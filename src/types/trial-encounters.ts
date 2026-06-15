@@ -134,11 +134,19 @@ export const TRIAL_ENCOUNTERS: readonly Trial[] = [
     shortName: 'AA',
     encounters: [
       {
-        id: 'trash_1',
+        id: 'trash_frost_atronach',
         type: 'trash',
-        name: 'Elemental Chambers',
-        description:
-          'Entrance gauntlet: fire-trap stairs and a Flame Atronach pack, then a Library room with Frost Atronachs and roaming ice whirlwinds, then an Overcharger-led pack before the first boss arena.',
+        name: 'Frost Atronach',
+      },
+      {
+        id: 'trash_firstmage_overcharger',
+        type: 'trash',
+        name: 'Firstmage Overcharger',
+      },
+      {
+        id: 'trash_firstmage_chainspinner',
+        type: 'trash',
+        name: 'Firstmage Chainspinner',
       },
       {
         id: 'boss_1',
@@ -148,11 +156,19 @@ export const TRIAL_ENCOUNTERS: readonly Trial[] = [
           'Storm Atronach: stand on the glowing golden pad to survive the Impending Storm, plus dodgeable tornado AoEs.',
       },
       {
-        id: 'trash_2',
+        id: 'trash_firstmage_overcharger_2',
         type: 'trash',
-        name: 'Island Split 1',
-        description:
-          '3-way split into teams of 4 (Left / Middle / Right floating islands): Overcharger, Nullifier, and small-add packs. All islands must be cleared to proceed.',
+        name: 'Firstmage Overcharger',
+      },
+      {
+        id: 'trash_firstmage_nullifier',
+        type: 'trash',
+        name: 'Firstmage Nullifier',
+      },
+      {
+        id: 'trash_firstmage_chainspinner_2',
+        type: 'trash',
+        name: 'Firstmage Chainspinner',
       },
       {
         id: 'boss_2',
@@ -162,11 +178,9 @@ export const TRIAL_ENCOUNTERS: readonly Trial[] = [
           'Stack on the tank for Quake, spread for Boulder Storm; spawns Chainspinners and Nullifiers.',
       },
       {
-        id: 'trash_3',
+        id: 'trash_firstmage_chainspinner_3',
         type: 'trash',
-        name: 'Island Split 2',
-        description:
-          'Second 3-way island split into teams of 4; harder compositions (Chainspinner + Nullifier, imps). Clearing all islands opens the bridge to Varlariel.',
+        name: 'Firstmage Chainspinner',
       },
       {
         id: 'boss_3',
@@ -190,11 +204,9 @@ export const TRIAL_ENCOUNTERS: readonly Trial[] = [
     shortName: 'HRC',
     encounters: [
       {
-        id: 'trash_1',
+        id: 'trash_anka_ra_soldier',
         type: 'trash',
-        name: 'The Bridge',
-        description:
-          'Opening assault: Anka-Ra Soldiers, Archers, War-Priests, a Destroyer, and Welwa across the bridge to the first boss.',
+        name: 'Anka-Ra Soldier',
       },
       {
         id: 'boss_1',
@@ -204,13 +216,6 @@ export const TRIAL_ENCOUNTERS: readonly Trial[] = [
           'Giant Air Atronach with two War-Priests and a Destroyer: random red-circle whirlwinds, and four boomeranging swords (stand behind the boss).',
       },
       {
-        id: 'trash_2',
-        type: 'trash',
-        name: 'Courtyard & Split',
-        description:
-          "After Ra Kotu the 12-player group splits into two teams of 6: Left gate (Yokeda Rok'dun path) and Right gate (Yokeda Kai path), each with large add waves, killed simultaneously.",
-      },
-      {
         id: 'boss_2',
         type: 'boss',
         name: 'The Yokedas',
@@ -218,11 +223,14 @@ export const TRIAL_ENCOUNTERS: readonly Trial[] = [
           "Simultaneous split bosses on separate sides: Yokeda Rok'dun (archer, fire circles) on the left, Yokeda Kai (mage, interrupt his duplicating fireball casts) on the right. ESO Logs tracks the pair as one encounter.",
       },
       {
-        id: 'trash_3',
+        id: 'trash_anka_ra_war_priest',
         type: 'trash',
-        name: 'Pre-Warrior Army',
-        description:
-          'The rejoined group fights the Anka-Ra army before the final boss: War-Priests, Flame-Shapers, Gargoyles, and Destroyers.',
+        name: 'Anka-Ra War-Priest',
+      },
+      {
+        id: 'trash_gargoyle',
+        type: 'trash',
+        name: 'Gargoyle',
       },
       {
         id: 'boss_3',
@@ -239,11 +247,14 @@ export const TRIAL_ENCOUNTERS: readonly Trial[] = [
     shortName: 'SO',
     encounters: [
       {
-        id: 'trash_1',
+        id: 'trash_scaled_court_shaman',
         type: 'trash',
-        name: 'Opening Area',
-        description:
-          'Entry chamber: light the two nirncrux altars to trigger waves of Lamias, Archers, Conjurers, Trolls and Overchargers.',
+        name: 'Scaled Court Shaman',
+      },
+      {
+        id: 'trash_scaled_court_conjurer',
+        type: 'trash',
+        name: 'Scaled Court Conjurer',
       },
       {
         id: 'boss_1',
@@ -261,11 +272,19 @@ export const TRIAL_ENCOUNTERS: readonly Trial[] = [
           'Optional mini-boss inside the Mantikora portal arena. The ported player must kill it (~100s) or the Mantikora enrages; high-DPS groups can skip it.',
       },
       {
-        id: 'trash_2',
+        id: 'trash_scaled_court_overcharger',
         type: 'trash',
-        name: 'Bridge Approach',
-        description:
-          'Elite packs to the second boss: Overchargers (drop large lightning AoEs), Rockheaver Trolls, War-Priests, and Serpent Fangs across the bridge.',
+        name: 'Scaled Court Overcharger',
+      },
+      {
+        id: 'trash_rockheaver_troll',
+        type: 'trash',
+        name: 'Rockheaver Troll',
+      },
+      {
+        id: 'trash_serpent_war_priest',
+        type: 'trash',
+        name: 'Serpent War-Priest',
       },
       {
         id: 'boss_2',
@@ -275,11 +294,9 @@ export const TRIAL_ENCOUNTERS: readonly Trial[] = [
           'Armored troll: spreading Poison, Ground Slam line attack, Destructive Aura; Overchargers join at 75/50/25%.',
       },
       {
-        id: 'trash_3',
+        id: 'trash_rockheaver_troll_2',
         type: 'trash',
-        name: 'Lever Rooms',
-        description:
-          'Synchronized lever-pulling progression interspersed with Scaled Court packs (Overchargers, Trolls, War-Priests, Serpent Fangs, Shamans).',
+        name: 'Rockheaver Troll',
       },
       {
         id: 'boss_3',
@@ -289,11 +306,14 @@ export const TRIAL_ENCOUNTERS: readonly Trial[] = [
           'Large Lamia: Trapping Bolts pin an increasing number of players (synergy to free), plus continuously respawning single adds of each trash type.',
       },
       {
-        id: 'trash_3b',
+        id: 'trash_rockheaver_troll_3',
         type: 'trash',
-        name: "Serpent's Chamber Approach",
-        description:
-          'Staircase to the final boss room; two Sacred Banners at mid-stairs (burning both arms Hard Mode for The Serpent). A side room holds the optional Feeding Pit.',
+        name: 'Rockheaver Troll',
+      },
+      {
+        id: 'trash_berserker_troll',
+        type: 'trash',
+        name: 'Berserker Troll',
       },
       {
         id: 'boss_4',
@@ -310,11 +330,9 @@ export const TRIAL_ENCOUNTERS: readonly Trial[] = [
     shortName: 'MoL',
     encounters: [
       {
-        id: 'trash_1',
+        id: 'trash_ghostly_sar_mathra',
         type: 'trash',
-        name: 'Maw Entrance & Temple of Seven Riddles',
-        description:
-          "Dro-m'Athra rush in (Cursed Monks/Scholars/War-Priests) then elite drop-ins (Savage, Shadowguard, Dreadstalker) and Sun-Eaters up the stairs. Focus Sun-Eaters first.",
+        name: "Ghostly Sar-m'Athra",
       },
       {
         id: 'boss_1',
@@ -324,11 +342,14 @@ export const TRIAL_ENCOUNTERS: readonly Trial[] = [
           'Grip of Lorkhaj curse (cleanse in light/pillar formations), Dark Aegis shields, summoned cat adds, Void Explosion.',
       },
       {
-        id: 'trash_2',
+        id: 'trash_ogre_shaman',
         type: 'trash',
-        name: 'Ogre Gauntlet & Arena',
-        description:
-          "New Champion enemies: Ogre Brute, Ogre Shaman (heals), and Ogre Flesh-Render (bash to stop the group knockdown), then a multi-wave arena of Dro-m'Athra plus Hulks.",
+        name: 'Ogre Shaman',
+      },
+      {
+        id: 'trash_ghostly_sar_mathra_2',
+        type: 'trash',
+        name: "Ghostly Sar-m'Athra",
       },
       {
         id: 'boss_2',
@@ -338,11 +359,14 @@ export const TRIAL_ENCOUNTERS: readonly Trial[] = [
           "S'kinrai & Vashai, twin Dro-m'Athra fought together: the raid is buff-split into Shadow (6) and Holy (6) halves handling color-matched mechanics, with Rage of S'kinrai / Will of Vashai adds.",
       },
       {
-        id: 'trash_3',
+        id: 'trash_colossal_sar_mathra',
         type: 'trash',
-        name: 'Suthay Sanctuary & Lattice Walk',
-        description:
-          "Colossal Sar-m'Athra (one-shot cats) and Ghostly Sar-m'Athra, two chain-switches that pull Dro-m'Athra waves, then a three-wave hallway up to Rakkhat with continuously spawning Cursed Monks.",
+        name: "Colossal Sar-m'Athra",
+      },
+      {
+        id: 'trash_ghostly_sar_mathra_3',
+        type: 'trash',
+        name: "Ghostly Sar-m'Athra",
       },
       {
         id: 'boss_3',
@@ -359,11 +383,14 @@ export const TRIAL_ENCOUNTERS: readonly Trial[] = [
     shortName: 'HoF',
     encounters: [
       {
-        id: 'trash_1',
+        id: 'trash_kagouti_fabricant',
         type: 'trash',
-        name: 'Initial Fabricants',
-        description:
-          'Abanabi Cave path: Kagouti Fabricants (block the one-shot charge), Shalks, Nix-Hounds, and ranged Refabricated Arquebus.',
+        name: 'Kagouti Fabricant',
+      },
+      {
+        id: 'trash_refabricated_arquebus',
+        type: 'trash',
+        name: 'Refabricated Arquebus',
       },
       {
         id: 'boss_1',
@@ -373,11 +400,14 @@ export const TRIAL_ENCOUNTERS: readonly Trial[] = [
           'Raptor-fabricant pair (Hunter-Killer Positrox & Negatrix): keep them apart (their arc disables Dwarven Sphere shields), lightning hazards, continuous shielded Spheres.',
       },
       {
-        id: 'trash_2',
+        id: 'trash_shalk_fabricant',
         type: 'trash',
-        name: 'Fabricant Packs',
-        description:
-          'Mixed fabricant packs (Dissectors, Capacitors, Nix-Hounds) into the Pinnacle Factotum chamber.',
+        name: 'Shalk Fabricant',
+      },
+      {
+        id: 'trash_kagouti_fabricant_2',
+        type: 'trash',
+        name: 'Kagouti Fabricant',
       },
       {
         id: 'boss_2',
@@ -387,13 +417,6 @@ export const TRIAL_ENCOUNTERS: readonly Trial[] = [
           'Element-wielding Factotum: linked lightning beams, clone/shade mechanic, and a ~90s upstairs portal phase where 4 DPS destroy shielded Spheres and press all four buttons together.',
       },
       {
-        id: 'trash_3',
-        type: 'trash',
-        name: 'Spider Room',
-        description:
-          'Refabricated Spiders (Calefactors/Dissectors that explode and charge) while dodging Whirling Blade Traps that stack a heavy bleed.',
-      },
-      {
         id: 'boss_3',
         type: 'boss',
         name: 'Archcustodian',
@@ -401,11 +424,19 @@ export const TRIAL_ENCOUNTERS: readonly Trial[] = [
           'Giant invulnerable Dwarven Spider: lure it past Shock Pylons and activate them to drop its shield; smaller spider adds spawn.',
       },
       {
-        id: 'trash_4',
+        id: 'trash_refabricated_spider',
         type: 'trash',
-        name: 'Tunnel & Junkyard',
-        description:
-          'Reprocessing Yard traversal: Shock Pylons, Capacitors, and Centurions that spawn Arquebus adds on death.',
+        name: 'Refabricated Spider',
+      },
+      {
+        id: 'trash_kagouti_fabricant_3',
+        type: 'trash',
+        name: 'Kagouti Fabricant',
+      },
+      {
+        id: 'trash_ruptured_centurion',
+        type: 'trash',
+        name: 'Ruptured Centurion',
       },
       {
         id: 'boss_4',
@@ -413,6 +444,11 @@ export const TRIAL_ENCOUNTERS: readonly Trial[] = [
         name: 'The Refabrication Committee',
         description:
           "Three Factotums (Reducer / Reclaimer / Reactor) kept apart so they don't link; Ruined Factotums charge, leap onto a player, and explode.",
+      },
+      {
+        id: 'trash_calefactor',
+        type: 'trash',
+        name: 'Calefactor',
       },
       {
         id: 'boss_5',
@@ -459,11 +495,9 @@ export const TRIAL_ENCOUNTERS: readonly Trial[] = [
     shortName: 'CR',
     encounters: [
       {
-        id: 'trash_1',
+        id: 'trash_yaghra_monstrosity',
         type: 'trash',
-        name: 'Galenwe Platform Adds',
-        description:
-          'Ice platform: clear a Yaghra wave (Striders, Nocturnal Creepers, Larva, a Monstrosity) before Galenwe and his gryphon descend.',
+        name: 'Yaghra Monstrosity',
       },
       {
         id: 'boss_1',
@@ -473,10 +507,9 @@ export const TRIAL_ENCOUNTERS: readonly Trial[] = [
           'Ice Welkynar Galenwe + gryphon Falarielle: keep them apart (they empower when close), kill simultaneously or tentacles spawn, heavy tank bleed. ESO Logs tracks the pair as one boss.',
       },
       {
-        id: 'trash_1b',
+        id: 'trash_yaghra_monstrosity_2',
         type: 'trash',
-        name: 'Siroria Platform Adds',
-        description: 'Fire platform: clear a Yaghra wave before Siroria and her gryphon descend.',
+        name: 'Yaghra Monstrosity',
       },
       {
         id: 'boss_2',
@@ -486,10 +519,9 @@ export const TRIAL_ENCOUNTERS: readonly Trial[] = [
           'Fire Welkynar Siroria + gryphon Silaeda: same empower/simultaneous-kill/tank-bleed rules, plus a fire stack-circle mechanic.',
       },
       {
-        id: 'trash_1c',
+        id: 'trash_yaghra_monstrosity_3',
         type: 'trash',
-        name: 'Relequen Platform Adds',
-        description: 'Shock platform: clear a Yaghra wave before Relequen and his gryphon descend.',
+        name: 'Yaghra Monstrosity',
       },
       {
         id: 'boss_3',
@@ -497,6 +529,11 @@ export const TRIAL_ENCOUNTERS: readonly Trial[] = [
         name: 'Shade of Relequen',
         description:
           'Shock Welkynar Relequen + gryphon Belanaril: same rules, plus a weapon-swap mechanic when Belanaril overloads your bar.',
+      },
+      {
+        id: 'trash_yaghra_monstrosity_4',
+        type: 'trash',
+        name: 'Yaghra Monstrosity',
       },
       {
         id: 'boss_4',
@@ -513,11 +550,14 @@ export const TRIAL_ENCOUNTERS: readonly Trial[] = [
     shortName: 'SS',
     encounters: [
       {
-        id: 'trash_1',
+        id: 'trash_jones_gale_claw',
         type: 'trash',
-        name: 'Temple Vestibule',
-        description:
-          'Entrance: Nahviintaas appears then flies off, leaving a wave of Sunspire Archers, Menders, and Atronachs to clear before climbing toward the dragons.',
+        name: "Jone's Gale-Claw",
+      },
+      {
+        id: 'trash_alkoshs_roar',
+        type: 'trash',
+        name: "Alkosh's Roar",
       },
       {
         id: 'boss_1',
@@ -527,6 +567,21 @@ export const TRIAL_ENCOUNTERS: readonly Trial[] = [
           'Red flame dragon (right path): becomes untargetable at 80/50/25% spawning Flame Atronachs and Iron Servants that must be cleaved. Can be killed before or after Lokkestiiz.',
       },
       {
+        id: 'trash_alkoshs_fate',
+        type: 'trash',
+        name: "Alkosh's Fate",
+      },
+      {
+        id: 'trash_jodes_fire_fang',
+        type: 'trash',
+        name: "Jode's Fire-Fang",
+      },
+      {
+        id: 'trash_fury_of_alkosh',
+        type: 'trash',
+        name: 'Fury of Alkosh',
+      },
+      {
         id: 'boss_2',
         type: 'boss',
         name: 'Lokkestiiz',
@@ -534,11 +589,14 @@ export const TRIAL_ENCOUNTERS: readonly Trial[] = [
           'White frost/lightning dragon (left path): Storm Atronachs leave shock puddles; Frost Atronachs must be dragged into the shock circle to die. Either order with Yolnahkriin.',
       },
       {
-        id: 'trash_2',
+        id: 'trash_jodes_fire_fang_2',
         type: 'trash',
-        name: 'Pre-Nahviintaas',
-        description:
-          'Killing both side dragons breaks the seal; clear the approach adds before engaging the final boss.',
+        name: "Jode's Fire-Fang",
+      },
+      {
+        id: 'trash_alkoshs_fate_2',
+        type: 'trash',
+        name: "Alkosh's Fate",
       },
       {
         id: 'boss_3',
@@ -555,11 +613,14 @@ export const TRIAL_ENCOUNTERS: readonly Trial[] = [
     shortName: 'KA',
     encounters: [
       {
-        id: 'trash_1',
+        id: 'trash_half_giant_bulwark',
         type: 'trash',
-        name: 'Beach Assault',
-        description:
-          'Opening defense: Half-Giant Bulwarks (shields), Stormcallers (lightning), and Tidebreakers (waves) up the beach.',
+        name: 'Half-Giant Bulwark',
+      },
+      {
+        id: 'trash_half_giant_raider',
+        type: 'trash',
+        name: 'Half-Giant Raider',
       },
       {
         id: 'boss_1',
@@ -569,11 +630,14 @@ export const TRIAL_ENCOUNTERS: readonly Trial[] = [
           'Sea Giant: spawns a pet every 60s (alternating Sea Adder / Gryphon) and a totem every 20s; enrages at 50%.',
       },
       {
-        id: 'trash_2',
+        id: 'trash_half_giant_raider_2',
         type: 'trash',
-        name: 'Fortress Approach',
-        description:
-          'Shamans, Apothecaries, and Harpooners with coordinated pulls up to the fortress.',
+        name: 'Half-Giant Raider',
+      },
+      {
+        id: 'trash_half_giant_bulwark_2',
+        type: 'trash',
+        name: 'Half-Giant Bulwark',
       },
       {
         id: 'boss_2',
@@ -583,11 +647,24 @@ export const TRIAL_ENCOUNTERS: readonly Trial[] = [
           'Use ballista and travel to his longboat; from 50% he summons shaman pairs on the longship (killable only by ballistas), plus Storm Twins.',
       },
       {
-        id: 'trash_3',
+        id: 'trash_vampire_infuser',
         type: 'trash',
-        name: 'Vampire Gauntlet',
-        description:
-          'The hardest trash: Infusers (must interrupt) with Crimson, Bitter, and Blood Knights through the vampire wing.',
+        name: 'Vampire Infuser',
+      },
+      {
+        id: 'trash_crimson_knight',
+        type: 'trash',
+        name: 'Crimson Knight',
+      },
+      {
+        id: 'trash_bitter_knight',
+        type: 'trash',
+        name: 'Bitter Knight',
+      },
+      {
+        id: 'trash_blood_knight',
+        type: 'trash',
+        name: 'Blood Knight',
       },
       {
         id: 'boss_3',
@@ -604,20 +681,6 @@ export const TRIAL_ENCOUNTERS: readonly Trial[] = [
     shortName: 'RG',
     encounters: [
       {
-        id: 'trash_0',
-        type: 'trash',
-        name: 'Walled Sanctuary',
-        description:
-          'Entrance pull: easy Sul-Xan packs with Death Hoppers mixed in, leading east toward the gate to the Overgrown Thoroughfare.',
-      },
-      {
-        id: 'trash_1',
-        type: 'trash',
-        name: 'Overgrown Thoroughfare',
-        description:
-          'Sul-Xan forces (Reavers, Bloodseekers, Soulweavers) and Death Hoppers; stay out of the damaging water.',
-      },
-      {
         id: 'mini_1b',
         type: 'mini_boss',
         name: 'Basks-In-Snakes',
@@ -633,6 +696,16 @@ export const TRIAL_ENCOUNTERS: readonly Trial[] = [
           'Large roaming beast in the Grand Geyser area with Sul-Xan adds. Optional "Turtle Soup" achievement: lure it into the erupting geyser.',
       },
       {
+        id: 'trash_sul_xan_reaver',
+        type: 'trash',
+        name: 'Sul-Xan Reaver',
+      },
+      {
+        id: 'trash_sul_xan_bloodseeker',
+        type: 'trash',
+        name: 'Sul-Xan Bloodseeker',
+      },
+      {
         id: 'boss_1',
         type: 'boss',
         name: 'Oaxiltso',
@@ -640,11 +713,14 @@ export const TRIAL_ENCOUNTERS: readonly Trial[] = [
           'Behemoth guarding the xanmeer: charges, Blistering Smash AoEs, stomps, Noxious Sludge pools, and Havocrel Annihilator adds at 95/75/50/25%.',
       },
       {
-        id: 'trash_2',
+        id: 'trash_sul_xan_reaver_2',
         type: 'trash',
-        name: 'Xanmeer Crypts',
-        description:
-          'Sul-Xan, Durzogs, and Havocrel Butchers/Barbarians climbing the pinnacle; some pulls need coordinated ultimates.',
+        name: 'Sul-Xan Reaver',
+      },
+      {
+        id: 'trash_havocrel_butcher',
+        type: 'trash',
+        name: 'Havocrel Butcher',
       },
       {
         id: 'boss_2',
@@ -654,19 +730,27 @@ export const TRIAL_ENCOUNTERS: readonly Trial[] = [
           'Naga warrior-mage atop the pinnacle: Cursed Ground, Embrace of Death curse, Prime Meteors, Burning Specters, and Fire Behemoths at 50/40/30/20/10%.',
       },
       {
-        id: 'trash_3',
-        type: 'trash',
-        name: 'Deadlands & Tower',
-        description:
-          'Oblivion Gate to the Tower of the Five Crimes: Havocrel Torchcasters/Butchers/Barbarians, a roaming Fire Behemoth, and Prime Meteors.',
-      },
-      {
         id: 'mini_2',
         type: 'mini_boss',
         name: 'Ash Titan',
         optional: true,
         description:
           'Optional choice mini-boss in the Oblivion Gate (~8.6M HP): inverse-distance damage (hits harder the farther you are) with a Torchcaster, Barbarian, and Fire Behemoth.',
+      },
+      {
+        id: 'trash_havocrel_butcher_2',
+        type: 'trash',
+        name: 'Havocrel Butcher',
+      },
+      {
+        id: 'trash_havocrel_barbarian',
+        type: 'trash',
+        name: 'Havocrel Barbarian',
+      },
+      {
+        id: 'trash_fire_behemoth',
+        type: 'trash',
+        name: 'Fire Behemoth',
       },
       {
         id: 'boss_3',
@@ -683,11 +767,19 @@ export const TRIAL_ENCOUNTERS: readonly Trial[] = [
     shortName: 'DSR',
     encounters: [
       {
-        id: 'trash_1',
+        id: 'trash_dreadsail_keelcutter',
         type: 'trash',
-        name: 'Dreadsail Beach',
-        description:
-          'Pirate packs: Keel Cutters, Swashbucklers, Serpent Callers, and Rangers up the beach.',
+        name: 'Dreadsail Keelcutter',
+      },
+      {
+        id: 'trash_dreadsail_swashbuckler',
+        type: 'trash',
+        name: 'Dreadsail Swashbuckler',
+      },
+      {
+        id: 'trash_dreadsail_ranger',
+        type: 'trash',
+        name: 'Dreadsail Ranger',
       },
       {
         id: 'boss_1',
@@ -697,25 +789,11 @@ export const TRIAL_ENCOUNTERS: readonly Trial[] = [
           'Fire (Lylanar) + ice (Turlassil) brothers: carry Ember/Hailstone orbs to the opposite-element boss to manage stacks, then a two-sided split phase.',
       },
       {
-        id: 'trash_2',
-        type: 'trash',
-        name: 'Coral Cavern & Split',
-        description:
-          'A hub with a pirate tavern that gates two branching paths — Tempest Heights (lightning) and Reef Caverns (poison). Both must be cleared (often simultaneously) to advance.',
-      },
-      {
         id: 'mini_1',
         type: 'mini_boss',
         name: 'Sail Ripper',
         description:
           'Lightning-side mini-boss (Tempest Heights): flies around then channels a raid-wide lightning attack to interrupt on landing, with Harpy Stormweaver/Windcaller adds.',
-      },
-      {
-        id: 'trash_2b',
-        type: 'trash',
-        name: 'Reef Caverns (Poison Side)',
-        description:
-          'The other split branch: poison hazards with Dreadsail Brewmasters (shrinking potions), Coral Drift Bears, and small Coral Haj Mota, leading to Bow Breaker.',
       },
       {
         id: 'mini_1b',
@@ -725,11 +803,51 @@ export const TRIAL_ENCOUNTERS: readonly Trial[] = [
           'Poison-side mini-boss (Reef Caverns): a large Coral Haj Mota with a frontal Horn Strike cleave (tank faces away) and small Haj Mota adds to stack on it.',
       },
       {
+        id: 'trash_dreadsail_keelcutter_2',
+        type: 'trash',
+        name: 'Dreadsail Keelcutter',
+      },
+      {
+        id: 'trash_dreadsail_swashbuckler_2',
+        type: 'trash',
+        name: 'Dreadsail Swashbuckler',
+      },
+      {
+        id: 'trash_dreadsail_brewmaster',
+        type: 'trash',
+        name: 'Dreadsail Brewmaster',
+      },
+      {
+        id: 'trash_spirit_crab_broodmother',
+        type: 'trash',
+        name: 'Spirit Crab Broodmother',
+      },
+      {
+        id: 'trash_dreadsail_serpent_tongue',
+        type: 'trash',
+        name: 'Dreadsail Serpent-Tongue',
+      },
+      {
         id: 'boss_2',
         type: 'boss',
         name: 'Reef Guardian',
         description:
           'Splits into smaller copies of itself when damaged; control DPS to limit copies while managing adds, in the Coral Caldera pool.',
+      },
+      {
+        id: 'trash_dreadsail_overseer',
+        type: 'trash',
+        name: 'Dreadsail Overseer',
+      },
+      {
+        id: 'trash_dreadsail_keelcutter_3',
+        type: 'trash',
+        name: 'Dreadsail Keelcutter',
+      },
+      {
+        id: 'trash_dreadsail_swashbuckler_3',
+        type: 'trash',
+        name: 'Dreadsail Swashbuckler',
       },
       {
         id: 'boss_3',
@@ -746,18 +864,26 @@ export const TRIAL_ENCOUNTERS: readonly Trial[] = [
     shortName: 'SE',
     encounters: [
       {
-        id: 'trash_1',
-        type: 'trash',
-        name: 'Contramagis Militia',
-        description:
-          'Opening trash before the first boss: Contramagis Militia adds (Summoner, Paranoxia, Enforcer, Wamasu, Butcher, Disruptor). Pull toward cover to block the Wamasu charge.',
-      },
-      {
         id: 'mini_1',
         type: 'mini_boss',
         name: 'Spiral Descender',
         description:
           'Mini-boss that spawns during the opening trash (random spot): mass-pulls the group, drains ~75% HP, applies a strong snare and a growing AoE; block its Raze winding attack.',
+      },
+      {
+        id: 'trash_wamasu',
+        type: 'trash',
+        name: 'Wamasu',
+      },
+      {
+        id: 'trash_contramagis_militia_butcher',
+        type: 'trash',
+        name: 'Contramagis Militia Butcher',
+      },
+      {
+        id: 'trash_paranoxia',
+        type: 'trash',
+        name: 'Paranoxia',
       },
       {
         id: 'boss_1',
@@ -767,18 +893,26 @@ export const TRIAL_ENCOUNTERS: readonly Trial[] = [
           'First boss (leader of the Militia): dual-wielding mage-hunter with Chain Pull, Fire/Frost Bombs, Knife Blast, and Wamasu adds.',
       },
       {
-        id: 'trash_2',
-        type: 'trash',
-        name: 'Pre-Twelvane Forces',
-        description:
-          "The trial's most dangerous elites across several pulls: Disruptors (top priority — Vehement Preservation aura), Griffins, and Voidmasters. The Spiral Descender spawns a second time here.",
-      },
-      {
         id: 'mini_2',
         type: 'mini_boss',
         name: 'The Hollow One',
         description:
           'Named Soulrazor Knight elite within the pre-Twelvane trash: Pulverize heavy attack, roll-dodgeable Exploding Charge, and a 25m Shield Throw stun.',
+      },
+      {
+        id: 'trash_dynamagis_voidmaster',
+        type: 'trash',
+        name: 'Dynamagis Voidmaster',
+      },
+      {
+        id: 'trash_paranoxia_2',
+        type: 'trash',
+        name: 'Paranoxia',
+      },
+      {
+        id: 'trash_dynamagis_disruptor',
+        type: 'trash',
+        name: 'Dynamagis Disruptor',
       },
       {
         id: 'boss_2',
@@ -788,11 +922,14 @@ export const TRIAL_ENCOUNTERS: readonly Trial[] = [
           '3-phase fight: elemental phase, a constellation/crystal puzzle, then the Chimera with Gryphon/Lion/Wamasu head phases.',
       },
       {
-        id: 'trash_2b',
+        id: 'trash_ansuuls_summoner',
         type: 'trash',
-        name: "Ansuul's Forces",
-        description:
-          "Final trash in Vanton's Psyche: enemies become Ansuul's nightmares — Ansuul's Summoner (banner-carriers), Demented Brood (Spider Daedra), Fetid Flesh (Flesh Atronach), and Ansuul's Gryphon.",
+        name: "Ansuul's Summoner",
+      },
+      {
+        id: 'trash_paranoxia_3',
+        type: 'trash',
+        name: 'Paranoxia',
       },
       {
         id: 'boss_3',
@@ -809,11 +946,29 @@ export const TRIAL_ENCOUNTERS: readonly Trial[] = [
     shortName: 'LC',
     encounters: [
       {
-        id: 'trash_1',
+        id: 'trash_darkcaster_slasher',
         type: 'trash',
-        name: 'Faceted Gallery',
-        description:
-          'Entrance trash: Skirmishers, Slashers, Acolytes, and Firestorm adds with bleed, stun, and darkness debuffs.',
+        name: 'Darkcaster Slasher',
+      },
+      {
+        id: 'trash_lightbringer_acolyte',
+        type: 'trash',
+        name: 'Lightbringer Acolyte',
+      },
+      {
+        id: 'trash_darkcaster_firestorm',
+        type: 'trash',
+        name: 'Darkcaster Firestorm',
+      },
+      {
+        id: 'trash_dremora_battlemage',
+        type: 'trash',
+        name: 'Dremora Battlemage',
+      },
+      {
+        id: 'trash_dremora_lurker',
+        type: 'trash',
+        name: 'Dremora Lurker',
       },
       {
         id: 'boss_1',
@@ -823,11 +978,19 @@ export const TRIAL_ENCOUNTERS: readonly Trial[] = [
           'First boss in the Mirror of Opposition: the group SPLITS in two across a glass panel — one side fights Count Ryelaz (darkness/meteors), the other Zilyesset (light crystal scorpion). Cross via lit pads.',
       },
       {
-        id: 'trash_2',
+        id: 'trash_lightbringer_iridescent',
         type: 'trash',
-        name: 'Sunken Ruins',
-        description:
-          'Descent trash: Lightbringer Iridescents and necrotic adds, plus a Crystal Atronach pack that teaches the light mechanic.',
+        name: 'Lightbringer Iridescent',
+      },
+      {
+        id: 'trash_lightbringer_acolyte_2',
+        type: 'trash',
+        name: 'Lightbringer Acolyte',
+      },
+      {
+        id: 'trash_crystal_atronach',
+        type: 'trash',
+        name: 'Crystal Atronach',
       },
       {
         id: 'boss_2',
@@ -837,32 +1000,11 @@ export const TRIAL_ENCOUNTERS: readonly Trial[] = [
           'Second boss (a Breton) at the end of the Sunken Ruins: a radiance invulnerability phase with sunburst AoEs and adds.',
       },
       {
-        id: 'trash_2b',
-        type: 'trash',
-        name: 'Ghost Light Flight',
-        description:
-          'Wisp-puzzle traversal: a blue ring synergy turns players into a Wisp with a new skill bar to navigate blue stamina orbs and red reset orbs across the gap toward the Crystalline Ramparts.',
-      },
-      {
-        id: 'trash_3',
-        type: 'trash',
-        name: 'Crystalline Ramparts',
-        description:
-          'Large outdoor packs (Acolytes, Firestorm, Slashers) and the Catalyst Nook intro waves (Crystal Hollow Sentinels, gold-barred Crystal Atronachs) before the third boss.',
-      },
-      {
         id: 'boss_3',
         type: 'boss',
         name: 'Orphic Shattered Shard',
         description:
           'Third boss in the Catalyst Nook: light/dark mirror-flip mechanic at health thresholds. Xoryn leaves at ~20%; killing the Shard yields the Arcane Knot and starts the escort.',
-      },
-      {
-        id: 'escort',
-        type: 'trash',
-        name: 'Escort: Defense Prisms',
-        description:
-          'Begin escorting the Arcane Knot back. Destroy a Defense Prism while fighting a Mirrormoor Mantikora (spear throws, portals), then break a second linked Prism within the timer.',
       },
       {
         id: 'mini_1',
@@ -893,6 +1035,31 @@ export const TRIAL_ENCOUNTERS: readonly Trial[] = [
           'Paired escort mini-boss gated by four linked Defense Prisms: Jresazzel (melee, shield throw) plus Xynizata (ranged caster — drag in and interrupt its channel).',
       },
       {
+        id: 'trash_darkcaster_slasher_2',
+        type: 'trash',
+        name: 'Darkcaster Slasher',
+      },
+      {
+        id: 'trash_lightbringer_acolyte_3',
+        type: 'trash',
+        name: 'Lightbringer Acolyte',
+      },
+      {
+        id: 'trash_dremora_lurker_2',
+        type: 'trash',
+        name: 'Dremora Lurker',
+      },
+      {
+        id: 'trash_lightbringer_iridescent_2',
+        type: 'trash',
+        name: 'Lightbringer Iridescent',
+      },
+      {
+        id: 'trash_crystal_atronach_2',
+        type: 'trash',
+        name: 'Crystal Atronach',
+      },
+      {
         id: 'boss_4',
         type: 'boss',
         name: 'Xoryn',
@@ -907,11 +1074,19 @@ export const TRIAL_ENCOUNTERS: readonly Trial[] = [
     shortName: 'OSC',
     encounters: [
       {
-        id: 'trash_1',
+        id: 'trash_tormented_skullmancer',
         type: 'trash',
-        name: 'Carrion Halls',
-        description:
-          'Entry trash (The Marred Path): synergize a Carrion Portal (stacking Caustic Carrion DoT) to clear Osteon Archers, a Bonelord, and a Fear Mage on the far side.',
+        name: 'Tormented Skullmancer',
+      },
+      {
+        id: 'trash_channeler',
+        type: 'trash',
+        name: 'Channeler',
+      },
+      {
+        id: 'trash_tormented_deadraiser',
+        type: 'trash',
+        name: 'Tormented Deadraiser',
       },
       {
         id: 'boss_1',
@@ -936,11 +1111,19 @@ export const TRIAL_ENCOUNTERS: readonly Trial[] = [
           'Optional side boss (a Lich) in the Inscrutable Lichyard via the FIRST Dreadful Portal: stack-and-burn with replica adds. Skippable.',
       },
       {
-        id: 'trash_2',
+        id: 'trash_tormented_crusher',
         type: 'trash',
-        name: 'Iron-Bone Halls',
-        description:
-          'Trash + mandatory "Split Ways": Tormented Crusher (face the conal breath away), Soul Devourers, Death Hounds, then two teams each take a Carrion Portal.',
+        name: 'Tormented Crusher',
+      },
+      {
+        id: 'trash_channeler_2',
+        type: 'trash',
+        name: 'Channeler',
+      },
+      {
+        id: 'trash_tormented_soul_devourer',
+        type: 'trash',
+        name: 'Tormented Soul Devourer',
       },
       {
         id: 'boss_2',
@@ -965,13 +1148,6 @@ export const TRIAL_ENCOUNTERS: readonly Trial[] = [
           'Optional side boss in the Gaol of Transition via the SECOND Dreadful Portal: three tortured Dremora — split and burn. Skippable.',
       },
       {
-        id: 'trash_3',
-        type: 'trash',
-        name: 'Pre-Kazpian Gauntlet',
-        description:
-          'Carrion Reapers, Deadraisers, Incinerators, Crypt Slashers and Casters toward The Wormgut and the Mangled Court.',
-      },
-      {
         id: 'abductor_3',
         type: 'mini_boss',
         name: 'Dreadful Abductor (3rd)',
@@ -985,6 +1161,26 @@ export const TRIAL_ENCOUNTERS: readonly Trial[] = [
         optional: true,
         description:
           'Optional side boss (a Vampire Lord) in the Sitient Lair via the THIRD Dreadful Portal: aided by Blood Slingers, Bloodknights, and Frozen Gargoyles. Skippable.',
+      },
+      {
+        id: 'trash_tormented_carrion_reaper',
+        type: 'trash',
+        name: 'Tormented Carrion Reaper',
+      },
+      {
+        id: 'trash_tormented_skullmancer_2',
+        type: 'trash',
+        name: 'Tormented Skullmancer',
+      },
+      {
+        id: 'trash_tormented_soul_devourer_2',
+        type: 'trash',
+        name: 'Tormented Soul Devourer',
+      },
+      {
+        id: 'trash_tormented_crusher_2',
+        type: 'trash',
+        name: 'Tormented Crusher',
       },
       {
         id: 'boss_3',
