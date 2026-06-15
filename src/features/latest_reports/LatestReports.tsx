@@ -203,20 +203,23 @@ export const LatestReports: React.FC = () => {
               activeServerFilterCount={activeServerFilterCount}
               onOpenMobileFilters={() => setMobileFiltersOpen(true)}
               searchInputRef={searchInputRef}
-            />
-
-            {/* Active filter chips — kept inside the sticky region so applied
-                filters stay visible while the results scroll. */}
-            <ActiveFilterBar
-              filters={filters}
-              zones={zones}
-              visibleCount={visibleCount}
-              searchActive={searchActive}
-              searchDebouncing={isDebouncing}
-              onRemoveZone={() => setFilters({ zoneId: null })}
-              onRemoveDate={() => setFilters({ range: 'all', customFrom: null, customTo: null })}
-              onClearAll={clearServerFilters}
-              searchInputRef={searchInputRef}
+              // Active-filter chips share the view-controls row (left side),
+              // reusing existing space instead of adding a new band per filter.
+              activeFilters={
+                <ActiveFilterBar
+                  filters={filters}
+                  zones={zones}
+                  visibleCount={visibleCount}
+                  searchActive={searchActive}
+                  searchDebouncing={isDebouncing}
+                  onRemoveZone={() => setFilters({ zoneId: null })}
+                  onRemoveDate={() =>
+                    setFilters({ range: 'all', customFrom: null, customTo: null })
+                  }
+                  onClearAll={clearServerFilters}
+                  searchInputRef={searchInputRef}
+                />
+              }
             />
           </Box>
 

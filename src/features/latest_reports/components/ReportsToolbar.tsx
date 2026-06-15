@@ -27,6 +27,12 @@ interface ReportsToolbarProps {
   /** Mobile: open the filter bottom-sheet. */
   onOpenMobileFilters: () => void;
   searchInputRef: React.Ref<HTMLInputElement>;
+  /**
+   * Active-filter chips (zone/date) + scope chip + clear-all. Rendered on the
+   * desktop view row (left side, sharing the otherwise-empty space next to the
+   * view/density controls) and below the toolbar on mobile.
+   */
+  activeFilters?: React.ReactNode;
 }
 
 /**
@@ -56,6 +62,7 @@ export const ReportsToolbar: React.FC<ReportsToolbarProps> = ({
   activeServerFilterCount,
   onOpenMobileFilters,
   searchInputRef,
+  activeFilters,
 }) => {
   const dateValue: DateRangeValue = {
     range: filters.range,
@@ -90,6 +97,7 @@ export const ReportsToolbar: React.FC<ReportsToolbarProps> = ({
           <Box sx={{ flex: 1 }} />
           <DensityToggle value={density} onChange={onDensityChange} />
         </Box>
+        {activeFilters}
       </Box>
     );
   }
@@ -124,11 +132,25 @@ export const ReportsToolbar: React.FC<ReportsToolbarProps> = ({
         </Box>
       </Box>
 
-      {/* Hairline separator + Row 2 — view controls, right-aligned. */}
+      {/* Hairline separator + Row 2 — active-filter chips fill the left (reusing
+          the space next to the controls), view controls stay right-aligned. The
+          row only grows taller when many chips wrap, instead of always adding a
+          whole new band when a single filter is applied. */}
       <Divider sx={{ borderColor: 'divider', opacity: 0.6 }} />
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, ml: 'auto' }}>
-        <ViewToggle value={viewMode} onChange={onViewModeChange} />
-        <DensityToggle value={density} onChange={onDensityChange} />
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1.5,
+          flexWrap: 'wrap',
+          minHeight: 36,
+        }}
+      >
+        <Box sx={{ flex: '1 1 auto', minWidth: 0 }}>{activeFilters}</Box>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexShrink: 0 }}>
+          <ViewToggle value={viewMode} onChange={onViewModeChange} />
+          <DensityToggle value={density} onChange={onDensityChange} />
+        </Box>
       </Box>
     </Box>
   );

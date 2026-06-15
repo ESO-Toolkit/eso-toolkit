@@ -82,7 +82,6 @@ export const ActiveFilterBar: React.FC<ActiveFilterBarProps> = ({
         flexWrap: 'wrap',
         alignItems: 'center',
         gap: 1,
-        py: 1,
       }}
     >
       {zoneActive && (
@@ -147,7 +146,7 @@ export const ActiveFilterBar: React.FC<ActiveFilterBarProps> = ({
             // back to the search input rather than letting it fall to <body>.
             searchInputRef.current?.focus();
           }}
-          sx={{ ml: 'auto', textTransform: 'none' }}
+          sx={{ textTransform: 'none', flexShrink: 0 }}
         >
           Clear all
         </Button>
