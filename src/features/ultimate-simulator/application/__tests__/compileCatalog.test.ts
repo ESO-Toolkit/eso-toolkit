@@ -1,4 +1,8 @@
-import { COST_REDUCTION_CATALOG, ULTIMATE_SOURCE_CATALOG } from '../../shared/constants/catalog';
+import {
+  COST_REDUCTION_CATALOG,
+  ULTIMATE_ABILITIES,
+  ULTIMATE_SOURCE_CATALOG,
+} from '../../shared/constants/catalog';
 import type { CatalogSelection } from '../compileCatalog';
 import {
   availableReductions,
@@ -148,5 +152,54 @@ describe('catalog data integrity', () => {
     expect(s.length).toBeLessThanOrEqual(ULTIMATE_SOURCE_CATALOG.length);
     const r = availableReductions(COST_REDUCTION_CATALOG, baseSelection);
     expect(r.length).toBeLessThanOrEqual(COST_REDUCTION_CATALOG.length);
+  });
+
+  it('only cites UESP or ESO-Skillbook as provenance (repo data-source policy)', () => {
+    // Allowlist the permitted hosts rather than denylisting the forbidden one, so
+    // this test never contains the banned substring (the repo guard is a literal
+    // source-text scan) and any future disallowed host is caught too.
+    const allowedHosts = ['en.uesp.net', 'eso-skillbook.com'];
+    const all = [...ULTIMATE_SOURCE_CATALOG, ...COST_REDUCTION_CATALOG, ...ULTIMATE_ABILITIES];
+    for (const e of all) {
+      const host = new URL(e.provenance).host;
+      expect(allowedHosts).toContain(host);
+    }
+  });
+
+  // Lock the ultimate costs to the values verified against primary sources
+  // (ESO-Skillbook / UESP, U50). A silent regression here would mislead the
+  // time-to-ultimate output.
+  it('encodes the verified U50 ultimate costs', () => {
+    const cost = (id: string): number | undefined =>
+      ULTIMATE_ABILITIES.find((a) => a.id === id)?.baseCost;
+    expect(cost('dawnbreaker')).toBe(125);
+    expect(cost('standard-of-might')).toBe(200);
+    expect(cost('shifting-standard')).toBe(200);
+    expect(cost('corrosive-armor')).toBe(200);
+    expect(cost('storm-atronach')).toBe(200);
+    expect(cost('negate-magic')).toBe(225);
+    expect(cost('incapacitating-strike')).toBe(70);
+    expect(cost('nova')).toBe(225);
+    expect(cost('permafrost')).toBe(200);
+    expect(cost('colossus')).toBe(175);
+    expect(cost('the-unblinking-eye')).toBe(175);
+  });
+
+  it('encodes the verified generation rates and cost-reduction percentages', () => {
+    const src = (id: string) => ULTIMATE_SOURCE_CATALOG.find((s) => s.id === id);
+    // Base light-attack income = 3 ult/sec.
+    expect(src('base-light-attack')?.amountPerInstance).toBe(3);
+    expect(src('base-light-attack')?.instancesPerSecond).toBe(1);
+    // Minor Heroism = 1 ult / 1.5s; Major Heroism = 3 ult / 1.5s.
+    expect(src('minor-heroism')?.amountPerInstance).toBe(1);
+    expect(src('minor-heroism')?.instancesPerSecond).toBeCloseTo(1 / 1.5, 6);
+    expect(src('major-heroism')?.amountPerInstance).toBe(3);
+    // Class ult-gen passives.
+    expect(src('arcanist-implacable-outcome')?.amountPerInstance).toBe(4);
+    expect(src('necromancer-corpse-consumption')?.amountPerInstance).toBe(10);
+    // Cost reductions.
+    const red = (id: string) => COST_REDUCTION_CATALOG.find((r) => r.id === id);
+    expect(red('sorcerer-power-stone')?.fraction).toBeCloseTo(0.15, 6);
+    expect(red('templar-restoring-spirit')?.fraction).toBeCloseTo(0.05, 6);
   });
 });

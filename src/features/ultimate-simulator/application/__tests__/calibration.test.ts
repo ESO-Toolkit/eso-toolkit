@@ -68,6 +68,20 @@ describe('calibrateFromEvents (snapshot / conservation method)', () => {
     expect(r.hitCap).toBe(false);
   });
 
+  it('sorts snapshots by timestamp so event order does not matter', () => {
+    // Same 0→3→7→12 series, but passed OUT OF ORDER (e.g. concatenated scopes).
+    const events = [
+      snapshotEvent(1, 7, { timestamp: 300 }),
+      snapshotEvent(1, 0, { timestamp: 0 }),
+      snapshotEvent(1, 12, { timestamp: 450 }),
+      snapshotEvent(1, 3, { timestamp: 150 }),
+    ];
+    const r = calibrateFromEvents({ events, fightDurationSeconds: 6, targetActorID: 1 });
+    expect(r.totalGenerated).toBe(12); // would be wrong if unsorted
+    expect(r.totalSpent).toBe(0);
+    expect(r.approxCasts).toBe(0);
+  });
+
   it('counts spends (negative deltas) without subtracting from generation', () => {
     // 0 → 250 (gen 250) → cast to 0 (spent 250) → 100 (gen 100). gen=350, spent=250.
     const events = [
