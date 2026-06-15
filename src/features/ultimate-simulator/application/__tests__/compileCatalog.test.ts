@@ -244,7 +244,9 @@ describe('catalog data integrity', () => {
     expect(cost('storm-atronach')).toBe(200);
     expect(cost('negate-magic')).toBe(225);
     expect(cost('incapacitating-strike')).toBe(70);
-    expect(cost('nova')).toBe(225);
+    // Nova family has a SPLIT cost: base Nova / Solar Prison = 250, Solar
+    // Disturbance morph = 225 (verified on ESO-Skillbook). We list the base (250).
+    expect(cost('nova')).toBe(250);
     expect(cost('permafrost')).toBe(200);
     expect(cost('colossus')).toBe(175);
     expect(cost('the-unblinking-eye')).toBe(175);

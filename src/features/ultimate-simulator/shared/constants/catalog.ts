@@ -483,11 +483,15 @@ export const ULTIMATE_ABILITIES: readonly UltimateAbility[] = [
   },
   // Templar
   {
+    // Nova is one of the rare ults whose morphs DON'T share a cost: base Nova and
+    // the Solar Prison morph are 250, but Solar Disturbance is 225 (verified on
+    // ESO-Skillbook). We list the base/Solar Prison cost (250); pick "Custom cost"
+    // and enter 225 if modeling Solar Disturbance specifically.
     id: 'nova',
-    label: 'Nova / Solar Disturbance (Templar)',
-    baseCost: 225,
+    label: 'Nova / Solar Prison (Templar)',
+    baseCost: 250,
     owner: 'templar',
-    provenance: 'https://eso-skillbook.com/skill/solar-disturbance',
+    provenance: 'https://eso-skillbook.com/skill/nova',
     confidence: 'high',
   },
   // Warden
