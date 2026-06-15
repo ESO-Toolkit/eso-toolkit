@@ -76,6 +76,11 @@ import {
   ARMOR_QUALITY_LABELS,
 } from '../data/skill-lines/calculator-data';
 import {
+  CALCULATOR_TOOLTIP_RECORDS,
+  TOOLTIP_ACCENT_META,
+  type CalculatorTooltipRecord,
+} from '../data/skill-lines/calculator-tooltip-content';
+import {
   extractSlotFromItemName,
   isMutuallyExclusiveArmorItem,
   findConflictingItems,
@@ -1430,38 +1435,279 @@ function TabPanel(props: TabPanelProps): React.JSX.Element {
   );
 }
 
-// Custom styled alert component that matches SkillTooltip styling
+// Structured tooltip card. Resolves a typed record by item name (preferred) and
+// falls back to rendering the legacy `content` HTML string when no record exists.
 interface CalculatorTooltipProps {
   title: string;
-  content: string;
+  content?: string;
+  record?: CalculatorTooltipRecord;
 }
 
-const CalculatorTooltip: React.FC<CalculatorTooltipProps> = ({ title, content }) => {
-  const theme = useTheme();
+// Relative luminance check for an #rrggbb hue — decides whether text on a SOLID
+// fill of that hue should be near-black (light hue) or white (dark/saturated hue).
+const isLightHue = (hex: string): boolean => {
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex);
+  if (!m) return false;
+  const n = parseInt(m[1], 16);
+  const r = (n >> 16) & 255;
+  const g = (n >> 8) & 255;
+  const b = n & 255;
+  // Perceived luminance (sRGB-weighted). > 0.6 ≈ a pale chip that needs dark text.
+  const lum = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+  return lum > 0.6;
+};
 
+// Shared HTML-string styling for the legacy fallback path (a handful of items
+// still carry rich freeform tooltips that have no structured record yet).
+const useLegacyTooltipSx = (theme: Theme): Record<string, unknown> => ({
+  color: 'text.primary',
+  lineHeight: 1.45,
+  fontSize: '0.8rem',
+  wordBreak: 'break-word',
+  '& strong': {
+    color: theme.palette.mode === 'dark' ? theme.palette.primary.light : theme.palette.primary.main,
+    fontWeight: 600,
+  },
+  '& em': { color: 'text.secondary', fontStyle: 'italic' },
+  '& u': { textDecorationColor: alpha(theme.palette.primary.main, 0.6) },
+  '& .tt-head': {
+    fontWeight: 600,
+    color:
+      theme.palette.mode === 'dark' ? theme.palette.secondary.light : theme.palette.secondary.main,
+    fontSize: '0.75rem',
+    marginTop: theme.spacing(0.5),
+    marginBottom: theme.spacing(0.25),
+  },
+  '& br': { marginBottom: theme.spacing(0.5) },
+  '& ul': {
+    margin: 0,
+    paddingLeft: theme.spacing(2),
+    '& li': { marginBottom: theme.spacing(0.25) },
+  },
+  '& a': {
+    color: theme.palette.primary.main,
+    textDecoration: 'underline',
+    '&:hover': { color: theme.palette.primary.light },
+  },
+});
+
+const CalculatorTooltip: React.FC<CalculatorTooltipProps> = ({ title, content, record }) => {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+
+  const surfaceBg = isDark ? 'rgba(17, 25, 40, 0.96)' : 'rgba(255, 255, 255, 0.97)';
+  const legacySx = useLegacyTooltipSx(theme);
+
+  // ---- Structured card (preferred) -------------------------------------------
+  if (record) {
+    const accentMeta = TOOLTIP_ACCENT_META[record.accent] ?? TOOLTIP_ACCENT_META.neutral;
+    const hue = accentMeta.hue;
+    // Pick a readable text color to sit on a SOLID accent fill (the value chip).
+    // Light hues (gold/green/cyan) need near-black text; saturated/darker hues
+    // read fine with white.
+    const onAccentText = isLightHue(hue) ? 'rgba(10, 14, 20, 0.92)' : '#ffffff';
+
+    return (
+      <Card
+        variant="outlined"
+        role="tooltip"
+        sx={{
+          maxWidth: 320,
+          minWidth: 248,
+          overflow: 'hidden',
+          position: 'relative',
+          borderRadius: 2,
+          border: `1px solid ${isDark ? alpha(hue, 0.28) : alpha(theme.palette.common.black, 0.08)}`,
+          backgroundColor: surfaceBg,
+          WebkitBackdropFilter: 'blur(10px)',
+          boxShadow: isDark
+            ? `0 12px 32px rgba(0,0,0,0.45), 0 0 0 1px ${alpha(hue, 0.12)}`
+            : '0 12px 28px rgba(15,23,42,0.16)',
+          // Accent rail down the left edge.
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            left: 0,
+            top: 0,
+            bottom: 0,
+            width: 3,
+            background: `linear-gradient(180deg, ${hue} 0%, ${alpha(hue, 0.35)} 100%)`,
+          },
+        }}
+      >
+        <CardContent sx={{ p: 1.5, pl: 1.75, '&:last-child': { pb: 1.5 } }}>
+          {/* Header: name + category badge (quiet, OUTLINE-only tag) */}
+          <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, mb: 1.25 }}>
+            <Typography
+              component="div"
+              sx={{
+                fontWeight: 700,
+                fontSize: '0.9rem',
+                lineHeight: 1.25,
+                color: 'text.primary',
+                flex: 1,
+                minWidth: 0,
+              }}
+            >
+              {title}
+            </Typography>
+            <Box
+              component="span"
+              sx={{
+                flexShrink: 0,
+                mt: '1px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 0.5,
+                fontSize: '0.58rem',
+                fontWeight: 700,
+                letterSpacing: '0.06em',
+                textTransform: 'uppercase',
+                // Outline-only, muted text — a quiet category tag, clearly NOT the
+                // filled value chip below.
+                color: 'text.secondary',
+                backgroundColor: 'transparent',
+                border: `1px solid ${alpha(theme.palette.divider, isDark ? 0.9 : 1)}`,
+                borderRadius: 999,
+                px: 0.75,
+                py: 0.125,
+                lineHeight: 1.5,
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {/* tiny accent dot keeps the category color cue without filling the chip */}
+              <Box
+                component="span"
+                sx={{
+                  width: 6,
+                  height: 6,
+                  borderRadius: '50%',
+                  backgroundColor: hue,
+                  flexShrink: 0,
+                }}
+              />
+              {accentMeta.label}
+            </Box>
+          </Box>
+
+          {/* Value chip — the hero: SOLID accent fill, high-contrast text. */}
+          <Box
+            sx={{
+              display: 'inline-flex',
+              alignItems: 'baseline',
+              mb: 1.25,
+              px: 1.125,
+              py: 0.5,
+              borderRadius: 1.5,
+              backgroundColor: hue,
+              boxShadow: isDark ? `0 2px 10px ${alpha(hue, 0.35)}` : `0 2px 8px ${alpha(hue, 0.3)}`,
+            }}
+          >
+            <Typography
+              component="span"
+              sx={{
+                fontWeight: 800,
+                fontSize: '0.95rem',
+                lineHeight: 1.1,
+                letterSpacing: '0.01em',
+                color: onAccentText,
+                fontFeatureSettings: '"tnum" 1',
+                fontVariantNumeric: 'tabular-nums',
+              }}
+            >
+              {record.valueLabel}
+            </Typography>
+          </Box>
+
+          {/* Mechanical summary */}
+          <Typography
+            component="p"
+            sx={{
+              color: 'text.primary',
+              lineHeight: 1.5,
+              fontSize: '0.8rem',
+              m: 0,
+            }}
+          >
+            {record.summary}
+          </Typography>
+
+          {/* Footer: source + optional PvE/PvP note */}
+          {(record.source || record.modeNote) && (
+            <Divider
+              sx={{ my: 1.25, borderColor: alpha(theme.palette.divider, isDark ? 0.6 : 0.8) }}
+            />
+          )}
+          {record.source && (
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.25 }}>
+              <Typography
+                component="span"
+                sx={{
+                  fontSize: '0.62rem',
+                  fontWeight: 700,
+                  color: alpha(hue, isDark ? 0.95 : 0.85),
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.08em',
+                }}
+              >
+                Source
+              </Typography>
+              <Typography
+                component="span"
+                sx={{ fontSize: '0.72rem', lineHeight: 1.45, color: 'text.secondary' }}
+              >
+                {record.source}
+              </Typography>
+            </Box>
+          )}
+          {record.modeNote && (
+            <Box
+              sx={{
+                mt: 0.75,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 0.5,
+                fontSize: '0.68rem',
+                fontWeight: 600,
+                color: isDark ? '#fcd34d' : '#b45309',
+                backgroundColor: isDark ? 'rgba(252, 211, 77, 0.12)' : 'rgba(245, 158, 11, 0.1)',
+                border: `1px solid ${isDark ? 'rgba(252, 211, 77, 0.3)' : 'rgba(245, 158, 11, 0.25)'}`,
+                borderRadius: 1,
+                px: 0.75,
+                py: 0.25,
+                lineHeight: 1.35,
+              }}
+            >
+              <span aria-hidden>⚔️</span>
+              {record.modeNote}
+            </Box>
+          )}
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // ---- Legacy HTML fallback --------------------------------------------------
   return (
     <Card
       variant="outlined"
       sx={{
         maxWidth: 320,
         minWidth: 240,
+        borderRadius: 2,
         border: `1px solid ${alpha(theme.palette.common.white, 0.1)}`,
-        backgroundColor:
-          theme.palette.mode === 'dark' ? 'rgba(30, 41, 59, 0.9)' : 'rgba(255, 255, 255, 0.9)',
-        // backdropFilter: // REMOVED - breaks sticky positioning 'blur(10px)',
+        backgroundColor: surfaceBg,
         WebkitBackdropFilter: 'blur(10px)',
+        boxShadow: isDark ? '0 12px 32px rgba(0,0,0,0.45)' : '0 12px 28px rgba(15,23,42,0.16)',
       }}
     >
-      <CardContent sx={{ p: 1.5 }}>
+      <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
         <Typography
           variant="subtitle2"
           sx={{
             fontWeight: 700,
             mb: 1,
-            color:
-              theme.palette.mode === 'dark'
-                ? theme.palette.primary.light
-                : theme.palette.primary.main,
+            color: isDark ? theme.palette.primary.light : theme.palette.primary.main,
             fontSize: '0.9rem',
           }}
         >
@@ -1470,51 +1716,9 @@ const CalculatorTooltip: React.FC<CalculatorTooltipProps> = ({ title, content })
         <Divider sx={{ my: 1, borderColor: alpha(theme.palette.common.white, 0.08) }} />
         <Typography
           variant="body2"
-          sx={{
-            color: 'text.primary',
-            lineHeight: 1.4,
-            fontSize: '0.8rem',
-            wordBreak: 'break-word',
-            '& strong': {
-              color:
-                theme.palette.mode === 'dark'
-                  ? theme.palette.primary.light
-                  : theme.palette.primary.main,
-              fontWeight: 600,
-            },
-            '& em': {
-              color: 'text.secondary',
-              fontStyle: 'italic',
-            },
-            '& .tt-head': {
-              fontWeight: 600,
-              color:
-                theme.palette.mode === 'dark'
-                  ? theme.palette.secondary.light
-                  : theme.palette.secondary.main,
-              fontSize: '0.75rem',
-              marginTop: theme.spacing(0.5),
-              marginBottom: theme.spacing(0.25),
-            },
-            '& br': {
-              marginBottom: theme.spacing(0.5),
-            },
-            '& ul': {
-              margin: 0,
-              paddingLeft: theme.spacing(2),
-              '& li': {
-                marginBottom: theme.spacing(0.25),
-              },
-            },
-            '& a': {
-              color: theme.palette.primary.main,
-              textDecoration: 'underline',
-              '&:hover': {
-                color: theme.palette.primary.light,
-              },
-            },
-          }}
-          dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(content) }}
+          component="div"
+          sx={legacySx}
+          dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(content ?? '') }}
         />
       </CardContent>
     </Card>
@@ -1871,11 +2075,7 @@ const CalculatorComponent: React.FC = () => {
   const calculateItemValue = useCallback((item: CalculatorItem): number => {
     if (!item.enabled) return 0;
 
-    if (item.name === 'Anthelmir') {
-      // Penetration = Weapon Damage ÷ 2.5
-      const wd = parseFloat(item.quantity.toString()) || 0;
-      return Math.round(wd / 2.5);
-    } else if (item.name === 'Balorgh') {
+    if (item.name === 'Balorgh') {
       // Penetration = Ultimate × 23
       const ult = parseFloat(item.quantity.toString()) || 0;
       return Math.round(ult * 23);
@@ -2822,11 +3022,7 @@ const CalculatorComponent: React.FC = () => {
       let displayValue: number;
       let perDisplay = '';
 
-      if (item.name === 'Anthelmir') {
-        // Penetration = Weapon Damage ÷ 2.5
-        const wd = parseFloat(item.quantity.toString()) || 0;
-        displayValue = Math.round(wd / 2.5);
-      } else if (item.name === 'Balorgh') {
+      if (item.name === 'Balorgh') {
         // Penetration = Ultimate × 23
         const ult = parseFloat(item.quantity.toString()) || 0;
         displayValue = Math.round(ult * 23);
@@ -3254,9 +3450,15 @@ const CalculatorComponent: React.FC = () => {
                   <Typography variant="body2" sx={nameStyles}>
                     {item.name}
                   </Typography>
-                  {item.tooltip && !item.hideTooltip && (
+                  {(CALCULATOR_TOOLTIP_RECORDS[item.name] || item.tooltip) && !item.hideTooltip && (
                     <Tooltip
-                      title={<CalculatorTooltip title={item.name} content={item.tooltip} />}
+                      title={
+                        <CalculatorTooltip
+                          title={item.name}
+                          record={CALCULATOR_TOOLTIP_RECORDS[item.name]}
+                          content={item.tooltip}
+                        />
+                      }
                       enterTouchDelay={0}
                       leaveTouchDelay={3000}
                       placement="top-start"
@@ -3278,7 +3480,36 @@ const CalculatorComponent: React.FC = () => {
                             { name: 'offset', options: { offset: [0, 8] } },
                           ],
                         },
-                        tooltip: { sx: { p: 0 } },
+                        // Strip MUI's default dark grey tooltip surface so it
+                        // doesn't bleed through the rounded corners of our card.
+                        tooltip: {
+                          sx: {
+                            p: 0,
+                            m: 0,
+                            backgroundColor: 'transparent',
+                            backgroundImage: 'none',
+                            boxShadow: 'none',
+                            maxWidth: 'none',
+                            borderRadius: 0,
+                          },
+                        },
+                        // Match the arrow to the card surface (and hide its own
+                        // default dark fill).
+                        arrow: {
+                          sx: {
+                            color:
+                              theme.palette.mode === 'dark'
+                                ? 'rgba(17, 25, 40, 0.96)'
+                                : 'rgba(255, 255, 255, 0.97)',
+                            '&::before': {
+                              border: `1px solid ${
+                                theme.palette.mode === 'dark'
+                                  ? 'rgba(255,255,255,0.08)'
+                                  : 'rgba(15,23,42,0.10)'
+                              }`,
+                            },
+                          },
+                        },
                       }}
                     >
                       <IconButton
