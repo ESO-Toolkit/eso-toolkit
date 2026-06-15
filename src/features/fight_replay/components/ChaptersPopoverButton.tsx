@@ -83,7 +83,9 @@ const ChaptersPopoverButtonComponent: React.FC<ChaptersPopoverButtonProps> = ({
       <Tooltip title="Chapters — jump to any boss ( [ and ] skip )">
         <IconButton
           aria-label="Chapters"
-          aria-haspopup="dialog"
+          // It opens a non-modal Popover (no role=dialog / focus trap), so announce it as a
+          // menu, not a dialog — "dialog" would mislead assistive tech into expecting modality.
+          aria-haspopup="menu"
           aria-expanded={open}
           size="small"
           onClick={(e) => setAnchor(e.currentTarget)}

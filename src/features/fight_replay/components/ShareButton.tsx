@@ -12,7 +12,7 @@ import React, { useCallback, useState } from 'react';
 
 import { getBaseUrl } from '@/utils/envUtils';
 
-import { TRANSPORT_MOTION } from '../constants/replayDesign';
+import { TRANSPORT_MOTION, TRANSPORT_PILL_RADIUS } from '../constants/replayDesign';
 
 interface ShareButtonProps {
   /** Report ID for URL generation */
@@ -157,7 +157,7 @@ export const ShareButton: React.FC<ShareButtonProps> = ({
             // the ghost transport buttons + collapse chevron. There, drop the border/fill/min-width so
             // Share becomes a quiet ghost icon like the rest of the row.
             height: 34,
-            borderRadius: '11px',
+            borderRadius: `${TRANSPORT_PILL_RADIUS}px`,
             fontSize: '13px',
             fontWeight: 600,
             textTransform: 'none',

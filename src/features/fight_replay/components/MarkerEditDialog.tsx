@@ -134,6 +134,15 @@ export const MarkerEditDialog: React.FC<MarkerEditDialogProps> = ({
     onClose();
   }, [marker, onClose, onDelete]);
 
+  // Imported M0R markers can legitimately sit outside the slider range; the slider track clamps
+  // its display but the value is preserved. Flag that so the clamped track doesn't silently
+  // contradict the true size shown in the label.
+  const sizeOutOfRange = size < MIN_SIZE_METERS || size > MAX_SIZE_METERS;
+  // The colour editor only exposes RGB; the marker's alpha is preserved verbatim through Save
+  // (handleApply re-attaches marker.colour[3]). Surface it so a translucent marker isn't a
+  // silent surprise. Defaults to 1 (fully opaque) when unset.
+  const markerAlpha = marker?.colour[3] ?? 1;
+
   return (
     <Dialog
       open={Boolean(marker)}
@@ -228,12 +237,28 @@ export const MarkerEditDialog: React.FC<MarkerEditDialogProps> = ({
               }}
             />
           </Box>
+          {markerAlpha < 1 && (
+            <Typography
+              variant="caption"
+              sx={{ display: 'block', mt: 0.75, color: 'text.secondary' }}
+            >
+              Opacity ({Math.round(markerAlpha * 100)}%) is preserved from the original marker.
+            </Typography>
+          )}
         </Box>
 
         {/* Size */}
         <Box>
-          <Typography variant="subtitle2" sx={{ mb: 0.5 }}>
+          <Typography
+            variant="subtitle2"
+            sx={{ mb: 0.5, color: sizeOutOfRange ? 'warning.main' : undefined }}
+          >
             Size: {size.toFixed(2)}m
+            {sizeOutOfRange && (
+              <Typography component="span" variant="caption" sx={{ ml: 1, color: 'warning.main' }}>
+                (outside the slider range — preserved as imported)
+              </Typography>
+            )}
           </Typography>
           <Slider
             // Display clamps an out-of-range size to the track edge; `size` itself stays
