@@ -929,6 +929,34 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
                                 {s.description}
                               </Typography>
                             )}
+                            {/* Pillager's per-cast amount scales with the healer's
+                                ultimate cost (10% of it) — let the user match theirs. */}
+                            {s.id === 'pillagers-profit-external' && (
+                              <Stack
+                                direction="row"
+                                spacing={1}
+                                sx={{ alignItems: 'center', mt: 1 }}
+                              >
+                                <TextField
+                                  label="Healer's ult cost"
+                                  type="number"
+                                  size="small"
+                                  value={state.pillagerHealerUltCost}
+                                  onChange={(e) =>
+                                    calc.setPillagerHealerUltCost(Number(e.target.value))
+                                  }
+                                  slotProps={{ htmlInput: { min: 70, max: 500, step: 5 } }}
+                                  sx={{ width: 150 }}
+                                />
+                                <Typography
+                                  variant="caption"
+                                  className="u-tabular"
+                                  sx={{ color: 'text.secondary' }}
+                                >
+                                  → {Math.round(state.pillagerHealerUltCost * 0.1)} ult / cast
+                                </Typography>
+                              </Stack>
+                            )}
                           </Box>
                         )}
                       </Box>

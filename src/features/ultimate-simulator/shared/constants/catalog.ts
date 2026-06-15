@@ -149,15 +149,17 @@ export const ULTIMATE_SOURCE_CATALOG: readonly CatalogSource[] = [
     category: 'external',
     kind: 'perCast',
     // Pillager's Profit (Dreadsail Reef, 5pc): when the wearer casts an ultimate
-    // in combat, group members gain 2% of the ultimate SPENT, every 2s over 10s
-    // (= 5 ticks), and a member can only be affected ONCE PER 45s. So one
-    // healer-cast on a ~200 ult ability grants a DPS 2% × 200 × 5 = 20 ultimate,
-    // and the 45s per-target lockout caps it to at most one such bundle / 45s.
-    //   effective ≈ 20 ult / 45s ≈ 0.44 ult/s (healer ulting on cooldown).
-    // Modeled as one 20-ult bundle every 45s. The earlier 50/(1/12s) encoding
-    // implied ~4.2 ult/s — ~10× too high — because it ignored the 45s lockout
-    // and over-stated the per-event amount.
-    amountPerInstance: 20,
+    // in combat, group members gain 2% of the ultimate SPENT *per tick*, every 2s
+    // over 10s (= 5 ticks → 10% of the cost total), and a member can only be
+    // affected ONCE PER 45s. So one healer-cast grants a DPS 10% of the healer's
+    // ult cost, capped to one bundle / 45s:
+    //   250-cost ult → 25 ult / 45s ≈ 0.56 ult/s;  500 (max) → 50 ult ≈ 1.1 ult/s.
+    // The per-cast amount scales with the healer's ult cost (set in the UI; see
+    // PILLAGERS_PROFIT_FRACTION_PER_CAST in compileCatalog.ts). amountPerInstance
+    // here is the fallback for a ~250-cost healer ult. The earlier 50/(1/12s)
+    // encoding implied ~4.2 ult/s — ~10× too high — because it ignored the 45s
+    // lockout and applied a flat 50 regardless of the healer's actual ult.
+    amountPerInstance: 25, // 10% of a typical ~250 healer ult (overridden by UI input)
     instancesPerSecond: 1 / 45, // 45s per-target lockout dominates the cadence
     uptime: 1,
     rollsDecisive: false, // externally granted — does not roll the wearer's Decisive
@@ -167,7 +169,7 @@ export const ULTIMATE_SOURCE_CATALOG: readonly CatalogSource[] = [
     provenance: SRC_PILLAGERS,
     confidence: 'medium',
     description:
-      "When a group healer wears Pillager's Profit, casting their ultimate grants you 2% of its cost every 2s for 10s — about 20 ultimate from a 200-cost ult — but only once per 45s. Modeled as ~0.4 ult/s; the real rate scales with your healer's ultimate cost and how often they cast it.",
+      "When a group healer wears Pillager's Profit, casting their ultimate grants you 2% of its cost every 2s for 10s (10% of the cost total) — but only once per 45s. Set your healer's ult cost below; e.g. a 250-cost ult ≈ 25 per cast (~0.55 ult/s), a 500 ult ≈ 50.",
   },
 ];
 

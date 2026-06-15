@@ -28,7 +28,20 @@ export interface CatalogSelection {
   readonly enabledOverrides: Readonly<Record<string, boolean>>;
   /** Per-source uptime override (0..1), keyed by id. Missing → catalog default. */
   readonly uptimeOverrides: Readonly<Record<string, number>>;
+  /**
+   * The ultimate cost the group healer spends, for Pillager's Profit. The set
+   * grants 2% of that cost per tick × 5 ticks = 10% of the cost per affecting
+   * cast, so the per-cast amount scales with the healer's ultimate. Missing →
+   * use the catalog default. (See PILLAGERS_PROFIT_SOURCE_ID.)
+   */
+  readonly pillagerHealerUltCost?: number;
 }
+
+/** Catalog id of the Pillager's Profit external source (parameterized by healer ult cost). */
+export const PILLAGERS_PROFIT_SOURCE_ID = 'pillagers-profit-external';
+
+/** Fraction of the healer's spent ultimate a member receives per affecting cast (2% × 5 ticks). */
+export const PILLAGERS_PROFIT_FRACTION_PER_CAST = 0.1;
 
 /** Is a source available given the current context / class / role? */
 export function isSourceAvailable(
@@ -106,11 +119,18 @@ export function compileSources(
         rollsDecisive,
         note,
       } = resolved;
+      // Pillager's Profit's per-cast amount scales with the healer's ultimate
+      // cost (10% of it). Parameterize it from the selection when provided so
+      // the user can match their actual healer; otherwise keep the catalog default.
+      const effectiveAmount =
+        id === PILLAGERS_PROFIT_SOURCE_ID && selection.pillagerHealerUltCost != null
+          ? PILLAGERS_PROFIT_FRACTION_PER_CAST * Math.max(0, selection.pillagerHealerUltCost)
+          : amountPerInstance;
       return {
         id,
         label,
         kind,
-        amountPerInstance,
+        amountPerInstance: effectiveAmount,
         instancesPerSecond,
         uptime: up,
         rollsDecisive,

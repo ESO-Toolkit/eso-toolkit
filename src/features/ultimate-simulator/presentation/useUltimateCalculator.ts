@@ -62,6 +62,8 @@ export interface UltimateCalculatorState {
   ultimateAbilityId: string;
   customUltimateCost: number | null;
   startingUltimate: number;
+  /** Healer's ultimate cost for the Pillager's Profit external source (10% of it per cast). */
+  pillagerHealerUltCost: number;
 }
 
 const INITIAL_STATE: UltimateCalculatorState = {
@@ -77,6 +79,8 @@ const INITIAL_STATE: UltimateCalculatorState = {
   ultimateAbilityId: 'generic-250',
   customUltimateCost: null,
   startingUltimate: 0,
+  // A typical healer ultimate (e.g. ~250 cost) → 25 ult per affecting cast.
+  pillagerHealerUltCost: 250,
 };
 
 export interface UltimateCalculatorResult {
@@ -116,6 +120,7 @@ export interface UltimateCalculatorResult {
   setUltimateAbility: (id: string) => void;
   setCustomUltimateCost: (cost: number | null) => void;
   setStartingUltimate: (n: number) => void;
+  setPillagerHealerUltCost: (n: number) => void;
   reset: () => void;
 }
 
@@ -130,8 +135,16 @@ export function useUltimateCalculator(): UltimateCalculatorResult {
       role: state.role,
       enabledOverrides: state.enabledOverrides,
       uptimeOverrides: state.uptimeOverrides,
+      pillagerHealerUltCost: state.pillagerHealerUltCost,
     }),
-    [state.context, state.esoClass, state.role, state.enabledOverrides, state.uptimeOverrides],
+    [
+      state.context,
+      state.esoClass,
+      state.role,
+      state.enabledOverrides,
+      state.uptimeOverrides,
+      state.pillagerHealerUltCost,
+    ],
   );
 
   const availableSourceEntries = useMemo(
@@ -283,6 +296,17 @@ export function useUltimateCalculator(): UltimateCalculatorResult {
       })),
     [patch],
   );
+  const setPillagerHealerUltCost = useCallback(
+    (pillagerHealerUltCost: number) =>
+      patch((s) => ({
+        ...s,
+        pillagerHealerUltCost: Math.min(
+          MAX_ULTIMATE_POOL,
+          Math.max(0, Math.round(pillagerHealerUltCost)),
+        ),
+      })),
+    [patch],
+  );
   const reset = useCallback(() => {
     setState(INITIAL_STATE);
     setDistribution(null);
@@ -316,6 +340,7 @@ export function useUltimateCalculator(): UltimateCalculatorResult {
     setUltimateAbility,
     setCustomUltimateCost,
     setStartingUltimate,
+    setPillagerHealerUltCost,
     reset,
   };
 }

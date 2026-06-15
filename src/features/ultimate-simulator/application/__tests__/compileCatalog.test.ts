@@ -113,6 +113,40 @@ describe('compileSources', () => {
     expect(solo.map((s) => s.id)).not.toContain('pillagers-profit-external');
   });
 
+  it("scales Pillager's per-cast amount to the healer's ultimate cost (10% of it)", () => {
+    // Pillager's grants 2% of the spent ult per tick × 5 ticks = 10% of the cost.
+    // The per-cast amount must follow the healer's ult cost from the selection.
+    const at500 = compileSources(ULTIMATE_SOURCE_CATALOG, {
+      ...baseSelection,
+      enabledOverrides: { 'pillagers-profit-external': true },
+      pillagerHealerUltCost: 500,
+    });
+    const at200 = compileSources(ULTIMATE_SOURCE_CATALOG, {
+      ...baseSelection,
+      enabledOverrides: { 'pillagers-profit-external': true },
+      pillagerHealerUltCost: 200,
+    });
+    const amt = (sources: ReturnType<typeof compileSources>) =>
+      sources.find((s) => s.id === 'pillagers-profit-external')!.amountPerInstance;
+    expect(amt(at500)).toBe(50); // 10% of 500 — the user's "50 from a full cast"
+    expect(amt(at200)).toBe(20); // 10% of 200
+
+    // Sanity: even at max healer ult, the rate stays a minor contributor, not the
+    // ~4 ult/s the old flat-50 encoding produced.
+    const src = at500.find((s) => s.id === 'pillagers-profit-external')!;
+    const ultPerSecond = src.amountPerInstance * src.instancesPerSecond * src.uptime;
+    expect(ultPerSecond).toBeLessThan(1.2); // 50 / 45 ≈ 1.11
+  });
+
+  it('falls back to the catalog default when no healer ult cost is given', () => {
+    const compiled = compileSources(ULTIMATE_SOURCE_CATALOG, {
+      ...baseSelection,
+      enabledOverrides: { 'pillagers-profit-external': true },
+    });
+    // No pillagerHealerUltCost → catalog default amountPerInstance (25 = 10% of ~250).
+    expect(compiled.find((s) => s.id === 'pillagers-profit-external')!.amountPerInstance).toBe(25);
+  });
+
   it('models Minor Heroism as a single source (no per-provider duplicate)', () => {
     // Minor Heroism is one named buff; the catalog represents all of its
     // providers with the single `minor-heroism` entry, so enabling it yields
