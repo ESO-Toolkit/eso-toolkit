@@ -47,8 +47,10 @@ export const LogCalibrationPanel: React.FC<LogCalibrationPanelProps> = ({ modele
   const accent = theme.palette.mode === 'dark' ? 'rgb(56, 189, 248)' : 'rgb(40, 145, 200)';
 
   const m = cal.measurement;
-  const delta =
-    m && modeledPerSecond > 0 ? (modeledPerSecond - m.perSecond) / modeledPerSecond : null;
+  // How far the MODEL is from the MEASURED log rate, as a fraction of the
+  // measured rate (the measured value is the reference — "the model is X% vs
+  // measured"). Guard measured-zero to avoid divide-by-zero / Infinity.
+  const delta = m && m.perSecond > 0 ? (modeledPerSecond - m.perSecond) / m.perSecond : null;
   const deltaPct = delta != null ? Math.round(delta * 100) : null;
 
   return (

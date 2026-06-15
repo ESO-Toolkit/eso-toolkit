@@ -150,6 +150,50 @@ describe('timeToUltimate', () => {
     expect(r.secondsToFirstCast).toBe(Infinity);
     expect(r.castsPerFight).toBe(0);
   });
+
+  it('is castable immediately (0s) when the bank already covers the cost, even at rate 0', () => {
+    const r = timeToUltimate({
+      effectiveCost: 125,
+      ultimatePerSecond: 0,
+      fightDurationSeconds: 180,
+      startingUltimate: 500,
+    });
+    expect(r.secondsToFirstCast).toBe(0); // bank ≥ cost ⇒ ready now, not Infinity
+    // 500 banked / 125 cost = 4 casts available from the bank alone.
+    expect(r.castsPerFight).toBe(4);
+  });
+
+  it('counts excess banked ultimate toward the cast total', () => {
+    const r = timeToUltimate({
+      effectiveCost: 100,
+      ultimatePerSecond: 5,
+      fightDurationSeconds: 100, // generates 500
+      startingUltimate: 250,
+    });
+    expect(r.secondsToFirstCast).toBe(0); // 250 banked ≥ 100 cost
+    // (250 banked + 500 generated) / 100 = floor(7.5) = 7 casts.
+    expect(r.castsPerFight).toBe(7);
+  });
+
+  it('caps banked ultimate at the 500 pool (excess input is ignored)', () => {
+    const r = timeToUltimate({
+      effectiveCost: 100,
+      ultimatePerSecond: 0,
+      fightDurationSeconds: 180,
+      startingUltimate: 9999, // clamped to 500
+    });
+    expect(r.castsPerFight).toBe(5); // floor(500 / 100), not floor(9999/100)
+  });
+
+  it('reduces to floor(totalGenerated/cost) when nothing is banked', () => {
+    const r = timeToUltimate({
+      effectiveCost: 250,
+      ultimatePerSecond: 10,
+      fightDurationSeconds: 180,
+      startingUltimate: 0,
+    });
+    expect(r.castsPerFight).toBe(7); // floor(1800/250)
+  });
 });
 
 describe('applyCostReduction', () => {

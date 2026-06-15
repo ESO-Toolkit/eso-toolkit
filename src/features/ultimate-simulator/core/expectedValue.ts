@@ -27,6 +27,9 @@ import type {
   UltimateSource,
 } from '../shared/types';
 
+/** Hard ultimate pool cap — banked ultimate cannot exceed this. */
+const ULTIMATE_POOL_CAP = 500;
+
 /** Expected number of ult-gain instances a source emits over the fight. */
 export function expectedInstances(source: UltimateSource, durationSeconds: number): number {
   const expected = source.instancesPerSecond * durationSeconds * source.uptime;
@@ -98,10 +101,12 @@ export function expectedValue(config: Omit<SimulationConfig, 'seed'>): ExpectedV
  *
  * `ultimatePerSecond` is the steady-state generation rate (from `expectedValue`).
  * `effectiveCost` is the ultimate's cost AFTER any cost reduction (the caller
- * applies reductions; see `applyCostReduction`). The first cast is gated by the
- * full cost from zero; subsequent casts refill from zero at the same rate, so
- * casts-per-fight is `floor((duration · rate) / cost) ` once enough total ult is
- * generated — equivalently `floor(totalGenerated / cost)`.
+ * applies reductions; see `applyCostReduction`). Banked `startingUltimate` (up to
+ * the 500 pool cap) counts toward both the first cast and the total — so the cast
+ * count is the single coherent identity `floor((start + totalGenerated) / cost)`,
+ * which reduces exactly to `floor(totalGenerated / cost)` when nothing is banked.
+ * If the bank alone already covers the cost the ultimate is castable immediately
+ * (0s), even when the generation rate is 0.
  */
 export function timeToUltimate(input: TimeToUltimateInput): TimeToUltimateResult {
   const { effectiveCost, ultimatePerSecond, fightDurationSeconds, startingUltimate = 0 } = input;
@@ -109,26 +114,25 @@ export function timeToUltimate(input: TimeToUltimateInput): TimeToUltimateResult
   const cost = Math.max(0, effectiveCost);
   const rate = Math.max(0, ultimatePerSecond);
   const duration = Math.max(0, fightDurationSeconds);
-  const start = Math.min(Math.max(0, startingUltimate), cost);
+  // Banked ultimate is capped at the pool (500), NOT at the cost — excess over a
+  // single cast still counts toward the cast total.
+  const start = Math.min(Math.max(0, startingUltimate), ULTIMATE_POOL_CAP);
 
-  // Time to the FIRST cast, accounting for any ultimate already banked.
+  // Time to the FIRST cast, accounting for any ultimate already banked. If the
+  // bank already covers the cost the ultimate is ready now (0s) regardless of
+  // rate; otherwise the shortfall must be generated (∞ if the rate is 0).
   const remainingForFirst = Math.max(0, cost - start);
-  const secondsToFirstCast = rate > 0 ? remainingForFirst / rate : Infinity;
+  const secondsToFirstCast =
+    remainingForFirst <= 0 ? 0 : rate > 0 ? remainingForFirst / rate : Infinity;
 
-  // Total ultimate generated over the whole fight (excludes the starting pool —
-  // that only accelerates the first cast).
+  // Total ultimate generated over the whole fight (from the generation rate).
   const totalGenerated = rate * duration;
 
-  // Casts that complete within the fight: the first cast consumes
-  // `remainingForFirst` from generation, each subsequent cast consumes a full
-  // `cost`. So castable = floor((generated - remainingForFirst)/cost) + 1 once
-  // the first cast is affordable, else 0.
-  let castsPerFight = 0;
-  if (cost <= 0) {
-    castsPerFight = Infinity;
-  } else if (totalGenerated >= remainingForFirst) {
-    castsPerFight = Math.floor((totalGenerated - remainingForFirst) / cost) + 1;
-  }
+  // Casts that complete within the fight. The banked pool plus everything
+  // generated is the spendable total; each cast costs `cost`. This single
+  // identity covers every case (start=0 → floor(totalGenerated/cost);
+  // start≥cost with rate 0 → at least floor(start/cost) casts).
+  const castsPerFight = cost <= 0 ? Infinity : Math.floor((start + totalGenerated) / cost);
 
   // Seconds between subsequent casts at steady state (full cost from zero).
   const secondsPerCast = rate > 0 ? cost / rate : Infinity;
