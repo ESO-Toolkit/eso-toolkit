@@ -10,7 +10,9 @@
  */
 
 import {
+  AutoFixHighOutlined,
   BoltOutlined,
+  InfoOutlined,
   InsightsOutlined,
   QueryStatsOutlined,
   TuneOutlined,
@@ -24,7 +26,9 @@ import {
   FormControl,
   FormControlLabel,
   InputLabel,
+  LinearProgress,
   Link,
+  ListSubheader,
   MenuItem,
   Paper,
   Select,
@@ -41,6 +45,7 @@ import {
   ToggleButtonGroup,
   Tooltip,
   Typography,
+  alpha,
   useTheme,
 } from '@mui/material';
 import type { SxProps, Theme } from '@mui/material';
@@ -78,6 +83,102 @@ const ROLE_OPTIONS: { value: CombatRole; label: string }[] = [
 ];
 
 const CONTEXT_OPTIONS: CombatContext[] = ['soloPve', 'groupPve', 'pvp'];
+
+/**
+ * Canonical per-class accent colors (mirrors the repo's class palette in
+ * build-editor/data/esoStaticData.ts). Cosmetic only — used for swatches in the
+ * class + ultimate dropdowns, not for any gameplay number.
+ */
+const CLASS_COLORS: Record<EsoClass, string> = {
+  arcanist: '#43a047',
+  dragonknight: '#e05c00',
+  necromancer: '#7c4dff',
+  nightblade: '#e53935',
+  sorcerer: '#00acc1',
+  templar: '#ffb300',
+  warden: '#26a69a',
+};
+
+/** Owner color for an ultimate option (class color, or accent for shared ults). */
+const ownerColor = (owner: string, fallback: string): string =>
+  owner in CLASS_COLORS ? CLASS_COLORS[owner as EsoClass] : fallback;
+
+/**
+ * Decisive weapon-quality tier colors (the white/green/blue/purple/gold the
+ * labels already name) — a cosmetic restatement, not new data.
+ */
+const QUALITY_COLORS: Record<DecisiveQuality, string> = {
+  normal: '#c7c7c7',
+  fine: '#4caf50',
+  superior: '#2196f3',
+  epic: '#9c27b0',
+  legendary: '#ffc107',
+};
+
+/** A small color dot used in dropdown options (decorative — aria-hidden). */
+const Swatch: React.FC<{ color: string; square?: boolean; size?: number; glow?: boolean }> = ({
+  color,
+  square,
+  size = 10,
+  glow,
+}) => (
+  <Box
+    aria-hidden
+    component="span"
+    sx={{
+      width: size,
+      height: size,
+      borderRadius: square ? 0.5 : '50%',
+      bgcolor: color,
+      boxShadow: glow ? `0 0 6px ${color}66` : 'none',
+      flexShrink: 0,
+    }}
+  />
+);
+
+/**
+ * Build-archetype presets — each flips ONLY existing boolean/selection state
+ * (context / role / class / source on-off) via the hook's setters. Crucially it
+ * NEVER sets an uptime: a toggled-on source inherits its own research-sourced
+ * catalog-default uptime, so no unsourced number is ever introduced.
+ */
+interface BuildPreset {
+  readonly id: string;
+  readonly label: string;
+  readonly context: CombatContext;
+  readonly role: CombatRole;
+  /** Source ids to force on (others left at their catalog defaults). */
+  readonly enableSources: readonly string[];
+  /** Source ids to force off. */
+  readonly disableSources: readonly string[];
+}
+
+const BUILD_PRESETS: readonly BuildPreset[] = [
+  {
+    id: 'trial-dps',
+    label: 'Trial group DPS',
+    context: 'groupPve',
+    role: 'dps',
+    enableSources: ['major-heroism'],
+    disableSources: [],
+  },
+  {
+    id: 'solo-parse',
+    label: 'Solo parse',
+    context: 'soloPve',
+    role: 'dps',
+    enableSources: [],
+    disableSources: ['minor-heroism', 'major-heroism'],
+  },
+  {
+    id: 'pvp',
+    label: 'PvP',
+    context: 'pvp',
+    role: 'dps',
+    enableSources: ['minor-heroism'],
+    disableSources: [],
+  },
+];
 
 const fmt = (n: number, digits = 1): string =>
   Number.isFinite(n)
@@ -153,7 +254,9 @@ const StatBlock: React.FC<{
   sub?: string;
   accent?: string;
   highlight?: boolean;
-}> = ({ label, value, sub, accent, highlight }) => {
+  /** Optional plain-language explanation shown on an info-icon tooltip. */
+  info?: string;
+}> = ({ label, value, sub, accent, highlight, info }) => {
   const theme = useTheme();
   return (
     <Box
@@ -180,19 +283,33 @@ const StatBlock: React.FC<{
             : 'none',
       }}
     >
-      <Typography
-        variant="caption"
-        sx={{
-          color: 'text.secondary',
-          textTransform: 'uppercase',
-          letterSpacing: 0.7,
-          fontWeight: 600,
-          fontSize: 11,
-          display: 'block',
-        }}
-      >
-        {label}
-      </Typography>
+      <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
+        <Typography
+          variant="caption"
+          sx={{
+            color: 'text.secondary',
+            textTransform: 'uppercase',
+            letterSpacing: 0.7,
+            fontWeight: 600,
+            fontSize: 11,
+          }}
+        >
+          {label}
+        </Typography>
+        {info && (
+          <Tooltip arrow title={info}>
+            <InfoOutlined
+              sx={{
+                fontSize: 13,
+                color: 'text.secondary',
+                opacity: 0.6,
+                cursor: 'help',
+                '&:hover': { opacity: 1 },
+              }}
+            />
+          </Tooltip>
+        )}
+      </Stack>
       <Typography
         className="u-tabular"
         sx={{
@@ -261,6 +378,51 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
     };
     return [...ULTIMATE_ABILITIES].sort((a, b) => rank(a.owner) - rank(b.owner));
   }, [state.esoClass]);
+
+  // Sectioned ultimate list for the grouped picker: your class first, then the
+  // shared weapon/guild ults everyone can run, then the rest.
+  const ultimateGroups = React.useMemo(() => {
+    const yours = orderedUltimates.filter((a) => a.owner === state.esoClass);
+    const shared = orderedUltimates.filter((a) => a.owner === 'global' || a.owner === 'weapon');
+    const others = orderedUltimates.filter(
+      (a) => a.owner !== state.esoClass && a.owner !== 'global' && a.owner !== 'weapon',
+    );
+    return [
+      { key: 'yours', label: `${ESO_CLASS_LABELS[state.esoClass]} ultimates`, items: yours },
+      { key: 'shared', label: 'Weapon & guild (any class)', items: shared },
+      { key: 'others', label: 'Other classes', items: others },
+    ].filter((g) => g.items.length > 0);
+  }, [orderedUltimates, state.esoClass]);
+
+  // Render the closed Select control as plain label text (the menu options carry
+  // swatches/chips, but the collapsed control must stay clean — and no test
+  // asserts this surface, so a blank/cluttered control would pass CI silently).
+  const renderSelectedUltimate = React.useCallback((value: unknown): string => {
+    if (value === 'custom') return 'Custom cost…';
+    const ability = ULTIMATE_ABILITIES.find((a) => a.id === value);
+    return ability ? `${ability.label} — ${ability.baseCost}` : '';
+  }, []);
+
+  // Apply a build-archetype preset: flips ONLY context/role/class and boolean
+  // source toggles. It never sets an uptime — a toggled-on source keeps its
+  // research-sourced catalog default, so no unsourced number is introduced.
+  const applyPreset = React.useCallback(
+    (preset: BuildPreset) => {
+      calc.setContext(preset.context);
+      calc.setRole(preset.role);
+      for (const id of preset.enableSources) calc.toggleSource(id, true);
+      for (const id of preset.disableSources) calc.toggleSource(id, false);
+    },
+    [calc],
+  );
+
+  // Best-effort "active" highlight: a preset reads as active when the current
+  // context + role match it (presentation hint only — not an exact build match).
+  const activePresetId = React.useMemo(
+    () =>
+      BUILD_PRESETS.find((p) => p.context === state.context && p.role === state.role)?.id ?? null,
+    [state.context, state.role],
+  );
 
   return (
     <Box className={`${className ?? ''} u-fade-in`} sx={{ width: '100%' }}>
@@ -357,21 +519,25 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
             sub={`${fmt(expected.totalUltimate, 0)} over ${state.fightDurationSeconds}s`}
             accent={accent}
             highlight
+            info="Average ultimate generated per second across the whole fight, from every enabled source plus Decisive."
           />
           <StatBlock
             label="Time to first ult"
             value={fmtSeconds(timeToUlt.secondsToFirstCast)}
             sub={`${effectiveCost} ult cost`}
+            info={`How long until you can first fire the selected ultimate (effective cost ${effectiveCost}), counting any banked ultimate at fight start.`}
           />
           <StatBlock
             label="Casts / fight"
             value={Number.isFinite(timeToUlt.castsPerFight) ? String(timeToUlt.castsPerFight) : '∞'}
             sub={`every ${fmtSeconds(timeToUlt.secondsPerCast)}`}
+            info={`How many times you can fire it in a ${state.fightDurationSeconds}s fight — total generation divided by its effective cost.`}
           />
           <StatBlock
             label="Generated by 60s"
             value={fmt(expected.ultimatePerSecond * 60, 0)}
             sub={`ult (pool caps at ${maxPool})`}
+            info={`Ultimate built in the first minute at this rate. The pool itself can only hold ${maxPool} at once.`}
           />
         </Stack>
         {exceedsSanity && (
@@ -387,6 +553,56 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
         {/* ============================ INPUTS ============================ */}
         <Paper elevation={0} sx={{ ...panelSx(theme), flex: '1 1 420px', minWidth: 0 }}>
           <SectionHeader icon={<TuneOutlined />} title="Your build" accent={accent} />
+
+          {/* Quick-start presets — flip context/role + boolean source toggles only. */}
+          <Box sx={{ mb: 2 }}>
+            <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center', mb: 0.75 }}>
+              <AutoFixHighOutlined sx={{ fontSize: 15, color: accent }} />
+              <Typography
+                variant="caption"
+                sx={{
+                  color: 'text.secondary',
+                  textTransform: 'uppercase',
+                  letterSpacing: 0.6,
+                  fontWeight: 700,
+                }}
+              >
+                Quick start
+              </Typography>
+            </Stack>
+            <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', rowGap: 1 }}>
+              {BUILD_PRESETS.map((p) => {
+                const active = activePresetId === p.id;
+                return (
+                  <Chip
+                    key={p.id}
+                    label={p.label}
+                    size="small"
+                    clickable
+                    onClick={() => applyPreset(p)}
+                    variant={active ? 'filled' : 'outlined'}
+                    sx={{
+                      fontWeight: 600,
+                      borderColor: active ? accent : undefined,
+                      color: active ? accent : undefined,
+                      backgroundColor: active
+                        ? theme.palette.mode === 'dark'
+                          ? 'rgba(56,189,248,0.12)'
+                          : 'rgba(40,145,200,0.1)'
+                        : undefined,
+                      '&:hover': {
+                        borderColor: accent,
+                        backgroundColor:
+                          theme.palette.mode === 'dark'
+                            ? 'rgba(56,189,248,0.08)'
+                            : 'rgba(40,145,200,0.06)',
+                      },
+                    }}
+                  />
+                );
+              })}
+            </Stack>
+          </Box>
 
           {/* Context / class / role */}
           <Stack spacing={2}>
@@ -426,10 +642,19 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
                   label="Class"
                   value={state.esoClass}
                   onChange={(e) => calc.setClass(e.target.value as EsoClass)}
+                  renderValue={(v) => (
+                    <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+                      <Swatch color={CLASS_COLORS[v as EsoClass]} size={9} />
+                      <span>{ESO_CLASS_LABELS[v as EsoClass]}</span>
+                    </Stack>
+                  )}
                 >
                   {ESO_CLASSES.map((c) => (
                     <MenuItem key={c} value={c}>
-                      {ESO_CLASS_LABELS[c]}
+                      <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+                        <Swatch color={CLASS_COLORS[c]} glow />
+                        <span>{ESO_CLASS_LABELS[c]}</span>
+                      </Stack>
                     </MenuItem>
                   ))}
                 </Select>
@@ -484,10 +709,24 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
                       label="Weapon quality"
                       value={state.decisiveQuality}
                       onChange={(e) => calc.setDecisiveQuality(e.target.value as DecisiveQuality)}
+                      renderValue={(v) => (
+                        <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+                          <Swatch color={QUALITY_COLORS[v as DecisiveQuality]} square size={9} />
+                          <span>
+                            {QUALITY_OPTIONS.find((o) => o.value === v)?.label} —{' '}
+                            {(DECISIVE_PROC_CHANCE[v as DecisiveQuality] * 100).toFixed(1)}%
+                          </span>
+                        </Stack>
+                      )}
                     >
                       {QUALITY_OPTIONS.map((opt) => (
                         <MenuItem key={opt.value} value={opt.value}>
-                          {opt.label} — {(DECISIVE_PROC_CHANCE[opt.value] * 100).toFixed(1)}%
+                          <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+                            <Swatch color={QUALITY_COLORS[opt.value]} square />
+                            <span>
+                              {opt.label} — {(DECISIVE_PROC_CHANCE[opt.value] * 100).toFixed(1)}%
+                            </span>
+                          </Stack>
                         </MenuItem>
                       ))}
                     </Select>
@@ -722,6 +961,8 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
                   labelId="ult-ability-label"
                   label="Ultimate"
                   value={state.customUltimateCost != null ? 'custom' : state.ultimateAbilityId}
+                  renderValue={renderSelectedUltimate}
+                  MenuProps={{ slotProps: { paper: { sx: { maxHeight: 420 } } } }}
                   onChange={(e) => {
                     // Seed custom cost with the current EFFECTIVE cost (after any
                     // reductions), since a custom cost is treated as already
@@ -731,13 +972,54 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
                     else calc.setUltimateAbility(e.target.value);
                   }}
                 >
-                  {orderedUltimates.map((a) => (
-                    <MenuItem key={a.id} value={a.id}>
-                      {a.label} — {a.baseCost}
-                      {a.confidence !== 'high' ? ' *' : ''}
-                    </MenuItem>
-                  ))}
-                  <MenuItem value="custom">Custom cost…</MenuItem>
+                  {/* Grouped by owner. Children are emitted as ONE flat array
+                      (ListSubheader + MenuItems per group) — wrapping a group in
+                      a Fragment/Box would break MUI Select's direct-child value
+                      scan and blank the closed control. */}
+                  {ultimateGroups.flatMap((g) => [
+                    <ListSubheader
+                      key={`sub-${g.key}`}
+                      disableSticky
+                      sx={{
+                        lineHeight: 2.2,
+                        fontSize: 11,
+                        fontWeight: 700,
+                        letterSpacing: 0.5,
+                        textTransform: 'uppercase',
+                        color: 'text.secondary',
+                        background: 'transparent',
+                      }}
+                    >
+                      {g.label}
+                    </ListSubheader>,
+                    ...g.items.map((a) => (
+                      <MenuItem key={a.id} value={a.id}>
+                        <Stack
+                          direction="row"
+                          spacing={1}
+                          sx={{ alignItems: 'center', width: '100%' }}
+                        >
+                          <Swatch color={ownerColor(a.owner, accent)} size={8} />
+                          <Typography variant="body2" sx={{ flex: 1, minWidth: 0 }} noWrap>
+                            {a.label}
+                          </Typography>
+                          <Typography
+                            variant="caption"
+                            className="u-tabular"
+                            sx={{ color: 'text.secondary', fontWeight: 600 }}
+                          >
+                            {a.baseCost}
+                          </Typography>
+                        </Stack>
+                      </MenuItem>
+                    )),
+                  ])}
+                  <MenuItem value="custom">
+                    <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+                      <Swatch color={theme.palette.text.disabled} size={8} />
+                      <span>Custom cost…</span>
+                    </Stack>
+                  </MenuItem>
                 </Select>
               </FormControl>
               {state.customUltimateCost != null && (
@@ -934,9 +1216,44 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
                 <TableBody>
                   {expected.contributions.map((c) => {
                     const tot = c.baseUltimate + c.decisiveUltimate;
+                    // Presentation-only share of the grand total, shown as a
+                    // mini bar so the dominant source reads at a glance.
+                    const share = expected.totalUltimate > 0 ? tot / expected.totalUltimate : 0;
                     return (
                       <TableRow key={c.sourceId}>
-                        <TableCell>{c.label}</TableCell>
+                        <TableCell sx={{ minWidth: 150 }}>
+                          <Typography variant="body2">{c.label}</Typography>
+                          <Stack
+                            direction="row"
+                            spacing={0.75}
+                            sx={{ alignItems: 'center', mt: 0.5 }}
+                          >
+                            <LinearProgress
+                              variant="determinate"
+                              value={Math.min(100, share * 100)}
+                              aria-hidden
+                              sx={{
+                                flex: 1,
+                                height: 5,
+                                borderRadius: 3,
+                                backgroundColor: alpha(theme.palette.divider, 0.5),
+                                '& .MuiLinearProgress-bar': {
+                                  borderRadius: 3,
+                                  background: `linear-gradient(90deg, ${accent}, ${
+                                    theme.palette.mode === 'dark' ? 'rgba(0,225,255,0.85)' : accent
+                                  })`,
+                                },
+                              }}
+                            />
+                            <Typography
+                              variant="caption"
+                              className="u-tabular"
+                              sx={{ minWidth: 32, textAlign: 'right', color: 'text.secondary' }}
+                            >
+                              {Math.round(share * 100)}%
+                            </Typography>
+                          </Stack>
+                        </TableCell>
                         <TableCell align="right">{fmt(c.baseUltimate, 0)}</TableCell>
                         <TableCell align="right">{fmt(c.decisiveUltimate, 1)}</TableCell>
                         <TableCell align="right">{fmt(tot, 1)}</TableCell>
