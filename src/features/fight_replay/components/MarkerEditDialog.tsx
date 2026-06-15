@@ -24,6 +24,7 @@ import { MorMarker } from '@/types/mapMarkers';
 import { ELMS_ICON_MAP } from '@/utils/elmsMarkersDecoder';
 
 import { ReplayMarker } from '../types/mapMarkers';
+import { portalToFullscreen } from '../utils/fullscreenPortal';
 import { MarkerEdit } from '../utils/mapMarkerConverters';
 
 import { MarkerIconGrid } from './MarkerIconGrid';
@@ -140,6 +141,9 @@ export const MarkerEditDialog: React.FC<MarkerEditDialogProps> = ({
       maxWidth="sm"
       fullWidth
       fullScreen={fullScreen}
+      // "Edit marker…" is reachable from the in-replay marker menu while in desktop native
+      // fullscreen; portal the dialog into that subtree so it isn't invisible there.
+      container={portalToFullscreen}
     >
       <DialogTitle sx={{ display: 'flex', alignItems: 'center', pr: 1.5 }}>
         <Box component="span" sx={{ flexGrow: 1 }}>

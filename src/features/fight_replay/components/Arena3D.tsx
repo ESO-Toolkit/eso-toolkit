@@ -31,6 +31,7 @@ import { getActorPositionAtClosestTimestamp } from '../../../workers/calculation
 import { ARENA_HEIGHT } from '../constants/replayDesign';
 import { MapMarkersState, ReplayMarker } from '../types/mapMarkers';
 import { computeRobustActorFraming } from '../utils/cameraFraming';
+import { portalToFullscreen } from '../utils/fullscreenPortal';
 import { DEFAULT_ACTOR_SCALE, computeActorScaleFromMapData } from '../utils/mapScaling';
 import { getVisiblePlayerIds } from '../utils/pathUtils';
 import { decidePreviewMode } from '../utils/previewMode';
@@ -961,6 +962,9 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
         <Menu
           open={contextMenu?.type === 'marker'}
           onClose={handleCloseContextMenu}
+          // Portal into the fullscreen subtree on desktop, else body — otherwise the menu is
+          // invisible in native fullscreen (renders outside the top-layer element).
+          container={portalToFullscreen}
           anchorReference="anchorPosition"
           anchorPosition={
             contextMenu?.type === 'marker'

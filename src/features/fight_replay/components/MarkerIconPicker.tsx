@@ -14,6 +14,8 @@ import CloseIcon from '@mui/icons-material/Close';
 import { Box, Drawer, IconButton, Popover, Typography } from '@mui/material';
 import React, { useCallback, useRef } from 'react';
 
+import { portalToFullscreen } from '../utils/fullscreenPortal';
+
 import { MarkerIconGrid } from './MarkerIconGrid';
 
 interface MarkerIconPickerProps {
@@ -80,6 +82,9 @@ export const MarkerIconPicker: React.FC<MarkerIconPickerProps> = ({
         anchor="bottom"
         open={open}
         onClose={onClose}
+        // Portal into the fullscreen subtree on desktop, else body (mobile pseudo-fullscreen is a
+        // CSS overlay, so this resolves to body and is unchanged there).
+        container={portalToFullscreen}
         // The mobile replay overlay sits at zIndex.modal; the sheet must stack above it.
         sx={(theme) => ({ zIndex: theme.zIndex.modal + 1 })}
         slotProps={{
@@ -127,6 +132,9 @@ export const MarkerIconPicker: React.FC<MarkerIconPickerProps> = ({
     <Popover
       open={open}
       onClose={onClose}
+      // Portal into the fullscreen subtree on desktop, else body — otherwise the picker is
+      // invisible in native fullscreen (renders outside the top-layer element).
+      container={portalToFullscreen}
       anchorReference="anchorPosition"
       anchorPosition={lastAnchorRef.current ?? undefined}
       sx={(theme) => ({ zIndex: theme.zIndex.modal + 1 })}
