@@ -311,8 +311,14 @@ export interface RaidRoster {
   // UI preference for how much detail to show per slot
   rosterDetailLevel?: RosterDetailLevel;
 
-  // Per-fight build overrides (optional, advanced feature)
-  trialOverrides?: TrialBuildOverrides;
+  /**
+   * Per-fight build overrides (optional, advanced feature), keyed by trial id.
+   * A roster can hold per-encounter overrides for each trial it is built for,
+   * independently. Entries are created lazily (only when a trial actually gets
+   * an override), so tagged-but-empty trials cost nothing here or in the URL.
+   * Display order is driven by `trials` iteration, never by map-key order.
+   */
+  trialOverrides?: Record<string, TrialBuildOverrides>;
 
   /**
    * Trials this roster is built for, used to surface it under the right filters

@@ -77,6 +77,30 @@ export function encounterHasOverrides(overrides: EncounterOverrides | undefined)
   return Object.values(overrides.slots).some((o) => !isOverrideEmpty(o));
 }
 
+/**
+ * Does a single trial's overrides contain any real per-encounter data?
+ * `useSameBuildForAll` alone does NOT count as an override — only populated
+ * encounters do. Used to decide whether a trial shows up on the read-only viewer.
+ */
+export function trialHasOverrides(trial: TrialBuildOverrides | undefined): boolean {
+  if (!trial) return false;
+  return Object.values(trial.encounterBuilds).some((eo) => encounterHasOverrides(eo));
+}
+
+/** Does the multi-trial overrides map have any trial with real per-encounter data? */
+export function hasAnyTrialOverrides(
+  map: Record<string, TrialBuildOverrides> | undefined,
+): boolean {
+  if (!map) return false;
+  return Object.values(map).some((t) => trialHasOverrides(t));
+}
+
+/** Count the encounters in a trial that have real overrides (for badges). */
+export function countTrialOverrides(trial: TrialBuildOverrides | undefined): number {
+  if (!trial) return 0;
+  return Object.values(trial.encounterBuilds).filter((eo) => encounterHasOverrides(eo)).length;
+}
+
 /** Merge a base TankSetup with a sparse override */
 export function applyTankOverride(base: TankSetup, override?: PlayerOverride): TankSetup {
   if (!override || isOverrideEmpty(override)) return base;
@@ -1217,6 +1241,29 @@ export const TRIAL_ENCOUNTERS: readonly Trial[] = [
 /** Lookup a trial by its id */
 export function getTrialById(trialId: string): Trial | undefined {
   return TRIAL_ENCOUNTERS.find((t) => t.id === trialId);
+}
+
+/**
+ * Map of a trial's short code (case-normalized) → its full encounter-data id.
+ * The "Built for (Trials)" picker tags rosters with short codes from
+ * loadout-manager's trialConfigs (e.g. 'RG', 'MOL', 'KA'); this bridges those
+ * to the encounter-data slugs used by Per-Fight Builds (e.g. 'rockgrove').
+ */
+const TRIAL_ID_BY_SHORT_NAME = new Map(
+  TRIAL_ENCOUNTERS.map((t) => [t.shortName.toUpperCase(), t.id] as const),
+);
+
+/**
+ * Resolve a "Built for" trial tag (a trialConfigs short code like 'RG' or a
+ * full encounter slug like 'rockgrove') to the encounter-data trial id.
+ * Returns undefined if it doesn't correspond to a trial with encounter data.
+ */
+export function resolveTrialId(tag: string): string | undefined {
+  if (!tag) return undefined;
+  // Already a full encounter-data id?
+  if (TRIAL_ENCOUNTERS.some((t) => t.id === tag)) return tag;
+  // Otherwise treat as a short code (case-insensitive).
+  return TRIAL_ID_BY_SHORT_NAME.get(tag.toUpperCase());
 }
 
 /** Create a default (empty) TrialBuildOverrides for a given trial */
