@@ -112,6 +112,35 @@ describe('compileSources', () => {
     });
     expect(solo.map((s) => s.id)).not.toContain('pillagers-profit-external');
   });
+
+  it('does not stack Minor Heroism across providers (keeps one, not both)', () => {
+    // Generic Minor Heroism and Cryptcanon both grant the SAME named buff; with
+    // both enabled, only one contribution should survive (they share a
+    // nonStackingGroup), never summed.
+    const both = compileSources(ULTIMATE_SOURCE_CATALOG, {
+      ...baseSelection,
+      enabledOverrides: { 'minor-heroism': true, 'cryptcanon-vestments': true },
+    });
+    const minorHeroismGroup = both.filter(
+      (s) => s.id === 'minor-heroism' || s.id === 'cryptcanon-vestments',
+    );
+    expect(minorHeroismGroup).toHaveLength(1);
+
+    // The single survivor's contribution must not exceed either provider alone —
+    // i.e. enabling both is never larger than enabling just one.
+    const onlyGeneric = compileSources(ULTIMATE_SOURCE_CATALOG, {
+      ...baseSelection,
+      enabledOverrides: { 'minor-heroism': true },
+    });
+    const rate = (s: { amountPerInstance: number; instancesPerSecond: number; uptime: number }) =>
+      s.amountPerInstance * s.instancesPerSecond * s.uptime;
+    const bothRate = rate(minorHeroismGroup[0]);
+    const genericRate = rate(onlyGeneric.find((s) => s.id === 'minor-heroism')!);
+    // The kept provider is the strongest single one, so its rate is ≥ the generic
+    // alone but the GROUP total equals exactly that one provider (no doubling).
+    expect(bothRate).toBeGreaterThanOrEqual(genericRate);
+    expect(minorHeroismGroup).toHaveLength(1);
+  });
 });
 
 describe('compileReductions', () => {

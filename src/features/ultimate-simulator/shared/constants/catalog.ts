@@ -79,6 +79,9 @@ export const ULTIMATE_SOURCE_CATALOG: readonly CatalogSource[] = [
     // if your build actually provides it. (Validated against a real trial log: a
     // baseline Arcanist measured ~3.4 ult/s, matching base income + Decisive.)
     defaultEnabled: false,
+    // Same named buff as the Cryptcanon source — Minor Heroism does not stack
+    // across providers, so enabling both must not double-count.
+    nonStackingGroup: 'minor-heroism',
     provenance: SRC_MINOR_HEROISM,
     confidence: 'high',
     description:
@@ -149,6 +152,8 @@ export const ULTIMATE_SOURCE_CATALOG: readonly CatalogSource[] = [
     rollsDecisive: true,
     availableIn: ['soloPve', 'groupPve', 'pvp'],
     defaultEnabled: false,
+    // Grants the SAME Minor Heroism buff as the generic source — do not stack.
+    nonStackingGroup: 'minor-heroism',
     provenance: SRC_CRYPTCANON,
     confidence: 'high',
     description:
