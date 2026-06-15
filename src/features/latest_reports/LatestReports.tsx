@@ -1,227 +1,166 @@
-import RefreshIcon from '@mui/icons-material/Refresh';
 import {
-  Alert,
   Box,
   Card,
   CardContent,
-  Chip,
   CircularProgress,
   Container,
-  IconButton,
   Pagination,
-  Paper,
-  Skeleton,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Tooltip,
   Typography,
   useTheme,
 } from '@mui/material';
 import type { Theme } from '@mui/material/styles';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { useEsoLogsClientInstance } from '../../EsoLogsClientContext';
-import {
-  GetLatestReportsQuery,
-  UserReportSummaryFragment,
-  GetLatestReportsDocument,
-} from '../../graphql/gql/graphql';
-import { ReportListMobile } from '../reports/components/ReportListMobile';
-import {
-  formatReportDateTime,
-  formatReportDuration,
-  getReportVisibilityColor,
-  partitionReportsByData,
-} from '../reports/reportFormatting';
 import { useReportPageLayout } from '../reports/useReportPageLayout';
 
-interface LatestReportsState {
-  reports: UserReportSummaryFragment[];
-  /** Reports on the current page hidden because they contain no combat data. */
-  hiddenEmptyCount: number;
-  loading: boolean;
-  error: string | null;
-  pagination: {
-    currentPage: number;
-    totalPages: number;
-    totalReports: number;
-    perPage: number;
-    hasMorePages: boolean;
-  };
-}
+import { ActiveFilterBar } from './components/ActiveFilterBar';
+import type { DateRangeValue } from './components/DateRangeFilter';
+import { LatestReportsHeader } from './components/LatestReportsHeader';
+import { MobileFilterSheet } from './components/MobileFilterSheet';
+import { ReportCardGrid } from './components/ReportCardGrid';
+import { ReportsEmptyState, type EmptyStateInput } from './components/ReportsEmptyState';
+import { ReportsResultsMeta } from './components/ReportsResultsMeta';
+import { ReportsSkeleton } from './components/ReportsSkeleton';
+import { ReportsTable } from './components/ReportsTable';
+import { ReportsToolbar } from './components/ReportsToolbar';
+import { useFilteredReports } from './hooks/useFilteredReports';
+import { useLatestReportsQuery } from './hooks/useLatestReportsQuery';
+import { hasActiveServerFilter, useLatestReportsUrlState } from './hooks/useLatestReportsUrlState';
+import { useReportViewPrefs } from './hooks/useReportViewPrefs';
+import { useZoneOptions } from './hooks/useZoneOptions';
+import { glassPanelSx } from './latestReportsStyles';
 
-const REPORTS_PER_PAGE = 25;
+const DENSITY_VARS: Record<'comfortable' | 'compact', React.CSSProperties> = {
+  comfortable: {
+    ['--report-row-height' as string]: '56px',
+    ['--report-padding' as string]: '16px',
+    ['--report-gap' as string]: '12px',
+    ['--report-grid-gap' as string]: '16px',
+  },
+  compact: {
+    ['--report-row-height' as string]: '40px',
+    ['--report-padding' as string]: '12px',
+    ['--report-gap' as string]: '8px',
+    ['--report-grid-gap' as string]: '12px',
+  },
+};
 
 export const LatestReports: React.FC = () => {
   const theme = useTheme();
   const navigate = useNavigate();
-  const client = useEsoLogsClientInstance();
-  const { isDesktop, cardSx, cardContentSx, headerStackSx, actionGroupSx } = useReportPageLayout();
+  const { isDesktop, cardSx, cardContentSx } = useReportPageLayout();
 
   useEffect(() => {
     document.title = 'Latest Reports | ESO Toolkit';
   }, []);
 
-  const [state, setState] = useState<LatestReportsState>({
-    reports: [],
-    hiddenEmptyCount: 0,
-    loading: true,
-    error: null,
-    pagination: {
-      currentPage: 1,
-      totalPages: 1,
-      totalReports: 0,
-      perPage: REPORTS_PER_PAGE,
-      hasMorePages: false,
-    },
+  const { filters, setFilters, clearServerFilters } = useLatestReportsUrlState();
+  const { viewMode, density, setViewMode, setDensity } = useReportViewPrefs();
+  const { zones } = useZoneOptions();
+
+  const { reports, hiddenEmptyCount, loading, error, pagination, refetch } = useLatestReportsQuery({
+    page: filters.page,
+    zoneId: filters.zoneId,
+    range: filters.range,
+    customFrom: filters.customFrom,
+    customTo: filters.customTo,
   });
 
-  // Fetch functions
-  const fetchLatestReports = useCallback(
-    async (page = 1): Promise<void> => {
-      try {
-        setState((prev) => ({
-          ...prev,
-          loading: true,
-          error: null,
-        }));
+  const { filtered, visibleCount, loadedCount, appliedQuery, isDebouncing } = useFilteredReports(
+    reports,
+    filters.q,
+  );
 
-        const reportsResult = await client.query<GetLatestReportsQuery>({
-          query: GetLatestReportsDocument,
-          variables: {
-            limit: REPORTS_PER_PAGE,
-            page,
-          },
-          errorPolicy: 'all', // Return both data and errors
-        });
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement | null>(null);
+  const resultsRef = useRef<HTMLDivElement | null>(null);
+  const [announcement, setAnnouncement] = useState('');
 
-        const reportPagination = reportsResult.reportData?.reports;
+  // Effective layout: mobile is always cards; desktop honours the toggle.
+  const effectiveViewMode = isDesktop ? viewMode : 'cards';
+  const searchActive = appliedQuery.trim().length > 0;
+  const serverFilterActive = hasActiveServerFilter(filters);
+  const activeServerFilterCount =
+    (filters.zoneId !== null ? 1 : 0) + (filters.range !== 'all' ? 1 : 0);
 
-        if (!reportPagination) {
-          setState((prev) => ({
-            ...prev,
-            loading: false,
-            error:
-              'No reports data available. This may be due to authentication issues or API limitations.',
-          }));
-          return;
-        }
+  // --- Handlers ---------------------------------------------------------------
 
-        const fetchedReports = (reportPagination.data || []).filter(
-          (report: UserReportSummaryFragment | null): report is UserReportSummaryFragment =>
-            report !== null,
-        );
-        // Hide logs with no combat data (failed uploads/parses on ESO Logs) —
-        // there is nothing to view, so listing them is just a dead end.
-        const { reportsWithData, emptyCount } = partitionReportsByData(fetchedReports);
-
-        setState((prev) => ({
-          ...prev,
-          reports: reportsWithData,
-          hiddenEmptyCount: emptyCount,
-          loading: false,
-          pagination: {
-            currentPage: reportPagination.current_page || 1,
-            totalPages:
-              reportPagination.last_page > 0
-                ? reportPagination.last_page
-                : reportPagination.has_more_pages
-                  ? (reportPagination.current_page || 1) + 1
-                  : reportPagination.current_page || 1,
-            totalReports: 0,
-            perPage: reportPagination.per_page || REPORTS_PER_PAGE,
-            hasMorePages: reportPagination.has_more_pages || false,
-          },
-        }));
-      } catch (error) {
-        setState((prev) => ({
-          ...prev,
-          loading: false,
-          error: error instanceof Error ? error.message : 'Failed to fetch latest reports',
-        }));
+  const handleReportClick = useCallback(
+    (reportCode: string, event?: React.MouseEvent): void => {
+      const url = `/report/${reportCode}`;
+      if (event && (event.button === 1 || event.ctrlKey || event.metaKey)) {
+        event.preventDefault();
+        window.open(url, '_blank', 'noopener,noreferrer');
+      } else {
+        navigate(url);
       }
     },
-    [client],
-  ); // Load initial data
+    [navigate],
+  );
+
+  const handlePageChange = useCallback(
+    (_event: React.ChangeEvent<unknown>, page: number): void => {
+      setFilters({ page });
+      // Move focus to the results region so keyboard users are not stranded.
+      requestAnimationFrame(() => resultsRef.current?.focus());
+    },
+    [setFilters],
+  );
+
+  const handleDateChange = useCallback(
+    (value: DateRangeValue): void => {
+      setFilters({ range: value.range, customFrom: value.customFrom, customTo: value.customTo });
+    },
+    [setFilters],
+  );
+
+  const handleApplyMobileFilters = useCallback(
+    (next: { zoneId: number | null; date: DateRangeValue }): void => {
+      setFilters({
+        zoneId: next.zoneId,
+        range: next.date.range,
+        customFrom: next.date.customFrom,
+        customTo: next.date.customTo,
+      });
+    },
+    [setFilters],
+  );
+
+  // --- Live region announcements (debounced via the filtered hook) ------------
+
   useEffect(() => {
-    fetchLatestReports(1);
-  }, [fetchLatestReports]);
-
-  // Event handlers
-  const handleRefresh = (): void => {
-    fetchLatestReports(state.pagination.currentPage);
-  };
-
-  const handlePageChange = (event: React.ChangeEvent<unknown>, page: number): void => {
-    fetchLatestReports(page);
-  };
-
-  const handleReportClick = (reportCode: string, event?: React.MouseEvent): void => {
-    const url = `/report/${reportCode}`;
-
-    // Check if middle-click, Ctrl+Click, or Cmd+Click (Mac)
-    if (event && (event.button === 1 || event.ctrlKey || event.metaKey)) {
-      event.preventDefault();
-      window.open(url, '_blank', 'noopener,noreferrer');
+    if (loading) return;
+    let message: string;
+    if (searchActive) {
+      message =
+        visibleCount === 0
+          ? `No reports match "${appliedQuery.trim()}". Try clearing the search or adjusting Zone and Date filters.`
+          : `Showing ${visibleCount} of ${loadedCount} loaded reports.`;
     } else {
-      navigate(url);
+      message = `Showing ${loadedCount} reports on page ${pagination.currentPage} of ${pagination.totalPages}.`;
     }
-  };
+    setAnnouncement(message);
+  }, [
+    loading,
+    searchActive,
+    appliedQuery,
+    visibleCount,
+    loadedCount,
+    pagination.currentPage,
+    pagination.totalPages,
+  ]);
 
-  // Loading state — skeleton matching the Card + table layout
-  if (state.loading && state.reports.length === 0) {
-    return (
-      <Container maxWidth="lg" sx={{ py: isDesktop ? 4 : 2 }}>
-        <Card elevation={isDesktop ? 4 : 1} sx={cardSx}>
-          <CardContent sx={cardContentSx}>
-            {/* Header skeleton */}
-            <Box sx={{ ...headerStackSx, mb: 3 }}>
-              <Box>
-                <Skeleton variant="text" width={200} height={isDesktop ? 36 : 30} />
-                <Skeleton variant="text" width={320} height={18} sx={{ mt: 0.5 }} />
-              </Box>
-            </Box>
-            {/* Stats row skeleton */}
-            <Box
-              sx={{ justifyContent: 'space-between', alignItems: 'center', display: 'flex', mb: 3 }}
-            >
-              <Skeleton variant="text" width={240} height={18} />
-              <Skeleton variant="rounded" width={100} height={28} sx={{ borderRadius: '16px' }} />
-            </Box>
-            {/* Table rows skeleton */}
-            {Array.from({ length: 8 }).map((_, i) => (
-              <Box
-                key={i}
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 2,
-                  py: 1.5,
-                  borderBottom: '1px solid',
-                  borderColor: 'divider',
-                }}
-              >
-                <Skeleton variant="text" width={`${28 + ((i * 11) % 20)}%`} height={18} />
-                <Skeleton variant="text" width={80} height={18} />
-                <Box sx={{ flex: 1 }} />
-                <Skeleton variant="text" width={60} height={18} />
-                <Skeleton variant="rounded" width={50} height={22} sx={{ borderRadius: '4px' }} />
-              </Box>
-            ))}
-            {/* Pagination skeleton */}
-            <Box sx={{ mt: 3, justifyContent: 'center', display: 'flex' }}>
-              <Skeleton variant="rounded" width={200} height={32} sx={{ borderRadius: '16px' }} />
-            </Box>
-          </CardContent>
-        </Card>
-      </Container>
-    );
-  }
+  const emptyStateInput: EmptyStateInput = useMemo(
+    () => ({ serverFilterActive, searchActive, loadedCount, hiddenEmptyCount }),
+    [serverFilterActive, searchActive, loadedCount, hiddenEmptyCount],
+  );
+
+  const showResults = filtered.length > 0;
+  const showEmptyState = !loading && filtered.length === 0;
+  const showInitialSkeleton = loading && reports.length === 0;
+
+  // --- Render -----------------------------------------------------------------
 
   return (
     <Container maxWidth="lg" sx={{ py: isDesktop ? 4 : 2 }}>
@@ -229,329 +168,202 @@ export const LatestReports: React.FC = () => {
         elevation={isDesktop ? 4 : 1}
         sx={{
           ...cardSx,
-          background: (theme: Theme) =>
-            theme.palette.mode === 'dark'
+          background: (t: Theme) =>
+            t.palette.mode === 'dark'
               ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.12) 0%, rgba(0, 225, 255, 0.12) 100%)'
               : 'linear-gradient(135deg, rgba(219, 234, 254, 0.5) 0%, rgba(224, 242, 254, 0.5) 100%)',
         }}
       >
         <CardContent sx={{ ...cardContentSx, position: 'relative' }}>
-          {/* Mobile Floating Refresh Button */}
-          {!isDesktop && (
-            <IconButton
-              onClick={handleRefresh}
-              disabled={state.loading}
-              aria-label="Refresh reports"
-              color="primary"
-              sx={{
-                position: 'absolute',
-                top: 16,
-                right: 16,
-                zIndex: 1,
-                backgroundColor: theme.palette.background.paper,
-                boxShadow: theme.shadows[2],
-                '&:hover': {
-                  backgroundColor: theme.palette.action.hover,
-                },
-              }}
-            >
-              <RefreshIcon />
-            </IconButton>
-          )}
+          {/* Branded header tile (carries the refresh action) */}
+          <LatestReportsHeader onRefresh={refetch} refreshing={loading} />
 
-          {/* Header */}
-          <Box sx={{ ...headerStackSx, mb: 3 }}>
-            <Box>
-              <Typography
-                variant={isDesktop ? 'h4' : 'h5'}
-                component="h1"
-                gutterBottom
-                sx={{ mb: isDesktop ? 0.5 : 0, pr: isDesktop ? 0 : 5 }} // Add right padding on mobile to account for floating button
-              >
-                Latest Reports
-              </Typography>
-              <Typography
-                variant="body1"
-                sx={{
-                  color: 'text.secondary',
-                  maxWidth: isDesktop ? 'none' : '26ch',
-                  pr: isDesktop ? 0 : 1, // Add some right padding on mobile
-                }}
-              >
-                Discover the most recent combat logs from the community
-              </Typography>
-            </Box>
-
-            {isDesktop && (
-              <Box sx={actionGroupSx}>
-                <IconButton
-                  onClick={handleRefresh}
-                  disabled={state.loading}
-                  aria-label="Refresh reports"
-                  color="primary"
-                  sx={{
-                    width: 'auto',
-                  }}
-                >
-                  <RefreshIcon />
-                </IconButton>
-              </Box>
-            )}
+          {/* Glassmorphic filter panel — sticky so filters stay reachable while
+              the results scroll. Matches the Roster Hub filter bar aesthetic. */}
+          <Box
+            sx={{
+              position: 'sticky',
+              top: 8,
+              zIndex: 3,
+              mb: 2,
+              ...glassPanelSx(theme.palette.mode === 'dark'),
+            }}
+          >
+            <ReportsToolbar
+              isDesktop={isDesktop}
+              filters={filters}
+              searchValue={filters.q}
+              onSearchChange={(value) => setFilters({ q: value }, { replace: true })}
+              onZoneChange={(zoneId) => setFilters({ zoneId })}
+              onDateChange={handleDateChange}
+              viewMode={effectiveViewMode}
+              onViewModeChange={setViewMode}
+              density={density}
+              onDensityChange={setDensity}
+              activeServerFilterCount={activeServerFilterCount}
+              onOpenMobileFilters={() => setMobileFiltersOpen(true)}
+              searchInputRef={searchInputRef}
+              // Active-filter chips share the view-controls row (left side),
+              // reusing existing space instead of adding a new band per filter.
+              activeFilters={
+                <ActiveFilterBar
+                  filters={filters}
+                  zones={zones}
+                  visibleCount={visibleCount}
+                  searchActive={searchActive}
+                  searchDebouncing={isDebouncing}
+                  onRemoveZone={() => setFilters({ zoneId: null })}
+                  onRemoveDate={() =>
+                    setFilters({ range: 'all', customFrom: null, customTo: null })
+                  }
+                  onClearAll={clearServerFilters}
+                  searchInputRef={searchInputRef}
+                />
+              }
+            />
           </Box>
 
-          {(state.reports.length > 0 || state.hiddenEmptyCount > 0) && (
-            <Box
-              sx={{
-                flexDirection: isDesktop ? 'row' : 'column',
-                justifyContent: 'space-between',
-                gap: isDesktop ? 2 : 1.5,
-                alignItems: isDesktop ? 'center' : 'flex-start',
-                display: 'flex',
-                mb: isDesktop ? 3 : 2,
-              }}
-            >
-              <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1.5, flexWrap: 'wrap' }}>
-                <Typography variant="body1" sx={{ color: 'text.secondary' }}>
-                  Page {state.pagination.currentPage}
-                  {state.pagination.hasMorePages ? '+' : ` of ${state.pagination.totalPages}`}
-                </Typography>
-                {state.hiddenEmptyCount > 0 && (
-                  <Tooltip
-                    title="Logs with no combat data — usually caused by an upload or parsing issue on ESO Logs — are hidden from this list because there is nothing to view"
-                    arrow
-                  >
-                    <Typography
-                      variant="caption"
-                      sx={{
-                        color: 'text.secondary',
-                        cursor: 'help',
-                        textDecoration: 'underline dotted',
-                        textUnderlineOffset: '3px',
-                      }}
-                    >
-                      {state.hiddenEmptyCount} empty {state.hiddenEmptyCount === 1 ? 'log' : 'logs'}{' '}
-                      hidden
-                    </Typography>
-                  </Tooltip>
-                )}
-              </Box>
-
-              <Chip
-                variant="outlined"
-                color="primary"
-                label={`${state.pagination.perPage} per page`}
-                sx={{ fontWeight: 500 }}
+          {/* Results meta */}
+          {(reports.length > 0 || hiddenEmptyCount > 0) && (
+            <Box sx={{ mt: 1, mb: 2 }}>
+              <ReportsResultsMeta
+                pagination={pagination}
+                hiddenEmptyCount={hiddenEmptyCount}
+                isDesktop={isDesktop}
               />
             </Box>
           )}
 
-          {state.reports.length > 0 ? (
-            <>
-              {isDesktop ? (
-                <TableContainer
-                  component={Paper}
-                  elevation={1}
-                  sx={{
-                    borderRadius: 2,
-                    mb: 3,
-                    overflowX: 'auto',
-                  }}
-                >
-                  <Table sx={{ tableLayout: 'fixed', width: '100%' }}>
-                    <TableHead>
-                      <TableRow>
-                        <TableCell sx={{ width: '35%', whiteSpace: 'normal' }}>
-                          <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
-                            Title
-                          </Typography>
-                        </TableCell>
-                        <TableCell sx={{ width: '35%', whiteSpace: 'normal' }}>
-                          <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
-                            Zone
-                          </Typography>
-                        </TableCell>
-                        <TableCell sx={{ width: '15%', whiteSpace: 'normal' }}>
-                          <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
-                            Duration
-                          </Typography>
-                        </TableCell>
-                        <TableCell sx={{ width: '15%', whiteSpace: 'normal' }}>
-                          <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
-                            Visibility
-                          </Typography>
-                        </TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {state.reports.map((report) => (
-                        <TableRow
-                          key={report.code}
-                          hover
-                          tabIndex={0}
-                          role="link"
-                          aria-label={`View report ${report.title || report.code}`}
-                          onClick={(e: React.MouseEvent<HTMLTableRowElement>) =>
-                            handleReportClick(report.code, e)
-                          }
-                          onKeyDown={(e: React.KeyboardEvent<HTMLTableRowElement>) => {
-                            if (e.key === 'Enter' || e.key === ' ') {
-                              e.preventDefault();
-                              handleReportClick(
-                                report.code,
-                                e as unknown as React.MouseEvent<HTMLTableRowElement>,
-                              );
-                            }
-                          }}
-                          onMouseDown={(e: React.MouseEvent<HTMLTableRowElement>) => {
-                            // Handle middle-click
-                            if (e.button === 1) {
-                              e.preventDefault();
-                              handleReportClick(report.code, e);
-                            }
-                          }}
-                          sx={{
-                            cursor: 'pointer',
-                            transition: 'all 0.2s ease-in-out',
-                            '&:hover': {
-                              backgroundColor: theme.palette.action.hover,
-                              transform: 'translateX(4px)',
-                            },
-                          }}
-                        >
-                          <TableCell sx={{ verticalAlign: 'top', whiteSpace: 'normal' }}>
-                            <Box>
-                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-                                <Typography
-                                  variant="body2"
-                                  sx={{
-                                    color: 'primary.main',
-                                    fontWeight: 'medium',
-                                    overflowWrap: 'anywhere',
-                                    wordBreak: 'break-word',
-                                    lineHeight: 1.4,
-                                    display: '-webkit-box',
-                                    WebkitLineClamp: 2,
-                                    WebkitBoxOrient: 'vertical',
-                                    textOverflow: 'ellipsis',
-                                    overflow: 'hidden',
-                                  }}
-                                >
-                                  {report.title || 'Untitled Report'}
-                                </Typography>
-                              </Box>
-                              <Typography
-                                variant="caption"
-                                sx={{
-                                  color: 'text.secondary',
-                                  display: 'block',
-                                  mt: 0.25,
-                                  whiteSpace: 'nowrap',
-                                  textOverflow: 'ellipsis',
-                                  overflow: 'hidden',
-                                }}
-                              >
-                                {`Owner: ${report.owner?.name || 'Unknown'}`}
-                              </Typography>
-                              <Typography
-                                variant="caption"
-                                sx={{
-                                  color: 'text.secondary',
-                                  display: 'block',
-                                  mt: 0.25,
-                                  whiteSpace: 'nowrap',
-                                  textOverflow: 'ellipsis',
-                                  overflow: 'hidden',
-                                }}
-                              >
-                                {formatReportDateTime(report.startTime)}
-                              </Typography>
-                            </Box>
-                          </TableCell>
-                          <TableCell
-                            sx={{
-                              verticalAlign: 'top',
-                              whiteSpace: 'normal',
-                              wordBreak: 'break-word',
-                            }}
-                          >
-                            <Typography variant="body2" sx={{ whiteSpace: 'inherit' }}>
-                              {report.zone?.name || 'Unknown Zone'}
-                            </Typography>
-                          </TableCell>
-                          <TableCell sx={{ verticalAlign: 'top', whiteSpace: 'normal' }}>
-                            <Typography variant="body2">
-                              {formatReportDuration(report.startTime, report.endTime)}
-                            </Typography>
-                          </TableCell>
-                          <TableCell sx={{ verticalAlign: 'top', whiteSpace: 'normal' }}>
-                            <Chip
-                              label={report.visibility}
-                              color={getReportVisibilityColor(report.visibility)}
-                              size="small"
-                              variant="outlined"
-                              sx={{ textTransform: 'capitalize', whiteSpace: 'nowrap' }}
-                            />
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
+          {/* Live region (visually hidden) */}
+          <Box
+            role="status"
+            aria-live="polite"
+            aria-atomic="true"
+            sx={{
+              position: 'absolute',
+              width: 1,
+              height: 1,
+              overflow: 'hidden',
+              clip: 'rect(0 0 0 0)',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {announcement}
+          </Box>
+
+          {/* Results */}
+          <Box
+            ref={resultsRef}
+            tabIndex={-1}
+            aria-busy={loading}
+            aria-label={`Reports, page ${pagination.currentPage}${
+              searchActive ? `, ${visibleCount} matching the search` : ''
+            }`}
+            style={DENSITY_VARS[density]}
+            sx={{
+              outline: 'none',
+              scrollPaddingTop: '72px',
+              position: 'relative',
+              minHeight: 200,
+            }}
+          >
+            {error ? (
+              <ReportsEmptyState
+                input={{
+                  serverFilterActive,
+                  searchActive: false,
+                  loadedCount: 0,
+                  hiddenEmptyCount: 0,
+                }}
+                query=""
+                onClearSearch={() => setFilters({ q: '' })}
+                onClearFilters={clearServerFilters}
+              />
+            ) : showInitialSkeleton ? (
+              <ReportsSkeleton viewMode={effectiveViewMode} isDesktop={isDesktop} />
+            ) : showResults ? (
+              effectiveViewMode === 'table' ? (
+                <ReportsTable reports={filtered} onSelect={handleReportClick} />
               ) : (
-                <ReportListMobile reports={state.reports} onSelect={handleReportClick} showOwner />
-              )}
-            </>
-          ) : (
-            !state.loading && (
-              <Alert severity="info">
-                {state.hiddenEmptyCount > 0
-                  ? 'Every report on this page contains no combat data, so they were all hidden. Try another page.'
-                  : 'No reports found.'}
-              </Alert>
-            )
+                <ReportCardGrid reports={filtered} onSelect={handleReportClick} />
+              )
+            ) : showEmptyState ? (
+              <ReportsEmptyState
+                input={emptyStateInput}
+                query={appliedQuery}
+                onClearSearch={() => setFilters({ q: '' })}
+                onClearFilters={clearServerFilters}
+              />
+            ) : null}
+
+            {/* Re-fetch indicator — a non-blocking corner pill so prior results
+                stay fully interactive (scroll/click) while new data loads. */}
+            {loading && reports.length > 0 && (
+              <Box
+                sx={{
+                  position: 'absolute',
+                  top: 8,
+                  right: 8,
+                  zIndex: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1,
+                  px: 1.25,
+                  py: 0.5,
+                  borderRadius: 999,
+                  bgcolor: 'background.paper',
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  boxShadow: (t: Theme) => t.shadows[2],
+                }}
+              >
+                <CircularProgress size={16} aria-label="Loading reports" />
+                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                  Refreshing…
+                </Typography>
+              </Box>
+            )}
+          </Box>
+
+          {/* Error message (when nothing else surfaced it) */}
+          {error && (
+            <Typography variant="body2" color="error" sx={{ mt: 2, textAlign: 'center' }}>
+              {error}
+            </Typography>
           )}
 
-          {/* Pagination — kept visible even when a page has nothing to show, so
-              users can still navigate away from a fully-hidden page. */}
-          {state.pagination.totalPages > 1 && (
-            <Box sx={{ mt: isDesktop ? 3 : 2, justifyContent: 'center', display: 'flex' }}>
+          {/* Pagination */}
+          {pagination.totalPages > 1 && (
+            <Box sx={{ mt: isDesktop ? 3 : 2, display: 'flex', justifyContent: 'center' }}>
               <Pagination
-                count={state.pagination.totalPages}
-                page={state.pagination.currentPage}
+                count={pagination.totalPages}
+                page={pagination.currentPage}
                 onChange={handlePageChange}
-                disabled={state.loading}
+                disabled={loading}
                 color="primary"
                 size={isDesktop ? 'large' : 'medium'}
                 sx={{
+                  // WCAG 2.5.8 target size: ensure >= 40px touch targets on mobile.
                   '& .MuiPaginationItem-root': {
                     borderRadius: 2,
+                    ...(isDesktop ? {} : { minWidth: 40, height: 40 }),
                   },
                 }}
               />
             </Box>
           )}
-
-          {/* Loading overlay */}
-          {state.loading && state.reports.length > 0 && (
-            <Box
-              sx={{
-                bottom: 0,
-                bgcolor: 'rgba(255,255,255,0.7)',
-                justifyContent: 'center',
-                alignItems: 'center',
-                top: 0,
-                zIndex: 1,
-                display: 'flex',
-                position: 'absolute',
-                left: 0,
-                right: 0,
-              }}
-            >
-              <CircularProgress />
-            </Box>
-          )}
         </CardContent>
       </Card>
+
+      {/* Mobile filter sheet */}
+      {!isDesktop && (
+        <MobileFilterSheet
+          open={mobileFiltersOpen}
+          onClose={() => setMobileFiltersOpen(false)}
+          filters={filters}
+          onApply={handleApplyMobileFilters}
+        />
+      )}
     </Container>
   );
 };
