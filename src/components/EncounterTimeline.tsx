@@ -48,6 +48,7 @@ export const EncounterTimeline: React.FC<EncounterTimelineProps> = React.memo(
     const isDark = theme.palette.mode === 'dark';
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
     const reduceMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
+    const optionRefs = React.useRef<Array<HTMLDivElement | null>>([]);
 
     const handleSelect = (id: string, el: HTMLElement | null): void => {
       onSelectEncounter(id);
@@ -59,8 +60,53 @@ export const EncounterTimeline: React.FC<EncounterTimelineProps> = React.memo(
       });
     };
 
+    // The node that carries tabIndex=0 in the roving-tabindex listbox: the
+    // selected encounter, or the first node when nothing is selected yet.
+    const selectedIndex = encounters.findIndex((e) => e.id === selectedEncounterId);
+    const activeIndex = selectedIndex >= 0 ? selectedIndex : 0;
+
+    const focusOption = (index: number): void => {
+      const clamped = Math.max(0, Math.min(encounters.length - 1, index));
+      const node = optionRefs.current[clamped];
+      node?.focus();
+      handleSelect(encounters[clamped].id, node);
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent, index: number, id: string): void => {
+      switch (e.key) {
+        case 'ArrowRight':
+        case 'ArrowDown':
+          e.preventDefault();
+          focusOption(index + 1);
+          break;
+        case 'ArrowLeft':
+        case 'ArrowUp':
+          e.preventDefault();
+          focusOption(index - 1);
+          break;
+        case 'Home':
+          e.preventDefault();
+          focusOption(0);
+          break;
+        case 'End':
+          e.preventDefault();
+          focusOption(encounters.length - 1);
+          break;
+        case 'Enter':
+        case ' ':
+          e.preventDefault();
+          handleSelect(id, e.currentTarget as HTMLElement);
+          break;
+        default:
+          break;
+      }
+    };
+
     return (
       <Box
+        role="listbox"
+        aria-label="Encounter timeline — select a fight to customize"
+        aria-orientation="horizontal"
         sx={{
           display: 'flex',
           alignItems: 'center',
@@ -120,7 +166,17 @@ export const EncounterTimeline: React.FC<EncounterTimelineProps> = React.memo(
                 placement="top"
               >
                 <Box
+                  ref={(el: HTMLDivElement | null) => {
+                    optionRefs.current[index] = el;
+                  }}
+                  role="option"
+                  aria-selected={isSelected}
+                  aria-label={`${encounter.name} — ${ENCOUNTER_LABELS[encounter.type]}${
+                    hasOverride ? ', customized' : ''
+                  }`}
+                  tabIndex={index === activeIndex ? 0 : -1}
                   onClick={(e) => handleSelect(encounter.id, e.currentTarget)}
+                  onKeyDown={(e) => handleKeyDown(e, index, encounter.id)}
                   sx={{
                     position: 'relative',
                     display: 'flex',
@@ -132,11 +188,16 @@ export const EncounterTimeline: React.FC<EncounterTimelineProps> = React.memo(
                     flexShrink: 0,
                     minWidth: isBoss ? 80 : 64,
                     scrollSnapAlign: 'center',
+                    borderRadius: '12px',
                     // WCAG 2.5.5: ensure a 44px touch target on coarse pointers.
                     '@media (pointer: coarse)': { minHeight: 44 },
-                    transition: 'transform 0.15s ease',
+                    transition: reduceMotion ? 'none' : 'transform 0.15s ease',
                     '&:hover': {
-                      transform: 'translateY(-2px)',
+                      transform: reduceMotion ? 'none' : 'translateY(-2px)',
+                    },
+                    '&:focus-visible': {
+                      outline: '2px solid #38bdf8',
+                      outlineOffset: '2px',
                     },
                   }}
                 >
