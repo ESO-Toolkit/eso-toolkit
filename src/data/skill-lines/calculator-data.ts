@@ -125,7 +125,7 @@ export const CALCULATOR_TOOLTIPS = {
   'Sharpened (2H Trait)': 'Weapon trait that increases Penetration on two-handed weapons.',
   'Arena 1-piece Bonus': 'Arena weapon set bonus that provides additional Penetration.',
   Anthelmir:
-    '<strong>Mythic Item:</strong> Enter your total Weapon Damage. Penetration is calculated as Weapon Damage ÷ 2.5. High Weapon Damage builds benefit most from this mythic.',
+    "<strong>Anthelmir's Construct</strong> (2-piece monster set): a fully-charged Heavy Attack throws an axe that reduces the target's Armor by <strong>400</strong> for 5 seconds, once every 10 seconds.",
   Balorgh:
     '<strong>Monster Set:</strong> Enter the cost of your Ultimate ability. Each point of Ultimate cost grants 23 Penetration when Ultimate is active.',
 };
@@ -273,12 +273,9 @@ export const PENETRATION_DATA: CalculatorData = {
     {
       name: 'Anthelmir',
       enabled: false,
-      quantity: 5000,
-      per: 1,
-      maxQuantity: 100000,
-      minQuantity: 0,
-      step: 1,
-      quantityTitle: 'Weapon Damage (enter WD)',
+      quantity: 1,
+      value: 400,
+      isFlat: true,
       category: 'gear',
       tooltip: CALCULATOR_TOOLTIPS['Anthelmir'],
     },
@@ -364,8 +361,8 @@ export const PENETRATION_DATA: CalculatorData = {
       name: 'Champion Point: Force of Nature',
       enabled: false,
       quantity: 3,
-      per: 220,
-      maxQuantity: 7,
+      per: 660,
+      maxQuantity: 8,
       category: 'cp',
       tooltip: CALCULATOR_TOOLTIPS['Champion Point: Force of Nature'],
     },

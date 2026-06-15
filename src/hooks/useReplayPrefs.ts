@@ -59,6 +59,10 @@ export interface ReplayPrefs {
   statsPanelEnabled: boolean;
   /** Which sections of the stats panel are shown (the panel's gear-menu checklist). */
   statsPanelSections: StatsPanelSections;
+  /** Continuous "play the whole trial" mode — auto-advance from each fight into the next. */
+  continuousPlay: boolean;
+  /** Whether continuous play walks the trash between bosses (vs boss-to-boss). */
+  continuousIncludeTrash: boolean;
 }
 
 /**
@@ -85,6 +89,8 @@ export const DEFAULT_REPLAY_PREFS: ReplayPrefs = {
   barCollapsed: false,
   statsPanelEnabled: true,
   statsPanelSections: DEFAULT_STATS_PANEL_SECTIONS,
+  continuousPlay: false,
+  continuousIncludeTrash: true,
 };
 
 const isFiniteNumber = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
@@ -108,6 +114,8 @@ const sanitize = (raw: unknown): Partial<ReplayPrefs> => {
   if (isBool(obj.performanceMode)) out.performanceMode = obj.performanceMode;
   if (isBool(obj.barCollapsed)) out.barCollapsed = obj.barCollapsed;
   if (isBool(obj.statsPanelEnabled)) out.statsPanelEnabled = obj.statsPanelEnabled;
+  if (isBool(obj.continuousPlay)) out.continuousPlay = obj.continuousPlay;
+  if (isBool(obj.continuousIncludeTrash)) out.continuousIncludeTrash = obj.continuousIncludeTrash;
   // statsPanelSections: accept a partial object, keep only the well-typed boolean flags, and merge
   // over the defaults so a missing/corrupt flag falls back rather than disappearing.
   if (obj.statsPanelSections && typeof obj.statsPanelSections === 'object') {

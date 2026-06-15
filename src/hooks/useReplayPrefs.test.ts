@@ -30,6 +30,8 @@ describe('useReplayPrefs', () => {
       barCollapsed: true,
       statsPanelEnabled: false,
       statsPanelSections: { hero: true, dr: false, buffs: true, debuffs: false, abilities: true },
+      continuousPlay: true,
+      continuousIncludeTrash: false,
     };
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(stored));
 

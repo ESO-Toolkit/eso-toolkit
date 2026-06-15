@@ -3,12 +3,17 @@ import { MapMarkersState, ReplayMarker } from '../types/mapMarkers';
 import {
   COMMON_MARKER_GROUPS,
   COMMON_MARKER_OPTIONS,
+  applyElmsIconTemplate,
+  arenaPointToWorld,
   createMarkerFromElmsIcon,
   encodeMarkersToElms,
   encodeMarkersToMor,
   ensureFormat,
   parseMarkersInput,
   updateMarker,
+  withMarkerEdit,
+  withMarkerPatch,
+  withMarkerPosition,
   withNewMarker,
   withoutMarker,
 } from './mapMarkerConverters';
@@ -190,5 +195,117 @@ describe('marker menu metadata', () => {
     const numbers = COMMON_MARKER_GROUPS.find((g) => g.key === 'numbers');
     expect(numbers?.label).toBe('Numbers');
     expect(numbers?.options.map((o) => o.iconKey)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+  });
+});
+
+describe('arenaPointToWorld', () => {
+  // Hel Ra Citadel main map bounds.
+  const helRa = {
+    name: 'Hel Ra Citadel',
+    mapId: 614,
+    zoneId: 636,
+    scaleFactor: 0.0000098844,
+    minX: 32030,
+    maxX: 133200,
+    minZ: 18939,
+    maxZ: 120109,
+  };
+
+  it('maps the arena center to the bounding-box midpoint', () => {
+    const world = arenaPointToWorld(helRa, { x: 50, z: 50 });
+    expect(world.x).toBeCloseTo((helRa.minX + helRa.maxX) / 2, 5);
+    expect(world.z).toBeCloseTo((helRa.minZ + helRa.maxZ) / 2, 5);
+  });
+
+  it('inverts the render transform exactly (world -> arena -> world round trip)', () => {
+    // Forward transform used by MapMarkers: arena = 100 - normalized * 100.
+    const worldX = 80000;
+    const worldZ = 70000;
+    const arenaX = 100 - ((worldX - helRa.minX) / (helRa.maxX - helRa.minX)) * 100;
+    const arenaZ = 100 - ((worldZ - helRa.minZ) / (helRa.maxZ - helRa.minZ)) * 100;
+
+    const world = arenaPointToWorld(helRa, { x: arenaX, z: arenaZ });
+    expect(world.x).toBeCloseTo(worldX, 5);
+    expect(world.z).toBeCloseTo(worldZ, 5);
+  });
+
+  it('clamps out-of-range arena points into the map bounds', () => {
+    const past = arenaPointToWorld(helRa, { x: 150, z: -10 });
+    expect(past.x).toBe(helRa.minX); // arena x > 100 clamps to the min-X edge
+    expect(past.z).toBe(helRa.maxZ); // arena z < 0 clamps to the max-Z edge
+  });
+});
+
+describe('withMarkerPosition', () => {
+  it('moves only the matching marker and keeps Y by default', () => {
+    const a = manualMarker(1, { x: 100, y: 42, z: 200 });
+    const b = { ...manualMarker(2), id: 'other' };
+    const next = withMarkerPosition(stateFromMarkers([a, b]), a.id, { x: 999, z: 888 });
+
+    expect(next.markers[0]).toMatchObject({ x: 999, y: 42, z: 888 });
+    expect(next.markers[1]).toMatchObject({ x: 100, z: 200 });
+  });
+});
+
+describe('withMarkerPatch', () => {
+  it('keeps elmsIconKey when the patch matches the template values', () => {
+    const a = manualMarker(1); // template: text '1', size 1.5, white
+    const next = withMarkerPatch(stateFromMarkers([a]), a.id, {
+      text: '1',
+      size: 1.5,
+      colour: [1, 1, 1, 1],
+    });
+    expect(next.markers[0].elmsIconKey).toBe(1);
+  });
+
+  it('drops elmsIconKey when the patch diverges from the template', () => {
+    const a = manualMarker(1);
+    const next = withMarkerPatch(stateFromMarkers([a]), a.id, { text: 'custom label' });
+    expect(next.markers[0].text).toBe('custom label');
+    expect(next.markers[0].elmsIconKey).toBeUndefined();
+  });
+
+  it('clears the label when given blank text', () => {
+    const a = manualMarker(1);
+    const next = withMarkerPatch(stateFromMarkers([a]), a.id, { text: '   ' });
+    expect(next.markers[0].text).toBeUndefined();
+  });
+
+  it('ignores non-positive sizes', () => {
+    const a = manualMarker(1);
+    const next = withMarkerPatch(stateFromMarkers([a]), a.id, { size: -2 });
+    expect(next.markers[0].size).toBe(1.5);
+  });
+});
+
+describe('applyElmsIconTemplate / withMarkerEdit', () => {
+  it('re-skins a marker from a template while keeping its position and id', () => {
+    const a = manualMarker(1, { x: 11, y: 22, z: 33 });
+    const reskinned = applyElmsIconTemplate(a, 21); // MT hex: red, text 'MT'
+    expect(reskinned).toMatchObject({ id: a.id, x: 11, y: 22, z: 33, text: 'MT' });
+    expect(reskinned.colour).toEqual([1, 0, 0, 1]);
+    expect(reskinned.elmsIconKey).toBe(21);
+  });
+
+  it('throws on an unknown icon key', () => {
+    expect(() => applyElmsIconTemplate(manualMarker(1), 99999)).toThrow(/Unknown Elms icon/);
+  });
+
+  it('withMarkerEdit applies icon swap then field overrides in one transition', () => {
+    const a = manualMarker(1);
+    const next = withMarkerEdit(stateFromMarkers([a]), a.id, {
+      iconKey: 21,
+      text: 'MT',
+      colour: [1, 0, 0, 1],
+      size: 1,
+    });
+    // Overrides equal the template → still a faithful icon 21.
+    expect(next.markers[0].elmsIconKey).toBe(21);
+    expect(next.markers[0].text).toBe('MT');
+  });
+
+  it('withMarkerEdit is a no-op for an unknown marker id', () => {
+    const state = stateFromMarkers([manualMarker(1)]);
+    expect(withMarkerEdit(state, 'nope', { text: 'x' })).toBe(state);
   });
 });

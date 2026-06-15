@@ -279,6 +279,9 @@ export const DEFAULT_COMPOSITION: RoleComposition = { tanks: 2, healers: 2, dps:
 /** Total roster size — ESO trials are always 12 players */
 export const ROSTER_SIZE = 12;
 
+/** Maximum number of trials a roster can be tagged with for Hub discovery. */
+export const MAX_ROSTER_TRIALS = 10;
+
 /**
  * Complete roster configuration
  */
@@ -310,6 +313,13 @@ export interface RaidRoster {
 
   // Per-fight build overrides (optional, advanced feature)
   trialOverrides?: TrialBuildOverrides;
+
+  /**
+   * Trials this roster is built for, used to surface it under the right filters
+   * in the Roster Hub. Stores trial ids (see TRIALS in trialConfigs). A roster
+   * can target multiple trials, or just one.
+   */
+  trials?: string[];
 }
 
 /**
@@ -384,6 +394,7 @@ export const createDefaultRoster = (comp: RoleComposition = DEFAULT_COMPOSITION)
   healers: createDefaultHealers(comp.healers),
   dpsSlots: createDefaultDPSSlots(comp.dps),
   availableGroups: [],
+  trials: [],
 });
 
 /**

@@ -35,10 +35,7 @@ export function runMonteCarlo(
   let maxTotal = -Infinity;
 
   // Accumulate per-source contributions to report a mean breakdown.
-  const baseBySource = new Map<
-    string,
-    { label: string; base: number; decisive: number; instances: number }
-  >();
+  const baseBySource = new Map<string, { label: string; base: number; decisive: number; instances: number }>();
 
   for (let i = 0; i < runs; i += 1) {
     const result = simulateFight({ ...config, seed: options.baseSeed + i });

@@ -430,6 +430,44 @@ describe('compactifyRoster / expandCompactRoster', () => {
     });
   });
 
+  describe('trials (Hub discovery tags)', () => {
+    it('round-trips a multi-trial selection', () => {
+      const roster = createDefaultRoster();
+      roster.trials = ['AA', 'DSR', 'HOF'];
+      const expanded = expandCompactRoster(compactifyRoster(roster));
+      expect(expanded.trials).toEqual(['AA', 'DSR', 'HOF']);
+    });
+
+    it('round-trips a single-trial selection', () => {
+      const roster = createDefaultRoster();
+      roster.trials = ['CR'];
+      const expanded = expandCompactRoster(compactifyRoster(roster));
+      expect(expanded.trials).toEqual(['CR']);
+    });
+
+    it('omits the trials field from compact output when empty', () => {
+      const roster = createDefaultRoster();
+      roster.trials = [];
+      expect(compactifyRoster(roster).tr).toBeUndefined();
+    });
+
+    it('defaults to an empty array when decoding a roster without trials', () => {
+      const roster = createDefaultRoster();
+      delete roster.trials;
+      const expanded = expandCompactRoster(compactifyRoster(roster));
+      expect(expanded.trials).toEqual([]);
+    });
+
+    it('drops non-string entries and caps the trial count on decode', () => {
+      const compact = compactifyRoster(createDefaultRoster());
+      // Inject a hostile payload: too many entries + a non-string.
+      compact.tr = [...Array.from({ length: 15 }, (_, i) => `T${i}`), 42 as unknown as string];
+      const expanded = expandCompactRoster(compact);
+      expect(expanded.trials).toHaveLength(10);
+      expect(expanded.trials?.every((t) => typeof t === 'string')).toBe(true);
+    });
+  });
+
   describe('buildRef round-trip (roster ↔ build editor link)', () => {
     const buildRef: BuildReference = {
       buildId: 'build-abc-123',

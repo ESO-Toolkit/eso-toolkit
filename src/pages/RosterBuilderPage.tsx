@@ -52,6 +52,7 @@ import { SetAssignmentManager } from '../components/SetAssignmentManager';
 import { WorkInProgressDisclaimer } from '../components/WorkInProgressDisclaimer';
 import { useEsoLogsClientContext } from '../EsoLogsClientContext';
 import { useAuth } from '../features/auth/AuthContext';
+import { TRIALS } from '../features/loadout-manager/data/trialConfigs';
 import { PublishRosterDialog } from '../features/roster-hub/components/PublishRosterDialog';
 import { ServerPickerDialog } from '../features/roster-hub/components/ServerPickerDialog';
 import { GetPlayersForReportQuery } from '../graphql/gql/graphql';
@@ -67,6 +68,7 @@ import {
   JailDDType,
   RosterDetailLevel,
   RoleComposition,
+  MAX_ROSTER_TRIALS,
   createDefaultRoster,
   defaultTankSetup,
   defaultHealerSetup,
@@ -102,6 +104,14 @@ const GET_PLAYERS_FOR_REPORT = gql`
     }
   }
 `;
+
+/**
+ * Trials selectable in the roster's "Built for" picker. Dungeons (4-player) are
+ * intentionally excluded — they use a different roster format and are handled
+ * separately. Arenas/general setups are likewise filtered out here.
+ */
+const ROSTER_TRIAL_OPTIONS = TRIALS.filter((t) => t.type === 'trial');
+const ROSTER_TRIAL_NAME_BY_ID = new Map(ROSTER_TRIAL_OPTIONS.map((t) => [t.id, t.name] as const));
 
 // ---------------------------------------------------------------------------
 // Addon export helpers (ESO-658)
@@ -630,6 +640,15 @@ export const RosterBuilderPage: React.FC = () => {
       updatedAt: new Date().toISOString(),
     }));
   };
+
+  // Update the trials this roster is built for (used for Roster Hub discovery)
+  const handleTrialsChange = useCallback((trialIds: string[]): void => {
+    setRoster((prev) => ({
+      ...prev,
+      trials: trialIds.slice(0, MAX_ROSTER_TRIALS),
+      updatedAt: new Date().toISOString(),
+    }));
+  }, []);
 
   // Stable DPS slot change handler (used with slotIndex prop on DPSSlotCard)
   const handleDPSSlotChange = useCallback((slotIndex: number, updates: Partial<DPSSlot>): void => {
@@ -1277,6 +1296,49 @@ export const RosterBuilderPage: React.FC = () => {
           }}
         />
 
+        {/* Row 2.5 — Trial selector ("Built for") */}
+        <Autocomplete
+          multiple
+          disableCloseOnSelect
+          options={ROSTER_TRIAL_OPTIONS.map((t) => t.id)}
+          value={roster.trials ?? []}
+          onChange={(_, value) => handleTrialsChange(value)}
+          getOptionLabel={(id) => ROSTER_TRIAL_NAME_BY_ID.get(id) ?? id}
+          getOptionDisabled={() => (roster.trials?.length ?? 0) >= MAX_ROSTER_TRIALS}
+          renderValue={(value, getItemProps) =>
+            (value as string[]).map((id, index) => {
+              const { key, ...chipProps } = getItemProps({ index });
+              return (
+                <Chip
+                  label={ROSTER_TRIAL_NAME_BY_ID.get(id) ?? id}
+                  {...chipProps}
+                  key={key}
+                  sx={{
+                    borderRadius: '6px',
+                    backgroundColor: isDarkMode ? 'rgba(96,165,250,0.12)' : 'rgba(37,99,235,0.08)',
+                    border: isDarkMode
+                      ? '1px solid rgba(96,165,250,0.25)'
+                      : '1px solid rgba(37,99,235,0.2)',
+                    color: isDarkMode ? '#bfdbfe' : '#1d4ed8',
+                    fontWeight: 600,
+                    fontSize: '0.8rem',
+                  }}
+                />
+              );
+            })
+          }
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              label="Built for (Trials)"
+              placeholder={(roster.trials?.length ?? 0) === 0 ? 'Select one or more trials…' : ''}
+              helperText="Tag this roster with the trials it's built for so it's discoverable in the Roster Hub."
+              sx={glassTextField}
+            />
+          )}
+          sx={{ mb: 2 }}
+        />
+
         {/* Row 3 — Action button bar */}
         <Box sx={{ mb: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
           {/* ── Top row: pill groups left + right ── */}
@@ -1485,9 +1547,12 @@ export const RosterBuilderPage: React.FC = () => {
             <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'block' } }} />
 
             {/* ── Right side: Copy pill + Publish/Save pill ── */}
+            {/* Stack the two pills on mobile so the Publish pill (Hub · Discord ·
+                Save) gets full width instead of overflowing off-screen. */}
             <Box
               sx={{
                 display: 'flex',
+                flexDirection: { xs: 'column', md: 'row' },
                 alignItems: 'stretch',
                 gap: 1,
                 width: { xs: '100%', md: 'auto' },
@@ -2556,6 +2621,7 @@ export const RosterBuilderPage: React.FC = () => {
       <PublishRosterDialog
         open={publishDialogOpen}
         rosterData={publishRosterData}
+        defaultTrials={roster.trials}
         token={accessToken}
         onClose={() => setPublishDialogOpen(false)}
         onPublished={() => {

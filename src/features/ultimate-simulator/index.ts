@@ -1,10 +1,12 @@
 /**
- * Public API for the Ultimate Calculator feature.
+ * Public API for the ultimate-simulator feature directory.
  *
- * An all-class ultimate generation & time-to-ultimate tool. The engine is a
- * class-agnostic closed-form expected-value model (with an optional Monte Carlo
- * distribution); the catalog is the research-sourced data layer; the calculator
- * UI mounts as the "Ultimate" tab of /calculator.
+ * This directory hosts TWO related tools that share the same engine vocabulary,
+ * Decisive math, and log-calibration analyzer:
+ *  - the all-class Ultimate CALCULATOR (closed-form expected value + time to
+ *    ultimate) that mounts as the "Ultimate" tab of /calculator, and
+ *  - the Arcanist Ultimate SIMULATOR (Monte Carlo distribution) at
+ *    /ultimate-simulator.
  */
 
 // Types & constants
@@ -52,3 +54,6 @@ export { useUltimateCalculator } from './presentation/useUltimateCalculator';
 export { useLogCalibration, parseReportCode } from './presentation/useLogCalibration';
 export { UltimateCalculator } from './presentation/components/UltimateCalculator';
 export { LogCalibrationPanel } from './presentation/components/LogCalibrationPanel';
+export { useUltimateSimulator } from './presentation/useUltimateSimulator';
+export { UltimateSimulator } from './presentation/components/UltimateSimulator';
+export { UltimateSimulatorPage } from './presentation/pages/UltimateSimulatorPage';

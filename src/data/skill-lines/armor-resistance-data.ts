@@ -643,11 +643,11 @@ export const ARMOR_RESISTANCE_DATA: CalculatorData = {
       name: 'Armor Master',
       enabled: false,
       quantity: 1,
-      value: 2984,
+      value: 5940,
       isFlat: true,
       category: 'cp',
       tooltip:
-        'Armor Master constellation grants <strong>2984</strong> Physical and Spell Resistance.',
+        'Armor Master (crafted set) grants <strong>5940</strong> Physical and Spell Resistance for 10s when you use an Armor ability in combat.',
     },
     {
       name: 'Fortified',
@@ -760,41 +760,10 @@ export const OVER_RESISTANCE_DIVISOR = 109; // Over-resistance calculation divis
 export const MAX_DAMAGE_MITIGATION = 50; // Maximum damage mitigation percentage
 export const DAMAGE_MITIGATION_DIVISOR = 662; // 33100 / 50 - for percentage calculation
 
-// Tooltip data for armor resistance items
-export const ARMOR_RESISTANCE_TOOLTIPS = {
-  'Heavy Armor Passive':
-    'Each piece of heavy armor grants <strong>343</strong> Physical and Spell Resistance.',
-  'Light Armor Passive': 'Each piece of light armor grants <strong>726</strong> Spell Resistance.',
-  'Nord Passive':
-    '<div class="tt-head">Nord Racial Passive</div><strong>Rugged</strong><br/>Increases your Physical and Spell Resistance by 2600.',
-  'Breton Passive':
-    '<div class="tt-head">Breton Racial Passive</div><strong>Spell Attunement</strong><br/>Increases your Spell Resistance by 2310. This effect is doubled if you are afflicted with Burning, Chilled, or Concussed.',
-  'Dragonknight Passive':
-    '<div class="tt-head">Draconic Power</div><strong>Scaled Armor</strong><br/>Increases your Physical and Spell Resistance by 2974.',
-  'Warden Passive Per Skill':
-    '<div class="tt-head">Winter\'s Embrace</div><strong>Frozen Armor</strong><br/>Increases your Physical and Spell Resistance by 1240 for each Winter\'s Embrace ability slotted.',
-  'Templar Passive':
-    '<div class="tt-head">Aedric Spear</div><strong>Balanced Warrior</strong><br/>Increases your Weapon Damage, Spell Damage, and Armor by 6%.',
-  'Arcanist Passive':
-    '<div class="tt-head">Soldier Of Apocrypha</div><strong>Aegis of the Unseen</strong><br/>While a beneficial Soldier of Apocrypha ability is active on you, increase your Armor by 3271.',
-  'Runic Sunder': 'Runic Sunder steals <strong>2200</strong> Armor from enemies.',
-  Fortified: 'Fortified increases Physical and Spell Resistance by <strong>1731</strong>.',
-  Bulwark: 'Bulwark increases Physical and Spell Resistance by <strong>1900</strong>.',
-  'Armor Potions': 'Armor potions grant <strong>5280</strong> Physical and Spell Resistance.',
-  'Lord Warden':
-    'Lord Warden set bonus grants <strong>3180</strong> Physical and Spell Resistance.',
-  Ozezans: 'Ozezans set bonus grants <strong>4272</strong> Physical and Spell Resistance.',
-  'Markyn Ring of Majesty':
-    'Markyn Ring of Majesty grants <strong>1157</strong> Physical and Spell Resistance.',
-  'Defending Trait':
-    'Defending trait on jewelry grants <strong>1638</strong> Physical and Spell Resistance.',
-  'Armor Line Bonus':
-    'Armor line bonus (e.g., Crimson Oath) grants <strong>1487</strong> Physical and Spell Resistance.',
-  Shield: 'Shields grant base <strong>1720</strong> Physical and Spell Resistance.',
-  'Shield Reinforced':
-    'Reinforced shields grant <strong>1995</strong> Physical and Spell Resistance.',
-  'Major Resolve': 'Increases your Physical and Spell Resistance by <strong>5948</strong>.',
-  'Minor Resolve': 'Increases your Physical and Spell Resistance by <strong>2974</strong>.',
-  'Armor Master':
-    'Armor Master constellation grants <strong>2984</strong> Physical and Spell Resistance.',
-};
+// NOTE: A previous `ARMOR_RESISTANCE_TOOLTIPS` map lived here but was never
+// imported (dead code) and had drifted out of date (e.g. it still called the
+// Dragonknight passive "Scaled Armor" after it became "Heart of Stone"). The
+// live tooltip text is now sourced from the per-item `tooltip` fields above and,
+// for the structured calculator card, from
+// `src/data/skill-lines/calculator-tooltip-content.ts`. Removed to avoid a
+// stale duplicate.

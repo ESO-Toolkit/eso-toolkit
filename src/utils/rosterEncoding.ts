@@ -21,6 +21,7 @@ import {
   RaidRoster,
   RoleComposition,
   DEFAULT_COMPOSITION,
+  MAX_ROSTER_TRIALS,
   RosterDetailLevel,
   TankSetup,
   TankGearSet,
@@ -244,6 +245,8 @@ export interface CompactRosterV3 {
   no?: string;
   to?: CompactTrialOverrides;
   dl?: number;
+  /** Trials this roster is tagged with (for Hub discovery) */
+  tr?: string[];
 }
 
 /** Union of all compact roster formats */
@@ -830,6 +833,7 @@ export function compactifyRoster(roster: RaidRoster): CompactRosterV3 {
   if (filledSlots.length) c.dp = filledSlots.map(compactDPS);
   if (roster.availableGroups?.length) c.ag = roster.availableGroups;
   if (roster.notes) c.no = roster.notes;
+  if (roster.trials?.length) c.tr = roster.trials.slice(0, MAX_ROSTER_TRIALS);
   if (roster.trialOverrides) c.to = compactTrialOverrides(roster.trialOverrides);
   if (roster.rosterDetailLevel) {
     const DL_MAP: Record<RosterDetailLevel, number> = { simple: 0, full: 1 };
@@ -891,9 +895,16 @@ function expandCompactRosterV3(c: CompactRosterV3): RaidRoster {
     dpsSlots,
     availableGroups: c.ag ?? [],
     notes: c.no,
+    trials: expandTrials(c.tr),
     trialOverrides: c.to ? expandTrialOverrides(c.to) : undefined,
     rosterDetailLevel: c.dl != null ? DL_LEVELS[c.dl] : undefined,
   };
+}
+
+/** Decode the trials array, dropping non-string entries and capping the count. */
+function expandTrials(tr?: unknown): string[] {
+  if (!Array.isArray(tr)) return [];
+  return tr.filter((t): t is string => typeof t === 'string').slice(0, MAX_ROSTER_TRIALS);
 }
 
 /**

@@ -60,3 +60,26 @@ export const isProduction = (): boolean => {
 export const getEnvVar = (key: string): string | undefined => {
   return import.meta.env[key];
 };
+
+/**
+ * Base URL of the roster-hub-api Worker (reports, roster hub, pack hub, build hub,
+ * the ESO Logs client-credential proxy) — the single resolution every API client uses.
+ *
+ * Resolution order:
+ *  1. `VITE_ROSTER_HUB_API_URL` when set — prod builds pin the Worker URL here, and
+ *     Worker developers point it at `http://localhost:8787` (wrangler dev).
+ *  2. Dev fallback: `/roster-hub-api`, a SAME-ORIGIN path the Vite dev server proxies
+ *     to the deployed Worker (see `server.proxy` in vite.config.mjs). Same-origin means
+ *     no CORS preflight, so dev works on ANY localhost port — the Worker's CORS
+ *     allowlist only covers localhost:3000–3003/5173, and worktree dev servers on other
+ *     ports (e.g. :3007) had every report query silently blocked.
+ *  3. Prod fallback: the deployed Worker URL.
+ *
+ * Trailing slash is stripped so callers can append `/graphql`, `/packs`, … verbatim.
+ */
+export const getRosterHubBaseUrl = (): string => {
+  const explicit = getEnvVar('VITE_ROSTER_HUB_API_URL');
+  if (explicit) return explicit.replace(/\/$/, '');
+  if (isDevelopment()) return '/roster-hub-api';
+  return 'https://roster-hub-api.eso-toolkit.workers.dev';
+};

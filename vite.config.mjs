@@ -246,6 +246,25 @@ ${downloadBtn}
       headers: {
         'Access-Control-Allow-Origin': '*',
       },
+      proxy: {
+        // Same-origin route to the roster-hub-api Worker (reports, roster/pack/build hubs,
+        // the ESO Logs client proxy). The Worker's CORS allowlist only admits localhost
+        // ports 3000–3003/5173, so dev servers on any other port (worktrees each get their
+        // own PORT) had every API call killed in preflight — pages rendered empty. Browser
+        // requests go to /roster-hub-api/* on THIS origin (no CORS at all) and Vite forwards
+        // them server-side. API clients resolve this path via getRosterHubBaseUrl()
+        // (src/utils/envUtils.ts); an explicit VITE_ROSTER_HUB_API_URL still bypasses it.
+        '/roster-hub-api': {
+          target: 'https://roster-hub-api.eso-toolkit.workers.dev',
+          changeOrigin: true,
+          rewrite: (p) => p.replace(/^\/roster-hub-api/, ''),
+          configure: (proxy) => {
+            // Strip the browser Origin so the Worker's allowlist never rejects the
+            // forwarded request (it sees a plain server-to-server call).
+            proxy.on('proxyReq', (proxyReq) => proxyReq.removeHeader('origin'));
+          },
+        },
+      },
     },
 
     // Preview server configuration (for production preview)

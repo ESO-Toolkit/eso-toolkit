@@ -42,3 +42,13 @@ export const getEnvVar = jest.fn((key: string): string | undefined => {
   if (key === 'VITE_BASE_URL') return '/';
   return undefined;
 });
+
+/**
+ * Base URL of the roster-hub-api Worker.
+ * Mocked to the production Worker URL — the resolution tests saw before the
+ * same-origin dev proxy existed (isDevelopment() is mocked false here, so the
+ * real helper would resolve the same way).
+ */
+export const getRosterHubBaseUrl = jest.fn((): string => {
+  return 'https://roster-hub-api.eso-toolkit.workers.dev';
+});
