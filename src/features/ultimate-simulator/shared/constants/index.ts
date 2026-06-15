@@ -8,7 +8,7 @@
  * known outputs.
  */
 
-import type { DecisiveConfig } from '../types';
+import type { DecisiveConfig, UltimateSource } from '../types';
 
 /** Default fight length (3 minutes — a typical raid boss pull). */
 export const DEFAULT_FIGHT_DURATION_SECONDS = 180;
@@ -48,3 +48,74 @@ export function makeDecisiveConfig(quality: DecisiveQuality, twoHanded: boolean)
     rollsPerInstance: twoHanded ? 2 : 1,
   };
 }
+
+/** Default Monte Carlo run count (10k → standard error ≈ sheet's ÷10). */
+export const DEFAULT_MONTE_CARLO_RUNS = 10000;
+
+/** Default base seed for reproducible aggregates. */
+export const DEFAULT_BASE_SEED = 1;
+
+/**
+ * Raid-context source preset (used by the standalone Arcanist Ultimate Simulator).
+ *
+ * Tick cadences: Heroism buffs tick every 1.5s (instancesPerSecond = 1/1.5).
+ * The "base" row is the light/heavy-attack buff (3 ult/sec, 1 instance/sec),
+ * NOT a passive regen (no such stat exists). Implacable Outcome is a triggered
+ * +4 on an 8s ICD. Pillager's Profit is batteried from the group healer.
+ *
+ * `instancesPerSecond` and `amountPerInstance` are chosen so each row's expected
+ * ult/s matches the sheet's "Est. Ult/s" column, and the total instance count
+ * reconciles with the sheet's SUM Ticks (404.8 over 180s) for Decisive validation.
+ */
+export const RAID_CONTEXT_SOURCES: readonly UltimateSource[] = [
+  {
+    id: 'base-light-attack',
+    label: 'Base (light-attack buff)',
+    kind: 'periodic',
+    amountPerInstance: 3,
+    instancesPerSecond: 1, // 3 ult/sec while weaving
+    uptime: 0.99,
+    rollsDecisive: true,
+    note: 'Light/heavy-attack hidden buff — the real base income (no passive ult regen exists).',
+  },
+  {
+    id: 'minor-heroism',
+    label: 'Minor Heroism',
+    kind: 'periodic',
+    amountPerInstance: 1,
+    instancesPerSecond: 1 / 1.5, // 1 ult / 1.5s
+    uptime: 0.95,
+    rollsDecisive: true,
+    note: 'From Cryptcanon Vestments (Mythic) / ult potions / sets.',
+  },
+  {
+    id: 'major-heroism',
+    label: 'Major Heroism',
+    kind: 'periodic',
+    amountPerInstance: 3,
+    instancesPerSecond: 1 / 1.5, // 3 ult / 1.5s
+    uptime: 0.78,
+    rollsDecisive: true,
+    note: 'Group buff — from a Warden U50 Class Mastery scrip in the raid.',
+  },
+  {
+    id: 'implacable-outcome',
+    label: 'Implacable Outcome',
+    kind: 'triggered',
+    amountPerInstance: 4,
+    instancesPerSecond: 1 / 8, // +4 ult, max once / 8s on Crux consume
+    uptime: 1,
+    rollsDecisive: true,
+    note: 'Arcanist passive (Soldier of Apocrypha): +4 ult on Crux consume, 8s ICD.',
+  },
+  {
+    id: 'pillagers-profit',
+    label: "Pillager's Profit (from healer)",
+    kind: 'perCast',
+    amountPerInstance: 50,
+    instancesPerSecond: 1 / 45, // batteried to allies once / 45s
+    uptime: 1,
+    rollsDecisive: false, // externally-granted; does not roll the wearer's Decisive
+    note: "Batteried to the Arcanist by the group healer's Pillager's Profit (~50 ult / 45s).",
+  },
+];
