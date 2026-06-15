@@ -75,7 +75,7 @@ const AppAuth = React.lazy(() =>
   import('./AppAuth').then((module) => ({ default: module.AppAuth })),
 );
 const Calculator = React.lazy(() =>
-  import('./components/CalculatorPage').then((module) => ({ default: module.CalculatorPage })),
+  import('./components/Calculator').then((module) => ({ default: module.Calculator })),
 );
 const TextEditor = React.lazy(() =>
   import('./components/TextEditor').then((module) => ({ default: module.TextEditor })),
