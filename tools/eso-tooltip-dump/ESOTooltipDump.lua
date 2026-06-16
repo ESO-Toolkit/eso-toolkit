@@ -290,6 +290,20 @@ local function captureSet(setId)
 
   local link = buildReferenceItemLink(setId)
 
+  -- Bonus COUNT must come from the itemLink form for PERFECTED sets. GetItemSetInfo(setId)
+  -- returns the base tier count and omits the perfected-only stat tier, so looping to that
+  -- count silently drops it (this is why every Perfected set previously mirrored its base).
+  -- GetItemLinkSetInfo(perfectedItemLink) reports numBonuses INCLUDING the perfected tier
+  -- (matches ZOS's own tooltip code: esoui itemtooltips.lua AddSet), and the per-bonus loop
+  -- below already reads it build-independently via GetItemLinkSetBonusInfo(link, false, i).
+  -- No item needs to be equipped. Keep the GetItemSetInfo count as the no-LibSets fallback.
+  if link and GetItemLinkSetInfo then
+    local lok, lHasSet, _, lNumBonuses = pcall(GetItemLinkSetInfo, link, false)
+    if lok and lHasSet and lNumBonuses and lNumBonuses > (numBonuses or 0) then
+      numBonuses = lNumBonuses
+    end
+  end
+
   if numBonuses and numBonuses > 0 then
     for i = 1, numBonuses do
       local numRequired, bonusDescription, isPerfected
