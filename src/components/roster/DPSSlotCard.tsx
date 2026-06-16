@@ -46,6 +46,7 @@ import {
   getUltimateIcon,
   isDDSpecialSet,
 } from './shared/rosterCardHelpers';
+import { SetGearAutocomplete } from './shared/SetGearAutocomplete';
 import { SlotActionPill } from './shared/slot-action-pill';
 import { SlotFullModePanel } from './SlotFullModePanel';
 
@@ -375,81 +376,46 @@ export const DPSSlotCard = React.memo<DPSSlotCardProps>(
                 <Stack spacing={1.5}>
                   <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
                     <Box sx={{ flex: '1 1 45%', minWidth: 200 }}>
-                      <Autocomplete
-                        freeSolo
-                        size="small"
+                      <SetGearAutocomplete
                         options={DPS_5PIECE_OPTIONS}
                         value={slot.set1 ? getSetDisplayName(slot.set1) : ''}
-                        onChange={(_, value) =>
-                          onChange({ set1: value ? findSetIdByName(value) : undefined })
-                        }
+                        onResolve={(setId) => onChange({ set1: setId })}
                         groupBy={(option) => {
                           const setId = findSetIdByName(option);
                           if (setId && isDDSpecialSet(setId)) return 'DD Special Sets';
                           return 'Other Sets';
                         }}
-                        renderInput={(params) => (
-                          <TextField
-                            {...params}
-                            size="small"
-                            label="Primary Set (Body)"
-                            placeholder="e.g., Roar of Alkosh"
-                            sx={glassSx}
-                          />
-                        )}
-                        renderOption={(props, option) => <li {...props}>{option}</li>}
+                        label="Primary Set (Body)"
+                        placeholder="e.g., Roar of Alkosh"
+                        sx={glassSx}
                       />
                     </Box>
                     <Box sx={{ flex: '1 1 45%', minWidth: 200 }}>
-                      <Autocomplete
-                        freeSolo
-                        size="small"
+                      <SetGearAutocomplete
                         options={DPS_5PIECE_OPTIONS}
                         value={slot.set2 ? getSetDisplayName(slot.set2) : ''}
-                        onChange={(_, value) =>
-                          onChange({ set2: value ? findSetIdByName(value) : undefined })
-                        }
+                        onResolve={(setId) => onChange({ set2: setId })}
                         groupBy={(option) => {
                           const setId = findSetIdByName(option);
                           if (setId && isDDSpecialSet(setId)) return 'DD Special Sets';
                           return 'Other Sets';
                         }}
-                        renderInput={(params) => (
-                          <TextField
-                            {...params}
-                            size="small"
-                            label="Secondary Set (Jewelry)"
-                            placeholder="e.g., Way of Martial Knowledge"
-                            sx={glassSx}
-                          />
-                        )}
-                        renderOption={(props, option) => <li {...props}>{option}</li>}
+                        label="Secondary Set (Jewelry)"
+                        placeholder="e.g., Way of Martial Knowledge"
+                        sx={glassSx}
                       />
                     </Box>
                   </Box>
                   <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
                     <Box sx={{ flex: '1 1 45%', minWidth: 200 }}>
-                      <Autocomplete
-                        freeSolo
-                        size="small"
+                      <SetGearAutocomplete
                         options={DPS_MONSTER_OPTIONS}
                         value={slot.monsterSet ? getSetDisplayName(slot.monsterSet) : ''}
-                        onChange={(_, value) =>
-                          onChange({
-                            monsterSet: value ? findSetIdByName(value) : undefined,
-                          })
-                        }
+                        onResolve={(setId) => onChange({ monsterSet: setId })}
                         groupBy={() => 'Monster Sets'}
-                        renderInput={(params) => (
-                          <TextField
-                            {...params}
-                            size="small"
-                            label="Monster/Mythic Set"
-                            placeholder="e.g., Zaan"
-                            sx={glassSx}
-                          />
-                        )}
-                        renderOption={(props, option) => <li {...props}>{option}</li>}
+                        label="Monster/Mythic Set"
+                        placeholder="e.g., Zaan"
+                        sx={glassSx}
                       />
                     </Box>
                   </Box>

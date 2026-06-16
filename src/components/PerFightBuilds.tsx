@@ -44,25 +44,26 @@ import {
 } from '../types/trial-encounters';
 import { encodeRosterToURL } from '../utils/rosterEncoding';
 import { copyToClipboard } from '../utils/safeClipboard';
-import { getSetDisplayName, findSetIdByName } from '../utils/setNameUtils';
+import { getSetDisplayName } from '../utils/setNameUtils';
 import type { SlotKey } from '../utils/slotKey';
 import { makeSlotKey } from '../utils/slotKey';
 
 import { EncounterTimeline } from './EncounterTimeline';
+import { SetGearAutocomplete } from './roster/shared/SetGearAutocomplete';
 
 // ─── Set option lists ───────────────────────────────────────────
 
-const ALL_5PIECE_OPTIONS: readonly string[] = (() => {
-  return Array.from(ALL_5PIECE_SETS)
-    .map((id) => getSetDisplayName(id))
-    .sort();
-})();
+// ALL_5PIECE_SETS / MONSTER_SETS unify several curated arrays and so repeat
+// some IDs (e.g. Claw of Yolnahkriin sits in both RECOMMENDED and TANK lists).
+// Dedup the display names with a Set so the dropdown has no duplicate rows
+// (and React doesn't warn about duplicate option keys).
+const ALL_5PIECE_OPTIONS: readonly string[] = Array.from(
+  new Set(Array.from(ALL_5PIECE_SETS).map((id) => getSetDisplayName(id))),
+).sort();
 
-const ALL_MONSTER_OPTIONS: readonly string[] = (() => {
-  return Array.from(MONSTER_SETS)
-    .map((id) => getSetDisplayName(id))
-    .sort();
-})();
+const ALL_MONSTER_OPTIONS: readonly string[] = Array.from(
+  new Set(Array.from(MONSTER_SETS).map((id) => getSetDisplayName(id))),
+).sort();
 
 const ULTIMATE_OPTIONS = [
   SupportUltimate.WARHORN,
@@ -353,78 +354,45 @@ const PlayerOverrideEditor: React.FC<PlayerOverrideEditorProps> = React.memo(
             <Stack spacing={1}>
               <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
                 <Box sx={{ flex: '1 1 30%', minWidth: 150 }}>
-                  <Autocomplete
-                    freeSolo
-                    size="small"
-                    options={ALL_5PIECE_OPTIONS as string[]}
+                  <SetGearAutocomplete
+                    options={ALL_5PIECE_OPTIONS}
                     value={
                       override?.set1 != null
                         ? getSetDisplayName(override.set1 as KnownSetIDs)
                         : player.currentSet1 || ''
                     }
-                    onChange={(_, value) => {
-                      const setId = value ? findSetIdByName(value) : undefined;
-                      handleFieldChange('set1', setId as number | undefined);
-                    }}
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        size="small"
-                        label="Set 1 (5pc)"
-                        placeholder={player.currentSet1 || 'Base build'}
-                        sx={glassSx}
-                      />
-                    )}
+                    onResolve={(setId) => handleFieldChange('set1', setId)}
+                    label="Set 1 (5pc)"
+                    placeholder={player.currentSet1 || 'Base build'}
+                    sx={glassSx}
                   />
                 </Box>
                 <Box sx={{ flex: '1 1 30%', minWidth: 150 }}>
-                  <Autocomplete
-                    freeSolo
-                    size="small"
-                    options={ALL_5PIECE_OPTIONS as string[]}
+                  <SetGearAutocomplete
+                    options={ALL_5PIECE_OPTIONS}
                     value={
                       override?.set2 != null
                         ? getSetDisplayName(override.set2 as KnownSetIDs)
                         : player.currentSet2 || ''
                     }
-                    onChange={(_, value) => {
-                      const setId = value ? findSetIdByName(value) : undefined;
-                      handleFieldChange('set2', setId as number | undefined);
-                    }}
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        size="small"
-                        label="Set 2 (5pc)"
-                        placeholder={player.currentSet2 || 'Base build'}
-                        sx={glassSx}
-                      />
-                    )}
+                    onResolve={(setId) => handleFieldChange('set2', setId)}
+                    label="Set 2 (5pc)"
+                    placeholder={player.currentSet2 || 'Base build'}
+                    sx={glassSx}
                   />
                 </Box>
                 <Box sx={{ flex: '1 1 30%', minWidth: 150 }}>
-                  <Autocomplete
-                    freeSolo
-                    size="small"
-                    options={ALL_MONSTER_OPTIONS as string[]}
+                  <SetGearAutocomplete
+                    options={ALL_MONSTER_OPTIONS}
                     value={
                       override?.monsterSet != null
                         ? getSetDisplayName(override.monsterSet as KnownSetIDs)
                         : player.currentMonster || ''
                     }
-                    onChange={(_, value) => {
-                      const setId = value ? findSetIdByName(value) : undefined;
-                      handleFieldChange('monsterSet', setId as number | undefined);
-                    }}
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        size="small"
-                        label="Monster / Mythic"
-                        placeholder={player.currentMonster || 'Base build'}
-                        sx={glassSx}
-                      />
-                    )}
+                    onResolve={(setId) => handleFieldChange('monsterSet', setId)}
+                    label="Monster / Mythic"
+                    placeholder={player.currentMonster || 'Base build'}
+                    sx={glassSx}
                   />
                 </Box>
               </Box>
