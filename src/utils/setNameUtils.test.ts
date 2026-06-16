@@ -1,3 +1,4 @@
+import libsetsSetNames from '../../data/libsets-set-names.json';
 import { KnownSetIDs } from '../types/abilities';
 import * as errorTracking from './errorTracking';
 import {
@@ -369,5 +370,141 @@ describe('setIdToRosterName wrapper', () => {
   it('delegates correctly to getSetDisplayName', () => {
     expect(setIdToRosterName(KnownSetIDs.LUCENT_ECHOES)).toBe('Lucent Echoes');
     expect(setIdToRosterName(undefined)).toBe('');
+  });
+});
+
+// ============================================================
+// Canonical-name validation against the LibSets dump
+// ============================================================
+
+/**
+ * `SET_DISPLAY_NAMES` is hand-maintained, so a name can silently drift to a
+ * wrong-but-unique value (e.g. "Yolnahkriin" instead of "Claw of Yolnahkriin")
+ * without tripping the duplicate/round-trip guards above.
+ *
+ * `data/libsets-set-names.json` (generated from the LibSets addon, keyed by the
+ * same set IDs) is the authoritative source for a set's full in-game name. This
+ * test asserts every display name either equals the dump's canonical `en` name
+ * or is an explicitly allowlisted intentional shorthand. Adding a new set with a
+ * name that doesn't match the dump — or letting an existing name drift — fails
+ * here and forces a deliberate choice: fix the name, or allowlist the shorthand.
+ *
+ * To intentionally diverge from the canonical name (short label, set-name-over-
+ * proc-name for weapons, retained legacy alias, "Unknown" placeholder), add the
+ * set ID to INTENTIONAL_NAME_DIVERGENCE_IDS with a comment explaining why.
+ */
+describe('SET_DISPLAY_NAMES canonical-name validation (libsets dump)', () => {
+  const dumpSets = (libsetsSetNames as { sets: Record<string, { en?: string }> }).sets;
+
+  // Set IDs whose display name intentionally differs from the dump's canonical
+  // English name. Each is a deliberate product choice, not a drift bug.
+  const INTENTIONAL_NAME_DIVERGENCE_IDS = new Set<number>([
+    // ── Short labels (full name is verbose for a roster chip) ──
+    147, // WAY_OF_MARTIAL_KNOWLEDGE — "Martial Knowledge" vs "Way of Martial Knowledge"
+    391, // VESTMENT_OF_OLORIME — "Olorime" vs "Vestment of Olorime"
+    395, // PERFECTED_VESTMENT_OF_OLORIME — "Perfected Olorime"
+    455, // ZENS_REDRESS — "Zen's Redress" vs "Z'en's Redress"
+    232, // ROAR_OF_ALKOSH — "Alkosh" vs "Roar of Alkosh"
+    577, // ENCRATIS_BEHEMOTH — "Encratis" vs "Encratis's Behemoth"
+    687, // OZEZAN — "Ozezan" vs "Ozezan the Inferno"
+    456, // AZUREBLIGHT — "Azureblight" vs "Azureblight Reaper"
+    503, // WILD_HUNT — "Wild Hunt" vs "Ring of the Wild Hunt"
+    602, // CRIMSON_OATH — "Crimson Oath" vs "Crimson Oath's Rive"
+    671, // GOURMAND — "Gourmand" vs "Back-Alley Gourmand"
+    766, // MORA_SCRIBE — "Mora Scribe" vs "Mora Scribe's Thesis"
+    773, // MORA_SCRIBE_PERFECTED — "Perfected Mora Scribe"
+    795, // JERENSI — "Jerensi" vs "Jerensi's Bladestorm"
+    815, // KAZPIAN — "Kazpian's" vs "Kazpian's Cruel Signet"
+    820, // KAZPIAN_PERFECTED — "Perfected Kazpian's"
+    575, // PALE_ORDER — "Pale Order" vs "Ring of the Pale Order"
+    623, // STORM_CURSED — "Storm-Cursed" vs "Storm-Cursed's Revenge"
+    675, // STORMWEAVER — "Stormweaver" vs "Stormweaver's Cavort"
+    690, // AKATOSHS_LAW — "Akatosh's Law" vs "Judgment of Akatosh"
+    757, // THE_WEALD — "The Weald" vs "Symmetry of the Weald"
+    794, // VANDORALLEN — "Vandorallen" vs "Vandorallen's Resonance"
+    805, // THREE_QUEENS — "Three Queens" vs "Three Queens Wellspring"
+    193, // OVERWHELMING — "Overwhelming" vs "Overwhelming Surge"
+    210, // THE_PARIAH — "The Pariah" vs "Mark of the Pariah"
+    126, // ANCIENT_GRACE — "Ancient Grace" vs "Grace of the Ancients"
+    173, // VICIOUS_OPHIDIAN — "Vicious Ophidian" vs "Vicious Serpent"
+
+    // ── Retained legacy / pre-rename aliases players still recognize ──
+    137, // ADVANCING_YOKEDA vs "Berserking Warrior"
+    138, // RESILIENT_YOKEDA vs "Defending Warrior"
+    171, // ETERNAL_YOKEDA vs "Eternal Warrior"
+    140, // AETHER_DESTRUCTION — "Aether" vs "Destructive Mage"
+    172, // INFALLIBLE_AETHER — "Infallible Aether" vs "Infallible Mage"
+    29, // THE_SERGEANT vs "Sergeant's Mail"
+    46, // THE_NOBLE_DUELIST vs "Noble Duelist's Silks"
+    77, // THE_CRUSADER vs "Crusader"
+    84, // PRISMATIC_WEAPON vs "Orgnum's Scales"
+
+    // ── Weapon/arena sets: app uses the SET name, dump uses the proc name ──
+    314, // THE_MASTERS_MACE vs "Puncturing Remedy"
+    316, // THE_MASTERS_BOW vs "Caustic Arrow"
+    317, // THE_MASTERS_ICE_STAFF vs "Destructive Impact"
+    318, // THE_MASTERS_RESTORATION_STAFF vs "Grand Rejuvenation"
+    358, // ASYLUM_PERFECTED_DAGGER vs "Perfected Defensive Position"
+    362, // ASYLUM_PERFECTED_RESTO vs "Perfected Timeless Blessing"
+    372, // MAELSTROMS_BOW vs "Thunderous Volley"
+    413, // BLACKROSE_DAGGER vs "Spectral Cloak"
+    414, // BLACKROSE_BOW vs "Virulent Shot"
+    415, // BLACKROSE_ICE_STAFF vs "Wild Impulse"
+    416, // BLACKROSE_RESTO vs "Mender's Ward"
+    425, // BLACKROSE_PERFECTED_DAGGER vs "Perfected Spectral Cloak"
+    426, // BLACKROSE_PERFECTED_BOW vs "Perfected Virulent Shot"
+    427, // BLACKROSE_PERFECTED_ICE_STAFF vs "Perfected Wild Impulse"
+    428, // BLACKROSE_PERFECTED_RESTO vs "Perfected Mender's Ward"
+    559, // VATESHRAN_GREATSWORD vs "Frenzied Momentum"
+    563, // VATESHRAN_PERFECTED_SWORD vs "Perfected Executioner's Blade"
+    564, // VATESHRAN_PERFECTED_DAGGER vs "Perfected Void Bash"
+    567, // VATESHRAN_PERFECTED_STAFF vs "Perfected Wrath of Elements"
+
+    // ── "<Owner>'s Perfected" word-order convention for some perfected sets ──
+    389, // RELEQUEN — "Relequen" vs "Arms of Relequen"
+    393, // RELEQUEN_PERFECTED — "Relequen's Perfected" vs "Perfected Arms of Relequen"
+    394, // SIRORIA_PERFECTED — "Siroria's Perfected" vs "Perfected Mantle of Siroria"
+    392, // GALENWES_PERFECTED_RESTO — "Galenwe's Perfected" vs "Perfected Aegis of Galenwe"
+    450, // LOKKESTIIZ_PERFECTED — "Lokkestiiz's Perfected" vs "Perfected Tooth of Lokkestiiz"
+    495, // VROL_PERFECTED — "Vrol's Perfected" vs "Perfected Vrol's Command"
+    449, // FALSE_GODS_PERFECTED — "Perfected False God's" vs "Perfected False God's Devotion"
+
+    // ── Placeholder for an unmapped/unknown set ──
+    846, // UNKNOWN_SET_846 — kept as "Unknown" placeholder vs dump "Xanmeer Genesis"
+  ]);
+
+  it('every display name matches the LibSets canonical name (or is an allowlisted shorthand)', () => {
+    const drift: string[] = [];
+
+    for (const [idStr, appName] of Object.entries(SET_DISPLAY_NAMES)) {
+      const id = Number(idStr);
+      const canonical = dumpSets[idStr]?.en;
+      if (!canonical) continue; // dump doesn't cover this id — nothing to validate against
+      if (appName === canonical) continue; // exact match
+      if (INTENTIONAL_NAME_DIVERGENCE_IDS.has(id)) continue; // deliberate divergence
+
+      drift.push(`  ${id}: SET_DISPLAY_NAMES="${appName}"  canonical="${canonical}"`);
+    }
+
+    if (drift.length > 0) {
+      throw new Error(
+        `${drift.length} set display name(s) diverge from the LibSets canonical name without being ` +
+          `allowlisted. Either fix the name in SET_DISPLAY_NAMES to match, or — if the divergence is ` +
+          `intentional — add the set ID to INTENTIONAL_NAME_DIVERGENCE_IDS with a reason:\n${drift.join('\n')}`,
+      );
+    }
+  });
+
+  it('the four bug-fixed sets exactly match the canonical dump name', () => {
+    const expectations: Array<[KnownSetIDs, string]> = [
+      [KnownSetIDs.CLAW_OF_YOLNAHKRIIN, 'Claw of Yolnahkriin'],
+      [KnownSetIDs.PERFECTED_CLAW_OF_YOLNAHKRIIN, 'Perfected Claw of Yolnahkriin'],
+      [KnownSetIDs.PERFECTED_SAXHLEEL_CHAMPION, 'Perfected Saxhleel Champion'],
+      [KnownSetIDs.PERFECTED_XORYNS_MASTERPIECE, "Perfected Xoryn's Masterpiece"],
+    ];
+    for (const [id, expected] of expectations) {
+      expect(getSetDisplayName(id)).toBe(expected);
+      expect(dumpSets[String(id)]?.en).toBe(expected);
+    }
   });
 });

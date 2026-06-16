@@ -226,7 +226,7 @@ export const TankCard = React.memo<TankCardProps>(
                             {...params}
                             size="small"
                             label="Primary Set (Body)"
-                            placeholder="e.g., Alkosh, Yolnahkriin"
+                            placeholder="e.g., Alkosh, Claw of Yolnahkriin"
                             sx={glassSx}
                           />
                         )}
