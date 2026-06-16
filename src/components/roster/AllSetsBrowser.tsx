@@ -487,6 +487,7 @@ const AllSetsBrowserInner: React.FC<AllSetsBrowserProps> = ({
         open={detailsSet !== null}
         onClose={handleCloseDetails}
         assignedTo={detailsSet ? (assignments.get(detailsSet.name) ?? []) : []}
+        roleColors={roleColors}
       />
     </Box>
   );
