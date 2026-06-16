@@ -142,6 +142,66 @@ describe('setNameUtils', () => {
     });
   });
 
+  describe('Perfected/base set name collisions (roster edit regression)', () => {
+    /**
+     * Regression guard for the "Edit roster" bug: base and Perfected variants of
+     * these sets previously shared a display name (or the base used a non-canonical
+     * name), so SET_NAME_TO_ID_INDEX collapsed Perfected → base on round-trip and
+     * Claw of Yolnahkriin rendered as bare "Yolnahkriin". Each variant must now map
+     * to its own canonical name and back to its own ID.
+     */
+    const variantPairs: Array<{ baseId: KnownSetIDs; perfectedId: KnownSetIDs }> = [
+      {
+        baseId: KnownSetIDs.CLAW_OF_YOLNAHKRIIN,
+        perfectedId: KnownSetIDs.PERFECTED_CLAW_OF_YOLNAHKRIIN,
+      },
+      {
+        baseId: KnownSetIDs.SAXHLEEL_CHAMPION,
+        perfectedId: KnownSetIDs.PERFECTED_SAXHLEEL_CHAMPION,
+      },
+      {
+        baseId: KnownSetIDs.XORYNS_MASTERPIECE,
+        perfectedId: KnownSetIDs.PERFECTED_XORYNS_MASTERPIECE,
+      },
+    ];
+
+    it.each(variantPairs)(
+      'base and Perfected variants have distinct display names ($baseId / $perfectedId)',
+      ({ baseId, perfectedId }) => {
+        const baseName = getSetDisplayName(baseId);
+        const perfectedName = getSetDisplayName(perfectedId);
+        expect(baseName).not.toBe(perfectedName);
+        expect(perfectedName).toBe(`Perfected ${baseName}`);
+      },
+    );
+
+    it.each(variantPairs)(
+      'each variant round-trips to its own ID ($baseId / $perfectedId)',
+      ({ baseId, perfectedId }) => {
+        expect(findSetIdByName(getSetDisplayName(baseId))).toBe(baseId);
+        expect(findSetIdByName(getSetDisplayName(perfectedId))).toBe(perfectedId);
+      },
+    );
+
+    it('Claw of Yolnahkriin uses its canonical in-game name (not bare "Yolnahkriin")', () => {
+      expect(getSetDisplayName(KnownSetIDs.CLAW_OF_YOLNAHKRIIN)).toBe('Claw of Yolnahkriin');
+      // The old non-canonical name must no longer resolve to any set.
+      expect(findSetIdByName('Yolnahkriin')).toBeUndefined();
+    });
+
+    it('no two real sets share a display name (only "Unknown" placeholders may collide)', () => {
+      const nameToIds = new Map<string, number[]>();
+      for (const [idStr, name] of Object.entries(SET_DISPLAY_NAMES)) {
+        if (name === 'Unknown') continue;
+        const ids = nameToIds.get(name) ?? [];
+        ids.push(Number(idStr));
+        nameToIds.set(name, ids);
+      }
+      const collisions = [...nameToIds.entries()].filter(([, ids]) => ids.length > 1);
+      expect(collisions).toEqual([]);
+    });
+  });
+
   describe('isUnsupportedSet', () => {
     it('should return true for unsupported sets', () => {
       expect(isUnsupportedSet('Shattered Fate')).toBe(true);

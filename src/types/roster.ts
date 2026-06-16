@@ -588,10 +588,16 @@ export function validateCompatibility(
   const warnings: string[] = [];
   const activeSets = sets.filter((set): set is string => !!set);
 
+  // Rules are keyed on base (non-perfected) set names, but slots may hold the
+  // "Perfected …" display name. Compare on the base name so a rule fires for both
+  // the base and perfected variants of the same set.
+  const stripPerfected = (s: string): string => s.replace(/^Perfected\s+/i, '');
+  const activeBaseNames = activeSets.map(stripPerfected);
+
   // Check each active set against compatibility rules
   activeSets.forEach((activeSet) => {
     COMPATIBILITY_RULES.forEach((rule) => {
-      if (rule.setName !== activeSet) return;
+      if (stripPerfected(rule.setName) !== stripPerfected(activeSet)) return;
 
       switch (rule.type) {
         case CompatibilityRuleType.REQUIRED_ULTIMATE:
@@ -607,8 +613,9 @@ export function validateCompatibility(
 
         case CompatibilityRuleType.EXCLUSIVE_SETS:
           if (rule.exclusions) {
-            const conflictingSets = activeSets.filter((set) => rule.exclusions?.includes(set));
-            if (conflictingSets.length > 0) {
+            const exclusionBaseNames = rule.exclusions.map(stripPerfected);
+            const hasConflict = activeBaseNames.some((name) => exclusionBaseNames.includes(name));
+            if (hasConflict) {
               warnings.push(rule.message);
             }
           }
@@ -619,7 +626,10 @@ export function validateCompatibility(
             const requiredSets = Array.isArray(rule.requirement)
               ? rule.requirement
               : [rule.requirement];
-            const hasRequired = requiredSets.some((reqSet) => activeSets.includes(reqSet));
+            const requiredBaseNames = requiredSets.map(stripPerfected);
+            const hasRequired = requiredBaseNames.some((reqSet) =>
+              activeBaseNames.includes(reqSet),
+            );
             if (!hasRequired) {
               warnings.push(rule.message);
             }

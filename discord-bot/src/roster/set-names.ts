@@ -25,8 +25,8 @@ export const SET_NAMES: Record<number, string> = {
   // Support — Tank 5-piece
   232: 'Alkosh',
   331: 'War Machine',
-  446: 'Yolnahkriin',
-  451: 'Perfected Yolnahkriin',
+  446: 'Claw of Yolnahkriin',
+  451: 'Perfected Claw of Yolnahkriin',
   571: "Drake's Rush",
   585: 'Saxhleel Champion',
   589: 'Perfected Saxhleel Champion',

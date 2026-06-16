@@ -62,7 +62,7 @@ test.describe('SetAssignmentManager', () => {
     // These are the default sets in the SetAssignmentManager
     await expect(page.getByRole('button', { name: 'Lucent Echoes' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Pearlescent Ward' })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Yolnahkriin' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Claw of Yolnahkriin' })).toBeVisible();
   });
 
   test('renders healer set buttons', async ({ page }) => {
