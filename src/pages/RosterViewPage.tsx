@@ -1277,13 +1277,24 @@ const PerFightTrialGroup: React.FC<PerFightTrialGroupProps> = ({
                     ].filter(Boolean);
                     if (!sets.length && !o.ultimate && !o.notes) return null;
                     return (
-                      <Box key={key} sx={{ display: 'flex', alignItems: 'center', gap: 0.4 }}>
+                      <Box
+                        key={key}
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          // Wrap a slot's chips/ultimate to a new line on narrow
+                          // screens instead of overflowing the card horizontally.
+                          flexWrap: 'wrap',
+                          gap: 0.4,
+                        }}
+                      >
                         <Typography
                           sx={{
                             fontSize: '0.68rem',
                             fontWeight: 700,
                             color: 'text.disabled',
                             minWidth: 20,
+                            flexShrink: 0,
                           }}
                         >
                           {labelMap[key]}:
@@ -1337,13 +1348,22 @@ const PerFightTrialGroup: React.FC<PerFightTrialGroupProps> = ({
                       ].filter(Boolean);
                       if (!sets.length && !slot.ultimate && !slot.notes) return null;
                       return (
-                        <Box key={key} sx={{ display: 'flex', alignItems: 'center', gap: 0.4 }}>
+                        <Box
+                          key={key}
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            flexWrap: 'wrap',
+                            gap: 0.4,
+                          }}
+                        >
                           <Typography
                             sx={{
                               fontSize: '0.68rem',
                               fontWeight: 700,
                               color: 'text.disabled',
                               minWidth: 20,
+                              flexShrink: 0,
                             }}
                           >
                             D{dpsIdx + 1}:
