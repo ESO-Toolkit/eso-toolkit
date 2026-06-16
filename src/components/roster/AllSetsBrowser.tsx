@@ -12,6 +12,7 @@
 import {
   CheckCircle as CheckCircleIcon,
   Favorite as FavoriteIcon,
+  InfoOutlined as InfoIcon,
   Search as SearchIcon,
   Shield as ShieldIcon,
   SwapHoriz as SwapHorizIcon,
@@ -20,13 +21,14 @@ import {
   Box,
   ButtonBase,
   Chip,
+  IconButton,
   InputAdornment,
   Stack,
   TextField,
   Tooltip,
   Typography,
 } from '@mui/material';
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 
 import {
   SET_TYPE_COLORS,
@@ -43,6 +45,7 @@ import {
   type AssignableSet,
   type SetRole,
 } from './allSetsCatalog';
+import { GearDetailsSheet } from './GearDetailsSheet';
 
 const SEARCH_DEBOUNCE_MS = 160;
 const MIN_SEARCH_LENGTH = 1;
@@ -68,6 +71,8 @@ interface SetRowProps {
   assignedTo: string[];
   roleColors: { tank: string; healer: string; dps: string };
   onSetClick: (setName: string, event: React.MouseEvent<HTMLElement>) => void;
+  /** Open the set-details sheet (the touch-accessible way to view bonuses). */
+  onInfo: (set: AssignableSet) => void;
 }
 
 const roleIcon = (role: SetRole, color: string): React.ReactElement => {
@@ -76,7 +81,14 @@ const roleIcon = (role: SetRole, color: string): React.ReactElement => {
   return <SwapHorizIcon sx={{ fontSize: 14, color }} />;
 };
 
-const SetRow: React.FC<SetRowProps> = ({ set, isDark, assignedTo, roleColors, onSetClick }) => {
+const SetRow: React.FC<SetRowProps> = ({
+  set,
+  isDark,
+  assignedTo,
+  roleColors,
+  onSetClick,
+  onInfo,
+}) => {
   const catColor = SET_TYPE_COLORS[set.setType];
   const isAssigned = assignedTo.length > 0;
   const rColor =
@@ -87,80 +99,107 @@ const SetRow: React.FC<SetRowProps> = ({ set, isDark, assignedTo, roleColors, on
         : roleColors.dps;
 
   // Rich hover card (type badge + set bonuses), shared with the rest of the app.
-  // Built once per set (memoized in the catalog module). Hover-only: on touch a
-  // tap is the assign action (the popover), so the tooltip's touch trigger is
-  // suppressed via a long enterTouchDelay rather than firing on every tap.
+  // Built once per set (memoized in the catalog module). This is the fast desktop
+  // path; touch users open the same content as a bottom sheet via the info button
+  // (the row tap assigns), so set details are reachable without hover.
   const tooltipProps = useMemo(() => getSetTooltipProps(set), [set]);
 
   return (
-    <Tooltip
-      title={<GearSetTooltip {...tooltipProps} />}
-      placement="top"
-      enterDelay={300}
-      enterNextDelay={150}
-      enterTouchDelay={700}
-      leaveTouchDelay={2500}
-      slotProps={RICH_TOOLTIP_SLOT_PROPS}
+    <Box
+      sx={{
+        display: 'flex',
+        alignItems: 'center',
+        borderRadius: 1.5,
+        background: isAssigned ? (isDark ? `${rColor}14` : `${rColor}0C`) : 'transparent',
+        border: isAssigned ? `1px solid ${rColor}40` : '1px solid transparent',
+        '&:hover': {
+          background: isAssigned
+            ? undefined
+            : isDark
+              ? 'rgba(255,255,255,0.04)'
+              : 'rgba(0,0,0,0.03)',
+        },
+      }}
     >
-      <ButtonBase
-        onClick={(e) => onSetClick(set.name, e)}
-        aria-label={
-          isAssigned ? `${set.name} — assigned to ${assignedTo.join(', ')}` : `Assign ${set.name}`
-        }
+      <Tooltip
+        title={<GearSetTooltip {...tooltipProps} />}
+        placement="top"
+        enterDelay={300}
+        enterNextDelay={150}
+        // Touch users get the bottom sheet via the info button; suppress the
+        // touch tooltip so a tap goes straight to the assign action.
+        enterTouchDelay={10000}
+        slotProps={RICH_TOOLTIP_SLOT_PROPS}
+      >
+        <ButtonBase
+          onClick={(e) => onSetClick(set.name, e)}
+          aria-label={
+            isAssigned ? `${set.name} — assigned to ${assignedTo.join(', ')}` : `Assign ${set.name}`
+          }
+          sx={{
+            flex: 1,
+            minWidth: 0,
+            py: { xs: 1.1, sm: 0.75 },
+            pl: 1,
+            pr: 0.5,
+            minHeight: { xs: 44, sm: 0 },
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            borderRadius: 1.5,
+            textAlign: 'left',
+          }}
+        >
+          <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center', minWidth: 0, flex: 1 }}>
+            <Box sx={{ flexShrink: 0, display: 'inline-flex' }}>{roleIcon(set.role, rColor)}</Box>
+            <Typography
+              noWrap
+              sx={{
+                fontSize: 12,
+                fontWeight: isAssigned ? 700 : 600,
+                fontFamily: 'Space Grotesk, Inter, system-ui',
+                color: isDark ? 'rgba(255,255,255,0.82)' : 'rgba(0,0,0,0.78)',
+              }}
+            >
+              {set.name}
+            </Typography>
+            <Chip
+              label={set.setType}
+              size="small"
+              sx={{
+                height: 14,
+                fontSize: '0.5rem',
+                fontWeight: 700,
+                fontFamily: 'Space Grotesk, Inter, system-ui',
+                background: `${catColor}25`,
+                color: catColor,
+                border: 'none',
+                flexShrink: 0,
+                '& .MuiChip-label': { px: 0.6 },
+              }}
+            />
+          </Stack>
+          {isAssigned && <CheckCircleIcon sx={{ fontSize: 15, color: rColor, flexShrink: 0 }} />}
+        </ButtonBase>
+      </Tooltip>
+
+      {/* Info button: touch-accessible way to view set bonuses (opens the sheet).
+          Separate from the row's assign tap so the two actions never collide. */}
+      <IconButton
+        onClick={() => onInfo(set)}
+        aria-label={`View ${set.name} details`}
         sx={{
-          width: '100%',
-          py: { xs: 1.1, sm: 0.75 },
-          pl: 1,
-          pr: 0.75,
-          minHeight: { xs: 44, sm: 0 },
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          borderRadius: 1.5,
-          textAlign: 'left',
-          background: isAssigned ? (isDark ? `${rColor}14` : `${rColor}0C`) : 'transparent',
-          border: isAssigned ? `1px solid ${rColor}40` : '1px solid transparent',
-          '&:hover': {
-            background: isAssigned
-              ? undefined
-              : isDark
-                ? 'rgba(255,255,255,0.04)'
-                : 'rgba(0,0,0,0.03)',
-          },
+          flexShrink: 0,
+          mr: 0.25,
+          width: { xs: 40, sm: 30 },
+          height: { xs: 40, sm: 30 },
+          color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)',
+          '&:hover': { color: isDark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.6)' },
         }}
       >
-        <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center', minWidth: 0, flex: 1 }}>
-          <Box sx={{ flexShrink: 0, display: 'inline-flex' }}>{roleIcon(set.role, rColor)}</Box>
-          <Typography
-            noWrap
-            sx={{
-              fontSize: 12,
-              fontWeight: isAssigned ? 700 : 600,
-              fontFamily: 'Space Grotesk, Inter, system-ui',
-              color: isDark ? 'rgba(255,255,255,0.82)' : 'rgba(0,0,0,0.78)',
-            }}
-          >
-            {set.name}
-          </Typography>
-          <Chip
-            label={set.setType}
-            size="small"
-            sx={{
-              height: 14,
-              fontSize: '0.5rem',
-              fontWeight: 700,
-              fontFamily: 'Space Grotesk, Inter, system-ui',
-              background: `${catColor}25`,
-              color: catColor,
-              border: 'none',
-              flexShrink: 0,
-              '& .MuiChip-label': { px: 0.6 },
-            }}
-          />
-        </Stack>
-        {isAssigned && <CheckCircleIcon sx={{ fontSize: 15, color: rColor, flexShrink: 0 }} />}
-      </ButtonBase>
-    </Tooltip>
+        <InfoIcon sx={{ fontSize: 17 }} />
+      </IconButton>
+    </Box>
   );
 };
 
@@ -176,6 +215,10 @@ const AllSetsBrowserInner: React.FC<AllSetsBrowserProps> = ({
   const [search, setSearch] = useState('');
   const [typeTab, setTypeTab] = useState<TypeTab>('all');
   const [roleFilter, setRoleFilter] = useState<RoleFilter>('all');
+  // Set whose details sheet is open (touch-accessible bonus viewer).
+  const [detailsSet, setDetailsSet] = useState<AssignableSet | null>(null);
+  const handleInfo = useCallback((s: AssignableSet) => setDetailsSet(s), []);
+  const handleCloseDetails = useCallback(() => setDetailsSet(null), []);
 
   const allSets = getAssignableSets();
 
@@ -407,6 +450,7 @@ const AllSetsBrowserInner: React.FC<AllSetsBrowserProps> = ({
                 assignedTo={assignments.get(set.name) ?? []}
                 roleColors={roleColors}
                 onSetClick={onSetClick}
+                onInfo={handleInfo}
               />
             ))}
           </Stack>
@@ -436,6 +480,14 @@ const AllSetsBrowserInner: React.FC<AllSetsBrowserProps> = ({
           Showing {visibleSets.length} of {allSets.length} sets
         </Typography>
       </Box>
+
+      {/* Touch-accessible set-details viewer (bottom sheet). */}
+      <GearDetailsSheet
+        set={detailsSet}
+        open={detailsSet !== null}
+        onClose={handleCloseDetails}
+        assignedTo={detailsSet ? (assignments.get(detailsSet.name) ?? []) : []}
+      />
     </Box>
   );
 };
