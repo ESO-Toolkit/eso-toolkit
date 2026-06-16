@@ -168,7 +168,8 @@ function categorizeSets(gear: LogGearItem[]): {
     // (the perfected display name) still carries the perfected ID into storage.
     const baseId = isPerfected(setName) ? findSetIdByName(normalizeSetName(setName)) : undefined;
     const inArray = (arr: readonly KnownSetIDs[]): boolean =>
-      (setId !== undefined && arr.includes(setId)) || (baseId !== undefined && arr.includes(baseId));
+      (setId !== undefined && arr.includes(setId)) ||
+      (baseId !== undefined && arr.includes(baseId));
 
     if (setId && excludedSetIds.has(setId)) return;
 
