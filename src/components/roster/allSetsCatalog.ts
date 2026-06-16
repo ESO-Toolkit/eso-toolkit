@@ -1,0 +1,297 @@
+/**
+ * Assignable-set catalog for the Roster Builder "All Sets" browser.
+ *
+ * The roster stores gear as numeric `KnownSetIDs` (ESO Logs gameData ids) and
+ * resolves a chosen set name → id via `findSetIdByName`. A set therefore can
+ * only be assigned if it lives in `SET_DISPLAY_NAMES`. This module enumerates
+ * that genuinely-assignable universe (~230 sets) and enriches each entry with:
+ *   - `setType`/`bonuses` from the build-editor gear catalog (`gearSetRegistry`)
+ *     when the name resolves there, so the browser can show content-type tabs
+ *     and set-bonus previews exactly like the build editor's gear picker.
+ *   - `slotKind` ('fivePiece' | 'monster') — which roster slot the set can go in.
+ *     This is derived from the curated roster lists FIRST (always correct, even
+ *     when the catalog has no match), so the assign popover never shows a set
+ *     with zero assignable slots.
+ *   - `role` ('tank' | 'healer' | 'both') for the role filter.
+ *
+ * Everything is precomputed once at module load — rows never call
+ * `findSetIdByName`/`getSetRole`/`lookupGearSet` during render.
+ */
+
+import {
+  getSetType,
+  lookupGearSet,
+  type GearSetType,
+} from '../../features/build-editor/data/gearSetRegistry';
+import { KnownSetIDs } from '../../types/abilities';
+import {
+  ALL_5PIECE_SETS,
+  MONSTER_SETS,
+  QUICK_TANK_5PIECE_SETS,
+  QUICK_TANK_MONSTER_SETS,
+  QUICK_FLEXIBLE_5PIECE_SETS,
+  QUICK_FLEXIBLE_MONSTER_SETS,
+  QUICK_FLEXIBLE_MYTHICS,
+  QUICK_HEALER_5PIECE_SETS,
+  QUICK_HEALER_MONSTER_SETS,
+  QUICK_HEALER_MYTHICS,
+  TANK_SETS,
+  HEALER_SETS,
+  FLEXIBLE_SETS,
+} from '../../types/roster';
+import { getGearSetTooltipPropsByName } from '../../utils/gearSetTooltipMapper';
+import { getAllSetIds, getSetDisplayName } from '../../utils/setNameUtils';
+import type { GearSetTooltipProps } from '../GearSetTooltip';
+
+export type SetSlotKind = 'fivePiece' | 'monster';
+export type SetRole = 'tank' | 'healer' | 'both';
+
+export interface AssignableSet {
+  id: KnownSetIDs;
+  name: string;
+  /**
+   * The catalog's canonical name for this set (after alias resolution). Equals
+   * `name` unless the roster display name is abbreviated. Used to look up the
+   * rich gear-set tooltip, which keys by the catalog name.
+   */
+  catalogName: string;
+  /** Content-type label for grouping/tabs (catalog-derived, or 'Other'). */
+  setType: GearSetType;
+  /** Set-bonus lines from the catalog; empty when the catalog has no match. */
+  bonuses: string[];
+  /** Which roster slot this set can be assigned to. Always resolvable. */
+  slotKind: SetSlotKind;
+  /** Primary role(s) for the role filter. */
+  role: SetRole;
+}
+
+// ─── Membership sets (built once) ────────────────────────────────────────────
+
+const MONSTER_ID_SET = new Set<KnownSetIDs>(MONSTER_SETS as readonly KnownSetIDs[]);
+const FIVE_PIECE_ID_SET = new Set<KnownSetIDs>(ALL_5PIECE_SETS as readonly KnownSetIDs[]);
+
+const TANK_ID_SET = new Set<KnownSetIDs>([
+  ...QUICK_TANK_5PIECE_SETS,
+  ...QUICK_TANK_MONSTER_SETS,
+  ...(TANK_SETS as readonly KnownSetIDs[]),
+]);
+const HEALER_ID_SET = new Set<KnownSetIDs>([
+  ...QUICK_HEALER_5PIECE_SETS,
+  ...QUICK_HEALER_MONSTER_SETS,
+  ...QUICK_HEALER_MYTHICS,
+  ...(HEALER_SETS as readonly KnownSetIDs[]),
+]);
+const FLEX_ID_SET = new Set<KnownSetIDs>([
+  ...QUICK_FLEXIBLE_5PIECE_SETS,
+  ...QUICK_FLEXIBLE_MONSTER_SETS,
+  ...QUICK_FLEXIBLE_MYTHICS,
+  ...(FLEXIBLE_SETS as readonly KnownSetIDs[]),
+]);
+
+/**
+ * Catalog setTypes that occupy the Monster/Mythic (2-piece / 1-piece) slot.
+ * Used as the secondary slot-kind signal when a set isn't in the curated lists.
+ */
+const MONSTER_SLOT_TYPES = new Set<GearSetType>(['Monster Set', 'Mythic']);
+
+/**
+ * Catalog canonical names for sets whose roster display name is abbreviated
+ * (so `lookupGearSet` misses them). Resolves the set's content type + bonus
+ * preview. Each entry was verified as the unique catalog set whose name contains
+ * the roster name — not guessed. Not required for correctness (slot kind is
+ * resolved independently); purely a content-type / bonus enrichment.
+ */
+const CATALOG_NAME_ALIASES: Record<string, string> = {
+  'Advancing Yokeda': 'Berserking Warrior',
+  // NOTE: "Aether" (ESO-Logs set 140) is a distinct, unidentified legacy set —
+  // NOT Infallible Aether (172). Left unmapped rather than risk wrong bonuses.
+  "Akatosh's Law": 'Judgment of Akatosh',
+  Alkosh: 'Roar of Alkosh',
+  "Asylum's Perfected Dagger": 'Perfected Chaotic Whirlwind',
+  "Asylum's Perfected Restoration Staff": 'Perfected Timeless Blessing',
+  Azureblight: 'Azureblight Reaper',
+  'Blackrose Bow': 'Virulent Shot',
+  'Blackrose Ice Staff': 'Wild Impulse',
+  'Blackrose Prison Dagger': 'Spectral Cloak',
+  'Blackrose Prison Perfected Bow': 'Perfected Virulent Shot',
+  'Blackrose Prison Perfected Dagger': 'Perfected Spectral Cloak',
+  'Blackrose Prison Perfected Ice Staff': 'Perfected Wild Impulse',
+  'Blackrose Prison Perfected Restoration Staff': 'Perfected Mender’s Ward',
+  'Blackrose Resto': "Mender's Ward",
+  'Crimson Oath': "Crimson Oath's Rive",
+  'The Crusader': 'Crusader',
+  Encratis: "Encratis's Behemoth",
+  'Eternal Yokeda': 'Eternal Warrior',
+  "Galenwe's Perfected": 'Aegis of Galenwe',
+  Gourmand: 'Back-Alley Gourmand',
+  'Infallible Aether': 'Infallible Mage',
+  Jerensi: "Jerensi's Bladestorm",
+  "Kazpian's": "Kazpian's Cruel Signet",
+  "Perfected Kazpian's": "Kazpian's Cruel Signet",
+  "Lokkestiiz's Perfected": 'Tooth of Lokkestiiz',
+  "Maelstrom's Bow": 'Thunderous Volley',
+  'Martial Knowledge': 'Way of Martial Knowledge',
+  "The Master's Bow": 'Caustic Arrow',
+  "The Master's Ice Staff": 'Destructive Impact',
+  "The Master's Mace": 'Puncturing Remedy',
+  "The Master's Restoration Staff": 'Grand Rejuvenation',
+  'Mora Scribe': "Mora Scribe's Thesis",
+  'Perfected Mora Scribe': "Mora Scribe's Thesis",
+  'The Noble Duelist': "Noble Duelist's Silks",
+  Olorime: 'Vestment of Olorime',
+  'Perfected Olorime': 'Vestment of Olorime',
+  Overwhelming: 'Overwhelming Surge',
+  Ozezan: 'Ozezan the Inferno',
+  'Pale Order': 'Ring of the Pale Order',
+  "Perfected False God's": "False God's Devotion",
+  Relequen: 'Arms of Relequen',
+  "Relequen's Perfected": 'Arms of Relequen',
+  'Resilient Yokeda': 'Defending Warrior',
+  'The Sergeant': "Sergeant's Mail",
+  "Siroria's Perfected": 'Mantle of Siroria',
+  'Storm-Cursed': "Storm-Cursed's Revenge",
+  Stormweaver: "Stormweaver's Cavort",
+  'The Pariah': 'Mark of the Pariah',
+  'The Weald': 'Symmetry of the Weald',
+  'Three Queens': 'Three Queens Wellspring',
+  Vandorallen: "Vandorallen's Resonance",
+  'Vateshran Perfected Dagger': "Perfected Executioner's Blade",
+  'Vateshran Perfected Sword': "Perfected Executioner's Blade",
+  "Vateshran's Greatsword": 'Frenzied Momentum',
+  "Vateshran's Perfected Staff": 'Perfected Wrath of Elements',
+  'Vicious Ophidian': 'Vicious Serpent',
+  "Vrol's Perfected": "Vrol's Command",
+  'Wild Hunt': 'Ring of the Wild Hunt',
+  Yolnahkriin: 'Claw of Yolnahkriin',
+  "Zen's Redress": "Z'en's Redress",
+};
+
+// ─── Role / slot classifiers ─────────────────────────────────────────────────
+
+function deriveRole(id: KnownSetIDs): SetRole {
+  if (FLEX_ID_SET.has(id)) return 'both';
+  const isTank = TANK_ID_SET.has(id);
+  const isHealer = HEALER_ID_SET.has(id);
+  if (isTank && !isHealer) return 'tank';
+  if (isHealer && !isTank) return 'healer';
+  return 'both';
+}
+
+function deriveSlotKind(id: KnownSetIDs, setType: GearSetType): SetSlotKind {
+  // Curated lists are authoritative when present.
+  if (MONSTER_ID_SET.has(id)) return 'monster';
+  if (FIVE_PIECE_ID_SET.has(id)) return 'fivePiece';
+  // Otherwise fall back to the catalog content type.
+  return MONSTER_SLOT_TYPES.has(setType) ? 'monster' : 'fivePiece';
+}
+
+// ─── Catalog (built once) ────────────────────────────────────────────────────
+
+function buildAssignableSets(): AssignableSet[] {
+  const sets: AssignableSet[] = [];
+  for (const id of getAllSetIds()) {
+    const name = getSetDisplayName(id);
+    // Skip the placeholder "Unknown" entries that exist only to map stray ids.
+    if (!name || name === 'Unknown' || name.startsWith('Unknown Set')) continue;
+
+    const catalogName = CATALOG_NAME_ALIASES[name] ?? name;
+    const gearData = lookupGearSet(catalogName);
+    const setType = getSetType(catalogName);
+    const bonuses = gearData?.bonuses ?? [];
+
+    sets.push({
+      id,
+      name,
+      catalogName,
+      setType,
+      bonuses,
+      slotKind: deriveSlotKind(id, setType),
+      role: deriveRole(id),
+    });
+  }
+  // Stable alphabetical order; tab grouping re-buckets by type.
+  sets.sort((a, b) => a.name.localeCompare(b.name));
+  return sets;
+}
+
+let _cache: AssignableSet[] | null = null;
+let _byName: Map<string, AssignableSet> | null = null;
+
+/** All assignable sets, enriched and sorted by name. Computed once. */
+export function getAssignableSets(): AssignableSet[] {
+  if (!_cache) _cache = buildAssignableSets();
+  return _cache;
+}
+
+function nameIndex(): Map<string, AssignableSet> {
+  if (!_byName) {
+    _byName = new Map(getAssignableSets().map((s) => [s.name.toLowerCase(), s]));
+  }
+  return _byName;
+}
+
+/**
+ * Slot kind for an arbitrary set name (case-insensitive). Used by the assign
+ * popover so it can offer the correct slot(s) for any assignable set, not just
+ * the ~35 curated support sets. Returns null for names not in the catalog.
+ */
+export function getSlotKindForSetName(setName: string | undefined | null): SetSlotKind | null {
+  if (!setName) return null;
+  return nameIndex().get(setName.toLowerCase())?.slotKind ?? null;
+}
+
+const _tooltipCache = new Map<KnownSetIDs, GearSetTooltipProps>();
+
+/**
+ * Rich tooltip props for a set row's hover card (the shared `GearSetTooltip`).
+ * Resolves the catalog entry by the aliased `catalogName` so abbreviated roster
+ * names (Olorime, Alkosh, …) still get bonuses. Falls back to a minimal card
+ * built from the set's own data so EVERY row has a useful tooltip — including
+ * the sets the catalog can't name-match (shown with the roster name + type, and
+ * any bonuses we did capture). Memoized per set id.
+ */
+const ROLE_LABEL: Record<SetRole, string> = {
+  tank: 'Tank',
+  healer: 'Healer',
+  both: 'Tank / Healer',
+};
+const SLOT_LABEL: Record<SetSlotKind, string> = {
+  fivePiece: '5-piece · Body set (Set 1 / Set 2 slot)',
+  monster: '1–2 piece · Monster / Mythic slot',
+};
+
+export function getSetTooltipProps(set: AssignableSet): GearSetTooltipProps {
+  const cached = _tooltipCache.get(set.id);
+  if (cached) return cached;
+
+  const mapped = getGearSetTooltipPropsByName(set.catalogName, 0);
+
+  let props: GearSetTooltipProps;
+  if (mapped && mapped.setBonuses.length > 0) {
+    props = mapped;
+  } else {
+    // No catalog bonuses for this set — build an informative card from what we
+    // know (type/role/slot) so the tooltip never reads as broken/empty.
+    const ownBonuses = set.bonuses.map((bonus) => {
+      const m = bonus.match(/\((\d+)\s*items?\)/i);
+      return {
+        pieces: m ? m[0] : '',
+        effect: bonus.replace(/\(\d+\s*items?\)\s*/i, '').trim(),
+      };
+    });
+    props = {
+      headerBadge: set.setType === 'Other' ? ROLE_LABEL[set.role] : set.setType,
+      setName: set.name,
+      lineText: SLOT_LABEL[set.slotKind],
+      setBonuses: ownBonuses,
+      description:
+        ownBonuses.length === 0
+          ? 'Set bonus details aren’t in the gear catalog yet. You can still assign this set to a slot.'
+          : undefined,
+    };
+  }
+  // Always show the roster's own name, even when the catalog canonical differs.
+  props.setName = set.name;
+  _tooltipCache.set(set.id, props);
+  return props;
+}
