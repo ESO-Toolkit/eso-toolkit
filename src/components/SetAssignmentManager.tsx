@@ -31,7 +31,6 @@ import React, { useMemo, useState, useCallback } from 'react';
 import { KnownSetIDs } from '../types/abilities';
 import {
   RECOMMENDED_SETS,
-  RECOMMENDED_5PIECE_SETS,
   RECOMMENDED_2PIECE_SETS,
   RECOMMENDED_1PIECE_SETS,
   QUICK_TANK_5PIECE_SETS,
@@ -45,6 +44,7 @@ import {
   TANK_SETS,
   HEALER_SETS,
   FLEXIBLE_SETS,
+  FIVE_PIECE_BASE_VARIANTS,
   MONSTER_SETS,
   ALL_5PIECE_SETS,
   SetCategory,
@@ -92,7 +92,9 @@ const getSetRole = (setId: KnownSetIDs): 'tank' | 'healer' | 'both' => {
 
   // Fallback to category-based logic for sets not in Quick Assignment
   if (FLEXIBLE_SETS.includes(setId)) return 'both';
-  if (TANK_SETS.includes(setId)) return 'tank';
+  // The pickers curate the perfected Saxhleel/Xoryn, but a roster may store the
+  // base variant — classify those base IDs as tank too (FIVE_PIECE_BASE_VARIANTS).
+  if (TANK_SETS.includes(setId) || FIVE_PIECE_BASE_VARIANTS.includes(setId)) return 'tank';
   if (HEALER_SETS.includes(setId)) return 'healer';
 
   return 'both'; // Default for unknown sets
@@ -139,18 +141,21 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
   };
 
   // Helper function to add set assignments.
-  // Registers the assignment under both the full display name AND its base
-  // (non-"Perfected") name, so a worn perfected set (e.g. "Perfected Saxhleel
-  // Champion", id 589) is still found by the recommended tile, which looks up by
-  // the base set's display name (e.g. "Saxhleel Champion", id 585). Mirrors the
-  // strip-"Perfected" fallback in findSetIdByName.
+  // Registers the assignment under BOTH the base (non-"Perfected") and the
+  // "Perfected …" display name so a worn set matches a recommended tile
+  // regardless of which variant each side uses. A recommended tile may render
+  // the base name (e.g. "Saxhleel Champion") or the perfected name (e.g.
+  // "Perfected Saxhleel Champion") depending on which variant ID is curated in
+  // QUICK_*; the worn set may be either variant too. Keying both directions
+  // makes the lookup perfected/base-insensitive. Mirrors findSetIdByName.
   const addSetToAssignments = useCallback(
     (assignments: Map<string, string[]>, setId: KnownSetIDs | undefined, label: string): void => {
       if (!setId) return;
       const setName = getSetDisplayName(setId);
       const keys = new Set<string>([setName]);
       const baseName = setName.replace(/^Perfected\s+/i, '');
-      if (baseName !== setName) keys.add(baseName);
+      keys.add(baseName);
+      keys.add(`Perfected ${baseName}`);
       for (const key of keys) {
         const existing = assignments.get(key) || [];
         assignments.set(key, [...existing, label]);
@@ -467,7 +472,9 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
   // Helper functions to categorize sets by slot type
   const is5PieceSet = useCallback((setName: string): boolean => {
     const setId = findSetIdByName(setName);
-    return setId !== undefined && RECOMMENDED_5PIECE_SETS.includes(setId);
+    // canAssignToFivePieceSlot also recognizes the base Saxhleel/Xoryn variants
+    // (FIVE_PIECE_BASE_VARIANTS), so a base-stored ID still classifies as 5-piece.
+    return setId !== undefined && canAssignToFivePieceSlot(setId);
   }, []);
 
   const is2PieceSet = useCallback((setName: string): boolean => {
