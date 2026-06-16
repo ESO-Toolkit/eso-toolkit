@@ -86,5 +86,28 @@ describe('allSetsCatalog', () => {
         expect(Array.isArray(props.setBonuses)).toBe(true);
       }
     });
+
+    it('resolves bonuses for nearly every set (only a few genuinely have none)', () => {
+      // Catalog-name aliases connect abbreviated/renamed roster names to their
+      // real gear-set entry. Only a tiny tail (sets absent from the gear data or
+      // not real sets, e.g. Prismatic Weapon) should lack bonuses — guard against
+      // regressions that would silently re-break the long tail.
+      const withoutBonuses = sets.filter((s) => getSetTooltipProps(s).setBonuses.length === 0);
+      expect(withoutBonuses.length).toBeLessThanOrEqual(5);
+    });
+
+    it('resolves renamed/abbreviated sets via aliases (Blackrose, Yokeda, Akatosh, …)', () => {
+      for (const name of [
+        'Blackrose Bow',
+        'Advancing Yokeda',
+        "Akatosh's Law",
+        'Vicious Ophidian',
+        "The Master's Bow",
+        "Zen's Redress",
+      ]) {
+        const s = sets.find((x) => x.name === name);
+        if (s) expect(getSetTooltipProps(s).setBonuses.length).toBeGreaterThan(0);
+      }
+    });
   });
 });

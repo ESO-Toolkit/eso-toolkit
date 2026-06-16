@@ -1460,7 +1460,7 @@ export const indomitableFury: GearSetData = {
 export const infallibleMage: GearSetData = {
   name: 'Infallible Mage',
   icon: 'Infallible Mage',
-  setType: 'Monster Set',
+  setType: 'Trial',
   bonuses: [
     '(2 items) Adds 657 Critical Chance',
     '(3 items) Gain Minor Slayer at all times, increasing your damage done to Dungeon, Trial, and Arena Monsters by 5%.',
@@ -4051,7 +4051,7 @@ export const ysgramorSBirthright: GearSetData = {
 export const zEnSRedress: GearSetData = {
   name: "Z'en's Redress",
   icon: "Z'en's Redress",
-  setType: 'Monster Set',
+  setType: 'Dungeon',
   bonuses: [
     '(2 items) Adds 129 Magicka Recovery',
     '(3 items) Adds 129 Weapon and Spell Damage',
