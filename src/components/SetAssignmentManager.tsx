@@ -138,13 +138,22 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
     setActiveTab(newValue);
   };
 
-  // Helper function to add set assignments
+  // Helper function to add set assignments.
+  // Registers the assignment under both the full display name AND its base
+  // (non-"Perfected") name, so a worn perfected set (e.g. "Perfected Saxhleel
+  // Champion", id 589) is still found by the recommended tile, which looks up by
+  // the base set's display name (e.g. "Saxhleel Champion", id 585). Mirrors the
+  // strip-"Perfected" fallback in findSetIdByName.
   const addSetToAssignments = useCallback(
     (assignments: Map<string, string[]>, setId: KnownSetIDs | undefined, label: string): void => {
-      if (setId) {
-        const setName = getSetDisplayName(setId);
-        const existing = assignments.get(setName) || [];
-        assignments.set(setName, [...existing, label]);
+      if (!setId) return;
+      const setName = getSetDisplayName(setId);
+      const keys = new Set<string>([setName]);
+      const baseName = setName.replace(/^Perfected\s+/i, '');
+      if (baseName !== setName) keys.add(baseName);
+      for (const key of keys) {
+        const existing = assignments.get(key) || [];
+        assignments.set(key, [...existing, label]);
       }
     },
     [],

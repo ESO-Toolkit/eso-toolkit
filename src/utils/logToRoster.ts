@@ -129,7 +129,10 @@ function categorizeSets(gear: LogGearItem[]): {
     }
   }
 
-  // Consolidate perfected/non-perfected variants
+  // Consolidate perfected/non-perfected variants. Sum the pieces under the base
+  // name for counting, but key the result by the PERFECTED display name when the
+  // player actually wore a perfected piece — so the downstream findSetIdByName
+  // resolves to the perfected set ID instead of silently downgrading to the base.
   const setCountMap = new Map<string, number>();
   const processedNormalized = new Set<string>();
 
@@ -142,7 +145,7 @@ function categorizeSets(gear: LogGearItem[]): {
     const perfectedName = perfectedVersions.get(normalized);
     if (perfectedName) totalCount += rawCountMap.get(perfectedName) ?? 0;
     totalCount += rawCountMap.get(normalized) ?? 0;
-    setCountMap.set(normalized, totalCount);
+    setCountMap.set(perfectedName ?? normalized, totalCount);
   });
 
   const fivePieceSets: string[] = [];
@@ -158,24 +161,34 @@ function categorizeSets(gear: LogGearItem[]): {
 
   setCountMap.forEach((count, setName) => {
     const setId = findSetIdByName(setName);
+    // Classify by membership, but some curated arrays only list one variant of a
+    // perfected/non-perfected pair (e.g. ALL_5PIECE_SETS has CLAW_OF_YOLNAHKRIIN
+    // but not its perfected ID). Fall back to the base-name ID for membership so
+    // a perfected piece is categorized the same as its base — while `setName`
+    // (the perfected display name) still carries the perfected ID into storage.
+    const baseId = isPerfected(setName) ? findSetIdByName(normalizeSetName(setName)) : undefined;
+    const inArray = (arr: readonly KnownSetIDs[]): boolean =>
+      (setId !== undefined && arr.includes(setId)) ||
+      (baseId !== undefined && arr.includes(baseId));
+
     if (setId && excludedSetIds.has(setId)) return;
 
     // Arena weapon detection
-    if (setId && (ARENA_WEAPON_SETS as readonly KnownSetIDs[]).includes(setId)) {
-      arenaWeapon = getSetDisplayName(setId);
+    if (inArray(ARENA_WEAPON_SETS as readonly KnownSetIDs[])) {
+      arenaWeapon = getSetDisplayName(setId ?? (baseId as KnownSetIDs));
       return;
     }
 
     // DPS mythic detection
-    if (setId && (DPS_MYTHIC_SETS as readonly KnownSetIDs[]).includes(setId)) {
-      dpsMythic = setId;
+    if (inArray(DPS_MYTHIC_SETS as readonly KnownSetIDs[])) {
+      dpsMythic = setId ?? baseId;
       return;
     }
 
     // Monster/mythic sets (2-piece and 1-piece support mythics)
-    if (setId && MONSTER_SETS.includes(setId)) {
+    if (inArray(MONSTER_SETS)) {
       monsterSets.push(setName);
-    } else if (setId && count >= 5 && ALL_5PIECE_SETS.includes(setId)) {
+    } else if (count >= 5 && inArray(ALL_5PIECE_SETS)) {
       fivePieceSets.push(setName);
     } else {
       otherSets.push(setName);

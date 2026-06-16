@@ -65,10 +65,10 @@ export const SET_DISPLAY_NAMES: Record<KnownSetIDs, string> = {
   // ============================================================
   [KnownSetIDs.ROAR_OF_ALKOSH]: 'Alkosh',
   [KnownSetIDs.WAR_MACHINE]: 'War Machine',
-  [KnownSetIDs.CLAW_OF_YOLNAHKRIIN]: 'Yolnahkriin',
-  [KnownSetIDs.PERFECTED_CLAW_OF_YOLNAHKRIIN]: 'Claw of Yolnahkriin',
+  [KnownSetIDs.CLAW_OF_YOLNAHKRIIN]: 'Claw of Yolnahkriin',
+  [KnownSetIDs.PERFECTED_CLAW_OF_YOLNAHKRIIN]: 'Perfected Claw of Yolnahkriin',
   [KnownSetIDs.DRAKES_RUSH]: "Drake's Rush",
-  [KnownSetIDs.PERFECTED_SAXHLEEL_CHAMPION]: 'Saxhleel Champion',
+  [KnownSetIDs.PERFECTED_SAXHLEEL_CHAMPION]: 'Perfected Saxhleel Champion',
   [KnownSetIDs.PEARLESCENT_WARD]: 'Pearlescent Ward',
   [KnownSetIDs.PILLAGERS_PROFIT]: "Pillager's Profit",
   [KnownSetIDs.PERFECTED_PILLAGERS_PROFIT]: "Perfected Pillager's Profit",
@@ -115,7 +115,7 @@ export const SET_DISPLAY_NAMES: Record<KnownSetIDs, string> = {
   [KnownSetIDs.PERFECTED_ANSUULS_TORMENT]: "Perfected Ansuul's Torment",
   [KnownSetIDs.SLIVERS_OF_THE_NULL_ARCA]: 'Slivers of the Null Arca',
   [KnownSetIDs.PERFECTED_SLIVERS_OF_THE_NULL_ARCA]: 'Perfected Slivers of the Null Arca',
-  [KnownSetIDs.PERFECTED_XORYNS_MASTERPIECE]: "Xoryn's Masterpiece",
+  [KnownSetIDs.PERFECTED_XORYNS_MASTERPIECE]: "Perfected Xoryn's Masterpiece",
   [KnownSetIDs.TIDEBORN_WILDSTALKER]: 'Tide-Born Wildstalker',
 
   // ============================================================
