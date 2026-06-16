@@ -260,6 +260,7 @@ export const perfectedThunderousVolley: GearSetData = {
   icon: 'Perfected Thunderous Volley',
   setType: 'Arena',
   bonuses: [
+    '(2 items) Adds 526 Critical Chance',
     '(2 items) Increases the damage Volley deals by 430 each tick. This bonus increases by 191 every time Volley ticks, up to a maximum of 8 times.',
   ],
 };
