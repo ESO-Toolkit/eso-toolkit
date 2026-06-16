@@ -1921,7 +1921,10 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
         slotProps={{
           paper: {
             sx: {
-              maxHeight: 560,
+              // Never taller than the visible viewport (dvh accounts for the
+              // mobile browser toolbars), so the popover can't run off-screen and
+              // force the page behind it to scroll to reveal the lower roles.
+              maxHeight: 'min(560px, calc(100dvh - 24px))',
               minWidth: { xs: 'calc(100vw - 32px)', sm: 500 },
               borderRadius: '14px',
               border: isDarkMode
@@ -1933,13 +1936,29 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
                 ? '0 24px 64px rgba(0,0,0,0.85), 0 0 0 1px rgba(255,255,255,0.04), inset 0 1px 0 rgba(255,255,255,0.06)'
                 : '0 16px 48px rgba(0,0,0,0.12), 0 4px 12px rgba(0,0,0,0.06)',
               overflow: 'hidden',
+              display: 'flex',
+              flexDirection: 'column',
+            },
+          },
+          // Lay the menu list out as a flex column so the header can stay pinned
+          // while only the body scrolls. Drop the default MenuList vertical
+          // padding so the header sits flush against the paper edge.
+          list: {
+            sx: {
+              p: 0,
+              display: 'flex',
+              flexDirection: 'column',
+              flex: 1,
+              minHeight: 0,
+              overflow: 'hidden',
             },
           },
         }}
       >
-        {/* Header */}
+        {/* Header — pinned so it stays visible while the body scrolls */}
         <Box
           sx={{
+            flexShrink: 0,
             px: 2,
             py: 1.5,
             background: isDarkMode
@@ -1970,9 +1989,15 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
           </Typography>
         </Box>
 
-        {/* Two-column body */}
+        {/* Two-column body — the only scrollable region. overscroll-behavior
+            keeps a touch scroll from chaining to the page behind the popover. */}
         <Box
           sx={{
+            flex: 1,
+            minHeight: 0,
+            overflowY: 'auto',
+            overscrollBehavior: 'contain',
+            WebkitOverflowScrolling: 'touch',
             px: { xs: 1, sm: 1.5 },
             pt: 1.25,
             pb: 1.25,
