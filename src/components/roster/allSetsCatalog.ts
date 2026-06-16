@@ -215,22 +215,46 @@ const _tooltipCache = new Map<KnownSetIDs, GearSetTooltipProps>();
  * the sets the catalog can't name-match (shown with the roster name + type, and
  * any bonuses we did capture). Memoized per set id.
  */
+const ROLE_LABEL: Record<SetRole, string> = {
+  tank: 'Tank',
+  healer: 'Healer',
+  both: 'Tank / Healer',
+};
+const SLOT_LABEL: Record<SetSlotKind, string> = {
+  fivePiece: '5-piece · Body set (Set 1 / Set 2 slot)',
+  monster: '1–2 piece · Monster / Mythic slot',
+};
+
 export function getSetTooltipProps(set: AssignableSet): GearSetTooltipProps {
   const cached = _tooltipCache.get(set.id);
   if (cached) return cached;
 
   const mapped = getGearSetTooltipPropsByName(set.catalogName, 0);
-  const props: GearSetTooltipProps = mapped ?? {
-    headerBadge: set.setType === 'Other' ? undefined : set.setType,
-    setName: set.name,
-    setBonuses: set.bonuses.map((bonus) => {
+
+  let props: GearSetTooltipProps;
+  if (mapped && mapped.setBonuses.length > 0) {
+    props = mapped;
+  } else {
+    // No catalog bonuses for this set — build an informative card from what we
+    // know (type/role/slot) so the tooltip never reads as broken/empty.
+    const ownBonuses = set.bonuses.map((bonus) => {
       const m = bonus.match(/\((\d+)\s*items?\)/i);
       return {
         pieces: m ? m[0] : '',
         effect: bonus.replace(/\(\d+\s*items?\)\s*/i, '').trim(),
       };
-    }),
-  };
+    });
+    props = {
+      headerBadge: set.setType === 'Other' ? ROLE_LABEL[set.role] : set.setType,
+      setName: set.name,
+      lineText: SLOT_LABEL[set.slotKind],
+      setBonuses: ownBonuses,
+      description:
+        ownBonuses.length === 0
+          ? 'Set bonus details aren’t in the gear catalog yet. You can still assign this set to a slot.'
+          : undefined,
+    };
+  }
   // Always show the roster's own name, even when the catalog canonical differs.
   props.setName = set.name;
   _tooltipCache.set(set.id, props);

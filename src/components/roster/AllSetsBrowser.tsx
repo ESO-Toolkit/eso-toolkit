@@ -86,17 +86,20 @@ const SetRow: React.FC<SetRowProps> = ({ set, isDark, assignedTo, roleColors, on
         ? roleColors.healer
         : roleColors.dps;
 
-  // Rich hover card (icon + type badge + set bonuses), shared with the rest of
-  // the app. Built once per set (memoized in the catalog module).
+  // Rich hover card (type badge + set bonuses), shared with the rest of the app.
+  // Built once per set (memoized in the catalog module). Hover-only: on touch a
+  // tap is the assign action (the popover), so the tooltip's touch trigger is
+  // suppressed via a long enterTouchDelay rather than firing on every tap.
   const tooltipProps = useMemo(() => getSetTooltipProps(set), [set]);
 
   return (
     <Tooltip
       title={<GearSetTooltip {...tooltipProps} />}
-      placement="left"
-      enterDelay={250}
-      enterTouchDelay={0}
-      leaveTouchDelay={3000}
+      placement="top"
+      enterDelay={300}
+      enterNextDelay={150}
+      enterTouchDelay={700}
+      leaveTouchDelay={2500}
       slotProps={RICH_TOOLTIP_SLOT_PROPS}
     >
       <ButtonBase
@@ -106,9 +109,10 @@ const SetRow: React.FC<SetRowProps> = ({ set, isDark, assignedTo, roleColors, on
         }
         sx={{
           width: '100%',
-          py: 0.75,
+          py: { xs: 1.1, sm: 0.75 },
           pl: 1,
           pr: 0.75,
+          minHeight: { xs: 44, sm: 0 },
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -293,8 +297,22 @@ const AllSetsBrowserInner: React.FC<AllSetsBrowserProps> = ({
         </Box>
       </Stack>
 
-      {/* Content-type tabs */}
-      <Box sx={{ display: 'flex', gap: 0.5, mb: 1.5, flexWrap: 'wrap', rowGap: 0.5 }}>
+      {/* Content-type tabs — wrap on desktop, horizontal-scroll on mobile so
+          they never eat several rows of vertical space on a phone. */}
+      <Box
+        sx={{
+          display: 'flex',
+          gap: 0.5,
+          mb: 1.5,
+          flexWrap: { xs: 'nowrap', sm: 'wrap' },
+          rowGap: 0.5,
+          overflowX: { xs: 'auto', sm: 'visible' },
+          pb: { xs: 0.5, sm: 0 },
+          WebkitOverflowScrolling: 'touch',
+          scrollbarWidth: 'none',
+          '&::-webkit-scrollbar': { display: 'none' },
+        }}
+      >
         {tabs.map((tab) => {
           const isActive = activeTab === tab;
           const label = tab === 'all' ? 'All' : tab;
@@ -360,7 +378,14 @@ const AllSetsBrowserInner: React.FC<AllSetsBrowserProps> = ({
       </Box>
 
       {/* Set list */}
-      <Box sx={{ maxHeight: 460, overflowY: 'auto', pr: 0.5 }}>
+      <Box
+        sx={{
+          maxHeight: { xs: '55vh', sm: 460 },
+          overflowY: 'auto',
+          pr: 0.5,
+          WebkitOverflowScrolling: 'touch',
+        }}
+      >
         {visibleSets.length === 0 ? (
           <Typography
             sx={{
