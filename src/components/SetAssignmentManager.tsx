@@ -22,8 +22,6 @@ import {
   Menu,
   MenuItem,
   useTheme,
-  Button,
-  ButtonGroup,
   IconButton,
 } from '@mui/material';
 import React, { useMemo, useState, useCallback } from 'react';
@@ -45,8 +43,6 @@ import {
   HEALER_SETS,
   FLEXIBLE_SETS,
   FIVE_PIECE_BASE_VARIANTS,
-  MONSTER_SETS,
-  ALL_5PIECE_SETS,
   SetCategory,
   TankSetup,
   HealerSetup,
@@ -61,6 +57,9 @@ import { DARK_ROLE_COLORS, LIGHT_ROLE_COLORS_SOLID } from '../utils/roleColors';
 import { getSetDisplayName, findSetIdByName } from '../utils/setNameUtils';
 import type { SlotKey } from '../utils/slotKey';
 import { makeSlotKey } from '../utils/slotKey';
+
+import { AllSetsBrowser } from './roster/AllSetsBrowser';
+import { getSlotKindForSetName } from './roster/allSetsCatalog';
 
 const logger = new Logger({ level: LogLevel.WARN, contextPrefix: 'SetAssignmentManager' });
 
@@ -129,12 +128,35 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
   const [assignMenuAnchor, setAssignMenuAnchor] = useState<null | HTMLElement>(null);
   const [selectedSetForAssign, setSelectedSetForAssign] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<number>(0);
-  const [roleFilter, setRoleFilter] = useState<'all' | 'tank' | 'healer'>('all');
 
   // Convert selected set name to ID for validation
   const selectedSetId = useMemo(() => {
     return selectedSetForAssign ? findSetIdByName(selectedSetForAssign) : undefined;
   }, [selectedSetForAssign]);
+
+  // Slot kind for the selected set, from the full assignable catalog. Generalizes
+  // the curated-only canAssignTo* checks so any assignable set (not just the ~35
+  // recommended support sets) offers the correct slot(s) in the popover.
+  const selectedSlotKind = useMemo(
+    () => (selectedSetForAssign ? getSlotKindForSetName(selectedSetForAssign) : null),
+    [selectedSetForAssign],
+  );
+
+  // Can the selected set go in a 5-piece (Set 1 / Set 2) slot?
+  const selectedAllowsFivePiece = useMemo(
+    () =>
+      (selectedSetId !== undefined && canAssignToFivePieceSlot(selectedSetId)) ||
+      selectedSlotKind === 'fivePiece',
+    [selectedSetId, selectedSlotKind],
+  );
+
+  // Can the selected set go in the Monster slot?
+  const selectedAllowsMonster = useMemo(
+    () =>
+      (selectedSetId !== undefined && canAssignToMonsterSlot(selectedSetId)) ||
+      selectedSlotKind === 'monster',
+    [selectedSetId, selectedSlotKind],
+  );
 
   const handleTabChange = (newValue: number): void => {
     setActiveTab(newValue);
@@ -534,50 +556,6 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
     return assignments;
   }, [setAssignments]);
 
-  const allSets = useMemo(() => {
-    const sets: SetAssignment[] = [];
-    const addedSetNames = new Set<string>();
-    const recommendedSetIds = RECOMMENDED_SETS as readonly KnownSetIDs[];
-
-    // Helper to add a set if not already added
-    const addSet = (setName: string, category: SetCategory): void => {
-      if (!addedSetNames.has(setName)) {
-        addedSetNames.add(setName);
-        sets.push({
-          setName,
-          assignedTo: setAssignments.get(setName) || [],
-          isRecommended: false,
-          category,
-        });
-      }
-    };
-
-    // Helper to process a set category
-    const processSets = (
-      setList: readonly KnownSetIDs[],
-      category: SetCategory,
-      requireFivePieceCheck: boolean = true,
-    ): void => {
-      setList.forEach((setId) => {
-        const setName = getSetDisplayName(setId);
-        const isRecommended = recommendedSetIds.includes(setId);
-        const is5PieceCompatible = !requireFivePieceCheck || ALL_5PIECE_SETS.includes(setId);
-
-        if (!isRecommended && is5PieceCompatible) {
-          addSet(setName, category);
-        }
-      });
-    };
-
-    // Process all set categories
-    processSets(TANK_SETS, SetCategory.TANK);
-    processSets(HEALER_SETS, SetCategory.HEALER);
-    processSets(FLEXIBLE_SETS, SetCategory.FLEXIBLE);
-    processSets(MONSTER_SETS, SetCategory.MONSTER, false);
-
-    return sets;
-  }, [setAssignments]);
-
   // Helper to extract all gear set names from a setup
   const getTankGearSets = useCallback((tank: TankSetup): (string | undefined)[] => {
     return [
@@ -637,7 +615,7 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
   );
 
   const handleSetClick = useCallback(
-    (setName: string, event: React.MouseEvent<HTMLDivElement>): void => {
+    (setName: string, event: React.MouseEvent<HTMLElement>): void => {
       // Left-click: Open assignment menu
       setSelectedSetForAssign(setName);
       setAssignMenuAnchor(event.currentTarget);
@@ -694,11 +672,13 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
         return;
       }
 
-      // Validate slot restrictions
+      // Validate slot restrictions. Curated support sets pass the canAssignTo*
+      // checks; any other assignable set is classified by the catalog slotKind
+      // so the All Sets browser can assign it to the correct slot too.
+      const slotKind = getSlotKindForSetName(selectedSetForAssign);
       if (slot === 'monster') {
-        // Monster slot can only accept monster sets (2-piece)
-        if (!canAssignToMonsterSlot(setId)) {
-          // Invalid assignment - log and ignore
+        // Monster slot can only accept monster/mythic sets
+        if (!canAssignToMonsterSlot(setId) && slotKind !== 'monster') {
           logger.warn('Cannot assign 5-piece set to monster slot:', selectedSetForAssign);
           setAssignMenuAnchor(null);
           setSelectedSetForAssign(null);
@@ -706,8 +686,7 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
         }
       } else if (slot === 'set1' || slot === 'set2') {
         // Set1/Set2 slots can only accept 5-piece sets
-        if (!canAssignToFivePieceSlot(setId)) {
-          // Invalid assignment - log and ignore
+        if (!canAssignToFivePieceSlot(setId) && slotKind !== 'fivePiece') {
           logger.warn(`Cannot assign monster/mythic set to ${slot} slot:`, selectedSetForAssign);
           setAssignMenuAnchor(null);
           setSelectedSetForAssign(null);
@@ -1130,19 +1109,23 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
               {label} {'\u00B7'} Tank {index + 1}
             </Typography>
           </Box>
-          {selectedSetId && canAssignToFivePieceSlot(selectedSetId) && (
+          {selectedAllowsFivePiece && (
             <>
               {renderTankSlotMenuItem(tank, slotKey, 'set1', color)}
               {renderTankSlotMenuItem(tank, slotKey, 'set2', color)}
             </>
           )}
-          {selectedSetId &&
-            canAssignToMonsterSlot(selectedSetId) &&
-            renderTankSlotMenuItem(tank, slotKey, 'monster', color)}
+          {selectedAllowsMonster && renderTankSlotMenuItem(tank, slotKey, 'monster', color)}
         </Box>
       );
     },
-    [roleColors, isDarkMode, selectedSetId, renderTankSlotMenuItem],
+    [
+      roleColors,
+      isDarkMode,
+      selectedAllowsFivePiece,
+      selectedAllowsMonster,
+      renderTankSlotMenuItem,
+    ],
   );
 
   // Render all 3 gear slots for a single healer in the assignment menu
@@ -1202,19 +1185,23 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
               {label} {'\u00B7'} Healer {index + 1}
             </Typography>
           </Box>
-          {selectedSetId && canAssignToFivePieceSlot(selectedSetId) && (
+          {selectedAllowsFivePiece && (
             <>
               {renderHealerSlotMenuItem(healer, slotKey, 'set1', color)}
               {renderHealerSlotMenuItem(healer, slotKey, 'set2', color)}
             </>
           )}
-          {selectedSetId &&
-            canAssignToMonsterSlot(selectedSetId) &&
-            renderHealerSlotMenuItem(healer, slotKey, 'monster', color)}
+          {selectedAllowsMonster && renderHealerSlotMenuItem(healer, slotKey, 'monster', color)}
         </Box>
       );
     },
-    [roleColors, isDarkMode, selectedSetId, renderHealerSlotMenuItem],
+    [
+      roleColors,
+      isDarkMode,
+      selectedAllowsFivePiece,
+      selectedAllowsMonster,
+      renderHealerSlotMenuItem,
+    ],
   );
 
   return (
@@ -1923,123 +1910,14 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
         </Box>
       )}
 
-      {/* Tab Panel 1: All Sets (Advanced) */}
+      {/* Tab Panel 1: All Sets — full assignable-catalog browser */}
       {activeTab === 1 && (
-        <Box>
-          {/* Role Filter Buttons */}
-          <Box sx={{ mb: 2, display: 'flex', gap: 2, alignItems: 'center' }}>
-            <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
-              Filter by Role:
-            </Typography>
-            <ButtonGroup size="small" variant="outlined">
-              <Button
-                variant={roleFilter === 'all' ? 'contained' : 'outlined'}
-                onClick={() => setRoleFilter('all')}
-              >
-                All Sets
-              </Button>
-              <Button
-                variant={roleFilter === 'tank' ? 'contained' : 'outlined'}
-                onClick={() => setRoleFilter('tank')}
-                sx={{ color: roleFilter === 'tank' ? 'white' : roleColors.tank }}
-              >
-                Tank Sets
-              </Button>
-              <Button
-                variant={roleFilter === 'healer' ? 'contained' : 'outlined'}
-                onClick={() => setRoleFilter('healer')}
-                sx={{ color: roleFilter === 'healer' ? 'white' : roleColors.healer }}
-              >
-                Healer Sets
-              </Button>
-            </ButtonGroup>
-          </Box>
-
-          {/* Legend */}
-          <Paper variant="outlined" sx={{ p: 1.5, mb: 2, bgcolor: 'action.hover' }}>
-            <Typography variant="caption" sx={{ fontWeight: 'bold', display: 'block', mb: 0.5 }}>
-              Legend:
-            </Typography>
-            <Stack direction="row" spacing={2} sx={{ flexWrap: 'wrap' }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                <ShieldIcon sx={{ fontSize: 14, color: roleColors.tank }} />
-                <Typography variant="caption">Tank-specific set</Typography>
-              </Box>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                <FavoriteIcon sx={{ fontSize: 14, color: roleColors.healer }} />
-                <Typography variant="caption">Healer-specific set</Typography>
-              </Box>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                <SwapHorizIcon sx={{ fontSize: 14, color: 'text.secondary' }} />
-                <Typography variant="caption">Flexible (Tank/Healer)</Typography>
-              </Box>
-            </Stack>
-          </Paper>
-
-          {/* Filtered Sets */}
-          {(roleFilter === 'all' || roleFilter === 'tank') && (
-            <Box sx={{ mb: 2 }}>
-              <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 1 }}>
-                Tank Sets
-              </Typography>
-              <Box>
-                {allSets
-                  .filter((s) => s.category === SetCategory.TANK)
-                  .map((a) => renderSetChip(a))}
-              </Box>
-            </Box>
-          )}
-
-          {(roleFilter === 'all' || roleFilter === 'healer') && (
-            <Box sx={{ mb: 2 }}>
-              <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 1 }}>
-                Healer Sets
-              </Typography>
-              <Box>
-                {allSets
-                  .filter((s) => s.category === SetCategory.HEALER)
-                  .map((a) => renderSetChip(a))}
-              </Box>
-            </Box>
-          )}
-
-          {roleFilter === 'all' && (
-            <>
-              {/* Flexible Sets */}
-              <Box sx={{ mb: 2 }}>
-                <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 1 }}>
-                  Flexible (Tank/Healer)
-                </Typography>
-                <Box>
-                  {allSets
-                    .filter((s) => s.category === SetCategory.FLEXIBLE)
-                    .map((a) => renderSetChip(a))}
-                </Box>
-              </Box>
-
-              {/* Monster Sets */}
-              <Box>
-                <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 1 }}>
-                  Monster Sets
-                </Typography>
-                <Box>
-                  {allSets
-                    .filter((s) => s.category === SetCategory.MONSTER)
-                    .map((a) => renderSetChip(a))}
-                </Box>
-              </Box>
-            </>
-          )}
-
-          {/* Quick Stats */}
-          <Box sx={{ mt: 2, p: 1, bgcolor: 'action.hover', borderRadius: 1 }}>
-            <Stack direction="row" spacing={3} sx={{ justifyContent: 'center' }}>
-              <Typography variant="caption">
-                <strong>Total Sets Assigned:</strong> {setAssignments.size}
-              </Typography>
-            </Stack>
-          </Box>
-        </Box>
+        <AllSetsBrowser
+          isDarkMode={isDarkMode}
+          roleColors={roleColors}
+          assignments={setAssignments}
+          onSetClick={handleSetClick}
+        />
       )}
 
       {/* Assignment Menu */}
@@ -2050,7 +1928,10 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
         slotProps={{
           paper: {
             sx: {
-              maxHeight: 560,
+              // Never taller than the visible viewport (dvh accounts for the
+              // mobile browser toolbars), so the popover can't run off-screen and
+              // force the page behind it to scroll to reveal the lower roles.
+              maxHeight: 'min(560px, calc(100dvh - 24px))',
               minWidth: { xs: 'calc(100vw - 32px)', sm: 500 },
               borderRadius: '14px',
               border: isDarkMode
@@ -2062,13 +1943,29 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
                 ? '0 24px 64px rgba(0,0,0,0.85), 0 0 0 1px rgba(255,255,255,0.04), inset 0 1px 0 rgba(255,255,255,0.06)'
                 : '0 16px 48px rgba(0,0,0,0.12), 0 4px 12px rgba(0,0,0,0.06)',
               overflow: 'hidden',
+              display: 'flex',
+              flexDirection: 'column',
+            },
+          },
+          // Lay the menu list out as a flex column so the header can stay pinned
+          // while only the body scrolls. Drop the default MenuList vertical
+          // padding so the header sits flush against the paper edge.
+          list: {
+            sx: {
+              p: 0,
+              display: 'flex',
+              flexDirection: 'column',
+              flex: 1,
+              minHeight: 0,
+              overflow: 'hidden',
             },
           },
         }}
       >
-        {/* Header */}
+        {/* Header — pinned so it stays visible while the body scrolls */}
         <Box
           sx={{
+            flexShrink: 0,
             px: 2,
             py: 1.5,
             background: isDarkMode
@@ -2099,9 +1996,15 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
           </Typography>
         </Box>
 
-        {/* Two-column body */}
+        {/* Two-column body — the only scrollable region. overscroll-behavior
+            keeps a touch scroll from chaining to the page behind the popover. */}
         <Box
           sx={{
+            flex: 1,
+            minHeight: 0,
+            overflowY: 'auto',
+            overscrollBehavior: 'contain',
+            WebkitOverflowScrolling: 'touch',
             px: { xs: 1, sm: 1.5 },
             pt: 1.25,
             pb: 1.25,
