@@ -343,9 +343,31 @@ const SET_NAME_TO_ID_INDEX: ReadonlyMap<string, KnownSetIDs> = new Map(
   ]),
 );
 
+// Lowercase base names that actually HAVE a "Perfected <base>" entry in
+// SET_DISPLAY_NAMES (e.g. "saxhleel champion" → because "Perfected Saxhleel
+// Champion" exists). Used to gate the strip-"Perfected" fallback so it only
+// fires for sets with a real perfected variant — "Perfected Alkosh" (no such
+// variant) and "Perfected Perfected X" (double prefix) resolve to undefined
+// instead of silently masking the typo.
+const BASE_NAMES_WITH_PERFECTED_VARIANT: ReadonlySet<string> = new Set(
+  Object.values(SET_DISPLAY_NAMES)
+    .map((name) => name.toLowerCase())
+    .filter((name) => name.startsWith('perfected '))
+    .map((name) => name.slice('perfected '.length)),
+);
+
 /**
- * Find a set ID by its display name (case-insensitive, handles variations)
- * Returns undefined if not found
+ * Find a set ID by its display name (case-insensitive, handles variations).
+ * Returns undefined if not found.
+ *
+ * Resolution order:
+ *   1. Exact (case-insensitive) match against a display name — covers both base
+ *      and "Perfected …" names that are themselves catalog entries.
+ *   2. Fallback: an unrecognized "Perfected <base>" resolves to its base ID, but
+ *      ONLY when <base> is a real set that actually has a perfected variant. This
+ *      lets log-import/legacy strings like "Perfected <base>" map to the base ID
+ *      when the perfected display name isn't a catalog key, while rejecting typos
+ *      ("Perfected Alkosh") and malformed input ("Perfected Perfected X").
  */
 export function findSetIdByName(displayName: string | undefined | null): KnownSetIDs | undefined {
   if (!displayName) return undefined;
@@ -356,9 +378,19 @@ export function findSetIdByName(displayName: string | undefined | null): KnownSe
   const direct = SET_NAME_TO_ID_INDEX.get(normalized);
   if (direct !== undefined) return direct;
 
-  // Strip "Perfected" prefix and try again — handles inputs like "Perfected Saxhleel Champion"
+  // Strip a single "Perfected " prefix and retry against the BASE name — but
+  // only for sets that genuinely have a perfected variant. This guards against
+  // "Perfected <set-without-a-perfected-variant>" and stacked "Perfected "
+  // prefixes, both of which should be treated as unknown rather than silently
+  // resolved to a base set the user didn't intend.
   const withoutPerfected = normalized.replace(/^perfected\s+/, '');
-  if (withoutPerfected !== normalized) return SET_NAME_TO_ID_INDEX.get(withoutPerfected);
+  if (
+    withoutPerfected !== normalized &&
+    !withoutPerfected.startsWith('perfected ') &&
+    BASE_NAMES_WITH_PERFECTED_VARIANT.has(withoutPerfected)
+  ) {
+    return SET_NAME_TO_ID_INDEX.get(withoutPerfected);
+  }
 
   return undefined;
 }

@@ -48,6 +48,7 @@ import {
   isHealer5PieceSet,
   isFlexible5PieceSet,
 } from './shared/rosterCardHelpers';
+import { SetGearAutocomplete } from './shared/SetGearAutocomplete';
 import { SlotActionPill } from './shared/slot-action-pill';
 import { SlotFullModePanel } from './SlotFullModePanel';
 
@@ -212,85 +213,48 @@ export const HealerCard = React.memo<HealerCardProps>(
                 <Stack spacing={1.5}>
                   <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
                     <Box sx={{ flex: '1 1 45%', minWidth: 200 }}>
-                      <Autocomplete
-                        freeSolo
-                        size="small"
+                      <SetGearAutocomplete
                         options={HEALER_5PIECE_OPTIONS}
                         value={healer.set1 ? getSetDisplayName(healer.set1) : ''}
-                        onChange={(_, value) =>
-                          onChange({ set1: value ? findSetIdByName(value) : undefined })
-                        }
+                        onResolve={(setId) => onChange({ set1: setId })}
                         groupBy={(option) => {
                           const setId = findSetIdByName(option);
                           if (setId && isHealer5PieceSet(setId)) return 'Healer Sets';
                           if (setId && isFlexible5PieceSet(setId)) return 'Hybrid Sets';
                           return 'Other';
                         }}
-                        renderInput={(params) => (
-                          <TextField
-                            {...params}
-                            size="small"
-                            label="Primary Set (Body)"
-                            placeholder="e.g., Stone-Talker's Oath"
-                            sx={glassSx}
-                          />
-                        )}
-                        renderOption={(props, option) => <li {...props}>{option}</li>}
+                        label="Primary Set (Body)"
+                        placeholder="e.g., Stone-Talker's Oath"
+                        sx={glassSx}
                       />
                     </Box>
                     <Box sx={{ flex: '1 1 45%', minWidth: 200 }}>
-                      <Autocomplete
-                        freeSolo
-                        size="small"
+                      <SetGearAutocomplete
                         options={HEALER_5PIECE_OPTIONS}
                         value={healer.set2 ? getSetDisplayName(healer.set2) : ''}
-                        onChange={(_, value) =>
-                          onChange({ set2: value ? findSetIdByName(value) : undefined })
-                        }
+                        onResolve={(setId) => onChange({ set2: setId })}
                         groupBy={(option) => {
                           const setId = findSetIdByName(option);
                           if (setId && isHealer5PieceSet(setId)) return 'Healer Sets';
                           if (setId && isFlexible5PieceSet(setId)) return 'Hybrid Sets';
                           return 'Other';
                         }}
-                        renderInput={(params) => (
-                          <TextField
-                            {...params}
-                            size="small"
-                            label="Secondary Set (Jewelry)"
-                            placeholder="e.g., Worm's Raiment"
-                            sx={glassSx}
-                          />
-                        )}
-                        renderOption={(props, option) => <li {...props}>{option}</li>}
+                        label="Secondary Set (Jewelry)"
+                        placeholder="e.g., Worm's Raiment"
+                        sx={glassSx}
                       />
                     </Box>
                   </Box>
                   <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
                     <Box sx={{ flex: '1 1 45%', minWidth: 200 }}>
-                      <Autocomplete
-                        freeSolo
-                        size="small"
+                      <SetGearAutocomplete
                         options={HEALER_MONSTER_OPTIONS}
                         value={healer.monsterSet ? getSetDisplayName(healer.monsterSet) : ''}
-                        onChange={(_, value) =>
-                          onChange({
-                            monsterSet: value ? findSetIdByName(value) : undefined,
-                          })
-                        }
-                        groupBy={(_option) => {
-                          return 'Monster Sets';
-                        }}
-                        renderInput={(params) => (
-                          <TextField
-                            {...params}
-                            size="small"
-                            label="Monster/Mythic Set"
-                            placeholder="e.g., Symphony of Blades"
-                            sx={glassSx}
-                          />
-                        )}
-                        renderOption={(props, option) => <li {...props}>{option}</li>}
+                        onResolve={(setId) => onChange({ monsterSet: setId })}
+                        groupBy={() => 'Monster Sets'}
+                        label="Monster/Mythic Set"
+                        placeholder="e.g., Symphony of Blades"
+                        sx={glassSx}
                       />
                     </Box>
                   </Box>

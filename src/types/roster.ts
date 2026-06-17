@@ -437,8 +437,11 @@ export interface SupportSet {
 export const QUICK_TANK_5PIECE_SETS: readonly KnownSetIDs[] = [
   KnownSetIDs.LUCENT_ECHOES, // 25.8% (Tank: 45%, Healer: 9%)
   KnownSetIDs.PEARLESCENT_WARD, // 29.0% (Tank: 52%, Healer: 9%)
-  KnownSetIDs.SAXHLEEL_CHAMPION, // 11.3% (Tank: 21%, Healer: 3%)
-  KnownSetIDs.XORYNS_MASTERPIECE, // Tank set
+  // Perfected variants, to match TANK_5PIECE_SETS (the slot-card picker) so both
+  // pickers offer and store the same set ID. (Endgame tanks run the perfected
+  // versions; role detection already recognizes both base and perfected.)
+  KnownSetIDs.PERFECTED_SAXHLEEL_CHAMPION, // 11.3% (Tank: 21%, Healer: 3%)
+  KnownSetIDs.PERFECTED_XORYNS_MASTERPIECE, // Tank set
   KnownSetIDs.CLAW_OF_YOLNAHKRIIN, // 17.7% (Tank: 31%, Healer: 6%)
 ] as const;
 
@@ -654,6 +657,20 @@ export const RECOMMENDED_SETS: readonly KnownSetIDs[] = [
 ] as const;
 
 /**
+ * Base (non-perfected) variants of 5-piece sets whose PERFECTED form is what the
+ * pickers offer (see QUICK_TANK_5PIECE_SETS / TANK_5PIECE_SETS). The pickers
+ * deliberately list only the perfected variant, but a roster can still legitimately
+ * hold the base ID — from an older shared `?r=` URL, a base-set log import, or a
+ * hand-typed base name. These base IDs must therefore still count as valid 5-piece
+ * sets for membership/classification (canAssignToFivePieceSlot, is5PieceSet, log
+ * import categorization) even though they are not surfaced as separate picker rows.
+ */
+export const FIVE_PIECE_BASE_VARIANTS: readonly KnownSetIDs[] = [
+  KnownSetIDs.SAXHLEEL_CHAMPION, // perfected variant (589) is in the pickers
+  KnownSetIDs.XORYNS_MASTERPIECE, // perfected variant (770) is in the pickers
+] as const;
+
+/**
  * Slot type restrictions for set assignment
  * Defines which sets can be assigned to which slots
  */
@@ -669,7 +686,9 @@ export interface SetSlotRestrictions {
  * Note: Monster slot accepts both 2-piece monster sets and 1-piece mythic sets
  */
 export const SET_SLOT_RESTRICTIONS: SetSlotRestrictions = {
-  fivePieceSets: RECOMMENDED_5PIECE_SETS,
+  // Include the base variants for membership so a base-stored Saxhleel/Xoryn is
+  // still recognized as 5-piece (the pickers themselves stay perfected-only).
+  fivePieceSets: [...RECOMMENDED_5PIECE_SETS, ...FIVE_PIECE_BASE_VARIANTS],
   monsterSets: [...RECOMMENDED_2PIECE_SETS, ...RECOMMENDED_1PIECE_SETS],
   flexibleSets: RECOMMENDED_1PIECE_SETS,
 };

@@ -8,12 +8,12 @@ import { createDefaultTanks, createDefaultHealers, type TankSetup } from '../typ
 import { SetAssignmentManager } from './SetAssignmentManager';
 
 /**
- * Regression for the perfected/non-perfected rename: the Quick Assignment
- * "recommended" tiles look up assignment status by the BASE set's display name
- * (e.g. "Saxhleel Champion", id 585), but a tank actually wears the PERFECTED
- * variant (id 589) which now displays "Perfected Saxhleel Champion". Without
- * perfected-insensitive keying the recommended tile would show as unassigned
- * even though a tank is equipped with it.
+ * Regression for the perfected/non-perfected handling: the Quick Assignment
+ * "recommended" tiles now curate the PERFECTED Saxhleel variant (id 589), so the
+ * tile is labelled "Perfected Saxhleel Champion" — matching the slot-card picker
+ * (issue #1254 item 4). A tank may wear EITHER the base (585) or perfected (589)
+ * variant; perfected/base-insensitive keying must mark the tile as assigned in
+ * both cases.
  */
 describe('SetAssignmentManager — perfected set assignment detection', () => {
   const renderWithTank = (set1: KnownSetIDs) => {
@@ -23,23 +23,23 @@ describe('SetAssignmentManager — perfected set assignment detection', () => {
     return render(<SetAssignmentManager tanks={tanks} healers={healers} onAssignSet={jest.fn()} />);
   };
 
-  it('shows the recommended "Saxhleel Champion" tile as assigned when a tank wears the Perfected variant (589)', async () => {
+  it('shows the recommended "Perfected Saxhleel Champion" tile as assigned when a tank wears the Perfected variant (589)', async () => {
     const user = userEvent.setup();
     renderWithTank(KnownSetIDs.PERFECTED_SAXHLEEL_CHAMPION);
 
-    // The recommended tile is labelled with the base name.
-    const tile = screen.getByText('Saxhleel Champion');
+    // The recommended tile is now labelled with the perfected name.
+    const tile = screen.getByText('Perfected Saxhleel Champion');
     await user.hover(tile);
 
     // Its tooltip must report the tank assignment (proves perfected-insensitive keying).
     expect(await screen.findByText(/Assigned to:.*Tank 1/)).toBeInTheDocument();
   });
 
-  it('shows the recommended tile as assigned for the base variant too (585)', async () => {
+  it('shows the recommended tile as assigned when a tank wears the base variant too (585)', async () => {
     const user = userEvent.setup();
     renderWithTank(KnownSetIDs.SAXHLEEL_CHAMPION);
 
-    const tile = screen.getByText('Saxhleel Champion');
+    const tile = screen.getByText('Perfected Saxhleel Champion');
     await user.hover(tile);
 
     expect(await screen.findByText(/Assigned to:.*Tank 1/)).toBeInTheDocument();

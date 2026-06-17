@@ -38,6 +38,7 @@ import {
   isTank5PieceSet,
   isFlexible5PieceSet,
 } from './shared/rosterCardHelpers';
+import { SetGearAutocomplete } from './shared/SetGearAutocomplete';
 import { SlotActionPill } from './shared/slot-action-pill';
 import { SlotFullModePanel } from './SlotFullModePanel';
 
@@ -202,18 +203,11 @@ export const TankCard = React.memo<TankCardProps>(
                 <Stack spacing={1.5}>
                   <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
                     <Box sx={{ flex: '1 1 45%', minWidth: 200 }}>
-                      <Autocomplete
-                        freeSolo
-                        size="small"
+                      <SetGearAutocomplete
                         options={TANK_5PIECE_OPTIONS}
                         value={tank.gearSets.set1 ? getSetDisplayName(tank.gearSets.set1) : ''}
-                        onChange={(_, value) =>
-                          onChange({
-                            gearSets: {
-                              ...tank.gearSets,
-                              set1: value ? findSetIdByName(value) : undefined,
-                            },
-                          })
+                        onResolve={(setId) =>
+                          onChange({ gearSets: { ...tank.gearSets, set1: setId } })
                         }
                         groupBy={(option) => {
                           const setId = findSetIdByName(option);
@@ -221,31 +215,17 @@ export const TankCard = React.memo<TankCardProps>(
                           if (setId && isFlexible5PieceSet(setId)) return 'Hybrid Sets';
                           return 'Other';
                         }}
-                        renderInput={(params) => (
-                          <TextField
-                            {...params}
-                            size="small"
-                            label="Primary Set (Body)"
-                            placeholder="e.g., Alkosh, Claw of Yolnahkriin"
-                            sx={glassSx}
-                          />
-                        )}
-                        renderOption={(props, option) => <li {...props}>{option}</li>}
+                        label="Primary Set (Body)"
+                        placeholder="e.g., Alkosh, Claw of Yolnahkriin"
+                        sx={glassSx}
                       />
                     </Box>
                     <Box sx={{ flex: '1 1 45%', minWidth: 200 }}>
-                      <Autocomplete
-                        freeSolo
-                        size="small"
+                      <SetGearAutocomplete
                         options={TANK_5PIECE_OPTIONS}
                         value={tank.gearSets.set2 ? getSetDisplayName(tank.gearSets.set2) : ''}
-                        onChange={(_, value) =>
-                          onChange({
-                            gearSets: {
-                              ...tank.gearSets,
-                              set2: value ? findSetIdByName(value) : undefined,
-                            },
-                          })
+                        onResolve={(setId) =>
+                          onChange({ gearSets: { ...tank.gearSets, set2: setId } })
                         }
                         groupBy={(option) => {
                           const setId = findSetIdByName(option);
@@ -253,51 +233,28 @@ export const TankCard = React.memo<TankCardProps>(
                           if (setId && isFlexible5PieceSet(setId)) return 'Hybrid Sets';
                           return 'Other';
                         }}
-                        renderInput={(params) => (
-                          <TextField
-                            {...params}
-                            size="small"
-                            label="Secondary Set (Jewelry)"
-                            placeholder="e.g., Crimson Oath's Rive"
-                            sx={glassSx}
-                          />
-                        )}
-                        renderOption={(props, option) => <li {...props}>{option}</li>}
+                        label="Secondary Set (Jewelry)"
+                        placeholder="e.g., Crimson Oath's Rive"
+                        sx={glassSx}
                       />
                     </Box>
                   </Box>
                   <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
                     <Box sx={{ flex: '1 1 45%', minWidth: 200 }}>
-                      <Autocomplete
-                        freeSolo
-                        size="small"
+                      <SetGearAutocomplete
                         options={TANK_MONSTER_OPTIONS}
                         value={
                           tank.gearSets.monsterSet
                             ? getSetDisplayName(tank.gearSets.monsterSet)
                             : ''
                         }
-                        onChange={(_, value) =>
-                          onChange({
-                            gearSets: {
-                              ...tank.gearSets,
-                              monsterSet: value ? findSetIdByName(value) : undefined,
-                            },
-                          })
+                        onResolve={(setId) =>
+                          onChange({ gearSets: { ...tank.gearSets, monsterSet: setId } })
                         }
-                        groupBy={(_option) => {
-                          return 'Monster Sets';
-                        }}
-                        renderInput={(params) => (
-                          <TextField
-                            {...params}
-                            size="small"
-                            label="Monster/Mythic Set"
-                            placeholder="e.g., Symphony of Blades"
-                            sx={glassSx}
-                          />
-                        )}
-                        renderOption={(props, option) => <li {...props}>{option}</li>}
+                        groupBy={() => 'Monster Sets'}
+                        label="Monster/Mythic Set"
+                        placeholder="e.g., Symphony of Blades"
+                        sx={glassSx}
                       />
                     </Box>
                     <Box sx={{ flex: '1 1 45%', minWidth: 200 }}>

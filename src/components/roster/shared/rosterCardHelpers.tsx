@@ -173,13 +173,24 @@ export const HEALER_MONSTER_OPTIONS: readonly string[] = (() => {
 })();
 
 export const DPS_5PIECE_OPTIONS: readonly string[] = (() => {
-  const ddSets = Array.from(DD_SPECIAL_SETS)
-    .map((id) => getSetDisplayName(id))
-    .sort();
-  const otherSets = Array.from(ALL_5PIECE_SETS)
-    .filter((set) => !DD_SPECIAL_SETS.includes(set))
-    .map((id) => getSetDisplayName(id))
-    .sort();
+  // ALL_5PIECE_SETS unifies several curated arrays and repeats some IDs, so the
+  // resulting display names must be deduped (a Set) to avoid duplicate dropdown
+  // rows and React duplicate-key warnings.
+  const ddSets = Array.from(
+    new Set(Array.from(DD_SPECIAL_SETS).map((id) => getSetDisplayName(id))),
+  );
+  ddSets.sort();
+  const ddNames = new Set(ddSets);
+  const otherSets = Array.from(
+    new Set(
+      Array.from(ALL_5PIECE_SETS)
+        .filter((set) => !DD_SPECIAL_SETS.includes(set))
+        .map((id) => getSetDisplayName(id)),
+    ),
+  )
+    // Guard against a name that exists in both segments (kept in the DD group).
+    .filter((name) => !ddNames.has(name));
+  otherSets.sort();
   return [...ddSets, ...otherSets];
 })();
 

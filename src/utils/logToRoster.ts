@@ -24,6 +24,7 @@ import type { PlayerGear, PlayerTalent } from '../types/playerDetails';
 import {
   ALL_5PIECE_SETS,
   ARENA_WEAPON_SETS,
+  canAssignToFivePieceSlot,
   DPS_MYTHIC_SETS,
   HealerBuff,
   HealerChampionPoint,
@@ -97,6 +98,22 @@ function normalizeSetName(name: string): string {
 
 function isPerfected(name: string): boolean {
   return /^Perfected\s+/i.test(name);
+}
+
+/**
+ * True if either the resolved set ID or its base-variant ID can sit in a 5-piece
+ * slot. canAssignToFivePieceSlot recognizes the base variants whose perfected
+ * form is the one curated in the pickers (e.g. base Saxhleel/Xoryn), so a
+ * base-worn set still classifies as 5-piece.
+ */
+function is5PieceMembership(
+  setId: KnownSetIDs | undefined,
+  baseId: KnownSetIDs | undefined,
+): boolean {
+  return (
+    (setId !== undefined && canAssignToFivePieceSlot(setId)) ||
+    (baseId !== undefined && canAssignToFivePieceSlot(baseId))
+  );
 }
 
 /** Categorize a player's gear into 5-piece, monster, arena, and other sets. */
@@ -188,7 +205,11 @@ function categorizeSets(gear: LogGearItem[]): {
     // Monster/mythic sets (2-piece and 1-piece support mythics)
     if (inArray(MONSTER_SETS)) {
       monsterSets.push(setName);
-    } else if (count >= 5 && inArray(ALL_5PIECE_SETS)) {
+    } else if (count >= 5 && (inArray(ALL_5PIECE_SETS) || is5PieceMembership(setId, baseId))) {
+      // canAssignToFivePieceSlot also recognizes base variants whose perfected
+      // form is the one in the pickers (e.g. base Saxhleel 585 / Xoryn 769), so a
+      // base-worn set still classifies as 5-piece even though ALL_5PIECE_SETS only
+      // carries the perfected variant.
       fivePieceSets.push(setName);
     } else {
       otherSets.push(setName);

@@ -141,6 +141,36 @@ describe('setNameUtils', () => {
       const result = findSetIdByName('Nonexistent Set Name');
       expect(result).toBeUndefined();
     });
+
+    describe('strip-"Perfected" fallback only fires for real perfected variants', () => {
+      // The fallback exists so a "Perfected <base>" string resolves to the base
+      // ID when needed, but it must not mask typos by stripping "Perfected " off
+      // a set that has no perfected variant, nor accept stacked prefixes.
+      it('rejects "Perfected <X>" when X has no perfected variant', () => {
+        // Roar of Alkosh ('Alkosh') has no perfected variant — must not resolve.
+        expect(findSetIdByName('Perfected Alkosh')).toBeUndefined();
+        // War Machine / Nazaray / Earthgore likewise have no perfected variant.
+        expect(findSetIdByName('Perfected War Machine')).toBeUndefined();
+        expect(findSetIdByName('Perfected Nazaray')).toBeUndefined();
+        expect(findSetIdByName('Perfected Earthgore')).toBeUndefined();
+      });
+
+      it('rejects stacked "Perfected Perfected <X>" prefixes', () => {
+        expect(findSetIdByName('Perfected Perfected Saxhleel Champion')).toBeUndefined();
+      });
+
+      it('still resolves every real base/perfected pair to its own ID', () => {
+        // Direct hits — the rename gave each variant its own canonical name.
+        expect(findSetIdByName('Saxhleel Champion')).toBe(KnownSetIDs.SAXHLEEL_CHAMPION);
+        expect(findSetIdByName('Perfected Saxhleel Champion')).toBe(
+          KnownSetIDs.PERFECTED_SAXHLEEL_CHAMPION,
+        );
+        expect(findSetIdByName('Claw of Yolnahkriin')).toBe(KnownSetIDs.CLAW_OF_YOLNAHKRIIN);
+        expect(findSetIdByName('Perfected Claw of Yolnahkriin')).toBe(
+          KnownSetIDs.PERFECTED_CLAW_OF_YOLNAHKRIIN,
+        );
+      });
+    });
   });
 
   describe('Perfected/base set name collisions (roster edit regression)', () => {
