@@ -261,13 +261,13 @@ const StatBlock: React.FC<{
   info?: string;
 }> = ({ label, value, sub, accent, highlight, info }) => {
   const theme = useTheme();
+  const tileAccent = accent ?? theme.palette.primary.main;
   return (
     <Box
       sx={{
-        flex: '1 1 0',
-        minWidth: { xs: 132, sm: 0 },
+        minWidth: 0,
         px: { xs: 1.5, sm: 2 },
-        py: { xs: 1.5, sm: 1.25 },
+        py: { xs: 1.5, sm: 1.5 },
         borderRadius: 3,
         position: 'relative',
         background: highlight
@@ -277,13 +277,21 @@ const StatBlock: React.FC<{
           : theme.palette.mode === 'dark'
             ? 'rgba(148,163,184,0.05)'
             : 'rgba(255,255,255,0.5)',
-        border: highlight
-          ? `1px solid ${(accent ?? theme.palette.primary.main) + '55'}`
-          : `1px solid ${theme.palette.divider}`,
+        border: highlight ? `1px solid ${tileAccent}55` : `1px solid ${theme.palette.divider}`,
         boxShadow:
           highlight && theme.palette.mode === 'dark'
             ? '0 0 28px rgba(56,189,248,0.12) inset'
             : 'none',
+        // Motion-safe hover: border + shadow only (no transform), so the tiles
+        // feel responsive without violating prefers-reduced-motion.
+        transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
+        '&:hover': {
+          borderColor: `${tileAccent}${highlight ? '88' : '55'}`,
+          boxShadow:
+            theme.palette.mode === 'dark'
+              ? `0 6px 22px rgba(0,0,0,0.28), 0 0 0 1px ${tileAccent}22`
+              : '0 6px 18px rgba(15,23,42,0.08)',
+        },
       }}
     >
       <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
@@ -330,7 +338,7 @@ const StatBlock: React.FC<{
           fontSize: { xs: '1.9rem', sm: '2.15rem' },
           lineHeight: 1.05,
           mt: 0.25,
-          color: highlight ? (accent ?? theme.palette.primary.main) : theme.palette.text.primary,
+          color: highlight ? tileAccent : theme.palette.text.primary,
         }}
       >
         {value}
@@ -518,17 +526,19 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
           },
         }}
       >
-        <Stack
-          direction={{ xs: 'column', sm: 'row' }}
-          spacing={{ xs: 1.25, sm: 1.5 }}
-          divider={
-            <Divider
-              orientation="vertical"
-              flexItem
-              sx={{ display: { xs: 'none', sm: 'block' }, borderColor: theme.palette.divider }}
-            />
-          }
-          sx={{ position: 'relative' }}
+        <Box
+          sx={{
+            position: 'relative',
+            display: 'grid',
+            gap: { xs: 1.25, sm: 1.5 },
+            // 2×2 on phones (compact, no long scroll), a single 4-up row from the
+            // small breakpoint onward. Each tile is its own bordered card, so no
+            // separating dividers are needed.
+            gridTemplateColumns: {
+              xs: 'repeat(2, minmax(0, 1fr))',
+              sm: 'repeat(4, minmax(0, 1fr))',
+            },
+          }}
         >
           <StatBlock
             label="Ultimate / second"
@@ -556,7 +566,7 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
             sub={`ult (pool caps at ${maxPool})`}
             info={`Ultimate built in the first minute at this rate. The pool itself can only hold ${maxPool} at once.`}
           />
-        </Stack>
+        </Box>
         {exceedsSanity && (
           <Alert severity="info" sx={{ mt: 2 }}>
             {fmt(expected.ultimatePerSecond, 2)} ult/s is above the practical sustained ceiling (~

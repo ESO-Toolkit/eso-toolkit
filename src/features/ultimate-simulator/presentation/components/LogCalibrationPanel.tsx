@@ -57,7 +57,24 @@ export const LogCalibrationPanel: React.FC<LogCalibrationPanelProps> = ({ modele
     <Accordion
       variant="outlined"
       disableGutters
-      sx={{ borderRadius: 3, '&:before': { display: 'none' }, overflow: 'hidden' }}
+      sx={{
+        // Match the glass-gradient surface of the sibling result panels (same
+        // gradient/border/shadow as `panelSx` in UltimateCalculator) so this
+        // collapsible "advanced" section reads as part of the same set rather
+        // than a flatter outlined card.
+        borderRadius: 3.5,
+        overflow: 'hidden',
+        border: `1px solid ${theme.palette.divider}`,
+        background:
+          theme.palette.mode === 'dark'
+            ? 'linear-gradient(180deg, rgba(15,23,42,0.66) 0%, rgba(3,7,18,0.66) 100%)'
+            : 'linear-gradient(180deg, rgb(40 145 200 / 6%) 0%, rgba(248, 250, 252, 0.9) 100%)',
+        boxShadow:
+          theme.palette.mode === 'dark'
+            ? '0 8px 30px rgba(0, 0, 0, 0.25)'
+            : '0 4px 12px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.03)',
+        '&:before': { display: 'none' },
+      }}
     >
       <AccordionSummary expandIcon={<ExpandMoreIcon />}>
         <Stack direction="row" spacing={1.25} sx={{ alignItems: 'center' }}>
