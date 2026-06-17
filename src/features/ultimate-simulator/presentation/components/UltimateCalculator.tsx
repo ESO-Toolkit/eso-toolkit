@@ -15,6 +15,7 @@ import {
   InfoOutlined,
   InsightsOutlined,
   QueryStatsOutlined,
+  RestartAltOutlined,
   TuneOutlined,
 } from '@mui/icons-material';
 import {
@@ -1271,7 +1272,8 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
               onClick={calc.reset}
               size="small"
               variant="text"
-              sx={{ alignSelf: 'flex-start' }}
+              startIcon={<RestartAltOutlined sx={{ fontSize: 16 }} />}
+              sx={{ alignSelf: 'flex-start', color: 'text.secondary', mt: 0.5 }}
             >
               Reset to defaults
             </Button>
@@ -1569,18 +1571,6 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
                     >
                       Total
                     </TableCell>
-                    <TableCell
-                      align="right"
-                      sx={{
-                        textTransform: 'uppercase',
-                        letterSpacing: 0.4,
-                        fontSize: 11,
-                        fontWeight: 700,
-                        color: 'text.secondary',
-                      }}
-                    >
-                      ult/s
-                    </TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -1631,12 +1621,6 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
                           {fmt(c.decisiveUltimate, 1)}
                         </TableCell>
                         <TableCell align="right">{fmt(tot, 1)}</TableCell>
-                        <TableCell align="right">
-                          {fmt(
-                            state.fightDurationSeconds > 0 ? tot / state.fightDurationSeconds : 0,
-                            2,
-                          )}
-                        </TableCell>
                       </TableRow>
                     );
                   })}
@@ -1670,9 +1654,6 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
                       data-testid="ult-grand-total"
                     >
                       {fmt(expected.totalUltimate, 1)}
-                    </TableCell>
-                    <TableCell align="right" sx={{ fontWeight: 700, color: accentText }}>
-                      {fmt(expected.ultimatePerSecond, 2)}
                     </TableCell>
                   </TableRow>
                 </TableBody>
@@ -1754,6 +1735,66 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
                     </Typography>
                   </Box>
                 </Stack>
+
+                {/* Min–mean–max range bar: the whole track spans the observed
+                    min→max, with the mean marked so the spread reads visually. */}
+                {distribution.maxTotal > distribution.minTotal && (
+                  <Box sx={{ mt: 1.75 }}>
+                    <Box
+                      aria-hidden
+                      sx={{
+                        position: 'relative',
+                        height: 8,
+                        borderRadius: 4,
+                        background: `linear-gradient(90deg, ${alpha(accent, 0.18)}, ${alpha(
+                          accent,
+                          0.5,
+                        )})`,
+                        border: `1px solid ${alpha(theme.palette.divider, 0.8)}`,
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          position: 'absolute',
+                          top: -3,
+                          bottom: -3,
+                          left: `${Math.min(
+                            100,
+                            Math.max(
+                              0,
+                              ((distribution.meanTotal - distribution.minTotal) /
+                                (distribution.maxTotal - distribution.minTotal)) *
+                                100,
+                            ),
+                          )}%`,
+                          width: 2,
+                          transform: 'translateX(-1px)',
+                          background: theme.palette.mode === 'dark' ? '#fff' : accentText,
+                          borderRadius: 2,
+                          boxShadow: `0 0 6px ${accent}`,
+                        }}
+                      />
+                    </Box>
+                    <Stack
+                      direction="row"
+                      sx={{ justifyContent: 'space-between', mt: 0.5 }}
+                      className="u-tabular"
+                    >
+                      <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: 10 }}>
+                        {fmt(distribution.minTotal, 0)}
+                      </Typography>
+                      <Typography
+                        variant="caption"
+                        sx={{ color: accentText, fontWeight: 700, fontSize: 10 }}
+                      >
+                        mean {fmt(distribution.meanTotal, 0)}
+                      </Typography>
+                      <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: 10 }}>
+                        {fmt(distribution.maxTotal, 0)}
+                      </Typography>
+                    </Stack>
+                  </Box>
+                )}
               </Box>
             )}
           </Paper>
