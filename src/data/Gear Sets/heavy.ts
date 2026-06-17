@@ -2342,6 +2342,7 @@ export const perfectedAegisOfGalenwe: GearSetData = {
   icon: 'Perfected Aegis of Galenwe',
   setType: 'Trial',
   bonuses: [
+    '(5 perfected items) Adds 1206 Maximum Health',
     '(2 items) Adds 1206 Maximum Health',
     '(3 items) Gain Minor Aegis at all times, reducing your damage taken from Dungeon, Trial, and Arena Monsters by 5%.',
     '(4 items) Adds 4% Healing Taken',
@@ -2354,6 +2355,7 @@ export const perfectedClawOfYolnahkriin: GearSetData = {
   icon: 'Perfected Claw of Yolnahkriin',
   setType: 'Trial',
   bonuses: [
+    '(5 perfected items) Adds 1206 Maximum Health',
     '(2 items) Adds 1206 Maximum Health',
     '(3 items) Gain Minor Aegis at all times, reducing your damage taken from Dungeon, Trial, and Arena Monsters by 5%.',
     '(4 items) Adds 1096 Maximum Stamina',
@@ -2366,6 +2368,7 @@ export const perfectedDolorousArena: GearSetData = {
   icon: 'Perfected Dolorous Arena',
   setType: 'Trial',
   bonuses: [
+    '(5 perfected items) Adds 1096 Maximum Stamina',
     '(2 items) Adds 1206 Maximum Health',
     '(3 items) Gain Minor Aegis at all times, reducing your damage taken from Dungeon, Trial, and Arena Monsters by 5%.',
     '(4 items) Adds 1487 Armor',
@@ -2378,6 +2381,7 @@ export const perfectedLucentEchoes: GearSetData = {
   icon: 'Perfected Lucent Echoes',
   setType: 'Trial',
   bonuses: [
+    '(5 perfected items) Adds 1206 Maximum Health',
     '(2 items) Adds 4% Healing Taken',
     '(3 items) Gain Minor Aegis at all times, reducing your damage taken from Dungeon, Trial, and Arena Monsters by 5%.',
     '(4 items) Adds 1206 Maximum Health',
@@ -2390,6 +2394,7 @@ export const perfectedPearlescentWard: GearSetData = {
   icon: 'Perfected Pearlescent Ward',
   setType: 'Trial',
   bonuses: [
+    '(5 perfected items) Adds 1206 Maximum Health',
     '(2 items) Adds 1206 Maximum Health',
     '(3 items) Gain Minor Aegis at all times, reducing your damage taken from Dungeon, Trial, and Arena Monsters by 5%.',
     '(4 items) Adds 4% Healing Taken',
@@ -2402,6 +2407,7 @@ export const perfectedSaxhleelChampion: GearSetData = {
   icon: 'Perfected Saxhleel Champion',
   setType: 'Trial',
   bonuses: [
+    '(5 perfected items) Adds 1096 Maximum Stamina',
     '(2 items) Adds 1096 Maximum Magicka',
     '(3 items) Gain Minor Aegis at all times, reducing your damage taken from Dungeon, Trial, and Arena Monsters by 5%.',
     '(4 items) Adds 1096 Maximum Stamina',
@@ -2414,6 +2420,7 @@ export const perfectedTestOfResolve: GearSetData = {
   icon: 'Perfected Test of Resolve',
   setType: 'Trial',
   bonuses: [
+    '(5 perfected items) Adds 1487 Armor',
     '(2 items) Adds 1487 Armor',
     '(3 items) Gain Minor Aegis at all times, reducing your damage taken from Dungeon, Trial, and Arena Monsters by 5%.',
     '(4 items) Adds 1206 Maximum Health',
@@ -2426,6 +2433,7 @@ export const perfectedVrolSCommand: GearSetData = {
   icon: "Perfected Vrol's Command",
   setType: 'Arena',
   bonuses: [
+    '(5 perfected items) Adds 4% Healing Taken',
     '(2 items) Adds 1096 Maximum Stamina',
     '(3 items) Gain Minor Aegis at all times, reducing your damage taken from Dungeon, Trial, and Arena Monsters by 5%.',
     '(4 items) Adds 1206 Maximum Health',

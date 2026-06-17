@@ -99,9 +99,10 @@ if (fs.existsSync(FP_PATH)) {
   for (const s of dump.sets) for (const b of s.bonuses) addDump(b.description);
   dumpSetBonusesSrc = new Map();
   for (const s of dump.sets) {
-    const list = s.bonuses
-      .filter((b) => !b.perfected && b.description)
-      .map((b) => norm(b.description));
+    // Include perfected tiers — the app now ships them (see refresh-gear-bonuses),
+    // so completeness must account for them. Mirrors the fingerprint in
+    // parse-tooltip-dump.mjs (writeProvenanceFingerprint).
+    const list = s.bonuses.filter((b) => b.description).map((b) => norm(b.description));
     if (list.length) dumpSetBonusesSrc.set(norm(s.name), list);
   }
 } else {

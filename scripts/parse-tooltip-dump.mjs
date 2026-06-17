@@ -457,15 +457,15 @@ function writeProvenanceFingerprint(result, outPath) {
   }
   const setBonuses = {};
   for (const s of result.sets) {
+    // Include perfected tiers: the app now ships them (refresh-gear-bonuses writes
+    // the set's FULL ordered bonus list), so they must be traceable here and counted
+    // by the completeness check. Game-sourced perfected text is provenance-clean.
     const list = s.bonuses
-      .filter((b) => !b.perfected && b.description)
+      .filter((b) => b.description)
       .map((b) => normForProvenance(b.description));
     if (list.length) setBonuses[normForProvenance(s.name)] = list;
   }
-  fs.writeFileSync(
-    outPath,
-    JSON.stringify({ descriptions: [...descriptions], setBonuses }),
-  );
+  fs.writeFileSync(outPath, JSON.stringify({ descriptions: [...descriptions], setBonuses }));
 }
 
 // Run only when invoked directly (allows importing stripMarkup/parseLuaTable in tests).
