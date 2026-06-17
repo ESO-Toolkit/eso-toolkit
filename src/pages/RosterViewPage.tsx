@@ -1423,56 +1423,133 @@ const PerFightTrialGroup: React.FC<PerFightTrialGroupProps> = ({
                   )}
                 </AccordionSummary>
 
-                <AccordionDetails sx={{ px: 1.25, pt: 0, pb: 1.25 }}>
-                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                <AccordionDetails sx={{ px: 1, pt: 0, pb: 1 }}>
+                  {/* One clearly-separated card per player slot so every role
+                      (MT/OT/H1…/D1–D8) is legible and nothing crams. Each card
+                      stacks: role + player name, then set chips, ultimate, and
+                      the per-fight note (the only place notes are surfaced). */}
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.6 }}>
                     {rows.map((row) => (
                       <Box
                         key={row.key}
                         sx={{
                           display: 'flex',
-                          alignItems: 'center',
-                          // Wrap a slot's chips/ultimate to a new line on narrow
-                          // screens instead of overflowing the card horizontally.
-                          flexWrap: 'wrap',
+                          flexDirection: 'column',
                           gap: 0.4,
+                          p: 0.75,
+                          borderRadius: '8px',
+                          borderLeft: `2px solid ${accentColor}55`,
+                          backgroundColor: isDarkMode
+                            ? 'rgba(255,255,255,0.025)'
+                            : 'rgba(0,0,0,0.02)',
                         }}
                       >
-                        <Typography
-                          sx={{
-                            fontSize: '0.68rem',
-                            fontWeight: 700,
-                            color: 'text.disabled',
-                            minWidth: 24,
-                            flexShrink: 0,
-                          }}
-                        >
-                          {row.label}:
-                        </Typography>
-                        {row.sets.map((s) => (
-                          <Chip
-                            key={s}
-                            label={s}
-                            size="small"
+                        {/* Header line: role badge + player name */}
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.6 }}>
+                          <Box
                             sx={{
-                              height: 16,
-                              fontSize: '0.6rem',
-                              fontWeight: 500,
-                              backgroundColor: `${accentColor}18`,
-                              color: accentColor,
-                              border: `1px solid ${accentColor}30`,
-                              '& .MuiChip-label': { px: 0.5 },
+                              flexShrink: 0,
+                              px: 0.6,
+                              py: 0.1,
+                              borderRadius: '5px',
+                              backgroundColor: `${accentColor}20`,
+                              border: `1px solid ${accentColor}38`,
                             }}
-                          />
-                        ))}
+                          >
+                            <Typography
+                              sx={{
+                                fontSize: '0.64rem',
+                                fontWeight: 800,
+                                letterSpacing: '0.02em',
+                                color: accentColor,
+                                lineHeight: 1.5,
+                              }}
+                            >
+                              {row.label}
+                            </Typography>
+                          </Box>
+                          {row.playerName && (
+                            <Typography
+                              sx={{
+                                fontSize: '0.72rem',
+                                fontWeight: 600,
+                                color: 'text.primary',
+                                letterSpacing: '-0.01em',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                              }}
+                            >
+                              {row.playerName}
+                            </Typography>
+                          )}
+                        </Box>
+
+                        {/* Set chips — wrap freely, never overflow horizontally */}
+                        {row.sets.length > 0 && (
+                          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.4, pl: 0.25 }}>
+                            {row.sets.map((s) => (
+                              <Chip
+                                key={s}
+                                label={s}
+                                size="small"
+                                sx={{
+                                  height: 18,
+                                  fontSize: '0.62rem',
+                                  fontWeight: 500,
+                                  maxWidth: '100%',
+                                  backgroundColor: `${accentColor}18`,
+                                  color: accentColor,
+                                  border: `1px solid ${accentColor}30`,
+                                  '& .MuiChip-label': { px: 0.5 },
+                                }}
+                              />
+                            ))}
+                          </Box>
+                        )}
+
+                        {/* Ultimate */}
                         {row.ultimate && (
+                          <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 0.5, pl: 0.25 }}>
+                            <Typography
+                              sx={{
+                                fontSize: '0.6rem',
+                                fontWeight: 700,
+                                color: 'text.disabled',
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.04em',
+                                flexShrink: 0,
+                              }}
+                            >
+                              Ult
+                            </Typography>
+                            <Typography
+                              sx={{
+                                fontSize: '0.7rem',
+                                color: 'text.secondary',
+                                fontWeight: 500,
+                              }}
+                            >
+                              {row.ultimate}
+                            </Typography>
+                          </Box>
+                        )}
+
+                        {/* Per-fight note */}
+                        {row.notes && (
                           <Typography
                             sx={{
                               fontSize: '0.68rem',
                               color: 'text.secondary',
                               fontStyle: 'italic',
+                              lineHeight: 1.45,
+                              pl: 0.25,
+                              borderTop: `1px dashed ${isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}`,
+                              pt: 0.4,
+                              mt: 0.1,
                             }}
                           >
-                            {row.ultimate}
+                            {row.notes}
                           </Typography>
                         )}
                       </Box>

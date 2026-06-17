@@ -38,6 +38,35 @@ describe('perFightRunSheet helpers', () => {
     expect(rows[0].ultimate).toBe('Aggressive Horn');
   });
 
+  it('resolves player names from the base roster slots when assigned', () => {
+    const named = createDefaultRoster();
+    named.tanks[0].playerName = 'Vael';
+    named.healers[1].playerName = 'Liora';
+    // dps base slots intentionally left unnamed (common for set-only rosters)
+    const overrides: EncounterOverrides = {
+      slots: {
+        'tank:0': { set1: PEARLESCENT_WARD },
+        'healer:1': { set1: SPELL_POWER_CURE },
+        'dps:0': { set1: RELEQUEN },
+      },
+    };
+    const rows = buildSlotRows(named, overrides);
+    const byLabel = Object.fromEntries(rows.map((r) => [r.label, r.playerName]));
+    expect(byLabel.MT).toBe('Vael');
+    expect(byLabel.H2).toBe('Liora');
+    expect(byLabel.D1).toBeUndefined();
+  });
+
+  it('carries the per-slot note through to the row', () => {
+    const overrides: EncounterOverrides = {
+      slots: {
+        'tank:0': { set1: PEARLESCENT_WARD, notes: 'Taunt swap at 50%.' },
+      },
+    };
+    const [row] = buildSlotRows(roster, overrides);
+    expect(row.notes).toBe('Taunt swap at 50%.');
+  });
+
   it('sorts dps slots numerically, not lexically', () => {
     const overrides: EncounterOverrides = {
       slots: {

@@ -18,6 +18,8 @@ export interface SlotRow {
   key: string;
   /** Short role label shown to the user, e.g. "MT", "OT", "H1", "D3". */
   label: string;
+  /** Player name from the base roster slot, when one is assigned. */
+  playerName?: string;
   /** Resolved set display names (set1, set2, monster) in order, empties dropped. */
   sets: string[];
   /** Optional ultimate name. */
@@ -70,13 +72,14 @@ export function buildSlotRows(
   if (!overrides) return [];
   const rows: SlotRow[] = [];
 
-  roster.tanks.forEach((_, i) => {
+  roster.tanks.forEach((tank, i) => {
     const key = `tank:${i}`;
     const o = overrides.slots?.[key];
     if (o && slotHasContent(o)) {
       rows.push({
         key,
         label: tankLabel(i),
+        playerName: tank?.playerName || undefined,
         sets: resolveSets(o),
         ultimate: o.ultimate,
         notes: o.notes,
@@ -84,13 +87,14 @@ export function buildSlotRows(
     }
   });
 
-  roster.healers.forEach((_, i) => {
+  roster.healers.forEach((healer, i) => {
     const key = `healer:${i}`;
     const o = overrides.slots?.[key];
     if (o && slotHasContent(o)) {
       rows.push({
         key,
         label: `H${i + 1}`,
+        playerName: healer?.playerName || undefined,
         sets: resolveSets(o),
         ultimate: o.ultimate,
         notes: o.notes,
@@ -107,6 +111,7 @@ export function buildSlotRows(
         rows.push({
           key,
           label: `D${dpsIdx + 1}`,
+          playerName: roster.dpsSlots?.[dpsIdx]?.playerName || undefined,
           sets: resolveSets(o),
           ultimate: o.ultimate,
           notes: o.notes,
