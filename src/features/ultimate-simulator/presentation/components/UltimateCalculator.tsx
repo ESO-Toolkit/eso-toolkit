@@ -25,6 +25,7 @@ import {
   Divider,
   FormControl,
   FormControlLabel,
+  InputAdornment,
   InputLabel,
   LinearProgress,
   Link,
@@ -504,9 +505,9 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
           </Typography>
         </Box>
       </Stack>
-      <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2.5, maxWidth: 760 }}>
-        How fast do you build ultimate, and how often can you cast it? Pick your context and build,
-        and get exact ultimate&nbsp;/&nbsp;second, time to your first ultimate, and casts per fight.
+      <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2.5, maxWidth: 640 }}>
+        Set your context and build for exact ultimate&nbsp;/&nbsp;second, time to your first cast,
+        and casts per fight.
       </Typography>
 
       {/* ===================== HEADLINE (full width, results-first) ===================== */}
@@ -737,23 +738,36 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
                   <Chip
                     key={p.id}
                     label={p.label}
-                    size="small"
                     clickable
                     onClick={() => applyPreset(p)}
-                    variant={active ? 'filled' : 'outlined'}
+                    aria-pressed={active}
                     sx={{
+                      height: 30,
+                      borderRadius: 2,
                       fontWeight: 600,
-                      borderColor: active ? accent : undefined,
-                      color: active ? accent : undefined,
-                      backgroundColor: active
+                      px: 0.25,
+                      border: `1px solid ${active ? accent : theme.palette.divider}`,
+                      color: active ? accentText : 'text.secondary',
+                      background: active
                         ? theme.palette.mode === 'dark'
-                          ? 'rgba(56,189,248,0.12)'
-                          : 'rgba(40,145,200,0.1)'
-                        : undefined,
+                          ? 'linear-gradient(135deg, rgba(56,189,248,0.22), rgba(0,225,255,0.08))'
+                          : 'linear-gradient(135deg, rgba(56,189,248,0.18), rgba(0,225,255,0.06))'
+                        : theme.palette.mode === 'dark'
+                          ? 'rgba(148,163,184,0.06)'
+                          : 'rgba(255,255,255,0.6)',
+                      boxShadow: active
+                        ? theme.palette.mode === 'dark'
+                          ? 'inset 0 0 0 1px rgba(56,189,248,0.4), 0 0 14px rgba(56,189,248,0.12)'
+                          : 'inset 0 0 0 1px rgba(40,145,200,0.35)'
+                        : 'none',
+                      transition: 'background-color 0.18s ease, border-color 0.18s ease',
                       '&:hover': {
                         borderColor: accent,
-                        backgroundColor:
-                          theme.palette.mode === 'dark'
+                        background: active
+                          ? theme.palette.mode === 'dark'
+                            ? 'linear-gradient(135deg, rgba(56,189,248,0.26), rgba(0,225,255,0.1))'
+                            : 'linear-gradient(135deg, rgba(56,189,248,0.22), rgba(0,225,255,0.08))'
+                          : theme.palette.mode === 'dark'
                             ? 'rgba(56,189,248,0.08)'
                             : 'rgba(40,145,200,0.06)',
                       },
@@ -895,12 +909,23 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
             </Stack>
 
             <TextField
-              label="Fight duration (seconds)"
+              label="Fight duration"
               type="number"
               size="small"
               value={state.fightDurationSeconds}
               onChange={(e) => calc.setFightDuration(Number(e.target.value))}
-              slotProps={{ htmlInput: { min: 1, step: 5 } }}
+              slotProps={{
+                htmlInput: { min: 1, step: 5 },
+                input: {
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                        sec
+                      </Typography>
+                    </InputAdornment>
+                  ),
+                },
+              }}
             />
 
             {/* Decisive */}
@@ -919,7 +944,19 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
                 }
               />
               {state.decisiveEnabled && (
-                <Stack spacing={1.5} sx={{ mt: 1, pl: 1 }}>
+                <Stack
+                  spacing={1.5}
+                  sx={{
+                    mt: 1,
+                    p: 1.5,
+                    borderRadius: 2,
+                    borderLeft: `3px solid ${accent}`,
+                    background:
+                      theme.palette.mode === 'dark'
+                        ? 'rgba(56,189,248,0.05)'
+                        : 'rgba(40,145,200,0.04)',
+                  }}
+                >
                   <FormControl size="small" fullWidth>
                     <InputLabel id="decisive-quality-label">Weapon quality</InputLabel>
                     <Select
@@ -1247,7 +1284,7 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
           <Paper elevation={0} sx={panelSx(theme)}>
             <SectionHeader icon={<BoltOutlined />} title="Which ultimate?" accent={accent} />
             <Stack direction="row" spacing={2} sx={{ flexWrap: 'wrap', rowGap: 2 }}>
-              <FormControl size="small" sx={{ minWidth: 220, flex: 1 }}>
+              <FormControl size="small" sx={{ flex: '1 1 100%' }}>
                 <InputLabel id="ult-ability-label">Ultimate</InputLabel>
                 <Select
                   labelId="ult-ability-label"
@@ -1348,9 +1385,20 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
                 size="small"
                 value={state.startingUltimate}
                 onChange={(e) => calc.setStartingUltimate(Number(e.target.value))}
-                slotProps={{ htmlInput: { min: 0, max: 500, step: 5 } }}
-                sx={{ width: 150 }}
-                helperText="Banked at fight start"
+                slotProps={{
+                  htmlInput: { min: 0, max: 500, step: 5 },
+                  input: {
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                          ult
+                        </Typography>
+                      </InputAdornment>
+                    ),
+                  },
+                }}
+                sx={{ width: 190 }}
+                helperText="Banked at start"
               />
             </Stack>
             {state.customUltimateCost == null && (
