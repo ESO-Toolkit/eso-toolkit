@@ -26,6 +26,7 @@ import {
   FOCUS_GLOW,
   glassFieldBg,
   glassMenuPaperSx,
+  presetButtonSx,
 } from '../latestReportsStyles';
 
 export interface DateRangeValue {
@@ -54,7 +55,9 @@ interface DateRangeFilterProps {
 const PRESET_BUTTONS: ReadonlyArray<DateRangePreset> = DATE_RANGE_PRESETS;
 
 /** The preset + custom-range picker body, shared by the inline and popover forms. */
-const DateRangeBody: React.FC<DateRangeFilterProps> = ({ value, onChange }) => {
+const DateRangeBody: React.FC<DateRangeFilterProps> = ({ value, onChange, inline = false }) => {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
   const fromId = useId();
   const toId = useId();
   const invalidRange = isInvalidDateRange(value);
@@ -68,27 +71,59 @@ const DateRangeBody: React.FC<DateRangeFilterProps> = ({ value, onChange }) => {
   };
 
   return (
-    <Stack spacing={1.5} sx={{ p: { xs: 0, md: 2 }, minWidth: { md: 260 } }}>
-      <ToggleButtonGroup
-        value={value.range}
-        exclusive
-        size="small"
-        onChange={(_event, next: DateRangePreset | null) => {
-          if (next) handlePreset(next);
-        }}
-        aria-label="Date range preset"
-        sx={{
-          flexWrap: 'wrap',
-          gap: 0.5,
-          '& .MuiToggleButton-root': { borderRadius: '8px !important', border: '1px solid' },
-        }}
-      >
-        {PRESET_BUTTONS.map((preset) => (
-          <ToggleButton key={preset} value={preset} sx={{ textTransform: 'none', px: 1.25 }}>
-            {dateRangePresetLabel(preset)}
-          </ToggleButton>
-        ))}
-      </ToggleButtonGroup>
+    <Stack
+      spacing={inline ? 2 : 1.5}
+      sx={{ p: inline ? 0 : { xs: 0, md: 2 }, minWidth: { md: 260 } }}
+    >
+      {inline ? (
+        // Mobile: a touch-first 2-column grid of large pills ("Custom" spans the
+        // full width) instead of the cramped, small-target ToggleButtonGroup.
+        <Box
+          role="group"
+          aria-label="Date range preset"
+          sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 1 }}
+        >
+          {PRESET_BUTTONS.map((preset) => {
+            const active = value.range === preset;
+            return (
+              <Box
+                key={preset}
+                component="button"
+                type="button"
+                onClick={() => handlePreset(preset)}
+                aria-pressed={active}
+                sx={{
+                  ...presetButtonSx(isDark, active),
+                  ...(preset === 'custom' ? { gridColumn: '1 / -1' } : null),
+                }}
+              >
+                {dateRangePresetLabel(preset)}
+              </Box>
+            );
+          })}
+        </Box>
+      ) : (
+        <ToggleButtonGroup
+          value={value.range}
+          exclusive
+          size="small"
+          onChange={(_event, next: DateRangePreset | null) => {
+            if (next) handlePreset(next);
+          }}
+          aria-label="Date range preset"
+          sx={{
+            flexWrap: 'wrap',
+            gap: 0.5,
+            '& .MuiToggleButton-root': { borderRadius: '8px !important', border: '1px solid' },
+          }}
+        >
+          {PRESET_BUTTONS.map((preset) => (
+            <ToggleButton key={preset} value={preset} sx={{ textTransform: 'none', px: 1.25 }}>
+              {dateRangePresetLabel(preset)}
+            </ToggleButton>
+          ))}
+        </ToggleButtonGroup>
+      )}
 
       {value.range === 'custom' && (
         <Stack spacing={1.25} sx={{ pt: 0.5 }}>

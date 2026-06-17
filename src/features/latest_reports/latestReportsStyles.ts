@@ -96,6 +96,64 @@ export const segmentedTrackSx = (isDark: boolean): SxProps<Theme> => ({
   flexShrink: 0,
 });
 
+/**
+ * Large, full-width date-range preset pill for the MOBILE filter sheet. Uses
+ * the same accent gradient as the segmented controls but with touch-first sizing
+ * (≥ 48px target, WCAG 2.5.8 / iOS HIG) and a tactile press scale.
+ */
+export const presetButtonSx = (isDark: boolean, active: boolean): SxProps<Theme> => ({
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  gap: 0.5,
+  width: '100%',
+  minHeight: 48,
+  px: 1.5,
+  borderRadius: '12px',
+  border: '1px solid',
+  cursor: 'pointer',
+  fontFamily: 'inherit',
+  fontSize: '0.9rem',
+  fontWeight: 600,
+  letterSpacing: '0.01em',
+  lineHeight: 1.2,
+  textAlign: 'center',
+  transition:
+    'transform 0.15s ease, background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease',
+  WebkitTapHighlightColor: 'transparent',
+  touchAction: 'manipulation',
+  ...(active
+    ? {
+        background: accentGradient(isDark),
+        color: '#fff',
+        borderColor: 'transparent',
+        boxShadow: accentGlow(isDark),
+      }
+    : {
+        ...glassFieldBg(isDark),
+        color: isDark ? 'rgba(255,255,255,0.78)' : 'rgba(0,0,0,0.72)',
+        borderColor: fieldBorder(isDark),
+        '&:hover': {
+          borderColor: fieldBorderHover(isDark),
+          background: isDark ? 'rgba(255,255,255,0.09)' : 'rgba(0,0,0,0.05)',
+        },
+      }),
+  '&:active': { transform: 'scale(0.97)' },
+  '&:focus-visible': { outline: `2px solid ${FOCUS_BORDER}`, outlineOffset: '2px' },
+  '@media (prefers-reduced-motion: reduce)': {
+    transition: 'none',
+    '&:active': { transform: 'none' },
+  },
+});
+
+/** Grouped section surface inside the mobile filter sheet (subtle card). */
+export const sheetSectionSx = (isDark: boolean): SxProps<Theme> => ({
+  p: 1.75,
+  borderRadius: '16px',
+  border: `1px solid ${isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)'}`,
+  background: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.015)',
+});
+
 /** A single pill button inside a segmented control. */
 export const segmentedButtonSx = (isDark: boolean, active: boolean): SxProps<Theme> => ({
   display: 'inline-flex',
