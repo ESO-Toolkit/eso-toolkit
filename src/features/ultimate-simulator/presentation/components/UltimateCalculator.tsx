@@ -314,7 +314,13 @@ const StatBlock: React.FC<{
         },
       }}
     >
-      <Stack direction="row" spacing={0.4} sx={{ alignItems: 'center' }}>
+      {/* Reserve two lines so the values below sit on the same baseline across
+          all three cards, regardless of whether a label wraps. */}
+      <Stack
+        direction="row"
+        spacing={0.4}
+        sx={{ alignItems: 'flex-start', minHeight: { xs: 25, sm: 27 } }}
+      >
         <Typography
           variant="caption"
           sx={{
@@ -323,7 +329,7 @@ const StatBlock: React.FC<{
             letterSpacing: 0.5,
             fontWeight: 700,
             fontSize: { xs: 9.5, sm: 10 },
-            lineHeight: 1.25,
+            lineHeight: 1.3,
           }}
         >
           {label}
@@ -357,9 +363,10 @@ const StatBlock: React.FC<{
         sx={{
           fontFamily: 'Space Grotesk, Inter, system-ui',
           fontWeight: 700,
-          fontSize: { xs: '1.4rem', sm: '1.7rem' },
-          lineHeight: 1.1,
-          mt: 0.5,
+          fontSize: { xs: '1.45rem', sm: '1.7rem' },
+          lineHeight: 1.05,
+          letterSpacing: '-0.01em',
+          mt: 0.75,
           color: theme.palette.text.primary,
           whiteSpace: 'nowrap',
         }}
@@ -484,13 +491,17 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
   return (
     <Box className={`${className ?? ''} u-fade-in`} sx={{ width: '100%' }}>
       {/* ===================== INTRO ===================== */}
-      <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', mb: 0.75 }}>
+      {/* Icon + the whole text column share one left edge: heading, eyebrow, and
+          blurb all align (the blurb used to start at the container edge while the
+          eyebrow sat indented under the heading). */}
+      <Stack direction="row" spacing={1.5} sx={{ alignItems: 'flex-start', mb: 2.75 }}>
         <Box
           aria-hidden
           sx={{
             display: 'inline-flex',
             alignItems: 'center',
             justifyContent: 'center',
+            flexShrink: 0,
             width: 40,
             height: 40,
             borderRadius: 2.5,
@@ -506,22 +517,33 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
         >
           <BoltOutlined />
         </Box>
-        <Box>
-          <Typography variant="h5" component="h2" sx={{ fontWeight: 700, lineHeight: 1.1 }}>
+        <Box sx={{ minWidth: 0 }}>
+          <Typography
+            variant="h5"
+            component="h2"
+            sx={{ fontWeight: 700, lineHeight: 1.15, letterSpacing: '-0.01em' }}
+          >
             Ultimate Calculator
           </Typography>
           <Typography
             variant="caption"
-            sx={{ color: 'text.secondary', textTransform: 'uppercase', letterSpacing: 0.8 }}
+            sx={{
+              display: 'block',
+              color: 'text.secondary',
+              textTransform: 'uppercase',
+              letterSpacing: 1,
+              fontWeight: 600,
+              mt: 0.25,
+            }}
           >
             Update 50 · all classes
           </Typography>
+          <Typography variant="body2" sx={{ color: 'text.secondary', mt: 1, maxWidth: 600 }}>
+            Set your context and build for exact ultimate&nbsp;/&nbsp;second, time to your first
+            cast, and casts per fight.
+          </Typography>
         </Box>
       </Stack>
-      <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2.5, maxWidth: 640 }}>
-        Set your context and build for exact ultimate&nbsp;/&nbsp;second, time to your first cast,
-        and casts per fight.
-      </Typography>
 
       {/* ===================== HEADLINE (full width, results-first) ===================== */}
       <Paper
@@ -633,17 +655,16 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
                 />
               </Tooltip>
             </Stack>
-            <Stack direction="row" spacing={0.75} sx={{ alignItems: 'baseline', mt: 0.25 }}>
+            <Stack direction="row" spacing={0.6} sx={{ alignItems: 'baseline', mt: 0.5 }}>
               <Typography
                 className="u-tabular"
                 sx={{
                   fontFamily: 'Space Grotesk, Inter, system-ui',
                   fontWeight: 700,
-                  fontSize: { xs: '3.1rem', sm: '3.6rem' },
-                  lineHeight: 0.95,
+                  fontSize: { xs: '2.6rem', sm: '3.1rem' },
+                  lineHeight: 1,
+                  letterSpacing: '-0.02em',
                   color: accent,
-                  textShadow:
-                    theme.palette.mode === 'dark' ? '0 0 32px rgba(56,189,248,0.35)' : 'none',
                 }}
               >
                 {fmt(expected.ultimatePerSecond, 2)}
@@ -652,7 +673,7 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
                 sx={{
                   color: 'text.secondary',
                   fontWeight: 600,
-                  fontSize: { xs: '1rem', sm: '1.1rem' },
+                  fontSize: { xs: '0.95rem', sm: '1.05rem' },
                 }}
               >
                 ult/s
