@@ -55,7 +55,6 @@ import { totalReductionFraction } from '../../core/cost';
 import { DECISIVE_PROC_CHANCE, type DecisiveQuality } from '../../shared/constants';
 import { ULTIMATE_ABILITIES } from '../../shared/constants/catalog';
 import {
-  COMBAT_CONTEXT_LABELS,
   ESO_CLASSES,
   ESO_CLASS_LABELS,
   SOURCE_CATEGORY_LABELS,
@@ -83,6 +82,18 @@ const ROLE_OPTIONS: { value: CombatRole; label: string }[] = [
 ];
 
 const CONTEXT_OPTIONS: CombatContext[] = ['soloPve', 'groupPve', 'pvp'];
+
+/**
+ * Short, single-line labels for the context segmented control. The full
+ * descriptive strings (COMBAT_CONTEXT_LABELS) wrapped to two uneven lines in a
+ * three-up control; here the primary word stays on one line with a small hint
+ * underneath. Cosmetic only — the underlying CombatContext values are unchanged.
+ */
+const CONTEXT_META: Record<CombatContext, { label: string; hint: string }> = {
+  soloPve: { label: 'Solo', hint: 'Parse · PvE' },
+  groupPve: { label: 'Group', hint: 'Trial · PvE' },
+  pvp: { label: 'PvP', hint: 'Cyrodiil · BG' },
+};
 
 /**
  * Canonical per-class accent colors (mirrors the repo's class palette in
@@ -771,15 +782,71 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
               <ToggleButtonGroup
                 exclusive
                 fullWidth
-                size="small"
                 value={state.context}
                 onChange={(_, v) => v && calc.setContext(v as CombatContext)}
                 aria-labelledby="ult-context-label"
-                sx={{ mt: 0.5 }}
+                sx={{
+                  mt: 0.75,
+                  gap: 0.5,
+                  p: 0.5,
+                  borderRadius: 2.5,
+                  border: `1px solid ${theme.palette.divider}`,
+                  background:
+                    theme.palette.mode === 'dark'
+                      ? 'rgba(148,163,184,0.05)'
+                      : 'rgba(255,255,255,0.55)',
+                  // Segmented-control styling that mirrors the top Stats/Ultimate
+                  // switcher: filled accent pill behind the active option.
+                  '& .MuiToggleButtonGroup-grouped': {
+                    border: 0,
+                    borderRadius: '8px !important',
+                    flexDirection: 'column',
+                    gap: 0,
+                    py: 0.85,
+                    minHeight: 48,
+                    color: 'text.secondary',
+                    transition:
+                      'background-color 0.18s ease, color 0.18s ease, box-shadow 0.18s ease',
+                    '&:hover': {
+                      backgroundColor:
+                        theme.palette.mode === 'dark'
+                          ? 'rgba(56,189,248,0.06)'
+                          : 'rgba(15,23,42,0.04)',
+                    },
+                    '&.Mui-selected': {
+                      color: accentText,
+                      background:
+                        theme.palette.mode === 'dark'
+                          ? 'linear-gradient(135deg, rgba(56,189,248,0.18), rgba(0,225,255,0.06))'
+                          : 'linear-gradient(135deg, rgba(56,189,248,0.16), rgba(0,225,255,0.05))',
+                      boxShadow:
+                        theme.palette.mode === 'dark'
+                          ? 'inset 0 0 0 1px rgba(56,189,248,0.4), 0 0 16px rgba(56,189,248,0.12)'
+                          : 'inset 0 0 0 1px rgba(40,145,200,0.4)',
+                      '&:hover': {
+                        background:
+                          theme.palette.mode === 'dark'
+                            ? 'linear-gradient(135deg, rgba(56,189,248,0.22), rgba(0,225,255,0.08))'
+                            : 'linear-gradient(135deg, rgba(56,189,248,0.2), rgba(0,225,255,0.07))',
+                      },
+                    },
+                  },
+                }}
               >
                 {CONTEXT_OPTIONS.map((c) => (
                   <ToggleButton key={c} value={c} sx={{ textTransform: 'none' }}>
-                    {COMBAT_CONTEXT_LABELS[c]}
+                    <Typography
+                      component="span"
+                      sx={{ fontWeight: 700, fontSize: '0.875rem', lineHeight: 1.15 }}
+                    >
+                      {CONTEXT_META[c].label}
+                    </Typography>
+                    <Typography
+                      component="span"
+                      sx={{ fontSize: 10, opacity: 0.85, lineHeight: 1.2, mt: 0.25 }}
+                    >
+                      {CONTEXT_META[c].hint}
+                    </Typography>
                   </ToggleButton>
                 ))}
               </ToggleButtonGroup>
@@ -948,8 +1015,9 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
                         key={s.id}
                         sx={{
                           borderRadius: 2.5,
-                          px: 1.25,
-                          py: 0.75,
+                          px: 1.5,
+                          py: enabled ? 1.25 : 0.5,
+                          pl: 1.75,
                           position: 'relative',
                           overflow: 'hidden',
                           transition:
@@ -993,13 +1061,17 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
                       >
                         <Stack
                           direction="row"
-                          sx={{ justifyContent: 'space-between', alignItems: 'center' }}
+                          spacing={1}
+                          sx={{
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            minHeight: 44,
+                          }}
                         >
                           <FormControlLabel
-                            sx={{ mr: 0, flex: 1, minWidth: 0 }}
+                            sx={{ mr: 0, flex: 1, minWidth: 0, gap: 0.75 }}
                             control={
                               <Switch
-                                size="small"
                                 checked={enabled}
                                 onChange={(e) => calc.toggleSource(s.id, e.target.checked)}
                               />
@@ -1008,7 +1080,7 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
                               <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center' }}>
                                 <Typography
                                   variant="body2"
-                                  sx={{ fontWeight: enabled ? 600 : 400 }}
+                                  sx={{ fontWeight: enabled ? 600 : 500, lineHeight: 1.3 }}
                                 >
                                   {s.label}
                                 </Typography>
@@ -1039,7 +1111,13 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
                           )}
                         </Stack>
                         {enabled && (
-                          <Box sx={{ pl: 5, pr: 1, pb: 0.5 }}>
+                          <Box
+                            sx={{
+                              mt: 0.75,
+                              pt: 1,
+                              borderTop: `1px solid ${alpha(theme.palette.divider, 0.7)}`,
+                            }}
+                          >
                             <Stack
                               direction="row"
                               sx={{ justifyContent: 'space-between', alignItems: 'baseline' }}
@@ -1049,15 +1127,16 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
                                 sx={{
                                   color: 'text.secondary',
                                   textTransform: 'uppercase',
-                                  letterSpacing: 0.4,
+                                  letterSpacing: 0.5,
                                   fontSize: 10,
+                                  fontWeight: 700,
                                 }}
                               >
                                 Uptime
                               </Typography>
                               <Typography
                                 className="u-tabular"
-                                variant="caption"
+                                variant="body2"
                                 sx={{ color: accentText, fontWeight: 700 }}
                               >
                                 {Math.round((state.uptimeOverrides[s.id] ?? s.uptime) * 100)}%
@@ -1075,7 +1154,12 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
                             {s.description && (
                               <Typography
                                 variant="caption"
-                                sx={{ color: 'text.secondary', display: 'block', mt: -0.5 }}
+                                sx={{
+                                  color: 'text.secondary',
+                                  display: 'block',
+                                  mt: -0.25,
+                                  lineHeight: 1.45,
+                                }}
                               >
                                 {s.description}
                               </Typography>
