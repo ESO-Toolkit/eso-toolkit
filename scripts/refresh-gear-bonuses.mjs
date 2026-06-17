@@ -50,7 +50,9 @@ const dumpByName = new Map();
 for (const set of dump.sets) {
   const list = [];
   for (const b of set.bonuses) {
-    if (b.perfected) continue; // standard tiers only (arena/monster perfected = separate pass)
+    // Include perfected tiers in game order (the perfected "(N perfected items) Adds…"
+    // line comes first in the dump, matching the in-game tooltip). Whole-array replace
+    // below puts the app's bonuses in this exact order. Game-sourced = provenance-clean.
     if (b.description) list.push(b.description);
   }
   dumpByName.set(norm(set.name), { name: set.name, list });

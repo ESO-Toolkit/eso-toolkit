@@ -165,6 +165,7 @@ export const perfectedChaoticWhirlwind: GearSetData = {
   icon: 'Perfected Chaotic Whirlwind',
   setType: 'Trial',
   bonuses: [
+    '(2 perfected items) Adds 526 Critical Chance',
     '(2 items) When you cast Whirlwind while in combat, you gain a stack of Chaotic Whirlwind for 5 seconds, granting you 5% Movement Speed per stack, up to a maximum of 5 times. While Chaotic Whirlwind is active, you gain 6 Weapon and Spell Damage for every 1% bonus Movement Speed you have, up to a maximum of 450.\n\nAt 5 stacks, the duration doubles but cannot be refreshed.',
   ],
 };
@@ -174,6 +175,7 @@ export const perfectedConcentratedForce: GearSetData = {
   icon: 'Perfected Concentrated Force',
   setType: 'Trial',
   bonuses: [
+    '(2 perfected items) Adds 103 Weapon and Spell Damage',
     '(2 items) Every second cast of Force Shock will always apply the Burning, Concussion, and Chilled status effects. The Force Shock casts must be made within 5 seconds of each other for this effect to occur.',
   ],
 };
@@ -183,6 +185,7 @@ export const perfectedDefensivePosition: GearSetData = {
   icon: 'Perfected Defensive Position',
   setType: 'Trial',
   bonuses: [
+    '(2 perfected items) Adds 103 Stamina Recovery',
     '(2 items) When you reflect or absorb a spell projectile with Defensive Posture, you restore 2200 Magicka. If Defensive Posture expires without reflecting or absorbing a spell projectile, you restore 6600 Magicka instead.',
   ],
 };
@@ -192,6 +195,7 @@ export const perfectedDisciplinedSlash: GearSetData = {
   icon: 'Perfected Disciplined Slash',
   setType: 'Trial',
   bonuses: [
+    '(2 perfected items) Adds 877 Maximum Stamina',
     '(2 items) When you deal damage with Reverse Slash, you generate up to 12 Ultimate based on how much execute bonus damage it dealt.',
   ],
 };
@@ -201,6 +205,7 @@ export const perfectedPiercingSpray: GearSetData = {
   icon: 'Perfected Piercing Spray',
   setType: 'Trial',
   bonuses: [
+    '(2 perfected items) Adds 1190 Offensive Penetration',
     '(2 items) When you deal damage with Arrow Spray, you cause enemies hit to have 6600 less Armor against Bow attacks for 10 seconds.',
   ],
 };
@@ -210,6 +215,7 @@ export const perfectedTimelessBlessing: GearSetData = {
   icon: 'Perfected Timeless Blessing',
   setType: 'Trial',
   bonuses: [
+    '(2 perfected items) Adds 877 Maximum Magicka',
     '(2 items) When you cast Blessing of Protection, the cost of your Magicka and Stamina healing abilities are reduced by 21% for 3 seconds.',
   ],
 };
@@ -2282,6 +2288,7 @@ export const perfectedBahseiSMania: GearSetData = {
   icon: "Perfected Bahsei's Mania",
   setType: 'Trial',
   bonuses: [
+    '(5 perfected items) Adds 129 Weapon and Spell Damage',
     '(2 items) Adds 129 Weapon and Spell Damage',
     '(3 items) Gain Minor Slayer at all times, increasing your damage done to Dungeon, Trial, and Arena Monsters by 5%.',
     '(4 items) Adds 657 Critical Chance',
@@ -2294,6 +2301,7 @@ export const perfectedEyeOfNahviintaas: GearSetData = {
   icon: 'Perfected Eye of Nahviintaas',
   setType: 'Trial',
   bonuses: [
+    '(5 perfected items) Adds 1096 Maximum Magicka',
     '(2 items) Adds 129 Magicka Recovery',
     '(3 items) Gain Minor Aegis at all times, reducing your damage taken from Dungeon, Trial, and Arena Monsters by 5%.',
     '(4 items) Adds 1096 Maximum Magicka',
@@ -2306,6 +2314,7 @@ export const perfectedFalseGodSDevotion: GearSetData = {
   icon: "Perfected False God's Devotion",
   setType: 'Trial',
   bonuses: [
+    '(5 perfected items) Adds 129 Weapon and Spell Damage',
     '(2 items) Adds 657 Critical Chance',
     '(3 items) Gain Minor Slayer at all times, increasing your damage done to Dungeon, Trial, and Arena Monsters by 5%.',
     '(4 items) Adds 657 Critical Chance',
@@ -2318,6 +2327,7 @@ export const perfectedHarmonyInChaos: GearSetData = {
   icon: 'Perfected Harmony in Chaos',
   setType: 'Trial',
   bonuses: [
+    '(5 perfected items) Adds 129 Weapon and Spell Damage',
     '(2 items) Adds 129 Weapon and Spell Damage',
     '(3 items) Gain Minor Slayer at all times, increasing your damage done to Dungeon, Trial, and Arena Monsters by 5%.',
     '(4 items) Adds 129 Weapon and Spell Damage',
@@ -2331,6 +2341,7 @@ export const perfectedKyneSWind: GearSetData = {
   icon: "Perfected Kyne's Wind",
   setType: 'Trial',
   bonuses: [
+    '(5 perfected items) Adds 129 Magicka Recovery',
     '(2 items) Adds 129 Magicka Recovery',
     '(3 items) Gain Minor Aegis at all times, reducing your damage taken from Dungeon, Trial, and Arena Monsters by 5%.',
     '(4 items) Adds 4% Healing Done',
@@ -2343,6 +2354,7 @@ export const perfectedMantleOfSiroria: GearSetData = {
   icon: 'Perfected Mantle of Siroria',
   setType: 'Trial',
   bonuses: [
+    '(5 perfected items) Adds 129 Weapon and Spell Damage',
     '(2 items) Adds 129 Weapon and Spell Damage',
     '(3 items) Gain Minor Slayer at all times, increasing your damage done to Dungeon, Trial, and Arena Monsters by 5%.',
     '(4 items) Adds 129 Weapon and Spell Damage',
@@ -2356,6 +2368,7 @@ export const perfectedMoraScribeSThesis: GearSetData = {
   icon: "Perfected Mora Scribe's Thesis",
   setType: 'Trial',
   bonuses: [
+    '(5 perfected items) Adds 657 Critical Chance',
     '(2 items) Adds 657 Critical Chance',
     '(3 items) Gain Minor Slayer at all times, increasing your damage done to Dungeon, Trial, and Arena Monsters by 5%.',
     '(4 items) Adds 129 Weapon and Spell Damage',
@@ -2368,6 +2381,7 @@ export const perfectedPeaceAndSerenity: GearSetData = {
   icon: 'Perfected Peace and Serenity',
   setType: 'Trial',
   bonuses: [
+    '(5 perfected items) Adds 129 Weapon and Spell Damage',
     '(2 items) Adds 657 Critical Chance',
     '(3 items) Gain Minor Slayer at all times, increasing your damage done to Dungeon, Trial, and Arena Monsters by 5%.',
     '(4 items) Adds 129 Weapon and Spell Damage',
@@ -2380,6 +2394,7 @@ export const perfectedPillagerSProfit: GearSetData = {
   icon: "Perfected Pillager's Profit",
   setType: 'Trial',
   bonuses: [
+    '(5 perfected items) Adds 129 Magicka Recovery',
     '(2 items) Adds 4% Healing Done',
     '(3 items) Gain Minor Aegis at all times, reducing your damage taken from Dungeon, Trial, and Arena Monsters by 5%.',
     '(4 items) Adds 1096 Maximum Magicka',
@@ -2392,6 +2407,7 @@ export const perfectedRecoveryConvergence: GearSetData = {
   icon: 'Perfected Recovery Convergence',
   setType: 'Trial',
   bonuses: [
+    '(5 perfected items) Adds 4% Healing Done',
     '(2 items) Adds 4% Healing Done',
     '(3 items) Gain Minor Aegis at all times, reducing your damage taken from Dungeon, Trial, and Arena Monsters by 5%.',
     '(4 items) Adds 1096 Maximum Magicka',
@@ -2404,6 +2420,7 @@ export const perfectedRoaringOpportunist: GearSetData = {
   icon: 'Perfected Roaring Opportunist',
   setType: 'Trial',
   bonuses: [
+    '(5 perfected items) Adds 1096 Maximum Magicka',
     '(2 items) Adds 129 Weapon and Spell Damage',
     '(3 items) Gain Minor Slayer at all times, increasing your damage done to Dungeon, Trial, and Arena Monsters by 5%.',
     '(4 items) Adds 129 Weapon and Spell Damage',
@@ -2416,6 +2433,7 @@ export const perfectedStoneTalkerSOath: GearSetData = {
   icon: "Perfected Stone-Talker's Oath",
   setType: 'Trial',
   bonuses: [
+    '(5 perfected items) Adds 1096 Maximum Magicka',
     '(2 items) Adds 129 Magicka Recovery',
     '(3 items) Gain Minor Aegis at all times, reducing your damage taken from Dungeon, Trial, and Arena Monsters by 5%.',
     '(4 items) Adds 129 Magicka Recovery',
@@ -2428,6 +2446,7 @@ export const perfectedTransformativeHope: GearSetData = {
   icon: 'Perfected Transformative Hope',
   setType: 'Trial',
   bonuses: [
+    '(5 perfected items) Adds 4% Healing Done',
     '(2 items) Adds 4% Healing Done',
     '(3 items) Gain Minor Aegis at all times, reducing your damage taken from Dungeon, Trial, and Arena Monsters by 5%.',
     '(4 items) Adds 129 Magicka Recovery',
@@ -2440,6 +2459,7 @@ export const perfectedVestmentOfOlorime: GearSetData = {
   icon: 'Perfected Vestment of Olorime',
   setType: 'Trial',
   bonuses: [
+    '(5 perfected items) Adds 1096 Maximum Magicka',
     '(2 items) Adds 129 Magicka Recovery',
     '(3 items) Gain Minor Aegis at all times, reducing your damage taken from Dungeon, Trial, and Arena Monsters by 5%.',
     '(4 items) Adds 129 Magicka Recovery',
@@ -2452,6 +2472,7 @@ export const perfectedWhorlOfTheDepths: GearSetData = {
   icon: 'Perfected Whorl of the Depths',
   setType: 'Trial',
   bonuses: [
+    '(5 perfected items) Adds 657 Critical Chance',
     '(2 items) Adds 129 Weapon and Spell Damage',
     '(3 items) Gain Minor Slayer at all times, increasing your damage done to Dungeon, Trial, and Arena Monsters by 5%.',
     '(4 items) Adds 129 Weapon and Spell Damage',
@@ -2464,6 +2485,7 @@ export const perfectedXorynSMasterpiece: GearSetData = {
   icon: "Perfected Xoryn's Masterpiece",
   setType: 'PvP',
   bonuses: [
+    '(5 perfected items) Adds 1096 Maximum Magicka',
     '(2 items) Adds 1096 Maximum Magicka',
     '(3 items) Gain Minor Aegis at all times, reducing your damage taken from Dungeon, Trial, and Arena Monsters by 5%.',
     '(4 items) Adds 129 Magicka Recovery',

@@ -75,6 +75,7 @@ export const perfectedAnsuulsTorment: GearSetData = {
   icon: "Perfected Ansuul's Torment",
   setType: 'Trial',
   bonuses: [
+    '(5 perfected items) Adds 657 Critical Chance',
     '(2 items) Adds 657 Critical Chance',
     '(3 items) Gain Minor Slayer at all times, increasing your damage done to Dungeon, Trial, and Arena Monsters by 5%.',
     '(4 items) Adds 1487 Offensive Penetration',
@@ -1286,6 +1287,7 @@ export const perfectedArmsOfRelequen: GearSetData = {
   icon: 'Perfected Arms of Relequen',
   setType: 'Trial',
   bonuses: [
+    '(5 perfected items) Adds 129 Weapon and Spell Damage',
     '(2 items) Adds 129 Weapon and Spell Damage',
     '(3 items) Gain Minor Slayer at all times, increasing your damage done to Dungeon, Trial, and Arena Monsters by 5%.',
     '(4 items) Adds 1487 Offensive Penetration',
@@ -1298,6 +1300,7 @@ export const perfectedCoralRiptide: GearSetData = {
   icon: 'Perfected Coral Riptide',
   setType: 'Trial',
   bonuses: [
+    '(5 perfected items) Adds 657 Critical Chance',
     '(2 items) Adds 657 Critical Chance',
     '(3 items) Gain Minor Slayer at all times, increasing your damage done to Dungeon, Trial, and Arena Monsters by 5%.',
     '(4 items) Adds 129 Weapon and Spell Damage',
@@ -1310,6 +1313,7 @@ export const perfectedKazpiansCruelSignet: GearSetData = {
   icon: "Perfected Kazpian's Cruel Signet",
   setType: 'Trial',
   bonuses: [
+    '(5 perfected items) Adds 129 Weapon and Spell Damage',
     '(2 items) Adds 129 Weapon and Spell Damage',
     '(3 items) Gain Minor Slayer at all times, increasing your damage done to Dungeon, Trial, and Arena Monsters by 5%.',
     '(4 items) Adds 1487 Offensive Penetration',
@@ -1322,6 +1326,7 @@ export const perfectedSliversOfTheNullArca: GearSetData = {
   icon: 'Perfected Slivers of the Null Arca',
   setType: 'Trial',
   bonuses: [
+    '(5 perfected items) Adds 129 Weapon and Spell Damage',
     '(2 items) Adds 657 Critical Chance',
     '(3 items) Gain Minor Slayer at all times, increasing your damage done to Dungeon, Trial, and Arena Monsters by 5%.',
     '(4 items) Adds 657 Critical Chance',
@@ -1334,6 +1339,7 @@ export const perfectedSulxansTorment: GearSetData = {
   icon: "Perfected Sul-Xan's Torment",
   setType: 'Trial',
   bonuses: [
+    '(5 perfected items) Adds 657 Critical Chance',
     '(2 items) Adds 129 Weapon and Spell Damage',
     '(3 items) Gain Minor Slayer at all times, increasing your damage done to Dungeon, Trial, and Arena Monsters by 5%.',
     '(4 items) Adds 657 Critical Chance',
@@ -1346,6 +1352,7 @@ export const perfectedToothOfLokkestiiz: GearSetData = {
   icon: 'Perfected Tooth of Lokkestiiz',
   setType: 'Trial',
   bonuses: [
+    '(5 perfected items) Adds 657 Critical Chance',
     '(2 items) Adds 129 Weapon and Spell Damage',
     '(3 items) Gain Minor Slayer at all times, increasing your damage done to Dungeon, Trial, and Arena Monsters by 5%.',
     '(4 items) Adds 129 Weapon and Spell Damage',
@@ -1358,6 +1365,7 @@ export const perfectedYandirsMight: GearSetData = {
   icon: "Perfected Yandir's Might",
   setType: 'Trial',
   bonuses: [
+    '(5 perfected items) Adds 129 Weapon and Spell Damage',
     '(2 items) Adds 129 Weapon and Spell Damage',
     '(3 items) Gain Minor Slayer at all times, increasing your damage done to Dungeon, Trial, and Arena Monsters by 5%.',
     '(4 items) Adds 129 Weapon and Spell Damage',
