@@ -210,22 +210,24 @@ const fmtSeconds = (n: number): string => {
 };
 
 /**
- * Shared surface style for the redesigned panels — opts into the app's
- * signature glass-gradient card look (the same gradient MuiPaper uses) instead
- * of the flat `variant="outlined"` surface, so the Ultimate tab reads as a
- * sibling of the rest of the toolkit rather than a bare MUI form.
+ * Shared surface style for the redesigned panels. Dark mode leans into a
+ * layered, cyan-tinted depth system: panels are a recessed mid-layer (deeper
+ * gradient, faint cyan border, a glossy top inset highlight, and a soft drop
+ * shadow) so the raised cards inside them read as sitting above the surface.
  */
 const panelSx = (theme: Theme): SxProps<Theme> => ({
   p: { xs: 2, sm: 2.5 },
   borderRadius: 3.5,
-  border: `1px solid ${theme.palette.divider}`,
+  border: `1px solid ${
+    theme.palette.mode === 'dark' ? 'rgba(56,189,248,0.12)' : theme.palette.divider
+  }`,
   background:
     theme.palette.mode === 'dark'
-      ? 'linear-gradient(180deg, rgba(15,23,42,0.66) 0%, rgba(3,7,18,0.66) 100%)'
+      ? 'linear-gradient(180deg, rgba(14,22,42,0.74) 0%, rgba(3,9,20,0.82) 100%)'
       : 'linear-gradient(180deg, rgb(40 145 200 / 6%) 0%, rgba(248, 250, 252, 0.9) 100%)',
   boxShadow:
     theme.palette.mode === 'dark'
-      ? '0 8px 30px rgba(0, 0, 0, 0.25)'
+      ? '0 14px 36px rgba(0,0,0,0.44), inset 0 1px 0 rgba(255,255,255,0.05)'
       : '0 4px 12px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.03)',
 });
 
@@ -287,17 +289,27 @@ const StatBlock: React.FC<{
         borderRadius: 2.5,
         position: 'relative',
         height: '100%',
+        // Raised card: a cyan-tinted gradient that lifts off the recessed panel,
+        // with a glossy top inset highlight and a soft drop shadow for depth.
         background:
-          theme.palette.mode === 'dark' ? 'rgba(148,163,184,0.05)' : 'rgba(255,255,255,0.5)',
-        border: `1px solid ${theme.palette.divider}`,
+          theme.palette.mode === 'dark'
+            ? 'linear-gradient(180deg, rgba(56,189,248,0.09) 0%, rgba(56,189,248,0.02) 100%)'
+            : 'rgba(255,255,255,0.6)',
+        border: `1px solid ${
+          theme.palette.mode === 'dark' ? 'rgba(56,189,248,0.16)' : theme.palette.divider
+        }`,
+        boxShadow:
+          theme.palette.mode === 'dark'
+            ? 'inset 0 1px 0 rgba(255,255,255,0.07), 0 6px 16px rgba(0,0,0,0.34)'
+            : '0 2px 8px rgba(15,23,42,0.05)',
         // Motion-safe hover: border + shadow only (no transform), so the tiles
         // feel responsive without violating prefers-reduced-motion.
         transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
         '&:hover': {
-          borderColor: `${tileAccent}55`,
+          borderColor: `${tileAccent}66`,
           boxShadow:
             theme.palette.mode === 'dark'
-              ? `0 6px 22px rgba(0,0,0,0.28), 0 0 0 1px ${tileAccent}22`
+              ? `inset 0 1px 0 rgba(255,255,255,0.09), 0 8px 24px rgba(0,0,0,0.4), 0 0 18px ${tileAccent}1f`
               : '0 6px 18px rgba(15,23,42,0.08)',
         },
       }}
@@ -520,28 +532,45 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
           borderRadius: 4,
           position: 'relative',
           overflow: 'hidden',
-          border: `1px solid ${theme.palette.divider}`,
+          border: `1px solid ${
+            theme.palette.mode === 'dark' ? 'rgba(56,189,248,0.18)' : theme.palette.divider
+          }`,
           background:
             theme.palette.mode === 'dark'
-              ? 'linear-gradient(135deg, rgba(56,189,248,0.10) 0%, rgba(15,23,42,0.55) 55%, rgba(3,7,18,0.6) 100%)'
+              ? 'linear-gradient(135deg, rgba(56,189,248,0.16) 0%, rgba(13,22,42,0.6) 50%, rgba(3,8,18,0.72) 100%)'
               : 'linear-gradient(135deg, rgba(56,189,248,0.12) 0%, rgba(248,250,252,0.85) 60%, rgba(255,255,255,0.95) 100%)',
           boxShadow:
             theme.palette.mode === 'dark'
-              ? '0 10px 40px rgba(0,0,0,0.3), 0 0 60px rgba(56,189,248,0.06)'
+              ? '0 18px 50px rgba(0,0,0,0.46), 0 0 80px rgba(56,189,248,0.10), inset 0 1px 0 rgba(255,255,255,0.06)'
               : '0 6px 20px rgba(15,23,42,0.07)',
-          // Soft accent glow bleeding from the top-left, behind the stats.
+          // Two soft cyan glows (top-left + bottom-right) bleeding behind the
+          // stats to give the panel atmospheric depth.
           '&::before': {
             content: '""',
             position: 'absolute',
-            top: -80,
-            left: -60,
-            width: 260,
-            height: 260,
+            top: -90,
+            left: -70,
+            width: 300,
+            height: 300,
             borderRadius: '50%',
             background:
               theme.palette.mode === 'dark'
-                ? 'radial-gradient(circle, rgba(56,189,248,0.18), transparent 70%)'
+                ? 'radial-gradient(circle, rgba(0,225,255,0.22), transparent 70%)'
                 : 'radial-gradient(circle, rgba(56,189,248,0.16), transparent 70%)',
+            pointerEvents: 'none',
+          },
+          '&::after': {
+            content: '""',
+            position: 'absolute',
+            bottom: -120,
+            right: -80,
+            width: 320,
+            height: 320,
+            borderRadius: '50%',
+            background:
+              theme.palette.mode === 'dark'
+                ? 'radial-gradient(circle, rgba(56,189,248,0.12), transparent 70%)'
+                : 'radial-gradient(circle, rgba(56,189,248,0.08), transparent 70%)',
             pointerEvents: 'none',
           },
         }}
@@ -549,6 +578,7 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
         <Box
           sx={{
             position: 'relative',
+            zIndex: 1,
             display: 'flex',
             flexDirection: { xs: 'column', md: 'row' },
             gap: { xs: 2, md: 3 },
@@ -1069,9 +1099,15 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
                           }`,
                           background: enabled
                             ? theme.palette.mode === 'dark'
-                              ? 'linear-gradient(135deg, rgba(56,189,248,0.10) 0%, rgba(56,189,248,0.02) 100%)'
+                              ? 'linear-gradient(135deg, rgba(56,189,248,0.14) 0%, rgba(56,189,248,0.03) 100%)'
                               : 'linear-gradient(135deg, rgba(40,145,200,0.07) 0%, rgba(40,145,200,0.01) 100%)'
                             : 'transparent',
+                          // Raised + glowing when active, flush when off.
+                          boxShadow: enabled
+                            ? theme.palette.mode === 'dark'
+                              ? 'inset 0 1px 0 rgba(255,255,255,0.06), 0 4px 14px rgba(0,0,0,0.3), 0 0 16px rgba(56,189,248,0.07)'
+                              : '0 2px 8px rgba(15,23,42,0.05)'
+                            : 'none',
                           // Accent rail on the left edge marks an active source.
                           '&::before': enabled
                             ? {
@@ -1082,8 +1118,12 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
                                 bottom: 0,
                                 width: 3,
                                 background: `linear-gradient(180deg, ${accent}, ${
-                                  theme.palette.mode === 'dark' ? 'rgba(0,225,255,0.7)' : accent
+                                  theme.palette.mode === 'dark' ? 'rgba(0,225,255,0.8)' : accent
                                 })`,
+                                boxShadow:
+                                  theme.palette.mode === 'dark'
+                                    ? '0 0 10px rgba(0,225,255,0.5)'
+                                    : 'none',
                               }
                             : undefined,
                           '&:hover': {

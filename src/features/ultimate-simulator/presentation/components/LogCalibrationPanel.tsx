@@ -64,14 +64,16 @@ export const LogCalibrationPanel: React.FC<LogCalibrationPanelProps> = ({ modele
         // than a flatter outlined card.
         borderRadius: 3.5,
         overflow: 'hidden',
-        border: `1px solid ${theme.palette.divider}`,
+        border: `1px solid ${
+          theme.palette.mode === 'dark' ? 'rgba(56,189,248,0.12)' : theme.palette.divider
+        }`,
         background:
           theme.palette.mode === 'dark'
-            ? 'linear-gradient(180deg, rgba(15,23,42,0.66) 0%, rgba(3,7,18,0.66) 100%)'
+            ? 'linear-gradient(180deg, rgba(14,22,42,0.74) 0%, rgba(3,9,20,0.82) 100%)'
             : 'linear-gradient(180deg, rgb(40 145 200 / 6%) 0%, rgba(248, 250, 252, 0.9) 100%)',
         boxShadow:
           theme.palette.mode === 'dark'
-            ? '0 8px 30px rgba(0, 0, 0, 0.25)'
+            ? '0 14px 36px rgba(0,0,0,0.44), inset 0 1px 0 rgba(255,255,255,0.05)'
             : '0 4px 12px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.03)',
         '&:before': { display: 'none' },
       }}
