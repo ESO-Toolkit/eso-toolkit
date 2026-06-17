@@ -250,43 +250,38 @@ const SectionHeader: React.FC<{
   </Stack>
 );
 
-/** A big headline stat tile in the hero strip. */
+/**
+ * A supporting headline stat tile in the hero strip. The dominant
+ * "Ultimate / second" metric is rendered separately (see PrimaryStat); these
+ * are the compact secondary stats that sit beside it.
+ */
 const StatBlock: React.FC<{
   label: string;
   value: string;
   sub?: string;
   accent?: string;
-  highlight?: boolean;
   /** Optional plain-language explanation shown on an info-icon tooltip. */
   info?: string;
-}> = ({ label, value, sub, accent, highlight, info }) => {
+}> = ({ label, value, sub, accent, info }) => {
   const theme = useTheme();
   const tileAccent = accent ?? theme.palette.primary.main;
   return (
     <Box
       sx={{
         minWidth: 0,
-        px: { xs: 1.5, sm: 2 },
-        py: { xs: 1.5, sm: 1.5 },
-        borderRadius: 3,
+        px: { xs: 1.25, sm: 1.75 },
+        py: { xs: 1.25, sm: 1.5 },
+        borderRadius: 2.5,
         position: 'relative',
-        background: highlight
-          ? theme.palette.mode === 'dark'
-            ? 'linear-gradient(160deg, rgba(56,189,248,0.16) 0%, rgba(0,225,255,0.06) 100%)'
-            : 'linear-gradient(160deg, rgba(56,189,248,0.16) 0%, rgba(0,225,255,0.05) 100%)'
-          : theme.palette.mode === 'dark'
-            ? 'rgba(148,163,184,0.05)'
-            : 'rgba(255,255,255,0.5)',
-        border: highlight ? `1px solid ${tileAccent}55` : `1px solid ${theme.palette.divider}`,
-        boxShadow:
-          highlight && theme.palette.mode === 'dark'
-            ? '0 0 28px rgba(56,189,248,0.12) inset'
-            : 'none',
+        height: '100%',
+        background:
+          theme.palette.mode === 'dark' ? 'rgba(148,163,184,0.05)' : 'rgba(255,255,255,0.5)',
+        border: `1px solid ${theme.palette.divider}`,
         // Motion-safe hover: border + shadow only (no transform), so the tiles
         // feel responsive without violating prefers-reduced-motion.
         transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
         '&:hover': {
-          borderColor: `${tileAccent}${highlight ? '88' : '55'}`,
+          borderColor: `${tileAccent}55`,
           boxShadow:
             theme.palette.mode === 'dark'
               ? `0 6px 22px rgba(0,0,0,0.28), 0 0 0 1px ${tileAccent}22`
@@ -294,15 +289,16 @@ const StatBlock: React.FC<{
         },
       }}
     >
-      <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
+      <Stack direction="row" spacing={0.4} sx={{ alignItems: 'center' }}>
         <Typography
           variant="caption"
           sx={{
             color: 'text.secondary',
             textTransform: 'uppercase',
-            letterSpacing: 0.7,
-            fontWeight: 600,
-            fontSize: 11,
+            letterSpacing: 0.5,
+            fontWeight: 700,
+            fontSize: { xs: 9.5, sm: 10 },
+            lineHeight: 1.25,
           }}
         >
           {label}
@@ -314,15 +310,16 @@ const StatBlock: React.FC<{
               aria-label={`${label}: ${info}`}
               tabIndex={0}
               sx={{
-                fontSize: 13,
+                fontSize: 12,
                 color: 'text.secondary',
                 opacity: 0.6,
                 cursor: 'help',
                 borderRadius: '50%',
+                flexShrink: 0,
                 '&:hover': { opacity: 1 },
                 '&:focus-visible': {
                   opacity: 1,
-                  outline: `2px solid ${accent ?? theme.palette.primary.main}`,
+                  outline: `2px solid ${tileAccent}`,
                   outlineOffset: 2,
                 },
               }}
@@ -335,16 +332,26 @@ const StatBlock: React.FC<{
         sx={{
           fontFamily: 'Space Grotesk, Inter, system-ui',
           fontWeight: 700,
-          fontSize: { xs: '1.9rem', sm: '2.15rem' },
-          lineHeight: 1.05,
-          mt: 0.25,
-          color: highlight ? tileAccent : theme.palette.text.primary,
+          fontSize: { xs: '1.4rem', sm: '1.7rem' },
+          lineHeight: 1.1,
+          mt: 0.5,
+          color: theme.palette.text.primary,
+          whiteSpace: 'nowrap',
         }}
       >
         {value}
       </Typography>
       {sub && (
-        <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mt: 0.25 }}>
+        <Typography
+          variant="caption"
+          sx={{
+            color: 'text.secondary',
+            display: 'block',
+            mt: 0.25,
+            fontSize: { xs: 10.5, sm: 11.5 },
+            lineHeight: 1.3,
+          }}
+        >
           {sub}
         </Typography>
       )}
@@ -495,7 +502,7 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
       <Paper
         elevation={0}
         sx={{
-          p: { xs: 1.5, sm: 2 },
+          p: { xs: 2, sm: 2.75 },
           mb: 2.5,
           borderRadius: 4,
           position: 'relative',
@@ -529,43 +536,158 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
         <Box
           sx={{
             position: 'relative',
-            display: 'grid',
-            gap: { xs: 1.25, sm: 1.5 },
-            // 2×2 on phones (compact, no long scroll), a single 4-up row from the
-            // small breakpoint onward. Each tile is its own bordered card, so no
-            // separating dividers are needed.
-            gridTemplateColumns: {
-              xs: 'repeat(2, minmax(0, 1fr))',
-              sm: 'repeat(4, minmax(0, 1fr))',
-            },
+            display: 'flex',
+            flexDirection: { xs: 'column', md: 'row' },
+            gap: { xs: 2, md: 3 },
+            alignItems: { md: 'stretch' },
           }}
         >
-          <StatBlock
-            label="Ultimate / second"
-            value={fmt(expected.ultimatePerSecond, 2)}
-            sub={`${fmt(expected.totalUltimate, 0)} over ${state.fightDurationSeconds}s`}
-            accent={accent}
-            highlight
-            info="Average ultimate generated per second across the whole fight, from every enabled source plus Decisive."
-          />
-          <StatBlock
-            label="Time to first ult"
-            value={fmtSeconds(timeToUlt.secondsToFirstCast)}
-            sub={`${effectiveCost} ult cost`}
-            info={`How long until you can first fire the selected ultimate (effective cost ${effectiveCost}), counting any banked ultimate at fight start.`}
-          />
-          <StatBlock
-            label="Casts / fight"
-            value={Number.isFinite(timeToUlt.castsPerFight) ? String(timeToUlt.castsPerFight) : '∞'}
-            sub={`every ${fmtSeconds(timeToUlt.secondsPerCast)}`}
-            info={`How many times you can fire it in a ${state.fightDurationSeconds}s fight — total generation divided by its effective cost.`}
-          />
-          <StatBlock
-            label="Generated by 60s"
-            value={fmt(expected.ultimatePerSecond * 60, 0)}
-            sub={`ult (pool caps at ${maxPool})`}
-            info={`Ultimate built in the first minute at this rate. The pool itself can only hold ${maxPool} at once.`}
-          />
+          {/* PRIMARY — the dominant result, with a gauge vs the sustained ceiling. */}
+          <Box
+            sx={{
+              flex: { md: '0 0 40%' },
+              minWidth: 0,
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
+              px: { xs: 0.5, sm: 1 },
+            }}
+          >
+            <Stack direction="row" spacing={0.6} sx={{ alignItems: 'center' }}>
+              <Typography
+                variant="caption"
+                sx={{
+                  color: 'text.secondary',
+                  textTransform: 'uppercase',
+                  letterSpacing: 1,
+                  fontWeight: 700,
+                  fontSize: 11,
+                }}
+              >
+                Ultimate / second
+              </Typography>
+              <Tooltip
+                arrow
+                title="Average ultimate generated per second across the whole fight, from every enabled source plus Decisive."
+              >
+                <InfoOutlined
+                  role="img"
+                  aria-label="Ultimate / second: average ultimate generated per second across the whole fight, from every enabled source plus Decisive."
+                  tabIndex={0}
+                  sx={{
+                    fontSize: 14,
+                    color: 'text.secondary',
+                    opacity: 0.6,
+                    cursor: 'help',
+                    borderRadius: '50%',
+                    '&:hover': { opacity: 1 },
+                    '&:focus-visible': {
+                      opacity: 1,
+                      outline: `2px solid ${accent}`,
+                      outlineOffset: 2,
+                    },
+                  }}
+                />
+              </Tooltip>
+            </Stack>
+            <Stack direction="row" spacing={0.75} sx={{ alignItems: 'baseline', mt: 0.25 }}>
+              <Typography
+                className="u-tabular"
+                sx={{
+                  fontFamily: 'Space Grotesk, Inter, system-ui',
+                  fontWeight: 700,
+                  fontSize: { xs: '3.1rem', sm: '3.6rem' },
+                  lineHeight: 0.95,
+                  color: accent,
+                  textShadow:
+                    theme.palette.mode === 'dark' ? '0 0 32px rgba(56,189,248,0.35)' : 'none',
+                }}
+              >
+                {fmt(expected.ultimatePerSecond, 2)}
+              </Typography>
+              <Typography
+                sx={{
+                  color: 'text.secondary',
+                  fontWeight: 600,
+                  fontSize: { xs: '1rem', sm: '1.1rem' },
+                }}
+              >
+                ult/s
+              </Typography>
+            </Stack>
+            {/* Gauge: this rate against the practical sustained ceiling. */}
+            <Box sx={{ mt: 1.25 }}>
+              <LinearProgress
+                variant="determinate"
+                value={Math.min(100, (expected.ultimatePerSecond / sanityMax) * 100)}
+                aria-hidden
+                sx={{
+                  height: 7,
+                  borderRadius: 4,
+                  backgroundColor: alpha(theme.palette.divider, 0.6),
+                  '& .MuiLinearProgress-bar': {
+                    borderRadius: 4,
+                    background: `linear-gradient(90deg, ${accent}, ${
+                      theme.palette.mode === 'dark' ? 'rgba(0,225,255,0.9)' : accent
+                    })`,
+                  },
+                }}
+              />
+              <Stack
+                direction="row"
+                sx={{ justifyContent: 'space-between', alignItems: 'baseline', mt: 0.6 }}
+              >
+                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                  <Box
+                    component="span"
+                    className="u-tabular"
+                    sx={{ fontWeight: 700, color: accentText }}
+                  >
+                    {fmt(expected.totalUltimate, 0)}
+                  </Box>{' '}
+                  ult over {state.fightDurationSeconds}s
+                </Typography>
+                <Typography variant="caption" sx={{ color: 'text.secondary', opacity: 0.8 }}>
+                  ceiling ~{sanityMax}/s
+                </Typography>
+              </Stack>
+            </Box>
+          </Box>
+
+          {/* SECONDARY — supporting stats, 3-up across every breakpoint. */}
+          <Box
+            sx={{
+              flex: 1,
+              minWidth: 0,
+              display: 'grid',
+              gap: { xs: 1, sm: 1.25 },
+              gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+            }}
+          >
+            <StatBlock
+              label="Time to first ult"
+              value={fmtSeconds(timeToUlt.secondsToFirstCast)}
+              sub={`${effectiveCost} ult cost`}
+              accent={accent}
+              info={`How long until you can first fire the selected ultimate (effective cost ${effectiveCost}), counting any banked ultimate at fight start.`}
+            />
+            <StatBlock
+              label="Casts / fight"
+              value={
+                Number.isFinite(timeToUlt.castsPerFight) ? String(timeToUlt.castsPerFight) : '∞'
+              }
+              sub={`every ${fmtSeconds(timeToUlt.secondsPerCast)}`}
+              accent={accent}
+              info={`How many times you can fire it in a ${state.fightDurationSeconds}s fight — total generation divided by its effective cost.`}
+            />
+            <StatBlock
+              label="By 60s"
+              value={fmt(expected.ultimatePerSecond * 60, 0)}
+              sub={`ult · cap ${maxPool}`}
+              accent={accent}
+              info={`Ultimate built in the first minute at this rate. The pool itself can only hold ${maxPool} at once.`}
+            />
+          </Box>
         </Box>
         {exceedsSanity && (
           <Alert severity="info" sx={{ mt: 2 }}>
@@ -1285,6 +1407,7 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
                         fontSize: 11,
                         fontWeight: 700,
                         color: 'text.secondary',
+                        display: { xs: 'none', sm: 'table-cell' },
                       }}
                     >
                       Base
@@ -1297,6 +1420,7 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
                         fontSize: 11,
                         fontWeight: 700,
                         color: 'text.secondary',
+                        display: { xs: 'none', sm: 'table-cell' },
                       }}
                     >
                       Decisive
@@ -1368,8 +1492,12 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
                             </Typography>
                           </Stack>
                         </TableCell>
-                        <TableCell align="right">{fmt(c.baseUltimate, 0)}</TableCell>
-                        <TableCell align="right">{fmt(c.decisiveUltimate, 1)}</TableCell>
+                        <TableCell align="right" sx={{ display: { xs: 'none', sm: 'table-cell' } }}>
+                          {fmt(c.baseUltimate, 0)}
+                        </TableCell>
+                        <TableCell align="right" sx={{ display: { xs: 'none', sm: 'table-cell' } }}>
+                          {fmt(c.decisiveUltimate, 1)}
+                        </TableCell>
                         <TableCell align="right">{fmt(tot, 1)}</TableCell>
                         <TableCell align="right">
                           {fmt(
@@ -1392,10 +1520,16 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
                     }}
                   >
                     <TableCell sx={{ fontWeight: 700 }}>Total</TableCell>
-                    <TableCell align="right" sx={{ fontWeight: 700 }}>
+                    <TableCell
+                      align="right"
+                      sx={{ fontWeight: 700, display: { xs: 'none', sm: 'table-cell' } }}
+                    >
                       {fmt(expected.baseUltimate, 0)}
                     </TableCell>
-                    <TableCell align="right" sx={{ fontWeight: 700 }}>
+                    <TableCell
+                      align="right"
+                      sx={{ fontWeight: 700, display: { xs: 'none', sm: 'table-cell' } }}
+                    >
                       {fmt(expected.decisiveUltimate, 1)}
                     </TableCell>
                     <TableCell

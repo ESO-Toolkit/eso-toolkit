@@ -97,7 +97,15 @@ export const CalculatorPage: React.FC = () => {
             value="stats"
             icon={<TuneOutlined fontSize="small" />}
             iconPosition="start"
-            label="Stats (Pen / Crit / Armor)"
+            label={
+              <Box component="span">
+                Stats
+                <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>
+                  {' '}
+                  (Pen / Crit / Armor)
+                </Box>
+              </Box>
+            }
           />
           <Tab
             value="ultimate"
