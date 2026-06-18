@@ -2109,18 +2109,21 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
                 borderRadius: 3,
                 cursor: 'pointer',
                 border: `1px solid ${
-                  theme.palette.mode === 'dark' ? 'rgba(56,189,248,0.38)' : 'rgba(40,145,200,0.3)'
+                  theme.palette.mode === 'dark' ? 'rgba(56,189,248,0.6)' : 'rgba(40,145,200,0.45)'
                 }`,
+                // Frosted, elevated glass that sits clearly ABOVE the page rather
+                // than matching its flat navy — a lighter, more transparent
+                // surface (so the blur reads) plus a brighter cyan edge + glow.
                 background:
                   theme.palette.mode === 'dark'
-                    ? 'linear-gradient(180deg, rgba(14,24,44,0.92), rgba(7,14,28,0.95))'
-                    : 'rgba(255,255,255,0.96)',
-                backdropFilter: 'blur(16px) saturate(1.3)',
-                WebkitBackdropFilter: 'blur(16px) saturate(1.3)',
+                    ? 'linear-gradient(180deg, rgba(30,48,78,0.72) 0%, rgba(17,32,58,0.78) 100%)'
+                    : 'linear-gradient(180deg, rgba(240,250,255,0.82) 0%, rgba(255,255,255,0.84) 100%)',
+                backdropFilter: 'blur(22px) saturate(1.6)',
+                WebkitBackdropFilter: 'blur(22px) saturate(1.6)',
                 boxShadow:
                   theme.palette.mode === 'dark'
-                    ? '0 14px 38px rgba(0,0,0,0.55), 0 0 24px rgba(56,189,248,0.18)'
-                    : '0 12px 30px rgba(15,23,42,0.18)',
+                    ? '0 18px 44px rgba(0,0,0,0.55), 0 0 34px rgba(56,189,248,0.32), inset 0 1px 0 rgba(255,255,255,0.08)'
+                    : '0 16px 36px rgba(15,23,42,0.2), 0 0 22px rgba(40,145,200,0.2)',
                 '&:focus-visible': { outline: `2px solid ${accent}`, outlineOffset: 2 },
               }}
             >
