@@ -8,7 +8,7 @@
  */
 
 import { BoltOutlined, TuneOutlined } from '@mui/icons-material';
-import { Box, Container, Tab, Tabs, Typography } from '@mui/material';
+import { Box, Container, Tab, Tabs } from '@mui/material';
 import React, { Suspense, useState } from 'react';
 
 import { Calculator } from './Calculator';
@@ -43,94 +43,77 @@ export const CalculatorPage: React.FC = () => {
 
   return (
     <Box sx={{ width: '100%' }}>
-      {/* Top-level page navigation. Rendered as a full-width underline tab bar
-          (not a pill group) so it reads as primary, app-level navigation and is
-          visually distinct from the secondary segmented pill controls (PvE/PvP,
-          Pen/Crit/Armor, Solo/Group/PvP) that live inside each panel — fixing
-          the "tabs inside tabs" / double-pill confusion. */}
       <Container maxWidth="lg" sx={{ pt: { xs: 1.5, sm: 2.5 } }}>
-        <Box
-          component="nav"
-          aria-label="Calculator sections"
+        <Tabs
+          value={tab}
+          onChange={handleChange}
+          aria-label="Calculator type"
+          variant="standard"
           sx={(theme) => ({
-            borderBottom: `1px solid ${theme.palette.divider}`,
-          })}
-        >
-          <Typography
-            component="span"
-            sx={(theme) => ({
-              display: 'block',
-              mb: 1,
-              fontSize: '0.6875rem',
-              fontWeight: 700,
-              letterSpacing: '0.12em',
-              textTransform: 'uppercase',
+            minHeight: 46,
+            display: 'inline-flex',
+            p: 0.5,
+            borderRadius: 3,
+            border: `1px solid ${theme.palette.divider}`,
+            background:
+              theme.palette.mode === 'dark'
+                ? 'linear-gradient(180deg, rgba(15,23,42,0.66) 0%, rgba(3,7,18,0.66) 100%)'
+                : 'rgba(255,255,255,0.6)',
+            // Hide the default underline indicator — selection is shown by the
+            // filled pill behind the active tab instead.
+            '& .MuiTabs-indicator': { display: 'none' },
+            '& .MuiTabs-flexContainer': { gap: 0.5 },
+            '& .MuiTab-root': {
+              textTransform: 'none',
+              fontWeight: 600,
+              minHeight: 38,
+              borderRadius: 2.25,
+              px: { xs: 1.5, sm: 2 },
+              color: theme.palette.text.secondary,
+              transition: 'background-color 0.18s ease, color 0.18s ease',
+              '&:hover': {
+                color: theme.palette.text.primary,
+                backgroundColor:
+                  theme.palette.mode === 'dark' ? 'rgba(56,189,248,0.06)' : 'rgba(15,23,42,0.04)',
+              },
+            },
+            '& .Mui-selected': {
               color:
                 theme.palette.mode === 'dark'
-                  ? 'rgba(148,163,184,0.85)'
-                  : theme.palette.text.secondary,
-            })}
-          >
-            Calculator
-          </Typography>
-          <Tabs
-            value={tab}
-            onChange={handleChange}
-            aria-label="Calculator type"
-            variant="standard"
-            sx={(theme) => {
-              const accent = theme.palette.mode === 'dark' ? 'rgb(56,189,248)' : 'rgb(40,145,200)';
-              return {
-                minHeight: 52,
-                // A clear cyan underline marks the active section — a tab-bar
-                // affordance that differs from the filled inner pills.
-                '& .MuiTabs-indicator': {
-                  height: 3,
-                  borderRadius: '3px 3px 0 0',
-                  backgroundColor: accent,
-                  boxShadow: theme.palette.mode === 'dark' ? `0 0 12px ${accent}` : 'none',
-                },
-                '& .MuiTabs-flexContainer': { gap: { xs: 1, sm: 2.5 } },
-                '& .MuiTab-root': {
-                  textTransform: 'none',
-                  fontWeight: 600,
-                  fontSize: { xs: '0.9375rem', sm: '1.0625rem' },
-                  minHeight: 52,
-                  px: { xs: 0.5, sm: 1 },
-                  color: theme.palette.text.secondary,
-                  transition: 'color 0.18s ease',
-                  '@media (prefers-reduced-motion: reduce)': { transition: 'none' },
-                  '&:hover': { color: theme.palette.text.primary },
-                },
-                '& .Mui-selected': {
-                  color: `${accent} !important`,
-                  fontWeight: 700,
-                },
-              };
-            }}
-          >
-            <Tab
-              value="stats"
-              icon={<TuneOutlined fontSize="small" />}
-              iconPosition="start"
-              label={
-                <Box component="span">
-                  Stats
-                  <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>
-                    {' '}
-                    (Pen / Crit / Armor)
-                  </Box>
+                  ? `${theme.palette.primary.main} !important`
+                  : '#ffffff !important',
+              background:
+                theme.palette.mode === 'dark'
+                  ? 'linear-gradient(135deg, rgba(56,189,248,0.18), rgba(0,225,255,0.06))'
+                  : 'linear-gradient(135deg, #0f172a, #1e293b)',
+              boxShadow:
+                theme.palette.mode === 'dark'
+                  ? '0 0 18px rgba(56,189,248,0.15), inset 0 0 0 1px rgba(56,189,248,0.35)'
+                  : '0 4px 12px rgba(15,23,42,0.18)',
+            },
+          })}
+        >
+          <Tab
+            value="stats"
+            icon={<TuneOutlined fontSize="small" />}
+            iconPosition="start"
+            label={
+              <Box component="span">
+                Stats
+                <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>
+                  {' '}
+                  (Pen / Crit / Armor)
                 </Box>
-              }
-            />
-            <Tab
-              value="ultimate"
-              icon={<BoltOutlined fontSize="small" />}
-              iconPosition="start"
-              label="Ultimate"
-            />
-          </Tabs>
-        </Box>
+              </Box>
+            }
+          />
+          <Tab
+            value="ultimate"
+            icon={<BoltOutlined fontSize="small" />}
+            iconPosition="start"
+            label="Ultimate"
+          />
+        </Tabs>
       </Container>
 
       {/* Keep the stat calculator mounted (display:none) so switching back is

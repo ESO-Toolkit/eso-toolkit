@@ -10,7 +10,6 @@
  */
 
 import {
-  AutoFixHighOutlined,
   BoltOutlined,
   InfoOutlined,
   InsightsOutlined,
@@ -152,50 +151,6 @@ const Swatch: React.FC<{ color: string; square?: boolean; size?: number; glow?: 
     }}
   />
 );
-
-/**
- * Build-archetype presets — each flips ONLY existing boolean/selection state
- * (context / role / class / source on-off) via the hook's setters. Crucially it
- * NEVER sets an uptime: a toggled-on source inherits its own research-sourced
- * catalog-default uptime, so no unsourced number is ever introduced.
- */
-interface BuildPreset {
-  readonly id: string;
-  readonly label: string;
-  readonly context: CombatContext;
-  readonly role: CombatRole;
-  /** Source ids to force on (others left at their catalog defaults). */
-  readonly enableSources: readonly string[];
-  /** Source ids to force off. */
-  readonly disableSources: readonly string[];
-}
-
-const BUILD_PRESETS: readonly BuildPreset[] = [
-  {
-    id: 'trial-dps',
-    label: 'Trial group DPS',
-    context: 'groupPve',
-    role: 'dps',
-    enableSources: ['major-heroism'],
-    disableSources: [],
-  },
-  {
-    id: 'solo-parse',
-    label: 'Solo parse',
-    context: 'soloPve',
-    role: 'dps',
-    enableSources: [],
-    disableSources: ['minor-heroism', 'major-heroism'],
-  },
-  {
-    id: 'pvp',
-    label: 'PvP',
-    context: 'pvp',
-    role: 'dps',
-    enableSources: ['minor-heroism'],
-    disableSources: [],
-  },
-];
 
 const fmt = (n: number, digits = 1): string =>
   Number.isFinite(n)
@@ -575,35 +530,11 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
     return ability ? `${ability.label} — ${ability.baseCost}` : '';
   }, []);
 
-  // Apply a build-archetype preset: flips ONLY context/role/class and boolean
-  // source toggles. It never sets an uptime — a toggled-on source keeps its
-  // research-sourced catalog default, so no unsourced number is introduced.
-  const applyPreset = React.useCallback(
-    (preset: BuildPreset) => {
-      calc.setContext(preset.context);
-      calc.setRole(preset.role);
-      for (const id of preset.enableSources) calc.toggleSource(id, true);
-      for (const id of preset.disableSources) calc.toggleSource(id, false);
-    },
-    [calc],
-  );
-
-  // Best-effort "active" highlight: a preset reads as active when the current
-  // context + role match it (presentation hint only — not an exact build match).
-  const activePresetId = React.useMemo(
-    () =>
-      BUILD_PRESETS.find((p) => p.context === state.context && p.role === state.role)?.id ?? null,
-    [state.context, state.role],
-  );
-
   return (
     <ThemeProvider theme={calcTheme}>
       <Box className={`${className ?? ''} u-fade-in`} sx={{ width: '100%' }}>
         {/* ===================== INTRO ===================== */}
-        {/* Icon + the whole text column share one left edge: heading, eyebrow, and
-          blurb all align (the blurb used to start at the container edge while the
-          eyebrow sat indented under the heading). */}
-        <Stack direction="row" spacing={1.5} sx={{ alignItems: 'flex-start', mb: 2.75 }}>
+        <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', mb: 0.75 }}>
           <Box
             aria-hidden
             sx={{
@@ -627,32 +558,21 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
             <BoltOutlined />
           </Box>
           <Box sx={{ minWidth: 0 }}>
-            <Typography
-              variant="h5"
-              component="h2"
-              sx={{ fontWeight: 700, lineHeight: 1.15, letterSpacing: '-0.01em' }}
-            >
+            <Typography variant="h5" component="h2" sx={{ fontWeight: 700, lineHeight: 1.1 }}>
               Ultimate Calculator
             </Typography>
             <Typography
               variant="caption"
-              sx={{
-                display: 'block',
-                color: 'text.secondary',
-                textTransform: 'uppercase',
-                letterSpacing: 1,
-                fontWeight: 600,
-                mt: 0.25,
-              }}
+              sx={{ color: 'text.secondary', textTransform: 'uppercase', letterSpacing: 0.8 }}
             >
               Update 50 · all classes
             </Typography>
-            <Typography variant="body2" sx={{ color: 'text.secondary', mt: 1, maxWidth: 600 }}>
-              Set your context and build for exact ultimate&nbsp;/&nbsp;second, time to your first
-              cast, and casts per fight.
-            </Typography>
           </Box>
         </Stack>
+        <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2.5, maxWidth: 640 }}>
+          Set your context and build for exact ultimate&nbsp;/&nbsp;second, time to your first cast,
+          and casts per fight.
+        </Typography>
 
         {/* ===================== HEADLINE (full width, results-first) ===================== */}
         <Paper
@@ -875,69 +795,6 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
           {/* ============================ INPUTS ============================ */}
           <Paper elevation={0} sx={{ ...panelSx(theme), flex: '1 1 420px', minWidth: 0 }}>
             <SectionHeader icon={<TuneOutlined />} title="Your build" accent={accent} />
-
-            {/* Quick-start presets — flip context/role + boolean source toggles only. */}
-            <Box sx={{ mb: 2 }}>
-              <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center', mb: 0.75 }}>
-                <AutoFixHighOutlined sx={{ fontSize: 15, color: accent }} />
-                <Typography
-                  variant="caption"
-                  sx={{
-                    color: 'text.secondary',
-                    textTransform: 'uppercase',
-                    letterSpacing: 0.6,
-                    fontWeight: 700,
-                  }}
-                >
-                  Quick start
-                </Typography>
-              </Stack>
-              <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', rowGap: 1 }}>
-                {BUILD_PRESETS.map((p) => {
-                  const active = activePresetId === p.id;
-                  return (
-                    <Chip
-                      key={p.id}
-                      label={p.label}
-                      clickable
-                      onClick={() => applyPreset(p)}
-                      aria-pressed={active}
-                      sx={{
-                        height: 30,
-                        borderRadius: 2,
-                        fontWeight: 600,
-                        px: 0.25,
-                        border: `1px solid ${active ? accent : theme.palette.divider}`,
-                        color: active ? accentText : 'text.secondary',
-                        background: active
-                          ? theme.palette.mode === 'dark'
-                            ? 'linear-gradient(135deg, rgba(56,189,248,0.22), rgba(0,225,255,0.08))'
-                            : 'linear-gradient(135deg, rgba(56,189,248,0.18), rgba(0,225,255,0.06))'
-                          : theme.palette.mode === 'dark'
-                            ? 'rgba(148,163,184,0.06)'
-                            : 'rgba(255,255,255,0.6)',
-                        boxShadow: active
-                          ? theme.palette.mode === 'dark'
-                            ? 'inset 0 0 0 1px rgba(56,189,248,0.4), 0 0 14px rgba(56,189,248,0.12)'
-                            : 'inset 0 0 0 1px rgba(40,145,200,0.35)'
-                          : 'none',
-                        transition: 'background-color 0.18s ease, border-color 0.18s ease',
-                        '&:hover': {
-                          borderColor: accent,
-                          background: active
-                            ? theme.palette.mode === 'dark'
-                              ? 'linear-gradient(135deg, rgba(56,189,248,0.26), rgba(0,225,255,0.1))'
-                              : 'linear-gradient(135deg, rgba(56,189,248,0.22), rgba(0,225,255,0.08))'
-                            : theme.palette.mode === 'dark'
-                              ? 'rgba(56,189,248,0.08)'
-                              : 'rgba(40,145,200,0.06)',
-                        },
-                      }}
-                    />
-                  );
-                })}
-              </Stack>
-            </Box>
 
             {/* Context / class / role */}
             <Stack spacing={2}>
