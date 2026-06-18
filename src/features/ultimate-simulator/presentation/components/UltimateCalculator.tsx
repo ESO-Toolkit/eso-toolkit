@@ -1570,7 +1570,21 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
           </Paper>
 
           {/* ============================ RESULTS ============================ */}
-          <Stack spacing={2.5} sx={{ flex: '1 1 480px', minWidth: 0 }}>
+          <Stack
+            spacing={2.5}
+            sx={{
+              flex: '1 1 480px',
+              minWidth: 0,
+              // On wide (lg) screens the build column is much taller, so the
+              // results otherwise float beside a tall stretch of empty space.
+              // Stick them to the top so they stay in view while scrolling the
+              // build. alignSelf:flex-start stops the column stretching (which
+              // would defeat sticky). Header is position:static, so top:16 is safe.
+              alignSelf: { lg: 'flex-start' },
+              position: { lg: 'sticky' },
+              top: { lg: 16 },
+            }}
+          >
             {/* Ultimate picker / cost */}
             <Paper elevation={0} sx={panelSx(theme)}>
               <SectionHeader icon={<BoltOutlined />} title="Which ultimate?" accent={accent} />
