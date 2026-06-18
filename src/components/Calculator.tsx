@@ -3190,6 +3190,15 @@ const CalculatorComponent: React.FC = () => {
               minWidth: isMobile ? '40px' : '175px',
               width: isMobile ? '40px' : '175px',
               minHeight: isMobile ? '40px' : '24px',
+              // Keep the mobile gear button a perfect circle. The global theme
+              // bumps every Button to a 44px min-height on coarse pointers, which
+              // — combined with the fixed 40px width — would otherwise render this
+              // round button as a vertical oval. Pin the height and neutralise the
+              // coarse-pointer min-height so width and height stay equal.
+              ...(isMobile && {
+                height: '40px',
+                '@media (pointer: coarse)': { minHeight: '40px' },
+              }),
               fontSize: '0.7rem',
               fontWeight: 600,
               py: isMobile ? 0 : 0.4,
