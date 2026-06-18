@@ -397,34 +397,60 @@ const buildCalcTheme = (base: Theme): Theme => {
             color: cyan,
           },
           rail: {
-            height: 5,
-            borderRadius: 4,
+            height: 6,
+            borderRadius: 3,
             opacity: 1,
             backgroundColor: railColor,
+            // Recessed groove so the filled track reads as raised + glowing.
+            boxShadow: dark
+              ? 'inset 0 1px 2px rgba(0,0,0,0.55)'
+              : 'inset 0 1px 2px rgba(15,23,42,0.12)',
           },
           track: {
-            height: 5,
-            borderRadius: 4,
+            height: 6,
+            borderRadius: 3,
             border: 'none',
             backgroundImage: trackGradient,
-            boxShadow: dark ? `0 0 8px rgba(0,225,255,0.35)` : 'none',
+            // Glowing, slightly glossy fill.
+            boxShadow: dark
+              ? '0 0 10px rgba(0,225,255,0.45), inset 0 1px 0 rgba(255,255,255,0.3)'
+              : '0 1px 3px rgba(40,145,200,0.3), inset 0 1px 0 rgba(255,255,255,0.4)',
           },
           thumb: {
-            width: 16,
-            height: 16,
-            backgroundColor: dark ? '#eaf9ff' : '#ffffff',
+            width: 18,
+            height: 18,
+            // Glossy domed thumb (radial highlight) instead of a flat dot.
+            backgroundImage: dark
+              ? 'radial-gradient(circle at 35% 30%, #ffffff 0%, #d6f6ff 45%, #8fe6ff 100%)'
+              : 'radial-gradient(circle at 35% 30%, #ffffff 0%, #eaf9ff 60%, #d6f1ff 100%)',
             border: `2px solid ${cyan}`,
             boxShadow: dark
-              ? '0 1px 4px rgba(0,0,0,0.5), 0 0 0 1px rgba(0,225,255,0.25)'
-              : '0 1px 3px rgba(15,23,42,0.25)',
-            // Color/shadow-only transition (reduced-motion safe).
+              ? '0 2px 6px rgba(0,0,0,0.55), 0 0 0 1px rgba(0,225,255,0.35), 0 0 12px rgba(0,225,255,0.4)'
+              : '0 2px 5px rgba(15,23,42,0.28), 0 0 0 1px rgba(40,145,200,0.25)',
+            // Shadow-only transitions (reduced-motion safe — no scale/move).
             transition: 'box-shadow 0.2s ease, border-color 0.2s ease',
             '&:hover, &.Mui-focusVisible': {
-              boxShadow: focusRing,
+              boxShadow: dark
+                ? '0 2px 8px rgba(0,0,0,0.6), 0 0 0 6px rgba(56,189,248,0.18), 0 0 16px rgba(0,225,255,0.55)'
+                : '0 2px 8px rgba(15,23,42,0.3), 0 0 0 6px rgba(56,189,248,0.16)',
             },
             '&.Mui-active': {
-              boxShadow: '0 0 0 5px rgba(56,189,248,0.3)',
+              boxShadow: dark
+                ? '0 2px 10px rgba(0,0,0,0.6), 0 0 0 9px rgba(56,189,248,0.22), 0 0 22px rgba(0,225,255,0.6)'
+                : '0 2px 10px rgba(15,23,42,0.32), 0 0 0 9px rgba(56,189,248,0.2)',
             },
+          },
+          valueLabel: {
+            // Cyan-glass bubble shown while dragging.
+            backgroundColor: dark ? 'rgba(8,22,40,0.96)' : 'rgba(15,23,42,0.94)',
+            border: `1px solid ${cyan}`,
+            borderRadius: 8,
+            fontWeight: 700,
+            fontSize: 11,
+            lineHeight: 1.4,
+            padding: '1px 7px',
+            boxShadow: dark ? '0 0 14px rgba(0,225,255,0.45)' : '0 2px 8px rgba(15,23,42,0.25)',
+            '&::before': { color: dark ? 'rgba(8,22,40,0.96)' : 'rgba(15,23,42,0.94)' },
           },
         },
       },
@@ -1425,17 +1451,23 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
                                       {Math.round((state.uptimeOverrides[s.id] ?? s.uptime) * 100)}%
                                     </Typography>
                                   </Stack>
-                                  <Slider
-                                    size="small"
-                                    value={Math.round(
-                                      (state.uptimeOverrides[s.id] ?? s.uptime) * 100,
-                                    )}
-                                    onChange={(_, v) => calc.setUptime(s.id, (v as number) / 100)}
-                                    min={0}
-                                    max={100}
-                                    aria-label={`${s.label} uptime`}
-                                    sx={{ py: 0.5 }}
-                                  />
+                                  {/* Horizontal padding keeps the 18px thumb from
+                                      colliding with the card edge at 0%/100%. */}
+                                  <Box sx={{ px: '12px' }}>
+                                    <Slider
+                                      size="small"
+                                      value={Math.round(
+                                        (state.uptimeOverrides[s.id] ?? s.uptime) * 100,
+                                      )}
+                                      onChange={(_, v) => calc.setUptime(s.id, (v as number) / 100)}
+                                      min={0}
+                                      max={100}
+                                      valueLabelDisplay="auto"
+                                      valueLabelFormat={(v) => `${v}%`}
+                                      aria-label={`${s.label} uptime`}
+                                      sx={{ py: 0.5, display: 'block' }}
+                                    />
+                                  </Box>
                                   {s.description && (
                                     <Typography
                                       variant="caption"
