@@ -123,6 +123,13 @@ const sanitizeTrialIds = (ids: unknown): string[] => {
   return [...new Set(ids.filter(isValidTrialId).map(sanitize))].slice(0, 10);
 };
 
+/** Allowed build visibility values. Mirrors BuildVisibility in the frontend. */
+const BUILD_VISIBILITIES = ['public', 'private', 'link-only'] as const;
+
+/** Validate a build visibility value against the allowlist. */
+const isValidVisibility = (v: unknown): v is (typeof BUILD_VISIBILITIES)[number] =>
+  typeof v === 'string' && (BUILD_VISIBILITIES as readonly string[]).includes(v);
+
 // ─── Security headers ────────────────────────────────────────────────────────
 
 app.use('*', async (c, next) => {
@@ -627,6 +634,7 @@ app.post('/builds', async (c) => {
     role: string;
     game_mode?: string;
     build_data: string;
+    visibility?: string;
     tags?: string[];
     is_anonymous?: boolean;
   }
@@ -646,6 +654,7 @@ app.post('/builds', async (c) => {
     game_mode = 'pve',
     build_data,
     tags = [],
+    visibility = 'public',
     is_anonymous = false,
   } = body;
 
@@ -660,6 +669,8 @@ app.post('/builds', async (c) => {
     return c.json({ error: 'build_data must be ≤ 50 000 characters' }, 400);
   if (!isValidBase64Url(build_data))
     return c.json({ error: 'build_data must be valid base64url' }, 400);
+  if (!isValidVisibility(visibility))
+    return c.json({ error: 'visibility must be one of public, private, link-only' }, 400);
 
   const createAllowed = await checkBuildCreateRateLimit(c.env.DB, user.id);
   if (!createAllowed)
@@ -680,6 +691,7 @@ app.post('/builds', async (c) => {
     role: sanitize(role),
     gameMode: sanitize(game_mode),
     buildData: build_data,
+    visibility,
     tags: Array.isArray(tags) ? tags.filter(isValidTag).slice(0, 10).map(sanitize) : [],
     isAnonymous: !!is_anonymous,
   });
@@ -701,6 +713,7 @@ app.put('/builds/:id', async (c) => {
     role: string;
     game_mode?: string;
     build_data: string;
+    visibility?: string;
     tags?: string[];
     is_anonymous?: boolean;
   }
@@ -719,6 +732,7 @@ app.put('/builds/:id', async (c) => {
     role,
     game_mode = 'pve',
     build_data,
+    visibility,
     tags = [],
     is_anonymous = false,
   } = body;
@@ -734,6 +748,8 @@ app.put('/builds/:id', async (c) => {
     return c.json({ error: 'build_data must be ≤ 50 000 characters' }, 400);
   if (!isValidBase64Url(build_data))
     return c.json({ error: 'build_data must be valid base64url' }, 400);
+  if (visibility !== undefined && !isValidVisibility(visibility))
+    return c.json({ error: 'visibility must be one of public, private, link-only' }, 400);
 
   const updated = await updateBuild(c.env.DB, c.req.param('id'), user.id, {
     title: sanitize(title),
@@ -742,6 +758,7 @@ app.put('/builds/:id', async (c) => {
     role: sanitize(role),
     gameMode: sanitize(game_mode),
     buildData: build_data,
+    visibility,
     tags: Array.isArray(tags) ? tags.filter(isValidTag).slice(0, 10).map(sanitize) : [],
     isAnonymous: !!is_anonymous,
   });
@@ -769,8 +786,8 @@ app.post('/builds/:id/vote', async (c) => {
   if (!user) return c.json({ error: 'Unauthorized' }, 401);
 
   const buildId = c.req.param('id');
-  const exists = await c.env.DB.prepare('SELECT id FROM builds WHERE id = ?').bind(buildId).first();
-  if (!exists) return c.json({ error: 'Not found' }, 404);
+  const build = await getBuildById(c.env.DB, buildId, user.id);
+  if (!build) return c.json({ error: 'Not found' }, 404);
 
   const allowed = await checkBuildVoteRateLimit(c.env.DB, user.id);
   if (!allowed)
@@ -784,9 +801,10 @@ app.post('/builds/:id/vote', async (c) => {
 // ─── GET /builds/:id/comments ─────────────────────────────────────────────────
 
 app.get('/builds/:id/comments', async (c) => {
+  const user = await validateToken(c.req.header('Authorization'), c.env);
   const buildId = c.req.param('id');
-  const exists = await c.env.DB.prepare('SELECT id FROM builds WHERE id = ?').bind(buildId).first();
-  if (!exists) return c.json({ error: 'Not found' }, 404);
+  const build = await getBuildById(c.env.DB, buildId, user?.id);
+  if (!build) return c.json({ error: 'Not found' }, 404);
 
   const comments = await listBuildComments(c.env.DB, buildId);
   return c.json({ comments });
@@ -799,8 +817,8 @@ app.post('/builds/:id/comments', async (c) => {
   if (!user) return c.json({ error: 'Unauthorized' }, 401);
 
   const buildId = c.req.param('id');
-  const exists = await c.env.DB.prepare('SELECT id FROM builds WHERE id = ?').bind(buildId).first();
-  if (!exists) return c.json({ error: 'Build not found' }, 404);
+  const build = await getBuildById(c.env.DB, buildId, user.id);
+  if (!build) return c.json({ error: 'Build not found' }, 404);
 
   const allowed = await checkBuildCommentRateLimit(c.env.DB, user.id);
   if (!allowed) return c.json({ error: 'Rate limit exceeded. Try again in a minute.' }, 429);

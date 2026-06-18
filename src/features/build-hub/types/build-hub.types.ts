@@ -1,3 +1,6 @@
+/** Build visibility — mirrors BuildVisibility in build-editor types. */
+export type HubBuildVisibility = 'public' | 'private' | 'link-only';
+
 export interface HubBuild {
   id: string;
   author_id: string;
@@ -10,6 +13,8 @@ export interface HubBuild {
   game_mode: string;
   /** Compact encoded build — base64url(deflate(compact JSON)) */
   build_data: string;
+  /** public = in hub; link-only = hidden from hub but direct link works; private = owner-only */
+  visibility?: HubBuildVisibility;
   vote_count: number;
   created_at: string;
   updated_at: string;
@@ -44,6 +49,7 @@ export interface PublishBuildPayload {
   role: string;
   game_mode?: string;
   build_data: string;
+  visibility?: HubBuildVisibility;
   tags?: string[];
   is_anonymous?: boolean;
 }

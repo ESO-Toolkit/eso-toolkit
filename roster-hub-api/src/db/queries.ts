@@ -463,6 +463,17 @@ export async function listBuilds(
     bindings.push(opts.tag);
   }
 
+  // Visibility: only public builds appear in the hub list, unless the requester
+  // is the owner (owners see all of their own builds, but only public ones from
+  // others). link-only and private are both hidden here — link-only is reachable
+  // only via its direct id.
+  if (opts.userId) {
+    conditions.push("(b.visibility = 'public' OR b.author_id = ?)");
+    bindings.push(opts.userId);
+  } else {
+    conditions.push("b.visibility = 'public'");
+  }
+
   const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
   const sql = `
@@ -515,6 +526,11 @@ export async function getBuildById(
   const row = await db.prepare('SELECT * FROM builds WHERE id = ?').bind(id).first<BuildRow>();
   if (!row) return null;
 
+  // Private builds are visible only to their owner. Return null (caller turns
+  // this into a 404) so non-owners can't even confirm the build exists. public
+  // and link-only are returned to anyone with the direct id.
+  if (row.visibility === 'private' && userId !== row.author_id) return null;
+
   const tagRows = await db
     .prepare('SELECT tag FROM build_tags WHERE build_id = ?')
     .bind(id)
@@ -553,13 +569,14 @@ export async function createBuild(
     role: string;
     gameMode: string;
     buildData: string;
+    visibility?: string;
     tags: string[];
     isAnonymous: boolean;
   },
 ): Promise<void> {
   await db
     .prepare(
-      'INSERT INTO builds (id, author_id, author_name, title, description, eso_class, role, game_mode, build_data, is_anonymous) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO builds (id, author_id, author_name, title, description, eso_class, role, game_mode, build_data, visibility, is_anonymous) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
     )
     .bind(
       data.id,
@@ -571,6 +588,7 @@ export async function createBuild(
       data.role,
       data.gameMode,
       data.buildData,
+      data.visibility ?? 'public',
       data.isAnonymous ? 1 : 0,
     )
     .run();
@@ -591,13 +609,14 @@ export async function updateBuild(
     role: string;
     gameMode: string;
     buildData: string;
+    visibility?: string;
     tags: string[];
     isAnonymous: boolean;
   },
 ): Promise<boolean> {
   const result = await db
     .prepare(
-      "UPDATE builds SET title = ?, description = ?, eso_class = ?, role = ?, game_mode = ?, build_data = ?, is_anonymous = ?, updated_at = datetime('now') WHERE id = ? AND author_id = ?",
+      "UPDATE builds SET title = ?, description = ?, eso_class = ?, role = ?, game_mode = ?, build_data = ?, visibility = COALESCE(?, visibility), is_anonymous = ?, updated_at = datetime('now') WHERE id = ? AND author_id = ?",
     )
     .bind(
       data.title,
@@ -606,6 +625,7 @@ export async function updateBuild(
       data.role,
       data.gameMode,
       data.buildData,
+      data.visibility ?? null,
       data.isAnonymous ? 1 : 0,
       id,
       authorId,
@@ -1028,7 +1048,7 @@ export async function getUserProfile(
                   b.vote_count, b.created_at, GROUP_CONCAT(DISTINCT bt.tag) AS tags_concat
            FROM builds b
            LEFT JOIN build_tags bt ON bt.build_id = b.id
-           WHERE b.author_name = ? COLLATE NOCASE AND b.is_anonymous = 0
+           WHERE b.author_name = ? COLLATE NOCASE AND b.is_anonymous = 0 AND b.visibility = 'public'
            GROUP BY b.id
            ORDER BY b.vote_count DESC, b.created_at DESC
            LIMIT ?`,
@@ -1052,7 +1072,7 @@ export async function getUserProfile(
 
       db
         .prepare(
-          'SELECT COUNT(*) AS cnt FROM builds WHERE author_name = ? COLLATE NOCASE AND is_anonymous = 0',
+          "SELECT COUNT(*) AS cnt FROM builds WHERE author_name = ? COLLATE NOCASE AND is_anonymous = 0 AND visibility = 'public'",
         )
         .bind(username)
         .first<{ cnt: number }>(),

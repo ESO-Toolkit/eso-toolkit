@@ -11,6 +11,8 @@ import {
   Stack,
   Switch,
   TextField,
+  ToggleButton,
+  ToggleButtonGroup,
   Tooltip,
   Typography,
 } from '@mui/material';
@@ -18,8 +20,22 @@ import { useTheme } from '@mui/material/styles';
 import React from 'react';
 
 import { buildHubApi } from '../api/build-hub-api';
-import type { HubBuild, PublishBuildPayload } from '../types/build-hub.types';
+import type { HubBuild, HubBuildVisibility, PublishBuildPayload } from '../types/build-hub.types';
 import { BUILD_TAG_COLORS, PRESET_BUILD_TAGS } from '../types/build-hub.types';
+
+const VISIBILITY_OPTIONS: ReadonlyArray<{
+  id: HubBuildVisibility;
+  label: string;
+  description: string;
+}> = [
+  { id: 'public', label: 'Public', description: 'Visible to everyone in the Build Hub' },
+  {
+    id: 'link-only',
+    label: 'Link Only',
+    description: 'Hidden from the Hub — only people with the direct link can view',
+  },
+  { id: 'private', label: 'Private', description: 'Only you can view it' },
+];
 
 interface PublishBuildDialogProps {
   open: boolean;
@@ -27,6 +43,8 @@ interface PublishBuildDialogProps {
   esoClass: string;
   role: string;
   gameMode: string;
+  /** The build's current visibility choice (from build.settings.visibility). */
+  visibility?: HubBuildVisibility;
   onClose: () => void;
   onPublished: () => void;
   token: string;
@@ -42,6 +60,7 @@ export const PublishBuildDialog: React.FC<PublishBuildDialogProps> = ({
   esoClass,
   role,
   gameMode,
+  visibility = 'public',
   onClose,
   onPublished,
   token,
@@ -53,6 +72,7 @@ export const PublishBuildDialog: React.FC<PublishBuildDialogProps> = ({
   const [description, setDescription] = React.useState('');
   const [selectedTags, setSelectedTags] = React.useState<string[]>([]);
   const [isAnonymous, setIsAnonymous] = React.useState(false);
+  const [selectedVisibility, setSelectedVisibility] = React.useState<HubBuildVisibility>('public');
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
@@ -79,6 +99,7 @@ export const PublishBuildDialog: React.FC<PublishBuildDialogProps> = ({
         role,
         game_mode: gameMode,
         build_data: buildData,
+        visibility: selectedVisibility,
         tags: selectedTags,
         is_anonymous: isAnonymous,
       };
@@ -106,15 +127,17 @@ export const PublishBuildDialog: React.FC<PublishBuildDialogProps> = ({
         setDescription(editingBuild.description ?? '');
         setSelectedTags(editingBuild.tags ?? []);
         setIsAnonymous(editingBuild.is_anonymous ?? false);
+        setSelectedVisibility(editingBuild.visibility ?? visibility);
       } else {
         setTitle('');
         setDescription('');
         setSelectedTags([]);
         setIsAnonymous(false);
+        setSelectedVisibility(visibility);
       }
       setError(null);
     }
-  }, [open, editingBuild]);
+  }, [open, editingBuild, visibility]);
 
   const atTagLimit = selectedTags.length >= MAX_TAGS;
 
@@ -215,6 +238,40 @@ export const PublishBuildDialog: React.FC<PublishBuildDialogProps> = ({
               );
             })}
           </Stack>
+        </div>
+
+        <div>
+          <Typography
+            variant="caption"
+            gutterBottom
+            sx={{ color: 'text.secondary', display: 'block' }}
+          >
+            Visibility
+          </Typography>
+          <ToggleButtonGroup
+            value={selectedVisibility}
+            exclusive
+            size="small"
+            onChange={(_e, val) => {
+              if (val) setSelectedVisibility(val as HubBuildVisibility);
+            }}
+            aria-label="Build visibility"
+            sx={{ mt: 0.5, flexWrap: 'wrap' }}
+          >
+            {VISIBILITY_OPTIONS.map((opt) => (
+              <ToggleButton
+                key={opt.id}
+                value={opt.id}
+                aria-label={`${opt.label}: ${opt.description}`}
+                sx={{ textTransform: 'none', px: 1.5 }}
+              >
+                {opt.label}
+              </ToggleButton>
+            ))}
+          </ToggleButtonGroup>
+          <Typography variant="caption" sx={{ color: 'text.disabled', display: 'block', mt: 0.5 }}>
+            {VISIBILITY_OPTIONS.find((o) => o.id === selectedVisibility)?.description}
+          </Typography>
         </div>
 
         <FormControlLabel

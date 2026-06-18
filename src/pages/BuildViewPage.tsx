@@ -44,6 +44,7 @@ import { ESO_CONSUMABLE_LOOKUP } from '../data/esoConsumables';
 import { getEnchantName } from '../data/esoEnchants';
 import { ESO_POTION_LOOKUP } from '../data/esoPotions';
 import { getTraitName } from '../data/esoTraits';
+import { useAuth } from '../features/auth/AuthContext';
 import { staggerContainer, fadeInUp } from '../features/build-editor/components/motion/variants';
 import { GlassPanel } from '../features/build-editor/components/primitives/GlassPanel';
 import { StatBreakdown } from '../features/build-editor/components/primitives/StatBreakdown';
@@ -1995,6 +1996,7 @@ export const BuildViewPage: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const savedBuilds = useSelector(selectSavedBuilds);
+  const { accessToken } = useAuth();
 
   const [build, setBuild] = useState<Build | null>(null);
   const [loading, setLoading] = useState(true);
@@ -2064,7 +2066,7 @@ export const BuildViewPage: React.FC = () => {
           });
       } else {
         void buildHubApi
-          .get(idParam)
+          .get(idParam, accessToken)
           .then(({ build: hubBuild }) =>
             decodeBuildFromURL(hubBuild.build_data).then((decoded) =>
               onDecoded(decoded, hubBuild.build_data),
@@ -2080,10 +2082,9 @@ export const BuildViewPage: React.FC = () => {
     return () => {
       cancelled = true;
     };
-  }, [location.state]);
+  }, [accessToken, location.state]);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => loadBuild(), []);
+  useEffect(() => loadBuild(), [loadBuild]);
 
   const handleCopyLink = (): void => {
     const url = hubBuildId
