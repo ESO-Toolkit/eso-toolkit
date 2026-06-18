@@ -2019,7 +2019,7 @@ export const BuildViewPage: React.FC = () => {
     setNotFound(false);
     setFetchError(false);
 
-    const params = new URLSearchParams(window.location.search);
+    const params = new URLSearchParams(location.search);
     const encoded = params.get('b') ?? '';
     const idParam = params.get('id') ?? '';
     const routerData = (location.state as { buildData?: string } | null)?.buildData;
@@ -2046,6 +2046,7 @@ export const BuildViewPage: React.FC = () => {
     };
 
     if (encoded) {
+      setHubBuildId('');
       setEncodedParam(encoded);
       void decodeBuildFromURL(encoded)
         .then((decoded) => onDecoded(decoded, encoded))
@@ -2075,6 +2076,8 @@ export const BuildViewPage: React.FC = () => {
           .catch(handleFetchError);
       }
     } else {
+      setHubBuildId('');
+      setEncodedParam('');
       setNotFound(true);
       setLoading(false);
     }
@@ -2082,13 +2085,13 @@ export const BuildViewPage: React.FC = () => {
     return () => {
       cancelled = true;
     };
-  }, [accessToken, location.state]);
+  }, [accessToken, location.search, location.state]);
 
   useEffect(() => loadBuild(), [loadBuild]);
 
   const handleCopyLink = (): void => {
     const url = hubBuildId
-      ? `${window.location.origin}${window.location.pathname}?id=${hubBuildId}`
+      ? `${window.location.origin}${window.location.pathname}?id=${encodeURIComponent(hubBuildId)}`
       : `${window.location.origin}${window.location.pathname}?b=${encodedParam}`;
     navigator.clipboard
       .writeText(url)

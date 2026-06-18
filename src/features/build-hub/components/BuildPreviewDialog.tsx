@@ -18,6 +18,7 @@ import React from 'react';
 
 import type { HubBuild } from '../types/build-hub.types';
 import { ROLE_ACCENT } from '../types/build-hub.types';
+import { getHubBuildViewUrl } from '../utils/buildLinks';
 
 const IFRAME_TIMEOUT_MS = 12000;
 
@@ -91,11 +92,20 @@ export const BuildPreviewDialog: React.FC<BuildPreviewDialogProps> = ({
   }, [build, iframeLoaded, iframeError]);
 
   const embedUrl = build
-    ? `${window.location.origin}${import.meta.env.BASE_URL}bv?b=${encodeURIComponent(build.build_data)}&embed=1`
+    ? getHubBuildViewUrl({
+        baseUrl: import.meta.env.BASE_URL,
+        buildId: build.id,
+        embed: true,
+        origin: window.location.origin,
+      })
     : '';
 
   const shareUrl = build
-    ? `${window.location.origin}${import.meta.env.BASE_URL}bv?b=${encodeURIComponent(build.build_data)}`
+    ? getHubBuildViewUrl({
+        baseUrl: import.meta.env.BASE_URL,
+        buildId: build.id,
+        origin: window.location.origin,
+      })
     : '';
 
   const handleOpenFullPage = (): void => {

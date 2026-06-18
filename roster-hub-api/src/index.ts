@@ -167,10 +167,12 @@ interface CacheTier {
 }
 
 function getCacheTier(path: string): CacheTier | null {
-  if (/^\/(rosters|builds|packs)$/.test(path)) return { edgeTtl: 30, swr: 300 };
-  if (/^\/(rosters|builds|packs)\/[^/]+$/.test(path)) return { edgeTtl: 10, swr: 60 };
-  if (/^\/(rosters|builds)\/[^/]+\/comments$/.test(path)) return { edgeTtl: 15, swr: 60 };
-  if (path.startsWith('/users/')) return { edgeTtl: 300, swr: 60 };
+  // Build/profile responses include mutable build visibility. Without targeted
+  // cache invalidation, edge caching can serve stale public data after a build
+  // is made private, so those routes intentionally fall through to no-store.
+  if (/^\/(rosters|packs)$/.test(path)) return { edgeTtl: 30, swr: 300 };
+  if (/^\/(rosters|packs)\/[^/]+$/.test(path)) return { edgeTtl: 10, swr: 60 };
+  if (/^\/rosters\/[^/]+\/comments$/.test(path)) return { edgeTtl: 15, swr: 60 };
   if (path === '/search-addons') return { edgeTtl: 60, swr: 300 };
   return null;
 }
