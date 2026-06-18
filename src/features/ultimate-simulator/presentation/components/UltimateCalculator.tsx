@@ -461,18 +461,18 @@ const buildCalcTheme = (base: Theme): Theme => {
             marginTop: 6,
             overflow: 'hidden',
             backgroundImage: 'none',
-            // Lighter, more transparent frosted glass so the popover floats
-            // clearly ABOVE the dark panels instead of merging with them; the
-            // heavy blur keeps items readable over whatever's behind.
+            // Near-opaque, distinctly lighter slate surface. (A transparent menu
+            // let the dark panels bleed through and read as the same color, so it
+            // "blended in" — opacity + a clearly lighter tone fixes that.)
             background: dark
-              ? 'linear-gradient(180deg, rgba(34,54,86,0.85) 0%, rgba(20,37,66,0.88) 100%)'
-              : 'linear-gradient(180deg, rgba(240,250,255,0.9) 0%, rgba(252,254,255,0.92) 100%)',
-            backdropFilter: 'blur(22px) saturate(1.6)',
-            WebkitBackdropFilter: 'blur(22px) saturate(1.6)',
-            border: `1px solid ${dark ? 'rgba(56,189,248,0.5)' : 'rgba(40,145,200,0.35)'}`,
+              ? 'linear-gradient(180deg, rgba(46,66,102,0.985) 0%, rgba(32,50,82,0.985) 100%)'
+              : 'linear-gradient(180deg, rgba(248,252,255,0.99) 0%, rgba(255,255,255,0.99) 100%)',
+            backdropFilter: 'blur(20px) saturate(1.5)',
+            WebkitBackdropFilter: 'blur(20px) saturate(1.5)',
+            border: `1px solid ${dark ? 'rgba(56,189,248,0.6)' : 'rgba(40,145,200,0.4)'}`,
             boxShadow: dark
-              ? '0 24px 60px rgba(0,0,0,0.6), 0 0 36px rgba(56,189,248,0.28), inset 0 1px 0 rgba(255,255,255,0.1)'
-              : '0 20px 48px rgba(15,23,42,0.2), 0 0 24px rgba(40,145,200,0.18), inset 0 1px 0 rgba(255,255,255,0.9)',
+              ? '0 24px 60px rgba(0,0,0,0.65), 0 0 36px rgba(56,189,248,0.3), inset 0 1px 0 rgba(255,255,255,0.12)'
+              : '0 20px 48px rgba(15,23,42,0.22), 0 0 24px rgba(40,145,200,0.18), inset 0 1px 0 rgba(255,255,255,0.9)',
             // A thin cyan sheen across the very top edge of the popover.
             '&::before': {
               content: '""',
