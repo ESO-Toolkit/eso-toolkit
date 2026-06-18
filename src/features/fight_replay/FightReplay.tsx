@@ -296,7 +296,7 @@ export const FightReplay: React.FC = () => {
   useEffect(() => {
     const onKey = (event: KeyboardEvent): void => {
       if (event.defaultPrevented) return;
-      if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) {
+      if (isTextEntryTarget(event.target)) {
         return;
       }
       if (event.ctrlKey || event.metaKey || event.altKey) return;
