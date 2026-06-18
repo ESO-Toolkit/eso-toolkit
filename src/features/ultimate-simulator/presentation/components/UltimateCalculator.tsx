@@ -461,15 +461,18 @@ const buildCalcTheme = (base: Theme): Theme => {
             marginTop: 6,
             overflow: 'hidden',
             backgroundImage: 'none',
+            // Lighter, more transparent frosted glass so the popover floats
+            // clearly ABOVE the dark panels instead of merging with them; the
+            // heavy blur keeps items readable over whatever's behind.
             background: dark
-              ? 'linear-gradient(180deg, rgba(18,34,58,0.94) 0%, rgba(6,13,28,0.96) 100%)'
-              : 'linear-gradient(180deg, rgba(244,251,255,0.98) 0%, rgba(255,255,255,0.98) 100%)',
-            backdropFilter: 'blur(18px) saturate(1.4)',
-            WebkitBackdropFilter: 'blur(18px) saturate(1.4)',
-            border: `1px solid ${dark ? 'rgba(56,189,248,0.30)' : 'rgba(40,145,200,0.28)'}`,
+              ? 'linear-gradient(180deg, rgba(34,54,86,0.85) 0%, rgba(20,37,66,0.88) 100%)'
+              : 'linear-gradient(180deg, rgba(240,250,255,0.9) 0%, rgba(252,254,255,0.92) 100%)',
+            backdropFilter: 'blur(22px) saturate(1.6)',
+            WebkitBackdropFilter: 'blur(22px) saturate(1.6)',
+            border: `1px solid ${dark ? 'rgba(56,189,248,0.5)' : 'rgba(40,145,200,0.35)'}`,
             boxShadow: dark
-              ? '0 24px 60px rgba(0,0,0,0.62), 0 0 26px rgba(56,189,248,0.16), inset 0 1px 0 rgba(255,255,255,0.07)'
-              : '0 20px 48px rgba(15,23,42,0.18), 0 0 18px rgba(40,145,200,0.10), inset 0 1px 0 rgba(255,255,255,0.9)',
+              ? '0 24px 60px rgba(0,0,0,0.6), 0 0 36px rgba(56,189,248,0.28), inset 0 1px 0 rgba(255,255,255,0.1)'
+              : '0 20px 48px rgba(15,23,42,0.2), 0 0 24px rgba(40,145,200,0.18), inset 0 1px 0 rgba(255,255,255,0.9)',
             // A thin cyan sheen across the very top edge of the popover.
             '&::before': {
               content: '""',
