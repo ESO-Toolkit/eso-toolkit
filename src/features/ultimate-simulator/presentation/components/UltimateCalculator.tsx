@@ -445,6 +445,52 @@ const buildCalcTheme = (base: Theme): Theme => {
           },
         },
       },
+      // The open dropdown popover + its items — was stock MUI; now a cyan-glass
+      // panel with rounded, inset-highlighted items to match the inputs.
+      MuiMenu: {
+        styleOverrides: {
+          paper: {
+            borderRadius: 12,
+            marginTop: 6,
+            backgroundImage: 'none',
+            backgroundColor: dark ? 'rgba(10,17,33,0.92)' : 'rgba(255,255,255,0.97)',
+            backdropFilter: 'blur(14px) saturate(1.3)',
+            WebkitBackdropFilter: 'blur(14px) saturate(1.3)',
+            border: `1px solid ${dark ? 'rgba(56,189,248,0.16)' : 'rgba(40,145,200,0.18)'}`,
+            boxShadow: dark
+              ? '0 16px 40px rgba(0,0,0,0.55), 0 0 0 1px rgba(56,189,248,0.08), inset 0 1px 0 rgba(255,255,255,0.05)'
+              : '0 16px 40px rgba(15,23,42,0.16), 0 0 0 1px rgba(40,145,200,0.08)',
+          },
+          list: { paddingTop: 6, paddingBottom: 6 },
+        },
+      },
+      MuiMenuItem: {
+        styleOverrides: {
+          root: {
+            borderRadius: 8,
+            marginLeft: 6,
+            marginRight: 6,
+            paddingTop: 7,
+            paddingBottom: 7,
+            transition: 'background-color 0.15s ease, color 0.15s ease',
+            '&:hover': {
+              backgroundColor: dark ? 'rgba(56,189,248,0.10)' : 'rgba(40,145,200,0.08)',
+            },
+            '&.Mui-focusVisible': {
+              backgroundColor: dark ? 'rgba(56,189,248,0.14)' : 'rgba(40,145,200,0.10)',
+            },
+            '&.Mui-selected': {
+              backgroundColor: dark ? 'rgba(56,189,248,0.16)' : 'rgba(40,145,200,0.12)',
+              '&:hover': {
+                backgroundColor: dark ? 'rgba(56,189,248,0.22)' : 'rgba(40,145,200,0.16)',
+              },
+              '&.Mui-focusVisible': {
+                backgroundColor: dark ? 'rgba(56,189,248,0.2)' : 'rgba(40,145,200,0.15)',
+              },
+            },
+          },
+        },
+      },
     },
   });
 };
