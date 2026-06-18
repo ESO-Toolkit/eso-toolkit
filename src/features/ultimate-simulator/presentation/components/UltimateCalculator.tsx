@@ -1574,8 +1574,100 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
             {/* Ultimate picker / cost */}
             <Paper elevation={0} sx={panelSx(theme)}>
               <SectionHeader icon={<BoltOutlined />} title="Which ultimate?" accent={accent} />
-              <Stack direction="row" spacing={2} sx={{ flexWrap: 'wrap', rowGap: 2 }}>
-                <FormControl size="small" sx={{ flex: '1 1 100%' }}>
+              {/* Focal cost readout — the card's answer, and live feedback as the
+                  cost-reduction toggles below change it. */}
+              <Box
+                sx={{
+                  mb: 2,
+                  px: 2,
+                  py: 1.5,
+                  borderRadius: 1.4, // 14px — card tier
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: 2,
+                  border: `1px solid ${
+                    theme.palette.mode === 'dark' ? 'rgba(56,189,248,0.28)' : 'rgba(40,145,200,0.3)'
+                  }`,
+                  background:
+                    theme.palette.mode === 'dark'
+                      ? 'linear-gradient(135deg, rgba(56,189,248,0.1), rgba(56,189,248,0.02))'
+                      : 'linear-gradient(135deg, rgba(40,145,200,0.06), rgba(40,145,200,0.01))',
+                  boxShadow:
+                    theme.palette.mode === 'dark'
+                      ? 'inset 0 1px 0 rgba(255,255,255,0.05), 0 4px 14px rgba(0,0,0,0.25)'
+                      : '0 2px 8px rgba(15,23,42,0.05)',
+                }}
+              >
+                <Box sx={{ minWidth: 0 }}>
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      display: 'block',
+                      color: 'text.secondary',
+                      textTransform: 'uppercase',
+                      letterSpacing: 0.6,
+                      fontWeight: 700,
+                      fontSize: 10,
+                    }}
+                  >
+                    Ultimate cost
+                  </Typography>
+                  <Stack direction="row" spacing={0.75} sx={{ alignItems: 'baseline' }}>
+                    <Typography
+                      className="u-tabular"
+                      sx={{
+                        fontSize: 34,
+                        fontWeight: 800,
+                        lineHeight: 1.05,
+                        color: accentText,
+                      }}
+                    >
+                      {effectiveCost}
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: 'text.secondary', fontWeight: 600 }}>
+                      ult
+                    </Typography>
+                  </Stack>
+                </Box>
+                {state.customUltimateCost == null && reductionFraction > 0 && (
+                  <Stack spacing={0.5} sx={{ alignItems: 'flex-end', flexShrink: 0 }}>
+                    <Box
+                      sx={{
+                        px: 1,
+                        py: 0.25,
+                        borderRadius: 999,
+                        fontSize: 12,
+                        fontWeight: 700,
+                        color: theme.palette.success.main,
+                        background:
+                          theme.palette.mode === 'dark'
+                            ? 'rgba(34,197,94,0.14)'
+                            : 'rgba(5,150,105,0.1)',
+                        border: `1px solid ${
+                          theme.palette.mode === 'dark'
+                            ? 'rgba(34,197,94,0.35)'
+                            : 'rgba(5,150,105,0.25)'
+                        }`,
+                      }}
+                    >
+                      −{Math.round(reductionFraction * 100)}%
+                    </Box>
+                    <Typography
+                      variant="caption"
+                      className="u-tabular"
+                      sx={{ color: 'text.secondary' }}
+                    >
+                      base{' '}
+                      <Box component="span" sx={{ textDecoration: 'line-through' }}>
+                        {baseCost}
+                      </Box>
+                    </Typography>
+                  </Stack>
+                )}
+              </Box>
+              <Stack spacing={2}>
+                <FormControl size="small" fullWidth>
                   <InputLabel id="ult-ability-label">Ultimate</InputLabel>
                   <Select
                     labelId="ult-ability-label"
@@ -1667,7 +1759,7 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
                     value={state.customUltimateCost}
                     onChange={(e) => calc.setCustomUltimateCost(Number(e.target.value))}
                     slotProps={{ htmlInput: { min: 0, max: 500, step: 5 } }}
-                    sx={{ width: 140 }}
+                    fullWidth
                   />
                 )}
                 <TextField
@@ -1688,7 +1780,7 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
                       ),
                     },
                   }}
-                  sx={{ width: 190 }}
+                  fullWidth
                   helperText="Banked at start"
                 />
               </Stack>
