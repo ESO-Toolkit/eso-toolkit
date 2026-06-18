@@ -177,7 +177,7 @@ const fmtSeconds = (n: number): string => {
  */
 const panelSx = (theme: Theme): SxProps<Theme> => ({
   p: { xs: 2, sm: 2.5 },
-  borderRadius: 2, // 20px — top-level panel tier (radius scale: panel 20 / card 14 / control 10)
+  borderRadius: 2.8, // 28px — top-level panel tier (rounded; scale: panel 28 / card 14 / control 10)
   border: `1px solid ${
     theme.palette.mode === 'dark' ? 'rgba(56,189,248,0.12)' : theme.palette.divider
   }`,
@@ -375,10 +375,15 @@ const buildCalcTheme = (base: Theme): Theme => {
     ? `linear-gradient(90deg, ${cyan}, ${cyanBright})`
     : `linear-gradient(90deg, ${cyan}, rgb(56,189,248))`;
   // Translucent glass fill for inputs.
-  const inputFill = dark ? 'rgba(56,189,248,0.05)' : 'rgba(56,189,248,0.04)';
-  const inputFillHover = dark ? 'rgba(56,189,248,0.09)' : 'rgba(56,189,248,0.06)';
-  const inputBorder = dark ? 'rgba(56,189,248,0.18)' : 'rgba(40,145,200,0.28)';
-  const inputBorderHover = dark ? 'rgba(56,189,248,0.55)' : 'rgba(40,145,200,0.6)';
+  // Inputs read as recessed wells (darker than the panel + an inset shadow) so
+  // they're clearly distinct rather than blending into the surface.
+  const inputFill = dark ? 'rgba(3,8,20,0.66)' : 'rgba(255,255,255,0.92)';
+  const inputFillHover = dark ? 'rgba(3,8,20,0.82)' : 'rgba(255,255,255,1)';
+  const inputBorder = dark ? 'rgba(56,189,248,0.32)' : 'rgba(40,145,200,0.34)';
+  const inputBorderHover = dark ? 'rgba(56,189,248,0.6)' : 'rgba(40,145,200,0.65)';
+  const inputInset = dark
+    ? 'inset 0 2px 5px rgba(0,0,0,0.5)'
+    : 'inset 0 1px 2px rgba(15,23,42,0.08)';
   const railColor = dark ? 'rgba(148,163,184,0.28)' : 'rgba(15,23,42,0.16)';
 
   return createTheme(base, {
@@ -428,6 +433,7 @@ const buildCalcTheme = (base: Theme): Theme => {
           root: {
             borderRadius: 10,
             backgroundColor: inputFill,
+            boxShadow: inputInset,
             transition: 'background-color 0.2s ease, box-shadow 0.2s ease',
             '& .MuiOutlinedInput-notchedOutline': {
               borderColor: inputBorder,
@@ -444,7 +450,7 @@ const buildCalcTheme = (base: Theme): Theme => {
               borderWidth: 1,
             },
             '&.Mui-focused': {
-              boxShadow: focusRing,
+              boxShadow: `${inputInset}, ${focusRing}`,
             },
           },
         },
@@ -724,7 +730,7 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
           sx={{
             p: { xs: 2, sm: 2.75 },
             mb: 2.5,
-            borderRadius: 2, // 20px — panel tier (was 40, matched nothing else)
+            borderRadius: 2.8, // 28px — panel tier (unified with result panels)
             position: 'relative',
             overflow: 'hidden',
             border: `1px solid ${
@@ -1112,10 +1118,19 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
                       mt: 1,
                       p: 1.5,
                       borderRadius: 1.4, // 14px — card tier
-                      borderLeft: `3px solid ${accent}`,
+                      // Full border (was a left rail that read like a slider).
+                      border: `1px solid ${
+                        theme.palette.mode === 'dark'
+                          ? 'rgba(56,189,248,0.28)'
+                          : 'rgba(40,145,200,0.3)'
+                      }`,
+                      boxShadow:
+                        theme.palette.mode === 'dark'
+                          ? 'inset 0 1px 0 rgba(255,255,255,0.05), 0 4px 14px rgba(0,0,0,0.3)'
+                          : '0 2px 8px rgba(15,23,42,0.05)',
                       background:
                         theme.palette.mode === 'dark'
-                          ? 'rgba(56,189,248,0.05)'
+                          ? 'linear-gradient(135deg, rgba(56,189,248,0.08), rgba(56,189,248,0.02))'
                           : 'rgba(40,145,200,0.04)',
                     }}
                   >
@@ -1287,44 +1302,31 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
                                 overflow: 'hidden',
                                 transition:
                                   'background-color 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease',
+                                // Enabled = a full cyan border + tint + glow (no
+                                // left rail — it read like a vertical slider next
+                                // to the real uptime slider). Disabled cards sit
+                                // recessed/flush so active ones clearly stand out.
                                 border: `1px solid ${
                                   enabled
                                     ? theme.palette.mode === 'dark'
-                                      ? 'rgba(56,189,248,0.32)'
-                                      : 'rgba(40,145,200,0.28)'
+                                      ? 'rgba(56,189,248,0.5)'
+                                      : 'rgba(40,145,200,0.45)'
                                     : theme.palette.divider
                                 }`,
                                 background: enabled
                                   ? theme.palette.mode === 'dark'
-                                    ? 'linear-gradient(135deg, rgba(56,189,248,0.14) 0%, rgba(56,189,248,0.03) 100%)'
-                                    : 'linear-gradient(135deg, rgba(40,145,200,0.07) 0%, rgba(40,145,200,0.01) 100%)'
-                                  : 'transparent',
-                                // Raised + glowing when active, flush when off.
+                                    ? 'linear-gradient(135deg, rgba(56,189,248,0.15) 0%, rgba(56,189,248,0.04) 100%)'
+                                    : 'linear-gradient(135deg, rgba(40,145,200,0.08) 0%, rgba(40,145,200,0.02) 100%)'
+                                  : theme.palette.mode === 'dark'
+                                    ? 'rgba(2,6,16,0.35)'
+                                    : 'rgba(15,23,42,0.015)',
                                 boxShadow: enabled
                                   ? theme.palette.mode === 'dark'
-                                    ? 'inset 0 1px 0 rgba(255,255,255,0.06), 0 4px 14px rgba(0,0,0,0.3), 0 0 16px rgba(56,189,248,0.07)'
-                                    : '0 2px 8px rgba(15,23,42,0.05)'
-                                  : 'none',
-                                // Accent rail on the left edge marks an active source.
-                                '&::before': enabled
-                                  ? {
-                                      content: '""',
-                                      position: 'absolute',
-                                      left: 0,
-                                      top: 0,
-                                      bottom: 0,
-                                      width: 3,
-                                      background: `linear-gradient(180deg, ${accent}, ${
-                                        theme.palette.mode === 'dark'
-                                          ? 'rgba(0,225,255,0.8)'
-                                          : accent
-                                      })`,
-                                      boxShadow:
-                                        theme.palette.mode === 'dark'
-                                          ? '0 0 10px rgba(0,225,255,0.5)'
-                                          : 'none',
-                                    }
-                                  : undefined,
+                                    ? 'inset 0 1px 0 rgba(255,255,255,0.07), 0 6px 18px rgba(0,0,0,0.35), 0 0 18px rgba(56,189,248,0.12)'
+                                    : '0 4px 12px rgba(15,23,42,0.07)'
+                                  : theme.palette.mode === 'dark'
+                                    ? 'inset 0 1px 2px rgba(0,0,0,0.3)'
+                                    : 'none',
                                 '&:hover': {
                                   borderColor: enabled
                                     ? theme.palette.mode === 'dark'

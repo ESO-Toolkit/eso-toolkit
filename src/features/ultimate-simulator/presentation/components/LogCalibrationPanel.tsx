@@ -62,7 +62,7 @@ export const LogCalibrationPanel: React.FC<LogCalibrationPanelProps> = ({ modele
         // gradient/border/shadow as `panelSx` in UltimateCalculator) so this
         // collapsible "advanced" section reads as part of the same set rather
         // than a flatter outlined card.
-        borderRadius: 2, // 20px — panel tier (matches panelSx)
+        borderRadius: 2.8, // 28px — panel tier (matches panelSx)
         overflow: 'hidden',
         border: `1px solid ${
           theme.palette.mode === 'dark' ? 'rgba(56,189,248,0.12)' : theme.palette.divider
