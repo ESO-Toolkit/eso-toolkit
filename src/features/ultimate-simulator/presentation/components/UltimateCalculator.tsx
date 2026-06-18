@@ -11,8 +11,10 @@
 
 import {
   BoltOutlined,
+  ExpandMore,
   InfoOutlined,
   InsightsOutlined,
+  KeyboardArrowUp,
   QueryStatsOutlined,
   RestartAltOutlined,
   TuneOutlined,
@@ -22,6 +24,7 @@ import {
   Box,
   Button,
   Chip,
+  Collapse,
   Divider,
   FormControl,
   FormControlLabel,
@@ -32,6 +35,7 @@ import {
   ListSubheader,
   MenuItem,
   Paper,
+  Portal,
   Select,
   Slider,
   Stack,
@@ -575,7 +579,47 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
 
   const reductionFraction = totalReductionFraction(appliedReductions);
 
-  // Order the ultimate picker so the current class's ults (and global/weapon
+  const prefersReducedMotion = React.useMemo(
+    () =>
+      typeof window !== 'undefined' &&
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+    [],
+  );
+
+  // --- Mobile sticky results bar -------------------------------------------
+  // On phones the hero scrolls far out of view while editing the build below,
+  // so the headline number is invisible right when you're tweaking it. An
+  // IntersectionObserver on the hero toggles a slim fixed bar that keeps ult/s
+  // (and time-to-ult) live in view; tapping it jumps back to the results.
+  const heroRef = React.useRef<HTMLDivElement>(null);
+  const [showStickyResults, setShowStickyResults] = React.useState(false);
+  React.useEffect(() => {
+    const el = heroRef.current;
+    if (!el || typeof IntersectionObserver === 'undefined') return;
+    const obs = new IntersectionObserver(([entry]) => setShowStickyResults(!entry.isIntersecting), {
+      threshold: 0,
+    });
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+  const jumpToResults = React.useCallback(() => {
+    heroRef.current?.scrollIntoView({
+      behavior: prefersReducedMotion ? 'auto' : 'smooth',
+      block: 'start',
+    });
+  }, [prefersReducedMotion]);
+
+  // --- Collapsible source groups -------------------------------------------
+  // Each category defaults open when it has an enabled source and folded away
+  // when it's all-off, so the build form isn't one giant scroll; an explicit
+  // user toggle overrides the default.
+  const [groupOpen, setGroupOpen] = React.useState<Record<string, boolean>>({});
+  const toggleGroup = React.useCallback(
+    (key: string, currentlyOpen: boolean) => setGroupOpen((m) => ({ ...m, [key]: !currentlyOpen })),
+    [],
+  );
+
   // ones, usable by everyone) surface first; other classes' ults follow.
   const orderedUltimates = React.useMemo(() => {
     const rank = (owner: string): number => {
@@ -656,6 +700,7 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
 
         {/* ===================== HEADLINE (full width, results-first) ===================== */}
         <Paper
+          ref={heroRef}
           elevation={0}
           sx={{
             p: { xs: 2, sm: 2.75 },
@@ -1117,263 +1162,344 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
               </Divider>
 
               {/* Source toggles, grouped by category */}
-              {grouped.map(([category, entries]) => (
-                <Box key={category}>
-                  <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center', mb: 0.75 }}>
-                    <Box
-                      aria-hidden
-                      sx={{
-                        width: 5,
-                        height: 5,
-                        borderRadius: '50%',
-                        background: accent,
-                        flexShrink: 0,
+              {grouped.map(([category, entries]) => {
+                const onCount = entries.reduce(
+                  (n, s) => n + (calc.isEnabled(s.id, s.defaultEnabled) ? 1 : 0),
+                  0,
+                );
+                // Default: open when something's enabled, folded when all-off;
+                // an explicit user toggle (groupOpen) wins.
+                const open = category in groupOpen ? groupOpen[category] : onCount > 0;
+                return (
+                  <Box key={category}>
+                    <Stack
+                      direction="row"
+                      spacing={0.75}
+                      role="button"
+                      tabIndex={0}
+                      aria-expanded={open}
+                      onClick={() => toggleGroup(category, open)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          toggleGroup(category, open);
+                        }
                       }}
-                    />
-                    <Typography
-                      variant="caption"
                       sx={{
-                        color: 'text.secondary',
-                        fontWeight: 700,
-                        textTransform: 'uppercase',
-                        letterSpacing: 0.6,
+                        alignItems: 'center',
+                        mb: 0.75,
+                        py: 0.25,
+                        borderRadius: 1.5,
+                        cursor: 'pointer',
+                        userSelect: 'none',
+                        '&:hover .cat-label': { color: 'text.primary' },
+                        '&:focus-visible': { outline: `2px solid ${accent}`, outlineOffset: 2 },
                       }}
                     >
-                      {SOURCE_CATEGORY_LABELS[category]}
-                    </Typography>
-                  </Stack>
-                  <Stack spacing={1}>
-                    {entries.map((s) => {
-                      const enabled = calc.isEnabled(s.id, s.defaultEnabled);
-                      return (
+                      <Box
+                        aria-hidden
+                        sx={{
+                          width: 5,
+                          height: 5,
+                          borderRadius: '50%',
+                          background: accent,
+                          flexShrink: 0,
+                        }}
+                      />
+                      <Typography
+                        className="cat-label"
+                        variant="caption"
+                        sx={{
+                          color: 'text.secondary',
+                          fontWeight: 700,
+                          textTransform: 'uppercase',
+                          letterSpacing: 0.6,
+                          transition: 'color 0.15s ease',
+                        }}
+                      >
+                        {SOURCE_CATEGORY_LABELS[category]}
+                      </Typography>
+                      {onCount > 0 && (
                         <Box
-                          key={s.id}
+                          component="span"
+                          aria-hidden
                           sx={{
-                            borderRadius: 2.5,
-                            px: 1.5,
-                            py: enabled ? 1.25 : 0.5,
-                            pl: 1.75,
-                            position: 'relative',
-                            overflow: 'hidden',
-                            transition:
-                              'background-color 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease',
-                            border: `1px solid ${
-                              enabled
-                                ? theme.palette.mode === 'dark'
-                                  ? 'rgba(56,189,248,0.32)'
-                                  : 'rgba(40,145,200,0.28)'
-                                : theme.palette.divider
-                            }`,
-                            background: enabled
-                              ? theme.palette.mode === 'dark'
-                                ? 'linear-gradient(135deg, rgba(56,189,248,0.14) 0%, rgba(56,189,248,0.03) 100%)'
-                                : 'linear-gradient(135deg, rgba(40,145,200,0.07) 0%, rgba(40,145,200,0.01) 100%)'
-                              : 'transparent',
-                            // Raised + glowing when active, flush when off.
-                            boxShadow: enabled
-                              ? theme.palette.mode === 'dark'
-                                ? 'inset 0 1px 0 rgba(255,255,255,0.06), 0 4px 14px rgba(0,0,0,0.3), 0 0 16px rgba(56,189,248,0.07)'
-                                : '0 2px 8px rgba(15,23,42,0.05)'
-                              : 'none',
-                            // Accent rail on the left edge marks an active source.
-                            '&::before': enabled
-                              ? {
-                                  content: '""',
-                                  position: 'absolute',
-                                  left: 0,
-                                  top: 0,
-                                  bottom: 0,
-                                  width: 3,
-                                  background: `linear-gradient(180deg, ${accent}, ${
-                                    theme.palette.mode === 'dark' ? 'rgba(0,225,255,0.8)' : accent
-                                  })`,
-                                  boxShadow:
-                                    theme.palette.mode === 'dark'
-                                      ? '0 0 10px rgba(0,225,255,0.5)'
-                                      : 'none',
-                                }
-                              : undefined,
-                            '&:hover': {
-                              borderColor: enabled
-                                ? theme.palette.mode === 'dark'
-                                  ? 'rgba(56,189,248,0.5)'
-                                  : 'rgba(40,145,200,0.45)'
-                                : theme.palette.mode === 'dark'
-                                  ? 'rgba(148,163,184,0.4)'
-                                  : 'rgba(15,23,42,0.18)',
-                            },
+                            ml: 0.25,
+                            px: 0.6,
+                            borderRadius: 1,
+                            fontSize: 9.5,
+                            fontWeight: 700,
+                            lineHeight: 1.7,
+                            color: accentText,
+                            border: `1px solid ${accent}55`,
+                            background:
+                              theme.palette.mode === 'dark'
+                                ? 'rgba(56,189,248,0.10)'
+                                : 'rgba(40,145,200,0.08)',
                           }}
                         >
-                          <Stack
-                            direction="row"
-                            spacing={1}
-                            sx={{
-                              justifyContent: 'space-between',
-                              alignItems: 'center',
-                              minHeight: 44,
-                            }}
-                          >
-                            <FormControlLabel
-                              sx={{ mr: 0, flex: 1, minWidth: 0, gap: 0.75 }}
-                              control={
-                                <Switch
-                                  checked={enabled}
-                                  onChange={(e) => calc.toggleSource(s.id, e.target.checked)}
-                                />
-                              }
-                              label={
-                                <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center' }}>
-                                  <Typography
-                                    variant="body2"
-                                    sx={{ fontWeight: enabled ? 600 : 500, lineHeight: 1.3 }}
-                                  >
-                                    {s.label}
-                                  </Typography>
-                                  {s.confidence !== 'high' && (
-                                    <Chip
-                                      label={s.confidence}
-                                      size="small"
-                                      sx={{
-                                        height: 17,
-                                        fontSize: 10,
-                                        textTransform: 'capitalize',
-                                      }}
-                                    />
-                                  )}
-                                </Stack>
-                              }
-                            />
-                            {s.provenance && (
-                              <Link
-                                href={s.provenance}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                variant="caption"
-                                sx={{ flexShrink: 0, fontWeight: 600 }}
-                              >
-                                source
-                              </Link>
-                            )}
-                          </Stack>
-                          {enabled && (
+                          {onCount} on
+                        </Box>
+                      )}
+                      <Box sx={{ flex: 1 }} />
+                      <ExpandMore
+                        aria-hidden
+                        sx={{
+                          fontSize: 18,
+                          color: 'text.secondary',
+                          transition: prefersReducedMotion ? 'none' : 'transform 0.2s ease',
+                          transform: open ? 'rotate(0deg)' : 'rotate(-90deg)',
+                        }}
+                      />
+                    </Stack>
+                    <Collapse in={open} timeout={prefersReducedMotion ? 0 : 'auto'}>
+                      <Stack spacing={1}>
+                        {entries.map((s) => {
+                          const enabled = calc.isEnabled(s.id, s.defaultEnabled);
+                          return (
                             <Box
+                              key={s.id}
                               sx={{
-                                mt: 0.75,
-                                pt: 1,
-                                borderTop: `1px solid ${alpha(theme.palette.divider, 0.7)}`,
+                                borderRadius: 2.5,
+                                px: 1.5,
+                                py: enabled ? 1.25 : 0.5,
+                                pl: 1.75,
+                                position: 'relative',
+                                overflow: 'hidden',
+                                transition:
+                                  'background-color 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease',
+                                border: `1px solid ${
+                                  enabled
+                                    ? theme.palette.mode === 'dark'
+                                      ? 'rgba(56,189,248,0.32)'
+                                      : 'rgba(40,145,200,0.28)'
+                                    : theme.palette.divider
+                                }`,
+                                background: enabled
+                                  ? theme.palette.mode === 'dark'
+                                    ? 'linear-gradient(135deg, rgba(56,189,248,0.14) 0%, rgba(56,189,248,0.03) 100%)'
+                                    : 'linear-gradient(135deg, rgba(40,145,200,0.07) 0%, rgba(40,145,200,0.01) 100%)'
+                                  : 'transparent',
+                                // Raised + glowing when active, flush when off.
+                                boxShadow: enabled
+                                  ? theme.palette.mode === 'dark'
+                                    ? 'inset 0 1px 0 rgba(255,255,255,0.06), 0 4px 14px rgba(0,0,0,0.3), 0 0 16px rgba(56,189,248,0.07)'
+                                    : '0 2px 8px rgba(15,23,42,0.05)'
+                                  : 'none',
+                                // Accent rail on the left edge marks an active source.
+                                '&::before': enabled
+                                  ? {
+                                      content: '""',
+                                      position: 'absolute',
+                                      left: 0,
+                                      top: 0,
+                                      bottom: 0,
+                                      width: 3,
+                                      background: `linear-gradient(180deg, ${accent}, ${
+                                        theme.palette.mode === 'dark'
+                                          ? 'rgba(0,225,255,0.8)'
+                                          : accent
+                                      })`,
+                                      boxShadow:
+                                        theme.palette.mode === 'dark'
+                                          ? '0 0 10px rgba(0,225,255,0.5)'
+                                          : 'none',
+                                    }
+                                  : undefined,
+                                '&:hover': {
+                                  borderColor: enabled
+                                    ? theme.palette.mode === 'dark'
+                                      ? 'rgba(56,189,248,0.5)'
+                                      : 'rgba(40,145,200,0.45)'
+                                    : theme.palette.mode === 'dark'
+                                      ? 'rgba(148,163,184,0.4)'
+                                      : 'rgba(15,23,42,0.18)',
+                                },
                               }}
                             >
                               <Stack
                                 direction="row"
-                                sx={{ justifyContent: 'space-between', alignItems: 'baseline' }}
+                                spacing={1}
+                                sx={{
+                                  justifyContent: 'space-between',
+                                  alignItems: 'center',
+                                  minHeight: 44,
+                                }}
                               >
-                                <Typography
-                                  variant="caption"
-                                  sx={{
-                                    color: 'text.secondary',
-                                    textTransform: 'uppercase',
-                                    letterSpacing: 0.5,
-                                    fontSize: 10,
-                                    fontWeight: 700,
-                                  }}
-                                >
-                                  Uptime
-                                </Typography>
-                                <Typography
-                                  className="u-tabular"
-                                  variant="body2"
-                                  sx={{ color: accentText, fontWeight: 700 }}
-                                >
-                                  {Math.round((state.uptimeOverrides[s.id] ?? s.uptime) * 100)}%
-                                </Typography>
+                                <FormControlLabel
+                                  sx={{ mr: 0, flex: 1, minWidth: 0, gap: 0.75 }}
+                                  control={
+                                    <Switch
+                                      checked={enabled}
+                                      onChange={(e) => calc.toggleSource(s.id, e.target.checked)}
+                                    />
+                                  }
+                                  label={
+                                    <Stack
+                                      direction="row"
+                                      spacing={0.75}
+                                      sx={{ alignItems: 'center' }}
+                                    >
+                                      <Typography
+                                        variant="body2"
+                                        sx={{ fontWeight: enabled ? 600 : 500, lineHeight: 1.3 }}
+                                      >
+                                        {s.label}
+                                      </Typography>
+                                      {s.confidence !== 'high' && (
+                                        <Chip
+                                          label={s.confidence}
+                                          size="small"
+                                          sx={{
+                                            height: 17,
+                                            fontSize: 10,
+                                            textTransform: 'capitalize',
+                                          }}
+                                        />
+                                      )}
+                                    </Stack>
+                                  }
+                                />
+                                {s.provenance && (
+                                  <Link
+                                    href={s.provenance}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    variant="caption"
+                                    sx={{ flexShrink: 0, fontWeight: 600 }}
+                                  >
+                                    source
+                                  </Link>
+                                )}
                               </Stack>
-                              <Slider
-                                size="small"
-                                value={Math.round((state.uptimeOverrides[s.id] ?? s.uptime) * 100)}
-                                onChange={(_, v) => calc.setUptime(s.id, (v as number) / 100)}
-                                min={0}
-                                max={100}
-                                aria-label={`${s.label} uptime`}
-                                sx={{ py: 0.5 }}
-                              />
-                              {s.description && (
-                                <Typography
-                                  variant="caption"
+                              {enabled && (
+                                <Box
                                   sx={{
-                                    color: 'text.secondary',
-                                    display: 'block',
-                                    mt: -0.25,
-                                    lineHeight: 1.45,
+                                    mt: 0.75,
+                                    pt: 1,
+                                    borderTop: `1px solid ${alpha(theme.palette.divider, 0.7)}`,
                                   }}
                                 >
-                                  {s.description}
-                                </Typography>
-                              )}
-                              {/* Pillager's per-cast amount scales with the cost of the
+                                  <Stack
+                                    direction="row"
+                                    sx={{ justifyContent: 'space-between', alignItems: 'baseline' }}
+                                  >
+                                    <Typography
+                                      variant="caption"
+                                      sx={{
+                                        color: 'text.secondary',
+                                        textTransform: 'uppercase',
+                                        letterSpacing: 0.5,
+                                        fontSize: 10,
+                                        fontWeight: 700,
+                                      }}
+                                    >
+                                      Uptime
+                                    </Typography>
+                                    <Typography
+                                      className="u-tabular"
+                                      variant="body2"
+                                      sx={{ color: accentText, fontWeight: 700 }}
+                                    >
+                                      {Math.round((state.uptimeOverrides[s.id] ?? s.uptime) * 100)}%
+                                    </Typography>
+                                  </Stack>
+                                  <Slider
+                                    size="small"
+                                    value={Math.round(
+                                      (state.uptimeOverrides[s.id] ?? s.uptime) * 100,
+                                    )}
+                                    onChange={(_, v) => calc.setUptime(s.id, (v as number) / 100)}
+                                    min={0}
+                                    max={100}
+                                    aria-label={`${s.label} uptime`}
+                                    sx={{ py: 0.5 }}
+                                  />
+                                  {s.description && (
+                                    <Typography
+                                      variant="caption"
+                                      sx={{
+                                        color: 'text.secondary',
+                                        display: 'block',
+                                        mt: -0.25,
+                                        lineHeight: 1.45,
+                                      }}
+                                    >
+                                      {s.description}
+                                    </Typography>
+                                  )}
+                                  {/* Pillager's per-cast amount scales with the cost of the
                                 ULTIMATE OF WHOEVER WEARS THE SET (usually your healer) —
                                 a different player's ult, NOT your own. You receive 10% of
                                 their ult's cost. Deliberately decoupled from the main
                                 "Which ultimate?" cost above to avoid implying it tracks
                                 your own ultimate. */}
-                              {s.id === 'pillagers-profit-external' && (
-                                <Stack spacing={0.5} sx={{ mt: 1 }}>
-                                  <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
-                                    <TextField
-                                      label="Wearer's ult cost"
-                                      type="number"
-                                      size="small"
-                                      value={state.pillagerHealerUltCost}
-                                      onChange={(e) =>
-                                        calc.setPillagerHealerUltCost(Number(e.target.value))
-                                      }
-                                      slotProps={{ htmlInput: { min: 70, max: 500, step: 5 } }}
-                                      sx={{ width: 160 }}
-                                    />
-                                    <Tooltip
-                                      arrow
-                                      title="The cost of the ULTIMATE CAST BY THE PILLAGER'S WEARER — usually your healer, not you. You receive 10% of their ult's cost (once per 45s). This is separate from the 'Which ultimate?' cost above, which is your own ult."
-                                    >
-                                      <InfoOutlined
-                                        role="img"
-                                        aria-label="About the wearer's ult cost: the cost of the ultimate cast by the Pillager's wearer (usually your healer), not your own. You receive 10% of it, once per 45 seconds."
-                                        tabIndex={0}
-                                        sx={{
-                                          fontSize: 16,
-                                          color: 'text.secondary',
-                                          cursor: 'help',
-                                          borderRadius: '50%',
-                                          '&:focus-visible': {
-                                            outline: `2px solid ${accent}`,
-                                            outlineOffset: 2,
-                                          },
-                                        }}
-                                      />
-                                    </Tooltip>
-                                    <Typography
-                                      variant="caption"
-                                      className="u-tabular"
-                                      sx={{ color: 'text.secondary' }}
-                                    >
-                                      → {Math.round(state.pillagerHealerUltCost * 0.1)} ult / cast
-                                    </Typography>
-                                  </Stack>
-                                  <Typography
-                                    variant="caption"
-                                    sx={{ color: 'text.secondary', display: 'block' }}
-                                  >
-                                    Whoever wears Pillager&apos;s (usually your healer) — not your
-                                    own ultimate.
-                                  </Typography>
-                                </Stack>
+                                  {s.id === 'pillagers-profit-external' && (
+                                    <Stack spacing={0.5} sx={{ mt: 1 }}>
+                                      <Stack
+                                        direction="row"
+                                        spacing={1}
+                                        sx={{ alignItems: 'center' }}
+                                      >
+                                        <TextField
+                                          label="Wearer's ult cost"
+                                          type="number"
+                                          size="small"
+                                          value={state.pillagerHealerUltCost}
+                                          onChange={(e) =>
+                                            calc.setPillagerHealerUltCost(Number(e.target.value))
+                                          }
+                                          slotProps={{ htmlInput: { min: 70, max: 500, step: 5 } }}
+                                          sx={{ width: 160 }}
+                                        />
+                                        <Tooltip
+                                          arrow
+                                          title="The cost of the ULTIMATE CAST BY THE PILLAGER'S WEARER — usually your healer, not you. You receive 10% of their ult's cost (once per 45s). This is separate from the 'Which ultimate?' cost above, which is your own ult."
+                                        >
+                                          <InfoOutlined
+                                            role="img"
+                                            aria-label="About the wearer's ult cost: the cost of the ultimate cast by the Pillager's wearer (usually your healer), not your own. You receive 10% of it, once per 45 seconds."
+                                            tabIndex={0}
+                                            sx={{
+                                              fontSize: 16,
+                                              color: 'text.secondary',
+                                              cursor: 'help',
+                                              borderRadius: '50%',
+                                              '&:focus-visible': {
+                                                outline: `2px solid ${accent}`,
+                                                outlineOffset: 2,
+                                              },
+                                            }}
+                                          />
+                                        </Tooltip>
+                                        <Typography
+                                          variant="caption"
+                                          className="u-tabular"
+                                          sx={{ color: 'text.secondary' }}
+                                        >
+                                          → {Math.round(state.pillagerHealerUltCost * 0.1)} ult /
+                                          cast
+                                        </Typography>
+                                      </Stack>
+                                      <Typography
+                                        variant="caption"
+                                        sx={{ color: 'text.secondary', display: 'block' }}
+                                      >
+                                        Whoever wears Pillager&apos;s (usually your healer) — not
+                                        your own ultimate.
+                                      </Typography>
+                                    </Stack>
+                                  )}
+                                </Box>
                               )}
                             </Box>
-                          )}
-                        </Box>
-                      );
-                    })}
-                  </Stack>
-                </Box>
-              ))}
+                          );
+                        })}
+                      </Stack>
+                    </Collapse>
+                  </Box>
+                );
+              })}
 
               <Button
                 onClick={calc.reset}
@@ -1946,6 +2072,100 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
             <LogCalibrationPanel modeledPerSecond={expected.ultimatePerSecond} />
           </Stack>
         </Box>
+
+        {/* Mobile sticky results bar — keeps the headline live while you edit the
+            build below; tap to jump back to the results. Phones only (desktop
+            shows the results column alongside the inputs). Portalled to <body>
+            because the calculator root carries an (identity) transform from its
+            fade-in animation, which would otherwise be the fixed-positioning
+            containing block and pin the bar to the panel instead of the screen. */}
+        {showStickyResults && (
+          <Portal>
+            <Box
+              role="button"
+              tabIndex={0}
+              aria-label={`Live result ${fmt(expected.ultimatePerSecond, 2)} ultimate per second, first ultimate in ${fmtSeconds(
+                timeToUlt.secondsToFirstCast,
+              )}. Jump back to results.`}
+              onClick={jumpToResults}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  jumpToResults();
+                }
+              }}
+              className="u-fade-in-up"
+              sx={{
+                display: { xs: 'flex', md: 'none' },
+                position: 'fixed',
+                left: 10,
+                right: 10,
+                bottom: 10,
+                zIndex: (t) => t.zIndex.appBar + 2,
+                alignItems: 'center',
+                gap: 1.25,
+                px: 1.75,
+                py: 1,
+                borderRadius: 3,
+                cursor: 'pointer',
+                border: `1px solid ${
+                  theme.palette.mode === 'dark' ? 'rgba(56,189,248,0.38)' : 'rgba(40,145,200,0.3)'
+                }`,
+                background:
+                  theme.palette.mode === 'dark'
+                    ? 'linear-gradient(180deg, rgba(14,24,44,0.92), rgba(7,14,28,0.95))'
+                    : 'rgba(255,255,255,0.96)',
+                backdropFilter: 'blur(16px) saturate(1.3)',
+                WebkitBackdropFilter: 'blur(16px) saturate(1.3)',
+                boxShadow:
+                  theme.palette.mode === 'dark'
+                    ? '0 14px 38px rgba(0,0,0,0.55), 0 0 24px rgba(56,189,248,0.18)'
+                    : '0 12px 30px rgba(15,23,42,0.18)',
+                '&:focus-visible': { outline: `2px solid ${accent}`, outlineOffset: 2 },
+              }}
+            >
+              <BoltOutlined sx={{ fontSize: 20, color: accent, flexShrink: 0 }} />
+              <Box sx={{ display: 'flex', alignItems: 'baseline', minWidth: 0 }}>
+                <Typography
+                  component="span"
+                  className="u-tabular"
+                  sx={{
+                    fontFamily: 'Space Grotesk, Inter, system-ui',
+                    fontWeight: 700,
+                    fontSize: '1.3rem',
+                    letterSpacing: '-0.02em',
+                    color: accent,
+                    lineHeight: 1,
+                  }}
+                >
+                  {fmt(expected.ultimatePerSecond, 2)}
+                </Typography>
+                <Typography
+                  component="span"
+                  sx={{ color: 'text.secondary', fontWeight: 600, fontSize: '0.72rem', ml: 0.5 }}
+                >
+                  ult/s
+                </Typography>
+              </Box>
+              <Divider orientation="vertical" flexItem sx={{ borderColor: 'divider', my: 0.25 }} />
+              <Box sx={{ flex: 1, minWidth: 0 }}>
+                <Typography
+                  variant="caption"
+                  sx={{ color: 'text.secondary', display: 'block', fontSize: 9.5, lineHeight: 1.2 }}
+                >
+                  to 1st ult
+                </Typography>
+                <Typography
+                  className="u-tabular"
+                  sx={{ fontWeight: 700, fontSize: '0.9rem', lineHeight: 1.2 }}
+                >
+                  {fmtSeconds(timeToUlt.secondsToFirstCast)}
+                </Typography>
+              </Box>
+              <KeyboardArrowUp sx={{ fontSize: 22, color: 'text.secondary', flexShrink: 0 }} />
+            </Box>
+          </Portal>
+        )}
       </Box>
     </ThemeProvider>
   );
