@@ -459,7 +459,11 @@ const buildCalcTheme = (base: Theme): Theme => {
             position: 'relative',
             borderRadius: 14,
             marginTop: 6,
-            overflow: 'hidden',
+            // Clip the rounded corners horizontally, but allow vertical scroll —
+            // `overflow: hidden` here previously broke scrolling in tall menus
+            // (e.g. the Ultimate picker). border-radius still clips with auto.
+            overflowX: 'hidden',
+            overflowY: 'auto',
             backdropFilter: 'blur(20px) saturate(1.5)',
             WebkitBackdropFilter: 'blur(20px) saturate(1.5)',
             boxShadow: dark
