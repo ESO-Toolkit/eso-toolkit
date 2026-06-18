@@ -1465,7 +1465,10 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
                                       valueLabelDisplay="auto"
                                       valueLabelFormat={(v) => `${v}%`}
                                       aria-label={`${s.label} uptime`}
-                                      sx={{ py: 0.5, display: 'block' }}
+                                      // Keep the theme's 10px touch-padding (don't
+                                      // override with py) so the 18px thumb + glow
+                                      // has room and never overlaps the text below.
+                                      sx={{ display: 'block' }}
                                     />
                                   </Box>
                                   {s.description && (
@@ -1474,7 +1477,7 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
                                       sx={{
                                         color: 'text.secondary',
                                         display: 'block',
-                                        mt: -0.25,
+                                        mt: 0.5,
                                         lineHeight: 1.45,
                                       }}
                                     >
