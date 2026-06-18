@@ -418,7 +418,9 @@ const PassiveRow: React.FC<PassiveRowProps> = ({
                 fontSize: 12,
                 transition: 'all 0.12s',
                 '&:hover:not(:disabled)': {
-                  background: isDark ? `rgba(${treeColorRgb}, 0.24)` : `rgba(${treeColorRgb}, 0.18)`,
+                  background: isDark
+                    ? `rgba(${treeColorRgb}, 0.24)`
+                    : `rgba(${treeColorRgb}, 0.18)`,
                   boxShadow: `0 0 6px rgba(${treeColorRgb}, 0.20)`,
                 },
                 '&:disabled': { opacity: 0.2, border: '1px solid transparent' },
