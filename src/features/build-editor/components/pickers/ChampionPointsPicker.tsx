@@ -280,7 +280,9 @@ const PassiveRow: React.FC<PassiveRowProps> = ({
   const isDark = theme.palette.mode === 'dark';
   const pct = (points / passive.maxPoints) * 100;
 
-  const adjust = (delta: number): void => {
+  const adjust = (direction: number, e: React.MouseEvent): void => {
+    const step = e.shiftKey ? 10 : 1;
+    const delta = direction * step;
     onPassiveChange(treeKey, passive.id, Math.max(0, Math.min(passive.maxPoints, points + delta)));
   };
 
@@ -317,27 +319,31 @@ const PassiveRow: React.FC<PassiveRowProps> = ({
       </Box>
 
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexShrink: 0 }}>
-        <ButtonBase
-          onClick={() => adjust(-1)}
-          disabled={points === 0}
-          aria-label={`Decrease ${passive.name}`}
-          sx={{
-            width: 28,
-            height: 28,
-            borderRadius: '6px',
-            background: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
-            border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'}`,
-            fontWeight: 700,
-            fontSize: 12,
-            transition: 'all 0.12s',
-            '&:hover:not(:disabled)': {
-              background: isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.07)',
-            },
-            '&:disabled': { opacity: 0.2, border: '1px solid transparent' },
-          }}
-        >
-          −
-        </ButtonBase>
+        <Tooltip title={`Decrease ${passive.name} (Shift ×10)`}>
+          <span>
+            <ButtonBase
+              onClick={(e: React.MouseEvent) => adjust(-1, e)}
+              disabled={points === 0}
+              aria-label={`Decrease ${passive.name}`}
+              sx={{
+                width: 28,
+                height: 28,
+                borderRadius: '6px',
+                background: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
+                border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'}`,
+                fontWeight: 700,
+                fontSize: 12,
+                transition: 'all 0.12s',
+                '&:hover:not(:disabled)': {
+                  background: isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.07)',
+                },
+                '&:disabled': { opacity: 0.2, border: '1px solid transparent' },
+              }}
+            >
+              −
+            </ButtonBase>
+          </span>
+        </Tooltip>
 
         <Box sx={{ display: 'flex', gap: '1.5px', alignItems: 'center', mx: 0.25 }}>
           {passive.maxPoints <= 1 ? (
@@ -395,29 +401,33 @@ const PassiveRow: React.FC<PassiveRowProps> = ({
           {points}/{passive.maxPoints}
         </Typography>
 
-        <ButtonBase
-          onClick={() => adjust(1)}
-          disabled={points === passive.maxPoints}
-          aria-label={`Increase ${passive.name}`}
-          sx={{
-            width: 20,
-            height: 20,
-            borderRadius: '6px',
-            background: isDark ? `rgba(${treeColorRgb}, 0.14)` : `rgba(${treeColorRgb}, 0.10)`,
-            border: `1px solid rgba(${treeColorRgb}, 0.30)`,
-            color: treeColor,
-            fontWeight: 700,
-            fontSize: 12,
-            transition: 'all 0.12s',
-            '&:hover:not(:disabled)': {
-              background: isDark ? `rgba(${treeColorRgb}, 0.24)` : `rgba(${treeColorRgb}, 0.18)`,
-              boxShadow: `0 0 6px rgba(${treeColorRgb}, 0.20)`,
-            },
-            '&:disabled': { opacity: 0.2, border: '1px solid transparent' },
-          }}
-        >
-          +
-        </ButtonBase>
+        <Tooltip title={`Increase ${passive.name} (Shift ×10)`}>
+          <span>
+            <ButtonBase
+              onClick={(e: React.MouseEvent) => adjust(1, e)}
+              disabled={points === passive.maxPoints}
+              aria-label={`Increase ${passive.name}`}
+              sx={{
+                width: 20,
+                height: 20,
+                borderRadius: '6px',
+                background: isDark ? `rgba(${treeColorRgb}, 0.14)` : `rgba(${treeColorRgb}, 0.10)`,
+                border: `1px solid rgba(${treeColorRgb}, 0.30)`,
+                color: treeColor,
+                fontWeight: 700,
+                fontSize: 12,
+                transition: 'all 0.12s',
+                '&:hover:not(:disabled)': {
+                  background: isDark ? `rgba(${treeColorRgb}, 0.24)` : `rgba(${treeColorRgb}, 0.18)`,
+                  boxShadow: `0 0 6px rgba(${treeColorRgb}, 0.20)`,
+                },
+                '&:disabled': { opacity: 0.2, border: '1px solid transparent' },
+              }}
+            >
+              +
+            </ButtonBase>
+          </span>
+        </Tooltip>
       </Box>
     </Box>
   );
