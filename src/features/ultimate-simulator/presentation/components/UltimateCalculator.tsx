@@ -460,19 +460,23 @@ const buildCalcTheme = (base: Theme): Theme => {
             borderRadius: 14,
             marginTop: 6,
             overflow: 'hidden',
-            backgroundImage: 'none',
-            // Near-opaque, distinctly lighter slate surface. (A transparent menu
-            // let the dark panels bleed through and read as the same color, so it
-            // "blended in" — opacity + a clearly lighter tone fixes that.)
-            background: dark
-              ? 'linear-gradient(180deg, rgba(46,66,102,0.985) 0%, rgba(32,50,82,0.985) 100%)'
-              : 'linear-gradient(180deg, rgba(248,252,255,0.99) 0%, rgba(255,255,255,0.99) 100%)',
             backdropFilter: 'blur(20px) saturate(1.5)',
             WebkitBackdropFilter: 'blur(20px) saturate(1.5)',
-            border: `1px solid ${dark ? 'rgba(56,189,248,0.6)' : 'rgba(40,145,200,0.4)'}`,
             boxShadow: dark
               ? '0 24px 60px rgba(0,0,0,0.65), 0 0 36px rgba(56,189,248,0.3), inset 0 1px 0 rgba(255,255,255,0.12)'
               : '0 20px 48px rgba(15,23,42,0.22), 0 0 24px rgba(40,145,200,0.18), inset 0 1px 0 rgba(255,255,255,0.9)',
+            // The global theme forces `.MuiMenu-paper { background:#0f172a
+            // !important }`, which a normal scoped override can't beat — so the
+            // dropdown kept rendering the same dark navy and blending in. Win it
+            // locally with higher specificity (&&) + !important: a distinctly
+            // lighter, solid slate surface, scoped to this tab's menus only.
+            '&&': {
+              backgroundColor: `${dark ? 'rgb(45,64,99)' : 'rgb(250,253,255)'} !important`,
+              backgroundImage: 'none !important',
+              border: `1px solid ${
+                dark ? 'rgba(56,189,248,0.6)' : 'rgba(40,145,200,0.4)'
+              } !important`,
+            },
             // A thin cyan sheen across the very top edge of the popover.
             '&::before': {
               content: '""',
@@ -485,6 +489,7 @@ const buildCalcTheme = (base: Theme): Theme => {
                 ? 'linear-gradient(90deg, transparent, rgba(0,225,255,0.7), transparent)'
                 : 'linear-gradient(90deg, transparent, rgba(40,145,200,0.6), transparent)',
               pointerEvents: 'none',
+              zIndex: 1,
             },
           },
           list: { paddingTop: 7, paddingBottom: 7 },
