@@ -445,47 +445,81 @@ const buildCalcTheme = (base: Theme): Theme => {
           },
         },
       },
-      // The open dropdown popover + its items — was stock MUI; now a cyan-glass
-      // panel with rounded, inset-highlighted items to match the inputs.
+      // The open dropdown popover + its items — was stock MUI; now a pronounced
+      // cyan-glass panel: tinted gradient surface, a glowing cyan edge, a thin
+      // accent line across the top, and items that light up with a cyan fill +
+      // a left accent rail on hover/selection so it reads clearly "premium".
       MuiMenu: {
         styleOverrides: {
           paper: {
-            borderRadius: 12,
+            position: 'relative',
+            borderRadius: 14,
             marginTop: 6,
+            overflow: 'hidden',
             backgroundImage: 'none',
-            backgroundColor: dark ? 'rgba(10,17,33,0.92)' : 'rgba(255,255,255,0.97)',
-            backdropFilter: 'blur(14px) saturate(1.3)',
-            WebkitBackdropFilter: 'blur(14px) saturate(1.3)',
-            border: `1px solid ${dark ? 'rgba(56,189,248,0.16)' : 'rgba(40,145,200,0.18)'}`,
+            background: dark
+              ? 'linear-gradient(180deg, rgba(18,34,58,0.94) 0%, rgba(6,13,28,0.96) 100%)'
+              : 'linear-gradient(180deg, rgba(244,251,255,0.98) 0%, rgba(255,255,255,0.98) 100%)',
+            backdropFilter: 'blur(18px) saturate(1.4)',
+            WebkitBackdropFilter: 'blur(18px) saturate(1.4)',
+            border: `1px solid ${dark ? 'rgba(56,189,248,0.30)' : 'rgba(40,145,200,0.28)'}`,
             boxShadow: dark
-              ? '0 16px 40px rgba(0,0,0,0.55), 0 0 0 1px rgba(56,189,248,0.08), inset 0 1px 0 rgba(255,255,255,0.05)'
-              : '0 16px 40px rgba(15,23,42,0.16), 0 0 0 1px rgba(40,145,200,0.08)',
+              ? '0 24px 60px rgba(0,0,0,0.62), 0 0 26px rgba(56,189,248,0.16), inset 0 1px 0 rgba(255,255,255,0.07)'
+              : '0 20px 48px rgba(15,23,42,0.18), 0 0 18px rgba(40,145,200,0.10), inset 0 1px 0 rgba(255,255,255,0.9)',
+            // A thin cyan sheen across the very top edge of the popover.
+            '&::before': {
+              content: '""',
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              height: 2,
+              background: dark
+                ? 'linear-gradient(90deg, transparent, rgba(0,225,255,0.7), transparent)'
+                : 'linear-gradient(90deg, transparent, rgba(40,145,200,0.6), transparent)',
+              pointerEvents: 'none',
+            },
           },
-          list: { paddingTop: 6, paddingBottom: 6 },
+          list: { paddingTop: 7, paddingBottom: 7 },
         },
       },
       MuiMenuItem: {
         styleOverrides: {
           root: {
-            borderRadius: 8,
-            marginLeft: 6,
-            marginRight: 6,
-            paddingTop: 7,
-            paddingBottom: 7,
-            transition: 'background-color 0.15s ease, color 0.15s ease',
+            borderRadius: 9,
+            marginLeft: 7,
+            marginRight: 7,
+            paddingTop: 9,
+            paddingBottom: 9,
+            transition: 'background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease',
             '&:hover': {
-              backgroundColor: dark ? 'rgba(56,189,248,0.10)' : 'rgba(40,145,200,0.08)',
+              background: dark
+                ? 'linear-gradient(90deg, rgba(56,189,248,0.20), rgba(56,189,248,0.06))'
+                : 'linear-gradient(90deg, rgba(40,145,200,0.16), rgba(40,145,200,0.04))',
+              boxShadow: `inset 3px 0 0 ${cyan}`,
             },
             '&.Mui-focusVisible': {
-              backgroundColor: dark ? 'rgba(56,189,248,0.14)' : 'rgba(40,145,200,0.10)',
+              background: dark
+                ? 'linear-gradient(90deg, rgba(56,189,248,0.24), rgba(56,189,248,0.08))'
+                : 'linear-gradient(90deg, rgba(40,145,200,0.18), rgba(40,145,200,0.05))',
+              boxShadow: `inset 3px 0 0 ${cyan}`,
             },
             '&.Mui-selected': {
-              backgroundColor: dark ? 'rgba(56,189,248,0.16)' : 'rgba(40,145,200,0.12)',
+              color: dark ? 'rgb(186,236,255)' : 'rgb(20,110,160)',
+              fontWeight: 600,
+              background: dark
+                ? 'linear-gradient(90deg, rgba(56,189,248,0.32), rgba(0,225,255,0.10))'
+                : 'linear-gradient(90deg, rgba(40,145,200,0.22), rgba(40,145,200,0.06))',
+              boxShadow: `inset 3px 0 0 ${cyan}, ${dark ? '0 0 16px rgba(56,189,248,0.18)' : 'none'}`,
               '&:hover': {
-                backgroundColor: dark ? 'rgba(56,189,248,0.22)' : 'rgba(40,145,200,0.16)',
+                background: dark
+                  ? 'linear-gradient(90deg, rgba(56,189,248,0.4), rgba(0,225,255,0.14))'
+                  : 'linear-gradient(90deg, rgba(40,145,200,0.28), rgba(40,145,200,0.1))',
               },
               '&.Mui-focusVisible': {
-                backgroundColor: dark ? 'rgba(56,189,248,0.2)' : 'rgba(40,145,200,0.15)',
+                background: dark
+                  ? 'linear-gradient(90deg, rgba(56,189,248,0.36), rgba(0,225,255,0.12))'
+                  : 'linear-gradient(90deg, rgba(40,145,200,0.26), rgba(40,145,200,0.08))',
               },
             },
           },
