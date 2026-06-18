@@ -177,7 +177,7 @@ const fmtSeconds = (n: number): string => {
  */
 const panelSx = (theme: Theme): SxProps<Theme> => ({
   p: { xs: 2, sm: 2.5 },
-  borderRadius: 3.5,
+  borderRadius: 2, // 20px — top-level panel tier (radius scale: panel 20 / card 14 / control 10)
   border: `1px solid ${
     theme.palette.mode === 'dark' ? 'rgba(56,189,248,0.12)' : theme.palette.divider
   }`,
@@ -246,7 +246,7 @@ const StatBlock: React.FC<{
         minWidth: 0,
         px: { xs: 1.25, sm: 1.75 },
         py: { xs: 1.25, sm: 1.5 },
-        borderRadius: 2.5,
+        borderRadius: 1.4, // 14px — card tier (nested inside 20px panels)
         position: 'relative',
         height: '100%',
         // Raised card: a cyan-tinted gradient that lifts off the recessed panel,
@@ -502,7 +502,7 @@ const buildCalcTheme = (base: Theme): Theme => {
       MuiMenuItem: {
         styleOverrides: {
           root: {
-            borderRadius: 9,
+            borderRadius: 10,
             marginLeft: 7,
             marginRight: 7,
             paddingTop: 9,
@@ -539,6 +539,13 @@ const buildCalcTheme = (base: Theme): Theme => {
               },
             },
           },
+        },
+      },
+      // Control tier: buttons share the inputs' 10px radius (global default is
+      // 8px, which read as inconsistent next to the 10px fields).
+      MuiButton: {
+        styleOverrides: {
+          root: { borderRadius: 10 },
         },
       },
     },
@@ -717,7 +724,7 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
           sx={{
             p: { xs: 2, sm: 2.75 },
             mb: 2.5,
-            borderRadius: 4,
+            borderRadius: 2, // 20px — panel tier (was 40, matched nothing else)
             position: 'relative',
             overflow: 'hidden',
             border: `1px solid ${
@@ -958,7 +965,7 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
                     mt: 0.75,
                     gap: 0.5,
                     p: 0.5,
-                    borderRadius: 2.5,
+                    borderRadius: 1.4, // 14px — card tier
                     border: `1px solid ${theme.palette.divider}`,
                     background:
                       theme.palette.mode === 'dark'
@@ -968,7 +975,7 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
                     // switcher: filled accent pill behind the active option.
                     '& .MuiToggleButtonGroup-grouped': {
                       border: 0,
-                      borderRadius: '8px !important',
+                      borderRadius: '10px !important', // control tier (was 8, matches fields now)
                       flexDirection: 'column',
                       gap: 0,
                       py: 0.85,
@@ -1104,7 +1111,7 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
                     sx={{
                       mt: 1,
                       p: 1.5,
-                      borderRadius: 2,
+                      borderRadius: 1.4, // 14px — card tier
                       borderLeft: `3px solid ${accent}`,
                       background:
                         theme.palette.mode === 'dark'
@@ -1272,7 +1279,7 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
                             <Box
                               key={s.id}
                               sx={{
-                                borderRadius: 2.5,
+                                borderRadius: 1.4, // 14px — card tier
                                 px: 1.5,
                                 py: enabled ? 1.25 : 0.5,
                                 pl: 1.75,
@@ -1699,7 +1706,7 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
                     mt: 1.5,
                     px: 1.5,
                     py: 1,
-                    borderRadius: 2,
+                    borderRadius: 1.4, // 14px — card tier (cost-reduction note)
                     background:
                       theme.palette.mode === 'dark'
                         ? 'rgba(34,197,94,0.08)'
@@ -1937,7 +1944,7 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
                   sx={{
                     mt: 2,
                     p: 1.75,
-                    borderRadius: 2.5,
+                    borderRadius: 1.4, // 14px — card tier (Monte Carlo spread box)
                     background:
                       theme.palette.mode === 'dark'
                         ? 'rgba(148,163,184,0.05)'
@@ -2118,7 +2125,7 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
                 gap: 1.25,
                 px: 1.75,
                 py: 1,
-                borderRadius: 3,
+                borderRadius: 1.4, // 14px — card tier
                 cursor: 'pointer',
                 border: `1px solid ${
                   theme.palette.mode === 'dark' ? 'rgba(56,189,248,0.6)' : 'rgba(40,145,200,0.45)'

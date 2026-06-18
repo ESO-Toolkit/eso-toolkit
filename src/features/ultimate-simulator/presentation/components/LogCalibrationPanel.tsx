@@ -62,7 +62,7 @@ export const LogCalibrationPanel: React.FC<LogCalibrationPanelProps> = ({ modele
         // gradient/border/shadow as `panelSx` in UltimateCalculator) so this
         // collapsible "advanced" section reads as part of the same set rather
         // than a flatter outlined card.
-        borderRadius: 3.5,
+        borderRadius: 2, // 20px — panel tier (matches panelSx)
         overflow: 'hidden',
         border: `1px solid ${
           theme.palette.mode === 'dark' ? 'rgba(56,189,248,0.12)' : theme.palette.divider
@@ -193,7 +193,7 @@ export const LogCalibrationPanel: React.FC<LogCalibrationPanelProps> = ({ modele
               <Box
                 className="u-fade-in"
                 sx={{
-                  borderRadius: 3,
+                  borderRadius: 1.4, // 14px — card tier
                   p: 2,
                   border: `1px solid ${theme.palette.divider}`,
                   background:
@@ -220,7 +220,7 @@ export const LogCalibrationPanel: React.FC<LogCalibrationPanelProps> = ({ modele
                           flex: 1,
                           minWidth: 0,
                           p: 1.5,
-                          borderRadius: 2.5,
+                          borderRadius: 1.2, // 12px — small inner stat card
                           background:
                             theme.palette.mode === 'dark'
                               ? 'rgba(56,189,248,0.08)'
@@ -259,7 +259,7 @@ export const LogCalibrationPanel: React.FC<LogCalibrationPanelProps> = ({ modele
                           flex: 1,
                           minWidth: 0,
                           p: 1.5,
-                          borderRadius: 2.5,
+                          borderRadius: 1.2, // 12px — small inner stat card
                           background:
                             theme.palette.mode === 'dark'
                               ? 'rgba(148,163,184,0.05)'
