@@ -87,7 +87,21 @@ function buildNameContext(
     const date = new Date(eventTime);
     if (!isNaN(date.getTime())) {
       const tz = timezone || DEFAULT_TIMEZONE;
-      const { dayOfWeek, hour } = getDatePartsInTz(date, tz);
+      let dayOfWeek: number;
+      let hour: number;
+      try {
+        ({ dayOfWeek, hour } = getDatePartsInTz(date, tz));
+      } catch (err) {
+        // Guild admins can configure the timezone. If it is mistyped or later
+        // becomes invalid in the runtime's ICU data, do not fail publishing for
+        // the whole server; fall back to the stable default and log the config
+        // problem for follow-up.
+        console.warn(
+          `[publish] invalid timezone "${tz}", falling back to ${DEFAULT_TIMEZONE}:`,
+          err,
+        );
+        ({ dayOfWeek, hour } = getDatePartsInTz(date, DEFAULT_TIMEZONE));
+      }
       ctx.dayShort = SHORT_DAYS[dayOfWeek];
       ctx.time = formatTime12h(hour);
     }

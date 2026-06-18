@@ -156,6 +156,22 @@ describe('splitMessages', () => {
     const rejoined = chunks.join('\n');
     expect(rejoined).toBe(text);
   });
+
+  it('hard-wraps a single over-limit line without dropping content', () => {
+    const longLine = 'A'.repeat(4500);
+    const chunks = splitMessages(`before\n${longLine}\nafter`);
+
+    expect(chunks).toEqual([
+      'before',
+      longLine.slice(0, 2000),
+      longLine.slice(2000, 4000),
+      longLine.slice(4000),
+      'after',
+    ]);
+    for (const chunk of chunks) {
+      expect(chunk.length).toBeLessThanOrEqual(2000);
+    }
+  });
 });
 
 describe('buildRosterActionRows', () => {
@@ -184,6 +200,23 @@ describe('buildRosterActionRows', () => {
     const rows = buildRosterActionRows('abc-xyz');
     const buttons = rows[0].components ?? [];
     expect(buttons[0].custom_id).toContain('abc-xyz');
+  });
+
+  it('does not truncate over-limit roster IDs in custom_ids', () => {
+    const longRosterId = 'r'.repeat(120);
+    const rows = buildRosterActionRows(longRosterId);
+    const signupButtons = rows[0].components ?? [];
+    const actionButtons = rows[1].components ?? [];
+    const refreshButton = actionButtons.find((button) =>
+      button.custom_id?.startsWith('roster_refresh'),
+    );
+
+    expect(signupButtons.map((button) => button.custom_id)).toEqual([
+      'roster_signup:tank',
+      'roster_signup:healer',
+      'roster_signup:dd',
+    ]);
+    expect(refreshButton?.custom_id).toBe('roster_refresh');
   });
 });
 

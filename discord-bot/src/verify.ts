@@ -3,15 +3,19 @@
  * Uses the Web Crypto API (built into the Workers runtime) — no external deps.
  */
 
-function hexToUint8Array(hex: string): Uint8Array {
+function hexToUint8Array(hex: string): Uint8Array<ArrayBuffer> {
   if (hex.length % 2 !== 0) {
     throw new Error('Invalid hex string length');
   }
-  const arr = new Uint8Array(hex.length / 2);
+  const arr = new Uint8Array(new ArrayBuffer(hex.length / 2));
   for (let i = 0; i < hex.length; i += 2) {
     arr[i / 2] = parseInt(hex.slice(i, i + 2), 16);
   }
   return arr;
+}
+
+function utf8Bytes(value: string): Uint8Array<ArrayBuffer> {
+  return new Uint8Array(new TextEncoder().encode(value));
 }
 
 /**
@@ -37,7 +41,7 @@ export async function verifyDiscordSignature(
       'Ed25519',
       key,
       hexToUint8Array(signature),
-      new TextEncoder().encode(timestamp + body),
+      utf8Bytes(timestamp + body),
     );
 
     return valid;
