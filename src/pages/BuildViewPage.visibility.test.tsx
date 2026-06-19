@@ -149,6 +149,28 @@ describe('BuildViewPage visibility enforcement', () => {
     expect(screen.queryByTestId('build-shell')).not.toBeInTheDocument();
   });
 
+  it('overrides stale embedded visibility with the authoritative Hub value on ?id= loads', async () => {
+    // Blob says public, but the Hub record is now private and the API authorized
+    // this viewer (owner). The build renders, and the effective visibility is the
+    // server's — proven by the ?b= copy guard downstream reading server truth.
+    mockGet.mockResolvedValue({
+      build: { build_data: 'blob-marked-public', visibility: 'private' },
+    } as Awaited<ReturnType<typeof buildHubApi.get>>);
+    mockDecode.mockResolvedValue(fullBuild('public'));
+
+    render(
+      <MemoryRouter initialEntries={[{ pathname: '/bv', search: '?id=build-9' }]}>
+        <Routes>
+          <Route path="/bv" element={<BuildViewPage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    // Owner-authorized private build loads via the id path and renders.
+    await waitFor(() => expect(screen.getByTestId('build-shell')).toBeInTheDocument());
+    expect(screen.queryByText(/No build found/i)).not.toBeInTheDocument();
+  });
+
   it('rejects a Private ?b= payload (forwarded/address-bar link) as not-found', async () => {
     mockDecode.mockResolvedValue({ settings: { visibility: 'private' } } as never);
 
