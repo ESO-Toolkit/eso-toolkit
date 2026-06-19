@@ -201,7 +201,24 @@ export const BuildCompletionHeader: React.FC = () => {
     enqueueSnackbar('Build saved!', { variant: 'success' });
   };
 
+  // Any link handed to other people (a self-contained ?b= URL or a remote temp
+  // /b/<id> link) embeds build_data and is resolved without the owner-gated
+  // visibility check, so it can never be revoked. Refuse those share actions for
+  // Private builds; Link Only and Public still share freely (Link Only IS the
+  // share-by-link tier). The owner's own read-only View is not a share and is
+  // intentionally left enabled.
+  const blockShareIfPrivate = (): boolean => {
+    if (build.settings.visibility === 'private') {
+      enqueueSnackbar('This build is Private. Set it to Link Only or Public to share a link.', {
+        variant: 'warning',
+      });
+      return true;
+    }
+    return false;
+  };
+
   const handleShare = (): void => {
+    if (blockShareIfPrivate()) return;
     void encodeBuildToURL(build).then((encoded) => {
       if (!encoded) {
         enqueueSnackbar('Could not encode build for sharing.', { variant: 'error' });
@@ -281,6 +298,7 @@ export const BuildCompletionHeader: React.FC = () => {
       enqueueSnackbar('Please enter a build name before getting a link.', { variant: 'warning' });
       return;
     }
+    if (blockShareIfPrivate()) return;
     setIsCreatingLink(true);
     void encodeBuildToURL(build).then((encoded) => {
       if (!encoded) {
