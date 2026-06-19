@@ -27,6 +27,12 @@ export interface StatusEffectMetadata {
   icon: string;
 }
 
+// ESO Logs assigns five of these effects a generic placeholder icon
+// (`ability_mage_065`). We override those with the matching element-specific
+// `death_recap_*_dot_heavy` art so each status effect reads distinctly in the UI.
+// Every icon below was confirmed HTTP 200 (real PNG) on the rpglogs CDN.
+// Sundered has no dedicated physical-status icon, so it reuses the bleed art it
+// shares with Hemorrhaging (both are bleed-family) — an accepted overlap.
 export const STATUS_EFFECT_METADATA: Readonly<Record<number, StatusEffectMetadata>> = {
   [KnownAbilities.BURNING]: { name: 'Burning', icon: 'ability_mage_062' },
   [KnownAbilities.POISONED]: { name: 'Poisoned', icon: 'ability_rogue_030' },
@@ -34,11 +40,11 @@ export const STATUS_EFFECT_METADATA: Readonly<Record<number, StatusEffectMetadat
     name: 'Hemorrhaging',
     icon: 'death_recap_bleed_dot_heavy',
   },
-  [KnownAbilities.CHILL]: { name: 'Chill', icon: 'ability_mage_065' },
-  [KnownAbilities.CONCUSSION]: { name: 'Concussion', icon: 'ability_mage_065' },
-  [KnownAbilities.DISEASED]: { name: 'Diseased', icon: 'ability_mage_065' },
-  [KnownAbilities.OVERCHARGED]: { name: 'Overcharged', icon: 'ability_mage_065' },
-  [KnownAbilities.SUNDERED]: { name: 'Sundered', icon: 'ability_mage_065' },
+  [KnownAbilities.CHILL]: { name: 'Chill', icon: 'death_recap_cold_dot_heavy' },
+  [KnownAbilities.CONCUSSION]: { name: 'Concussion', icon: 'death_recap_shock_dot_heavy' },
+  [KnownAbilities.DISEASED]: { name: 'Diseased', icon: 'death_recap_disease_dot_heavy' },
+  [KnownAbilities.OVERCHARGED]: { name: 'Overcharged', icon: 'death_recap_magic_dot_heavy' },
+  [KnownAbilities.SUNDERED]: { name: 'Sundered', icon: 'death_recap_bleed_dot_heavy' },
 };
 
 /**

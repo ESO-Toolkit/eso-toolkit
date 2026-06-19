@@ -180,7 +180,7 @@ describe('CalculateStatusEffectUptimes', () => {
 
         // Hostile-buff branch also resolves a canonical name + icon.
         expect(overchargedResult.abilityName).toBe('Overcharged');
-        expect(overchargedResult.icon).toBe('ability_mage_065');
+        expect(overchargedResult.icon).toBe('death_recap_magic_dot_heavy');
 
         // Target 1: 6 seconds (2000-8000ms)
         const target1Data = overchargedResult.targetData[TARGET_ID_1];

@@ -152,6 +152,7 @@ export const StatusEffectUptimesView: React.FC<StatusEffectUptimesViewProps> = (
           onChange={(e) => setNameFilter(e.target.value)}
           sx={{ mb: 1 }}
           slotProps={{
+            htmlInput: { 'aria-label': 'Filter status effects by name' },
             input: {
               startAdornment: (
                 <InputAdornment position="start">
