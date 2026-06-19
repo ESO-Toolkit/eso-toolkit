@@ -55,7 +55,7 @@ describe('StatusEffectUptimesPanel Target Segmentation Integration', () => {
   const mockTargetSegmentedData: StatusEffectUptimesByTarget[] = [
     {
       abilityGameID: KnownAbilities.BURNING.toString(),
-      abilityName: `Ability ${KnownAbilities.BURNING}`,
+      abilityName: 'Burning',
       isDebuff: true,
       hostilityType: 1,
       uniqueKey: `${KnownAbilities.BURNING}-status-effect`,
@@ -76,7 +76,7 @@ describe('StatusEffectUptimesPanel Target Segmentation Integration', () => {
     },
     {
       abilityGameID: KnownAbilities.POISONED.toString(),
-      abilityName: `Ability ${KnownAbilities.POISONED}`,
+      abilityName: 'Poisoned',
       isDebuff: true,
       hostilityType: 1,
       uniqueKey: `${KnownAbilities.POISONED}-status-effect`,
@@ -174,7 +174,7 @@ describe('StatusEffectUptimesPanel Target Segmentation Integration', () => {
       const partialData: StatusEffectUptimesByTarget[] = [
         {
           abilityGameID: KnownAbilities.BURNING.toString(),
-          abilityName: `Ability ${KnownAbilities.BURNING}`,
+          abilityName: 'Burning',
           isDebuff: true,
           hostilityType: 1,
           uniqueKey: `${KnownAbilities.BURNING}-status-effect`,
@@ -232,7 +232,7 @@ describe('StatusEffectUptimesPanel Target Segmentation Integration', () => {
       expect(burning?.isDebuff).toBe(true);
       expect(burning?.hostilityType).toBe(1);
       expect(burning?.uniqueKey).toBe(`${KnownAbilities.BURNING}-status-effect`);
-      expect(burning?.abilityName).toBe(`Ability ${KnownAbilities.BURNING}`);
+      expect(burning?.abilityName).toBe('Burning');
     });
   });
 
