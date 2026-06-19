@@ -73,6 +73,7 @@ import { CHAMPION_POINT_ABILITIES, ChampionPointAbilityId } from '../types/champ
 import { decodeBuildFromURL } from '../utils/buildEncoding';
 import { getGearSetTooltipPropsByName } from '../utils/gearSetTooltipMapper';
 import { sanitizeYoutubeUrl } from '../utils/sanitize-url';
+import { useSetPieceCounts } from '../utils/setPieceCounting';
 import { buildTooltipPropsFromAbilityId } from '../utils/skillTooltipMapper';
 
 // ─── Icon CDNs ────────────────────────────────────────────────────────────────
@@ -840,16 +841,9 @@ const SetupDisplay: React.FC<{ setup: BuildSetup; build: Build; races?: string[]
     }),
   );
 
-  const setPieceCounts = React.useMemo(() => {
-    const counts = new Map<string, number>();
-    for (const entry of gearEntries) {
-      const info = getItemInfo(entry.id);
-      if (info?.setName) {
-        counts.set(info.setName, (counts.get(info.setName) ?? 0) + 1);
-      }
-    }
-    return counts;
-  }, [gearEntries]);
+  // Count set pieces treating a two-handed weapon as 2 (ESO's in-game math), so
+  // single-weapon arena sets (e.g. Perfected Crushing Wall) activate correctly.
+  const setPieceCounts = useSetPieceCounts(gearEntries.map((entry) => entry.id));
 
   // Normalize skill slot indices to display format (0-4 abilities, 5 ultimate).
   // CSPS/combat-log builds use ESO-native slots 3-8; roster bridge builds already use 0-5.
