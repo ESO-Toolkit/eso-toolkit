@@ -67,28 +67,28 @@ export const assault: SkillLineData = {
       id: AbilityId.VIGOR,
       name: 'Vigor',
       description:
-        'Let loose a battle cry, instilling yourself and nearby allies with resolve and healing them for 3480 Health over 10 seconds.',
+        'Let loose a battle cry, instilling yourself and nearby allies with resolve and healing them for 12270 Health over 10 seconds.',
       maxRank: 4,
     },
     {
       id: 61505, // Morph of Vigor
       name: 'Echoing Vigor',
       description:
-        'Let loose a battle cry, instilling you and your allies with resolve and healing for 5220 Health over 16 seconds.',
+        'Let loose a battle cry, instilling you and your allies with resolve and healing for 12264 Health over 16 seconds.',
       maxRank: 4,
     },
     {
       id: 61507, // Morph of Vigor
       name: 'Resolving Vigor',
       description:
-        'Let loose a battle cry, instilling yourself with resolve and healing for 5388 Health over 5 seconds.\n\nAfter casting you gain Minor Resolve, increasing your Physical and Spell Resistance by 2974, for 20 seconds.',
+        'Let loose a battle cry, instilling yourself with resolve and healing for 19008 Health over 5 seconds.\n\nAfter casting you gain Minor Resolve, increasing your Physical and Spell Resistance by 2974, for 20 seconds.',
       maxRank: 4,
     },
     {
       id: AbilityId.CALTROPS,
       name: 'Caltrops',
       description:
-        'Hurl a ball of caltrops that scatter over the target area, dealing 280 Physical Damage every 1 second to enemies inside, and reducing their Movement Speed by 50%.',
+        'Hurl a ball of caltrops that scatter over the target area, dealing 1024 Physical Damage every 1 second to enemies inside, and reducing their Movement Speed by 50%.',
       maxRank: 4,
       alternateIds: [33376],
     },
@@ -96,35 +96,35 @@ export const assault: SkillLineData = {
       id: 40255, // Morph of Caltrops
       name: 'Anti-Cavalry Caltrops',
       description:
-        'Hurl a ball of caltrops that scatter over the target area, dealing 281 Physical Damage every 1 second to enemies inside, and reducing their Movement Speed by 50%.\n\nThe caltrops also drain the Mount Stamina of any enemy in the area.',
+        'Hurl a ball of caltrops that scatter over the target area, dealing 1024 Physical Damage every 1 second to enemies inside, and reducing their Movement Speed by 50%.\n\nThe caltrops also drain the Mount Stamina of any enemy in the area.',
       maxRank: 4,
     },
     {
       id: 40242, // Morph of Caltrops
       name: 'Razor Caltrops',
       description:
-        'Hurl a ball of caltrops that scatter over the target area, dealing 281 Physical Damage every 1 second to enemies inside, and reducing their Movement Speed by 50%.\n\nEnemies who take damage from the caltrops have Major Breach applied to them, reducing their Physical and Spell Resistance by 5948 for 4.1 seconds.',
+        'Hurl a ball of caltrops that scatter over the target area, dealing 1024 Physical Damage every 1 second to enemies inside, and reducing their Movement Speed by 50%.\n\nEnemies who take damage from the caltrops have Major Breach applied to them, reducing their Physical and Spell Resistance by 5948 for 4.1 seconds.',
       maxRank: 4,
     },
     {
       id: AbilityId.MAGICKA_DETONATION,
       name: 'Magicka Detonation',
       description:
-        "Curse an enemy with a magical bomb that explodes after 4 seconds, dealing 434 Magic Damage to all enemies in the area.\n\nEach enemy within the bomb's radius increases the damage by 100%, including the original target.",
+        "Curse an enemy with a magical bomb that explodes after 4 seconds, dealing 1679 Magic Damage to all enemies in the area.\n\nEach enemy within the bomb's radius increases the damage by 100%, including the original target.",
       maxRank: 4,
     },
     {
       id: 61491, // Morph of Magicka Detonation
       name: 'Inevitable Detonation',
       description:
-        "Curse an enemy with a magical bomb that explodes after 4 seconds, dealing 449 Magic Damage to all enemies in the area.\n\nIf the bomb is dispelled or removed early, the explosion is triggered immediately.\n\nEach enemy within the bomb's radius increases the damage by 100%.",
+        "Curse an enemy with a magical bomb that explodes after 4 seconds, dealing 1735 Magic Damage to all enemies in the area.\n\nIf the bomb is dispelled or removed early, the explosion is triggered immediately.\n\nEach enemy within the bomb's radius increases the damage by 100%.",
       maxRank: 4,
     },
     {
       id: 61500, // Morph of Magicka Detonation
       name: 'Proximity Detonation',
       description:
-        "Activate a magical bomb on yourself that explodes after 8 seconds, dealing 449 Magic Damage to all enemies in the area.\n\nEach enemy within the bomb's radius increases the damage by 100%, including the original target.",
+        "Activate a magical bomb on yourself that explodes after 8 seconds, dealing 1735 Magic Damage to all enemies in the area.\n\nEach enemy within the bomb's radius increases the damage by 100%, including the original target.",
       maxRank: 4,
     },
     // Passive abilities

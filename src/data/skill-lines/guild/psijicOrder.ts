@@ -57,21 +57,21 @@ export const psijicOrder: SkillLineData = {
       id: AbilityId.IMBUE_WEAPON,
       name: 'Imbue Weapon',
       description:
-        'Infuse your weapon with power, causing your next Light Attack used within 2 seconds to deal an additional 2090 Physical Damage.\n\nIf the power is not consumed in time, you restore 1620 Stamina.',
+        'Infuse your weapon with power, causing your next Light Attack used within 2 seconds to deal an additional 8525 Physical Damage.\n\nIf the power is not consumed in time, you restore 1425 Stamina.',
       type: 'active',
     },
     {
       id: 103623, // Morph of Imbue Weapon
       name: 'Crushing Weapon',
       description:
-        'Infuse your weapon with power, causing your next Light Attack used within 2 seconds to deal an additional 2160 Physical Damage and applying Major Breach to the target, reducing their Physical and Spell Resistance by 5948 for 5 seconds.\n\nIf the power is not consumed in time, you restore 1620 Stamina.',
+        'Infuse your weapon with power, causing your next Light Attack used within 2 seconds to deal an additional 8808 Physical Damage and applying Major Breach to the target, reducing their Physical and Spell Resistance by 5948 for 5 seconds.\n\nIf the power is not consumed in time, you restore 1425 Stamina.',
       type: 'active',
     },
     {
       id: 103571, // Morph of Imbue Weapon
       name: 'Elemental Weapon',
       description:
-        'Infuse your weapon with power, causing your next Light Attack used within 2 seconds to deal an additional 2160 Magic Damage and apply the Burning, Concussion, or Chill elemental status effect.\n\nIf the power is not consumed in time, you restore 1620 Magicka.',
+        'Infuse your weapon with power, causing your next Light Attack used within 2 seconds to deal an additional 8808 Magic Damage and apply the Burning, Concussion, or Chill elemental status effect.\n\nIf the power is not consumed in time, you restore 1587 Magicka.',
       type: 'active',
     },
     {
@@ -99,42 +99,42 @@ export const psijicOrder: SkillLineData = {
       id: AbilityId.MEND_WOUNDS,
       name: 'Mend Wounds',
       description:
-        'Invoke the Rites of Moawita, replacing your Light and Heavy Attacks with healing abilities that can only be used on allies.\n\nYour Light Attacks heal for 941.\n\nYour Heavy Attacks heal for 834 every 1 second, and restore 1155 Magicka to you for successfully healing.',
+        'Invoke the Rites of Moawita, replacing your Light and Heavy Attacks with healing abilities that can only be used on allies.\n\nYour Light Attacks heal for 3312.\n\nYour Heavy Attacks heal for 2945 every 1 second, and restore 1155 Magicka to you for successfully healing.',
       type: 'active',
     },
     {
       id: 103747, // Morph of Mend Wounds
       name: 'Mend Spirit',
       description:
-        'Invoke the Rites of Moawita, replacing your Light and Heavy Attacks with healing abilities that only can be used on allies.\n\nYour Light Attacks heal for 972.\n\nYour Heavy Attacks heal for 863 every 1 second, and restore 1155 Magicka to you for successfully healing.\n\nAfter you heal an ally you grant them Major Resolve, increasing their Physical and Spell Resistance by 5948 for 5 seconds.',
+        'Invoke the Rites of Moawita, replacing your Light and Heavy Attacks with healing abilities that only can be used on allies.\n\nYour Light Attacks heal for 3422.\n\nYour Heavy Attacks heal for 3042 every 1 second, and restore 1155 Magicka to you for successfully healing.\n\nAfter you heal an ally you grant them Major Resolve, increasing their Physical and Spell Resistance by 5948 for 5 seconds.',
       type: 'active',
     },
     {
       id: 103755, // Morph of Mend Wounds
       name: 'Symbiosis',
       description:
-        'Invoke the Rites of Moawita, replacing your Light and Heavy Attacks with healing abilities that can be used on allies.\n\nYour Light Attacks heal for 972.\n\nYour Heavy Attacks heal for 863 every 1 second, and restore 1155 Magicka to you for successfully healing.\n\nYou heal yourself for 50% of the amount of healing done to the ally.',
+        'Invoke the Rites of Moawita, replacing your Light and Heavy Attacks with healing abilities that can be used on allies.\n\nYour Light Attacks heal for 3422.\n\nYour Heavy Attacks heal for 3042 every 1 second, and restore 1155 Magicka to you for successfully healing.\n\nYou heal yourself for 51% of the amount of healing done to the ally.',
       type: 'active',
     },
     {
       id: AbilityId.MEDITATE,
       name: 'Meditate',
       description:
-        'Focus your body and mind into a meditative state, healing for 1500 Health and restoring 1500 Magicka and Stamina every 1 second.\n\nYou will remain in a meditative state until you toggle this ability off or are interrupted.',
+        'Focus your body and mind into a meditative state, healing for 1530 Health and restoring 1500 Magicka and Stamina every 1 second.\n\nYou will remain in a meditative state until you toggle this ability off or are interrupted.',
       type: 'active',
     },
     {
       id: 103652, // Morph of Meditate
       name: 'Deep Thoughts',
       description:
-        'Focus your body and mind into a meditative state, healing for 1500 Health and restoring 1900 Magicka and Stamina every 1 second.\n\nYou will remain in a meditative state until you toggle this ability off or are interrupted.',
+        'Focus your body and mind into a meditative state, healing for 1530 Health and restoring 1900 Magicka and Stamina every 1 second.\n\nYou will remain in a meditative state until you toggle this ability off or are interrupted.',
       type: 'active',
     },
     {
       id: 103665, // Morph of Meditate
       name: 'Introspection',
       description:
-        'Focus your body and mind into a meditative state, healing for 1800 Health and restoring 1500 Magicka and Stamina every 1 second.\n\nMaintaining the channel increases the Health restored by 10% every tick, up to a maximum of 50%.\n\nYou will remain in a meditative state until you toggle this ability off or are interrupted.',
+        'Focus your body and mind into a meditative state, healing for 1836 Health and restoring 1500 Magicka and Stamina every 1 second.\n\nMaintaining the channel increases the Health restored by 10% every tick, up to a maximum of 50%.\n\nYou will remain in a meditative state until you toggle this ability off or are interrupted.',
       type: 'active',
     },
     {
@@ -170,7 +170,7 @@ export const psijicOrder: SkillLineData = {
       ],
       name: 'Spell Orb',
       description:
-        'When you cast a Psijic Order ability while you are in combat, you generate a spell charge for 10 seconds. When you reach 5 spell charges, you launch a spell orb at the closest enemy to you dealing 562 Magic Damage.\n\nThis effect scales off your highest offensive stats.',
+        'When you cast a Psijic Order ability while you are in combat, you generate a spell charge for 10 seconds. When you reach 5 spell charges, you launch a spell orb at the closest enemy to you dealing 2293 Magic Damage.\n\nThis effect scales off your highest offensive stats.',
       type: 'passive',
       isPassive: true,
       maxRank: 1,

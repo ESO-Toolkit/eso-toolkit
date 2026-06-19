@@ -69,11 +69,12 @@ documented reference state and use the SAME one every time:
 ```
 /dumptooltips
 ```
-Wait for both completion lines and the final:
-`[ESOTooltipDump] FULL dump complete (X skills, Y sets). Run /reloadui ...`
+Wait for all three completion lines (`skills`, `sets`, `allids`) and the final:
+`[ESOTooltipDump] FULL dump complete (X skills, Y sets, Z by-id; mode=exhaustive-scan). Run /reloadui ...`
 
 Confirm in the same message / preceding lines:
-- `abilities, Z WITH description text` — Z should be the large majority of abilities.
+- `abilities, Z WITH description text` — Z should be the large majority of skill-tree abilities.
+- `allids: N resolvable captured` — confirms combat/proc/NPC id scanning ran.
 - No red `WARNING` lines.
 
 Then flush to disk:

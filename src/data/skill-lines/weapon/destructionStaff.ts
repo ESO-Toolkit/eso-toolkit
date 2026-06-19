@@ -15,7 +15,7 @@ export const destructionStaffSkillLine: SkillLineData = {
       type: 'ultimate',
       baseAbilityId: AbilityId.ELEMENTAL_STORM,
       description:
-        'Create a cataclysmic storm at the target location that builds for 2 seconds then lays waste to all enemies in the area, dealing 1742 Magic Damage every 1 second for 7 seconds.',
+        'Create a cataclysmic storm at the target location that builds for 2 seconds then lays waste to all enemies in the area, dealing 6343 Magic Damage every 1 second for 7 seconds.',
       alternateIds: [83628], // Ice Storm (element-specific version)
     },
     {
@@ -24,7 +24,7 @@ export const destructionStaffSkillLine: SkillLineData = {
       type: 'ultimate',
       baseAbilityId: AbilityId.ELEMENTAL_STORM,
       description:
-        'Create a cataclysmic storm at the target location that builds for 2 seconds then lays waste to all enemies in the area, dealing 2249 Magic Damage every 1 second for 7 seconds.\n\nFiery Rage increases the damage by 15%.\n\nIcy Rage immobilizes enemies hit for 3 seconds.\n\nThunderous Rage increases the duration by 2 seconds.',
+        'Create a cataclysmic storm at the target location that builds for 2 seconds then lays waste to all enemies in the area, dealing 8191 Magic Damage every 1 second for 7 seconds.\n\nFiery Rage increases the damage by 15%.\n\nIcy Rage immobilizes enemies hit for 3 seconds.\n\nThunderous Rage increases the duration by 2 seconds.',
       alternateIds: [84434, 85126], // Elemental Rage (alt rank) and Fiery Rage variants
     },
     {
@@ -33,7 +33,7 @@ export const destructionStaffSkillLine: SkillLineData = {
       type: 'ultimate',
       baseAbilityId: AbilityId.ELEMENTAL_STORM,
       description:
-        'Create a cataclysmic storm above you that builds for 2 seconds then lays waste to all enemies nearby, dealing 1799 Magic Damage every 1 second for 7 seconds.',
+        'Create a cataclysmic storm above you that builds for 2 seconds then lays waste to all enemies nearby, dealing 6553 Magic Damage every 1 second for 7 seconds.',
     },
 
     // Scribing ability
@@ -53,7 +53,7 @@ export const destructionStaffSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.FORCE_SHOCK,
       description:
-        'Focus all the elemental energies with your staff and blast an enemy for 695 Flame Damage, 695 Frost Damage, and 695 Shock Damage.',
+        'Focus all the elemental energies with your staff and blast an enemy for 2840 Flame Damage, 2840 Frost Damage, and 2840 Shock Damage.',
     },
     {
       id: 46348, // Crushing Shock (morph)
@@ -61,7 +61,7 @@ export const destructionStaffSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.FORCE_SHOCK,
       description:
-        'Focus all the elemental energies with your staff and blast an enemy for 696 Flame Damage, 696 Frost Damage, and 696 Shock Damage.\n\nEnemies hit while casting are interrupted, set Off Balance, and stunned for 3 seconds.',
+        'Focus all the elemental energies with your staff and blast an enemy for 2841 Flame Damage, 2841 Frost Damage, and 2841 Shock Damage.\n\nEnemies hit while casting are interrupted, set Off Balance, and stunned for 3 seconds.',
     },
     {
       id: 46356, // Force Pulse (morph)
@@ -69,7 +69,7 @@ export const destructionStaffSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.FORCE_SHOCK,
       description:
-        'Focus all the elemental energies with your staff and blast an enemy for 696 Flame Damage, 696 Frost Damage, and 696 Shock Damage.\n\nUp to 2 nearby enemies will take\n2399 Magic Damage if they were already afflicted with a status effect.',
+        'Focus all the elemental energies with your staff and blast an enemy for 2841 Flame Damage, 2841 Frost Damage, and 2841 Shock Damage.\n\nUp to 2 nearby enemies will take\n9785 Magic Damage if they were already afflicted with a status effect.',
     },
     {
       id: AbilityId.WALL_OF_ELEMENTS,
@@ -77,7 +77,7 @@ export const destructionStaffSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.WALL_OF_ELEMENTS,
       description:
-        'Slam your staff down to create an elemental barrier in front of you, dealing 280 Magic Damage to enemies in the target area every 1 second.\n\nWall of Fire deals additional damage to Burning enemies.\n\nWall of Frost costs more, but snares and reduces armor against Chilled enemies and grants damage shields.\n\nWall of Storms sets Concussed enemies Off Balance.',
+        'Slam your staff down to create an elemental barrier in front of you, dealing 1024 Magic Damage to enemies in the target area every 1 second.\n\nWall of Fire deals additional damage to Burning enemies.\n\nWall of Frost costs more, but snares and reduces armor against Chilled enemies and grants damage shields.\n\nWall of Storms sets Concussed enemies Off Balance.',
     },
     {
       id: 39011, // Elemental Blockade (morph)
@@ -85,7 +85,7 @@ export const destructionStaffSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.WALL_OF_ELEMENTS,
       description:
-        'Slam your staff down to create an elemental barrier in front of you, dealing 281 Magic Damage to enemies in the target area every 1 second.\n\nBlockade of Fire deals additional damage to Burning enemies.\n\nBlockade of Frost costs more, but snares and reduces armor against Chilled enemies and grants damage shields.\n\nBlockade of Storms sets Concussed enemies Off Balance.',
+        'Slam your staff down to create an elemental barrier in front of you, dealing 1024 Magic Damage to enemies in the target area every 1 second.\n\nBlockade of Fire deals additional damage to Burning enemies.\n\nBlockade of Frost costs more, but snares and reduces armor against Chilled enemies and grants damage shields.\n\nBlockade of Storms sets Concussed enemies Off Balance.',
     },
     {
       id: 39053, // Blockade of Fire (ability rank)
@@ -119,7 +119,7 @@ export const destructionStaffSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.WALL_OF_ELEMENTS,
       description:
-        'Create an unstable elemental barrier in front of you, dealing 281 Magic Damage to enemies in the target area every 1 second before exploding for an additional 1199 Magic Damage.\n\nUnstable Wall of Fire deals additional damage to Burning enemies.\n\nUnstable Wall of Frost costs more, but snares and reduces armor against Chilled enemies and grants damage shields.\n\nUnstable Wall of Storms sets Concussed enemies Off Balance.',
+        'Create an unstable elemental barrier in front of you, dealing 1024 Magic Damage to enemies in the target area every 1 second before exploding for an additional 4630 Magic Damage.\n\nUnstable Wall of Fire deals additional damage to Burning enemies.\n\nUnstable Wall of Frost costs more, but snares and reduces armor against Chilled enemies and grants damage shields.\n\nUnstable Wall of Storms sets Concussed enemies Off Balance.',
     },
     {
       id: 39061, // Unstable Blockade of Fire
@@ -152,7 +152,7 @@ export const destructionStaffSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.DESTRUCTIVE_TOUCH,
       description:
-        "Devastate an enemy with an enhanced charge from your staff, dealing 1161 Magic Damage and an additional 3470 Magic Damage over 20 seconds.\n\nThe initial hit always applies the element's status effect.",
+        "Devastate an enemy with an enhanced charge from your staff, dealing 4736 Magic Damage and an additional 13430 Magic Damage over 20 seconds.\n\nThe initial hit always applies the element's status effect.",
     },
     {
       id: 38984, // Destructive Clench (morph)
@@ -160,7 +160,7 @@ export const destructionStaffSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.DESTRUCTIVE_TOUCH,
       description:
-        "Devastate an enemy with an enhanced charge from your staff, dealing 1161 Magic Damage.\n\nThe initial hit always applies the element's status effect.\n\nFlame Clench also knocks the enemy back.\n\nFrost Clench deals less damage, has increased range, applies Major Maim, immobilizes, and taunts the enemy.\n\nShock Clench converts the attack into an area of effect explosion.",
+        "Devastate an enemy with an enhanced charge from your staff, dealing 4736 Magic Damage.\n\nThe initial hit always applies the element's status effect.\n\nFlame Clench also knocks the enemy back.\n\nFrost Clench deals less damage, has increased range, applies Major Maim, immobilizes, and taunts the enemy.\n\nShock Clench converts the attack into an area of effect explosion.",
       alternateIds: [38989], // Frost Clench variant
     },
     {
@@ -169,7 +169,7 @@ export const destructionStaffSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.DESTRUCTIVE_TOUCH,
       description:
-        "Devastate an enemy with an enhanced charge from your staff, dealing 1161 Magic Damage and an additional 3470 Magic Damage over 20 seconds.\n\nThe initial hit always applies the element's status effect.",
+        "Devastate an enemy with an enhanced charge from your staff, dealing 4736 Magic Damage and an additional 13440 Magic Damage over 20 seconds.\n\nThe initial hit always applies the element's status effect.",
     },
     {
       id: AbilityId.WEAKNESS_TO_ELEMENTS,
@@ -201,7 +201,7 @@ export const destructionStaffSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.IMPULSE,
       description:
-        "Release a surge of elemental energy, dealing 1742 Magic Damage to nearby enemies.\n\nFire Impulse hits Burning enemies with Impulse Afterburn, which deals more damage based on their missing Health.\n\nFrost Impulse also provides Minor Protection.\n\nShock Impulse's damage increases based on the number of enemies hit.",
+        "Release a surge of elemental energy, dealing 6724 Magic Damage to nearby enemies.\n\nFire Impulse hits Burning enemies with Impulse Afterburn, which deals more damage based on their missing Health.\n\nFrost Impulse also provides Minor Protection.\n\nShock Impulse's damage increases based on the number of enemies hit.",
       alternateIds: [28798],
     },
     {
@@ -210,7 +210,7 @@ export const destructionStaffSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.IMPULSE,
       description:
-        "Release a surge of elemental energy, dealing 1799 Magic Damage to enemies at the target location.\n\nFire Ring hits Burning enemies with Ring Afterburn, which deals more damage based on their missing Health.\n\nFrost Ring also provides Minor Protection.\n\nShock Ring's damage increases based on the number of enemies hit.",
+        "Release a surge of elemental energy, dealing 6946 Magic Damage to enemies at the target location.\n\nFire Ring hits Burning enemies with Ring Afterburn, which deals more damage based on their missing Health.\n\nFrost Ring also provides Minor Protection.\n\nShock Ring's damage increases based on the number of enemies hit.",
     },
     {
       id: 39161, // Pulsar (morph)
@@ -218,7 +218,7 @@ export const destructionStaffSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.IMPULSE,
       description:
-        "Release a surge of elemental energy, dealing 1742 Magic Damage to nearby enemies and afflicting them with Minor Mangle, reducing their Max Health by 10% for 10 seconds.\n\nFlame Pulsar hits Burning enemies with Pulsar Afterburn, which deals more damage based on their missing Health.\n\nFrost Pulsar also provides Minor Protection.\n\nStorm Pulsar's damage increases based on the number of enemies hit.",
+        "Release a surge of elemental energy, dealing 6725 Magic Damage to nearby enemies and afflicting them with Minor Mangle, reducing their Max Health by 10% for 10 seconds.\n\nFlame Pulsar hits Burning enemies with Pulsar Afterburn, which deals more damage based on their missing Health.\n\nFrost Pulsar also provides Minor Protection.\n\nStorm Pulsar's damage increases based on the number of enemies hit.",
       alternateIds: [39163],
     },
 
@@ -234,7 +234,7 @@ export const destructionStaffSkillLine: SkillLineData = {
       type: 'passive',
       baseAbilityId: AbilityId.TRI_FOCUS,
       description:
-        'Fully-charged Inferno Staff Heavy Attacks deal an additional 2230 Flame Damage over 20 seconds.\n\nFully-charged Lightning Staff Heavy Attacks damage nearby enemies for 50% of the damage done.\n\nFully-charged Ice Staff Heavy Attacks grant you a damage shield that absorbs 2640 damage. This effect scales off your Max Health.\n\nWhile an Ice Staff is equipped, blocking costs Magicka instead of Stamina.',
+        'Fully-charged Inferno Staff Heavy Attacks deal an additional 8670 Flame Damage over 20 seconds.\n\nFully-charged Lightning Staff Heavy Attacks damage nearby enemies for 50% of the damage done.\n\nFully-charged Ice Staff Heavy Attacks grant you a damage shield that absorbs 3036 damage. This effect scales off your Max Health.\n\nWhile an Ice Staff is equipped, blocking costs Magicka instead of Stamina.',
     },
     {
       id: AbilityId.PENETRATING_MAGIC,

@@ -231,6 +231,9 @@ function cleanAbility(ab) {
   };
   if (ab.description) out.description = stripMarkup(ab.description);
   if (ab.descriptionHeader) out.descriptionHeader = stripMarkup(ab.descriptionHeader);
+  if (ab.effectDescription) out.effectDescription = stripMarkup(ab.effectDescription);
+  if (ab.effectType != null) out.effectType = ab.effectType;
+  if (ab.targetType != null) out.targetType = ab.targetType;
   if (ab.icon) out.icon = ab.icon;
   if (ab.skillRankNeeded != null) out.skillRankNeeded = ab.skillRankNeeded;
   if (ab.characterLevelNeeded != null) out.characterLevelNeeded = ab.characterLevelNeeded;
@@ -250,7 +253,7 @@ function cleanAbility(ab) {
   return out;
 }
 
-function transform(sv) {
+export function transform(sv) {
   // Group skill slots by category + line.
   const linesMap = new Map(); // key: `${category}::${lineName}` -> line object
   let skippedEmpty = 0;
@@ -288,6 +291,14 @@ function transform(sv) {
     id: set.id,
     name: stripMarkup(set.name),
     maxEquipped: set.maxEquipped,
+    itemId: set.itemId,
+    itemIds: asArray(set.itemIds),
+    referenceItemLink: set.referenceItemLink,
+    itemIcon: set.itemIcon,
+    setType: set.setType,
+    sourceType: set.sourceType,
+    sourceTypes: asArray(set.sourceTypes),
+    equipTypes: asArray(set.equipTypes),
     bonuses: asArray(set.bonuses).map((b) => ({
       numRequired: b.numRequired,
       description: stripMarkup(b.description),
@@ -299,6 +310,12 @@ function transform(sv) {
   // and the AbilityId enum) that the skill-tree walk cannot enumerate. Same shape
   // as a morph entry; consumed by the refresh by id.
   const abilitiesById = asArray(sv.abilitiesById).map(cleanAbility);
+  const abilityRanksById = asArray(sv.abilityRanksById).map((entry) => ({
+    id: entry.id,
+    name: stripMarkup(entry.name),
+    bestRank: entry.bestRank,
+    ranks: asArray(entry.ranks).map(cleanAbility),
+  }));
 
   return {
     meta: {
@@ -306,10 +323,19 @@ function transform(sv) {
       apiVersion: sv.apiVersion,
       statSnapshot: sv.statSnapshot,
       setIdSource: sv.setIdSource,
+      abilityIdMode: sv.abilityIdMode,
+      abilityIdScanMin: sv.abilityIdScanMin,
+      abilityIdScanMax: sv.abilityIdScanMax,
+      abilityIdRequestedCount: sv.abilityIdRequestedCount,
+      combatLogSeededAbilityIdCount: sv.combatLogSeededAbilityIdCount,
+      addonVersion: sv.addonVersion,
+      gameLanguage: sv.gameLanguage,
+      libSetsVersion: sv.libSetsVersion,
     },
     skillLines: [...linesMap.values()],
     sets,
     abilitiesById,
+    abilityRanksById,
   };
 }
 
@@ -361,8 +387,12 @@ function report(result) {
   console.log(`Sets:               ${result.sets.length}`);
   console.log(`  set bonuses:      ${setBonuses}`);
   console.log(`  markup leak:      ${setTokenLeak} ${setTokenLeak ? '  <-- WARNING' : 'OK'}`);
+  const rankBundles = result.abilityRanksById ?? [];
+  const rankVariants = rankBundles.reduce((sum, entry) => sum + (entry.ranks?.length ?? 0), 0);
   console.log(`Abilities by id:    ${byId.length}`);
   console.log(`  with description: ${byIdWithDesc}`);
+  console.log(`  rank bundles:     ${rankBundles.length}`);
+  console.log(`  rank variants:    ${rankVariants}`);
   console.log(`  markup leak:      ${byIdTokenLeak} ${byIdTokenLeak ? '  <-- WARNING' : 'OK'}`);
 
   const problems = [];
@@ -454,6 +484,12 @@ function writeProvenanceFingerprint(result, outPath) {
   for (const ab of result.abilitiesById || []) {
     const n = normForProvenance(ab.description);
     if (n) descriptions.add(n);
+  }
+  for (const entry of result.abilityRanksById || []) {
+    for (const ab of entry.ranks || []) {
+      const n = normForProvenance(ab.description);
+      if (n) descriptions.add(n);
+    }
   }
   const setBonuses = {};
   for (const s of result.sets) {

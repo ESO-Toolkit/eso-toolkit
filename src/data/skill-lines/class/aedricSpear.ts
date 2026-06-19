@@ -19,7 +19,7 @@ export const aedricSpear: SkillLineData = {
       type: 'ultimate',
       icon: 'ability_templar_radial_sweep',
       description:
-        'Swing your Aedric spear around with holy vengeance, dealing 2323 Magic Damage to all nearby enemies and an additional 1161 Magic Damage every 2 seconds for 6 seconds.',
+        'Swing your Aedric spear around with holy vengeance, dealing 8965 Magic Damage to all nearby enemies and an additional 4229 Magic Damage every 2 seconds for 6 seconds.',
       isUltimate: true,
       baseSkillId: ClassSkillId.TEMPLAR_RADIAL_SWEEP,
     },
@@ -29,7 +29,7 @@ export const aedricSpear: SkillLineData = {
       type: 'ultimate',
       icon: 'ability_templar_crescent_sweep',
       description:
-        'Swing your Aedric spear around with holy vengeance, dealing 2399 Magic Damage to all nearby enemies and an additional 1161 Magic Damage every 2 seconds for 6 seconds.\n\nEnemies in your path will be hit for 60% more damage.',
+        'Swing your Aedric spear around with holy vengeance, dealing 9261 Magic Damage to all nearby enemies and an additional 4229 Magic Damage every 2 seconds for 6 seconds.\n\nEnemies in your path will be hit for 60% more damage.',
       isUltimate: true,
       baseSkillId: ClassSkillId.TEMPLAR_RADIAL_SWEEP,
     },
@@ -39,7 +39,7 @@ export const aedricSpear: SkillLineData = {
       type: 'ultimate',
       icon: 'ability_templar_empowering_sweep',
       description:
-        'Swing your Aedric spear around with holy vengeance, dealing 2399 Physical Damage to all nearby enemies and an additional 1161 Physical Damage every 2 seconds for 10 seconds. The duration is extended by 2 seconds for each enemy hit.',
+        'Swing your Aedric spear around with holy vengeance, dealing 9261 Physical Damage to all nearby enemies and an additional 4229 Physical Damage every 2 seconds for 10 seconds. The duration is extended by 2 seconds for each enemy hit.',
       isUltimate: true,
       baseSkillId: ClassSkillId.TEMPLAR_RADIAL_SWEEP,
     },
@@ -49,7 +49,7 @@ export const aedricSpear: SkillLineData = {
       type: 'active',
       icon: 'ability_templar_returning_spear',
       description:
-        "Hurl your spear at an enemy with godlike strength, dealing 1392 Magic Damage and knocking them back 8 meters.\n\nThis ability ignores the enemy's Resistances and cannot be blocked.",
+        "Hurl your spear at an enemy with godlike strength, dealing 5683 Magic Damage and knocking them back 8 meters.\n\nThis ability ignores the enemy's Resistances and cannot be blocked.",
       baseSkillId: ClassSkillId.TEMPLAR_PIERCING_JAVELIN,
     },
     {
@@ -58,7 +58,7 @@ export const aedricSpear: SkillLineData = {
       type: 'active',
       icon: 'ability_templar_ripping_spear',
       description:
-        "Hurl your spear at an enemy with godlike strength, dealing 1438 Magic Damage and knocking them back 8 meters.\n\nThis ability ignores the enemy's Resistances and cannot be blocked.\n\nThe spear deals an additional 2% damage for every 1 meter you are away from the target, up to a maximum of 40%.",
+        "Hurl your spear at an enemy with godlike strength, dealing 5870 Magic Damage and knocking them back 8 meters.\n\nThis ability ignores the enemy's Resistances and cannot be blocked.\n\nThe spear deals an additional 2% damage for every 1 meter you are away from the target, up to a maximum of 40%.",
       baseSkillId: ClassSkillId.TEMPLAR_PIERCING_JAVELIN,
     },
     {
@@ -67,7 +67,7 @@ export const aedricSpear: SkillLineData = {
       type: 'active',
       icon: 'ability_templar_light_spear',
       description:
-        "Hurl your spear at an enemy with godlike strength, dealing 1393 Physical Damage and stunning them for 4 seconds.\n\nThis ability ignores the enemy's Resistances and cannot be blocked.",
+        "Hurl your spear at an enemy with godlike strength, dealing 5683 Physical Damage and stunning them for 4 seconds.\n\nThis ability ignores the enemy's Resistances and cannot be blocked.",
       baseSkillId: ClassSkillId.TEMPLAR_PIERCING_JAVELIN,
     },
     {
@@ -76,7 +76,7 @@ export const aedricSpear: SkillLineData = {
       type: 'active',
       icon: 'ability_templar_trained_attacker',
       description:
-        'Launch a relentless assault, striking up to 6 enemies in front of you three times with your Aedric spear. The spear deals 889 Magic Damage per strike and reduces enemy Movement Speed by 40% for 0.5 seconds.',
+        'Launch a relentless assault, striking up to 6 enemies in front of you three times with your Aedric spear. The spear deals 3435 Magic Damage per strike and reduces enemy Movement Speed by 40% for 0.5 seconds.',
       baseSkillId: ClassSkillId.TEMPLAR_PUNCTURING_STRIKES,
     },
     {
@@ -85,7 +85,7 @@ export const aedricSpear: SkillLineData = {
       type: 'active',
       icon: 'ability_templar_reckless_attacks',
       description:
-        'Launch a relentless assault, striking up to 6 enemies in front of you three times with your Aedric spear. The spear deals 919 Magic Damage per strike and reduces enemy Movement Speed by 40% for 0.5 seconds.\n\nYou heal for 25% of the damage done with this ability.',
+        'Launch a relentless assault, striking up to 6 enemies in front of you three times with your Aedric spear. The spear deals 3549 Magic Damage per strike and reduces enemy Movement Speed by 40% for 0.5 seconds.\n\nYou heal for 26% of the damage done with this ability.',
       baseSkillId: ClassSkillId.TEMPLAR_PUNCTURING_STRIKES,
     },
     {
@@ -94,7 +94,7 @@ export const aedricSpear: SkillLineData = {
       type: 'active',
       icon: 'ability_templar_recovery',
       description:
-        'Launch a relentless assault, striking up to 6 enemies in front of you three times with your Aedric spear. The spear deals 919 Physical Damage per strike and reduces enemy Movement Speed by 40% for 0.5 seconds. Each strike has a 10% chance of applying the Sundered status effect.\n\nActivating this ability grants you Major Brutality and Major Sorcery, increasing your Weapon and Spell Damage by 20% for 10 seconds.',
+        'Launch a relentless assault, striking up to 6 enemies in front of you three times with your Aedric spear. The spear deals 3549 Physical Damage per strike and reduces enemy Movement Speed by 40% for 0.5 seconds. Each strike has a 10% chance of applying the Sundered status effect.\n\nActivating this ability grants you Major Brutality and Major Sorcery, increasing your Weapon and Spell Damage by 20% for 10 seconds.',
       baseSkillId: ClassSkillId.TEMPLAR_PUNCTURING_STRIKES,
     },
     {
@@ -103,7 +103,7 @@ export const aedricSpear: SkillLineData = {
       type: 'active',
       icon: 'ability_templar_sun_shield',
       description:
-        'Surround yourself with solar rays, dealing 1742 Magic Damage to nearby enemies and applying Minor Maim to them for 10 seconds, reducing their damage done by 5%.\n\nThe rays then protect you, granting a damage shield that absorbs up to 4800 damage for 6 seconds, increasing by 10% for each enemy hit, up to 60%. This portion of the ability scales off your Max Health.',
+        'Surround yourself with solar rays, dealing 6724 Magic Damage to nearby enemies and applying Minor Maim to them for 10 seconds, reducing their damage done by 5%.\n\nThe rays then protect you, granting a damage shield that absorbs up to 5520 damage for 6 seconds, increasing by 10% for each enemy hit, up to 60%. This portion of the ability scales off your Max Health.',
       baseSkillId: ClassSkillId.TEMPLAR_SUN_SHIELD,
     },
     {
@@ -112,7 +112,7 @@ export const aedricSpear: SkillLineData = {
       type: 'active',
       icon: 'ability_templar_blazing_shield',
       description:
-        'Surround yourself with solar rays, applying Minor Maim to nearby enemies for 10 seconds, reducing their damage done by 5%.\n\nYou gain a damage shield that absorbs up to 4800 damage for 6 seconds, increasing by 10% for each enemy hit, up to 60%. This ability scales off your Max Health.\n\nWhen the shield expires it explodes, dealing 33% of damage absorbed as Magic Damage to nearby enemies.',
+        'Surround yourself with solar rays, applying Minor Maim to nearby enemies for 10 seconds, reducing their damage done by 5%.\n\nYou gain a damage shield that absorbs up to 5520 damage for 6 seconds, increasing by 10% for each enemy hit, up to 60%. This ability scales off your Max Health.\n\nWhen the shield expires it explodes, dealing 35% of damage absorbed as Magic Damage to nearby enemies.',
       baseSkillId: ClassSkillId.TEMPLAR_SUN_SHIELD,
     },
     {
@@ -121,7 +121,7 @@ export const aedricSpear: SkillLineData = {
       type: 'active',
       icon: 'ability_templar_radiant_ward',
       description:
-        'Surround yourself with solar rays, dealing 1742 Magic Damage to nearby enemies and applying Minor Maim to them for 10 seconds, reducing their damage done by 5%.\n\nThe rays then protect you, granting a damage shield that absorbs up to 4958 damage for 6 seconds, increasing by 20% for each enemy hit, up to 120%. This portion of the ability scales off your Max Health.',
+        'Surround yourself with solar rays, dealing 6725 Magic Damage to nearby enemies and applying Minor Maim to them for 10 seconds, reducing their damage done by 5%.\n\nThe rays then protect you, granting a damage shield that absorbs up to 5702 damage for 6 seconds, increasing by 20% for each enemy hit, up to 120%. This portion of the ability scales off your Max Health.',
       baseSkillId: ClassSkillId.TEMPLAR_SUN_SHIELD,
     },
     {
@@ -130,7 +130,7 @@ export const aedricSpear: SkillLineData = {
       type: 'active',
       icon: 'ability_templar_sun_strike',
       description:
-        'Send your spear into the heavens to bring down a shower of divine wrath, dealing 1742 Magic Damage to enemies in the area and an additional 166 Magic Damage every 1 second for 10 seconds.\n\nAn ally near the spear can activate the Blessed Shards synergy, restoring 3960 Magicka or Stamina, whichever maximum is higher.',
+        'Send your spear into the heavens to bring down a shower of divine wrath, dealing 6724 Magic Damage to enemies in the area and an additional 605 Magic Damage every 1 second for 10 seconds.\n\nAn ally near the spear can activate the Blessed Shards synergy, restoring 3960 Magicka or Stamina, whichever maximum is higher.',
       baseSkillId: ClassSkillId.TEMPLAR_SPEAR_SHARDS,
     },
     {
@@ -139,7 +139,7 @@ export const aedricSpear: SkillLineData = {
       type: 'active',
       icon: 'ability_templarsun_thrust',
       description:
-        'Send your spear into the heavens to bring down a shower of divine wrath, dealing 1742 Magic Damage to enemies in the area and an additional 276 Magic Damage every 1 second for 10 seconds. Enemies hit by the initial hit are immobilized for 4 seconds.\n\nAn ally near the spear can activate the Blessed Shards synergy, restoring 3960 Magicka or Stamina, whichever maximum is higher.',
+        'Send your spear into the heavens to bring down a shower of divine wrath, dealing 6725 Magic Damage to enemies in the area and an additional 1009 Magic Damage every 1 second for 10 seconds. Enemies hit by the initial hit are immobilized for 4 seconds.\n\nAn ally near the spear can activate the Blessed Shards synergy, restoring 3960 Magicka or Stamina, whichever maximum is higher.',
       baseSkillId: ClassSkillId.TEMPLAR_SPEAR_SHARDS,
     },
     {
@@ -148,7 +148,7 @@ export const aedricSpear: SkillLineData = {
       type: 'active',
       icon: 'ability_templar_light_strike',
       description:
-        'Send your spear into the heavens to bring down a shower of divine wrath, dealing 1742 Magic Damage to enemies in the area and an additional 165 Magic Damage every 1 second for 10 seconds.\n\nYou or an ally near the spear can activate the Holy Shards synergy, which restores 3960 Magicka and Stamina.',
+        'Send your spear into the heavens to bring down a shower of divine wrath, dealing 6725 Magic Damage to enemies in the area and an additional 605 Magic Damage every 1 second for 10 seconds.\n\nYou or an ally near the spear can activate the Holy Shards synergy, which restores 3960 Magicka and Stamina.',
       baseSkillId: ClassSkillId.TEMPLAR_SPEAR_SHARDS,
     },
     {
@@ -157,7 +157,7 @@ export const aedricSpear: SkillLineData = {
       type: 'active',
       icon: 'ability_templar_focused_charge',
       description:
-        'Charge with your divine lance to impale an enemy, dealing 1392 Magic Damage while taunting them to attack you for 15 seconds. If the enemy hit was casting, they are interrupted, set Off Balance, and stunned for 3 seconds.\n\nYou also gain Major Protection for 7 seconds, reducing your damage taken by 10%.',
+        'Charge with your divine lance to impale an enemy, dealing 5683 Magic Damage while taunting them to attack you for 15 seconds. If the enemy hit was casting, they are interrupted, set Off Balance, and stunned for 3 seconds.\n\nYou also gain Major Protection for 7 seconds, reducing your damage taken by 10%.',
       baseSkillId: ClassSkillId.TEMPLAR_FOCUSED_CHARGE,
     },
     {
@@ -166,7 +166,7 @@ export const aedricSpear: SkillLineData = {
       type: 'active',
       icon: 'ability_templar_toppling_charge',
       description:
-        'Charge with your divine lance to impale an enemy, dealing 1393 Magic Damage while taunting them to attack you for 15 seconds. The enemy hit is stunned for 3 seconds, set Off Balance, and if they were casting, they are interrupted.\n\nYou also gain Major Protection for 7 seconds, reducing your damage taken by 10%.',
+        'Charge with your divine lance to impale an enemy, dealing 5683 Magic Damage while taunting them to attack you for 15 seconds. The enemy hit is stunned for 3 seconds, set Off Balance, and if they were casting, they are interrupted.\n\nYou also gain Major Protection for 7 seconds, reducing your damage taken by 10%.',
       baseSkillId: ClassSkillId.TEMPLAR_FOCUSED_CHARGE,
     },
     {
@@ -175,7 +175,7 @@ export const aedricSpear: SkillLineData = {
       type: 'active',
       icon: 'ability_templar_double_tipped_charge',
       description:
-        'Charge with your divine lance to impale all enemies in the area, dealing 1799 Magic Damage while taunting the first enemy hit to attack you for 15 seconds. Any enemy hit that was casting is interrupted, set Off Balance, and stunned for 3 seconds.\n\nYou also gain Major Protection for 15 seconds, reducing your damage taken by 10%.',
+        'Charge with your divine lance to impale all enemies in the area, dealing 6946 Magic Damage while taunting the first enemy hit to attack you for 15 seconds. Any enemy hit that was casting is interrupted, set Off Balance, and stunned for 3 seconds.\n\nYou also gain Major Protection for 15 seconds, reducing your damage taken by 10%.',
       baseSkillId: ClassSkillId.TEMPLAR_FOCUSED_CHARGE,
     },
     {
@@ -196,7 +196,7 @@ export const aedricSpear: SkillLineData = {
       type: 'passive',
       icon: 'ability_templar_028',
       description:
-        'When you deal damage you generate a stack of Burning Light for 3 seconds. After reaching 4 stacks, you deal 500 Magic Damage to your target. This effect can stack once every half second and scales off the higher of your Weapon or Spell Damage.',
+        'When you deal damage you generate a stack of Burning Light for 3 seconds. After reaching 4 stacks, you deal 3100 Magic Damage to your target. This effect can stack once every half second and scales off the higher of your Weapon or Spell Damage.',
       isPassive: true,
     },
     {

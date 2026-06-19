@@ -15,7 +15,7 @@ export const restorationStaff: SkillLineData = {
       type: 'ultimate',
       baseAbilityId: AbilityId.PANACEA,
       description:
-        'Release the rejuvenating energies of your staff to swirl around you, healing you or an ally for 2904 Health every 1 second for 5 seconds.',
+        'Release the rejuvenating energies of your staff to swirl around you, healing you or an ally for 10228 Health every 1 second for 5 seconds.',
     },
     {
       id: 83558, // Life Giver (morph)
@@ -23,7 +23,7 @@ export const restorationStaff: SkillLineData = {
       type: 'ultimate',
       baseAbilityId: AbilityId.PANACEA,
       description:
-        'Release the rejuvenating energies of your staff to swirl around you, healing you or an ally for 2999 Health every 1 second for 5 seconds.\n\nWhen you activate this ability you automatically cast Regeneration, Blessing of Protection, and Steadfast Ward at no cost. These will update based on which morph of each ability you have taken.',
+        'Release the rejuvenating energies of your staff to swirl around you, healing you or an ally for 10564 Health every 1 second for 5 seconds.\n\nWhen you activate this ability you automatically cast Regeneration, Blessing of Protection, and Steadfast Ward at no cost. These will update based on which morph of each ability you have taken.',
     },
     {
       id: 83563, // Light's Champion (morph)
@@ -31,7 +31,7 @@ export const restorationStaff: SkillLineData = {
       type: 'ultimate',
       baseAbilityId: AbilityId.PANACEA,
       description:
-        'Release the rejuvenating energies of your staff to swirl around you, healing you or a nearby ally for 2904 Health every 1 second for 5 seconds.\n\nAny friendly target you heal gains Major Force for 8 seconds, increasing their Critical Damage by 20%.',
+        'Release the rejuvenating energies of your staff to swirl around you, healing you or a nearby ally for 10228 Health every 1 second for 5 seconds.\n\nAny friendly target you heal gains Major Force for 8 seconds, increasing their Critical Damage by 20%.',
     },
     // Scribing abilities
     {
@@ -48,7 +48,7 @@ export const restorationStaff: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.GRAND_HEALING,
       description:
-        'Summon restoring spirits with your staff, healing you and your allies in the target area for 4631 Health over 10 seconds.',
+        'Summon restoring spirits with your staff, healing you and your allies in the target area for 16346 Health over 10 seconds.',
     },
     {
       id: 40060, // Healing Springs (morph)
@@ -56,7 +56,7 @@ export const restorationStaff: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.GRAND_HEALING,
       description:
-        'Summon restoring spirits with your staff, healing you and your allies in the target area for 4642 Health over 10 seconds.\n\nIncreases your Magicka Recovery by 15 for each target affected, stacking up to 20 times.',
+        'Summon restoring spirits with your staff, healing you and your allies in the target area for 16357 Health over 10 seconds.\n\nIncreases your Magicka Recovery by 15 for each target affected, stacking up to 20 times.',
     },
     {
       id: 40058, // Illustrious Healing (morph)
@@ -64,7 +64,7 @@ export const restorationStaff: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.GRAND_HEALING,
       description:
-        'Summon restoring spirits with your staff, healing you and your allies in the target area for 6752 Health over 15 seconds.',
+        'Summon restoring spirits with your staff, healing you and your allies in the target area for 19331 Health over 15 seconds.',
     },
     // Active abilities - Regeneration family
     {
@@ -73,7 +73,7 @@ export const restorationStaff: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.REGENERATION,
       description:
-        "Share your staff's life-giving energy, healing you or a nearby ally for 3480 Health over 10 seconds.",
+        "Share your staff's life-giving energy, healing you or a nearby ally for 12270 Health over 10 seconds.",
     },
     {
       id: 40079, // Radiating Regeneration (morph)
@@ -81,7 +81,7 @@ export const restorationStaff: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.REGENERATION,
       description:
-        "Share your staff's life-giving energy, healing you or up to 3 nearby allies for 3594 over 10 seconds.",
+        "Share your staff's life-giving energy, healing you or up to 3 nearby allies for 12666 over 10 seconds.",
     },
     {
       id: 40076, // Rapid Regeneration (morph)
@@ -89,7 +89,7 @@ export const restorationStaff: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.REGENERATION,
       description:
-        "Share your staff's life-giving energy, healing you or a nearby ally for 3594 Health over 5 seconds.\n\nThe healing increases by up to 50% more on targets under 100% Health.",
+        "Share your staff's life-giving energy, healing you or a nearby ally for 12666 Health over 5 seconds.\n\nThe healing increases by up to 50% more on targets under 100% Health.",
     },
     // Active abilities - Blessing of Protection family
     {
@@ -98,7 +98,7 @@ export const restorationStaff: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.BLESSING_OF_PROTECTION,
       description:
-        "Slam your staff down to activate its blessings, healing you and your allies in front of you for 2613 Health.\n\nAlso grants Minor Resolve, increasing you and your allies' Physical Resistance and Spell Resistance by 2974 for 10 seconds.",
+        "Slam your staff down to activate its blessings, healing you and your allies in front of you for 9204 Health.\n\nAlso grants Minor Resolve, increasing you and your allies' Physical Resistance and Spell Resistance by 2974 for 10 seconds.",
     },
     {
       id: 40103, // Blessing of Restoration (morph)
@@ -106,7 +106,7 @@ export const restorationStaff: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.BLESSING_OF_PROTECTION,
       description:
-        "Slam your staff down to activate its blessings, healing you and your allies in front of you for 2970 Health.\n\nAlso grants Minor Resolve, increasing you and your allies' Physical Resistance and Spell Resistance by 2974 for 20 seconds.",
+        "Slam your staff down to activate its blessings, healing you and your allies in front of you for 10458 Health.\n\nAlso grants Minor Resolve, increasing you and your allies' Physical Resistance and Spell Resistance by 2974 for 20 seconds.",
     },
     {
       id: 40094, // Combat Prayer (morph)
@@ -114,7 +114,7 @@ export const restorationStaff: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.BLESSING_OF_PROTECTION,
       description:
-        "Slam your staff down to activate its blessings, healing you and your allies in front of you for 2614 Health.\n\nAlso grants Minor Berserk and Minor Resolve increasing you and your allies' damage done by 5% and Physical Resistance and Spell Resistance by 2974 for 10 seconds.",
+        "Slam your staff down to activate its blessings, healing you and your allies in front of you for 9204 Health.\n\nAlso grants Minor Berserk and Minor Resolve increasing you and your allies' damage done by 5% and Physical Resistance and Spell Resistance by 2974 for 10 seconds.",
     },
     // Active abilities - Steadfast Ward family
     {
@@ -123,7 +123,7 @@ export const restorationStaff: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.STEADFAST_WARD,
       description:
-        "Call on your staff's strength to protect you or the lowest health ally around you with a damage shield that absorbs 2323 damage for 6 seconds.\n\nThe shield's strength is increased by up to 100%, depending on the severity of the target's wounds.",
+        "Call on your staff's strength to protect you or the lowest health ally around you with a damage shield that absorbs 8021 damage for 6 seconds.\n\nThe shield's strength is increased by up to 100%, depending on the severity of the target's wounds.",
     },
     {
       id: 40126, // Healing Ward (morph)
@@ -131,7 +131,7 @@ export const restorationStaff: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.STEADFAST_WARD,
       description:
-        "Call on your staff's strength to protect you or the lowest health ally around you with a damage shield that absorbs 2399 damage.\n\nThe shield's strength is increased by up to 100%, depending on the severity of the target's wounds.\n\nWhile the shield persists, the target is healed for 33% of the shield's remaining strength every second.",
+        "Call on your staff's strength to protect you or the lowest health ally around you with a damage shield that absorbs 8285 damage.\n\nThe shield's strength is increased by up to 100%, depending on the severity of the target's wounds.\n\nWhile the shield persists, the target is healed for 34% of the shield's remaining strength every second.",
     },
     {
       id: 40130, // Ward Ally (morph)
@@ -139,7 +139,7 @@ export const restorationStaff: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.STEADFAST_WARD,
       description:
-        "Call on your staff's strength to protect you and the lowest health ally around you with a damage shield that absorbs 2323 damage.\n\nThe shield's strength is increased by up to 100%, depending on the severity of the target's wounds.",
+        "Call on your staff's strength to protect you and the lowest health ally around you with a damage shield that absorbs 8021 damage.\n\nThe shield's strength is increased by up to 100%, depending on the severity of the target's wounds.",
     },
     // Active abilities - Force Siphon family
     {
@@ -148,7 +148,7 @@ export const restorationStaff: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.FORCE_SIPHON,
       description:
-        "Focus your staff's power to apply Minor Lifesteal to an enemy for 24 seconds, healing you and your allies for 600 Health every 1 second when damaging them.",
+        "Focus your staff's power to apply Minor Lifesteal to an enemy for 24 seconds, healing you and your allies for 612 Health every 1 second when damaging them.",
     },
     {
       id: 40116, // Quick Siphon (morph)
@@ -156,7 +156,7 @@ export const restorationStaff: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.FORCE_SIPHON,
       description:
-        "Focus your staff's power to apply Minor Lifesteal to an enemy for 30 seconds, healing you and your allies for 600 Health every 1 second when damaging them.\n\nWhen you or an ally hits the target, they gain Minor Expedition, which increases their Movement Speed by 15% for 4 seconds.",
+        "Focus your staff's power to apply Minor Lifesteal to an enemy for 30 seconds, healing you and your allies for 612 Health every 1 second when damaging them.\n\nWhen you or an ally hits the target, they gain Minor Expedition, which increases their Movement Speed by 15% for 4 seconds.",
     },
     {
       id: 40109, // Siphon Spirit (morph)
@@ -164,7 +164,7 @@ export const restorationStaff: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.FORCE_SIPHON,
       description:
-        "Focus your staff's power to apply Minor Lifesteal to an enemy for 30 seconds, healing you and your allies for 600 Health every 1 second when damaging them.\n\nAlso applies Minor Magickasteal to the enemy for 30 seconds, causing you and your allies to restore 168 Magicka every 1 second when damaging them.",
+        "Focus your staff's power to apply Minor Lifesteal to an enemy for 30 seconds, healing you and your allies for 612 Health every 1 second when damaging them.\n\nAlso applies Minor Magickasteal to the enemy for 30 seconds, causing you and your allies to restore 168 Magicka every 1 second when damaging them.",
     },
     // Passive abilities
     {
@@ -178,7 +178,7 @@ export const restorationStaff: SkillLineData = {
       type: 'passive',
       baseAbilityId: AbilityId.ESSENCE_DRAIN,
       description:
-        'You gain Major Mending for 2 seconds after completing a fully-charged Heavy Attack, increasing your healing done by 16%.\n\nYou also heal yourself or an ally within 12 meters of the target for 25% of the damage inflicted by the final hit of a fully-charged Heavy Attack.',
+        'You gain Major Mending for 2 seconds after completing a fully-charged Heavy Attack, increasing your healing done by 16%.\n\nYou also heal yourself or an ally within 12 meters of the target for 26% of the damage inflicted by the final hit of a fully-charged Heavy Attack.',
     },
     {
       id: AbilityId.RESTORATION_EXPERT,

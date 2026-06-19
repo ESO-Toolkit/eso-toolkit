@@ -13,7 +13,7 @@ export const support: SkillLineData = {
       id: AbilityId.BARRIER,
       name: 'Barrier',
       description:
-        'Invoke defensive tactics to protect yourself and nearby group members with wards that each absorb up to 11621 damage for 30 seconds.',
+        'Invoke defensive tactics to protect yourself and nearby group members with wards that each absorb up to 40111 damage for 30 seconds.',
       isUltimate: true,
       isPassive: false,
       maxRank: 4,
@@ -22,7 +22,7 @@ export const support: SkillLineData = {
       id: 40239, // Morph of Barrier
       name: 'Replenishing Barrier',
       description:
-        'Invoke defensive tactics to protect yourself and nearby group members with wards that each absorb up to 11620 damage.\n\nEach time a ward dissolves, you restore 1500 Magicka.',
+        'Invoke defensive tactics to protect yourself and nearby group members with wards that each absorb up to 40111 damage.\n\nEach time a ward dissolves, you restore 1500 Magicka.',
       isUltimate: true,
       isPassive: false,
       maxRank: 4,
@@ -31,7 +31,7 @@ export const support: SkillLineData = {
       id: 40237, // Morph of Barrier
       name: 'Reviving Barrier',
       description:
-        'Invoke defensive tactics to protect yourself and nearby group members with wards that each absorb up to 11620 damage for 30 seconds.\n\nThe wards also heal you and your group members for 5370 Health over 15 seconds.',
+        'Invoke defensive tactics to protect yourself and nearby group members with wards that each absorb up to 40111 damage for 30 seconds.\n\nThe wards also heal you and your group members for 19005 Health over 15 seconds.',
       isUltimate: true,
       isPassive: false,
       maxRank: 4,

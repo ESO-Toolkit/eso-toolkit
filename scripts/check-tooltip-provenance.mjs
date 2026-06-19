@@ -112,13 +112,17 @@ if (fs.existsSync(FP_PATH)) {
   process.exit(1);
 }
 
+const stripPiecePrefix = (n) => n.replace(/^\d+ (?:perfected )?items? /, '');
+
 // Substring index for prefix variance: a long-enough dump string contains the
 // rendered text (or vice versa) even if a leading "(N items)" differs slightly.
 const dumpArr = [...dumpNorm];
+const dumpStripped = new Set(dumpArr.map(stripPiecePrefix).filter(Boolean));
 
 // Returns a match kind: 'exact' | 'prefix' | 'contained' | null.
 //  exact     — normalized rendered text equals a dump entry.
-//  prefix    — equal after stripping a leading "(N items)" piece-count prefix.
+//  prefix    — equal after stripping a leading "(N items)" or
+//              "(N perfected items)" piece-count prefix from both sides.
 //  contained — a dump entry CONTAINS the full rendered text (handles whitespace/
 //              prefix variance where the dump phrasing is a superset). This is the
 //              only sound substring direction. The reverse (rendered text contains
@@ -128,8 +132,8 @@ function traceKind(text) {
   const n = norm(text);
   if (!n) return 'exact'; // empty isn't a provenance claim
   if (dumpNorm.has(n)) return 'exact';
-  const stripped = n.replace(/^\d+ (?:perfected )?items? /, '');
-  if (dumpNorm.has(stripped)) return 'prefix';
+  const stripped = stripPiecePrefix(n);
+  if (dumpNorm.has(stripped) || dumpStripped.has(stripped)) return 'prefix';
   // Require a substantial length so "contained" can't pass on a trivial fragment.
   if (stripped.length >= 40) {
     for (const d of dumpArr) {
