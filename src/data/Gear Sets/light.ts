@@ -20,7 +20,7 @@ export const aeriesCry: GearSetData = {
     '(2 items) Adds 1487 Offensive Penetration',
     '(3 items) Adds 129 Weapon and Spell Damage',
     '(4 items) Adds 129 Weapon and Spell Damage',
-    '(5 items) Dealing damage with a Light Attack applies Eagle\'s Mark to your target for 12 seconds. Eagle\'s Mark causes an eagle to attack your target every 3 seconds after a 3 second delay, dealing 5311 Physical Damage per attack.\n\nApplying Eagle\'s Mark grants you Aerie\'s Call for 12 seconds, increasing your damage done by 10% against enemies with Eagle\'s Mark.\n\nThis effect can occur every 3 seconds. You can have one Eagle\'s Mark active at a time.',
+    "(5 items) Dealing damage with a Light Attack applies Eagle's Mark to your target for 12 seconds. Eagle's Mark causes an eagle to attack your target every 3 seconds after a 3 second delay, dealing 5311 Physical Damage per attack.\n\nApplying Eagle's Mark grants you Aerie's Call for 12 seconds, increasing your damage done by 10% against enemies with Eagle's Mark.\n\nThis effect can occur every 3 seconds. You can have one Eagle's Mark active at a time.",
   ],
 };
 
@@ -691,7 +691,7 @@ export const coldharbourSFavorite: GearSetData = {
     '(2 items) Adds 1096 Maximum Magicka',
     '(3 items) Adds 1096 Maximum Stamina',
     '(4 items) Adds 129 Weapon and Spell Damage',
-    '(5 items) Healing yourself or a group member summons Coldharbour\'s Favorite, who after 2 seconds, begins healing you and group members near him for 9394 Health over 6 seconds based on the higher of your Max Magicka or Stamina.\n\nDealing damage summons Coldharbour\'s Favorite, who after 2 seconds, explodes, damaging enemies near him for 13811 Magic Damage over 6 seconds based on the higher of your Weapon or Spell Damage.\n\nColdharbour\'s Favorite can only be summoned once every 10 seconds.',
+    "(5 items) Healing yourself or a group member summons Coldharbour's Favorite, who after 2 seconds, begins healing you and group members near him for 9394 Health over 6 seconds based on the higher of your Max Magicka or Stamina.\n\nDealing damage summons Coldharbour's Favorite, who after 2 seconds, explodes, damaging enemies near him for 13811 Magic Damage over 6 seconds based on the higher of your Weapon or Spell Damage.\n\nColdharbour's Favorite can only be summoned once every 10 seconds.",
   ],
 };
 
@@ -893,7 +893,7 @@ export const dragonSAppetite: GearSetData = {
     '(2 items) Adds 129 Weapon and Spell Damage',
     '(3 items) Adds 129 Stamina Recovery',
     '(4 items) Adds 129 Stamina Recovery',
-    '(5 items) Increase your damage done to Bleeding enemies by 225. Dealing non-Bleed damage to Bleeding enemies generates a stack of Dragon\'s Appetite for 5 seconds, up to once per half second. After 10 stacks you consume Dragon\'s Appetite and heal for 8918 Health. The heal effect scales off the higher of your Max Magicka or Stamina.',
+    "(5 items) Increase your damage done to Bleeding enemies by 225. Dealing non-Bleed damage to Bleeding enemies generates a stack of Dragon's Appetite for 5 seconds, up to once per half second. After 10 stacks you consume Dragon's Appetite and heal for 8918 Health. The heal effect scales off the higher of your Max Magicka or Stamina.",
   ],
 };
 
@@ -1575,7 +1575,7 @@ export const kjalnarSNightmare: GearSetData = {
   setType: 'PvP',
   bonuses: [
     '(1 item) Adds 129 Weapon and Spell Damage',
-    '(2 items) Damaging an enemy with a Light Attack puts a Bone stack on them for 5 seconds, up to once every 0.5 seconds.\n\nAt 5 stacks, an undodgeable skeletal hand attacks your enemy after 1 second, knocking them into the air and stunning them for 3 seconds, or dealing 13776 Magic Damage if they cannot be stunned. Enemies then become immune to Kjalnar\'s Nightmare stacks for 4 seconds. The damage scales off the higher of your Weapon or Spell Damage.',
+    "(2 items) Damaging an enemy with a Light Attack puts a Bone stack on them for 5 seconds, up to once every 0.5 seconds.\n\nAt 5 stacks, an undodgeable skeletal hand attacks your enemy after 1 second, knocking them into the air and stunning them for 3 seconds, or dealing 13776 Magic Damage if they cannot be stunned. Enemies then become immune to Kjalnar's Nightmare stacks for 4 seconds. The damage scales off the higher of your Weapon or Spell Damage.",
   ],
 };
 
@@ -1641,7 +1641,7 @@ export const ladyThorn: GearSetData = {
   setType: 'Dungeon',
   bonuses: [
     '(1 item) Adds 1206 Maximum Health',
-    '(2 items) Casting an ability that costs Health spawns a blood ball for 10 seconds. This effect can occur once every 10 seconds.\n\nYou or an ally near the blood ball can activate the Sanguine Burst synergy, dealing 3510 Disease Damage to nearby enemies and applying Major Maim for 8 seconds, decreasing their damage done by 10%. Enemies can only receive Major Maim from Sanguine Burst once every 20 seconds. The damage scales off the synergy activator\'s Max Health.',
+    "(2 items) Casting an ability that costs Health spawns a blood ball for 10 seconds. This effect can occur once every 10 seconds.\n\nYou or an ally near the blood ball can activate the Sanguine Burst synergy, dealing 3510 Disease Damage to nearby enemies and applying Major Maim for 8 seconds, decreasing their damage done by 10%. Enemies can only receive Major Maim from Sanguine Burst once every 20 seconds. The damage scales off the synergy activator's Max Health.",
   ],
 };
 
@@ -1851,7 +1851,7 @@ export const mawOfTheInfernal: GearSetData = {
   setType: 'Craftable',
   bonuses: [
     '(1 item) Adds 129 Weapon and Spell Damage',
-    '(2 items) When you deal damage with a Light or Heavy Attack, you have a 33% chance to summon a fire breathing Daedroth for 15 seconds. The Daedroth\'s attacks deal 3718 Flame Damage every 2 seconds.\n\nThe Daedroth can only be summoned once every 15 seconds and its damage scales off the higher of your Weapon or Spell Damage.',
+    "(2 items) When you deal damage with a Light or Heavy Attack, you have a 33% chance to summon a fire breathing Daedroth for 15 seconds. The Daedroth's attacks deal 3718 Flame Damage every 2 seconds.\n\nThe Daedroth can only be summoned once every 15 seconds and its damage scales off the higher of your Weapon or Spell Damage.",
   ],
 };
 
@@ -1921,7 +1921,7 @@ export const monolithOfStorms: GearSetData = {
     '(2 items) Adds 657 Critical Chance',
     '(3 items) Adds 129 Weapon and Spell Damage',
     '(4 items) Adds 129 Weapon and Spell Damage',
-    '(5 items) Dealing damage with a Storm Calling ability\'s initial hit or every 5th tick creates a Monolith near the enemy for 10 seconds, up to one every 1 second, up to 3 total. Your Monoliths within 28 meters of one another link together, dealing 4111 Shock Damage, scaling off of the higher of your Weapon or Spell Damage, every 2 seconds to enemies near the links, up to once every 2 seconds per enemy.\n\nEach Monolith active grants you 100 Weapon and Spell Damage.',
+    "(5 items) Dealing damage with a Storm Calling ability's initial hit or every 5th tick creates a Monolith near the enemy for 10 seconds, up to one every 1 second, up to 3 total. Your Monoliths within 28 meters of one another link together, dealing 4111 Shock Damage, scaling off of the higher of your Weapon or Spell Damage, every 2 seconds to enemies near the links, up to once every 2 seconds per enemy.\n\nEach Monolith active grants you 100 Weapon and Spell Damage.",
   ],
 };
 
@@ -1969,7 +1969,7 @@ export const morkuldin: GearSetData = {
     '(2 items) Adds 129 Weapon and Spell Damage',
     '(3 items) Adds 657 Critical Chance',
     '(4 items) Adds 129 Weapon and Spell Damage',
-    '(5 items) When you deal damage with a Light or Heavy Attack, you summon an animated weapon to attack your enemies for 15 seconds. The animated weapon\'s basic attacks deal 2621 Physical Damage. This effect can occur once every 15 seconds and scales off the higher of your Weapon or Spell Damage.',
+    "(5 items) When you deal damage with a Light or Heavy Attack, you summon an animated weapon to attack your enemies for 15 seconds. The animated weapon's basic attacks deal 2621 Physical Damage. This effect can occur once every 15 seconds and scales off the higher of your Weapon or Spell Damage.",
   ],
 };
 
@@ -2186,7 +2186,7 @@ export const oblivionSFoe: GearSetData = {
     '(3 items) Adds 1487 Offensive Penetration',
     '(4 items) Adds 657 Critical Chance',
     '(5 items) Adds 129 Weapon and Spell Damage',
-    '(5 items) When you deal damage with Soul Magic, you mark the target\'s soul dealing 11005 Magic Damage over 10 seconds, as long as they are not already marked from you. This effect scales off the higher of your Weapon or Spell Damage.',
+    "(5 items) When you deal damage with Soul Magic, you mark the target's soul dealing 11005 Magic Damage over 10 seconds, as long as they are not already marked from you. This effect scales off the higher of your Weapon or Spell Damage.",
   ],
 };
 
@@ -2233,7 +2233,7 @@ export const orpheonTheTactician: GearSetData = {
   setType: 'Dungeon',
   bonuses: [
     '(1 item) Adds 129 Weapon and Spell Damage',
-    '(2 items) While in combat, casting an ability that leaves an effect on the ground summons a tentacle at the target\'s location. After 2 seconds, the tentacle swings wildly in a 5 meter radius, dealing 1347 Physical Damage and stunning up to 6 enemies for 3 seconds. Enemies immune to stun take 8389 Physical Damage instead. This effect can occur every 8 seconds and the damage scales off the higher of your Weapon or Spell Damage.',
+    "(2 items) While in combat, casting an ability that leaves an effect on the ground summons a tentacle at the target's location. After 2 seconds, the tentacle swings wildly in a 5 meter radius, dealing 1347 Physical Damage and stunning up to 6 enemies for 3 seconds. Enemies immune to stun take 8389 Physical Damage instead. This effect can occur every 8 seconds and the damage scales off the higher of your Weapon or Spell Damage.",
   ],
 };
 
@@ -2345,7 +2345,7 @@ export const perfectedKyneSWind: GearSetData = {
     '(3 items) Gain Minor Aegis at all times, reducing your damage taken from Dungeon, Trial, and Arena Monsters by 5%.',
     '(4 items) Adds 4% Healing Done',
     '(5 perfected items) Adds 129 Magicka Recovery',
-    '(5 items) When you overheal yourself or a group member, you create a pool of Kyne\'s Blessing under the target for 4 seconds. You and group members standing in Kyne\'s Blessing restore 420 Stamina and Magicka every 1 second. This effect can occur once every 10 seconds.',
+    "(5 items) When you overheal yourself or a group member, you create a pool of Kyne's Blessing under the target for 4 seconds. You and group members standing in Kyne's Blessing restore 420 Stamina and Magicka every 1 second. This effect can occur once every 10 seconds.",
   ],
 };
 
@@ -2887,7 +2887,7 @@ export const shadowrend: GearSetData = {
   setType: 'Craftable',
   bonuses: [
     '(1 item) Adds 129 Magicka Recovery',
-    '(2 items) When you take damage, you summon a shadowy Clannfear for 15 seconds. The Clannfear\'s attacks deal 792 Magic Damage and apply Minor Maim, reducing the target\'s damage done by 5% for 2 seconds.\n\nThe Clannfear can be summoned once every 15 seconds and its damage scales off your Max Health.',
+    "(2 items) When you take damage, you summon a shadowy Clannfear for 15 seconds. The Clannfear's attacks deal 792 Magic Damage and apply Minor Maim, reducing the target's damage done by 5% for 2 seconds.\n\nThe Clannfear can be summoned once every 15 seconds and its damage scales off your Max Health.",
   ],
 };
 
@@ -3620,7 +3620,7 @@ export const twilightRemedy: GearSetData = {
     '(2 items) Adds 129 Magicka Recovery',
     '(3 items) Gain Minor Aegis at all times, reducing your damage taken from Dungeon, Trial, and Arena Monsters by 5%.',
     '(4 items) Adds 129 Weapon and Spell Damage',
-    '(5 items) When an ally activates a synergy you have created within 10 seconds, they heal themselves for 15560 Health over 15 seconds and gain Minor Force for the duration, increasing their Critical Damage by 10%. This effect scales off the higher of the synergy activator\'s Max Magicka or Stamina.',
+    "(5 items) When an ally activates a synergy you have created within 10 seconds, they heal themselves for 15560 Health over 15 seconds and gain Minor Force for the duration, increasing their Critical Damage by 10%. This effect scales off the higher of the synergy activator's Max Magicka or Stamina.",
   ],
 };
 

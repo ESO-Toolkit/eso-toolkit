@@ -5,7 +5,7 @@ export const belharzasBand: GearSetData = {
   icon: "Belharza's Band",
   setType: 'Mythic',
   bonuses: [
-    '(1 item) Increase the damage of your Light Attacks by 900.\n\nWhen you deal damage with consecutive melee Light Attacks, gain a stack of Belharza\'s Temper for 10 seconds, up to 5 stacks max. At 5 stacks, consume Belharza\'s Temper and after 1 second, deal 8637 Physical Damage to enemies in a line and stun them for 3 seconds. This effect can occur once every 10 seconds and scales off the higher of your Weapon or Spell Damage.',
+    "(1 item) Increase the damage of your Light Attacks by 900.\n\nWhen you deal damage with consecutive melee Light Attacks, gain a stack of Belharza's Temper for 10 seconds, up to 5 stacks max. At 5 stacks, consume Belharza's Temper and after 1 second, deal 8637 Physical Damage to enemies in a line and stun them for 3 seconds. This effect can occur once every 10 seconds and scales off the higher of your Weapon or Spell Damage.",
   ],
 };
 
