@@ -15,6 +15,18 @@ jest.mock('../data/Gear Sets/heavy', () => ({
       '(5 items) Reduce enemy movement speed',
     ],
   },
+  perfectedHeavySet: {
+    name: 'Perfected Heavy Trial Set',
+    icon: 'Perfected Heavy Trial Set',
+    setType: 'Trial',
+    bonuses: [
+      '(5 perfected items) Adds 1206 Maximum Health',
+      '(2 items) Adds 1206 Maximum Health',
+      '(3 items) Gain Minor Aegis at all times.',
+      '(4 items) Adds 4% Healing Taken',
+      '(5 items) Trial set effect',
+    ],
+  },
 }));
 
 jest.mock('../data/Gear Sets/light', () => ({
@@ -290,6 +302,31 @@ describe('gearSetTooltipMapper', () => {
       expect(result).not.toBeNull();
       expect(result!.setName).toBe('Perfected Arena Master Set');
       expect(result!.headerBadge).toBe('Arena');
+    });
+  });
+
+  describe('perfected stat tier parsing', () => {
+    it('parses the "(N perfected items)" badge and respects its piece requirement', () => {
+      const result = getGearSetTooltipPropsByName('Perfected Heavy Trial Set', 5);
+
+      expect(result).not.toBeNull();
+      const perfectedTier = result!.setBonuses[0];
+      // Badge keeps the full "(5 perfected items)" label rather than a garbled "(5".
+      expect(perfectedTier.pieces).toBe('(5 perfected items)');
+      // The "(N perfected items)" prefix is stripped from the effect text.
+      expect(perfectedTier.effect).toBe('Adds 1206 Maximum Health');
+      // Requires 5 pieces — active at 5 equipped.
+      expect(perfectedTier.active).toBe(true);
+    });
+
+    it('does not mark the perfected tier active below its piece requirement', () => {
+      const result = getGearSetTooltipPropsByName('Perfected Heavy Trial Set', 2);
+
+      expect(result).not.toBeNull();
+      const perfectedTier = result!.setBonuses[0];
+      expect(perfectedTier.pieces).toBe('(5 perfected items)');
+      // Previously parsed as requiredPieces = 1, so it wrongly activated at 2 pieces.
+      expect(perfectedTier.active).toBe(false);
     });
   });
 
