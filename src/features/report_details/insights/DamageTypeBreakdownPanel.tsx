@@ -124,12 +124,12 @@ const AOE_ABILITY_IDS = Object.freeze(
 const STATUS_EFFECT_ABILITY_IDS = Object.freeze(
   new Set([
     18084, // Burning
-    95136, // Chilled
-    95134, // Concussed
-    178127, // Poisoned
-    148801, // Diseased
-    178118, // Hemorrhaging
-    21929, // Overcharged
+    95136, // Chill
+    95134, // Concussion
+    178127, // Diseased
+    148801, // Hemorrhaging
+    178118, // Overcharged
+    21929, // Poisoned
     178123, // Sundered
   ]),
 );
@@ -280,8 +280,8 @@ export const DamageTypeBreakdownPanel: React.FC<DamageTypeBreakdownPanelProps> =
         statusEffectDamageData.events.push(event);
       }
 
-      // Add to fire damage category if it's a fire ability (ability.type == 4)
-      if (ability?.type === '4') {
+      // Add to fire damage category if it's a fire ability
+      if (ability?.type === DamageTypeFlags.FIRE) {
         fireDamageData.totalDamage += event.amount;
         fireDamageData.hitCount += 1;
         fireDamageData.criticalHits += fullCritHitCount;

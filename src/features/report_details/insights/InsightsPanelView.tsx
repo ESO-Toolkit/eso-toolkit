@@ -53,7 +53,10 @@ const ABILITY_DATA: AbilityDatum[] = [
   {
     name: 'Atronach',
     ids: ['23495'],
-    icon: undefined,
+    // Summon Charged Atronach (Sorc). Master data often lacks this id in a given
+    // fight, so supply the canonical ESO Logs icon (verified 200 on the CDN) as a
+    // fallback — otherwise AbilityIcon renders nothing.
+    icon: 'ability_sorcerer_endless_atronachs',
     knownAbilities: [KnownAbilities.SUMMON_CHARGED_ATRONACH],
   },
   {
@@ -65,7 +68,9 @@ const ABILITY_DATA: AbilityDatum[] = [
   {
     name: 'Horn',
     ids: ['40223'],
-    icon: undefined,
+    // Aggressive Horn (Assault ult). Same master-data gap as Atronach above;
+    // supply the canonical ESO Logs icon (verified 200 on the CDN) as a fallback.
+    icon: 'ability_ava_003_a',
     knownAbilities: [KnownAbilities.AGGRESSIVE_HORN],
   },
 ];
@@ -206,6 +211,8 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
                 Key Group Abilities:
               </Typography>
               <Box
+                role="list"
+                aria-label="Key group abilities"
                 sx={{
                   display: 'grid',
                   gridTemplateColumns: '1fr',
@@ -230,6 +237,7 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
                   return (
                     <Box
                       key={ability.name}
+                      role="listitem"
                       sx={{
                         display: 'flex',
                         alignItems: 'center',
@@ -263,7 +271,11 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
                           overflow: 'hidden',
                         }}
                       >
-                        <AbilityIcon abilityId={ability.ids[0]} fallbackIcon={ability.icon} />
+                        <AbilityIcon
+                          abilityId={ability.ids[0]}
+                          fallbackIcon={ability.icon}
+                          fallbackName={ability.name}
+                        />
                       </Box>
                       <Box sx={{ flex: 1, minWidth: 0 }}>
                         <Typography
@@ -280,6 +292,9 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
                         </Typography>
                         <Typography
                           variant="caption"
+                          // Full list on hover: the line truncates with an ellipsis
+                          // when many players share an ultimate (e.g. a 12-player raid).
+                          title={hasPlayers ? equippedBy.join(', ') : undefined}
                           sx={{
                             display: 'block',
                             color: hasPlayers

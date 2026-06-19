@@ -8,6 +8,8 @@ export interface AbilityIconProps {
   abilityId: string | number;
   /** Optional icon filename (without extension) to use if the ability is missing from master data */
   fallbackIcon?: string;
+  /** Optional human-readable name to use for alt text if the ability is missing from master data */
+  fallbackName?: string;
 }
 
 export function AbilityIcon(props: AbilityIconProps): React.ReactElement | null {
@@ -27,7 +29,9 @@ export function AbilityIcon(props: AbilityIconProps): React.ReactElement | null 
   return (
     <Avatar
       src={src}
-      alt={ability?.name || `Ability ${props.abilityId}`}
+      // When master data lacks this ability, a real fallback icon is still shown,
+      // so prefer the caller-supplied name over the meaningless "Ability <id>".
+      alt={ability?.name || props.fallbackName || `Ability ${props.abilityId}`}
       sx={{ width: 32, height: 32, borderRadius: 1, boxShadow: 1 }}
       variant="rounded"
     />

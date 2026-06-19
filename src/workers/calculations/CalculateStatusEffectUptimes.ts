@@ -2,6 +2,8 @@ import { KnownAbilities } from '../../types/abilities';
 import { BuffLookupData } from '../../utils/BuffLookupUtils';
 import { OnProgressCallback } from '../Utils';
 
+import { getStatusEffectIcon, getStatusEffectName } from './statusEffectMetadata';
+
 /**
  * Status Effect Uptimes Calculation Worker
  *
@@ -187,7 +189,12 @@ export function calculateStatusEffectUptimes(
       if (Object.keys(allPlayers).length > 0) {
         results.set(abilityKey, {
           abilityGameID: abilityKey,
-          abilityName: `Ability ${abilityId}`, // Will be resolved by UI layer
+          // Canonical name/icon for this fixed status effect. The UI still
+          // prefers per-report master data when present, but these status-effect
+          // ids are frequently absent from it — without this fallback the panel
+          // rendered a raw "Ability <id>" placeholder with no icon.
+          abilityName: getStatusEffectName(abilityId),
+          icon: getStatusEffectIcon(abilityId),
           isDebuff: true,
           hostilityType: 1,
           uniqueKey: `${abilityId}-status-effect`,
@@ -301,7 +308,9 @@ export function calculateStatusEffectUptimes(
       if (Object.keys(allPlayers).length > 0) {
         results.set(abilityKey, {
           abilityGameID: abilityKey,
-          abilityName: `Ability ${abilityId}`, // Will be resolved by UI layer
+          // Canonical name/icon for this fixed status effect (see debuff branch).
+          abilityName: getStatusEffectName(abilityId),
+          icon: getStatusEffectIcon(abilityId),
           isDebuff: false,
           hostilityType: 1,
           uniqueKey: `${abilityId}-status-effect`,

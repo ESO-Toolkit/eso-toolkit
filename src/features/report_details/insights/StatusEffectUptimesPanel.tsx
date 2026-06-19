@@ -289,15 +289,12 @@ export const StatusEffectUptimesPanel: React.FC<StatusEffectUptimesPanelProps> =
       return playerFilteredStatusEffectUptimes;
     }
 
-    // When a player is selected, we need to show their data compared to group average
-    // The key insight: playerFilteredStatusEffectUptimes already contains the player's data
-    // We just need to attach the group average to it
+    // When a player is selected, we need to show their data compared to group average.
+    // playerFilteredStatusEffectUptimes already contains the player's data either way;
+    // when a player is selected we additionally attach the group average below.
     const usePlayerData = selectedPlayerId && selectedFriendlyPlayerId;
-    const sourceData = usePlayerData
-      ? playerFilteredStatusEffectUptimes
-      : playerFilteredStatusEffectUptimes;
 
-    const enhanced = sourceData.map((uptime) => {
+    const enhanced = playerFilteredStatusEffectUptimes.map((uptime) => {
       const ability = reportMasterData.abilitiesById[uptime.abilityGameID as string];
       return {
         ...uptime,

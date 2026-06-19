@@ -73,6 +73,12 @@ describe('CalculateStatusEffectUptimes', () => {
         expect(burningResult.hostilityType).toBe(1);
         expect(burningResult.uniqueKey).toBe(`${KnownAbilities.BURNING}-status-effect`);
 
+        // Status effects resolve a canonical name + icon from the static table,
+        // not the old raw "Ability <id>" placeholder (these ids are usually
+        // absent from per-report master data).
+        expect(burningResult.abilityName).toBe('Burning');
+        expect(burningResult.icon).toBe('ability_mage_062');
+
         // Check target segmentation
         expect(Object.keys(burningResult.targetData)).toHaveLength(1);
         expect(burningResult.targetData[TARGET_ID_1]).toBeDefined();
@@ -171,6 +177,10 @@ describe('CalculateStatusEffectUptimes', () => {
 
         expect(overchargedResult.isDebuff).toBe(false);
         expect(Object.keys(overchargedResult.targetData)).toHaveLength(2);
+
+        // Hostile-buff branch also resolves a canonical name + icon.
+        expect(overchargedResult.abilityName).toBe('Overcharged');
+        expect(overchargedResult.icon).toBe('death_recap_magic_dot_heavy');
 
         // Target 1: 6 seconds (2000-8000ms)
         const target1Data = overchargedResult.targetData[TARGET_ID_1];
@@ -427,17 +437,17 @@ describe('CalculateStatusEffectUptimes', () => {
           (r) => r.abilityGameID === KnownAbilities.OVERCHARGED.toString(),
         );
 
-        // Check debuff properties
+        // Check debuff properties — canonical name resolved from the static table.
         expect(burningResult!.isDebuff).toBe(true);
         expect(burningResult!.hostilityType).toBe(1);
         expect(burningResult!.uniqueKey).toBe(`${KnownAbilities.BURNING}-status-effect`);
-        expect(burningResult!.abilityName).toContain('Ability'); // Generic name for now
+        expect(burningResult!.abilityName).toBe('Burning');
 
-        // Check buff properties
+        // Check buff properties — canonical name resolved from the static table.
         expect(overchargedResult!.isDebuff).toBe(false);
         expect(overchargedResult!.hostilityType).toBe(1);
         expect(overchargedResult!.uniqueKey).toBe(`${KnownAbilities.OVERCHARGED}-status-effect`);
-        expect(overchargedResult!.abilityName).toContain('Ability'); // Generic name for now
+        expect(overchargedResult!.abilityName).toBe('Overcharged');
       });
     });
 
