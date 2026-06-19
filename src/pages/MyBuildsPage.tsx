@@ -230,15 +230,24 @@ export const MyBuildsPage: React.FC = () => {
 
   const handleView = async (saved: SavedBuild): Promise<void> => {
     const encoded = await encodeBuildToURL(saved.build);
-    // These are the owner's own locally-saved builds, so previewing a Private
-    // one is legitimate. The viewer rejects Private ?b= payloads by default
-    // (forwarded/address-bar links carry no router state); pass an in-app
-    // ownerPreview flag so it allows this trusted, same-app navigation only.
-    navigate(`/bv?b=${encoded}`, {
-      state: { ownerPreview: true },
-      vtType: 'forward',
-      morph: { ref: { current: cardRefs.current.get(saved.id) ?? null }, name: 'build-hero' },
-    });
+    const morph = {
+      ref: { current: cardRefs.current.get(saved.id) ?? null },
+      name: 'build-hero',
+    };
+    if (saved.build.settings.visibility === 'private') {
+      // Owner previewing their own Private build. Keep the blob OUT of the URL —
+      // a self-contained /bv?b= URL would leak the full private build into the
+      // address bar/history. Pass it through router state only (never on a
+      // forwarded/pasted link) with an ownerPreview flag the viewer trusts.
+      navigate('/bv', {
+        state: { ownerPreview: true, previewBuild: encoded },
+        vtType: 'forward',
+        morph,
+      });
+      return;
+    }
+    // Public / Link Only builds are shareable by design — a ?b= URL is fine.
+    navigate(`/bv?b=${encoded}`, { vtType: 'forward', morph });
   };
 
   const handlePublish = async (saved: SavedBuild): Promise<void> => {

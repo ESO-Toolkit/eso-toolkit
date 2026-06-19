@@ -199,4 +199,52 @@ describe('BuildViewPage visibility enforcement', () => {
     await waitFor(() => expect(screen.getByTestId('build-shell')).toBeInTheDocument());
     expect(screen.queryByText(/No build found/i)).not.toBeInTheDocument();
   });
+
+  it('renders a Private owner preview from router state with no blob in the URL', async () => {
+    mockDecode.mockResolvedValue(fullBuild('private'));
+
+    // My Builds → View of an own Private build: blob lives in router state
+    // (previewBuild), not in the URL. No ?b= / ?id= search params.
+    render(
+      <MemoryRouter
+        initialEntries={[
+          {
+            pathname: '/bv',
+            search: '',
+            state: { ownerPreview: true, previewBuild: 'private-blob-in-state' },
+          },
+        ]}
+      >
+        <Routes>
+          <Route path="/bv" element={<BuildViewPage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    // The owner's private build renders, decoded from the state-carried blob.
+    await waitFor(() => expect(mockDecode).toHaveBeenCalledWith('private-blob-in-state'));
+    await waitFor(() => expect(screen.getByTestId('build-shell')).toBeInTheDocument());
+    expect(screen.queryByText(/No build found/i)).not.toBeInTheDocument();
+  });
+
+  it('does not render a private build from bare router state without ownerPreview', async () => {
+    mockDecode.mockResolvedValue(fullBuild('private'));
+
+    // previewBuild without the ownerPreview flag must be ignored (an untrusted
+    // state shape can't smuggle a build into the no-params not-found path).
+    render(
+      <MemoryRouter
+        initialEntries={[
+          { pathname: '/bv', search: '', state: { previewBuild: 'private-blob-in-state' } },
+        ]}
+      >
+        <Routes>
+          <Route path="/bv" element={<BuildViewPage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => expect(screen.getByText(/No build found/i)).toBeInTheDocument());
+    expect(screen.queryByTestId('build-shell')).not.toBeInTheDocument();
+  });
 });

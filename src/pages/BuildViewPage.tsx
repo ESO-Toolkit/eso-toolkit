@@ -2023,10 +2023,14 @@ export const BuildViewPage: React.FC = () => {
     const encoded = params.get('b') ?? '';
     const idParam = params.get('id') ?? '';
     // In-app owner preview (My Builds → View of one's own saved build). Only set
-    // by trusted same-app navigation, never present on a forwarded/pasted URL,
-    // so it can safely relax the Private ?b= rejection for the owner.
-    const ownerPreview =
-      (location.state as { ownerPreview?: boolean } | null)?.ownerPreview === true;
+    // by trusted same-app navigation, never present on a forwarded/pasted URL.
+    // For Private builds the encoded blob is carried in router state
+    // (previewBuild) instead of the URL, so the full private build never lands
+    // in the address bar/history. ownerPreview also relaxes the Private ?b=
+    // rejection for the legacy/public in-app path.
+    const previewState = location.state as { ownerPreview?: boolean; previewBuild?: string } | null;
+    const ownerPreview = previewState?.ownerPreview === true;
+    const previewBuild = ownerPreview ? (previewState?.previewBuild ?? '') : '';
 
     const onDecoded = (decoded: Build | null, buildData: string): void => {
       if (cancelled) return;
@@ -2049,7 +2053,20 @@ export const BuildViewPage: React.FC = () => {
       setLoading(false);
     };
 
-    if (encoded) {
+    if (previewBuild) {
+      // Trusted in-app owner preview: the blob came from router state, not the
+      // URL. Render it directly (Private is allowed — it's the owner's own
+      // build) without exposing it in the address bar.
+      setHubBuildId('');
+      setEncodedParam('');
+      void decodeBuildFromURL(previewBuild)
+        .then((decoded) => onDecoded(decoded, previewBuild))
+        .catch(() => {
+          if (cancelled) return;
+          setNotFound(true);
+          setLoading(false);
+        });
+    } else if (encoded) {
       setHubBuildId('');
       setEncodedParam(encoded);
       void decodeBuildFromURL(encoded)
@@ -2061,7 +2078,7 @@ export const BuildViewPage: React.FC = () => {
           // address-bar /bv?b= links for now-private builds regardless of how
           // they were produced (the per-button share guards are the first line;
           // this is the backstop). The one exception is a trusted in-app owner
-          // preview (see ownerPreview above); owner views via ?id= are also fine.
+          // preview (the previewBuild branch above); owner ?id= views are fine.
           if (decoded && decoded.settings.visibility === 'private' && !ownerPreview) {
             setNotFound(true);
             setLoading(false);

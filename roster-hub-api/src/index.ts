@@ -139,17 +139,42 @@ const VISIBILITY_BY_INDEX = ['public', 'private', 'link-only'] as const;
  * if the blob can't be decoded — callers must fail closed (treat null as
  * not-public) so an undecodable or hostile blob can't slip through as public.
  */
+const MAX_COMPRESSED_BUILD_BYTES = 100 * 1024; // 100 KB compressed
+const MAX_DECOMPRESSED_BUILD_BYTES = 1024 * 1024; // 1 MB decompressed — hard cap
+
 async function decodeEmbeddedVisibility(
   buildData: string,
 ): Promise<(typeof BUILD_VISIBILITIES)[number] | null> {
   try {
     const b64 = buildData.replace(/-/g, '+').replace(/_/g, '/');
     const bytes = Uint8Array.from(atob(b64), (ch) => ch.charCodeAt(0));
-    // 100 KB compressed cap — matches the frontend decode bomb guard.
-    if (bytes.length > 100 * 1024) return null;
+    // Cap compressed input first (matches the frontend decode-bomb guard).
+    if (bytes.length > MAX_COMPRESSED_BUILD_BYTES) return null;
+
     const ds = new DecompressionStream('deflate-raw');
-    const stream = new Response(new Blob([bytes]).stream().pipeThrough(ds));
-    const json = await stream.text();
+    const reader = new Blob([bytes]).stream().pipeThrough(ds).getReader();
+    // Stream-decode with a hard decompressed-byte cap so a small bomb can't
+    // expand into unbounded memory; abort as soon as the cap is exceeded.
+    const chunks: Uint8Array[] = [];
+    let total = 0;
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      total += value.byteLength;
+      if (total > MAX_DECOMPRESSED_BUILD_BYTES) {
+        await reader.cancel();
+        return null;
+      }
+      chunks.push(value);
+    }
+
+    const merged = new Uint8Array(total);
+    let offset = 0;
+    for (const chunk of chunks) {
+      merged.set(chunk, offset);
+      offset += chunk.byteLength;
+    }
+    const json = new TextDecoder().decode(merged);
     const compact = JSON.parse(json) as { vs?: number };
     const idx = typeof compact.vs === 'number' ? compact.vs : 0;
     return VISIBILITY_BY_INDEX[idx] ?? null;
@@ -961,15 +986,9 @@ app.post('/temp-builds', async (c) => {
   if (!isValidBase64Url(body.build_data))
     return c.json({ error: 'build_data must be valid base64url' }, 400);
 
-  // A temp link is a public, unauthenticated share surface. Refuse to host a
-  // Private build (and fail closed if the blob can't be decoded) so the UI guard
-  // can't be bypassed by a direct API call or an out-of-date client.
-  const tempVisibility = await decodeEmbeddedVisibility(body.build_data);
-  if (tempVisibility !== 'public' && tempVisibility !== 'link-only') {
-    return c.json({ error: 'Private builds cannot be shared as a temporary link.' }, 403);
-  }
-
-  // Rate limit by IP (10 per hour)
+  // Rate limit by IP (10 per hour) BEFORE decompressing attacker-supplied data —
+  // decompression is the expensive step, so throttle first to blunt a
+  // decompression-bomb DoS on this unauthenticated endpoint.
   const ip = c.req.header('CF-Connecting-IP') ?? 'unknown';
   const allowed = await checkTempBuildRateLimit(c.env.DB, ip);
   if (!allowed)
@@ -979,6 +998,14 @@ app.post('/temp-builds', async (c) => {
     );
 
   await recordTempBuildRateLimit(c.env.DB, ip);
+
+  // A temp link is a public, unauthenticated share surface. Refuse to host a
+  // Private build (and fail closed if the blob can't be decoded) so the UI guard
+  // can't be bypassed by a direct API call or an out-of-date client.
+  const tempVisibility = await decodeEmbeddedVisibility(body.build_data);
+  if (tempVisibility !== 'public' && tempVisibility !== 'link-only') {
+    return c.json({ error: 'Private builds cannot be shared as a temporary link.' }, 403);
+  }
 
   const id = Array.from(crypto.getRandomValues(new Uint8Array(10)))
     .map((b) => b.toString(36).padStart(2, '0'))
