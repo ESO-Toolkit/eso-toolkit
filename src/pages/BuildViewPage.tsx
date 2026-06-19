@@ -2022,7 +2022,6 @@ export const BuildViewPage: React.FC = () => {
     const params = new URLSearchParams(location.search);
     const encoded = params.get('b') ?? '';
     const idParam = params.get('id') ?? '';
-    const routerData = (location.state as { buildData?: string } | null)?.buildData;
 
     const onDecoded = (decoded: Build | null, buildData: string): void => {
       if (cancelled) return;
@@ -2057,24 +2056,21 @@ export const BuildViewPage: React.FC = () => {
         });
     } else if (idParam) {
       setHubBuildId(idParam);
-      if (routerData) {
-        void decodeBuildFromURL(routerData)
-          .then((decoded) => onDecoded(decoded, routerData))
-          .catch(() => {
-            if (cancelled) return;
-            setNotFound(true);
-            setLoading(false);
-          });
-      } else {
-        void buildHubApi
-          .get(idParam, accessToken)
-          .then(({ build: hubBuild }) =>
-            decodeBuildFromURL(hubBuild.build_data).then((decoded) =>
-              onDecoded(decoded, hubBuild.build_data),
-            ),
-          )
-          .catch(handleFetchError);
-      }
+      // An id-based view MUST be resolved only through buildHubApi.get, the one
+      // path that enforces build visibility (private builds 404 for non-owners).
+      // Router state (location.state.buildData) from a BuildCard click is never
+      // rendered: a stale Hub tab from when the build was public would otherwise
+      // expose now-private content — even briefly, or indefinitely if the API
+      // request hangs. The view stays in its loading state until the
+      // visibility-checked fetch succeeds.
+      void buildHubApi
+        .get(idParam, accessToken)
+        .then(({ build: hubBuild }) =>
+          decodeBuildFromURL(hubBuild.build_data).then((decoded) =>
+            onDecoded(decoded, hubBuild.build_data),
+          ),
+        )
+        .catch(handleFetchError);
     } else {
       setHubBuildId('');
       setEncodedParam('');
@@ -2085,7 +2081,7 @@ export const BuildViewPage: React.FC = () => {
     return () => {
       cancelled = true;
     };
-  }, [accessToken, location.search, location.state]);
+  }, [accessToken, location.search]);
 
   useEffect(() => loadBuild(), [loadBuild]);
 
