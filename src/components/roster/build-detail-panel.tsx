@@ -20,6 +20,7 @@ import { deriveItemNameForSlot } from '../../features/loadout-manager/utils/item
 import { getChampionPointAbilityName } from '../../types/champion-points';
 import { getGearSetTooltipPropsByName } from '../../utils/gearSetTooltipMapper';
 import { RICH_TOOLTIP_SLOT_PROPS } from '../../utils/richTooltipSlotProps';
+import { useSetPieceCounts } from '../../utils/setPieceCounting';
 import { buildTooltipPropsFromAbilityId } from '../../utils/skillTooltipMapper';
 import { GearSetTooltip } from '../GearSetTooltip';
 import { LazySkillTooltip as SkillTooltipCard } from '../LazySkillTooltip';
@@ -334,16 +335,11 @@ const GearDisplay: React.FC<{
 }> = ({ gear, isDarkMode }) => {
   const populatedSlots = GEAR_SLOT_ORDER.filter((slotIdx) => gear[slotIdx]);
 
-  const setPieceCounts = React.useMemo(() => {
-    const counts = new Map<string, number>();
-    for (const slotIdx of populatedSlots) {
-      const piece = gear[slotIdx];
-      if (!piece) continue;
-      const info = getItemInfo(Number(piece.id));
-      if (info?.setName) counts.set(info.setName, (counts.get(info.setName) ?? 0) + 1);
-    }
-    return counts;
-  }, [gear, populatedSlots]);
+  // Count set pieces treating a two-handed weapon as 2 (ESO's in-game math), so
+  // single-weapon arena sets (e.g. Perfected Crushing Wall) activate correctly.
+  const setPieceCounts = useSetPieceCounts(
+    populatedSlots.map((slotIdx) => Number(gear[slotIdx]?.id)).filter((id) => !Number.isNaN(id)),
+  );
 
   if (populatedSlots.length === 0) return null;
 

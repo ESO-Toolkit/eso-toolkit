@@ -19,7 +19,7 @@ export const shadow: SkillLineData = {
       type: 'ultimate',
       icon: 'ability_nightblade_015',
       description:
-        'Conjure a ring of shadow, reducing the Movement Speed of enemies by 70% and granting you and your allies Major Protection, reducing your damage taken by 10%.\n\nAllies in the area can activate the Hidden Refresh synergy, granting them invisibility, increasing their Movement Speed by 70%, and healing them for 9110 Health over 4 seconds.',
+        'Conjure a ring of shadow, reducing the Movement Speed of enemies by 70% and granting you and your allies Major Protection, reducing your damage taken by 10%.\n\nAllies in the area can activate the Hidden Refresh synergy, granting them invisibility, increasing their Movement Speed by 70%, and healing them for 32070 Health over 4 seconds.',
       isUltimate: true,
       baseSkillId: ClassSkillId.NIGHTBLADE_CONSUMING_DARKNESS,
     },
@@ -29,7 +29,7 @@ export const shadow: SkillLineData = {
       type: 'ultimate',
       icon: 'ability_nightblade_015_a',
       description:
-        'Conjure a ring of shadow, reducing the Movement Speed of enemies by 70% and granting you and your allies Major Protection for 10 seconds, reducing your damage taken by 10%.\n\nAllies in the area can activate the Hidden Refresh synergy, granting them invisibility, increasing their Movement Speed by 70%, and healing them for 9110 Health over 4 seconds.',
+        'Conjure a ring of shadow, reducing the Movement Speed of enemies by 70% and granting you and your allies Major Protection for 10 seconds, reducing your damage taken by 10%.\n\nAllies in the area can activate the Hidden Refresh synergy, granting them invisibility, increasing their Movement Speed by 70%, and healing them for 32070 Health over 4 seconds.',
       isUltimate: true,
       baseSkillId: ClassSkillId.NIGHTBLADE_CONSUMING_DARKNESS,
     },
@@ -39,7 +39,7 @@ export const shadow: SkillLineData = {
       type: 'ultimate',
       icon: 'ability_nightblade_015_b',
       description:
-        'Conjure a ring of shadow, reducing the Movement Speed of enemies by 70%, dealing 1438 Magic Damage to them every 1 second, and granting you and your allies Major Protection, reducing your damage taken by 10%.\n\nAllies in the area can activate the Hidden Refresh synergy, granting them invisibility, increasing their Movement Speed by 70%, and healing them for 9110 Health over 4 seconds.',
+        'Conjure a ring of shadow, reducing the Movement Speed of enemies by 70%, dealing 5241 Magic Damage to them every 1 second, and granting you and your allies Major Protection, reducing your damage taken by 10%.\n\nAllies in the area can activate the Hidden Refresh synergy, granting them invisibility, increasing their Movement Speed by 70%, and healing them for 32070 Health over 4 seconds.',
       isUltimate: true,
       baseSkillId: ClassSkillId.NIGHTBLADE_CONSUMING_DARKNESS,
     },
@@ -67,7 +67,7 @@ export const shadow: SkillLineData = {
       type: 'active',
       icon: 'ability_nightblade_004_b',
       description:
-        'Shroud yourself in protective shadow to heal for 853 Health every 1 second, over 3 seconds, increasing by an additional 150% while Bracing. This portion of the ability scales off your Max Health.\n\nWhile slotted on either bar, you gain Minor Protection, reducing your damage taken by 5%.',
+        'Shroud yourself in protective shadow to heal for 1001 Health every 1 second, over 3 seconds, increasing by an additional 150% while Bracing. This portion of the ability scales off your Max Health.\n\nWhile slotted on either bar, you gain Minor Protection, reducing your damage taken by 5%.',
       baseSkillId: ClassSkillId.NIGHTBLADE_SHADOW_CLOAK,
     },
     {
@@ -130,7 +130,7 @@ export const shadow: SkillLineData = {
       type: 'active',
       icon: 'ability_nightblade_001',
       description:
-        "Summon a shade version of yourself to attack an enemy and fight at your side for 20 seconds.\n\nThe shade slashes at an enemy, dealing 462 Magic Damage once every 2 seconds, and inflicts Minor Maim for 4 seconds, reducing the enemy's damage done by 5%.",
+        "Summon a shade version of yourself to attack an enemy and fight at your side for 20 seconds.\n\nThe shade slashes at an enemy, dealing 1894 Magic Damage once every 2 seconds, and inflicts Minor Maim for 4 seconds, reducing the enemy's damage done by 5%.",
       baseSkillId: ClassSkillId.NIGHTBLADE_SUMMON_SHADE,
     },
     {
@@ -139,7 +139,7 @@ export const shadow: SkillLineData = {
       type: 'active',
       icon: 'ability_nightblade_001_a',
       description:
-        'Summon a shade version of yourself to attack an enemy and fight at your side for 20 seconds.\n\nThe shade attacks nearby enemies within 9 meters of it, dealing 623 Magic Damage once every 2 seconds and afflicting them with Minor Maim for 4 seconds, reducing their damage done by 5%.',
+        'Summon a shade version of yourself to attack an enemy and fight at your side for 20 seconds.\n\nThe shade attacks nearby enemies within 9 meters of it, dealing 2407 Magic Damage once every 2 seconds and afflicting them with Minor Maim for 4 seconds, reducing their damage done by 5%.',
       baseSkillId: ClassSkillId.NIGHTBLADE_SUMMON_SHADE,
     },
     {
@@ -148,7 +148,7 @@ export const shadow: SkillLineData = {
       type: 'active',
       icon: 'ability_nightblade_001_b',
       description:
-        "Summon a shade version of yourself to stay in place and attack an enemy from range for 20 seconds.\n\nThe shade shoots at an enemy, dealing 478 Magic Damage every 2 seconds, and inflicts Minor Maim for 4 seconds, reducing the enemy's damage done by 5%.\n\nWhile the shade is summoned, you can activate this ability again for no cost to teleport to the shade's location.",
+        "Summon a shade version of yourself to stay in place and attack an enemy from range for 20 seconds.\n\nThe shade shoots at an enemy, dealing 1954 Magic Damage every 2 seconds, and inflicts Minor Maim for 4 seconds, reducing the enemy's damage done by 5%.\n\nWhile the shade is summoned, you can activate this ability again for no cost to teleport to the shade's location.",
       baseSkillId: ClassSkillId.NIGHTBLADE_SUMMON_SHADE,
     },
     {
@@ -166,7 +166,7 @@ export const shadow: SkillLineData = {
       type: 'active',
       icon: 'ability_nightblade_010_b',
       description:
-        'Create a corridor of shadows for 10 seconds, granting you and allies in the area Major Expedition, increasing Movement Speed by 30% which persists for 4 seconds after leaving the path.\n\nDeals 377 Magic Damage to enemies in the target area every 1 second.',
+        'Create a corridor of shadows for 10 seconds, granting you and allies in the area Major Expedition, increasing Movement Speed by 30% which persists for 4 seconds after leaving the path.\n\nDeals 1375 Magic Damage to enemies in the target area every 1 second.',
       baseSkillId: ClassSkillId.NIGHTBLADE_PATH_OF_DARKNESS,
     },
     {
@@ -175,7 +175,7 @@ export const shadow: SkillLineData = {
       type: 'active',
       icon: 'ability_nightblade_010_a',
       description:
-        'Create a corridor of shadows for 10 seconds, granting you and allies in the area Major Expedition, Minor Endurance, and Minor Intellect, increasing Movement Speed by 30%, as well as Stamina and Magicka Recovery by 15%. Effect persists for 4 seconds after leaving the path.\n\nHeals 435 Health to you and allies in the area every 1 second.',
+        'Create a corridor of shadows for 10 seconds, granting you and allies in the area Major Expedition, Minor Endurance, and Minor Intellect, increasing Movement Speed by 30%, as well as Stamina and Magicka Recovery by 15%. Effect persists for 4 seconds after leaving the path.\n\nHeals 1536 Health to you and allies in the area every 1 second.',
       baseSkillId: ClassSkillId.NIGHTBLADE_PATH_OF_DARKNESS,
     },
     {

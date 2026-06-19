@@ -5,7 +5,7 @@ export const belharzasBand: GearSetData = {
   icon: "Belharza's Band",
   setType: 'Mythic',
   bonuses: [
-    "(1 item) Increase the damage of your Light Attacks by 900.\n\nWhen you deal damage with consecutive melee Light Attacks, gain a stack of Belharza's Temper for 10 seconds, up to 5 stacks max. At 5 stacks, consume Belharza's Temper and after 1 second, deal 1471 Physical Damage to enemies in a line and stun them for 3 seconds. This effect can occur once every 10 seconds and scales off the higher of your Weapon or Spell Damage.",
+    "(1 item) Increase the damage of your Light Attacks by 900.\n\nWhen you deal damage with consecutive melee Light Attacks, gain a stack of Belharza's Temper for 10 seconds, up to 5 stacks max. At 5 stacks, consume Belharza's Temper and after 1 second, deal 8637 Physical Damage to enemies in a line and stun them for 3 seconds. This effect can occur once every 10 seconds and scales off the higher of your Weapon or Spell Damage.",
   ],
 };
 
@@ -41,7 +41,7 @@ export const dovRhaSabatons: GearSetData = {
   icon: 'Dov-Rha Sabatons',
   setType: 'Mythic',
   bonuses: [
-    '(1 item) While Sprinting gain a stack of Draconic Scales every 0.5 seconds, granting you 660 Armor, up to 20 stacks max. Upon stopping you deal 0 Physical Damage per stack in an 8 meter shockwave, gain a damage shield equal to damage dealt, and retain Draconic Scales for 10 seconds but cannot gain new stacks. At 20 stacks, this damage will also stun for 3 seconds. The damage scales off the higher of your Physical or Spell Resistance.',
+    '(1 item) While Sprinting gain a stack of Draconic Scales every 0.5 seconds, granting you 660 Armor, up to 20 stacks max. Upon stopping you deal 139 Physical Damage per stack in an 8 meter shockwave, gain a damage shield equal to damage dealt, and retain Draconic Scales for 10 seconds but cannot gain new stacks. At 20 stacks, this damage will also stun for 3 seconds. The damage scales off the higher of your Physical or Spell Resistance.',
   ],
 };
 
@@ -59,7 +59,7 @@ export const faunsLarkCladding: GearSetData = {
   icon: "Faun's Lark Cladding",
   setType: 'Mythic',
   bonuses: [
-    '(1 item) If you continuously Sprint for 1 second, you gain the ability to pass through enemies. Enemies you pass through become Charmed for 4 seconds, removing their ability to attack or cast abilities as they move toward you. Charming an enemy this way restores 678 Stamina and Magicka to you, and heals you for 678 Health.\n\nCharming an enemy removes you from Stealth.',
+    '(1 item) If you continuously Sprint for 1 second, you gain the ability to pass through enemies. Enemies you pass through become Charmed for 4 seconds, removing their ability to attack or cast abilities as they move toward you. Charming an enemy this way restores 678 Stamina and Magicka to you, and heals you for 692 Health.\n\nCharming an enemy removes you from Stealth.',
   ],
 };
 
@@ -107,7 +107,7 @@ export const madGodsDancingShoes: GearSetData = {
   icon: "Mad God's Dancing Shoes",
   setType: 'Mythic',
   bonuses: [
-    '(1 item) While in combat, roll dodging creates a random effect. This effect can occur once every 3 seconds. Effects:\n\n-Create a cheese wheel under an enemy within 15 meters that deals 1249 Magic Damage to enemies in 3 meters after 1 second.\n-Deal 1000 Physical Damage to enemies facing you after 1.5 seconds.\n-Deal 1394 Magic Damage to the nearest enemy.\n-Gain Major Expedition for 4.5 seconds.\n-Restore 1172 Stamina.\n-Reduce the cost of your next non-Ultimate ability by 14%.\n-Gain 7 Ultimate.',
+    '(1 item) While in combat, roll dodging creates a random effect. This effect can occur once every 3 seconds. Effects:\n\n-Create a cheese wheel under an enemy within 15 meters that deals 7333 Magic Damage to enemies in 3 meters after 1 second.\n-Deal 5868 Physical Damage to enemies facing you after 1.5 seconds.\n-Deal 8649 Magic Damage to the nearest enemy.\n-Gain Major Expedition for 4.5 seconds.\n-Restore 1172 Stamina.\n-Reduce the cost of your next non-Ultimate ability by 14%.\n-Gain 7 Ultimate.',
   ],
 };
 

@@ -51,7 +51,7 @@ export const oneHandAndShieldSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.PUNCTURE,
       description:
-        'Thrust your weapon with disciplined precision at an enemy, dealing 1161 Physical Damage and taunting them to attack you for 15 seconds.\n\nAlso inflicts Major Breach on the enemy, reducing their Physical and Spell Resistance by 5948 for 15 seconds.',
+        'Thrust your weapon with disciplined precision at an enemy, dealing 4736 Physical Damage and taunting them to attack you for 15 seconds.\n\nAlso inflicts Major Breach on the enemy, reducing their Physical and Spell Resistance by 5948 for 15 seconds.',
     },
     {
       id: 38250, // Pierce Armor (morph)
@@ -59,7 +59,7 @@ export const oneHandAndShieldSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.PUNCTURE,
       description:
-        'Thrust your weapon with disciplined precision at an enemy, dealing 1199 Physical Damage and taunting them to attack you for 15 seconds.\n\nAlso inflicts Minor Breach and Major Breach on the enemy, reducing their Physical Resistance and Spell Resistance by 2974 and 5948 for 15 seconds.',
+        'Thrust your weapon with disciplined precision at an enemy, dealing 4892 Physical Damage and taunting them to attack you for 15 seconds.\n\nAlso inflicts Minor Breach and Major Breach on the enemy, reducing their Physical Resistance and Spell Resistance by 2974 and 5948 for 15 seconds.',
     },
     {
       id: 38254, // Ransack (morph)
@@ -67,7 +67,7 @@ export const oneHandAndShieldSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.PUNCTURE,
       description:
-        'Thrust your weapon with disciplined precision at an enemy, dealing 1199 Physical Damage and taunting them to attack you for 15 seconds.\n\nAlso inflicts Major Breach on the enemy, reducing their Physical and Spell Resistance by 5948 for 15 seconds.\n\nYou also gain Minor Protection, reducing your damage taken by 5% for 15 seconds.',
+        'Thrust your weapon with disciplined precision at an enemy, dealing 4892 Physical Damage and taunting them to attack you for 15 seconds.\n\nAlso inflicts Major Breach on the enemy, reducing their Physical and Spell Resistance by 5948 for 15 seconds.\n\nYou also gain Minor Protection, reducing your damage taken by 5% for 15 seconds.',
     },
     {
       id: AbilityId.LOW_SLASH,
@@ -75,7 +75,7 @@ export const oneHandAndShieldSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.LOW_SLASH,
       description:
-        'Surprise an enemy with a deep lunge, dealing 1392 Physical Damage and afflicting them with Minor Maim, reducing their damage done by 5% for 15 seconds.',
+        'Surprise an enemy with a deep lunge, dealing 5683 Physical Damage and afflicting them with Minor Maim, reducing their damage done by 5% for 15 seconds.',
     },
     {
       id: 38268, // Deep Slash (morph)
@@ -83,7 +83,7 @@ export const oneHandAndShieldSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.LOW_SLASH,
       description:
-        'Surprise an enemy with a sweeping lunge, dealing 1799 Physical Damage to them and other nearby enemies, afflicting them with Minor Maim, reducing their damage done by 5% for 15 seconds.\n\nEnemies hit also have their Movement Speed reduced by 30% for 4 seconds.',
+        'Surprise an enemy with a sweeping lunge, dealing 6946 Physical Damage to them and other nearby enemies, afflicting them with Minor Maim, reducing their damage done by 5% for 15 seconds.\n\nEnemies hit also have their Movement Speed reduced by 30% for 4 seconds.',
     },
     {
       id: 38264, // Heroic Slash (morph)
@@ -91,7 +91,7 @@ export const oneHandAndShieldSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.LOW_SLASH,
       description:
-        'Surprise an enemy with a deep lunge, dealing 1438 Physical Damage and afflicting them with Minor Maim, reducing their damage done by 5% for 15 seconds.\n\nYou gain Minor Heroism, granting you 1 Ultimate every 1.5 seconds for 15 seconds.',
+        'Surprise an enemy with a deep lunge, dealing 5870 Physical Damage and afflicting them with Minor Maim, reducing their damage done by 5% for 15 seconds.\n\nYou gain Minor Heroism, granting you 1 Ultimate every 1.5 seconds for 15 seconds.',
     },
     {
       id: AbilityId.DEFENSIVE_POSTURE,
@@ -99,7 +99,7 @@ export const oneHandAndShieldSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.DEFENSIVE_POSTURE,
       description:
-        'Bolster your defenses, gaining a damage shield that absorbs up to 4958 damage for 6 seconds. This portion of the ability scales off your Max Health.\n\nYou reflect the next harmful direct damage projectile cast at you. This effect can occur once per cast.',
+        'Bolster your defenses, gaining a damage shield that absorbs up to 5702 damage for 6 seconds. This portion of the ability scales off your Max Health.\n\nYou reflect the next harmful direct damage projectile cast at you. This effect can occur once per cast.',
     },
     {
       id: 38401, // Absorb Missile (morph)
@@ -107,7 +107,7 @@ export const oneHandAndShieldSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.DEFENSIVE_POSTURE,
       description:
-        'Rush an enemy and ram them, dealing 1393 Physical Damage and stunning them for 3 seconds.\n\nYou gain a damage shield after the attack, absorbing 5121 damage for 6 seconds. This portion of the ability scales off your Max Health.',
+        'Rush an enemy and ram them, dealing 5683 Physical Damage and stunning them for 3 seconds.\n\nYou gain a damage shield after the attack, absorbing 5890 damage for 6 seconds. This portion of the ability scales off your Max Health.',
     },
     {
       id: 38405, // Defensive Stance (morph)
@@ -115,7 +115,7 @@ export const oneHandAndShieldSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.DEFENSIVE_POSTURE,
       description:
-        'Rush an enemy and ram them, dealing 1393 Physical Damage and stunning them for 4 seconds.\n\nStuns up to 50% longer based on the distance traveled.',
+        'Rush an enemy and ram them, dealing 5683 Physical Damage and stunning them for 4 seconds.\n\nStuns up to 50% longer based on the distance traveled.',
     },
     {
       id: AbilityId.SHIELD_CHARGE,
@@ -123,7 +123,7 @@ export const oneHandAndShieldSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.SHIELD_CHARGE,
       description:
-        'Rush an enemy and ram them, dealing 1392 Physical Damage and stunning them for 3 seconds.',
+        'Rush an enemy and ram them, dealing 5683 Physical Damage and stunning them for 3 seconds.',
     },
     {
       id: 38455, // Invasion (morph)
@@ -131,7 +131,7 @@ export const oneHandAndShieldSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.SHIELD_CHARGE,
       description:
-        "Strike an enemy full-force with your shield, dealing 1161 Physical Damage and stunning them for 3 seconds.\n\nAfter the stun ends, the enemy takes an additional 1161 Physical Damage.\n\nThis ability's damage is considered Bash damage and interrupts the enemy if they are casting.",
+        "Strike an enemy full-force with your shield, dealing 4736 Physical Damage and stunning them for 3 seconds.\n\nAfter the stun ends, the enemy takes an additional 4736 Physical Damage.\n\nThis ability's damage is considered Bash damage and interrupts the enemy if they are casting.",
     },
     {
       id: 38452, // Shielded Assault (morph)
@@ -139,7 +139,7 @@ export const oneHandAndShieldSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.SHIELD_CHARGE,
       description:
-        "Strike an enemy full-force with your shield, dealing 2399 Physical Damage.\n\nWhile slotted, blocking any attack grants you Resentment, which reduces the cost of your next Power Slam cast within 10 seconds by 50%.\n\nThis ability's damage is considered Bash damage and interrupts the enemy if they are casting.",
+        "Strike an enemy full-force with your shield, dealing 9785 Physical Damage.\n\nWhile slotted, blocking any attack grants you Resentment, which reduces the cost of your next Power Slam cast within 10 seconds by 50%.\n\nThis ability's damage is considered Bash damage and interrupts the enemy if they are casting.",
     },
     {
       id: AbilityId.POWER_BASH,
@@ -147,7 +147,7 @@ export const oneHandAndShieldSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.POWER_BASH,
       description:
-        "Strike an enemy full-force with your shield, dealing 2323 Physical Damage.\n\nThis ability's damage is considered Bash damage and interrupts the enemy if they are casting.",
+        "Strike an enemy full-force with your shield, dealing 9473 Physical Damage.\n\nThis ability's damage is considered Bash damage and interrupts the enemy if they are casting.",
     },
     {
       id: 38382, // Power Slam (morph)
@@ -155,7 +155,7 @@ export const oneHandAndShieldSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.POWER_BASH,
       description:
-        "Strike an enemy full-force with your shield, dealing 2399 Physical Damage.\n\nWhile slotted, blocking any attack grants you Resentment, which reduces the cost of your next Power Slam cast within 10 seconds by 50%.\n\nThis ability's damage is considered Bash damage and interrupts the enemy if they are casting.",
+        "Strike an enemy full-force with your shield, dealing 9785 Physical Damage.\n\nWhile slotted, blocking any attack grants you Resentment, which reduces the cost of your next Power Slam cast within 10 seconds by 50%.\n\nThis ability's damage is considered Bash damage and interrupts the enemy if they are casting.",
     },
     {
       id: 38386, // Reverberating Bash (morph)
@@ -163,7 +163,7 @@ export const oneHandAndShieldSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.POWER_BASH,
       description:
-        "Strike an enemy full-force with your shield, dealing 1161 Physical Damage and stunning them for 3 seconds.\n\nAfter the stun ends, the enemy takes an additional 1161 Physical Damage.\n\nThis ability's damage is considered Bash damage and interrupts the enemy if they are casting.",
+        "Strike an enemy full-force with your shield, dealing 4736 Physical Damage and stunning them for 3 seconds.\n\nAfter the stun ends, the enemy takes an additional 4736 Physical Damage.\n\nThis ability's damage is considered Bash damage and interrupts the enemy if they are casting.",
     },
 
     // Passive abilities

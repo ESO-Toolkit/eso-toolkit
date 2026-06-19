@@ -19,7 +19,7 @@ export const siphoning: SkillLineData = {
       type: 'ultimate',
       icon: 'ability_nightblade_018',
       description:
-        "Ravage nearby enemies' souls with a night rune, dealing 3486 Magic Damage and stunning them for 4 seconds.\n\nAn ally can target a ravaged enemy and activate the Soul Leech synergy, dealing 3122 Magic Damage to them and healing for the damage caused.",
+        "Ravage nearby enemies' souls with a night rune, dealing 13449 Magic Damage and stunning them for 4 seconds.\n\nAn ally can target a ravaged enemy and activate the Soul Leech synergy, dealing 12728 Magic Damage to them and healing for the damage caused.",
       isUltimate: true,
       baseSkillId: ClassSkillId.NIGHTBLADE_SOUL_SHRED,
     },
@@ -29,7 +29,7 @@ export const siphoning: SkillLineData = {
       type: 'ultimate',
       icon: 'ability_nightblade_018_a',
       description:
-        "Ravage nearby enemies' souls with a night rune, dealing 3600 Magic Damage, healing for half the damage, and stunning them for 4 seconds.\n\nRavaged enemies are tethered to you for 8 seconds, and while they remain within 10 meters, you siphon 627 Health from them every second.\n\nAn ally can target a ravaged enemy and activate the Soul Leech synergy, dealing 3122 Magic Damage to them and healing for the damage caused.",
+        "Ravage nearby enemies' souls with a night rune, dealing 13892 Magic Damage, healing for half the damage, and stunning them for 4 seconds.\n\nRavaged enemies are tethered to you for 8 seconds, and while they remain within 10 meters, you siphon 2419 Health from them every second.\n\nAn ally can target a ravaged enemy and activate the Soul Leech synergy, dealing 12728 Magic Damage to them and healing for the damage caused.",
       isUltimate: true,
       baseSkillId: ClassSkillId.NIGHTBLADE_SOUL_SHRED,
     },
@@ -39,7 +39,7 @@ export const siphoning: SkillLineData = {
       type: 'ultimate',
       icon: 'ability_nightblade_018_b',
       description:
-        'Sanctify your soul and the souls of nearby allies with a night rune, healing for 3600 Health and an additional 9384 Health over 4 seconds.\n\nYou and your allies will also receive Major Vitality, increasing your healing received and damage shield strength by 12% for 4 seconds.\n\nAn ally can target a nearby enemy and activate the Soul Leech synergy, dealing 3122 Magic Damage to them and healing for the damage caused.',
+        'Sanctify your soul and the souls of nearby allies with a night rune, healing for 12679 Health and an additional 33048 Health over 4 seconds.\n\nYou and your allies will also receive Major Vitality, increasing your healing received and damage shield strength by 12% for 4 seconds.\n\nAn ally can target a nearby enemy and activate the Soul Leech synergy, dealing 12728 Magic Damage to them and healing for the damage caused.',
       isUltimate: true,
       baseSkillId: ClassSkillId.NIGHTBLADE_SOUL_SHRED,
     },
@@ -49,7 +49,7 @@ export const siphoning: SkillLineData = {
       type: 'active',
       icon: 'ability_nightblade_012',
       description:
-        "Steal an enemy's life force, dealing 1548 Magic Damage and healing you or a nearby ally for 50% of the damage inflicted every 2 seconds for 10 seconds.",
+        "Steal an enemy's life force, dealing 6316 Magic Damage and healing you or a nearby ally for 51% of the damage inflicted every 2 seconds for 10 seconds.",
       baseSkillId: ClassSkillId.NIGHTBLADE_STRIFE,
     },
     {
@@ -58,7 +58,7 @@ export const siphoning: SkillLineData = {
       type: 'active',
       icon: 'ability_nightblade_012_a',
       description:
-        "Steal an enemy's life force, dealing 2160 Magic Damage and healing you for 35% of the damage inflicted every 2 seconds for 10 seconds.",
+        "Steal an enemy's life force, dealing 8808 Magic Damage and healing you for 36% of the damage inflicted every 2 seconds for 10 seconds.",
       baseSkillId: ClassSkillId.NIGHTBLADE_STRIFE,
     },
     {
@@ -67,7 +67,7 @@ export const siphoning: SkillLineData = {
       type: 'active',
       icon: 'ability_nightblade_012_b',
       description:
-        "Steal an enemy's life force, dealing 1600 Magic Damage and healing you or 3 other nearby allies for 50% of the damage inflicted every 2 seconds for 10 seconds.",
+        "Steal an enemy's life force, dealing 6524 Magic Damage and healing you or 3 other nearby allies for 51% of the damage inflicted every 2 seconds for 10 seconds.",
       baseSkillId: ClassSkillId.NIGHTBLADE_STRIFE,
     },
     {
@@ -76,7 +76,7 @@ export const siphoning: SkillLineData = {
       type: 'active',
       icon: 'ability_nightblade_006',
       description:
-        "Sap an enemy's agility and wrack them with pain, dealing 4631 Magic Damage over 20 seconds and reducing their Movement Speed by 30% for 4 seconds.",
+        "Sap an enemy's agility and wrack them with pain, dealing 17919 Magic Damage over 20 seconds and reducing their Movement Speed by 30% for 4 seconds.",
       baseSkillId: ClassSkillId.NIGHTBLADE_CRIPPLE,
     },
     {
@@ -85,7 +85,7 @@ export const siphoning: SkillLineData = {
       type: 'active',
       icon: 'ability_nightblade_006_b',
       description:
-        "Sap an enemy's agility and wrack them with pain, dealing 1199 Magic Damage and an additional 4350 Magic Damage over 20 seconds, immobilizing them for 2 seconds, and reducing their Movement Speed by 30% for 4 seconds.",
+        "Sap an enemy's agility and wrack them with pain, dealing 4892 Magic Damage and an additional 16820 Magic Damage over 20 seconds, immobilizing them for 2 seconds, and reducing their Movement Speed by 30% for 4 seconds.",
       baseSkillId: ClassSkillId.NIGHTBLADE_CRIPPLE,
     },
     {
@@ -94,7 +94,7 @@ export const siphoning: SkillLineData = {
       type: 'active',
       icon: 'ability_nightblade_006_a',
       description:
-        "Sap an enemy's agility and wrack them with pain, dealing 4785 Magic Damage over 20 seconds and reducing their Movement Speed by 50% for 4 seconds.\n\nThis ability has a higher chance of applying the Overcharged status effect.",
+        "Sap an enemy's agility and wrack them with pain, dealing 18502 Magic Damage over 20 seconds and reducing their Movement Speed by 50% for 4 seconds.\n\nThis ability has a higher chance of applying the Overcharged status effect.",
       baseSkillId: ClassSkillId.NIGHTBLADE_CRIPPLE,
     },
     {
@@ -103,7 +103,7 @@ export const siphoning: SkillLineData = {
       type: 'active',
       icon: 'ability_nightblade_003',
       description:
-        'Channel a portion of your soul to convert Health to 2000 Magicka and Stamina.\n\nWhile slotted on either bar, your soul yearns for the warmth of life. All damage you deal heals you for 1250 Health, up to once every 1 second.',
+        'Channel a portion of your soul to convert Health to 2000 Magicka and Stamina.\n\nWhile slotted on either bar, your soul yearns for the warmth of life. All damage you deal heals you for 1275 Health, up to once every 1 second.',
       baseSkillId: ClassSkillId.NIGHTBLADE_SIPHONING_STRIKES,
     },
     {
@@ -112,7 +112,7 @@ export const siphoning: SkillLineData = {
       type: 'active',
       icon: 'ability_nightblade_003_a',
       description:
-        'Channel a portion of your soul to convert Health to 2000 Magicka and Stamina.\n\nWhile slotted on either bar, your soul yearns for the warmth of life. All damage you deal heals you for 1800 Health and reduces the cost of your next Leeching Strikes by 10%, stacking up to 10 times. This effect can occur once every 1 second.',
+        'Channel a portion of your soul to convert Health to 2000 Magicka and Stamina.\n\nWhile slotted on either bar, your soul yearns for the warmth of life. All damage you deal heals you for 1836 Health and reduces the cost of your next Leeching Strikes by 10%, stacking up to 10 times. This effect can occur once every 1 second.',
       baseSkillId: ClassSkillId.NIGHTBLADE_SIPHONING_STRIKES,
     },
     {
@@ -121,7 +121,7 @@ export const siphoning: SkillLineData = {
       type: 'active',
       icon: 'ability_nightblade_003_b',
       description:
-        'Channel a portion of your soul to convert Health to 2600 Magicka and Stamina.\n\nWhile slotted on either bar, your soul yearns for the warmth of life. All damage you deal heals you for 1250 Health and restores 200 Magicka and Stamina, up to once every 1 second.',
+        'Channel a portion of your soul to convert Health to 2600 Magicka and Stamina.\n\nWhile slotted on either bar, your soul yearns for the warmth of life. All damage you deal heals you for 1275 Health and restores 200 Magicka and Stamina, up to once every 1 second.',
       baseSkillId: ClassSkillId.NIGHTBLADE_SIPHONING_STRIKES,
     },
     {
@@ -130,7 +130,7 @@ export const siphoning: SkillLineData = {
       type: 'active',
       icon: 'ability_nightblade_013',
       description:
-        "Siphon the vigor from your enemies' blood, dealing 1742 Magic Damage to all nearby enemies.\n\nIf an enemy is hit, you gain Major Brutality and Sorcery, increasing your Weapon and Spell Damage by 20% for 30 seconds.",
+        "Siphon the vigor from your enemies' blood, dealing 6724 Magic Damage to all nearby enemies.\n\nIf an enemy is hit, you gain Major Brutality and Sorcery, increasing your Weapon and Spell Damage by 20% for 30 seconds.",
       baseSkillId: ClassSkillId.NIGHTBLADE_DRAIN_POWER,
     },
     {
@@ -139,7 +139,7 @@ export const siphoning: SkillLineData = {
       type: 'active',
       icon: 'ability_nightblade_013_b',
       description:
-        "Siphon the vigor from your enemies' blood, dealing 1742 Disease Damage to all nearby enemies.\n\nIf an enemy is hit you gain Major Brutality and Sorcery, and Minor Courage increasing your Weapon and Spell Damage by 20% and 215 for 30 seconds. Enemies hit have Minor Cowardice applied to them for 10 seconds, reducing their Weapon and Spell Damage by 215.",
+        "Siphon the vigor from your enemies' blood, dealing 6725 Disease Damage to all nearby enemies.\n\nIf an enemy is hit you gain Major Brutality and Sorcery, and Minor Courage increasing your Weapon and Spell Damage by 20% and 215 for 30 seconds. Enemies hit have Minor Cowardice applied to them for 10 seconds, reducing their Weapon and Spell Damage by 215.",
       baseSkillId: ClassSkillId.NIGHTBLADE_DRAIN_POWER,
     },
     {
@@ -148,7 +148,7 @@ export const siphoning: SkillLineData = {
       type: 'active',
       icon: 'ability_nightblade_013_a',
       description:
-        "Siphon the vigor from your enemies' blood, dealing 1742 Magic Damage to all nearby enemies and healing you and your allies for 599 plus 20% more for each enemy hit.\n\nIf an enemy is hit, you gain Major Brutality and Sorcery, increasing your Weapon and Spell Damage by 20% for 30 seconds.",
+        "Siphon the vigor from your enemies' blood, dealing 6725 Magic Damage to all nearby enemies and healing you and your allies for 2111 plus 20% more for each enemy hit.\n\nIf an enemy is hit, you gain Major Brutality and Sorcery, increasing your Weapon and Spell Damage by 20% for 30 seconds.",
       baseSkillId: ClassSkillId.NIGHTBLADE_DRAIN_POWER,
     },
     {
@@ -157,7 +157,7 @@ export const siphoning: SkillLineData = {
       type: 'active',
       icon: 'ability_nightblade_011',
       description:
-        'Pour out your lifesblood and channel the arcane, healing yourself or an ally in front of you for 3486 Health, while draining 1080 Health from yourself over 3 seconds.',
+        'Pour out your lifesblood and channel the arcane, healing yourself or an ally in front of you for 12273 Health, while draining 1080 Health from yourself over 3 seconds.',
       baseSkillId: ClassSkillId.NIGHTBLADE_MALEVOLENT_OFFERING,
     },
     {
@@ -166,7 +166,7 @@ export const siphoning: SkillLineData = {
       type: 'active',
       icon: 'ability_nightblade_011_a',
       description:
-        'Pour out your lifesblood and channel the arcane, healing yourself or an ally in front of you for 3600 Health, while draining 1080 Health from yourself over 3 seconds.\n\nAfter casting, gain Minor Mending for 10 seconds, increasing your healing done by 8%.',
+        'Pour out your lifesblood and channel the arcane, healing yourself or an ally in front of you for 12679 Health, while draining 1080 Health from yourself over 3 seconds.\n\nAfter casting, gain Minor Mending for 10 seconds, increasing your healing done by 8%.',
       baseSkillId: ClassSkillId.NIGHTBLADE_MALEVOLENT_OFFERING,
     },
     {
@@ -175,7 +175,7 @@ export const siphoning: SkillLineData = {
       type: 'active',
       icon: 'ability_nightblade_011_b',
       description:
-        'Pour out your lifesblood and channel the arcane, healing yourself or an ally in front of you for 3485 Health, while draining 810 Health from yourself over 2 seconds.',
+        'Pour out your lifesblood and channel the arcane, healing yourself or an ally in front of you for 12274 Health, while draining 810 Health from yourself over 2 seconds.',
       baseSkillId: ClassSkillId.NIGHTBLADE_MALEVOLENT_OFFERING,
     },
     {

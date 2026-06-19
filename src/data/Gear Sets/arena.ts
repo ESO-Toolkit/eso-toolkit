@@ -39,7 +39,7 @@ export const executionersBlade: GearSetData = {
   icon: "Executioner's Blade",
   setType: 'Arena',
   bonuses: [
-    '(2 items) Hidden Blade deals up to 250% more damage to targets under 100% Health when you are standing behind them.\n\nRestores 1890 Stamina if the target was below 50% Health.',
+    '(2 items) Hidden Blade deals up to 250% more damage to targets under 100% Health when you are standing behind them.\n\nRestores 1417 Stamina if the target was below 50% Health.',
   ],
 };
 
@@ -57,7 +57,7 @@ export const frenziedMomentum: GearSetData = {
   icon: 'Frenzied Momentum',
   setType: 'Arena',
   bonuses: [
-    '(2 items) While Momentum is active, casting Stamina abilities while in combat generates a stack of Frenzied Momentum for 20 seconds, increasing your Weapon and Spell Damage by 30 up to 10 times. After 5 or more stacks, your next Heavy Attack consumes all stacks and releases a violent explosion of energy around you, dealing 1084 Physical Damage to all enemies within 8 meters, scaling off the higher of your Weapon or Spell Damage.',
+    '(2 items) While Momentum is active, casting Stamina abilities while in combat generates a stack of Frenzied Momentum for 20 seconds, increasing your Weapon and Spell Damage by 30 up to 10 times. After 5 or more stacks, your next Heavy Attack consumes all stacks and releases a violent explosion of energy around you, dealing 6362 Physical Damage to all enemies within 8 meters, scaling off the higher of your Weapon or Spell Damage.',
   ],
 };
 
@@ -93,7 +93,7 @@ export const mercilessCharge: GearSetData = {
   icon: 'Merciless Charge',
   setType: 'Arena',
   bonuses: [
-    '(2 items) Activating Critical Charge stirs up a barbarous lust for battle within you for 18 seconds, increasing your damage done with direct damage attacks by 1%, up to a maximum of 12%. This effect scales off the higher of your Weapon or Spell Damage.',
+    '(2 items) Activating Critical Charge stirs up a barbarous lust for battle within you for 18 seconds, increasing your damage done with direct damage attacks by 9%, up to a maximum of 12%. This effect scales off the higher of your Weapon or Spell Damage.',
   ],
 };
 
@@ -143,7 +143,7 @@ export const perfectedExecutionersBlade: GearSetData = {
   setType: 'Arena',
   bonuses: [
     '(2 perfected items) Adds 526 Critical Chance',
-    '(2 items) Hidden Blade deals up to 250% more damage to targets under 100% Health when you are standing behind them.\n\nRestores 1890 Stamina if the target was below 50% Health.',
+    '(2 items) Hidden Blade deals up to 250% more damage to targets under 100% Health when you are standing behind them.\n\nRestores 1417 Stamina if the target was below 50% Health.',
   ],
 };
 
@@ -163,7 +163,7 @@ export const perfectedFrenziedMomentum: GearSetData = {
   setType: 'Arena',
   bonuses: [
     '(2 perfected items) Adds 877 Maximum Stamina',
-    '(2 items) While Momentum is active, casting Stamina abilities while in combat generates a stack of Frenzied Momentum for 20 seconds, increasing your Weapon and Spell Damage by 30 up to 10 times. After 5 or more stacks, your next Heavy Attack consumes all stacks and releases a violent explosion of energy around you, dealing 1084 Physical Damage to all enemies within 8 meters, scaling off the higher of your Weapon or Spell Damage.',
+    '(2 items) While Momentum is active, casting Stamina abilities while in combat generates a stack of Frenzied Momentum for 20 seconds, increasing your Weapon and Spell Damage by 30 up to 10 times. After 5 or more stacks, your next Heavy Attack consumes all stacks and releases a violent explosion of energy around you, dealing 6362 Physical Damage to all enemies within 8 meters, scaling off the higher of your Weapon or Spell Damage.',
   ],
 };
 
@@ -203,7 +203,7 @@ export const perfectedMercilessCharge: GearSetData = {
   setType: 'Arena',
   bonuses: [
     '(2 perfected items) Adds 1190 Offensive Penetration',
-    '(2 items) Activating Critical Charge stirs up a barbarous lust for battle within you for 18 seconds, increasing your damage done with direct damage attacks by 1%, up to a maximum of 12%. This effect scales off the higher of your Weapon or Spell Damage.',
+    '(2 items) Activating Critical Charge stirs up a barbarous lust for battle within you for 18 seconds, increasing your damage done with direct damage attacks by 9%, up to a maximum of 12%. This effect scales off the higher of your Weapon or Spell Damage.',
   ],
 };
 
@@ -233,7 +233,7 @@ export const perfectedPuncturingRemedy: GearSetData = {
   setType: 'Arena',
   bonuses: [
     '(2 perfected items) Adds 3% Healing Taken',
-    '(2 items) When you deal damage with Puncture, you heal for 2230 Health and gain Spell and Physical Resistance equal to the amount of healing or over healing done for 5 seconds. The healing scales off your Max Health.',
+    '(2 items) When you deal damage with Puncture, you heal for 2615 Health and gain Spell and Physical Resistance equal to the amount of healing or over healing done for 5 seconds. The healing scales off your Max Health.',
   ],
 };
 
@@ -274,7 +274,7 @@ export const perfectedStingingSlashes: GearSetData = {
   setType: 'Arena',
   bonuses: [
     '(2 perfected items) Adds 526 Critical Chance',
-    '(2 items) Twin Slashes deals 209 more damage for each hit of the initial attack and bleed. This effect scales off the higher of your Weapon or Spell Damage.',
+    '(2 items) Twin Slashes deals 1074 more damage for each hit of the initial attack and bleed. This effect scales off the higher of your Weapon or Spell Damage.',
   ],
 };
 
@@ -324,7 +324,7 @@ export const perfectedWildImpulse: GearSetData = {
   setType: 'Arena',
   bonuses: [
     '(2 perfected items) Adds 1190 Offensive Penetration',
-    '(2 items) Reduce the cost of Impulse by 10%. Impulse places lingering elemental damage on your targets, dealing 605 Flame, 605 Shock, and 605 Frost Damage over 8 seconds. Each element ticks once over the duration and its damage scales off the higher of your Weapon or Spell Damage.',
+    '(2 items) Reduce the cost of Impulse by 10%. Impulse places lingering elemental damage on your targets, dealing 3555 Flame, 3555 Shock, and 3555 Frost Damage over 8 seconds. Each element ticks once over the duration and its damage scales off the higher of your Weapon or Spell Damage.',
   ],
 };
 
@@ -334,7 +334,7 @@ export const perfectedWrathOfElements: GearSetData = {
   setType: 'Arena',
   bonuses: [
     '(2 perfected items) Adds 1190 Offensive Penetration',
-    '(2 items) Casting Weakness to Elements on a target within 15 meters of you causes a surge of elemental energy to tether between you for 10 seconds. While the tether persists, enemies touching the tether take 331 Flame Damage, 331 Shock Damage, or 331 Frost Damage every 1 second, which increases by 1% each time it deals damage, up to 20%. This effect can occur once every 10 seconds, and scales off the higher of your Weapon or Spell Damage.',
+    '(2 items) Casting Weakness to Elements on a target within 15 meters of you causes a surge of elemental energy to tether between you for 10 seconds. While the tether persists, enemies touching the tether take 1834 Flame Damage, 1834 Shock Damage, or 1834 Frost Damage every 1 second, which increases by 1% each time it deals damage, up to 20%. This effect can occur once every 10 seconds, and scales off the higher of your Weapon or Spell Damage.',
   ],
 };
 
@@ -361,7 +361,7 @@ export const puncturingRemedy: GearSetData = {
   icon: 'Puncturing Remedy',
   setType: 'Arena',
   bonuses: [
-    '(2 items) When you deal damage with Puncture, you heal for 2230 Health and gain Spell and Physical Resistance equal to the amount of healing or over healing done for 5 seconds. The healing scales off your Max Health.',
+    '(2 items) When you deal damage with Puncture, you heal for 2615 Health and gain Spell and Physical Resistance equal to the amount of healing or over healing done for 5 seconds. The healing scales off your Max Health.',
   ],
 };
 
@@ -395,7 +395,7 @@ export const stingingSlashes: GearSetData = {
   icon: 'Stinging Slashes',
   setType: 'Arena',
   bonuses: [
-    '(2 items) Twin Slashes deals 209 more damage for each hit of the initial attack and bleed. This effect scales off the higher of your Weapon or Spell Damage.',
+    '(2 items) Twin Slashes deals 1074 more damage for each hit of the initial attack and bleed. This effect scales off the higher of your Weapon or Spell Damage.',
   ],
 };
 
@@ -440,7 +440,7 @@ export const wildImpulse: GearSetData = {
   icon: 'Wild Impulse',
   setType: 'Arena',
   bonuses: [
-    '(2 items) Reduce the cost of Impulse by 10%. Impulse places lingering elemental damage on your targets, dealing 605 Flame, 605 Shock, and 605 Frost Damage over 8 seconds. Each element ticks once over the duration and its damage scales off the higher of your Weapon or Spell Damage.',
+    '(2 items) Reduce the cost of Impulse by 10%. Impulse places lingering elemental damage on your targets, dealing 3555 Flame, 3555 Shock, and 3555 Frost Damage over 8 seconds. Each element ticks once over the duration and its damage scales off the higher of your Weapon or Spell Damage.',
   ],
 };
 
@@ -449,6 +449,6 @@ export const wrathOfElements: GearSetData = {
   icon: 'Wrath of Elements',
   setType: 'Arena',
   bonuses: [
-    '(2 items) Casting Weakness to Elements on a target within 15 meters of you causes a surge of elemental energy to tether between you for 10 seconds. While the tether persists, enemies touching the tether take 331 Flame Damage, 331 Shock Damage, or 331 Frost Damage every 1 second, which increases by 1% each time it deals damage, up to 20%. This effect can occur once every 10 seconds, and scales off the higher of your Weapon or Spell Damage.',
+    '(2 items) Casting Weakness to Elements on a target within 15 meters of you causes a surge of elemental energy to tether between you for 10 seconds. While the tether persists, enemies touching the tether take 1834 Flame Damage, 1834 Shock Damage, or 1834 Frost Damage every 1 second, which increases by 1% each time it deals damage, up to 20%. This effect can occur once every 10 seconds, and scales off the higher of your Weapon or Spell Damage.',
   ],
 };

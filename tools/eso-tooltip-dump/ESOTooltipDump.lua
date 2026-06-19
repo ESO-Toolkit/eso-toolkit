@@ -8,16 +8,24 @@
 --   /dumptooltips skills  dump skills only
 --   /dumptooltips sets    dump sets only
 --   /dumptooltips ids     ID-driven pass only (scribing + enum ids, from CaptureIds.lua)
+--   /dumptooltips allids  exhaustive ability-id scan (slow, catches combat/proc/NPC ids)
 --   /dumptooltips state   print the current reference-state stat snapshot (no dump)
 --   /dumptooltips probe   test whether locked (e.g. scribing) abilities return text (no dump)
---
+
 -- The dump records a snapshot of the player's derived stats so the numbers are traceable
 -- to the exact character state they were produced at. Run at a consistent reference state
 -- (documented in the project runbook) for stable cross-patch output.
 
 local ADDON_NAME = "ESOTooltipDump"
-local DUMP_FORMAT_VERSION = 1
+local ADDON_VERSION = "1.1.2"
+local DUMP_FORMAT_VERSION = 3
 local CASTER = "player"
+
+-- Exhaustive ability-id scan bounds. The current data already contains ids above 243k;
+-- 300k leaves room for new patch content while still being practical with chunking.
+local ABILITY_ID_SCAN_MIN = 1
+local ABILITY_ID_SCAN_MAX = 300000
+local SET_ID_SCAN_MAX = 3000
 
 -- Per-frame work budget for the chunked iterators (ms). Kept small so a full run never
 -- trips the addon watchdog; the dump simply spreads across several frames.
@@ -144,6 +152,18 @@ local function captureAbility(abilityId, overrideRank)
     local ok, icon = pcall(GetAbilityIcon, abilityId)
     if ok and icon and icon ~= "" then entry.icon = icon end
   end
+  if GetAbilityEffectDescription then
+    local ok, effectDesc = pcall(GetAbilityEffectDescription, abilityId, overrideRank, CASTER)
+    if ok and effectDesc and effectDesc ~= "" then entry.effectDescription = effectDesc end
+  end
+  if GetAbilityEffectType then
+    local ok, effectType = pcall(GetAbilityEffectType, abilityId)
+    if ok and effectType ~= nil then entry.effectType = effectType end
+  end
+  if GetAbilityTargetType then
+    local ok, targetType = pcall(GetAbilityTargetType, abilityId)
+    if ok and targetType ~= nil then entry.targetType = targetType end
+  end
 
   entry.stats = captureAbilityStats(abilityId, overrideRank)
   return entry
@@ -231,24 +251,102 @@ end
 -- ---------------------------------------------------------------------------
 
 local function getAllSetIds()
-  -- Prefer LibSets' curated list when available.
+  local seen = {}
+  local list = {}
+  local sources = {}
+  local libSetsCandidates = 0
+  local scanCandidates = 0
+
+  local function addSetId(setId)
+    if setId and not seen[setId] then
+      seen[setId] = true
+      list[#list + 1] = setId
+    end
+  end
+
+  -- Prefer LibSets' curated list when available, but do not trust it as complete:
+  -- an outdated LibSets can miss brand-new or PTS sets. Merge it with a numeric scan.
   if LibSets and LibSets.GetAllSetIds then
     local ok, ids = pcall(LibSets.GetAllSetIds)
     if ok and type(ids) == "table" and next(ids) ~= nil then
-      local list = {}
-      for setId in pairs(ids) do list[#list + 1] = setId end
-      return list, "LibSets"
+      sources[#sources + 1] = "LibSets"
+      for key, value in pairs(ids) do
+        local setId = type(value) == "number" and value or key
+        if type(setId) == "number" then
+          libSetsCandidates = libSetsCandidates + 1
+          addSetId(setId)
+        end
+      end
     end
   end
-  -- Fallback: numeric scan. GetItemSetInfo(setId) returns hasSet=false for gaps.
-  local list = {}
-  for setId = 1, 1000 do
-    if GetItemSetInfo then
-      local ok, hasSet = pcall(GetItemSetInfo, setId)
-      if ok and hasSet then list[#list + 1] = setId end
+
+  -- Numeric scan catches sets not present in LibSets. GetItemSetInfo(setId) returns
+  -- hasSet=false for gaps, so keeping the range broad is cheap and future-proof.
+  if GetItemSetInfo then
+    local before = #list
+    for setId = 1, SET_ID_SCAN_MAX do
+      local ok, a, b, c = pcall(GetItemSetInfo, setId)
+      local hasSet = false
+      if ok then
+        if type(a) == "boolean" then
+          hasSet = a
+        elseif type(a) == "string" and a ~= "" then
+          hasSet = true
+        elseif type(b) == "string" and b ~= "" then
+          hasSet = true
+        elseif type(c) == "string" and c ~= "" then
+          hasSet = true
+        end
+      end
+      if hasSet then
+        scanCandidates = scanCandidates + 1
+        addSetId(setId)
+      end
+    end
+    if #list > before then sources[#sources + 1] = "scan" end
+  end
+
+  table.sort(list)
+  if #sources == 0 then sources[#sources + 1] = "none" end
+  ESOTooltipDumpSV.setIdLibSetsCandidateCount = libSetsCandidates
+  ESOTooltipDumpSV.setIdScanCandidateCount = scanCandidates
+  ESOTooltipDumpSV.setIdCandidateCount = #list
+  return list, table.concat(sources, "+")
+end
+
+local function parseItemSetInfo(setId)
+  if not GetItemSetInfo then return nil end
+  local ok, a, b, c, d, e, f = pcall(GetItemSetInfo, setId)
+  if not ok then return nil end
+
+  local values = { a, b, c, d, e, f }
+  local hasSet, setName, numBonuses, maxEquipped
+  if type(a) == "boolean" then
+    hasSet, setName, numBonuses, maxEquipped = a, b, c, f
+  else
+    hasSet = true
+    for i = 1, #values do
+      if type(values[i]) == "string" and values[i] ~= "" then
+        setName = values[i]
+        for j = i + 1, #values do
+          if type(values[j]) == "number" then
+            numBonuses = values[j]
+            break
+          end
+        end
+        break
+      end
+    end
+    for i = #values, 1, -1 do
+      if type(values[i]) == "number" then
+        maxEquipped = values[i]
+        break
+      end
     end
   end
-  return list, "scan"
+
+  if not hasSet or not setName or setName == "" then return nil end
+  return setName, numBonuses, maxEquipped
 end
 
 -- Build a reference (gold/CP160) itemLink for a set so bonus text comes back with
@@ -259,36 +357,142 @@ end
 -- NOTE: at the current client the setId form (GetItemSetBonusInfo) already returns
 -- resolved values, so the fallback is not lossy — the itemLink path is preferred only
 -- as a hardening against future API changes.
-local function buildReferenceItemLink(setId)
+local function getLibSetsSetName(setId)
   if not LibSets then return nil end
+  if LibSets.GetSetName then
+    local ok, name = pcall(LibSets.GetSetName, setId)
+    if ok and name and name ~= "" then return name end
+  end
+  if LibSets.GetSetNames then
+    local ok, names = pcall(LibSets.GetSetNames, setId)
+    if ok and type(names) == "table" then
+      local lang = GetCVar and GetCVar("Language.2") or "en"
+      if names[lang] and names[lang] ~= "" then return names[lang] end
+      if names.en and names.en ~= "" then return names.en end
+      for _, name in pairs(names) do
+        if type(name) == "string" and name ~= "" then return name end
+      end
+    end
+  end
+  return nil
+end
+
+local function buildReferenceItemLink(setId)
+  if not LibSets then return nil, nil, nil end
   -- Prefer the singular GetSetItemId; fall back to the plural table form.
   local itemId
+  local itemIds
   if LibSets.GetSetItemId then
     local ok, id = pcall(LibSets.GetSetItemId, setId)
     if ok then itemId = id end
   end
-  if not itemId and LibSets.GetSetItemIds then
-    local ok, itemIds = pcall(LibSets.GetSetItemIds, setId)
-    if ok and type(itemIds) == "table" then itemId = next(itemIds) end
+  if LibSets.GetSetItemIds then
+    local ok, ids = pcall(LibSets.GetSetItemIds, setId)
+    if ok and type(ids) == "table" then
+      itemIds = {}
+      for key, value in pairs(ids) do
+        local id = type(value) == "number" and value or key
+        if type(id) == "number" then itemIds[#itemIds + 1] = id end
+      end
+      table.sort(itemIds)
+      if not itemId then itemId = itemIds[1] end
+    end
   end
-  if not itemId then return nil end
+
+  if not itemId then return nil, nil, itemIds end
+
   -- Pass Legendary (gold) quality subtype 370 so the reference link yields CP160 gold
   -- set-bonus values; LibSets.buildItemLink otherwise defaults to Normal (366).
   if LibSets.buildItemLink then
     local LEGENDARY_QUALITY_SUBTYPE = 370
     local ok, link = pcall(LibSets.buildItemLink, itemId, LEGENDARY_QUALITY_SUBTYPE)
-    if ok and link and link ~= "" then return link end
+    if ok and link and link ~= "" then return link, itemId, itemIds end
   end
-  return nil
+  return nil, itemId, itemIds
+end
+
+local function captureSetMetadata(setId, entry, link)
+  if link and GetItemLinkIcon then
+    local ok, icon = pcall(GetItemLinkIcon, link)
+    if ok and icon and icon ~= "" then entry.itemIcon = icon end
+  end
+  if LibSets then
+    local function captureTable(methodName, fieldName)
+      local fn = LibSets[methodName]
+      if not fn then return end
+      local ok, value = pcall(fn, setId)
+      if ok and type(value) == "table" then
+        local list = {}
+        for _, v in pairs(value) do
+          local tv = type(v)
+          if tv == "string" or tv == "number" or tv == "boolean" then
+            list[#list + 1] = v
+          end
+        end
+        table.sort(list, function(a, b) return tostring(a) < tostring(b) end)
+        if #list > 0 then entry[fieldName] = list end
+      elseif ok and value ~= nil then
+        local tv = type(value)
+        if tv == "string" or tv == "number" or tv == "boolean" then entry[fieldName] = value end
+      end
+    end
+    captureTable("GetSetSourceTypes", "sourceTypes")
+    captureTable("GetSetSourceType", "sourceType")
+    captureTable("GetSetType", "setType")
+    captureTable("GetSetEquipmentTypes", "equipTypes")
+    captureTable("GetSetEquipTypes", "equipTypes")
+  end
 end
 
 local function captureSet(setId)
-  if not GetItemSetInfo then return nil end
-  local ok, hasSet, setName, numBonuses, _, _, maxEquipped = pcall(GetItemSetInfo, setId)
-  if not ok or not hasSet then return nil end
+  local link, itemId, itemIds = buildReferenceItemLink(setId)
+  local setName, numBonuses, maxEquipped
+
+  -- Prefer the item-link API. LibSets itself validates set IDs this way, and it
+  -- returns the canonical shape: hasSet, setName, numBonuses, equipped, maxEquipped, setId.
+  if link and GetItemLinkSetInfo then
+    local ok, hasSet, linkSetName, linkNumBonuses, _, linkMaxEquipped, linkSetId = pcall(GetItemLinkSetInfo, link, false)
+    if ok and hasSet and (not linkSetId or linkSetId == setId) then
+      setName = linkSetName
+      numBonuses = linkNumBonuses
+      maxEquipped = linkMaxEquipped
+    end
+  end
+
+  -- Fallback for environments without LibSets/item links.
+  if not setName then
+    setName, numBonuses, maxEquipped = parseItemSetInfo(setId)
+  end
+
+  -- Last-resort LibSets fallback: do not drop a known set id just because the ESO
+  -- direct set APIs do not expose it in this client state. Bonus text may still be
+  -- filled below if item-link bonus APIs resolve.
+  if not setName then
+    setName = getLibSetsSetName(setId)
+    numBonuses = numBonuses or 0
+  end
+
+  if not setName or setName == "" then return nil end
   local entry = { id = setId, name = setName, maxEquipped = maxEquipped, bonuses = {} }
 
-  local link = buildReferenceItemLink(setId)
+  if itemId then entry.itemId = itemId end
+  if itemIds and #itemIds > 0 then entry.itemIds = itemIds end
+  if link then entry.referenceItemLink = link end
+  captureSetMetadata(setId, entry, link)
+
+  -- Bonus COUNT must come from the itemLink form for PERFECTED sets. GetItemSetInfo(setId)
+  -- returns the base tier count and omits the perfected-only stat tier, so looping to that
+  -- count silently drops it (this is why every Perfected set previously mirrored its base).
+  -- GetItemLinkSetInfo(perfectedItemLink) reports numBonuses INCLUDING the perfected tier
+  -- (matches ZOS's own tooltip code: esoui itemtooltips.lua AddSet), and the per-bonus loop
+  -- below already reads it build-independently via GetItemLinkSetBonusInfo(link, false, i).
+  -- No item needs to be equipped. Keep the GetItemSetInfo count as the no-LibSets fallback.
+  if link and GetItemLinkSetInfo then
+    local lok, lHasSet, _, lNumBonuses = pcall(GetItemLinkSetInfo, link, false)
+    if lok and lHasSet and lNumBonuses and lNumBonuses > (numBonuses or 0) then
+      numBonuses = lNumBonuses
+    end
+  end
 
   -- Bonus COUNT must come from the itemLink form for PERFECTED sets. GetItemSetInfo(setId)
   -- returns the base tier count and omits the perfected-only stat tier, so looping to that
@@ -339,22 +543,93 @@ end
 -- highest rank that yields a non-empty description.
 -- ---------------------------------------------------------------------------
 
-local function captureAbilityById(abilityId)
+local function abilityHasTooltipText(ability)
+  if not ability then return false end
+  if ability.description and ability.description ~= "" then return true end
+  if ability.effectDescription and ability.effectDescription ~= "" then return true end
+  if ability.descriptionHeader and ability.descriptionHeader ~= "" then return true end
+  return false
+end
+
+local function abilityHasContent(ability)
+  if not ability then return false end
+  if abilityHasTooltipText(ability) then return true end
+  if ability.name and ability.name ~= "" then return true end
+  if ability.icon and ability.icon ~= "" and ability.icon ~= "/esoui/art/icons/icon_missing.dds" then return true end
+  return false
+end
+
+local function captureAbilityRankBundle(abilityId, keepEmpty)
   if not abilityId or abilityId == 0 then return nil end
+  local ranks = {}
   local best
+
   for rank = 1, 4 do
     local ability = captureAbility(abilityId, rank)
-    if ability and ability.description and ability.description ~= "" then
+    -- Full-rank preservation is useful for real tooltip text, but storing four
+    -- empty/name-only ranks for ~150k resolved ids creates a >600MB SavedVariables
+    -- file. Curated ids keep everything; exhaustive allids keeps rank variants only
+    -- when text/effect text exists. The best entry below still preserves name/icon
+    -- for combat-log id matching.
+    if ability and (keepEmpty or abilityHasTooltipText(ability)) then
+      ranks[#ranks + 1] = ability
+    end
+    if ability and abilityHasTooltipText(ability) then
       -- keep the highest rank with text (later ranks overwrite earlier)
       best = ability
     end
   end
+
   -- Fall back to a nil-rank capture so an entry still exists even with no ranked
   -- description (records name/icon; description may be empty).
   if not best then
-    best = captureAbility(abilityId, nil)
+    local ability = captureAbility(abilityId, nil)
+    if ability and (keepEmpty or abilityHasContent(ability)) then
+      best = ability
+      if keepEmpty or abilityHasTooltipText(ability) then ranks[#ranks + 1] = ability end
+    end
   end
-  return best
+
+  if not best and #ranks == 0 then return nil end
+  best = best or ranks[#ranks]
+  return {
+    id = abilityId,
+    name = best and best.name or nil,
+    bestRank = best and best.rank or nil,
+    best = best,
+    ranks = ranks,
+  }
+end
+
+local function captureAbilityById(abilityId, keepEmpty)
+  local bundle = captureAbilityRankBundle(abilityId, keepEmpty)
+  return bundle and bundle.best or nil
+end
+
+local function buildAbilityIdScanWorkList()
+  local seen = {}
+  local work = {}
+
+  local function add(id)
+    if id and not seen[id] then
+      seen[id] = true
+      work[#work + 1] = id
+    end
+  end
+
+  -- Seed with curated ids so out-of-range or known edge ids are always included.
+  if type(ESOTooltipDumpCaptureIds) == "table" then
+    for _, id in ipairs(ESOTooltipDumpCaptureIds) do add(id) end
+  end
+  -- Seed with ids observed in real combat logs/reports. This closes the loop between
+  -- what the app needs and what the generic numeric scan can resolve.
+  if type(ESOTooltipDumpCombatLogAbilityIds) == "table" then
+    for _, id in ipairs(ESOTooltipDumpCombatLogAbilityIds) do add(id) end
+  end
+
+  for id = ABILITY_ID_SCAN_MIN, ABILITY_ID_SCAN_MAX do add(id) end
+  table.sort(work)
+  return work
 end
 
 -- ---------------------------------------------------------------------------
@@ -365,6 +640,8 @@ local function runChunked(label, workList, perItemFn, onDone)
   local i = 1
   local total = #workList
   local results = {}
+  local errors = 0
+  local firstError
   local frame = 0
 
   local function step()
@@ -373,7 +650,12 @@ local function runChunked(label, workList, perItemFn, onDone)
     while i <= total do
       local item = workList[i]
       local ok, res = pcall(perItemFn, item)
-      if ok and res ~= nil then results[#results + 1] = res end
+      if ok and res ~= nil then
+        results[#results + 1] = res
+      elseif not ok then
+        errors = errors + 1
+        if not firstError then firstError = tostring(res) end
+      end
       i = i + 1
       if GetGameTimeMilliseconds() - startMs >= FRAME_BUDGET_MS then break end
     end
@@ -383,7 +665,9 @@ local function runChunked(label, workList, perItemFn, onDone)
       end
       zo_callLater(step, 0)
     else
-      d(string.format("[%s] %s: done (%d items)", ADDON_NAME, label, #results))
+      ESOTooltipDumpSV[label .. "ErrorCount"] = errors
+      if firstError then ESOTooltipDumpSV[label .. "FirstError"] = firstError end
+      d(string.format("[%s] %s: done (%d items, %d errors)", ADDON_NAME, label, #results, errors))
       onDone(results)
     end
   end
@@ -447,6 +731,34 @@ local function dumpSets(onDone)
   end)
 end
 
+local function storeAbilityBundles(mode, requestedCount, bundles)
+  local bestList = {}
+  local rankBundles = {}
+  local withDesc = 0
+  for _, bundle in ipairs(bundles) do
+    if bundle.best then
+      bestList[#bestList + 1] = bundle.best
+      if bundle.best.description and bundle.best.description ~= "" then withDesc = withDesc + 1 end
+    end
+    if bundle.ranks and #bundle.ranks > 0 then
+      rankBundles[#rankBundles + 1] = {
+        id = bundle.id,
+        name = bundle.name,
+        bestRank = bundle.bestRank,
+        ranks = bundle.ranks,
+      }
+    end
+  end
+  ESOTooltipDumpSV.abilitiesById = bestList
+  ESOTooltipDumpSV.abilityRanksById = rankBundles
+  ESOTooltipDumpSV.abilitiesByIdCount = #bestList
+  ESOTooltipDumpSV.abilityRanksByIdCount = #rankBundles
+  ESOTooltipDumpSV.abilityIdMode = mode
+  ESOTooltipDumpSV.abilityIdRequestedCount = requestedCount
+  ESOTooltipDumpSV.abilitiesByIdWithDescriptionCount = withDesc
+  return withDesc, #bestList
+end
+
 local function dumpAbilitiesById(onDone)
   local ids = ESOTooltipDumpCaptureIds
   if type(ids) ~= "table" or #ids == 0 then
@@ -454,24 +766,42 @@ local function dumpAbilitiesById(onDone)
     if onDone then onDone() end
     return
   end
-  runChunked("ids", ids, captureAbilityById, function(list)
-    ESOTooltipDumpSV.abilitiesById = list
-    ESOTooltipDumpSV.abilitiesByIdCount = #list
-    local withDesc = 0
-    for _, ab in ipairs(list) do
-      if ab.description and ab.description ~= "" then withDesc = withDesc + 1 end
-    end
-    ESOTooltipDumpSV.abilitiesByIdWithDescriptionCount = withDesc
+  runChunked("ids", ids, function(id) return captureAbilityRankBundle(id, true) end, function(bundles)
+    local withDesc, captured = storeAbilityBundles("curated", #ids, bundles)
     d(string.format("[%s] ids: %d captured, %d WITH description text (of %d requested).",
-      ADDON_NAME, #list, withDesc, #ids))
+      ADDON_NAME, captured, withDesc, #ids))
     if onDone then onDone() end
   end)
 end
 
+local function dumpAllAbilitiesById(onDone)
+  local ids = buildAbilityIdScanWorkList()
+  runChunked("allids", ids, function(id) return captureAbilityRankBundle(id, false) end, function(bundles)
+    local withDesc, captured = storeAbilityBundles("exhaustive-scan", #ids, bundles)
+    ESOTooltipDumpSV.abilityIdScanMin = ABILITY_ID_SCAN_MIN
+    ESOTooltipDumpSV.abilityIdScanMax = ABILITY_ID_SCAN_MAX
+    d(string.format("[%s] allids: %d resolvable captured, %d WITH description text (scanned %d ids).",
+      ADDON_NAME, captured, withDesc, #ids))
+    if onDone then onDone() end
+  end)
+end
+
+local function countCombatLogSeedIds()
+  if type(ESOTooltipDumpCombatLogAbilityIds) ~= "table" then return 0 end
+  return #ESOTooltipDumpCombatLogAbilityIds
+end
+
 local function initDumpHeader()
-  ESOTooltipDumpSV = ESOTooltipDumpSV or {}
+  -- Start each dump from a clean table. Otherwise a scoped run after an exhaustive
+  -- run can leave stale allids/set fields in SavedVariables and look larger/full
+  -- even though the current command did less work.
+  ESOTooltipDumpSV = {}
   ESOTooltipDumpSV.formatVersion = DUMP_FORMAT_VERSION
+  ESOTooltipDumpSV.addonVersion = ADDON_VERSION
   ESOTooltipDumpSV.apiVersion = GetAPIVersion and GetAPIVersion() or nil
+  ESOTooltipDumpSV.gameLanguage = GetCVar and GetCVar("Language.2") or nil
+  ESOTooltipDumpSV.libSetsVersion = (LibSets and LibSets.version) or (LibSets and LibSets.VERSION) or nil
+  ESOTooltipDumpSV.combatLogSeededAbilityIdCount = countCombatLogSeedIds()
   ESOTooltipDumpSV.gameTimeMs = GetGameTimeMilliseconds()
   ESOTooltipDumpSV.statSnapshot = captureStatSnapshot()
 end
@@ -541,8 +871,9 @@ local function handleSlash(args)
   end
 
   initDumpHeader()
-  d(string.format("[%s] API %s. Dumping... do NOT change gear/CP until '/reloadui' to flush.",
-    ADDON_NAME, tostring(ESOTooltipDumpSV.apiVersion)))
+  ESOTooltipDumpSV.lastCommand = args ~= "" and args or "scoped"
+  d(string.format("[%s] API %s. Dumping command=%s... do NOT change gear/CP until '/reloadui' to flush.",
+    ADDON_NAME, tostring(ESOTooltipDumpSV.apiVersion), tostring(ESOTooltipDumpSV.lastCommand)))
 
   if args == "skills" then
     dumpSkills(function()
@@ -556,14 +887,19 @@ local function handleSlash(args)
     dumpAbilitiesById(function()
       d(string.format("[%s] ID-driven pass complete. Run /reloadui to write the file.", ADDON_NAME))
     end)
+  elseif args == "allids" or args == "full" or args == "exhaustive" then
+    dumpAllAbilitiesById(function()
+      d(string.format("[%s] Exhaustive ID scan complete. Run /reloadui to write the file.", ADDON_NAME))
+    end)
   else
-    -- Full dump: skills, then sets, then the ID-driven pass (scribing + enum).
+    -- Default scoped dump: skills, then sets, then curated/combat-log ids. The 300k
+    -- exhaustive scan is intentionally opt-in via `/dumptooltips allids` / `full`.
     dumpSkills(function()
       dumpSets(function()
         dumpAbilitiesById(function()
-          d(string.format("[%s] FULL dump complete (%d skills, %d sets, %d by-id). Run /reloadui to write the file.",
+          d(string.format("[%s] SCOPED dump complete (%d skills, %d sets, %d by-id; mode=%s). Run /reloadui to write the file. Use /dumptooltips allids only for an exhaustive 300k scan.",
             ADDON_NAME, ESOTooltipDumpSV.skillCount or 0, ESOTooltipDumpSV.setCount or 0,
-            ESOTooltipDumpSV.abilitiesByIdCount or 0))
+            ESOTooltipDumpSV.abilitiesByIdCount or 0, tostring(ESOTooltipDumpSV.abilityIdMode)))
         end)
       end)
     end)
@@ -575,7 +911,7 @@ local function onAddOnLoaded(_, name)
   EVENT_MANAGER:UnregisterForEvent(ADDON_NAME, EVENT_ADD_ON_LOADED)
   ESOTooltipDumpSV = ESOTooltipDumpSV or {}
   SLASH_COMMANDS["/dumptooltips"] = handleSlash
-  d(string.format("[%s] loaded. Set your reference state, then run /dumptooltips (or /dumptooltips state to preview).", ADDON_NAME))
+  d(string.format("[%s] loaded. Run /dumptooltips for scoped dump, /dumptooltips allids for exhaustive scan, or /dumptooltips state to preview.", ADDON_NAME))
 end
 
 EVENT_MANAGER:RegisterForEvent(ADDON_NAME, EVENT_ADD_ON_LOADED, onAddOnLoaded)

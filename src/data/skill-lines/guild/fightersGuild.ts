@@ -15,7 +15,7 @@ export const fightersGuild: SkillLineData = {
       type: 'ultimate',
       baseAbilityId: AbilityId.DAWNBREAKER,
       description:
-        "Arm yourself with Meridia's sacred sword and dispense her retribution, dealing 2904 Physical Damage to enemies in front of you and an additional 3483 Physical Damage over 6 seconds.",
+        "Arm yourself with Meridia's sacred sword and dispense her retribution, dealing 11207 Physical Damage to enemies in front of you and an additional 13449 Physical Damage over 6 seconds.",
     },
     {
       id: 40158,
@@ -23,7 +23,7 @@ export const fightersGuild: SkillLineData = {
       type: 'ultimate',
       baseAbilityId: AbilityId.DAWNBREAKER,
       description:
-        "Arm yourself with Meridia's sacred sword and dispense her retribution, dealing 3600 Physical Damage to enemies in front of you, an additional 4314 Physical Damage over 6 seconds, and stunning them for 2 seconds.",
+        "Arm yourself with Meridia's sacred sword and dispense her retribution, dealing 13892 Physical Damage to enemies in front of you, an additional 16665 Physical Damage over 6 seconds, and stunning them for 2 seconds.",
     },
     {
       id: 40161,
@@ -31,7 +31,7 @@ export const fightersGuild: SkillLineData = {
       type: 'ultimate',
       baseAbilityId: AbilityId.DAWNBREAKER,
       description:
-        "Arm yourself with Meridia's sacred sword and dispense her retribution, dealing 2904 Physical Damage to enemies in front of you and an additional 3483 Physical Damage over 6 seconds.\n\nAfter activating, your Weapon and Spell Damage is increased by 300 for 20 seconds.",
+        "Arm yourself with Meridia's sacred sword and dispense her retribution, dealing 11207 Physical Damage to enemies in front of you and an additional 13449 Physical Damage over 6 seconds.\n\nAfter activating, your Weapon and Spell Damage is increased by 300 for 20 seconds.",
     },
 
     // Scribing abilities
@@ -51,7 +51,7 @@ export const fightersGuild: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.SILVER_BOLTS,
       description:
-        "Fire a Dawnguard Vampire Hunter's crossbow bolt to strike an enemy, dealing 2090 Physical Damage.",
+        "Fire a Dawnguard Vampire Hunter's crossbow bolt to strike an enemy, dealing 8525 Physical Damage.",
     },
     {
       id: 40336,
@@ -59,7 +59,7 @@ export const fightersGuild: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.SILVER_BOLTS,
       description:
-        "Fire a Dawnguard's crossbow hook to pull an enemy to you, dealing 1438 Physical Damage, taunting them for 15 seconds if they are not already taunted, and reducing their Movement Speed by 30% for 4 seconds.",
+        "Fire a Dawnguard's crossbow hook to pull an enemy to you, dealing 5870 Physical Damage, taunting them for 15 seconds if they are not already taunted, and reducing their Movement Speed by 30% for 4 seconds.",
     },
     {
       id: 40300,
@@ -67,7 +67,7 @@ export const fightersGuild: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.SILVER_BOLTS,
       description:
-        "Fire an augmented Dawnguard Vampire Hunter's crossbow bolt to strike an enemy, dealing 2091 Physical Damage.\n\nFires additional bolts at other enemies near the initial target for 22% less damage.",
+        "Fire an augmented Dawnguard Vampire Hunter's crossbow bolt to strike an enemy, dealing 8070 Physical Damage.\n\nFires additional bolts at other enemies near the initial target for 22% less damage.",
     },
 
     // Active abilities - Circle of Protection family
@@ -85,7 +85,7 @@ export const fightersGuild: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.CIRCLE_OF_PROTECTION,
       description:
-        'Brand the earth at your location with a rune of protection for 10 seconds. You and your allies in the area gain Minor Protection and Minor Endurance, reducing damage taken by 5% and increasing Stamina Recovery by 15%, and are healed for 435 Health every 1 second.',
+        'Brand the earth at your location with a rune of protection for 10 seconds. You and your allies in the area gain Minor Protection and Minor Endurance, reducing damage taken by 5% and increasing Stamina Recovery by 15%, and are healed for 1536 Health every 1 second.',
     },
     {
       id: 40181,
@@ -129,7 +129,7 @@ export const fightersGuild: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.TRAP_BEAST,
       description:
-        'Set a sharpened blade trap at your location, which takes 1.5 seconds to arm and lasts for 20 seconds.\n\nWhen triggered, the trap deals 1161 Bleed Damage, an additional 3470 Bleed Damage over 20 seconds, and grants you Minor Force, increasing your Critical Damage by 10% for the duration.\n\nEnemies who activate the trap are immobilized for 2 seconds.',
+        'Set a sharpened blade trap at your location, which takes 1.5 seconds to arm and lasts for 20 seconds.\n\nWhen triggered, the trap deals 4736 Bleed Damage, an additional 13430 Bleed Damage over 20 seconds, and grants you Minor Force, increasing your Critical Damage by 10% for the duration.\n\nEnemies who activate the trap are immobilized for 2 seconds.',
     },
     {
       id: 40382,
@@ -137,7 +137,7 @@ export const fightersGuild: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.TRAP_BEAST,
       description:
-        'Set a sharpened blade trap at your location, which takes 1.5 seconds to arm and lasts for 20 seconds.\n\nWhen triggered, the trap deals 1438 Bleed Damage, an additional 3580 Bleed Damage over 20 seconds, and grants you Minor Force, increasing your Critical Damage by 10% for the duration.\n\nEnemies hit by the initial hit are afflicted with the Hemorrhaging status effect.\n\nEnemies who activate the trap are immobilized for 2 seconds.',
+        'Set a sharpened blade trap at your location, which takes 1.5 seconds to arm and lasts for 20 seconds.\n\nWhen triggered, the trap deals 5870 Bleed Damage, an additional 13880 Bleed Damage over 20 seconds, and grants you Minor Force, increasing your Critical Damage by 10% for the duration.\n\nEnemies hit by the initial hit are afflicted with the Hemorrhaging status effect.\n\nEnemies who activate the trap are immobilized for 2 seconds.',
     },
     {
       id: 40372,
@@ -146,7 +146,7 @@ export const fightersGuild: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.TRAP_BEAST,
       description:
-        'Launch a sharpened blade trap at a target location, which takes 1.5 seconds to arm and lasts for 20 seconds.\n\nWhen triggered, the trap deals 1161 Bleed Damage, an additional 3470 Bleed Damage over 20 seconds, and grants you Minor Force, increasing your Critical Damage by 10% for the duration.\n\nEnemies who activate the trap are immobilized for 2 seconds.',
+        'Launch a sharpened blade trap at a target location, which takes 1.5 seconds to arm and lasts for 20 seconds.\n\nWhen triggered, the trap deals 4736 Bleed Damage, an additional 13440 Bleed Damage over 20 seconds, and grants you Minor Force, increasing your Critical Damage by 10% for the duration.\n\nEnemies who activate the trap are immobilized for 2 seconds.',
     },
 
     // Passive abilities

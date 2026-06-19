@@ -14,7 +14,7 @@ export const werewolf: SkillLineData = {
       name: 'Werewolf Transformation',
       icon: 'ability_werewolf_001',
       description:
-        'Transform into a beast, fearing nearby enemies for 3 seconds.\n\nWhile transformed and in combat, abilities generate 15 Fury. When you have 1000, this ability becomes Rampage, which increases your damage done by 15%, Movement Speed by 20%, and removes the cost of all Werewolf abilities for 20 seconds.\n\nWhile slotted, your Stamina Recovery is increased by 15%.',
+        'Transform into a beast, fearing nearby enemies for 3 seconds.\n\nWhile transformed and in combat, abilities generate 25 Fury. When you have 1000, this ability becomes Rampage, which increases your damage done by 15%, Movement Speed by 20%, and removes the cost of all Werewolf abilities for 20 seconds.\n\nWhile slotted, your Stamina Recovery is increased by 15%.',
       maxRank: 4,
       isUltimate: true,
       isPassive: false,
@@ -24,7 +24,7 @@ export const werewolf: SkillLineData = {
       name: 'Pack Leader',
       icon: 'ability_werewolf_001_a',
       description:
-        'Transform into an imposing beast, fearing nearby enemies for 3 seconds.\n\nYou also gain Major Protection, 15% increased Block Mitigation, and you and group members gain Minor Courage.\n\nYou summon two direwolves that deal 103 Physical Damage twice or 555 Physical Damage once every 2 seconds.\n\nWhile transformed in combat, abilities generate Fury. When you have 1000, this ability becomes Enduring Rampage, which gains 4000 Health Recovery in addition to its base effects.\n\nWhile slotted, your Stamina Recovery is increased by 15%.',
+        'Transform into an imposing beast, fearing nearby enemies for 3 seconds.\n\nYou also gain Major Protection, 15% increased Block Mitigation, and you and group members gain Minor Courage.\n\nYou summon two direwolves that deal 398 Physical Damage twice or 2126 Physical Damage once every 2 seconds.\n\nWhile transformed in combat, abilities generate Fury. When you have 1000, this ability becomes Enduring Rampage, which gains 4000 Health Recovery in addition to its base effects.\n\nWhile slotted, your Stamina Recovery is increased by 15%.',
       maxRank: 4,
       isUltimate: true,
       isPassive: false,
@@ -34,7 +34,7 @@ export const werewolf: SkillLineData = {
       name: 'Werewolf Berserker',
       icon: 'ability_werewolf_001_b',
       description:
-        'Transform into a berserk beast, fearing nearby enemies for 3 seconds.\n\nWhile transformed, you gain Major Berserk and your Light Attacks and Heavy Attacks apply a bleed for 1390 Bleed Damage over 4 seconds, or 695 Bleed Damage after 1 second against players.\n\nWhile transformed and in combat, abilities generate Fury. When you have 1000, this ability becomes Rampage, which increases your damage done, Movement Speed, and removes the cost of Werewolf abilities for 20 seconds.\n\nWhile slotted, your Stamina Recovery is increased by 15%.',
+        'Transform into a berserk beast, fearing nearby enemies for 3 seconds.\n\nWhile transformed, you gain Major Berserk and your Light Attacks and Heavy Attacks apply a bleed for 5030 Bleed Damage over 4 seconds, or 2515 Bleed Damage after 1 second against players.\n\nWhile transformed and in combat, abilities generate Fury. When you have 1000, this ability becomes Rampage, which increases your damage done, Movement Speed, and removes the cost of Werewolf abilities for 20 seconds.\n\nWhile slotted, your Stamina Recovery is increased by 15%.',
       maxRank: 4,
       isUltimate: true,
       isPassive: false,
@@ -45,7 +45,7 @@ export const werewolf: SkillLineData = {
       name: 'Pounce',
       icon: 'ability_werewolf_002',
       description:
-        'Pounce on an enemy with primal fury, dealing 1616 Bleed Damage and applying the Hemorrhaging status effect.\n\nWhen you are 7 meters or closer this ability becomes Carnage, which causes you to rip into an enemy and deal 1701 Bleed Damage over 12 seconds, dealing up to 450% more damage to enemies under 100% Health.',
+        'Pounce on an enemy with primal fury, dealing 6178 Bleed Damage and applying the Hemorrhaging status effect.\n\nWhen you are 7 meters or closer this ability becomes Carnage, which causes you to rip into an enemy and deal 6188 Bleed Damage over 12 seconds, dealing up to 450% more damage to enemies under 100% Health.',
       maxRank: 4,
       isUltimate: false,
       isPassive: false,
@@ -55,7 +55,7 @@ export const werewolf: SkillLineData = {
       name: 'Brutal Pounce',
       icon: 'ability_werewolf_002_b',
       description:
-        'Pounce on an enemy with primal fury, dealing 1669 Bleed Damage and applying the Hemorrhaging status effect to all nearby enemies.\n\nWhen you are 7 meters or closer this ability becomes Brutal Carnage, which causes you to rip into all enemies in front of you to deal 1764 Bleed Damage over 12 seconds, dealing up to 450% more damage to enemies under 100% Health. The duration increases by 10 seconds if cast on the same enemy multiple times.',
+        'Pounce on an enemy with primal fury, dealing 6040 Bleed Damage and applying the Hemorrhaging status effect to all nearby enemies.\n\nWhen you are 7 meters or closer this ability becomes Brutal Carnage, which causes you to rip into all enemies in front of you to deal 6034 Bleed Damage over 12 seconds, dealing up to 450% more damage to enemies under 100% Health. The duration increases by 10 seconds if cast on the same enemy multiple times.',
       maxRank: 4,
       isUltimate: false,
       isPassive: false,
@@ -65,7 +65,7 @@ export const werewolf: SkillLineData = {
       name: 'Feral Pounce',
       icon: 'ability_werewolf_002_a',
       description:
-        'Pounce on an enemy with primal fury, dealing 1616 Bleed Damage and applying the Hemorrhaging status effect.\n\nWhen you are 7 meters or closer this ability becomes Feral Carnage, which causes you to rip into an enemy and deal 1708 Bleed Damage over 12 seconds, dealing up to 450% more damage to enemies under 100% Health.\n\nDealing damage with either ability restores 200 Stamina and triggers Fury generation.',
+        'Pounce on an enemy with primal fury, dealing 6178 Bleed Damage and applying the Hemorrhaging status effect.\n\nWhen you are 7 meters or closer this ability becomes Feral Carnage, which causes you to rip into an enemy and deal 6195 Bleed Damage over 12 seconds, dealing up to 450% more damage to enemies under 100% Health.\n\nDealing damage with either ability restores 200 Stamina and triggers Fury generation.',
       maxRank: 4,
       isUltimate: false,
       isPassive: false,
@@ -76,7 +76,7 @@ export const werewolf: SkillLineData = {
       name: "Hircine's Bounty",
       icon: 'ability_werewolf_004_a',
       description:
-        "Invoke the Huntsman's blessing, healing you for 5701 Health, scaling off your Max Health. You also restore 10% Stamina, increasing by up to 100% based on how high your current Health is.\n\nWhile slotted you gain Major Brutality and Sorcery, increasing your Weapon and Spell Damage by 20%.",
+        "Invoke the Huntsman's blessing, healing you for 6687 Health, scaling off your Max Health. You also restore 10% Stamina, increasing by up to 100% based on how high your current Health is.\n\nWhile slotted you gain Major Brutality and Sorcery, increasing your Weapon and Spell Damage by 20%.",
       maxRank: 4,
       isUltimate: false,
       isPassive: false,
@@ -86,7 +86,7 @@ export const werewolf: SkillLineData = {
       name: "Hircine's Fortitude",
       icon: 'ability_werewolf_004_c',
       description:
-        "Invoke the Huntsman's blessing, healing you for 6478 Health, scaling off your Max Health. You also restore 12% Stamina, increasing by up to 100% based on how high your current Health is.\n\nWhile slotted you gain Major Brutality, Sorcery, and Vitality increasing Weapon and Spell Damage by 20% and healing received and damage shield strength by 12%.",
+        "Invoke the Huntsman's blessing, healing you for 7600 Health, scaling off your Max Health. You also restore 12% Stamina, increasing by up to 100% based on how high your current Health is.\n\nWhile slotted you gain Major Brutality, Sorcery, and Vitality increasing Weapon and Spell Damage by 20% and healing received and damage shield strength by 12%.",
       maxRank: 4,
       isUltimate: false,
       isPassive: false,
@@ -96,7 +96,7 @@ export const werewolf: SkillLineData = {
       name: "Hircine's Rage",
       icon: 'ability_werewolf_004_b',
       description:
-        "Invoke the Huntsman's blessing, healing you for 3369 Health, granting double Fury, and increasing your damage done and taken by up to 12% for 20 seconds, based on how high your current Health is.\n\nYou also restore 10% Stamina, increasing by up to 100%, based on how high your current Health is.\n\nWhile slotted you gain Major Brutality and Sorcery and Minor Berserk.",
+        "Invoke the Huntsman's blessing, healing you for 11167 Health, granting double Fury, and increasing your damage done and taken by up to 12% for 20 seconds, based on how high your current Health is.\n\nYou also restore 10% Stamina, increasing by up to 100%, based on how high your current Health is.\n\nWhile slotted you gain Major Brutality and Sorcery and Minor Berserk.",
       maxRank: 4,
       isUltimate: false,
       isPassive: false,
@@ -138,7 +138,7 @@ export const werewolf: SkillLineData = {
       name: 'Gnash',
       icon: 'ability_werewolf_005_a',
       description:
-        'Bare your fangs and gnash your teeth into an enemy while ripping back, dealing 1345 Physical Damage on the initial lunge and 1345 Bleed Damage while ripping out.\n\nConsumes a stack of Blood Hunger to increase the initial damage done by 25%.\n\nThe second hit deals up to 125% more damage to enemies with less than 25% Health.',
+        'Bare your fangs and gnash your teeth into an enemy while ripping back, dealing 5148 Physical Damage on the initial lunge and 5148 Bleed Damage while ripping out.\n\nConsumes a stack of Blood Hunger to increase the initial damage done by 25%.\n\nThe second hit deals up to 125% more damage to enemies with less than 25% Health.',
       maxRank: 4,
       isUltimate: false,
       isPassive: false,
@@ -148,7 +148,7 @@ export const werewolf: SkillLineData = {
       name: 'Bloody Gnash',
       icon: 'ability_werewolf_005_c',
       description:
-        'Bare your fangs and gnash your teeth into an enemy while ripping back, dealing 1347 Physical Damage on the initial lunge and 1391 Bleed Damage while ripping out.\n\nConsumes a stack of Blood Hunger to increase the initial damage done by 25%. There is a 50% chance to retain Blood Hunger each cast.\n\nThe second hit deals up to 200% more damage to enemies with less than 25% Health and applies the Hemorrhaging status effect.',
+        'Bare your fangs and gnash your teeth into an enemy while ripping back, dealing 5149 Physical Damage on the initial lunge and 5318 Bleed Damage while ripping out.\n\nConsumes a stack of Blood Hunger to increase the initial damage done by 25%. There is a 50% chance to retain Blood Hunger each cast.\n\nThe second hit deals up to 200% more damage to enemies with less than 25% Health and applies the Hemorrhaging status effect.',
       maxRank: 4,
       isUltimate: false,
       isPassive: false,
@@ -158,7 +158,7 @@ export const werewolf: SkillLineData = {
       name: 'Rip and Tear',
       icon: 'ability_werewolf_005_b',
       description:
-        'Rip and tear into an enemy with your fangs, dealing 1347 Physical Damage while applying Major Breach for 15 seconds and the Sundered status effect on the initial rip and 1347 Bleed Damage while tearing out, when it is done.\n\nThe second hit deals up to 125% more damage to enemies with less than 25% Health and heals you for 3414, based off your Max Health.\n\nConsumes a stack of Blood Hunger to increase the initial damage and healing done by 25%.',
+        'Rip and tear into an enemy with your fangs, dealing 5149 Physical Damage while applying Major Breach for 15 seconds and the Sundered status effect on the initial rip and 5149 Bleed Damage while tearing out, when it is done.\n\nThe second hit deals up to 125% more damage to enemies with less than 25% Health and heals you for 4005, based off your Max Health.\n\nConsumes a stack of Blood Hunger to increase the initial damage and healing done by 25%.',
       maxRank: 4,
       isUltimate: false,
       isPassive: false,
@@ -169,7 +169,7 @@ export const werewolf: SkillLineData = {
       name: 'Rending Claws',
       icon: 'ability_mage_065',
       description:
-        'Shred up to 6 enemies in front of you with wild abandon, dealing 2020 Physical Damage and an additional 4035 Bleed Damage over 10 seconds. Reduced to 2421 Bleed Damage over 6 seconds against players.\n\nThe initial hit has a 15% chance of applying Sundered, while the damage over time has a 5% chance of applying Hemorrhaging.',
+        'Shred up to 6 enemies in front of you with wild abandon, dealing 7309 Physical Damage and an additional 14610 Bleed Damage over 10 seconds. Reduced to 8766 Bleed Damage over 6 seconds against players.\n\nThe initial hit has a 15% chance of applying Sundered, while the damage over time has a 5% chance of applying Hemorrhaging.',
       maxRank: 4,
       isUltimate: false,
       isPassive: false,
@@ -179,7 +179,7 @@ export const werewolf: SkillLineData = {
       name: 'Claw Fury',
       icon: 'ability_werewolf_006_b',
       description:
-        'Shred up to 6 enemies in front of you with furious intent, dealing 22230 Physical Damage in a channeled attack over 4.7 seconds.\n\nDealing damage with this ability generates 15 Fury and a stack of Blood Hunger, up to once per second.\n\nThis ability deals 25% more damage per stack of Blood Hunger, consumes all stacks when the ability ends, and is considered direct damage.',
+        'Shred up to 6 enemies in front of you with furious intent, dealing 80392 Physical Damage in a channeled attack over 4.7 seconds.\n\nDealing damage with this ability generates 25 Fury and a stack of Blood Hunger, up to once per second.\n\nThis ability deals 25% more damage per stack of Blood Hunger, consumes all stacks when the ability ends, and is considered direct damage.',
       maxRank: 4,
       isUltimate: false,
       isPassive: false,
@@ -189,7 +189,7 @@ export const werewolf: SkillLineData = {
       name: 'Bloodclaws',
       icon: 'ability_werewolf_006_c',
       description:
-        "Shred up to 6 enemies in front of you with blood soaked claws, dealing 2087 Physical Damage and an additional 4040 Bleed Damage over 10 seconds. Reduced to 2424 Bleed Damage over 6 seconds against players.\n\nYou heal for 40% of the initial hit's damage, while you heal for 1023 Health with the damage over time, based off your Max Health.\n\nThe initial hit grants a stack of Blood Hunger per enemy hit and has a 15% chance of applying Sundered, while the damage over time has a 5% chance of applying Hemorrhaging.",
+        "Shred up to 6 enemies in front of you with blood soaked claws, dealing 7550 Physical Damage and an additional 14615 Bleed Damage over 10 seconds. Reduced to 8769 Bleed Damage over 6 seconds against players.\n\nYou heal for 41% of the initial hit's damage, while you heal for 1201 Health with the damage over time, based off your Max Health.\n\nThe initial hit grants a stack of Blood Hunger per enemy hit and has a 15% chance of applying Sundered, while the damage over time has a 5% chance of applying Hemorrhaging.",
       maxRank: 4,
       isUltimate: false,
       isPassive: false,
@@ -213,7 +213,7 @@ export const werewolf: SkillLineData = {
       name: 'Insatiable Hunger',
       icon: 'ability_werewolf_007',
       description:
-        'Hunger gnaws at you. Like Storihbeg, shape it into a brutal weapon.\n\nGain the ability to devour corpses, for up to 4 seconds per corpse. Each second devouring you heal for 3200 Health, based off your Max Health, and restore 15 Ultimate.\n\nIf you are a Werewolf Berserker, each tick activates Fury generation.',
+        'Hunger gnaws at you. Like Storihbeg, shape it into a brutal weapon.\n\nGain the ability to devour corpses, for up to 4 seconds per corpse. Each second devouring you heal for 3754 Health, based off your Max Health, and restore 15 Ultimate.\n\nIf you are a Werewolf Berserker, each tick activates Fury generation.',
       maxRank: 1,
       isUltimate: false,
       isPassive: true,

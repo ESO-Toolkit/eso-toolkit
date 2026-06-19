@@ -19,7 +19,7 @@ export const curativeRuneforms: SkillLineData = {
       type: 'ultimate',
       icon: 'ability_arcanist_018',
       description:
-        'Summon an Apocryphal glyphic, which you and your allies can heal. The glyphic spawns at 30% Health and grows stronger the more you heal it.\n\nThe power within the glyphic grants up to 200 Weapon and Spell Damage and heals you and your allies around it for up to 927 Health every 1 second in proportion to its Health.',
+        'Summon an Apocryphal glyphic, which you and your allies can heal. The glyphic spawns at 30% Health and grows stronger the more you heal it.\n\nThe power within the glyphic grants up to 200 Weapon and Spell Damage and heals you and your allies around it for up to 3271 Health every 1 second in proportion to its Health.',
       isUltimate: true,
       baseSkillId: ClassSkillId.ARCANIST_VITALIZING_GLYPHIC,
     },
@@ -29,7 +29,7 @@ export const curativeRuneforms: SkillLineData = {
       type: 'ultimate',
       icon: 'ability_arcanist_018_a',
       description:
-        'Summon an Apocryphal glyphic, which you and your allies can heal. The glyphic spawns at 53% Health and grows stronger the more you heal it.\n\nThe power within the glyphic grants up to 200 Weapon and Spell Damage and heals you and your allies around it for up to 928 Health every 1 second in proportion to its Health.\n\nAt full Health the glyphic grants Major Protection, reducing damage taken by 10%.',
+        'Summon an Apocryphal glyphic, which you and your allies can heal. The glyphic spawns at 53% Health and grows stronger the more you heal it.\n\nThe power within the glyphic grants up to 200 Weapon and Spell Damage and heals you and your allies around it for up to 3272 Health every 1 second in proportion to its Health.\n\nAt full Health the glyphic grants Major Protection, reducing damage taken by 10%.',
       isUltimate: true,
       baseSkillId: ClassSkillId.ARCANIST_VITALIZING_GLYPHIC,
     },
@@ -39,7 +39,7 @@ export const curativeRuneforms: SkillLineData = {
       type: 'ultimate',
       icon: 'ability_arcanist_018_b',
       description:
-        'Summon an Apocryphal glyphic while in combat, which you and your allies can damage. The glyphic spawns at 70% Health and grows stronger the more you damage it.\n\nThe glyphic grants up to 200 Weapon and Spell Damage and heals you and your allies around it for up to 958 Health every 1 second in proportion to its Health.',
+        'Summon an Apocryphal glyphic while in combat, which you and your allies can damage. The glyphic spawns at 70% Health and grows stronger the more you damage it.\n\nThe glyphic grants up to 200 Weapon and Spell Damage and heals you and your allies around it for up to 3379 Health every 1 second in proportion to its Health.',
       isUltimate: true,
       baseSkillId: ClassSkillId.ARCANIST_VITALIZING_GLYPHIC,
     },
@@ -49,7 +49,7 @@ export const curativeRuneforms: SkillLineData = {
       type: 'active',
       icon: 'ability_arcanist_013',
       description:
-        'Craft a series of precise Apocryphal runes, then propel them at yourself or an ally in front of you. The runes heal for 1161 Health three times and generate Crux.\n\nEach active Crux reduces the cost of this ability by 3%.',
+        'Craft a series of precise Apocryphal runes, then propel them at yourself or an ally in front of you. The runes heal for 4090 Health three times and generate Crux.\n\nEach active Crux reduces the cost of this ability by 3%.',
       baseSkillId: ClassSkillId.ARCANIST_RUNEMEND,
     },
     {
@@ -58,7 +58,7 @@ export const curativeRuneforms: SkillLineData = {
       type: 'active',
       icon: 'ability_arcanist_013_b',
       description:
-        'Craft a series of virtuous Apocryphal runes, then propel them at yourself or an ally in front of you. The runes heal for 1199 Health three times and generate Crux.\n\nHealing a target under 50% Health grants them Minor Heroism for 6 seconds, generating 1 Ultimate every 1.5 seconds.\n\nEach active Crux reduces the cost of this ability by 3%.',
+        'Craft a series of virtuous Apocryphal runes, then propel them at yourself or an ally in front of you. The runes heal for 4225 Health three times and generate Crux.\n\nHealing a target under 50% Health grants them Minor Heroism for 6 seconds, generating 1 Ultimate every 1.5 seconds.\n\nEach active Crux reduces the cost of this ability by 3%.',
       baseSkillId: ClassSkillId.ARCANIST_RUNEMEND,
     },
     {
@@ -67,7 +67,7 @@ export const curativeRuneforms: SkillLineData = {
       type: 'active',
       icon: 'ability_arcanist_013_a',
       description:
-        'Craft a series of adaptive Apocryphal runes, then propel them at yourself or an ally in front of you. The runes heal for 1161 Health three times, an additional 1302 Health over 6 seconds, and generate Crux.\n\nEach active Crux reduces the cost of this ability by 3%.',
+        'Craft a series of adaptive Apocryphal runes, then propel them at yourself or an ally in front of you. The runes heal for 4090 Health three times, an additional 4599 Health over 6 seconds, and generate Crux.\n\nEach active Crux reduces the cost of this ability by 3%.',
       baseSkillId: ClassSkillId.ARCANIST_RUNEMEND,
     },
     {
@@ -76,7 +76,7 @@ export const curativeRuneforms: SkillLineData = {
       type: 'active',
       icon: 'ability_arcanist_014',
       description:
-        'Channel the abyssal sea to coalesce a beam of restorative energy. The beam heals you and your allies in its path for 11310 Health over 4.5 seconds.\n\nConsume Crux to also restore 728 Magicka and Stamina per Crux spent to your allies over 4.5 seconds.',
+        'Channel the abyssal sea to coalesce a beam of restorative energy. The beam heals you and your allies in its path for 39884 Health over 4.5 seconds.\n\nConsume Crux to also restore 728 Magicka and Stamina per Crux spent to your allies over 4.5 seconds.',
       baseSkillId: ClassSkillId.ARCANIST_REMEDY_CASCADE,
       alternateIds: [198309],
     },
@@ -86,7 +86,7 @@ export const curativeRuneforms: SkillLineData = {
       type: 'active',
       icon: 'ability_arcanist_014_a',
       description:
-        "Channel the abyssal sea to coalesce a beam that heals you and your allies in its path for 11674 Health over 4.5 seconds.\n\nThe beam heals for up to 50% more in proportion to the severity of the target's wounds as you reweave fate itself.\n\nConsume Crux to also restore 728 Magicka and Stamina per Crux spent to your allies over 4.5 seconds.",
+        "Channel the abyssal sea to coalesce a beam that heals you and your allies in its path for 41184 Health over 4.5 seconds.\n\nThe beam heals for up to 50% more in proportion to the severity of the target's wounds as you reweave fate itself.\n\nConsume Crux to also restore 728 Magicka and Stamina per Crux spent to your allies over 4.5 seconds.",
       baseSkillId: ClassSkillId.ARCANIST_REMEDY_CASCADE,
     },
     {
@@ -95,7 +95,7 @@ export const curativeRuneforms: SkillLineData = {
       type: 'active',
       icon: 'ability_arcanist_014_b',
       description:
-        'Channel the abyssal sea to coalesce a beam that heals you and your allies in its path for 11674 Health over 4.5 seconds.\n\nThe beam gradually grows stronger the longer you channel it, healing for up to 192% more at the end of its duration.\n\nConsume Crux to also restore 728 Magicka and Stamina per Crux spent to your allies over 4.5 seconds.',
+        'Channel the abyssal sea to coalesce a beam that heals you and your allies in its path for 41184 Health over 4.5 seconds.\n\nThe beam gradually grows stronger the longer you channel it, healing for up to 192% more at the end of its duration.\n\nConsume Crux to also restore 728 Magicka and Stamina per Crux spent to your allies over 4.5 seconds.',
       baseSkillId: ClassSkillId.ARCANIST_REMEDY_CASCADE,
     },
     {
@@ -104,7 +104,7 @@ export const curativeRuneforms: SkillLineData = {
       type: 'active',
       icon: 'ability_arcanist_015',
       description:
-        'Carve the runes of the Blind Man to call forth spinning mystical discs. Discs surround you or up to 4 allies in front of you, granting a shield that absorbs 3068 damage for 6 seconds.\n\nDiscs prefer your reticle target, or low-Health targets without shields.',
+        'Carve the runes of the Blind Man to call forth spinning mystical discs. Discs surround you or up to 4 allies in front of you, granting a shield that absorbs 6075 damage for 6 seconds.\n\nDiscs prefer your reticle target, or low-Health targets without shields.',
       baseSkillId: ClassSkillId.ARCANIST_CHAKRAM_SHIELDS,
       alternateIds: [183447],
     },
@@ -114,7 +114,7 @@ export const curativeRuneforms: SkillLineData = {
       type: 'active',
       icon: 'ability_arcanist_015_a',
       description:
-        "Carve the Fate Crone's runes to create spinning mystical discs and generate Crux. Discs surround you or up to 4 allies in front of you, granting a shield that absorbs 3068 damage for 6 seconds.\n\nRecasting on a target already shielded grants a new shield that is 30% stronger.\n\nDiscs prefer your reticle target, or low-Health targets without shields.",
+        "Carve the Fate Crone's runes to create spinning mystical discs and generate Crux. Discs surround you or up to 4 allies in front of you, granting a shield that absorbs 6075 damage for 6 seconds.\n\nRecasting on a target already shielded grants a new shield that is 30% stronger.\n\nDiscs prefer your reticle target, or low-Health targets without shields.",
       baseSkillId: ClassSkillId.ARCANIST_CHAKRAM_SHIELDS,
     },
     {
@@ -123,7 +123,7 @@ export const curativeRuneforms: SkillLineData = {
       type: 'active',
       icon: 'ability_arcanist_015_b',
       description:
-        "Carve the Baron of Breakers' runes to create spinning discs. Discs surround you or up to 4 allies in front of you, granting a shield that absorbs 3169 damage for 6 seconds.\n\nConsume Crux to cause the shields to heal for 33% of the shield's remaining strength every 1 second per Crux spent.\n\nDiscs prefer your reticle target, or low-Health targets without shields.",
+        "Carve the Baron of Breakers' runes to create spinning discs. Discs surround you or up to 4 allies in front of you, granting a shield that absorbs 6275 damage for 6 seconds.\n\nConsume Crux to cause the shields to heal for 33% of the shield's remaining strength every 1 second per Crux spent.\n\nDiscs prefer your reticle target, or low-Health targets without shields.",
       baseSkillId: ClassSkillId.ARCANIST_CHAKRAM_SHIELDS,
     },
     {
@@ -141,7 +141,7 @@ export const curativeRuneforms: SkillLineData = {
       type: 'active',
       icon: 'ability_arcanist_017_b',
       description:
-        'Draw forth your tome and invoke the leviathanum of the Abyssal Sea to conjure a vortex of eldritch power. Entering this vortex grants you and your allies Minor Courage, Minor Fortitude, Minor Intellect, and Minor Endurance, increasing your Weapon and Spell Damage by 215 and your Health, Magicka, and Stamina Recovery by 15%.\n\nThe vortex also heals you and your allies for 4631 Health over 20 seconds.',
+        'Draw forth your tome and invoke the leviathanum of the Abyssal Sea to conjure a vortex of eldritch power. Entering this vortex grants you and your allies Minor Courage, Minor Fortitude, Minor Intellect, and Minor Endurance, increasing your Weapon and Spell Damage by 215 and your Health, Magicka, and Stamina Recovery by 15%.\n\nThe vortex also heals you and your allies for 16346 Health over 20 seconds.',
       baseSkillId: ClassSkillId.ARCANIST_ARCANIST_S_DOMAIN,
     },
     {

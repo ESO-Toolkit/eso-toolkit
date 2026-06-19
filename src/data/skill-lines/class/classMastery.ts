@@ -50,7 +50,7 @@ export const classMasteryDragonknight: SkillLineData = {
       type: 'passive',
       icon: 'ability_dragonknight_028',
       description:
-        'Fire forged within can never be extinguished. Fan the flames.\n\nWhen your Dragonknight damage over time effects end, you apply Wildfire Embers to the target, dealing 1561 Flame Damage over 12 seconds. This effect stacks up to 12 times and increases in damage by 25% per stack.',
+        'Fire forged within can never be extinguished. Fan the flames.\n\nWhen your Dragonknight damage over time effects end, you apply Wildfire Embers to the target, dealing 6069 Flame Damage over 12 seconds. This effect stacks up to 12 times and increases in damage by 25% per stack.',
       isPassive: true,
     },
     {
@@ -169,7 +169,7 @@ export const classMasteryNecromancer: SkillLineData = {
       type: 'passive',
       icon: 'passive_necromancer_010',
       description:
-        "Knock upon death's door and demand your due.\n\nWhen you take damage you have a 10% chance to heal 1600 Health and restore 5% of your missing Stamina, up to once per second. This chance increases by 1% for every missing Health percent you have and the healing is based off your Max Health.",
+        "Knock upon death's door and demand your due.\n\nWhen you take damage you have a 10% chance to heal 1877 Health and restore 5% of your missing Stamina, up to once per second. This chance increases by 1% for every missing Health percent you have and the healing is based off your Max Health.",
       isPassive: true,
     },
     {
@@ -252,7 +252,7 @@ export const classMasteryTemplar: SkillLineData = {
       type: 'passive',
       icon: 'ability_templar_025',
       description:
-        'Light consecrates the ground on which you tread.\n\nSacred Ground is now applied while you are in your own Nova and Spear Shards, and while Radial Sweep and Solar Barrage are active. While Sacred Ground is active, you heal for 1279 Health every 1 second. If you are at full Health after being healed from this effect while in combat, you also gain 2 Ultimate.',
+        'Light consecrates the ground on which you tread.\n\nSacred Ground is now applied while you are in your own Nova and Spear Shards, and while Radial Sweep and Solar Barrage are active. While Sacred Ground is active, you heal for 1500 Health every 1 second. If you are at full Health after being healed from this effect while in combat, you also gain 2 Ultimate.',
       isPassive: true,
     },
     {
@@ -261,7 +261,7 @@ export const classMasteryTemplar: SkillLineData = {
       type: 'passive',
       icon: 'ability_templar_018',
       description:
-        'Radiant is the shield that pushes back the dark.\n\nWhile Sacred Ground is active, you gain a damage shield for 6 seconds, up to once every 6 seconds. The shield absorbs up to 3200 damage and provides 300 Health, Magicka, and Stamina Recovery while active. If the shield breaks, you gain 10 Ultimate.',
+        'Radiant is the shield that pushes back the dark.\n\nWhile Sacred Ground is active, you gain a damage shield for 6 seconds, up to once every 6 seconds. The shield absorbs up to 3680 damage and provides 300 Health, Magicka, and Stamina Recovery while active. If the shield breaks, you gain 10 Ultimate.',
       isPassive: true,
     },
     {
@@ -362,7 +362,7 @@ export const classMasterySorcerer: SkillLineData = {
       type: 'passive',
       icon: 'ability_sorcerer_044',
       description:
-        'Spellcasting is second nature to you. A skill honed by tireless study.\n\nUpgrades rank 2 of Blood Magic to work with all abilities with a cost, excluding cost per tick abilities, and restores 239 Magicka and 239 Stamina when it activates. This effect scales off your Max Magicka and Stamina.',
+        'Spellcasting is second nature to you. A skill honed by tireless study.\n\nUpgrades rank 2 of Blood Magic to work with all abilities with a cost, excluding cost per tick abilities, and restores 257 Magicka and 475 Stamina when it activates. This effect scales off your Max Magicka and Stamina.',
       isPassive: true,
     },
     {
@@ -371,7 +371,7 @@ export const classMasterySorcerer: SkillLineData = {
       type: 'passive',
       icon: 'ability_sorcerer_063',
       description:
-        'Within you is a wellspring of near unlimited power.\n\nUpgrades rank 2 of Exploitation to work with any Sorcerer ability and increases your Weapon and Spell Damage by 6% for 10 seconds. The Weapon and Spell Damage increases by 1% for every 1750 Max Magicka or Stamina you have, whichever is higher.',
+        'Within you is a wellspring of near unlimited power.\n\nUpgrades rank 2 of Exploitation to work with any Sorcerer ability and increases your Weapon and Spell Damage by 13% for 10 seconds. The Weapon and Spell Damage increases by 1% for every 1750 Max Magicka or Stamina you have, whichever is higher.',
       isPassive: true,
     },
     {
@@ -380,7 +380,7 @@ export const classMasterySorcerer: SkillLineData = {
       type: 'passive',
       icon: 'ability_sorcerer_023',
       description:
-        'The battlefield crackles with untapped potential. Make use of it.\n\nWhen you deal damage, you have a 5% chance to deal 314 Shock Damage, up to once every 0.3 seconds.\n\nThe chance increases by 1% for every 1% missing Health the target has. The chance is divided by 1 plus every permanent pet you have active.',
+        'The battlefield crackles with untapped potential. Make use of it.\n\nWhen you deal damage, you have a 5% chance to deal 1952 Shock Damage, up to once every 0.3 seconds.\n\nThe chance increases by 1% for every 1% missing Health the target has. The chance is divided by 1 plus every permanent pet you have active.',
       isPassive: true,
     },
     {
@@ -389,7 +389,7 @@ export const classMasterySorcerer: SkillLineData = {
       type: 'passive',
       icon: 'ability_sorcerer_037',
       description:
-        'Success is a certainty when nothing is left to chance.\n\nWhile beginning to use a Sorcerer ability or an ability with a cast time, you gain a damage shield for 0.5 seconds that can absorb 5280 damage. This effect is based off your Max Health. If the shield does not break, you and nearby group members gain 6% Weapon and Spell Damage for 20 seconds.',
+        'Success is a certainty when nothing is left to chance.\n\nWhile beginning to use a Sorcerer ability or an ability with a cast time, you gain a damage shield for 0.5 seconds that can absorb 6072 damage. This effect is based off your Max Health. If the shield does not break, you and nearby group members gain 6% Weapon and Spell Damage for 20 seconds.',
       isPassive: true,
     },
     {
@@ -398,7 +398,7 @@ export const classMasterySorcerer: SkillLineData = {
       type: 'passive',
       icon: 'ability_sorcerer_047',
       description:
-        "Magicka extends your reach, a benefit to those who fight beside you.\n\nCasting a damage shield on yourself or an ally grants an additional shield that absorbs up to 2400 damage for 4 seconds and 225 Health, Magicka, and Stamina Recovery for 12 seconds. The shield scales off the higher of your Max Health or Max Magicka, and is capped at 25% of the target's Max Health.",
+        "Magicka extends your reach, a benefit to those who fight beside you.\n\nCasting a damage shield on yourself or an ally grants an additional shield that absorbs up to 2760 damage for 4 seconds and 225 Health, Magicka, and Stamina Recovery for 12 seconds. The shield scales off the higher of your Max Health or Max Magicka, and is capped at 25% of the target's Max Health.",
       isPassive: true,
     },
   ],

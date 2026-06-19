@@ -20,7 +20,7 @@ export const aeriesCry: GearSetData = {
     '(2 items) Adds 1487 Offensive Penetration',
     '(3 items) Adds 129 Weapon and Spell Damage',
     '(4 items) Adds 129 Weapon and Spell Damage',
-    "(5 items) Dealing damage with a Light Attack applies Eagle's Mark to your target for 12 seconds. Eagle's Mark causes an eagle to attack your target every 3 seconds after a 3 second delay, dealing 856 Physical Damage per attack.\n\nApplying Eagle's Mark grants you Aerie's Call for 12 seconds, increasing your damage done by 10% against enemies with Eagle's Mark.\n\nThis effect can occur every 3 seconds. You can have one Eagle's Mark active at a time.",
+    "(5 items) Dealing damage with a Light Attack applies Eagle's Mark to your target for 12 seconds. Eagle's Mark causes an eagle to attack your target every 3 seconds after a 3 second delay, dealing 5311 Physical Damage per attack.\n\nApplying Eagle's Mark grants you Aerie's Call for 12 seconds, increasing your damage done by 10% against enemies with Eagle's Mark.\n\nThis effect can occur every 3 seconds. You can have one Eagle's Mark active at a time.",
   ],
 };
 
@@ -44,7 +44,7 @@ export const aethericLancer: GearSetData = {
     '(2 items) Adds 129 Weapon and Spell Damage',
     '(3 items) Adds 657 Critical Chance',
     '(4 items) Adds 129 Weapon and Spell Damage',
-    '(5 items) Dealing damage with Burning Light twice within 30 seconds creates a 5 meter area for 5 seconds. This effect can occur once every 3 seconds.\n\nWhile in the area, dealing damage with an Aedric Spear ability launches a spear at your target, dealing 1684 Magic Damage and applying Sundered and increasing your Weapon and Spell Damage by 300 for 10 seconds. The damage scales off the higher of your Weapon or Spell Damage.',
+    '(5 items) Dealing damage with Burning Light twice within 30 seconds creates a 5 meter area for 5 seconds. This effect can occur once every 3 seconds.\n\nWhile in the area, dealing damage with an Aedric Spear ability launches a spear at your target, dealing 10442 Magic Damage and applying Sundered and increasing your Weapon and Spell Damage by 300 for 10 seconds. The damage scales off the higher of your Weapon or Spell Damage.',
   ],
 };
 
@@ -147,7 +147,7 @@ export const glitteringGoad: GearSetData = {
   setType: 'Monster Set',
   bonuses: [
     '(1 item) Adds 129 Weapon and Spell Damage',
-    '(2 items) Dealing damage with a Bash or Heavy Attack deals 812 Frost Damage over 8 seconds to the enemy. This effect can occur once every 8 seconds.\n\nIf the effect completes, the enemy applies Minor Brittle to up to 6 enemies within 12 meters of itself for 10 seconds.\n\nIf the enemy dies, the enemy releases glittering energy, restoring 847 Magicka and Stamina to you and group members within 12 meters of the defeated enemy.',
+    '(2 items) Dealing damage with a Bash or Heavy Attack deals 4784 Frost Damage over 8 seconds to the enemy. This effect can occur once every 8 seconds.\n\nIf the effect completes, the enemy applies Minor Brittle to up to 6 enemies within 12 meters of itself for 10 seconds.\n\nIf the enemy dies, the enemy releases glittering energy, restoring 847 Magicka and Stamina to you and group members within 12 meters of the defeated enemy.',
   ],
 };
 
@@ -261,7 +261,7 @@ export const runecarversBlaze: GearSetData = {
     '(2 items) Adds 129 Weapon and Spell Damage',
     '(3 items) Adds 129 Weapon and Spell Damage',
     '(4 items) Adds 1487 Offensive Penetration',
-    '(5 items) Your damage over time effects deal an additional 209 Flame Damage every third damage tick. This damage scales off your Weapon or Spell Damage.',
+    '(5 items) Your damage over time effects deal an additional 1298 Flame Damage every third damage tick. This damage scales off your Weapon or Spell Damage.',
   ],
 };
 
@@ -273,7 +273,7 @@ export const almalexiasMercy: GearSetData = {
     '(2 items) Adds 1206 Maximum Health',
     '(3 items) Adds 1487 Armor',
     '(4 items) Adds 1487 Armor',
-    '(5 items) When you take damage, you heal you and your group members within 7 meters of you for 1412 Health over 3 seconds. This effect can occur once every 3 seconds and scales off the higher of your Max Magicka or Stamina.',
+    '(5 items) When you take damage, you heal you and your group members within 7 meters of you for 2852 Health over 3 seconds. This effect can occur once every 3 seconds and scales off the higher of your Max Magicka or Stamina.',
   ],
 };
 export const amberPlasm: GearSetData = {
@@ -308,7 +308,7 @@ export const anthelmirSConstruct: GearSetData = {
   setType: 'Monster Set',
   bonuses: [
     '(1 item) Adds 129 Weapon and Spell Damage',
-    '(2 items) Dealing damage with a fully-charged Heavy Attack throws an axe at the enemy, dealing 1572 Physical Damage and reducing their Armor by 400 for 5 seconds. This effect can occur once every 10 seconds and scales off the higher of your Weapon or Spell Damage.\n\nThe axe drops to the ground after traveling to your target for 5 seconds. Touching the axe reduces the cooldown of this set by 5 seconds.',
+    '(2 items) Dealing damage with a fully-charged Heavy Attack throws an axe at the enemy, dealing 9748 Physical Damage and reducing their Armor by 2053 for 5 seconds. This effect can occur once every 10 seconds and scales off the higher of your Weapon or Spell Damage.\n\nThe axe drops to the ground after traveling to your target for 5 seconds. Touching the axe reduces the cooldown of this set by 5 seconds.',
   ],
 };
 
@@ -318,7 +318,7 @@ export const archdruidDevyric: GearSetData = {
   setType: 'PvP',
   bonuses: [
     '(1 item) Adds 1487 Offensive Penetration',
-    '(2 items) When you deal damage with a Heavy Attack, after 1.2 seconds deal 650 Shock Damage to up to 6 enemies within a 7 by 5 meter line on your target, applying Major Vulnerability to them for 7 seconds, increasing the damage enemies take by 10%. This effect can occur once every 15 seconds and scales off the higher of your Weapon or Spell Damage.',
+    '(2 items) When you deal damage with a Heavy Attack, after 1.2 seconds deal 3817 Shock Damage to up to 6 enemies within a 7 by 5 meter line on your target, applying Major Vulnerability to them for 7 seconds, increasing the damage enemies take by 10%. This effect can occur once every 15 seconds and scales off the higher of your Weapon or Spell Damage.',
   ],
 };
 
@@ -377,7 +377,7 @@ export const ashenGrip: GearSetData = {
     '(2 items) Adds 1206 Maximum Health',
     '(3 items) Adds 129 Weapon and Spell Damage',
     '(4 items) Adds 657 Critical Chance',
-    '(5 items) When you deal Martial melee damage, you breathe fire to all enemies in front of you for 774 Flame Damage. This effect can occur once every 4 seconds and scales off the higher of your Weapon or Spell Damage.',
+    '(5 items) When you deal Martial melee damage, you breathe fire to all enemies in front of you for 4547 Flame Damage. This effect can occur once every 4 seconds and scales off the higher of your Weapon or Spell Damage.',
   ],
 };
 
@@ -401,7 +401,7 @@ export const auroranSThunder: GearSetData = {
     '(2 items) Adds 1206 Maximum Health',
     '(3 items) Adds 129 Weapon and Spell Damage',
     '(4 items) Adds 1487 Offensive Penetration',
-    '(5 items) Dealing direct damage to a target within 10 meters of you summons a cone of lightning from your chest for 5 seconds, dealing 396 Shock Damage every 1 second to enemies in the cone. This effect can occur every 10 seconds and scales off the higher of your Weapon or Spell Damage.',
+    '(5 items) Dealing direct damage to a target within 10 meters of you summons a cone of lightning from your chest for 5 seconds, dealing 2197 Shock Damage every 1 second to enemies in the cone. This effect can occur every 10 seconds and scales off the higher of your Weapon or Spell Damage.',
   ],
 };
 
@@ -426,7 +426,7 @@ export const bahrahaSCurse: GearSetData = {
     '(3 items) Adds 1096 Maximum Magicka',
     '(4 items) Adds 1096 Maximum Stamina',
     '(4 items) Reduces your damage taken from environmental traps by 40%.',
-    '(5 items) When you deal damage, you have a 25% chance to create desecrated ground for 5 seconds, which reduces the Movement Speed of enemies within 3.5 meters by 60%, damages them for 349 Magic Damage every 1 second, and heals you for 100% of the damage done. This effect can occur once every 5 seconds and the damage scales off your Max Health.',
+    '(5 items) When you deal damage, you have a 25% chance to create desecrated ground for 5 seconds, which reduces the Movement Speed of enemies within 3.5 meters by 60%, damages them for 401 Magic Damage every 1 second, and heals you for 100% of the damage done. This effect can occur once every 5 seconds and the damage scales off your Max Health.',
   ],
 };
 
@@ -458,7 +458,7 @@ export const barSakka: GearSetData = {
   setType: 'Monster Set',
   bonuses: [
     '(1 item) Adds 1206 Maximum Health',
-    '(2 items) While in combat, performing a Roll Dodge creates a 6 meter pool of blood. After a 1 second delay, enemies in the pool take 788 Magic Damage. Gain a Damage Shield for 6 seconds based on total damage done by the pool to enemies, up to 15000 damage. This effect can occur once every 10 seconds and the amount of damage done scales off your Max Health and cannot critically hit.',
+    '(2 items) While in combat, performing a Roll Dodge creates a 6 meter pool of blood. After a 1 second delay, enemies in the pool take 960 Magic Damage. Gain a Damage Shield for 6 seconds based on total damage done by the pool to enemies, up to 15000 damage. This effect can occur once every 10 seconds and the amount of damage done scales off your Max Health and cannot critically hit.',
   ],
 };
 
@@ -469,7 +469,7 @@ export const baronThirsk: GearSetData = {
   bonuses: [
     '(1 item) Adds 129 Stamina Recovery',
     '(1 item) Adds 129 Magicka Recovery',
-    '(2 items) On dealing area direct damage, mark a target for 6 seconds. Every 2 seconds after, an Explosive Scamp is spawned nearby and detonates after 1 second, dealing 362 Magic Damage to up to 6 enemies within 4 meters and applying Minor Timidity for 10 seconds, draining 1 Ultimate every 1.5 seconds. Each Explosive Scamp spawned deals 100% increased damage. This effect can occur once every 25 seconds and scales off the higher of your Weapon or Spell Damage.',
+    '(2 items) On dealing area direct damage, mark a target for 6 seconds. Every 2 seconds after, an Explosive Scamp is spawned nearby and detonates after 1 second, dealing 2128 Magic Damage to up to 6 enemies within 4 meters and applying Minor Timidity for 10 seconds, draining 1 Ultimate every 1.5 seconds. Each Explosive Scamp spawned deals 100% increased damage. This effect can occur once every 25 seconds and scales off the higher of your Weapon or Spell Damage.',
   ],
 };
 
@@ -621,7 +621,7 @@ export const caluurionSLegacy: GearSetData = {
     '(2 items) Adds 657 Critical Chance',
     '(3 items) Adds 129 Weapon and Spell Damage',
     '(4 items) Adds 657 Critical Chance',
-    '(5 items) When you deal Critical Damage with a Light or Heavy Attack, you launch a projectile at your target that deals 894 Flame, 894 Frost, 894 Shock, or 894 Disease damage and applies the respective status effect. This effect can occur once every 5 seconds and scales off the higher of your Weapon or Spell Damage.',
+    '(5 items) When you deal Critical Damage with a Light or Heavy Attack, you launch a projectile at your target that deals 5548 Flame, 5548 Frost, 5548 Shock, or 5548 Disease damage and applies the respective status effect. This effect can occur once every 5 seconds and scales off the higher of your Weapon or Spell Damage.',
   ],
 };
 
@@ -643,7 +643,7 @@ export const chokethorn: GearSetData = {
   setType: 'Dungeon',
   bonuses: [
     '(1 item) Adds 129 Magicka Recovery',
-    '(2 items) When you use a heal ability with a cost, you have a 33% chance to summon a strangler sapling that heals you or an ally for 6986 Health over 6 seconds. This effect can occur once every 10 seconds and scales off the higher of your Max Magicka or Stamina.',
+    '(2 items) When you use a heal ability with a cost, you have a 33% chance to summon a strangler sapling that heals you or an ally for 14119 Health over 6 seconds. This effect can occur once every 10 seconds and scales off the higher of your Max Magicka or Stamina.',
   ],
 };
 
@@ -655,7 +655,7 @@ export const cindersOfAnthelmir: GearSetData = {
     '(2 items) Adds 1487 Offensive Penetration',
     '(3 items) Adds 129 Weapon and Spell Damage',
     '(4 items) Adds 129 Weapon and Spell Damage',
-    '(5 items) On dealing damage, summon a Cindermoth that chases your target without mercy for 8 seconds. If your target dies before the moth reaches them, it seeks a new target within 8 meters. The first enemy that nears the Cindermoth causes it to stop and burst after 1 second, dealing 1283 Flame Damage and Burning enemies within 8 meters. This can occur once every 8 seconds and scales off your Weapon or Spell Damage.',
+    '(5 items) On dealing damage, summon a Cindermoth that chases your target without mercy for 8 seconds. If your target dies before the moth reaches them, it seeks a new target within 8 meters. The first enemy that nears the Cindermoth causes it to stop and burst after 1 second, dealing 7529 Flame Damage and Burning enemies within 8 meters. This can occur once every 8 seconds and scales off your Weapon or Spell Damage.',
   ],
 };
 
@@ -691,7 +691,7 @@ export const coldharbourSFavorite: GearSetData = {
     '(2 items) Adds 1096 Maximum Magicka',
     '(3 items) Adds 1096 Maximum Stamina',
     '(4 items) Adds 129 Weapon and Spell Damage',
-    "(5 items) Healing yourself or a group member summons Coldharbour's Favorite, who after 2 seconds, begins healing you and group members near him for 4648 Health over 6 seconds based on the higher of your Max Magicka or Stamina.\n\nDealing damage summons Coldharbour's Favorite, who after 2 seconds, explodes, damaging enemies near him for 2352 Magic Damage over 6 seconds based on the higher of your Weapon or Spell Damage.\n\nColdharbour's Favorite can only be summoned once every 10 seconds.",
+    "(5 items) Healing yourself or a group member summons Coldharbour's Favorite, who after 2 seconds, begins healing you and group members near him for 9394 Health over 6 seconds based on the higher of your Max Magicka or Stamina.\n\nDealing damage summons Coldharbour's Favorite, who after 2 seconds, explodes, damaging enemies near him for 13811 Magic Damage over 6 seconds based on the higher of your Weapon or Spell Damage.\n\nColdharbour's Favorite can only be summoned once every 10 seconds.",
   ],
 };
 
@@ -725,7 +725,7 @@ export const corpseburster: GearSetData = {
     '(2 items) Adds 129 Weapon and Spell Damage',
     '(3 items) Adds 129 Weapon and Spell Damage',
     '(4 items) Adds 657 Critical Chance',
-    '(5 items) Consuming a corpse causes the corpse to explode, dealing 1298 Disease Damage to enemies within 5 meters and applying the Diseased status effect and Minor Breach to them for 5 seconds, reducing their Physical and Spell Resistance by 2974. This effect can occur once every 0.5 seconds, scales off the higher of your Weapon or Spell Damage, and deals 10% more damage for each Grave Lord ability slotted.',
+    '(5 items) Consuming a corpse causes the corpse to explode, dealing 7617 Disease Damage to enemies within 5 meters and applying the Diseased status effect and Minor Breach to them for 5 seconds, reducing their Physical and Spell Resistance by 2974. This effect can occur once every 0.5 seconds, scales off the higher of your Weapon or Spell Damage, and deals 10% more damage for each Grave Lord ability slotted.',
   ],
 };
 
@@ -797,7 +797,7 @@ export const darkConvergence: GearSetData = {
     '(2 items) Adds 129 Weapon and Spell Damage',
     '(3 items) Adds 1487 Offensive Penetration',
     '(4 items) Adds 129 Weapon and Spell Damage',
-    '(5 items) While in combat, casting abilities that leave an effect on the ground will create an area that applies a 60% snare and pulls enemies after a 1 second delay, stunning them for 1 second. After 4 seconds, the area deals 821 Magic Damage to all enemies in the 10 meter area, and 1642 Magic Damage to enemies within 3 meters of the center, increasing by 50% for each target. This effect can occur once every 25 seconds and scales off the higher of your Weapon or Spell Damage.',
+    '(5 items) While in combat, casting abilities that leave an effect on the ground will create an area that applies a 60% snare and pulls enemies after a 1 second delay, stunning them for 1 second. After 4 seconds, the area deals 4818 Magic Damage to all enemies in the 10 meter area, and 9636 Magic Damage to enemies within 3 meters of the center, increasing by 50% for each target. This effect can occur once every 25 seconds and scales off the higher of your Weapon or Spell Damage.',
   ],
 };
 
@@ -822,7 +822,7 @@ export const deadlandsDemolisher: GearSetData = {
     '(2 items) Adds 1096 Maximum Stamina',
     '(3 items) Adds 129 Weapon and Spell Damage',
     '(4 items) Adds 1096 Maximum Stamina',
-    '(5 items) Your Bash attacks deal 935 more damage. When you Bash, you also deal 0 Physical Damage in a cone in front of you, interrupting any enemies hit. This effect can occur once every 2 seconds and counts as Bash damage.',
+    '(5 items) Your Bash attacks deal 935 more damage. When you Bash, you also deal 301 Physical Damage in a cone in front of you, interrupting any enemies hit. This effect can occur once every 2 seconds and counts as Bash damage.',
   ],
 };
 
@@ -858,7 +858,7 @@ export const destructiveMage: GearSetData = {
     '(2 items) Adds 129 Weapon and Spell Damage',
     '(3 items) Adds 657 Critical Chance',
     '(4 items) Adds 129 Weapon and Spell Damage',
-    '(5 items) When you deal damage with a fully-charged Heavy Attack, you mark the enemy with unstable energies for 10 seconds. If your mark was already active before applying, it instead detonates, dealing 1071 Magic Damage all enemies within 8 meters. This effect can occur once every 3 seconds and scales off the higher of your Weapon or Spell Damage.',
+    '(5 items) When you deal damage with a fully-charged Heavy Attack, you mark the enemy with unstable energies for 10 seconds. If your mark was already active before applying, it instead detonates, dealing 6288 Magic Damage all enemies within 8 meters. This effect can occur once every 3 seconds and scales off the higher of your Weapon or Spell Damage.',
   ],
 };
 
@@ -881,7 +881,7 @@ export const domihaus: GearSetData = {
   bonuses: [
     '(1 item) Adds 1096 Maximum Stamina',
     '(1 item) Adds 1096 Maximum Magicka',
-    '(2 items) When you deal damage, you create a 10 meter ring of molten earth around you for 10 seconds, which deals 90 Flame Damage and 90 Physical Damage every 1 second. Standing within the ring grants you 300 Weapon and Spell Damage. This effect can occur once every 15 seconds and the damage scales off the higher of your Weapon or Spell Damage.',
+    '(2 items) When you deal damage, you create a 10 meter ring of molten earth around you for 10 seconds, which deals 503 Flame Damage and 533 Physical Damage every 1 second. Standing within the ring grants you 300 Weapon and Spell Damage. This effect can occur once every 15 seconds and the damage scales off the higher of your Weapon or Spell Damage.',
   ],
 };
 
@@ -893,7 +893,7 @@ export const dragonSAppetite: GearSetData = {
     '(2 items) Adds 129 Weapon and Spell Damage',
     '(3 items) Adds 129 Stamina Recovery',
     '(4 items) Adds 129 Stamina Recovery',
-    "(5 items) Increase your damage done to Bleeding enemies by 225. Dealing non-Bleed damage to Bleeding enemies generates a stack of Dragon's Appetite for 5 seconds, up to once per half second. After 10 stacks you consume Dragon's Appetite and heal for 4415 Health. The heal effect scales off the higher of your Max Magicka or Stamina.",
+    "(5 items) Increase your damage done to Bleeding enemies by 225. Dealing non-Bleed damage to Bleeding enemies generates a stack of Dragon's Appetite for 5 seconds, up to once per half second. After 10 stacks you consume Dragon's Appetite and heal for 8918 Health. The heal effect scales off the higher of your Max Magicka or Stamina.",
   ],
 };
 
@@ -905,7 +905,7 @@ export const draugrSRest: GearSetData = {
     '(2 items) Adds 1096 Maximum Magicka',
     '(3 items) Adds 129 Magicka Recovery',
     '(4 items) Adds 4% Healing Done',
-    '(5 items) When you complete a fully-charged Heavy Attack, you create a circle of consecrated ground that heals you and your group members within 5 meters for 5550 Health over 10 seconds. This effect can occur once every 10 seconds and scales off the higher of your Max Magicka or Stamina.',
+    '(5 items) When you complete a fully-charged Heavy Attack, you create a circle of consecrated ground that heals you and your group members within 5 meters for 11220 Health over 10 seconds. This effect can occur once every 10 seconds and scales off the higher of your Max Magicka or Stamina.',
   ],
 };
 
@@ -959,7 +959,7 @@ export const earthgore: GearSetData = {
   setType: 'Dungeon',
   bonuses: [
     '(1 item) Adds 4% Healing Done',
-    '(2 items) When you heal yourself or a group member that is under 50% Health, you conjure a pool of blood underneath them, immediately removing all harmful area effects, and healing the lowest Health group member in the area after 2 seconds for 1702 Health every 2 seconds over 8 seconds. This effect can occur once every 20 seconds and scales off the higher of your Max Magicka or Stamina.',
+    '(2 items) When you heal yourself or a group member that is under 50% Health, you conjure a pool of blood underneath them, immediately removing all harmful area effects, and healing the lowest Health group member in the area after 2 seconds for 3438 Health every 2 seconds over 8 seconds. This effect can occur once every 20 seconds and scales off the higher of your Max Magicka or Stamina.',
   ],
 };
 
@@ -1003,7 +1003,7 @@ export const engineGuardian: GearSetData = {
   setType: 'Craftable',
   bonuses: [
     '(1 item) Adds 129 Health Recovery',
-    '(2 items) When you use an ability that costs resources, you have a 25% chance to summon a Dwemer automaton to restore 550 Stamina or Magicka or 1955 Health to you every 0.5 seconds for 6 seconds. This effect can occur once every 10 seconds.',
+    '(2 items) When you use an ability that costs resources, you have a 25% chance to summon a Dwemer automaton to restore 550 Stamina or Magicka or 1994 Health to you every 0.5 seconds for 6 seconds. This effect can occur once every 10 seconds.',
   ],
 };
 
@@ -1015,7 +1015,7 @@ export const eternalHunt: GearSetData = {
     '(2 items) Adds 1096 Maximum Stamina',
     '(3 items) Adds 129 Stamina Recovery',
     '(4 items) Adds 129 Stamina Recovery',
-    '(5 items) When you use Roll Dodge, you leave behind a rune that detonates when an enemy comes close, dealing 992 Poison Damage and immobilizing them for 1.5 seconds. This effect scales off the higher of your Weapon or Spell Damage.',
+    '(5 items) When you use Roll Dodge, you leave behind a rune that detonates when an enemy comes close, dealing 5827 Poison Damage and immobilizing them for 1.5 seconds. This effect scales off the higher of your Weapon or Spell Damage.',
   ],
 };
 
@@ -1025,7 +1025,7 @@ export const euphoticGatekeeper: GearSetData = {
   setType: 'Trial',
   bonuses: [
     '(1 item) Adds 129 Stamina Recovery',
-    '(2 items) When you use Roll Dodge, create a Hadolid Husk after you roll. While within 5 meters of the Hadolid Husk, it will absorb all direct damage attacks against you. After 1 second, the Hadolid Husk explodes, dealing 1155 Poison Damage to all enemies within 5 meters. This effect can occur once every 20 seconds and scales off the higher of your Weapon or Spell Damage.',
+    '(2 items) When you use Roll Dodge, create a Hadolid Husk after you roll. While within 5 meters of the Hadolid Husk, it will absorb all direct damage attacks against you. After 1 second, the Hadolid Husk explodes, dealing 6781 Poison Damage to all enemies within 5 meters. This effect can occur once every 20 seconds and scales off the higher of your Weapon or Spell Damage.',
   ],
 };
 
@@ -1096,7 +1096,7 @@ export const flameBlossom: GearSetData = {
     '(2 items) Adds 1096 Maximum Magicka',
     '(3 items) Adds 129 Weapon and Spell Damage',
     '(4 items) Adds 1487 Offensive Penetration',
-    '(5 items) When you deal damage, you summon a line of flame that moves forward after 1 second, dealing 1537 Flame Damage to any enemy in its path and applying the Burning status effect. This effect can occur once every 10 seconds and scales off the higher of your Weapon or Spell Damage.',
+    '(5 items) When you deal damage, you summon a line of flame that moves forward after 1 second, dealing 8511 Flame Damage to any enemy in its path and applying the Burning status effect. This effect can occur once every 10 seconds and scales off the higher of your Weapon or Spell Damage.',
   ],
 };
 
@@ -1144,7 +1144,7 @@ export const galerionSRevenge: GearSetData = {
     '(2 items) Adds 657 Critical Chance',
     '(3 items) Adds 424 Critical Resistance',
     '(4 items) Adds 129 Weapon and Spell Damage',
-    '(5 items) When you deal damage with a Light or Heavy Attack, you put a Mark of Revenge on the enemy for 15 seconds. After stacking 5 Marks of Revenge on an enemy they detonate for 1462 Magic Damage.\n\nYou can only apply a stack once every half second and the damage scales off the higher of your Weapon or Spell Damage.',
+    '(5 items) When you deal damage with a Light or Heavy Attack, you put a Mark of Revenge on the enemy for 15 seconds. After stacking 5 Marks of Revenge on an enemy they detonate for 9068 Magic Damage.\n\nYou can only apply a stack once every half second and the damage scales off the higher of your Weapon or Spell Damage.',
   ],
 };
 
@@ -1221,7 +1221,7 @@ export const grothdarr: GearSetData = {
   setType: 'Monster Set',
   bonuses: [
     '(1 item) Adds 1096 Maximum Magicka',
-    '(2 items) When you deal damage to an enemy within 8 meters, you have a 10% chance to create lava pools that swirl around you, dealing 259 Flame Damage to all enemies within 8 meters of you every 1 second for 5 seconds. This effect can occur once every 10 seconds and scales off the higher of your Weapon or Spell Damage.',
+    '(2 items) When you deal damage to an enemy within 8 meters, you have a 10% chance to create lava pools that swirl around you, dealing 1437 Flame Damage to all enemies within 8 meters of you every 1 second for 5 seconds. This effect can occur once every 10 seconds and scales off the higher of your Weapon or Spell Damage.',
   ],
 };
 
@@ -1344,7 +1344,7 @@ export const histWhisperer: GearSetData = {
     '(2 items) Adds 129 Health Recovery',
     '(3 items) Adds 129 Stamina Recovery',
     '(4 items) Adds 129 Magicka Recovery',
-    '(5 items) Dealing damage with a Light or Medium Attack heals you for 318 Health and restores 318 Stamina and Magicka. Dealing damage with a fully-charged Heavy Attack heals you for 636 Health and restores 636 Stamina and Magicka.',
+    '(5 items) Dealing damage with a Light or Medium Attack heals you for 324 Health and restores 318 Stamina and Magicka. Dealing damage with a fully-charged Heavy Attack heals you for 649 Health and restores 636 Stamina and Magicka.',
   ],
 };
 
@@ -1356,7 +1356,7 @@ export const hitiSHearth: GearSetData = {
     '(2 items) Adds 129 Magicka Recovery',
     '(3 items) Adds 129 Magicka Recovery',
     '(4 items) Adds 1096 Maximum Magicka',
-    '(5 items) When you heal yourself or an ally with an ability, gain a Warming Aura for 10 seconds. While in the Warming Aura, you and group members restore 565 Health every 2 seconds and reduce the cost of Sprint, Block, and Roll Dodge by 5%. This effect can occur once every 12 seconds and the heal scales off the higher of your Max Magicka or Stamina.',
+    '(5 items) When you heal yourself or an ally with an ability, gain a Warming Aura for 10 seconds. While in the Warming Aura, you and group members restore 1140 Health every 2 seconds and reduce the cost of Sprint, Block, and Roll Dodge by 5%. This effect can occur once every 12 seconds and the heal scales off the higher of your Max Magicka or Stamina.',
   ],
 };
 
@@ -1390,7 +1390,7 @@ export const iceheart: GearSetData = {
   setType: 'Dungeon',
   bonuses: [
     '(1 item) Adds 657 Critical Chance',
-    '(2 items) When you deal Critical Damage, you have a 20% chance to gain a damage shield that absorbs 5000 damage for 6 seconds. While the damage shield holds, you deal 259 Frost Damage to all enemies within 5 meters of you every 1 second. This effect can occur once every 6 seconds and the damage scales off the higher of your Weapon or Spell Damage.',
+    '(2 items) When you deal Critical Damage, you have a 20% chance to gain a damage shield that absorbs 5000 damage for 6 seconds. While the damage shield holds, you deal 1436 Frost Damage to all enemies within 5 meters of you every 1 second. This effect can occur once every 6 seconds and the damage scales off the higher of your Weapon or Spell Damage.',
   ],
 };
 
@@ -1402,7 +1402,7 @@ export const icyConjurer: GearSetData = {
     '(2 items) Adds 1096 Maximum Magicka',
     '(3 items) Adds 129 Weapon and Spell Damage',
     '(4 items) Adds 1487 Offensive Penetration',
-    '(5 items) Applying a minor debuff to your enemy summons a non-reflectable Ice Wraith that will charge into your enemy, dealing 3070 Frost Damage over 10 seconds. This effect can occur every 10 seconds and scales off the higher of your Weapon or Spell Damage.',
+    '(5 items) Applying a minor debuff to your enemy summons a non-reflectable Ice Wraith that will charge into your enemy, dealing 18025 Frost Damage over 10 seconds. This effect can occur every 10 seconds and scales off the higher of your Weapon or Spell Damage.',
   ],
 };
 
@@ -1412,7 +1412,7 @@ export const ilambris: GearSetData = {
   setType: 'Monster Set',
   bonuses: [
     '(1 item) Adds 1096 Maximum Magicka',
-    '(2 items) When you deal Flame or Shock Damage, you have a 33% chance to summon a meteor shower that deals 145 Flame Damage and 145 Shock Damage to all enemies within 4 meters every 1 second for 5 seconds. This effect can occur once every 8 seconds and scales off the higher of your Weapon or Spell Damage.',
+    '(2 items) When you deal Flame or Shock Damage, you have a 33% chance to summon a meteor shower that deals 807 Flame Damage and 807 Shock Damage to all enemies within 4 meters every 1 second for 5 seconds. This effect can occur once every 8 seconds and scales off the higher of your Weapon or Spell Damage.',
   ],
 };
 
@@ -1482,7 +1482,7 @@ export const infernalGuardian: GearSetData = {
   setType: 'Craftable',
   bonuses: [
     '(1 item) Adds 1096 Maximum Magicka',
-    '(2 items) When you apply a damage shield to yourself or an ally, you have a 50% chance to lob 3 mortars over 2 seconds at the furthest enemy from you that each deal 641 Flame Damage to all enemies within 5 meters of the blast area. This effect can occur once every 6 seconds and scales off the higher of your Weapon or Spell Damage.',
+    '(2 items) When you apply a damage shield to yourself or an ally, you have a 50% chance to lob 3 mortars over 2 seconds at the furthest enemy from you that each deal 3762 Flame Damage to all enemies within 5 meters of the blast area. This effect can occur once every 6 seconds and scales off the higher of your Weapon or Spell Damage.',
   ],
 };
 
@@ -1565,7 +1565,7 @@ export const kargaeda: GearSetData = {
   bonuses: [
     '(1 item) Adds 731 Maximum Magicka',
     '(1 item) Adds 731 Maximum Stamina',
-    '(2 items) On dealing damage with a Heavy Attack, create a 6 meter whirlwind that slowly moves forward for 8 seconds, growing by 3 meters every 3 seconds. Enemies within the whirlwind take 150 Shock Damage and 150 Physical Damage every second, while group members reduce their Magicka and Stamina costs by 10%. This effect can occur once every 20 seconds and the damage scales off the higher of your Weapon or Spell Damage.',
+    '(2 items) On dealing damage with a Heavy Attack, create a 6 meter whirlwind that slowly moves forward for 8 seconds, growing by 3 meters every 3 seconds. Enemies within the whirlwind take 831 Shock Damage and 831 Physical Damage every second, while group members reduce their Magicka and Stamina costs by 10%. This effect can occur once every 20 seconds and the damage scales off the higher of your Weapon or Spell Damage.',
   ],
 };
 
@@ -1575,7 +1575,7 @@ export const kjalnarSNightmare: GearSetData = {
   setType: 'PvP',
   bonuses: [
     '(1 item) Adds 129 Weapon and Spell Damage',
-    "(2 items) Damaging an enemy with a Light Attack puts a Bone stack on them for 5 seconds, up to once every 0.5 seconds.\n\nAt 5 stacks, an undodgeable skeletal hand attacks your enemy after 1 second, knocking them into the air and stunning them for 3 seconds, or dealing 2221 Magic Damage if they cannot be stunned. Enemies then become immune to Kjalnar's Nightmare stacks for 4 seconds. The damage scales off the higher of your Weapon or Spell Damage.",
+    "(2 items) Damaging an enemy with a Light Attack puts a Bone stack on them for 5 seconds, up to once every 0.5 seconds.\n\nAt 5 stacks, an undodgeable skeletal hand attacks your enemy after 1 second, knocking them into the air and stunning them for 3 seconds, or dealing 13776 Magic Damage if they cannot be stunned. Enemies then become immune to Kjalnar's Nightmare stacks for 4 seconds. The damage scales off the higher of your Weapon or Spell Damage.",
   ],
 };
 
@@ -1597,7 +1597,7 @@ export const kraGh: GearSetData = {
   setType: 'Craftable',
   bonuses: [
     '(1 item) Adds 1487 Offensive Penetration',
-    '(2 items) When you deal damage, you have a 10% chance to spawn dreugh limbs that create shockwaves in front of you dealing 249 Physical Damage every 0.6 seconds for 2.4 seconds. This effect can occur once every 6 seconds and scales off the higher of your Weapon or Spell Damage.',
+    '(2 items) When you deal damage, you have a 10% chance to spawn dreugh limbs that create shockwaves in front of you dealing 1462 Physical Damage every 0.6 seconds for 2.4 seconds. This effect can occur once every 6 seconds and scales off the higher of your Weapon or Spell Damage.',
   ],
 };
 
@@ -1631,7 +1631,7 @@ export const ladyMalygda: GearSetData = {
   setType: 'Monster Set',
   bonuses: [
     '(1 item) Adds 1487 Offensive Penetration',
-    '(2 items) When you deal direct damage to a target within 12 meters, create a 5 meter area that after 1 second, quickly moves forward and then returns, dealing 811 Shock Damage to enemies and applying Minor Enervation for 5 seconds, causing the target to deal 10% less Critical Damage. This effect can occur once every 15 seconds and scales off the higher of your Weapon or Spell Damage.',
+    '(2 items) When you deal direct damage to a target within 12 meters, create a 5 meter area that after 1 second, quickly moves forward and then returns, dealing 4764 Shock Damage to enemies and applying Minor Enervation for 5 seconds, causing the target to deal 10% less Critical Damage. This effect can occur once every 15 seconds and scales off the higher of your Weapon or Spell Damage.',
   ],
 };
 
@@ -1641,7 +1641,7 @@ export const ladyThorn: GearSetData = {
   setType: 'Dungeon',
   bonuses: [
     '(1 item) Adds 1206 Maximum Health',
-    "(2 items) Casting an ability that costs Health spawns a blood ball for 10 seconds. This effect can occur once every 10 seconds.\n\nYou or an ally near the blood ball can activate the Sanguine Burst synergy, dealing 2879 Disease Damage to nearby enemies and applying Major Maim for 8 seconds, decreasing their damage done by 10%. Enemies can only receive Major Maim from Sanguine Burst once every 20 seconds. The damage scales off the synergy activator's Max Health.",
+    "(2 items) Casting an ability that costs Health spawns a blood ball for 10 seconds. This effect can occur once every 10 seconds.\n\nYou or an ally near the blood ball can activate the Sanguine Burst synergy, dealing 3510 Disease Damage to nearby enemies and applying Major Maim for 8 seconds, decreasing their damage done by 10%. Enemies can only receive Major Maim from Sanguine Burst once every 20 seconds. The damage scales off the synergy activator's Max Health.",
   ],
 };
 
@@ -1653,7 +1653,7 @@ export const lamiaSSong: GearSetData = {
     '(2 items) Adds 1096 Maximum Magicka',
     '(3 items) Adds 129 Magicka Recovery',
     '(4 items) Adds 1096 Maximum Magicka',
-    '(5 items) When you use an Ultimate ability, you and your group members within 20 meters of you heal for 25 Health and restore 25 Magicka and Stamina per Ultimate spent.',
+    '(5 items) When you use an Ultimate ability, you and your group members within 20 meters of you heal for 26 Health and restore 25 Magicka and Stamina per Ultimate spent.',
   ],
 };
 
@@ -1689,7 +1689,7 @@ export const legacyOfKarth: GearSetData = {
     '(2 items) Adds 657 Critical Chance',
     '(3 items) Adds 129 Weapon and Spell Damage',
     '(4 items) Adds 1487 Offensive Penetration',
-    '(5 items) Enemies affected by your alchemic poisons take 285 Disease Damage every 1 second. This effect scales off the higher of your Weapon or Spell Damage.',
+    '(5 items) Enemies affected by your alchemic poisons take 1676 Disease Damage every 1 second. This effect scales off the higher of your Weapon or Spell Damage.',
   ],
 };
 
@@ -1745,7 +1745,7 @@ export const maarselok: GearSetData = {
   setType: 'Mythic',
   bonuses: [
     '(1 item) Adds 1096 Maximum Stamina',
-    '(2 items) When you deal damage with a melee Heavy Attack, you spew a cone of corruption, dealing 1492 Disease Damage to enemies over 4 seconds. This damage is increased by 10% for each negative effect the enemies have, up to a maximum of 300%. This effect can occur once every 10 seconds and scales off the higher of your Weapon or Spell Damage.',
+    '(2 items) When you deal damage with a melee Heavy Attack, you spew a cone of corruption, dealing 8264 Disease Damage to enemies over 4 seconds. This damage is increased by 10% for each negative effect the enemies have, up to a maximum of 300%. This effect can occur once every 10 seconds and scales off the higher of your Weapon or Spell Damage.',
   ],
 };
 
@@ -1757,7 +1757,7 @@ export const madTinkerer: GearSetData = {
     '(2 items) Adds 657 Critical Chance',
     '(3 items) Adds 657 Critical Chance',
     '(4 items) Adds 129 Weapon and Spell Damage',
-    '(5 items) When you deal damage, you summon a Verminous Fabricant that charges forward, dealing 1504 Shock Damage to all enemies in its path, and knocking up to 6 into the air, stunning them for 2 seconds. This effect can occur once every 8 seconds and scales off the higher of your Weapon or Spell Damage.',
+    '(5 items) When you deal damage, you summon a Verminous Fabricant that charges forward, dealing 8831 Shock Damage to all enemies in its path, and knocking up to 6 into the air, stunning them for 2 seconds. This effect can occur once every 8 seconds and scales off the higher of your Weapon or Spell Damage.',
   ],
 };
 
@@ -1851,7 +1851,7 @@ export const mawOfTheInfernal: GearSetData = {
   setType: 'Craftable',
   bonuses: [
     '(1 item) Adds 129 Weapon and Spell Damage',
-    "(2 items) When you deal damage with a Light or Heavy Attack, you have a 33% chance to summon a fire breathing Daedroth for 15 seconds. The Daedroth's attacks deal 599 Flame Damage every 2 seconds.\n\nThe Daedroth can only be summoned once every 15 seconds and its damage scales off the higher of your Weapon or Spell Damage.",
+    "(2 items) When you deal damage with a Light or Heavy Attack, you have a 33% chance to summon a fire breathing Daedroth for 15 seconds. The Daedroth's attacks deal 3718 Flame Damage every 2 seconds.\n\nThe Daedroth can only be summoned once every 15 seconds and its damage scales off the higher of your Weapon or Spell Damage.",
   ],
 };
 
@@ -1921,7 +1921,7 @@ export const monolithOfStorms: GearSetData = {
     '(2 items) Adds 657 Critical Chance',
     '(3 items) Adds 129 Weapon and Spell Damage',
     '(4 items) Adds 129 Weapon and Spell Damage',
-    "(5 items) Dealing damage with a Storm Calling ability's initial hit or every 5th tick creates a Monolith near the enemy for 10 seconds, up to one every 1 second, up to 3 total. Your Monoliths within 28 meters of one another link together, dealing 742 Shock Damage, scaling off of the higher of your Weapon or Spell Damage, every 2 seconds to enemies near the links, up to once every 2 seconds per enemy.\n\nEach Monolith active grants you 100 Weapon and Spell Damage.",
+    "(5 items) Dealing damage with a Storm Calling ability's initial hit or every 5th tick creates a Monolith near the enemy for 10 seconds, up to one every 1 second, up to 3 total. Your Monoliths within 28 meters of one another link together, dealing 4111 Shock Damage, scaling off of the higher of your Weapon or Spell Damage, every 2 seconds to enemies near the links, up to once every 2 seconds per enemy.\n\nEach Monolith active grants you 100 Weapon and Spell Damage.",
   ],
 };
 
@@ -1969,7 +1969,7 @@ export const morkuldin: GearSetData = {
     '(2 items) Adds 129 Weapon and Spell Damage',
     '(3 items) Adds 657 Critical Chance',
     '(4 items) Adds 129 Weapon and Spell Damage',
-    "(5 items) When you deal damage with a Light or Heavy Attack, you summon an animated weapon to attack your enemies for 15 seconds. The animated weapon's basic attacks deal 422 Physical Damage. This effect can occur once every 15 seconds and scales off the higher of your Weapon or Spell Damage.",
+    "(5 items) When you deal damage with a Light or Heavy Attack, you summon an animated weapon to attack your enemies for 15 seconds. The animated weapon's basic attacks deal 2621 Physical Damage. This effect can occur once every 15 seconds and scales off the higher of your Weapon or Spell Damage.",
   ],
 };
 
@@ -2035,7 +2035,7 @@ export const nerienEth: GearSetData = {
   setType: 'Dungeon',
   bonuses: [
     '(1 item) Adds 129 Weapon and Spell Damage',
-    '(2 items) When you deal direct damage, you have a 15% chance to summon a Lich crystal that explodes after 2 seconds, dealing 1360 Magic Damage to all enemies within 4 meters. This effect can occur once every 3 seconds and scales off the higher of your Weapon or Spell Damage.',
+    '(2 items) When you deal direct damage, you have a 15% chance to summon a Lich crystal that explodes after 2 seconds, dealing 7984 Magic Damage to all enemies within 4 meters. This effect can occur once every 3 seconds and scales off the higher of your Weapon or Spell Damage.',
   ],
 };
 
@@ -2103,7 +2103,7 @@ export const nightflame: GearSetData = {
   setType: 'Class Sets',
   bonuses: [
     '(1 item) Adds 1096 Maximum Magicka',
-    '(2 items) When you heal yourself or an ally, you have a 20% chance to summon a totem for 6 seconds that heals you and your allies within 5 meters for 704 Health every 1 second. This effect can occur once every 10 seconds and scales off the higher of your Max Magicka or Stamina.',
+    '(2 items) When you heal yourself or an ally, you have a 20% chance to summon a totem for 6 seconds that heals you and your allies within 5 meters for 1423 Health every 1 second. This effect can occur once every 10 seconds and scales off the higher of your Max Magicka or Stamina.',
   ],
 };
 
@@ -2139,7 +2139,7 @@ export const nobleSConquest: GearSetData = {
     '(2 items) Adds 1206 Maximum Health',
     '(3 items) Adds 1096 Maximum Stamina',
     '(4 items) Adds 4% Healing Taken',
-    '(5 items) When you Bash a target, you heal for 3408 Health over 10 seconds and apply Minor Vulnerability to the enemy for 10 seconds, increasing their damage taken by 5%. The heal can only activate once every 10 seconds and scales off your Max Health.',
+    '(5 items) When you Bash a target, you heal for 3996 Health over 10 seconds and apply Minor Vulnerability to the enemy for 10 seconds, increasing their damage taken by 5%. The heal can only activate once every 10 seconds and scales off your Max Health.',
   ],
 };
 
@@ -2151,7 +2151,7 @@ export const nocturnalSFavor: GearSetData = {
     '(2 items) Adds 129 Stamina Recovery',
     '(3 items) Adds 1206 Maximum Health',
     '(4 items) Adds 1206 Maximum Health',
-    '(5 items) Whenever you successfully Dodge, you heal yourself for 2820 Health over 5 seconds. This effect can occur every 5 seconds and scales off the higher of your Max Magicka or Stamina.',
+    '(5 items) Whenever you successfully Dodge, you heal yourself for 5706 Health over 5 seconds. This effect can occur every 5 seconds and scales off the higher of your Max Magicka or Stamina.',
   ],
 };
 
@@ -2161,7 +2161,7 @@ export const nunatak: GearSetData = {
   setType: 'PvP',
   bonuses: [
     '(1 item) Adds 1487 Armor',
-    '(2 items) On dealing Frost Damage, create a 6 meter area under the target for 6 seconds, dealing 191 Frost Damage to enemies every 1 second and applying a 40% snare for 4 seconds. Enemies damaged four times become immobilized and afflicted with Major Brittle for 4 seconds, causing the target to take 20% increased Critical Damage. This effect can occur once every 15 seconds and scales off the higher of your Weapon or Spell Damage.',
+    '(2 items) On dealing Frost Damage, create a 6 meter area under the target for 6 seconds, dealing 1059 Frost Damage to enemies every 1 second and applying a 40% snare for 4 seconds. Enemies damaged four times become immobilized and afflicted with Major Brittle for 4 seconds, causing the target to take 20% increased Critical Damage. This effect can occur once every 15 seconds and scales off the higher of your Weapon or Spell Damage.',
   ],
 };
 
@@ -2186,7 +2186,7 @@ export const oblivionSFoe: GearSetData = {
     '(3 items) Adds 1487 Offensive Penetration',
     '(4 items) Adds 657 Critical Chance',
     '(5 items) Adds 129 Weapon and Spell Damage',
-    "(5 items) When you deal damage with Soul Magic, you mark the target's soul dealing 1875 Magic Damage over 10 seconds, as long as they are not already marked from you. This effect scales off the higher of your Weapon or Spell Damage.",
+    "(5 items) When you deal damage with Soul Magic, you mark the target's soul dealing 11005 Magic Damage over 10 seconds, as long as they are not already marked from you. This effect scales off the higher of your Weapon or Spell Damage.",
   ],
 };
 
@@ -2233,7 +2233,7 @@ export const orpheonTheTactician: GearSetData = {
   setType: 'Dungeon',
   bonuses: [
     '(1 item) Adds 129 Weapon and Spell Damage',
-    "(2 items) While in combat, casting an ability that leaves an effect on the ground summons a tentacle at the target's location. After 2 seconds, the tentacle swings wildly in a 5 meter radius, dealing 229 Physical Damage and stunning up to 6 enemies for 3 seconds. Enemies immune to stun take 1429 Physical Damage instead. This effect can occur every 8 seconds and the damage scales off the higher of your Weapon or Spell Damage.",
+    "(2 items) While in combat, casting an ability that leaves an effect on the ground summons a tentacle at the target's location. After 2 seconds, the tentacle swings wildly in a 5 meter radius, dealing 1347 Physical Damage and stunning up to 6 enemies for 3 seconds. Enemies immune to stun take 8389 Physical Damage instead. This effect can occur every 8 seconds and the damage scales off the higher of your Weapon or Spell Damage.",
   ],
 };
 
@@ -2245,7 +2245,7 @@ export const overwhelmingSurge: GearSetData = {
     '(2 items) Adds 1096 Maximum Magicka',
     '(3 items) Adds 129 Weapon and Spell Damage',
     '(4 items) Adds 129 Weapon and Spell Damage',
-    '(5 items) When you deal damage with a Class ability, you surround yourself with a torrent that deals 149 Shock Damage to enemies within 8 meters of you every 1 second for 6 seconds. 15% of the damage you deal this way is restored to you as Magicka. This effect can occur every 7 seconds and scales off the higher of your Weapon or Spell Damage.',
+    '(5 items) When you deal damage with a Class ability, you surround yourself with a torrent that deals 829 Shock Damage to enemies within 8 meters of you every 1 second for 6 seconds. 15% of the damage you deal this way is restored to you as Magicka. This effect can occur every 7 seconds and scales off the higher of your Weapon or Spell Damage.',
   ],
 };
 
@@ -2279,7 +2279,7 @@ export const pelinalSWrath: GearSetData = {
     '(2 items) Adds 129 Weapon and Spell Damage',
     '(3 items) Adds 1487 Offensive Penetration',
     '(4 items) Adds 129 Weapon and Spell Damage',
-    '(5 items) Whenever you kill an enemy you gain a damage shield that absorbs up to 3876 damage for 10 seconds and a stack of Wrath of Whitestrake for 10 seconds. Each stack of Wrath of Whitestrake grants you 100 Weapon and Spell Damage, but causes you to take 159 Oblivion damage every second, up to 10 stacks. The damage shield scales off the higher of your Weapon or Spell Damage, and the damage scales off your Max Health.',
+    '(5 items) Whenever you kill an enemy you gain a damage shield that absorbs up to 19897 damage for 10 seconds and a stack of Wrath of Whitestrake for 10 seconds. Each stack of Wrath of Whitestrake grants you 100 Weapon and Spell Damage, but causes you to take 183 Oblivion damage every second, up to 10 stacks. The damage shield scales off the higher of your Weapon or Spell Damage, and the damage scales off your Max Health.',
   ],
 };
 
@@ -2288,10 +2288,10 @@ export const perfectedBahseiSMania: GearSetData = {
   icon: "Perfected Bahsei's Mania",
   setType: 'Trial',
   bonuses: [
-    '(5 perfected items) Adds 129 Weapon and Spell Damage',
     '(2 items) Adds 129 Weapon and Spell Damage',
     '(3 items) Gain Minor Slayer at all times, increasing your damage done to Dungeon, Trial, and Arena Monsters by 5%.',
     '(4 items) Adds 657 Critical Chance',
+    '(5 perfected items) Adds 129 Weapon and Spell Damage',
     '(5 items) Increases your damage done against monsters by up to 15% based on your missing Magicka, reaching the maximum at 50% Magicka.',
   ],
 };
@@ -2301,10 +2301,10 @@ export const perfectedEyeOfNahviintaas: GearSetData = {
   icon: 'Perfected Eye of Nahviintaas',
   setType: 'Trial',
   bonuses: [
-    '(5 perfected items) Adds 1096 Maximum Magicka',
     '(2 items) Adds 129 Magicka Recovery',
     '(3 items) Gain Minor Aegis at all times, reducing your damage taken from Dungeon, Trial, and Arena Monsters by 5%.',
     '(4 items) Adds 1096 Maximum Magicka',
+    '(5 perfected items) Adds 1096 Maximum Magicka',
     '(5 items) When an ally activates a synergy you have created within 10 seconds, you and the ally who activated the synergy get 12% cost reduction for non-Ultimate abilities for 3 seconds. This effect can occur every 6 seconds per target.',
   ],
 };
@@ -2314,10 +2314,10 @@ export const perfectedFalseGodSDevotion: GearSetData = {
   icon: "Perfected False God's Devotion",
   setType: 'Trial',
   bonuses: [
-    '(5 perfected items) Adds 129 Weapon and Spell Damage',
     '(2 items) Adds 657 Critical Chance',
     '(3 items) Gain Minor Slayer at all times, increasing your damage done to Dungeon, Trial, and Arena Monsters by 5%.',
     '(4 items) Adds 657 Critical Chance',
+    '(5 perfected items) Adds 129 Weapon and Spell Damage',
     '(5 items) Reduces the cost of your Magicka abilities by 8%. When an enemy you recently damaged dies, you restore 2454 Magicka and gain Major Expedition for 8 seconds, increasing your Movement Speed by 30%. These effects can occur once every second.',
   ],
 };
@@ -2327,11 +2327,11 @@ export const perfectedHarmonyInChaos: GearSetData = {
   icon: 'Perfected Harmony in Chaos',
   setType: 'Trial',
   bonuses: [
-    '(5 perfected items) Adds 129 Weapon and Spell Damage',
     '(2 items) Adds 129 Weapon and Spell Damage',
     '(3 items) Gain Minor Slayer at all times, increasing your damage done to Dungeon, Trial, and Arena Monsters by 5%.',
     '(4 items) Adds 129 Weapon and Spell Damage',
     '(5 items) Adds 200 Weapon and Spell Damage',
+    '(5 perfected items) Adds 129 Weapon and Spell Damage',
     '(5 items) While in combat, activating a synergy increases your Weapon and Spell Damage by 88 for 15 seconds, stacking up to 5 times.',
   ],
 };
@@ -2341,10 +2341,10 @@ export const perfectedKyneSWind: GearSetData = {
   icon: "Perfected Kyne's Wind",
   setType: 'Trial',
   bonuses: [
-    '(5 perfected items) Adds 129 Magicka Recovery',
     '(2 items) Adds 129 Magicka Recovery',
     '(3 items) Gain Minor Aegis at all times, reducing your damage taken from Dungeon, Trial, and Arena Monsters by 5%.',
     '(4 items) Adds 4% Healing Done',
+    '(5 perfected items) Adds 129 Magicka Recovery',
     "(5 items) When you overheal yourself or a group member, you create a pool of Kyne's Blessing under the target for 4 seconds. You and group members standing in Kyne's Blessing restore 420 Stamina and Magicka every 1 second. This effect can occur once every 10 seconds.",
   ],
 };
@@ -2354,11 +2354,11 @@ export const perfectedMantleOfSiroria: GearSetData = {
   icon: 'Perfected Mantle of Siroria',
   setType: 'Trial',
   bonuses: [
-    '(5 perfected items) Adds 129 Weapon and Spell Damage',
     '(2 items) Adds 129 Weapon and Spell Damage',
     '(3 items) Gain Minor Slayer at all times, increasing your damage done to Dungeon, Trial, and Arena Monsters by 5%.',
     '(4 items) Adds 129 Weapon and Spell Damage',
     '(5 items) Adds 200 Weapon and Spell Damage',
+    '(5 perfected items) Adds 129 Weapon and Spell Damage',
     '(5 items) Dealing damage with a Light or Heavy Attack creates a ring of fire beneath you for 8 seconds. This effect can occur once every 8 seconds. Every second spent standing in the ring increases your Weapon and Spell Damage by 44 for 5 seconds, stacking up to 10 times.',
   ],
 };
@@ -2368,10 +2368,10 @@ export const perfectedMoraScribeSThesis: GearSetData = {
   icon: "Perfected Mora Scribe's Thesis",
   setType: 'Trial',
   bonuses: [
-    '(5 perfected items) Adds 657 Critical Chance',
     '(2 items) Adds 657 Critical Chance',
     '(3 items) Gain Minor Slayer at all times, increasing your damage done to Dungeon, Trial, and Arena Monsters by 5%.',
     '(4 items) Adds 129 Weapon and Spell Damage',
+    '(5 perfected items) Adds 657 Critical Chance',
     '(5 items) Increase your Critical Chance by 128 for every Major Buff active on you, up to 1536 Critical Chance.\n\nIncrease your Critical Damage done by 1% for every Minor Buff active on you, up to 12% Critical Damage done.',
   ],
 };
@@ -2381,10 +2381,10 @@ export const perfectedPeaceAndSerenity: GearSetData = {
   icon: 'Perfected Peace and Serenity',
   setType: 'Trial',
   bonuses: [
-    '(5 perfected items) Adds 129 Weapon and Spell Damage',
     '(2 items) Adds 657 Critical Chance',
     '(3 items) Gain Minor Slayer at all times, increasing your damage done to Dungeon, Trial, and Arena Monsters by 5%.',
     '(4 items) Adds 129 Weapon and Spell Damage',
+    '(5 perfected items) Adds 129 Weapon and Spell Damage',
     '(5 items) While you are standing still, you gain 465 Weapon and Spell Damage. While you are moving, you gain 203 Health, Magicka, and Stamina Recovery.',
   ],
 };
@@ -2394,10 +2394,10 @@ export const perfectedPillagerSProfit: GearSetData = {
   icon: "Perfected Pillager's Profit",
   setType: 'Trial',
   bonuses: [
-    '(5 perfected items) Adds 129 Magicka Recovery',
     '(2 items) Adds 4% Healing Done',
     '(3 items) Gain Minor Aegis at all times, reducing your damage taken from Dungeon, Trial, and Arena Monsters by 5%.',
     '(4 items) Adds 1096 Maximum Magicka',
+    '(5 perfected items) Adds 129 Magicka Recovery',
     '(5 items) Casting an Ultimate ability while in combat grants 2% of Ultimate spent as Ultimate to up to 11 other group members within 12 meters every 2 seconds over 10 seconds. Group members can only be affected by this set once every 45 seconds.',
   ],
 };
@@ -2407,10 +2407,10 @@ export const perfectedRecoveryConvergence: GearSetData = {
   icon: 'Perfected Recovery Convergence',
   setType: 'Trial',
   bonuses: [
-    '(5 perfected items) Adds 4% Healing Done',
     '(2 items) Adds 4% Healing Done',
     '(3 items) Gain Minor Aegis at all times, reducing your damage taken from Dungeon, Trial, and Arena Monsters by 5%.',
     '(4 items) Adds 1096 Maximum Magicka',
+    '(5 perfected items) Adds 4% Healing Done',
     '(5 items) While in combat, overhealing done is converted into stored energy on you for 20 seconds. After overhealing 100000 Health, your energy maxes out, granting you the Convergence Release synergy. When you activate this synergy, restore 6886 Stamina and Magicka to yourself and group members within 28 meters of you.',
   ],
 };
@@ -2420,10 +2420,10 @@ export const perfectedRoaringOpportunist: GearSetData = {
   icon: 'Perfected Roaring Opportunist',
   setType: 'Trial',
   bonuses: [
-    '(5 perfected items) Adds 1096 Maximum Magicka',
     '(2 items) Adds 129 Weapon and Spell Damage',
     '(3 items) Gain Minor Slayer at all times, increasing your damage done to Dungeon, Trial, and Arena Monsters by 5%.',
     '(4 items) Adds 129 Weapon and Spell Damage',
+    '(5 perfected items) Adds 1096 Maximum Magicka',
     '(5 items) After completing a fully-charged Heavy Attack, you and up to 5 group members gain Major Slayer, increasing your damage done to Dungeon, Trial, and Arena Monsters by 10% for 1 second for every 600 Spell Damage or 6300 Magicka you have. Roaring Opportunist can only affect a target every 22 seconds.\n\nMaximum duration 12 seconds.',
   ],
 };
@@ -2433,10 +2433,10 @@ export const perfectedStoneTalkerSOath: GearSetData = {
   icon: "Perfected Stone-Talker's Oath",
   setType: 'Trial',
   bonuses: [
-    '(5 perfected items) Adds 1096 Maximum Magicka',
     '(2 items) Adds 129 Magicka Recovery',
     '(3 items) Gain Minor Aegis at all times, reducing your damage taken from Dungeon, Trial, and Arena Monsters by 5%.',
     '(4 items) Adds 129 Magicka Recovery',
+    '(5 perfected items) Adds 1096 Maximum Magicka',
     '(5 items) Your fully-charged Heavy Attacks place a soul bomb on your target that charges as the target takes damage. After 10 seconds, the bomb explodes, restoring 5% of the damage received as Stamina and Magicka, up to 2240 Stamina and Magicka, to 12 group members within 16 meters of the explosion. This effect can occur every 10 seconds.',
   ],
 };
@@ -2446,10 +2446,10 @@ export const perfectedTransformativeHope: GearSetData = {
   icon: 'Perfected Transformative Hope',
   setType: 'Trial',
   bonuses: [
-    '(5 perfected items) Adds 4% Healing Done',
     '(2 items) Adds 4% Healing Done',
     '(3 items) Gain Minor Aegis at all times, reducing your damage taken from Dungeon, Trial, and Arena Monsters by 5%.',
     '(4 items) Adds 129 Magicka Recovery',
+    '(5 perfected items) Adds 4% Healing Done',
     '(5 items) While in combat, when you heal yourself or an ally that is below 50% Health, you ignite a Spark of Hope within them for 3 seconds. If they are above 90% Health when the effect ends, you and the ally gain Major Heroism for 15 seconds. This effect can occur once every 20 seconds per target.',
   ],
 };
@@ -2459,10 +2459,10 @@ export const perfectedVestmentOfOlorime: GearSetData = {
   icon: 'Perfected Vestment of Olorime',
   setType: 'Trial',
   bonuses: [
-    '(5 perfected items) Adds 1096 Maximum Magicka',
     '(2 items) Adds 129 Magicka Recovery',
     '(3 items) Gain Minor Aegis at all times, reducing your damage taken from Dungeon, Trial, and Arena Monsters by 5%.',
     '(4 items) Adds 129 Magicka Recovery',
+    '(5 perfected items) Adds 1096 Maximum Magicka',
     '(5 items) Casting abilities that leave an effect on the ground in combat will create a circle of might for 5 seconds. You and your group members in the circle gain Major Courage for 20 seconds, increasing your Weapon and Spell Damage by 430 for 20 seconds. This effect can occur once every 10 seconds.',
   ],
 };
@@ -2472,11 +2472,11 @@ export const perfectedWhorlOfTheDepths: GearSetData = {
   icon: 'Perfected Whorl of the Depths',
   setType: 'Trial',
   bonuses: [
-    '(5 perfected items) Adds 657 Critical Chance',
     '(2 items) Adds 129 Weapon and Spell Damage',
     '(3 items) Gain Minor Slayer at all times, increasing your damage done to Dungeon, Trial, and Arena Monsters by 5%.',
     '(4 items) Adds 129 Weapon and Spell Damage',
-    '(5 items) When you deal damage with a Light Attack, you apply Whorl of the Depths to the target, dealing 1016 Frost Damage over 8 seconds. When this effect ends, a 5 meter whirlpool is created under the target for 6 seconds and deals 764 Frost Damage every 1 second. This effect can occur once every 18 seconds and scales off the higher of your Weapon or Spell Damage.',
+    '(5 perfected items) Adds 657 Critical Chance',
+    '(5 items) When you deal damage with a Light Attack, you apply Whorl of the Depths to the target, dealing 5980 Frost Damage over 8 seconds. When this effect ends, a 5 meter whirlpool is created under the target for 6 seconds and deals 4230 Frost Damage every 1 second. This effect can occur once every 18 seconds and scales off the higher of your Weapon or Spell Damage.',
   ],
 };
 
@@ -2485,10 +2485,10 @@ export const perfectedXorynSMasterpiece: GearSetData = {
   icon: "Perfected Xoryn's Masterpiece",
   setType: 'PvP',
   bonuses: [
-    '(5 perfected items) Adds 1096 Maximum Magicka',
     '(2 items) Adds 1096 Maximum Magicka',
     '(3 items) Gain Minor Aegis at all times, reducing your damage taken from Dungeon, Trial, and Arena Monsters by 5%.',
     '(4 items) Adds 129 Magicka Recovery',
+    '(5 perfected items) Adds 1096 Maximum Magicka',
     '(5 items) Increases Max Magicka and Max Stamina by 1667 for you and up to 11 other group members within 28 meters of you. This bonus persists through death.',
   ],
 };
@@ -2501,7 +2501,7 @@ export const phoenix: GearSetData = {
     '(2 items) Adds 129 Weapon and Spell Damage',
     '(3 items) Adds 424 Critical Resistance',
     '(4 items) Adds 129 Weapon and Spell Damage',
-    '(5 items) When you take damage while below 25% Health, gain a damage shield that absorbs 25000 damage for 10 seconds and deals 1006 Flame Damage to nearby enemies. This effect can occur once every 1 minute and the damage scales off the higher of your Weapon or Spell Damage.',
+    '(5 items) When you take damage while below 25% Health, gain a damage shield that absorbs 25000 damage for 10 seconds and deals 5906 Flame Damage to nearby enemies. This effect can occur once every 1 minute and the damage scales off the higher of your Weapon or Spell Damage.',
   ],
 };
 
@@ -2545,7 +2545,7 @@ export const priorThierric: GearSetData = {
   setType: 'Overland',
   bonuses: [
     '(1 item) Adds 129 Weapon and Spell Damage',
-    '(2 items) Dealing direct damage with an area of effect ability creates a 6 meter shadowy whirlwind below your enemy for 7 seconds. Enemies within the whirlwind take 283 Physical Damage each second and increase their damage taken from your area of effect abilities by 5%. This effect can occur once every 15 seconds and scales off the higher of your Weapon or Spell Damage.',
+    '(2 items) Dealing direct damage with an area of effect ability creates a 6 meter shadowy whirlwind below your enemy for 7 seconds. Enemies within the whirlwind take 1569 Physical Damage each second and increase their damage taken from your area of effect abilities by 5%. This effect can occur once every 15 seconds and scales off the higher of your Weapon or Spell Damage.',
   ],
 };
 
@@ -2569,7 +2569,7 @@ export const pyrebrand: GearSetData = {
     '(2 items) Adds 1487 Offensive Penetration',
     '(3 items) Adds 129 Weapon and Spell Damage',
     '(4 items) Adds 129 Weapon and Spell Damage',
-    '(5 items) Your Light Attacks deal 836 Flame Damage over 6 seconds. This effect can activate Wildfire Embers, up to once every 10 seconds.\n\nYour fully-charged Heavy Attacks consume up to 3 stacks of your Wildfire Embers to deal 629 Flame Damage around the target, dealing up to 200% more damage to enemies below 33% Health.\n\nThe damage scales off the higher of your Weapon or Spell Damage increases by 25% per stack of Recursive Flame and Pyrebrand.',
+    '(5 items) Your Light Attacks deal 4928 Flame Damage over 6 seconds. This effect can activate Wildfire Embers, up to once every 10 seconds.\n\nYour fully-charged Heavy Attacks consume up to 3 stacks of your Wildfire Embers to deal 3696 Flame Damage around the target, dealing up to 200% more damage to enemies below 33% Health.\n\nThe damage scales off the higher of your Weapon or Spell Damage increases by 25% per stack of Recursive Flame and Pyrebrand.',
   ],
 };
 
@@ -2644,7 +2644,7 @@ export const redistributor: GearSetData = {
     '(2 items) Adds 1206 Maximum Health',
     '(3 items) Adds 1096 Maximum Stamina',
     '(4 items) Adds 1096 Maximum Magicka',
-    '(5 items) When you overheal yourself, you heal a group member within 15 meters of you for 663 Health. This effect can occur once every 1 second and scales off the higher of your Max Magicka or Stamina.',
+    '(5 items) When you overheal yourself, you heal a group member within 15 meters of you for 1340 Health. This effect can occur once every 1 second and scales off the higher of your Max Magicka or Stamina.',
   ],
 };
 
@@ -2656,7 +2656,7 @@ export const ritemasterSBond: GearSetData = {
     '(2 items) Adds 129 Magicka Recovery',
     '(3 items) Adds 4% Healing Done',
     '(4 items) Adds 1096 Maximum Magicka',
-    '(5 items) Healing an ally within 12 meters with a Direct Heal creates a 15 meter tether between you for 10 seconds. This effect can occur once every 15 seconds.\n\nYou and allies touching the tether are healed for 981 Health every second, scaling off the higher of your Max Magicka or Stamina. If you or an ally is overhealed by the tether, they gain Minor Heroism for 1.5 seconds.',
+    '(5 items) Healing an ally within 12 meters with a Direct Heal creates a 15 meter tether between you for 10 seconds. This effect can occur once every 15 seconds.\n\nYou and allies touching the tether are healed for 1983 Health every second, scaling off the higher of your Max Magicka or Stamina. If you or an ally is overhealed by the tether, they gain Minor Heroism for 1.5 seconds.',
   ],
 };
 
@@ -2716,7 +2716,7 @@ export const robesOfTheHist: GearSetData = {
     '(2 items) Adds 1206 Maximum Health',
     '(3 items) Adds 129 Weapon and Spell Damage',
     '(4 items) Adds 1096 Maximum Magicka',
-    '(5 items) After being hit by a disabling effect, immobilization, or snare, you heal for 2000 Health every 1 second for 5 seconds.\n\nThe effect can apply once every second, but cannot stack.',
+    '(5 items) After being hit by a disabling effect, immobilization, or snare, you heal for 2040 Health every 1 second for 5 seconds.\n\nThe effect can apply once every second, but cannot stack.',
   ],
 };
 
@@ -2728,7 +2728,7 @@ export const robesOfTheWitheredHand: GearSetData = {
     '(2 items) Adds 129 Magicka Recovery',
     '(3 items) Adds 1096 Maximum Magicka',
     '(4 items) Adds 1206 Maximum Health',
-    '(5 items) When you are within 28 meters of an enemy you are in combat with, and the enemy dies, you heal for 1637 Health and gain 1637 Magicka. This effect can occur once every 3 seconds.',
+    '(5 items) When you are within 28 meters of an enemy you are in combat with, and the enemy dies, you heal for 1670 Health and gain 1670 Magicka. This effect can occur once every 3 seconds.',
   ],
 };
 
@@ -2786,7 +2786,7 @@ export const scourgeHarvester: GearSetData = {
   setType: 'Craftable',
   bonuses: [
     '(1 item) Adds 1206 Maximum Health',
-    '(2 items) When you take damage, you have a 10% chance to tether to your enemy for 6 seconds, as long as you remain within 8 meters of them. While tethered, you deal 311 Magic Damage every second to the enemy, heal for the damage caused, and gain Major Vitality, increasing your healing received and damage shield strength by 12%. This effect can occur once every 6 seconds and scales off your Max Health.',
+    '(2 items) When you take damage, you have a 10% chance to tether to your enemy for 6 seconds, as long as you remain within 8 meters of them. While tethered, you deal 379 Magic Damage every second to the enemy, heal for the damage caused, and gain Major Vitality, increasing your healing received and damage shield strength by 12%. This effect can occur once every 6 seconds and scales off your Max Health.',
   ],
 };
 
@@ -2808,7 +2808,7 @@ export const selene: GearSetData = {
   setType: 'Monster Set',
   bonuses: [
     '(1 item) Adds 129 Weapon and Spell Damage',
-    '(2 items) When you deal Martial melee damage, you call upon a primal spirit that mauls the closest enemy in front of you after 1.3 seconds for 1702 Physical Damage. This effect can occur once every 6 seconds and scales off the higher of your Weapon or Spell Damage.',
+    '(2 items) When you deal Martial melee damage, you call upon a primal spirit that mauls the closest enemy in front of you after 1.3 seconds for 10557 Physical Damage. This effect can occur once every 6 seconds and scales off the higher of your Weapon or Spell Damage.',
   ],
 };
 
@@ -2818,7 +2818,7 @@ export const sellistrix: GearSetData = {
   setType: 'Craftable',
   bonuses: [
     '(1 item) Adds 1096 Maximum Stamina',
-    '(2 items) When you deal damage you create an earthquake under the enemy that erupts after 1.5 seconds, dealing 975 Physical Damage to all enemies within 4 meters and stunning them for 3 seconds. This effect can occur once every 6 seconds and the damage scales off the higher of your Weapon or Spell Damage.',
+    '(2 items) When you deal damage you create an earthquake under the enemy that erupts after 1.5 seconds, dealing 5721 Physical Damage to all enemies within 4 meters and stunning them for 3 seconds. This effect can occur once every 6 seconds and the damage scales off the higher of your Weapon or Spell Damage.',
   ],
 };
 
@@ -2840,7 +2840,7 @@ export const sentinelOfRkugamz: GearSetData = {
   setType: 'Craftable',
   bonuses: [
     '(1 item) Adds 4% Healing Done',
-    '(2 items) When you heal yourself or an ally you summon a Dwemer spider that heals for 1000 Health and restores 125 Magicka and Stamina to you and your allies within 5 meters every 1 second for 8 seconds. This effect can occur once every 15 seconds.',
+    '(2 items) When you heal yourself or an ally you summon a Dwemer spider that heals for 1020 Health and restores 125 Magicka and Stamina to you and your allies within 5 meters every 1 second for 8 seconds. This effect can occur once every 15 seconds.',
   ],
 };
 
@@ -2887,7 +2887,7 @@ export const shadowrend: GearSetData = {
   setType: 'Craftable',
   bonuses: [
     '(1 item) Adds 129 Magicka Recovery',
-    "(2 items) When you take damage, you summon a shadowy Clannfear for 15 seconds. The Clannfear's attacks deal 615 Magic Damage and apply Minor Maim, reducing the target's damage done by 5% for 2 seconds.\n\nThe Clannfear can be summoned once every 15 seconds and its damage scales off your Max Health.",
+    "(2 items) When you take damage, you summon a shadowy Clannfear for 15 seconds. The Clannfear's attacks deal 792 Magic Damage and apply Minor Maim, reducing the target's damage done by 5% for 2 seconds.\n\nThe Clannfear can be summoned once every 15 seconds and its damage scales off your Max Health.",
   ],
 };
 
@@ -2899,7 +2899,7 @@ export const shalidorSCurse: GearSetData = {
     '(2 items) Adds 1206 Maximum Health',
     '(3 items) Adds 4% Healing Taken',
     '(4 items) Adds 1206 Maximum Health',
-    '(5 items) While you are under 50% Health, dealing damage with a Light or Heavy Attack heals you for 941 Health. This effect can occur once every 1 second and scales off the higher of your Max Magicka or Stamina.',
+    '(5 items) While you are under 50% Health, dealing damage with a Light or Heavy Attack heals you for 1901 Health. This effect can occur once every 1 second and scales off the higher of your Max Magicka or Stamina.',
   ],
 };
 
@@ -3006,7 +3006,7 @@ export const snakeInTheStars: GearSetData = {
     '(3 items) Adds 1096 Maximum Magicka',
     '(4 items) Adds 129 Weapon and Spell Damage',
     '(5 items) Adds 129 Magicka Recovery',
-    '(5 items) Applying a Major or Minor Debuff to an enemy applies Star Venom to them for 4 seconds. This effect can occur once every 12 seconds. Whenever an enemy with Star Venom is healed, they take 1170 Oblivion Damage, up to once every 0.1 seconds.\n\nAn enemy can only be affected by one instance of Star Venom every 12 seconds.',
+    '(5 items) Applying a Major or Minor Debuff to an enemy applies Star Venom to them for 4 seconds. This effect can occur once every 12 seconds. Whenever an enemy with Star Venom is healed, they take 1310 Oblivion Damage, up to once every 0.1 seconds.\n\nAn enemy can only be affected by one instance of Star Venom every 12 seconds.',
   ],
 };
 
@@ -3018,7 +3018,7 @@ export const songOfLamae: GearSetData = {
     '(2 items) Adds 1487 Armor',
     '(3 items) Adds 1487 Armor',
     '(4 items) Adds 1206 Maximum Health',
-    '(5 items) When you take damage while you are under 30% Health, you deal 1377 Magic Damage to the attacker and heal for the damage done. This effect can occur once every 3 seconds and scales off your Max Health.',
+    '(5 items) When you take damage while you are under 30% Health, you deal 1774 Magic Damage to the attacker and heal for the damage done. This effect can occur once every 3 seconds and scales off your Max Health.',
   ],
 };
 
@@ -3052,7 +3052,7 @@ export const spawnOfMephala: GearSetData = {
   setType: 'Craftable',
   bonuses: [
     '(1 item) Adds 1096 Maximum Stamina',
-    '(2 items) When you deal damage with a fully-charged Heavy Attack, you create a web under the target for 10 seconds that deals 218 Poison Damage every 1 second to all enemies within 4 meters. This effect can occur once every 10 seconds and scales off the higher of your Weapon or Spell Damage.',
+    '(2 items) When you deal damage with a fully-charged Heavy Attack, you create a web under the target for 10 seconds that deals 1212 Poison Damage every 1 second to all enemies within 4 meters. This effect can occur once every 10 seconds and scales off the higher of your Weapon or Spell Damage.',
   ],
 };
 
@@ -3146,7 +3146,7 @@ export const squallOfRetribution: GearSetData = {
   setType: 'Overland',
   bonuses: [
     '(1 item) Adds 1206 Maximum Health',
-    '(2 items) When you take damage, gain one random effect for 6 seconds:\nGain Minor Protection, reducing your damage taken by 5%.\nGain a damage shield that absorbs up to 5835 damage.\nHeal for 607 Health every 2 seconds.\n\nThe Health restore scales off of your Max Health. This effect can occur once every 4.5 seconds.',
+    '(2 items) When you take damage, gain one random effect for 6 seconds:\nGain Minor Protection, reducing your damage taken by 5%.\nGain a damage shield that absorbs up to 5835 damage.\nHeal for 712 Health every 2 seconds.\n\nThe Health restore scales off of your Max Health. This effect can occur once every 4.5 seconds.',
   ],
 };
 
@@ -3168,7 +3168,7 @@ export const stoneHusk: GearSetData = {
   setType: 'Dungeon',
   bonuses: [
     '(1 item) Adds 657 Critical Chance',
-    '(2 items) Your Heavy Attacks tether you to enemies for 5 seconds, as long as you remain within 10 meters of them. Enemies touching the tether take 212 Physical Damage every 1 second and you gain a stack of Husk Drain, up to 15 stacks. This effect can occur once every 10 seconds and scales off the higher of your Weapon or Spell Damage.\n\nWhen the tether ends, you consume the stacks and gain 30 Weapon and Spell Damage per stack for 5 seconds.',
+    '(2 items) Your Heavy Attacks tether you to enemies for 5 seconds, as long as you remain within 10 meters of them. Enemies touching the tether take 1178 Physical Damage every 1 second and you gain a stack of Husk Drain, up to 15 stacks. This effect can occur once every 10 seconds and scales off the higher of your Weapon or Spell Damage.\n\nWhen the tether ends, you consume the stacks and gain 30 Weapon and Spell Damage per stack for 5 seconds.',
   ],
 };
 
@@ -3204,7 +3204,7 @@ export const stonekeeper: GearSetData = {
     '(1 item) Adds 548 Maximum Stamina',
     '(1 item) Adds 548 Maximum Magicka',
     '(1 item) Adds 603 Maximum Health',
-    '(2 items) When you Block, you gain an energy Charge stack. When you gain 6 Charges, you release the energy, restoring 2480 Stamina and Magicka, and healing for 2480. After releasing the Charges, you cannot regain new Charges for 14 seconds.\n\nCharges can be accumulated up to once every .25 seconds.',
+    '(2 items) When you Block, you gain an energy Charge stack. When you gain 6 Charges, you release the energy, restoring 2480 Stamina and Magicka, and healing for 2530. After releasing the Charges, you cannot regain new Charges for 14 seconds.\n\nCharges can be accumulated up to once every .25 seconds.',
   ],
 };
 
@@ -3216,7 +3216,7 @@ export const stormCursedSRevenge: GearSetData = {
     '(2 items) Adds 1096 Maximum Magicka',
     '(3 items) Adds 129 Weapon and Spell Damage',
     '(4 items) Adds 1487 Offensive Penetration',
-    '(5 items) When you deal Shock Damage, you have a 15% chance to deal 433 Shock Damage to the enemy and up to two other enemies within 5 meters. This effect scales off the higher of your Weapon or Spell Damage.',
+    '(5 items) When you deal Shock Damage, you have a 15% chance to deal 2543 Shock Damage to the enemy and up to two other enemies within 5 meters. This effect scales off the higher of your Weapon or Spell Damage.',
   ],
 };
 
@@ -3226,7 +3226,7 @@ export const stormfist: GearSetData = {
   setType: 'Mythic',
   bonuses: [
     '(1 item) Adds 129 Stamina Recovery',
-    '(2 items) When you deal damage, you have a 10% chance to create a thunderfist to crush the enemy, dealing 277 Shock Damage every 1 second for 3 seconds to all enemies within 4 meters and a final 1110 Physical Damage when the fist closes. This effect can occur once every 8 seconds and scales off the higher of your Weapon or Spell Damage.',
+    '(2 items) When you deal damage, you have a 10% chance to create a thunderfist to crush the enemy, dealing 1537 Shock Damage every 1 second for 3 seconds to all enemies within 4 meters and a final 6517 Physical Damage when the fist closes. This effect can occur once every 8 seconds and scales off the higher of your Weapon or Spell Damage.',
   ],
 };
 
@@ -3296,7 +3296,7 @@ export const syvarraSScales: GearSetData = {
     '(3 items) Adds 1096 Maximum Stamina',
     '(4 items) Adds 1096 Maximum Magicka',
     '(4 items) Reduces your damage taken from Guards by 20%.',
-    '(5 items) When you deal damage, you cause a burst of lamia poison that deals 149 Poison Damage in a 5 meter radius and an additional 1494 Poison Damage over 6 seconds to all enemies hit. This effect can occur once every 7 seconds and scales off the higher of your Weapon or Spell Damage.',
+    '(5 items) When you deal damage, you cause a burst of lamia poison that deals 879 Poison Damage in a 5 meter radius and an additional 8790 Poison Damage over 6 seconds to all enemies hit. This effect can occur once every 7 seconds and scales off the higher of your Weapon or Spell Damage.',
   ],
 };
 
@@ -3417,7 +3417,7 @@ export const thewsOfTheHarbinger: GearSetData = {
     '(2 items) Adds 1206 Maximum Health',
     '(3 items) Adds 1206 Maximum Health',
     '(4 items) Adds 1096 Maximum Stamina',
-    '(5 items) When you Block, you deal 717 Physical Damage to the attacker. This effect scales off your Max Health.',
+    '(5 items) When you Block, you deal 924 Physical Damage to the attacker. This effect scales off your Max Health.',
   ],
 };
 
@@ -3427,7 +3427,7 @@ export const thousandEyes: GearSetData = {
   setType: 'Monster Set',
   bonuses: [
     '(1 item) Adds 657 Critical Chance',
-    '(2 items) Dealing direct critical damage applies Shived to the enemy, dealing 1079 Bleed Damage and increasing their damage taken from you by 2% for 15 seconds. This damage scales off the higher of your Weapon or Spell Damage. When the enemy dies, Shived is reapplied to the lowest health enemy within 12 meters of the corpse and increases the damage taken by 2%, up to 8%. You may only have 1 enemy with Shived.',
+    '(2 items) Dealing direct critical damage applies Shived to the enemy, dealing 6690 Bleed Damage and increasing their damage taken from you by 2% for 15 seconds. This damage scales off the higher of your Weapon or Spell Damage. When the enemy dies, Shived is reapplied to the lowest health enemy within 12 meters of the corpse and increases the damage taken by 2%, up to 8%. You may only have 1 enemy with Shived.',
   ],
 };
 
@@ -3463,7 +3463,7 @@ export const thunderCaller: GearSetData = {
     '(2 items) Adds 1487 Offensive Penetration',
     '(3 items) Adds 129 Weapon and Spell Damage',
     '(4 items) Adds 129 Weapon and Spell Damage',
-    '(5 items) Dealing damage with a fully-charged Heavy Attack calls a bolt of lightning at your target, dealing 467 Shock Damage and leaving a 4 meter lightning crater at their location for 7 seconds, dealing 467 Shock Damage per second to enemies inside. This effect can occur once every 12 seconds and scales off the higher of your Weapon or Spell Damage.',
+    '(5 items) Dealing damage with a fully-charged Heavy Attack calls a bolt of lightning at your target, dealing 2895 Shock Damage and leaving a 4 meter lightning crater at their location for 7 seconds, dealing 2585 Shock Damage per second to enemies inside. This effect can occur once every 12 seconds and scales off the higher of your Weapon or Spell Damage.',
   ],
 };
 
@@ -3473,7 +3473,7 @@ export const thurvokun: GearSetData = {
   setType: 'Craftable',
   bonuses: [
     '(1 item) Adds 1206 Maximum Health',
-    '(2 items) When you take damage from a nearby enemy, you summon a growing pool of desecrated bile for 8 seconds. Enemies in the bile take 195 Disease Damage every 1 second and are afflicted with Minor Maim and the Diseased status for 4 seconds, reducing their damage done by 5% and healing received and Health Recovery by 6%. This effect can occur every 16 seconds and the damage scales off your Max Health.',
+    '(2 items) When you take damage from a nearby enemy, you summon a growing pool of desecrated bile for 8 seconds. Enemies in the bile take 225 Disease Damage every 1 second and are afflicted with Minor Maim and the Diseased status for 4 seconds, reducing their damage done by 5% and healing received and Health Recovery by 6%. This effect can occur every 16 seconds and the damage scales off your Max Health.',
   ],
 };
 
@@ -3560,7 +3560,7 @@ export const tremorscale: GearSetData = {
   setType: 'Craftable',
   bonuses: [
     '(1 item) Adds 1096 Maximum Stamina',
-    '(2 items) When you activate a taunt ability on an enemy, you cause a duneripper to burst from the ground beneath them after 1 second, dealing 0 Physical Damage to all enemies within 4 meters and reducing their Armor by 0 for 15 seconds. This effect can occur once every 10 seconds and scales off the higher of your Physical or Spell Resistance.',
+    '(2 items) When you activate a taunt ability on an enemy, you cause a duneripper to burst from the ground beneath them after 1 second, dealing 2819 Physical Damage to all enemies within 4 meters and reducing their Armor by 986 for 15 seconds. This effect can occur once every 10 seconds and scales off the higher of your Physical or Spell Resistance.',
   ],
 };
 
@@ -3584,7 +3584,7 @@ export const trinimacSValor: GearSetData = {
     '(2 items) Adds 129 Magicka Recovery',
     '(3 items) Adds 1096 Maximum Magicka',
     '(4 items) Adds 129 Magicka Recovery',
-    '(5 items) When you cast a damage shield, you call down a fragment of Trinimac that heals you and group members for 1396 Health and damages enemies for 1396 Magic Damage in a 5 meter radius after a 2 second delay. This effect can occur once every 5 seconds and scales with the higher of your Max Magicka or Stamina.',
+    '(5 items) When you cast a damage shield, you call down a fragment of Trinimac that heals you and group members for 2820 Health and damages enemies for 2931 Magic Damage in a 5 meter radius after a 2 second delay. This effect can occur once every 5 seconds and scales with the higher of your Max Magicka or Stamina.',
   ],
 };
 
@@ -3620,7 +3620,7 @@ export const twilightRemedy: GearSetData = {
     '(2 items) Adds 129 Magicka Recovery',
     '(3 items) Gain Minor Aegis at all times, reducing your damage taken from Dungeon, Trial, and Arena Monsters by 5%.',
     '(4 items) Adds 129 Weapon and Spell Damage',
-    "(5 items) When an ally activates a synergy you have created within 10 seconds, they heal themselves for 7704 Health over 15 seconds and gain Minor Force for the duration, increasing their Critical Damage by 10%. This effect scales off the higher of the synergy activator's Max Magicka or Stamina.",
+    "(5 items) When an ally activates a synergy you have created within 10 seconds, they heal themselves for 15560 Health over 15 seconds and gain Minor Force for the duration, increasing their Critical Damage by 10%. This effect scales off the higher of the synergy activator's Max Magicka or Stamina.",
   ],
 };
 
@@ -3702,7 +3702,7 @@ export const valkynSkoria: GearSetData = {
   setType: 'Overland',
   bonuses: [
     '(1 item) Adds 1487 Offensive Penetration',
-    '(2 items) When you deal damage with a damage over time effect, you have an 8% chance to summon a meteor that deals 1342 Flame Damage to the target and 447 Flame Damage to all other enemies within 5 meters. This effect can occur once every 5 seconds and scales off the higher of your Weapon or Spell Damage.',
+    '(2 items) When you deal damage with a damage over time effect, you have an 8% chance to summon a meteor that deals 8324 Flame Damage to the target and 2626 Flame Damage to all other enemies within 5 meters. This effect can occur once every 5 seconds and scales off the higher of your Weapon or Spell Damage.',
   ],
 };
 
@@ -3728,7 +3728,7 @@ export const vampireSKiss: GearSetData = {
     '(4 items) Adds 1096 Maximum Stamina',
     '(4 items) Adds 1096 Maximum Magicka',
     '(5 items) Adds 129 Weapon and Spell Damage',
-    '(5 items) When you kill an enemy, you heal for 10512 Health over 10 seconds. This effect scales off the higher of your Max Magicka or Stamina.',
+    '(5 items) When you kill an enemy, you heal for 21234 Health over 10 seconds. This effect scales off the higher of your Max Magicka or Stamina.',
   ],
 };
 
@@ -3740,7 +3740,7 @@ export const vandorallenSResonance: GearSetData = {
     '(2 items) Adds 1487 Offensive Penetration',
     '(3 items) Adds 657 Critical Chance',
     '(4 items) Adds 129 Weapon and Spell Damage',
-    '(5 items) Dealing damage with a fully-charged Heavy Attack places an electric charge on yourself and below your enemy. After 1 second, both charges explode in a 4 meter blast, each dealing 914 Shock Damage to enemies hit. This effect can occur once every 6 seconds and scales off the higher of your Weapon or Spell Damage.',
+    '(5 items) Dealing damage with a fully-charged Heavy Attack places an electric charge on yourself and below your enemy. After 1 second, both charges explode in a 4 meter blast, each dealing 5364 Shock Damage to enemies hit. This effect can occur once every 6 seconds and scales off the higher of your Weapon or Spell Damage.',
   ],
 };
 
@@ -3776,7 +3776,7 @@ export const velidreth: GearSetData = {
   setType: 'Trial',
   bonuses: [
     '(1 item) Adds 129 Weapon and Spell Damage',
-    '(2 items) When you deal damage, you have a 20% chance to spawn 3 disease spores in front of you after 1 second that deal 1557 Disease Damage to any enemy they hit. This effect can occur once every 8 seconds and scales off the higher of your Weapon or Spell Damage.',
+    '(2 items) When you deal damage, you have a 20% chance to spawn 3 disease spores in front of you after 1 second that deal 9139 Disease Damage to any enemy they hit. This effect can occur once every 8 seconds and scales off the higher of your Weapon or Spell Damage.',
   ],
 };
 
@@ -3812,7 +3812,7 @@ export const vicecanonOfVenom: GearSetData = {
     '(2 items) Adds 129 Weapon and Spell Damage',
     '(3 items) Adds 129 Weapon and Spell Damage',
     '(4 items) Adds 657 Critical Chance',
-    '(5 items) When you deal direct Critical Damage to an enemy while behind them, you inject a leeching poison that deals 1300 Poison Damage over 10 seconds to them and heals you for 100% of the damage done. This effect can occur once every 10 seconds per enemy and scales off the higher of your Weapon or Spell Damage.',
+    '(5 items) When you deal direct Critical Damage to an enemy while behind them, you inject a leeching poison that deals 7635 Poison Damage over 10 seconds to them and heals you for 100% of the damage done. This effect can occur once every 10 seconds per enemy and scales off the higher of your Weapon or Spell Damage.',
   ],
 };
 
@@ -3825,7 +3825,7 @@ export const viciousDeath: GearSetData = {
     '(3 items) Adds 129 Weapon and Spell Damage',
     '(4 items) Adds 657 Critical Chance',
     '(5 items) Adds 1487 Offensive Penetration',
-    '(5 items) When you kill a Player, they violently explode for 3322 Flame Damage to all other enemies in a 5 meter radius. This effect scales off the higher of your Weapon or Spell Damage.',
+    '(5 items) When you kill a Player, they violently explode for 19499 Flame Damage to all other enemies in a 5 meter radius. This effect scales off the higher of your Weapon or Spell Damage.',
   ],
 };
 
@@ -3920,7 +3920,7 @@ export const whorlOfTheDepths: GearSetData = {
     '(2 items) Adds 129 Weapon and Spell Damage',
     '(3 items) Gain Minor Slayer at all times, increasing your damage done to Dungeon, Trial, and Arena Monsters by 5%.',
     '(4 items) Adds 129 Weapon and Spell Damage',
-    '(5 items) When you deal damage with a Light Attack, you apply Whorl of the Depths to the target, dealing 1016 Frost Damage over 8 seconds. When this effect ends, a 5 meter whirlpool is created under the target for 6 seconds and deals 764 Frost Damage every 1 second. This effect can occur once every 18 seconds and scales off the higher of your Weapon or Spell Damage.',
+    '(5 items) When you deal damage with a Light Attack, you apply Whorl of the Depths to the target, dealing 5980 Frost Damage over 8 seconds. When this effect ends, a 5 meter whirlpool is created under the target for 6 seconds and deals 4230 Frost Damage every 1 second. This effect can occur once every 18 seconds and scales off the higher of your Weapon or Spell Damage.',
   ],
 };
 
@@ -3944,7 +3944,7 @@ export const winterSRespite: GearSetData = {
     '(2 items) Adds 129 Magicka Recovery',
     '(3 items) Adds 1096 Maximum Magicka',
     '(4 items) Adds 1096 Maximum Magicka',
-    '(5 items) While in combat, casting abilities that leave an effect on the ground will create a circle of healing frost for 10 seconds. You and your group members restore 1125 Health every 2 seconds while inside the circle. This effect can occur once every 10 seconds and scales off the higher of your Max Magicka or Stamina.',
+    '(5 items) While in combat, casting abilities that leave an effect on the ground will create a circle of healing frost for 10 seconds. You and your group members restore 2274 Health every 2 seconds while inside the circle. This effect can occur once every 10 seconds and scales off the higher of your Max Magicka or Stamina.',
   ],
 };
 
@@ -3956,7 +3956,7 @@ export const winterborn: GearSetData = {
     '(2 items) Adds 1096 Maximum Magicka',
     '(3 items) Adds 129 Magicka Recovery',
     '(4 items) Adds 129 Weapon and Spell Damage',
-    '(5 items) When you deal Frost Damage, you summon an ice pillar that deals 1071 Frost Damage to all enemies in a 3 meter radius. The ice pillar persists for 2 seconds and reduces the Movement Speed of all enemies within the radius by 50%. This effect can occur once every 6 seconds and the damage scales off the higher of your Weapon or Spell Damage.',
+    '(5 items) When you deal Frost Damage, you summon an ice pillar that deals 6289 Frost Damage to all enemies in a 3 meter radius. The ice pillar persists for 2 seconds and reduces the Movement Speed of all enemies within the radius by 50%. This effect can occur once every 6 seconds and the damage scales off the higher of your Weapon or Spell Damage.',
   ],
 };
 
@@ -4088,7 +4088,7 @@ export const zaan: GearSetData = {
   setType: 'Monster Set',
   bonuses: [
     '(1 item) Adds 657 Critical Chance',
-    '(2 items) When you deal Critical Damage with a Light or Heavy Attack, you have a 33% chance to tether to your enemy for 10 seconds as long as you remain within 8 meters of them. Enemies touching the tether take 145 Flame Damage every 1 second, increasing by 100% per tick and are afflicted with the Burning status effect. This effect can occur once every 20 seconds and scales off the higher of your Weapon or Spell Damage.',
+    '(2 items) When you deal Critical Damage with a Light or Heavy Attack, you have a 33% chance to tether to your enemy for 10 seconds as long as you remain within 8 meters of them. Enemies touching the tether take 807 Flame Damage every 1 second, increasing by 100% per tick and are afflicted with the Burning status effect. This effect can occur once every 20 seconds and scales off the higher of your Weapon or Spell Damage.',
   ],
 };
 

@@ -12,7 +12,7 @@ export const soulMagic: SkillLineData = {
       id: AbilityId.SOUL_STRIKE,
       name: 'Soul Strike',
       description:
-        'Burn an enemy from the inside with soulfire, dealing 14808 Magic Damage over 5 seconds.\n\nWhile channeling this ability, you gain immunity to all disabling effects.\n\nEnemies affected by this ability are revealed for 3 seconds and may not enter stealth or invisibility.\n\nThis ability is considered direct damage.',
+        'Burn an enemy from the inside with soulfire, dealing 57156 Magic Damage over 5 seconds.\n\nWhile channeling this ability, you gain immunity to all disabling effects.\n\nEnemies affected by this ability are revealed for 3 seconds and may not enter stealth or invisibility.\n\nThis ability is considered direct damage.',
       icon: 'ability_otherclass_002',
       isUltimate: true,
       isPassive: false,
@@ -22,7 +22,7 @@ export const soulMagic: SkillLineData = {
       id: 40415, // Morph of Soul Strike
       name: 'Shatter Soul',
       description:
-        'Burn an enemy from the inside with soulfire, dealing 14814 Magic Damage over 5 seconds. Upon completion, the soulfire overflows and explodes from the enemy, dealing 2399 Magic Damage to all enemies near them.\n\nWhile channeling this ability, you gain immunity to all disabling effects.\n\nEnemies affected by this ability are revealed for 3 seconds and may not enter stealth or invisibility.\n\nThis ability is considered direct damage.',
+        'Burn an enemy from the inside with soulfire, dealing 57156 Magic Damage over 5 seconds. Upon completion, the soulfire overflows and explodes from the enemy, dealing 9261 Magic Damage to all enemies near them.\n\nWhile channeling this ability, you gain immunity to all disabling effects.\n\nEnemies affected by this ability are revealed for 3 seconds and may not enter stealth or invisibility.\n\nThis ability is considered direct damage.',
       icon: 'ability_otherclass_002_a',
       isUltimate: true,
       isPassive: false,
@@ -32,7 +32,7 @@ export const soulMagic: SkillLineData = {
       id: 40420, // Morph of Soul Strike
       name: 'Soul Assault',
       description:
-        'Burn an enemy from the inside with soulfire, dealing 20400 Magic Damage over 6 seconds.\n\nWhile channeling this ability, you gain immunity to all disabling effects.\n\nEnemies affected by this ability are revealed for 3 seconds and may not enter stealth or invisibility.\n\nThis ability is considered direct damage.',
+        'Burn an enemy from the inside with soulfire, dealing 78720 Magic Damage over 6 seconds.\n\nWhile channeling this ability, you gain immunity to all disabling effects.\n\nEnemies affected by this ability are revealed for 3 seconds and may not enter stealth or invisibility.\n\nThis ability is considered direct damage.',
       icon: 'ability_otherclass_002_b',
       isUltimate: true,
       isPassive: false,
@@ -60,7 +60,7 @@ export const soulMagic: SkillLineData = {
       id: AbilityId.SOUL_TRAP,
       name: 'Soul Trap',
       description:
-        "Lay claim to an enemy's soul, dealing 4631 Magic Damage over 20 seconds.\n\nFills an empty Soul Gem if an affected enemy dies.",
+        "Lay claim to an enemy's soul, dealing 17919 Magic Damage over 20 seconds.\n\nFills an empty Soul Gem if an affected enemy dies.",
       icon: 'ability_otherclass_001',
       isUltimate: false,
       isPassive: false,
@@ -70,7 +70,7 @@ export const soulMagic: SkillLineData = {
       id: 40319, // Morph of Soul Trap
       name: 'Consuming Trap',
       description:
-        "Lay claim to an enemy's soul, dealing 4642 Magic Damage over 20 seconds.\n\nIf an affected enemy dies, you fill an empty Soul Gem, heal for 3200 Health, and restore 2400 Magicka and 2400 Stamina. This portion of the ability scales off your Max Health, Magicka, and Stamina.",
+        "Lay claim to an enemy's soul, dealing 17919 Magic Damage over 20 seconds.\n\nIf an affected enemy dies, you fill an empty Soul Gem, heal for 3754 Health, and restore 2573 Magicka and 4752 Stamina. This portion of the ability scales off your Max Health, Magicka, and Stamina.",
       icon: 'ability_mage_065',
       isUltimate: false,
       isPassive: false,
@@ -80,7 +80,7 @@ export const soulMagic: SkillLineData = {
       id: 40329, // Morph of Soul Trap
       name: 'Soul Splitting Trap',
       description:
-        'Lay claim to enemy souls, dealing 2316 Magic Damage to your target and any other nearby enemies over 10 seconds.\n\nFills an empty Soul Gem if an affected enemy dies.',
+        'Lay claim to enemy souls, dealing 8964 Magic Damage to your target and any other nearby enemies over 10 seconds.\n\nFills an empty Soul Gem if an affected enemy dies.',
       icon: 'ability_mage_065',
       isUltimate: false,
       isPassive: false,
@@ -94,7 +94,7 @@ export const soulMagic: SkillLineData = {
       ],
       name: 'Soul Shatter',
       description:
-        'When your Health drops below 20% your soul explodes, dealing 800 Magic Damage to enemies within 8 meters of you.\n\nThis effect can occur once every 2 minutes and scales off your Max Health.',
+        'When your Health drops below 20% your soul explodes, dealing 975 Magic Damage to enemies within 8 meters of you.\n\nThis effect can occur once every 2 minutes and scales off your Max Health.',
       icon: 'ability_sorcerer_065',
       isUltimate: false,
       isPassive: true,
