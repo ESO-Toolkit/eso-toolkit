@@ -2048,7 +2048,21 @@ export const BuildViewPage: React.FC = () => {
       setHubBuildId('');
       setEncodedParam(encoded);
       void decodeBuildFromURL(encoded)
-        .then((decoded) => onDecoded(decoded, encoded))
+        .then((decoded) => {
+          if (cancelled) return;
+          // A self-contained ?b= payload carries no ownership signal, so it can
+          // never be authorized. Refuse to render a build whose embedded
+          // visibility is Private — this closes forwarded/stale/address-bar
+          // /bv?b= links for now-private builds regardless of how they were
+          // produced (the per-button share guards are the first line; this is
+          // the backstop). Owner-authorized private views go through ?id=.
+          if (decoded && decoded.settings.visibility === 'private') {
+            setNotFound(true);
+            setLoading(false);
+            return;
+          }
+          onDecoded(decoded, encoded);
+        })
         .catch(() => {
           if (cancelled) return;
           setNotFound(true);

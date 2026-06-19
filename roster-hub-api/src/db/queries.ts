@@ -526,10 +526,14 @@ export async function getBuildById(
   const row = await db.prepare('SELECT * FROM builds WHERE id = ?').bind(id).first<BuildRow>();
   if (!row) return null;
 
-  // Private builds are visible only to their owner. Return null (caller turns
-  // this into a 404) so non-owners can't even confirm the build exists. public
-  // and link-only are returned to anyone with the direct id.
-  if (row.visibility === 'private' && userId !== row.author_id) return null;
+  // Fail closed: only explicitly public / link-only builds are readable by id
+  // without ownership. Anything else (private, a typo, a null, or a future
+  // visibility value) is owner-only. Returning null (caller turns this into a
+  // 404) means non-owners can't even confirm the build exists.
+  const PUBLICLY_READABLE_BY_ID = new Set(['public', 'link-only']);
+  if (!PUBLICLY_READABLE_BY_ID.has(row.visibility) && userId !== row.author_id) {
+    return null;
+  }
 
   const tagRows = await db
     .prepare('SELECT tag FROM build_tags WHERE build_id = ?')

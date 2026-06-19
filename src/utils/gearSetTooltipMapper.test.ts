@@ -50,6 +50,17 @@ jest.mock('../data/Gear Sets/arena', () => ({
     setType: 'Arena',
     bonuses: ['(1 item) Adds 100 Weapon Damage', '(2 items) Arena effect'],
   },
+  // Perfected variants prefix the count with "perfected", e.g.
+  // "(2 perfected items)" / "(5 perfected items)".
+  arenaSetPerfected: {
+    name: 'Perfected Arena Set',
+    icon: 'arena_perfected',
+    setType: 'Arena',
+    bonuses: [
+      '(2 perfected items) Adds 103 Weapon and Spell Damage',
+      '(5 perfected items) Big perfected five-piece effect',
+    ],
+  },
 }));
 
 jest.mock('../data/Gear Sets/mythics', () => ({
@@ -118,6 +129,45 @@ describe('gearSetTooltipMapper', () => {
 
       expect(result).not.toBeNull();
       expect(result!.setBonuses.map((bonus) => bonus.active)).toEqual([true, true, false]);
+    });
+
+    it('parses "(N perfected items)" bonus lines correctly', () => {
+      const gearRecord = buildGearRecord({
+        labelName: 'Perfected Arena Set',
+        count: 5,
+      });
+
+      const result = createGearSetTooltipProps(gearRecord);
+
+      expect(result).not.toBeNull();
+      // Piece label keeps the full "(N perfected items)" token (not "(N"),
+      // and the effect text has the prefix stripped.
+      expect(result!.setBonuses).toEqual([
+        {
+          pieces: '(2 perfected items)',
+          effect: 'Adds 103 Weapon and Spell Damage',
+          active: true,
+        },
+        {
+          pieces: '(5 perfected items)',
+          effect: 'Big perfected five-piece effect',
+          active: true,
+        },
+      ]);
+    });
+
+    it('marks a perfected 5-piece bonus inactive when too few pieces are equipped', () => {
+      const gearRecord = buildGearRecord({
+        labelName: 'Perfected Arena Set',
+        count: 2,
+      });
+
+      const result = createGearSetTooltipProps(gearRecord);
+
+      expect(result).not.toBeNull();
+      // requiredPieces must come from the parsed count (2 and 5), not default to
+      // 1 — otherwise the 5-piece line would wrongly show active at 2 equipped.
+      expect(result!.setBonuses.map((bonus) => bonus.active)).toEqual([true, false]);
     });
 
     it('uses category badges for specialty sets', () => {

@@ -233,6 +233,16 @@ export const BuildCompletionHeader: React.FC = () => {
   };
 
   const handleView = (): void => {
+    // The read-only preview opens a self-contained ?b= URL in a new tab, which
+    // lands in the address bar / history and is rejected by the viewer for
+    // Private builds. Block it here so the owner gets a clear message rather
+    // than a broken tab; Link Only and Public preview normally.
+    if (build.settings.visibility === 'private') {
+      enqueueSnackbar('Private builds can’t open the shareable preview. Set Link Only or Public.', {
+        variant: 'warning',
+      });
+      return;
+    }
     void encodeBuildToURL(build).then((encoded) => {
       if (!encoded) {
         enqueueSnackbar('Could not encode build.', { variant: 'error' });

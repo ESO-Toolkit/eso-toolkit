@@ -81,12 +81,16 @@ const convertBonusesToTooltipFormat = (
   if (!bonuses) return [];
 
   return bonuses.map((bonus) => {
-    // Extract the piece count from the bonus string
-    const pieceMatch = bonus.match(/\((\d+)\s*items?\)/i);
+    // Extract the piece count from the bonus string. Perfected sets prefix the
+    // count with "perfected" — e.g. "(5 perfected items)" — so allow an optional
+    // word between the number and "items"; otherwise the line mis-parses to
+    // pieces "(5", keeps the prefix in the effect, and defaults to 1 piece
+    // (showing the bonus active with too few pieces equipped).
+    const pieceMatch = bonus.match(/\((\d+)\s*(?:\w+\s+)?items?\)/i);
     const pieces = pieceMatch ? pieceMatch[0] : bonus.split(' ')[0] || '(1 item)';
 
     // Extract the effect description
-    const effect = bonus.replace(/\(\d+\s*items?\)\s*/i, '').trim();
+    const effect = bonus.replace(/\(\d+\s*(?:\w+\s+)?items?\)\s*/i, '').trim();
 
     // Determine if this bonus is active based on equipped count
     const requiredPieces = pieceMatch ? parseInt(pieceMatch[1], 10) : 1;
