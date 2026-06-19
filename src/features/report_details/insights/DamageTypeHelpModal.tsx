@@ -115,10 +115,10 @@ const STATUS_EFFECT_ABILITIES = [
   { id: 18084, name: 'Burning' },
   { id: 95136, name: 'Chilled' },
   { id: 95134, name: 'Concussed' },
-  { id: 178127, name: 'Poisoned' },
-  { id: 148801, name: 'Diseased' },
-  { id: 178118, name: 'Hemorrhaging' },
-  { id: 21929, name: 'Overcharged' },
+  { id: 178127, name: 'Diseased' },
+  { id: 148801, name: 'Hemorrhaging' },
+  { id: 178118, name: 'Overcharged' },
+  { id: 21929, name: 'Poisoned' },
   { id: 178123, name: 'Sundered' },
 ];
 
