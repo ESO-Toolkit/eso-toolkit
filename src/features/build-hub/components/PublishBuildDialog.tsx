@@ -19,6 +19,7 @@ import {
 import { useTheme } from '@mui/material/styles';
 import React from 'react';
 
+import { decodeBuildFromURL, encodeBuildToURL } from '../../../utils/buildEncoding';
 import { buildHubApi } from '../api/build-hub-api';
 import type { HubBuild, HubBuildVisibility, PublishBuildPayload } from '../types/build-hub.types';
 import { BUILD_TAG_COLORS, PRESET_BUILD_TAGS } from '../types/build-hub.types';
@@ -92,13 +93,32 @@ export const PublishBuildDialog: React.FC<PublishBuildDialogProps> = ({
     setLoading(true);
     setError(null);
     try {
+      // The encoded blob also embeds settings.visibility (as `vs`). If the user
+      // changed visibility in this dialog, re-encode so the blob matches the
+      // selected value — otherwise client-side share gating that reads the
+      // decoded build would act on a stale visibility (e.g. treat a now-private
+      // build as shareable). Fall back to the original blob if re-encode fails.
+      let syncedBuildData = buildData;
+      try {
+        const decoded = await decodeBuildFromURL(buildData);
+        if (decoded && decoded.settings.visibility !== selectedVisibility) {
+          const reencoded = await encodeBuildToURL({
+            ...decoded,
+            settings: { ...decoded.settings, visibility: selectedVisibility },
+          });
+          if (reencoded) syncedBuildData = reencoded;
+        }
+      } catch {
+        /* keep original blob; server `visibility` metadata is still authoritative */
+      }
+
       const payload: PublishBuildPayload = {
         title: title.trim(),
         description: description.trim(),
         eso_class: esoClass,
         role,
         game_mode: gameMode,
-        build_data: buildData,
+        build_data: syncedBuildData,
         visibility: selectedVisibility,
         tags: selectedTags,
         is_anonymous: isAnonymous,

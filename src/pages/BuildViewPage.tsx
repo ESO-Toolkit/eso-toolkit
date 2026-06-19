@@ -2086,6 +2086,17 @@ export const BuildViewPage: React.FC = () => {
   useEffect(() => loadBuild(), [loadBuild]);
 
   const handleCopyLink = (): void => {
+    // A ?b= link is self-contained and bypasses the visibility-checked API, so
+    // it must not be handed out for a Private build. The ?id= link is fine — it
+    // resolves through the owner-gated API. (?id= copy is unaffected.)
+    if (!hubBuildId && build?.settings.visibility === 'private') {
+      setSnackbar({
+        open: true,
+        message: 'This build is Private. Set it to Link Only or Public to share a link.',
+        severity: 'error',
+      });
+      return;
+    }
     const url = hubBuildId
       ? `${window.location.origin}${window.location.pathname}?id=${encodeURIComponent(hubBuildId)}`
       : `${window.location.origin}${window.location.pathname}?b=${encodedParam}`;
