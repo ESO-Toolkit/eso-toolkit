@@ -1033,6 +1033,16 @@ app.get('/temp-builds/:id', async (c) => {
     return c.json({ error: 'This build link has expired or does not exist.' }, 410);
   }
 
+  // Enforce visibility at read time too — POST only began rejecting private
+  // payloads recently, so a temp row created earlier can still embed a private
+  // build. Decode and refuse to disclose it (fail closed on undecodable rows).
+  // Return 410 (same as missing) so a private link is indistinguishable from an
+  // expired one and existence isn't leaked.
+  const tempVisibility = await decodeEmbeddedVisibility(row.build_data);
+  if (tempVisibility !== 'public' && tempVisibility !== 'link-only') {
+    return c.json({ error: 'This build link has expired or does not exist.' }, 410);
+  }
+
   return c.json({
     build_data: row.build_data,
     created_at: row.created_at,
