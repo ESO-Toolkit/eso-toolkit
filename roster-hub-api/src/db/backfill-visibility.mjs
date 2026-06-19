@@ -35,10 +35,16 @@ function fromBase64Url(s) {
   return Buffer.from(b64, 'base64');
 }
 
+const MAX_COMPRESSED_BYTES = 100 * 1024; // 100 KB compressed
+const MAX_DECOMPRESSED_BYTES = 1024 * 1024; // 1 MB — hard cap so a corrupt/hostile row can't bomb the backfill
+
 /** Decode the compact build blob and return its embedded visibility. */
 function visibilityFromBuildData(buildData) {
   const bytes = fromBase64Url(buildData);
-  const json = inflateRawSync(bytes).toString('utf8');
+  if (bytes.length > MAX_COMPRESSED_BYTES) throw new Error('compressed payload too large');
+  // maxOutputLength makes inflate throw (rather than buffer unbounded) past the
+  // cap — a decompression bomb in a legacy row can't crash the whole backfill.
+  const json = inflateRawSync(bytes, { maxOutputLength: MAX_DECOMPRESSED_BYTES }).toString('utf8');
   const compact = JSON.parse(json);
   // `vs` omitted ⇒ public (the encoder drops 0). Unknown index ⇒ public.
   const idx = typeof compact.vs === 'number' ? compact.vs : 0;

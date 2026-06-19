@@ -188,7 +188,10 @@ export function dpsSlotToBuild(slot: DPSSlot): Build {
       }),
     ],
     guide: { content: '', youtubeUrl: '', bannerImageUrl: '' },
-    settings: { visibility: 'private', dlc: 'Base Game', setupOrder: [0] },
+    // 'link-only', not 'private': these are ephemeral roster-slot previews
+    // opened via a self-contained /bv?b= link (the viewer rejects Private ?b=
+    // payloads). A direct-link-only preview is exactly what this is.
+    settings: { visibility: 'link-only', dlc: 'Base Game', setupOrder: [0] },
     addonImportString: '',
     createdAt: now,
     updatedAt: now,
@@ -229,7 +232,10 @@ export function tankSlotToBuild(tank: TankSetup, tankNum: number): Build {
       }),
     ],
     guide: { content: '', youtubeUrl: '', bannerImageUrl: '' },
-    settings: { visibility: 'private', dlc: 'Base Game', setupOrder: [0] },
+    // 'link-only', not 'private': these are ephemeral roster-slot previews
+    // opened via a self-contained /bv?b= link (the viewer rejects Private ?b=
+    // payloads). A direct-link-only preview is exactly what this is.
+    settings: { visibility: 'link-only', dlc: 'Base Game', setupOrder: [0] },
     addonImportString: '',
     createdAt: now,
     updatedAt: now,
@@ -272,7 +278,10 @@ export function healerSlotToBuild(healer: HealerSetup, healerNum: number): Build
       }),
     ],
     guide: { content: '', youtubeUrl: '', bannerImageUrl: '' },
-    settings: { visibility: 'private', dlc: 'Base Game', setupOrder: [0] },
+    // 'link-only', not 'private': these are ephemeral roster-slot previews
+    // opened via a self-contained /bv?b= link (the viewer rejects Private ?b=
+    // payloads). A direct-link-only preview is exactly what this is.
+    settings: { visibility: 'link-only', dlc: 'Base Game', setupOrder: [0] },
     addonImportString: '',
     createdAt: now,
     updatedAt: now,
