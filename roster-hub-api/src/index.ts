@@ -726,21 +726,17 @@ app.post('/builds', async (c) => {
   if (body.visibility !== undefined && !isValidVisibility(body.visibility))
     return c.json({ error: 'visibility must be one of public, private, link-only' }, 400);
 
-  // Reconcile visibility against the value embedded in build_data so an
-  // out-of-date client (which omits the field) can't downgrade a private blob to
-  // public, and a tampered request can't claim a visibility its blob contradicts.
+  // Visibility is authoritative only when we can actually decode it from
+  // build_data. Fail closed if the blob is undecodable — never store a caller's
+  // claimed visibility for a payload the server couldn't verify (that would let
+  // a malformed/opaque blob be published as public). Then reconcile: trust the
+  // blob when the field is omitted, and reject a body value that contradicts it.
   const embeddedVisibility = await decodeEmbeddedVisibility(build_data);
-  let visibility: (typeof BUILD_VISIBILITIES)[number];
-  if (body.visibility === undefined) {
-    // Field omitted (old client): trust the blob; fail closed if undecodable.
-    if (embeddedVisibility === null)
-      return c.json({ error: 'Could not determine build visibility.' }, 400);
-    visibility = embeddedVisibility;
-  } else {
-    visibility = body.visibility;
-    if (embeddedVisibility !== null && embeddedVisibility !== visibility)
-      return c.json({ error: 'visibility does not match the encoded build.' }, 400);
-  }
+  if (embeddedVisibility === null)
+    return c.json({ error: 'Could not verify build visibility from build_data.' }, 400);
+  if (body.visibility !== undefined && body.visibility !== embeddedVisibility)
+    return c.json({ error: 'visibility does not match the encoded build.' }, 400);
+  const visibility: (typeof BUILD_VISIBILITIES)[number] = embeddedVisibility;
 
   const createAllowed = await checkBuildCreateRateLimit(c.env.DB, user.id);
   if (!createAllowed)
@@ -821,21 +817,16 @@ app.put('/builds/:id', async (c) => {
     return c.json({ error: 'visibility must be one of public, private, link-only' }, 400);
 
   // build_data is always replaced on update, so the stored visibility column
-  // must track the new blob. Derive it when the client omits the field (fail
-  // closed if undecodable) and reject a body value that contradicts the blob —
-  // otherwise an old client could update to a private blob while the column
-  // stays public.
+  // must track the new blob — and only a decodable blob yields an authoritative
+  // value. Fail closed if undecodable (don't let an opaque payload replace a
+  // build and be marked public from the request); otherwise trust the blob and
+  // reject a body value that contradicts it.
   const embeddedVisibility = await decodeEmbeddedVisibility(build_data);
-  let visibility: (typeof BUILD_VISIBILITIES)[number];
-  if (body.visibility === undefined) {
-    if (embeddedVisibility === null)
-      return c.json({ error: 'Could not determine build visibility.' }, 400);
-    visibility = embeddedVisibility;
-  } else {
-    visibility = body.visibility;
-    if (embeddedVisibility !== null && embeddedVisibility !== visibility)
-      return c.json({ error: 'visibility does not match the encoded build.' }, 400);
-  }
+  if (embeddedVisibility === null)
+    return c.json({ error: 'Could not verify build visibility from build_data.' }, 400);
+  if (body.visibility !== undefined && body.visibility !== embeddedVisibility)
+    return c.json({ error: 'visibility does not match the encoded build.' }, 400);
+  const visibility: (typeof BUILD_VISIBILITIES)[number] = embeddedVisibility;
 
   const updated = await updateBuild(c.env.DB, c.req.param('id'), user.id, {
     title: sanitize(title),
