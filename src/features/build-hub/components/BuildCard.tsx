@@ -19,6 +19,7 @@ import { CLASS_COLOR_MAP } from '../../build-editor/theme/classColorMap';
 import { VoteButton } from '../../roster-hub/components/VoteButton';
 import type { HubBuild } from '../types/build-hub.types';
 import { ROLE_ACCENT } from '../types/build-hub.types';
+import { getHubBuildViewUrl } from '../utils/buildLinks';
 
 interface BuildCardProps {
   build: HubBuild;
@@ -70,7 +71,11 @@ export const BuildCard: React.FC<BuildCardProps> = React.memo(
 
     const handleCopyLink = (e: React.MouseEvent): void => {
       e.stopPropagation();
-      const url = `${window.location.origin}${import.meta.env.BASE_URL}bv?b=${encodeURIComponent(build.build_data)}`;
+      const url = getHubBuildViewUrl({
+        baseUrl: import.meta.env.BASE_URL,
+        buildId: build.id,
+        origin: window.location.origin,
+      });
       void navigator.clipboard.writeText(url).then(() => {
         enqueueSnackbar('Link copied to clipboard!', { variant: 'success' });
       });
@@ -128,7 +133,7 @@ export const BuildCard: React.FC<BuildCardProps> = React.memo(
 
         <CardActionArea
           onClick={() =>
-            navigate(`/bv?id=${build.id}`, {
+            navigate(`/bv?id=${encodeURIComponent(build.id)}`, {
               state: { buildData: build.build_data },
               vtType: 'forward',
               morph: { ref: cardRef, name: 'build-hero' },

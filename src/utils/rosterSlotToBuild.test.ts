@@ -162,8 +162,10 @@ describe('dpsSlotToBuild', () => {
       expect(dpsSlotToBuild(slot).id).not.toBe(dpsSlotToBuild(slot).id);
     });
 
-    it('sets visibility to private', () => {
-      expect(dpsSlotToBuild({ slotNumber: 1 }).settings.visibility).toBe('private');
+    it('sets visibility to link-only so the ?b= preview link renders', () => {
+      // Roster-slot previews open via a self-contained /bv?b= link, which the
+      // viewer rejects for Private builds. link-only is the correct tier.
+      expect(dpsSlotToBuild({ slotNumber: 1 }).settings.visibility).toBe('link-only');
     });
 
     it('sets gameMode to pve', () => {
@@ -274,8 +276,8 @@ describe('tankSlotToBuild', () => {
   });
 
   describe('build metadata', () => {
-    it('sets visibility to private', () => {
-      expect(tankSlotToBuild(defaultTankSetup(), 1).settings.visibility).toBe('private');
+    it('sets visibility to link-only so the ?b= preview link renders', () => {
+      expect(tankSlotToBuild(defaultTankSetup(), 1).settings.visibility).toBe('link-only');
     });
 
     it('sets gameMode to pve', () => {
@@ -391,8 +393,8 @@ describe('healerSlotToBuild', () => {
   });
 
   describe('build metadata', () => {
-    it('sets visibility to private', () => {
-      expect(healerSlotToBuild(defaultHealerSetup(), 1).settings.visibility).toBe('private');
+    it('sets visibility to link-only so the ?b= preview link renders', () => {
+      expect(healerSlotToBuild(defaultHealerSetup(), 1).settings.visibility).toBe('link-only');
     });
 
     it('generates unique IDs on each call', () => {

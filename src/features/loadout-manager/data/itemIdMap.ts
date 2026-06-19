@@ -203858,9 +203858,9 @@ export function getItemIdsBySet(setName: string): number[] {
  * @returns Array of item IDs matching the set and slot
  */
 export function getSetItemsBySlot(setName: string, slot: SlotType): number[] {
-  return Object.entries(itemIdMap)
-    .filter(([, info]) => info.setName === setName && info.slot === slot)
-    .map(([id]) => parseInt(id, 10));
+  return getItemsBySlot(slot)
+    .filter(({ info }) => info.setName === setName)
+    .map(({ itemId }) => itemId);
 }
 
 export function getItemsBySlot(slot: SlotType): { itemId: number; info: ItemInfo }[] {

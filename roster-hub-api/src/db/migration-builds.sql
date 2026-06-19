@@ -13,6 +13,10 @@ CREATE TABLE IF NOT EXISTS builds (
   game_mode    TEXT NOT NULL DEFAULT 'pve',
   build_data   TEXT NOT NULL,
   vote_count   INTEGER NOT NULL DEFAULT 0,
+  -- Visibility tier: 'public' | 'link-only' | 'private'. Included here so a
+  -- freshly-created builds table already has the column the worker requires;
+  -- migration-build-visibility.sql back-fills pre-existing tables.
+  visibility   TEXT NOT NULL DEFAULT 'public',
   created_at   TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at   TEXT NOT NULL DEFAULT (datetime('now'))
 );
@@ -48,6 +52,7 @@ CREATE INDEX IF NOT EXISTS idx_builds_mode           ON builds(game_mode);
 CREATE INDEX IF NOT EXISTS idx_builds_votes          ON builds(vote_count DESC);
 CREATE INDEX IF NOT EXISTS idx_builds_created        ON builds(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_builds_author         ON builds(author_id);
+CREATE INDEX IF NOT EXISTS idx_builds_visibility     ON builds(visibility);
 CREATE INDEX IF NOT EXISTS idx_build_tags_tag        ON build_tags(tag);
 CREATE INDEX IF NOT EXISTS idx_build_votes_user      ON build_votes(user_id);
 CREATE INDEX IF NOT EXISTS idx_build_comments_build  ON build_comments(build_id, created_at);

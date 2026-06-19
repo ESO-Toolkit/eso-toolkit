@@ -100,6 +100,7 @@ export interface BuildRow {
   role: string;
   game_mode: string;
   build_data: string;
+  visibility: string;
   vote_count: number;
   created_at: string;
   updated_at: string;

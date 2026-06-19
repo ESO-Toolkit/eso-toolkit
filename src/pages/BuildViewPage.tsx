@@ -44,6 +44,7 @@ import { ESO_CONSUMABLE_LOOKUP } from '../data/esoConsumables';
 import { getEnchantName } from '../data/esoEnchants';
 import { ESO_POTION_LOOKUP } from '../data/esoPotions';
 import { getTraitName } from '../data/esoTraits';
+import { useAuth } from '../features/auth/AuthContext';
 import { staggerContainer, fadeInUp } from '../features/build-editor/components/motion/variants';
 import { GlassPanel } from '../features/build-editor/components/primitives/GlassPanel';
 import { StatBreakdown } from '../features/build-editor/components/primitives/StatBreakdown';
@@ -1995,6 +1996,7 @@ export const BuildViewPage: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const savedBuilds = useSelector(selectSavedBuilds);
+  const { accessToken } = useAuth();
 
   const [build, setBuild] = useState<Build | null>(null);
   const [loading, setLoading] = useState(true);
@@ -2017,10 +2019,18 @@ export const BuildViewPage: React.FC = () => {
     setNotFound(false);
     setFetchError(false);
 
-    const params = new URLSearchParams(window.location.search);
+    const params = new URLSearchParams(location.search);
     const encoded = params.get('b') ?? '';
     const idParam = params.get('id') ?? '';
-    const routerData = (location.state as { buildData?: string } | null)?.buildData;
+    // In-app owner preview (My Builds → View of one's own saved build). Only set
+    // by trusted same-app navigation, never present on a forwarded/pasted URL.
+    // For Private builds the encoded blob is carried in router state
+    // (previewBuild) instead of the URL, so the full private build never lands
+    // in the address bar/history. ownerPreview also relaxes the Private ?b=
+    // rejection for the legacy/public in-app path.
+    const previewState = location.state as { ownerPreview?: boolean; previewBuild?: string } | null;
+    const ownerPreview = previewState?.ownerPreview === true;
+    const previewBuild = ownerPreview ? (previewState?.previewBuild ?? '') : '';
 
     const onDecoded = (decoded: Build | null, buildData: string): void => {
       if (cancelled) return;
@@ -2043,10 +2053,39 @@ export const BuildViewPage: React.FC = () => {
       setLoading(false);
     };
 
-    if (encoded) {
+    if (previewBuild) {
+      // Trusted in-app owner preview: the blob came from router state, not the
+      // URL. Render it directly (Private is allowed — it's the owner's own
+      // build) without exposing it in the address bar.
+      setHubBuildId('');
+      setEncodedParam('');
+      void decodeBuildFromURL(previewBuild)
+        .then((decoded) => onDecoded(decoded, previewBuild))
+        .catch(() => {
+          if (cancelled) return;
+          setNotFound(true);
+          setLoading(false);
+        });
+    } else if (encoded) {
+      setHubBuildId('');
       setEncodedParam(encoded);
       void decodeBuildFromURL(encoded)
-        .then((decoded) => onDecoded(decoded, encoded))
+        .then((decoded) => {
+          if (cancelled) return;
+          // A self-contained ?b= payload carries no ownership signal, so it can
+          // never be authorized from the URL alone. Refuse to render a build
+          // whose embedded visibility is Private — this closes forwarded/stale/
+          // address-bar /bv?b= links for now-private builds regardless of how
+          // they were produced (the per-button share guards are the first line;
+          // this is the backstop). The one exception is a trusted in-app owner
+          // preview (the previewBuild branch above); owner ?id= views are fine.
+          if (decoded && decoded.settings.visibility === 'private' && !ownerPreview) {
+            setNotFound(true);
+            setLoading(false);
+            return;
+          }
+          onDecoded(decoded, encoded);
+        })
         .catch(() => {
           if (cancelled) return;
           setNotFound(true);
@@ -2054,25 +2093,33 @@ export const BuildViewPage: React.FC = () => {
         });
     } else if (idParam) {
       setHubBuildId(idParam);
-      if (routerData) {
-        void decodeBuildFromURL(routerData)
-          .then((decoded) => onDecoded(decoded, routerData))
-          .catch(() => {
-            if (cancelled) return;
-            setNotFound(true);
-            setLoading(false);
-          });
-      } else {
-        void buildHubApi
-          .get(idParam)
-          .then(({ build: hubBuild }) =>
-            decodeBuildFromURL(hubBuild.build_data).then((decoded) =>
-              onDecoded(decoded, hubBuild.build_data),
-            ),
-          )
-          .catch(handleFetchError);
-      }
+      // An id-based view MUST be resolved only through buildHubApi.get, the one
+      // path that enforces build visibility (private builds 404 for non-owners).
+      // Router state (location.state.buildData) from a BuildCard click is never
+      // rendered: a stale Hub tab from when the build was public would otherwise
+      // expose now-private content — even briefly, or indefinitely if the API
+      // request hangs. The view stays in its loading state until the
+      // visibility-checked fetch succeeds.
+      void buildHubApi
+        .get(idParam, accessToken)
+        .then(({ build: hubBuild }) =>
+          decodeBuildFromURL(hubBuild.build_data).then((decoded) => {
+            // The Hub record's `visibility` column is authoritative — the value
+            // embedded in build_data can be stale (e.g. a build published before
+            // dialog re-encode, or edited out-of-band). Override the decoded
+            // value with server truth so downstream share/copy gating can't be
+            // fooled by a stale blob.
+            const authoritative =
+              decoded && hubBuild.visibility
+                ? { ...decoded, settings: { ...decoded.settings, visibility: hubBuild.visibility } }
+                : decoded;
+            onDecoded(authoritative, hubBuild.build_data);
+          }),
+        )
+        .catch(handleFetchError);
     } else {
+      setHubBuildId('');
+      setEncodedParam('');
       setNotFound(true);
       setLoading(false);
     }
@@ -2080,14 +2127,24 @@ export const BuildViewPage: React.FC = () => {
     return () => {
       cancelled = true;
     };
-  }, [location.state]);
+  }, [accessToken, location.search, location.state]);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => loadBuild(), []);
+  useEffect(() => loadBuild(), [loadBuild]);
 
   const handleCopyLink = (): void => {
+    // A ?b= link is self-contained and bypasses the visibility-checked API, so
+    // it must not be handed out for a Private build. The ?id= link is fine — it
+    // resolves through the owner-gated API. (?id= copy is unaffected.)
+    if (!hubBuildId && build?.settings.visibility === 'private') {
+      setSnackbar({
+        open: true,
+        message: 'This build is Private. Set it to Link Only or Public to share a link.',
+        severity: 'error',
+      });
+      return;
+    }
     const url = hubBuildId
-      ? `${window.location.origin}${window.location.pathname}?id=${hubBuildId}`
+      ? `${window.location.origin}${window.location.pathname}?id=${encodeURIComponent(hubBuildId)}`
       : `${window.location.origin}${window.location.pathname}?b=${encodedParam}`;
     navigator.clipboard
       .writeText(url)

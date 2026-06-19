@@ -2,9 +2,10 @@
   "metadata": {
     "generatedAt": "2025-12-11T02:20:56.149Z",
     "source": "tmp\\globals.txt",
-    "totalPieces": 10601,
-    "totalItems": 10601,
-    "unknownSlotCount": 0
+    "totalPieces": 10667,
+    "totalItems": 10667,
+    "unknownSlotCount": 0,
+    "note": "+66 items for 6 crafted sets (Order's Wrath, Clever Alchemist, Heartland Conqueror, Tide-Born Wildstalker, Druid's Braid, Wretched Vitality) sourced from UESP minedItem"
   },
   "slotMasks": {
     "1": {
@@ -2081,6 +2082,69 @@
       "slotMask": 2097152,
       "category": "jewelry",
       "slot": "neck"
+    },
+    "72142": {
+      "setId": 225,
+      "slotMask": 256,
+      "category": "armor",
+      "slot": "chest",
+      "weight": "heavy"
+    },
+    "72150": {
+      "setId": 225,
+      "slotMask": 16,
+      "category": "armor",
+      "slot": "shoulders",
+      "weight": "medium"
+    },
+    "72151": {
+      "setId": 225,
+      "slotMask": 1024,
+      "category": "armor",
+      "slot": "hands",
+      "weight": "medium"
+    },
+    "72152": {
+      "setId": 225,
+      "slotMask": 8192,
+      "category": "armor",
+      "slot": "waist",
+      "weight": "medium"
+    },
+    "72154": {
+      "setId": 225,
+      "slotMask": 524288,
+      "category": "armor",
+      "slot": "feet",
+      "weight": "medium"
+    },
+    "72155": {
+      "setId": 225,
+      "slotMask": 1,
+      "category": "armor",
+      "slot": "head",
+      "weight": "light"
+    },
+    "72161": {
+      "setId": 225,
+      "slotMask": 32768,
+      "category": "armor",
+      "slot": "legs",
+      "weight": "light"
+    },
+    "72164": {
+      "setId": 225,
+      "slotMask": 8388608,
+      "category": "weapon",
+      "slot": "weapon",
+      "note": "UESP-added (one-hand)"
+    },
+    "72171": {
+      "setId": 225,
+      "slotMask": 34359738368,
+      "category": "weapon",
+      "slot": "offhand",
+      "note": "UESP-added (shield)"
     },
     "72841": {
       "setId": 227,
@@ -38791,6 +38855,18 @@
       "slot": "waist",
       "weight": "light"
     },
+    "137546": {
+      "setId": 225,
+      "slotMask": 4194304,
+      "category": "jewelry",
+      "slot": "ring"
+    },
+    "137714": {
+      "setId": 225,
+      "slotMask": 2097152,
+      "category": "jewelry",
+      "slot": "neck"
+    },
     "137964": {
       "setId": 392,
       "slotMask": 4194304,
@@ -53892,6 +53968,81 @@
       "slot": "waist",
       "weight": "heavy"
     },
+    "172831": {
+      "setId": 583,
+      "slotMask": 8388608,
+      "category": "weapon",
+      "slot": "weapon",
+      "note": "UESP-added (one-hand)"
+    },
+    "172841": {
+      "setId": 583,
+      "slotMask": 34359738368,
+      "category": "weapon",
+      "slot": "offhand",
+      "note": "UESP-added (shield)"
+    },
+    "172842": {
+      "setId": 583,
+      "slotMask": 256,
+      "category": "armor",
+      "slot": "chest",
+      "weight": "heavy"
+    },
+    "172852": {
+      "setId": 583,
+      "slotMask": 1,
+      "category": "armor",
+      "slot": "head",
+      "weight": "light"
+    },
+    "172853": {
+      "setId": 583,
+      "slotMask": 32768,
+      "category": "armor",
+      "slot": "legs",
+      "weight": "light"
+    },
+    "172858": {
+      "setId": 583,
+      "slotMask": 524288,
+      "category": "armor",
+      "slot": "feet",
+      "weight": "medium"
+    },
+    "172859": {
+      "setId": 583,
+      "slotMask": 1024,
+      "category": "armor",
+      "slot": "hands",
+      "weight": "medium"
+    },
+    "172862": {
+      "setId": 583,
+      "slotMask": 16,
+      "category": "armor",
+      "slot": "shoulders",
+      "weight": "medium"
+    },
+    "172863": {
+      "setId": 583,
+      "slotMask": 8192,
+      "category": "armor",
+      "slot": "waist",
+      "weight": "medium"
+    },
+    "172864": {
+      "setId": 583,
+      "slotMask": 4194304,
+      "category": "jewelry",
+      "slot": "ring"
+    },
+    "172865": {
+      "setId": 583,
+      "slotMask": 2097152,
+      "category": "jewelry",
+      "slot": "neck"
+    },
     "173591": {
       "setId": 587,
       "slotMask": 4194304,
@@ -56453,6 +56604,81 @@
       "category": "armor",
       "slot": "shoulders",
       "weight": "light"
+    },
+    "178808": {
+      "setId": 610,
+      "slotMask": 8388608,
+      "category": "weapon",
+      "slot": "weapon",
+      "note": "UESP-added (one-hand)"
+    },
+    "178818": {
+      "setId": 610,
+      "slotMask": 34359738368,
+      "category": "weapon",
+      "slot": "offhand",
+      "note": "UESP-added (shield)"
+    },
+    "178819": {
+      "setId": 610,
+      "slotMask": 256,
+      "category": "armor",
+      "slot": "chest",
+      "weight": "heavy"
+    },
+    "178829": {
+      "setId": 610,
+      "slotMask": 1,
+      "category": "armor",
+      "slot": "head",
+      "weight": "light"
+    },
+    "178830": {
+      "setId": 610,
+      "slotMask": 32768,
+      "category": "armor",
+      "slot": "legs",
+      "weight": "light"
+    },
+    "178835": {
+      "setId": 610,
+      "slotMask": 524288,
+      "category": "armor",
+      "slot": "feet",
+      "weight": "medium"
+    },
+    "178836": {
+      "setId": 610,
+      "slotMask": 1024,
+      "category": "armor",
+      "slot": "hands",
+      "weight": "medium"
+    },
+    "178839": {
+      "setId": 610,
+      "slotMask": 16,
+      "category": "armor",
+      "slot": "shoulders",
+      "weight": "medium"
+    },
+    "178840": {
+      "setId": 610,
+      "slotMask": 8192,
+      "category": "armor",
+      "slot": "waist",
+      "weight": "medium"
+    },
+    "178841": {
+      "setId": 610,
+      "slotMask": 4194304,
+      "category": "jewelry",
+      "slot": "ring"
+    },
+    "178842": {
+      "setId": 610,
+      "slotMask": 2097152,
+      "category": "jewelry",
+      "slot": "neck"
     },
     "179924": {
       "setId": 609,
@@ -59205,6 +59431,156 @@
       "category": "armor",
       "slot": "shoulders",
       "weight": "light"
+    },
+    "184773": {
+      "setId": 640,
+      "slotMask": 8388608,
+      "category": "weapon",
+      "slot": "weapon",
+      "note": "UESP-added (one-hand)"
+    },
+    "184783": {
+      "setId": 640,
+      "slotMask": 34359738368,
+      "category": "weapon",
+      "slot": "offhand",
+      "note": "UESP-added (shield)"
+    },
+    "184784": {
+      "setId": 640,
+      "slotMask": 256,
+      "category": "armor",
+      "slot": "chest",
+      "weight": "heavy"
+    },
+    "184794": {
+      "setId": 640,
+      "slotMask": 1,
+      "category": "armor",
+      "slot": "head",
+      "weight": "light"
+    },
+    "184795": {
+      "setId": 640,
+      "slotMask": 32768,
+      "category": "armor",
+      "slot": "legs",
+      "weight": "light"
+    },
+    "184800": {
+      "setId": 640,
+      "slotMask": 524288,
+      "category": "armor",
+      "slot": "feet",
+      "weight": "medium"
+    },
+    "184801": {
+      "setId": 640,
+      "slotMask": 1024,
+      "category": "armor",
+      "slot": "hands",
+      "weight": "medium"
+    },
+    "184804": {
+      "setId": 640,
+      "slotMask": 16,
+      "category": "armor",
+      "slot": "shoulders",
+      "weight": "medium"
+    },
+    "184805": {
+      "setId": 640,
+      "slotMask": 8192,
+      "category": "armor",
+      "slot": "waist",
+      "weight": "medium"
+    },
+    "184806": {
+      "setId": 640,
+      "slotMask": 4194304,
+      "category": "jewelry",
+      "slot": "ring"
+    },
+    "184807": {
+      "setId": 640,
+      "slotMask": 2097152,
+      "category": "jewelry",
+      "slot": "neck"
+    },
+    "185533": {
+      "setId": 642,
+      "slotMask": 8388608,
+      "category": "weapon",
+      "slot": "weapon",
+      "note": "UESP-added (one-hand)"
+    },
+    "185543": {
+      "setId": 642,
+      "slotMask": 34359738368,
+      "category": "weapon",
+      "slot": "offhand",
+      "note": "UESP-added (shield)"
+    },
+    "185544": {
+      "setId": 642,
+      "slotMask": 256,
+      "category": "armor",
+      "slot": "chest",
+      "weight": "heavy"
+    },
+    "185554": {
+      "setId": 642,
+      "slotMask": 1,
+      "category": "armor",
+      "slot": "head",
+      "weight": "light"
+    },
+    "185555": {
+      "setId": 642,
+      "slotMask": 32768,
+      "category": "armor",
+      "slot": "legs",
+      "weight": "light"
+    },
+    "185560": {
+      "setId": 642,
+      "slotMask": 524288,
+      "category": "armor",
+      "slot": "feet",
+      "weight": "medium"
+    },
+    "185561": {
+      "setId": 642,
+      "slotMask": 1024,
+      "category": "armor",
+      "slot": "hands",
+      "weight": "medium"
+    },
+    "185564": {
+      "setId": 642,
+      "slotMask": 16,
+      "category": "armor",
+      "slot": "shoulders",
+      "weight": "medium"
+    },
+    "185565": {
+      "setId": 642,
+      "slotMask": 8192,
+      "category": "armor",
+      "slot": "waist",
+      "weight": "medium"
+    },
+    "185566": {
+      "setId": 642,
+      "slotMask": 4194304,
+      "category": "jewelry",
+      "slot": "ring"
+    },
+    "185567": {
+      "setId": 642,
+      "slotMask": 2097152,
+      "category": "jewelry",
+      "slot": "neck"
     },
     "185907": {
       "setId": 643,
@@ -76942,6 +77318,81 @@
       "category": "armor",
       "slot": "waist",
       "weight": "heavy"
+    },
+    "215481": {
+      "setId": 809,
+      "slotMask": 8388608,
+      "category": "weapon",
+      "slot": "weapon",
+      "note": "UESP-added (one-hand)"
+    },
+    "215491": {
+      "setId": 809,
+      "slotMask": 34359738368,
+      "category": "weapon",
+      "slot": "offhand",
+      "note": "UESP-added (shield)"
+    },
+    "215492": {
+      "setId": 809,
+      "slotMask": 256,
+      "category": "armor",
+      "slot": "chest",
+      "weight": "heavy"
+    },
+    "215502": {
+      "setId": 809,
+      "slotMask": 1,
+      "category": "armor",
+      "slot": "head",
+      "weight": "light"
+    },
+    "215503": {
+      "setId": 809,
+      "slotMask": 32768,
+      "category": "armor",
+      "slot": "legs",
+      "weight": "light"
+    },
+    "215508": {
+      "setId": 809,
+      "slotMask": 524288,
+      "category": "armor",
+      "slot": "feet",
+      "weight": "medium"
+    },
+    "215509": {
+      "setId": 809,
+      "slotMask": 1024,
+      "category": "armor",
+      "slot": "hands",
+      "weight": "medium"
+    },
+    "215512": {
+      "setId": 809,
+      "slotMask": 16,
+      "category": "armor",
+      "slot": "shoulders",
+      "weight": "medium"
+    },
+    "215513": {
+      "setId": 809,
+      "slotMask": 8192,
+      "category": "armor",
+      "slot": "waist",
+      "weight": "medium"
+    },
+    "215514": {
+      "setId": 809,
+      "slotMask": 4194304,
+      "category": "jewelry",
+      "slot": "ring"
+    },
+    "215515": {
+      "setId": 809,
+      "slotMask": 2097152,
+      "category": "jewelry",
+      "slot": "neck"
     },
     "216235": {
       "setId": 805,

@@ -66,8 +66,8 @@ export const buildHubApi = {
     return apiFetch(`/builds/${id}/vote`, { method: 'POST' }, token);
   },
 
-  listComments(id: string): Promise<{ comments: HubBuildComment[] }> {
-    return apiFetch(`/builds/${id}/comments`);
+  listComments(id: string, token?: string): Promise<{ comments: HubBuildComment[] }> {
+    return apiFetch(`/builds/${id}/comments`, {}, token);
   },
 
   createComment(

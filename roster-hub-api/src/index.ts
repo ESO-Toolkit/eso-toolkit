@@ -123,6 +123,66 @@ const sanitizeTrialIds = (ids: unknown): string[] => {
   return [...new Set(ids.filter(isValidTrialId).map(sanitize))].slice(0, 10);
 };
 
+/** Allowed build visibility values. Mirrors BuildVisibility in the frontend. */
+const BUILD_VISIBILITIES = ['public', 'private', 'link-only'] as const;
+
+/** Validate a build visibility value against the allowlist. */
+const isValidVisibility = (v: unknown): v is (typeof BUILD_VISIBILITIES)[number] =>
+  typeof v === 'string' && (BUILD_VISIBILITIES as readonly string[]).includes(v);
+
+/** `vs` index → visibility, mirroring VISIBILITIES in src/utils/buildEncoding.ts. */
+const VISIBILITY_BY_INDEX = ['public', 'private', 'link-only'] as const;
+
+/**
+ * Decode the visibility embedded in an encoded build_data blob (base64url +
+ * deflate-raw, mirroring the frontend encoder). Returns the visibility, or null
+ * if the blob can't be decoded — callers must fail closed (treat null as
+ * not-public) so an undecodable or hostile blob can't slip through as public.
+ */
+const MAX_COMPRESSED_BUILD_BYTES = 100 * 1024; // 100 KB compressed
+const MAX_DECOMPRESSED_BUILD_BYTES = 1024 * 1024; // 1 MB decompressed — hard cap
+
+async function decodeEmbeddedVisibility(
+  buildData: string,
+): Promise<(typeof BUILD_VISIBILITIES)[number] | null> {
+  try {
+    const b64 = buildData.replace(/-/g, '+').replace(/_/g, '/');
+    const bytes = Uint8Array.from(atob(b64), (ch) => ch.charCodeAt(0));
+    // Cap compressed input first (matches the frontend decode-bomb guard).
+    if (bytes.length > MAX_COMPRESSED_BUILD_BYTES) return null;
+
+    const ds = new DecompressionStream('deflate-raw');
+    const reader = new Blob([bytes]).stream().pipeThrough(ds).getReader();
+    // Stream-decode with a hard decompressed-byte cap so a small bomb can't
+    // expand into unbounded memory; abort as soon as the cap is exceeded.
+    const chunks: Uint8Array[] = [];
+    let total = 0;
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      total += value.byteLength;
+      if (total > MAX_DECOMPRESSED_BUILD_BYTES) {
+        await reader.cancel();
+        return null;
+      }
+      chunks.push(value);
+    }
+
+    const merged = new Uint8Array(total);
+    let offset = 0;
+    for (const chunk of chunks) {
+      merged.set(chunk, offset);
+      offset += chunk.byteLength;
+    }
+    const json = new TextDecoder().decode(merged);
+    const compact = JSON.parse(json) as { vs?: number };
+    const idx = typeof compact.vs === 'number' ? compact.vs : 0;
+    return VISIBILITY_BY_INDEX[idx] ?? null;
+  } catch {
+    return null;
+  }
+}
+
 // ─── Security headers ────────────────────────────────────────────────────────
 
 app.use('*', async (c, next) => {
@@ -160,10 +220,12 @@ interface CacheTier {
 }
 
 function getCacheTier(path: string): CacheTier | null {
-  if (/^\/(rosters|builds|packs)$/.test(path)) return { edgeTtl: 30, swr: 300 };
-  if (/^\/(rosters|builds|packs)\/[^/]+$/.test(path)) return { edgeTtl: 10, swr: 60 };
-  if (/^\/(rosters|builds)\/[^/]+\/comments$/.test(path)) return { edgeTtl: 15, swr: 60 };
-  if (path.startsWith('/users/')) return { edgeTtl: 300, swr: 60 };
+  // Build/profile responses include mutable build visibility. Without targeted
+  // cache invalidation, edge caching can serve stale public data after a build
+  // is made private, so those routes intentionally fall through to no-store.
+  if (/^\/(rosters|packs)$/.test(path)) return { edgeTtl: 30, swr: 300 };
+  if (/^\/(rosters|packs)\/[^/]+$/.test(path)) return { edgeTtl: 10, swr: 60 };
+  if (/^\/rosters\/[^/]+\/comments$/.test(path)) return { edgeTtl: 15, swr: 60 };
   if (path === '/search-addons') return { edgeTtl: 60, swr: 300 };
   return null;
 }
@@ -627,6 +689,7 @@ app.post('/builds', async (c) => {
     role: string;
     game_mode?: string;
     build_data: string;
+    visibility?: string;
     tags?: string[];
     is_anonymous?: boolean;
   }
@@ -660,6 +723,20 @@ app.post('/builds', async (c) => {
     return c.json({ error: 'build_data must be ≤ 50 000 characters' }, 400);
   if (!isValidBase64Url(build_data))
     return c.json({ error: 'build_data must be valid base64url' }, 400);
+  if (body.visibility !== undefined && !isValidVisibility(body.visibility))
+    return c.json({ error: 'visibility must be one of public, private, link-only' }, 400);
+
+  // Visibility is authoritative only when we can actually decode it from
+  // build_data. Fail closed if the blob is undecodable — never store a caller's
+  // claimed visibility for a payload the server couldn't verify (that would let
+  // a malformed/opaque blob be published as public). Then reconcile: trust the
+  // blob when the field is omitted, and reject a body value that contradicts it.
+  const embeddedVisibility = await decodeEmbeddedVisibility(build_data);
+  if (embeddedVisibility === null)
+    return c.json({ error: 'Could not verify build visibility from build_data.' }, 400);
+  if (body.visibility !== undefined && body.visibility !== embeddedVisibility)
+    return c.json({ error: 'visibility does not match the encoded build.' }, 400);
+  const visibility: (typeof BUILD_VISIBILITIES)[number] = embeddedVisibility;
 
   const createAllowed = await checkBuildCreateRateLimit(c.env.DB, user.id);
   if (!createAllowed)
@@ -680,6 +757,7 @@ app.post('/builds', async (c) => {
     role: sanitize(role),
     gameMode: sanitize(game_mode),
     buildData: build_data,
+    visibility,
     tags: Array.isArray(tags) ? tags.filter(isValidTag).slice(0, 10).map(sanitize) : [],
     isAnonymous: !!is_anonymous,
   });
@@ -701,6 +779,7 @@ app.put('/builds/:id', async (c) => {
     role: string;
     game_mode?: string;
     build_data: string;
+    visibility?: string;
     tags?: string[];
     is_anonymous?: boolean;
   }
@@ -734,6 +813,20 @@ app.put('/builds/:id', async (c) => {
     return c.json({ error: 'build_data must be ≤ 50 000 characters' }, 400);
   if (!isValidBase64Url(build_data))
     return c.json({ error: 'build_data must be valid base64url' }, 400);
+  if (body.visibility !== undefined && !isValidVisibility(body.visibility))
+    return c.json({ error: 'visibility must be one of public, private, link-only' }, 400);
+
+  // build_data is always replaced on update, so the stored visibility column
+  // must track the new blob — and only a decodable blob yields an authoritative
+  // value. Fail closed if undecodable (don't let an opaque payload replace a
+  // build and be marked public from the request); otherwise trust the blob and
+  // reject a body value that contradicts it.
+  const embeddedVisibility = await decodeEmbeddedVisibility(build_data);
+  if (embeddedVisibility === null)
+    return c.json({ error: 'Could not verify build visibility from build_data.' }, 400);
+  if (body.visibility !== undefined && body.visibility !== embeddedVisibility)
+    return c.json({ error: 'visibility does not match the encoded build.' }, 400);
+  const visibility: (typeof BUILD_VISIBILITIES)[number] = embeddedVisibility;
 
   const updated = await updateBuild(c.env.DB, c.req.param('id'), user.id, {
     title: sanitize(title),
@@ -742,6 +835,7 @@ app.put('/builds/:id', async (c) => {
     role: sanitize(role),
     gameMode: sanitize(game_mode),
     buildData: build_data,
+    visibility,
     tags: Array.isArray(tags) ? tags.filter(isValidTag).slice(0, 10).map(sanitize) : [],
     isAnonymous: !!is_anonymous,
   });
@@ -769,8 +863,8 @@ app.post('/builds/:id/vote', async (c) => {
   if (!user) return c.json({ error: 'Unauthorized' }, 401);
 
   const buildId = c.req.param('id');
-  const exists = await c.env.DB.prepare('SELECT id FROM builds WHERE id = ?').bind(buildId).first();
-  if (!exists) return c.json({ error: 'Not found' }, 404);
+  const build = await getBuildById(c.env.DB, buildId, user.id);
+  if (!build) return c.json({ error: 'Not found' }, 404);
 
   const allowed = await checkBuildVoteRateLimit(c.env.DB, user.id);
   if (!allowed)
@@ -784,9 +878,10 @@ app.post('/builds/:id/vote', async (c) => {
 // ─── GET /builds/:id/comments ─────────────────────────────────────────────────
 
 app.get('/builds/:id/comments', async (c) => {
+  const user = await validateToken(c.req.header('Authorization'), c.env);
   const buildId = c.req.param('id');
-  const exists = await c.env.DB.prepare('SELECT id FROM builds WHERE id = ?').bind(buildId).first();
-  if (!exists) return c.json({ error: 'Not found' }, 404);
+  const build = await getBuildById(c.env.DB, buildId, user?.id);
+  if (!build) return c.json({ error: 'Not found' }, 404);
 
   const comments = await listBuildComments(c.env.DB, buildId);
   return c.json({ comments });
@@ -799,8 +894,8 @@ app.post('/builds/:id/comments', async (c) => {
   if (!user) return c.json({ error: 'Unauthorized' }, 401);
 
   const buildId = c.req.param('id');
-  const exists = await c.env.DB.prepare('SELECT id FROM builds WHERE id = ?').bind(buildId).first();
-  if (!exists) return c.json({ error: 'Build not found' }, 404);
+  const build = await getBuildById(c.env.DB, buildId, user.id);
+  if (!build) return c.json({ error: 'Build not found' }, 404);
 
   const allowed = await checkBuildCommentRateLimit(c.env.DB, user.id);
   if (!allowed) return c.json({ error: 'Rate limit exceeded. Try again in a minute.' }, 429);
@@ -882,7 +977,9 @@ app.post('/temp-builds', async (c) => {
   if (!isValidBase64Url(body.build_data))
     return c.json({ error: 'build_data must be valid base64url' }, 400);
 
-  // Rate limit by IP (10 per hour)
+  // Rate limit by IP (10 per hour) BEFORE decompressing attacker-supplied data —
+  // decompression is the expensive step, so throttle first to blunt a
+  // decompression-bomb DoS on this unauthenticated endpoint.
   const ip = c.req.header('CF-Connecting-IP') ?? 'unknown';
   const allowed = await checkTempBuildRateLimit(c.env.DB, ip);
   if (!allowed)
@@ -892,6 +989,14 @@ app.post('/temp-builds', async (c) => {
     );
 
   await recordTempBuildRateLimit(c.env.DB, ip);
+
+  // A temp link is a public, unauthenticated share surface. Refuse to host a
+  // Private build (and fail closed if the blob can't be decoded) so the UI guard
+  // can't be bypassed by a direct API call or an out-of-date client.
+  const tempVisibility = await decodeEmbeddedVisibility(body.build_data);
+  if (tempVisibility !== 'public' && tempVisibility !== 'link-only') {
+    return c.json({ error: 'Private builds cannot be shared as a temporary link.' }, 403);
+  }
 
   const id = Array.from(crypto.getRandomValues(new Uint8Array(10)))
     .map((b) => b.toString(36).padStart(2, '0'))
@@ -916,6 +1021,16 @@ app.get('/temp-builds/:id', async (c) => {
 
   const row = await getTempBuild(c.env.DB, id);
   if (!row) {
+    return c.json({ error: 'This build link has expired or does not exist.' }, 410);
+  }
+
+  // Enforce visibility at read time too — POST only began rejecting private
+  // payloads recently, so a temp row created earlier can still embed a private
+  // build. Decode and refuse to disclose it (fail closed on undecodable rows).
+  // Return 410 (same as missing) so a private link is indistinguishable from an
+  // expired one and existence isn't leaked.
+  const tempVisibility = await decodeEmbeddedVisibility(row.build_data);
+  if (tempVisibility !== 'public' && tempVisibility !== 'link-only') {
     return c.json({ error: 'This build link has expired or does not exist.' }, 410);
   }
 
