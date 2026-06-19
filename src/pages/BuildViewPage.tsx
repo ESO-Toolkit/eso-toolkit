@@ -2022,6 +2022,11 @@ export const BuildViewPage: React.FC = () => {
     const params = new URLSearchParams(location.search);
     const encoded = params.get('b') ?? '';
     const idParam = params.get('id') ?? '';
+    // In-app owner preview (My Builds → View of one's own saved build). Only set
+    // by trusted same-app navigation, never present on a forwarded/pasted URL,
+    // so it can safely relax the Private ?b= rejection for the owner.
+    const ownerPreview =
+      (location.state as { ownerPreview?: boolean } | null)?.ownerPreview === true;
 
     const onDecoded = (decoded: Build | null, buildData: string): void => {
       if (cancelled) return;
@@ -2051,12 +2056,13 @@ export const BuildViewPage: React.FC = () => {
         .then((decoded) => {
           if (cancelled) return;
           // A self-contained ?b= payload carries no ownership signal, so it can
-          // never be authorized. Refuse to render a build whose embedded
-          // visibility is Private — this closes forwarded/stale/address-bar
-          // /bv?b= links for now-private builds regardless of how they were
-          // produced (the per-button share guards are the first line; this is
-          // the backstop). Owner-authorized private views go through ?id=.
-          if (decoded && decoded.settings.visibility === 'private') {
+          // never be authorized from the URL alone. Refuse to render a build
+          // whose embedded visibility is Private — this closes forwarded/stale/
+          // address-bar /bv?b= links for now-private builds regardless of how
+          // they were produced (the per-button share guards are the first line;
+          // this is the backstop). The one exception is a trusted in-app owner
+          // preview (see ownerPreview above); owner views via ?id= are also fine.
+          if (decoded && decoded.settings.visibility === 'private' && !ownerPreview) {
             setNotFound(true);
             setLoading(false);
             return;
@@ -2095,7 +2101,7 @@ export const BuildViewPage: React.FC = () => {
     return () => {
       cancelled = true;
     };
-  }, [accessToken, location.search]);
+  }, [accessToken, location.search, location.state]);
 
   useEffect(() => loadBuild(), [loadBuild]);
 

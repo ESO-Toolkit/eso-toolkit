@@ -230,7 +230,12 @@ export const MyBuildsPage: React.FC = () => {
 
   const handleView = async (saved: SavedBuild): Promise<void> => {
     const encoded = await encodeBuildToURL(saved.build);
+    // These are the owner's own locally-saved builds, so previewing a Private
+    // one is legitimate. The viewer rejects Private ?b= payloads by default
+    // (forwarded/address-bar links carry no router state); pass an in-app
+    // ownerPreview flag so it allows this trusted, same-app navigation only.
     navigate(`/bv?b=${encoded}`, {
+      state: { ownerPreview: true },
       vtType: 'forward',
       morph: { ref: { current: cardRefs.current.get(saved.id) ?? null }, name: 'build-hero' },
     });

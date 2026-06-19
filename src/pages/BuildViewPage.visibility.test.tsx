@@ -37,12 +37,15 @@ jest.mock('../features/build-viewer/components/BuildViewShell', () => ({
   ),
 }));
 
+import { useSelector } from 'react-redux';
+
 import { buildHubApi } from '../features/build-hub/api/build-hub-api';
 import { decodeBuildFromURL } from '../utils/buildEncoding';
 import { BuildViewPage } from './BuildViewPage';
 
 const mockGet = buildHubApi.get as jest.MockedFunction<typeof buildHubApi.get>;
 const mockDecode = decodeBuildFromURL as jest.MockedFunction<typeof decodeBuildFromURL>;
+const mockUseSelector = useSelector as jest.MockedFunction<typeof useSelector>;
 
 const renderWithStaleState = (buildId: string, staleBuildData: string) =>
   render(
@@ -57,12 +60,43 @@ const renderWithStaleState = (buildId: string, staleBuildData: string) =>
     </MemoryRouter>,
   );
 
+// A decoded build complete enough for the page's render path (it reads guide,
+// setups, esoClass, etc.). Only the fields the render touches need to be real.
+const fullBuild = (visibility: string) =>
+  ({
+    id: 'b1',
+    name: 'Test',
+    shortDescription: '',
+    esoClass: 'sorcerer',
+    classSkillLines: [null, null, null],
+    classMasteryPassives: [],
+    role: 'magicka-dps',
+    gameMode: 'pve',
+    races: [],
+    setups: [],
+    guide: { content: '', youtubeUrl: '', bannerImageUrl: '' },
+    settings: { visibility, dlc: 'Base Game', setupOrder: [] },
+    addonImportString: '',
+    createdAt: '2024-01-01T00:00:00.000Z',
+    updatedAt: '2024-01-01T00:00:00.000Z',
+  }) as never;
+
+const renderEncoded = (encoded: string, state?: Record<string, unknown>) =>
+  render(
+    <MemoryRouter initialEntries={[{ pathname: '/bv', search: `?b=${encoded}`, state }]}>
+      <Routes>
+        <Route path="/bv" element={<BuildViewPage />} />
+      </Routes>
+    </MemoryRouter>,
+  );
+
 describe('BuildViewPage visibility enforcement', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    // clearAllMocks wipes call history; re-assert the default decode impl so a
-    // bare jest.fn() never returns undefined (which would break `.then`).
+    // clearAllMocks wipes implementations; re-assert defaults so bare jest.fn()s
+    // never return undefined (which would break `.then` / `savedBuilds.find`).
     mockDecode.mockResolvedValue(null);
+    mockUseSelector.mockReturnValue([]);
   });
 
   it('resolves ?id= builds only through the visibility-checked API, never router state', async () => {
@@ -113,5 +147,34 @@ describe('BuildViewPage visibility enforcement', () => {
 
     await waitFor(() => expect(screen.getByText(/No build found/i)).toBeInTheDocument());
     expect(screen.queryByTestId('build-shell')).not.toBeInTheDocument();
+  });
+
+  it('rejects a Private ?b= payload (forwarded/address-bar link) as not-found', async () => {
+    mockDecode.mockResolvedValue({ settings: { visibility: 'private' } } as never);
+
+    renderEncoded('encoded-private-build');
+
+    await waitFor(() => expect(screen.getByText(/No build found/i)).toBeInTheDocument());
+    expect(screen.queryByTestId('build-shell')).not.toBeInTheDocument();
+  });
+
+  it('renders a non-private ?b= payload normally', async () => {
+    mockDecode.mockResolvedValue(fullBuild('link-only'));
+
+    renderEncoded('encoded-link-only-build');
+
+    // A non-private self-contained link is accepted (no not-found short-circuit).
+    await waitFor(() => expect(screen.getByTestId('build-shell')).toBeInTheDocument());
+    expect(screen.queryByText(/No build found/i)).not.toBeInTheDocument();
+  });
+
+  it('allows a Private ?b= payload through the trusted in-app owner preview', async () => {
+    mockDecode.mockResolvedValue(fullBuild('private'));
+
+    renderEncoded('encoded-private-build', { ownerPreview: true });
+
+    // ownerPreview relaxes the Private rejection: the build renders, not 404'd.
+    await waitFor(() => expect(screen.getByTestId('build-shell')).toBeInTheDocument());
+    expect(screen.queryByText(/No build found/i)).not.toBeInTheDocument();
   });
 });
