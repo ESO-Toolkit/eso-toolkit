@@ -130,6 +130,34 @@ const BUILD_VISIBILITIES = ['public', 'private', 'link-only'] as const;
 const isValidVisibility = (v: unknown): v is (typeof BUILD_VISIBILITIES)[number] =>
   typeof v === 'string' && (BUILD_VISIBILITIES as readonly string[]).includes(v);
 
+/** `vs` index → visibility, mirroring VISIBILITIES in src/utils/buildEncoding.ts. */
+const VISIBILITY_BY_INDEX = ['public', 'private', 'link-only'] as const;
+
+/**
+ * Decode the visibility embedded in an encoded build_data blob (base64url +
+ * deflate-raw, mirroring the frontend encoder). Returns the visibility, or null
+ * if the blob can't be decoded — callers must fail closed (treat null as
+ * not-public) so an undecodable or hostile blob can't slip through as public.
+ */
+async function decodeEmbeddedVisibility(
+  buildData: string,
+): Promise<(typeof BUILD_VISIBILITIES)[number] | null> {
+  try {
+    const b64 = buildData.replace(/-/g, '+').replace(/_/g, '/');
+    const bytes = Uint8Array.from(atob(b64), (ch) => ch.charCodeAt(0));
+    // 100 KB compressed cap — matches the frontend decode bomb guard.
+    if (bytes.length > 100 * 1024) return null;
+    const ds = new DecompressionStream('deflate-raw');
+    const stream = new Response(new Blob([bytes]).stream().pipeThrough(ds));
+    const json = await stream.text();
+    const compact = JSON.parse(json) as { vs?: number };
+    const idx = typeof compact.vs === 'number' ? compact.vs : 0;
+    return VISIBILITY_BY_INDEX[idx] ?? null;
+  } catch {
+    return null;
+  }
+}
+
 // ─── Security headers ────────────────────────────────────────────────────────
 
 app.use('*', async (c, next) => {
@@ -656,7 +684,6 @@ app.post('/builds', async (c) => {
     game_mode = 'pve',
     build_data,
     tags = [],
-    visibility = 'public',
     is_anonymous = false,
   } = body;
 
@@ -671,8 +698,24 @@ app.post('/builds', async (c) => {
     return c.json({ error: 'build_data must be ≤ 50 000 characters' }, 400);
   if (!isValidBase64Url(build_data))
     return c.json({ error: 'build_data must be valid base64url' }, 400);
-  if (!isValidVisibility(visibility))
+  if (body.visibility !== undefined && !isValidVisibility(body.visibility))
     return c.json({ error: 'visibility must be one of public, private, link-only' }, 400);
+
+  // Reconcile visibility against the value embedded in build_data so an
+  // out-of-date client (which omits the field) can't downgrade a private blob to
+  // public, and a tampered request can't claim a visibility its blob contradicts.
+  const embeddedVisibility = await decodeEmbeddedVisibility(build_data);
+  let visibility: (typeof BUILD_VISIBILITIES)[number];
+  if (body.visibility === undefined) {
+    // Field omitted (old client): trust the blob; fail closed if undecodable.
+    if (embeddedVisibility === null)
+      return c.json({ error: 'Could not determine build visibility.' }, 400);
+    visibility = embeddedVisibility;
+  } else {
+    visibility = body.visibility;
+    if (embeddedVisibility !== null && embeddedVisibility !== visibility)
+      return c.json({ error: 'visibility does not match the encoded build.' }, 400);
+  }
 
   const createAllowed = await checkBuildCreateRateLimit(c.env.DB, user.id);
   if (!createAllowed)
@@ -734,7 +777,6 @@ app.put('/builds/:id', async (c) => {
     role,
     game_mode = 'pve',
     build_data,
-    visibility,
     tags = [],
     is_anonymous = false,
   } = body;
@@ -750,8 +792,25 @@ app.put('/builds/:id', async (c) => {
     return c.json({ error: 'build_data must be ≤ 50 000 characters' }, 400);
   if (!isValidBase64Url(build_data))
     return c.json({ error: 'build_data must be valid base64url' }, 400);
-  if (visibility !== undefined && !isValidVisibility(visibility))
+  if (body.visibility !== undefined && !isValidVisibility(body.visibility))
     return c.json({ error: 'visibility must be one of public, private, link-only' }, 400);
+
+  // build_data is always replaced on update, so the stored visibility column
+  // must track the new blob. Derive it when the client omits the field (fail
+  // closed if undecodable) and reject a body value that contradicts the blob —
+  // otherwise an old client could update to a private blob while the column
+  // stays public.
+  const embeddedVisibility = await decodeEmbeddedVisibility(build_data);
+  let visibility: (typeof BUILD_VISIBILITIES)[number];
+  if (body.visibility === undefined) {
+    if (embeddedVisibility === null)
+      return c.json({ error: 'Could not determine build visibility.' }, 400);
+    visibility = embeddedVisibility;
+  } else {
+    visibility = body.visibility;
+    if (embeddedVisibility !== null && embeddedVisibility !== visibility)
+      return c.json({ error: 'visibility does not match the encoded build.' }, 400);
+  }
 
   const updated = await updateBuild(c.env.DB, c.req.param('id'), user.id, {
     title: sanitize(title),
@@ -901,6 +960,14 @@ app.post('/temp-builds', async (c) => {
     return c.json({ error: 'build_data must be ≤ 50 000 characters' }, 400);
   if (!isValidBase64Url(body.build_data))
     return c.json({ error: 'build_data must be valid base64url' }, 400);
+
+  // A temp link is a public, unauthenticated share surface. Refuse to host a
+  // Private build (and fail closed if the blob can't be decoded) so the UI guard
+  // can't be bypassed by a direct API call or an out-of-date client.
+  const tempVisibility = await decodeEmbeddedVisibility(body.build_data);
+  if (tempVisibility !== 'public' && tempVisibility !== 'link-only') {
+    return c.json({ error: 'Private builds cannot be shared as a temporary link.' }, 403);
+  }
 
   // Rate limit by IP (10 per hour)
   const ip = c.req.header('CF-Connecting-IP') ?? 'unknown';
