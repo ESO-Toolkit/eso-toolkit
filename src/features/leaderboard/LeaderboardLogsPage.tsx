@@ -123,6 +123,8 @@ export const LeaderboardLogsPage: React.FC = () => {
   const [rankingsLoading, setRankingsLoading] = React.useState<boolean>(false);
   const [rankingsError, setRankingsError] = React.useState<string | null>(null);
   const partitionPreferenceRef = React.useRef<Map<string, number>>(new Map());
+  // Monotonic id so a slower, superseded fetch can't overwrite a newer one.
+  const fetchGenerationRef = React.useRef(0);
   const clientUnavailable = !client;
 
   React.useEffect(() => {
@@ -191,6 +193,7 @@ export const LeaderboardLogsPage: React.FC = () => {
         return;
       }
 
+      const generation = ++fetchGenerationRef.current;
       setRankingsLoading(true);
       setRankingsError(null);
 
@@ -287,10 +290,17 @@ export const LeaderboardLogsPage: React.FC = () => {
       const candidates = buildVariableCandidates();
       let lastError: unknown;
       let success = false;
+      // Track whether any candidate resolved without throwing, so we can tell
+      // "every candidate errored" apart from "the leaderboard is simply empty".
+      let anyResolved = false;
 
       for (const variables of candidates) {
         try {
           const parsed = await attemptFetch(variables);
+          anyResolved = true;
+
+          // A newer fetch superseded this one — drop the stale result.
+          if (generation !== fetchGenerationRef.current) return;
 
           if (parsed.rankings.length === 0 && !parsed.hasMorePages) {
             logger.warn('Leaderboard query returned no data; trying next fallback', { variables });
@@ -311,13 +321,22 @@ export const LeaderboardLogsPage: React.FC = () => {
         }
       }
 
+      if (generation !== fetchGenerationRef.current) return;
+
       if (!success) {
         const fallbackPage = page ?? 1;
-        const message =
-          lastError instanceof Error
-            ? lastError.message
-            : 'Leaderboard query returned no data for the available fallbacks';
-        setRankingsError(message);
+        // Only surface an error if every candidate actually threw. If at least
+        // one resolved (just empty), show the friendly empty-state instead of a
+        // scary red error for an encounter that simply has no ranked runs.
+        if (anyResolved) {
+          setRankingsError(null);
+        } else {
+          const message =
+            lastError instanceof Error
+              ? lastError.message
+              : 'Leaderboard query returned no data for the available fallbacks';
+          setRankingsError(message);
+        }
         setRankingsState(createEmptyRankings(fallbackPage));
       }
 
@@ -376,12 +395,6 @@ export const LeaderboardLogsPage: React.FC = () => {
       size: sizeForDifficulty,
     });
   }, [client, fetchRankings, resolveSizeForDifficulty, selectedEncounterId, selectedDifficultyId]);
-
-  React.useEffect(() => {
-    if (!client) {
-      logger.error('EsoLogsClient is unavailable for leaderboard data');
-    }
-  }, [client, logger]);
 
   const handleZoneChange = (event: SelectChangeEvent<number>): void => {
     const nextZoneId = Number(event.target.value);
