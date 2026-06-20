@@ -65,6 +65,23 @@ export function validateOAuthState(stateParam: string | null): boolean {
   return !!stored && stored === stateParam;
 }
 
+/**
+ * Generate a random OAuth CSRF state token. Prefers crypto.randomUUID when
+ * available but falls back to getRandomValues — the same primitive the PKCE
+ * code verifier already uses — so the login flow never gains a stricter crypto
+ * requirement than it already has (some browsers/WebViews expose getRandomValues
+ * + subtle.digest but not randomUUID).
+ */
+export function generateOAuthState(): string {
+  const cryptoObj = globalThis.crypto;
+  if (typeof cryptoObj?.randomUUID === 'function') {
+    return cryptoObj.randomUUID();
+  }
+  const array = new Uint32Array(8);
+  cryptoObj.getRandomValues(array);
+  return Array.from(array, (dec) => dec.toString(16).padStart(8, '0')).join('');
+}
+
 export function setIntendedDestination(path: string): void {
   localStorage.setItem(INTENDED_DESTINATION_KEY, path);
   localStorage.setItem(INTENDED_DESTINATION_PROTECTED_KEY, '1');
@@ -140,7 +157,7 @@ export async function startPKCEAuth(): Promise<void> {
   // CSRF protection: generate a random state, persist it, and echo it on the
   // authorize URL. OAuthRedirect validates the returned state before exchanging
   // the authorization code.
-  const state = globalThis.crypto.randomUUID();
+  const state = generateOAuthState();
   setOAuthState(state);
 
   // For dev-preview deployments, store the current base path so the shared

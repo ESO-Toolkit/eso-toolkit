@@ -16,6 +16,7 @@ import {
   _resetRefreshState,
   setOAuthState,
   validateOAuthState,
+  generateOAuthState,
   OAUTH_STATE_KEY,
   buildAuthUrl,
 } from './auth';
@@ -204,6 +205,41 @@ describe('OAuth Basic Functions', () => {
       mockSessionStorage.getItem.mockReturnValue('abc-123');
       validateOAuthState('abc-123');
       expect(mockSessionStorage.removeItem).toHaveBeenCalledWith(OAUTH_STATE_KEY);
+    });
+
+    describe('generateOAuthState', () => {
+      const originalCrypto = window.crypto;
+      afterEach(() => {
+        Object.defineProperty(window, 'crypto', { value: originalCrypto, writable: true });
+      });
+
+      it('uses crypto.randomUUID when available', () => {
+        Object.defineProperty(window, 'crypto', {
+          value: {
+            randomUUID: () => 'uuid-value',
+            getRandomValues: originalCrypto.getRandomValues,
+          },
+          writable: true,
+        });
+        expect(generateOAuthState()).toBe('uuid-value');
+      });
+
+      it('falls back to getRandomValues when randomUUID is unavailable', () => {
+        Object.defineProperty(window, 'crypto', {
+          value: {
+            getRandomValues: (arr: Uint32Array) => {
+              for (let i = 0; i < arr.length; i++) arr[i] = i + 1;
+              return arr;
+            },
+          },
+          writable: true,
+        });
+        const state = generateOAuthState();
+        expect(typeof state).toBe('string');
+        expect(state.length).toBeGreaterThan(0);
+        // 8 x Uint32 hex-padded => 64 hex chars, no randomUUID needed
+        expect(state).toBe('0000000100000002000000030000000400000005000000060000000700000008');
+      });
     });
   });
 
