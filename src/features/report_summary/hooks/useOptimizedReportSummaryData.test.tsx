@@ -91,10 +91,12 @@ jest.mock('../../../store/master_data/masterDataSelectors', () => ({
   selectAbilitiesByIdForContext: () => mockAbilities,
 }));
 
-const makeWrapper = () => {
+const makeWrapper = (
+  reportData: Record<string, unknown> = { title: 'Test Report', zone: { name: 'Test Zone' } },
+) => {
   const store = configureStore({
     reducer: {
-      report: () => ({ data: { title: 'Test Report', zone: { name: 'Test Zone' } } }),
+      report: () => ({ data: reportData }),
     },
     middleware: (getDefault) => getDefault({ serializableCheck: false, immutableCheck: false }),
   });
@@ -143,5 +145,19 @@ describe('useOptimizedReportSummaryData', () => {
     expect(result.current.reportSummaryData!.reportInfo.duration).toBe(10_000);
     // No hardcoded owner placeholder.
     expect(result.current.reportSummaryData!.reportInfo.ownerName).toBeUndefined();
+  });
+
+  it('surfaces the report owner name when the report has an owner', async () => {
+    const { result } = renderHook(() => useOptimizedReportSummaryData('test123'), {
+      wrapper: makeWrapper({
+        title: 'Test Report',
+        zone: { name: 'Test Zone' },
+        owner: { name: 'GuildLeader' },
+      }),
+    });
+
+    await waitFor(() => expect(result.current.reportSummaryData).not.toBeNull());
+
+    expect(result.current.reportSummaryData!.reportInfo.ownerName).toBe('GuildLeader');
   });
 });

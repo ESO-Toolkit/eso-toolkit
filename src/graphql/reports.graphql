@@ -10,6 +10,9 @@ fragment Report on Report {
   zone {
     name
   }
+  owner {
+    name
+  }
   fights {
     ...Fight
   }

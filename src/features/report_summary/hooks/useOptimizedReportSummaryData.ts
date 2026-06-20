@@ -351,6 +351,7 @@ export function useOptimizedReportSummaryData(
           // DPS denominator above).
           duration: Math.max(0, reportEnd - reportStart),
           zoneName: reportData?.zone?.name || 'Unknown Zone',
+          ownerName: reportData?.owner?.name || undefined,
         };
 
         const summaryData: ReportSummaryData = {
