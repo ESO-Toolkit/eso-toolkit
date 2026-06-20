@@ -384,6 +384,22 @@ describe('cspsExport', () => {
       expect(charData.profiles![1].werte!.pass!.part1).toContain('238232:1');
     });
 
+    it('migrates leaked Class Mastery ids from setup.passives when there are no explicit picks (legacy build)', () => {
+      const build = makeBuild({
+        esoClass: 'dragonknight',
+        classSkillLines: [null, null, null],
+        classMasteryPassives: [], // legacy build: top-level field never populated
+        // CM ids leaked into setup.passives by the pre-split import; 400 is real
+        setups: [makeSetup({ passives: [400, 238232, 240268] })],
+      });
+      const charData =
+        convertBuildToCSPS(build).Default!['@ESOToolkit'].$AccountWide.charData!['1'];
+      expect(charData.werte!.pass!.part1).toContain('400:1');
+      // leaked CM picks are recovered and exported rather than silently dropped
+      expect(charData.werte!.pass!.part1).toContain('238232:1');
+      expect(charData.werte!.pass!.part1).toContain('240268:1');
+    });
+
     it('does not export stale Class Mastery ids left in setup.passives', () => {
       const build = makeBuild({
         esoClass: 'dragonknight',

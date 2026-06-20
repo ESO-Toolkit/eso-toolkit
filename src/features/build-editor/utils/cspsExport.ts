@@ -285,9 +285,20 @@ export function convertBuildToCSPS(build: Build): CSPSSavedVariables {
   // Class Mastery is a character-wide selection (not per-setup) and is invalid
   // while subclassed, so resolve the eligible picks once and write the same set
   // into every setup/profile's werte.pass.
-  const classMasteryPassives = isClassMasteryEligible(build.esoClass, build.classSkillLines)
-    ? sanitizeClassMasteryPicks(build.classMasteryPassives, build.esoClass)
-    : [];
+  let classMasteryPassives: number[] = [];
+  if (isClassMasteryEligible(build.esoClass, build.classSkillLines)) {
+    classMasteryPassives = sanitizeClassMasteryPicks(build.classMasteryPassives, build.esoClass);
+    // Legacy / URL-decoded builds may carry Class Mastery picks only inside
+    // setup.passives (the pre-split leak). When there are no explicit picks,
+    // recover them so export/round-trip doesn't silently drop them before
+    // buildWerte strips leaked ids below. Explicit picks win over stale extras.
+    if (classMasteryPassives.length === 0) {
+      classMasteryPassives = sanitizeClassMasteryPicks(
+        build.setups.flatMap((setup) => setup.passives),
+        build.esoClass,
+      );
+    }
+  }
 
   // First setup → main character data
   const mainSetup = build.setups[0];
