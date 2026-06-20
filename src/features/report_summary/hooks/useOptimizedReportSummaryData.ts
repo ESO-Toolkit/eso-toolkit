@@ -318,16 +318,20 @@ export function useOptimizedReportSummaryData(
         // ---- Report metadata ----
         const lastFight = cleanFights[cleanFights.length - 1];
         const reportData = state.report.data;
-        const sessionStart = firstFight?.startTime ?? Date.now();
+        // Prefer the report's absolute start/end (epoch ms). Fight timestamps are
+        // report-relative, so using them here renders the date as 1970.
+        const sessionStart = firstFight?.startTime ?? 0;
         const sessionEnd = lastFight?.endTime ?? lastFight?.startTime ?? sessionStart;
+        const reportStart = reportData?.startTime ?? sessionStart;
+        const reportEnd = reportData?.endTime ?? sessionEnd;
         const reportInfo: ReportInfo = {
           reportId: reportCode,
           title: reportData?.title || 'Report',
-          startTime: sessionStart,
-          endTime: sessionEnd,
+          startTime: reportStart,
+          endTime: reportEnd,
           // Wall-clock span of the session (not summed combat time, which is the
           // DPS denominator above).
-          duration: Math.max(0, sessionEnd - sessionStart),
+          duration: Math.max(0, reportEnd - reportStart),
           zoneName: reportData?.zone?.name || 'Unknown Zone',
         };
 

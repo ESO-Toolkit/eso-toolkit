@@ -183,7 +183,9 @@ const EnhancedDeathAnalysisSectionComponent: React.FC<EnhancedDeathAnalysisSecti
         {/* Header */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
           <SkullIcon color={hasDeaths ? 'error' : 'success'} />
-          <Typography variant="h5">Death Analysis</Typography>
+          <Typography variant="h5" component="h2">
+            Death Analysis
+          </Typography>
         </Box>
 
         {!hasDeaths ? (
