@@ -94,7 +94,7 @@ interface DamageBreakdownSectionProps {
   error?: string;
 }
 
-const DamageBreakdownSection: React.FC<DamageBreakdownSectionProps> = ({
+const DamageBreakdownSectionComponent: React.FC<DamageBreakdownSectionProps> = ({
   damageBreakdown,
   isLoading,
   error,
@@ -441,10 +441,8 @@ const DamageBreakdownSkeleton: React.FC = () => {
   );
 };
 
-// Export memoized component
-// eslint-disable-next-line import/no-default-export
-export default React.memo(DamageBreakdownSection);
-export { DamageBreakdownSection };
+export const DamageBreakdownSection = React.memo(DamageBreakdownSectionComponent);
+DamageBreakdownSection.displayName = 'DamageBreakdownSection';
 
 // Helper functions
 function formatDamage(damage: number): string {

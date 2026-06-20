@@ -115,7 +115,7 @@ function groupFightsByType(fightDeaths: FightDeathAnalysis[]): FightGroup[] {
  * - Death patterns and actionable insights
  * - Per-fight breakdown (encounters shown by default, trash fights collapsible)
  */
-export const EnhancedDeathAnalysisSection: React.FC<EnhancedDeathAnalysisSectionProps> = ({
+const EnhancedDeathAnalysisSectionComponent: React.FC<EnhancedDeathAnalysisSectionProps> = ({
   deathAnalysis,
   isLoading,
   error,
@@ -705,5 +705,5 @@ function getSeverityLevel(severity: 'High' | 'Medium' | 'Low'): 'error' | 'warni
   }
 }
 
-// eslint-disable-next-line import/no-default-export
-export default React.memo(EnhancedDeathAnalysisSection);
+export const EnhancedDeathAnalysisSection = React.memo(EnhancedDeathAnalysisSectionComponent);
+EnhancedDeathAnalysisSection.displayName = 'EnhancedDeathAnalysisSection';

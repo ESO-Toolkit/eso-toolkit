@@ -9,8 +9,14 @@ import { useReportData } from '../../hooks';
 import { ReportSummaryData } from '../../types/reportSummaryTypes';
 
 // Lazy load heavy sections for better performance
-const DamageBreakdownSection = React.lazy(() => import('./DamageBreakdownSection'));
-const EnhancedDeathAnalysisSection = React.lazy(() => import('./EnhancedDeathAnalysisSection'));
+const DamageBreakdownSection = React.lazy(() =>
+  import('./DamageBreakdownSection').then((m) => ({ default: m.DamageBreakdownSection })),
+);
+const EnhancedDeathAnalysisSection = React.lazy(() =>
+  import('./EnhancedDeathAnalysisSection').then((m) => ({
+    default: m.EnhancedDeathAnalysisSection,
+  })),
+);
 import { useOptimizedReportSummaryData } from './hooks/useOptimizedReportSummaryData';
 
 export const ReportSummaryPage: React.FC = () => {
