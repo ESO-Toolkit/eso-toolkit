@@ -68,6 +68,21 @@ function fromHex(value: string): number {
   return parseInt(value, 16);
 }
 
+/**
+ * Signed hex for values that can legitimately be negative — the per-export coordinate base and a
+ * shape's world Y. Some ESO maps have negative world bounds (e.g. Halls of Fabrication), so a
+ * clamped-to-0 base would shift the whole shape on decode. Vertex offsets stay unsigned (they are
+ * always >= the min base) as do radius/time.
+ */
+function toSignedHex(value: number): string {
+  const v = Math.round(value);
+  return v < 0 ? `-${Math.abs(v).toString(16).toUpperCase()}` : v.toString(16).toUpperCase();
+}
+
+function fromSignedHex(value: string): number {
+  return value.startsWith('-') ? -parseInt(value.slice(1), 16) : parseInt(value, 16);
+}
+
 function rgbaToHex([r, g, b, a]: [number, number, number, number]): string {
   const byte = (v: number): string =>
     Math.max(0, Math.min(255, Math.round(v * 255)))
@@ -93,11 +108,14 @@ function hexToRgba(hex: string): [number, number, number, number] | null {
 // String.fromCharCode keeps the source pure ASCII (no literal PUA bytes), and split/join sidesteps
 // having to regex-escape the special characters themselves.
 
-const LABEL_DELIMITERS = [':', ',', ']', ';', '>', '|', ')', '('] as const;
+// The real newline is included as a delimiter so it gets its own PUA codepoint — that way a
+// backslash is never a special character and a literal "\n" typed in a label can't collide with
+// an escape token.
+const LABEL_DELIMITERS = [':', ',', ']', ';', '>', '|', ')', '(', '\n'] as const;
 const PUA_BASE = 0xe000;
 
 function escapeLabel(text: string): string {
-  let out = text.replace(/\n/g, '\\n');
+  let out = text;
   LABEL_DELIMITERS.forEach((literal, index) => {
     out = out.split(literal).join(String.fromCharCode(PUA_BASE + index));
   });
@@ -109,7 +127,7 @@ function unescapeLabel(text: string): string {
   LABEL_DELIMITERS.forEach((literal, index) => {
     out = out.split(String.fromCharCode(PUA_BASE + index)).join(literal);
   });
-  return out.replace(/\\n/g, '\n');
+  return out;
 }
 
 /** True when a string looks like a shapes share code (vs M0R `<...>` / Elms `/...`). */
@@ -150,7 +168,7 @@ export function encodeShapes(
     const flags = `${shape.style.dashed ? 'd' : ''}${shape.style.fill ? 'f' : ''}`;
     const width = toHex(shape.style.width);
     const colour = rgbaToHex(shape.style.colour);
-    const y = toHex(shape.worldY);
+    const y = toSignedHex(shape.worldY);
     const radius = shape.kind === 'circle' && shape.radius ? toHex(shape.radius * 100) : '';
     const time = shape.time ? `${toHex(shape.time[0])}:${toHex(shape.time[1])}` : '';
     const verts = shape.vertices
@@ -161,7 +179,7 @@ export function encodeShapes(
     return [KIND_TO_TAG[shape.kind], flags, width, colour, y, radius, time, verts, label].join('|');
   });
 
-  return `(${VERSION}]${zoneId}]${toHex(baseX)}:${toHex(baseZ)}]${blocks.join(';')})`;
+  return `(${VERSION}]${zoneId}]${toSignedHex(baseX)}:${toSignedHex(baseZ)}]${blocks.join(';')})`;
 }
 
 /** Parse one `|`-delimited block into ShapeData, or null when malformed. */
@@ -179,7 +197,7 @@ function decodeBlock(block: string, baseX: number, baseZ: number): ShapeData | n
   if (!colour) return null;
 
   const width = fromHex(widthStr);
-  const worldY = fromHex(yStr);
+  const worldY = fromSignedHex(yStr);
   if (!Number.isFinite(worldY)) return null;
 
   const vertices: Array<[number, number]> = [];
@@ -250,8 +268,8 @@ export function decodeShapes(code: string): ShapeData[] {
   // sections[0] = version (reserved for future grammar changes), [1] = zone, [2] = min, rest = blocks
   const minParts = sections[2].split(':');
   if (minParts.length !== 2) return [];
-  const baseX = fromHex(minParts[0]);
-  const baseZ = fromHex(minParts[1]);
+  const baseX = fromSignedHex(minParts[0]);
+  const baseZ = fromSignedHex(minParts[1]);
   if (!Number.isFinite(baseX) || !Number.isFinite(baseZ)) return [];
 
   const blocksStr = sections.slice(3).join(']');

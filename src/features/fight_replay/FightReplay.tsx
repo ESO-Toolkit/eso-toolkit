@@ -231,7 +231,7 @@ export const FightReplay: React.FC = () => {
     if (restoredCount > 0) {
       setCopySnackbar({
         type: 'info',
-        message: `Restored ${restoredCount} saved marker${restoredCount === 1 ? '' : 's'} for this zone.`,
+        message: `Restored ${restoredCount} saved item${restoredCount === 1 ? '' : 's'} (markers & shapes) for this zone.`,
       });
     }
   }, [restoredCount]);

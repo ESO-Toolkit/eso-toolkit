@@ -1026,7 +1026,9 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
       <OrbitControls
         enablePan={touchPolicy.enablePan}
         enableZoom={false}
-        enableRotate={touchPolicy.enableRotate}
+        // Suppress camera rotation while a draw tool is armed so a placement click never spins the
+        // view. Declarative (not an imperative one-shot) so drei re-applies it on every re-render.
+        enableRotate={touchPolicy.enableRotate && !drawTool}
         minDistance={cameraSettings.minDistance}
         maxDistance={cameraSettings.maxDistance}
         maxPolarAngle={Math.PI / 2 - 0.1} // Prevent camera from going below ground (slightly above horizon)

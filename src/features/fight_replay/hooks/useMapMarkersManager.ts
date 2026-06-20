@@ -400,7 +400,9 @@ export const useMapMarkersManager = ({
           const importedZone = decodeShapesZone(trimmed);
           setRestoredCount(0);
           commit((prev) => {
-            const targetZone = prev?.zoneId ?? importedZone ?? zoneId ?? 0;
+            // Anchor to the CURRENT fight zone so the set persists/restores under the right key
+            // (shape vertices are absolute world coords, so a foreign-zone code just renders nothing).
+            const targetZone = zoneId ?? prev?.zoneId ?? importedZone ?? 0;
             const base: MapMarkersState = prev ?? {
               format: 'elms',
               zoneId: targetZone,
@@ -411,10 +413,12 @@ export const useMapMarkersManager = ({
           return;
         }
 
-        // Markers string (M0R / Elms): replace markers, KEEP existing shapes.
+        // Markers string (M0R / Elms): replace markers, KEEP existing shapes. Anchor the slot to
+        // the current fight zone so carried-over shapes persist/restore under the right key even
+        // when the pasted string was authored for a different zone.
         const parsed = parseMarkersInput(trimmed);
         setRestoredCount(0);
-        commit((prev) => ({ ...parsed, shapes: prev?.shapes }));
+        commit((prev) => ({ ...parsed, zoneId: zoneId ?? parsed.zoneId, shapes: prev?.shapes }));
       } catch (error) {
         onErrorRef.current?.(
           error instanceof Error ? error.message : 'Unable to decode markers string.',
@@ -425,7 +429,15 @@ export const useMapMarkersManager = ({
   );
 
   const clearMarkers = useCallback(() => {
-    commit((prev) => (prev === null ? prev : null));
+    // Clear ONLY markers — drawn shapes are managed independently (clearShapes handles those).
+    // Drop the whole slot to null only when no shapes remain, so persistZone can prune it.
+    commit((prev) => {
+      if (!prev) return prev;
+      if (prev.shapes && prev.shapes.length > 0) {
+        return prev.markers.length === 0 ? prev : { ...prev, markers: [] };
+      }
+      return null;
+    });
   }, [commit]);
 
   const addMarkerAt = useCallback(

@@ -135,6 +135,31 @@ describe('shapeShareCodec', () => {
       // Exactly one block decoded (the label did not introduce a spurious `;` split).
       expect(decodeShapes(code)).toHaveLength(1);
     });
+
+    it('round-trips a label containing a literal backslash followed by n (no newline collision)', () => {
+      const label = 'C:\\node \\next path'; // literal backslashes, NOT newlines
+      const code = encodeShapes([shape({ label })], ZONE);
+      const [got] = decodeShapes(code);
+      expect(got.label).toBe(label);
+    });
+
+    it('round-trips negative world coordinates and a negative worldY (maps with negative bounds)', () => {
+      const s = shape({
+        kind: 'polyline',
+        vertices: [
+          [-3414, -13285],
+          [5000, 10000],
+        ],
+        worldY: -250,
+      });
+      const code = encodeShapes([s], ZONE);
+      const [got] = decodeShapes(code);
+      expect(got.vertices).toEqual([
+        [-3414, -13285],
+        [5000, 10000],
+      ]);
+      expect(got.worldY).toBe(-250);
+    });
   });
 
   describe('graceful degradation (never throws)', () => {

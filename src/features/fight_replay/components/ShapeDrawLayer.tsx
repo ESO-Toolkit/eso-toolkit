@@ -12,7 +12,6 @@
  * OrbitControls rotation is suppressed while a tool is active so a placement click never spins the
  * camera. Every state change pokes markDirty so the preview repaints on the on-demand render loop.
  */
-import { useThree } from '@react-three/fiber';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 
@@ -29,10 +28,6 @@ const TWO_CLICK: ReadonlySet<ShapeKind> = new Set<ShapeKind>(['circle', 'rect', 
 const PREVIEW_Y = 0.1;
 /** Two arena points closer than this are treated as the same click (dedupe double-click tail). */
 const SAME_POINT_EPS = 0.05;
-
-interface ToggleableRotation {
-  enableRotate: boolean;
-}
 
 export interface ShapeDrawLayerProps {
   tool: ShapeKind;
@@ -71,7 +66,6 @@ export const ShapeDrawLayer: React.FC<ShapeDrawLayerProps> = ({
   onCancel,
   markDirty,
 }) => {
-  const { controls } = useThree();
   const [points, setPoints] = useState<ArenaPoint[]>([]);
   const [cursor, setCursor] = useState<ArenaPoint | null>(null);
 
@@ -86,17 +80,6 @@ export const ShapeDrawLayer: React.FC<ShapeDrawLayerProps> = ({
   onCancelRef.current = onCancel;
   const markDirtyRef = useRef(markDirty);
   markDirtyRef.current = markDirty;
-
-  // Suppress camera rotation while a tool is armed; restore on unmount / tool change.
-  useEffect(() => {
-    const orbit = controls as unknown as ToggleableRotation | null;
-    if (!orbit) return undefined;
-    const prev = orbit.enableRotate;
-    orbit.enableRotate = false;
-    return () => {
-      orbit.enableRotate = prev;
-    };
-  }, [controls]);
 
   // Reset any in-progress geometry whenever the tool changes.
   useEffect(() => {
@@ -149,6 +132,11 @@ export const ShapeDrawLayer: React.FC<ShapeDrawLayerProps> = ({
       if (pointsRef.current.length === 0) {
         setPoints([point]);
         markDirtyRef.current?.();
+        return;
+      }
+      // Ignore a zero-size second click (e.g. a double-click in place) so a degenerate
+      // circle/rect/ruler is never committed.
+      if (samePoint(pointsRef.current[0], point)) {
         return;
       }
       // Second click completes a two-click tool.

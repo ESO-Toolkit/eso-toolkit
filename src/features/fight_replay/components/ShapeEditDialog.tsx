@@ -23,15 +23,15 @@ import { ShapeEditPatch } from '../utils/mapMarkerConverters';
 
 type RGBA = [number, number, number, number];
 
-const SWATCHES: RGBA[] = [
-  [1, 1, 1, 1],
-  [0.9, 0.16, 0.22, 1],
-  [1, 0.5, 0, 1],
-  [1, 0.8, 0, 1],
-  [0.3, 0.85, 0.3, 1],
-  [0, 0.9, 0.85, 1],
-  [0.2, 0.5, 1, 1],
-  [1, 0.2, 0.85, 1],
+const SWATCHES: Array<{ rgba: RGBA; name: string }> = [
+  { rgba: [1, 1, 1, 1], name: 'White' },
+  { rgba: [0.9, 0.16, 0.22, 1], name: 'Red' },
+  { rgba: [1, 0.5, 0, 1], name: 'Orange' },
+  { rgba: [1, 0.8, 0, 1], name: 'Gold' },
+  { rgba: [0.3, 0.85, 0.3, 1], name: 'Green' },
+  { rgba: [0, 0.9, 0.85, 1], name: 'Cyan' },
+  { rgba: [0.2, 0.5, 1, 1], name: 'Blue' },
+  { rgba: [1, 0.2, 0.85, 1], name: 'Magenta' },
 ];
 
 function toCss([r, g, b, a]: RGBA): string {
@@ -130,19 +130,22 @@ export const ShapeEditDialog: React.FC<ShapeEditDialogProps> = ({
             Colour
           </Typography>
           <Box sx={{ display: 'flex', gap: 0.75, mt: 0.5 }}>
-            {SWATCHES.map((swatch, i) => {
-              const selected = sameRGB(colour, swatch);
+            {SWATCHES.map(({ rgba, name }) => {
+              const selected = sameRGB(colour, rgba);
               return (
                 <Box
-                  key={i}
-                  role="button"
-                  aria-label={`Colour ${i + 1}`}
-                  onClick={() => setColour([...swatch] as RGBA)}
+                  key={name}
+                  component="button"
+                  type="button"
+                  aria-label={`Colour ${name}`}
+                  aria-pressed={selected}
+                  onClick={() => setColour([...rgba] as RGBA)}
                   sx={{
                     width: 24,
                     height: 24,
+                    p: 0,
                     borderRadius: '50%',
-                    background: toCss(swatch),
+                    background: toCss(rgba),
                     cursor: 'pointer',
                     border: selected ? '2px solid' : '1px solid rgba(0,0,0,0.4)',
                     borderColor: selected ? 'primary.main' : 'rgba(0,0,0,0.4)',

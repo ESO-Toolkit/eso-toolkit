@@ -27,7 +27,7 @@ import { FightFragment } from '../../../graphql/gql/graphql';
 import { useMarkerStats } from '../../../hooks/useMarkerStats';
 import { isElmsMarkersFormat } from '../../../utils/elmsMarkersDecoder';
 import { MapMarkersState } from '../types/mapMarkers';
-import { decodeShapes, isShapeShareFormat } from '../utils/shapeShareCodec';
+import { decodeShapes, decodeShapesZone, isShapeShareFormat } from '../utils/shapeShareCodec';
 
 import { MarkerSpritePreview } from './MarkerSpritePreview';
 
@@ -83,6 +83,17 @@ export const MapMarkersModal: React.FC<MapMarkersModalProps> = ({
     () => (isShapes ? decodeShapes(trimmedInput).length : 0),
     [isShapes, trimmedInput],
   );
+  // Shapes carry absolute world coords, so a code authored for a different zone renders nothing on
+  // this map — gate the load and warn (mirrors the marker zone-mismatch UX).
+  const importedShapeZone = useMemo(
+    () => (isShapes ? decodeShapesZone(trimmedInput) : null),
+    [isShapes, trimmedInput],
+  );
+  const shapeZoneMismatch =
+    isShapes &&
+    importedShapeZone != null &&
+    fight.gameZone?.id != null &&
+    importedShapeZone !== fight.gameZone.id;
 
   // Live validation of the raw input string — drives the Load gate and live feedback.
   const inputStats = useMarkerStats(isShapes ? '' : trimmedInput, fight);
@@ -92,7 +103,9 @@ export const MapMarkersModal: React.FC<MapMarkersModalProps> = ({
   const inputFailed = hasInput && !isShapes && !inputStats.success;
   // Load is only safe to fire when the live preview validates AND has matching content,
   // because the parent closes the modal on load.
-  const canLoad = isShapes ? shapeCount > 0 : inputStats.success && inputStats.filtered > 0;
+  const canLoad = isShapes
+    ? shapeCount > 0 && !shapeZoneMismatch
+    : inputStats.success && inputStats.filtered > 0;
 
   const detectedFormat = useMemo(
     () =>
@@ -318,17 +331,21 @@ export const MapMarkersModal: React.FC<MapMarkersModalProps> = ({
 
           {/* Shapes code detected (own grammar — not validated by the marker stats). */}
           {isShapes && (
-            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
               {shapeCount > 0 ? (
                 <Chip
                   label={`${shapeCount} shape${shapeCount === 1 ? '' : 's'}`}
-                  color="success"
+                  color={shapeZoneMismatch ? 'warning' : 'success'}
                   size="small"
                   variant="outlined"
+                  sx={{ alignSelf: 'flex-start' }}
                 />
               ) : (
-                <Alert severity="warning" sx={{ width: '100%' }}>
-                  No shapes found in that code.
+                <Alert severity="warning">No shapes found in that code.</Alert>
+              )}
+              {shapeZoneMismatch && (
+                <Alert severity="warning">
+                  These shapes were drawn for a different zone and won&apos;t appear on this map.
                 </Alert>
               )}
             </Box>

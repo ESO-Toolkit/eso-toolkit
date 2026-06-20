@@ -122,6 +122,44 @@ describe('useMapMarkersManager — shapes', () => {
     expect(result.current.markersState?.shapes).toHaveLength(0);
   });
 
+  it('clearMarkers preserves drawn shapes (markers cleared, shapes + storage kept)', () => {
+    window.localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        '636': {
+          format: 'elms',
+          zoneId: 636,
+          markers: [savedMarker()],
+          shapes: [{ ...shapeData(), id: 's1', source: 'manual' }],
+          savedAt: 1,
+        },
+      }),
+    );
+    const { result } = renderHook(() => useMapMarkersManager({ fight: HEL_RA_FIGHT }));
+    expect(result.current.markersState?.markers).toHaveLength(1);
+    expect(result.current.markersState?.shapes).toHaveLength(1);
+
+    act(() => result.current.clearMarkers());
+
+    expect(result.current.markersState?.markers).toHaveLength(0);
+    expect(result.current.markersState?.shapes).toHaveLength(1);
+    // The shapes-only slot is still persisted (not deleted with the markers).
+    expect(readStorage()['636']?.shapes).toHaveLength(1);
+  });
+
+  it('clearMarkers with no shapes still drops the whole slot', () => {
+    window.localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        '636': { format: 'elms', zoneId: 636, markers: [savedMarker()], savedAt: 1 },
+      }),
+    );
+    const { result } = renderHook(() => useMapMarkersManager({ fight: HEL_RA_FIGHT }));
+    act(() => result.current.clearMarkers());
+    expect(result.current.markersState).toBeNull();
+    expect(readStorage()['636']).toBeUndefined();
+  });
+
   it('edits a shape style/label/time as one undoable step', () => {
     const { result } = renderHook(() => useMapMarkersManager({ fight: HEL_RA_FIGHT }));
     act(() => result.current.addShape(shapeData()));
