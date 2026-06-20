@@ -153,8 +153,13 @@ export interface MechanicDeathAnalysis {
   playersAffected: string[];
   /** Fights where this mechanic caused deaths */
   fightsWithDeaths: number[];
-  /** Average damage of killing blow */
+  /** Average overkill of the killing blow (how far it exceeded remaining health). */
   averageKillingBlowDamage: number;
+  /**
+   * Average true killing-blow hit size — the actual lethal damage, summed across
+   * simultaneous hits, joined from the damage event stream (not overkill).
+   */
+  averageKillingBlowHitSize: number;
   /** Mechanic category (avoidable, unavoidable, etc.) */
   category: MechanicCategory;
 }

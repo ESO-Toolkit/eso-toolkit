@@ -206,6 +206,7 @@ export function useOptimizedReportSummaryData(
         // ---- Death analysis (over the deaths we actually loaded) ----
         const fightDeathData: DeathAnalysisInput[] = cleanFights.map((fight) => ({
           deathEvents: deathByFight.get(fight.id) ?? [],
+          damageEvents: damageByFight.get(fight.id) ?? [],
           fightId: fight.id,
           fightName: fight.name,
           fightStartTime: fight.startTime,

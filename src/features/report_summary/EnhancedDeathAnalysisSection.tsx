@@ -383,8 +383,8 @@ const EnhancedDeathAnalysisSectionComponent: React.FC<EnhancedDeathAnalysisSecti
                         Category
                       </TableCell>
                       <TableCell align="right" sx={{ fontWeight: 'bold' }}>
-                        <Tooltip title="Average overkill — how far the lethal hit exceeded the player's remaining health, not the hit's full damage">
-                          <span>Avg Overkill</span>
+                        <Tooltip title="Average true killing-blow hit size — the actual lethal damage, summed across simultaneous hits, joined from the damage stream. Overkill (how far the blow exceeded remaining health) is shown beneath.">
+                          <span>Avg Hit Size</span>
                         </Tooltip>
                       </TableCell>
                       <TableCell align="center" sx={{ fontWeight: 'bold' }}>
@@ -424,8 +424,16 @@ const EnhancedDeathAnalysisSectionComponent: React.FC<EnhancedDeathAnalysisSecti
                           />
                         </TableCell>
                         <TableCell align="right">
-                          <Typography variant="body2" color="text.secondary">
-                            {Math.round(mechanic.averageKillingBlowDamage).toLocaleString()}
+                          <Typography variant="body2">
+                            {Math.round(mechanic.averageKillingBlowHitSize).toLocaleString()}
+                          </Typography>
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
+                            sx={{ display: 'block' }}
+                          >
+                            {Math.round(mechanic.averageKillingBlowDamage).toLocaleString()}{' '}
+                            overkill
                           </Typography>
                         </TableCell>
                         <TableCell align="center">

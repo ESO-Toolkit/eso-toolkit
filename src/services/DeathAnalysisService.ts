@@ -4,7 +4,7 @@ import {
 } from '../features/report_details/insights/damageTypeCategorization';
 import { ReportActorFragment, ReportAbilityFragment } from '../graphql/gql/graphql';
 import { DamageTypeFlags } from '../types/abilities';
-import { DeathEvent } from '../types/combatlogEvents';
+import { DamageEvent, DeathEvent } from '../types/combatlogEvents';
 import {
   ReportDeathAnalysis,
   PlayerDeathAnalysis,
@@ -23,6 +23,8 @@ const logger = new Logger({ contextPrefix: 'DeathAnalysis' });
 
 export interface DeathAnalysisInput {
   deathEvents: DeathEvent[];
+  /** Damage events for the same fight, used to join each death to its lethal hit. */
+  damageEvents: DamageEvent[];
   fightId: number;
   fightName: string;
   fightStartTime: number;
@@ -64,13 +66,29 @@ export class DeathAnalysisService {
     // Collect all death events across fights (filter to player deaths only)
     const allDeathEvents: DeathEvent[] = [];
     const fightAnalyses: FightDeathAnalysis[] = [];
+    // Per-death true killing-blow hit size, joined from the fight's damage stream.
+    const killingBlowByDeath = new Map<string, number>();
 
     // Analyze each fight individually first
     for (const fightData of fightDeathData) {
       const fightAnalysis = this.analyzeFightDeaths(fightData);
       fightAnalyses.push(fightAnalysis);
       // Only collect player deaths (targetIsFriendly === true)
-      allDeathEvents.push(...fightData.deathEvents.filter((d) => d.targetIsFriendly));
+      const playerDeaths = fightData.deathEvents.filter((d) => d.targetIsFriendly);
+      allDeathEvents.push(...playerDeaths);
+
+      // Join each death to its lethal hit (skip the sort when nothing died).
+      if (playerDeaths.length > 0) {
+        const sortedDamage = [...(fightData.damageEvents ?? [])].sort(
+          (a, b) => a.timestamp - b.timestamp,
+        );
+        for (const death of playerDeaths) {
+          killingBlowByDeath.set(
+            this.deathKey(death),
+            this.computeKillingBlowHitSize(sortedDamage, death),
+          );
+        }
+      }
     }
 
     // Get combined actors and abilities data
@@ -92,6 +110,7 @@ export class DeathAnalysisService {
       allDeathEvents,
       combinedActors,
       combinedAbilities,
+      killingBlowByDeath,
     );
     const deathPatterns = this.identifyDeathPatterns(
       allDeathEvents,
@@ -312,6 +331,47 @@ export class DeathAnalysisService {
     return analyses.sort((a, b) => b.totalDeaths - a.totalDeaths);
   }
 
+  /** Stable identity for a death event (one per victim per timestamp per fight). */
+  private static deathKey(death: DeathEvent): string {
+    return `${death.fight}:${death.targetID}:${death.timestamp}`;
+  }
+
+  /**
+   * True killing-blow hit size for a death: the most-recent damage dealt to the
+   * victim within the second before death, summed with any simultaneous (<=50ms)
+   * hits. Mirrors the per-death join used by the per-fight Death panel. Returns 0
+   * when no matching damage was loaded.
+   */
+  private static computeKillingBlowHitSize(sortedDamage: DamageEvent[], death: DeathEvent): number {
+    const TIME_WINDOW_MS = 1000;
+    const SIMULTANEOUS_MS = 50;
+    const deathTs = death.timestamp;
+
+    // Binary-search the first index with timestamp >= deathTs - window.
+    let lo = 0;
+    let hi = sortedDamage.length - 1;
+    const lowerTarget = deathTs - TIME_WINDOW_MS;
+    while (lo <= hi) {
+      const mid = (lo + hi) >> 1;
+      if (sortedDamage[mid].timestamp >= lowerTarget) hi = mid - 1;
+      else lo = mid + 1;
+    }
+
+    const recent: DamageEvent[] = [];
+    for (let i = lo; i < sortedDamage.length; i++) {
+      const ev = sortedDamage[i];
+      if (ev.timestamp > deathTs) break;
+      if (ev.targetID === death.targetID && (ev.amount || 0) > 0) recent.push(ev);
+    }
+    if (recent.length === 0) return 0;
+
+    // Most-recent hit plus everything within the simultaneous window of it.
+    const latestTs = recent[recent.length - 1].timestamp;
+    return recent
+      .filter((ev) => latestTs - ev.timestamp <= SIMULTANEOUS_MS)
+      .reduce((sum, ev) => sum + (ev.amount || 0), 0);
+  }
+
   /**
    * Analyze deaths by ability/mechanic
    */
@@ -319,6 +379,7 @@ export class DeathAnalysisService {
     deathEvents: DeathEvent[],
     actors: Record<string, ReportActorFragment>,
     abilities: Record<string, ReportAbilityFragment>,
+    killingBlowByDeath: Map<string, number> = new Map(),
   ): MechanicDeathAnalysis[] {
     const mechanicMap = new Map<
       number,
@@ -370,6 +431,15 @@ export class DeathAnalysisService {
             mechanicData.deaths.length
           : 0;
 
+      // True killing-blow hit size, averaged from the per-death damage-event join.
+      const averageKillingBlowHitSize =
+        mechanicData.deaths.length > 0
+          ? mechanicData.deaths.reduce(
+              (sum, death) => sum + (killingBlowByDeath.get(this.deathKey(death)) ?? 0),
+              0,
+            ) / mechanicData.deaths.length
+          : 0;
+
       // Get affected player names
       const playersAffected = Array.from(mechanicData.playersAffected)
         .map((playerId) => actors[playerId]?.name || `Player ${playerId}`)
@@ -385,6 +455,7 @@ export class DeathAnalysisService {
         playersAffected,
         fightsWithDeaths,
         averageKillingBlowDamage,
+        averageKillingBlowHitSize,
         category: this.categorizeAbility(ability, mechanicData.deaths),
       });
     }

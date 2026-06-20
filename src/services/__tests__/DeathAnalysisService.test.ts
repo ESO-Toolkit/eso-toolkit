@@ -1,5 +1,5 @@
 import { ReportActorFragment, ReportAbilityFragment } from '../../graphql/gql/graphql';
-import { DeathEvent } from '../../types/combatlogEvents';
+import { DamageEvent, DeathEvent } from '../../types/combatlogEvents';
 import { MechanicCategory } from '../../types/reportSummaryTypes';
 import { DeathAnalysisInput, DeathAnalysisService } from '../DeathAnalysisService';
 
@@ -21,6 +21,24 @@ const makeDeath = (partial: Partial<DeathEvent>): DeathEvent =>
     ...partial,
   }) as DeathEvent;
 
+const makeDamage = (partial: Partial<DamageEvent>): DamageEvent =>
+  ({
+    timestamp: 0,
+    type: 'damage',
+    sourceID: 50,
+    sourceIsFriendly: false,
+    targetID: 1, // the dead player by default
+    targetIsFriendly: false,
+    abilityGameID: 9000,
+    fight: 1,
+    hitType: 1,
+    amount: 0,
+    castTrackID: 0,
+    sourceResources: {} as DamageEvent['sourceResources'],
+    targetResources: {} as DamageEvent['targetResources'],
+    ...partial,
+  }) as DamageEvent;
+
 const actors: Record<string, ReportActorFragment> = {
   1: { id: 1, name: 'Alice', type: 'Player' } as ReportActorFragment,
   2: { id: 2, name: 'Bob', type: 'Player' } as ReportActorFragment,
@@ -40,6 +58,7 @@ const abilities: Record<string, ReportAbilityFragment> = {
 
 const input = (partial: Partial<DeathAnalysisInput>): DeathAnalysisInput => ({
   deathEvents: [],
+  damageEvents: [],
   fightId: 1,
   fightName: 'Boss',
   fightStartTime: 0,
@@ -154,6 +173,30 @@ describe('DeathAnalysisService.analyzeReportDeaths', () => {
       input({ deathEvents: [makeDeath({ abilityGameID: 126633 })] }),
     ]);
     expect(result.mechanicDeaths[0].category).toBe(MechanicCategory.AREA_EFFECT);
+  });
+
+  it('joins each death to its lethal damage for the true killing-blow hit size', () => {
+    // Player 1 dies at t=5000 to Meteor (9000). The killing blow is the most-recent
+    // damage to them, summed with any simultaneous (<=50ms) hits; earlier hits and
+    // hits to other victims or after death are excluded.
+    const result = DeathAnalysisService.analyzeReportDeaths([
+      input({
+        deathEvents: [
+          makeDeath({ targetID: 1, abilityGameID: 9000, timestamp: 5000, amount: 1234 }),
+        ],
+        damageEvents: [
+          makeDamage({ targetID: 1, timestamp: 4000, amount: 99999 }), // in window, not simultaneous
+          makeDamage({ targetID: 1, timestamp: 4960, amount: 5000 }), // simultaneous with the lethal hit
+          makeDamage({ targetID: 1, timestamp: 4980, amount: 30000 }), // the lethal (most recent) hit
+          makeDamage({ targetID: 2, timestamp: 4990, amount: 88888 }), // different victim, excluded
+          makeDamage({ targetID: 1, timestamp: 6000, amount: 7777 }), // after death, excluded
+        ],
+      }),
+    ]);
+
+    const meteor = result.mechanicDeaths.find((m) => m.mechanicId === 9000)!;
+    expect(meteor.averageKillingBlowHitSize).toBe(35000); // 30000 + 5000 simultaneous
+    expect(meteor.averageKillingBlowDamage).toBe(1234); // overkill stays the death.amount
   });
 
   it('reports a flawless run when there are no deaths', () => {
