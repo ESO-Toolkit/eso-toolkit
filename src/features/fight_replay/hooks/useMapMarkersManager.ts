@@ -5,17 +5,24 @@ import { MorMarker } from '@/types/mapMarkers';
 import { ZONE_SCALE_DATA, ZoneScaleData } from '@/types/zoneScaleData';
 import { detectMapFromCoordinates } from '@/utils/mapMarkersUtils';
 
-import { MapMarkersState, ReplayMarker } from '../types/mapMarkers';
+import { MapMarkersState, ReplayMarker, ReplayShape, ShapeData } from '../types/mapMarkers';
 import {
   MarkerEdit,
+  ShapeEditPatch,
   arenaPointToWorld,
   createMarkerFromElmsIcon,
   parseMarkersInput,
   withMarkerEdit,
   withMarkerPosition,
   withNewMarker,
+  withNewShape,
+  withShapeEdit,
+  withShapeVertices,
+  withShapesReplaced,
   withoutMarker,
+  withoutShape,
 } from '../utils/mapMarkerConverters';
+import { decodeShapes, decodeShapesZone, isShapeShareFormat } from '../utils/shapeShareCodec';
 
 /**
  * useMapMarkersManager
@@ -39,6 +46,8 @@ interface PersistedZoneMarkers {
   format: MapMarkersState['format'];
   zoneId: number;
   markers: ReplayMarker[];
+  /** Esotk-native drawn shapes saved alongside the markers (optional for back-compat). */
+  shapes?: ReplayShape[];
   savedAt: number;
 }
 
@@ -85,22 +94,101 @@ function sanitizeMarker(raw: unknown): ReplayMarker | null {
   };
 }
 
+const SHAPE_KINDS: ReplayShape['kind'][] = ['polyline', 'polygon', 'circle', 'rect', 'ruler'];
+
+/** Minimum vertices a sanitized shape of each kind must carry. */
+const MIN_SHAPE_VERTICES: Record<ReplayShape['kind'], number> = {
+  polyline: 2,
+  polygon: 3,
+  circle: 1,
+  rect: 2,
+  ruler: 2,
+};
+
+const isVertex = (v: unknown): v is [number, number] =>
+  Array.isArray(v) && v.length === 2 && v.every(isFiniteNumber);
+
+function sanitizeShape(raw: unknown): ReplayShape | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const obj = raw as Record<string, unknown>;
+
+  if (typeof obj.id !== 'string') return null;
+  if (typeof obj.kind !== 'string' || !SHAPE_KINDS.includes(obj.kind as ReplayShape['kind'])) {
+    return null;
+  }
+  const kind = obj.kind as ReplayShape['kind'];
+
+  if (!Array.isArray(obj.vertices)) return null;
+  const vertices = obj.vertices.filter(isVertex).map((v) => [v[0], v[1]] as [number, number]);
+  if (vertices.length < MIN_SHAPE_VERTICES[kind]) return null;
+
+  if (!isFiniteNumber(obj.worldY)) return null;
+
+  const style = obj.style;
+  if (!style || typeof style !== 'object') return null;
+  const styleObj = style as Record<string, unknown>;
+  if (!isColour(styleObj.colour)) return null;
+  if (!isFiniteNumber(styleObj.width) || styleObj.width <= 0) return null;
+  if (typeof styleObj.dashed !== 'boolean' || typeof styleObj.fill !== 'boolean') return null;
+
+  let radius: number | undefined;
+  if (kind === 'circle') {
+    if (!isFiniteNumber(obj.radius) || obj.radius <= 0) return null;
+    radius = obj.radius;
+  }
+
+  let time: [number, number] | undefined;
+  if (
+    Array.isArray(obj.time) &&
+    obj.time.length === 2 &&
+    obj.time.every(isFiniteNumber) &&
+    (obj.time[1] as number) >= (obj.time[0] as number)
+  ) {
+    time = [obj.time[0] as number, obj.time[1] as number];
+  }
+
+  const shape: ReplayShape = {
+    id: obj.id,
+    source: obj.source === 'imported' ? 'imported' : 'manual',
+    kind,
+    vertices,
+    worldY: obj.worldY,
+    style: {
+      colour: [...styleObj.colour] as [number, number, number, number],
+      width: styleObj.width,
+      dashed: styleObj.dashed,
+      fill: styleObj.fill,
+    },
+  };
+  if (radius !== undefined) shape.radius = radius;
+  if (time) shape.time = time;
+  if (typeof obj.label === 'string') shape.label = obj.label;
+
+  return shape;
+}
+
 function sanitizeZoneEntry(raw: unknown): PersistedZoneMarkers | null {
   if (!raw || typeof raw !== 'object') return null;
   const obj = raw as Record<string, unknown>;
 
-  if (!isFiniteNumber(obj.zoneId) || !Array.isArray(obj.markers)) return null;
+  if (!isFiniteNumber(obj.zoneId)) return null;
 
-  const markers = obj.markers
+  const markers = (Array.isArray(obj.markers) ? obj.markers : [])
     .map(sanitizeMarker)
     .filter((marker): marker is ReplayMarker => marker !== null);
 
-  if (markers.length === 0) return null;
+  const shapes = (Array.isArray(obj.shapes) ? obj.shapes : [])
+    .map(sanitizeShape)
+    .filter((shape): shape is ReplayShape => shape !== null);
+
+  // A slot is worth keeping if it carries markers OR shapes.
+  if (markers.length === 0 && shapes.length === 0) return null;
 
   return {
     format: obj.format === 'mor' ? 'mor' : 'elms',
     zoneId: obj.zoneId,
     markers,
+    shapes,
     savedAt: isFiniteNumber(obj.savedAt) ? obj.savedAt : 0,
   };
 }
@@ -133,13 +221,16 @@ function persistZone(zoneId: number, state: MapMarkersState | null): void {
     const stored = readStored();
     const key = String(zoneId);
 
-    if (!state || state.markers.length === 0) {
+    const isEmpty = !state || (state.markers.length === 0 && (state.shapes?.length ?? 0) === 0);
+
+    if (isEmpty) {
       delete stored[key];
     } else {
       stored[key] = {
         format: state.format,
         zoneId: state.zoneId,
         markers: state.markers,
+        shapes: state.shapes ?? [],
         savedAt: Date.now(),
       };
     }
@@ -210,6 +301,15 @@ export interface UseMapMarkersManagerResult {
   moveMarker: (markerId: string, arenaPoint: { x: number; z: number }) => void;
   /** Apply one edit-dialog submission (icon/label/colour/size) as a single undo step. */
   editMarker: (markerId: string, edit: MarkerEdit) => void;
+  /** Add a drawn shape (vertices in world coordinates). */
+  addShape: (data: ShapeData) => void;
+  removeShape: (shapeId: string) => void;
+  /** Remove all drawn shapes (markers untouched). */
+  clearShapes: () => void;
+  /** Apply a style/label/time/radius edit to one shape. */
+  editShape: (shapeId: string, patch: ShapeEditPatch) => void;
+  /** Commit a shape drag / vertex edit (vertices in world coordinates). */
+  moveShapeVertices: (shapeId: string, vertices: Array<[number, number]>) => void;
   undo: () => void;
   redo: () => void;
 }
@@ -251,8 +351,13 @@ export const useMapMarkersManager = ({
 
     const saved = readStored()[String(zoneId)];
     if (saved) {
-      setMarkersState({ format: saved.format, zoneId: saved.zoneId, markers: saved.markers });
-      setRestoredCount(saved.markers.length);
+      setMarkersState({
+        format: saved.format,
+        zoneId: saved.zoneId,
+        markers: saved.markers,
+        shapes: saved.shapes ?? [],
+      });
+      setRestoredCount(saved.markers.length + (saved.shapes?.length ?? 0));
     } else {
       setMarkersState(null);
       setRestoredCount(0);
@@ -283,16 +388,40 @@ export const useMapMarkersManager = ({
 
   const loadFromString = useCallback(
     (markersString: string) => {
+      const trimmed = markersString.trim();
       try {
-        const parsed = parseMarkersInput(markersString);
-        commit(() => parsed);
+        // Shapes share code: replace the shapes set, KEEP existing markers.
+        if (isShapeShareFormat(trimmed)) {
+          const datas = decodeShapes(trimmed);
+          if (datas.length === 0) {
+            onErrorRef.current?.('No shapes found in that code.');
+            return;
+          }
+          const importedZone = decodeShapesZone(trimmed);
+          setRestoredCount(0);
+          commit((prev) => {
+            const targetZone = prev?.zoneId ?? importedZone ?? zoneId ?? 0;
+            const base: MapMarkersState = prev ?? {
+              format: 'elms',
+              zoneId: targetZone,
+              markers: [],
+            };
+            return withShapesReplaced({ ...base, zoneId: targetZone }, datas, 'imported');
+          });
+          return;
+        }
+
+        // Markers string (M0R / Elms): replace markers, KEEP existing shapes.
+        const parsed = parseMarkersInput(trimmed);
+        setRestoredCount(0);
+        commit((prev) => ({ ...parsed, shapes: prev?.shapes }));
       } catch (error) {
         onErrorRef.current?.(
           error instanceof Error ? error.message : 'Unable to decode markers string.',
         );
       }
     },
-    [commit],
+    [commit, zoneId],
   );
 
   const clearMarkers = useCallback(() => {
@@ -378,6 +507,63 @@ export const useMapMarkersManager = ({
     [commit],
   );
 
+  /**
+   * Add one drawn shape. Vertices are expected in WORLD coordinates (centimetres) — the draw tool
+   * converts arena points via arenaPointToWorld before calling. Routed through commit() so it
+   * inherits undo/redo + per-zone persistence.
+   */
+  const addShape = useCallback(
+    (data: ShapeData) => {
+      if (zoneId === null) {
+        onErrorRef.current?.('Fight zone information is unavailable.');
+        return;
+      }
+      setRestoredCount(0);
+      commit((prev) => {
+        const targetZone = prev?.zoneId ?? zoneId;
+        const base: MapMarkersState = prev ?? {
+          format: 'elms',
+          zoneId: targetZone,
+          markers: [],
+        };
+        const adjusted =
+          base.zoneId === targetZone
+            ? base
+            : { ...base, zoneId: targetZone, markers: [], shapes: [] };
+        return withNewShape(adjusted, data, 'manual');
+      });
+    },
+    [commit, zoneId],
+  );
+
+  const removeShape = useCallback(
+    (shapeId: string) => {
+      commit((prev) => (prev ? withoutShape(prev, shapeId) : prev));
+    },
+    [commit],
+  );
+
+  const clearShapes = useCallback(() => {
+    commit((prev) =>
+      prev && prev.shapes && prev.shapes.length > 0 ? { ...prev, shapes: [] } : prev,
+    );
+  }, [commit]);
+
+  const editShape = useCallback(
+    (shapeId: string, patch: ShapeEditPatch) => {
+      commit((prev) => (prev ? withShapeEdit(prev, shapeId, patch) : prev));
+    },
+    [commit],
+  );
+
+  /** Commit a shape drag/vertex edit — vertices in WORLD coordinates. */
+  const moveShapeVertices = useCallback(
+    (shapeId: string, vertices: Array<[number, number]>) => {
+      commit((prev) => (prev ? withShapeVertices(prev, shapeId, vertices) : prev));
+    },
+    [commit],
+  );
+
   const undo = useCallback(() => {
     setMarkersState((current) => {
       if (pastRef.current.length === 0) {
@@ -434,6 +620,11 @@ export const useMapMarkersManager = ({
     removeMarker,
     moveMarker,
     editMarker,
+    addShape,
+    removeShape,
+    clearShapes,
+    editShape,
+    moveShapeVertices,
     undo,
     redo,
   };

@@ -10,7 +10,15 @@ import {
 } from '@/utils/elmsMarkersDecoder';
 import { decodeMorMarkersString } from '@/utils/morMarkersDecoder';
 
-import { MapMarkersState, MarkerFormat, ReplayMarker } from '../types/mapMarkers';
+import {
+  MapMarkersState,
+  MarkerFormat,
+  MarkerSource,
+  ReplayMarker,
+  ReplayShape,
+  ShapeData,
+  ShapeStyle,
+} from '../types/mapMarkers';
 
 const COLOR_TOLERANCE = 0.05;
 const SIZE_TOLERANCE = 0.05;
@@ -743,5 +751,158 @@ export function ensureFormat(state: MapMarkersState, format: MarkerFormat): MapM
   return {
     ...state,
     format,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Drawn shapes (esotk-native: polyline / polygon / circle / rect / ruler)
+// ---------------------------------------------------------------------------
+
+function generateShapeId(index: number): string {
+  return `shape-${index}-${uuidv4()}`;
+}
+
+/** Deep-clone a shape's mutable geometry/style so reducers never alias prior-state arrays. */
+function cloneShapeData(data: ShapeData): ShapeData {
+  const cloned: ShapeData = {
+    kind: data.kind,
+    vertices: data.vertices.map((vertex) => [vertex[0], vertex[1]] as [number, number]),
+    worldY: data.worldY,
+    style: {
+      colour: [...data.style.colour] as [number, number, number, number],
+      width: data.style.width,
+      dashed: data.style.dashed,
+      fill: data.style.fill,
+    },
+  };
+  if (data.radius !== undefined) cloned.radius = data.radius;
+  if (data.label !== undefined) cloned.label = data.label;
+  if (data.time !== undefined) cloned.time = [data.time[0], data.time[1]];
+  return cloned;
+}
+
+export function buildReplayShape(
+  data: ShapeData,
+  source: MarkerSource,
+  index: number,
+): ReplayShape {
+  return {
+    ...cloneShapeData(data),
+    id: generateShapeId(index),
+    source,
+  };
+}
+
+/** Fields the shape edit UI can change. `null` clears an optional field; omit to leave unchanged. */
+export interface ShapeEditPatch {
+  style?: Partial<ShapeStyle>;
+  label?: string | null;
+  time?: [number, number] | null;
+  /** Circle radius in metres. */
+  radius?: number;
+}
+
+export function withNewShape(
+  state: MapMarkersState,
+  data: ShapeData,
+  source: MarkerSource = 'manual',
+): MapMarkersState {
+  const shape = buildReplayShape(data, source, state.shapes?.length ?? 0);
+  return {
+    ...state,
+    shapes: [...(state.shapes ?? []), shape],
+  };
+}
+
+/** Replace the whole shapes set (used by share-code import). Keeps markers untouched. */
+export function withShapesReplaced(
+  state: MapMarkersState,
+  datas: ShapeData[],
+  source: MarkerSource = 'imported',
+): MapMarkersState {
+  return {
+    ...state,
+    shapes: datas.map((data, index) => buildReplayShape(data, source, index)),
+  };
+}
+
+export function withoutShape(state: MapMarkersState, shapeId: string): MapMarkersState {
+  if (!state.shapes?.some((shape) => shape.id === shapeId)) {
+    return state;
+  }
+  return {
+    ...state,
+    shapes: state.shapes.filter((shape) => shape.id !== shapeId),
+  };
+}
+
+/** Move a shape to new WORLD-space vertices (drag-to-move / vertex edit commit). */
+export function withShapeVertices(
+  state: MapMarkersState,
+  shapeId: string,
+  vertices: Array<[number, number]>,
+): MapMarkersState {
+  if (!state.shapes) return state;
+  return {
+    ...state,
+    shapes: state.shapes.map((shape) =>
+      shape.id === shapeId
+        ? {
+            ...shape,
+            vertices: vertices.map((vertex) => [vertex[0], vertex[1]] as [number, number]),
+          }
+        : shape,
+    ),
+  };
+}
+
+/** Apply a style/label/time/radius edit to one shape as a single transition. */
+export function withShapeEdit(
+  state: MapMarkersState,
+  shapeId: string,
+  patch: ShapeEditPatch,
+): MapMarkersState {
+  if (!state.shapes) return state;
+
+  return {
+    ...state,
+    shapes: state.shapes.map((shape) => {
+      if (shape.id !== shapeId) {
+        return shape;
+      }
+
+      const next: ReplayShape = {
+        ...shape,
+        style: {
+          ...shape.style,
+          colour: [...shape.style.colour] as [number, number, number, number],
+        },
+        vertices: shape.vertices.map((vertex) => [vertex[0], vertex[1]] as [number, number]),
+      };
+
+      if (patch.style) {
+        next.style = {
+          ...next.style,
+          ...patch.style,
+          colour: patch.style.colour
+            ? ([...patch.style.colour] as [number, number, number, number])
+            : next.style.colour,
+        };
+      }
+
+      if (patch.label !== undefined) {
+        next.label = patch.label && patch.label.trim().length > 0 ? patch.label : undefined;
+      }
+
+      if (patch.time !== undefined) {
+        next.time = patch.time ? ([patch.time[0], patch.time[1]] as [number, number]) : undefined;
+      }
+
+      if (patch.radius !== undefined && Number.isFinite(patch.radius) && patch.radius > 0) {
+        next.radius = patch.radius;
+      }
+
+      return next;
+    }),
   };
 }

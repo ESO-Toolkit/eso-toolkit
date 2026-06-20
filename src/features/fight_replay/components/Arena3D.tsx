@@ -29,7 +29,7 @@ import { Logger, LogLevel } from '../../../utils/logger';
 import { MapTimeline } from '../../../utils/mapTimelineUtils';
 import { getActorPositionAtClosestTimestamp } from '../../../workers/calculations/CalculateActorPositions';
 import { ARENA_HEIGHT } from '../constants/replayDesign';
-import { MapMarkersState, ReplayMarker } from '../types/mapMarkers';
+import { MapMarkersState, ReplayMarker, ShapeKind, ShapeStyle } from '../types/mapMarkers';
 import { computeRobustActorFraming } from '../utils/cameraFraming';
 import { portalToFullscreen } from '../utils/fullscreenPortal';
 import {
@@ -116,6 +116,12 @@ interface Arena3DProps {
   onToggleMarkersEditMode?: () => void;
   /** Drag-to-move commit for a marker (arena-space coordinates). */
   onMarkerMove?: (markerId: string, arenaPoint: { x: number; z: number }) => void;
+  /** Active shape draw tool (null when not drawing). */
+  drawTool?: ShapeKind | null;
+  /** Style applied to freshly drawn shapes. */
+  drawStyle?: ShapeStyle;
+  /** Commit a finished shape's ARENA points (FightReplay converts to world + persists). */
+  onShapeDrawn?: (kind: ShapeKind, arenaPoints: Array<[number, number]>) => void;
   /** Opens the marker edit dialog (owned by FightReplay) for the given marker. */
   onEditMarker?: (markerId: string) => void;
   /** Marker undo/redo (mobile tools sheet — Ctrl+Z/Ctrl+Shift+Z have no touch equivalent). */
@@ -193,6 +199,9 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
   markersEditMode = false,
   onToggleMarkersEditMode,
   onMarkerMove,
+  drawTool = null,
+  drawStyle,
+  onShapeDrawn,
   onEditMarker,
   canUndoMarkers = false,
   onUndoMarkers,
@@ -808,6 +817,9 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
             onMarkerContextMenu={handleMarkerContextMenu}
             markersEditMode={markersEditMode}
             onMarkerMove={onMarkerMove}
+            drawTool={drawTool}
+            drawStyle={drawStyle}
+            onShapeDrawn={onShapeDrawn}
             fight={fight}
             initialTarget={initialCameraTarget}
             initialPosition={initialCameraPosition}

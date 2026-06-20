@@ -30,7 +30,7 @@ import {
   type TrialTimeline as TrialTimelineModel,
 } from '../trial_chapters/trialTimeline';
 import type { TrialChapter } from '../trial_chapters/types';
-import { MapMarkersState } from '../types/mapMarkers';
+import { MapMarkersState, ShapeKind, ShapeStyle } from '../types/mapMarkers';
 import { lockDocumentSelection } from '../utils/documentSelectionLock';
 import { clampReplayTime } from '../utils/replayTime';
 
@@ -102,6 +102,12 @@ interface FightReplay3DProps {
   onToggleMarkersEditMode?: () => void;
   /** Drag-to-move commit for a marker (arena-space coordinates). */
   onMarkerMove?: (markerId: string, arenaPoint: { x: number; z: number }) => void;
+  /** Active shape draw tool (null when not drawing). */
+  drawTool?: ShapeKind | null;
+  /** Style applied to freshly drawn shapes. */
+  drawStyle?: ShapeStyle;
+  /** Commit a finished shape's ARENA points (FightReplay converts to world + persists). */
+  onShapeDrawn?: (kind: ShapeKind, arenaPoints: Array<[number, number]>) => void;
   /** Opens the marker edit dialog (owned by FightReplay) for the given marker. */
   onEditMarker?: (markerId: string) => void;
   /** Marker undo/redo for the mobile tools sheet (Ctrl+Z/Ctrl+Shift+Z have no touch equivalent). */
@@ -127,6 +133,9 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
   markersEditMode = false,
   onToggleMarkersEditMode,
   onMarkerMove,
+  drawTool = null,
+  drawStyle,
+  onShapeDrawn,
   onEditMarker,
   canUndoMarkers = false,
   onUndoMarkers,
@@ -1292,6 +1301,9 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
           markersEditMode={markersEditMode}
           onToggleMarkersEditMode={onToggleMarkersEditMode}
           onMarkerMove={onMarkerMove}
+          drawTool={drawTool}
+          drawStyle={drawStyle}
+          onShapeDrawn={onShapeDrawn}
           onEditMarker={onEditMarker}
           canUndoMarkers={canUndoMarkers}
           onUndoMarkers={onUndoMarkers}

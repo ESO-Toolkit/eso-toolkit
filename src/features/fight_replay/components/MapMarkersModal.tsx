@@ -27,6 +27,7 @@ import { FightFragment } from '../../../graphql/gql/graphql';
 import { useMarkerStats } from '../../../hooks/useMarkerStats';
 import { isElmsMarkersFormat } from '../../../utils/elmsMarkersDecoder';
 import { MapMarkersState } from '../types/mapMarkers';
+import { decodeShapes, isShapeShareFormat } from '../utils/shapeShareCodec';
 
 import { MarkerSpritePreview } from './MarkerSpritePreview';
 
@@ -50,6 +51,8 @@ interface MapMarkersModalProps {
   onExportElms?: () => void;
   /** Optional: copy currently-loaded markers as an M0R string */
   onExportMor?: () => void;
+  /** Optional: copy currently-drawn shapes as an esotk shapes code */
+  onExportShapes?: () => void;
 }
 
 /**
@@ -64,6 +67,7 @@ export const MapMarkersModal: React.FC<MapMarkersModalProps> = ({
   onClearMarkers,
   onExportElms,
   onExportMor,
+  onExportShapes,
 }) => {
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down('sm'));
@@ -71,20 +75,29 @@ export const MapMarkersModal: React.FC<MapMarkersModalProps> = ({
 
   const trimmedInput = mapMarkersInput.trim();
 
+  const hasInput = trimmedInput.length > 0;
+  // Shapes use a distinct `(...)` code that the marker-stats decoder can't read, so route it
+  // separately and feed the marker stats an empty string to avoid a spurious decode error.
+  const isShapes = hasInput && isShapeShareFormat(trimmedInput);
+  const shapeCount = useMemo(
+    () => (isShapes ? decodeShapes(trimmedInput).length : 0),
+    [isShapes, trimmedInput],
+  );
+
   // Live validation of the raw input string — drives the Load gate and live feedback.
-  const inputStats = useMarkerStats(trimmedInput, fight);
+  const inputStats = useMarkerStats(isShapes ? '' : trimmedInput, fight);
   // Stats for the already-committed markers — drives the "Currently Loaded" section only.
   const committedStats = useMarkerStats(markersState ?? undefined, fight);
 
-  const hasInput = trimmedInput.length > 0;
-  const inputFailed = hasInput && !inputStats.success;
-  // Load is only safe to fire when the live preview validates AND has matching markers,
+  const inputFailed = hasInput && !isShapes && !inputStats.success;
+  // Load is only safe to fire when the live preview validates AND has matching content,
   // because the parent closes the modal on load.
-  const canLoad = inputStats.success && inputStats.filtered > 0;
+  const canLoad = isShapes ? shapeCount > 0 : inputStats.success && inputStats.filtered > 0;
 
   const detectedFormat = useMemo(
-    () => (hasInput ? (isElmsMarkersFormat(trimmedInput) ? 'Elms' : 'M0R') : null),
-    [hasInput, trimmedInput],
+    () =>
+      hasInput ? (isShapes ? 'Shapes' : isElmsMarkersFormat(trimmedInput) ? 'Elms' : 'M0R') : null,
+    [hasInput, isShapes, trimmedInput],
   );
 
   // Distinct Elms icon keys present in the committed markers (for the loaded preview).
@@ -148,6 +161,7 @@ export const MapMarkersModal: React.FC<MapMarkersModalProps> = ({
   }, []);
 
   const hasCommittedMarkers = Boolean(markersState && markersState.markers.length > 0);
+  const hasCommittedShapes = Boolean(markersState?.shapes && markersState.shapes.length > 0);
 
   return (
     <Dialog
@@ -190,7 +204,9 @@ export const MapMarkersModal: React.FC<MapMarkersModalProps> = ({
           <Typography variant="body2" color="text.secondary">
             Paste a markers string exported from <strong>M0RMarkers</strong> or{' '}
             <strong>EnchantedMapsLite (Elms)</strong> below. Markers are auto-detected, filtered to
-            the current map, and rendered in the 3D arena.
+            the current map, and rendered in the 3D arena. You can also paste an esotk{' '}
+            <strong>Shapes</strong> code (it starts with <code>(</code>) to load drawn
+            lines/zones/circles.
           </Typography>
           <Typography variant="caption" color="text.secondary">
             In <strong>M0RMarkers</strong>, open the markers menu and use Export/Share to copy the
@@ -300,8 +316,26 @@ export const MapMarkersModal: React.FC<MapMarkersModalProps> = ({
             </Alert>
           )}
 
+          {/* Shapes code detected (own grammar — not validated by the marker stats). */}
+          {isShapes && (
+            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
+              {shapeCount > 0 ? (
+                <Chip
+                  label={`${shapeCount} shape${shapeCount === 1 ? '' : 's'}`}
+                  color="success"
+                  size="small"
+                  variant="outlined"
+                />
+              ) : (
+                <Alert severity="warning" sx={{ width: '100%' }}>
+                  No shapes found in that code.
+                </Alert>
+              )}
+            </Box>
+          )}
+
           {/* Live validation: ready-to-load summary */}
-          {canLoad && (
+          {canLoad && !isShapes && (
             <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
               <Chip
                 label={`${inputStats.filtered} / ${inputStats.totalDecoded} markers`}
@@ -389,6 +423,17 @@ export const MapMarkersModal: React.FC<MapMarkersModalProps> = ({
             startIcon={<ContentCopyIcon />}
           >
             Copy M0R
+          </Button>
+        )}
+        {hasCommittedShapes && onExportShapes && (
+          <Button
+            onClick={onExportShapes}
+            color="secondary"
+            variant="outlined"
+            type="button"
+            startIcon={<ContentCopyIcon />}
+          >
+            Copy Shapes
           </Button>
         )}
         {hasCommittedMarkers && (

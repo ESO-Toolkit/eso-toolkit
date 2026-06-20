@@ -10,7 +10,7 @@ import { usePerfTier } from '../../../hooks/usePerfTier';
 import { Logger, LogLevel } from '../../../utils/logger';
 import { MapTimeline } from '../../../utils/mapTimelineUtils';
 import { TimestampPositionLookup } from '../../../workers/calculations/CalculateActorPositions';
-import { MapMarkersState } from '../types/mapMarkers';
+import { MapMarkersState, ShapeKind, ShapeStyle } from '../types/mapMarkers';
 import { LongPressTracker } from '../utils/longPress';
 import { DEFAULT_ACTOR_SCALE, computeActorScaleFromFightArea } from '../utils/mapScaling';
 import { extractPlayerPaths, DEFAULT_PATH_SAMPLING } from '../utils/pathUtils';
@@ -22,6 +22,7 @@ import { BloomComposer, type BloomComposerHandle } from './BloomComposer';
 import { CameraFollower } from './CameraFollower';
 import { CameraResetControls } from './CameraResetControls';
 import { CanvasWheelZoom } from './CanvasWheelZoom';
+import { DrawnShapes } from './DrawnShapes';
 import { DynamicMapTexture } from './DynamicMapTexture';
 import { InstancedReplayFigures3D } from './InstancedReplayFigures3D';
 import { KeyboardCameraControls } from './KeyboardCameraControls';
@@ -29,6 +30,7 @@ import { MapMarkers } from './MapMarkers';
 import { MarkerContextMenuPayload } from './Marker3D';
 import { PerformanceMonitorCanvas } from './PerformanceMonitor';
 import { PlayerPathTrail3D } from './PlayerPathTrail3D';
+import { ShapeDrawLayer } from './ShapeDrawLayer';
 
 // Stable empty Map for the optional playerVisibility prop default — a fresh `new Map()` in
 // the default would change identity every render and churn child memoization.
@@ -443,6 +445,12 @@ export interface Arena3DSceneProps {
   markersEditMode?: boolean;
   /** Drag-to-move commit for a marker (arena-space coordinates). */
   onMarkerMove?: (markerId: string, arenaPoint: { x: number; z: number }) => void;
+  /** Active draw tool (null when not drawing) — arms the click-to-draw layer. */
+  drawTool?: ShapeKind | null;
+  /** Style applied to a freshly drawn shape. */
+  drawStyle?: ShapeStyle;
+  /** Commit a finished shape's ARENA points (parent converts to world + persists). */
+  onShapeDrawn?: (kind: ShapeKind, arenaPoints: Array<[number, number]>) => void;
   fight: FightFragment;
   initialTarget?: [number, number, number];
   /**
@@ -495,6 +503,9 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
   onMarkerContextMenu,
   markersEditMode = false,
   onMarkerMove,
+  drawTool = null,
+  drawStyle,
+  onShapeDrawn,
   fight,
   initialTarget,
   initialPosition,
@@ -917,6 +928,16 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
           markDirty={markSceneDirty}
         />
       )}
+      {/* Drawn shapes (esotk-native lines/zones/circles/rects/rulers) — rendered alongside markers,
+          time-gated against the same playback clock. */}
+      {markersState && markersState.shapes && markersState.shapes.length > 0 && (
+        <DrawnShapes
+          markersState={markersState}
+          fight={fight}
+          timeRef={timeRef}
+          markDirty={markSceneDirty}
+        />
+      )}
       {/* Player Path Trails - Animated trails for selected players */}
       {showPlayerTrails && (
         <PlayerPathTrail3D
@@ -980,6 +1001,17 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
         <planeGeometry args={[arenaDimensions.size, arenaDimensions.size]} />
         <meshBasicMaterial visible={false} transparent opacity={0} />
       </mesh>
+      {/* Click-to-draw layer (active only while a shape tool is armed). */}
+      {drawTool && drawStyle && onShapeDrawn && (
+        <ShapeDrawLayer
+          tool={drawTool}
+          style={drawStyle}
+          planeCenter={[arenaDimensions.centerX, arenaDimensions.centerZ]}
+          planeSize={arenaDimensions.size}
+          onCommit={onShapeDrawn}
+          markDirty={markSceneDirty}
+        />
+      )}
       {/* Controls - dynamically positioned based on fight area. Zoom is handled by CanvasWheelZoom
           (cooperative wheel: plain wheel scrolls the page through the canvas, Ctrl/⌘+wheel or
           fullscreen zooms) instead of OrbitControls' built-in wheel zoom, which preventDefault()s
