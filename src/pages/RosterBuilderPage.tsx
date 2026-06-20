@@ -497,7 +497,14 @@ export const RosterBuilderPage: React.FC = () => {
 
         return {
           ...prev,
-          dpsSlots: arrayMove(prev.dpsSlots, oldIndex, newIndex),
+          // Renumber slotNumber to the new array position. The encoder keys DPS
+          // slots by slotNumber (sn) and rebuilds the array as dpsSlots[sn-1],
+          // so without renumbering the reorder is silently discarded on
+          // encode/save/share/reload.
+          dpsSlots: arrayMove(prev.dpsSlots, oldIndex, newIndex).map((slot, i) => ({
+            ...slot,
+            slotNumber: i + 1,
+          })),
           updatedAt: new Date().toISOString(),
         };
       });
@@ -510,7 +517,12 @@ export const RosterBuilderPage: React.FC = () => {
       if (newIndex < 0 || newIndex >= prev.dpsSlots.length) return prev;
       return {
         ...prev,
-        dpsSlots: arrayMove(prev.dpsSlots, slotIndex, newIndex),
+        // Renumber slotNumber to the new array position so the reorder survives
+        // encoding (see handleDPSDragEnd).
+        dpsSlots: arrayMove(prev.dpsSlots, slotIndex, newIndex).map((slot, i) => ({
+          ...slot,
+          slotNumber: i + 1,
+        })),
         updatedAt: new Date().toISOString(),
       };
     });
