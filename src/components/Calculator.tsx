@@ -1055,6 +1055,78 @@ const QuantityInput: React.FC<{
 type GameMode = 'pve' | 'pvp' | 'both';
 type SummaryStatus = 'at-cap' | 'over-cap' | 'under-cap';
 
+// ---------------------------------------------------------------------------
+// Full Mode palette ("Aurora")
+// ---------------------------------------------------------------------------
+// Full Mode's colors are centralized here. Lite mode is intentionally NOT
+// affected — only the `!liteMode` style surfaces read from these tokens.
+interface FullModeThemeTokens {
+  cardBg: string;
+  rowEnabledBg: string;
+  rowEnabledBorder: string;
+  rowDisabledBg: string;
+  rowDisabledBorder: string;
+  rowHoverBorder: string;
+  rowHoverShadow: string;
+  accent: string;
+  valueColor: string;
+  sectionBg: string;
+  sectionBorder: string;
+  footerBg: string;
+  // Tab/action header strip — a tinted bar that blends with the card, not a slate slab.
+  chromeBg: string;
+}
+
+const FULL_MODE_TOKENS: { light: FullModeThemeTokens; dark: FullModeThemeTokens } = {
+  light: {
+    cardBg:
+      'linear-gradient(135deg, rgb(110 170 240 / 22%) 0%, rgb(152 131 227 / 14%) 50%, rgb(173 192 255 / 7%) 100%)',
+    rowEnabledBg: 'linear-gradient(135deg, rgb(128 211 255 / 20%) 0%, rgb(56 189 248 / 15%) 100%)',
+    rowEnabledBorder: '1px solid rgb(105 162 255 / 45%)',
+    rowDisabledBg: 'rgb(255 255 255 / 55%)',
+    rowDisabledBorder: '1px solid transparent',
+    rowHoverBorder: '1px solid rgb(78 38 177 / 38%)',
+    rowHoverShadow: '0 6px 16px rgb(110 170 240 / 28%)',
+    accent: '#4e26b1',
+    valueColor: 'rgb(18 103 155)',
+    // Keep the Aurora card visible THROUGH the section — light translucent tint +
+    // clear border + soft shadow give edge definition without an opaque slab.
+    sectionBg: 'linear-gradient(180deg, rgba(173,192,255,0.18) 0%, rgba(152,131,227,0.11) 100%)',
+    sectionBorder: '1px solid rgba(120,140,210,0.45)',
+    // Near-opaque so the running totals stay readable over scrolling content.
+    footerBg: 'linear-gradient(135deg, rgba(224,231,250,0.97) 0%, rgba(244,247,253,0.97) 100%)',
+    // Aurora-tinted chrome bars (controls / tabs / actions): a different color that
+    // still blends — like lite mode. Stronger periwinkle in light so the bars read
+    // as distinct surfaces against the pale card instead of washing out.
+    chromeBg: 'linear-gradient(135deg, rgba(168,191,246,0.92) 0%, rgba(198,213,247,0.86) 100%)',
+  },
+  dark: {
+    // Richer, sustained blue→violet→blue glow so the aurora clearly reads as a
+    // colored surface floating on #1258's dark cosmic background — and carries the
+    // whole way down the tall Full-mode card (no 135deg fade-out into the list).
+    cardBg:
+      'linear-gradient(160deg, rgb(86 140 240 / 42%) 0%, rgb(140 110 228 / 34%) 50%, rgb(72 150 215 / 26%) 100%)',
+    rowEnabledBg: 'linear-gradient(135deg, rgba(56,189,248,0.4) 0%, rgba(0,225,255,0.3) 100%)',
+    rowEnabledBorder: '1px solid rgba(56,189,248,0.65)',
+    rowDisabledBg: 'rgb(0 0 0 / 28%)',
+    rowDisabledBorder: '1px solid transparent',
+    rowHoverBorder: '1px solid rgba(159,135,219,0.55)',
+    rowHoverShadow: '0 6px 16px rgba(56,189,248,0.32)',
+    accent: 'rgb(159 135 219)',
+    // Near-white (with a cool cyan textShadow) so value text clears WCAG AA over the
+    // vivid enabled-row gradient now that the card glow is brighter.
+    valueColor: 'rgb(236 246 255)',
+    // Translucent Aurora-hued frost so the blue→purple card glow still reads
+    // through the panel; the border + shadow supply the section definition.
+    sectionBg: 'linear-gradient(180deg, rgba(130,160,235,0.16) 0%, rgba(150,130,225,0.11) 100%)',
+    sectionBorder: '1px solid rgba(150,170,235,0.5)',
+    footerBg: 'linear-gradient(135deg, rgba(30,41,80,0.92) 0%, rgba(3,7,18,0.96) 100%)',
+    // Aurora-tinted chrome bars (controls / tabs / actions): a different color that
+    // still blends with the card glow — like lite mode, not the opaque slate slab.
+    chromeBg: 'linear-gradient(135deg, rgba(120,160,240,0.22) 0%, rgba(150,130,225,0.15) 100%)',
+  },
+};
+
 // Styled components
 const CalculatorContainer = styled(Box, {
   shouldForwardProp: (prop) => prop !== 'liteMode',
@@ -1079,8 +1151,8 @@ const CalculatorContainer = styled(Box, {
 }));
 
 const CalculatorCard = styled(Paper, {
-  shouldForwardProp: (prop) => prop !== 'liteMode',
-})<{ liteMode?: boolean }>(({ theme, liteMode }) => ({
+  shouldForwardProp: (prop) => prop !== 'liteMode' && prop !== 'fullCardBg',
+})<{ liteMode?: boolean; fullCardBg?: string }>(({ theme, liteMode, fullCardBg }) => ({
   width: '100%',
   maxWidth: liteMode ? '100%' : '1200px',
   margin: '0 auto',
@@ -1093,9 +1165,10 @@ const CalculatorCard = styled(Paper, {
   },
   background: liteMode
     ? 'linear-gradient(135deg, rgb(110 170 240 / 25%) 0%, rgb(152 131 227 / 15%) 50%, rgb(173 192 255 / 8%) 100%)'
-    : theme.palette.mode === 'dark'
-      ? 'linear-gradient(180deg, rgba(15,23,42,0.66) 0%, rgba(3,7,18,0.66) 100%)'
-      : 'linear-gradient(180deg, rgb(40 145 200 / 6%) 0%, rgba(248, 250, 252, 0.9) 100%)',
+    : (fullCardBg ??
+      (theme.palette.mode === 'dark'
+        ? 'linear-gradient(180deg, rgba(15,23,42,0.66) 0%, rgba(3,7,18,0.66) 100%)'
+        : 'linear-gradient(180deg, rgb(40 145 200 / 6%) 0%, rgba(248, 250, 252, 0.9) 100%)')),
   borderRadius: liteMode ? 22 : 22,
   minHeight: 'auto',
 }));
@@ -1539,6 +1612,8 @@ const CalculatorComponent: React.FC = () => {
     [logger],
   );
   const [liteMode, setLiteMode] = useState(isMobile);
+  // Full Mode color palette (Lite mode keeps its own bespoke styling).
+  const fullTokens = theme.palette.mode === 'dark' ? FULL_MODE_TOKENS.dark : FULL_MODE_TOKENS.light;
   const [gameMode, setGameMode] = useState<GameMode>('both');
   const [variantModalOpen, setVariantModalOpen] = useState(false);
   const [currentEditingIndex, setCurrentEditingIndex] = useState<number | null>(null);
@@ -2578,38 +2653,29 @@ const CalculatorComponent: React.FC = () => {
             ? '1px solid transparent'
             : '1px solid rgba(214, 168, 255, 0.2)';
       } else {
-        // Default background for other items
+        // Default background for other items.
+        // Lite mode keeps its bespoke palette; full mode reads the active variant tokens.
         background = item.enabled
           ? liteMode
             ? theme.palette.mode === 'dark'
               ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.4) 0%, rgba(0, 225, 255, 0.3) 100%)'
               : 'linear-gradient(135deg, rgb(128 211 255 / 20%) 0%, rgb(56 189 248 / 15%) 100%)'
-            : theme.palette.mode === 'dark'
-              ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.4) 0%, rgba(0, 225, 255, 0.3) 100%)'
-              : 'linear-gradient(135deg, rgb(128 211 255 / 20%) 0%, rgb(56 189 248 / 15%) 100%)'
+            : fullTokens.rowEnabledBg
           : liteMode
             ? theme.palette.mode === 'dark'
               ? 'rgb(0 0 0 / 28%)'
               : 'rgb(255 255 255 / 41%)'
-            : theme.palette.mode === 'dark'
-              ? 'rgba(15, 23, 42, 0.6)'
-              : 'rgba(241, 245, 249, 0.8)';
+            : fullTokens.rowDisabledBg;
 
         border = item.enabled
           ? liteMode
             ? theme.palette.mode === 'dark'
               ? '1px solid rgba(56, 189, 248, 0.6) !important'
               : '1px solid rgb(105 162 255 / 40%) !important'
-            : theme.palette.mode === 'dark'
-              ? '1px solid rgba(56, 189, 248, 0.8)'
-              : liteMode
-                ? '1px solid rgb(40 145 200 / 35%)'
-                : '1px solid rgb(40 145 200 / 35%)'
+            : fullTokens.rowEnabledBorder
           : liteMode
             ? '1px solid transparent'
-            : theme.palette.mode === 'dark'
-              ? '1px solid rgba(255, 255, 255, 0.12)'
-              : '1px solid rgba(203, 213, 225, 0.3)';
+            : fullTokens.rowDisabledBorder;
       }
 
       return {
@@ -2630,15 +2696,12 @@ const CalculatorComponent: React.FC = () => {
         '&:hover': !item.locked
           ? {
               transform: liteMode ? 'none' : 'translateY(-1px)',
-              border:
-                theme.palette.mode === 'dark'
+              border: liteMode
+                ? theme.palette.mode === 'dark'
                   ? '1px solid rgba(56, 189, 248, 0.2)'
-                  : '1px solid rgb(40 145 200 / 30%)',
-              boxShadow: liteMode
-                ? 'none'
-                : theme.palette.mode === 'dark'
-                  ? '0 4px 12px rgba(56, 189, 248, 0.3)'
-                  : '0 4px 12px rgb(40 145 200 / 25%)',
+                  : '1px solid rgb(40 145 200 / 30%)'
+                : fullTokens.rowHoverBorder,
+              boxShadow: liteMode ? 'none' : fullTokens.rowHoverShadow,
               '& .MuiCheckbox-root': {
                 backgroundColor: liteMode
                   ? theme.palette.mode === 'dark'
@@ -2652,7 +2715,7 @@ const CalculatorComponent: React.FC = () => {
           : {},
       };
     },
-    [theme.palette.mode, liteMode, isMobile],
+    [theme.palette.mode, liteMode, isMobile, fullTokens],
   );
 
   // Render item component - optimized to reduce re-renders
@@ -2736,7 +2799,7 @@ const CalculatorComponent: React.FC = () => {
         minWidth: liteMode ? '32px' : isExtraSmall ? '48px' : isMobile ? '44px' : '32px',
         minHeight: liteMode ? '32px' : isExtraSmall ? '48px' : isMobile ? '44px' : '32px',
         '&.Mui-checked': {
-          color: liteMode ? '#4e26b1' : 'rgb(159 135 219)',
+          color: liteMode ? '#4e26b1' : fullTokens.accent,
         },
         // Enhanced touch feedback
         '&:hover': {
@@ -2818,7 +2881,11 @@ const CalculatorComponent: React.FC = () => {
       };
 
       const valueStyles = {
-        color: theme.palette.mode === 'dark' ? 'rgb(199 234 255)' : 'rgb(40 145 200)',
+        color: liteMode
+          ? theme.palette.mode === 'dark'
+            ? 'rgb(199 234 255)'
+            : 'rgb(40 145 200)'
+          : fullTokens.valueColor,
         fontWeight: 700,
         fontFamily: 'monospace',
         textShadow: theme.palette.mode === 'dark' ? '0 0 10px rgba(199 234 255,0.25)' : 'none',
@@ -3267,6 +3334,7 @@ const CalculatorComponent: React.FC = () => {
       cycleArmorResistanceVariant,
       updateArmorResistanceQuality,
       armorResistanceData.gear,
+      fullTokens,
     ],
   );
 
@@ -3293,6 +3361,16 @@ const CalculatorComponent: React.FC = () => {
         disableGutters
         sx={{
           mb: 2,
+          // Distinct panel surface so sections read as floating cards instead of
+          // blending into the calculator background. The `background` shorthand also
+          // clears MUI's dark elevation overlay (a background-image), so a gradient
+          // sectionBg renders correctly.
+          background: fullTokens.sectionBg,
+          border: fullTokens.sectionBorder,
+          boxShadow:
+            theme.palette.mode === 'dark'
+              ? '0 6px 20px rgba(0, 0, 0, 0.28)'
+              : '0 6px 18px rgba(40, 80, 160, 0.10)',
           '&.Mui-expanded': {
             mb: 2,
           },
@@ -3964,7 +4042,11 @@ const CalculatorComponent: React.FC = () => {
           }}
         >
           {/* Main Calculator */}
-          <CalculatorCard liteMode={liteMode} data-calculator-card="true">
+          <CalculatorCard
+            liteMode={liteMode}
+            fullCardBg={liteMode ? undefined : fullTokens.cardBg}
+            data-calculator-card="true"
+          >
             {/* Controls */}
             <Box
               sx={{
@@ -3986,9 +4068,7 @@ const CalculatorComponent: React.FC = () => {
                   ? theme.palette.mode === 'dark'
                     ? 'linear-gradient(135deg, rgb(110 170 240 / 25%) 0%, rgb(152 131 227 / 15%) 50%, rgb(173 192 255 / 8%) 100%)'
                     : 'rgba(255, 255, 255, 0.65)'
-                  : theme.palette.mode === 'dark'
-                    ? 'rgba(15, 23, 42, 0.9)'
-                    : 'rgba(255, 255, 255, 0.98)',
+                  : fullTokens.chromeBg,
                 position: 'relative',
                 // Enhanced mobile responsiveness
                 // Better mobile layout with stacked controls
@@ -4481,13 +4561,7 @@ const CalculatorComponent: React.FC = () => {
                     theme.palette.mode === 'dark'
                       ? 'rgb(128 211 255 / 18%)'
                       : 'rgb(40 145 200 / 15%)',
-                  background: liteMode
-                    ? theme.palette.mode === 'dark'
-                      ? 'rgba(15, 23, 42, 0.0)'
-                      : 'rgba(255, 255, 255, 0.0)'
-                    : theme.palette.mode === 'dark'
-                      ? 'rgba(15, 23, 42, 0.7)'
-                      : 'rgba(255, 255, 255, 0.95)',
+                  background: liteMode ? 'transparent' : fullTokens.chromeBg,
 
                   position: 'relative',
                   borderRadius: liteMode ? '8px 8px 0 0' : '8px 8px 0 0',
@@ -4676,13 +4750,9 @@ const CalculatorComponent: React.FC = () => {
                     p: 2,
                     alignItems: 'center',
                     borderRadius: '10px',
-                    backgroundColor: liteMode
-                      ? theme.palette.mode === 'dark'
-                        ? 'rgba(15, 23, 42, 0.0)'
-                        : 'rgba(255, 255, 255, 0.0)'
-                      : theme.palette.mode === 'dark'
-                        ? 'rgba(15, 23, 42, 0.3)'
-                        : 'rgba(255, 255, 255, 0.5)',
+                    // Transparent: this panel sits inside the tab-bar wrapper, which already
+                    // paints chromeBg — re-painting it here would double-stack the tint.
+                    backgroundColor: 'transparent',
                     borderColor:
                       theme.palette.mode === 'dark'
                         ? 'rgb(128 211 255 / 15%)'
@@ -5702,11 +5772,7 @@ const CalculatorComponent: React.FC = () => {
                   pointerEvents: 'auto',
                   borderRadius: liteMode ? 0 : '14px',
                   // Near-opaque so the list scrolling behind stays hidden.
-                  background: liteMode
-                    ? 'transparent'
-                    : theme.palette.mode === 'dark'
-                      ? 'linear-gradient(135deg, rgba(15, 23, 42, 0.96) 0%, rgba(3, 7, 18, 0.97) 100%)'
-                      : 'linear-gradient(135deg, rgba(255, 255, 255, 0.96) 0%, rgba(248, 250, 252, 0.94) 100%)',
+                  background: liteMode ? 'transparent' : fullTokens.footerBg,
                   border: liteMode
                     ? 'none'
                     : `1px solid ${
