@@ -396,6 +396,9 @@ function parseClassLines(
 
 // ─── Race / Mundus / Attributes / Food ───────────────────────────────────────
 
+/** Escape a literal string for use inside a RegExp. */
+const escapeRegExp = (s: string): string => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
 function parseRace(text: string): { raceId?: string; raceLabel?: string } {
   // Prefer the author's explicit pick ("I use Nord").
   const explicit = /\bI\s+use\s+(?:the\s+)?([A-Z][a-zA-Z]+(?:\s+Elf)?)/.exec(text);
@@ -403,11 +406,14 @@ function parseRace(text: string): { raceId?: string; raceLabel?: string } {
     const race = ESO_RACES.find((r) => normKey(r.label) === normKey(explicit[1]));
     if (race) return { raceId: race.id, raceLabel: race.label };
   }
-  // Fallback: the first race label that appears in the text.
+  // Fallback: the first race named on a WORD BOUNDARY (longest label first).
+  // Substring matching is unsafe — e.g. "Sorcerer" contains "Orc" — so a guide
+  // that never names a race must not fabricate one.
   const byLen = [...ESO_RACES].sort((a, b) => b.label.length - a.label.length);
-  const hay = text.toLowerCase();
   for (const r of byLen) {
-    if (hay.includes(r.label.toLowerCase())) return { raceId: r.id, raceLabel: r.label };
+    if (new RegExp(`\\b${escapeRegExp(r.label)}\\b`, 'i').test(text)) {
+      return { raceId: r.id, raceLabel: r.label };
+    }
   }
   return {};
 }

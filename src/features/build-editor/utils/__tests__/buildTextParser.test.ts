@@ -188,6 +188,23 @@ describe('buildImportPayload', () => {
   });
 });
 
+describe('parseBuildText — race detection', () => {
+  it('does NOT fabricate Orc from the word "Sorcerer"', () => {
+    const r = parseBuildText('Magicka Sorcerer build. Storm Calling. No race mentioned here.');
+    expect(r.raceId).toBeUndefined();
+  });
+
+  it('still detects an explicit "I use Nord" pick', () => {
+    const r = parseBuildText('I use Nord because the armor racial is worth it.');
+    expect(r.raceId).toBe('nord');
+  });
+
+  it('detects a race named on a word boundary', () => {
+    expect(parseBuildText('Orc is the best race for this build.').raceId).toBe('orc');
+    expect(parseBuildText('Run High Elf for the magicka.').raceId).toBe('highelf');
+  });
+});
+
 describe('parseBuildText — numbered ring labels', () => {
   it('parses "Ring 1"/"Ring 2" and keeps the weapon rows that follow them', () => {
     const text = [
