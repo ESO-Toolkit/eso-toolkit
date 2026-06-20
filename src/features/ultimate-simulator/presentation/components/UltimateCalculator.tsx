@@ -364,7 +364,39 @@ const StatBlock: React.FC<{
  *  - Legible in BOTH dark and light mode (translucent fills + 1px borders that
  *    brighten to cyan on hover and show a cyan focus glow ring on focus).
  */
-const buildCalcTheme = (base: Theme): Theme => {
+
+/** MUI Select `onOpen` handler — measures the anchor to choose open direction. */
+type SelectOpenHandler = (event: React.SyntheticEvent) => void;
+
+/**
+ * Select-menu open-direction origins.
+ *
+ * Two problems with MUI's defaults are fixed here:
+ *  1. The default `selectedMenu` positioning aligns the *selected* item over
+ *     the anchor, so a Select whose value is near the end of the list (e.g.
+ *     "Legendary" weapon quality, the last option) opens centred on the field
+ *     instead of below it. Anchoring bottom→top makes menus open downward like
+ *     a normal dropdown.
+ *  2. When the field sits near the bottom of the viewport there isn't room for
+ *     the menu below it. MUI's Popover only *shifts* the menu up to stay
+ *     on-screen — it never flips — so a downward menu slides up and covers the
+ *     field. We detect that case (see `handleSelectOpen`) and flip the origins
+ *     to open *upward* (top→bottom), keeping the field visible.
+ */
+const DROPDOWN_MENU_ORIGINS_DOWN = {
+  anchorOrigin: { vertical: 'bottom', horizontal: 'left' },
+  transformOrigin: { vertical: 'top', horizontal: 'left' },
+} as const;
+const DROPDOWN_MENU_ORIGINS_UP = {
+  anchorOrigin: { vertical: 'top', horizontal: 'left' },
+  transformOrigin: { vertical: 'bottom', horizontal: 'left' },
+} as const;
+const dropdownMenuOrigins = (
+  up: boolean,
+): typeof DROPDOWN_MENU_ORIGINS_UP | typeof DROPDOWN_MENU_ORIGINS_DOWN =>
+  up ? DROPDOWN_MENU_ORIGINS_UP : DROPDOWN_MENU_ORIGINS_DOWN;
+
+const buildCalcTheme = (base: Theme, menuUp: boolean, onSelectOpen: SelectOpenHandler): Theme => {
   const dark = base.palette.mode === 'dark';
   // Cyan tokens per the design direction.
   const cyan = dark ? 'rgb(56,189,248)' : 'rgb(40,145,200)';
@@ -497,7 +529,11 @@ const buildCalcTheme = (base: Theme): Theme => {
             // absolute paper is already a containing block, so the `&::before`
             // top sheen below still anchors correctly without `relative`.
             borderRadius: 14,
-            marginTop: 6,
+            // Gap between field and menu, on whichever side the menu opens — a
+            // static marginTop would push an upward-flipped menu down onto the
+            // field, so mirror it to marginBottom when `menuUp`.
+            marginTop: menuUp ? 0 : 6,
+            marginBottom: menuUp ? 6 : 0,
             // Clip the rounded corners horizontally, but allow vertical scroll —
             // `overflow: hidden` here previously broke scrolling in tall menus
             // (e.g. the Ultimate picker). border-radius still clips with auto.
@@ -587,6 +623,16 @@ const buildCalcTheme = (base: Theme): Theme => {
           root: { borderRadius: 10 },
         },
       },
+      // Every Select in this tab (incl. LogCalibrationPanel) opens downward —
+      // or upward when the field is near the viewport bottom — instead of
+      // overlapping the field. `onSelectOpen` measures the anchor and toggles
+      // `menuUp`; see dropdownMenuOrigins / handleSelectOpen.
+      MuiSelect: {
+        defaultProps: {
+          onOpen: onSelectOpen,
+          MenuProps: dropdownMenuOrigins(menuUp),
+        },
+      },
     },
   });
 };
@@ -613,10 +659,30 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
     distribution,
   } = calc;
 
+  // Open Select menus upward when the field is too close to the viewport bottom
+  // to fit the menu below it (otherwise MUI shifts a downward menu up over the
+  // field). Measured per-open from the anchor; only one Select menu is open at a
+  // time, so a single shared direction is sufficient.
+  const [menuUp, setMenuUp] = React.useState(false);
+  const handleSelectOpen = React.useCallback<SelectOpenHandler>((event) => {
+    const anchor = event.currentTarget as HTMLElement | null;
+    if (!anchor) return;
+    const rect = anchor.getBoundingClientRect();
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const spaceAbove = rect.top;
+    // Flip up only when below is genuinely tight AND above has more room — so
+    // ordinary mid-page selects keep opening downward as expected.
+    setMenuUp(spaceBelow < 320 && spaceAbove > spaceBelow);
+  }, []);
+
   // Feature-scoped theme: cyan-glass Sliders / Selects / inputs for this tab and
   // its LogCalibrationPanel child, derived from the parent theme (mode carries
-  // over). Memoized on the base theme so it only rebuilds on theme/mode change.
-  const calcTheme = React.useMemo(() => buildCalcTheme(theme), [theme]);
+  // over). Rebuilds on theme/mode change, and on `menuUp` so the Select menus
+  // pick up the flipped open-direction origins.
+  const calcTheme = React.useMemo(
+    () => buildCalcTheme(theme, menuUp, handleSelectOpen),
+    [theme, menuUp, handleSelectOpen],
+  );
 
   const accent = theme.palette.mode === 'dark' ? 'rgb(56, 189, 248)' : 'rgb(40, 145, 200)';
   // `accent` is tuned for borders/glows and LARGE text (the hero number passes
@@ -1695,7 +1761,13 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
                     label="Ultimate"
                     value={state.customUltimateCost != null ? 'custom' : state.ultimateAbilityId}
                     renderValue={renderSelectedUltimate}
-                    MenuProps={{ slotProps: { paper: { sx: { maxHeight: 420 } } } }}
+                    // Spreads the open-direction origins because an explicit
+                    // MenuProps here replaces (not merges with) the theme
+                    // defaultProps. (`onOpen` still comes from defaultProps.)
+                    MenuProps={{
+                      ...dropdownMenuOrigins(menuUp),
+                      slotProps: { paper: { sx: { maxHeight: 420 } } },
+                    }}
                     onChange={(e) => {
                       // Seed custom cost with the current EFFECTIVE cost (after any
                       // reductions), since a custom cost is treated as already
