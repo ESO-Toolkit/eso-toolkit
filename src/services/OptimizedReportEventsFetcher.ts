@@ -65,45 +65,31 @@ export class OptimizedReportEventsFetcher {
 
     // TRY OPTIMIZED BATCH QUERIES FIRST
     logger.info('Trying optimized batch queries');
-    const [damageData, deathData, healingData] = await Promise.all([
-      this.fetchWithPagination(
-        GET_REPORT_DAMAGE_EVENTS,
-        {
-          code: reportCode,
-          startTime: reportStartTime,
-          endTime: reportEndTime,
-          hostilityType: HostilityType.Friendlies,
-        },
-        'damage',
-      ),
-
-      this.fetchWithPagination(
-        GET_REPORT_DEATH_EVENTS,
-        {
-          code: reportCode,
-          startTime: reportStartTime,
-          endTime: reportEndTime,
-          hostilityType: HostilityType.Friendlies,
-        },
-        'death',
-      ),
-
-      this.fetchWithPagination(
-        GET_REPORT_HEALING_EVENTS,
-        {
-          code: reportCode,
-          startTime: reportStartTime,
-          endTime: reportEndTime,
-          hostilityType: HostilityType.Friendlies,
-        },
-        'healing',
-      ),
+    const baseVars = {
+      code: reportCode,
+      startTime: reportStartTime,
+      endTime: reportEndTime,
+    };
+    const [damageResult, deathResult, healingResult] = await Promise.all([
+      this.fetchBothHostilities(GET_REPORT_DAMAGE_EVENTS, baseVars, 'damage'),
+      this.fetchBothHostilities(GET_REPORT_DEATH_EVENTS, baseVars, 'death'),
+      this.fetchBothHostilities(GET_REPORT_HEALING_EVENTS, baseVars, 'healing'),
     ]);
+
+    const damageData = damageResult.events;
+    const deathData = deathResult.events;
+    const healingData = healingResult.events;
+
+    // If any query was truncated by the page cap, the report-wide result is
+    // incomplete — defer to the proven per-fight fallback (which paginates each
+    // fight independently) rather than render partial data.
+    const batchTruncated =
+      damageResult.truncated || deathResult.truncated || healingResult.truncated;
 
     // Check if batch queries worked
     const totalEvents = damageData.length + deathData.length + healingData.length;
 
-    if (totalEvents > 0) {
+    if (totalEvents > 0 && !batchTruncated) {
       const endTime = performance.now();
       logger.info(`Batch parallel fetching successful in ${(endTime - startTime).toFixed(2)}ms`);
       logger.info(
@@ -119,7 +105,9 @@ export class OptimizedReportEventsFetcher {
 
     // FALLBACK: Use proven individual fight approach
     logger.warn(
-      'Batch parallel queries returned 0 events - falling back to individual fight queries',
+      batchTruncated
+        ? 'Batch parallel queries were truncated by the page cap - falling back to individual fight queries'
+        : 'Batch parallel queries returned 0 events - falling back to individual fight queries',
     );
 
     try {
@@ -190,7 +178,7 @@ export class OptimizedReportEventsFetcher {
     // FIRST ATTEMPT: Try optimized batch query
     logger.info('Testing time-based batch query');
 
-    const allEvents = await this.fetchWithPagination(
+    const allEventsResult = await this.fetchBothHostilities(
       GET_ALL_EVENTS_TIME_BASED,
       {
         code: reportCode,
@@ -199,9 +187,11 @@ export class OptimizedReportEventsFetcher {
       },
       'all events',
     );
+    const allEvents = allEventsResult.events;
 
-    // Check if batch query worked
-    if (allEvents.length > 0) {
+    // Check if batch query worked. A truncated (page-capped) result is
+    // incomplete, so treat it as a miss and use the per-fight fallback.
+    if (allEvents.length > 0 && !allEventsResult.truncated) {
       logger.info(`Batch query successful: ${allEvents.length} events found`);
 
       // Filter events by type on client side
@@ -230,8 +220,12 @@ export class OptimizedReportEventsFetcher {
       };
     }
 
-    // FALLBACK: Batch query failed, use proven individual fight approach
-    logger.warn('Batch query returned 0 events - falling back to individual fight queries');
+    // FALLBACK: Batch query failed or was truncated, use proven per-fight path
+    logger.warn(
+      allEventsResult.truncated
+        ? 'Batch query was truncated by the page cap - falling back to individual fight queries'
+        : 'Batch query returned 0 events - falling back to individual fight queries',
+    );
 
     try {
       // Use the exact same approach as deathEventsSlice that works
@@ -484,13 +478,23 @@ export class OptimizedReportEventsFetcher {
   }
 
   /**
-   * Helper method to handle paginated queries
+   * Helper method to handle paginated queries.
+   *
+   * Returns the events plus a `truncated` flag: when the report-wide query is
+   * larger than the page-cap can cover, the result is incomplete and callers
+   * must fall back to the per-fight path rather than render partial data.
+   *
+   * NOTE: client.query() already unwraps to the GraphQL `data` object (there is
+   * no outer `.data`), so we read `response.reportData...` directly — the old
+   * `response.data.reportData...` always resolved to undefined, which silently
+   * made every batch query return 0 events.
    */
   private async fetchWithPagination(
     query: any,
     baseVariables: any,
     eventType: string,
-  ): Promise<LogEvent[]> {
+  ): Promise<{ events: LogEvent[]; truncated: boolean }> {
+    const MAX_PAGES = 50;
     let allEvents: LogEvent[] = [];
     let nextPageTimestamp: number | null = null;
     let pageCount = 0;
@@ -510,29 +514,57 @@ export class OptimizedReportEventsFetcher {
         fetchPolicy: 'no-cache',
       });
 
-      const events =
-        response.data?.reportData?.report?.events?.data ||
-        response.data?.reportData?.report?.damageEvents?.data ||
-        response.data?.reportData?.report?.deathEvents?.data ||
-        response.data?.reportData?.report?.healingEvents?.data ||
-        [];
+      const report = response?.reportData?.report;
+      const eventsNode =
+        report?.events || report?.damageEvents || report?.deathEvents || report?.healingEvents;
 
+      const events = eventsNode?.data || [];
       if (events.length > 0) {
         allEvents = allEvents.concat(events);
       }
 
-      nextPageTimestamp =
-        response.data?.reportData?.report?.events?.nextPageTimestamp ||
-        response.data?.reportData?.report?.damageEvents?.nextPageTimestamp ||
-        response.data?.reportData?.report?.deathEvents?.nextPageTimestamp ||
-        response.data?.reportData?.report?.healingEvents?.nextPageTimestamp ||
-        null;
-    } while (nextPageTimestamp && pageCount < 50); // Safety limit
+      nextPageTimestamp = eventsNode?.nextPageTimestamp || null;
+    } while (nextPageTimestamp && pageCount < MAX_PAGES);
+
+    const truncated = nextPageTimestamp != null && pageCount >= MAX_PAGES;
+    if (truncated) {
+      logger.warn(
+        `${eventType} pagination hit the ${MAX_PAGES}-page cap with more data pending; result is incomplete`,
+      );
+    }
 
     logger.info(
       `Completed ${eventType} pagination: ${allEvents.length} total events in ${pageCount} pages`,
     );
-    return allEvents;
+    return { events: allEvents, truncated };
+  }
+
+  /**
+   * Fetch one event type for BOTH hostilities (Friendlies + Enemies), matching
+   * the per-fight fallback's data completeness — enemy-source events (e.g. the
+   * killing blows used by death analysis) are otherwise missed.
+   */
+  private async fetchBothHostilities(
+    query: any,
+    baseVariables: any,
+    eventType: string,
+  ): Promise<{ events: LogEvent[]; truncated: boolean }> {
+    const [friendly, enemy] = await Promise.all([
+      this.fetchWithPagination(
+        query,
+        { ...baseVariables, hostilityType: HostilityType.Friendlies },
+        `${eventType} (friendlies)`,
+      ),
+      this.fetchWithPagination(
+        query,
+        { ...baseVariables, hostilityType: HostilityType.Enemies },
+        `${eventType} (enemies)`,
+      ),
+    ]);
+    return {
+      events: [...friendly.events, ...enemy.events],
+      truncated: friendly.truncated || enemy.truncated,
+    };
   }
 }
 
