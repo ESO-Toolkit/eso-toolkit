@@ -332,16 +332,19 @@ export function useUltimateCalculator(): UltimateCalculatorResult {
     (decisiveTwoHanded: boolean) => patch((s) => ({ ...s, decisiveTwoHanded })),
     [patch],
   );
-  // Hand-editing the source layer marks the build "customized" so a later
-  // context/role/class switch won't overwrite the user's choices. (Cost
-  // reductions also flow through toggleSource — toggling one is a real build
-  // change, so it counts as customizing too.)
+  // Hand-editing a generation SOURCE marks the build "customized" so a later
+  // context/role/class switch won't overwrite the user's choices. Cost
+  // reductions also flow through toggleSource, but they're orthogonal to the
+  // archetype source layer (a preset never sets them, and applyArchetype
+  // preserves them), so toggling one must NOT freeze preset auto-apply —
+  // otherwise switching playstyle after, say, turning off Power Stone would
+  // leave stale source uptimes from the previous archetype.
   const toggleSource = useCallback(
     (id: string, enabled: boolean) =>
       patch((s) => ({
         ...s,
         enabledOverrides: { ...s.enabledOverrides, [id]: enabled },
-        customized: true,
+        customized: s.customized || !COST_REDUCTION_IDS.has(id),
       })),
     [patch],
   );

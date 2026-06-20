@@ -164,4 +164,23 @@ describe('UltimateCalculator', () => {
     expect(sourceSwitch(/^Major Heroism/i)).not.toBeChecked();
     expect(sourceSwitch(/^Minor Heroism/i)).toBeChecked();
   });
+
+  it('does not freeze archetype auto-apply when only a cost reduction is toggled', () => {
+    renderCalc();
+    // Sorcerer has Power Stone (−15%) as a default-on cost reduction.
+    fireEvent.mouseDown(screen.getByLabelText(/Class/i));
+    fireEvent.click(within(screen.getByRole('listbox')).getByText('Sorcerer'));
+
+    // A cost reduction is orthogonal to the archetype source layer — toggling it
+    // must NOT mark the build customized.
+    fireEvent.click(screen.getByLabelText(/Power Stone/i));
+    expect(screen.queryByText(/customized this build/i)).not.toBeInTheDocument();
+
+    // …so switching context still auto-applies the new archetype preset…
+    fireEvent.click(screen.getByRole('button', { name: /^Solo/i }));
+    expect(screen.getByText(/^Typical Solo/i)).toBeInTheDocument();
+    expect(screen.queryByText(/customized this build/i)).not.toBeInTheDocument();
+    // …while preserving the reduction toggle the user changed.
+    expect(screen.getByLabelText(/Power Stone/i)).not.toBeChecked();
+  });
 });
