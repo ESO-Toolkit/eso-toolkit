@@ -11,11 +11,17 @@ import { join } from 'path';
 import {
   buildImportPayload,
   parseBuildText,
+  parseSetCellCandidates,
   pickWeaponVariant,
+  resolveCanonicalSetName,
   type ParsedBuildResult,
 } from '../buildTextParser';
 
 const FIXTURE = readFileSync(join(__dirname, 'fixtures', 'hyperioxes-solo-mag-sorc.txt'), 'utf8');
+const SKINNY_GEAR = readFileSync(
+  join(__dirname, 'fixtures', 'skinnycheeks-stamblade-gear.txt'),
+  'utf8',
+);
 
 let result: ParsedBuildResult;
 beforeAll(() => {
@@ -185,6 +191,76 @@ describe('buildImportPayload', () => {
     for (const [, piece] of Object.entries(payload.setup.gear ?? {})) {
       expect(piece.id).toBeGreaterThan(0);
     }
+  });
+});
+
+describe('parseSetCellCandidates — image-guide set syntax', () => {
+  it('strips a MYTHIC:/MONSTER: category prefix', () => {
+    expect(parseSetCellCandidates("MYTHIC: HUNTSMAN'S WARMASK")).toEqual(["HUNTSMAN'S WARMASK"]);
+    expect(parseSetCellCandidates('MONSTER: Slimecraw')).toEqual(['Slimecraw']);
+  });
+
+  it('splits "A / B / C" and "A OR B" choice lists', () => {
+    expect(parseSetCellCandidates('NULL ARCA / CORAL / ANSUUL')).toEqual([
+      'NULL ARCA',
+      'CORAL',
+      'ANSUUL',
+    ]);
+    expect(parseSetCellCandidates('Aegis Caller OR Soulcleaver')).toEqual([
+      'Aegis Caller',
+      'Soulcleaver',
+    ]);
+  });
+
+  it('passes a plain set name through unchanged', () => {
+    expect(parseSetCellCandidates('Slimecraw')).toEqual(['Slimecraw']);
+  });
+});
+
+describe('resolveCanonicalSetName — abbreviation resolution', () => {
+  it('resolves an exact name', () => {
+    expect(resolveCanonicalSetName('Slimecraw')).toBe('Slimecraw');
+  });
+
+  it('resolves a unique prefix/abbreviation to the full set name', () => {
+    // "Slimecra" is a unique prefix of "Slimecraw".
+    expect(resolveCanonicalSetName('Slimecra')).toBe('Slimecraw');
+  });
+
+  it('returns null for an unknown / too-short token', () => {
+    expect(resolveCanonicalSetName('zzzznotaset')).toBeNull();
+    expect(resolveCanonicalSetName('a')).toBeNull();
+  });
+});
+
+describe('parseBuildText — skinnycheeks image-guide gear panel', () => {
+  let r: ParsedBuildResult;
+  beforeAll(() => {
+    r = parseBuildText(SKINNY_GEAR);
+  });
+
+  it('detects the swapped column order (Slot · Weight · Set · Trait · Enchant)', () => {
+    // 13 rows in ESO slot order — proves the slot column was read, not the weight column.
+    expect(r.gear.map((g) => g.slot)).toEqual([0, 3, 2, 16, 6, 8, 9, 1, 11, 12, 4, 5, 20]);
+  });
+
+  it('reads trait/enchant from the correct columns despite the swap', () => {
+    const head = r.gear.find((g) => g.slot === 0);
+    expect(head?.trait).toBe('divines');
+    expect(head?.enchant).toBe('stamina');
+    const main = r.gear.find((g) => g.slot === 4);
+    expect(main?.trait).toBe('charged');
+    expect(main?.enchant).toBe('flame');
+  });
+
+  it('resolves a weight from a "Light or Medium" choice cell', () => {
+    expect(r.gear.find((g) => g.slot === 0)?.weight).toBe('medium');
+    expect(r.gear.find((g) => g.slot === 3)?.weight).toBe('light');
+  });
+
+  it('resolves the mythic head set from "MYTHIC: …" and a jewelry abbreviation', () => {
+    expect(r.gear.find((g) => g.slot === 0)?.itemId).toBeGreaterThan(0); // Huntsman's Warmask
+    expect(r.gear.find((g) => g.slot === 1)?.itemId).toBeGreaterThan(0); // Aegis Caller (necklace)
   });
 });
 

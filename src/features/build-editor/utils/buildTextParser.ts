@@ -103,28 +103,74 @@ const SLOT_TYPE_PARAM = (
   slotType: EquipSlotDef['slotType'],
 ): Parameters<typeof getSetItemsBySlot>[1] => slotType as Parameters<typeof getSetItemsBySlot>[1];
 
-// Lazy normalized index of canonical set names — lets us recover from
-// punctuation variants (curly vs straight apostrophes, en-dashes) that web
-// pastes routinely introduce, since getSetItemsBySlot matches names exactly.
-let setNameIndex: Map<string, string> | null = null;
-function canonicalSetName(setName: string): string | null {
-  if (!setNameIndex) {
-    setNameIndex = new Map();
-    for (const n of getAllSetNames()) setNameIndex.set(normKey(n), n);
-  }
-  return setNameIndex.get(normKey(setName)) ?? null;
+// Category labels guides put before a set name with a colon (e.g.
+// "MYTHIC: Huntsman's Warmask", "MONSTER: 1pc Crit"). Stripped before matching.
+const SET_CATEGORY_PREFIX_RE =
+  /^\s*(?:mythic|monster|trial|arena|dungeon|overland|crafted|craft|class|set|pvp|battlegrounds?|imperial\s+city|cyrodiil)\s*:\s*/i;
+
+/**
+ * Split a guide's ITEM SET cell into ordered candidate set-name strings.
+ * Handles a "MYTHIC:" / "MONSTER:" category prefix and "A / B / C" or "A OR B"
+ * choice lists (common in image-guide panels), so the resolver can try each.
+ */
+export function parseSetCellCandidates(cell: string): string[] {
+  return cell
+    .replace(SET_CATEGORY_PREFIX_RE, '')
+    .split(/\s*\/\s*|\s+or\s+/i)
+    .map((s) => s.trim())
+    .filter((s) => s.length > 1);
 }
 
-/** All candidate item ids of a set for a slot type (with punctuation fallback). */
+// Lazy index of canonical set names (full + normalized key) for exact and
+// abbreviation matching.
+let canonicalSetNames: { name: string; key: string }[] | null = null;
+function allCanonicalSetNames(): { name: string; key: string }[] {
+  if (!canonicalSetNames) {
+    canonicalSetNames = getAllSetNames().map((name) => ({ name, key: normKey(name) }));
+  }
+  return canonicalSetNames;
+}
+
+/**
+ * Resolve a (possibly abbreviated/punctuation-variant) set name to a canonical
+ * full set name, or null. Tries exact normalized match, then a UNIQUE prefix
+ * match, then a UNIQUE substring match — so abbreviations like "Aegis" →
+ * "Aegis Caller" or "Null Arca" → "Slivers of the Null Arca" resolve, while
+ * ambiguous tokens (matching 0 or >1 sets) stay unresolved for the review step.
+ */
+export function resolveCanonicalSetName(raw: string): string | null {
+  const key = normKey(raw);
+  if (key.length < 3) return null; // too short to disambiguate
+  const all = allCanonicalSetNames();
+  const exact = all.find((s) => s.key === key);
+  if (exact) return exact.name;
+  const starts = all.filter((s) => s.key.startsWith(key));
+  if (starts.length === 1) return starts[0].name;
+  const includes = all.filter((s) => s.key.includes(key));
+  if (includes.length === 1) return includes[0].name;
+  if (includes.length > 1) {
+    // Trial sets carry a "Perfected X" twin — if the only ambiguity is that
+    // pair, resolve to the non-perfected base (the more common choice).
+    const base = includes.filter((s) => !s.key.startsWith('perfected'));
+    if (base.length === 1) return base[0].name;
+  }
+  return null;
+}
+
+/** All candidate item ids of a set for a slot type (handles prefixes, choice
+ *  lists, punctuation variants, and abbreviations). */
 function setItemCandidates(setName: string, slotType: EquipSlotDef['slotType']): number[] {
   if (!setName) return [];
   const param = SLOT_TYPE_PARAM(slotType);
-  let ids = getSetItemsBySlot(setName.trim(), param);
-  if (ids.length === 0) {
-    const canon = canonicalSetName(setName);
-    if (canon) ids = getSetItemsBySlot(canon, param);
+  for (const candidate of parseSetCellCandidates(setName)) {
+    let ids = getSetItemsBySlot(candidate, param);
+    if (ids.length === 0) {
+      const canon = resolveCanonicalSetName(candidate);
+      if (canon) ids = getSetItemsBySlot(canon, param);
+    }
+    if (ids.length > 0) return ids;
   }
-  return ids;
+  return [];
 }
 
 /** First item id of a set for a given equipment slot type, or null. */
@@ -237,26 +283,28 @@ function resolveSlotIndex(rawLabel: string, ringSlots: { used: Set<number> }): n
     ringSlots.used.add(slot);
     return slot;
   }
-  // Weapons — match front/back + main/off.
-  const isBack = k.includes('back');
-  const isOff = k.includes('off');
-  if (
-    k.includes('mainhand') ||
-    k.includes('offhand') ||
-    k.includes('weapon') ||
-    k.includes('bar')
-  ) {
+  // Weapons — front bar unless "back" is present; off-hand if "off" is present.
+  // Accepts bare labels ("Main", "Off-Hand", "Back Bar") and qualified ones
+  // ("Frontbar Main Hand", "Backbar Off Hand").
+  const looksWeapon =
+    k.includes('main') || k.includes('off') || k.includes('weapon') || k.includes('bar');
+  if (looksWeapon) {
+    const isBack = k.includes('back');
+    const isOff = k.includes('off');
     if (isBack) return isOff ? 21 : 20;
     return isOff ? 5 : 4;
   }
   return null;
 }
 
-const WEIGHT_KEYS: Record<string, ArmorWeight> = {
-  light: 'light',
-  medium: 'medium',
-  heavy: 'heavy',
-};
+/** First armor-weight word in a cell ("Light or Medium" → light), or undefined. */
+function firstWeight(cell: string): ArmorWeight | undefined {
+  const k = cell.toLowerCase();
+  if (/\blight\b/.test(k)) return 'light';
+  if (/\bmedium\b/.test(k)) return 'medium';
+  if (/\bheavy\b/.test(k)) return 'heavy';
+  return undefined;
+}
 
 function resolveTrait(
   value: string,
@@ -283,29 +331,56 @@ function resolveEnchant(
 
 const GEAR_HEADER_RE = /gear\s*slot/i;
 
+/**
+ * Read the gear table's column order from its header row. Guides differ: some
+ * use Slot · Set · Weight · Trait · Enchant, others Slot · Weight · Set · …
+ * Falls back to the common Hyperioxes order when a column header is missing.
+ */
+function gearColumnMap(headerLine: string): {
+  slot: number;
+  set: number;
+  weight: number;
+  trait: number;
+  enchant: number;
+} {
+  const cols = headerLine.split('\t').map((h) => normKey(h));
+  const find = (pred: (h: string) => boolean, fallback: number): number => {
+    const i = cols.findIndex(pred);
+    return i === -1 ? fallback : i;
+  };
+  return {
+    slot: find((h) => h.includes('slot'), 0),
+    set: find((h) => h.includes('set'), 1),
+    weight: find((h) => h.includes('weight') || h.includes('type'), 2),
+    trait: find((h) => h.includes('trait'), 3),
+    enchant: find((h) => h.includes('enchant'), 4),
+  };
+}
+
 /** Parse the first tab-separated gear table found in the text. */
 function parseGear(lines: string[], warnings: string[]): ParsedGearRow[] {
   const headerIdx = lines.findIndex((l) => GEAR_HEADER_RE.test(l) && /\bset\b/i.test(l));
   if (headerIdx === -1) return [];
 
+  const col = gearColumnMap(lines[headerIdx]);
   const rows: ParsedGearRow[] = [];
   const ringSlots = { used: new Set<number>() };
 
   for (let i = headerIdx + 1; i < lines.length; i++) {
     const cells = lines[i].split('\t').map((c) => c.trim());
     // End of table: a blank line or a row without a recognisable slot label.
-    if (cells.length < 2 || cells[0] === '') break;
+    if (cells.length < 2 || (cells[col.slot] ?? '') === '') break;
 
-    const slot = resolveSlotIndex(cells[0], ringSlots);
+    const slot = resolveSlotIndex(cells[col.slot] ?? '', ringSlots);
     if (slot == null) break;
 
     const def = SLOT_BY_NAME.get(slot);
     if (!def) continue;
 
-    const setName = cells[1] ?? '';
-    const weightOrType = cells[2] ?? '';
-    const traitRaw = cells[3] ?? '';
-    const enchantRaw = cells[4] ?? '';
+    const setName = cells[col.set] ?? '';
+    const weightOrType = cells[col.weight] ?? '';
+    const traitRaw = cells[col.trait] ?? '';
+    const enchantRaw = cells[col.enchant] ?? '';
 
     // Weapons: pick the variant matching the pasted type cell (Dagger / Staff /
     // …); other slots resolve by set + slot type.
@@ -319,7 +394,7 @@ function parseGear(lines: string[], warnings: string[]): ParsedGearRow[] {
       itemId = resolveSetItem(setName, def.slotType);
     }
 
-    const weight = def.category === 'apparel' ? WEIGHT_KEYS[weightOrType.toLowerCase()] : undefined;
+    const weight = def.category === 'apparel' ? firstWeight(weightOrType) : undefined;
     const trait = traitRaw ? resolveTrait(traitRaw, def.category) : null;
     const enchant = enchantRaw ? resolveEnchant(enchantRaw, def.category) : null;
 
