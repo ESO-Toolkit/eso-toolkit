@@ -54,10 +54,16 @@ export function useOptimizedReportSummaryData(
   } | null>(null);
   const [error, setError] = React.useState<string | null>(null);
   const [reportSummaryData, setReportSummaryData] = React.useState<ReportSummaryData | null>(null);
+  // Identifies the latest fetch so a superseded run (reportCode change, or the
+  // `fights` selector reference churning and re-firing the effect) can't commit
+  // stale results or race the newer run's setReportSummaryData.
+  const runIdRef = React.useRef(0);
 
   const fetchData = React.useCallback(
     async (_params: FetchReportSummaryParams) => {
       if (!client || !fights) return;
+
+      const runId = ++runIdRef.current;
 
       try {
         setIsLoading(true);
@@ -280,23 +286,18 @@ export function useOptimizedReportSummaryData(
         );
         const dps = totalDuration > 0 ? (totalDamage / totalDuration) * 1000 : 0;
 
+        // The actor map is identical for all players (always firstFight.id), so
+        // resolve it once instead of re-invoking the selector per player inside
+        // the filter.
+        const firstFight = cleanFights[0];
+        const playerActors = firstFight
+          ? selectActorsByIdForContext(state, { reportCode, fightId: firstFight.id })
+          : {};
+
         // Convert to PlayerDamageBreakdown array - filter to only actual players
         const playerBreakdown: PlayerDamageBreakdown[] = Array.from(playerDamageMap.entries())
-          .filter(([playerId]) => {
-            // Get actor from any fight to check if it's a player
-            const actorId = parseInt(playerId, 10);
-            const firstFight = cleanFights[0];
-            if (!firstFight) return false;
-
-            const actors = selectActorsByIdForContext(state, {
-              reportCode,
-              fightId: firstFight.id,
-            });
-            const actor = actors[actorId];
-
-            // Only include if type is 'player' (exclude NPCs and pets)
-            return actor?.type?.toLowerCase() === 'player';
-          })
+          // Only include if type is 'player' (exclude NPCs and pets)
+          .filter(([playerId]) => playerActors[Number(playerId)]?.type?.toLowerCase() === 'player')
           .map(([playerId, data]) => {
             const playerDps = totalDuration > 0 ? (data.totalDamage / totalDuration) * 1000 : 0;
             const damagePercentage = totalDamage > 0 ? (data.totalDamage / totalDamage) * 100 : 0;
@@ -540,6 +541,7 @@ export function useOptimizedReportSummaryData(
           },
         };
 
+        if (runId !== runIdRef.current) return; // superseded by a newer fetch
         setReportSummaryData(summaryData);
         setProgress({
           current: totalTasks,
@@ -547,9 +549,11 @@ export function useOptimizedReportSummaryData(
           currentTask: 'Complete!',
         });
       } catch (err) {
+        if (runId !== runIdRef.current) return; // superseded by a newer fetch
         setError(err instanceof Error ? err.message : 'An error occurred');
       } finally {
-        setIsLoading(false);
+        // Only the latest run owns the loading flag.
+        if (runId === runIdRef.current) setIsLoading(false);
       }
     },
     [dispatch, client, fights, reportCode, store],
