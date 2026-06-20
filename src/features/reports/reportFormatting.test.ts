@@ -23,6 +23,49 @@ describe('isReportEmpty', () => {
     expect(isReportEmpty({ startTime: 1, endTime: 2 })).toBe(false);
     expect(isReportEmpty({ startTime: 1, endTime: 1 })).toBe(true);
   });
+
+  it('treats an empty fights array as empty even when segments and duration look healthy', () => {
+    // The real-world slip-through: ESO Logs reports segments > 0 and a long
+    // duration, but the combat data never parsed so there are no fights.
+    expect(isReportEmpty({ ...baseReport, fights: [] })).toBe(true);
+  });
+
+  it('treats a non-empty fights array as having data regardless of other fields', () => {
+    expect(isReportEmpty({ ...baseReport, segments: 0, fights: [{ id: 1 }] })).toBe(false);
+    expect(isReportEmpty({ startTime: 5, endTime: 5, segments: 0, fights: [{ id: 1 }] })).toBe(
+      false,
+    );
+  });
+
+  it('falls back to the heuristic for a non-empty all-null fights array (degraded response)', () => {
+    // A non-empty all-null array means a non-null subfield (id) errored and
+    // null-propagated — a partial failure that hits every report's fights at
+    // once. It is NOT a real empty (those return []), so it must not mass-hide
+    // healthy reports: fall through to the metadata heuristic.
+    expect(isReportEmpty({ ...baseReport, fights: [null] })).toBe(false);
+    expect(isReportEmpty({ ...baseReport, fights: [null, null] })).toBe(false);
+    // ...but the heuristic still hides one that also has zero segments.
+    expect(isReportEmpty({ ...baseReport, segments: 0, fights: [null, null] })).toBe(true);
+  });
+
+  it('keeps a report with at least one non-null fight among null rows', () => {
+    expect(isReportEmpty({ ...baseReport, fights: [null, { id: 7 }] })).toBe(false);
+  });
+
+  it('ignores the fights field when the query does not select it', () => {
+    expect(isReportEmpty({ ...baseReport, fights: undefined })).toBe(false);
+    expect(isReportEmpty({ ...baseReport, segments: 0, fights: undefined })).toBe(true);
+  });
+
+  it('fails open to the heuristic when a selected fights field came back null', () => {
+    // errorPolicy:'all' can null an errored field. Deliberately fail open: a
+    // null fights field falls through to segments/duration rather than hiding,
+    // so a transient/partial error never blanks out healthy reports on the
+    // public browse page (worst case is a rare un-filterable empty, same as the
+    // pre-fix behavior — strictly better than mass-hiding real reports).
+    expect(isReportEmpty({ ...baseReport, fights: null })).toBe(false);
+    expect(isReportEmpty({ ...baseReport, segments: 0, fights: null })).toBe(true);
+  });
 });
 
 describe('partitionReportsByData', () => {
@@ -30,15 +73,18 @@ describe('partitionReportsByData', () => {
     const healthy = { ...baseReport, code: 'A' };
     const noSegments = { ...baseReport, code: 'B', segments: 0 };
     const zeroDuration = { ...baseReport, code: 'C', endTime: baseReport.startTime };
+    // Healthy-looking metadata but zero parsed fights — must be counted empty.
+    const noFights = { ...baseReport, code: 'D', fights: [] };
 
     const { reportsWithData, emptyCount } = partitionReportsByData([
       healthy,
       noSegments,
       zeroDuration,
+      noFights,
     ]);
 
     expect(reportsWithData).toEqual([healthy]);
-    expect(emptyCount).toBe(2);
+    expect(emptyCount).toBe(3);
   });
 
   it('returns everything with a zero count when no reports are empty', () => {

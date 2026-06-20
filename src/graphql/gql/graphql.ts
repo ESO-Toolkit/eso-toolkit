@@ -3133,6 +3133,7 @@ export type GetLatestReportsQuery = {
         segments: number;
         zone?: { __typename?: 'Zone'; id: number; name: string } | null;
         owner?: { __typename?: 'User'; name: string } | null;
+        fights?: Array<{ __typename?: 'ReportFight'; id: number } | null> | null;
       } | null> | null;
     } | null;
   } | null;
@@ -7086,6 +7087,23 @@ export const GetLatestReportsDocument = {
                             {
                               kind: 'FragmentSpread',
                               name: { kind: 'Name', value: 'UserReportSummary' },
+                            },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'fights' },
+                              arguments: [
+                                {
+                                  kind: 'Argument',
+                                  name: { kind: 'Name', value: 'translate' },
+                                  value: { kind: 'BooleanValue', value: false },
+                                },
+                              ],
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                                ],
+                              },
                             },
                           ],
                         },

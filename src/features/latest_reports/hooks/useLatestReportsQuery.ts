@@ -107,8 +107,11 @@ export function useLatestReportsQuery(input: LatestReportsQueryInput): LatestRep
         return;
       }
 
+      // Keep the non-null narrowing on the query's own row type (which now also
+      // carries `fights`) rather than the bare summary fragment, so the empty-log
+      // partition below can read the authoritative fight count.
       const fetched = (reportPagination.data ?? []).filter(
-        (report): report is UserReportSummaryFragment => report !== null,
+        (report): report is NonNullable<typeof report> => report !== null,
       );
       const { reportsWithData, emptyCount } = partitionReportsByData(fetched);
 
