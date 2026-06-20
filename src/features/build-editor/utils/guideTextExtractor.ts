@@ -45,6 +45,10 @@ const BLOCK_TAGS = new Set([
 
 function parseHtml(html: string): Document | null {
   try {
+    // A DOMParser document has no browsing context, so it is INERT: scripts don't
+    // run and resource-bearing elements (img/iframe/…) issue NO network requests.
+    // We only ever read attributes/textContent off it and never insert its nodes
+    // into the live DOM, so fetched guide markup can't trigger subresource loads.
     const doc = new DOMParser().parseFromString(html, 'text/html');
     doc.querySelectorAll('script, style, noscript').forEach((el) => el.remove());
     return doc;
