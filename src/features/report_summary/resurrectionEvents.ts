@@ -14,8 +14,14 @@ export interface ResurrectionEvent {
 
 // Server-filters the cast stream to the Resurrect ability (abilityID), so only a
 // handful of events come back instead of every player's full cast log.
+//
+// The operation is intentionally named `getCastEvents`: the roster-hub-api proxy
+// only forwards requests whose operation is on its allowlist, and `getCastEvents`
+// is already allowlisted. The proxy forwards the request body verbatim, so this
+// ability-filtered variant reaches ESO Logs without needing a brand-new
+// allowlisted operation (which would require a Worker redeploy).
 const RESURRECTION_CASTS_QUERY = gql`
-  query getResurrectionCasts(
+  query getCastEvents(
     $code: String!
     $startTime: Float
     $endTime: Float
