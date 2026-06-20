@@ -1100,313 +1100,6 @@ const CalculatorCard = styled(Paper, {
   minHeight: 'auto',
 }));
 
-// JavaScript-based sticky positioning hook
-const useStickyFooter = (
-  liteMode: boolean,
-  theme: Theme,
-  isMobile: boolean,
-): {
-  footerRef: React.RefObject<HTMLDivElement | null>;
-  placeholderRef: React.RefObject<HTMLDivElement | null>;
-  placeholderHeight: string;
-  footerStyle: React.CSSProperties;
-  isSticky: boolean;
-} => {
-  const footerRef = useRef<HTMLDivElement>(null);
-  const placeholderRef = useRef<HTMLDivElement>(null);
-  const [isSticky, setIsSticky] = useState(false);
-  const [footerStyle, setFooterStyle] = useState<React.CSSProperties>({});
-  const [placeholderHeight, setPlaceholderHeight] = useState<string>('auto');
-
-  const rafRef = useRef<number | null>(null);
-  const cardRectSignatureRef = useRef<string>('');
-  const placeholderWidthRef = useRef<number>(0);
-
-  // Cache for measurements to avoid redundant DOM queries
-  const measurementCacheRef = useRef<{
-    cardRect: DOMRect | null;
-    footerRect: DOMRect | null;
-    placeholderRect: DOMRect | null;
-    viewportHeight: number;
-    timestamp: number;
-  }>({
-    cardRect: null,
-    footerRect: null,
-    placeholderRect: null,
-    viewportHeight: 0,
-    timestamp: 0,
-  });
-
-  // Throttle measurements to avoid excessive calculations
-  const lastMeasurementTimeRef = useRef<number>(0);
-  const MEASUREMENT_THROTTLE = 16; // ~60fps
-
-  const runMeasurement = useCallback(() => {
-    const now = performance.now();
-
-    // Throttle measurements to 60fps
-    if (now - lastMeasurementTimeRef.current < MEASUREMENT_THROTTLE) {
-      return;
-    }
-    lastMeasurementTimeRef.current = now;
-
-    const footerEl = footerRef.current;
-    const placeholderEl = placeholderRef.current;
-
-    if (!footerEl) {
-      return;
-    }
-
-    const calculatorCard = footerEl.closest('[data-calculator-card]') as HTMLElement | null;
-    if (!calculatorCard) {
-      return;
-    }
-
-    // Use cached measurements if available and recent
-    const cache = measurementCacheRef.current;
-    const viewportHeight = window.innerHeight;
-
-    let cardRect = cache.cardRect;
-    let footerRect = cache.footerRect;
-    let placeholderRect = cache.placeholderRect;
-
-    // Only recalculate if viewport changed or cache is stale
-    if (cache.viewportHeight !== viewportHeight || now - cache.timestamp > 50) {
-      cardRect = calculatorCard.getBoundingClientRect();
-      footerRect = footerEl.getBoundingClientRect();
-      placeholderRect = placeholderEl?.getBoundingClientRect() || null;
-
-      measurementCacheRef.current = {
-        cardRect,
-        footerRect,
-        placeholderRect,
-        viewportHeight,
-        timestamp: now,
-      };
-    }
-
-    // Add null checks for safety
-    if (!cardRect || !footerRect) {
-      return;
-    }
-
-    const cardBottomThreshold = viewportHeight - 8;
-    const shouldStick = cardRect.bottom >= cardBottomThreshold && cardRect.top < viewportHeight;
-
-    if (!shouldStick) {
-      if (isSticky) {
-        setIsSticky(false);
-        setFooterStyle({});
-        setPlaceholderHeight('auto');
-      }
-      return;
-    }
-
-    const cardStyles = window.getComputedStyle(calculatorCard);
-    const paddingLeft = parseFloat(cardStyles.paddingLeft) || 0;
-    const paddingRight = parseFloat(cardStyles.paddingRight) || 0;
-
-    const width = placeholderRect
-      ? placeholderRect.width
-      : Math.max(0, cardRect.width - paddingLeft - paddingRight);
-    const left = placeholderRect ? placeholderRect.left : cardRect.left + paddingLeft;
-
-    const baseBottom = 16;
-    // Add space for feedback button on mobile (16px for button + 8px spacing = 24px)
-    const mobileFeedbackOffset = isMobile ? 24 : 0;
-    const adjustedBaseBottom = baseBottom + mobileFeedbackOffset;
-    const maxBottom = Math.max(
-      adjustedBaseBottom,
-      viewportHeight - cardRect.top - footerRect.height,
-    );
-    const minBottom = Math.max(0, viewportHeight - cardRect.bottom);
-    const desiredBottom = minBottom > 0 ? minBottom : adjustedBaseBottom;
-    const clampedBottom = Math.min(desiredBottom, maxBottom);
-
-    // Batch all state updates together
-    const footerHeight = `${Math.round(footerRect.height)}px`;
-    const newSignature = `${Math.round(cardRect.left)}|${Math.round(cardRect.width)}|${Math.round(cardRect.top)}`;
-    const widthChanged = Math.round(placeholderWidthRef.current) !== Math.round(width);
-    const styleChanged = cardRectSignatureRef.current !== newSignature || widthChanged || !isSticky;
-
-    // Only update state if something actually changed
-    if (styleChanged || placeholderHeight !== footerHeight) {
-      const nextStyle: React.CSSProperties = {
-        position: 'fixed',
-        left: `${Math.round(left)}px`,
-        width: `${Math.round(width)}px`,
-        bottom: `${Math.round(clampedBottom)}px`,
-        zIndex: isMobile ? 1001 : 11, // Ensure footer is above feedback button on mobile
-        boxSizing: 'border-box',
-        // Preserve background styling - prevent transparency in full mode
-        background: liteMode
-          ? 'transparent'
-          : theme.palette.mode === 'dark'
-            ? 'linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(3, 7, 18, 0.98) 100%)'
-            : 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.9) 100%)',
-        borderRadius: liteMode ? '0' : '12px',
-        boxShadow: liteMode
-          ? 'none'
-          : theme.palette.mode === 'dark'
-            ? '0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05)'
-            : '0 8px 32px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
-      };
-
-      // Batch state updates
-      requestAnimationFrame(() => {
-        if (placeholderHeight !== footerHeight) {
-          setPlaceholderHeight(footerHeight);
-        }
-
-        if (styleChanged) {
-          cardRectSignatureRef.current = newSignature;
-          placeholderWidthRef.current = width;
-          setFooterStyle(nextStyle);
-          if (!isSticky) {
-            setIsSticky(true);
-          }
-        }
-      });
-    }
-  }, [isSticky, placeholderHeight, liteMode, theme.palette.mode, isMobile]);
-
-  // Debounced measurement scheduler
-  const scheduleMeasurement = useCallback(() => {
-    if (rafRef.current !== null) {
-      return;
-    }
-    rafRef.current = window.requestAnimationFrame(() => {
-      rafRef.current = null;
-      runMeasurement();
-    });
-  }, [runMeasurement]);
-
-  // Throttled scroll handler
-  const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const lastScrollTimeRef = useRef<number>(0);
-  const SCROLL_THROTTLE = 16; // ~60fps
-
-  const handleScroll = useCallback(() => {
-    const now = performance.now();
-
-    // Throttle scroll events
-    if (now - lastScrollTimeRef.current < SCROLL_THROTTLE) {
-      return;
-    }
-    lastScrollTimeRef.current = now;
-
-    // Clear any pending timeout
-    if (scrollTimeoutRef.current) {
-      clearTimeout(scrollTimeoutRef.current);
-    }
-
-    // Debounce the actual measurement
-    scrollTimeoutRef.current = setTimeout(() => {
-      scheduleMeasurement();
-    }, 32); // ~30fps for smooth scrolling
-  }, [scheduleMeasurement]);
-
-  // Throttled resize handler
-  const resizeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const lastResizeTimeRef = useRef<number>(0);
-  const RESIZE_THROTTLE = 100; // Slower for resize events
-
-  const handleResize = useCallback(() => {
-    const now = performance.now();
-
-    // Throttle resize events more aggressively
-    if (now - lastResizeTimeRef.current < RESIZE_THROTTLE) {
-      return;
-    }
-    lastResizeTimeRef.current = now;
-
-    // Clear any pending timeout
-    if (resizeTimeoutRef.current) {
-      clearTimeout(resizeTimeoutRef.current);
-    }
-
-    // Invalidate cache on resize to force recalculation
-    measurementCacheRef.current.timestamp = 0;
-
-    // Debounce the actual measurement
-    resizeTimeoutRef.current = setTimeout(() => {
-      scheduleMeasurement();
-    }, 150);
-  }, [scheduleMeasurement]);
-
-  useEffect(() => {
-    // Initial measurement
-    runMeasurement();
-
-    // Add event listeners with passive option for better performance
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    window.addEventListener('resize', handleResize, { passive: true });
-
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-      window.removeEventListener('resize', handleResize);
-
-      // Cleanup timeouts
-      if (scrollTimeoutRef.current) {
-        clearTimeout(scrollTimeoutRef.current);
-      }
-      if (resizeTimeoutRef.current) {
-        clearTimeout(resizeTimeoutRef.current);
-      }
-
-      // Cleanup RAF
-      if (rafRef.current !== null) {
-        cancelAnimationFrame(rafRef.current);
-        rafRef.current = null;
-      }
-    };
-  }, [runMeasurement, handleScroll, handleResize, scheduleMeasurement]);
-
-  // Optimized ResizeObserver with debouncing
-  useEffect(() => {
-    if (typeof ResizeObserver === 'undefined') {
-      return;
-    }
-
-    let resizeTimeout: NodeJS.Timeout | null = null;
-
-    const observer = new ResizeObserver(() => {
-      // Invalidate cache on resize to force recalculation
-      measurementCacheRef.current.timestamp = 0;
-
-      // Debounce resize observer callbacks
-      if (resizeTimeout) {
-        clearTimeout(resizeTimeout);
-      }
-
-      resizeTimeout = setTimeout(() => {
-        scheduleMeasurement();
-      }, 100); // Debounce resize observer events
-    });
-
-    // Only observe elements that actually exist
-    if (footerRef.current) {
-      observer.observe(footerRef.current);
-    }
-
-    const calculatorCard = footerRef.current?.closest(
-      '[data-calculator-card]',
-    ) as HTMLElement | null;
-    if (calculatorCard) {
-      observer.observe(calculatorCard);
-    }
-
-    return () => {
-      observer.disconnect();
-      if (resizeTimeout) {
-        clearTimeout(resizeTimeout);
-      }
-    };
-  }, [scheduleMeasurement]);
-
-  return { footerRef, placeholderRef, footerStyle, placeholderHeight, isSticky };
-};
-
 const _TotalSection = styled(Box)<{ isLiteMode: boolean }>(
   ({ theme: _theme, isLiteMode: _isLiteMode }) => ({
     position: 'relative',
@@ -2066,14 +1759,8 @@ const CalculatorComponent: React.FC = () => {
     [armorResistanceData.cp],
   );
 
-  // JavaScript-based sticky footer
-  const {
-    footerRef,
-    placeholderRef,
-    placeholderHeight,
-    footerStyle,
-    isSticky: _isSticky,
-  } = useStickyFooter(liteMode, theme, isMobile);
+  // Results summary sticks to the viewport bottom via native CSS position:sticky
+  // (see the footer JSX below) — no JS scroll measurement.
 
   // Calculate total values
   const calculateItemValue = useCallback((item: CalculatorItem): number => {
@@ -5994,29 +5681,45 @@ const CalculatorComponent: React.FC = () => {
               </TabPanel>
             </Box>
 
-            {/* Footer positioned outside TabPanels but inside CalculatorCard */}
-            <Box ref={placeholderRef} sx={{ minHeight: placeholderHeight }}>
+            {/* Results summary — native CSS sticky. Floats just above the
+                viewport bottom while the (long) item list scrolls behind it,
+                then rests at the end of the card. The outer box positions; the
+                inner box is the glass surface. Replaces the old JS hook. */}
+            <Box
+              sx={{
+                position: 'sticky',
+                // Lift above the mobile feedback FAB; small gap on desktop.
+                bottom: { xs: '40px', sm: '16px' },
+                zIndex: { xs: 1001, sm: 11 },
+                mt: '20px',
+                // Let pointer events fall through the transparent margin so the
+                // list underneath the rounded corners stays interactive.
+                pointerEvents: 'none',
+              }}
+            >
               <Box
-                ref={footerRef}
                 sx={{
-                  px: 0, // Remove horizontal padding
-                  pb: 0, // Remove bottom padding
-                  position: 'relative',
-                  zIndex: 5,
-                  backgroundColor: liteMode
+                  pointerEvents: 'auto',
+                  borderRadius: liteMode ? 0 : '14px',
+                  // Near-opaque so the list scrolling behind stays hidden.
+                  background: liteMode
                     ? 'transparent'
                     : theme.palette.mode === 'dark'
-                      ? 'linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(3, 7, 18, 0.98) 100%)'
-                      : 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.9) 100%)',
-                  borderRadius: liteMode ? '0' : '12px',
+                      ? 'linear-gradient(135deg, rgba(15, 23, 42, 0.96) 0%, rgba(3, 7, 18, 0.97) 100%)'
+                      : 'linear-gradient(135deg, rgba(255, 255, 255, 0.96) 0%, rgba(248, 250, 252, 0.94) 100%)',
+                  border: liteMode
+                    ? 'none'
+                    : `1px solid ${
+                        theme.palette.mode === 'dark'
+                          ? 'rgba(56, 189, 248, 0.18)'
+                          : 'rgba(15, 23, 42, 0.08)'
+                      }`,
                   boxShadow: liteMode
                     ? 'none'
                     : theme.palette.mode === 'dark'
-                      ? '0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05)'
-                      : '0 8px 32px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
-                  marginTop: '20px',
+                      ? 'inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 12px 36px rgba(0, 0, 0, 0.4)'
+                      : 'inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 12px 36px rgba(15, 23, 42, 0.12)',
                 }}
-                style={footerStyle}
               >
                 {selectedTab === 0 &&
                   renderSummaryFooter({
