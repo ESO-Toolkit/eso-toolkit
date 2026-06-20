@@ -125,6 +125,46 @@ export function copySetupSection(
   return next;
 }
 
+/**
+ * Return a NEW BuildSetup with the given section reset to its empty default.
+ * Mirrors copySetupSection's field ownership so "clear" and "copy" stay in sync.
+ */
+export function clearedSetupSection(setup: BuildSetup, section: SetupSection): BuildSetup {
+  const next = deepClone(setup);
+
+  switch (section) {
+    case 'gear':
+      next.gear = {};
+      break;
+    case 'skills':
+      next.skills = { 0: {}, 1: {} };
+      delete next.skilledAbilities;
+      delete next.scribedAbilityIds;
+      delete next.quickslots;
+      break;
+    case 'champion':
+      next.cp = {
+        warfare: { slots: [null, null, null, null], passives: {} },
+        fitness: { slots: [null, null, null, null], passives: {} },
+        craft: { slots: [null, null, null, null], passives: {} },
+      };
+      break;
+    case 'consumables':
+      next.consumables = { potions: [], food: {} };
+      break;
+    case 'passives':
+      next.passives = [];
+      break;
+    case 'character':
+      next.attributes = { magicka: 0, health: 0, stamina: 0 };
+      next.curse = 'none';
+      next.mundusStone = '';
+      break;
+  }
+
+  return next;
+}
+
 // ─── Skill-bar helpers ────────────────────────────────────────────────────────
 
 /**

@@ -31,6 +31,7 @@ import type {
 } from '../types/build.types';
 import { CLASS_MASTERY_MAX_PICKS } from '../utils/classMasteryEligibility';
 import {
+  clearedSetupSection,
   cloneSetup,
   copySetupSection as copySetupSectionHelper,
   type SetupSection,
@@ -316,6 +317,16 @@ export const buildEditorSlice = createSlice({
       if (!source || !target) return;
 
       state.build.setups[activeIndex] = copySetupSectionHelper(target, source, section);
+      state.build.updatedAt = new Date().toISOString();
+      state.isDirty = true;
+    },
+
+    /** Reset one section of the active setup to its empty default. */
+    clearSetupSection(state, action: PayloadAction<{ section: SetupSection }>) {
+      const idx = state.activeSetupIndex;
+      const setup = state.build.setups[idx];
+      if (!setup) return;
+      state.build.setups[idx] = clearedSetupSection(setup, action.payload.section);
       state.build.updatedAt = new Date().toISOString();
       state.isDirty = true;
     },
@@ -749,6 +760,7 @@ export const {
   deleteSetup,
   reorderSetups,
   copySetupSection,
+  clearSetupSection,
   bulkSetGear,
   applyImportedBuild,
   setAttributes,

@@ -5,6 +5,7 @@
 import type { SkillsConfig } from '../../../loadout-manager/types/loadout.types';
 import type { BuildSetup } from '../../types/build.types';
 import {
+  clearedSetupSection,
   cloneSetup,
   copySetupSection,
   copySkillBar,
@@ -281,5 +282,47 @@ describe('copySkillBar', () => {
     expect(result[1]).toEqual({ 3: 9 });
     result[0][3] = 5;
     expect(skills[0][3]).toBe(1);
+  });
+});
+
+// ─── clearedSetupSection ──────────────────────────────────────────────────────
+
+describe('clearedSetupSection', () => {
+  it('clears only the targeted section and leaves the original untouched', () => {
+    const setup = makeTestSetup();
+    const snapshot = JSON.parse(JSON.stringify(setup));
+
+    const gearCleared = clearedSetupSection(setup, 'gear');
+    expect(gearCleared.gear).toEqual({});
+    expect(gearCleared.skills).toEqual(setup.skills); // unrelated section kept
+    expect(setup).toEqual(snapshot); // original not mutated
+  });
+
+  it('skills clear also drops skilledAbilities / scribedAbilityIds / quickslots', () => {
+    const cleared = clearedSetupSection(makeTestSetup(), 'skills');
+    expect(cleared.skills).toEqual({ 0: {}, 1: {} });
+    expect(cleared.skilledAbilities).toBeUndefined();
+    expect(cleared.scribedAbilityIds).toBeUndefined();
+    expect(cleared.quickslots).toBeUndefined();
+  });
+
+  it('champion clear resets all three trees to empty', () => {
+    const cleared = clearedSetupSection(makeTestSetup(), 'champion');
+    expect(cleared.cp.warfare).toEqual({ slots: [null, null, null, null], passives: {} });
+    expect(cleared.cp.fitness.slots.every((s) => s === null)).toBe(true);
+  });
+
+  it('character clear resets attributes, curse and mundus', () => {
+    const cleared = clearedSetupSection(makeTestSetup(), 'character');
+    expect(cleared.attributes).toEqual({ magicka: 0, health: 0, stamina: 0 });
+    expect(cleared.curse).toBe('none');
+    expect(cleared.mundusStone).toBe('');
+  });
+
+  it('consumables and passives clear to empty', () => {
+    const c = clearedSetupSection(makeTestSetup(), 'consumables');
+    expect(c.consumables).toEqual({ potions: [], food: {} });
+    const p = clearedSetupSection(makeTestSetup(), 'passives');
+    expect(p.passives).toEqual([]);
   });
 });

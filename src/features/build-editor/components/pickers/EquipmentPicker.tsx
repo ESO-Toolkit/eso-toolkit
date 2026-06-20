@@ -11,12 +11,8 @@
  * EquipmentSection wraps this with useSelector / dispatch.
  */
 
-import {
-  CheckCircle as CheckCircleIcon,
-  ChecklistRtl as ChecklistIcon,
-  RadioButtonUnchecked as UncheckedIcon,
-} from '@mui/icons-material';
-import { Box, ButtonBase, Stack, Typography } from '@mui/material';
+import { ChecklistRtl as ChecklistIcon } from '@mui/icons-material';
+import { Box, ButtonBase, Checkbox, Stack, Typography } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -164,58 +160,35 @@ const SlotRowComponent: React.FC<SlotRowProps> = ({
 
   if (!selectionMode) return card;
 
-  // Only filled slots can be bulk-edited; empty slots render dimmed + inert.
-  if (itemId == null) {
-    return <Box sx={{ opacity: 0.35, pointerEvents: 'none' }}>{card}</Box>;
-  }
-
+  // Bulk mode: a dedicated checkbox is the ONLY selection control — the card
+  // itself stays fully interactive (trait/enchant/weight chips and item swap
+  // all keep working). Empty slots can't be bulk-edited, so their checkbox is
+  // disabled, but the card still works for adding an item.
+  const isFilled = itemId != null;
   return (
-    <Box
-      role="button"
-      aria-pressed={selected}
-      aria-label={`${selected ? 'Deselect' : 'Select'} ${def.name}`}
-      tabIndex={0}
-      onClick={() => onToggleSelect?.(def.slot)}
-      onKeyDown={(e: React.KeyboardEvent) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          onToggleSelect?.(def.slot);
-        }
-      }}
+    <Stack
+      direction="row"
+      spacing={0.75}
       sx={{
-        position: 'relative',
+        alignItems: 'center',
         borderRadius: 2,
-        cursor: 'pointer',
+        px: 0.5,
         outline: selected ? '2px solid var(--be-accent, #38bdf8)' : '2px solid transparent',
         outlineOffset: '1px',
-        transition: 'outline-color 0.15s',
-        '&:hover': selected
-          ? undefined
-          : { outline: '2px solid rgba(var(--be-accent-rgb, 56, 189, 248), 0.40)' },
+        background: selected ? 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.06)' : 'transparent',
+        transition: 'all 0.15s',
       }}
     >
-      {/* Inert card — clicks fall through to the selection wrapper */}
-      <Box sx={{ pointerEvents: 'none' }}>{card}</Box>
-      <Box
-        sx={{
-          position: 'absolute',
-          top: '50%',
-          right: 8,
-          transform: 'translateY(-50%)',
-          display: 'flex',
-          color: selected
-            ? 'var(--be-accent, #38bdf8)'
-            : 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.45)',
-          pointerEvents: 'none',
-        }}
-      >
-        {selected ? (
-          <CheckCircleIcon sx={{ fontSize: 20 }} />
-        ) : (
-          <UncheckedIcon sx={{ fontSize: 20 }} />
-        )}
-      </Box>
-    </Box>
+      <Checkbox
+        checked={selected && isFilled}
+        disabled={!isFilled}
+        onChange={() => onToggleSelect?.(def.slot)}
+        size="small"
+        slotProps={{ input: { 'aria-label': `Select ${def.name} for bulk edit` } }}
+        sx={{ p: 0.25, flexShrink: 0, color: 'var(--be-accent, #38bdf8)' }}
+      />
+      <Box sx={{ flex: 1, minWidth: 0 }}>{card}</Box>
+    </Stack>
   );
 };
 

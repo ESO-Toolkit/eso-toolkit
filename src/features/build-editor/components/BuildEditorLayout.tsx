@@ -42,9 +42,9 @@ import { BUILD_EDITOR_STORAGE_KEY, markSaved } from '../store/buildEditorSlice';
 
 import { BuildCompletionHeader } from './BuildCompletionHeader';
 import { BuildNavRail } from './BuildNavRail';
-import { CopyFromSetupMenu } from './CopyFromSetupMenu';
 import { LazySection } from './primitives/LazySection';
 import { SectionCard } from './primitives/SectionCard';
+import { SectionHeaderActions } from './SectionHeaderActions';
 import { ChampionSection } from './sections/ChampionSection';
 import { CharacterSection } from './sections/CharacterSection';
 import { ClassMasterySection } from './sections/ClassMasterySection';
@@ -191,7 +191,7 @@ export const BuildEditorLayout: React.FC = () => {
                 icon={<CharacterIcon />}
                 complete={progress.character}
                 defaultExpanded={!isMobile}
-                headerAction={<CopyFromSetupMenu section="character" />}
+                headerAction={<SectionHeaderActions section="character" />}
               >
                 <CharacterSection />
               </SectionCard>
@@ -236,7 +236,7 @@ export const BuildEditorLayout: React.FC = () => {
                 variant="primary"
                 gridRow={isMobile ? undefined : 'span 2'}
                 defaultExpanded={!isMobile}
-                headerAction={<CopyFromSetupMenu section="gear" />}
+                headerAction={<SectionHeaderActions section="gear" />}
               >
                 <EquipmentSection />
               </SectionCard>
@@ -250,7 +250,7 @@ export const BuildEditorLayout: React.FC = () => {
                 complete={progress.skills}
                 variant="primary"
                 defaultExpanded={!isMobile}
-                headerAction={<CopyFromSetupMenu section="skills" />}
+                headerAction={<SectionHeaderActions section="skills" />}
               >
                 <SkillsSection />
               </SectionCard>
@@ -263,7 +263,7 @@ export const BuildEditorLayout: React.FC = () => {
                 icon={<ConsumableIcon />}
                 complete={progress.consumables}
                 defaultExpanded={!isMobile}
-                headerAction={<CopyFromSetupMenu section="consumables" />}
+                headerAction={<SectionHeaderActions section="consumables" />}
               >
                 <ConsumablesSection />
               </SectionCard>
@@ -283,7 +283,7 @@ export const BuildEditorLayout: React.FC = () => {
                 variant="primary"
                 gridColumn={isMobile ? undefined : 'span 2'}
                 defaultExpanded={!isMobile}
-                headerAction={<CopyFromSetupMenu section="champion" />}
+                headerAction={<SectionHeaderActions section="champion" />}
               >
                 <ChampionSection />
               </SectionCard>
@@ -297,7 +297,7 @@ export const BuildEditorLayout: React.FC = () => {
                 icon={<PassiveIcon />}
                 complete={progress.passives}
                 defaultExpanded={!isMobile}
-                headerAction={<CopyFromSetupMenu section="passives" />}
+                headerAction={<SectionHeaderActions section="passives" />}
               >
                 <PassivesSection />
               </SectionCard>
