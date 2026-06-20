@@ -44,9 +44,13 @@ export const SETUP_SECTIONS: SetupSectionMeta[] = [
 /** Maximum length for a setup name (matches the rename input cap). */
 const MAX_SETUP_NAME_LENGTH = 32;
 
-/** Structural deep clone for plain-JSON setup data. */
+/**
+ * Structural deep clone for plain-JSON setup data. Returns `undefined`
+ * untouched — optional setup fields (skilledAbilities, quickslots, …) are
+ * frequently absent, and JSON.parse(JSON.stringify(undefined)) would throw.
+ */
 function deepClone<T>(value: T): T {
-  return JSON.parse(JSON.stringify(value)) as T;
+  return value === undefined ? value : (JSON.parse(JSON.stringify(value)) as T);
 }
 
 /**

@@ -180,6 +180,25 @@ describe('copySetupSection', () => {
     expect(source.skilledAbilities![0].morph).toBe(2);
   });
 
+  it('copies the skills section from a blank setup (undefined optional fields) without throwing', () => {
+    const target = makeTestSetup();
+    // A freshly-added setup has no skilledAbilities / scribedAbilityIds / quickslots.
+    const blankSource = makeTestSetup({
+      skills: { 0: {}, 1: {} },
+      skilledAbilities: undefined,
+      scribedAbilityIds: undefined,
+      quickslots: undefined,
+    });
+    let result: BuildSetup | undefined;
+    expect(() => {
+      result = copySetupSection(target, blankSource, 'skills');
+    }).not.toThrow();
+    expect(result?.skills).toEqual({ 0: {}, 1: {} });
+    expect(result?.skilledAbilities).toBeUndefined();
+    expect(result?.scribedAbilityIds).toBeUndefined();
+    expect(result?.quickslots).toBeUndefined();
+  });
+
   it('champion section copies cp only and deep-clones', () => {
     const target = baseTarget();
     const source = makeTestSetup();

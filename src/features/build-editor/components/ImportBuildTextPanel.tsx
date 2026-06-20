@@ -30,8 +30,9 @@ import {
 import { useTheme } from '@mui/material/styles';
 import { useSnackbar } from 'notistack';
 import React, { useMemo, useState } from 'react';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 
+import { selectBuildSetups } from '../store/buildEditorSelectors';
 import { applyImportedBuild } from '../store/buildEditorSlice';
 import {
   buildImportPayload,
@@ -39,6 +40,8 @@ import {
   type ImportSections,
   type ParsedBuildResult,
 } from '../utils/buildTextParser';
+
+const MAX_SETUPS = 5;
 
 const PLACEHOLDER = `Paste a build write-up here — e.g. copy the text from a build guide page.
 
@@ -62,10 +65,14 @@ export const ImportBuildTextPanel: React.FC<ImportBuildTextPanelProps> = ({ onCl
   const dispatch = useDispatch();
   const { enqueueSnackbar } = useSnackbar();
 
+  // At the setup cap there's no room for a new setup, so importing can only
+  // go into the active setup — default + lock the target accordingly.
+  const atCap = useSelector(selectBuildSetups).length >= MAX_SETUPS;
+
   const [raw, setRaw] = useState('');
   const [parsed, setParsed] = useState<ParsedBuildResult | null>(null);
   const [include, setInclude] = useState<ImportSections>(DEFAULT_SECTIONS);
-  const [target, setTarget] = useState<'new' | 'active'>('new');
+  const [target, setTarget] = useState<'new' | 'active'>(atCap ? 'active' : 'new');
 
   const stats = useMemo(() => {
     if (!parsed) return null;
@@ -287,9 +294,23 @@ export const ImportBuildTextPanel: React.FC<ImportBuildTextPanelProps> = ({ onCl
                 },
               }}
             >
-              <ToggleButton value="new">New setup</ToggleButton>
+              <ToggleButton value="new" disabled={atCap}>
+                New setup
+              </ToggleButton>
               <ToggleButton value="active">Active setup</ToggleButton>
             </ToggleButtonGroup>
+            {atCap && (
+              <Typography
+                sx={{
+                  fontSize: 10.5,
+                  color: 'text.secondary',
+                  mt: 0.5,
+                  fontFamily: 'Space Grotesk, Inter, system-ui',
+                }}
+              >
+                You already have {MAX_SETUPS} setups — importing into the active setup.
+              </Typography>
+            )}
           </Box>
 
           <Stack direction="row" spacing={1} sx={{ justifyContent: 'space-between' }}>

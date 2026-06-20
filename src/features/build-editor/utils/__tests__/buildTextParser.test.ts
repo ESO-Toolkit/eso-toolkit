@@ -163,6 +163,22 @@ describe('buildImportPayload', () => {
   });
 });
 
+describe('parseBuildText — numbered ring labels', () => {
+  it('parses "Ring 1"/"Ring 2" and keeps the weapon rows that follow them', () => {
+    const text = [
+      'GEAR SLOT\tSET\tWEIGHT/TYPE\tTRAIT\tENCHANTMENT',
+      'Necklace\tSlimecraw\tJewelry\tBloodthirsty\tIncrease Magical Harm',
+      'Ring 1\tSlimecraw\tJewelry\tBloodthirsty\tIncrease Magical Harm',
+      'Ring 2\tSlimecraw\tJewelry\tBloodthirsty\tIncrease Magical Harm',
+      'Frontbar Main Hand\tCrushing Wall\tLightning Staff\tInfused\tWeapon Damage',
+    ].join('\n');
+    const r = parseBuildText(text);
+    const slots = r.gear.map((g) => g.slot);
+    // Neck=1, Ring 1=11, Ring 2=12, Front Main=4 — none dropped.
+    expect(slots).toEqual([1, 11, 12, 4]);
+  });
+});
+
 describe('parseBuildText — punctuation robustness', () => {
   it('resolves a set name written with a curly apostrophe', () => {
     const straight = parseBuildText(

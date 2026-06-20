@@ -428,26 +428,55 @@ export const buildEditorSlice = createSlice({
       }>,
     ) {
       const { setup: imported, buildFields } = action.payload;
+      const wantNew = action.payload.target === 'new';
 
-      // Decide which setup receives the imported data.
+      // Never silently overwrite the active setup when the user asked for a NEW
+      // one but we're at the 5-setup cap — no-op instead (the UI also disables
+      // the New-setup option at the cap).
+      if (wantNew && state.build.setups.length >= 5) return;
+
       let target: BuildSetup | undefined;
-      if (action.payload.target === 'new' && state.build.setups.length < 5) {
+      if (wantNew) {
         const created = makeSetup(imported.name ?? `Setup ${state.build.setups.length + 1}`);
         state.build.setups.push(created);
         state.build.settings.setupOrder = state.build.setups.map((_, i) => i);
         state.activeSetupIndex = state.build.setups.length - 1;
         target = state.build.setups[state.activeSetupIndex];
       } else {
-        // 'active', or 'new' that fell back because we're at the cap.
         target = state.build.setups[state.activeSetupIndex];
       }
       if (!target) return;
 
-      // Merge setup-level fields — replace whole sub-objects that are provided.
-      if (imported.gear !== undefined) target.gear = imported.gear;
-      if (imported.skills !== undefined) target.skills = imported.skills;
-      if (imported.cp !== undefined) target.cp = imported.cp;
-      if (imported.consumables !== undefined) target.consumables = imported.consumables;
+      // MERGE imported fields into the target — never wipe data the parser
+      // didn't include. (A fresh "new" setup starts empty, so merging there is
+      // equivalent to replacing; applying to the "active" setup preserves
+      // existing slots/potions/star allocations that weren't in the import.)
+      if (imported.gear !== undefined) target.gear = { ...target.gear, ...imported.gear };
+      if (imported.skills !== undefined) {
+        target.skills = {
+          0: { ...(target.skills?.[0] ?? {}), ...(imported.skills[0] ?? {}) },
+          1: { ...(target.skills?.[1] ?? {}), ...(imported.skills[1] ?? {}) },
+        };
+      }
+      if (imported.cp !== undefined) {
+        // Take the imported slotted perks but keep existing passive-star points.
+        const src = imported.cp;
+        for (const tree of ['warfare', 'fitness', 'craft'] as const) {
+          target.cp[tree] = {
+            slots: [...src[tree].slots],
+            passives: { ...target.cp[tree].passives },
+          };
+        }
+      }
+      if (imported.consumables !== undefined) {
+        const food = imported.consumables.food;
+        target.consumables = {
+          potions: imported.consumables.potions.length
+            ? imported.consumables.potions
+            : target.consumables.potions,
+          food: food && Object.keys(food).length ? food : target.consumables.food,
+        };
+      }
       if (imported.passives !== undefined) target.passives = imported.passives;
       if (imported.attributes !== undefined) target.attributes = imported.attributes;
       if (imported.mundusStone !== undefined) target.mundusStone = imported.mundusStone;

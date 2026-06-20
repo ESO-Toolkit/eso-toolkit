@@ -150,6 +150,10 @@ function resolveSlotIndex(rawLabel: string, ringSeen: { count: number }): number
     amulet: 1,
   };
   if (k in map) return map[k];
+  // Numbered rings ("Ring 1" / "Ring 2", "Ring One" / "Ring Two") map directly.
+  if (k === 'ring1' || k === 'ringone') return 11;
+  if (k === 'ring2' || k === 'ringtwo') return 12;
+  // A bare "Ring" relies on document order: first → Ring 1, second → Ring 2.
   if (k === 'ring') {
     const slot = ringSeen.count === 0 ? 11 : 12;
     ringSeen.count += 1;
