@@ -9,17 +9,23 @@
 import {
   CheckCircleRounded as CheckCircleIcon,
   Close as CloseIcon,
+  ContentCopy as CopyBarIcon,
   ExpandMore as ExpandIcon,
   FilterList as FilterListIcon,
   InfoOutlined as InfoIcon,
   SwapHoriz as SwapHorizIcon,
+  SwapVert as SwapVertIcon,
 } from '@mui/icons-material';
 import {
   Box,
   ButtonBase,
   Collapse,
   IconButton,
+  ListItemIcon,
+  ListItemText,
   ListSubheader,
+  Menu,
+  MenuItem,
   Popover,
   Stack,
   Tooltip,
@@ -39,6 +45,7 @@ import {
 import type { SkillsConfig } from '../../../loadout-manager/types/loadout.types';
 import { CLASS_SKILL_LINES, ESO_CLASSES } from '../../data/esoStaticData';
 import { CLASS_COLOR_MAP } from '../../theme/classColorMap';
+import { copySkillBar, swapSkillBars } from '../../utils/setupTransfer';
 import { PickerDialog } from '../primitives/PickerDialog';
 
 // ── Constants ───────────────────────────────────────────────────────────────
@@ -1191,6 +1198,32 @@ export const SkillBarPicker: React.FC<SkillBarPickerProps> = ({
     [handleSelect, picker.barIndex, picker.slotIndex],
   );
 
+  // ── Bar copy / swap ──────────────────────────────────────────────────────
+  const [copyMenuAnchor, setCopyMenuAnchor] = useState<HTMLElement | null>(null);
+
+  const handleSwapBars = useCallback(() => onChange(swapSkillBars(skills)), [onChange, skills]);
+
+  const handleCopyBar = useCallback(
+    (from: 0 | 1, to: 0 | 1) => {
+      onChange(copySkillBar(skills, from, to));
+      setCopyMenuAnchor(null);
+    },
+    [onChange, skills],
+  );
+
+  const barToolSx = {
+    width: 26,
+    height: 26,
+    color: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.40)',
+    border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.10)'}`,
+    transition: 'all 0.15s',
+    '&:hover': {
+      color: 'var(--be-accent, #38bdf8)',
+      background: 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.10)',
+      borderColor: 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.30)',
+    },
+  } as const;
+
   return (
     <>
       <Stack spacing={2.5} sx={{ height: '100%' }}>
@@ -1211,31 +1244,51 @@ export const SkillBarPicker: React.FC<SkillBarPickerProps> = ({
                 : 'linear-gradient(90deg, transparent 0%, rgba(var(--be-accent-rgb, 56,189,248), 0.15) 100%)',
             }}
           />
-          <Stack
-            direction="row"
-            spacing={0.5}
-            sx={{ alignItems: 'center', flexShrink: 0, userSelect: 'none' }}
-          >
-            <SwapHorizIcon
-              sx={{
-                fontSize: 14,
-                color: isDark
-                  ? 'rgba(var(--be-accent-rgb, 56,189,248), 0.55)'
-                  : 'rgba(var(--be-accent-rgb, 56,189,248), 0.50)',
-              }}
-            />
-            <Typography
-              sx={{
-                fontSize: '0.68rem',
-                fontWeight: 700,
-                letterSpacing: 1.5,
-                textTransform: 'uppercase',
-                fontFamily: 'Space Grotesk, Inter, system-ui',
-                color: isDark ? 'rgba(255,255,255,0.50)' : 'rgba(0,0,0,0.42)',
-              }}
-            >
-              Weapon Swap
-            </Typography>
+          <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center', flexShrink: 0 }}>
+            <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center', userSelect: 'none' }}>
+              <SwapHorizIcon
+                sx={{
+                  fontSize: 14,
+                  color: isDark
+                    ? 'rgba(var(--be-accent-rgb, 56,189,248), 0.55)'
+                    : 'rgba(var(--be-accent-rgb, 56,189,248), 0.50)',
+                }}
+              />
+              <Typography
+                sx={{
+                  fontSize: '0.68rem',
+                  fontWeight: 700,
+                  letterSpacing: 1.5,
+                  textTransform: 'uppercase',
+                  fontFamily: 'Space Grotesk, Inter, system-ui',
+                  color: isDark ? 'rgba(255,255,255,0.50)' : 'rgba(0,0,0,0.42)',
+                }}
+              >
+                Weapon Swap
+              </Typography>
+            </Stack>
+            <Tooltip title="Swap front & back bars" arrow>
+              <IconButton
+                size="small"
+                onClick={handleSwapBars}
+                aria-label="Swap front and back skill bars"
+                sx={barToolSx}
+              >
+                <SwapVertIcon sx={{ fontSize: 15 }} />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Copy one bar onto the other" arrow>
+              <IconButton
+                size="small"
+                onClick={(e) => setCopyMenuAnchor(e.currentTarget)}
+                aria-label="Copy a skill bar"
+                aria-haspopup="menu"
+                aria-expanded={Boolean(copyMenuAnchor)}
+                sx={barToolSx}
+              >
+                <CopyBarIcon sx={{ fontSize: 13 }} />
+              </IconButton>
+            </Tooltip>
           </Stack>
           <Box
             sx={{
@@ -1255,6 +1308,53 @@ export const SkillBarPicker: React.FC<SkillBarPickerProps> = ({
           onRemove={(slotIndex) => handleRemove(1, slotIndex)}
         />
       </Stack>
+
+      {/* Copy-bar menu (overwrites the destination bar) */}
+      <Menu
+        anchorEl={copyMenuAnchor}
+        open={Boolean(copyMenuAnchor)}
+        onClose={() => setCopyMenuAnchor(null)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        transformOrigin={{ vertical: 'top', horizontal: 'center' }}
+        slotProps={{
+          paper: {
+            sx: {
+              mt: 0.5,
+              minWidth: 200,
+              borderRadius: 2,
+              backdropFilter: 'blur(12px)',
+              WebkitBackdropFilter: 'blur(12px)',
+              background: isDark ? 'rgba(15, 23, 42, 0.97)' : 'rgba(255, 255, 255, 0.97)',
+              border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'}`,
+            },
+          },
+        }}
+      >
+        <MenuItem
+          onClick={() => handleCopyBar(0, 1)}
+          sx={{ fontFamily: 'Space Grotesk, Inter, system-ui', fontSize: 13, py: 0.75 }}
+        >
+          <ListItemIcon sx={{ minWidth: 30, color: 'var(--be-accent, #38bdf8)' }}>
+            <CopyBarIcon sx={{ fontSize: 14 }} />
+          </ListItemIcon>
+          <ListItemText
+            primary="Front → Back"
+            slotProps={{ primary: { sx: { fontSize: 13, fontWeight: 600 } } }}
+          />
+        </MenuItem>
+        <MenuItem
+          onClick={() => handleCopyBar(1, 0)}
+          sx={{ fontFamily: 'Space Grotesk, Inter, system-ui', fontSize: 13, py: 0.75 }}
+        >
+          <ListItemIcon sx={{ minWidth: 30, color: 'var(--be-accent, #38bdf8)' }}>
+            <CopyBarIcon sx={{ fontSize: 14 }} />
+          </ListItemIcon>
+          <ListItemText
+            primary="Back → Front"
+            slotProps={{ primary: { sx: { fontSize: 13, fontWeight: 600 } } }}
+          />
+        </MenuItem>
+      </Menu>
 
       <SkillPickerDialog
         open={picker.open}
