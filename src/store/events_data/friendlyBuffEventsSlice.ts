@@ -244,11 +244,15 @@ export const fetchFriendlyBuffEvents = createAsyncThunk<
 
       const lastFetchedTimestamp = entry?.cacheMetadata.lastFetchedTimestamp;
       const isCached = Boolean(entry?.events.length);
+      // A partially-failed fetch (some 30s windows errored) is missing events;
+      // don't treat it as a complete cache hit, so the next access re-fetches
+      // and the gaps can fill in instead of silently undercounting uptime.
+      const isComplete = (entry?.cacheMetadata.failedIntervals ?? 0) === 0;
       const isFresh =
         typeof lastFetchedTimestamp === 'number' &&
         Date.now() - lastFetchedTimestamp < DATA_FETCH_CACHE_TIMEOUT;
 
-      if (isCached && isFresh && restrictMatches) {
+      if (isCached && isComplete && isFresh && restrictMatches) {
         logger.info('Using cached friendly buff events', {
           reportCode,
           fightId: Number(fight.id),
