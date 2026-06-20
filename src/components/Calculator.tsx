@@ -1058,9 +1058,13 @@ type SummaryStatus = 'at-cap' | 'over-cap' | 'under-cap';
 // Styled components
 const CalculatorContainer = styled(Box, {
   shouldForwardProp: (prop) => prop !== 'liteMode',
-})<{ liteMode?: boolean }>(({ theme, liteMode: _liteMode }) => ({
+})<{ liteMode?: boolean }>(({ liteMode: _liteMode }) => ({
   // minHeight: '100vh', // Removed - interferes with sticky positioning
-  background: theme.palette.mode === 'dark' ? theme.palette.background.default : 'transparent',
+  // Transparent in both themes so the global cosmic SiteBackground shows through
+  // and the rounded CalculatorCard floats on it — matching the Ultimate tab.
+  // (Dark mode previously painted an opaque background.default slab slightly
+  // wider than the card, leaving a flat, square-cornered band around it.)
+  background: 'transparent',
   position: 'static', // Changed from relative
   width: '100%',
   maxWidth: '100vw',
