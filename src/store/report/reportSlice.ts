@@ -155,6 +155,18 @@ const ensureEntry = (state: ReportState, reportId: string): ReportEntry => {
   return state.entries[key];
 };
 
+// Keep fightIndexByReport in lockstep with the LRU cache: trimCache only evicts
+// from state.entries, so without this an entry's fight-index leaks every time a
+// report is evicted, growing unbounded across a long browsing session.
+const pruneFightIndexByReport = (state: ReportState): void => {
+  for (const reportId of Object.keys(state.fightIndexByReport)) {
+    const key = resolveReportKey(reportId);
+    if (!key || !state.entries[key]) {
+      delete state.fightIndexByReport[reportId];
+    }
+  }
+};
+
 const syncActiveReportState = (state: ReportState): void => {
   const fallbackReportId = state.reportId || null;
   const activeReportId = state.activeContext.reportId ?? fallbackReportId;
@@ -301,6 +313,7 @@ const reportSlice = createSlice({
       const { key } = resolveCacheKey({ reportCode: resolvedReportId });
       touchAccessOrder(state, key);
       trimCache(state, REPORT_CACHE_MAX_ENTRIES);
+      pruneFightIndexByReport(state);
 
       state.activeContext.reportId =
         payload?.code ?? state.activeContext.reportId ?? resolvedReportId;
@@ -342,12 +355,16 @@ const reportSlice = createSlice({
       delete state.fightIndexByReport[context.reportCode];
       if (state.activeContext.reportId === context.reportCode) {
         state.activeContext.reportId = null;
+        // Also clear the fight: leaving it set leaves activeContext pointing at
+        // a fight from the now-removed report.
+        state.activeContext.fightId = null;
       }
       syncActiveReportState(state);
     },
     trimReportCache(state, action: PayloadAction<{ maxEntries?: number } | undefined>) {
       const limit = action?.payload?.maxEntries ?? REPORT_CACHE_MAX_ENTRIES;
       trimCache(state, limit);
+      pruneFightIndexByReport(state);
       syncActiveReportState(state);
     },
   },
@@ -394,6 +411,7 @@ const reportSlice = createSlice({
 
         touchAccessOrder(state, cacheKey);
         trimCache(state, REPORT_CACHE_MAX_ENTRIES);
+        pruneFightIndexByReport(state);
 
         if (!state.activeContext.reportId) {
           state.activeContext.reportId = reportId;
