@@ -5,8 +5,9 @@
 
 import { Logger, LogLevel } from '@/utils/logger';
 
+import scribingCompleteData from '../../../../../data/scribing-complete.json';
 import { IScribingDataRepository } from '../../core/repositories/IScribingDataRepository';
-import { DATA_FILE_PATHS, ERROR_MESSAGES } from '../../shared/constants';
+import { ERROR_MESSAGES } from '../../shared/constants';
 import { validateScribingData } from '../../shared/schemas';
 import {
   ScribingData,
@@ -14,7 +15,114 @@ import {
   FocusScript,
   SignatureScript,
   AffixScript,
+  ResourceType,
+  DamageType,
 } from '../../shared/types';
+
+const RESOURCE_TYPES: ReadonlySet<string> = new Set(['magicka', 'stamina', 'health', 'hybrid']);
+const DAMAGE_TYPES: ReadonlySet<string> = new Set([
+  'magic',
+  'physical',
+  'fire',
+  'frost',
+  'shock',
+  'poison',
+  'disease',
+  'bleed',
+  'oblivion',
+  'flame',
+]);
+
+const asResource = (v: unknown): ResourceType | undefined =>
+  typeof v === 'string' && RESOURCE_TYPES.has(v) ? (v as ResourceType) : undefined;
+const asDamageType = (v: unknown): DamageType | undefined =>
+  typeof v === 'string' && DAMAGE_TYPES.has(v) ? (v as DamageType) : undefined;
+
+/**
+ * Adapts the game-extracted `scribing-complete.json` (records keyed by slug,
+ * flat grimoire cost, per-grimoire `nameTransformations`) into the typed
+ * {@link ScribingData} the simulator consumes. The reference sections the
+ * dataset doesn't include (quest rewards, vendors, …) are simply omitted.
+ */
+export function adaptScribingData(raw: typeof scribingCompleteData): ScribingData {
+  const rawAny = raw as unknown as {
+    version?: string;
+    description?: string;
+    lastUpdated?: string;
+    grimoires?: Record<string, Record<string, unknown>>;
+    focusScripts?: Record<string, Record<string, unknown>>;
+    signatureScripts?: Record<string, Record<string, unknown>>;
+    affixScripts?: Record<string, Record<string, unknown>>;
+  };
+
+  const grimoireKeys = Object.keys(rawAny.grimoires ?? {});
+
+  const grimoires: Record<string, Grimoire> = {};
+  for (const [slug, g] of Object.entries(rawAny.grimoires ?? {})) {
+    const flatCost = Number(g.cost) || 0;
+    // The grimoire's numeric `id` (when present) is its base ability id.
+    const baseAbilityId = typeof g.id === 'number' ? g.id : undefined;
+    grimoires[slug] = {
+      id: slug,
+      name: String(g.name ?? slug),
+      requirements: null,
+      cost: { first: flatCost, additional: flatCost },
+      description: '',
+      resource: asResource(g.resource),
+      nameTransformations: g.nameTransformations as Grimoire['nameTransformations'],
+      abilityIds: baseAbilityId !== undefined ? [baseAbilityId] : undefined,
+    };
+  }
+
+  const focusScripts: Record<string, FocusScript> = {};
+  for (const [slug, f] of Object.entries(rawAny.focusScripts ?? {})) {
+    focusScripts[slug] = {
+      id: String(f.id ?? slug),
+      name: String(f.name ?? slug),
+      type: 'Focus',
+      icon: '',
+      // Focus scripts apply to any grimoire (each grimoire has a transformed
+      // name per damage type); compatibility is enforced by nameTransformations.
+      compatibleGrimoires: grimoireKeys,
+      description: String(f.name ?? ''),
+      damageType: asDamageType(f.damageType),
+    };
+  }
+
+  const toListScript = (
+    slug: string,
+    s: Record<string, unknown>,
+  ): Omit<SignatureScript, 'type'> => ({
+    id: String(s.id ?? slug),
+    name: String(s.name ?? slug),
+    icon: '',
+    compatibleGrimoires: Array.isArray(s.compatibleGrimoires)
+      ? (s.compatibleGrimoires as string[])
+      : grimoireKeys,
+    description: String(s.description ?? ''),
+    abilityIds: Array.isArray(s.abilityIds) ? (s.abilityIds as number[]) : undefined,
+  });
+
+  const signatureScripts: Record<string, SignatureScript> = {};
+  for (const [slug, s] of Object.entries(rawAny.signatureScripts ?? {})) {
+    signatureScripts[slug] = { ...toListScript(slug, s), type: 'Signature' };
+  }
+
+  const affixScripts: Record<string, AffixScript> = {};
+  for (const [slug, s] of Object.entries(rawAny.affixScripts ?? {})) {
+    affixScripts[slug] = { ...toListScript(slug, s), type: 'Affix' };
+  }
+
+  return {
+    version: rawAny.version ?? '1.0.0',
+    description: rawAny.description ?? 'ESO Scribing data',
+    lastUpdated: rawAny.lastUpdated,
+    grimoires,
+    focusScripts,
+    signatureScripts,
+    affixScripts,
+  } as ScribingData;
+}
 
 export class JsonScribingDataRepository implements IScribingDataRepository {
   private cachedData: ScribingData | null = null;
@@ -45,16 +153,13 @@ export class JsonScribingDataRepository implements IScribingDataRepository {
 
   private async fetchAndValidateData(): Promise<ScribingData> {
     try {
-      // Try to load the complete scribing data first
-      const response = await fetch(DATA_FILE_PATHS.SCRIBING_COMPLETE);
-      if (!response.ok) {
-        throw new Error(`Failed to fetch scribing data: ${response.status} ${response.statusText}`);
-      }
+      // The dataset is bundled with the app, so adapt the imported JSON directly
+      // (the previous runtime fetch of /data/scribing-complete.json 404'd in the
+      // built SPA — the file is not served from public/).
+      const adapted = adaptScribingData(scribingCompleteData);
 
-      const rawData = await response.json();
-
-      // Validate the data structure
-      const validatedData = validateScribingData(rawData);
+      // Validate the adapted structure.
+      const validatedData = validateScribingData(adapted);
 
       return validatedData;
     } catch (error) {

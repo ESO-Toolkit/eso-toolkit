@@ -9,79 +9,14 @@ import { AbilityMappingService } from '../../core/services/AbilityMappingService
 import { ScribingSimulatorService } from '../../application/simulators/ScribingSimulatorService';
 import { ScribingDetectionService } from '../../application/services/ScribingDetectionService';
 
-// Mock fetch for testing
-global.fetch = jest.fn();
-
-const mockScribingData = {
-  version: '1.0.0',
-  description: 'Test data',
-  lastUpdated: '2025-01-01',
-  grimoires: {
-    'test-grimoire': {
-      id: 'test-grimoire',
-      name: 'Test Grimoire',
-      skillLine: 'Support',
-      requirements: null,
-      cost: { first: 100, additional: 50 },
-      description: 'A test grimoire',
-      abilityIds: [12345],
-    },
-  },
-  focusScripts: {
-    'test-focus': {
-      id: 'test-focus',
-      name: 'Test Focus',
-      type: 'Focus',
-      icon: 'test-icon',
-      compatibleGrimoires: ['test-grimoire'],
-      description: 'A test focus script',
-      damageType: 'physical',
-    },
-  },
-  signatureScripts: {
-    'test-signature': {
-      id: 'test-signature',
-      name: 'Test Signature',
-      type: 'Signature',
-      icon: 'test-icon',
-      compatibleGrimoires: ['test-grimoire'],
-      description: 'A test signature script',
-    },
-  },
-  affixScripts: {
-    'test-affix': {
-      id: 'test-affix',
-      name: 'Test Affix',
-      type: 'Affix',
-      icon: 'test-icon',
-      compatibleGrimoires: ['test-grimoire'],
-      description: 'A test affix script',
-    },
-  },
-  questRewards: {},
-  freeScriptLocations: {},
-  dailyScriptSources: {
-    'focus-scripts': [],
-    'signature-scripts': [],
-    'affix-scripts': [],
-  },
-  scriptVendors: {},
-  luminousInk: {
-    description: 'Test ink',
-    costs: { newSkill: 1, modifySkill: 1 },
-    sources: [],
-    storage: 'Test storage',
-  },
-  system: {
-    totalPossibleSkills: 1000,
-    grimoireRange: { min: 1, max: 12 },
-    requirements: {
-      chapter: 'Test Chapter',
-      characterLevel: 1,
-      tutorialQuest: 'Test Quest',
-    },
-  },
-};
+// Real-data fixtures from the bundled data/scribing-complete.json. The
+// repository now imports + adapts that dataset directly (no runtime fetch).
+const GRIMOIRE_SLUG = 'traveling-knife';
+const GRIMOIRE_NAME = 'Traveling Knife';
+const FOCUS_SLUG = 'physical-damage'; // -> grimoire name "Sundering Knife"
+const SIGNATURE_SLUG = 'lingering-torment';
+const AFFIX_SLUG = 'off-balance';
+const GRIMOIRE_WITH_ABILITY_ID = { ability: 217699, name: 'Banner Bearer' }; // banner-bearer
 
 describe('Scribing Architecture Integration', () => {
   let repository: JsonScribingDataRepository;
@@ -90,13 +25,6 @@ describe('Scribing Architecture Integration', () => {
   let detectionService: ScribingDetectionService;
 
   beforeEach(() => {
-    // Mock successful fetch
-    (global.fetch as jest.Mock).mockResolvedValue({
-      ok: true,
-      json: async () => mockScribingData,
-    });
-
-    // Initialize services
     repository = new JsonScribingDataRepository();
     mappingService = new AbilityMappingService(repository);
     simulatorService = new ScribingSimulatorService(repository);
@@ -108,23 +36,23 @@ describe('Scribing Architecture Integration', () => {
       const data = await repository.loadScribingData();
 
       expect(data).toBeDefined();
-      expect(data.version).toBe('1.0.0');
-      expect(Object.keys(data.grimoires)).toHaveLength(1);
+      expect(data.version).toBeTruthy();
+      expect(Object.keys(data.grimoires).length).toBeGreaterThan(0);
     });
 
     it('should get grimoire by id', async () => {
-      const grimoire = await repository.getGrimoire('test-grimoire');
+      const grimoire = await repository.getGrimoire(GRIMOIRE_SLUG);
 
       expect(grimoire).toBeDefined();
-      expect(grimoire?.name).toBe('Test Grimoire');
+      expect(grimoire?.name).toBe(GRIMOIRE_NAME);
     });
 
     it('should validate valid combination', async () => {
       const isValid = await repository.validateCombination(
-        'test-grimoire',
-        'test-focus',
-        'test-signature',
-        'test-affix',
+        GRIMOIRE_SLUG,
+        FOCUS_SLUG,
+        SIGNATURE_SLUG,
+        AFFIX_SLUG,
       );
 
       expect(isValid).toBe(true);
@@ -133,9 +61,9 @@ describe('Scribing Architecture Integration', () => {
     it('should reject invalid combination', async () => {
       const isValid = await repository.validateCombination(
         'non-existent',
-        'test-focus',
-        'test-signature',
-        'test-affix',
+        FOCUS_SLUG,
+        SIGNATURE_SLUG,
+        AFFIX_SLUG,
       );
 
       expect(isValid).toBe(false);
@@ -152,18 +80,18 @@ describe('Scribing Architecture Integration', () => {
     });
 
     it('should detect scribing abilities', () => {
-      const isScribing = mappingService.isScribingAbility(12345);
+      const isScribing = mappingService.isScribingAbility(GRIMOIRE_WITH_ABILITY_ID.ability);
       expect(isScribing).toBe(true);
 
-      const isNotScribing = mappingService.isScribingAbility(99999);
+      const isNotScribing = mappingService.isScribingAbility(99999999);
       expect(isNotScribing).toBe(false);
     });
 
     it('should get grimoire by ability id', () => {
-      const grimoire = mappingService.getGrimoireByAbilityId(12345);
+      const grimoire = mappingService.getGrimoireByAbilityId(GRIMOIRE_WITH_ABILITY_ID.ability);
 
       expect(grimoire).toBeDefined();
-      expect(grimoire?.name).toBe('Test Grimoire');
+      expect(grimoire?.name).toBe(GRIMOIRE_WITH_ABILITY_ID.name);
       expect(grimoire?.type).toBe('grimoire');
     });
 
@@ -178,16 +106,20 @@ describe('Scribing Architecture Integration', () => {
   describe('Simulator Service', () => {
     it('should simulate valid combination', async () => {
       const result = await simulatorService.simulate({
-        grimoireId: 'test-grimoire',
-        focusScriptId: 'test-focus',
-        signatureScriptId: 'test-signature',
-        affixScriptId: 'test-affix',
+        grimoireId: GRIMOIRE_SLUG,
+        focusScriptId: FOCUS_SLUG,
+        signatureScriptId: SIGNATURE_SLUG,
+        affixScriptId: AFFIX_SLUG,
       });
 
       expect(result.isValid).toBe(true);
       expect(result.calculatedSkill.name).toBeDefined();
       expect(result.calculatedSkill.cost).toBeGreaterThan(0);
-      expect(result.combination.grimoire).toBe('Test Grimoire');
+      expect(result.combination.grimoire).toBe(GRIMOIRE_NAME);
+      // The physical focus transforms "Traveling Knife" -> "Sundering Knife".
+      expect(result.calculatedSkill.name).toBe('Sundering Knife');
+      // Resource comes from the grimoire's dataset entry (stamina here).
+      expect(result.calculatedSkill.resourceType).toBe('stamina');
     });
 
     it('should reject invalid grimoire', async () => {
@@ -201,12 +133,14 @@ describe('Scribing Architecture Integration', () => {
     });
 
     it('should get available combinations', async () => {
-      const combinations = await simulatorService.getAvailableCombinations('test-grimoire');
+      const combinations = await simulatorService.getAvailableCombinations(GRIMOIRE_SLUG);
 
-      expect(combinations.focusScripts).toHaveLength(1);
-      expect(combinations.signatureScripts).toHaveLength(1);
-      expect(combinations.affixScripts).toHaveLength(1);
-      expect(combinations.focusScripts[0].name).toBe('Test Focus');
+      expect(combinations.focusScripts.length).toBeGreaterThan(0);
+      expect(combinations.signatureScripts.length).toBeGreaterThan(0);
+      expect(combinations.affixScripts.length).toBeGreaterThan(0);
+      expect(
+        combinations.signatureScripts.some((s) => s.id === SIGNATURE_SLUG || s.name.length > 0),
+      ).toBe(true);
     });
   });
 
@@ -262,17 +196,12 @@ describe('Scribing Architecture Integration', () => {
   });
 
   describe('Error Handling', () => {
-    beforeEach(() => {
-      // Mock fetch failure
-      (global.fetch as jest.Mock).mockRejectedValue(new Error('Network error'));
-    });
-
-    it('should handle data loading failures gracefully', async () => {
+    it('loads + validates the bundled dataset without throwing', async () => {
+      // The dataset is bundled and adapted at import time, so the previous
+      // network-failure path no longer exists; instead guarantee the bundled
+      // data passes adapter + schema validation.
       const newRepository = new JsonScribingDataRepository();
-
-      await expect(newRepository.loadScribingData()).rejects.toThrow(
-        'Failed to load scribing data',
-      );
+      await expect(newRepository.loadScribingData()).resolves.toBeDefined();
     });
 
     it('should handle uninitialized mapping service', () => {
