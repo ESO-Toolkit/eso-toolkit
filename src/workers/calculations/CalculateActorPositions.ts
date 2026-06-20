@@ -15,9 +15,11 @@ import { Logger, LogLevel } from '../../utils/logger';
 import { resolveActorName } from '../../utils/resolveActorName';
 import { OnProgressCallback } from '../Utils';
 
-// Create logger instance for actor position calculations (worker context)
+// Create logger instance for actor position calculations (worker context). INFO so the one-line
+// multi-instance split summary surfaces (once per fight) — the signal for live-verifying that
+// previously-teleporting packs of adds now render as separate pucks. Warnings still pass through.
 const logger = new Logger({
-  level: LogLevel.WARN,
+  level: LogLevel.INFO,
   contextPrefix: 'ActorPositions',
 });
 
@@ -563,14 +565,39 @@ export function calculateActorPositions(
     }
   }
   const multiInstanceActors = new Set<number>();
+  let splitCopyCount = 0; // total pucks emitted for split NPCs (for observability)
   slotsByActor.forEach((slots, actorId) => {
-    if (slots.size >= 2) multiInstanceActors.add(actorId);
+    if (slots.size < 2) return;
+    // Safety: the synthetic render id is `actorId + slot * INSTANCE_STRIDE`, and baseActorIdOf reverses
+    // it with `% INSTANCE_STRIDE`. That round-trip is only exact while the real id is below the stride.
+    // Real ESO-Logs report actor ids are small sequential ints, so this never trips in practice; if a
+    // report ever exceeded it we keep the (merged) pre-fix behavior for that actor rather than risk a
+    // corrupted id, and log it.
+    if (actorId >= INSTANCE_STRIDE) {
+      logger.warn('Skipping multi-instance split for out-of-range actor id', {
+        actorId,
+        instanceStride: INSTANCE_STRIDE,
+      });
+      return;
+    }
+    multiInstanceActors.add(actorId);
+    splitCopyCount += slots.size;
   });
 
   // Map a (real actorId, raw instance) to the id under which its position history / death / event
   // times are keyed and the puck is rendered. Single-instance actors keep their real id verbatim.
   const resolveRenderId = (actorId: number, rawInstance: number | undefined): number =>
     multiInstanceActors.has(actorId) ? makeRenderId(actorId, rawInstance) : actorId;
+
+  // Observability: surface when the split actually fires. A fight with no multi-instance NPCs logs
+  // nothing (and behaves exactly as before); a trash pull logs how many NPC ids fanned out into how
+  // many pucks — the signal to look for when live-verifying that "teleporting adds" are now split.
+  if (multiInstanceActors.size > 0) {
+    logger.info('Split multi-instance NPCs into per-copy pucks', {
+      multiInstanceNpcs: multiInstanceActors.size,
+      totalCopies: splitCopyCount,
+    });
+  }
 
   // Collect position data from events
   for (const event of allEvents) {

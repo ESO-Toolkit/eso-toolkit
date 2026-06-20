@@ -9,7 +9,10 @@ import {
   createMockPlayersById,
   createMockActorsById,
 } from '../../test/utils/enhancedMockFactories';
-import { createMockDeathEvent } from '../../test/utils/combatLogMockFactories';
+import {
+  createMockDeathEvent,
+  createMockResourceChangeEvent,
+} from '../../test/utils/combatLogMockFactories';
 import { BuffLookupData } from '../../utils/BuffLookupUtils';
 
 import {
@@ -664,6 +667,103 @@ describe('calculateActorPositions', () => {
       const first = calculateActorPositions(task);
       const second = calculateActorPositions(task);
       expect(second.actorIds).toEqual(first.actorIds);
+    });
+
+    it('splits from resource events too (the densest position source)', () => {
+      // Enemy copies are most often located via periodic resourcechange ticks, not just damage.
+      const enemyResourceTicks = (
+        targetInstance: number,
+        pos: { x: number; y: number },
+        relTimes: number[],
+      ) =>
+        relTimes.map((rel) =>
+          createMockResourceChangeEvent({
+            timestamp: 1_000_000 + rel,
+            sourceID: PLAYER_ID,
+            sourceIsFriendly: true,
+            targetID: ENEMY_ID,
+            targetIsFriendly: false,
+            targetInstance,
+            sourceResources: createEnhancedMockResources(5235, 5410, 0),
+            targetResources: createEnhancedMockResources(pos.x, pos.y, 0),
+          }),
+        );
+
+      const events = createMockEvents();
+      events.resource = [
+        ...enemyResourceTicks(1, POS_A, dense),
+        ...enemyResourceTicks(2, POS_B, dense),
+      ];
+
+      const result = calculateActorPositions({
+        fight: baseFight(),
+        events,
+        playersById: createMockPlayersById(),
+        actorsById: createMockActorsById(),
+      });
+
+      expect(result.actorIds).toContain(ENEMY_ID);
+      expect(result.actorIds).toContain(ENEMY_ID + 2 * INSTANCE_STRIDE);
+      const actors = getAllActorPositionsAtTimestamp(result, 4000);
+      expect(actors.find((a) => a.id === ENEMY_ID)).toBeDefined();
+      expect(actors.find((a) => a.id === ENEMY_ID + 2 * INSTANCE_STRIDE)).toBeDefined();
+    });
+
+    it('populates baseActorId and instance on each split puck', () => {
+      const events = createMockEvents();
+      events.damage = [...enemyHits(1, POS_A, dense), ...enemyHits(2, POS_B, dense)];
+
+      const result = calculateActorPositions({
+        fight: baseFight(),
+        events,
+        playersById: createMockPlayersById(),
+        actorsById: createMockActorsById(),
+      });
+
+      const actors = getAllActorPositionsAtTimestamp(result, 4000);
+      const primary = actors.find((a) => a.id === ENEMY_ID);
+      const copy = actors.find((a) => a.id === ENEMY_ID + 2 * INSTANCE_STRIDE);
+      // Both decode back to the real report id; the slot distinguishes them.
+      expect(primary?.baseActorId).toBe(ENEMY_ID);
+      expect(primary?.instance).toBe(0);
+      expect(copy?.baseActorId).toBe(ENEMY_ID);
+      expect(copy?.instance).toBe(2);
+    });
+
+    it('splits {0,2} (skipped instance 1) into the primary plus the explicit copy', () => {
+      const events = createMockEvents();
+      events.damage = [...enemyHits(0, POS_A, dense), ...enemyHits(2, POS_B, dense)];
+
+      const result = calculateActorPositions({
+        fight: baseFight(),
+        events,
+        playersById: createMockPlayersById(),
+        actorsById: createMockActorsById(),
+      });
+
+      const enemyIds = (result.actorIds ?? [])
+        .filter((id) => id % INSTANCE_STRIDE === ENEMY_ID)
+        .sort((x, y) => x - y);
+      expect(enemyIds).toEqual([ENEMY_ID, ENEMY_ID + 2 * INSTANCE_STRIDE]);
+    });
+
+    it('does not split a co-present single-instance player when an enemy splits', () => {
+      const events = createMockEvents();
+      // Player 101 (always instance 0 as the source) hits two enemy copies.
+      events.damage = [...enemyHits(1, POS_A, dense), ...enemyHits(2, POS_B, dense)];
+
+      const result = calculateActorPositions({
+        fight: baseFight(),
+        events,
+        playersById: createMockPlayersById(),
+        actorsById: createMockActorsById(),
+      });
+
+      // The player keeps exactly one entry at its real id, never promoted to the synthetic band.
+      const playerIds = (result.actorIds ?? []).filter((id) => id % INSTANCE_STRIDE === PLAYER_ID);
+      expect(playerIds).toEqual([PLAYER_ID]);
+      const player = getAllActorPositionsAtTimestamp(result, 4000).find((a) => a.id === PLAYER_ID);
+      expect(player?.type).toBe('player');
     });
   });
 });
