@@ -106,6 +106,12 @@ export const HashRouteRedirect: React.FC = () => {
     if (hash && hash.startsWith('#/')) {
       // Extract the path after #/
       const hashPath = hash.substring(1); // Remove the # to get /path
+      // Validate before navigating — `#/` still admits protocol-relative
+      // values like `#//evil.com` (hashPath === `//evil.com`), the exact
+      // open-redirect case the other two branches already guard against.
+      if (!isValidRedirectPath(hashPath)) {
+        return;
+      }
       // Remove the hash from URL and navigate to the clean path (safe history operation)
       safeHistoryReplaceState({}, '', window.location.pathname);
       navigate(hashPath, { replace: true });
