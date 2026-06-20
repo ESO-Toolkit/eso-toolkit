@@ -34,7 +34,7 @@ import {
   type CSPSSkillData,
 } from '../../loadout-manager/utils/cspsConverter';
 import { parseLuaSavedVariables } from '../../loadout-manager/utils/luaParser';
-import { getDefaultLinesForClass, EQUIP_SLOTS } from '../data/esoStaticData';
+import { EQUIP_SLOTS } from '../data/esoStaticData';
 import { esoTypeToArmorWeight } from '../data/setArmorWeights';
 import type {
   Build,
@@ -52,6 +52,7 @@ import {
   isCSPSNativeCode,
   parseCSPSExportCode,
   parseCSPSNativeCode,
+  parseSubclassLines,
 } from './cspsExportCodeParser';
 
 const logger = new Logger({ contextPrefix: 'CSPSImport' });
@@ -622,8 +623,13 @@ export function convertCSPSCharacterToBuild(character: CSPSCharacterOption): Bui
   const comp1 = decompressComp1(character.data.comp1);
   const role: CombatRole = comp1?.role ? cspsRoleToCombatRole(comp1.role) : 'magicka-dps';
 
-  // Default class skill lines for the detected class
-  const classSkillLines = getDefaultLinesForClass(detectedClass);
+  // Honor any subclass lines CSPS records in werte.scribeStyleSubclass
+  // (crafted*styles*subclasses) so a subclassed import decodes as subclassed —
+  // otherwise the retained Class Mastery picks lifted above would be wrongly
+  // treated as active by the eligibility-gated stats/export. Empty → class
+  // defaults (non-subclassed), unchanged from before.
+  const subclassStr = (character.data.werte?.scribeStyleSubclass ?? '').split('*')[2] ?? '';
+  const classSkillLines = parseSubclassLines(subclassStr, detectedClass);
 
   return {
     id: uuidv4(),

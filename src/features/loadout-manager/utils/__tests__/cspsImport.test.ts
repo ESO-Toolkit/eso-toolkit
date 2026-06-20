@@ -2,6 +2,7 @@
  * @jest-environment jsdom
  */
 
+import { isClassMasteryEligible } from '../../../build-editor/utils/classMasteryEligibility';
 import {
   parseCSPSInput,
   convertCSPSCharacterToBuild,
@@ -386,6 +387,20 @@ describe('cspsImport', () => {
       expect(build.classMasteryPassives).toEqual([238232, 240268]);
       expect(build.setups[0].passives).toEqual([400]);
       expect(build.setups[1].passives).toEqual([]); // CM stripped from the profile too
+    });
+
+    it('decodes subclass lines from werte.scribeStyleSubclass so retained CM picks stay gated', () => {
+      const char = makeCSPSCharacterOption({
+        werte: {
+          prog: { part1: '20657:1' }, // DK active skill
+          pass: { part1: '238232:1' }, // retained DK Class Mastery id
+          scribeStyleSubclass: '-*-*39', // crafted*styles*subclasses; 39 = Nightblade Shadow
+        },
+      });
+      const build = convertCSPSCharacterToBuild(char);
+      // an off-class subclass line means the build is subclassed → CM disabled
+      expect(build.classSkillLines).toContain('class.shadow');
+      expect(isClassMasteryEligible(build.esoClass, build.classSkillLines)).toBe(false);
     });
 
     it('treats Class Mastery ids as the base class over off-class active skills', () => {

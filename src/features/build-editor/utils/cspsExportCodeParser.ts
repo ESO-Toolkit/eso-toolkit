@@ -188,10 +188,12 @@ const ESO_SKILL_LINE_MAP: Record<number, ClassSkillLineId> = {
 };
 
 /**
- * Parse subclass skill line IDs from section 7 and map to ClassSkillLineId.
- * Returns [line1, line2, line3] or nulls if IDs are unknown.
+ * Parse subclass skill line IDs from a comma-separated id string and map to
+ * ClassSkillLineId. Returns [line1, line2, line3], or the class defaults when
+ * the string is empty/unknown. Shared with the SavedVariables import, which
+ * sources the ids from `werte.scribeStyleSubclass`.
  */
-function parseSubclassLines(
+export function parseSubclassLines(
   subclassStr: string,
   fallbackClass: ESOClass,
 ): [ClassSkillLineId | null, ClassSkillLineId | null, ClassSkillLineId | null] {
