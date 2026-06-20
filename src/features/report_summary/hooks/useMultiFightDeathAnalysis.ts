@@ -110,9 +110,21 @@ export function useMultiFightDeathAnalysis(reportCode: string): UseMultiFightDea
           }),
       );
 
-      await Promise.all(fetchPromises);
+      // Use allSettled so one fight's failed fetch doesn't blank the entire
+      // report's death analysis — proceed with whatever loaded, and only fail
+      // hard if every fight failed.
+      const settled = await Promise.allSettled(fetchPromises);
+      if (settled.every((r) => r.status === 'rejected')) {
+        const firstReason = settled.find((r) => r.status === 'rejected') as
+          | PromiseRejectedResult
+          | undefined;
+        throw firstReason?.reason instanceof Error
+          ? firstReason.reason
+          : new Error('Failed to load death events for any fight');
+      }
 
-      // Now that all events are cached in Redux, retrieve them along with master data
+      // Now that the available events are cached in Redux, retrieve them along
+      // with master data (fights whose fetch failed simply contribute no deaths)
       const state = (dispatch as any).getState() as RootState;
 
       const fightDeathData: DeathAnalysisInput[] = cleanFights.map((fight) => {
