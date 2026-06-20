@@ -35,6 +35,7 @@ const EnhancedDeathAnalysisSection = React.lazy(() =>
 );
 
 import { useOptimizedReportSummaryData } from './hooks/useOptimizedReportSummaryData';
+import { chipPillSx, SEMANTIC_ACCENTS } from './summaryStyles';
 
 export const ReportSummaryPage: React.FC = () => {
   const { reportId } = useParams<{ reportId: string }>();
@@ -164,21 +165,35 @@ const ReportSummaryHeader: React.FC<ReportSummaryHeaderProps> = ({
           <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap', alignItems: 'center' }}>
             <Chip
               label={`${summaryData?.fights.length || 0} Fights`}
-              color="primary"
-              variant="outlined"
               size="small"
+              sx={(theme) => chipPillSx(theme.palette.mode === 'dark', SEMANTIC_ACCENTS.cyan)}
             />
             {reportData?.zone?.name && (
-              <Chip label={reportData.zone.name} size="small" color="secondary" />
+              <Chip
+                label={reportData.zone.name}
+                size="small"
+                sx={(theme) => chipPillSx(theme.palette.mode === 'dark', SEMANTIC_ACCENTS.violet)}
+              />
             )}
             {summaryData?.reportInfo.duration && (
-              <Chip label={formatDuration(summaryData.reportInfo.duration)} size="small" />
+              <Chip
+                label={formatDuration(summaryData.reportInfo.duration)}
+                size="small"
+                sx={(theme) => chipPillSx(theme.palette.mode === 'dark', SEMANTIC_ACCENTS.slate)}
+              />
             )}
             {summaryData?.deathAnalysis.totalDeaths !== undefined && (
               <Chip
                 label={`${summaryData.deathAnalysis.totalDeaths} Total Deaths`}
                 size="small"
-                color={summaryData.deathAnalysis.totalDeaths === 0 ? 'success' : 'warning'}
+                sx={(theme) =>
+                  chipPillSx(
+                    theme.palette.mode === 'dark',
+                    summaryData.deathAnalysis.totalDeaths === 0
+                      ? SEMANTIC_ACCENTS.green
+                      : SEMANTIC_ACCENTS.coral,
+                  )
+                }
               />
             )}
             {summaryData?.reportInfo && (

@@ -146,6 +146,43 @@ export function metricPillSx(dark: boolean, accentRgb: string): SystemStyleObjec
   };
 }
 
+/** Semantic accent triplets for status chips/pills. */
+export const SEMANTIC_ACCENTS = {
+  cyan: '56, 189, 248',
+  amber: '251, 191, 36',
+  coral: '248, 113, 113',
+  green: '74, 222, 128',
+  violet: '129, 140, 248',
+  slate: '148, 163, 184',
+} as const;
+
+/** Death-mechanic category → accent triplet (ties the category chips to the palette). */
+export const CATEGORY_ACCENTS: Record<string, string> = {
+  'Direct Damage': SEMANTIC_ACCENTS.amber,
+  'Burst Damage': SEMANTIC_ACCENTS.coral,
+  'Execute Phase': SEMANTIC_ACCENTS.coral,
+  'Area Effect': SEMANTIC_ACCENTS.violet,
+  'Damage Over Time': SEMANTIC_ACCENTS.green,
+  Environmental: SEMANTIC_ACCENTS.cyan,
+  'Player Ability': SEMANTIC_ACCENTS.violet,
+  Other: SEMANTIC_ACCENTS.slate,
+};
+
+/** A compact gradient pill for inline status/label chips (apply to a MUI Chip's sx). */
+export function chipPillSx(dark: boolean, accentRgb: string): SystemStyleObject<Theme> {
+  return {
+    fontWeight: 700,
+    fontSize: '0.72rem',
+    letterSpacing: '0.02em',
+    color: `rgb(${accentRgb})`,
+    border: `1px solid rgba(${accentRgb}, ${dark ? 0.42 : 0.36})`,
+    background: dark
+      ? `linear-gradient(135deg, rgba(${accentRgb}, 0.22) 0%, rgba(${accentRgb}, 0.08) 100%)`
+      : `linear-gradient(135deg, rgba(${accentRgb}, 0.16) 0%, rgba(${accentRgb}, 0.05) 100%)`,
+    '& .MuiChip-label': { fontWeight: 700 },
+  };
+}
+
 /** Hover accent (tint + left rail) for an interactive list row. */
 export function listRowHoverSx(dark: boolean, accentRgb: string): SystemStyleObject<Theme> {
   return {

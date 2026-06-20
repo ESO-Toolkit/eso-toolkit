@@ -42,14 +42,16 @@ import React from 'react';
 import { glassCardSurfaceSx, SUMMARY_ACCENTS } from '../../theme/glassCardSurface';
 import {
   ReportDeathAnalysis,
-  MechanicCategory,
   DeathPatternType,
   FightDeathAnalysis,
 } from '../../types/reportSummaryTypes';
 
 import {
   accentTableSx,
+  CATEGORY_ACCENTS,
+  chipPillSx,
   gradientTitleSx,
+  SEMANTIC_ACCENTS,
   sectionIconBadgeSx,
   statLabelSx,
   statTileSx,
@@ -337,13 +339,22 @@ const EnhancedDeathAnalysisSectionComponent: React.FC<EnhancedDeathAnalysisSecti
                           Affected players:
                         </Typography>
                         {pattern.affectedPlayers.slice(0, 5).map((player, index) => (
-                          <Chip key={`${player}-${index}`} label={player} size="small" />
+                          <Chip
+                            key={`${player}-${index}`}
+                            label={player}
+                            size="small"
+                            sx={(theme) =>
+                              chipPillSx(theme.palette.mode === 'dark', SEMANTIC_ACCENTS.slate)
+                            }
+                          />
                         ))}
                         {pattern.affectedPlayers.length > 5 && (
                           <Chip
                             label={`+${pattern.affectedPlayers.length - 5} more`}
                             size="small"
-                            variant="outlined"
+                            sx={(theme) =>
+                              chipPillSx(theme.palette.mode === 'dark', SEMANTIC_ACCENTS.slate)
+                            }
                           />
                         )}
                       </Box>
@@ -406,8 +417,10 @@ const EnhancedDeathAnalysisSectionComponent: React.FC<EnhancedDeathAnalysisSecti
                           <Chip
                             label={mechanic.totalDeaths}
                             size="small"
-                            color="error"
-                            sx={{ minWidth: 40 }}
+                            sx={(theme) => ({
+                              ...chipPillSx(theme.palette.mode === 'dark', SEMANTIC_ACCENTS.coral),
+                              minWidth: 40,
+                            })}
                           />
                         </TableCell>
                         <TableCell align="right">
@@ -419,8 +432,12 @@ const EnhancedDeathAnalysisSectionComponent: React.FC<EnhancedDeathAnalysisSecti
                           <Chip
                             label={mechanic.category}
                             size="small"
-                            color={getCategoryColor(mechanic.category)}
-                            sx={{ fontSize: '0.7rem' }}
+                            sx={(theme) =>
+                              chipPillSx(
+                                theme.palette.mode === 'dark',
+                                CATEGORY_ACCENTS[mechanic.category] ?? SEMANTIC_ACCENTS.slate,
+                              )
+                            }
                           />
                         </TableCell>
                         <TableCell align="right">
@@ -511,12 +528,15 @@ const EnhancedDeathAnalysisSectionComponent: React.FC<EnhancedDeathAnalysisSecti
                           <Chip
                             label={player.totalDeaths}
                             size="small"
-                            color={
-                              player.totalDeaths === 0
-                                ? 'success'
-                                : player.totalDeaths >= 3
-                                  ? 'error'
-                                  : 'warning'
+                            sx={(theme) =>
+                              chipPillSx(
+                                theme.palette.mode === 'dark',
+                                player.totalDeaths === 0
+                                  ? SEMANTIC_ACCENTS.green
+                                  : player.totalDeaths >= 3
+                                    ? SEMANTIC_ACCENTS.coral
+                                    : SEMANTIC_ACCENTS.amber,
+                              )
                             }
                           />
                         </TableCell>
@@ -605,12 +625,24 @@ const EnhancedDeathAnalysisSectionComponent: React.FC<EnhancedDeathAnalysisSecti
                               <Chip
                                 label={`${fight.totalDeaths} deaths`}
                                 size="small"
-                                color={fight.totalDeaths === 0 ? 'success' : 'error'}
+                                sx={(theme) =>
+                                  chipPillSx(
+                                    theme.palette.mode === 'dark',
+                                    fight.totalDeaths === 0
+                                      ? SEMANTIC_ACCENTS.green
+                                      : SEMANTIC_ACCENTS.coral,
+                                  )
+                                }
                               />
                               <Chip
                                 label={fight.success ? 'Kill' : 'Wipe'}
                                 size="small"
-                                color={fight.success ? 'success' : 'error'}
+                                sx={(theme) =>
+                                  chipPillSx(
+                                    theme.palette.mode === 'dark',
+                                    fight.success ? SEMANTIC_ACCENTS.green : SEMANTIC_ACCENTS.coral,
+                                  )
+                                }
                               />
                             </Box>
                           </AccordionSummary>
@@ -663,12 +695,26 @@ const EnhancedDeathAnalysisSectionComponent: React.FC<EnhancedDeathAnalysisSecti
                                 <Chip
                                   label={`${fight.totalDeaths} deaths`}
                                   size="small"
-                                  color={fight.totalDeaths === 0 ? 'success' : 'error'}
+                                  sx={(theme) =>
+                                    chipPillSx(
+                                      theme.palette.mode === 'dark',
+                                      fight.totalDeaths === 0
+                                        ? SEMANTIC_ACCENTS.green
+                                        : SEMANTIC_ACCENTS.coral,
+                                    )
+                                  }
                                 />
                                 <Chip
                                   label={fight.success ? 'Clear' : 'Wipe'}
                                   size="small"
-                                  color={fight.success ? 'success' : 'error'}
+                                  sx={(theme) =>
+                                    chipPillSx(
+                                      theme.palette.mode === 'dark',
+                                      fight.success
+                                        ? SEMANTIC_ACCENTS.green
+                                        : SEMANTIC_ACCENTS.coral,
+                                    )
+                                  }
                                 />
                               </Box>
                             </AccordionSummary>
@@ -705,27 +751,6 @@ const EnhancedDeathAnalysisSectionComponent: React.FC<EnhancedDeathAnalysisSecti
 };
 
 // Helper functions
-function getCategoryColor(
-  category: MechanicCategory,
-): 'primary' | 'secondary' | 'error' | 'warning' | 'info' | 'success' {
-  switch (category) {
-    case MechanicCategory.AREA_EFFECT:
-      return 'warning';
-    case MechanicCategory.BURST_DAMAGE:
-      return 'error';
-    case MechanicCategory.EXECUTE_PHASE:
-      return 'error';
-    case MechanicCategory.DAMAGE_OVER_TIME:
-      return 'info';
-    case MechanicCategory.ENVIRONMENTAL:
-      return 'secondary';
-    case MechanicCategory.DIRECT_DAMAGE:
-      return 'primary';
-    default:
-      return 'primary';
-  }
-}
-
 function getPatternTypeLabel(type: DeathPatternType): string {
   return type.replace(/_/g, ' ');
 }
