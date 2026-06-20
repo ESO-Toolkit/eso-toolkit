@@ -1281,22 +1281,25 @@ export function analyzeWeaving(
   let weaveTimingCount = 0;
   const castDetails: CastDetail[] = [];
 
-  skillCasts.forEach((castEvent) => {
-    // Find the immediately preceding cast, skipping excluded abilities (weapon swaps and synergies)
-    let precedingCast: UnifiedCastEvent | null = null;
-    const currentIndex = playerCasts.indexOf(castEvent);
+  // Walk playerCasts once, carrying the previous non-excluded cast as we go,
+  // instead of calling playerCasts.indexOf() per skill (which was O(numSkills × numPlayerCasts)).
+  // playerCasts is already filtered to exclude weapon swaps and synergies (see above), so the
+  // immediately preceding cast is simply the prior element in playerCasts. This preserves the
+  // original backward-skip semantics because no excluded ability can appear in playerCasts.
+  let runningPrecedingCast: UnifiedCastEvent | null = null;
+  playerCasts.forEach((castEvent) => {
+    const precedingCast = runningPrecedingCast;
+    // This cast becomes the preceding cast for the next iteration.
+    runningPrecedingCast = castEvent;
 
-    for (let i = currentIndex - 1; i >= 0; i--) {
-      const cast = playerCasts[i];
-      // Skip excluded abilities (weapon swaps and synergies)
-      if (
-        cast.abilityGameID === KnownAbilities.SWAP_WEAPONS ||
-        SYNERGY_ABILITY_IDS.has(cast.abilityGameID)
-      ) {
-        continue;
-      }
-      precedingCast = cast;
-      break;
+    // Only skill casts contribute to the weave analysis (mirror the skillCasts filter).
+    const isSkillCast =
+      !LIGHT_ATTACK_ABILITY_IDS.has(castEvent.abilityGameID) &&
+      !HEAVY_ATTACK_ABILITY_IDS.has(castEvent.abilityGameID) &&
+      castEvent.abilityGameID !== KnownAbilities.SWAP_WEAPONS &&
+      !SYNERGY_ABILITY_IDS.has(castEvent.abilityGameID);
+    if (!isSkillCast) {
+      return;
     }
 
     // Determine if this is a proper weave (light attack immediately before skill)
