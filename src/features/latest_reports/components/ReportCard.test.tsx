@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 
 import type { UserReportSummaryFragment } from '../../../graphql/gql/graphql';
 import { ReportCard } from './ReportCard';
@@ -58,5 +58,28 @@ describe('ReportCard', () => {
     const onSelect = jest.fn();
     render(<ReportCard report={report} onSelect={onSelect} />);
     expect(screen.queryByText('Empty')).not.toBeInTheDocument();
+  });
+
+  it('renders the zone name in the identity pill', () => {
+    const onSelect = jest.fn();
+    render(<ReportCard report={report} onSelect={onSelect} />);
+    expect(screen.getByText('Rockgrove')).toBeInTheDocument();
+  });
+
+  it('copies the share code without triggering navigation', async () => {
+    const onSelect = jest.fn();
+    const writeText = jest.fn().mockResolvedValue(undefined);
+    Object.assign(navigator, { clipboard: { writeText } });
+
+    render(<ReportCard report={report} onSelect={onSelect} />);
+    const copyButton = screen.getByRole('button', { name: /copy share code/i });
+    // Wrap in act so the resolved-clipboard "copied" state update flushes.
+    await act(async () => {
+      fireEvent.click(copyButton);
+    });
+
+    expect(writeText).toHaveBeenCalledWith('XYZ123');
+    // The copy button must not bubble up to the card link.
+    expect(onSelect).not.toHaveBeenCalled();
   });
 });
