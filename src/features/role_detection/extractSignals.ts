@@ -91,6 +91,9 @@ export function extractSignals(
   // --- Pass 3: Healing output ---
   const groupTotalHealing = extractHealingSignals(events.healEvents, playerSignals, context);
 
+  // --- Pass 3b: Damage shields applied to allies ---
+  extractShieldSignals(events.healEvents, playerSignals, context);
+
   // --- Pass 4: Damage taken ---
   const groupTotalDamageTaken = extractDamageTakenSignals(
     events.damageEvents,
@@ -305,6 +308,62 @@ function extractHealingSignals(
   }
 
   return groupTotal;
+}
+
+// ============================================================
+// Damage Shield Signals
+// ============================================================
+
+/**
+ * Estimate how much damage-shield (absorb) value each player granted to OTHER
+ * allies. This drives the Shield Healer classification.
+ *
+ * ESO Logs does not emit a dedicated "shield applied" event, and the set of
+ * damage-shield ability IDs is large, version-volatile, and mostly self-only,
+ * so matching on a hardcoded ability-ID list is unreliable. Instead we use the
+ * one signal that is actually present in the event stream and is correctly
+ * source-attributed: heal events carry the recipient's current absorb pool in
+ * `targetResources.absorb`. When a player casts a shield on an ally, that ally's
+ * absorb pool rises on the same heal event, and the event names the caster as
+ * `sourceID`. We therefore credit the source with any increase in the target's
+ * absorb pool observed on a heal event the source produced on another ally.
+ *
+ * Only increases are counted (absorb naturally decays as it soaks damage, which
+ * is not a shield application), and self-heals are ignored so a player shielding
+ * only themselves is not mistaken for a group shield healer.
+ */
+function extractShieldSignals(
+  healEvents: HealEvent[],
+  playerSignals: Map<number, PlayerRoleSignals>,
+  context: FightContext,
+): void {
+  // Process in timestamp order so the per-target "previous absorb" baseline is
+  // chronologically correct even if the caller passes unsorted events.
+  const sorted = [...healEvents]
+    .filter((e) => e.fight === context.fightId)
+    .sort((a, b) => a.timestamp - b.timestamp);
+
+  // Most-recent observed absorb pool per target (across ALL heal events to that
+  // target, regardless of source) so we measure true increases.
+  const lastAbsorbByTarget = new Map<number, number>();
+
+  for (const event of sorted) {
+    const currentAbsorb = event.targetResources?.absorb ?? 0;
+    const previousAbsorb = lastAbsorbByTarget.get(event.targetID) ?? 0;
+    lastAbsorbByTarget.set(event.targetID, currentAbsorb);
+
+    // Only friendly source applying to a DIFFERENT ally counts as a group shield.
+    if (!event.sourceIsFriendly) continue;
+    if (event.sourceID === event.targetID) continue;
+
+    const signals = playerSignals.get(event.sourceID);
+    if (!signals) continue;
+
+    const increase = currentAbsorb - previousAbsorb;
+    if (increase > 0) {
+      signals.shieldAppliedToOthers += increase;
+    }
+  }
 }
 
 // ============================================================

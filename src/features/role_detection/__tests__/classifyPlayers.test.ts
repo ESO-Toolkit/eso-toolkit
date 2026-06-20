@@ -349,6 +349,30 @@ describe('classifyPlayers', () => {
       expect(healer.role).toBe(DetectedRole.ShieldHealer);
     });
 
+    it('should detect Shield Healer from shieldAppliedToOthers alone (no barrier)', () => {
+      // A damage-shield healer with a shield set but no Barrier ultimate scores
+      // exactly 15 on shieldScore (set only), which is NOT > 15 → would be
+      // mislabeled GroupHealer. Populating shieldAppliedToOthers (+10) pushes it
+      // to 25 → ShieldHealer. This guards the previously-unpopulated signal.
+      const signals = [
+        createSignals({
+          playerId: 1,
+          healingShareOfGroup: 0.3,
+          healerSetIds: [194], // Combat Physician (shield healer set)
+          barrierCasts: 0,
+          shieldAppliedToOthers: 80000, // shields cast on allies
+          damageShareOfGroup: 0.02,
+        }),
+        createSignals({ playerId: 2, damageShareOfGroup: 0.49, dpsSetIds: [389] }),
+        createSignals({ playerId: 3, damageShareOfGroup: 0.49, dpsSetIds: [389] }),
+      ];
+
+      const results = classifyPlayers(signals, FIGHT_DURATION_MS);
+
+      const healer = results.find((r) => r.playerId === 1)!;
+      expect(healer.role).toBe(DetectedRole.ShieldHealer);
+    });
+
     it('should detect Buff Healer with >= 2 offensive buff categories', () => {
       const signals = [
         createSignals({
