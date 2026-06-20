@@ -48,6 +48,13 @@ const SHORT_DAYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'] as const;
 
 const DEFAULT_TIMEZONE = 'America/New_York';
 
+/**
+ * TTL for direct-publish KV entries (mapping, roster-data, roster-meta). A
+ * refresh re-applies it so an actively-used direct roster keeps a sliding
+ * 90-day window and all of its keys expire together.
+ */
+const DIRECT_TTL = 60 * 60 * 24 * 90; // 90 days
+
 /** Get the day-of-week and hour for a Date in a specific IANA timezone. */
 function getDatePartsInTz(date: Date, tz: string): { dayOfWeek: number; hour: number } {
   const dayFmt = new Intl.DateTimeFormat('en-US', { timeZone: tz, weekday: 'short' });
@@ -195,15 +202,15 @@ export interface PublishResult {
 
 export async function publishRoster(env: Env, req: PublishRequest): Promise<PublishResult> {
   // 0. Acquire publish lock to prevent concurrent channel creation
-  const locked = await acquirePublishLock(env, req.guildId, req.rosterId);
-  if (!locked) {
+  const token = await acquirePublishLock(env, req.guildId, req.rosterId);
+  if (!token) {
     return { ok: false, error: 'A publish is already in progress for this roster. Please wait.' };
   }
 
   try {
     return await doPublishRoster(env, req);
   } finally {
-    await releasePublishLock(env, req.guildId, req.rosterId);
+    await releasePublishLock(env, req.guildId, req.rosterId, token);
   }
 }
 
@@ -253,6 +260,8 @@ async function doPublishRoster(env: Env, req: PublishRequest): Promise<PublishRe
       channelName,
       categoryId,
       req.eventTime,
+      true,
+      config.defaultChannelId,
     );
     if (!refreshed.ok) return refreshed;
     channelId = refreshed.channelId!;
@@ -407,6 +416,7 @@ export async function refreshRoster(
       mapping.categoryId,
       undefined,
       allowRecreate,
+      config.defaultChannelId,
     );
 
     if (result.ok) {
@@ -416,7 +426,29 @@ export async function refreshRoster(
         channelId: result.channelId ?? mapping.channelId,
         updatedAt: new Date().toISOString(),
       };
-      await upsertMapping(env, updated);
+      // Direct-publish rosters live only in KV; re-apply the TTL on every
+      // refresh so the mapping, data, and meta keep a sliding 90-day window
+      // and expire together instead of the mapping outliving the data.
+      const isDirect = rosterId.startsWith('direct-');
+      await upsertMapping(env, updated, isDirect ? DIRECT_TTL : undefined);
+      if (isDirect) {
+        await Promise.all([
+          env.ROSTERS.put(`${KV_PREFIX.ROSTER_DATA}:${rosterId}`, snapshot.roster_data, {
+            expirationTtl: DIRECT_TTL,
+          }),
+          env.ROSTERS.put(
+            `${KV_PREFIX.ROSTER_META}:${rosterId}`,
+            JSON.stringify({
+              title: snapshot.title,
+              description: snapshot.description,
+              trial_id: snapshot.trial_id,
+              author_name: snapshot.author_name,
+              tags: snapshot.tags,
+            } satisfies DirectRosterMeta),
+            { expirationTtl: DIRECT_TTL },
+          ),
+        ]);
+      }
       refreshedCount++;
     } else {
       lastError = result.error;
@@ -464,17 +496,19 @@ export async function publishDirect(env: Env, req: DirectPublishRequest): Promis
   // Acquire lock keyed on the *content* (not the random synthetic ID): a rapid
   // double-click sends two identical requests that would each mint a different
   // synthetic ID, so locking on the ID would never collide and both would
-  // create a channel. Hashing the payload makes duplicate submissions contend.
+  // create a channel. Hashing the payload makes duplicate submissions contend
+  // on a best-effort basis (KV has no compare-and-swap, so a true simultaneous
+  // race can still admit two — this only narrows the double-submit window).
   const lockKey = await contentLockKey(req);
-  const locked = await acquirePublishLock(env, req.guildId, lockKey);
-  if (!locked) {
+  const token = await acquirePublishLock(env, req.guildId, lockKey);
+  if (!token) {
     return { ok: false, error: 'A publish is already in progress for this roster. Please wait.' };
   }
 
   try {
     return await doPublishDirect(env, req, syntheticId);
   } finally {
-    await releasePublishLock(env, req.guildId, lockKey);
+    await releasePublishLock(env, req.guildId, lockKey, token);
   }
 }
 
@@ -512,8 +546,6 @@ async function doPublishDirect(
   req: DirectPublishRequest,
   syntheticId: string,
 ): Promise<PublishResult> {
-  const DIRECT_TTL = 60 * 60 * 24 * 90; // 90 days
-
   const snapshot: RosterSnapshot = {
     id: syntheticId,
     title: req.title,
@@ -645,6 +677,7 @@ async function refreshExistingMapping(
   categoryId?: string,
   eventTime?: string,
   allowRecreate = true,
+  defaultChannelId?: string,
 ): Promise<InternalRefreshResult> {
   const text = buildRosterText(snapshot, decoded, eventTime);
   const chunks = splitMessages(text);
@@ -663,24 +696,37 @@ async function refreshExistingMapping(
       }
       return { ok: true, channelId: mapping.channelId, messageId: mapping.messageId };
     } catch (err) {
-      console.warn('[refresh] edit failed, will delete and re-post:', err);
+      console.warn('[refresh] edit failed, will re-post:', err);
     }
   }
 
-  // Delete old messages, then re-post fresh
-  for (const id of oldMessageIds) {
-    try {
-      await deleteMessage(env, mapping.channelId, id);
-    } catch {
-      // Message may already be deleted — ignore
-    }
-  }
-
+  // Re-post path: post the NEW messages first, and only delete the OLD ones
+  // once the new post fully succeeds. This avoids a window where the old
+  // messages are gone but the new ones are incomplete; sendRosterMessages
+  // self-cleans its own partial posts on failure, so nothing is leaked.
   try {
     const messageIds = await sendRosterMessages(env, mapping.channelId, chunks, components);
+    for (const id of oldMessageIds) {
+      try {
+        await deleteMessage(env, mapping.channelId, id);
+      } catch {
+        // Old message may already be deleted — ignore.
+      }
+    }
     return { ok: true, channelId: mapping.channelId, messageId: messageIds };
   } catch (err) {
     console.warn('[refresh] re-post to existing channel failed:', err);
+  }
+
+  // Posting to the existing channel failed. If the roster was consolidated into
+  // the guild's configured default channel, never silently create a new
+  // per-roster channel — that would migrate it out of the default channel on a
+  // transient failure. Leave the mapping intact so it recovers once access does.
+  if (defaultChannelId && mapping.channelId === defaultChannelId) {
+    return {
+      ok: false,
+      error: 'Failed to post into the configured default channel. Check the bot has access to it.',
+    };
   }
 
   // The channel/messages are gone. Only recreate for user-initiated refreshes —
@@ -721,15 +767,28 @@ async function sendRosterMessages(
   components: DiscordComponent[],
 ): Promise<string> {
   const ids: string[] = [];
-  for (let i = 0; i < chunks.length; i++) {
-    const isLast = i === chunks.length - 1;
-    const msg = await sendMessage(env, channelId, {
-      content: chunks[i],
-      ...(isLast ? { components } : {}),
-    });
-    ids.push(msg.id);
+  try {
+    for (let i = 0; i < chunks.length; i++) {
+      const isLast = i === chunks.length - 1;
+      const msg = await sendMessage(env, channelId, {
+        content: chunks[i],
+        ...(isLast ? { components } : {}),
+      });
+      ids.push(msg.id);
+    }
+    return ids.join(',');
+  } catch (err) {
+    // Best-effort cleanup: a mid-sequence failure must not leak the messages
+    // already posted (callers treat a throw as a fully failed post).
+    for (const id of ids) {
+      try {
+        await deleteMessage(env, channelId, id);
+      } catch {
+        // ignore
+      }
+    }
+    throw err;
   }
-  return ids.join(',');
 }
 
 // ── Post roster into an existing channel ────────────────────────────────────

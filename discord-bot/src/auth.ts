@@ -140,8 +140,12 @@ export async function verifyHttpCaller(
     return {
       authorized: false,
       userId: me.id,
-      error:
-        'No allowed roles are configured for this server. Only server admins can publish until a role is set up with /roster config set-role.',
+      // Tailor the message to the requested tier: admin-tier callers (e.g. config
+      // writes) get an accurate "Manage Server required" message rather than the
+      // publish-oriented "set up a role" hint.
+      error: opts.requireManageGuild
+        ? 'Manage Server (MANAGE_GUILD) permission is required for this action.'
+        : 'No allowed roles are configured for this server. Only server admins can publish until a role is set up with /roster config set-role.',
     };
   }
 

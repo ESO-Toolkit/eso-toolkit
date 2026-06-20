@@ -53,3 +53,33 @@ describe('decodeRosterData — composition', () => {
     await expect(decodeRosterData(data)).rejects.toThrow(/Unsupported roster version/);
   });
 });
+
+describe('decodeRosterData — gear sets', () => {
+  it('keeps a DPS slot whose only gear is in additionalSets (no primary set)', async () => {
+    // 575 = Pale Order, 658 = Oakensoul Ring — a mythic-only DD.
+    const data = await encodeRoster({ v: 3, dp: [{ sn: 1, as: [575, 658] }] });
+    const decoded = await decodeRosterData(data);
+    expect(decoded.dps[0]?.sets).toEqual(['Pale Order', 'Oakensoul Ring']);
+  });
+
+  it('still merges additionalSets after the primary sets when both are present', async () => {
+    const data = await encodeRoster({ v: 3, dp: [{ sn: 1, s1: 80, s2: 292, as: [575] }] });
+    const decoded = await decodeRosterData(data);
+    expect(decoded.dps[0]?.sets).toEqual(["Hunding's Rage", "Mother's Sorrow", 'Pale Order']);
+  });
+});
+
+describe('decodeRosterData — malformed input is tolerated', () => {
+  it('does not throw when array-typed fields arrive as non-arrays', async () => {
+    // Crafted payload: labels/groups/additionalSets are strings, not arrays.
+    const data = await encodeRoster({
+      v: 3,
+      ts: [{ lb: 'evil', grs: 'nope' }],
+      dp: [{ sn: 1, as: 'bad' }],
+    });
+    const decoded = await decodeRosterData(data);
+    expect(decoded.tanks[0]?.labels).toBeUndefined();
+    expect(decoded.tanks[0]?.groups).toBeUndefined();
+    expect(decoded.dps[0]?.sets).toBeUndefined();
+  });
+});

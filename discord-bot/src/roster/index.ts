@@ -16,7 +16,6 @@ export type {
 
 export {
   getMappingByRosterId,
-  getMappingByChannelId,
   upsertMapping,
   deleteMappingForRoster,
   listMappingsForGuild,
@@ -35,4 +34,9 @@ export { decodeRosterData } from './decoder.js';
 export { fetchRosterSnapshot } from './api.js';
 
 export { publishRoster, refreshRoster, publishDirect } from './publish.js';
-export type { PublishRequest, PublishResult, RefreshResult, DirectPublishRequest } from './publish.js';
+export type {
+  PublishRequest,
+  PublishResult,
+  RefreshResult,
+  DirectPublishRequest,
+} from './publish.js';

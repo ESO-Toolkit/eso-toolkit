@@ -22,8 +22,9 @@ const SEPARATOR = '▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬';
 /** Wrap a value in brackets as a header token — returns empty string if falsy. */
 const bracket = (val: string | null | undefined): string => (val ? ` [${val}]` : '');
 
-/** Wrap an array of values as bracket tokens. */
-const bracketed = (vals: string[]): string => vals.map((v) => ` [${v}]`).join('');
+/** Wrap an array of values as bracket tokens. Tolerates non-array input. */
+const bracketed = (vals: string[]): string =>
+  Array.isArray(vals) ? vals.map((v) => ` [${v}]`).join('') : '';
 
 /** Derive group arrow from group name: "left" → ⬅️, "right" → ➡️ */
 function groupArrow(slot: DecodedRosterSlot): string {

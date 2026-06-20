@@ -4,9 +4,12 @@
  * Key schema:
  *   roster-map:{guildId}:{rosterId}  → JSON RosterMapping
  *   guild-config:{guildId}           → JSON GuildConfig
- *   channel-roster:{channelId}       → "{guildId}:{rosterId}" (reverse lookup)
  *   roster-data:{rosterId}           → encoded roster_data (direct-publish only)
  *   roster-meta:{rosterId}           → JSON snapshot metadata (direct-publish only)
+ *
+ * Channel→roster resolution is done by scanning roster-map entries
+ * (listMappingsForGuild) rather than a reverse index: a single default channel
+ * can host many rosters, which a one-value reverse key cannot represent.
  */
 
 import type { Env } from '../types.js';
@@ -16,7 +19,6 @@ import type { GuildConfig, RosterMapping } from './types.js';
 
 export const KV_PREFIX = {
   ROSTER_MAP: 'roster-map',
-  CHANNEL_ROSTER: 'channel-roster',
   GUILD_CONFIG: 'guild-config',
   ROSTER_DATA: 'roster-data',
   ROSTER_META: 'roster-meta',
@@ -26,10 +28,6 @@ export const KV_PREFIX = {
 
 function mappingKey(guildId: string, rosterId: string): string {
   return `${KV_PREFIX.ROSTER_MAP}:${guildId}:${rosterId}`;
-}
-
-function reverseKey(channelId: string): string {
-  return `${KV_PREFIX.CHANNEL_ROSTER}:${channelId}`;
 }
 
 export async function getMappingByRosterId(
@@ -47,20 +45,6 @@ export async function getMappingByRosterId(
   }
 }
 
-export async function getMappingByChannelId(
-  env: Env,
-  channelId: string,
-): Promise<RosterMapping | null> {
-  const ref = await env.ROSTERS.get(reverseKey(channelId));
-  if (!ref) return null;
-  const idx = ref.indexOf(':');
-  if (idx === -1) return null;
-  const guildId = ref.slice(0, idx);
-  const rosterId = ref.slice(idx + 1);
-  if (!guildId || !rosterId) return null;
-  return getMappingByRosterId(env, guildId, rosterId);
-}
-
 export async function upsertMapping(
   env: Env,
   mapping: RosterMapping,
@@ -68,10 +52,7 @@ export async function upsertMapping(
 ): Promise<void> {
   const json = JSON.stringify(mapping);
   const opts = expirationTtl ? { expirationTtl } : undefined;
-  await Promise.all([
-    env.ROSTERS.put(mappingKey(mapping.guildId, mapping.rosterId), json, opts),
-    env.ROSTERS.put(reverseKey(mapping.channelId), `${mapping.guildId}:${mapping.rosterId}`, opts),
-  ]);
+  await env.ROSTERS.put(mappingKey(mapping.guildId, mapping.rosterId), json, opts);
 }
 
 export async function deleteMappingForRoster(
@@ -79,11 +60,7 @@ export async function deleteMappingForRoster(
   guildId: string,
   rosterId: string,
 ): Promise<void> {
-  const existing = await getMappingByRosterId(env, guildId, rosterId);
   await env.ROSTERS.delete(mappingKey(guildId, rosterId));
-  if (existing) {
-    await env.ROSTERS.delete(reverseKey(existing.channelId));
-  }
 }
 
 // ── All Mappings for a Guild (list by prefix) ───────────────────────────────
@@ -149,27 +126,40 @@ const LOCK_TTL_SECONDS = 30;
 
 /**
  * Attempt to acquire a short-lived lock for a roster+guild pair.
- * Returns true if the lock was acquired, false if already held.
- * The lock expires after 30 seconds to prevent deadlocks.
+ * Returns a fencing token (string) if the lock was acquired, or null if it is
+ * already held. The lock expires after 30 seconds to prevent deadlocks.
+ *
+ * Best-effort only: KV has no compare-and-swap, so under a true simultaneous
+ * race both callers can observe an empty key and proceed. This narrows the
+ * common double-submit window but cannot guarantee single-flight.
  */
 export async function acquirePublishLock(
   env: Env,
   guildId: string,
   rosterId: string,
-): Promise<boolean> {
+): Promise<string | null> {
   const key = `${LOCK_PREFIX}:${guildId}:${rosterId}`;
   const existing = await env.ROSTERS.get(key);
-  if (existing) return false;
-  await env.ROSTERS.put(key, Date.now().toString(), { expirationTtl: LOCK_TTL_SECONDS });
-  return true;
+  if (existing) return null;
+  const token = crypto.randomUUID();
+  await env.ROSTERS.put(key, token, { expirationTtl: LOCK_TTL_SECONDS });
+  return token;
 }
 
+/**
+ * Release a previously-acquired lock. Only deletes the key when it still holds
+ * the same fencing token — so a caller whose lock TTL-expired (and was then
+ * re-acquired by someone else) can't delete the new owner's lock.
+ */
 export async function releasePublishLock(
   env: Env,
   guildId: string,
   rosterId: string,
+  token: string,
 ): Promise<void> {
-  await env.ROSTERS.delete(`${LOCK_PREFIX}:${guildId}:${rosterId}`);
+  const key = `${LOCK_PREFIX}:${guildId}:${rosterId}`;
+  const current = await env.ROSTERS.get(key);
+  if (current === token) await env.ROSTERS.delete(key);
 }
 
 // ── Rate limiting ────────────────────────────────────────────────────────────
