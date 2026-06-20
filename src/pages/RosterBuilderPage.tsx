@@ -1105,6 +1105,7 @@ export const RosterBuilderPage: React.FC = () => {
       <Paper elevation={2} sx={{ p: { xs: 1.5, sm: 2 }, mb: 3 }}>
         {/* Row 1 — Title lockup + Mode pill toggle + Hub link */}
         <Box
+          data-vt-hero="roster-hero"
           sx={{
             viewTransitionName: 'roster-hero',
             display: 'flex',
