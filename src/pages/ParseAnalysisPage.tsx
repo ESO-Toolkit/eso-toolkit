@@ -114,6 +114,7 @@ import { setParseReport, clearParseReport } from '../store/parse_analysis/parseA
 import { setReportData } from '../store/report/reportSlice';
 import { useAppDispatch } from '../store/useAppDispatch';
 import { createBuffLookup } from '../utils/BuffLookupUtils';
+import { getPetOwnerMap } from '../utils/damageEventUtils';
 import { detectBuildIssues, type BuildIssue } from '../utils/detectBuildIssues';
 import { Logger, LogLevel } from '../utils/logger';
 
@@ -673,13 +674,20 @@ const ParseAnalysisPageContent: React.FC = () => {
       debuffEventsCount: debuffEvents.length,
     });
 
-    // Only run if we have pending analysis and events are not loading
+    // Only run if we have pending analysis and events are not loading. Also wait
+    // for report master data: pet/summon DPS attribution reads actorsById, and
+    // running before it loads would build an empty pet-owner map and then clear
+    // pendingAnalysis, leaving pet-heavy parses undercounted. When master data
+    // finishes, actorsById changes and re-fires this effect. (A hard master-data
+    // failure leaves isMasterDataLoading false so analysis still runs, degrading
+    // gracefully to player-only DPS.)
     if (
       !pendingAnalysis ||
       isCastEventsLoading ||
       isDamageEventsLoading ||
       isCombatantInfoEventsLoading ||
-      isDebuffEventsLoading
+      isDebuffEventsLoading ||
+      isMasterDataLoading
     ) {
       return;
     }
@@ -718,7 +726,16 @@ const ParseAnalysisPageContent: React.FC = () => {
       combatantInfoEvents,
     );
     const cpm = calculateCPM(castEvents, playerId, fightStartTime, fightEndTime, abilityMapper);
-    const dpsResult = calculateDPS(damageEvents, playerId, fightStartTime, fightEndTime);
+    // Attribute pet/summon damage (Sorc atronachs, Warden bear, NB shades, etc.)
+    // back to their owner so pet-heavy builds aren't undercounted.
+    const petOwnerByActorId = getPetOwnerMap(reportMasterData.actorsById);
+    const dpsResult = calculateDPS(
+      damageEvents,
+      playerId,
+      fightStartTime,
+      fightEndTime,
+      petOwnerByActorId,
+    );
     const rotationResult = analyzeRotation(
       castEvents,
       playerId,
@@ -892,6 +909,8 @@ const ParseAnalysisPageContent: React.FC = () => {
     isCombatantInfoEventsLoading,
     isDebuffEventsLoading,
     abilityMapper,
+    reportMasterData.actorsById,
+    isMasterDataLoading,
     state.fightName,
   ]);
 

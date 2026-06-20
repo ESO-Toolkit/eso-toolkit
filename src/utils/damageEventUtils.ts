@@ -38,6 +38,43 @@ export function getChargedReportActors(
 }
 
 /**
+ * Builds a map of every pet/summon actor to its owner player ID.
+ *
+ * ESO Logs attributes pet damage (Sorc atronachs, Warden bear, NB shades, etc.)
+ * to the player who summoned the pet. This generalizes {@link getChargedReportActors}
+ * (which only handles the Charged Atronach) to cover ALL pets, so callers can
+ * attribute any pet's damage events back to their owner.
+ *
+ * @param actorsById - Record mapping actor IDs to actor data from report master data
+ * @returns Record mapping pet actor IDs to their owner player IDs
+ *
+ * @example
+ * ```typescript
+ * const petOwnerMap = getPetOwnerMap(actorsById);
+ * // Result: { "89": 123, "156": 456 } where keys are pet IDs, values are owner player IDs
+ * ```
+ */
+export function getPetOwnerMap(
+  actorsById: Record<string | number, ReportActor>,
+): Record<number, number> {
+  const petOwners: Record<number, number> = {};
+
+  Object.values(actorsById).forEach((actor) => {
+    if (
+      actor.id !== undefined &&
+      actor.id !== null &&
+      actor?.type === 'Pet' &&
+      actor.petOwner !== undefined &&
+      actor.petOwner !== null
+    ) {
+      petOwners[actor.id] = actor.petOwner;
+    }
+  });
+
+  return petOwners;
+}
+
+/**
  * Groups damage events by player ID, creating a record where keys are player IDs
  * and values are arrays of damage events associated with that player.
  * For charged atronach damage, attributes the damage to the player who cast the summoning spell.

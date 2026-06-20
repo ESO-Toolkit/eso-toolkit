@@ -615,6 +615,80 @@ describe('parseAnalysisUtils', () => {
       expect(result.dps).toBe(0);
       expect(result.durationMs).toBe(60000);
     });
+
+    describe('pet/summon attribution', () => {
+      const PET_ACTOR_ID = 50;
+      const petDamageEvents: DamageEvent[] = [
+        {
+          timestamp: FIGHT_START + 1000,
+          type: 'damage',
+          sourceID: PLAYER_ID, // direct player damage
+          sourceIsFriendly: true,
+          targetID: 2,
+          targetIsFriendly: false,
+          abilityGameID: 12345,
+          fight: 1,
+          amount: 10000,
+          hitType: 1,
+          castTrackID: 1,
+          sourceResources: mockResources,
+          targetResources: mockResources,
+        },
+        {
+          timestamp: FIGHT_START + 2000,
+          type: 'damage',
+          sourceID: PET_ACTOR_ID, // pet/summon damage owned by PLAYER_ID
+          sourceIsFriendly: true,
+          targetID: 2,
+          targetIsFriendly: false,
+          abilityGameID: 12346,
+          fight: 1,
+          amount: 5000,
+          hitType: 1,
+          castTrackID: 2,
+          sourceResources: mockResources,
+          targetResources: mockResources,
+        },
+      ];
+
+      it('should count pet damage toward the owner when the pet map is provided', () => {
+        const petOwnerByActorId = { [PET_ACTOR_ID]: PLAYER_ID };
+
+        const result = calculateDPS(
+          petDamageEvents,
+          PLAYER_ID,
+          FIGHT_START,
+          FIGHT_END,
+          petOwnerByActorId,
+        );
+
+        // 10000 (player) + 5000 (pet) = 15000 over 60s = 250 DPS
+        expect(result.totalDamage).toBe(15000);
+        expect(result.dps).toBe(250);
+      });
+
+      it('should NOT count pet damage when the map is omitted (backward compatible)', () => {
+        const result = calculateDPS(petDamageEvents, PLAYER_ID, FIGHT_START, FIGHT_END);
+
+        // Only the direct player event counts
+        expect(result.totalDamage).toBe(10000);
+        expect(result.dps).toBeCloseTo(10000 / 60, 5);
+      });
+
+      it('should not count a pet owned by a different player', () => {
+        const petOwnerByActorId = { [PET_ACTOR_ID]: 999 };
+
+        const result = calculateDPS(
+          petDamageEvents,
+          PLAYER_ID,
+          FIGHT_START,
+          FIGHT_END,
+          petOwnerByActorId,
+        );
+
+        expect(result.totalDamage).toBe(10000);
+      });
+    });
   });
 
   describe('analyzeWeaving', () => {

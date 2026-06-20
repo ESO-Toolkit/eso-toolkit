@@ -666,16 +666,27 @@ export interface DPSResult {
 
 /**
  * Calculate total damage and DPS for a player
+ *
+ * @param petOwnerByActorId - Optional map of pet actor IDs to owner player IDs
+ *   (see getPetOwnerMap in damageEventUtils). When provided, damage from a
+ *   player's pets/summons (Sorc atronachs, Warden bear, NB shades, etc.) is
+ *   attributed to that player. When omitted, only direct player damage counts
+ *   (backward-compatible behavior).
  */
 export function calculateDPS(
   damageEvents: DamageEvent[],
   playerId: number,
   fightStartTime: number,
   fightEndTime: number,
+  petOwnerByActorId?: Record<number, number>,
 ): DPSResult {
-  // Sum all damage dealt by the player
+  // Sum all damage dealt by the player (and, when provided, their pets/summons)
   const playerDamageEvents = damageEvents.filter(
-    (event) => event.sourceID === playerId && event.sourceIsFriendly,
+    (event) =>
+      event.sourceIsFriendly &&
+      event.sourceID != null &&
+      (event.sourceID === playerId ||
+        (petOwnerByActorId !== undefined && petOwnerByActorId[event.sourceID] === playerId)),
   );
 
   const totalDamage = playerDamageEvents.reduce((sum, event) => sum + event.amount, 0);
