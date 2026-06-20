@@ -46,8 +46,13 @@ export function parseDamageTypeFlags(type: string | number | null | undefined): 
 
   const damageTypes: string[] = [];
 
+  // DamageTypeFlags is a string enum, so Object.values() yields the string
+  // values ('1','2','4',...). Coerce to a number for the bitmask test —
+  // `typeof flag === 'number'` would never be true here and silently collapsed
+  // every result to 'Unknown'.
   Object.values(DamageTypeFlags).forEach((flag) => {
-    if (typeof flag === 'number' && (typeNum & flag) === flag) {
+    const flagNum = Number(flag);
+    if (flagNum !== 0 && (typeNum & flagNum) === flagNum) {
       damageTypes.push(DAMAGE_TYPE_DISPLAY_NAMES[flag]);
     }
   });
@@ -63,8 +68,11 @@ export function getDamageTypesFromFlags(
 ): { flag: DamageTypeFlags; name: string }[] {
   const result: { flag: DamageTypeFlags; name: string }[] = [];
 
+  // DamageTypeFlags is a string enum; coerce to a number for the bitmask test
+  // (see parseDamageTypeFlags — the `typeof === 'number'` guard never matched).
   Object.values(DamageTypeFlags).forEach((flag) => {
-    if (typeof flag === 'number' && (flagValue & flag) === flag) {
+    const flagNum = Number(flag);
+    if (flagNum !== 0 && (flagValue & flagNum) === flagNum) {
       result.push({ flag, name: DAMAGE_TYPE_DISPLAY_NAMES[flag] });
     }
   });
