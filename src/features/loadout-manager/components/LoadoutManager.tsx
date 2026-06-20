@@ -46,6 +46,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 
 import { WorkInProgressDisclaimer } from '@/components/WorkInProgressDisclaimer';
+import { useDropdownMenuProps } from '@/hooks/useDropdownMenuDirection';
 import type { RootState } from '@/store/storeWithHistory';
 
 import { preloadChampionPointData } from '../data/championPointData';
@@ -116,6 +117,16 @@ export const LoadoutManager: React.FC = () => {
 
   // Glass design tokens
   const isDarkMode = theme.palette.mode === 'dark';
+
+  // Open below the field (flip up near the viewport bottom) while keeping the
+  // glass paper styling — an explicit MenuProps would otherwise drop the global
+  // theme's open-direction default. Shared by the Trial and Page Selects below.
+  const glassMenuProps = useDropdownMenuProps({
+    borderRadius: '10px',
+    backdropFilter: 'blur(12px)',
+    backgroundColor: isDarkMode ? 'rgba(20,20,30,0.92)' : 'rgba(255,255,255,0.94)',
+    border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}`,
+  });
   const glassTextField = {
     '& .MuiOutlinedInput-root': {
       backgroundColor: isDarkMode ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)',
@@ -610,20 +621,7 @@ export const LoadoutManager: React.FC = () => {
                     if (!trial) return 'Select trial';
                     return `${trial.name} · ${getActivityKindLabel(trial.type)}`;
                   }}
-                  MenuProps={{
-                    slotProps: {
-                      paper: {
-                        sx: {
-                          borderRadius: '10px',
-                          backdropFilter: 'blur(12px)',
-                          backgroundColor: isDarkMode
-                            ? 'rgba(20,20,30,0.92)'
-                            : 'rgba(255,255,255,0.94)',
-                          border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}`,
-                        },
-                      },
-                    },
-                  }}
+                  MenuProps={glassMenuProps}
                 >
                   {getGroupedTrials().flatMap((group) => [
                     <ListSubheader
@@ -787,20 +785,7 @@ export const LoadoutManager: React.FC = () => {
                       if (isMdDown) setDrawerOpen(false);
                     }}
                     disabled={allPages.length === 0}
-                    MenuProps={{
-                      slotProps: {
-                        paper: {
-                          sx: {
-                            borderRadius: '10px',
-                            backdropFilter: 'blur(12px)',
-                            backgroundColor: isDarkMode
-                              ? 'rgba(20,20,30,0.92)'
-                              : 'rgba(255,255,255,0.94)',
-                            border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}`,
-                          },
-                        },
-                      },
-                    }}
+                    MenuProps={glassMenuProps}
                   >
                     {allPages.map((page, index) => (
                       <MenuItem key={`${page.name}-${index}`} value={index}>

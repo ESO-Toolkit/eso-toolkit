@@ -13,6 +13,7 @@ import {
 } from '@mui/material';
 import React from 'react';
 
+import { useDropdownMenuProps } from '../../../hooks/useDropdownMenuDirection';
 import type { BuildHubFilters, SortOrder } from '../types/build-hub.types';
 import {
   BUILD_TAG_COLORS,
@@ -78,7 +79,6 @@ export const BuildFilterBar: React.FC<BuildFilterBarProps> = React.memo(
     };
 
     const menuPaperSx = {
-      mt: 0.5,
       borderRadius: 2,
       background: isDark ? 'rgba(18,24,38,0.96)' : 'rgba(255,255,255,0.96)',
       backdropFilter: 'blur(20px)',
@@ -101,6 +101,11 @@ export const BuildFilterBar: React.FC<BuildFilterBarProps> = React.memo(
         },
       },
     };
+
+    // Open below the field (flip up near the viewport bottom) while keeping the
+    // glass paper styling — an explicit MenuProps would otherwise drop the global
+    // theme's open-direction default. Shared by both filter Selects.
+    const menuProps = useDropdownMenuProps(menuPaperSx);
 
     return (
       <Box
@@ -216,7 +221,7 @@ export const BuildFilterBar: React.FC<BuildFilterBarProps> = React.memo(
                     ? 'rgba(255,255,255,0.38)'
                     : 'rgba(0,0,0,0.38)',
               }}
-              MenuProps={{ slotProps: { paper: { sx: menuPaperSx } } }}
+              MenuProps={menuProps}
             >
               {CLASS_OPTIONS.map((o) => (
                 <MenuItem key={o.value} value={o.value}>
@@ -244,7 +249,7 @@ export const BuildFilterBar: React.FC<BuildFilterBarProps> = React.memo(
                     ? 'rgba(255,255,255,0.38)'
                     : 'rgba(0,0,0,0.38)',
               }}
-              MenuProps={{ slotProps: { paper: { sx: menuPaperSx } } }}
+              MenuProps={menuProps}
             >
               {ROLE_OPTIONS.map((o) => (
                 <MenuItem key={o.value} value={o.value}>

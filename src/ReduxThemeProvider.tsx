@@ -3,11 +3,27 @@ import GlobalStyles from '@mui/material/GlobalStyles';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import React from 'react';
 
+import {
+  DropdownMenuDirectionProvider,
+  useDropdownMenuController,
+} from './hooks/useDropdownMenuDirection';
 import { usePersistentDarkMode } from './hooks/usePersistentDarkMode';
+import {
+  DROPDOWN_MENU_GAP,
+  DROPDOWN_MENU_MAX_HEIGHT_SX,
+  dropdownMenuOrigins,
+} from './theme/dropdownMenu';
 
 export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // Use persistent dark mode hook that handles localStorage persistence
   const { darkMode } = usePersistentDarkMode();
+
+  // Single app-wide "open Select menus upward?" flag — only one Select menu is
+  // open at a time, so one shared flag is enough. The handler measures the
+  // anchor on open and flips when the field is too close to the viewport bottom
+  // to fit the menu below it. See useDropdownMenuController / src/theme/dropdownMenu.ts.
+  const dropdownDirection = useDropdownMenuController();
+  const { menuUp, onSelectOpen } = dropdownDirection;
 
   // Mirror color-scheme onto <html data-color-scheme="dark|light"> so static
   // CSS rules (e.g. the data-perf='low' glass-dialog fallback in index.css)
@@ -51,7 +67,7 @@ export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }
   }, [darkMode]);
 
-  const theme = React.useMemo(
+  const baseTheme = React.useMemo(
     () =>
       createTheme({
         palette: {
@@ -503,6 +519,46 @@ export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     [darkMode, tokens],
   );
 
+  // Overlay the base theme with the dynamic Select open-direction defaults. Kept
+  // separate so the (heavy) base theme only rebuilds on dark-mode/token changes;
+  // this thin extension recomputes only when `menuUp` actually flips (rare —
+  // setMenuUp bails out when the value is unchanged). Result: every Select opens
+  // downward, or upward when near the viewport bottom, instead of centred over /
+  // covering the field. A Select that passes its OWN MenuProps replaces this
+  // default, so those call sites must spread useDropdownMenuOrigins() — see
+  // src/hooks/useDropdownMenuDirection.ts.
+  const theme = React.useMemo(
+    () =>
+      createTheme(baseTheme, {
+        components: {
+          MuiSelect: {
+            defaultProps: {
+              onOpen: onSelectOpen,
+              MenuProps: {
+                ...dropdownMenuOrigins(menuUp),
+                slotProps: {
+                  paper: {
+                    sx: {
+                      // Cap height to the room on the open side so a tall menu
+                      // scrolls below the field instead of being shifted up over
+                      // it; the cap is published per-open as a CSS var.
+                      maxHeight: DROPDOWN_MENU_MAX_HEIGHT_SX,
+                      // Direction-aware gap so an upward-flipped menu doesn't sit
+                      // on the field.
+                      ...(menuUp
+                        ? { mt: 0, mb: DROPDOWN_MENU_GAP }
+                        : { mt: DROPDOWN_MENU_GAP, mb: 0 }),
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      }),
+    [baseTheme, menuUp, onSelectOpen],
+  );
+
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
@@ -822,7 +878,9 @@ export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           },
         }}
       />
-      {children}
+      <DropdownMenuDirectionProvider value={dropdownDirection}>
+        {children}
+      </DropdownMenuDirectionProvider>
     </ThemeProvider>
   );
 };
