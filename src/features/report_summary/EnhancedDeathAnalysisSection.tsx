@@ -39,12 +39,22 @@ import {
 } from '@mui/material';
 import React from 'react';
 
+import { glassCardSurfaceSx, SUMMARY_ACCENTS } from '../../theme/glassCardSurface';
 import {
   ReportDeathAnalysis,
   MechanicCategory,
   DeathPatternType,
   FightDeathAnalysis,
 } from '../../types/reportSummaryTypes';
+
+import {
+  accentTableSx,
+  gradientTitleSx,
+  sectionIconBadgeSx,
+  statLabelSx,
+  statTileSx,
+  statValueSx,
+} from './summaryStyles';
 
 interface EnhancedDeathAnalysisSectionProps {
   deathAnalysis?: ReportDeathAnalysis;
@@ -134,7 +144,10 @@ const EnhancedDeathAnalysisSectionComponent: React.FC<EnhancedDeathAnalysisSecti
 
   if (error) {
     return (
-      <Card elevation={2}>
+      <Card
+        elevation={0}
+        sx={(theme) => glassCardSurfaceSx(theme.palette.mode === 'dark', SUMMARY_ACCENTS.death)}
+      >
         <CardContent>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
             <SkullIcon color="error" />
@@ -153,7 +166,10 @@ const EnhancedDeathAnalysisSectionComponent: React.FC<EnhancedDeathAnalysisSecti
 
   if (isLoading) {
     return (
-      <Card elevation={2}>
+      <Card
+        elevation={0}
+        sx={(theme) => glassCardSurfaceSx(theme.palette.mode === 'dark', SUMMARY_ACCENTS.death)}
+      >
         <CardContent>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
             <SkullIcon />
@@ -178,12 +194,21 @@ const EnhancedDeathAnalysisSectionComponent: React.FC<EnhancedDeathAnalysisSecti
   const hasDeaths = deathAnalysis && deathAnalysis.totalDeaths > 0;
 
   return (
-    <Card elevation={2}>
+    <Card
+      elevation={0}
+      sx={(theme) => glassCardSurfaceSx(theme.palette.mode === 'dark', SUMMARY_ACCENTS.death)}
+    >
       <CardContent>
         {/* Header */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
-          <SkullIcon color={hasDeaths ? 'error' : 'success'} />
-          <Typography variant="h5" component="h2">
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 3 }}>
+          <Box sx={sectionIconBadgeSx(SUMMARY_ACCENTS.death)}>
+            <SkullIcon />
+          </Box>
+          <Typography
+            variant="h5"
+            component="h2"
+            sx={(t) => gradientTitleSx(t.palette.mode === 'dark', SUMMARY_ACCENTS.death)}
+          >
             Death Analysis
           </Typography>
         </Box>
@@ -207,18 +232,13 @@ const EnhancedDeathAnalysisSectionComponent: React.FC<EnhancedDeathAnalysisSecti
               <Grid size={{ xs: 12, md: 3 }}>
                 <Card
                   variant="outlined"
-                  sx={{
-                    background:
-                      theme.palette.mode === 'dark'
-                        ? 'linear-gradient(135deg, rgba(244, 67, 54, 0.1) 0%, rgba(244, 67, 54, 0.05) 100%)'
-                        : 'linear-gradient(135deg, rgba(244, 67, 54, 0.05) 0%, rgba(244, 67, 54, 0.02) 100%)',
-                  }}
+                  sx={statTileSx(theme.palette.mode === 'dark', SUMMARY_ACCENTS.death)}
                 >
                   <CardContent sx={{ textAlign: 'center' }}>
-                    <Typography variant="h4" color="error" sx={{ fontWeight: 'bold' }}>
+                    <Typography sx={{ ...statValueSx, color: `rgb(${SUMMARY_ACCENTS.death})` }}>
                       {deathAnalysis.totalDeaths}
                     </Typography>
-                    <Typography variant="body2" color="text.secondary">
+                    <Typography component="span" sx={statLabelSx}>
                       Total Deaths
                     </Typography>
                   </CardContent>
@@ -226,12 +246,15 @@ const EnhancedDeathAnalysisSectionComponent: React.FC<EnhancedDeathAnalysisSecti
               </Grid>
 
               <Grid size={{ xs: 12, md: 3 }}>
-                <Card variant="outlined">
+                <Card
+                  variant="outlined"
+                  sx={statTileSx(theme.palette.mode === 'dark', SUMMARY_ACCENTS.info)}
+                >
                   <CardContent sx={{ textAlign: 'center' }}>
-                    <Typography variant="h4" color="primary" sx={{ fontWeight: 'bold' }}>
+                    <Typography sx={{ ...statValueSx, color: `rgb(${SUMMARY_ACCENTS.info})` }}>
                       {deathAnalysis.playerDeaths.length}
                     </Typography>
-                    <Typography variant="body2" color="text.secondary">
+                    <Typography component="span" sx={statLabelSx}>
                       Players Affected
                     </Typography>
                   </CardContent>
@@ -239,12 +262,15 @@ const EnhancedDeathAnalysisSectionComponent: React.FC<EnhancedDeathAnalysisSecti
               </Grid>
 
               <Grid size={{ xs: 12, md: 3 }}>
-                <Card variant="outlined">
+                <Card
+                  variant="outlined"
+                  sx={statTileSx(theme.palette.mode === 'dark', SUMMARY_ACCENTS.damage)}
+                >
                   <CardContent sx={{ textAlign: 'center' }}>
-                    <Typography variant="h4" color="warning.main" sx={{ fontWeight: 'bold' }}>
+                    <Typography sx={{ ...statValueSx, color: `rgb(${SUMMARY_ACCENTS.damage})` }}>
                       {deathAnalysis.mechanicDeaths.length}
                     </Typography>
-                    <Typography variant="body2" color="text.secondary">
+                    <Typography component="span" sx={statLabelSx}>
                       Deadly Abilities
                     </Typography>
                   </CardContent>
@@ -252,12 +278,15 @@ const EnhancedDeathAnalysisSectionComponent: React.FC<EnhancedDeathAnalysisSecti
               </Grid>
 
               <Grid size={{ xs: 12, md: 3 }}>
-                <Card variant="outlined">
+                <Card
+                  variant="outlined"
+                  sx={statTileSx(theme.palette.mode === 'dark', '167, 139, 250')}
+                >
                   <CardContent sx={{ textAlign: 'center' }}>
-                    <Typography variant="h4" color="info.main" sx={{ fontWeight: 'bold' }}>
+                    <Typography sx={{ ...statValueSx, color: 'rgb(167, 139, 250)' }}>
                       {deathAnalysis.deathPatterns.length}
                     </Typography>
-                    <Typography variant="body2" color="text.secondary">
+                    <Typography component="span" sx={statLabelSx}>
                       Patterns Found
                     </Typography>
                   </CardContent>
@@ -336,7 +365,11 @@ const EnhancedDeathAnalysisSectionComponent: React.FC<EnhancedDeathAnalysisSecti
                 Deadliest Abilities & Mechanics
               </Typography>
               <TableContainer component={Paper} variant="outlined">
-                <Table size="small" aria-label="Deadliest abilities and mechanics">
+                <Table
+                  size="small"
+                  aria-label="Deadliest abilities and mechanics"
+                  sx={(t) => accentTableSx(t.palette.mode === 'dark', SUMMARY_ACCENTS.death)}
+                >
                   <TableHead>
                     <TableRow>
                       <TableCell sx={{ fontWeight: 'bold' }}>Ability/Mechanic</TableCell>
@@ -429,7 +462,11 @@ const EnhancedDeathAnalysisSectionComponent: React.FC<EnhancedDeathAnalysisSecti
                 Player Death Analysis
               </Typography>
               <TableContainer component={Paper} variant="outlined">
-                <Table size="small" aria-label="Player death analysis">
+                <Table
+                  size="small"
+                  aria-label="Player death analysis"
+                  sx={(t) => accentTableSx(t.palette.mode === 'dark', SUMMARY_ACCENTS.death)}
+                >
                   <TableHead>
                     <TableRow>
                       <TableCell sx={{ fontWeight: 'bold' }}>Player</TableCell>

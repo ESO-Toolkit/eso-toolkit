@@ -21,6 +21,7 @@ import { DynamicMetaTags } from '../../components/DynamicMetaTags';
 import { ReportActionBar } from '../../components/ReportActionBar';
 import { ReportFragment } from '../../graphql/gql/graphql';
 import { useReportData } from '../../hooks';
+import { glassCardSurfaceSx, SUMMARY_ACCENTS } from '../../theme/glassCardSurface';
 import { ReportSummaryData } from '../../types/reportSummaryTypes';
 
 // Lazy load heavy sections for better performance
@@ -32,6 +33,7 @@ const EnhancedDeathAnalysisSection = React.lazy(() =>
     default: m.EnhancedDeathAnalysisSection,
   })),
 );
+
 import { useOptimizedReportSummaryData } from './hooks/useOptimizedReportSummaryData';
 
 export const ReportSummaryPage: React.FC = () => {
@@ -154,7 +156,10 @@ const ReportSummaryHeader: React.FC<ReportSummaryHeaderProps> = ({
       />
 
       {/* Summary metadata chips */}
-      <Card elevation={2} sx={{ mb: 3 }}>
+      <Card
+        elevation={0}
+        sx={(theme) => ({ ...glassCardSurfaceSx(theme.palette.mode === 'dark'), mb: 3 })}
+      >
         <CardContent sx={{ py: 2, '&:last-child': { pb: 2 } }}>
           <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap', alignItems: 'center' }}>
             <Chip
@@ -199,7 +204,7 @@ interface ReportSummaryLoadingViewProps {
 
 const ReportSummaryLoadingView: React.FC<ReportSummaryLoadingViewProps> = ({ progress }) => {
   return (
-    <Card elevation={2}>
+    <Card elevation={0} sx={(theme) => glassCardSurfaceSx(theme.palette.mode === 'dark')}>
       <CardContent>
         <Typography variant="h5" component="h2" gutterBottom>
           Loading Report Summary
@@ -274,7 +279,10 @@ interface ReportSummaryErrorViewProps {
 
 const ReportSummaryErrorView: React.FC<ReportSummaryErrorViewProps> = ({ error, reportId }) => {
   return (
-    <Card elevation={2}>
+    <Card
+      elevation={0}
+      sx={(theme) => glassCardSurfaceSx(theme.palette.mode === 'dark', SUMMARY_ACCENTS.death)}
+    >
       <CardContent>
         <Typography variant="h5" component="h2" gutterBottom color="error">
           Failed to Load Report Summary

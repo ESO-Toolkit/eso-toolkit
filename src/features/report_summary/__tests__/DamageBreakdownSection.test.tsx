@@ -1,5 +1,5 @@
 import { ThemeProvider, createTheme } from '@mui/material/styles';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 
 import { ReportDamageBreakdown } from '../../../types/reportSummaryTypes';
 import { DamageBreakdownSection } from '../DamageBreakdownSection';
@@ -73,9 +73,17 @@ describe('DamageBreakdownSection', () => {
     );
 
     expect(screen.getByText('Top Damage Dealers')).toBeInTheDocument();
-    expect(screen.getByText('#1 Top DPS Player')).toBeInTheDocument();
-    expect(screen.getByText('#2 Second DPS Player')).toBeInTheDocument();
-    expect(screen.getByText('#3 Tank Player')).toBeInTheDocument();
+    // Each top dealer now shows a medal rank badge (the ordinal) beside the name;
+    // scope to the dealers list since the same names also appear in the table below.
+    const dealers = within(
+      screen.getByText('Top Damage Dealers').closest('.MuiBox-root') as HTMLElement,
+    );
+    expect(dealers.getByText('Top DPS Player')).toBeInTheDocument();
+    expect(dealers.getByText('Second DPS Player')).toBeInTheDocument();
+    expect(dealers.getByText('Tank Player')).toBeInTheDocument();
+    expect(dealers.getByText('1')).toBeInTheDocument();
+    expect(dealers.getByText('2')).toBeInTheDocument();
+    expect(dealers.getByText('3')).toBeInTheDocument();
   });
 
   it('shows damage by type with an overlap disclaimer', () => {

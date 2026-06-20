@@ -2,6 +2,7 @@ import type { SvgIconComponent } from '@mui/icons-material';
 import AcUnitIcon from '@mui/icons-material/AcUnit';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
+import BarChartIcon from '@mui/icons-material/BarChart';
 import BlurOnIcon from '@mui/icons-material/BlurOn';
 import BoltIcon from '@mui/icons-material/Bolt';
 import CoronavirusIcon from '@mui/icons-material/Coronavirus';
@@ -36,7 +37,17 @@ import {
 } from '@mui/material';
 import React from 'react';
 
+import { glassCardSurfaceSx, SUMMARY_ACCENTS } from '../../theme/glassCardSurface';
 import { AbilityTypeDamageBreakdown, ReportDamageBreakdown } from '../../types/reportSummaryTypes';
+
+import {
+  accentTableSx,
+  gradientTitleSx,
+  listRowHoverSx,
+  metricPillSx,
+  rankBadgeSx,
+  sectionIconBadgeSx,
+} from './summaryStyles';
 
 /** Icon + accent color per damage-type label (keyed by both long and short names). */
 const DAMAGE_TYPE_PRESENTATION: Record<string, { Icon: SvgIconComponent; color: string }> = {
@@ -68,7 +79,13 @@ const DamageTypeList: React.FC<{ items: AbilityTypeDamageBreakdown[] }> = ({ ite
         const { Icon, color } = DAMAGE_TYPE_PRESENTATION[type.abilityType] ?? DEFAULT_PRESENTATION;
         return (
           <React.Fragment key={type.abilityType}>
-            <ListItem sx={{ py: 1.5, gap: 1.5 }}>
+            <ListItem
+              sx={(theme) => ({
+                py: 1.5,
+                gap: 1.5,
+                ...listRowHoverSx(theme.palette.mode === 'dark', SUMMARY_ACCENTS.damage),
+              })}
+            >
               <Icon sx={{ color, flexShrink: 0 }} aria-hidden />
               <Box sx={{ flex: 1, minWidth: 0 }}>
                 <Box
@@ -125,7 +142,10 @@ const DamageBreakdownSectionComponent: React.FC<DamageBreakdownSectionProps> = (
 
   if (error) {
     return (
-      <Card elevation={2}>
+      <Card
+        elevation={0}
+        sx={(theme) => glassCardSurfaceSx(theme.palette.mode === 'dark', SUMMARY_ACCENTS.damage)}
+      >
         <CardContent>
           <Typography variant="h5" component="h2" gutterBottom>
             Damage Breakdown
@@ -138,7 +158,10 @@ const DamageBreakdownSectionComponent: React.FC<DamageBreakdownSectionProps> = (
 
   if (isLoading || !damageBreakdown) {
     return (
-      <Card elevation={2}>
+      <Card
+        elevation={0}
+        sx={(theme) => glassCardSurfaceSx(theme.palette.mode === 'dark', SUMMARY_ACCENTS.damage)}
+      >
         <CardContent>
           <Typography variant="h5" component="h2" gutterBottom>
             Damage Breakdown
@@ -155,7 +178,10 @@ const DamageBreakdownSectionComponent: React.FC<DamageBreakdownSectionProps> = (
 
   if (damageBreakdown.playerBreakdown.length === 0) {
     return (
-      <Card elevation={2}>
+      <Card
+        elevation={0}
+        sx={(theme) => glassCardSurfaceSx(theme.palette.mode === 'dark', SUMMARY_ACCENTS.damage)}
+      >
         <CardContent>
           <Typography variant="h5" component="h2" gutterBottom>
             Damage Breakdown
@@ -167,21 +193,29 @@ const DamageBreakdownSectionComponent: React.FC<DamageBreakdownSectionProps> = (
   }
 
   return (
-    <Card elevation={2}>
+    <Card
+      elevation={0}
+      sx={(theme) => glassCardSurfaceSx(theme.palette.mode === 'dark', SUMMARY_ACCENTS.damage)}
+    >
       <CardContent>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3, flexWrap: 'wrap' }}>
-          <Typography variant="h5" component="h2">
+          <Box sx={sectionIconBadgeSx(SUMMARY_ACCENTS.damage)}>
+            <BarChartIcon />
+          </Box>
+          <Typography
+            variant="h5"
+            component="h2"
+            sx={(theme) => gradientTitleSx(theme.palette.mode === 'dark', SUMMARY_ACCENTS.damage)}
+          >
             Damage Breakdown
           </Typography>
           <Chip
             label={formatDamage(damageBreakdown.totalDamage)}
-            color="primary"
-            variant="outlined"
+            sx={(theme) => metricPillSx(theme.palette.mode === 'dark', SUMMARY_ACCENTS.damage)}
           />
           <Chip
             label={`${formatNumber(damageBreakdown.dps)} DPS`}
-            color="secondary"
-            variant="outlined"
+            sx={(theme) => metricPillSx(theme.palette.mode === 'dark', SUMMARY_ACCENTS.info)}
           />
         </Box>
 
@@ -194,11 +228,22 @@ const DamageBreakdownSectionComponent: React.FC<DamageBreakdownSectionProps> = (
             <List>
               {damageBreakdown.playerBreakdown.slice(0, 5).map((player, index) => (
                 <React.Fragment key={player.playerId}>
-                  <ListItem>
+                  <ListItem
+                    sx={(theme) =>
+                      listRowHoverSx(theme.palette.mode === 'dark', SUMMARY_ACCENTS.damage)
+                    }
+                  >
+                    <Box
+                      component="span"
+                      sx={(theme) => rankBadgeSx(index + 1, theme.palette.mode === 'dark')}
+                    >
+                      {index + 1}
+                    </Box>
                     <ListItemText
+                      sx={{ ml: 1.5 }}
                       primary={
-                        <Typography variant="subtitle1">
-                          #{index + 1} {player.playerName}
+                        <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                          {player.playerName}
                         </Typography>
                       }
                       secondary={
@@ -302,7 +347,11 @@ const DamageBreakdownSectionComponent: React.FC<DamageBreakdownSectionProps> = (
             Player Performance Details
           </Typography>
           <TableContainer component={Paper} variant="outlined">
-            <Table size="small" aria-labelledby="player-performance-heading">
+            <Table
+              size="small"
+              aria-labelledby="player-performance-heading"
+              sx={(theme) => accentTableSx(theme.palette.mode === 'dark', SUMMARY_ACCENTS.damage)}
+            >
               <TableHead>
                 <TableRow>
                   <TableCell>Player</TableCell>

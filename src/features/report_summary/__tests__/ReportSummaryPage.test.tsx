@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
@@ -258,8 +258,14 @@ describe('ReportSummaryPage', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Top Damage Dealers')).toBeInTheDocument();
-      expect(screen.getByText('#1 Test Player 1')).toBeInTheDocument();
-      expect(screen.getByText('#2 Test Player 2')).toBeInTheDocument();
+      // Names also appear in the performance table, so scope to the dealers list.
+      const dealers = within(
+        screen.getByText('Top Damage Dealers').closest('.MuiBox-root') as HTMLElement,
+      );
+      expect(dealers.getByText('Test Player 1')).toBeInTheDocument();
+      expect(dealers.getByText('Test Player 2')).toBeInTheDocument();
+      expect(dealers.getByText('1')).toBeInTheDocument();
+      expect(dealers.getByText('2')).toBeInTheDocument();
     });
   });
 
