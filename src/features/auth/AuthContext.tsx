@@ -156,12 +156,31 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   useEffect(() => {
     if (!accessToken || !accessTokenExpiry || accessTokenExpired) return;
 
+    // setTimeout delays are stored as a signed 32-bit int; any delay larger
+    // than ~24.8 days overflows and fires almost immediately. ESO Logs access
+    // tokens are long-lived (expiry can be up to a year out), so scheduling the
+    // raw delay would fire on every mount — and with no refresh token available
+    // that would clear a perfectly valid session. Skip proactive refresh when
+    // expiry is beyond the timer's safe range; the effect re-runs on the next
+    // load with a fresh Date.now().
+    const MAX_TIMEOUT_MS = 2_147_483_647;
     const msUntilRefresh = accessTokenExpiry - Date.now() - 60_000;
+    if (msUntilRefresh > MAX_TIMEOUT_MS) return;
+
     const doRefresh = (): void => {
       void refreshAccessToken()
         ?.then((newToken) => {
-          if (newToken) updateAccessToken(newToken);
-          else updateAccessToken('');
+          if (newToken) {
+            updateAccessToken(newToken);
+            return;
+          }
+          // A null result means either no refresh token is stored (ESO Logs
+          // does not always issue one — the current access token is still
+          // valid, so keep it) or a hard refresh failure (refreshAccessToken
+          // already purged storage). Only log out in the latter case.
+          if (!localStorage.getItem(LOCAL_STORAGE_ACCESS_TOKEN_KEY)) {
+            updateAccessToken('');
+          }
         })
         ?.catch(() => updateAccessToken(''));
     };

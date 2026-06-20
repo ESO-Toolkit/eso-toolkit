@@ -95,22 +95,28 @@ export const OAuthRedirect: React.FC = () => {
                 refresh_token: data.refresh_token || null,
                 expires_in: data.expires_in || 3600,
               }),
+              signal: controller.signal,
             });
             if (!callbackResp.ok) {
               throw new Error(`Desktop app responded with ${callbackResp.status}`);
             }
           } catch {
+            // Don't surface an error (or touch state) if we were unmounted /
+            // aborted mid-flight.
+            if (controller.signal.aborted) return;
             setError(
               'Could not connect to the desktop application. ' +
                 'Please make sure it is running and try again.',
             );
             return;
           }
+          if (controller.signal.aborted) return;
           setKalpaSuccess(true);
           return;
         }
 
         // Normal web auth flow
+        if (controller.signal.aborted) return;
         localStorage.setItem(LOCAL_STORAGE_ACCESS_TOKEN_KEY, data.access_token as string);
         // Store refresh token if provided
         if (data.refresh_token && typeof data.refresh_token === 'string') {
