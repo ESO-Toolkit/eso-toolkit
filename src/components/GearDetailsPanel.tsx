@@ -94,44 +94,56 @@ export const GearDetailsPanel: React.FC<GearDetailsPanelProps> = ({
     return sortedPlayers.findIndex((p) => p.id === currentPlayerId);
   }, [sortedPlayers, currentPlayerId]);
 
+  // Track the nested transition timers so we can cancel them on close/unmount
+  // (otherwise the inner callbacks still fire onPlayerChange, re-pointing the
+  // parent's selected player after dismissal) and when a new navigation starts.
+  const navTimersRef = React.useRef<ReturnType<typeof setTimeout>[]>([]);
+  const clearNavTimers = React.useCallback(() => {
+    navTimersRef.current.forEach(clearTimeout);
+    navTimersRef.current = [];
+  }, []);
+
   // Player navigation functions with fancy fade transition
+  const navigateTo = React.useCallback(
+    (nextIndex: number, direction: 'left' | 'right') => {
+      clearNavTimers();
+      setTransitionDirection(direction);
+      setFadeStage('out');
+      setIsTransitioning(true);
+
+      navTimersRef.current.push(
+        setTimeout(() => {
+          setDisplayedPlayerId(sortedPlayers[nextIndex].id);
+          setFadeStage('in');
+
+          navTimersRef.current.push(
+            setTimeout(() => {
+              onPlayerChange(sortedPlayers[nextIndex].id);
+              setFadeStage('none');
+              setIsTransitioning(false);
+            }, 300),
+          );
+        }, 300),
+      );
+    },
+    [sortedPlayers, onPlayerChange, clearNavTimers],
+  );
+
   const goToPreviousPlayer = React.useCallback(() => {
     if (sortedPlayers.length <= 1) return;
-    const prevIndex = currentPlayerIndex > 0 ? currentPlayerIndex - 1 : sortedPlayers.length - 1;
-    setTransitionDirection('right');
-    setFadeStage('out');
-    setIsTransitioning(true);
-
-    setTimeout(() => {
-      setDisplayedPlayerId(sortedPlayers[prevIndex].id);
-      setFadeStage('in');
-
-      setTimeout(() => {
-        onPlayerChange(sortedPlayers[prevIndex].id);
-        setFadeStage('none');
-        setIsTransitioning(false);
-      }, 300);
-    }, 300);
-  }, [sortedPlayers, currentPlayerIndex, onPlayerChange]);
+    navigateTo(currentPlayerIndex > 0 ? currentPlayerIndex - 1 : sortedPlayers.length - 1, 'right');
+  }, [sortedPlayers, currentPlayerIndex, navigateTo]);
 
   const goToNextPlayer = React.useCallback(() => {
     if (sortedPlayers.length <= 1) return;
-    const nextIndex = currentPlayerIndex < sortedPlayers.length - 1 ? currentPlayerIndex + 1 : 0;
-    setTransitionDirection('left');
-    setFadeStage('out');
-    setIsTransitioning(true);
+    navigateTo(currentPlayerIndex < sortedPlayers.length - 1 ? currentPlayerIndex + 1 : 0, 'left');
+  }, [sortedPlayers, currentPlayerIndex, navigateTo]);
 
-    setTimeout(() => {
-      setDisplayedPlayerId(sortedPlayers[nextIndex].id);
-      setFadeStage('in');
-
-      setTimeout(() => {
-        onPlayerChange(sortedPlayers[nextIndex].id);
-        setFadeStage('none');
-        setIsTransitioning(false);
-      }, 300);
-    }, 300);
-  }, [sortedPlayers, currentPlayerIndex, onPlayerChange]);
+  // Cancel pending transition timers on close and unmount.
+  React.useEffect(() => {
+    if (!open) clearNavTimers();
+    return () => clearNavTimers();
+  }, [open, clearNavTimers]);
 
   // Keyboard navigation
   React.useEffect(() => {
