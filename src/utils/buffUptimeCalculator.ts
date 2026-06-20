@@ -224,7 +224,7 @@ export function computeBuffUptimesWithGroupAverage(
       if (targetIds && !targetIds.has(interval.targetID)) {
         return;
       }
-      if (sourceIds && interval.sourceID && !sourceIds.has(interval.sourceID)) {
+      if (sourceIds && interval.sourceID != null && !sourceIds.has(interval.sourceID)) {
         return;
       }
 
@@ -237,13 +237,15 @@ export function computeBuffUptimesWithGroupAverage(
 
       // Determine which player(s) this interval contributes to.
       // - Normal mode: the single targetID (already gated to allTargetIds above).
-      // - Inverted mode with a real sourceID: that single source player.
-      // - Inverted mode with a falsy sourceID (0/undefined): the original per-player
-      //   call's `interval.sourceID && ...` guard short-circuits, so the interval is
-      //   NOT filtered out by source and is counted for EVERY comparison player.
+      // - Inverted mode with a recorded sourceID (including 0): that single source
+      //   player; if it isn't one of the compared players the interval is dropped
+      //   (matches computeBuffUptimes' `interval.sourceID != null && !sourceIds.has`).
+      // - Inverted mode with a null/undefined sourceID: the per-player call's source
+      //   filter short-circuits (sourceID != null is false), so the interval is NOT
+      //   filtered out and is counted for EVERY comparison player.
       let contributingPlayers: number[];
       if (filterBySourceId) {
-        if (interval.sourceID) {
+        if (interval.sourceID != null) {
           if (!allTargetIds.has(interval.sourceID)) {
             return;
           }
