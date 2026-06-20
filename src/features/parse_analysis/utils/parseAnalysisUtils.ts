@@ -1608,10 +1608,9 @@ const KNOWN_ULTIMATE_ABILITY_IDS = new Set([
   24799, // Suppression Field
   27706, // Absorption Field
   // Templar
-  22223, // Crescent Sweep
-  22226, // Radiant Glory (morph ult)
-  22139, // Flawless Dawnbreaker
-  40161, // Flawless Dawnbreaker (morph)
+  22223, // Rite of Passage
+  22226, // Practiced Incantation (Rite of Passage morph)
+  22139, // Crescent Sweep
   // Necromancer
   115238, // Pestilent Colossus
   122174, // Glacial Colossus
@@ -1625,7 +1624,6 @@ const KNOWN_ULTIMATE_ABILITY_IDS = new Set([
   183623, // Exhausting Fatecarver
   183625, // Pragmatic Fatecarver
   // Weapon skill lines
-  22139, // Flawless Dawnbreaker
   40161, // Flawless Dawnbreaker (morph)
   40158, // Dawnbreaker of Smiting
   // Fighters Guild
