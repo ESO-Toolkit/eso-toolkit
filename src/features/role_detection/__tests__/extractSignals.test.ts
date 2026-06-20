@@ -209,6 +209,123 @@ describe('extractSignals', () => {
     });
   });
 
+  describe('shield signals', () => {
+    function makeShieldHealEvent(
+      sourceID: number,
+      targetID: number,
+      absorb: number,
+      timestamp: number,
+    ): HealEvent {
+      return {
+        timestamp,
+        type: 'heal',
+        sourceID,
+        sourceIsFriendly: true,
+        targetID,
+        targetIsFriendly: true,
+        abilityGameID: 5678,
+        fight: FIGHT_ID,
+        hitType: 1,
+        amount: 0,
+        overheal: 0,
+        castTrackID: 0,
+        sourceResources: {} as HealEvent['sourceResources'],
+        targetResources: { absorb } as HealEvent['targetResources'],
+      };
+    }
+
+    it('should credit a player who raises an ally absorb pool with shieldAppliedToOthers', () => {
+      const events = emptyEvents({
+        healEvents: [makeShieldHealEvent(PLAYER_HEALER, PLAYER_DPS1, 12000, FIGHT_START + 1000)],
+      });
+
+      const result = extractSignals(events, createContext());
+
+      const healer = result.find((s) => s.playerId === PLAYER_HEALER)!;
+      expect(healer.shieldAppliedToOthers).toBe(12000);
+    });
+
+    it('should count only the increase, not the standing absorb pool', () => {
+      const events = emptyEvents({
+        healEvents: [
+          makeShieldHealEvent(PLAYER_HEALER, PLAYER_DPS1, 12000, FIGHT_START + 1000),
+          // pool decayed (soaked damage) then re-shielded higher
+          makeShieldHealEvent(PLAYER_HEALER, PLAYER_DPS1, 4000, FIGHT_START + 2000),
+          makeShieldHealEvent(PLAYER_HEALER, PLAYER_DPS1, 10000, FIGHT_START + 3000),
+        ],
+      });
+
+      const result = extractSignals(events, createContext());
+
+      const healer = result.find((s) => s.playerId === PLAYER_HEALER)!;
+      // +12000 (0→12000), decay ignored, +6000 (4000→10000)
+      expect(healer.shieldAppliedToOthers).toBe(18000);
+    });
+
+    it('should ignore self-shields', () => {
+      const events = emptyEvents({
+        healEvents: [makeShieldHealEvent(PLAYER_DPS1, PLAYER_DPS1, 15000, FIGHT_START + 1000)],
+      });
+
+      const result = extractSignals(events, createContext());
+
+      const dps1 = result.find((s) => s.playerId === PLAYER_DPS1)!;
+      expect(dps1.shieldAppliedToOthers).toBe(0);
+    });
+
+    it('should ignore absorb applied to non-player targets (pets/NPCs)', () => {
+      const NON_PLAYER_TARGET = 99999; // not in friendlyPlayerIds
+      const events = emptyEvents({
+        healEvents: [
+          makeShieldHealEvent(PLAYER_HEALER, NON_PLAYER_TARGET, 20000, FIGHT_START + 1000),
+        ],
+      });
+
+      const result = extractSignals(events, createContext());
+
+      const healer = result.find((s) => s.playerId === PLAYER_HEALER)!;
+      expect(healer.shieldAppliedToOthers).toBe(0);
+    });
+
+    it('should not reset the baseline on heals that omit absorb (no false re-credit)', () => {
+      // Shield to 12000, then a resource-less heal (no absorb) lands while the
+      // pool still stands, then another heal still reports 12000. The standing
+      // pool must NOT be re-counted as a new shield.
+      const resourcelessHeal = makeShieldHealEvent(
+        PLAYER_HEALER,
+        PLAYER_DPS1,
+        0,
+        FIGHT_START + 2000,
+      );
+      delete (resourcelessHeal.targetResources as { absorb?: number }).absorb;
+
+      const events = emptyEvents({
+        healEvents: [
+          makeShieldHealEvent(PLAYER_HEALER, PLAYER_DPS1, 12000, FIGHT_START + 1000),
+          resourcelessHeal,
+          makeShieldHealEvent(PLAYER_HEALER, PLAYER_DPS1, 12000, FIGHT_START + 3000),
+        ],
+      });
+
+      const result = extractSignals(events, createContext());
+
+      const healer = result.find((s) => s.playerId === PLAYER_HEALER)!;
+      // Only the initial 0->12000 counts; the standing pool is not re-credited.
+      expect(healer.shieldAppliedToOthers).toBe(12000);
+    });
+
+    it('should leave shieldAppliedToOthers at 0 when no absorb is present', () => {
+      const events = emptyEvents({
+        healEvents: [makeHealEvent(PLAYER_HEALER, 20000)],
+      });
+
+      const result = extractSignals(events, createContext());
+
+      const healer = result.find((s) => s.playerId === PLAYER_HEALER)!;
+      expect(healer.shieldAppliedToOthers).toBe(0);
+    });
+  });
+
   describe('damage taken signals', () => {
     it('should track damage taken per player', () => {
       const events = emptyEvents({
