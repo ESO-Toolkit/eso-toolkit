@@ -64,6 +64,10 @@ export const ReportCard: React.FC<ReportCardProps> = ({ report, onSelect, showOw
   const [copied, setCopied] = useState(false);
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>): void => {
+    // Only the card itself activates on Enter/Space. Without this guard, key
+    // presses on nested controls (e.g. the copy-code button) bubble up here and
+    // would navigate to the report instead of running their own action.
+    if (event.target !== event.currentTarget) return;
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
       onSelect(report.code, event as unknown as React.MouseEvent);

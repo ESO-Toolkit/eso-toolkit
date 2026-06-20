@@ -82,4 +82,15 @@ describe('ReportCard', () => {
     // The copy button must not bubble up to the card link.
     expect(onSelect).not.toHaveBeenCalled();
   });
+
+  it('does not navigate when Enter/Space is pressed on a nested control', () => {
+    const onSelect = jest.fn();
+    render(<ReportCard report={report} onSelect={onSelect} />);
+    const copyButton = screen.getByRole('button', { name: /copy share code/i });
+    // Keys on the copy button bubble to the card handler; the target guard
+    // keeps them from activating the card link.
+    fireEvent.keyDown(copyButton, { key: 'Enter' });
+    fireEvent.keyDown(copyButton, { key: ' ' });
+    expect(onSelect).not.toHaveBeenCalled();
+  });
 });

@@ -99,7 +99,7 @@ export const ReportsToolbar: React.FC<ReportsToolbarProps> = ({
               sx={{
                 textTransform: 'none',
                 minHeight: 44,
-                borderRadius: '10px',
+                borderRadius: '14px',
                 fontWeight: 600,
               }}
             >
