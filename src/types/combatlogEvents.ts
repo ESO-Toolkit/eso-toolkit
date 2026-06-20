@@ -10,8 +10,12 @@ export interface DamageEvent {
   type: 'damage';
   sourceID: number;
   sourceIsFriendly: boolean;
+  // ESO Logs assigns ONE actor id to all simultaneous copies of a multi-instance NPC; these optional
+  // per-event fields identify WHICH physical copy this event is about (absent/0 for single-instance).
+  sourceInstance?: number;
   targetID: number;
   targetIsFriendly: false;
+  targetInstance?: number;
   abilityGameID: number;
   fight: number;
   hitType: HitType;
@@ -29,6 +33,7 @@ export interface DeathEvent {
   type: 'death';
   sourceID: number;
   sourceIsFriendly: boolean;
+  sourceInstance?: number;
   targetID: number;
   targetInstance: number;
   targetIsFriendly: boolean;
@@ -45,8 +50,10 @@ export interface ResourceChangeEvent {
   type: 'resourcechange';
   sourceID: number;
   sourceIsFriendly: boolean;
+  sourceInstance?: number;
   targetID: number;
   targetIsFriendly: boolean;
+  targetInstance?: number;
   abilityGameID: number;
   fight: number;
   resourceChange: number;
@@ -88,8 +95,10 @@ export interface HealEvent {
   type: 'heal';
   sourceID: number;
   sourceIsFriendly: boolean;
+  sourceInstance?: number;
   targetID: number;
   targetIsFriendly: boolean;
+  targetInstance?: number;
   abilityGameID: number;
   fight: number;
   hitType: number;
@@ -123,8 +132,10 @@ export interface CastEvent {
   type: 'cast';
   sourceID: number;
   sourceIsFriendly: boolean;
+  sourceInstance?: number;
   targetID: number;
   targetIsFriendly: boolean;
+  targetInstance?: number;
   abilityGameID: number;
   fight: number;
   fake?: boolean;

@@ -15,9 +15,11 @@ import { Logger, LogLevel } from '../../utils/logger';
 import { resolveActorName } from '../../utils/resolveActorName';
 import { OnProgressCallback } from '../Utils';
 
-// Create logger instance for actor position calculations (worker context)
+// Create logger instance for actor position calculations (worker context). INFO so the one-line
+// multi-instance split summary surfaces (once per fight) — the signal for live-verifying that
+// previously-teleporting packs of adds now render as separate pucks. Warnings still pass through.
 const logger = new Logger({
-  level: LogLevel.WARN,
+  level: LogLevel.INFO,
   contextPrefix: 'ActorPositions',
 });
 
@@ -35,6 +37,15 @@ export interface ActorPosition {
     max: number;
     percentage: number;
   };
+  /**
+   * Real ESO-Logs report actor id this puck derives from. Equals `id` for single-instance actors;
+   * for a multi-instance NPC copy, `id` is a synthetic render id and `baseActorId` recovers the real
+   * report id. Any consumer that joins back to report data (actorsById / playersById / event indices)
+   * MUST use `baseActorId`, never `id`. See INSTANCE_STRIDE / baseActorIdOf below.
+   */
+  baseActorId?: number;
+  /** Instance slot for a multi-instance NPC copy (0 = primary/single-instance; >=2 = extra copies). */
+  instance?: number;
 }
 
 export interface TimestampPositionLookup {
@@ -158,6 +169,59 @@ const MIN_VISIBILITY_MS = 1000;
 const BOSS_DEATH_VISIBILITY_WINDOW_MS = 2000;
 const SAMPLE_INTERVAL_MS = 4.7; // 240Hz sampling rate (better performance vs quality balance)
 const MAX_TIMESTAMPS = 72000; // Cap at 5 minutes worth of 240Hz data to prevent excessive computation
+
+// ---- Multi-instance NPC splitting --------------------------------------------------------------
+//
+// ESO Logs assigns ONE ReportFightNPC `id` to ALL simultaneous copies of an NPC (the schema:
+// `id` "is used in events to identify sources and targets" + `instanceCount` = "how many instances
+// of the NPC were seen"). Each physical copy is distinguished on events by sourceInstance /
+// targetInstance. Position history was keyed by `id` alone, so a pack of identical adds
+// (instanceCount > 1) merged into ONE history array and the interpolator slid a single puck across
+// the copies' separate map positions — the "enemies bug out and move rapidly" report.
+//
+// Fix: give each copy of a genuinely multi-instance NPC its own puck via a synthetic, REVERSIBLE
+// render id. Single-instance actors (the overwhelming common case) keep their real id unchanged, so
+// the lookup is byte-identical to before for them. If ESO Logs ever omits instance fields entirely,
+// every actor collapses to a single slot and NOTHING splits → no behavior change (fail-safe).
+//
+// Instance numbering is small and varies across reports: single-instance NPCs log instance 0 (or
+// omit it); multi-instance copies log 1, 2, 3, .... We map a raw instance to a copy "slot" where 0
+// and 1 both mean the primary copy, so {0}, {1}, {0,1} are all single-instance (never split) and
+// {1,2}, {0,2}, {1,2,3} split into the right number of pucks without phantom copies.
+const INSTANCE_STRIDE = 1_000_000; // >> any real ReportActor.id (small sequential ints); copy counts are tiny
+
+/** Map a raw per-event instance value to its copy slot: 0/undefined/1 => 0 (primary), N>=2 => N. */
+function instanceSlot(rawInstance: number | undefined | null): number {
+  const v = rawInstance ?? 0;
+  return v <= 1 ? 0 : v;
+}
+
+/**
+ * Synthetic render id for a (real actorId, instance) pair. The primary slot keeps the bare actorId,
+ * so single-instance actors and every NPC's primary copy are unchanged; extra copies get
+ * `actorId + slot * INSTANCE_STRIDE`, which cannot collide with real ids (all < INSTANCE_STRIDE) nor
+ * with other copies. Reversible: see baseActorIdOf / instanceSlotOf.
+ */
+function makeRenderId(actorId: number, rawInstance: number | undefined | null): number {
+  const slot = instanceSlot(rawInstance);
+  return slot === 0 ? actorId : actorId + slot * INSTANCE_STRIDE;
+}
+
+/** Recover the real ESO-Logs actor id from a render id (for name/type/role/taunt joins). */
+function baseActorIdOf(renderId: number): number {
+  return renderId % INSTANCE_STRIDE;
+}
+
+/** Recover the copy slot from a render id (0 = primary/single-instance). */
+function instanceSlotOf(renderId: number): number {
+  return Math.floor(renderId / INSTANCE_STRIDE);
+}
+
+/** Minimal accessor for the optional instance discriminators on any positional event. */
+interface EventWithInstances {
+  sourceInstance?: number;
+  targetInstance?: number;
+}
 
 // Memory-efficient batch size for processing
 const ACTOR_BATCH_SIZE = 50; // Process actors in batches to manage memory
@@ -477,15 +541,76 @@ export function calculateActorPositions(
 
   onProgress?.(0.1);
 
+  // Pre-pass: discover which actors are genuinely multi-instance so we only split those. For every
+  // event, record the copy slot seen for the source and target actor. An actor is multi-instance iff
+  // it shows >= 2 distinct slots (slot 0 = primary/single). This is cheap (one extra scan) and makes
+  // the split fail-safe: if instance fields are absent everywhere, every actor has just slot 0 and
+  // nothing is split (identical to the pre-fix behavior).
+  const slotsByActor = new Map<number, Set<number>>();
+  const noteSlot = (actorId: number, rawInstance: number | undefined): void => {
+    let set = slotsByActor.get(actorId);
+    if (!set) {
+      set = new Set<number>();
+      slotsByActor.set(actorId, set);
+    }
+    set.add(instanceSlot(rawInstance));
+  };
+  for (const event of allEvents) {
+    const withInstances = event as EventWithInstances;
+    if ('sourceID' in event) {
+      noteSlot((event as { sourceID: number }).sourceID, withInstances.sourceInstance);
+    }
+    if ('targetID' in event) {
+      noteSlot((event as { targetID: number }).targetID, withInstances.targetInstance);
+    }
+  }
+  const multiInstanceActors = new Set<number>();
+  let splitCopyCount = 0; // total pucks emitted for split NPCs (for observability)
+  slotsByActor.forEach((slots, actorId) => {
+    if (slots.size < 2) return;
+    // Safety: the synthetic render id is `actorId + slot * INSTANCE_STRIDE`, and baseActorIdOf reverses
+    // it with `% INSTANCE_STRIDE`. That round-trip is only exact while the real id is below the stride.
+    // Real ESO-Logs report actor ids are small sequential ints, so this never trips in practice; if a
+    // report ever exceeded it we keep the (merged) pre-fix behavior for that actor rather than risk a
+    // corrupted id, and log it.
+    if (actorId >= INSTANCE_STRIDE) {
+      logger.warn('Skipping multi-instance split for out-of-range actor id', {
+        actorId,
+        instanceStride: INSTANCE_STRIDE,
+      });
+      return;
+    }
+    multiInstanceActors.add(actorId);
+    splitCopyCount += slots.size;
+  });
+
+  // Map a (real actorId, raw instance) to the id under which its position history / death / event
+  // times are keyed and the puck is rendered. Single-instance actors keep their real id verbatim.
+  const resolveRenderId = (actorId: number, rawInstance: number | undefined): number =>
+    multiInstanceActors.has(actorId) ? makeRenderId(actorId, rawInstance) : actorId;
+
+  // Observability: surface when the split actually fires. A fight with no multi-instance NPCs logs
+  // nothing (and behaves exactly as before); a trash pull logs how many NPC ids fanned out into how
+  // many pucks — the signal to look for when live-verifying that "teleporting adds" are now split.
+  if (multiInstanceActors.size > 0) {
+    logger.info('Split multi-instance NPCs into per-copy pucks', {
+      multiInstanceNpcs: multiInstanceActors.size,
+      totalCopies: splitCopyCount,
+    });
+  }
+
   // Collect position data from events
   for (const event of allEvents) {
-    // Track death and resurrection status
+    const withInstances = event as EventWithInstances;
+    // Track death and resurrection status. Death events carry targetInstance, so a copy's death is
+    // recorded under that copy's render id — only the dying copy stops rendering, not its siblings.
     if (event.type === 'death') {
       const deathEvent = event as DeathEvent;
-      if (!actorDeathEvents.has(deathEvent.targetID)) {
-        actorDeathEvents.set(deathEvent.targetID, []);
+      const deathRenderId = resolveRenderId(deathEvent.targetID, deathEvent.targetInstance);
+      if (!actorDeathEvents.has(deathRenderId)) {
+        actorDeathEvents.set(deathRenderId, []);
       }
-      const events = actorDeathEvents.get(deathEvent.targetID);
+      const events = actorDeathEvents.get(deathRenderId);
       if (events) {
         events.push({
           type: 'death',
@@ -494,14 +619,17 @@ export function calculateActorPositions(
       }
     }
 
-    // Handle resurrection cast events
+    // Handle resurrection cast events (resurrection targets are players, which are single-instance,
+    // so this resolves to the real id; a multi-instance NPC with no instance on the cast resolves to
+    // its primary copy).
     if (event.type === 'cast') {
       const castEvent = event as CastEvent;
       if (castEvent.abilityGameID === KnownAbilities.RESURRECT && castEvent.targetID) {
-        if (!actorDeathEvents.has(castEvent.targetID)) {
-          actorDeathEvents.set(castEvent.targetID, []);
+        const resRenderId = resolveRenderId(castEvent.targetID, castEvent.targetInstance);
+        if (!actorDeathEvents.has(resRenderId)) {
+          actorDeathEvents.set(resRenderId, []);
         }
-        const events = actorDeathEvents.get(castEvent.targetID);
+        const events = actorDeathEvents.get(resRenderId);
         if (events) {
           events.push({
             type: 'resurrection',
@@ -511,18 +639,33 @@ export function calculateActorPositions(
       }
     }
 
-    // Process source and target actors
-    const actorsToProcess: Array<{ id: number; isTarget: boolean }> = [];
+    // Process source and target actors. Each role's events are keyed by the render id of the specific
+    // copy they belong to, so a multi-instance NPC's copies build SEPARATE position histories (the
+    // fix: the interpolator can no longer bridge two physically distinct copies into one teleporting
+    // puck).
+    const actorsToProcess: Array<{ renderId: number; isTarget: boolean }> = [];
     if ('sourceID' in event) {
-      actorsToProcess.push({ id: event.sourceID, isTarget: false });
+      actorsToProcess.push({
+        renderId: resolveRenderId(
+          (event as { sourceID: number }).sourceID,
+          withInstances.sourceInstance,
+        ),
+        isTarget: false,
+      });
     }
     if ('targetID' in event) {
-      actorsToProcess.push({ id: event.targetID, isTarget: true });
+      actorsToProcess.push({
+        renderId: resolveRenderId(
+          (event as { targetID: number }).targetID,
+          withInstances.targetInstance,
+        ),
+        isTarget: true,
+      });
     }
 
-    for (const { id: actorId, isTarget } of actorsToProcess) {
+    for (const { renderId, isTarget } of actorsToProcess) {
       trackActorEvent(
-        actorId,
+        renderId,
         event.timestamp,
         actorFirstEventTime,
         actorEventTimes,
@@ -535,7 +678,7 @@ export function calculateActorPositions(
         if (resourceKey in event) {
           extractPositionData(
             event as DamageEvent | HealEvent | DeathEvent | ResourceChangeEvent,
-            actorId,
+            renderId,
             resourceKey,
             actorPositionHistory,
           );
@@ -668,18 +811,25 @@ export function calculateActorPositions(
   for (let batchIndex = 0; batchIndex < actorBatches.length; batchIndex++) {
     const actorBatch = actorBatches[batchIndex];
 
-    for (const actorId of actorBatch) {
-      const history = actorPositionHistory.get(actorId) || [];
+    for (const renderId of actorBatch) {
+      const history = actorPositionHistory.get(renderId) || [];
       if (history.length === 0) {
         processedActors++;
         continue;
       }
 
+      // `renderId` is the per-copy key (== real id for single-instance actors). ALL report-data joins
+      // (type/role/name classification, taunt lookup) must use the REAL id; only position history,
+      // death, event-times, and the emitted puck id are keyed by renderId. Every copy of one NPC
+      // shares the same name/type/role, so resolving them off the base id is correct.
+      const baseActorId = baseActorIdOf(renderId);
+      const instance = instanceSlotOf(renderId);
+
       // Determine actor type and role
-      const isPlayer = fight.friendlyPlayers?.includes(actorId) ?? false;
+      const isPlayer = fight.friendlyPlayers?.includes(baseActorId) ?? false;
 
       // Get actor data early for boss and pet detection and name resolution
-      const actorData = actorsById?.[actorId];
+      const actorData = actorsById?.[baseActorId];
 
       // Check if actor is a boss by looking at actorsById data
       const isBoss = actorData?.subType === 'Boss' && actorData?.type === 'NPC';
@@ -687,8 +837,8 @@ export function calculateActorPositions(
       // Check if actor is a pet by looking at actorsById data
       const isPet = actorData?.subType === 'Pet' && actorData?.type === 'Pet';
 
-      const isFriendlyNPC = fight.friendlyNPCs?.some((npc) => npc?.id === actorId) ?? false;
-      const isEnemyNPC = fight.enemyNPCs?.some((npc) => npc?.id === actorId) ?? false;
+      const isFriendlyNPC = fight.friendlyNPCs?.some((npc) => npc?.id === baseActorId) ?? false;
+      const isEnemyNPC = fight.enemyNPCs?.some((npc) => npc?.id === baseActorId) ?? false;
 
       let type: 'player' | 'enemy' | 'boss' | 'friendly_npc' | 'pet' = 'friendly_npc';
       if (isPlayer) type = 'player';
@@ -699,14 +849,14 @@ export function calculateActorPositions(
       } else if (isFriendlyNPC) type = 'friendly_npc';
 
       // Get role for players
-      const playerData = isPlayer && playersById ? playersById[actorId] : undefined;
+      const playerData = isPlayer && playersById ? playersById[baseActorId] : undefined;
       const role = playerData?.role;
 
       // Get actor name (reusing actorData from above)
-      const actorName = resolveActorName(actorData, actorId, `Actor ${actorId}`);
+      const actorName = resolveActorName(actorData, baseActorId, `Actor ${baseActorId}`);
 
       // Get first event time for this actor
-      const firstEventTime = actorFirstEventTime.get(actorId);
+      const firstEventTime = actorFirstEventTime.get(renderId);
       const isNPC = type !== 'player' && type !== 'boss'; // Includes pets, enemies, and friendly NPCs
 
       // Process each timestamp and directly populate the lookup structure
@@ -719,7 +869,7 @@ export function calculateActorPositions(
         }
 
         // Check if actor is dead at this timestamp
-        const actorEvents = actorDeathEvents.get(actorId) || [];
+        const actorEvents = actorDeathEvents.get(renderId) || [];
 
         // Sort events chronologically and determine if actor is dead at current timestamp
         const sortedEvents = actorEvents.slice().sort((a, b) => a.timestamp - b.timestamp);
@@ -734,7 +884,7 @@ export function calculateActorPositions(
           }
         }
 
-        const lastEventTimestamp = actorLastEventTime.get(actorId);
+        const lastEventTimestamp = actorLastEventTime.get(renderId);
         const hasRecordedDeath = actorEvents.some((event) => event.type === 'death');
 
         // If actor is dead, handle based on actor type
@@ -774,7 +924,7 @@ export function calculateActorPositions(
               debuffLookupData,
               fight,
               relativeTime,
-              actorId,
+              baseActorId,
               actorDeathEvents,
             );
 
@@ -794,8 +944,8 @@ export function calculateActorPositions(
             }
 
             // Directly add to lookup structure
-            positionsByTimestamp[relativeTime][actorId] = {
-              id: actorId,
+            positionsByTimestamp[relativeTime][renderId] = {
+              id: renderId,
               name: actorName,
               type,
               role,
@@ -804,6 +954,8 @@ export function calculateActorPositions(
               isDead: true,
               isTaunted,
               health,
+              baseActorId,
+              instance,
             };
           }
           continue;
@@ -821,11 +973,11 @@ export function calculateActorPositions(
 
         // For NPCs (including pets) or bosses without death records, skip positions if no recent event within 5 seconds
         // Use pre-sorted event times for better performance
-        const sortedEventTimes = sortedEventTimesCache.get(actorId) || [];
+        const sortedEventTimes = sortedEventTimesCache.get(renderId) || [];
         const enforceRecentEventVisibility = isNPC || (type === 'boss' && !hasRecordedDeath);
         if (
           enforceRecentEventVisibility &&
-          !hasRecentEvent(actorId, currentTimestamp, sortedEventTimes)
+          !hasRecentEvent(renderId, currentTimestamp, sortedEventTimes)
         ) {
           continue;
         }
@@ -904,7 +1056,7 @@ export function calculateActorPositions(
                 debuffLookupData,
                 fight,
                 relativeTime,
-                actorId,
+                baseActorId,
                 actorDeathEvents,
               )
             : false;
@@ -932,8 +1084,8 @@ export function calculateActorPositions(
         }
 
         // Directly add to lookup structure
-        positionsByTimestamp[relativeTime][actorId] = {
-          id: actorId,
+        positionsByTimestamp[relativeTime][renderId] = {
+          id: renderId,
           name: actorName,
           type,
           role,
@@ -942,6 +1094,8 @@ export function calculateActorPositions(
           isDead, // Use the calculated death status
           isTaunted,
           health,
+          baseActorId,
+          instance,
         };
       }
 
