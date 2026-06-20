@@ -1166,9 +1166,7 @@ export const PublicProfilePage: React.FC = () => {
   // still resolving for a possible owner, or while the owner-fallback profile is
   // about to be synthesized by the effect above.
   const ownerFallbackPending =
-    notFound &&
-    !profile &&
-    (userLoading || (isOwner && currentUser?.id != null));
+    notFound && !profile && (userLoading || (isOwner && currentUser?.id != null));
 
   if (loading || ownerFallbackPending) {
     return (
