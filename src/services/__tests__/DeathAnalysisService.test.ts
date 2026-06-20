@@ -1,5 +1,6 @@
 import { ReportActorFragment, ReportAbilityFragment } from '../../graphql/gql/graphql';
 import { DeathEvent } from '../../types/combatlogEvents';
+import { MechanicCategory } from '../../types/reportSummaryTypes';
 import { DeathAnalysisInput, DeathAnalysisService } from '../DeathAnalysisService';
 
 const makeDeath = (partial: Partial<DeathEvent>): DeathEvent =>
@@ -29,6 +30,8 @@ const actors: Record<string, ReportActorFragment> = {
 const abilities: Record<string, ReportAbilityFragment> = {
   9000: { gameID: 9000, name: 'Meteor' } as unknown as ReportAbilityFragment,
   9001: { gameID: 9001, name: 'Cleave' } as unknown as ReportAbilityFragment,
+  // 126633 (Elemental Ring) is in the canonical AOE_ABILITY_IDS set.
+  126633: { gameID: 126633, name: 'Elemental Ring', type: '64' } as unknown as ReportAbilityFragment,
 };
 
 const input = (partial: Partial<DeathAnalysisInput>): DeathAnalysisInput => ({
@@ -118,6 +121,35 @@ describe('DeathAnalysisService.analyzeReportDeaths', () => {
       }),
     ]);
     expect(result.mechanicDeaths[0].averageKillingBlowDamage).toBe(2000);
+  });
+
+  it('uses the authoritative kill flag for success, not the death-rate heuristic', () => {
+    // 1 death over 60s = 1/min, which the old heuristic (<2/min) called a success.
+    // With kill:false it must read as a wipe.
+    const wipe = DeathAnalysisService.analyzeReportDeaths([
+      input({ kill: false, isBoss: true, deathEvents: [makeDeath({})] }),
+    ]);
+    expect(wipe.fightDeaths[0].success).toBe(false);
+    expect(wipe.fightDeaths[0].isBoss).toBe(true);
+
+    // A kill that happened to have deaths must still read as a kill.
+    const kill = DeathAnalysisService.analyzeReportDeaths([
+      input({
+        kill: true,
+        isBoss: true,
+        fightStartTime: 0,
+        fightEndTime: 10_000,
+        deathEvents: [makeDeath({}), makeDeath({}), makeDeath({})],
+      }),
+    ]);
+    expect(kill.fightDeaths[0].success).toBe(true);
+  });
+
+  it('categorizes a mechanic by ability id / damage-type flags, not its name', () => {
+    const result = DeathAnalysisService.analyzeReportDeaths([
+      input({ deathEvents: [makeDeath({ abilityGameID: 126633 })] }),
+    ]);
+    expect(result.mechanicDeaths[0].category).toBe(MechanicCategory.AREA_EFFECT);
   });
 
   it('reports a flawless run when there are no deaths', () => {

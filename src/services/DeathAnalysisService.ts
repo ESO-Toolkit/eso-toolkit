@@ -1,5 +1,9 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
+import {
+  AOE_ABILITY_IDS,
+  STATUS_EFFECT_ABILITY_IDS,
+} from '../features/report_details/insights/damageTypeCategorization';
 import { ReportActorFragment, ReportAbilityFragment } from '../graphql/gql/graphql';
+import { DamageTypeFlags } from '../types/abilities';
 import { DeathEvent } from '../types/combatlogEvents';
 import {
   ReportDeathAnalysis,
@@ -25,6 +29,10 @@ export interface DeathAnalysisInput {
   fightEndTime: number;
   actors: Record<string, ReportActorFragment>;
   abilities: Record<string, ReportAbilityFragment>;
+  /** Authoritative kill flag for the fight (ESO Logs `fight.kill`); null/undefined when unknown. */
+  kill?: boolean | null;
+  /** Whether this fight is a boss encounter (ESO Logs `encounterID` != 0). */
+  isBoss?: boolean;
 }
 
 export interface DeathCause {
@@ -113,7 +121,8 @@ export class DeathAnalysisService {
    * Analyze deaths within a single fight
    */
   static analyzeFightDeaths(fightData: DeathAnalysisInput): FightDeathAnalysis {
-    const { deathEvents, fightId, fightName, fightStartTime, fightEndTime } = fightData;
+    const { deathEvents, fightId, fightName, fightStartTime, fightEndTime, kill } = fightData;
+    const isBoss = fightData.isBoss ?? true;
 
     // Filter to only player deaths (targetIsFriendly === true)
     const playerDeaths = deathEvents.filter((death) => death.targetIsFriendly);
@@ -124,7 +133,8 @@ export class DeathAnalysisService {
         fightName,
         totalDeaths: 0,
         deathRate: 0,
-        success: true, // No deaths = success
+        success: kill ?? true, // No deaths: trust the kill flag, else assume success
+        isBoss,
         mechanicBreakdown: [],
       };
     }
@@ -163,8 +173,9 @@ export class DeathAnalysisService {
       (a, b) => b.deathCount - a.deathCount,
     );
 
-    // Determine success (heuristic: fights with high death rates are likely wipes)
-    const success = deathRate < 2.0; // Less than 2 deaths per minute = success
+    // Prefer the authoritative kill flag; fall back to a death-rate heuristic only
+    // when the outcome is unknown (e.g. legacy logs, or trash without a kill flag).
+    const success = kill != null ? kill : deathRate < 2.0;
 
     return {
       fightId,
@@ -172,6 +183,7 @@ export class DeathAnalysisService {
       totalDeaths: playerDeaths.length,
       deathRate,
       success,
+      isBoss,
       mechanicBreakdown,
     };
   }
@@ -266,7 +278,6 @@ export class DeathAnalysisService {
         // Get the fight data to access start time
         const fightData = fightDeathData.find((f) => f.fightId === fightId);
         const fightStartTime = fightData?.fightStartTime || 0;
-        const fightEndTime = fightData?.fightEndTime || fightStartTime;
 
         // Time alive is from fight start to first death
         const firstDeathTime = Math.min(...deaths.map((d) => d.timestamp));
@@ -459,13 +470,11 @@ export class DeathAnalysisService {
    */
   private static guessPlayerRole(
     actor: ReportActorFragment | undefined,
-    deaths: DeathEvent[],
+    _deaths: DeathEvent[],
   ): string | undefined {
-    // This is a simplified heuristic - in reality you'd use more sophisticated logic
+    // Role is not derivable from death events alone (it needs cast/buff/debuff
+    // signals — see features/role_detection). Return undefined rather than guess.
     if (!actor) return undefined;
-
-    // Could analyze gear, abilities used, etc. to determine role
-    // For now, return undefined to avoid incorrect assumptions
     return undefined;
   }
 
@@ -476,50 +485,34 @@ export class DeathAnalysisService {
     ability: ReportAbilityFragment | undefined,
     deaths: DeathEvent[],
   ): MechanicCategory {
-    if (!ability || !ability.name) return MechanicCategory.OTHER;
+    if (!ability) return MechanicCategory.OTHER;
 
-    const abilityName = ability.name.toLowerCase();
-
-    // Area effect abilities
-    if (
-      abilityName.includes('aoe') ||
-      abilityName.includes('area') ||
-      abilityName.includes('blast') ||
-      abilityName.includes('explosion')
-    ) {
+    // Categorize by stable game data (ability id + damage-type bitmask) rather
+    // than English name substrings, which mislabel abilities and break on
+    // localized clients.
+    const abilityId = deaths[0]?.abilityGameID;
+    if (abilityId != null && AOE_ABILITY_IDS.has(abilityId)) {
       return MechanicCategory.AREA_EFFECT;
     }
-
-    // Execute phase abilities
-    if (abilityName.includes('execute') || abilityName.includes('enrage')) {
-      return MechanicCategory.EXECUTE_PHASE;
+    if (abilityId != null && STATUS_EFFECT_ABILITY_IDS.has(abilityId)) {
+      return MechanicCategory.DAMAGE_OVER_TIME;
     }
 
-    // Damage over time effects
+    const typeNum = ability.type != null ? Number(ability.type) : 0;
+    const hasFlag = (flag: DamageTypeFlags): boolean => {
+      const f = Number(flag);
+      return (typeNum & f) === f;
+    };
+
+    // Bleed / Poison / Disease read as damage-over-time mechanics.
     if (
-      abilityName.includes('dot') ||
-      abilityName.includes('bleed') ||
-      abilityName.includes('poison') ||
-      abilityName.includes('burn')
+      hasFlag(DamageTypeFlags.BLEED) ||
+      hasFlag(DamageTypeFlags.POISON) ||
+      hasFlag(DamageTypeFlags.DISEASE)
     ) {
       return MechanicCategory.DAMAGE_OVER_TIME;
     }
 
-    // Environmental damage
-    if (
-      abilityName.includes('fall') ||
-      abilityName.includes('lava') ||
-      abilityName.includes('environmental')
-    ) {
-      return MechanicCategory.ENVIRONMENTAL;
-    }
-
-    // High damage abilities
-    const avgDamage = deaths.reduce((sum, d) => sum + (d.amount || 0), 0) / deaths.length;
-    if (avgDamage > 50000) {
-      return MechanicCategory.BURST_DAMAGE;
-    }
-
-    return MechanicCategory.DIRECT_DAMAGE;
+    return typeNum !== 0 ? MechanicCategory.DIRECT_DAMAGE : MechanicCategory.OTHER;
   }
 }

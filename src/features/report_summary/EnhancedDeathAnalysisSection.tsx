@@ -65,22 +65,13 @@ function groupFightsByType(fightDeaths: FightDeathAnalysis[]): FightGroup[] {
   const encounters: FightDeathAnalysis[] = [];
   const trash: FightDeathAnalysis[] = [];
 
-  // Separate encounters from trash based on naming patterns
-  // Encounters typically have boss names, trash fights are generic
+  // Boss vs trash is decided by the API encounterID (threaded through as isBoss),
+  // not by guessing from the fight name.
   for (const fight of fightDeaths) {
-    const name = fight.fightName.toLowerCase();
-    // Trash fights typically contain: "trash", "adds", or are unnamed/generic
-    const isTrash =
-      name.includes('trash') ||
-      name.includes('adds') ||
-      name === 'unknown' ||
-      name === 'unnamed' ||
-      /^fight \d+$/i.test(fight.fightName);
-
-    if (isTrash) {
-      trash.push(fight);
-    } else {
+    if (fight.isBoss) {
       encounters.push(fight);
+    } else {
+      trash.push(fight);
     }
   }
 
@@ -350,7 +341,9 @@ const EnhancedDeathAnalysisSectionComponent: React.FC<EnhancedDeathAnalysisSecti
                         Category
                       </TableCell>
                       <TableCell align="right" sx={{ fontWeight: 'bold' }}>
-                        Avg Damage
+                        <Tooltip title="Average overkill — how far the lethal hit exceeded the player's remaining health, not the hit's full damage">
+                          <span>Avg Overkill</span>
+                        </Tooltip>
                       </TableCell>
                       <TableCell align="center" sx={{ fontWeight: 'bold' }}>
                         Players Hit
@@ -434,7 +427,9 @@ const EnhancedDeathAnalysisSectionComponent: React.FC<EnhancedDeathAnalysisSecti
                         Deaths
                       </TableCell>
                       <TableCell align="right" sx={{ fontWeight: 'bold' }}>
-                        Avg Time Alive
+                        <Tooltip title="Average time from the start of a fight to the player's first death, across fights where they died">
+                          <span>Time to First Death</span>
+                        </Tooltip>
                       </TableCell>
                       <TableCell align="left" sx={{ fontWeight: 'bold' }}>
                         Top Cause of Death

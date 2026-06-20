@@ -23,6 +23,7 @@ import {
   AbilityTypeDamageBreakdown,
   FightDamageBreakdown,
 } from '../../../types/reportSummaryTypes';
+import { isBossFight, wasKill } from '../../report_details/fightGrouping';
 import {
   categorizeDamageEvents,
   type DamageCategoryKey,
@@ -209,6 +210,9 @@ export function useOptimizedReportSummaryData(
           fightEndTime: fight.endTime ?? fight.startTime,
           actors: actorsById,
           abilities: abilitiesById,
+          // Authoritative outcome / classification from the API (not heuristics).
+          kill: wasKill(fight),
+          isBoss: isBossFight(fight),
         }));
         const deathAnalysis = DeathAnalysisService.analyzeReportDeaths(fightDeathData);
 

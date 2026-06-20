@@ -104,7 +104,7 @@ export interface PlayerDeathAnalysis {
   role?: string;
   /** Total deaths */
   totalDeaths: number;
-  /** Average time alive per fight (in seconds) */
+  /** Average time-to-first-death per fight that had a death (in milliseconds) */
   averageTimeAlive: number;
   /** Deaths per fight breakdown */
   fightDeaths: FightPlayerDeaths[];
@@ -119,7 +119,7 @@ export interface FightPlayerDeaths {
   fightName: string;
   /** Number of deaths in this fight */
   deathCount: number;
-  /** Time alive in this fight (seconds) */
+  /** Time from fight start to the player's first death (in milliseconds) */
   timeAlive: number;
   /** Death timestamps */
   deathTimestamps: number[];
@@ -164,8 +164,10 @@ export interface FightDeathAnalysis {
   totalDeaths: number;
   /** Death rate (deaths per minute) */
   deathRate: number;
-  /** Fight success (true if kill, false if wipe) */
+  /** Fight success — the authoritative kill flag when known, else a death-rate heuristic */
   success: boolean;
+  /** Whether this fight is a boss encounter (vs trash), from the API encounterID */
+  isBoss: boolean;
   /** Deaths by mechanic in this fight */
   mechanicBreakdown: MechanicDeathCount[];
 }
