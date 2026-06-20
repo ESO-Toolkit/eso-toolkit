@@ -40,6 +40,12 @@ describe('classMasteryTransfer', () => {
     it('ignores non-Class-Mastery ids and returns undefined when none are present', () => {
       expect(classFromMasteryIds([400, 500])).toBeUndefined();
     });
+
+    it('returns undefined on an ambiguous cross-class tie (stale/corrupt data)', () => {
+      // 1 Dragonknight + 1 Warden CM id — impossible for a real character, so it
+      // is treated as inconclusive rather than letting a stale id pick the class.
+      expect(classFromMasteryIds([238232, 263519])).toBeUndefined();
+    });
   });
 
   describe('stripClassMasteryIds', () => {

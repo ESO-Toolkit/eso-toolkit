@@ -419,6 +419,21 @@ describe('cspsImport', () => {
       expect(build.classMasteryPassives).toEqual([263519, 263520]);
     });
 
+    it('defers to active-skill detection when CM ids are ambiguous, dropping the stale id', () => {
+      const char = makeCSPSCharacterOption({
+        werte: {
+          prog: { part1: '20657:1' }, // clear Dragonknight active skill
+          pass: { part1: '238232:1,263519:1' }, // legit DK CM + stale Warden CM (1-1 tie)
+        },
+      });
+      const build = convertCSPSCharacterToBuild(char);
+      // the active-skill signal wins on ambiguity, so the legit DK pick is kept
+      // and the stale Warden id is dropped rather than overriding the base class.
+      expect(build.esoClass).toBe('dragonknight');
+      expect(build.classMasteryPassives).toEqual([238232]);
+      expect(build.setups[0].passives).toEqual([]);
+    });
+
     it('caps imported Class Mastery picks at 2 and drops foreign-class ids', () => {
       const char = makeCSPSCharacterOption({
         werte: {

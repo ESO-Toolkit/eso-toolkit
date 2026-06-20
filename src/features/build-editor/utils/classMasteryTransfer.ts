@@ -6,9 +6,9 @@
  * addon (v6.1.6+) stores Class Mastery passives inside `werte.pass` as plain
  * `abilityId:1` pairs — mixed in with every other passive, with no dedicated
  * field. So any flat passive-id list crossing the CSPS boundary (SavedVariables
- * `werte.pass`, ESO-Hub export codes, native codes) must be split back out into
- * regular passives vs Class Mastery picks on the way in, and the picks must be
- * folded back into the passive list on the way out.
+ * `werte.pass` plus the export-code formats) must be split back out into regular
+ * passives vs Class Mastery picks on the way in, and the picks must be folded
+ * back into the passive list on the way out.
  *
  * These helpers are the single source of truth for that split + validation, so
  * the CSPS import/export paths and the URL-share encoding all behave identically.
@@ -55,7 +55,14 @@ export function sanitizeClassMasteryPicks(ids: number[] | undefined, esoClass: E
  * Best-guess base class implied by the Class Mastery passive ids present in a
  * flat id list — the class owning the most CM ids. Non-CM ids are ignored.
  * Used to recover the class on import when active-skill detection is
- * inconclusive (CM ids are unique per class, so they are a reliable signal).
+ * inconclusive (a real character's CM ids are all its single base class, so
+ * they are a reliable signal).
+ *
+ * Returns undefined when the top owner is TIED across classes — a real
+ * character can only ever have its own base class's CM ids, so a tie means
+ * stale/foreign (corrupt) data. Deferring to active-skill detection there
+ * avoids a stale id silently overriding the real base class and stripping the
+ * legitimate picks as "foreign".
  */
 export function classFromMasteryIds(ids: number[]): ESOClass | undefined {
   const counts = new Map<ESOClass, number>();
@@ -65,13 +72,17 @@ export function classFromMasteryIds(ids: number[]): ESOClass | undefined {
   }
   let best: ESOClass | undefined;
   let bestCount = 0;
+  let tied = false;
   for (const [cls, count] of counts) {
     if (count > bestCount) {
       bestCount = count;
       best = cls;
+      tied = false;
+    } else if (count === bestCount) {
+      tied = true;
     }
   }
-  return best;
+  return tied ? undefined : best;
 }
 
 /** Remove every Class Mastery passive id from a flat passive-id list. */
