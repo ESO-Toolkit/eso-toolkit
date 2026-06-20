@@ -674,13 +674,20 @@ const ParseAnalysisPageContent: React.FC = () => {
       debuffEventsCount: debuffEvents.length,
     });
 
-    // Only run if we have pending analysis and events are not loading
+    // Only run if we have pending analysis and events are not loading. Also wait
+    // for report master data: pet/summon DPS attribution reads actorsById, and
+    // running before it loads would build an empty pet-owner map and then clear
+    // pendingAnalysis, leaving pet-heavy parses undercounted. When master data
+    // finishes, actorsById changes and re-fires this effect. (A hard master-data
+    // failure leaves isMasterDataLoading false so analysis still runs, degrading
+    // gracefully to player-only DPS.)
     if (
       !pendingAnalysis ||
       isCastEventsLoading ||
       isDamageEventsLoading ||
       isCombatantInfoEventsLoading ||
-      isDebuffEventsLoading
+      isDebuffEventsLoading ||
+      isMasterDataLoading
     ) {
       return;
     }
@@ -903,6 +910,7 @@ const ParseAnalysisPageContent: React.FC = () => {
     isDebuffEventsLoading,
     abilityMapper,
     reportMasterData.actorsById,
+    isMasterDataLoading,
     state.fightName,
   ]);
 
