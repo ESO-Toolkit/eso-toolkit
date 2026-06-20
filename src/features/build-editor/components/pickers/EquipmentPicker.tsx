@@ -11,7 +11,12 @@
  * EquipmentSection wraps this with useSelector / dispatch.
  */
 
-import { Box, Stack, Typography } from '@mui/material';
+import {
+  CheckCircle as CheckCircleIcon,
+  ChecklistRtl as ChecklistIcon,
+  RadioButtonUnchecked as UncheckedIcon,
+} from '@mui/icons-material';
+import { Box, ButtonBase, Stack, Typography } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -30,6 +35,7 @@ import { EQUIP_SLOTS, type EquipSlotDef } from '../../data/esoStaticData';
 import { getLockedArmorWeight, resolveApparelWeight } from '../../data/setArmorWeights';
 import { GearSlotCard } from '../primitives/GearSlotCard';
 
+import { BulkGearToolbar, type BulkGearPatch, type SlotCategory } from './BulkGearToolbar';
 import { GearPickerDialog } from './GearPicker';
 
 // ── 2H weapon logic ─────────────────────────────────────────────────────────
@@ -104,6 +110,10 @@ interface SlotRowProps {
   onWeightChange?: (slot: number, weight: ArmorWeight) => void;
   onTraitChange?: (slot: number, trait: string | undefined) => void;
   onEnchantChange?: (slot: number, enchant: string | undefined) => void;
+  /** Bulk-edit selection mode — the row becomes a selection toggle. */
+  selectionMode?: boolean;
+  selected?: boolean;
+  onToggleSelect?: (slot: number) => void;
 }
 
 const SlotRowComponent: React.FC<SlotRowProps> = ({
@@ -115,6 +125,9 @@ const SlotRowComponent: React.FC<SlotRowProps> = ({
   onWeightChange,
   onTraitChange,
   onEnchantChange,
+  selectionMode = false,
+  selected = false,
+  onToggleSelect,
 }) => {
   const itemId = piece?.id != null ? Number(piece.id) : null;
   const info = itemId ? getItemInfo(itemId) : null;
@@ -125,7 +138,7 @@ const SlotRowComponent: React.FC<SlotRowProps> = ({
   // can't be cycled. Crafted + monster sets return null here = free choice.
   const lockedWeight = getLockedArmorWeight(info?.setName);
 
-  return (
+  const card = (
     <GearSlotCard
       slotDef={def}
       itemId={itemId}
@@ -147,6 +160,62 @@ const SlotRowComponent: React.FC<SlotRowProps> = ({
       onOpen={() => onOpen(def)}
       onClear={() => onClear(def.slot)}
     />
+  );
+
+  if (!selectionMode) return card;
+
+  // Only filled slots can be bulk-edited; empty slots render dimmed + inert.
+  if (itemId == null) {
+    return <Box sx={{ opacity: 0.35, pointerEvents: 'none' }}>{card}</Box>;
+  }
+
+  return (
+    <Box
+      role="button"
+      aria-pressed={selected}
+      aria-label={`${selected ? 'Deselect' : 'Select'} ${def.name}`}
+      tabIndex={0}
+      onClick={() => onToggleSelect?.(def.slot)}
+      onKeyDown={(e: React.KeyboardEvent) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onToggleSelect?.(def.slot);
+        }
+      }}
+      sx={{
+        position: 'relative',
+        borderRadius: 2,
+        cursor: 'pointer',
+        outline: selected ? '2px solid var(--be-accent, #38bdf8)' : '2px solid transparent',
+        outlineOffset: '1px',
+        transition: 'outline-color 0.15s',
+        '&:hover': selected
+          ? undefined
+          : { outline: '2px solid rgba(var(--be-accent-rgb, 56, 189, 248), 0.40)' },
+      }}
+    >
+      {/* Inert card — clicks fall through to the selection wrapper */}
+      <Box sx={{ pointerEvents: 'none' }}>{card}</Box>
+      <Box
+        sx={{
+          position: 'absolute',
+          top: '50%',
+          right: 8,
+          transform: 'translateY(-50%)',
+          display: 'flex',
+          color: selected
+            ? 'var(--be-accent, #38bdf8)'
+            : 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.45)',
+          pointerEvents: 'none',
+        }}
+      >
+        {selected ? (
+          <CheckCircleIcon sx={{ fontSize: 20 }} />
+        ) : (
+          <UncheckedIcon sx={{ fontSize: 20 }} />
+        )}
+      </Box>
+    </Box>
   );
 };
 
@@ -187,6 +256,8 @@ export interface EquipmentPickerProps {
   onWeightChange?: (slot: number, weight: ArmorWeight) => void;
   onTraitChange?: (slot: number, trait: string | undefined) => void;
   onEnchantChange?: (slot: number, enchant: string | undefined) => void;
+  /** Apply trait/enchant/weight to many slots at once (enables Bulk Edit). */
+  onBulkApply?: (slots: number[], patch: BulkGearPatch) => void;
 }
 
 // ── Slot groups ─────────────────────────────────────────────────────────────
@@ -196,6 +267,21 @@ const ACCESSORY_SLOTS = [1, 11, 12]; // Neck, Ring 1, Ring 2
 const FRONT_WEAPON_SLOTS = [4, 5]; // Main-Hand, Off-Hand
 const BACK_WEAPON_SLOTS = [20, 21]; // Back bar Main-Hand, Off-Hand
 
+/** Slot index → its EquipSlotDef.category, for bulk-edit grouping. */
+const SLOT_CATEGORY: Record<number, SlotCategory> = {
+  ...Object.fromEntries(APPAREL_SLOTS.map((s) => [s, 'apparel' as SlotCategory])),
+  ...Object.fromEntries(ACCESSORY_SLOTS.map((s) => [s, 'accessories' as SlotCategory])),
+  ...Object.fromEntries(
+    [...FRONT_WEAPON_SLOTS, ...BACK_WEAPON_SLOTS].map((s) => [s, 'weapons' as SlotCategory]),
+  ),
+};
+const ALL_GEAR_SLOTS = [
+  ...APPAREL_SLOTS,
+  ...ACCESSORY_SLOTS,
+  ...FRONT_WEAPON_SLOTS,
+  ...BACK_WEAPON_SLOTS,
+];
+
 // ── Main Component ──────────────────────────────────────────────────────────
 
 export const EquipmentPicker: React.FC<EquipmentPickerProps> = ({
@@ -204,8 +290,105 @@ export const EquipmentPicker: React.FC<EquipmentPickerProps> = ({
   onWeightChange,
   onTraitChange,
   onEnchantChange,
+  onBulkApply,
 }) => {
+  const isDark = useTheme().palette.mode === 'dark';
   const [pickerSlot, setPickerSlot] = useState<EquipSlotDef | null>(null);
+
+  // ── Bulk edit ──────────────────────────────────────────────────────────────
+  const [bulkMode, setBulkMode] = useState(false);
+  const [selected, setSelected] = useState<Set<number>>(() => new Set());
+
+  // Filled slots grouped by category (only items that exist can be bulk-edited).
+  const filledByCategory = useMemo(() => {
+    const res: Record<SlotCategory, number[]> = { apparel: [], accessories: [], weapons: [] };
+    for (const idx of ALL_GEAR_SLOTS) {
+      if (gear[idx]?.id == null) continue;
+      res[SLOT_CATEGORY[idx]].push(idx);
+    }
+    return res;
+  }, [gear]);
+
+  const counts = useMemo(
+    () => ({
+      apparel: filledByCategory.apparel.length,
+      accessories: filledByCategory.accessories.length,
+      weapons: filledByCategory.weapons.length,
+      total:
+        filledByCategory.apparel.length +
+        filledByCategory.accessories.length +
+        filledByCategory.weapons.length,
+    }),
+    [filledByCategory],
+  );
+
+  // Distinct slot category across the current selection (drives trait/enchant).
+  const selectionSlotCategory = useMemo<SlotCategory | 'mixed' | null>(() => {
+    let cat: SlotCategory | null = null;
+    for (const slot of selected) {
+      const c = SLOT_CATEGORY[slot];
+      if (!c) continue;
+      if (cat === null) cat = c;
+      else if (cat !== c) return 'mixed';
+    }
+    return cat;
+  }, [selected]);
+
+  const hasApparelSelected = useMemo(
+    () => [...selected].some((s) => SLOT_CATEGORY[s] === 'apparel'),
+    [selected],
+  );
+
+  const handleToggleSelect = useCallback((slot: number) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(slot)) next.delete(slot);
+      else next.add(slot);
+      return next;
+    });
+  }, []);
+
+  const handleSelectCategory = useCallback(
+    (category: SlotCategory) => {
+      setSelected((prev) => {
+        const next = new Set(prev);
+        const slots = filledByCategory[category];
+        const allIn = slots.every((s) => next.has(s));
+        // Toggle the whole category: add it, or remove it if already fully in.
+        for (const s of slots) {
+          if (allIn) next.delete(s);
+          else next.add(s);
+        }
+        return next;
+      });
+    },
+    [filledByCategory],
+  );
+
+  const handleSelectAllFilled = useCallback(() => {
+    setSelected(
+      new Set([
+        ...filledByCategory.apparel,
+        ...filledByCategory.accessories,
+        ...filledByCategory.weapons,
+      ]),
+    );
+  }, [filledByCategory]);
+
+  const handleClearSelection = useCallback(() => setSelected(new Set()), []);
+
+  const handleExitBulk = useCallback(() => {
+    setBulkMode(false);
+    setSelected(new Set());
+  }, []);
+
+  const handleBulkApply = useCallback(
+    (patch: BulkGearPatch) => {
+      if (!onBulkApply || selected.size === 0) return;
+      onBulkApply([...selected], patch);
+    },
+    [onBulkApply, selected],
+  );
 
   const frontMainId = gear[FRONT_MAIN]?.id != null ? Number(gear[FRONT_MAIN].id) : null;
   const backMainId = gear[BACK_MAIN]?.id != null ? Number(gear[BACK_MAIN].id) : null;
@@ -308,11 +491,60 @@ export const EquipmentPicker: React.FC<EquipmentPickerProps> = ({
         onWeightChange={onWeightChange}
         onTraitChange={onTraitChange}
         onEnchantChange={onEnchantChange}
+        selectionMode={bulkMode}
+        selected={selected.has(idx)}
+        onToggleSelect={handleToggleSelect}
       />
     ));
 
   return (
     <>
+      {/* Bulk-edit entry button (only when the host wired onBulkApply) */}
+      {onBulkApply && !bulkMode && (
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 0.75 }}>
+          <ButtonBase
+            onClick={() => setBulkMode(true)}
+            aria-label="Bulk edit traits, enchants and weights"
+            sx={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 0.5,
+              px: 1,
+              py: 0.45,
+              borderRadius: 1.5,
+              fontSize: 11.5,
+              fontWeight: 700,
+              fontFamily: 'Space Grotesk, Inter, system-ui',
+              color: isDark ? 'rgba(255,255,255,0.60)' : 'rgba(0,0,0,0.55)',
+              border: `1px solid ${isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)'}`,
+              transition: 'all 0.15s',
+              '&:hover': {
+                color: 'var(--be-accent, #38bdf8)',
+                borderColor: 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.35)',
+                background: 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.08)',
+              },
+            }}
+          >
+            <ChecklistIcon sx={{ fontSize: 15 }} />
+            Bulk edit
+          </ButtonBase>
+        </Box>
+      )}
+
+      {onBulkApply && bulkMode && (
+        <BulkGearToolbar
+          selectedCount={selected.size}
+          counts={counts}
+          selectionSlotCategory={selectionSlotCategory}
+          hasApparelSelected={hasApparelSelected}
+          onSelectCategory={handleSelectCategory}
+          onSelectAll={handleSelectAllFilled}
+          onClear={handleClearSelection}
+          onExit={handleExitBulk}
+          onApply={handleBulkApply}
+        />
+      )}
+
       <Stack spacing={0.5}>
         {/* ── Apparel ────────────────── */}
         <SectionLabel label="Apparel" />

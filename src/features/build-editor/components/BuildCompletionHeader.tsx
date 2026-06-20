@@ -35,6 +35,8 @@ import {
   MenuItem as MuiMenuItem,
   Stack,
   TextField,
+  ToggleButton,
+  ToggleButtonGroup,
   Tooltip,
   Typography,
   useMediaQuery,
@@ -74,6 +76,7 @@ import {
 } from '../utils/cspsImport';
 
 import { AddToRosterDialog } from './AddToRosterDialog';
+import { ImportBuildTextPanel } from './ImportBuildTextPanel';
 import { glassInputSx } from './primitives/glassInputSx';
 
 // ─── Module-scope sx factories ────────────────────────────────────────────
@@ -168,6 +171,9 @@ export const BuildCompletionHeader: React.FC = () => {
   const [tempLinkDialogOpen, setTempLinkDialogOpen] = React.useState(false);
   const [tempLink, setTempLink] = React.useState('');
   const [tempLinkExpiry, setTempLinkExpiry] = React.useState('');
+
+  // Import mode: structured addon code (CSPS) vs free-text build write-up
+  const [importMode, setImportMode] = React.useState<'csps' | 'text'>('csps');
 
   // CSPS import state
   const [cspsCharacters, setCspsCharacters] = React.useState<CSPSCharacterOption[]>([]);
@@ -421,6 +427,7 @@ export const BuildCompletionHeader: React.FC = () => {
 
   const handleImportClose = (): void => {
     setImportOpen(false);
+    setImportMode('csps');
     setCspsCharacters([]);
     setImportParsed(false);
     setImportError(null);
@@ -1230,7 +1237,7 @@ export const BuildCompletionHeader: React.FC = () => {
               pb: 0.5,
             }}
           >
-            Import from Addon
+            Import Build
             <IconButton
               onClick={handleImportClose}
               size="small"
@@ -1241,158 +1248,188 @@ export const BuildCompletionHeader: React.FC = () => {
             </IconButton>
           </DialogTitle>
           <DialogContent>
-            <Typography
-              variant="caption"
+            <ToggleButtonGroup
+              exclusive
+              size="small"
+              value={importMode}
+              onChange={(_, v) => v && setImportMode(v as 'csps' | 'text')}
               sx={{
-                color: 'text.secondary',
-                display: 'block',
                 mb: 2,
-                fontSize: 12,
-                fontFamily: 'Space Grotesk, Inter, system-ui',
+                '& .MuiToggleButton-root': {
+                  textTransform: 'none',
+                  fontSize: 12,
+                  fontFamily: 'Space Grotesk, Inter, system-ui',
+                  fontWeight: 600,
+                  px: 1.5,
+                  py: 0.5,
+                },
               }}
             >
-              Paste a <strong>Caro&apos;s Skill Point Saver</strong> export code or SavedVariables
-              file content to import skills, attributes, champion points, and gear into your build.
-            </Typography>
-            <Stack spacing={1.5}>
-              <TextField
-                fullWidth
-                size="small"
-                placeholder="Paste CSPS export code or SavedVariables content here…"
-                value={build.addonImportString}
-                onChange={(e) => {
-                  dispatch(setAddonImportString(e.target.value));
-                  if (importParsed) {
-                    setImportParsed(false);
-                    setCspsCharacters([]);
-                    setImportError(null);
-                  }
-                }}
-                multiline
-                minRows={3}
-                maxRows={8}
-                autoFocus={!isMobile}
-                sx={glassInputSx(isDark, isMobile)}
-              />
+              <ToggleButton value="csps">Addon code</ToggleButton>
+              <ToggleButton value="text">Build text</ToggleButton>
+            </ToggleButtonGroup>
 
-              {importError && (
-                <Alert
-                  severity="error"
+            {importMode === 'text' ? (
+              <ImportBuildTextPanel onClose={handleImportClose} />
+            ) : (
+              <>
+                <Typography
+                  variant="caption"
                   sx={{
-                    py: 0.25,
-                    fontSize: 11,
-                    borderRadius: 2,
+                    color: 'text.secondary',
+                    display: 'block',
+                    mb: 2,
+                    fontSize: 12,
                     fontFamily: 'Space Grotesk, Inter, system-ui',
                   }}
                 >
-                  {importError}
-                </Alert>
-              )}
-
-              {importParsed && cspsCharacters.length > 0 && (
-                <Box>
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      display: 'block',
-                      mb: 1,
-                      fontSize: 11,
-                      fontWeight: 600,
-                      fontFamily: 'Space Grotesk, Inter, system-ui',
-                      color: 'text.secondary',
+                  Paste a <strong>Caro&apos;s Skill Point Saver</strong> export code or
+                  SavedVariables file content to import skills, attributes, champion points, and
+                  gear into your build.
+                </Typography>
+                <Stack spacing={1.5}>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    placeholder="Paste CSPS export code or SavedVariables content here…"
+                    value={build.addonImportString}
+                    onChange={(e) => {
+                      dispatch(setAddonImportString(e.target.value));
+                      if (importParsed) {
+                        setImportParsed(false);
+                        setCspsCharacters([]);
+                        setImportError(null);
+                      }
                     }}
-                  >
-                    {cspsCharacters.length === 1
-                      ? 'Found 1 character:'
-                      : `Found ${cspsCharacters.length} characters — select one to import:`}
-                  </Typography>
-                  <Stack spacing={0.5}>
-                    {cspsCharacters.map((char, idx) => (
-                      <Button
-                        key={char.compositeKey}
-                        variant={idx === selectedCharIndex ? 'contained' : 'outlined'}
-                        size="small"
-                        onClick={() => setSelectedCharIndex(idx)}
+                    multiline
+                    minRows={3}
+                    maxRows={8}
+                    autoFocus={!isMobile}
+                    sx={glassInputSx(isDark, isMobile)}
+                  />
+
+                  {importError && (
+                    <Alert
+                      severity="error"
+                      sx={{
+                        py: 0.25,
+                        fontSize: 11,
+                        borderRadius: 2,
+                        fontFamily: 'Space Grotesk, Inter, system-ui',
+                      }}
+                    >
+                      {importError}
+                    </Alert>
+                  )}
+
+                  {importParsed && cspsCharacters.length > 0 && (
+                    <Box>
+                      <Typography
+                        variant="caption"
                         sx={{
-                          textTransform: 'none',
-                          justifyContent: 'flex-start',
+                          display: 'block',
+                          mb: 1,
+                          fontSize: 11,
+                          fontWeight: 600,
                           fontFamily: 'Space Grotesk, Inter, system-ui',
-                          fontSize: 12,
-                          borderRadius: 2,
-                          ...(idx === selectedCharIndex
-                            ? {
-                                background:
-                                  'linear-gradient(135deg, rgba(var(--be-accent-rgb, 56, 189, 248), 0.85), rgba(var(--be-accent-rgb, 56, 189, 248), 0.65))',
-                                color: isDark ? '#fff' : '#0b1220',
-                              }
-                            : {
-                                borderColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)',
-                              }),
+                          color: 'text.secondary',
                         }}
                       >
-                        <Box component="span" sx={{ fontWeight: 700, mr: 1 }}>
-                          {char.name}
-                        </Box>
-                        <Box component="span" sx={{ opacity: 0.7, fontSize: 10 }}>
-                          {char.accountName}
-                          {char.profileCount > 0 && ` · ${char.profileCount} profiles`}
-                        </Box>
-                      </Button>
-                    ))}
-                  </Stack>
-                </Box>
-              )}
+                        {cspsCharacters.length === 1
+                          ? 'Found 1 character:'
+                          : `Found ${cspsCharacters.length} characters — select one to import:`}
+                      </Typography>
+                      <Stack spacing={0.5}>
+                        {cspsCharacters.map((char, idx) => (
+                          <Button
+                            key={char.compositeKey}
+                            variant={idx === selectedCharIndex ? 'contained' : 'outlined'}
+                            size="small"
+                            onClick={() => setSelectedCharIndex(idx)}
+                            sx={{
+                              textTransform: 'none',
+                              justifyContent: 'flex-start',
+                              fontFamily: 'Space Grotesk, Inter, system-ui',
+                              fontSize: 12,
+                              borderRadius: 2,
+                              ...(idx === selectedCharIndex
+                                ? {
+                                    background:
+                                      'linear-gradient(135deg, rgba(var(--be-accent-rgb, 56, 189, 248), 0.85), rgba(var(--be-accent-rgb, 56, 189, 248), 0.65))',
+                                    color: isDark ? '#fff' : '#0b1220',
+                                  }
+                                : {
+                                    borderColor: isDark
+                                      ? 'rgba(255,255,255,0.12)'
+                                      : 'rgba(0,0,0,0.12)',
+                                  }),
+                            }}
+                          >
+                            <Box component="span" sx={{ fontWeight: 700, mr: 1 }}>
+                              {char.name}
+                            </Box>
+                            <Box component="span" sx={{ opacity: 0.7, fontSize: 10 }}>
+                              {char.accountName}
+                              {char.profileCount > 0 && ` · ${char.profileCount} profiles`}
+                            </Box>
+                          </Button>
+                        ))}
+                      </Stack>
+                    </Box>
+                  )}
 
-              <Stack
-                direction="row"
-                spacing={1}
-                sx={{ justifyContent: 'flex-end', alignItems: 'center' }}
-              >
-                <Button
-                  variant="outlined"
-                  size="small"
-                  onClick={handleImportClose}
-                  sx={outlinedPill}
-                >
-                  Cancel
-                </Button>
-                {!importParsed ? (
-                  <Button
-                    variant="contained"
-                    size="small"
-                    disabled={build.addonImportString.length < 10}
-                    onClick={handleImportParse}
-                    sx={{
-                      ...pillBase,
-                      background:
-                        'linear-gradient(135deg, rgba(var(--be-accent-rgb, 56, 189, 248), 0.85), rgba(var(--be-accent-rgb, 56, 189, 248), 0.65))',
-                      '&.Mui-disabled': {
-                        background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)',
-                      },
-                    }}
+                  <Stack
+                    direction="row"
+                    spacing={1}
+                    sx={{ justifyContent: 'flex-end', alignItems: 'center' }}
                   >
-                    Parse
-                  </Button>
-                ) : (
-                  <Button
-                    variant="contained"
-                    size="small"
-                    disabled={cspsCharacters.length === 0}
-                    onClick={handleImportLoad}
-                    sx={{
-                      ...pillBase,
-                      background:
-                        'linear-gradient(135deg, rgba(34, 197, 94, 0.85), rgba(22, 163, 74, 0.75))',
-                      '&.Mui-disabled': {
-                        background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)',
-                      },
-                    }}
-                  >
-                    Load Build
-                  </Button>
-                )}
-              </Stack>
-            </Stack>
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      onClick={handleImportClose}
+                      sx={outlinedPill}
+                    >
+                      Cancel
+                    </Button>
+                    {!importParsed ? (
+                      <Button
+                        variant="contained"
+                        size="small"
+                        disabled={build.addonImportString.length < 10}
+                        onClick={handleImportParse}
+                        sx={{
+                          ...pillBase,
+                          background:
+                            'linear-gradient(135deg, rgba(var(--be-accent-rgb, 56, 189, 248), 0.85), rgba(var(--be-accent-rgb, 56, 189, 248), 0.65))',
+                          '&.Mui-disabled': {
+                            background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)',
+                          },
+                        }}
+                      >
+                        Parse
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="contained"
+                        size="small"
+                        disabled={cspsCharacters.length === 0}
+                        onClick={handleImportLoad}
+                        sx={{
+                          ...pillBase,
+                          background:
+                            'linear-gradient(135deg, rgba(34, 197, 94, 0.85), rgba(22, 163, 74, 0.75))',
+                          '&.Mui-disabled': {
+                            background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)',
+                          },
+                        }}
+                      >
+                        Load Build
+                      </Button>
+                    )}
+                  </Stack>
+                </Stack>
+              </>
+            )}
           </DialogContent>
         </Dialog>
       )}

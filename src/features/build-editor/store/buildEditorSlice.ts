@@ -13,7 +13,7 @@ import type {
   GearConfig,
   SkillsConfig,
 } from '../../loadout-manager/types/loadout.types';
-import { getDefaultLinesForClass } from '../data/esoStaticData';
+import { EQUIP_SLOTS, getDefaultLinesForClass } from '../data/esoStaticData';
 import { DEFAULT_STAT_OVERRIDES } from '../engine/stat-constants';
 import type { StatOverrides } from '../engine/stat-types';
 import type {
@@ -30,6 +30,16 @@ import type {
   SkilledAbility,
 } from '../types/build.types';
 import { CLASS_MASTERY_MAX_PICKS } from '../utils/classMasteryEligibility';
+import {
+  cloneSetup,
+  copySetupSection as copySetupSectionHelper,
+  type SetupSection,
+} from '../utils/setupTransfer';
+
+/** Apparel slot indices — only these carry an armor weight. */
+const APPAREL_SLOT_SET = new Set<number>(
+  EQUIP_SLOTS.filter((s) => s.category === 'apparel').map((s) => s.slot),
+);
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -268,6 +278,182 @@ export const buildEditorSlice = createSlice({
       if (activeSetupId) {
         const newIdx = state.build.setups.findIndex((s) => s.id === activeSetupId);
         if (newIdx !== -1) state.activeSetupIndex = newIdx;
+      }
+
+      state.build.updatedAt = new Date().toISOString();
+      state.isDirty = true;
+    },
+
+    /**
+     * Clone setups[index], insert the clone immediately AFTER index, cap at 5
+     * setups (no-op if already at 5), refresh setupOrder, and activate the new
+     * clone.
+     */
+    duplicateSetup(state, action: PayloadAction<number>) {
+      const index = action.payload;
+      const source = state.build.setups[index];
+      if (!source) return;
+      if (state.build.setups.length >= 5) return;
+
+      const clone = cloneSetup(source);
+      state.build.setups.splice(index + 1, 0, clone);
+      state.build.settings.setupOrder = state.build.setups.map((_, i) => i);
+      state.activeSetupIndex = index + 1;
+      state.build.updatedAt = new Date().toISOString();
+      state.isDirty = true;
+    },
+
+    /**
+     * Copy one section FROM another setup INTO the currently active setup.
+     * `fromIndex` must be a valid, different setup index. No-op on invalid input.
+     */
+    copySetupSection(state, action: PayloadAction<{ section: SetupSection; fromIndex: number }>) {
+      const { section, fromIndex } = action.payload;
+      const activeIndex = state.activeSetupIndex;
+      if (fromIndex === activeIndex) return;
+      const source = state.build.setups[fromIndex];
+      const target = state.build.setups[activeIndex];
+      if (!source || !target) return;
+
+      state.build.setups[activeIndex] = copySetupSectionHelper(target, source, section);
+      state.build.updatedAt = new Date().toISOString();
+      state.isDirty = true;
+    },
+
+    /**
+     * Bulk-apply trait/enchant/weight to multiple gear slots of the ACTIVE
+     * setup. Slots with no item are skipped. For trait/enchant: a string sets
+     * the field, null deletes it, undefined leaves it unchanged. `weight`
+     * applies ONLY to apparel slots (never weapons/jewelry).
+     */
+    bulkSetGear(
+      state,
+      action: PayloadAction<{
+        slots: number[];
+        trait?: string | null;
+        enchant?: string | null;
+        weight?: ArmorWeight | null;
+      }>,
+    ) {
+      const setup = state.build.setups[state.activeSetupIndex];
+      if (!setup) return;
+      const { slots, trait, enchant, weight } = action.payload;
+
+      let changed = false;
+      for (const slot of slots) {
+        const piece = setup.gear[slot];
+        if (!piece || piece.id == null) continue;
+
+        if (trait === null) {
+          delete piece.trait;
+          changed = true;
+        } else if (trait !== undefined) {
+          piece.trait = trait;
+          changed = true;
+        }
+
+        if (enchant === null) {
+          delete piece.enchant;
+          changed = true;
+        } else if (enchant !== undefined) {
+          piece.enchant = enchant;
+          changed = true;
+        }
+
+        if (APPAREL_SLOT_SET.has(slot)) {
+          if (weight === null) {
+            delete piece.weight;
+            changed = true;
+          } else if (weight !== undefined) {
+            piece.weight = weight;
+            changed = true;
+          }
+        }
+      }
+
+      if (changed) {
+        state.build.updatedAt = new Date().toISOString();
+        state.isDirty = true;
+      }
+    },
+
+    /**
+     * Apply an imported (parsed) build. Parser-agnostic: merges only DEFINED
+     * fields. `target: 'active'` merges setup fields into the active setup;
+     * `target: 'new'` creates a fresh setup, merges into it, pushes (cap 5;
+     * if at cap, falls back to 'active'), and activates it. `buildFields`
+     * overwrite build-level fields (only defined keys).
+     */
+    applyImportedBuild(
+      state,
+      action: PayloadAction<{
+        setup: Partial<
+          Pick<
+            BuildSetup,
+            | 'gear'
+            | 'skills'
+            | 'cp'
+            | 'consumables'
+            | 'passives'
+            | 'attributes'
+            | 'mundusStone'
+            | 'curse'
+            | 'name'
+          >
+        >;
+        buildFields?: Partial<
+          Pick<
+            Build,
+            | 'esoClass'
+            | 'classSkillLines'
+            | 'races'
+            | 'role'
+            | 'gameMode'
+            | 'name'
+            | 'shortDescription'
+          >
+        >;
+        target: 'active' | 'new';
+      }>,
+    ) {
+      const { setup: imported, buildFields } = action.payload;
+
+      // Decide which setup receives the imported data.
+      let target: BuildSetup | undefined;
+      if (action.payload.target === 'new' && state.build.setups.length < 5) {
+        const created = makeSetup(imported.name ?? `Setup ${state.build.setups.length + 1}`);
+        state.build.setups.push(created);
+        state.build.settings.setupOrder = state.build.setups.map((_, i) => i);
+        state.activeSetupIndex = state.build.setups.length - 1;
+        target = state.build.setups[state.activeSetupIndex];
+      } else {
+        // 'active', or 'new' that fell back because we're at the cap.
+        target = state.build.setups[state.activeSetupIndex];
+      }
+      if (!target) return;
+
+      // Merge setup-level fields — replace whole sub-objects that are provided.
+      if (imported.gear !== undefined) target.gear = imported.gear;
+      if (imported.skills !== undefined) target.skills = imported.skills;
+      if (imported.cp !== undefined) target.cp = imported.cp;
+      if (imported.consumables !== undefined) target.consumables = imported.consumables;
+      if (imported.passives !== undefined) target.passives = imported.passives;
+      if (imported.attributes !== undefined) target.attributes = imported.attributes;
+      if (imported.mundusStone !== undefined) target.mundusStone = imported.mundusStone;
+      if (imported.curse !== undefined) target.curse = imported.curse;
+      if (imported.name !== undefined) target.name = imported.name;
+
+      // Merge build-level fields — only defined keys.
+      if (buildFields) {
+        if (buildFields.esoClass !== undefined) state.build.esoClass = buildFields.esoClass;
+        if (buildFields.classSkillLines !== undefined)
+          state.build.classSkillLines = buildFields.classSkillLines;
+        if (buildFields.races !== undefined) state.build.races = buildFields.races;
+        if (buildFields.role !== undefined) state.build.role = buildFields.role;
+        if (buildFields.gameMode !== undefined) state.build.gameMode = buildFields.gameMode;
+        if (buildFields.name !== undefined) state.build.name = buildFields.name;
+        if (buildFields.shortDescription !== undefined)
+          state.build.shortDescription = buildFields.shortDescription;
       }
 
       state.build.updatedAt = new Date().toISOString();
@@ -558,9 +744,13 @@ export const {
   setVisibility,
   setDlc,
   addSetup,
+  duplicateSetup,
   renameSetup,
   deleteSetup,
   reorderSetups,
+  copySetupSection,
+  bulkSetGear,
+  applyImportedBuild,
   setAttributes,
   setCurse,
   setMundusStone,
