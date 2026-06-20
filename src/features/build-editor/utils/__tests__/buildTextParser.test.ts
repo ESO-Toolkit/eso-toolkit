@@ -205,6 +205,22 @@ describe('parseBuildText — race detection', () => {
   });
 });
 
+describe('parseBuildText — matcher word boundaries (no substring false positives)', () => {
+  it('mundus "The Mage" is not matched inside "Mages Guild"', () => {
+    const r = parseBuildText('MUNDUS\nUse the Mages Guild ultimate. No mundus stone named here.');
+    expect(r.mundusId).toBeUndefined();
+  });
+
+  it('mundus still resolves a genuinely named stone', () => {
+    expect(parseBuildText('MUNDUS\nDEFAULT\nThe Thief').mundusId).toBe('thief');
+  });
+
+  it('class lines resolve on word boundaries (Sorcerer guide → sorcerer)', () => {
+    const r = parseBuildText('Dark Magic, Daedric Summoning, and Storm Calling are the lines.');
+    expect(r.esoClass).toBe('sorcerer');
+  });
+});
+
 describe('parseBuildText — numbered ring labels', () => {
   it('parses "Ring 1"/"Ring 2" and keeps the weapon rows that follow them', () => {
     const text = [

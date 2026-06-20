@@ -96,6 +96,9 @@ export interface ParsedBuildResult {
 /** Lowercase + strip all non-alphanumerics — robust fuzzy key for name matching. */
 const normKey = (s: string): string => s.toLowerCase().replace(/[^a-z0-9]/g, '');
 
+/** Escape a literal string for safe use inside a RegExp. */
+const escapeRegExp = (s: string): string => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
 const SLOT_TYPE_PARAM = (
   slotType: EquipSlotDef['slotType'],
 ): Parameters<typeof getSetItemsBySlot>[1] => slotType as Parameters<typeof getSetItemsBySlot>[1];
@@ -355,10 +358,11 @@ function parseClassLines(
   const labels: string[] = [];
   // Longest labels first so "Dark Magic" isn't shadowed by a shorter match.
   const byLen = [...CLASS_SKILL_LINES].sort((a, b) => b.label.length - a.label.length);
-  const haystack = ` ${text.toLowerCase()} `;
+  // Word-boundary match (not substring) so a label like "Shadow" doesn't match
+  // inside an unrelated word.
   for (const line of byLen) {
     if (found.includes(line.id)) continue;
-    if (haystack.includes(line.label.toLowerCase())) {
+    if (new RegExp(`\\b${escapeRegExp(line.label)}\\b`, 'i').test(text)) {
       found.push(line.id);
       labels.push(line.label);
     }
@@ -396,9 +400,6 @@ function parseClassLines(
 
 // ─── Race / Mundus / Attributes / Food ───────────────────────────────────────
 
-/** Escape a literal string for use inside a RegExp. */
-const escapeRegExp = (s: string): string => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-
 function parseRace(text: string): { raceId?: string; raceLabel?: string } {
   // Prefer the author's explicit pick ("I use Nord").
   const explicit = /\bI\s+use\s+(?:the\s+)?([A-Z][a-zA-Z]+(?:\s+Elf)?)/.exec(text);
@@ -423,9 +424,11 @@ function parseMundus(text: string): { mundusId?: string; mundusLabel?: string } 
   const idx = text.toUpperCase().indexOf('MUNDUS');
   const scope = idx === -1 ? text : text.slice(idx);
   const byLen = [...ESO_MUNDUS_STONES].sort((a, b) => b.label.length - a.label.length);
-  const hay = scope.toLowerCase();
+  // Word-boundary match so "The Mage" doesn't match "The Mages Guild".
   for (const m of byLen) {
-    if (hay.includes(m.label.toLowerCase())) return { mundusId: m.id, mundusLabel: m.label };
+    if (new RegExp(`\\b${escapeRegExp(m.label)}\\b`, 'i').test(scope)) {
+      return { mundusId: m.id, mundusLabel: m.label };
+    }
   }
   return {};
 }
