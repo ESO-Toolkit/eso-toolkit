@@ -366,6 +366,28 @@ describe('cspsImport', () => {
       expect(build.classMasteryPassives).toEqual([263519, 263520]);
     });
 
+    it('preserves profile-only Class Mastery picks when the active build has none', () => {
+      const char = makeCSPSCharacterOption({
+        werte: {
+          prog: { part1: '20657:1' }, // DK active → detected dragonknight
+          pass: { part1: '400:3' }, // active build: regular passive only, no CM
+        },
+        profiles: {
+          1: {
+            name: 'Profile 1',
+            comp1: '0;0;0#0,0,0,0,0,0;0,0,0,0,0,0####1#0',
+            comp2: 'gear#unique#outfit',
+            werte: { pass: { part1: '238232:1,240268:1' } }, // profile holds the CM picks
+          },
+        },
+      });
+      const build = convertCSPSCharacterToBuild(char);
+      // profile-only picks are lifted to the build level rather than discarded
+      expect(build.classMasteryPassives).toEqual([238232, 240268]);
+      expect(build.setups[0].passives).toEqual([400]);
+      expect(build.setups[1].passives).toEqual([]); // CM stripped from the profile too
+    });
+
     it('caps imported Class Mastery picks at 2 and drops foreign-class ids', () => {
       const char = makeCSPSCharacterOption({
         werte: {

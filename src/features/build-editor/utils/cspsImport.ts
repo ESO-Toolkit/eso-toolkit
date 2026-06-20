@@ -604,12 +604,16 @@ export function convertCSPSCharacterToBuild(character: CSPSCharacterOption): Bui
 
   // Class Mastery passives ride in werte.pass alongside regular passives, so
   // split them back out of every setup (they must not pollute the regular
-  // Passives section) and lift the build-level picks from the main setup.
+  // Passives section). CM is character-wide, so lift a single build-level pick
+  // set: prefer the main setup, but fall back to the first profile that has any
+  // rather than discarding a profile-only selection.
   let classMasteryPassives: number[] = [];
-  setups.forEach((setup, i) => {
+  setups.forEach((setup) => {
     const partitioned = partitionClassMasteryPicks(setup.passives, detectedClass);
     setup.passives = partitioned.passives;
-    if (i === 0) classMasteryPassives = partitioned.classMasteryPassives;
+    if (classMasteryPassives.length === 0 && partitioned.classMasteryPassives.length > 0) {
+      classMasteryPassives = partitioned.classMasteryPassives;
+    }
   });
 
   // Detect role from comp1 (falls back to 'magicka-dps')
