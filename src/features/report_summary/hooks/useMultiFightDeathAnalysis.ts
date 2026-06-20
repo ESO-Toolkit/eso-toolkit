@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 
 import { useEsoLogsClientInstance } from '../../../EsoLogsClientContext';
@@ -46,6 +46,10 @@ export function useMultiFightDeathAnalysis(reportCode: string): UseMultiFightDea
   const [progress, setProgress] = useState<{ current: number; total: number } | null>(null);
   const [deathAnalysis, setDeathAnalysis] = useState<ReportDeathAnalysis | null>(null);
 
+  // Identifies the latest analysis run so a slower, superseded run (reportCode
+  // changed mid-flight, or unmount) can't overwrite newer results.
+  const runIdRef = useRef(0);
+
   // Use Redux selectors to get cached data for each fight
   const getFightDeathData = useCallback(
     (fight: FightFragment, state: RootState): DeathEvent[] => {
@@ -81,6 +85,8 @@ export function useMultiFightDeathAnalysis(reportCode: string): UseMultiFightDea
     if (!client || !fights || fights.length === 0) {
       return;
     }
+
+    const runId = ++runIdRef.current;
 
     try {
       setIsLoading(true);
@@ -127,15 +133,20 @@ export function useMultiFightDeathAnalysis(reportCode: string): UseMultiFightDea
 
       // Perform comprehensive death analysis
       const analysis = DeathAnalysisService.analyzeReportDeaths(fightDeathData);
+      if (runId !== runIdRef.current) return; // superseded by a newer run
       setDeathAnalysis(analysis);
     } catch (err) {
+      if (runId !== runIdRef.current) return; // superseded by a newer run
       const errorMessage = err instanceof Error ? err.message : 'Failed to analyze death events';
       setError(errorMessage);
       // eslint-disable-next-line no-console
       console.error('Death analysis error:', err);
     } finally {
-      setIsLoading(false);
-      setProgress(null);
+      // Only the latest run owns the loading/progress UI.
+      if (runId === runIdRef.current) {
+        setIsLoading(false);
+        setProgress(null);
+      }
     }
   }, [client, fights, reportCode, dispatch, getFightDeathData, getFightActors, getFightAbilities]);
 

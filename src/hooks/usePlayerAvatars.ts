@@ -52,8 +52,15 @@ export function usePlayerAvatars(players: PlayerIdentity[]): Record<string, stri
 
     rosterHubApi
       .lookupPlayerAvatars(unique)
-      .then((res) => setAvatars(res.avatars))
-      .catch(() => setAvatars({}));
+      // Guard against out-of-order resolution: if the player set changed while
+      // this lookup was in flight, cacheKeyRef now holds a newer key, so drop
+      // this stale response rather than overwriting the newer avatars.
+      .then((res) => {
+        if (cacheKey === cacheKeyRef.current) setAvatars(res.avatars);
+      })
+      .catch(() => {
+        if (cacheKey === cacheKeyRef.current) setAvatars({});
+      });
   }, [players]);
 
   return avatars;
