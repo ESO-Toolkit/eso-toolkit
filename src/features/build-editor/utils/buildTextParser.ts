@@ -200,26 +200,45 @@ export function resolveCanonicalSetName(raw: string): string | null {
   return null;
 }
 
-/** All candidate item ids of a set for a slot type (handles prefixes, choice
- *  lists, punctuation variants, and abbreviations). */
-function setItemCandidates(setName: string, slotType: EquipSlotDef['slotType']): number[] {
-  if (!setName) return [];
+/**
+ * Resolve a gear-set cell. Returns the item ids of the FIRST set that resolves
+ * plus the canonical names of EVERY option in the cell that resolves — a cell
+ * like "Null Arca / Coral / Ansuul" is the guide offering a choice, so the
+ * caller can flag it instead of silently committing to the first.
+ */
+function setItemCandidates(
+  setName: string,
+  slotType: EquipSlotDef['slotType'],
+): { ids: number[]; options: string[] } {
+  const options: string[] = [];
+  let ids: number[] = [];
+  if (!setName) return { ids, options };
   const param = SLOT_TYPE_PARAM(slotType);
   for (const candidate of parseSetCellCandidates(setName)) {
-    let ids = getSetItemsBySlot(candidate, param);
-    if (ids.length === 0) {
+    let cand = getSetItemsBySlot(candidate, param);
+    let name = candidate;
+    if (cand.length === 0) {
       const canon = resolveCanonicalSetName(candidate);
-      if (canon) ids = getSetItemsBySlot(canon, param);
+      if (canon) {
+        cand = getSetItemsBySlot(canon, param);
+        name = canon;
+      }
     }
-    if (ids.length > 0) return ids;
+    if (cand.length > 0) {
+      if (ids.length === 0) ids = cand;
+      options.push(name);
+    }
   }
-  return [];
+  return { ids, options };
 }
 
-/** First item id of a set for a given equipment slot type, or null. */
-function resolveSetItem(setName: string, slotType: EquipSlotDef['slotType']): number | null {
-  const ids = setItemCandidates(setName, slotType);
-  return ids.length > 0 ? ids[0] : null;
+/** First item id of a set for a slot, plus the resolvable choice options. */
+function resolveSetItem(
+  setName: string,
+  slotType: EquipSlotDef['slotType'],
+): { itemId: number | null; options: string[] } {
+  const { ids, options } = setItemCandidates(setName, slotType);
+  return { itemId: ids.length > 0 ? ids[0] : null, options };
 }
 
 /**
@@ -276,9 +295,9 @@ function resolveWeaponItem(
   setName: string,
   slotType: EquipSlotDef['slotType'],
   typeCell: string,
-): { itemId: number | null; confirmed: boolean } {
-  const candidates = setItemCandidates(setName, slotType);
-  return pickWeaponVariant(candidates, typeCell, (id) => getWeaponTypeLabel(id));
+): { itemId: number | null; confirmed: boolean; options: string[] } {
+  const { ids, options } = setItemCandidates(setName, slotType);
+  return { ...pickWeaponVariant(ids, typeCell, (id) => getWeaponTypeLabel(id)), options };
 }
 
 // ─── Gear ──────────────────────────────────────────────────────────────────
@@ -455,13 +474,20 @@ function parseGear(lines: string[], warnings: string[]): ParsedGearRow[] {
     // …); other slots resolve by set + slot type.
     let itemId: number | null;
     let weaponUnconfirmed = false;
+    let setOptions: string[] = [];
     if (def.category === 'weapons') {
       const w = resolveWeaponItem(setName, def.slotType, weightOrType);
       itemId = w.itemId;
       weaponUnconfirmed = w.itemId != null && !w.confirmed;
+      setOptions = w.options;
     } else {
-      itemId = resolveSetItem(setName, def.slotType);
+      const s = resolveSetItem(setName, def.slotType);
+      itemId = s.itemId;
+      setOptions = s.options;
     }
+    // A cell like "Null Arca / Coral / Ansuul" is the guide offering a choice —
+    // we import the first as a starting point but flag it so the user verifies.
+    const setAmbiguous = setOptions.length > 1;
 
     // A cell like "Light or Medium" offers the player a choice — don't silently
     // pick one. Only import a weight when exactly one is named.
@@ -472,12 +498,16 @@ function parseGear(lines: string[], warnings: string[]): ParsedGearRow[] {
 
     let status: ImportConfidence = 'ok';
     if (itemId == null) status = 'unresolved';
-    else if ((traitRaw && !trait) || (enchantRaw && !enchant) || weaponUnconfirmed)
+    else if ((traitRaw && !trait) || (enchantRaw && !enchant) || weaponUnconfirmed || setAmbiguous)
       status = 'partial';
 
     if (itemId == null) warnings.push(`Couldn't match set “${setName}” for ${def.name}`);
     else if (weaponUnconfirmed)
       warnings.push(`Verify weapon type “${weightOrType}” for ${def.name}`);
+    if (setAmbiguous)
+      warnings.push(
+        `${def.name}: guide lists set options (${setOptions.join(' / ')}) — imported “${setOptions[0]}”, verify`,
+      );
     if (weights.length > 1)
       warnings.push(`${def.name} lists multiple weights (${weights.join('/')}) — choose one`);
 

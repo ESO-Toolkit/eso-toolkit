@@ -267,6 +267,24 @@ describe('parseBuildText — skinnycheeks image-guide gear panel', () => {
   });
 });
 
+describe('parseBuildText — set choice cells', () => {
+  it('imports the first option but flags a multi-set choice cell as partial', () => {
+    // Both sets resolve for a ring slot, so the cell is the guide offering a
+    // choice — import the first, but mark it partial and warn (don't pretend
+    // it's a confident single match).
+    const r = parseBuildText(
+      [
+        'GEAR SLOT\tSET\tWEIGHT/TYPE\tTRAIT\tENCHANT',
+        "Ring 1\tSul-Xan's Torment / Ring of the Pale Order\t-\tInfused\tWeapon Damage",
+      ].join('\n'),
+    );
+    const ring = r.gear.find((g) => g.slot === 11);
+    expect(ring?.itemId).toBeGreaterThan(0);
+    expect(ring?.status).toBe('partial');
+    expect(r.warnings.some((w) => /set options/i.test(w))).toBe(true);
+  });
+});
+
 describe('parseBuildText — OCR resilience (pipe/space delimiters + fuzzy matching)', () => {
   it('parses a pipe-delimited gear table', () => {
     const text = [

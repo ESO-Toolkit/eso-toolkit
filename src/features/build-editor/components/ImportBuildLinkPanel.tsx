@@ -39,6 +39,7 @@ export const ImportBuildLinkPanel: React.FC<ImportBuildLinkPanelProps> = ({ onCl
   const [error, setError] = useState<string | null>(null);
   const [text, setText] = useState<string | null>(null);
   const [thin, setThin] = useState(false);
+  const [truncated, setTruncated] = useState(false);
 
   const handleFetch = async (): Promise<void> => {
     if (!looksLikeUrl(url)) {
@@ -52,6 +53,7 @@ export const ImportBuildLinkPanel: React.FC<ImportBuildLinkPanelProps> = ({ onCl
       // Heuristic: a build-bearing page has plenty of text. Very little usually
       // means the build is image-only — let the user know but still proceed.
       setThin(result.text.replace(/\s+/g, ' ').trim().length < 200);
+      setTruncated(result.truncated);
       setText(result.text);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not fetch that link.');
@@ -64,6 +66,12 @@ export const ImportBuildLinkPanel: React.FC<ImportBuildLinkPanelProps> = ({ onCl
   if (text !== null) {
     return (
       <Stack spacing={1}>
+        {truncated && (
+          <Alert severity="warning" sx={{ py: 0.25, fontSize: 11, borderRadius: 2 }}>
+            This page was too large to read fully, so the build below may be incomplete — review
+            carefully before applying.
+          </Alert>
+        )}
         {thin && (
           <Alert severity="info" sx={{ py: 0.25, fontSize: 11, borderRadius: 2 }}>
             This guide seems to show its build mostly as images — little text was found. Try the

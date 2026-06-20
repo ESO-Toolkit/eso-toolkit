@@ -12,6 +12,9 @@ const BASE_URL = getRosterHubBaseUrl();
 
 export interface GuideFetchResult extends ExtractedGuide {
   finalUrl: string;
+  /** True when the worker hit its size cap — the HTML (and thus the parsed
+   *  build) is incomplete, so the UI must warn before importing. */
+  truncated: boolean;
 }
 
 /** Fetch a guide page by URL via the worker proxy and extract its build text. */
@@ -21,8 +24,8 @@ export async function fetchGuideByUrl(url: string): Promise<GuideFetchResult> {
     const body = (await res.json().catch(() => ({}))) as { error?: string };
     throw new Error(body.error ?? `Couldn't fetch that link (${res.status}).`);
   }
-  const data = (await res.json()) as { html?: string; finalUrl?: string };
+  const data = (await res.json()) as { html?: string; finalUrl?: string; truncated?: boolean };
   const finalUrl = data.finalUrl || url;
   const extracted = extractGuide(data.html ?? '', finalUrl);
-  return { ...extracted, finalUrl };
+  return { ...extracted, finalUrl, truncated: Boolean(data.truncated) };
 }

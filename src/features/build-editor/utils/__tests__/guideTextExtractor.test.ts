@@ -51,6 +51,19 @@ describe('extractGuide', () => {
     const imgs = extractGuide(GUIDE_HTML, 'https://example.com/guide').images;
     expect(imgs).toEqual(['https://example.com/images/Nightblade-Gear-Single-Target.png']);
   });
+
+  it('keeps a row on one line when cells wrap their contents in div/p/span', () => {
+    // Real guide tables often wrap cell contents in layout divs — block elements
+    // inside a cell must not split the row across lines.
+    const html = `<table>
+      <tr><th><div>GEAR SLOT</div></th><th><span>SET</span></th><th>WEIGHT/TYPE</th><th>TRAIT</th><th>ENCHANT</th></tr>
+      <tr><td><div>Head</div></td><td><div><p>Slimecraw</p></div></td><td>Medium</td><td>Divines</td><td>Magicka</td></tr>
+    </table>`;
+    const { text } = extractGuide(html);
+    expect(text).toMatch(/GEAR SLOT\tSET\tWEIGHT\/TYPE\tTRAIT\tENCHANT/);
+    const parsed = parseBuildText(text);
+    expect(parsed.gear.find((g) => g.slot === 0)?.itemId).toBeGreaterThan(0); // Slimecraw
+  });
 });
 
 describe('extractGuideImageUrls', () => {

@@ -1684,7 +1684,32 @@ const FETCH_GUIDE_TIMEOUT_MS = 12_000;
 const FETCH_GUIDE_RATE_LIMIT = 20; // per IP per minute
 const fetchGuideRateCounts = new Map<string, { count: number; expires: number }>();
 
-/** Validate a URL is a safe, public http(s) target (blocks SSRF to internal hosts). */
+// Allowlisted ESO build-guide domains. /fetch-guide is unauthenticated, so we
+// restrict it to reputable guide sites rather than running an open fetch proxy.
+// This is also the real SSRF backstop: a DNS-rebind/redirect to an internal
+// address can't pass because internal hosts aren't on this list (and the literal
+// IP / IPv4-mapped checks below are defense-in-depth). Add domains here as
+// users request them.
+const GUIDE_DOMAIN_ALLOWLIST = [
+  'hyperioxes.com',
+  'skinnycheeks.gg',
+  'alcasthq.com',
+  'eso-hub.com',
+  'esohub.com',
+  'deltiasgaming.com',
+  'arzyelbuilds.com',
+  'dottzgaming.com',
+  'xynodegaming.com',
+  'eso-skillbook.com',
+  'tamrieljournal.com',
+  'uesp.net',
+];
+
+function isAllowedGuideHost(host: string): boolean {
+  return GUIDE_DOMAIN_ALLOWLIST.some((d) => host === d || host.endsWith('.' + d));
+}
+
+/** Validate a URL is a safe, allowlisted public http(s) target (blocks SSRF). */
 function safeGuideUrl(raw: string): URL | null {
   let u: URL;
   try {
@@ -1694,6 +1719,7 @@ function safeGuideUrl(raw: string): URL | null {
   }
   if (u.protocol !== 'http:' && u.protocol !== 'https:') return null;
   const host = u.hostname.toLowerCase().replace(/^\[|\]$/g, '');
+  if (!isAllowedGuideHost(host)) return null;
   if (
     host === 'localhost' ||
     host === '::1' ||
@@ -1757,7 +1783,14 @@ function safeGuideUrl(raw: string): URL | null {
 
 app.get('/fetch-guide', async (c) => {
   const url = safeGuideUrl((c.req.query('url') ?? '').trim());
-  if (!url) return c.json({ error: 'Please provide a valid public http(s) URL.' }, 400);
+  if (!url)
+    return c.json(
+      {
+        error:
+          'Please paste a link from a supported guide site (e.g. hyperioxes.com, alcasthq.com, eso-hub.com, skinnycheeks.gg, deltiasgaming.com).',
+      },
+      400,
+    );
 
   // In-memory per-IP rate limit (mirrors /search-addons).
   const ip = c.req.header('CF-Connecting-IP') ?? 'unknown';

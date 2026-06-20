@@ -82,26 +82,30 @@ export function extractGuideImageUrls(html: string, baseUrl = ''): string[] {
   return doc ? collectImages(doc, baseUrl) : [];
 }
 
-/** Walk the DOM, emitting tabs between table cells and newlines at block ends. */
+/** Walk the DOM, emitting tabs between table cells and newlines at block ends.
+ *  Inside a table cell, block elements (guides often wrap cell contents in a
+ *  div/p for layout) must NOT inject newlines — that would split one gear row
+ *  across lines and break the tab structure the parser keys on. */
 function gatherText(root: Node): string {
   const parts: string[] = [];
-  const visit = (node: Node): void => {
+  const visit = (node: Node, inCell: boolean): void => {
     for (let child = node.firstChild; child; child = child.nextSibling) {
       if (child.nodeType === 3 /* text */) {
         parts.push((child.textContent ?? '').replace(/\s+/g, ' '));
       } else if (child.nodeType === 1 /* element */) {
         const tag = (child as Element).tagName;
         if (tag === 'BR') {
-          parts.push('\n');
+          parts.push(inCell ? ' ' : '\n'); // keep a cell on one line
           continue;
         }
-        visit(child);
-        if (CELL_TAGS.has(tag)) parts.push('\t');
-        else if (BLOCK_TAGS.has(tag)) parts.push('\n');
+        const isCell = CELL_TAGS.has(tag);
+        visit(child, inCell || isCell);
+        if (isCell) parts.push('\t');
+        else if (BLOCK_TAGS.has(tag) && !inCell) parts.push('\n');
       }
     }
   };
-  visit(root);
+  visit(root, false);
   return parts.join('');
 }
 
