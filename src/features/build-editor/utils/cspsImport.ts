@@ -593,13 +593,15 @@ export function convertCSPSCharacterToBuild(character: CSPSCharacterOption): Bui
 
   const now = new Date().toISOString();
 
-  // Detect class from werte skill data. If the active skills are inconclusive,
-  // fall back to the class implied by any Class Mastery passives present (those
-  // ids are unique per class) before defaulting to 'dragonknight'.
+  // Class Mastery ids uniquely identify the BASE class, so prefer them — a
+  // subclassed character's active skills can be off-class lines that would
+  // otherwise mislead detection (and cause the partition to drop the retained
+  // base-class picks as "foreign"). Fall back to active-skill detection, then
+  // 'dragonknight'.
   const allPassiveIds = setups.flatMap((s) => s.passives);
   const detectedClass =
-    detectClassFromWerte(character.data.werte) ??
     classFromMasteryIds(allPassiveIds) ??
+    detectClassFromWerte(character.data.werte) ??
     'dragonknight';
 
   // Class Mastery passives ride in werte.pass alongside regular passives, so

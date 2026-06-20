@@ -388,6 +388,22 @@ describe('cspsImport', () => {
       expect(build.setups[1].passives).toEqual([]); // CM stripped from the profile too
     });
 
+    it('treats Class Mastery ids as the base class over off-class active skills', () => {
+      const char = makeCSPSCharacterOption({
+        werte: {
+          // off-class subclass active skill (Nightblade Assassination range 18342-18519)
+          prog: { part1: '18429:1' },
+          // retained base-class (Warden) Class Mastery picks in pass
+          pass: { part1: '263519:1,263520:1' },
+        },
+      });
+      const build = convertCSPSCharacterToBuild(char);
+      // CM owner (Warden) wins over the Nightblade active skill, so the picks
+      // are kept rather than dropped as foreign.
+      expect(build.esoClass).toBe('warden');
+      expect(build.classMasteryPassives).toEqual([263519, 263520]);
+    });
+
     it('caps imported Class Mastery picks at 2 and drops foreign-class ids', () => {
       const char = makeCSPSCharacterOption({
         werte: {

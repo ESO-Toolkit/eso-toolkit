@@ -956,11 +956,12 @@ export function parseCSPSNativeCode(input: string): CSPSExportCodeResult {
   const roleIndex = sections[8] && sections[8] !== '-' ? parseIntSafe(sections[8]) : 0;
   const role = roleIndexToRole(roleIndex);
 
-  // Detect class from hotbar ability IDs (no explicit class field in native
-  // format); fall back to the class implied by any Class Mastery passives.
+  // Class Mastery ids uniquely identify the BASE class, so prefer them — a
+  // subclassed character's hotbar carries off-class lines that would otherwise
+  // mislead detection. Fall back to hotbar detection, then 'any-class'.
   const allBarIds = [...hotbar.frontBar, ...hotbar.backBar].filter((n) => n > 0);
   const detectedClass = detectClassFromAbilityIds(allBarIds);
-  const esoClass: ESOClass = detectedClass ?? classFromMasteryIds(skillPassives) ?? 'any-class';
+  const esoClass: ESOClass = classFromMasteryIds(skillPassives) ?? detectedClass ?? 'any-class';
   // Honor the native subclasses part so a subclassed export decodes as
   // subclassed — otherwise retained Class Mastery picks would be (wrongly)
   // treated as active by the eligibility-gated stats/export.

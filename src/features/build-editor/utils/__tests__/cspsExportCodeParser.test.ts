@@ -406,6 +406,24 @@ describe('Class Mastery in export codes', () => {
     expect(build.setups[0].passives).toEqual([500]);
   });
 
+  it('detects the native base class from Class Mastery ids over an off-class hotbar skill', () => {
+    const native = [
+      '-*263519:1,263520:1*-*-*-', // pass = Warden Class Mastery ids
+      '18429,0,0,0,0,0;0,0,0,0,0,0', // hotbar front slot 0 = Nightblade Assassination skill
+      '0;0;0', // attributes
+      '-', // mundus
+      '-', // champion points
+      '-', // gear
+      '-', // quickslots
+      '-', // outfits
+      '1', // role
+    ].join('#');
+    const { build } = parseCSPSNativeCode(native);
+    // CM owner (Warden) wins over the Nightblade hotbar skill → picks preserved
+    expect(build.esoClass).toBe('warden');
+    expect(build.classMasteryPassives).toEqual([263519, 263520]);
+  });
+
   it('decodes the native subclasses part so retained Class Mastery picks stay gated', () => {
     const native = [
       '-*263519:1*-*-*38', // skills: pass = Warden CM id; subclasses = 38 (Assassination, NB)
