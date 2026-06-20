@@ -101,6 +101,12 @@ const CONTEXT_META: Record<CombatContext, { label: string; hint: string }> = {
   pvp: { label: 'PvP', hint: 'Cyrodiil · BG' },
 };
 
+const ROLE_LABELS: Record<CombatRole, string> = { dps: 'DPS', healer: 'Healer', tank: 'Tank' };
+
+/** Short, human archetype label, e.g. "Group · DPS" — used in the explainer + nudges. */
+const archetypeLabel = (context: CombatContext, role: CombatRole): string =>
+  `${CONTEXT_META[context].label} · ${ROLE_LABELS[role]}`;
+
 /**
  * Canonical per-class accent colors (mirrors the repo's class palette in
  * build-editor/data/esoStaticData.ts). Cosmetic only — used for swatches in the
@@ -744,6 +750,15 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
     [],
   );
 
+  // --- Archetype explainer --------------------------------------------------
+  // The active (context × role) preset, how many of its sources are currently
+  // enabled, and whether the assumptions list is expanded. Drives the explainer
+  // card under the Solo/Group/PvP + role controls.
+  const [showAssumptions, setShowAssumptions] = React.useState(false);
+  const enabledSourceCount = availableSourceEntries.filter((s) =>
+    calc.isEnabled(s.id, s.defaultEnabled),
+  ).length;
+
   // ones, usable by everyone) surface first; other classes' ults follow.
   const orderedUltimates = React.useMemo(() => {
     const rank = (owner: string): number => {
@@ -1174,6 +1189,159 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
                   </Select>
                 </FormControl>
               </Stack>
+
+              {/* Archetype explainer — turns the Solo/Group/PvP + role choice into
+                  a real, transparent starting build: a one-line summary, an
+                  expandable "what this assumes", a live "N sources on" count, and
+                  (once you've customized) a one-tap way back to the typical build. */}
+              <Box
+                sx={{
+                  p: 1.5,
+                  borderRadius: 1.4, // 14px — card tier
+                  border: `1px solid ${
+                    theme.palette.mode === 'dark' ? 'rgba(56,189,248,0.28)' : 'rgba(40,145,200,0.3)'
+                  }`,
+                  background:
+                    theme.palette.mode === 'dark'
+                      ? 'linear-gradient(135deg, rgba(56,189,248,0.1), rgba(56,189,248,0.02))'
+                      : 'rgba(40,145,200,0.04)',
+                  boxShadow:
+                    theme.palette.mode === 'dark'
+                      ? 'inset 0 1px 0 rgba(255,255,255,0.05), 0 4px 14px rgba(0,0,0,0.25)'
+                      : '0 2px 8px rgba(15,23,42,0.05)',
+                }}
+              >
+                <Stack
+                  direction="row"
+                  spacing={1}
+                  sx={{ alignItems: 'center', justifyContent: 'space-between' }}
+                >
+                  <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center', minWidth: 0 }}>
+                    <InsightsOutlined sx={{ fontSize: 17, color: accent, flexShrink: 0 }} />
+                    <Typography variant="body2" sx={{ fontWeight: 700, minWidth: 0 }} noWrap>
+                      Typical {archetypeLabel(state.context, state.role)}
+                    </Typography>
+                  </Stack>
+                  <Box
+                    component="span"
+                    sx={{
+                      flexShrink: 0,
+                      px: 0.75,
+                      py: 0.1,
+                      borderRadius: 999,
+                      fontSize: 10.5,
+                      fontWeight: 700,
+                      lineHeight: 1.7,
+                      color: accentText,
+                      border: `1px solid ${accent}55`,
+                      background:
+                        theme.palette.mode === 'dark'
+                          ? 'rgba(56,189,248,0.1)'
+                          : 'rgba(40,145,200,0.08)',
+                    }}
+                  >
+                    {enabledSourceCount} {enabledSourceCount === 1 ? 'source' : 'sources'} on
+                  </Box>
+                </Stack>
+                <Typography
+                  variant="caption"
+                  sx={{ color: 'text.secondary', display: 'block', mt: 0.75, lineHeight: 1.5 }}
+                >
+                  {calc.activePreset.summary}
+                </Typography>
+
+                {calc.customized ? (
+                  // Edited away from the preset — never silently overwrite; offer
+                  // an explicit one-tap re-apply (kept distinct from the wording
+                  // "reset" so it reads as a deliberate, safe action).
+                  <Stack
+                    direction="row"
+                    spacing={1}
+                    sx={{ alignItems: 'center', mt: 1.25, flexWrap: 'wrap', rowGap: 0.75 }}
+                  >
+                    <Typography
+                      variant="caption"
+                      sx={{ color: 'text.secondary', fontStyle: 'italic' }}
+                    >
+                      You’ve customized this build.
+                    </Typography>
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      startIcon={<RestartAltOutlined sx={{ fontSize: 15 }} />}
+                      onClick={calc.applyActivePreset}
+                      sx={{ textTransform: 'none' }}
+                    >
+                      Apply typical {archetypeLabel(state.context, state.role)}
+                    </Button>
+                  </Stack>
+                ) : (
+                  <Box sx={{ mt: 0.75 }}>
+                    <Stack
+                      direction="row"
+                      spacing={0.5}
+                      role="button"
+                      tabIndex={0}
+                      aria-expanded={showAssumptions}
+                      aria-controls="ult-archetype-assumptions"
+                      onClick={() => setShowAssumptions((v) => !v)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          setShowAssumptions((v) => !v);
+                        }
+                      }}
+                      sx={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        cursor: 'pointer',
+                        userSelect: 'none',
+                        color: accentText,
+                        borderRadius: 1,
+                        '&:focus-visible': { outline: `2px solid ${accent}`, outlineOffset: 2 },
+                      }}
+                    >
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          fontWeight: 700,
+                          textTransform: 'uppercase',
+                          letterSpacing: 0.5,
+                        }}
+                      >
+                        What this assumes
+                      </Typography>
+                      <ExpandMore
+                        aria-hidden
+                        sx={{
+                          fontSize: 16,
+                          transition: prefersReducedMotion ? 'none' : 'transform 0.2s ease',
+                          transform: showAssumptions ? 'rotate(0deg)' : 'rotate(-90deg)',
+                        }}
+                      />
+                    </Stack>
+                    <Collapse in={showAssumptions} timeout={prefersReducedMotion ? 0 : 'auto'}>
+                      <Stack
+                        component="ul"
+                        id="ult-archetype-assumptions"
+                        spacing={0.5}
+                        sx={{ m: 0, mt: 0.75, pl: 2.25 }}
+                      >
+                        {calc.activePreset.assumptions.map((a, i) => (
+                          <Typography
+                            key={i}
+                            component="li"
+                            variant="caption"
+                            sx={{ color: 'text.secondary', lineHeight: 1.45 }}
+                          >
+                            {a}
+                          </Typography>
+                        ))}
+                      </Stack>
+                    </Collapse>
+                  </Box>
+                )}
+              </Box>
 
               <TextField
                 label="Fight duration"
@@ -1631,13 +1799,13 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
               })}
 
               <Button
-                onClick={calc.reset}
+                onClick={calc.applyActivePreset}
                 size="small"
                 variant="text"
                 startIcon={<RestartAltOutlined sx={{ fontSize: 16 }} />}
                 sx={{ alignSelf: 'flex-start', color: 'text.secondary', mt: 0.5 }}
               >
-                Reset to defaults
+                Reset to typical {archetypeLabel(state.context, state.role)}
               </Button>
             </Stack>
           </Paper>

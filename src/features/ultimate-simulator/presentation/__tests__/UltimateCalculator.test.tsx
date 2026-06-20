@@ -100,4 +100,129 @@ describe('UltimateCalculator', () => {
     const costAfter = screen.getByText(/\d+ ult cost/i).textContent;
     expect(costAfter).toBe(costBefore);
   });
+
+  // --- Archetype presets: the Solo/Group/PvP + role controls are now meaningful ---
+
+  it('opens on a realistic Group · DPS build (archetype explainer + sources enabled)', () => {
+    renderCalc();
+    // Anchored ^Typical matches the explainer title, not the "Reset to typical …" button.
+    expect(screen.getByText(/^Typical Group/i)).toBeInTheDocument();
+    // The preset enables more than just base income (base + class proc + group
+    // sources), so the headline is well above an inert base-only number.
+    expect(readTotal()).toBeGreaterThan(700);
+  });
+
+  it('changes the headline when switching context (Solo is lower than Group)', () => {
+    renderCalc();
+    const group = readTotal();
+    fireEvent.click(screen.getByRole('button', { name: /^Solo/i }));
+    const solo = readTotal();
+    // Solo loses the group-only batteries → strictly less generation.
+    expect(solo).toBeLessThan(group);
+    expect(screen.getByText(/^Typical Solo/i)).toBeInTheDocument();
+  });
+
+  it('changes the headline when switching role (Group Tank out-generates Group DPS)', () => {
+    renderCalc();
+    const dps = readTotal();
+    fireEvent.mouseDown(screen.getByLabelText(/Role/i));
+    fireEvent.click(within(screen.getByRole('listbox')).getByText('Tank'));
+    const tank = readTotal();
+    // Tank adds Bloodspawn + Major Heroism + Pillager's on top → higher.
+    expect(tank).toBeGreaterThan(dps);
+    expect(screen.getByText(/^Typical Group.*Tank/i)).toBeInTheDocument();
+  });
+
+  // The source switch + its uptime slider share a label prefix; pick the
+  // checkbox input specifically (the slider is a range input).
+  const sourceSwitch = (label: RegExp): HTMLInputElement =>
+    screen
+      .getAllByLabelText(label)
+      .find((el) => el.getAttribute('type') === 'checkbox') as HTMLInputElement;
+
+  it('preserves a hand-edit across an archetype switch and restores it on apply-typical', () => {
+    renderCalc();
+    expect(screen.queryByText(/customized this build/i)).not.toBeInTheDocument();
+
+    // Enable Major Heroism — a manual source edit. (Its Heroism group stays open
+    // because Minor Heroism is on, so the control stays visible to assert on.)
+    const majorToggle = sourceSwitch(/^Major Heroism/i);
+    expect(majorToggle).not.toBeChecked();
+    fireEvent.click(majorToggle);
+    expect(sourceSwitch(/^Major Heroism/i)).toBeChecked();
+    expect(screen.getByText(/customized this build/i)).toBeInTheDocument();
+
+    // Switching context replays the edit on top of the new archetype (Major
+    // Heroism stays on) rather than discarding it.
+    fireEvent.click(screen.getByRole('button', { name: /^Solo/i }));
+    expect(screen.getByText(/customized this build/i)).toBeInTheDocument();
+    expect(sourceSwitch(/^Major Heroism/i)).toBeChecked();
+
+    // Applying the typical build drops the edit and restores the pure preset
+    // (Solo DPS has no Major Heroism) and clears the custom flag.
+    fireEvent.click(screen.getByRole('button', { name: /Apply typical Solo/i }));
+    expect(screen.queryByText(/customized this build/i)).not.toBeInTheDocument();
+    expect(sourceSwitch(/^Major Heroism/i)).not.toBeChecked();
+    expect(sourceSwitch(/^Minor Heroism/i)).toBeChecked();
+  });
+
+  it('adopts the new archetype defaults on a customized switch (no stale hybrid)', () => {
+    renderCalc();
+    // Group DPS does not run Colovian Highlands General; PvP DPS does. Customize
+    // the build with an unrelated edit, then switch playstyle.
+    fireEvent.click(sourceSwitch(/^Major Heroism/i));
+    expect(screen.getByText(/customized this build/i)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /^PvP/i }));
+
+    // The build must adopt the PvP archetype's defaults (Colovian on), proving the
+    // preset is re-resolved — not a frozen Group snapshot…
+    expect(screen.getByText(/^Typical PvP/i)).toBeInTheDocument();
+    expect(sourceSwitch(/Colovian Highlands General/i)).toBeChecked();
+    // …while still replaying the user's edit on top.
+    expect(sourceSwitch(/^Major Heroism/i)).toBeChecked();
+  });
+
+  it('prunes a reverted toggle so it cannot leak into another archetype', () => {
+    renderCalc(); // Group DPS: Minor Heroism on by preset.
+    fireEvent.click(sourceSwitch(/^Minor Heroism/i)); // off — a real edit
+    expect(screen.getByText(/customized this build/i)).toBeInTheDocument();
+    fireEvent.click(sourceSwitch(/^Minor Heroism/i)); // back on — matches preset again
+    // The delta is pruned, so the build is pristine once more…
+    expect(screen.queryByText(/customized this build/i)).not.toBeInTheDocument();
+
+    // …and switching to a Major-Heroism archetype does NOT leave Minor on too
+    // (which would double-count the non-stacking buff).
+    fireEvent.mouseDown(screen.getByLabelText(/Role/i));
+    fireEvent.click(within(screen.getByRole('listbox')).getByText('Tank'));
+    expect(sourceSwitch(/^Major Heroism/i)).toBeChecked();
+    expect(sourceSwitch(/^Minor Heroism/i)).not.toBeChecked();
+  });
+
+  it('enabling Major Heroism disables Minor (they do not stack)', () => {
+    renderCalc(); // Group DPS: Minor on, Major off.
+    expect(sourceSwitch(/^Minor Heroism/i)).toBeChecked();
+    fireEvent.click(sourceSwitch(/^Major Heroism/i));
+    expect(sourceSwitch(/^Major Heroism/i)).toBeChecked();
+    expect(sourceSwitch(/^Minor Heroism/i)).not.toBeChecked();
+  });
+
+  it('does not freeze archetype auto-apply when only a cost reduction is toggled', () => {
+    renderCalc();
+    // Sorcerer has Power Stone (−15%) as a default-on cost reduction.
+    fireEvent.mouseDown(screen.getByLabelText(/Class/i));
+    fireEvent.click(within(screen.getByRole('listbox')).getByText('Sorcerer'));
+
+    // A cost reduction is orthogonal to the archetype source layer — toggling it
+    // must NOT mark the build customized.
+    fireEvent.click(screen.getByLabelText(/Power Stone/i));
+    expect(screen.queryByText(/customized this build/i)).not.toBeInTheDocument();
+
+    // …so switching context still auto-applies the new archetype preset…
+    fireEvent.click(screen.getByRole('button', { name: /^Solo/i }));
+    expect(screen.getByText(/^Typical Solo/i)).toBeInTheDocument();
+    expect(screen.queryByText(/customized this build/i)).not.toBeInTheDocument();
+    // …while preserving the reduction toggle the user changed.
+    expect(screen.getByLabelText(/Power Stone/i)).not.toBeChecked();
+  });
 });
