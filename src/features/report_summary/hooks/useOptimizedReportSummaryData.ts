@@ -90,10 +90,15 @@ export function useOptimizedReportSummaryData(
         setIsLoading(true);
         setError(null);
 
-        // Filter fights same as report fight selector - exclude invalid timestamps/zero duration
+        // Filter fights same as the report fight selector / fightGrouping —
+        // exclude null entries and invalid/zero-duration windows. Use `!= null`
+        // (not truthiness) so a fight whose startTime is 0 isn't dropped.
         const cleanFights = fights
           .filter((fight): fight is FightFragment => fight !== null)
-          .filter((fight) => fight.startTime && fight.endTime && fight.endTime > fight.startTime);
+          .filter(
+            (fight) =>
+              fight.startTime != null && fight.endTime != null && fight.endTime > fight.startTime,
+          );
         const totalTasks = cleanFights.length * 3 + 2; // 3 event types per fight + analysis tasks
 
         if (isCurrent()) {
