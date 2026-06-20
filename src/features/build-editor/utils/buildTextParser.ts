@@ -209,12 +209,12 @@ export function resolveCanonicalSetName(raw: string): string | null {
 function setItemCandidates(
   setName: string,
   slotType: EquipSlotDef['slotType'],
-): { ids: number[]; options: string[] } {
+): { ids: number[]; options: string[]; rawCandidates: string[] } {
   const options: string[] = [];
   let ids: number[] = [];
-  if (!setName) return { ids, options };
+  const rawCandidates = setName ? parseSetCellCandidates(setName) : [];
   const param = SLOT_TYPE_PARAM(slotType);
-  for (const candidate of parseSetCellCandidates(setName)) {
+  for (const candidate of rawCandidates) {
     let cand = getSetItemsBySlot(candidate, param);
     let name = candidate;
     if (cand.length === 0) {
@@ -229,16 +229,16 @@ function setItemCandidates(
       options.push(name);
     }
   }
-  return { ids, options };
+  return { ids, options, rawCandidates };
 }
 
-/** First item id of a set for a slot, plus the resolvable choice options. */
+/** First item id of a set for a slot, plus the choice options (raw + resolved). */
 function resolveSetItem(
   setName: string,
   slotType: EquipSlotDef['slotType'],
-): { itemId: number | null; options: string[] } {
-  const { ids, options } = setItemCandidates(setName, slotType);
-  return { itemId: ids.length > 0 ? ids[0] : null, options };
+): { itemId: number | null; options: string[]; rawCandidates: string[] } {
+  const { ids, options, rawCandidates } = setItemCandidates(setName, slotType);
+  return { itemId: ids.length > 0 ? ids[0] : null, options, rawCandidates };
 }
 
 /**
@@ -295,9 +295,13 @@ function resolveWeaponItem(
   setName: string,
   slotType: EquipSlotDef['slotType'],
   typeCell: string,
-): { itemId: number | null; confirmed: boolean; options: string[] } {
-  const { ids, options } = setItemCandidates(setName, slotType);
-  return { ...pickWeaponVariant(ids, typeCell, (id) => getWeaponTypeLabel(id)), options };
+): { itemId: number | null; confirmed: boolean; options: string[]; rawCandidates: string[] } {
+  const { ids, options, rawCandidates } = setItemCandidates(setName, slotType);
+  return {
+    ...pickWeaponVariant(ids, typeCell, (id) => getWeaponTypeLabel(id)),
+    options,
+    rawCandidates,
+  };
 }
 
 // ─── Gear ──────────────────────────────────────────────────────────────────
@@ -475,19 +479,24 @@ function parseGear(lines: string[], warnings: string[]): ParsedGearRow[] {
     let itemId: number | null;
     let weaponUnconfirmed = false;
     let setOptions: string[] = [];
+    let rawCandidates: string[] = [];
     if (def.category === 'weapons') {
       const w = resolveWeaponItem(setName, def.slotType, weightOrType);
       itemId = w.itemId;
       weaponUnconfirmed = w.itemId != null && !w.confirmed;
       setOptions = w.options;
+      rawCandidates = w.rawCandidates;
     } else {
       const s = resolveSetItem(setName, def.slotType);
       itemId = s.itemId;
       setOptions = s.options;
+      rawCandidates = s.rawCandidates;
     }
-    // A cell like "Null Arca / Coral / Ansuul" is the guide offering a choice —
-    // we import the first as a starting point but flag it so the user verifies.
-    const setAmbiguous = setOptions.length > 1;
+    // A cell like "Null Arca / Coral / Ansuul" (or "AY / Aegis") is the guide
+    // offering a choice — we import the first resolvable one but flag it. Base
+    // this on the RAW cell, not just what resolved: an option that fails to
+    // resolve (e.g. a too-short abbreviation) must still mark the row ambiguous.
+    const setAmbiguous = itemId != null && rawCandidates.length > 1;
 
     // A cell like "Light or Medium" offers the player a choice — don't silently
     // pick one. Only import a weight when exactly one is named.
@@ -506,7 +515,7 @@ function parseGear(lines: string[], warnings: string[]): ParsedGearRow[] {
       warnings.push(`Verify weapon type “${weightOrType}” for ${def.name}`);
     if (setAmbiguous)
       warnings.push(
-        `${def.name}: guide lists set options (${setOptions.join(' / ')}) — imported “${setOptions[0]}”, verify`,
+        `${def.name}: guide lists set options (${rawCandidates.join(' / ')}) — imported “${setOptions[0] ?? setName}”, verify`,
       );
     if (weights.length > 1)
       warnings.push(`${def.name} lists multiple weights (${weights.join('/')}) — choose one`);

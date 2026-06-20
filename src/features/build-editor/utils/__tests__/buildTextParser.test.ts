@@ -283,6 +283,21 @@ describe('parseBuildText — set choice cells', () => {
     expect(ring?.status).toBe('partial');
     expect(r.warnings.some((w) => /set options/i.test(w))).toBe(true);
   });
+
+  it('flags a choice cell even when one option fails to resolve (Qx9 / …)', () => {
+    // "Qx9" can't resolve, but the cell still offered a choice — the row must be
+    // marked partial, not imported as a confident single match.
+    const r = parseBuildText(
+      [
+        'GEAR SLOT\tSET\tWEIGHT/TYPE\tTRAIT\tENCHANT',
+        'Ring 1\tQx9 / Ring of the Pale Order\t-\tInfused\tWeapon Damage',
+      ].join('\n'),
+    );
+    const ring = r.gear.find((g) => g.slot === 11);
+    expect(ring?.itemId).toBeGreaterThan(0); // Ring of the Pale Order resolved
+    expect(ring?.status).toBe('partial');
+    expect(r.warnings.some((w) => /set options/i.test(w))).toBe(true);
+  });
 });
 
 describe('parseBuildText — OCR resilience (pipe/space delimiters + fuzzy matching)', () => {

@@ -8,11 +8,20 @@
  * text is fed to the same buildTextParser the paste/link importers use, then
  * shown for review before anything is applied.
  *
+ * Because this runs in the first-party origin, the entry script is pinned to an
+ * EXACT immutable version and loaded with a Subresource-Integrity hash + CORS, so
+ * a mutated/compromised CDN release can't execute arbitrary code here. (The exact
+ * version also pins tesseract's own worker/core sub-resources, which it derives
+ * from its baked-in version.) If the version is bumped, recompute the hash:
+ *   curl -s https://cdn.jsdelivr.net/npm/tesseract.js@<v>/dist/tesseract.min.js \
+ *     | openssl dgst -sha384 -binary | openssl base64 -A
+ *
  * Free + offline-capable once cached: no API key, no per-call cost.
  */
 
-const TESSERACT_VERSION = '5';
+const TESSERACT_VERSION = '5.1.1';
 const TESSERACT_CDN = `https://cdn.jsdelivr.net/npm/tesseract.js@${TESSERACT_VERSION}/dist/tesseract.min.js`;
+const TESSERACT_SRI = 'sha384-GJqSu7vueQ9qN0E9yLPb3Wtpd7OrgK8KmYzC8T1IysG1bcvxvIO4qtYR/D3A991F';
 
 export interface OcrProgress {
   /** Coarse phase label from tesseract (e.g. "recognizing text"). */
@@ -59,6 +68,8 @@ function loadTesseract(): Promise<TesseractNamespace> {
     const script = document.createElement('script');
     script.src = TESSERACT_CDN;
     script.async = true;
+    script.crossOrigin = 'anonymous'; // required for SRI on a cross-origin script
+    script.integrity = TESSERACT_SRI; // block execution if the bytes don't match
     script.onload = () => {
       if (window.Tesseract) resolve(window.Tesseract);
       else reject(new Error('Tesseract failed to initialise after loading.'));
