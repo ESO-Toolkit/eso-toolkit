@@ -108,50 +108,78 @@ export function calculateDamageOverTimeData(
     allTargets: {},
   };
 
+  // Pre-group events by (target, player) and by player-across-all-targets in a
+  // single pass, so each player's buckets are filled by ONE linear sweep instead
+  // of re-filtering the player's whole event list once per time bucket (the old
+  // O(targets × players × buckets × events) inner loop). Output is identical.
+  const eventsByTargetPlayer = new Map<number, Map<number, DamageEvent[]>>();
+  const eventsByPlayerAllTargets = new Map<number, DamageEvent[]>();
+  for (const event of playerDamageEvents) {
+    let perPlayer = eventsByTargetPlayer.get(event.targetID);
+    if (!perPlayer) {
+      perPlayer = new Map();
+      eventsByTargetPlayer.set(event.targetID, perPlayer);
+    }
+    const tpArr = perPlayer.get(event.sourceID);
+    if (tpArr) tpArr.push(event);
+    else perPlayer.set(event.sourceID, [event]);
+
+    const pArr = eventsByPlayerAllTargets.get(event.sourceID);
+    if (pArr) pArr.push(event);
+    else eventsByPlayerAllTargets.set(event.sourceID, [event]);
+  }
+
+  const perSecond = bucketSizeMs / 1000;
+
+  // Bucket one player's events with a single linear sweep. `floor((ts-start)/
+  // bucketSizeMs)` reproduces the old per-bucket `>= bucketStart && < bucketEnd`
+  // membership exactly for events inside [startTime, endTime); events outside
+  // that window matched no bucket before and are skipped here too. An empty list
+  // yields all-zero buckets (preserving players with no damage on a target).
+  const buildBuckets = (
+    playerEvents: DamageEvent[],
+  ): { dataPoints: DamageOverTimeDataPoint[]; totalDamage: number; maxDps: number } => {
+    const dataPoints: DamageOverTimeDataPoint[] = new Array(buckets.length);
+    for (let i = 0; i < buckets.length; i++) {
+      dataPoints[i] = {
+        timestamp: buckets[i],
+        relativeTime: (buckets[i] - startTime) / 1000,
+        damage: 0,
+        eventCount: 0,
+      };
+    }
+
+    let totalDamage = 0;
+    for (const event of playerEvents) {
+      if (event.timestamp < startTime || event.timestamp >= endTime) continue;
+      const idx = Math.floor((event.timestamp - startTime) / bucketSizeMs);
+      const dp = dataPoints[idx];
+      dp.damage += event.amount;
+      dp.eventCount += 1;
+      totalDamage += event.amount;
+    }
+
+    let maxDps = 0;
+    for (const dp of dataPoints) {
+      const dps = dp.damage / perSecond;
+      if (dps > maxDps) maxDps = dps;
+    }
+
+    return { dataPoints, totalDamage, maxDps };
+  };
+
   // Process each target separately
   let targetIndex = 0;
   for (const targetId of targetIds) {
     result.byTarget[targetId] = {};
+    const perPlayer = eventsByTargetPlayer.get(targetId);
 
-    // Get events for this target
-    const targetEvents = playerDamageEvents.filter((event) => event.targetID === targetId);
-
-    // Process each player for this target
     for (const playerId of playerIds) {
       const player = players[playerId];
       if (!player) continue;
 
-      const playerEvents = targetEvents.filter((event) => event.sourceID === playerId);
-
-      // Create data points for each time bucket
-      const dataPoints: DamageOverTimeDataPoint[] = [];
-      let totalDamage = 0;
-      let maxDps = 0;
-
-      for (let i = 0; i < buckets.length; i++) {
-        const bucketStart = buckets[i];
-        const bucketEnd = buckets[i + 1] || endTime;
-
-        // Get events in this bucket
-        const bucketEvents = playerEvents.filter(
-          (event) => event.timestamp >= bucketStart && event.timestamp < bucketEnd,
-        );
-
-        const bucketDamage = bucketEvents.reduce((sum, event) => sum + event.amount, 0);
-        const dps = bucketDamage / (bucketSizeMs / 1000); // Convert to per-second
-
-        totalDamage += bucketDamage;
-        maxDps = Math.max(maxDps, dps);
-
-        dataPoints.push({
-          timestamp: bucketStart,
-          relativeTime: (bucketStart - startTime) / 1000,
-          damage: bucketDamage,
-          eventCount: bucketEvents.length,
-        });
-      }
-
-      const averageDps = totalDamage / (fightDuration / 1000);
+      const playerEvents = perPlayer?.get(playerId) ?? [];
+      const { dataPoints, totalDamage, maxDps } = buildBuckets(playerEvents);
 
       result.byTarget[targetId][playerId] = {
         playerId,
@@ -160,7 +188,7 @@ export function calculateDamageOverTimeData(
         dataPoints,
         totalDamage,
         totalEvents: playerEvents.length,
-        averageDps,
+        averageDps: totalDamage / (fightDuration / 1000),
         maxDps,
       };
     }
@@ -175,40 +203,12 @@ export function calculateDamageOverTimeData(
     const player = players[playerId];
     if (!player) continue;
 
-    const playerEvents = playerDamageEvents.filter((event) => event.sourceID === playerId);
+    const playerEvents = eventsByPlayerAllTargets.get(playerId) ?? [];
 
     // Skip players with no damage events
     if (playerEvents.length === 0) continue;
 
-    // Create data points for each time bucket (all targets combined)
-    const dataPoints: DamageOverTimeDataPoint[] = [];
-    let totalDamage = 0;
-    let maxDps = 0;
-
-    for (let i = 0; i < buckets.length; i++) {
-      const bucketStart = buckets[i];
-      const bucketEnd = buckets[i + 1] || endTime;
-
-      // Get events in this bucket
-      const bucketEvents = playerEvents.filter(
-        (event) => event.timestamp >= bucketStart && event.timestamp < bucketEnd,
-      );
-
-      const bucketDamage = bucketEvents.reduce((sum, event) => sum + event.amount, 0);
-      const dps = bucketDamage / (bucketSizeMs / 1000); // Convert to per-second
-
-      totalDamage += bucketDamage;
-      maxDps = Math.max(maxDps, dps);
-
-      dataPoints.push({
-        timestamp: bucketStart,
-        relativeTime: (bucketStart - startTime) / 1000,
-        damage: bucketDamage,
-        eventCount: bucketEvents.length,
-      });
-    }
-
-    const averageDps = totalDamage / (fightDuration / 1000);
+    const { dataPoints, totalDamage, maxDps } = buildBuckets(playerEvents);
 
     result.allTargets[playerId] = {
       playerId,
@@ -217,7 +217,7 @@ export function calculateDamageOverTimeData(
       dataPoints,
       totalDamage,
       totalEvents: playerEvents.length,
-      averageDps,
+      averageDps: totalDamage / (fightDuration / 1000),
       maxDps,
     };
   }
