@@ -272,6 +272,55 @@ describe('ReportSummaryPage', () => {
       expect(screen.getByText('DOT')).toBeInTheDocument();
     });
   });
+
+  it('surfaces a non-fatal warning when some fights failed to load', async () => {
+    mockUseOptimizedReportSummaryData.mockReturnValue({
+      reportSummaryData: {
+        reportInfo: {
+          reportId: 'test123',
+          title: 'Test Report',
+          startTime: 1000000,
+          endTime: 2000000,
+          duration: 1000000,
+          zoneName: 'Test Zone',
+        },
+        fights: [],
+        damageBreakdown: {
+          totalDamage: 0,
+          dps: 0,
+          playerBreakdown: [],
+          abilityTypeBreakdown: [],
+          targetBreakdown: [],
+        },
+        deathAnalysis: {
+          totalDeaths: 0,
+          playerDeaths: [],
+          mechanicDeaths: [],
+          fightDeaths: [],
+          deathPatterns: [],
+        },
+        loadingStates: {
+          isLoading: false,
+          fightDataLoading: {},
+          damageEventsLoading: false,
+          deathEventsLoading: false,
+          playerDataLoading: false,
+          masterDataLoading: false,
+        },
+        errors: { generalErrors: [], fightErrors: { 1: 'network error' }, fetchErrors: {} },
+      },
+      isLoading: false,
+      error: null,
+      progress: null,
+      fetchData: jest.fn(),
+    });
+
+    renderWithProviders(<ReportSummaryPage />);
+
+    await waitFor(() => {
+      expect(screen.getByText(/couldn't be loaded for 1 fight/i)).toBeInTheDocument();
+    });
+  });
 });
 
 describe('ReportSummaryPage Loading State', () => {

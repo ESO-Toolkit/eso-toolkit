@@ -101,6 +101,12 @@ export const ReportSummaryPage: React.FC = () => {
         reportId={stableReportId}
       />
 
+      {summaryData && Object.keys(summaryData.errors.fightErrors).length > 0 && (
+        <Alert severity="warning" sx={{ mb: 2 }}>
+          {`Some events couldn't be loaded for ${Object.keys(summaryData.errors.fightErrors).length} fight(s); the summary below is based on the data that loaded.`}
+        </Alert>
+      )}
+
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mt: 1 }}>
         {/* Damage Breakdown Section */}
         <Box>
