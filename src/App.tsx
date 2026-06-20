@@ -7,6 +7,7 @@ import { PersistGate } from 'redux-persist/integration/react';
 
 import { AnalyticsListener } from './components/AnalyticsListener';
 import { BuildEditorSkeleton } from './components/BuildEditorSkeleton';
+import { CalculatorTabsSkeleton } from './components/CalculatorTabsSkeleton';
 import { CookieConsent } from './components/CookieConsent';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { HashRouteRedirect } from './components/HashRouteRedirect';
@@ -259,6 +260,10 @@ const CalculatorLoadingFallback: React.FC = () => {
     window.location.hash.replace('#', '').toLowerCase() === 'ultimate';
   return (
     <DelayedFallback>
+      {/* CalculatorPage always renders the Stats/Ultimate tab strip above the
+          calculator, so reserve its space here — otherwise it pops in and pushes
+          the content down when the page chunk resolves. */}
+      <CalculatorTabsSkeleton selected={isUltimate ? 'ultimate' : 'stats'} />
       {isUltimate ? (
         <Container maxWidth="lg" sx={{ py: 3 }}>
           <UltimateCalculatorSkeleton />

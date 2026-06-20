@@ -283,79 +283,88 @@ export const UltimateCalculatorSkeleton: React.FC<UltimateCalculatorSkeletonProp
             <Box sx={{ flex: 1, height: '1px', backgroundColor: theme.palette.divider }} />
           </Stack>
 
-          {/* Source category groups (first expanded showing a source card + slider) */}
-          {[0, 1, 2, 3, 4].map((g) => (
-            <Box key={g} sx={{ mb: 1 }}>
-              <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center', py: 0.75 }}>
-                <Box
-                  sx={{
-                    width: 5,
-                    height: 5,
-                    borderRadius: '50%',
-                    background: accent,
-                    flexShrink: 0,
-                  }}
-                />
-                <Skeleton variant="text" width={120 + ((g * 11) % 40)} height={14} />
-                <Box sx={{ flex: 1 }} />
-                <Skeleton variant="circular" width={16} height={16} />
-              </Stack>
-              {g === 0 && (
-                <Stack spacing={1} sx={{ mt: 0.5 }}>
-                  {[0, 1].map((s) => (
-                    <Box
-                      key={s}
-                      sx={{
-                        borderRadius: 1.4,
-                        px: 1.5,
-                        py: 1.25,
-                        border: `1px solid ${s === 0 ? 'rgba(56,189,248,0.5)' : theme.palette.divider}`,
-                        background:
-                          s === 0
-                            ? dark
-                              ? 'linear-gradient(135deg, rgba(56,189,248,0.15) 0%, rgba(56,189,248,0.04) 100%)'
-                              : 'linear-gradient(135deg, rgba(40,145,200,0.08) 0%, rgba(40,145,200,0.02) 100%)'
-                            : dark
-                              ? 'rgba(2,6,16,0.35)'
-                              : 'rgba(15,23,42,0.015)',
-                      }}
+          {/* Source category groups — mirrors the default Arcanist group-DPS
+              state: "Base income" and "Class passive" auto-expand (each has an
+              enabled source), the other three stay folded. Matching this shape
+              avoids a left-panel reflow when the real component mounts. */}
+          {[0, 1, 2, 3, 4].map((g) => {
+            const expanded = g === 0 || g === 2;
+            return (
+              <Box key={g} sx={{ mb: 1 }}>
+                <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center', py: 0.75 }}>
+                  <Box
+                    sx={{
+                      width: 5,
+                      height: 5,
+                      borderRadius: '50%',
+                      background: accent,
+                      flexShrink: 0,
+                    }}
+                  />
+                  <Skeleton variant="text" width={84 + ((g * 13) % 36)} height={14} />
+                  {/* "N on" count chip — shown on groups with an enabled source. */}
+                  {expanded && (
+                    <Skeleton
+                      variant="rectangular"
+                      width={30}
+                      height={14}
+                      sx={{ ml: 0.5, borderRadius: 1 }}
+                    />
+                  )}
+                  <Box sx={{ flex: 1 }} />
+                  <Skeleton variant="circular" width={16} height={16} />
+                </Stack>
+                {expanded && (
+                  <Box
+                    sx={{
+                      mt: 0.5,
+                      borderRadius: 1.4,
+                      px: 1.5,
+                      py: 1.25,
+                      border: '1px solid rgba(56,189,248,0.5)',
+                      background: dark
+                        ? 'linear-gradient(135deg, rgba(56,189,248,0.15) 0%, rgba(56,189,248,0.04) 100%)'
+                        : 'linear-gradient(135deg, rgba(40,145,200,0.08) 0%, rgba(40,145,200,0.02) 100%)',
+                    }}
+                  >
+                    <Stack
+                      direction="row"
+                      spacing={1}
+                      sx={{ alignItems: 'center', justifyContent: 'space-between' }}
                     >
+                      <Stack direction="row" spacing={1} sx={{ alignItems: 'center', minWidth: 0 }}>
+                        <Skeleton
+                          variant="rectangular"
+                          width={34}
+                          height={20}
+                          sx={{ borderRadius: 10 }}
+                        />
+                        <Skeleton variant="text" width={150} height={15} />
+                      </Stack>
+                    </Stack>
+                    {/* Uptime label + value, then the slider (enabled source). */}
+                    <Box sx={{ mt: 1, pt: 1, borderTop: `1px solid ${theme.palette.divider}` }}>
                       <Stack
                         direction="row"
-                        spacing={1}
-                        sx={{ alignItems: 'center', justifyContent: 'space-between' }}
+                        sx={{ justifyContent: 'space-between', alignItems: 'center' }}
                       >
-                        <Stack
-                          direction="row"
-                          spacing={1}
-                          sx={{ alignItems: 'center', minWidth: 0 }}
-                        >
-                          <Skeleton
-                            variant="rectangular"
-                            width={34}
-                            height={20}
-                            sx={{ borderRadius: 10 }}
-                          />
-                          <Skeleton variant="text" width={150} height={15} />
-                        </Stack>
-                        <Skeleton variant="text" width={36} height={12} />
+                        <Skeleton variant="text" width={48} height={12} />
+                        <Skeleton variant="text" width={30} height={12} />
                       </Stack>
-                      {s === 0 && (
-                        <Box sx={{ px: '12px', mt: 1 }}>
-                          <Skeleton
-                            variant="rectangular"
-                            width="100%"
-                            height={6}
-                            sx={{ borderRadius: 3 }}
-                          />
-                        </Box>
-                      )}
+                      <Box sx={{ px: '12px', mt: 0.5 }}>
+                        <Skeleton
+                          variant="rectangular"
+                          width="100%"
+                          height={6}
+                          sx={{ borderRadius: 3 }}
+                        />
+                      </Box>
                     </Box>
-                  ))}
-                </Stack>
-              )}
-            </Box>
-          ))}
+                  </Box>
+                )}
+              </Box>
+            );
+          })}
 
           {/* Reset button */}
           <Skeleton variant="text" width={130} height={16} sx={{ mt: 1.5 }} />
