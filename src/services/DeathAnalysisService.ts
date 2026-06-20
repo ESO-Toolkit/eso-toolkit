@@ -129,9 +129,11 @@ export class DeathAnalysisService {
       };
     }
 
-    // Calculate death rate (deaths per minute) - only counting player deaths
+    // Calculate death rate (deaths per minute) - only counting player deaths.
+    // Guard against a zero-duration fight: dividing by 0 yields Infinity, which
+    // forces success=false (Infinity < 2.0) and renders as 'Infinity'/NaN.
     const durationMinutes = (fightEndTime - fightStartTime) / (1000 * 60);
-    const deathRate = playerDeaths.length / durationMinutes;
+    const deathRate = durationMinutes > 0 ? playerDeaths.length / durationMinutes : 0;
 
     // Group deaths by ability/mechanic, filtering out friendly sources
     const mechanicCounts = new Map<number, MechanicDeathCount>();
