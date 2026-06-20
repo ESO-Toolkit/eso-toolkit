@@ -24,6 +24,7 @@
  */
 
 import type { MenuProps } from '@mui/material/Menu';
+import { useTheme } from '@mui/material/styles';
 import type { SxProps, Theme } from '@mui/material/styles';
 import React from 'react';
 
@@ -32,6 +33,7 @@ import {
   DROPDOWN_MENU_MAX_HEIGHT_SX,
   computeMenuPlacement,
   dropdownMenuOrigins,
+  dropdownMenuPaperSx,
   setDropdownMenuMaxHeight,
   type DropdownMenuOrigins,
 } from '../theme/dropdownMenu';
@@ -81,20 +83,23 @@ export const useDropdownMenuOrigins = (): DropdownMenuOrigins =>
   dropdownMenuOrigins(useDropdownMenuDirection().menuUp);
 
 /**
- * Build the `MenuProps` for a Select that needs its OWN cosmetic paper styling.
- * Folds in the shared open-direction origins (opens below the field, flips up
- * near the viewport bottom), the per-open height cap (tall menus scroll instead
- * of covering the field), and a DIRECTION-AWARE gap (below the field when the
- * menu opens down, above it when it flips up — so an upward menu never overlaps
- * the field). The caller's paper `sx` is layered on top.
+ * Build the `MenuProps` for a Select that passes its OWN `MenuProps` (which would
+ * otherwise replace the theme default). Folds in everything the global default
+ * gives plain Selects so they stay consistent: the shared open-direction origins
+ * (opens below the field, flips up near the viewport bottom), the per-open height
+ * cap (tall menus scroll instead of covering the field), a DIRECTION-AWARE gap
+ * (below the field when opening down, above it when flipped up — so an upward
+ * menu never overlaps the field), and the shared premium cyan-glass paper look.
+ * Any caller-supplied paper `sx` is layered on top.
  *
  * ```tsx
- * const menuProps = useDropdownMenuProps(menuPaperSx);
+ * const menuProps = useDropdownMenuProps();
  * <Select MenuProps={menuProps}>…</Select>
  * ```
  */
 export const useDropdownMenuProps = (paperSx?: SxProps<Theme>): Partial<MenuProps> => {
   const { menuUp } = useDropdownMenuDirection();
+  const dark = useTheme().palette.mode === 'dark';
   const baseSx: SxProps<Theme> = {
     maxHeight: DROPDOWN_MENU_MAX_HEIGHT_SX,
     ...(menuUp ? { mt: 0, mb: DROPDOWN_MENU_GAP } : { mt: DROPDOWN_MENU_GAP, mb: 0 }),
@@ -106,6 +111,8 @@ export const useDropdownMenuProps = (paperSx?: SxProps<Theme>): Partial<MenuProp
       : [];
   return {
     ...dropdownMenuOrigins(menuUp),
-    slotProps: { paper: { sx: [baseSx, ...extra] as SxProps<Theme> } },
+    slotProps: {
+      paper: { sx: [dropdownMenuPaperSx(dark), baseSx, ...extra] as SxProps<Theme> },
+    },
   };
 };

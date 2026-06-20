@@ -12,6 +12,7 @@ import {
   DROPDOWN_MENU_GAP,
   DROPDOWN_MENU_MAX_HEIGHT_SX,
   dropdownMenuOrigins,
+  dropdownMenuPaperSx,
 } from './theme/dropdownMenu';
 
 export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -538,17 +539,22 @@ export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
                 ...dropdownMenuOrigins(menuUp),
                 slotProps: {
                   paper: {
-                    sx: {
-                      // Cap height to the room on the open side so a tall menu
-                      // scrolls below the field instead of being shifted up over
-                      // it; the cap is published per-open as a CSS var.
-                      maxHeight: DROPDOWN_MENU_MAX_HEIGHT_SX,
-                      // Direction-aware gap so an upward-flipped menu doesn't sit
-                      // on the field.
-                      ...(menuUp
-                        ? { mt: 0, mb: DROPDOWN_MENU_GAP }
-                        : { mt: DROPDOWN_MENU_GAP, mb: 0 }),
-                    },
+                    sx: [
+                      // Shared premium cyan-glass look — the single source of the
+                      // dropdown styling, so every Select menu matches.
+                      dropdownMenuPaperSx(darkMode),
+                      {
+                        // Cap height to the room on the open side so a tall menu
+                        // scrolls below the field instead of being shifted up over
+                        // it; the cap is published per-open as a CSS var.
+                        maxHeight: DROPDOWN_MENU_MAX_HEIGHT_SX,
+                        // Direction-aware gap so an upward-flipped menu doesn't sit
+                        // on the field.
+                        ...(menuUp
+                          ? { mt: 0, mb: DROPDOWN_MENU_GAP }
+                          : { mt: DROPDOWN_MENU_GAP, mb: 0 }),
+                      },
+                    ],
                   },
                 },
               },
@@ -556,7 +562,7 @@ export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           },
         },
       }),
-    [baseTheme, menuUp, onSelectOpen],
+    [baseTheme, darkMode, menuUp, onSelectOpen],
   );
 
   return (

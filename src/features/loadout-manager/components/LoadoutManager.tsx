@@ -118,15 +118,10 @@ export const LoadoutManager: React.FC = () => {
   // Glass design tokens
   const isDarkMode = theme.palette.mode === 'dark';
 
-  // Open below the field (flip up near the viewport bottom) while keeping the
-  // glass paper styling — an explicit MenuProps would otherwise drop the global
-  // theme's open-direction default. Shared by the Trial and Page Selects below.
-  const glassMenuProps = useDropdownMenuProps({
-    borderRadius: '10px',
-    backdropFilter: 'blur(12px)',
-    backgroundColor: isDarkMode ? 'rgba(20,20,30,0.92)' : 'rgba(255,255,255,0.94)',
-    border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}`,
-  });
+  // Open below the field (flip up near the viewport bottom) with the shared
+  // premium dropdown look — an explicit MenuProps would otherwise drop the global
+  // theme's open-direction + styling default. Shared by the Trial and Page Selects.
+  const glassMenuProps = useDropdownMenuProps();
   const glassTextField = {
     '& .MuiOutlinedInput-root': {
       backgroundColor: isDarkMode ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)',
