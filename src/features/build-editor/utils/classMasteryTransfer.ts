@@ -74,6 +74,11 @@ export function classFromMasteryIds(ids: number[]): ESOClass | undefined {
   return best;
 }
 
+/** Remove every Class Mastery passive id from a flat passive-id list. */
+export function stripClassMasteryIds(ids: number[]): number[] {
+  return ids.filter((id) => !CLASS_MASTERY_SKILL_IDS.has(id));
+}
+
 /**
  * Split a flat passive-id list (e.g. CSPS `werte.pass`) into regular passives
  * and Class Mastery picks. Class Mastery ids are removed from `passives`

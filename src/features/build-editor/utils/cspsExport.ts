@@ -39,7 +39,7 @@ import type {
 } from '../types/build.types';
 
 import { isClassMasteryEligible } from './classMasteryEligibility';
-import { sanitizeClassMasteryPicks } from './classMasteryTransfer';
+import { sanitizeClassMasteryPicks, stripClassMasteryIds } from './classMasteryTransfer';
 
 // ── Reverse mappings (Build Editor → CSPS) ───────────────────────────
 
@@ -164,8 +164,13 @@ function buildWerte(
   const werte: CSPSSkillData = {};
   let hasData = false;
 
-  // Passives (+ Class Mastery picks) → werte.pass
-  const passIds = [...new Set([...passives.filter((id) => id > 0), ...classMasteryPassives])];
+  // Passives (+ Class Mastery picks) → werte.pass. Strip any Class Mastery ids
+  // that leaked into setup.passives (legacy/corrupt builds) so the ONLY CM ids
+  // written are the sanitized, eligibility-gated `classMasteryPassives` — never
+  // a stale id that would exceed the 2-pick cap or win on round-trip import.
+  const passIds = [
+    ...new Set([...stripClassMasteryIds(passives.filter((id) => id > 0)), ...classMasteryPassives]),
+  ];
   const passEntries: CSPSSkillEntry[] = passIds.map((abilityId) => ({ abilityId, value: 1 }));
   if (passEntries.length > 0) {
     werte.pass = compressSkillEntries(passEntries);

@@ -384,6 +384,25 @@ describe('cspsExport', () => {
       expect(charData.profiles![1].werte!.pass!.part1).toContain('238232:1');
     });
 
+    it('does not export stale Class Mastery ids left in setup.passives', () => {
+      const build = makeBuild({
+        esoClass: 'dragonknight',
+        classSkillLines: [null, null, null],
+        classMasteryPassives: [238232, 240268],
+        // 259224 is a DK Class Mastery id wrongly left in setup.passives (legacy);
+        // 400 is a real passive. Only the sanitized picks should reach werte.pass.
+        setups: [makeSetup({ passives: [400, 259224] })],
+      });
+      const charData =
+        convertBuildToCSPS(build).Default!['@ESOToolkit'].$AccountWide.charData!['1'];
+      expect(charData.werte!.pass!.part1).toContain('400:1');
+      expect(charData.werte!.pass!.part1).toContain('238232:1');
+      expect(charData.werte!.pass!.part1).toContain('240268:1');
+      // the stale CM id must NOT be exported — it would exceed the 2-pick cap
+      // and could win over the intended pick on round-trip import.
+      expect(charData.werte!.pass!.part1).not.toContain('259224:1');
+    });
+
     it('round-trips Class Mastery picks through export → import', () => {
       const build = makeBuild({
         esoClass: 'warden',

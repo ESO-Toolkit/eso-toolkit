@@ -3,6 +3,7 @@ import {
   classOfClassMasteryId,
   partitionClassMasteryPicks,
   sanitizeClassMasteryPicks,
+  stripClassMasteryIds,
 } from '../classMasteryTransfer';
 
 describe('classMasteryTransfer', () => {
@@ -38,6 +39,16 @@ describe('classMasteryTransfer', () => {
 
     it('ignores non-Class-Mastery ids and returns undefined when none are present', () => {
       expect(classFromMasteryIds([400, 500])).toBeUndefined();
+    });
+  });
+
+  describe('stripClassMasteryIds', () => {
+    it('removes every Class Mastery id, keeping the regular passives in order', () => {
+      expect(stripClassMasteryIds([400, 238232, 500, 263519])).toEqual([400, 500]);
+    });
+
+    it('is a no-op when there are no Class Mastery ids', () => {
+      expect(stripClassMasteryIds([400, 500])).toEqual([400, 500]);
     });
   });
 
