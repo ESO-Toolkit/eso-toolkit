@@ -259,20 +259,57 @@ describe('copySetupSection', () => {
 // ─── buildHasContent ──────────────────────────────────────────────────────────
 
 describe('buildHasContent', () => {
-  it('is false for a blank build (empty gear + empty skill bars)', () => {
-    const blank = makeTestSetup({ gear: {}, skills: { 0: {}, 1: {} } });
-    expect(buildHasContent([blank])).toBe(false);
+  // A truly blank setup — every user-entered field at its default.
+  const blankSetup = (): BuildSetup =>
+    makeTestSetup({
+      gear: {},
+      skills: { 0: {}, 1: {} },
+      passives: [],
+      mundusStone: '',
+      curse: 'none',
+      attributes: { magicka: 0, health: 0, stamina: 0 },
+      consumables: { potions: [], food: {} },
+      cp: {
+        warfare: { slots: [null, null, null, null], passives: {} },
+        fitness: { slots: [null, null, null, null], passives: {} },
+        craft: { slots: [null, null, null, null], passives: {} },
+      },
+      skilledAbilities: undefined,
+      scribedAbilityIds: undefined,
+      quickslots: undefined,
+    });
+
+  it('is false for a fully blank build', () => {
+    expect(buildHasContent([blankSetup()])).toBe(false);
   });
 
-  it('is true when any setup has gear', () => {
-    const blank = makeTestSetup({ gear: {}, skills: { 0: {}, 1: {} } });
-    const withGear = makeTestSetup({ gear: { 0: { id: 1 } }, skills: { 0: {}, 1: {} } });
-    expect(buildHasContent([blank, withGear])).toBe(true);
+  it('is true for gear, slotted skills, or passives', () => {
+    expect(buildHasContent([{ ...blankSetup(), gear: { 0: { id: 1 } } }])).toBe(true);
+    expect(buildHasContent([{ ...blankSetup(), skills: { 0: { 3: 99 }, 1: {} } }])).toBe(true);
+    expect(buildHasContent([{ ...blankSetup(), passives: [42] }])).toBe(true);
   });
 
-  it('is true when any setup has a slotted skill', () => {
-    const withSkill = makeTestSetup({ gear: {}, skills: { 0: { 3: 99 }, 1: {} } });
-    expect(buildHasContent([withSkill])).toBe(true);
+  it('is true for non-gear content: attributes, mundus, curse, consumables', () => {
+    expect(
+      buildHasContent([{ ...blankSetup(), attributes: { magicka: 64, health: 0, stamina: 0 } }]),
+    ).toBe(true);
+    expect(buildHasContent([{ ...blankSetup(), mundusStone: 'thief' }])).toBe(true);
+    expect(buildHasContent([{ ...blankSetup(), curse: 'vampire-1' }])).toBe(true);
+    expect(
+      buildHasContent([
+        { ...blankSetup(), consumables: { potions: [], food: { id: 9, name: 'Food' } } },
+      ]),
+    ).toBe(true);
+  });
+
+  it('is true for champion perks or passive stars', () => {
+    const withSlot = blankSetup();
+    withSlot.cp.warfare.slots[0] = 264;
+    expect(buildHasContent([withSlot])).toBe(true);
+
+    const withStars = blankSetup();
+    withStars.cp.fitness.passives = { piercing: 5 };
+    expect(buildHasContent([withStars])).toBe(true);
   });
 });
 

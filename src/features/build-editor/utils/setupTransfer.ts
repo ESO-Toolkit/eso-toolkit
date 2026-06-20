@@ -170,18 +170,34 @@ export function clearedSetupSection(setup: BuildSetup, section: SetupSection): B
 }
 
 /**
- * True when any setup already holds real content (gear or a slotted skill).
- * Used to decide whether a build-wide identity (class/race) import is risky —
- * a blank build is safe to auto-apply identity to; one with content is not,
- * since class is shared across every setup.
+ * True when any setup already holds user-entered content — gear, slotted
+ * skills, champion perks/stars, passives, consumables, non-zero attributes, a
+ * mundus, or a non-default curse. Used to decide whether a build-wide identity
+ * (class/race) import is risky: only a truly blank build is safe to auto-apply
+ * identity to, since class is shared across every setup. (Build-level content
+ * such as class-mastery picks is checked by the caller alongside this.)
  */
 export function buildHasContent(setups: BuildSetup[]): boolean {
-  return setups.some(
-    (s) =>
-      Object.keys(s.gear ?? {}).length > 0 ||
-      Object.keys(s.skills?.[0] ?? {}).length > 0 ||
-      Object.keys(s.skills?.[1] ?? {}).length > 0,
-  );
+  return setups.some((s) => {
+    if (Object.keys(s.gear ?? {}).length > 0) return true;
+    if (Object.keys(s.skills?.[0] ?? {}).length > 0) return true;
+    if (Object.keys(s.skills?.[1] ?? {}).length > 0) return true;
+    if ((s.passives?.length ?? 0) > 0) return true;
+    if (s.mundusStone) return true;
+    if (s.curse && s.curse !== 'none') return true;
+    const a = s.attributes;
+    if (a && (a.magicka > 0 || a.health > 0 || a.stamina > 0)) return true;
+    const c = s.consumables;
+    if (c && ((c.potions?.length ?? 0) > 0 || Object.keys(c.food ?? {}).length > 0)) return true;
+    const cp = s.cp;
+    if (cp) {
+      for (const tree of [cp.warfare, cp.fitness, cp.craft]) {
+        if (tree.slots.some((x) => x != null)) return true;
+        if (Object.keys(tree.passives ?? {}).length > 0) return true;
+      }
+    }
+    return false;
+  });
 }
 
 // ─── Skill-bar helpers ────────────────────────────────────────────────────────

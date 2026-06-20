@@ -32,7 +32,7 @@ import { useSnackbar } from 'notistack';
 import React, { useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
-import { selectBuildSetups } from '../store/buildEditorSelectors';
+import { selectBuildSetups, selectClassMasteryPassives } from '../store/buildEditorSelectors';
 import { applyImportedBuild } from '../store/buildEditorSlice';
 import {
   buildImportPayload,
@@ -76,7 +76,9 @@ export const ImportBuildTextPanel: React.FC<ImportBuildTextPanelProps> = ({ onCl
   // than one setup, OR a single setup that already has gear/skills (even a "new
   // setup" import rewrites that existing setup's class). Only a blank build is
   // safe to auto-apply identity to. When risky it's opt-in + clearly labelled.
-  const identityIsRisky = setupCount > 1 || buildHasContent(setups);
+  // Class mastery is build-level content that also depends on the class.
+  const classMasteryPicks = useSelector(selectClassMasteryPassives);
+  const identityIsRisky = setupCount > 1 || classMasteryPicks.length > 0 || buildHasContent(setups);
 
   const [raw, setRaw] = useState('');
   const [parsed, setParsed] = useState<ParsedBuildResult | null>(null);
