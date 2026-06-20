@@ -1673,6 +1673,132 @@ app.post('/packs/:id/vote', async (c) => {
   return c.json(result);
 });
 
+// ─── GET /fetch-guide — fetch a build-guide page server-side (CORS proxy) ────
+// Lets the build editor import a guide by URL: the browser can't fetch a third-
+// party page (CORS), so we fetch it here and return the raw HTML for the client
+// to parse. Hardened against SSRF (public http(s) only, private ranges blocked),
+// with size + timeout caps and a per-IP rate limit.
+
+const FETCH_GUIDE_MAX_BYTES = 3 * 1024 * 1024; // 3 MB
+const FETCH_GUIDE_TIMEOUT_MS = 12_000;
+const FETCH_GUIDE_RATE_LIMIT = 20; // per IP per minute
+const fetchGuideRateCounts = new Map<string, { count: number; expires: number }>();
+
+/** Validate a URL is a safe, public http(s) target (blocks SSRF to internal hosts). */
+function safeGuideUrl(raw: string): URL | null {
+  let u: URL;
+  try {
+    u = new URL(raw);
+  } catch {
+    return null;
+  }
+  if (u.protocol !== 'http:' && u.protocol !== 'https:') return null;
+  const host = u.hostname.toLowerCase().replace(/^\[|\]$/g, '');
+  if (
+    host === 'localhost' ||
+    host === '::1' ||
+    host.endsWith('.localhost') ||
+    host.endsWith('.internal') ||
+    host.endsWith('.local')
+  ) {
+    return null;
+  }
+  // IPv4 literal in a loopback / private / link-local / unspecified range.
+  const m = host.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
+  if (m) {
+    const a = Number(m[1]);
+    const b = Number(m[2]);
+    if (
+      a === 0 ||
+      a === 127 ||
+      a === 10 ||
+      (a === 192 && b === 168) ||
+      (a === 169 && b === 254) ||
+      (a === 172 && b >= 16 && b <= 31)
+    ) {
+      return null;
+    }
+  }
+  // IPv6 unique-local (fc00::/7) / link-local (fe80::/10).
+  if (/^f[cd][0-9a-f]{2}:/i.test(host) || /^fe[89ab][0-9a-f]:/i.test(host)) return null;
+  return u;
+}
+
+app.get('/fetch-guide', async (c) => {
+  const url = safeGuideUrl((c.req.query('url') ?? '').trim());
+  if (!url) return c.json({ error: 'Please provide a valid public http(s) URL.' }, 400);
+
+  // In-memory per-IP rate limit (mirrors /search-addons).
+  const ip = c.req.header('CF-Connecting-IP') ?? 'unknown';
+  const now = Date.now();
+  if (Math.random() < 0.02) {
+    for (const [key, val] of fetchGuideRateCounts) {
+      if (val.expires <= now) fetchGuideRateCounts.delete(key);
+    }
+  }
+  const bucket = fetchGuideRateCounts.get(ip);
+  if (bucket && bucket.expires > now) {
+    if (bucket.count >= FETCH_GUIDE_RATE_LIMIT) return c.json({ error: 'Rate limit exceeded.' }, 429);
+    bucket.count++;
+  } else {
+    fetchGuideRateCounts.set(ip, { count: 1, expires: now + 60_000 });
+  }
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), FETCH_GUIDE_TIMEOUT_MS);
+  try {
+    const res = await fetch(url.href, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (compatible; ESO-Toolkit-BuildImporter/1.0)',
+        Accept: 'text/html,application/xhtml+xml,text/plain',
+      },
+      redirect: 'follow',
+      signal: controller.signal,
+    });
+    if (!res.ok) return c.json({ error: `That link returned ${res.status}.` }, 502);
+    const contentType = res.headers.get('content-type') ?? '';
+    if (!/text\/html|application\/xhtml|text\/plain/i.test(contentType)) {
+      return c.json({ error: 'That link is not a readable web page.' }, 415);
+    }
+    const reader = res.body?.getReader();
+    if (!reader) return c.json({ error: 'Empty response from that link.' }, 502);
+    const chunks: Uint8Array[] = [];
+    let size = 0;
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      if (value) {
+        size += value.byteLength;
+        if (size > FETCH_GUIDE_MAX_BYTES) {
+          await reader.cancel();
+          break;
+        }
+        chunks.push(value);
+      }
+    }
+    const merged = new Uint8Array(size > FETCH_GUIDE_MAX_BYTES ? FETCH_GUIDE_MAX_BYTES : size);
+    let offset = 0;
+    for (const chunk of chunks) {
+      if (offset + chunk.byteLength > merged.length) {
+        merged.set(chunk.subarray(0, merged.length - offset), offset);
+        break;
+      }
+      merged.set(chunk, offset);
+      offset += chunk.byteLength;
+    }
+    const html = new TextDecoder('utf-8').decode(merged);
+    return c.json({ html, finalUrl: res.url || url.href });
+  } catch (err) {
+    const aborted = err instanceof Error && err.name === 'AbortError';
+    return c.json(
+      { error: aborted ? 'That link took too long to load.' : 'Could not fetch that link.' },
+      502,
+    );
+  } finally {
+    clearTimeout(timer);
+  }
+});
+
 // ─── GET /search-addons — ESOUI addon search via MMOUI API ─────────────────
 // Fetches the full addon catalog from api.mmoui.com and caches it in Worker
 // memory.  Search is a case-insensitive substring match on title + author,

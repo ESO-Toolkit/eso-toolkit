@@ -77,6 +77,7 @@ import {
 
 import { AddToRosterDialog } from './AddToRosterDialog';
 import { ImportBuildImagePanel } from './ImportBuildImagePanel';
+import { ImportBuildLinkPanel } from './ImportBuildLinkPanel';
 import { ImportBuildTextPanel } from './ImportBuildTextPanel';
 import { glassInputSx } from './primitives/glassInputSx';
 
@@ -174,7 +175,7 @@ export const BuildCompletionHeader: React.FC = () => {
   const [tempLinkExpiry, setTempLinkExpiry] = React.useState('');
 
   // Import mode: structured addon code (CSPS) vs free-text build write-up
-  const [importMode, setImportMode] = React.useState<'csps' | 'text' | 'image'>('csps');
+  const [importMode, setImportMode] = React.useState<'csps' | 'text' | 'image' | 'link'>('csps');
 
   // CSPS import state
   const [cspsCharacters, setCspsCharacters] = React.useState<CSPSCharacterOption[]>([]);
@@ -1254,7 +1255,7 @@ export const BuildCompletionHeader: React.FC = () => {
               exclusive
               size="small"
               value={importMode}
-              onChange={(_, v) => v && setImportMode(v as 'csps' | 'text' | 'image')}
+              onChange={(_, v) => v && setImportMode(v as 'csps' | 'text' | 'image' | 'link')}
               sx={{
                 mb: 2,
                 '& .MuiToggleButton-root': {
@@ -1269,10 +1270,13 @@ export const BuildCompletionHeader: React.FC = () => {
             >
               <ToggleButton value="csps">Addon code</ToggleButton>
               <ToggleButton value="text">Build text</ToggleButton>
+              <ToggleButton value="link">Link</ToggleButton>
               <ToggleButton value="image">Image</ToggleButton>
             </ToggleButtonGroup>
 
-            {importMode === 'image' ? (
+            {importMode === 'link' ? (
+              <ImportBuildLinkPanel onClose={handleImportClose} />
+            ) : importMode === 'image' ? (
               <ImportBuildImagePanel onClose={handleImportClose} />
             ) : importMode === 'text' ? (
               <ImportBuildTextPanel onClose={handleImportClose} />
