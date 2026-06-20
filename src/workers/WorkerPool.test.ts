@@ -350,6 +350,23 @@ describe('WorkerPool', () => {
 
       clearIntervalSpy.mockRestore();
     });
+
+    it('recovers the worker slot when a task times out (does not deadlock)', async () => {
+      // First task hangs forever; the timeout must tear the worker down and
+      // free the single pool slot so the second task can still run.
+      mockWorker.calculateBuffLookup
+        .mockImplementationOnce(() => new Promise<never>(() => {}))
+        .mockResolvedValueOnce({ ok: true } as never);
+
+      const pool = new WorkerPool({ maxWorkers: 1, taskTimeout: 50, logger: mockLogger });
+
+      await expect(pool.execute('calculateBuffLookup', {})).rejects.toThrow(/timeout/i);
+
+      // The worker slot is recovered, so a fresh worker handles the next task.
+      await expect(pool.execute('calculateBuffLookup', {})).resolves.toEqual({ ok: true });
+
+      pool.destroy();
+    });
   });
 
   describe('Logging', () => {

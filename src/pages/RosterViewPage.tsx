@@ -1849,6 +1849,7 @@ export const RosterViewPage: React.FC = () => {
     <Container maxWidth="lg" sx={{ pt: 3, pb: 6, px: { xs: 2, sm: 3 } }}>
       {/* ── Page header ── */}
       <Box
+        data-vt-hero="roster-hero"
         sx={{
           viewTransitionName: 'roster-hero',
           display: 'flex',

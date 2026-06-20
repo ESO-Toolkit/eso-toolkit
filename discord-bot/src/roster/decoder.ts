@@ -239,18 +239,26 @@ function decodeGroupName(
   grs?: string[],
   gr?: CompactGroup,
 ): { groups?: string[]; groupName?: string } {
-  if (grs?.length) return { groups: grs };
+  if (Array.isArray(grs) && grs.length) return { groups: grs };
   if (gr?.g) return { groupName: gr.g };
   return {};
+}
+
+/** Pass through a labels array only when it is genuinely an array. */
+function safeLabels(lb: unknown): string[] | undefined {
+  return Array.isArray(lb) ? (lb as string[]) : undefined;
 }
 
 function collectSets(ids: (number | undefined)[], additional?: number[]): string[] | undefined {
   const sets: string[] = [];
   for (const id of ids) {
-    if (id != null) sets.push(getSetName(id));
+    if (typeof id === 'number') sets.push(getSetName(id));
   }
-  if (additional) {
-    for (const id of additional) sets.push(getSetName(id));
+  // Guard against malformed payloads where `additional` is not an array.
+  if (Array.isArray(additional)) {
+    for (const id of additional) {
+      if (typeof id === 'number') sets.push(getSetName(id));
+    }
   }
   return sets.length > 0 ? sets : undefined;
 }
@@ -265,7 +273,7 @@ function decodeTank(t: CompactTank): DecodedRosterSlot {
     buildRefId: t.br?.bi,
     positionTag: t.pt,
     playerNumber: t.pi,
-    labels: t.lb,
+    labels: safeLabels(t.lb),
     roleNotes: t.rn,
     ultimate: decodeUltimate(t.ul),
     skillLines: decodeSkillLines(t.sl),
@@ -284,7 +292,7 @@ function decodeHealer(h: CompactHealer): DecodedRosterSlot {
     buildRefId: h.br?.bi,
     positionTag: h.pt,
     playerNumber: h.pi,
-    labels: h.lb,
+    labels: safeLabels(h.lb),
     roleNotes: h.rn,
     ultimate: decodeUltimate(h.ul),
     skillLines: decodeSkillLines(h.sl),
@@ -297,11 +305,14 @@ function decodeHealer(h: CompactHealer): DecodedRosterSlot {
 
 function decodeDPS(d: CompactDPS): DecodedRosterSlot {
   const grp = decodeGroupName(d.grs, d.gr);
-  // Prefer structured set fields; fall back to legacy gs array
+  // Prefer structured set fields; fall back to legacy gs array.
+  // Include the `as` (additionalSets) array even when no primary set is set —
+  // a DD whose only gear is in additionalSets (e.g. a mythic-only slot) must
+  // still render a GEAR line, matching the web "Copy to Discord" format.
   let sets: string[];
-  if (d.s1 != null || d.s2 != null || d.ms != null) {
+  if (d.s1 != null || d.s2 != null || d.ms != null || (Array.isArray(d.as) && d.as.length > 0)) {
     sets = collectSets([d.s1, d.s2, d.ms], d.as) ?? [];
-  } else if (d.gs?.length) {
+  } else if (Array.isArray(d.gs) && d.gs.length) {
     sets = d.gs.map((id) => getSetName(id)).filter(Boolean);
   } else {
     sets = [];
@@ -318,7 +329,7 @@ function decodeDPS(d: CompactDPS): DecodedRosterSlot {
     buildRefId: d.br?.bi,
     positionTag: d.pt,
     playerNumber: d.pi,
-    labels: d.lb,
+    labels: safeLabels(d.lb),
     roleNotes: d.rn,
     ultimate: decodeUltimate(d.ul),
     skillLines: decodeSkillLines(d.sl),

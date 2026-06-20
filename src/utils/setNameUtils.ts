@@ -337,10 +337,13 @@ export function getSetDisplayName(setId: KnownSetIDs | undefined | null): string
 // Avoids linear scans in findSetIdByName, which is called in hot paths like
 // Autocomplete groupBy callbacks (fires per-option, per render).
 const SET_NAME_TO_ID_INDEX: ReadonlyMap<string, KnownSetIDs> = new Map(
-  Object.entries(SET_DISPLAY_NAMES).map(([id, name]) => [
-    name.toLowerCase(),
-    Number(id) as KnownSetIDs,
-  ]),
+  Object.entries(SET_DISPLAY_NAMES)
+    // The placeholder ids 846/2268/2342 all map to the generic name 'Unknown',
+    // which would collapse to a single non-injective index key (only the
+    // last-inserted id surviving) and make findSetIdByName('Unknown') resolve a
+    // wrong id. 'Unknown' is a placeholder no user types, so exclude it.
+    .filter(([, name]) => name !== 'Unknown')
+    .map(([id, name]) => [name.toLowerCase(), Number(id) as KnownSetIDs]),
 );
 
 // Lowercase base names that actually HAVE a "Perfected <base>" entry in

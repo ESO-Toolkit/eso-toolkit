@@ -257,6 +257,18 @@ class LuaTableParser {
       }
     }
 
+    // Mixed case: a table carries BOTH implicit positional values AND explicit
+    // numeric-key entries. In Lua, implicit values take consecutive 1-based
+    // indices, so merge them into the index-keyed object alongside the explicit
+    // entries instead of silently dropping `arr`.
+    if (hasImplicitValues && arr.length > 0) {
+      let index = 1;
+      for (const value of arr) {
+        obj[String(index)] = value;
+        index += 1;
+      }
+    }
+
     return obj;
   }
 

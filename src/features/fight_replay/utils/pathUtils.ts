@@ -173,9 +173,13 @@ function calculateDistance3D(
 }
 
 /**
- * Apply smoothing to path points using moving average
+ * Apply smoothing to path points using a Gaussian-weighted moving average.
+ *
+ * Exported for testing: the Gaussian kernel must be centered on the point being
+ * smoothed (i), including at clipped window boundaries where the window midpoint
+ * differs from i.
  */
-function smoothPath(points: PathPoint[], factor: number): PathPoint[] {
+export function smoothPath(points: PathPoint[], factor: number): PathPoint[] {
   if (points.length < 3 || factor <= 0) {
     return points;
   }
@@ -187,7 +191,6 @@ function smoothPath(points: PathPoint[], factor: number): PathPoint[] {
   for (let i = 0; i < points.length; i++) {
     const start = Math.max(0, i - halfWindow);
     const end = Math.min(points.length, i + halfWindow + 1);
-    const windowLen = end - start;
 
     // Calculate weighted average position — iterate by index to avoid per-point allocation
     let x = 0,
@@ -196,8 +199,8 @@ function smoothPath(points: PathPoint[], factor: number): PathPoint[] {
     let totalWeight = 0;
 
     for (let j = start; j < end; j++) {
-      // Gaussian weight (higher weight for closer points)
-      const distance = Math.abs(j - start - windowLen / 2);
+      // Gaussian weight (higher weight for points closer to i, the point being smoothed)
+      const distance = Math.abs(j - i);
       const weight = Math.exp(-(distance * distance) / (2 * factor * factor));
 
       x += points[j].position[0] * weight;

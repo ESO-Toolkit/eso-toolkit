@@ -166,6 +166,59 @@ describe('CalculateDamageOverTime', () => {
     expect(result.allTargets[PLAYER_ID_1].totalDamage).toBe(1500); // Only the enemy damage
   });
 
+  it('buckets boundary events correctly and excludes out-of-window events', () => {
+    const damageEvents = [
+      // Exactly on a bucket boundary -> belongs to bucket 10 (10s in)
+      createMockDamageEvent({
+        timestamp: FIGHT_START + 10000,
+        sourceID: PLAYER_ID_1,
+        targetID: TARGET_ID_1,
+        amount: 500,
+        sourceIsFriendly: true,
+        targetIsFriendly: false,
+      }),
+      // Before the fight window -> excluded from buckets (matched no bucket)
+      createMockDamageEvent({
+        timestamp: FIGHT_START - 5,
+        sourceID: PLAYER_ID_1,
+        targetID: TARGET_ID_1,
+        amount: 999,
+        sourceIsFriendly: true,
+        targetIsFriendly: false,
+      }),
+      // Exactly at fight end -> excluded (last bucket end is exclusive)
+      createMockDamageEvent({
+        timestamp: FIGHT_END,
+        sourceID: PLAYER_ID_1,
+        targetID: TARGET_ID_1,
+        amount: 777,
+        sourceIsFriendly: true,
+        targetIsFriendly: false,
+      }),
+    ];
+
+    const result = calculateDamageOverTimeData({
+      fight: mockFight,
+      players: mockPlayers,
+      damageEvents,
+      bucketSizeMs: 1000,
+    });
+
+    const p1t1 = result.byTarget[TARGET_ID_1][PLAYER_ID_1];
+    // Only the boundary event lands in a bucket; out-of-window events are dropped.
+    expect(p1t1.dataPoints[10].damage).toBe(500);
+    expect(p1t1.dataPoints[10].eventCount).toBe(1);
+    expect(p1t1.totalDamage).toBe(500);
+    // totalEvents counts all of the player's events (matches prior behavior).
+    expect(p1t1.totalEvents).toBe(3);
+
+    // Player 2 has no events but is in the players record -> all-zero buckets.
+    const p2t1 = result.byTarget[TARGET_ID_1][PLAYER_ID_2];
+    expect(p2t1.totalDamage).toBe(0);
+    expect(p2t1.dataPoints).toHaveLength(30);
+    expect(p2t1.dataPoints.every((d) => d.damage === 0 && d.eventCount === 0)).toBe(true);
+  });
+
   it('should calculate correct DPS values', () => {
     const damageEvents = [
       createMockDamageEvent({

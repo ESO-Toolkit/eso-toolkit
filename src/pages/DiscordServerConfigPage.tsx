@@ -349,6 +349,8 @@ export const DiscordServerConfigPage: React.FC = () => {
 
   // Dirty tracking — snapshot of form values at load time
   const initialFormRef = useRef<string>('');
+  // Monotonic id so a superseded guild config fetch can't commit stale data.
+  const configFetchIdRef = useRef(0);
 
   const currentFormSnapshot = useMemo(
     () =>
@@ -451,6 +453,12 @@ export const DiscordServerConfigPage: React.FC = () => {
   useEffect(() => {
     if (!selectedGuild || !discordToken) return;
 
+    // Guard against a slower earlier guild's response resolving last: switching
+    // guild A -> B before A resolves would otherwise overwrite B's channels/
+    // roles/config and the dirty-tracking snapshot with A's data while the UI
+    // shows B selected.
+    const fetchId = ++configFetchIdRef.current;
+
     setConfigLoading(true);
     setConfigError(null);
 
@@ -467,6 +475,8 @@ export const DiscordServerConfigPage: React.FC = () => {
             discordToken,
           ),
         ]);
+
+        if (fetchId !== configFetchIdRef.current) return; // superseded by a newer guild
 
         setChannels(channelsRes.channels);
         setRoles(rolesRes.roles);
@@ -493,6 +503,7 @@ export const DiscordServerConfigPage: React.FC = () => {
 
         // Snapshot for dirty tracking (deferred to next tick so state is settled)
         setTimeout(() => {
+          if (fetchId !== configFetchIdRef.current) return; // superseded
           initialFormRef.current = JSON.stringify({
             defaultChannelId: cfg.defaultChannelId ?? '',
             defaultCategoryId: detectedCategory,
@@ -505,9 +516,10 @@ export const DiscordServerConfigPage: React.FC = () => {
           });
         }, 0);
       } catch (err) {
+        if (fetchId !== configFetchIdRef.current) return; // superseded
         setConfigError(err instanceof Error ? err.message : 'Failed to load server data');
       } finally {
-        setConfigLoading(false);
+        if (fetchId === configFetchIdRef.current) setConfigLoading(false);
       }
     })();
   }, [selectedGuild, discordToken]);

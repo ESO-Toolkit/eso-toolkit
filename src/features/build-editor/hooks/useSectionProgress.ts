@@ -58,7 +58,7 @@ const selectHasCharacter = (s: RootState): boolean => {
 
 const selectHasEquipment = (s: RootState): boolean => {
   const setup = s.buildEditor.build.setups[s.buildEditor.activeSetupIndex];
-  return setup ? Object.keys(setup.gear).length > 0 : false;
+  return setup ? Object.values(setup.gear).some((p) => p?.id != null) : false;
 };
 
 const selectHasSkills = (s: RootState): boolean => {

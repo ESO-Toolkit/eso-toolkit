@@ -94,7 +94,7 @@ function hydratePack(pack: HubPack): HubPack {
     author_name: decodeHtmlEntities(pack.author_name),
     title: decodeHtmlEntities(pack.title),
     description: decodeHtmlEntities(pack.description),
-    tags: pack.tags.map(decodeHtmlEntities),
+    tags: (pack.tags ?? []).map(decodeHtmlEntities),
     addons: addons.map((a) => ({
       ...a,
       name: decodeHtmlEntities(a.name),
@@ -119,7 +119,9 @@ export async function searchEsouiAddons(query: string): Promise<EsouiAddonSearch
   const data = await request<{ results: EsouiAddonSearchResult[] }>(
     `/search-addons?${params.toString()}`,
   );
-  return data.results;
+  // The worker proxies an external service; guard against a malformed/empty
+  // payload so callers (e.g. <Autocomplete options>) always get an array.
+  return Array.isArray(data?.results) ? data.results : [];
 }
 
 // ─── Pack Hub CRUD ───────────────────────────────────────────────────────────

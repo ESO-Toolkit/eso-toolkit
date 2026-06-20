@@ -252,17 +252,27 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
   const [replyTo, setReplyTo] = React.useState<{ id: string; authorName: string } | null>(null);
   const [submitting, setSubmitting] = React.useState(false);
   const pendingIdsRef = React.useRef<Set<string>>(new Set());
+  // Identifies the latest list load so a slower, superseded reload (rosterId
+  // change, or overlapping post/delete reloads) can't clobber the newer list.
+  const fetchKeyRef = React.useRef(0);
 
   const fetchComments = React.useCallback((): void => {
+    const fetchKey = ++fetchKeyRef.current;
     setLoading(true);
     setError('');
     rosterHubApi
       .listComments(rosterId)
-      .then((res) => setComments(res.comments))
-      .catch((err: unknown) =>
-        setError(err instanceof Error ? err.message : 'Failed to load comments'),
-      )
-      .finally(() => setLoading(false));
+      .then((res) => {
+        if (fetchKey === fetchKeyRef.current) setComments(res.comments);
+      })
+      .catch((err: unknown) => {
+        if (fetchKey === fetchKeyRef.current) {
+          setError(err instanceof Error ? err.message : 'Failed to load comments');
+        }
+      })
+      .finally(() => {
+        if (fetchKey === fetchKeyRef.current) setLoading(false);
+      });
   }, [rosterId]);
 
   React.useEffect(() => {

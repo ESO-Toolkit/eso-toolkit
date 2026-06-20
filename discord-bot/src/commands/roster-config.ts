@@ -13,6 +13,7 @@
 
 import { isAdmin } from '../discord.js';
 import { getGuildConfig, getDefaultGuildConfig, upsertGuildConfig } from '../roster/kv.js';
+import type { GuildConfig } from '../roster/types.js';
 import { InteractionResponseType, MessageFlags } from '../types.js';
 import type {
   DiscordInteraction,
@@ -21,27 +22,30 @@ import type {
   InteractionResponse,
 } from '../types.js';
 
+/** Discord snowflake (17–20 digits) — reject malformed IDs before storing them. */
+const SNOWFLAKE_RE = /^\d{17,20}$/;
+
 export async function handleRosterConfig(
   env: Env,
   interaction: DiscordInteraction,
   _ctx: ExecutionContext,
 ): Promise<InteractionResponse> {
-  if (!isAdmin(interaction)) {
-    return {
-      type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-      data: {
-        content: '❌ You need **Manage Server** permission to configure roster settings.',
-        flags: MessageFlags.EPHEMERAL,
-      },
-    };
-  }
-
   const guildId = interaction.guild_id;
   if (!guildId) {
     return {
       type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
       data: {
         content: '❌ This command can only be used in a server.',
+        flags: MessageFlags.EPHEMERAL,
+      },
+    };
+  }
+
+  if (!isAdmin(interaction)) {
+    return {
+      type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+      data: {
+        content: '❌ You need **Manage Server** permission to configure roster settings.',
         flags: MessageFlags.EPHEMERAL,
       },
     };
@@ -124,7 +128,7 @@ async function handleSetNamePattern(
       type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
       data: {
         content:
-          '❌ Please provide a pattern. Tokens: `{day-short}`, `{day}`, `{time}`, `{trial}`, `{difficulty}`',
+          '❌ Please provide a pattern. Tokens: `{day-short}`, `{day-full}`, `{day}`, `{time}`, `{trial}`, `{difficulty}`',
         flags: MessageFlags.EPHEMERAL,
       },
     };
@@ -160,11 +164,11 @@ async function handleSetDefaultCategory(
   options: DiscordInteractionOption[],
 ): Promise<InteractionResponse> {
   const categoryId = options.find((o) => o.name === 'category')?.value as string | undefined;
-  if (!categoryId) {
+  if (!categoryId || !SNOWFLAKE_RE.test(categoryId)) {
     return {
       type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
       data: {
-        content: '❌ Please provide a category channel ID.',
+        content: '❌ Please pick a valid category from the list.',
         flags: MessageFlags.EPHEMERAL,
       },
     };
@@ -192,16 +196,22 @@ async function handleSetRolePings(
   const healer = options.find((o) => o.name === 'healer-role')?.value as string | undefined;
   const dd = options.find((o) => o.name === 'dd-role')?.value as string | undefined;
 
+  // Boolean "clear" flags let an admin REMOVE a configured ping role. ROLE
+  // options can't carry an empty value, so without these there is no slash
+  // path to stop pinging a role once set.
+  const clearTank = options.find((o) => o.name === 'clear-tank')?.value === true;
+  const clearHealer = options.find((o) => o.name === 'clear-healer')?.value === true;
+  const clearDd = options.find((o) => o.name === 'clear-dd')?.value === true;
+
   // Defense-in-depth: option values come from Discord role pickers (already
   // snowflakes), but reject anything malformed so we never store junk that
   // would later be skipped silently at ping time.
-  const snowflake = /^\d{17,20}$/;
   for (const [label, value] of [
     ['tank', tank],
     ['healer', healer],
     ['dd', dd],
   ] as const) {
-    if (value !== undefined && !snowflake.test(value)) {
+    if (value !== undefined && !SNOWFLAKE_RE.test(value)) {
       return {
         type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
         data: {
@@ -213,18 +223,30 @@ async function handleSetRolePings(
   }
 
   const config = (await getGuildConfig(env, guildId)) ?? getDefaultGuildConfig(guildId);
-  config.rolePingIds = {
-    ...config.rolePingIds,
-    ...(tank !== undefined ? { tank } : {}),
-    ...(healer !== undefined ? { healer } : {}),
-    ...(dd !== undefined ? { dd } : {}),
-  };
+  const next: NonNullable<GuildConfig['rolePingIds']> = { ...config.rolePingIds };
+  // A clear flag wins over a same-role value; otherwise set when provided.
+  if (clearTank) delete next.tank;
+  else if (tank !== undefined) next.tank = tank;
+  if (clearHealer) delete next.healer;
+  else if (healer !== undefined) next.healer = healer;
+  if (clearDd) delete next.dd;
+  else if (dd !== undefined) next.dd = dd;
+
+  // Drop the object entirely when nothing remains, so the config reads as unset.
+  if (!next.tank && !next.healer && !next.dd) {
+    delete config.rolePingIds;
+  } else {
+    config.rolePingIds = next;
+  }
   await upsertGuildConfig(env, config);
 
+  const cleared = clearTank || clearHealer || clearDd;
   return {
     type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
     data: {
-      content: '✅ Role pings updated.',
+      content: cleared
+        ? '✅ Role pings updated (cleared roles removed).'
+        : '✅ Role pings updated.',
       flags: MessageFlags.EPHEMERAL,
     },
   };
@@ -238,11 +260,11 @@ async function handleSetRole(
   options: DiscordInteractionOption[],
 ): Promise<InteractionResponse> {
   const roleId = options.find((o) => o.name === 'role')?.value as string | undefined;
-  if (!roleId) {
+  if (!roleId || !SNOWFLAKE_RE.test(roleId)) {
     return {
       type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
       data: {
-        content: '❌ Please provide a role.',
+        content: '❌ Please pick a valid role from the list.',
         flags: MessageFlags.EPHEMERAL,
       },
     };
@@ -267,11 +289,11 @@ async function handleAddRole(
   options: DiscordInteractionOption[],
 ): Promise<InteractionResponse> {
   const roleId = options.find((o) => o.name === 'role')?.value as string | undefined;
-  if (!roleId) {
+  if (!roleId || !SNOWFLAKE_RE.test(roleId)) {
     return {
       type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
       data: {
-        content: '❌ Please provide a role.',
+        content: '❌ Please pick a valid role from the list.',
         flags: MessageFlags.EPHEMERAL,
       },
     };

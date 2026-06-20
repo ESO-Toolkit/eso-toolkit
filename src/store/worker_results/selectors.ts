@@ -10,16 +10,45 @@ import { WorkerTaskState } from './workerTaskSliceFactory';
 export const selectWorkerResults = (state: RootState): typeof state.workerResults =>
   state.workerResults;
 
+/**
+ * Per-taskName memoization caches for the selector factories below.
+ *
+ * Each factory builds a fresh `createSelector` (with its own empty memo cache)
+ * every time it's called. The worker-task hooks call these factories inline
+ * inside `useSelector`, so without caching a brand-new selector instance is
+ * created on every render and the memoization is permanently defeated. Keying
+ * the created selector by `taskName` guarantees a single stable instance per
+ * task name across renders, restoring memoization without changing behavior.
+ */
+const selectWorkerTaskCache = new Map<string, ReturnType<typeof createSelector>>();
+const selectWorkerTaskResultCache = new Map<string, ReturnType<typeof createSelector>>();
+const selectWorkerTaskLoadingCache = new Map<string, ReturnType<typeof createSelector>>();
+const selectWorkerTaskProgressCache = new Map<string, ReturnType<typeof createSelector>>();
+const selectWorkerTaskErrorCache = new Map<string, ReturnType<typeof createSelector>>();
+const selectWorkerTaskLastUpdatedCache = new Map<string, ReturnType<typeof createSelector>>();
+
 // Generic selector for a specific worker task
 export const selectWorkerTask = <T extends SharedComputationWorkerTaskType>(
   taskName: T,
 ): ReturnType<
   typeof createSelector<[typeof selectWorkerResults], WorkerTaskState<SharedWorkerResultType<T>>>
-> =>
-  createSelector(
+> => {
+  const cached = selectWorkerTaskCache.get(taskName);
+  if (cached) {
+    return cached as ReturnType<
+      typeof createSelector<
+        [typeof selectWorkerResults],
+        WorkerTaskState<SharedWorkerResultType<T>>
+      >
+    >;
+  }
+  const selector = createSelector(
     [selectWorkerResults],
     (workerResults) => workerResults[taskName] as WorkerTaskState<SharedWorkerResultType<T>>,
   );
+  selectWorkerTaskCache.set(taskName, selector as ReturnType<typeof createSelector>);
+  return selector;
+};
 
 // Specific selectors for each worker task
 export const selectActorPositionsTask = selectWorkerTask('calculateActorPositions');
@@ -41,27 +70,76 @@ export const selectWorkerTaskResult = <T extends SharedComputationWorkerTaskType
   taskName: T,
 ): ReturnType<
   typeof createSelector<[ReturnType<typeof selectWorkerTask<T>>], SharedWorkerResultType<T> | null>
-> => createSelector([selectWorkerTask(taskName)], (task) => task.result);
+> => {
+  const cached = selectWorkerTaskResultCache.get(taskName);
+  if (cached) {
+    return cached as ReturnType<
+      typeof createSelector<
+        [ReturnType<typeof selectWorkerTask<T>>],
+        SharedWorkerResultType<T> | null
+      >
+    >;
+  }
+  const selector = createSelector([selectWorkerTask(taskName)], (task) => task.result);
+  selectWorkerTaskResultCache.set(taskName, selector as ReturnType<typeof createSelector>);
+  return selector;
+};
 
 export const selectWorkerTaskLoading = <T extends SharedComputationWorkerTaskType>(
   taskName: T,
-): ReturnType<typeof createSelector<[ReturnType<typeof selectWorkerTask<T>>], boolean>> =>
-  createSelector([selectWorkerTask(taskName)], (task) => task.isLoading);
+): ReturnType<typeof createSelector<[ReturnType<typeof selectWorkerTask<T>>], boolean>> => {
+  const cached = selectWorkerTaskLoadingCache.get(taskName);
+  if (cached) {
+    return cached as ReturnType<
+      typeof createSelector<[ReturnType<typeof selectWorkerTask<T>>], boolean>
+    >;
+  }
+  const selector = createSelector([selectWorkerTask(taskName)], (task) => task.isLoading);
+  selectWorkerTaskLoadingCache.set(taskName, selector as ReturnType<typeof createSelector>);
+  return selector;
+};
 
 export const selectWorkerTaskProgress = <T extends SharedComputationWorkerTaskType>(
   taskName: T,
-): ReturnType<typeof createSelector<[ReturnType<typeof selectWorkerTask<T>>], number | null>> =>
-  createSelector([selectWorkerTask(taskName)], (task) => task.progress);
+): ReturnType<typeof createSelector<[ReturnType<typeof selectWorkerTask<T>>], number | null>> => {
+  const cached = selectWorkerTaskProgressCache.get(taskName);
+  if (cached) {
+    return cached as ReturnType<
+      typeof createSelector<[ReturnType<typeof selectWorkerTask<T>>], number | null>
+    >;
+  }
+  const selector = createSelector([selectWorkerTask(taskName)], (task) => task.progress);
+  selectWorkerTaskProgressCache.set(taskName, selector as ReturnType<typeof createSelector>);
+  return selector;
+};
 
 export const selectWorkerTaskError = <T extends SharedComputationWorkerTaskType>(
   taskName: T,
-): ReturnType<typeof createSelector<[ReturnType<typeof selectWorkerTask<T>>], string | null>> =>
-  createSelector([selectWorkerTask(taskName)], (task) => task.error);
+): ReturnType<typeof createSelector<[ReturnType<typeof selectWorkerTask<T>>], string | null>> => {
+  const cached = selectWorkerTaskErrorCache.get(taskName);
+  if (cached) {
+    return cached as ReturnType<
+      typeof createSelector<[ReturnType<typeof selectWorkerTask<T>>], string | null>
+    >;
+  }
+  const selector = createSelector([selectWorkerTask(taskName)], (task) => task.error);
+  selectWorkerTaskErrorCache.set(taskName, selector as ReturnType<typeof createSelector>);
+  return selector;
+};
 
 export const selectWorkerTaskLastUpdated = <T extends SharedComputationWorkerTaskType>(
   taskName: T,
-): ReturnType<typeof createSelector<[ReturnType<typeof selectWorkerTask<T>>], number | null>> =>
-  createSelector([selectWorkerTask(taskName)], (task) => task.lastUpdated);
+): ReturnType<typeof createSelector<[ReturnType<typeof selectWorkerTask<T>>], number | null>> => {
+  const cached = selectWorkerTaskLastUpdatedCache.get(taskName);
+  if (cached) {
+    return cached as ReturnType<
+      typeof createSelector<[ReturnType<typeof selectWorkerTask<T>>], number | null>
+    >;
+  }
+  const selector = createSelector([selectWorkerTask(taskName)], (task) => task.lastUpdated);
+  selectWorkerTaskLastUpdatedCache.set(taskName, selector as ReturnType<typeof createSelector>);
+  return selector;
+};
 
 // Convenience selectors for specific results
 export const selectActorPositionsResult = selectWorkerTaskResult('calculateActorPositions');

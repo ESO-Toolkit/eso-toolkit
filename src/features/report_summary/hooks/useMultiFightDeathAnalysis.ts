@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 
 import { useEsoLogsClientInstance } from '../../../EsoLogsClientContext';
@@ -46,6 +46,10 @@ export function useMultiFightDeathAnalysis(reportCode: string): UseMultiFightDea
   const [progress, setProgress] = useState<{ current: number; total: number } | null>(null);
   const [deathAnalysis, setDeathAnalysis] = useState<ReportDeathAnalysis | null>(null);
 
+  // Identifies the latest analysis run so a slower, superseded run (reportCode
+  // changed mid-flight, or unmount) can't overwrite newer results.
+  const runIdRef = useRef(0);
+
   // Use Redux selectors to get cached data for each fight
   const getFightDeathData = useCallback(
     (fight: FightFragment, state: RootState): DeathEvent[] => {
@@ -82,6 +86,8 @@ export function useMultiFightDeathAnalysis(reportCode: string): UseMultiFightDea
       return;
     }
 
+    const runId = ++runIdRef.current;
+
     try {
       setIsLoading(true);
       setError(null);
@@ -104,9 +110,21 @@ export function useMultiFightDeathAnalysis(reportCode: string): UseMultiFightDea
           }),
       );
 
-      await Promise.all(fetchPromises);
+      // Use allSettled so one fight's failed fetch doesn't blank the entire
+      // report's death analysis — proceed with whatever loaded, and only fail
+      // hard if every fight failed.
+      const settled = await Promise.allSettled(fetchPromises);
+      if (settled.every((r) => r.status === 'rejected')) {
+        const firstReason = settled.find((r) => r.status === 'rejected') as
+          | PromiseRejectedResult
+          | undefined;
+        throw firstReason?.reason instanceof Error
+          ? firstReason.reason
+          : new Error('Failed to load death events for any fight');
+      }
 
-      // Now that all events are cached in Redux, retrieve them along with master data
+      // Now that the available events are cached in Redux, retrieve them along
+      // with master data (fights whose fetch failed simply contribute no deaths)
       const state = (dispatch as any).getState() as RootState;
 
       const fightDeathData: DeathAnalysisInput[] = cleanFights.map((fight) => {
@@ -127,15 +145,20 @@ export function useMultiFightDeathAnalysis(reportCode: string): UseMultiFightDea
 
       // Perform comprehensive death analysis
       const analysis = DeathAnalysisService.analyzeReportDeaths(fightDeathData);
+      if (runId !== runIdRef.current) return; // superseded by a newer run
       setDeathAnalysis(analysis);
     } catch (err) {
+      if (runId !== runIdRef.current) return; // superseded by a newer run
       const errorMessage = err instanceof Error ? err.message : 'Failed to analyze death events';
       setError(errorMessage);
       // eslint-disable-next-line no-console
       console.error('Death analysis error:', err);
     } finally {
-      setIsLoading(false);
-      setProgress(null);
+      // Only the latest run owns the loading/progress UI.
+      if (runId === runIdRef.current) {
+        setIsLoading(false);
+        setProgress(null);
+      }
     }
   }, [client, fights, reportCode, dispatch, getFightDeathData, getFightActors, getFightAbilities]);
 

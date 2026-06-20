@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { useEsoLogsClientInstance } from '../EsoLogsClientContext';
 import { useAuth } from '../features/auth/AuthContext';
@@ -29,7 +29,13 @@ export const useLatestReport = (): LatestReportState & { refetch: () => Promise<
     error: null,
   });
 
+  // Identifies the latest fetch so a slower, superseded request (e.g. the user
+  // logged out / switched identity, or the component unmounted) can't overwrite
+  // newer state with a stale report.
+  const fetchIdRef = useRef(0);
+
   const fetchLatestReport = useCallback(async (): Promise<void> => {
+    const fetchId = ++fetchIdRef.current;
     if (!isLoggedIn || !currentUser?.id) {
       setState({
         report: null,
@@ -67,12 +73,14 @@ export const useLatestReport = (): LatestReportState & { refetch: () => Promise<
       const latestReport = candidates.find((report) => !isReportEmpty(report)) ?? null;
       const fallbackReport = candidates[0] ?? null;
 
+      if (fetchId !== fetchIdRef.current) return; // superseded / unmounted
       setState({
         report: latestReport ?? fallbackReport,
         loading: false,
         error: null,
       });
     } catch {
+      if (fetchId !== fetchIdRef.current) return; // superseded / unmounted
       setState({
         report: null,
         loading: false,
@@ -82,6 +90,10 @@ export const useLatestReport = (): LatestReportState & { refetch: () => Promise<
   }, [client, currentUser?.id, isLoggedIn]);
 
   useEffect(() => {
+    // Each call bumps fetchIdRef, so when identity/login deps change the
+    // re-created fetchLatestReport supersedes any in-flight one (its stale
+    // result is dropped by the fetchId guard above). setState after unmount is
+    // a no-op in React 19, so no cleanup is needed.
     fetchLatestReport();
   }, [fetchLatestReport]);
 

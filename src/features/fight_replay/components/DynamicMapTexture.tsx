@@ -367,13 +367,16 @@ export const DynamicMapTexture: React.FC<DynamicMapTextureProps> = ({
     }
   }, [mapTimeline, maplessTexture, onTextureChange]);
 
-  // Cleanup on unmount
+  // Cleanup on unmount: dispose only the per-instance resources this component created.
+  // Do NOT clear the module-global textureCache here — it is shared across all live
+  // DynamicMapTexture instances, so disposing it on one unmount is a use-after-dispose
+  // (blank/garbled floor) for every other instance and defeats the cross-mount cache.
+  // clearMapTextureCache remains available for explicit app-level teardown.
   useEffect(() => {
     return () => {
       geometry.dispose();
       fallbackTexture.dispose();
       maplessTexture.dispose();
-      clearMapTextureCache();
     };
   }, [geometry, fallbackTexture, maplessTexture]);
 

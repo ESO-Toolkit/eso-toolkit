@@ -13,7 +13,12 @@ import { handleButton } from './handlers/buttons.js';
 import { handleCommand } from './handlers/commands.js';
 import { handleModal } from './handlers/modals.js';
 import { publishRoster, refreshRoster, publishDirect } from './roster/index.js';
-import { getGuildConfig, upsertGuildConfig, getDefaultGuildConfig } from './roster/kv.js';
+import {
+  getGuildConfig,
+  upsertGuildConfig,
+  getDefaultGuildConfig,
+  checkRosterRateLimit,
+} from './roster/kv.js';
 import type { GuildConfig } from './roster/types.js';
 import type { PublishRequest, DirectPublishRequest } from './roster/index.js';
 import { KV_PREFIX } from './roster/kv.js';
@@ -106,7 +111,8 @@ export default {
       return withCors(request, env, await handleOAuthTokenExchange(request, env));
     }
 
-    // ── Guild config API routes (CORS-enabled, admin auth) ────────────
+    // ── Guild config API routes (CORS-enabled; reads = publish tier,
+    //    config writes = admin/MANAGE_GUILD, enforced per-route) ────────
     if (url.pathname.startsWith('/discord/guild/')) {
       return withCors(request, env, await handleGuildApi(request, url, env));
     }
@@ -357,6 +363,18 @@ async function handleRosterApi(request: Request, url: URL, env: Env): Promise<Re
   }
 
   if (path === '/discord/roster/publish') {
+    // Throttle channel creation per publisher. Shares the slash command's
+    // budget (same namespace + key) so the HTTP surface can't be used to
+    // bypass the interaction-side limit.
+    const allowed = await checkRosterRateLimit(
+      env,
+      `publish:${guildId}:${auth.userId ?? 'anon'}`,
+      5,
+      60,
+    );
+    if (!allowed) {
+      return jsonResponse({ error: 'Rate limit exceeded. Try again in a minute.' }, 429);
+    }
     return handlePublish(body, env, auth.userId);
   }
   if (path === '/discord/roster/publish-direct') {
@@ -428,6 +446,17 @@ async function handleRefresh(
     const auth = await verifyHttpCaller(env, guildId, authHeader);
     if (!auth.authorized) {
       return jsonResponse({ error: auth.error ?? 'Forbidden' }, 403);
+    }
+    // Throttle user-initiated refreshes (shares the slash command's budget).
+    // The webhook/server-to-server path above is intentionally left unthrottled.
+    const allowed = await checkRosterRateLimit(
+      env,
+      `refresh:${guildId}:${auth.userId ?? 'anon'}`,
+      10,
+      60,
+    );
+    if (!allowed) {
+      return jsonResponse({ error: 'Rate limit exceeded. Try again in a minute.' }, 429);
     }
     scopeGuildId = guildId;
   }
@@ -502,7 +531,9 @@ async function handleGuildApi(request: Request, url: URL, env: Env): Promise<Res
   const guildId = extractGuildId(url.pathname);
   if (!guildId) return jsonResponse({ error: 'Invalid guild ID.' }, 400);
 
-  // All guild config routes require admin auth
+  // Route-level auth covers the publish tier (read-only channel/role/config
+  // GETs). Config *writes* require MANAGE_GUILD — re-checked in the PUT branch
+  // below so a publish-role holder can't rewrite allowedRoleIds and escalate.
   const auth = await verifyHttpCaller(env, guildId, request.headers.get('Authorization'));
   if (!auth.authorized) {
     return jsonResponse({ error: auth.error ?? 'Unauthorized.' }, 403);
@@ -541,6 +572,19 @@ async function handleGuildApi(request: Request, url: URL, env: Env): Promise<Res
   }
 
   if (subpath === 'config' && request.method === 'PUT') {
+    // Config writes are admin-only — parity with the `/roster config` slash
+    // command (requires Manage Server). The route-level check above only
+    // guarantees the publish tier, so require MANAGE_GUILD here explicitly.
+    const adminAuth = await verifyHttpCaller(env, guildId, request.headers.get('Authorization'), {
+      requireManageGuild: true,
+    });
+    if (!adminAuth.authorized) {
+      return jsonResponse(
+        { error: adminAuth.error ?? 'Manage Server permission is required to change settings.' },
+        403,
+      );
+    }
+
     let body: Record<string, unknown>;
     try {
       body = (await request.json()) as Record<string, unknown>;
@@ -554,9 +598,10 @@ async function handleGuildApi(request: Request, url: URL, env: Env): Promise<Res
       guildId,
       ...(typeof body.defaultChannelId === 'string' &&
         /^\d{17,20}$/.test(body.defaultChannelId) && { defaultChannelId: body.defaultChannelId }),
-      ...(typeof body.defaultCategoryId === 'string' && {
-        defaultCategoryId: body.defaultCategoryId,
-      }),
+      ...(typeof body.defaultCategoryId === 'string' &&
+        /^\d{17,20}$/.test(body.defaultCategoryId) && {
+          defaultCategoryId: body.defaultCategoryId,
+        }),
       ...(typeof body.namePattern === 'string' &&
         body.namePattern.length <= 100 && { namePattern: body.namePattern }),
       ...(Array.isArray(body.allowedRoleIds) && {
@@ -585,8 +630,9 @@ async function handleGuildApi(request: Request, url: URL, env: Env): Promise<Res
         })() && { timezone: body.timezone }),
     };
 
-    // An explicit empty string clears the default posting channel.
+    // An explicit empty string clears the default posting channel / category.
     if (body.defaultChannelId === '') delete (updated as GuildConfig).defaultChannelId;
+    if (body.defaultCategoryId === '') delete (updated as GuildConfig).defaultCategoryId;
 
     await upsertGuildConfig(env, updated);
     return jsonResponse({ ok: true, config: updated });

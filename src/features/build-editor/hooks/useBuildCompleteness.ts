@@ -38,7 +38,7 @@ const selectHasMundus = (s: RootState): boolean => {
 
 const selectGearCount = (s: RootState): number => {
   const setup = s.buildEditor.build.setups[s.buildEditor.activeSetupIndex];
-  return setup ? Object.keys(setup.gear).length : 0;
+  return setup ? Object.values(setup.gear).filter((p) => p?.id != null).length : 0;
 };
 
 const selectSkillCount = (s: RootState): number => {

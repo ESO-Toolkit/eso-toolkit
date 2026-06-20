@@ -21,6 +21,7 @@ import { useDispatch, useSelector } from 'react-redux';
 
 import type { RootState } from '@/store/storeWithHistory';
 
+import { useDropdownMenuProps } from '../../../hooks/useDropdownMenuDirection';
 import { setCurrentCharacter, updateCharacterRole } from '../store/loadoutSlice';
 import type { ClassSkillLine } from '../types/loadout.types';
 
@@ -70,6 +71,11 @@ export const CharacterSelector: React.FC = (): React.ReactElement => {
     dispatch(updateCharacterRole({ characterId, role: newRole }));
   };
 
+  // Open below the field (flip up near the viewport bottom) with the shared
+  // premium dropdown look — an explicit MenuProps would otherwise drop the global
+  // theme's open-direction + styling default. Shared by both Selects below.
+  const menuProps = useDropdownMenuProps();
+
   if (!hasCharacters) {
     return (
       <FormControl size="small" sx={{ minWidth: 160, ...glassTextField }} disabled>
@@ -99,18 +105,7 @@ export const CharacterSelector: React.FC = (): React.ReactElement => {
             if (!char) return 'Select character';
             return char.name;
           }}
-          MenuProps={{
-            slotProps: {
-              paper: {
-                sx: {
-                  borderRadius: '10px',
-                  backdropFilter: 'blur(12px)',
-                  backgroundColor: isDarkMode ? 'rgba(20,20,30,0.92)' : 'rgba(255,255,255,0.94)',
-                  border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}`,
-                },
-              },
-            },
-          }}
+          MenuProps={menuProps}
         >
           {sortedCharacters.map((char) => {
             const skillInfo = formatSkillLines(char.skillLines);
@@ -152,20 +147,7 @@ export const CharacterSelector: React.FC = (): React.ReactElement => {
             value={sortedCharacters.find((c) => c.id === currentCharacter)?.role ?? 'DPS'}
             label="Role"
             onChange={(e) => handleRoleChange(currentCharacter, e.target.value)}
-            MenuProps={{
-              slotProps: {
-                paper: {
-                  sx: {
-                    borderRadius: '10px',
-                    backdropFilter: 'blur(12px)',
-                    backgroundColor: isDarkMode ? 'rgba(20,20,30,0.92)' : 'rgba(255,255,255,0.94)',
-                    border: `1px solid ${
-                      isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'
-                    }`,
-                  },
-                },
-              },
-            }}
+            MenuProps={menuProps}
           >
             {ROLE_OPTIONS.map((role) => (
               <MenuItem key={role} value={role}>

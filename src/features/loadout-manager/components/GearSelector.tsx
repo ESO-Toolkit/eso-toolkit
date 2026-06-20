@@ -274,17 +274,24 @@ const GearTile: React.FC<GearTileProps> = ({
   // Fetch item icon from UESP
   useEffect(() => {
     if (resolvedItemId && resolvedItemId > 0) {
+      let cancelled = false;
       setIconFailed(false);
+      // Clear the previous item's icon immediately so we don't show A's icon
+      // next to B's name while B's (possibly slow/failing) fetch resolves.
+      setIconUrl(null);
       fetchItemIconUrl(resolvedItemId)
         .then((url) => {
-          if (url) setIconUrl(url);
+          if (!cancelled) setIconUrl(url ?? null);
         })
         .catch(() => {
           /* silently fail; SVG fallback will show */
         });
-    } else {
-      setIconUrl(null);
+      return () => {
+        cancelled = true;
+      };
     }
+    setIconUrl(null);
+    return undefined;
   }, [resolvedItemId]);
 
   const setName = gearPiece?.setName || itemData?.setName;
@@ -713,7 +720,9 @@ export const GearSelector: React.FC<GearSelectorProps> = ({
       itemId: resolvedItemId,
       name: itemInfo.name,
       setName: itemInfo.setName,
-      trait: itemInfo.slot || 'Unknown',
+      // Note: itemInfo.slot is the slot kind, NOT a trait. Don't write it into
+      // `trait` — GearTile keys mythic styling off trait === 'mythic', so a
+      // slot string here would poison that detection. Leave trait unset.
       slot: pickerSlot.index,
       setId: collectionItem?.setId,
     };

@@ -64,6 +64,7 @@ const uiTransform = createTransform<UIState, Partial<UIState>>(
       myReportsPage,
       perfTier,
       perfTierOverride,
+      chartIntensity,
     } = inboundState;
     return {
       darkMode,
@@ -72,6 +73,9 @@ const uiTransform = createTransform<UIState, Partial<UIState>>(
       myReportsPage,
       perfTier,
       perfTierOverride,
+      // chartIntensity is a user preference, not report-specific state — without
+      // this it was reset to 'subtle' on every reload.
+      chartIntensity,
     };
   },
   // Transform state being rehydrated
@@ -143,7 +147,10 @@ const createStoreWithClient = (esoLogsClient: EsoLogsClient): AppStore => {
           // Only ignore Redux persist actions since thunk actions are now serializable
           ignoredActions: [FLUSH, PAUSE, PERSIST, PURGE, REGISTER, REHYDRATE],
           // State paths that contain large datasets or computed data
-          ignoredPaths: ['events', 'playerData.playersById', 'workerResults'],
+          // playerData is a keyed cache (playerData.entries[key].playersById);
+          // the old 'playerData.playersById' path matched nothing, so the dev
+          // serializability check still deep-traversed every cached fight.
+          ignoredPaths: ['events', 'playerData.entries', 'workerResults'],
           // Increase warning threshold for better performance
           warnAfter: 128,
         },

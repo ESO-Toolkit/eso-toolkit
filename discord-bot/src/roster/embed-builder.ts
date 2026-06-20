@@ -22,8 +22,9 @@ const SEPARATOR = '▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬';
 /** Wrap a value in brackets as a header token — returns empty string if falsy. */
 const bracket = (val: string | null | undefined): string => (val ? ` [${val}]` : '');
 
-/** Wrap an array of values as bracket tokens. */
-const bracketed = (vals: string[]): string => vals.map((v) => ` [${v}]`).join('');
+/** Wrap an array of values as bracket tokens. Tolerates non-array input. */
+const bracketed = (vals: string[]): string =>
+  Array.isArray(vals) ? vals.map((v) => ` [${v}]`).join('') : '';
 
 /** Derive group arrow from group name: "left" → ⬅️, "right" → ➡️ */
 function groupArrow(slot: DecodedRosterSlot): string {
@@ -155,7 +156,9 @@ export function buildRosterText(
   sortedDPS.forEach((dd) => {
     const arrow = groupArrow(dd);
     const slotNum = dd.slotNumber ?? 0;
-    const jailType = dd.jailDDType ? ` [${dd.jailDDType === 'Custom' && dd.customDescription ? dd.customDescription : dd.jailDDType}]` : '';
+    const jailType = dd.jailDDType
+      ? ` [${dd.jailDDType === 'Custom' && dd.customDescription ? dd.customDescription : dd.jailDDType}]`
+      : '';
     const pos = formatPosition(dd.positionTag, dd.playerNumber);
     const roleNote = bracket(dd.roleNotes);
     const labelsPart = dd.labels?.length ? bracketed(dd.labels) : '';
@@ -189,7 +192,8 @@ export function buildRosterText(
 
 /**
  * Split text into chunks that each fit within Discord's 2000-char limit.
- * Splits on line boundaries so no line is broken mid-way.
+ * Splits on line boundaries where possible, but hard-wraps individual lines
+ * that exceed Discord's limit so roster content is never silently discarded.
  */
 export function splitMessages(text: string): string[] {
   if (text.length <= MAX_MESSAGE_LENGTH) return [text];
@@ -198,21 +202,39 @@ export function splitMessages(text: string): string[] {
   const chunks: string[] = [];
   let current = '';
 
-  for (const line of lines) {
+  const pushCurrent = () => {
+    if (current.length > 0) {
+      chunks.push(current);
+      current = '';
+    }
+  };
+
+  const appendLine = (line: string) => {
     const addition = current.length === 0 ? line : `\n${line}`;
     if (current.length + addition.length > MAX_MESSAGE_LENGTH) {
-      if (current.length > 0) {
-        chunks.push(current);
-      }
-      current = line.length > MAX_MESSAGE_LENGTH ? line.slice(0, MAX_MESSAGE_LENGTH) : line;
+      pushCurrent();
+      current = line;
     } else {
       current += addition;
     }
+  };
+
+  for (const line of lines) {
+    if (line.length <= MAX_MESSAGE_LENGTH) {
+      appendLine(line);
+      continue;
+    }
+
+    // A single free-text field can exceed 2000 chars (for example pasted
+    // notes). Preserve the entire value by hard-wrapping that line after
+    // flushing any accumulated line-boundary chunk.
+    pushCurrent();
+    for (let start = 0; start < line.length; start += MAX_MESSAGE_LENGTH) {
+      chunks.push(line.slice(start, start + MAX_MESSAGE_LENGTH));
+    }
   }
 
-  if (current.length > 0) {
-    chunks.push(current);
-  }
+  pushCurrent();
 
   return chunks;
 }
@@ -274,8 +296,11 @@ export function buildRolePingLine(
 // ── Action Rows ─────────────────────────────────────────────────────────────
 
 export function buildRosterActionRows(rosterId: string): DiscordComponent[] {
-  // Discord custom_id max is 100 chars. Longest prefix is "roster_signup:healer:" (22 chars).
-  const id = rosterId.slice(0, 75);
+  // Discord custom_id max is 100 chars. Never truncate roster IDs: a truncated
+  // refresh ID cannot be looked up in KV. When an ID is too long, omit it and
+  // let the refresh handler fall back to the channel→roster mapping.
+  const customIdWithOptionalRosterId = (prefix: string): string =>
+    `${prefix}:${rosterId}`.length <= 100 ? `${prefix}:${rosterId}` : prefix;
   return [
     {
       type: ComponentType.ACTION_ROW,
@@ -285,21 +310,21 @@ export function buildRosterActionRows(rosterId: string): DiscordComponent[] {
           style: ButtonStyle.PRIMARY,
           label: 'Tank',
           emoji: { name: '🛡️' },
-          custom_id: `${RosterButtonId.SIGNUP_PREFIX}tank:${id}`,
+          custom_id: customIdWithOptionalRosterId(`${RosterButtonId.SIGNUP_PREFIX}tank`),
         },
         {
           type: ComponentType.BUTTON,
           style: ButtonStyle.PRIMARY,
           label: 'Healer',
           emoji: { name: '💚' },
-          custom_id: `${RosterButtonId.SIGNUP_PREFIX}healer:${id}`,
+          custom_id: customIdWithOptionalRosterId(`${RosterButtonId.SIGNUP_PREFIX}healer`),
         },
         {
           type: ComponentType.BUTTON,
           style: ButtonStyle.PRIMARY,
           label: 'DD',
           emoji: { name: '⚔️' },
-          custom_id: `${RosterButtonId.SIGNUP_PREFIX}dd:${id}`,
+          custom_id: customIdWithOptionalRosterId(`${RosterButtonId.SIGNUP_PREFIX}dd`),
         },
       ],
     },
@@ -317,7 +342,7 @@ export function buildRosterActionRows(rosterId: string): DiscordComponent[] {
           style: ButtonStyle.SECONDARY,
           label: 'Refresh',
           emoji: { name: '🔄' },
-          custom_id: `${RosterButtonId.REFRESH}:${id}`,
+          custom_id: customIdWithOptionalRosterId(RosterButtonId.REFRESH),
         },
       ],
     },

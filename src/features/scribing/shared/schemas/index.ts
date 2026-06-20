@@ -37,7 +37,7 @@ export const SkillLineSchema = z.enum([
 export const GrimoireSchema = z.object({
   id: z.string().min(1),
   name: z.string().min(1),
-  skillLine: SkillLineSchema,
+  skillLine: SkillLineSchema.optional(),
   requirements: z.string().nullable(),
   cost: z.object({
     first: z.number().min(0),
@@ -46,6 +46,17 @@ export const GrimoireSchema = z.object({
   description: z.string(),
   iconUrl: z.string().url().optional(),
   abilityIds: z.array(z.number()).optional(),
+  resource: ResourceTypeSchema.optional(),
+  nameTransformations: z
+    .record(
+      z.string(),
+      z.object({
+        name: z.string(),
+        abilityIds: z.array(z.number()).optional(),
+        matchCount: z.number().optional(),
+      }),
+    )
+    .optional(),
 });
 
 export const ScriptSchema = z.object({
@@ -164,21 +175,26 @@ export const ScribingSystemSchema = z.object({
 export const ScribingDataSchema = z.object({
   version: z.string().min(1),
   description: z.string(),
-  lastUpdated: z.string(),
+  lastUpdated: z.string().optional(),
   grimoires: z.record(z.string(), GrimoireSchema),
   focusScripts: z.record(z.string(), FocusScriptSchema),
   signatureScripts: z.record(z.string(), SignatureScriptSchema),
   affixScripts: z.record(z.string(), AffixScriptSchema),
-  questRewards: z.record(z.string(), QuestRewardSchema),
-  freeScriptLocations: z.record(z.string(), FreeScriptLocationSchema),
-  dailyScriptSources: z.object({
-    'focus-scripts': z.array(z.string()),
-    'signature-scripts': z.array(z.string()),
-    'affix-scripts': z.array(z.string()),
-  }),
-  scriptVendors: z.record(z.string(), ScriptVendorSchema),
-  luminousInk: LuminousInkSchema,
-  system: ScribingSystemSchema,
+  // The simulator only needs grimoires + scripts; the reference sections below
+  // (quest/vendor/ink/system metadata) aren't part of the extracted dataset, so
+  // they're optional.
+  questRewards: z.record(z.string(), QuestRewardSchema).optional(),
+  freeScriptLocations: z.record(z.string(), FreeScriptLocationSchema).optional(),
+  dailyScriptSources: z
+    .object({
+      'focus-scripts': z.array(z.string()),
+      'signature-scripts': z.array(z.string()),
+      'affix-scripts': z.array(z.string()),
+    })
+    .optional(),
+  scriptVendors: z.record(z.string(), ScriptVendorSchema).optional(),
+  luminousInk: LuminousInkSchema.optional(),
+  system: ScribingSystemSchema.optional(),
 });
 
 // DTO schemas

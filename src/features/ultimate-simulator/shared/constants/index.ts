@@ -1,45 +1,46 @@
 /**
- * Constants and presets for the Arcanist Ultimate Simulator.
+ * Engine-level constants for the Ultimate Calculator.
  *
- * Numbers derive from research (.scratch/ult-sim-research.md) and from decoding
- * the original Google Sheet. The model is a raid-context Arcanist: it RECEIVES
- * group ult support (Major Heroism from a Warden's U50 Class Mastery scrip,
- * Pillager's Profit batteried from the healer) on top of its own base income.
- *
- * Calibration against real ESO Logs data (the source of truth) can later
- * override any of these — they are defaults, not assumptions baked in code.
+ * The all-class source data lives in `./catalog.ts`; this file holds only the
+ * Decisive proc ladder, the default fight length, and the `makeDecisiveConfig`
+ * helper. The `SHEET_VALIDATION_SOURCES` preset (sheetValidation.ts) is kept as a
+ * regression anchor for the engine, reproducing the original ported model's
+ * known outputs.
  */
 
-import type { UltimateSource, DecisiveConfig } from '../types';
+import type { DecisiveConfig, UltimateSource } from '../types';
 
-/** Default fight length used by the sheet. */
+/** Default fight length (3 minutes — a typical raid boss pull). */
 export const DEFAULT_FIGHT_DURATION_SECONDS = 180;
 
-/** Default Monte Carlo run count (10k → standard error ≈ sheet's ÷10). */
-export const DEFAULT_MONTE_CARLO_RUNS = 10000;
-
-/** Default base seed for reproducible aggregates. */
-export const DEFAULT_BASE_SEED = 1;
-
 /**
- * Decisive per-instance proc chance by weapon quality (single roll).
- * The five-tier ladder; the gold value matches the sheet's decoded 27.68%.
- * NOTE: some sources list legendary as .254 — kept .275 to match the sheet's
- * empirical "Half" value pending in-game verification.
+ * Per-instance chance the Decisive trait grants +1 ultimate, by weapon quality.
+ *
+ * The full FIVE-tier ladder, verified against UESP (Online:Decisive):
+ * Normal 19.1% / Fine 21.2% / Superior 23.3% / Epic 25.4% / Legendary 27.5%
+ * (each tier +2.1%). Decisive exists from white quality up. (The historical
+ * "0.254 vs 0.275" disagreement was Epic vs Legendary — two different tiers, not
+ * two competing Legendary values.)
  */
 export const DECISIVE_PROC_CHANCE = {
-  fine: 0.191,
-  superior: 0.212,
-  epic: 0.233,
+  normal: 0.191,
+  fine: 0.212,
+  superior: 0.233,
+  epic: 0.254,
   legendary: 0.275,
 } as const;
 
 export type DecisiveQuality = keyof typeof DECISIVE_PROC_CHANCE;
 
+/** Default weapon quality assumed when Decisive is enabled (an optimized build). */
+export const DEFAULT_DECISIVE_QUALITY: DecisiveQuality = 'legendary';
+
 /**
  * Build a DecisiveConfig from quality + whether the weapon is two-handed.
- * 1H / staff / bow = 1 roll per instance; 2H melee = 2 independent rolls
- * (ESO's "two-handed weapons provide twice the bonus").
+ * 1H / restoration & destruction staff & bow each count as their own weapon for
+ * trait purposes (1 roll); a TWO-HANDED melee weapon (greatsword / battle axe /
+ * maul) occupies both bars' weapon slots and "provides twice the bonus" — modeled
+ * as 2 independent rolls per instance (mean = 2 × procChance).
  */
 export function makeDecisiveConfig(quality: DecisiveQuality, twoHanded: boolean): DecisiveConfig {
   return {
@@ -48,8 +49,14 @@ export function makeDecisiveConfig(quality: DecisiveQuality, twoHanded: boolean)
   };
 }
 
+/** Default Monte Carlo run count (10k → standard error ≈ sheet's ÷10). */
+export const DEFAULT_MONTE_CARLO_RUNS = 10000;
+
+/** Default base seed for reproducible aggregates. */
+export const DEFAULT_BASE_SEED = 1;
+
 /**
- * Raid-context source preset (corrected from the sheet).
+ * Raid-context source preset (used by the standalone Arcanist Ultimate Simulator).
  *
  * Tick cadences: Heroism buffs tick every 1.5s (instancesPerSecond = 1/1.5).
  * The "base" row is the light/heavy-attack buff (3 ult/sec, 1 instance/sec),

@@ -112,6 +112,7 @@ export const GET_ALL_EVENTS_TIME_BASED = gql`
     $code: String!
     $startTime: Float
     $endTime: Float
+    $hostilityType: HostilityType = Friendlies
     $limit: Int = 1000000
   ) {
     reportData {
@@ -122,6 +123,7 @@ export const GET_ALL_EVENTS_TIME_BASED = gql`
           dataType: All
           useActorIDs: true
           includeResources: true
+          hostilityType: $hostilityType
           limit: $limit
         ) {
           data

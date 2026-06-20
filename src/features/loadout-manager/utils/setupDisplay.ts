@@ -26,16 +26,16 @@ const normalize = (value?: string | null): string => (value ?? '').trim();
 const isTrashKeyword = (value: string): boolean => value.includes('trash');
 
 export const isTrashSetup = (setup: LoadoutSetup): boolean => {
-  if (typeof setup.condition.trash === 'number') {
+  if (typeof setup.condition?.trash === 'number') {
     return true;
   }
 
-  const bossName = normalize(setup.condition.boss).toLowerCase();
+  const bossName = normalize(setup.condition?.boss).toLowerCase();
   return bossName !== '' && isTrashKeyword(bossName);
 };
 
 export const isBossSetup = (setup: LoadoutSetup): boolean => {
-  const bossName = normalize(setup.condition.boss);
+  const bossName = normalize(setup.condition?.boss);
   if (!bossName) {
     return false;
   }

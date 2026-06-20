@@ -41,6 +41,8 @@ import type {
   SkilledAbility,
 } from '../types/build.types';
 
+import { classFromMasteryIds, partitionClassMasteryPicks } from './classMasteryTransfer';
+
 const logger = new Logger({ contextPrefix: 'CSPSExportCode' });
 
 // ── ESO ID → Build Editor mappings ──────────────────────────────────
@@ -186,10 +188,12 @@ const ESO_SKILL_LINE_MAP: Record<number, ClassSkillLineId> = {
 };
 
 /**
- * Parse subclass skill line IDs from section 7 and map to ClassSkillLineId.
- * Returns [line1, line2, line3] or nulls if IDs are unknown.
+ * Parse subclass skill line IDs from a comma-separated id string and map to
+ * ClassSkillLineId. Returns [line1, line2, line3], or the class defaults when
+ * the string is empty/unknown. Shared with the SavedVariables import, which
+ * sources the ids from `werte.scribeStyleSubclass`.
  */
-function parseSubclassLines(
+export function parseSubclassLines(
   subclassStr: string,
   fallbackClass: ESOClass,
 ): [ClassSkillLineId | null, ClassSkillLineId | null, ClassSkillLineId | null] {
@@ -206,6 +210,23 @@ function parseSubclassLines(
   while (mapped.length < 3) mapped.push(null);
 
   return [mapped[0], mapped[1], mapped[2]];
+}
+
+/** Reverse of ESO_SKILL_LINE_MAP — build editor line id → ESO skill-line id. */
+const CLASS_SKILL_LINE_TO_ESO_ID: Record<string, number> = Object.fromEntries(
+  Object.entries(ESO_SKILL_LINE_MAP).map(([esoId, lineId]) => [lineId, Number(esoId)]),
+);
+
+/**
+ * Serialize a build's classSkillLines into the comma-separated ESO skill-line id
+ * string CSPS stores in the `subclasses` slot of werte.scribeStyleSubclass.
+ * Inverse of parseSubclassLines; empty slots are skipped.
+ */
+export function serializeSubclassLines(classSkillLines: Build['classSkillLines']): string {
+  return classSkillLines
+    .map((lineId) => (lineId != null ? CLASS_SKILL_LINE_TO_ESO_ID[lineId] : undefined))
+    .filter((esoId): esoId is number => typeof esoId === 'number' && esoId > 0)
+    .join(',');
 }
 
 /** CSPS role index → build editor CombatRole */
@@ -564,8 +585,13 @@ export function parseCSPSExportCode(input: string): CSPSExportCodeResult {
   const skills = hotbarsToSkillsConfig(frontParsed.bar, backParsed.bar);
   const scribedAbilityIds = [...frontParsed.scribedIds, ...backParsed.scribedIds];
 
-  // Section 10: Passives (comma-separated ability IDs)
-  const passives = parseCommaInts(sections[9] || '');
+  // Section 10: Passives (comma-separated ability IDs). The real CSPS addon
+  // lists Class Mastery passives here too, so split them back out into the
+  // build-level Class Mastery field instead of the regular passives bucket.
+  const { passives, classMasteryPassives } = partitionClassMasteryPicks(
+    parseCommaInts(sections[9] || ''),
+    esoClass,
+  );
 
   // Section 11 & 12: Champion Points
   const cp = parseSlottedCP(sections[10] || '');
@@ -600,6 +626,7 @@ export function parseCSPSExportCode(input: string): CSPSExportCodeResult {
     shortDescription: 'Imported from CSPS export code',
     esoClass,
     classSkillLines,
+    classMasteryPassives,
     role,
     gameMode: 'pve',
     races: race ? [race] : [],
@@ -721,13 +748,16 @@ function parseNativeSkills(s: string): {
   passives: number[];
   scribedIds: number[];
   skilledAbilities: SkilledAbility[];
+  subclasses: string;
 } {
-  if (!s || s === '-') return { passives: [], scribedIds: [], skilledAbilities: [] };
+  if (!s || s === '-')
+    return { passives: [], scribedIds: [], skilledAbilities: [], subclasses: '' };
 
   const parts = s.split('*');
   // parts[0] = prog (active skills with morph choices)
   // parts[1] = pass (passive skills)
   // parts[2] = crafted scribing
+  // parts[4] = subclasses (comma-separated skill-line ids)
   const passives: number[] = [];
   const scribedIds: number[] = [];
 
@@ -756,7 +786,7 @@ function parseNativeSkills(s: string): {
     }
   }
 
-  return { passives, scribedIds, skilledAbilities };
+  return { passives, scribedIds, skilledAbilities, subclasses: parts[4] ?? '' };
 }
 
 /**
@@ -884,6 +914,7 @@ export function parseCSPSNativeCode(input: string): CSPSExportCodeResult {
     passives: skillPassives,
     scribedIds: skillScribedIds,
     skilledAbilities: nativeSkilledAbilities,
+    subclasses: nativeSubclasses,
   } = parseNativeSkills(sections[0]);
 
   // Section 2: Hotbars (bar1;bar2;bar3 — slots comma-separated, scribed prefixed "c")
@@ -944,11 +975,21 @@ export function parseCSPSNativeCode(input: string): CSPSExportCodeResult {
   const roleIndex = sections[8] && sections[8] !== '-' ? parseIntSafe(sections[8]) : 0;
   const role = roleIndexToRole(roleIndex);
 
-  // Detect class from hotbar ability IDs (no explicit class field in native format)
+  // Class Mastery ids uniquely identify the BASE class, so prefer them — a
+  // subclassed character's hotbar carries off-class lines that would otherwise
+  // mislead detection. Fall back to hotbar detection, then 'any-class'.
   const allBarIds = [...hotbar.frontBar, ...hotbar.backBar].filter((n) => n > 0);
   const detectedClass = detectClassFromAbilityIds(allBarIds);
-  const esoClass: ESOClass = detectedClass ?? 'any-class';
-  const classSkillLines = getDefaultLinesForClass(esoClass);
+  const esoClass: ESOClass = classFromMasteryIds(skillPassives) ?? detectedClass ?? 'any-class';
+  // Honor the native subclasses part so a subclassed export decodes as
+  // subclassed — otherwise retained Class Mastery picks would be (wrongly)
+  // treated as active by the eligibility-gated stats/export.
+  const classSkillLines = parseSubclassLines(nativeSubclasses, esoClass);
+  // Split Class Mastery passives out of the native pass list (see ESO-Hub path).
+  const { passives: regularPassives, classMasteryPassives } = partitionClassMasteryPicks(
+    skillPassives,
+    esoClass,
+  );
   const now = new Date().toISOString();
 
   const setup: BuildSetup = {
@@ -961,7 +1002,7 @@ export function parseCSPSNativeCode(input: string): CSPSExportCodeResult {
     skills,
     cp,
     consumables: { potions: [], food: {} },
-    passives: skillPassives,
+    passives: regularPassives,
     screenshots: [],
     ...(allScribedIds.length > 0 ? { scribedAbilityIds: allScribedIds } : {}),
     ...(nativeSkilledAbilities.length > 0 ? { skilledAbilities: nativeSkilledAbilities } : {}),
@@ -974,6 +1015,7 @@ export function parseCSPSNativeCode(input: string): CSPSExportCodeResult {
     shortDescription: 'Imported from CSPS native export code',
     esoClass,
     classSkillLines,
+    classMasteryPassives,
     role,
     gameMode: 'pve',
     races: [],

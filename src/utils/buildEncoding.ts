@@ -12,8 +12,7 @@
  */
 
 import { ESO_POTION_LOOKUP } from '@/data/esoPotions';
-import { getClassMasteryLine } from '@/data/skill-lines/class/classMastery';
-import { CLASS_MASTERY_MAX_PICKS } from '@/features/build-editor/utils/classMasteryEligibility';
+import { sanitizeClassMasteryPicks } from '@/features/build-editor/utils/classMasteryTransfer';
 
 import type {
   Build,
@@ -322,9 +321,14 @@ function expandSetup(compact: CompactSetup, index: number): BuildSetup {
   return {
     id: `decoded-setup-${index}`,
     name: compact.nm ?? 'Default',
-    attributes: compact.at
-      ? { magicka: compact.at[0], health: compact.at[1], stamina: compact.at[2] }
-      : { magicka: 0, health: 0, stamina: 0 },
+    // Coerce defensively: a malformed/hand-crafted ?b= blob can carry a short
+    // or non-numeric `at` array, which would otherwise yield undefined/NaN
+    // attributes that render as "NaN%" bars and poison stat math.
+    attributes: {
+      magicka: Number(compact.at?.[0]) || 0,
+      health: Number(compact.at?.[1]) || 0,
+      stamina: Number(compact.at?.[2]) || 0,
+    },
     curse: compact.cu ?? 'none',
     mundusStone: compact.ms ?? '',
     gear: expandGear(compact.g, compact.gt, compact.ge, compact.gw),
@@ -392,17 +396,6 @@ function compactifyBuild(build: Build): CompactBuild {
   if (build.updatedAt) c.ua = Math.floor(new Date(build.updatedAt).getTime() / 1000);
 
   return c;
-}
-
-/**
- * A crafted/corrupted `cm` payload with ids the section never renders would
- * otherwise hit the 2-pick cap and soft-lock the picker — keep only the
- * decoded class's own Class Mastery passives, deduped and capped.
- */
-function sanitizeClassMasteryPicks(cm: number[] | undefined, esoClass: ESOClass): number[] {
-  if (!Array.isArray(cm) || cm.length === 0) return [];
-  const valid = new Set(getClassMasteryLine(esoClass)?.skills.map((skill) => skill.id) ?? []);
-  return [...new Set(cm)].filter((id) => valid.has(id)).slice(0, CLASS_MASTERY_MAX_PICKS);
 }
 
 function expandCompactBuild(c: CompactBuild): Build {

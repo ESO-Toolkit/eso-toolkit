@@ -115,6 +115,14 @@ export const createWorkerTaskSlice = <T extends SharedComputationWorkerTaskType>
           return taskState.resultCache[inputHash];
         }
 
+        // If the request was already aborted before we got a chance to start the
+        // worker, bail out early so we don't kick off work that's already been
+        // cancelled. (Note: this only avoids *starting* already-cancelled work;
+        // a worker that's already running is still not terminated mid-flight.)
+        if (signal.aborted) {
+          return rejectWithValue('Task was aborted');
+        }
+
         const result = await workerManager.executeTask(taskName, input, (progress: number) => {
           // Only dispatch progress updates if the task hasn't been aborted
           if (!signal.aborted) {

@@ -341,7 +341,7 @@ export const CLASS_PASSIVES: ClassPassive[] = [
   // Warden — Winter's Embrace: Frozen Armor (+1240 resistance per Winter's
   // Embrace ability slotted; modeled at the fully-slotted 5 abilities).
   {
-    skillLineId: 'class.winter-s-embrace',
+    skillLineId: 'class.winters-embrace',
     stat: 'armor',
     name: 'Frozen Armor',
     value: 6200, // 1240 × 5 slotted

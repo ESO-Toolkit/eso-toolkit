@@ -623,9 +623,15 @@ export const ChampionPointsPicker: React.FC<ChampionPointsPickerProps> = ({ cp, 
     points: number,
   ): void => {
     const tree = cp[treeKey];
+    const nextPassives = { ...tree.passives };
+    if (points <= 0) {
+      delete nextPassives[cpId];
+    } else {
+      nextPassives[cpId] = points;
+    }
     onChange({
       ...cp,
-      [treeKey]: { ...tree, passives: { ...tree.passives, [cpId]: points } },
+      [treeKey]: { ...tree, passives: nextPassives },
     });
   };
 

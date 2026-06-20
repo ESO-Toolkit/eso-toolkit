@@ -28,6 +28,7 @@ import {
 } from '../../../store/ui/uiSelectors';
 import { setSelectedFriendlyPlayerId, setSelectedTargetIds } from '../../../store/ui/uiSlice';
 import { useAppDispatch } from '../../../store/useAppDispatch';
+import { computeMenuPlacement, dropdownMenuOrigins } from '../../../theme/dropdownMenu';
 
 const SECTION_HEADER_SX = {
   px: 2,
@@ -48,8 +49,23 @@ const CombinedFilterDropdownComponent: React.FC<CombinedFilterDropdownProps> = (
   const isDarkMode = theme.palette.mode === 'dark';
 
   const [anchorEl, setAnchorEl] = React.useState<HTMLButtonElement | null>(null);
+  // Open the panel below the trigger, flipping above it when the trigger is too
+  // close to the viewport bottom, and cap its height to the room on the open
+  // side so a long target/player list scrolls instead of being shifted up over
+  // the trigger (MUI's Popover only shifts, never flips or fits). Measured once
+  // per open from the trigger's rect.
+  const [menuUp, setMenuUp] = React.useState(false);
+  const [menuMaxHeight, setMenuMaxHeight] = React.useState<number | null>(null);
   const open = Boolean(anchorEl);
   const popoverId = open ? 'combined-filter-popover' : undefined;
+
+  const handleOpen = React.useCallback((event: React.MouseEvent<HTMLButtonElement>) => {
+    const placement = computeMenuPlacement(event.currentTarget);
+    setMenuUp(placement.menuUp);
+    // Keep the existing 70vh design ceiling, but never taller than the room available.
+    setMenuMaxHeight(Math.min(placement.maxHeight, Math.round(window.innerHeight * 0.7)));
+    setAnchorEl(event.currentTarget);
+  }, []);
 
   const fight = useSelectedFight();
   const { reportMasterData, isMasterDataLoading } = useReportMasterData();
@@ -154,7 +170,9 @@ const CombinedFilterDropdownComponent: React.FC<CombinedFilterDropdownProps> = (
   const popoverSx = React.useMemo(
     () => ({
       '& .MuiPaper-root': {
-        mt: 1,
+        // Gap between trigger and panel on whichever side it opens — a static mt
+        // would push an upward-flipped panel down onto the trigger.
+        ...(menuUp ? { mt: 0, mb: 1 } : { mt: 1, mb: 0 }),
         borderRadius: '12px',
         border: isDarkMode
           ? '1px solid rgba(56, 189, 248, 0.2)'
@@ -168,11 +186,11 @@ const CombinedFilterDropdownComponent: React.FC<CombinedFilterDropdownProps> = (
           : '0 12px 40px rgba(0, 0, 0, 0.1), 0 0 60px rgba(59, 130, 246, 0.05)',
         minWidth: 260,
         maxWidth: 320,
-        maxHeight: '70vh',
+        maxHeight: menuMaxHeight ?? '70vh',
         overflowY: 'auto',
       },
     }),
-    [isDarkMode],
+    [isDarkMode, menuUp, menuMaxHeight],
   );
 
   const sectionHeaderSx = SECTION_HEADER_SX;
@@ -223,7 +241,7 @@ const CombinedFilterDropdownComponent: React.FC<CombinedFilterDropdownProps> = (
         aria-controls={popoverId}
         aria-expanded={open}
         aria-haspopup="dialog"
-        onClick={(e) => setAnchorEl(e.currentTarget)}
+        onClick={handleOpen}
         endIcon={
           <KeyboardArrowDownIcon
             sx={{
@@ -309,8 +327,7 @@ const CombinedFilterDropdownComponent: React.FC<CombinedFilterDropdownProps> = (
         open={open}
         anchorEl={anchorEl}
         onClose={() => setAnchorEl(null)}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
-        transformOrigin={{ vertical: 'top', horizontal: 'left' }}
+        {...dropdownMenuOrigins(menuUp)}
         sx={popoverSx}
       >
         {/* Target Section */}

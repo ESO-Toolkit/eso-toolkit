@@ -52,7 +52,7 @@ import {
   Typography,
   useTheme,
 } from '@mui/material';
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { AbilityIcon } from '../components/AbilityIcon';
@@ -1033,9 +1033,17 @@ const ParseAnalysisPageContent: React.FC = () => {
   /** Seconds until the next poll fires — shown in the navigation strip */
   const [pollCountdown, setPollCountdown] = useState(POLL_INTERVAL_MS / 1000);
 
+  // Mirror loading into a ref so the poll interval can read it without listing
+  // state.loading as a dependency (which tore down + recreated the timers and
+  // reset the visible countdown on every analyze).
+  const loadingRef = useRef(state.loading);
+  useEffect(() => {
+    loadingRef.current = state.loading;
+  }, [state.loading]);
+
   // Poll for new fights added to the report while the page is open.
-  // Restarts when the report changes or loading state flips; uses closure-captured values
-  // so the interval always reflects the latest fight count.
+  // Restarts when the report changes; uses closure-captured values so the
+  // interval always reflects the latest fight count.
   useEffect(() => {
     if (!state.reportCode || !client || !isReady || !isLoggedIn) return;
 
@@ -1051,7 +1059,7 @@ const ParseAnalysisPageContent: React.FC = () => {
     }, 1000);
 
     const timerId = setInterval(() => {
-      if (state.loading) {
+      if (loadingRef.current) {
         setPollCountdown(intervalSec); // reset visual while loading
         return;
       }
@@ -1093,7 +1101,6 @@ const ParseAnalysisPageContent: React.FC = () => {
     };
   }, [
     state.reportCode,
-    state.loading,
     availableFights.length,
     client,
     isReady,

@@ -6,6 +6,7 @@ import { SharedComputationWorkerTaskType } from './SharedWorker';
 import type { WorkerPoolConfig, WorkerTask, WorkerInfo, WorkerStats } from './types';
 import { OnProgressCallback } from './Utils';
 import { createSharedWorker } from './workerFactories';
+import { releaseAndTerminate } from './workerRegistry';
 
 /**
  * WorkerPool manages a pool of web workers for executing computationally intensive tasks
@@ -93,10 +94,7 @@ export class WorkerPool {
       if (this.config.taskTimeout) {
         task.timeoutId = setTimeout(() => {
           if (this.pendingTasks.has(taskId)) {
-            this.handleTaskError(
-              taskId,
-              new Error(`Task timeout after ${this.config.taskTimeout}ms: ${taskType}`),
-            );
+            this.handleTaskTimeout(taskId, taskType);
           }
         }, this.config.taskTimeout);
       }
@@ -118,9 +116,9 @@ export class WorkerPool {
       clearInterval(this.cleanupInterval);
     }
 
-    // Terminate all workers
+    // Terminate all workers (release the proxy AND stop the thread)
     for (const workerInfo of this.workers.values()) {
-      workerInfo.worker[releaseProxy]();
+      releaseAndTerminate(workerInfo.worker);
     }
 
     // Reject all pending tasks
@@ -248,6 +246,20 @@ export class WorkerPool {
       this.handleTaskComplete(task.id, result);
     } catch (err) {
       this.handleTaskError(task.id, err as Error);
+    } finally {
+      // Release the per-task progress proxy so its MessagePort doesn't leak.
+      // comlink only auto-releases proxied callbacks via non-deterministic GC.
+      try {
+        (onProgress as unknown as { [releaseProxy]?: () => void })[releaseProxy]?.();
+      } catch {
+        /* already released */
+      }
+    }
+
+    // If this task already timed out, its worker was torn down and recovered by
+    // handleTaskTimeout; don't resurrect the detached worker's bookkeeping.
+    if (!this.workers.has(workerInfo.id)) {
+      return;
     }
 
     // Mark worker as available
@@ -316,6 +328,32 @@ export class WorkerPool {
   }
 
   /**
+   * Handle a task that exceeded its timeout. The worker may be hung (the very
+   * scenario the timeout defends against), in which case its `busy` flag would
+   * otherwise stay true forever and permanently strand the pool slot. So we
+   * tear the worker down, reject the caller, and re-run the queue on a fresh
+   * worker.
+   */
+  private handleTaskTimeout(taskId: string, taskType: string): void {
+    for (const [workerId, workerInfo] of this.workers.entries()) {
+      if (workerInfo.currentTaskId === taskId) {
+        releaseAndTerminate(workerInfo.worker);
+        this.workers.delete(workerId);
+        this.stats.activeWorkers = this.workers.size;
+        break;
+      }
+    }
+
+    this.handleTaskError(
+      taskId,
+      new Error(`Task timeout after ${this.config.taskTimeout}ms: ${taskType}`),
+    );
+
+    // A pool slot just freed up — let any queued work proceed.
+    this.processNextTask();
+  }
+
+  /**
    * Clean up task resources (timeout timer)
    */
   private cleanupTask(task: WorkerTask<unknown, unknown>): void {
@@ -344,7 +382,7 @@ export class WorkerPool {
 
     for (const [workerId, workerInfo] of this.workers.entries()) {
       if (!workerInfo.busy && now - workerInfo.lastUsed > idleTimeout) {
-        workerInfo.worker[releaseProxy]();
+        releaseAndTerminate(workerInfo.worker);
         this.workers.delete(workerId);
 
         if (this.config.enableLogging && this.logger) {

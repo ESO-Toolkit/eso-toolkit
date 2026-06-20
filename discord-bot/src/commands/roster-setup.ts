@@ -14,22 +14,22 @@ export async function handleRosterSetup(
   env: Env,
   interaction: DiscordInteraction,
 ): Promise<InteractionResponse> {
-  if (!isAdmin(interaction)) {
-    return {
-      type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-      data: {
-        content: '❌ You need **Manage Server** permission to view setup instructions.',
-        flags: MessageFlags.EPHEMERAL,
-      },
-    };
-  }
-
   const guildId = interaction.guild_id;
   if (!guildId) {
     return {
       type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
       data: {
-        content: 'This command can only be used in a server.',
+        content: '❌ This command can only be used in a server.',
+        flags: MessageFlags.EPHEMERAL,
+      },
+    };
+  }
+
+  if (!isAdmin(interaction)) {
+    return {
+      type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+      data: {
+        content: '❌ You need **Manage Server** permission to view setup instructions.',
         flags: MessageFlags.EPHEMERAL,
       },
     };
@@ -72,7 +72,7 @@ export async function handleRosterSetup(
     '',
     `${check(hasNamePattern)} **Step 4 — Customize channel names** *(optional)*`,
     'Set a template for auto-generated channel names.',
-    'Tokens: `{day-short}`, `{day}`, `{time}`, `{trial}`, `{difficulty}`',
+    'Tokens: `{day-short}`, `{day-full}`, `{day}`, `{time}`, `{trial}`, `{difficulty}`',
     '```',
     '/roster config set-name-pattern {day-short}-{time}-{trial}',
     '```',

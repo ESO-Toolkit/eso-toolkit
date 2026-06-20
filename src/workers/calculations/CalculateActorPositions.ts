@@ -239,7 +239,10 @@ function checkTauntStatus(
   fight: FightFragment,
   relativeTime: number,
   actorId: number,
-  actorDeathEvents: Map<number, Array<{ type: 'death' | 'resurrection'; timestamp: number }>>,
+  // Pre-sorted (ascending timestamp) death/resurrection events per actor id. The death events of any
+  // given source never change across timestamps, so sorting them once up front (see
+  // sortedActorDeathEvents below) avoids a per-call .slice().sort() on every sampled timestamp.
+  sortedActorDeathEvents: Map<number, Array<{ type: 'death' | 'resurrection'; timestamp: number }>>,
 ): boolean {
   if (!(type === 'enemy' || type === 'boss') || !debuffLookupData || !fight) {
     return false;
@@ -272,11 +275,8 @@ function checkTauntStatus(
     return false; // No active taunt interval found
   }
 
-  // Check if the taunt source is still alive
-  const sourceDeathEvents = actorDeathEvents.get(activeInterval.sourceID) || [];
-
-  // Sort events chronologically and determine if source is dead at current timestamp
-  const sortedEvents = sourceDeathEvents.slice().sort((a, b) => a.timestamp - b.timestamp);
+  // Check if the taunt source is still alive. Events are already sorted ascending by timestamp.
+  const sortedEvents = sortedActorDeathEvents.get(activeInterval.sourceID) || [];
   let sourceIsDead = false;
 
   // Walk through events to find current status of the taunt source
@@ -694,6 +694,22 @@ export function calculateActorPositions(
     history.sort((a, b) => a.timestamp - b.timestamp);
   });
 
+  // Pre-sort each actor's death/resurrection events ONCE. An actor's death events are invariant
+  // across the (up to MAX_TIMESTAMPS) sampled timestamps, so the old per-timestamp
+  // `events.slice().sort()` — both for the actor's own death check and inside checkTauntStatus —
+  // recomputed identical work tens of thousands of times. We build the ascending-by-timestamp copies
+  // here and reuse them everywhere below. Output is identical: same comparator, same stable ordering.
+  const sortedActorDeathEvents = new Map<
+    number,
+    Array<{ type: 'death' | 'resurrection'; timestamp: number }>
+  >();
+  actorDeathEvents.forEach((deathEvents, id) => {
+    sortedActorDeathEvents.set(
+      id,
+      deathEvents.slice().sort((a, b) => a.timestamp - b.timestamp),
+    );
+  });
+
   // Generate sample timestamps at regular intervals
   const timestamps: number[] = [];
   const adjustedInterval = Math.max(sampleInterval, fightDuration / MAX_TIMESTAMPS);
@@ -859,6 +875,17 @@ export function calculateActorPositions(
       const firstEventTime = actorFirstEventTime.get(renderId);
       const isNPC = type !== 'player' && type !== 'boss'; // Includes pets, enemies, and friendly NPCs
 
+      // Hoist the actor's death state out of the per-timestamp loop: the death/resurrection events
+      // and whether the actor ever has a recorded death are invariant across timestamps. The
+      // pre-sorted copy (ascending by timestamp) is reused for the dead-state walk below.
+      const sortedDeathEvents = sortedActorDeathEvents.get(renderId) || [];
+      const hasRecordedDeath = sortedDeathEvents.some((event) => event.type === 'death');
+      // currentDeathTimestamp is monotonic non-decreasing as relativeTime advances, so cache the
+      // history scan index for the "last position before death" lookup (FIX B) and never rescan from
+      // the end of the (growing) history each frame.
+      let lastDeathTimestampUsed: number | undefined;
+      let lastPosBeforeDeathIndex = -1;
+
       // Process each timestamp and directly populate the lookup structure
       for (const relativeTime of timestamps) {
         const currentTimestamp = fightStartTime + relativeTime;
@@ -868,11 +895,9 @@ export function calculateActorPositions(
           continue;
         }
 
-        // Check if actor is dead at this timestamp
-        const actorEvents = actorDeathEvents.get(renderId) || [];
-
-        // Sort events chronologically and determine if actor is dead at current timestamp
-        const sortedEvents = actorEvents.slice().sort((a, b) => a.timestamp - b.timestamp);
+        // Determine if actor is dead at this timestamp using the pre-sorted death/resurrection
+        // events (ascending by timestamp; hoisted above so the sort is not repeated per timestamp).
+        const sortedEvents = sortedDeathEvents;
         let isDead = false;
 
         // Walk through events to find current status
@@ -885,7 +910,6 @@ export function calculateActorPositions(
         }
 
         const lastEventTimestamp = actorLastEventTime.get(renderId);
-        const hasRecordedDeath = actorEvents.some((event) => event.type === 'death');
 
         // If actor is dead, handle based on actor type
         if (isDead) {
@@ -894,13 +918,17 @@ export function calculateActorPositions(
             continue;
           }
 
-          // For players and bosses, continue giving positions at their last known location
-          // Find the last position before the most recent death time
-          const currentDeathEvent = sortedEvents
-            .slice()
-            .reverse()
-            .find((e) => e.type === 'death' && currentTimestamp >= e.timestamp);
-          const currentDeathTimestamp = currentDeathEvent?.timestamp;
+          // For players and bosses, continue giving positions at their last known location.
+          // Find the most recent death event at or before the current timestamp via an
+          // allocation-free reverse walk (was sortedEvents.slice().reverse().find(...) per frame).
+          let currentDeathTimestamp: number | undefined;
+          for (let i = sortedEvents.length - 1; i >= 0; i--) {
+            const e = sortedEvents[i];
+            if (e.type === 'death' && currentTimestamp >= e.timestamp) {
+              currentDeathTimestamp = e.timestamp;
+              break;
+            }
+          }
 
           if (type === 'boss' && currentDeathTimestamp) {
             const timeSinceDeath = currentTimestamp - currentDeathTimestamp;
@@ -909,10 +937,33 @@ export function calculateActorPositions(
             }
           }
 
-          const lastPositionBeforeDeath = history
-            .slice()
-            .reverse()
-            .find((pos) => (currentDeathTimestamp ? pos.timestamp < currentDeathTimestamp : false));
+          // Find the last position strictly before the death timestamp. `history` is time-ordered and
+          // currentDeathTimestamp is monotonic non-decreasing across the loop, so the answer index is
+          // monotonic too — advance a cached index forward instead of copying+reversing the (growing)
+          // history each frame. Semantics match the old reverse().find(pos.timestamp < deathTs).
+          let lastPositionBeforeDeath:
+            | {
+                x: number;
+                y: number;
+                facing: number;
+                timestamp: number;
+                health?: { current: number; max: number; percentage: number };
+              }
+            | undefined;
+          if (currentDeathTimestamp !== undefined) {
+            if (currentDeathTimestamp !== lastDeathTimestampUsed) {
+              lastDeathTimestampUsed = currentDeathTimestamp;
+              while (
+                lastPosBeforeDeathIndex + 1 < history.length &&
+                history[lastPosBeforeDeathIndex + 1].timestamp < currentDeathTimestamp
+              ) {
+                lastPosBeforeDeathIndex++;
+              }
+            }
+            if (lastPosBeforeDeathIndex >= 0) {
+              lastPositionBeforeDeath = history[lastPosBeforeDeathIndex];
+            }
+          }
           if (lastPositionBeforeDeath) {
             const position = convertCoordinatesWithBottomLeft(
               lastPositionBeforeDeath.x,
@@ -925,7 +976,7 @@ export function calculateActorPositions(
               fight,
               relativeTime,
               baseActorId,
-              actorDeathEvents,
+              sortedActorDeathEvents,
             );
 
             // Extract health information if available
@@ -1057,7 +1108,7 @@ export function calculateActorPositions(
                 fight,
                 relativeTime,
                 baseActorId,
-                actorDeathEvents,
+                sortedActorDeathEvents,
               )
             : false;
 

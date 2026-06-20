@@ -152,13 +152,19 @@ export function useRoleDetection({
       }
     }
 
+    // Resolve the real boss from actor metadata. fight.enemyNPCs has no defined
+    // ordering and no boss flag, so enemyNpcIds[0] is usually a trash add. Use
+    // the actor whose subType is 'Boss'; if none is present, leave it null so
+    // extractSignals' most-taunted-enemy auto-detection can run.
+    const primaryBossId = enemyNpcIds.find((id) => actorsById[id]?.subType === 'Boss') ?? null;
+
     const context: FightContext = {
       fightId: fight.id,
       startTime: fight.startTime,
       endTime: fight.endTime,
       friendlyPlayerIds,
       enemyNpcIds,
-      primaryBossId: enemyNpcIds.length > 0 ? enemyNpcIds[0] : null,
+      primaryBossId,
       playerNames,
     };
 

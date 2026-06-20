@@ -6,12 +6,14 @@ import {
 import {
   DEFAULT_PATH_SAMPLING,
   PathSamplingConfig,
+  PathPoint,
   PlayerPath,
   calculateTrailOpacity,
   extractPlayerPaths,
   getPathPointsUpToTime,
   getPlayerInfo,
   getVisiblePlayerIds,
+  smoothPath,
 } from './pathUtils';
 
 function makeActor(
@@ -168,6 +170,62 @@ describe('extractPlayerPaths', () => {
       minSampleInterval: 100,
     });
     expect(paths.get(1)!.points.every((p) => p.rotation === undefined)).toBe(true);
+  });
+});
+
+describe('smoothPath', () => {
+  function makePoints(xs: number[]): PathPoint[] {
+    return xs.map((x, i) => ({
+      position: [x, 0, 0] as [number, number, number],
+      timestamp: i * 100,
+      actorId: 1,
+    }));
+  }
+
+  it('returns the input unchanged when there are fewer than 3 points or factor <= 0', () => {
+    const pts = makePoints([0, 10]);
+    expect(smoothPath(pts, 0.5)).toBe(pts);
+    const pts3 = makePoints([0, 10, 20]);
+    expect(smoothPath(pts3, 0)).toBe(pts3);
+  });
+
+  it('preserves point count and non-position metadata', () => {
+    const out = smoothPath(makePoints([0, 5, 10, 15, 20]), 0.5);
+    expect(out).toHaveLength(5);
+    expect(out.map((p) => p.timestamp)).toEqual([0, 100, 200, 300, 400]);
+    expect(out.every((p) => p.actorId === 1)).toBe(true);
+  });
+
+  // Boundary-weighting regression (#75): the Gaussian kernel must be centered on the
+  // point being smoothed (i), NOT on the clipped-window midpoint. At i=0 with factor=0.2
+  // the window is indices {0,1}; centering on i weights index 0 highest, so the smoothed
+  // x stays nearest the original first point. The old midpoint-centered weighting
+  // (Math.abs(j - start - windowLen/2)) put equal weight on {0,1}, pulling the first
+  // point toward the average and distorting the trail at the endpoint.
+  it('centers the kernel on i at clipped boundaries (not the window midpoint)', () => {
+    const factor = 0.2; // windowSize=3, halfWindow=1
+    const out = smoothPath(makePoints([0, 10, 20]), factor);
+
+    // Reference: i=0 window is {0,1}; weight uses distance |j - i|.
+    const w = (d: number) => Math.exp(-(d * d) / (2 * factor * factor));
+    const w0 = w(0); // |0-0|
+    const w1 = w(1); // |1-0|
+    const expectedFirstX = (0 * w0 + 10 * w1) / (w0 + w1);
+
+    expect(out[0].position[0]).toBeCloseTo(expectedFirstX, 10);
+
+    // The midpoint-centered bug would have weighted indices 0 and 1 equally
+    // (distance |j - 1| -> 1 and 0... actually equal magnitudes), yielding the
+    // plain average 5. The i-centered result must be strictly below that, hugging
+    // the true first point.
+    expect(out[0].position[0]).toBeLessThan(5);
+  });
+
+  it('keeps an interior point symmetric (kernel centered on i in a full window)', () => {
+    const factor = 0.2;
+    const out = smoothPath(makePoints([0, 10, 20, 30, 40]), factor);
+    // Interior point i=2: window {1,2,3} centered on i=2 -> stays at 20 by symmetry.
+    expect(out[2].position[0]).toBeCloseTo(20, 10);
   });
 });
 

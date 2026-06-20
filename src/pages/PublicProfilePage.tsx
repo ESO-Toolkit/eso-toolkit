@@ -1040,13 +1040,23 @@ export const PublicProfilePage: React.FC = () => {
         return;
       }
 
-      // Read as data-URL for base64 upload
-      const dataUrl = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result as string);
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
+      // Read as data-URL for base64 upload. This runs before the upload
+      // try/catch, so guard it separately — a failed read would otherwise be an
+      // unhandled rejection with no user feedback.
+      let dataUrl: string;
+      try {
+        dataUrl = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = () => reject(reader.error ?? new Error('File read failed'));
+          reader.readAsDataURL(file);
+        });
+      } catch {
+        enqueueSnackbar('Could not read the selected image. Please try another file.', {
+          variant: 'error',
+        });
+        return;
+      }
 
       setAvatarUploading(true);
       try {

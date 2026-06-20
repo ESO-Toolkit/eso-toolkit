@@ -2116,7 +2116,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
 
                             issues.push(
                               <Box
-                                key="quality"
+                                key={`quality-${message}`}
                                 sx={{
                                   display: 'flex',
                                   alignItems: 'center',
@@ -2326,7 +2326,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
 
                             issues.push(
                               <Box
-                                key="enchant"
+                                key={`enchant-${message}`}
                                 sx={{
                                   display: 'flex',
                                   alignItems: 'center',
@@ -2547,7 +2547,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
 
                             issues.push(
                               <Box
-                                key="level"
+                                key={`level-${message}`}
                                 sx={{
                                   display: 'flex',
                                   alignItems: 'center',
