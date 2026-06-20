@@ -1719,8 +1719,39 @@ function safeGuideUrl(raw: string): URL | null {
       return null;
     }
   }
-  // IPv6 unique-local (fc00::/7) / link-local (fe80::/10).
+  // IPv6 unspecified / loopback / unique-local (fc00::/7) / link-local (fe80::/10).
+  if (host === '::' || host === '::1') return null;
   if (/^f[cd][0-9a-f]{2}:/i.test(host) || /^fe[89ab][0-9a-f]:/i.test(host)) return null;
+  // IPv4-mapped IPv6 (e.g. ::ffff:127.0.0.1 or ::ffff:7f00:1) — unwrap the
+  // embedded v4 and re-check it against the private/loopback ranges above.
+  const mapped = host.match(/^(?:0:0:0:0:0:ffff:|::ffff:)([0-9a-f.:]+)$/i);
+  if (mapped) {
+    const tail = mapped[1];
+    let a = -1;
+    let b = -1;
+    const dotted = tail.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
+    if (dotted) {
+      a = Number(dotted[1]);
+      b = Number(dotted[2]);
+    } else {
+      const hex = tail.match(/^([0-9a-f]{1,4}):([0-9a-f]{1,4})$/i);
+      if (hex) {
+        const hi = parseInt(hex[1], 16);
+        a = (hi >> 8) & 0xff;
+        b = hi & 0xff;
+      }
+    }
+    if (
+      a === 0 ||
+      a === 127 ||
+      a === 10 ||
+      (a === 192 && b === 168) ||
+      (a === 169 && b === 254) ||
+      (a === 172 && b >= 16 && b <= 31)
+    ) {
+      return null;
+    }
+  }
   return u;
 }
 
@@ -1747,14 +1778,34 @@ app.get('/fetch-guide', async (c) => {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), FETCH_GUIDE_TIMEOUT_MS);
   try {
-    const res = await fetch(url.href, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; ESO-Toolkit-BuildImporter/1.0)',
-        Accept: 'text/html,application/xhtml+xml,text/plain',
-      },
-      redirect: 'follow',
-      signal: controller.signal,
-    });
+    // Follow redirects MANUALLY so every hop's target is re-validated — a public
+    // URL must not be able to 30x its way to an internal/link-local host.
+    const FETCH_GUIDE_MAX_REDIRECTS = 4;
+    let target = url;
+    let res: Response | null = null;
+    for (let hop = 0; ; hop++) {
+      res = await fetch(target.href, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (compatible; ESO-Toolkit-BuildImporter/1.0)',
+          Accept: 'text/html,application/xhtml+xml,text/plain',
+        },
+        redirect: 'manual',
+        signal: controller.signal,
+      });
+      const location = res.status >= 300 && res.status < 400 ? res.headers.get('location') : null;
+      if (!location) break;
+      if (hop >= FETCH_GUIDE_MAX_REDIRECTS)
+        return c.json({ error: 'That link redirected too many times.' }, 502);
+      let next: URL | null = null;
+      try {
+        next = safeGuideUrl(new URL(location, target.href).href);
+      } catch {
+        next = null;
+      }
+      if (!next) return c.json({ error: 'That link redirected to a blocked target.' }, 400);
+      target = next;
+    }
+    if (!res) return c.json({ error: 'Could not fetch that link.' }, 502);
     if (!res.ok) return c.json({ error: `That link returned ${res.status}.` }, 502);
     const contentType = res.headers.get('content-type') ?? '';
     if (!/text\/html|application\/xhtml|text\/plain/i.test(contentType)) {
@@ -1763,31 +1814,34 @@ app.get('/fetch-guide', async (c) => {
     const reader = res.body?.getReader();
     if (!reader) return c.json({ error: 'Empty response from that link.' }, 502);
     const chunks: Uint8Array[] = [];
-    let size = 0;
+    let collected = 0;
+    let truncated = false;
     for (;;) {
       const { done, value } = await reader.read();
       if (done) break;
-      if (value) {
-        size += value.byteLength;
-        if (size > FETCH_GUIDE_MAX_BYTES) {
-          await reader.cancel();
-          break;
+      if (!value || value.byteLength === 0) continue;
+      if (collected + value.byteLength > FETCH_GUIDE_MAX_BYTES) {
+        // Keep only what fits, then stop — never allocate past what we copied.
+        const room = FETCH_GUIDE_MAX_BYTES - collected;
+        if (room > 0) {
+          chunks.push(value.subarray(0, room));
+          collected += room;
         }
-        chunks.push(value);
-      }
-    }
-    const merged = new Uint8Array(size > FETCH_GUIDE_MAX_BYTES ? FETCH_GUIDE_MAX_BYTES : size);
-    let offset = 0;
-    for (const chunk of chunks) {
-      if (offset + chunk.byteLength > merged.length) {
-        merged.set(chunk.subarray(0, merged.length - offset), offset);
+        truncated = true;
+        await reader.cancel();
         break;
       }
+      chunks.push(value);
+      collected += value.byteLength;
+    }
+    const merged = new Uint8Array(collected);
+    let offset = 0;
+    for (const chunk of chunks) {
       merged.set(chunk, offset);
       offset += chunk.byteLength;
     }
     const html = new TextDecoder('utf-8').decode(merged);
-    return c.json({ html, finalUrl: res.url || url.href });
+    return c.json({ html, finalUrl: target.href, truncated });
   } catch (err) {
     const aborted = err instanceof Error && err.name === 'AbortError';
     return c.json(

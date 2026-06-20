@@ -3,31 +3,13 @@
  * tab-structured text that buildTextParser expects.
  *
  * The worker fetches the guide URL server-side (CORS) and returns its raw HTML;
- * this runs client-side so the parsing logic stays unit-testable. Table cells
- * become tabs and block elements become newlines, which reconstructs the
- * gear-table layout the parser keys on. Also collects build-panel image URLs so
- * image-only guides can fall back to OCR.
+ * this runs client-side so the parsing logic stays unit-testable. We parse with
+ * the platform HTML parser (DOMParser — available in browsers and jsdom) rather
+ * than regexes: it's linear and can't be made to backtrack quadratically on
+ * malformed/hostile markup. Table cells become tabs and block elements become
+ * newlines, which reconstructs the gear-table layout the parser keys on. Also
+ * collects build-panel image URLs so image-only guides can fall back to OCR.
  */
-
-const ENTITIES: Record<string, string> = {
-  amp: '&',
-  lt: '<',
-  gt: '>',
-  quot: '"',
-  apos: "'",
-  nbsp: ' ',
-};
-
-/** Decode the HTML entities that appear in guide text (named + numeric). */
-function decodeEntities(s: string): string {
-  return s.replace(/&(#x?[0-9a-f]+|[a-z]+);/gi, (m, e: string) => {
-    if (e[0] === '#') {
-      const n = e[1] === 'x' || e[1] === 'X' ? parseInt(e.slice(2), 16) : parseInt(e.slice(1), 10);
-      return Number.isFinite(n) ? String.fromCodePoint(n) : m;
-    }
-    return ENTITIES[e.toLowerCase()] ?? m;
-  });
-}
 
 export interface ExtractedGuide {
   title: string;
@@ -36,20 +18,53 @@ export interface ExtractedGuide {
   images: string[];
 }
 
-/** Extract build-panel image URLs (gear/skill/CP/setup) from page HTML. */
-export function extractGuideImageUrls(html: string, baseUrl = ''): string[] {
+/** Only consider images whose name hints they carry build data (gear/skills/CP). */
+const BUILD_IMAGE_RE = /gear|skill|build|setup|champion|frontbar|backbar|\bbar\b|\bcp\b/i;
+
+const CELL_TAGS = new Set(['TD', 'TH']);
+const BLOCK_TAGS = new Set([
+  'TR',
+  'P',
+  'DIV',
+  'LI',
+  'UL',
+  'OL',
+  'TABLE',
+  'SECTION',
+  'HEADER',
+  'FOOTER',
+  'ARTICLE',
+  'BLOCKQUOTE',
+  'H1',
+  'H2',
+  'H3',
+  'H4',
+  'H5',
+  'H6',
+]);
+
+function parseHtml(html: string): Document | null {
+  try {
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    doc.querySelectorAll('script, style, noscript').forEach((el) => el.remove());
+    return doc;
+  } catch {
+    return null;
+  }
+}
+
+function collectImages(doc: Document, baseUrl: string): string[] {
   const out: string[] = [];
-  const re = /<img\b[^>]*?\bsrc=["']([^"']+)["']/gi;
-  let m: RegExpExecArray | null;
-  while ((m = re.exec(html)) !== null) {
-    const src = m[1];
-    let decoded: string;
+  doc.querySelectorAll('img[src]').forEach((img) => {
+    const src = img.getAttribute('src') ?? '';
+    if (!src) return;
+    let decoded = src;
     try {
       decoded = decodeURIComponent(src);
     } catch {
-      decoded = src;
+      /* keep raw src */
     }
-    if (!/gear|skill|build|setup|champion|frontbar|backbar|\bbar\b|\bcp\b/i.test(decoded)) continue;
+    if (!BUILD_IMAGE_RE.test(decoded)) return;
     let abs = src;
     try {
       abs = baseUrl ? new URL(src, baseUrl).href : src;
@@ -57,34 +72,48 @@ export function extractGuideImageUrls(html: string, baseUrl = ''): string[] {
       /* keep the raw src */
     }
     out.push(abs);
-  }
+  });
   return [...new Set(out)].slice(0, 12);
+}
+
+/** Extract build-panel image URLs (gear/skill/CP/setup) from page HTML. */
+export function extractGuideImageUrls(html: string, baseUrl = ''): string[] {
+  const doc = parseHtml(html);
+  return doc ? collectImages(doc, baseUrl) : [];
+}
+
+/** Walk the DOM, emitting tabs between table cells and newlines at block ends. */
+function gatherText(root: Node): string {
+  const parts: string[] = [];
+  const visit = (node: Node): void => {
+    for (let child = node.firstChild; child; child = child.nextSibling) {
+      if (child.nodeType === 3 /* text */) {
+        parts.push((child.textContent ?? '').replace(/\s+/g, ' '));
+      } else if (child.nodeType === 1 /* element */) {
+        const tag = (child as Element).tagName;
+        if (tag === 'BR') {
+          parts.push('\n');
+          continue;
+        }
+        visit(child);
+        if (CELL_TAGS.has(tag)) parts.push('\t');
+        else if (BLOCK_TAGS.has(tag)) parts.push('\n');
+      }
+    }
+  };
+  visit(root);
+  return parts.join('');
 }
 
 /** Convert a guide page's HTML into parser-ready text + a build-image list. */
 export function extractGuide(html: string, baseUrl = ''): ExtractedGuide {
-  const cleaned = html
-    .replace(/<script[\s\S]*?<\/script>/gi, ' ')
-    .replace(/<style[\s\S]*?<\/style>/gi, ' ')
-    .replace(/<noscript[\s\S]*?<\/noscript>/gi, ' ')
-    .replace(/<!--[\s\S]*?-->/g, ' ');
+  const doc = parseHtml(html);
+  if (!doc) return { title: '', text: '', images: [] };
 
-  const title = decodeEntities(
-    (cleaned.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1] ?? '').trim(),
-  );
+  // textContent here is already entity-decoded by the parser (no manual decode).
+  const title = (doc.querySelector('title')?.textContent ?? '').replace(/\s+/g, ' ').trim();
 
-  let s = cleaned
-    // Table cells → tabs (reconstructs gear-table columns the parser keys on).
-    .replace(/<\/(td|th)>\s*<(td|th)\b[^>]*>/gi, '\t')
-    .replace(/<(td|th)\b[^>]*>/gi, '')
-    .replace(/<\/(td|th)>/gi, '\t')
-    // Block boundaries → newlines.
-    .replace(/<br\s*\/?>/gi, '\n')
-    .replace(/<\/(tr|p|div|li|h[1-6]|section|header|article)>/gi, '\n');
-  s = s.replace(/<[^>]+>/g, ' ');
-  s = decodeEntities(s);
-
-  const text = s
+  const text = gatherText(doc.body ?? doc)
     .split('\n')
     .map((line) =>
       line
@@ -97,5 +126,5 @@ export function extractGuide(html: string, baseUrl = ''): ExtractedGuide {
     .filter((l) => l.length > 0)
     .join('\n');
 
-  return { title, text, images: extractGuideImageUrls(cleaned, baseUrl) };
+  return { title, text, images: collectImages(doc, baseUrl) };
 }

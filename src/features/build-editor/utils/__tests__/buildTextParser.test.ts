@@ -253,9 +253,12 @@ describe('parseBuildText — skinnycheeks image-guide gear panel', () => {
     expect(main?.enchant).toBe('flame');
   });
 
-  it('resolves a weight from a "Light or Medium" choice cell', () => {
+  it('imports a single weight but leaves a "Light or Medium" choice cell unset', () => {
+    // HEAD = "MEDIUM" → imported; SHOULDER = "LIGHT OR MEDIUM" is the guide
+    // offering a choice, so we don't silently pick one — and we warn instead.
     expect(r.gear.find((g) => g.slot === 0)?.weight).toBe('medium');
-    expect(r.gear.find((g) => g.slot === 3)?.weight).toBe('light');
+    expect(r.gear.find((g) => g.slot === 3)?.weight).toBeUndefined();
+    expect(r.warnings.some((w) => /multiple weights/i.test(w))).toBe(true);
   });
 
   it('resolves the mythic head set from "MYTHIC: …" and a jewelry abbreviation', () => {

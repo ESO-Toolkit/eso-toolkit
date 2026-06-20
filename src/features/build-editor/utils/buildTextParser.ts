@@ -342,13 +342,14 @@ function resolveSlotIndex(rawLabel: string, ringSlots: { used: Set<number> }): n
   return fuzzy ?? null;
 }
 
-/** First armor-weight word in a cell ("Light or Medium" → light), or undefined. */
-function firstWeight(cell: string): ArmorWeight | undefined {
+/** Distinct armor-weight words in a cell, in light → medium → heavy order. */
+function weightOptions(cell: string): ArmorWeight[] {
   const k = cell.toLowerCase();
-  if (/\blight\b/.test(k)) return 'light';
-  if (/\bmedium\b/.test(k)) return 'medium';
-  if (/\bheavy\b/.test(k)) return 'heavy';
-  return undefined;
+  const out: ArmorWeight[] = [];
+  if (/\blight\b/.test(k)) out.push('light');
+  if (/\bmedium\b/.test(k)) out.push('medium');
+  if (/\bheavy\b/.test(k)) out.push('heavy');
+  return out;
 }
 
 function resolveTrait(
@@ -462,7 +463,10 @@ function parseGear(lines: string[], warnings: string[]): ParsedGearRow[] {
       itemId = resolveSetItem(setName, def.slotType);
     }
 
-    const weight = def.category === 'apparel' ? firstWeight(weightOrType) : undefined;
+    // A cell like "Light or Medium" offers the player a choice — don't silently
+    // pick one. Only import a weight when exactly one is named.
+    const weights = def.category === 'apparel' ? weightOptions(weightOrType) : [];
+    const weight = weights.length === 1 ? weights[0] : undefined;
     const trait = traitRaw ? resolveTrait(traitRaw, def.category) : null;
     const enchant = enchantRaw ? resolveEnchant(enchantRaw, def.category) : null;
 
@@ -474,6 +478,8 @@ function parseGear(lines: string[], warnings: string[]): ParsedGearRow[] {
     if (itemId == null) warnings.push(`Couldn't match set “${setName}” for ${def.name}`);
     else if (weaponUnconfirmed)
       warnings.push(`Verify weapon type “${weightOrType}” for ${def.name}`);
+    if (weights.length > 1)
+      warnings.push(`${def.name} lists multiple weights (${weights.join('/')}) — choose one`);
 
     rows.push({
       slot,
