@@ -8,6 +8,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { getClassMasteryLine } from '@/data/skill-lines/class/classMastery';
 
+import { getItemInfo } from '../../loadout-manager/data/itemIdMap';
 import type {
   ArmorWeight,
   GearConfig,
@@ -15,6 +16,7 @@ import type {
 } from '../../loadout-manager/types/loadout.types';
 import { isTwoHandedWeapon } from '../../loadout-manager/utils/itemIconResolver';
 import { EQUIP_SLOTS, getDefaultLinesForClass } from '../data/esoStaticData';
+import { getLockedArmorWeight } from '../data/setArmorWeights';
 import { DEFAULT_STAT_OVERRIDES } from '../engine/stat-constants';
 import type { StatOverrides } from '../engine/stat-types';
 import type {
@@ -373,12 +375,20 @@ export const buildEditorSlice = createSlice({
         }
 
         if (APPAREL_SLOT_SET.has(slot)) {
-          if (weight === null) {
-            delete piece.weight;
-            changed = true;
-          } else if (weight !== undefined) {
-            piece.weight = weight;
-            changed = true;
+          // Sets locked to one in-game armor weight (mythics, overland/dungeon/
+          // trial drops) can't be re-weighted — the single-slot UI shows them as
+          // read-only, so skip them here too rather than persist an impossible
+          // weight that exports/roster display would read verbatim.
+          const setName = piece.id != null ? getItemInfo(Number(piece.id))?.setName : undefined;
+          const isLocked = getLockedArmorWeight(setName) !== null;
+          if (!isLocked) {
+            if (weight === null) {
+              delete piece.weight;
+              changed = true;
+            } else if (weight !== undefined) {
+              piece.weight = weight;
+              changed = true;
+            }
           }
         }
       }
