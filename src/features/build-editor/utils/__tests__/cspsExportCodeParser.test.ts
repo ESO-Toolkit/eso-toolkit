@@ -362,3 +362,46 @@ describe('parseCSPSNativeCode', () => {
     expect(() => parseCSPSNativeCode('a#b#c')).toThrow(/at least 5 sections/);
   });
 });
+
+describe('Class Mastery in export codes', () => {
+  it('partitions Class Mastery passives out of an ESO-Hub code', () => {
+    const code = [
+      '1', // class: Dragonknight
+      '3', // race
+      '1', // role
+      '0:0:64', // attributes
+      '0', // curse
+      '13975', // mundus
+      '35,36,37', // subclasses: all DK lines → not subclassed
+      '0', // hotbar 1
+      '0', // hotbar 2
+      '238232,240268,400', // passives: 2 DK Class Mastery + 1 regular
+      '0', // slotted CP
+      '0', // passive CP
+      '0', // gear
+      '0', // food
+      '0', // potions
+    ].join(';');
+    const { build } = parseCSPSExportCode(code);
+    expect(build.classMasteryPassives).toEqual([238232, 240268]);
+    expect(build.setups[0].passives).toEqual([400]);
+  });
+
+  it('partitions Class Mastery passives out of a native code and recovers the class', () => {
+    const native = [
+      '-*263519:1,263520:1,500:1*-*-*-', // skills: prog empty / pass = 2 Warden CM + 1 regular
+      '0,0,0,0,0,0;0,0,0,0,0,0', // hotbars empty → class recovered from CM ids
+      '0;0;0', // attributes
+      '-', // mundus
+      '-', // champion points
+      '-', // gear
+      '-', // quickslots
+      '-', // outfits
+      '1', // role
+    ].join('#');
+    const { build } = parseCSPSNativeCode(native);
+    expect(build.esoClass).toBe('warden');
+    expect(build.classMasteryPassives).toEqual([263519, 263520]);
+    expect(build.setups[0].passives).toEqual([500]);
+  });
+});

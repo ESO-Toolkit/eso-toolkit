@@ -41,6 +41,8 @@ import type {
   SkilledAbility,
 } from '../types/build.types';
 
+import { classFromMasteryIds, partitionClassMasteryPicks } from './classMasteryTransfer';
+
 const logger = new Logger({ contextPrefix: 'CSPSExportCode' });
 
 // ── ESO ID → Build Editor mappings ──────────────────────────────────
@@ -564,8 +566,13 @@ export function parseCSPSExportCode(input: string): CSPSExportCodeResult {
   const skills = hotbarsToSkillsConfig(frontParsed.bar, backParsed.bar);
   const scribedAbilityIds = [...frontParsed.scribedIds, ...backParsed.scribedIds];
 
-  // Section 10: Passives (comma-separated ability IDs)
-  const passives = parseCommaInts(sections[9] || '');
+  // Section 10: Passives (comma-separated ability IDs). The real CSPS addon
+  // lists Class Mastery passives here too, so split them back out into the
+  // build-level Class Mastery field instead of the regular passives bucket.
+  const { passives, classMasteryPassives } = partitionClassMasteryPicks(
+    parseCommaInts(sections[9] || ''),
+    esoClass,
+  );
 
   // Section 11 & 12: Champion Points
   const cp = parseSlottedCP(sections[10] || '');
@@ -600,6 +607,7 @@ export function parseCSPSExportCode(input: string): CSPSExportCodeResult {
     shortDescription: 'Imported from CSPS export code',
     esoClass,
     classSkillLines,
+    classMasteryPassives,
     role,
     gameMode: 'pve',
     races: race ? [race] : [],
@@ -944,11 +952,17 @@ export function parseCSPSNativeCode(input: string): CSPSExportCodeResult {
   const roleIndex = sections[8] && sections[8] !== '-' ? parseIntSafe(sections[8]) : 0;
   const role = roleIndexToRole(roleIndex);
 
-  // Detect class from hotbar ability IDs (no explicit class field in native format)
+  // Detect class from hotbar ability IDs (no explicit class field in native
+  // format); fall back to the class implied by any Class Mastery passives.
   const allBarIds = [...hotbar.frontBar, ...hotbar.backBar].filter((n) => n > 0);
   const detectedClass = detectClassFromAbilityIds(allBarIds);
-  const esoClass: ESOClass = detectedClass ?? 'any-class';
+  const esoClass: ESOClass = detectedClass ?? classFromMasteryIds(skillPassives) ?? 'any-class';
   const classSkillLines = getDefaultLinesForClass(esoClass);
+  // Split Class Mastery passives out of the native pass list (see ESO-Hub path).
+  const { passives: regularPassives, classMasteryPassives } = partitionClassMasteryPicks(
+    skillPassives,
+    esoClass,
+  );
   const now = new Date().toISOString();
 
   const setup: BuildSetup = {
@@ -961,7 +975,7 @@ export function parseCSPSNativeCode(input: string): CSPSExportCodeResult {
     skills,
     cp,
     consumables: { potions: [], food: {} },
-    passives: skillPassives,
+    passives: regularPassives,
     screenshots: [],
     ...(allScribedIds.length > 0 ? { scribedAbilityIds: allScribedIds } : {}),
     ...(nativeSkilledAbilities.length > 0 ? { skilledAbilities: nativeSkilledAbilities } : {}),
@@ -974,6 +988,7 @@ export function parseCSPSNativeCode(input: string): CSPSExportCodeResult {
     shortDescription: 'Imported from CSPS native export code',
     esoClass,
     classSkillLines,
+    classMasteryPassives,
     role,
     gameMode: 'pve',
     races: [],

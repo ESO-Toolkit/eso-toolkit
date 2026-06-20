@@ -338,4 +338,45 @@ describe('cspsImport', () => {
       expect(build.setups[0].skills[0]).toEqual({});
     });
   });
+
+  describe('Class Mastery (U50)', () => {
+    it('partitions Class Mastery passives from werte.pass into build.classMasteryPassives', () => {
+      const char = makeCSPSCharacterOption({
+        werte: {
+          prog: { part1: '20657:1' }, // DK Ardent Flame range → detected as dragonknight
+          pass: { part1: '238232:1,240268:1,400:3' }, // 2 DK Class Mastery + 1 regular passive
+        },
+      });
+      const build = convertCSPSCharacterToBuild(char);
+      expect(build.esoClass).toBe('dragonknight');
+      expect(build.classMasteryPassives).toEqual([238232, 240268]);
+      // CM ids must not leak into the regular passives bucket
+      expect(build.setups[0].passives).toEqual([400]);
+    });
+
+    it('recovers the class from Class Mastery ids when active-skill detection is inconclusive', () => {
+      const char = makeCSPSCharacterOption({
+        werte: {
+          prog: { part1: '100:1' }, // unknown id → no class from active skills
+          pass: { part1: '263519:1,263520:1' }, // Warden Class Mastery ids
+        },
+      });
+      const build = convertCSPSCharacterToBuild(char);
+      expect(build.esoClass).toBe('warden');
+      expect(build.classMasteryPassives).toEqual([263519, 263520]);
+    });
+
+    it('caps imported Class Mastery picks at 2 and drops foreign-class ids', () => {
+      const char = makeCSPSCharacterOption({
+        werte: {
+          prog: { part1: '20657:1' }, // dragonknight
+          pass: { part1: '238232:1,240268:1,259224:1,263519:1' }, // 3 DK CM + 1 Warden CM
+        },
+      });
+      const build = convertCSPSCharacterToBuild(char);
+      expect(build.classMasteryPassives).toEqual([238232, 240268]);
+      // every Class Mastery id is stripped from regular passives
+      expect(build.setups[0].passives).toEqual([]);
+    });
+  });
 });

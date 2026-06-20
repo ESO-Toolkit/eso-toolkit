@@ -46,6 +46,7 @@ import type {
   SkilledAbility,
 } from '../types/build.types';
 
+import { classFromMasteryIds, partitionClassMasteryPicks } from './classMasteryTransfer';
 import {
   isCSPSExportCode,
   isCSPSNativeCode,
@@ -592,8 +593,24 @@ export function convertCSPSCharacterToBuild(character: CSPSCharacterOption): Bui
 
   const now = new Date().toISOString();
 
-  // Detect class from werte skill data (falls back to 'dragonknight')
-  const detectedClass = detectClassFromWerte(character.data.werte) ?? 'dragonknight';
+  // Detect class from werte skill data. If the active skills are inconclusive,
+  // fall back to the class implied by any Class Mastery passives present (those
+  // ids are unique per class) before defaulting to 'dragonknight'.
+  const allPassiveIds = setups.flatMap((s) => s.passives);
+  const detectedClass =
+    detectClassFromWerte(character.data.werte) ??
+    classFromMasteryIds(allPassiveIds) ??
+    'dragonknight';
+
+  // Class Mastery passives ride in werte.pass alongside regular passives, so
+  // split them back out of every setup (they must not pollute the regular
+  // Passives section) and lift the build-level picks from the main setup.
+  let classMasteryPassives: number[] = [];
+  setups.forEach((setup, i) => {
+    const partitioned = partitionClassMasteryPicks(setup.passives, detectedClass);
+    setup.passives = partitioned.passives;
+    if (i === 0) classMasteryPassives = partitioned.classMasteryPassives;
+  });
 
   // Detect role from comp1 (falls back to 'magicka-dps')
   const comp1 = decompressComp1(character.data.comp1);
@@ -608,6 +625,7 @@ export function convertCSPSCharacterToBuild(character: CSPSCharacterOption): Bui
     shortDescription: `Imported from CSPS — ${character.accountName}`,
     esoClass: detectedClass,
     classSkillLines,
+    classMasteryPassives,
     role,
     gameMode: 'pve',
     races: [],

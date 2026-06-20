@@ -341,4 +341,60 @@ describe('cspsExport', () => {
       expect(hotbar.backBar).toEqual([700, 800, 900, 1000, 1100, 1200]);
     });
   });
+
+  describe('Class Mastery (U50)', () => {
+    it('writes eligible Class Mastery picks into werte.pass as id:1', () => {
+      const build = makeBuild({
+        esoClass: 'dragonknight',
+        classSkillLines: [null, null, null],
+        classMasteryPassives: [238232, 240268],
+        setups: [makeSetup({ passives: [400] })],
+      });
+      const charData =
+        convertBuildToCSPS(build).Default!['@ESOToolkit'].$AccountWide.charData!['1'];
+      expect(charData.werte!.pass!.part1).toContain('238232:1');
+      expect(charData.werte!.pass!.part1).toContain('240268:1');
+      expect(charData.werte!.pass!.part1).toContain('400:1');
+    });
+
+    it('omits Class Mastery picks when the build is subclassed', () => {
+      const build = makeBuild({
+        esoClass: 'dragonknight',
+        // an off-class skill line makes the build subclassed → CM disabled in-game
+        classSkillLines: ['class.assassination', null, null],
+        classMasteryPassives: [238232, 240268],
+        setups: [makeSetup({ passives: [400] })],
+      });
+      const charData =
+        convertBuildToCSPS(build).Default!['@ESOToolkit'].$AccountWide.charData!['1'];
+      expect(charData.werte!.pass!.part1).toContain('400:1');
+      expect(charData.werte!.pass!.part1).not.toContain('238232:1');
+    });
+
+    it('writes the same Class Mastery picks into every profile (character-wide)', () => {
+      const build = makeBuild({
+        esoClass: 'dragonknight',
+        classSkillLines: [null, null, null],
+        classMasteryPassives: [238232],
+        setups: [makeSetup({ passives: [400] }), makeSetup({ name: 'AoE', passives: [500] })],
+      });
+      const charData =
+        convertBuildToCSPS(build).Default!['@ESOToolkit'].$AccountWide.charData!['1'];
+      expect(charData.werte!.pass!.part1).toContain('238232:1');
+      expect(charData.profiles![1].werte!.pass!.part1).toContain('238232:1');
+    });
+
+    it('round-trips Class Mastery picks through export → import', () => {
+      const build = makeBuild({
+        esoClass: 'warden',
+        classSkillLines: [null, null, null],
+        classMasteryPassives: [263519, 263520],
+        setups: [makeSetup({ passives: [] })],
+      });
+      const lua = exportBuildToCSPSLua(build);
+      const reimported = convertCSPSCharacterToBuild(parseCSPSInput(lua).characters[0]);
+      expect(reimported.classMasteryPassives).toEqual([263519, 263520]);
+      expect(reimported.setups[0].passives).toEqual([]);
+    });
+  });
 });

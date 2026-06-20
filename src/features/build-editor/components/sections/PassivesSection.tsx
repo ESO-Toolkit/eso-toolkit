@@ -8,6 +8,8 @@
 import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
+import { CLASS_MASTERY_SKILL_IDS } from '@/data/skill-lines/class/classMastery';
+
 import {
   selectActiveSetup,
   selectBuildEsoClass,
@@ -24,9 +26,14 @@ const PassivesSectionComponent: React.FC = () => {
 
   if (!setup) return null;
 
+  // Class Mastery picks live on build.classMasteryPassives, not here. Defend
+  // against legacy/imported builds that left CM ids in setup.passives so they
+  // never show up as (unmanageable) tiles in the regular Passives picker.
+  const regularPassives = setup.passives.filter((id) => !CLASS_MASTERY_SKILL_IDS.has(id));
+
   return (
     <PassivesPicker
-      passives={setup.passives}
+      passives={regularPassives}
       onChange={(updated) => dispatch(setPassives(updated))}
       esoClass={esoClass}
       races={races}

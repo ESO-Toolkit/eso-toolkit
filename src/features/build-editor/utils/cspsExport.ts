@@ -38,6 +38,9 @@ import type {
   QuickslotEntry,
 } from '../types/build.types';
 
+import { isClassMasteryEligible } from './classMasteryEligibility';
+import { sanitizeClassMasteryPicks } from './classMasteryTransfer';
+
 // ── Reverse mappings (Build Editor → CSPS) ───────────────────────────
 
 /** Build editor mundus string IDs → CSPS mundus ability IDs */
@@ -147,18 +150,23 @@ function convertGearConfigToCSPS(gear: Record<number, GearPiece>): Record<number
 /**
  * Build werte object from passives + skilled abilities.
  * Combines werte.pass (passive skills) and werte.prog (active skills with morphs).
+ *
+ * Class Mastery picks (build-level) are merged into werte.pass as plain
+ * `abilityId:1` pairs, matching how the real CSPS addon stores them — there is
+ * no dedicated Class Mastery field, so the addon re-applies them via the Class
+ * Mastery Points pool on restore. Deduped against the regular passives.
  */
 function buildWerte(
   passives: number[],
   skilledAbilities?: BuildSetup['skilledAbilities'],
+  classMasteryPassives: number[] = [],
 ): CSPSSkillData | undefined {
   const werte: CSPSSkillData = {};
   let hasData = false;
 
-  // Passives → werte.pass
-  const passEntries: CSPSSkillEntry[] = passives
-    .filter((id) => id > 0)
-    .map((abilityId) => ({ abilityId, value: 1 }));
+  // Passives (+ Class Mastery picks) → werte.pass
+  const passIds = [...new Set([...passives.filter((id) => id > 0), ...classMasteryPassives])];
+  const passEntries: CSPSSkillEntry[] = passIds.map((abilityId) => ({ abilityId, value: 1 }));
   if (passEntries.length > 0) {
     werte.pass = compressSkillEntries(passEntries);
     hasData = true;
@@ -194,6 +202,7 @@ function setupToCSPSCharacterData(
   setup: BuildSetup,
   name: string,
   role: CombatRole,
+  classMasteryPassives: number[] = [],
 ): CSPSCharacterData {
   // Skills → hotbar (with scribed ability tracking)
   const hotbar = convertSkillsToHotbar(setup.skills);
@@ -239,8 +248,8 @@ function setupToCSPSCharacterData(
     outfitComp: '',
   };
 
-  // Passives + skilled abilities → werte
-  const werte = buildWerte(setup.passives, setup.skilledAbilities);
+  // Passives + skilled abilities + Class Mastery picks → werte
+  const werte = buildWerte(setup.passives, setup.skilledAbilities, classMasteryPassives);
 
   const charData: CSPSCharacterData = {
     comp1: compressComp1(comp1),
@@ -268,10 +277,17 @@ export function convertBuildToCSPS(build: Build): CSPSSavedVariables {
   const accountName = '@ESOToolkit';
   const characterId = '1';
 
+  // Class Mastery is a character-wide selection (not per-setup) and is invalid
+  // while subclassed, so resolve the eligible picks once and write the same set
+  // into every setup/profile's werte.pass.
+  const classMasteryPassives = isClassMasteryEligible(build.esoClass, build.classSkillLines)
+    ? sanitizeClassMasteryPicks(build.classMasteryPassives, build.esoClass)
+    : [];
+
   // First setup → main character data
   const mainSetup = build.setups[0];
   const charData: CSPSCharacterData = mainSetup
-    ? setupToCSPSCharacterData(mainSetup, characterName, build.role)
+    ? setupToCSPSCharacterData(mainSetup, characterName, build.role, classMasteryPassives)
     : { comp1: '', comp2: '', $lastCharacterName: characterName };
 
   // Additional setups → profiles
@@ -279,7 +295,12 @@ export function convertBuildToCSPS(build: Build): CSPSSavedVariables {
     charData.profiles = {};
     for (let i = 1; i < build.setups.length; i++) {
       const setup = build.setups[i];
-      const profileData = setupToCSPSCharacterData(setup, setup.name, build.role);
+      const profileData = setupToCSPSCharacterData(
+        setup,
+        setup.name,
+        build.role,
+        classMasteryPassives,
+      );
       charData.profiles[i] = {
         ...profileData,
         name: setup.name,
