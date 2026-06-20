@@ -1186,7 +1186,7 @@ export const noblesConquest: GearSetData = {
 export const nocturnalsFavor: GearSetData = {
   name: "Nocturnal's Favor",
   icon: "Nocturnal's Favor",
-  setType: 'Craftable',
+  setType: 'PvP',
   bonuses: [
     '(2 items) Adds 129 Stamina Recovery',
     '(3 items) Adds 1206 Maximum Health',
@@ -1693,7 +1693,7 @@ export const sheerVenom: GearSetData = {
 export const sithisTouch: GearSetData = {
   name: "Sithis' Touch",
   icon: "Sithis' Touch",
-  setType: 'Overland',
+  setType: 'Mythic',
   bonuses: [
     '(2 items) Adds 1096 Maximum Stamina',
     '(3 items) Adds 1096 Maximum Magicka',
@@ -2172,7 +2172,7 @@ export const twicefangedSerpent: GearSetData = {
 export const twilightsEmbrace: GearSetData = {
   name: "Twilight's Embrace",
   icon: "Twilight's Embrace",
-  setType: 'Craftable',
+  setType: 'Trial',
   bonuses: [
     '(2 items) Adds 1096 Maximum Magicka',
     '(3 items) Adds 657 Critical Chance',
@@ -2527,7 +2527,7 @@ export const yandirsMight: GearSetData = {
 export const alessianOrder: GearSetData = {
   name: 'Alessian Order',
   icon: 'Alessian Order',
-  setType: 'Craftable',
+  setType: 'PvP',
   bonuses: [
     '(2 items) Adds 1487 Armor',
     '(3 items) Adds 1487 Armor',
@@ -2539,7 +2539,7 @@ export const alessianOrder: GearSetData = {
 export const anthelmirSConstruct: GearSetData = {
   name: "Anthelmir's Construct",
   icon: "Anthelmir's Construct",
-  setType: 'Dungeon',
+  setType: 'Monster Set',
   bonuses: [
     '(1 item) Adds 129 Weapon and Spell Damage',
     '(2 items) Dealing damage with a fully-charged Heavy Attack throws an axe at the enemy, dealing 9748 Physical Damage and reducing their Armor by 2053 for 5 seconds. This effect can occur once every 10 seconds and scales off the higher of your Weapon or Spell Damage.\n\nThe axe drops to the ground after traveling to your target for 5 seconds. Touching the axe reduces the cooldown of this set by 5 seconds.',
@@ -2549,7 +2549,7 @@ export const anthelmirSConstruct: GearSetData = {
 export const archdruidDevyric: GearSetData = {
   name: 'Archdruid Devyric',
   icon: 'Archdruid Devyric',
-  setType: 'Arena',
+  setType: 'Monster Set',
   bonuses: [
     '(1 item) Adds 1487 Offensive Penetration',
     '(2 items) When you deal damage with a Heavy Attack, after 1.2 seconds deal 3817 Shock Damage to up to 6 enemies within a 7 by 5 meter line on your target, applying Major Vulnerability to them for 7 seconds, increasing the damage enemies take by 10%. This effect can occur once every 15 seconds and scales off the higher of your Weapon or Spell Damage.',
@@ -2571,7 +2571,7 @@ export const archerSMind: GearSetData = {
 export const armorOfTheTrainee: GearSetData = {
   name: 'Armor of the Trainee',
   icon: 'Armor of the Trainee',
-  setType: 'Trial',
+  setType: 'Overland',
   bonuses: [
     '(1 item) Adds 1454 Maximum Health',
     '(2 items) Adds 1454 Maximum Magicka',
@@ -2592,7 +2592,7 @@ export const balorgh: GearSetData = {
 export const barSakka: GearSetData = {
   name: 'Bar-Sakka',
   icon: 'Bar-Sakka',
-  setType: 'Dungeon',
+  setType: 'Monster Set',
   bonuses: [
     '(1 item) Adds 1206 Maximum Health',
     '(2 items) While in combat, performing a Roll Dodge creates a 6 meter pool of blood. After a 1 second delay, enemies in the pool take 960 Magic Damage. Gain a Damage Shield for 6 seconds based on total damage done by the pool to enemies, up to 15000 damage. This effect can occur once every 10 seconds and the amount of damage done scales off your Max Health and cannot critically hit.',
@@ -2613,7 +2613,7 @@ export const baronThirsk: GearSetData = {
 export const baronZaudrus: GearSetData = {
   name: 'Baron Zaudrus',
   icon: 'Baron Zaudrus',
-  setType: 'Class Sets',
+  setType: 'Monster Set',
   bonuses: [
     '(1 item) Adds 548 Maximum Stamina',
     '(1 item) Adds 548 Maximum Magicka',
@@ -2637,7 +2637,7 @@ export const battlefieldAcrobat: GearSetData = {
 export const blackGemMonstrosity: GearSetData = {
   name: 'Black Gem Monstrosity',
   icon: 'Black Gem Monstrosity',
-  setType: 'Dungeon',
+  setType: 'Monster Set',
   bonuses: [
     '(1 item) Adds 1487 Offensive Penetration',
     "(2 items) While in combat, casting a Soul Magic ability consumes a Soul Gem and gives you a Black Gemsplitter for 10 seconds. This effect can occur once every 6 seconds. Dealing Light or Heavy Attack damage fires the Black Gemsplitter at your target, dealing 17.1% of your target's Max Health as Magic Damage, up to 17100 Magic Damage.",
@@ -2647,7 +2647,7 @@ export const blackGemMonstrosity: GearSetData = {
 export const bloodspawn: GearSetData = {
   name: 'Bloodspawn',
   icon: 'Bloodspawn',
-  setType: 'PvP',
+  setType: 'Monster Set',
   bonuses: [
     '(1 item) Adds 129 Stamina Recovery',
     '(2 items) When you take damage, you have a 6% chance to generate 13 Ultimate and increase your Physical and Spell Resistance by 3731 for 5 seconds. This effect can occur once every 5 seconds.',
@@ -2669,7 +2669,7 @@ export const bluntedBlades: GearSetData = {
 export const chokethorn: GearSetData = {
   name: 'Chokethorn',
   icon: 'Chokethorn',
-  setType: 'Craftable',
+  setType: 'Monster Set',
   bonuses: [
     '(1 item) Adds 129 Magicka Recovery',
     '(2 items) When you use a heal ability with a cost, you have a 33% chance to summon a strangler sapling that heals you or an ally for 14119 Health over 6 seconds. This effect can occur once every 10 seconds and scales off the higher of your Max Magicka or Stamina.',
@@ -2679,7 +2679,7 @@ export const chokethorn: GearSetData = {
 export const colovianHighlandsGeneral: GearSetData = {
   name: 'Colovian Highlands General',
   icon: 'Colovian Highlands General',
-  setType: 'Trial',
+  setType: 'Monster Set',
   bonuses: [
     '(1 item) Adds 1487 Offensive Penetration',
     '(2 items) When you kill a Player, gain a stack of Blood Debt for 0.5 seconds. When Blood Debt expires, you and up to 5 group members within 28 meters of you gain 15 Ultimate per stack of Blood Debt.',
@@ -2726,7 +2726,7 @@ export const deadlyStrike: GearSetData = {
 export const domihaus: GearSetData = {
   name: 'Domihaus',
   icon: 'Domihaus',
-  setType: 'Craftable',
+  setType: 'Monster Set',
   bonuses: [
     '(1 item) Adds 1096 Maximum Stamina',
     '(1 item) Adds 1096 Maximum Magicka',
@@ -2757,7 +2757,7 @@ export const encratisSBehemoth: GearSetData = {
 export const engineGuardian: GearSetData = {
   name: 'Engine Guardian',
   icon: 'Engine Guardian',
-  setType: 'Dungeon',
+  setType: 'Monster Set',
   bonuses: [
     '(1 item) Adds 129 Health Recovery',
     '(2 items) When you use an ability that costs resources, you have a 25% chance to summon a Dwemer automaton to restore 550 Stamina or Magicka or 1994 Health to you every 0.5 seconds for 6 seconds. This effect can occur once every 10 seconds.',
@@ -2767,7 +2767,7 @@ export const engineGuardian: GearSetData = {
 export const euphoticGatekeeper: GearSetData = {
   name: 'Euphotic Gatekeeper',
   icon: 'Euphotic Gatekeeper',
-  setType: 'Craftable',
+  setType: 'Monster Set',
   bonuses: [
     '(1 item) Adds 129 Stamina Recovery',
     '(2 items) When you use Roll Dodge, create a Hadolid Husk after you roll. While within 5 meters of the Hadolid Husk, it will absorb all direct damage attacks against you. After 1 second, the Hadolid Husk explodes, dealing 6781 Poison Damage to all enemies within 5 meters. This effect can occur once every 20 seconds and scales off the higher of your Weapon or Spell Damage.',
@@ -2789,7 +2789,7 @@ export const farstrider: GearSetData = {
 export const fellowshipSFortitude: GearSetData = {
   name: "Fellowship's Fortitude",
   icon: "Fellowship's Fortitude",
-  setType: 'Overland',
+  setType: 'Craftable',
   bonuses: [
     '(5 items) Adds 7425 Armor',
     '(10 items) Adds 6020 Maximum Health',
@@ -2822,7 +2822,7 @@ export const giantSpider: GearSetData = {
 export const glorgolochTheDestroyer: GearSetData = {
   name: 'Glorgoloch the Destroyer',
   icon: 'Glorgoloch the Destroyer',
-  setType: 'Craftable',
+  setType: 'Monster Set',
   bonuses: [
     '(1 item) Adds 1206 Maximum Health',
     '(2 items) While in combat, each second you stand still grants you a stack of Flesh Fortress, up to 10 stacks. Each stack increases your Armor by 380 and your Critical Resistance by 38. Each second you move removes a stack of Flesh Fortress. Exiting combat removes all stacks of Flesh Fortress.\n\nUsing charge and teleport abilities do not remove stacks of Flesh Fortress.',
@@ -2842,7 +2842,7 @@ export const grothdarr: GearSetData = {
 export const grundwulf: GearSetData = {
   name: 'Grundwulf',
   icon: 'Grundwulf',
-  setType: 'Overland',
+  setType: 'Monster Set',
   bonuses: [
     '(1 item) Adds 657 Critical Chance',
     '(2 items) Whenever you deal critical damage, restore 700 Magicka or Stamina, whichever maximum is higher. You also gain 350 of the other resource. This effect can occur once every 5 seconds.',
@@ -2908,7 +2908,7 @@ export const ilambris: GearSetData = {
 export const immolatorCharr: GearSetData = {
   name: 'Immolator Charr',
   icon: 'Immolator Charr',
-  setType: 'PvP',
+  setType: 'Monster Set',
   bonuses: [
     '(1 item) Adds 1487 Armor',
     '(2 items) Adds 1206 Maximum Health',
@@ -2931,7 +2931,7 @@ export const imperialPhysique: GearSetData = {
 export const impregnableArmor: GearSetData = {
   name: 'Impregnable Armor',
   icon: 'Impregnable Armor',
-  setType: 'Monster Set',
+  setType: 'PvP',
   bonuses: [
     '(2 items) Adds 424 Critical Resistance',
     '(3 items) Adds 424 Critical Resistance',
@@ -2963,7 +2963,7 @@ export const jerallMountainsWarchief: GearSetData = {
 export const kargaeda: GearSetData = {
   name: 'Kargaeda',
   icon: 'Kargaeda',
-  setType: 'Trial',
+  setType: 'Monster Set',
   bonuses: [
     '(1 item) Adds 731 Maximum Magicka',
     '(1 item) Adds 731 Maximum Stamina',
@@ -2984,7 +2984,7 @@ export const kjalnarSNightmare: GearSetData = {
 export const kraGh: GearSetData = {
   name: "Kra'gh",
   icon: "Kra'gh",
-  setType: 'Dungeon',
+  setType: 'Monster Set',
   bonuses: [
     '(1 item) Adds 1487 Offensive Penetration',
     '(2 items) When you deal damage, you have a 10% chance to spawn dreugh limbs that create shockwaves in front of you dealing 1462 Physical Damage every 0.6 seconds for 2.4 seconds. This effect can occur once every 6 seconds and scales off the higher of your Weapon or Spell Damage.',
@@ -3016,7 +3016,7 @@ export const ladyMalygda: GearSetData = {
 export const ladyThorn: GearSetData = {
   name: 'Lady Thorn',
   icon: 'Lady Thorn',
-  setType: 'PvP',
+  setType: 'Monster Set',
   bonuses: [
     '(1 item) Adds 1206 Maximum Health',
     "(2 items) Casting an ability that costs Health spawns a blood ball for 10 seconds. This effect can occur once every 10 seconds.\n\nYou or an ally near the blood ball can activate the Sanguine Burst synergy, dealing 3510 Disease Damage to nearby enemies and applying Major Maim for 8 seconds, decreasing their damage done by 10%. Enemies can only receive Major Maim from Sanguine Burst once every 20 seconds. The damage scales off the synergy activator's Max Health.",
@@ -3060,7 +3060,7 @@ export const lordWarden: GearSetData = {
 export const maarselok: GearSetData = {
   name: 'Maarselok',
   icon: 'Maarselok',
-  setType: 'Overland',
+  setType: 'Monster Set',
   bonuses: [
     '(1 item) Adds 1096 Maximum Stamina',
     '(2 items) When you deal damage with a melee Heavy Attack, you spew a cone of corruption, dealing 8264 Disease Damage to enemies over 4 seconds. This damage is increased by 10% for each negative effect the enemies have, up to a maximum of 300%. This effect can occur once every 10 seconds and scales off the higher of your Weapon or Spell Damage.',
@@ -3124,7 +3124,7 @@ export const molagKena: GearSetData = {
 export const motherCiannait: GearSetData = {
   name: 'Mother Ciannait',
   icon: 'Mother Ciannait',
-  setType: 'Craftable',
+  setType: 'Monster Set',
   bonuses: [
     '(1 item) Adds 1096 Maximum Magicka',
     '(2 items) While in combat, casting an ability with a cast time or channeling an ability grants you a damage shield that absorbs 5000 damage for 6 seconds. If the damage shield is broken, you restore 985 Magicka. This effect can occur once every 7 seconds.',
@@ -3144,7 +3144,7 @@ export const nazaray: GearSetData = {
 export const nerienEth: GearSetData = {
   name: "Nerien'eth",
   icon: "Nerien'eth",
-  setType: 'Craftable',
+  setType: 'Monster Set',
   bonuses: [
     '(1 item) Adds 129 Weapon and Spell Damage',
     '(2 items) When you deal direct damage, you have a 15% chance to summon a Lich crystal that explodes after 2 seconds, dealing 7984 Magic Damage to all enemies within 4 meters. This effect can occur once every 3 seconds and scales off the higher of your Weapon or Spell Damage.',
@@ -3154,7 +3154,7 @@ export const nerienEth: GearSetData = {
 export const nibenayBayBattlereeve: GearSetData = {
   name: 'Nibenay Bay Battlereeve',
   icon: 'Nibenay Bay Battlereeve',
-  setType: 'Overland',
+  setType: 'Monster Set',
   bonuses: [
     '(1 item) Adds 424 Critical Resistance',
     '(2 items) When you are forcefully moved via a Pull, Knockback or Teleport ability, gain a damage shield that absorbs up to 15112 damage for 6 seconds. This damage shield is not affected by Battle Spirit. This effect can occur once every 14 seconds. While you do not have the damage shield from this set, reduce your damage taken from players by 5%.',
@@ -3164,7 +3164,7 @@ export const nibenayBayBattlereeve: GearSetData = {
 export const nightflame: GearSetData = {
   name: 'Nightflame',
   icon: 'Nightflame',
-  setType: 'Dungeon',
+  setType: 'Monster Set',
   bonuses: [
     '(1 item) Adds 1096 Maximum Magicka',
     '(2 items) When you heal yourself or an ally, you have a 20% chance to summon a totem for 6 seconds that heals you and your allies within 5 meters for 1423 Health every 1 second. This effect can occur once every 10 seconds and scales off the higher of your Max Magicka or Stamina.',
@@ -3174,7 +3174,7 @@ export const nightflame: GearSetData = {
 export const nocturnalSPloy: GearSetData = {
   name: "Nocturnal's Ploy",
   icon: "Nocturnal's Ploy",
-  setType: 'Dungeon',
+  setType: 'PvP',
   bonuses: [
     '(2 items) Adds 1487 Offensive Penetration',
     '(3 items) Adds 424 Critical Resistance',
@@ -3186,7 +3186,7 @@ export const nocturnalSPloy: GearSetData = {
 export const nunatak: GearSetData = {
   name: 'Nunatak',
   icon: 'Nunatak',
-  setType: 'Dungeon',
+  setType: 'Monster Set',
   bonuses: [
     '(1 item) Adds 1487 Armor',
     '(2 items) On dealing Frost Damage, create a 6 meter area under the target for 6 seconds, dealing 1059 Frost Damage to enemies every 1 second and applying a 40% snare for 4 seconds. Enemies damaged four times become immobilized and afflicted with Major Brittle for 4 seconds, causing the target to take 20% increased Critical Damage. This effect can occur once every 15 seconds and scales off the higher of your Weapon or Spell Damage.',
@@ -3206,7 +3206,7 @@ export const orpheonTheTactician: GearSetData = {
 export const ozezanTheInferno: GearSetData = {
   name: 'Ozezan the Inferno',
   icon: 'Ozezan the Inferno',
-  setType: 'Arena',
+  setType: 'Monster Set',
   bonuses: [
     '(1 item) Adds 129 Magicka Recovery',
     '(2 items) Overhealing yourself or an ally grants them 4272 Armor for 1.1 seconds. Healing yourself or an ally grants them Minor Vitality for 1.1 seconds, increasing their healing received and damage shield strength by 6%.',
@@ -3241,7 +3241,7 @@ export const pestilentHost: GearSetData = {
 export const pirateSkeleton: GearSetData = {
   name: 'Pirate Skeleton',
   icon: 'Pirate Skeleton',
-  setType: 'Dungeon',
+  setType: 'Monster Set',
   bonuses: [
     '(1 item) Adds 1487 Armor',
     '(2 items) When you take damage, you transform into a skeleton and gain Major Protection and Minor Defile for 15 seconds, reducing your damage taken by 10% but reducing your healing received and damage shield strength by 6%. This effect can occur once every 20 seconds.',
@@ -3275,7 +3275,7 @@ export const powerfulAssault: GearSetData = {
 export const priorThierric: GearSetData = {
   name: 'Prior Thierric',
   icon: 'Prior Thierric',
-  setType: 'Unknown',
+  setType: 'Monster Set',
   bonuses: [
     '(1 item) Adds 129 Weapon and Spell Damage',
     '(2 items) Dealing direct damage with an area of effect ability creates a 6 meter shadowy whirlwind below your enemy for 7 seconds. Enemies within the whirlwind take 1569 Physical Damage each second and increase their damage taken from your area of effect abilities by 5%. This effect can occur once every 15 seconds and scales off the higher of your Weapon or Spell Damage.',
@@ -3285,7 +3285,7 @@ export const priorThierric: GearSetData = {
 export const roksaTheWarped: GearSetData = {
   name: 'Roksa the Warped',
   icon: 'Roksa the Warped',
-  setType: 'Dungeon',
+  setType: 'Monster Set',
   bonuses: [
     '(1 item) Adds 70 Stamina Recovery',
     '(1 item) Adds 70 Magicka Recovery',
@@ -3317,7 +3317,7 @@ export const selene: GearSetData = {
 export const sellistrix: GearSetData = {
   name: 'Sellistrix',
   icon: 'Sellistrix',
-  setType: 'Overland',
+  setType: 'Monster Set',
   bonuses: [
     '(1 item) Adds 1096 Maximum Stamina',
     '(2 items) When you deal damage you create an earthquake under the enemy that erupts after 1.5 seconds, dealing 5721 Physical Damage to all enemies within 4 meters and stunning them for 3 seconds. This effect can occur once every 6 seconds and the damage scales off the higher of your Weapon or Spell Damage.',
@@ -3327,7 +3327,7 @@ export const sellistrix: GearSetData = {
 export const sentinelOfRkugamz: GearSetData = {
   name: 'Sentinel of Rkugamz',
   icon: 'Sentinel of Rkugamz',
-  setType: 'PvP',
+  setType: 'Monster Set',
   bonuses: [
     '(1 item) Adds 4% Healing Done',
     '(2 items) When you heal yourself or an ally you summon a Dwemer spider that heals for 1020 Health and restores 125 Magicka and Stamina to you and your allies within 5 meters every 1 second for 8 seconds. This effect can occur once every 15 seconds.',
@@ -3384,7 +3384,7 @@ export const sharedPain: GearSetData = {
 export const shatteredFate: GearSetData = {
   name: 'Shattered Fate',
   icon: 'Shattered Fate',
-  setType: 'Dungeon',
+  setType: 'Craftable',
   bonuses: [
     '(5 items) Adds 7918 Offensive Penetration',
     '(10 items) Adds 687 Weapon and Spell Damage',
@@ -3431,7 +3431,7 @@ export const shieldOfTheValiant: GearSetData = {
 export const slimecraw: GearSetData = {
   name: 'Slimecraw',
   icon: 'Slimecraw',
-  setType: 'Trial',
+  setType: 'Monster Set',
   bonuses: [
     '(1 item) Adds 657 Critical Chance',
     '(2 items) Adds 113 Critical Chance',
@@ -3464,7 +3464,7 @@ export const spawnOfMephala: GearSetData = {
 export const squallOfRetribution: GearSetData = {
   name: 'Squall of Retribution',
   icon: 'Squall of Retribution',
-  setType: 'Overland',
+  setType: 'Monster Set',
   bonuses: [
     '(1 item) Adds 1206 Maximum Health',
     '(2 items) When you take damage, gain one random effect for 6 seconds:\nGain Minor Protection, reducing your damage taken by 5%.\nGain a damage shield that absorbs up to 5835 damage.\nHeal for 712 Health every 2 seconds.\n\nThe Health restore scales off of your Max Health. This effect can occur once every 4.5 seconds.',
@@ -3484,7 +3484,7 @@ export const stoneHusk: GearSetData = {
 export const stonekeeper: GearSetData = {
   name: 'Stonekeeper',
   icon: 'Stonekeeper',
-  setType: 'Dungeon',
+  setType: 'Monster Set',
   bonuses: [
     '(1 item) Adds 548 Maximum Stamina',
     '(1 item) Adds 548 Maximum Magicka',
@@ -3496,7 +3496,7 @@ export const stonekeeper: GearSetData = {
 export const stormfist: GearSetData = {
   name: 'Stormfist',
   icon: 'Stormfist',
-  setType: 'Dungeon',
+  setType: 'Monster Set',
   bonuses: [
     '(1 item) Adds 129 Stamina Recovery',
     '(2 items) When you deal damage, you have a 10% chance to create a thunderfist to crush the enemy, dealing 1537 Shock Damage every 1 second for 3 seconds to all enemies within 4 meters and a final 6517 Physical Damage when the fist closes. This effect can occur once every 8 seconds and scales off the higher of your Weapon or Spell Damage.',
@@ -3506,7 +3506,7 @@ export const stormfist: GearSetData = {
 export const swarmMother: GearSetData = {
   name: 'Swarm Mother',
   icon: 'Swarm Mother',
-  setType: 'Dungeon',
+  setType: 'Monster Set',
   bonuses: [
     '(1 item) Adds 1096 Maximum Stamina',
     '(1 item) Adds 1096 Maximum Magicka',
@@ -3517,7 +3517,7 @@ export const swarmMother: GearSetData = {
 export const symphonyOfBlades: GearSetData = {
   name: 'Symphony of Blades',
   icon: 'Symphony of Blades',
-  setType: 'Overland',
+  setType: 'Monster Set',
   bonuses: [
     '(1 item) Adds 4% Healing Done',
     "(2 items) When you heal a group member who is under 50% of their primary resource, grant them Meridia's Favor, which restores 570 Magicka or Stamina every 1 second for 6 seconds. This effect can occur every 18 seconds per target.\n\nThis effect cannot target yourself, and the resource returned is based off the target's highest maximum resource.",
@@ -3527,7 +3527,7 @@ export const symphonyOfBlades: GearSetData = {
 export const theBlind: GearSetData = {
   name: 'The Blind',
   icon: 'The Blind',
-  setType: 'PvP',
+  setType: 'Monster Set',
   bonuses: [
     '(1 item) Adds 657 Critical Chance',
     '(2 items) When your healing critically strikes, your target gains a Hydroglass Damage Shield that absorbs up to 2692 damage for 6 seconds. While the Damage Shield holds and for 3 seconds after it ends, the target gains Minor Force, increasing their Critical Damage done by 10%. This effect can occur once every 6 seconds per target.',
@@ -3549,7 +3549,7 @@ export const theMoragTong: GearSetData = {
 export const theTrollKing: GearSetData = {
   name: 'The Troll King',
   icon: 'The Troll King',
-  setType: 'PvP',
+  setType: 'Monster Set',
   bonuses: [
     '(1 item) Adds 4% Healing Done',
     '(2 items) When you heal yourself or an ally, if they are still below 50% Health, their Health Recovery is increased by 925 for 10 seconds.',
@@ -3559,7 +3559,7 @@ export const theTrollKing: GearSetData = {
 export const thewsOfTheHarbinger: GearSetData = {
   name: 'Thews of the Harbinger',
   icon: 'Thews of the Harbinger',
-  setType: 'Craftable',
+  setType: 'PvP',
   bonuses: [
     '(2 items) Adds 1206 Maximum Health',
     '(3 items) Adds 1206 Maximum Health',
@@ -3591,7 +3591,7 @@ export const tremorscale: GearSetData = {
 export const valkynSkoria: GearSetData = {
   name: 'Valkyn Skoria',
   icon: 'Valkyn Skoria',
-  setType: 'Craftable',
+  setType: 'Monster Set',
   bonuses: [
     '(1 item) Adds 1487 Offensive Penetration',
     '(2 items) When you deal damage with a damage over time effect, you have an 8% chance to summon a meteor that deals 8324 Flame Damage to the target and 2626 Flame Damage to all other enemies within 5 meters. This effect can occur once every 5 seconds and scales off the higher of your Weapon or Spell Damage.',
@@ -3601,7 +3601,7 @@ export const valkynSkoria: GearSetData = {
 export const velidreth: GearSetData = {
   name: 'Velidreth',
   icon: 'Velidreth',
-  setType: 'Overland',
+  setType: 'Monster Set',
   bonuses: [
     '(1 item) Adds 129 Weapon and Spell Damage',
     '(2 items) When you deal damage, you have a 20% chance to spawn 3 disease spores in front of you after 1 second that deal 9139 Disease Damage to any enemy they hit. This effect can occur once every 8 seconds and scales off the higher of your Weapon or Spell Damage.',
@@ -3611,7 +3611,7 @@ export const velidreth: GearSetData = {
 export const vicecanonOfVenom: GearSetData = {
   name: 'Vicecanon of Venom',
   icon: 'Vicecanon of Venom',
-  setType: 'Trial',
+  setType: 'PvP',
   bonuses: [
     '(2 items) Adds 129 Weapon and Spell Damage',
     '(3 items) Adds 129 Weapon and Spell Damage',
@@ -3623,7 +3623,7 @@ export const vicecanonOfVenom: GearSetData = {
 export const vykosa: GearSetData = {
   name: 'Vykosa',
   icon: 'Vykosa',
-  setType: 'Trial',
+  setType: 'Monster Set',
   bonuses: [
     '(1 item) Adds 4% Healing Taken',
     "(2 items) When you Bash an enemy you've taunted, you frighten them with a deafening howl, applying Major Cowardice to them, lowering their Weapon and Spell Damage by 430 for 8 seconds. This effect can occur once every 15 seconds.",
