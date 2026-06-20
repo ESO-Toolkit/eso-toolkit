@@ -11,7 +11,11 @@
  * matching the server's allow-list exactly so no additional entities leak
  * through.
  */
-export function decodeHtmlEntities(input: string): string {
+export function decodeHtmlEntities(input: string | null | undefined): string {
+  // External data stores (e.g. D1 columns) can legitimately hold NULL even
+  // where the TS types claim a string, so tolerate non-strings rather than
+  // throwing on `null.replace`.
+  if (typeof input !== 'string') return '';
   return input
     .replace(/&#x27;/g, "'")
     .replace(/&quot;/g, '"')
