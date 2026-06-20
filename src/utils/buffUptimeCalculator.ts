@@ -91,8 +91,11 @@ export function computeBuffUptimes(
         return false;
       }
 
-      // Filter by source IDs if specified
-      if (sourceIds && interval.sourceID && !sourceIds.has(interval.sourceID)) {
+      // Filter by source IDs if specified. Use a presence check (!= null) rather
+      // than truthiness: sourceID 0 is the environment/no-source actor, and the
+      // truthiness guard let it bypass an explicit player-source filter,
+      // inflating a single player's inverted-debuff uptime.
+      if (sourceIds && interval.sourceID != null && !sourceIds.has(interval.sourceID)) {
         return false;
       }
 
