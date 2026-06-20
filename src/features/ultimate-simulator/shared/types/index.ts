@@ -56,8 +56,9 @@ export interface UltimateSource {
 /** Weapon configuration governing how Decisive rolls. */
 export interface DecisiveConfig {
   /**
-   * Per-instance proc chance for +1 ultimate (0..1). By weapon quality:
-   * Fine .191 / Superior .212 / Epic .233 / Legendary .254 (some sources .275).
+   * Per-instance proc chance for +1 ultimate (0..1). Full five-tier ladder
+   * (see DECISIVE_PROC_CHANCE in shared/constants — verified against UESP):
+   * Normal .191 / Fine .212 / Superior .233 / Epic .254 / Legendary .275.
    */
   readonly procChance: number;
   /**
@@ -114,4 +115,46 @@ export interface MonteCarloResult {
   readonly maxTotal: number;
   /** Mean per-source contribution across runs. */
   readonly contributions: readonly SourceContribution[];
+}
+
+/**
+ * Exact closed-form expectation of ultimate generation over the fight.
+ *
+ * This is the calculator's headline result — same shape as a single
+ * `SimulationResult`, but every value is the true mean (no sampling noise), so
+ * it never wobbles between recomputes. `contributions` are sorted by total
+ * contribution descending.
+ */
+export interface ExpectedValueResult {
+  readonly totalUltimate: number;
+  readonly baseUltimate: number;
+  readonly decisiveUltimate: number;
+  readonly ultimatePerSecond: number;
+  readonly contributions: readonly SourceContribution[];
+}
+
+/** Inputs to the time-to-ultimate computation. */
+export interface TimeToUltimateInput {
+  /** Ultimate cost AFTER any cost reduction has been applied. */
+  readonly effectiveCost: number;
+  /** Steady-state ultimate generation rate (ult / second). */
+  readonly ultimatePerSecond: number;
+  /** Fight length, for casts-per-fight. */
+  readonly fightDurationSeconds: number;
+  /** Ultimate already banked at the start (0..effectiveCost). Default 0. */
+  readonly startingUltimate?: number;
+}
+
+/** Result of the time-to-ultimate computation. */
+export interface TimeToUltimateResult {
+  readonly effectiveCost: number;
+  readonly ultimatePerSecond: number;
+  /** Seconds until the first cast is affordable (∞ if rate is 0). */
+  readonly secondsToFirstCast: number;
+  /** Steady-state seconds between casts (cost / rate; ∞ if rate is 0). */
+  readonly secondsPerCast: number;
+  /** Number of casts that complete within the fight (∞ if cost is 0). */
+  readonly castsPerFight: number;
+  /** Total ultimate generated over the whole fight (rate × duration). */
+  readonly totalGenerated: number;
 }

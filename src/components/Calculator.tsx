@@ -1055,12 +1055,88 @@ const QuantityInput: React.FC<{
 type GameMode = 'pve' | 'pvp' | 'both';
 type SummaryStatus = 'at-cap' | 'over-cap' | 'under-cap';
 
+// ---------------------------------------------------------------------------
+// Full Mode palette ("Aurora")
+// ---------------------------------------------------------------------------
+// Full Mode's colors are centralized here. Lite mode is intentionally NOT
+// affected — only the `!liteMode` style surfaces read from these tokens.
+interface FullModeThemeTokens {
+  cardBg: string;
+  rowEnabledBg: string;
+  rowEnabledBorder: string;
+  rowDisabledBg: string;
+  rowDisabledBorder: string;
+  rowHoverBorder: string;
+  rowHoverShadow: string;
+  accent: string;
+  valueColor: string;
+  sectionBg: string;
+  sectionBorder: string;
+  footerBg: string;
+  // Tab/action header strip — a tinted bar that blends with the card, not a slate slab.
+  chromeBg: string;
+}
+
+const FULL_MODE_TOKENS: { light: FullModeThemeTokens; dark: FullModeThemeTokens } = {
+  light: {
+    cardBg:
+      'linear-gradient(135deg, rgb(110 170 240 / 22%) 0%, rgb(152 131 227 / 14%) 50%, rgb(173 192 255 / 7%) 100%)',
+    rowEnabledBg: 'linear-gradient(135deg, rgb(128 211 255 / 20%) 0%, rgb(56 189 248 / 15%) 100%)',
+    rowEnabledBorder: '1px solid rgb(105 162 255 / 45%)',
+    rowDisabledBg: 'rgb(255 255 255 / 55%)',
+    rowDisabledBorder: '1px solid transparent',
+    rowHoverBorder: '1px solid rgb(78 38 177 / 38%)',
+    rowHoverShadow: '0 6px 16px rgb(110 170 240 / 28%)',
+    accent: '#4e26b1',
+    valueColor: 'rgb(18 103 155)',
+    // Keep the Aurora card visible THROUGH the section — light translucent tint +
+    // clear border + soft shadow give edge definition without an opaque slab.
+    sectionBg: 'linear-gradient(180deg, rgba(173,192,255,0.18) 0%, rgba(152,131,227,0.11) 100%)',
+    sectionBorder: '1px solid rgba(120,140,210,0.45)',
+    // Near-opaque so the running totals stay readable over scrolling content.
+    footerBg: 'linear-gradient(135deg, rgba(224,231,250,0.97) 0%, rgba(244,247,253,0.97) 100%)',
+    // Aurora-tinted chrome bars (controls / tabs / actions): a different color that
+    // still blends — like lite mode. Stronger periwinkle in light so the bars read
+    // as distinct surfaces against the pale card instead of washing out.
+    chromeBg: 'linear-gradient(135deg, rgba(168,191,246,0.92) 0%, rgba(198,213,247,0.86) 100%)',
+  },
+  dark: {
+    // Richer, sustained blue→violet→blue glow so the aurora clearly reads as a
+    // colored surface floating on #1258's dark cosmic background — and carries the
+    // whole way down the tall Full-mode card (no 135deg fade-out into the list).
+    cardBg:
+      'linear-gradient(160deg, rgb(86 140 240 / 42%) 0%, rgb(140 110 228 / 34%) 50%, rgb(72 150 215 / 26%) 100%)',
+    rowEnabledBg: 'linear-gradient(135deg, rgba(56,189,248,0.4) 0%, rgba(0,225,255,0.3) 100%)',
+    rowEnabledBorder: '1px solid rgba(56,189,248,0.65)',
+    rowDisabledBg: 'rgb(0 0 0 / 28%)',
+    rowDisabledBorder: '1px solid transparent',
+    rowHoverBorder: '1px solid rgba(159,135,219,0.55)',
+    rowHoverShadow: '0 6px 16px rgba(56,189,248,0.32)',
+    accent: 'rgb(159 135 219)',
+    // Near-white (with a cool cyan textShadow) so value text clears WCAG AA over the
+    // vivid enabled-row gradient now that the card glow is brighter.
+    valueColor: 'rgb(236 246 255)',
+    // Translucent Aurora-hued frost so the blue→purple card glow still reads
+    // through the panel; the border + shadow supply the section definition.
+    sectionBg: 'linear-gradient(180deg, rgba(130,160,235,0.16) 0%, rgba(150,130,225,0.11) 100%)',
+    sectionBorder: '1px solid rgba(150,170,235,0.5)',
+    footerBg: 'linear-gradient(135deg, rgba(30,41,80,0.92) 0%, rgba(3,7,18,0.96) 100%)',
+    // Aurora-tinted chrome bars (controls / tabs / actions): a different color that
+    // still blends with the card glow — like lite mode, not the opaque slate slab.
+    chromeBg: 'linear-gradient(135deg, rgba(120,160,240,0.22) 0%, rgba(150,130,225,0.15) 100%)',
+  },
+};
+
 // Styled components
 const CalculatorContainer = styled(Box, {
   shouldForwardProp: (prop) => prop !== 'liteMode',
-})<{ liteMode?: boolean }>(({ theme, liteMode: _liteMode }) => ({
+})<{ liteMode?: boolean }>(({ liteMode: _liteMode }) => ({
   // minHeight: '100vh', // Removed - interferes with sticky positioning
-  background: theme.palette.mode === 'dark' ? theme.palette.background.default : 'transparent',
+  // Transparent in both themes so the global cosmic SiteBackground shows through
+  // and the rounded CalculatorCard floats on it — matching the Ultimate tab.
+  // (Dark mode previously painted an opaque background.default slab slightly
+  // wider than the card, leaving a flat, square-cornered band around it.)
+  background: 'transparent',
   position: 'static', // Changed from relative
   width: '100%',
   maxWidth: '100vw',
@@ -1075,8 +1151,8 @@ const CalculatorContainer = styled(Box, {
 }));
 
 const CalculatorCard = styled(Paper, {
-  shouldForwardProp: (prop) => prop !== 'liteMode',
-})<{ liteMode?: boolean }>(({ theme, liteMode }) => ({
+  shouldForwardProp: (prop) => prop !== 'liteMode' && prop !== 'fullCardBg',
+})<{ liteMode?: boolean; fullCardBg?: string }>(({ theme, liteMode, fullCardBg }) => ({
   width: '100%',
   maxWidth: liteMode ? '100%' : '1200px',
   margin: '0 auto',
@@ -1089,319 +1165,13 @@ const CalculatorCard = styled(Paper, {
   },
   background: liteMode
     ? 'linear-gradient(135deg, rgb(110 170 240 / 25%) 0%, rgb(152 131 227 / 15%) 50%, rgb(173 192 255 / 8%) 100%)'
-    : theme.palette.mode === 'dark'
-      ? 'linear-gradient(180deg, rgba(15,23,42,0.66) 0%, rgba(3,7,18,0.66) 100%)'
-      : 'linear-gradient(180deg, rgb(40 145 200 / 6%) 0%, rgba(248, 250, 252, 0.9) 100%)',
+    : (fullCardBg ??
+      (theme.palette.mode === 'dark'
+        ? 'linear-gradient(180deg, rgba(15,23,42,0.66) 0%, rgba(3,7,18,0.66) 100%)'
+        : 'linear-gradient(180deg, rgb(40 145 200 / 6%) 0%, rgba(248, 250, 252, 0.9) 100%)')),
   borderRadius: liteMode ? 22 : 22,
   minHeight: 'auto',
 }));
-
-// JavaScript-based sticky positioning hook
-const useStickyFooter = (
-  liteMode: boolean,
-  theme: Theme,
-  isMobile: boolean,
-): {
-  footerRef: React.RefObject<HTMLDivElement | null>;
-  placeholderRef: React.RefObject<HTMLDivElement | null>;
-  placeholderHeight: string;
-  footerStyle: React.CSSProperties;
-  isSticky: boolean;
-} => {
-  const footerRef = useRef<HTMLDivElement>(null);
-  const placeholderRef = useRef<HTMLDivElement>(null);
-  const [isSticky, setIsSticky] = useState(false);
-  const [footerStyle, setFooterStyle] = useState<React.CSSProperties>({});
-  const [placeholderHeight, setPlaceholderHeight] = useState<string>('auto');
-
-  const rafRef = useRef<number | null>(null);
-  const cardRectSignatureRef = useRef<string>('');
-  const placeholderWidthRef = useRef<number>(0);
-
-  // Cache for measurements to avoid redundant DOM queries
-  const measurementCacheRef = useRef<{
-    cardRect: DOMRect | null;
-    footerRect: DOMRect | null;
-    placeholderRect: DOMRect | null;
-    viewportHeight: number;
-    timestamp: number;
-  }>({
-    cardRect: null,
-    footerRect: null,
-    placeholderRect: null,
-    viewportHeight: 0,
-    timestamp: 0,
-  });
-
-  // Throttle measurements to avoid excessive calculations
-  const lastMeasurementTimeRef = useRef<number>(0);
-  const MEASUREMENT_THROTTLE = 16; // ~60fps
-
-  const runMeasurement = useCallback(() => {
-    const now = performance.now();
-
-    // Throttle measurements to 60fps
-    if (now - lastMeasurementTimeRef.current < MEASUREMENT_THROTTLE) {
-      return;
-    }
-    lastMeasurementTimeRef.current = now;
-
-    const footerEl = footerRef.current;
-    const placeholderEl = placeholderRef.current;
-
-    if (!footerEl) {
-      return;
-    }
-
-    const calculatorCard = footerEl.closest('[data-calculator-card]') as HTMLElement | null;
-    if (!calculatorCard) {
-      return;
-    }
-
-    // Use cached measurements if available and recent
-    const cache = measurementCacheRef.current;
-    const viewportHeight = window.innerHeight;
-
-    let cardRect = cache.cardRect;
-    let footerRect = cache.footerRect;
-    let placeholderRect = cache.placeholderRect;
-
-    // Only recalculate if viewport changed or cache is stale
-    if (cache.viewportHeight !== viewportHeight || now - cache.timestamp > 50) {
-      cardRect = calculatorCard.getBoundingClientRect();
-      footerRect = footerEl.getBoundingClientRect();
-      placeholderRect = placeholderEl?.getBoundingClientRect() || null;
-
-      measurementCacheRef.current = {
-        cardRect,
-        footerRect,
-        placeholderRect,
-        viewportHeight,
-        timestamp: now,
-      };
-    }
-
-    // Add null checks for safety
-    if (!cardRect || !footerRect) {
-      return;
-    }
-
-    const cardBottomThreshold = viewportHeight - 8;
-    const shouldStick = cardRect.bottom >= cardBottomThreshold && cardRect.top < viewportHeight;
-
-    if (!shouldStick) {
-      if (isSticky) {
-        setIsSticky(false);
-        setFooterStyle({});
-        setPlaceholderHeight('auto');
-      }
-      return;
-    }
-
-    const cardStyles = window.getComputedStyle(calculatorCard);
-    const paddingLeft = parseFloat(cardStyles.paddingLeft) || 0;
-    const paddingRight = parseFloat(cardStyles.paddingRight) || 0;
-
-    const width = placeholderRect
-      ? placeholderRect.width
-      : Math.max(0, cardRect.width - paddingLeft - paddingRight);
-    const left = placeholderRect ? placeholderRect.left : cardRect.left + paddingLeft;
-
-    const baseBottom = 16;
-    // Add space for feedback button on mobile (16px for button + 8px spacing = 24px)
-    const mobileFeedbackOffset = isMobile ? 24 : 0;
-    const adjustedBaseBottom = baseBottom + mobileFeedbackOffset;
-    const maxBottom = Math.max(
-      adjustedBaseBottom,
-      viewportHeight - cardRect.top - footerRect.height,
-    );
-    const minBottom = Math.max(0, viewportHeight - cardRect.bottom);
-    const desiredBottom = minBottom > 0 ? minBottom : adjustedBaseBottom;
-    const clampedBottom = Math.min(desiredBottom, maxBottom);
-
-    // Batch all state updates together
-    const footerHeight = `${Math.round(footerRect.height)}px`;
-    const newSignature = `${Math.round(cardRect.left)}|${Math.round(cardRect.width)}|${Math.round(cardRect.top)}`;
-    const widthChanged = Math.round(placeholderWidthRef.current) !== Math.round(width);
-    const styleChanged = cardRectSignatureRef.current !== newSignature || widthChanged || !isSticky;
-
-    // Only update state if something actually changed
-    if (styleChanged || placeholderHeight !== footerHeight) {
-      const nextStyle: React.CSSProperties = {
-        position: 'fixed',
-        left: `${Math.round(left)}px`,
-        width: `${Math.round(width)}px`,
-        bottom: `${Math.round(clampedBottom)}px`,
-        zIndex: isMobile ? 1001 : 11, // Ensure footer is above feedback button on mobile
-        boxSizing: 'border-box',
-        // Preserve background styling - prevent transparency in full mode
-        background: liteMode
-          ? 'transparent'
-          : theme.palette.mode === 'dark'
-            ? 'linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(3, 7, 18, 0.98) 100%)'
-            : 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.9) 100%)',
-        borderRadius: liteMode ? '0' : '12px',
-        boxShadow: liteMode
-          ? 'none'
-          : theme.palette.mode === 'dark'
-            ? '0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05)'
-            : '0 8px 32px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
-      };
-
-      // Batch state updates
-      requestAnimationFrame(() => {
-        if (placeholderHeight !== footerHeight) {
-          setPlaceholderHeight(footerHeight);
-        }
-
-        if (styleChanged) {
-          cardRectSignatureRef.current = newSignature;
-          placeholderWidthRef.current = width;
-          setFooterStyle(nextStyle);
-          if (!isSticky) {
-            setIsSticky(true);
-          }
-        }
-      });
-    }
-  }, [isSticky, placeholderHeight, liteMode, theme.palette.mode, isMobile]);
-
-  // Debounced measurement scheduler
-  const scheduleMeasurement = useCallback(() => {
-    if (rafRef.current !== null) {
-      return;
-    }
-    rafRef.current = window.requestAnimationFrame(() => {
-      rafRef.current = null;
-      runMeasurement();
-    });
-  }, [runMeasurement]);
-
-  // Throttled scroll handler
-  const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const lastScrollTimeRef = useRef<number>(0);
-  const SCROLL_THROTTLE = 16; // ~60fps
-
-  const handleScroll = useCallback(() => {
-    const now = performance.now();
-
-    // Throttle scroll events
-    if (now - lastScrollTimeRef.current < SCROLL_THROTTLE) {
-      return;
-    }
-    lastScrollTimeRef.current = now;
-
-    // Clear any pending timeout
-    if (scrollTimeoutRef.current) {
-      clearTimeout(scrollTimeoutRef.current);
-    }
-
-    // Debounce the actual measurement
-    scrollTimeoutRef.current = setTimeout(() => {
-      scheduleMeasurement();
-    }, 32); // ~30fps for smooth scrolling
-  }, [scheduleMeasurement]);
-
-  // Throttled resize handler
-  const resizeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const lastResizeTimeRef = useRef<number>(0);
-  const RESIZE_THROTTLE = 100; // Slower for resize events
-
-  const handleResize = useCallback(() => {
-    const now = performance.now();
-
-    // Throttle resize events more aggressively
-    if (now - lastResizeTimeRef.current < RESIZE_THROTTLE) {
-      return;
-    }
-    lastResizeTimeRef.current = now;
-
-    // Clear any pending timeout
-    if (resizeTimeoutRef.current) {
-      clearTimeout(resizeTimeoutRef.current);
-    }
-
-    // Invalidate cache on resize to force recalculation
-    measurementCacheRef.current.timestamp = 0;
-
-    // Debounce the actual measurement
-    resizeTimeoutRef.current = setTimeout(() => {
-      scheduleMeasurement();
-    }, 150);
-  }, [scheduleMeasurement]);
-
-  useEffect(() => {
-    // Initial measurement
-    runMeasurement();
-
-    // Add event listeners with passive option for better performance
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    window.addEventListener('resize', handleResize, { passive: true });
-
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-      window.removeEventListener('resize', handleResize);
-
-      // Cleanup timeouts
-      if (scrollTimeoutRef.current) {
-        clearTimeout(scrollTimeoutRef.current);
-      }
-      if (resizeTimeoutRef.current) {
-        clearTimeout(resizeTimeoutRef.current);
-      }
-
-      // Cleanup RAF
-      if (rafRef.current !== null) {
-        cancelAnimationFrame(rafRef.current);
-        rafRef.current = null;
-      }
-    };
-  }, [runMeasurement, handleScroll, handleResize, scheduleMeasurement]);
-
-  // Optimized ResizeObserver with debouncing
-  useEffect(() => {
-    if (typeof ResizeObserver === 'undefined') {
-      return;
-    }
-
-    let resizeTimeout: NodeJS.Timeout | null = null;
-
-    const observer = new ResizeObserver(() => {
-      // Invalidate cache on resize to force recalculation
-      measurementCacheRef.current.timestamp = 0;
-
-      // Debounce resize observer callbacks
-      if (resizeTimeout) {
-        clearTimeout(resizeTimeout);
-      }
-
-      resizeTimeout = setTimeout(() => {
-        scheduleMeasurement();
-      }, 100); // Debounce resize observer events
-    });
-
-    // Only observe elements that actually exist
-    if (footerRef.current) {
-      observer.observe(footerRef.current);
-    }
-
-    const calculatorCard = footerRef.current?.closest(
-      '[data-calculator-card]',
-    ) as HTMLElement | null;
-    if (calculatorCard) {
-      observer.observe(calculatorCard);
-    }
-
-    return () => {
-      observer.disconnect();
-      if (resizeTimeout) {
-        clearTimeout(resizeTimeout);
-      }
-    };
-  }, [scheduleMeasurement]);
-
-  return { footerRef, placeholderRef, footerStyle, placeholderHeight, isSticky };
-};
 
 const _TotalSection = styled(Box)<{ isLiteMode: boolean }>(
   ({ theme: _theme, isLiteMode: _isLiteMode }) => ({
@@ -1842,6 +1612,8 @@ const CalculatorComponent: React.FC = () => {
     [logger],
   );
   const [liteMode, setLiteMode] = useState(isMobile);
+  // Full Mode color palette (Lite mode keeps its own bespoke styling).
+  const fullTokens = theme.palette.mode === 'dark' ? FULL_MODE_TOKENS.dark : FULL_MODE_TOKENS.light;
   const [gameMode, setGameMode] = useState<GameMode>('both');
   const [variantModalOpen, setVariantModalOpen] = useState(false);
   const [currentEditingIndex, setCurrentEditingIndex] = useState<number | null>(null);
@@ -2062,14 +1834,8 @@ const CalculatorComponent: React.FC = () => {
     [armorResistanceData.cp],
   );
 
-  // JavaScript-based sticky footer
-  const {
-    footerRef,
-    placeholderRef,
-    placeholderHeight,
-    footerStyle,
-    isSticky: _isSticky,
-  } = useStickyFooter(liteMode, theme, isMobile);
+  // Results summary sticks to the viewport bottom via native CSS position:sticky
+  // (see the footer JSX below) — no JS scroll measurement.
 
   // Calculate total values
   const calculateItemValue = useCallback((item: CalculatorItem): number => {
@@ -2893,38 +2659,29 @@ const CalculatorComponent: React.FC = () => {
             ? '1px solid transparent'
             : '1px solid rgba(214, 168, 255, 0.2)';
       } else {
-        // Default background for other items
+        // Default background for other items.
+        // Lite mode keeps its bespoke palette; full mode reads the active variant tokens.
         background = item.enabled
           ? liteMode
             ? theme.palette.mode === 'dark'
               ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.4) 0%, rgba(0, 225, 255, 0.3) 100%)'
               : 'linear-gradient(135deg, rgb(128 211 255 / 20%) 0%, rgb(56 189 248 / 15%) 100%)'
-            : theme.palette.mode === 'dark'
-              ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.4) 0%, rgba(0, 225, 255, 0.3) 100%)'
-              : 'linear-gradient(135deg, rgb(128 211 255 / 20%) 0%, rgb(56 189 248 / 15%) 100%)'
+            : fullTokens.rowEnabledBg
           : liteMode
             ? theme.palette.mode === 'dark'
               ? 'rgb(0 0 0 / 28%)'
               : 'rgb(255 255 255 / 41%)'
-            : theme.palette.mode === 'dark'
-              ? 'rgba(15, 23, 42, 0.6)'
-              : 'rgba(241, 245, 249, 0.8)';
+            : fullTokens.rowDisabledBg;
 
         border = item.enabled
           ? liteMode
             ? theme.palette.mode === 'dark'
               ? '1px solid rgba(56, 189, 248, 0.6) !important'
               : '1px solid rgb(105 162 255 / 40%) !important'
-            : theme.palette.mode === 'dark'
-              ? '1px solid rgba(56, 189, 248, 0.8)'
-              : liteMode
-                ? '1px solid rgb(40 145 200 / 35%)'
-                : '1px solid rgb(40 145 200 / 35%)'
+            : fullTokens.rowEnabledBorder
           : liteMode
             ? '1px solid transparent'
-            : theme.palette.mode === 'dark'
-              ? '1px solid rgba(255, 255, 255, 0.12)'
-              : '1px solid rgba(203, 213, 225, 0.3)';
+            : fullTokens.rowDisabledBorder;
       }
 
       return {
@@ -2945,15 +2702,12 @@ const CalculatorComponent: React.FC = () => {
         '&:hover': !item.locked
           ? {
               transform: liteMode ? 'none' : 'translateY(-1px)',
-              border:
-                theme.palette.mode === 'dark'
+              border: liteMode
+                ? theme.palette.mode === 'dark'
                   ? '1px solid rgba(56, 189, 248, 0.2)'
-                  : '1px solid rgb(40 145 200 / 30%)',
-              boxShadow: liteMode
-                ? 'none'
-                : theme.palette.mode === 'dark'
-                  ? '0 4px 12px rgba(56, 189, 248, 0.3)'
-                  : '0 4px 12px rgb(40 145 200 / 25%)',
+                  : '1px solid rgb(40 145 200 / 30%)'
+                : fullTokens.rowHoverBorder,
+              boxShadow: liteMode ? 'none' : fullTokens.rowHoverShadow,
               '& .MuiCheckbox-root': {
                 backgroundColor: liteMode
                   ? theme.palette.mode === 'dark'
@@ -2967,7 +2721,7 @@ const CalculatorComponent: React.FC = () => {
           : {},
       };
     },
-    [theme.palette.mode, liteMode, isMobile],
+    [theme.palette.mode, liteMode, isMobile, fullTokens],
   );
 
   // Render item component - optimized to reduce re-renders
@@ -3051,7 +2805,7 @@ const CalculatorComponent: React.FC = () => {
         minWidth: liteMode ? '32px' : isExtraSmall ? '48px' : isMobile ? '44px' : '32px',
         minHeight: liteMode ? '32px' : isExtraSmall ? '48px' : isMobile ? '44px' : '32px',
         '&.Mui-checked': {
-          color: liteMode ? '#4e26b1' : 'rgb(159 135 219)',
+          color: liteMode ? '#4e26b1' : fullTokens.accent,
         },
         // Enhanced touch feedback
         '&:hover': {
@@ -3133,7 +2887,11 @@ const CalculatorComponent: React.FC = () => {
       };
 
       const valueStyles = {
-        color: theme.palette.mode === 'dark' ? 'rgb(199 234 255)' : 'rgb(40 145 200)',
+        color: liteMode
+          ? theme.palette.mode === 'dark'
+            ? 'rgb(199 234 255)'
+            : 'rgb(40 145 200)'
+          : fullTokens.valueColor,
         fontWeight: 700,
         fontFamily: 'monospace',
         textShadow: theme.palette.mode === 'dark' ? '0 0 10px rgba(199 234 255,0.25)' : 'none',
@@ -3591,6 +3349,7 @@ const CalculatorComponent: React.FC = () => {
       cycleArmorResistanceVariant,
       updateArmorResistanceQuality,
       armorResistanceData.gear,
+      fullTokens,
     ],
   );
 
@@ -3617,6 +3376,16 @@ const CalculatorComponent: React.FC = () => {
         disableGutters
         sx={{
           mb: 2,
+          // Distinct panel surface so sections read as floating cards instead of
+          // blending into the calculator background. The `background` shorthand also
+          // clears MUI's dark elevation overlay (a background-image), so a gradient
+          // sectionBg renders correctly.
+          background: fullTokens.sectionBg,
+          border: fullTokens.sectionBorder,
+          boxShadow:
+            theme.palette.mode === 'dark'
+              ? '0 6px 20px rgba(0, 0, 0, 0.28)'
+              : '0 6px 18px rgba(40, 80, 160, 0.10)',
           '&.Mui-expanded': {
             mb: 2,
           },
@@ -4288,7 +4057,11 @@ const CalculatorComponent: React.FC = () => {
           }}
         >
           {/* Main Calculator */}
-          <CalculatorCard liteMode={liteMode} data-calculator-card="true">
+          <CalculatorCard
+            liteMode={liteMode}
+            fullCardBg={liteMode ? undefined : fullTokens.cardBg}
+            data-calculator-card="true"
+          >
             {/* Controls */}
             <Box
               sx={{
@@ -4310,9 +4083,7 @@ const CalculatorComponent: React.FC = () => {
                   ? theme.palette.mode === 'dark'
                     ? 'linear-gradient(135deg, rgb(110 170 240 / 25%) 0%, rgb(152 131 227 / 15%) 50%, rgb(173 192 255 / 8%) 100%)'
                     : 'rgba(255, 255, 255, 0.65)'
-                  : theme.palette.mode === 'dark'
-                    ? 'rgba(15, 23, 42, 0.9)'
-                    : 'rgba(255, 255, 255, 0.98)',
+                  : fullTokens.chromeBg,
                 position: 'relative',
                 // Enhanced mobile responsiveness
                 // Better mobile layout with stacked controls
@@ -4805,13 +4576,7 @@ const CalculatorComponent: React.FC = () => {
                     theme.palette.mode === 'dark'
                       ? 'rgb(128 211 255 / 18%)'
                       : 'rgb(40 145 200 / 15%)',
-                  background: liteMode
-                    ? theme.palette.mode === 'dark'
-                      ? 'rgba(15, 23, 42, 0.0)'
-                      : 'rgba(255, 255, 255, 0.0)'
-                    : theme.palette.mode === 'dark'
-                      ? 'rgba(15, 23, 42, 0.7)'
-                      : 'rgba(255, 255, 255, 0.95)',
+                  background: liteMode ? 'transparent' : fullTokens.chromeBg,
 
                   position: 'relative',
                   borderRadius: liteMode ? '8px 8px 0 0' : '8px 8px 0 0',
@@ -5000,13 +4765,9 @@ const CalculatorComponent: React.FC = () => {
                     p: 2,
                     alignItems: 'center',
                     borderRadius: '10px',
-                    backgroundColor: liteMode
-                      ? theme.palette.mode === 'dark'
-                        ? 'rgba(15, 23, 42, 0.0)'
-                        : 'rgba(255, 255, 255, 0.0)'
-                      : theme.palette.mode === 'dark'
-                        ? 'rgba(15, 23, 42, 0.3)'
-                        : 'rgba(255, 255, 255, 0.5)',
+                    // Transparent: this panel sits inside the tab-bar wrapper, which already
+                    // paints chromeBg — re-painting it here would double-stack the tint.
+                    backgroundColor: 'transparent',
                     borderColor:
                       theme.palette.mode === 'dark'
                         ? 'rgb(128 211 255 / 15%)'
@@ -6005,29 +5766,41 @@ const CalculatorComponent: React.FC = () => {
               </TabPanel>
             </Box>
 
-            {/* Footer positioned outside TabPanels but inside CalculatorCard */}
-            <Box ref={placeholderRef} sx={{ minHeight: placeholderHeight }}>
+            {/* Results summary — native CSS sticky. Floats just above the
+                viewport bottom while the (long) item list scrolls behind it,
+                then rests at the end of the card. The outer box positions; the
+                inner box is the glass surface. Replaces the old JS hook. */}
+            <Box
+              sx={{
+                position: 'sticky',
+                // Lift above the mobile feedback FAB; small gap on desktop.
+                bottom: { xs: '40px', sm: '16px' },
+                zIndex: { xs: 1001, sm: 11 },
+                mt: '20px',
+                // Let pointer events fall through the transparent margin so the
+                // list underneath the rounded corners stays interactive.
+                pointerEvents: 'none',
+              }}
+            >
               <Box
-                ref={footerRef}
                 sx={{
-                  px: 0, // Remove horizontal padding
-                  pb: 0, // Remove bottom padding
-                  position: 'relative',
-                  zIndex: 5,
-                  backgroundColor: liteMode
-                    ? 'transparent'
-                    : theme.palette.mode === 'dark'
-                      ? 'linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(3, 7, 18, 0.98) 100%)'
-                      : 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.9) 100%)',
-                  borderRadius: liteMode ? '0' : '12px',
+                  pointerEvents: 'auto',
+                  borderRadius: liteMode ? 0 : '14px',
+                  // Near-opaque so the list scrolling behind stays hidden.
+                  background: liteMode ? 'transparent' : fullTokens.footerBg,
+                  border: liteMode
+                    ? 'none'
+                    : `1px solid ${
+                        theme.palette.mode === 'dark'
+                          ? 'rgba(56, 189, 248, 0.18)'
+                          : 'rgba(15, 23, 42, 0.08)'
+                      }`,
                   boxShadow: liteMode
                     ? 'none'
                     : theme.palette.mode === 'dark'
-                      ? '0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05)'
-                      : '0 8px 32px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
-                  marginTop: '20px',
+                      ? 'inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 12px 36px rgba(0, 0, 0, 0.4)'
+                      : 'inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 12px 36px rgba(15, 23, 42, 0.12)',
                 }}
-                style={footerStyle}
               >
                 {selectedTab === 0 &&
                   renderSummaryFooter({

@@ -1,0 +1,157 @@
+/**
+ * Compile catalog entries into engine inputs.
+ *
+ * The catalog (data) describes every ultimate source the calculator knows; the
+ * engine (core) only understands generic `UltimateSource`/`CostReduction`. This
+ * module bridges them: given the user's context/class/role and their per-entry
+ * toggles + uptime overrides, it filters the catalog down to what's available
+ * and produces the exact arrays the engine consumes.
+ *
+ * Pure and unit-testable — no React, no network.
+ */
+
+import type { CostReduction } from '../core/cost';
+import type { UltimateSource } from '../shared/types';
+import type {
+  CatalogCostReduction,
+  CatalogSource,
+  CombatContext,
+  CombatRole,
+  EsoClass,
+} from '../shared/types/catalog';
+
+export interface CatalogSelection {
+  readonly context: CombatContext;
+  readonly esoClass: EsoClass;
+  readonly role: CombatRole;
+  /** Per-entry enabled override, keyed by id. Missing → use defaultEnabled. */
+  readonly enabledOverrides: Readonly<Record<string, boolean>>;
+  /** Per-source uptime override (0..1), keyed by id. Missing → catalog default. */
+  readonly uptimeOverrides: Readonly<Record<string, number>>;
+  /**
+   * The ultimate cost the group healer spends, for Pillager's Profit. The set
+   * grants 2% of that cost per tick × 5 ticks = 10% of the cost per affecting
+   * cast, so the per-cast amount scales with the healer's ultimate. Missing →
+   * use the catalog default. (See PILLAGERS_PROFIT_SOURCE_ID.)
+   */
+  readonly pillagerHealerUltCost?: number;
+}
+
+/** Catalog id of the Pillager's Profit external source (parameterized by healer ult cost). */
+export const PILLAGERS_PROFIT_SOURCE_ID = 'pillagers-profit-external';
+
+/** Fraction of the healer's spent ultimate a member receives per affecting cast (2% × 5 ticks). */
+export const PILLAGERS_PROFIT_FRACTION_PER_CAST = 0.1;
+
+/** Is a source available given the current context / class / role? */
+export function isSourceAvailable(
+  source: CatalogSource,
+  selection: Pick<CatalogSelection, 'context' | 'esoClass' | 'role'>,
+): boolean {
+  if (!source.availableIn.includes(selection.context)) return false;
+  if (source.classes && !source.classes.includes(selection.esoClass)) return false;
+  if (source.roles && !source.roles.includes(selection.role)) return false;
+  return true;
+}
+
+/** Is a cost reduction available given the current context / class? */
+export function isReductionAvailable(
+  reduction: CatalogCostReduction,
+  selection: Pick<CatalogSelection, 'context' | 'esoClass'>,
+): boolean {
+  if (!reduction.availableIn.includes(selection.context)) return false;
+  if (reduction.classes && !reduction.classes.includes(selection.esoClass)) return false;
+  return true;
+}
+
+/** Whether an entry is currently enabled (override wins over default). */
+export function isEntryEnabled(
+  id: string,
+  defaultEnabled: boolean,
+  overrides: Readonly<Record<string, boolean>>,
+): boolean {
+  return overrides[id] ?? defaultEnabled;
+}
+
+/** The available catalog sources for a selection (regardless of enabled). */
+export function availableSources(
+  catalog: readonly CatalogSource[],
+  selection: CatalogSelection,
+): readonly CatalogSource[] {
+  return catalog.filter((s) => isSourceAvailable(s, selection));
+}
+
+/** The available cost reductions for a selection (regardless of enabled). */
+export function availableReductions(
+  catalog: readonly CatalogCostReduction[],
+  selection: CatalogSelection,
+): readonly CatalogCostReduction[] {
+  return catalog.filter((r) => isReductionAvailable(r, selection));
+}
+
+/**
+ * Compile enabled, available catalog sources into engine `UltimateSource[]`,
+ * applying per-source uptime overrides.
+ *
+ * Note on non-stacking buffs: named buffs like Minor Heroism do not stack across
+ * providers, but the catalog already models each such buff as ONE source (e.g.
+ * the single `minor-heroism` entry represents "Minor Heroism from whatever
+ * provides it"), so no per-provider de-duplication is needed here.
+ */
+export function compileSources(
+  catalog: readonly CatalogSource[],
+  selection: CatalogSelection,
+): UltimateSource[] {
+  return availableSources(catalog, selection)
+    .filter((s) => isEntryEnabled(s.id, s.defaultEnabled, selection.enabledOverrides))
+    .map((s) => {
+      const uptime = selection.uptimeOverrides[s.id];
+      const resolved =
+        uptime === undefined ? s : { ...s, uptime: Math.min(1, Math.max(0, uptime)) };
+      // Strip catalog-only fields down to the engine's UltimateSource shape.
+      const {
+        id,
+        label,
+        kind,
+        amountPerInstance,
+        instancesPerSecond,
+        uptime: up,
+        rollsDecisive,
+        note,
+      } = resolved;
+      // Pillager's Profit's per-cast amount scales with the SET WEARER's ultimate
+      // cost (10% of it) — usually the healer, a different player from the one we
+      // compute time-to-ult for. Parameterize it from the selection when provided
+      // so the user can match the actual wearer; otherwise keep the catalog default.
+      const effectiveAmount =
+        id === PILLAGERS_PROFIT_SOURCE_ID && selection.pillagerHealerUltCost != null
+          ? PILLAGERS_PROFIT_FRACTION_PER_CAST * Math.max(0, selection.pillagerHealerUltCost)
+          : amountPerInstance;
+      return {
+        id,
+        label,
+        kind,
+        amountPerInstance: effectiveAmount,
+        instancesPerSecond,
+        uptime: up,
+        rollsDecisive,
+        note,
+      };
+    });
+}
+
+/**
+ * Compile enabled, available cost reductions into engine `CostReduction[]`.
+ * The engine's `enabled` flag is set from the selection (default or override).
+ */
+export function compileReductions(
+  catalog: readonly CatalogCostReduction[],
+  selection: CatalogSelection,
+): CostReduction[] {
+  return availableReductions(catalog, selection).map((r) => ({
+    id: r.id,
+    label: r.label,
+    fraction: r.fraction,
+    enabled: isEntryEnabled(r.id, r.defaultEnabled, selection.enabledOverrides),
+  }));
+}
