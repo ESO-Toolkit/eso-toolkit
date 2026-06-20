@@ -5,6 +5,7 @@
 import type { SkillsConfig } from '../../../loadout-manager/types/loadout.types';
 import type { BuildSetup } from '../../types/build.types';
 import {
+  buildHasContent,
   clearedSetupSection,
   cloneSetup,
   copySetupSection,
@@ -252,6 +253,26 @@ describe('copySetupSection', () => {
     const snapshot = JSON.parse(JSON.stringify(target));
     copySetupSection(target, source, 'gear');
     expect(target).toEqual(snapshot);
+  });
+});
+
+// ─── buildHasContent ──────────────────────────────────────────────────────────
+
+describe('buildHasContent', () => {
+  it('is false for a blank build (empty gear + empty skill bars)', () => {
+    const blank = makeTestSetup({ gear: {}, skills: { 0: {}, 1: {} } });
+    expect(buildHasContent([blank])).toBe(false);
+  });
+
+  it('is true when any setup has gear', () => {
+    const blank = makeTestSetup({ gear: {}, skills: { 0: {}, 1: {} } });
+    const withGear = makeTestSetup({ gear: { 0: { id: 1 } }, skills: { 0: {}, 1: {} } });
+    expect(buildHasContent([blank, withGear])).toBe(true);
+  });
+
+  it('is true when any setup has a slotted skill', () => {
+    const withSkill = makeTestSetup({ gear: {}, skills: { 0: { 3: 99 }, 1: {} } });
+    expect(buildHasContent([withSkill])).toBe(true);
   });
 });
 

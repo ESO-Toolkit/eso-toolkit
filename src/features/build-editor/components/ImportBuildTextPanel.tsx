@@ -40,6 +40,7 @@ import {
   type ImportSections,
   type ParsedBuildResult,
 } from '../utils/buildTextParser';
+import { buildHasContent } from '../utils/setupTransfer';
 
 const MAX_SETUPS = 5;
 
@@ -65,13 +66,17 @@ export const ImportBuildTextPanel: React.FC<ImportBuildTextPanelProps> = ({ onCl
   const dispatch = useDispatch();
   const { enqueueSnackbar } = useSnackbar();
 
-  const setupCount = useSelector(selectBuildSetups).length;
+  const setups = useSelector(selectBuildSetups);
+  const setupCount = setups.length;
   // At the setup cap there's no room for a new setup, so importing can only
   // go into the active setup — default + lock the target accordingly.
   const atCap = setupCount >= MAX_SETUPS;
-  // Class & race are build-wide; importing them into a multi-setup build is
-  // risky, so it's opt-in there (see handleParse + the Class & Race row note).
-  const hasMultipleSetups = setupCount > 1;
+  // Class & race are BUILD-WIDE (one class shared by every setup). Changing them
+  // is risky whenever the build already has real content to invalidate — more
+  // than one setup, OR a single setup that already has gear/skills (even a "new
+  // setup" import rewrites that existing setup's class). Only a blank build is
+  // safe to auto-apply identity to. When risky it's opt-in + clearly labelled.
+  const identityIsRisky = setupCount > 1 || buildHasContent(setups);
 
   const [raw, setRaw] = useState('');
   const [parsed, setParsed] = useState<ParsedBuildResult | null>(null);
@@ -99,15 +104,16 @@ export const ImportBuildTextPanel: React.FC<ImportBuildTextPanelProps> = ({ onCl
     const result = parseBuildText(raw);
     setParsed(result);
     // Turn off sections that found nothing so the review reflects reality.
-    // Class & race are BUILD-WIDE (shared by every setup), so default them OFF
-    // when the build already has more than one setup — importing a different
-    // class would otherwise silently invalidate the other setups' skill lines.
+    // Class & race are BUILD-WIDE, so default them OFF whenever the build
+    // already has content (multi-setup, or a single setup with gear/skills) —
+    // importing a different class would otherwise silently reclassify existing
+    // setups, even on a "new setup" import.
     setInclude({
       gear: result.gear.some((g) => g.itemId != null),
       skills: result.skills.some((s) => s.abilityId != null),
       champion: result.cp.length > 0,
       character: Boolean(result.attributes || result.mundusId || result.foodName),
-      identity: Boolean(result.esoClass || result.raceId) && !hasMultipleSetups,
+      identity: Boolean(result.esoClass || result.raceId) && !identityIsRisky,
     });
   };
 
@@ -195,9 +201,9 @@ export const ImportBuildTextPanel: React.FC<ImportBuildTextPanelProps> = ({ onCl
           <Stack spacing={0.5}>
             <ReviewRow
               icon={<ClassIcon sx={{ fontSize: 16 }} />}
-              label={hasMultipleSetups ? 'Class & Race (all setups)' : 'Class & Race'}
+              label={identityIsRisky ? 'Class & Race (all setups)' : 'Class & Race'}
               detail={
-                hasMultipleSetups && stats?.hasIdentity
+                identityIsRisky && stats?.hasIdentity
                   ? `${[parsed.esoClass && capitalize(parsed.esoClass), parsed.raceLabel].filter(Boolean).join(' · ')} — changes every setup`
                   : [parsed.esoClass && capitalize(parsed.esoClass), parsed.raceLabel]
                       .filter(Boolean)

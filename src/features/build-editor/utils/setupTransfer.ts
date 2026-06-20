@@ -169,6 +169,21 @@ export function clearedSetupSection(setup: BuildSetup, section: SetupSection): B
   return next;
 }
 
+/**
+ * True when any setup already holds real content (gear or a slotted skill).
+ * Used to decide whether a build-wide identity (class/race) import is risky —
+ * a blank build is safe to auto-apply identity to; one with content is not,
+ * since class is shared across every setup.
+ */
+export function buildHasContent(setups: BuildSetup[]): boolean {
+  return setups.some(
+    (s) =>
+      Object.keys(s.gear ?? {}).length > 0 ||
+      Object.keys(s.skills?.[0] ?? {}).length > 0 ||
+      Object.keys(s.skills?.[1] ?? {}).length > 0,
+  );
+}
+
 // ─── Skill-bar helpers ────────────────────────────────────────────────────────
 
 /**
