@@ -22,10 +22,7 @@ import type {
   GearConfig,
   SkillsConfig,
 } from '../../loadout-manager/types/loadout.types';
-import {
-  getItemIconUrl,
-  parseWeaponTypeFromIconUrl,
-} from '../../loadout-manager/utils/itemIconResolver';
+import { getWeaponTypeLabel } from '../../loadout-manager/utils/itemIconResolver';
 import {
   CLASS_SKILL_LINES,
   EQUIP_SLOTS,
@@ -134,12 +131,54 @@ function resolveSetItem(setName: string, slotType: EquipSlotDef['slotType']): nu
 }
 
 /**
- * Resolve a weapon item, preferring the candidate whose type matches the
- * pasted "WEIGHT/TYPE" cell (e.g. "Dagger", "Lightning Staff", "Greatsword").
- * A set usually has multiple weapon variants sharing one bonus; picking the
- * first would silently import the wrong weapon type. When the variant can't be
- * confirmed (ambiguous, or icon data not yet loaded), falls back to the first
- * candidate and reports `confirmed: false` so the caller can warn.
+ * Pure variant picker: choose the candidate whose weapon-type label matches the
+ * pasted "WEIGHT/TYPE" cell. Pulled out of resolveWeaponItem so it can be tested
+ * without item/icon data — `labelOf(id)` injects the type label per candidate
+ * ("Dagger", "Lightning Staff", generic "Staff", or null when unresolved).
+ *
+ * Rules:
+ *  - exact label match (incl. resolved staff element) → confirmed.
+ *  - a GENERIC "staff" request matches any staff candidate → confirmed.
+ *  - a SPECIFIC staff element ("Lightning Staff") with only generic "Staff"
+ *    candidates → first staff candidate, NOT confirmed (caller warns), since the
+ *    element can't be verified.
+ *  - otherwise the first candidate, NOT confirmed.
+ */
+export function pickWeaponVariant(
+  candidates: number[],
+  typeCell: string,
+  labelOf: (id: number) => string | null,
+): { itemId: number | null; confirmed: boolean } {
+  if (candidates.length === 0) return { itemId: null, confirmed: false };
+  if (candidates.length === 1 || !typeCell.trim()) {
+    return { itemId: candidates[0], confirmed: true };
+  }
+
+  const want = normKey(typeCell);
+  const wantsStaff = want.includes('staff');
+  const wantsGenericStaff = want === 'staff';
+  let firstStaff: number | null = null;
+
+  for (const id of candidates) {
+    const label = labelOf(id);
+    if (!label) continue;
+    const lk = normKey(label);
+    if (lk === want) return { itemId: id, confirmed: true }; // exact (incl. element)
+    if (wantsStaff && lk === 'staff' && firstStaff === null) firstStaff = id;
+  }
+
+  if (firstStaff !== null) {
+    // Generic "Staff" request is satisfied by any staff; a specific element
+    // can't be confirmed against a generic-icon staff, so warn.
+    return { itemId: firstStaff, confirmed: wantsGenericStaff };
+  }
+  return { itemId: candidates[0], confirmed: false };
+}
+
+/**
+ * Resolve a weapon item, preferring the candidate whose type matches the pasted
+ * "WEIGHT/TYPE" cell. A set usually has multiple weapon variants sharing one
+ * bonus; picking the first would silently import the wrong weapon type.
  */
 function resolveWeaponItem(
   setName: string,
@@ -147,26 +186,7 @@ function resolveWeaponItem(
   typeCell: string,
 ): { itemId: number | null; confirmed: boolean } {
   const candidates = setItemCandidates(setName, slotType);
-  if (candidates.length === 0) return { itemId: null, confirmed: false };
-  // Nothing to disambiguate.
-  if (candidates.length === 1 || !typeCell.trim()) {
-    return { itemId: candidates[0], confirmed: true };
-  }
-
-  const want = normKey(typeCell);
-  const wantsStaff = want.includes('staff');
-  for (const id of candidates) {
-    const label = parseWeaponTypeFromIconUrl(getItemIconUrl(id));
-    if (!label) continue;
-    const lk = normKey(label);
-    if (lk === want) return { itemId: id, confirmed: true };
-    // Regular gear staff icons collapse all four elements to "Staff"; treat any
-    // staff candidate as a match for a staff request (element isn't recoverable
-    // from the sync icon, but the weapon class is correct).
-    if (wantsStaff && lk === 'staff') return { itemId: id, confirmed: true };
-  }
-  // Couldn't confirm the exact variant — best-effort first candidate + warn.
-  return { itemId: candidates[0], confirmed: false };
+  return pickWeaponVariant(candidates, typeCell, (id) => getWeaponTypeLabel(id));
 }
 
 // ─── Gear ──────────────────────────────────────────────────────────────────

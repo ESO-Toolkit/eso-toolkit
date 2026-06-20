@@ -395,6 +395,26 @@ export function isWeaponTypeResolved(
 }
 
 /**
+ * The specific weapon-type label for an item — "Dagger", "Bow", "Greatsword",
+ * "Lightning Staff", … — resolving the staff element from the weapon-type data
+ * when available. Returns the generic "Staff" when an item is a staff whose
+ * element can't be determined, and null for non-weapons / unresolved icons.
+ * Callers that need element certainty should reject a generic "Staff" result.
+ */
+export function getWeaponTypeLabel(
+  itemId: number | null | undefined,
+  iconUrlOverride?: string | null,
+): string | null {
+  const id = itemId ?? 0;
+  if (id <= 0) return null;
+  // Data-driven staff element wins (inferno/ice/lightning/restoration).
+  const staff = lookupStaffTypeLabelFromData(id);
+  if (staff) return staff;
+  const url = iconUrlOverride !== undefined ? iconUrlOverride : getItemIconUrl(id);
+  return parseWeaponTypeFromIconUrl(url);
+}
+
+/**
  * Fetch the icon URL for a single item from UESP (fallback).
  * Only called for items not present in the local JSON data.
  */

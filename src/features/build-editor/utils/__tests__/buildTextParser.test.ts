@@ -8,7 +8,12 @@
 import { readFileSync } from 'fs';
 import { join } from 'path';
 
-import { buildImportPayload, parseBuildText, type ParsedBuildResult } from '../buildTextParser';
+import {
+  buildImportPayload,
+  parseBuildText,
+  pickWeaponVariant,
+  type ParsedBuildResult,
+} from '../buildTextParser';
 
 const FIXTURE = readFileSync(join(__dirname, 'fixtures', 'hyperioxes-solo-mag-sorc.txt'), 'utf8');
 
@@ -191,6 +196,53 @@ describe('parseBuildText — numbered ring labels', () => {
     expect(parseBuildText(mk('Ring', 'Ring 2')).gear.map((g) => g.slot)).toEqual([11, 12]);
     // "Ring 2" first, then a bare "Ring" → 12, then first-free 11 (no collision).
     expect(parseBuildText(mk('Ring 2', 'Ring')).gear.map((g) => g.slot)).toEqual([12, 11]);
+  });
+});
+
+describe('pickWeaponVariant — weapon type matching', () => {
+  // Inject a label map so the logic is tested without item/icon data.
+  const label =
+    (m: Record<number, string | null>) =>
+    (id: number): string | null =>
+      m[id] ?? null;
+
+  it('picks the exact staff element and confirms it', () => {
+    // 1 = Inferno Staff, 2 = Lightning Staff (both resolvable).
+    const r = pickWeaponVariant(
+      [1, 2],
+      'Lightning Staff',
+      label({ 1: 'Inferno Staff', 2: 'Lightning Staff' }),
+    );
+    expect(r).toEqual({ itemId: 2, confirmed: true });
+  });
+
+  it('does NOT confirm a specific staff element when only a generic Staff is available', () => {
+    // Both candidates only resolve to generic "Staff" (element unknown).
+    const r = pickWeaponVariant([1, 2], 'Lightning Staff', label({ 1: 'Staff', 2: 'Staff' }));
+    expect(r.itemId).toBe(1); // best-effort first candidate
+    expect(r.confirmed).toBe(false); // → caller warns
+  });
+
+  it('confirms a generic "Staff" request against any staff candidate', () => {
+    const r = pickWeaponVariant([1, 2], 'Staff', label({ 1: 'Staff', 2: 'Staff' }));
+    expect(r).toEqual({ itemId: 1, confirmed: true });
+  });
+
+  it('matches a non-staff weapon type exactly (Dagger over Sword)', () => {
+    const r = pickWeaponVariant([1, 2], 'Dagger', label({ 1: 'Sword', 2: 'Dagger' }));
+    expect(r).toEqual({ itemId: 2, confirmed: true });
+  });
+
+  it('a single candidate is confirmed regardless of type cell', () => {
+    expect(pickWeaponVariant([7], 'Greatsword', () => null)).toEqual({
+      itemId: 7,
+      confirmed: true,
+    });
+  });
+
+  it('falls back unconfirmed when no candidate matches the requested type', () => {
+    const r = pickWeaponVariant([1, 2], 'Bow', label({ 1: 'Sword', 2: 'Dagger' }));
+    expect(r).toEqual({ itemId: 1, confirmed: false });
   });
 });
 
