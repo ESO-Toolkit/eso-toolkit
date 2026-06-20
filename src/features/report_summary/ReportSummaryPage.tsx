@@ -1,4 +1,19 @@
-import { Box, Typography, Card, CardContent, LinearProgress, Alert, Chip } from '@mui/material';
+import BarChartIcon from '@mui/icons-material/BarChart';
+import DangerousIcon from '@mui/icons-material/Dangerous';
+import InsightsIcon from '@mui/icons-material/Insights';
+import {
+  Box,
+  Typography,
+  Card,
+  CardContent,
+  LinearProgress,
+  Alert,
+  Chip,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
+} from '@mui/material';
 import React, { Suspense } from 'react';
 import { useParams } from 'react-router-dom';
 
@@ -180,7 +195,7 @@ const ReportSummaryLoadingView: React.FC<ReportSummaryLoadingViewProps> = ({ pro
   return (
     <Card elevation={2}>
       <CardContent>
-        <Typography variant="h5" gutterBottom>
+        <Typography variant="h5" component="h2" gutterBottom>
           Loading Report Summary
         </Typography>
 
@@ -209,13 +224,38 @@ const ReportSummaryLoadingView: React.FC<ReportSummaryLoadingViewProps> = ({ pro
 
         {!progress && <LinearProgress sx={{ mb: 2 }} />}
 
-        <Typography variant="body2" color="text.secondary">
-          📊 Aggregating damage data across all fights
-          <br />
-          💀 Analyzing death patterns and mechanics
-          <br />
-          🎯 Identifying improvement opportunities
-        </Typography>
+        <List dense disablePadding>
+          <ListItem disableGutters>
+            <ListItemIcon sx={{ minWidth: 32 }}>
+              <BarChartIcon fontSize="small" color="action" aria-hidden />
+            </ListItemIcon>
+            <ListItemText>
+              <Typography variant="body2" color="text.secondary">
+                Aggregating damage data across all fights
+              </Typography>
+            </ListItemText>
+          </ListItem>
+          <ListItem disableGutters>
+            <ListItemIcon sx={{ minWidth: 32 }}>
+              <DangerousIcon fontSize="small" color="action" aria-hidden />
+            </ListItemIcon>
+            <ListItemText>
+              <Typography variant="body2" color="text.secondary">
+                Analyzing death patterns and mechanics
+              </Typography>
+            </ListItemText>
+          </ListItem>
+          <ListItem disableGutters>
+            <ListItemIcon sx={{ minWidth: 32 }}>
+              <InsightsIcon fontSize="small" color="action" aria-hidden />
+            </ListItemIcon>
+            <ListItemText>
+              <Typography variant="body2" color="text.secondary">
+                Identifying improvement opportunities
+              </Typography>
+            </ListItemText>
+          </ListItem>
+        </List>
       </CardContent>
     </Card>
   );
@@ -230,7 +270,7 @@ const ReportSummaryErrorView: React.FC<ReportSummaryErrorViewProps> = ({ error, 
   return (
     <Card elevation={2}>
       <CardContent>
-        <Typography variant="h5" gutterBottom color="error">
+        <Typography variant="h5" component="h2" gutterBottom color="error">
           Failed to Load Report Summary
         </Typography>
 

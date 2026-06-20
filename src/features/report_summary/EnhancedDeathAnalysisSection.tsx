@@ -1,6 +1,7 @@
 import BoltIcon from '@mui/icons-material/Bolt';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import SkullIcon from '@mui/icons-material/Dangerous';
+import DeleteSweepIcon from '@mui/icons-material/DeleteSweep';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import GroupIcon from '@mui/icons-material/Group';
 import PersonIcon from '@mui/icons-material/Person';
@@ -137,7 +138,9 @@ const EnhancedDeathAnalysisSectionComponent: React.FC<EnhancedDeathAnalysisSecti
         <CardContent>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
             <SkullIcon color="error" />
-            <Typography variant="h5">Death Analysis</Typography>
+            <Typography variant="h5" component="h2">
+              Death Analysis
+            </Typography>
           </Box>
           <Alert severity="error">
             <Typography variant="h6">Analysis Failed</Typography>
@@ -154,7 +157,9 @@ const EnhancedDeathAnalysisSectionComponent: React.FC<EnhancedDeathAnalysisSecti
         <CardContent>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
             <SkullIcon />
-            <Typography variant="h5">Death Analysis</Typography>
+            <Typography variant="h5" component="h2">
+              Death Analysis
+            </Typography>
           </Box>
           <LinearProgress sx={{ mb: 2 }} />
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
@@ -186,7 +191,7 @@ const EnhancedDeathAnalysisSectionComponent: React.FC<EnhancedDeathAnalysisSecti
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <CheckCircleIcon fontSize="large" />
               <Box>
-                <Typography variant="h6">Flawless Performance! 🎉</Typography>
+                <Typography variant="h6">Flawless Performance!</Typography>
                 <Typography>
                   No deaths recorded across all fights. Excellent execution by the entire team!
                 </Typography>
@@ -263,6 +268,7 @@ const EnhancedDeathAnalysisSectionComponent: React.FC<EnhancedDeathAnalysisSecti
               <Box sx={{ mb: 4 }}>
                 <Typography
                   variant="h6"
+                  component="h3"
                   gutterBottom
                   sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
                 >
@@ -320,6 +326,7 @@ const EnhancedDeathAnalysisSectionComponent: React.FC<EnhancedDeathAnalysisSecti
             <Box sx={{ mb: 4 }}>
               <Typography
                 variant="h6"
+                component="h3"
                 gutterBottom
                 sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
               >
@@ -327,7 +334,7 @@ const EnhancedDeathAnalysisSectionComponent: React.FC<EnhancedDeathAnalysisSecti
                 Deadliest Abilities & Mechanics
               </Typography>
               <TableContainer component={Paper} variant="outlined">
-                <Table size="small">
+                <Table size="small" aria-label="Deadliest abilities and mechanics">
                   <TableHead>
                     <TableRow>
                       <TableCell sx={{ fontWeight: 'bold' }}>Ability/Mechanic</TableCell>
@@ -412,6 +419,7 @@ const EnhancedDeathAnalysisSectionComponent: React.FC<EnhancedDeathAnalysisSecti
             <Box sx={{ mb: 4 }}>
               <Typography
                 variant="h6"
+                component="h3"
                 gutterBottom
                 sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
               >
@@ -419,7 +427,7 @@ const EnhancedDeathAnalysisSectionComponent: React.FC<EnhancedDeathAnalysisSecti
                 Player Death Analysis
               </Typography>
               <TableContainer component={Paper} variant="outlined">
-                <Table size="small">
+                <Table size="small" aria-label="Player death analysis">
                   <TableHead>
                     <TableRow>
                       <TableCell sx={{ fontWeight: 'bold' }}>Player</TableCell>
@@ -445,14 +453,6 @@ const EnhancedDeathAnalysisSectionComponent: React.FC<EnhancedDeathAnalysisSecti
                               {player.playerName.charAt(0)}
                             </Avatar>
                             {player.playerName}
-                            {player.role && (
-                              <Chip
-                                label={player.role}
-                                size="small"
-                                color={getRoleColor(player.role)}
-                                sx={{ fontSize: '0.7rem' }}
-                              />
-                            )}
                           </Box>
                         </TableCell>
                         <TableCell align="right">
@@ -507,7 +507,9 @@ const EnhancedDeathAnalysisSectionComponent: React.FC<EnhancedDeathAnalysisSecti
                   mb: 2,
                 }}
               >
-                <Typography variant="h6">Deaths by Fight</Typography>
+                <Typography variant="h6" component="h3">
+                  Deaths by Fight
+                </Typography>
                 {trashStats.count > 0 && (
                   <FormControlLabel
                     control={
@@ -515,21 +517,15 @@ const EnhancedDeathAnalysisSectionComponent: React.FC<EnhancedDeathAnalysisSecti
                         checked={showTrashFights}
                         onChange={(e) => setShowTrashFights(e.target.checked)}
                         size="small"
-                        slotProps={{ input: { 'aria-label': 'Toggle trash fights' } }}
-                        sx={{
-                          '& .MuiSwitch-switchBase.Mui-checked': {
-                            color: '#38bdf8',
-                            '&:hover': {
-                              backgroundColor: 'rgba(56, 189, 248, 0.08)',
-                            },
-                          },
-                          '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-                            backgroundColor: '#38bdf8',
-                          },
-                        }}
+                        color="info"
                       />
                     }
-                    label={`🗑️ ${trashStats.count} trash (${trashStats.deaths} deaths)`}
+                    label={
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                        <DeleteSweepIcon fontSize="small" aria-hidden />
+                        {`${trashStats.count} trash (${trashStats.deaths} deaths)`}
+                      </Box>
+                    }
                     sx={{ ml: 2, mr: 0 }}
                   />
                 )}
@@ -671,16 +667,6 @@ function getCategoryColor(
     default:
       return 'primary';
   }
-}
-
-function getRoleColor(
-  role: string,
-): 'primary' | 'secondary' | 'error' | 'warning' | 'info' | 'success' {
-  const lowerRole = role.toLowerCase();
-  if (lowerRole.includes('tank')) return 'info';
-  if (lowerRole.includes('heal')) return 'success';
-  if (lowerRole.includes('dps') || lowerRole.includes('damage')) return 'error';
-  return 'primary';
 }
 
 function getPatternTypeLabel(type: DeathPatternType): string {

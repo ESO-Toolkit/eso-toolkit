@@ -231,7 +231,7 @@ describe('ReportSummaryPage', () => {
 
     await waitFor(() => {
       expect(screen.getByText('0 Total Deaths')).toBeInTheDocument();
-      expect(screen.getByText('Flawless Performance! 🎉')).toBeInTheDocument();
+      expect(screen.getByText('Flawless Performance!')).toBeInTheDocument();
     });
   });
 
@@ -267,7 +267,7 @@ describe('ReportSummaryPage', () => {
     renderWithProviders(<ReportSummaryPage />);
 
     await waitFor(() => {
-      expect(screen.getByText('Damage Type Distribution')).toBeInTheDocument();
+      expect(screen.getByText('Damage by Type')).toBeInTheDocument();
       expect(screen.getByText('Direct Damage')).toBeInTheDocument();
       expect(screen.getByText('DOT')).toBeInTheDocument();
     });
