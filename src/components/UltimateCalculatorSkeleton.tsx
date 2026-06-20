@@ -248,18 +248,15 @@ export const UltimateCalculatorSkeleton: React.FC<UltimateCalculatorSkeletonProp
         <Paper elevation={0} sx={{ ...panelSx(theme), flex: '1 1 420px', minWidth: 0 }}>
           {sectionHeader(140)}
 
-          {/* Context toggle (Solo / Group / PvP) */}
-          <Box
-            sx={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(3, 1fr)',
-              gap: 0.5,
-              mb: 2,
-            }}
-          >
-            {[0, 1, 2].map((i) => (
-              <Skeleton key={i} variant="rectangular" height={48} sx={{ borderRadius: '10px' }} />
-            ))}
+          {/* Context toggle — a "Context" label over three two-line buttons
+              (Solo / Group / PvP, each with a sub-label), matching the real height. */}
+          <Box sx={{ mb: 2 }}>
+            <Skeleton variant="text" width={70} height={14} sx={{ mb: 0.75 }} />
+            <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 0.5 }}>
+              {[0, 1, 2].map((i) => (
+                <Skeleton key={i} variant="rectangular" height={60} sx={{ borderRadius: '10px' }} />
+              ))}
+            </Box>
           </Box>
 
           {/* Class + Role selects */}
@@ -274,7 +271,7 @@ export const UltimateCalculatorSkeleton: React.FC<UltimateCalculatorSkeletonProp
           {/* Decisive trait toggle — on by default, so the nested weapon-quality
               select + two-handed switch panel is shown at first paint. */}
           <Box sx={{ mb: 2 }}>
-            <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
+            <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', minHeight: 38 }}>
               <Skeleton variant="rectangular" width={34} height={20} sx={{ borderRadius: 10 }} />
               <Skeleton variant="text" width={170} height={16} />
             </Stack>
@@ -291,7 +288,7 @@ export const UltimateCalculatorSkeleton: React.FC<UltimateCalculatorSkeletonProp
               }}
             >
               <Skeleton variant="rectangular" height={40} sx={{ borderRadius: '10px' }} />
-              <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
+              <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', minHeight: 38 }}>
                 <Skeleton variant="rectangular" width={34} height={20} sx={{ borderRadius: 10 }} />
                 <Skeleton variant="text" width={150} height={16} />
               </Stack>
@@ -299,7 +296,11 @@ export const UltimateCalculatorSkeleton: React.FC<UltimateCalculatorSkeletonProp
           </Box>
 
           {/* Divider + "ULTIMATE SOURCES" eyebrow */}
-          <Stack direction="row" spacing={1} sx={{ alignItems: 'center', mb: 1.5 }}>
+          <Stack
+            direction="row"
+            spacing={1}
+            sx={{ alignItems: 'center', mt: 0.5, mb: 1.5, minHeight: 24 }}
+          >
             <Skeleton variant="text" width={120} height={12} />
             <Box sx={{ flex: 1, height: '1px', backgroundColor: theme.palette.divider }} />
           </Stack>
@@ -348,10 +349,16 @@ export const UltimateCalculatorSkeleton: React.FC<UltimateCalculatorSkeletonProp
                         : 'linear-gradient(135deg, rgba(40,145,200,0.08) 0%, rgba(40,145,200,0.02) 100%)',
                     }}
                   >
+                    {/* Toggle + label + provenance link — the real card reserves a
+                        44px min-height header row. */}
                     <Stack
                       direction="row"
                       spacing={1}
-                      sx={{ alignItems: 'center', justifyContent: 'space-between' }}
+                      sx={{
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        minHeight: 44,
+                      }}
                     >
                       <Stack direction="row" spacing={1} sx={{ alignItems: 'center', minWidth: 0 }}>
                         <Skeleton
@@ -362,17 +369,20 @@ export const UltimateCalculatorSkeleton: React.FC<UltimateCalculatorSkeletonProp
                         />
                         <Skeleton variant="text" width={150} height={15} />
                       </Stack>
+                      <Skeleton variant="text" width={42} height={12} sx={{ flexShrink: 0 }} />
                     </Stack>
                     {/* Uptime label + value, then the slider (enabled source). */}
-                    <Box sx={{ mt: 1, pt: 1, borderTop: `1px solid ${theme.palette.divider}` }}>
+                    <Box sx={{ mt: 0.75, pt: 1, borderTop: `1px solid ${theme.palette.divider}` }}>
                       <Stack
                         direction="row"
                         sx={{ justifyContent: 'space-between', alignItems: 'center' }}
                       >
                         <Skeleton variant="text" width={48} height={12} />
-                        <Skeleton variant="text" width={30} height={12} />
+                        <Skeleton variant="text" width={30} height={14} />
                       </Stack>
-                      <Box sx={{ px: '12px', mt: 0.5 }}>
+                      {/* Slider — reserve the small MUI Slider's height (rail + its
+                          10px touch padding top and bottom). */}
+                      <Box sx={{ px: '12px', py: '10px' }}>
                         <Skeleton
                           variant="rectangular"
                           width="100%"
@@ -380,9 +390,18 @@ export const UltimateCalculatorSkeleton: React.FC<UltimateCalculatorSkeletonProp
                           sx={{ borderRadius: 3 }}
                         />
                       </Box>
-                      {/* Source description (the enabled cards show one). */}
-                      <Skeleton variant="text" width="92%" height={11} sx={{ mt: 0.5 }} />
-                      <Skeleton variant="text" width="68%" height={11} />
+                      {/* Source description — the default Arcanist sources wrap
+                          past two lines; the long base-income text wraps an extra
+                          line at narrow widths, so reserve a 4th line on xs only. */}
+                      <Skeleton variant="text" width="100%" height={11} />
+                      <Skeleton variant="text" width="96%" height={11} />
+                      <Skeleton
+                        variant="text"
+                        width="88%"
+                        height={11}
+                        sx={{ display: { xs: 'block', sm: 'none' } }}
+                      />
+                      <Skeleton variant="text" width="60%" height={11} />
                     </Box>
                   </Box>
                 )}
@@ -390,8 +409,13 @@ export const UltimateCalculatorSkeleton: React.FC<UltimateCalculatorSkeletonProp
             );
           })}
 
-          {/* Reset button */}
-          <Skeleton variant="text" width={130} height={16} sx={{ mt: 1.5 }} />
+          {/* Reset button (a text Button with a leading icon). */}
+          <Skeleton
+            variant="rounded"
+            width={150}
+            height={30}
+            sx={{ mt: 1.5, borderRadius: '8px' }}
+          />
         </Paper>
 
         {/* ----------------------- RIGHT: results (sticky on lg) ----------------------- */}
