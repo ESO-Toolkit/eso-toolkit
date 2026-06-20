@@ -32,7 +32,13 @@ import { useSnackbar } from 'notistack';
 import React, { useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
-import { selectBuildSetups, selectClassMasteryPassives } from '../store/buildEditorSelectors';
+import {
+  selectBuildClassSkillLines,
+  selectBuildEsoClass,
+  selectBuildRaces,
+  selectBuildSetups,
+  selectClassMasteryPassives,
+} from '../store/buildEditorSelectors';
 import { applyImportedBuild } from '../store/buildEditorSlice';
 import {
   buildImportPayload,
@@ -40,7 +46,7 @@ import {
   type ImportSections,
   type ParsedBuildResult,
 } from '../utils/buildTextParser';
-import { buildHasContent } from '../utils/setupTransfer';
+import { buildHasContent, buildIdentityTouched } from '../utils/setupTransfer';
 
 const MAX_SETUPS = 5;
 
@@ -76,9 +82,17 @@ export const ImportBuildTextPanel: React.FC<ImportBuildTextPanelProps> = ({ onCl
   // than one setup, OR a single setup that already has gear/skills (even a "new
   // setup" import rewrites that existing setup's class). Only a blank build is
   // safe to auto-apply identity to. When risky it's opt-in + clearly labelled.
-  // Class mastery is build-level content that also depends on the class.
+  // Build-level identity/content a build-wide import would overwrite: class
+  // mastery picks, plus the class / subclass lines / races themselves.
   const classMasteryPicks = useSelector(selectClassMasteryPassives);
-  const identityIsRisky = setupCount > 1 || classMasteryPicks.length > 0 || buildHasContent(setups);
+  const esoClass = useSelector(selectBuildEsoClass);
+  const classSkillLines = useSelector(selectBuildClassSkillLines);
+  const races = useSelector(selectBuildRaces);
+  const identityIsRisky =
+    setupCount > 1 ||
+    classMasteryPicks.length > 0 ||
+    buildIdentityTouched(esoClass, classSkillLines, races) ||
+    buildHasContent(setups);
 
   const [raw, setRaw] = useState('');
   const [parsed, setParsed] = useState<ParsedBuildResult | null>(null);

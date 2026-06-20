@@ -11,7 +11,8 @@
 import { v4 as uuidv4 } from 'uuid';
 
 import type { SkillsConfig } from '../../loadout-manager/types/loadout.types';
-import type { BuildSetup } from '../types/build.types';
+import { getDefaultLinesForClass } from '../data/esoStaticData';
+import type { Build, BuildSetup } from '../types/build.types';
 
 // ─── Section descriptors ──────────────────────────────────────────────────────
 
@@ -198,6 +199,23 @@ export function buildHasContent(setups: BuildSetup[]): boolean {
     }
     return false;
   });
+}
+
+/**
+ * True when the build's BUILD-LEVEL identity (class, subclass skill lines, or
+ * races) has been changed from a factory-fresh build (Dragonknight with its
+ * default three lines and no races). A build-wide identity import would
+ * overwrite these, so it should be opt-in once any of them is set.
+ */
+export function buildIdentityTouched(
+  esoClass: Build['esoClass'],
+  classSkillLines: Build['classSkillLines'],
+  races: string[],
+): boolean {
+  if (esoClass !== 'dragonknight') return true;
+  if (races.length > 0) return true;
+  const def = getDefaultLinesForClass('dragonknight');
+  return classSkillLines.some((line, i) => line !== def[i]);
 }
 
 // ─── Skill-bar helpers ────────────────────────────────────────────────────────

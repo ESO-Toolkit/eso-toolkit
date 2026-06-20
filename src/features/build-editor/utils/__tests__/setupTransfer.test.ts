@@ -4,8 +4,10 @@
 
 import type { SkillsConfig } from '../../../loadout-manager/types/loadout.types';
 import type { BuildSetup } from '../../types/build.types';
+import { getDefaultLinesForClass } from '../../data/esoStaticData';
 import {
   buildHasContent,
+  buildIdentityTouched,
   clearedSetupSection,
   cloneSetup,
   copySetupSection,
@@ -310,6 +312,30 @@ describe('buildHasContent', () => {
     const withStars = blankSetup();
     withStars.cp.fitness.passives = { piercing: 5 };
     expect(buildHasContent([withStars])).toBe(true);
+  });
+});
+
+// ─── buildIdentityTouched ─────────────────────────────────────────────────────
+
+describe('buildIdentityTouched', () => {
+  const dkLines = getDefaultLinesForClass('dragonknight');
+
+  it('is false for a factory-fresh build (DK, default lines, no races)', () => {
+    expect(buildIdentityTouched('dragonknight', dkLines, [])).toBe(false);
+  });
+
+  it('is true when the class changed', () => {
+    expect(buildIdentityTouched('sorcerer', getDefaultLinesForClass('sorcerer'), [])).toBe(true);
+  });
+
+  it('is true when races are set', () => {
+    expect(buildIdentityTouched('dragonknight', dkLines, ['nord'])).toBe(true);
+  });
+
+  it('is true when a subclass skill line differs from the class default', () => {
+    const subclassed = [...dkLines];
+    subclassed[2] = 'class.storm-calling'; // a Sorcerer line on a DK build
+    expect(buildIdentityTouched('dragonknight', subclassed as typeof dkLines, [])).toBe(true);
   });
 });
 
