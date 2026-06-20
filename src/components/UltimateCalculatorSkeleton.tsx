@@ -467,8 +467,11 @@ export const UltimateCalculatorSkeleton: React.FC<UltimateCalculatorSkeletonProp
                 <Skeleton variant="text" width={36} height={14} sx={{ ml: 'auto' }} />
               </Box>
 
-              {/* Body rows + total */}
-              {[0, 1, 2, 3, 4, 5].map((r) => tableRow(r))}
+              {/* Body rows + total. The default Arcanist group-DPS state enables
+                  two sources (base income + the class passive), so the real table
+                  renders two contribution rows before the Total — match that count
+                  so the table doesn't collapse when the calculator mounts. */}
+              {[0, 1].map((r) => tableRow(r))}
               {tableRow(99, { total: true })}
             </Box>
           </Paper>
