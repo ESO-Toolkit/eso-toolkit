@@ -180,6 +180,7 @@ export interface InteractionResponse {
     flags?: number;
     title?: string;
     custom_id?: string;
+    allowed_mentions?: { parse?: string[]; users?: string[]; roles?: string[] };
   };
 }
 
@@ -243,33 +244,38 @@ export const ButtonId = {
 } as const;
 
 // Response templates for quick replies
-export const ResponseTemplates: Record<string, { label: string; emoji: string; message: string }> = {
-  acknowledged: {
-    label: 'Acknowledged',
-    emoji: '✅',
-    message: 'Thank you for your report! We have acknowledged this issue and it has been added to our backlog. We will update you when there is progress.',
-  },
-  investigating: {
-    label: 'Investigating',
-    emoji: '🔍',
-    message: 'We are actively investigating this issue. Thank you for your patience!',
-  },
-  needs_info: {
-    label: 'Need More Info',
-    emoji: '❓',
-    message: 'We need more information to proceed. Could you please provide additional details about the issue?',
-  },
-  resolved: {
-    label: 'Resolved',
-    emoji: '✨',
-    message: 'This issue has been resolved! Thank you for your report. Please let us know if you encounter any further problems.',
-  },
-  wont_fix: {
-    label: "Won't Fix",
-    emoji: '🚫',
-    message: "Thank you for your report. After review, we've determined this will not be addressed at this time. We appreciate your feedback.",
-  },
-} as const;
+export const ResponseTemplates: Record<string, { label: string; emoji: string; message: string }> =
+  {
+    acknowledged: {
+      label: 'Acknowledged',
+      emoji: '✅',
+      message:
+        'Thank you for your report! We have acknowledged this issue and it has been added to our backlog. We will update you when there is progress.',
+    },
+    investigating: {
+      label: 'Investigating',
+      emoji: '🔍',
+      message: 'We are actively investigating this issue. Thank you for your patience!',
+    },
+    needs_info: {
+      label: 'Need More Info',
+      emoji: '❓',
+      message:
+        'We need more information to proceed. Could you please provide additional details about the issue?',
+    },
+    resolved: {
+      label: 'Resolved',
+      emoji: '✨',
+      message:
+        'This issue has been resolved! Thank you for your report. Please let us know if you encounter any further problems.',
+    },
+    wont_fix: {
+      label: "Won't Fix",
+      emoji: '🚫',
+      message:
+        "Thank you for your report. After review, we've determined this will not be addressed at this time. We appreciate your feedback.",
+    },
+  } as const;
 
 // Modal custom_id prefix
 export const ModalId = {

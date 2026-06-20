@@ -35,6 +35,7 @@ const commands = [
     name: 'ticket',
     description: 'Manage support tickets',
     default_member_permissions: null, // available to everyone; handlers enforce permissions
+    dm_permission: false, // server-only; handlers assume interaction.member exists
     options: [
       {
         type: 1, // SUB_COMMAND
@@ -86,6 +87,7 @@ const commands = [
     name: 'roster',
     description: 'Manage ESO Toolkit roster → Discord integration',
     default_member_permissions: null,
+    dm_permission: false, // server-only; handlers assume interaction.member/guild exists
     options: [
       {
         type: 1, // SUB_COMMAND
@@ -148,7 +150,8 @@ const commands = [
               {
                 type: 3,
                 name: 'pattern',
-                description: 'Template: {day-short}, {day-full}, {time}, {tag}, {label}',
+                description:
+                  'Template: {day-short}, {day-full}, {day}, {time}, {trial}, {difficulty}',
                 required: true,
               },
             ],
@@ -187,6 +190,24 @@ const commands = [
                 type: 8,
                 name: 'dd-role',
                 description: 'DD role to ping',
+                required: false,
+              },
+              {
+                type: 5, // BOOLEAN
+                name: 'clear-tank',
+                description: 'Stop pinging a tank role',
+                required: false,
+              },
+              {
+                type: 5,
+                name: 'clear-healer',
+                description: 'Stop pinging a healer role',
+                required: false,
+              },
+              {
+                type: 5,
+                name: 'clear-dd',
+                description: 'Stop pinging a DD role',
                 required: false,
               },
             ],
@@ -264,18 +285,11 @@ async function registerCommands() {
   }
 
   console.log('✅ Commands registered successfully!');
-  console.log(
-    'Registered:',
-    data.map((c) => `/${c.name}`).join(', '),
-  );
+  console.log('Registered:', data.map((c) => `/${c.name}`).join(', '));
 
   if (!GUILD_ID) {
-    console.log(
-      '\nNote: Global commands can take up to 1 hour to propagate to all servers.',
-    );
-    console.log(
-      'For instant propagation during development, set DISCORD_GUILD_ID and re-run.',
-    );
+    console.log('\nNote: Global commands can take up to 1 hour to propagate to all servers.');
+    console.log('For instant propagation during development, set DISCORD_GUILD_ID and re-run.');
   }
 }
 

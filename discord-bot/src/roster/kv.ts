@@ -5,6 +5,8 @@
  *   roster-map:{guildId}:{rosterId}  → JSON RosterMapping
  *   guild-config:{guildId}           → JSON GuildConfig
  *   channel-roster:{channelId}       → "{guildId}:{rosterId}" (reverse lookup)
+ *   roster-data:{rosterId}           → encoded roster_data (direct-publish only)
+ *   roster-meta:{rosterId}           → JSON snapshot metadata (direct-publish only)
  */
 
 import type { Env } from '../types.js';
@@ -17,6 +19,7 @@ export const KV_PREFIX = {
   CHANNEL_ROSTER: 'channel-roster',
   GUILD_CONFIG: 'guild-config',
   ROSTER_DATA: 'roster-data',
+  ROSTER_META: 'roster-meta',
 } as const;
 
 // ── Roster Mapping CRUD ─────────────────────────────────────────────────────

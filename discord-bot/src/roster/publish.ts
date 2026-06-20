@@ -339,17 +339,20 @@ export async function refreshRoster(
     // Direct-publish rosters live in KV, not the hub API
     const kvData = await env.ROSTERS.get(`${KV_PREFIX.ROSTER_DATA}:${rosterId}`);
     if (kvData) {
-      // Reconstruct a minimal snapshot — find any mapping for this roster
+      // Reconstruct the snapshot. Prefer persisted metadata (title/desc/tags)
+      // so a refresh keeps the original embed faithful; fall back to
+      // placeholders for rosters published before metadata persistence existed.
       const mappings = await findMappingsForRoster(env, rosterId);
       const mapping = mappings[0] ?? null;
+      const meta = await readDirectRosterMeta(env, rosterId);
       snapshot = {
         id: rosterId,
-        title: mapping?.channelNameOverride ?? 'Direct Roster',
-        description: '',
-        trial_id: '',
-        author_name: 'Unknown',
+        title: meta?.title ?? mapping?.channelNameOverride ?? 'Direct Roster',
+        description: meta?.description ?? '',
+        trial_id: meta?.trial_id ?? '',
+        author_name: meta?.author_name ?? 'Unknown',
         roster_data: kvData,
-        tags: [],
+        tags: meta?.tags ?? [],
         vote_count: 0,
         created_at: mapping?.createdAt ?? new Date().toISOString(),
         updated_at: new Date().toISOString(),
@@ -495,7 +498,7 @@ async function contentLockKey(req: DirectPublishRequest): Promise<string> {
     req.categoryId ?? '',
     req.eventTime ?? '',
     req.roster_data,
-  ].join(' ');
+  ].join('\0');
   const bytes = new TextEncoder().encode(material);
   const digest = await crypto.subtle.digest('SHA-256', bytes);
   const hex = Array.from(new Uint8Array(digest))
@@ -585,7 +588,43 @@ async function doPublishDirect(
     expirationTtl: DIRECT_TTL,
   });
 
+  // Persist snapshot metadata so a later refresh rebuilds the embed faithfully.
+  // Direct rosters have no hub record, so without this a refresh would degrade
+  // the title/description/tags to placeholders. Same TTL — expire together.
+  await env.ROSTERS.put(
+    `${KV_PREFIX.ROSTER_META}:${syntheticId}`,
+    JSON.stringify({
+      title: snapshot.title,
+      description: snapshot.description,
+      trial_id: snapshot.trial_id,
+      author_name: snapshot.author_name,
+      tags: snapshot.tags,
+    } satisfies DirectRosterMeta),
+    { expirationTtl: DIRECT_TTL },
+  );
+
   return { ok: true, channelId: result.channelId, channelName, messageId: result.messageId };
+}
+
+/** Snapshot metadata persisted for direct-publish rosters (no hub record). */
+interface DirectRosterMeta {
+  title?: string;
+  description?: string;
+  trial_id?: string;
+  author_name?: string;
+  tags?: string[];
+}
+
+/** Load persisted metadata for a direct-publish roster, or null if absent/corrupt. */
+async function readDirectRosterMeta(env: Env, rosterId: string): Promise<DirectRosterMeta | null> {
+  const raw = await env.ROSTERS.get(`${KV_PREFIX.ROSTER_META}:${rosterId}`);
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw) as DirectRosterMeta;
+  } catch {
+    console.error(`[refresh] failed to parse direct roster meta for ${rosterId}`);
+    return null;
+  }
 }
 
 // ── Refresh a single channel for an existing mapping ────────────────────────
