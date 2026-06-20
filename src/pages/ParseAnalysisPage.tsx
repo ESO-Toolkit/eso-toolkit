@@ -114,6 +114,7 @@ import { setParseReport, clearParseReport } from '../store/parse_analysis/parseA
 import { setReportData } from '../store/report/reportSlice';
 import { useAppDispatch } from '../store/useAppDispatch';
 import { createBuffLookup } from '../utils/BuffLookupUtils';
+import { getPetOwnerMap } from '../utils/damageEventUtils';
 import { detectBuildIssues, type BuildIssue } from '../utils/detectBuildIssues';
 import { Logger, LogLevel } from '../utils/logger';
 
@@ -718,7 +719,16 @@ const ParseAnalysisPageContent: React.FC = () => {
       combatantInfoEvents,
     );
     const cpm = calculateCPM(castEvents, playerId, fightStartTime, fightEndTime, abilityMapper);
-    const dpsResult = calculateDPS(damageEvents, playerId, fightStartTime, fightEndTime);
+    // Attribute pet/summon damage (Sorc atronachs, Warden bear, NB shades, etc.)
+    // back to their owner so pet-heavy builds aren't undercounted.
+    const petOwnerByActorId = getPetOwnerMap(reportMasterData.actorsById);
+    const dpsResult = calculateDPS(
+      damageEvents,
+      playerId,
+      fightStartTime,
+      fightEndTime,
+      petOwnerByActorId,
+    );
     const rotationResult = analyzeRotation(
       castEvents,
       playerId,
@@ -892,6 +902,7 @@ const ParseAnalysisPageContent: React.FC = () => {
     isCombatantInfoEventsLoading,
     isDebuffEventsLoading,
     abilityMapper,
+    reportMasterData.actorsById,
     state.fightName,
   ]);
 
