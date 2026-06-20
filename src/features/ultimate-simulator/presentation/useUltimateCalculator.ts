@@ -122,6 +122,71 @@ function applyArchetype(
   };
 }
 
+/**
+ * Minor and Major Heroism are the same buff at two tiers — they never stack
+ * (Major overrides Minor). Enabling one disables the other so the engine, which
+ * does not de-duplicate buffs, can never sum both.
+ */
+const HEROISM_EXCLUSIVE: Record<string, string> = {
+  'minor-heroism': 'major-heroism',
+  'major-heroism': 'minor-heroism',
+};
+
+/**
+ * Set a generation source's enabled state, recording it as a user delta ONLY
+ * when it differs from the active archetype preset. Reverting a toggle back to
+ * the preset value therefore clears the delta (the build returns to pristine),
+ * so a stale "matches the preset anyway" delta can never leak into — and
+ * double-count against — a later archetype. Enabling a Heroism tier disables the
+ * other (recorded as a delta too) to preserve the non-stacking invariant.
+ */
+function setSourceEnabled(
+  state: UltimateCalculatorState,
+  id: string,
+  enabled: boolean,
+): Pick<UltimateCalculatorState, 'enabledOverrides' | 'userEnabledEdits'> {
+  const presetEnabled = resolvePresetOverrides(
+    getArchetypePreset(state.context, state.role),
+    state.esoClass,
+  ).enabledOverrides;
+  const enabledOverrides = { ...state.enabledOverrides };
+  const userEnabledEdits = { ...state.userEnabledEdits };
+  const set = (sid: string, val: boolean): void => {
+    enabledOverrides[sid] = val;
+    if (val === presetEnabled[sid]) delete userEnabledEdits[sid];
+    else userEnabledEdits[sid] = val;
+  };
+  set(id, enabled);
+  const exclusive = HEROISM_EXCLUSIVE[id];
+  if (exclusive && enabled) set(exclusive, false);
+  return { enabledOverrides, userEnabledEdits };
+}
+
+/**
+ * Set a source's uptime, recording it as a delta only when it differs from the
+ * resolved preset value (preset override, else the catalog default). Comparison
+ * is by whole percent — the only granularity the slider exposes — so dragging a
+ * slider back to the preset value clears the delta.
+ */
+function setSourceUptime(
+  state: UltimateCalculatorState,
+  id: string,
+  uptime: number,
+): Pick<UltimateCalculatorState, 'uptimeOverrides' | 'userUptimeEdits'> {
+  const clamped = Math.min(1, Math.max(0, uptime));
+  const presetUptimes = resolvePresetOverrides(
+    getArchetypePreset(state.context, state.role),
+    state.esoClass,
+  ).uptimeOverrides;
+  const catalogDefault = ULTIMATE_SOURCE_CATALOG.find((s) => s.id === id)?.uptime ?? 0;
+  const presetValue = presetUptimes[id] ?? catalogDefault;
+  const uptimeOverrides = { ...state.uptimeOverrides, [id]: clamped };
+  const userUptimeEdits = { ...state.userUptimeEdits };
+  if (Math.round(clamped * 100) === Math.round(presetValue * 100)) delete userUptimeEdits[id];
+  else userUptimeEdits[id] = clamped;
+  return { uptimeOverrides, userUptimeEdits };
+}
+
 const BASE_INITIAL_STATE: UltimateCalculatorState = {
   context: 'groupPve',
   esoClass: 'arcanist',
@@ -341,34 +406,23 @@ export function useUltimateCalculator(): UltimateCalculatorResult {
     [patch],
   );
   // Hand-editing a generation SOURCE records a user delta (replayed across
-  // archetype switches). Cost reductions also flow through toggleSource, but
-  // they're orthogonal to the archetype source layer (a preset never sets them,
-  // and applyArchetype preserves them), so toggling one updates the override but
-  // is NOT tracked as a customization — otherwise switching playstyle after,
-  // say, turning off Power Stone would be treated as a custom build.
+  // archetype switches, pruned when it matches the preset). Cost reductions also
+  // flow through toggleSource, but they're orthogonal to the archetype source
+  // layer (a preset never sets them, and applyArchetype preserves them), so
+  // toggling one updates the override but is NOT tracked as a customization —
+  // otherwise switching playstyle after, say, turning off Power Stone would be
+  // treated as a custom build.
   const toggleSource = useCallback(
     (id: string, enabled: boolean) =>
-      patch((s) => {
-        const enabledOverrides = { ...s.enabledOverrides, [id]: enabled };
-        if (COST_REDUCTION_IDS.has(id)) return { ...s, enabledOverrides };
-        return {
-          ...s,
-          enabledOverrides,
-          userEnabledEdits: { ...s.userEnabledEdits, [id]: enabled },
-        };
-      }),
+      patch((s) =>
+        COST_REDUCTION_IDS.has(id)
+          ? { ...s, enabledOverrides: { ...s.enabledOverrides, [id]: enabled } }
+          : { ...s, ...setSourceEnabled(s, id, enabled) },
+      ),
     [patch],
   );
   const setUptime = useCallback(
-    (id: string, uptime: number) =>
-      patch((s) => {
-        const clamped = Math.min(1, Math.max(0, uptime));
-        return {
-          ...s,
-          uptimeOverrides: { ...s.uptimeOverrides, [id]: clamped },
-          userUptimeEdits: { ...s.userUptimeEdits, [id]: clamped },
-        };
-      }),
+    (id: string, uptime: number) => patch((s) => ({ ...s, ...setSourceUptime(s, id, uptime) })),
     [patch],
   );
   const setUltimateAbility = useCallback(

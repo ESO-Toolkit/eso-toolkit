@@ -183,6 +183,30 @@ describe('UltimateCalculator', () => {
     expect(sourceSwitch(/^Major Heroism/i)).toBeChecked();
   });
 
+  it('prunes a reverted toggle so it cannot leak into another archetype', () => {
+    renderCalc(); // Group DPS: Minor Heroism on by preset.
+    fireEvent.click(sourceSwitch(/^Minor Heroism/i)); // off — a real edit
+    expect(screen.getByText(/customized this build/i)).toBeInTheDocument();
+    fireEvent.click(sourceSwitch(/^Minor Heroism/i)); // back on — matches preset again
+    // The delta is pruned, so the build is pristine once more…
+    expect(screen.queryByText(/customized this build/i)).not.toBeInTheDocument();
+
+    // …and switching to a Major-Heroism archetype does NOT leave Minor on too
+    // (which would double-count the non-stacking buff).
+    fireEvent.mouseDown(screen.getByLabelText(/Role/i));
+    fireEvent.click(within(screen.getByRole('listbox')).getByText('Tank'));
+    expect(sourceSwitch(/^Major Heroism/i)).toBeChecked();
+    expect(sourceSwitch(/^Minor Heroism/i)).not.toBeChecked();
+  });
+
+  it('enabling Major Heroism disables Minor (they do not stack)', () => {
+    renderCalc(); // Group DPS: Minor on, Major off.
+    expect(sourceSwitch(/^Minor Heroism/i)).toBeChecked();
+    fireEvent.click(sourceSwitch(/^Major Heroism/i));
+    expect(sourceSwitch(/^Major Heroism/i)).toBeChecked();
+    expect(sourceSwitch(/^Minor Heroism/i)).not.toBeChecked();
+  });
+
   it('does not freeze archetype auto-apply when only a cost reduction is toggled', () => {
     renderCalc();
     // Sorcerer has Power Stone (−15%) as a default-on cost reduction.
