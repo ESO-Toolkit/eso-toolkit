@@ -34,8 +34,18 @@ export const PackHubPage: React.FC = () => {
   const { isLoggedIn, accessToken, currentUser } = useAuth();
   const token = isLoggedIn ? accessToken : undefined;
 
-  const { filteredPacks, loading, error, filters, hasMore, setFilter, loadMore, refresh, vote } =
-    usePackHub(token);
+  const {
+    packs,
+    filteredPacks,
+    loading,
+    error,
+    filters,
+    hasMore,
+    setFilter,
+    loadMore,
+    refresh,
+    vote,
+  } = usePackHub(token);
 
   React.useEffect(() => {
     document.title = 'Pack Hub | ESO Toolkit';
@@ -310,7 +320,10 @@ export const PackHubPage: React.FC = () => {
         )}
 
         <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-          {loading && filteredPacks.length > 0 ? null : hasMore && filteredPacks.length > 0 ? (
+          {/* Gate "Load more" on the unfiltered packs: a client-side search that
+              matches nothing on the loaded pages must not hide pagination, or
+              matches on later pages become unreachable. */}
+          {loading && packs.length > 0 ? null : hasMore && packs.length > 0 ? (
             <Button variant="outlined" onClick={loadMore} aria-label="Load more packs">
               Load more
             </Button>

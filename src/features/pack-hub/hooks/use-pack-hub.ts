@@ -3,6 +3,9 @@ import React from 'react';
 import { packHubApi } from '../api/pack-hub-api';
 import type { HubPack, PackHubFilters } from '../types/pack-hub.types';
 
+/** Server page size for pack listings (must match the roster-hub worker). */
+const PACK_HUB_PAGE_SIZE = 20;
+
 interface UsePackHubReturn {
   packs: HubPack[];
   filteredPacks: HubPack[];
@@ -54,7 +57,9 @@ export function usePackHub(token: string | undefined): UsePackHubReturn {
         if (fetchKey !== fetchKeyRef.current) return; // stale
 
         setPacks((prev) => (append ? [...prev, ...res.packs] : res.packs));
-        setHasMore(res.packs.length === 20);
+        // A full page implies there may be more. Use >= so an unexpected page
+        // size from the worker can't permanently disable "Load more".
+        setHasMore(res.packs.length >= PACK_HUB_PAGE_SIZE);
       } catch (err) {
         if (controller.signal.aborted) return;
         if (fetchKey !== fetchKeyRef.current) return;
