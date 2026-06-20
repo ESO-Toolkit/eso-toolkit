@@ -20,6 +20,8 @@ import {
   ShapeStyle,
 } from '../types/mapMarkers';
 
+import { shapeOutlineLengthMeters, shapeSampleWorld } from './shapeGeometry';
+
 const COLOR_TOLERANCE = 0.05;
 const SIZE_TOLERANCE = 0.05;
 
@@ -905,4 +907,76 @@ export function withShapeEdit(
       return next;
     }),
   };
+}
+
+// ---------------------------------------------------------------------------
+// In-game export: bake markers + shapes into a real M0RMarkers string
+// ---------------------------------------------------------------------------
+
+/** Circle texture used for baked shape dots (built-in M0R ^1). */
+const SHAPE_DOT_TEXTURE = 'M0RMarkers/textures/circle.dds';
+/** Lay baked dots flat on the floor (pitch -90°), so a sampled line reads as a ground boundary. */
+const GROUND_FLAT_ORIENTATION: [number, number] = [-Math.PI / 2, 0];
+
+export interface InGameMorResult {
+  /** The M0RMarkers `<...>` string to paste into the addon in-game. */
+  code: string;
+  /** Total markers in the export (real markers + baked shape dots). */
+  markerCount: number;
+  /** How many of those are baked shape dots. */
+  dotCount: number;
+  /** Effective spacing between dots in metres (auto-coarsened to fit the cap). */
+  spacingMeters: number;
+}
+
+/**
+ * Bake markers + drawn shapes into ONE M0RMarkers import string that renders IN THE GAME.
+ *
+ * ESO marker addons cannot draw lines/areas — only point markers — so each shape's OUTLINE is
+ * sampled into a row of ground-flat circle dots in the shape's colour (fills can't transfer; only
+ * the boundary does). Dot spacing is coarsened automatically so real markers + dots stay under
+ * `maxMarkers` (the addon's storage ceiling is ~19k chars / a few hundred markers).
+ */
+export function encodeInGameMor(
+  state: MapMarkersState,
+  spacingMeters = 2,
+  maxMarkers = 500,
+): InGameMorResult {
+  const realMarkers = state.markers ?? [];
+  const shapes = state.shapes ?? [];
+
+  // Coarsen spacing so real markers + baked dots fit the cap.
+  const totalLenMeters = shapes.reduce((sum, shape) => sum + shapeOutlineLengthMeters(shape), 0);
+  const budget = Math.max(0, maxMarkers - realMarkers.length);
+  let spacing = Math.max(0.25, spacingMeters);
+  if (budget > 0 && totalLenMeters / spacing > budget) {
+    spacing = totalLenMeters / budget;
+  }
+  const spacingCm = spacing * 100;
+
+  const dots: ReplayMarker[] = [];
+  shapes.forEach((shape, shapeIndex) => {
+    shapeSampleWorld(shape, spacingCm).forEach(([x, z], pointIndex) => {
+      dots.push({
+        id: `bake-${shapeIndex}-${pointIndex}`,
+        source: 'manual',
+        x,
+        y: shape.worldY,
+        z,
+        size: 1,
+        bgTexture: SHAPE_DOT_TEXTURE,
+        colour: [...shape.style.colour] as [number, number, number, number],
+        text: '',
+        orientation: [...GROUND_FLAT_ORIENTATION] as [number, number],
+      });
+    });
+  });
+
+  const combined = [...realMarkers, ...dots];
+  if (combined.length === 0) {
+    throw new Error('No markers or shapes available to export.');
+  }
+
+  const code = encodeMarkersToMor({ ...state, markers: combined, shapes: undefined });
+  return { code, markerCount: combined.length, dotCount: dots.length, spacingMeters: spacing };
 }

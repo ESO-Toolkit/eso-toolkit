@@ -95,3 +95,52 @@ export function shapeOutlineWorld(shape: ReplayShape, circleSegments = 64): Poin
 export function isClosedKind(kind: ReplayShape['kind']): boolean {
   return kind === 'polygon' || kind === 'rect' || kind === 'circle';
 }
+
+/**
+ * Resample a polyline at a fixed arc-length `spacing` (in the SAME units as the points), returning
+ * evenly-spaced points along it starting at the first vertex. `closed` appends the first point so
+ * the closing edge is sampled too. Used to "bake" a drawn shape into a row of point markers for
+ * in-game export (ESO addons can't draw lines — only points).
+ */
+export function resamplePath(points: Point[], spacing: number, closed: boolean): Point[] {
+  if (points.length < 2 || spacing <= 0) {
+    return points.map((p) => [p[0], p[1]] as Point);
+  }
+  const path = closed && points.length > 2 ? [...points, points[0]] : points;
+  const out: Point[] = [[path[0][0], path[0][1]]];
+  let prev = path[0];
+  let acc = 0;
+  for (let i = 1; i < path.length; i++) {
+    const cur = path[i];
+    let segLen = Math.hypot(cur[0] - prev[0], cur[1] - prev[1]);
+    while (segLen > 0 && acc + segLen >= spacing) {
+      const remain = spacing - acc;
+      const t = remain / segLen;
+      const np: Point = [prev[0] + (cur[0] - prev[0]) * t, prev[1] + (cur[1] - prev[1]) * t];
+      out.push(np);
+      prev = np;
+      segLen = Math.hypot(cur[0] - prev[0], cur[1] - prev[1]);
+      acc = 0;
+    }
+    acc += segLen;
+    prev = cur;
+  }
+  return out;
+}
+
+/** World-cm sample points along a shape's outline at `spacingCm`, for baking to in-game markers. */
+export function shapeSampleWorld(shape: ReplayShape, spacingCm: number): Point[] {
+  const outline = shapeOutlineWorld(shape);
+  if (outline.length <= 1) {
+    return outline.map((p) => [p[0], p[1]] as Point);
+  }
+  return resamplePath(outline, spacingCm, isClosedKind(shape.kind));
+}
+
+/** Total outline length in METRES of a shape (including the closing edge for closed kinds). */
+export function shapeOutlineLengthMeters(shape: ReplayShape): number {
+  const outline = shapeOutlineWorld(shape);
+  if (outline.length < 2) return 0;
+  const path = isClosedKind(shape.kind) && outline.length > 2 ? [...outline, outline[0]] : outline;
+  return pathLengthMeters(path);
+}

@@ -39,8 +39,8 @@ import { useReplayPrefetch } from './trial_chapters/useReplayPrefetch';
 import type { ShapeData, ShapeKind, ShapeStyle } from './types/mapMarkers';
 import {
   arenaPointToWorld,
+  encodeInGameMor,
   encodeMarkersToElms,
-  encodeMarkersToMor,
 } from './utils/mapMarkerConverters';
 import { worldDistanceMeters } from './utils/shapeGeometry';
 import { encodeShapes } from './utils/shapeShareCodec';
@@ -272,56 +272,55 @@ export const FightReplay: React.FC = () => {
 
   const handleExportMarkers = useCallback(
     async (format: 'elms' | 'mor') => {
-      if (!markersState || markersState.markers.length === 0) {
-        setCopySnackbar({ type: 'error', message: 'No markers available to export.' });
+      const hasMarkers = !!markersState && markersState.markers.length > 0;
+      const hasShapes = !!markersState?.shapes && markersState.shapes.length > 0;
+
+      // Elms can only carry point markers.
+      if (format === 'elms') {
+        if (!markersState || !hasMarkers) {
+          setCopySnackbar({ type: 'error', message: 'No markers available to export.' });
+          return;
+        }
+        try {
+          const encoded = encodeMarkersToElms(markersState);
+          const ok = await copyTextToClipboard(encoded);
+          setCopySnackbar(
+            ok
+              ? { type: 'success', message: 'Elms markers copied to clipboard.' }
+              : { type: 'error', message: 'Unable to copy Elms markers right now.' },
+          );
+        } catch (error) {
+          setCopySnackbar({
+            type: 'error',
+            message: error instanceof Error ? error.message : 'Unable to export Elms markers.',
+          });
+        }
         return;
       }
 
-      const successMessage =
-        format === 'elms'
-          ? 'Elms markers copied to clipboard.'
-          : 'M0R markers copied to clipboard.';
-      const fallbackFailureMessage =
-        format === 'elms'
-          ? 'Unable to copy Elms markers to clipboard right now.'
-          : 'Unable to copy M0R markers to clipboard right now.';
-
+      // M0R is the IN-GAME export: markers + drawn shapes baked into a single addon string. ESO
+      // addons can't draw lines, so each shape's outline becomes a row of ground-flat marker dots.
+      if (!markersState || (!hasMarkers && !hasShapes)) {
+        setCopySnackbar({ type: 'error', message: 'No markers or shapes available to export.' });
+        return;
+      }
       try {
-        const encoded =
-          format === 'elms' ? encodeMarkersToElms(markersState) : encodeMarkersToMor(markersState);
-
-        if (navigator.clipboard && window.isSecureContext) {
-          await navigator.clipboard.writeText(encoded);
-          setCopySnackbar({ type: 'success', message: successMessage });
+        const { code, markerCount, dotCount, spacingMeters } = encodeInGameMor(markersState);
+        const ok = await copyTextToClipboard(code);
+        if (!ok) {
+          setCopySnackbar({ type: 'error', message: 'Unable to copy the M0R string right now.' });
           return;
         }
-
-        const textArea = document.createElement('textarea');
-        textArea.value = encoded;
-        textArea.style.position = 'fixed';
-        textArea.style.left = '-9999px';
-        textArea.style.top = '-9999px';
-        document.body.appendChild(textArea);
-        textArea.focus();
-        textArea.select();
-
-        let fallbackSucceeded = false;
-        try {
-          fallbackSucceeded = document.execCommand('copy');
-        } finally {
-          document.body.removeChild(textArea);
-        }
-
-        if (fallbackSucceeded) {
-          setCopySnackbar({ type: 'success', message: successMessage });
-          return;
-        }
-
-        throw new Error(fallbackFailureMessage);
+        const shapeNote =
+          dotCount > 0 ? ` (${dotCount} shape dots at ~${spacingMeters.toFixed(1)}m spacing)` : '';
+        setCopySnackbar({
+          type: 'success',
+          message: `M0R import copied — ${markerCount} markers${shapeNote}. Paste it into M0RMarkers in-game.`,
+        });
       } catch (error) {
         setCopySnackbar({
           type: 'error',
-          message: error instanceof Error ? error.message : fallbackFailureMessage,
+          message: error instanceof Error ? error.message : 'Unable to export M0R markers.',
         });
       }
     },

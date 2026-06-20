@@ -4,9 +4,12 @@ import {
   isClosedKind,
   pathLengthMeters,
   rectRingWorld,
+  resamplePath,
   sampleCircleWorld,
   shapeAnchor,
+  shapeOutlineLengthMeters,
   shapeOutlineWorld,
+  shapeSampleWorld,
   worldDistanceMeters,
 } from './shapeGeometry';
 
@@ -132,6 +135,80 @@ describe('shapeGeometry', () => {
         [2, 0],
       ];
       expect(shapeOutlineWorld(shape({ kind: 'polyline', vertices: v }))).toEqual(v);
+    });
+  });
+
+  describe('resamplePath (baking shapes into evenly-spaced points)', () => {
+    it('emits start + every `spacing` along a straight open path', () => {
+      const pts = resamplePath(
+        [
+          [0, 0],
+          [1000, 0],
+        ],
+        200,
+        false,
+      );
+      expect(pts).toEqual([
+        [0, 0],
+        [200, 0],
+        [400, 0],
+        [600, 0],
+        [800, 0],
+        [1000, 0],
+      ]);
+    });
+
+    it('samples the closing edge when closed', () => {
+      const square: Array<[number, number]> = [
+        [0, 0],
+        [1000, 0],
+        [1000, 1000],
+        [0, 1000],
+      ];
+      const open = resamplePath(square, 1000, false);
+      const closed = resamplePath(square, 1000, true);
+      // The closed loop walks the extra 4th edge back to the start, so it has more points.
+      expect(closed.length).toBeGreaterThan(open.length);
+      // Last closed point returns to the origin.
+      expect(closed[closed.length - 1][0]).toBeCloseTo(0, 6);
+      expect(closed[closed.length - 1][1]).toBeCloseTo(0, 6);
+    });
+
+    it('returns the points unchanged for degenerate spacing/short input', () => {
+      expect(resamplePath([[5, 5]], 100, false)).toEqual([[5, 5]]);
+      expect(
+        resamplePath(
+          [
+            [0, 0],
+            [100, 0],
+          ],
+          0,
+          false,
+        ),
+      ).toEqual([
+        [0, 0],
+        [100, 0],
+      ]);
+    });
+  });
+
+  describe('shapeSampleWorld + shapeOutlineLengthMeters (in-game bake)', () => {
+    it('samples a circle outline at the requested spacing', () => {
+      const circle = shape({ kind: 'circle', vertices: [[0, 0]], radius: 10 }); // 10m radius
+      const lenM = shapeOutlineLengthMeters(circle);
+      expect(lenM).toBeCloseTo(2 * Math.PI * 10, 0); // ~62.8m circumference
+      const pts = shapeSampleWorld(circle, 200); // 2m spacing
+      // ~circumference(cm)/spacing(cm) points; allow a wide tolerance for end effects.
+      const expected = (2 * Math.PI * 1000) / 200;
+      expect(pts.length).toBeGreaterThan(expected * 0.5);
+      expect(pts.length).toBeLessThan(expected * 1.5);
+      // Every sampled point is ~radius from the centre. Points lie on the 64-gon's chords, so
+      // they sit slightly inside the true radius (chord sag) — allow that small band.
+      for (const [x, z] of pts) {
+        const r = Math.hypot(x, z);
+        expect(r).toBeGreaterThan(995);
+        expect(r).toBeLessThanOrEqual(1001);
+      }
     });
   });
 

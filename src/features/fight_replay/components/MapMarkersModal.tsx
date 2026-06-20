@@ -431,7 +431,7 @@ export const MapMarkersModal: React.FC<MapMarkersModalProps> = ({
             Copy Elms
           </Button>
         )}
-        {hasCommittedMarkers && onExportMor && (
+        {(hasCommittedMarkers || hasCommittedShapes) && onExportMor && (
           <Button
             onClick={onExportMor}
             color="secondary"
@@ -439,7 +439,7 @@ export const MapMarkersModal: React.FC<MapMarkersModalProps> = ({
             type="button"
             startIcon={<ContentCopyIcon />}
           >
-            Copy M0R
+            Copy for in-game (M0R)
           </Button>
         )}
         {hasCommittedShapes && onExportShapes && (
