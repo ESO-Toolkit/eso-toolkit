@@ -488,7 +488,14 @@ const buildCalcTheme = (base: Theme): Theme => {
       MuiMenu: {
         styleOverrides: {
           paper: {
-            position: 'relative',
+            // NOTE: do NOT set `position: relative` here. MUI's PopoverPaper is
+            // `position: absolute` and the Select's Popover sizes the menu to the
+            // anchor via an inline `min-width`. A theme override of `position`
+            // beats that base rule, so a relative (block) paper stretches to its
+            // containing block — capped only by `max-width: calc(100% - 32px)` —
+            // making the menu span almost the whole viewport on desktop. The
+            // absolute paper is already a containing block, so the `&::before`
+            // top sheen below still anchors correctly without `relative`.
             borderRadius: 14,
             marginTop: 6,
             // Clip the rounded corners horizontally, but allow vertical scroll —
