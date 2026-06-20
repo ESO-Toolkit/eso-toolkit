@@ -20,7 +20,7 @@ import {
   getClassMasteryLine,
 } from '@/data/skill-lines/class/classMastery';
 
-import type { ESOClass } from '../types/build.types';
+import type { Build, ESOClass } from '../types/build.types';
 
 import { CLASS_MASTERY_MAX_PICKS } from './classMasteryEligibility';
 
@@ -110,4 +110,31 @@ export function partitionClassMasteryPicks(
     }
   }
   return { passives, classMasteryPassives: sanitizeClassMasteryPicks(masteryIds, esoClass) };
+}
+
+/**
+ * Reclaim Class Mastery picks that older builds (saved/shared before the
+ * build-level split, or imported by pre-split code) left inside `setup.passives`.
+ * Runs when a build enters the editor: if the build-level field is empty it
+ * lifts the leaked picks into it (making them visible in the Class Mastery
+ * section), and it always strips Class Mastery ids out of every setup's regular
+ * passives. After this, the editor is WYSIWYG — what the CM section shows is what
+ * exports — so the export path no longer needs to recover hidden ids. Mutates in
+ * place (safe for both an Immer draft and a freshly-decoded plain build).
+ */
+export function migrateLeakedClassMasteryPicks(
+  build: Pick<Build, 'esoClass' | 'classMasteryPassives' | 'setups'>,
+): void {
+  const hasExisting =
+    Array.isArray(build.classMasteryPassives) && build.classMasteryPassives.length > 0;
+  if (!hasExisting) {
+    const leaked = build.setups.flatMap((setup) => setup.passives ?? []);
+    const recovered = sanitizeClassMasteryPicks(leaked, build.esoClass);
+    if (recovered.length > 0) build.classMasteryPassives = recovered;
+  }
+  for (const setup of build.setups) {
+    if (Array.isArray(setup.passives)) {
+      setup.passives = stripClassMasteryIds(setup.passives);
+    }
+  }
 }

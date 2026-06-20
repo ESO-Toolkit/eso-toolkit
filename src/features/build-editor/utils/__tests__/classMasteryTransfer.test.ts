@@ -1,10 +1,24 @@
 import {
   classFromMasteryIds,
   classOfClassMasteryId,
+  migrateLeakedClassMasteryPicks,
   partitionClassMasteryPicks,
   sanitizeClassMasteryPicks,
   stripClassMasteryIds,
 } from '../classMasteryTransfer';
+import type { Build } from '../../types/build.types';
+
+/** A minimal build-shaped object for the migration helper. */
+function leakyBuild(
+  classMasteryPassives: number[],
+  passivesPerSetup: number[][],
+): Pick<Build, 'esoClass' | 'classMasteryPassives' | 'setups'> {
+  return {
+    esoClass: 'dragonknight',
+    classMasteryPassives,
+    setups: passivesPerSetup.map((passives) => ({ passives })) as Build['setups'],
+  };
+}
 
 describe('classMasteryTransfer', () => {
   describe('classOfClassMasteryId', () => {
@@ -75,6 +89,29 @@ describe('classMasteryTransfer', () => {
       );
       expect(passives).toEqual([400]); // CM id removed regardless of class
       expect(classMasteryPassives).toEqual([]); // not a valid DK pick
+    });
+  });
+
+  describe('migrateLeakedClassMasteryPicks', () => {
+    it('lifts leaked CM ids from setup.passives into the empty build-level field', () => {
+      const build = leakyBuild([], [[400, 238232, 240268]]);
+      migrateLeakedClassMasteryPicks(build);
+      expect(build.classMasteryPassives).toEqual([238232, 240268]);
+      expect(build.setups[0].passives).toEqual([400]);
+    });
+
+    it('keeps existing build-level picks but still strips leaked ids from passives', () => {
+      const build = leakyBuild([238232], [[400, 240268]]);
+      migrateLeakedClassMasteryPicks(build);
+      expect(build.classMasteryPassives).toEqual([238232]); // not overwritten
+      expect(build.setups[0].passives).toEqual([400]); // 240268 stripped
+    });
+
+    it('is a no-op for a clean build with no leaked ids', () => {
+      const build = leakyBuild([], [[400, 500]]);
+      migrateLeakedClassMasteryPicks(build);
+      expect(build.classMasteryPassives).toEqual([]);
+      expect(build.setups[0].passives).toEqual([400, 500]);
     });
   });
 });

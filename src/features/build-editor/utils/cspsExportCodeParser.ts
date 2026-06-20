@@ -212,6 +212,23 @@ export function parseSubclassLines(
   return [mapped[0], mapped[1], mapped[2]];
 }
 
+/** Reverse of ESO_SKILL_LINE_MAP — build editor line id → ESO skill-line id. */
+const CLASS_SKILL_LINE_TO_ESO_ID: Record<string, number> = Object.fromEntries(
+  Object.entries(ESO_SKILL_LINE_MAP).map(([esoId, lineId]) => [lineId, Number(esoId)]),
+);
+
+/**
+ * Serialize a build's classSkillLines into the comma-separated ESO skill-line id
+ * string CSPS stores in the `subclasses` slot of werte.scribeStyleSubclass.
+ * Inverse of parseSubclassLines; empty slots are skipped.
+ */
+export function serializeSubclassLines(classSkillLines: Build['classSkillLines']): string {
+  return classSkillLines
+    .map((lineId) => (lineId != null ? CLASS_SKILL_LINE_TO_ESO_ID[lineId] : undefined))
+    .filter((esoId): esoId is number => typeof esoId === 'number' && esoId > 0)
+    .join(',');
+}
+
 /** CSPS role index → build editor CombatRole */
 function roleIndexToRole(index: number): CombatRole {
   switch (index) {

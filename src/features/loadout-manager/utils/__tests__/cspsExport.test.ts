@@ -384,20 +384,18 @@ describe('cspsExport', () => {
       expect(charData.profiles![1].werte!.pass!.part1).toContain('238232:1');
     });
 
-    it('migrates leaked Class Mastery ids from setup.passives when there are no explicit picks (legacy build)', () => {
+    it('exports no Class Mastery when the build-level field is empty (WYSIWYG; migration happens on load)', () => {
       const build = makeBuild({
         esoClass: 'dragonknight',
         classSkillLines: [null, null, null],
-        classMasteryPassives: [], // legacy build: top-level field never populated
-        // CM ids leaked into setup.passives by the pre-split import; 400 is real
-        setups: [makeSetup({ passives: [400, 238232, 240268] })],
+        classMasteryPassives: [], // empty at the build level
+        // a stray CM id in setup.passives must NOT be resurrected on export
+        setups: [makeSetup({ passives: [400, 238232] })],
       });
       const charData =
         convertBuildToCSPS(build).Default!['@ESOToolkit'].$AccountWide.charData!['1'];
       expect(charData.werte!.pass!.part1).toContain('400:1');
-      // leaked CM picks are recovered and exported rather than silently dropped
-      expect(charData.werte!.pass!.part1).toContain('238232:1');
-      expect(charData.werte!.pass!.part1).toContain('240268:1');
+      expect(charData.werte!.pass!.part1).not.toContain('238232:1');
     });
 
     it('does not export stale Class Mastery ids left in setup.passives', () => {
@@ -430,6 +428,22 @@ describe('cspsExport', () => {
       const reimported = convertCSPSCharacterToBuild(parseCSPSInput(lua).characters[0]);
       expect(reimported.classMasteryPassives).toEqual([263519, 263520]);
       expect(reimported.setups[0].passives).toEqual([]);
+    });
+
+    it('round-trips subclass lines through export → import while keeping CM gated', () => {
+      const build = makeBuild({
+        esoClass: 'dragonknight',
+        classSkillLines: ['class.ardent-flame', 'class.assassination', null], // DK + NB subclass
+        classMasteryPassives: [238232, 240268], // retained, inert while subclassed
+        setups: [makeSetup({ passives: [] })],
+      });
+      const lua = exportBuildToCSPSLua(build);
+      const reimported = convertCSPSCharacterToBuild(parseCSPSInput(lua).characters[0]);
+      // subclass lines survive the round trip
+      expect(reimported.classSkillLines).toContain('class.ardent-flame');
+      expect(reimported.classSkillLines).toContain('class.assassination');
+      // Class Mastery is correctly omitted on a subclassed export — not resurrected
+      expect(reimported.classMasteryPassives).toEqual([]);
     });
   });
 });
