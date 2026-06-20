@@ -144,8 +144,7 @@ export const UnauthenticatedLandingSection: React.FC = () => {
             '& .MuiInputBase-input': {
               padding: { xs: '16px 0', sm: '18px 0' },
               color: theme.palette.mode === 'dark' ? '#e5e7eb' : '#1e293b',
-              // Keep >=16px on mobile so iOS Safari doesn't auto-zoom on focus.
-              fontSize: { xs: '16px', sm: '1rem' },
+              fontSize: { xs: '0.9rem', sm: '1rem' },
             },
           }}
           slotProps={{
