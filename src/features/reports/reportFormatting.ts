@@ -73,16 +73,45 @@ export const getReportVisibilityColor = (visibility: string): ChipProps['color']
 /**
  * Minimal report shape needed to decide whether a log has any combat data.
  * Structural so it works with any report summary type (generated fragments,
- * profile log summaries, etc.) — `segments` is optional because not every
- * query selects it.
+ * profile log summaries, etc.) — every field is optional because not every
+ * query selects all of them.
  */
 export interface ReportEmptinessFields {
   startTime: number;
   endTime: number;
   segments?: number | null;
+  /**
+   * The report's parsed fights, when the query selects them — the authoritative
+   * "has combat data" signal. ESO Logs can report `segments > 0` (and a real
+   * duration) for a log whose combat data failed to parse, returning an empty
+   * `fights` list; the report detail page renders "No fights available" for
+   * exactly those (it builds its view from `fights.filter(Boolean)` in
+   * ReportFights.tsx). Three shapes are distinguished in `isReportEmpty`:
+   *   `[]`            – a genuinely empty log (what the real slip-throughs return);
+   *   `[…real fight]` – has combat data;
+   *   `[null, …]`     – a degraded/partial response (a non-null `id` errored and
+   *                     null-propagated), NOT a real empty, so it falls back to
+   *                     the heuristic rather than hiding.
+   * Undefined (field not selected) or null (the field itself errored) likewise
+   * fall back to the heuristic, so a transient `fights` failure can never hide an
+   * otherwise-healthy report on the public browse page.
+   */
+  fights?: ReadonlyArray<unknown> | null;
 }
 
 export const isReportEmpty = (report: ReportEmptinessFields): boolean => {
+  // When the query selected fights, prefer that authoritative signal — but only
+  // an empty list (resolver succeeded, zero fights) or a list with at least one
+  // real fight is trustworthy. A non-empty all-null array means a non-null
+  // subfield errored and null-propagated (a partial failure that would hit every
+  // report's fights at once), so it must NOT mass-hide healthy reports: fall
+  // through to the metadata heuristic instead.
+  if (Array.isArray(report.fights)) {
+    if (report.fights.length === 0) return true;
+    if (report.fights.some(Boolean)) return false;
+  }
+  // No fights selected, the field errored to null, or a degraded all-null array:
+  // use the cheap metadata heuristics.
   if (report.segments === 0) return true;
   if (report.startTime === report.endTime) return true;
   return false;

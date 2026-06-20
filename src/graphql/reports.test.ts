@@ -5,6 +5,7 @@ import {
   GetCurrentUserDocument,
   GetUserReportsDocument,
   GetReportByCodeDocument,
+  GetLatestReportsDocument,
 } from './gql/graphql';
 
 describe('GraphQL Query Documents', () => {
@@ -61,6 +62,22 @@ describe('GraphQL Query Documents', () => {
       expect(queryString).toContain('visibility');
       expect(queryString).toContain('zone');
       expect(queryString).toContain('owner');
+    });
+  });
+
+  describe('GetLatestReportsDocument', () => {
+    it('should be a valid GraphQL document', () => {
+      expect(GetLatestReportsDocument).toBeDefined();
+      expect(GetLatestReportsDocument.kind).toBe('Document');
+    });
+
+    it('selects fights(translate: false) so empty logs can be filtered from the list', () => {
+      // Guards the hand-edited document AST: without this selection the list
+      // cannot distinguish a parsed-but-empty log from one with combat data.
+      const queryString = print(GetLatestReportsDocument);
+      expect(queryString).toContain('query getLatestReports');
+      expect(queryString).toContain('...UserReportSummary');
+      expect(queryString).toContain('fights(translate: false)');
     });
   });
 

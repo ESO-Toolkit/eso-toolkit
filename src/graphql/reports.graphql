@@ -80,6 +80,14 @@ query getLatestReports($limit: Int, $page: Int, $startTime: Float, $endTime: Flo
     reports(limit: $limit, page: $page, startTime: $startTime, endTime: $endTime, zoneID: $zoneID) {
       data {
         ...UserReportSummary
+        # Authoritative "has combat data" signal. ESO Logs can report
+        # segments > 0 for a log whose fights failed to parse, which then renders
+        # "No fights available" when opened. Selecting the fight ids lets the list
+        # hide those logs instead of surfacing dead links. translate: false skips
+        # upstream name auto-translation we never read (only ids are selected).
+        fights(translate: false) {
+          id
+        }
       }
       total
       from
