@@ -420,8 +420,18 @@ describe('Class Mastery in export codes', () => {
     ].join('#');
     const { build } = parseCSPSNativeCode(native);
     // CM owner (Warden) wins over the Nightblade hotbar skill → picks preserved
+    // (Codex findings 5+6: CM ids uniquely identify the base class, so they must
+    // win detection, else the legitimate Warden picks get dropped as "foreign").
     expect(build.esoClass).toBe('warden');
     expect(build.classMasteryPassives).toEqual([263519, 263520]);
+    // DELIBERATE: "Warden CM ids + Nightblade hotbar skill" is impossible in-game
+    // (Class Mastery requires a pure class — a subclassed character has no active
+    // CM and cannot purchase CM passives). Given this contradictory input we
+    // normalize to a coherent, non-subclassed Warden-with-CM build rather than
+    // guessing a subclass; stat/export eligibility gates keep it internally
+    // consistent. A real subclassed code carries no CM ids, so this never fires
+    // for genuine data.
+    expect(isClassMasteryEligible(build.esoClass, build.classSkillLines)).toBe(true);
   });
 
   it('decodes the native subclasses part so retained Class Mastery picks stay gated', () => {
