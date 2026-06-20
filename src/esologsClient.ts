@@ -160,6 +160,7 @@ export class EsoLogsClient {
         // Create a new observable that will retry the request after refreshing the token
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         return new Observable((observer: any) => {
+          let innerSub: { unsubscribe: () => void } | undefined;
           refreshAccessToken()
             .then((newToken) => {
               if (newToken) {
@@ -187,7 +188,7 @@ export class EsoLogsClient {
                   },
                 };
 
-                forward(operation).subscribe(subscriber);
+                innerSub = forward(operation).subscribe(subscriber);
               } else {
                 // Refresh failed, clear tokens and notify user
                 logger.error('Token refresh failed - user needs to re-authenticate');
@@ -202,6 +203,15 @@ export class EsoLogsClient {
               this.isRefreshingToken = false;
               observer.error(err);
             });
+
+          // If the consumer unsubscribes (component unmount / cancelled query)
+          // while the refresh or forwarded request is in flight, tear down the
+          // inner subscription and clear the guard — otherwise isRefreshingToken
+          // can stay stuck at true and block all future refreshes on this client.
+          return () => {
+            innerSub?.unsubscribe();
+            this.isRefreshingToken = false;
+          };
         });
       }
 

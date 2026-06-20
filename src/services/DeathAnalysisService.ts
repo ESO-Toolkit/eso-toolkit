@@ -238,12 +238,19 @@ export class DeathAnalysisService {
         causeCounts.set(abilityId, (causeCounts.get(abilityId) || 0) + 1);
       }
 
+      // Divide by the hostile-death population (the same set the numerator
+      // counts), not total deaths — otherwise self/ally-caused deaths inflate
+      // the denominator and the percentages don't sum to 100%.
+      const hostileDeathCount = Array.from(causeCounts.values()).reduce(
+        (sum, count) => sum + count,
+        0,
+      );
       const topCausesOfDeath: CauseOfDeath[] = Array.from(causeCounts.entries())
         .map(([abilityId, count]) => ({
           abilityId,
           abilityName: abilities[abilityId]?.name || `Unknown (${abilityId})`,
           deathCount: count,
-          percentage: (count / playerData.deaths.length) * 100,
+          percentage: hostileDeathCount > 0 ? (count / hostileDeathCount) * 100 : 0,
         }))
         .sort((a, b) => b.deathCount - a.deathCount);
 
@@ -334,7 +341,9 @@ export class DeathAnalysisService {
       mechanicData.fightsAffected.add(death.fight);
     }
 
-    const totalDeaths = deathEvents.length;
+    // Match the population the loop above actually counts (it skips
+    // friendly-source deaths), so mechanic percentages are coherent.
+    const totalDeaths = deathEvents.filter((death) => !death.sourceIsFriendly).length;
     const analyses: MechanicDeathAnalysis[] = [];
 
     for (const [abilityId, mechanicData] of mechanicMap) {
