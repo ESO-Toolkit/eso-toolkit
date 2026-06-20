@@ -90,11 +90,11 @@ export const useLatestReport = (): LatestReportState & { refetch: () => Promise<
   }, [client, currentUser?.id, isLoggedIn]);
 
   useEffect(() => {
+    // Each call bumps fetchIdRef, so when identity/login deps change the
+    // re-created fetchLatestReport supersedes any in-flight one (its stale
+    // result is dropped by the fetchId guard above). setState after unmount is
+    // a no-op in React 19, so no cleanup is needed.
     fetchLatestReport();
-    // Invalidate any in-flight fetch when deps change or the hook unmounts.
-    return () => {
-      fetchIdRef.current++;
-    };
   }, [fetchLatestReport]);
 
   return {
