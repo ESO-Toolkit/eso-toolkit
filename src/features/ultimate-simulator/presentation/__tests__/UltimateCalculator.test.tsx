@@ -133,15 +133,15 @@ describe('UltimateCalculator', () => {
     expect(screen.getByText(/^Typical Group.*Tank/i)).toBeInTheDocument();
   });
 
-  it('marks the build customized after a manual edit and stops auto-applying on switch', () => {
-    renderCalc();
-    // The source switch + its uptime slider share a label prefix; pick the
-    // checkbox input specifically (the slider is a range input).
-    const sourceSwitch = (label: RegExp): HTMLInputElement =>
-      screen
-        .getAllByLabelText(label)
-        .find((el) => el.getAttribute('type') === 'checkbox') as HTMLInputElement;
+  // The source switch + its uptime slider share a label prefix; pick the
+  // checkbox input specifically (the slider is a range input).
+  const sourceSwitch = (label: RegExp): HTMLInputElement =>
+    screen
+      .getAllByLabelText(label)
+      .find((el) => el.getAttribute('type') === 'checkbox') as HTMLInputElement;
 
+  it('preserves a hand-edit across an archetype switch and restores it on apply-typical', () => {
+    renderCalc();
     expect(screen.queryByText(/customized this build/i)).not.toBeInTheDocument();
 
     // Enable Major Heroism — a manual source edit. (Its Heroism group stays open
@@ -152,17 +152,35 @@ describe('UltimateCalculator', () => {
     expect(sourceSwitch(/^Major Heroism/i)).toBeChecked();
     expect(screen.getByText(/customized this build/i)).toBeInTheDocument();
 
-    // Switching context must NOT overwrite the edit (Major Heroism stays on).
+    // Switching context replays the edit on top of the new archetype (Major
+    // Heroism stays on) rather than discarding it.
     fireEvent.click(screen.getByRole('button', { name: /^Solo/i }));
     expect(screen.getByText(/customized this build/i)).toBeInTheDocument();
     expect(sourceSwitch(/^Major Heroism/i)).toBeChecked();
 
-    // Applying the typical build restores the preset (Solo DPS has no Major
-    // Heroism) and clears the custom flag.
+    // Applying the typical build drops the edit and restores the pure preset
+    // (Solo DPS has no Major Heroism) and clears the custom flag.
     fireEvent.click(screen.getByRole('button', { name: /Apply typical Solo/i }));
     expect(screen.queryByText(/customized this build/i)).not.toBeInTheDocument();
     expect(sourceSwitch(/^Major Heroism/i)).not.toBeChecked();
     expect(sourceSwitch(/^Minor Heroism/i)).toBeChecked();
+  });
+
+  it('adopts the new archetype defaults on a customized switch (no stale hybrid)', () => {
+    renderCalc();
+    // Group DPS does not run Colovian Highlands General; PvP DPS does. Customize
+    // the build with an unrelated edit, then switch playstyle.
+    fireEvent.click(sourceSwitch(/^Major Heroism/i));
+    expect(screen.getByText(/customized this build/i)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /^PvP/i }));
+
+    // The build must adopt the PvP archetype's defaults (Colovian on), proving the
+    // preset is re-resolved — not a frozen Group snapshot…
+    expect(screen.getByText(/^Typical PvP/i)).toBeInTheDocument();
+    expect(sourceSwitch(/Colovian Highlands General/i)).toBeChecked();
+    // …while still replaying the user's edit on top.
+    expect(sourceSwitch(/^Major Heroism/i)).toBeChecked();
   });
 
   it('does not freeze archetype auto-apply when only a cost reduction is toggled', () => {
