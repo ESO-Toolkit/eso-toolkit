@@ -388,9 +388,16 @@ export function useUltimateCalculator(): UltimateCalculatorResult {
     (role: CombatRole) => patch((s) => applyArchetype({ ...s, role }, true)),
     [patch],
   );
+  // Numeric setters reject non-finite input (NaN/Infinity from a transient or
+  // out-of-range field value) so it can never poison effective cost / time-to-ult
+  // / the results with NaN. An invalid edit leaves the prior value untouched.
   const setFightDuration = useCallback(
     (seconds: number) =>
-      patch((s) => ({ ...s, fightDurationSeconds: Math.max(1, Math.round(seconds)) })),
+      patch((s) =>
+        Number.isFinite(seconds)
+          ? { ...s, fightDurationSeconds: Math.max(1, Math.round(seconds)) }
+          : s,
+      ),
     [patch],
   );
   const setDecisiveEnabled = useCallback(
@@ -432,30 +439,41 @@ export function useUltimateCalculator(): UltimateCalculatorResult {
   );
   const setCustomUltimateCost = useCallback(
     (customUltimateCost: number | null) =>
-      patch((s) => ({
-        ...s,
-        customUltimateCost:
-          customUltimateCost == null ? null : Math.max(0, Math.round(customUltimateCost)),
-      })),
+      patch((s) => {
+        if (customUltimateCost == null) return { ...s, customUltimateCost: null };
+        if (!Number.isFinite(customUltimateCost)) return s;
+        return { ...s, customUltimateCost: Math.max(0, Math.round(customUltimateCost)) };
+      }),
     [patch],
   );
   const setStartingUltimate = useCallback(
     (startingUltimate: number) =>
-      patch((s) => ({
-        ...s,
-        startingUltimate: Math.min(MAX_ULTIMATE_POOL, Math.max(0, Math.round(startingUltimate))),
-      })),
+      patch((s) =>
+        Number.isFinite(startingUltimate)
+          ? {
+              ...s,
+              startingUltimate: Math.min(
+                MAX_ULTIMATE_POOL,
+                Math.max(0, Math.round(startingUltimate)),
+              ),
+            }
+          : s,
+      ),
     [patch],
   );
   const setPillagerHealerUltCost = useCallback(
     (pillagerHealerUltCost: number) =>
-      patch((s) => ({
-        ...s,
-        pillagerHealerUltCost: Math.min(
-          MAX_ULTIMATE_POOL,
-          Math.max(0, Math.round(pillagerHealerUltCost)),
-        ),
-      })),
+      patch((s) =>
+        Number.isFinite(pillagerHealerUltCost)
+          ? {
+              ...s,
+              pillagerHealerUltCost: Math.min(
+                MAX_ULTIMATE_POOL,
+                Math.max(0, Math.round(pillagerHealerUltCost)),
+              ),
+            }
+          : s,
+      ),
     [patch],
   );
   // Drop the user's hand-edits and restore the pure archetype preset (keeps
