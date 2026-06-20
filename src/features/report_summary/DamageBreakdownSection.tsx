@@ -31,10 +31,12 @@ import {
   ListItem,
   ListItemText,
   Divider,
+  ToggleButton,
+  ToggleButtonGroup,
 } from '@mui/material';
 import React from 'react';
 
-import { ReportDamageBreakdown } from '../../types/reportSummaryTypes';
+import { AbilityTypeDamageBreakdown, ReportDamageBreakdown } from '../../types/reportSummaryTypes';
 
 /** Icon + accent color per damage-type label (keyed by both long and short names). */
 const DAMAGE_TYPE_PRESENTATION: Record<string, { Icon: SvgIconComponent; color: string }> = {
@@ -58,6 +60,56 @@ const DAMAGE_TYPE_PRESENTATION: Record<string, { Icon: SvgIconComponent; color: 
 
 const DEFAULT_PRESENTATION = { Icon: BlurOnIcon, color: '#94A3B8' };
 
+/** Renders a damage-type breakdown as labelled rows with a thin themed bar. */
+const DamageTypeList: React.FC<{ items: AbilityTypeDamageBreakdown[] }> = ({ items }) => (
+  <Paper variant="outlined">
+    <List disablePadding>
+      {items.map((type, index) => {
+        const { Icon, color } = DAMAGE_TYPE_PRESENTATION[type.abilityType] ?? DEFAULT_PRESENTATION;
+        return (
+          <React.Fragment key={type.abilityType}>
+            <ListItem sx={{ py: 1.5, gap: 1.5 }}>
+              <Icon sx={{ color, flexShrink: 0 }} aria-hidden />
+              <Box sx={{ flex: 1, minWidth: 0 }}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'baseline',
+                    justifyContent: 'space-between',
+                    gap: 1,
+                  }}
+                >
+                  <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                    {type.abilityType}
+                  </Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                    {type.percentage.toFixed(1)}%
+                  </Typography>
+                </Box>
+                <LinearProgress
+                  variant="determinate"
+                  value={Math.max(0, Math.min(100, type.percentage))}
+                  aria-label={`${type.abilityType} share of damage`}
+                  sx={{
+                    my: 0.5,
+                    height: 6,
+                    borderRadius: 3,
+                    '& .MuiLinearProgress-bar': { backgroundColor: color },
+                  }}
+                />
+                <Typography variant="caption" color="text.secondary">
+                  {formatDamage(type.totalDamage)} • {formatNumber(type.hitCount)} hits
+                </Typography>
+              </Box>
+            </ListItem>
+            {index < items.length - 1 && <Divider />}
+          </React.Fragment>
+        );
+      })}
+    </List>
+  </Paper>
+);
+
 interface DamageBreakdownSectionProps {
   damageBreakdown?: ReportDamageBreakdown;
   isLoading: boolean;
@@ -69,6 +121,8 @@ const DamageBreakdownSectionComponent: React.FC<DamageBreakdownSectionProps> = (
   isLoading,
   error,
 }) => {
+  const [typeView, setTypeView] = React.useState<'combined' | 'split'>('combined');
+
   if (error) {
     return (
       <Card elevation={2}>
@@ -187,61 +241,59 @@ const DamageBreakdownSectionComponent: React.FC<DamageBreakdownSectionProps> = (
 
         {/* Damage Type Breakdown */}
         <Box sx={{ mb: 4 }}>
-          <Typography variant="h6" component="h3" gutterBottom>
-            Damage by Type
-          </Typography>
-          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1.5 }}>
-            Categories overlap (a fire DOT counts as Fire, Magic and Damage over Time), so
-            percentages can add up to more than 100%.
-          </Typography>
-          <Paper variant="outlined">
-            <List disablePadding>
-              {damageBreakdown.abilityTypeBreakdown.map((type, index) => {
-                const { Icon, color } =
-                  DAMAGE_TYPE_PRESENTATION[type.abilityType] ?? DEFAULT_PRESENTATION;
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: 1,
+              mb: 1,
+            }}
+          >
+            <Typography variant="h6" component="h3">
+              Damage by Type
+            </Typography>
+            <ToggleButtonGroup
+              size="small"
+              exclusive
+              value={typeView}
+              onChange={(_event, value) => value && setTypeView(value)}
+              aria-label="Damage by type view"
+            >
+              <ToggleButton value="combined">Combined</ToggleButton>
+              <ToggleButton value="split">Split (100%)</ToggleButton>
+            </ToggleButtonGroup>
+          </Box>
 
-                return (
-                  <React.Fragment key={type.abilityType}>
-                    <ListItem sx={{ py: 1.5, gap: 1.5 }}>
-                      <Icon sx={{ color, flexShrink: 0 }} aria-hidden />
-                      <Box sx={{ flex: 1, minWidth: 0 }}>
-                        <Box
-                          sx={{
-                            display: 'flex',
-                            alignItems: 'baseline',
-                            justifyContent: 'space-between',
-                            gap: 1,
-                          }}
-                        >
-                          <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                            {type.abilityType}
-                          </Typography>
-                          <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                            {type.percentage.toFixed(1)}%
-                          </Typography>
-                        </Box>
-                        <LinearProgress
-                          variant="determinate"
-                          value={Math.max(0, Math.min(100, type.percentage))}
-                          aria-label={`${type.abilityType} share of damage`}
-                          sx={{
-                            my: 0.5,
-                            height: 6,
-                            borderRadius: 3,
-                            '& .MuiLinearProgress-bar': { backgroundColor: color },
-                          }}
-                        />
-                        <Typography variant="caption" color="text.secondary">
-                          {formatDamage(type.totalDamage)} • {formatNumber(type.hitCount)} hits
-                        </Typography>
-                      </Box>
-                    </ListItem>
-                    {index < damageBreakdown.abilityTypeBreakdown.length - 1 && <Divider />}
-                  </React.Fragment>
-                );
-              })}
-            </List>
-          </Paper>
+          {typeView === 'combined' ? (
+            <>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ display: 'block', mb: 1.5 }}
+              >
+                Categories overlap (a fire DOT counts as Fire, Magic and Damage over Time), so
+                percentages can add up to more than 100%.
+              </Typography>
+              <DamageTypeList items={damageBreakdown.abilityTypeBreakdown} />
+            </>
+          ) : (
+            <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 2 }}>
+              <Box sx={{ flex: 1, minWidth: 0 }}>
+                <Typography variant="subtitle2" gutterBottom>
+                  By delivery
+                </Typography>
+                <DamageTypeList items={damageBreakdown.deliveryBreakdown ?? []} />
+              </Box>
+              <Box sx={{ flex: 1, minWidth: 0 }}>
+                <Typography variant="subtitle2" gutterBottom>
+                  By school
+                </Typography>
+                <DamageTypeList items={damageBreakdown.schoolBreakdown ?? []} />
+              </Box>
+            </Box>
+          )}
         </Box>
 
         {/* Player Details Table */}

@@ -152,3 +152,85 @@ export function categorizeDamageEvents(
 
   return result;
 }
+
+/** A bucket within an exclusive partition. */
+export type PartitionBucket = DamageCategoryTotals & { key: string; label: string };
+
+/** An exclusive partition: every counted event lands in exactly one bucket, so
+ *  the bucket percentages sum to 100%. */
+export interface DamagePartition {
+  buckets: PartitionBucket[];
+  totalDamage: number;
+}
+
+export interface ExclusiveDamagePartitions {
+  /** Direct vs Damage over Time. */
+  byDelivery: DamagePartition;
+  /** Magic vs Martial vs Other (magic-school flags take priority). */
+  bySchool: DamagePartition;
+}
+
+/**
+ * Partition player-outgoing damage into mutually-exclusive buckets (each event
+ * counted once per partition), so percentages are a true 100% split — the
+ * alternative presentation to the overlapping {@link categorizeDamageEvents}.
+ */
+export function partitionDamageEvents(
+  events: readonly DamageEvent[] | undefined | null,
+  abilitiesById: AbilitiesLookup | undefined | null,
+  options?: { includeEvent?: (event: DamageEvent) => boolean },
+): ExclusiveDamagePartitions {
+  const direct = makeBucket();
+  const dot = makeBucket();
+  const magic = makeBucket();
+  const martial = makeBucket();
+  const other = makeBucket();
+  let totalDamage = 0;
+
+  const add = (bucket: DamageCategoryTotals, amount: number, crit: number): void => {
+    bucket.totalDamage += amount;
+    bucket.hitCount += 1;
+    bucket.criticalHits += crit;
+  };
+
+  if (events) {
+    const include = options?.includeEvent;
+    for (const event of events) {
+      if (event.sourceIsFriendly !== true || event.targetIsFriendly) continue;
+      if (include && !include(event)) continue;
+
+      const amount = event.amount || 0;
+      const crit = event.hitType === HitType.Critical ? 1 : 0;
+      const ability = abilitiesById?.[event.abilityGameID];
+      const typeNum = ability?.type != null ? Number(ability.type) : 0;
+      totalDamage += amount;
+
+      // Delivery — exclusive (Rapid Strikes ticks count as direct).
+      const isDirect = event.tick !== true || event.abilityGameID === KnownAbilities.RAPID_STRIKES;
+      add(isDirect ? direct : dot, amount, crit);
+
+      // School — exclusive, magic flags take priority over martial.
+      if ((typeNum & MAGIC_FLAGS) !== 0) add(magic, amount, crit);
+      else if ((typeNum & MARTIAL_FLAGS) !== 0) add(martial, amount, crit);
+      else add(other, amount, crit);
+    }
+  }
+
+  return {
+    byDelivery: {
+      totalDamage,
+      buckets: [
+        { key: 'direct', label: 'Direct', ...direct },
+        { key: 'dot', label: 'Damage over Time', ...dot },
+      ],
+    },
+    bySchool: {
+      totalDamage,
+      buckets: [
+        { key: 'magic', label: 'Magic', ...magic },
+        { key: 'martial', label: 'Martial', ...martial },
+        { key: 'other', label: 'Other', ...other },
+      ],
+    },
+  };
+}

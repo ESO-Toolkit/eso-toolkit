@@ -4,6 +4,7 @@ import { DamageEvent, HitType } from '../../../types/combatlogEvents';
 import {
   AOE_ABILITY_IDS,
   categorizeDamageEvents,
+  partitionDamageEvents,
   STATUS_EFFECT_ABILITY_IDS,
 } from './damageTypeCategorization';
 
@@ -104,5 +105,35 @@ describe('categorizeDamageEvents', () => {
     const result = categorizeDamageEvents(null, null);
     expect(result.totalDamage).toBe(0);
     expect(result.magic.totalDamage).toBe(0);
+  });
+});
+
+describe('partitionDamageEvents', () => {
+  it('splits delivery into a mutually-exclusive 100% partition', () => {
+    const result = partitionDamageEvents(
+      [makeDamage({ amount: 70, tick: false }), makeDamage({ amount: 30, tick: true })],
+      abilities,
+    );
+    const get = (k: string) => result.byDelivery.buckets.find((b) => b.key === k)?.totalDamage ?? 0;
+    expect(result.byDelivery.totalDamage).toBe(100);
+    expect(get('direct')).toBe(70);
+    expect(get('dot')).toBe(30);
+    expect(get('direct') + get('dot')).toBe(result.byDelivery.totalDamage);
+  });
+
+  it('assigns each event to exactly one school bucket (magic priority)', () => {
+    const result = partitionDamageEvents(
+      [
+        makeDamage({ abilityGameID: 1000, amount: 50 }), // type 64 → magic
+        makeDamage({ abilityGameID: 1003, amount: 30 }), // type 256 (disease) → martial
+        makeDamage({ abilityGameID: 9999, amount: 20 }), // unknown ability → other
+      ],
+      abilities,
+    );
+    const get = (k: string) => result.bySchool.buckets.find((b) => b.key === k)?.totalDamage ?? 0;
+    expect(get('magic')).toBe(50);
+    expect(get('martial')).toBe(30);
+    expect(get('other')).toBe(20);
+    expect(get('magic') + get('martial') + get('other')).toBe(result.bySchool.totalDamage);
   });
 });

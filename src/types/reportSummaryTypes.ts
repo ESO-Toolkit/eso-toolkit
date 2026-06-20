@@ -20,8 +20,12 @@ export interface ReportDamageBreakdown {
   dps: number;
   /** Breakdown by player */
   playerBreakdown: PlayerDamageBreakdown[];
-  /** Breakdown by ability type */
+  /** Breakdown by ability type (overlapping categories — can sum to >100%) */
   abilityTypeBreakdown: AbilityTypeDamageBreakdown[];
+  /** Exclusive Direct vs Damage-over-Time split (sums to 100%) */
+  deliveryBreakdown?: AbilityTypeDamageBreakdown[];
+  /** Exclusive Magic vs Martial vs Other split (sums to 100%) */
+  schoolBreakdown?: AbilityTypeDamageBreakdown[];
   /** Breakdown by target */
   targetBreakdown: TargetDamageBreakdown[];
 }

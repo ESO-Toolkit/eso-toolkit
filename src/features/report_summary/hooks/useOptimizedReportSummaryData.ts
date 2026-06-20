@@ -26,7 +26,9 @@ import {
 import { isBossFight, wasKill } from '../../report_details/fightGrouping';
 import {
   categorizeDamageEvents,
+  partitionDamageEvents,
   type DamageCategoryKey,
+  type DamagePartition,
 } from '../../report_details/insights/damageTypeCategorization';
 
 interface UseOptimizedReportSummaryDataReturn {
@@ -315,6 +317,22 @@ export function useOptimizedReportSummaryData(
           }))
           .sort((a, b) => b.totalDamage - a.totalDamage);
 
+        // Exclusive partitions (each sums to 100%) — the alternate presentation.
+        const partitions = partitionDamageEvents(allDamageEvents, abilitiesById);
+        const toBreakdown = (partition: DamagePartition): AbilityTypeDamageBreakdown[] =>
+          partition.buckets
+            .filter((bucket) => bucket.totalDamage > 0)
+            .map((bucket) => ({
+              abilityType: bucket.label,
+              totalDamage: bucket.totalDamage,
+              percentage:
+                partition.totalDamage > 0 ? (bucket.totalDamage / partition.totalDamage) * 100 : 0,
+              hitCount: bucket.hitCount,
+            }))
+            .sort((a, b) => b.totalDamage - a.totalDamage);
+        const deliveryBreakdown = toBreakdown(partitions.byDelivery);
+        const schoolBreakdown = toBreakdown(partitions.bySchool);
+
         // ---- Report metadata ----
         const lastFight = cleanFights[cleanFights.length - 1];
         const reportData = state.report.data;
@@ -343,6 +361,8 @@ export function useOptimizedReportSummaryData(
             dps,
             playerBreakdown,
             abilityTypeBreakdown,
+            deliveryBreakdown,
+            schoolBreakdown,
             targetBreakdown: [],
           },
           deathAnalysis,
