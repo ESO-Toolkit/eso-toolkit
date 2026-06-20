@@ -2,8 +2,68 @@ import { BuffLookupData } from './BuffLookupUtils';
 import {
   BuffInterval,
   BuffUptimeCalculatorOptions,
+  BuffUptimeResult,
   computeBuffUptimes,
+  computeBuffUptimesWithGroupAverage,
 } from './buffUptimeCalculator';
+
+/**
+ * Reference implementation of the ORIGINAL (pre-optimization) group-average algorithm:
+ * call computeBuffUptimes() once per player, then average the per-player uptime
+ * percentages. The single-pass implementation must produce byte-identical output.
+ */
+function referenceGroupAverage(
+  buffLookup: BuffLookupData | null | undefined,
+  options: BuffUptimeCalculatorOptions,
+  singleTargetId: number,
+): BuffUptimeResult[] {
+  if (!buffLookup || !options.fightDuration) {
+    return [];
+  }
+  const allTargetIds = options.filterBySourceId
+    ? options.sourceIds || new Set<number>()
+    : options.targetIds || new Set<number>();
+  if (allTargetIds.size === 0) {
+    return [];
+  }
+
+  const playerUptimes = new Map<string, Map<number, number>>();
+  allTargetIds.forEach((targetId) => {
+    const singlePlayerOptions = {
+      ...options,
+      ...(options.filterBySourceId
+        ? { sourceIds: new Set([targetId]) }
+        : { targetIds: new Set([targetId]) }),
+    };
+    const uptimes = computeBuffUptimes(buffLookup, singlePlayerOptions);
+    uptimes.forEach((uptime) => {
+      const abilityId = uptime.abilityGameID;
+      if (!playerUptimes.has(abilityId)) {
+        playerUptimes.set(abilityId, new Map());
+      }
+      playerUptimes.get(abilityId)!.set(targetId, uptime.uptimePercentage);
+    });
+  });
+
+  const groupAverageMap = new Map<string, number>();
+  playerUptimes.forEach((playerMap, abilityId) => {
+    const uptimes = Array.from(playerMap.values());
+    const average = uptimes.reduce((sum, val) => sum + val, 0) / Math.max(uptimes.length, 1);
+    groupAverageMap.set(abilityId, average);
+  });
+
+  const singleTargetOptions = {
+    ...options,
+    ...(options.filterBySourceId
+      ? { sourceIds: new Set([singleTargetId]) }
+      : { targetIds: new Set([singleTargetId]) }),
+  };
+  const singleTargetUptimes = computeBuffUptimes(buffLookup, singleTargetOptions);
+  return singleTargetUptimes.map((uptime) => ({
+    ...uptime,
+    groupAverageUptimePercentage: groupAverageMap.get(uptime.abilityGameID),
+  }));
+}
 
 describe('buffUptimeCalculator', () => {
   // Mock constants for testing
@@ -410,6 +470,180 @@ describe('buffUptimeCalculator', () => {
       expect(result).toHaveLength(1);
       // Should average across specified target count: 50% / 2 = 25%
       expect(result[0].uptimePercentage).toBe(25);
+    });
+  });
+
+  describe('computeBuffUptimesWithGroupAverage (single-pass equivalence)', () => {
+    const PLAYER_A = MOCK_TARGET_ID_1; // 111
+    const PLAYER_B = MOCK_TARGET_ID_2; // 222
+    const PLAYER_C = 333;
+    const ENEMY_A = 555;
+    const ENEMY_B = 666;
+
+    it('returns empty for null lookup / zero duration / empty player set', () => {
+      expect(computeBuffUptimesWithGroupAverage(null, baseOptions, PLAYER_A)).toEqual([]);
+      const lookup = createBuffLookup(new Map());
+      expect(
+        computeBuffUptimesWithGroupAverage(lookup, { ...baseOptions, fightDuration: 0 }, PLAYER_A),
+      ).toEqual([]);
+      // No targetIds / sourceIds -> allTargetIds empty
+      expect(computeBuffUptimesWithGroupAverage(lookup, baseOptions, PLAYER_A)).toEqual([]);
+    });
+
+    it('matches the per-player reference for NORMAL buffs across multiple players', () => {
+      const intervals = new Map([
+        [
+          MOCK_ABILITY_ID_1,
+          [
+            createBuffInterval(FIGHT_START + 1000, FIGHT_START + 6000, PLAYER_A), // A: 50%
+            createBuffInterval(FIGHT_START + 2000, FIGHT_START + 5000, PLAYER_B), // B: 30%
+            createBuffInterval(FIGHT_START + 0, FIGHT_START + 2000, PLAYER_C), // C: 20%
+          ],
+        ],
+        [
+          MOCK_ABILITY_ID_2,
+          [
+            createBuffInterval(FIGHT_START + 1000, FIGHT_START + 9000, PLAYER_A), // A: 80%
+            createBuffInterval(FIGHT_START + 3000, FIGHT_START + 6000, PLAYER_B), // B: 30%
+          ],
+        ],
+      ]);
+      const buffLookup = createBuffLookup(intervals);
+      const options: BuffUptimeCalculatorOptions = {
+        ...baseOptions,
+        targetIds: new Set([PLAYER_A, PLAYER_B, PLAYER_C]),
+      };
+
+      const expected = referenceGroupAverage(buffLookup, options, PLAYER_A);
+      const actual = computeBuffUptimesWithGroupAverage(buffLookup, options, PLAYER_A);
+      expect(actual).toEqual(expected);
+      // sanity: group average for ability 1 = (50+30+20)/3 ~= 33.33
+      const a1 = actual.find((u) => u.abilityGameID === String(MOCK_ABILITY_ID_1))!;
+      expect(a1.groupAverageUptimePercentage).toBeCloseTo(100 / 3, 6);
+      expect(a1.uptimePercentage).toBe(50);
+    });
+
+    it('matches reference with an additional sourceIds filter in NORMAL mode', () => {
+      const intervals = new Map([
+        [
+          MOCK_ABILITY_ID_1,
+          [
+            createBuffInterval(FIGHT_START + 1000, FIGHT_START + 6000, PLAYER_A, MOCK_SOURCE_ID_1),
+            createBuffInterval(FIGHT_START + 2000, FIGHT_START + 7000, PLAYER_A, MOCK_SOURCE_ID_2),
+            createBuffInterval(FIGHT_START + 0, FIGHT_START + 5000, PLAYER_B, MOCK_SOURCE_ID_1),
+          ],
+        ],
+      ]);
+      const buffLookup = createBuffLookup(intervals);
+      const options: BuffUptimeCalculatorOptions = {
+        ...baseOptions,
+        targetIds: new Set([PLAYER_A, PLAYER_B]),
+        sourceIds: new Set([MOCK_SOURCE_ID_1]),
+      };
+
+      const expected = referenceGroupAverage(buffLookup, options, PLAYER_A);
+      const actual = computeBuffUptimesWithGroupAverage(buffLookup, options, PLAYER_A);
+      expect(actual).toEqual(expected);
+    });
+
+    it('matches reference for INVERTED debuffs (filterBySourceId) across enemies', () => {
+      // sourceID = friendly player who applied; targetID = enemy receiving.
+      const intervals = new Map([
+        [
+          MOCK_ABILITY_ID_1,
+          [
+            // Player A on Enemy A & Enemy B
+            createBuffInterval(FIGHT_START + 1000, FIGHT_START + 6000, ENEMY_A, PLAYER_A), // 50%
+            createBuffInterval(FIGHT_START + 2000, FIGHT_START + 5000, ENEMY_B, PLAYER_A), // 30%
+            // Player B on Enemy A only
+            createBuffInterval(FIGHT_START + 0, FIGHT_START + 4000, ENEMY_A, PLAYER_B), // 40%
+          ],
+        ],
+      ]);
+      const buffLookup = createBuffLookup(intervals);
+      const options: BuffUptimeCalculatorOptions = {
+        ...baseOptions,
+        isDebuff: true,
+        sourceIds: new Set([PLAYER_A, PLAYER_B]), // players to compare
+        targetIds: new Set([ENEMY_A, ENEMY_B]), // enemy filter (denominator = 2)
+        filterBySourceId: true,
+      };
+
+      const expected = referenceGroupAverage(buffLookup, options, PLAYER_A);
+      const actual = computeBuffUptimesWithGroupAverage(buffLookup, options, PLAYER_A);
+      expect(actual).toEqual(expected);
+      // Player A single-target: (50% + 30%) / 2 enemies = 40%
+      const a1 = actual.find((u) => u.abilityGameID === String(MOCK_ABILITY_ID_1))!;
+      expect(a1.uptimePercentage).toBeCloseTo(40, 6);
+      // Group avg: playerA=40, playerB=(40%/2)=20 -> (40+20)/2 = 30
+      expect(a1.groupAverageUptimePercentage).toBeCloseTo(30, 6);
+    });
+
+    it('matches reference for INVERTED debuffs with NO targetIds filter (distinct-target denominator)', () => {
+      const intervals = new Map([
+        [
+          MOCK_ABILITY_ID_1,
+          [
+            createBuffInterval(FIGHT_START + 1000, FIGHT_START + 6000, ENEMY_A, PLAYER_A), // 50%
+            createBuffInterval(FIGHT_START + 2000, FIGHT_START + 5000, ENEMY_B, PLAYER_A), // 30%
+            createBuffInterval(FIGHT_START + 0, FIGHT_START + 4000, ENEMY_A, PLAYER_B), // 40%
+          ],
+        ],
+      ]);
+      const buffLookup = createBuffLookup(intervals);
+      const options: BuffUptimeCalculatorOptions = {
+        ...baseOptions,
+        isDebuff: true,
+        sourceIds: new Set([PLAYER_A, PLAYER_B]),
+        // no targetIds -> denominator = distinct targets seen per player
+        filterBySourceId: true,
+      };
+
+      const expected = referenceGroupAverage(buffLookup, options, PLAYER_A);
+      const actual = computeBuffUptimesWithGroupAverage(buffLookup, options, PLAYER_A);
+      expect(actual).toEqual(expected);
+    });
+
+    it('matches reference when singleTargetId is not in the comparison set', () => {
+      const intervals = new Map([
+        [
+          MOCK_ABILITY_ID_1,
+          [
+            createBuffInterval(FIGHT_START + 1000, FIGHT_START + 6000, PLAYER_A),
+            createBuffInterval(FIGHT_START + 2000, FIGHT_START + 5000, PLAYER_B),
+          ],
+        ],
+      ]);
+      const buffLookup = createBuffLookup(intervals);
+      const options: BuffUptimeCalculatorOptions = {
+        ...baseOptions,
+        targetIds: new Set([PLAYER_A, PLAYER_B]),
+      };
+      // Compare against player C (no data) while group is A+B
+      const expected = referenceGroupAverage(buffLookup, options, PLAYER_C);
+      const actual = computeBuffUptimesWithGroupAverage(buffLookup, options, PLAYER_C);
+      expect(actual).toEqual(expected);
+    });
+
+    it('matches reference with interval clipping and zero-duration intervals', () => {
+      const intervals = new Map([
+        [
+          MOCK_ABILITY_ID_1,
+          [
+            createBuffInterval(FIGHT_START - 2000, FIGHT_END + 2000, PLAYER_A), // clipped -> 100%
+            createBuffInterval(FIGHT_START + 5000, FIGHT_START + 5000, PLAYER_B), // zero
+            createBuffInterval(FIGHT_START + 3000, FIGHT_START + 7000, PLAYER_B), // 40%
+          ],
+        ],
+      ]);
+      const buffLookup = createBuffLookup(intervals);
+      const options: BuffUptimeCalculatorOptions = {
+        ...baseOptions,
+        targetIds: new Set([PLAYER_A, PLAYER_B]),
+      };
+      const expected = referenceGroupAverage(buffLookup, options, PLAYER_A);
+      const actual = computeBuffUptimesWithGroupAverage(buffLookup, options, PLAYER_A);
+      expect(actual).toEqual(expected);
     });
   });
 });

@@ -189,30 +189,119 @@ export function computeBuffUptimesWithGroupAverage(
     return [];
   }
 
-  // Calculate uptime for each player individually
-  const playerUptimes = new Map<string, Map<number, number>>(); // abilityId -> Map<playerId -> uptimePercentage>
+  // Single-pass per-player uptime accumulation.
+  //
+  // The previous implementation called computeBuffUptimes() once per player, and
+  // each call re-walked + re-filtered the FULL interval list of every ability,
+  // giving O(players × totalIntervals). Instead, walk each ability's intervals
+  // exactly once and bucket every interval's clipped duration by (player, target).
+  //
+  // The per-player call's filtering is exactly equivalent to the original options'
+  // targetIds + sourceIds filter:
+  //   - Normal mode: per-player targetIds={P}; combined over all players (= options.targetIds)
+  //     reduces to options.targetIds.has(targetID). sourceIds is unchanged.
+  //   - Inverted mode (filterBySourceId): per-player sourceIds={P}; combined over all players
+  //     (= options.sourceIds) reduces to options.sourceIds.has(sourceID). targetIds is unchanged.
+  // So the constant filter below mirrors a single computeBuffUptimes() pass, plus a player bucket.
+  const { sourceIds, targetIds, fightStartTime, fightEndTime, fightDuration } = options;
+  const filterBySourceId = options.filterBySourceId === true;
 
-  allTargetIds.forEach((targetId, _index) => {
-    const singlePlayerOptions = {
-      ...options,
-      // For inverted debuffs, set sourceIds to the single player
-      // For normal buffs/debuffs, set targetIds to the single player
-      ...(options.filterBySourceId
-        ? { sourceIds: new Set([targetId]) }
-        : { targetIds: new Set([targetId]) }),
-    };
-    const uptimes = computeBuffUptimes(buffLookup, singlePlayerOptions);
+  // abilityId -> playerId -> targetID -> accumulated duration
+  const accumulation = new Map<string, Map<number, Map<number, number>>>();
 
-    uptimes.forEach((uptime) => {
-      const abilityId = uptime.abilityGameID;
-      if (!playerUptimes.has(abilityId)) {
-        playerUptimes.set(abilityId, new Map());
+  Object.entries(buffLookup.buffIntervals).forEach(([abilityGameIDStr, intervals]) => {
+    const abilityGameID = parseInt(abilityGameIDStr, 10);
+    if (!options.abilityIds.has(abilityGameID)) {
+      return;
+    }
+    const abilityKey = String(abilityGameID);
+
+    intervals.forEach((interval: BuffInterval) => {
+      // Apply the same target/source filtering computeBuffUptimes() applies.
+      if (targetIds && !targetIds.has(interval.targetID)) {
+        return;
       }
-      playerUptimes.get(abilityId)!.set(targetId, uptime.uptimePercentage);
+      if (sourceIds && interval.sourceID && !sourceIds.has(interval.sourceID)) {
+        return;
+      }
+
+      const start = Math.max(interval.start, fightStartTime);
+      const end = Math.min(interval.end, fightEndTime);
+      const duration = end > start ? end - start : 0;
+      if (duration <= 0) {
+        return;
+      }
+
+      // Determine which player(s) this interval contributes to.
+      // - Normal mode: the single targetID (already gated to allTargetIds above).
+      // - Inverted mode with a real sourceID: that single source player.
+      // - Inverted mode with a falsy sourceID (0/undefined): the original per-player
+      //   call's `interval.sourceID && ...` guard short-circuits, so the interval is
+      //   NOT filtered out by source and is counted for EVERY comparison player.
+      let contributingPlayers: number[];
+      if (filterBySourceId) {
+        if (interval.sourceID) {
+          if (!allTargetIds.has(interval.sourceID)) {
+            return;
+          }
+          contributingPlayers = [interval.sourceID];
+        } else {
+          contributingPlayers = Array.from(allTargetIds);
+        }
+      } else {
+        if (!allTargetIds.has(interval.targetID)) {
+          return;
+        }
+        contributingPlayers = [interval.targetID];
+      }
+
+      let byPlayer = accumulation.get(abilityKey);
+      if (!byPlayer) {
+        byPlayer = new Map();
+        accumulation.set(abilityKey, byPlayer);
+      }
+      contributingPlayers.forEach((playerId) => {
+        let byTarget = byPlayer!.get(playerId);
+        if (!byTarget) {
+          byTarget = new Map();
+          byPlayer!.set(playerId, byTarget);
+        }
+        byTarget.set(interval.targetID, (byTarget.get(interval.targetID) || 0) + duration);
+      });
     });
   });
 
-  // Calculate the average uptime across all players for each ability
+  // Derive each player's uptime percentage per ability, mirroring computeBuffUptimes' averaging.
+  // playerUptimes: abilityId -> Map<playerId -> uptimePercentage>
+  const playerUptimes = new Map<string, Map<number, number>>();
+  accumulation.forEach((byPlayer, abilityKey) => {
+    byPlayer.forEach((byTarget, playerId) => {
+      // Sum each target's uptime percentage for this player.
+      let totalUptimeSum = 0;
+      byTarget.forEach((totalDuration) => {
+        totalUptimeSum += (totalDuration / fightDuration) * 100;
+      });
+
+      // Denominator matches the per-player computeBuffUptimes call:
+      //   targetCount = (per-player targetIds) ? its size : number of distinct targets seen.
+      // Normal mode: per-player targetIds={P} -> size 1.
+      // Inverted mode: per-player targetIds = options.targetIds (or distinct targets if undefined).
+      const targetCount = filterBySourceId ? (targetIds ? targetIds.size : byTarget.size) : 1;
+      const averageUptimePercentage = totalUptimeSum / Math.max(targetCount, 1);
+
+      // computeBuffUptimes only emits a result when averageUptimePercentage > 0.
+      if (averageUptimePercentage > 0) {
+        let perPlayer = playerUptimes.get(abilityKey);
+        if (!perPlayer) {
+          perPlayer = new Map();
+          playerUptimes.set(abilityKey, perPlayer);
+        }
+        perPlayer.set(playerId, averageUptimePercentage);
+      }
+    });
+  });
+
+  // Calculate the average uptime across all contributing players for each ability.
   const groupAverageMap = new Map<string, number>();
   playerUptimes.forEach((playerMap, abilityId) => {
     const uptimes = Array.from(playerMap.values());
