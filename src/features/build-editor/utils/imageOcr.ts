@@ -8,20 +8,35 @@
  * text is fed to the same buildTextParser the paste/link importers use, then
  * shown for review before anything is applied.
  *
- * Because this runs in the first-party origin, the entry script is pinned to an
- * EXACT immutable version and loaded with a Subresource-Integrity hash + CORS, so
- * a mutated/compromised CDN release can't execute arbitrary code here. (The exact
- * version also pins tesseract's own worker/core sub-resources, which it derives
- * from its baked-in version.) If the version is bumped, recompute the hash:
+ * Supply-chain hardening (this runs in the first-party origin):
+ *  - The entry script is pinned to an EXACT immutable version and loaded with a
+ *    Subresource-Integrity hash + CORS, so a mutated/compromised CDN release of
+ *    it can't execute arbitrary code here.
+ *  - Every sub-resource (worker, core/wasm, language data) is ALSO pinned to an
+ *    exact immutable version. This matters: tesseract.js's own defaults resolve
+ *    `tesseract.js-core` via a "^5.1.1" RANGE (mutable to any future 5.x), so we
+ *    pass explicit pinned paths to remove that. The browser can't SRI-verify the
+ *    core because the worker pulls it via importScripts (no integrity attribute);
+ *    the immutable version pin is the practical mitigation. Fully closing that
+ *    last gap would mean self-hosting ~20MB of wasm + language data — not worth
+ *    it for a best-effort importer, but the path is documented if it changes.
+ * If the entry version is bumped, recompute the hash:
  *   curl -s https://cdn.jsdelivr.net/npm/tesseract.js@<v>/dist/tesseract.min.js \
  *     | openssl dgst -sha384 -binary | openssl base64 -A
  *
  * Free + offline-capable once cached: no API key, no per-call cost.
  */
 
+const CDN = 'https://cdn.jsdelivr.net/npm';
 const TESSERACT_VERSION = '5.1.1';
-const TESSERACT_CDN = `https://cdn.jsdelivr.net/npm/tesseract.js@${TESSERACT_VERSION}/dist/tesseract.min.js`;
+const TESSERACT_CORE_VERSION = '5.1.1';
+const TESSERACT_LANG_VERSION = '4.0.0';
+const TESSERACT_CDN = `${CDN}/tesseract.js@${TESSERACT_VERSION}/dist/tesseract.min.js`;
 const TESSERACT_SRI = 'sha384-GJqSu7vueQ9qN0E9yLPb3Wtpd7OrgK8KmYzC8T1IysG1bcvxvIO4qtYR/D3A991F';
+// Exact immutable sub-resource paths (override tesseract's mutable defaults).
+const TESSERACT_WORKER_PATH = `${CDN}/tesseract.js@${TESSERACT_VERSION}/dist/worker.min.js`;
+const TESSERACT_CORE_PATH = `${CDN}/tesseract.js-core@${TESSERACT_CORE_VERSION}`;
+const TESSERACT_LANG_PATH = `https://tessdata.projectnaptha.com/${TESSERACT_LANG_VERSION}`;
 
 export interface OcrProgress {
   /** Coarse phase label from tesseract (e.g. "recognizing text"). */
@@ -41,11 +56,18 @@ interface TesseractWorker {
   setParameters(params: Record<string, string>): Promise<unknown>;
   terminate(): Promise<unknown>;
 }
+interface TesseractWorkerOptions {
+  logger?: (m: { status: string; progress: number }) => void;
+  /** Pinned sub-resource paths — override tesseract's mutable CDN defaults. */
+  workerPath?: string;
+  corePath?: string;
+  langPath?: string;
+}
 interface TesseractNamespace {
   createWorker(
     langs: string,
     oem?: number,
-    options?: { logger?: (m: { status: string; progress: number }) => void },
+    options?: TesseractWorkerOptions,
   ): Promise<TesseractWorker>;
 }
 
@@ -151,7 +173,11 @@ export async function ocrImages(
   // BEFORE createWorker because tesseract calls the logger during worker setup.
   let current = 1;
   // One worker reused across images keeps the (large) language data load to once.
+  // Pinned worker/core/lang paths keep the whole OCR chain on immutable versions.
   const worker = await Tesseract.createWorker('eng', 1, {
+    workerPath: TESSERACT_WORKER_PATH,
+    corePath: TESSERACT_CORE_PATH,
+    langPath: TESSERACT_LANG_PATH,
     logger: (m) => {
       onProgress?.({ status: m.status, progress: m.progress, index: current, total });
     },
