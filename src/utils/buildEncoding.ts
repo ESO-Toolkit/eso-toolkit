@@ -322,9 +322,14 @@ function expandSetup(compact: CompactSetup, index: number): BuildSetup {
   return {
     id: `decoded-setup-${index}`,
     name: compact.nm ?? 'Default',
-    attributes: compact.at
-      ? { magicka: compact.at[0], health: compact.at[1], stamina: compact.at[2] }
-      : { magicka: 0, health: 0, stamina: 0 },
+    // Coerce defensively: a malformed/hand-crafted ?b= blob can carry a short
+    // or non-numeric `at` array, which would otherwise yield undefined/NaN
+    // attributes that render as "NaN%" bars and poison stat math.
+    attributes: {
+      magicka: Number(compact.at?.[0]) || 0,
+      health: Number(compact.at?.[1]) || 0,
+      stamina: Number(compact.at?.[2]) || 0,
+    },
     curse: compact.cu ?? 'none',
     mundusStone: compact.ms ?? '',
     gear: expandGear(compact.g, compact.gt, compact.ge, compact.gw),
