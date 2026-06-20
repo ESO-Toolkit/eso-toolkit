@@ -371,8 +371,9 @@ export const CalculatorSkeletonLite: React.FC<CalculatorSkeletonLiteProps> = ({
       data-testid={dataTestId}
       sx={{
         minHeight: '100vh',
-        background:
-          theme.palette.mode === 'dark' ? theme.palette.background.default : 'transparent',
+        // Transparent in both themes so the card floats on the cosmic
+        // SiteBackground — matches the post-refactor Calculator.
+        background: 'transparent',
         position: 'relative',
         width: '100%',
         maxWidth: '100vw',
@@ -393,7 +394,7 @@ export const CalculatorSkeletonLite: React.FC<CalculatorSkeletonLiteProps> = ({
           background: cardBackground,
           backdropFilter: 'blur(20px)',
           WebkitBackdropFilter: 'blur(20px)',
-          borderRadius: 1,
+          borderRadius: '22px',
           border: `1px solid ${cardBorderColor}`,
           boxShadow:
             theme.palette.mode === 'dark'

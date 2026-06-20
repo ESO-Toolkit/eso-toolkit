@@ -6,8 +6,8 @@ import React from 'react';
 jest.mock('../Calculator', () => ({
   Calculator: () => <div data-testid="stat-calculator">STAT CALCULATOR</div>,
 }));
-jest.mock('../SmartCalculatorSkeleton', () => ({
-  SmartCalculatorSkeleton: () => <div>loading…</div>,
+jest.mock('../UltimateCalculatorSkeleton', () => ({
+  UltimateCalculatorSkeleton: () => <div>loading…</div>,
 }));
 jest.mock(
   '@features/ultimate-simulator/presentation/components/UltimateCalculator',

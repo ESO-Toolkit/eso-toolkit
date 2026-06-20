@@ -17,7 +17,8 @@ export const SKELETON_SELECTORS = {
   TEXT_EDITOR: '[data-testid="text-editor-skeleton"]',
   CALCULATOR: '[data-testid="calculator-skeleton"]',
   CALCULATOR_LITE: '[data-testid="calculator-skeleton-lite"]',
-  
+  ULTIMATE_CALCULATOR: '[data-testid="ultimate-calculator-skeleton"]',
+
   // These are actual loading skeletons that should disappear
   ACTUAL_LOADING_SKELETONS: [
     '[data-testid="players-skeleton"]',
@@ -31,9 +32,10 @@ export const SKELETON_SELECTORS = {
     '[data-testid="tab-aware-loading-skeleton"]',
     '[data-testid="text-editor-skeleton"]',
     '[data-testid="calculator-skeleton"]',
-    '[data-testid="calculator-skeleton-lite"]'
+    '[data-testid="calculator-skeleton-lite"]',
+    '[data-testid="ultimate-calculator-skeleton"]'
   ].join(', '),
-  
+
   // Loading fallback components - these might be persistent, not reliable for loading detection
   PLAYER_CARD_LOADING: '[data-testid="player-card-loading-fallback"]',
   SKILL_TOOLTIP_LOADING: '[data-testid="skill-tooltip-loading-fallback"]',
@@ -57,7 +59,8 @@ export const SKELETON_SELECTORS = {
     '[data-testid="tab-aware-loading-skeleton"]:not([data-permanent])',
     '[data-testid="text-editor-skeleton"]:not([data-permanent])',
     '[data-testid="calculator-skeleton"]:not([data-permanent])',
-    '[data-testid="calculator-skeleton-lite"]:not([data-permanent])'
+    '[data-testid="calculator-skeleton-lite"]:not([data-permanent])',
+    '[data-testid="ultimate-calculator-skeleton"]:not([data-permanent])'
   ].join(', '),
 } as const;
 

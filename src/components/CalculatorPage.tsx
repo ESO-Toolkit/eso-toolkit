@@ -12,7 +12,7 @@ import { Box, Container, Tab, Tabs } from '@mui/material';
 import React, { Suspense, useState } from 'react';
 
 import { Calculator } from './Calculator';
-import { SmartCalculatorSkeleton } from './SmartCalculatorSkeleton';
+import { UltimateCalculatorSkeleton } from './UltimateCalculatorSkeleton';
 
 const UltimateCalculator = React.lazy(() =>
   import('@features/ultimate-simulator/presentation/components/UltimateCalculator').then((m) => ({
@@ -124,7 +124,7 @@ export const CalculatorPage: React.FC = () => {
 
       {tab === 'ultimate' && (
         <Container maxWidth="lg" sx={{ py: 3 }}>
-          <Suspense fallback={<SmartCalculatorSkeleton />}>
+          <Suspense fallback={<UltimateCalculatorSkeleton />}>
             <UltimateCalculator />
           </Suspense>
         </Container>

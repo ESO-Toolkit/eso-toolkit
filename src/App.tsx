@@ -1,4 +1,4 @@
-import { Box } from '@mui/material';
+import { Box, Container } from '@mui/material';
 import { SnackbarProvider } from 'notistack';
 import React, { Suspense, useEffect, useState } from 'react';
 import { Provider as ReduxProvider } from 'react-redux';
@@ -21,6 +21,7 @@ import { ScrollRestoration } from './components/ScrollRestoration';
 import { SiteBackground } from './components/shared';
 import { SmartCalculatorSkeleton } from './components/SmartCalculatorSkeleton';
 import { TextEditorSkeleton } from './components/TextEditorSkeleton';
+import { UltimateCalculatorSkeleton } from './components/UltimateCalculatorSkeleton';
 import { UpdateNotification } from './components/UpdateNotification';
 import { LoggerProvider, LogLevel } from './contexts/LoggerContext';
 import { DiscordOAuthRedirect } from './DiscordOAuthRedirect';
@@ -249,12 +250,25 @@ const ReportFightsLoadingFallback: React.FC = () => (
   </DelayedFallback>
 );
 
-// Calculator specific loading fallback
-const CalculatorLoadingFallback: React.FC = () => (
-  <DelayedFallback>
-    <SmartCalculatorSkeleton />
-  </DelayedFallback>
-);
+// Calculator specific loading fallback. The page defaults to the Stats tab, but a
+// `#ultimate` deep-link opens straight onto the Ultimate tab — match the skeleton
+// to the tab the page is about to render so the layout doesn't swap on mount.
+const CalculatorLoadingFallback: React.FC = () => {
+  const isUltimate =
+    typeof window !== 'undefined' &&
+    window.location.hash.replace('#', '').toLowerCase() === 'ultimate';
+  return (
+    <DelayedFallback>
+      {isUltimate ? (
+        <Container maxWidth="lg" sx={{ py: 3 }}>
+          <UltimateCalculatorSkeleton />
+        </Container>
+      ) : (
+        <SmartCalculatorSkeleton />
+      )}
+    </DelayedFallback>
+  );
+};
 
 // Roster Builder specific loading fallback
 const RosterBuilderLoadingFallback: React.FC = () => (

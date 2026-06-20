@@ -637,18 +637,21 @@ export const CalculatorSkeleton: React.FC<CalculatorSkeletonProps> = ({
       sx={{
         mt: 4,
         p: 3,
+        // Mirror the real summary footer surface (now a sticky glass card, sans
+        // backdrop blur — the JS sticky-footer hook was replaced by CSS sticky).
         background:
           theme.palette.mode === 'dark'
-            ? 'linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(3, 7, 18, 0.98) 100%)'
-            : 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.9) 100%)',
-        borderRadius: 2,
-        border: `1px solid ${sectionBorderColor}`,
+            ? 'linear-gradient(135deg, rgba(15, 23, 42, 0.96) 0%, rgba(3, 7, 18, 0.97) 100%)'
+            : 'linear-gradient(135deg, rgba(255, 255, 255, 0.96) 0%, rgba(248, 250, 252, 0.94) 100%)',
+        borderRadius: '14px',
+        border:
+          theme.palette.mode === 'dark'
+            ? '1px solid rgba(56, 189, 248, 0.18)'
+            : '1px solid rgba(15, 23, 42, 0.08)',
         boxShadow:
           theme.palette.mode === 'dark'
-            ? '0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05)'
-            : '0 8px 32px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
-        backdropFilter: 'blur(12px)',
-        WebkitBackdropFilter: 'blur(12px)',
+            ? 'inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 12px 36px rgba(0, 0, 0, 0.4)'
+            : 'inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 12px 36px rgba(15, 23, 42, 0.12)',
       }}
     >
       {/* Matches renderSummaryFooter structure */}
@@ -773,8 +776,10 @@ export const CalculatorSkeleton: React.FC<CalculatorSkeletonProps> = ({
       data-testid={dataTestId}
       sx={{
         minHeight: '100vh',
-        background:
-          theme.palette.mode === 'dark' ? theme.palette.background.default : 'transparent',
+        // Transparent in both themes so the global cosmic SiteBackground shows
+        // through and the card floats — matches the post-refactor Calculator
+        // (it no longer paints an opaque background.default slab in dark mode).
+        background: 'transparent',
         position: 'relative',
         width: '100%',
         maxWidth: '100vw',
@@ -801,7 +806,7 @@ export const CalculatorSkeleton: React.FC<CalculatorSkeletonProps> = ({
             background: cardBackground,
             backdropFilter: 'blur(20px)',
             WebkitBackdropFilter: 'blur(20px)',
-            borderRadius: 2,
+            borderRadius: '22px',
             border: `1px solid ${cardBorderColor}`,
             boxShadow:
               theme.palette.mode === 'dark'
