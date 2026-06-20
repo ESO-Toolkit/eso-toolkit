@@ -148,7 +148,7 @@ export const KalpaBanner: React.FC = () => {
             </Box>
             {' — ESO addon manager '}
             <Box component="span" sx={{ opacity: 0.65, fontStyle: 'italic' }}>
-              (alpha)
+              (beta)
             </Box>
           </Typography>
           <span className="kalpa-arrow" aria-hidden="true">
@@ -167,7 +167,7 @@ export const KalpaBanner: React.FC = () => {
           >
             Introducing <strong>Kalpa</strong> — a fast, open-source addon manager for ESO.{' '}
             <Box component="span" sx={{ opacity: 0.7, fontStyle: 'italic' }}>
-              Currently in alpha.
+              Currently in beta.
             </Box>
           </Typography>
           <BannerLink href={KALPA_URL} target="_blank" rel="noopener noreferrer">
