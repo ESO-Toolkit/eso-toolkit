@@ -230,11 +230,17 @@ const GearSlotCardComponent: React.FC<GearSlotCardProps> = ({
       setIconUrl(sync);
       return;
     }
+    // Clear the previous item's icon while the async fetch is in flight so we
+    // don't show the old item's art next to the new item; show the fallback if
+    // the fetch fails rather than leaving the stale icon forever.
+    setIconUrl(null);
     fetchItemIconUrl(itemId)
       .then((url) => {
         if (!cancelled) setIconUrl(url);
       })
-      .catch(() => {});
+      .catch(() => {
+        if (!cancelled) setIconFailed(true);
+      });
     return () => {
       cancelled = true;
     };
