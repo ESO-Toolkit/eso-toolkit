@@ -254,4 +254,39 @@ describe('wizardWardrobeConverter', () => {
     expect(setup?.food?.id).toBe(153629);
     expect(setup?.food?.link).toContain('item:153629');
   });
+
+  it('preserves the boss label on initialized trash setups', () => {
+    const state = convertAllCharactersToLoadoutState({
+      charKey: {
+        version: 1,
+        selectedZoneTag: 'SS',
+        setups: {
+          SS: [
+            {
+              1: {
+                name: 'Trash Setup',
+                disabled: false,
+                condition: { boss: 'Trash', trash: 2 },
+                skills: { 0: {}, 1: {} },
+                cp: {},
+                food: {},
+                gear: {},
+              },
+            },
+          ],
+        },
+        pages: {
+          SS: [{ name: 'Page 1' }],
+        },
+        $LastCharacterName: 'Trash Tester',
+      },
+    });
+
+    const characterId = 'trash-tester-charKey';
+    const condition = state.pages[characterId].SS[0].setups[0].condition;
+
+    // Both the boss label and the trash pack number must survive the round-trip.
+    expect(condition.boss).toBe('Trash');
+    expect(condition.trash).toBe(2);
+  });
 });

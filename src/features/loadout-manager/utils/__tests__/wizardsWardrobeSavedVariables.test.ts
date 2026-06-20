@@ -1,4 +1,5 @@
 import {
+  parseLuaAssignments,
   parseWizardsWardrobeSavedVariables,
   serializeWizardsWardrobeSavedVariables,
   type WizardWardrobeSavedVariables,
@@ -94,5 +95,28 @@ describe('wizardsWardrobeSavedVariables', () => {
 
     expect(parsed.Default?.['@Account']?.$AccountWide?.selectedZoneTag).toBe('GEN');
     expect(parsed.Default?.['@Account']?.$AccountWide?.setups).toBeDefined();
+  });
+
+  it('keeps both implicit positional and explicit numeric-key entries in a mixed table', () => {
+    // A Lua table that carries BOTH bare positional values AND explicit [N] = ...
+    // numeric-key entries must not drop the positional ("implicit") values.
+    const assignments = parseLuaAssignments(`Mixed = { "a", "b", [5] = "e", [6] = "f" }`);
+    const mixed = assignments.Mixed as Record<string, unknown>;
+
+    expect(Array.isArray(mixed)).toBe(false);
+    // Implicit values take consecutive 1-based indices.
+    expect(mixed['1']).toBe('a');
+    expect(mixed['2']).toBe('b');
+    // Explicit numeric keys are preserved.
+    expect(mixed['5']).toBe('e');
+    expect(mixed['6']).toBe('f');
+  });
+
+  it('does not change pure-array or pure-object tables', () => {
+    const arrayCase = parseLuaAssignments(`Arr = { "a", "b", "c" }`);
+    expect(arrayCase.Arr).toEqual(['a', 'b', 'c']);
+
+    const objectCase = parseLuaAssignments(`Obj = { ["x"] = 1, ["y"] = 2 }`);
+    expect(objectCase.Obj).toEqual({ x: 1, y: 2 });
   });
 });
