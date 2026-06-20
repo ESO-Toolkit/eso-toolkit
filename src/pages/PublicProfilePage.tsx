@@ -943,7 +943,7 @@ export const PublicProfilePage: React.FC = () => {
   const isDarkMode = theme.palette.mode === 'dark';
   const navigate = useViewTransitionNavigate();
   const { enqueueSnackbar } = useSnackbar();
-  const { isLoggedIn, accessToken, currentUser } = useAuth();
+  const { isLoggedIn, accessToken, currentUser, userLoading } = useAuth();
 
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -1000,6 +1000,30 @@ export const PublicProfilePage: React.FC = () => {
       document.title = 'ESO Toolkit';
     };
   }, [profile]);
+
+  // Owner fallback: the public profile API 404s for a logged-in user who has no
+  // public builds/rosters and no profile row yet. Rather than tell owners their
+  // own profile "doesn't exist", synthesize a minimal profile from their auth
+  // session so Recent Logs (keyed on their ESO Logs user id) still render. Built
+  // entirely from the viewer's own AuthContext — no other user's data is read.
+  useEffect(() => {
+    if (notFound && !profile && isOwner && currentUser?.id != null) {
+      setProfile({
+        username: currentUser.name,
+        bio: '',
+        avatar_url: null,
+        avatar_thumb_url: null,
+        build_count: 0,
+        roster_count: 0,
+        builds: [],
+        rosters: [],
+        eso_logs_user_id: String(currentUser.id),
+        na_display_name: currentUser.naDisplayName ?? null,
+        eu_display_name: currentUser.euDisplayName ?? null,
+      });
+      setNotFound(false);
+    }
+  }, [notFound, profile, isOwner, currentUser]);
 
   const handleSaveBio = useCallback(
     async (bio: string) => {
@@ -1138,7 +1162,15 @@ export const PublicProfilePage: React.FC = () => {
 
   // ── Loading ────────────────────────────────────────────────────────────────
 
-  if (loading) {
+  // Keep the skeleton up (instead of flashing "Player not found") while auth is
+  // still resolving for a possible owner, or while the owner-fallback profile is
+  // about to be synthesized by the effect above.
+  const ownerFallbackPending =
+    notFound &&
+    !profile &&
+    (userLoading || (isOwner && currentUser?.id != null));
+
+  if (loading || ownerFallbackPending) {
     return (
       <Container maxWidth="md" sx={{ py: { xs: 4, sm: 6 } }}>
         <Skeleton variant="rounded" height={140} sx={{ borderRadius: '20px', mb: 5 }} />
