@@ -31,7 +31,11 @@ const abilities: Record<string, ReportAbilityFragment> = {
   9000: { gameID: 9000, name: 'Meteor' } as unknown as ReportAbilityFragment,
   9001: { gameID: 9001, name: 'Cleave' } as unknown as ReportAbilityFragment,
   // 126633 (Elemental Ring) is in the canonical AOE_ABILITY_IDS set.
-  126633: { gameID: 126633, name: 'Elemental Ring', type: '64' } as unknown as ReportAbilityFragment,
+  126633: {
+    gameID: 126633,
+    name: 'Elemental Ring',
+    type: '64',
+  } as unknown as ReportAbilityFragment,
 };
 
 const input = (partial: Partial<DeathAnalysisInput>): DeathAnalysisInput => ({

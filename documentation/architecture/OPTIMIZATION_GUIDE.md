@@ -47,7 +47,7 @@ useOptimizedReportSummaryData(reportCode)
    the per-player totals and the damage-type breakdown.
 
 4. **Friendly-outgoing filter.** The event stream contains both friendly and
-   enemy hostility (damage dealt *and* damage taken). Aggregation counts only
+   enemy hostility (damage dealt _and_ damage taken). Aggregation counts only
    `sourceIsFriendly === true && !targetIsFriendly` so totals, DPS, and
    percentages describe player-outgoing damage — matching the insights panels.
 
@@ -63,11 +63,11 @@ useOptimizedReportSummaryData(reportCode)
 
 ## Where the logic lives
 
-| Concern | File |
-|---------|------|
+| Concern                     | File                                                                 |
+| --------------------------- | -------------------------------------------------------------------- |
 | Orchestration / aggregation | `src/features/report_summary/hooks/useOptimizedReportSummaryData.ts` |
-| Damage-type categorization | `src/features/report_details/insights/damageTypeCategorization.ts` |
-| Death analysis | `src/services/DeathAnalysisService.ts` |
-| Shared event fetching/cache | `src/store/events_data/*` |
-| Kill / boss detection | `src/features/report_details/fightGrouping.ts` |
-| Types | `src/types/reportSummaryTypes.ts` |
+| Damage-type categorization  | `src/features/report_details/insights/damageTypeCategorization.ts`   |
+| Death analysis              | `src/services/DeathAnalysisService.ts`                               |
+| Shared event fetching/cache | `src/store/events_data/*`                                            |
+| Kill / boss detection       | `src/features/report_details/fightGrouping.ts`                       |
+| Types                       | `src/types/reportSummaryTypes.ts`                                    |

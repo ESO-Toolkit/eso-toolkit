@@ -96,8 +96,7 @@ const makeWrapper = () => {
     reducer: {
       report: () => ({ data: { title: 'Test Report', zone: { name: 'Test Zone' } } }),
     },
-    middleware: (getDefault) =>
-      getDefault({ serializableCheck: false, immutableCheck: false }),
+    middleware: (getDefault) => getDefault({ serializableCheck: false, immutableCheck: false }),
   });
   const client = { query: jest.fn(), mutate: jest.fn(), watchQuery: jest.fn() };
   const wrapper = ({ children }: { children: React.ReactNode }) => (

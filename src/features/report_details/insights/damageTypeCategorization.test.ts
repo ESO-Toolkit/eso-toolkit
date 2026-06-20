@@ -67,10 +67,7 @@ describe('categorizeDamageEvents', () => {
 
   it('separates direct hits from damage-over-time ticks', () => {
     const result = categorizeDamageEvents(
-      [
-        makeDamage({ amount: 100, tick: false }),
-        makeDamage({ amount: 50, tick: true }),
-      ],
+      [makeDamage({ amount: 100, tick: false }), makeDamage({ amount: 50, tick: true })],
       abilities,
     );
     expect(result.direct.totalDamage).toBe(100);
