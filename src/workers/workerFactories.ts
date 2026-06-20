@@ -5,6 +5,7 @@
 import { wrap, Remote } from 'comlink';
 
 import { SharedComputationWorker } from './SharedWorker';
+import { registerRawWorker } from './workerRegistry';
 
 /**
  * Creates a new instance of the buff calculation worker
@@ -14,5 +15,9 @@ export function createSharedWorker(): Remote<SharedComputationWorker> {
     type: 'module',
   });
 
-  return wrap<SharedComputationWorker>(worker);
+  const proxy = wrap<SharedComputationWorker>(worker);
+  // Remember the raw worker so the pool can terminate the thread on cleanup
+  // (releaseProxy alone never stops a Worker endpoint).
+  registerRawWorker(proxy, worker);
+  return proxy;
 }
