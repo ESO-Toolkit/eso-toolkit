@@ -30,12 +30,25 @@ export type SkillLine =
   | 'Werewolf';
 
 /**
+ * Per-damage-type name transformation for a grimoire, e.g. focusing "Traveling
+ * Knife" with the Flame focus yields "Fiery Knife". Keyed by `<damage>-damage`
+ * (e.g. `flame-damage`). Sourced from the game-extracted scribing dataset.
+ */
+export interface GrimoireNameTransformation {
+  readonly name: string;
+  readonly abilityIds?: readonly number[];
+  readonly matchCount?: number;
+}
+
+/**
  * Core Grimoire entity - represents a base scribing skill template
  */
 export interface Grimoire {
   readonly id: string;
   readonly name: string;
-  readonly skillLine: SkillLine;
+  // Optional: the source dataset categorizes grimoires by `resource`/`school`
+  // rather than a UI skill line, so skillLine may be absent.
+  readonly skillLine?: SkillLine;
   readonly requirements: string | null;
   readonly cost: {
     readonly first: number;
@@ -44,6 +57,10 @@ export interface Grimoire {
   readonly description: string;
   readonly iconUrl?: string;
   readonly abilityIds?: readonly number[];
+  /** Resource the grimoire's base ability costs (from the extracted dataset). */
+  readonly resource?: ResourceType;
+  /** Skill-name overrides per focus damage type, keyed by `<damage>-damage`. */
+  readonly nameTransformations?: Readonly<Record<string, GrimoireNameTransformation>>;
 }
 
 /**
@@ -187,19 +204,20 @@ export interface ScribingSystem {
 export interface ScribingData {
   readonly version: string;
   readonly description: string;
-  readonly lastUpdated: string;
+  readonly lastUpdated?: string;
   readonly grimoires: Record<string, Grimoire>;
   readonly focusScripts: Record<string, FocusScript>;
   readonly signatureScripts: Record<string, SignatureScript>;
   readonly affixScripts: Record<string, AffixScript>;
-  readonly questRewards: Record<string, QuestReward>;
-  readonly freeScriptLocations: Record<string, FreeScriptLocation>;
-  readonly dailyScriptSources: {
+  // Reference metadata not present in the extracted dataset — optional.
+  readonly questRewards?: Record<string, QuestReward>;
+  readonly freeScriptLocations?: Record<string, FreeScriptLocation>;
+  readonly dailyScriptSources?: {
     readonly 'focus-scripts': readonly string[];
     readonly 'signature-scripts': readonly string[];
     readonly 'affix-scripts': readonly string[];
   };
-  readonly scriptVendors: Record<string, ScriptVendor>;
-  readonly luminousInk: LuminousInk;
-  readonly system: ScribingSystem;
+  readonly scriptVendors?: Record<string, ScriptVendor>;
+  readonly luminousInk?: LuminousInk;
+  readonly system?: ScribingSystem;
 }

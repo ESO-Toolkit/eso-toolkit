@@ -159,19 +159,13 @@ export class ScribingSimulatorService implements IScribingSimulatorService {
     affixScript: AffixScript | null,
     request: ScribingSimulationRequest,
   ) {
-    // Base properties from grimoire
-    let resourceType: ResourceType = 'magicka'; // Default
+    // Base properties from grimoire. The dataset provides the grimoire's actual
+    // resource and base cost directly.
+    let resourceType: ResourceType = grimoire.resource ?? 'magicka';
     let baseCost = grimoire.cost.first;
     let castTime = DEFAULT_SIMULATION_CONFIG.BASE_CAST_TIME;
     let range = 28; // Default range in meters
     let damage: { type: DamageType; amount: number } | undefined;
-
-    // Determine resource type from grimoire skill line
-    if (grimoire.skillLine === 'Support' || grimoire.skillLine === 'Restoration Staff') {
-      resourceType = 'magicka';
-    } else if (grimoire.skillLine === 'Assault') {
-      resourceType = 'stamina';
-    }
 
     // Apply focus script modifications
     if (focusScript) {
@@ -242,22 +236,20 @@ export class ScribingSimulatorService implements IScribingSimulatorService {
   private generateSkillName(
     grimoire: Grimoire,
     focusScript: FocusScript | null,
-    signatureScript: SignatureScript | null,
+    _signatureScript: SignatureScript | null,
     _affixScript: AffixScript | null,
   ): string {
-    let name = grimoire.name;
-
-    if (focusScript && focusScript.effectType) {
-      // Modify name based on focus script
-      name = `${focusScript.effectType} ${name}`;
+    // The grimoire's name changes with the chosen focus damage type, and the
+    // dataset carries the real in-game name for each (e.g. Traveling Knife +
+    // Flame focus -> "Fiery Knife"). Signature/affix scripts don't rename the
+    // skill, so they don't affect the name.
+    if (focusScript?.damageType) {
+      const transformed = grimoire.nameTransformations?.[`${focusScript.damageType}-damage`]?.name;
+      if (transformed) {
+        return transformed;
+      }
     }
-
-    if (signatureScript) {
-      // Some signature scripts add suffixes
-      name = `${name} (Enhanced)`;
-    }
-
-    return name;
+    return grimoire.name;
   }
 
   private generateSkillDescription(
