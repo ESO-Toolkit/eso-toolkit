@@ -73,7 +73,7 @@ import { selectSavedBuilds } from '../store/saved_builds';
 import { CHAMPION_POINT_ABILITIES, ChampionPointAbilityId } from '../types/champion-points';
 import { decodeBuildFromURL } from '../utils/buildEncoding';
 import { getGearSetTooltipPropsByName } from '../utils/gearSetTooltipMapper';
-import { sanitizeYoutubeUrl } from '../utils/sanitize-url';
+import { sanitizeImageUrl, sanitizeYoutubeUrl } from '../utils/sanitize-url';
 import { useSetPieceCounts } from '../utils/setPieceCounting';
 import { buildTooltipPropsFromAbilityId } from '../utils/skillTooltipMapper';
 
@@ -644,10 +644,14 @@ const GearSlotDisplay: React.FC<{
   );
 
   useEffect(() => {
-    if (iconUrl || resolvedIconId == null) return;
+    if (iconUrl || resolvedIconId == null) return undefined;
+    let active = true;
     void fetchItemIconUrl(resolvedIconId).then((url) => {
-      if (url) setIconUrl(url);
+      if (active && url) setIconUrl(url);
     });
+    return () => {
+      active = false;
+    };
   }, [resolvedIconId, iconUrl]);
 
   // Swap the generic " Weapon"/" Off-Hand"/" Gear" suffix for a specific
@@ -833,13 +837,18 @@ const SetupDisplay: React.FC<{ setup: BuildSetup; build: Build; races?: string[]
   const totalAttributes =
     setup.attributes.magicka + setup.attributes.health + setup.attributes.stamina;
 
-  const gearEntries = GEAR_SLOT_ORDER.filter((slot) => setup.gear[slot]?.id != null).map(
-    (slot) => ({
-      slot,
-      id: setup.gear[slot].id as number,
-      trait: setup.gear[slot].trait,
-      enchant: setup.gear[slot].enchant,
-    }),
+  // Memoize on setup.gear so the array identity is stable: setPieceCounts and
+  // every per-row gearTooltipProps memo key off this, and an unstable identity
+  // busted all ~14 gear-set tooltip lookups on any parent re-render.
+  const gearEntries = React.useMemo(
+    () =>
+      GEAR_SLOT_ORDER.filter((slot) => setup.gear[slot]?.id != null).map((slot) => ({
+        slot,
+        id: setup.gear[slot].id as number,
+        trait: setup.gear[slot].trait,
+        enchant: setup.gear[slot].enchant,
+      })),
+    [setup.gear],
   );
 
   // Count set pieces treating a two-handed weapon as 2 (ESO's in-game math), so
@@ -2266,7 +2275,7 @@ export const BuildViewPage: React.FC = () => {
             animate="visible"
           >
             {/* ── Banner image ── */}
-            {build.guide.bannerImageUrl && (
+            {sanitizeImageUrl(build.guide.bannerImageUrl) && (
               <motion.div variants={fadeInUp}>
                 <Box
                   sx={{
@@ -2290,7 +2299,7 @@ export const BuildViewPage: React.FC = () => {
                   }}
                 >
                   <img
-                    src={build.guide.bannerImageUrl}
+                    src={sanitizeImageUrl(build.guide.bannerImageUrl) ?? undefined}
                     alt={`${build.name} banner`}
                     style={{
                       width: '100%',
