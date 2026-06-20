@@ -12,6 +12,7 @@
  * isn't present in a paste.
  */
 
+import { ESO_CONSUMABLES } from '@/data/esoConsumables';
 import { CHAMPION_POINT_ABILITIES, ChampionPointTree } from '@/types/champion-points';
 
 import { getAllSetNames, getSetItemsBySlot } from '../../loadout-manager/data/itemIdMap';
@@ -21,6 +22,10 @@ import type {
   GearConfig,
   SkillsConfig,
 } from '../../loadout-manager/types/loadout.types';
+import {
+  getItemIconUrl,
+  parseWeaponTypeFromIconUrl,
+} from '../../loadout-manager/utils/itemIconResolver';
 import {
   CLASS_SKILL_LINES,
   EQUIP_SLOTS,
@@ -81,6 +86,8 @@ export interface ParsedBuildResult {
   mundusLabel?: string;
   attributes?: BuildAttributes;
   foodName?: string;
+  /** Resolved consumable id for foodName, when it matches the ESO food list. */
+  foodId?: number;
   gear: ParsedGearRow[];
   skills: ParsedSkillRow[];
   cp: ParsedCP[];
@@ -108,25 +115,66 @@ function canonicalSetName(setName: string): string | null {
   return setNameIndex.get(normKey(setName)) ?? null;
 }
 
-/** First item id of a set for a given equipment slot type, or null. */
-function resolveSetItem(setName: string, slotType: EquipSlotDef['slotType']): number | null {
-  if (!setName) return null;
+/** All candidate item ids of a set for a slot type (with punctuation fallback). */
+function setItemCandidates(setName: string, slotType: EquipSlotDef['slotType']): number[] {
+  if (!setName) return [];
   const param = SLOT_TYPE_PARAM(slotType);
   let ids = getSetItemsBySlot(setName.trim(), param);
   if (ids.length === 0) {
-    // Retry against the canonical name (punctuation-insensitive).
     const canon = canonicalSetName(setName);
     if (canon) ids = getSetItemsBySlot(canon, param);
   }
+  return ids;
+}
+
+/** First item id of a set for a given equipment slot type, or null. */
+function resolveSetItem(setName: string, slotType: EquipSlotDef['slotType']): number | null {
+  const ids = setItemCandidates(setName, slotType);
   return ids.length > 0 ? ids[0] : null;
+}
+
+/**
+ * Resolve a weapon item, preferring the candidate whose type matches the
+ * pasted "WEIGHT/TYPE" cell (e.g. "Dagger", "Lightning Staff", "Greatsword").
+ * A set usually has multiple weapon variants sharing one bonus; picking the
+ * first would silently import the wrong weapon type. When the variant can't be
+ * confirmed (ambiguous, or icon data not yet loaded), falls back to the first
+ * candidate and reports `confirmed: false` so the caller can warn.
+ */
+function resolveWeaponItem(
+  setName: string,
+  slotType: EquipSlotDef['slotType'],
+  typeCell: string,
+): { itemId: number | null; confirmed: boolean } {
+  const candidates = setItemCandidates(setName, slotType);
+  if (candidates.length === 0) return { itemId: null, confirmed: false };
+  // Nothing to disambiguate.
+  if (candidates.length === 1 || !typeCell.trim()) {
+    return { itemId: candidates[0], confirmed: true };
+  }
+
+  const want = normKey(typeCell);
+  const wantsStaff = want.includes('staff');
+  for (const id of candidates) {
+    const label = parseWeaponTypeFromIconUrl(getItemIconUrl(id));
+    if (!label) continue;
+    const lk = normKey(label);
+    if (lk === want) return { itemId: id, confirmed: true };
+    // Regular gear staff icons collapse all four elements to "Staff"; treat any
+    // staff candidate as a match for a staff request (element isn't recoverable
+    // from the sync icon, but the weapon class is correct).
+    if (wantsStaff && lk === 'staff') return { itemId: id, confirmed: true };
+  }
+  // Couldn't confirm the exact variant — best-effort first candidate + warn.
+  return { itemId: candidates[0], confirmed: false };
 }
 
 // ─── Gear ──────────────────────────────────────────────────────────────────
 
 const SLOT_BY_NAME = new Map(EQUIP_SLOTS.map((s) => [s.slot, s]));
 
-/** Map a guide's gear-slot label to an EQUIP_SLOTS index (ring uses a counter). */
-function resolveSlotIndex(rawLabel: string, ringSeen: { count: number }): number | null {
+/** Map a guide's gear-slot label to an EQUIP_SLOTS index. */
+function resolveSlotIndex(rawLabel: string, ringSlots: { used: Set<number> }): number | null {
   const k = normKey(rawLabel);
   const map: Record<string, number> = {
     head: 0,
@@ -150,20 +198,20 @@ function resolveSlotIndex(rawLabel: string, ringSeen: { count: number }): number
     amulet: 1,
   };
   if (k in map) return map[k];
-  // Numbered rings ("Ring 1" / "Ring 2", "Ring One" / "Ring Two") map directly,
-  // and advance the counter so a later bare "Ring" still resolves correctly.
+  // Rings: track which slots (11 = Ring 1, 12 = Ring 2) are taken so numbered
+  // and bare labels in any order never collide. Numbered labels claim their
+  // slot; a bare "Ring" takes the first still-free slot.
   if (k === 'ring1' || k === 'ringone') {
-    ringSeen.count = Math.max(ringSeen.count, 1);
+    ringSlots.used.add(11);
     return 11;
   }
   if (k === 'ring2' || k === 'ringtwo') {
-    ringSeen.count = Math.max(ringSeen.count, 2);
+    ringSlots.used.add(12);
     return 12;
   }
-  // A bare "Ring" relies on document order: first → Ring 1, second → Ring 2.
   if (k === 'ring') {
-    const slot = ringSeen.count === 0 ? 11 : 12;
-    ringSeen.count += 1;
+    const slot = !ringSlots.used.has(11) ? 11 : 12;
+    ringSlots.used.add(slot);
     return slot;
   }
   // Weapons — match front/back + main/off.
@@ -218,14 +266,14 @@ function parseGear(lines: string[], warnings: string[]): ParsedGearRow[] {
   if (headerIdx === -1) return [];
 
   const rows: ParsedGearRow[] = [];
-  const ringSeen = { count: 0 };
+  const ringSlots = { used: new Set<number>() };
 
   for (let i = headerIdx + 1; i < lines.length; i++) {
     const cells = lines[i].split('\t').map((c) => c.trim());
     // End of table: a blank line or a row without a recognisable slot label.
     if (cells.length < 2 || cells[0] === '') break;
 
-    const slot = resolveSlotIndex(cells[0], ringSeen);
+    const slot = resolveSlotIndex(cells[0], ringSlots);
     if (slot == null) break;
 
     const def = SLOT_BY_NAME.get(slot);
@@ -236,16 +284,30 @@ function parseGear(lines: string[], warnings: string[]): ParsedGearRow[] {
     const traitRaw = cells[3] ?? '';
     const enchantRaw = cells[4] ?? '';
 
-    const itemId = resolveSetItem(setName, def.slotType);
+    // Weapons: pick the variant matching the pasted type cell (Dagger / Staff /
+    // …); other slots resolve by set + slot type.
+    let itemId: number | null;
+    let weaponUnconfirmed = false;
+    if (def.category === 'weapons') {
+      const w = resolveWeaponItem(setName, def.slotType, weightOrType);
+      itemId = w.itemId;
+      weaponUnconfirmed = w.itemId != null && !w.confirmed;
+    } else {
+      itemId = resolveSetItem(setName, def.slotType);
+    }
+
     const weight = def.category === 'apparel' ? WEIGHT_KEYS[weightOrType.toLowerCase()] : undefined;
     const trait = traitRaw ? resolveTrait(traitRaw, def.category) : null;
     const enchant = enchantRaw ? resolveEnchant(enchantRaw, def.category) : null;
 
     let status: ImportConfidence = 'ok';
     if (itemId == null) status = 'unresolved';
-    else if ((traitRaw && !trait) || (enchantRaw && !enchant)) status = 'partial';
+    else if ((traitRaw && !trait) || (enchantRaw && !enchant) || weaponUnconfirmed)
+      status = 'partial';
 
     if (itemId == null) warnings.push(`Couldn't match set “${setName}” for ${def.name}`);
+    else if (weaponUnconfirmed)
+      warnings.push(`Verify weapon type “${weightOrType}” for ${def.name}`);
 
     rows.push({
       slot,
@@ -354,16 +416,26 @@ function parseAttributes(text: string): BuildAttributes | undefined {
   return { health, magicka, stamina };
 }
 
-function parseFood(lines: string[]): string | undefined {
+// Lazy name → consumable id index (food + drink, since "food" guides list both).
+let foodIndex: Map<string, number> | null = null;
+function resolveFoodId(name: string): number | undefined {
+  if (!foodIndex) {
+    foodIndex = new Map();
+    for (const c of ESO_CONSUMABLES) foodIndex.set(normKey(c.name), c.id);
+  }
+  return foodIndex.get(normKey(name));
+}
+
+function parseFood(lines: string[]): { foodName?: string; foodId?: number } {
   const idx = lines.findIndex((l) => l.trim().toUpperCase() === 'FOOD');
-  if (idx === -1) return undefined;
+  if (idx === -1) return {};
   // The default food name is the first non-label line after FOOD / DEFAULT.
   for (let i = idx + 1; i < Math.min(idx + 5, lines.length); i++) {
     const t = lines[i].trim();
     if (!t || t.toUpperCase() === 'DEFAULT') continue;
-    if (t.length > 2) return t;
+    if (t.length > 2) return { foodName: t, foodId: resolveFoodId(t) };
   }
-  return undefined;
+  return {};
 }
 
 // ─── Skills ───────────────────────────────────────────────────────────────
@@ -469,17 +541,20 @@ export function parseBuildText(raw: string): ParsedBuildResult {
   const race = parseRace(text);
   const mundus = parseMundus(text);
   const attributes = parseAttributes(text);
-  const foodName = parseFood(lines);
+  const food = parseFood(lines);
 
   if (gear.length === 0) warnings.push('No gear table found.');
   if (skills.length === 0) warnings.push('No skill bars found.');
+  if (food.foodName && food.foodId === undefined)
+    warnings.push(`Couldn't match food “${food.foodName}”`);
 
   return {
     ...classInfo,
     ...race,
     ...mundus,
     attributes,
-    foodName,
+    foodName: food.foodName,
+    foodId: food.foodId,
     gear,
     skills,
     cp,
@@ -504,7 +579,7 @@ export interface ImportPayload {
     cp?: BuildChampionPoints;
     attributes?: BuildAttributes;
     mundusStone?: string;
-    consumables?: { potions: never[]; food: { name?: string } };
+    consumables?: { potions: never[]; food: { id?: number; name?: string } };
   };
   buildFields?: {
     esoClass?: ESOClass;
@@ -567,7 +642,12 @@ export function buildImportPayload(
   if (include.character) {
     if (result.attributes) setup.attributes = result.attributes;
     if (result.mundusId) setup.mundusStone = result.mundusId;
-    if (result.foodName) setup.consumables = { potions: [], food: { name: result.foodName } };
+    // Only import food we resolved to a real id — the consumables UI renders
+    // food by id, so a name-only entry would be invisible (and the parser
+    // already warns when the name didn't match).
+    if (result.foodId !== undefined) {
+      setup.consumables = { potions: [], food: { id: result.foodId, name: result.foodName } };
+    }
   }
 
   const buildFields: NonNullable<ImportPayload['buildFields']> = {};

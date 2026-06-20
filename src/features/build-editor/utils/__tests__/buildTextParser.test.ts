@@ -189,6 +189,45 @@ describe('parseBuildText — numbered ring labels', () => {
     expect(parseBuildText(mk('Ring 1', 'Ring')).gear.map((g) => g.slot)).toEqual([11, 12]);
     // Bare "Ring" then "Ring 2" → 11, 12.
     expect(parseBuildText(mk('Ring', 'Ring 2')).gear.map((g) => g.slot)).toEqual([11, 12]);
+    // "Ring 2" first, then a bare "Ring" → 12, then first-free 11 (no collision).
+    expect(parseBuildText(mk('Ring 2', 'Ring')).gear.map((g) => g.slot)).toEqual([12, 11]);
+  });
+});
+
+describe('parseBuildText — food id resolution', () => {
+  it('resolves a known food name to its consumable id', () => {
+    const r = parseBuildText(['FOOD', 'DEFAULT', 'Artaeum Pickled Fish Bowl'].join('\n'));
+    expect(r.foodName).toBe('Artaeum Pickled Fish Bowl');
+    expect(r.foodId).toBeGreaterThan(0);
+  });
+
+  it('warns and leaves foodId undefined for an unknown food', () => {
+    const r = parseBuildText(['FOOD', 'DEFAULT', 'Totally Not A Real Dish'].join('\n'));
+    expect(r.foodName).toBe('Totally Not A Real Dish');
+    expect(r.foodId).toBeUndefined();
+    expect(r.warnings.some((w) => /Couldn't match food/i.test(w))).toBe(true);
+  });
+
+  it('buildImportPayload only imports food when an id resolved (visible in the UI)', () => {
+    const resolved = parseBuildText(['FOOD', 'DEFAULT', 'Artaeum Pickled Fish Bowl'].join('\n'));
+    const p1 = buildImportPayload(resolved, {
+      gear: false,
+      skills: false,
+      champion: false,
+      character: true,
+      identity: false,
+    });
+    expect(p1.setup.consumables?.food.id).toBeGreaterThan(0);
+
+    const unresolved = parseBuildText(['FOOD', 'DEFAULT', 'Totally Not A Real Dish'].join('\n'));
+    const p2 = buildImportPayload(unresolved, {
+      gear: false,
+      skills: false,
+      champion: false,
+      character: true,
+      identity: false,
+    });
+    expect(p2.setup.consumables).toBeUndefined();
   });
 });
 
