@@ -93,7 +93,7 @@ function tryDeleteImgBBImage(deleteUrl: string | null): void {
 /** Verify that an encoded payload is valid base64url (no special chars that break URLs). */
 const isValidBase64Url = (s: string): boolean => /^[A-Za-z0-9_-]*=*$/.test(s);
 
-import { escapeHtml, sanitize } from './sanitize';
+import { cleanText, sanitize } from './sanitize';
 
 /** Validate and sanitize an addon entry. Returns null if invalid. */
 const sanitizeAddonEntry = (a: unknown): RecommendedAddonEntry | null => {
@@ -104,9 +104,9 @@ const sanitizeAddonEntry = (a: unknown): RecommendedAddonEntry | null => {
   if (typeof entry.name !== 'string' || !entry.name.trim() || entry.name.length > 200) return null;
   return {
     esouiId: entry.esouiId,
-    name: sanitize(entry.name),
+    name: cleanText(entry.name),
     required: typeof entry.required === 'boolean' ? entry.required : undefined,
-    note: typeof entry.note === 'string' ? sanitize(entry.note.slice(0, 500)) : undefined,
+    note: typeof entry.note === 'string' ? cleanText(entry.note.slice(0, 500)) : undefined,
   };
 };
 
@@ -387,7 +387,7 @@ app.post('/rosters', async (c) => {
             : undefined,
         packTitle:
           typeof recommended_addons.packTitle === 'string'
-            ? sanitize(recommended_addons.packTitle)
+            ? cleanText(recommended_addons.packTitle)
             : undefined,
         addons: sanitizedAddons,
       });
@@ -407,9 +407,9 @@ app.post('/rosters', async (c) => {
   await createRoster(c.env.DB, {
     id,
     authorId: user.id,
-    authorName: escapeHtml(user.name),
-    title: sanitize(title),
-    description: sanitize(description),
+    authorName: user.name,
+    title: cleanText(title),
+    description: cleanText(description),
     trialId: sanitize(trial_id),
     trialIds: sanitizeTrialIds(trial_ids),
     rosterData: roster_data,
@@ -482,7 +482,7 @@ app.put('/rosters/:id', async (c) => {
             : undefined,
         packTitle:
           typeof recommended_addons.packTitle === 'string'
-            ? sanitize(recommended_addons.packTitle)
+            ? cleanText(recommended_addons.packTitle)
             : undefined,
         addons: sanitizedAddons,
       });
@@ -491,8 +491,8 @@ app.put('/rosters/:id', async (c) => {
 
   const existing = await getRosterById(c.env.DB, c.req.param('id'), user.id);
   const updated = await updateRoster(c.env.DB, c.req.param('id'), user.id, {
-    title: sanitize(title),
-    description: sanitize(description),
+    title: cleanText(title),
+    description: cleanText(description),
     trialId: sanitize(trial_id),
     trialIds: sanitizeTrialIds(trial_ids),
     rosterData: roster_data,
@@ -617,8 +617,8 @@ app.post('/rosters/:id/comments', async (c) => {
     rosterId,
     parentId: body.parent_id ?? null,
     authorId: user.id,
-    authorName: escapeHtml(user.name),
-    body: escapeHtml(body.body.trim()),
+    authorName: user.name,
+    body: body.body.trim(),
   });
 
   return c.json({ comment }, 201);
@@ -750,9 +750,9 @@ app.post('/builds', async (c) => {
   await createBuild(c.env.DB, {
     id,
     authorId: user.id,
-    authorName: escapeHtml(user.name),
-    title: sanitize(title),
-    description: sanitize(description),
+    authorName: user.name,
+    title: cleanText(title),
+    description: cleanText(description),
     esoClass: sanitize(eso_class),
     role: sanitize(role),
     gameMode: sanitize(game_mode),
@@ -829,8 +829,8 @@ app.put('/builds/:id', async (c) => {
   const visibility: (typeof BUILD_VISIBILITIES)[number] = embeddedVisibility;
 
   const updated = await updateBuild(c.env.DB, c.req.param('id'), user.id, {
-    title: sanitize(title),
-    description: sanitize(description),
+    title: cleanText(title),
+    description: cleanText(description),
     esoClass: sanitize(eso_class),
     role: sanitize(role),
     gameMode: sanitize(game_mode),
@@ -935,8 +935,8 @@ app.post('/builds/:id/comments', async (c) => {
     buildId,
     parentId: body.parent_id ?? null,
     authorId: user.id,
-    authorName: escapeHtml(user.name),
-    body: escapeHtml(body.body.trim()),
+    authorName: user.name,
+    body: body.body.trim(),
   });
 
   return c.json({ comment }, 201);
@@ -1301,7 +1301,7 @@ app.put('/users/me/bio', async (c) => {
   if (typeof body.bio !== 'string') return c.json({ error: 'bio must be a string' }, 400);
   if (body.bio.length > 200) return c.json({ error: 'bio must be ≤ 200 characters' }, 400);
 
-  await upsertUserBio(c.env.DB, user.id, escapeHtml(user.name), sanitize(body.bio));
+  await upsertUserBio(c.env.DB, user.id, user.name, cleanText(body.bio));
   return c.json({ ok: true });
 });
 
@@ -1426,7 +1426,7 @@ app.put('/users/me/avatar', async (c) => {
   await upsertUserAvatar(
     c.env.DB,
     user.id,
-    escapeHtml(user.name),
+    user.name,
     imgbb.data.url,
     imgbb.data.thumb.url,
     imgbb.data.delete_url,
@@ -1460,7 +1460,7 @@ app.put('/users/me/display-names', async (c) => {
   const na = body.na_display_name?.trim() || null;
   const eu = body.eu_display_name?.trim() || null;
 
-  await updateDisplayNames(c.env.DB, user.id, escapeHtml(user.name), na, eu);
+  await updateDisplayNames(c.env.DB, user.id, user.name, na, eu);
   return c.json({ ok: true });
 });
 
@@ -1573,9 +1573,9 @@ app.post('/packs', async (c) => {
   await createPack(c.env.DB, {
     id,
     authorId: user.id,
-    authorName: escapeHtml(user.name),
-    title: sanitize(title),
-    description: sanitize(description),
+    authorName: user.name,
+    title: cleanText(title),
+    description: cleanText(description),
     packType: sanitize(pack_type),
     addons: JSON.stringify(sanitizedAddons),
     tags: Array.isArray(tags) ? tags.filter(isValidTag).slice(0, 10).map(sanitize) : [],
@@ -1632,8 +1632,8 @@ app.put('/packs/:id', async (c) => {
     return c.json({ error: 'No valid addon entries provided' }, 400);
 
   const updated = await updatePack(c.env.DB, c.req.param('id'), user.id, {
-    title: sanitize(title),
-    description: sanitize(description),
+    title: cleanText(title),
+    description: cleanText(description),
     packType: sanitize(pack_type),
     addons: JSON.stringify(sanitizedAddons),
     tags: Array.isArray(tags) ? tags.filter(isValidTag).slice(0, 10).map(sanitize) : [],
