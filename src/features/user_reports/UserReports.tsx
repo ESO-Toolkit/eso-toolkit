@@ -212,7 +212,13 @@ export const UserReports: React.FC = () => {
 
   // Get the current page from URL query parameter
   const currentPageFromUrl = parseInt(searchParams.get('page') || '1', 10);
-  const pageToUse = isNaN(currentPageFromUrl) || currentPageFromUrl < 1 ? 1 : currentPageFromUrl;
+  const lowerClampedPage =
+    isNaN(currentPageFromUrl) || currentPageFromUrl < 1 ? 1 : currentPageFromUrl;
+  // Clamp to the available range so an out-of-range ?page= (e.g. a stale shared
+  // URL like ?page=999) falls back to the last valid page instead of slicing
+  // past the end and showing a blank "no reports" state.
+  const pageToUse =
+    filteredTotalPages > 0 ? Math.min(lowerClampedPage, filteredTotalPages) : lowerClampedPage;
 
   // Track initial loading state
   const [initialLoading, setInitialLoading] = React.useState(true);

@@ -125,7 +125,7 @@ export const fetchAllUserReports = createAsyncThunk<
   { rejectValue: string; state: { userReports: UserReportsState } }
 >(
   'userReports/fetchAll',
-  async ({ client, userId, limit = 100 }, { dispatch, rejectWithValue, getState }) => {
+  async ({ client, userId, limit = 100 }, { dispatch, rejectWithValue, signal }) => {
     try {
       // Fetch first page to get total count
       const firstPageResult = await dispatch(
@@ -141,10 +141,10 @@ export const fetchAllUserReports = createAsyncThunk<
 
       // Fetch remaining pages sequentially to avoid overwhelming the API
       for (let page = 2; page <= totalPages; page++) {
-        // Check if user cancelled or if there was an error
-        const state = getState();
-        if (!state.userReports.isFetchingAll) {
-          break; // User cancelled
+        // Stop if this thunk was aborted (the previous `isFetchingAll` guard was
+        // dead — that flag is always true while the thunk is still running).
+        if (signal.aborted) {
+          break;
         }
 
         await dispatch(
@@ -205,7 +205,7 @@ const userReportsSlice = createSlice({
         state.error = null;
       })
       .addCase(fetchUserReportsPage.fulfilled, (state, action) => {
-        const { reports, page, totalCount, perPage } = action.payload;
+        const { reports, page, totalCount } = action.payload;
 
         // Store reports in normalized structure
         reports.forEach((report) => {
@@ -215,9 +215,11 @@ const userReportsSlice = createSlice({
         // Store page mapping
         state.pages[page] = reports.map((r) => r.code);
 
-        // Update metadata
+        // Update metadata. Note: do NOT overwrite state.perPage with the API's
+        // per_page (the fetch batch size, 100) — it is the DISPLAY page size
+        // (10, see REPORTS_PER_PAGE) that the pagination selectors slice by.
+        // Fetch-all math uses the unwrapped result's perPage, not state.
         state.totalCount = totalCount;
-        state.perPage = perPage;
         state.loading = false;
         state.lastFetched = Date.now();
       })
