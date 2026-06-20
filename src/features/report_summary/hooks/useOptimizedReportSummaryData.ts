@@ -4,9 +4,7 @@ import { useSelector, useStore } from 'react-redux';
 import { useEsoLogsClientInstance } from '../../../EsoLogsClientContext';
 import { FightFragment } from '../../../graphql/gql/graphql';
 import { DeathAnalysisInput, DeathAnalysisService } from '../../../services/DeathAnalysisService';
-import { selectDamageEventsForContext } from '../../../store/events_data/damageEventsSelectors';
 import { fetchDamageEvents } from '../../../store/events_data/damageEventsSlice';
-import { selectDeathEventsForContext } from '../../../store/events_data/deathEventsSelectors';
 import { fetchDeathEvents } from '../../../store/events_data/deathEventsSlice';
 import { fetchHealingEvents } from '../../../store/events_data/healingEventsSlice';
 import {
@@ -16,6 +14,7 @@ import {
 import { selectReportFights } from '../../../store/report/reportSelectors';
 import { RootState } from '../../../store/storeWithHistory';
 import { useAppDispatch } from '../../../store/useAppDispatch';
+import { DamageEvent, DeathEvent } from '../../../types/combatlogEvents';
 import {
   ReportSummaryData,
   FetchReportSummaryParams,
@@ -24,6 +23,10 @@ import {
   AbilityTypeDamageBreakdown,
   FightDamageBreakdown,
 } from '../../../types/reportSummaryTypes';
+import {
+  categorizeDamageEvents,
+  type DamageCategoryKey,
+} from '../../report_details/insights/damageTypeCategorization';
 
 interface UseOptimizedReportSummaryDataReturn {
   reportSummaryData: ReportSummaryData | null;
@@ -33,10 +36,27 @@ interface UseOptimizedReportSummaryDataReturn {
   fetchData: (params: FetchReportSummaryParams) => Promise<void>;
 }
 
+/** Damage-type buckets, in default render order, mapped to display labels. */
+const CATEGORY_LABELS: ReadonlyArray<{ key: DamageCategoryKey; label: string }> = [
+  { key: 'magic', label: 'Magic' },
+  { key: 'martial', label: 'Martial' },
+  { key: 'direct', label: 'Direct' },
+  { key: 'poison', label: 'Poison' },
+  { key: 'dot', label: 'Damage over Time' },
+  { key: 'aoe', label: 'Area of Effect' },
+  { key: 'statusEffects', label: 'Status Effects' },
+  { key: 'fire', label: 'Fire' },
+];
+
 /**
- * Optimized version that fetches events in batches with rate limiting to avoid
- * overwhelming the ESO Logs API. Processes fights in small batches (3 at a time)
- * with delays between batches to stay within API rate limits.
+ * Fetches every fight's damage/death/healing events (in small concurrent
+ * batches, reusing the shared Redux event slices) and aggregates them into the
+ * report-wide damage breakdown + death analysis.
+ *
+ * Events are consumed directly from each `dispatch(...).unwrap()` result rather
+ * than re-read from Redux afterwards: the event slices trim their cache to
+ * EVENT_CACHE_MAX_ENTRIES, so a read-back pass would miss the earliest fights of
+ * any report larger than that cap.
  */
 export function useOptimizedReportSummaryData(
   reportCode: string,
@@ -56,7 +76,7 @@ export function useOptimizedReportSummaryData(
   const [reportSummaryData, setReportSummaryData] = React.useState<ReportSummaryData | null>(null);
   // Identifies the latest fetch so a superseded run (reportCode change, or the
   // `fights` selector reference churning and re-firing the effect) can't commit
-  // stale results or race the newer run's setReportSummaryData.
+  // stale results or race the newer run's state updates.
   const runIdRef = React.useRef(0);
 
   const fetchData = React.useCallback(
@@ -64,6 +84,7 @@ export function useOptimizedReportSummaryData(
       if (!client || !fights) return;
 
       const runId = ++runIdRef.current;
+      const isCurrent = (): boolean => runId === runIdRef.current;
 
       try {
         setIsLoading(true);
@@ -75,163 +96,127 @@ export function useOptimizedReportSummaryData(
           .filter((fight) => fight.startTime && fight.endTime && fight.endTime > fight.startTime);
         const totalTasks = cleanFights.length * 3 + 2; // 3 event types per fight + analysis tasks
 
-        setProgress({
-          current: 0,
-          total: totalTasks,
-          currentTask: 'Starting optimized data fetch...',
-        });
+        if (isCurrent()) {
+          setProgress({
+            current: 0,
+            total: totalTasks,
+            currentTask: 'Starting data fetch...',
+          });
+        }
 
-        // **RATE-LIMITED BATCH PROCESSING**
-        // Process fights in batches to avoid overwhelming the API
-        const BATCH_SIZE = 3; // Process 3 fights at a time
-        const BATCH_DELAY_MS = 500; // Wait 500ms between batches
-
+        // Per-fight events captured straight from the thunk results (see note
+        // above re: cache eviction). Failures are recorded per-fight rather than
+        // aborting the whole summary.
+        const damageByFight = new Map<number, DamageEvent[]>();
+        const deathByFight = new Map<number, DeathEvent[]>();
+        const fightErrors: Record<number, string> = {};
+        let successfulFights = 0;
         let completedTasks = 0;
+
+        // **CONCURRENCY-LIMITED BATCH PROCESSING**
+        // Fetch a few fights at a time so we never fire dozens of requests at
+        // once; the Apollo RetryLink already backs off on real rate limits.
+        const BATCH_SIZE = 3;
 
         for (let i = 0; i < cleanFights.length; i += BATCH_SIZE) {
           const batch = cleanFights.slice(i, i + BATCH_SIZE);
           const batchNum = Math.floor(i / BATCH_SIZE) + 1;
           const totalBatches = Math.ceil(cleanFights.length / BATCH_SIZE);
 
-          setProgress({
-            current: completedTasks,
-            total: totalTasks,
-            currentTask: `Processing batch ${batchNum}/${totalBatches} (${batch.length} fights)...`,
-          });
-
-          // Process this batch of fights in parallel
-          const batchPromises = batch.map(async (fight, batchIndex) => {
-            const fightIndex = i + batchIndex;
-            const _baseFightProgress = fightIndex * 3;
-
-            // Fetch all event types for this fight in parallel
-            const [damageEvents, deathEvents, healingEvents] = await Promise.all([
-              dispatch(
-                fetchDamageEvents({
-                  reportCode,
-                  fight,
-                  client,
-                }),
-              )
-                .unwrap()
-                .then((result) => {
-                  completedTasks++;
-                  setProgress({
-                    current: completedTasks,
-                    total: totalTasks,
-                    currentTask: `Completed damage events for ${fight.name}`,
-                  });
-                  return result;
-                }),
-
-              dispatch(
-                fetchDeathEvents({
-                  reportCode,
-                  fight,
-                  client,
-                }),
-              )
-                .unwrap()
-                .then((result) => {
-                  completedTasks++;
-                  setProgress({
-                    current: completedTasks,
-                    total: totalTasks,
-                    currentTask: `Completed death events for ${fight.name}`,
-                  });
-                  return result;
-                }),
-
-              dispatch(
-                fetchHealingEvents({
-                  reportCode,
-                  fight,
-                  client,
-                }),
-              )
-                .unwrap()
-                .then((result) => {
-                  completedTasks++;
-                  setProgress({
-                    current: completedTasks,
-                    total: totalTasks,
-                    currentTask: `Completed healing events for ${fight.name}`,
-                  });
-                  return result;
-                }),
-            ]);
-
-            return {
-              fight,
-              damageEvents,
-              deathEvents,
-              healingEvents,
-            };
-          });
-
-          // Wait for this batch to complete
-          await Promise.all(batchPromises);
-
-          // Add delay between batches (except for the last batch)
-          if (i + BATCH_SIZE < cleanFights.length) {
-            await new Promise((resolve) => setTimeout(resolve, BATCH_DELAY_MS));
+          if (isCurrent()) {
+            setProgress({
+              current: completedTasks,
+              total: totalTasks,
+              currentTask: `Processing batch ${batchNum}/${totalBatches} (${batch.length} fights)...`,
+            });
           }
+
+          await Promise.all(
+            batch.map(async (fight) => {
+              const [damageRes, deathRes, healingRes] = await Promise.allSettled([
+                dispatch(fetchDamageEvents({ reportCode, fight, client })).unwrap(),
+                dispatch(fetchDeathEvents({ reportCode, fight, client })).unwrap(),
+                dispatch(fetchHealingEvents({ reportCode, fight, client })).unwrap(),
+              ]);
+
+              if (damageRes.status === 'fulfilled') {
+                damageByFight.set(fight.id, damageRes.value as DamageEvent[]);
+              }
+              if (deathRes.status === 'fulfilled') {
+                deathByFight.set(fight.id, deathRes.value as DeathEvent[]);
+              }
+              if (damageRes.status === 'fulfilled' || deathRes.status === 'fulfilled') {
+                successfulFights += 1;
+              }
+
+              const failure = [damageRes, deathRes, healingRes].find(
+                (r): r is PromiseRejectedResult => r.status === 'rejected',
+              );
+              if (failure) {
+                fightErrors[fight.id] =
+                  failure.reason instanceof Error
+                    ? failure.reason.message
+                    : 'Failed to load some events';
+              }
+
+              completedTasks += 3;
+              if (isCurrent()) {
+                setProgress({
+                  current: completedTasks,
+                  total: totalTasks,
+                  currentTask: `Loaded events for ${fight.name}`,
+                });
+              }
+            }),
+          );
         }
 
-        // All fights processed
-        setProgress({
-          current: cleanFights.length * 3,
-          total: totalTasks,
-          currentTask: 'Analyzing death patterns...',
-        });
+        // If literally every fight failed to load, there's nothing to show.
+        if (cleanFights.length > 0 && successfulFights === 0) {
+          throw new Error('Failed to load event data for any fight in this report.');
+        }
 
-        // Now that all events are cached in Redux, retrieve them for analysis
+        if (isCurrent()) {
+          setProgress({
+            current: totalTasks - 1,
+            total: totalTasks,
+            currentTask: 'Analyzing damage and death patterns...',
+          });
+        }
+
+        // Master data (actors/abilities) is report-wide and not subject to the
+        // event-cache eviction, so a single lookup is correct for every fight.
         const state = store.getState();
+        const firstFight = cleanFights[0];
+        const actorsById = firstFight
+          ? selectActorsByIdForContext(state, { reportCode, fightId: firstFight.id })
+          : {};
+        const abilitiesById = firstFight
+          ? selectAbilitiesByIdForContext(state, { reportCode, fightId: firstFight.id })
+          : {};
 
-        // Perform death analysis using Redux-cached data
-        setProgress({
-          current: totalTasks - 1,
-          total: totalTasks,
-          currentTask: 'Analyzing death patterns...',
-        });
-
-        const fightDeathData: DeathAnalysisInput[] = cleanFights.map((fight) => {
-          const deathEvents = selectDeathEventsForContext(state, {
-            reportCode,
-            fightId: fight.id,
-          });
-          const actors = selectActorsByIdForContext(state, {
-            reportCode,
-            fightId: fight.id,
-          });
-          const abilities = selectAbilitiesByIdForContext(state, {
-            reportCode,
-            fightId: fight.id,
-          });
-
-          return {
-            deathEvents,
-            fightId: fight.id,
-            fightName: fight.name,
-            fightStartTime: fight.startTime,
-            fightEndTime: fight.endTime ?? fight.startTime,
-            actors,
-            abilities,
-          };
-        });
-
-        // Perform comprehensive death analysis
+        // ---- Death analysis (over the deaths we actually loaded) ----
+        const fightDeathData: DeathAnalysisInput[] = cleanFights.map((fight) => ({
+          deathEvents: deathByFight.get(fight.id) ?? [],
+          fightId: fight.id,
+          fightName: fight.name,
+          fightStartTime: fight.startTime,
+          fightEndTime: fight.endTime ?? fight.startTime,
+          actors: actorsById,
+          abilities: abilitiesById,
+        }));
         const deathAnalysis = DeathAnalysisService.analyzeReportDeaths(fightDeathData);
 
-        // Calculate comprehensive damage breakdown
-        const totalDuration = cleanFights.reduce(
+        // ---- Damage breakdown ----
+        // Summed active fight time — the denominator for active-combat DPS.
+        const totalActiveDuration = cleanFights.reduce(
           (sum, fight) => sum + ((fight.endTime ?? fight.startTime) - fight.startTime),
           0,
         );
 
-        // Build player damage breakdown
+        // Per-player totals + per-fight breakdown (player-outgoing damage only).
         const playerDamageMap = new Map<
-          string,
+          number,
           {
             name: string;
             totalDamage: number;
@@ -239,67 +224,47 @@ export function useOptimizedReportSummaryData(
           }
         >();
 
-        cleanFights.forEach((fight) => {
-          const damageEvents = selectDamageEventsForContext(state, {
-            reportCode,
-            fightId: fight.id,
-          });
-          const actors = selectActorsByIdForContext(state, {
-            reportCode,
-            fightId: fight.id,
-          });
-
+        for (const fight of cleanFights) {
+          const damageEvents = damageByFight.get(fight.id) ?? [];
           const fightDuration = (fight.endTime ?? fight.startTime) - fight.startTime;
 
-          damageEvents.forEach((event) => {
-            const sourceId = event.sourceID?.toString() || 'unknown';
-            const actor = actors[event.sourceID];
+          for (const event of damageEvents) {
+            // Count player-outgoing damage only (excludes damage taken / friendly
+            // fire), so totals and percentages describe damage *done*.
+            if (event.sourceIsFriendly !== true || event.targetIsFriendly) continue;
+
+            const sourceId = event.sourceID;
+            const actor = actorsById[sourceId];
             const actorName = actor?.name || `Actor ${sourceId}`;
 
-            if (!playerDamageMap.has(sourceId)) {
-              playerDamageMap.set(sourceId, {
-                name: actorName,
-                totalDamage: 0,
-                fightData: new Map(),
-              });
+            let playerData = playerDamageMap.get(sourceId);
+            if (!playerData) {
+              playerData = { name: actorName, totalDamage: 0, fightData: new Map() };
+              playerDamageMap.set(sourceId, playerData);
             }
-
-            const playerData = playerDamageMap.get(sourceId)!;
             playerData.totalDamage += event.amount || 0;
 
-            if (!playerData.fightData.has(fight.id)) {
-              playerData.fightData.set(fight.id, {
-                damage: 0,
-                duration: fightDuration,
-                fightName: fight.name,
-              });
+            let fightData = playerData.fightData.get(fight.id);
+            if (!fightData) {
+              fightData = { damage: 0, duration: fightDuration, fightName: fight.name };
+              playerData.fightData.set(fight.id, fightData);
             }
-
-            const fightData = playerData.fightData.get(fight.id)!;
             fightData.damage += event.amount || 0;
-          });
-        });
+          }
+        }
 
         const totalDamage = Array.from(playerDamageMap.values()).reduce(
           (sum, player) => sum + player.totalDamage,
           0,
         );
-        const dps = totalDuration > 0 ? (totalDamage / totalDuration) * 1000 : 0;
+        const dps = totalActiveDuration > 0 ? (totalDamage / totalActiveDuration) * 1000 : 0;
 
-        // The actor map is identical for all players (always firstFight.id), so
-        // resolve it once instead of re-invoking the selector per player inside
-        // the filter.
-        const firstFight = cleanFights[0];
-        const playerActors = firstFight
-          ? selectActorsByIdForContext(state, { reportCode, fightId: firstFight.id })
-          : {};
-
-        // Convert to PlayerDamageBreakdown array - filter to only actual players
         const playerBreakdown: PlayerDamageBreakdown[] = Array.from(playerDamageMap.entries())
-          // Only include if type is 'player' (exclude NPCs and pets)
-          .filter(([playerId]) => playerActors[Number(playerId)]?.type?.toLowerCase() === 'player')
+          // Only include actual players (exclude NPCs and pets/atronachs).
+          .filter(([playerId]) => actorsById[playerId]?.type?.toLowerCase() === 'player')
           .map(([playerId, data]) => {
-            const playerDps = totalDuration > 0 ? (data.totalDamage / totalDuration) * 1000 : 0;
+            const playerDps =
+              totalActiveDuration > 0 ? (data.totalDamage / totalActiveDuration) * 1000 : 0;
             const damagePercentage = totalDamage > 0 ? (data.totalDamage / totalDamage) * 100 : 0;
 
             const fightBreakdown: FightDamageBreakdown[] = Array.from(data.fightData.entries()).map(
@@ -313,7 +278,7 @@ export function useOptimizedReportSummaryData(
             );
 
             return {
-              playerId,
+              playerId: playerId.toString(),
               playerName: data.name,
               totalDamage: data.totalDamage,
               dps: playerDps,
@@ -323,196 +288,38 @@ export function useOptimizedReportSummaryData(
           })
           .sort((a, b) => b.totalDamage - a.totalDamage);
 
-        // Build ability type breakdown using same categorization as insights panel
-        // Define damage type constants (matching insights panel logic)
-        const MAGIC_DAMAGE_TYPES = new Set(['64', '4', '16', '512']); // Magic, Fire, Frost, Shock
-        const MARTIAL_DAMAGE_TYPES = new Set(['1', '2', '8', '256']); // Physical, Bleed, Poison, Disease
-        const AOE_ABILITY_IDS = new Set([
-          126633, 75752, 133494, 227072, 172672, 102136, 183123, 186370, 189869, 185407, 191078,
-          183006, 32711, 32714, 32948, 20252, 20930, 98438, 32792, 32794, 115572, 117809, 117854,
-          117715, 118011, 123082, 118766, 122392, 118314, 143944, 143946, 118720, 23202, 23667,
-          29809, 29806, 23232, 23214, 23196, 23208, 24329, 77186, 94424, 181331, 88802, 100218,
-          26869, 80172, 26794, 44432, 26879, 26871, 108936, 62912, 62951, 62990, 85127, 40267,
-          40252, 61502, 62547, 62529, 38891, 38792, 126474, 38745, 42029, 85432, 41990, 80107,
-          126720, 41839, 217348, 217459, 222678, 40161, 38690, 63474, 63471, 40469, 215779,
-        ]);
-        const STATUS_EFFECT_ABILITY_IDS = new Set([
-          18084, 95136, 95134, 178127, 148801, 178118, 21929, 178123,
-        ]);
-        const RAPID_STRIKES_ID = 18429; // Known ability that should count as direct despite being tick=true
+        // Damage-by-type via the shared categorization. `categorized.totalDamage`
+        // equals the player-outgoing `totalDamage` above (same filtered
+        // population), so percentages here are comparable to the player table.
+        const allDamageEvents = cleanFights.flatMap((fight) => damageByFight.get(fight.id) ?? []);
+        const categorized = categorizeDamageEvents(allDamageEvents, abilitiesById);
+        const denominator = categorized.totalDamage;
 
-        // Track different damage categories
-        const damageCategories = {
-          magic: { damage: 0, hitCount: 0 },
-          martial: { damage: 0, hitCount: 0 },
-          direct: { damage: 0, hitCount: 0 },
-          poison: { damage: 0, hitCount: 0 },
-          dot: { damage: 0, hitCount: 0 },
-          aoe: { damage: 0, hitCount: 0 },
-          statusEffects: { damage: 0, hitCount: 0 },
-          fire: { damage: 0, hitCount: 0 },
-        };
+        const abilityTypeBreakdown: AbilityTypeDamageBreakdown[] = CATEGORY_LABELS.filter(
+          ({ key }) => categorized[key].totalDamage > 0,
+        )
+          .map(({ key, label }) => ({
+            abilityType: label,
+            totalDamage: categorized[key].totalDamage,
+            percentage: denominator > 0 ? (categorized[key].totalDamage / denominator) * 100 : 0,
+            hitCount: categorized[key].hitCount,
+          }))
+          .sort((a, b) => b.totalDamage - a.totalDamage);
 
-        cleanFights.forEach((fight) => {
-          const damageEvents = selectDamageEventsForContext(state, {
-            reportCode,
-            fightId: fight.id,
-          });
-          const abilities = selectAbilitiesByIdForContext(state, {
-            reportCode,
-            fightId: fight.id,
-          });
-
-          damageEvents.forEach((event) => {
-            // Only count friendly damage to hostile targets
-            if (event.sourceIsFriendly !== true || event.targetIsFriendly) {
-              return;
-            }
-
-            const ability = abilities[event.abilityGameID];
-            const amount = event.amount || 0;
-            const isDirectDamage = event.tick !== true || event.abilityGameID === RAPID_STRIKES_ID;
-
-            // Direct damage
-            if (isDirectDamage) {
-              damageCategories.direct.damage += amount;
-              damageCategories.direct.hitCount += 1;
-            }
-
-            // DOT damage
-            if (event.tick === true) {
-              damageCategories.dot.damage += amount;
-              damageCategories.dot.hitCount += 1;
-            }
-
-            // Poison damage (type 8 or 256)
-            if (ability?.type === '8' || ability?.type === '256') {
-              damageCategories.poison.damage += amount;
-              damageCategories.poison.hitCount += 1;
-            }
-
-            // Fire damage (type 4)
-            if (ability?.type === '4') {
-              damageCategories.fire.damage += amount;
-              damageCategories.fire.hitCount += 1;
-            }
-
-            // AOE damage
-            if (AOE_ABILITY_IDS.has(event.abilityGameID)) {
-              damageCategories.aoe.damage += amount;
-              damageCategories.aoe.hitCount += 1;
-            }
-
-            // Status effects
-            if (STATUS_EFFECT_ABILITY_IDS.has(event.abilityGameID)) {
-              damageCategories.statusEffects.damage += amount;
-              damageCategories.statusEffects.hitCount += 1;
-            }
-
-            // Magic damage (combines Magic, Fire, Frost, Shock)
-            if (ability?.type && MAGIC_DAMAGE_TYPES.has(ability.type)) {
-              damageCategories.magic.damage += amount;
-              damageCategories.magic.hitCount += 1;
-            }
-
-            // Martial damage (combines Physical, Bleed, Poison, Disease)
-            if (ability?.type && MARTIAL_DAMAGE_TYPES.has(ability.type)) {
-              damageCategories.martial.damage += amount;
-              damageCategories.martial.hitCount += 1;
-            }
-          });
-        });
-
-        // Build breakdown array from categories
-        const abilityTypeBreakdown: AbilityTypeDamageBreakdown[] = [];
-
-        if (damageCategories.magic.damage > 0) {
-          abilityTypeBreakdown.push({
-            abilityType: 'Magic',
-            totalDamage: damageCategories.magic.damage,
-            percentage: (damageCategories.magic.damage / totalDamage) * 100,
-            hitCount: damageCategories.magic.hitCount,
-          });
-        }
-
-        if (damageCategories.martial.damage > 0) {
-          abilityTypeBreakdown.push({
-            abilityType: 'Martial',
-            totalDamage: damageCategories.martial.damage,
-            percentage: (damageCategories.martial.damage / totalDamage) * 100,
-            hitCount: damageCategories.martial.hitCount,
-          });
-        }
-
-        if (damageCategories.direct.damage > 0) {
-          abilityTypeBreakdown.push({
-            abilityType: 'Direct',
-            totalDamage: damageCategories.direct.damage,
-            percentage: (damageCategories.direct.damage / totalDamage) * 100,
-            hitCount: damageCategories.direct.hitCount,
-          });
-        }
-
-        if (damageCategories.poison.damage > 0) {
-          abilityTypeBreakdown.push({
-            abilityType: 'Poison',
-            totalDamage: damageCategories.poison.damage,
-            percentage: (damageCategories.poison.damage / totalDamage) * 100,
-            hitCount: damageCategories.poison.hitCount,
-          });
-        }
-
-        if (damageCategories.dot.damage > 0) {
-          abilityTypeBreakdown.push({
-            abilityType: 'Damage over Time',
-            totalDamage: damageCategories.dot.damage,
-            percentage: (damageCategories.dot.damage / totalDamage) * 100,
-            hitCount: damageCategories.dot.hitCount,
-          });
-        }
-
-        if (damageCategories.aoe.damage > 0) {
-          abilityTypeBreakdown.push({
-            abilityType: 'Area of Effect',
-            totalDamage: damageCategories.aoe.damage,
-            percentage: (damageCategories.aoe.damage / totalDamage) * 100,
-            hitCount: damageCategories.aoe.hitCount,
-          });
-        }
-
-        if (damageCategories.statusEffects.damage > 0) {
-          abilityTypeBreakdown.push({
-            abilityType: 'Status Effects',
-            totalDamage: damageCategories.statusEffects.damage,
-            percentage: (damageCategories.statusEffects.damage / totalDamage) * 100,
-            hitCount: damageCategories.statusEffects.hitCount,
-          });
-        }
-
-        if (damageCategories.fire.damage > 0) {
-          abilityTypeBreakdown.push({
-            abilityType: 'Fire',
-            totalDamage: damageCategories.fire.damage,
-            percentage: (damageCategories.fire.damage / totalDamage) * 100,
-            hitCount: damageCategories.fire.hitCount,
-          });
-        }
-
-        // Sort by damage descending
-        const _sortedAbilityTypeBreakdown: AbilityTypeDamageBreakdown[] = abilityTypeBreakdown.sort(
-          (a, b) => b.totalDamage - a.totalDamage,
-        );
-
-        // Get actual report metadata from Redux store
+        // ---- Report metadata ----
+        const lastFight = cleanFights[cleanFights.length - 1];
         const reportData = state.report.data;
+        const sessionStart = firstFight?.startTime ?? Date.now();
+        const sessionEnd = lastFight?.endTime ?? lastFight?.startTime ?? sessionStart;
         const reportInfo: ReportInfo = {
           reportId: reportCode,
           title: reportData?.title || 'Report',
-          startTime: cleanFights[0]?.startTime ?? Date.now(),
-          endTime: cleanFights[cleanFights.length - 1]?.endTime ?? Date.now(),
-          duration: totalDuration,
+          startTime: sessionStart,
+          endTime: sessionEnd,
+          // Wall-clock span of the session (not summed combat time, which is the
+          // DPS denominator above).
+          duration: Math.max(0, sessionEnd - sessionStart),
           zoneName: reportData?.zone?.name || 'Unknown Zone',
-          ownerName: 'Report Owner', // Owner info not available in ReportFragment
         };
 
         const summaryData: ReportSummaryData = {
@@ -523,7 +330,7 @@ export function useOptimizedReportSummaryData(
             dps,
             playerBreakdown,
             abilityTypeBreakdown,
-            targetBreakdown: [], // Target breakdown can be added later if needed
+            targetBreakdown: [],
           },
           deathAnalysis,
           loadingStates: {
@@ -536,12 +343,12 @@ export function useOptimizedReportSummaryData(
           },
           errors: {
             generalErrors: [],
-            fightErrors: {},
+            fightErrors,
             fetchErrors: {},
           },
         };
 
-        if (runId !== runIdRef.current) return; // superseded by a newer fetch
+        if (!isCurrent()) return; // superseded by a newer fetch
         setReportSummaryData(summaryData);
         setProgress({
           current: totalTasks,
@@ -549,11 +356,11 @@ export function useOptimizedReportSummaryData(
           currentTask: 'Complete!',
         });
       } catch (err) {
-        if (runId !== runIdRef.current) return; // superseded by a newer fetch
+        if (!isCurrent()) return; // superseded by a newer fetch
         setError(err instanceof Error ? err.message : 'An error occurred');
       } finally {
         // Only the latest run owns the loading flag.
-        if (runId === runIdRef.current) setIsLoading(false);
+        if (isCurrent()) setIsLoading(false);
       }
     },
     [dispatch, client, fights, reportCode, store],
