@@ -178,38 +178,16 @@ export function isBuffActiveOnTarget(
     );
   }
 
-  // Binary search for intervals containing the timestamp on the specific target
-  let left = 0;
-  let right = intervals.length - 1;
-
-  while (left <= right) {
-    const mid = Math.floor((left + right) / 2);
-    const interval = intervals[mid];
-
-    if (
-      timestamp >= interval.start &&
-      timestamp <= interval.end &&
-      interval.targetID === targetID
-    ) {
-      return true;
-    } else if (timestamp < interval.start) {
-      right = mid - 1;
-    } else {
-      left = mid + 1;
-    }
-  }
-
-  // Also check adjacent intervals since they might overlap or be on different targets
-  for (const interval of intervals) {
-    const timestampCheck = timestamp >= interval.start && timestamp <= interval.end;
-    const targetCheck = interval.targetID === targetID;
-
-    if (timestampCheck && targetCheck) {
-      return true;
-    }
-  }
-
-  return false;
+  // Intervals are sorted by start time ONLY, so a binary search that also
+  // requires interval.targetID === targetID can't validly narrow the range —
+  // different targets' intervals are interleaved by start time. The previous
+  // code recognized this and fell back to a full linear scan anyway, so the
+  // "binary search" was dead complexity. Use the linear scan directly (O(n)
+  // over this ability id's intervals); behavior is identical.
+  return intervals.some(
+    (interval: BuffTimeInterval) =>
+      interval.targetID === targetID && timestamp >= interval.start && timestamp <= interval.end,
+  );
 }
 
 /**
