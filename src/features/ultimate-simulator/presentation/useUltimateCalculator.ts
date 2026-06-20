@@ -36,6 +36,11 @@ import {
   ULTIMATE_ABILITIES,
   ULTIMATE_SOURCE_CATALOG,
 } from '../shared/constants/catalog';
+import {
+  getArchetypePreset,
+  resolvePresetOverrides,
+  type ArchetypePreset,
+} from '../shared/constants/presets';
 import type { ExpectedValueResult, MonteCarloResult, TimeToUltimateResult } from '../shared/types';
 import type {
   CatalogCostReduction,
@@ -64,9 +69,42 @@ export interface UltimateCalculatorState {
   startingUltimate: number;
   /** Healer's ultimate cost for the Pillager's Profit external source (10% of it per cast). */
   pillagerHealerUltCost: number;
+  /**
+   * True once the user has hand-edited the source layer (toggled a source or
+   * moved an uptime). While false ("pristine"), switching context/role/class
+   * auto-applies the matching archetype preset so the headline visibly tracks the
+   * playstyle; once true, switches preserve the user's edits and the UI offers an
+   * explicit "Apply typical {archetype}" instead. Scenario inputs (Decisive,
+   * fight length, the chosen ultimate, etc.) never flip this.
+   */
+  customized: boolean;
 }
 
-const INITIAL_STATE: UltimateCalculatorState = {
+/** Cost-reduction ids — preserved across preset applies (a preset never changes them). */
+const COST_REDUCTION_IDS = new Set(COST_REDUCTION_CATALOG.map((r) => r.id));
+
+/**
+ * Re-seed the source layer (enabled toggles + uptimes) from the archetype preset
+ * for the state's current context / role / class, preserving the user's scenario
+ * inputs and any cost-reduction toggles, and marking the build pristine.
+ */
+function applyArchetype(state: UltimateCalculatorState): UltimateCalculatorState {
+  const preset = getArchetypePreset(state.context, state.role);
+  const { enabledOverrides, uptimeOverrides } = resolvePresetOverrides(preset, state.esoClass);
+  // Carry over cost-reduction toggles; the preset only governs generation sources.
+  const preservedReductions: Record<string, boolean> = {};
+  for (const [id, on] of Object.entries(state.enabledOverrides)) {
+    if (COST_REDUCTION_IDS.has(id)) preservedReductions[id] = on;
+  }
+  return {
+    ...state,
+    enabledOverrides: { ...preservedReductions, ...enabledOverrides },
+    uptimeOverrides,
+    customized: false,
+  };
+}
+
+const BASE_INITIAL_STATE: UltimateCalculatorState = {
   context: 'groupPve',
   esoClass: 'arcanist',
   role: 'dps',
@@ -81,7 +119,12 @@ const INITIAL_STATE: UltimateCalculatorState = {
   startingUltimate: 0,
   // A typical healer ultimate (e.g. ~250 cost) → 25 ult per affecting cast.
   pillagerHealerUltCost: 250,
+  customized: false,
 };
+
+// Open on a realistic build rather than the inert base-only number: seed the
+// typical Group · DPS archetype so the headline is meaningful at first paint.
+const INITIAL_STATE: UltimateCalculatorState = applyArchetype(BASE_INITIAL_STATE);
 
 export interface UltimateCalculatorResult {
   state: UltimateCalculatorState;
@@ -107,6 +150,12 @@ export interface UltimateCalculatorResult {
   /** Lazily-computed Monte Carlo distribution (null until requested). */
   distribution: MonteCarloResult | null;
   computeDistribution: () => void;
+  /** The preset describing the current (context × role) archetype. */
+  activePreset: ArchetypePreset;
+  /** True once the user has hand-edited the source layer away from the preset. */
+  customized: boolean;
+  /** Re-apply the active archetype preset's source layer (keeps scenario inputs). */
+  applyActivePreset: () => void;
   // setters
   setContext: (c: CombatContext) => void;
   setClass: (c: EsoClass) => void;
@@ -238,12 +287,34 @@ export function useUltimateCalculator(): UltimateCalculatorResult {
     setDistribution(null);
   }, []);
 
+  // Context / role / class drive the archetype preset. While the build is
+  // pristine, changing any of them re-seeds the source layer to the new
+  // archetype so the headline visibly tracks the playstyle; once customized,
+  // the switch keeps the user's edits (the UI then offers an explicit re-apply).
   const setContext = useCallback(
-    (context: CombatContext) => patch((s) => ({ ...s, context })),
+    (context: CombatContext) =>
+      patch((s) => {
+        const next = { ...s, context };
+        return s.customized ? next : applyArchetype(next);
+      }),
     [patch],
   );
-  const setClass = useCallback((esoClass: EsoClass) => patch((s) => ({ ...s, esoClass })), [patch]);
-  const setRole = useCallback((role: CombatRole) => patch((s) => ({ ...s, role })), [patch]);
+  const setClass = useCallback(
+    (esoClass: EsoClass) =>
+      patch((s) => {
+        const next = { ...s, esoClass };
+        return s.customized ? next : applyArchetype(next);
+      }),
+    [patch],
+  );
+  const setRole = useCallback(
+    (role: CombatRole) =>
+      patch((s) => {
+        const next = { ...s, role };
+        return s.customized ? next : applyArchetype(next);
+      }),
+    [patch],
+  );
   const setFightDuration = useCallback(
     (seconds: number) =>
       patch((s) => ({ ...s, fightDurationSeconds: Math.max(1, Math.round(seconds)) })),
@@ -261,9 +332,17 @@ export function useUltimateCalculator(): UltimateCalculatorResult {
     (decisiveTwoHanded: boolean) => patch((s) => ({ ...s, decisiveTwoHanded })),
     [patch],
   );
+  // Hand-editing the source layer marks the build "customized" so a later
+  // context/role/class switch won't overwrite the user's choices. (Cost
+  // reductions also flow through toggleSource — toggling one is a real build
+  // change, so it counts as customizing too.)
   const toggleSource = useCallback(
     (id: string, enabled: boolean) =>
-      patch((s) => ({ ...s, enabledOverrides: { ...s.enabledOverrides, [id]: enabled } })),
+      patch((s) => ({
+        ...s,
+        enabledOverrides: { ...s.enabledOverrides, [id]: enabled },
+        customized: true,
+      })),
     [patch],
   );
   const setUptime = useCallback(
@@ -271,6 +350,7 @@ export function useUltimateCalculator(): UltimateCalculatorResult {
       patch((s) => ({
         ...s,
         uptimeOverrides: { ...s.uptimeOverrides, [id]: Math.min(1, Math.max(0, uptime)) },
+        customized: true,
       })),
     [patch],
   );
@@ -307,6 +387,16 @@ export function useUltimateCalculator(): UltimateCalculatorResult {
       })),
     [patch],
   );
+  // Re-apply the current archetype's typical source layer (keeps context, role,
+  // class and every scenario input). Backs both the "Apply typical {archetype}"
+  // nudge and the "Reset to typical {archetype}" button.
+  const applyActivePreset = useCallback(() => patch((s) => applyArchetype(s)), [patch]);
+
+  const activePreset = useMemo(
+    () => getArchetypePreset(state.context, state.role),
+    [state.context, state.role],
+  );
+
   const reset = useCallback(() => {
     setState(INITIAL_STATE);
     setDistribution(null);
@@ -315,6 +405,9 @@ export function useUltimateCalculator(): UltimateCalculatorResult {
   return {
     state,
     selection,
+    activePreset,
+    customized: state.customized,
+    applyActivePreset,
     availableSourceEntries,
     availableReductionEntries,
     isEnabled,

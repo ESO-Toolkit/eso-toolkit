@@ -100,4 +100,68 @@ describe('UltimateCalculator', () => {
     const costAfter = screen.getByText(/\d+ ult cost/i).textContent;
     expect(costAfter).toBe(costBefore);
   });
+
+  // --- Archetype presets: the Solo/Group/PvP + role controls are now meaningful ---
+
+  it('opens on a realistic Group · DPS build (archetype explainer + sources enabled)', () => {
+    renderCalc();
+    // Anchored ^Typical matches the explainer title, not the "Reset to typical …" button.
+    expect(screen.getByText(/^Typical Group/i)).toBeInTheDocument();
+    // The preset enables more than just base income (base + class proc + group
+    // sources), so the headline is well above an inert base-only number.
+    expect(readTotal()).toBeGreaterThan(700);
+  });
+
+  it('changes the headline when switching context (Solo is lower than Group)', () => {
+    renderCalc();
+    const group = readTotal();
+    fireEvent.click(screen.getByRole('button', { name: /^Solo/i }));
+    const solo = readTotal();
+    // Solo loses the group-only batteries → strictly less generation.
+    expect(solo).toBeLessThan(group);
+    expect(screen.getByText(/^Typical Solo/i)).toBeInTheDocument();
+  });
+
+  it('changes the headline when switching role (Group Tank out-generates Group DPS)', () => {
+    renderCalc();
+    const dps = readTotal();
+    fireEvent.mouseDown(screen.getByLabelText(/Role/i));
+    fireEvent.click(within(screen.getByRole('listbox')).getByText('Tank'));
+    const tank = readTotal();
+    // Tank adds Bloodspawn + Major Heroism + Pillager's on top → higher.
+    expect(tank).toBeGreaterThan(dps);
+    expect(screen.getByText(/^Typical Group.*Tank/i)).toBeInTheDocument();
+  });
+
+  it('marks the build customized after a manual edit and stops auto-applying on switch', () => {
+    renderCalc();
+    // The source switch + its uptime slider share a label prefix; pick the
+    // checkbox input specifically (the slider is a range input).
+    const sourceSwitch = (label: RegExp): HTMLInputElement =>
+      screen
+        .getAllByLabelText(label)
+        .find((el) => el.getAttribute('type') === 'checkbox') as HTMLInputElement;
+
+    expect(screen.queryByText(/customized this build/i)).not.toBeInTheDocument();
+
+    // Enable Major Heroism — a manual source edit. (Its Heroism group stays open
+    // because Minor Heroism is on, so the control stays visible to assert on.)
+    const majorToggle = sourceSwitch(/^Major Heroism/i);
+    expect(majorToggle).not.toBeChecked();
+    fireEvent.click(majorToggle);
+    expect(sourceSwitch(/^Major Heroism/i)).toBeChecked();
+    expect(screen.getByText(/customized this build/i)).toBeInTheDocument();
+
+    // Switching context must NOT overwrite the edit (Major Heroism stays on).
+    fireEvent.click(screen.getByRole('button', { name: /^Solo/i }));
+    expect(screen.getByText(/customized this build/i)).toBeInTheDocument();
+    expect(sourceSwitch(/^Major Heroism/i)).toBeChecked();
+
+    // Applying the typical build restores the preset (Solo DPS has no Major
+    // Heroism) and clears the custom flag.
+    fireEvent.click(screen.getByRole('button', { name: /Apply typical Solo/i }));
+    expect(screen.queryByText(/customized this build/i)).not.toBeInTheDocument();
+    expect(sourceSwitch(/^Major Heroism/i)).not.toBeChecked();
+    expect(sourceSwitch(/^Minor Heroism/i)).toBeChecked();
+  });
 });
