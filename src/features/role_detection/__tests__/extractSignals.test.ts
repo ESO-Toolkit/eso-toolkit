@@ -287,6 +287,33 @@ describe('extractSignals', () => {
       expect(healer.shieldAppliedToOthers).toBe(0);
     });
 
+    it('should not reset the baseline on heals that omit absorb (no false re-credit)', () => {
+      // Shield to 12000, then a resource-less heal (no absorb) lands while the
+      // pool still stands, then another heal still reports 12000. The standing
+      // pool must NOT be re-counted as a new shield.
+      const resourcelessHeal = makeShieldHealEvent(
+        PLAYER_HEALER,
+        PLAYER_DPS1,
+        0,
+        FIGHT_START + 2000,
+      );
+      delete (resourcelessHeal.targetResources as { absorb?: number }).absorb;
+
+      const events = emptyEvents({
+        healEvents: [
+          makeShieldHealEvent(PLAYER_HEALER, PLAYER_DPS1, 12000, FIGHT_START + 1000),
+          resourcelessHeal,
+          makeShieldHealEvent(PLAYER_HEALER, PLAYER_DPS1, 12000, FIGHT_START + 3000),
+        ],
+      });
+
+      const result = extractSignals(events, createContext());
+
+      const healer = result.find((s) => s.playerId === PLAYER_HEALER)!;
+      // Only the initial 0->12000 counts; the standing pool is not re-credited.
+      expect(healer.shieldAppliedToOthers).toBe(12000);
+    });
+
     it('should leave shieldAppliedToOthers at 0 when no absorb is present', () => {
       const events = emptyEvents({
         healEvents: [makeHealEvent(PLAYER_HEALER, 20000)],

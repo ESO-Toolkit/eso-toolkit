@@ -354,7 +354,14 @@ function extractShieldSignals(
   const friendlyPlayers = new Set(context.friendlyPlayerIds);
 
   for (const event of sorted) {
-    const currentAbsorb = event.targetResources?.absorb ?? 0;
+    // Heal events that don't report an absorb reading carry no information about
+    // the target's shield pool, so skip them entirely — treating a missing value
+    // as 0 would reset the baseline and make the next resource-bearing heal look
+    // like a brand-new shield (a false credit). Only events that actually report
+    // absorb (including an explicit 0) update the baseline.
+    const rawAbsorb = event.targetResources?.absorb;
+    if (rawAbsorb == null) continue;
+    const currentAbsorb = rawAbsorb;
     const previousAbsorb = lastAbsorbByTarget.get(event.targetID) ?? 0;
     lastAbsorbByTarget.set(event.targetID, currentAbsorb);
 
