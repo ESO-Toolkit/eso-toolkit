@@ -39,7 +39,11 @@ import type {
 } from '../types/build.types';
 
 import { isClassMasteryEligible } from './classMasteryEligibility';
-import { sanitizeClassMasteryPicks, stripClassMasteryIds } from './classMasteryTransfer';
+import {
+  migrateLeakedClassMasteryPicks,
+  sanitizeClassMasteryPicks,
+  stripClassMasteryIds,
+} from './classMasteryTransfer';
 import { serializeSubclassLines } from './cspsExportCodeParser';
 
 // ── Reverse mappings (Build Editor → CSPS) ───────────────────────────
@@ -292,16 +296,29 @@ function setupToCSPSCharacterData(
  * The first setup becomes the active character build.
  * Additional setups become CSPS profiles.
  */
-export function convertBuildToCSPS(build: Build): CSPSSavedVariables {
+export function convertBuildToCSPS(inputBuild: Build): CSPSSavedVariables {
+  // Normalize on a local copy so the export is correct for EVERY caller, not
+  // only builds that already went through the editor's load-time migration
+  // (e.g. BuildViewPage exports a build decoded straight from a URL share). This
+  // reclaims leaked Class Mastery ids into the build-level field and strips them
+  // from setup.passives using the SAME idempotent helper the editor runs on
+  // load, so both surfaces always agree. The caller's object is never mutated.
+  const build: Build = {
+    ...inputBuild,
+    classMasteryPassives: inputBuild.classMasteryPassives
+      ? [...inputBuild.classMasteryPassives]
+      : [],
+    setups: inputBuild.setups.map((setup) => ({ ...setup, passives: [...(setup.passives ?? [])] })),
+  };
+  migrateLeakedClassMasteryPicks(build);
+
   const characterName = build.name || 'Exported Build';
   const accountName = '@ESOToolkit';
   const characterId = '1';
 
   // Class Mastery is a character-wide selection (not per-setup) and is invalid
   // while subclassed, so resolve the eligible picks once and write the same set
-  // into every setup/profile's werte.pass. The editor is WYSIWYG (leaked picks
-  // are reclaimed into classMasteryPassives on load), so export reads only the
-  // build-level field — no recovery from setup.passives here.
+  // into every setup/profile's werte.pass.
   const classMasteryPassives = isClassMasteryEligible(build.esoClass, build.classSkillLines)
     ? sanitizeClassMasteryPicks(build.classMasteryPassives, build.esoClass)
     : [];

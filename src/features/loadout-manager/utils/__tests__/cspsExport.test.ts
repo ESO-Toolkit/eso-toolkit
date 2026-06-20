@@ -384,18 +384,36 @@ describe('cspsExport', () => {
       expect(charData.profiles![1].werte!.pass!.part1).toContain('238232:1');
     });
 
-    it('exports no Class Mastery when the build-level field is empty (WYSIWYG; migration happens on load)', () => {
+    it('recovers leaked legacy CM ids on direct export (caller bypassed editor migration)', () => {
+      // A legacy/shared build (e.g. BuildViewPage exporting a URL-decoded build)
+      // can have CM ids only in setup.passives with an empty build-level field.
+      // Export self-normalizes, so the picks are recovered, not lost. 400 is a
+      // real passive; 238232/240268 are DK Class Mastery ids.
       const build = makeBuild({
         esoClass: 'dragonknight',
         classSkillLines: [null, null, null],
-        classMasteryPassives: [], // empty at the build level
-        // a stray CM id in setup.passives must NOT be resurrected on export
-        setups: [makeSetup({ passives: [400, 238232] })],
+        classMasteryPassives: [],
+        setups: [makeSetup({ passives: [400, 238232, 240268] })],
       });
       const charData =
         convertBuildToCSPS(build).Default!['@ESOToolkit'].$AccountWide.charData!['1'];
       expect(charData.werte!.pass!.part1).toContain('400:1');
-      expect(charData.werte!.pass!.part1).not.toContain('238232:1');
+      expect(charData.werte!.pass!.part1).toContain('238232:1');
+      expect(charData.werte!.pass!.part1).toContain('240268:1');
+    });
+
+    it('does not mutate the caller-supplied build during export', () => {
+      const setup = makeSetup({ passives: [400, 238232] });
+      const build = makeBuild({
+        esoClass: 'dragonknight',
+        classSkillLines: [null, null, null],
+        classMasteryPassives: [],
+        setups: [setup],
+      });
+      convertBuildToCSPS(build);
+      // the original build object is untouched (normalization runs on a copy)
+      expect(build.classMasteryPassives).toEqual([]);
+      expect(build.setups[0].passives).toEqual([400, 238232]);
     });
 
     it('does not export stale Class Mastery ids left in setup.passives', () => {
