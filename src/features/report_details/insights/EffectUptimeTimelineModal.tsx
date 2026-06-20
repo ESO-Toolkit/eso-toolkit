@@ -163,12 +163,21 @@ export const EffectUptimeTimelineModal: React.FC<EffectUptimeTimelineModalProps>
       tooltip: {
         trigger: 'axis',
         appendToBody: true,
-        formatter: (params: Array<{ seriesName: string; value: number[]; color: string }>) => {
+        formatter: (
+          params: Array<{
+            seriesName: string;
+            seriesIndex: number;
+            value: number[];
+            color: string;
+          }>,
+        ) => {
           if (!params[0]) return '';
           const time = formatSeconds(params[0].value[0]);
           const active = params.filter((p) => {
-            const idx = series.findIndex((s) => s.label === p.seriesName);
-            return p.value[1] > idx + 0.4;
+            // Use the series index ECharts provides rather than resolving by
+            // name — two series can share a display name, and findIndex-by-name
+            // would always pick the first, mislabeling the duplicate.
+            return p.value[1] > p.seriesIndex + 0.4;
           });
           if (active.length === 0) {
             return `<div style="font-size:13px"><div style="color:${echartsTheme.mutedColor}">Time: ${time}</div><div>No active effects</div></div>`;
@@ -254,7 +263,7 @@ export const EffectUptimeTimelineModal: React.FC<EffectUptimeTimelineModalProps>
                 const rgb = hexToRgb(color);
                 return (
                   <Box
-                    key={s.label}
+                    key={s.id}
                     sx={{
                       height: 24,
                       borderRadius: '12px',
