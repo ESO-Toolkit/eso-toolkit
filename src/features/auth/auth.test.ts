@@ -14,6 +14,11 @@ import {
   DEV_PREVIEW_OAUTH_RETURN_KEY,
   refreshAccessToken,
   _resetRefreshState,
+  setOAuthState,
+  validateOAuthState,
+  generateOAuthState,
+  OAUTH_STATE_KEY,
+  buildAuthUrl,
 } from './auth';
 import { getBaseUrl } from '../../utils/envUtils';
 
@@ -167,6 +172,99 @@ describe('OAuth Basic Functions', () => {
         INTENDED_DESTINATION_KEY,
         '/leaderboards',
       );
+    });
+  });
+
+  describe('OAuth CSRF state management', () => {
+    it('setOAuthState stores the value under OAUTH_STATE_KEY', () => {
+      setOAuthState('abc-123');
+      expect(mockSessionStorage.setItem).toHaveBeenCalledWith(OAUTH_STATE_KEY, 'abc-123');
+    });
+
+    it('validateOAuthState returns true when the param matches the stored value', () => {
+      mockSessionStorage.getItem.mockReturnValue('abc-123');
+      expect(validateOAuthState('abc-123')).toBe(true);
+    });
+
+    it('validateOAuthState returns false on a mismatch', () => {
+      mockSessionStorage.getItem.mockReturnValue('abc-123');
+      expect(validateOAuthState('different')).toBe(false);
+    });
+
+    it('validateOAuthState returns false when nothing is stored', () => {
+      mockSessionStorage.getItem.mockReturnValue(null);
+      expect(validateOAuthState('abc-123')).toBe(false);
+    });
+
+    it('validateOAuthState returns false when the callback param is missing', () => {
+      mockSessionStorage.getItem.mockReturnValue('abc-123');
+      expect(validateOAuthState(null)).toBe(false);
+    });
+
+    it('validateOAuthState clears the stored state (one-time consume)', () => {
+      mockSessionStorage.getItem.mockReturnValue('abc-123');
+      validateOAuthState('abc-123');
+      expect(mockSessionStorage.removeItem).toHaveBeenCalledWith(OAUTH_STATE_KEY);
+    });
+
+    describe('generateOAuthState', () => {
+      const originalCrypto = window.crypto;
+      afterEach(() => {
+        Object.defineProperty(window, 'crypto', { value: originalCrypto, writable: true });
+      });
+
+      it('uses crypto.randomUUID when available', () => {
+        Object.defineProperty(window, 'crypto', {
+          value: {
+            randomUUID: () => 'uuid-value',
+            getRandomValues: originalCrypto.getRandomValues,
+          },
+          writable: true,
+        });
+        expect(generateOAuthState()).toBe('uuid-value');
+      });
+
+      it('falls back to getRandomValues when randomUUID is unavailable', () => {
+        Object.defineProperty(window, 'crypto', {
+          value: {
+            getRandomValues: (arr: Uint32Array) => {
+              for (let i = 0; i < arr.length; i++) arr[i] = i + 1;
+              return arr;
+            },
+          },
+          writable: true,
+        });
+        const state = generateOAuthState();
+        expect(typeof state).toBe('string');
+        expect(state.length).toBeGreaterThan(0);
+        // 8 x Uint32 hex-padded => 64 hex chars, no randomUUID needed
+        expect(state).toBe('0000000100000002000000030000000400000005000000060000000700000008');
+      });
+    });
+  });
+
+  describe('buildAuthUrl', () => {
+    const originalCrypto = window.crypto;
+
+    afterEach(() => {
+      Object.defineProperty(window, 'crypto', { value: originalCrypto, writable: true });
+    });
+
+    it('includes the URL-encoded state parameter', async () => {
+      jest.mocked(getBaseUrl).mockReturnValue('https://esotk.com/');
+      Object.defineProperty(window, 'crypto', {
+        value: {
+          subtle: {
+            digest: jest.fn().mockResolvedValue(new ArrayBuffer(32)),
+          },
+        },
+        writable: true,
+      });
+
+      const url = await buildAuthUrl('verifier-xyz', 'state value/&=');
+
+      expect(url).toContain(`&state=${encodeURIComponent('state value/&=')}`);
+      expect(url).toContain('code_challenge_method=S256');
     });
   });
 
