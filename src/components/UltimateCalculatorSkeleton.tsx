@@ -271,11 +271,32 @@ export const UltimateCalculatorSkeleton: React.FC<UltimateCalculatorSkeletonProp
           {/* Fight duration */}
           <Skeleton variant="rectangular" height={40} sx={{ mb: 2, borderRadius: '10px' }} />
 
-          {/* Decisive trait toggle */}
-          <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', mb: 2 }}>
-            <Skeleton variant="rectangular" width={34} height={20} sx={{ borderRadius: 10 }} />
-            <Skeleton variant="text" width={170} height={16} />
-          </Stack>
+          {/* Decisive trait toggle — on by default, so the nested weapon-quality
+              select + two-handed switch panel is shown at first paint. */}
+          <Box sx={{ mb: 2 }}>
+            <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
+              <Skeleton variant="rectangular" width={34} height={20} sx={{ borderRadius: 10 }} />
+              <Skeleton variant="text" width={170} height={16} />
+            </Stack>
+            <Stack
+              spacing={1.5}
+              sx={{
+                mt: 1,
+                p: 1.5,
+                borderRadius: 1.4,
+                border: `1px solid ${dark ? 'rgba(56,189,248,0.28)' : 'rgba(40,145,200,0.3)'}`,
+                background: dark
+                  ? 'linear-gradient(135deg, rgba(56,189,248,0.08), rgba(56,189,248,0.02))'
+                  : 'rgba(40,145,200,0.04)',
+              }}
+            >
+              <Skeleton variant="rectangular" height={40} sx={{ borderRadius: '10px' }} />
+              <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
+                <Skeleton variant="rectangular" width={34} height={20} sx={{ borderRadius: 10 }} />
+                <Skeleton variant="text" width={150} height={16} />
+              </Stack>
+            </Stack>
+          </Box>
 
           {/* Divider + "ULTIMATE SOURCES" eyebrow */}
           <Stack direction="row" spacing={1} sx={{ alignItems: 'center', mb: 1.5 }}>
@@ -359,6 +380,9 @@ export const UltimateCalculatorSkeleton: React.FC<UltimateCalculatorSkeletonProp
                           sx={{ borderRadius: 3 }}
                         />
                       </Box>
+                      {/* Source description (the enabled cards show one). */}
+                      <Skeleton variant="text" width="92%" height={11} sx={{ mt: 0.5 }} />
+                      <Skeleton variant="text" width="68%" height={11} />
                     </Box>
                   </Box>
                 )}
@@ -412,11 +436,17 @@ export const UltimateCalculatorSkeleton: React.FC<UltimateCalculatorSkeletonProp
               <Skeleton variant="rectangular" width={48} height={22} sx={{ borderRadius: 999 }} />
             </Box>
 
-            {/* Ultimate select + Starting ultimate */}
+            {/* Ultimate select + Starting ultimate (with its "Banked at start"
+                helper line), then the "* approximate cost" catalog note. */}
             <Stack spacing={2}>
               <Skeleton variant="rectangular" height={40} sx={{ borderRadius: '10px' }} />
-              <Skeleton variant="rectangular" height={40} sx={{ borderRadius: '10px' }} />
+              <Box>
+                <Skeleton variant="rectangular" height={40} sx={{ borderRadius: '10px' }} />
+                <Skeleton variant="text" width={90} height={11} sx={{ mt: 0.5, ml: 1.75 }} />
+              </Box>
             </Stack>
+            <Skeleton variant="text" width="96%" height={11} sx={{ mt: 1 }} />
+            <Skeleton variant="text" width="58%" height={11} />
           </Paper>
 
           {/* Card 2 — Per-source breakdown table */}
