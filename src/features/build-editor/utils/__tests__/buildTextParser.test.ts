@@ -177,6 +177,19 @@ describe('parseBuildText — numbered ring labels', () => {
     // Neck=1, Ring 1=11, Ring 2=12, Front Main=4 — none dropped.
     expect(slots).toEqual([1, 11, 12, 4]);
   });
+
+  it('handles mixed numbered/bare ring labels without duplicating a slot', () => {
+    const mk = (a: string, b: string): string =>
+      [
+        'GEAR SLOT\tSET\tWEIGHT/TYPE\tTRAIT\tENCHANTMENT',
+        `${a}\tSlimecraw\tJewelry\tBloodthirsty\tIncrease Magical Harm`,
+        `${b}\tSlimecraw\tJewelry\tBloodthirsty\tIncrease Magical Harm`,
+      ].join('\n');
+    // "Ring 1" then bare "Ring" → 11, 12 (not 11, 11).
+    expect(parseBuildText(mk('Ring 1', 'Ring')).gear.map((g) => g.slot)).toEqual([11, 12]);
+    // Bare "Ring" then "Ring 2" → 11, 12.
+    expect(parseBuildText(mk('Ring', 'Ring 2')).gear.map((g) => g.slot)).toEqual([11, 12]);
+  });
 });
 
 describe('parseBuildText — punctuation robustness', () => {

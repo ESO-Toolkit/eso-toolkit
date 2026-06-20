@@ -13,6 +13,7 @@ import type {
   GearConfig,
   SkillsConfig,
 } from '../../loadout-manager/types/loadout.types';
+import { isTwoHandedWeapon } from '../../loadout-manager/utils/itemIconResolver';
 import { EQUIP_SLOTS, getDefaultLinesForClass } from '../data/esoStaticData';
 import { DEFAULT_STAT_OVERRIDES } from '../engine/stat-constants';
 import type { StatOverrides } from '../engine/stat-types';
@@ -451,7 +452,21 @@ export const buildEditorSlice = createSlice({
       // didn't include. (A fresh "new" setup starts empty, so merging there is
       // equivalent to replacing; applying to the "active" setup preserves
       // existing slots/potions/star allocations that weren't in the import.)
-      if (imported.gear !== undefined) target.gear = { ...target.gear, ...imported.gear };
+      if (imported.gear !== undefined) {
+        target.gear = { ...target.gear, ...imported.gear };
+        // A two-handed main-hand occupies both weapon slots — drop any stale
+        // off-hand the merge would otherwise keep (mirrors EquipmentPicker's
+        // auto-clear so exports/stats never read a phantom off-hand weapon).
+        for (const [mainSlot, offSlot] of [
+          [4, 5],
+          [20, 21],
+        ] as const) {
+          const mainId = target.gear[mainSlot]?.id;
+          if (mainId != null && isTwoHandedWeapon(Number(mainId))) {
+            delete target.gear[offSlot];
+          }
+        }
+      }
       if (imported.skills !== undefined) {
         target.skills = {
           0: { ...(target.skills?.[0] ?? {}), ...(imported.skills[0] ?? {}) },

@@ -5,6 +5,12 @@
  * data it didn't include.
  */
 
+// Treat item id 9999 as a two-handed weapon so we can assert off-hand clearing
+// without coupling the test to the real itemIdMap.
+jest.mock('../../loadout-manager/utils/itemIconResolver', () => ({
+  isTwoHandedWeapon: (id: number) => id === 9999,
+}));
+
 import reducer, {
   addSetup,
   applyImportedBuild,
@@ -65,6 +71,30 @@ describe('buildEditorSlice — applyImportedBuild', () => {
       { id: 7, name: 'Tri-Pot', effects: [] },
     ]);
     expect(s.build.setups[0].consumables.food).toEqual({ name: 'Bewitched Sugar Skulls' });
+  });
+
+  it('clears a stale off-hand when the imported main-hand is two-handed', () => {
+    let s = fresh();
+    // Active setup: dual wield (front main + front off, back main + back off).
+    s = reducer(s, setGearSlot({ slot: 4, itemId: 111 }));
+    s = reducer(s, setGearSlot({ slot: 5, itemId: 222 }));
+    s = reducer(s, setGearSlot({ slot: 20, itemId: 333 }));
+    s = reducer(s, setGearSlot({ slot: 21, itemId: 444 }));
+
+    // Import a two-handed staff into both main-hands, with no off-hand rows.
+    s = reducer(
+      s,
+      applyImportedBuild({
+        setup: { gear: { 4: { id: 9999 }, 20: { id: 9999 } } },
+        target: 'active',
+      }),
+    );
+
+    expect(s.build.setups[0].gear[4]).toEqual({ id: 9999 });
+    expect(s.build.setups[0].gear[20]).toEqual({ id: 9999 });
+    // Paired off-hands must be cleared (no phantom weapon behind the 2H).
+    expect(s.build.setups[0].gear[5]).toBeUndefined();
+    expect(s.build.setups[0].gear[21]).toBeUndefined();
   });
 
   it('keeps existing CP passive-star points when importing slotted perks', () => {
