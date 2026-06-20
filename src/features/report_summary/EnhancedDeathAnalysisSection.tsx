@@ -486,6 +486,11 @@ const EnhancedDeathAnalysisSectionComponent: React.FC<EnhancedDeathAnalysisSecti
                           <span>Time to First Death</span>
                         </Tooltip>
                       </TableCell>
+                      <TableCell align="right" sx={{ fontWeight: 'bold' }}>
+                        <Tooltip title="Average true time alive per fight — counts time after a resurrection, not just up to the first death">
+                          <span>Time Alive</span>
+                        </Tooltip>
+                      </TableCell>
                       <TableCell align="left" sx={{ fontWeight: 'bold' }}>
                         Top Cause of Death
                       </TableCell>
@@ -518,6 +523,11 @@ const EnhancedDeathAnalysisSectionComponent: React.FC<EnhancedDeathAnalysisSecti
                         <TableCell align="right">
                           <Typography variant="body2" color="text.secondary">
                             {Math.round(player.averageTimeAlive / 1000)}s
+                          </Typography>
+                        </TableCell>
+                        <TableCell align="right">
+                          <Typography variant="body2" color="text.secondary">
+                            {Math.round(player.averageTimeAliveTotal / 1000)}s
                           </Typography>
                         </TableCell>
                         <TableCell>

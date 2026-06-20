@@ -30,6 +30,7 @@ import {
   type DamageCategoryKey,
   type DamagePartition,
 } from '../../report_details/insights/damageTypeCategorization';
+import { fetchResurrectionEvents, type ResurrectionEvent } from '../resurrectionEvents';
 
 interface UseOptimizedReportSummaryDataReturn {
   reportSummaryData: ReportSummaryData | null;
@@ -117,6 +118,7 @@ export function useOptimizedReportSummaryData(
         // aborting the whole summary.
         const damageByFight = new Map<number, DamageEvent[]>();
         const deathByFight = new Map<number, DeathEvent[]>();
+        const resurrectByFight = new Map<number, ResurrectionEvent[]>();
         const fightErrors: Record<number, string> = {};
         let successfulFights = 0;
         let completedTasks = 0;
@@ -141,10 +143,11 @@ export function useOptimizedReportSummaryData(
 
           await Promise.all(
             batch.map(async (fight) => {
-              const [damageRes, deathRes, healingRes] = await Promise.allSettled([
+              const [damageRes, deathRes, healingRes, rezRes] = await Promise.allSettled([
                 dispatch(fetchDamageEvents({ reportCode, fight, client })).unwrap(),
                 dispatch(fetchDeathEvents({ reportCode, fight, client })).unwrap(),
                 dispatch(fetchHealingEvents({ reportCode, fight, client })).unwrap(),
+                fetchResurrectionEvents({ reportCode, fight, client }),
               ]);
 
               if (damageRes.status === 'fulfilled') {
@@ -152,6 +155,10 @@ export function useOptimizedReportSummaryData(
               }
               if (deathRes.status === 'fulfilled') {
                 deathByFight.set(fight.id, deathRes.value as DeathEvent[]);
+              }
+              // Resurrects are best-effort — a failure here never fails the fight.
+              if (rezRes.status === 'fulfilled') {
+                resurrectByFight.set(fight.id, rezRes.value as ResurrectionEvent[]);
               }
               if (damageRes.status === 'fulfilled' || deathRes.status === 'fulfilled') {
                 successfulFights += 1;
@@ -207,6 +214,7 @@ export function useOptimizedReportSummaryData(
         const fightDeathData: DeathAnalysisInput[] = cleanFights.map((fight) => ({
           deathEvents: deathByFight.get(fight.id) ?? [],
           damageEvents: damageByFight.get(fight.id) ?? [],
+          resurrectEvents: resurrectByFight.get(fight.id) ?? [],
           fightId: fight.id,
           fightName: fight.name,
           fightStartTime: fight.startTime,

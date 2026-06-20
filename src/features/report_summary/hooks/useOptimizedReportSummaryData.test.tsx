@@ -82,6 +82,10 @@ jest.mock('../../../store/events_data/healingEventsSlice', () => {
   };
 });
 
+jest.mock('../resurrectionEvents', () => ({
+  fetchResurrectionEvents: jest.fn(async () => []),
+}));
+
 jest.mock('../../../store/report/reportSelectors', () => ({
   selectReportFights: () => mockFights,
 }));

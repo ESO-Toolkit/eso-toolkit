@@ -110,6 +110,12 @@ export interface PlayerDeathAnalysis {
   totalDeaths: number;
   /** Average time-to-first-death per fight that had a death (in milliseconds) */
   averageTimeAlive: number;
+  /**
+   * Average true time alive per fight that had a death (in milliseconds) — counts
+   * every alive interval, including time after a resurrection, not just the time
+   * up to the first death.
+   */
+  averageTimeAliveTotal: number;
   /** Deaths per fight breakdown */
   fightDeaths: FightPlayerDeaths[];
   /** Top causes of death */
@@ -125,6 +131,12 @@ export interface FightPlayerDeaths {
   deathCount: number;
   /** Time from fight start to the player's first death (in milliseconds) */
   timeAlive: number;
+  /**
+   * Total time the player was alive this fight (in milliseconds), summing the
+   * intervals between fight start / each resurrection and the next death or
+   * fight end.
+   */
+  timeAliveTotal: number;
   /** Death timestamps */
   deathTimestamps: number[];
 }

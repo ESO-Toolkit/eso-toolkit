@@ -25,6 +25,8 @@ export interface DeathAnalysisInput {
   deathEvents: DeathEvent[];
   /** Damage events for the same fight, used to join each death to its lethal hit. */
   damageEvents: DamageEvent[];
+  /** Resurrection casts for the fight (target = revived player), for time-alive math. */
+  resurrectEvents: { targetID: number; timestamp: number }[];
   fightId: number;
   fightName: string;
   fightStartTime: number;
@@ -293,28 +295,46 @@ export class DeathAnalysisService {
         const fightAnalysis = fightAnalyses.find((f) => f.fightId === fightId);
         const fightName = fightAnalysis?.fightName || `Fight ${fightId}`;
 
-        // Calculate time alive using fight start/end from analysis
-        // Get the fight data to access start time
+        // Fight bounds for the alive-interval math.
         const fightData = fightDeathData.find((f) => f.fightId === fightId);
         const fightStartTime = fightData?.fightStartTime || 0;
+        const fightEndTime = fightData?.fightEndTime ?? fightStartTime;
 
-        // Time alive is from fight start to first death
-        const firstDeathTime = Math.min(...deaths.map((d) => d.timestamp));
-        const timeAlive = Math.max(0, firstDeathTime - fightStartTime);
+        const deathTimes = deaths.map((d) => d.timestamp).sort((a, b) => a - b);
+
+        // Time alive is from fight start to first death.
+        const timeAlive = Math.max(0, deathTimes[0] - fightStartTime);
+
+        // True time alive sums every alive interval, resuming at each resurrection.
+        const rezTimes = (fightData?.resurrectEvents ?? [])
+          .filter((r) => r.targetID === targetId)
+          .map((r) => r.timestamp)
+          .sort((a, b) => a - b);
+        const timeAliveTotal = this.computeTimeAliveTotal(
+          fightStartTime,
+          fightEndTime,
+          deathTimes,
+          rezTimes,
+        );
 
         fightDeaths.push({
           fightId,
           fightName,
           deathCount: deaths.length,
           timeAlive,
+          timeAliveTotal,
           deathTimestamps: deaths.map((d) => d.timestamp),
         });
       }
 
-      // Calculate average time alive
+      // Averages across the fights this player died in.
       const averageTimeAlive =
         fightDeaths.length > 0
           ? fightDeaths.reduce((sum, fight) => sum + fight.timeAlive, 0) / fightDeaths.length
+          : 0;
+      const averageTimeAliveTotal =
+        fightDeaths.length > 0
+          ? fightDeaths.reduce((sum, fight) => sum + fight.timeAliveTotal, 0) / fightDeaths.length
           : 0;
 
       analyses.push({
@@ -323,12 +343,38 @@ export class DeathAnalysisService {
         role: this.guessPlayerRole(actor, playerData.deaths), // Simple role guessing
         totalDeaths: playerData.deaths.length,
         averageTimeAlive,
+        averageTimeAliveTotal,
         fightDeaths,
         topCausesOfDeath,
       });
     }
 
     return analyses.sort((a, b) => b.totalDeaths - a.totalDeaths);
+  }
+
+  /**
+   * Total time a player was alive in a fight: sum the intervals from fight start
+   * (and from each resurrection) to the next death or to fight end. `deathTimes`
+   * and `rezTimes` must be sorted ascending.
+   */
+  private static computeTimeAliveTotal(
+    fightStartTime: number,
+    fightEndTime: number,
+    deathTimes: number[],
+    rezTimes: number[],
+  ): number {
+    let total = 0;
+    let aliveStart: number | null = fightStartTime;
+    for (const deathTs of deathTimes) {
+      if (aliveStart === null || deathTs < aliveStart) continue;
+      total += deathTs - aliveStart;
+      // Resume the next alive interval at the first resurrection after this death.
+      const rez = rezTimes.find((r) => r > deathTs);
+      aliveStart = rez ?? null;
+    }
+    // Survived to fight end after the last revive (no trailing death).
+    if (aliveStart !== null) total += Math.max(0, fightEndTime - aliveStart);
+    return total;
   }
 
   /** Stable identity for a death event (one per victim per timestamp per fight). */

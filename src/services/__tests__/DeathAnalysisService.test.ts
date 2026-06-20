@@ -59,6 +59,7 @@ const abilities: Record<string, ReportAbilityFragment> = {
 const input = (partial: Partial<DeathAnalysisInput>): DeathAnalysisInput => ({
   deathEvents: [],
   damageEvents: [],
+  resurrectEvents: [],
   fightId: 1,
   fightName: 'Boss',
   fightStartTime: 0,
@@ -197,6 +198,42 @@ describe('DeathAnalysisService.analyzeReportDeaths', () => {
     const meteor = result.mechanicDeaths.find((m) => m.mechanicId === 9000)!;
     expect(meteor.averageKillingBlowHitSize).toBe(35000); // 30000 + 5000 simultaneous
     expect(meteor.averageKillingBlowDamage).toBe(1234); // overkill stays the death.amount
+  });
+
+  it('counts time alive across resurrections, not just time to first death', () => {
+    // Player 1 dies at 3000, is rezzed at 5000, dies again at 8000 and stays dead
+    // until fight end (10000). Fight runs 0–10000.
+    const result = DeathAnalysisService.analyzeReportDeaths([
+      input({
+        fightStartTime: 0,
+        fightEndTime: 10_000,
+        deathEvents: [
+          makeDeath({ targetID: 1, timestamp: 3000 }),
+          makeDeath({ targetID: 1, timestamp: 8000 }),
+        ],
+        resurrectEvents: [{ targetID: 1, timestamp: 5000 }],
+      }),
+    ]);
+
+    const player = result.playerDeaths.find((p) => p.playerId === '1')!;
+    expect(Math.round(player.averageTimeAlive / 1000)).toBe(3); // to first death
+    expect(Math.round(player.averageTimeAliveTotal / 1000)).toBe(6); // (3000-0) + (8000-5000)
+  });
+
+  it('includes post-resurrection survival up to fight end', () => {
+    // Dies at 4000, rezzed at 6000, survives to fight end (10000).
+    const result = DeathAnalysisService.analyzeReportDeaths([
+      input({
+        fightStartTime: 0,
+        fightEndTime: 10_000,
+        deathEvents: [makeDeath({ targetID: 1, timestamp: 4000 })],
+        resurrectEvents: [{ targetID: 1, timestamp: 6000 }],
+      }),
+    ]);
+
+    const player = result.playerDeaths.find((p) => p.playerId === '1')!;
+    expect(Math.round(player.averageTimeAlive / 1000)).toBe(4); // to first death
+    expect(Math.round(player.averageTimeAliveTotal / 1000)).toBe(8); // 4000 + (10000-6000)
   });
 
   it('reports a flawless run when there are no deaths', () => {
