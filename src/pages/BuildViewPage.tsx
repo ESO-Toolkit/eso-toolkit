@@ -34,9 +34,9 @@ import {
 } from '@mui/material';
 import { alpha, useTheme } from '@mui/material/styles';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 
 import { GearSetTooltip } from '../components/GearSetTooltip';
 import { LazySkillTooltip as SkillTooltipCard } from '../components/LazySkillTooltip';
@@ -68,6 +68,7 @@ import {
   fetchItemIconUrl,
   deriveItemNameForSlot,
 } from '../features/loadout-manager/utils/itemIconResolver';
+import { useViewTransitionNavigate } from '../hooks/useViewTransitionNavigate';
 import { selectSavedBuilds } from '../store/saved_builds';
 import { CHAMPION_POINT_ABILITIES, ChampionPointAbilityId } from '../types/champion-points';
 import { decodeBuildFromURL } from '../utils/buildEncoding';
@@ -1994,7 +1995,8 @@ export const BuildViewPage: React.FC = () => {
   const prefersReduced = useReducedMotion();
   const skillCacheReady = useSkillCacheReady();
   const location = useLocation();
-  const navigate = useNavigate();
+  const navigate = useViewTransitionNavigate();
+  const buildHeroRef = useRef<HTMLDivElement>(null);
   const savedBuilds = useSelector(selectSavedBuilds);
   const { accessToken } = useAuth();
 
@@ -2180,7 +2182,13 @@ export const BuildViewPage: React.FC = () => {
 
   const handleOpenInEditor = (): void => {
     const base = `/build-editor?b=${encodeURIComponent(encodedParam)}`;
-    navigate(ownedSavedBuild ? `${base}&id=${ownedSavedBuild.id}` : base);
+    // Forward drill that morphs the shared build-hero header into the editor's
+    // header — consistent with every other build navigation (which uses
+    // vtType:'forward' + morph) instead of the bare default crossfade.
+    navigate(ownedSavedBuild ? `${base}&id=${ownedSavedBuild.id}` : base, {
+      vtType: 'forward',
+      morph: { ref: buildHeroRef, name: 'build-hero' },
+    });
   };
 
   // ── Loading ──
@@ -2307,6 +2315,8 @@ export const BuildViewPage: React.FC = () => {
             {/* ── Header ── */}
             <motion.div variants={fadeInUp}>
               <Box
+                ref={buildHeroRef}
+                data-vt-hero="build-hero"
                 sx={{
                   viewTransitionName: 'build-hero',
                   display: 'flex',

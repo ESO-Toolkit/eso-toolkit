@@ -484,6 +484,7 @@ export const BuildCompletionHeader: React.FC = () => {
 
   return (
     <Box
+      data-vt-hero="build-hero"
       sx={{
         viewTransitionName: 'build-hero',
         display: 'flex',
