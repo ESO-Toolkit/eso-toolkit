@@ -153,6 +153,26 @@ describe('buildImportPayload', () => {
     expect(payload.setup.cp?.warfare.slots.filter(Boolean).length).toBeGreaterThan(0);
   });
 
+  it('emits clearGearSlots (and no setup.gear) when every gear row is unresolved', () => {
+    const r = parseBuildText(
+      [
+        'GEAR SLOT\tSET\tWEIGHT/TYPE\tTRAIT\tENCHANTMENT',
+        'Head\tNonexistent Fake Set\tMedium\tDivines\tMagicka',
+        'Shoulders\tNonexistent Fake Set\tLight\tDivines\tMagicka',
+      ].join('\n'),
+    );
+    expect(r.gear.every((g) => g.itemId == null)).toBe(true);
+    const p = buildImportPayload(r, {
+      gear: true,
+      skills: false,
+      champion: false,
+      character: false,
+      identity: false,
+    });
+    expect(p.setup.gear).toBeUndefined();
+    expect(p.clearGearSlots).toEqual([0, 3]); // Head, Shoulders — cleared, not stale
+  });
+
   it('builds a gear config keyed by slot for resolved items', () => {
     const payload = buildImportPayload(result, {
       gear: true,

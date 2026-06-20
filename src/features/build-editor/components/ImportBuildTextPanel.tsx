@@ -116,6 +116,8 @@ export const ImportBuildTextPanel: React.FC<ImportBuildTextPanelProps> = ({ onCl
     const payload = buildImportPayload(parsed, include);
     const hasSomething =
       Object.keys(payload.setup).length > 0 ||
+      (payload.clearGearSlots?.length ?? 0) > 0 ||
+      (payload.clearSkillSlots?.length ?? 0) > 0 ||
       (payload.buildFields && Object.keys(payload.buildFields).length > 0);
     if (!hasSomething) {
       enqueueSnackbar('Nothing selected to import.', { variant: 'warning' });
@@ -227,10 +229,14 @@ export const ImportBuildTextPanel: React.FC<ImportBuildTextPanelProps> = ({ onCl
               label="Gear"
               detail={
                 stats && stats.gearTotal > 0
-                  ? `${stats.gearMatched} of ${stats.gearTotal} sets matched`
+                  ? stats.gearMatched > 0
+                    ? `${stats.gearMatched} of ${stats.gearTotal} sets matched`
+                    : `0 of ${stats.gearTotal} matched — clears those slots`
                   : 'No gear table found'
               }
-              available={Boolean(stats && stats.gearMatched > 0)}
+              // Available when the guide listed gear — even if nothing resolved,
+              // so the user can clear the slots it named on an active import.
+              available={Boolean(stats && stats.gearTotal > 0)}
               checked={include.gear}
               onToggle={toggle('gear')}
             />
@@ -239,10 +245,12 @@ export const ImportBuildTextPanel: React.FC<ImportBuildTextPanelProps> = ({ onCl
               label="Skills"
               detail={
                 stats && stats.skillsTotal > 0
-                  ? `${stats.skillsMatched} of ${stats.skillsTotal} skills matched`
+                  ? stats.skillsMatched > 0
+                    ? `${stats.skillsMatched} of ${stats.skillsTotal} skills matched`
+                    : `0 of ${stats.skillsTotal} matched — clears those slots`
                   : 'No skill bars found'
               }
-              available={Boolean(stats && stats.skillsMatched > 0)}
+              available={Boolean(stats && stats.skillsTotal > 0)}
               checked={include.skills}
               onToggle={toggle('skills')}
             />

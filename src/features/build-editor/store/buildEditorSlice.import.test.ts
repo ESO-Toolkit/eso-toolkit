@@ -120,6 +120,20 @@ describe('buildEditorSlice — applyImportedBuild', () => {
     expect(s.build.setups[0].gear[1]).toEqual({ id: 555 }); // unmentioned neck preserved
   });
 
+  it('active import with NO resolved gear still clears the named (all-unresolved) slots', () => {
+    let s = fresh();
+    s = reducer(s, setGearSlot({ slot: 0, itemId: 111 }));
+    s = reducer(s, setGearSlot({ slot: 3, itemId: 222 }));
+    s = reducer(s, setGearSlot({ slot: 1, itemId: 555 })); // unmentioned → preserved
+
+    // setup.gear undefined (nothing resolved), only clear instructions.
+    s = reducer(s, applyImportedBuild({ setup: {}, clearGearSlots: [0, 3], target: 'active' }));
+
+    expect(s.build.setups[0].gear[0]).toBeUndefined();
+    expect(s.build.setups[0].gear[3]).toBeUndefined();
+    expect(s.build.setups[0].gear[1]).toEqual({ id: 555 });
+  });
+
   it('active import clears unresolved skill slots the guide named', () => {
     let s = fresh();
     s = reducer(s, setSkills({ 0: { 3: 10, 4: 20 }, 1: {} }));
