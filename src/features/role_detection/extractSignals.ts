@@ -331,6 +331,15 @@ function extractHealingSignals(
  * Only increases are counted (absorb naturally decays as it soaks damage, which
  * is not a shield application), and self-heals are ignored so a player shielding
  * only themselves is not mistaken for a group shield healer.
+ *
+ * Known limitation: the baseline is built from heal events only, so absorb
+ * consumed by incoming damage (which appears on damage events, not heals) is not
+ * observed. A reapplication that merely restores a partially-soaked pool to a
+ * value at or below the last heal-observed peak is therefore under-counted. This
+ * does not affect classification: `shieldAppliedToOthers` is consumed only as a
+ * `> 0` gate, and an actual group shield healer crosses it on the first in-fight
+ * application (the per-target baseline starts at 0). Threading damage-event
+ * absorb readings in would refine the magnitude but not the boolean outcome.
  */
 function extractShieldSignals(
   healEvents: HealEvent[],
