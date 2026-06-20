@@ -430,6 +430,25 @@ describe('cspsExport', () => {
       expect(reimported.setups[0].passives).toEqual([]);
     });
 
+    it('round-trips an empty (non-subclassed) classSkillLines build with CM intact', () => {
+      // [null,null,null] normalizes to the class defaults on reimport (the CSPS
+      // subclass list is compact, matching the real addon) — both are
+      // non-subclassed, so Class Mastery eligibility and picks are preserved.
+      const build = makeBuild({
+        esoClass: 'dragonknight',
+        classSkillLines: [null, null, null],
+        classMasteryPassives: [238232, 240268],
+        setups: [makeSetup({ passives: [] })],
+      });
+      const lua = exportBuildToCSPSLua(build);
+      const reimported = convertCSPSCharacterToBuild(parseCSPSInput(lua).characters[0]);
+      // still non-subclassed → CM eligible and preserved
+      expect(reimported.classMasteryPassives).toEqual([238232, 240268]);
+      expect(
+        reimported.classSkillLines.every((line) => line == null || line.startsWith('class.')),
+      ).toBe(true);
+    });
+
     it('round-trips subclass lines through export → import while keeping CM gated', () => {
       const build = makeBuild({
         esoClass: 'dragonknight',
