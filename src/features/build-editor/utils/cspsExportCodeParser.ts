@@ -729,13 +729,16 @@ function parseNativeSkills(s: string): {
   passives: number[];
   scribedIds: number[];
   skilledAbilities: SkilledAbility[];
+  subclasses: string;
 } {
-  if (!s || s === '-') return { passives: [], scribedIds: [], skilledAbilities: [] };
+  if (!s || s === '-')
+    return { passives: [], scribedIds: [], skilledAbilities: [], subclasses: '' };
 
   const parts = s.split('*');
   // parts[0] = prog (active skills with morph choices)
   // parts[1] = pass (passive skills)
   // parts[2] = crafted scribing
+  // parts[4] = subclasses (comma-separated skill-line ids)
   const passives: number[] = [];
   const scribedIds: number[] = [];
 
@@ -764,7 +767,7 @@ function parseNativeSkills(s: string): {
     }
   }
 
-  return { passives, scribedIds, skilledAbilities };
+  return { passives, scribedIds, skilledAbilities, subclasses: parts[4] ?? '' };
 }
 
 /**
@@ -892,6 +895,7 @@ export function parseCSPSNativeCode(input: string): CSPSExportCodeResult {
     passives: skillPassives,
     scribedIds: skillScribedIds,
     skilledAbilities: nativeSkilledAbilities,
+    subclasses: nativeSubclasses,
   } = parseNativeSkills(sections[0]);
 
   // Section 2: Hotbars (bar1;bar2;bar3 — slots comma-separated, scribed prefixed "c")
@@ -957,7 +961,10 @@ export function parseCSPSNativeCode(input: string): CSPSExportCodeResult {
   const allBarIds = [...hotbar.frontBar, ...hotbar.backBar].filter((n) => n > 0);
   const detectedClass = detectClassFromAbilityIds(allBarIds);
   const esoClass: ESOClass = detectedClass ?? classFromMasteryIds(skillPassives) ?? 'any-class';
-  const classSkillLines = getDefaultLinesForClass(esoClass);
+  // Honor the native subclasses part so a subclassed export decodes as
+  // subclassed — otherwise retained Class Mastery picks would be (wrongly)
+  // treated as active by the eligibility-gated stats/export.
+  const classSkillLines = parseSubclassLines(nativeSubclasses, esoClass);
   // Split Class Mastery passives out of the native pass list (see ESO-Hub path).
   const { passives: regularPassives, classMasteryPassives } = partitionClassMasteryPicks(
     skillPassives,

@@ -1,3 +1,4 @@
+import { isClassMasteryEligible } from '../classMasteryEligibility';
 import {
   isCSPSExportCode,
   isCSPSNativeCode,
@@ -403,5 +404,23 @@ describe('Class Mastery in export codes', () => {
     expect(build.esoClass).toBe('warden');
     expect(build.classMasteryPassives).toEqual([263519, 263520]);
     expect(build.setups[0].passives).toEqual([500]);
+  });
+
+  it('decodes the native subclasses part so retained Class Mastery picks stay gated', () => {
+    const native = [
+      '-*263519:1*-*-*38', // skills: pass = Warden CM id; subclasses = 38 (Assassination, NB)
+      '0,0,0,0,0,0;0,0,0,0,0,0', // hotbars
+      '0;0;0', // attributes
+      '-', // mundus
+      '-', // champion points
+      '-', // gear
+      '-', // quickslots
+      '-', // outfits
+      '1', // role
+    ].join('#');
+    const { build } = parseCSPSNativeCode(native);
+    // an off-class line means the build is subclassed → Class Mastery is disabled
+    expect(build.classSkillLines).toContain('class.assassination');
+    expect(isClassMasteryEligible(build.esoClass, build.classSkillLines)).toBe(false);
   });
 });
