@@ -93,7 +93,7 @@ export const SetupList: React.FC<SetupListProps> = ({
         const progress = getSetupProgressSections(setup)
           .map((section) => formatProgressSection(section).toLowerCase())
           .join(' ');
-        const haystack = `${setup.name.toLowerCase()} ${tags} ${condition} ${progress}`;
+        const haystack = `${(setup.name ?? '').toLowerCase()} ${tags} ${condition} ${progress}`;
         return haystack.includes(normalizedFilter);
       });
   }, [setups, normalizedFilter]);
