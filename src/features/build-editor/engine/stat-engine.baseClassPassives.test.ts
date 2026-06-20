@@ -61,7 +61,7 @@ describe('calculateArmor — U50 base-class armor passives', () => {
   });
 
   it('Frozen Armor (Warden) adds +6200 resistance at 5 slotted', () => {
-    const r = calculateArmor(baseSetup(), buildWithLines(['class.winter-s-embrace']), overrides());
+    const r = calculateArmor(baseSetup(), buildWithLines(['class.winters-embrace']), overrides());
     expect(item(r, 'Frozen Armor')?.value).toBe(6200);
     expect(r.total).toBe(6200);
   });
