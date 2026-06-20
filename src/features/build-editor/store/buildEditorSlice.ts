@@ -413,6 +413,11 @@ export const buildEditorSlice = createSlice({
             | 'name'
           >
         >;
+        /** Gear slots the import mentioned but couldn't resolve — cleared so an
+         *  active import never leaves the previous build's item behind. */
+        clearGearSlots?: number[];
+        /** Skill slots the import mentioned but couldn't resolve. */
+        clearSkillSlots?: Array<{ bar: 0 | 1; slotIndex: number }>;
         buildFields?: Partial<
           Pick<
             Build,
@@ -428,7 +433,7 @@ export const buildEditorSlice = createSlice({
         target: 'active' | 'new';
       }>,
     ) {
-      const { setup: imported, buildFields } = action.payload;
+      const { setup: imported, buildFields, clearGearSlots, clearSkillSlots } = action.payload;
       const wantNew = action.payload.target === 'new';
 
       // Never silently overwrite the active setup when the user asked for a NEW
@@ -454,6 +459,14 @@ export const buildEditorSlice = createSlice({
       // existing slots/potions/star allocations that weren't in the import.)
       if (imported.gear !== undefined) {
         target.gear = { ...target.gear, ...imported.gear };
+      }
+      // Clear slots the guide listed but we couldn't resolve, so an active
+      // import doesn't leave the previous build's item behind (slots the guide
+      // never mentioned are preserved). Runs even when nothing resolved.
+      for (const slot of clearGearSlots ?? []) {
+        if (imported.gear?.[slot] === undefined) delete target.gear[slot];
+      }
+      if (imported.gear !== undefined || (clearGearSlots && clearGearSlots.length > 0)) {
         // A two-handed main-hand occupies both weapon slots — drop any stale
         // off-hand the merge would otherwise keep (mirrors EquipmentPicker's
         // auto-clear so exports/stats never read a phantom off-hand weapon).
@@ -472,6 +485,10 @@ export const buildEditorSlice = createSlice({
           0: { ...(target.skills?.[0] ?? {}), ...(imported.skills[0] ?? {}) },
           1: { ...(target.skills?.[1] ?? {}), ...(imported.skills[1] ?? {}) },
         };
+      }
+      // Clear skill slots the guide named but we couldn't resolve.
+      for (const { bar, slotIndex } of clearSkillSlots ?? []) {
+        if (imported.skills?.[bar]?.[slotIndex] === undefined) delete target.skills[bar][slotIndex];
       }
       if (imported.cp !== undefined) {
         // Take the imported slotted perks but keep existing passive-star points.
@@ -500,7 +517,15 @@ export const buildEditorSlice = createSlice({
 
       // Merge build-level fields — only defined keys.
       if (buildFields) {
-        if (buildFields.esoClass !== undefined) state.build.esoClass = buildFields.esoClass;
+        if (buildFields.esoClass !== undefined) {
+          // Class Mastery picks belong to the previous class — clear them when
+          // the class changes, matching setBuildClass's invariant (otherwise
+          // stale picks pollute stats and the Class Mastery UI).
+          if (buildFields.esoClass !== state.build.esoClass) {
+            state.build.classMasteryPassives = [];
+          }
+          state.build.esoClass = buildFields.esoClass;
+        }
         if (buildFields.classSkillLines !== undefined)
           state.build.classSkillLines = buildFields.classSkillLines;
         if (buildFields.races !== undefined) state.build.races = buildFields.races;

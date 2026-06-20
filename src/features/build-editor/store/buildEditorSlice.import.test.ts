@@ -11,6 +11,8 @@ jest.mock('../../loadout-manager/utils/itemIconResolver', () => ({
   isTwoHandedWeapon: (id: number) => id === 9999,
 }));
 
+import { getClassMasteryLine } from '@/data/skill-lines/class/classMastery';
+
 import reducer, {
   addSetup,
   applyImportedBuild,
@@ -19,6 +21,8 @@ import reducer, {
   setChampionPassive,
   setConsumables,
   setGearSlot,
+  setSkills,
+  toggleClassMasteryPassive,
 } from './buildEditorSlice';
 import type { BuildEditorState } from './buildEditorSlice';
 
@@ -95,6 +99,70 @@ describe('buildEditorSlice — applyImportedBuild', () => {
     // Paired off-hands must be cleared (no phantom weapon behind the 2H).
     expect(s.build.setups[0].gear[5]).toBeUndefined();
     expect(s.build.setups[0].gear[21]).toBeUndefined();
+  });
+
+  it('active import clears slots the guide listed but could not resolve (keeps unmentioned ones)', () => {
+    let s = fresh();
+    s = reducer(s, setGearSlot({ slot: 0, itemId: 111 })); // old head
+    s = reducer(s, setGearSlot({ slot: 1, itemId: 555 })); // neck (guide won't mention)
+
+    s = reducer(
+      s,
+      applyImportedBuild({
+        setup: { gear: { 2: { id: 999 } } }, // body resolved
+        clearGearSlots: [0], // head listed in guide but unresolved
+        target: 'active',
+      }),
+    );
+
+    expect(s.build.setups[0].gear[2]).toEqual({ id: 999 }); // imported
+    expect(s.build.setups[0].gear[0]).toBeUndefined(); // stale head cleared
+    expect(s.build.setups[0].gear[1]).toEqual({ id: 555 }); // unmentioned neck preserved
+  });
+
+  it('active import clears unresolved skill slots the guide named', () => {
+    let s = fresh();
+    s = reducer(s, setSkills({ 0: { 3: 10, 4: 20 }, 1: {} }));
+    s = reducer(
+      s,
+      applyImportedBuild({
+        setup: { skills: { 0: { 3: 99 }, 1: {} } }, // slot 3 resolved
+        clearSkillSlots: [{ bar: 0, slotIndex: 4 }], // slot 4 named but unresolved
+        target: 'active',
+      }),
+    );
+    expect(s.build.setups[0].skills[0][3]).toBe(99); // imported
+    expect(s.build.setups[0].skills[0][4]).toBeUndefined(); // stale skill cleared
+  });
+
+  it('clears class mastery picks when an imported class differs from the current one', () => {
+    let s = fresh(); // dragonknight by default
+    const dkIds = (getClassMasteryLine('dragonknight')?.skills ?? []).map((p) => p.id);
+    s = reducer(s, toggleClassMasteryPassive(dkIds[0]));
+    s = reducer(s, toggleClassMasteryPassive(dkIds[1]));
+    expect(s.build.classMasteryPassives).toEqual([dkIds[0], dkIds[1]]);
+
+    s = reducer(
+      s,
+      applyImportedBuild({ setup: {}, buildFields: { esoClass: 'sorcerer' }, target: 'active' }),
+    );
+    expect(s.build.esoClass).toBe('sorcerer');
+    expect(s.build.classMasteryPassives).toEqual([]); // stale DK picks cleared
+  });
+
+  it('keeps class mastery picks when the imported class matches the current one', () => {
+    let s = fresh();
+    const dkIds = (getClassMasteryLine('dragonknight')?.skills ?? []).map((p) => p.id);
+    s = reducer(s, toggleClassMasteryPassive(dkIds[0]));
+    s = reducer(
+      s,
+      applyImportedBuild({
+        setup: {},
+        buildFields: { esoClass: 'dragonknight' },
+        target: 'active',
+      }),
+    );
+    expect(s.build.classMasteryPassives).toEqual([dkIds[0]]);
   });
 
   it('keeps existing CP passive-star points when importing slotted perks', () => {

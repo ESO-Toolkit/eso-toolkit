@@ -601,6 +601,11 @@ export interface ImportPayload {
     mundusStone?: string;
     consumables?: { potions: never[]; food: { id?: number; name?: string } };
   };
+  /** Gear slots the guide listed but we couldn't resolve — cleared on apply so
+   *  an active import doesn't leave the previous build's item in that slot. */
+  clearGearSlots?: number[];
+  /** Skill slots the guide named but we couldn't resolve. */
+  clearSkillSlots?: Array<{ bar: 0 | 1; slotIndex: number }>;
   buildFields?: {
     esoClass?: ESOClass;
     classSkillLines?: [ClassSkillLineId | null, ClassSkillLineId | null, ClassSkillLineId | null];
@@ -620,11 +625,16 @@ export function buildImportPayload(
   include: ImportSections,
 ): ImportPayload {
   const setup: ImportPayload['setup'] = {};
+  const clearGearSlots: number[] = [];
+  const clearSkillSlots: Array<{ bar: 0 | 1; slotIndex: number }> = [];
 
   if (include.gear) {
     const gear: GearConfig = {};
     for (const row of result.gear) {
-      if (row.itemId == null) continue;
+      if (row.itemId == null) {
+        clearGearSlots.push(row.slot); // listed but unresolved → clear stale item
+        continue;
+      }
       gear[row.slot] = {
         id: row.itemId,
         ...(row.trait ? { trait: row.trait } : {}),
@@ -639,7 +649,10 @@ export function buildImportPayload(
     const skills: SkillsConfig = { 0: {}, 1: {} };
     let any = false;
     for (const row of result.skills) {
-      if (row.abilityId == null) continue;
+      if (row.abilityId == null) {
+        clearSkillSlots.push({ bar: row.bar, slotIndex: row.slotIndex });
+        continue;
+      }
       skills[row.bar][row.slotIndex] = row.abilityId;
       any = true;
     }
@@ -679,6 +692,8 @@ export function buildImportPayload(
 
   return {
     setup,
+    ...(clearGearSlots.length > 0 ? { clearGearSlots } : {}),
+    ...(clearSkillSlots.length > 0 ? { clearSkillSlots } : {}),
     ...(Object.keys(buildFields).length > 0 ? { buildFields } : {}),
   };
 }
