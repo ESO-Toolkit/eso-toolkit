@@ -2,6 +2,7 @@
  * @jest-environment jsdom
  */
 
+import { isClassMasteryEligible } from '../../../build-editor/utils/classMasteryEligibility';
 import {
   parseCSPSInput,
   convertCSPSCharacterToBuild,
@@ -336,6 +337,114 @@ describe('cspsImport', () => {
       expect(build.setups).toHaveLength(1);
       // Should still create a setup with empty skills
       expect(build.setups[0].skills[0]).toEqual({});
+    });
+  });
+
+  describe('Class Mastery (U50)', () => {
+    it('partitions Class Mastery passives from werte.pass into build.classMasteryPassives', () => {
+      const char = makeCSPSCharacterOption({
+        werte: {
+          prog: { part1: '20657:1' }, // DK Ardent Flame range → detected as dragonknight
+          pass: { part1: '238232:1,240268:1,400:3' }, // 2 DK Class Mastery + 1 regular passive
+        },
+      });
+      const build = convertCSPSCharacterToBuild(char);
+      expect(build.esoClass).toBe('dragonknight');
+      expect(build.classMasteryPassives).toEqual([238232, 240268]);
+      // CM ids must not leak into the regular passives bucket
+      expect(build.setups[0].passives).toEqual([400]);
+    });
+
+    it('recovers the class from Class Mastery ids when active-skill detection is inconclusive', () => {
+      const char = makeCSPSCharacterOption({
+        werte: {
+          prog: { part1: '100:1' }, // unknown id → no class from active skills
+          pass: { part1: '263519:1,263520:1' }, // Warden Class Mastery ids
+        },
+      });
+      const build = convertCSPSCharacterToBuild(char);
+      expect(build.esoClass).toBe('warden');
+      expect(build.classMasteryPassives).toEqual([263519, 263520]);
+    });
+
+    it('preserves profile-only Class Mastery picks when the active build has none', () => {
+      const char = makeCSPSCharacterOption({
+        werte: {
+          prog: { part1: '20657:1' }, // DK active → detected dragonknight
+          pass: { part1: '400:3' }, // active build: regular passive only, no CM
+        },
+        profiles: {
+          1: {
+            name: 'Profile 1',
+            comp1: '0;0;0#0,0,0,0,0,0;0,0,0,0,0,0####1#0',
+            comp2: 'gear#unique#outfit',
+            werte: { pass: { part1: '238232:1,240268:1' } }, // profile holds the CM picks
+          },
+        },
+      });
+      const build = convertCSPSCharacterToBuild(char);
+      // profile-only picks are lifted to the build level rather than discarded
+      expect(build.classMasteryPassives).toEqual([238232, 240268]);
+      expect(build.setups[0].passives).toEqual([400]);
+      expect(build.setups[1].passives).toEqual([]); // CM stripped from the profile too
+    });
+
+    it('decodes subclass lines from werte.scribeStyleSubclass so retained CM picks stay gated', () => {
+      const char = makeCSPSCharacterOption({
+        werte: {
+          prog: { part1: '20657:1' }, // DK active skill
+          pass: { part1: '238232:1' }, // retained DK Class Mastery id
+          scribeStyleSubclass: '-*-*39', // crafted*styles*subclasses; 39 = Nightblade Shadow
+        },
+      });
+      const build = convertCSPSCharacterToBuild(char);
+      // an off-class subclass line means the build is subclassed → CM disabled
+      expect(build.classSkillLines).toContain('class.shadow');
+      expect(isClassMasteryEligible(build.esoClass, build.classSkillLines)).toBe(false);
+    });
+
+    it('treats Class Mastery ids as the base class over off-class active skills', () => {
+      const char = makeCSPSCharacterOption({
+        werte: {
+          // off-class subclass active skill (Nightblade Assassination range 18342-18519)
+          prog: { part1: '18429:1' },
+          // retained base-class (Warden) Class Mastery picks in pass
+          pass: { part1: '263519:1,263520:1' },
+        },
+      });
+      const build = convertCSPSCharacterToBuild(char);
+      // CM owner (Warden) wins over the Nightblade active skill, so the picks
+      // are kept rather than dropped as foreign.
+      expect(build.esoClass).toBe('warden');
+      expect(build.classMasteryPassives).toEqual([263519, 263520]);
+    });
+
+    it('defers to active-skill detection when CM ids are ambiguous, dropping the stale id', () => {
+      const char = makeCSPSCharacterOption({
+        werte: {
+          prog: { part1: '20657:1' }, // clear Dragonknight active skill
+          pass: { part1: '238232:1,263519:1' }, // legit DK CM + stale Warden CM (1-1 tie)
+        },
+      });
+      const build = convertCSPSCharacterToBuild(char);
+      // the active-skill signal wins on ambiguity, so the legit DK pick is kept
+      // and the stale Warden id is dropped rather than overriding the base class.
+      expect(build.esoClass).toBe('dragonknight');
+      expect(build.classMasteryPassives).toEqual([238232]);
+      expect(build.setups[0].passives).toEqual([]);
+    });
+
+    it('caps imported Class Mastery picks at 2 and drops foreign-class ids', () => {
+      const char = makeCSPSCharacterOption({
+        werte: {
+          prog: { part1: '20657:1' }, // dragonknight
+          pass: { part1: '238232:1,240268:1,259224:1,263519:1' }, // 3 DK CM + 1 Warden CM
+        },
+      });
+      const build = convertCSPSCharacterToBuild(char);
+      expect(build.classMasteryPassives).toEqual([238232, 240268]);
+      // every Class Mastery id is stripped from regular passives
+      expect(build.setups[0].passives).toEqual([]);
     });
   });
 });

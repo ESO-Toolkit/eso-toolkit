@@ -30,6 +30,7 @@ import type {
   SkilledAbility,
 } from '../types/build.types';
 import { CLASS_MASTERY_MAX_PICKS } from '../utils/classMasteryEligibility';
+import { migrateLeakedClassMasteryPicks } from '../utils/classMasteryTransfer';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -102,6 +103,9 @@ function loadFromStorage(): Pick<BuildEditorState, 'build' | 'activeSetupIndex'>
     if (!Array.isArray(parsed.build.classMasteryPassives)) {
       parsed.build.classMasteryPassives = [];
     }
+    // Migration: reclaim Class Mastery picks that pre-split builds left inside
+    // setup.passives so they're visible again (and out of the regular passives).
+    migrateLeakedClassMasteryPicks(parsed.build);
     // Migration: builds saved before stats feature won't have statOverrides
     for (const setup of parsed.build.setups) {
       if (!setup.statOverrides) {
@@ -522,6 +526,9 @@ export const buildEditorSlice = createSlice({
     /** Load an entire build object (e.g. from a decoded URL share). */
     loadBuild(state, action: PayloadAction<Build>) {
       state.build = action.payload;
+      // Reclaim any Class Mastery picks a pre-split source left in setup.passives
+      // so every editor entry point (URL decode, CSPS import, roster) is WYSIWYG.
+      migrateLeakedClassMasteryPicks(state.build);
       state.activeSetupIndex = 0;
       state.activeSidebarTab = 'general';
       state.activeSetupTab = 'info';

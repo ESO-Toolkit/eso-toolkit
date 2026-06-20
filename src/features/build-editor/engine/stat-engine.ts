@@ -9,6 +9,7 @@ import type { GearConfig } from '../../loadout-manager/types/loadout.types';
 import { EQUIP_SLOTS } from '../data/esoStaticData';
 import { resolveApparelWeight } from '../data/setArmorWeights';
 import type { Build, BuildSetup, GameMode } from '../types/build.types';
+import { isClassMasteryEligible } from '../utils/classMasteryEligibility';
 
 import {
   ANTHELMIR_DIVISOR,
@@ -287,9 +288,14 @@ export function calculateCritDamage(
   let { cap, max } = CRIT_DMG_CAPS;
   const items: StatItem[] = [];
 
-  // U50 Class Mastery passives the player selected (only relevant while not
-  // subclassed — the selection is build-level and already gated by the picker).
-  const selectedMastery = new Set(build.classMasteryPassives ?? []);
+  // U50 Class Mastery passives the player selected. The selection is build-level
+  // and is kept (inert) while subclassed, so re-check eligibility here — a
+  // subclassed build must not get its retained CM crit bonuses in the stats.
+  const selectedMastery = new Set(
+    isClassMasteryEligible(build.esoClass, build.classSkillLines)
+      ? (build.classMasteryPassives ?? [])
+      : [],
+  );
   const masteryCrit = CLASS_MASTERY_CRIT_PASSIVES.filter((p) => selectedMastery.has(p.id));
   // Buffs (e.g. Major Force / Major Brittle) supplied by a selected passive —
   // map buff name → the passive granting it, so the buff loop can force it on

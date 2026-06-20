@@ -38,6 +38,14 @@ import type {
   QuickslotEntry,
 } from '../types/build.types';
 
+import { isClassMasteryEligible } from './classMasteryEligibility';
+import {
+  migrateLeakedClassMasteryPicks,
+  sanitizeClassMasteryPicks,
+  stripClassMasteryIds,
+} from './classMasteryTransfer';
+import { serializeSubclassLines } from './cspsExportCodeParser';
+
 // ── Reverse mappings (Build Editor → CSPS) ───────────────────────────
 
 /** Build editor mundus string IDs → CSPS mundus ability IDs */
@@ -147,18 +155,29 @@ function convertGearConfigToCSPS(gear: Record<number, GearPiece>): Record<number
 /**
  * Build werte object from passives + skilled abilities.
  * Combines werte.pass (passive skills) and werte.prog (active skills with morphs).
+ *
+ * Class Mastery picks (build-level) are merged into werte.pass as plain
+ * `abilityId:1` pairs, matching how the real CSPS addon stores them — there is
+ * no dedicated Class Mastery field, so the addon re-applies them via the Class
+ * Mastery Points pool on restore. Deduped against the regular passives.
  */
 function buildWerte(
   passives: number[],
   skilledAbilities?: BuildSetup['skilledAbilities'],
+  classMasteryPassives: number[] = [],
+  scribeStyleSubclass = '',
 ): CSPSSkillData | undefined {
   const werte: CSPSSkillData = {};
   let hasData = false;
 
-  // Passives → werte.pass
-  const passEntries: CSPSSkillEntry[] = passives
-    .filter((id) => id > 0)
-    .map((abilityId) => ({ abilityId, value: 1 }));
+  // Passives (+ Class Mastery picks) → werte.pass. Strip any Class Mastery ids
+  // that leaked into setup.passives (legacy/corrupt builds) so the ONLY CM ids
+  // written are the sanitized, eligibility-gated `classMasteryPassives` — never
+  // a stale id that would exceed the 2-pick cap or win on round-trip import.
+  const passIds = [
+    ...new Set([...stripClassMasteryIds(passives.filter((id) => id > 0)), ...classMasteryPassives]),
+  ];
+  const passEntries: CSPSSkillEntry[] = passIds.map((abilityId) => ({ abilityId, value: 1 }));
   if (passEntries.length > 0) {
     werte.pass = compressSkillEntries(passEntries);
     hasData = true;
@@ -173,6 +192,13 @@ function buildWerte(
       werte.prog = compressSkillEntries(progEntries);
       hasData = true;
     }
+  }
+
+  // Subclass lines → werte.scribeStyleSubclass (crafted*styles*subclasses) so a
+  // subclassed build round-trips its lines and Class Mastery stays gated.
+  if (scribeStyleSubclass) {
+    werte.scribeStyleSubclass = scribeStyleSubclass;
+    hasData = true;
   }
 
   return hasData ? werte : undefined;
@@ -194,6 +220,8 @@ function setupToCSPSCharacterData(
   setup: BuildSetup,
   name: string,
   role: CombatRole,
+  classMasteryPassives: number[] = [],
+  scribeStyleSubclass = '',
 ): CSPSCharacterData {
   // Skills → hotbar (with scribed ability tracking)
   const hotbar = convertSkillsToHotbar(setup.skills);
@@ -239,8 +267,13 @@ function setupToCSPSCharacterData(
     outfitComp: '',
   };
 
-  // Passives + skilled abilities → werte
-  const werte = buildWerte(setup.passives, setup.skilledAbilities);
+  // Passives + skilled abilities + Class Mastery picks + subclass lines → werte
+  const werte = buildWerte(
+    setup.passives,
+    setup.skilledAbilities,
+    classMasteryPassives,
+    scribeStyleSubclass,
+  );
 
   const charData: CSPSCharacterData = {
     comp1: compressComp1(comp1),
@@ -263,15 +296,47 @@ function setupToCSPSCharacterData(
  * The first setup becomes the active character build.
  * Additional setups become CSPS profiles.
  */
-export function convertBuildToCSPS(build: Build): CSPSSavedVariables {
+export function convertBuildToCSPS(inputBuild: Build): CSPSSavedVariables {
+  // Normalize on a local copy so the export is correct for EVERY caller, not
+  // only builds that already went through the editor's load-time migration
+  // (e.g. BuildViewPage exports a build decoded straight from a URL share). This
+  // reclaims leaked Class Mastery ids into the build-level field and strips them
+  // from setup.passives using the SAME idempotent helper the editor runs on
+  // load, so both surfaces always agree. The caller's object is never mutated.
+  const build: Build = {
+    ...inputBuild,
+    classMasteryPassives: inputBuild.classMasteryPassives
+      ? [...inputBuild.classMasteryPassives]
+      : [],
+    setups: inputBuild.setups.map((setup) => ({ ...setup, passives: [...(setup.passives ?? [])] })),
+  };
+  migrateLeakedClassMasteryPicks(build);
+
   const characterName = build.name || 'Exported Build';
   const accountName = '@ESOToolkit';
   const characterId = '1';
 
+  // Class Mastery is a character-wide selection (not per-setup) and is invalid
+  // while subclassed, so resolve the eligible picks once and write the same set
+  // into every setup/profile's werte.pass.
+  const classMasteryPassives = isClassMasteryEligible(build.esoClass, build.classSkillLines)
+    ? sanitizeClassMasteryPicks(build.classMasteryPassives, build.esoClass)
+    : [];
+
+  // Subclass lines → werte.scribeStyleSubclass for every setup (character-wide).
+  const subclassIds = serializeSubclassLines(build.classSkillLines);
+  const scribeStyleSubclass = subclassIds ? `-*-*${subclassIds}` : '';
+
   // First setup → main character data
   const mainSetup = build.setups[0];
   const charData: CSPSCharacterData = mainSetup
-    ? setupToCSPSCharacterData(mainSetup, characterName, build.role)
+    ? setupToCSPSCharacterData(
+        mainSetup,
+        characterName,
+        build.role,
+        classMasteryPassives,
+        scribeStyleSubclass,
+      )
     : { comp1: '', comp2: '', $lastCharacterName: characterName };
 
   // Additional setups → profiles
@@ -279,7 +344,13 @@ export function convertBuildToCSPS(build: Build): CSPSSavedVariables {
     charData.profiles = {};
     for (let i = 1; i < build.setups.length; i++) {
       const setup = build.setups[i];
-      const profileData = setupToCSPSCharacterData(setup, setup.name, build.role);
+      const profileData = setupToCSPSCharacterData(
+        setup,
+        setup.name,
+        build.role,
+        classMasteryPassives,
+        scribeStyleSubclass,
+      );
       charData.profiles[i] = {
         ...profileData,
         name: setup.name,
