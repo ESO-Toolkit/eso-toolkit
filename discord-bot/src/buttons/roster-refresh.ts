@@ -8,7 +8,7 @@
 import { hasRosterPermission } from '../auth.js';
 import { sendFollowup } from '../discord.js';
 import {
-  getMappingByChannelId,
+  listMappingsForGuild,
   getGuildConfig,
   getDefaultGuildConfig,
   checkRosterRateLimit,
@@ -68,44 +68,57 @@ export async function handleRosterRefreshButton(
   }
 
   // The button encodes its own roster ID (roster_refresh:<rosterId>), so refresh
-  // that exact roster even when several rosters share one channel. Fall back to
-  // the channel→roster lookup for any older buttons without an encoded ID.
+  // that exact roster even when several rosters share one channel. Older buttons
+  // (or those whose ID was too long to fit the custom_id) carry none — for those
+  // we refresh every roster mapped to this channel, which also covers a default
+  // channel hosting several rosters.
   const customId = interaction.data?.custom_id ?? '';
   const prefix = `${RosterButtonId.REFRESH}:`;
   const encodedRosterId = customId.startsWith(prefix) ? customId.slice(prefix.length) : '';
 
   ctx.waitUntil(
     (async () => {
-      let rosterId = encodedRosterId;
-      if (!rosterId) {
-        const mapping = await getMappingByChannelId(env, channelId);
-        if (!mapping) {
+      let rosterIds: string[];
+      if (encodedRosterId) {
+        rosterIds = [encodedRosterId];
+      } else {
+        rosterIds = (await listMappingsForGuild(env, guildId))
+          .filter((m) => m.channelId === channelId)
+          .map((m) => m.rosterId);
+        if (rosterIds.length === 0) {
           await sendFollowup(env, interaction.token, {
             content: '❌ No roster is linked to this channel.',
             flags: MessageFlags.EPHEMERAL,
           });
           return;
         }
-        rosterId = mapping.rosterId;
       }
 
-      const result = await refreshRoster(env, rosterId, guildId);
-      if (result.ok && (result.refreshedCount ?? 0) > 0) {
+      let okCount = 0;
+      let lastError: string | undefined;
+      for (const rid of rosterIds) {
+        const result = await refreshRoster(env, rid, guildId);
+        if (result.ok && (result.refreshedCount ?? 0) > 0) okCount++;
+        else if (!result.ok) lastError = result.error;
+      }
+
+      if (okCount > 0) {
+        const suffix = rosterIds.length > 1 ? ` (${okCount}/${rosterIds.length})` : '';
         await sendFollowup(env, interaction.token, {
-          content: '✅ Roster refreshed!',
+          content: `✅ Roster refreshed!${suffix}`,
           flags: MessageFlags.EPHEMERAL,
         });
-      } else if (result.ok) {
-        // ok but nothing refreshed → this roster has no live post in this server
+      } else if (lastError) {
+        await sendFollowup(env, interaction.token, {
+          content: `❌ Refresh failed: ${lastError}`,
+          flags: MessageFlags.EPHEMERAL,
+        });
+      } else {
+        // ok but nothing refreshed → no live post for this roster in this server
         // (mapping removed/expired). Don't claim success.
         await sendFollowup(env, interaction.token, {
           content:
             "⚠️ Couldn't find this roster's post to refresh — it may have been removed. Try re-publishing it.",
-          flags: MessageFlags.EPHEMERAL,
-        });
-      } else {
-        await sendFollowup(env, interaction.token, {
-          content: `❌ Refresh failed: ${result.error}`,
           flags: MessageFlags.EPHEMERAL,
         });
       }

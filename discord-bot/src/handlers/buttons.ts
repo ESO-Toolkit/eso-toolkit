@@ -50,8 +50,8 @@ export async function handleButton(
     return handleRosterSignupButton(env, interaction, role);
   }
 
-  // Refresh button: roster_refresh:<rosterId>
-  if (customId.startsWith(`${RosterButtonId.REFRESH}:`)) {
+  // Refresh button: roster_refresh or roster_refresh:<rosterId>
+  if (customId === RosterButtonId.REFRESH || customId.startsWith(`${RosterButtonId.REFRESH}:`)) {
     return handleRosterRefreshButton(env, interaction, ctx);
   }
 

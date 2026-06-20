@@ -51,20 +51,33 @@ export interface HttpAuthResult {
   error?: string | undefined;
 }
 
+/** Options controlling which permission tier {@link verifyHttpCaller} enforces. */
+export interface VerifyHttpCallerOptions {
+  /**
+   * When true, require MANAGE_GUILD regardless of whether a publish role is
+   * configured. Use this for admin-only actions (e.g. writing guild config) so
+   * a holder of the publish-tier role can never reach admin-tier endpoints. The
+   * publish-role overlap shortcut is skipped entirely.
+   */
+  requireManageGuild?: boolean;
+}
+
 /**
- * Verify that an HTTP caller has permission to publish to the given guild.
+ * Verify that an HTTP caller has permission to act on the given guild.
  *
  * Flow:
  *   1. Extract Bearer token from Authorization header
  *   2. Call Discord /users/@me to get user ID
  *   3. Load guild config to check allowedRoleIds
- *   4. If roles configured: fetch member via bot token, check role overlap
- *   5. If no roles: check MANAGE_GUILD via user's guild list
+ *   4. If roles configured (and not requireManageGuild): fetch member via bot
+ *      token, check role overlap (publish tier)
+ *   5. Otherwise: check MANAGE_GUILD via user's guild list (admin tier)
  */
 export async function verifyHttpCaller(
   env: Env,
   guildId: string,
   authHeader: string | null,
+  opts: VerifyHttpCallerOptions = {},
 ): Promise<HttpAuthResult> {
   if (!authHeader?.startsWith('Bearer ')) {
     return { authorized: false, error: 'Missing or invalid Authorization header.' };
@@ -84,7 +97,10 @@ export async function verifyHttpCaller(
   const config = await getGuildConfig(env, guildId);
   const allowedRoles = config?.allowedRoleIds;
 
-  if (allowedRoles && allowedRoles.length > 0) {
+  // Admin-only actions must NEVER accept the publish-role tier: a publish-role
+  // holder could otherwise rewrite allowedRoleIds and escalate. Skip the
+  // role-overlap shortcut and fall through to the MANAGE_GUILD check.
+  if (!opts.requireManageGuild && allowedRoles && allowedRoles.length > 0) {
     // 3a. Roles are configured — check member's roles via bot token
     try {
       const member = await getGuildMember(env, guildId, me.id);
@@ -102,7 +118,9 @@ export async function verifyHttpCaller(
     }
   }
 
-  // 3b. No roles configured — check MANAGE_GUILD via user's guild list
+  // 3b. Admin tier — require MANAGE_GUILD via the user's guild list. Reached
+  // when no publish role is configured, or when the caller explicitly requested
+  // the admin tier (requireManageGuild).
   const guildsRes = await fetch(`${DISCORD_API}/users/@me/guilds`, {
     headers: { Authorization: `Bearer ${userToken}` },
   });
@@ -122,8 +140,12 @@ export async function verifyHttpCaller(
     return {
       authorized: false,
       userId: me.id,
-      error:
-        'No allowed roles are configured for this server. Only server admins can publish until a role is set up with /roster config set-role.',
+      // Tailor the message to the requested tier: admin-tier callers (e.g. config
+      // writes) get an accurate "Manage Server required" message rather than the
+      // publish-oriented "set up a role" hint.
+      error: opts.requireManageGuild
+        ? 'Manage Server (MANAGE_GUILD) permission is required for this action.'
+        : 'No allowed roles are configured for this server. Only server admins can publish until a role is set up with /roster config set-role.',
     };
   }
 
