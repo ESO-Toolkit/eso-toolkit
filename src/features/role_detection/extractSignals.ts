@@ -347,6 +347,12 @@ function extractShieldSignals(
   // target, regardless of source) so we measure true increases.
   const lastAbsorbByTarget = new Map<number, number>();
 
+  // The signal is "shields granted to other PLAYERS", so only credit absorb
+  // applied to friendly players — not to pets, summons, or friendly NPCs (whose
+  // absorb pools would otherwise inflate a healer's score, and the classifier
+  // only checks `> 0`).
+  const friendlyPlayers = new Set(context.friendlyPlayerIds);
+
   for (const event of sorted) {
     const currentAbsorb = event.targetResources?.absorb ?? 0;
     const previousAbsorb = lastAbsorbByTarget.get(event.targetID) ?? 0;
@@ -355,6 +361,7 @@ function extractShieldSignals(
     // Only friendly source applying to a DIFFERENT ally counts as a group shield.
     if (!event.sourceIsFriendly) continue;
     if (event.sourceID === event.targetID) continue;
+    if (!friendlyPlayers.has(event.targetID)) continue;
 
     const signals = playerSignals.get(event.sourceID);
     if (!signals) continue;

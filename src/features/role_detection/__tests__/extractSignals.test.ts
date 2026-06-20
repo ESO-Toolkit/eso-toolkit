@@ -273,6 +273,20 @@ describe('extractSignals', () => {
       expect(dps1.shieldAppliedToOthers).toBe(0);
     });
 
+    it('should ignore absorb applied to non-player targets (pets/NPCs)', () => {
+      const NON_PLAYER_TARGET = 99999; // not in friendlyPlayerIds
+      const events = emptyEvents({
+        healEvents: [
+          makeShieldHealEvent(PLAYER_HEALER, NON_PLAYER_TARGET, 20000, FIGHT_START + 1000),
+        ],
+      });
+
+      const result = extractSignals(events, createContext());
+
+      const healer = result.find((s) => s.playerId === PLAYER_HEALER)!;
+      expect(healer.shieldAppliedToOthers).toBe(0);
+    });
+
     it('should leave shieldAppliedToOthers at 0 when no absorb is present', () => {
       const events = emptyEvents({
         healEvents: [makeHealEvent(PLAYER_HEALER, 20000)],
