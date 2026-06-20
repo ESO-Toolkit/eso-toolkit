@@ -13,6 +13,7 @@ import {
 } from '@mui/material';
 import React from 'react';
 
+import { useDropdownMenuProps } from '../../../hooks/useDropdownMenuDirection';
 import { TRIALS } from '../../loadout-manager/data/trialConfigs';
 import type { RosterHubFilters, SortOrder } from '../types/roster-hub.types';
 import { PRESET_TAGS, TAG_COLORS } from '../types/roster-hub.types';
@@ -62,6 +63,11 @@ export const FilterBar: React.FC<FilterBarProps> = React.memo(
     const borderHover = isDark ? 'rgba(255,255,255,0.20)' : 'rgba(0,0,0,0.14)';
     const borderFocus = 'rgba(96,165,250,0.55)';
     const focusGlow = '0 0 0 3px rgba(96,165,250,0.12)';
+
+    // Open below the field (flip up near the viewport bottom) with the shared
+    // premium dropdown look — an explicit MenuProps would otherwise drop the
+    // global theme's open-direction + styling default.
+    const trialMenuProps = useDropdownMenuProps();
 
     return (
       <Box
@@ -192,39 +198,7 @@ export const FilterBar: React.FC<FilterBarProps> = React.memo(
                 },
                 '& .MuiSelect-select': { py: '7px' },
               }}
-              MenuProps={{
-                slotProps: {
-                  paper: {
-                    sx: {
-                      mt: 0.5,
-                      borderRadius: 2,
-                      background: isDark ? 'rgba(18,24,38,0.96)' : 'rgba(255,255,255,0.96)',
-                      backdropFilter: 'blur(20px)',
-                      WebkitBackdropFilter: 'blur(20px)',
-                      border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'}`,
-                      boxShadow: isDark
-                        ? '0 8px 32px rgba(0,0,0,0.6)'
-                        : '0 8px 32px rgba(0,0,0,0.12)',
-                      '& .MuiMenuItem-root': {
-                        fontSize: '0.85rem',
-                        borderRadius: 1,
-                        mx: 0.5,
-                        '&:hover': {
-                          background: isDark ? 'rgba(96,165,250,0.12)' : 'rgba(37,99,235,0.06)',
-                        },
-                        '&.Mui-selected': {
-                          background: isDark ? 'rgba(96,165,250,0.18)' : 'rgba(37,99,235,0.10)',
-                          color: isDark ? '#60a5fa' : '#1d4ed8',
-                          fontWeight: 600,
-                          '&:hover': {
-                            background: isDark ? 'rgba(96,165,250,0.22)' : 'rgba(37,99,235,0.14)',
-                          },
-                        },
-                      },
-                    },
-                  },
-                },
-              }}
+              MenuProps={trialMenuProps}
             >
               <MenuItem value="">All Trials</MenuItem>
               {HUB_TRIALS.map((t) => (
