@@ -133,6 +133,31 @@ async function buildCacheKey(url: string, bodyStr: string): Promise<string> {
   return `${url}:${hex}`;
 }
 
+/**
+ * True when a `getReportByCode` response contains at least one fight.
+ *
+ * ESO Logs returns an empty `fights` list while a freshly uploaded log is still
+ * being processed. Caching that transient empty state would keep serving a stale
+ * "No fights available" detail for the whole cache TTL — even after the log
+ * finishes parsing and gains fights — which is exactly what makes a recent report
+ * in Latest Reports open into an empty page. We therefore refuse to cache an
+ * empty-fights report so the next request re-fetches fresh data.
+ *
+ * Returns false on any parse failure (treat as not-cacheable) so we never cache a
+ * response we could not verify.
+ */
+function reportResponseHasFights(responseBody: string): boolean {
+  try {
+    const parsed = JSON.parse(responseBody) as {
+      data?: { reportData?: { report?: { fights?: unknown } | null } | null };
+    };
+    const fights = parsed?.data?.reportData?.report?.fights;
+    return Array.isArray(fights) && fights.length > 0;
+  } catch {
+    return false;
+  }
+}
+
 // ─── Proxy handler ────────────────────────────────────────────────────────────
 
 export async function handleGraphqlProxy(c: Context<{ Bindings: Env }>): Promise<Response> {
@@ -224,8 +249,16 @@ export async function handleGraphqlProxy(c: Context<{ Bindings: Env }>): Promise
       },
     });
 
-    // Store successful cacheable responses
-    if (isCacheable && upstream.status === 200 && cacheKey) {
+    // Store successful cacheable responses — but never cache a report detail that
+    // came back with no fights. A still-processing log reports an empty `fights`
+    // list, and caching it would serve a stale "No fights available" for the full
+    // TTL even after the log finishes parsing. Skipping the store lets the next
+    // request re-fetch fresh data once the fights are available.
+    let storeInCache = isCacheable && upstream.status === 200 && Boolean(cacheKey);
+    if (storeInCache && operationHint === 'getReportByCode') {
+      storeInCache = reportResponseHasFights(responseBody);
+    }
+    if (storeInCache && cacheKey) {
       c.executionCtx.waitUntil(cache.put(cacheKey, response.clone()));
     }
 
