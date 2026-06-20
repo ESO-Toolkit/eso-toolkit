@@ -408,8 +408,11 @@ export function detectClassFromTalents(talents: PlayerTalent[]): ClassAnalysisRe
     }))
     .sort((a, b) => b.count - a.count);
 
+  // `primary` is the primary *skill-line* name, matching the documented
+  // contract of analyzePlayerClassUsage (see playerToBuild.ts) and its tests.
+  // Returning className here previously made the same result shape ambiguous.
   return {
-    primary: skillLines.length > 0 ? skillLines[0].className : null,
+    primary: skillLines.length > 0 ? skillLines[0].skillLine : null,
     skillLines,
   };
 }
