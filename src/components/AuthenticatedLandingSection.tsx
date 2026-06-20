@@ -413,7 +413,16 @@ export const AuthenticatedLandingSection: React.FC = () => {
             </Box>
 
             {/* Title + date */}
-            <Box sx={{ display: 'flex', flexDirection: 'column', minWidth: 0, flex: 1 }}>
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'flex-start',
+                textAlign: 'left',
+                minWidth: 0,
+                flex: 1,
+              }}
+            >
               <Typography
                 sx={{
                   fontSize: '0.7rem',
@@ -431,10 +440,11 @@ export const AuthenticatedLandingSection: React.FC = () => {
               <Typography
                 noWrap
                 sx={{
-                  fontSize: '0.95rem',
-                  fontWeight: 600,
+                  maxWidth: '100%',
+                  fontSize: '1rem',
+                  fontWeight: 700,
                   color: theme.palette.text.primary,
-                  lineHeight: 1.25,
+                  lineHeight: 1.3,
                 }}
               >
                 {latestReport.title || 'Untitled'}
@@ -444,12 +454,12 @@ export const AuthenticatedLandingSection: React.FC = () => {
                   display: 'flex',
                   alignItems: 'center',
                   gap: 0.5,
-                  mt: 0.25,
+                  mt: 0.5,
                   color: theme.palette.text.secondary,
                 }}
               >
                 <CalendarMonthIcon sx={{ fontSize: 14 }} />
-                <Typography sx={{ fontSize: '0.8rem', fontWeight: 500 }}>
+                <Typography sx={{ fontSize: '0.8rem', fontWeight: 500, lineHeight: 1 }}>
                   {format(new Date(latestReport.startTime), 'MMM dd, yyyy')}
                 </Typography>
               </Box>
