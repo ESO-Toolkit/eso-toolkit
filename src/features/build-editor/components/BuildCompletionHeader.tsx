@@ -76,6 +76,7 @@ import {
 } from '../utils/cspsImport';
 
 import { AddToRosterDialog } from './AddToRosterDialog';
+import { ImportBuildImagePanel } from './ImportBuildImagePanel';
 import { ImportBuildTextPanel } from './ImportBuildTextPanel';
 import { glassInputSx } from './primitives/glassInputSx';
 
@@ -173,7 +174,7 @@ export const BuildCompletionHeader: React.FC = () => {
   const [tempLinkExpiry, setTempLinkExpiry] = React.useState('');
 
   // Import mode: structured addon code (CSPS) vs free-text build write-up
-  const [importMode, setImportMode] = React.useState<'csps' | 'text'>('csps');
+  const [importMode, setImportMode] = React.useState<'csps' | 'text' | 'image'>('csps');
 
   // CSPS import state
   const [cspsCharacters, setCspsCharacters] = React.useState<CSPSCharacterOption[]>([]);
@@ -1253,7 +1254,7 @@ export const BuildCompletionHeader: React.FC = () => {
               exclusive
               size="small"
               value={importMode}
-              onChange={(_, v) => v && setImportMode(v as 'csps' | 'text')}
+              onChange={(_, v) => v && setImportMode(v as 'csps' | 'text' | 'image')}
               sx={{
                 mb: 2,
                 '& .MuiToggleButton-root': {
@@ -1268,9 +1269,12 @@ export const BuildCompletionHeader: React.FC = () => {
             >
               <ToggleButton value="csps">Addon code</ToggleButton>
               <ToggleButton value="text">Build text</ToggleButton>
+              <ToggleButton value="image">Image</ToggleButton>
             </ToggleButtonGroup>
 
-            {importMode === 'text' ? (
+            {importMode === 'image' ? (
+              <ImportBuildImagePanel onClose={handleImportClose} />
+            ) : importMode === 'text' ? (
               <ImportBuildTextPanel onClose={handleImportClose} />
             ) : (
               <>

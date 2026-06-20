@@ -264,6 +264,40 @@ describe('parseBuildText — skinnycheeks image-guide gear panel', () => {
   });
 });
 
+describe('parseBuildText — OCR resilience (pipe/space delimiters + fuzzy matching)', () => {
+  it('parses a pipe-delimited gear table', () => {
+    const text = [
+      'GEAR SLOT | SET | WEIGHT/TYPE | TRAIT | ENCHANT',
+      'Head | Slimecraw | Medium | Divines | Magicka',
+      'Shoulders | Slimecraw | Light | Divines | Magicka',
+    ].join('\n');
+    const r = parseBuildText(text);
+    expect(r.gear.map((g) => g.slot)).toEqual([0, 3]);
+    expect(r.gear[0].trait).toBe('divines');
+    expect(r.gear[0].enchant).toBe('magicka');
+  });
+
+  it('fuzzy-recovers a slightly OCR-garbled trait and slot label', () => {
+    const text = [
+      'GEAR SLOT | SET | WEIGHT/TYPE | TRAIT | ENCHANT',
+      'Shoulder | Slimecraw | Medium | Dvines | Magicka', // "Shoulder"+"Divines" misreads
+    ].join('\n');
+    const r = parseBuildText(text);
+    expect(r.gear[0]?.slot).toBe(3); // shoulders
+    expect(r.gear[0]?.trait).toBe('divines'); // fuzzy-recovered from "Dvines"
+  });
+
+  it('does not fuzzy-match an unrelated word to a trait', () => {
+    // "Banana" is far from every trait — must stay unresolved, not snap to one.
+    const text = [
+      'GEAR SLOT | SET | WEIGHT/TYPE | TRAIT | ENCHANT',
+      'Head | Slimecraw | Medium | Banana | Magicka',
+    ].join('\n');
+    const r = parseBuildText(text);
+    expect(r.gear[0]?.trait).toBeUndefined();
+  });
+});
+
 describe('parseBuildText — race detection', () => {
   it('does NOT fabricate Orc from the word "Sorcerer"', () => {
     const r = parseBuildText('Magicka Sorcerer build. Storm Calling. No race mentioned here.');

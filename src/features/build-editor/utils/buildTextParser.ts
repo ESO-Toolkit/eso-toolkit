@@ -99,6 +99,49 @@ const normKey = (s: string): string => s.toLowerCase().replace(/[^a-z0-9]/g, '')
 /** Escape a literal string for safe use inside a RegExp. */
 const escapeRegExp = (s: string): string => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
+/** Levenshtein edit distance between two short strings. */
+function editDistance(a: string, b: string): number {
+  const m = a.length;
+  const n = b.length;
+  if (m === 0) return n;
+  if (n === 0) return m;
+  let prev = Array.from({ length: n + 1 }, (_, i) => i);
+  for (let i = 1; i <= m; i++) {
+    const cur = [i];
+    for (let j = 1; j <= n; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + cost);
+    }
+    prev = cur;
+  }
+  return prev[n];
+}
+
+/** Edit-distance budget scaled to token length (OCR garbles longer words more). */
+const fuzzyBudget = (token: string): number => (token.length <= 4 ? 1 : token.length <= 8 ? 2 : 3);
+
+/**
+ * Closest entry to `token` within an edit-distance budget — recovers OCR
+ * misreads (e.g. "dvines" → "divines") against a SMALL closed vocabulary.
+ * Returns null when nothing is within budget or the best is a tie (ambiguous).
+ */
+function closestByDistance<T>(token: string, entries: [string, T][], maxDist: number): T | null {
+  let best: T | null = null;
+  let bestD = maxDist + 1;
+  let tie = false;
+  for (const [key, value] of entries) {
+    const d = editDistance(token, key);
+    if (d < bestD) {
+      bestD = d;
+      best = value;
+      tie = false;
+    } else if (d === bestD) {
+      tie = true;
+    }
+  }
+  return tie ? null : best;
+}
+
 const SLOT_TYPE_PARAM = (
   slotType: EquipSlotDef['slotType'],
 ): Parameters<typeof getSetItemsBySlot>[1] => slotType as Parameters<typeof getSetItemsBySlot>[1];
@@ -294,7 +337,9 @@ function resolveSlotIndex(rawLabel: string, ringSlots: { used: Set<number> }): n
     if (isBack) return isOff ? 21 : 20;
     return isOff ? 5 : 4;
   }
-  return null;
+  // Fuzzy fallback for OCR-garbled apparel/jewelry labels ("Shouider" → 3).
+  const fuzzy = closestByDistance<number>(k, Object.entries(map), fuzzyBudget(k));
+  return fuzzy ?? null;
 }
 
 /** First armor-weight word in a cell ("Light or Medium" → light), or undefined. */
@@ -311,10 +356,18 @@ function resolveTrait(
   category: EquipSlotDef['category'],
 ): { id: string; label: string } | null {
   const k = normKey(value);
-  for (const t of getTraitsForSlot(category)) {
+  if (!k) return null;
+  const traits = getTraitsForSlot(category);
+  for (const t of traits) {
     if (normKey(t.name) === k) return { id: t.id, label: t.name };
   }
-  return null;
+  // Fuzzy fallback for OCR misreads against the small trait vocabulary.
+  const fuzzy = closestByDistance(
+    k,
+    traits.map((t) => [normKey(t.name), t] as [string, (typeof traits)[number]]),
+    fuzzyBudget(k),
+  );
+  return fuzzy ? { id: fuzzy.id, label: fuzzy.name } : null;
 }
 
 function resolveEnchant(
@@ -322,14 +375,29 @@ function resolveEnchant(
   category: EquipSlotDef['category'],
 ): { id: string; label: string } | null {
   const k = normKey(value);
-  for (const e of getEnchantsForSlot(category)) {
+  if (!k) return null;
+  const enchants = getEnchantsForSlot(category);
+  const entries: [string, { id: string; label: string }][] = [];
+  for (const e of enchants) {
     const short = getEnchantShortName(e.id, category) ?? e.name;
     if (normKey(short) === k || normKey(e.name) === k) return { id: e.id, label: short };
+    entries.push([normKey(short), { id: e.id, label: short }]);
+    entries.push([normKey(e.name), { id: e.id, label: short }]);
   }
-  return null;
+  // Fuzzy fallback against both the short and full enchant names.
+  return closestByDistance(k, entries, fuzzyBudget(k));
 }
 
 const GEAR_HEADER_RE = /gear\s*slot/i;
+
+// Cell separator for gear tables: a tab, a pipe (OCR/markdown tables), or a run
+// of 2+ spaces. Single spaces are preserved so multi-word set names survive.
+const GEAR_CELL_SEP = /\t|\s*\|\s*|\s{2,}/;
+const splitGearRow = (line: string): string[] =>
+  line
+    .split(GEAR_CELL_SEP)
+    .map((c) => c.trim())
+    .filter((c, i, arr) => c !== '' || (i > 0 && i < arr.length - 1));
 
 /**
  * Read the gear table's column order from its header row. Guides differ: some
@@ -343,7 +411,7 @@ function gearColumnMap(headerLine: string): {
   trait: number;
   enchant: number;
 } {
-  const cols = headerLine.split('\t').map((h) => normKey(h));
+  const cols = splitGearRow(headerLine).map((h) => normKey(h));
   const find = (pred: (h: string) => boolean, fallback: number): number => {
     const i = cols.findIndex(pred);
     return i === -1 ? fallback : i;
@@ -367,7 +435,7 @@ function parseGear(lines: string[], warnings: string[]): ParsedGearRow[] {
   const ringSlots = { used: new Set<number>() };
 
   for (let i = headerIdx + 1; i < lines.length; i++) {
-    const cells = lines[i].split('\t').map((c) => c.trim());
+    const cells = splitGearRow(lines[i]);
     // End of table: a blank line or a row without a recognisable slot label.
     if (cells.length < 2 || (cells[col.slot] ?? '') === '') break;
 

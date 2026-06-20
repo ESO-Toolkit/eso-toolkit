@@ -56,6 +56,8 @@ Works best with guides that list gear in a table (Slot · Set · Trait · Enchan
 
 interface ImportBuildTextPanelProps {
   onClose: () => void;
+  /** Seed the text box (e.g. with OCR'd or fetched text) for the user to review. */
+  initialText?: string;
 }
 
 const DEFAULT_SECTIONS: ImportSections = {
@@ -66,7 +68,10 @@ const DEFAULT_SECTIONS: ImportSections = {
   identity: true,
 };
 
-export const ImportBuildTextPanel: React.FC<ImportBuildTextPanelProps> = ({ onClose }) => {
+export const ImportBuildTextPanel: React.FC<ImportBuildTextPanelProps> = ({
+  onClose,
+  initialText,
+}) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const dispatch = useDispatch();
@@ -94,7 +99,7 @@ export const ImportBuildTextPanel: React.FC<ImportBuildTextPanelProps> = ({ onCl
     buildIdentityTouched(esoClass, classSkillLines, races) ||
     buildHasContent(setups);
 
-  const [raw, setRaw] = useState('');
+  const [raw, setRaw] = useState(initialText ?? '');
   const [parsed, setParsed] = useState<ParsedBuildResult | null>(null);
   const [include, setInclude] = useState<ImportSections>(DEFAULT_SECTIONS);
   const [target, setTarget] = useState<'new' | 'active'>(atCap ? 'active' : 'new');
