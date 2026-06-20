@@ -313,10 +313,11 @@ html:active-view-transition-type(hero)::view-transition-new(root) {
 
 /* ── Up (circle reveal) ──────────────────────────────────── */
 
-/* Old fade matched to the 350ms circle-reveal so the receding page under-paints
-   the region outside the expanding circle for the whole transition. A shorter
-   old fade (e.g. 200ms) leaves that region transparent for the final stretch,
-   exposing the live committed DOM and weakening the reveal. */
+/* Old fade lengthened to span almost all of the 350ms circle-reveal so the
+   receding page under-paints the region outside the expanding circle for nearly
+   the whole transition (ending a hair early to avoid a 1-frame old edge at full
+   circle). A shorter old fade (e.g. 200ms) leaves that region transparent for
+   the final stretch, exposing the live committed DOM and weakening the reveal. */
 html:active-view-transition-type(up)::view-transition-old(root) {
   animation: vt-shrink-out 340ms ease-in both;
   z-index: 1;
