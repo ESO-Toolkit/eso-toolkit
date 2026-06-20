@@ -758,7 +758,7 @@ export const ARMOR_RESISTANCE_CAP = 33500;
 export const MAX_ARMOR_VALUE = 33100; // Maximum armor value before diminishing returns
 export const OVER_RESISTANCE_DIVISOR = 109; // Over-resistance calculation divisor
 export const MAX_DAMAGE_MITIGATION = 50; // Maximum damage mitigation percentage
-export const DAMAGE_MITIGATION_DIVISOR = 662; // 33100 / 50 - for percentage calculation
+export const DAMAGE_MITIGATION_DIVISOR = 660; // 660 resistance = 1% mitigation (33,000 = 50% soft cap)
 
 // NOTE: A previous `ARMOR_RESISTANCE_TOOLTIPS` map lived here but was never
 // imported (dead code) and had drifted out of date (e.g. it still called the

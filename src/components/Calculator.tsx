@@ -2124,8 +2124,12 @@ const CalculatorComponent: React.FC = () => {
   // Filter items based on current mode
   const getFilteredItems = useCallback(
     (data: CalculatorData, calcType: 'pen' | 'crit' | 'armor') => {
-      if (gameMode === 'both') {
-        // Return all items when both modes are selected
+      // Armor resistance is identical in PvE and PvP, so the armor tab is never
+      // mode-filtered. The per-mode allowlists only enumerate buffs/passives and
+      // omit the individual armor pieces, so filtering armor would drop every
+      // equipped piece. Only pen/crit differ by mode.
+      if (gameMode === 'both' || calcType === 'armor') {
+        // Return all items when both modes are selected (or for armor)
         return data;
       }
 
@@ -2197,7 +2201,9 @@ const CalculatorComponent: React.FC = () => {
   }, [criticalData, gameMode, calculateItemValue]);
 
   const armorResistanceTotal = useMemo(() => {
-    const allowedItems = gameMode === 'both' ? null : MODE_FILTER[gameMode]?.['armor'] || null;
+    // Armor resistance does not differ by PvE/PvP, so it is never mode-filtered
+    // (the per-mode allowlists omit the individual armor pieces, which would
+    // silently drop every equipped piece from the total).
     let total = 0;
 
     // Pre-calculate for performance
@@ -2211,14 +2217,14 @@ const CalculatorComponent: React.FC = () => {
 
     for (let i = 0; i < items.length; i++) {
       const item = items[i];
-      if (item.enabled && (!allowedItems || allowedItems.includes(item.name))) {
+      if (item.enabled) {
         const value = calculateItemValue(item);
         total += value;
       }
     }
 
     return total;
-  }, [armorResistanceData, gameMode, calculateItemValue]);
+  }, [armorResistanceData, calculateItemValue]);
 
   // Status calculation
   const getPenStatus = useCallback((total: number, mode: GameMode) => {
@@ -6036,10 +6042,10 @@ const CalculatorComponent: React.FC = () => {
                           : undefined,
                       targetRanges:
                         gameMode === 'pve'
-                          ? 'Target: 18,200–18,999'
+                          ? `Target: ${PEN_OPTIMAL_MIN_PVE.toLocaleString()}–${PEN_OPTIMAL_MAX_PVE.toLocaleString()}`
                           : gameMode === 'pvp'
-                            ? 'Target: 33,100–33,500'
-                            : 'PvE: 18,200–18,999\nPvP: 33,100–33,500',
+                            ? `Target: ${PEN_OPTIMAL_MIN_PVP.toLocaleString()}–${PEN_OPTIMAL_MAX_PVP.toLocaleString()}`
+                            : `PvE: ${PEN_OPTIMAL_MIN_PVE.toLocaleString()}–${PEN_OPTIMAL_MAX_PVE.toLocaleString()}\nPvP: ${PEN_OPTIMAL_MIN_PVP.toLocaleString()}–${PEN_OPTIMAL_MAX_PVP.toLocaleString()}`,
                     },
                   })}
                 {selectedTab === 1 &&
