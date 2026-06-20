@@ -252,10 +252,10 @@ export interface PlayerDamageReductionSnapshot {
 }
 
 /**
- * Convert resistance value to damage reduction percentage
- * ESO uses a diminishing returns formula, not linear
- * Formula: Damage Reduction % = Resistance / (Resistance + 33000) * 100
- * This gives: 33000 resistance = 50% damage reduction (soft cap)
+ * Convert resistance value to damage reduction percentage.
+ * ESO armor mitigation is linear, not diminishing-returns: every 660 resistance
+ * grants 1% mitigation, soft-capped at 50% (33,000 resistance).
+ * Formula: Damage Reduction % = min(50, Resistance / 660)
  */
 export function resistanceToDamageReduction(resistance: number): number {
   if (resistance <= 0) return 0;
