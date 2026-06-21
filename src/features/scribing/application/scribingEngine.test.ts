@@ -158,6 +158,19 @@ describe('deriveScribedSkill', () => {
     expect(result?.warnings.length).toBeGreaterThan(0);
   });
 
+  it('excludes an incompatible script from effects and completeness', () => {
+    // lingering-torment is not available on Banner Bearer.
+    const result = deriveScribedSkill(data, {
+      grimoireId: 'banner-bearer',
+      focusId: 'flame-damage',
+      signatureId: 'lingering-torment',
+      affixId: 'brutality-and-sorcery',
+    });
+    expect(result?.effects.map((e) => e.slot)).toEqual(['focus', 'affix']); // no signature
+    expect(result?.isComplete).toBe(false);
+    expect(result?.warnings.some((w) => /Lingering Torment/.test(w))).toBe(true);
+  });
+
   it('returns null for an unknown grimoire', () => {
     expect(deriveScribedSkill(data, { grimoireId: 'nope' })).toBeNull();
   });

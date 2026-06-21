@@ -87,6 +87,25 @@ export class ScribingSimulatorService implements IScribingSimulatorService {
         ? data.affixScripts[request.affixScriptId]
         : undefined;
 
+      // A script id that was requested but does not exist in the dataset (a typo
+      // or stale/drifted id) is an error — never silently dropped, which would
+      // bless a different build than was requested as valid.
+      const unknownScripts: string[] = [];
+      if (request.focusScriptId && !focusScript) {
+        unknownScripts.push(`focus "${request.focusScriptId}"`);
+      }
+      if (request.signatureScriptId && !signatureScript) {
+        unknownScripts.push(`signature "${request.signatureScriptId}"`);
+      }
+      if (request.affixScriptId && !affixScript) {
+        unknownScripts.push(`affix "${request.affixScriptId}"`);
+      }
+      if (unknownScripts.length > 0) {
+        return this.createErrorResponse(request, [
+          `Unknown script(s): ${unknownScripts.join(', ')}`,
+        ]);
+      }
+
       // Strict compatibility for the public API: a provided script that the
       // grimoire does not support is an error (the live UI never offers these).
       const validationErrors: string[] = [];
@@ -214,18 +233,25 @@ export class ScribingSimulatorService implements IScribingSimulatorService {
     };
   }
 
+  /**
+   * Validity of a (possibly partial) selection, using the SAME rules as
+   * {@link simulate}: a partial build with only compatible, known scripts is
+   * valid; unknown or incompatible script ids are not. This keeps the validation
+   * and simulation contracts in agreement for in-progress planner states.
+   */
   async validateCombination(
     grimoireId: string,
     focusScriptId?: string,
     signatureScriptId?: string,
     affixScriptId?: string,
   ): Promise<boolean> {
-    return this.repository.validateCombination(
+    const response = await this.simulate({
       grimoireId,
-      focusScriptId || '',
-      signatureScriptId || '',
-      affixScriptId || '',
-    );
+      focusScriptId,
+      signatureScriptId,
+      affixScriptId,
+    });
+    return response.isValid;
   }
 
   async getAvailableCombinations(grimoireId: string): Promise<{

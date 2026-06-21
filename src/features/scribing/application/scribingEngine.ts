@@ -153,15 +153,22 @@ export function deriveScribedSkill(
     : undefined;
 
   // Focus drives the skill's name + resulting ability. Only a focus the grimoire
-  // actually supports transforms the skill.
+  // actually supports transforms the skill. A selected script that the grimoire
+  // does NOT support is reported as a warning and excluded from the result (not
+  // counted toward the effects or completeness) so the engine never renders an
+  // impossible build as a valid one.
   const transform = focus ? grimoire.nameTransformations?.[focus.id] : undefined;
-  if (focus && !transform) {
+  const focusOk = Boolean(focus && transform);
+  const signatureOk = Boolean(signature && signature.compatibleGrimoires.includes(grimoire.id));
+  const affixOk = Boolean(affix && affix.compatibleGrimoires.includes(grimoire.id));
+
+  if (focus && !focusOk) {
     warnings.push(`${focus.name} is not available on ${grimoire.name}.`);
   }
-  if (signature && !signature.compatibleGrimoires.includes(grimoire.id)) {
+  if (signature && !signatureOk) {
     warnings.push(`${signature.name} is not available on ${grimoire.name}.`);
   }
-  if (affix && !affix.compatibleGrimoires.includes(grimoire.id)) {
+  if (affix && !affixOk) {
     warnings.push(`${affix.name} is not available on ${grimoire.name}.`);
   }
 
@@ -173,9 +180,9 @@ export function deriveScribedSkill(
   const abilityId = transform ? transform.abilityIds?.[0] : grimoire.abilityIds?.[0];
 
   const effects: ScribedEffectLine[] = [];
-  if (focus) effects.push(effectLine('focus', focus));
-  if (signature) effects.push(effectLine('signature', signature));
-  if (affix) effects.push(effectLine('affix', affix));
+  if (focusOk && focus) effects.push(effectLine('focus', focus));
+  if (signatureOk && signature) effects.push(effectLine('signature', signature));
+  if (affixOk && affix) effects.push(effectLine('affix', affix));
 
   return {
     grimoireId: grimoire.id,
@@ -191,7 +198,8 @@ export function deriveScribedSkill(
     baseEffect: grimoire.baseEffect,
     effects,
     warnings,
-    isComplete: Boolean(focus && signature && affix),
+    // A complete build = all three slots filled with grimoire-compatible scripts.
+    isComplete: focusOk && signatureOk && affixOk,
   };
 }
 
