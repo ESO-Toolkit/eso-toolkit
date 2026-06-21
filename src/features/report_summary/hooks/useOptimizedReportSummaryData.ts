@@ -4,6 +4,7 @@ import { useSelector, useStore } from 'react-redux';
 import { useEsoLogsClientInstance } from '../../../EsoLogsClientContext';
 import { FightFragment } from '../../../graphql/gql/graphql';
 import { DeathAnalysisInput, DeathAnalysisService } from '../../../services/DeathAnalysisService';
+import { fetchDamageEvents } from '../../../store/events_data/damageEventsSlice';
 import { fetchDeathEvents } from '../../../store/events_data/deathEventsSlice';
 import {
   selectAbilitiesByIdForContext,
@@ -318,9 +319,10 @@ export function useOptimizedReportSummaryData(
         }
 
         // When the Deaths table is unavailable, fall back to the raw per-fight
-        // death-events fetch (cheap — it carries no damage payload). The Enemies
-        // damage crawl stays dropped, so A8 hit size degrades to 0 in that
-        // fallback; death counts / causes / patterns stay correct.
+        // death-events fetch. In that fallback the per-fight damage fetch below
+        // pulls BOTH hostilities (so the A8 killing-blow join still finds the
+        // incoming lethal hits); the Enemies crawl is dropped only on the normal,
+        // table-backed path.
         const needRawDeaths = tableDeaths == null;
 
         // Per-fight events captured straight from the thunk results (see note
@@ -353,16 +355,25 @@ export function useOptimizedReportSummaryData(
 
           await Promise.all(
             batch.map(async (fight) => {
-              // Friendlies-only damage (for the per-event damage-type breakdown) +
-              // best-effort resurrections (for A9 time alive). The Enemies damage
-              // crawl is dropped (A8 now comes from the Deaths table recap), and the
-              // raw death fetch runs ONLY when the Deaths table was unavailable.
+              // Damage (for the per-event damage-type breakdown) + best-effort
+              // resurrections (for A9 time alive). On the normal path the A8 hit
+              // size comes from the Deaths table recap, so only the Friendlies
+              // stream is needed; in the raw-death fallback there is no recap to
+              // join against, so we fetch BOTH hostilities (the full pre-table
+              // behaviour) — the incoming Enemies damage is what
+              // `computeKillingBlowHitSize` joins, without it A8 would be 0.
               const [damageRes, deathRes, rezRes] = await Promise.allSettled([
-                withTimeout(
-                  fetchSummaryFriendlyDamageEvents({ reportCode, fight, client }),
-                  PER_FIGHT_EVENT_TIMEOUT_MS,
-                  `damage events for ${fight.name}`,
-                ),
+                needRawDeaths
+                  ? withTimeout(
+                      dispatch(fetchDamageEvents({ reportCode, fight, client })).unwrap(),
+                      PER_FIGHT_EVENT_TIMEOUT_MS,
+                      `damage events for ${fight.name}`,
+                    )
+                  : withTimeout(
+                      fetchSummaryFriendlyDamageEvents({ reportCode, fight, client }),
+                      PER_FIGHT_EVENT_TIMEOUT_MS,
+                      `damage events for ${fight.name}`,
+                    ),
                 needRawDeaths
                   ? withTimeout(
                       dispatch(fetchDeathEvents({ reportCode, fight, client })).unwrap(),
@@ -447,8 +458,8 @@ export function useOptimizedReportSummaryData(
         // ---- Death analysis ----
         // Prefer the aggregated Deaths table (A8 hit size from each death's recap,
         // A9 from the resurrection casts just fetched). Fall back to the raw
-        // per-fight death events when the table was unavailable — A8 degrades to 0
-        // there (the Enemies damage crawl is dropped), counts/causes stay correct.
+        // per-fight death events when the table was unavailable; that path fetched
+        // both damage hostilities above, so A8 joins the incoming lethal hits too.
         const deathAnalysis: ReportDeathAnalysis = tableDeaths
           ? buildTableDeathAnalysis(tableDeaths, resurrectByFight)
           : DeathAnalysisService.analyzeReportDeaths(

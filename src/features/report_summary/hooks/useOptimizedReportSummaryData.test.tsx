@@ -77,7 +77,8 @@ const mockAbilities = {
 };
 
 // A plain async function (not a jest.fn) so `resetMocks` can't wipe its body —
-// mirrors how the original damage thunk was mocked via createAsyncThunk.
+// mirrors how the original damage thunk was mocked via createAsyncThunk. This is
+// the normal (table-backed) path's Friendlies-only fetch.
 jest.mock('../summaryDamageEvents', () => ({
   fetchSummaryFriendlyDamageEvents: async ({ fight }: { fight: { id: number } }) => {
     if (mockHangDamageFightId === fight.id) {
@@ -87,6 +88,23 @@ jest.mock('../summaryDamageEvents', () => ({
     return mockDamageByFight[fight.id] ?? [];
   },
 }));
+
+// The shared damage thunk — used ONLY on the raw-death fallback path (both
+// hostilities) so the A8 killing-blow join still has incoming damage.
+jest.mock('../../../store/events_data/damageEventsSlice', () => {
+  const { createAsyncThunk } = jest.requireActual('@reduxjs/toolkit');
+  return {
+    fetchDamageEvents: createAsyncThunk(
+      'test/fetchDamageEvents',
+      async ({ fight }: { fight: { id: number } }) => {
+        if (mockHangDamageFightId === fight.id) {
+          return new Promise<unknown[]>(() => {});
+        }
+        return mockDamageByFight[fight.id] ?? [];
+      },
+    ),
+  };
+});
 
 jest.mock('../../../store/events_data/deathEventsSlice', () => {
   const { createAsyncThunk } = jest.requireActual('@reduxjs/toolkit');
@@ -300,6 +318,36 @@ describe('useOptimizedReportSummaryData', () => {
 
     expect(mockFetchDeathEventsImpl).toHaveBeenCalled();
     expect(result.current.reportSummaryData!.deathAnalysis!.totalDeaths).toBe(1);
+  });
+
+  it('computes A8 hit size from the Enemies stream in the raw-death fallback', async () => {
+    // Deaths table unavailable -> fallback fetches BOTH hostilities, so the
+    // incoming lethal hit (the boss's 400 at ts 2) is available to the A8 join.
+    mockFetchDeathEventsImpl.mockResolvedValueOnce([
+      {
+        type: 'death',
+        targetID: 1,
+        targetIsFriendly: true,
+        sourceID: 50,
+        sourceIsFriendly: false,
+        abilityGameID: 2000,
+        fight: 1,
+        timestamp: 3, // within 1s of the incoming 400 damage at ts 2
+        amount: 0,
+      },
+    ]);
+
+    const { result } = renderHook(() => useOptimizedReportSummaryData('test123'), {
+      wrapper: makeWrapper(),
+    });
+    await waitFor(() => expect(result.current.reportSummaryData?.deathAnalysis).toBeDefined());
+
+    const mechanic = result.current.reportSummaryData!.deathAnalysis!.mechanicDeaths.find(
+      (m) => m.mechanicId === 2000,
+    );
+    // Without the both-hostility fallback fetch this would be 0 (the Friendlies
+    // stream has no incoming damage to the victim).
+    expect(mechanic?.averageKillingBlowHitSize).toBe(400);
   });
 
   it('drops the previous report’s data when the report changes (no stale render)', async () => {
