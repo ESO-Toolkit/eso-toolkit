@@ -52,9 +52,32 @@ const CATEGORY_LABELS: ReadonlyArray<{ key: DamageCategoryKey; label: string }> 
 ];
 
 /**
- * Fetches every fight's damage/death/healing events (in small concurrent
- * batches, reusing the shared Redux event slices) and aggregates them into the
- * report-wide damage breakdown + death analysis.
+ * Per-fight event fetches are raced against this bound so a single hung request
+ * can never freeze the whole summary. The batch loop `await`s a
+ * `Promise.allSettled` over each fight's fetches; without a timeout, one stuck
+ * request would block every later batch indefinitely (observed live as a
+ * permanently stalled progress bar). It is deliberately generous — it only
+ * trips on a genuinely stalled request, not a slow-but-progressing one.
+ */
+const PER_FIGHT_EVENT_TIMEOUT_MS = 60_000;
+
+/**
+ * Rejects if `promise` has not settled within `ms`. The underlying thunk keeps
+ * running; we simply stop waiting and let this fight's data count as failed
+ * (recorded in `fightErrors`), exactly like any other per-fight fetch failure.
+ */
+export function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+  let timer: ReturnType<typeof setTimeout>;
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new Error(`Timed out fetching ${label} after ${ms} ms`)), ms);
+  });
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer)) as Promise<T>;
+}
+
+/**
+ * Fetches every fight's damage/death events (plus best-effort resurrections) in
+ * small concurrent batches, reusing the shared Redux event slices, and
+ * aggregates them into the report-wide damage breakdown + death analysis.
  *
  * Events are consumed directly from each `dispatch(...).unwrap()` result rather
  * than re-read from Redux afterwards: the event slices trim their cache to
@@ -147,9 +170,21 @@ export function useOptimizedReportSummaryData(
               // Fetching healing (a paginated, multi-MB per-fight query) was pure
               // waste — its result was never stored or read.
               const [damageRes, deathRes, rezRes] = await Promise.allSettled([
-                dispatch(fetchDamageEvents({ reportCode, fight, client })).unwrap(),
-                dispatch(fetchDeathEvents({ reportCode, fight, client })).unwrap(),
-                fetchResurrectionEvents({ reportCode, fight, client }),
+                withTimeout(
+                  dispatch(fetchDamageEvents({ reportCode, fight, client })).unwrap(),
+                  PER_FIGHT_EVENT_TIMEOUT_MS,
+                  `damage events for ${fight.name}`,
+                ),
+                withTimeout(
+                  dispatch(fetchDeathEvents({ reportCode, fight, client })).unwrap(),
+                  PER_FIGHT_EVENT_TIMEOUT_MS,
+                  `death events for ${fight.name}`,
+                ),
+                withTimeout(
+                  fetchResurrectionEvents({ reportCode, fight, client }),
+                  PER_FIGHT_EVENT_TIMEOUT_MS,
+                  `resurrection events for ${fight.name}`,
+                ),
               ]);
 
               if (damageRes.status === 'fulfilled') {

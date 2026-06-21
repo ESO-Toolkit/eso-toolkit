@@ -6,7 +6,7 @@ import { Provider } from 'react-redux';
 import { EsoLogsClientProvider } from '../../../EsoLogsClientContext';
 import { LoggerProvider } from '../../../contexts/LoggerContext';
 
-import { useOptimizedReportSummaryData } from './useOptimizedReportSummaryData';
+import { useOptimizedReportSummaryData, withTimeout } from './useOptimizedReportSummaryData';
 
 // One 10s fight.
 const mockFights = [{ id: 1, name: 'Boss', startTime: 0, endTime: 10_000 }];
@@ -156,5 +156,31 @@ describe('useOptimizedReportSummaryData', () => {
     await waitFor(() => expect(result.current.reportSummaryData).not.toBeNull());
 
     expect(result.current.reportSummaryData!.reportInfo.ownerName).toBe('GuildLeader');
+  });
+});
+
+describe('withTimeout (per-fight fetch safety net)', () => {
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
+  it('rejects a hung promise once the timeout elapses', async () => {
+    jest.useFakeTimers();
+    const neverSettles = new Promise<number>(() => {});
+    const raced = withTimeout(neverSettles, 60_000, 'damage events for Boss');
+    const assertion = expect(raced).rejects.toThrow(
+      'Timed out fetching damage events for Boss after 60000 ms',
+    );
+    await jest.advanceTimersByTimeAsync(60_000);
+    await assertion;
+  });
+
+  it('passes a value straight through and clears the timer when it settles first', async () => {
+    jest.useFakeTimers();
+    await expect(withTimeout(Promise.resolve('events'), 60_000, 'death events')).resolves.toBe(
+      'events',
+    );
+    // The timeout timer is cleared on settle — nothing left to leak.
+    expect(jest.getTimerCount()).toBe(0);
   });
 });
