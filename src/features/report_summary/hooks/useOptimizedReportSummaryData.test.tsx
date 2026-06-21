@@ -378,6 +378,70 @@ describe('useOptimizedReportSummaryData', () => {
     });
     await waitFor(() => expect(result.current.isLoading).toBe(false));
   });
+
+  it('does not let the previous report’s in-flight fetch commit after a report change', async () => {
+    // Report A's Tier-1 is still in flight (pending) when we navigate away.
+    let resolveA: (v: { damage: unknown; deaths: unknown }) => void = () => {};
+    const pendingA = new Promise<{ damage: unknown; deaths: unknown }>((res) => {
+      resolveA = res;
+    });
+    mockFetchSummaryTables.mockReturnValueOnce(pendingA);
+
+    const { result, rerender } = renderHook(({ code }) => useOptimizedReportSummaryData(code), {
+      wrapper: makeWrapper(),
+      initialProps: { code: 'reportA' },
+    });
+
+    // Navigate to report B, which resolves to its own leaderboard (total 42).
+    mockFetchSummaryTables.mockResolvedValueOnce({
+      damage: {
+        totalDamage: 42,
+        dps: 1,
+        playerBreakdown: [
+          {
+            playerId: '1',
+            playerName: 'Bee',
+            totalDamage: 42,
+            dps: 1,
+            damagePercentage: 100,
+            fightBreakdown: [],
+          },
+        ],
+      },
+      deaths: null,
+    });
+    await act(async () => {
+      rerender({ code: 'reportB' });
+    });
+    await waitFor(() =>
+      expect(result.current.reportSummaryData?.damageBreakdown.totalDamage).toBe(42),
+    );
+
+    // Now report A's stale fetch resolves — superseded by the runId bump on the
+    // report change, it must NOT overwrite report B's data.
+    await act(async () => {
+      resolveA({
+        damage: {
+          totalDamage: 999,
+          dps: 1,
+          playerBreakdown: [
+            {
+              playerId: '1',
+              playerName: 'Ay',
+              totalDamage: 999,
+              dps: 1,
+              damagePercentage: 100,
+              fightBreakdown: [],
+            },
+          ],
+        },
+        deaths: null,
+      });
+      await pendingA;
+    });
+
+    expect(result.current.reportSummaryData?.damageBreakdown.totalDamage).toBe(42);
+  });
 });
 
 describe('useOptimizedReportSummaryData per-fight timeout wiring', () => {

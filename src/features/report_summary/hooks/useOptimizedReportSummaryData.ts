@@ -637,10 +637,18 @@ export function useOptimizedReportSummaryData(
   // show the PRIOR report's death analysis / leaderboard during the new report's
   // load. Keyed on reportCode ONLY (not the fetch deps) so same-report effect
   // re-fires — e.g. the `fights` selector reference churning — never wipe a valid
-  // in-progress commit. A run still in flight is fenced off by its runId guard.
+  // in-progress commit.
+  //
+  // Bump the run id here too: the auto-fetch below is deferred until the new
+  // report's fights load, so without superseding the old run its still-in-flight
+  // request would pass `isCurrent()` and re-commit the previous report's data
+  // right after this reset. The old run's setState calls are now all fenced off.
   React.useEffect(() => {
+    runIdRef.current += 1;
     setReportSummaryData(null);
+    setProgress(null);
     setError(null);
+    setIsLoading(false);
   }, [reportCode]);
 
   // Auto-fetch data when dependencies are ready
