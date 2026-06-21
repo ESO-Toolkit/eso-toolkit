@@ -191,6 +191,10 @@ export function deriveScribedSkill(
     skillName,
     abilityId,
     icon: grimoire.icon,
+    // Resource is a property of the grimoire in the game-extracted data (the
+    // Focus changes the damage TYPE, not Magicka vs Stamina). Cost is the
+    // grimoire's base value — the exact cost scales with the Focus, so the UI
+    // de-emphasises the number rather than presenting it as authoritative.
     resourceType: grimoire.resource ?? 'magicka',
     cost: grimoire.cost.first,
     targetType: grimoire.targetType,

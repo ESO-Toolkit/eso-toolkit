@@ -20,7 +20,6 @@ import {
   Box,
   Button,
   Chip,
-  IconButton,
   InputAdornment,
   Stack,
   TextField,
@@ -346,6 +345,11 @@ export const ScriptSlotPicker: React.FC<ScriptSlotPickerProps> = ({
                 key={s.id}
                 role="option"
                 aria-selected={selected}
+                // Fold name + effect + unlock into the option's accessible name
+                // so screen-reader users get everything without a nested control.
+                aria-label={`${s.name}. ${s.description}${
+                  s.acquisition ? `. How to unlock: ${s.acquisition}` : ''
+                }`}
                 tabIndex={s.id === tabbableId ? 0 : -1}
                 onClick={() => onSelect(s.id)}
                 onKeyDown={(e) => {
@@ -390,16 +394,14 @@ export const ScriptSlotPicker: React.FC<ScriptSlotPickerProps> = ({
                     />
                   )}
                   {s.acquisition && (
+                    // Non-focusable hover affordance only — no nested interactive
+                    // control inside the listbox option. The acquisition text is
+                    // already in the option's aria-label for keyboard/SR users.
                     <Tooltip title={s.acquisition} arrow>
-                      <IconButton
-                        size="small"
-                        aria-label={`How to unlock ${s.name}: ${s.acquisition}`}
-                        onClick={(e) => e.stopPropagation()}
-                        onKeyDown={(e) => e.stopPropagation()}
-                        sx={{ ml: 'auto', p: 0.25, color: 'text.disabled' }}
-                      >
-                        <InfoIcon sx={{ fontSize: 16 }} />
-                      </IconButton>
+                      <InfoIcon
+                        aria-hidden
+                        sx={{ ml: 'auto', fontSize: 16, color: 'text.disabled', cursor: 'help' }}
+                      />
                     </Tooltip>
                   )}
                 </Box>
@@ -567,7 +569,7 @@ export const ScribedSkillCard: React.FC<ScribedSkillCardProps> = ({ result }) =>
         }}
       >
         <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-          The Focus script sets the skill’s final name, resource and cost.
+          The Focus script sets the skill’s final name and cost.
         </Typography>
         {result.isComplete && (
           <Chip

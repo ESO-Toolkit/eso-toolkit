@@ -510,7 +510,8 @@ export const AFFIX_META: Readonly<Record<string, ScriptMeta>> = {
       'Drop after the Sigil of the Luminary Netch, or buy from Firandil / Filer Ool / Tel Var merchant.',
   },
   protection: {
-    effect: 'Grants Minor Protection (-5% damage taken) to you/allies.',
+    effect:
+      'Grants Minor Protection (-5% damage taken) to you/allies; Major on some grimoires (e.g. Trample).',
     category: 'Buff',
     acquisition:
       'Drop after the Sigil of the Luminary Netch, or buy from Firandil / Filer Ool / Tel Var merchant.',

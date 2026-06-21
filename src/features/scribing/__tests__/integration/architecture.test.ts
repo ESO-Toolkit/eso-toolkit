@@ -68,6 +68,17 @@ describe('Scribing Architecture Integration', () => {
 
       expect(isValid).toBe(false);
     });
+
+    it('accepts a partial selection but rejects an unknown script (one contract)', async () => {
+      // Empty slots are allowed (in-progress build).
+      await expect(repository.validateCombination(GRIMOIRE_SLUG, FOCUS_SLUG, '', '')).resolves.toBe(
+        true,
+      );
+      // A provided-but-unknown script id is invalid.
+      await expect(
+        repository.validateCombination(GRIMOIRE_SLUG, 'not-a-real-focus', '', ''),
+      ).resolves.toBe(false);
+    });
   });
 
   describe('Ability Mapping Service', () => {

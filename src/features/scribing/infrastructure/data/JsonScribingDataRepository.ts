@@ -278,6 +278,12 @@ export class JsonScribingDataRepository implements IScribingDataRepository {
     };
   }
 
+  /**
+   * Validity of a (possibly partial) selection. An empty script id means "slot
+   * not chosen" and is allowed; a provided id must exist AND be compatible with
+   * the grimoire. This matches {@link ScribingSimulatorService.simulate} so there
+   * is a single validity contract across the repository, service and engine.
+   */
   async validateCombination(
     grimoireId: string,
     focusScriptId: string,
@@ -285,25 +291,26 @@ export class JsonScribingDataRepository implements IScribingDataRepository {
     affixScriptId: string,
   ): Promise<boolean> {
     try {
-      const [grimoire, focusScript, signatureScript, affixScript] = await Promise.all([
-        this.getGrimoire(grimoireId),
-        this.getFocusScript(focusScriptId),
-        this.getSignatureScript(signatureScriptId),
-        this.getAffixScript(affixScriptId),
-      ]);
-
-      // Check if all components exist
-      if (!grimoire || !focusScript || !signatureScript || !affixScript) {
+      const data = await this.loadScribingData();
+      const grimoire = data.grimoires[grimoireId];
+      if (!grimoire) {
         return false;
       }
 
-      // Check compatibility
-      const isCompatible =
-        focusScript.compatibleGrimoires.includes(grimoireId) &&
-        signatureScript.compatibleGrimoires.includes(grimoireId) &&
-        affixScript.compatibleGrimoires.includes(grimoireId);
+      const slotOk = (
+        id: string,
+        script: { compatibleGrimoires: readonly string[] } | undefined,
+      ): boolean => {
+        if (!id) return true; // slot intentionally left empty
+        if (!script) return false; // unknown id
+        return script.compatibleGrimoires.includes(grimoireId);
+      };
 
-      return isCompatible;
+      return (
+        slotOk(focusScriptId, data.focusScripts[focusScriptId]) &&
+        slotOk(signatureScriptId, data.signatureScripts[signatureScriptId]) &&
+        slotOk(affixScriptId, data.affixScripts[affixScriptId])
+      );
     } catch (error) {
       this.logger.error(
         'Error validating combination',
