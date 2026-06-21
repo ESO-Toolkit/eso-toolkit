@@ -99,6 +99,17 @@ export const UnauthenticatedLandingSection: React.FC = () => {
               height: { xs: '56px', sm: '64px' },
               padding: '0 1.5rem',
               border: 'none',
+              // The container handles the hover lift; neutralize the global
+              // MuiOutlinedInput hover styles so the input doesn't lift on its
+              // own or paint an opaque background over the container's top
+              // accent border.
+              '&:hover': {
+                backgroundColor: 'transparent !important',
+                transform: 'none',
+              },
+              '&.Mui-focused': {
+                backgroundColor: 'transparent',
+              },
               '& fieldset': {
                 border: 'none',
               },
