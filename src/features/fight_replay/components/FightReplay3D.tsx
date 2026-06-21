@@ -47,6 +47,25 @@ import { UpNextCard, type UpNextState } from './UpNextCard';
 // an analyst inch through a moment frame-by-frame. Distinct from the ±1s arrow seek (Item 5).
 const FRAME_STEP_MS = 100;
 
+/** True when a keyboard event came from a text-entry surface that should keep replay shortcuts. */
+function isTextEntryTarget(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) {
+    return false;
+  }
+  return (
+    target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable === true
+  );
+}
+
+/** Parse the share/deep-link actor id query parameter into the replay's nullable selection type. */
+function parseActorIdParam(actorParam: string | null): number | null {
+  if (actorParam === null) {
+    return null;
+  }
+  const parsedActorId = Number(actorParam);
+  return Number.isFinite(parsedActorId) ? parsedActorId : null;
+}
+
 /**
  * Continuous trial-replay wiring. When present (a multi-segment run), the transport
  * gains the trial-wide scrubber + "play whole trial" controls, and playback can
@@ -140,14 +159,7 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
   const [searchParams] = useSearchParams();
   const params = useParams();
   const actorParam = searchParams.get('actorId');
-
-  let initialSelectedActorId: number | null = null;
-  if (actorParam !== null) {
-    const parsedActorId = Number(actorParam);
-    if (!isNaN(parsedActorId)) {
-      initialSelectedActorId = parsedActorId;
-    }
-  }
+  const selectedActorIdFromUrl = React.useMemo(() => parseActorIdParam(actorParam), [actorParam]);
 
   // Actor selection and camera following state.
   // null = no actor selected/following, number = following that actor ID.
@@ -156,8 +168,8 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
   // useFrame loop and by KeyboardCameraControls. `followingActorId` mirrors it as React
   // state purely so UI (the "Following:" chip) can react to changes. The two are always
   // written together via setFollowingActor below — no polling needed.
-  const followingActorIdRef = useRef<number | null>(initialSelectedActorId);
-  const [followingActorId, setFollowingActorId] = useState<number | null>(initialSelectedActorId);
+  const followingActorIdRef = useRef<number | null>(selectedActorIdFromUrl);
+  const [followingActorId, setFollowingActorId] = useState<number | null>(selectedActorIdFromUrl);
 
   // Wrapper around the canvas + the docked control bar. Used as the fullscreen target (Item 3) so one
   // requestFullscreen() takes the whole replay block (3D view, overlays, and the controls) at once.
@@ -169,6 +181,13 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
     followingActorIdRef.current = actorId;
     setFollowingActorId(actorId);
   }, []);
+
+  // The replay shell stays mounted across in-replay route/search-param changes. Keep share/deep
+  // links truthful when `?actorId=` changes without a remount (for example browser back/forward or
+  // a pasted URL handled client-side) instead of leaving the previous manual actor lock selected.
+  useEffect(() => {
+    setFollowingActor(selectedActorIdFromUrl);
+  }, [selectedActorIdFromUrl, setFollowingActor]);
 
   // Persisted viewer prefs (localStorage). FightReplay3D owns the speed + path/trail slices;
   // Arena3D owns the names + performance slices (it persists those itself via the same hook).
@@ -449,7 +468,7 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
     setLoopStart(null);
     setLoopEnd(null);
     setIsPlaying(false);
-    setFollowingActor(null);
+    setFollowingActor(selectedActorIdFromUrl);
     setSelectedPlayerIds(new Set());
     // A new fight is a new boundary: clear BOTH halves of any Up-next cancel (a stale
     // countdownCancelled would suppress the next fight's countdown — the only Cancel UI —
@@ -467,6 +486,7 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
     animationTimeRef,
     setFollowingActor,
     searchParams,
+    selectedActorIdFromUrl,
   ]);
 
   // Resume playback once the freshly-loaded fight is ready (continuous auto-advance).
@@ -959,7 +979,7 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
         return;
       }
       // Don't interfere with text input.
-      if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) {
+      if (isTextEntryTarget(event.target)) {
         return;
       }
 
