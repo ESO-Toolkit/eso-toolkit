@@ -46,6 +46,11 @@ export const ReportSummaryPage: React.FC = () => {
   // Get basic report data
   const { reportData, isReportLoading } = useReportData();
 
+  // The fight list ships with the report metadata, well before the (slow)
+  // per-fight event aggregation finishes — used to show the fight count in the
+  // header immediately instead of flashing "0 Fights" during the summary load.
+  const reportFightCount = reportData?.fights?.filter(Boolean).length;
+
   // Get aggregated summary data using optimized Redux-based hook
   const {
     reportSummaryData: summaryData,
@@ -70,8 +75,12 @@ export const ReportSummaryPage: React.FC = () => {
     };
   }, [stableReportId, reportData]);
 
-  // Show loading state
-  if (isReportLoading || isSummaryLoading) {
+  // Show the full-page loading view only while the report *metadata* itself is
+  // loading — without it there is no header/zone/title to anchor the page. The
+  // slow per-fight event aggregation (isSummaryLoading) no longer blocks the
+  // whole page: the header renders immediately and each section shows its own
+  // skeleton until its data lands (progressive render).
+  if (isReportLoading) {
     return (
       <Box sx={{ p: 3 }}>
         <DynamicMetaTags {...metaTags} />
@@ -102,7 +111,28 @@ export const ReportSummaryPage: React.FC = () => {
         reportData={reportData}
         summaryData={summaryData ?? undefined}
         reportId={stableReportId}
+        fallbackFightCount={reportFightCount}
       />
+
+      {isSummaryLoading && (
+        <Box sx={{ mb: 2 }}>
+          {progress && (
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+              <Typography variant="caption" color="text.secondary">
+                {progress.currentTask}
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                {progress.current}/{progress.total}
+              </Typography>
+            </Box>
+          )}
+          <LinearProgress
+            variant={progress ? 'determinate' : 'indeterminate'}
+            value={progress ? (progress.current / progress.total) * 100 : undefined}
+            sx={{ height: 6, borderRadius: 3 }}
+          />
+        </Box>
+      )}
 
       {summaryData && Object.keys(summaryData.errors.fightErrors).length > 0 && (
         <Alert severity="warning" sx={{ mb: 2 }}>
@@ -141,12 +171,15 @@ interface ReportSummaryHeaderProps {
   reportData: ReportFragment | null;
   summaryData?: ReportSummaryData;
   reportId: string;
+  /** Fight count from report master data, shown until the aggregation lands. */
+  fallbackFightCount?: number;
 }
 
 const ReportSummaryHeader: React.FC<ReportSummaryHeaderProps> = ({
   reportData,
   summaryData,
   reportId,
+  fallbackFightCount,
 }) => {
   return (
     <>
@@ -164,7 +197,7 @@ const ReportSummaryHeader: React.FC<ReportSummaryHeaderProps> = ({
         <CardContent sx={{ py: 2, '&:last-child': { pb: 2 } }}>
           <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap', alignItems: 'center' }}>
             <Chip
-              label={`${summaryData?.fights.length || 0} Fights`}
+              label={`${summaryData?.fights.length ?? fallbackFightCount ?? 0} Fights`}
               size="small"
               sx={(theme) => chipPillSx(theme.palette.mode === 'dark', SEMANTIC_ACCENTS.cyan)}
             />

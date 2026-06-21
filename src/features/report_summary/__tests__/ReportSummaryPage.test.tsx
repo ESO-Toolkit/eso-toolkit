@@ -330,8 +330,11 @@ describe('ReportSummaryPage', () => {
 });
 
 describe('ReportSummaryPage Loading State', () => {
-  it('shows loading skeleton while data is loading', () => {
-    // Mock loading state
+  it('renders the header immediately and streams an inline progress bar while the summary aggregates', () => {
+    // Report metadata is ready (isReportLoading: false from the useReportData
+    // mock) but the per-fight aggregation is still running. The page should NOT
+    // block on the full-page loading card — it renders the header progressively
+    // and shows the aggregation progress inline.
     mockUseOptimizedReportSummaryData.mockReturnValue({
       reportSummaryData: undefined,
       isLoading: true,
@@ -346,7 +349,12 @@ describe('ReportSummaryPage Loading State', () => {
 
     renderWithProviders(<ReportSummaryPage />);
 
-    expect(screen.getByText('Loading Report Summary')).toBeInTheDocument();
+    // The full-page blocker is gone — header content renders right away.
+    expect(screen.queryByText('Loading Report Summary')).not.toBeInTheDocument();
+    expect(screen.getByText('Test Report')).toBeInTheDocument();
+    // Fight count comes from report metadata before the aggregation finishes.
+    expect(screen.getByText('2 Fights')).toBeInTheDocument();
+    // Inline progress reflects the ongoing aggregation.
     expect(screen.getByText('Fetching damage events...')).toBeInTheDocument();
     expect(screen.getByText('2/10')).toBeInTheDocument();
   });
