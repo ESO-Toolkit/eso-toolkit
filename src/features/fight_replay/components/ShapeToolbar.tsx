@@ -108,6 +108,8 @@ export const ShapeToolbar: React.FC<ShapeToolbarProps> = ({
           exclusive
           onChange={(_e, value: ShapeKind | null) => onSelectTool(value)}
           aria-label="Shape drawing tool"
+          // Wrap to a second row on narrow screens so no tool (RECT/RULER) is clipped off-edge.
+          sx={{ flexWrap: 'wrap' }}
         >
           {TOOLS.map((tool) => (
             <ToggleButton key={tool.kind} value={tool.kind} aria-label={tool.label}>

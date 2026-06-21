@@ -108,6 +108,14 @@ interface FightReplay3DProps {
   drawStyle?: ShapeStyle;
   /** Commit a finished shape's ARENA points (FightReplay converts to world + persists). */
   onShapeDrawn?: (kind: ShapeKind, arenaPoints: Array<[number, number]>) => void;
+  /** Select/disarm a draw tool (surfaced in the mobile Settings sheet). */
+  onSelectDrawTool?: (tool: ShapeKind | null) => void;
+  /** Change the draw style (mobile Settings sheet). */
+  onDrawStyleChange?: (patch: Partial<ShapeStyle>) => void;
+  /** Number of drawn shapes (mobile Settings sheet "clear" affordance). */
+  shapeCount?: number;
+  /** Remove all drawn shapes (mobile Settings sheet). */
+  onClearShapes?: () => void;
   /** Opens the marker edit dialog (owned by FightReplay) for the given marker. */
   onEditMarker?: (markerId: string) => void;
   /** Marker undo/redo for the mobile tools sheet (Ctrl+Z/Ctrl+Shift+Z have no touch equivalent). */
@@ -136,6 +144,10 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
   drawTool = null,
   drawStyle,
   onShapeDrawn,
+  onSelectDrawTool,
+  onDrawStyleChange,
+  shapeCount = 0,
+  onClearShapes,
   onEditMarker,
   canUndoMarkers = false,
   onUndoMarkers,
@@ -1605,6 +1617,12 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
             onUndoMarkers={onUndoMarkers}
             canRedoMarkers={canRedoMarkers}
             onRedoMarkers={onRedoMarkers}
+            drawTool={drawTool}
+            drawStyle={drawStyle}
+            onSelectDrawTool={onSelectDrawTool}
+            onDrawStyleChange={onDrawStyleChange}
+            shapeCount={shapeCount}
+            onClearShapes={onClearShapes}
           />
         </Box>
       )}

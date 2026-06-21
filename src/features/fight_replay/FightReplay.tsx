@@ -655,6 +655,10 @@ export const FightReplay: React.FC = () => {
         drawTool={drawTool}
         drawStyle={drawStyle}
         onShapeDrawn={handleShapeDrawn}
+        onSelectDrawTool={handleSelectTool}
+        onDrawStyleChange={handleStyleChange}
+        shapeCount={markersState?.shapes?.length ?? 0}
+        onClearShapes={clearShapes}
         onEditMarker={setEditingMarkerId}
         canUndoMarkers={canUndo}
         onUndoMarkers={undo}

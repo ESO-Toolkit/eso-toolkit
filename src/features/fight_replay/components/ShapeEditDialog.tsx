@@ -15,6 +15,8 @@ import {
   Switch,
   TextField,
   Typography,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import React, { useEffect, useMemo, useState } from 'react';
 
@@ -76,6 +78,9 @@ export const ShapeEditDialog: React.FC<ShapeEditDialogProps> = ({
   const [timeEnabled, setTimeEnabled] = useState(false);
   const [timeRange, setTimeRange] = useState<[number, number]>([0, fightDurationMs]);
 
+  const theme = useTheme();
+  const fullScreen = useMediaQuery(theme.breakpoints.down('sm'));
+
   // Seed local state from the shape each time the dialog opens for a (new) shape.
   useEffect(() => {
     if (!shape) return;
@@ -113,7 +118,7 @@ export const ShapeEditDialog: React.FC<ShapeEditDialogProps> = ({
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
+    <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth fullScreen={fullScreen}>
       <DialogTitle>Edit shape</DialogTitle>
       <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
         <TextField

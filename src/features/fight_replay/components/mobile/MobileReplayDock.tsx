@@ -32,9 +32,11 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useOptimizedTimelineScrubbing } from '../../../../hooks/useOptimizedTimelineScrubbing';
 import { useTimelineMarkers } from '../../../../hooks/useTimelineMarkers';
 import type { TrialChapter } from '../../trial_chapters/types';
+import type { ShapeKind, ShapeStyle } from '../../types/mapMarkers';
 import { ChapterList } from '../ChapterList';
 import type { TrialReplayNav } from '../FightReplay3D';
 import { PlaybackButtons } from '../PlaybackButtons';
+import { ShapeToolbar } from '../ShapeToolbar';
 import { ShareButton } from '../ShareButton';
 import { TimelineSlider } from '../TimelineSlider';
 import { TrialTimeline, type TrialTimelineSeekTarget } from '../TrialTimeline';
@@ -108,6 +110,14 @@ interface MobileReplayDockProps {
   onUndoMarkers?: () => void;
   canRedoMarkers?: boolean;
   onRedoMarkers?: () => void;
+  // Draw shapes — the touch home for the desktop shape toolbar. Omit onSelectDrawTool to hide the
+  // whole Shapes section. Selecting a tool closes the sheet so the map is reachable for tapping.
+  drawTool?: ShapeKind | null;
+  drawStyle?: ShapeStyle;
+  onSelectDrawTool?: (tool: ShapeKind | null) => void;
+  onDrawStyleChange?: (patch: Partial<ShapeStyle>) => void;
+  shapeCount?: number;
+  onClearShapes?: () => void;
 }
 
 type SheetId = 'chapters' | 'settings' | null;
@@ -315,6 +325,12 @@ const MobileReplayDockComponent: React.FC<MobileReplayDockProps> = ({
   onUndoMarkers,
   canRedoMarkers = false,
   onRedoMarkers,
+  drawTool = null,
+  drawStyle,
+  onSelectDrawTool,
+  onDrawStyleChange,
+  shapeCount = 0,
+  onClearShapes,
 }) => {
   const [sheet, setSheet] = useState<SheetId>(null);
 
@@ -367,6 +383,19 @@ const MobileReplayDockComponent: React.FC<MobileReplayDockProps> = ({
     setSheet(null);
     onAddMarkerAtCenter?.();
   }, [onAddMarkerAtCenter]);
+
+  // Arming a draw tool closes the sheet so the map is reachable for tap-to-draw (the sheet covers
+  // the arena). Disarming (tool === null) keeps the sheet open.
+  const handleSelectDrawTool = useCallback(
+    (tool: ShapeKind | null) => {
+      onSelectDrawTool?.(tool);
+      if (tool) setSheet(null);
+    },
+    [onSelectDrawTool],
+  );
+
+  const noopStyleChange = useCallback(() => {}, []);
+  const noopClearShapes = useCallback(() => {}, []);
 
   const {
     displayTime,
@@ -780,6 +809,36 @@ const MobileReplayDockComponent: React.FC<MobileReplayDockProps> = ({
                       </Box>
                     </>
                   )}
+                </Box>
+              </>
+            )}
+
+            {/* Draw shapes — the touch home for the desktop shape toolbar. Arming a tool closes
+                the sheet so the map is reachable for tap-to-draw. */}
+            {onSelectDrawTool && drawStyle && (
+              <>
+                <Typography
+                  variant="overline"
+                  sx={{ color: 'text.secondary', fontWeight: 700, letterSpacing: '0.08em' }}
+                >
+                  Draw shapes
+                </Typography>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75, mt: 1, mb: 2.5 }}>
+                  <Typography
+                    variant="caption"
+                    sx={{ color: 'text.secondary', px: 0.5, lineHeight: 1.4 }}
+                  >
+                    Pick a tool, then tap the map to place points. Circle/rect/ruler take two taps;
+                    double-tap to finish a line or zone; tap the tool again to cancel.
+                  </Typography>
+                  <ShapeToolbar
+                    activeTool={drawTool}
+                    onSelectTool={handleSelectDrawTool}
+                    style={drawStyle}
+                    onStyleChange={onDrawStyleChange ?? noopStyleChange}
+                    shapeCount={shapeCount}
+                    onClearShapes={onClearShapes ?? noopClearShapes}
+                  />
                 </Box>
               </>
             )}
