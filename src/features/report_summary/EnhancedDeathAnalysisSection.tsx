@@ -170,7 +170,12 @@ const EnhancedDeathAnalysisSectionComponent: React.FC<EnhancedDeathAnalysisSecti
     );
   }
 
-  if (isLoading) {
+  // Render the skeleton while loading OR before data has arrived. Without the
+  // `!deathAnalysis` guard, the progressive-render path (header + sections mount
+  // before aggregation completes) would fall through to the success branch and
+  // show a false "Flawless Performance!" — see DamageBreakdownSection, which
+  // guards `isLoading || !damageBreakdown` for the same reason.
+  if (isLoading || !deathAnalysis) {
     return (
       <Card
         elevation={0}

@@ -1,5 +1,5 @@
 import { configureStore } from '@reduxjs/toolkit';
-import { renderHook, waitFor } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import React from 'react';
 import { Provider } from 'react-redux';
 
@@ -10,6 +10,11 @@ import { useOptimizedReportSummaryData, withTimeout } from './useOptimizedReport
 
 // One 10s fight.
 const mockFights = [{ id: 1, name: 'Boss', startTime: 0, endTime: 10_000 }];
+
+// When set to a fight id, the mocked damage fetch for that fight never settles —
+// used to exercise the per-fight timeout wiring. `mock`-prefixed so jest's
+// hoisted mock factory may reference it.
+let mockHangDamageFightId: number | null = null;
 
 // Player 1 deals 600 to the boss; the boss (enemy) deals 400 to the player.
 // Only the player-outgoing 600 should count toward totals/DPS/percentages.
@@ -63,7 +68,13 @@ jest.mock('../../../store/events_data/damageEventsSlice', () => {
   return {
     fetchDamageEvents: createAsyncThunk(
       'test/fetchDamageEvents',
-      async ({ fight }: { fight: { id: number } }) => mockDamageByFight[fight.id] ?? [],
+      async ({ fight }: { fight: { id: number } }) => {
+        if (mockHangDamageFightId === fight.id) {
+          // Never settles — the per-fight timeout must rescue the batch loop.
+          return new Promise<unknown[]>(() => {});
+        }
+        return mockDamageByFight[fight.id] ?? [];
+      },
     ),
   };
 });
@@ -156,6 +167,37 @@ describe('useOptimizedReportSummaryData', () => {
     await waitFor(() => expect(result.current.reportSummaryData).not.toBeNull());
 
     expect(result.current.reportSummaryData!.reportInfo.ownerName).toBe('GuildLeader');
+  });
+});
+
+describe('useOptimizedReportSummaryData per-fight timeout wiring', () => {
+  beforeEach(() => jest.useFakeTimers());
+  afterEach(() => {
+    jest.useRealTimers();
+    mockHangDamageFightId = null;
+  });
+
+  it('records a fight error and still commits the summary when a fetch hangs', async () => {
+    // Fight 1's damage fetch never settles; death/rez resolve normally.
+    mockHangDamageFightId = 1;
+
+    const { result } = renderHook(() => useOptimizedReportSummaryData('test123'), {
+      wrapper: makeWrapper(),
+    });
+
+    // Advance past the per-fight timeout; act() flushes the rejection, the
+    // batch-loop continuation, aggregation and the final state commit.
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(60_000);
+    });
+
+    // The hook recovered instead of hanging: it committed a summary...
+    expect(result.current.isLoading).toBe(false);
+    expect(result.current.reportSummaryData).not.toBeNull();
+    // ...with the hung fight recorded as a per-fight error.
+    expect(result.current.reportSummaryData!.errors.fightErrors[1]).toMatch(
+      /Timed out fetching damage events for Boss after 60000 ms/,
+    );
   });
 });
 

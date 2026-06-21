@@ -52,6 +52,21 @@ const CATEGORY_LABELS: ReadonlyArray<{ key: DamageCategoryKey; label: string }> 
 ];
 
 /**
+ * A fight that contributes to the summary: present, with a valid, positive-
+ * duration window. Shared so the header's pre-aggregation fight count matches
+ * the count the aggregation ultimately reports (no count flicker on resolve).
+ * Uses `!= null` (not truthiness) so a fight whose startTime is 0 isn't dropped.
+ */
+export function isUsableFight(fight: FightFragment | null): fight is FightFragment {
+  return (
+    fight != null &&
+    fight.startTime != null &&
+    fight.endTime != null &&
+    fight.endTime > fight.startTime
+  );
+}
+
+/**
  * Per-fight event fetches are raced against this bound so a single hung request
  * can never freeze the whole summary. The batch loop `await`s a
  * `Promise.allSettled` over each fight's fetches; without a timeout, one stuck
@@ -119,12 +134,7 @@ export function useOptimizedReportSummaryData(
         // Filter fights same as the report fight selector / fightGrouping —
         // exclude null entries and invalid/zero-duration windows. Use `!= null`
         // (not truthiness) so a fight whose startTime is 0 isn't dropped.
-        const cleanFights = fights
-          .filter((fight): fight is FightFragment => fight !== null)
-          .filter(
-            (fight) =>
-              fight.startTime != null && fight.endTime != null && fight.endTime > fight.startTime,
-          );
+        const cleanFights = fights.filter(isUsableFight);
         const totalTasks = cleanFights.length * 2 + 2; // 2 consumed event types per fight + analysis tasks
 
         if (isCurrent()) {

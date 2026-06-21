@@ -34,7 +34,10 @@ const EnhancedDeathAnalysisSection = React.lazy(() =>
   })),
 );
 
-import { useOptimizedReportSummaryData } from './hooks/useOptimizedReportSummaryData';
+import {
+  isUsableFight,
+  useOptimizedReportSummaryData,
+} from './hooks/useOptimizedReportSummaryData';
 import { chipPillSx, SEMANTIC_ACCENTS } from './summaryStyles';
 
 export const ReportSummaryPage: React.FC = () => {
@@ -49,7 +52,9 @@ export const ReportSummaryPage: React.FC = () => {
   // The fight list ships with the report metadata, well before the (slow)
   // per-fight event aggregation finishes — used to show the fight count in the
   // header immediately instead of flashing "0 Fights" during the summary load.
-  const reportFightCount = reportData?.fights?.filter(Boolean).length;
+  // Uses the same validity filter as the aggregation (isUsableFight) so the
+  // count never visibly drops when summaryData resolves.
+  const reportFightCount = reportData?.fights?.filter(isUsableFight).length;
 
   // Get aggregated summary data using optimized Redux-based hook
   const {

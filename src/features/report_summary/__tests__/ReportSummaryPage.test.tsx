@@ -31,6 +31,13 @@ const mockUseOptimizedReportSummaryData = jest.fn();
 
 jest.mock('../hooks/useOptimizedReportSummaryData', () => ({
   useOptimizedReportSummaryData: (...args: any[]) => mockUseOptimizedReportSummaryData(...args),
+  // Real pure predicate (the page uses it for the header fight count); mirror it
+  // here so the partial mock doesn't leave it undefined.
+  isUsableFight: (fight: { startTime?: number | null; endTime?: number | null } | null) =>
+    fight != null &&
+    fight.startTime != null &&
+    fight.endTime != null &&
+    fight.endTime > fight.startTime,
 }));
 
 // Mock react-router-dom
@@ -357,6 +364,27 @@ describe('ReportSummaryPage Loading State', () => {
     // Inline progress reflects the ongoing aggregation.
     expect(screen.getByText('Fetching damage events...')).toBeInTheDocument();
     expect(screen.getByText('2/10')).toBeInTheDocument();
+  });
+});
+
+describe('ReportSummaryPage progressive render', () => {
+  it('does not show a false "Flawless Performance!" before the summary data arrives', async () => {
+    // Report metadata is ready but aggregation has not produced summaryData yet
+    // (and is not flagged loading) — the transient/zero-fight progressive-render
+    // window. The death section must show its skeleton, never a success message.
+    mockUseOptimizedReportSummaryData.mockReturnValue({
+      reportSummaryData: undefined,
+      isLoading: false,
+      error: undefined,
+      progress: null,
+      fetchData: jest.fn(),
+    });
+
+    renderWithProviders(<ReportSummaryPage />);
+
+    await waitFor(() => expect(screen.getByText('Test Report')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText(/Analyzing death patterns/i)).toBeInTheDocument());
+    expect(screen.queryByText('Flawless Performance!')).not.toBeInTheDocument();
   });
 });
 
