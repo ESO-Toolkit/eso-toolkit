@@ -50,8 +50,12 @@ import {
   accentTableSx,
   CATEGORY_ACCENTS,
   chipPillSx,
+  fightAccordionSx,
   gradientTitleSx,
+  innerPanelSx,
+  patternCalloutSx,
   SEMANTIC_ACCENTS,
+  SEVERITY_ACCENTS,
   sectionIconBadgeSx,
   statLabelSx,
   statTileSx,
@@ -312,7 +316,12 @@ const EnhancedDeathAnalysisSectionComponent: React.FC<EnhancedDeathAnalysisSecti
                   <Alert
                     key={index}
                     severity={getSeverityLevel(pattern.severity)}
-                    sx={{ mb: 2 }}
+                    sx={(theme) =>
+                      patternCalloutSx(
+                        theme.palette.mode === 'dark',
+                        SEVERITY_ACCENTS[pattern.severity] ?? SEMANTIC_ACCENTS.cyan,
+                      )
+                    }
                     icon={<WarningIcon />}
                   >
                     <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 'bold' }}>
@@ -375,7 +384,11 @@ const EnhancedDeathAnalysisSectionComponent: React.FC<EnhancedDeathAnalysisSecti
                 <BoltIcon />
                 Deadliest Abilities & Mechanics
               </Typography>
-              <TableContainer component={Paper} variant="outlined">
+              <TableContainer
+                component={Paper}
+                variant="outlined"
+                sx={(theme) => innerPanelSx(theme.palette.mode === 'dark')}
+              >
                 <Table
                   size="small"
                   aria-label="Deadliest abilities and mechanics"
@@ -486,7 +499,11 @@ const EnhancedDeathAnalysisSectionComponent: React.FC<EnhancedDeathAnalysisSecti
                 <PersonIcon />
                 Player Death Analysis
               </Typography>
-              <TableContainer component={Paper} variant="outlined">
+              <TableContainer
+                component={Paper}
+                variant="outlined"
+                sx={(theme) => innerPanelSx(theme.palette.mode === 'dark')}
+              >
                 <Table
                   size="small"
                   aria-label="Player death analysis"
@@ -614,7 +631,10 @@ const EnhancedDeathAnalysisSectionComponent: React.FC<EnhancedDeathAnalysisSecti
                   {group.type === 'encounter' && (
                     <Box>
                       {group.fights.map((fight) => (
-                        <Accordion key={fight.fightId} sx={{ mb: 1 }}>
+                        <Accordion
+                          key={fight.fightId}
+                          sx={(theme) => fightAccordionSx(theme.palette.mode === 'dark')}
+                        >
                           <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                             <Box
                               sx={{ display: 'flex', alignItems: 'center', gap: 2, width: '100%' }}
@@ -679,7 +699,10 @@ const EnhancedDeathAnalysisSectionComponent: React.FC<EnhancedDeathAnalysisSecti
                           Trash Fights
                         </Typography>
                         {group.fights.map((fight) => (
-                          <Accordion key={fight.fightId} sx={{ mb: 1 }}>
+                          <Accordion
+                            key={fight.fightId}
+                            sx={(theme) => fightAccordionSx(theme.palette.mode === 'dark')}
+                          >
                             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                               <Box
                                 sx={{

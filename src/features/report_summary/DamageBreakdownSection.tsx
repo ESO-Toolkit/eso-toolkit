@@ -43,6 +43,7 @@ import { AbilityTypeDamageBreakdown, ReportDamageBreakdown } from '../../types/r
 import {
   accentTableSx,
   gradientTitleSx,
+  innerPanelSx,
   listRowHoverSx,
   metricPillSx,
   rankBadgeSx,
@@ -73,7 +74,7 @@ const DEFAULT_PRESENTATION = { Icon: BlurOnIcon, color: '#94A3B8' };
 
 /** Renders a damage-type breakdown as labelled rows with a thin themed bar. */
 const DamageTypeList: React.FC<{ items: AbilityTypeDamageBreakdown[] }> = ({ items }) => (
-  <Paper variant="outlined">
+  <Paper variant="outlined" sx={(theme) => innerPanelSx(theme.palette.mode === 'dark')}>
     <List disablePadding>
       {items.map((type, index) => {
         const { Icon, color } = DAMAGE_TYPE_PRESENTATION[type.abilityType] ?? DEFAULT_PRESENTATION;
@@ -224,7 +225,7 @@ const DamageBreakdownSectionComponent: React.FC<DamageBreakdownSectionProps> = (
           <Typography variant="h6" component="h3" gutterBottom>
             Top Damage Dealers
           </Typography>
-          <Paper variant="outlined">
+          <Paper variant="outlined" sx={(theme) => innerPanelSx(theme.palette.mode === 'dark')}>
             <List>
               {damageBreakdown.playerBreakdown.slice(0, 5).map((player, index) => (
                 <React.Fragment key={player.playerId}>
@@ -346,7 +347,11 @@ const DamageBreakdownSectionComponent: React.FC<DamageBreakdownSectionProps> = (
           <Typography variant="h6" component="h3" gutterBottom id="player-performance-heading">
             Player Performance Details
           </Typography>
-          <TableContainer component={Paper} variant="outlined">
+          <TableContainer
+            component={Paper}
+            variant="outlined"
+            sx={(theme) => innerPanelSx(theme.palette.mode === 'dark')}
+          >
             <Table
               size="small"
               aria-labelledby="player-performance-heading"

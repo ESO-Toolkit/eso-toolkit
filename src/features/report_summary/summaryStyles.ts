@@ -168,6 +168,54 @@ export const CATEGORY_ACCENTS: Record<string, string> = {
   Other: SEMANTIC_ACCENTS.slate,
 };
 
+/** Translucent inner panel so the card's gradient + cosmic background read through
+ *  (apply to the Paper / TableContainer that wraps a list or table). */
+export function innerPanelSx(dark: boolean): SystemStyleObject<Theme> {
+  return {
+    backgroundColor: dark ? 'rgba(255, 255, 255, 0.025)' : 'rgba(15, 23, 42, 0.02)',
+    backgroundImage: 'none',
+    border: `1px solid ${dark ? 'rgba(255, 255, 255, 0.07)' : 'rgba(15, 23, 42, 0.07)'}`,
+  };
+}
+
+/** Severity → accent for the death-pattern callouts. */
+export const SEVERITY_ACCENTS: Record<string, string> = {
+  High: '248, 113, 113',
+  Medium: '251, 191, 36',
+  Low: '56, 189, 248',
+};
+
+/** Premium accent-rail callout styling for a MUI Alert (severity-tinted glass). */
+export function patternCalloutSx(dark: boolean, accentRgb: string): SystemStyleObject<Theme> {
+  return {
+    mb: 2,
+    borderRadius: 2,
+    color: dark ? 'rgb(226, 232, 240)' : 'rgb(30, 41, 59)',
+    border: `1px solid rgba(${accentRgb}, ${dark ? 0.28 : 0.24})`,
+    borderLeft: `3px solid rgb(${accentRgb})`,
+    background: dark
+      ? `linear-gradient(135deg, rgba(${accentRgb}, 0.13) 0%, rgba(${accentRgb}, 0.04) 100%)`
+      : `linear-gradient(135deg, rgba(${accentRgb}, 0.09) 0%, rgba(${accentRgb}, 0.03) 100%)`,
+    backdropFilter: 'blur(8px)',
+    '& .MuiAlert-icon': { color: `rgb(${accentRgb})` },
+  };
+}
+
+/** Subtle-glass styling for the per-fight accordions (drops MUI's default frame). */
+export function fightAccordionSx(dark: boolean): SystemStyleObject<Theme> {
+  return {
+    mb: 1,
+    borderRadius: 2,
+    overflow: 'hidden',
+    backgroundImage: 'none',
+    boxShadow: 'none',
+    backgroundColor: dark ? 'rgba(255, 255, 255, 0.025)' : 'rgba(15, 23, 42, 0.02)',
+    border: `1px solid ${dark ? 'rgba(255, 255, 255, 0.07)' : 'rgba(15, 23, 42, 0.07)'}`,
+    '&::before': { display: 'none' },
+    '&.Mui-expanded': { margin: '0 0 8px 0' },
+  };
+}
+
 /** A compact gradient pill for inline status/label chips (apply to a MUI Chip's sx). */
 export function chipPillSx(dark: boolean, accentRgb: string): SystemStyleObject<Theme> {
   return {
