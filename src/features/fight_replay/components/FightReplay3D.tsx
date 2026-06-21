@@ -1316,6 +1316,7 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
           drawTool={drawTool}
           drawStyle={drawStyle}
           onShapeDrawn={onShapeDrawn}
+          onSelectDrawTool={onSelectDrawTool}
           onEditMarker={onEditMarker}
           canUndoMarkers={canUndoMarkers}
           onUndoMarkers={onUndoMarkers}

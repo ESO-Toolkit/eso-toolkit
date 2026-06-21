@@ -236,9 +236,10 @@ export const FightReplay: React.FC = () => {
     }
   }, [restoredCount]);
 
-  // Undo/redo keyboard shortcuts while edit mode is on (Ctrl/Cmd+Z, Ctrl/Cmd+Shift+Z or Ctrl+Y).
+  // Undo/redo keyboard shortcuts while editing markers OR drawing shapes (Ctrl/Cmd+Z,
+  // Ctrl/Cmd+Shift+Z or Ctrl+Y). The shared history covers both.
   useEffect(() => {
-    if (!markersEditMode) {
+    if (!markersEditMode && !drawTool) {
       return;
     }
 
@@ -259,7 +260,7 @@ export const FightReplay: React.FC = () => {
 
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [markersEditMode, undo, redo]);
+  }, [markersEditMode, drawTool, undo, redo]);
 
   // Handle loading markers from modal
   const handleLoadMarkers = useCallback(
@@ -877,6 +878,10 @@ export const FightReplay: React.FC = () => {
                 onStyleChange={handleStyleChange}
                 shapeCount={markersState?.shapes?.length ?? 0}
                 onClearShapes={clearShapes}
+                canUndo={canUndo}
+                onUndo={undo}
+                canRedo={canRedo}
+                onRedo={redo}
               />
             </Box>
           </Box>

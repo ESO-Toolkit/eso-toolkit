@@ -42,6 +42,7 @@ import { decidePreviewMode } from '../utils/previewMode';
 
 import { ADD_MARKER_AT_CENTER_EVENT, Arena3DScene, GroundContextMenuPayload } from './Arena3DScene';
 import { BossHealthPanel } from './BossHealthPanel';
+import { DrawingHud } from './DrawingHud';
 import { LockedPlayerStatsPanel } from './LockedPlayerStatsPanel';
 import { MarkerContextMenuPayload } from './Marker3D';
 import { MarkerIconPicker } from './MarkerIconPicker';
@@ -122,6 +123,8 @@ interface Arena3DProps {
   drawStyle?: ShapeStyle;
   /** Commit a finished shape's ARENA points (FightReplay converts to world + persists). */
   onShapeDrawn?: (kind: ShapeKind, arenaPoints: Array<[number, number]>) => void;
+  /** Disarm/select a draw tool — wired to the in-canvas drawing HUD's Done button. */
+  onSelectDrawTool?: (tool: ShapeKind | null) => void;
   /** Opens the marker edit dialog (owned by FightReplay) for the given marker. */
   onEditMarker?: (markerId: string) => void;
   /** Marker undo/redo (mobile tools sheet — Ctrl+Z/Ctrl+Shift+Z have no touch equivalent). */
@@ -202,6 +205,7 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
   drawTool = null,
   drawStyle,
   onShapeDrawn,
+  onSelectDrawTool,
   onEditMarker,
   canUndoMarkers = false,
   onUndoMarkers,
@@ -311,6 +315,19 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
   useEffect(() => {
     persistPrefs({ statsPanelSections });
   }, [persistPrefs, statsPanelSections]);
+
+  // In-canvas drawing HUD wiring. The Finish/Cancel buttons bump a signal the ShapeDrawLayer
+  // reacts to (touch has no Enter/Esc); the layer reports its in-progress point count back up so
+  // the HUD can show it + gate Finish. Reset the count whenever the tool changes.
+  const [drawFinishSignal, setDrawFinishSignal] = useState(0);
+  const [drawCancelSignal, setDrawCancelSignal] = useState(0);
+  const [drawPointCount, setDrawPointCount] = useState(0);
+  const handleDrawFinish = useCallback(() => setDrawFinishSignal((n) => n + 1), []);
+  const handleDrawCancel = useCallback(() => setDrawCancelSignal((n) => n + 1), []);
+  const handleDrawPointsChange = useCallback((n: number) => setDrawPointCount(n), []);
+  useEffect(() => {
+    setDrawPointCount(0);
+  }, [drawTool]);
 
   // Player IDs for the DOM player-list overlay (derived from the same lookup the scene uses).
   const availablePlayerIds = useMemo(() => (lookup ? getVisiblePlayerIds(lookup) : []), [lookup]);
@@ -820,6 +837,9 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
             drawTool={drawTool}
             drawStyle={drawStyle}
             onShapeDrawn={onShapeDrawn}
+            drawFinishSignal={drawFinishSignal}
+            drawCancelSignal={drawCancelSignal}
+            onDrawPointsChange={handleDrawPointsChange}
             fight={fight}
             initialTarget={initialCameraTarget}
             initialPosition={initialCameraPosition}
@@ -960,6 +980,36 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
         {/* Player-list + boss-health HUDs are DOM overlays (above) rendered as siblings of
             the <Canvas>, not in-canvas textured planes — crisp text, real scroll, native
             MUI styling. */}
+
+        {/* In-canvas drawing HUD — floating controls over the arena while a tool is armed, so
+            drawing is controllable without a keyboard (essential on touch). */}
+        {drawTool && (
+          <Box
+            sx={{
+              position: 'absolute',
+              top: 12,
+              left: 0,
+              right: 0,
+              display: 'flex',
+              justifyContent: 'center',
+              px: 1,
+              zIndex: 6,
+              pointerEvents: 'none',
+            }}
+          >
+            <DrawingHud
+              tool={drawTool}
+              pointCount={drawPointCount}
+              onFinish={handleDrawFinish}
+              onCancel={handleDrawCancel}
+              onDone={() => onSelectDrawTool?.(null)}
+              canUndo={!!canUndoMarkers}
+              onUndo={() => onUndoMarkers?.()}
+              canRedo={!!canRedoMarkers}
+              onRedo={() => onRedoMarkers?.()}
+            />
+          </Box>
+        )}
 
         {/* Add-marker picker: one flat surface with every icon (bottom sheet on touch,
             popover at the click point on desktop). Kept mounted so close transitions run. */}

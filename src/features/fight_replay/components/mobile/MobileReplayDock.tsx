@@ -838,6 +838,10 @@ const MobileReplayDockComponent: React.FC<MobileReplayDockProps> = ({
                     onStyleChange={onDrawStyleChange ?? noopStyleChange}
                     shapeCount={shapeCount}
                     onClearShapes={onClearShapes ?? noopClearShapes}
+                    canUndo={canUndoMarkers}
+                    onUndo={onUndoMarkers}
+                    canRedo={canRedoMarkers}
+                    onRedo={onRedoMarkers}
                   />
                 </Box>
               </>

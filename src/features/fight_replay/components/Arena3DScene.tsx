@@ -451,6 +451,10 @@ export interface Arena3DSceneProps {
   drawStyle?: ShapeStyle;
   /** Commit a finished shape's ARENA points (parent converts to world + persists). */
   onShapeDrawn?: (kind: ShapeKind, arenaPoints: Array<[number, number]>) => void;
+  /** In-canvas HUD Finish/Cancel signals + point-count reporting for the draw layer. */
+  drawFinishSignal?: number;
+  drawCancelSignal?: number;
+  onDrawPointsChange?: (count: number) => void;
   fight: FightFragment;
   initialTarget?: [number, number, number];
   /**
@@ -506,6 +510,9 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
   drawTool = null,
   drawStyle,
   onShapeDrawn,
+  drawFinishSignal = 0,
+  drawCancelSignal = 0,
+  onDrawPointsChange,
   fight,
   initialTarget,
   initialPosition,
@@ -1010,6 +1017,9 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
           planeSize={arenaDimensions.size}
           onCommit={onShapeDrawn}
           markDirty={markSceneDirty}
+          finishSignal={drawFinishSignal}
+          cancelSignal={drawCancelSignal}
+          onPointsChange={onDrawPointsChange}
         />
       )}
       {/* Controls - dynamically positioned based on fight area. Zoom is handled by CanvasWheelZoom

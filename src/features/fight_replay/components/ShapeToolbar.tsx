@@ -7,10 +7,13 @@ import CropSquareIcon from '@mui/icons-material/CropSquare';
 import PentagonOutlinedIcon from '@mui/icons-material/PentagonOutlined';
 import PolylineIcon from '@mui/icons-material/Polyline';
 import RadioButtonUncheckedIcon from '@mui/icons-material/RadioButtonUnchecked';
+import RedoIcon from '@mui/icons-material/Redo';
 import StraightenIcon from '@mui/icons-material/Straighten';
+import UndoIcon from '@mui/icons-material/Undo';
 import {
   Box,
   FormControlLabel,
+  IconButton,
   Slider,
   Switch,
   ToggleButton,
@@ -87,6 +90,11 @@ interface ShapeToolbarProps {
   /** Number of shapes currently drawn (for the count chip / clear affordance). */
   shapeCount: number;
   onClearShapes: () => void;
+  /** Quick undo/redo (shared marker+shape history). Omit to hide the buttons. */
+  canUndo?: boolean;
+  onUndo?: () => void;
+  canRedo?: boolean;
+  onRedo?: () => void;
 }
 
 export const ShapeToolbar: React.FC<ShapeToolbarProps> = ({
@@ -96,6 +104,10 @@ export const ShapeToolbar: React.FC<ShapeToolbarProps> = ({
   onStyleChange,
   shapeCount,
   onClearShapes,
+  canUndo,
+  onUndo,
+  canRedo,
+  onRedo,
 }) => {
   const hint = activeTool ? TOOLS.find((t) => t.kind === activeTool)?.hint : null;
 
@@ -124,6 +136,28 @@ export const ShapeToolbar: React.FC<ShapeToolbarProps> = ({
             </ToggleButton>
           ))}
         </ToggleButtonGroup>
+
+        <Box sx={{ flexGrow: 1 }} />
+
+        {/* Quick undo/redo (shared with markers). */}
+        {onUndo && (
+          <Tooltip title="Undo">
+            <span>
+              <IconButton size="small" onClick={onUndo} disabled={!canUndo} aria-label="Undo">
+                <UndoIcon fontSize="small" />
+              </IconButton>
+            </span>
+          </Tooltip>
+        )}
+        {onRedo && (
+          <Tooltip title="Redo">
+            <span>
+              <IconButton size="small" onClick={onRedo} disabled={!canRedo} aria-label="Redo">
+                <RedoIcon fontSize="small" />
+              </IconButton>
+            </span>
+          </Tooltip>
+        )}
 
         {shapeCount > 0 && (
           <Typography

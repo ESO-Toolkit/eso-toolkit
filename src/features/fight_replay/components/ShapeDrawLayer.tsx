@@ -40,6 +40,12 @@ export interface ShapeDrawLayerProps {
   /** Notified when the user presses Escape (the in-progress shape is cleared regardless). */
   onCancel?: () => void;
   markDirty?: () => void;
+  /** Bumped by the in-canvas HUD's Finish button to commit a multi-point shape (touch: no Enter). */
+  finishSignal?: number;
+  /** Bumped by the HUD's Cancel button to clear the in-progress shape (touch: no Esc). */
+  cancelSignal?: number;
+  /** Reports the in-progress point count so the HUD can show it + gate Finish. */
+  onPointsChange?: (count: number) => void;
 }
 
 function samePoint(a: ArenaPoint, b: ArenaPoint): boolean {
@@ -65,6 +71,9 @@ export const ShapeDrawLayer: React.FC<ShapeDrawLayerProps> = ({
   onCommit,
   onCancel,
   markDirty,
+  finishSignal = 0,
+  cancelSignal = 0,
+  onPointsChange,
 }) => {
   const [points, setPoints] = useState<ArenaPoint[]>([]);
   const [cursor, setCursor] = useState<ArenaPoint | null>(null);
@@ -126,6 +135,22 @@ export const ShapeDrawLayer: React.FC<ShapeDrawLayerProps> = ({
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [finishMulti, cancel]);
+
+  // Report the in-progress point count to the parent HUD.
+  const onPointsChangeRef = useRef(onPointsChange);
+  onPointsChangeRef.current = onPointsChange;
+  useEffect(() => {
+    onPointsChangeRef.current?.(points.length);
+  }, [points.length]);
+
+  // In-canvas HUD Finish/Cancel (touch has no Enter/Esc): each new signal value fires once.
+  // finishSignal/cancelSignal start at 0 and only act when bumped, so the initial mount is a no-op.
+  useEffect(() => {
+    if (finishSignal > 0) finishMulti();
+  }, [finishSignal, finishMulti]);
+  useEffect(() => {
+    if (cancelSignal > 0) cancel();
+  }, [cancelSignal, cancel]);
 
   const addPoint = useCallback((point: ArenaPoint) => {
     if (TWO_CLICK.has(toolRef.current)) {
