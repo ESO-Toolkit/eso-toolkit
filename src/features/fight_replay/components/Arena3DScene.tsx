@@ -17,6 +17,7 @@ import { extractPlayerPaths, DEFAULT_PATH_SAMPLING } from '../utils/pathUtils';
 import { getPlayerPathColor } from '../utils/playerColors';
 import { resolveTouchPolicy } from '../utils/touchPolicy';
 
+import { AdaptiveResolution } from './AdaptiveResolution';
 import { ArenaEnvironmentShell, type CosmicVariant } from './ArenaEnvironmentShell';
 import { BloomComposer, type BloomComposerHandle } from './BloomComposer';
 import { CameraFollower } from './CameraFollower';
@@ -71,6 +72,8 @@ interface AnimationFrameSceneActorsProps {
   playerColorOverrides?: Map<number, string>;
   /** When true, player figures stop casting shadows (perf headroom for large fights). */
   performanceMode?: boolean;
+  /** Repaint + shadow-dirty signal for async caster changes (humanoid/boss GLB load). */
+  markDirty?: () => void;
 }
 
 export interface GroundContextMenuPayload {
@@ -153,6 +156,7 @@ const AnimationFrameSceneActors: React.FC<AnimationFrameSceneActorsProps> = ({
   playerVisibility,
   playerColorOverrides,
   performanceMode,
+  markDirty,
 }) => {
   // Performance settings based on scrubbing mode
   const shouldRenderEffects = scrubbingMode?.shouldRenderEffects ?? true;
@@ -169,6 +173,7 @@ const AnimationFrameSceneActors: React.FC<AnimationFrameSceneActorsProps> = ({
       playerVisibility={playerVisibility}
       playerColorOverrides={playerColorOverrides}
       performanceMode={performanceMode}
+      markDirty={markDirty}
     />
   );
 };
@@ -191,6 +196,24 @@ interface RenderLoopProps {
    * refills it from per-frame signals (time, camera, follow) below.
    */
   renderBudgetRef: React.RefObject<number>;
+  /**
+   * "An actor (shadow caster) may have moved" signal, shared with the parent. The directional
+   * sun's shadow map is CAMERA-INDEPENDENT (the shadow camera is the light's fixed ortho frustum
+   * over the arena), so it only needs regenerating when a caster moves — playback/scrub (time
+   * changed) or a scene commit that changes the cast set (visibility / perf mode / fight). We turn
+   * three's per-render `shadowMap.autoUpdate` OFF and flag `needsUpdate` only on those frames, so
+   * orbiting a PAUSED scene (a very common inspect gesture) no longer re-renders the 2048² shadow
+   * pass every frame. Pixels are identical — same shadow, just not recomputed when nothing casting
+   * it moved. The parent sets it on every commit (safe superset); RenderLoop sets it on time change.
+   */
+  shadowDirtyRef: React.RefObject<boolean>;
+  /**
+   * Set true on every frame this loop actually painted (budget > 0), false when it skipped. Lets the
+   * adaptive-resolution controller tell a genuinely idle (workload-free, vsync-paced) frame from a
+   * paused-but-painted one (camera/follow), so it learns the real display interval and measures only
+   * true playback frames.
+   */
+  paintedRef: React.RefObject<boolean>;
   /**
    * Optional bloom composer. When present (non-performance mode) the gated render goes through the
    * composer (RenderPass → bloom → OutputPass) so bright celestials glow; otherwise a plain gl.render.
@@ -218,11 +241,26 @@ const RenderLoop: React.FC<RenderLoopProps> = ({
   timeRef,
   followingActorIdRef,
   renderBudgetRef,
+  shadowDirtyRef,
+  paintedRef,
   composerRef,
 }) => {
   const { gl, scene, camera, controls } = useThree();
 
   const lastRenderedTimeRef = useRef<number | null>(null);
+
+  // Take manual control of the shadow map: three regenerates it on EVERY render by default, but the
+  // directional sun's shadow only changes when a caster moves (see shadowDirtyRef). We flag it dirty
+  // ourselves below. Restore three's default on unmount so the renderer is left as we found it.
+  useEffect(() => {
+    const prevAuto = gl.shadowMap.autoUpdate;
+    gl.shadowMap.autoUpdate = false;
+    gl.shadowMap.needsUpdate = true; // first frame must populate the shadow map
+    return () => {
+      gl.shadowMap.autoUpdate = prevAuto;
+      gl.shadowMap.needsUpdate = true;
+    };
+  }, [gl]);
 
   // Refill the budget whenever the user moves the camera via OrbitControls.
   useEffect(() => {
@@ -231,6 +269,8 @@ const RenderLoop: React.FC<RenderLoopProps> = ({
     }
     const markDirty = (): void => {
       renderBudgetRef.current = RENDER_TAIL_FRAMES;
+      // NOTE: deliberately does NOT flag the shadow dirty — a camera move never changes a
+      // directional shadow map, so orbiting a paused scene reuses the existing shadow for free.
     };
     // OrbitControls extends EventDispatcher and emits 'change' on every camera mutation.
     const orbit = controls as unknown as {
@@ -246,9 +286,11 @@ const RenderLoop: React.FC<RenderLoopProps> = ({
   useFrame(() => {
     const currentTime = timeRef.current;
 
-    // Time advanced (playback or scrub) → the scene changed; refill the budget.
+    // Time advanced (playback or scrub) → the scene changed; refill the budget. Actors (shadow
+    // casters) moved, so the shadow map must regenerate this paint.
     if (lastRenderedTimeRef.current !== currentTime) {
       renderBudgetRef.current = RENDER_TAIL_FRAMES;
+      shadowDirtyRef.current = true;
     }
 
     // Keep rendering whenever an actor is followed/selected. Load-bearing for TWO reasons,
@@ -263,9 +305,19 @@ const RenderLoop: React.FC<RenderLoopProps> = ({
       renderBudgetRef.current = RENDER_TAIL_FRAMES;
     }
 
+    // Record whether this frame paints, for the adaptive-resolution controller (idle vs rendered).
+    paintedRef.current = renderBudgetRef.current > 0;
+
     if (renderBudgetRef.current > 0) {
       renderBudgetRef.current -= 1;
       lastRenderedTimeRef.current = currentTime;
+      // Regenerate the shadow map only on frames where a caster may have moved (time change or a
+      // scene commit). three clears needsUpdate back to false after it renders the shadow, so a
+      // pure camera-orbit frame (budget refilled by OrbitControls 'change') reuses the last shadow.
+      if (shadowDirtyRef.current) {
+        gl.shadowMap.needsUpdate = true;
+        shadowDirtyRef.current = false;
+      }
       const composer = composerRef.current;
       if (composer) {
         composer.render();
@@ -535,8 +587,16 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
   // playback is paused. RenderLoop also tops it up from per-frame signals (time / camera /
   // follow). A ref, never state: a state flag would re-render every frame.
   const renderBudgetRef = useRef(RENDER_TAIL_FRAMES);
+  // "A shadow caster may have moved" flag (see RenderLoop). Set on every commit (a safe superset:
+  // visibility/perf-mode/fight changes can alter the cast set) so the shadow re-renders alongside
+  // the commit's repaint; RenderLoop also sets it on every playhead change.
+  const shadowDirtyRef = useRef(true);
+  // Whether the RenderLoop painted the most recent frame (see RenderLoopProps.paintedRef). Read by
+  // AdaptiveResolution to classify frames (idle vs rendered).
+  const paintedRef = useRef(false);
   useEffect(() => {
     renderBudgetRef.current = RENDER_TAIL_FRAMES;
+    shadowDirtyRef.current = true;
   });
 
   // Bloom composer handle, published by <BloomComposer> and consumed by RenderLoop. Null in
@@ -547,6 +607,10 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
   // Without this the composer target is single-sampled and bloom-on tiers would render aliased edges.
   const perfTier = usePerfTier();
   const bloomSamples = perfTier === 'high' ? 4 : perfTier === 'medium' ? 2 : 0;
+  // Render-resolution cap by tier — must mirror the Canvas `dpr` ceiling in Arena3D
+  // (`perfTier === 'low' ? [1, 1.5] : [1, 2]`). Threaded to AdaptiveResolution as its full-quality
+  // ceiling so the scaler tracks tier changes instead of a value captured at mount.
+  const dprCap = perfTier === 'low' ? 1.5 : 2;
 
   // Lets scene children that mutate visible three.js state from an ASYNC callback (outside
   // any React commit, time change, camera move, or follow) tell the RenderLoop to repaint —
@@ -556,6 +620,9 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
   // budget. Stable identity so it never churns child memoization.
   const markSceneDirty = useCallback(() => {
     renderBudgetRef.current = RENDER_TAIL_FRAMES;
+    // An async scene mutation (e.g. a CDN map texture resolving) may also coincide with a changed
+    // cast set; flagging the shadow dirty here is a cheap safe superset (these events are rare).
+    shadowDirtyRef.current = true;
   }, []);
 
   // Touch path for placing markers: press-and-hold on the ground (edit mode only) opens the
@@ -803,7 +870,18 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
         timeRef={timeRef}
         followingActorIdRef={followingActorIdRef}
         renderBudgetRef={renderBudgetRef}
+        shadowDirtyRef={shadowDirtyRef}
+        paintedRef={paintedRef}
         composerRef={composerRef}
+      />
+      {/* Dynamic render-resolution scaler — holds ~120fps on weaker GPUs / 4K / heavy fights by
+          trading resolution only under sustained load, and stays at full quality (no change) when
+          there's headroom. Inert on capable hardware. */}
+      <AdaptiveResolution
+        timeRef={timeRef}
+        dprCap={dprCap}
+        paintedRef={paintedRef}
+        markDirty={markSceneDirty}
       />
       {/* Camera follower system */}
       <CameraFollower lookup={lookup} timeRef={timeRef} followingActorIdRef={followingActorIdRef} />
@@ -920,6 +998,7 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
         playerVisibility={playerVisibility}
         playerColorOverrides={playerColorOverrides}
         performanceMode={performanceMode}
+        markDirty={markSceneDirty}
       />
       {/* Boss health + player list are now DOM overlays rendered by Arena3D as siblings of
           the <Canvas> (crisp text, real scroll region, native MUI styling) — not in-canvas

@@ -96,9 +96,28 @@ export const BossHealthPanel: React.FC<BossHealthPanelProps> = ({
     }
 
     let raf = 0;
+    // The playhead value the last write pass ran for. While the replay is PAUSED, `timeRef.current`
+    // never changes, so boss health is identical frame-to-frame — re-querying the lookup and
+    // re-writing the DOM (a `width`/`backgroundColor`/`textContent` mutation that, with the fill's
+    // CSS `transition`, keeps the compositor animating) every rAF was pure waste over the live WebGL
+    // canvas. Gate the body on the playhead actually moving. `lastTickTime` is NaN-seeded so the
+    // first tick always runs.
+    let lastTickTime = NaN;
+    // Forces a write pass even when the playhead is static: set on mount and whenever the boss SET
+    // changes (newly-mounted bars must receive their initial width/text), cleared once every current
+    // boss's bar refs exist and have been written.
+    let pendingWrite = true;
+    // Per-bar last-written values, so a moving playhead still only touches the DOM for bars whose
+    // displayed value actually changed (e.g. a boss already at a steady % between samples).
+    const lastWritten = new Map<number, { width: string; color: string; text: string }>();
 
     const tick = (): void => {
       const currentTime = timeRef.current;
+      if (currentTime === lastTickTime && !pendingWrite) {
+        raf = requestAnimationFrame(tick);
+        return;
+      }
+      lastTickTime = currentTime;
       const allActors = getAllActorPositionsAtTimestamp(lookup, currentTime);
 
       // Filter to bosses with health (same rule as the old HUD).
@@ -110,36 +129,60 @@ export const BossHealthPanel: React.FC<BossHealthPanelProps> = ({
         }
       }
 
-      // Re-render only when the boss SET changes (id + name).
+      // Re-render only when the boss SET changes (id + name). A changed set mounts/unmounts bars, so
+      // force the next pass(es) to write through until the new refs exist.
       let sig = '';
       for (const b of bossActors) sig += `${b.id}:${b.name};`;
       if (sig !== lastSigRef.current) {
         lastSigRef.current = sig;
         setBosses(bossActors.map((b) => ({ id: b.id, name: b.name })));
+        pendingWrite = true;
+        // Drop the dirty-check cache so every (re)mounted bar is written fresh. Without this, a boss
+        // that left the set and later reappears at an identical health % would match its stale cache
+        // entry, the write would be skipped, and the freshly-mounted bar would keep its default 100%.
+        lastWritten.clear();
       }
 
-      // Write live values straight to the DOM — no React involved.
+      // Write live values straight to the DOM — no React involved. Only touch a node when its value
+      // changed since the last write (dirty check), so a paused/steady bar adds zero layout/paint.
+      let allRefsPresent = true;
       for (const boss of bossActors) {
         const refs = barRefs.current.get(boss.id);
-        if (!refs || !boss.health) continue;
-        const pct = boss.health.percentage;
-        if (refs.fill) {
-          refs.fill.style.width = boss.isDead ? '0%' : `${Math.max(0, Math.min(100, pct))}%`;
-          refs.fill.style.backgroundColor = healthColor(theme, pct);
+        // An UNMOUNTED bar leaves a stale {fill:null, readout:null} entry (the callback ref nulls
+        // them out), so `refs` can be truthy while its elements are gone. Require the actual nodes —
+        // otherwise a reappearing boss would clear pendingWrite without writing, and the freshly
+        // mounted bar would keep its default 100% until the playhead moves.
+        if (!refs || !refs.fill || !refs.readout) {
+          allRefsPresent = false;
+          continue;
         }
-        if (refs.readout) {
-          // Mobile keeps it to the percentage only — the exact HP numbers are noise on a phone and
-          // make the bar read as cluttered. Desktop shows "pct · cur / max", abbreviating once the
-          // numbers are big enough that the exact form ("145,368,051 / 181,632,304") would overflow
-          // the 280px pill and spill past the track.
-          const compact = isMobile || boss.health.max >= 10_000_000;
-          refs.readout.textContent = boss.isDead
-            ? 'DEAD'
-            : isMobile
-              ? `${pct.toFixed(1)}%`
-              : `${pct.toFixed(1)}%  ·  ${fmtHp(boss.health.current, compact)} / ${fmtHp(boss.health.max, compact)}`;
+        if (!boss.health) continue;
+        const pct = boss.health.percentage;
+        const width = boss.isDead ? '0%' : `${Math.max(0, Math.min(100, pct))}%`;
+        const color = healthColor(theme, pct);
+        // Mobile keeps it to the percentage only — the exact HP numbers are noise on a phone and
+        // make the bar read as cluttered. Desktop shows "pct · cur / max", abbreviating once the
+        // numbers are big enough that the exact form ("145,368,051 / 181,632,304") would overflow
+        // the 280px pill and spill past the track.
+        const compact = isMobile || boss.health.max >= 10_000_000;
+        const text = boss.isDead
+          ? 'DEAD'
+          : isMobile
+            ? `${pct.toFixed(1)}%`
+            : `${pct.toFixed(1)}%  ·  ${fmtHp(boss.health.current, compact)} / ${fmtHp(boss.health.max, compact)}`;
+        const prev = lastWritten.get(boss.id);
+        if (!prev || prev.width !== width || prev.color !== color || prev.text !== text) {
+          if (refs.fill) {
+            refs.fill.style.width = width;
+            refs.fill.style.backgroundColor = color;
+          }
+          if (refs.readout) refs.readout.textContent = text;
+          lastWritten.set(boss.id, { width, color, text });
         }
       }
+      // Hold the force flag until every current boss has had its (just-mounted) refs written, so the
+      // initial values are never dropped while React is still committing the bars.
+      if (allRefsPresent) pendingWrite = false;
 
       raf = requestAnimationFrame(tick);
     };

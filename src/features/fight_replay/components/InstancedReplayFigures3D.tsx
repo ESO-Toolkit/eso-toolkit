@@ -59,6 +59,13 @@ interface InstancedReplayFigures3DProps {
   playerColorOverrides?: Map<number, string>;
   /** When true, the humanoid figures stop casting shadows (drops the shadow-pass tri load). */
   performanceMode?: boolean;
+  /**
+   * Repaint + shadow-dirty signal. Called when the async humanoid/boss GLB loads and swaps the
+   * shadow-casting geometry: this child's setState does NOT re-run the parent scene's commit effect,
+   * so without this a paused scene would keep the stale (capsule / no-boss) shadow map on the next
+   * camera-orbit repaint until the playhead moved. Routed to Arena3DScene's markSceneDirty.
+   */
+  markDirty?: () => void;
 }
 
 const EMPTY_VISIBILITY: Map<number, boolean> = new Map();
@@ -446,6 +453,23 @@ function bossTuneSignature(performanceMode: boolean): string {
   ].join(',');
 }
 
+// Stable per-attribute "needs upload" flaggers, hoisted to module scope so the per-frame flush can
+// mark every layer dirty WITHOUT allocating a fresh temp array + arrow closure each frame (that
+// churn ran at the playback frame rate and added avoidable GC pressure → micro-stutters). They're
+// shape-compatible with Array.forEach AND Map.forEach (extra index/key args are ignored).
+function flagMatrixNeedsUpdate(mesh: THREE.InstancedMesh | null | undefined): void {
+  if (mesh) mesh.instanceMatrix.needsUpdate = true;
+}
+function flagColorNeedsUpdate(mesh: THREE.InstancedMesh | null | undefined): void {
+  if (mesh?.instanceColor) mesh.instanceColor.needsUpdate = true;
+}
+function flagOpacityNeedsUpdate(mesh: THREE.InstancedMesh | null | undefined): void {
+  const attr = mesh?.geometry.getAttribute('instanceOpacity') as
+    | THREE.InstancedBufferAttribute
+    | undefined;
+  if (attr) attr.needsUpdate = true;
+}
+
 export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> = ({
   lookup,
   timeRef,
@@ -456,6 +480,7 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
   playerVisibility = EMPTY_VISIBILITY,
   playerColorOverrides = EMPTY_COLOR_OVERRIDES,
   performanceMode = false,
+  markDirty,
 }) => {
   const bodyHeight = 0.55 * scale;
   const capY = bodyHeight + 0.02 * scale;
@@ -874,6 +899,15 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
     bossMatStateRef.current = null;
   }, [bossModel]);
 
+  // When the humanoid poses or boss GLB finish loading, the shadow-CASTING geometry swaps
+  // (capsule → humanoid pose meshes; boss capsule → boss model). This is a child-local state change
+  // that does NOT re-run the parent scene's commit effect, so signal a repaint + shadow regeneration
+  // explicitly — otherwise a paused scene keeps the stale shadow map (and the swap may not paint)
+  // until the playhead next moves. Fires once on mount too (harmless). See markDirty prop doc.
+  useEffect(() => {
+    markDirty?.();
+  }, [poseGeometries, bossModel, markDirty]);
+
   const hideInstance = useCallback((mesh: THREE.InstancedMesh | null, index: number): void => {
     if (!mesh) return;
     const obj = tempObject.current;
@@ -961,6 +995,12 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
       const isThreat = isThreatActor(actor);
       const selected = selectedActorId === actorId;
       const taunted = actor.isTaunted || false;
+      // Previous frame's cached state for this actor (written at the end of this iteration). Used to
+      // skip re-hiding layers whose membership/state is unchanged — an actor's glyph group is fixed
+      // and most actors are neither selected nor taunted, so re-hiding those layers every frame
+      // re-composed hundreds of identical "hidden" matrices for nothing. null on first frame / after
+      // a cache reset → the full hide runs then, so initial hidden state is always established.
+      const prev = cacheRef.current[index];
       // Players become the humanoid figure once the pose geometries have loaded; everyone else (and
       // players pre-load) keeps the capsule blob. For a humanoid player, exactly one pose layer is
       // shown (the capsule body and the other four pose layers are hidden off-screen). For everyone
@@ -1112,13 +1152,16 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
       obj.rotation.set(-Math.PI / 2, 0, 0);
       obj.scale.setScalar(glyphScale);
       obj.updateMatrix();
-      glyphRefs.current.forEach((mesh, symbol) => {
-        if (symbol === groupSymbol) {
-          mesh.setMatrixAt(index, obj.matrix);
-        } else {
-          hideInstance(mesh, index);
-        }
-      });
+      // Write the matching glyph from the CLEAN obj.matrix first (before any hideInstance below
+      // clobbers the shared tempObject). An actor's glyph group never changes, so it only needs
+      // hiding in the OTHER groups on (re)appearance — re-hiding all 7 every frame re-composed ~7
+      // identical hidden matrices per actor for nothing (the single largest waste in this loop).
+      glyphRefs.current.get(groupSymbol)?.setMatrixAt(index, obj.matrix);
+      if (!prev || !prev.visible || prev.glyphSymbol !== groupSymbol) {
+        glyphRefs.current.forEach((mesh, symbol) => {
+          if (symbol !== groupSymbol) hideInstance(mesh, index);
+        });
+      }
 
       // Contact-shadow blob flat on ground, just UNDER the anchor ring (+0.004 vs the ring's +0.006)
       // so the ring still reads on top. Same x,z + groupScale as the ring; flat orientation (-PI/2 X).
@@ -1162,14 +1205,18 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
       obj.updateMatrix();
       hitProxyRef.current?.setMatrixAt(index, obj.matrix);
 
-      // Selection / taunt rings: shown only when active.
+      // Selection / taunt rings: shown only when active. When ACTIVE the ring tracks the moving
+      // actor, so its matrix updates every frame. When INACTIVE it only needs hiding on the
+      // transition into inactive (or first appearance) — once parked off-screen it stays there, so
+      // re-hiding it for every unselected/untaunted actor every frame was pure waste (~80 hidden
+      // matrix composes/frame across a raid where at most one actor is selected).
       if (selected) {
         obj.position.set(x, y + GROUND_LEVEL + 0.016, z);
         obj.rotation.set(-Math.PI / 2, 0, 0);
         obj.scale.setScalar(groupScale);
         obj.updateMatrix();
         selectionRingRef.current?.setMatrixAt(index, obj.matrix);
-      } else {
+      } else if (!prev || !prev.visible || prev.selected) {
         hideInstance(selectionRingRef.current, index);
       }
       if (taunted) {
@@ -1178,12 +1225,11 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
         obj.scale.setScalar(groupScale);
         obj.updateMatrix();
         tauntRingRef.current?.setMatrixAt(index, obj.matrix);
-      } else {
+      } else if (!prev || !prev.visible || prev.taunted) {
         hideInstance(tauntRingRef.current, index);
       }
 
-      // ---- Colors + opacity (only write when changed) ----
-      const prev = cacheRef.current[index];
+      // ---- Colors + opacity (only write when changed) ---- (prev captured at the top of the loop)
       const changed =
         !prev ||
         !prev.visible ||
@@ -1302,48 +1348,34 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
       }
     }
 
-    // Flush matrices every frame (positions change constantly during playback).
-    [
-      bodyRef.current,
-      ...poseRefs.current,
-      capRef.current,
-      visionRef.current,
-      hitProxyRef.current,
-      aoBlobRef.current,
-      anchorRingRef.current,
-      selectionRingRef.current,
-      tauntRingRef.current,
-    ].forEach((m) => {
-      if (m) m.instanceMatrix.needsUpdate = true;
-    });
-    glyphRefs.current.forEach((m) => {
-      m.instanceMatrix.needsUpdate = true;
-    });
+    // Flush matrices every frame (positions change constantly during playback). Iterate the refs
+    // directly with the hoisted stable flaggers — no per-frame temp array / closure allocation.
+    const poses = poseRefs.current;
+    flagMatrixNeedsUpdate(bodyRef.current);
+    for (let p = 0; p < poses.length; p++) flagMatrixNeedsUpdate(poses[p]);
+    flagMatrixNeedsUpdate(capRef.current);
+    flagMatrixNeedsUpdate(visionRef.current);
+    flagMatrixNeedsUpdate(hitProxyRef.current);
+    flagMatrixNeedsUpdate(aoBlobRef.current);
+    flagMatrixNeedsUpdate(anchorRingRef.current);
+    flagMatrixNeedsUpdate(selectionRingRef.current);
+    flagMatrixNeedsUpdate(tauntRingRef.current);
+    glyphRefs.current.forEach(flagMatrixNeedsUpdate);
 
     if (colorDirty) {
-      [
-        bodyRef.current,
-        ...poseRefs.current,
-        capRef.current,
-        anchorRingRef.current,
-        visionRef.current,
-      ].forEach((m) => {
-        if (m?.instanceColor) m.instanceColor.needsUpdate = true;
-      });
+      flagColorNeedsUpdate(bodyRef.current);
+      for (let p = 0; p < poses.length; p++) flagColorNeedsUpdate(poses[p]);
+      flagColorNeedsUpdate(capRef.current);
+      flagColorNeedsUpdate(anchorRingRef.current);
+      flagColorNeedsUpdate(visionRef.current);
     }
     if (opacityDirty) {
-      const flag = (mesh: THREE.InstancedMesh | null): void => {
-        const attr = mesh?.geometry.getAttribute('instanceOpacity') as
-          | THREE.InstancedBufferAttribute
-          | undefined;
-        if (attr) attr.needsUpdate = true;
-      };
-      flag(bodyRef.current);
-      poseRefs.current.forEach((m) => flag(m));
-      flag(capRef.current);
-      flag(anchorRingRef.current);
-      flag(visionRef.current);
-      glyphRefs.current.forEach((m) => flag(m));
+      flagOpacityNeedsUpdate(bodyRef.current);
+      for (let p = 0; p < poses.length; p++) flagOpacityNeedsUpdate(poses[p]);
+      flagOpacityNeedsUpdate(capRef.current);
+      flagOpacityNeedsUpdate(anchorRingRef.current);
+      flagOpacityNeedsUpdate(visionRef.current);
+      glyphRefs.current.forEach(flagOpacityNeedsUpdate);
     }
   }, RenderPriority.ACTORS);
 

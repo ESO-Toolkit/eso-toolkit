@@ -240,6 +240,13 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
   const perfTier = usePerfTier();
   const prefersReducedMotion = usePrefersReducedMotion();
   const previewMode = decidePreviewMode(perfTier, prefersReducedMotion);
+  // Stable [min, max] DPR range for the Canvas. Memoized so a re-render doesn't hand R3F a new array
+  // and re-apply the DPR — that would overwrite AdaptiveResolution's runtime downscale (which owns
+  // the pixel ratio after mount). Only a genuine perf-tier change produces a new range.
+  const canvasDprRange = useMemo<[number, number]>(
+    () => (perfTier === 'low' ? [1, 1.5] : [1, 2]),
+    [perfTier],
+  );
   const [showKeyboardHelp, setShowKeyboardHelp] = useState(false);
 
   // Persisted viewer prefs (localStorage). Arena3D owns the names + performance slices; the
@@ -757,7 +764,7 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
           // models"). 1.5× restores most of that crispness while still trimming the fill cost vs a full
           // 2× for genuinely weak GPUs. Reactive — changes apply without a remount. (This is a perf
           // lever, not the floor-sharpness fix; the floor crispness win comes from the unsharp mask.)
-          dpr={perfTier === 'low' ? [1, 1.5] : [1, 2]}
+          dpr={canvasDprRange}
           camera={{
             position: initialCameraPosition,
             fov: 30,

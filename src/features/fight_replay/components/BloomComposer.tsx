@@ -52,6 +52,10 @@ export const BloomComposer: React.FC<BloomComposerProps> = ({
   threshold = 0.9,
 }) => {
   const { gl, scene, camera, size } = useThree();
+  // The live render pixel ratio. AdaptiveResolution mutates this at runtime (setDpr) to hold the
+  // framerate; the composer's HDR/bloom targets are sized in DEVICE pixels (size × dpr), so they
+  // must be re-sized whenever the dpr changes, not only on a CSS-size change.
+  const dpr = useThree((s) => s.viewport.dpr);
 
   const { composer, bloomPass } = useMemo(() => {
     // Explicit multisampled HDR target (vs three's single-sampled default) — clamp to the GPU's max.
@@ -85,11 +89,13 @@ export const BloomComposer: React.FC<BloomComposerProps> = ({
     bloomPass.threshold = threshold;
   }, [bloomPass, strength, radius, threshold]);
 
-  // Track canvas size (incl. fullscreen transitions) — a hand-built composer does not auto-resize.
+  // Track canvas size (incl. fullscreen transitions) AND the adaptive pixel ratio — a hand-built
+  // composer does not auto-resize. `dpr` is in the deps so a runtime resolution change (adaptive
+  // scaler) resizes the composer's targets to match the renderer's new drawing buffer.
   useEffect(() => {
     composer.setPixelRatio(gl.getPixelRatio());
     composer.setSize(size.width, size.height);
-  }, [composer, gl, size.width, size.height]);
+  }, [composer, gl, size.width, size.height, dpr]);
 
   // Publish the render handle for RenderLoop to call in place of gl.render.
   useEffect(() => {
