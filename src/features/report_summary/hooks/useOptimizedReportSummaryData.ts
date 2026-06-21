@@ -6,7 +6,6 @@ import { FightFragment } from '../../../graphql/gql/graphql';
 import { DeathAnalysisInput, DeathAnalysisService } from '../../../services/DeathAnalysisService';
 import { fetchDamageEvents } from '../../../store/events_data/damageEventsSlice';
 import { fetchDeathEvents } from '../../../store/events_data/deathEventsSlice';
-import { fetchHealingEvents } from '../../../store/events_data/healingEventsSlice';
 import {
   selectAbilitiesByIdForContext,
   selectActorsByIdForContext,
@@ -103,7 +102,7 @@ export function useOptimizedReportSummaryData(
             (fight) =>
               fight.startTime != null && fight.endTime != null && fight.endTime > fight.startTime,
           );
-        const totalTasks = cleanFights.length * 3 + 2; // 3 event types per fight + analysis tasks
+        const totalTasks = cleanFights.length * 2 + 2; // 2 consumed event types per fight + analysis tasks
 
         if (isCurrent()) {
           setProgress({
@@ -143,10 +142,13 @@ export function useOptimizedReportSummaryData(
 
           await Promise.all(
             batch.map(async (fight) => {
-              const [damageRes, deathRes, healingRes, rezRes] = await Promise.allSettled([
+              // Healing events are intentionally NOT fetched here: the summary
+              // aggregation only consumes damage, death and resurrection data.
+              // Fetching healing (a paginated, multi-MB per-fight query) was pure
+              // waste — its result was never stored or read.
+              const [damageRes, deathRes, rezRes] = await Promise.allSettled([
                 dispatch(fetchDamageEvents({ reportCode, fight, client })).unwrap(),
                 dispatch(fetchDeathEvents({ reportCode, fight, client })).unwrap(),
-                dispatch(fetchHealingEvents({ reportCode, fight, client })).unwrap(),
                 fetchResurrectionEvents({ reportCode, fight, client }),
               ]);
 
@@ -164,7 +166,7 @@ export function useOptimizedReportSummaryData(
                 successfulFights += 1;
               }
 
-              const failure = [damageRes, deathRes, healingRes].find(
+              const failure = [damageRes, deathRes].find(
                 (r): r is PromiseRejectedResult => r.status === 'rejected',
               );
               if (failure) {
@@ -174,7 +176,7 @@ export function useOptimizedReportSummaryData(
                     : 'Failed to load some events';
               }
 
-              completedTasks += 3;
+              completedTasks += 2;
               if (isCurrent()) {
                 setProgress({
                   current: completedTasks,

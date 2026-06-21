@@ -75,13 +75,6 @@ jest.mock('../../../store/events_data/deathEventsSlice', () => {
   };
 });
 
-jest.mock('../../../store/events_data/healingEventsSlice', () => {
-  const { createAsyncThunk } = jest.requireActual('@reduxjs/toolkit');
-  return {
-    fetchHealingEvents: createAsyncThunk('test/fetchHealingEvents', async () => []),
-  };
-});
-
 jest.mock('../resurrectionEvents', () => ({
   fetchResurrectionEvents: jest.fn(async () => []),
 }));
