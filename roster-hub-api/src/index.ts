@@ -1673,6 +1673,219 @@ app.post('/packs/:id/vote', async (c) => {
   return c.json(result);
 });
 
+// ─── GET /fetch-guide — fetch a build-guide page server-side (CORS proxy) ────
+// Lets the build editor import a guide by URL: the browser can't fetch a third-
+// party page (CORS), so we fetch it here and return the raw HTML for the client
+// to parse. Hardened against SSRF (public http(s) only, private ranges blocked),
+// with size + timeout caps and a per-IP rate limit.
+
+const FETCH_GUIDE_MAX_BYTES = 3 * 1024 * 1024; // 3 MB
+const FETCH_GUIDE_TIMEOUT_MS = 12_000;
+const FETCH_GUIDE_RATE_LIMIT = 20; // per IP per minute
+const fetchGuideRateCounts = new Map<string, { count: number; expires: number }>();
+
+// Allowlisted ESO build-guide domains. /fetch-guide is unauthenticated, so we
+// restrict it to reputable guide sites rather than running an open fetch proxy.
+// This is also the real SSRF backstop: a DNS-rebind/redirect to an internal
+// address can't pass because internal hosts aren't on this list (and the literal
+// IP / IPv4-mapped checks below are defense-in-depth). Add domains here as
+// users request them.
+const GUIDE_DOMAIN_ALLOWLIST = [
+  'hyperioxes.com',
+  'skinnycheeks.gg',
+  'alcasthq.com',
+  'eso-hub.com',
+  'esohub.com',
+  'deltiasgaming.com',
+  'arzyelbuilds.com',
+  'dottzgaming.com',
+  'xynodegaming.com',
+  'eso-skillbook.com',
+  'tamrieljournal.com',
+  'uesp.net',
+];
+
+function isAllowedGuideHost(host: string): boolean {
+  return GUIDE_DOMAIN_ALLOWLIST.some((d) => host === d || host.endsWith('.' + d));
+}
+
+/** Validate a URL is a safe, allowlisted public http(s) target (blocks SSRF). */
+function safeGuideUrl(raw: string): URL | null {
+  let u: URL;
+  try {
+    u = new URL(raw);
+  } catch {
+    return null;
+  }
+  if (u.protocol !== 'http:' && u.protocol !== 'https:') return null;
+  const host = u.hostname.toLowerCase().replace(/^\[|\]$/g, '');
+  if (!isAllowedGuideHost(host)) return null;
+  if (
+    host === 'localhost' ||
+    host === '::1' ||
+    host.endsWith('.localhost') ||
+    host.endsWith('.internal') ||
+    host.endsWith('.local')
+  ) {
+    return null;
+  }
+  // IPv4 literal in a loopback / private / link-local / unspecified range.
+  const m = host.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
+  if (m) {
+    const a = Number(m[1]);
+    const b = Number(m[2]);
+    if (
+      a === 0 ||
+      a === 127 ||
+      a === 10 ||
+      (a === 192 && b === 168) ||
+      (a === 169 && b === 254) ||
+      (a === 172 && b >= 16 && b <= 31)
+    ) {
+      return null;
+    }
+  }
+  // IPv6 unspecified / loopback / unique-local (fc00::/7) / link-local (fe80::/10).
+  if (host === '::' || host === '::1') return null;
+  if (/^f[cd][0-9a-f]{2}:/i.test(host) || /^fe[89ab][0-9a-f]:/i.test(host)) return null;
+  // IPv4-mapped IPv6 (e.g. ::ffff:127.0.0.1 or ::ffff:7f00:1) — unwrap the
+  // embedded v4 and re-check it against the private/loopback ranges above.
+  const mapped = host.match(/^(?:0:0:0:0:0:ffff:|::ffff:)([0-9a-f.:]+)$/i);
+  if (mapped) {
+    const tail = mapped[1];
+    let a = -1;
+    let b = -1;
+    const dotted = tail.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
+    if (dotted) {
+      a = Number(dotted[1]);
+      b = Number(dotted[2]);
+    } else {
+      const hex = tail.match(/^([0-9a-f]{1,4}):([0-9a-f]{1,4})$/i);
+      if (hex) {
+        const hi = parseInt(hex[1], 16);
+        a = (hi >> 8) & 0xff;
+        b = hi & 0xff;
+      }
+    }
+    if (
+      a === 0 ||
+      a === 127 ||
+      a === 10 ||
+      (a === 192 && b === 168) ||
+      (a === 169 && b === 254) ||
+      (a === 172 && b >= 16 && b <= 31)
+    ) {
+      return null;
+    }
+  }
+  return u;
+}
+
+app.get('/fetch-guide', async (c) => {
+  const url = safeGuideUrl((c.req.query('url') ?? '').trim());
+  if (!url)
+    return c.json(
+      {
+        error:
+          'Please paste a link from a supported guide site (e.g. hyperioxes.com, alcasthq.com, eso-hub.com, skinnycheeks.gg, deltiasgaming.com).',
+      },
+      400,
+    );
+
+  // In-memory per-IP rate limit (mirrors /search-addons).
+  const ip = c.req.header('CF-Connecting-IP') ?? 'unknown';
+  const now = Date.now();
+  if (Math.random() < 0.02) {
+    for (const [key, val] of fetchGuideRateCounts) {
+      if (val.expires <= now) fetchGuideRateCounts.delete(key);
+    }
+  }
+  const bucket = fetchGuideRateCounts.get(ip);
+  if (bucket && bucket.expires > now) {
+    if (bucket.count >= FETCH_GUIDE_RATE_LIMIT) return c.json({ error: 'Rate limit exceeded.' }, 429);
+    bucket.count++;
+  } else {
+    fetchGuideRateCounts.set(ip, { count: 1, expires: now + 60_000 });
+  }
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), FETCH_GUIDE_TIMEOUT_MS);
+  try {
+    // Follow redirects MANUALLY so every hop's target is re-validated — a public
+    // URL must not be able to 30x its way to an internal/link-local host.
+    const FETCH_GUIDE_MAX_REDIRECTS = 4;
+    let target = url;
+    let res: Response | null = null;
+    for (let hop = 0; ; hop++) {
+      res = await fetch(target.href, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (compatible; ESO-Toolkit-BuildImporter/1.0)',
+          Accept: 'text/html,application/xhtml+xml,text/plain',
+        },
+        redirect: 'manual',
+        signal: controller.signal,
+      });
+      const location = res.status >= 300 && res.status < 400 ? res.headers.get('location') : null;
+      if (!location) break;
+      if (hop >= FETCH_GUIDE_MAX_REDIRECTS)
+        return c.json({ error: 'That link redirected too many times.' }, 502);
+      let next: URL | null = null;
+      try {
+        next = safeGuideUrl(new URL(location, target.href).href);
+      } catch {
+        next = null;
+      }
+      if (!next) return c.json({ error: 'That link redirected to a blocked target.' }, 400);
+      target = next;
+    }
+    if (!res) return c.json({ error: 'Could not fetch that link.' }, 502);
+    if (!res.ok) return c.json({ error: `That link returned ${res.status}.` }, 502);
+    const contentType = res.headers.get('content-type') ?? '';
+    if (!/text\/html|application\/xhtml|text\/plain/i.test(contentType)) {
+      return c.json({ error: 'That link is not a readable web page.' }, 415);
+    }
+    const reader = res.body?.getReader();
+    if (!reader) return c.json({ error: 'Empty response from that link.' }, 502);
+    const chunks: Uint8Array[] = [];
+    let collected = 0;
+    let truncated = false;
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      if (!value || value.byteLength === 0) continue;
+      if (collected + value.byteLength > FETCH_GUIDE_MAX_BYTES) {
+        // Keep only what fits, then stop — never allocate past what we copied.
+        const room = FETCH_GUIDE_MAX_BYTES - collected;
+        if (room > 0) {
+          chunks.push(value.subarray(0, room));
+          collected += room;
+        }
+        truncated = true;
+        await reader.cancel();
+        break;
+      }
+      chunks.push(value);
+      collected += value.byteLength;
+    }
+    const merged = new Uint8Array(collected);
+    let offset = 0;
+    for (const chunk of chunks) {
+      merged.set(chunk, offset);
+      offset += chunk.byteLength;
+    }
+    const html = new TextDecoder('utf-8').decode(merged);
+    return c.json({ html, finalUrl: target.href, truncated });
+  } catch (err) {
+    const aborted = err instanceof Error && err.name === 'AbortError';
+    return c.json(
+      { error: aborted ? 'That link took too long to load.' : 'Could not fetch that link.' },
+      502,
+    );
+  } finally {
+    clearTimeout(timer);
+  }
+});
+
 // ─── GET /search-addons — ESOUI addon search via MMOUI API ─────────────────
 // Fetches the full addon catalog from api.mmoui.com and caches it in Worker
 // memory.  Search is a case-insensitive substring match on title + author,

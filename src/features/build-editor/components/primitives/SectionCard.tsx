@@ -24,6 +24,12 @@ interface SectionCardProps {
   variant?: GlassPanelVariant;
   /** Whether the section starts expanded. Defaults to true. Pass false to start collapsed on mobile. */
   defaultExpanded?: boolean;
+  /**
+   * Optional control rendered at the right edge of the header (e.g. a
+   * "Copy from setup" menu). Clicks inside it are isolated so they never
+   * toggle the mobile collapse.
+   */
+  headerAction?: React.ReactNode;
 }
 
 export const SectionCard = React.memo<SectionCardProps>(function SectionCard({
@@ -36,6 +42,7 @@ export const SectionCard = React.memo<SectionCardProps>(function SectionCard({
   gridRow,
   variant = 'default',
   defaultExpanded = true,
+  headerAction,
 }) {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
@@ -131,6 +138,18 @@ export const SectionCard = React.memo<SectionCardProps>(function SectionCard({
         >
           {title}
         </Typography>
+
+        {/* Optional header control (e.g. copy-from-setup). Isolate clicks/keys
+            so they never bubble to the mobile collapse toggle. */}
+        {headerAction && (
+          <Box
+            onClick={(e: React.MouseEvent) => e.stopPropagation()}
+            onKeyDown={(e: React.KeyboardEvent) => e.stopPropagation()}
+            sx={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}
+          >
+            {headerAction}
+          </Box>
+        )}
 
         {/* Completion indicator — checkmark when done, nothing when not */}
         {complete && (

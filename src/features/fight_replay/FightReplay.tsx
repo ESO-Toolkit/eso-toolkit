@@ -1,8 +1,9 @@
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import EditLocationAltIcon from '@mui/icons-material/EditLocationAlt';
+import KeyboardArrowDownRoundedIcon from '@mui/icons-material/KeyboardArrowDownRounded';
 import PlaceIcon from '@mui/icons-material/Place';
-import { Alert, Box, Button, Chip, Snackbar, Typography } from '@mui/material';
+import { Alert, Box, Button, Chip, Collapse, Snackbar, Typography } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -210,6 +211,17 @@ export const FightReplay: React.FC = () => {
     },
     [activeMapData, addShape, drawStyle, markersState],
   );
+
+  // Markers tools live behind a collapsed toggle so the deck no longer permanently shoulders the
+  // arena down the page (most viewers never place a marker). Default collapsed, but FORCED open
+  // whenever there's something to act on — edit mode is active or markers are loaded. Deriving the
+  // open state (rather than syncing it via an effect) means the toggle can never collapse the deck
+  // out from under an active edit session and strand the "Done Editing" button.
+  const hasMarkers = !!markersState && markersState.markers.length > 0;
+  const deckForcedOpen = markersEditMode || hasMarkers;
+  const [markersDeckUserOpen, setMarkersDeckUserOpen] = useState(false);
+  const markersDeckOpen = deckForcedOpen || markersDeckUserOpen;
+  const toggleMarkersDeck = useCallback(() => setMarkersDeckUserOpen((prev) => !prev), []);
 
   // The marker currently open in the edit dialog (from the context menu or the panel list).
   const [editingMarkerId, setEditingMarkerId] = useState<string | null>(null);
@@ -436,7 +448,7 @@ export const FightReplay: React.FC = () => {
   useEffect(() => {
     const onKey = (event: KeyboardEvent): void => {
       if (event.defaultPrevented) return;
-      if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) {
+      if (isTextEntryTarget(event.target)) {
         return;
       }
       if (event.ctrlKey || event.metaKey || event.altKey) return;
@@ -750,176 +762,215 @@ export const FightReplay: React.FC = () => {
           copy below the arena. */}
       {fight && !isMobileReplay && (
         <Box sx={{ mb: 2 }}>
-          <Box
-            sx={(theme) => ({
-              ...markerDeckSurface(theme),
-              p: { xs: 1.5, sm: 2 },
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 1.5,
-            })}
+          {/* Collapsed by default: one quiet toggle keeps the markers tools (a power feature most
+              viewers never touch) from permanently pushing the arena down the page. It expands the
+              full deck on demand. While the deck is FORCED open (editing / markers loaded) the
+              toggle is disabled so it can't hide the tools the user is actively working with — and
+              the chevron is dropped, since there's nothing to collapse to. */}
+          <Button
+            variant="text"
+            color="inherit"
+            onClick={toggleMarkersDeck}
+            disabled={deckForcedOpen}
+            type="button"
+            aria-expanded={markersDeckOpen}
+            startIcon={<PlaceIcon fontSize="small" sx={{ color: 'secondary.main' }} />}
+            endIcon={
+              deckForcedOpen ? undefined : (
+                <KeyboardArrowDownRoundedIcon
+                  sx={{
+                    transition: 'transform 0.2s ease',
+                    transform: markersDeckOpen ? 'rotate(180deg)' : 'none',
+                  }}
+                />
+              )
+            }
+            sx={{
+              ml: -1,
+              color: 'text.primary',
+              fontWeight: 700,
+              letterSpacing: 0.2,
+              textTransform: 'none',
+              // Keep the label legible even while disabled (MUI dims disabled text heavily).
+              '&.Mui-disabled': { color: 'text.primary', opacity: 0.85 },
+            }}
           >
-            {/* Deck header: an identity label for the cluster + the live marker-stat chips,
-                pushed to the trailing edge so they read as a status readout for this surface. */}
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
-              <PlaceIcon fontSize="small" sx={{ color: 'secondary.main' }} />
-              <Typography
-                variant="subtitle2"
-                sx={{ fontWeight: 700, letterSpacing: 0.2, color: 'text.primary' }}
+            Map Markers
+            {hasMarkers && (
+              <Chip
+                label={markersState?.markers.length}
+                size="small"
+                color="success"
+                variant="outlined"
+                sx={{ ml: 1, height: 20, '& .MuiChip-label': { px: 0.75 } }}
+              />
+            )}
+          </Button>
+
+          <Collapse in={markersDeckOpen} unmountOnExit>
+            <Box sx={{ mt: 1 }}>
+              <Box
+                sx={(theme) => ({
+                  ...markerDeckSurface(theme),
+                  p: { xs: 1.5, sm: 2 },
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 1.5,
+                })}
               >
-                Map Markers
-              </Typography>
-              <Box sx={{ flexGrow: 1 }} />
-              {markersState && markerStats.success && (
-                <Box sx={{ display: 'flex', gap: 0.75, alignItems: 'center', flexWrap: 'wrap' }}>
-                  <Chip
-                    label={`${markerStats.filtered} / ${markerStats.totalDecoded} markers`}
-                    color="success"
-                    size="small"
-                    variant="outlined"
-                  />
-                  {markerStats.is3D && (
-                    <Chip label="3D Filtering" color="info" size="small" variant="outlined" />
-                  )}
-                  {markerStats.removed > 0 && (
+                {/* Live marker-stat chips — a status readout for this surface. The cluster's identity
+                ("Map Markers") now lives on the toggle above, so the header is just the stats
+                (and renders nothing until markers are loaded). */}
+                {markersState && markerStats.success && (
+                  <Box sx={{ display: 'flex', gap: 0.75, alignItems: 'center', flexWrap: 'wrap' }}>
                     <Chip
-                      label={`${markerStats.removed} filtered out`}
-                      color="warning"
+                      label={`${markerStats.filtered} / ${markerStats.totalDecoded} markers`}
+                      color="success"
                       size="small"
                       variant="outlined"
                     />
-                  )}
-                </Box>
-              )}
-            </Box>
+                    {markerStats.is3D && (
+                      <Chip label="3D Filtering" color="info" size="small" variant="outlined" />
+                    )}
+                    {markerStats.removed > 0 && (
+                      <Chip
+                        label={`${markerStats.removed} filtered out`}
+                        color="warning"
+                        size="small"
+                        variant="outlined"
+                      />
+                    )}
+                  </Box>
+                )}
 
-            {/* Actions. A clear hierarchy instead of three lookalike buttons: the primary entry
+                {/* Actions. A clear hierarchy instead of three lookalike buttons: the primary entry
                 point (Manage) is filled, Edit is a quiet outlined toggle, and Export is its own
                 grouped split control on the row below. The manage/edit pair share one row with
                 equal flex + `stretch` so they are always the same width AND the same height (no
                 ragged single-vs-double-line wrap); on phones they stack full width. */}
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-              <Box
-                sx={{
-                  display: 'flex',
-                  gap: 1,
-                  alignItems: 'stretch',
-                  flexDirection: { xs: 'column', sm: 'row' },
-                }}
-              >
-                <Button
-                  variant="contained"
-                  color="primary"
-                  startIcon={<PlaceIcon />}
-                  onClick={() => setMarkersModalOpen(true)}
-                  type="button"
-                  sx={{ flex: 1, whiteSpace: 'nowrap' }}
-                >
-                  {markersState ? 'Manage Map Markers' : 'Import Map Markers'}
-                </Button>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      gap: 1,
+                      alignItems: 'stretch',
+                      flexDirection: { xs: 'column', sm: 'row' },
+                    }}
+                  >
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      startIcon={<PlaceIcon />}
+                      onClick={() => setMarkersModalOpen(true)}
+                      type="button"
+                      sx={{ flex: 1, whiteSpace: 'nowrap' }}
+                    >
+                      {markersState ? 'Manage Map Markers' : 'Import Map Markers'}
+                    </Button>
 
-                <Button
-                  variant={markersEditMode ? 'contained' : 'outlined'}
-                  color="secondary"
-                  startIcon={<EditLocationAltIcon />}
-                  onClick={toggleMarkersEditMode}
-                  type="button"
-                  aria-pressed={markersEditMode}
-                  sx={{ flex: 1, whiteSpace: 'nowrap' }}
-                >
-                  {markersEditMode ? 'Done Editing' : 'Edit Markers'}
-                </Button>
-              </Box>
+                    <Button
+                      variant={markersEditMode ? 'contained' : 'outlined'}
+                      color="secondary"
+                      startIcon={<EditLocationAltIcon />}
+                      onClick={toggleMarkersEditMode}
+                      type="button"
+                      aria-pressed={markersEditMode}
+                      sx={{ flex: 1, whiteSpace: 'nowrap' }}
+                    >
+                      {markersEditMode ? 'Done Editing' : 'Edit Markers'}
+                    </Button>
+                  </Box>
 
-              {markersState && markersState.markers.length > 0 && (
-                <MarkerExportButton onExport={handleExportMarkers} sx={{ width: '100%' }} />
-              )}
-            </Box>
+                  {markersState && markersState.markers.length > 0 && (
+                    <MarkerExportButton onExport={handleExportMarkers} sx={{ width: '100%' }} />
+                  )}
+                </Box>
 
-            {/* Edit-mode hint: surfaces the gestures, which are otherwise invisible. Touch and
+                {/* Edit-mode hint: surfaces the gestures, which are otherwise invisible. Touch and
                 mouse get their own wording — right-click and Ctrl+Z don't exist on a phone. It
                 sits in a tinted well so it reads as inline guidance, not body copy. */}
-            {markersEditMode && (
-              <Box
-                sx={(theme) => ({
-                  borderRadius: 1.5,
-                  px: 1.5,
-                  py: 1,
-                  bgcolor:
-                    theme.palette.mode === 'dark'
-                      ? alpha(theme.palette.secondary.main, 0.08)
-                      : alpha(theme.palette.primary.main, 0.05),
-                  border: '1px solid',
-                  borderColor:
-                    theme.palette.mode === 'dark'
-                      ? alpha(theme.palette.secondary.main, 0.22)
-                      : 'divider',
-                })}
-              >
-                <Typography variant="caption" color="text.secondary">
-                  {isMobileReplay
-                    ? 'Press and hold the map to place a marker · drag a marker to move it · press and hold a marker to edit or remove it'
-                    : 'Right-click the map to place a marker · drag a marker to move it · right-click a marker to edit or remove it · Ctrl+Z to undo'}
-                </Typography>
+                {markersEditMode && (
+                  <Box
+                    sx={(theme) => ({
+                      borderRadius: 1.5,
+                      px: 1.5,
+                      py: 1,
+                      bgcolor:
+                        theme.palette.mode === 'dark'
+                          ? alpha(theme.palette.secondary.main, 0.08)
+                          : alpha(theme.palette.primary.main, 0.05),
+                      border: '1px solid',
+                      borderColor:
+                        theme.palette.mode === 'dark'
+                          ? alpha(theme.palette.secondary.main, 0.22)
+                          : 'divider',
+                    })}
+                  >
+                    <Typography variant="caption" color="text.secondary">
+                      {isMobileReplay
+                        ? 'Press and hold the map to place a marker · drag a marker to move it · press and hold a marker to edit or remove it'
+                        : 'Right-click the map to place a marker · drag a marker to move it · right-click a marker to edit or remove it · Ctrl+Z to undo'}
+                    </Typography>
+                  </Box>
+                )}
+                {/* Draw shapes — esotk-native lines / zones / circles / rects / rulers. Sits under
+                    the marker actions as the second half of the command strip. */}
+                <Box sx={{ borderTop: 1, borderColor: 'divider', pt: 1.5 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+                      Draw Shapes
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      lines · zones · circles · rulers
+                    </Typography>
+                  </Box>
+                  <ShapeToolbar
+                    activeTool={drawTool}
+                    onSelectTool={handleSelectTool}
+                    style={drawStyle}
+                    onStyleChange={handleStyleChange}
+                    shapeCount={markersState?.shapes?.length ?? 0}
+                    onClearShapes={clearShapes}
+                    canUndo={canUndo}
+                    onUndo={undo}
+                    canRedo={canRedo}
+                    onRedo={redo}
+                  />
+                </Box>
               </Box>
-            )}
 
-            {/* Draw shapes — esotk-native lines / zones / circles / rects / rulers. Sits under the
-                marker actions as the second half of the command strip. */}
-            <Box sx={{ borderTop: 1, borderColor: 'divider', pt: 1.5 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
-                  Draw Shapes
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  lines · zones · circles · rulers
-                </Typography>
-              </Box>
-              <ShapeToolbar
-                activeTool={drawTool}
-                onSelectTool={handleSelectTool}
-                style={drawStyle}
-                onStyleChange={handleStyleChange}
-                shapeCount={markersState?.shapes?.length ?? 0}
-                onClearShapes={clearShapes}
-                canUndo={canUndo}
-                onUndo={undo}
-                canRedo={canRedo}
-                onRedo={redo}
-              />
-            </Box>
-          </Box>
-
-          {/* Marker management list: edit/delete each marker, undo/redo, clear all. Kept just
+              {/* Marker management list: edit/delete each marker, undo/redo, clear all. Kept just
               below the deck (its own accordion surface) so the deck stays a compact command strip
               and the per-marker detail expands separately. */}
-          {(markersEditMode || (markersState && markersState.markers.length > 0)) && (
-            <Box sx={{ mt: 1.5 }}>
-              <MarkersPanel
-                markersState={markersState}
-                editMode={markersEditMode}
-                canUndo={canUndo}
-                canRedo={canRedo}
-                onUndo={undo}
-                onRedo={redo}
-                onEditMarker={setEditingMarkerId}
-                onRemoveMarker={removeMarker}
-                onClearMarkers={clearMarkers}
-              />
-            </Box>
-          )}
+              {(markersEditMode || (markersState && markersState.markers.length > 0)) && (
+                <Box sx={{ mt: 1.5 }}>
+                  <MarkersPanel
+                    markersState={markersState}
+                    editMode={markersEditMode}
+                    canUndo={canUndo}
+                    canRedo={canRedo}
+                    onUndo={undo}
+                    onRedo={redo}
+                    onEditMarker={setEditingMarkerId}
+                    onRemoveMarker={removeMarker}
+                    onClearMarkers={clearMarkers}
+                  />
+                </Box>
+              )}
 
-          {/* Shape management list: per-shape edit/delete + clear-all. */}
-          {markersState?.shapes && markersState.shapes.length > 0 && (
-            <Box sx={{ mt: 1.5 }}>
-              <ShapesPanel
-                shapes={markersState.shapes}
-                onEditShape={setEditingShapeId}
-                onRemoveShape={removeShape}
-                onClearShapes={clearShapes}
-              />
+              {/* Shape management list: per-shape edit/delete + clear-all. */}
+              {markersState?.shapes && markersState.shapes.length > 0 && (
+                <Box sx={{ mt: 1.5 }}>
+                  <ShapesPanel
+                    shapes={markersState.shapes}
+                    onEditShape={setEditingShapeId}
+                    onRemoveShape={removeShape}
+                    onClearShapes={clearShapes}
+                  />
+                </Box>
+              )}
             </Box>
-          )}
+          </Collapse>
         </Box>
       )}
 

@@ -77,6 +77,13 @@ export const TRANSPORT_MOTION = {
 } as const;
 
 /**
+ * Pill geometry for the transport's small control chips (speed selector, share button). One
+ * shared radius so the pill family reads as one set instead of three independently-tuned magic
+ * `11px` literals scattered across components.
+ */
+export const TRANSPORT_PILL_RADIUS = 11;
+
+/**
  * Build the docked transport bar's surface `sx` from the live theme. A subtle top-edge
  * accent wash (cyan in dark mode) lifts the bar off the arena above it and reads as the
  * "control deck" of a player rather than a flat form panel — without floating over the 3D

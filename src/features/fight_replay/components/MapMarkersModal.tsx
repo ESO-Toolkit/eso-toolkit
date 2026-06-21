@@ -420,6 +420,9 @@ export const MapMarkersModal: React.FC<MapMarkersModalProps> = ({
         >
           Close
         </Button>
+        {/* Export buttons live here in the modal so they're reachable on mobile too: the page deck
+            (which hosts the toolbar's MarkerExportButton) is desktop-only, and shapes can ONLY be
+            exported from here (the marker split-button is markers-only). */}
         {hasCommittedMarkers && onExportElms && (
           <Button
             onClick={onExportElms}

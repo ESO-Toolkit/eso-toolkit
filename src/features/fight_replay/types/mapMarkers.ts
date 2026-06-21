@@ -70,6 +70,4 @@ export interface MapMarkersState {
   markers: ReplayMarker[];
   /** Esotk-native drawn shapes (lines/zones/circles/rects/rulers). Optional for back-compat. */
   shapes?: ReplayShape[];
-  /** Preserve the original encoded string when markers were loaded */
-  originalEncodedString?: string;
 }

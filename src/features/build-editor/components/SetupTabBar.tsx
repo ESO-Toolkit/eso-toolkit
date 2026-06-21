@@ -37,6 +37,7 @@ import { CSS } from '@dnd-kit/utilities';
 import {
   Add as AddIcon,
   Close as CloseIcon,
+  ContentCopy as DuplicateIcon,
   DragIndicator as DragIndicatorIcon,
 } from '@mui/icons-material';
 import {
@@ -48,6 +49,10 @@ import {
   DialogContent,
   DialogTitle,
   IconButton,
+  ListItemIcon,
+  ListItemText,
+  Menu,
+  MenuItem,
   TextField,
   Tooltip,
   Typography,
@@ -62,6 +67,7 @@ import { selectActiveSetupIndex, selectBuildSetups } from '../store/buildEditorS
 import {
   addSetup,
   deleteSetup,
+  duplicateSetup,
   renameSetup,
   reorderSetups,
   setActiveSetupIndex,
@@ -553,6 +559,21 @@ export const SetupTabBar: React.FC = () => {
   // Stable callback refs for SortableSetupTab props
   const handleSelect = useCallback((idx: number) => dispatch(setActiveSetupIndex(idx)), [dispatch]);
 
+  // ── Add-setup menu (Blank vs Duplicate current) ──────────────────────────
+  const [addMenuAnchor, setAddMenuAnchor] = useState<HTMLElement | null>(null);
+  const atMax = build.setups.length >= 5;
+  const activeSetupName = build.setups[activeSetupIndex]?.name ?? 'current setup';
+
+  const handleAddBlank = useCallback(() => {
+    dispatch(addSetup());
+    setAddMenuAnchor(null);
+  }, [dispatch]);
+
+  const handleDuplicateActive = useCallback(() => {
+    dispatch(duplicateSetup(activeSetupIndex));
+    setAddMenuAnchor(null);
+  }, [dispatch, activeSetupIndex]);
+
   return (
     <>
       <Box
@@ -631,14 +652,16 @@ export const SetupTabBar: React.FC = () => {
           )}
         </DndContext>
 
-        {/* Add setup — glass circle with accent border */}
-        <Tooltip title={build.setups.length >= 5 ? 'Max 5 setups' : 'Add setup'}>
+        {/* Add setup — glass circle with accent border; opens Blank/Duplicate menu */}
+        <Tooltip title={atMax ? 'Max 5 setups' : 'Add setup'}>
           <Box>
             <IconButton
               size="small"
-              onClick={() => dispatch(addSetup())}
-              disabled={build.setups.length >= 5}
+              onClick={(e) => setAddMenuAnchor(e.currentTarget)}
+              disabled={atMax}
               aria-label="Add setup"
+              aria-haspopup="menu"
+              aria-expanded={Boolean(addMenuAnchor)}
               sx={{
                 width: 32,
                 height: 32,
@@ -667,6 +690,69 @@ export const SetupTabBar: React.FC = () => {
             </IconButton>
           </Box>
         </Tooltip>
+
+        {/* Add-setup menu: blank or duplicate the active setup */}
+        <Menu
+          anchorEl={addMenuAnchor}
+          open={Boolean(addMenuAnchor)}
+          onClose={() => setAddMenuAnchor(null)}
+          anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+          transformOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+          slotProps={{
+            paper: {
+              sx: {
+                mb: 0.5,
+                minWidth: 220,
+                borderRadius: 2,
+                backdropFilter: 'blur(12px)',
+                WebkitBackdropFilter: 'blur(12px)',
+                background: isDark ? 'rgba(15, 23, 42, 0.97)' : 'rgba(255, 255, 255, 0.97)',
+                border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'}`,
+              },
+            },
+          }}
+        >
+          <MenuItem
+            onClick={handleAddBlank}
+            sx={{ fontFamily: 'Space Grotesk, Inter, system-ui', fontSize: 13, py: 0.85 }}
+          >
+            <ListItemIcon sx={{ minWidth: 32, color: 'var(--be-accent, #38bdf8)' }}>
+              <AddIcon sx={{ fontSize: 18 }} />
+            </ListItemIcon>
+            <ListItemText
+              primary="Blank setup"
+              secondary="Start from scratch"
+              slotProps={{
+                primary: { sx: { fontSize: 13, fontWeight: 600 } },
+                secondary: { sx: { fontSize: 11 } },
+              }}
+            />
+          </MenuItem>
+          <MenuItem
+            onClick={handleDuplicateActive}
+            sx={{ fontFamily: 'Space Grotesk, Inter, system-ui', fontSize: 13, py: 0.85 }}
+          >
+            <ListItemIcon sx={{ minWidth: 32, color: 'var(--be-accent, #38bdf8)' }}>
+              <DuplicateIcon sx={{ fontSize: 16 }} />
+            </ListItemIcon>
+            <ListItemText
+              primary={`Duplicate “${activeSetupName}”`}
+              secondary="Copy gear, skills, CP & more"
+              slotProps={{
+                primary: {
+                  sx: {
+                    fontSize: 13,
+                    fontWeight: 600,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  },
+                },
+                secondary: { sx: { fontSize: 11 } },
+              }}
+            />
+          </MenuItem>
+        </Menu>
       </Box>
 
       {/* ── Delete confirmation dialog ─────────────────────────────────────── */}
