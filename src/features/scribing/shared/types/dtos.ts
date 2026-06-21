@@ -122,7 +122,10 @@ export interface ScribingSimulationResponse {
     name: string;
     description: string;
     resourceType: ResourceType;
-    cost: number;
+    /** Base cost; omitted when the grimoire's cost varies (e.g. highest-resource). */
+    cost?: number;
+    /** True when the grimoire's cost is not a fixed number. */
+    costVaries?: boolean;
     /**
      * Cast time (ms) / range (m) are omitted rather than fabricated: the
      * simulator conveys cast behaviour and target via the descriptive

@@ -183,6 +183,7 @@ export class ScribingSimulatorService implements IScribingSimulatorService {
         description: sentences.join(' '),
         resourceType: result.resourceType,
         cost: result.cost,
+        costVaries: result.costVaries || undefined,
         // castTime/range intentionally omitted — conveyed via castType/targetType.
         effects: result.effects.map((e) => `${e.name}: ${e.effect}`),
         abilityId: result.abilityId,

@@ -71,7 +71,11 @@ export function adaptScribingData(raw: typeof scribingCompleteData): ScribingDat
   const focusGrimoires = new Map<string, string[]>();
   const grimoires: Record<string, Grimoire> = {};
   for (const [slug, g] of Object.entries(rawAny.grimoires ?? {})) {
-    const flatCost = Number(g.cost) || 0;
+    // Some grimoires have a non-numeric cost (e.g. Soul Burst "highest-resource").
+    // Flag those rather than silently coercing a real variable cost to 0.
+    const numericCost = typeof g.cost === 'number' ? g.cost : Number(g.cost);
+    const costVaries = !Number.isFinite(numericCost);
+    const flatCost = costVaries ? 0 : numericCost;
     // The grimoire's numeric `id` (when present) is its base ability id.
     const baseAbilityId = typeof g.id === 'number' ? g.id : undefined;
     const meta = GRIMOIRE_META[slug];
@@ -96,6 +100,7 @@ export function adaptScribingData(raw: typeof scribingCompleteData): ScribingDat
       skillLine: meta?.skillLine,
       requirements: null,
       cost: { first: flatCost, additional: flatCost },
+      costVaries: costVaries || undefined,
       description: meta?.baseEffect ?? '',
       icon: meta?.icon,
       resource: asResource(g.resource),

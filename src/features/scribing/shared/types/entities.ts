@@ -69,6 +69,12 @@ export interface Grimoire {
     readonly first: number;
     readonly additional: number;
   };
+  /**
+   * True when the grimoire's cost is not a fixed number (e.g. Soul Burst costs
+   * your "highest resource"). When set, the numeric `cost` is a placeholder (0)
+   * and should not be presented as an exact value.
+   */
+  readonly costVaries?: boolean;
   readonly description: string;
   readonly iconUrl?: string;
   /** ESO Logs ability-icon filename (no extension) for the grimoire's skill. */

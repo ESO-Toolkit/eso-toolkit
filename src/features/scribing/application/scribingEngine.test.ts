@@ -41,6 +41,19 @@ describe('grimoire metadata integrity', () => {
     }
   });
 
+  it('flags a non-numeric grimoire cost instead of silently coercing it to 0', () => {
+    // Soul Burst costs your "highest resource" — a real variable cost.
+    expect(data.grimoires['soul-burst'].costVaries).toBe(true);
+    // Fixed-cost grimoires are not flagged and keep their numeric cost.
+    expect(data.grimoires['traveling-knife'].costVaries).toBeFalsy();
+    expect(data.grimoires['traveling-knife'].cost.first).toBeGreaterThan(0);
+
+    // The engine surfaces the variability and omits a misleading number.
+    const variable = deriveScribedSkill(data, { grimoireId: 'soul-burst' });
+    expect(variable?.costVaries).toBe(true);
+    expect(variable?.cost).toBeUndefined();
+  });
+
   it('maps the documented skill lines from game-data icons', () => {
     expect(data.grimoires['banner-bearer'].skillLine).toBe('Support');
     expect(data.grimoires['trample'].skillLine).toBe('Assault');
