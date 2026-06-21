@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
@@ -31,6 +31,13 @@ const mockUseOptimizedReportSummaryData = jest.fn();
 
 jest.mock('../hooks/useOptimizedReportSummaryData', () => ({
   useOptimizedReportSummaryData: (...args: any[]) => mockUseOptimizedReportSummaryData(...args),
+  // Real pure predicate (the page uses it for the header fight count); mirror it
+  // here so the partial mock doesn't leave it undefined.
+  isUsableFight: (fight: { startTime?: number | null; endTime?: number | null } | null) =>
+    fight != null &&
+    fight.startTime != null &&
+    fight.endTime != null &&
+    fight.endTime > fight.startTime,
 }));
 
 // Mock react-router-dom
@@ -231,7 +238,7 @@ describe('ReportSummaryPage', () => {
 
     await waitFor(() => {
       expect(screen.getByText('0 Total Deaths')).toBeInTheDocument();
-      expect(screen.getByText('Flawless Performance! 🎉')).toBeInTheDocument();
+      expect(screen.getByText('Flawless Performance!')).toBeInTheDocument();
     });
   });
 
@@ -258,8 +265,14 @@ describe('ReportSummaryPage', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Top Damage Dealers')).toBeInTheDocument();
-      expect(screen.getByText('#1 Test Player 1')).toBeInTheDocument();
-      expect(screen.getByText('#2 Test Player 2')).toBeInTheDocument();
+      // Names also appear in the performance table, so scope to the dealers list.
+      const dealers = within(
+        screen.getByText('Top Damage Dealers').closest('.MuiBox-root') as HTMLElement,
+      );
+      expect(dealers.getByText('Test Player 1')).toBeInTheDocument();
+      expect(dealers.getByText('Test Player 2')).toBeInTheDocument();
+      expect(dealers.getByText('1')).toBeInTheDocument();
+      expect(dealers.getByText('2')).toBeInTheDocument();
     });
   });
 
@@ -267,16 +280,68 @@ describe('ReportSummaryPage', () => {
     renderWithProviders(<ReportSummaryPage />);
 
     await waitFor(() => {
-      expect(screen.getByText('Damage Type Distribution')).toBeInTheDocument();
+      expect(screen.getByText('Damage by Type')).toBeInTheDocument();
       expect(screen.getByText('Direct Damage')).toBeInTheDocument();
       expect(screen.getByText('DOT')).toBeInTheDocument();
+    });
+  });
+
+  it('surfaces a non-fatal warning when some fights failed to load', async () => {
+    mockUseOptimizedReportSummaryData.mockReturnValue({
+      reportSummaryData: {
+        reportInfo: {
+          reportId: 'test123',
+          title: 'Test Report',
+          startTime: 1000000,
+          endTime: 2000000,
+          duration: 1000000,
+          zoneName: 'Test Zone',
+        },
+        fights: [],
+        damageBreakdown: {
+          totalDamage: 0,
+          dps: 0,
+          playerBreakdown: [],
+          abilityTypeBreakdown: [],
+          targetBreakdown: [],
+        },
+        deathAnalysis: {
+          totalDeaths: 0,
+          playerDeaths: [],
+          mechanicDeaths: [],
+          fightDeaths: [],
+          deathPatterns: [],
+        },
+        loadingStates: {
+          isLoading: false,
+          fightDataLoading: {},
+          damageEventsLoading: false,
+          deathEventsLoading: false,
+          playerDataLoading: false,
+          masterDataLoading: false,
+        },
+        errors: { generalErrors: [], fightErrors: { 1: 'network error' }, fetchErrors: {} },
+      },
+      isLoading: false,
+      error: null,
+      progress: null,
+      fetchData: jest.fn(),
+    });
+
+    renderWithProviders(<ReportSummaryPage />);
+
+    await waitFor(() => {
+      expect(screen.getByText(/couldn't be loaded for 1 fight/i)).toBeInTheDocument();
     });
   });
 });
 
 describe('ReportSummaryPage Loading State', () => {
-  it('shows loading skeleton while data is loading', () => {
-    // Mock loading state
+  it('renders the header immediately and streams an inline progress bar while the summary aggregates', () => {
+    // Report metadata is ready (isReportLoading: false from the useReportData
+    // mock) but the per-fight aggregation is still running. The page should NOT
+    // block on the full-page loading card — it renders the header progressively
+    // and shows the aggregation progress inline.
     mockUseOptimizedReportSummaryData.mockReturnValue({
       reportSummaryData: undefined,
       isLoading: true,
@@ -291,9 +356,35 @@ describe('ReportSummaryPage Loading State', () => {
 
     renderWithProviders(<ReportSummaryPage />);
 
-    expect(screen.getByText('Loading Report Summary')).toBeInTheDocument();
+    // The full-page blocker is gone — header content renders right away.
+    expect(screen.queryByText('Loading Report Summary')).not.toBeInTheDocument();
+    expect(screen.getByText('Test Report')).toBeInTheDocument();
+    // Fight count comes from report metadata before the aggregation finishes.
+    expect(screen.getByText('2 Fights')).toBeInTheDocument();
+    // Inline progress reflects the ongoing aggregation.
     expect(screen.getByText('Fetching damage events...')).toBeInTheDocument();
     expect(screen.getByText('2/10')).toBeInTheDocument();
+  });
+});
+
+describe('ReportSummaryPage progressive render', () => {
+  it('does not show a false "Flawless Performance!" before the summary data arrives', async () => {
+    // Report metadata is ready but aggregation has not produced summaryData yet
+    // (and is not flagged loading) — the transient/zero-fight progressive-render
+    // window. The death section must show its skeleton, never a success message.
+    mockUseOptimizedReportSummaryData.mockReturnValue({
+      reportSummaryData: undefined,
+      isLoading: false,
+      error: undefined,
+      progress: null,
+      fetchData: jest.fn(),
+    });
+
+    renderWithProviders(<ReportSummaryPage />);
+
+    await waitFor(() => expect(screen.getByText('Test Report')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText(/Analyzing death patterns/i)).toBeInTheDocument());
+    expect(screen.queryByText('Flawless Performance!')).not.toBeInTheDocument();
   });
 });
 

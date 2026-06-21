@@ -2848,6 +2848,7 @@ export type ReportFragment = {
   title: string;
   visibility: string;
   zone?: { __typename?: 'Zone'; name: string } | null;
+  owner?: { __typename?: 'User'; name: string } | null;
   fights?: Array<{
     __typename?: 'ReportFight';
     id: number;
@@ -2964,6 +2965,7 @@ export type GetReportByCodeQuery = {
       title: string;
       visibility: string;
       zone?: { __typename?: 'Zone'; name: string } | null;
+      owner?: { __typename?: 'User'; name: string } | null;
       fights?: Array<{
         __typename?: 'ReportFight';
         id: number;
@@ -3622,6 +3624,14 @@ export const ReportFragmentDoc = {
           {
             kind: 'Field',
             name: { kind: 'Name', value: 'zone' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [{ kind: 'Field', name: { kind: 'Name', value: 'name' } }],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'owner' },
             selectionSet: {
               kind: 'SelectionSet',
               selections: [{ kind: 'Field', name: { kind: 'Name', value: 'name' } }],
@@ -6804,6 +6814,14 @@ export const GetReportByCodeDocument = {
           {
             kind: 'Field',
             name: { kind: 'Name', value: 'zone' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [{ kind: 'Field', name: { kind: 'Name', value: 'name' } }],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'owner' },
             selectionSet: {
               kind: 'SelectionSet',
               selections: [{ kind: 'Field', name: { kind: 'Name', value: 'name' } }],

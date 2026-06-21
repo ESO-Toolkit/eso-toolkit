@@ -20,8 +20,12 @@ export interface ReportDamageBreakdown {
   dps: number;
   /** Breakdown by player */
   playerBreakdown: PlayerDamageBreakdown[];
-  /** Breakdown by ability type */
+  /** Breakdown by ability type (overlapping categories — can sum to >100%) */
   abilityTypeBreakdown: AbilityTypeDamageBreakdown[];
+  /** Exclusive Direct vs Damage-over-Time split (sums to 100%) */
+  deliveryBreakdown?: AbilityTypeDamageBreakdown[];
+  /** Exclusive Magic vs Martial vs Other split (sums to 100%) */
+  schoolBreakdown?: AbilityTypeDamageBreakdown[];
   /** Breakdown by target */
   targetBreakdown: TargetDamageBreakdown[];
 }
@@ -104,8 +108,14 @@ export interface PlayerDeathAnalysis {
   role?: string;
   /** Total deaths */
   totalDeaths: number;
-  /** Average time alive per fight (in seconds) */
+  /** Average time-to-first-death per fight that had a death (in milliseconds) */
   averageTimeAlive: number;
+  /**
+   * Average true time alive per fight that had a death (in milliseconds) — counts
+   * every alive interval, including time after a resurrection, not just the time
+   * up to the first death.
+   */
+  averageTimeAliveTotal: number;
   /** Deaths per fight breakdown */
   fightDeaths: FightPlayerDeaths[];
   /** Top causes of death */
@@ -119,8 +129,14 @@ export interface FightPlayerDeaths {
   fightName: string;
   /** Number of deaths in this fight */
   deathCount: number;
-  /** Time alive in this fight (seconds) */
+  /** Time from fight start to the player's first death (in milliseconds) */
   timeAlive: number;
+  /**
+   * Total time the player was alive this fight (in milliseconds), summing the
+   * intervals between fight start / each resurrection and the next death or
+   * fight end.
+   */
+  timeAliveTotal: number;
   /** Death timestamps */
   deathTimestamps: number[];
 }
@@ -149,8 +165,13 @@ export interface MechanicDeathAnalysis {
   playersAffected: string[];
   /** Fights where this mechanic caused deaths */
   fightsWithDeaths: number[];
-  /** Average damage of killing blow */
+  /** Average overkill of the killing blow (how far it exceeded remaining health). */
   averageKillingBlowDamage: number;
+  /**
+   * Average true killing-blow hit size — the actual lethal damage, summed across
+   * simultaneous hits, joined from the damage event stream (not overkill).
+   */
+  averageKillingBlowHitSize: number;
   /** Mechanic category (avoidable, unavoidable, etc.) */
   category: MechanicCategory;
 }
@@ -164,8 +185,10 @@ export interface FightDeathAnalysis {
   totalDeaths: number;
   /** Death rate (deaths per minute) */
   deathRate: number;
-  /** Fight success (true if kill, false if wipe) */
+  /** Fight success — the authoritative kill flag when known, else a death-rate heuristic */
   success: boolean;
+  /** Whether this fight is a boss encounter (vs trash), from the API encounterID */
+  isBoss: boolean;
   /** Deaths by mechanic in this fight */
   mechanicBreakdown: MechanicDeathCount[];
 }
@@ -241,8 +264,8 @@ export interface ReportSummaryData {
   fights: FightFragment[];
   /** Damage breakdown analysis */
   damageBreakdown: ReportDamageBreakdown;
-  /** Death analysis */
-  deathAnalysis: ReportDeathAnalysis;
+  /** Death analysis — undefined in the Tier-1 partial, before the raw-event pass lands */
+  deathAnalysis?: ReportDeathAnalysis;
   /** Data loading states */
   loadingStates: ReportDataLoadingStates;
   /** Any errors encountered */
