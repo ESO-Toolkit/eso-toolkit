@@ -122,9 +122,11 @@ export interface ScribingSimulationResponse {
     name: string;
     description: string;
     resourceType: ResourceType;
-    /** Base cost; omitted when the grimoire's cost varies (e.g. highest-resource). */
-    cost?: number;
-    /** True when the grimoire's cost is not a fixed number. */
+    /**
+     * No exact cost number is reported — a scribed skill's cost depends on the
+     * Focus script and character stats. `costVaries` flags grimoires (e.g. Soul
+     * Burst) whose cost is inherently variable (highest-resource).
+     */
     costVaries?: boolean;
     /**
      * Cast time (ms) / range (m) are omitted rather than fabricated: the

@@ -310,6 +310,9 @@ export const ScriptSlotPicker: React.FC<ScriptSlotPickerProps> = ({
                   </InputAdornment>
                 ),
               },
+              // Placeholders aren't a reliable accessible name — give the field
+              // a durable label for screen readers.
+              htmlInput: { 'aria-label': `Search ${SLOT_LABELS[slot]} scripts` },
             }}
           />
         </Box>

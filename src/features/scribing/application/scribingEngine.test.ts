@@ -48,10 +48,11 @@ describe('grimoire metadata integrity', () => {
     expect(data.grimoires['traveling-knife'].costVaries).toBeFalsy();
     expect(data.grimoires['traveling-knife'].cost.first).toBeGreaterThan(0);
 
-    // The engine surfaces the variability and omits a misleading number.
+    // The engine surfaces the variability (no misleading cost number exists).
     const variable = deriveScribedSkill(data, { grimoireId: 'soul-burst' });
     expect(variable?.costVaries).toBe(true);
-    expect(variable?.cost).toBeUndefined();
+    const fixed = deriveScribedSkill(data, { grimoireId: 'traveling-knife' });
+    expect(fixed?.costVaries).toBe(false);
   });
 
   it('maps the documented skill lines from game-data icons', () => {

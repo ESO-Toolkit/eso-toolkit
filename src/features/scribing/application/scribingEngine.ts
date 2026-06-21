@@ -61,9 +61,12 @@ export interface ScribedSkillResult {
   /** ESO Logs ability-icon filename (no extension). */
   readonly icon?: string;
   readonly resourceType: ResourceType;
-  /** Base magicka/stamina cost of the grimoire ability; undefined when it varies. */
-  readonly cost?: number;
-  /** True when the grimoire's cost is not a fixed number (e.g. highest-resource). */
+  /**
+   * Whether the grimoire's cost is variable (e.g. highest-resource). A concrete
+   * cost number is intentionally not modeled: the exact cost of a scribed skill
+   * depends on the Focus script and the character's stats, none of which the
+   * dataset captures, so a number here would be misleadingly authoritative.
+   */
   readonly costVaries: boolean;
   readonly targetType?: string;
   readonly castType?: string;
@@ -194,12 +197,9 @@ export function deriveScribedSkill(
     abilityId,
     icon: grimoire.icon,
     // Resource is a property of the grimoire in the game-extracted data (the
-    // Focus changes the damage TYPE, not Magicka vs Stamina). Cost is the
-    // grimoire's base value — the exact cost scales with the Focus, so the UI
-    // de-emphasises the number rather than presenting it as authoritative. A
-    // grimoire with a variable cost (e.g. highest-resource) reports no number.
+    // Focus changes the damage TYPE, not Magicka vs Stamina). No cost number is
+    // surfaced — the exact cost scales with the Focus and character stats.
     resourceType: grimoire.resource ?? 'magicka',
-    cost: grimoire.costVaries ? undefined : grimoire.cost.first,
     costVaries: Boolean(grimoire.costVaries),
     targetType: grimoire.targetType,
     castType: grimoire.castType,

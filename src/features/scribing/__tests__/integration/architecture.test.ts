@@ -125,7 +125,6 @@ describe('Scribing Architecture Integration', () => {
 
       expect(result.isValid).toBe(true);
       expect(result.calculatedSkill.name).toBeDefined();
-      expect(result.calculatedSkill.cost).toBeGreaterThan(0);
       expect(result.combination.grimoire).toBe(GRIMOIRE_NAME);
       // The physical focus transforms "Traveling Knife" -> "Sundering Knife".
       expect(result.calculatedSkill.name).toBe('Sundering Knife');
