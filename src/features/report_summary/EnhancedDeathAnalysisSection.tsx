@@ -125,7 +125,8 @@ function groupFightsByType(fightDeaths: FightDeathAnalysis[]): FightGroup[] {
  */
 const EnhancedDeathAnalysisSectionComponent: React.FC<EnhancedDeathAnalysisSectionProps> = ({
   deathAnalysis,
-  isLoading,
+  // `isLoading` is still part of the props (the page passes it) but no longer
+  // gates rendering: the section paints as soon as `deathAnalysis` is present.
   error,
 }) => {
   const theme = useTheme();
@@ -170,12 +171,14 @@ const EnhancedDeathAnalysisSectionComponent: React.FC<EnhancedDeathAnalysisSecti
     );
   }
 
-  // Render the skeleton while loading OR before data has arrived. Without the
-  // `!deathAnalysis` guard, the progressive-render path (header + sections mount
-  // before aggregation completes) would fall through to the success branch and
-  // show a false "Flawless Performance!" — see DamageBreakdownSection, which
-  // guards `isLoading || !damageBreakdown` for the same reason.
-  if (isLoading || !deathAnalysis) {
+  // Render the section as soon as the death analysis is present — even while the
+  // rest of the summary is still loading — so the Tier-1 (Deaths table) commit
+  // paints the death section fast instead of waiting for the per-event pass.
+  // `!deathAnalysis` (not `isLoading`) still gates the success branch, so the
+  // skeleton holds until real data arrives and a false "Flawless Performance!"
+  // can never flash — the hook only commits a death analysis once the Deaths
+  // table actually returned deaths.
+  if (!deathAnalysis) {
     return (
       <Card
         elevation={0}

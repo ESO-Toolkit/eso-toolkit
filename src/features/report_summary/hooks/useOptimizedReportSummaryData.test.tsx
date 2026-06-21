@@ -16,15 +16,18 @@ const mockFights = [{ id: 1, name: 'Boss', startTime: 0, endTime: 10_000 }];
 // hoisted mock factory may reference it.
 let mockHangDamageFightId: number | null = null;
 
-// Tier-1 server-side damage table. Defaults to an empty result so the existing
-// tests exercise the raw-event fallback path; individual tests override it to
-// assert the Tier-1 leaderboard is preferred. (The real module would hit the
-// network via the context's real client, which hangs in jsdom.)
-const mockFetchSummaryDamageTotals = jest.fn(async () => ({
-  totalDamage: 0,
-  dps: 0,
-  playerBreakdown: [] as unknown[],
-}));
+// Tier-1 server-side tables (damage leaderboard + death analysis inputs).
+// jest's global `resetMocks` wipes jest.fn implementations before each test, so
+// this returns undefined by default (the hook falls back to the raw-event path,
+// exactly what the default tests exercise). Override per-test with
+// `mockResolvedValueOnce`. (The real module would hit the network via the
+// context's real client, which hangs in jsdom — every fetch path is mocked.)
+const mockFetchSummaryTables = jest.fn();
+
+// Raw death-events fetch — a jest.fn so the table path can assert it was NOT
+// dispatched. `resetMocks` clears its calls + impl between tests; the
+// fallback test sets its return with `mockResolvedValueOnce`.
+const mockFetchDeathEventsImpl = jest.fn();
 
 // Player 1 deals 600 to the boss; the boss (enemy) deals 400 to the player.
 // Only the player-outgoing 600 should count toward totals/DPS/percentages.
@@ -73,26 +76,24 @@ const mockAbilities = {
   2000: { gameID: 2000, name: 'Boss Slam', type: '1' },
 };
 
-jest.mock('../../../store/events_data/damageEventsSlice', () => {
-  const { createAsyncThunk } = jest.requireActual('@reduxjs/toolkit');
-  return {
-    fetchDamageEvents: createAsyncThunk(
-      'test/fetchDamageEvents',
-      async ({ fight }: { fight: { id: number } }) => {
-        if (mockHangDamageFightId === fight.id) {
-          // Never settles — the per-fight timeout must rescue the batch loop.
-          return new Promise<unknown[]>(() => {});
-        }
-        return mockDamageByFight[fight.id] ?? [];
-      },
-    ),
-  };
-});
+// A plain async function (not a jest.fn) so `resetMocks` can't wipe its body —
+// mirrors how the original damage thunk was mocked via createAsyncThunk.
+jest.mock('../summaryDamageEvents', () => ({
+  fetchSummaryFriendlyDamageEvents: async ({ fight }: { fight: { id: number } }) => {
+    if (mockHangDamageFightId === fight.id) {
+      // Never settles — the per-fight timeout must rescue the batch loop.
+      return new Promise<unknown[]>(() => {});
+    }
+    return mockDamageByFight[fight.id] ?? [];
+  },
+}));
 
 jest.mock('../../../store/events_data/deathEventsSlice', () => {
   const { createAsyncThunk } = jest.requireActual('@reduxjs/toolkit');
   return {
-    fetchDeathEvents: createAsyncThunk('test/fetchDeathEvents', async () => []),
+    fetchDeathEvents: createAsyncThunk('test/fetchDeathEvents', (...args: unknown[]) =>
+      mockFetchDeathEventsImpl(...(args as [])),
+    ),
   };
 });
 
@@ -101,7 +102,7 @@ jest.mock('../resurrectionEvents', () => ({
 }));
 
 jest.mock('../reportSummaryTables', () => ({
-  fetchSummaryDamageTotals: (...args: unknown[]) => mockFetchSummaryDamageTotals(...args),
+  fetchSummaryTables: (...args: unknown[]) => mockFetchSummaryTables(...args),
 }));
 
 jest.mock('../../../store/report/reportSelectors', () => ({
@@ -184,19 +185,22 @@ describe('useOptimizedReportSummaryData', () => {
   });
 
   it('prefers the Tier-1 aggregated leaderboard when it is available', async () => {
-    mockFetchSummaryDamageTotals.mockResolvedValueOnce({
-      totalDamage: 1234,
-      dps: 99,
-      playerBreakdown: [
-        {
-          playerId: '1',
-          playerName: 'Alice',
-          totalDamage: 1234,
-          dps: 99,
-          damagePercentage: 100,
-          fightBreakdown: [],
-        },
-      ],
+    mockFetchSummaryTables.mockResolvedValueOnce({
+      damage: {
+        totalDamage: 1234,
+        dps: 99,
+        playerBreakdown: [
+          {
+            playerId: '1',
+            playerName: 'Alice',
+            totalDamage: 1234,
+            dps: 99,
+            damagePercentage: 100,
+            fightBreakdown: [],
+          },
+        ],
+      },
+      deaths: null,
     });
 
     const { result } = renderHook(() => useOptimizedReportSummaryData('test123'), {
@@ -211,6 +215,91 @@ describe('useOptimizedReportSummaryData', () => {
     expect(damageBreakdown.playerBreakdown[0].playerName).toBe('Alice');
     // Tier-2 raw events still fill the damage-type breakdown.
     expect(Array.isArray(damageBreakdown.abilityTypeBreakdown)).toBe(true);
+  });
+
+  it('builds the death analysis from the Deaths table without fetching raw deaths', async () => {
+    const { adaptDeathsTable } = jest.requireActual('../reportSummaryTables');
+    const tableDeaths = adaptDeathsTable({
+      data: {
+        entries: [
+          {
+            name: 'Alice',
+            id: 1,
+            type: 'Arcanist',
+            timestamp: 5000,
+            fight: 1,
+            overkill: 10,
+            killingBlow: { guid: 9000, name: 'Meteor', type: 1 },
+            events: [
+              {
+                timestamp: 5000,
+                type: 'damage',
+                sourceID: 50,
+                sourceIsFriendly: false,
+                targetID: 1,
+                amount: 1000,
+              },
+            ],
+          },
+        ],
+      },
+    });
+    mockFetchSummaryTables.mockResolvedValueOnce({
+      damage: {
+        totalDamage: 1234,
+        dps: 99,
+        playerBreakdown: [
+          {
+            playerId: '1',
+            playerName: 'Alice',
+            totalDamage: 1234,
+            dps: 99,
+            damagePercentage: 100,
+            fightBreakdown: [],
+          },
+        ],
+      },
+      deaths: tableDeaths,
+    });
+
+    const { result } = renderHook(() => useOptimizedReportSummaryData('test123'), {
+      wrapper: makeWrapper(),
+    });
+    await waitFor(() => expect(result.current.reportSummaryData?.deathAnalysis).toBeDefined());
+
+    const death = result.current.reportSummaryData!.deathAnalysis!;
+    // One player death; A8 hit size comes from the table recap (not a raw crawl).
+    expect(death.totalDeaths).toBe(1);
+    expect(death.mechanicDeaths.find((m) => m.mechanicId === 9000)?.averageKillingBlowHitSize).toBe(
+      1000,
+    );
+    // The raw death thunk is never dispatched when the table provided deaths.
+    expect(mockFetchDeathEventsImpl).not.toHaveBeenCalled();
+  });
+
+  it('falls back to the raw death fetch when the Deaths table is unavailable', async () => {
+    // Default mockFetchSummaryTables returns deaths:null -> raw-death fallback.
+    mockFetchDeathEventsImpl.mockResolvedValueOnce([
+      {
+        type: 'death',
+        targetID: 1,
+        targetIsFriendly: true,
+        sourceID: 50,
+        sourceIsFriendly: false,
+        abilityGameID: 2000,
+        fight: 1,
+        timestamp: 5000,
+        amount: 0,
+      },
+    ]);
+
+    const { result } = renderHook(() => useOptimizedReportSummaryData('test123'), {
+      wrapper: makeWrapper(),
+    });
+    await waitFor(() => expect(result.current.reportSummaryData?.deathAnalysis).toBeDefined());
+
+    expect(mockFetchDeathEventsImpl).toHaveBeenCalled();
+    expect(result.current.reportSummaryData!.deathAnalysis!.totalDeaths).toBe(1);
   });
 });
 

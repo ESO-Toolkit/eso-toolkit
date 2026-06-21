@@ -72,6 +72,16 @@ describe('EnhancedDeathAnalysisSection', () => {
     expect(screen.getByText(/Analyzing death patterns/)).toBeInTheDocument();
   });
 
+  it('renders the analysis as soon as it is present, even while still loading', () => {
+    // The Tier-1 (Deaths table) commit arrives before the rest of the summary
+    // finishes; the section must paint it instead of holding the skeleton.
+    renderWithTheme(
+      <EnhancedDeathAnalysisSection isLoading={true} error={undefined} deathAnalysis={analysis} />,
+    );
+    expect(screen.getByText('Deadliest Abilities & Mechanics')).toBeInTheDocument();
+    expect(screen.queryByText(/Analyzing death patterns/)).not.toBeInTheDocument();
+  });
+
   it('celebrates a flawless run with no deaths', () => {
     renderWithTheme(
       <EnhancedDeathAnalysisSection

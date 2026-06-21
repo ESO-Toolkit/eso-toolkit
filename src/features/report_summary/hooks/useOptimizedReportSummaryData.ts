@@ -4,7 +4,6 @@ import { useSelector, useStore } from 'react-redux';
 import { useEsoLogsClientInstance } from '../../../EsoLogsClientContext';
 import { FightFragment } from '../../../graphql/gql/graphql';
 import { DeathAnalysisInput, DeathAnalysisService } from '../../../services/DeathAnalysisService';
-import { fetchDamageEvents } from '../../../store/events_data/damageEventsSlice';
 import { fetchDeathEvents } from '../../../store/events_data/deathEventsSlice';
 import {
   selectAbilitiesByIdForContext,
@@ -18,6 +17,7 @@ import {
   ReportSummaryData,
   FetchReportSummaryParams,
   ReportInfo,
+  ReportDeathAnalysis,
   PlayerDamageBreakdown,
   AbilityTypeDamageBreakdown,
   FightDamageBreakdown,
@@ -29,8 +29,13 @@ import {
   type DamageCategoryKey,
   type DamagePartition,
 } from '../../report_details/insights/damageTypeCategorization';
-import { fetchSummaryDamageTotals, type SummaryDamageTotals } from '../reportSummaryTables';
+import {
+  fetchSummaryTables,
+  type SummaryDamageTotals,
+  type SummaryDeathsData,
+} from '../reportSummaryTables';
 import { fetchResurrectionEvents, type ResurrectionEvent } from '../resurrectionEvents';
+import { fetchSummaryFriendlyDamageEvents } from '../summaryDamageEvents';
 
 interface UseOptimizedReportSummaryDataReturn {
   reportSummaryData: ReportSummaryData | null;
@@ -126,15 +131,22 @@ function buildReportInfo(
 }
 
 /**
- * The Tier-1 summary committed as soon as the aggregated damage leaderboard
- * arrives: the player damage table + report DPS render immediately, while the
- * damage-type breakdown and death analysis stay empty/undefined (their sections
- * show skeletons) until the raw-event passes fill them in.
+ * The Tier-1 summary committed as soon as the aggregated tables arrive: the
+ * player damage table + report DPS AND the full death analysis render
+ * immediately, while the per-event damage-type breakdown stays empty (its
+ * section shows a skeleton) until the raw Friendlies pass fills it in.
+ *
+ * `deathAnalysis` is the table-derived analysis when the Deaths table returned
+ * deaths, else undefined (its section keeps its skeleton — never a false
+ * "Flawless Performance!"). The Tier-1 death analysis omits resurrection data
+ * (it streams in behind), so A9 "Time Alive" is refined at the final commit; on
+ * a report with no resurrections (the common case) the two are identical.
  */
 function buildTier1Summary(
   reportInfo: ReportInfo,
   cleanFights: FightFragment[],
   tier1: SummaryDamageTotals,
+  deathAnalysis: ReportDeathAnalysis | undefined,
 ): ReportSummaryData {
   return {
     reportInfo,
@@ -148,7 +160,7 @@ function buildTier1Summary(
       schoolBreakdown: [],
       targetBreakdown: [],
     },
-    deathAnalysis: undefined,
+    deathAnalysis,
     loadingStates: {
       isLoading: true,
       fightDataLoading: {},
@@ -227,24 +239,89 @@ export function useOptimizedReportSummaryData(
           });
         }
 
-        // ---- Tier-1: one server-side aggregated damage table ----
-        // Renders the player damage leaderboard + report DPS almost immediately
-        // while the per-fight raw-event passes (damage-type breakdown, death
-        // analysis) stream in behind it. Best-effort: on failure/timeout the
-        // raw-event pass below is the authoritative fallback. Timed out so a hung
-        // request can't delay the rest of the summary.
+        // Reads the report-wide master data (actors/abilities) fresh. It is not
+        // loaded on the /summary route at first paint, so the table-derived maps
+        // below fill the gaps; once it is warm, the real records take precedence.
+        const readMasterData = (): {
+          realActors: ReturnType<typeof selectActorsByIdForContext>;
+          realAbilities: ReturnType<typeof selectAbilitiesByIdForContext>;
+        } => {
+          const s = store.getState();
+          const ff = cleanFights[0];
+          return {
+            realActors: ff ? selectActorsByIdForContext(s, { reportCode, fightId: ff.id }) : {},
+            realAbilities: ff
+              ? selectAbilitiesByIdForContext(s, { reportCode, fightId: ff.id })
+              : {},
+          };
+        };
+
+        // Builds the death analysis from the aggregated Deaths table. The service's
+        // analysis logic is the unchanged source of truth; only its inputs are
+        // adapted from the table — synthesized death events plus each death's recap
+        // damage (the A8 killing-blow join). Resurrection casts (A9) are layered in
+        // as they arrive; the table maps are overlaid by real master data.
+        const buildTableDeathAnalysis = (
+          deaths: SummaryDeathsData,
+          rezByFight: Map<number, ResurrectionEvent[]>,
+        ): ReportDeathAnalysis => {
+          const { realActors, realAbilities } = readMasterData();
+          const actors = { ...deaths.tableActors, ...realActors };
+          const abilities = { ...deaths.tableAbilities, ...realAbilities };
+          const fightDeathData: DeathAnalysisInput[] = cleanFights.map((fight) => ({
+            deathEvents: deaths.deathEventsByFight.get(fight.id) ?? [],
+            damageEvents: deaths.recapDamageByFight.get(fight.id) ?? [],
+            resurrectEvents: rezByFight.get(fight.id) ?? [],
+            fightId: fight.id,
+            fightName: fight.name,
+            fightStartTime: fight.startTime,
+            fightEndTime: fight.endTime ?? fight.startTime,
+            actors,
+            abilities,
+            kill: wasKill(fight),
+            isBoss: isBossFight(fight),
+          }));
+          return DeathAnalysisService.analyzeReportDeaths(fightDeathData);
+        };
+
+        // ---- Tier-1: one server-side aggregated request (damage + deaths tables) ----
+        // Renders the player damage leaderboard + report DPS AND the full death
+        // analysis almost immediately, while only the per-event damage-type
+        // breakdown streams in behind it. Best-effort: on failure/timeout the
+        // raw-event passes below are the authoritative fallback. Timed out so a
+        // hung request can't delay the rest of the summary.
         let tier1: SummaryDamageTotals | null = null;
+        let tableDeaths: SummaryDeathsData | null = null;
         const fightIds = cleanFights.map((fight) => Number(fight.id));
         if (fightIds.length > 0) {
-          tier1 = await withTimeout(
-            fetchSummaryDamageTotals({ reportCode, client, fightIds, totalActiveDuration }),
+          const tables = await withTimeout(
+            fetchSummaryTables({ reportCode, client, fightIds, totalActiveDuration }),
             PER_FIGHT_EVENT_TIMEOUT_MS,
-            'summary damage table',
+            'summary tables',
           ).catch(() => null);
-          if (isCurrent() && tier1 && tier1.playerBreakdown.length > 0) {
-            setReportSummaryData(buildTier1Summary(reportInfo, cleanFights, tier1));
+          tier1 = tables?.damage && tables.damage.playerBreakdown.length > 0 ? tables.damage : null;
+          tableDeaths = tables?.deaths ?? null;
+
+          // Only commit a Tier-1 death analysis when the table actually returned
+          // deaths — never synthesize a 0-death "Flawless Performance!" from an
+          // empty/unparseable payload (the section keeps its skeleton instead).
+          const tier1DeathAnalysis =
+            tableDeaths && tableDeaths.deathCount > 0
+              ? buildTableDeathAnalysis(tableDeaths, new Map())
+              : undefined;
+
+          if (isCurrent() && tier1) {
+            setReportSummaryData(
+              buildTier1Summary(reportInfo, cleanFights, tier1, tier1DeathAnalysis),
+            );
           }
         }
+
+        // When the Deaths table is unavailable, fall back to the raw per-fight
+        // death-events fetch (cheap — it carries no damage payload). The Enemies
+        // damage crawl stays dropped, so A8 hit size degrades to 0 in that
+        // fallback; death counts / causes / patterns stay correct.
+        const needRawDeaths = tableDeaths == null;
 
         // Per-fight events captured straight from the thunk results (see note
         // above re: cache eviction). Failures are recorded per-fight rather than
@@ -276,21 +353,23 @@ export function useOptimizedReportSummaryData(
 
           await Promise.all(
             batch.map(async (fight) => {
-              // Healing events are intentionally NOT fetched here: the summary
-              // aggregation only consumes damage, death and resurrection data.
-              // Fetching healing (a paginated, multi-MB per-fight query) was pure
-              // waste — its result was never stored or read.
+              // Friendlies-only damage (for the per-event damage-type breakdown) +
+              // best-effort resurrections (for A9 time alive). The Enemies damage
+              // crawl is dropped (A8 now comes from the Deaths table recap), and the
+              // raw death fetch runs ONLY when the Deaths table was unavailable.
               const [damageRes, deathRes, rezRes] = await Promise.allSettled([
                 withTimeout(
-                  dispatch(fetchDamageEvents({ reportCode, fight, client })).unwrap(),
+                  fetchSummaryFriendlyDamageEvents({ reportCode, fight, client }),
                   PER_FIGHT_EVENT_TIMEOUT_MS,
                   `damage events for ${fight.name}`,
                 ),
-                withTimeout(
-                  dispatch(fetchDeathEvents({ reportCode, fight, client })).unwrap(),
-                  PER_FIGHT_EVENT_TIMEOUT_MS,
-                  `death events for ${fight.name}`,
-                ),
+                needRawDeaths
+                  ? withTimeout(
+                      dispatch(fetchDeathEvents({ reportCode, fight, client })).unwrap(),
+                      PER_FIGHT_EVENT_TIMEOUT_MS,
+                      `death events for ${fight.name}`,
+                    )
+                  : Promise.resolve<DeathEvent[]>([]),
                 withTimeout(
                   fetchResurrectionEvents({ reportCode, fight, client }),
                   PER_FIGHT_EVENT_TIMEOUT_MS,
@@ -301,14 +380,19 @@ export function useOptimizedReportSummaryData(
               if (damageRes.status === 'fulfilled') {
                 damageByFight.set(fight.id, damageRes.value as DamageEvent[]);
               }
-              if (deathRes.status === 'fulfilled') {
+              if (needRawDeaths && deathRes.status === 'fulfilled') {
                 deathByFight.set(fight.id, deathRes.value as DeathEvent[]);
               }
               // Resurrects are best-effort — a failure here never fails the fight.
               if (rezRes.status === 'fulfilled') {
                 resurrectByFight.set(fight.id, rezRes.value as ResurrectionEvent[]);
               }
-              if (damageRes.status === 'fulfilled' || deathRes.status === 'fulfilled') {
+              // A fight "succeeded" if its Friendlies damage loaded (the kept
+              // crawl); in the raw-death fallback a death-only success also counts.
+              if (
+                damageRes.status === 'fulfilled' ||
+                (needRawDeaths && deathRes.status === 'fulfilled')
+              ) {
                 successfulFights += 1;
               }
 
@@ -334,8 +418,10 @@ export function useOptimizedReportSummaryData(
           );
         }
 
-        // If literally every fight failed to load, there's nothing to show.
-        if (cleanFights.length > 0 && successfulFights === 0) {
+        // If literally every fight failed to load AND no Tier-1 table data is
+        // available, there's nothing to show.
+        const haveTier1Data = Boolean(tier1) || Boolean(tableDeaths);
+        if (cleanFights.length > 0 && successfulFights === 0 && !haveTier1Data) {
           throw new Error('Failed to load event data for any fight in this report.');
         }
 
@@ -358,22 +444,29 @@ export function useOptimizedReportSummaryData(
           ? selectAbilitiesByIdForContext(state, { reportCode, fightId: firstFight.id })
           : {};
 
-        // ---- Death analysis (over the deaths we actually loaded) ----
-        const fightDeathData: DeathAnalysisInput[] = cleanFights.map((fight) => ({
-          deathEvents: deathByFight.get(fight.id) ?? [],
-          damageEvents: damageByFight.get(fight.id) ?? [],
-          resurrectEvents: resurrectByFight.get(fight.id) ?? [],
-          fightId: fight.id,
-          fightName: fight.name,
-          fightStartTime: fight.startTime,
-          fightEndTime: fight.endTime ?? fight.startTime,
-          actors: actorsById,
-          abilities: abilitiesById,
-          // Authoritative outcome / classification from the API (not heuristics).
-          kill: wasKill(fight),
-          isBoss: isBossFight(fight),
-        }));
-        const deathAnalysis = DeathAnalysisService.analyzeReportDeaths(fightDeathData);
+        // ---- Death analysis ----
+        // Prefer the aggregated Deaths table (A8 hit size from each death's recap,
+        // A9 from the resurrection casts just fetched). Fall back to the raw
+        // per-fight death events when the table was unavailable — A8 degrades to 0
+        // there (the Enemies damage crawl is dropped), counts/causes stay correct.
+        const deathAnalysis: ReportDeathAnalysis = tableDeaths
+          ? buildTableDeathAnalysis(tableDeaths, resurrectByFight)
+          : DeathAnalysisService.analyzeReportDeaths(
+              cleanFights.map((fight) => ({
+                deathEvents: deathByFight.get(fight.id) ?? [],
+                damageEvents: damageByFight.get(fight.id) ?? [],
+                resurrectEvents: resurrectByFight.get(fight.id) ?? [],
+                fightId: fight.id,
+                fightName: fight.name,
+                fightStartTime: fight.startTime,
+                fightEndTime: fight.endTime ?? fight.startTime,
+                actors: actorsById,
+                abilities: abilitiesById,
+                // Authoritative outcome / classification from the API (not heuristics).
+                kill: wasKill(fight),
+                isBoss: isBossFight(fight),
+              })),
+            );
 
         // ---- Damage breakdown (raw-event fallback for when Tier-1 is absent) ----
         // `totalActiveDuration` was computed up-front (shared with the Tier-1 DPS).
