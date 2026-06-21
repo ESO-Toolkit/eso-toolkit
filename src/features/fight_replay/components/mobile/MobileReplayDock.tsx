@@ -15,6 +15,7 @@
 import AddLocationAltRoundedIcon from '@mui/icons-material/AddLocationAltRounded';
 import BoltRoundedIcon from '@mui/icons-material/BoltRounded';
 import DeleteSweepRoundedIcon from '@mui/icons-material/DeleteSweepRounded';
+import DrawRoundedIcon from '@mui/icons-material/DrawRounded';
 import EditLocationAltRoundedIcon from '@mui/icons-material/EditLocationAltRounded';
 import GroupRoundedIcon from '@mui/icons-material/GroupRounded';
 import InsightsRoundedIcon from '@mui/icons-material/InsightsRounded';
@@ -120,7 +121,7 @@ interface MobileReplayDockProps {
   onClearShapes?: () => void;
 }
 
-type SheetId = 'chapters' | 'settings' | null;
+type SheetId = 'chapters' | 'markers' | 'settings' | null;
 
 /**
  * A settings row: leading icon + label/description, trailing control. Generous 56px tap target.
@@ -534,6 +535,15 @@ const MobileReplayDockComponent: React.FC<MobileReplayDockProps> = ({
               onClick={() => setSheet((s) => (s === 'chapters' ? null : 'chapters'))}
             />
           )}
+          {(onToggleMarkersEditMode || onSelectDrawTool) && (
+            <DockButton
+              icon={<DrawRoundedIcon fontSize="small" />}
+              label="Markers"
+              active={sheet === 'markers'}
+              opensSheet
+              onClick={() => setSheet((s) => (s === 'markers' ? null : 'markers'))}
+            />
+          )}
           <DockButton
             icon={<TuneRoundedIcon fontSize="small" />}
             label="Settings"
@@ -634,6 +644,111 @@ const MobileReplayDockComponent: React.FC<MobileReplayDockProps> = ({
           )}
         </MobileSheet>
       )}
+
+      {/* Markers & Shapes drawer — the touch home for the desktop "Map Markers" deck (markers +
+          drawn shapes), which sits behind the immersive overlay and is unreachable on a phone.
+          Its own dock button (not buried in Settings). Arming a tool / entering edit mode closes
+          the sheet so the map is reachable; the in-canvas HUD then drives Finish/Cancel/Undo. */}
+      <MobileSheet
+        open={sheet === 'markers'}
+        title="Markers & Shapes"
+        onClose={() => setSheet(null)}
+      >
+        {sheet === 'markers' && (
+          <>
+            {onToggleMarkersEditMode && (
+              <>
+                <Typography
+                  variant="overline"
+                  sx={{ color: 'text.secondary', fontWeight: 700, letterSpacing: '0.08em' }}
+                >
+                  Markers
+                </Typography>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75, mt: 1, mb: 2.5 }}>
+                  <SettingRow
+                    icon={<EditLocationAltRoundedIcon fontSize="small" />}
+                    label="Edit markers"
+                    description="Place, move, and remove map markers"
+                    active={markersEditMode}
+                    control={
+                      <Switch
+                        checked={markersEditMode}
+                        onChange={handleToggleEditMarkers}
+                        slotProps={{ input: { 'aria-label': 'Edit markers' } }}
+                      />
+                    }
+                  />
+                  {markersEditMode && (
+                    <>
+                      <Typography
+                        variant="caption"
+                        sx={{ color: 'text.secondary', px: 0.5, lineHeight: 1.4 }}
+                      >
+                        Press and hold the map to place a marker · drag a marker to move it · press
+                        and hold a marker to edit or remove it
+                      </Typography>
+                      <Box
+                        sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 0.75 }}
+                      >
+                        <MarkerActionButton
+                          icon={<AddLocationAltRoundedIcon fontSize="small" />}
+                          label="Add here"
+                          onClick={handleAddMarkerAtCenter}
+                          disabled={!onAddMarkerAtCenter}
+                        />
+                        <MarkerActionButton
+                          icon={<UndoRoundedIcon fontSize="small" />}
+                          label="Undo"
+                          onClick={() => onUndoMarkers?.()}
+                          disabled={!onUndoMarkers || !canUndoMarkers}
+                        />
+                        <MarkerActionButton
+                          icon={<RedoRoundedIcon fontSize="small" />}
+                          label="Redo"
+                          onClick={() => onRedoMarkers?.()}
+                          disabled={!onRedoMarkers || !canRedoMarkers}
+                        />
+                      </Box>
+                    </>
+                  )}
+                </Box>
+              </>
+            )}
+
+            {onSelectDrawTool && drawStyle && (
+              <>
+                <Typography
+                  variant="overline"
+                  sx={{ color: 'text.secondary', fontWeight: 700, letterSpacing: '0.08em' }}
+                >
+                  Draw shapes
+                </Typography>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75, mt: 1, mb: 1 }}>
+                  <Typography
+                    variant="caption"
+                    sx={{ color: 'text.secondary', px: 0.5, lineHeight: 1.4 }}
+                  >
+                    Pick a tool, then tap the map to place points. Circle/rect/ruler take two taps;
+                    use the on-map Finish button (or double-tap) to finish a line or zone.
+                  </Typography>
+                  <ShapeToolbar
+                    activeTool={drawTool}
+                    onSelectTool={handleSelectDrawTool}
+                    style={drawStyle}
+                    onStyleChange={onDrawStyleChange ?? noopStyleChange}
+                    shapeCount={shapeCount}
+                    onClearShapes={onClearShapes ?? noopClearShapes}
+                    canUndo={canUndoMarkers}
+                    onUndo={onUndoMarkers}
+                    canRedo={canRedoMarkers}
+                    onRedo={onRedoMarkers}
+                  />
+                </Box>
+              </>
+            )}
+          </>
+        )}
+      </MobileSheet>
 
       {/* Settings sheet — playback speed · display toggles · share. Body rendered only while open
           (same reason as above: its ShareButton takes `currentTime`, so a mounted-but-closed sheet
@@ -750,102 +865,6 @@ const MobileReplayDockComponent: React.FC<MobileReplayDockProps> = ({
                 }
               />
             </Box>
-
-            {/* Markers — the touch home for the desktop "Edit Markers" tools. The page-toolbar
-                marker controls sit behind the immersive overlay, so on a phone this sheet is the
-                only place to manage markers. Hidden entirely when the host wires no marker toggle. */}
-            {onToggleMarkersEditMode && (
-              <>
-                <Typography
-                  variant="overline"
-                  sx={{ color: 'text.secondary', fontWeight: 700, letterSpacing: '0.08em' }}
-                >
-                  Markers
-                </Typography>
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75, mt: 1, mb: 2.5 }}>
-                  <SettingRow
-                    icon={<EditLocationAltRoundedIcon fontSize="small" />}
-                    label="Edit markers"
-                    description="Place, move, and remove map markers"
-                    active={markersEditMode}
-                    control={
-                      <Switch
-                        checked={markersEditMode}
-                        onChange={handleToggleEditMarkers}
-                        slotProps={{ input: { 'aria-label': 'Edit markers' } }}
-                      />
-                    }
-                  />
-                  {markersEditMode && (
-                    <>
-                      <Typography
-                        variant="caption"
-                        sx={{ color: 'text.secondary', px: 0.5, lineHeight: 1.4 }}
-                      >
-                        Press and hold the map to place a marker · drag a marker to move it · press
-                        and hold a marker to edit or remove it
-                      </Typography>
-                      <Box
-                        sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 0.75 }}
-                      >
-                        <MarkerActionButton
-                          icon={<AddLocationAltRoundedIcon fontSize="small" />}
-                          label="Add here"
-                          onClick={handleAddMarkerAtCenter}
-                          disabled={!onAddMarkerAtCenter}
-                        />
-                        <MarkerActionButton
-                          icon={<UndoRoundedIcon fontSize="small" />}
-                          label="Undo"
-                          onClick={() => onUndoMarkers?.()}
-                          disabled={!onUndoMarkers || !canUndoMarkers}
-                        />
-                        <MarkerActionButton
-                          icon={<RedoRoundedIcon fontSize="small" />}
-                          label="Redo"
-                          onClick={() => onRedoMarkers?.()}
-                          disabled={!onRedoMarkers || !canRedoMarkers}
-                        />
-                      </Box>
-                    </>
-                  )}
-                </Box>
-              </>
-            )}
-
-            {/* Draw shapes — the touch home for the desktop shape toolbar. Arming a tool closes
-                the sheet so the map is reachable for tap-to-draw. */}
-            {onSelectDrawTool && drawStyle && (
-              <>
-                <Typography
-                  variant="overline"
-                  sx={{ color: 'text.secondary', fontWeight: 700, letterSpacing: '0.08em' }}
-                >
-                  Draw shapes
-                </Typography>
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75, mt: 1, mb: 2.5 }}>
-                  <Typography
-                    variant="caption"
-                    sx={{ color: 'text.secondary', px: 0.5, lineHeight: 1.4 }}
-                  >
-                    Pick a tool, then tap the map to place points. Circle/rect/ruler take two taps;
-                    double-tap to finish a line or zone; tap the tool again to cancel.
-                  </Typography>
-                  <ShapeToolbar
-                    activeTool={drawTool}
-                    onSelectTool={handleSelectDrawTool}
-                    style={drawStyle}
-                    onStyleChange={onDrawStyleChange ?? noopStyleChange}
-                    shapeCount={shapeCount}
-                    onClearShapes={onClearShapes ?? noopClearShapes}
-                    canUndo={canUndoMarkers}
-                    onUndo={onUndoMarkers}
-                    canRedo={canRedoMarkers}
-                    onRedo={onRedoMarkers}
-                  />
-                </Box>
-              </>
-            )}
 
             <Typography
               variant="overline"

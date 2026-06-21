@@ -76,21 +76,22 @@ function renderDock(overrides: Partial<DockProps> = {}): void {
   render(<MobileReplayDock {...props} />);
 }
 
-function openSettings(): void {
-  fireEvent.click(screen.getByLabelText('Settings'));
+function openMarkers(): void {
+  fireEvent.click(screen.getByLabelText('Markers'));
 }
 
 describe('MobileReplayDock — Markers section', () => {
-  it('hides the Markers section when no marker toggle is wired', () => {
+  it('hides the Markers dock button + section when no marker/shape tools are wired', () => {
     renderDock();
-    openSettings();
+    // No annotation tools wired → no dedicated dock button at all.
+    expect(screen.queryByLabelText('Markers')).not.toBeInTheDocument();
     expect(screen.queryByLabelText('Edit markers')).not.toBeInTheDocument();
   });
 
   it('surfaces an Edit markers toggle that calls the handler', () => {
     const onToggleMarkersEditMode = jest.fn();
     renderDock({ onToggleMarkersEditMode });
-    openSettings();
+    openMarkers();
 
     fireEvent.click(screen.getByLabelText('Edit markers'));
     expect(onToggleMarkersEditMode).toHaveBeenCalledTimes(1);
@@ -98,7 +99,7 @@ describe('MobileReplayDock — Markers section', () => {
 
   it('hides the marker actions until edit mode is on', () => {
     renderDock({ onToggleMarkersEditMode: noop, markersEditMode: false });
-    openSettings();
+    openMarkers();
     expect(screen.queryByLabelText('Add here')).not.toBeInTheDocument();
   });
 
@@ -115,7 +116,7 @@ describe('MobileReplayDock — Markers section', () => {
       canUndoMarkers: true,
       canRedoMarkers: true,
     });
-    openSettings();
+    openMarkers();
 
     // Undo/Redo keep the sheet open for repeated tweaks; "Add here" closes it (the icon picker
     // opens over the arena), so click it last or it would unmount the others mid-test.
@@ -127,7 +128,7 @@ describe('MobileReplayDock — Markers section', () => {
     expect(onRedoMarkers).toHaveBeenCalledTimes(1);
     expect(onAddMarkerAtCenter).toHaveBeenCalledTimes(1);
 
-    // "Add here" dismisses the Settings sheet so the placement picker isn't hidden behind it.
+    // "Add here" dismisses the Markers sheet so the placement picker isn't hidden behind it.
     expect(screen.queryByLabelText('Add here')).not.toBeInTheDocument();
   });
 
@@ -141,7 +142,7 @@ describe('MobileReplayDock — Markers section', () => {
       canUndoMarkers: false,
       canRedoMarkers: false,
     });
-    openSettings();
+    openMarkers();
 
     expect(screen.getByLabelText('Undo')).toBeDisabled();
     expect(screen.getByLabelText('Redo')).toBeDisabled();
