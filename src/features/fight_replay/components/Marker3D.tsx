@@ -9,6 +9,7 @@ import * as THREE from 'three';
 
 import { MorMarker } from '../../../types/mapMarkers';
 import { LongPressTracker } from '../utils/longPress';
+import { resolveMarkerIconUrl } from '../utils/markerIconAssets';
 
 import { MarkerShape } from './MarkerShape';
 
@@ -68,6 +69,48 @@ function createTextTexture(text: string, fontSize: number): THREE.CanvasTexture 
   texture.generateMipmaps = true;
   texture.anisotropy = 16; // crisp text at grazing angles
   texture.needsUpdate = true;
+  return texture;
+}
+
+/**
+ * Module-level cache of loaded marker icon textures (bundled class glyphs etc.), keyed by URL.
+ * Shared across all markers and kept for the session — the assets are small and reused, so we
+ * don't dispose them per-marker (mirrors the map texture cache).
+ */
+const iconTextureCache = new Map<string, THREE.Texture>();
+
+/** Load (and cache) an image-icon texture for a marker; null until ready / when there's no icon. */
+function useMarkerIconTexture(url: string | null, onReady?: () => void): THREE.Texture | null {
+  const [texture, setTexture] = useState<THREE.Texture | null>(() =>
+    url ? (iconTextureCache.get(url) ?? null) : null,
+  );
+  const onReadyRef = useRef(onReady);
+  onReadyRef.current = onReady;
+
+  useEffect(() => {
+    if (!url) {
+      setTexture(null);
+      return;
+    }
+    const cached = iconTextureCache.get(url);
+    if (cached) {
+      setTexture(cached);
+      return;
+    }
+    let cancelled = false;
+    new THREE.TextureLoader().load(url, (loaded) => {
+      loaded.colorSpace = THREE.SRGBColorSpace;
+      iconTextureCache.set(url, loaded);
+      if (!cancelled) {
+        setTexture(loaded);
+        onReadyRef.current?.(); // repaint the on-demand loop now the glyph is available
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [url]);
+
   return texture;
 }
 
@@ -445,6 +488,11 @@ export const Marker3D: React.FC<Marker3DProps> = ({
     };
   }, [textTexture]);
 
+  // Image-icon markers (e.g. ESO class icons) render a bundled glyph texture instead of a drawn
+  // shape. resolveMarkerIconUrl returns null for the code-drawn M0R shapes.
+  const iconUrl = resolveMarkerIconUrl(marker.bgTexture);
+  const iconTexture = useMarkerIconTexture(iconUrl, markDirty);
+
   // Determine if marker should be a billboard (always face camera) or have orientation
   const isFloating = marker.orientation === undefined;
 
@@ -457,21 +505,33 @@ export const Marker3D: React.FC<Marker3DProps> = ({
 
   const content = (
     <>
-      {/* Shape based on bgTexture (only if provided) */}
-      {marker.bgTexture && (
-        <MarkerShape
-          texturePath={marker.bgTexture}
-          size={markerSize}
-          color={color}
-          opacity={marker.colour[3]}
-        />
-      )}
+      {iconUrl ? (
+        // Image-icon marker (e.g. class icon): the loaded glyph as a billboarded sprite. Nothing
+        // renders until the texture loads (markDirty repaints the on-demand loop on arrival).
+        iconTexture && (
+          <sprite scale={[markerSize, markerSize, 1]}>
+            <spriteMaterial map={iconTexture} transparent depthTest={false} />
+          </sprite>
+        )
+      ) : (
+        <>
+          {/* Shape based on bgTexture (only if provided) */}
+          {marker.bgTexture && (
+            <MarkerShape
+              texturePath={marker.bgTexture}
+              size={markerSize}
+              color={color}
+              opacity={marker.colour[3]}
+            />
+          )}
 
-      {/* Text label if provided */}
-      {textTexture && (
-        <sprite position={[0, 0, 0.01]} scale={[markerSize * 0.8, markerSize * 0.4, 1]}>
-          <spriteMaterial map={textTexture} transparent depthTest={false} />
-        </sprite>
+          {/* Text label if provided */}
+          {textTexture && (
+            <sprite position={[0, 0, 0.01]} scale={[markerSize * 0.8, markerSize * 0.4, 1]}>
+              <spriteMaterial map={textTexture} transparent depthTest={false} />
+            </sprite>
+          )}
+        </>
       )}
 
       {/* Edit-mode grab proxy (invisible, raycast-only) */}

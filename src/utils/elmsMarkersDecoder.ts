@@ -4,7 +4,7 @@
  * Based on Elms Markers addon and M0RMarkers conversion logic
  */
 
-import { MorMarker } from '../types/mapMarkers';
+import { ESO_CLASS_TEXTURES, MorMarker } from '../types/mapMarkers';
 
 import { Logger, LogLevel } from './logger';
 
@@ -150,6 +150,26 @@ export const ELMS_ICON_MAP: Record<number, Partial<MorMarker>> = {
     orientation: [-Math.PI / 2, -Math.PI / 2], // West (left)
   },
 };
+
+// Class-icon markers (esotk-native, keys 101-107). These are NOT Elms format icons — keys >= 100
+// are skipped by the Elms encoder. They carry the M0R built-in class-icon texture path so they
+// render via the bundled class glyph in the editor AND transfer in-game as the M0R class icon.
+const CLASS_ICON_KEY_ORDER = [
+  'dragonknight',
+  'sorcerer',
+  'nightblade',
+  'warden',
+  'necromancer',
+  'templar',
+  'arcanist',
+] as const;
+CLASS_ICON_KEY_ORDER.forEach((className, index) => {
+  ELMS_ICON_MAP[101 + index] = {
+    bgTexture: ESO_CLASS_TEXTURES[className],
+    colour: [1, 1, 1, 1],
+    size: 1.5,
+  };
+});
 
 /**
  * Parsed Elms marker entry

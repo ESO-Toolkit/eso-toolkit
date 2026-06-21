@@ -20,13 +20,39 @@ import {
   ShapeStyle,
 } from '../types/mapMarkers';
 
+import { CLASS_ICON_OPTIONS } from './markerIconCatalog';
 import { shapeOutlineLengthMeters, shapeSampleWorld } from './shapeGeometry';
 
 const COLOR_TOLERANCE = 0.05;
 const SIZE_TOLERANCE = 0.05;
 
 export const COMMON_ELMS_ICON_KEYS: number[] = [
-  1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 21, 18, 72, 73, 74, 75, 76, 77, 14, 15, 16, 17, 20, 22,
+  1,
+  2,
+  3,
+  4,
+  5,
+  6,
+  7,
+  8,
+  9,
+  10,
+  21,
+  18,
+  72,
+  73,
+  74,
+  75,
+  76,
+  77,
+  14,
+  15,
+  16,
+  17,
+  20,
+  22,
+  // esotk-native class icon markers (101-107)
+  ...CLASS_ICON_OPTIONS.map((option) => option.iconKey),
 ];
 
 const ICON_LABEL_OVERRIDES: Record<number, string> = {
@@ -58,6 +84,10 @@ const ICON_LABEL_OVERRIDES: Record<number, string> = {
   76: 'Arrow South',
   77: 'Arrow West',
 };
+// Class icon labels (keys 101-107).
+CLASS_ICON_OPTIONS.forEach((option) => {
+  ICON_LABEL_OVERRIDES[option.iconKey] = option.label;
+});
 
 function deriveLabel(iconKey: number): string {
   if (ICON_LABEL_OVERRIDES[iconKey]) {
@@ -88,7 +118,7 @@ export interface MarkerMenuOption {
   sample?: string;
 }
 
-export type MarkerGroupKey = 'numbers' | 'roles' | 'arrows' | 'shapes' | 'squares';
+export type MarkerGroupKey = 'numbers' | 'roles' | 'arrows' | 'shapes' | 'squares' | 'classes';
 
 interface MarkerGroupDefinition {
   key: MarkerGroupKey;
@@ -107,6 +137,7 @@ const GROUP_LABEL_OVERRIDES: Partial<Record<MarkerGroupKey, string>> = {
   arrows: 'Directional Arrows',
   shapes: 'Shapes',
   squares: 'Squares',
+  classes: 'Classes',
 };
 
 const MARKER_GROUPS: MarkerGroupDefinition[] = [
@@ -133,6 +164,11 @@ const MARKER_GROUPS: MarkerGroupDefinition[] = [
   {
     key: 'squares',
     iconKeys: [15, 16, 17, 20, 22],
+  },
+  {
+    // ESO class icons — render via bundled glyphs, transfer in-game as M0R class icons (^15-^21).
+    key: 'classes',
+    iconKeys: CLASS_ICON_OPTIONS.map((option) => option.iconKey),
   },
 ];
 
@@ -291,13 +327,16 @@ function orientationsMatch(
 }
 
 function findElmsIconKeyForMarker(marker: MorMarker): number | null {
-  if (typeof marker.elmsIconKey === 'number') {
+  // Class icon markers (keys >= 100) are esotk-native with no Elms representation; let them fall
+  // through so Elms export fails gracefully (their in-game transfer path is M0R, not Elms).
+  if (typeof marker.elmsIconKey === 'number' && marker.elmsIconKey < 100) {
     return marker.elmsIconKey;
   }
 
   for (const [key, definition] of Object.entries(ELMS_ICON_MAP)) {
     const iconKey = Number(key);
     if (Number.isNaN(iconKey)) continue;
+    if (iconKey >= 100) continue;
 
     if (definition.bgTexture) {
       if (!marker.bgTexture) continue;

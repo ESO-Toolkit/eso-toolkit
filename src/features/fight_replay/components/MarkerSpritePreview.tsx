@@ -3,6 +3,8 @@ import React from 'react';
 import type { MorMarker } from '@/types/mapMarkers';
 import { ELMS_ICON_MAP } from '@/utils/elmsMarkersDecoder';
 
+import { resolveMarkerIconUrl } from '../utils/markerIconAssets';
+
 type MarkerShape =
   | 'blank'
   | 'circle'
@@ -100,6 +102,21 @@ interface MarkerSpritePreviewProps {
 
 export const MarkerSpritePreview: React.FC<MarkerSpritePreviewProps> = ({ iconKey, label }) => {
   const template = ELMS_ICON_MAP[iconKey];
+
+  // Image-icon markers (e.g. class icons) render the bundled glyph rather than a drawn shape.
+  const iconUrl = resolveMarkerIconUrl(template?.bgTexture);
+  if (iconUrl) {
+    return (
+      <img
+        src={iconUrl}
+        alt={label ?? `Marker ${iconKey}`}
+        width={32}
+        height={32}
+        style={{ width: 32, height: 32, minWidth: 32, objectFit: 'contain', userSelect: 'none' }}
+      />
+    );
+  }
+
   const templateColour = template?.colour as MorMarker['colour'] | undefined;
 
   const shape: MarkerShape = template?.bgTexture
