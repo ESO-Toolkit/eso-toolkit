@@ -704,6 +704,13 @@ export const HeaderBar: React.FC = () => {
       accent: '#3b82f6',
       path: '/build-editor',
     },
+    {
+      text: 'Scribing Simulator',
+      desc: 'Plan scribed skills',
+      icon: '✒️',
+      accent: '#8b5cf6',
+      path: '/scribing-simulator',
+    },
   ];
 
   const reportsItems = React.useMemo(() => {

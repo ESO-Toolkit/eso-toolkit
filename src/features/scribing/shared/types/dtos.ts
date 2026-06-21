@@ -131,8 +131,26 @@ export interface ScribingSimulationResponse {
       amount: number;
     };
     effects: string[];
+    /** Resulting in-game ability id (for icon/name resolution). */
+    abilityId?: number;
+    /** ESO Logs ability-icon filename (no extension). */
+    icon?: string;
+    /** Skill line the grimoire belongs to. */
+    skillLine?: string;
+    targetType?: string;
+    castType?: string;
+    /** One structured entry per chosen Focus/Signature/Affix script. */
+    scriptBreakdown?: Array<{
+      slot: 'focus' | 'signature' | 'affix';
+      name: string;
+      effect: string;
+      category?: string;
+      acquisition?: string;
+    }>;
   };
   isValid: boolean;
+  /** Non-fatal warnings (e.g. an incompatible script was ignored). */
+  warnings?: string[];
   errors?: string[];
 }
 

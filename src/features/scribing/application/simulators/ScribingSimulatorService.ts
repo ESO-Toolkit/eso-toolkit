@@ -1,23 +1,28 @@
 /**
- * Scribing Simulation Engine
- * Calculates dynamic skill properties based on script combinations
+ * Scribing Simulation Engine (service layer)
+ *
+ * Thin async wrapper over the pure {@link deriveScribedSkill} engine: it loads
+ * the dataset via the repository, enforces script compatibility for the public
+ * API, and shapes the result into a {@link ScribingSimulationResponse}.
  */
 
 import { Logger, LogLevel } from '@/utils/logger';
 
 import { IScribingDataRepository } from '../../core/repositories/IScribingDataRepository';
-import { ERROR_MESSAGES, DEFAULT_SIMULATION_CONFIG } from '../../shared/constants';
+import { ERROR_MESSAGES } from '../../shared/constants';
 import { validateSimulationRequest, validateSimulationResponse } from '../../shared/schemas';
 import {
   ScribingSimulationRequest,
   ScribingSimulationResponse,
-  Grimoire,
   FocusScript,
   SignatureScript,
   AffixScript,
-  ResourceType,
-  DamageType,
 } from '../../shared/types';
+import {
+  deriveScribedSkill,
+  getCompatibleScripts,
+  type ScribedSkillResult,
+} from '../scribingEngine';
 
 export interface IScribingSimulatorService {
   /**
@@ -59,81 +64,66 @@ export class ScribingSimulatorService implements IScribingSimulatorService {
         combination: {
           grimoire: request.grimoireId,
         },
-        calculatedSkill: {
-          name: 'Invalid Request',
-          description: 'Simulation request validation failed',
-          resourceType: 'magicka',
-          cost: 0,
-          castTime: 0,
-          range: 0,
-          effects: [],
-        },
+        calculatedSkill: this.emptySkill('Invalid Request', 'Simulation request validation failed'),
         isValid: false,
         errors: [`Validation failed: ${error instanceof Error ? error.message : String(error)}`],
       };
     }
 
     try {
-      // Get components
-      const [grimoire, focusScript, signatureScript, affixScript] = await Promise.all([
-        this.repository.getGrimoire(request.grimoireId),
-        request.focusScriptId ? this.repository.getFocusScript(request.focusScriptId) : null,
-        request.signatureScriptId
-          ? this.repository.getSignatureScript(request.signatureScriptId)
-          : null,
-        request.affixScriptId ? this.repository.getAffixScript(request.affixScriptId) : null,
-      ]);
-
+      const data = await this.repository.loadScribingData();
+      const grimoire = data.grimoires[request.grimoireId];
       if (!grimoire) {
         return this.createErrorResponse(request, [ERROR_MESSAGES.MISSING_GRIMOIRE]);
       }
 
-      // Validate compatibility
-      const validationErrors: string[] = [];
+      const focusScript = request.focusScriptId
+        ? data.focusScripts[request.focusScriptId]
+        : undefined;
+      const signatureScript = request.signatureScriptId
+        ? data.signatureScripts[request.signatureScriptId]
+        : undefined;
+      const affixScript = request.affixScriptId
+        ? data.affixScripts[request.affixScriptId]
+        : undefined;
 
-      if (focusScript && !focusScript.compatibleGrimoires.includes(request.grimoireId)) {
+      // Strict compatibility for the public API: a provided script that the
+      // grimoire does not support is an error (the live UI never offers these).
+      const validationErrors: string[] = [];
+      if (focusScript && !focusScript.compatibleGrimoires.includes(grimoire.id)) {
         validationErrors.push(
           `Focus script ${focusScript.name} is not compatible with ${grimoire.name}`,
         );
       }
-
-      if (signatureScript && !signatureScript.compatibleGrimoires.includes(request.grimoireId)) {
+      if (signatureScript && !signatureScript.compatibleGrimoires.includes(grimoire.id)) {
         validationErrors.push(
           `Signature script ${signatureScript.name} is not compatible with ${grimoire.name}`,
         );
       }
-
-      if (affixScript && !affixScript.compatibleGrimoires.includes(request.grimoireId)) {
+      if (affixScript && !affixScript.compatibleGrimoires.includes(grimoire.id)) {
         validationErrors.push(
           `Affix script ${affixScript.name} is not compatible with ${grimoire.name}`,
         );
       }
-
       if (validationErrors.length > 0) {
         return this.createErrorResponse(request, validationErrors);
       }
 
-      // Calculate skill properties
-      const calculatedSkill = this.calculateSkillProperties(
-        grimoire,
-        focusScript,
-        signatureScript,
-        affixScript,
-        request,
-      );
+      const result = deriveScribedSkill(data, {
+        grimoireId: request.grimoireId,
+        focusId: request.focusScriptId,
+        signatureId: request.signatureScriptId,
+        affixId: request.affixScriptId,
+      });
 
-      const response: ScribingSimulationResponse = {
-        combination: {
-          grimoire: grimoire.name,
-          focusScript: focusScript?.name,
-          signatureScript: signatureScript?.name,
-          affixScript: affixScript?.name,
-        },
-        calculatedSkill,
-        isValid: true,
-      };
+      // `deriveScribedSkill` only returns null for an unknown grimoire, already
+      // handled above.
+      if (!result) {
+        return this.createErrorResponse(request, [ERROR_MESSAGES.MISSING_GRIMOIRE]);
+      }
 
-      // Validate response structure
+      const response = this.toResponse(result, focusScript, signatureScript, affixScript);
+
       try {
         validateSimulationResponse(response);
       } catch (error) {
@@ -151,128 +141,63 @@ export class ScribingSimulatorService implements IScribingSimulatorService {
     }
   }
 
-  // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-  private calculateSkillProperties(
-    grimoire: Grimoire,
-    focusScript: FocusScript | null,
-    signatureScript: SignatureScript | null,
-    affixScript: AffixScript | null,
-    request: ScribingSimulationRequest,
-  ) {
-    // Base properties from grimoire. The dataset provides the grimoire's actual
-    // resource and base cost directly.
-    let resourceType: ResourceType = grimoire.resource ?? 'magicka';
-    let baseCost = grimoire.cost.first;
-    let castTime = DEFAULT_SIMULATION_CONFIG.BASE_CAST_TIME;
-    let range = 28; // Default range in meters
-    let damage: { type: DamageType; amount: number } | undefined;
-
-    // Apply focus script modifications
-    if (focusScript) {
-      if (focusScript.damageType) {
-        damage = {
-          type: focusScript.damageType,
-          amount: this.calculateDamageAmount(baseCost, request.characterLevel),
-        };
-      }
-
-      // Focus scripts can modify resource type
-      if (focusScript.effectType?.includes('stamina')) {
-        resourceType = 'stamina';
-      } else if (focusScript.effectType?.includes('magicka')) {
-        resourceType = 'magicka';
-      }
-    }
-
-    // Apply signature script modifications
-    const effects: string[] = [grimoire.description];
-    if (signatureScript) {
-      if (signatureScript.additionalEffects) {
-        effects.push(...signatureScript.additionalEffects);
-      }
-      effects.push(signatureScript.description);
-    }
-
-    // Apply affix script modifications
-    if (affixScript) {
-      effects.push(affixScript.description);
-
-      // Affix scripts might modify cost
-      if (affixScript.bonusType === 'cost_reduction' && affixScript.bonusValue) {
-        baseCost = Math.max(1, baseCost - affixScript.bonusValue);
-      }
-    }
-
-    // Generate skill name
-    const name = this.generateSkillName(grimoire, focusScript, signatureScript, affixScript);
-
-    // Generate description
-    const description = this.generateSkillDescription(
-      grimoire,
-      focusScript,
-      signatureScript,
-      affixScript,
-    );
+  private toResponse(
+    result: ScribedSkillResult,
+    focusScript: FocusScript | undefined,
+    signatureScript: SignatureScript | undefined,
+    affixScript: AffixScript | undefined,
+  ): ScribingSimulationResponse {
+    const sentences = [
+      result.baseEffect,
+      ...result.effects.map((e) => `${e.name}: ${e.effect}`),
+    ].filter((s): s is string => Boolean(s && s.length));
 
     return {
-      name,
-      description,
-      resourceType,
-      cost: baseCost,
-      castTime,
-      range,
-      damage,
-      effects: effects.filter(Boolean),
+      combination: {
+        grimoire: result.grimoireName,
+        focusScript: focusScript?.name,
+        signatureScript: signatureScript?.name,
+        affixScript: affixScript?.name,
+      },
+      calculatedSkill: {
+        name: result.skillName,
+        description: sentences.join(' '),
+        resourceType: result.resourceType,
+        cost: result.cost,
+        castTime: 0,
+        range: 0,
+        effects: result.effects.map((e) => `${e.name}: ${e.effect}`),
+        abilityId: result.abilityId,
+        icon: result.icon,
+        skillLine: result.skillLine,
+        targetType: result.targetType,
+        castType: result.castType,
+        scriptBreakdown: result.effects.map((e) => ({
+          slot: e.slot,
+          name: e.name,
+          effect: e.effect,
+          category: e.category,
+          acquisition: e.acquisition,
+        })),
+      },
+      isValid: true,
+      warnings: result.warnings.length ? result.warnings : undefined,
     };
   }
 
-  private calculateDamageAmount(baseCost: number, characterLevel?: number): number {
-    // Simple damage calculation based on cost and level
-    const level = characterLevel || DEFAULT_SIMULATION_CONFIG.CHARACTER_LEVEL;
-    const levelMultiplier = Math.max(1, level / 160);
-    return Math.floor(baseCost * 10 * levelMultiplier);
-  }
-
-  private generateSkillName(
-    grimoire: Grimoire,
-    focusScript: FocusScript | null,
-    _signatureScript: SignatureScript | null,
-    _affixScript: AffixScript | null,
-  ): string {
-    // The grimoire's name changes with the chosen focus damage type, and the
-    // dataset carries the real in-game name for each (e.g. Traveling Knife +
-    // Flame focus -> "Fiery Knife"). Signature/affix scripts don't rename the
-    // skill, so they don't affect the name.
-    if (focusScript?.damageType) {
-      const transformed = grimoire.nameTransformations?.[`${focusScript.damageType}-damage`]?.name;
-      if (transformed) {
-        return transformed;
-      }
-    }
-    return grimoire.name;
-  }
-
-  private generateSkillDescription(
-    grimoire: Grimoire,
-    focusScript: FocusScript | null,
-    signatureScript: SignatureScript | null,
-    affixScript: AffixScript | null,
-  ): string {
-    let description = grimoire.description;
-
-    if (focusScript) {
-      description += ` Modified by ${focusScript.name}: ${focusScript.description}`;
-    }
-
-    if (signatureScript) {
-      description += ` Enhanced by ${signatureScript.name}: ${signatureScript.description}`;
-    }
-
-    if (affixScript) {
-      description += ` Augmented by ${affixScript.name}: ${affixScript.description}`;
-    }
-
-    return description;
+  private emptySkill(
+    name: string,
+    description: string,
+  ): ScribingSimulationResponse['calculatedSkill'] {
+    return {
+      name,
+      description,
+      resourceType: 'magicka',
+      cost: 0,
+      castTime: 0,
+      range: 0,
+      effects: [],
+    };
   }
 
   private createErrorResponse(
@@ -286,15 +211,7 @@ export class ScribingSimulatorService implements IScribingSimulatorService {
         signatureScript: request.signatureScriptId,
         affixScript: request.affixScriptId,
       },
-      calculatedSkill: {
-        name: 'Invalid Combination',
-        description: 'This combination is not valid',
-        resourceType: 'magicka',
-        cost: 0,
-        castTime: 0,
-        range: 0,
-        effects: [],
-      },
+      calculatedSkill: this.emptySkill('Invalid Combination', 'This combination is not valid'),
       isValid: false,
       errors,
     };
@@ -319,6 +236,7 @@ export class ScribingSimulatorService implements IScribingSimulatorService {
     signatureScripts: SignatureScript[];
     affixScripts: AffixScript[];
   }> {
-    return this.repository.getCompatibleScripts(grimoireId);
+    const data = await this.repository.loadScribingData();
+    return getCompatibleScripts(data, grimoireId);
   }
 }

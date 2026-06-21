@@ -1,107 +1,107 @@
 /**
- * Smart component - ScribingSimulator container
- * Handles business logic and state management
+ * Scribing Simulator container.
+ *
+ * Live grimoire + script planner: pick a grimoire, choose its compatible Focus /
+ * Signature / Affix scripts, and see a faithful preview of the resulting scribed
+ * skill update instantly. Selection is shareable via the URL.
  */
 
-import { Container, Box, Typography, Alert, CircularProgress } from '@mui/material';
+import {
+  Alert,
+  Box,
+  CircularProgress,
+  Container,
+  Stack,
+  Typography,
+  alpha,
+  useTheme,
+} from '@mui/material';
 import React from 'react';
 
-import { useLogger } from '../../../../contexts/LoggerContext';
+import { useLogger } from '@/contexts/LoggerContext';
+
+import { SCRIBING_SYSTEM } from '../../data/scribingMetadata';
 import { useScribingSimulation } from '../hooks/useScribingSimulation';
 
 import {
-  ScriptSelector,
-  SimulationResultDisplay,
-  SimulationControls,
+  GrimoireGrid,
+  ScribedSkillCard,
+  ScriptSlotPicker,
+  SimulatorControls,
 } from './ScribingSimulatorComponents';
 
 export interface ScribingSimulatorProps {
   className?: string;
   defaultGrimoire?: string;
+  /** Unused; retained for API compatibility. */
   autoSimulate?: boolean;
 }
+
+const FACT_CHIPS = [
+  '12 grimoires',
+  '3 script slots each',
+  '12,000+ combinations',
+  SCRIBING_SYSTEM.scribingCost,
+];
 
 export const ScribingSimulator: React.FC<ScribingSimulatorProps> = ({
   className,
   defaultGrimoire,
-  autoSimulate = false,
 }) => {
+  const theme = useTheme();
   const logger = useLogger('ScribingSimulator');
+  const {
+    isLoading,
+    error,
+    isReady,
+    grimoires,
+    selection,
+    selectedGrimoire,
+    compatible,
+    result,
+    setGrimoire,
+    setFocus,
+    setSignature,
+    setAffix,
+    reset,
+    randomize,
+    shareUrl,
+  } = useScribingSimulation({ defaultGrimoire });
+
+  const [shareLabel, setShareLabel] = React.useState('Share build');
 
   React.useEffect(() => {
     document.title = 'Scribing Simulator | ESO Toolkit';
   }, []);
 
-  const {
-    // Data
-    grimoires,
-    availableFocusScripts,
-    availableSignatureScripts,
-    availableAffixScripts,
-
-    // Current selection
-    selectedGrimoire,
-    selectedFocusScript,
-    selectedSignatureScript,
-    selectedAffixScript,
-
-    // Selection methods
-    setSelectedGrimoire,
-    setSelectedFocusScript,
-    setSelectedSignatureScript,
-    setSelectedAffixScript,
-
-    // Simulation
-    simulationResult,
-    isSimulating,
-    simulationError,
-    simulate,
-
-    // State
-    isLoading,
-    error,
-    isReady,
-  } = useScribingSimulation({
-    defaultGrimoire,
-    autoSimulate,
-  });
-
-  const handleShare = (): void => {
-    if (!selectedGrimoire) return;
-
-    const params = new URLSearchParams();
-    params.set('grimoire', selectedGrimoire);
-    if (selectedFocusScript) params.set('focus', selectedFocusScript);
-    if (selectedSignatureScript) params.set('signature', selectedSignatureScript);
-    if (selectedAffixScript) params.set('affix', selectedAffixScript);
-
-    const shareUrl = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
-    // writeText returns a promise that rejects on permission/clipboard errors;
-    // handle it so it isn't an unhandled rejection.
+  const handleShare = React.useCallback((): void => {
+    if (!shareUrl) return;
     void navigator.clipboard
       .writeText(shareUrl)
       .then(() => {
-        logger.info('Configuration URL copied to clipboard', { shareUrl });
+        setShareLabel('Link copied!');
+        logger.info('Scribing build URL copied', { shareUrl });
+        window.setTimeout(() => setShareLabel('Share build'), 2000);
       })
       .catch((err: unknown) => {
-        logger.warn('Failed to copy configuration URL to clipboard', {
+        logger.warn('Failed to copy scribing build URL', {
           error: err instanceof Error ? err.message : String(err),
         });
+        setShareLabel('Copy failed');
+        window.setTimeout(() => setShareLabel('Share build'), 2000);
       });
-  };
+  }, [shareUrl, logger]);
 
   if (isLoading) {
     return (
-      <Container maxWidth="xl" className={className}>
+      <Container maxWidth="lg" className={className}>
         <Box
           role="status"
           aria-live="polite"
-          sx={{ justifyContent: 'center', alignItems: 'center', display: 'flex', py: 8 }}
+          sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 2, py: 10 }}
         >
           <CircularProgress aria-label="Loading scribing data" />
-          <Typography variant="h6" sx={{ ml: 2 }}>
-            Loading scribing data...
-          </Typography>
+          <Typography variant="h6">Loading scribing data…</Typography>
         </Box>
       </Container>
     );
@@ -109,9 +109,9 @@ export const ScribingSimulator: React.FC<ScribingSimulatorProps> = ({
 
   if (error) {
     return (
-      <Container maxWidth="xl" className={className}>
-        <Alert severity="error" sx={{ mt: 2 }}>
-          <Typography variant="h6">Failed to Load Scribing Data</Typography>
+      <Container maxWidth="lg" className={className}>
+        <Alert severity="error" sx={{ mt: 4 }}>
+          <Typography variant="h6">Failed to load scribing data</Typography>
           <Typography variant="body2">{error}</Typography>
         </Alert>
       </Container>
@@ -120,105 +120,132 @@ export const ScribingSimulator: React.FC<ScribingSimulatorProps> = ({
 
   if (!isReady) {
     return (
-      <Container maxWidth="xl" className={className}>
-        <Alert severity="warning" sx={{ mt: 2 }}>
-          <Typography variant="body1">Scribing data is not ready</Typography>
+      <Container maxWidth="lg" className={className}>
+        <Alert severity="warning" sx={{ mt: 4 }}>
+          <Typography variant="body1">Scribing data is not ready.</Typography>
         </Alert>
       </Container>
     );
   }
 
   return (
-    <Container maxWidth="xl" className={className}>
-      <Box sx={{ py: 4 }}>
-        <Typography variant="h4" component="h1" gutterBottom sx={{ textAlign: 'center' }}>
-          ESO Scribing Simulator
-        </Typography>
-        <Typography variant="body1" sx={{ color: 'text.secondary', textAlign: 'center', mb: 2 }}>
-          Design and simulate custom scribing combinations for Elder Scrolls Online
-        </Typography>
+    <Container maxWidth="lg" className={className}>
+      <Box sx={{ py: { xs: 3, md: 4 } }}>
+        {/* Header */}
+        <Box sx={{ textAlign: 'center', mb: 3 }}>
+          <Typography variant="h4" component="h1" sx={{ fontWeight: 800 }} gutterBottom>
+            ESO Scribing Simulator
+          </Typography>
+          <Typography variant="body1" sx={{ color: 'text.secondary', maxWidth: 720, mx: 'auto' }}>
+            {SCRIBING_SYSTEM.intro}
+          </Typography>
+          <Stack
+            direction="row"
+            spacing={1}
+            sx={{ justifyContent: 'center', flexWrap: 'wrap', gap: 1, mt: 2 }}
+          >
+            {FACT_CHIPS.map((fact) => (
+              <Box
+                key={fact}
+                sx={{
+                  px: 1.25,
+                  py: 0.5,
+                  borderRadius: 5,
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  color: 'text.secondary',
+                  border: '1px solid',
+                  borderColor: alpha(theme.palette.divider, 0.6),
+                  bgcolor: alpha(theme.palette.background.paper, 0.4),
+                }}
+              >
+                {fact}
+              </Box>
+            ))}
+          </Stack>
+        </Box>
 
-        <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 3, mt: 2 }}>
-          {/* Configuration Panel */}
-          <Box sx={{ flex: 1 }}>
-            <Box component="form" sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-              <Typography variant="h6" gutterBottom>
-                Script Configuration
+        <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
+          <SimulatorControls
+            onRandomize={randomize}
+            onReset={reset}
+            onShare={handleShare}
+            shareLabel={shareLabel}
+          />
+        </Box>
+
+        {/* Body */}
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', md: 'minmax(0, 1.2fr) minmax(0, 1fr)' },
+            gap: 3,
+            alignItems: 'start',
+          }}
+        >
+          {/* Configuration */}
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <Box>
+              <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>
+                1 · Choose a grimoire
               </Typography>
-
-              {/* Grimoire Selection */}
-              <ScriptSelector
-                label="Grimoire"
-                value={selectedGrimoire}
-                options={grimoires.map((g) => ({
-                  id: g.id,
-                  name: g.name,
-                  description: g.description,
-                }))}
-                onChange={setSelectedGrimoire}
-                error={!selectedGrimoire ? 'Please select a grimoire' : undefined}
+              <GrimoireGrid
+                grimoires={grimoires}
+                selectedId={selection.grimoireId}
+                onSelect={setGrimoire}
               />
+              {selectedGrimoire?.acquisition && (
+                <Typography
+                  variant="caption"
+                  sx={{ color: 'text.secondary', display: 'block', mt: 1 }}
+                >
+                  <strong>How to get it:</strong> {selectedGrimoire.acquisition}
+                </Typography>
+              )}
+            </Box>
 
-              {/* Focus Script Selection */}
-              <ScriptSelector
-                label="Focus Script"
-                value={selectedFocusScript}
-                options={availableFocusScripts.map((s) => ({
-                  id: s.id,
-                  name: s.name,
-                  description: s.description,
-                }))}
-                onChange={setSelectedFocusScript}
-                disabled={!selectedGrimoire}
-              />
-
-              {/* Signature Script Selection */}
-              <ScriptSelector
-                label="Signature Script"
-                value={selectedSignatureScript}
-                options={availableSignatureScripts.map((s) => ({
-                  id: s.id,
-                  name: s.name,
-                  description: s.description,
-                }))}
-                onChange={setSelectedSignatureScript}
-                disabled={!selectedGrimoire}
-              />
-
-              {/* Affix Script Selection */}
-              <ScriptSelector
-                label="Affix Script"
-                value={selectedAffixScript}
-                options={availableAffixScripts.map((s) => ({
-                  id: s.id,
-                  name: s.name,
-                  description: s.description,
-                }))}
-                onChange={setSelectedAffixScript}
-                disabled={!selectedGrimoire}
-              />
-
-              {/* Simulation Controls */}
-              <SimulationControls
-                onSimulate={simulate}
-                onShare={handleShare}
-                isSimulating={isSimulating}
-                disabled={!selectedGrimoire}
-              />
+            <Box>
+              <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>
+                2 · Slot your scripts
+              </Typography>
+              <Stack spacing={1.5}>
+                <ScriptSlotPicker
+                  slot="focus"
+                  scripts={compatible.focusScripts}
+                  selectedId={selection.focusId}
+                  onSelect={setFocus}
+                  disabled={!selection.grimoireId}
+                />
+                <ScriptSlotPicker
+                  slot="signature"
+                  scripts={compatible.signatureScripts}
+                  selectedId={selection.signatureId}
+                  onSelect={setSignature}
+                  disabled={!selection.grimoireId}
+                />
+                <ScriptSlotPicker
+                  slot="affix"
+                  scripts={compatible.affixScripts}
+                  selectedId={selection.affixId}
+                  onSelect={setAffix}
+                  disabled={!selection.grimoireId}
+                />
+              </Stack>
             </Box>
           </Box>
 
-          {/* Results Panel */}
-          <Box sx={{ flex: 1 }}>
-            <Typography variant="h6" gutterBottom>
-              Simulation Results
+          {/* Preview */}
+          <Box sx={{ position: { md: 'sticky' }, top: { md: 16 } }}>
+            <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>
+              Your scribed skill
             </Typography>
-
-            <SimulationResultDisplay
-              result={simulationResult}
-              isSimulating={isSimulating}
-              error={simulationError}
-            />
+            <ScribedSkillCard result={result} />
+            <Typography
+              variant="caption"
+              sx={{ color: 'text.disabled', display: 'block', mt: 1.5, textAlign: 'center' }}
+            >
+              Effects verified against ESO-Hub &amp; UESP. Values scale with your character.
+            </Typography>
           </Box>
         </Box>
       </Box>

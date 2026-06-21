@@ -17,15 +17,30 @@ export type DamageType =
   | 'flame';
 
 export type ScriptType = 'Focus' | 'Signature' | 'Affix';
+/**
+ * Skill lines a Scribing grimoire can belong to. The 12 live grimoires map to
+ * weapon, guild, Alliance War and Soul Magic lines (derived from each grimoire's
+ * `ability_grimoire_*` base icon in the game data). The trailing entries are
+ * kept for backward compatibility with older detection metadata.
+ */
 export type SkillLine =
-  | 'Support'
+  // Weapon lines
+  | 'Two Handed'
+  | 'One Hand and Shield'
+  | 'Dual Wield'
+  | 'Bow'
   | 'Destruction Staff'
   | 'Restoration Staff'
-  | 'Assault'
-  | 'Mage Guild'
+  // Guild lines
+  | 'Mages Guild'
   | 'Fighters Guild'
-  | 'Psijic Order'
   | 'Soul Magic'
+  // Alliance War lines
+  | 'Assault'
+  | 'Support'
+  // Back-compat (legacy detection metadata)
+  | 'Mage Guild'
+  | 'Psijic Order'
   | 'Vampire'
   | 'Werewolf';
 
@@ -56,10 +71,20 @@ export interface Grimoire {
   };
   readonly description: string;
   readonly iconUrl?: string;
+  /** ESO Logs ability-icon filename (no extension) for the grimoire's skill. */
+  readonly icon?: string;
   readonly abilityIds?: readonly number[];
   /** Resource the grimoire's base ability costs (from the extracted dataset). */
   readonly resource?: ResourceType;
-  /** Skill-name overrides per focus damage type, keyed by `<damage>-damage`. */
+  /** How the grimoire is acquired in-game (quest/activity). */
+  readonly acquisition?: string;
+  /** Short summary of what the grimoire's base ability does. */
+  readonly baseEffect?: string;
+  /** Target type, e.g. "Enemy", "Self", "Ground", "Area". */
+  readonly targetType?: string;
+  /** Cast behaviour, e.g. "Instant", "Channeled", "Cast Time", "Toggle". */
+  readonly castType?: string;
+  /** Skill-name overrides per focus script, keyed by the focus script slug. */
   readonly nameTransformations?: Readonly<Record<string, GrimoireNameTransformation>>;
 }
 
@@ -73,6 +98,10 @@ export interface Script {
   readonly icon: string;
   readonly compatibleGrimoires: readonly string[];
   readonly description: string;
+  /** Unlock category, e.g. "Class", "World", "Guild", "Weapon", "Alliance War". */
+  readonly category?: string;
+  /** Where/how the script is unlocked in-game (quest, activity, vendor). */
+  readonly acquisition?: string;
   readonly questReward?: string;
   readonly freeLocation?: string;
   readonly abilityIds?: readonly number[];

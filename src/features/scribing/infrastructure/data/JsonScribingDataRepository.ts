@@ -7,11 +7,19 @@ import { Logger, LogLevel } from '@/utils/logger';
 
 import scribingCompleteData from '../../../../../data/scribing-complete.json';
 import { IScribingDataRepository } from '../../core/repositories/IScribingDataRepository';
+import {
+  GRIMOIRE_META,
+  FOCUS_META,
+  SIGNATURE_META,
+  AFFIX_META,
+  VERIFIED_FOCUS_EXCLUSIONS,
+} from '../../data/scribingMetadata';
 import { ERROR_MESSAGES } from '../../shared/constants';
 import { validateScribingData } from '../../shared/schemas';
 import {
   ScribingData,
   Grimoire,
+  GrimoireNameTransformation,
   FocusScript,
   SignatureScript,
   AffixScript,
@@ -57,34 +65,65 @@ export function adaptScribingData(raw: typeof scribingCompleteData): ScribingDat
 
   const grimoireKeys = Object.keys(rawAny.grimoires ?? {});
 
+  // Build each grimoire's supported Focus set from its name-transformation keys,
+  // dropping transforms research verified as not existing in the live game. This
+  // is the ground truth for which focuses a grimoire can take.
+  const focusGrimoires = new Map<string, string[]>();
   const grimoires: Record<string, Grimoire> = {};
   for (const [slug, g] of Object.entries(rawAny.grimoires ?? {})) {
     const flatCost = Number(g.cost) || 0;
     // The grimoire's numeric `id` (when present) is its base ability id.
     const baseAbilityId = typeof g.id === 'number' ? g.id : undefined;
+    const meta = GRIMOIRE_META[slug];
+    const excluded = new Set(VERIFIED_FOCUS_EXCLUSIONS[slug] ?? []);
+
+    const rawTransforms = (g.nameTransformations ?? {}) as Record<
+      string,
+      GrimoireNameTransformation
+    >;
+    const nameTransformations: Record<string, GrimoireNameTransformation> = {};
+    for (const [focusSlug, t] of Object.entries(rawTransforms)) {
+      if (excluded.has(focusSlug)) continue;
+      nameTransformations[focusSlug] = t;
+      const list = focusGrimoires.get(focusSlug) ?? [];
+      list.push(slug);
+      focusGrimoires.set(focusSlug, list);
+    }
+
     grimoires[slug] = {
       id: slug,
       name: String(g.name ?? slug),
+      skillLine: meta?.skillLine,
       requirements: null,
       cost: { first: flatCost, additional: flatCost },
-      description: '',
+      description: meta?.baseEffect ?? '',
+      icon: meta?.icon,
       resource: asResource(g.resource),
-      nameTransformations: g.nameTransformations as Grimoire['nameTransformations'],
+      acquisition: meta?.acquisition,
+      baseEffect: meta?.baseEffect,
+      targetType: meta?.targetType,
+      castType: meta?.castType,
+      nameTransformations,
       abilityIds: baseAbilityId !== undefined ? [baseAbilityId] : undefined,
     };
   }
 
   const focusScripts: Record<string, FocusScript> = {};
   for (const [slug, f] of Object.entries(rawAny.focusScripts ?? {})) {
+    const meta = FOCUS_META[slug];
     focusScripts[slug] = {
-      id: String(f.id ?? slug),
+      // Key focus scripts by their slug — that is the key grimoire
+      // `nameTransformations` use, and the raw `f.id` is an unrelated numeric id.
+      id: slug,
       name: String(f.name ?? slug),
       type: 'Focus',
       icon: '',
-      // Focus scripts apply to any grimoire (each grimoire has a transformed
-      // name per damage type); compatibility is enforced by nameTransformations.
-      compatibleGrimoires: grimoireKeys,
-      description: String(f.name ?? ''),
+      // A focus is compatible with exactly the grimoires whose (validated) name
+      // transformations include it — the game-extracted ground truth.
+      compatibleGrimoires: focusGrimoires.get(slug) ?? [],
+      description: meta?.effect ?? String(f.name ?? ''),
+      category: meta?.category,
+      acquisition: meta?.acquisition,
       damageType: asDamageType(f.damageType),
     };
   }
@@ -92,25 +131,30 @@ export function adaptScribingData(raw: typeof scribingCompleteData): ScribingDat
   const toListScript = (
     slug: string,
     s: Record<string, unknown>,
+    meta:
+      | { effect?: string; category?: string; acquisition?: string; displayName?: string }
+      | undefined,
   ): Omit<SignatureScript, 'type'> => ({
     id: String(s.id ?? slug),
-    name: String(s.name ?? slug),
+    name: meta?.displayName ?? String(s.name ?? slug),
     icon: '',
     compatibleGrimoires: Array.isArray(s.compatibleGrimoires)
       ? (s.compatibleGrimoires as string[])
       : grimoireKeys,
-    description: String(s.description ?? ''),
+    description: meta?.effect ?? String(s.description ?? ''),
+    category: meta?.category,
+    acquisition: meta?.acquisition,
     abilityIds: Array.isArray(s.abilityIds) ? (s.abilityIds as number[]) : undefined,
   });
 
   const signatureScripts: Record<string, SignatureScript> = {};
   for (const [slug, s] of Object.entries(rawAny.signatureScripts ?? {})) {
-    signatureScripts[slug] = { ...toListScript(slug, s), type: 'Signature' };
+    signatureScripts[slug] = { ...toListScript(slug, s, SIGNATURE_META[slug]), type: 'Signature' };
   }
 
   const affixScripts: Record<string, AffixScript> = {};
   for (const [slug, s] of Object.entries(rawAny.affixScripts ?? {})) {
-    affixScripts[slug] = { ...toListScript(slug, s), type: 'Affix' };
+    affixScripts[slug] = { ...toListScript(slug, s, AFFIX_META[slug]), type: 'Affix' };
   }
 
   return {

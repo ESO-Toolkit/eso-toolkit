@@ -11,6 +11,7 @@ const ROUTE_NAMES: Record<string, string> = {
   '/loadout-manager': 'Loadout Manager',
   '/roster-builder': 'Roster Builder',
   '/build-editor': 'Build Editor',
+  '/scribing-simulator': 'Scribing Simulator',
   '/roster-hub': 'Roster Hub',
   '/build-hub': 'Build Hub',
   '/pack-hub': 'Pack Hub',

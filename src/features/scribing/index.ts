@@ -33,7 +33,25 @@ export { useScribingSimulation } from './presentation/hooks/useScribingSimulatio
 
 // Component parts for custom implementations
 export {
-  ScriptSelector,
-  SimulationResultDisplay,
-  SimulationControls,
+  GrimoireGrid,
+  ScriptSlotPicker,
+  ScribedSkillCard,
+  SimulatorControls,
+  ScribingIcon,
+  skillLineColor,
 } from './presentation/components/ScribingSimulatorComponents';
+
+// Pure simulation engine
+export {
+  deriveScribedSkill,
+  getCompatibleScripts,
+  getFocusScriptIdsForGrimoire,
+  summarizeScribedSkill,
+} from './application/scribingEngine';
+export type {
+  ScribingSelection,
+  ScribedSkillResult,
+  ScribedEffectLine,
+  CompatibleScripts,
+  ScribingSlot,
+} from './application/scribingEngine';
