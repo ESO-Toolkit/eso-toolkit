@@ -489,7 +489,7 @@ const MobileReplayDockComponent: React.FC<MobileReplayDockProps> = ({
           </Box>
         </Typography>
 
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25, flex: '0 0 auto' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flex: '0 0 auto' }}>
           <DockButton
             icon={<GroupRoundedIcon fontSize="small" />}
             label="Players"
@@ -609,7 +609,15 @@ const MobileReplayDockComponent: React.FC<MobileReplayDockProps> = ({
       {/* Settings sheet — playback speed · display toggles · share. Body rendered only while open
           (same reason as above: its ShareButton takes `currentTime`, so a mounted-but-closed sheet
           reconciled at the playback tick). */}
-      <MobileSheet open={sheet === 'settings'} title="Settings" onClose={() => setSheet(null)}>
+      <MobileSheet
+        open={sheet === 'settings'}
+        title="Settings"
+        onClose={() => setSheet(null)}
+        // In marker edit mode the on-screen instructions tell the user to drag markers on the
+        // arena; a drag that bleeds onto this sheet's header must not dismiss it. Close stays
+        // available via the X / backdrop / Escape.
+        draggable={!markersEditMode}
+      >
         {sheet === 'settings' && (
           <>
             <Typography

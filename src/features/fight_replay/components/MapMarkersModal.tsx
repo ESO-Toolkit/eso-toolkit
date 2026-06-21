@@ -46,10 +46,6 @@ interface MapMarkersModalProps {
   onLoadMarkers: (markersString: string) => void;
   /** Callback when markers are cleared */
   onClearMarkers: () => void;
-  /** Optional: copy currently-loaded markers as an Elms string */
-  onExportElms?: () => void;
-  /** Optional: copy currently-loaded markers as an M0R string */
-  onExportMor?: () => void;
 }
 
 /**
@@ -62,8 +58,6 @@ export const MapMarkersModal: React.FC<MapMarkersModalProps> = ({
   markersState,
   onLoadMarkers,
   onClearMarkers,
-  onExportElms,
-  onExportMor,
 }) => {
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down('sm'));
@@ -369,28 +363,8 @@ export const MapMarkersModal: React.FC<MapMarkersModalProps> = ({
         >
           Close
         </Button>
-        {hasCommittedMarkers && onExportElms && (
-          <Button
-            onClick={onExportElms}
-            color="secondary"
-            variant="outlined"
-            type="button"
-            startIcon={<ContentCopyIcon />}
-          >
-            Copy Elms
-          </Button>
-        )}
-        {hasCommittedMarkers && onExportMor && (
-          <Button
-            onClick={onExportMor}
-            color="secondary"
-            variant="outlined"
-            type="button"
-            startIcon={<ContentCopyIcon />}
-          >
-            Copy M0R
-          </Button>
-        )}
+        {/* Export (Copy Elms / Copy M0R) lives solely in the toolbar's MarkerExportButton now —
+            the duplicate modal buttons were removed to keep one export entry point. */}
         {hasCommittedMarkers && (
           <Button onClick={handleClearMarkers} color="secondary" variant="outlined" type="button">
             Clear Markers

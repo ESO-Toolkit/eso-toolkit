@@ -10,6 +10,7 @@ import { PlayArrow, Pause, SkipPrevious, SkipNext, Forward10, Replay10 } from '@
 import { Box, IconButton, Tooltip } from '@mui/material';
 import React from 'react';
 
+import { usePrefersReducedMotion } from '../../../hooks/usePrefersReducedMotion';
 import { TRANSPORT_MOTION } from '../constants/replayDesign';
 
 interface PlaybackButtonsProps {
@@ -51,13 +52,22 @@ const PlaybackButtonsComponent: React.FC<PlaybackButtonsProps> = ({
   // Compact overlay shrinks the play orb (58→38) and its ring/icon so the bar reads as a thin
   // YouTube-style transport instead of a tall deck dominated by the orb.
   const orbSize = compact ? 38 : 58;
+  // Gate non-essential motion per replayDesign's motion contract (the play-orb hover lift/scale
+  // and the ghost-button hover tints). The global !important rule is a fallback.
+  const prefersReducedMotion = usePrefersReducedMotion();
+  const ghostTransition = prefersReducedMotion
+    ? 'none'
+    : `background-color ${TRANSPORT_MOTION.tap} ${TRANSPORT_MOTION.ease}, color ${TRANSPORT_MOTION.tap} ${TRANSPORT_MOTION.ease}`;
+  const orbTransition = prefersReducedMotion
+    ? 'none'
+    : `transform ${TRANSPORT_MOTION.tap} ${TRANSPORT_MOTION.ease}, box-shadow ${TRANSPORT_MOTION.settle} ${TRANSPORT_MOTION.ease}, filter ${TRANSPORT_MOTION.tap} ${TRANSPORT_MOTION.ease}`;
   // Ghost skip buttons — flat by default, a soft accent tint on hover. Quiet next to the
   // play orb so the focal hierarchy reads instantly: one bright control, four supporting.
   const ghostSx = {
     color: 'text.secondary',
     borderRadius: 2,
     ...(compact ? { padding: 0.5 } : null),
-    transition: `background-color ${TRANSPORT_MOTION.tap} ${TRANSPORT_MOTION.ease}, color ${TRANSPORT_MOTION.tap} ${TRANSPORT_MOTION.ease}`,
+    transition: ghostTransition,
     '&:hover': { color: 'text.primary', backgroundColor: 'action.hover' },
     '& .MuiSvgIcon-root': { fontSize: compact ? '1.15rem' : '1.4rem' },
   } as const;
@@ -130,7 +140,7 @@ const PlaybackButtonsComponent: React.FC<PlaybackButtonsProps> = ({
             theme.palette.mode === 'dark'
               ? `inset 0 0 0 1px rgba(255,255,255,0.3), 0 0 0 1px ${theme.palette.primary.main}40, 0 0 28px ${theme.palette.primary.main}99, 0 8px 26px ${theme.palette.primary.main}80`
               : `inset 0 0 0 1px rgba(255,255,255,0.4), 0 0 22px ${theme.palette.primary.main}66, 0 8px 24px ${theme.palette.primary.main}59`,
-          transition: `transform ${TRANSPORT_MOTION.tap} ${TRANSPORT_MOTION.ease}, box-shadow ${TRANSPORT_MOTION.settle} ${TRANSPORT_MOTION.ease}, filter ${TRANSPORT_MOTION.tap} ${TRANSPORT_MOTION.ease}`,
+          transition: orbTransition,
           // Detached orbiting ring just outside the orb (the proto's bright halo gap).
           '&::after': {
             content: '""',
@@ -149,7 +159,7 @@ const PlaybackButtonsComponent: React.FC<PlaybackButtonsProps> = ({
                 ? `inset 0 0 0 1px rgba(255,255,255,0.3), 0 10px 32px ${theme.palette.primary.main}99`
                 : `inset 0 0 0 1px rgba(255,255,255,0.5), 0 10px 30px ${theme.palette.primary.main}73`,
           },
-          '&:active': { transform: 'scale(0.96)' },
+          '&:active': prefersReducedMotion ? undefined : { transform: 'scale(0.96)' },
           '& .MuiSvgIcon-root': { fontSize: compact ? '1.3rem' : '1.9rem' },
         })}
       >

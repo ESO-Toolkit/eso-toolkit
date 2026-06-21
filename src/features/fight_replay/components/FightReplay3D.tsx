@@ -252,6 +252,11 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
   // Playback state - initialize with URL parameter if available (clamped to range)
   const [currentTime, setCurrentTime] = useState(clampedInitialTime);
   const [isPlaying, setIsPlaying] = useState(false);
+  // Mirror into a ref so the keyboard play/pause handler can read the current value without
+  // depending on `isPlaying` (which would re-create the handler — and re-bind the window keydown
+  // listener — on every play/pause).
+  const isPlayingRef = useRef(isPlaying);
+  isPlayingRef.current = isPlaying;
   const [playbackSpeed, setPlaybackSpeed] = useState(initialPrefs.playbackSpeed);
   const [isScrubbingMode, setIsScrubbingMode] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
@@ -274,6 +279,13 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
   // normalizes lo/hi. Both set + a sane span → playback wraps within [A,B] until the chip clears.
   const [loopStart, setLoopStart] = useState<number | null>(null);
   const [loopEnd, setLoopEnd] = useState<number | null>(null);
+  // Mirror the loop bounds into refs so the keyboard play/pause handler can read them without
+  // taking them as deps — otherwise that handler (and the window keydown listener it lives in)
+  // would re-create every time a loop point is set, churning the listener on a frequent action.
+  const loopStartRef = useRef(loopStart);
+  loopStartRef.current = loopStart;
+  const loopEndRef = useRef(loopEnd);
+  loopEndRef.current = loopEnd;
 
   // Transport bar visibility (cinema model). Master state for the compact bar:
   //  - windowed: stays visible unless the user manually collapses it (C / chevron).
@@ -369,25 +381,22 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
   // have just cancelled. With a sane A–B loop armed the restart is SKIPPED: the playback hook's
   // wrap branch never calls onEnd and resumes at the loop in-point — restarting to 0:00 would
   // dump a user looping the final burn back into the whole pre-loop section.
+  // Stable across play/pause + loop changes: reads the playing state and loop bounds from refs, so
+  // it never re-creates on those frequent interactions (and the window keydown listener that
+  // depends on it stops re-binding each time).
   const handlePlayPause = useCallback(() => {
-    if (!isPlaying) {
+    const wasPlaying = isPlayingRef.current;
+    if (!wasPlaying) {
       const dur = selectedFight.endTime - selectedFight.startTime;
-      const loopArmed =
-        loopStart != null && loopEnd != null && Math.abs(loopEnd - loopStart) >= 100;
+      const ls = loopStartRef.current;
+      const le = loopEndRef.current;
+      const loopArmed = ls != null && le != null && Math.abs(le - ls) >= 100;
       if (!loopArmed && animationTimeRef.timeRef.current >= dur - 250) {
         seekTo(0);
       }
     }
-    setIsPlaying(!isPlaying);
-  }, [
-    isPlaying,
-    selectedFight.endTime,
-    selectedFight.startTime,
-    animationTimeRef.timeRef,
-    loopStart,
-    loopEnd,
-    seekTo,
-  ]);
+    setIsPlaying(!wasPlaying);
+  }, [selectedFight.endTime, selectedFight.startTime, animationTimeRef.timeRef, seekTo]);
 
   const handlePlayingChange = useCallback((playing: boolean) => {
     setIsPlaying(playing);
@@ -546,17 +555,18 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
     [animationTimeRef.timeRef, duration, seekTo],
   );
 
-  // +/- step through the same discrete speed ladder the on-screen SpeedSelector uses.
-  const stepSpeed = useCallback(
-    (direction: 1 | -1) => {
-      const idx = PLAYBACK_SPEEDS.indexOf(playbackSpeed);
+  // +/- step through the same discrete speed ladder the on-screen SpeedSelector uses. Uses the
+  // functional updater so it has no `playbackSpeed` dep — keeping it (and the keydown listener
+  // that depends on it) stable when the user steps the speed.
+  const stepSpeed = useCallback((direction: 1 | -1) => {
+    setPlaybackSpeed((current) => {
+      const idx = PLAYBACK_SPEEDS.indexOf(current);
       // If the current speed isn't on the ladder (shouldn't happen), fall back to 1x's slot.
       const currentIdx = idx === -1 ? PLAYBACK_SPEEDS.indexOf(1) : idx;
       const nextIdx = Math.max(0, Math.min(PLAYBACK_SPEEDS.length - 1, currentIdx + direction));
-      setPlaybackSpeed(PLAYBACK_SPEEDS[nextIdx]);
-    },
-    [playbackSpeed],
-  );
+      return PLAYBACK_SPEEDS[nextIdx];
+    });
+  }, []);
 
   // Frame-step (,/.): pause if playing, then nudge by FRAME_STEP_MS so the figures advance one
   // small visible step. Stepping is only meaningful on a still frame, so we always pause first.

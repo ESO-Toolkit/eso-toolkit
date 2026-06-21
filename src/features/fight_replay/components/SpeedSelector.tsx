@@ -23,7 +23,8 @@ import {
 import type { Theme } from '@mui/material/styles';
 import React, { useCallback, useMemo, useState } from 'react';
 
-import { TRANSPORT_MOTION } from '../constants/replayDesign';
+import { usePrefersReducedMotion } from '../../../hooks/usePrefersReducedMotion';
+import { TRANSPORT_MOTION, TRANSPORT_PILL_RADIUS } from '../constants/replayDesign';
 
 interface SpeedSelectorProps {
   /** Current playback speed multiplier */
@@ -57,6 +58,15 @@ export const SpeedSelector: React.FC<SpeedSelectorProps> = ({
   // On narrow screens the segmented chips don't fit alongside the transport cluster, so the
   // whole control collapses to just the overflow trigger (which always shows current speed).
   const compact = useMediaQuery(theme.breakpoints.down('sm'));
+  // Gate the chip hover/select transitions per replayDesign's motion contract (the global
+  // !important rule is a fallback; component-level gating is the documented primary).
+  const prefersReducedMotion = usePrefersReducedMotion();
+  const segmentTransition = prefersReducedMotion
+    ? 'none'
+    : `background-color ${TRANSPORT_MOTION.tap} ${TRANSPORT_MOTION.ease}, color ${TRANSPORT_MOTION.tap} ${TRANSPORT_MOTION.ease}`;
+  const triggerTransition = prefersReducedMotion
+    ? 'none'
+    : `background-color ${TRANSPORT_MOTION.tap} ${TRANSPORT_MOTION.ease}`;
 
   const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
   const menuOpen = Boolean(menuAnchor);
@@ -87,7 +97,7 @@ export const SpeedSelector: React.FC<SpeedSelectorProps> = ({
   const segmentSx = {
     border: '1px solid',
     borderColor: 'divider',
-    borderRadius: '11px',
+    borderRadius: `${TRANSPORT_PILL_RADIUS}px`,
     overflow: 'hidden',
     bgcolor: 'action.hover',
     height: 34,
@@ -106,7 +116,7 @@ export const SpeedSelector: React.FC<SpeedSelectorProps> = ({
       borderRight: '1px solid',
       borderRightColor: 'divider',
       '&:last-of-type': { borderRight: 0 },
-      transition: `background-color ${TRANSPORT_MOTION.tap} ${TRANSPORT_MOTION.ease}, color ${TRANSPORT_MOTION.tap} ${TRANSPORT_MOTION.ease}`,
+      transition: segmentTransition,
       '&:hover': { bgcolor: 'action.selected', color: 'text.primary' },
       '&.Mui-selected': {
         backgroundImage: (t: Theme) =>
@@ -155,10 +165,11 @@ export const SpeedSelector: React.FC<SpeedSelectorProps> = ({
           onClick={(e) => setMenuAnchor(e.currentTarget)}
           aria-label="Choose playback speed"
           aria-haspopup="true"
+          aria-expanded={menuOpen}
           sx={{
             border: '1px solid',
             borderColor: 'divider',
-            borderRadius: '11px',
+            borderRadius: `${TRANSPORT_PILL_RADIUS}px`,
             height: 34,
             px: triggerLabel ? '11px' : '8px',
             py: 0,
@@ -169,7 +180,7 @@ export const SpeedSelector: React.FC<SpeedSelectorProps> = ({
             fontVariantNumeric: 'tabular-nums',
             lineHeight: 1,
             bgcolor: 'action.hover',
-            transition: `background-color ${TRANSPORT_MOTION.tap} ${TRANSPORT_MOTION.ease}`,
+            transition: triggerTransition,
             '&:hover': { bgcolor: 'action.selected', color: 'text.primary' },
             '&.Mui-selected': {
               bgcolor: 'primary.main',
