@@ -301,6 +301,83 @@ describe('useOptimizedReportSummaryData', () => {
     expect(mockFetchDeathEventsImpl).toHaveBeenCalled();
     expect(result.current.reportSummaryData!.deathAnalysis!.totalDeaths).toBe(1);
   });
+
+  it('drops the previous report’s data when the report changes (no stale render)', async () => {
+    const { adaptDeathsTable } = jest.requireActual('../reportSummaryTables');
+    const deathsA = adaptDeathsTable({
+      data: {
+        entries: [
+          {
+            name: 'Alice',
+            id: 1,
+            type: 'Arcanist',
+            timestamp: 5000,
+            fight: 1,
+            overkill: 0,
+            killingBlow: { guid: 9000, name: 'Meteor', type: 1 },
+            events: [
+              {
+                timestamp: 5000,
+                type: 'damage',
+                sourceID: 50,
+                sourceIsFriendly: false,
+                targetID: 1,
+                amount: 100,
+              },
+            ],
+          },
+        ],
+      },
+    });
+    mockFetchSummaryTables.mockResolvedValueOnce({
+      damage: {
+        totalDamage: 1,
+        dps: 1,
+        playerBreakdown: [
+          {
+            playerId: '1',
+            playerName: 'Alice',
+            totalDamage: 1,
+            dps: 1,
+            damagePercentage: 100,
+            fightBreakdown: [],
+          },
+        ],
+      },
+      deaths: deathsA,
+    });
+
+    const { result, rerender } = renderHook(({ code }) => useOptimizedReportSummaryData(code), {
+      wrapper: makeWrapper(),
+      initialProps: { code: 'reportA' },
+    });
+    await waitFor(() =>
+      expect(result.current.reportSummaryData?.deathAnalysis?.totalDeaths).toBe(1),
+    );
+
+    // Report B's Tier-1 stays pending so it cannot commit during the assertion.
+    let resolveB: (v: { damage: unknown; deaths: unknown }) => void = () => {};
+    const pendingB = new Promise<{ damage: unknown; deaths: unknown }>((res) => {
+      resolveB = res;
+    });
+    mockFetchSummaryTables.mockReturnValueOnce(pendingB);
+
+    await act(async () => {
+      rerender({ code: 'reportB' });
+    });
+
+    // The previous report's committed analysis is gone immediately — the section
+    // shows its skeleton instead of report A's deaths while report B loads.
+    expect(result.current.reportSummaryData).toBeNull();
+
+    // Let report B finish so the pending fetch (and its timeout timer) settle
+    // and all of B's state updates flush inside act.
+    await act(async () => {
+      resolveB({ damage: { totalDamage: 0, dps: 0, playerBreakdown: [] }, deaths: null });
+      await pendingB;
+    });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+  });
 });
 
 describe('useOptimizedReportSummaryData per-fight timeout wiring', () => {

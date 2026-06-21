@@ -630,6 +630,19 @@ export function useOptimizedReportSummaryData(
     [dispatch, client, fights, reportCode, store],
   );
 
+  // Drop the previous report's committed data the moment the report changes.
+  // The sections now render as soon as their data is present (the death section
+  // no longer gates on isLoading, so the Tier-1 commit can paint fast); without
+  // this reset, navigating from one report's summary to another would briefly
+  // show the PRIOR report's death analysis / leaderboard during the new report's
+  // load. Keyed on reportCode ONLY (not the fetch deps) so same-report effect
+  // re-fires — e.g. the `fights` selector reference churning — never wipe a valid
+  // in-progress commit. A run still in flight is fenced off by its runId guard.
+  React.useEffect(() => {
+    setReportSummaryData(null);
+    setError(null);
+  }, [reportCode]);
+
   // Auto-fetch data when dependencies are ready
   React.useEffect(() => {
     if (reportCode && client && fights && fights.length > 0) {
