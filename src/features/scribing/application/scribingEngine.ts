@@ -16,6 +16,7 @@
  *   list (validated combinations observed in logs).
  */
 
+import { VERIFIED_SCRIBING_ABILITY_IDS } from '../data/verifiedScribingAbilityIds';
 import type {
   ScribingData,
   Grimoire,
@@ -24,6 +25,11 @@ import type {
   AffixScript,
   ResourceType,
 } from '../shared/types';
+
+/** First ability id that is a verified scribing skill (grimoire icon), if any. */
+function verifiedAbilityId(ids?: readonly number[]): number | undefined {
+  return ids?.find((id) => VERIFIED_SCRIBING_ABILITY_IDS.has(id));
+}
 
 export type ScribingSlot = 'focus' | 'signature' | 'affix';
 
@@ -178,11 +184,14 @@ export function deriveScribedSkill(
   }
 
   const skillName = transform?.name ?? grimoire.name;
-  // Only fall back to the grimoire's base ability id when NO focus transform
-  // applied. A transformed skill whose dataset entry has no matched ability id
-  // (the many `matchCount: 0` transforms) stays undefined — its icon falls back
-  // to the grimoire icon — rather than masquerading as the base ability.
-  const abilityId = transform ? transform.abilityIds?.[0] : grimoire.abilityIds?.[0];
+  // Resolve the resulting ability id, but only to a VERIFIED scribing skill
+  // (grimoire icon). Ambiguous transforms (matchCount > 1) can list unrelated
+  // abilities first (e.g. a generic death-recap id), so an unverified match is
+  // dropped to undefined rather than published as authoritative. With no focus
+  // transform, fall back to the grimoire's own (verified) base ability id.
+  const abilityId = transform
+    ? verifiedAbilityId(transform.abilityIds)
+    : verifiedAbilityId(grimoire.abilityIds);
 
   const effects: ScribedEffectLine[] = [];
   if (focusOk && focus) effects.push(effectLine('focus', focus));

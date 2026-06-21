@@ -163,6 +163,27 @@ describe('deriveScribedSkill', () => {
     expect(result?.abilityId).toBeUndefined();
   });
 
+  it('does not publish an unverified ability id for an ambiguous transform', () => {
+    // Elemental Explosion + Flame ("Fiery Explosion") has matchCount 11 and its
+    // first matched id (35144) maps to a generic death-recap icon, not a scribing
+    // skill — so no ability id should be surfaced.
+    const result = deriveScribedSkill(data, {
+      grimoireId: 'elemental-explosion',
+      focusId: 'flame-damage',
+    });
+    expect(result?.skillName).toBe('Fiery Explosion');
+    expect(result?.abilityId).toBeUndefined();
+  });
+
+  it('surfaces a verified ability id even when the transform is matchCount > 1', () => {
+    // Sundering Knife (matchCount 2) resolves to a real grimoire-icon ability.
+    const result = deriveScribedSkill(data, {
+      grimoireId: 'traveling-knife',
+      focusId: 'physical-damage',
+    });
+    expect(result?.abilityId).toBe(217359);
+  });
+
   it('warns (but does not crash) on an incompatible focus', () => {
     const result = deriveScribedSkill(data, {
       grimoireId: 'traveling-knife',
