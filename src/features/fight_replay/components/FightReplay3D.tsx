@@ -116,6 +116,9 @@ interface FightReplay3DProps {
   shapeCount?: number;
   /** Remove all drawn shapes (mobile Settings sheet). */
   onClearShapes?: () => void;
+  /** Opens the marker manage / import / share modal — the mobile drawer's gateway to it (the
+      page-level deck that normally hosts it is desktop-only). */
+  onOpenMarkersManager?: () => void;
   /** Opens the marker edit dialog (owned by FightReplay) for the given marker. */
   onEditMarker?: (markerId: string) => void;
   /** Marker undo/redo for the mobile tools sheet (Ctrl+Z/Ctrl+Shift+Z have no touch equivalent). */
@@ -148,6 +151,7 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
   onDrawStyleChange,
   shapeCount = 0,
   onClearShapes,
+  onOpenMarkersManager,
   onEditMarker,
   canUndoMarkers = false,
   onUndoMarkers,
@@ -1624,6 +1628,7 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
             onDrawStyleChange={onDrawStyleChange}
             shapeCount={shapeCount}
             onClearShapes={onClearShapes}
+            onOpenMarkersManager={onOpenMarkersManager}
           />
         </Box>
       )}

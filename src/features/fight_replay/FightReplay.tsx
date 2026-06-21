@@ -660,6 +660,7 @@ export const FightReplay: React.FC = () => {
         onDrawStyleChange={handleStyleChange}
         shapeCount={markersState?.shapes?.length ?? 0}
         onClearShapes={clearShapes}
+        onOpenMarkersManager={() => setMarkersModalOpen(true)}
         onEditMarker={setEditingMarkerId}
         canUndoMarkers={canUndo}
         onUndoMarkers={undo}
@@ -743,8 +744,11 @@ export const FightReplay: React.FC = () => {
           language) so the marker tools read as one intentional cluster instead of naked buttons
           on the page, while staying calm enough never to compete with the arena hero below. The
           actions stay quiet/outlined; the Edit toggle flips to contained only to signal its
-          active state. */}
-      {fight && (
+          active state. DESKTOP-ONLY: on mobile this whole deck sits behind the immersive overlay
+          (unreachable on a phone), so the touch home for these tools is the dock's dedicated
+          "Markers" drawer — rendering the deck here too would just stack a redundant, cramped
+          copy below the arena. */}
+      {fight && !isMobileReplay && (
         <Box sx={{ mb: 2 }}>
           <Box
             sx={(theme) => ({

@@ -4,8 +4,8 @@ import React from 'react';
 import { MobileReplayDock } from './MobileReplayDock';
 
 // The dock pulls in redux selectors and several heavy leaf components; stub them so the test
-// focuses on the dock's own wiring (here: the Settings-sheet Markers section added so marker
-// editing is reachable inside the mobile immersive overlay).
+// focuses on the dock's own wiring (here: the dedicated "Markers & Shapes" drawer that makes
+// marker editing + shape drawing reachable inside the mobile immersive overlay).
 jest.mock('../../../../hooks/useOptimizedTimelineScrubbing', () => ({
   useOptimizedTimelineScrubbing: (): {
     displayTime: number;
@@ -146,5 +146,33 @@ describe('MobileReplayDock — Markers section', () => {
 
     expect(screen.getByLabelText('Undo')).toBeDisabled();
     expect(screen.getByLabelText('Redo')).toBeDisabled();
+  });
+
+  it('keeps Undo / Redo in the always-on quick actions row, even outside edit mode', () => {
+    // Undo/redo are a single shared history (markers + shapes), so they live at the top of the
+    // drawer regardless of edit mode — not gated behind "Edit markers" like "Add here" is.
+    renderDock({
+      onToggleMarkersEditMode: noop,
+      markersEditMode: false,
+      onUndoMarkers: noop,
+      onRedoMarkers: noop,
+      canUndoMarkers: true,
+      canRedoMarkers: true,
+    });
+    openMarkers();
+
+    expect(screen.getByLabelText('Undo')).toBeEnabled();
+    expect(screen.getByLabelText('Redo')).toBeEnabled();
+    // ...while the gesture-only "Add here" stays hidden until edit mode is on.
+    expect(screen.queryByLabelText('Add here')).not.toBeInTheDocument();
+  });
+
+  it('surfaces a Codes button that opens the import / export modal', () => {
+    const onOpenMarkersManager = jest.fn();
+    renderDock({ onSelectDrawTool: noop, onOpenMarkersManager });
+    openMarkers();
+
+    fireEvent.click(screen.getByLabelText('Codes'));
+    expect(onOpenMarkersManager).toHaveBeenCalledTimes(1);
   });
 });

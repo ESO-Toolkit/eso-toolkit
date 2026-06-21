@@ -19,6 +19,7 @@ import DrawRoundedIcon from '@mui/icons-material/DrawRounded';
 import EditLocationAltRoundedIcon from '@mui/icons-material/EditLocationAltRounded';
 import GroupRoundedIcon from '@mui/icons-material/GroupRounded';
 import InsightsRoundedIcon from '@mui/icons-material/InsightsRounded';
+import IosShareRoundedIcon from '@mui/icons-material/IosShareRounded';
 import LabelRoundedIcon from '@mui/icons-material/LabelRounded';
 import PlaylistPlayRoundedIcon from '@mui/icons-material/PlaylistPlayRounded';
 import RedoRoundedIcon from '@mui/icons-material/RedoRounded';
@@ -119,6 +120,9 @@ interface MobileReplayDockProps {
   onDrawStyleChange?: (patch: Partial<ShapeStyle>) => void;
   shapeCount?: number;
   onClearShapes?: () => void;
+  /** Opens the manage / import / share-code modal. The page deck that normally hosts it is
+      desktop-only, so this is the phone's only route to importing or copying marker/shape codes. */
+  onOpenMarkersManager?: () => void;
 }
 
 type SheetId = 'chapters' | 'markers' | 'settings' | null;
@@ -332,6 +336,7 @@ const MobileReplayDockComponent: React.FC<MobileReplayDockProps> = ({
   onDrawStyleChange,
   shapeCount = 0,
   onClearShapes,
+  onOpenMarkersManager,
 }) => {
   const [sheet, setSheet] = useState<SheetId>(null);
 
@@ -394,6 +399,13 @@ const MobileReplayDockComponent: React.FC<MobileReplayDockProps> = ({
     },
     [onSelectDrawTool],
   );
+
+  // "Codes" opens the import / export / clear modal. Close the sheet first so the dialog lands in
+  // front of the arena rather than behind the drawer.
+  const handleOpenManager = useCallback(() => {
+    setSheet(null);
+    onOpenMarkersManager?.();
+  }, [onOpenMarkersManager]);
 
   const noopStyleChange = useCallback(() => {}, []);
   const noopClearShapes = useCallback(() => {}, []);
@@ -656,6 +668,32 @@ const MobileReplayDockComponent: React.FC<MobileReplayDockProps> = ({
       >
         {sheet === 'markers' && (
           <>
+            {/* Quick actions — one shared undo/redo history spans markers AND shapes, so it lives
+                up top where it's always findable (the thing people hunt for first), beside the
+                gateway to import / export / clear codes. These stay put as you edit or draw. */}
+            <Box
+              sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 0.75, mb: 2.5 }}
+            >
+              <MarkerActionButton
+                icon={<UndoRoundedIcon fontSize="small" />}
+                label="Undo"
+                onClick={() => onUndoMarkers?.()}
+                disabled={!onUndoMarkers || !canUndoMarkers}
+              />
+              <MarkerActionButton
+                icon={<RedoRoundedIcon fontSize="small" />}
+                label="Redo"
+                onClick={() => onRedoMarkers?.()}
+                disabled={!onRedoMarkers || !canRedoMarkers}
+              />
+              <MarkerActionButton
+                icon={<IosShareRoundedIcon fontSize="small" />}
+                label="Codes"
+                onClick={handleOpenManager}
+                disabled={!onOpenMarkersManager}
+              />
+            </Box>
+
             {onToggleMarkersEditMode && (
               <>
                 <Typography
@@ -687,28 +725,14 @@ const MobileReplayDockComponent: React.FC<MobileReplayDockProps> = ({
                         Press and hold the map to place a marker · drag a marker to move it · press
                         and hold a marker to edit or remove it
                       </Typography>
-                      <Box
-                        sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 0.75 }}
-                      >
-                        <MarkerActionButton
-                          icon={<AddLocationAltRoundedIcon fontSize="small" />}
-                          label="Add here"
-                          onClick={handleAddMarkerAtCenter}
-                          disabled={!onAddMarkerAtCenter}
-                        />
-                        <MarkerActionButton
-                          icon={<UndoRoundedIcon fontSize="small" />}
-                          label="Undo"
-                          onClick={() => onUndoMarkers?.()}
-                          disabled={!onUndoMarkers || !canUndoMarkers}
-                        />
-                        <MarkerActionButton
-                          icon={<RedoRoundedIcon fontSize="small" />}
-                          label="Redo"
-                          onClick={() => onRedoMarkers?.()}
-                          disabled={!onRedoMarkers || !canRedoMarkers}
-                        />
-                      </Box>
+                      {/* Single full-width gesture-free placement (undo/redo moved to the quick
+                          actions row above). */}
+                      <MarkerActionButton
+                        icon={<AddLocationAltRoundedIcon fontSize="small" />}
+                        label="Add here"
+                        onClick={handleAddMarkerAtCenter}
+                        disabled={!onAddMarkerAtCenter}
+                      />
                     </>
                   )}
                 </Box>
@@ -731,6 +755,9 @@ const MobileReplayDockComponent: React.FC<MobileReplayDockProps> = ({
                     Pick a tool, then tap the map to place points. Circle/rect/ruler take two taps;
                     use the on-map Finish button (or double-tap) to finish a line or zone.
                   </Typography>
+                  {/* Undo/redo intentionally omitted here — they live in the quick actions row at
+                      the top of the drawer (one shared history), so this toolbar stays focused on
+                      tool + style. */}
                   <ShapeToolbar
                     activeTool={drawTool}
                     onSelectTool={handleSelectDrawTool}
@@ -738,10 +765,6 @@ const MobileReplayDockComponent: React.FC<MobileReplayDockProps> = ({
                     onStyleChange={onDrawStyleChange ?? noopStyleChange}
                     shapeCount={shapeCount}
                     onClearShapes={onClearShapes ?? noopClearShapes}
-                    canUndo={canUndoMarkers}
-                    onUndo={onUndoMarkers}
-                    canRedo={canRedoMarkers}
-                    onRedo={onRedoMarkers}
                   />
                 </Box>
               </>
