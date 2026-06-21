@@ -264,8 +264,8 @@ export interface ReportSummaryData {
   fights: FightFragment[];
   /** Damage breakdown analysis */
   damageBreakdown: ReportDamageBreakdown;
-  /** Death analysis */
-  deathAnalysis: ReportDeathAnalysis;
+  /** Death analysis — undefined in the Tier-1 partial, before the raw-event pass lands */
+  deathAnalysis?: ReportDeathAnalysis;
   /** Data loading states */
   loadingStates: ReportDataLoadingStates;
   /** Any errors encountered */

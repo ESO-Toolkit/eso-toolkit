@@ -157,7 +157,11 @@ const DamageBreakdownSectionComponent: React.FC<DamageBreakdownSectionProps> = (
     );
   }
 
-  if (isLoading || !damageBreakdown) {
+  // Render the full skeleton only until the Tier-1 damage leaderboard arrives.
+  // Once player data is present we show it immediately and skeleton just the
+  // slower, raw-event-derived "Damage by Type" panels (see typeBreakdownLoading).
+  const hasPlayerData = !!damageBreakdown && damageBreakdown.playerBreakdown.length > 0;
+  if (!damageBreakdown || (isLoading && !hasPlayerData)) {
     return (
       <Card
         elevation={0}
@@ -176,6 +180,10 @@ const DamageBreakdownSectionComponent: React.FC<DamageBreakdownSectionProps> = (
   // Calculate highest damage for relative progress bars
   const highestDamage =
     damageBreakdown.playerBreakdown.length > 0 ? damageBreakdown.playerBreakdown[0].totalDamage : 1;
+
+  // The damage-type breakdown comes from the slower raw-event pass; while the
+  // Tier-1 leaderboard is already shown, skeleton just this block until it lands.
+  const typeBreakdownLoading = isLoading && damageBreakdown.abilityTypeBreakdown.length === 0;
 
   if (damageBreakdown.playerBreakdown.length === 0) {
     return (
@@ -285,60 +293,75 @@ const DamageBreakdownSectionComponent: React.FC<DamageBreakdownSectionProps> = (
           </Paper>
         </Box>
 
-        {/* Damage Type Breakdown */}
+        {/* Damage Type Breakdown (raw-event derived — streams in after the leaderboard) */}
         <Box sx={{ mb: 4 }}>
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              flexWrap: 'wrap',
-              gap: 1,
-              mb: 1,
-            }}
-          >
-            <Typography variant="h6" component="h3">
-              Damage by Type
-            </Typography>
-            <ToggleButtonGroup
-              size="small"
-              exclusive
-              value={typeView}
-              onChange={(_event, value) => value && setTypeView(value)}
-              aria-label="Damage by type view"
-            >
-              <ToggleButton value="combined">Combined</ToggleButton>
-              <ToggleButton value="split">Split (100%)</ToggleButton>
-            </ToggleButtonGroup>
-          </Box>
-
-          {typeView === 'combined' ? (
+          {typeBreakdownLoading ? (
             <>
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                sx={{ display: 'block', mb: 1.5 }}
-              >
-                Categories overlap (a fire DOT counts as Fire, Magic and Damage over Time), so
-                percentages can add up to more than 100%.
+              <Typography variant="h6" component="h3" gutterBottom>
+                Damage by Type
               </Typography>
-              <DamageTypeList items={damageBreakdown.abilityTypeBreakdown} />
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                <Skeleton variant="rounded" height={64} />
+                <Skeleton variant="rounded" height={64} />
+                <Skeleton variant="rounded" height={64} />
+              </Box>
             </>
           ) : (
-            <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 2 }}>
-              <Box sx={{ flex: 1, minWidth: 0 }}>
-                <Typography variant="subtitle2" gutterBottom>
-                  By delivery
+            <>
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  flexWrap: 'wrap',
+                  gap: 1,
+                  mb: 1,
+                }}
+              >
+                <Typography variant="h6" component="h3">
+                  Damage by Type
                 </Typography>
-                <DamageTypeList items={damageBreakdown.deliveryBreakdown ?? []} />
+                <ToggleButtonGroup
+                  size="small"
+                  exclusive
+                  value={typeView}
+                  onChange={(_event, value) => value && setTypeView(value)}
+                  aria-label="Damage by type view"
+                >
+                  <ToggleButton value="combined">Combined</ToggleButton>
+                  <ToggleButton value="split">Split (100%)</ToggleButton>
+                </ToggleButtonGroup>
               </Box>
-              <Box sx={{ flex: 1, minWidth: 0 }}>
-                <Typography variant="subtitle2" gutterBottom>
-                  By school
-                </Typography>
-                <DamageTypeList items={damageBreakdown.schoolBreakdown ?? []} />
-              </Box>
-            </Box>
+
+              {typeView === 'combined' ? (
+                <>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ display: 'block', mb: 1.5 }}
+                  >
+                    Categories overlap (a fire DOT counts as Fire, Magic and Damage over Time), so
+                    percentages can add up to more than 100%.
+                  </Typography>
+                  <DamageTypeList items={damageBreakdown.abilityTypeBreakdown} />
+                </>
+              ) : (
+                <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 2 }}>
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Typography variant="subtitle2" gutterBottom>
+                      By delivery
+                    </Typography>
+                    <DamageTypeList items={damageBreakdown.deliveryBreakdown ?? []} />
+                  </Box>
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Typography variant="subtitle2" gutterBottom>
+                      By school
+                    </Typography>
+                    <DamageTypeList items={damageBreakdown.schoolBreakdown ?? []} />
+                  </Box>
+                </Box>
+              )}
+            </>
           )}
         </Box>
 

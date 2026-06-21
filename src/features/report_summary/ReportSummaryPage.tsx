@@ -220,14 +220,14 @@ const ReportSummaryHeader: React.FC<ReportSummaryHeaderProps> = ({
                 sx={(theme) => chipPillSx(theme.palette.mode === 'dark', SEMANTIC_ACCENTS.slate)}
               />
             )}
-            {summaryData?.deathAnalysis.totalDeaths !== undefined && (
+            {summaryData?.deathAnalysis?.totalDeaths !== undefined && (
               <Chip
                 label={`${summaryData.deathAnalysis.totalDeaths} Total Deaths`}
                 size="small"
                 sx={(theme) =>
                   chipPillSx(
                     theme.palette.mode === 'dark',
-                    summaryData.deathAnalysis.totalDeaths === 0
+                    summaryData.deathAnalysis?.totalDeaths === 0
                       ? SEMANTIC_ACCENTS.green
                       : SEMANTIC_ACCENTS.coral,
                   )

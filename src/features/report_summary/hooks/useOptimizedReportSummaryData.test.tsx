@@ -16,6 +16,16 @@ const mockFights = [{ id: 1, name: 'Boss', startTime: 0, endTime: 10_000 }];
 // hoisted mock factory may reference it.
 let mockHangDamageFightId: number | null = null;
 
+// Tier-1 server-side damage table. Defaults to an empty result so the existing
+// tests exercise the raw-event fallback path; individual tests override it to
+// assert the Tier-1 leaderboard is preferred. (The real module would hit the
+// network via the context's real client, which hangs in jsdom.)
+const mockFetchSummaryDamageTotals = jest.fn(async () => ({
+  totalDamage: 0,
+  dps: 0,
+  playerBreakdown: [] as unknown[],
+}));
+
 // Player 1 deals 600 to the boss; the boss (enemy) deals 400 to the player.
 // Only the player-outgoing 600 should count toward totals/DPS/percentages.
 const mockDamageByFight: Record<number, unknown[]> = {
@@ -88,6 +98,10 @@ jest.mock('../../../store/events_data/deathEventsSlice', () => {
 
 jest.mock('../resurrectionEvents', () => ({
   fetchResurrectionEvents: jest.fn(async () => []),
+}));
+
+jest.mock('../reportSummaryTables', () => ({
+  fetchSummaryDamageTotals: (...args: unknown[]) => mockFetchSummaryDamageTotals(...args),
 }));
 
 jest.mock('../../../store/report/reportSelectors', () => ({
@@ -167,6 +181,36 @@ describe('useOptimizedReportSummaryData', () => {
     await waitFor(() => expect(result.current.reportSummaryData).not.toBeNull());
 
     expect(result.current.reportSummaryData!.reportInfo.ownerName).toBe('GuildLeader');
+  });
+
+  it('prefers the Tier-1 aggregated leaderboard when it is available', async () => {
+    mockFetchSummaryDamageTotals.mockResolvedValueOnce({
+      totalDamage: 1234,
+      dps: 99,
+      playerBreakdown: [
+        {
+          playerId: '1',
+          playerName: 'Alice',
+          totalDamage: 1234,
+          dps: 99,
+          damagePercentage: 100,
+          fightBreakdown: [],
+        },
+      ],
+    });
+
+    const { result } = renderHook(() => useOptimizedReportSummaryData('test123'), {
+      wrapper: makeWrapper(),
+    });
+    await waitFor(() => expect(result.current.reportSummaryData).not.toBeNull());
+
+    const { damageBreakdown } = result.current.reportSummaryData!;
+    // Player table comes from the Tier-1 table(), not the raw-event sum.
+    expect(damageBreakdown.totalDamage).toBe(1234);
+    expect(damageBreakdown.playerBreakdown).toHaveLength(1);
+    expect(damageBreakdown.playerBreakdown[0].playerName).toBe('Alice');
+    // Tier-2 raw events still fill the damage-type breakdown.
+    expect(Array.isArray(damageBreakdown.abilityTypeBreakdown)).toBe(true);
   });
 });
 

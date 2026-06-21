@@ -29,6 +29,7 @@ import {
   type DamageCategoryKey,
   type DamagePartition,
 } from '../../report_details/insights/damageTypeCategorization';
+import { fetchSummaryDamageTotals, type SummaryDamageTotals } from '../reportSummaryTables';
 import { fetchResurrectionEvents, type ResurrectionEvent } from '../resurrectionEvents';
 
 interface UseOptimizedReportSummaryDataReturn {
@@ -89,6 +90,77 @@ export function withTimeout<T>(promise: Promise<T>, ms: number, label: string): 
   return Promise.race([promise, timeout]).finally(() => clearTimeout(timer)) as Promise<T>;
 }
 
+/** Build the header/metadata block from report data + the cleaned fight list. */
+function buildReportInfo(
+  reportCode: string,
+  cleanFights: FightFragment[],
+  reportData:
+    | {
+        title?: string | null;
+        startTime?: number | null;
+        endTime?: number | null;
+        zone?: { name?: string | null } | null;
+        owner?: { name?: string | null } | null;
+      }
+    | null
+    | undefined,
+): ReportInfo {
+  const firstFight = cleanFights[0];
+  const lastFight = cleanFights[cleanFights.length - 1];
+  // Prefer the report's absolute start/end (epoch ms). Fight timestamps are
+  // report-relative, so using them here renders the date as 1970.
+  const sessionStart = firstFight?.startTime ?? 0;
+  const sessionEnd = lastFight?.endTime ?? lastFight?.startTime ?? sessionStart;
+  const reportStart = reportData?.startTime ?? sessionStart;
+  const reportEnd = reportData?.endTime ?? sessionEnd;
+  return {
+    reportId: reportCode,
+    title: reportData?.title || 'Report',
+    startTime: reportStart,
+    endTime: reportEnd,
+    // Wall-clock span of the session (not summed combat time, the DPS denominator).
+    duration: Math.max(0, reportEnd - reportStart),
+    zoneName: reportData?.zone?.name || 'Unknown Zone',
+    ownerName: reportData?.owner?.name || undefined,
+  };
+}
+
+/**
+ * The Tier-1 summary committed as soon as the aggregated damage leaderboard
+ * arrives: the player damage table + report DPS render immediately, while the
+ * damage-type breakdown and death analysis stay empty/undefined (their sections
+ * show skeletons) until the raw-event passes fill them in.
+ */
+function buildTier1Summary(
+  reportInfo: ReportInfo,
+  cleanFights: FightFragment[],
+  tier1: SummaryDamageTotals,
+): ReportSummaryData {
+  return {
+    reportInfo,
+    fights: cleanFights,
+    damageBreakdown: {
+      totalDamage: tier1.totalDamage,
+      dps: tier1.dps,
+      playerBreakdown: tier1.playerBreakdown,
+      abilityTypeBreakdown: [],
+      deliveryBreakdown: [],
+      schoolBreakdown: [],
+      targetBreakdown: [],
+    },
+    deathAnalysis: undefined,
+    loadingStates: {
+      isLoading: true,
+      fightDataLoading: {},
+      damageEventsLoading: false,
+      deathEventsLoading: false,
+      playerDataLoading: false,
+      masterDataLoading: false,
+    },
+    errors: { generalErrors: [], fightErrors: {}, fetchErrors: {} },
+  };
+}
+
 /**
  * Fetches every fight's damage/death events (plus best-effort resurrections) in
  * small concurrent batches, reusing the shared Redux event slices, and
@@ -137,12 +209,41 @@ export function useOptimizedReportSummaryData(
         const cleanFights = fights.filter(isUsableFight);
         const totalTasks = cleanFights.length * 2 + 2; // 2 consumed event types per fight + analysis tasks
 
+        // Summed active fight time — the denominator for active-combat DPS. Shared
+        // by the Tier-1 leaderboard and the raw-event fallback so both agree.
+        const totalActiveDuration = cleanFights.reduce(
+          (sum, fight) => sum + ((fight.endTime ?? fight.startTime) - fight.startTime),
+          0,
+        );
+        // Report metadata is available immediately (no event data needed), so the
+        // header + Tier-1 leaderboard can render before the raw-event passes finish.
+        const reportInfo = buildReportInfo(reportCode, cleanFights, store.getState().report.data);
+
         if (isCurrent()) {
           setProgress({
             current: 0,
             total: totalTasks,
             currentTask: 'Starting data fetch...',
           });
+        }
+
+        // ---- Tier-1: one server-side aggregated damage table ----
+        // Renders the player damage leaderboard + report DPS almost immediately
+        // while the per-fight raw-event passes (damage-type breakdown, death
+        // analysis) stream in behind it. Best-effort: on failure/timeout the
+        // raw-event pass below is the authoritative fallback. Timed out so a hung
+        // request can't delay the rest of the summary.
+        let tier1: SummaryDamageTotals | null = null;
+        const fightIds = cleanFights.map((fight) => Number(fight.id));
+        if (fightIds.length > 0) {
+          tier1 = await withTimeout(
+            fetchSummaryDamageTotals({ reportCode, client, fightIds, totalActiveDuration }),
+            PER_FIGHT_EVENT_TIMEOUT_MS,
+            'summary damage table',
+          ).catch(() => null);
+          if (isCurrent() && tier1 && tier1.playerBreakdown.length > 0) {
+            setReportSummaryData(buildTier1Summary(reportInfo, cleanFights, tier1));
+          }
         }
 
         // Per-fight events captured straight from the thunk results (see note
@@ -274,13 +375,8 @@ export function useOptimizedReportSummaryData(
         }));
         const deathAnalysis = DeathAnalysisService.analyzeReportDeaths(fightDeathData);
 
-        // ---- Damage breakdown ----
-        // Summed active fight time — the denominator for active-combat DPS.
-        const totalActiveDuration = cleanFights.reduce(
-          (sum, fight) => sum + ((fight.endTime ?? fight.startTime) - fight.startTime),
-          0,
-        );
-
+        // ---- Damage breakdown (raw-event fallback for when Tier-1 is absent) ----
+        // `totalActiveDuration` was computed up-front (shared with the Tier-1 DPS).
         // Per-player totals + per-fight breakdown (player-outgoing damage only).
         const playerDamageMap = new Map<
           number,
@@ -389,34 +485,19 @@ export function useOptimizedReportSummaryData(
         const deliveryBreakdown = toBreakdown(partitions.byDelivery);
         const schoolBreakdown = toBreakdown(partitions.bySchool);
 
-        // ---- Report metadata ----
-        const lastFight = cleanFights[cleanFights.length - 1];
-        const reportData = state.report.data;
-        // Prefer the report's absolute start/end (epoch ms). Fight timestamps are
-        // report-relative, so using them here renders the date as 1970.
-        const sessionStart = firstFight?.startTime ?? 0;
-        const sessionEnd = lastFight?.endTime ?? lastFight?.startTime ?? sessionStart;
-        const reportStart = reportData?.startTime ?? sessionStart;
-        const reportEnd = reportData?.endTime ?? sessionEnd;
-        const reportInfo: ReportInfo = {
-          reportId: reportCode,
-          title: reportData?.title || 'Report',
-          startTime: reportStart,
-          endTime: reportEnd,
-          // Wall-clock span of the session (not summed combat time, which is the
-          // DPS denominator above).
-          duration: Math.max(0, reportEnd - reportStart),
-          zoneName: reportData?.zone?.name || 'Unknown Zone',
-          ownerName: reportData?.owner?.name || undefined,
-        };
-
+        // ---- Final commit ----
+        // Prefer the Tier-1 aggregated leaderboard (already on screen) so the
+        // player table doesn't re-flicker; fall back to the raw-event totals when
+        // Tier-1 was unavailable. Per-fight `fightBreakdown` is not rendered, so
+        // Tier-1's empty value is fine.
+        const t1 = tier1 && tier1.playerBreakdown.length > 0 ? tier1 : null;
         const summaryData: ReportSummaryData = {
           reportInfo,
           fights: cleanFights,
           damageBreakdown: {
-            totalDamage,
-            dps,
-            playerBreakdown,
+            totalDamage: t1 ? t1.totalDamage : totalDamage,
+            dps: t1 ? t1.dps : dps,
+            playerBreakdown: t1 ? t1.playerBreakdown : playerBreakdown,
             abilityTypeBreakdown,
             deliveryBreakdown,
             schoolBreakdown,
