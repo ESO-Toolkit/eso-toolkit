@@ -104,9 +104,18 @@ export function useScribingSimulation(
         const grimoireIds = Object.keys(loaded.grimoires);
         const fallback = options.defaultGrimoire ?? grimoireIds[0] ?? '';
         const fromUrl = readSelectionFromUrl(fallback);
-        // Only honour a URL grimoire that actually exists.
+        // Only honour a URL grimoire that actually exists, and drop any script a
+        // hand-crafted/stale link carries that the grimoire does not support.
         const grimoireId = loaded.grimoires[fromUrl.grimoireId] ? fromUrl.grimoireId : fallback;
-        setSelection({ ...fromUrl, grimoireId });
+        const compat = getCompatibleScripts(loaded, grimoireId);
+        const keep = (id: string | undefined, list: { id: string }[]): string | undefined =>
+          id && list.some((s) => s.id === id) ? id : undefined;
+        setSelection({
+          grimoireId,
+          focusId: keep(fromUrl.focusId, compat.focusScripts),
+          signatureId: keep(fromUrl.signatureId, compat.signatureScripts),
+          affixId: keep(fromUrl.affixId, compat.affixScripts),
+        });
         initialisedRef.current = true;
       } catch (err) {
         if (!cancelled) {

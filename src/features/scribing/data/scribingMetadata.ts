@@ -315,7 +315,8 @@ export const SIGNATURE_META: Readonly<Record<string, ScriptMeta>> = {
     acquisition: 'Free reward from the Scribing quest "The Wing of the Indrik".',
   },
   'hunters-snare': {
-    effect: 'Reduces the Movement Speed of enemies hit by 30% for 4s (a snare).',
+    effect:
+      'Snares enemies hit, reducing Movement Speed — the amount and duration scale per grimoire (e.g. 40% for 5s on Vault).',
     category: 'Signature',
     acquisition:
       'Free from a Mages Guild hall (Mournhold, Deshaan) after the Sigil of the Luminary Dragon.',
@@ -416,7 +417,7 @@ export const SIGNATURE_META: Readonly<Record<string, ScriptMeta>> = {
   },
   'growing-impact': {
     effect:
-      'On Ulfsild’s Contingency, leaves a rune for 8s that applies your Affix script in an area.',
+      'On Ulfsild’s Contingency, leaves a rune for 9.6s that applies your Affix script in an area.',
     category: 'Signature',
     acquisition:
       'Random drop from daily quest coffers (World Boss / Cyrodiil / Fighters Guild) or the Firandil rotation.',
@@ -502,7 +503,8 @@ export const AFFIX_META: Readonly<Record<string, ScriptMeta>> = {
       'Drop after the Sigil of the Luminary Netch, or buy from Firandil / Filer Ool / Tel Var merchant.',
   },
   expedition: {
-    effect: 'Grants Major Expedition (+30% Movement Speed) to you/allies.',
+    effect:
+      'Grants Minor Expedition (+15% Movement Speed) to you/allies; Major (+30%) on some grimoires.',
     category: 'Buff',
     acquisition:
       'Drop after the Sigil of the Luminary Netch, or buy from Firandil / Filer Ool / Tel Var merchant.',

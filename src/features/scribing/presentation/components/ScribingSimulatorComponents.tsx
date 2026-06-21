@@ -13,12 +13,14 @@ import {
   Share as ShareIcon,
   Search as SearchIcon,
   Check as CheckIcon,
+  InfoOutlined as InfoIcon,
 } from '@mui/icons-material';
 import {
   Avatar,
   Box,
   Button,
   Chip,
+  IconButton,
   InputAdornment,
   Stack,
   TextField,
@@ -28,6 +30,39 @@ import {
   useTheme,
 } from '@mui/material';
 import React from 'react';
+
+/**
+ * Roving-tabindex keyboard navigation for an ARIA radiogroup/listbox: moves DOM
+ * focus to the next/previous (or first/last) item of `role` within the same
+ * container. Returns the focused element so callers can react (e.g. select it).
+ */
+function focusRovingSibling(
+  current: HTMLElement,
+  role: 'radio' | 'option',
+  dir: 1 | -1 | 'first' | 'last',
+): HTMLElement | null {
+  const container = current.closest('[role="radiogroup"], [role="listbox"]');
+  if (!container) return null;
+  const items = Array.from(container.querySelectorAll<HTMLElement>(`[role="${role}"]`));
+  const idx = items.indexOf(current);
+  if (idx === -1 || items.length === 0) return null;
+  let next: number;
+  if (dir === 'first') next = 0;
+  else if (dir === 'last') next = items.length - 1;
+  else next = (idx + dir + items.length) % items.length;
+  const el = items[next] ?? null;
+  el?.focus();
+  return el;
+}
+
+const ARROW_DIR: Record<string, 1 | -1 | 'first' | 'last'> = {
+  ArrowRight: 1,
+  ArrowDown: 1,
+  ArrowLeft: -1,
+  ArrowUp: -1,
+  Home: 'first',
+  End: 'last',
+};
 
 import { abilityIconUrl } from '@/utils/abilityIconCorrections';
 
@@ -106,6 +141,8 @@ export interface GrimoireGridProps {
 
 export const GrimoireGrid: React.FC<GrimoireGridProps> = ({ grimoires, selectedId, onSelect }) => {
   const theme = useTheme();
+  // Roving tabindex: only the checked radio (or the first, if none) is tabbable.
+  const tabbableId = grimoires.some((g) => g.id === selectedId) ? selectedId : grimoires[0]?.id;
   return (
     <Box
       role="radiogroup"
@@ -126,12 +163,21 @@ export const GrimoireGrid: React.FC<GrimoireGridProps> = ({ grimoires, selectedI
             key={g.id}
             role="radio"
             aria-checked={selected}
-            tabIndex={0}
+            data-id={g.id}
+            tabIndex={g.id === tabbableId ? 0 : -1}
             onClick={() => onSelect(g.id)}
             onKeyDown={(e) => {
               if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault();
                 onSelect(g.id);
+                return;
+              }
+              const dir = ARROW_DIR[e.key];
+              if (dir !== undefined) {
+                e.preventDefault();
+                // ARIA radiogroup: arrow keys move focus and check the radio.
+                const el = focusRovingSibling(e.currentTarget, 'radio', dir);
+                if (el?.dataset.id) onSelect(el.dataset.id);
               }
             }}
             sx={{
@@ -204,6 +250,8 @@ export const ScriptSlotPicker: React.FC<ScriptSlotPickerProps> = ({
   }, [scripts, query]);
 
   const showSearch = scripts.length > 6;
+  // Roving tabindex target: the selected option if it's visible, else the first.
+  const tabbableId = filtered.some((s) => s.id === selectedId) ? selectedId : filtered[0]?.id;
 
   return (
     <Box
@@ -230,6 +278,15 @@ export const ScriptSlotPicker: React.FC<ScriptSlotPickerProps> = ({
         <Typography variant="subtitle2" sx={{ fontWeight: 700, flexGrow: 1 }}>
           {SLOT_LABELS[slot]} Script
         </Typography>
+        {selectedId && (
+          <Button
+            size="small"
+            onClick={() => onSelect(undefined)}
+            sx={{ minWidth: 0, px: 1, py: 0, fontSize: '0.7rem' }}
+          >
+            Clear
+          </Button>
+        )}
         <Chip
           size="small"
           label={`${scripts.length} available`}
@@ -289,12 +346,19 @@ export const ScriptSlotPicker: React.FC<ScriptSlotPickerProps> = ({
                 key={s.id}
                 role="option"
                 aria-selected={selected}
-                tabIndex={0}
-                onClick={() => onSelect(selected ? undefined : s.id)}
+                tabIndex={s.id === tabbableId ? 0 : -1}
+                onClick={() => onSelect(s.id)}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault();
-                    onSelect(selected ? undefined : s.id);
+                    onSelect(s.id);
+                    return;
+                  }
+                  const dir = ARROW_DIR[e.key];
+                  // In a listbox arrow keys move focus only; selection is explicit.
+                  if (dir !== undefined) {
+                    e.preventDefault();
+                    focusRovingSibling(e.currentTarget, 'option', dir);
                   }
                 }}
                 sx={{
@@ -327,12 +391,15 @@ export const ScriptSlotPicker: React.FC<ScriptSlotPickerProps> = ({
                   )}
                   {s.acquisition && (
                     <Tooltip title={s.acquisition} arrow>
-                      <Typography
-                        variant="caption"
-                        sx={{ ml: 'auto', color: 'text.disabled', cursor: 'help' }}
+                      <IconButton
+                        size="small"
+                        aria-label={`How to unlock ${s.name}: ${s.acquisition}`}
+                        onClick={(e) => e.stopPropagation()}
+                        onKeyDown={(e) => e.stopPropagation()}
+                        sx={{ ml: 'auto', p: 0.25, color: 'text.disabled' }}
                       >
-                        ⓘ
-                      </Typography>
+                        <InfoIcon sx={{ fontSize: 16 }} />
+                      </IconButton>
                     </Tooltip>
                   )}
                 </Box>
