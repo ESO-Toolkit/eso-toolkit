@@ -26,6 +26,7 @@ export const getRedirectUri = (): string => {
 // Replace with your actual ESO Logs client ID
 export const CLIENT_ID = '9fd28ffc-300a-44ce-8a0e-6167db47a7e1';
 export const PKCE_CODE_VERIFIER_KEY = 'eso_code_verifier';
+export const OAUTH_STATE_KEY = 'eso_oauth_state';
 export const INTENDED_DESTINATION_KEY = 'eso_intended_destination';
 const INTENDED_DESTINATION_PROTECTED_KEY = 'eso_intended_destination_protected';
 
@@ -42,6 +43,43 @@ export function setPkceCodeVerifier(verifier: string): void {
 
 export function getPkceCodeVerifier(): string {
   return sessionStorage.getItem(PKCE_CODE_VERIFIER_KEY) || '';
+}
+
+/**
+ * Store the OAuth CSRF state value for the ESO Logs authorization flow.
+ */
+export function setOAuthState(state: string): void {
+  sessionStorage.setItem(OAUTH_STATE_KEY, state);
+}
+
+/**
+ * Validate the OAuth `state` parameter returned on the callback against the
+ * value we stored before redirecting. Consumes (clears) the stored state so it
+ * can only be validated once — mirrors the Discord flow's validateOAuthState.
+ *
+ * @returns true only when a stored state exists and matches the callback param.
+ */
+export function validateOAuthState(stateParam: string | null): boolean {
+  const stored = sessionStorage.getItem(OAUTH_STATE_KEY);
+  sessionStorage.removeItem(OAUTH_STATE_KEY);
+  return !!stored && stored === stateParam;
+}
+
+/**
+ * Generate a random OAuth CSRF state token. Prefers crypto.randomUUID when
+ * available but falls back to getRandomValues — the same primitive the PKCE
+ * code verifier already uses — so the login flow never gains a stricter crypto
+ * requirement than it already has (some browsers/WebViews expose getRandomValues
+ * + subtle.digest but not randomUUID).
+ */
+export function generateOAuthState(): string {
+  const cryptoObj = globalThis.crypto;
+  if (typeof cryptoObj?.randomUUID === 'function') {
+    return cryptoObj.randomUUID();
+  }
+  const array = new Uint32Array(8);
+  cryptoObj.getRandomValues(array);
+  return Array.from(array, (dec) => dec.toString(16).padStart(8, '0')).join('');
 }
 
 export function setIntendedDestination(path: string): void {
@@ -103,18 +141,24 @@ const generateCodeChallenge = async (verifier: string): Promise<string> => {
   return base64UrlEncode(digest);
 };
 
-export async function buildAuthUrl(verifier: string): Promise<string> {
+export async function buildAuthUrl(verifier: string, state: string): Promise<string> {
   const challenge = await generateCodeChallenge(verifier);
 
   // Use the documented scope for user profile access
   const scope = 'view-user-profile';
 
-  return `https://www.esologs.com/oauth/authorize?response_type=code&client_id=${CLIENT_ID}&code_challenge=${challenge}&code_challenge_method=S256&redirect_uri=${encodeURIComponent(getRedirectUri())}&scope=${encodeURIComponent(scope)}`;
+  return `https://www.esologs.com/oauth/authorize?response_type=code&client_id=${CLIENT_ID}&code_challenge=${challenge}&code_challenge_method=S256&redirect_uri=${encodeURIComponent(getRedirectUri())}&scope=${encodeURIComponent(scope)}&state=${encodeURIComponent(state)}`;
 }
 
 export async function startPKCEAuth(): Promise<void> {
   const verifier = generateCodeVerifier();
   setPkceCodeVerifier(verifier);
+
+  // CSRF protection: generate a random state, persist it, and echo it on the
+  // authorize URL. OAuthRedirect validates the returned state before exchanging
+  // the authorization code.
+  const state = generateOAuthState();
+  setOAuthState(state);
 
   // For dev-preview deployments, store the current base path so the shared
   // OAuth bounce page knows which PR preview to redirect back to.
@@ -125,7 +169,7 @@ export async function startPKCEAuth(): Promise<void> {
 
   let authUrl: string | undefined;
   try {
-    authUrl = await buildAuthUrl(verifier);
+    authUrl = await buildAuthUrl(verifier, state);
     window.location.href = authUrl;
   } catch (err) {
     logger.error(

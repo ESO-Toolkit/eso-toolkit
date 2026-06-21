@@ -25,10 +25,12 @@ export const LatestReportsHeader: React.FC<LatestReportsHeaderProps> = ({
       sx={{
         position: 'relative',
         display: 'flex',
-        alignItems: { xs: 'flex-start', sm: 'center' },
-        flexDirection: { xs: 'column', sm: 'row' },
+        // Keep the refresh action inline with the title on every breakpoint —
+        // it's a small icon button and doesn't warrant its own row on mobile.
+        alignItems: 'center',
+        flexDirection: 'row',
         justifyContent: 'space-between',
-        gap: 2,
+        gap: 1.5,
         mb: 2.5,
         px: 2.5,
         py: 2,
@@ -54,7 +56,7 @@ export const LatestReportsHeader: React.FC<LatestReportsHeaderProps> = ({
         },
       }}
     >
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, minWidth: 0 }}>
         <Box
           sx={{
             width: 40,

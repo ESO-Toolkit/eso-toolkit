@@ -1,0 +1,627 @@
+SIMULATED PARSE TABLES
+
+I built a simulator that takes the current setup from the guide and plays it through the listed rotation. It uses the listed gear, skills, Champion Points, race, food, potions, target armor and target health. It tracks skill casts, light attacks, DoT ticks, cooldowns, execute scaling, crits and status effect rolls. It assumes 100% of light attacks hit and a 0.027 second weave average.
+
+Most comparison tables use deterministic rolls on a 15 million HP target unless the row says 6m, random, or real CMX. There is no 15 million Target Dummy in ESO. I use that health value because the 6 million dummy dies too fast, so random crits, status effects and execute timing can move the DPS by a lot.
+
+For comparison tables I keep the setup identical and change one thing at a time. That makes the tables better for comparing options than random dummy parses, where one run can get better crits, different status effects or a better execute window. For Crystal Fragments , deterministic sims treat the 33% proc as one proc every 3 skills.
+
+The baseline sim uses Whorl of the Depths instead of Sul-Xan's Torment because you can't parse with Sul-Xan on the dummy, and I wanted the simulator checked against a real parse. Sul-Xan comparison rows say whether the Soul buff is active.
+
+RUN	SIMULATED DPS	NOTES
+15m deterministic sim	
+68.2k DPS
+	Used for most comparison tables
+6m deterministic sim	
+68.1k DPS
+	Same setup on real dummy health
+Real 6m CMX parse	
+67.6k DPS
+	Recorded in game
+100 random 6m sims	
+P10 66.7k DPS
+P90 69.2k DPS
+	This is why random parses are unreliable when crits and status effects roll differently
+CLASS MASTERY
+
+Class Masteries are a new U50 system where each class picks 2 of 5 passive bonuses (Class Mastery Points, not Skill Points). Activating subclassing disables Class Mastery, so it's a tradeoff between keeping your native skill lines or subclassing.
+
+DEFAULT
+SORCERER CLASS MASTERY
+STATIC REVERBERATION
+
+The battlefield crackles with untapped potential. Make use of it.
+
+When you deal damage, you have a 5% chance to deal Shock Damage, up to once every 0.3 seconds.
+
+The chance increases by 1% for every 1% missing Health the target has. The chance is divided by 1 plus every permanent pet you have active.
+
+SHOCK DAMAGE
+COEFFICIENT	31.56% Weapon or Spell Damage
+STATUS CHANCE	10%
+TAGS	
+SHOCK
+SINGLE TARGET
+DIRECT
+NOTES
+
+Does a lot of damage in execute.
+
+SORCERER CLASS MASTERY
+CONSERVATION OF ENERGY
+
+Spellcasting is second nature to you. A skill honed by tireless study.
+
+Upgrades rank 2 of Blood Magic to work with all abilities with a cost, excluding cost per tick abilities, and restores Magicka and Stamina when it activates.
+
+MAGICKA
+COEFFICIENT	2% Max Magicka
+STAMINA
+COEFFICIENT	2% Max Stamina
+NOTES
+
+Gives you a lot of sustain and makes Blood Magic trigger every second.
+
+SITUATIONAL
+SORCERER CLASS MASTERY
+CALCULATED DEFENSE
+
+Success is a certainty when nothing is left to chance.
+
+While beginning to use a Sorcerer ability or an ability with a cast time, you gain a damage shield for 0.5 seconds that can absorb Damage Shield. This effect is based off your Max Health. If the shield does not break, you and nearby group members gain 6% Weapon and Spell Damage for 20 seconds.
+
+DAMAGE SHIELD
+COEFFICIENT	33% Max Health
+TAGS	
+DAMAGE SHIELD
+SINGLE TARGET
+DIRECT
+NOTES
+
+Replace Static Reverberation with Calculated Defense if you need more survivability.
+
+SORCERER CLASS MASTERY
+FONT OF POWER
+
+Within you is a wellspring of near unlimited power.
+
+Upgrades rank 2 of Exploitation to work with any Sorcerer ability and increases your Weapon and Spell Damage for 10 seconds. The Weapon and Spell Damage increases by 1% for every 1750 Max Magicka or Stamina you have, whichever is higher.
+
+NOTES
+
+Useful when using weapons different than Dual Wield, see Front Bar Weapons
+
+NOT WORTH IT
+SORCERER CLASS MASTERY
+SPHERE OF INFLUENCE
+
+Magicka extends your reach, a benefit to those who fight beside you.
+
+Casting a damage shield on yourself or an ally grants an additional shield that absorbs up to Damage Shield for 4 seconds and 225 Health, Magicka, and Stamina Recovery for 12 seconds.
+
+DAMAGE SHIELD
+COEFFICIENT	15% higher Max Health or Max Magicka
+CAP	25% of target's Max Health
+TAGS	
+DAMAGE SHIELD
+SINGLE TARGET
+DIRECT
+NOTES
+
+Not worth it for this setup.
+
+SKILL SETUPS
+BASE SETUP
+
+A base setup that will work for most situations and which should be your starting point when making situational setups
+
+FRONT BAR	BACK BAR
+Slot 1: Traveling Knife	
+Slot 1: Hurricane
+Morph of Lightning Form
+
+
+Slot 2: Liquid Lightning
+Morph of Lightning Splash
+	
+Slot 2: Critical Surge
+Morph of Surge
+
+
+Slot 3: Bound Armaments
+Morph of Bound Armor
+	
+Slot 3: Elemental Susceptibility
+Morph of Weakness to Elements
+
+
+Slot 4: Crystal Fragments
+Morph of Crystal Shard
+	
+Slot 4: Elemental Blockade
+Morph of Wall of Elements
+
+Slot 5: Ulfsild's Contingency	Slot 5: Barbed Trap
+
+Ultimate: Power Overload
+Morph of Overload
+	
+Ultimate: Summon Charged Atronach
+Morph of Summon Storm Atronach
+INFO
+Traveling Knife (Magic, Assassin's Misery, Berserk) - a spammable which increases chance to apply Status Effects on affected enemies by 100% for 10 seconds, and grants you Minor Berserk for 20 seconds, increasing your damage done by 5%.
+Liquid Lightning - a 15 second ground DoT which grants you the Conduit synergy which deals damage around you.
+Bound Armaments - passively gives you Major Savagery and Major Prophecy , increasing your Critical Chance by 12%. Your Light and Heavy Attacks build stacks, and at 4 stacks you can cast it to send 4 blades at your target. The tooltip doesn't say it, but these blades have an increased chance to proc Status Effects, and since this is basically 4 hits in one ability, it procs a lot of Sundered .
+Crystal Fragments - is an ability that has 33% chance to become empowered whenever you use an ability with a cost. Use it whenever it procs. This ability will proc the Exploitation passive, increasing your Critical Chance by 6%.
+Ulfsild's Contingency (Shock Damage, Lingering Torment, Resolve) - deals damage in an AoE, applies a 22 second DoT and grants you Minor Resolve , increasing your armor by 2974. It is delayed until the next ability with a cost.
+Power Overload - an ultimate we won't be using most of the time, but we'll keep slotted on frontbar for the passive 108 Weapon and Spell Damage from Expert Mage passive.
+Hurricane - your source of Major Resolve which is a crucial defensive buff, and it also deals decent damage.
+Critical Surge - your source of Major Brutality and Major Sorcery that will also heal you for 3300 whenever you deal critical damage, up to once every second. The heal itself can also be a critical heal
+Elemental Susceptibility - an extremely strong ability that does a multitude of things. It's completely free to cast so it'll help you sustain. It applies Major Breach , which reduces enemies' armor by 5948 which is a massive damage increase. It also applies Burning , Chilled and Concussed status effects at the beginning and then every 7.5 seconds. All of these Status Effects deal decent damage, but Concussed will also apply Minor Vulnerability for 4 seconds, increasing enemies' damage taken by 5%. Chilled will also apply Minor Maim for 4 seconds, reducing enemies' damage done by 5%
+Elemental Blockade - a 15 second ground DoT which constantly applies your Weapon Damage enchantment and deals more damage thanks to Crushing Wall .
+Barbed Trap - a DoT that applies Hemorrhaging and grants you Minor Force , increasing your Critical Damage by 10%.
+Summon Charged Atronach - the most powerful ultimate Sorcerer has access to. It will also keep proccing Concussion status effect which will keep up the Minor Vulnerability debuff, which increases enemies' damage taken by 5%
+SITUATIONAL
+ROTATION
+FINAL SETUPS
+
+A few examples of final setups you could end up with after applying the situational skills to the base setup
+
+TRASH
+TANKY
+
+A setup for trash packs
+
+FRONT BAR	BACK BAR
+Slot 1: Traveling Knife	
+Slot 1: Hurricane
+Morph of Lightning Form
+
+
+Slot 2: Liquid Lightning
+Morph of Lightning Splash
+	
+Slot 2: Critical Surge
+Morph of Surge
+
+
+Slot 3: Bound Armaments
+Morph of Bound Armor
+	
+Slot 3: Razor Caltrops
+Morph of Caltrops
+
+
+Slot 4: Silver Leash
+Morph of Silver Bolts
+	
+Slot 4: Elemental Blockade
+Morph of Wall of Elements
+
+Slot 5: Ulfsild's Contingency	Slot 5: Channeled Acceleration
+
+Ultimate: Power Overload
+Morph of Overload
+	
+Ultimate: Summon Charged Atronach
+Morph of Summon Storm Atronach
+WHAT CHANGES
+
+Changes compared to the Base Setup
+
+Razor Caltrops replaces Elemental Susceptibility
+Silver Leash replaces Crystal Fragments
+Channeled Acceleration replaces Barbed Trap
+SKILL SETUP COMPARISON
+SETUP	SIMULATED PARSE	DAMAGE CHANGE
+Regular	
+68.2k DPS
+	Baseline
+Tanky	
+63.1k DPS
+	-7.5%
+PASSIVES
+
+Some trees are only needed when using situational skills, for example Psijic Order provides nothing without Precognition
+
+CLASS
+
+DARK MAGIC
+DAEDRIC SUMMONING
+STORM CALLING
+
+WEAPON
+
+DUAL WIELD
+DESTRUCTION STAFF
+
+ARMOR
+
+LIGHT ARMOR
+MEDIUM ARMOR
+HEAVY ARMOR
+
+GUILD
+
+FIGHTERS GUILD
+MAGES GUILD
+UNDAUNTED
+PSIJIC ORDER
+
+ALLIANCE WAR
+
+SUPPORT
+
+RACIAL
+
+YOUR RACE
+
+CRAFT
+
+ALCHEMY
+
+WEAPON - DUAL WIELD
+
+ Slaughter - High Priority
+
+ Dual Wield Expert - High Priority
+
+ Controlled Fury - High Priority
+
+ Ruffian - Medium Priority
+
+ Twin Blade and Blunt - High Priority
+
+GEAR
+
+Overland (Base) is your starting point and works for most situations. Crafted is a beginner version using only craftable sets. Instanced is a swap for Arenas and Dungeons where enemies have higher armor.
+
+Switching gear for trash packs isn't worth it unless you're using gear-swap addons
+
+OVERLAND (BASE)
+CRAFTED
+INSTANCED
+GEAR SLOT	SET	WEIGHT/TYPE	TRAIT	ENCHANTMENT
+Head	Slimecraw	Medium	Divines	Magicka
+Shoulders	Beacon of Oblivion	Light	Divines	Magicka
+Chest	Sul-Xan's Torment	Medium	Divines	Magicka
+Hands	Beacon of Oblivion	Light	Divines	Magicka
+Belt	Beacon of Oblivion	Light	Divines	Magicka
+Legs	Beacon of Oblivion	Medium	Divines	Magicka
+Boots	Beacon of Oblivion	Light	Divines	Magicka
+Necklace	Sul-Xan's Torment	Jewelry	Bloodthirsty	Increase Magical Harm
+Ring	Sul-Xan's Torment	Jewelry	Bloodthirsty	Increase Magical Harm
+Ring	Ring of the Pale Order	Jewelry	Bloodthirsty	Increase Magical Harm
+Frontbar Main Hand	Sul-Xan's Torment	Dagger	Charged	Poison
+Frontbar Off Hand	Sul-Xan's Torment	Dagger	Charged	Flame
+Backbar Main Hand	Crushing Wall	Lightning Staff	Infused	Weapon Damage
+
+FALLBACK GEAR
+
+LOOK HERE
+You dont need the Trial gear. Crafted Tide-Born Wildstalker is only about a 7.9% damage loss against Overland enemies compared to Sul-Xan's Torment .
+Body
+BEACON OF OBLIVION - CLASS SET (INFINITE ARCHIVE)
+
+IF YOU DON'T HAVE IT, USE IN ORDER
+
+Tide-Born Wildstalker - Crafted
+Whorl of the Depths - Trial Set (Dreadsail Reef)
+Monolith of Storms - Class Set (Infinite Archive)
+Order's Wrath - Crafted
+Weapons and Jewelry
+SUL-XAN'S TORMENT - TRIAL SET (ROCKGROVE)
+
+IF YOU DON'T HAVE IT, USE IN ORDER
+
+Slivers of the Null Arca - Trial Set (Lucent Citadel)
+Whorl of the Depths - Trial Set (Dreadsail Reef)
+Monolith of Storms - Class Set (Infinite Archive)
+Tide-Born Wildstalker - Crafted
+Order's Wrath - Crafted
+Monster Helm
+SLIMECRAW - MONSTER SET (WAYREST SEWERS I)
+
+ALTERNATIVE (SAME BONUS)
+
+Iceheart - Direfrost Keep
+Zaan - Scalecaller Peak
+Grundwulf - Moongrave Fane
+Stone Husk - Stone Garden
+The Blind - Bedlam Veil
+Thousand Eyes - Night Market
+
+Use the Penetration Calculator to fine-tune your penetration for different content. Overland enemies have 9,100 armor while Instanced enemies (Arenas and Dungeons) have 18,200.
+
+GEAR SET COMPARISONS
+
+Damage comparison for the set options.
+
+INSTANCED 18.2K
+OVERLAND 9.1K
+
+INSTANCED ENEMY - 18,200 ARMOR
+
+All of these use 6 Light / 1 Medium and Valkyn Skoria .
+
+BODY
+Beacon of Oblivion
+WEAPONS + JEWELRY
+Sul-Xan's Torment
+
+WEAPONS + JEWELRY
+
+Compares Beacon of Oblivion + X weapons and jewelry set.
+
+SOURCE
+All
+Trial
+Crafted
+Dungeon
+Archive
+Overland
+PvP
+SET	SOURCE	SIMULATED PARSE	DAMAGE CHANGE
+Ansuul's Torment	Trial - Sanity's Edge	
+INTERRUPT 74.1k DPS
+NO INTERRUPT 67.8k DPS
+	
++3.9%
+-4.9%
+
+Sul-Xan's Torment	Trial - Rockgrove	
+SOUL 71.3k DPS
+NO SOUL 64.3k DPS
+	
+Baseline
+-9.8%
+
+Slivers of the Null Arca	Trial - Lucent Citadel	
+68.5k DPS
+	-3.9%
+Whorl of the Depths	Trial - Dreadsail Reef	
+68.2k DPS
+	-4.3%
+Tide-Born Wildstalker	Crafted	
+67.0k DPS
+	-6.0%
+Jerensi's Bladestorm	Dungeon - Exiled Redoubt	
+66.3k DPS
+	-7.0%
+Monolith of Storms	Class Set - Infinite Archive	
+66.2k DPS
+	-7.2%
+Aegis Caller	Dungeon - Unhallowed Grave	
+65.9k DPS
+	-7.6%
+Tzogvin's Warband	Dungeon - Frostvault	
+65.7k DPS
+	-7.9%
+Highland Sentinel	Crafted	
+65.6k DPS
+	-8.0%
+20 RESULTS
+1
+2
+FRONT BAR WEAPONS
+
+Daggers are the default weapon. Lightning Staff is the best ranged weapon when mechanics make melee annoying.
+
+FRONT BAR WEAPON	ADDITIONAL CHANGES	SIMULATED PARSE	DAMAGE CHANGE
+Dual Wield Daggers	none	
+68.2k DPS
+	Baseline
+Lightning Staff	Traveling Knife -> Wield Soul	
+67.4k DPS
+	-1.2%
+Inferno Staff	Traveling Knife -> Wield Soul	
+66.1k DPS
+	-3.1%
+Bow	Traveling Knife -> Wield Soul	
+66.2k DPS
+	-2.9%
+Greatsword	Traveling Knife -> Wield Soul	
+65.9k DPS
+	-3.4%
+Ice Staff	Traveling Knife -> Wield Soul	
+64.5k DPS
+	-5.5%
+Restoration Staff	Traveling Knife -> Wield Soul	
+62.5k DPS
+	-8.4%
+Sword and Shield	Traveling Knife -> Wield Soul	
+63.6k DPS
+	-6.7%
+
+Traits and enchants: Daggers use Charged Poison and Charged Flame . Every one-weapon option uses a Charged Poison weapon and keeps the same backbar Lightning Staff. Sword and Shield uses a Charged Poison sword plus a Divines Magicka shield.
+
+Rows using Wield Soul also use Orzorga's Smoked Bear Haunch and Font of Power instead of Artaeum Pickled Fish Bowl and Conservation of Energy . Wield Soul gives Major Intellect and Major Endurance , which allows you to sustain Font of Power .
+
+SITUATIONAL SWAPS
+
+Alternative setups for different goals and content types
+
+Shattered Path's Signet replaces Ring of the Pale Order if you want more damage, but you lose self-healing and it also drains Ultimate. Do not spend Ultimate.
+Use Ansuul's Torment in fights where you can interrupt something at least once every 30 seconds.
+Replace Sul-Xan's Torment in fights with no adds. Whorl of the Depths is the strongest fallback. Use Tide-Born Wildstalker if you don't have it.
+ADDITIONAL TIPS
+You can change some or all of the Magicka enchants to Health ones for extremely hard hitting bosses.
+CHAMPION POINTS
+WARFARE
+Master-at-Arms
+6% Direct Damage
+Because more than 60% of your damage is Direct
+Deadly Aim
+6% Single Target Damage
+Because more than 60% of your damage is Single Target
+Fighting Finesse
+8% Critical Damage and Healing
+Next strongest CP damage-wise
+Wrathful Strikes
+205 Weapon and Spell Damage
+Next strongest CP damage-wise
+More Mitigation
+Replace Wrathful Strikes + Fighting Finesse with 2 mitigation CPs: Ironclad , Duelist's Rebuff , Enduring Resolve , or Unassailable (depending on the type of damage the Boss deals to you)
+More Healing
+Reaving Blows is a decent option if you need more HPS
+FITNESS
+Boundless Vitality
+1400 Max Health
+Survivability
+Siphoning Spells
+1500 Magicka on kills
+Sustain
+Rejuvenation
+90 Health, Magicka and Stamina Recovery
+Sustain
+Fortified
+1731 Armor
+Survivability
+Block Mitigation
+Use Bracing Anchor in fights where you need to block a lot and can afford to be slower
+Movement Speed
+Use Celerity in fights where you have to move a lot
+Sustain in fights with lots of adds
+Use Bloody Renewal if you need more Stamina in fights with lots of adds
+ CRAFT
+Steed's Blessing
+20% Movement Speed out of combat
+Extremely useful utility
+Quality of Life
+Green Champion Points don't affect Combat, choose whatever Quality of Life you prefer
+RACE
+
+For solo you need both damage and survivability, so every race brings something to the table. I use Nord because in difficult solo content the armor racial is worth the DPS trade-off.
+
+NORD
+The tankiest race. Nord is also what I use for soloing Veteran DLC Dungeons. Rugged provides around 5-7% damage mitigation, depending on your current armor, without sacrificing much damage.
+Rugged
+2600 armor
+Stalwart
+1500 Max Stamina, 0.5 Ultimate per second
+Resist Frost
+1000 Max Health, 4620 Frost Resistance
+RACE	SIMULATED PARSE	DAMAGE CHANGE
+Khajiit	
+72.2k DPS
+	+5.8%
+Dark Elf	
+71.4k DPS
+	+4.6%
+High Elf	
+71.4k DPS
+	+4.6%
+Orc	
+70.5k DPS
+	+3.3%
+Wood Elf	
+69.4k DPS
+	+1.7%
+Breton	
+69.3k DPS
+	+1.6%
+Argonian	
+68.8k DPS
+	+0.9%
+Imperial	
+68.2k DPS
+	+0.0%
+Nord	
+68.2k DPS
+	Baseline
+Redguard	
+68.2k DPS
+	+0.0%
+MUNDUS
+DEFAULT
+THE THIEF
+5.53% Critical Chance (9.04% with 7 Divines)
+WHEN TO USE
+Use it as the default. It increases your Critical Chance.
+DIFFICULT CONTENT
+THE LADY
+2744 Armor (4489 with 7 Divines)
+WHEN TO USE
+Consider switching for extremely difficult dungeons. It increases your Armor.
+MUNDUS	SIMULATED PARSE	DAMAGE CHANGE
+The Thief	
+68.2k DPS
+	Baseline
+The Lady	
+65.2k DPS
+	-4.5%
+ATTRIBUTES
+
+For most content you should put all 64 points into Magicka. For difficult content you should devote as many attribute points as necessary to Health. For some content you'll be able to get away with 32 Health 32 Magicka, and for the extremely difficult stuff you'll need 64 Health.
+
+DEFAULT
+SEMI-DIFFICULT
+DIFFICULT
+HEALTH
+0
+MAGICKA
+64
+STAMINA
+0
+All points into Magicka. Use it for most content.
+ATTRIBUTES	SIMULATED PARSE	DAMAGE CHANGE
+64 Magicka	
+68.2k DPS
+	Baseline
+32 Health / 32 Magicka	
+66.3k DPS
+	-2.8%
+64 Health	
+64.2k DPS
+	-5.9%
+
+The damage loss from changing attributes is small enough that you should move points into Health whenever you need it.
+
+FOOD
+DEFAULT
+Artaeum Pickled Fish Bowl
+Max Health
+Max Magicka
+The sustain from Conservation of Energy allows us to use Bi-Stat Food as the default.
+SUSTAIN
+Orzorga's Smoked Bear Haunch
+Max Health
+Stamina Recovery
+Magicka Recovery
+Use this if you need more sustain. It trades Max Magicka for Stamina and Magicka Recovery. Jewels of Misrule is a cheaper alternative.
+POTIONS
+DEFAULT
+Armor Potion
+Restore Health
++5280 Armor
+
+The default option. Gives you 5,280 Armor, which is a lot of damage mitigation.
+
+CRAFT WITH:
+Bugloss
+Mountain Flower
+Mudcrab Chitin
+SUSTAIN
+Tri-Stat Potion
+Restore Health
+Restore Stamina
+Restore Magicka
+
+Use this if you need more sustain. It restores Stamina and Magicka on use, and also grants you Major Endurance and Major Intellect.
+
+CRAFT WITH:
+Columbine
+Bugloss
+Mountain Flower
+SUSTAIN
+Heroism Potion
+Minor Heroism
+Restore Stamina
+Restore Magicka
+
+Use this if you need more sustain. Basically a Tri-Stat Potion , but with the useless Restore Health changed to Minor Heroism . It's straight up an upgrade over Tri-Stat Potion , but expensive to craft.
+
+CRAFT WITH:
+Dragon Rheum
+Dragon's Blood
+Columbine

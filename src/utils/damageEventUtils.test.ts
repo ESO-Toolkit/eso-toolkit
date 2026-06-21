@@ -5,6 +5,7 @@
 
 import {
   getChargedReportActors,
+  getPetOwnerMap,
   getDamageEventsByPlayer,
   CHARGED_ATRONACH_GAME_ID,
 } from './damageEventUtils';
@@ -162,6 +163,45 @@ describe('damageEventUtils', () => {
           124: 456,
         });
       });
+    });
+  });
+
+  describe('getPetOwnerMap', () => {
+    it('should map every pet actor to its owner regardless of gameID', () => {
+      const actorsById = {
+        // Charged Atronach
+        123: createMockActor(123, CHARGED_ATRONACH_GAME_ID, 'Pet', 456),
+        // Some other pet/summon (Warden bear, NB shade, etc.) with a different gameID
+        124: createMockActor(124, 67890, 'Pet', 456),
+        125: createMockActor(125, 11111, 'Pet', 789),
+        // Players are ignored
+        456: createMockActor(456, 12345, 'Player'),
+        789: createMockActor(789, 12346, 'Player'),
+      };
+
+      const result = getPetOwnerMap(actorsById);
+
+      expect(result).toEqual({
+        123: 456,
+        124: 456,
+        125: 789,
+      });
+    });
+
+    it('should ignore non-Pet actors and pets without a valid owner', () => {
+      const actorsById = {
+        123: createMockActor(123, 67890, 'Player', 456), // not a Pet
+        124: createMockActor(124, 67890, 'Pet'), // no petOwner
+        125: createMockActor(125, 67890, 'Pet', 0), // zero owner is valid
+      };
+
+      const result = getPetOwnerMap(actorsById);
+
+      expect(result).toEqual({ 125: 0 });
+    });
+
+    it('should handle an empty actors record', () => {
+      expect(getPetOwnerMap({})).toEqual({});
     });
   });
 

@@ -91,6 +91,9 @@ export function extractSignals(
   // --- Pass 3: Healing output ---
   const groupTotalHealing = extractHealingSignals(events.healEvents, playerSignals, context);
 
+  // --- Pass 3b: Damage shields applied to allies ---
+  extractShieldSignals(events.healEvents, playerSignals, context);
+
   // --- Pass 4: Damage taken ---
   const groupTotalDamageTaken = extractDamageTakenSignals(
     events.damageEvents,
@@ -305,6 +308,85 @@ function extractHealingSignals(
   }
 
   return groupTotal;
+}
+
+// ============================================================
+// Damage Shield Signals
+// ============================================================
+
+/**
+ * Estimate how much damage-shield (absorb) value each player granted to OTHER
+ * allies. This drives the Shield Healer classification.
+ *
+ * ESO Logs does not emit a dedicated "shield applied" event, and the set of
+ * damage-shield ability IDs is large, version-volatile, and mostly self-only,
+ * so matching on a hardcoded ability-ID list is unreliable. Instead we use the
+ * one signal that is actually present in the event stream and is correctly
+ * source-attributed: heal events carry the recipient's current absorb pool in
+ * `targetResources.absorb`. When a player casts a shield on an ally, that ally's
+ * absorb pool rises on the same heal event, and the event names the caster as
+ * `sourceID`. We therefore credit the source with any increase in the target's
+ * absorb pool observed on a heal event the source produced on another ally.
+ *
+ * Only increases are counted (absorb naturally decays as it soaks damage, which
+ * is not a shield application), and self-heals are ignored so a player shielding
+ * only themselves is not mistaken for a group shield healer.
+ *
+ * Known limitation: the baseline is built from heal events only, so absorb
+ * consumed by incoming damage (which appears on damage events, not heals) is not
+ * observed. A reapplication that merely restores a partially-soaked pool to a
+ * value at or below the last heal-observed peak is therefore under-counted. This
+ * does not affect classification: `shieldAppliedToOthers` is consumed only as a
+ * `> 0` gate, and an actual group shield healer crosses it on the first in-fight
+ * application (the per-target baseline starts at 0). Threading damage-event
+ * absorb readings in would refine the magnitude but not the boolean outcome.
+ */
+function extractShieldSignals(
+  healEvents: HealEvent[],
+  playerSignals: Map<number, PlayerRoleSignals>,
+  context: FightContext,
+): void {
+  // Process in timestamp order so the per-target "previous absorb" baseline is
+  // chronologically correct even if the caller passes unsorted events.
+  const sorted = [...healEvents]
+    .filter((e) => e.fight === context.fightId)
+    .sort((a, b) => a.timestamp - b.timestamp);
+
+  // Most-recent observed absorb pool per target (across ALL heal events to that
+  // target, regardless of source) so we measure true increases.
+  const lastAbsorbByTarget = new Map<number, number>();
+
+  // The signal is "shields granted to other PLAYERS", so only credit absorb
+  // applied to friendly players — not to pets, summons, or friendly NPCs (whose
+  // absorb pools would otherwise inflate a healer's score, and the classifier
+  // only checks `> 0`).
+  const friendlyPlayers = new Set(context.friendlyPlayerIds);
+
+  for (const event of sorted) {
+    // Heal events that don't report an absorb reading carry no information about
+    // the target's shield pool, so skip them entirely — treating a missing value
+    // as 0 would reset the baseline and make the next resource-bearing heal look
+    // like a brand-new shield (a false credit). Only events that actually report
+    // absorb (including an explicit 0) update the baseline.
+    const rawAbsorb = event.targetResources?.absorb;
+    if (rawAbsorb == null) continue;
+    const currentAbsorb = rawAbsorb;
+    const previousAbsorb = lastAbsorbByTarget.get(event.targetID) ?? 0;
+    lastAbsorbByTarget.set(event.targetID, currentAbsorb);
+
+    // Only friendly source applying to a DIFFERENT ally counts as a group shield.
+    if (!event.sourceIsFriendly) continue;
+    if (event.sourceID === event.targetID) continue;
+    if (!friendlyPlayers.has(event.targetID)) continue;
+
+    const signals = playerSignals.get(event.sourceID);
+    if (!signals) continue;
+
+    const increase = currentAbsorb - previousAbsorb;
+    if (increase > 0) {
+      signals.shieldAppliedToOthers += increase;
+    }
+  }
 }
 
 // ============================================================

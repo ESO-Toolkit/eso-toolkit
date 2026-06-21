@@ -109,8 +109,9 @@ export interface PlayerRoleSignals {
 
   // --- Absorb/shield signals ---
   /**
-   * Total shield (absorb) value this player granted to OTHER players,
-   * estimated from heal events where the target's absorb increased.
+   * Total damage-shield (absorb) value this player granted to OTHER players.
+   * Estimated from heal events to allies where the recipient's
+   * `targetResources.absorb` pool increased; self-shields are excluded.
    */
   shieldAppliedToOthers: number;
 

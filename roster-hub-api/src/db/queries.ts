@@ -1037,9 +1037,9 @@ export async function getUserProfile(
   db: D1Database,
   username: string,
 ): Promise<UserProfileResponse | null> {
-  // Run all 5 reads in a single parallel batch — counts included upfront to
+  // Run all 6 reads in a single parallel batch — counts included upfront to
   // avoid a second round-trip to D1.
-  const [profileRow, buildsResult, rostersResult, buildCountRow, rosterCountRow] =
+  const [profileRow, buildsResult, rostersResult, buildCountRow, rosterCountRow, identityRow] =
     await Promise.all([
       db
         .prepare('SELECT * FROM user_profiles WHERE author_name = ? COLLATE NOCASE')
@@ -1087,10 +1087,31 @@ export async function getUserProfile(
         )
         .bind(username)
         .first<{ cnt: number }>(),
+
+      // Identity anchor — resolves the user's ESO Logs id + canonical name from
+      // ANY of their non-anonymous builds, regardless of visibility. Private and
+      // Link-Only builds are intentionally excluded from the displayed `builds`
+      // list and `build_count` above (public-only), but they still identify a
+      // real account, so we use this to keep the profile from 404ing and to
+      // surface the owner's public ESO Logs. Without it, a user whose only
+      // content is private builds resolves to a 404 ("Player not found").
+      db
+        .prepare(
+          `SELECT author_id, author_name FROM builds
+           WHERE author_name = ? COLLATE NOCASE AND is_anonymous = 0
+           ORDER BY created_at DESC
+           LIMIT 1`,
+        )
+        .bind(username)
+        .first<{ author_id: string; author_name: string }>(),
     ]);
 
-  // Unknown user — no bio row and no public content
-  if (!profileRow && buildsResult.results.length === 0 && rostersResult.results.length === 0) {
+  // Unknown user — no bio/avatar row, no public content, and no non-anonymous
+  // build we can attribute to them. `identityRow` is a superset of the public
+  // `buildsResult` (it ignores visibility), so a non-empty public builds list
+  // implies identityRow is set; the explicit check below covers private-only
+  // users whose builds were filtered out of buildsResult.
+  if (!profileRow && !identityRow && rostersResult.results.length === 0) {
     return null;
   }
 
@@ -1099,15 +1120,18 @@ export async function getUserProfile(
     buildsResult.results[0]?.author_name ??
     rostersResult.results[0]?.author_name ??
     profileRow?.author_name ??
+    identityRow?.author_name ??
     username;
 
   // The ESO Logs user ID is the author_id (auth.ts derives it from the ESO Logs
-  // currentUser.id). Prefer the profile row, then any content row, so uploaded
-  // logs resolve even when a profile has content but no profile row yet.
+  // currentUser.id). Prefer the profile row, then any content row — including a
+  // private/link-only build via identityRow — so uploaded logs resolve even when
+  // the user has no profile row and no public builds or rosters.
   const esoLogsUserId =
     profileRow?.author_id ??
     buildsResult.results[0]?.author_id ??
     rostersResult.results[0]?.author_id ??
+    identityRow?.author_id ??
     null;
 
   return {

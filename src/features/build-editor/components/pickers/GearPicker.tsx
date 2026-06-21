@@ -40,16 +40,23 @@ import {
 import { useTheme } from '@mui/material/styles';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import type { CanonicalKeyFn, ItemInfo, SlotType } from '@features/loadout-manager/data/itemIdMap';
+import type {
+  CanonicalKeyFn,
+  ItemInfo,
+  SlotSetSummary,
+  SlotType,
+} from '@features/loadout-manager/data/itemIdMap';
 import {
   getAvailableSetsForSlot,
   getCanonicalItemsBySlot,
   getItemInfo,
+  getItemsBySlot,
   validateItemForSlot,
 } from '@features/loadout-manager/data/itemIdMap';
 import {
   deriveItemNameForSlot,
   isIconDataReady,
+  isTwoHandedWeapon,
   isWeaponTypeResolved,
   preloadIconData,
 } from '@features/loadout-manager/utils/itemIconResolver';
@@ -91,6 +98,78 @@ const APPAREL_SLOTS_SET = new Set<SlotType>([
 // generic name — see getCanonicalItemsBySlot. For these, the canonical key must
 // fold in the per-item weapon type so each type survives as its own pickable row.
 const WEAPON_SLOTS_SET = new Set<SlotType>(['weapon', 'offhand']);
+
+type SlotItem = { itemId: number; info: ItemInfo };
+
+let offhandCompatibleItemsCache: SlotItem[] | null = null;
+
+function isOffhandCompatibleItem(itemId: number, info: ItemInfo): boolean {
+  if (info.slot === 'offhand') return true;
+  if (info.slot !== 'weapon') return false;
+  return !isTwoHandedWeapon(itemId);
+}
+
+function isItemCompatibleWithTargetSlot(itemId: number, targetSlot: SlotType): boolean {
+  if (targetSlot !== 'offhand') return validateItemForSlot(itemId, targetSlot).valid;
+  const info = getItemInfo(itemId);
+  return Boolean(info && isOffhandCompatibleItem(itemId, info));
+}
+
+function getOffhandCompatibleItems(): SlotItem[] {
+  const iconReady = isIconDataReady();
+  if (iconReady && offhandCompatibleItemsCache) return offhandCompatibleItemsCache;
+  const items: SlotItem[] = [];
+  const seen = new Set<number>();
+  for (const slot of ['offhand', 'weapon'] as const) {
+    for (const item of getItemsBySlot(slot)) {
+      if (seen.has(item.itemId)) continue;
+      if (!isOffhandCompatibleItem(item.itemId, item.info)) continue;
+      seen.add(item.itemId);
+      items.push(item);
+    }
+  }
+  if (iconReady) offhandCompatibleItemsCache = items;
+  return items;
+}
+
+function getItemsForTargetSlot(targetSlot: SlotType): SlotItem[] {
+  if (targetSlot !== 'offhand') return getItemsBySlot(targetSlot);
+  return getOffhandCompatibleItems();
+}
+
+function getCanonicalItemsForTargetSlot(
+  targetSlot: SlotType,
+  keyFn: CanonicalKeyFn = (_itemId, info) => info.setName,
+): SlotItem[] {
+  if (targetSlot !== 'offhand') return getCanonicalItemsBySlot(targetSlot, keyFn);
+
+  const byKey = new Map<string, SlotItem>();
+  for (const entry of getItemsForTargetSlot(targetSlot)) {
+    const key = keyFn(entry.itemId, entry.info);
+    const existing = byKey.get(key);
+    if (!existing || entry.itemId < existing.itemId) {
+      byKey.set(key, entry);
+    }
+  }
+
+  return Array.from(byKey.values()).sort(
+    (a, b) =>
+      a.info.setName.localeCompare(b.info.setName) || a.info.name.localeCompare(b.info.name),
+  );
+}
+
+function getAvailableSetsForTargetSlot(targetSlot: SlotType): SlotSetSummary[] {
+  if (targetSlot !== 'offhand') return getAvailableSetsForSlot(targetSlot);
+
+  const counts = new Map<string, number>();
+  getItemsForTargetSlot(targetSlot).forEach(({ info }) => {
+    counts.set(info.setName, (counts.get(info.setName) ?? 0) + 1);
+  });
+
+  return Array.from(counts.entries())
+    .map(([setName, itemCount]) => ({ setName, itemCount }))
+    .sort((a, b) => a.setName.localeCompare(b.setName));
+}
 
 /**
  * Canonical dedup key for the gear picker. Weapons key by their slot-aware
@@ -207,12 +286,12 @@ function getSetGroupsForSlot(targetSlot: SlotType): SetGroupResult {
 }
 
 function buildSetGroups(targetSlot: SlotType): SetGroupResult {
-  const setSummaries = getAvailableSetsForSlot(targetSlot);
+  const setSummaries = getAvailableSetsForTargetSlot(targetSlot);
   // Canonical items for this slot. Apparel/jewelry collapse to one row per set
   // (the ~24 level/quality/trait variants are pure noise); weapons keep one row
   // per weapon TYPE so a set's bow / staff / greatsword stay individually
-  // selectable. See makeCanonicalKey / getCanonicalItemsBySlot.
-  const allItems = getCanonicalItemsBySlot(targetSlot, makeCanonicalKey(targetSlot));
+  // selectable. See makeCanonicalKey / getCanonicalItemsForTargetSlot.
+  const allItems = getCanonicalItemsForTargetSlot(targetSlot, makeCanonicalKey(targetSlot));
 
   // Build item lookup by set name
   const itemsBySet = new Map<string, { itemId: number; info: ItemInfo }[]>();
@@ -697,7 +776,7 @@ export const GearPickerDialog: React.FC<GearPickerDialogProps> = ({
   // scans ~5k items resolving each one's type, so memoize it away from `search`.
   // `iconReady` is a dep for the same reason as the browse groups above.
   const canonicalItems = useMemo(
-    () => getCanonicalItemsBySlot(targetSlot, makeCanonicalKey(targetSlot)),
+    () => getCanonicalItemsForTargetSlot(targetSlot, makeCanonicalKey(targetSlot)),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [targetSlot, iconReady],
   );
@@ -735,8 +814,7 @@ export const GearPickerDialog: React.FC<GearPickerDialogProps> = ({
 
   const handleSelect = useCallback(
     (itemId: number) => {
-      const validation = validateItemForSlot(itemId, targetSlot);
-      if (!validation.valid) return;
+      if (!isItemCompatibleWithTargetSlot(itemId, targetSlot)) return;
       onSelect(itemId);
       onClose();
     },

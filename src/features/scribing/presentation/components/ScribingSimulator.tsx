@@ -76,9 +76,18 @@ export const ScribingSimulator: React.FC<ScribingSimulatorProps> = ({
     if (selectedAffixScript) params.set('affix', selectedAffixScript);
 
     const shareUrl = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
-    navigator.clipboard.writeText(shareUrl);
-
-    logger.info('Configuration URL copied to clipboard', { shareUrl });
+    // writeText returns a promise that rejects on permission/clipboard errors;
+    // handle it so it isn't an unhandled rejection.
+    void navigator.clipboard
+      .writeText(shareUrl)
+      .then(() => {
+        logger.info('Configuration URL copied to clipboard', { shareUrl });
+      })
+      .catch((err: unknown) => {
+        logger.warn('Failed to copy configuration URL to clipboard', {
+          error: err instanceof Error ? err.message : String(err),
+        });
+      });
   };
 
   if (isLoading) {

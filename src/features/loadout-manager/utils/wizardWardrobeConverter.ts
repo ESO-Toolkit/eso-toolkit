@@ -260,6 +260,7 @@ function normalizeCondition(condition: any): LoadoutSetup['condition'] {
   // Handle both boss and trash conditions
   if (condition.trash !== undefined) {
     return {
+      ...(condition.boss ? { boss: condition.boss } : {}),
       trash: Number(condition.trash),
     };
   }

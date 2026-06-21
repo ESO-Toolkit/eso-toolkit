@@ -10,7 +10,14 @@ import { useDispatch, useSelector } from 'react-redux';
 
 import type { ArmorWeight, GearConfig } from '../../../loadout-manager/types/loadout.types';
 import { selectActiveSetup } from '../../store/buildEditorSelectors';
-import { setGear, setGearEnchant, setGearTrait, setGearWeight } from '../../store/buildEditorSlice';
+import {
+  bulkSetGear,
+  setGear,
+  setGearEnchant,
+  setGearTrait,
+  setGearWeight,
+} from '../../store/buildEditorSlice';
+import type { BulkGearPatch } from '../pickers/BulkGearToolbar';
 import { EquipmentPicker } from '../pickers/EquipmentPicker';
 
 const EquipmentSectionComponent: React.FC = () => {
@@ -45,6 +52,13 @@ const EquipmentSectionComponent: React.FC = () => {
     [dispatch],
   );
 
+  const handleBulkApply = useCallback(
+    (slots: number[], patch: BulkGearPatch) => {
+      dispatch(bulkSetGear({ slots, ...patch }));
+    },
+    [dispatch],
+  );
+
   if (!setup) return null;
 
   return (
@@ -54,6 +68,7 @@ const EquipmentSectionComponent: React.FC = () => {
       onWeightChange={handleWeightChange}
       onTraitChange={handleTraitChange}
       onEnchantChange={handleEnchantChange}
+      onBulkApply={handleBulkApply}
     />
   );
 };

@@ -633,6 +633,65 @@ describe('workerTaskSliceFactory', () => {
         expect(state.workerResults[mockTaskName].error).toBeNull();
         expect(state.workerResults[mockTaskName].isLoading).toBe(false);
       });
+
+      it('should not start the worker when the signal is already aborted before scheduling', async () => {
+        // Early-abort guard: if the request's signal is already aborted by the
+        // time the payload creator reaches the guard, the worker is never
+        // scheduled. We force this by aborting the in-flight request from inside
+        // `createInputHash`, which the creator calls synchronously right before
+        // the guard (the second call overall — the first is the thunk
+        // `condition`).
+        let hashCalls = 0;
+        let abortControllerRef: AbortController | null = null;
+        const abortingHash = (input: SharedWorkerInputType<typeof mockTaskName>): string => {
+          hashCalls += 1;
+          // Second call is inside the payload creator, immediately before the guard.
+          if (hashCalls === 2) {
+            abortControllerRef?.abort();
+          }
+          return JSON.stringify(input);
+        };
+
+        // Capture the AbortController RTK installs for this dispatch by wrapping
+        // the global so the creator's `signal` reflects our abort synchronously.
+        const RealAbortController = global.AbortController;
+        global.AbortController = class extends RealAbortController {
+          constructor() {
+            super();
+            abortControllerRef = this;
+          }
+        } as typeof AbortController;
+
+        const abortSlice = createWorkerTaskSlice(mockTaskName, abortingHash);
+        const abortStore = configureStore({
+          reducer: {
+            workerResults: combineReducers({
+              [mockTaskName]: abortSlice.reducer,
+            }),
+          },
+        });
+
+        try {
+          const promise = abortStore.dispatch(abortSlice.executeTask(mockInput));
+          await promise.catch(() => {});
+        } finally {
+          global.AbortController = RealAbortController;
+        }
+
+        // Worker must never have been scheduled for already-cancelled work.
+        expect(mockWorkerManager.executeTask).not.toHaveBeenCalled();
+
+        const state = abortStore.getState() as {
+          workerResults: {
+            [mockTaskName]: WorkerTaskState<SharedWorkerResultType<typeof mockTaskName>>;
+          };
+        };
+
+        // Aborted task: no error, not loading, no result.
+        expect(state.workerResults[mockTaskName].error).toBeNull();
+        expect(state.workerResults[mockTaskName].isLoading).toBe(false);
+        expect(state.workerResults[mockTaskName].result).toBeNull();
+      });
     });
   });
 });

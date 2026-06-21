@@ -816,6 +816,15 @@ export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
               },
             },
           },
+          // iOS Safari auto-zooms the page when a focused form control has a
+          // font-size below 16px. Enforce a 16px floor on all form fields at
+          // mobile widths so tapping any input never triggers a zoom. Uses
+          // !important to win over per-component sx font sizing.
+          '@media (max-width: 600px)': {
+            'input, textarea, select, .MuiInputBase-input': {
+              fontSize: '16px !important',
+            },
+          },
         }}
       />
       <GlobalStyles

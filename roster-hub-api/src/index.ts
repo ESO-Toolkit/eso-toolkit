@@ -93,7 +93,7 @@ function tryDeleteImgBBImage(deleteUrl: string | null): void {
 /** Verify that an encoded payload is valid base64url (no special chars that break URLs). */
 const isValidBase64Url = (s: string): boolean => /^[A-Za-z0-9_-]*=*$/.test(s);
 
-import { escapeHtml, sanitize } from './sanitize';
+import { cleanText, sanitize } from './sanitize';
 
 /** Validate and sanitize an addon entry. Returns null if invalid. */
 const sanitizeAddonEntry = (a: unknown): RecommendedAddonEntry | null => {
@@ -104,9 +104,9 @@ const sanitizeAddonEntry = (a: unknown): RecommendedAddonEntry | null => {
   if (typeof entry.name !== 'string' || !entry.name.trim() || entry.name.length > 200) return null;
   return {
     esouiId: entry.esouiId,
-    name: sanitize(entry.name),
+    name: cleanText(entry.name),
     required: typeof entry.required === 'boolean' ? entry.required : undefined,
-    note: typeof entry.note === 'string' ? sanitize(entry.note.slice(0, 500)) : undefined,
+    note: typeof entry.note === 'string' ? cleanText(entry.note.slice(0, 500)) : undefined,
   };
 };
 
@@ -387,7 +387,7 @@ app.post('/rosters', async (c) => {
             : undefined,
         packTitle:
           typeof recommended_addons.packTitle === 'string'
-            ? sanitize(recommended_addons.packTitle)
+            ? cleanText(recommended_addons.packTitle)
             : undefined,
         addons: sanitizedAddons,
       });
@@ -407,9 +407,9 @@ app.post('/rosters', async (c) => {
   await createRoster(c.env.DB, {
     id,
     authorId: user.id,
-    authorName: escapeHtml(user.name),
-    title: sanitize(title),
-    description: sanitize(description),
+    authorName: user.name,
+    title: cleanText(title),
+    description: cleanText(description),
     trialId: sanitize(trial_id),
     trialIds: sanitizeTrialIds(trial_ids),
     rosterData: roster_data,
@@ -482,7 +482,7 @@ app.put('/rosters/:id', async (c) => {
             : undefined,
         packTitle:
           typeof recommended_addons.packTitle === 'string'
-            ? sanitize(recommended_addons.packTitle)
+            ? cleanText(recommended_addons.packTitle)
             : undefined,
         addons: sanitizedAddons,
       });
@@ -491,8 +491,8 @@ app.put('/rosters/:id', async (c) => {
 
   const existing = await getRosterById(c.env.DB, c.req.param('id'), user.id);
   const updated = await updateRoster(c.env.DB, c.req.param('id'), user.id, {
-    title: sanitize(title),
-    description: sanitize(description),
+    title: cleanText(title),
+    description: cleanText(description),
     trialId: sanitize(trial_id),
     trialIds: sanitizeTrialIds(trial_ids),
     rosterData: roster_data,
@@ -617,8 +617,8 @@ app.post('/rosters/:id/comments', async (c) => {
     rosterId,
     parentId: body.parent_id ?? null,
     authorId: user.id,
-    authorName: escapeHtml(user.name),
-    body: escapeHtml(body.body.trim()),
+    authorName: user.name,
+    body: body.body.trim(),
   });
 
   return c.json({ comment }, 201);
@@ -750,9 +750,9 @@ app.post('/builds', async (c) => {
   await createBuild(c.env.DB, {
     id,
     authorId: user.id,
-    authorName: escapeHtml(user.name),
-    title: sanitize(title),
-    description: sanitize(description),
+    authorName: user.name,
+    title: cleanText(title),
+    description: cleanText(description),
     esoClass: sanitize(eso_class),
     role: sanitize(role),
     gameMode: sanitize(game_mode),
@@ -829,8 +829,8 @@ app.put('/builds/:id', async (c) => {
   const visibility: (typeof BUILD_VISIBILITIES)[number] = embeddedVisibility;
 
   const updated = await updateBuild(c.env.DB, c.req.param('id'), user.id, {
-    title: sanitize(title),
-    description: sanitize(description),
+    title: cleanText(title),
+    description: cleanText(description),
     esoClass: sanitize(eso_class),
     role: sanitize(role),
     gameMode: sanitize(game_mode),
@@ -935,8 +935,8 @@ app.post('/builds/:id/comments', async (c) => {
     buildId,
     parentId: body.parent_id ?? null,
     authorId: user.id,
-    authorName: escapeHtml(user.name),
-    body: escapeHtml(body.body.trim()),
+    authorName: user.name,
+    body: body.body.trim(),
   });
 
   return c.json({ comment }, 201);
@@ -1301,7 +1301,7 @@ app.put('/users/me/bio', async (c) => {
   if (typeof body.bio !== 'string') return c.json({ error: 'bio must be a string' }, 400);
   if (body.bio.length > 200) return c.json({ error: 'bio must be ≤ 200 characters' }, 400);
 
-  await upsertUserBio(c.env.DB, user.id, escapeHtml(user.name), sanitize(body.bio));
+  await upsertUserBio(c.env.DB, user.id, user.name, cleanText(body.bio));
   return c.json({ ok: true });
 });
 
@@ -1426,7 +1426,7 @@ app.put('/users/me/avatar', async (c) => {
   await upsertUserAvatar(
     c.env.DB,
     user.id,
-    escapeHtml(user.name),
+    user.name,
     imgbb.data.url,
     imgbb.data.thumb.url,
     imgbb.data.delete_url,
@@ -1460,7 +1460,7 @@ app.put('/users/me/display-names', async (c) => {
   const na = body.na_display_name?.trim() || null;
   const eu = body.eu_display_name?.trim() || null;
 
-  await updateDisplayNames(c.env.DB, user.id, escapeHtml(user.name), na, eu);
+  await updateDisplayNames(c.env.DB, user.id, user.name, na, eu);
   return c.json({ ok: true });
 });
 
@@ -1573,9 +1573,9 @@ app.post('/packs', async (c) => {
   await createPack(c.env.DB, {
     id,
     authorId: user.id,
-    authorName: escapeHtml(user.name),
-    title: sanitize(title),
-    description: sanitize(description),
+    authorName: user.name,
+    title: cleanText(title),
+    description: cleanText(description),
     packType: sanitize(pack_type),
     addons: JSON.stringify(sanitizedAddons),
     tags: Array.isArray(tags) ? tags.filter(isValidTag).slice(0, 10).map(sanitize) : [],
@@ -1632,8 +1632,8 @@ app.put('/packs/:id', async (c) => {
     return c.json({ error: 'No valid addon entries provided' }, 400);
 
   const updated = await updatePack(c.env.DB, c.req.param('id'), user.id, {
-    title: sanitize(title),
-    description: sanitize(description),
+    title: cleanText(title),
+    description: cleanText(description),
     packType: sanitize(pack_type),
     addons: JSON.stringify(sanitizedAddons),
     tags: Array.isArray(tags) ? tags.filter(isValidTag).slice(0, 10).map(sanitize) : [],
@@ -1671,6 +1671,219 @@ app.post('/packs/:id/vote', async (c) => {
   await recordRateLimitEvent(c.env.DB, user.id, 'pack_vote');
   const result = await togglePackVote(c.env.DB, c.req.param('id'), user.id);
   return c.json(result);
+});
+
+// ─── GET /fetch-guide — fetch a build-guide page server-side (CORS proxy) ────
+// Lets the build editor import a guide by URL: the browser can't fetch a third-
+// party page (CORS), so we fetch it here and return the raw HTML for the client
+// to parse. Hardened against SSRF (public http(s) only, private ranges blocked),
+// with size + timeout caps and a per-IP rate limit.
+
+const FETCH_GUIDE_MAX_BYTES = 3 * 1024 * 1024; // 3 MB
+const FETCH_GUIDE_TIMEOUT_MS = 12_000;
+const FETCH_GUIDE_RATE_LIMIT = 20; // per IP per minute
+const fetchGuideRateCounts = new Map<string, { count: number; expires: number }>();
+
+// Allowlisted ESO build-guide domains. /fetch-guide is unauthenticated, so we
+// restrict it to reputable guide sites rather than running an open fetch proxy.
+// This is also the real SSRF backstop: a DNS-rebind/redirect to an internal
+// address can't pass because internal hosts aren't on this list (and the literal
+// IP / IPv4-mapped checks below are defense-in-depth). Add domains here as
+// users request them.
+const GUIDE_DOMAIN_ALLOWLIST = [
+  'hyperioxes.com',
+  'skinnycheeks.gg',
+  'alcasthq.com',
+  'eso-hub.com',
+  'esohub.com',
+  'deltiasgaming.com',
+  'arzyelbuilds.com',
+  'dottzgaming.com',
+  'xynodegaming.com',
+  'eso-skillbook.com',
+  'tamrieljournal.com',
+  'uesp.net',
+];
+
+function isAllowedGuideHost(host: string): boolean {
+  return GUIDE_DOMAIN_ALLOWLIST.some((d) => host === d || host.endsWith('.' + d));
+}
+
+/** Validate a URL is a safe, allowlisted public http(s) target (blocks SSRF). */
+function safeGuideUrl(raw: string): URL | null {
+  let u: URL;
+  try {
+    u = new URL(raw);
+  } catch {
+    return null;
+  }
+  if (u.protocol !== 'http:' && u.protocol !== 'https:') return null;
+  const host = u.hostname.toLowerCase().replace(/^\[|\]$/g, '');
+  if (!isAllowedGuideHost(host)) return null;
+  if (
+    host === 'localhost' ||
+    host === '::1' ||
+    host.endsWith('.localhost') ||
+    host.endsWith('.internal') ||
+    host.endsWith('.local')
+  ) {
+    return null;
+  }
+  // IPv4 literal in a loopback / private / link-local / unspecified range.
+  const m = host.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
+  if (m) {
+    const a = Number(m[1]);
+    const b = Number(m[2]);
+    if (
+      a === 0 ||
+      a === 127 ||
+      a === 10 ||
+      (a === 192 && b === 168) ||
+      (a === 169 && b === 254) ||
+      (a === 172 && b >= 16 && b <= 31)
+    ) {
+      return null;
+    }
+  }
+  // IPv6 unspecified / loopback / unique-local (fc00::/7) / link-local (fe80::/10).
+  if (host === '::' || host === '::1') return null;
+  if (/^f[cd][0-9a-f]{2}:/i.test(host) || /^fe[89ab][0-9a-f]:/i.test(host)) return null;
+  // IPv4-mapped IPv6 (e.g. ::ffff:127.0.0.1 or ::ffff:7f00:1) — unwrap the
+  // embedded v4 and re-check it against the private/loopback ranges above.
+  const mapped = host.match(/^(?:0:0:0:0:0:ffff:|::ffff:)([0-9a-f.:]+)$/i);
+  if (mapped) {
+    const tail = mapped[1];
+    let a = -1;
+    let b = -1;
+    const dotted = tail.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
+    if (dotted) {
+      a = Number(dotted[1]);
+      b = Number(dotted[2]);
+    } else {
+      const hex = tail.match(/^([0-9a-f]{1,4}):([0-9a-f]{1,4})$/i);
+      if (hex) {
+        const hi = parseInt(hex[1], 16);
+        a = (hi >> 8) & 0xff;
+        b = hi & 0xff;
+      }
+    }
+    if (
+      a === 0 ||
+      a === 127 ||
+      a === 10 ||
+      (a === 192 && b === 168) ||
+      (a === 169 && b === 254) ||
+      (a === 172 && b >= 16 && b <= 31)
+    ) {
+      return null;
+    }
+  }
+  return u;
+}
+
+app.get('/fetch-guide', async (c) => {
+  const url = safeGuideUrl((c.req.query('url') ?? '').trim());
+  if (!url)
+    return c.json(
+      {
+        error:
+          'Please paste a link from a supported guide site (e.g. hyperioxes.com, alcasthq.com, eso-hub.com, skinnycheeks.gg, deltiasgaming.com).',
+      },
+      400,
+    );
+
+  // In-memory per-IP rate limit (mirrors /search-addons).
+  const ip = c.req.header('CF-Connecting-IP') ?? 'unknown';
+  const now = Date.now();
+  if (Math.random() < 0.02) {
+    for (const [key, val] of fetchGuideRateCounts) {
+      if (val.expires <= now) fetchGuideRateCounts.delete(key);
+    }
+  }
+  const bucket = fetchGuideRateCounts.get(ip);
+  if (bucket && bucket.expires > now) {
+    if (bucket.count >= FETCH_GUIDE_RATE_LIMIT) return c.json({ error: 'Rate limit exceeded.' }, 429);
+    bucket.count++;
+  } else {
+    fetchGuideRateCounts.set(ip, { count: 1, expires: now + 60_000 });
+  }
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), FETCH_GUIDE_TIMEOUT_MS);
+  try {
+    // Follow redirects MANUALLY so every hop's target is re-validated — a public
+    // URL must not be able to 30x its way to an internal/link-local host.
+    const FETCH_GUIDE_MAX_REDIRECTS = 4;
+    let target = url;
+    let res: Response | null = null;
+    for (let hop = 0; ; hop++) {
+      res = await fetch(target.href, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (compatible; ESO-Toolkit-BuildImporter/1.0)',
+          Accept: 'text/html,application/xhtml+xml,text/plain',
+        },
+        redirect: 'manual',
+        signal: controller.signal,
+      });
+      const location = res.status >= 300 && res.status < 400 ? res.headers.get('location') : null;
+      if (!location) break;
+      if (hop >= FETCH_GUIDE_MAX_REDIRECTS)
+        return c.json({ error: 'That link redirected too many times.' }, 502);
+      let next: URL | null = null;
+      try {
+        next = safeGuideUrl(new URL(location, target.href).href);
+      } catch {
+        next = null;
+      }
+      if (!next) return c.json({ error: 'That link redirected to a blocked target.' }, 400);
+      target = next;
+    }
+    if (!res) return c.json({ error: 'Could not fetch that link.' }, 502);
+    if (!res.ok) return c.json({ error: `That link returned ${res.status}.` }, 502);
+    const contentType = res.headers.get('content-type') ?? '';
+    if (!/text\/html|application\/xhtml|text\/plain/i.test(contentType)) {
+      return c.json({ error: 'That link is not a readable web page.' }, 415);
+    }
+    const reader = res.body?.getReader();
+    if (!reader) return c.json({ error: 'Empty response from that link.' }, 502);
+    const chunks: Uint8Array[] = [];
+    let collected = 0;
+    let truncated = false;
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      if (!value || value.byteLength === 0) continue;
+      if (collected + value.byteLength > FETCH_GUIDE_MAX_BYTES) {
+        // Keep only what fits, then stop — never allocate past what we copied.
+        const room = FETCH_GUIDE_MAX_BYTES - collected;
+        if (room > 0) {
+          chunks.push(value.subarray(0, room));
+          collected += room;
+        }
+        truncated = true;
+        await reader.cancel();
+        break;
+      }
+      chunks.push(value);
+      collected += value.byteLength;
+    }
+    const merged = new Uint8Array(collected);
+    let offset = 0;
+    for (const chunk of chunks) {
+      merged.set(chunk, offset);
+      offset += chunk.byteLength;
+    }
+    const html = new TextDecoder('utf-8').decode(merged);
+    return c.json({ html, finalUrl: target.href, truncated });
+  } catch (err) {
+    const aborted = err instanceof Error && err.name === 'AbortError';
+    return c.json(
+      { error: aborted ? 'That link took too long to load.' : 'Could not fetch that link.' },
+      502,
+    );
+  } finally {
+    clearTimeout(timer);
+  }
 });
 
 // ─── GET /search-addons — ESOUI addon search via MMOUI API ─────────────────

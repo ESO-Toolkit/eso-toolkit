@@ -139,13 +139,19 @@ export const LoopChip: React.FC<{
         component="button"
         type="button"
         aria-label="Clear A–B loop"
+        title="Clear A–B loop (U)"
         onClick={onClearLoop}
         sx={{
           display: 'inline-flex',
           alignItems: 'center',
           justifyContent: 'center',
-          width: 16,
-          height: 16,
+          // Hit area expanded to ~28px (padding) while a negative margin keeps the chip's visible
+          // footprint unchanged — the glyph stays small but the target clears the touch floor.
+          minWidth: 28,
+          minHeight: 28,
+          width: 28,
+          height: 28,
+          m: '-6px',
           p: 0,
           border: 'none',
           borderRadius: '50%',

@@ -56,7 +56,8 @@ export const glassPanelSx = (isDark: boolean): SxProps<Theme> => ({
 export const glassOutlinedFieldSx = (isDark: boolean): SxProps<Theme> => ({
   '& .MuiOutlinedInput-root': {
     ...glassFieldBg(isDark),
-    borderRadius: '10px',
+    // Softer radius that nests better inside the 24px glass panel (was 10px).
+    borderRadius: '14px',
     '& fieldset': {
       borderColor: fieldBorder(isDark),
       transition: 'border-color 0.2s ease, box-shadow 0.2s ease',

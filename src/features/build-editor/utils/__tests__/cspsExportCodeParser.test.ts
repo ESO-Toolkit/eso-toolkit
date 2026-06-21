@@ -1,3 +1,4 @@
+import { isClassMasteryEligible } from '../classMasteryEligibility';
 import {
   isCSPSExportCode,
   isCSPSNativeCode,
@@ -360,5 +361,94 @@ describe('parseCSPSNativeCode', () => {
 
   it('throws for too few sections', () => {
     expect(() => parseCSPSNativeCode('a#b#c')).toThrow(/at least 5 sections/);
+  });
+});
+
+describe('Class Mastery in export codes', () => {
+  it('partitions Class Mastery passives out of an ESO-Hub code', () => {
+    const code = [
+      '1', // class: Dragonknight
+      '3', // race
+      '1', // role
+      '0:0:64', // attributes
+      '0', // curse
+      '13975', // mundus
+      '35,36,37', // subclasses: all DK lines → not subclassed
+      '0', // hotbar 1
+      '0', // hotbar 2
+      '238232,240268,400', // passives: 2 DK Class Mastery + 1 regular
+      '0', // slotted CP
+      '0', // passive CP
+      '0', // gear
+      '0', // food
+      '0', // potions
+    ].join(';');
+    const { build } = parseCSPSExportCode(code);
+    expect(build.classMasteryPassives).toEqual([238232, 240268]);
+    expect(build.setups[0].passives).toEqual([400]);
+  });
+
+  it('partitions Class Mastery passives out of a native code and recovers the class', () => {
+    const native = [
+      '-*263519:1,263520:1,500:1*-*-*-', // skills: prog empty / pass = 2 Warden CM + 1 regular
+      '0,0,0,0,0,0;0,0,0,0,0,0', // hotbars empty → class recovered from CM ids
+      '0;0;0', // attributes
+      '-', // mundus
+      '-', // champion points
+      '-', // gear
+      '-', // quickslots
+      '-', // outfits
+      '1', // role
+    ].join('#');
+    const { build } = parseCSPSNativeCode(native);
+    expect(build.esoClass).toBe('warden');
+    expect(build.classMasteryPassives).toEqual([263519, 263520]);
+    expect(build.setups[0].passives).toEqual([500]);
+  });
+
+  it('detects the native base class from Class Mastery ids over an off-class hotbar skill', () => {
+    const native = [
+      '-*263519:1,263520:1*-*-*-', // pass = Warden Class Mastery ids
+      '18429,0,0,0,0,0;0,0,0,0,0,0', // hotbar front slot 0 = Nightblade Assassination skill
+      '0;0;0', // attributes
+      '-', // mundus
+      '-', // champion points
+      '-', // gear
+      '-', // quickslots
+      '-', // outfits
+      '1', // role
+    ].join('#');
+    const { build } = parseCSPSNativeCode(native);
+    // CM owner (Warden) wins over the Nightblade hotbar skill → picks preserved
+    // (Codex findings 5+6: CM ids uniquely identify the base class, so they must
+    // win detection, else the legitimate Warden picks get dropped as "foreign").
+    expect(build.esoClass).toBe('warden');
+    expect(build.classMasteryPassives).toEqual([263519, 263520]);
+    // DELIBERATE: "Warden CM ids + Nightblade hotbar skill" is impossible in-game
+    // (Class Mastery requires a pure class — a subclassed character has no active
+    // CM and cannot purchase CM passives). Given this contradictory input we
+    // normalize to a coherent, non-subclassed Warden-with-CM build rather than
+    // guessing a subclass; stat/export eligibility gates keep it internally
+    // consistent. A real subclassed code carries no CM ids, so this never fires
+    // for genuine data.
+    expect(isClassMasteryEligible(build.esoClass, build.classSkillLines)).toBe(true);
+  });
+
+  it('decodes the native subclasses part so retained Class Mastery picks stay gated', () => {
+    const native = [
+      '-*263519:1*-*-*38', // skills: pass = Warden CM id; subclasses = 38 (Assassination, NB)
+      '0,0,0,0,0,0;0,0,0,0,0,0', // hotbars
+      '0;0;0', // attributes
+      '-', // mundus
+      '-', // champion points
+      '-', // gear
+      '-', // quickslots
+      '-', // outfits
+      '1', // role
+    ].join('#');
+    const { build } = parseCSPSNativeCode(native);
+    // an off-class line means the build is subclassed → Class Mastery is disabled
+    expect(build.classSkillLines).toContain('class.assassination');
+    expect(isClassMasteryEligible(build.esoClass, build.classSkillLines)).toBe(false);
   });
 });

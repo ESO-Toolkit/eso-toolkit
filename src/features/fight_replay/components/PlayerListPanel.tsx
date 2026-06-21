@@ -463,7 +463,12 @@ export const PlayerListPanel: React.FC<PlayerListPanelProps> = ({
                       onClick={() => onPlayerVisibilityChange(player.id, !isVisible)}
                       sx={{
                         p: 0.25,
-                        color: isVisible ? theme.palette.primary.main : theme.palette.text.disabled,
+                        // Hidden state uses text.secondary (not text.disabled): on the dark glass
+                        // panel, disabled (~0.38 alpha ≈ 2:1) fails WCAG 1.4.11 non-text contrast;
+                        // secondary keeps the muted look while passing.
+                        color: isVisible
+                          ? theme.palette.primary.main
+                          : theme.palette.text.secondary,
                       }}
                     >
                       {isVisible ? (
@@ -521,7 +526,7 @@ export const PlayerListPanel: React.FC<PlayerListPanelProps> = ({
         }}
       >
         {colorPicker && (
-          <Box sx={{ width: 132 }}>
+          <Box sx={{ width: 156 }}>
             <Box
               sx={{
                 display: 'grid',
@@ -542,8 +547,10 @@ export const PlayerListPanel: React.FC<PlayerListPanelProps> = ({
                       setColorPicker(null);
                     }}
                     sx={{
-                      width: 20,
-                      height: 20,
+                      // ~28px so the swatch clears a comfortable touch target (the old 20px was
+                      // below the floor); the 5-col grid + 156px popover width fit them exactly.
+                      width: 28,
+                      height: 28,
                       p: 0,
                       borderRadius: '4px',
                       cursor: 'pointer',

@@ -341,4 +341,146 @@ describe('cspsExport', () => {
       expect(hotbar.backBar).toEqual([700, 800, 900, 1000, 1100, 1200]);
     });
   });
+
+  describe('Class Mastery (U50)', () => {
+    it('writes eligible Class Mastery picks into werte.pass as id:1', () => {
+      const build = makeBuild({
+        esoClass: 'dragonknight',
+        classSkillLines: [null, null, null],
+        classMasteryPassives: [238232, 240268],
+        setups: [makeSetup({ passives: [400] })],
+      });
+      const charData =
+        convertBuildToCSPS(build).Default!['@ESOToolkit'].$AccountWide.charData!['1'];
+      expect(charData.werte!.pass!.part1).toContain('238232:1');
+      expect(charData.werte!.pass!.part1).toContain('240268:1');
+      expect(charData.werte!.pass!.part1).toContain('400:1');
+    });
+
+    it('omits Class Mastery picks when the build is subclassed', () => {
+      const build = makeBuild({
+        esoClass: 'dragonknight',
+        // an off-class skill line makes the build subclassed → CM disabled in-game
+        classSkillLines: ['class.assassination', null, null],
+        classMasteryPassives: [238232, 240268],
+        setups: [makeSetup({ passives: [400] })],
+      });
+      const charData =
+        convertBuildToCSPS(build).Default!['@ESOToolkit'].$AccountWide.charData!['1'];
+      expect(charData.werte!.pass!.part1).toContain('400:1');
+      expect(charData.werte!.pass!.part1).not.toContain('238232:1');
+    });
+
+    it('writes the same Class Mastery picks into every profile (character-wide)', () => {
+      const build = makeBuild({
+        esoClass: 'dragonknight',
+        classSkillLines: [null, null, null],
+        classMasteryPassives: [238232],
+        setups: [makeSetup({ passives: [400] }), makeSetup({ name: 'AoE', passives: [500] })],
+      });
+      const charData =
+        convertBuildToCSPS(build).Default!['@ESOToolkit'].$AccountWide.charData!['1'];
+      expect(charData.werte!.pass!.part1).toContain('238232:1');
+      expect(charData.profiles![1].werte!.pass!.part1).toContain('238232:1');
+    });
+
+    it('recovers leaked legacy CM ids on direct export (caller bypassed editor migration)', () => {
+      // A legacy/shared build (e.g. BuildViewPage exporting a URL-decoded build)
+      // can have CM ids only in setup.passives with an empty build-level field.
+      // Export self-normalizes, so the picks are recovered, not lost. 400 is a
+      // real passive; 238232/240268 are DK Class Mastery ids.
+      const build = makeBuild({
+        esoClass: 'dragonknight',
+        classSkillLines: [null, null, null],
+        classMasteryPassives: [],
+        setups: [makeSetup({ passives: [400, 238232, 240268] })],
+      });
+      const charData =
+        convertBuildToCSPS(build).Default!['@ESOToolkit'].$AccountWide.charData!['1'];
+      expect(charData.werte!.pass!.part1).toContain('400:1');
+      expect(charData.werte!.pass!.part1).toContain('238232:1');
+      expect(charData.werte!.pass!.part1).toContain('240268:1');
+    });
+
+    it('does not mutate the caller-supplied build during export', () => {
+      const setup = makeSetup({ passives: [400, 238232] });
+      const build = makeBuild({
+        esoClass: 'dragonknight',
+        classSkillLines: [null, null, null],
+        classMasteryPassives: [],
+        setups: [setup],
+      });
+      convertBuildToCSPS(build);
+      // the original build object is untouched (normalization runs on a copy)
+      expect(build.classMasteryPassives).toEqual([]);
+      expect(build.setups[0].passives).toEqual([400, 238232]);
+    });
+
+    it('does not export stale Class Mastery ids left in setup.passives', () => {
+      const build = makeBuild({
+        esoClass: 'dragonknight',
+        classSkillLines: [null, null, null],
+        classMasteryPassives: [238232, 240268],
+        // 259224 is a DK Class Mastery id wrongly left in setup.passives (legacy);
+        // 400 is a real passive. Only the sanitized picks should reach werte.pass.
+        setups: [makeSetup({ passives: [400, 259224] })],
+      });
+      const charData =
+        convertBuildToCSPS(build).Default!['@ESOToolkit'].$AccountWide.charData!['1'];
+      expect(charData.werte!.pass!.part1).toContain('400:1');
+      expect(charData.werte!.pass!.part1).toContain('238232:1');
+      expect(charData.werte!.pass!.part1).toContain('240268:1');
+      // the stale CM id must NOT be exported — it would exceed the 2-pick cap
+      // and could win over the intended pick on round-trip import.
+      expect(charData.werte!.pass!.part1).not.toContain('259224:1');
+    });
+
+    it('round-trips Class Mastery picks through export → import', () => {
+      const build = makeBuild({
+        esoClass: 'warden',
+        classSkillLines: [null, null, null],
+        classMasteryPassives: [263519, 263520],
+        setups: [makeSetup({ passives: [] })],
+      });
+      const lua = exportBuildToCSPSLua(build);
+      const reimported = convertCSPSCharacterToBuild(parseCSPSInput(lua).characters[0]);
+      expect(reimported.classMasteryPassives).toEqual([263519, 263520]);
+      expect(reimported.setups[0].passives).toEqual([]);
+    });
+
+    it('round-trips an empty (non-subclassed) classSkillLines build with CM intact', () => {
+      // [null,null,null] normalizes to the class defaults on reimport (the CSPS
+      // subclass list is compact, matching the real addon) — both are
+      // non-subclassed, so Class Mastery eligibility and picks are preserved.
+      const build = makeBuild({
+        esoClass: 'dragonknight',
+        classSkillLines: [null, null, null],
+        classMasteryPassives: [238232, 240268],
+        setups: [makeSetup({ passives: [] })],
+      });
+      const lua = exportBuildToCSPSLua(build);
+      const reimported = convertCSPSCharacterToBuild(parseCSPSInput(lua).characters[0]);
+      // still non-subclassed → CM eligible and preserved
+      expect(reimported.classMasteryPassives).toEqual([238232, 240268]);
+      expect(
+        reimported.classSkillLines.every((line) => line == null || line.startsWith('class.')),
+      ).toBe(true);
+    });
+
+    it('round-trips subclass lines through export → import while keeping CM gated', () => {
+      const build = makeBuild({
+        esoClass: 'dragonknight',
+        classSkillLines: ['class.ardent-flame', 'class.assassination', null], // DK + NB subclass
+        classMasteryPassives: [238232, 240268], // retained, inert while subclassed
+        setups: [makeSetup({ passives: [] })],
+      });
+      const lua = exportBuildToCSPSLua(build);
+      const reimported = convertCSPSCharacterToBuild(parseCSPSInput(lua).characters[0]);
+      // subclass lines survive the round trip
+      expect(reimported.classSkillLines).toContain('class.ardent-flame');
+      expect(reimported.classSkillLines).toContain('class.assassination');
+      // Class Mastery is correctly omitted on a subclassed export — not resurrected
+      expect(reimported.classMasteryPassives).toEqual([]);
+    });
+  });
 });

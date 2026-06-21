@@ -34,7 +34,7 @@ import {
   type CSPSSkillData,
 } from '../../loadout-manager/utils/cspsConverter';
 import { parseLuaSavedVariables } from '../../loadout-manager/utils/luaParser';
-import { getDefaultLinesForClass, EQUIP_SLOTS } from '../data/esoStaticData';
+import { EQUIP_SLOTS } from '../data/esoStaticData';
 import { esoTypeToArmorWeight } from '../data/setArmorWeights';
 import type {
   Build,
@@ -46,11 +46,13 @@ import type {
   SkilledAbility,
 } from '../types/build.types';
 
+import { classFromMasteryIds, partitionClassMasteryPicks } from './classMasteryTransfer';
 import {
   isCSPSExportCode,
   isCSPSNativeCode,
   parseCSPSExportCode,
   parseCSPSNativeCode,
+  parseSubclassLines,
 } from './cspsExportCodeParser';
 
 const logger = new Logger({ contextPrefix: 'CSPSImport' });
@@ -592,15 +594,42 @@ export function convertCSPSCharacterToBuild(character: CSPSCharacterOption): Bui
 
   const now = new Date().toISOString();
 
-  // Detect class from werte skill data (falls back to 'dragonknight')
-  const detectedClass = detectClassFromWerte(character.data.werte) ?? 'dragonknight';
+  // Class Mastery ids uniquely identify the BASE class, so prefer them — a
+  // subclassed character's active skills can be off-class lines that would
+  // otherwise mislead detection (and cause the partition to drop the retained
+  // base-class picks as "foreign"). Fall back to active-skill detection, then
+  // 'dragonknight'.
+  const allPassiveIds = setups.flatMap((s) => s.passives);
+  const detectedClass =
+    classFromMasteryIds(allPassiveIds) ??
+    detectClassFromWerte(character.data.werte) ??
+    'dragonknight';
+
+  // Class Mastery passives ride in werte.pass alongside regular passives, so
+  // split them back out of every setup (they must not pollute the regular
+  // Passives section). CM is character-wide, so lift a single build-level pick
+  // set: prefer the main setup, but fall back to the first profile that has any
+  // rather than discarding a profile-only selection.
+  let classMasteryPassives: number[] = [];
+  setups.forEach((setup) => {
+    const partitioned = partitionClassMasteryPicks(setup.passives, detectedClass);
+    setup.passives = partitioned.passives;
+    if (classMasteryPassives.length === 0 && partitioned.classMasteryPassives.length > 0) {
+      classMasteryPassives = partitioned.classMasteryPassives;
+    }
+  });
 
   // Detect role from comp1 (falls back to 'magicka-dps')
   const comp1 = decompressComp1(character.data.comp1);
   const role: CombatRole = comp1?.role ? cspsRoleToCombatRole(comp1.role) : 'magicka-dps';
 
-  // Default class skill lines for the detected class
-  const classSkillLines = getDefaultLinesForClass(detectedClass);
+  // Honor any subclass lines CSPS records in werte.scribeStyleSubclass
+  // (crafted*styles*subclasses) so a subclassed import decodes as subclassed —
+  // otherwise the retained Class Mastery picks lifted above would be wrongly
+  // treated as active by the eligibility-gated stats/export. Empty → class
+  // defaults (non-subclassed), unchanged from before.
+  const subclassStr = (character.data.werte?.scribeStyleSubclass ?? '').split('*')[2] ?? '';
+  const classSkillLines = parseSubclassLines(subclassStr, detectedClass);
 
   return {
     id: uuidv4(),
@@ -608,6 +637,7 @@ export function convertCSPSCharacterToBuild(character: CSPSCharacterOption): Bui
     shortDescription: `Imported from CSPS — ${character.accountName}`,
     esoClass: detectedClass,
     classSkillLines,
+    classMasteryPassives,
     role,
     gameMode: 'pve',
     races: [],

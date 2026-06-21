@@ -47,6 +47,25 @@ import { UpNextCard, type UpNextState } from './UpNextCard';
 // an analyst inch through a moment frame-by-frame. Distinct from the ±1s arrow seek (Item 5).
 const FRAME_STEP_MS = 100;
 
+/** True when a keyboard event came from a text-entry surface that should keep replay shortcuts. */
+function isTextEntryTarget(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) {
+    return false;
+  }
+  return (
+    target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable === true
+  );
+}
+
+/** Parse the share/deep-link actor id query parameter into the replay's nullable selection type. */
+function parseActorIdParam(actorParam: string | null): number | null {
+  if (actorParam === null) {
+    return null;
+  }
+  const parsedActorId = Number(actorParam);
+  return Number.isFinite(parsedActorId) ? parsedActorId : null;
+}
+
 /**
  * Continuous trial-replay wiring. When present (a multi-segment run), the transport
  * gains the trial-wide scrubber + "play whole trial" controls, and playback can
@@ -140,14 +159,7 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
   const [searchParams] = useSearchParams();
   const params = useParams();
   const actorParam = searchParams.get('actorId');
-
-  let initialSelectedActorId: number | null = null;
-  if (actorParam !== null) {
-    const parsedActorId = Number(actorParam);
-    if (!isNaN(parsedActorId)) {
-      initialSelectedActorId = parsedActorId;
-    }
-  }
+  const selectedActorIdFromUrl = React.useMemo(() => parseActorIdParam(actorParam), [actorParam]);
 
   // Actor selection and camera following state.
   // null = no actor selected/following, number = following that actor ID.
@@ -156,8 +168,8 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
   // useFrame loop and by KeyboardCameraControls. `followingActorId` mirrors it as React
   // state purely so UI (the "Following:" chip) can react to changes. The two are always
   // written together via setFollowingActor below — no polling needed.
-  const followingActorIdRef = useRef<number | null>(initialSelectedActorId);
-  const [followingActorId, setFollowingActorId] = useState<number | null>(initialSelectedActorId);
+  const followingActorIdRef = useRef<number | null>(selectedActorIdFromUrl);
+  const [followingActorId, setFollowingActorId] = useState<number | null>(selectedActorIdFromUrl);
 
   // Wrapper around the canvas + the docked control bar. Used as the fullscreen target (Item 3) so one
   // requestFullscreen() takes the whole replay block (3D view, overlays, and the controls) at once.
@@ -169,6 +181,13 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
     followingActorIdRef.current = actorId;
     setFollowingActorId(actorId);
   }, []);
+
+  // The replay shell stays mounted across in-replay route/search-param changes. Keep share/deep
+  // links truthful when `?actorId=` changes without a remount (for example browser back/forward or
+  // a pasted URL handled client-side) instead of leaving the previous manual actor lock selected.
+  useEffect(() => {
+    setFollowingActor(selectedActorIdFromUrl);
+  }, [selectedActorIdFromUrl, setFollowingActor]);
 
   // Persisted viewer prefs (localStorage). FightReplay3D owns the speed + path/trail slices;
   // Arena3D owns the names + performance slices (it persists those itself via the same hook).
@@ -252,6 +271,11 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
   // Playback state - initialize with URL parameter if available (clamped to range)
   const [currentTime, setCurrentTime] = useState(clampedInitialTime);
   const [isPlaying, setIsPlaying] = useState(false);
+  // Mirror into a ref so the keyboard play/pause handler can read the current value without
+  // depending on `isPlaying` (which would re-create the handler — and re-bind the window keydown
+  // listener — on every play/pause).
+  const isPlayingRef = useRef(isPlaying);
+  isPlayingRef.current = isPlaying;
   const [playbackSpeed, setPlaybackSpeed] = useState(initialPrefs.playbackSpeed);
   const [isScrubbingMode, setIsScrubbingMode] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
@@ -274,6 +298,13 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
   // normalizes lo/hi. Both set + a sane span → playback wraps within [A,B] until the chip clears.
   const [loopStart, setLoopStart] = useState<number | null>(null);
   const [loopEnd, setLoopEnd] = useState<number | null>(null);
+  // Mirror the loop bounds into refs so the keyboard play/pause handler can read them without
+  // taking them as deps — otherwise that handler (and the window keydown listener it lives in)
+  // would re-create every time a loop point is set, churning the listener on a frequent action.
+  const loopStartRef = useRef(loopStart);
+  loopStartRef.current = loopStart;
+  const loopEndRef = useRef(loopEnd);
+  loopEndRef.current = loopEnd;
 
   // Transport bar visibility (cinema model). Master state for the compact bar:
   //  - windowed: stays visible unless the user manually collapses it (C / chevron).
@@ -369,25 +400,22 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
   // have just cancelled. With a sane A–B loop armed the restart is SKIPPED: the playback hook's
   // wrap branch never calls onEnd and resumes at the loop in-point — restarting to 0:00 would
   // dump a user looping the final burn back into the whole pre-loop section.
+  // Stable across play/pause + loop changes: reads the playing state and loop bounds from refs, so
+  // it never re-creates on those frequent interactions (and the window keydown listener that
+  // depends on it stops re-binding each time).
   const handlePlayPause = useCallback(() => {
-    if (!isPlaying) {
+    const wasPlaying = isPlayingRef.current;
+    if (!wasPlaying) {
       const dur = selectedFight.endTime - selectedFight.startTime;
-      const loopArmed =
-        loopStart != null && loopEnd != null && Math.abs(loopEnd - loopStart) >= 100;
+      const ls = loopStartRef.current;
+      const le = loopEndRef.current;
+      const loopArmed = ls != null && le != null && Math.abs(le - ls) >= 100;
       if (!loopArmed && animationTimeRef.timeRef.current >= dur - 250) {
         seekTo(0);
       }
     }
-    setIsPlaying(!isPlaying);
-  }, [
-    isPlaying,
-    selectedFight.endTime,
-    selectedFight.startTime,
-    animationTimeRef.timeRef,
-    loopStart,
-    loopEnd,
-    seekTo,
-  ]);
+    setIsPlaying(!wasPlaying);
+  }, [selectedFight.endTime, selectedFight.startTime, animationTimeRef.timeRef, seekTo]);
 
   const handlePlayingChange = useCallback((playing: boolean) => {
     setIsPlaying(playing);
@@ -440,7 +468,7 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
     setLoopStart(null);
     setLoopEnd(null);
     setIsPlaying(false);
-    setFollowingActor(null);
+    setFollowingActor(selectedActorIdFromUrl);
     setSelectedPlayerIds(new Set());
     // A new fight is a new boundary: clear BOTH halves of any Up-next cancel (a stale
     // countdownCancelled would suppress the next fight's countdown — the only Cancel UI —
@@ -458,6 +486,7 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
     animationTimeRef,
     setFollowingActor,
     searchParams,
+    selectedActorIdFromUrl,
   ]);
 
   // Resume playback once the freshly-loaded fight is ready (continuous auto-advance).
@@ -546,17 +575,18 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
     [animationTimeRef.timeRef, duration, seekTo],
   );
 
-  // +/- step through the same discrete speed ladder the on-screen SpeedSelector uses.
-  const stepSpeed = useCallback(
-    (direction: 1 | -1) => {
-      const idx = PLAYBACK_SPEEDS.indexOf(playbackSpeed);
+  // +/- step through the same discrete speed ladder the on-screen SpeedSelector uses. Uses the
+  // functional updater so it has no `playbackSpeed` dep — keeping it (and the keydown listener
+  // that depends on it) stable when the user steps the speed.
+  const stepSpeed = useCallback((direction: 1 | -1) => {
+    setPlaybackSpeed((current) => {
+      const idx = PLAYBACK_SPEEDS.indexOf(current);
       // If the current speed isn't on the ladder (shouldn't happen), fall back to 1x's slot.
       const currentIdx = idx === -1 ? PLAYBACK_SPEEDS.indexOf(1) : idx;
       const nextIdx = Math.max(0, Math.min(PLAYBACK_SPEEDS.length - 1, currentIdx + direction));
-      setPlaybackSpeed(PLAYBACK_SPEEDS[nextIdx]);
-    },
-    [playbackSpeed],
-  );
+      return PLAYBACK_SPEEDS[nextIdx];
+    });
+  }, []);
 
   // Frame-step (,/.): pause if playing, then nudge by FRAME_STEP_MS so the figures advance one
   // small visible step. Stepping is only meaningful on a still frame, so we always pause first.
@@ -949,7 +979,7 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
         return;
       }
       // Don't interfere with text input.
-      if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) {
+      if (isTextEntryTarget(event.target)) {
         return;
       }
 

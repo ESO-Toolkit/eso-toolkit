@@ -25,13 +25,33 @@ export const ReportsSkeleton: React.FC<ReportsSkeletonProps> = ({
         }}
       >
         {Array.from({ length: rows }).map((_, index) => (
-          <Paper key={index} variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
-            <Skeleton variant="text" width="70%" height={26} />
-            <Skeleton variant="text" width="40%" height={16} sx={{ mb: 1.5 }} />
-            <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-              <Skeleton variant="text" width={80} height={32} />
-              <Skeleton variant="text" width={80} height={32} />
-              <Skeleton variant="text" width={80} height={32} />
+          <Paper key={index} variant="outlined" sx={{ p: 2, pl: 2.25, borderRadius: 3 }}>
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'flex-start',
+                gap: 1,
+              }}
+            >
+              <Skeleton variant="text" width="65%" height={26} />
+              <Skeleton variant="rounded" width={64} height={22} sx={{ borderRadius: 999 }} />
+            </Box>
+            <Skeleton variant="rounded" width={140} height={28} sx={{ borderRadius: 999, mt: 1 }} />
+            <Box
+              sx={{
+                display: 'flex',
+                gap: 2,
+                flexWrap: 'wrap',
+                mt: 1.75,
+                pt: 1.25,
+                borderTop: '1px solid',
+                borderColor: 'divider',
+              }}
+            >
+              <Skeleton variant="text" width={70} height={20} />
+              <Skeleton variant="text" width={90} height={20} />
+              <Skeleton variant="text" width={50} height={20} />
             </Box>
           </Paper>
         ))}

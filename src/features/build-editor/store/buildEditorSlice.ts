@@ -8,12 +8,15 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { getClassMasteryLine } from '@/data/skill-lines/class/classMastery';
 
+import { getItemInfo } from '../../loadout-manager/data/itemIdMap';
 import type {
   ArmorWeight,
   GearConfig,
   SkillsConfig,
 } from '../../loadout-manager/types/loadout.types';
-import { getDefaultLinesForClass } from '../data/esoStaticData';
+import { isTwoHandedWeapon } from '../../loadout-manager/utils/itemIconResolver';
+import { EQUIP_SLOTS, getDefaultLinesForClass } from '../data/esoStaticData';
+import { getLockedArmorWeight } from '../data/setArmorWeights';
 import { DEFAULT_STAT_OVERRIDES } from '../engine/stat-constants';
 import type { StatOverrides } from '../engine/stat-types';
 import type {
@@ -30,6 +33,18 @@ import type {
   SkilledAbility,
 } from '../types/build.types';
 import { CLASS_MASTERY_MAX_PICKS } from '../utils/classMasteryEligibility';
+import { migrateLeakedClassMasteryPicks } from '../utils/classMasteryTransfer';
+import {
+  clearedSetupSection,
+  cloneSetup,
+  copySetupSection as copySetupSectionHelper,
+  type SetupSection,
+} from '../utils/setupTransfer';
+
+/** Apparel slot indices — only these carry an armor weight. */
+const APPAREL_SLOT_SET = new Set<number>(
+  EQUIP_SLOTS.filter((s) => s.category === 'apparel').map((s) => s.slot),
+);
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -102,6 +117,9 @@ function loadFromStorage(): Pick<BuildEditorState, 'build' | 'activeSetupIndex'>
     if (!Array.isArray(parsed.build.classMasteryPassives)) {
       parsed.build.classMasteryPassives = [];
     }
+    // Migration: reclaim Class Mastery picks that pre-split builds left inside
+    // setup.passives so they're visible again (and out of the regular passives).
+    migrateLeakedClassMasteryPicks(parsed.build);
     // Migration: builds saved before stats feature won't have statOverrides
     for (const setup of parsed.build.setups) {
       if (!setup.statOverrides) {
@@ -268,6 +286,268 @@ export const buildEditorSlice = createSlice({
       if (activeSetupId) {
         const newIdx = state.build.setups.findIndex((s) => s.id === activeSetupId);
         if (newIdx !== -1) state.activeSetupIndex = newIdx;
+      }
+
+      state.build.updatedAt = new Date().toISOString();
+      state.isDirty = true;
+    },
+
+    /**
+     * Clone setups[index], insert the clone immediately AFTER index, cap at 5
+     * setups (no-op if already at 5), refresh setupOrder, and activate the new
+     * clone.
+     */
+    duplicateSetup(state, action: PayloadAction<number>) {
+      const index = action.payload;
+      const source = state.build.setups[index];
+      if (!source) return;
+      if (state.build.setups.length >= 5) return;
+
+      const clone = cloneSetup(source);
+      state.build.setups.splice(index + 1, 0, clone);
+      state.build.settings.setupOrder = state.build.setups.map((_, i) => i);
+      state.activeSetupIndex = index + 1;
+      state.build.updatedAt = new Date().toISOString();
+      state.isDirty = true;
+    },
+
+    /**
+     * Copy one section FROM another setup INTO the currently active setup.
+     * `fromIndex` must be a valid, different setup index. No-op on invalid input.
+     */
+    copySetupSection(state, action: PayloadAction<{ section: SetupSection; fromIndex: number }>) {
+      const { section, fromIndex } = action.payload;
+      const activeIndex = state.activeSetupIndex;
+      if (fromIndex === activeIndex) return;
+      const source = state.build.setups[fromIndex];
+      const target = state.build.setups[activeIndex];
+      if (!source || !target) return;
+
+      state.build.setups[activeIndex] = copySetupSectionHelper(target, source, section);
+      state.build.updatedAt = new Date().toISOString();
+      state.isDirty = true;
+    },
+
+    /** Reset one section of the active setup to its empty default. */
+    clearSetupSection(state, action: PayloadAction<{ section: SetupSection }>) {
+      const idx = state.activeSetupIndex;
+      const setup = state.build.setups[idx];
+      if (!setup) return;
+      state.build.setups[idx] = clearedSetupSection(setup, action.payload.section);
+      state.build.updatedAt = new Date().toISOString();
+      state.isDirty = true;
+    },
+
+    /**
+     * Bulk-apply trait/enchant/weight to multiple gear slots of the ACTIVE
+     * setup. Slots with no item are skipped. For trait/enchant: a string sets
+     * the field, null deletes it, undefined leaves it unchanged. `weight`
+     * applies ONLY to apparel slots (never weapons/jewelry).
+     */
+    bulkSetGear(
+      state,
+      action: PayloadAction<{
+        slots: number[];
+        trait?: string | null;
+        enchant?: string | null;
+        weight?: ArmorWeight | null;
+      }>,
+    ) {
+      const setup = state.build.setups[state.activeSetupIndex];
+      if (!setup) return;
+      const { slots, trait, enchant, weight } = action.payload;
+
+      let changed = false;
+      for (const slot of slots) {
+        const piece = setup.gear[slot];
+        if (!piece || piece.id == null) continue;
+
+        if (trait === null) {
+          delete piece.trait;
+          changed = true;
+        } else if (trait !== undefined) {
+          piece.trait = trait;
+          changed = true;
+        }
+
+        if (enchant === null) {
+          delete piece.enchant;
+          changed = true;
+        } else if (enchant !== undefined) {
+          piece.enchant = enchant;
+          changed = true;
+        }
+
+        if (APPAREL_SLOT_SET.has(slot)) {
+          // Sets locked to one in-game armor weight (mythics, overland/dungeon/
+          // trial drops) can't be re-weighted — the single-slot UI shows them as
+          // read-only, so skip them here too rather than persist an impossible
+          // weight that exports/roster display would read verbatim.
+          const setName = piece.id != null ? getItemInfo(Number(piece.id))?.setName : undefined;
+          const isLocked = getLockedArmorWeight(setName) !== null;
+          if (!isLocked) {
+            if (weight === null) {
+              delete piece.weight;
+              changed = true;
+            } else if (weight !== undefined) {
+              piece.weight = weight;
+              changed = true;
+            }
+          }
+        }
+      }
+
+      if (changed) {
+        state.build.updatedAt = new Date().toISOString();
+        state.isDirty = true;
+      }
+    },
+
+    /**
+     * Apply an imported (parsed) build. Parser-agnostic: merges only DEFINED
+     * fields. `target: 'active'` merges setup fields into the active setup;
+     * `target: 'new'` creates a fresh setup, merges into it, pushes (cap 5;
+     * if at cap, falls back to 'active'), and activates it. `buildFields`
+     * overwrite build-level fields (only defined keys).
+     */
+    applyImportedBuild(
+      state,
+      action: PayloadAction<{
+        setup: Partial<
+          Pick<
+            BuildSetup,
+            | 'gear'
+            | 'skills'
+            | 'cp'
+            | 'consumables'
+            | 'passives'
+            | 'attributes'
+            | 'mundusStone'
+            | 'curse'
+            | 'name'
+          >
+        >;
+        /** Gear slots the import mentioned but couldn't resolve — cleared so an
+         *  active import never leaves the previous build's item behind. */
+        clearGearSlots?: number[];
+        /** Skill slots the import mentioned but couldn't resolve. */
+        clearSkillSlots?: Array<{ bar: 0 | 1; slotIndex: number }>;
+        buildFields?: Partial<
+          Pick<
+            Build,
+            | 'esoClass'
+            | 'classSkillLines'
+            | 'races'
+            | 'role'
+            | 'gameMode'
+            | 'name'
+            | 'shortDescription'
+          >
+        >;
+        target: 'active' | 'new';
+      }>,
+    ) {
+      const { setup: imported, buildFields, clearGearSlots, clearSkillSlots } = action.payload;
+      const wantNew = action.payload.target === 'new';
+
+      // Never silently overwrite the active setup when the user asked for a NEW
+      // one but we're at the 5-setup cap — no-op instead (the UI also disables
+      // the New-setup option at the cap).
+      if (wantNew && state.build.setups.length >= 5) return;
+
+      let target: BuildSetup | undefined;
+      if (wantNew) {
+        const created = makeSetup(imported.name ?? `Setup ${state.build.setups.length + 1}`);
+        state.build.setups.push(created);
+        state.build.settings.setupOrder = state.build.setups.map((_, i) => i);
+        state.activeSetupIndex = state.build.setups.length - 1;
+        target = state.build.setups[state.activeSetupIndex];
+      } else {
+        target = state.build.setups[state.activeSetupIndex];
+      }
+      if (!target) return;
+
+      // MERGE imported fields into the target — never wipe data the parser
+      // didn't include. (A fresh "new" setup starts empty, so merging there is
+      // equivalent to replacing; applying to the "active" setup preserves
+      // existing slots/potions/star allocations that weren't in the import.)
+      if (imported.gear !== undefined) {
+        target.gear = { ...target.gear, ...imported.gear };
+      }
+      // Clear slots the guide listed but we couldn't resolve, so an active
+      // import doesn't leave the previous build's item behind (slots the guide
+      // never mentioned are preserved). Runs even when nothing resolved.
+      for (const slot of clearGearSlots ?? []) {
+        if (imported.gear?.[slot] === undefined) delete target.gear[slot];
+      }
+      if (imported.gear !== undefined || (clearGearSlots && clearGearSlots.length > 0)) {
+        // A two-handed main-hand occupies both weapon slots — drop any stale
+        // off-hand the merge would otherwise keep (mirrors EquipmentPicker's
+        // auto-clear so exports/stats never read a phantom off-hand weapon).
+        for (const [mainSlot, offSlot] of [
+          [4, 5],
+          [20, 21],
+        ] as const) {
+          const mainId = target.gear[mainSlot]?.id;
+          if (mainId != null && isTwoHandedWeapon(Number(mainId))) {
+            delete target.gear[offSlot];
+          }
+        }
+      }
+      if (imported.skills !== undefined) {
+        target.skills = {
+          0: { ...(target.skills?.[0] ?? {}), ...(imported.skills[0] ?? {}) },
+          1: { ...(target.skills?.[1] ?? {}), ...(imported.skills[1] ?? {}) },
+        };
+      }
+      // Clear skill slots the guide named but we couldn't resolve.
+      for (const { bar, slotIndex } of clearSkillSlots ?? []) {
+        if (imported.skills?.[bar]?.[slotIndex] === undefined) delete target.skills[bar][slotIndex];
+      }
+      if (imported.cp !== undefined) {
+        // Take the imported slotted perks but keep existing passive-star points.
+        const src = imported.cp;
+        for (const tree of ['warfare', 'fitness', 'craft'] as const) {
+          target.cp[tree] = {
+            slots: [...src[tree].slots],
+            passives: { ...target.cp[tree].passives },
+          };
+        }
+      }
+      if (imported.consumables !== undefined) {
+        const food = imported.consumables.food;
+        target.consumables = {
+          potions: imported.consumables.potions.length
+            ? imported.consumables.potions
+            : target.consumables.potions,
+          food: food && Object.keys(food).length ? food : target.consumables.food,
+        };
+      }
+      if (imported.passives !== undefined) target.passives = imported.passives;
+      if (imported.attributes !== undefined) target.attributes = imported.attributes;
+      if (imported.mundusStone !== undefined) target.mundusStone = imported.mundusStone;
+      if (imported.curse !== undefined) target.curse = imported.curse;
+      if (imported.name !== undefined) target.name = imported.name;
+
+      // Merge build-level fields — only defined keys.
+      if (buildFields) {
+        if (buildFields.esoClass !== undefined) {
+          // Class Mastery picks belong to the previous class — clear them when
+          // the class changes, matching setBuildClass's invariant (otherwise
+          // stale picks pollute stats and the Class Mastery UI).
+          if (buildFields.esoClass !== state.build.esoClass) {
+            state.build.classMasteryPassives = [];
+          }
+          state.build.esoClass = buildFields.esoClass;
+        }
+        if (buildFields.classSkillLines !== undefined)
+          state.build.classSkillLines = buildFields.classSkillLines;
+        if (buildFields.races !== undefined) state.build.races = buildFields.races;
+        if (buildFields.role !== undefined) state.build.role = buildFields.role;
+        if (buildFields.gameMode !== undefined) state.build.gameMode = buildFields.gameMode;
+        if (buildFields.name !== undefined) state.build.name = buildFields.name;
+        if (buildFields.shortDescription !== undefined)
+          state.build.shortDescription = buildFields.shortDescription;
       }
 
       state.build.updatedAt = new Date().toISOString();
@@ -522,6 +802,9 @@ export const buildEditorSlice = createSlice({
     /** Load an entire build object (e.g. from a decoded URL share). */
     loadBuild(state, action: PayloadAction<Build>) {
       state.build = action.payload;
+      // Reclaim any Class Mastery picks a pre-split source left in setup.passives
+      // so every editor entry point (URL decode, CSPS import, roster) is WYSIWYG.
+      migrateLeakedClassMasteryPicks(state.build);
       state.activeSetupIndex = 0;
       state.activeSidebarTab = 'general';
       state.activeSetupTab = 'info';
@@ -558,9 +841,14 @@ export const {
   setVisibility,
   setDlc,
   addSetup,
+  duplicateSetup,
   renameSetup,
   deleteSetup,
   reorderSetups,
+  copySetupSection,
+  clearSetupSection,
+  bulkSetGear,
+  applyImportedBuild,
   setAttributes,
   setCurse,
   setMundusStone,

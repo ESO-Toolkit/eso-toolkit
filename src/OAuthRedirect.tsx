@@ -2,7 +2,7 @@ import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
 import Container from '@mui/material/Container';
 import Typography from '@mui/material/Typography';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { APP_AUTH_PORT_KEY } from './AppAuth';
@@ -14,6 +14,7 @@ import {
   startPKCEAuth,
   getIntendedDestination,
   clearIntendedDestination,
+  validateOAuthState,
 } from './features/auth/auth';
 import { useAuth } from './features/auth/AuthContext';
 import { KalpaAuthSuccess } from './features/auth/KalpaAuthSuccess';
@@ -28,11 +29,18 @@ export const OAuthRedirect: React.FC = () => {
   const [params] = useSearchParams();
   const navigate = useNavigate();
 
+  // validateOAuthState() consumes (clears) the stored state, so it can only
+  // succeed once. Under React StrictMode the effect runs twice in dev; we cache
+  // the first run's outcome here so the second invocation reuses it instead of
+  // failing on an already-consumed state.
+  const stateValidRef = useRef<boolean | null>(null);
+
   useEffect(() => {
     // Parse parameters directly from window.location since OAuth redirects
     // add query params to the full URL, not just the hash part
     const code = params.get('code');
     const error = params.get('error');
+    const stateParam = params.get('state');
     const verifier = getPkceCodeVerifier();
 
     if (error) {
@@ -47,6 +55,17 @@ export const OAuthRedirect: React.FC = () => {
 
     if (!verifier) {
       setError('Missing PKCE code verifier. Please restart the authentication process.');
+      return;
+    }
+
+    // CSRF protection: validate the returned state against the value we stored
+    // before redirecting. Validate at most once (StrictMode-safe) and reuse the
+    // cached result on the second dev invocation.
+    if (stateValidRef.current === null) {
+      stateValidRef.current = validateOAuthState(stateParam);
+    }
+    if (!stateValidRef.current) {
+      setError('OAuth state mismatch. Possible CSRF — please restart the authentication process.');
       return;
     }
 

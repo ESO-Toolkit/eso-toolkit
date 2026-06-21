@@ -14,6 +14,7 @@ import {
   createMockResourceChangeEvent,
 } from '../../test/utils/combatLogMockFactories';
 import { BuffLookupData } from '../../utils/BuffLookupUtils';
+import { convertCoordinatesWithBottomLeft } from '../../utils/coordinateUtils';
 
 import {
   calculateActorPositions,
@@ -280,6 +281,79 @@ describe('calculateActorPositions', () => {
       if (positionBefore && positionAfter) {
         expect(typeof positionBefore.isDead).toBe('boolean');
         expect(typeof positionAfter.isDead).toBe('boolean');
+      }
+    });
+
+    it('keeps a dead player at the last position recorded before death across frames', () => {
+      // Locks the hoisted dead-actor path: a player records two distinct positions, then dies. After
+      // death the player stays visible (players are not removed like NPCs) pinned at the LAST position
+      // strictly before the death timestamp — never the position sampled at/after death. This pins both
+      // the per-actor death-state hoist and the cached "last position before death" index across many
+      // sampled frames (the value must be identical regardless of how the lookup is computed).
+      const fight = createEnhancedMockFight({ startTime: 0, endTime: 10000 });
+      const events = createMockEvents();
+
+      const playerId = 101;
+      const enemyId = 202;
+      const deathTimestamp = 4000;
+
+      // Pre-death positions at distinct coordinates; the latest pre-death one is the expected pin.
+      const earlyPos = createEnhancedMockResources(1000, 1000, 0);
+      const latePrePos = createEnhancedMockResources(8000, 8000, 0);
+      // A position exactly AT the death timestamp must NOT be chosen (boundary is strictly `<`).
+      const atDeathPos = createEnhancedMockResources(2000, 2000, 0);
+
+      events.damage = [
+        createMockPositionalDamageEvent(
+          1000,
+          playerId,
+          enemyId,
+          earlyPos,
+          createEnhancedMockResources(),
+        ),
+        createMockPositionalDamageEvent(
+          3000,
+          playerId,
+          enemyId,
+          latePrePos,
+          createEnhancedMockResources(),
+        ),
+        createMockPositionalDamageEvent(
+          deathTimestamp,
+          playerId,
+          enemyId,
+          atDeathPos,
+          createEnhancedMockResources(),
+        ),
+      ];
+
+      events.death = [
+        createMockDeathEvent({
+          timestamp: deathTimestamp,
+          targetID: playerId,
+        }),
+      ];
+
+      const task: ActorPositionsCalculationTask = {
+        fight,
+        events,
+        playersById: createMockPlayersById(),
+        actorsById: createMockActorsById(),
+      };
+
+      const result = calculateActorPositions(task);
+
+      // The expected pinned world position = conversion of the latest STRICTLY-pre-death sample
+      // (8000,8000)@3000 — NOT the at-death sample (2000,2000)@4000.
+      const expectedPin = convertCoordinatesWithBottomLeft(8000, 8000);
+
+      // Across several frames after death, the dead player stays exactly at that pinned position.
+      for (const t of [4500, 6000, 8000, 9500]) {
+        const pos = getActorPositionAtClosestTimestamp(result, playerId, t);
+        expect(pos).not.toBeNull();
+        expect(pos?.isDead).toBe(true);
+        expect(pos?.position[0]).toBeCloseTo(expectedPin[0], 6);
+        expect(pos?.position[2]).toBeCloseTo(expectedPin[2], 6);
       }
     });
 

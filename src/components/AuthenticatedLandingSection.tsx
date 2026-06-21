@@ -1,5 +1,11 @@
-import { Link as LinkIcon, Assignment as AssignmentIcon } from '@mui/icons-material';
+import {
+  Link as LinkIcon,
+  Assignment as AssignmentIcon,
+  ChevronRight as ChevronRightIcon,
+  CalendarMonth as CalendarMonthIcon,
+} from '@mui/icons-material';
 import { Box, Button, TextField, Typography, Skeleton, useTheme } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import { format } from 'date-fns';
 import React, { useState } from 'react';
 
@@ -94,6 +100,17 @@ export const AuthenticatedLandingSection: React.FC = () => {
               height: { xs: '56px', sm: '64px' },
               padding: '0 1.5rem',
               border: 'none',
+              // The container handles the hover lift; neutralize the global
+              // MuiOutlinedInput hover styles so the input doesn't lift on its
+              // own or paint an opaque background over the container's top
+              // accent border.
+              '&:hover': {
+                backgroundColor: 'transparent !important',
+                transform: 'none',
+              },
+              '&.Mui-focused': {
+                backgroundColor: 'transparent',
+              },
               '& fieldset': {
                 border: 'none',
               },
@@ -333,102 +350,183 @@ export const AuthenticatedLandingSection: React.FC = () => {
         </Box>
       </Box>
 
-      {/* Mobile Layout - Simple Text Based */}
+      {/* Mobile Layout - Modern card-based */}
       <Box
         sx={{
           display: { xs: 'flex', sm: 'none' },
           flexDirection: 'column',
-          alignItems: 'center',
-          gap: 1,
-          maxWidth: '100%',
+          alignItems: 'stretch',
+          gap: 1.25,
           width: '100%',
-          mx: 'auto',
-          mt: 1,
+          mt: 1.5,
         }}
       >
         {/* Latest Report */}
         {latestReportLoading ? (
-          <Skeleton variant="text" width={190} height={22} sx={{ borderRadius: 1 }} />
+          <Skeleton variant="rounded" width="100%" height={72} sx={{ borderRadius: '14px' }} />
         ) : latestReport ? (
-          <Typography
-            variant="body2"
+          <Box
+            role="button"
+            tabIndex={0}
             onClick={() => navigate(`/report/${latestReport.code}`, { vtType: 'up' })}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                navigate(`/report/${latestReport.code}`, { vtType: 'up' });
+              }
+            }}
             sx={{
-              color:
-                theme.palette.mode === 'dark'
-                  ? 'rgba(255, 255, 255, 0.9)'
-                  : 'rgba(51, 65, 85, 0.9)',
-              fontSize: '0.875rem',
-              textAlign: 'center',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1.5,
+              width: '100%',
+              p: 1.5,
               cursor: 'pointer',
-              p: 1,
-              borderRadius: '6px',
-              transition: 'all 0.2s ease',
-              textDecoration: 'underline',
-              textDecorationColor: 'currentColor',
-              backgroundColor:
-                theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
-              '&:hover': {
-                textDecorationColor: 'currentColor',
-                backgroundColor:
-                  theme.palette.mode === 'dark'
-                    ? 'rgba(255, 255, 255, 0.08)'
-                    : 'rgba(0, 0, 0, 0.08)',
+              borderRadius: '14px',
+              background:
+                theme.palette.mode === 'dark'
+                  ? 'linear-gradient(180deg, rgba(15,23,42,0.66) 0%, rgba(3,7,18,0.66) 100%)'
+                  : theme.palette.background.paper,
+              backdropFilter: 'blur(10px)',
+              WebkitBackdropFilter: 'blur(10px)',
+              border: `1px solid ${theme.palette.divider}`,
+              boxShadow:
+                theme.palette.mode === 'dark'
+                  ? '0 8px 30px rgba(0, 0, 0, 0.25)'
+                  : '0 4px 12px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.03)',
+              transition: 'transform 0.2s ease, border-color 0.2s ease',
+              '&:active': {
+                transform: 'scale(0.98)',
+                borderColor: alpha('#38bdf8', 0.5),
+              },
+              '@media (prefers-reduced-motion: reduce)': {
+                transition: 'border-color 0.2s ease',
+                '&:active': { transform: 'none' },
               },
             }}
           >
-            <span style={{ fontWeight: 200 }}>{latestReport.title || 'Untitled'}</span> •{' '}
-            <span style={{ fontWeight: 700 }}>
-              📅 {format(new Date(latestReport.startTime), 'MMM dd')}
-            </span>
-          </Typography>
+            {/* Icon badge */}
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+                width: 44,
+                height: 44,
+                borderRadius: '12px',
+                background: 'linear-gradient(135deg, rgba(56,189,248,0.18), rgba(0,225,255,0.12))',
+                border: `1px solid ${alpha('#38bdf8', 0.25)}`,
+                color: '#38bdf8',
+              }}
+            >
+              <AssignmentIcon sx={{ fontSize: 22 }} />
+            </Box>
+
+            {/* Title + date */}
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'flex-start',
+                textAlign: 'left',
+                minWidth: 0,
+                flex: 1,
+              }}
+            >
+              <Typography
+                sx={{
+                  fontSize: '0.7rem',
+                  fontWeight: 600,
+                  letterSpacing: '0.6px',
+                  textTransform: 'uppercase',
+                  color:
+                    theme.palette.mode === 'dark'
+                      ? 'rgba(148, 163, 184, 0.9)'
+                      : 'rgba(100, 116, 139, 0.9)',
+                }}
+              >
+                Recent report
+              </Typography>
+              <Typography
+                noWrap
+                sx={{
+                  maxWidth: '100%',
+                  fontSize: '1rem',
+                  fontWeight: 700,
+                  color: theme.palette.text.primary,
+                  lineHeight: 1.3,
+                }}
+              >
+                {latestReport.title || 'Untitled'}
+              </Typography>
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 0.5,
+                  mt: 0.5,
+                  color: theme.palette.text.secondary,
+                }}
+              >
+                <CalendarMonthIcon sx={{ fontSize: 14 }} />
+                <Typography sx={{ fontSize: '0.8rem', fontWeight: 500, lineHeight: 1 }}>
+                  {format(new Date(latestReport.startTime), 'MMM dd, yyyy')}
+                </Typography>
+              </Box>
+            </Box>
+
+            {/* Chevron */}
+            <ChevronRightIcon
+              sx={{ flexShrink: 0, color: theme.palette.text.secondary, fontSize: 24 }}
+            />
+          </Box>
         ) : (
-          <Typography
-            variant="body2"
+          <Box
             sx={{
-              color:
-                theme.palette.mode === 'dark'
-                  ? 'rgba(255, 255, 255, 0.5)'
-                  : 'rgba(51, 65, 85, 0.5)',
-              fontSize: '0.875rem',
-              fontStyle: 'italic',
-              textAlign: 'center',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 1,
+              width: '100%',
+              p: 2,
+              borderRadius: '14px',
+              border: `1px dashed ${theme.palette.divider}`,
+              color: theme.palette.text.secondary,
             }}
           >
-            📝 No reports yet
-          </Typography>
+            <AssignmentIcon sx={{ fontSize: 18, opacity: 0.6 }} />
+            <Typography sx={{ fontSize: '0.875rem', fontStyle: 'italic' }}>
+              No reports yet
+            </Typography>
+          </Box>
         )}
 
-        {/* Simple divider */}
-        <Box
-          sx={{
-            width: '40%',
-            height: '1px',
-            background:
-              theme.palette.mode === 'dark' ? 'rgba(56, 189, 248, 0.2)' : 'rgba(14, 165, 233, 0.2)',
-          }}
-        />
-
-        {/* View my reports - simple text link */}
+        {/* View all reports */}
         <Button
-          variant="text"
-          size="small"
+          fullWidth
+          variant="outlined"
           onClick={() => navigate('/my-reports', { vtType: 'up' })}
-          startIcon={<AssignmentIcon sx={{ fontSize: 16 }} />}
+          startIcon={<AssignmentIcon sx={{ fontSize: 18 }} />}
           sx={{
-            px: 1,
+            minHeight: 46,
+            borderRadius: '12px',
             textTransform: 'none',
-            fontWeight: 400,
-            fontSize: '0.875rem',
-            color:
-              theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.7)' : 'rgba(51, 65, 85, 0.7)',
+            fontWeight: 600,
+            fontSize: '0.9rem',
+            color: theme.palette.text.primary,
+            borderColor: theme.palette.divider,
+            background:
+              theme.palette.mode === 'dark'
+                ? 'rgba(255, 255, 255, 0.02)'
+                : 'rgba(15, 23, 42, 0.01)',
+            transition: 'border-color 0.2s ease, background-color 0.2s ease',
             '&:hover': {
-              textDecoration: 'underline',
-              backgroundColor: 'transparent',
-              color:
-                theme.palette.mode === 'dark'
-                  ? 'rgba(255, 255, 255, 0.9)'
-                  : 'rgba(51, 65, 85, 0.9)',
+              borderColor: alpha('#38bdf8', 0.5),
+              background: alpha('#38bdf8', 0.06),
+            },
+            '&:active': {
+              background: alpha('#38bdf8', 0.1),
             },
           }}
         >
