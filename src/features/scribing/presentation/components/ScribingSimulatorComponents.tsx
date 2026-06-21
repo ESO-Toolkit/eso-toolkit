@@ -240,6 +240,13 @@ export const ScriptSlotPicker: React.FC<ScriptSlotPickerProps> = ({
   const [query, setQuery] = React.useState('');
   const accent = SLOT_COLORS[slot];
 
+  // Clear the search whenever the script list changes (e.g. a new grimoire). The
+  // search box is only rendered for long lists, so without this a stale query
+  // could keep filtering — and hiding valid options — after the box disappears.
+  React.useEffect(() => {
+    setQuery('');
+  }, [scripts]);
+
   const filtered = React.useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return scripts;
