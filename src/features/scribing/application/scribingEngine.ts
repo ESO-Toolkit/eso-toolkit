@@ -166,7 +166,11 @@ export function deriveScribedSkill(
   }
 
   const skillName = transform?.name ?? grimoire.name;
-  const abilityId = transform?.abilityIds?.[0] ?? grimoire.abilityIds?.[0];
+  // Only fall back to the grimoire's base ability id when NO focus transform
+  // applied. A transformed skill whose dataset entry has no matched ability id
+  // (the many `matchCount: 0` transforms) stays undefined — its icon falls back
+  // to the grimoire icon — rather than masquerading as the base ability.
+  const abilityId = transform ? transform.abilityIds?.[0] : grimoire.abilityIds?.[0];
 
   const effects: ScribedEffectLine[] = [];
   if (focus) effects.push(effectLine('focus', focus));

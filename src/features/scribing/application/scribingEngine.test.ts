@@ -137,6 +137,18 @@ describe('deriveScribedSkill', () => {
     expect(result?.warnings).toHaveLength(0);
   });
 
+  it('does not reuse the base ability id for a transform with no matched ability', () => {
+    // Elemental Explosion + Shock Damage ("Shocking Explosion") is a real focus
+    // but the dataset has no matched ability id (matchCount: 0). The result must
+    // not fall back to the grimoire's base ability id.
+    const result = deriveScribedSkill(data, {
+      grimoireId: 'elemental-explosion',
+      focusId: 'shock-damage',
+    });
+    expect(result?.skillName).toBe('Shocking Explosion');
+    expect(result?.abilityId).toBeUndefined();
+  });
+
   it('warns (but does not crash) on an incompatible focus', () => {
     const result = deriveScribedSkill(data, {
       grimoireId: 'traveling-knife',

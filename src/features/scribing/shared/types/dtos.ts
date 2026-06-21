@@ -123,8 +123,13 @@ export interface ScribingSimulationResponse {
     description: string;
     resourceType: ResourceType;
     cost: number;
-    castTime: number;
-    range: number;
+    /**
+     * Cast time (ms) / range (m) are omitted rather than fabricated: the
+     * simulator conveys cast behaviour and target via the descriptive
+     * `castType` / `targetType` strings instead of inexact numbers.
+     */
+    castTime?: number;
+    range?: number;
     duration?: number;
     damage?: {
       type: DamageType;

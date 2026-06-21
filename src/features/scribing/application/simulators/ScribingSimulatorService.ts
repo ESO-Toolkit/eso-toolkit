@@ -164,8 +164,7 @@ export class ScribingSimulatorService implements IScribingSimulatorService {
         description: sentences.join(' '),
         resourceType: result.resourceType,
         cost: result.cost,
-        castTime: 0,
-        range: 0,
+        // castTime/range intentionally omitted — conveyed via castType/targetType.
         effects: result.effects.map((e) => `${e.name}: ${e.effect}`),
         abilityId: result.abilityId,
         icon: result.icon,
@@ -194,8 +193,6 @@ export class ScribingSimulatorService implements IScribingSimulatorService {
       description,
       resourceType: 'magicka',
       cost: 0,
-      castTime: 0,
-      range: 0,
       effects: [],
     };
   }

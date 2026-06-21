@@ -282,8 +282,8 @@ export const ScribingSimulationResponseSchema = z.object({
     description: z.string(),
     resourceType: ResourceTypeSchema,
     cost: z.number().min(0),
-    castTime: z.number().min(0),
-    range: z.number().min(0),
+    castTime: z.number().min(0).optional(),
+    range: z.number().min(0).optional(),
     duration: z.number().min(0).optional(),
     damage: z
       .object({
