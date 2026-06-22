@@ -1,4 +1,4 @@
-import { useFrame, useThree } from '@react-three/fiber';
+import { useFrame } from '@react-three/fiber';
 import React, { useEffect, useRef } from 'react';
 
 import { RenderPriority } from '../constants/renderPriorities';
@@ -14,8 +14,13 @@ const AUTO_MAX_LEVEL = QUALITY_LEVEL.NO_SHADOWS;
 interface QualityGovernorProps {
   /** Live playhead — only frames where this advanced are measured as real playback workload. */
   timeRef: React.RefObject<number> | { current: number };
-  /** The perf-tier render-resolution cap (mirrors AdaptiveResolution) — used to know DPR's floor. */
-  dprCap: number;
+  /**
+   * AdaptiveResolution's exhaustion status (written by it): true once DPR is at its floor OR its
+   * effectiveness guard has fired. The governor only escalates effects when this is true, so
+   * resolution scaling always gets the first crack at a shortfall (no premature effect loss after a
+   * single DPR step).
+   */
+  dprExhaustedRef: React.RefObject<boolean>;
   /** True when RenderLoop painted the previous frame (idle vs rendered classification). */
   paintedRef: React.RefObject<boolean>;
   /** The governor's current quality level (owned by FightReplay3D so the scene + chip stay in sync). */
@@ -33,7 +38,6 @@ const SAMPLE_WINDOW = 110;
 const COOLDOWN_FRAMES = 180;
 const MAX_PLAUSIBLE_FRAME_MS = 250;
 const IDLE_WINDOW = 60;
-const DPR_EPSILON = 0.02;
 // Bootstrap only accepts mount-time deltas this fast or faster (~105Hz+) as a refresh sample — same
 // rationale as AdaptiveResolution: such a delta proves a >=~120Hz display, so targeting 120 is
 // meaningful, whereas a slower mount delta is ambiguous (true 60Hz vs load-contaminated).
@@ -49,17 +53,12 @@ const BOOTSTRAP_MAX_REFRESH_MS = 1000 / 120 + 1.2; // ≈ 9.5ms
  */
 export const QualityGovernor: React.FC<QualityGovernorProps> = ({
   timeRef,
-  dprCap,
+  dprExhaustedRef,
   paintedRef,
   level,
   onLevelChange,
   disabled = false,
 }) => {
-  const gl = useThree((s) => s.gl);
-
-  const deviceDpr = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1;
-  const maxDpr = Math.min(Math.max(1, deviceDpr), dprCap);
-
   const samplesRef = useRef<number[]>([]);
   // No initial cooldown — the SAMPLE_WINDOW itself enforces "sustained", so the first decision lands
   // after one window (~5–8s on a struggling device). The cooldown only spaces out SUBSEQUENT steps.
@@ -145,14 +144,11 @@ export const QualityGovernor: React.FC<QualityGovernorProps> = ({
 
     const displayInterval = estimateDisplayIntervalMs(idleSamplesRef.current);
     const targetMs = computeTargetMs(displayInterval);
-    // "DPR exhausted" = AdaptiveResolution has already pulled the pixel ratio BELOW full (resolution
-    // scaling has engaged) and we're STILL slow — so the remaining cost is pass-count / per-frame
-    // work that more resolution scaling won't fix (either DPR is at floor, or its effectiveness guard
-    // stopped it above floor because the bottleneck isn't pixel fill). Either way, trading an effect
-    // is the right next move. On a capable machine DPR stays at full → this is false → governor inert.
-    // Read the live ratio so we stay decoupled from AdaptiveResolution's internals; the governor's
-    // longer window + cooldown ensure DPR has had its chance first.
-    const dprExhausted = gl.getPixelRatio() < maxDpr - DPR_EPSILON;
+    // Escalate effects only once AdaptiveResolution reports DPR EXHAUSTED — at its floor, or its
+    // effectiveness guard has fired (lowering DPR stopped buying framerate because the bottleneck
+    // isn't pixel fill). This guarantees resolution scaling fully runs its course before we drop a
+    // visible effect. On a capable machine DPR never exhausts → this stays false → governor inert.
+    const dprExhausted = dprExhaustedRef.current === true;
 
     const next = decideNextQualityLevel(avg, levelRef.current, {
       maxLevel: AUTO_MAX_LEVEL,

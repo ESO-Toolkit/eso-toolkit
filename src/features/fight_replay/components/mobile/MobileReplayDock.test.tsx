@@ -49,7 +49,6 @@ type DockProps = React.ComponentProps<typeof MobileReplayDock>;
 
 function renderDock(overrides: Partial<DockProps> = {}): void {
   const props: DockProps = {
-    currentTime: 0,
     duration: 10000,
     isPlaying: false,
     playbackSpeed: 1,

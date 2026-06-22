@@ -24,6 +24,14 @@ interface AdaptiveResolutionProps {
   /** Refill the render budget + flag the shadow dirty so a restored-resolution frame actually
    *  repaints crisp while paused / after a cap change / re-assert (routed to markSceneDirty). */
   markDirty: () => void;
+  /**
+   * Optional status output the quality governor reads to know when DPR is EXHAUSTED — i.e. it has
+   * driven the pixel ratio to its floor, OR its effectiveness guard has fired (a downscale didn't
+   * buy framerate, so the bottleneck isn't pixel fill and lowering DPR further won't help). The
+   * governor only drops a visible effect once this is true, so resolution scaling always gets the
+   * first crack at a shortfall. Pure status write — does not affect any DPR decision.
+   */
+  exhaustedRef?: React.RefObject<boolean>;
 }
 
 // Rolling window of measured playback frame times before a decision is made (~0.6–0.7s at 120fps).
@@ -71,6 +79,7 @@ export const AdaptiveResolution: React.FC<AdaptiveResolutionProps> = ({
   dprCap,
   paintedRef,
   markDirty,
+  exhaustedRef,
 }) => {
   const setDpr = useThree((s) => s.setDpr);
   const gl = useThree((s) => s.gl);
@@ -92,6 +101,10 @@ export const AdaptiveResolution: React.FC<AdaptiveResolutionProps> = ({
   // declining when lowering resolution isn't actually buying framerate (CPU-bound) so we never blur
   // the scene to the floor for no gain. Cleared on any incline / cap change / pause-restore / resume.
   const lastDeclineAvgRef = useRef<number | null>(null);
+  // True once the effectiveness guard has fired (a downscale didn't buy framerate → not pixel-fill
+  // bound). Combined with "at floor" to publish `exhaustedRef`. Cleared whenever headroom returns
+  // (an incline) or the controller resets (cap change / pause-restore / resume).
+  const guardActiveRef = useRef(false);
   const lastTimeRef = useRef<number | null>(null);
   const samplesRef = useRef<number[]>([]);
   const cooldownRef = useRef(0);
@@ -120,6 +133,7 @@ export const AdaptiveResolution: React.FC<AdaptiveResolutionProps> = ({
       markDirty();
     }
     lastDeclineAvgRef.current = null;
+    guardActiveRef.current = false;
     samplesRef.current.length = 0;
     cooldownRef.current = 0; // re-evaluate immediately at the new tier (no stale cooldown stutter)
     playbackDprRef.current = null;
@@ -178,6 +192,12 @@ export const AdaptiveResolution: React.FC<AdaptiveResolutionProps> = ({
       markDirty();
     }
 
+    // Publish DPR exhaustion for the quality governor: at the floor, or the effectiveness guard has
+    // fired (lowering DPR isn't buying framerate). Cheap status write; never gates a DPR decision.
+    if (exhaustedRef) {
+      exhaustedRef.current = dprRef.current <= minDpr + DPR_EPSILON || guardActiveRef.current;
+    }
+
     const ms = delta * 1000;
     const t = timeRef.current;
     const advanced = t !== lastTimeRef.current;
@@ -198,6 +218,7 @@ export const AdaptiveResolution: React.FC<AdaptiveResolutionProps> = ({
         samplesRef.current.length = 0;
         cooldownRef.current = 0;
         lastDeclineAvgRef.current = null;
+        guardActiveRef.current = false;
       }
     } else {
       framesSinceAdvanceRef.current += 1;
@@ -212,6 +233,7 @@ export const AdaptiveResolution: React.FC<AdaptiveResolutionProps> = ({
         dprRef.current = maxDpr;
         setDpr(maxDpr);
         lastDeclineAvgRef.current = null;
+        guardActiveRef.current = false;
         samplesRef.current.length = 0;
         markDirty();
       }
@@ -265,6 +287,8 @@ export const AdaptiveResolution: React.FC<AdaptiveResolutionProps> = ({
       // The previous downscale didn't cut frame time by even ~6%, so pixel fill isn't the
       // bottleneck (CPU-bound). Hold the current resolution — blurring further wouldn't recover
       // framerate — and back off measuring for a while. An incline (headroom returning) resets this.
+      // DPR is now effectively exhausted (lowering it won't help) — tell the governor it may act.
+      guardActiveRef.current = true;
       cooldownRef.current = COOLDOWN_FRAMES * 3;
       samples.length = 0;
       return;
@@ -273,6 +297,9 @@ export const AdaptiveResolution: React.FC<AdaptiveResolutionProps> = ({
     dprRef.current = next;
     setDpr(next);
     lastDeclineAvgRef.current = isDecline ? avg : null;
+    // Reaching here means we made an effective change (an incline = headroom, or a decline that the
+    // guard didn't block), so resolution scaling is NOT exhausted.
+    guardActiveRef.current = false;
     samples.length = 0;
     cooldownRef.current = COOLDOWN_FRAMES;
   }, RenderPriority.EFFECTS);

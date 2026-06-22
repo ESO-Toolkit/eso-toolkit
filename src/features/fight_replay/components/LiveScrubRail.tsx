@@ -1,31 +1,42 @@
 /**
  * LiveScrubRail
  *
- * The scrub rail (timeline slider) wired so that NOTHING re-renders as playback advances.
+ * The scrub rail (timeline slider), isolated so playback does NOT re-render the surrounding transport.
  *
  * WHY THIS EXISTS (the low-power fps fix, confirmed by profiling): the transport used to receive the
- * playhead as a React state synced ~10Hz from the playback loop, re-rendering the whole transport
- * every tick. On a slow device a single frame can exceed that gate, so the sync fired EVERY frame.
- * Worse, the playhead lives on an MUI Slider, and re-rendering it re-runs emotion's style
- * serialization (`insertRule`) which invalidates the document stylesheet and forces a full style
- * recalc (`UpdateLayoutTree` — the single largest cost in a throttled trace). That style-recalc
- * storm, not the 3D scene, is what collapsed playback to single-digit fps.
+ * playhead as React state synced ~10Hz, re-rendering the WHOLE transport (trial mini-map, control
+ * row, buttons) every tick. On a slow device a single frame can exceed that gate, so it fired EVERY
+ * frame, and the dynamic-position emotion styles re-ran `insertRule` → a full document style recalc
+ * (`UpdateLayoutTree` — the single largest cost in a throttled trace). That style-recalc storm, not
+ * the 3D scene, collapsed playback to single-digit fps.
  *
- * The fix: the MUI Slider's `value` is a COMMITTED position that changes only on a seek or when
- * playback pauses — never per tick — so the Slider does not re-render during playback at all. The
- * live, smooth playhead is drawn by an rAF-driven DOM overlay (RailPlayhead, inside TimelineSlider)
- * that writes `style.left`/`style.width` directly, touching no React and no emotion. The Slider
- * stays mounted underneath for drag / click-seek / keyboard / a11y.
+ * The fix: the smooth VISIBLE playhead is drawn by an rAF-driven DOM overlay (RailPlayhead, inside
+ * TimelineSlider) that writes `style.left`/`style.width` directly — no React, no emotion — and the
+ * MUI thumb/track are hidden while it's live. The surrounding transport is memoized and no longer
+ * takes the playhead, so it never re-renders during playback. Only THIS isolated leaf resamples the
+ * MUI Slider's `value` from timeRef (capped to ~10Hz), which keeps the slider's semantic value —
+ * aria-valuenow, keyboard/Home/End seeks, the thumb shown on pause/drag — tracking the real playhead.
+ * The leaf's own styles are stable, so its resample is a cheap value update (no insertRule storm) and
+ * a fraction of the original whole-transport cost.
  *
  * @module LiveScrubRail
  */
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 
 import { useOptimizedTimelineScrubbing } from '../../../hooks/useOptimizedTimelineScrubbing';
 import { TimelineAnnotation } from '../../../types/timelineAnnotations';
+import { useSampledTime } from '../hooks/useSampledTime';
 
 import { TimelineSlider } from './TimelineSlider';
+
+// How often the MUI Slider's *semantic* value is resampled from timeRef. The smooth VISIBLE playhead
+// is the rAF DOM overlay (RailPlayhead) with the MUI thumb hidden during playback; this is only the
+// slider's React value, which must stay current so aria-valuenow, keyboard/Home/End seeks, and the
+// thumb shown on pause track the real playhead. Capped (not per-frame) so it can't spiral on a slow
+// device, and only this isolated leaf re-renders (its styles are stable → no emotion/insertRule
+// churn), so the cost is a fraction of the original per-tick whole-transport re-render.
+const SLIDER_SYNC_MS = 100;
 
 interface LiveScrubRailProps {
   /** High-frequency playhead (ms into the fight) — read by the DOM overlay, never re-renders this. */
@@ -65,43 +76,12 @@ const LiveScrubRailComponent: React.FC<LiveScrubRailProps> = ({
   onClearLoop,
   density,
 }) => {
-  // The MUI Slider's value. During PLAYBACK it is FROZEN (the rAF DOM overlay shows the live
-  // playhead), so the Slider never re-renders per tick. While PAUSED it tracks the live playhead so
-  // every seek path — the ±10s / skip-to-start/end buttons, keyboard arrows, marker jumps, the trial
-  // rail — moves the visible MUI thumb (those seeks update `timeRef` directly, not this component).
-  const [committedMs, setCommittedMs] = useState<number>(timeRef?.current ?? 0);
-  useEffect(() => {
-    // Frozen during playback: the overlay owns the live playhead and the Slider must not re-render.
-    if (isPlaying) return undefined;
-    // Paused: snap immediately (zero-flash on the pause edge), then sample so later seeks reflect.
-    setCommittedMs(timeRef?.current ?? 0);
-    let raf = 0;
-    let last = 0;
-    let lastVal = NaN;
-    const tick = (now: number): void => {
-      if (now - last >= 80) {
-        const t = timeRef?.current ?? 0;
-        if (t !== lastVal) {
-          lastVal = t;
-          last = now;
-          setCommittedMs(t);
-        }
-      }
-      raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, [isPlaying, timeRef]);
-
-  // A committed seek (slider drag commit, marker/rail click) updates the value instantly (no sample
-  // lag) and the host. During playback this path doesn't fire, so the Slider stays still.
-  const handleCommitTime = useCallback(
-    (time: number) => {
-      setCommittedMs(time);
-      onTimeChange(time);
-    },
-    [onTimeChange],
-  );
+  // The MUI Slider's value, resampled from the live timeRef at a capped rate (always — playing or
+  // paused). It is NOT the visible playhead during playback (that's the rAF overlay, thumb hidden),
+  // but it must stay live so the slider's aria-valuenow, keyboard/Home/End seeks, and the thumb shown
+  // on pause/drag operate from the real playhead rather than a frozen value. Seeks (±10s / skip /
+  // marker / rail / keyboard) update timeRef and are reflected here within SLIDER_SYNC_MS.
+  const liveMs = useSampledTime(timeRef, SLIDER_SYNC_MS);
 
   const {
     displayTime,
@@ -113,8 +93,8 @@ const LiveScrubRailComponent: React.FC<LiveScrubRailProps> = ({
     optimizedStep,
   } = useOptimizedTimelineScrubbing({
     duration,
-    currentTime: committedMs,
-    onTimeChange: handleCommitTime,
+    currentTime: liveMs,
+    onTimeChange,
     isPlaying,
     onPlayingChange,
     timeRef,

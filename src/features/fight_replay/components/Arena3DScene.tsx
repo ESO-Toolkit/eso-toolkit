@@ -608,6 +608,9 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
   // Whether the RenderLoop painted the most recent frame (see RenderLoopProps.paintedRef). Read by
   // AdaptiveResolution to classify frames (idle vs rendered).
   const paintedRef = useRef(false);
+  // DPR-exhaustion status: AdaptiveResolution writes it (true when DPR is at floor or its
+  // effectiveness guard fired); QualityGovernor reads it to gate effect escalation (DPR first).
+  const dprExhaustedRef = useRef(false);
   useEffect(() => {
     renderBudgetRef.current = RENDER_TAIL_FRAMES;
     shadowDirtyRef.current = true;
@@ -904,6 +907,7 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
         dprCap={dprCap}
         paintedRef={paintedRef}
         markDirty={markSceneDirty}
+        exhaustedRef={dprExhaustedRef}
       />
       {/* Adaptive quality governor — the tier BELOW resolution scaling. When a weak/throttled GPU
           stays below target after DPR is at floor, it drops effects (bloom → IBL/cosmic → shadows)
@@ -911,7 +915,7 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
       {onQualityLevelChange && (
         <QualityGovernor
           timeRef={timeRef}
-          dprCap={dprCap}
+          dprExhaustedRef={dprExhaustedRef}
           paintedRef={paintedRef}
           level={qualityAutoDisabled ? 0 : autoQualityLevel}
           onLevelChange={onQualityLevelChange}
