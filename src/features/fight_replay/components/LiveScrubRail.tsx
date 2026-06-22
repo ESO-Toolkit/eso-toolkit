@@ -20,7 +20,7 @@
  * @module LiveScrubRail
  */
 
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 import { useOptimizedTimelineScrubbing } from '../../../hooks/useOptimizedTimelineScrubbing';
 import { TimelineAnnotation } from '../../../types/timelineAnnotations';
@@ -65,23 +65,36 @@ const LiveScrubRailComponent: React.FC<LiveScrubRailProps> = ({
   onClearLoop,
   density,
 }) => {
-  // The MUI Slider's value: the last COMMITTED position. It moves only on a seek or when playback
-  // pauses (so the paused/grabbed thumb is exact) — NOT every tick — so the Slider does not
-  // re-render during playback. The live playhead is the rAF DOM overlay (livePlayhead below).
+  // The MUI Slider's value. During PLAYBACK it is FROZEN (the rAF DOM overlay shows the live
+  // playhead), so the Slider never re-renders per tick. While PAUSED it tracks the live playhead so
+  // every seek path — the ±10s / skip-to-start/end buttons, keyboard arrows, marker jumps, the trial
+  // rail — moves the visible MUI thumb (those seeks update `timeRef` directly, not this component).
   const [committedMs, setCommittedMs] = useState<number>(timeRef?.current ?? 0);
-
-  // Snap the committed value to the live playhead the instant playback pauses, so the MUI thumb
-  // (which becomes visible when livePlayhead turns off) sits exactly where the overlay left it.
-  const wasPlayingRef = useRef(isPlaying);
   useEffect(() => {
-    if (wasPlayingRef.current && !isPlaying) {
-      setCommittedMs(timeRef?.current ?? 0);
-    }
-    wasPlayingRef.current = isPlaying;
+    // Frozen during playback: the overlay owns the live playhead and the Slider must not re-render.
+    if (isPlaying) return undefined;
+    // Paused: snap immediately (zero-flash on the pause edge), then sample so later seeks reflect.
+    setCommittedMs(timeRef?.current ?? 0);
+    let raf = 0;
+    let last = 0;
+    let lastVal = NaN;
+    const tick = (now: number): void => {
+      if (now - last >= 80) {
+        const t = timeRef?.current ?? 0;
+        if (t !== lastVal) {
+          lastVal = t;
+          last = now;
+          setCommittedMs(t);
+        }
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
   }, [isPlaying, timeRef]);
 
-  // Any committed seek (slider drag commit, marker/rail click) updates both the committed value and
-  // the host. During playback this path doesn't fire, so the Slider stays still.
+  // A committed seek (slider drag commit, marker/rail click) updates the value instantly (no sample
+  // lag) and the host. During playback this path doesn't fire, so the Slider stays still.
   const handleCommitTime = useCallback(
     (time: number) => {
       setCommittedMs(time);
