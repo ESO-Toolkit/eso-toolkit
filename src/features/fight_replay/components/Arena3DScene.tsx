@@ -915,7 +915,11 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
           paintedRef={paintedRef}
           level={qualityAutoDisabled ? 0 : autoQualityLevel}
           onLevelChange={onQualityLevelChange}
-          disabled={qualityAutoDisabled}
+          // Stand down while the user forced full quality OR turned on manual performance mode:
+          // under manual mode every level renders the same (all effects already off), so the
+          // governor would ratchet autoQualityLevel up on no-op escalations and leak that latched
+          // level into effectiveLevel the moment manual mode is turned back off.
+          disabled={qualityAutoDisabled || performanceMode}
         />
       )}
       {/* Camera follower system */}

@@ -258,6 +258,12 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
   const [autoQualityLevel, setAutoQualityLevel] = useState(0);
   const [qualityAutoDisabled, setQualityAutoDisabled] = useState(false);
   const handleQualityLevelChange = useCallback((level: number) => setAutoQualityLevel(level), []);
+  // When manual performance mode turns on it forces all effects off, so the governor stands down
+  // (gated in Arena3DScene). Clear any level it had latched so that turning manual mode back off
+  // snaps straight to full quality (effectiveLevel = max(0, 0)) instead of inheriting a stale level.
+  useEffect(() => {
+    if (performanceMode) setAutoQualityLevel(0);
+  }, [performanceMode]);
   const handleForceFullQuality = useCallback(() => {
     setQualityAutoDisabled(true);
     setAutoQualityLevel(0);
@@ -1627,7 +1633,6 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
           }}
         >
           <MobileReplayDock
-            currentTime={currentTime}
             duration={selectedFight.endTime - selectedFight.startTime}
             isPlaying={isPlaying}
             playbackSpeed={playbackSpeed}

@@ -1455,7 +1455,9 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
       {/* Auto-quality chip — shown only when the governor has silently reduced effects to hold
           framerate on a weak/throttled device (not when the user chose performance mode themselves,
           and not in the inline preview). A tap forces full quality back and stands the governor down.
-          Sits just above the transport so it never overlaps the bottom controls. */}
+          Anchored bottom-CENTER just above the transport: the bottom-left lane is owned by the
+          locked-player stats panel (which grows upward) and the bottom-right by the control stack, so
+          center is the one bottom lane that never collides. */}
       {!mobilePreview &&
         onForceFullQuality &&
         !performanceMode &&
@@ -1470,7 +1472,8 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
               aria-label="Effects auto-reduced for performance. Tap to force full quality."
               sx={{
                 position: 'absolute',
-                left: 16,
+                left: '50%',
+                transform: 'translateX(-50%)',
                 bottom: (reservedInset ?? 80) + 12,
                 zIndex: 4,
                 cursor: 'pointer',

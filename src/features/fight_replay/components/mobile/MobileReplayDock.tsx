@@ -37,11 +37,12 @@ import type { ShapeKind, ShapeStyle } from '../../types/mapMarkers';
 import { ChapterList } from '../ChapterList';
 import type { TrialReplayNav } from '../FightReplay3D';
 import { LiveScrubRail } from '../LiveScrubRail';
+import { LiveTrialStrip } from '../LiveTrialStrip';
 import { PlaybackButtons } from '../PlaybackButtons';
 import { ShapeToolbar } from '../ShapeToolbar';
 import { ShareButton } from '../ShareButton';
 import { TimeReadout } from '../TimeReadout';
-import { TrialTimeline, type TrialTimelineSeekTarget } from '../TrialTimeline';
+import { type TrialTimelineSeekTarget } from '../TrialTimeline';
 
 import { MobileSheet } from './MobileSheet';
 
@@ -56,7 +57,6 @@ const formatTime = (ms: number): string => {
 
 interface MobileReplayDockProps {
   // Transport
-  currentTime: number;
   duration: number;
   isPlaying: boolean;
   playbackSpeed: number;
@@ -288,7 +288,6 @@ const MarkerActionButton: React.FC<{
 );
 
 const MobileReplayDockComponent: React.FC<MobileReplayDockProps> = ({
-  currentTime,
   duration,
   isPlaying,
   playbackSpeed,
@@ -605,13 +604,15 @@ const MobileReplayDockComponent: React.FC<MobileReplayDockProps> = ({
                 </Typography>
               )}
 
-              {/* Whole-run scrubber — the tall touch variant (≥44px interactive band). */}
+              {/* Whole-run scrubber — the tall touch variant (≥44px interactive band). Driven off
+                  timeRef (LiveTrialStrip) so it doesn't depend on the per-tick currentTime state —
+                  that lets the dock drop the currentTime prop and keep its React.memo during playback. */}
               <Box sx={{ mb: 1.5 }}>
-                <TrialTimeline
+                <LiveTrialStrip
+                  timeRef={timeRef}
                   timeline={trialNav.timeline}
                   currentFightId={trialNav.currentFightId}
                   currentFightStartTime={currentFightStartTime}
-                  currentLocalMs={currentTime}
                   onSeek={handleSheetTrialSeek}
                   variant="sheet"
                 />
@@ -751,9 +752,9 @@ const MobileReplayDockComponent: React.FC<MobileReplayDockProps> = ({
         )}
       </MobileSheet>
 
-      {/* Settings sheet — playback speed · display toggles · share. Body rendered only while open
-          (same reason as above: its ShareButton takes `currentTime`, so a mounted-but-closed sheet
-          reconciled at the playback tick). */}
+      {/* Settings sheet — playback speed · display toggles · share. Body rendered only while open so
+          a closed sheet doesn't reconcile its subtree. (ShareButton reads the live timeRef, not a
+          per-tick prop.) */}
       <MobileSheet
         open={sheet === 'settings'}
         title="Settings"

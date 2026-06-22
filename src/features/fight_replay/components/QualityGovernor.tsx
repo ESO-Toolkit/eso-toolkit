@@ -34,6 +34,10 @@ const COOLDOWN_FRAMES = 180;
 const MAX_PLAUSIBLE_FRAME_MS = 250;
 const IDLE_WINDOW = 60;
 const DPR_EPSILON = 0.02;
+// Bootstrap only accepts mount-time deltas this fast or faster (~105Hz+) as a refresh sample — same
+// rationale as AdaptiveResolution: such a delta proves a >=~120Hz display, so targeting 120 is
+// meaningful, whereas a slower mount delta is ambiguous (true 60Hz vs load-contaminated).
+const BOOTSTRAP_MAX_REFRESH_MS = 1000 / 120 + 1.2; // ≈ 9.5ms
 
 /**
  * Adaptive quality governor — the tier below AdaptiveResolution. Measures the real playback frame
@@ -77,6 +81,31 @@ export const QualityGovernor: React.FC<QualityGovernorProps> = ({
       window.removeEventListener('resize', reset);
       document.removeEventListener('visibilitychange', reset);
     };
+  }, []);
+
+  // Bootstrap the refresh estimate with a short mount rAF burst (mirrors AdaptiveResolution). The
+  // frame loop only learns the interval from UN-painted frames, but a session that goes straight into
+  // uninterrupted playback (forced-autoplay / continuous deep link) never produces one — paintedRef
+  // is true every frame while playing — so without a seed the governor would fall back to the lenient
+  // absolute 20ms (<50fps) bar and never engage on the 120/144Hz weak-GPU band (12–19ms) it targets.
+  // Only seed deltas at/below the 120fps cadence (a slower mount delta is ambiguous, see constant).
+  useEffect(() => {
+    let raf = 0;
+    let count = 0;
+    let last = performance.now();
+    const tick = (now: number): void => {
+      const d = now - last;
+      last = now;
+      if (d >= 3 && d <= BOOTSTRAP_MAX_REFRESH_MS) {
+        const idle = idleSamplesRef.current;
+        idle.push(d);
+        if (idle.length > IDLE_WINDOW) idle.shift();
+      }
+      count += 1;
+      if (count < 40) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
   }, []);
 
   useFrame((_state, delta) => {
