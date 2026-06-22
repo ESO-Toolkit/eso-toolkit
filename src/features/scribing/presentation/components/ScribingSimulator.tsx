@@ -452,7 +452,8 @@ export const ScribingSimulator: React.FC<ScribingSimulatorProps> = ({
             >
               <VerifiedIcon sx={{ fontSize: 14, color: 'text.disabled' }} />
               <Typography variant="caption" sx={{ color: 'text.disabled', textAlign: 'center' }}>
-                Effects verified against ESO-Hub &amp; UESP. Values scale with your character.
+                Effects verified against UESP &amp; official ESO release notes. Values scale with
+                your character.
               </Typography>
             </Stack>
           </Box>

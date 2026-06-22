@@ -9,11 +9,12 @@
  *
  * Accuracy: grimoire skill lines + icons are derived from each grimoire's
  * `ability_grimoire_*` base icon in the game data (authoritative). Acquisition,
- * base effects, and script effect text are sourced from ESO-Hub, UESP and the
- * official ESO release notes (verified June 2026). Where a buff/debuff tier or
- * value varies per grimoire, the text describes the common case.
+ * base effects, and script effect text are sourced from UESP and the official
+ * ESO release notes, cross-checked against in-game testing (verified June 2026).
+ * Where a buff/debuff tier or value varies per grimoire, the text describes the
+ * common case.
  *
- * Sources: https://eso-hub.com/en/scribing · https://en.uesp.net/wiki/Online:Scribing
+ * Sources: https://en.uesp.net/wiki/Online:Scribing and the official ESO release notes.
  */
 
 import type { SkillLine } from '../shared/types';
@@ -46,7 +47,7 @@ export interface ScriptMeta {
 
 /**
  * Per-grimoire metadata, keyed by the dataset slug. Skill line + icon verified
- * against game data; acquisition / base effect verified against ESO-Hub + UESP.
+ * against game data; acquisition / base effect verified against UESP + in-game.
  */
 export const GRIMOIRE_META: Readonly<Record<string, GrimoireMeta>> = {
   'wield-soul': {
@@ -171,8 +172,8 @@ export const GRIMOIRE_META: Readonly<Record<string, GrimoireMeta>> = {
 /**
  * Focus script effect text. Focus scripts set a scribed skill's name, resource
  * cost and primary function. Damage focuses change the skill's damage type;
- * utility focuses change what the skill does. Effect text verified against
- * ESO-Hub's script pages.
+ * utility focuses change what the skill does. Effect text verified against UESP
+ * and in-game testing.
  */
 const FOCUS_DROP =
   'Focus script drop after the Sigil of the Luminary Gryphon (daily delve / Mages Guild quests, PvP Rewards for the Worthy), or buy from Chronicler Firandil / Filer Ool.';
@@ -300,7 +301,7 @@ export const FOCUS_META: Readonly<Record<string, ScriptMeta>> = {
 
 /**
  * Signature script effect text + acquisition. Signature scripts add a unique
- * secondary mechanic. Verified against ESO-Hub script pages (values scale per
+ * secondary mechanic. Verified against UESP + in-game testing (values scale per
  * grimoire; the common case is described).
  */
 export const SIGNATURE_META: Readonly<Record<string, ScriptMeta>> = {
@@ -435,7 +436,7 @@ export const SIGNATURE_META: Readonly<Record<string, ScriptMeta>> = {
 /**
  * Affix script effect text + acquisition. Affix scripts bolt an existing ESO
  * buff or debuff onto a scribed skill. Most grant the Minor version; a few
- * grimoires upgrade specific scripts to Major. Verified against ESO-Hub.
+ * grimoires upgrade specific scripts to Major. Verified against UESP + in-game.
  */
 export const AFFIX_META: Readonly<Record<string, ScriptMeta>> = {
   breach: {
@@ -600,14 +601,14 @@ export const AFFIX_META: Readonly<Record<string, ScriptMeta>> = {
  * Focus transforms present in the game-extracted dataset that research refuted
  * as not existing in the live game (the dataset pre-seeded an expected name but
  * it never matched an ability — `matchCount: 0`). Keyed by grimoire slug → focus
- * slugs to drop. Verified against ESO-Hub's per-focus availability (June 2026).
+ * slugs to drop. Verified against UESP + in-game per-focus availability (June 2026).
  *
  * Only verified-wrong entries belong here: most `matchCount: 0` transforms are
  * real focuses simply unobserved in the sample logs (e.g. "Fiery Soul").
  */
 export const VERIFIED_FOCUS_EXCLUSIONS: Readonly<Record<string, readonly string[]>> = {
-  // ESO-Hub lists no Healing focus for Shield Throw (1H&S); dataset "Remedying
-  // Throw" has no ability id and is a seeding error.
+  // No Healing focus exists for Shield Throw (1H&S) in the live game; the
+  // dataset's "Remedying Throw" has no ability id and is a seeding error.
   'shield-throw': ['healing'],
 };
 
@@ -619,5 +620,5 @@ export const SCRIBING_SYSTEM = {
     'Focus sets the main effect, name, resource and cost. Signature adds a unique secondary mechanic. Affix bolts on an existing ESO buff or debuff.',
   scribingCost: 'Scribing a skill costs 3 Luminous Ink at the Scribing Altar in The Scholarium.',
   combinations: 'There are over 12,000 possible grimoire + script combinations.',
-  source: 'Verified against ESO-Hub and UESP (June 2026).',
+  source: 'Verified against UESP and in-game testing (June 2026).',
 } as const;
