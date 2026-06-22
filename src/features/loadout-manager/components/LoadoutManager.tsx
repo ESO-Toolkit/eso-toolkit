@@ -35,6 +35,8 @@ import {
   Snackbar,
   Stack,
   TextField,
+  ToggleButton,
+  ToggleButtonGroup,
   Tooltip,
   Typography,
   useMediaQuery,
@@ -47,6 +49,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { WorkInProgressDisclaimer } from '@/components/WorkInProgressDisclaimer';
 import { useDropdownMenuProps } from '@/hooks/useDropdownMenuDirection';
+import { selectSavedLoadouts } from '@/store/saved_loadouts';
 import type { RootState } from '@/store/storeWithHistory';
 
 import { preloadChampionPointData } from '../data/championPointData';
@@ -89,6 +92,7 @@ import {
 
 import { CharacterSelector } from './CharacterSelector';
 import { ExportDialog } from './ExportDialog';
+import { LoadoutLibraryPanel } from './LoadoutLibraryPanel';
 import { SetupEditor } from './SetupEditor';
 import { SetupList } from './SetupList';
 
@@ -146,7 +150,9 @@ export const LoadoutManager: React.FC = () => {
     currentTrial ? selectTrialPages(state, currentTrial) : [],
   );
   const currentCharacter = useSelector((state: RootState) => state.loadout.currentCharacter);
+  const savedLoadoutCount = useSelector(selectSavedLoadouts).length;
 
+  const [view, setView] = useState<'setups' | 'library'>('setups');
   const [selectedSetupIndex, setSelectedSetupIndex] = useState<number | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -282,6 +288,21 @@ export const LoadoutManager: React.FC = () => {
       setDrawerOpen(true);
     }
     showSnackbar('Blank setup added.', 'success');
+  };
+
+  const handleLoadFromLibrary = (setup: LoadoutSetup): void => {
+    if (!ensureTrialSelected()) {
+      return;
+    }
+    // Clone so future edits to the working setup don't mutate the library entry.
+    const cloned: LoadoutSetup = JSON.parse(JSON.stringify(setup));
+    dispatch(addSetup({ trialId: currentTrial!, pageIndex: currentPage, setup: cloned }));
+    setView('setups');
+    setSelectedSetupIndex(setups.length);
+    if (isMdDown) {
+      setDrawerOpen(true);
+    }
+    showSnackbar(`Loaded "${setup.name}" into the current page.`, 'success');
   };
 
   const handleDuplicateSetup = (index: number): void => {
@@ -888,71 +909,93 @@ export const LoadoutManager: React.FC = () => {
           </Stack>
         </Paper>
 
-        {/* ── Main content: list + editor ───────────────────── */}
-        <Stack direction={{ xs: 'column', lg: 'row' }} spacing={2} sx={{ alignItems: 'stretch' }}>
-          {/* Setup list — narrower on desktop */}
-          <Box
-            sx={{
-              width: { xs: '100%', lg: '38%' },
-              flexShrink: 0,
-              minWidth: 0,
-              maxHeight: { lg: 'calc(100vh - 280px)' },
-              display: 'flex',
-            }}
-          >
-            <SetupList
-              setups={setups}
-              selectedIndex={selectedSetupIndex}
-              filterText={searchTerm}
-              onOpenDetails={handleOpenDetails}
-              onDuplicateSetup={handleDuplicateSetup}
-              onDeleteSetup={handleDeleteSetup}
-              onCopySetup={handleCopySetup}
-            />
-          </Box>
+        {/* ── View toggle: working setups vs saved library ───── */}
+        <ToggleButtonGroup
+          value={view}
+          exclusive
+          size="small"
+          onChange={(_event, next: 'setups' | 'library' | null) => {
+            if (next) setView(next);
+          }}
+          sx={{ alignSelf: 'flex-start' }}
+        >
+          <ToggleButton value="setups" sx={{ textTransform: 'none', px: 2 }}>
+            Setups
+          </ToggleButton>
+          <ToggleButton value="library" sx={{ textTransform: 'none', px: 2 }}>
+            Library{savedLoadoutCount > 0 ? ` (${savedLoadoutCount})` : ''}
+          </ToggleButton>
+        </ToggleButtonGroup>
 
-          {/* Editor — wider on desktop */}
-          {!isMdDown && (
-            <Box sx={{ flex: 1, minWidth: 0 }}>
-              {selectedSetup ? (
-                <SetupEditor
-                  setup={selectedSetup}
-                  setupIndex={selectedSetupIndex ?? 0}
-                  trialId={currentTrial ?? 'GEN'}
-                  pageIndex={currentPage}
-                  variant="page"
-                />
-              ) : (
-                <Paper
-                  elevation={0}
-                  sx={{
-                    height: '100%',
-                    minHeight: 200,
-                    borderRadius: 2,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    textAlign: 'center',
-                    px: 3,
-                    py: 4,
-                    color: 'text.secondary',
-                    backgroundColor: isDarkMode ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)',
-                    border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
-                  }}
-                >
-                  <Stack spacing={1} sx={{ alignItems: 'center' }}>
-                    <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                      Select a setup
-                    </Typography>
-                    <Typography variant="body2">
-                      Choose a loadout from the list to review gear, skills, and CP.
-                    </Typography>
-                  </Stack>
-                </Paper>
-              )}
+        {view === 'library' ? (
+          <LoadoutLibraryPanel onLoad={handleLoadFromLibrary} />
+        ) : (
+          /* ── Main content: list + editor ───────────────────── */
+          <Stack direction={{ xs: 'column', lg: 'row' }} spacing={2} sx={{ alignItems: 'stretch' }}>
+            {/* Setup list — narrower on desktop */}
+            <Box
+              sx={{
+                width: { xs: '100%', lg: '38%' },
+                flexShrink: 0,
+                minWidth: 0,
+                maxHeight: { lg: 'calc(100vh - 280px)' },
+                display: 'flex',
+              }}
+            >
+              <SetupList
+                setups={setups}
+                selectedIndex={selectedSetupIndex}
+                filterText={searchTerm}
+                onOpenDetails={handleOpenDetails}
+                onDuplicateSetup={handleDuplicateSetup}
+                onDeleteSetup={handleDeleteSetup}
+                onCopySetup={handleCopySetup}
+              />
             </Box>
-          )}
-        </Stack>
+
+            {/* Editor — wider on desktop */}
+            {!isMdDown && (
+              <Box sx={{ flex: 1, minWidth: 0 }}>
+                {selectedSetup ? (
+                  <SetupEditor
+                    setup={selectedSetup}
+                    setupIndex={selectedSetupIndex ?? 0}
+                    trialId={currentTrial ?? 'GEN'}
+                    pageIndex={currentPage}
+                    variant="page"
+                  />
+                ) : (
+                  <Paper
+                    elevation={0}
+                    sx={{
+                      height: '100%',
+                      minHeight: 200,
+                      borderRadius: 2,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      textAlign: 'center',
+                      px: 3,
+                      py: 4,
+                      color: 'text.secondary',
+                      backgroundColor: isDarkMode ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)',
+                      border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
+                    }}
+                  >
+                    <Stack spacing={1} sx={{ alignItems: 'center' }}>
+                      <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                        Select a setup
+                      </Typography>
+                      <Typography variant="body2">
+                        Choose a loadout from the list to review gear, skills, and CP.
+                      </Typography>
+                    </Stack>
+                  </Paper>
+                )}
+              </Box>
+            )}
+          </Stack>
+        )}
       </Stack>
 
       {/* Hidden file input */}
