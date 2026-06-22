@@ -129,8 +129,10 @@ export function decideNextQualityLevel(
 
   // Recover: meeting the target framerate at the current quality, and something to restore. Not gated
   // on DPR (we always prefer to give quality back when we can; if it was premature the escalate path
-  // re-drops it). The fallback path (refresh unknown) keeps its own dead zone below the 20ms decline.
-  const inclineThreshold = displayKnown ? cfg.targetMs * incline : fallbackDeclineMs * 0.6;
+  // re-drops it). The fallback path (refresh unknown) recovers at 0.85× the 20ms decline (≈17ms) so a
+  // vsync-limited 60Hz device — which floors at ~16.7ms and can't reach a tighter threshold — still
+  // climbs back out of a degraded state; mirrors AdaptiveResolution's fallback incline.
+  const inclineThreshold = displayKnown ? cfg.targetMs * incline : fallbackDeclineMs * 0.85;
   if (avgFrameMs < inclineThreshold && currentLevel > 0) {
     return currentLevel - 1;
   }

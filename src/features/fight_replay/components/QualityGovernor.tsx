@@ -117,7 +117,15 @@ export const QualityGovernor: React.FC<QualityGovernorProps> = ({
   }, []);
 
   useFrame((_state, delta) => {
-    if (disabled) return;
+    if (disabled) {
+      // Stand down AND drop any pending pause-restore: when the user enters manual performance mode
+      // or forces full quality, the parent resets autoQualityLevel — a level we had latched in
+      // playbackLevelRef must not be reapplied on the next advancing frame and contradict that reset.
+      playbackLevelRef.current = null;
+      framesSinceAdvanceRef.current = 0;
+      samplesRef.current.length = 0;
+      return;
+    }
 
     const ms = delta * 1000;
     const t = timeRef.current;

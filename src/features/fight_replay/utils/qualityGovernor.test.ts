@@ -89,10 +89,17 @@ describe('decideNextQualityLevel', () => {
     const noRefresh = { targetMs: TARGET, dprExhausted: true };
     // 30ms > 20ms fallback → escalate.
     expect(decideNextQualityLevel(30, 0, noRefresh)).toBe(1);
-    // 16ms < 20ms but > fallback*incline (12ms) → dead zone, hold.
-    expect(decideNextQualityLevel(16, 1, noRefresh)).toBeNull();
-    // 10ms < 12ms → recover.
+    // 18ms < 20ms decline but > 17ms recover → dead zone, hold.
+    expect(decideNextQualityLevel(18, 1, noRefresh)).toBeNull();
+    // 10ms ≪ 17ms → recover.
     expect(decideNextQualityLevel(10, 1, noRefresh)).toBe(0);
+  });
+
+  it('recovers a vsync-limited 60Hz device even when the refresh is unknown (~16.7ms < ~17ms)', () => {
+    // A 60Hz panel floors at ~16.7ms; the unknown-refresh recover threshold (0.85 × 20ms = 17ms)
+    // must be reachable there, or effects would stay stuck off on smooth 60Hz playback.
+    const noRefresh = { targetMs: TARGET, dprExhausted: true };
+    expect(decideNextQualityLevel(16.7, 2, noRefresh)).toBe(1);
   });
 
   it('ignores non-finite / non-positive averages', () => {
