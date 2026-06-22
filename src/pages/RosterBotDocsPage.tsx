@@ -33,7 +33,6 @@ import {
   AccordionSummary,
   Box,
   Button,
-  Chip,
   Container,
   Divider,
   Stack,
@@ -295,7 +294,11 @@ export const RosterBotDocsPage: React.FC = () => {
     px: 1,
     py: 0.4,
     display: 'inline-block',
-    whiteSpace: 'nowrap',
+    maxWidth: '100%',
+    // Long slash commands (e.g. /roster config set-default-category) must wrap
+    // rather than force horizontal overflow on narrow mobile viewports.
+    whiteSpace: 'normal',
+    overflowWrap: 'anywhere',
   } as const;
 
   return (
@@ -369,11 +372,16 @@ export const RosterBotDocsPage: React.FC = () => {
               textTransform: 'none',
               px: 3,
               py: 1,
+              // Force white text + shadow so the label keeps AA contrast on the
+              // blurple gradient regardless of the active theme's contrastText.
+              color: '#fff',
+              textShadow: '0 1px 2px rgba(0,0,0,0.35)',
               background: `linear-gradient(135deg, ${DISCORD_BLURPLE} 0%, ${DISCORD_BLURPLE_DARK} 100%)`,
-              boxShadow: '0 4px 16px rgba(88,101,242,0.3)',
+              boxShadow: '0 4px 16px rgba(88,101,242,0.35)',
               '&:hover': {
-                background: `linear-gradient(135deg, #6973F5 0%, ${DISCORD_BLURPLE} 100%)`,
-                boxShadow: '0 6px 20px rgba(88,101,242,0.4)',
+                color: '#fff',
+                background: `linear-gradient(135deg, ${DISCORD_BLURPLE_DARK} 0%, #3a44a8 100%)`,
+                boxShadow: '0 6px 22px rgba(88,101,242,0.5)',
               },
             }}
           >
@@ -574,25 +582,27 @@ export const RosterBotDocsPage: React.FC = () => {
                   <Stack
                     direction="row"
                     spacing={1}
-                    sx={{ alignItems: 'center', justifyContent: 'space-between', mb: 0.75 }}
+                    sx={{ alignItems: 'flex-start', justifyContent: 'space-between', mb: 0.5 }}
                   >
-                    <Box component="code" sx={{ ...codeChipSx, fontSize: '1rem' }}>
+                    <Box
+                      component="code"
+                      sx={{ ...codeChipSx, fontSize: '1rem', minWidth: 0, flexShrink: 1 }}
+                    >
                       {cmd.command}
                     </Box>
-                    <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
-                      <Chip
-                        label={cmd.access}
-                        size="small"
-                        sx={{
-                          height: 22,
-                          fontSize: '0.68rem',
-                          fontWeight: 600,
-                          color: 'text.secondary',
-                          background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)',
-                        }}
-                      />
+                    <Box sx={{ flexShrink: 0 }}>
                       <CopyButton value={cmd.command} />
-                    </Stack>
+                    </Box>
+                  </Stack>
+                  <Stack
+                    direction="row"
+                    spacing={0.5}
+                    sx={{ alignItems: 'center', mb: 0.75, color: 'text.secondary' }}
+                  >
+                    <Shield sx={{ fontSize: 14, flexShrink: 0 }} />
+                    <Typography variant="caption" sx={{ fontWeight: 600, lineHeight: 1.3 }}>
+                      {cmd.access}
+                    </Typography>
                   </Stack>
                   <Typography variant="body2" sx={{ color: 'text.secondary', lineHeight: 1.55 }}>
                     {cmd.summary}
@@ -601,7 +611,10 @@ export const RosterBotDocsPage: React.FC = () => {
                     <Box component="ul" sx={{ mt: 1, mb: 0, pl: 2.5 }}>
                       {cmd.args.map((arg) => (
                         <Box component="li" key={arg.name} sx={{ mb: 0.25 }}>
-                          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                          <Typography
+                            variant="caption"
+                            sx={{ color: 'text.secondary', overflowWrap: 'anywhere' }}
+                          >
                             <Box
                               component="code"
                               sx={{
@@ -830,9 +843,14 @@ export const RosterBotDocsPage: React.FC = () => {
               fontWeight: 700,
               textTransform: 'none',
               px: 3,
+              color: '#fff',
+              textShadow: '0 1px 2px rgba(0,0,0,0.35)',
               background: `linear-gradient(135deg, ${DISCORD_BLURPLE} 0%, ${DISCORD_BLURPLE_DARK} 100%)`,
+              boxShadow: '0 4px 16px rgba(88,101,242,0.35)',
               '&:hover': {
-                background: `linear-gradient(135deg, #6973F5 0%, ${DISCORD_BLURPLE} 100%)`,
+                color: '#fff',
+                background: `linear-gradient(135deg, ${DISCORD_BLURPLE_DARK} 0%, #3a44a8 100%)`,
+                boxShadow: '0 6px 22px rgba(88,101,242,0.5)',
               },
             }}
           >
