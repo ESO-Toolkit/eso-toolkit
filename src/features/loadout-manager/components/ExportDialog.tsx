@@ -291,7 +291,7 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({ open, onClose }) => 
           </FormControl>
 
           {exportFormat === 'wizard' ? (
-            <WizardWardrobeTransferPanel setups={setups} />
+            <WizardWardrobeTransferPanel setups={setups} disabled={exportBlocked} />
           ) : (
             <>
               {/* Preview */}

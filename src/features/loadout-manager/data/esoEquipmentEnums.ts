@@ -13,9 +13,12 @@
  *  - name set:           esoui/esoui `ESOUIDocumentation.txt` (API 101050)
  *  - transfer format:    nicokimmel/wizardswardrobe `WizardsWardrobeTransfer.lua`
  *
- * traitType is a SOFT field for WW import (it prefers the requested trait, else
- * any matching item), so an unmapped trait safely degrades to 0 ("any"). equipType
- * and setId are HARD-matched, so callers must omit a slot rather than emit a guess.
+ * traitType, equipType, and setId are all HARD-matched on import: WW's
+ * `WWT.SearchItem` returns nil (leaving the slot unequipped) when any of them is
+ * 0. A non-zero traitType is a *preference* — WW falls back to any matching
+ * set+slot item if the player owns none with that trait — but 0 is rejected
+ * outright. So an unmapped/missing trait resolves to 0 here and the WW Transfer
+ * encoder must OMIT that slot rather than emit a tuple WW would silently skip.
  */
 
 /** `EQUIP_TYPE_*` — the value returned by `GetItemLinkEquipType(link)`. */
@@ -155,7 +158,8 @@ export function slotTraitCategory(slot: number): GearTraitCategory {
  * kebab-case trait id (as stored in `GearPiece.trait`, matching the ids in
  * build-editor `gear-traits-enchants.ts`) → `ITEM_TRAIT_TYPE` int, keyed by gear
  * category. `infused`/`training`/`nirnhoned` differ across categories, hence the
- * nesting. Unmapped ids resolve to 0 ("any trait") — safe for WW import.
+ * nesting. Unmapped/missing ids resolve to 0; since WW rejects a trait-0 tuple,
+ * the encoder must treat a 0 result as "unresolved" and omit the slot.
  */
 export const TRAIT_ID_TO_TRAIT_TYPE: Record<GearTraitCategory, Record<string, number>> = {
   armor: {
@@ -193,7 +197,7 @@ export const TRAIT_ID_TO_TRAIT_TYPE: Record<GearTraitCategory, Record<string, nu
   },
 };
 
-/** Resolve a kebab-case trait id to its `ITEM_TRAIT_TYPE` int (0 = none/any). */
+/** Resolve a kebab-case trait id to its `ITEM_TRAIT_TYPE` int (0 = none/unmapped — WW rejects it). */
 export function traitIdToTraitType(
   category: GearTraitCategory,
   traitId: string | undefined,

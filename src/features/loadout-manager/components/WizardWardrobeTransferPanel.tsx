@@ -16,7 +16,6 @@ import {
   Paper,
   Stack,
   TextField,
-  Tooltip,
   Typography,
   useTheme,
 } from '@mui/material';
@@ -33,6 +32,12 @@ import {
 
 interface WizardWardrobeTransferPanelProps {
   setups: LoadoutSetup[];
+  /**
+   * When true, gear validation has blocking errors, so import codes are withheld
+   * (the parent dialog shows the specific errors). Mirrors the JSON/AlphaGear
+   * export gate so an invalid setup can't be copied out of the Wizard path.
+   */
+  disabled?: boolean;
 }
 
 const SLOT_NAMES: Record<number, string> = {
@@ -54,6 +59,7 @@ const SLOT_NAMES: Record<number, string> = {
 
 export const WizardWardrobeTransferPanel: React.FC<WizardWardrobeTransferPanelProps> = ({
   setups,
+  disabled = false,
 }) => {
   const logger = useLogger('WizardWardrobeTransferPanel');
   const theme = useTheme();
@@ -84,6 +90,14 @@ export const WizardWardrobeTransferPanel: React.FC<WizardWardrobeTransferPanelPr
     );
   }
 
+  if (disabled) {
+    return (
+      <Alert severity="error" sx={{ borderRadius: '12px' }}>
+        Resolve the gear slot issues above to generate Wizard&apos;s Wardrobe import codes.
+      </Alert>
+    );
+  }
+
   return (
     <Stack spacing={2}>
       <Alert severity="info" sx={{ borderRadius: '12px' }}>
@@ -97,9 +111,6 @@ export const WizardWardrobeTransferPanel: React.FC<WizardWardrobeTransferPanelPr
 
       {encoded.map((result, index) => {
         const setupName = setups[index]?.name?.trim() || `Setup ${index + 1}`;
-        const unresolvedTitle = result.unresolvedSlots
-          .map((u) => `${SLOT_NAMES[u.slot] ?? `Slot ${u.slot}`}: ${u.reason}`)
-          .join('\n');
         return (
           <Paper
             key={index}
@@ -160,25 +171,23 @@ export const WizardWardrobeTransferPanel: React.FC<WizardWardrobeTransferPanelPr
             )}
 
             {result.unresolvedSlots.length > 0 && (
-              <Tooltip title={<Box sx={{ whiteSpace: 'pre-line' }}>{unresolvedTitle}</Box>}>
-                <Stack
-                  direction="row"
-                  spacing={0.5}
-                  sx={{
-                    mt: 1,
-                    color: 'warning.main',
-                    cursor: 'help',
-                    width: 'fit-content',
-                    alignItems: 'center',
-                  }}
-                >
-                  <WarningAmberOutlined fontSize="small" />
-                  <Typography variant="caption">
-                    {result.unresolvedSlots.length} slot
-                    {result.unresolvedSlots.length === 1 ? '' : 's'} to set manually in-game
-                  </Typography>
-                </Stack>
-              </Tooltip>
+              <Alert
+                severity="warning"
+                icon={<WarningAmberOutlined fontSize="small" />}
+                sx={{ mt: 1, borderRadius: '10px', py: 0.5 }}
+              >
+                <Typography variant="caption" sx={{ fontWeight: 600, display: 'block' }}>
+                  {result.unresolvedSlots.length} slot
+                  {result.unresolvedSlots.length === 1 ? '' : 's'} to set manually in-game:
+                </Typography>
+                <Box component="ul" sx={{ pl: 2, my: 0.5 }}>
+                  {result.unresolvedSlots.map((u) => (
+                    <Typography key={u.slot} component="li" variant="caption">
+                      <strong>{SLOT_NAMES[u.slot] ?? `Slot ${u.slot}`}:</strong> {u.reason}
+                    </Typography>
+                  ))}
+                </Box>
+              </Alert>
             )}
           </Paper>
         );

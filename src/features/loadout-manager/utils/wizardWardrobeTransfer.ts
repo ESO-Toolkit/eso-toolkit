@@ -18,10 +18,14 @@
  *
  * Gear is encoded as the abstract triple `[equipType, setId, traitType]`, NOT an
  * item instance — on import WW equips an item the player already owns that matches
- * the set + slot (preferring the requested trait). Because equipType and setId are
- * HARD-matched in-game, this generator OMITS any slot it cannot resolve with
- * confidence (rather than emit a wrong/zero value that would silently drop the
- * slot). Weapon slots are exported too: the weapon's equipType (ONE_HAND /
+ * the set + slot (preferring the requested trait, else any item of that set+slot).
+ * All three fields are effectively HARD-matched: `WWT.SearchItem` bails out and
+ * leaves the slot unequipped when equipType, setId, OR traitType is 0. So this
+ * generator OMITS any slot it cannot resolve to a full, non-zero triple (rather
+ * than emit a value that would silently drop the slot in-game) and reports it in
+ * `unresolvedSlots`. In particular, a gear piece with no recorded / unrecognized
+ * trait is omitted — WW would skip a trait-0 tuple entirely.
+ * Weapon slots are exported too: the weapon's equipType (ONE_HAND /
  * TWO_HAND / OFF_HAND) is derived from the item's resolved weapon type, and a slot
  * is only omitted when that type can't be pinned down (e.g. a generic set itemId
  * with no slot-specific weapon metadata). Omitted slots are reported in
@@ -203,7 +207,21 @@ export function loadoutSetupToWWTransfer(setup: LoadoutSetup): WWTransferResult 
       continue;
     }
 
+    // traitType is REQUIRED by WW's importer: `WWT.SearchItem` returns nil (the
+    // slot is left unequipped) when prefTraitType is 0. A non-zero value is a
+    // preference — WW falls back to any matching set+slot item if the player owns
+    // none with that trait — but 0 is rejected outright. So a piece with no
+    // recorded / unrecognized trait can't be encoded; omit it and tell the user.
     const traitType = traitIdToTraitType(slotTraitCategory(slot), piece.trait);
+    if (traitType === 0) {
+      unresolvedSlots.push({
+        slot,
+        reason: piece.trait
+          ? `Trait “${piece.trait}” isn’t recognized — set this slot’s trait manually in Wizard’s Wardrobe.`
+          : 'No trait recorded — Wizard’s Wardrobe needs a trait to equip this item. Pick a trait, or set this slot manually in-game.',
+      });
+      continue;
+    }
     gear[String(slot)] = [equipType, setId, traitType];
   }
 

@@ -26,6 +26,8 @@ jest.mock('../../data/itemIdMap', () => ({
           type: 'Gear',
           slot: 'weapon',
         },
+        // an armor (head) piece in a known set — exercises the non-weapon path
+        301: { name: 'Test Set Head', setName: 'Test Set', type: 'Gear', slot: 'head' },
         // generic set id with no slot field — collides with unrelated weapon icons
         685: { name: "Bloodthorn's Touch Gear", setName: "Bloodthorn's Touch", type: 'Gear' },
       }) as Record<number, unknown>
@@ -102,23 +104,31 @@ describe('weaponLabelToEquipType', () => {
 });
 
 describe('loadoutSetupToWWTransfer — weapon slots', () => {
-  it('encodes the weapon equipType derived from the item type', () => {
+  it('encodes the weapon equipType derived from the item type (with a valid trait)', () => {
     const result = loadoutSetupToWWTransfer(
       makeSetup({
         gear: {
-          4: { id: 201, trait: 'sharpened' }, // main hand → Sword → ONE_HAND
-          5: { id: 203 }, // off hand → Shield → OFF_HAND
-          20: { id: 202 }, // backup main → Greatsword → TWO_HAND
-          21: { id: 204 }, // backup off → Lightning Staff → TWO_HAND
+          4: { id: 201, trait: 'sharpened' }, // main hand → Sword → ONE_HAND, sharpened=7
+          5: { id: 203, trait: 'infused' }, // off hand → Shield → OFF_HAND, weapon infused=4
+          20: { id: 202, trait: 'precise' }, // backup main → Greatsword → TWO_HAND, precise=3
+          21: { id: 204, trait: 'charged' }, // backup off → Lightning Staff → TWO_HAND, charged=2
         },
       }),
     );
 
-    expect(result.data.gear['4']).toEqual([EQUIP_TYPE.ONE_HAND, 999, 7]); // sharpened (weapon) = 7
-    expect(result.data.gear['5']).toEqual([EQUIP_TYPE.OFF_HAND, 999, 0]);
-    expect(result.data.gear['20']).toEqual([EQUIP_TYPE.TWO_HAND, 999, 0]);
-    expect(result.data.gear['21']).toEqual([EQUIP_TYPE.TWO_HAND, 999, 0]);
+    expect(result.data.gear['4']).toEqual([EQUIP_TYPE.ONE_HAND, 999, 7]);
+    expect(result.data.gear['5']).toEqual([EQUIP_TYPE.OFF_HAND, 999, 4]);
+    expect(result.data.gear['20']).toEqual([EQUIP_TYPE.TWO_HAND, 999, 3]);
+    expect(result.data.gear['21']).toEqual([EQUIP_TYPE.TWO_HAND, 999, 2]);
     expect(result.unresolvedSlots).toHaveLength(0);
+  });
+
+  it('omits an otherwise-resolvable weapon that has no recorded trait (WW rejects trait 0)', () => {
+    const result = loadoutSetupToWWTransfer(makeSetup({ gear: { 4: { id: 201 } } }));
+    expect(result.data.gear['4']).toBeUndefined();
+    expect(result.unresolvedSlots).toEqual([
+      expect.objectContaining({ slot: 4, reason: expect.stringContaining('No trait recorded') }),
+    ]);
   });
 
   it('omits a weapon slot whose item is a generic set id (slot-specificity guard)', () => {
@@ -137,6 +147,34 @@ describe('loadoutSetupToWWTransfer — weapon slots', () => {
         slot: 4,
         reason: expect.stringContaining('couldn’t be identified'),
       }),
+    ]);
+  });
+});
+
+describe('loadoutSetupToWWTransfer — trait is required (any slot)', () => {
+  it('encodes an armor slot when the trait maps to a non-zero ITEM_TRAIT_TYPE', () => {
+    const result = loadoutSetupToWWTransfer(
+      makeSetup({ gear: { 0: { id: 301, trait: 'divines' } } }),
+    );
+    expect(result.data.gear['0']).toEqual([EQUIP_TYPE.HEAD, 999, 18]); // armor divines = 18
+    expect(result.unresolvedSlots).toHaveLength(0);
+  });
+
+  it('omits an otherwise-resolvable armor slot with no trait', () => {
+    const result = loadoutSetupToWWTransfer(makeSetup({ gear: { 0: { id: 301 } } }));
+    expect(result.data.gear['0']).toBeUndefined();
+    expect(result.unresolvedSlots).toEqual([
+      expect.objectContaining({ slot: 0, reason: expect.stringContaining('No trait recorded') }),
+    ]);
+  });
+
+  it('omits a slot whose trait id is unrecognized, naming the trait', () => {
+    const result = loadoutSetupToWWTransfer(
+      makeSetup({ gear: { 0: { id: 301, trait: 'bogus' } } }),
+    );
+    expect(result.data.gear['0']).toBeUndefined();
+    expect(result.unresolvedSlots).toEqual([
+      expect.objectContaining({ slot: 0, reason: expect.stringContaining('bogus') }),
     ]);
   });
 });
