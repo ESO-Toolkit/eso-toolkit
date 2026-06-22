@@ -20,12 +20,16 @@ const makeScripts = (n: number): FocusScript[] =>
     icon: '',
     compatibleGrimoires: [],
     description: `Description ${i}`,
+    acquisition: `Unlock ${i}`,
   }));
 
-const renderPicker = (scripts: FocusScript[]): ReturnType<typeof render> =>
+const renderPicker = (
+  scripts: FocusScript[],
+  onSelect: (id: string | undefined) => void = () => {},
+): ReturnType<typeof render> =>
   render(
     <ThemeProvider theme={createTheme()}>
-      <ScriptSlotPicker slot="focus" scripts={scripts} onSelect={() => {}} />
+      <ScriptSlotPicker slot="focus" scripts={scripts} onSelect={onSelect} />
     </ThemeProvider>,
   );
 
@@ -35,6 +39,24 @@ describe('ScriptSlotPicker', () => {
     const search = screen.getByLabelText('Search Focus scripts');
     fireEvent.change(search, { target: { value: 'Script 3' } });
     expect(screen.getAllByRole('option')).toHaveLength(1);
+  });
+
+  it('the acquisition info control is tap-friendly but does not select the option', () => {
+    const onSelect = jest.fn();
+    renderPicker(makeScripts(3), onSelect);
+    const infoButton = document.querySelector('[role="option"] .MuiIconButton-root');
+    expect(infoButton).not.toBeNull();
+    // Kept out of the keyboard tab order / a11y tree (acquisition is in the
+    // option's aria-label); the option itself carries the unlock text.
+    expect(infoButton?.getAttribute('tabindex')).toBe('-1');
+    expect(infoButton?.getAttribute('aria-hidden')).toBe('true');
+    expect(screen.getAllByRole('option')[0]).toHaveAttribute(
+      'aria-label',
+      expect.stringContaining('Unlock 0'),
+    );
+    // Tapping the info control must not select the script.
+    fireEvent.click(infoButton as Element);
+    expect(onSelect).not.toHaveBeenCalled();
   });
 
   it('clears a stale query when the list shrinks below the search threshold', () => {

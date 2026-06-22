@@ -20,6 +20,7 @@ import {
   Box,
   Button,
   Chip,
+  IconButton,
   InputAdornment,
   Stack,
   TextField,
@@ -404,14 +405,23 @@ export const ScriptSlotPicker: React.FC<ScriptSlotPickerProps> = ({
                     />
                   )}
                   {s.acquisition && (
-                    // Non-focusable hover affordance only — no nested interactive
-                    // control inside the listbox option. The acquisition text is
-                    // already in the option's aria-label for keyboard/SR users.
-                    <Tooltip title={s.acquisition} arrow>
-                      <InfoIcon
+                    // Pointer-only affordance: tappable on touch (enterTouchDelay
+                    // 0 so a tap reveals it immediately) and hoverable on desktop,
+                    // with stopPropagation so it never selects the option. Kept
+                    // OUT of the tab order + a11y tree (tabIndex -1, aria-hidden):
+                    // the acquisition is already in the option's aria-label, so
+                    // keyboard/screen-reader users get it without a nested control.
+                    <Tooltip title={s.acquisition} arrow enterTouchDelay={0} leaveTouchDelay={6000}>
+                      <IconButton
                         aria-hidden
-                        sx={{ ml: 'auto', fontSize: 16, color: 'text.disabled', cursor: 'help' }}
-                      />
+                        tabIndex={-1}
+                        size="small"
+                        disableRipple
+                        onClick={(e) => e.stopPropagation()}
+                        sx={{ ml: 'auto', p: 0.5, color: 'text.disabled' }}
+                      >
+                        <InfoIcon sx={{ fontSize: 18 }} />
+                      </IconButton>
                     </Tooltip>
                   )}
                 </Box>
