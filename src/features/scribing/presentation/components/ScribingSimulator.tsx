@@ -9,9 +9,6 @@
 
 import {
   AutoStories as GrimoireIcon,
-  AutoFixHigh as InkIcon,
-  Layers as SlotsIcon,
-  Calculate as CombosIcon,
   Verified as VerifiedIcon,
   PlaceOutlined as AltarIcon,
 } from '@mui/icons-material';
@@ -34,14 +31,15 @@ import { SCRIBING_SYSTEM } from '../../data/scribingMetadata';
 import { useScribingSimulation } from '../hooks/useScribingSimulation';
 
 import {
+  BuildUtilityRail,
   GrimoireGrid,
   InscriptionProgress,
+  PrimaryScribeAction,
+  RuneTriadLegend,
   ScribedSkillCard,
   ScriptSlotPicker,
-  SimulatorControls,
-  StatChip,
 } from './ScribingSimulatorComponents';
-import { glassPanelSx } from './scribingStyles';
+import { SLOT_COLORS, glassPanelSx } from './scribingStyles';
 
 export interface ScribingSimulatorProps {
   className?: string;
@@ -92,6 +90,68 @@ const StepHeader: React.FC<{ n: number; title: string; hint?: string }> = ({ n, 
         )}
       </Box>
     </Stack>
+  );
+};
+
+/** One "value over label" unit of the hero spec strip, led by a slot-colour dot. */
+const StatUnit: React.FC<{ value: string; label: string; dot: string }> = ({
+  value,
+  label,
+  dot,
+}) => (
+  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+    <Box
+      aria-hidden
+      sx={{
+        width: 6,
+        height: 6,
+        borderRadius: '50%',
+        flexShrink: 0,
+        bgcolor: dot,
+        boxShadow: `0 0 6px ${alpha(dot, 0.6)}`,
+      }}
+    />
+    <Box>
+      <Typography
+        sx={{
+          fontFamily: 'Space Grotesk, Inter, system-ui',
+          fontWeight: 700,
+          fontSize: '1.05rem',
+          lineHeight: 1.1,
+        }}
+      >
+        {value}
+      </Typography>
+      <Typography
+        sx={{
+          fontSize: '0.7rem',
+          fontWeight: 600,
+          letterSpacing: '0.08em',
+          textTransform: 'uppercase',
+          color: 'text.secondary',
+          lineHeight: 1,
+        }}
+      >
+        {label}
+      </Typography>
+    </Box>
+  </Box>
+);
+
+/** Hairline divider between spec-strip units. */
+const SpecDivider: React.FC = () => {
+  const theme = useTheme();
+  return (
+    <Box
+      aria-hidden
+      sx={{
+        width: '1px',
+        height: 26,
+        mx: 2,
+        flexShrink: 0,
+        bgcolor: alpha(theme.palette.divider, 0.6),
+      }}
+    />
   );
 };
 
@@ -151,6 +211,14 @@ export const ScribingSimulator: React.FC<ScribingSimulatorProps> = ({
     return filled;
   }, [result]);
 
+  // Single-open accordion state for the script pickers on mobile (the pickers
+  // only honour this below md). Focus opens first; selecting a script never
+  // auto-advances — the user drives expansion.
+  const [openSlot, setOpenSlot] = React.useState<ScribingSlot | null>('focus');
+  const toggleSlot = React.useCallback((slot: ScribingSlot) => {
+    setOpenSlot((prev) => (prev === slot ? null : slot));
+  }, []);
+
   if (isLoading) {
     return (
       <Container maxWidth="lg" className={className}>
@@ -190,78 +258,101 @@ export const ScribingSimulator: React.FC<ScribingSimulatorProps> = ({
   return (
     <Container maxWidth="lg" className={className}>
       <Box sx={{ py: { xs: 3, md: 4 } }}>
-        {/* ── Hero ─────────────────────────────────────────────────── */}
-        <Box sx={{ textAlign: 'center', mb: 3 }}>
-          <Stack
-            direction="row"
-            spacing={1}
-            sx={{ alignItems: 'center', justifyContent: 'center', mb: 1.25 }}
-          >
-            <GrimoireIcon sx={{ fontSize: 18, color: 'primary.main' }} />
-            <Typography
-              variant="overline"
-              sx={{
-                color: 'primary.main',
-                fontWeight: 700,
-                letterSpacing: '0.22em',
-                lineHeight: 1,
-              }}
-            >
-              ESO · Arcane Inscription
-            </Typography>
-          </Stack>
+        {/* ── Hero — left-anchored masthead ────────────────────────── */}
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', md: 'minmax(0, 1fr) auto' },
+            columnGap: 4,
+            rowGap: { xs: 2.5, md: 2 },
+            alignItems: 'end',
+            mb: { xs: 3, md: 4 },
+          }}
+        >
+          {/* Masthead text block */}
+          <Box>
+            <Stack direction="row" spacing={1} sx={{ alignItems: 'center', mb: 1.25 }}>
+              <GrimoireIcon sx={{ fontSize: 18, color: 'primary.main' }} />
+              <Typography
+                variant="overline"
+                sx={{
+                  color: 'primary.main',
+                  fontWeight: 700,
+                  letterSpacing: '0.18em',
+                  lineHeight: 1,
+                }}
+              >
+                ESO · Arcane Inscription
+              </Typography>
+            </Stack>
 
-          <Box
-            sx={{
-              filter: dark
-                ? `drop-shadow(0 0 28px ${alpha(theme.palette.primary.main, 0.28)})`
-                : 'none',
-            }}
-          >
             <Typography
-              variant="h3"
               component="h1"
               sx={{
                 fontWeight: 800,
-                letterSpacing: '-0.02em',
                 fontFamily: 'Space Grotesk, Inter, system-ui',
+                fontSize: { xs: '1.9rem', sm: '2.3rem', md: '2.6rem' },
+                lineHeight: 1.02,
+                letterSpacing: '-0.03em',
+                textWrap: 'balance',
                 background: dark
                   ? 'linear-gradient(180deg, #ffffff 0%, #9fd8f7 135%)'
                   : 'linear-gradient(180deg, #0f172a 0%, #0369a1 130%)',
                 WebkitBackgroundClip: 'text',
                 backgroundClip: 'text',
                 color: 'transparent',
+                filter: dark
+                  ? `drop-shadow(0 0 22px ${alpha(theme.palette.primary.main, 0.22)})`
+                  : 'none',
               }}
             >
               ESO Scribing Simulator
             </Typography>
+
+            <Typography
+              sx={{
+                color: 'text.secondary',
+                maxWidth: '52ch',
+                mt: 1.25,
+                fontSize: '1rem',
+                lineHeight: 1.55,
+                textWrap: 'pretty',
+              }}
+            >
+              {SCRIBING_SYSTEM.intro}
+            </Typography>
+
+            {/* Spec strip — the three real stats, hairline-divided (no pills) */}
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', mt: 2, rowGap: 1 }}>
+              <StatUnit value="12" label="Grimoires" dot={SLOT_COLORS.focus} />
+              <SpecDivider />
+              <StatUnit value="3" label="Script slots" dot={SLOT_COLORS.signature} />
+              <SpecDivider />
+              <StatUnit value="12,000+" label="Combinations" dot={SLOT_COLORS.affix} />
+            </Box>
           </Box>
 
-          <Typography
-            variant="body1"
-            sx={{ color: 'text.secondary', maxWidth: 720, mx: 'auto', mt: 1 }}
+          {/* Legend (md+) + the single primary CTA with a demoted utility rail */}
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 2.5,
+              alignItems: { xs: 'stretch', md: 'flex-end' },
+              justifyContent: 'flex-end',
+            }}
           >
-            {SCRIBING_SYSTEM.intro}
-          </Typography>
-
-          <Stack
-            direction="row"
-            spacing={1}
-            sx={{ justifyContent: 'center', flexWrap: 'wrap', gap: 1, mt: 2 }}
-          >
-            <StatChip icon={<GrimoireIcon />} label="12 grimoires" />
-            <StatChip icon={<SlotsIcon />} label="3 script slots each" accent="#34d399" />
-            <StatChip icon={<CombosIcon />} label="12,000+ combinations" accent="#a855f7" />
-            <StatChip icon={<InkIcon />} label={SCRIBING_SYSTEM.scribingCost} accent="#f59e0b" />
-          </Stack>
-
-          <Box sx={{ mt: 2.5 }}>
-            <SimulatorControls
-              onRandomize={randomize}
-              onReset={reset}
-              onShare={handleShare}
-              shareLabel={shareLabel}
-            />
+            <Box sx={{ display: { xs: 'none', md: 'block' } }}>
+              <RuneTriadLegend />
+            </Box>
+            <Stack
+              direction="row"
+              spacing={1.25}
+              sx={{ alignItems: 'center', width: { xs: '100%', md: 'auto' } }}
+            >
+              <PrimaryScribeAction onRandomize={randomize} sx={{ flexGrow: { xs: 1, md: 0 } }} />
+              <BuildUtilityRail onReset={reset} onShare={handleShare} shareLabel={shareLabel} />
+            </Stack>
           </Box>
         </Box>
 
@@ -314,6 +405,8 @@ export const ScribingSimulator: React.FC<ScribingSimulatorProps> = ({
                   selectedId={selection.focusId}
                   onSelect={setFocus}
                   disabled={!selection.grimoireId}
+                  expanded={openSlot === 'focus'}
+                  onToggleExpanded={() => toggleSlot('focus')}
                 />
                 <ScriptSlotPicker
                   slot="signature"
@@ -321,6 +414,8 @@ export const ScribingSimulator: React.FC<ScribingSimulatorProps> = ({
                   selectedId={selection.signatureId}
                   onSelect={setSignature}
                   disabled={!selection.grimoireId}
+                  expanded={openSlot === 'signature'}
+                  onToggleExpanded={() => toggleSlot('signature')}
                 />
                 <ScriptSlotPicker
                   slot="affix"
@@ -328,6 +423,8 @@ export const ScribingSimulator: React.FC<ScribingSimulatorProps> = ({
                   selectedId={selection.affixId}
                   onSelect={setAffix}
                   disabled={!selection.grimoireId}
+                  expanded={openSlot === 'affix'}
+                  onToggleExpanded={() => toggleSlot('affix')}
                 />
               </Stack>
             </Box>

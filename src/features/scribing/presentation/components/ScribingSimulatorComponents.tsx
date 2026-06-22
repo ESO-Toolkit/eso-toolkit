@@ -19,6 +19,8 @@ import {
   AutoAwesome as SignatureIcon,
   Shield as AffixIcon,
   AutoStories as GrimoireIcon,
+  AutoFixHigh as InkIcon,
+  ExpandMore as ExpandIcon,
   type SvgIconComponent,
 } from '@mui/icons-material';
 import {
@@ -26,6 +28,8 @@ import {
   Box,
   Button,
   Chip,
+  Collapse,
+  Divider,
   IconButton,
   InputAdornment,
   Stack,
@@ -33,7 +37,10 @@ import {
   Tooltip,
   Typography,
   alpha,
+  useMediaQuery,
   useTheme,
+  type SxProps,
+  type Theme,
 } from '@mui/material';
 import React from 'react';
 
@@ -326,6 +333,14 @@ export interface ScriptSlotPickerProps {
   selectedId?: string;
   onSelect: (id: string | undefined) => void;
   disabled?: boolean;
+  /**
+   * xs-only accordion. When `onToggleExpanded` is provided the picker collapses
+   * on small screens and its header becomes a toggle, so the bench stays short
+   * and only one option list scrolls with the page. When omitted (e.g. unit
+   * tests, or md+), the picker is always expanded — preserving the full listbox.
+   */
+  expanded?: boolean;
+  onToggleExpanded?: () => void;
 }
 
 export const ScriptSlotPicker: React.FC<ScriptSlotPickerProps> = ({
@@ -334,6 +349,8 @@ export const ScriptSlotPicker: React.FC<ScriptSlotPickerProps> = ({
   selectedId,
   onSelect,
   disabled = false,
+  expanded,
+  onToggleExpanded,
 }) => {
   const theme = useTheme();
   const dark = theme.palette.mode === 'dark';
@@ -341,6 +358,13 @@ export const ScriptSlotPicker: React.FC<ScriptSlotPickerProps> = ({
   const accent = SLOT_COLORS[slot];
   const SlotGlyph = SLOT_ICON[slot];
   const selectedScript = scripts.find((s) => s.id === selectedId);
+  const listboxId = React.useId();
+
+  // Only collapse on small screens, and only when the parent coordinates the
+  // open slot (single-open accordion). md+ keeps every picker open.
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const collapsible = isMobile && onToggleExpanded != null;
+  const open = !collapsible || expanded === true;
 
   // Clear the search whenever the script list changes (e.g. a new grimoire). The
   // search box is only rendered for long lists, so without this a stale query
@@ -379,7 +403,7 @@ export const ScriptSlotPicker: React.FC<ScriptSlotPickerProps> = ({
         transition: 'border-color .15s ease, box-shadow .15s ease',
       }}
     >
-      {/* Slot header — a glyph "rune well" + the slot's role */}
+      {/* Slot header — a glyph "rune well" + the slot's role (a toggle on xs) */}
       <Box
         sx={{
           px: 1.5,
@@ -387,40 +411,91 @@ export const ScriptSlotPicker: React.FC<ScriptSlotPickerProps> = ({
           display: 'flex',
           alignItems: 'center',
           gap: 1,
-          borderBottom: '1px solid',
+          borderBottom: open ? '1px solid' : 'none',
           borderColor: alpha(theme.palette.divider, 0.5),
           background: `linear-gradient(90deg, ${alpha(accent, dark ? 0.12 : 0.08)} 0%, transparent 70%)`,
         }}
       >
         <Box
-          aria-hidden
+          {...(collapsible
+            ? {
+                role: 'button',
+                tabIndex: 0,
+                'aria-expanded': open,
+                'aria-controls': listboxId,
+                onClick: onToggleExpanded,
+                onKeyDown: (e: React.KeyboardEvent) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    onToggleExpanded?.();
+                  }
+                },
+              }
+            : {})}
           sx={{
-            width: 30,
-            height: 30,
-            flexShrink: 0,
-            borderRadius: '9px',
-            display: 'grid',
-            placeItems: 'center',
-            color: accent,
-            border: '1px solid',
-            borderColor: alpha(accent, 0.5),
-            bgcolor: alpha(accent, dark ? 0.16 : 0.1),
-            boxShadow: selectedScript ? `0 0 12px ${alpha(accent, 0.45)}` : 'none',
-            '& svg': { fontSize: 17 },
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+            flexGrow: 1,
+            minWidth: 0,
+            borderRadius: '8px',
+            cursor: collapsible ? 'pointer' : 'default',
+            '&:focus-visible': collapsible
+              ? { outline: `2px solid ${accent}`, outlineOffset: 2 }
+              : undefined,
           }}
         >
-          <SlotGlyph />
-        </Box>
-        <Box sx={{ flexGrow: 1, minWidth: 0 }}>
-          <Typography
-            variant="subtitle2"
-            sx={{ fontWeight: 700, lineHeight: 1.1, fontFamily: 'Space Grotesk, Inter, system-ui' }}
+          <Box
+            aria-hidden
+            sx={{
+              width: 30,
+              height: 30,
+              flexShrink: 0,
+              borderRadius: '9px',
+              display: 'grid',
+              placeItems: 'center',
+              color: accent,
+              border: '1px solid',
+              borderColor: alpha(accent, 0.5),
+              bgcolor: alpha(accent, dark ? 0.16 : 0.1),
+              boxShadow: selectedScript ? `0 0 12px ${alpha(accent, 0.45)}` : 'none',
+              '& svg': { fontSize: 17 },
+            }}
           >
-            {SLOT_LABELS[slot]} Script
-          </Typography>
-          <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }} noWrap>
-            {SLOT_ROLE[slot]}
-          </Typography>
+            <SlotGlyph />
+          </Box>
+          <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+            <Typography
+              variant="subtitle2"
+              sx={{
+                fontWeight: 700,
+                lineHeight: 1.1,
+                fontFamily: 'Space Grotesk, Inter, system-ui',
+              }}
+            >
+              {SLOT_LABELS[slot]} Script
+            </Typography>
+            <Typography
+              variant="caption"
+              sx={{ color: selectedScript ? accent : 'text.secondary', display: 'block' }}
+              noWrap
+            >
+              {/* Collapsed on mobile → show the chosen script as the summary. */}
+              {collapsible && !open && selectedScript ? selectedScript.name : SLOT_ROLE[slot]}
+            </Typography>
+          </Box>
+          {collapsible && (
+            <ExpandIcon
+              aria-hidden
+              sx={{
+                fontSize: 20,
+                color: 'text.secondary',
+                flexShrink: 0,
+                transition: 'transform .2s ease',
+                transform: open ? 'rotate(180deg)' : 'none',
+              }}
+            />
+          )}
         </Box>
         {selectedId && (
           <Button
@@ -433,10 +508,12 @@ export const ScriptSlotPicker: React.FC<ScriptSlotPickerProps> = ({
         )}
         <Chip
           size="small"
-          label={`${scripts.length} available`}
+          label={`${scripts.length}`}
+          aria-label={`${scripts.length} available`}
           sx={{
             flexShrink: 0,
             height: 20,
+            minWidth: 28,
             fontWeight: 700,
             bgcolor: alpha(accent, dark ? 0.2 : 0.14),
             color: accent,
@@ -446,141 +523,152 @@ export const ScriptSlotPicker: React.FC<ScriptSlotPickerProps> = ({
         />
       </Box>
 
-      {showSearch && (
-        <Box sx={{ px: 1.5, pt: 1 }}>
-          <TextField
-            size="small"
-            fullWidth
-            placeholder={`Search ${SLOT_LABELS[slot].toLowerCase()} scripts…`}
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            disabled={disabled}
-            slotProps={{
-              input: {
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon fontSize="small" />
-                  </InputAdornment>
-                ),
-              },
-              // Placeholders aren't a reliable accessible name — give the field
-              // a durable label for screen readers.
-              htmlInput: { 'aria-label': `Search ${SLOT_LABELS[slot]} scripts` },
-            }}
-          />
-        </Box>
-      )}
+      <Collapse in={open} timeout="auto">
+        {showSearch && (
+          <Box sx={{ px: 1.5, pt: 1 }}>
+            <TextField
+              size="small"
+              fullWidth
+              placeholder={`Search ${SLOT_LABELS[slot].toLowerCase()} scripts…`}
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              disabled={disabled}
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon fontSize="small" />
+                    </InputAdornment>
+                  ),
+                },
+                // Placeholders aren't a reliable accessible name — give the field
+                // a durable label for screen readers.
+                htmlInput: { 'aria-label': `Search ${SLOT_LABELS[slot]} scripts` },
+              }}
+            />
+          </Box>
+        )}
 
-      <Box
-        role="listbox"
-        aria-label={`${SLOT_LABELS[slot]} script options`}
-        sx={{
-          maxHeight: 244,
-          overflowY: 'auto',
-          p: 1,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 0.5,
-        }}
-      >
-        {disabled && (
-          <Typography variant="body2" sx={{ color: 'text.secondary', p: 1 }}>
-            Select a grimoire first.
-          </Typography>
-        )}
-        {!disabled && filtered.length === 0 && (
-          <Typography variant="body2" sx={{ color: 'text.secondary', p: 1 }}>
-            No matching scripts.
-          </Typography>
-        )}
-        {!disabled &&
-          filtered.map((s) => {
-            const selected = s.id === selectedId;
-            return (
-              <Box
-                key={s.id}
-                role="option"
-                aria-selected={selected}
-                // Fold name + effect + unlock into the option's accessible name
-                // so screen-reader users get everything without a nested control.
-                aria-label={`${s.name}. ${s.description}${
-                  s.acquisition ? `. How to unlock: ${s.acquisition}` : ''
-                }`}
-                tabIndex={s.id === tabbableId ? 0 : -1}
-                onClick={() => onSelect(s.id)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    onSelect(s.id);
-                    return;
-                  }
-                  const dir = ARROW_DIR[e.key];
-                  // In a listbox arrow keys move focus only; selection is explicit.
-                  if (dir !== undefined) {
-                    e.preventDefault();
-                    focusRovingSibling(e.currentTarget, 'option', dir);
-                  }
-                }}
-                sx={{
-                  cursor: 'pointer',
-                  px: 1,
-                  py: 0.75,
-                  borderRadius: '10px',
-                  border: '1px solid',
-                  borderColor: selected ? alpha(accent, 0.6) : 'transparent',
-                  background: selected
-                    ? `linear-gradient(90deg, ${alpha(accent, dark ? 0.2 : 0.14)}, ${alpha(accent, 0.04)})`
-                    : 'transparent',
-                  boxShadow: selected ? `inset 3px 0 0 ${accent}` : 'none',
-                  transition: 'background .12s ease, border-color .12s ease',
-                  '&:hover': { background: alpha(accent, 0.08) },
-                  '&:focus-visible': { outline: `2px solid ${accent}`, outlineOffset: 1 },
-                }}
-              >
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-                  {selected && <CheckIcon sx={{ fontSize: 16, color: accent, flexShrink: 0 }} />}
-                  <Typography variant="body2" sx={{ fontWeight: selected ? 700 : 600 }}>
-                    {s.name}
-                  </Typography>
-                  {s.category && (
-                    <Chip
-                      size="small"
-                      label={s.category}
-                      sx={{
-                        height: 18,
-                        fontSize: '0.65rem',
-                        bgcolor: alpha(theme.palette.text.primary, 0.08),
-                      }}
-                    />
-                  )}
-                  {s.acquisition && (
-                    // Pointer-only affordance: tappable on touch (enterTouchDelay
-                    // 0 so a tap reveals it immediately) and hoverable on desktop,
-                    // with stopPropagation so it never selects the option. Kept
-                    // OUT of the tab order + a11y tree (tabIndex -1, aria-hidden):
-                    // the acquisition is already in the option's aria-label, so
-                    // keyboard/screen-reader users get it without a nested control.
-                    <Tooltip title={s.acquisition} arrow enterTouchDelay={0} leaveTouchDelay={6000}>
-                      <IconButton
-                        aria-hidden
-                        tabIndex={-1}
+        <Box
+          id={listboxId}
+          role="listbox"
+          aria-label={`${SLOT_LABELS[slot]} script options`}
+          sx={{
+            maxHeight: { xs: 'none', md: 244 },
+            overflowY: { xs: 'visible', md: 'auto' },
+            p: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 0.5,
+          }}
+        >
+          {disabled && (
+            <Typography variant="body2" sx={{ color: 'text.secondary', p: 1 }}>
+              Select a grimoire first.
+            </Typography>
+          )}
+          {!disabled && filtered.length === 0 && (
+            <Typography variant="body2" sx={{ color: 'text.secondary', p: 1 }}>
+              No matching scripts.
+            </Typography>
+          )}
+          {!disabled &&
+            filtered.map((s) => {
+              const selected = s.id === selectedId;
+              return (
+                <Box
+                  key={s.id}
+                  role="option"
+                  aria-selected={selected}
+                  // Fold name + effect + unlock into the option's accessible name
+                  // so screen-reader users get everything without a nested control.
+                  aria-label={`${s.name}. ${s.description}${
+                    s.acquisition ? `. How to unlock: ${s.acquisition}` : ''
+                  }`}
+                  tabIndex={s.id === tabbableId ? 0 : -1}
+                  onClick={() => onSelect(s.id)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      onSelect(s.id);
+                      return;
+                    }
+                    const dir = ARROW_DIR[e.key];
+                    // In a listbox arrow keys move focus only; selection is explicit.
+                    if (dir !== undefined) {
+                      e.preventDefault();
+                      focusRovingSibling(e.currentTarget, 'option', dir);
+                    }
+                  }}
+                  sx={{
+                    cursor: 'pointer',
+                    px: 1,
+                    py: 0.75,
+                    borderRadius: '10px',
+                    border: '1px solid',
+                    borderColor: selected ? alpha(accent, 0.6) : 'transparent',
+                    background: selected
+                      ? `linear-gradient(90deg, ${alpha(accent, dark ? 0.2 : 0.14)}, ${alpha(accent, 0.04)})`
+                      : 'transparent',
+                    boxShadow: selected ? `inset 3px 0 0 ${accent}` : 'none',
+                    transition: 'background .12s ease, border-color .12s ease',
+                    '&:hover': { background: alpha(accent, 0.08) },
+                    '&:focus-visible': { outline: `2px solid ${accent}`, outlineOffset: 1 },
+                  }}
+                >
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                    {selected && <CheckIcon sx={{ fontSize: 16, color: accent, flexShrink: 0 }} />}
+                    <Typography variant="body2" sx={{ fontWeight: selected ? 700 : 600 }}>
+                      {s.name}
+                    </Typography>
+                    {s.category && (
+                      <Chip
                         size="small"
-                        disableRipple
-                        onClick={(e) => e.stopPropagation()}
-                        sx={{ ml: 'auto', p: 0.5, color: 'text.disabled' }}
+                        label={s.category}
+                        sx={{
+                          height: 18,
+                          fontSize: '0.65rem',
+                          bgcolor: alpha(theme.palette.text.primary, 0.08),
+                        }}
+                      />
+                    )}
+                    {s.acquisition && (
+                      // Pointer-only affordance: tappable on touch (enterTouchDelay
+                      // 0 so a tap reveals it immediately) and hoverable on desktop,
+                      // with stopPropagation so it never selects the option. Kept
+                      // OUT of the tab order + a11y tree (tabIndex -1, aria-hidden):
+                      // the acquisition is already in the option's aria-label, so
+                      // keyboard/screen-reader users get it without a nested control.
+                      <Tooltip
+                        title={s.acquisition}
+                        arrow
+                        enterTouchDelay={0}
+                        leaveTouchDelay={6000}
                       >
-                        <InfoIcon sx={{ fontSize: 16 }} />
-                      </IconButton>
-                    </Tooltip>
-                  )}
+                        <IconButton
+                          aria-hidden
+                          tabIndex={-1}
+                          size="small"
+                          disableRipple
+                          onClick={(e) => e.stopPropagation()}
+                          sx={{ ml: 'auto', p: 0.5, color: 'text.disabled' }}
+                        >
+                          <InfoIcon sx={{ fontSize: 16 }} />
+                        </IconButton>
+                      </Tooltip>
+                    )}
+                  </Box>
+                  <Typography
+                    variant="caption"
+                    sx={{ color: 'text.secondary', display: 'block', textWrap: 'pretty' }}
+                  >
+                    {s.description}
+                  </Typography>
                 </Box>
-                <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
-                  {s.description}
-                </Typography>
-              </Box>
-            );
-          })}
-      </Box>
+              );
+            })}
+        </Box>
+      </Collapse>
     </Box>
   );
 };
@@ -819,25 +907,35 @@ export const ScribedSkillCard: React.FC<ScribedSkillCardProps> = ({ result }) =>
           borderTop: '1px solid',
           borderColor: alpha(theme.palette.divider, 0.5),
           display: 'flex',
-          alignItems: 'center',
-          gap: 1,
+          flexDirection: 'column',
+          gap: 0.75,
           background: result.isComplete
             ? `linear-gradient(90deg, ${alpha(theme.palette.success.main, dark ? 0.12 : 0.08)}, transparent 70%)`
             : 'transparent',
         }}
       >
-        <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-          {result.isComplete
-            ? 'A complete scribed skill — slot it at the Scribing Altar.'
-            : 'The Focus script sets the skill’s final name and cost.'}
-        </Typography>
-        <Chip
-          size="small"
-          label={result.isComplete ? 'Complete' : `${filledCount}/3 scripts`}
-          color={result.isComplete ? 'success' : 'default'}
-          variant="outlined"
-          sx={{ ml: 'auto', height: 20, fontWeight: 700 }}
-        />
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Typography variant="caption" sx={{ color: 'text.secondary', textWrap: 'pretty' }}>
+            {result.isComplete
+              ? 'A complete scribed skill — slot it at the Scribing Altar.'
+              : 'The Focus script sets the skill’s final name and cost.'}
+          </Typography>
+          <Chip
+            size="small"
+            label={result.isComplete ? 'Complete' : `${filledCount}/3 scripts`}
+            color={result.isComplete ? 'success' : 'default'}
+            variant="outlined"
+            sx={{ ml: 'auto', height: 20, fontWeight: 700, flexShrink: 0 }}
+          />
+        </Box>
+        {result.isComplete && (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+            <InkIcon aria-hidden sx={{ fontSize: 14, color: '#f59e0b', flexShrink: 0 }} />
+            <Typography variant="caption" sx={{ color: 'text.secondary', textWrap: 'pretty' }}>
+              Costs 3 Luminous Ink · Scribing Altar, The Scholarium.
+            </Typography>
+          </Box>
+        )}
       </Box>
     </Box>
   );
@@ -887,6 +985,168 @@ const MetaChip: React.FC<{ label: string; value: string; dotColor?: string }> = 
 // Controls
 // ---------------------------------------------------------------------------
 
+/**
+ * Hero "key": a compact legend introducing the three-rune slot system before the
+ * user reaches the pickers. Shown only on md+ as the masthead's right-column
+ * anchor (the altar's InscriptionProgress carries the live state on mobile).
+ */
+export const RuneTriadLegend: React.FC = () => {
+  const theme = useTheme();
+  const dark = theme.palette.mode === 'dark';
+  return (
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.25 }}>
+      <Typography
+        variant="overline"
+        sx={{ color: 'text.secondary', fontWeight: 700, letterSpacing: '0.14em', lineHeight: 1 }}
+      >
+        Three runes, one skill
+      </Typography>
+      <Stack spacing={0.75}>
+        {SLOT_ORDER.map((slot) => {
+          const c = SLOT_COLORS[slot];
+          const Glyph = SLOT_ICON[slot];
+          return (
+            <Box key={slot} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Box
+                aria-hidden
+                sx={{
+                  width: 26,
+                  height: 26,
+                  flexShrink: 0,
+                  borderRadius: '8px',
+                  display: 'grid',
+                  placeItems: 'center',
+                  color: c,
+                  border: '1px solid',
+                  borderColor: alpha(c, 0.55),
+                  bgcolor: alpha(c, dark ? 0.16 : 0.1),
+                  boxShadow: `0 0 10px ${alpha(c, 0.3)}`,
+                  '& svg': { fontSize: 14 },
+                }}
+              >
+                <Glyph />
+              </Box>
+              <Typography variant="body2" sx={{ color: c, fontWeight: 700 }}>
+                {SLOT_LABELS[slot]}
+              </Typography>
+            </Box>
+          );
+        })}
+      </Stack>
+    </Box>
+  );
+};
+
+// ---------------------------------------------------------------------------
+// Controls
+// ---------------------------------------------------------------------------
+
+export interface PrimaryScribeActionProps {
+  onRandomize: () => void;
+  disabled?: boolean;
+  sx?: SxProps<Theme>;
+}
+
+/** The one prominent CTA: roll a random complete build. */
+export const PrimaryScribeAction: React.FC<PrimaryScribeActionProps> = ({
+  onRandomize,
+  disabled = false,
+  sx,
+}) => {
+  const theme = useTheme();
+  return (
+    <Button
+      variant="contained"
+      startIcon={<RandomIcon />}
+      onClick={onRandomize}
+      disabled={disabled}
+      sx={[
+        {
+          borderRadius: '999px',
+          fontWeight: 700,
+          px: 3,
+          py: 1,
+          fontSize: '0.95rem',
+          boxShadow: `0 8px 24px ${alpha(theme.palette.primary.main, 0.4)}`,
+          '&:hover': { boxShadow: `0 10px 28px ${alpha(theme.palette.primary.main, 0.5)}` },
+        },
+        ...(Array.isArray(sx) ? sx : sx ? [sx] : []),
+      ]}
+    >
+      Surprise me
+    </Button>
+  );
+};
+
+export interface BuildUtilityRailProps {
+  onReset: () => void;
+  onShare: () => void;
+  /** Drives the Share tooltip + icon swap; the button's accessible name stays "Share build". */
+  shareLabel: string;
+  disabled?: boolean;
+}
+
+/** Demoted utility actions (Reset / Share) as a compact, grouped icon rail. */
+export const BuildUtilityRail: React.FC<BuildUtilityRailProps> = ({
+  onReset,
+  onShare,
+  shareLabel,
+  disabled = false,
+}) => {
+  const theme = useTheme();
+  const copied = shareLabel !== 'Share build';
+  return (
+    <Box
+      sx={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 0.25,
+        p: 0.5,
+        flexShrink: 0,
+        borderRadius: '12px',
+        border: '1px solid',
+        borderColor: alpha(theme.palette.divider, 0.7),
+        bgcolor: alpha(theme.palette.background.paper, theme.palette.mode === 'dark' ? 0.4 : 0.5),
+      }}
+    >
+      <Tooltip title="Reset scripts" arrow>
+        <span>
+          <IconButton
+            aria-label="Reset scripts"
+            onClick={onReset}
+            disabled={disabled}
+            sx={{ width: 38, height: 38, borderRadius: '9px' }}
+          >
+            <ResetIcon fontSize="small" />
+          </IconButton>
+        </span>
+      </Tooltip>
+      <Divider
+        orientation="vertical"
+        flexItem
+        sx={{ my: 0.75, borderColor: alpha(theme.palette.divider, 0.7) }}
+      />
+      <Tooltip title={shareLabel} arrow>
+        <span>
+          <IconButton
+            aria-label="Share build"
+            onClick={onShare}
+            disabled={disabled}
+            sx={{
+              width: 38,
+              height: 38,
+              borderRadius: '9px',
+              color: copied ? 'success.main' : undefined,
+            }}
+          >
+            {copied ? <CheckIcon fontSize="small" /> : <ShareIcon fontSize="small" />}
+          </IconButton>
+        </span>
+      </Tooltip>
+    </Box>
+  );
+};
+
 export interface SimulatorControlsProps {
   onRandomize: () => void;
   onReset: () => void;
@@ -895,6 +1155,7 @@ export interface SimulatorControlsProps {
   disabled?: boolean;
 }
 
+/** Composed controls (primary + utility rail) — retained for external consumers. */
 export const SimulatorControls: React.FC<SimulatorControlsProps> = ({
   onRandomize,
   onReset,
@@ -902,33 +1163,13 @@ export const SimulatorControls: React.FC<SimulatorControlsProps> = ({
   shareLabel,
   disabled = false,
 }) => (
-  <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', gap: 1, justifyContent: 'center' }}>
-    <Button
-      variant="contained"
-      startIcon={<RandomIcon />}
-      onClick={onRandomize}
+  <Stack direction="row" spacing={1} sx={{ alignItems: 'center', flexWrap: 'wrap', gap: 1 }}>
+    <PrimaryScribeAction onRandomize={onRandomize} disabled={disabled} />
+    <BuildUtilityRail
+      onReset={onReset}
+      onShare={onShare}
+      shareLabel={shareLabel}
       disabled={disabled}
-      sx={{ borderRadius: '999px', fontWeight: 700, px: 2.25 }}
-    >
-      Surprise me
-    </Button>
-    <Button
-      variant="outlined"
-      startIcon={<ResetIcon />}
-      onClick={onReset}
-      disabled={disabled}
-      sx={{ borderRadius: '999px', px: 2 }}
-    >
-      Reset scripts
-    </Button>
-    <Button
-      variant="outlined"
-      startIcon={<ShareIcon />}
-      onClick={onShare}
-      disabled={disabled}
-      sx={{ borderRadius: '999px', px: 2 }}
-    >
-      {shareLabel}
-    </Button>
+    />
   </Stack>
 );
