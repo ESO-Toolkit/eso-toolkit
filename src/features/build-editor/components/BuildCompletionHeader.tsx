@@ -6,6 +6,7 @@
 
 import {
   ArrowBack as ArrowBackIcon,
+  AutoFixHighOutlined,
   Close as CloseIcon,
   ContentCopyOutlined,
   FileDownloadOutlined,
@@ -50,10 +51,13 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/features/auth/AuthContext';
 import { tempBuildApi } from '@/features/build-editor/api/temp-build-api';
 import { PublishBuildDialog } from '@/features/build-hub/components/PublishBuildDialog';
+import { WizardWardrobeTransferPanel } from '@/features/loadout-manager/components/WizardWardrobeTransferPanel';
+import { validateGearConfig } from '@/features/loadout-manager/utils/itemSlotValidator';
 import { saveBuild, updateSavedBuild } from '@/store/saved_builds';
 import { attachBuildToSlot, selectSavedRosters } from '@/store/saved_rosters';
 import type { RootState } from '@/store/storeWithHistory';
 import { encodeBuildToURL } from '@/utils/buildEncoding';
+import { getBaseUrl } from '@/utils/envUtils';
 import { snapshotBuildToSlot } from '@/utils/rosterBuildBridge';
 
 import { ESO_CLASSES } from '../data/esoStaticData';
@@ -68,6 +72,7 @@ import {
   setBuildName,
 } from '../store/buildEditorSlice';
 import { BE_TOKENS } from '../theme/buildEditorTokens';
+import { buildSetupToLoadoutSetup } from '../utils/buildLoadoutBridge';
 import { exportBuildToCSPSLua } from '../utils/cspsExport';
 import {
   parseCSPSInput,
@@ -187,6 +192,22 @@ export const BuildCompletionHeader: React.FC = () => {
   const [cspsExportOpen, setCspsExportOpen] = React.useState(false);
   const [exportLua, setExportLua] = React.useState('');
 
+  // Wizard's Wardrobe export state — bridges every build setup into a paste-in
+  // WW import code (one per setup) via the shared loadout-manager panel.
+  const [wwExportOpen, setWwExportOpen] = React.useState(false);
+  // Convert the build's setups into loadout setups the WW panel understands.
+  // The panel runs the actual WW encoding internally, per setup.
+  const wwSetups = React.useMemo(
+    () => build.setups.map((setup) => buildSetupToLoadoutSetup(setup)),
+    [build.setups],
+  );
+  // Mirror the loadout ExportDialog gate: withhold codes if any setup has a
+  // blocking gear-slot error, so a broken setup can't be pasted into the game.
+  const wwExportBlocked = React.useMemo(
+    () => build.setups.some((setup) => validateGearConfig(setup.gear ?? {}).errors.length > 0),
+    [build.setups],
+  );
+
   const handleSave = (): void => {
     if (!build.name.trim()) {
       enqueueSnackbar('Please enter a build name before saving.', { variant: 'warning' });
@@ -232,7 +253,7 @@ export const BuildCompletionHeader: React.FC = () => {
         enqueueSnackbar('Could not encode build for sharing.', { variant: 'error' });
         return;
       }
-      const url = `${window.location.origin}${import.meta.env.BASE_URL}bv?b=${encoded}`;
+      const url = `${getBaseUrl()}bv?b=${encoded}`;
       navigator.clipboard
         .writeText(url)
         .then(() => enqueueSnackbar('Share link copied to clipboard!', { variant: 'info' }))
@@ -256,7 +277,7 @@ export const BuildCompletionHeader: React.FC = () => {
         enqueueSnackbar('Could not encode build.', { variant: 'error' });
         return;
       }
-      window.open(`${import.meta.env.BASE_URL}bv?b=${encoded}`, '_blank', 'noopener,noreferrer');
+      window.open(`${getBaseUrl()}bv?b=${encoded}`, '_blank', 'noopener,noreferrer');
     });
   };
 
@@ -328,7 +349,7 @@ export const BuildCompletionHeader: React.FC = () => {
         .create(encoded)
         .then((result) => {
           setIsCreatingLink(false);
-          const url = `${window.location.origin}${import.meta.env.BASE_URL}b/${result.id}`;
+          const url = `${getBaseUrl()}b/${result.id}`;
           setTempLink(url);
           setTempLinkExpiry(result.expires_at);
           setTempLinkDialogOpen(true);
@@ -433,6 +454,11 @@ export const BuildCompletionHeader: React.FC = () => {
     setCspsCharacters([]);
     setImportParsed(false);
     setImportError(null);
+  };
+
+  // ── Wizard's Wardrobe export handler ────────────────────────────────
+  const handleWWExportOpen = (): void => {
+    setWwExportOpen(true);
   };
 
   // ── CSPS Export handlers ────────────────────────────────────────────
@@ -809,6 +835,27 @@ export const BuildCompletionHeader: React.FC = () => {
                 )}
               </IconButton>
             </Tooltip>
+            <Divider orientation="vertical" flexItem sx={dividerSx} />
+            <Tooltip title="Send to Wizard's Wardrobe (paste-in import code)">
+              <IconButton
+                size="small"
+                onClick={handleWWExportOpen}
+                aria-label="Send to Wizard's Wardrobe"
+                sx={{
+                  borderRadius: 0,
+                  width: 34,
+                  height: 34,
+                  color: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.4)',
+                  transition: 'all 0.15s ease',
+                  '&:hover': {
+                    background: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
+                    color: isDark ? 'rgba(255,255,255,0.85)' : 'rgba(0,0,0,0.75)',
+                  },
+                }}
+              >
+                <AutoFixHighOutlined sx={{ fontSize: 16 }} />
+              </IconButton>
+            </Tooltip>
           </Box>
         )}
 
@@ -1143,6 +1190,17 @@ export const BuildCompletionHeader: React.FC = () => {
                   <SyncAltIcon sx={{ fontSize: 18 }} />
                 </ListItemIcon>
                 <ListItemText>Export to CSPS</ListItemText>
+              </MuiMenuItem>
+              <MuiMenuItem
+                onClick={() => {
+                  setMoreAnchor(null);
+                  handleWWExportOpen();
+                }}
+              >
+                <ListItemIcon>
+                  <AutoFixHighOutlined sx={{ fontSize: 18 }} />
+                </ListItemIcon>
+                <ListItemText>Send to Wizard&apos;s Wardrobe</ListItemText>
               </MuiMenuItem>
               <Divider />
               {/* Publish — shown in More menu on mobile since it's stripped from inline strip */}
@@ -1648,6 +1706,57 @@ export const BuildCompletionHeader: React.FC = () => {
                 </Tooltip>
               </Stack>
             </Stack>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Wizard's Wardrobe export dialog — lazy-mounted. Bridges each build
+          setup into a paste-in WW import code via the shared loadout panel. */}
+      {wwExportOpen && (
+        <Dialog
+          open
+          onClose={() => setWwExportOpen(false)}
+          maxWidth="sm"
+          fullWidth
+          slotProps={dialogSlotProps}
+        >
+          <DialogTitle
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              fontFamily: 'Space Grotesk, Inter, system-ui',
+              fontWeight: 700,
+              fontSize: 16,
+              pb: 0.5,
+            }}
+          >
+            Send to Wizard&apos;s Wardrobe
+            <IconButton
+              onClick={() => setWwExportOpen(false)}
+              size="small"
+              aria-label="Close Wizard's Wardrobe export dialog"
+              sx={{ color: 'text.secondary' }}
+            >
+              <CloseIcon fontSize="small" />
+            </IconButton>
+          </DialogTitle>
+          <DialogContent>
+            <Typography
+              variant="caption"
+              sx={{
+                color: 'text.secondary',
+                display: 'block',
+                mb: 2,
+                fontSize: 12,
+                fontFamily: 'Space Grotesk, Inter, system-ui',
+              }}
+            >
+              Generate a paste-in import code for each setup in this build. Editor-only details
+              (attributes, mundus, curse) aren&apos;t carried — Wizard&apos;s Wardrobe doesn&apos;t
+              store them.
+            </Typography>
+            <WizardWardrobeTransferPanel setups={wwSetups} disabled={wwExportBlocked} />
           </DialogContent>
         </Dialog>
       )}
