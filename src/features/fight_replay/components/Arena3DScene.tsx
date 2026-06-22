@@ -15,6 +15,7 @@ import { LongPressTracker } from '../utils/longPress';
 import { DEFAULT_ACTOR_SCALE, computeActorScaleFromFightArea } from '../utils/mapScaling';
 import { extractPlayerPaths, DEFAULT_PATH_SAMPLING } from '../utils/pathUtils';
 import { getPlayerPathColor } from '../utils/playerColors';
+import { QUALITY_LEVEL, qualityFlagsForLevel } from '../utils/qualityGovernor';
 import { resolveTouchPolicy } from '../utils/touchPolicy';
 
 import { AdaptiveResolution } from './AdaptiveResolution';
@@ -31,6 +32,7 @@ import { MapMarkers } from './MapMarkers';
 import { MarkerContextMenuPayload } from './Marker3D';
 import { PerformanceMonitorCanvas } from './PerformanceMonitor';
 import { PlayerPathTrail3D } from './PlayerPathTrail3D';
+import { QualityGovernor } from './QualityGovernor';
 import { ShapeDrawLayer } from './ShapeDrawLayer';
 
 // Stable empty Map for the optional playerVisibility prop default — a fresh `new Map()` in
@@ -531,8 +533,17 @@ export interface Arena3DSceneProps {
    * so the DOM player panel and the in-canvas figures share one source of truth.
    */
   playerColorOverrides?: Map<number, string>;
-  /** When true, player figures stop casting shadows (perf headroom for large fights). */
+  /** Manual performance mode (the Bolt toggle): drop bloom + IBL/cosmic + shadows all at once. */
   performanceMode?: boolean;
+  /**
+   * Auto quality level from the governor (0 = full). Combined with `performanceMode` to derive which
+   * effects render. Owned by FightReplay3D so the scene + the "auto" chip stay in lockstep.
+   */
+  autoQualityLevel?: number;
+  /** Governor requests a new level (escalate/recover one effect tier). */
+  onQualityLevelChange?: (level: number) => void;
+  /** True when the user forced full quality via the chip — the governor stands down. */
+  qualityAutoDisabled?: boolean;
   /**
    * True when the replay is a mobile device inside the pseudo-fullscreen overlay. Drives the touch
    * gesture policy: OrbitControls pan is disabled so two fingers are exclusively pinch-zoom
@@ -574,6 +585,9 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
   playerVisibility = EMPTY_VISIBILITY,
   playerColorOverrides = EMPTY_COLOR_OVERRIDES,
   performanceMode = false,
+  autoQualityLevel = 0,
+  onQualityLevelChange,
+  qualityAutoDisabled = false,
   mobileImmersive = false,
 }) => {
   // Touch-gesture policy for OrbitControls. `mobileImmersive` already folds in (mobile && immersive),
@@ -611,6 +625,14 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
   // (`perfTier === 'low' ? [1, 1.5] : [1, 2]`). Threaded to AdaptiveResolution as its full-quality
   // ceiling so the scaler tracks tier changes instead of a value captured at mount.
   const dprCap = perfTier === 'low' ? 1.5 : 2;
+
+  // Effective quality level → which effects render. The manual performance toggle forces the
+  // bloom+IBL/cosmic+shadows tier (its established behavior); the auto governor's level adds on top
+  // (and is ignored when the user forced full quality via the chip). qualityFlagsForLevel then maps
+  // the level to concrete on/off flags consumed by the effect components below.
+  const manualLevel = performanceMode ? QUALITY_LEVEL.NO_SHADOWS : QUALITY_LEVEL.FULL;
+  const effectiveLevel = Math.max(manualLevel, qualityAutoDisabled ? 0 : autoQualityLevel);
+  const qualityFlags = qualityFlagsForLevel(effectiveLevel);
 
   // Lets scene children that mutate visible three.js state from an ASYNC callback (outside
   // any React commit, time change, camera move, or follow) tell the RenderLoop to repaint —
@@ -862,9 +884,9 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
         slowFrameThreshold={33}
         maxSlowFrameLogsPerMinute={10}
       />
-      {/* Bloom post-processing (skipped in performance mode). Publishes its render handle to
-          composerRef; RenderLoop routes the gated render through it so bright celestials glow. */}
-      {!performanceMode && <BloomComposer composerRef={composerRef} samples={bloomSamples} />}
+      {/* Bloom post-processing (dropped at quality tier 1+ / performance mode). Publishes its render
+          handle to composerRef; RenderLoop routes the gated render through it so celestials glow. */}
+      {qualityFlags.bloom && <BloomComposer composerRef={composerRef} samples={bloomSamples} />}
       {/* Manual render loop - lowest priority to render after all updates, gated on-demand */}
       <RenderLoop
         timeRef={timeRef}
@@ -883,6 +905,19 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
         paintedRef={paintedRef}
         markDirty={markSceneDirty}
       />
+      {/* Adaptive quality governor — the tier BELOW resolution scaling. When a weak/throttled GPU
+          stays below target after DPR is at floor, it drops effects (bloom → IBL/cosmic → shadows)
+          and restores them as headroom returns. Inert on capable hardware. */}
+      {onQualityLevelChange && (
+        <QualityGovernor
+          timeRef={timeRef}
+          dprCap={dprCap}
+          paintedRef={paintedRef}
+          level={qualityAutoDisabled ? 0 : autoQualityLevel}
+          onLevelChange={onQualityLevelChange}
+          disabled={qualityAutoDisabled}
+        />
+      )}
       {/* Camera follower system */}
       <CameraFollower lookup={lookup} timeRef={timeRef} followingActorIdRef={followingActorIdRef} />
       {/* In-canvas camera keys: r = reset to fitted initial view, g = frame all actors. Lives in
@@ -908,7 +943,7 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
         centerX={arenaDimensions.centerX}
         centerZ={arenaDimensions.centerZ}
         size={arenaDimensions.size}
-        castShadows={!performanceMode}
+        castShadows={qualityFlags.shadows}
       />
       {/* Procedural image-based lighting for the actor figures. The body/cap materials are
           MeshStandard with metalness 0.1–0.2, so without an environment they reflect pure black and
@@ -917,7 +952,7 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
           `Environment preset`, which would fetch an HDR from a CDN. The env cube renders ONCE at
           mount (no per-frame cost, so it respects the on-demand RenderLoop), and `background={false}`
           keeps it off the visible backdrop — it only lights the figures. Dropped in performance mode. */}
-      {!performanceMode && (
+      {qualityFlags.environment && (
         <Environment resolution={64} frames={1} background={false}>
           <Lightformer intensity={1.6} position={[0, 6, 4]} scale={[12, 12, 1]} color="#fbf3e0" />
           <Lightformer intensity={0.7} position={[-6, 3, -4]} scale={[8, 8, 1]} color="#9fc2ff" />
@@ -932,7 +967,7 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
         size={arenaDimensions.size}
         centerX={arenaDimensions.centerX}
         centerZ={arenaDimensions.centerZ}
-        performanceMode={performanceMode}
+        performanceMode={!qualityFlags.cosmic}
         variant={cosmicVariant}
       />
       {/* Map Texture - Arena floor background with dynamic phase-based switching */}
@@ -997,7 +1032,7 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
         onActorClick={onActorClick}
         playerVisibility={playerVisibility}
         playerColorOverrides={playerColorOverrides}
-        performanceMode={performanceMode}
+        performanceMode={!qualityFlags.shadows}
         markDirty={markSceneDirty}
       />
       {/* Boss health + player list are now DOM overlays rendered by Arena3D as siblings of

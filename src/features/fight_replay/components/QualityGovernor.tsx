@@ -1,0 +1,143 @@
+import { useFrame, useThree } from '@react-three/fiber';
+import React, { useEffect, useRef } from 'react';
+
+import { RenderPriority } from '../constants/renderPriorities';
+import { computeTargetMs, estimateDisplayIntervalMs } from '../utils/adaptiveResolution';
+import { decideNextQualityLevel, QUALITY_LEVEL } from '../utils/qualityGovernor';
+
+// The controller currently escalates only as far as dropping shadows (the effect ladder). The
+// FRAME_CAP rung is defined in qualityGovernor for a follow-up — it needs the on-demand RenderLoop
+// (and ideally the per-frame actor update) gated to the cap to actually buy framerate, which is a
+// riskier change to the load-bearing render gate. Until then the auto-governor stops at NO_SHADOWS.
+const AUTO_MAX_LEVEL = QUALITY_LEVEL.NO_SHADOWS;
+
+interface QualityGovernorProps {
+  /** Live playhead — only frames where this advanced are measured as real playback workload. */
+  timeRef: React.RefObject<number> | { current: number };
+  /** The perf-tier render-resolution cap (mirrors AdaptiveResolution) — used to know DPR's floor. */
+  dprCap: number;
+  /** True when RenderLoop painted the previous frame (idle vs rendered classification). */
+  paintedRef: React.RefObject<boolean>;
+  /** The governor's current quality level (owned by FightReplay3D so the scene + chip stay in sync). */
+  level: number;
+  /** Request a new quality level (escalate/recover one tier). */
+  onLevelChange: (level: number) => void;
+  /** When true the user forced full quality (chip) — the governor stands down entirely. */
+  disabled?: boolean;
+}
+
+// Mirror AdaptiveResolution's measurement constants; the ladder is a coarser, slower tier BELOW it,
+// so use a slightly longer window + cooldown — dropping a whole effect is far more visible than a
+// resolution nudge, so we only do it on a clearly sustained shortfall and let each change settle.
+const SAMPLE_WINDOW = 110;
+const COOLDOWN_FRAMES = 180;
+const MAX_PLAUSIBLE_FRAME_MS = 250;
+const IDLE_WINDOW = 60;
+const DPR_EPSILON = 0.02;
+
+/**
+ * Adaptive quality governor — the tier below AdaptiveResolution. Measures the real playback frame
+ * time and, when a weak / throttled GPU stays below target AFTER resolution scaling is exhausted,
+ * steps an effect ladder down (bloom → IBL/cosmic → shadows → frame cap) and back up as headroom
+ * returns. Renders nothing; owns no React state (the level lives in FightReplay3D so the scene reads
+ * it). See utils/qualityGovernor for the pure hysteresis. Inert on capable hardware — if DPR never
+ * hits its floor (there was headroom), the escalate path never fires and quality stays full.
+ */
+export const QualityGovernor: React.FC<QualityGovernorProps> = ({
+  timeRef,
+  dprCap,
+  paintedRef,
+  level,
+  onLevelChange,
+  disabled = false,
+}) => {
+  const gl = useThree((s) => s.gl);
+
+  const deviceDpr = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1;
+  const maxDpr = Math.min(Math.max(1, deviceDpr), dprCap);
+
+  const samplesRef = useRef<number[]>([]);
+  // No initial cooldown — the SAMPLE_WINDOW itself enforces "sustained", so the first decision lands
+  // after one window (~5–8s on a struggling device). The cooldown only spaces out SUBSEQUENT steps.
+  const cooldownRef = useRef(0);
+  const lastTimeRef = useRef<number | null>(null);
+  const idleSamplesRef = useRef<number[]>([]);
+  // Read the latest requested level synchronously in the frame loop without it being a hook dep.
+  const levelRef = useRef(level);
+  levelRef.current = level;
+
+  // Re-learn the display interval after a resize / visibility flip (same rationale as AdaptiveResolution).
+  useEffect(() => {
+    const reset = (): void => {
+      idleSamplesRef.current.length = 0;
+    };
+    window.addEventListener('resize', reset);
+    document.addEventListener('visibilitychange', reset);
+    return () => {
+      window.removeEventListener('resize', reset);
+      document.removeEventListener('visibilitychange', reset);
+    };
+  }, []);
+
+  useFrame((_state, delta) => {
+    if (disabled) return;
+
+    const ms = delta * 1000;
+    const t = timeRef.current;
+    const advanced = t !== lastTimeRef.current;
+    lastTimeRef.current = t;
+
+    if (!paintedRef.current) {
+      // Idle (un-painted, vsync-paced) frame → a clean display-interval sample.
+      if (ms > 0 && ms < MAX_PLAUSIBLE_FRAME_MS) {
+        const idle = idleSamplesRef.current;
+        idle.push(ms);
+        if (idle.length > IDLE_WINDOW) idle.shift();
+      }
+      return;
+    }
+    // Painted but the playhead didn't advance (paused while following/selected) → not playback workload.
+    if (!advanced) return;
+    if (ms <= 0 || ms > MAX_PLAUSIBLE_FRAME_MS) return;
+
+    const samples = samplesRef.current;
+    samples.push(ms);
+    if (samples.length > SAMPLE_WINDOW) samples.shift();
+
+    if (cooldownRef.current > 0) {
+      cooldownRef.current -= 1;
+      return;
+    }
+    if (samples.length < SAMPLE_WINDOW) return;
+
+    let sum = 0;
+    for (let i = 0; i < samples.length; i++) sum += samples[i];
+    const avg = sum / samples.length;
+
+    const displayInterval = estimateDisplayIntervalMs(idleSamplesRef.current);
+    const targetMs = computeTargetMs(displayInterval);
+    // "DPR exhausted" = AdaptiveResolution has already pulled the pixel ratio BELOW full (resolution
+    // scaling has engaged) and we're STILL slow — so the remaining cost is pass-count / per-frame
+    // work that more resolution scaling won't fix (either DPR is at floor, or its effectiveness guard
+    // stopped it above floor because the bottleneck isn't pixel fill). Either way, trading an effect
+    // is the right next move. On a capable machine DPR stays at full → this is false → governor inert.
+    // Read the live ratio so we stay decoupled from AdaptiveResolution's internals; the governor's
+    // longer window + cooldown ensure DPR has had its chance first.
+    const dprExhausted = gl.getPixelRatio() < maxDpr - DPR_EPSILON;
+
+    const next = decideNextQualityLevel(avg, levelRef.current, {
+      maxLevel: AUTO_MAX_LEVEL,
+      targetMs,
+      displayIntervalMs: displayInterval,
+      dprExhausted,
+    });
+    if (next == null || next === levelRef.current) return;
+
+    onLevelChange(next);
+    levelRef.current = next; // optimistic — avoids re-firing the same step before the prop round-trips
+    samples.length = 0;
+    cooldownRef.current = COOLDOWN_FRAMES;
+  }, RenderPriority.EFFECTS);
+
+  return null;
+};

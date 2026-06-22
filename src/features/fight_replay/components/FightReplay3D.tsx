@@ -250,6 +250,19 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
   const togglePerformance = useCallback(() => setPerformanceMode((v) => !v), []);
   const toggleStats = useCallback(() => setStatsPanelEnabled((v) => !v), []);
 
+  // Adaptive quality governor (the tier below resolution scaling). `autoQualityLevel` is the
+  // governor's current effect-drop level (0 = full); the QualityGovernor inside the scene requests
+  // changes via handleQualityLevelChange. `qualityAutoDisabled` is set when the user taps the
+  // "Performance mode (auto)" chip to force full quality — the governor then stands down. Owned here
+  // so the scene (effect flags) and the chip share one source of truth.
+  const [autoQualityLevel, setAutoQualityLevel] = useState(0);
+  const [qualityAutoDisabled, setQualityAutoDisabled] = useState(false);
+  const handleQualityLevelChange = useCallback((level: number) => setAutoQualityLevel(level), []);
+  const handleForceFullQuality = useCallback(() => {
+    setQualityAutoDisabled(true);
+    setAutoQualityLevel(0);
+  }, []);
+
   // Compact contextual badges for the transport bar (encounter · difficulty · outcome).
   // The encounter name is shortened to its trailing word(s) so it complements — rather than
   // duplicates — the full title in the page header above. ESO Logs difficulty codes:
@@ -495,6 +508,9 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
     setIsPlaying(false);
     setFollowingActor(selectedActorIdFromUrl);
     setSelectedPlayerIds(new Set());
+    // A new fight is a fresh scene with its own load — re-measure from full quality. (The user's
+    // "force full quality" choice, qualityAutoDisabled, deliberately persists across fights.)
+    setAutoQualityLevel(0);
     // A new fight is a new boundary: clear BOTH halves of any Up-next cancel (a stale
     // countdownCancelled would suppress the next fight's countdown — the only Cancel UI —
     // while the cleared skip ref let it auto-advance silently).
@@ -1368,6 +1384,10 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
           onToggleNames={toggleNames}
           performanceMode={performanceMode}
           onTogglePerformance={togglePerformance}
+          autoQualityLevel={autoQualityLevel}
+          onQualityLevelChange={handleQualityLevelChange}
+          qualityAutoDisabled={qualityAutoDisabled}
+          onForceFullQuality={handleForceFullQuality}
           statsPanelEnabled={statsPanelEnabled}
           onToggleStats={toggleStats}
           // On mobile immersive the dedicated shell owns the close + all controls, so suppress
