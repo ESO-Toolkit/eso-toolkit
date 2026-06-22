@@ -38,6 +38,11 @@ const SAMPLE_WINDOW = 110;
 const COOLDOWN_FRAMES = 180;
 const MAX_PLAUSIBLE_FRAME_MS = 250;
 const IDLE_WINDOW = 60;
+// Consecutive non-advancing frames after which a degraded scene is treated as PAUSED and restored to
+// full effects (mirrors AdaptiveResolution's pause-restore). A static scene has no frame pressure, so
+// paused / end-of-fight inspection + screenshots should be full quality; the playback level is
+// remembered and snapped back on resume so a weak device doesn't re-escalate from scratch.
+const PAUSE_RESTORE_FRAMES = 12;
 // Bootstrap only accepts mount-time deltas this fast or faster (~105Hz+) as a refresh sample — same
 // rationale as AdaptiveResolution: such a delta proves a >=~120Hz display, so targeting 120 is
 // meaningful, whereas a slower mount delta is ambiguous (true 60Hz vs load-contaminated).
@@ -65,6 +70,10 @@ export const QualityGovernor: React.FC<QualityGovernorProps> = ({
   const cooldownRef = useRef(0);
   const lastTimeRef = useRef<number | null>(null);
   const idleSamplesRef = useRef<number[]>([]);
+  // Consecutive frames the playhead has not advanced (settled-pause detector).
+  const framesSinceAdvanceRef = useRef(0);
+  // The degraded level to snap back to on RESUME after a pause restored full effects (null = none).
+  const playbackLevelRef = useRef<number | null>(null);
   // Read the latest requested level synchronously in the frame loop without it being a hook dep.
   const levelRef = useRef(level);
   levelRef.current = level;
@@ -114,6 +123,35 @@ export const QualityGovernor: React.FC<QualityGovernorProps> = ({
     const t = timeRef.current;
     const advanced = t !== lastTimeRef.current;
     lastTimeRef.current = t;
+
+    // Pause-restore (mirrors AdaptiveResolution). A settled pause / end-of-fight has no frame
+    // pressure, so restore full effects for inspection + screenshots; remember the degraded playback
+    // level and snap straight back to it on resume so a weak device doesn't re-escalate from scratch.
+    if (advanced) {
+      framesSinceAdvanceRef.current = 0;
+      if (playbackLevelRef.current != null) {
+        const resume = playbackLevelRef.current;
+        playbackLevelRef.current = null;
+        if (resume !== levelRef.current) {
+          onLevelChange(resume);
+          levelRef.current = resume;
+        }
+        samplesRef.current.length = 0;
+        cooldownRef.current = COOLDOWN_FRAMES;
+      }
+    } else {
+      framesSinceAdvanceRef.current += 1;
+      if (
+        framesSinceAdvanceRef.current >= PAUSE_RESTORE_FRAMES &&
+        levelRef.current > 0 &&
+        playbackLevelRef.current == null
+      ) {
+        playbackLevelRef.current = levelRef.current;
+        onLevelChange(0);
+        levelRef.current = 0;
+        samplesRef.current.length = 0;
+      }
+    }
 
     if (!paintedRef.current) {
       // Idle (un-painted, vsync-paced) frame → a clean display-interval sample.
