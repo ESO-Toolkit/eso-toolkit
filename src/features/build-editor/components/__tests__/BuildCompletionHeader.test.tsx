@@ -84,6 +84,11 @@ describe('BuildCompletionHeader — Send to Wizard’s Wardrobe', () => {
     await waitFor(() =>
       expect(screen.getByText(/resolve the gear slot issues/i)).toBeInTheDocument(),
     );
+    // The dialog must name the offending setup/slot, not just gate silently.
+    expect(
+      screen.getByText(/Fix these gear slot issues before generating codes/i),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/Item ID 999999999 not found in database/i)).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /copy/i })).not.toBeInTheDocument();
   });
 });

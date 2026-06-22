@@ -201,12 +201,19 @@ export const BuildCompletionHeader: React.FC = () => {
     () => build.setups.map((setup) => buildSetupToLoadoutSetup(setup)),
     [build.setups],
   );
-  // Mirror the loadout ExportDialog gate: withhold codes if any setup has a
-  // blocking gear-slot error, so a broken setup can't be pasted into the game.
-  const wwExportBlocked = React.useMemo(
-    () => build.setups.some((setup) => validateGearConfig(setup.gear ?? {}).errors.length > 0),
+  // Mirror the loadout ExportDialog gate: collect per-setup blocking gear-slot
+  // errors so we can both withhold the codes and tell the user which setup/slot
+  // is the problem — the shared panel only renders a generic "resolve above"
+  // notice, so the dialog itself must surface the actual messages.
+  const wwBlockingErrors = React.useMemo(
+    () =>
+      build.setups.flatMap((setup, index) => {
+        const name = setup.name?.trim() || `Setup ${index + 1}`;
+        return validateGearConfig(setup.gear ?? {}).errors.map((error) => `${name}: ${error}`);
+      }),
     [build.setups],
   );
+  const wwExportBlocked = wwBlockingErrors.length > 0;
 
   const handleSave = (): void => {
     if (!build.name.trim()) {
@@ -1756,6 +1763,20 @@ export const BuildCompletionHeader: React.FC = () => {
               (attributes, mundus, curse) aren&apos;t carried — Wizard&apos;s Wardrobe doesn&apos;t
               store them.
             </Typography>
+            {wwExportBlocked && (
+              <Alert severity="error" sx={{ mb: 2, borderRadius: '10px' }}>
+                <Typography variant="caption" sx={{ fontWeight: 600, display: 'block' }}>
+                  Fix these gear slot issues before generating codes:
+                </Typography>
+                <Box component="ul" sx={{ pl: 2, my: 0.5 }}>
+                  {wwBlockingErrors.map((error, index) => (
+                    <Typography key={index} component="li" variant="caption">
+                      {error}
+                    </Typography>
+                  ))}
+                </Box>
+              </Alert>
+            )}
             <WizardWardrobeTransferPanel setups={wwSetups} disabled={wwExportBlocked} />
           </DialogContent>
         </Dialog>
