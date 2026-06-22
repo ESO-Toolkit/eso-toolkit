@@ -1,11 +1,20 @@
 /**
- * Scribing Simulator container.
+ * Scribing Simulator container — "The Inscription Bench".
  *
- * Live grimoire + script planner: pick a grimoire, choose its compatible Focus /
- * Signature / Affix scripts, and see a faithful preview of the resulting scribed
- * skill update instantly. Selection is shareable via the URL.
+ * A two-zone arcane workspace: the left bench is where you choose a grimoire and
+ * slot its compatible Focus / Signature / Affix script-runes; the right altar is
+ * where the resulting scribed skill materialises as a faithful in-game tooltip,
+ * updating instantly. Selection is shareable via the URL.
  */
 
+import {
+  AutoStories as GrimoireIcon,
+  AutoFixHigh as InkIcon,
+  Layers as SlotsIcon,
+  Calculate as CombosIcon,
+  Verified as VerifiedIcon,
+  PlaceOutlined as AltarIcon,
+} from '@mui/icons-material';
 import {
   Alert,
   Box,
@@ -20,15 +29,19 @@ import React from 'react';
 
 import { useLogger } from '@/contexts/LoggerContext';
 
+import type { ScribingSlot } from '../../application/scribingEngine';
 import { SCRIBING_SYSTEM } from '../../data/scribingMetadata';
 import { useScribingSimulation } from '../hooks/useScribingSimulation';
 
 import {
   GrimoireGrid,
+  InscriptionProgress,
   ScribedSkillCard,
   ScriptSlotPicker,
   SimulatorControls,
+  StatChip,
 } from './ScribingSimulatorComponents';
+import { glassPanelSx } from './scribingStyles';
 
 export interface ScribingSimulatorProps {
   className?: string;
@@ -37,18 +50,57 @@ export interface ScribingSimulatorProps {
   autoSimulate?: boolean;
 }
 
-const FACT_CHIPS = [
-  '12 grimoires',
-  '3 script slots each',
-  '12,000+ combinations',
-  SCRIBING_SYSTEM.scribingCost,
-];
+const NO_SLOTS: Record<ScribingSlot, boolean> = { focus: false, signature: false, affix: false };
+
+/** A numbered step header for the bench sections. */
+const StepHeader: React.FC<{ n: number; title: string; hint?: string }> = ({ n, title, hint }) => {
+  const theme = useTheme();
+  const dark = theme.palette.mode === 'dark';
+  return (
+    <Stack direction="row" spacing={1.25} sx={{ alignItems: 'center', mb: 1.25 }}>
+      <Box
+        aria-hidden
+        sx={{
+          width: 26,
+          height: 26,
+          flexShrink: 0,
+          borderRadius: '8px',
+          display: 'grid',
+          placeItems: 'center',
+          fontSize: '0.8rem',
+          fontWeight: 800,
+          fontFamily: 'Space Grotesk, Inter, system-ui',
+          color: theme.palette.primary.main,
+          border: '1px solid',
+          borderColor: alpha(theme.palette.primary.main, 0.4),
+          bgcolor: alpha(theme.palette.primary.main, dark ? 0.14 : 0.08),
+        }}
+      >
+        {n}
+      </Box>
+      <Box>
+        <Typography
+          variant="subtitle1"
+          sx={{ fontWeight: 700, lineHeight: 1.1, fontFamily: 'Space Grotesk, Inter, system-ui' }}
+        >
+          {title}
+        </Typography>
+        {hint && (
+          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+            {hint}
+          </Typography>
+        )}
+      </Box>
+    </Stack>
+  );
+};
 
 export const ScribingSimulator: React.FC<ScribingSimulatorProps> = ({
   className,
   defaultGrimoire,
 }) => {
   const theme = useTheme();
+  const dark = theme.palette.mode === 'dark';
   const logger = useLogger('ScribingSimulator');
   const {
     isLoading,
@@ -92,6 +144,13 @@ export const ScribingSimulator: React.FC<ScribingSimulatorProps> = ({
       });
   }, [shareUrl, logger]);
 
+  const filledSlots = React.useMemo<Record<ScribingSlot, boolean>>(() => {
+    if (!result) return NO_SLOTS;
+    const filled = { ...NO_SLOTS };
+    for (const e of result.effects) filled[e.slot] = true;
+    return filled;
+  }, [result]);
+
   if (isLoading) {
     return (
       <Container maxWidth="lg" className={className}>
@@ -131,83 +190,123 @@ export const ScribingSimulator: React.FC<ScribingSimulatorProps> = ({
   return (
     <Container maxWidth="lg" className={className}>
       <Box sx={{ py: { xs: 3, md: 4 } }}>
-        {/* Header */}
+        {/* ── Hero ─────────────────────────────────────────────────── */}
         <Box sx={{ textAlign: 'center', mb: 3 }}>
-          <Typography variant="h4" component="h1" sx={{ fontWeight: 800 }} gutterBottom>
-            ESO Scribing Simulator
-          </Typography>
-          <Typography variant="body1" sx={{ color: 'text.secondary', maxWidth: 720, mx: 'auto' }}>
+          <Stack
+            direction="row"
+            spacing={1}
+            sx={{ alignItems: 'center', justifyContent: 'center', mb: 1.25 }}
+          >
+            <GrimoireIcon sx={{ fontSize: 18, color: 'primary.main' }} />
+            <Typography
+              variant="overline"
+              sx={{
+                color: 'primary.main',
+                fontWeight: 700,
+                letterSpacing: '0.22em',
+                lineHeight: 1,
+              }}
+            >
+              ESO · Arcane Inscription
+            </Typography>
+          </Stack>
+
+          <Box
+            sx={{
+              filter: dark
+                ? `drop-shadow(0 0 28px ${alpha(theme.palette.primary.main, 0.28)})`
+                : 'none',
+            }}
+          >
+            <Typography
+              variant="h3"
+              component="h1"
+              sx={{
+                fontWeight: 800,
+                letterSpacing: '-0.02em',
+                fontFamily: 'Space Grotesk, Inter, system-ui',
+                background: dark
+                  ? 'linear-gradient(180deg, #ffffff 0%, #9fd8f7 135%)'
+                  : 'linear-gradient(180deg, #0f172a 0%, #0369a1 130%)',
+                WebkitBackgroundClip: 'text',
+                backgroundClip: 'text',
+                color: 'transparent',
+              }}
+            >
+              ESO Scribing Simulator
+            </Typography>
+          </Box>
+
+          <Typography
+            variant="body1"
+            sx={{ color: 'text.secondary', maxWidth: 720, mx: 'auto', mt: 1 }}
+          >
             {SCRIBING_SYSTEM.intro}
           </Typography>
+
           <Stack
             direction="row"
             spacing={1}
             sx={{ justifyContent: 'center', flexWrap: 'wrap', gap: 1, mt: 2 }}
           >
-            {FACT_CHIPS.map((fact) => (
-              <Box
-                key={fact}
-                sx={{
-                  px: 1.25,
-                  py: 0.5,
-                  borderRadius: 5,
-                  fontSize: '0.75rem',
-                  fontWeight: 600,
-                  color: 'text.secondary',
-                  border: '1px solid',
-                  borderColor: alpha(theme.palette.divider, 0.6),
-                  bgcolor: alpha(theme.palette.background.paper, 0.4),
-                }}
-              >
-                {fact}
-              </Box>
-            ))}
+            <StatChip icon={<GrimoireIcon />} label="12 grimoires" />
+            <StatChip icon={<SlotsIcon />} label="3 script slots each" accent="#34d399" />
+            <StatChip icon={<CombosIcon />} label="12,000+ combinations" accent="#a855f7" />
+            <StatChip icon={<InkIcon />} label={SCRIBING_SYSTEM.scribingCost} accent="#f59e0b" />
           </Stack>
+
+          <Box sx={{ mt: 2.5 }}>
+            <SimulatorControls
+              onRandomize={randomize}
+              onReset={reset}
+              onShare={handleShare}
+              shareLabel={shareLabel}
+            />
+          </Box>
         </Box>
 
-        <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
-          <SimulatorControls
-            onRandomize={randomize}
-            onReset={reset}
-            onShare={handleShare}
-            shareLabel={shareLabel}
-          />
-        </Box>
-
-        {/* Body */}
+        {/* ── Bench + Altar ────────────────────────────────────────── */}
         <Box
           sx={{
             display: 'grid',
-            gridTemplateColumns: { xs: '1fr', md: 'minmax(0, 1.2fr) minmax(0, 1fr)' },
-            gap: 3,
+            gridTemplateColumns: { xs: '1fr', md: 'minmax(0, 1.18fr) minmax(0, 1fr)' },
+            gap: { xs: 2.5, md: 3 },
             alignItems: 'start',
           }}
         >
-          {/* Configuration */}
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <Box>
-              <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>
-                1 · Choose a grimoire
-              </Typography>
-              <GrimoireGrid
-                grimoires={grimoires}
-                selectedId={selection.grimoireId}
-                onSelect={setGrimoire}
-              />
-              {selectedGrimoire?.acquisition && (
-                <Typography
-                  variant="caption"
-                  sx={{ color: 'text.secondary', display: 'block', mt: 1 }}
-                >
-                  <strong>How to get it:</strong> {selectedGrimoire.acquisition}
+          {/* Bench */}
+          <Box sx={{ ...glassPanelSx(theme), p: { xs: 2, md: 2.5 } }}>
+            <StepHeader n={1} title="Choose a grimoire" hint="The base skill you'll inscribe" />
+            <GrimoireGrid
+              grimoires={grimoires}
+              selectedId={selection.grimoireId}
+              onSelect={setGrimoire}
+            />
+            {selectedGrimoire?.acquisition && (
+              <Box
+                sx={{
+                  mt: 1.5,
+                  p: 1.25,
+                  display: 'flex',
+                  gap: 1,
+                  borderRadius: '10px',
+                  border: '1px solid',
+                  borderColor: alpha(theme.palette.primary.main, 0.25),
+                  bgcolor: alpha(theme.palette.primary.main, dark ? 0.06 : 0.04),
+                }}
+              >
+                <AltarIcon sx={{ fontSize: 16, color: 'primary.main', mt: '2px', flexShrink: 0 }} />
+                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                  <Box component="strong" sx={{ color: 'text.primary' }}>
+                    How to get it:{' '}
+                  </Box>
+                  {selectedGrimoire.acquisition}
                 </Typography>
-              )}
-            </Box>
+              </Box>
+            )}
 
-            <Box>
-              <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>
-                2 · Slot your scripts
-              </Typography>
+            <Box sx={{ mt: 3 }}>
+              <StepHeader n={2} title="Slot your scripts" hint="Focus · Signature · Affix" />
               <Stack spacing={1.5}>
                 <ScriptSlotPicker
                   slot="focus"
@@ -234,18 +333,31 @@ export const ScribingSimulator: React.FC<ScribingSimulatorProps> = ({
             </Box>
           </Box>
 
-          {/* Preview */}
+          {/* Altar */}
           <Box sx={{ position: { md: 'sticky' }, top: { md: 16 } }}>
-            <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>
-              Your scribed skill
-            </Typography>
-            <ScribedSkillCard result={result} />
-            <Typography
-              variant="caption"
-              sx={{ color: 'text.disabled', display: 'block', mt: 1.5, textAlign: 'center' }}
+            <Stack
+              direction="row"
+              sx={{ alignItems: 'center', justifyContent: 'space-between', mb: 1.25 }}
             >
-              Effects verified against ESO-Hub &amp; UESP. Values scale with your character.
-            </Typography>
+              <Typography
+                variant="subtitle1"
+                sx={{ fontWeight: 700, fontFamily: 'Space Grotesk, Inter, system-ui' }}
+              >
+                Your scribed skill
+              </Typography>
+              <InscriptionProgress filled={filledSlots} />
+            </Stack>
+            <ScribedSkillCard result={result} />
+            <Stack
+              direction="row"
+              spacing={0.75}
+              sx={{ alignItems: 'center', justifyContent: 'center', mt: 1.5 }}
+            >
+              <VerifiedIcon sx={{ fontSize: 14, color: 'text.disabled' }} />
+              <Typography variant="caption" sx={{ color: 'text.disabled', textAlign: 'center' }}>
+                Effects verified against ESO-Hub &amp; UESP. Values scale with your character.
+              </Typography>
+            </Stack>
           </Box>
         </Box>
       </Box>
