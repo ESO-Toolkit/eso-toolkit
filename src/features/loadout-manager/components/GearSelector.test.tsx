@@ -102,4 +102,35 @@ describe('GearSelector — shared GearPickerDialog adoption', () => {
     // the slot is filled rather than pinning the id.
     expect(updateGearAction.payload.gear[0]).toBeTruthy();
   });
+
+  it('accepts a one-handed weapon picked for the off-hand slot (dual wield)', async () => {
+    // The shared picker offers 1H `weapon`-slot items as off-hand-compatible.
+    // The strict validateItemForSlot(itemId, 'offhand') rejects them, so without
+    // the off-hand compatibility fallback this pick would silently no-op.
+    const weaponItem = getItemsBySlot('weapon')[0];
+    expect(weaponItem).toBeDefined();
+    expect(weaponItem.info.slot).toBe('weapon');
+    mockPickItemId = weaponItem.itemId;
+
+    const { dispatchSpy } = renderGearSelector();
+
+    fireEvent.click(screen.getByText('Off Hand'));
+    fireEvent.click(screen.getByTestId('shared-picker-select'));
+
+    await waitFor(() => {
+      const dispatched = dispatchSpy.mock.calls.some(([action]) =>
+        typeof action === 'object' && action !== null && 'type' in action
+          ? (action as { type: string }).type === updateGear.type
+          : false,
+      );
+      expect(dispatched).toBe(true);
+    });
+
+    const updateGearAction = dispatchSpy.mock.calls
+      .map(([action]) => action as { type: string; payload: { gear: Record<number, unknown> } })
+      .find((action) => action.type === updateGear.type)!;
+
+    // Off Hand is slot index 5 — it must be populated, not dropped.
+    expect(updateGearAction.payload.gear[5]).toBeTruthy();
+  });
 });

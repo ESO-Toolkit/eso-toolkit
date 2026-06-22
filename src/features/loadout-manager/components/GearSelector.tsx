@@ -667,10 +667,24 @@ export const GearSelector: React.FC<GearSelectorProps> = ({
       return;
     }
 
-    // Validate item for slot
-    const validation = validateItemForSlot(itemId, pickerSlot.type);
-    if (!validation.valid) {
-      const errorMessage = validation.error ?? 'Item validation failed';
+    // Validate item for slot. The shared GearPickerDialog offers one-handed
+    // weapons as off-hand picks (dual wield), but validateItemForSlot's strict
+    // check rejects any item whose metadata slot is `weapon` against an
+    // `offhand` target. Mirror the picker's off-hand compatibility rule here so
+    // a dual-wield off-hand pick the picker presents isn't silently dropped:
+    // an off-hand slot accepts an off-hand item OR a one-handed (non-2H) weapon.
+    const offhandValidation = validateItemForSlot(itemId, pickerSlot.type);
+    let isValidForSlot = offhandValidation.valid;
+    if (!isValidForSlot && pickerSlot.type === 'offhand') {
+      const candidateInfo = getItemInfo(itemId);
+      isValidForSlot = Boolean(
+        candidateInfo &&
+        (candidateInfo.slot === 'offhand' ||
+          (candidateInfo.slot === 'weapon' && !isTwoHandedWeapon(itemId))),
+      );
+    }
+    if (!isValidForSlot) {
+      const errorMessage = offhandValidation.error ?? 'Item validation failed';
       logger.error(errorMessage, new Error(errorMessage), {
         itemId,
         slotType: pickerSlot.type,
