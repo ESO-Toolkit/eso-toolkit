@@ -10,6 +10,7 @@ import { alpha, useTheme } from '@mui/material/styles';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useDispatch } from 'react-redux';
 
+import { GearPickerDialog } from '@/components/gear';
 import { useLogger } from '@/hooks/useLogger';
 
 import { validateItemForSlot, getItemInfo, type SlotType } from '../data/itemIdMap';
@@ -25,8 +26,6 @@ import {
 } from '../utils/itemIconResolver';
 import { getItemData, getItemIdFromLink } from '../utils/itemLinkParser';
 import { registerManualSlot } from '../utils/wizardWardrobeSlotRegistry';
-
-import { ItemPickerDialog } from './ItemPickerDialog';
 
 interface GearSelectorProps {
   gear: GearConfig;
@@ -892,9 +891,11 @@ export const GearSelector: React.FC<GearSelectorProps> = ({
         {renderTile(slotDef(21))}
       </Stack>
 
-      {/* Item Picker Dialog */}
+      {/* Shared, set-aware gear picker (src/components/gear). Replaces the
+          loadout-local ItemPickerDialog with the build editor's richer picker
+          core — same onSelect(itemId) contract, so WW export is unchanged. */}
       {pickerSlot && (
-        <ItemPickerDialog
+        <GearPickerDialog
           open={pickerOpen}
           onClose={handleClosePicker}
           onSelect={handleSelectItem}
