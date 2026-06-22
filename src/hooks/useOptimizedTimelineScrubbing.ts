@@ -59,7 +59,9 @@ export const useOptimizedTimelineScrubbing = ({
   // Handle slider drag start
   const handleSliderChangeStart = useCallback(() => {
     setIsDragging(true);
-    setTempTime(currentTime);
+    // Seed from the LIVE playhead ref (not the throttled `currentTime` snapshot) so grabbing the
+    // thumb mid-playback starts exactly under the playhead with no visible jump.
+    setTempTime(timeRef?.current ?? currentTime);
     setIsScrubbingMode(true);
 
     // Remember if we were playing before scrubbing
@@ -74,7 +76,7 @@ export const useOptimizedTimelineScrubbing = ({
     if (scrubbingTimeoutRef.current) {
       clearTimeout(scrubbingTimeoutRef.current);
     }
-  }, [currentTime, isPlaying, onPlayingChange]);
+  }, [currentTime, isPlaying, onPlayingChange, timeRef]);
 
   // Handle slider value changes during drag
   const handleSliderChange = useCallback(
@@ -141,12 +143,16 @@ export const useOptimizedTimelineScrubbing = ({
     };
   }, []);
 
-  // Update temp time when external time changes (and not dragging)
+  // Keep tempTime in sync with the external time ONLY while paused and not dragging. During
+  // playback the slider shows `currentTime` directly (displayTime falls back to it), and tempTime is
+  // used solely for an in-progress drag — which is always seeded fresh from the live ref at drag
+  // start. Skipping the sync during playback avoids a redundant per-tick setState (LiveScrubRail
+  // feeds a high-frequency `currentTime`), keeping the live rail's re-render to a single pass.
   useEffect(() => {
-    if (!isDragging) {
+    if (!isDragging && !isPlaying) {
       setTempTime(currentTime);
     }
-  }, [currentTime, isDragging]);
+  }, [currentTime, isDragging, isPlaying]);
 
   return {
     displayTime,

@@ -13,6 +13,7 @@ import React, { useCallback, useRef } from 'react';
 import { TimelineAnnotation } from '../../../types/timelineAnnotations';
 import { TRANSPORT_MOTION } from '../constants/replayDesign';
 
+import { RailPlayhead } from './RailPlayhead';
 import { TimelineMarkers } from './TimelineMarkers';
 import { TimelineScrubPreview } from './TimelineScrubPreview';
 interface TimelineSliderProps {
@@ -61,6 +62,15 @@ interface TimelineSliderProps {
    * thing fits one ~80px transport row.
    */
   density?: 'compact' | 'expanded';
+  /**
+   * High-frequency playhead ref. When provided with `livePlayhead`, an rAF-driven DOM overlay
+   * (RailPlayhead) draws the live progress fill + thumb while the MUI thumb/track are hidden — so
+   * the playhead moves smoothly without re-rendering the MUI Slider every tick (which would re-run
+   * emotion's `insertRule` and force a global style recalc — the dominant low-power fps cost).
+   */
+  timeRef?: React.RefObject<number> | { current: number };
+  /** Show the rAF playhead overlay + hide the MUI thumb/track (true while playback is running). */
+  livePlayhead?: boolean;
 }
 
 /** Small pill badge for the transport's contextual read-outs (encounter, outcome, %). */
@@ -201,6 +211,8 @@ export const TimelineSlider: React.FC<TimelineSliderProps> = ({
   loopEnd = null,
   onClearLoop,
   density = 'expanded',
+  timeRef,
+  livePlayhead = false,
 }) => {
   const compact = density === 'compact';
   // The rail wrapper that the hover skim-preview tracks the cursor over. A ref (not a
@@ -356,6 +368,9 @@ export const TimelineSlider: React.FC<TimelineSliderProps> = ({
               width: isDragging ? 18 : 16,
               height: isDragging ? 18 : 16,
               backgroundColor: '#fff',
+              // While the rAF overlay is live (playback running), hide the MUI thumb so there's a
+              // single playhead — the overlay — and the Slider never has to re-render to move it.
+              ...(livePlayhead ? { opacity: 0 } : null),
               // White playhead with an always-on cyan halo ring + glow (the bold proto's
               // thumb), widening while dragging.
               border: 'none',
@@ -373,6 +388,8 @@ export const TimelineSlider: React.FC<TimelineSliderProps> = ({
             '& .MuiSlider-track': {
               height: isDragging ? 7 : 6,
               border: 'none',
+              // Hidden while the rAF overlay draws the live progress fill (see thumb note above).
+              ...(livePlayhead ? { opacity: 0 } : null),
               transition: `height ${TRANSPORT_MOTION.settle} ${TRANSPORT_MOTION.ease}`,
               // Progress fill: the brand cyan gradient with a glow when playing; a flat info
               // hue while scrubbing so the "dragging" state is unmistakable (non-text cue).
@@ -408,6 +425,12 @@ export const TimelineSlider: React.FC<TimelineSliderProps> = ({
             },
           })}
         />
+
+        {/* Live playback playhead — an rAF-driven DOM overlay (fill + thumb) shown while playback
+            runs, so the playhead moves without re-rendering the MUI Slider (which would re-run
+            emotion/insertRule + a global style recalc — the dominant low-power fps cost). The MUI
+            thumb/track are hidden (above) while this is visible, so there's one playhead. */}
+        <RailPlayhead timeRef={timeRef} duration={duration} visible={livePlayhead} />
 
         {/* A–B loop region — a shaded band between the in/out points, drawn UNDER the slider
             (zIndex 0, pointer-events none) so it tints the track without intercepting drags or

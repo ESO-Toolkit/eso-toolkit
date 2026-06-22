@@ -19,11 +19,16 @@ interface ShareButtonProps {
   reportId?: string;
   /** Fight ID for URL generation */
   fightId?: string;
-  /** Current playback time in milliseconds */
-  currentTime: number;
+  /**
+   * Fallback playback time (ms) for the share URL. Optional — the live `timeRef` is preferred and is
+   * always supplied by the transport; this is only used if no ref is available. Kept off the
+   * per-tick render path so the share button (and its memoized transport) doesn't reconcile on
+   * every playback frame.
+   */
+  currentTime?: number;
   /** Optional ref to actor ID for URL generation */
   selectedActorIdRef?: React.RefObject<number | null>;
-  /** Optional ref to current time for more accurate sharing */
+  /** Optional ref to current time for more accurate sharing (the authoritative source). */
   timeRef?: React.RefObject<number> | { current: number };
 }
 
@@ -41,7 +46,7 @@ interface ShareButtonProps {
 export const ShareButton: React.FC<ShareButtonProps> = ({
   reportId,
   fightId,
-  currentTime,
+  currentTime = 0,
   selectedActorIdRef,
   timeRef,
 }) => {

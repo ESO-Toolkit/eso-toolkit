@@ -15,6 +15,15 @@ interface UsePlaybackAnimationProps {
    */
   loopStart?: number | null;
   loopEnd?: number | null;
+  /**
+   * How often (ms of wall clock) to sync the playhead back to React state via `onTimeUpdate`. This
+   * drives only COARSE consumers now (the end-of-fight / up-next gates) — the live transport playhead
+   * reads `timeRef` directly via rAF, so it no longer needs a fast state tick. Kept deliberately
+   * coarse (default 250ms) so that on a slow device, where a single frame can exceed this gate, the
+   * sync fires at most a few times a second instead of every frame (the old 100ms gate spiralled
+   * into an every-frame re-render of the transport, collapsing playback to single-digit fps).
+   */
+  stateSyncIntervalMs?: number;
 }
 
 // Minimum span for an A–B loop to engage. Below this the two points are effectively the same
@@ -34,6 +43,7 @@ export const usePlaybackAnimation = ({
   onEnd,
   loopStart,
   loopEnd,
+  stateSyncIntervalMs = 250,
 }: UsePlaybackAnimationProps): void => {
   const animationIdRef = useRef<number | null>(null);
   const lastUpdateRef = useRef(0);
@@ -87,15 +97,26 @@ export const usePlaybackAnimation = ({
       return;
     }
 
-    // Sync with React state periodically (every 100ms)
-    if (now - lastUpdateRef.current >= 100) {
+    // Sync with React state periodically. Coarse (default 250ms) — the live playhead UI reads the
+    // ref directly via rAF; this state tick now only feeds the end-of-fight / up-next gates.
+    if (now - lastUpdateRef.current >= stateSyncIntervalMs) {
       onTimeUpdate?.(newTime);
       lastUpdateRef.current = now;
     }
 
     // Continue animation loop
     animationIdRef.current = requestAnimationFrame(animationLoop);
-  }, [isPlaying, playbackSpeed, duration, timeRef, onTimeUpdate, onEnd, loopStart, loopEnd]);
+  }, [
+    isPlaying,
+    playbackSpeed,
+    duration,
+    timeRef,
+    onTimeUpdate,
+    onEnd,
+    loopStart,
+    loopEnd,
+    stateSyncIntervalMs,
+  ]);
 
   // Start/stop animation based on playing state
   useEffect(() => {

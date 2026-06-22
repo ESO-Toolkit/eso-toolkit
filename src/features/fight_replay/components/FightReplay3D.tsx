@@ -20,7 +20,6 @@ import {
   TRANSPORT_RESERVED,
   TRANSPORT_MOTION,
   HAIRLINE_H,
-  transportHairline,
 } from '../constants/replayDesign';
 import { useDelayedFlag } from '../hooks/useDelayedFlag';
 import { useIsMobileReplay } from '../hooks/useIsMobileReplay';
@@ -38,6 +37,7 @@ import { Arena3D } from './Arena3D';
 import { ADD_MARKER_AT_CENTER_EVENT } from './Arena3DScene';
 import { MobileReplayDock } from './mobile/MobileReplayDock';
 import { PlaybackControls, PLAYBACK_SPEEDS, type TransportTrial } from './PlaybackControls';
+import { ProgressHairline } from './ProgressHairline';
 import { ReplayTransitionOverlay } from './ReplayTransitionOverlay';
 import type { TrialTimelineSeekTarget } from './TrialTimeline';
 import { UpNextCard, type UpNextState } from './UpNextCard';
@@ -1571,10 +1571,7 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
             }}
           >
             <KeyboardArrowUpRoundedIcon sx={{ fontSize: 20, color: 'rgba(255,255,255,0.82)' }} />
-            <Box
-              aria-hidden
-              sx={(t) => transportHairline(t, duration > 0 ? (currentTime / duration) * 100 : 0)}
-            />
+            <ProgressHairline timeRef={animationTimeRef.timeRef} duration={duration} />
           </Box>
           <IconButton
             aria-label="Close replay"
@@ -1675,7 +1672,6 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
           }}
         >
           <PlaybackControls
-            currentTime={currentTime}
             duration={selectedFight.endTime - selectedFight.startTime}
             isPlaying={isPlaying}
             playbackSpeed={playbackSpeed}
@@ -1701,11 +1697,6 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
             isFullscreen={isImmersive}
             barVisible={barVisible}
             onToggleCollapse={toggleBar}
-            progressPct={
-              selectedFight.endTime > selectedFight.startTime
-                ? (currentTime / (selectedFight.endTime - selectedFight.startTime)) * 100
-                : 0
-            }
             overlay
             isMobile={isMobile}
             trial={transportTrial}

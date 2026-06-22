@@ -31,16 +31,16 @@ import { Box, Switch, Typography } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { useOptimizedTimelineScrubbing } from '../../../../hooks/useOptimizedTimelineScrubbing';
 import { useTimelineMarkers } from '../../../../hooks/useTimelineMarkers';
 import type { TrialChapter } from '../../trial_chapters/types';
 import type { ShapeKind, ShapeStyle } from '../../types/mapMarkers';
 import { ChapterList } from '../ChapterList';
 import type { TrialReplayNav } from '../FightReplay3D';
+import { LiveScrubRail } from '../LiveScrubRail';
 import { PlaybackButtons } from '../PlaybackButtons';
 import { ShapeToolbar } from '../ShapeToolbar';
 import { ShareButton } from '../ShareButton';
-import { TimelineSlider } from '../TimelineSlider';
+import { TimeReadout } from '../TimeReadout';
 import { TrialTimeline, type TrialTimelineSeekTarget } from '../TrialTimeline';
 
 import { MobileSheet } from './MobileSheet';
@@ -410,30 +410,6 @@ const MobileReplayDockComponent: React.FC<MobileReplayDockProps> = ({
   const noopStyleChange = useCallback(() => {}, []);
   const noopClearShapes = useCallback(() => {}, []);
 
-  const {
-    displayTime,
-    isDragging,
-    isScrubbingMode,
-    handleSliderChange,
-    handleSliderChangeStart,
-    handleSliderChangeEnd,
-    optimizedStep,
-  } = useOptimizedTimelineScrubbing({
-    duration,
-    currentTime,
-    onTimeChange,
-    isPlaying,
-    onPlayingChange,
-    timeRef,
-  });
-
-  useEffect(() => {
-    onScrubbingModeChange?.(isScrubbingMode);
-  }, [isScrubbingMode, onScrubbingModeChange]);
-  useEffect(() => {
-    onDraggingChange?.(isDragging);
-  }, [isDragging, onDraggingChange]);
-
   const { markers } = useTimelineMarkers();
   // Keep only the structural beats on the thin mobile rail (deaths reachable via clusters/chapters).
   const railMarkers = useMemo(
@@ -471,15 +447,14 @@ const MobileReplayDockComponent: React.FC<MobileReplayDockProps> = ({
         borderTop: `1px solid ${theme.palette.divider}`,
       })}
     >
-      <TimelineSlider
-        displayTime={displayTime}
+      <LiveScrubRail
+        timeRef={timeRef}
         duration={duration}
-        isDragging={isDragging}
-        isScrubbingMode={isScrubbingMode}
-        optimizedStep={optimizedStep}
-        onSliderChange={handleSliderChange}
-        onSliderChangeEnd={handleSliderChangeEnd}
-        onSliderChangeStart={handleSliderChangeStart}
+        isPlaying={isPlaying}
+        onTimeChange={onTimeChange}
+        onPlayingChange={onPlayingChange}
+        onScrubbingModeChange={onScrubbingModeChange}
+        onDraggingChange={onDraggingChange}
         markers={railMarkers}
         onMarkerClick={handleMarkerClick}
         density="compact"
@@ -511,17 +486,20 @@ const MobileReplayDockComponent: React.FC<MobileReplayDockProps> = ({
         }}
       >
         <Typography
+          component="div"
           sx={{
             fontFamily: 'Space Grotesk, Inter, system-ui',
             fontVariantNumeric: 'tabular-nums',
             fontSize: '0.8rem',
             fontWeight: 600,
-            color: isScrubbingMode || isDragging ? 'info.main' : 'text.primary',
+            color: 'text.primary',
             flex: '0 0 auto',
             whiteSpace: 'nowrap',
           }}
         >
-          {formatTime(displayTime)}
+          {/* Live timecode — rAF-driven from timeRef so it stays smooth without re-rendering the
+              dock every tick. */}
+          <TimeReadout timeRef={timeRef} format={formatTime} />
           <Box
             component="span"
             sx={{ color: 'text.secondary', fontWeight: 500, fontSize: '0.68rem' }}
@@ -929,7 +907,6 @@ const MobileReplayDockComponent: React.FC<MobileReplayDockProps> = ({
               <ShareButton
                 reportId={reportId}
                 fightId={fightId}
-                currentTime={currentTime}
                 selectedActorIdRef={selectedActorIdRef}
                 timeRef={timeRef}
               />
