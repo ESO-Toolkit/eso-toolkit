@@ -49,7 +49,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { WorkInProgressDisclaimer } from '@/components/WorkInProgressDisclaimer';
 import { useDropdownMenuProps } from '@/hooks/useDropdownMenuDirection';
-import { selectSavedLoadouts } from '@/store/saved_loadouts';
+import { selectSavedLoadouts, type SavedLoadout } from '@/store/saved_loadouts';
 import type { RootState } from '@/store/storeWithHistory';
 
 import { preloadChampionPointData } from '../data/championPointData';
@@ -290,19 +290,29 @@ export const LoadoutManager: React.FC = () => {
     showSnackbar('Blank setup added.', 'success');
   };
 
-  const handleLoadFromLibrary = (setup: LoadoutSetup): void => {
+  const handleLoadFromLibrary = (setup: LoadoutSetup, entry: SavedLoadout): void => {
     if (!ensureTrialSelected()) {
       return;
     }
-    // Clone so future edits to the working setup don't mutate the library entry.
+    // addSetup no-ops when no character is selected (the working tree is keyed by
+    // character). currentTrial can fall back to a default, so guard on the
+    // character explicitly rather than reporting a phantom success.
+    if (!currentCharacter) {
+      showSnackbar('Pick or import a character before loading a loadout.', 'error');
+      return;
+    }
+    // Clone so future edits to the working setup don't mutate the library entry,
+    // and adopt the library entry's name so the inserted setup matches the card
+    // the user clicked (the embedded setup.name can be stale after a rename).
     const cloned: LoadoutSetup = JSON.parse(JSON.stringify(setup));
+    cloned.name = entry.name;
     dispatch(addSetup({ trialId: currentTrial!, pageIndex: currentPage, setup: cloned }));
     setView('setups');
     setSelectedSetupIndex(setups.length);
     if (isMdDown) {
       setDrawerOpen(true);
     }
-    showSnackbar(`Loaded "${setup.name}" into the current page.`, 'success');
+    showSnackbar(`Loaded "${entry.name}" into the current page.`, 'success');
   };
 
   const handleDuplicateSetup = (index: number): void => {

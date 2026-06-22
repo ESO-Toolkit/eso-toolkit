@@ -61,12 +61,16 @@ describe('LoadoutLibraryPanel', () => {
     expect(screen.getByText('2 saved loadouts')).toBeInTheDocument();
   });
 
-  it('invokes onLoad with the entry setup when Load is clicked', () => {
+  it('invokes onLoad with the entry setup and the full entry when Load is clicked', () => {
     const onLoad = jest.fn();
-    renderPanel([makeEntry()], onLoad);
+    renderPanel([makeEntry({ name: 'Renamed Tank' })], onLoad);
     fireEvent.click(screen.getByRole('button', { name: 'Load' }));
     expect(onLoad).toHaveBeenCalledTimes(1);
+    // 1st arg: the embedded setup (name may be the original, pre-rename value).
     expect(onLoad.mock.calls[0][0]).toMatchObject({ name: 'My Setup' });
+    // 2nd arg: the saved entry, carrying the canonical (possibly renamed) name
+    // the loader adopts so the inserted setup matches the clicked card.
+    expect(onLoad.mock.calls[0][1]).toMatchObject({ name: 'Renamed Tank' });
   });
 
   it('duplicates a loadout into the library', () => {
