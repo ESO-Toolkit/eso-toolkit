@@ -159,6 +159,12 @@ const DiscordSetupPage = React.lazy(() =>
   })),
 );
 
+const RosterBotDocsPage = React.lazy(() =>
+  import('./pages/RosterBotDocsPage').then((module) => ({
+    default: module.RosterBotDocsPage,
+  })),
+);
+
 const MyRostersPage = React.lazy(() =>
   import('./pages/MyRostersPage').then((module) => ({ default: module.MyRostersPage })),
 );
@@ -698,6 +704,16 @@ const AppRoutes: React.FC = () => {
                 <ErrorBoundary>
                   <Suspense fallback={<LoadingFallback />}>
                     <CalculationKnowledgeBasePage />
+                  </Suspense>
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="/docs/discord-roster-bot"
+              element={
+                <ErrorBoundary>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <RosterBotDocsPage />
                   </Suspense>
                 </ErrorBoundary>
               }

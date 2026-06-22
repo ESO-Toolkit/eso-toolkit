@@ -630,6 +630,29 @@ export const DiscordServerConfigPage: React.FC = () => {
           >
             Connect Discord
           </Button>
+          <Typography variant="body2" sx={{ mt: 2.5, color: 'text.secondary' }}>
+            New to the bot?{' '}
+            <Box
+              component="span"
+              onClick={() => navigate('/docs/discord-roster-bot')}
+              role="link"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  navigate('/docs/discord-roster-bot');
+                }
+              }}
+              sx={{
+                color: '#5865F2',
+                fontWeight: 600,
+                cursor: 'pointer',
+                '&:hover': { textDecoration: 'underline' },
+              }}
+            >
+              Read the roster bot guide
+            </Box>
+          </Typography>
         </Paper>
       </Container>
     );
