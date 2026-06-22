@@ -95,13 +95,52 @@ export const SLOT_TO_EQUIP_TYPE: Readonly<Record<number, number>> = {
   [EQUIP_SLOT.RING2]: EQUIP_TYPE.RING,
 };
 
-/** Weapon gear-slot indices (equipType is weapon-type-dependent — omit if unknown). */
+/** Weapon gear-slot indices (equipType is weapon-type-dependent — derive per item). */
 export const WEAPON_SLOTS: ReadonlySet<number> = new Set([
   EQUIP_SLOT.MAIN_HAND,
   EQUIP_SLOT.OFF_HAND,
   EQUIP_SLOT.BACKUP_MAIN,
   EQUIP_SLOT.BACKUP_OFF,
 ]);
+
+/**
+ * ESO weapon-type label → `EQUIP_TYPE` int. The labels are exactly the values
+ * produced by `getWeaponTypeLabel` (itemIconResolver). equipType is intrinsic to
+ * the weapon (not the slot it sits in): every one-handed weapon equips as
+ * ONE_HAND even in the off-hand slot, a shield equips as OFF_HAND, and every
+ * two-handed weapon (greatsword / battle axe / maul / bow / all staves) equips as
+ * TWO_HAND. The generic "Staff" label (element unknown) is still unambiguously
+ * TWO_HAND, so it resolves here even though its element doesn't.
+ */
+export const WEAPON_LABEL_TO_EQUIP_TYPE: Readonly<Record<string, number>> = {
+  // One-handed weapons
+  Sword: EQUIP_TYPE.ONE_HAND,
+  Axe: EQUIP_TYPE.ONE_HAND,
+  Mace: EQUIP_TYPE.ONE_HAND,
+  Dagger: EQUIP_TYPE.ONE_HAND,
+  // Off-hand
+  Shield: EQUIP_TYPE.OFF_HAND,
+  // Two-handed weapons
+  Greatsword: EQUIP_TYPE.TWO_HAND,
+  'Battle Axe': EQUIP_TYPE.TWO_HAND,
+  Maul: EQUIP_TYPE.TWO_HAND,
+  Bow: EQUIP_TYPE.TWO_HAND,
+  Staff: EQUIP_TYPE.TWO_HAND,
+  'Inferno Staff': EQUIP_TYPE.TWO_HAND,
+  'Ice Staff': EQUIP_TYPE.TWO_HAND,
+  'Lightning Staff': EQUIP_TYPE.TWO_HAND,
+  'Restoration Staff': EQUIP_TYPE.TWO_HAND,
+};
+
+/**
+ * Resolve a weapon-type label (e.g. "Dagger", "Greatsword", "Inferno Staff") to
+ * its `EQUIP_TYPE` int. Returns undefined for non-weapon / unrecognized labels so
+ * callers can omit the slot rather than emit a wrong (hard-matched) equipType.
+ */
+export function weaponLabelToEquipType(label: string | null | undefined): number | undefined {
+  if (!label) return undefined;
+  return WEAPON_LABEL_TO_EQUIP_TYPE[label.trim()];
+}
 
 /** Internal gear-slot index → trait category (for resolving the trait int). */
 export function slotTraitCategory(slot: number): GearTraitCategory {

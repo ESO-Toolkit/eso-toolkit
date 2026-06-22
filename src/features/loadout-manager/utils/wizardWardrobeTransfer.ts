@@ -21,8 +21,10 @@
  * the set + slot (preferring the requested trait). Because equipType and setId are
  * HARD-matched in-game, this generator OMITS any slot it cannot resolve with
  * confidence (rather than emit a wrong/zero value that would silently drop the
- * slot). Weapon slots are omitted because the loadout model does not record weapon
- * type (1H/2H/shield), which equipType depends on. Omitted slots are reported in
+ * slot). Weapon slots are exported too: the weapon's equipType (ONE_HAND /
+ * TWO_HAND / OFF_HAND) is derived from the item's resolved weapon type, and a slot
+ * is only omitted when that type can't be pinned down (e.g. a generic set itemId
+ * with no slot-specific weapon metadata). Omitted slots are reported in
  * `unresolvedSlots` so the UI can tell the user to set them manually.
  *
  * The in-game import box caps input at 1000 characters (`overCharLimit`).
@@ -36,10 +38,12 @@ import {
   WW_EXCLUDED_SLOTS,
   slotTraitCategory,
   traitIdToTraitType,
+  weaponLabelToEquipType,
 } from '../data/esoEquipmentEnums';
 import { getItemInfo } from '../data/itemIdMap';
 import type { LoadoutSetup, GearPiece } from '../types/loadout.types';
 
+import { getWeaponTypeLabel } from './itemIconResolver';
 import { getItemIdFromLink } from './itemLinkParser';
 
 /** WW input box hard limit (`SetMaxInputChars(1000)`). */
@@ -98,6 +102,21 @@ function resolveItemId(piece: GearPiece): number | undefined {
   return undefined;
 }
 
+/**
+ * Resolve the `EQUIP_TYPE` for a weapon-slot item from its weapon type.
+ *
+ * Applies the same slot-specificity guard as `isTwoHandedWeapon`: generic set
+ * itemIds (no `slot` field) collide with unrelated weapon icons in UESP's icon
+ * database, so a guess from one would silently equip the wrong weapon class.
+ * Only classify items whose own metadata says they are a slot-specific
+ * weapon/offhand item; otherwise return undefined so the caller omits the slot.
+ */
+function resolveWeaponEquipType(itemId: number): number | undefined {
+  const info = getItemInfo(itemId);
+  if (info?.slot !== 'weapon' && info?.slot !== 'offhand') return undefined;
+  return weaponLabelToEquipType(getWeaponTypeLabel(itemId));
+}
+
 function buildSkills(skills: LoadoutSetup['skills']): WWTransferSetup['skills'] {
   const out: WWTransferSetup['skills'] = { '0': {}, '1': {} };
   for (const bar of [0, 1] as const) {
@@ -151,18 +170,27 @@ export function loadoutSetupToWWTransfer(setup: LoadoutSetup): WWTransferResult 
     const piece = rawPiece as GearPiece;
     if (!piece || (!piece.link && piece.id == null)) continue; // empty slot
 
+    const itemId = resolveItemId(piece);
+
+    // equipType is HARD-matched on import. Weapon slots derive it from the
+    // weapon's type; armor/jewelry slots read it straight from the slot index.
+    let equipType: number | undefined;
     if (WEAPON_SLOTS.has(slot)) {
-      unresolvedSlots.push({
-        slot,
-        reason: 'Weapon slot — weapon type is not stored, so set it manually in Wizard’s Wardrobe.',
-      });
-      continue;
+      equipType = itemId ? resolveWeaponEquipType(itemId) : undefined;
+      if (!equipType) {
+        unresolvedSlots.push({
+          slot,
+          reason: itemId
+            ? 'Weapon type couldn’t be determined — set this slot manually in Wizard’s Wardrobe.'
+            : 'Weapon item couldn’t be identified — set this slot manually in Wizard’s Wardrobe.',
+        });
+        continue;
+      }
+    } else {
+      equipType = SLOT_TO_EQUIP_TYPE[slot];
+      if (!equipType) continue; // not an exportable armor/jewelry slot
     }
 
-    const equipType = SLOT_TO_EQUIP_TYPE[slot];
-    if (!equipType) continue; // not an exportable armor/jewelry slot
-
-    const itemId = resolveItemId(piece);
     const setName = itemId ? getItemInfo(itemId)?.setName : undefined;
     const setId = findSetIdByName(setName);
     if (!setId) {
