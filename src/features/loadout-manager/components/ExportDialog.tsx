@@ -29,12 +29,13 @@ import { useLogger } from '@/hooks/useLogger';
 
 import { TRIALS } from '../data/trialConfigs';
 import { selectCurrentTrial, selectCurrentSetups, selectLoadoutState } from '../store/selectors';
-import type { WizardWardrobeExport } from '../types/loadout.types';
 import {
   convertLoadoutStateToAlphaGear,
   serializeAlphaGearToLua,
 } from '../utils/alphaGearConverter';
 import { validateGearConfig } from '../utils/itemSlotValidator';
+
+import { WizardWardrobeTransferPanel } from './WizardWardrobeTransferPanel';
 
 interface ExportDialogProps {
   open: boolean;
@@ -111,32 +112,16 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({ open, onClose }) => 
     return serializeAlphaGearToLua(agData);
   };
 
-  const generateWizardWardrobe = (): string => {
-    // Convert to Wizard's Wardrobe format
-    const wizardData: WizardWardrobeExport = {
-      version: 1,
-      selectedZoneTag: currentTrialId || '',
-      setups: {
-        [currentTrialId || 'default']: setups.map((setup, index) => ({
-          [index + 1]: setup,
-        })),
-      },
-      pages: {
-        [currentTrialId || 'default']: [{ selected: 1 }],
-      },
-    };
-    return JSON.stringify(wizardData, null, 2);
-  };
-
+  // Wizard's Wardrobe uses a paste-in import code per setup (handled by
+  // WizardWardrobeTransferPanel), so it is not part of the file/clipboard export
+  // path below — that path serves the JSON and AlphaGear (Lua file) formats.
   const getExportData = (): string => {
     if (exportFormat === 'alphagear') return generateAlphaGear();
-    if (exportFormat === 'wizard') return generateWizardWardrobe();
     return generateJSON();
   };
 
   const getExportFilename = (): string => {
     if (exportFormat === 'alphagear') return `AlphaGear.lua`;
-    if (exportFormat === 'wizard') return `wizard-wardrobe-${currentTrialId}-${Date.now()}.json`;
     return `loadout-${currentTrialId}-${Date.now()}.json`;
   };
 
@@ -290,7 +275,7 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({ open, onClose }) => 
                 <Stack>
                   <Typography variant="body1">Wizard&apos;s Wardrobe (ESO Addon)</Typography>
                   <Typography variant="caption" color="text.secondary">
-                    Compatible with in-game addon
+                    Paste-in import code — no file needed
                   </Typography>
                 </Stack>
               </MenuItem>
@@ -305,56 +290,62 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({ open, onClose }) => 
             </Select>
           </FormControl>
 
-          {/* Preview */}
-          <Paper
-            elevation={0}
-            sx={{
-              p: 2,
-              backgroundColor: isDarkMode ? 'rgba(0,0,0,0.4)' : 'rgba(0,0,0,0.04)',
-              border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.08)'}`,
-            }}
-          >
-            <Typography variant="caption" color="text.secondary" gutterBottom>
-              Preview:
-            </Typography>
-            <TextField
-              multiline
-              fullWidth
-              rows={12}
-              value={getPreview()}
-              slotProps={{
-                input: {
-                  readOnly: true,
-                  sx: {
-                    fontFamily: 'monospace',
-                    fontSize: '0.75rem',
-                    bgcolor: 'background.paper',
-                  },
-                },
-              }}
-            />
-          </Paper>
+          {exportFormat === 'wizard' ? (
+            <WizardWardrobeTransferPanel setups={setups} />
+          ) : (
+            <>
+              {/* Preview */}
+              <Paper
+                elevation={0}
+                sx={{
+                  p: 2,
+                  backgroundColor: isDarkMode ? 'rgba(0,0,0,0.4)' : 'rgba(0,0,0,0.04)',
+                  border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.08)'}`,
+                }}
+              >
+                <Typography variant="caption" color="text.secondary" gutterBottom>
+                  Preview:
+                </Typography>
+                <TextField
+                  multiline
+                  fullWidth
+                  rows={12}
+                  value={getPreview()}
+                  slotProps={{
+                    input: {
+                      readOnly: true,
+                      sx: {
+                        fontFamily: 'monospace',
+                        fontSize: '0.75rem',
+                        bgcolor: 'background.paper',
+                      },
+                    },
+                  }}
+                />
+              </Paper>
 
-          {copied && (
-            <Alert severity="success" onClose={() => setCopied(false)}>
-              Copied to clipboard!
-            </Alert>
-          )}
+              {copied && (
+                <Alert severity="success" onClose={() => setCopied(false)}>
+                  Copied to clipboard!
+                </Alert>
+              )}
 
-          {/* Help text for Wizard's Wardrobe and AlphaGear formats */}
-          {(exportFormat === 'wizard' || exportFormat === 'alphagear') && (
-            <Alert severity="info">
-              <Typography variant="caption" component="div">
-                <strong>To use in-game:</strong> Save this file to your ESO folder at:
-                <br />
-                <code style={{ fontSize: '0.85em', display: 'block', marginTop: '4px' }}>
-                  {getESOSavedVarsPath()}
-                  {exportFormat === 'alphagear' ? 'AlphaGear.lua' : 'WizardWardrobe.lua'}
-                </code>
-                <br />
-                Then use <code>/reloadui</code> in-game to load your changes.
-              </Typography>
-            </Alert>
+              {/* Help text for the AlphaGear (Lua SavedVariables file) format */}
+              {exportFormat === 'alphagear' && (
+                <Alert severity="info">
+                  <Typography variant="caption" component="div">
+                    <strong>To use in-game:</strong> Save this file to your ESO folder at:
+                    <br />
+                    <code style={{ fontSize: '0.85em', display: 'block', marginTop: '4px' }}>
+                      {getESOSavedVarsPath()}
+                      AlphaGear.lua
+                    </code>
+                    <br />
+                    Then use <code>/reloadui</code> in-game to load your changes.
+                  </Typography>
+                </Alert>
+              )}
+            </>
           )}
         </Stack>
       </DialogContent>
@@ -366,35 +357,40 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({ open, onClose }) => 
             </Typography>
           )}
         </Box>
-        <Button onClick={onClose}>Cancel</Button>
-        <Button
-          startIcon={<ContentCopy />}
-          onClick={handleCopy}
-          variant="outlined"
-          disabled={exportBlocked}
-          sx={{
-            borderRadius: '20px',
-            backgroundColor: isDarkMode ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)',
-            borderColor: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)',
-            '&:hover': {
-              backgroundColor: isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)',
-              borderColor: isDarkMode ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.12)',
-            },
-          }}
-        >
-          Copy to Clipboard
-        </Button>
-        <Button
-          startIcon={<Download />}
-          onClick={handleExport}
-          variant="contained"
-          disabled={exportBlocked}
-          sx={{
-            borderRadius: '20px',
-          }}
-        >
-          Download File
-        </Button>
+        <Button onClick={onClose}>{exportFormat === 'wizard' ? 'Close' : 'Cancel'}</Button>
+        {/* Wizard's Wardrobe uses per-setup copy buttons in the panel above. */}
+        {exportFormat !== 'wizard' && (
+          <>
+            <Button
+              startIcon={<ContentCopy />}
+              onClick={handleCopy}
+              variant="outlined"
+              disabled={exportBlocked}
+              sx={{
+                borderRadius: '20px',
+                backgroundColor: isDarkMode ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)',
+                borderColor: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)',
+                '&:hover': {
+                  backgroundColor: isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)',
+                  borderColor: isDarkMode ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.12)',
+                },
+              }}
+            >
+              Copy to Clipboard
+            </Button>
+            <Button
+              startIcon={<Download />}
+              onClick={handleExport}
+              variant="contained"
+              disabled={exportBlocked}
+              sx={{
+                borderRadius: '20px',
+              }}
+            >
+              Download File
+            </Button>
+          </>
+        )}
       </DialogActions>
     </Dialog>
   );
