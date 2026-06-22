@@ -8,7 +8,7 @@ const ROUTE_NAMES: Record<string, string> = {
   '/text-editor': 'Text Editor',
   '/calculator': 'Calculator',
   '/parse-analysis': 'Parse Analysis',
-  '/loadout-manager': 'Loadout Manager',
+  '/loadouts': 'Loadout Manager',
   '/roster-builder': 'Roster Builder',
   '/build-editor': 'Build Editor',
   '/roster-hub': 'Roster Hub',

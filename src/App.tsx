@@ -2,7 +2,7 @@ import { Box, Container } from '@mui/material';
 import { SnackbarProvider } from 'notistack';
 import React, { Suspense, useEffect, useState } from 'react';
 import { Provider as ReduxProvider } from 'react-redux';
-import { Routes, Route, BrowserRouter } from 'react-router-dom';
+import { Routes, Route, BrowserRouter, Navigate } from 'react-router-dom';
 import { PersistGate } from 'redux-persist/integration/react';
 
 import { AnalyticsListener } from './components/AnalyticsListener';
@@ -663,7 +663,7 @@ const AppRoutes: React.FC = () => {
               }
             />
             <Route
-              path="/loadout-manager"
+              path="/loadouts"
               element={
                 <ErrorBoundary>
                   <Suspense fallback={<LoadingFallback />}>
@@ -672,6 +672,10 @@ const AppRoutes: React.FC = () => {
                 </ErrorBoundary>
               }
             />
+            {/* Legacy route — /loadout-manager was renamed to /loadouts.
+                Keep a permanent client-side redirect so old links/bookmarks
+                still resolve. */}
+            <Route path="/loadout-manager" element={<Navigate to="/loadouts" replace />} />
             <Route
               path="/build-editor"
               element={
