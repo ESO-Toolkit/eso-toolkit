@@ -114,7 +114,7 @@ const COMMAND_GROUPS: ReadonlyArray<CommandGroup> = [
         command: '/roster link',
         summary:
           'Link an ESO Toolkit roster to this server and publish it in one step. Paste the roster URL or its ID.',
-        access: 'Publisher role or Manage Server',
+        access: 'Publisher role (or admins until one is set)',
         args: [
           {
             name: 'roster',
@@ -127,7 +127,7 @@ const COMMAND_GROUPS: ReadonlyArray<CommandGroup> = [
         command: '/roster publish',
         summary:
           'Publish a roster to a fresh Discord channel by ID. Optionally override the channel name or the category it lands in.',
-        access: 'Publisher role or Manage Server',
+        access: 'Publisher role (or admins until one is set)',
         args: [
           { name: 'roster-id', required: true, desc: 'ESO Toolkit roster ID' },
           {
@@ -142,7 +142,7 @@ const COMMAND_GROUPS: ReadonlyArray<CommandGroup> = [
         command: '/roster refresh',
         summary:
           'Re-sync the roster in the current channel from ESO Toolkit. Run it after editing the roster on the website. The 🔄 Refresh button on the post does the same thing.',
-        access: 'Publisher role or Manage Server',
+        access: 'Publisher role (or admins until one is set)',
       },
     ],
   },
@@ -174,7 +174,7 @@ const COMMAND_GROUPS: ReadonlyArray<CommandGroup> = [
       {
         command: '/roster config set-role',
         summary:
-          'Set the role allowed to publish and refresh rosters (replaces any existing allowed roles). Without this, only Manage Server admins can publish.',
+          'Set the role allowed to publish and refresh rosters (replaces any existing allowed roles). Once a role is set it is required for publishing — even Manage Server admins must hold it. With no role configured, only Manage Server admins can publish.',
         access: 'Manage Server',
         args: [{ name: 'role', required: true, desc: 'Role to allow' }],
       },
@@ -481,7 +481,8 @@ export const RosterBotDocsPage: React.FC = () => {
                   <Box component="code" sx={codeChipSx}>
                     /roster config set-role @RaidLead
                   </Box>{' '}
-                  so your leads can post rosters. Without it, only Manage Server admins can publish.
+                  so your leads can post rosters. Once a role is set, publishing requires it — even
+                  admins. With no role configured, only Manage Server admins can publish.
                 </>
               ),
             },
@@ -736,7 +737,7 @@ export const RosterBotDocsPage: React.FC = () => {
         <Stack spacing={1.5}>
           <PermRow
             role="Server admins (Manage Server)"
-            can="Everything — invite the bot, run all /roster config commands, publish, and refresh."
+            can="Invite the bot and run every /roster config command. They can also publish and refresh — but once a publisher role is configured, an admin needs that role too."
           />
           <PermRow
             role="Publisher role (set via set-role / add-role)"
