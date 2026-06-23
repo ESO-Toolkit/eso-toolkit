@@ -8,9 +8,14 @@
  * - Tabs stay full-width but without per-tab "Clear" header rows
  */
 
-import { ContentCopy, ContentPaste, Delete, FileCopy } from '@mui/icons-material';
+import { BookmarkAdd, ContentCopy, ContentPaste, Delete, FileCopy } from '@mui/icons-material';
 import {
   Box,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   Paper,
   Typography,
   Tabs,
@@ -21,6 +26,7 @@ import {
   Snackbar,
   Alert,
   ChipProps,
+  TextField,
   Tooltip,
   useTheme,
 } from '@mui/material';
@@ -28,6 +34,7 @@ import React, { useState } from 'react';
 import { useDispatch } from 'react-redux';
 
 import { useLogger } from '@/hooks/useLogger';
+import { saveLoadout } from '@/store/saved_loadouts';
 
 import { duplicateSetup, deleteSetup, replaceSetup } from '../store/loadoutSlice';
 import { LoadoutSetup, ClipboardSetup } from '../types/loadout.types';
@@ -99,6 +106,9 @@ export const SetupEditor: React.FC<SetupEditorProps> = ({
   const isDarkMode = theme.palette.mode === 'dark';
   const isDrawer = variant === 'drawer';
   const [currentTab, setCurrentTab] = React.useState(0);
+  const [saveDialogOpen, setSaveDialogOpen] = useState(false);
+  const [saveName, setSaveName] = useState('');
+  const [saveDescription, setSaveDescription] = useState('');
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
     message: string;
@@ -219,6 +229,31 @@ export const SetupEditor: React.FC<SetupEditorProps> = ({
   const handleDuplicate = (): void => {
     dispatch(duplicateSetup({ trialId, pageIndex, setupIndex }));
     showSnackbar('Setup duplicated!', 'success');
+  };
+
+  const handleOpenSaveDialog = (): void => {
+    setSaveName(setup.name || 'Untitled loadout');
+    setSaveDescription('');
+    setSaveDialogOpen(true);
+  };
+
+  const handleSaveToLibrary = (): void => {
+    const name = saveName.trim();
+    if (!name) {
+      return;
+    }
+    // Clone so later edits to the working setup don't mutate the library entry.
+    const clonedSetup: LoadoutSetup = JSON.parse(JSON.stringify(setup));
+    dispatch(
+      saveLoadout({
+        name,
+        setup: clonedSetup,
+        description: saveDescription.trim() || undefined,
+        meta: { trialId },
+      }),
+    );
+    setSaveDialogOpen(false);
+    showSnackbar(`Saved "${name}" to your library.`, 'success');
   };
 
   const handleDelete = (): void => {
@@ -351,6 +386,31 @@ export const SetupEditor: React.FC<SetupEditorProps> = ({
                   }}
                 >
                   <ContentPaste fontSize="small" />
+                </IconButton>
+              </Tooltip>
+              <Box
+                sx={{
+                  width: '1px',
+                  height: 20,
+                  flexShrink: 0,
+                  backgroundColor: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)',
+                }}
+              />
+              <Tooltip title="Save to library" arrow>
+                <IconButton
+                  size="small"
+                  onClick={handleOpenSaveDialog}
+                  color="success"
+                  aria-label="Save to library"
+                  sx={{
+                    borderRadius: 0,
+                    px: 0.75,
+                    '&:hover': {
+                      backgroundColor: isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
+                    },
+                  }}
+                >
+                  <BookmarkAdd fontSize="small" />
                 </IconButton>
               </Tooltip>
               <Box
@@ -537,6 +597,41 @@ export const SetupEditor: React.FC<SetupEditorProps> = ({
           />
         </TabPanel>
       </Box>
+
+      {/* Save to library dialog */}
+      <Dialog
+        open={saveDialogOpen}
+        onClose={() => setSaveDialogOpen(false)}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle sx={{ fontWeight: 700 }}>Save to Library</DialogTitle>
+        <DialogContent>
+          <TextField
+            value={saveName}
+            onChange={(event) => setSaveName(event.target.value)}
+            autoFocus
+            fullWidth
+            margin="dense"
+            label="Name"
+          />
+          <TextField
+            value={saveDescription}
+            onChange={(event) => setSaveDescription(event.target.value)}
+            fullWidth
+            margin="dense"
+            label="Description (optional)"
+            multiline
+            minRows={2}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setSaveDialogOpen(false)}>Cancel</Button>
+          <Button onClick={handleSaveToLibrary} variant="contained" disabled={!saveName.trim()}>
+            Save
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Snackbar */}
       <Snackbar

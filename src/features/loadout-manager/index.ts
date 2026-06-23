@@ -3,6 +3,7 @@
  */
 
 export { LoadoutManager } from './components/LoadoutManager';
+export { LoadoutLibraryPanel } from './components/LoadoutLibraryPanel';
 export { SetupList } from './components/SetupList';
 export { SetupEditor } from './components/SetupEditor';
 export { SkillSelector } from './components/SkillSelector';
