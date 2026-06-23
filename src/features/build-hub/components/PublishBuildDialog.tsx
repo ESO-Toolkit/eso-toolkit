@@ -111,14 +111,19 @@ export const PublishBuildDialog: React.FC<PublishBuildDialogProps> = ({
       // published so the Hub card, the description column, and the build you
       // open from the listing all agree — and so client-side share gating that
       // reads the decoded build acts on the selected visibility, not a stale
-      // one. Fall back to the original blob if decode/re-encode fails (the
-      // server's title/description/visibility metadata is still authoritative).
+      // one. Visibility is special: a `?b=` blob bypasses the owner-gated API,
+      // so if the selected visibility can't be written into the blob we fail
+      // closed rather than publish a self-contained payload that is more
+      // permissive than the row. Title/description-only drift can safely keep
+      // the original blob (cosmetic staleness; the server re-validates anyway).
       let syncedBuildData = buildData;
+      let visibilityResyncFailed = false;
       try {
         const decoded = await decodeBuildFromURL(buildData);
         if (decoded) {
+          const visibilityDiverged = decoded.settings.visibility !== selectedVisibility;
           const needsResync =
-            decoded.settings.visibility !== selectedVisibility ||
+            visibilityDiverged ||
             decoded.name !== trimmedTitle ||
             decoded.shortDescription !== trimmedDescription;
           if (needsResync) {
@@ -128,11 +133,20 @@ export const PublishBuildDialog: React.FC<PublishBuildDialogProps> = ({
               shortDescription: trimmedDescription,
               settings: { ...decoded.settings, visibility: selectedVisibility },
             });
-            if (reencoded) syncedBuildData = reencoded;
+            if (reencoded) {
+              syncedBuildData = reencoded;
+            } else if (visibilityDiverged) {
+              visibilityResyncFailed = true;
+            }
           }
         }
       } catch {
-        /* keep original blob; server metadata is still authoritative */
+        /* keep original blob; the server re-validates the embedded visibility */
+      }
+
+      if (visibilityResyncFailed) {
+        setError('Could not apply the selected visibility. Please try again.');
+        return;
       }
 
       const payload: PublishBuildPayload = {

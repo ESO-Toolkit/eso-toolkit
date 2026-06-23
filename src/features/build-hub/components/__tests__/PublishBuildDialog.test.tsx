@@ -147,6 +147,53 @@ describe('PublishBuildDialog publish-time sync', () => {
     expect(payload.build_data).toBe('ENCODED_ORIGINAL');
   });
 
+  it('fails closed: switching visibility with a failed re-encode aborts publish (no stale blob sent)', async () => {
+    // Decoded blob is Public; the author switches to Private but the re-encode
+    // fails. The dialog must NOT publish a Public self-contained blob tagged
+    // Private — it surfaces an error and never calls the API.
+    mockEncode.mockResolvedValue(''); // re-encode fails
+
+    render(
+      <PublishBuildDialog
+        {...baseProps}
+        visibility="public"
+        defaultTitle="Lightning Sorc"
+        defaultDescription="A tagline"
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /private/i }));
+    fireEvent.click(screen.getByRole('button', { name: 'Publish' }));
+
+    await waitFor(() =>
+      expect(screen.getByText(/could not apply the selected visibility/i)).toBeInTheDocument(),
+    );
+    expect(mockCreate).not.toHaveBeenCalled();
+  });
+
+  it('still publishes when only title/description drift and re-encode fails (keeps original blob)', async () => {
+    // Title changed but visibility unchanged; re-encode fails. Title/description
+    // drift is cosmetic, never a privacy leak, so the publish proceeds with the
+    // original blob rather than failing closed.
+    mockEncode.mockResolvedValue(''); // re-encode fails
+
+    render(
+      <PublishBuildDialog
+        {...baseProps}
+        visibility="public"
+        defaultTitle="Lightning Sorc"
+        defaultDescription="A tagline"
+      />,
+    );
+
+    fireEvent.change(titleInput(), { target: { value: 'Renamed Build' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Publish' }));
+
+    await waitFor(() => expect(mockCreate).toHaveBeenCalledTimes(1));
+    const [payload] = mockCreate.mock.calls[0];
+    expect(payload).toMatchObject({ title: 'Renamed Build', build_data: 'ENCODED_ORIGINAL' });
+  });
+
   it('blocks publishing with an empty title', () => {
     render(<PublishBuildDialog {...baseProps} />);
     fireEvent.click(screen.getByRole('button', { name: 'Publish' }));
