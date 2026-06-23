@@ -15,10 +15,10 @@ import { useDispatch, useSelector, useStore } from 'react-redux';
 
 import { AuthContext } from '@/features/auth/AuthContext';
 import {
+  claimUnownedLoadouts,
   replaceAllLoadouts,
   selectSavedLoadouts,
   selectLoadoutsLastSyncedAt,
-  selectLoadoutsSyncedUserId,
   setLastSyncedAt,
   setSyncedUserId,
   type SavedLoadout,
@@ -65,8 +65,10 @@ export interface UseLoadoutSyncResult {
   status: LoadoutSyncStatus;
   error: string | null;
   lastSyncedAt: string | undefined;
-  /** Pull + merge + push the whole library. Resolves with the merged count. */
+  /** Pull + merge + push this account's own loadouts. Resolves with the merged count. */
   syncNow: () => Promise<number | undefined>;
+  /** Explicitly claim unowned local loadouts for this account, then sync. */
+  claimLocalLoadouts: () => Promise<number | undefined>;
   /** Push a single loadout to the account (does not merge the rest). */
   saveOne: (loadout: SavedLoadout) => Promise<boolean>;
   /** Delete a single loadout from the account only (keeps the local copy). */
@@ -109,17 +111,12 @@ export function useLoadoutSync(): UseLoadoutSyncResult {
       return undefined;
     }
 
-    // Only claim unowned (guest/legacy) loadouts on a first/own-browser sync. Once
-    // a DIFFERENT account has synced here, leave unowned loadouts alone so this
-    // account can't hoover up a previous user's local library.
-    const previousSyncUser = selectLoadoutsSyncedUserId(store.getState());
-    const claimUnowned = !previousSyncUser || previousSyncUser === owner;
-    // Ids that are this user's at sync start; used to tell a delete-during-sync
-    // (was mine, now gone) apart from a server-pulled new loadout (never local).
+    // Sync NEVER implicitly claims unowned (guest/legacy) loadouts — that would let
+    // a shared browser upload a previous user's local library into this account.
+    // Claiming is an explicit, separate action (claimLocalLoadouts). So the sync
+    // slice is strictly this account's already-owned loadouts.
     const initialMineIds = new Set(
-      partitionByOwner(selectSavedLoadouts(store.getState()), owner, claimUnowned).mine.map(
-        (l) => l.id,
-      ),
+      partitionByOwner(selectSavedLoadouts(store.getState()), owner, false).mine.map((l) => l.id),
     );
 
     setStatus('syncing');
@@ -135,11 +132,7 @@ export function useLoadoutSync(): UseLoadoutSyncResult {
       // from the store each pass means edits made mid-sync aren't dropped; version-aware
       // purge keeps a local edit newer than its tombstone. Bounded by MAX_SYNC_PASSES.
       for (let pass = 0; pass < MAX_SYNC_PASSES; pass++) {
-        const { mine } = partitionByOwner(
-          selectSavedLoadouts(store.getState()),
-          owner,
-          claimUnowned,
-        );
+        const { mine } = partitionByOwner(selectSavedLoadouts(store.getState()), owner, false);
         const toPush = purgeDeleted(mergeLoadoutsByNewest(mine, committedMine), tombstones);
 
         if (toPush.length > MAX_ACCOUNT_LOADOUTS) {
@@ -165,7 +158,7 @@ export function useLoadoutSync(): UseLoadoutSyncResult {
         const { mine: mineAfter } = partitionByOwner(
           selectSavedLoadouts(store.getState()),
           owner,
-          claimUnowned,
+          false,
         );
         committedMine = stampOwner(
           purgeDeleted(mergeLoadoutsByNewest(mineAfter, committedMine), tombstones),
@@ -183,7 +176,7 @@ export function useLoadoutSync(): UseLoadoutSyncResult {
       const { mine: liveMine, others } = partitionByOwner(
         selectSavedLoadouts(store.getState()),
         owner,
-        claimUnowned,
+        false,
       );
       const liveMineIds = new Set(liveMine.map((l) => l.id));
       const serverKeep = committedMine.filter(
@@ -250,6 +243,20 @@ export function useLoadoutSync(): UseLoadoutSyncResult {
     [requireAuth],
   );
 
+  // Explicit one-time claim: assign all unowned (guest/legacy) local loadouts to
+  // this account, THEN sync. This is the deliberate "Add to account" action — sync
+  // itself never claims unowned data on its own.
+  const claimLocalLoadouts = useCallback(async (): Promise<number | undefined> => {
+    if (!requireAuth()) return undefined;
+    if (!currentUserId) {
+      setError('Your account is still loading — try again in a moment.');
+      setStatus('error');
+      return undefined;
+    }
+    dispatch(claimUnownedLoadouts(currentUserId));
+    return syncNow();
+  }, [requireAuth, currentUserId, dispatch, syncNow]);
+
   return {
     isLoggedIn,
     currentUserId,
@@ -257,6 +264,7 @@ export function useLoadoutSync(): UseLoadoutSyncResult {
     error,
     lastSyncedAt,
     syncNow,
+    claimLocalLoadouts,
     saveOne,
     removeFromAccount,
   };

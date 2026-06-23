@@ -1213,17 +1213,21 @@ app.post('/loadouts/sync', async (c) => {
     return c.json({ error: 'Rate limit exceeded. Too many loadout writes this hour.' }, 429);
 
   // Validate every entry up front; reject the whole batch on the first bad one
-  // so a sync is all-or-nothing (no partial, surprising state).
-  const inputs: UserLoadoutInput[] = [];
+  // so a sync is all-or-nothing (no partial, surprising state). De-dupe by id
+  // (last occurrence wins) so the preflight count matches what actually inserts
+  // and the batch can't double-insert a repeated id.
+  const byId = new Map<string, UserLoadoutInput>();
   for (const raw of body.loadouts) {
     const id = raw.id !== undefined ? raw.id : newLoadoutId();
     if (!isValidLoadoutId(id)) return c.json({ error: 'Each loadout id must be url-safe ≤ 64 chars' }, 400);
     const parsed = parseLoadoutBody(raw, id);
     if (typeof parsed === 'string') return c.json({ error: parsed }, 400);
-    inputs.push(parsed);
+    byId.set(id, parsed);
   }
+  const inputs = [...byId.values()];
 
-  // Enforce the per-user ceiling against the post-sync union of existing + new.
+  // Preflight the per-user ceiling for a friendly 409 (the upsert ALSO enforces it
+  // atomically, so this is advisory — the DB is the source of truth under races).
   const existingCount = await countUserLoadouts(c.env.DB, user.id);
   const existingIds = new Set(
     (await listUserLoadouts(c.env.DB, user.id)).map((l) => l.id),

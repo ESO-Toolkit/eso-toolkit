@@ -245,6 +245,7 @@ export const LoadoutLibraryPanel: React.FC<LoadoutLibraryPanelProps> = ({ onLoad
     error: syncError,
     lastSyncedAt,
     syncNow,
+    claimLocalLoadouts,
     removeFromAccount,
   } = useLoadoutSync();
   // Show only loadouts this user may see: their own + unowned. Another account's
@@ -253,11 +254,23 @@ export const LoadoutLibraryPanel: React.FC<LoadoutLibraryPanelProps> = ({ onLoad
   const [syncMessage, setSyncMessage] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
+  // Loadouts not yet tied to any account (guest/legacy). Offered as an explicit
+  // "Add to account" — sync never claims these implicitly.
+  const unownedCount = savedLoadouts.filter((l) => l.ownerUserId === undefined).length;
+
   const handleSync = async (): Promise<void> => {
     setSyncMessage(null);
     const count = await syncNow();
     if (typeof count === 'number') {
       setSyncMessage(`Synced ${count} loadout${count === 1 ? '' : 's'} with your account.`);
+    }
+  };
+
+  const handleClaimLocal = async (): Promise<void> => {
+    setSyncMessage(null);
+    const count = await claimLocalLoadouts();
+    if (typeof count === 'number') {
+      setSyncMessage(`Added your local loadouts to your account (${count} synced).`);
     }
   };
 
@@ -398,6 +411,25 @@ export const LoadoutLibraryPanel: React.FC<LoadoutLibraryPanelProps> = ({ onLoad
       {deleteError && (
         <Alert severity="error" sx={{ mb: 2 }} onClose={() => setDeleteError(null)}>
           {deleteError}
+        </Alert>
+      )}
+      {isLoggedIn && currentUserId && unownedCount > 0 && (
+        <Alert
+          severity="info"
+          sx={{ mb: 2 }}
+          action={
+            <Button
+              color="inherit"
+              size="small"
+              onClick={handleClaimLocal}
+              disabled={syncStatus === 'syncing'}
+            >
+              Add to account
+            </Button>
+          }
+        >
+          {unownedCount} loadout{unownedCount === 1 ? ' is' : 's are'} saved locally only. Add{' '}
+          {unownedCount === 1 ? 'it' : 'them'} to your account to sync across devices.
         </Alert>
       )}
 

@@ -1728,12 +1728,16 @@ export async function upsertUserLoadout(
     .run();
   // Single-loadout save/replace is a deliberate, explicit user action, so it
   // overwrites unconditionally (within ownership). Bulk sync is the path that
-  // needs last-write-wins — see upsertUserLoadouts.
+  // needs last-write-wins — see upsertUserLoadouts. The per-account cap is gated
+  // INSIDE the write (only for a NEW row) so it holds under concurrent creates;
+  // SQLite serializes writes so the COUNT reflects committed rows.
   await db
     .prepare(
       `INSERT INTO user_loadouts
          (id, user_id, name, description, trial_id, character_name, loadout_data, client_updated_at, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
+       SELECT ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now')
+       WHERE EXISTS (SELECT 1 FROM user_loadouts e WHERE e.user_id = ? AND e.id = ?)
+          OR (SELECT COUNT(*) FROM user_loadouts c WHERE c.user_id = ?) < ${MAX_LOADOUTS_PER_USER}
        ON CONFLICT(user_id, id) DO UPDATE SET
          name = excluded.name,
          description = excluded.description,
@@ -1752,6 +1756,9 @@ export async function upsertUserLoadout(
       data.characterName,
       data.loadoutData,
       data.clientUpdatedAt,
+      userId,
+      data.id,
+      userId,
     )
     .run();
 }
@@ -1900,6 +1907,15 @@ export async function upsertUserLoadouts(
            SELECT 1 FROM user_loadout_deletions d
            WHERE d.user_id = ? AND d.loadout_id = ? AND d.deleted_at >= ?
          )
+         -- Enforce the per-account cap INSIDE the write so two concurrent syncs
+         -- can't both pass an outside-the-write preflight and overshoot it. Only
+         -- NEW rows are gated (an update to an existing row is always allowed).
+         -- SQLite serializes writes, so each statement — and each concurrent batch
+         -- — sees prior inserts in the COUNT, making the limit a hard ceiling.
+         AND (
+           EXISTS (SELECT 1 FROM user_loadouts e WHERE e.user_id = ? AND e.id = ?)
+           OR (SELECT COUNT(*) FROM user_loadouts c WHERE c.user_id = ?) < ${MAX_LOADOUTS_PER_USER}
+         )
          ON CONFLICT(user_id, id) DO UPDATE SET
            name = excluded.name,
            description = excluded.description,
@@ -1922,6 +1938,9 @@ export async function upsertUserLoadouts(
         userId,
         l.id,
         l.clientUpdatedAt,
+        userId,
+        l.id,
+        userId,
       ),
   );
   await db.batch(stmts);
