@@ -18,6 +18,7 @@ import type {
   RosterTagRow,
   RosterTrialRow,
   RosterWithMeta,
+  UserLoadoutRow,
   UserProfileResponse,
   UserProfileRow,
 } from '../types';
@@ -1650,4 +1651,180 @@ export async function checkPackVoteRateLimit(db: D1Database, userId: string): Pr
     .bind(userId)
     .first<{ cnt: number }>();
   return (row?.cnt ?? 0) < 30;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// User loadouts — private, account-synced loadout library (no votes/comments)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Hard ceiling on how many loadouts one account may store. Bounds per-user
+ * storage (500 × ~3 KB ≈ 1.5 MB worst case) far below any free-plan limit while
+ * still dwarfing a heavy raider's real library.
+ */
+export const MAX_LOADOUTS_PER_USER = 500;
+
+/** Loadout write throttle: 120 create/update/sync writes per hour per user. */
+const LOADOUT_WRITE_RATE_LIMIT_WINDOW_SEC = 3600;
+const LOADOUT_WRITE_RATE_LIMIT_MAX = 120;
+
+export interface UserLoadoutInput {
+  id: string;
+  name: string;
+  description: string;
+  trialId: string;
+  characterName: string;
+  loadoutData: string;
+}
+
+export async function listUserLoadouts(
+  db: D1Database,
+  userId: string,
+): Promise<UserLoadoutRow[]> {
+  const rows = await db
+    .prepare(
+      'SELECT * FROM user_loadouts WHERE user_id = ? ORDER BY updated_at DESC, created_at DESC',
+    )
+    .bind(userId)
+    .all<UserLoadoutRow>();
+  return rows.results;
+}
+
+export async function getUserLoadoutById(
+  db: D1Database,
+  id: string,
+  userId: string,
+): Promise<UserLoadoutRow | null> {
+  const row = await db
+    .prepare('SELECT * FROM user_loadouts WHERE id = ? AND user_id = ?')
+    .bind(id, userId)
+    .first<UserLoadoutRow>();
+  return row ?? null;
+}
+
+export async function countUserLoadouts(db: D1Database, userId: string): Promise<number> {
+  const row = await db
+    .prepare('SELECT COUNT(*) AS cnt FROM user_loadouts WHERE user_id = ?')
+    .bind(userId)
+    .first<{ cnt: number }>();
+  return row?.cnt ?? 0;
+}
+
+/**
+ * Idempotent create-or-update of a single loadout, keyed on the client uuid.
+ * The `WHERE user_loadouts.user_id = excluded.user_id` guard on the upsert means
+ * a row whose id (astronomically unlikely) collides with another account is left
+ * untouched — you can only ever write your own rows.
+ */
+export async function upsertUserLoadout(
+  db: D1Database,
+  userId: string,
+  data: UserLoadoutInput,
+): Promise<void> {
+  await db
+    .prepare(
+      `INSERT INTO user_loadouts
+         (id, user_id, name, description, trial_id, character_name, loadout_data, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
+       ON CONFLICT(id) DO UPDATE SET
+         name = excluded.name,
+         description = excluded.description,
+         trial_id = excluded.trial_id,
+         character_name = excluded.character_name,
+         loadout_data = excluded.loadout_data,
+         updated_at = datetime('now')
+       WHERE user_loadouts.user_id = excluded.user_id`,
+    )
+    .bind(
+      data.id,
+      userId,
+      data.name,
+      data.description,
+      data.trialId,
+      data.characterName,
+      data.loadoutData,
+    )
+    .run();
+}
+
+export async function updateUserLoadout(
+  db: D1Database,
+  id: string,
+  userId: string,
+  data: Omit<UserLoadoutInput, 'id'>,
+): Promise<boolean> {
+  const result = await db
+    .prepare(
+      `UPDATE user_loadouts
+         SET name = ?, description = ?, trial_id = ?, character_name = ?, loadout_data = ?, updated_at = datetime('now')
+       WHERE id = ? AND user_id = ?`,
+    )
+    .bind(data.name, data.description, data.trialId, data.characterName, data.loadoutData, id, userId)
+    .run();
+  return (result.meta.changes ?? 0) > 0;
+}
+
+export async function deleteUserLoadout(
+  db: D1Database,
+  id: string,
+  userId: string,
+): Promise<boolean> {
+  const result = await db
+    .prepare('DELETE FROM user_loadouts WHERE id = ? AND user_id = ?')
+    .bind(id, userId)
+    .run();
+  return (result.meta.changes ?? 0) > 0;
+}
+
+/**
+ * Bulk upsert (non-destructive): inserts new loadouts and updates existing ones
+ * by id. Never deletes — removals are explicit via deleteUserLoadout — so a
+ * device pushing a partial library can't wipe loadouts saved on another device.
+ */
+export async function upsertUserLoadouts(
+  db: D1Database,
+  userId: string,
+  loadouts: UserLoadoutInput[],
+): Promise<void> {
+  if (loadouts.length === 0) return;
+  const stmts = loadouts.map((l) =>
+    db
+      .prepare(
+        `INSERT INTO user_loadouts
+           (id, user_id, name, description, trial_id, character_name, loadout_data, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
+         ON CONFLICT(id) DO UPDATE SET
+           name = excluded.name,
+           description = excluded.description,
+           trial_id = excluded.trial_id,
+           character_name = excluded.character_name,
+           loadout_data = excluded.loadout_data,
+           updated_at = datetime('now')
+         WHERE user_loadouts.user_id = excluded.user_id`,
+      )
+      .bind(
+        l.id,
+        userId,
+        l.name,
+        l.description,
+        l.trialId,
+        l.characterName,
+        l.loadoutData,
+      ),
+  );
+  await db.batch(stmts);
+}
+
+export async function checkLoadoutWriteRateLimit(
+  db: D1Database,
+  userId: string,
+): Promise<boolean> {
+  const row = await db
+    .prepare(
+      `SELECT COUNT(*) AS cnt FROM rate_limit_events
+       WHERE user_id = ? AND action = 'loadout_write' AND created_at > datetime('now', '-${LOADOUT_WRITE_RATE_LIMIT_WINDOW_SEC} seconds')`,
+    )
+    .bind(userId)
+    .first<{ cnt: number }>();
+  return (row?.cnt ?? 0) < LOADOUT_WRITE_RATE_LIMIT_MAX;
 }

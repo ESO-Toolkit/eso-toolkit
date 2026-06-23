@@ -25,24 +25,33 @@ import {
 import React, { useState } from 'react';
 import { useSelector } from 'react-redux';
 
+import { useAuth } from '@/features/auth/AuthContext';
 import { useLogger } from '@/hooks/useLogger';
 
 import { TRIALS } from '../data/trialConfigs';
 import { selectCurrentTrial, selectCurrentSetups, selectLoadoutState } from '../store/selectors';
-import {
-  convertLoadoutStateToAlphaGear,
-  serializeAlphaGearToLua,
-} from '../utils/alphaGearConverter';
+import { downloadTextFile } from '../utils/downloadFile';
 import { validateGearConfig } from '../utils/itemSlotValidator';
+import { generateAlphaGearLua, generateWizardWardrobeLua } from '../utils/loadoutLuaFiles';
 
 import { WizardWardrobeTransferPanel } from './WizardWardrobeTransferPanel';
+
+type ExportFormat = 'json' | 'wizard' | 'wizard-file' | 'alphagear';
+/** Formats that produce an addon SavedVariables (.lua) file keyed to an account. */
+const LUA_FILE_FORMATS: ExportFormat[] = ['wizard-file', 'alphagear'];
 
 interface ExportDialogProps {
   open: boolean;
   onClose: () => void;
+  /** Opens the install guide (where blank starters + step-by-step live). */
+  onOpenInstallGuide?: () => void;
 }
 
-export const ExportDialog: React.FC<ExportDialogProps> = ({ open, onClose }) => {
+export const ExportDialog: React.FC<ExportDialogProps> = ({
+  open,
+  onClose,
+  onOpenInstallGuide,
+}) => {
   const logger = useLogger('ExportDialog');
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === 'dark';
@@ -65,10 +74,23 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({ open, onClose }) => 
   const currentTrialId = useSelector(selectCurrentTrial);
   const setups = useSelector(selectCurrentSetups);
   const loadoutState = useSelector(selectLoadoutState);
-  const [exportFormat, setExportFormat] = useState<'json' | 'wizard' | 'alphagear'>('json');
+  const { currentUser } = useAuth();
+  const [exportFormat, setExportFormat] = useState<ExportFormat>('json');
+  const [accountName, setAccountName] = useState('');
   const [copied, setCopied] = useState(false);
 
+  // Prefill the account name from the signed-in ESO Logs name (often, but not
+  // always, the in-game @UserID — the user can correct it).
+  React.useEffect(() => {
+    if (currentUser?.name) setAccountName((prev) => prev || currentUser.name);
+  }, [currentUser?.name]);
+
   const currentTrial = TRIALS.find((t) => t.id === currentTrialId);
+  const currentCharacterName =
+    loadoutState.characters.find((ch) => ch.id === loadoutState.currentCharacter)?.name ??
+    loadoutState.currentCharacter ??
+    undefined;
+  const isLuaFileFormat = LUA_FILE_FORMATS.includes(exportFormat);
   const validationReports = React.useMemo(
     () =>
       setups.map((setup, index) => ({
@@ -107,21 +129,22 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({ open, onClose }) => 
     return JSON.stringify(exportData, null, 2);
   };
 
-  const generateAlphaGear = (): string => {
-    const agData = convertLoadoutStateToAlphaGear(loadoutState);
-    return serializeAlphaGearToLua(agData);
-  };
-
-  // Wizard's Wardrobe uses a paste-in import code per setup (handled by
-  // WizardWardrobeTransferPanel), so it is not part of the file/clipboard export
-  // path below — that path serves the JSON and AlphaGear (Lua file) formats.
+  // The "wizard" option is a paste-in import code per setup (handled by
+  // WizardWardrobeTransferPanel); "wizard-file" and "alphagear" produce a full
+  // SavedVariables (.lua) file from the whole library, keyed to the account.
   const getExportData = (): string => {
-    if (exportFormat === 'alphagear') return generateAlphaGear();
+    if (exportFormat === 'wizard-file')
+      return generateWizardWardrobeLua(loadoutState, accountName, currentCharacterName).contents;
+    if (exportFormat === 'alphagear')
+      return generateAlphaGearLua(loadoutState, accountName).contents;
     return generateJSON();
   };
 
   const getExportFilename = (): string => {
-    if (exportFormat === 'alphagear') return `AlphaGear.lua`;
+    if (exportFormat === 'wizard-file')
+      return generateWizardWardrobeLua(loadoutState, accountName, currentCharacterName).filename;
+    if (exportFormat === 'alphagear')
+      return generateAlphaGearLua(loadoutState, accountName).filename;
     return `loadout-${currentTrialId}-${Date.now()}.json`;
   };
 
@@ -131,18 +154,8 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({ open, onClose }) => 
     }
     const data = getExportData();
     const filename = getExportFilename();
-    const mimeType = exportFormat === 'alphagear' ? 'text/plain' : 'application/json';
-
-    // Create blob and download
-    const blob = new Blob([data], { type: mimeType });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    const mimeType = isLuaFileFormat ? 'text/plain' : 'application/json';
+    downloadTextFile(filename, data, mimeType);
   };
 
   const handleCopy = async (): Promise<void> => {
@@ -220,8 +233,16 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({ open, onClose }) => 
               border: `1px solid ${isDarkMode ? 'rgba(13, 110, 253, 0.3)' : 'rgba(13, 110, 253, 0.2)'}`,
             }}
           >
-            Exporting <strong>{setups.length} setups</strong> from{' '}
-            <strong>{currentTrial?.name || 'Unknown Trial'}</strong>
+            {isLuaFileFormat ? (
+              <>
+                Exporting <strong>your whole library</strong> (all trials) as a SavedVariables file.
+              </>
+            ) : (
+              <>
+                Exporting <strong>{setups.length} setups</strong> from{' '}
+                <strong>{currentTrial?.name || 'Unknown Trial'}</strong>
+              </>
+            )}
           </Alert>
 
           {blockingErrors.length > 0 && (
@@ -260,7 +281,7 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({ open, onClose }) => 
             <Select
               value={exportFormat}
               label="Export Format"
-              onChange={(e) => setExportFormat(e.target.value as 'json' | 'wizard' | 'alphagear')}
+              onChange={(e) => setExportFormat(e.target.value as ExportFormat)}
               size="small"
             >
               <MenuItem value="json">
@@ -273,22 +294,68 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({ open, onClose }) => 
               </MenuItem>
               <MenuItem value="wizard">
                 <Stack>
-                  <Typography variant="body1">Wizard&apos;s Wardrobe (ESO Addon)</Typography>
+                  <Typography variant="body1">Wizard&apos;s Wardrobe — paste code</Typography>
                   <Typography variant="caption" color="text.secondary">
-                    Paste-in import code — no file needed
+                    Paste-in import code per setup — no file needed
+                  </Typography>
+                </Stack>
+              </MenuItem>
+              <MenuItem value="wizard-file">
+                <Stack>
+                  <Typography variant="body1">Wizard&apos;s Wardrobe — .lua file</Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    Full SavedVariables file (all trials) to drop into your ESO folder
                   </Typography>
                 </Stack>
               </MenuItem>
               <MenuItem value="alphagear">
                 <Stack>
-                  <Typography variant="body1">AlphaGear 2 (ESO Addon)</Typography>
+                  <Typography variant="body1">AlphaGear 2 — .lua file</Typography>
                   <Typography variant="caption" color="text.secondary">
-                    Lua saved variables for AlphaGear 2 addon
+                    Lua saved variables for the AlphaGear 2 addon
                   </Typography>
                 </Stack>
               </MenuItem>
             </Select>
           </FormControl>
+
+          {/* Account name + install help for the .lua file formats. */}
+          {isLuaFileFormat && (
+            <Stack spacing={1}>
+              <TextField
+                label="Your ESO account name"
+                value={accountName}
+                onChange={(e) => setAccountName(e.target.value)}
+                placeholder="@YourAccount"
+                size="small"
+                fullWidth
+                sx={glassTextField}
+                helperText="Your in-game @UserID — the file is keyed to this so the addon loads it."
+              />
+              {onOpenInstallGuide && (
+                <Typography variant="caption" color="text.secondary">
+                  Don’t have the addon file yet, or need install steps?{' '}
+                  <Box
+                    component="button"
+                    type="button"
+                    onClick={onOpenInstallGuide}
+                    sx={{
+                      background: 'none',
+                      border: 'none',
+                      p: 0,
+                      color: 'primary.main',
+                      cursor: 'pointer',
+                      textDecoration: 'underline',
+                      font: 'inherit',
+                    }}
+                  >
+                    Open the install guide
+                  </Box>
+                  .
+                </Typography>
+              )}
+            </Stack>
+          )}
 
           {exportFormat === 'wizard' ? (
             <WizardWardrobeTransferPanel setups={setups} disabled={exportBlocked} />
@@ -330,18 +397,25 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({ open, onClose }) => 
                 </Alert>
               )}
 
-              {/* Help text for the AlphaGear (Lua SavedVariables file) format */}
-              {exportFormat === 'alphagear' && (
-                <Alert severity="info">
+              {/* Help text for the Lua SavedVariables file formats */}
+              {isLuaFileFormat && (
+                <Alert severity="warning">
                   <Typography variant="caption" component="div">
-                    <strong>To use in-game:</strong> Save this file to your ESO folder at:
+                    <strong>Back up first.</strong> Quit ESO, then save this file to:
                     <br />
                     <code style={{ fontSize: '0.85em', display: 'block', marginTop: '4px' }}>
                       {getESOSavedVarsPath()}
-                      AlphaGear.lua
+                      {getExportFilename()}
                     </code>
-                    <br />
-                    Then use <code>/reloadui</code> in-game to load your changes.
+                    Replacing an existing file overwrites the setups already in it — copy the old
+                    one somewhere safe first. Log in and use <code>/reloadui</code> to load.
+                    {exportFormat === 'wizard-file' && (
+                      <>
+                        {' '}
+                        These export into Wizard’s Wardrobe’s <strong>Account-Wide</strong> storage
+                        — switch WW to “Account-Wide” in-game to see them.
+                      </>
+                    )}
                   </Typography>
                 </Alert>
               )}

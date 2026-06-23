@@ -1,0 +1,89 @@
+/**
+ * Pure mappers between the local SavedLoadout shape and the server row/payload,
+ * plus a last-write-wins merge for two-way sync. No I/O — unit-testable.
+ */
+
+import type { SavedLoadout, SavedLoadoutMeta } from '@/store/saved_loadouts';
+
+import type { LoadoutSyncPayload, UserLoadoutRow } from '../types/loadout-sync.types';
+import type { LoadoutSetup } from '../types/loadout.types';
+
+/** The canonical payload stored in user_loadouts.loadout_data. */
+interface LoadoutDataBlob {
+  setup: LoadoutSetup;
+  meta?: SavedLoadoutMeta;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export function savedLoadoutToPayload(loadout: SavedLoadout): LoadoutSyncPayload {
+  const blob: LoadoutDataBlob = {
+    setup: loadout.setup,
+    meta: loadout.meta,
+    createdAt: loadout.createdAt,
+    updatedAt: loadout.updatedAt,
+  };
+  return {
+    id: loadout.id,
+    name: loadout.name,
+    description: loadout.description ?? '',
+    trial_id: loadout.meta?.trialId ?? '',
+    character_name: loadout.meta?.characterName ?? '',
+    loadout_data: JSON.stringify(blob),
+  };
+}
+
+/**
+ * Reconstruct a SavedLoadout from a server row. The authoritative timestamps and
+ * setup live inside loadout_data (the client's own ISO times, so merges compare
+ * like-for-like); the columns are fallbacks. Returns null if the blob is
+ * unparseable or missing a setup, so a corrupt row can't crash a sync.
+ */
+export function rowToSavedLoadout(row: UserLoadoutRow): SavedLoadout | null {
+  let blob: LoadoutDataBlob;
+  try {
+    blob = JSON.parse(row.loadout_data) as LoadoutDataBlob;
+  } catch {
+    return null;
+  }
+  if (!blob || typeof blob !== 'object' || !blob.setup) return null;
+
+  const meta: SavedLoadoutMeta | undefined =
+    blob.meta ??
+    (row.trial_id || row.character_name
+      ? { trialId: row.trial_id || undefined, characterName: row.character_name || undefined }
+      : undefined);
+
+  return {
+    id: row.id,
+    name: row.name,
+    description: row.description || undefined,
+    createdAt: blob.createdAt ?? row.created_at,
+    updatedAt: blob.updatedAt ?? row.updated_at,
+    setup: blob.setup,
+    meta,
+  };
+}
+
+const time = (iso: string | undefined): number => (iso ? Date.parse(iso) || 0 : 0);
+
+/**
+ * Merge local and remote libraries by id, keeping whichever side has the newer
+ * `updatedAt` for shared ids (ties favour remote, so a just-pushed sync settles
+ * deterministically). Non-destructive: ids present on only one side are kept.
+ * Result is sorted newest-first for stable display.
+ */
+export function mergeLoadoutsByNewest(
+  local: SavedLoadout[],
+  remote: SavedLoadout[],
+): SavedLoadout[] {
+  const byId = new Map<string, SavedLoadout>();
+  for (const l of local) byId.set(l.id, l);
+  for (const r of remote) {
+    const existing = byId.get(r.id);
+    if (!existing || time(r.updatedAt) >= time(existing.updatedAt)) {
+      byId.set(r.id, r);
+    }
+  }
+  return Array.from(byId.values()).sort((a, b) => time(b.updatedAt) - time(a.updatedAt));
+}

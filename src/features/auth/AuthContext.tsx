@@ -76,7 +76,9 @@ interface AuthContextType {
   refetchUser: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+// Exported so features can read auth defensively (e.g. a panel that may render
+// outside the provider in isolation/tests) — prefer the `useAuth` hook in app code.
+export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [accessToken, setAccessToken] = useState<string>(

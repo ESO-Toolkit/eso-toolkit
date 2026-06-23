@@ -28,6 +28,8 @@ export interface SavedLoadout {
 
 interface SavedLoadoutsState {
   loadouts: SavedLoadout[];
+  /** ISO timestamp of the last successful account sync, if any. */
+  lastSyncedAt?: string;
 }
 
 const initialState: SavedLoadoutsState = {
@@ -108,9 +110,25 @@ const savedLoadoutsSlice = createSlice({
     deleteSavedLoadout(state, action: PayloadAction<string>) {
       state.loadouts = state.loadouts.filter((l) => l.id !== action.payload);
     },
+    /**
+     * Replace the entire library — used by account sync after merging the local
+     * and remote sets so the store reflects loadouts pulled from other devices.
+     */
+    replaceAllLoadouts(state, action: PayloadAction<SavedLoadout[]>) {
+      state.loadouts = action.payload;
+    },
+    setLastSyncedAt(state, action: PayloadAction<string | undefined>) {
+      state.lastSyncedAt = action.payload;
+    },
   },
 });
 
-export const { saveLoadout, updateSavedLoadout, renameSavedLoadout, deleteSavedLoadout } =
-  savedLoadoutsSlice.actions;
+export const {
+  saveLoadout,
+  updateSavedLoadout,
+  renameSavedLoadout,
+  deleteSavedLoadout,
+  replaceAllLoadouts,
+  setLastSyncedAt,
+} = savedLoadoutsSlice.actions;
 export default savedLoadoutsSlice.reducer;

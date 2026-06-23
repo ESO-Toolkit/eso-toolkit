@@ -9,18 +9,21 @@
 
 import {
   Bookmark as BookmarkIcon,
+  CloudSync as CloudSyncIcon,
   ContentCopy as DuplicateIcon,
   Delete as DeleteIcon,
   DriveFileRenameOutline as RenameIcon,
   PlayArrow as LoadIcon,
 } from '@mui/icons-material';
 import {
+  Alert,
   Box,
   Button,
   Card,
   CardActions,
   CardContent,
   Chip,
+  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
@@ -29,6 +32,7 @@ import {
   Divider,
   Stack,
   TextField,
+  Tooltip,
   Typography,
   useTheme,
 } from '@mui/material';
@@ -44,6 +48,7 @@ import {
 } from '@/store/saved_loadouts';
 import { useAppDispatch } from '@/store/useAppDispatch';
 
+import { useLoadoutSync } from '../hooks/useLoadoutSync';
 import type { LoadoutSetup } from '../types/loadout.types';
 import {
   formatProgressSection,
@@ -234,6 +239,22 @@ export const LoadoutLibraryPanel: React.FC<LoadoutLibraryPanelProps> = ({ onLoad
   const isDarkMode = theme.palette.mode === 'dark';
   const dispatch = useAppDispatch();
   const savedLoadouts = useSelector(selectSavedLoadouts);
+  const {
+    isLoggedIn,
+    status: syncStatus,
+    error: syncError,
+    lastSyncedAt,
+    syncNow,
+  } = useLoadoutSync();
+  const [syncMessage, setSyncMessage] = useState<string | null>(null);
+
+  const handleSync = async (): Promise<void> => {
+    setSyncMessage(null);
+    const count = await syncNow();
+    if (typeof count === 'number') {
+      setSyncMessage(`Synced ${count} loadout${count === 1 ? '' : 's'} with your account.`);
+    }
+  };
 
   const [pendingDelete, setPendingDelete] = useState<SavedLoadout | null>(null);
   const [renameTarget, setRenameTarget] = useState<SavedLoadout | null>(null);
@@ -280,19 +301,75 @@ export const LoadoutLibraryPanel: React.FC<LoadoutLibraryPanelProps> = ({ onLoad
 
   return (
     <Box>
-      <Box sx={{ mb: 2 }}>
-        <Typography
-          variant="h6"
-          sx={{ fontWeight: 700, color: isDarkMode ? '#f1f5f9' : '#0f172a' }}
-        >
-          Loadout Library
-        </Typography>
-        <Typography variant="body2" sx={{ color: isDarkMode ? '#94a3b8' : '#64748b', mt: 0.25 }}>
-          {savedLoadouts.length === 0
-            ? 'No saved loadouts yet. Use "Save to Library" on a setup to add one.'
-            : `${savedLoadouts.length} saved loadout${savedLoadouts.length === 1 ? '' : 's'}`}
-        </Typography>
+      <Box
+        sx={{
+          mb: 2,
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'flex-start',
+          gap: 2,
+          flexWrap: 'wrap',
+        }}
+      >
+        <Box>
+          <Typography
+            variant="h6"
+            sx={{ fontWeight: 700, color: isDarkMode ? '#f1f5f9' : '#0f172a' }}
+          >
+            Loadout Library
+          </Typography>
+          <Typography variant="body2" sx={{ color: isDarkMode ? '#94a3b8' : '#64748b', mt: 0.25 }}>
+            {savedLoadouts.length === 0
+              ? 'No saved loadouts yet. Use "Save to Library" on a setup to add one.'
+              : `${savedLoadouts.length} saved loadout${savedLoadouts.length === 1 ? '' : 's'}`}
+          </Typography>
+        </Box>
+        <Stack spacing={0.5} sx={{ alignItems: 'flex-end' }}>
+          <Tooltip
+            arrow
+            title={
+              isLoggedIn
+                ? 'Save your library to your account and pull in loadouts from your other devices'
+                : 'Sign in to sync your loadouts to your account'
+            }
+          >
+            <span>
+              <Button
+                size="small"
+                variant="outlined"
+                onClick={handleSync}
+                disabled={!isLoggedIn || syncStatus === 'syncing'}
+                startIcon={
+                  syncStatus === 'syncing' ? (
+                    <CircularProgress size={16} color="inherit" />
+                  ) : (
+                    <CloudSyncIcon />
+                  )
+                }
+                sx={{ textTransform: 'none', fontWeight: 600, borderRadius: '20px' }}
+              >
+                {syncStatus === 'syncing' ? 'Syncing…' : 'Sync to account'}
+              </Button>
+            </span>
+          </Tooltip>
+          {lastSyncedAt && (
+            <Typography variant="caption" sx={{ color: isDarkMode ? '#64748b' : '#94a3b8' }}>
+              Last synced {formatDate(lastSyncedAt)}
+            </Typography>
+          )}
+        </Stack>
       </Box>
+
+      {syncError && syncStatus === 'error' && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {syncError}
+        </Alert>
+      )}
+      {syncMessage && (
+        <Alert severity="success" sx={{ mb: 2 }} onClose={() => setSyncMessage(null)}>
+          {syncMessage}
+        </Alert>
+      )}
 
       {savedLoadouts.length === 0 ? (
         <Box

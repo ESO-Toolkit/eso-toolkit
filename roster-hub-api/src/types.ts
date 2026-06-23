@@ -131,6 +131,25 @@ export interface BuildCommentWithReplies extends BuildCommentRow {
   replies: BuildCommentRow[];
 }
 
+// ─── User loadouts (private, account-synced loadout library) ─────────────────
+
+/**
+ * A per-user saved loadout row. Private to its owner — there is no public list,
+ * voting, comments or visibility tier. The id is the client-generated loadout
+ * uuid so a local library can be upserted by id during sync.
+ */
+export interface UserLoadoutRow {
+  id: string;
+  user_id: string;
+  name: string;
+  description: string;
+  trial_id: string;
+  character_name: string;
+  loadout_data: string; // compact JSON of the SavedLoadout payload
+  created_at: string;
+  updated_at: string;
+}
+
 // ─── Temp builds (guest, expiring) ───────────────────────────────────────────
 
 export interface TempBuildRow {

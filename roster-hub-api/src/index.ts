@@ -63,6 +63,16 @@ import {
   checkPackVoteRateLimit,
   recordRateLimitEvent,
   pruneRateLimitEvents,
+  listUserLoadouts,
+  getUserLoadoutById,
+  upsertUserLoadout,
+  updateUserLoadout,
+  deleteUserLoadout,
+  upsertUserLoadouts,
+  countUserLoadouts,
+  checkLoadoutWriteRateLimit,
+  MAX_LOADOUTS_PER_USER,
+  type UserLoadoutInput,
 } from './db/queries';
 import { moderateImage, MAX_IMAGE_BYTES } from './image-moderation';
 import { handleGraphqlProxy } from './graphql-proxy';
@@ -951,6 +961,225 @@ app.delete('/builds/:buildId/comments/:commentId', async (c) => {
   const deleted = await deleteBuildComment(c.env.DB, c.req.param('commentId'), user.id);
   if (!deleted) return c.json({ error: 'Not found or forbidden' }, 404);
   return c.json({ ok: true });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// User loadouts — private, account-synced loadout library (owner-only)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const MAX_LOADOUT_DATA_CHARS = 20_000;
+const MAX_LOADOUT_SYNC_BATCH = 200;
+/** Loadout ids are client uuids — short, url-safe, bounded length. */
+const isValidLoadoutId = (s: unknown): s is string =>
+  typeof s === 'string' && /^[A-Za-z0-9_-]{1,64}$/.test(s);
+
+interface LoadoutBody {
+  id?: string;
+  name?: string;
+  description?: string;
+  trial_id?: string;
+  character_name?: string;
+  loadout_data?: string;
+}
+
+/**
+ * Validate + normalise a single loadout payload into the query-layer input
+ * shape. Returns a string error message on failure, or the sanitised input.
+ */
+function parseLoadoutBody(body: LoadoutBody, id: string): UserLoadoutInput | string {
+  const name = typeof body.name === 'string' ? body.name : '';
+  const description = typeof body.description === 'string' ? body.description : '';
+  const trialId = typeof body.trial_id === 'string' ? body.trial_id : '';
+  const characterName = typeof body.character_name === 'string' ? body.character_name : '';
+  const loadoutData = typeof body.loadout_data === 'string' ? body.loadout_data : '';
+
+  if (!name.trim()) return 'name is required';
+  if (name.length > 100) return 'name must be ≤ 100 characters';
+  if (description.length > 500) return 'description must be ≤ 500 characters';
+  if (trialId.length > 64) return 'trial_id must be ≤ 64 characters';
+  if (characterName.length > 64) return 'character_name must be ≤ 64 characters';
+  if (!loadoutData.trim()) return 'loadout_data is required';
+  if (loadoutData.length > MAX_LOADOUT_DATA_CHARS)
+    return `loadout_data must be ≤ ${MAX_LOADOUT_DATA_CHARS} characters`;
+  try {
+    JSON.parse(loadoutData);
+  } catch {
+    return 'loadout_data must be valid JSON';
+  }
+
+  return {
+    id,
+    name: cleanText(name),
+    description: cleanText(description),
+    trialId: sanitize(trialId),
+    characterName: cleanText(characterName),
+    loadoutData,
+  };
+}
+
+const newLoadoutId = (): string =>
+  Array.from(crypto.getRandomValues(new Uint8Array(12)))
+    .map((b) => b.toString(36).padStart(2, '0'))
+    .join('')
+    .slice(0, 20);
+
+// ─── GET /loadouts — list the caller's own loadouts ───────────────────────────
+
+app.get('/loadouts', async (c) => {
+  const user = await validateToken(c.req.header('Authorization'), c.env);
+  if (!user) return c.json({ error: 'Unauthorized' }, 401);
+
+  const loadouts = await listUserLoadouts(c.env.DB, user.id);
+  return c.json({ loadouts });
+});
+
+// ─── GET /loadouts/:id — single own loadout ───────────────────────────────────
+
+app.get('/loadouts/:id', async (c) => {
+  const user = await validateToken(c.req.header('Authorization'), c.env);
+  if (!user) return c.json({ error: 'Unauthorized' }, 401);
+
+  const loadout = await getUserLoadoutById(c.env.DB, c.req.param('id'), user.id);
+  if (!loadout) return c.json({ error: 'Not found' }, 404);
+  return c.json({ loadout });
+});
+
+// ─── POST /loadouts — create/replace a loadout (idempotent by id) ─────────────
+
+app.post('/loadouts', async (c) => {
+  const user = await validateToken(c.req.header('Authorization'), c.env);
+  if (!user) return c.json({ error: 'Unauthorized' }, 401);
+
+  let body: LoadoutBody;
+  try {
+    body = await c.req.json<LoadoutBody>();
+  } catch {
+    return c.json({ error: 'Invalid JSON' }, 400);
+  }
+
+  if (body.id !== undefined && !isValidLoadoutId(body.id))
+    return c.json({ error: 'id must be a url-safe string ≤ 64 chars' }, 400);
+  const id = body.id ?? newLoadoutId();
+
+  const parsed = parseLoadoutBody(body, id);
+  if (typeof parsed === 'string') return c.json({ error: parsed }, 400);
+
+  const allowed = await checkLoadoutWriteRateLimit(c.env.DB, user.id);
+  if (!allowed)
+    return c.json({ error: 'Rate limit exceeded. Too many loadout writes this hour.' }, 429);
+
+  // Enforce the per-user ceiling only when this id is genuinely new (so editing
+  // an existing loadout at the cap still works).
+  const existing = await getUserLoadoutById(c.env.DB, id, user.id);
+  if (!existing) {
+    const count = await countUserLoadouts(c.env.DB, user.id);
+    if (count >= MAX_LOADOUTS_PER_USER)
+      return c.json(
+        { error: `Loadout limit reached (${MAX_LOADOUTS_PER_USER}). Delete some to add more.` },
+        409,
+      );
+  }
+
+  await recordRateLimitEvent(c.env.DB, user.id, 'loadout_write');
+  await upsertUserLoadout(c.env.DB, user.id, parsed);
+  const loadout = await getUserLoadoutById(c.env.DB, id, user.id);
+  return c.json({ loadout }, 201);
+});
+
+// ─── PUT /loadouts/:id — update own loadout ───────────────────────────────────
+
+app.put('/loadouts/:id', async (c) => {
+  const user = await validateToken(c.req.header('Authorization'), c.env);
+  if (!user) return c.json({ error: 'Unauthorized' }, 401);
+
+  const id = c.req.param('id');
+  if (!isValidLoadoutId(id)) return c.json({ error: 'Invalid loadout id' }, 400);
+
+  let body: LoadoutBody;
+  try {
+    body = await c.req.json<LoadoutBody>();
+  } catch {
+    return c.json({ error: 'Invalid JSON' }, 400);
+  }
+
+  const parsed = parseLoadoutBody(body, id);
+  if (typeof parsed === 'string') return c.json({ error: parsed }, 400);
+
+  const allowed = await checkLoadoutWriteRateLimit(c.env.DB, user.id);
+  if (!allowed)
+    return c.json({ error: 'Rate limit exceeded. Too many loadout writes this hour.' }, 429);
+
+  await recordRateLimitEvent(c.env.DB, user.id, 'loadout_write');
+  const { id: _omit, ...data } = parsed;
+  const updated = await updateUserLoadout(c.env.DB, id, user.id, data);
+  if (!updated) return c.json({ error: 'Not found or forbidden' }, 404);
+  const loadout = await getUserLoadoutById(c.env.DB, id, user.id);
+  return c.json({ loadout });
+});
+
+// ─── DELETE /loadouts/:id — delete own loadout ────────────────────────────────
+
+app.delete('/loadouts/:id', async (c) => {
+  const user = await validateToken(c.req.header('Authorization'), c.env);
+  if (!user) return c.json({ error: 'Unauthorized' }, 401);
+
+  const deleted = await deleteUserLoadout(c.env.DB, c.req.param('id'), user.id);
+  if (!deleted) return c.json({ error: 'Not found or forbidden' }, 404);
+  return c.json({ ok: true });
+});
+
+// ─── POST /loadouts/sync — non-destructive bulk upsert of the local library ───
+
+app.post('/loadouts/sync', async (c) => {
+  const user = await validateToken(c.req.header('Authorization'), c.env);
+  if (!user) return c.json({ error: 'Unauthorized' }, 401);
+
+  interface SyncBody {
+    loadouts?: LoadoutBody[];
+  }
+  let body: SyncBody;
+  try {
+    body = await c.req.json<SyncBody>();
+  } catch {
+    return c.json({ error: 'Invalid JSON' }, 400);
+  }
+
+  if (!Array.isArray(body.loadouts))
+    return c.json({ error: 'loadouts must be an array' }, 400);
+  if (body.loadouts.length > MAX_LOADOUT_SYNC_BATCH)
+    return c.json({ error: `Cannot sync more than ${MAX_LOADOUT_SYNC_BATCH} loadouts at once` }, 400);
+
+  const allowed = await checkLoadoutWriteRateLimit(c.env.DB, user.id);
+  if (!allowed)
+    return c.json({ error: 'Rate limit exceeded. Too many loadout writes this hour.' }, 429);
+
+  // Validate every entry up front; reject the whole batch on the first bad one
+  // so a sync is all-or-nothing (no partial, surprising state).
+  const inputs: UserLoadoutInput[] = [];
+  for (const raw of body.loadouts) {
+    const id = raw.id !== undefined ? raw.id : newLoadoutId();
+    if (!isValidLoadoutId(id)) return c.json({ error: 'Each loadout id must be url-safe ≤ 64 chars' }, 400);
+    const parsed = parseLoadoutBody(raw, id);
+    if (typeof parsed === 'string') return c.json({ error: parsed }, 400);
+    inputs.push(parsed);
+  }
+
+  // Enforce the per-user ceiling against the post-sync union of existing + new.
+  const existingCount = await countUserLoadouts(c.env.DB, user.id);
+  const existingIds = new Set(
+    (await listUserLoadouts(c.env.DB, user.id)).map((l) => l.id),
+  );
+  const newCount = inputs.filter((i) => !existingIds.has(i.id)).length;
+  if (existingCount + newCount > MAX_LOADOUTS_PER_USER)
+    return c.json(
+      { error: `Sync would exceed the ${MAX_LOADOUTS_PER_USER}-loadout limit. Delete some first.` },
+      409,
+    );
+
+  await recordRateLimitEvent(c.env.DB, user.id, 'loadout_write');
+  await upsertUserLoadouts(c.env.DB, user.id, inputs);
+  const loadouts = await listUserLoadouts(c.env.DB, user.id);
+  return c.json({ loadouts });
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════

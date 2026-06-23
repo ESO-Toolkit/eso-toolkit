@@ -7,3 +7,6 @@ export const selectSavedLoadoutById =
   (id: string) =>
   (state: RootState): RootState['savedLoadouts']['loadouts'][number] | undefined =>
     state.savedLoadouts.loadouts.find((l) => l.id === id);
+
+export const selectLoadoutsLastSyncedAt = (state: RootState): string | undefined =>
+  state.savedLoadouts.lastSyncedAt;
