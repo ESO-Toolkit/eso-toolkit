@@ -273,6 +273,7 @@ export const LoadoutLibraryPanel: React.FC<LoadoutLibraryPanelProps> = ({ onLoad
         setup: entry.setup,
         description: entry.description,
         meta: entry.meta,
+        ownerUserId: currentUserId,
       }),
     );
   };
@@ -290,6 +291,7 @@ export const LoadoutLibraryPanel: React.FC<LoadoutLibraryPanelProps> = ({ onLoad
     dispatch(
       renameSavedLoadout({
         id: renameTarget.id,
+        ownerUserId: renameTarget.ownerUserId,
         name: renameName.trim(),
         description: renameDescription.trim(),
       }),
@@ -316,7 +318,7 @@ export const LoadoutLibraryPanel: React.FC<LoadoutLibraryPanelProps> = ({ onLoad
         return;
       }
     }
-    dispatch(deleteSavedLoadout(target.id));
+    dispatch(deleteSavedLoadout({ id: target.id, ownerUserId: target.ownerUserId }));
     setPendingDelete(null);
   };
 

@@ -1679,10 +1679,7 @@ export interface UserLoadoutInput {
   clientUpdatedAt: string;
 }
 
-export async function listUserLoadouts(
-  db: D1Database,
-  userId: string,
-): Promise<UserLoadoutRow[]> {
+export async function listUserLoadouts(db: D1Database, userId: string): Promise<UserLoadoutRow[]> {
   const rows = await db
     .prepare(
       'SELECT * FROM user_loadouts WHERE user_id = ? ORDER BY updated_at DESC, created_at DESC',
@@ -1793,34 +1790,34 @@ export async function deleteUserLoadout(
   userId: string,
   deletedAt: string,
 ): Promise<DeleteLoadoutResult> {
-  // Version-aware delete in ONE atomic statement: the WHERE guard removes the row
-  // only if it was NOT edited after this delete (client_updated_at <= deletedAt).
-  // Doing the check inside the DELETE (rather than SELECT-then-DELETE) closes the
-  // race where another device upserts a newer edit between the two operations.
-  const result = await db
-    .prepare(
-      'DELETE FROM user_loadouts WHERE id = ? AND user_id = ? AND client_updated_at <= ?',
-    )
-    .bind(id, userId, deletedAt)
-    .run();
-
-  if ((result.meta.changes ?? 0) > 0) {
-    // A row was removed → record a tombstone (only real deletions tombstone, so
-    // arbitrary DELETEs of non-existent ids can't bloat the set).
-    await db
+  // Tombstone + row removal run in a SINGLE atomic batch (D1 batches are
+  // transactional — all-or-nothing) so a delete can never commit without its
+  // durable tombstone. The tombstone INSERT runs FIRST and is guarded on the row
+  // still existing AND being old enough (client_updated_at <= deletedAt) — i.e.
+  // the same version condition as the DELETE — so:
+  //   - a deletable row → tombstone + delete, atomically;
+  //   - a newer row (a concurrent edit won) → neither fires;
+  //   - a missing row → neither fires (no arbitrary-DELETE tombstone bloat).
+  const results = await db.batch([
+    db
       .prepare(
         `INSERT INTO user_loadout_deletions (user_id, loadout_id, deleted_at)
-         VALUES (?, ?, ?)
+         SELECT ?, ?, ?
+         WHERE EXISTS (
+           SELECT 1 FROM user_loadouts WHERE id = ? AND user_id = ? AND client_updated_at <= ?
+         )
          ON CONFLICT(user_id, loadout_id) DO UPDATE SET deleted_at = excluded.deleted_at`,
       )
-      .bind(userId, id, deletedAt)
-      .run();
-    return 'deleted';
-  }
+      .bind(userId, id, deletedAt, id, userId, deletedAt),
+    db
+      .prepare('DELETE FROM user_loadouts WHERE id = ? AND user_id = ? AND client_updated_at <= ?')
+      .bind(id, userId, deletedAt),
+  ]);
 
-  // Zero rows changed: either the loadout doesn't exist, or it exists but is newer
-  // than this delete (a newer edit won). Classify for the caller — this read does
-  // not gate the delete decision, which already happened atomically above.
+  if ((results[1].meta.changes ?? 0) > 0) return 'deleted';
+
+  // Nothing deleted: classify for the caller (does not gate the delete decision,
+  // which already resolved atomically above).
   const exists = await db
     .prepare('SELECT 1 FROM user_loadouts WHERE id = ? AND user_id = ?')
     .bind(id, userId)
@@ -1930,10 +1927,7 @@ export async function upsertUserLoadouts(
   await db.batch(stmts);
 }
 
-export async function checkLoadoutWriteRateLimit(
-  db: D1Database,
-  userId: string,
-): Promise<boolean> {
+export async function checkLoadoutWriteRateLimit(db: D1Database, userId: string): Promise<boolean> {
   const row = await db
     .prepare(
       `SELECT COUNT(*) AS cnt FROM rate_limit_events

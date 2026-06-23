@@ -54,6 +54,12 @@ interface SaveLoadoutInput {
   setup: LoadoutSetup;
   description?: string;
   meta?: SavedLoadoutMeta;
+  /**
+   * The account saving this loadout, when signed in. Stamping ownership at save
+   * time (not at sync) means a loadout built while signed in is never treated as
+   * unowned guest data and can't be claimed/pushed into a different account.
+   */
+  ownerUserId?: string;
 }
 
 const savedLoadoutsSlice = createSlice({
@@ -64,7 +70,7 @@ const savedLoadoutsSlice = createSlice({
       reducer(state, action: PayloadAction<SavedLoadout>) {
         state.loadouts.unshift(action.payload);
       },
-      prepare({ name, setup, description, meta }: SaveLoadoutInput) {
+      prepare({ name, setup, description, meta, ownerUserId }: SaveLoadoutInput) {
         const now = new Date().toISOString();
         return {
           payload: {
@@ -75,6 +81,7 @@ const savedLoadoutsSlice = createSlice({
             updatedAt: now,
             setup,
             meta,
+            ownerUserId,
           } satisfies SavedLoadout,
         };
       },
@@ -83,13 +90,19 @@ const savedLoadoutsSlice = createSlice({
       state,
       action: PayloadAction<{
         id: string;
+        ownerUserId?: string;
         setup: LoadoutSetup;
         name?: string;
         description?: string;
         meta?: SavedLoadoutMeta;
       }>,
     ) {
-      const idx = state.loadouts.findIndex((l) => l.id === action.payload.id);
+      // Match on (id, ownerUserId): the same client id can exist under different
+      // accounts in the persisted slice, so id alone could mutate another (hidden)
+      // account's loadout.
+      const idx = state.loadouts.findIndex(
+        (l) => l.id === action.payload.id && l.ownerUserId === action.payload.ownerUserId,
+      );
       if (idx === -1) {
         return;
       }
@@ -108,9 +121,16 @@ const savedLoadoutsSlice = createSlice({
     },
     renameSavedLoadout(
       state,
-      action: PayloadAction<{ id: string; name: string; description?: string }>,
+      action: PayloadAction<{
+        id: string;
+        ownerUserId?: string;
+        name: string;
+        description?: string;
+      }>,
     ) {
-      const idx = state.loadouts.findIndex((l) => l.id === action.payload.id);
+      const idx = state.loadouts.findIndex(
+        (l) => l.id === action.payload.id && l.ownerUserId === action.payload.ownerUserId,
+      );
       if (idx === -1) {
         return;
       }
@@ -120,8 +140,10 @@ const savedLoadoutsSlice = createSlice({
       }
       state.loadouts[idx].updatedAt = new Date().toISOString();
     },
-    deleteSavedLoadout(state, action: PayloadAction<string>) {
-      state.loadouts = state.loadouts.filter((l) => l.id !== action.payload);
+    deleteSavedLoadout(state, action: PayloadAction<{ id: string; ownerUserId?: string }>) {
+      state.loadouts = state.loadouts.filter(
+        (l) => !(l.id === action.payload.id && l.ownerUserId === action.payload.ownerUserId),
+      );
     },
     /**
      * Replace the entire library — used by account sync after merging the local

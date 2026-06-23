@@ -148,14 +148,23 @@ export function useLoadoutSync(): UseLoadoutSyncResult {
         if (sameLibrary(mine, mineAfter)) break;
       }
 
-      // Commit: the current user's converged loadouts (now claimed) PLUS every
-      // other account's loadouts preserved exactly — nothing is ever deleted.
-      const { others } = partitionByOwner(selectSavedLoadouts(store.getState()), owner);
-      dispatch(replaceAllLoadouts([...others, ...committedMine]));
+      // Commit against the LIVE store (re-read here, with no await before the
+      // dispatch) so a save/rename/delete that landed during the final push isn't
+      // lost: merge the live current-user slice into the server-authoritative set,
+      // and preserve every OTHER account's loadouts exactly — nothing is deleted.
+      const { mine: liveMine, others } = partitionByOwner(
+        selectSavedLoadouts(store.getState()),
+        owner,
+      );
+      const finalMine = stampOwner(
+        purgeDeleted(mergeLoadoutsByNewest(liveMine, committedMine), tombstones),
+        owner,
+      );
+      dispatch(replaceAllLoadouts([...others, ...finalMine]));
       dispatch(setSyncedUserId(owner));
       dispatch(setLastSyncedAt(new Date().toISOString()));
       setStatus('idle');
-      return committedMine.length;
+      return finalMine.length;
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Sync failed');
       setStatus('error');

@@ -33,6 +33,7 @@ import {
 import React, { useState } from 'react';
 import { useDispatch } from 'react-redux';
 
+import { useAuth } from '@/features/auth/AuthContext';
 import { useLogger } from '@/hooks/useLogger';
 import { saveLoadout } from '@/store/saved_loadouts';
 
@@ -101,6 +102,7 @@ export const SetupEditor: React.FC<SetupEditorProps> = ({
   variant = 'page',
 }) => {
   const dispatch = useDispatch();
+  const { currentUser } = useAuth();
   const logger = useLogger('SetupEditor');
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === 'dark';
@@ -250,6 +252,7 @@ export const SetupEditor: React.FC<SetupEditorProps> = ({
         setup: clonedSetup,
         description: saveDescription.trim() || undefined,
         meta: { trialId },
+        ownerUserId: currentUser?.id ? String(currentUser.id) : undefined,
       }),
     );
     setSaveDialogOpen(false);
