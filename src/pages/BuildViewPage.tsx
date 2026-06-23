@@ -2109,15 +2109,25 @@ export const BuildViewPage: React.FC = () => {
         .get(idParam, accessToken)
         .then(({ build: hubBuild }) =>
           decodeBuildFromURL(hubBuild.build_data).then((decoded) => {
-            // The Hub record's `visibility` column is authoritative — the value
-            // embedded in build_data can be stale (e.g. a build published before
-            // dialog re-encode, or edited out-of-band). Override the decoded
-            // value with server truth so downstream share/copy gating can't be
+            // The Hub record's columns are authoritative — the values embedded
+            // in build_data (visibility `vs`, name `n`, shortDescription `d`)
+            // can be stale: a build published before the dialog synced
+            // title/description into the blob, one whose publish-time re-encode
+            // fell back to the original blob, or one edited out-of-band.
+            // Override the decoded values with server truth so the opened build
+            // matches its Hub card and downstream share/copy gating can't be
             // fooled by a stale blob.
-            const authoritative =
-              decoded && hubBuild.visibility
-                ? { ...decoded, settings: { ...decoded.settings, visibility: hubBuild.visibility } }
-                : decoded;
+            const authoritative = decoded
+              ? {
+                  ...decoded,
+                  name: hubBuild.title ?? decoded.name,
+                  shortDescription: hubBuild.description ?? decoded.shortDescription,
+                  settings: {
+                    ...decoded.settings,
+                    visibility: hubBuild.visibility ?? decoded.settings.visibility,
+                  },
+                }
+              : decoded;
             onDecoded(authoritative, hubBuild.build_data);
           }),
         )

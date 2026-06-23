@@ -171,6 +171,40 @@ describe('BuildViewPage visibility enforcement', () => {
     expect(screen.queryByText(/No build found/i)).not.toBeInTheDocument();
   });
 
+  it('overrides stale embedded name/description with the authoritative Hub title/description on ?id= loads', async () => {
+    // The blob carries a STALE name/description (e.g. the publish-time re-encode
+    // fell back to the original blob, or the build predates dialog title sync).
+    // The Hub record's title/description columns are authoritative, so the
+    // opened build must match its Hub card — not the stale blob.
+    mockGet.mockResolvedValue({
+      build: {
+        build_data: 'blob-with-stale-name',
+        visibility: 'public',
+        title: 'Authoritative Title',
+        description: 'Authoritative description',
+      },
+    } as Awaited<ReturnType<typeof buildHubApi.get>>);
+    mockDecode.mockResolvedValue({
+      ...(fullBuild('public') as Record<string, unknown>),
+      name: 'Stale Name',
+      shortDescription: 'Stale description',
+    } as never);
+
+    render(
+      <MemoryRouter initialEntries={[{ pathname: '/bv', search: '?id=build-7' }]}>
+        <Routes>
+          <Route path="/bv" element={<BuildViewPage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => expect(screen.getByTestId('build-shell')).toBeInTheDocument());
+    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Authoritative Title');
+    expect(screen.getByText('Authoritative description')).toBeInTheDocument();
+    expect(screen.queryByText('Stale Name')).not.toBeInTheDocument();
+    expect(screen.queryByText('Stale description')).not.toBeInTheDocument();
+  });
+
   it('rejects a Private ?b= payload (forwarded/address-bar link) as not-found', async () => {
     mockDecode.mockResolvedValue({ settings: { visibility: 'private' } } as never);
 
