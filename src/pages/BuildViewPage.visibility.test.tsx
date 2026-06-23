@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 
@@ -23,6 +23,13 @@ jest.mock('../features/auth/AuthContext', () => ({
 
 jest.mock('react-redux', () => ({
   useSelector: jest.fn(() => []),
+}));
+
+// Mock the view-transition navigate so we can assert the exact target the
+// Edit/Remix button navigates to without pulling in startViewTransition/morph.
+const mockNavigate = jest.fn();
+jest.mock('../hooks/useViewTransitionNavigate', () => ({
+  useViewTransitionNavigate: () => mockNavigate,
 }));
 
 jest.mock('../features/build-hub/api/build-hub-api', () => ({
@@ -100,6 +107,7 @@ describe('BuildViewPage visibility enforcement', () => {
     mockDecode.mockResolvedValue(null);
     mockEncode.mockResolvedValue('');
     mockUseSelector.mockReturnValue([]);
+    mockNavigate.mockReset();
   });
 
   it('resolves ?id= builds only through the visibility-checked API, never router state', async () => {
@@ -244,6 +252,43 @@ describe('BuildViewPage visibility enforcement', () => {
 
     await waitFor(() => expect(screen.getByTestId('build-shell')).toBeInTheDocument());
     expect(mockEncode).not.toHaveBeenCalled();
+  });
+
+  it('fails closed: a private ?id= build with a stale public blob + failed re-encode never leaks the blob to the editor', async () => {
+    // The owner-authorized API returns a now-Private row, but its stored blob
+    // still encodes Public. The authoritative visibility is Private, so when the
+    // re-encode fails we must NOT retain the stale Public blob for the editor —
+    // Open-in-Editor would otherwise reopen the build as Public.
+    mockGet.mockResolvedValue({
+      build: {
+        build_data: 'stale-public-blob',
+        visibility: 'private',
+        title: 'My Private Build',
+        description: '',
+      },
+    } as Awaited<ReturnType<typeof buildHubApi.get>>);
+    mockDecode.mockResolvedValue(fullBuild('public'));
+    mockEncode.mockResolvedValue(''); // re-encode fails
+
+    render(
+      <MemoryRouter initialEntries={[{ pathname: '/bv', search: '?id=build-private' }]}>
+        <Routes>
+          <Route path="/bv" element={<BuildViewPage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => expect(screen.getByTestId('build-shell')).toBeInTheDocument());
+    await waitFor(() => expect(mockEncode).toHaveBeenCalled());
+
+    // Remix/Edit must not carry the stale Public payload (fail closed → empty b).
+    fireEvent.click(
+      screen.getByRole('button', { name: /open your own editable copy|edit your saved build/i }),
+    );
+    expect(mockNavigate).toHaveBeenCalledTimes(1);
+    const target = mockNavigate.mock.calls[0][0] as string;
+    expect(target).not.toContain('stale-public-blob');
+    expect(target).toBe('/build-editor?b=');
   });
 
   it('rejects a Private ?b= payload (forwarded/address-bar link) as not-found', async () => {

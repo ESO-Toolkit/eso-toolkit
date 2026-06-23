@@ -2134,16 +2134,27 @@ export const BuildViewPage: React.FC = () => {
             // retained payload — used by the share `?b=` link and the
             // Remix/Edit → /build-editor?b= path — carries the authoritative
             // metadata too. Otherwise Remix reopens the editor with the stale
-            // name/description and a later publish would reintroduce it. Fall
-            // back to the original blob if the re-encode fails.
+            // values and a later publish would reintroduce them.
+            const visibilityDiverged =
+              authoritative.settings.visibility !== decoded.settings.visibility;
             let buildData = hubBuild.build_data;
             if (
+              visibilityDiverged ||
               authoritative.name !== decoded.name ||
-              authoritative.shortDescription !== decoded.shortDescription ||
-              authoritative.settings.visibility !== decoded.settings.visibility
+              authoritative.shortDescription !== decoded.shortDescription
             ) {
               const reencoded = await encodeBuildToURL(authoritative);
-              if (reencoded) buildData = reencoded;
+              if (reencoded) {
+                buildData = reencoded;
+              } else if (visibilityDiverged) {
+                // Re-encode failed and the blob's embedded visibility no longer
+                // matches the authoritative Hub value. Fail closed: never retain
+                // a blob that Open-in-Editor (?b=) could reopen at a more
+                // permissive visibility than the server enforces — drop it so no
+                // stale-visibility payload leaks. (Title/description-only drift
+                // keeps the original blob: cosmetic staleness, never a leak.)
+                buildData = '';
+              }
             }
             onDecoded(authoritative, buildData);
           }),
