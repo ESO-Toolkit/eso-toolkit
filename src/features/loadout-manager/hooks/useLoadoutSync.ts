@@ -15,7 +15,6 @@ import { useDispatch, useSelector, useStore } from 'react-redux';
 
 import { AuthContext } from '@/features/auth/AuthContext';
 import {
-  claimUnownedLoadouts,
   replaceAllLoadouts,
   selectSavedLoadouts,
   selectLoadoutsLastSyncedAt,
@@ -97,106 +96,118 @@ export function useLoadoutSync(): UseLoadoutSyncResult {
     return accessToken;
   }, [isLoggedIn, accessToken]);
 
-  const syncNow = useCallback(async (): Promise<number | undefined> => {
-    const token = requireAuth();
-    if (!token) return undefined;
+  // `claimUnowned` is false for a normal sync (only this account's already-owned
+  // loadouts), true only for the explicit "Add to account" action. Ownership is
+  // applied solely from the SERVER-CONFIRMED result at commit, so a failed sync
+  // never leaves loadouts mis-stamped (rollback-safe — nothing is dispatched).
+  const runSync = useCallback(
+    async (claimUnowned: boolean): Promise<number | undefined> => {
+      const token = requireAuth();
+      if (!token) return undefined;
 
-    // Fail CLOSED if the account identity hasn't resolved yet (logged in but the
-    // user query is still loading/failed). Without a concrete id we'd stamp pulled
-    // account rows as `unowned`, declassifying private data — never do that.
-    const owner = currentUserId;
-    if (!owner) {
-      setError('Your account is still loading — try syncing again in a moment.');
-      setStatus('error');
-      return undefined;
-    }
-
-    // Sync NEVER implicitly claims unowned (guest/legacy) loadouts — that would let
-    // a shared browser upload a previous user's local library into this account.
-    // Claiming is an explicit, separate action (claimLocalLoadouts). So the sync
-    // slice is strictly this account's already-owned loadouts.
-    const initialMineIds = new Set(
-      partitionByOwner(selectSavedLoadouts(store.getState()), owner, false).mine.map((l) => l.id),
-    );
-
-    setStatus('syncing');
-    setError(null);
-    try {
-      // Pull the account: its library (stamped as owned by this user) + tombstones.
-      const pull = await loadoutsApi.list(token);
-      let committedMine = stampOwner(rowsToLoadouts(pull), owner);
-      let tombstones = tombstoneMap(pull);
-
-      // Push→re-read until quiescent. Each pass operates ONLY on the current user's
-      // slice; other accounts' loadouts are never read, pushed, or deleted. Re-reading
-      // from the store each pass means edits made mid-sync aren't dropped; version-aware
-      // purge keeps a local edit newer than its tombstone. Bounded by MAX_SYNC_PASSES.
-      for (let pass = 0; pass < MAX_SYNC_PASSES; pass++) {
-        const { mine } = partitionByOwner(selectSavedLoadouts(store.getState()), owner, false);
-        const toPush = purgeDeleted(mergeLoadoutsByNewest(mine, committedMine), tombstones);
-
-        if (toPush.length > MAX_ACCOUNT_LOADOUTS) {
-          setError(
-            `You have ${toPush.length} loadouts on this account, over the ${MAX_ACCOUNT_LOADOUTS} limit. Delete some, then sync again.`,
-          );
-          setStatus('error');
-          return undefined;
-        }
-
-        // Push (chunked). Each /sync returns the full server library + tombstones;
-        // the LAST response is authoritative for this pass.
-        let authoritative: LoadoutListResponse = pull;
-        const batches = chunk(toPush.map(savedLoadoutToPayload), SYNC_BATCH_SIZE);
-        if (batches.length === 0) {
-          authoritative = await loadoutsApi.sync([], token);
-        } else {
-          for (const batch of batches) authoritative = await loadoutsApi.sync(batch, token);
-        }
-        committedMine = stampOwner(rowsToLoadouts(authoritative), owner);
-        tombstones = tombstoneMap(authoritative);
-
-        const { mine: mineAfter } = partitionByOwner(
-          selectSavedLoadouts(store.getState()),
-          owner,
-          false,
-        );
-        committedMine = stampOwner(
-          purgeDeleted(mergeLoadoutsByNewest(mineAfter, committedMine), tombstones),
-          owner,
-        );
-
-        if (sameLibrary(mine, mineAfter)) break;
+      // Fail CLOSED if the account identity hasn't resolved yet (logged in but the
+      // user query is still loading/failed). Without a concrete id we'd stamp pulled
+      // account rows as `unowned`, declassifying private data — never do that.
+      const owner = currentUserId;
+      if (!owner) {
+        setError('Your account is still loading — try syncing again in a moment.');
+        setStatus('error');
+        return undefined;
       }
 
-      // Commit against the LIVE store (re-read here, no await before dispatch).
-      // Drop from the server-authoritative set anything the user DELETED locally
-      // during the sync (was mine at start, gone now) so a confirmed delete isn't
-      // resurrected; keep genuine server-pulled loadouts. Other accounts' loadouts
-      // are preserved exactly — nothing is deleted.
-      const { mine: liveMine, others } = partitionByOwner(
-        selectSavedLoadouts(store.getState()),
-        owner,
-        false,
+      const initialMineIds = new Set(
+        partitionByOwner(selectSavedLoadouts(store.getState()), owner, claimUnowned).mine.map(
+          (l) => l.id,
+        ),
       );
-      const liveMineIds = new Set(liveMine.map((l) => l.id));
-      const serverKeep = committedMine.filter(
-        (l) => liveMineIds.has(l.id) || !initialMineIds.has(l.id),
-      );
-      const finalMine = stampOwner(
-        purgeDeleted(mergeLoadoutsByNewest(liveMine, serverKeep), tombstones),
-        owner,
-      );
-      dispatch(replaceAllLoadouts([...others, ...finalMine]));
-      dispatch(setSyncedUserId(owner));
-      dispatch(setLastSyncedAt(new Date().toISOString()));
-      setStatus('idle');
-      return finalMine.length;
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Sync failed');
-      setStatus('error');
-      return undefined;
-    }
-  }, [requireAuth, currentUserId, dispatch, store]);
+
+      setStatus('syncing');
+      setError(null);
+      try {
+        // Pull the account: its library (stamped as owned by this user) + tombstones.
+        const pull = await loadoutsApi.list(token);
+        let committedMine = stampOwner(rowsToLoadouts(pull), owner);
+        let tombstones = tombstoneMap(pull);
+
+        // Push→re-read until quiescent. Each pass operates ONLY on the current user's
+        // slice; other accounts' loadouts are never read, pushed, or deleted. Re-reading
+        // from the store each pass means edits made mid-sync aren't dropped; version-aware
+        // purge keeps a local edit newer than its tombstone. Bounded by MAX_SYNC_PASSES.
+        for (let pass = 0; pass < MAX_SYNC_PASSES; pass++) {
+          const { mine } = partitionByOwner(
+            selectSavedLoadouts(store.getState()),
+            owner,
+            claimUnowned,
+          );
+          const toPush = purgeDeleted(mergeLoadoutsByNewest(mine, committedMine), tombstones);
+
+          if (toPush.length > MAX_ACCOUNT_LOADOUTS) {
+            setError(
+              `You have ${toPush.length} loadouts on this account, over the ${MAX_ACCOUNT_LOADOUTS} limit. Delete some, then sync again.`,
+            );
+            setStatus('error');
+            return undefined;
+          }
+
+          // Push (chunked). Each /sync returns the full server library + tombstones;
+          // the LAST response is authoritative for this pass.
+          let authoritative: LoadoutListResponse = pull;
+          const batches = chunk(toPush.map(savedLoadoutToPayload), SYNC_BATCH_SIZE);
+          if (batches.length === 0) {
+            authoritative = await loadoutsApi.sync([], token);
+          } else {
+            for (const batch of batches) authoritative = await loadoutsApi.sync(batch, token);
+          }
+          committedMine = stampOwner(rowsToLoadouts(authoritative), owner);
+          tombstones = tombstoneMap(authoritative);
+
+          const { mine: mineAfter } = partitionByOwner(
+            selectSavedLoadouts(store.getState()),
+            owner,
+            claimUnowned,
+          );
+          committedMine = stampOwner(
+            purgeDeleted(mergeLoadoutsByNewest(mineAfter, committedMine), tombstones),
+            owner,
+          );
+
+          if (sameLibrary(mine, mineAfter)) break;
+        }
+
+        // Commit against the LIVE store (re-read here, no await before dispatch).
+        // Drop from the server-authoritative set anything the user DELETED locally
+        // during the sync (was mine at start, gone now) so a confirmed delete isn't
+        // resurrected; keep genuine server-pulled loadouts. Other accounts' loadouts
+        // are preserved exactly — nothing is deleted.
+        const { mine: liveMine, others } = partitionByOwner(
+          selectSavedLoadouts(store.getState()),
+          owner,
+          claimUnowned,
+        );
+        const liveMineIds = new Set(liveMine.map((l) => l.id));
+        const serverKeep = committedMine.filter(
+          (l) => liveMineIds.has(l.id) || !initialMineIds.has(l.id),
+        );
+        const finalMine = stampOwner(
+          purgeDeleted(mergeLoadoutsByNewest(liveMine, serverKeep), tombstones),
+          owner,
+        );
+        dispatch(replaceAllLoadouts([...others, ...finalMine]));
+        dispatch(setSyncedUserId(owner));
+        dispatch(setLastSyncedAt(new Date().toISOString()));
+        setStatus('idle');
+        return finalMine.length;
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'Sync failed');
+        setStatus('error');
+        return undefined;
+      }
+    },
+    [requireAuth, currentUserId, dispatch, store],
+  );
+
+  /** Normal sync: only this account's already-owned loadouts. */
+  const syncNow = useCallback(() => runSync(false), [runSync]);
 
   const saveOne = useCallback(
     async (loadout: SavedLoadout): Promise<boolean> => {
@@ -243,19 +254,10 @@ export function useLoadoutSync(): UseLoadoutSyncResult {
     [requireAuth],
   );
 
-  // Explicit one-time claim: assign all unowned (guest/legacy) local loadouts to
-  // this account, THEN sync. This is the deliberate "Add to account" action — sync
-  // itself never claims unowned data on its own.
-  const claimLocalLoadouts = useCallback(async (): Promise<number | undefined> => {
-    if (!requireAuth()) return undefined;
-    if (!currentUserId) {
-      setError('Your account is still loading — try again in a moment.');
-      setStatus('error');
-      return undefined;
-    }
-    dispatch(claimUnownedLoadouts(currentUserId));
-    return syncNow();
-  }, [requireAuth, currentUserId, dispatch, syncNow]);
+  // Explicit "Add to account": sync WITH unowned (guest/legacy) loadouts included.
+  // Ownership is stamped only from the server-confirmed result at commit, so if
+  // the sync fails nothing is mis-stamped (rollback-safe — no eager local mutation).
+  const claimLocalLoadouts = useCallback(() => runSync(true), [runSync]);
 
   return {
     isLoggedIn,

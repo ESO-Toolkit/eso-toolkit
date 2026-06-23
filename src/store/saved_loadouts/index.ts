@@ -7,7 +7,6 @@ export {
   replaceAllLoadouts,
   setLastSyncedAt,
   setSyncedUserId,
-  claimUnownedLoadouts,
 } from './savedLoadoutsSlice';
 export {
   selectSavedLoadouts,

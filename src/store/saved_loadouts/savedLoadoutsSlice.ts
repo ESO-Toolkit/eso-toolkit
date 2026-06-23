@@ -158,16 +158,6 @@ const savedLoadoutsSlice = createSlice({
     setSyncedUserId(state, action: PayloadAction<string | undefined>) {
       state.syncedUserId = action.payload;
     },
-    /**
-     * Explicitly claim all unowned (guest/legacy) loadouts for an account — the
-     * "Add to account" action. Sync never claims unowned data implicitly, so this
-     * is the one deliberate step that assigns local-only loadouts to a user.
-     */
-    claimUnownedLoadouts(state, action: PayloadAction<string>) {
-      for (const l of state.loadouts) {
-        if (l.ownerUserId === undefined) l.ownerUserId = action.payload;
-      }
-    },
   },
 });
 
@@ -179,6 +169,5 @@ export const {
   replaceAllLoadouts,
   setLastSyncedAt,
   setSyncedUserId,
-  claimUnownedLoadouts,
 } = savedLoadoutsSlice.actions;
 export default savedLoadoutsSlice.reducer;

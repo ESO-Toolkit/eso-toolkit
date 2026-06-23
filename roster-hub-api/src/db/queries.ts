@@ -1720,47 +1720,54 @@ export async function upsertUserLoadout(
   userId: string,
   data: UserLoadoutInput,
 ): Promise<void> {
-  // An explicit save/re-create clears any tombstone for this id first, so a
-  // deliberately re-created loadout isn't blocked by an old deletion marker.
-  await db
-    .prepare('DELETE FROM user_loadout_deletions WHERE user_id = ? AND loadout_id = ?')
-    .bind(userId, data.id)
-    .run();
   // Single-loadout save/replace is a deliberate, explicit user action, so it
   // overwrites unconditionally (within ownership). Bulk sync is the path that
   // needs last-write-wins — see upsertUserLoadouts. The per-account cap is gated
   // INSIDE the write (only for a NEW row) so it holds under concurrent creates;
   // SQLite serializes writes so the COUNT reflects committed rows.
-  await db
-    .prepare(
-      `INSERT INTO user_loadouts
-         (id, user_id, name, description, trial_id, character_name, loadout_data, client_updated_at, created_at, updated_at)
-       SELECT ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now')
-       WHERE EXISTS (SELECT 1 FROM user_loadouts e WHERE e.user_id = ? AND e.id = ?)
-          OR (SELECT COUNT(*) FROM user_loadouts c WHERE c.user_id = ?) < ${MAX_LOADOUTS_PER_USER}
-       ON CONFLICT(user_id, id) DO UPDATE SET
-         name = excluded.name,
-         description = excluded.description,
-         trial_id = excluded.trial_id,
-         character_name = excluded.character_name,
-         loadout_data = excluded.loadout_data,
-         client_updated_at = excluded.client_updated_at,
-         updated_at = datetime('now')`,
-    )
-    .bind(
-      data.id,
-      userId,
-      data.name,
-      data.description,
-      data.trialId,
-      data.characterName,
-      data.loadoutData,
-      data.clientUpdatedAt,
-      userId,
-      data.id,
-      userId,
-    )
-    .run();
+  //
+  // The insert and the tombstone-clear run in ONE transactional batch, and the
+  // tombstone is cleared ONLY when the row actually exists afterwards. So if the
+  // quota guard blocks a new row, the durable delete marker is NOT lost (it would
+  // be, were the tombstone deleted up-front and the insert then no-op'd).
+  await db.batch([
+    db
+      .prepare(
+        `INSERT INTO user_loadouts
+           (id, user_id, name, description, trial_id, character_name, loadout_data, client_updated_at, created_at, updated_at)
+         SELECT ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now')
+         WHERE EXISTS (SELECT 1 FROM user_loadouts e WHERE e.user_id = ? AND e.id = ?)
+            OR (SELECT COUNT(*) FROM user_loadouts c WHERE c.user_id = ?) < ${MAX_LOADOUTS_PER_USER}
+         ON CONFLICT(user_id, id) DO UPDATE SET
+           name = excluded.name,
+           description = excluded.description,
+           trial_id = excluded.trial_id,
+           character_name = excluded.character_name,
+           loadout_data = excluded.loadout_data,
+           client_updated_at = excluded.client_updated_at,
+           updated_at = datetime('now')`,
+      )
+      .bind(
+        data.id,
+        userId,
+        data.name,
+        data.description,
+        data.trialId,
+        data.characterName,
+        data.loadoutData,
+        data.clientUpdatedAt,
+        userId,
+        data.id,
+        userId,
+      ),
+    db
+      .prepare(
+        `DELETE FROM user_loadout_deletions
+         WHERE user_id = ? AND loadout_id = ?
+           AND EXISTS (SELECT 1 FROM user_loadouts l WHERE l.user_id = ? AND l.id = ?)`,
+      )
+      .bind(userId, data.id, userId, data.id),
+  ]);
 }
 
 export async function updateUserLoadout(
