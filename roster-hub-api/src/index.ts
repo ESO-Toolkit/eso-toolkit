@@ -70,6 +70,7 @@ import {
   deleteUserLoadout,
   upsertUserLoadouts,
   listLoadoutTombstones,
+  clearRevivedTombstones,
   countUserLoadouts,
   checkLoadoutWriteRateLimit,
   MAX_LOADOUTS_PER_USER,
@@ -982,8 +983,8 @@ const ISO_UTC_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,3})?Z$/;
 /**
  * The client edit timestamp drives last-write-wins, so it must be trustworthy:
  * a malformed or far-future value could pin a row and make every later legit
- * sync a silent no-op. Accept only normalized ISO-8601 UTC that is not in the
- * future (beyond clock skew). Empty is allowed and sorts as "oldest".
+ * sync a silent no-op. Accept only ISO-8601 UTC that is not in the future
+ * (beyond clock skew). Empty is allowed and sorts as "oldest".
  */
 const isValidClientTimestamp = (s: string): boolean => {
   if (s === '') return true;
@@ -991,6 +992,15 @@ const isValidClientTimestamp = (s: string): boolean => {
   const ms = Date.parse(s);
   return Number.isFinite(ms) && ms <= Date.now() + CLOCK_SKEW_MS;
 };
+
+/**
+ * Canonicalize a valid timestamp to fixed-width ISO with milliseconds
+ * (YYYY-MM-DDTHH:MM:SS.sssZ) so lexicographic comparison orders correctly — a
+ * second-precision value must not sort after a same-second `.900` value. Stored
+ * client_updated_at and tombstone deleted_at both go through this so they're
+ * directly comparable. Empty stays empty (sorts oldest).
+ */
+const canonicalTimestamp = (s: string): string => (s === '' ? '' : new Date(s).toISOString());
 
 interface LoadoutBody {
   id?: string;
@@ -1039,7 +1049,7 @@ function parseLoadoutBody(body: LoadoutBody, id: string): UserLoadoutInput | str
     trialId: sanitize(trialId),
     characterName: cleanText(characterName),
     loadoutData,
-    clientUpdatedAt,
+    clientUpdatedAt: canonicalTimestamp(clientUpdatedAt),
   };
 }
 
@@ -1152,7 +1162,25 @@ app.delete('/loadouts/:id', async (c) => {
   const user = await validateToken(c.req.header('Authorization'), c.env);
   if (!user) return c.json({ error: 'Unauthorized' }, 401);
 
-  const deleted = await deleteUserLoadout(c.env.DB, c.req.param('id'), user.id);
+  const id = c.req.param('id');
+  if (!isValidLoadoutId(id)) return c.json({ error: 'Invalid loadout id' }, 400);
+
+  // The delete time (client-domain, canonical) is the tombstone's version: an
+  // edit on another device that post-dates it revives the loadout. Default to
+  // server now if the client didn't send one.
+  const tsParam = c.req.query('ts') ?? '';
+  if (!isValidClientTimestamp(tsParam))
+    return c.json({ error: 'ts must be an ISO-8601 UTC timestamp not in the future' }, 400);
+  const deletedAt = canonicalTimestamp(tsParam) || new Date().toISOString();
+
+  // Rate-limit deletes as writes so arbitrary DELETE calls can't be used to
+  // hammer the DB or (via tombstones) bloat sync responses.
+  const allowed = await checkLoadoutWriteRateLimit(c.env.DB, user.id);
+  if (!allowed)
+    return c.json({ error: 'Rate limit exceeded. Too many loadout writes this hour.' }, 429);
+  await recordRateLimitEvent(c.env.DB, user.id, 'loadout_write');
+
+  const deleted = await deleteUserLoadout(c.env.DB, id, user.id, deletedAt);
   if (!deleted) return c.json({ error: 'Not found or forbidden' }, 404);
   return c.json({ ok: true });
 });
@@ -1207,6 +1235,9 @@ app.post('/loadouts/sync', async (c) => {
 
   await recordRateLimitEvent(c.env.DB, user.id, 'loadout_write');
   await upsertUserLoadouts(c.env.DB, user.id, inputs);
+  // An edit that post-dated a delete just revived its loadout — drop the now-stale
+  // tombstone so other devices don't re-purge the revived copy on their next pull.
+  await clearRevivedTombstones(c.env.DB, user.id);
   const [loadouts, deletions] = await Promise.all([
     listUserLoadouts(c.env.DB, user.id),
     listLoadoutTombstones(c.env.DB, user.id),

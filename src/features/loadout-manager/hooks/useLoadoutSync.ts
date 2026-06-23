@@ -10,7 +10,7 @@
  * deletions are explicit (removeFromAccount) and are not propagated by sync.
  */
 
-import { useCallback, useContext, useState } from 'react';
+import { useCallback, useContext, useEffect, useState } from 'react';
 import { useDispatch, useSelector, useStore } from 'react-redux';
 
 import { AuthContext } from '@/features/auth/AuthContext';
@@ -187,7 +187,7 @@ export function useLoadoutSync(): UseLoadoutSyncResult {
       const token = requireAuth();
       if (!token) return false;
       try {
-        await loadoutsApi.remove(id, token);
+        await loadoutsApi.remove(id, token, new Date().toISOString());
         return true;
       } catch (e) {
         // A 404 means it was never on the account — treat as already-removed.
@@ -199,6 +199,20 @@ export function useLoadoutSync(): UseLoadoutSyncResult {
     },
     [requireAuth],
   );
+
+  // Privacy guard: the saved-loadout library is browser-persisted (not scoped per
+  // user). When the browser is now a DIFFERENT account than the one whose library
+  // was last synced here — including logout (currentUserId undefined) — clear the
+  // synced library so the previous user's private loadouts aren't shown/exported
+  // to whoever is here now. A never-synced (guest) library is left untouched.
+  useEffect(() => {
+    const syncedUserId = selectLoadoutsSyncedUserId(store.getState());
+    if (syncedUserId && syncedUserId !== currentUserId) {
+      dispatch(replaceAllLoadouts([]));
+      dispatch(setSyncedUserId(undefined));
+      dispatch(setLastSyncedAt(undefined));
+    }
+  }, [currentUserId, dispatch, store]);
 
   return { isLoggedIn, status, error, lastSyncedAt, syncNow, saveOne, removeFromAccount };
 }

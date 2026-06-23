@@ -53,9 +53,13 @@ export const loadoutsApi = {
     return apiFetch(`/loadouts/${id}`, { method: 'PUT', body: JSON.stringify(payload) }, token);
   },
 
-  /** Delete a loadout from the account. */
-  remove(id: string, token: string): Promise<{ ok: boolean }> {
-    return apiFetch(`/loadouts/${id}`, { method: 'DELETE' }, token);
+  /**
+   * Delete a loadout from the account. `deletedAt` (ISO) is the tombstone's
+   * version — an edit on another device newer than this revives the loadout.
+   */
+  remove(id: string, token: string, deletedAt?: string): Promise<{ ok: boolean }> {
+    const qs = deletedAt ? `?ts=${encodeURIComponent(deletedAt)}` : '';
+    return apiFetch(`/loadouts/${id}${qs}`, { method: 'DELETE' }, token);
   },
 
   /** Non-destructive bulk upsert; returns the full server library + tombstones. */

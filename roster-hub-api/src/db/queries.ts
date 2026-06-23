@@ -1789,22 +1789,29 @@ export async function deleteUserLoadout(
   db: D1Database,
   id: string,
   userId: string,
+  deletedAt: string,
 ): Promise<boolean> {
-  // Delete the row AND record a tombstone so the deletion is durable across
-  // devices — a device still holding this id locally would otherwise re-insert
-  // it on its next non-destructive sync. The tombstone is idempotent so deleting
-  // an already-deleted (or never-synced) loadout still records intent.
-  const [result] = await db.batch([
-    db.prepare('DELETE FROM user_loadouts WHERE id = ? AND user_id = ?').bind(id, userId),
-    db
+  const result = await db
+    .prepare('DELETE FROM user_loadouts WHERE id = ? AND user_id = ?')
+    .bind(id, userId)
+    .run();
+  // Only record a tombstone when a row was actually removed. This keeps deletes
+  // durable across this account's devices (a stale device can't re-insert the id)
+  // while preventing arbitrary DELETEs of non-existent ids from bloating the
+  // tombstone set. deletedAt is a client-domain canonical timestamp so it can be
+  // compared with an incoming edit's client_updated_at (see upsertUserLoadouts).
+  if ((result.meta.changes ?? 0) > 0) {
+    await db
       .prepare(
         `INSERT INTO user_loadout_deletions (user_id, loadout_id, deleted_at)
-         VALUES (?, ?, datetime('now'))
-         ON CONFLICT(user_id, loadout_id) DO UPDATE SET deleted_at = datetime('now')`,
+         VALUES (?, ?, ?)
+         ON CONFLICT(user_id, loadout_id) DO UPDATE SET deleted_at = excluded.deleted_at`,
       )
-      .bind(userId, id),
-  ]);
-  return (result.meta.changes ?? 0) > 0;
+      .bind(userId, id, deletedAt)
+      .run();
+    return true;
+  }
+  return false;
 }
 
 /** Ids the account has deleted — returned during sync so other devices purge them. */
@@ -1814,6 +1821,27 @@ export async function listLoadoutTombstones(db: D1Database, userId: string): Pro
     .bind(userId)
     .all<{ loadout_id: string }>();
   return rows.results.map((r) => r.loadout_id);
+}
+
+/**
+ * Drop tombstones whose loadout now exists with a strictly newer edit — i.e. an
+ * edit that post-dated the delete won and revived the loadout. Run after a bulk
+ * sync so a revived loadout isn't re-purged from other devices on the next pull.
+ */
+export async function clearRevivedTombstones(db: D1Database, userId: string): Promise<void> {
+  await db
+    .prepare(
+      `DELETE FROM user_loadout_deletions
+       WHERE user_id = ?
+         AND EXISTS (
+           SELECT 1 FROM user_loadouts l
+           WHERE l.user_id = user_loadout_deletions.user_id
+             AND l.id = user_loadout_deletions.loadout_id
+             AND l.client_updated_at > user_loadout_deletions.deleted_at
+         )`,
+    )
+    .bind(userId)
+    .run();
 }
 
 /**
@@ -1836,15 +1864,19 @@ export async function upsertUserLoadouts(
   const stmts = loadouts.map((l) =>
     db
       .prepare(
-        // INSERT…SELECT (not VALUES) so the WHERE NOT EXISTS tombstone guard also
-        // blocks INSERTING a brand-new row for a deleted id — a stale device can't
-        // resurrect a loadout another device deleted. Existing rows still take the
-        // last-write-wins path on conflict.
+        // INSERT…SELECT (not VALUES) so the tombstone guard also blocks INSERTING
+        // a brand-new row for a deleted id. The guard is VERSIONED: a delete only
+        // blocks an incoming edit that is older-or-equal (deleted_at >= the edit's
+        // client_updated_at). A strictly-newer edit post-dates the delete and is
+        // allowed to revive the loadout — clearRevivedTombstones then drops the
+        // stale tombstone so the revival isn't re-purged. Existing rows still take
+        // the last-write-wins path on conflict.
         `INSERT INTO user_loadouts
            (id, user_id, name, description, trial_id, character_name, loadout_data, client_updated_at, created_at, updated_at)
          SELECT ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now')
          WHERE NOT EXISTS (
-           SELECT 1 FROM user_loadout_deletions d WHERE d.user_id = ? AND d.loadout_id = ?
+           SELECT 1 FROM user_loadout_deletions d
+           WHERE d.user_id = ? AND d.loadout_id = ? AND d.deleted_at >= ?
          )
          ON CONFLICT(user_id, id) DO UPDATE SET
            name = excluded.name,
@@ -1867,6 +1899,7 @@ export async function upsertUserLoadouts(
         l.clientUpdatedAt,
         userId,
         l.id,
+        l.clientUpdatedAt,
       ),
   );
   await db.batch(stmts);
