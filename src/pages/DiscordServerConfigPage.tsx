@@ -622,8 +622,15 @@ export const DiscordServerConfigPage: React.FC = () => {
               />
             }
             sx={{
+              color: '#fff',
+              textShadow: '0 1px 2px rgba(0,0,0,0.35)',
               background: 'linear-gradient(135deg, #5865F2 0%, #4752C4 100%)',
-              '&:hover': { background: 'linear-gradient(135deg, #6973F5 0%, #5865F2 100%)' },
+              boxShadow: '0 4px 16px rgba(88,101,242,0.35)',
+              '&:hover': {
+                color: '#fff',
+                background: 'linear-gradient(135deg, #4752C4 0%, #3a44a8 100%)',
+                boxShadow: '0 6px 22px rgba(88,101,242,0.5)',
+              },
               px: 4,
               py: 1.2,
             }}
