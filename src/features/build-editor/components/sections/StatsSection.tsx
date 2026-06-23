@@ -9,8 +9,6 @@ import { useTheme } from '@mui/material/styles';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useDispatch, useSelector, useStore } from 'react-redux';
 
-import type { RootState } from '@/store/storeWithHistory';
-
 import {
   CLASS_PASSIVES,
   CRIT_CHANCE_DIVISOR,
@@ -18,9 +16,11 @@ import {
   CRIT_DMG_GEAR,
   DEFAULT_STAT_OVERRIDES,
   PEN_BUFFS,
-} from '../../engine/stat-constants';
-import { calculateBuildStats } from '../../engine/stat-engine';
-import type { StatOverrides } from '../../engine/stat-types';
+} from '@/engine/stat-constants';
+import { calculateBuildStats } from '@/engine/stat-engine';
+import type { StatOverrides } from '@/engine/stat-types';
+import type { RootState } from '@/store/storeWithHistory';
+
 import {
   selectActiveSetup,
   selectBuildClassSkillLines,

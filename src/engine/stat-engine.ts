@@ -5,11 +5,11 @@
  * No React, no Redux — just math. Components call this via useMemo.
  */
 
-import type { GearConfig } from '../../loadout-manager/types/loadout.types';
-import { EQUIP_SLOTS } from '../data/esoStaticData';
-import { resolveApparelWeight } from '../data/setArmorWeights';
-import type { Build, BuildSetup, GameMode } from '../types/build.types';
-import { isClassMasteryEligible } from '../utils/classMasteryEligibility';
+import { EQUIP_SLOTS } from '@features/build-editor/data/esoStaticData';
+import { resolveApparelWeight } from '@features/build-editor/data/setArmorWeights';
+import type { Build, BuildSetup, GameMode } from '@features/build-editor/types/build.types';
+import { isClassMasteryEligible } from '@features/build-editor/utils/classMasteryEligibility';
+import type { GearConfig } from '@features/loadout-manager/types/loadout.types';
 
 import {
   ANTHELMIR_DIVISOR,

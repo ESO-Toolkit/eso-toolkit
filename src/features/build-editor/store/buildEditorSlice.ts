@@ -7,6 +7,8 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { v4 as uuidv4 } from 'uuid';
 
 import { getClassMasteryLine } from '@/data/skill-lines/class/classMastery';
+import { DEFAULT_STAT_OVERRIDES } from '@/engine/stat-constants';
+import type { StatOverrides } from '@/engine/stat-types';
 
 import { getItemInfo } from '../../loadout-manager/data/itemIdMap';
 import type {
@@ -17,8 +19,6 @@ import type {
 import { isTwoHandedWeapon } from '../../loadout-manager/utils/itemIconResolver';
 import { EQUIP_SLOTS, getDefaultLinesForClass } from '../data/esoStaticData';
 import { getLockedArmorWeight } from '../data/setArmorWeights';
-import { DEFAULT_STAT_OVERRIDES } from '../engine/stat-constants';
-import type { StatOverrides } from '../engine/stat-types';
 import type {
   Build,
   BuildAttributes,

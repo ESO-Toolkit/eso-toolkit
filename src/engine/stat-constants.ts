@@ -5,7 +5,7 @@
  * and cross-referenced with ESO game data.
  */
 
-import type { GameMode } from '../types/build.types';
+import type { GameMode } from '@features/build-editor/types/build.types';
 
 // ─── Caps ───────────────────────────────────────────────────────────────────
 

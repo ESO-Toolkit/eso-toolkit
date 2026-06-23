@@ -131,7 +131,7 @@ export interface BuildSetup {
   /** Quickslot assignments (from CSPS comp1.quickslots) */
   quickslots?: QuickslotEntry[];
   /** Stat calculation overrides (buff toggles, armor counts, etc.) */
-  statOverrides?: import('../engine/stat-types').StatOverrides;
+  statOverrides?: import('@/engine/stat-types').StatOverrides;
 }
 
 // ─── Top-level build ─────────────────────────────────────────────────────────
