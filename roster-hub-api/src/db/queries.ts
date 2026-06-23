@@ -1731,15 +1731,14 @@ export async function upsertUserLoadout(
       `INSERT INTO user_loadouts
          (id, user_id, name, description, trial_id, character_name, loadout_data, client_updated_at, created_at, updated_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
-       ON CONFLICT(id) DO UPDATE SET
+       ON CONFLICT(user_id, id) DO UPDATE SET
          name = excluded.name,
          description = excluded.description,
          trial_id = excluded.trial_id,
          character_name = excluded.character_name,
          loadout_data = excluded.loadout_data,
          client_updated_at = excluded.client_updated_at,
-         updated_at = datetime('now')
-       WHERE user_loadouts.user_id = excluded.user_id`,
+         updated_at = datetime('now')`,
     )
     .bind(
       data.id,
@@ -1815,7 +1814,7 @@ export async function upsertUserLoadouts(
         `INSERT INTO user_loadouts
            (id, user_id, name, description, trial_id, character_name, loadout_data, client_updated_at, created_at, updated_at)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
-         ON CONFLICT(id) DO UPDATE SET
+         ON CONFLICT(user_id, id) DO UPDATE SET
            name = excluded.name,
            description = excluded.description,
            trial_id = excluded.trial_id,
@@ -1823,8 +1822,7 @@ export async function upsertUserLoadouts(
            loadout_data = excluded.loadout_data,
            client_updated_at = excluded.client_updated_at,
            updated_at = datetime('now')
-         WHERE user_loadouts.user_id = excluded.user_id
-           AND excluded.client_updated_at >= user_loadouts.client_updated_at`,
+         WHERE excluded.client_updated_at >= user_loadouts.client_updated_at`,
       )
       .bind(
         l.id,

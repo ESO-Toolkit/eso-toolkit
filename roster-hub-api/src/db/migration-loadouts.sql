@@ -8,7 +8,11 @@
 -- local library can be pushed up idempotently (upsert by id).
 
 CREATE TABLE IF NOT EXISTS user_loadouts (
-  id             TEXT PRIMARY KEY,             -- client loadout uuid (stable across sync)
+  -- (user_id, id) is the primary key, NOT id alone: ids are client-supplied and
+  -- could collide across accounts (shared/imported loadouts), so each user gets
+  -- an independent id namespace. A bare-id PK would let one user's id collide
+  -- with another's row and turn an upsert into a silent no-op.
+  id             TEXT NOT NULL,                -- client loadout uuid (stable across sync)
   user_id        TEXT NOT NULL,                -- owner (ESO Logs currentUser.id, as string)
   name           TEXT NOT NULL,
   description    TEXT NOT NULL DEFAULT '',
@@ -23,7 +27,8 @@ CREATE TABLE IF NOT EXISTS user_loadouts (
   -- sync so a stale device can't clobber a newer edit made on another device.
   client_updated_at TEXT NOT NULL DEFAULT '',
   created_at     TEXT NOT NULL DEFAULT (datetime('now')),
-  updated_at     TEXT NOT NULL DEFAULT (datetime('now'))
+  updated_at     TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (user_id, id)
 );
 
 -- Owners list their own library newest-first; this covers both the WHERE and

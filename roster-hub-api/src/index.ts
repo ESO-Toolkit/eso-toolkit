@@ -973,6 +973,24 @@ const MAX_LOADOUT_SYNC_BATCH = 200;
 const isValidLoadoutId = (s: unknown): s is string =>
   typeof s === 'string' && /^[A-Za-z0-9_-]{1,64}$/.test(s);
 
+/** Tolerance for client clock skew when capping future edit timestamps. */
+const CLOCK_SKEW_MS = 5 * 60 * 1000;
+/** Strict ISO-8601 UTC, e.g. 2026-06-23T19:09:43.438Z (millis optional). */
+const ISO_UTC_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,3})?Z$/;
+
+/**
+ * The client edit timestamp drives last-write-wins, so it must be trustworthy:
+ * a malformed or far-future value could pin a row and make every later legit
+ * sync a silent no-op. Accept only normalized ISO-8601 UTC that is not in the
+ * future (beyond clock skew). Empty is allowed and sorts as "oldest".
+ */
+const isValidClientTimestamp = (s: string): boolean => {
+  if (s === '') return true;
+  if (!ISO_UTC_RE.test(s)) return false;
+  const ms = Date.parse(s);
+  return Number.isFinite(ms) && ms <= Date.now() + CLOCK_SKEW_MS;
+};
+
 interface LoadoutBody {
   id?: string;
   name?: string;
@@ -1002,6 +1020,8 @@ function parseLoadoutBody(body: LoadoutBody, id: string): UserLoadoutInput | str
   if (trialId.length > 64) return 'trial_id must be ≤ 64 characters';
   if (characterName.length > 64) return 'character_name must be ≤ 64 characters';
   if (clientUpdatedAt.length > 40) return 'client_updated_at must be ≤ 40 characters';
+  if (!isValidClientTimestamp(clientUpdatedAt))
+    return 'client_updated_at must be an ISO-8601 UTC timestamp not in the future';
   if (!loadoutData.trim()) return 'loadout_data is required';
   if (loadoutData.length > MAX_LOADOUT_DATA_CHARS)
     return `loadout_data must be ≤ ${MAX_LOADOUT_DATA_CHARS} characters`;

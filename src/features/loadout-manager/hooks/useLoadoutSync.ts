@@ -11,7 +11,7 @@
  */
 
 import { useCallback, useContext, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch, useSelector, useStore } from 'react-redux';
 
 import { AuthContext } from '@/features/auth/AuthContext';
 import {
@@ -21,8 +21,10 @@ import {
   setLastSyncedAt,
   type SavedLoadout,
 } from '@/store/saved_loadouts';
+import type { RootState } from '@/store/storeWithHistory';
 
 import { loadoutsApi } from '../api/loadouts-api';
+import type { UserLoadoutRow } from '../types/loadout-sync.types';
 import {
   mergeLoadoutsByNewest,
   rowToSavedLoadout,
@@ -57,6 +59,7 @@ export interface UseLoadoutSyncResult {
 
 export function useLoadoutSync(): UseLoadoutSyncResult {
   const dispatch = useDispatch();
+  const store = useStore<RootState>();
   // Read auth defensively: the library panel can render in isolation (tests,
   // storybook) without an AuthProvider — there we simply behave as logged-out.
   const auth = useContext(AuthContext);
@@ -99,24 +102,36 @@ export function useLoadoutSync(): UseLoadoutSyncResult {
       }
 
       // 3. Push the merged set first (chunked to the cap). Only after every batch
-      //    commits do we replace local state — a failed push then leaves the
-      //    local library untouched, and the server (idempotent + non-destructive)
-      //    re-converges on the next successful sync.
+      //    commits do we touch local state — a failed push then leaves the local
+      //    library untouched, and the server (idempotent + non-destructive)
+      //    re-converges on the next successful sync. Each /sync returns the full
+      //    server library; keep the LAST response as the authoritative post-push
+      //    state (it reflects every batch and any rows the server's last-write-wins
+      //    guard kept from another device).
+      let authoritativeRows: UserLoadoutRow[] = remoteRows;
       for (const batch of chunk(merged.map(savedLoadoutToPayload), SYNC_BATCH_SIZE)) {
-        await loadoutsApi.sync(batch, token);
+        const resp = await loadoutsApi.sync(batch, token);
+        authoritativeRows = resp.loadouts;
       }
+      const serverLoadouts = authoritativeRows
+        .map(rowToSavedLoadout)
+        .filter((l): l is SavedLoadout => l !== null);
 
-      // 4. Reflect the converged set locally (adds loadouts pulled from other devices).
-      dispatch(replaceAllLoadouts(merged));
+      // 4. Commit the SERVER's truth, merged against the FRESHEST local state
+      //    (re-read from the store, not the snapshot captured before the await) so
+      //    edits/saves made while the sync was in flight aren't dropped.
+      const latestLocal = selectSavedLoadouts(store.getState());
+      const finalLibrary = mergeLoadoutsByNewest(latestLocal, serverLoadouts);
+      dispatch(replaceAllLoadouts(finalLibrary));
       dispatch(setLastSyncedAt(new Date().toISOString()));
       setStatus('idle');
-      return merged.length;
+      return finalLibrary.length;
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Sync failed');
       setStatus('error');
       return undefined;
     }
-  }, [requireAuth, loadouts, dispatch]);
+  }, [requireAuth, loadouts, dispatch, store]);
 
   const saveOne = useCallback(
     async (loadout: SavedLoadout): Promise<boolean> => {
