@@ -30,6 +30,12 @@ interface SavedLoadoutsState {
   loadouts: SavedLoadout[];
   /** ISO timestamp of the last successful account sync, if any. */
   lastSyncedAt?: string;
+  /**
+   * The account id the local library was last synced with. Used to detect a
+   * shared browser switching accounts, so one user's local loadouts are never
+   * pushed into another user's account.
+   */
+  syncedUserId?: string;
 }
 
 const initialState: SavedLoadoutsState = {
@@ -120,6 +126,9 @@ const savedLoadoutsSlice = createSlice({
     setLastSyncedAt(state, action: PayloadAction<string | undefined>) {
       state.lastSyncedAt = action.payload;
     },
+    setSyncedUserId(state, action: PayloadAction<string | undefined>) {
+      state.syncedUserId = action.payload;
+    },
   },
 });
 
@@ -130,5 +139,6 @@ export const {
   deleteSavedLoadout,
   replaceAllLoadouts,
   setLastSyncedAt,
+  setSyncedUserId,
 } = savedLoadoutsSlice.actions;
 export default savedLoadoutsSlice.reducer;

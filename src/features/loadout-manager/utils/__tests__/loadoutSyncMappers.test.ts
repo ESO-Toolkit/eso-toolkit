@@ -3,7 +3,9 @@ import type { SavedLoadout } from '@/store/saved_loadouts';
 import type { UserLoadoutRow } from '../../types/loadout-sync.types';
 import {
   mergeLoadoutsByNewest,
+  purgeDeleted,
   rowToSavedLoadout,
+  sameLibrary,
   savedLoadoutToPayload,
 } from '../loadoutSyncMappers';
 
@@ -128,5 +130,33 @@ describe('mergeLoadoutsByNewest', () => {
     });
     const merged = mergeLoadoutsByNewest([localNew], [remoteOld]);
     expect(merged[0].name).toBe('Local');
+  });
+});
+
+describe('purgeDeleted', () => {
+  it('removes loadouts whose id is tombstoned', () => {
+    const a = makeSavedLoadout({ id: 'a' });
+    const b = makeSavedLoadout({ id: 'b' });
+    expect(purgeDeleted([a, b], new Set(['b'])).map((l) => l.id)).toEqual(['a']);
+  });
+  it('returns the same list when nothing is deleted', () => {
+    const list = [makeSavedLoadout({ id: 'a' })];
+    expect(purgeDeleted(list, new Set())).toBe(list);
+  });
+});
+
+describe('sameLibrary', () => {
+  it('is true for the same ids + updatedAt regardless of order', () => {
+    const a = makeSavedLoadout({ id: 'a', updatedAt: '2026-06-10T00:00:00.000Z' });
+    const b = makeSavedLoadout({ id: 'b', updatedAt: '2026-06-11T00:00:00.000Z' });
+    expect(sameLibrary([a, b], [b, a])).toBe(true);
+  });
+  it('is false when an updatedAt changed (an edit happened)', () => {
+    const a1 = makeSavedLoadout({ id: 'a', updatedAt: '2026-06-10T00:00:00.000Z' });
+    const a2 = makeSavedLoadout({ id: 'a', updatedAt: '2026-06-12T00:00:00.000Z' });
+    expect(sameLibrary([a1], [a2])).toBe(false);
+  });
+  it('is false when the set of ids differs', () => {
+    expect(sameLibrary([makeSavedLoadout({ id: 'a' })], [])).toBe(false);
   });
 });

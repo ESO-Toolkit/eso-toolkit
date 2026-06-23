@@ -34,3 +34,15 @@ CREATE TABLE IF NOT EXISTS user_loadouts (
 -- Owners list their own library newest-first; this covers both the WHERE and
 -- the ORDER BY of the only hot query.
 CREATE INDEX IF NOT EXISTS idx_user_loadouts_user ON user_loadouts(user_id, updated_at DESC);
+
+-- Deletion tombstones make deletes durable across devices. Without them a device
+-- that still holds a locally-deleted loadout would re-insert it on its next
+-- (non-destructive) sync. A tombstone marks an id as deleted for an account; the
+-- bulk sync skips tombstoned ids and returns them so other devices purge their
+-- local copy. An explicit re-create (POST) clears the tombstone.
+CREATE TABLE IF NOT EXISTS user_loadout_deletions (
+  user_id    TEXT NOT NULL,
+  loadout_id TEXT NOT NULL,
+  deleted_at TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (user_id, loadout_id)
+);

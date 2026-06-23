@@ -10,3 +10,6 @@ export const selectSavedLoadoutById =
 
 export const selectLoadoutsLastSyncedAt = (state: RootState): string | undefined =>
   state.savedLoadouts.lastSyncedAt;
+
+export const selectLoadoutsSyncedUserId = (state: RootState): string | undefined =>
+  state.savedLoadouts.syncedUserId;

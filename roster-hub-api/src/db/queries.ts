@@ -1723,6 +1723,12 @@ export async function upsertUserLoadout(
   userId: string,
   data: UserLoadoutInput,
 ): Promise<void> {
+  // An explicit save/re-create clears any tombstone for this id first, so a
+  // deliberately re-created loadout isn't blocked by an old deletion marker.
+  await db
+    .prepare('DELETE FROM user_loadout_deletions WHERE user_id = ? AND loadout_id = ?')
+    .bind(userId, data.id)
+    .run();
   // Single-loadout save/replace is a deliberate, explicit user action, so it
   // overwrites unconditionally (within ownership). Bulk sync is the path that
   // needs last-write-wins — see upsertUserLoadouts.
@@ -1784,11 +1790,30 @@ export async function deleteUserLoadout(
   id: string,
   userId: string,
 ): Promise<boolean> {
-  const result = await db
-    .prepare('DELETE FROM user_loadouts WHERE id = ? AND user_id = ?')
-    .bind(id, userId)
-    .run();
+  // Delete the row AND record a tombstone so the deletion is durable across
+  // devices — a device still holding this id locally would otherwise re-insert
+  // it on its next non-destructive sync. The tombstone is idempotent so deleting
+  // an already-deleted (or never-synced) loadout still records intent.
+  const [result] = await db.batch([
+    db.prepare('DELETE FROM user_loadouts WHERE id = ? AND user_id = ?').bind(id, userId),
+    db
+      .prepare(
+        `INSERT INTO user_loadout_deletions (user_id, loadout_id, deleted_at)
+         VALUES (?, ?, datetime('now'))
+         ON CONFLICT(user_id, loadout_id) DO UPDATE SET deleted_at = datetime('now')`,
+      )
+      .bind(userId, id),
+  ]);
   return (result.meta.changes ?? 0) > 0;
+}
+
+/** Ids the account has deleted — returned during sync so other devices purge them. */
+export async function listLoadoutTombstones(db: D1Database, userId: string): Promise<string[]> {
+  const rows = await db
+    .prepare('SELECT loadout_id FROM user_loadout_deletions WHERE user_id = ?')
+    .bind(userId)
+    .all<{ loadout_id: string }>();
+  return rows.results.map((r) => r.loadout_id);
 }
 
 /**
@@ -1811,9 +1836,16 @@ export async function upsertUserLoadouts(
   const stmts = loadouts.map((l) =>
     db
       .prepare(
+        // INSERT…SELECT (not VALUES) so the WHERE NOT EXISTS tombstone guard also
+        // blocks INSERTING a brand-new row for a deleted id — a stale device can't
+        // resurrect a loadout another device deleted. Existing rows still take the
+        // last-write-wins path on conflict.
         `INSERT INTO user_loadouts
            (id, user_id, name, description, trial_id, character_name, loadout_data, client_updated_at, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
+         SELECT ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now')
+         WHERE NOT EXISTS (
+           SELECT 1 FROM user_loadout_deletions d WHERE d.user_id = ? AND d.loadout_id = ?
+         )
          ON CONFLICT(user_id, id) DO UPDATE SET
            name = excluded.name,
            description = excluded.description,
@@ -1833,6 +1865,8 @@ export async function upsertUserLoadouts(
         l.characterName,
         l.loadoutData,
         l.clientUpdatedAt,
+        userId,
+        l.id,
       ),
   );
   await db.batch(stmts);

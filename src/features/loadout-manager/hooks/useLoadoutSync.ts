@@ -18,16 +18,19 @@ import {
   replaceAllLoadouts,
   selectSavedLoadouts,
   selectLoadoutsLastSyncedAt,
+  selectLoadoutsSyncedUserId,
   setLastSyncedAt,
+  setSyncedUserId,
   type SavedLoadout,
 } from '@/store/saved_loadouts';
 import type { RootState } from '@/store/storeWithHistory';
 
-import { loadoutsApi } from '../api/loadouts-api';
-import type { UserLoadoutRow } from '../types/loadout-sync.types';
+import { loadoutsApi, type LoadoutListResponse } from '../api/loadouts-api';
 import {
   mergeLoadoutsByNewest,
+  purgeDeleted,
   rowToSavedLoadout,
+  sameLibrary,
   savedLoadoutToPayload,
 } from '../utils/loadoutSyncMappers';
 
@@ -35,6 +38,11 @@ import {
 const SYNC_BATCH_SIZE = 200;
 /** Mirror of the worker's per-account ceiling — preflighted before any write. */
 const MAX_ACCOUNT_LOADOUTS = 500;
+/** Max push→re-read passes before declaring the sync quiescent (bounds the loop). */
+const MAX_SYNC_PASSES = 3;
+
+const rowsToLoadouts = (resp: LoadoutListResponse): SavedLoadout[] =>
+  resp.loadouts.map(rowToSavedLoadout).filter((l): l is SavedLoadout => l !== null);
 
 export type LoadoutSyncStatus = 'idle' | 'syncing' | 'error';
 
@@ -65,7 +73,7 @@ export function useLoadoutSync(): UseLoadoutSyncResult {
   const auth = useContext(AuthContext);
   const isLoggedIn = auth?.isLoggedIn ?? false;
   const accessToken = auth?.accessToken ?? '';
-  const loadouts = useSelector(selectSavedLoadouts);
+  const currentUserId = auth?.currentUser?.id ? String(auth.currentUser.id) : undefined;
   const lastSyncedAt = useSelector(selectLoadoutsLastSyncedAt);
   const [status, setStatus] = useState<LoadoutSyncStatus>('idle');
   const [error, setError] = useState<string | null>(null);
@@ -86,52 +94,74 @@ export function useLoadoutSync(): UseLoadoutSyncResult {
     setStatus('syncing');
     setError(null);
     try {
-      // 1. Pull the server library and merge it into the local one (newest wins).
-      const { loadouts: remoteRows } = await loadoutsApi.list(token);
-      const remote = remoteRows.map(rowToSavedLoadout).filter((l): l is SavedLoadout => l !== null);
-      const merged = mergeLoadoutsByNewest(loadouts, remote);
+      // Pull the account: its library + the ids it has deleted (tombstones).
+      const pull = await loadoutsApi.list(token);
+      const serverLoadouts = rowsToLoadouts(pull);
+      const deletedIds = new Set(pull.deletions);
 
-      // 2. Preflight the account cap BEFORE mutating anything, so we never leave
-      //    local state replaced while the server rejects a later batch.
-      if (merged.length > MAX_ACCOUNT_LOADOUTS) {
-        setError(
-          `You have ${merged.length} loadouts across your devices, over the ${MAX_ACCOUNT_LOADOUTS} limit. Delete some, then sync again.`,
-        );
-        setStatus('error');
-        return undefined;
+      // Account-switch guard: if this browser last synced as a DIFFERENT account,
+      // never push the prior user's local library into the new account. Replace
+      // local with the new account's data and claim it. (A guest-built library
+      // that was never synced is still claimed on first sync — an accepted limit
+      // of a browser-global library, shared with saved builds/rosters.)
+      const previousUserId = selectLoadoutsSyncedUserId(store.getState());
+      if (currentUserId && previousUserId && previousUserId !== currentUserId) {
+        const replaced = purgeDeleted(serverLoadouts, deletedIds);
+        dispatch(replaceAllLoadouts(replaced));
+        dispatch(setSyncedUserId(currentUserId));
+        dispatch(setLastSyncedAt(new Date().toISOString()));
+        setStatus('idle');
+        return replaced.length;
       }
 
-      // 3. Push the merged set first (chunked to the cap). Only after every batch
-      //    commits do we touch local state — a failed push then leaves the local
-      //    library untouched, and the server (idempotent + non-destructive)
-      //    re-converges on the next successful sync. Each /sync returns the full
-      //    server library; keep the LAST response as the authoritative post-push
-      //    state (it reflects every batch and any rows the server's last-write-wins
-      //    guard kept from another device).
-      let authoritativeRows: UserLoadoutRow[] = remoteRows;
-      for (const batch of chunk(merged.map(savedLoadoutToPayload), SYNC_BATCH_SIZE)) {
-        const resp = await loadoutsApi.sync(batch, token);
-        authoritativeRows = resp.loadouts;
-      }
-      const serverLoadouts = authoritativeRows
-        .map(rowToSavedLoadout)
-        .filter((l): l is SavedLoadout => l !== null);
+      // Push→re-read until quiescent: each pass merges the freshest local state
+      // (re-read from the store, so edits made mid-sync aren't dropped) with the
+      // server, purges tombstoned ids, pushes, and stops once a pass starts and
+      // ends with an unchanged local library. Bounded by MAX_SYNC_PASSES.
+      let committed: SavedLoadout[] = serverLoadouts;
+      let tombstones = deletedIds;
+      for (let pass = 0; pass < MAX_SYNC_PASSES; pass++) {
+        const localBefore = selectSavedLoadouts(store.getState());
+        const toPush = purgeDeleted(mergeLoadoutsByNewest(localBefore, committed), tombstones);
 
-      // 4. Commit the SERVER's truth, merged against the FRESHEST local state
-      //    (re-read from the store, not the snapshot captured before the await) so
-      //    edits/saves made while the sync was in flight aren't dropped.
-      const latestLocal = selectSavedLoadouts(store.getState());
-      const finalLibrary = mergeLoadoutsByNewest(latestLocal, serverLoadouts);
-      dispatch(replaceAllLoadouts(finalLibrary));
+        if (toPush.length > MAX_ACCOUNT_LOADOUTS) {
+          setError(
+            `You have ${toPush.length} loadouts across your devices, over the ${MAX_ACCOUNT_LOADOUTS} limit. Delete some, then sync again.`,
+          );
+          setStatus('error');
+          return undefined;
+        }
+
+        // Push (chunked). Each /sync returns the full server library + tombstones;
+        // the LAST response is authoritative for this pass.
+        let authoritative: LoadoutListResponse = pull;
+        const batches = chunk(toPush.map(savedLoadoutToPayload), SYNC_BATCH_SIZE);
+        if (batches.length === 0) {
+          authoritative = await loadoutsApi.sync([], token);
+        } else {
+          for (const batch of batches) authoritative = await loadoutsApi.sync(batch, token);
+        }
+        committed = rowsToLoadouts(authoritative);
+        tombstones = new Set(authoritative.deletions);
+
+        const localAfter = selectSavedLoadouts(store.getState());
+        committed = purgeDeleted(mergeLoadoutsByNewest(localAfter, committed), tombstones);
+
+        // Quiescent when no local edit happened during this pass.
+        if (sameLibrary(localBefore, localAfter)) break;
+      }
+
+      dispatch(replaceAllLoadouts(committed));
+      dispatch(setSyncedUserId(currentUserId));
       dispatch(setLastSyncedAt(new Date().toISOString()));
       setStatus('idle');
-      return finalLibrary.length;
+      return committed.length;
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Sync failed');
       setStatus('error');
       return undefined;
     }
-  }, [requireAuth, loadouts, dispatch, store]);
+  }, [requireAuth, currentUserId, dispatch, store]);
 
   const saveOne = useCallback(
     async (loadout: SavedLoadout): Promise<boolean> => {

@@ -69,6 +69,7 @@ import {
   updateUserLoadout,
   deleteUserLoadout,
   upsertUserLoadouts,
+  listLoadoutTombstones,
   countUserLoadouts,
   checkLoadoutWriteRateLimit,
   MAX_LOADOUTS_PER_USER,
@@ -1054,8 +1055,11 @@ app.get('/loadouts', async (c) => {
   const user = await validateToken(c.req.header('Authorization'), c.env);
   if (!user) return c.json({ error: 'Unauthorized' }, 401);
 
-  const loadouts = await listUserLoadouts(c.env.DB, user.id);
-  return c.json({ loadouts });
+  const [loadouts, deletions] = await Promise.all([
+    listUserLoadouts(c.env.DB, user.id),
+    listLoadoutTombstones(c.env.DB, user.id),
+  ]);
+  return c.json({ loadouts, deletions });
 });
 
 // ─── GET /loadouts/:id — single own loadout ───────────────────────────────────
@@ -1203,8 +1207,11 @@ app.post('/loadouts/sync', async (c) => {
 
   await recordRateLimitEvent(c.env.DB, user.id, 'loadout_write');
   await upsertUserLoadouts(c.env.DB, user.id, inputs);
-  const loadouts = await listUserLoadouts(c.env.DB, user.id);
-  return c.json({ loadouts });
+  const [loadouts, deletions] = await Promise.all([
+    listUserLoadouts(c.env.DB, user.id),
+    listLoadoutTombstones(c.env.DB, user.id),
+  ]);
+  return c.json({ loadouts, deletions });
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════

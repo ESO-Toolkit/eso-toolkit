@@ -26,9 +26,16 @@ async function apiFetch<T>(path: string, options: RequestInit = {}, token?: stri
   return res.json() as Promise<T>;
 }
 
+/** A loadout list/sync response: the library plus ids the account has deleted. */
+export interface LoadoutListResponse {
+  loadouts: UserLoadoutRow[];
+  /** Tombstoned ids — loadouts deleted on the account; clients purge these. */
+  deletions: string[];
+}
+
 export const loadoutsApi = {
-  /** List the signed-in user's own loadouts. */
-  list(token: string): Promise<{ loadouts: UserLoadoutRow[] }> {
+  /** List the signed-in user's own loadouts + deletion tombstones. */
+  list(token: string): Promise<LoadoutListResponse> {
     return apiFetch('/loadouts', {}, token);
   },
 
@@ -51,8 +58,8 @@ export const loadoutsApi = {
     return apiFetch(`/loadouts/${id}`, { method: 'DELETE' }, token);
   },
 
-  /** Non-destructive bulk upsert; returns the full server library afterwards. */
-  sync(loadouts: LoadoutSyncPayload[], token: string): Promise<{ loadouts: UserLoadoutRow[] }> {
+  /** Non-destructive bulk upsert; returns the full server library + tombstones. */
+  sync(loadouts: LoadoutSyncPayload[], token: string): Promise<LoadoutListResponse> {
     return apiFetch(
       '/loadouts/sync',
       { method: 'POST', body: JSON.stringify({ loadouts }) },

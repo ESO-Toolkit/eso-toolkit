@@ -88,3 +88,22 @@ export function mergeLoadoutsByNewest(
   }
   return Array.from(byId.values()).sort((a, b) => time(b.updatedAt) - time(a.updatedAt));
 }
+
+/** Drop any loadout whose id is in the deleted set (account deletion tombstones). */
+export function purgeDeleted(loadouts: SavedLoadout[], deletedIds: Set<string>): SavedLoadout[] {
+  return deletedIds.size === 0 ? loadouts : loadouts.filter((l) => !deletedIds.has(l.id));
+}
+
+/**
+ * True when two libraries hold the same ids with the same updatedAt — i.e. no
+ * edit happened between two reads. Used to detect a quiescent sync pass.
+ */
+export function sameLibrary(a: SavedLoadout[], b: SavedLoadout[]): boolean {
+  if (a.length !== b.length) return false;
+  const sig = (list: SavedLoadout[]): string =>
+    list
+      .map((l) => `${l.id}:${l.updatedAt}`)
+      .sort()
+      .join('|');
+  return sig(a) === sig(b);
+}
