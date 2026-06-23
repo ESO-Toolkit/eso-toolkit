@@ -160,13 +160,32 @@ describe('BuildEditorPage build loading', () => {
     expect(screen.getByTestId('search').textContent).toBe('?id=saved-3');
   });
 
-  it('does not dispatch when decoding fails; warns instead', async () => {
+  it('clears the private payload from history even when decoding fails; warns instead', async () => {
     mockDecode.mockResolvedValue(null);
-    renderAt({ pathname: '/build-editor', search: '', state: { buildData: 'bad-blob' } });
+    renderAt({
+      pathname: '/build-editor',
+      search: '?id=saved-9',
+      state: { buildData: 'bad-blob' },
+    });
 
     await waitFor(() => expect(mockDecode).toHaveBeenCalledWith('bad-blob'));
+    // The blob must NOT linger in history.state on the failure path — a
+    // version-skewed/corrupt private payload must not survive a refresh/restore.
+    await waitFor(() => expect(screen.getByTestId('state').textContent).toBe('null'));
+    // The non-sensitive save target is preserved; no build loaded; user warned.
+    expect(screen.getByTestId('search').textContent).toBe('?id=saved-9');
     expect(mockDispatch).not.toHaveBeenCalled();
     await waitFor(() => expect(mockEnqueue).toHaveBeenCalled());
+  });
+
+  it('strips the legacy ?b= blob even when decoding fails', async () => {
+    mockDecode.mockResolvedValue(null);
+    renderAt({ pathname: '/build-editor', search: '?b=bad-blob&id=saved-9', state: null });
+
+    await waitFor(() => expect(mockDecode).toHaveBeenCalledWith('bad-blob'));
+    await waitFor(() => expect(screen.getByTestId('search').textContent).toBe('?id=saved-9'));
+    expect(screen.getByTestId('search').textContent).not.toContain('b=');
+    expect(mockDispatch).not.toHaveBeenCalled();
   });
 
   it('loads the build at most once on mount — the loadedRef guard keeps it idempotent (no reload over edits)', async () => {

@@ -55,30 +55,33 @@ const BuildEditorPageInner: React.FC = () => {
     if (!source) return;
     loadedRef.current = true;
 
+    // Scrub the build payload from the URL/history IMMEDIATELY — before the async
+    // decode — so a build blob (which may be a *private* build) never lingers in
+    // the address bar or in window.history.state, regardless of whether decoding
+    // succeeds (a failed/version-skewed payload must not survive in history). This
+    // also stops a refresh or Back from reloading the original over the user's
+    // in-progress edits (the editor's own state is persisted separately). The
+    // non-sensitive save-target (?id=) and roster params (from/slot/rid) stay put.
+    if (encoded) {
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete('b');
+      setSearchParams(newParams, { replace: true });
+    } else {
+      // Clear the router state (persisted in window.history across refreshes)
+      // while keeping the current path + remaining query params.
+      navigate(
+        { pathname: location.pathname, search: location.search },
+        { replace: true, state: null },
+      );
+    }
+
     void decodeBuildFromURL(source).then((decoded) => {
-      if (!decoded) {
+      if (decoded) {
+        dispatch(loadBuild(decoded));
+      } else {
         enqueueSnackbar('Could not load shared build — the link may be invalid.', {
           variant: 'warning',
         });
-        return;
-      }
-      dispatch(loadBuild(decoded));
-      // Strip the build payload from the URL/history so a refresh or Back
-      // navigation doesn't reload the original over the user's in-progress
-      // edits (the editor's own state is persisted separately), and so a
-      // private build never lingers in the address bar/history. The
-      // non-sensitive save-target (?id=) and roster params stay put.
-      if (encoded) {
-        const newParams = new URLSearchParams(searchParams);
-        newParams.delete('b');
-        setSearchParams(newParams, { replace: true });
-      } else {
-        // Clear the router state (persisted in window.history across refreshes)
-        // while keeping the current path + remaining query params.
-        navigate(
-          { pathname: location.pathname, search: location.search },
-          { replace: true, state: null },
-        );
       }
     });
   }, [searchParams, setSearchParams, location, navigate, dispatch, enqueueSnackbar]);
