@@ -171,6 +171,14 @@ describe('stampOwner / partitionByOwner', () => {
     expect(mine.map((l) => l.id).sort()).toEqual(['g', 'm']);
     expect(others.map((l) => l.id)).toEqual(['o']);
   });
+
+  it('leaves unowned loadouts out of "mine" when claimUnowned is false', () => {
+    const unowned = makeSavedLoadout({ id: 'g' });
+    const mineOwned = makeSavedLoadout({ id: 'm', ownerUserId: 'u1' });
+    const { mine, others } = partitionByOwner([unowned, mineOwned], 'u1', false);
+    expect(mine.map((l) => l.id)).toEqual(['m']);
+    expect(others.map((l) => l.id)).toEqual(['g']);
+  });
 });
 
 describe('sameLibrary', () => {

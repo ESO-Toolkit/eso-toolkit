@@ -113,15 +113,23 @@ export function stampOwner(loadouts: SavedLoadout[], ownerUserId: string): Saved
   return loadouts.map((l) => (l.ownerUserId === ownerUserId ? l : { ...l, ownerUserId }));
 }
 
-/** Split a library into the current user's (owned-by-them or unowned) and other accounts'. */
+/**
+ * Split a library into the current user's slice and everything else (preserved).
+ * `claimUnowned` controls whether unowned (guest/legacy) loadouts count as the
+ * current user's: true on a first/own-browser sync (claim them), false once a
+ * DIFFERENT account has synced here, so a shared browser never pushes a prior
+ * user's legacy loadouts into the new account.
+ */
 export function partitionByOwner(
   loadouts: SavedLoadout[],
   currentUserId: string,
+  claimUnowned = true,
 ): { mine: SavedLoadout[]; others: SavedLoadout[] } {
   const mine: SavedLoadout[] = [];
   const others: SavedLoadout[] = [];
   for (const l of loadouts) {
-    if (l.ownerUserId === undefined || l.ownerUserId === currentUserId) mine.push(l);
+    const isMine = l.ownerUserId === currentUserId || (claimUnowned && l.ownerUserId === undefined);
+    if (isMine) mine.push(l);
     else others.push(l);
   }
   return { mine, others };

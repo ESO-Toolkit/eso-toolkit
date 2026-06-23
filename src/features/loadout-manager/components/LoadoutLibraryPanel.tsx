@@ -351,9 +351,11 @@ export const LoadoutLibraryPanel: React.FC<LoadoutLibraryPanelProps> = ({ onLoad
           <Tooltip
             arrow
             title={
-              isLoggedIn
-                ? 'Save your library to your account and pull in loadouts from your other devices'
-                : 'Sign in to sync your loadouts to your account'
+              !isLoggedIn
+                ? 'Sign in to sync your loadouts to your account'
+                : !currentUserId
+                  ? 'Loading your account…'
+                  : 'Save your library to your account and pull in loadouts from your other devices'
             }
           >
             <span>
@@ -361,7 +363,7 @@ export const LoadoutLibraryPanel: React.FC<LoadoutLibraryPanelProps> = ({ onLoad
                 size="small"
                 variant="outlined"
                 onClick={handleSync}
-                disabled={!isLoggedIn || syncStatus === 'syncing'}
+                disabled={!isLoggedIn || !currentUserId || syncStatus === 'syncing'}
                 startIcon={
                   syncStatus === 'syncing' ? (
                     <CircularProgress size={16} color="inherit" />
