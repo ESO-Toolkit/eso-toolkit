@@ -24,6 +24,13 @@ export interface SavedLoadout {
   updatedAt: string; // ISO
   setup: LoadoutSetup;
   meta?: SavedLoadoutMeta;
+  /**
+   * The account this loadout belongs to, stamped when it is synced to an account.
+   * Undefined = unowned/local (a guest- or pre-sign-in-built loadout). Used to
+   * hide (never delete) other users' synced loadouts on a shared browser and to
+   * avoid pushing them into the wrong account. Claimed only on an explicit sync.
+   */
+  ownerUserId?: string;
 }
 
 interface SavedLoadoutsState {

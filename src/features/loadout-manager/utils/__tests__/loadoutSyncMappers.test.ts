@@ -3,10 +3,12 @@ import type { SavedLoadout } from '@/store/saved_loadouts';
 import type { UserLoadoutRow } from '../../types/loadout-sync.types';
 import {
   mergeLoadoutsByNewest,
+  partitionByOwner,
   purgeDeleted,
   rowToSavedLoadout,
   sameLibrary,
   savedLoadoutToPayload,
+  stampOwner,
 } from '../loadoutSyncMappers';
 
 function makeSavedLoadout(overrides: Partial<SavedLoadout> = {}): SavedLoadout {
@@ -148,6 +150,26 @@ describe('purgeDeleted', () => {
   it('returns the same list when there are no tombstones', () => {
     const list = [makeSavedLoadout({ id: 'a' })];
     expect(purgeDeleted(list, new Map())).toBe(list);
+  });
+});
+
+describe('stampOwner / partitionByOwner', () => {
+  it('stamps owner and is identity-preserving when unchanged', () => {
+    const a = makeSavedLoadout({ id: 'a' });
+    const stamped = stampOwner([a], 'u1');
+    expect(stamped[0].ownerUserId).toBe('u1');
+    // already-owned entries are returned as-is (no needless new object)
+    const again = stampOwner(stamped, 'u1');
+    expect(again[0]).toBe(stamped[0]);
+  });
+
+  it('partitions into the current user (own + unowned) vs other accounts', () => {
+    const unowned = makeSavedLoadout({ id: 'g' });
+    const mineOwned = makeSavedLoadout({ id: 'm', ownerUserId: 'u1' });
+    const other = makeSavedLoadout({ id: 'o', ownerUserId: 'u2' });
+    const { mine, others } = partitionByOwner([unowned, mineOwned, other], 'u1');
+    expect(mine.map((l) => l.id).sort()).toEqual(['g', 'm']);
+    expect(others.map((l) => l.id)).toEqual(['o']);
   });
 });
 

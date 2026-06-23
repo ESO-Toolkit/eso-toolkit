@@ -108,6 +108,25 @@ export function purgeDeleted(
   });
 }
 
+/** Tag loadouts with an owning account (claim on sync). Identity-preserving when unchanged. */
+export function stampOwner(loadouts: SavedLoadout[], ownerUserId: string): SavedLoadout[] {
+  return loadouts.map((l) => (l.ownerUserId === ownerUserId ? l : { ...l, ownerUserId }));
+}
+
+/** Split a library into the current user's (owned-by-them or unowned) and other accounts'. */
+export function partitionByOwner(
+  loadouts: SavedLoadout[],
+  currentUserId: string,
+): { mine: SavedLoadout[]; others: SavedLoadout[] } {
+  const mine: SavedLoadout[] = [];
+  const others: SavedLoadout[] = [];
+  for (const l of loadouts) {
+    if (l.ownerUserId === undefined || l.ownerUserId === currentUserId) mine.push(l);
+    else others.push(l);
+  }
+  return { mine, others };
+}
+
 /**
  * True when two libraries hold the same ids with the same updatedAt — i.e. no
  * edit happened between two reads. Used to detect a quiescent sync pass.

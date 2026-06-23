@@ -10,7 +10,7 @@
  * deletions are explicit (removeFromAccount) and are not propagated by sync.
  */
 
-import { useCallback, useContext, useEffect, useState } from 'react';
+import { useCallback, useContext, useState } from 'react';
 import { useDispatch, useSelector, useStore } from 'react-redux';
 
 import { AuthContext } from '@/features/auth/AuthContext';
@@ -18,7 +18,6 @@ import {
   replaceAllLoadouts,
   selectSavedLoadouts,
   selectLoadoutsLastSyncedAt,
-  selectLoadoutsSyncedUserId,
   setLastSyncedAt,
   setSyncedUserId,
   type SavedLoadout,
@@ -28,10 +27,12 @@ import type { RootState } from '@/store/storeWithHistory';
 import { loadoutsApi, type LoadoutListResponse } from '../api/loadouts-api';
 import {
   mergeLoadoutsByNewest,
+  partitionByOwner,
   purgeDeleted,
   rowToSavedLoadout,
   sameLibrary,
   savedLoadoutToPayload,
+  stampOwner,
 } from '../utils/loadoutSyncMappers';
 
 /** Worker caps a single /loadouts/sync call at 200 entries. */
@@ -58,6 +59,8 @@ function chunk<T>(items: T[], size: number): T[][] {
 
 export interface UseLoadoutSyncResult {
   isLoggedIn: boolean;
+  /** The signed-in account id (for scoping which loadouts are visible). */
+  currentUserId: string | undefined;
   status: LoadoutSyncStatus;
   error: string | null;
   lastSyncedAt: string | undefined;
@@ -95,42 +98,29 @@ export function useLoadoutSync(): UseLoadoutSyncResult {
     const token = requireAuth();
     if (!token) return undefined;
 
+    // currentUserId is guaranteed defined here (requireAuth passed → logged in).
+    const owner = currentUserId as string;
     setStatus('syncing');
     setError(null);
     try {
-      // Pull the account: its library + tombstones (deleted ids + delete times).
+      // Pull the account: its library (stamped as owned by this user) + tombstones.
       const pull = await loadoutsApi.list(token);
-      const serverLoadouts = rowsToLoadouts(pull);
-
-      // Account-switch guard: if this browser is now a DIFFERENT account than the
-      // one this library belongs to, never push the prior user's local library
-      // into the new account. Replace local with the new account's data and claim
-      // it. (The clear-on-auth-change effect already wipes a switched-away library
-      // before this runs; this is belt-and-braces for a same-mount switch.)
-      const previousUserId = selectLoadoutsSyncedUserId(store.getState());
-      if (currentUserId && previousUserId && previousUserId !== currentUserId) {
-        const replaced = purgeDeleted(serverLoadouts, tombstoneMap(pull));
-        dispatch(replaceAllLoadouts(replaced));
-        dispatch(setSyncedUserId(currentUserId));
-        dispatch(setLastSyncedAt(new Date().toISOString()));
-        setStatus('idle');
-        return replaced.length;
-      }
-
-      // Push→re-read until quiescent: each pass merges the freshest local state
-      // (re-read from the store, so edits made mid-sync aren't dropped) with the
-      // server, version-aware-purges tombstoned ids (a local edit newer than its
-      // tombstone survives to revive the loadout), pushes, and stops once a pass
-      // starts and ends with an unchanged local library. Bounded by MAX_SYNC_PASSES.
-      let committed: SavedLoadout[] = serverLoadouts;
+      let committedMine = stampOwner(rowsToLoadouts(pull), owner);
       let tombstones = tombstoneMap(pull);
+
+      // Push→re-read until quiescent. Each pass operates ONLY on the current user's
+      // slice (their own + still-unowned loadouts); other accounts' synced
+      // loadouts are never read, pushed, or deleted — just preserved untouched.
+      // Re-reading from the store each pass means edits made mid-sync aren't
+      // dropped; version-aware purge keeps a local edit newer than its tombstone so
+      // it survives to revive the loadout. Bounded by MAX_SYNC_PASSES.
       for (let pass = 0; pass < MAX_SYNC_PASSES; pass++) {
-        const localBefore = selectSavedLoadouts(store.getState());
-        const toPush = purgeDeleted(mergeLoadoutsByNewest(localBefore, committed), tombstones);
+        const { mine } = partitionByOwner(selectSavedLoadouts(store.getState()), owner);
+        const toPush = purgeDeleted(mergeLoadoutsByNewest(mine, committedMine), tombstones);
 
         if (toPush.length > MAX_ACCOUNT_LOADOUTS) {
           setError(
-            `You have ${toPush.length} loadouts across your devices, over the ${MAX_ACCOUNT_LOADOUTS} limit. Delete some, then sync again.`,
+            `You have ${toPush.length} loadouts on this account, over the ${MAX_ACCOUNT_LOADOUTS} limit. Delete some, then sync again.`,
           );
           setStatus('error');
           return undefined;
@@ -145,21 +135,27 @@ export function useLoadoutSync(): UseLoadoutSyncResult {
         } else {
           for (const batch of batches) authoritative = await loadoutsApi.sync(batch, token);
         }
-        committed = rowsToLoadouts(authoritative);
+        committedMine = stampOwner(rowsToLoadouts(authoritative), owner);
         tombstones = tombstoneMap(authoritative);
 
-        const localAfter = selectSavedLoadouts(store.getState());
-        committed = purgeDeleted(mergeLoadoutsByNewest(localAfter, committed), tombstones);
+        const { mine: mineAfter } = partitionByOwner(selectSavedLoadouts(store.getState()), owner);
+        committedMine = stampOwner(
+          purgeDeleted(mergeLoadoutsByNewest(mineAfter, committedMine), tombstones),
+          owner,
+        );
 
-        // Quiescent when no local edit happened during this pass.
-        if (sameLibrary(localBefore, localAfter)) break;
+        // Quiescent when this user's slice didn't change during the pass.
+        if (sameLibrary(mine, mineAfter)) break;
       }
 
-      dispatch(replaceAllLoadouts(committed));
-      dispatch(setSyncedUserId(currentUserId));
+      // Commit: the current user's converged loadouts (now claimed) PLUS every
+      // other account's loadouts preserved exactly — nothing is ever deleted.
+      const { others } = partitionByOwner(selectSavedLoadouts(store.getState()), owner);
+      dispatch(replaceAllLoadouts([...others, ...committedMine]));
+      dispatch(setSyncedUserId(owner));
       dispatch(setLastSyncedAt(new Date().toISOString()));
       setStatus('idle');
-      return committed.length;
+      return committedMine.length;
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Sync failed');
       setStatus('error');
@@ -212,27 +208,14 @@ export function useLoadoutSync(): UseLoadoutSyncResult {
     [requireAuth],
   );
 
-  // Privacy/ownership guard for the browser-persisted (not per-user) library:
-  //  - A signed-in user CLAIMS the current library (stamps owner) even before any
-  //    sync, so loadouts saved while signed in aren't later treated as unowned
-  //    guest data and pushed into a different account.
-  //  - When the browser is now a DIFFERENT owner than the library's — including
-  //    logout (currentUserId undefined) — clear it so the previous user's private
-  //    loadouts aren't shown/exported/pushed by whoever is here now.
-  // A library built by a never-signed-in guest stays unowned and untouched.
-  useEffect(() => {
-    const owner = selectLoadoutsSyncedUserId(store.getState());
-    if (owner === currentUserId) return;
-    if (owner && owner !== currentUserId) {
-      // Switched account or logged out → wipe the previous owner's library.
-      dispatch(replaceAllLoadouts([]));
-      dispatch(setLastSyncedAt(undefined));
-      dispatch(setSyncedUserId(currentUserId));
-    } else if (!owner && currentUserId) {
-      // First signed-in user claims the current (unowned) library.
-      dispatch(setSyncedUserId(currentUserId));
-    }
-  }, [currentUserId, dispatch, store]);
-
-  return { isLoggedIn, status, error, lastSyncedAt, syncNow, saveOne, removeFromAccount };
+  return {
+    isLoggedIn,
+    currentUserId,
+    status,
+    error,
+    lastSyncedAt,
+    syncNow,
+    saveOne,
+    removeFromAccount,
+  };
 }

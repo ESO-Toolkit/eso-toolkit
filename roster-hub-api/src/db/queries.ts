@@ -1793,30 +1793,39 @@ export async function deleteUserLoadout(
   userId: string,
   deletedAt: string,
 ): Promise<DeleteLoadoutResult> {
-  // Version-aware delete: never remove a row that was edited AFTER this delete's
-  // timestamp (a newer edit on another device wins, last-write-wins). Look at the
-  // current row first; only delete + tombstone when the delete is newer-or-equal.
-  const row = await db
-    .prepare('SELECT client_updated_at FROM user_loadouts WHERE id = ? AND user_id = ?')
-    .bind(id, userId)
-    .first<{ client_updated_at: string }>();
-  if (!row) return 'not-found';
-  if (row.client_updated_at > deletedAt) return 'conflict-newer';
+  // Version-aware delete in ONE atomic statement: the WHERE guard removes the row
+  // only if it was NOT edited after this delete (client_updated_at <= deletedAt).
+  // Doing the check inside the DELETE (rather than SELECT-then-DELETE) closes the
+  // race where another device upserts a newer edit between the two operations.
+  const result = await db
+    .prepare(
+      'DELETE FROM user_loadouts WHERE id = ? AND user_id = ? AND client_updated_at <= ?',
+    )
+    .bind(id, userId, deletedAt)
+    .run();
 
-  // Delete + tombstone. Only real deletions create a tombstone, so arbitrary
-  // DELETEs of non-existent ids can't bloat the set. deletedAt is a client-domain
-  // canonical timestamp, comparable with an incoming edit's client_updated_at.
-  await db.batch([
-    db.prepare('DELETE FROM user_loadouts WHERE id = ? AND user_id = ?').bind(id, userId),
-    db
+  if ((result.meta.changes ?? 0) > 0) {
+    // A row was removed → record a tombstone (only real deletions tombstone, so
+    // arbitrary DELETEs of non-existent ids can't bloat the set).
+    await db
       .prepare(
         `INSERT INTO user_loadout_deletions (user_id, loadout_id, deleted_at)
          VALUES (?, ?, ?)
          ON CONFLICT(user_id, loadout_id) DO UPDATE SET deleted_at = excluded.deleted_at`,
       )
-      .bind(userId, id, deletedAt),
-  ]);
-  return 'deleted';
+      .bind(userId, id, deletedAt)
+      .run();
+    return 'deleted';
+  }
+
+  // Zero rows changed: either the loadout doesn't exist, or it exists but is newer
+  // than this delete (a newer edit won). Classify for the caller — this read does
+  // not gate the delete decision, which already happened atomically above.
+  const exists = await db
+    .prepare('SELECT 1 FROM user_loadouts WHERE id = ? AND user_id = ?')
+    .bind(id, userId)
+    .first();
+  return exists ? 'conflict-newer' : 'not-found';
 }
 
 export interface LoadoutTombstone {

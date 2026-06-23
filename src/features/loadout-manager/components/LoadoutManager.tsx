@@ -51,7 +51,7 @@ import { useNavigate } from 'react-router-dom';
 import { WorkInProgressDisclaimer } from '@/components/WorkInProgressDisclaimer';
 import { useAuth } from '@/features/auth/AuthContext';
 import { useDropdownMenuProps } from '@/hooks/useDropdownMenuDirection';
-import { selectSavedLoadouts, type SavedLoadout } from '@/store/saved_loadouts';
+import { selectVisibleLoadouts, type SavedLoadout } from '@/store/saved_loadouts';
 import type { RootState } from '@/store/storeWithHistory';
 
 import { preloadChampionPointData } from '../data/championPointData';
@@ -153,7 +153,10 @@ export const LoadoutManager: React.FC = () => {
     currentTrial ? selectTrialPages(state, currentTrial) : [],
   );
   const currentCharacter = useSelector((state: RootState) => state.loadout.currentCharacter);
-  const savedLoadoutCount = useSelector(selectSavedLoadouts).length;
+  const { currentUser } = useAuth();
+  const savedLoadoutCount = useSelector(
+    selectVisibleLoadouts(currentUser?.id ? String(currentUser.id) : undefined),
+  ).length;
 
   const [view, setView] = useState<'setups' | 'library'>('setups');
   const [selectedSetupIndex, setSelectedSetupIndex] = useState<number | null>(null);
@@ -161,7 +164,6 @@ export const LoadoutManager: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
   const [installGuideOpen, setInstallGuideOpen] = useState(false);
-  const { currentUser } = useAuth();
   const [renameDialogOpen, setRenameDialogOpen] = useState(false);
   const [renameTargetIndex, setRenameTargetIndex] = useState<number | null>(null);
   const [renameValue, setRenameValue] = useState('');

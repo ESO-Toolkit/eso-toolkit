@@ -13,5 +13,6 @@ export {
   selectSavedLoadoutById,
   selectLoadoutsLastSyncedAt,
   selectLoadoutsSyncedUserId,
+  selectVisibleLoadouts,
 } from './savedLoadoutsSelectors';
 export type { SavedLoadout, SavedLoadoutMeta } from './savedLoadoutsSlice';
