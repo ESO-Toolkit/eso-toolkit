@@ -245,8 +245,10 @@ export const LoadoutLibraryPanel: React.FC<LoadoutLibraryPanelProps> = ({ onLoad
     error: syncError,
     lastSyncedAt,
     syncNow,
+    removeFromAccount,
   } = useLoadoutSync();
   const [syncMessage, setSyncMessage] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const handleSync = async (): Promise<void> => {
     setSyncMessage(null);
@@ -292,11 +294,27 @@ export const LoadoutLibraryPanel: React.FC<LoadoutLibraryPanelProps> = ({ onLoad
     setRenameTarget(null);
   };
 
-  const handleConfirmDelete = (): void => {
-    if (pendingDelete) {
-      dispatch(deleteSavedLoadout(pendingDelete.id));
-      setPendingDelete(null);
+  const handleConfirmDelete = async (): Promise<void> => {
+    if (!pendingDelete) return;
+    const target = pendingDelete;
+    setDeleteError(null);
+    // When signed in, remove from the account FIRST — sync is non-destructive,
+    // so a local-only delete would be resurrected on the next sync (and the data
+    // would linger on the server). removeFromAccount treats a 404 (never synced)
+    // as success. If the remote delete genuinely fails, keep the local copy so
+    // local and account stay consistent, and tell the user.
+    if (isLoggedIn) {
+      const removed = await removeFromAccount(target.id);
+      if (!removed) {
+        setDeleteError(
+          'Could not remove this loadout from your account. It was kept so your devices stay in sync — try again.',
+        );
+        setPendingDelete(null);
+        return;
+      }
     }
+    dispatch(deleteSavedLoadout(target.id));
+    setPendingDelete(null);
   };
 
   return (
@@ -368,6 +386,11 @@ export const LoadoutLibraryPanel: React.FC<LoadoutLibraryPanelProps> = ({ onLoad
       {syncMessage && (
         <Alert severity="success" sx={{ mb: 2 }} onClose={() => setSyncMessage(null)}>
           {syncMessage}
+        </Alert>
+      )}
+      {deleteError && (
+        <Alert severity="error" sx={{ mb: 2 }} onClose={() => setDeleteError(null)}>
+          {deleteError}
         </Alert>
       )}
 
@@ -451,6 +474,7 @@ export const LoadoutLibraryPanel: React.FC<LoadoutLibraryPanelProps> = ({ onLoad
           <DialogContentText sx={{ color: 'text.secondary' }}>
             Are you sure you want to delete <strong>{pendingDelete?.name}</strong>? This cannot be
             undone.
+            {isLoggedIn && ' It will also be removed from your account.'}
           </DialogContentText>
         </DialogContent>
         <DialogActions>

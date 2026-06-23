@@ -12,6 +12,8 @@ export interface UserLoadoutRow {
   character_name: string;
   /** Compact JSON of the SavedLoadout payload ({ setup, meta, createdAt, updatedAt }). */
   loadout_data: string;
+  /** Client-authored ISO edit time (the SavedLoadout's updatedAt). */
+  client_updated_at: string;
   created_at: string;
   updated_at: string;
 }
@@ -24,4 +26,6 @@ export interface LoadoutSyncPayload {
   trial_id: string;
   character_name: string;
   loadout_data: string;
+  /** Client-authored ISO edit time; drives server-side last-write-wins on sync. */
+  client_updated_at: string;
 }

@@ -1675,6 +1675,8 @@ export interface UserLoadoutInput {
   trialId: string;
   characterName: string;
   loadoutData: string;
+  /** Client-authored ISO edit time; '' when the client didn't supply one. */
+  clientUpdatedAt: string;
 }
 
 export async function listUserLoadouts(
@@ -1721,17 +1723,21 @@ export async function upsertUserLoadout(
   userId: string,
   data: UserLoadoutInput,
 ): Promise<void> {
+  // Single-loadout save/replace is a deliberate, explicit user action, so it
+  // overwrites unconditionally (within ownership). Bulk sync is the path that
+  // needs last-write-wins — see upsertUserLoadouts.
   await db
     .prepare(
       `INSERT INTO user_loadouts
-         (id, user_id, name, description, trial_id, character_name, loadout_data, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
+         (id, user_id, name, description, trial_id, character_name, loadout_data, client_updated_at, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
        ON CONFLICT(id) DO UPDATE SET
          name = excluded.name,
          description = excluded.description,
          trial_id = excluded.trial_id,
          character_name = excluded.character_name,
          loadout_data = excluded.loadout_data,
+         client_updated_at = excluded.client_updated_at,
          updated_at = datetime('now')
        WHERE user_loadouts.user_id = excluded.user_id`,
     )
@@ -1743,6 +1749,7 @@ export async function upsertUserLoadout(
       data.trialId,
       data.characterName,
       data.loadoutData,
+      data.clientUpdatedAt,
     )
     .run();
 }
@@ -1756,10 +1763,19 @@ export async function updateUserLoadout(
   const result = await db
     .prepare(
       `UPDATE user_loadouts
-         SET name = ?, description = ?, trial_id = ?, character_name = ?, loadout_data = ?, updated_at = datetime('now')
+         SET name = ?, description = ?, trial_id = ?, character_name = ?, loadout_data = ?, client_updated_at = ?, updated_at = datetime('now')
        WHERE id = ? AND user_id = ?`,
     )
-    .bind(data.name, data.description, data.trialId, data.characterName, data.loadoutData, id, userId)
+    .bind(
+      data.name,
+      data.description,
+      data.trialId,
+      data.characterName,
+      data.loadoutData,
+      data.clientUpdatedAt,
+      id,
+      userId,
+    )
     .run();
   return (result.meta.changes ?? 0) > 0;
 }
@@ -1780,6 +1796,12 @@ export async function deleteUserLoadout(
  * Bulk upsert (non-destructive): inserts new loadouts and updates existing ones
  * by id. Never deletes — removals are explicit via deleteUserLoadout — so a
  * device pushing a partial library can't wipe loadouts saved on another device.
+ *
+ * Last-write-wins: an existing row is only overwritten when the incoming
+ * client_updated_at is newer-or-equal. This closes the cross-device race where
+ * device A pulls, device B saves a newer edit, then A pushes its now-stale copy
+ * — A's older payload is rejected by the WHERE guard, preserving B's edit. Rows
+ * with no client timestamp on either side compare equal and still upsert.
  */
 export async function upsertUserLoadouts(
   db: D1Database,
@@ -1791,16 +1813,18 @@ export async function upsertUserLoadouts(
     db
       .prepare(
         `INSERT INTO user_loadouts
-           (id, user_id, name, description, trial_id, character_name, loadout_data, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
+           (id, user_id, name, description, trial_id, character_name, loadout_data, client_updated_at, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
          ON CONFLICT(id) DO UPDATE SET
            name = excluded.name,
            description = excluded.description,
            trial_id = excluded.trial_id,
            character_name = excluded.character_name,
            loadout_data = excluded.loadout_data,
+           client_updated_at = excluded.client_updated_at,
            updated_at = datetime('now')
-         WHERE user_loadouts.user_id = excluded.user_id`,
+         WHERE user_loadouts.user_id = excluded.user_id
+           AND excluded.client_updated_at >= user_loadouts.client_updated_at`,
       )
       .bind(
         l.id,
@@ -1810,6 +1834,7 @@ export async function upsertUserLoadouts(
         l.trialId,
         l.characterName,
         l.loadoutData,
+        l.clientUpdatedAt,
       ),
   );
   await db.batch(stmts);

@@ -146,6 +146,7 @@ export interface UserLoadoutRow {
   trial_id: string;
   character_name: string;
   loadout_data: string; // compact JSON of the SavedLoadout payload
+  client_updated_at: string; // client-authored ISO edit time (last-write-wins key)
   created_at: string;
   updated_at: string;
 }

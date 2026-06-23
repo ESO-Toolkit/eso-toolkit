@@ -980,6 +980,7 @@ interface LoadoutBody {
   trial_id?: string;
   character_name?: string;
   loadout_data?: string;
+  client_updated_at?: string;
 }
 
 /**
@@ -992,12 +993,15 @@ function parseLoadoutBody(body: LoadoutBody, id: string): UserLoadoutInput | str
   const trialId = typeof body.trial_id === 'string' ? body.trial_id : '';
   const characterName = typeof body.character_name === 'string' ? body.character_name : '';
   const loadoutData = typeof body.loadout_data === 'string' ? body.loadout_data : '';
+  const clientUpdatedAt =
+    typeof body.client_updated_at === 'string' ? body.client_updated_at : '';
 
   if (!name.trim()) return 'name is required';
   if (name.length > 100) return 'name must be ≤ 100 characters';
   if (description.length > 500) return 'description must be ≤ 500 characters';
   if (trialId.length > 64) return 'trial_id must be ≤ 64 characters';
   if (characterName.length > 64) return 'character_name must be ≤ 64 characters';
+  if (clientUpdatedAt.length > 40) return 'client_updated_at must be ≤ 40 characters';
   if (!loadoutData.trim()) return 'loadout_data is required';
   if (loadoutData.length > MAX_LOADOUT_DATA_CHARS)
     return `loadout_data must be ≤ ${MAX_LOADOUT_DATA_CHARS} characters`;
@@ -1014,6 +1018,7 @@ function parseLoadoutBody(body: LoadoutBody, id: string): UserLoadoutInput | str
     trialId: sanitize(trialId),
     characterName: cleanText(characterName),
     loadoutData,
+    clientUpdatedAt,
   };
 }
 

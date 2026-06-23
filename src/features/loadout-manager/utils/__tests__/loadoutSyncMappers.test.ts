@@ -37,6 +37,7 @@ describe('savedLoadoutToPayload', () => {
     expect(payload.description).toBe('Single-target');
     expect(payload.trial_id).toBe('DSR');
     expect(payload.character_name).toBe('Hero');
+    expect(payload.client_updated_at).toBe('2026-06-10T00:00:00.000Z');
     const blob = JSON.parse(payload.loadout_data);
     expect(blob.setup.gear[0].link).toBe('|H0:item:1:|h|h');
     expect(blob.updatedAt).toBe('2026-06-10T00:00:00.000Z');
@@ -63,6 +64,7 @@ describe('rowToSavedLoadout', () => {
       trial_id: p.trial_id,
       character_name: p.character_name,
       loadout_data: p.loadout_data,
+      client_updated_at: p.client_updated_at,
       created_at: '2026-06-01 00:00:00',
       updated_at: '2026-06-10 00:00:00',
     };

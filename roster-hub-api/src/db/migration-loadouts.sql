@@ -18,6 +18,10 @@ CREATE TABLE IF NOT EXISTS user_loadouts (
   -- A single fully-populated setup is ~2-3 KB of JSON, far under D1's 2 MB
   -- per-row ceiling; the worker caps it at 20 KB to leave generous headroom.
   loadout_data   TEXT NOT NULL,
+  -- Client-authored ISO timestamp of the loadout's last edit (the SavedLoadout's
+  -- own updatedAt). Used for optimistic-concurrency / last-write-wins on bulk
+  -- sync so a stale device can't clobber a newer edit made on another device.
+  client_updated_at TEXT NOT NULL DEFAULT '',
   created_at     TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at     TEXT NOT NULL DEFAULT (datetime('now'))
 );

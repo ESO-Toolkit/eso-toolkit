@@ -31,6 +31,8 @@ import {
 
 /** Worker caps a single /loadouts/sync call at 200 entries. */
 const SYNC_BATCH_SIZE = 200;
+/** Mirror of the worker's per-account ceiling — preflighted before any write. */
+const MAX_ACCOUNT_LOADOUTS = 500;
 
 export type LoadoutSyncStatus = 'idle' | 'syncing' | 'error';
 
@@ -86,14 +88,26 @@ export function useLoadoutSync(): UseLoadoutSyncResult {
       const remote = remoteRows.map(rowToSavedLoadout).filter((l): l is SavedLoadout => l !== null);
       const merged = mergeLoadoutsByNewest(loadouts, remote);
 
-      // 2. Reflect the merged set locally so pulled-in loadouts appear immediately.
-      dispatch(replaceAllLoadouts(merged));
+      // 2. Preflight the account cap BEFORE mutating anything, so we never leave
+      //    local state replaced while the server rejects a later batch.
+      if (merged.length > MAX_ACCOUNT_LOADOUTS) {
+        setError(
+          `You have ${merged.length} loadouts across your devices, over the ${MAX_ACCOUNT_LOADOUTS} limit. Delete some, then sync again.`,
+        );
+        setStatus('error');
+        return undefined;
+      }
 
-      // 3. Push the merged set up so the server converges (chunked to the cap).
+      // 3. Push the merged set first (chunked to the cap). Only after every batch
+      //    commits do we replace local state — a failed push then leaves the
+      //    local library untouched, and the server (idempotent + non-destructive)
+      //    re-converges on the next successful sync.
       for (const batch of chunk(merged.map(savedLoadoutToPayload), SYNC_BATCH_SIZE)) {
         await loadoutsApi.sync(batch, token);
       }
 
+      // 4. Reflect the converged set locally (adds loadouts pulled from other devices).
+      dispatch(replaceAllLoadouts(merged));
       dispatch(setLastSyncedAt(new Date().toISOString()));
       setStatus('idle');
       return merged.length;

@@ -30,6 +30,7 @@ export function savedLoadoutToPayload(loadout: SavedLoadout): LoadoutSyncPayload
     trial_id: loadout.meta?.trialId ?? '',
     character_name: loadout.meta?.characterName ?? '',
     loadout_data: JSON.stringify(blob),
+    client_updated_at: loadout.updatedAt ?? '',
   };
 }
 
