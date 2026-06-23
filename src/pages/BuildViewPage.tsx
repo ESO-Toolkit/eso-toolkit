@@ -71,7 +71,7 @@ import {
 import { useViewTransitionNavigate } from '../hooks/useViewTransitionNavigate';
 import { selectSavedBuilds } from '../store/saved_builds';
 import { CHAMPION_POINT_ABILITIES, ChampionPointAbilityId } from '../types/champion-points';
-import { decodeBuildFromURL } from '../utils/buildEncoding';
+import { decodeBuildFromURL, encodeBuildToURL } from '../utils/buildEncoding';
 import { getGearSetTooltipPropsByName } from '../utils/gearSetTooltipMapper';
 import { sanitizeImageUrl, sanitizeYoutubeUrl } from '../utils/sanitize-url';
 import { useSetPieceCounts } from '../utils/setPieceCounting';
@@ -2108,7 +2108,7 @@ export const BuildViewPage: React.FC = () => {
       void buildHubApi
         .get(idParam, accessToken)
         .then(({ build: hubBuild }) =>
-          decodeBuildFromURL(hubBuild.build_data).then((decoded) => {
+          decodeBuildFromURL(hubBuild.build_data).then(async (decoded) => {
             // The Hub record's columns are authoritative — the values embedded
             // in build_data (visibility `vs`, name `n`, shortDescription `d`)
             // can be stale: a build published before the dialog synced
@@ -2117,18 +2117,35 @@ export const BuildViewPage: React.FC = () => {
             // Override the decoded values with server truth so the opened build
             // matches its Hub card and downstream share/copy gating can't be
             // fooled by a stale blob.
-            const authoritative = decoded
-              ? {
-                  ...decoded,
-                  name: hubBuild.title ?? decoded.name,
-                  shortDescription: hubBuild.description ?? decoded.shortDescription,
-                  settings: {
-                    ...decoded.settings,
-                    visibility: hubBuild.visibility ?? decoded.settings.visibility,
-                  },
-                }
-              : decoded;
-            onDecoded(authoritative, hubBuild.build_data);
+            if (!decoded) {
+              onDecoded(decoded, hubBuild.build_data);
+              return;
+            }
+            const authoritative = {
+              ...decoded,
+              name: hubBuild.title ?? decoded.name,
+              shortDescription: hubBuild.description ?? decoded.shortDescription,
+              settings: {
+                ...decoded.settings,
+                visibility: hubBuild.visibility ?? decoded.settings.visibility,
+              },
+            };
+            // When server truth diverged from the blob, re-encode so the
+            // retained payload — used by the share `?b=` link and the
+            // Remix/Edit → /build-editor?b= path — carries the authoritative
+            // metadata too. Otherwise Remix reopens the editor with the stale
+            // name/description and a later publish would reintroduce it. Fall
+            // back to the original blob if the re-encode fails.
+            let buildData = hubBuild.build_data;
+            if (
+              authoritative.name !== decoded.name ||
+              authoritative.shortDescription !== decoded.shortDescription ||
+              authoritative.settings.visibility !== decoded.settings.visibility
+            ) {
+              const reencoded = await encodeBuildToURL(authoritative);
+              if (reencoded) buildData = reencoded;
+            }
+            onDecoded(authoritative, buildData);
           }),
         )
         .catch(handleFetchError);

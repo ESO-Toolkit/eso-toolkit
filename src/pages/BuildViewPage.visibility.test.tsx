@@ -9,6 +9,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 // load/visibility flow and exercise the not-found branch (notFound || !build).
 jest.mock('../utils/buildEncoding', () => ({
   decodeBuildFromURL: jest.fn(async () => null),
+  encodeBuildToURL: jest.fn(async () => ''),
 }));
 
 jest.mock('../features/loadout-manager/data/skillLineSkills', () => ({
@@ -40,11 +41,12 @@ jest.mock('../features/build-viewer/components/BuildViewShell', () => ({
 import { useSelector } from 'react-redux';
 
 import { buildHubApi } from '../features/build-hub/api/build-hub-api';
-import { decodeBuildFromURL } from '../utils/buildEncoding';
+import { decodeBuildFromURL, encodeBuildToURL } from '../utils/buildEncoding';
 import { BuildViewPage } from './BuildViewPage';
 
 const mockGet = buildHubApi.get as jest.MockedFunction<typeof buildHubApi.get>;
 const mockDecode = decodeBuildFromURL as jest.MockedFunction<typeof decodeBuildFromURL>;
+const mockEncode = encodeBuildToURL as jest.MockedFunction<typeof encodeBuildToURL>;
 const mockUseSelector = useSelector as jest.MockedFunction<typeof useSelector>;
 
 const renderWithStaleState = (buildId: string, staleBuildData: string) =>
@@ -96,6 +98,7 @@ describe('BuildViewPage visibility enforcement', () => {
     // clearAllMocks wipes implementations; re-assert defaults so bare jest.fn()s
     // never return undefined (which would break `.then` / `savedBuilds.find`).
     mockDecode.mockResolvedValue(null);
+    mockEncode.mockResolvedValue('');
     mockUseSelector.mockReturnValue([]);
   });
 
@@ -203,6 +206,44 @@ describe('BuildViewPage visibility enforcement', () => {
     expect(screen.getByText('Authoritative description')).toBeInTheDocument();
     expect(screen.queryByText('Stale Name')).not.toBeInTheDocument();
     expect(screen.queryByText('Stale description')).not.toBeInTheDocument();
+    // The retained payload (share `?b=` link + Remix/Edit → /build-editor?b=) is
+    // re-encoded with server truth so the editor never reopens with the stale
+    // metadata that a later republish could reintroduce.
+    await waitFor(() =>
+      expect(mockEncode).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: 'Authoritative Title',
+          shortDescription: 'Authoritative description',
+        }),
+      ),
+    );
+  });
+
+  it('does not re-encode the retained payload when the blob already matches the Hub metadata', async () => {
+    mockGet.mockResolvedValue({
+      build: {
+        build_data: 'fresh-blob',
+        visibility: 'public',
+        title: 'Same Title',
+        description: 'Same description',
+      },
+    } as Awaited<ReturnType<typeof buildHubApi.get>>);
+    mockDecode.mockResolvedValue({
+      ...(fullBuild('public') as Record<string, unknown>),
+      name: 'Same Title',
+      shortDescription: 'Same description',
+    } as never);
+
+    render(
+      <MemoryRouter initialEntries={[{ pathname: '/bv', search: '?id=build-8' }]}>
+        <Routes>
+          <Route path="/bv" element={<BuildViewPage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => expect(screen.getByTestId('build-shell')).toBeInTheDocument());
+    expect(mockEncode).not.toHaveBeenCalled();
   });
 
   it('rejects a Private ?b= payload (forwarded/address-bar link) as not-found', async () => {
