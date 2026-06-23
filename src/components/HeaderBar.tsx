@@ -688,7 +688,7 @@ export const HeaderBar: React.FC = () => {
       desc: 'Manage gear loadouts',
       icon: '⚔️',
       accent: '#ef4444',
-      path: '/loadout-manager',
+      path: '/loadouts',
     },
     {
       text: 'Roster Builder',
