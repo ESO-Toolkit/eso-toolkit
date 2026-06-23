@@ -160,7 +160,7 @@ describe('BuildEditorPage build loading', () => {
     expect(screen.getByTestId('search').textContent).toBe('?id=saved-3');
   });
 
-  it('clears the private payload from history even when decoding fails; warns instead', async () => {
+  it('on decode failure: scrubs the private payload AND drops the ?id= save target (fail-closed)', async () => {
     mockDecode.mockResolvedValue(null);
     renderAt({
       pathname: '/build-editor',
@@ -172,19 +172,33 @@ describe('BuildEditorPage build loading', () => {
     // The blob must NOT linger in history.state on the failure path — a
     // version-skewed/corrupt private payload must not survive a refresh/restore.
     await waitFor(() => expect(screen.getByTestId('state').textContent).toBe('null'));
-    // The non-sensitive save target is preserved; no build loaded; user warned.
-    expect(screen.getByTestId('search').textContent).toBe('?id=saved-9');
+    // The ?id= save target is dropped so a later Save can't overwrite saved-9 with
+    // the stale/default editor state that never loaded the intended build.
+    await waitFor(() => {
+      const params = new URLSearchParams(screen.getByTestId('search').textContent ?? '');
+      expect(params.has('id')).toBe(false);
+    });
     expect(mockDispatch).not.toHaveBeenCalled();
     await waitFor(() => expect(mockEnqueue).toHaveBeenCalled());
   });
 
-  it('strips the legacy ?b= blob even when decoding fails', async () => {
+  it('on decode failure: strips ?b= and ?id= but keeps roster round-trip params', async () => {
     mockDecode.mockResolvedValue(null);
-    renderAt({ pathname: '/build-editor', search: '?b=bad-blob&id=saved-9', state: null });
+    renderAt({
+      pathname: '/build-editor',
+      search: '?b=bad-blob&slot=dps3&rid=r1&from=roster&id=saved-9',
+      state: null,
+    });
 
     await waitFor(() => expect(mockDecode).toHaveBeenCalledWith('bad-blob'));
-    await waitFor(() => expect(screen.getByTestId('search').textContent).toBe('?id=saved-9'));
-    expect(screen.getByTestId('search').textContent).not.toContain('b=');
+    await waitFor(() => {
+      const params = new URLSearchParams(screen.getByTestId('search').textContent ?? '');
+      expect(params.has('b')).toBe(false);
+      expect(params.has('id')).toBe(false);
+      // Roster round-trip context is harmless (no overwrite risk) and preserved.
+      expect(params.get('slot')).toBe('dps3');
+      expect(params.get('from')).toBe('roster');
+    });
     expect(mockDispatch).not.toHaveBeenCalled();
   });
 

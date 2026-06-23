@@ -78,11 +78,21 @@ const BuildEditorPageInner: React.FC = () => {
     void decodeBuildFromURL(source).then((decoded) => {
       if (decoded) {
         dispatch(loadBuild(decoded));
-      } else {
-        enqueueSnackbar('Could not load shared build — the link may be invalid.', {
-          variant: 'warning',
-        });
+        return;
       }
+      // Fail closed: the build never loaded. Drop the ?id= save target (and any
+      // leftover ?b=) so a later Save can't overwrite that saved build with the
+      // stale/default editor state that's still on screen. Roster round-trip
+      // params are left as-is — they carry no overwrite risk.
+      if (searchParams.get('id') || searchParams.get('b')) {
+        const failParams = new URLSearchParams(searchParams);
+        failParams.delete('b');
+        failParams.delete('id');
+        setSearchParams(failParams, { replace: true });
+      }
+      enqueueSnackbar('Could not load shared build — the link may be invalid.', {
+        variant: 'warning',
+      });
     });
   }, [searchParams, setSearchParams, location, navigate, dispatch, enqueueSnackbar]);
 
