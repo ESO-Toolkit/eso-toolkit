@@ -1180,8 +1180,10 @@ app.delete('/loadouts/:id', async (c) => {
     return c.json({ error: 'Rate limit exceeded. Too many loadout writes this hour.' }, 429);
   await recordRateLimitEvent(c.env.DB, user.id, 'loadout_write');
 
-  const deleted = await deleteUserLoadout(c.env.DB, id, user.id, deletedAt);
-  if (!deleted) return c.json({ error: 'Not found or forbidden' }, 404);
+  const result = await deleteUserLoadout(c.env.DB, id, user.id, deletedAt);
+  if (result === 'not-found') return c.json({ error: 'Not found or forbidden' }, 404);
+  if (result === 'conflict-newer')
+    return c.json({ error: 'Loadout was edited more recently on another device.' }, 409);
   return c.json({ ok: true });
 });
 

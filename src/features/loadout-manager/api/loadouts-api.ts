@@ -5,7 +5,11 @@
  */
 
 import { getRosterHubBaseUrl } from '../../../utils/envUtils';
-import type { LoadoutSyncPayload, UserLoadoutRow } from '../types/loadout-sync.types';
+import type {
+  LoadoutSyncPayload,
+  LoadoutTombstone,
+  UserLoadoutRow,
+} from '../types/loadout-sync.types';
 
 const BASE_URL = getRosterHubBaseUrl();
 
@@ -26,11 +30,11 @@ async function apiFetch<T>(path: string, options: RequestInit = {}, token?: stri
   return res.json() as Promise<T>;
 }
 
-/** A loadout list/sync response: the library plus ids the account has deleted. */
+/** A loadout list/sync response: the library plus the account's deletion tombstones. */
 export interface LoadoutListResponse {
   loadouts: UserLoadoutRow[];
-  /** Tombstoned ids — loadouts deleted on the account; clients purge these. */
-  deletions: string[];
+  /** Tombstones — loadouts deleted on the account, with delete times. */
+  deletions: LoadoutTombstone[];
 }
 
 export const loadoutsApi = {

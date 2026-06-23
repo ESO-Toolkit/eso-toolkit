@@ -1785,42 +1785,58 @@ export async function updateUserLoadout(
   return (result.meta.changes ?? 0) > 0;
 }
 
+export type DeleteLoadoutResult = 'deleted' | 'not-found' | 'conflict-newer';
+
 export async function deleteUserLoadout(
   db: D1Database,
   id: string,
   userId: string,
   deletedAt: string,
-): Promise<boolean> {
-  const result = await db
-    .prepare('DELETE FROM user_loadouts WHERE id = ? AND user_id = ?')
+): Promise<DeleteLoadoutResult> {
+  // Version-aware delete: never remove a row that was edited AFTER this delete's
+  // timestamp (a newer edit on another device wins, last-write-wins). Look at the
+  // current row first; only delete + tombstone when the delete is newer-or-equal.
+  const row = await db
+    .prepare('SELECT client_updated_at FROM user_loadouts WHERE id = ? AND user_id = ?')
     .bind(id, userId)
-    .run();
-  // Only record a tombstone when a row was actually removed. This keeps deletes
-  // durable across this account's devices (a stale device can't re-insert the id)
-  // while preventing arbitrary DELETEs of non-existent ids from bloating the
-  // tombstone set. deletedAt is a client-domain canonical timestamp so it can be
-  // compared with an incoming edit's client_updated_at (see upsertUserLoadouts).
-  if ((result.meta.changes ?? 0) > 0) {
-    await db
+    .first<{ client_updated_at: string }>();
+  if (!row) return 'not-found';
+  if (row.client_updated_at > deletedAt) return 'conflict-newer';
+
+  // Delete + tombstone. Only real deletions create a tombstone, so arbitrary
+  // DELETEs of non-existent ids can't bloat the set. deletedAt is a client-domain
+  // canonical timestamp, comparable with an incoming edit's client_updated_at.
+  await db.batch([
+    db.prepare('DELETE FROM user_loadouts WHERE id = ? AND user_id = ?').bind(id, userId),
+    db
       .prepare(
         `INSERT INTO user_loadout_deletions (user_id, loadout_id, deleted_at)
          VALUES (?, ?, ?)
          ON CONFLICT(user_id, loadout_id) DO UPDATE SET deleted_at = excluded.deleted_at`,
       )
-      .bind(userId, id, deletedAt)
-      .run();
-    return true;
-  }
-  return false;
+      .bind(userId, id, deletedAt),
+  ]);
+  return 'deleted';
 }
 
-/** Ids the account has deleted — returned during sync so other devices purge them. */
-export async function listLoadoutTombstones(db: D1Database, userId: string): Promise<string[]> {
+export interface LoadoutTombstone {
+  id: string;
+  deleted_at: string;
+}
+
+/**
+ * Tombstones the account holds — returned during sync WITH their delete time so a
+ * client can tell whether a local edit post-dates the delete (revive) or not (purge).
+ */
+export async function listLoadoutTombstones(
+  db: D1Database,
+  userId: string,
+): Promise<LoadoutTombstone[]> {
   const rows = await db
-    .prepare('SELECT loadout_id FROM user_loadout_deletions WHERE user_id = ?')
+    .prepare('SELECT loadout_id, deleted_at FROM user_loadout_deletions WHERE user_id = ?')
     .bind(userId)
-    .all<{ loadout_id: string }>();
-  return rows.results.map((r) => r.loadout_id);
+    .all<{ loadout_id: string; deleted_at: string }>();
+  return rows.results.map((r) => ({ id: r.loadout_id, deleted_at: r.deleted_at }));
 }
 
 /**

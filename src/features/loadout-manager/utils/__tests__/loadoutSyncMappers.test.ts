@@ -134,14 +134,20 @@ describe('mergeLoadoutsByNewest', () => {
 });
 
 describe('purgeDeleted', () => {
-  it('removes loadouts whose id is tombstoned', () => {
-    const a = makeSavedLoadout({ id: 'a' });
-    const b = makeSavedLoadout({ id: 'b' });
-    expect(purgeDeleted([a, b], new Set(['b'])).map((l) => l.id)).toEqual(['a']);
+  it('removes a loadout older-or-equal to its tombstone (delete wins)', () => {
+    const a = makeSavedLoadout({ id: 'a', updatedAt: '2026-06-10T00:00:00.000Z' });
+    const b = makeSavedLoadout({ id: 'b', updatedAt: '2026-06-10T00:00:00.000Z' });
+    const tombstones = new Map([['b', '2026-06-12T00:00:00.000Z']]);
+    expect(purgeDeleted([a, b], tombstones).map((l) => l.id)).toEqual(['a']);
   });
-  it('returns the same list when nothing is deleted', () => {
+  it('keeps a local edit strictly newer than its tombstone (revive)', () => {
+    const b = makeSavedLoadout({ id: 'b', updatedAt: '2026-06-20T00:00:00.000Z' });
+    const tombstones = new Map([['b', '2026-06-12T00:00:00.000Z']]);
+    expect(purgeDeleted([b], tombstones).map((l) => l.id)).toEqual(['b']);
+  });
+  it('returns the same list when there are no tombstones', () => {
     const list = [makeSavedLoadout({ id: 'a' })];
-    expect(purgeDeleted(list, new Set())).toBe(list);
+    expect(purgeDeleted(list, new Map())).toBe(list);
   });
 });
 

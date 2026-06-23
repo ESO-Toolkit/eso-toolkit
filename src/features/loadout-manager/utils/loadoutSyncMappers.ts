@@ -89,9 +89,23 @@ export function mergeLoadoutsByNewest(
   return Array.from(byId.values()).sort((a, b) => time(b.updatedAt) - time(a.updatedAt));
 }
 
-/** Drop any loadout whose id is in the deleted set (account deletion tombstones). */
-export function purgeDeleted(loadouts: SavedLoadout[], deletedIds: Set<string>): SavedLoadout[] {
-  return deletedIds.size === 0 ? loadouts : loadouts.filter((l) => !deletedIds.has(l.id));
+/**
+ * Drop loadouts killed by an account deletion tombstone — but only when the local
+ * copy is NOT newer than the delete. A local edit that post-dates the tombstone
+ * (updatedAt > deleted_at) is kept so it can be pushed and revive the loadout
+ * (the server allows this and clears the stale tombstone). `tombstones` maps id →
+ * delete time (ISO).
+ */
+export function purgeDeleted(
+  loadouts: SavedLoadout[],
+  tombstones: Map<string, string>,
+): SavedLoadout[] {
+  if (tombstones.size === 0) return loadouts;
+  return loadouts.filter((l) => {
+    const deletedAt = tombstones.get(l.id);
+    if (deletedAt === undefined) return true; // not deleted
+    return time(l.updatedAt) > time(deletedAt); // keep only if strictly newer (revive)
+  });
 }
 
 /**

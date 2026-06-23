@@ -18,6 +18,13 @@ export interface UserLoadoutRow {
   updated_at: string;
 }
 
+/** A deletion tombstone: an id the account deleted, with the delete time. */
+export interface LoadoutTombstone {
+  id: string;
+  /** Client-domain ISO delete time; a local edit newer than this revives the loadout. */
+  deleted_at: string;
+}
+
 /** The body shape the worker accepts for create/update/sync. */
 export interface LoadoutSyncPayload {
   id: string;
