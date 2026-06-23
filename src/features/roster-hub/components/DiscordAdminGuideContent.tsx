@@ -31,6 +31,7 @@ import {
   useTheme,
 } from '@mui/material';
 import React from 'react';
+import { Link as RouterLink } from 'react-router-dom';
 
 import discordIcon from '../../../assets/discord-icon.svg';
 import { getBotInviteUrl } from '../../auth/discord-auth';
@@ -276,6 +277,29 @@ export const DiscordAdminGuideContent: React.FC<DiscordAdminGuideContentProps> =
             </Button>
           </Tooltip>
         </Stack>
+
+        {/* Let admins read what the bot actually does before they install. Opens
+            in a new tab so an in-progress publish (modal context) is preserved. */}
+        <Typography
+          variant="caption"
+          sx={{ display: 'block', mt: 1.5, color: 'text.secondary', fontSize: '0.78rem' }}
+        >
+          New to the bot?{' '}
+          <Box
+            component={RouterLink}
+            to="/docs/discord-roster-bot"
+            target="_blank"
+            rel="noopener noreferrer"
+            sx={{
+              color: '#5865F2',
+              fontWeight: 600,
+              textDecoration: 'none',
+              '&:hover': { textDecoration: 'underline' },
+            }}
+          >
+            See what it does and how to operate it →
+          </Box>
+        </Typography>
       </Box>
 
       {/* Permissions disclosure */}
