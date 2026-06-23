@@ -10,7 +10,7 @@
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 
-import { getItemsBySlot } from '../../../../loadout-manager/data/itemIdMap';
+import { getItemsBySlot } from '@features/loadout-manager/data/itemIdMap';
 
 // Pick a real weapon set and split its items: the first resolves to a specific
 // type, the rest are treated as unresolved (stale data). The mocked resolver
@@ -46,7 +46,7 @@ jest.mock('@features/loadout-manager/utils/itemIconResolver', () => {
   };
 });
 
-import { GearPickerDialog } from '../GearPicker';
+import { GearPickerDialog } from '../GearPickerDialog';
 
 const renderWeaponPicker = () =>
   render(

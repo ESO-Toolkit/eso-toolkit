@@ -10,6 +10,7 @@ import { alpha, useTheme } from '@mui/material/styles';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useDispatch } from 'react-redux';
 
+import { GearPickerDialog } from '@/components/gear';
 import { useLogger } from '@/hooks/useLogger';
 
 import { validateItemForSlot, getItemInfo, type SlotType } from '../data/itemIdMap';
@@ -25,8 +26,6 @@ import {
 } from '../utils/itemIconResolver';
 import { getItemData, getItemIdFromLink } from '../utils/itemLinkParser';
 import { registerManualSlot } from '../utils/wizardWardrobeSlotRegistry';
-
-import { ItemPickerDialog } from './ItemPickerDialog';
 
 interface GearSelectorProps {
   gear: GearConfig;
@@ -668,10 +667,24 @@ export const GearSelector: React.FC<GearSelectorProps> = ({
       return;
     }
 
-    // Validate item for slot
-    const validation = validateItemForSlot(itemId, pickerSlot.type);
-    if (!validation.valid) {
-      const errorMessage = validation.error ?? 'Item validation failed';
+    // Validate item for slot. The shared GearPickerDialog offers one-handed
+    // weapons as off-hand picks (dual wield), but validateItemForSlot's strict
+    // check rejects any item whose metadata slot is `weapon` against an
+    // `offhand` target. Mirror the picker's off-hand compatibility rule here so
+    // a dual-wield off-hand pick the picker presents isn't silently dropped:
+    // an off-hand slot accepts an off-hand item OR a one-handed (non-2H) weapon.
+    const offhandValidation = validateItemForSlot(itemId, pickerSlot.type);
+    let isValidForSlot = offhandValidation.valid;
+    if (!isValidForSlot && pickerSlot.type === 'offhand') {
+      const candidateInfo = getItemInfo(itemId);
+      isValidForSlot = Boolean(
+        candidateInfo &&
+        (candidateInfo.slot === 'offhand' ||
+          (candidateInfo.slot === 'weapon' && !isTwoHandedWeapon(itemId))),
+      );
+    }
+    if (!isValidForSlot) {
+      const errorMessage = offhandValidation.error ?? 'Item validation failed';
       logger.error(errorMessage, new Error(errorMessage), {
         itemId,
         slotType: pickerSlot.type,
@@ -892,9 +905,11 @@ export const GearSelector: React.FC<GearSelectorProps> = ({
         {renderTile(slotDef(21))}
       </Stack>
 
-      {/* Item Picker Dialog */}
+      {/* Shared, set-aware gear picker (src/components/gear). Replaces the
+          loadout-local ItemPickerDialog with the build editor's richer picker
+          core — same onSelect(itemId) contract, so WW export is unchanged. */}
       {pickerSlot && (
-        <ItemPickerDialog
+        <GearPickerDialog
           open={pickerOpen}
           onClose={handleClosePicker}
           onSelect={handleSelectItem}

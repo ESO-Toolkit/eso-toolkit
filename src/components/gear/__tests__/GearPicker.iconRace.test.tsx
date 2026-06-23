@@ -25,7 +25,7 @@ jest.mock('@features/loadout-manager/utils/itemIconResolver', () => {
   };
 });
 
-import { GearPickerDialog } from '../GearPicker';
+import { GearPickerDialog } from '../GearPickerDialog';
 
 const renderPicker = (slot: 'weapon' | 'chest') =>
   render(

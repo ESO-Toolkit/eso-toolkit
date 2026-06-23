@@ -60,7 +60,7 @@ jest.mock('@features/loadout-manager/utils/itemIconResolver', () => ({
   preloadIconData: (): Promise<void> => Promise.resolve(),
 }));
 
-import { GearPickerDialog } from '../GearPicker';
+import { GearPickerDialog } from '../GearPickerDialog';
 
 const renderOffhandPicker = (onSelect: jest.Mock = jest.fn()): jest.Mock => {
   render(
