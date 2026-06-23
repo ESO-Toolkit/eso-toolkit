@@ -2222,6 +2222,18 @@ export const BuildViewPage: React.FC = () => {
   const isOwned = Boolean(ownedSavedBuild);
 
   const handleOpenInEditor = (): void => {
+    if (!encodedParam && !ownedSavedBuild) {
+      // The retained payload was intentionally dropped (fail-closed on a
+      // visibility mismatch we couldn't re-encode) and there's no local saved
+      // copy to open by id. Navigating with an empty ?b= would drop the user
+      // into an unrelated/empty editor, so surface an error instead.
+      setSnackbar({
+        open: true,
+        message: 'This build cannot be opened in the editor right now. Try reloading the page.',
+        severity: 'error',
+      });
+      return;
+    }
     const base = `/build-editor?b=${encodeURIComponent(encodedParam)}`;
     // Forward drill that morphs the shared build-hero header into the editor's
     // header — consistent with every other build navigation (which uses

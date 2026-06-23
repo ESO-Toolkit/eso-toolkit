@@ -281,14 +281,13 @@ describe('BuildViewPage visibility enforcement', () => {
     await waitFor(() => expect(screen.getByTestId('build-shell')).toBeInTheDocument());
     await waitFor(() => expect(mockEncode).toHaveBeenCalled());
 
-    // Remix/Edit must not carry the stale Public payload (fail closed → empty b).
+    // Remix/Edit must not open the editor with the dropped payload — the guard
+    // refuses to navigate rather than dropping the user into an empty/unrelated
+    // editor (and certainly never with the stale Public blob).
     fireEvent.click(
       screen.getByRole('button', { name: /open your own editable copy|edit your saved build/i }),
     );
-    expect(mockNavigate).toHaveBeenCalledTimes(1);
-    const target = mockNavigate.mock.calls[0][0] as string;
-    expect(target).not.toContain('stale-public-blob');
-    expect(target).toBe('/build-editor?b=');
+    expect(mockNavigate).not.toHaveBeenCalled();
   });
 
   it('rejects a Private ?b= payload (forwarded/address-bar link) as not-found', async () => {

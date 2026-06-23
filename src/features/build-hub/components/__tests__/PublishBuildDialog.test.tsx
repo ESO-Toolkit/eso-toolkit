@@ -194,6 +194,30 @@ describe('PublishBuildDialog publish-time sync', () => {
     expect(payload).toMatchObject({ title: 'Renamed Build', build_data: 'ENCODED_ORIGINAL' });
   });
 
+  it('fails closed: aborts publish when the build_data cannot be decoded', async () => {
+    // Corrupt / oversized blob → decode resolves null. Publishing it would
+    // create an unopenable Hub row (and we can't verify its embedded
+    // visibility), so the dialog aborts and never calls the API — even though
+    // the pre-filled title satisfies the required-field guard.
+    mockDecode.mockResolvedValue(null);
+
+    render(
+      <PublishBuildDialog
+        {...baseProps}
+        defaultTitle="Lightning Sorc"
+        defaultDescription="A tagline"
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Publish' }));
+
+    await waitFor(() =>
+      expect(screen.getByText(/could not prepare this build for publishing/i)).toBeInTheDocument(),
+    );
+    expect(mockCreate).not.toHaveBeenCalled();
+    expect(mockEncode).not.toHaveBeenCalled();
+  });
+
   it('blocks publishing with an empty title', () => {
     render(<PublishBuildDialog {...baseProps} />);
     fireEvent.click(screen.getByRole('button', { name: 'Publish' }));

@@ -117,7 +117,7 @@ export const PublishBuildDialog: React.FC<PublishBuildDialogProps> = ({
       // permissive than the row. Title/description-only drift can safely keep
       // the original blob (cosmetic staleness; the server re-validates anyway).
       let syncedBuildData = buildData;
-      let visibilityResyncFailed = false;
+      let resyncError: string | null = null;
       try {
         const decoded = await decodeBuildFromURL(buildData);
         if (decoded) {
@@ -136,16 +136,21 @@ export const PublishBuildDialog: React.FC<PublishBuildDialogProps> = ({
             if (reencoded) {
               syncedBuildData = reencoded;
             } else if (visibilityDiverged) {
-              visibilityResyncFailed = true;
+              resyncError = 'Could not apply the selected visibility. Please try again.';
             }
           }
+        } else {
+          // The blob we'd publish can't be decoded (empty, corrupt, or larger
+          // than the decode cap). Publishing it would create an unopenable Hub
+          // row and we can't verify/sync its embedded visibility. Fail closed.
+          resyncError = 'Could not prepare this build for publishing. Please try again.';
         }
       } catch {
-        /* keep original blob; the server re-validates the embedded visibility */
+        resyncError = 'Could not prepare this build for publishing. Please try again.';
       }
 
-      if (visibilityResyncFailed) {
-        setError('Could not apply the selected visibility. Please try again.');
+      if (resyncError) {
+        setError(resyncError);
         return;
       }
 
