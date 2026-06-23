@@ -2222,11 +2222,14 @@ export const BuildViewPage: React.FC = () => {
   const isOwned = Boolean(ownedSavedBuild);
 
   const handleOpenInEditor = (): void => {
-    if (!encodedParam && !ownedSavedBuild) {
-      // The retained payload was intentionally dropped (fail-closed on a
-      // visibility mismatch we couldn't re-encode) and there's no local saved
-      // copy to open by id. Navigating with an empty ?b= would drop the user
-      // into an unrelated/empty editor, so surface an error instead.
+    if (!encodedParam) {
+      // No usable self-contained payload to hand the editor — the retained blob
+      // was dropped (fail-closed on a visibility mismatch we couldn't re-encode)
+      // or never set. The editor loads only from a non-empty ?b=; navigating
+      // with an empty one opens a blank editor while ?id= still acts as the
+      // save target, so a save would overwrite the owner's saved build with
+      // blank data. Refuse to navigate (even for owned builds) and surface an
+      // error instead.
       setSnackbar({
         open: true,
         message: 'This build cannot be opened in the editor right now. Try reloading the page.',

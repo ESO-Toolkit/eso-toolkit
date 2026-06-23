@@ -290,6 +290,40 @@ describe('BuildViewPage visibility enforcement', () => {
     expect(mockNavigate).not.toHaveBeenCalled();
   });
 
+  it('fails closed for an OWNED build too: dropped payload never opens the editor with an empty ?b= (no save-target corruption)', async () => {
+    // Same dropped-payload scenario, but the viewer owns a local saved copy of
+    // the build. Navigating /build-editor?b=&id=<savedId> would open a blank
+    // editor while ?id= stays the save target — a save would overwrite the
+    // saved build with blank data. The guard must refuse to navigate.
+    mockUseSelector.mockReturnValue([{ id: 'saved-1', build: { id: 'b1' } }]);
+    mockGet.mockResolvedValue({
+      build: {
+        build_data: 'stale-public-blob',
+        visibility: 'private',
+        title: 'My Private Build',
+        description: '',
+      },
+    } as Awaited<ReturnType<typeof buildHubApi.get>>);
+    mockDecode.mockResolvedValue(fullBuild('public')); // id 'b1', matches the saved build
+    mockEncode.mockResolvedValue(''); // re-encode fails → payload dropped
+
+    render(
+      <MemoryRouter initialEntries={[{ pathname: '/bv', search: '?id=build-private' }]}>
+        <Routes>
+          <Route path="/bv" element={<BuildViewPage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => expect(screen.getByTestId('build-shell')).toBeInTheDocument());
+    await waitFor(() => expect(mockEncode).toHaveBeenCalled());
+
+    fireEvent.click(
+      screen.getByRole('button', { name: /edit your saved build|open your own editable copy/i }),
+    );
+    expect(mockNavigate).not.toHaveBeenCalled();
+  });
+
   it('rejects a Private ?b= payload (forwarded/address-bar link) as not-found', async () => {
     mockDecode.mockResolvedValue({ settings: { visibility: 'private' } } as never);
 
