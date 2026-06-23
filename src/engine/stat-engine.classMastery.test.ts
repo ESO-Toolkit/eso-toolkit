@@ -8,8 +8,8 @@
  *   - Above and Beyond (Nightblade) → +25% PvE / +5% PvP, and +30% crit cap
  */
 
-import reducer from '../store/buildEditorSlice';
-import type { Build, BuildSetup, GameMode } from '../types/build.types';
+import reducer from '@features/build-editor/store/buildEditorSlice';
+import type { Build, BuildSetup, GameMode } from '@features/build-editor/types/build.types';
 
 import { CRIT_DMG_CAPS } from './stat-constants';
 import { calculateCritDamage } from './stat-engine';

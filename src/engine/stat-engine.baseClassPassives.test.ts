@@ -5,8 +5,8 @@
  * active; flank/execute ones are off-by-default toggles.
  */
 
-import reducer from '../store/buildEditorSlice';
-import type { Build, BuildSetup } from '../types/build.types';
+import reducer from '@features/build-editor/store/buildEditorSlice';
+import type { Build, BuildSetup } from '@features/build-editor/types/build.types';
 
 import { CRIT_CHANCE_DIVISOR } from './stat-constants';
 import { calculateArmor, calculateCritChance, calculateCritDamage } from './stat-engine';

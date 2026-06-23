@@ -38,6 +38,8 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 
+import { calculateBuildStats } from '@/engine/stat-engine';
+
 import { GearSetTooltip } from '../components/GearSetTooltip';
 import { LazySkillTooltip as SkillTooltipCard } from '../components/LazySkillTooltip';
 import { ESO_CONSUMABLE_LOOKUP } from '../data/esoConsumables';
@@ -51,7 +53,6 @@ import { StatBreakdown } from '../features/build-editor/components/primitives/St
 import { StatGauge } from '../features/build-editor/components/primitives/StatGauge';
 import { CP_PASSIVES_BY_TREE } from '../features/build-editor/data/championPassives';
 import { CLASS_SKILL_LINES } from '../features/build-editor/data/esoStaticData';
-import { calculateBuildStats } from '../features/build-editor/engine/stat-engine';
 import { BE_TOKENS } from '../features/build-editor/theme/buildEditorTokens';
 import { CLASS_COLOR_MAP } from '../features/build-editor/theme/classColorMap';
 import type { Build, BuildSetup, CombatRole } from '../features/build-editor/types/build.types';

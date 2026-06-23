@@ -9,7 +9,7 @@ import { useTheme } from '@mui/material/styles';
 import { motion, useReducedMotion } from 'framer-motion';
 import React, { useId } from 'react';
 
-import type { StatResult } from '../../engine/stat-types';
+import type { StatResult } from '@/engine/stat-types';
 
 interface StatGaugeProps {
   /** Label shown below the gauge (e.g. "Penetration") */
