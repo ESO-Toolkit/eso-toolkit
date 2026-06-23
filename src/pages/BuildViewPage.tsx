@@ -2184,11 +2184,28 @@ export const BuildViewPage: React.FC = () => {
   const isOwned = Boolean(ownedSavedBuild);
 
   const handleOpenInEditor = (): void => {
-    const base = `/build-editor?b=${encodeURIComponent(encodedParam)}`;
+    // Fail closed: never navigate to the editor (especially with an ?id= save
+    // target) without a payload — an empty editor pointed at ?id= would
+    // overwrite the saved build with blank state on save.
+    if (!encodedParam) {
+      setSnackbar({
+        open: true,
+        message: 'Could not open this build in the editor. Please reload and try again.',
+        severity: 'error',
+      });
+      return;
+    }
+    // Hand the encoded build to the editor via router state, NOT a ?b= URL
+    // param: this view can render a *private* build (the owner's ?id= view or
+    // an in-app owner preview), and the full blob must never land in the
+    // address bar/history/Referer. Only the non-sensitive save-target (?id=)
+    // stays in the URL.
+    const target = ownedSavedBuild ? `/build-editor?id=${ownedSavedBuild.id}` : '/build-editor';
     // Forward drill that morphs the shared build-hero header into the editor's
     // header — consistent with every other build navigation (which uses
     // vtType:'forward' + morph) instead of the bare default crossfade.
-    navigate(ownedSavedBuild ? `${base}&id=${ownedSavedBuild.id}` : base, {
+    navigate(target, {
+      state: { buildData: encodedParam },
       vtType: 'forward',
       morph: { ref: buildHeroRef, name: 'build-hero' },
     });
