@@ -162,7 +162,9 @@ export function useScribingSimulation(
     setOrDelete('focus', selection.focusId);
     setOrDelete('signature', selection.signatureId);
     setOrDelete('affix', selection.affixId);
-    const next = `${window.location.pathname}?${params.toString()}`;
+    // Preserve the hash (e.g. `#scribing` when hosted as the Calculator tab) so
+    // mirroring the build doesn't knock the page off the active tab.
+    const next = `${window.location.pathname}?${params.toString()}${window.location.hash}`;
     window.history.replaceState(null, '', next);
   }, [selection]);
 
@@ -221,7 +223,8 @@ export function useScribingSimulation(
     if (selection.focusId) params.set('focus', selection.focusId);
     if (selection.signatureId) params.set('signature', selection.signatureId);
     if (selection.affixId) params.set('affix', selection.affixId);
-    return `${window.location.origin}${window.location.pathname}?${params.toString()}`;
+    // Keep the hash so a shared link re-opens on the same tab (#scribing).
+    return `${window.location.origin}${window.location.pathname}?${params.toString()}${window.location.hash}`;
   }, [selection]);
 
   const summary = useMemo<string>(() => (result ? summarizeScribedSkill(result) : ''), [result]);

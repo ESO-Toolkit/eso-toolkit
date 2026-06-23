@@ -705,11 +705,11 @@ export const HeaderBar: React.FC = () => {
       path: '/build-editor',
     },
     {
-      text: 'Scribing Simulator',
+      text: 'Scribing',
       desc: 'Plan scribed skills',
       icon: '✒️',
       accent: '#8b5cf6',
-      path: '/scribing-simulator',
+      path: '/calculator#scribing',
     },
   ];
 

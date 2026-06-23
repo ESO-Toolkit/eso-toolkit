@@ -1,19 +1,21 @@
 import { test, expect } from '@playwright/test';
 
 /**
- * E2E tests for the Scribing Simulator page (/scribing-simulator).
+ * E2E tests for the Scribing planner, now hosted on the Calculator page as the
+ * "Scribing" tab (/calculator#scribing).
  *
- * The simulator is a live grimoire + script planner: choose a grimoire, slot its
+ * The planner is a live grimoire + script tool: choose a grimoire, slot its
  * compatible Focus / Signature / Affix scripts, and see the resulting scribed
- * skill update instantly. Selection is mirrored to the URL for sharing.
+ * skill update instantly. Selection is mirrored to the URL query for sharing,
+ * with the #scribing hash preserved so a shared link re-opens on this tab.
  *
  * Tests tolerate a data-load error state (the page shows an alert) so they don't
  * flake if the bundled dataset ever fails validation.
  */
 
-test.describe('Scribing Simulator Page', () => {
+test.describe('Scribing planner (Calculator tab)', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/scribing-simulator');
+    await page.goto('/calculator#scribing');
     await page.waitForLoadState('networkidle');
   });
 
@@ -24,17 +26,28 @@ test.describe('Scribing Simulator Page', () => {
       .isVisible()
       .catch(() => false);
 
-  test('loads the simulator (or a clean error state)', async ({ page }) => {
-    await expect(page).toHaveURL(/scribing-simulator/);
-    const heading = page.getByRole('heading', { name: /ESO Scribing Simulator/i });
+  test('opens the Scribing tab (or a clean error state)', async ({ page }) => {
+    await expect(page).toHaveURL(/\/calculator(\?.*)?#scribing/);
+    const chooser = page.getByRole('radiogroup', { name: /Grimoire/i });
     const errorVisible = await hasError(page);
-    expect(errorVisible || (await heading.isVisible())).toBe(true);
+    expect(errorVisible || (await chooser.isVisible())).toBe(true);
   });
 
   test('is not stuck loading', async ({ page }) => {
     await page.waitForTimeout(1500);
     const spinner = page.locator('[role="progressbar"]');
     expect(await spinner.isVisible().catch(() => false)).toBe(false);
+  });
+
+  test('redirects the legacy /scribing-simulator route, preserving shared builds', async ({
+    page,
+  }) => {
+    await page.goto('/scribing-simulator?grimoire=traveling-knife&focus=physical-damage');
+    await page.waitForLoadState('networkidle');
+    await expect(page).toHaveURL(/\/calculator(\?.*)?#scribing/);
+    if (await hasError(page)) test.skip(true, 'Data load error');
+    // The physical focus renames Traveling Knife to "Sundering Knife".
+    await expect(page.getByText(/Sundering Knife/i).first()).toBeVisible();
   });
 
   test.describe('success path', () => {
@@ -79,7 +92,7 @@ test.describe('Scribing Simulator Page', () => {
     });
 
     test('restores a build from a shared URL', async ({ page }) => {
-      await page.goto('/scribing-simulator?grimoire=traveling-knife&focus=physical-damage');
+      await page.goto('/calculator?grimoire=traveling-knife&focus=physical-damage#scribing');
       await page.waitForLoadState('networkidle');
       if (await hasError(page)) test.skip(true, 'Data load error');
       // The physical focus renames Traveling Knife to "Sundering Knife".

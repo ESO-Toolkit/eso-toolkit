@@ -28,7 +28,6 @@ export { FocusScriptDetectionStrategy } from './application/detectors/FocusScrip
 
 // Presentation components
 export { ScribingSimulator } from './presentation/components/ScribingSimulator';
-export { ScribingSimulatorPage } from './presentation/pages/ScribingSimulatorPage';
 export { useScribingSimulation } from './presentation/hooks/useScribingSimulation';
 
 // Component parts for custom implementations

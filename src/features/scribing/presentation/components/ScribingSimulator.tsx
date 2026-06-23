@@ -7,11 +7,7 @@
  * updating instantly. Selection is shareable via the URL.
  */
 
-import {
-  AutoStories as GrimoireIcon,
-  Verified as VerifiedIcon,
-  PlaceOutlined as AltarIcon,
-} from '@mui/icons-material';
+import { Verified as VerifiedIcon, PlaceOutlined as AltarIcon } from '@mui/icons-material';
 import {
   Alert,
   Box,
@@ -27,7 +23,6 @@ import React from 'react';
 import { useLogger } from '@/contexts/LoggerContext';
 
 import type { ScribingSlot } from '../../application/scribingEngine';
-import { SCRIBING_SYSTEM } from '../../data/scribingMetadata';
 import { useScribingSimulation } from '../hooks/useScribingSimulation';
 
 import {
@@ -39,7 +34,7 @@ import {
   ScribedSkillCard,
   ScriptSlotPicker,
 } from './ScribingSimulatorComponents';
-import { SLOT_COLORS, glassPanelSx } from './scribingStyles';
+import { glassPanelSx } from './scribingStyles';
 
 export interface ScribingSimulatorProps {
   className?: string;
@@ -93,68 +88,6 @@ const StepHeader: React.FC<{ n: number; title: string; hint?: string }> = ({ n, 
   );
 };
 
-/** One "value over label" unit of the hero spec strip, led by a slot-colour dot. */
-const StatUnit: React.FC<{ value: string; label: string; dot: string }> = ({
-  value,
-  label,
-  dot,
-}) => (
-  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-    <Box
-      aria-hidden
-      sx={{
-        width: 6,
-        height: 6,
-        borderRadius: '50%',
-        flexShrink: 0,
-        bgcolor: dot,
-        boxShadow: `0 0 6px ${alpha(dot, 0.6)}`,
-      }}
-    />
-    <Box>
-      <Typography
-        sx={{
-          fontFamily: 'Space Grotesk, Inter, system-ui',
-          fontWeight: 700,
-          fontSize: '1.05rem',
-          lineHeight: 1.1,
-        }}
-      >
-        {value}
-      </Typography>
-      <Typography
-        sx={{
-          fontSize: '0.7rem',
-          fontWeight: 600,
-          letterSpacing: '0.08em',
-          textTransform: 'uppercase',
-          color: 'text.secondary',
-          lineHeight: 1,
-        }}
-      >
-        {label}
-      </Typography>
-    </Box>
-  </Box>
-);
-
-/** Hairline divider between spec-strip units. */
-const SpecDivider: React.FC = () => {
-  const theme = useTheme();
-  return (
-    <Box
-      aria-hidden
-      sx={{
-        width: '1px',
-        height: 26,
-        mx: 2,
-        flexShrink: 0,
-        bgcolor: alpha(theme.palette.divider, 0.6),
-      }}
-    />
-  );
-};
-
 export const ScribingSimulator: React.FC<ScribingSimulatorProps> = ({
   className,
   defaultGrimoire,
@@ -181,10 +114,6 @@ export const ScribingSimulator: React.FC<ScribingSimulatorProps> = ({
   } = useScribingSimulation({ defaultGrimoire });
 
   const [shareLabel, setShareLabel] = React.useState('Share build');
-
-  React.useEffect(() => {
-    document.title = 'Scribing Simulator | ESO Toolkit';
-  }, []);
 
   const handleShare = React.useCallback((): void => {
     if (!shareUrl) return;
@@ -257,103 +186,29 @@ export const ScribingSimulator: React.FC<ScribingSimulatorProps> = ({
 
   return (
     <Container maxWidth="lg" className={className}>
-      <Box sx={{ py: { xs: 3, md: 4 } }}>
-        {/* ── Hero — left-anchored masthead ────────────────────────── */}
+      <Box sx={{ py: { xs: 2, md: 3 } }}>
+        {/* ── Build controls — slot legend + primary action & utility rail ── */}
         <Box
           sx={{
-            display: 'grid',
-            gridTemplateColumns: { xs: '1fr', md: 'minmax(0, 1fr) auto' },
-            columnGap: 4,
-            rowGap: { xs: 2.5, md: 2 },
-            alignItems: 'end',
-            mb: { xs: 3, md: 4 },
+            display: 'flex',
+            flexWrap: 'wrap',
+            alignItems: 'center',
+            justifyContent: { xs: 'flex-start', md: 'space-between' },
+            gap: 2,
+            mb: { xs: 2.5, md: 3 },
           }}
         >
-          {/* Masthead text block */}
-          <Box>
-            <Stack direction="row" spacing={1} sx={{ alignItems: 'center', mb: 1.25 }}>
-              <GrimoireIcon sx={{ fontSize: 18, color: 'primary.main' }} />
-              <Typography
-                variant="overline"
-                sx={{
-                  color: 'primary.main',
-                  fontWeight: 700,
-                  letterSpacing: '0.18em',
-                  lineHeight: 1,
-                }}
-              >
-                ESO · Arcane Inscription
-              </Typography>
-            </Stack>
-
-            <Typography
-              component="h1"
-              sx={{
-                fontWeight: 800,
-                fontFamily: 'Space Grotesk, Inter, system-ui',
-                fontSize: { xs: '1.9rem', sm: '2.3rem', md: '2.6rem' },
-                lineHeight: 1.02,
-                letterSpacing: '-0.03em',
-                textWrap: 'balance',
-                background: dark
-                  ? 'linear-gradient(180deg, #ffffff 0%, #9fd8f7 135%)'
-                  : 'linear-gradient(180deg, #0f172a 0%, #0369a1 130%)',
-                WebkitBackgroundClip: 'text',
-                backgroundClip: 'text',
-                color: 'transparent',
-                filter: dark
-                  ? `drop-shadow(0 0 22px ${alpha(theme.palette.primary.main, 0.22)})`
-                  : 'none',
-              }}
-            >
-              ESO Scribing Simulator
-            </Typography>
-
-            <Typography
-              sx={{
-                color: 'text.secondary',
-                maxWidth: '52ch',
-                mt: 1.25,
-                fontSize: '1rem',
-                lineHeight: 1.55,
-                textWrap: 'pretty',
-              }}
-            >
-              {SCRIBING_SYSTEM.intro}
-            </Typography>
-
-            {/* Spec strip — the three real stats, hairline-divided (no pills) */}
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', mt: 2, rowGap: 1 }}>
-              <StatUnit value="12" label="Grimoires" dot={SLOT_COLORS.focus} />
-              <SpecDivider />
-              <StatUnit value="3" label="Script slots" dot={SLOT_COLORS.signature} />
-              <SpecDivider />
-              <StatUnit value="12,000+" label="Combinations" dot={SLOT_COLORS.affix} />
-            </Box>
+          <Box sx={{ display: { xs: 'none', md: 'block' } }}>
+            <RuneTriadLegend />
           </Box>
-
-          {/* Legend (md+) + the single primary CTA with a demoted utility rail */}
-          <Box
-            sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 2.5,
-              alignItems: { xs: 'stretch', md: 'flex-end' },
-              justifyContent: 'flex-end',
-            }}
+          <Stack
+            direction="row"
+            spacing={1.25}
+            sx={{ alignItems: 'center', width: { xs: '100%', md: 'auto' } }}
           >
-            <Box sx={{ display: { xs: 'none', md: 'block' } }}>
-              <RuneTriadLegend />
-            </Box>
-            <Stack
-              direction="row"
-              spacing={1.25}
-              sx={{ alignItems: 'center', width: { xs: '100%', md: 'auto' } }}
-            >
-              <PrimaryScribeAction onRandomize={randomize} sx={{ flexGrow: { xs: 1, md: 0 } }} />
-              <BuildUtilityRail onReset={reset} onShare={handleShare} shareLabel={shareLabel} />
-            </Stack>
-          </Box>
+            <PrimaryScribeAction onRandomize={randomize} sx={{ flexGrow: { xs: 1, md: 0 } }} />
+            <BuildUtilityRail onReset={reset} onShare={handleShare} shareLabel={shareLabel} />
+          </Stack>
         </Box>
 
         {/* ── Bench + Altar ────────────────────────────────────────── */}

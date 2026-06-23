@@ -18,6 +18,7 @@ import { PerfTierProvider } from './components/PerfTierProvider';
 import { ReportFightsSkeleton } from './components/ReportFightsSkeleton';
 import { RosterBuilderSkeleton } from './components/RosterBuilderSkeleton';
 import { RosterHubSkeleton } from './components/RosterHubSkeleton';
+import { ScribingRedirect } from './components/ScribingRedirect';
 import { ScrollRestoration } from './components/ScrollRestoration';
 import { SiteBackground } from './components/shared';
 import { SmartCalculatorSkeleton } from './components/SmartCalculatorSkeleton';
@@ -92,11 +93,6 @@ const LeaderboardLogsPage = React.lazy(() =>
 );
 const FightReplay = React.lazy(() =>
   import('./features/fight_replay/FightReplay').then((module) => ({ default: module.FightReplay })),
-);
-const ScribingSimulatorPage = React.lazy(() =>
-  import('./pages/ScribingSimulatorPage').then((module) => ({
-    default: module.ScribingSimulatorPage,
-  })),
 );
 const UltimateSimulatorPage = React.lazy(() =>
   import('./pages/UltimateSimulatorPage').then((module) => ({
@@ -632,16 +628,9 @@ const AppRoutes: React.FC = () => {
                 </AuthenticatedRoute>
               }
             />
-            <Route
-              path="/scribing-simulator"
-              element={
-                <ErrorBoundary>
-                  <Suspense fallback={<LoadingFallback />}>
-                    <ScribingSimulatorPage />
-                  </Suspense>
-                </ErrorBoundary>
-              }
-            />
+            {/* The Scribing planner now lives on /calculator as the "Scribing"
+                tab — forward old links (and shared build URLs) to it. */}
+            <Route path="/scribing-simulator" element={<ScribingRedirect />} />
             <Route
               path="/ultimate-simulator"
               element={

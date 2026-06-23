@@ -301,7 +301,7 @@ test.describe('Nightly Regression - Pages & Features', () => {
   // ---------------------------------------------------------------------------
   test.describe('Scribing Simulator', () => {
     test('scribing simulator should load with interactive UI', async ({ page }) => {
-      await page.goto('/scribing-simulator', {
+      await page.goto('/calculator#scribing', {
         waitUntil: 'domcontentloaded',
         timeout: TEST_TIMEOUTS.navigation,
       });
@@ -329,7 +329,7 @@ test.describe('Nightly Regression - Pages & Features', () => {
     });
 
     test('scribing simulator should respond to a basic skill selection', async ({ page }) => {
-      await page.goto('/scribing-simulator', {
+      await page.goto('/calculator#scribing', {
         waitUntil: 'domcontentloaded',
         timeout: TEST_TIMEOUTS.navigation,
       });

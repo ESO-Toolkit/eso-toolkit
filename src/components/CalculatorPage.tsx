@@ -1,15 +1,21 @@
 /**
  * /calculator host page — a top-level tab switcher between the existing stat
- * calculator (Penetration / Critical / Armor) and the new Ultimate Calculator.
+ * calculator (Penetration / Critical / Armor), the Ultimate Calculator, and the
+ * Scribing planner.
  *
  * The Stats tab renders the original `Calculator` unchanged, so its sticky
  * footer and internal pen/crit/armor tabs keep working exactly as before — this
  * wrapper only adds the outer tab and never touches the stat calculator's markup.
+ *
+ * The active tab is derived from the URL hash (#ultimate / #scribing) via React
+ * Router, so deep-links and header/footer links switch tabs reliably — even when
+ * the user is already on /calculator.
  */
 
-import { BoltOutlined, TuneOutlined } from '@mui/icons-material';
-import { Box, Container, Tab, Tabs } from '@mui/material';
-import React, { Suspense, useState } from 'react';
+import { BoltOutlined, HistoryEduOutlined, TuneOutlined } from '@mui/icons-material';
+import { Box, CircularProgress, Container, Tab, Tabs } from '@mui/material';
+import React, { Suspense } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 import { Calculator } from './Calculator';
 import { UltimateCalculatorSkeleton } from './UltimateCalculatorSkeleton';
@@ -20,25 +26,46 @@ const UltimateCalculator = React.lazy(() =>
   })),
 );
 
-type TopTab = 'stats' | 'ultimate';
+const ScribingSimulator = React.lazy(() =>
+  import('@features/scribing/presentation/components/ScribingSimulator').then((m) => ({
+    default: m.ScribingSimulator,
+  })),
+);
 
-const VALID_TABS: readonly TopTab[] = ['stats', 'ultimate'];
+type TopTab = 'stats' | 'ultimate' | 'scribing';
 
-/** Read the initial tab from the URL hash (#ultimate) for shareable deep-links. */
-function initialTab(): TopTab {
-  if (typeof window === 'undefined') return 'stats';
-  const hash = window.location.hash.replace('#', '').toLowerCase();
-  return (VALID_TABS as readonly string[]).includes(hash) ? (hash as TopTab) : 'stats';
+const VALID_TABS: readonly TopTab[] = ['stats', 'ultimate', 'scribing'];
+
+/** Map the URL hash (#ultimate / #scribing) to a tab, defaulting to Stats. */
+function tabFromHash(hash: string): TopTab {
+  const h = hash.replace('#', '').toLowerCase();
+  return (VALID_TABS as readonly string[]).includes(h) ? (h as TopTab) : 'stats';
 }
 
+/** Lightweight fallback while a lazy tab chunk loads. */
+const TabFallback: React.FC = () => (
+  <Container maxWidth="lg" sx={{ py: 3 }}>
+    <Box
+      role="status"
+      aria-live="polite"
+      sx={{ display: 'flex', justifyContent: 'center', py: 10 }}
+    >
+      <CircularProgress aria-label="Loading" />
+    </Box>
+  </Container>
+);
+
 export const CalculatorPage: React.FC = () => {
-  const [tab, setTab] = useState<TopTab>(initialTab);
+  const location = useLocation();
+  const navigate = useNavigate();
+  const tab = tabFromHash(location.hash);
 
   const handleChange = (_: React.SyntheticEvent, next: TopTab): void => {
-    setTab(next);
-    if (typeof window !== 'undefined') {
-      window.history.replaceState(null, '', next === 'stats' ? ' ' : `#${next}`);
-    }
+    // Route the tab through React Router so the URL hash stays the single source
+    // of truth. Preserve the live query string (the Scribing tab mirrors its
+    // build there) and use `replace` so switching tabs doesn't stack history.
+    const search = typeof window !== 'undefined' ? window.location.search : '';
+    navigate(`/calculator${search}${next === 'stats' ? '' : `#${next}`}`, { replace: true });
   };
 
   return (
@@ -113,6 +140,12 @@ export const CalculatorPage: React.FC = () => {
             iconPosition="start"
             label="Ultimate"
           />
+          <Tab
+            value="scribing"
+            icon={<HistoryEduOutlined fontSize="small" />}
+            iconPosition="start"
+            label="Scribing"
+          />
         </Tabs>
       </Container>
 
@@ -128,6 +161,13 @@ export const CalculatorPage: React.FC = () => {
             <UltimateCalculator />
           </Suspense>
         </Container>
+      )}
+
+      {tab === 'scribing' && (
+        <Suspense fallback={<TabFallback />}>
+          {/* ScribingSimulator provides its own <Container>. */}
+          <ScribingSimulator />
+        </Suspense>
       )}
     </Box>
   );
