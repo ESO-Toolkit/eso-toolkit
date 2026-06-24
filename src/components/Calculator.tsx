@@ -5834,7 +5834,7 @@ const CalculatorComponent: React.FC = () => {
                           ? 'Target: 125%'
                           : gameMode === 'pvp'
                             ? 'Target: 125%'
-                            : 'PvE: 125%+\nPvP: 100%+',
+                            : 'PvE: 125%\nPvP: 100%',
                     },
                   })}
                 {selectedTab === 2 &&
