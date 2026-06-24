@@ -2222,26 +2222,30 @@ export const BuildViewPage: React.FC = () => {
   const isOwned = Boolean(ownedSavedBuild);
 
   const handleOpenInEditor = (): void => {
+    // Fail closed: never navigate to the editor (especially with an ?id= save
+    // target) without a payload — an empty editor pointed at ?id= would
+    // overwrite the saved build with blank state on save. (The ?id= view path
+    // drops the retained payload to '' when an authoritative visibility change
+    // can't be re-encoded, so this guard also covers that case.)
     if (!encodedParam) {
-      // No usable self-contained payload to hand the editor — the retained blob
-      // was dropped (fail-closed on a visibility mismatch we couldn't re-encode)
-      // or never set. The editor loads only from a non-empty ?b=; navigating
-      // with an empty one opens a blank editor while ?id= still acts as the
-      // save target, so a save would overwrite the owner's saved build with
-      // blank data. Refuse to navigate (even for owned builds) and surface an
-      // error instead.
       setSnackbar({
         open: true,
-        message: 'This build cannot be opened in the editor right now. Try reloading the page.',
+        message: 'Could not open this build in the editor. Please reload and try again.',
         severity: 'error',
       });
       return;
     }
-    const base = `/build-editor?b=${encodeURIComponent(encodedParam)}`;
+    // Hand the encoded build to the editor via router state, NOT a ?b= URL
+    // param: this view can render a *private* build (the owner's ?id= view or
+    // an in-app owner preview), and the full blob must never land in the
+    // address bar/history/Referer. Only the non-sensitive save-target (?id=)
+    // stays in the URL.
+    const target = ownedSavedBuild ? `/build-editor?id=${ownedSavedBuild.id}` : '/build-editor';
     // Forward drill that morphs the shared build-hero header into the editor's
     // header — consistent with every other build navigation (which uses
     // vtType:'forward' + morph) instead of the bare default crossfade.
-    navigate(ownedSavedBuild ? `${base}&id=${ownedSavedBuild.id}` : base, {
+    navigate(target, {
+      state: { buildData: encodedParam },
       vtType: 'forward',
       morph: { ref: buildHeroRef, name: 'build-hero' },
     });

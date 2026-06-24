@@ -401,3 +401,51 @@ describe('BuildViewPage visibility enforcement', () => {
     expect(screen.queryByTestId('build-shell')).not.toBeInTheDocument();
   });
 });
+
+describe('BuildViewPage → editor navigation keeps the build out of the URL', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockDecode.mockResolvedValue(null);
+    mockUseSelector.mockReturnValue([]);
+  });
+
+  it('Open-in-Editor (Remix, not owned) passes the build via router state, never a ?b= blob', async () => {
+    mockDecode.mockResolvedValue(fullBuild('link-only'));
+
+    renderEncoded('encoded-link-only-build');
+
+    await waitFor(() => expect(screen.getByTestId('build-shell')).toBeInTheDocument());
+
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: /Open your own editable copy of this build in the editor/i,
+      }),
+    );
+
+    await waitFor(() => expect(mockNavigate).toHaveBeenCalled());
+    const [to, options] = mockNavigate.mock.calls[0] as [string, Record<string, unknown>];
+    expect(to).toBe('/build-editor');
+    expect(to).not.toContain('b=');
+    expect(options.state).toEqual({ buildData: 'encoded-link-only-build' });
+  });
+
+  it('Open-in-Editor (owned) keeps only the non-sensitive ?id= save target in the URL', async () => {
+    mockDecode.mockResolvedValue(fullBuild('private'));
+    // Owner viewing their own private build via in-app preview; the saved build
+    // matches build.id ('b1'), so the editor link carries ?id= as the save target.
+    mockUseSelector.mockReturnValue([{ id: 'saved-99', build: { id: 'b1' } }] as never);
+
+    renderEncoded('encoded-private-build', { ownerPreview: true });
+
+    await waitFor(() => expect(screen.getByTestId('build-shell')).toBeInTheDocument());
+
+    fireEvent.click(screen.getByRole('button', { name: /Edit your saved build in the editor/i }));
+
+    await waitFor(() => expect(mockNavigate).toHaveBeenCalled());
+    const [to, options] = mockNavigate.mock.calls[0] as [string, Record<string, unknown>];
+    expect(to).toBe('/build-editor?id=saved-99');
+    expect(to).not.toContain('b=');
+    // The full private blob travels in state only — never in the address bar.
+    expect(options.state).toEqual({ buildData: 'encoded-private-build' });
+  });
+});

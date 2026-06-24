@@ -60,12 +60,17 @@ export const SlotActionPill = React.memo<SlotActionPillProps>(
         const build = buildFactory();
         const encoded = await encodeBuildToURL(build);
         if (encoded) {
-          // Build the URL with roster context params for round-trip support
-          const params = new URLSearchParams({ b: encoded });
+          // Roster round-trip context params stay in the URL (non-sensitive);
+          // the encoded build travels via router state so the full blob never
+          // lands in the editor's address bar/history/Referer.
+          const params = new URLSearchParams();
           if (slotKey) params.set('slot', slotKey);
           if (rosterId) params.set('rid', rosterId);
           if (slotKey || rosterId) params.set('from', 'roster');
-          navigate(`/build-editor?${params.toString()}`);
+          const query = params.toString();
+          navigate(query ? `/build-editor?${query}` : '/build-editor', {
+            state: { buildData: encoded },
+          });
         } else {
           enqueueSnackbar('Could not encode build — please try again.', { variant: 'error' });
         }
