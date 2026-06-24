@@ -36,7 +36,7 @@ test.describe('C1/C2 – Picker glass fallback (perf tier: low)', () => {
   test('gear picker paper has an opaque background when backdrop-filter is stripped', async ({
     page,
   }) => {
-    // Open the Equipment section (starts collapsed on mobile) via the nav rail
+    // Jump to the Equipment section via the nav rail (sections start expanded on mobile)
     const equipNav = page.getByRole('button', { name: /Equipment/i }).first();
     await equipNav.click();
 
