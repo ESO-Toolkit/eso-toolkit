@@ -179,6 +179,11 @@ export const BatchedActorNames3D: React.FC<BatchedActorNames3DProps> = ({
   // Scratch objects reused every frame (no per-frame allocation in the hot loop).
   const scratchWorld = useRef(new THREE.Vector3());
   const scratchProjected = useRef(new THREE.Vector3());
+  // Pooled NameScreenItem objects (grow-only, never shrunk) so Pass 1 mutates existing objects
+  // instead of allocating ~N fresh ones every frame — that per-frame garbage was a steady GC drip
+  // at the playback frame rate. `screenItems` is the reused active list (length reset each frame; it
+  // holds references INTO the pool, so resolveNameVisibility — which only reads — is unaffected).
+  const itemPool = useRef<NameScreenItem[]>([]);
   const screenItems = useRef<NameScreenItem[]>([]);
 
   useFrame(() => {
@@ -205,6 +210,8 @@ export const BatchedActorNames3D: React.FC<BatchedActorNames3DProps> = ({
     // --- Pass 1: position / orient / scale / text every name; collect on-screen rectangles ----
     const items = screenItems.current;
     items.length = 0;
+    const pool = itemPool.current;
+    let poolIdx = 0;
 
     handles.forEach((handle, actorId) => {
       const group = handle.group;
@@ -269,14 +276,20 @@ export const BatchedActorNames3D: React.FC<BatchedActorNames3DProps> = ({
       const halfW = (labelWorldW * worldToPixel) / 2;
       const halfH = (labelWorldH * worldToPixel) / 2;
 
-      items.push({
-        id: actorId,
-        screenX,
-        screenY,
-        halfW,
-        halfH,
-        priority: priorityForActor(actor, selectedActorId),
-      });
+      // Reuse a pooled item object (grow the pool on demand) instead of allocating a fresh literal.
+      let it = pool[poolIdx];
+      if (!it) {
+        it = { id: 0, screenX: 0, screenY: 0, halfW: 0, halfH: 0, priority: NamePriority.NORMAL };
+        pool[poolIdx] = it;
+      }
+      poolIdx++;
+      it.id = actorId;
+      it.screenX = screenX;
+      it.screenY = screenY;
+      it.halfW = halfW;
+      it.halfH = halfH;
+      it.priority = priorityForActor(actor, selectedActorId);
+      items.push(it);
     });
 
     // --- Pass 2: resolve overlap once, then write opacity through the refs --------------------

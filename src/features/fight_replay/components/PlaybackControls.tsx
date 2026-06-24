@@ -28,24 +28,22 @@ import {
 } from '@mui/material';
 import React from 'react';
 
-import { useOptimizedTimelineScrubbing } from '../../../hooks/useOptimizedTimelineScrubbing';
 import { usePrefersReducedMotion } from '../../../hooks/usePrefersReducedMotion';
 import { useTimelineMarkers } from '../../../hooks/useTimelineMarkers';
-import {
-  TRANSPORT_SPACING,
-  TRANSPORT_MOTION,
-  transportSurface,
-  transportHairline,
-} from '../constants/replayDesign';
+import { TRANSPORT_SPACING, TRANSPORT_MOTION, transportSurface } from '../constants/replayDesign';
 import type { TrialTimeline as TrialTimelineModel } from '../trial_chapters/trialTimeline';
 import type { TrialChapter } from '../trial_chapters/types';
 
 import { ChaptersPopoverButton } from './ChaptersPopoverButton';
+import { LiveScrubRail } from './LiveScrubRail';
+import { LiveTrialStrip } from './LiveTrialStrip';
 import { PlaybackButtons } from './PlaybackButtons';
+import { ProgressHairline } from './ProgressHairline';
 import { ShareButton } from './ShareButton';
 import { SpeedSelector } from './SpeedSelector';
-import { ContextBadge, LoopChip, TimelineSlider } from './TimelineSlider';
-import { TrialTimeline, type TrialTimelineSeekTarget } from './TrialTimeline';
+import { ContextBadge, LoopChip } from './TimelineSlider';
+import { TimeReadout } from './TimeReadout';
+import { type TrialTimelineSeekTarget } from './TrialTimeline';
 
 /**
  * The trial-run bundle the deck needs to render the whole-run layer: the
@@ -84,7 +82,6 @@ export interface TransportTrial {
 }
 
 interface PlaybackControlsProps {
-  currentTime: number;
   duration: number;
   isPlaying: boolean;
   playbackSpeed: number;
@@ -129,8 +126,6 @@ interface PlaybackControlsProps {
   barVisible?: boolean;
   /** Toggle the bar collapsed/shown (the chevron + restore caret; mirrors the C key). */
   onToggleCollapse?: () => void;
-  /** Fraction elapsed (0–100) for the progress hairline shown while the bar is hidden. */
-  progressPct?: number;
   /**
    * Mobile layout: collapses the control row to the essentials (timecode · play cluster · more)
    * and tucks Speed + Share behind a "more" toggle, so the transport stays uncluttered on a phone.
@@ -162,8 +157,7 @@ const formatTime = (timeMs: number): string => {
  * - Timeline slider with scrubbing support
  * - Control row: timecode/outcome/speed · transport + boss skip · trial toggles/share
  */
-export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
-  currentTime,
+const PlaybackControlsComponent: React.FC<PlaybackControlsProps> = ({
   duration,
   isPlaying,
   playbackSpeed,
@@ -190,7 +184,6 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
   isFullscreen = false,
   barVisible = true,
   onToggleCollapse,
-  progressPct = 0,
   isMobile = false,
   trial,
 }) => {
@@ -211,24 +204,6 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
     return undefined;
   }, [moreOpen]);
 
-  // Use optimized timeline scrubbing for better performance
-  const {
-    displayTime,
-    isDragging,
-    isScrubbingMode,
-    handleSliderChange,
-    handleSliderChangeStart,
-    handleSliderChangeEnd,
-    optimizedStep,
-  } = useOptimizedTimelineScrubbing({
-    duration,
-    currentTime,
-    onTimeChange,
-    isPlaying,
-    onPlayingChange,
-    timeRef,
-  });
-
   // Get timeline markers (phase transitions, death events)
   const { markers } = useTimelineMarkers();
 
@@ -247,15 +222,6 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
     },
     [onTimeChange],
   );
-
-  // Notify parent components about scrubbing mode changes
-  React.useEffect(() => {
-    onScrubbingModeChange?.(isScrubbingMode);
-  }, [isScrubbingMode, onScrubbingModeChange]);
-
-  React.useEffect(() => {
-    onDraggingChange?.(isDragging);
-  }, [isDragging, onDraggingChange]);
 
   const prefersReducedMotion = usePrefersReducedMotion();
 
@@ -284,8 +250,9 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
 
   return (
     <Box sx={{ position: 'relative' }}>
-      {/* Progress hairline — only while the fullscreen bar is hidden, so position stays legible. */}
-      {hidden && <Box sx={(t) => transportHairline(t, progressPct)} aria-hidden />}
+      {/* Progress hairline — only while the fullscreen bar is hidden, so position stays legible.
+          rAF-driven (reads timeRef directly) so it never re-renders this transport per tick. */}
+      {hidden && <ProgressHairline timeRef={timeRef} duration={duration} />}
       {/* Restore caret sitting on the hairline — a REAL focusable button so keyboard/AT users can
           bring the bar back without depending on pointer-move reveal. */}
       {hidden && onToggleCollapse && (
@@ -334,27 +301,28 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
         {/* Row 0: trial mini-map — the whole run as one gapless strip, flush above the fight
             rail so the two playheads share one x-axis and read as one system. */}
         {showTrialStrip && trial && (
-          <TrialTimeline
+          <LiveTrialStrip
+            timeRef={timeRef}
             timeline={trial.timeline}
             currentFightId={trial.currentFightId}
             currentFightStartTime={trial.currentFightStartTime}
-            currentLocalMs={displayTime}
             onSeek={trial.onSeek}
             onDraggingChange={trial.onDraggingChange}
             variant="deck"
           />
         )}
 
-        {/* Row 1: scrub rail — full width, the primary control. density="compact" = rail only. */}
-        <TimelineSlider
-          displayTime={displayTime}
+        {/* Row 1: scrub rail — full width, the primary control. density="compact" = rail only.
+            LiveScrubRail owns the high-frequency playhead subscription so only it (not this whole
+            transport) re-renders as playback advances. */}
+        <LiveScrubRail
+          timeRef={timeRef}
           duration={duration}
-          isDragging={isDragging}
-          isScrubbingMode={isScrubbingMode}
-          optimizedStep={optimizedStep}
-          onSliderChange={handleSliderChange}
-          onSliderChangeEnd={handleSliderChangeEnd}
-          onSliderChangeStart={handleSliderChangeStart}
+          isPlaying={isPlaying}
+          onTimeChange={onTimeChange}
+          onPlayingChange={onPlayingChange}
+          onScrubbingModeChange={onScrubbingModeChange}
+          onDraggingChange={onDraggingChange}
           markers={railMarkers}
           onMarkerClick={handleMarkerClick}
           replayContext={replayContext}
@@ -396,12 +364,16 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
                 flexShrink: 0,
                 fontFamily: 'Space Grotesk, Inter, system-ui',
                 fontVariantNumeric: 'tabular-nums',
-                color: isScrubbingMode || isDragging ? 'info.main' : 'text.primary',
+                color: 'text.primary',
               }}
             >
-              <Box component="span" sx={{ fontSize: '1rem', fontWeight: 600 }}>
-                {formatTime(displayTime)}
-              </Box>
+              {/* Live timecode — rAF-driven from timeRef, so it stays smooth without re-rendering
+                  the transport every tick. */}
+              <TimeReadout
+                timeRef={timeRef}
+                format={formatTime}
+                sx={{ fontSize: '1rem', fontWeight: 600 }}
+              />
               <Box
                 component="span"
                 className="transport-total-time"
@@ -575,7 +547,6 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
               <ShareButton
                 reportId={reportId}
                 fightId={fightId}
-                currentTime={currentTime}
                 selectedActorIdRef={selectedActorIdRef}
                 timeRef={timeRef}
               />
@@ -648,7 +619,6 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
             <ShareButton
               reportId={reportId}
               fightId={fightId}
-              currentTime={currentTime}
               selectedActorIdRef={selectedActorIdRef}
               timeRef={timeRef}
             />
@@ -661,3 +631,12 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
     </Box>
   );
 };
+
+/**
+ * Memoized so the transport bar (trial mini-map, event markers, control row, buttons) does NOT
+ * re-render as playback advances. The live playhead is owned by LiveScrubRail + TimeReadout +
+ * ProgressHairline (each reads `timeRef` on its own rAF), so none of PlaybackControls' props change
+ * per tick — the parent (FightReplay3D) only re-renders on coarse state (≤4Hz, end-of-fight gates),
+ * and the memo holds across it. This is the core of the low-power fps fix.
+ */
+export const PlaybackControls = React.memo(PlaybackControlsComponent);

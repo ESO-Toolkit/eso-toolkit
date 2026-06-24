@@ -20,7 +20,6 @@ import {
   TRANSPORT_RESERVED,
   TRANSPORT_MOTION,
   HAIRLINE_H,
-  transportHairline,
 } from '../constants/replayDesign';
 import { useDelayedFlag } from '../hooks/useDelayedFlag';
 import { useIsMobileReplay } from '../hooks/useIsMobileReplay';
@@ -38,6 +37,7 @@ import { Arena3D } from './Arena3D';
 import { ADD_MARKER_AT_CENTER_EVENT } from './Arena3DScene';
 import { MobileReplayDock } from './mobile/MobileReplayDock';
 import { PlaybackControls, PLAYBACK_SPEEDS, type TransportTrial } from './PlaybackControls';
+import { ProgressHairline } from './ProgressHairline';
 import { ReplayTransitionOverlay } from './ReplayTransitionOverlay';
 import type { TrialTimelineSeekTarget } from './TrialTimeline';
 import { UpNextCard, type UpNextState } from './UpNextCard';
@@ -249,6 +249,25 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
   const toggleNames = useCallback(() => setNamesEnabled((v) => !v), []);
   const togglePerformance = useCallback(() => setPerformanceMode((v) => !v), []);
   const toggleStats = useCallback(() => setStatsPanelEnabled((v) => !v), []);
+
+  // Adaptive quality governor (the tier below resolution scaling). `autoQualityLevel` is the
+  // governor's current effect-drop level (0 = full); the QualityGovernor inside the scene requests
+  // changes via handleQualityLevelChange. `qualityAutoDisabled` is set when the user taps the
+  // "Performance mode (auto)" chip to force full quality — the governor then stands down. Owned here
+  // so the scene (effect flags) and the chip share one source of truth.
+  const [autoQualityLevel, setAutoQualityLevel] = useState(0);
+  const [qualityAutoDisabled, setQualityAutoDisabled] = useState(false);
+  const handleQualityLevelChange = useCallback((level: number) => setAutoQualityLevel(level), []);
+  // When manual performance mode turns on it forces all effects off, so the governor stands down
+  // (gated in Arena3DScene). Clear any level it had latched so that turning manual mode back off
+  // snaps straight to full quality (effectiveLevel = max(0, 0)) instead of inheriting a stale level.
+  useEffect(() => {
+    if (performanceMode) setAutoQualityLevel(0);
+  }, [performanceMode]);
+  const handleForceFullQuality = useCallback(() => {
+    setQualityAutoDisabled(true);
+    setAutoQualityLevel(0);
+  }, []);
 
   // Compact contextual badges for the transport bar (encounter · difficulty · outcome).
   // The encounter name is shortened to its trailing word(s) so it complements — rather than
@@ -495,6 +514,9 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
     setIsPlaying(false);
     setFollowingActor(selectedActorIdFromUrl);
     setSelectedPlayerIds(new Set());
+    // A new fight is a fresh scene with its own load — re-measure from full quality. (The user's
+    // "force full quality" choice, qualityAutoDisabled, deliberately persists across fights.)
+    setAutoQualityLevel(0);
     // A new fight is a new boundary: clear BOTH halves of any Up-next cancel (a stale
     // countdownCancelled would suppress the next fight's countdown — the only Cancel UI —
     // while the cleared skip ref let it auto-advance silently).
@@ -1368,6 +1390,10 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
           onToggleNames={toggleNames}
           performanceMode={performanceMode}
           onTogglePerformance={togglePerformance}
+          autoQualityLevel={autoQualityLevel}
+          onQualityLevelChange={handleQualityLevelChange}
+          qualityAutoDisabled={qualityAutoDisabled}
+          onForceFullQuality={handleForceFullQuality}
           statsPanelEnabled={statsPanelEnabled}
           onToggleStats={toggleStats}
           // On mobile immersive the dedicated shell owns the close + all controls, so suppress
@@ -1571,10 +1597,7 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
             }}
           >
             <KeyboardArrowUpRoundedIcon sx={{ fontSize: 20, color: 'rgba(255,255,255,0.82)' }} />
-            <Box
-              aria-hidden
-              sx={(t) => transportHairline(t, duration > 0 ? (currentTime / duration) * 100 : 0)}
-            />
+            <ProgressHairline timeRef={animationTimeRef.timeRef} duration={duration} />
           </Box>
           <IconButton
             aria-label="Close replay"
@@ -1610,7 +1633,6 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
           }}
         >
           <MobileReplayDock
-            currentTime={currentTime}
             duration={selectedFight.endTime - selectedFight.startTime}
             isPlaying={isPlaying}
             playbackSpeed={playbackSpeed}
@@ -1675,7 +1697,6 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
           }}
         >
           <PlaybackControls
-            currentTime={currentTime}
             duration={selectedFight.endTime - selectedFight.startTime}
             isPlaying={isPlaying}
             playbackSpeed={playbackSpeed}
@@ -1701,11 +1722,6 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
             isFullscreen={isImmersive}
             barVisible={barVisible}
             onToggleCollapse={toggleBar}
-            progressPct={
-              selectedFight.endTime > selectedFight.startTime
-                ? (currentTime / (selectedFight.endTime - selectedFight.startTime)) * 100
-                : 0
-            }
             overlay
             isMobile={isMobile}
             trial={transportTrial}

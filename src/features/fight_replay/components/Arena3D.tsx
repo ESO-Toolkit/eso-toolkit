@@ -157,6 +157,14 @@ interface Arena3DProps {
   onToggleNames?: () => void;
   performanceMode?: boolean;
   onTogglePerformance?: () => void;
+  /** Auto quality level from the governor (0 = full); drives the "Performance mode (auto)" chip. */
+  autoQualityLevel?: number;
+  /** Governor requests a new quality level (escalate/recover one effect tier). */
+  onQualityLevelChange?: (level: number) => void;
+  /** True when the user forced full quality via the chip — the governor stands down. */
+  qualityAutoDisabled?: boolean;
+  /** Chip action: force full quality (disable the auto governor for the session). */
+  onForceFullQuality?: () => void;
   statsPanelEnabled?: boolean;
   onToggleStats?: () => void;
   /** True when the replay block is fullscreen/immersive (drives the fill-height layout + toggle icon). */
@@ -222,6 +230,10 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
   onToggleNames,
   performanceMode: performanceModeProp,
   onTogglePerformance,
+  autoQualityLevel = 0,
+  onQualityLevelChange,
+  qualityAutoDisabled = false,
+  onForceFullQuality,
   statsPanelEnabled: statsPanelEnabledProp,
   onToggleStats,
   reservedInset,
@@ -240,6 +252,13 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
   const perfTier = usePerfTier();
   const prefersReducedMotion = usePrefersReducedMotion();
   const previewMode = decidePreviewMode(perfTier, prefersReducedMotion);
+  // Stable [min, max] DPR range for the Canvas. Memoized so a re-render doesn't hand R3F a new array
+  // and re-apply the DPR — that would overwrite AdaptiveResolution's runtime downscale (which owns
+  // the pixel ratio after mount). Only a genuine perf-tier change produces a new range.
+  const canvasDprRange = useMemo<[number, number]>(
+    () => (perfTier === 'low' ? [1, 1.5] : [1, 2]),
+    [perfTier],
+  );
   const [showKeyboardHelp, setShowKeyboardHelp] = useState(false);
 
   // Persisted viewer prefs (localStorage). Arena3D owns the names + performance slices; the
@@ -757,7 +776,7 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
           // models"). 1.5× restores most of that crispness while still trimming the fill cost vs a full
           // 2× for genuinely weak GPUs. Reactive — changes apply without a remount. (This is a perf
           // lever, not the floor-sharpness fix; the floor crispness win comes from the unsharp mask.)
-          dpr={perfTier === 'low' ? [1, 1.5] : [1, 2]}
+          dpr={canvasDprRange}
           camera={{
             position: initialCameraPosition,
             fov: 30,
@@ -849,6 +868,9 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
             playerVisibility={playerVisibility}
             playerColorOverrides={playerColorOverrides}
             performanceMode={performanceMode}
+            autoQualityLevel={autoQualityLevel}
+            onQualityLevelChange={onQualityLevelChange}
+            qualityAutoDisabled={qualityAutoDisabled}
             mobileImmersive={mobileImmersive}
           />
         </Canvas>
@@ -1429,6 +1451,44 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
           </Typography>
         </Box>
       )}
+
+      {/* Auto-quality chip — shown only when the governor has silently reduced effects to hold
+          framerate on a weak/throttled device (not when the user chose performance mode themselves,
+          and not in the inline preview). A tap forces full quality back and stands the governor down.
+          Anchored bottom-CENTER just above the transport: the bottom-left lane is owned by the
+          locked-player stats panel (which grows upward) and the bottom-right by the control stack, so
+          center is the one bottom lane that never collides. */}
+      {!mobilePreview &&
+        onForceFullQuality &&
+        !performanceMode &&
+        !qualityAutoDisabled &&
+        autoQualityLevel > 0 && (
+          <Tooltip title="Effects were automatically reduced to keep playback smooth on this device. Tap to force full quality.">
+            <Chip
+              icon={<Bolt sx={{ fontSize: '0.95rem' }} />}
+              label="Performance mode (auto)"
+              size="small"
+              onClick={onForceFullQuality}
+              aria-label="Effects auto-reduced for performance. Tap to force full quality."
+              sx={{
+                position: 'absolute',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                bottom: (reservedInset ?? 80) + 12,
+                zIndex: 4,
+                cursor: 'pointer',
+                color: '#e2e8f0',
+                backgroundColor: 'rgba(13,20,48,0.82)',
+                backdropFilter: 'blur(8px)',
+                WebkitBackdropFilter: 'blur(8px)',
+                border: '1px solid rgba(252,211,77,0.4)',
+                fontSize: '0.72rem',
+                '& .MuiChip-icon': { color: '#fcd34d' },
+                '&:hover': { backgroundColor: 'rgba(13,20,48,0.95)' },
+              }}
+            />
+          </Tooltip>
+        )}
     </div>
   );
 };
