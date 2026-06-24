@@ -13,11 +13,14 @@ import type { GearConfig } from '@features/loadout-manager/types/loadout.types';
 
 import {
   ANTHELMIR_DIVISOR,
+  ARMOR_BASE_PER_PIECE,
   ARMOR_CAP,
   ARMOR_MAX,
   BALORGH_MULTIPLIER,
   BASE_CRIT_CHANCE,
   BASE_CRIT_DAMAGE,
+  BASE_MAX_HEALTH,
+  CLASS_HEALTH_PASSIVES,
   CLASS_MASTERY_CRIT_PASSIVES,
   CLASS_PASSIVES,
   CP_FIGHTING_FINESSE_CRIT_DMG,
@@ -31,22 +34,44 @@ import {
   CRIT_DMG_CAPS,
   CRIT_DMG_GEAR,
   DEFAULT_STAT_OVERRIDES,
+  DIVINES_MUNDUS_PCT_PER_GOLD_PIECE,
+  HEALTH_PER_ATTRIBUTE_POINT,
   LIGHT_ARMOR_PEN_PER_PIECE,
+  LORD_MUNDUS_ID,
   MEDIUM_ARMOR_CRIT_DMG_PER_PIECE,
+  MINOR_TOUGHNESS_MAX_HEALTH,
+  MINOR_TOUGHNESS_NAME,
+  MITIGATION_HARD_CAP,
   MUNDUS_BONUSES,
+  MUNDUS_LORD_7_DIVINES_HEALTH,
+  MUNDUS_LORD_BASE_HEALTH,
   PEN_BUFFS,
   PEN_CAPS,
+  RACE_HEALTH_PASSIVES,
   RACE_PASSIVES,
+  RESISTANCE_PER_1PCT_MITIGATION,
   TRAIT_DEFENDING_RESISTANCE,
   TRAIT_NIRNHONED_ARMOR_RESISTANCE,
   TRAIT_PRECISE_CRIT_RATING,
   TRAIT_SHARPENED_PEN,
 } from './stat-constants';
-import type { BuildStats, StatItem, StatOverrides, StatResult, StatStatus } from './stat-types';
+import type {
+  BuildStats,
+  StatItem,
+  StatOverrides,
+  StatResult,
+  StatStatus,
+  Survivability,
+} from './stat-types';
 
 // ─── Armor weight counting ──────────────────────────────────────────────────
 
 const APPAREL_SLOTS = EQUIP_SLOTS.filter((s) => s.category === 'apparel').map((s) => s.slot);
+
+/** Apparel slot number → its slotType (head/chest/…/waist) — keys ARMOR_BASE_PER_PIECE. */
+const APPAREL_SLOT_TYPE: Record<number, string> = Object.fromEntries(
+  EQUIP_SLOTS.filter((s) => s.category === 'apparel').map((s) => [s.slot, s.slotType]),
+);
 
 interface ArmorWeightCounts {
   light: number;
@@ -646,6 +671,216 @@ export function calculateArmor(
   return makeResult(items, ARMOR_CAP, ARMOR_MAX);
 }
 
+// ─── Max Health ───────────────────────────────────────────────────────────
+//
+// ⚠️ NEEDS IN-GAME VALIDATION. Models the deterministic, well-documented Max
+// Health sources only: base pool, Health attributes, flat race/class passives,
+// The Lord mundus, and the Minor Toughness buff. It does NOT model gear SET
+// bonuses (≈200+ sets, many %/conditional), the full food catalog, or any
+// state-dependent %Health — see PR disclaimer. All constants are cited in
+// stat-constants.ts.
+
+/** The Lord mundus Max Health, scaled by gold Divines pieces (pinned at N=7). */
+function mundusLordHealth(divinesCount: number): number {
+  if (divinesCount >= 7) return MUNDUS_LORD_7_DIVINES_HEALTH;
+  return Math.round(
+    MUNDUS_LORD_BASE_HEALTH * (1 + divinesCount * DIVINES_MUNDUS_PCT_PER_GOLD_PIECE),
+  );
+}
+
+export function calculateHealth(
+  setup: BuildSetup,
+  build: Build,
+  overrides: StatOverrides,
+): StatResult {
+  const items: StatItem[] = [];
+
+  // Base pool (always on)
+  items.push({
+    name: 'Base Health',
+    value: BASE_MAX_HEALTH,
+    source: 'base',
+    enabled: true,
+    autoDetected: true,
+  });
+
+  // Health attribute points (×122 each)
+  const healthPoints = setup.attributes?.health ?? 0;
+  if (healthPoints > 0) {
+    items.push({
+      name: `Health Attributes (${healthPoints} pt${healthPoints > 1 ? 's' : ''})`,
+      value: healthPoints * HEALTH_PER_ATTRIBUTE_POINT,
+      source: 'base',
+      enabled: true,
+      autoDetected: true,
+    });
+  }
+
+  // Race flat Max Health
+  const primaryRace = build.races[0] ?? '';
+  const raceHealth = RACE_HEALTH_PASSIVES[primaryRace];
+  if (raceHealth) {
+    items.push({
+      name: raceHealth.name,
+      value: raceHealth.value,
+      source: 'race',
+      enabled: true,
+      autoDetected: true,
+    });
+  }
+
+  // Class skill-line passives (auto-applied when the line is active)
+  const activeLines = build.classSkillLines.filter(Boolean) as string[];
+  for (const cp of CLASS_HEALTH_PASSIVES) {
+    if (activeLines.includes(cp.skillLineId)) {
+      items.push({
+        name: cp.name,
+        value: cp.value,
+        source: 'class',
+        enabled: true,
+        autoDetected: true,
+      });
+    }
+  }
+
+  // The Lord mundus (scaled by Divines)
+  if (setup.mundusStone === LORD_MUNDUS_ID) {
+    const divinesCount = countDivinesPieces(setup.gear);
+    items.push({
+      name: divinesCount > 0 ? `The Lord (${divinesCount} Divines)` : 'The Lord',
+      value: mundusLordHealth(divinesCount),
+      source: 'mundus',
+      enabled: true,
+      autoDetected: true,
+    });
+  }
+
+  // Minor Toughness (+10% of the flat subtotal) — the only Max Health pool buff.
+  // Computed as a flat contribution off the subtotal so the StatResult stays
+  // additive (mirrors how the game applies it: flat sources, then ×(1 + buff%)).
+  const flatSubtotal = items.filter((i) => i.enabled).reduce((sum, i) => sum + i.value, 0);
+  items.push({
+    name: `${MINOR_TOUGHNESS_NAME} (+10%)`,
+    value: Math.round(flatSubtotal * MINOR_TOUGHNESS_MAX_HEALTH),
+    source: 'buff',
+    enabled: overrides.buffs[MINOR_TOUGHNESS_NAME] ?? false,
+    autoDetected: false,
+  });
+
+  const total = items.filter((i) => i.enabled).reduce((sum, i) => sum + i.value, 0);
+  // Health has no cap — cap = maxCap = total keeps status 'optimal' (neutral).
+  return makeResult(items, total, total);
+}
+
+// ─── Total resistance (for EHP) ─────────────────────────────────────────────
+//
+// `calculateArmor` above intentionally tracks resistance ADDITIONS only (race,
+// mundus, traits, class) and NOT base gear armor. EHP needs the player's *total*
+// resistance, so this adds equipped-armor base resistance (per-piece, by weight ×
+// slot) on top of those additions. Physical and spell resistance are symmetric
+// here (armor adds to both equally). ⚠️ Buffs like Major/Minor Resolve are not
+// auto-added unless a modeled passive grants them; %-of-subtotal class passives
+// (e.g. Balanced Warrior) are surfaced at value 0 by calculateArmor and not
+// applied — see PR disclaimer.
+
+/** Sum of equipped apparel base resistance, aggregated into per-weight StatItems. */
+function gearBaseResistanceItems(gear: GearConfig): StatItem[] {
+  const byWeight: Record<string, { count: number; sum: number }> = {
+    heavy: { count: 0, sum: 0 },
+    medium: { count: 0, sum: 0 },
+    light: { count: 0, sum: 0 },
+  };
+  for (const slot of APPAREL_SLOTS) {
+    const piece = gear[slot];
+    if (!piece?.id) continue;
+    const weight = resolveApparelWeight(piece.id, piece.weight);
+    const slotType = APPAREL_SLOT_TYPE[slot];
+    const value = ARMOR_BASE_PER_PIECE[weight]?.[slotType] ?? 0;
+    byWeight[weight].count += 1;
+    byWeight[weight].sum += value;
+  }
+  const labels: Record<string, string> = { heavy: 'Heavy', medium: 'Medium', light: 'Light' };
+  return (['heavy', 'medium', 'light'] as const)
+    .filter((w) => byWeight[w].count > 0)
+    .map((w) => ({
+      name: `${labels[w]} Armor Base (${byWeight[w].count}pc)`,
+      value: byWeight[w].sum,
+      source: 'gear' as const,
+      enabled: true,
+      autoDetected: true,
+    }));
+}
+
+export function calculateTotalResistance(
+  setup: BuildSetup,
+  build: Build,
+  overrides: StatOverrides,
+): StatResult {
+  const baseItems = gearBaseResistanceItems(setup.gear);
+  // Reuse the additions breakdown (race/mundus/traits/class) computed by calculateArmor.
+  const additions = calculateArmor(setup, build, overrides);
+  const items = [...baseItems, ...additions.items];
+  const total = items.filter((i) => i.enabled).reduce((sum, i) => sum + i.value, 0);
+  // Resistance has a meaningful cap (33,000 = 50% mitigation), but flagging a DPS's
+  // sub-cap resistance as "under" would mislead, so status is left neutral.
+  return makeResult(items, total, total);
+}
+
+// ─── Effective HP ───────────────────────────────────────────────────────────
+
+/** Resistance → damage-mitigation fraction in [0, 0.5]. 660 resistance = 1%, cap 50%. */
+export function resistanceToMitigation(resistance: number): number {
+  const pct = Math.min(
+    Math.max(resistance, 0) / RESISTANCE_PER_1PCT_MITIGATION,
+    MITIGATION_HARD_CAP * 100,
+  );
+  return pct / 100;
+}
+
+/**
+ * Effective HP for one resistance channel: EHP = health / (1 − mitigation).
+ * Pure (per the plan's `calculateEHP(health, resistance)` signature).
+ */
+export function calculateEHP(
+  health: number,
+  resistance: number,
+): { ehp: number; mitigation: number } {
+  const mitigation = resistanceToMitigation(resistance);
+  const ehp = Math.round(health / (1 - mitigation));
+  return { ehp, mitigation };
+}
+
+/** Full survivability bundle: max health, total resistance, and physical/spell EHP. */
+export function calculateSurvivability(
+  setup: BuildSetup,
+  build: Build,
+  overrides?: StatOverrides,
+): Survivability {
+  const ov = overrides ?? DEFAULT_STAT_OVERRIDES;
+  const health = calculateHealth(setup, build, ov);
+  const resistance = calculateTotalResistance(setup, build, ov);
+  // Physical and spell resistance are symmetric under the current model; computed
+  // through the same channel so a future phys/spell-specific source can diverge them.
+  const physical = calculateEHP(health.total, resistance.total);
+  const spell = calculateEHP(health.total, resistance.total);
+  return {
+    health,
+    resistance,
+    physical: { resistance: resistance.total, mitigation: physical.mitigation, ehp: physical.ehp },
+    spell: { resistance: resistance.total, mitigation: spell.mitigation, ehp: spell.ehp },
+  };
+}
+
+/** Pack a Survivability into the BuildStats.ehp StatResult (headline = worst case). */
+function ehpStatResult(s: Survivability): StatResult {
+  const total = Math.min(s.physical.ehp, s.spell.ehp);
+  const items: StatItem[] = [
+    { name: 'Physical EHP', value: s.physical.ehp, source: 'base', enabled: false },
+    { name: 'Spell EHP', value: s.spell.ehp, source: 'base', enabled: false },
+  ];
+  return { total, cap: total, maxCap: total, status: 'optimal', items };
+}
+
 // ─── Master function ────────────────────────────────────────────────────────
 
 export function calculateBuildStats(
@@ -654,10 +889,13 @@ export function calculateBuildStats(
   overrides?: StatOverrides,
 ): BuildStats {
   const ov = overrides ?? DEFAULT_STAT_OVERRIDES;
+  const survivability = calculateSurvivability(setup, build, ov);
   return {
     penetration: calculatePenetration(setup, build, ov),
     critDamage: calculateCritDamage(setup, build, ov),
     critChance: calculateCritChance(setup, build, ov),
     armor: calculateArmor(setup, build, ov),
+    health: survivability.health,
+    ehp: ehpStatResult(survivability),
   };
 }

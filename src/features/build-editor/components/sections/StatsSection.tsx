@@ -9,6 +9,9 @@ import { useTheme } from '@mui/material/styles';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useDispatch, useSelector, useStore } from 'react-redux';
 
+import { StatBreakdown } from '@/components/stats/StatBreakdown';
+import { StatGauge } from '@/components/stats/StatGauge';
+import { StatHealthBadge } from '@/components/stats/StatHealthBadge';
 import {
   CLASS_PASSIVES,
   CRIT_CHANCE_DIVISOR,
@@ -17,7 +20,7 @@ import {
   DEFAULT_STAT_OVERRIDES,
   PEN_BUFFS,
 } from '@/engine/stat-constants';
-import { calculateBuildStats } from '@/engine/stat-engine';
+import { calculateBuildStats, calculateSurvivability } from '@/engine/stat-engine';
 import type { StatOverrides } from '@/engine/stat-types';
 import type { RootState } from '@/store/storeWithHistory';
 
@@ -29,8 +32,6 @@ import {
   selectClassMasteryPassives,
 } from '../../store/buildEditorSelectors';
 import { setStatOverrides as setStatOverridesAction } from '../../store/buildEditorSlice';
-import { StatBreakdown } from '../primitives/StatBreakdown';
-import { StatGauge } from '../primitives/StatGauge';
 
 const StatsSectionComponent: React.FC = () => {
   const dispatch = useDispatch();
@@ -62,10 +63,14 @@ const StatsSectionComponent: React.FC = () => {
 
   // Compute stats. Deps narrowed to the engine's actual inputs so unrelated
   // edits (e.g. name, guide content, description) don't trigger a recompute.
-  const stats = useMemo(
+  const computed = useMemo(
     () => {
       if (!setup) return null;
-      return calculateBuildStats(setup, store.getState().buildEditor.build, overrides);
+      const build = store.getState().buildEditor.build;
+      return {
+        stats: calculateBuildStats(setup, build, overrides),
+        survivability: calculateSurvivability(setup, build, overrides),
+      };
     },
     // `store` is a stable ref. `gameMode/races/classSkillLines/
     // classMasteryPassives` cover every build-level field read by
@@ -75,6 +80,8 @@ const StatsSectionComponent: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [setup, gameMode, races, classSkillLines, classMasteryPassives, overrides, store],
   );
+  const stats = computed?.stats ?? null;
+  const survivability = computed?.survivability ?? null;
 
   // Update helpers
   const updateOverrides = useCallback(
@@ -142,6 +149,9 @@ const StatsSectionComponent: React.FC = () => {
         <StatGauge label="Crit Chance" result={stats.critChance} isPercent />
         <StatGauge label="Armor" result={stats.armor} />
       </Box>
+
+      {/* Survivability (health + EHP + mitigation) */}
+      {survivability && <StatHealthBadge survivability={survivability} variant="full" />}
 
       {/* Buff toggles (expandable) */}
       <Box>

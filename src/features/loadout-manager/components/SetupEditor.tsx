@@ -49,6 +49,7 @@ import {
 import { ChampionPointSelector } from './ChampionPointSelector';
 import { FoodSelector } from './FoodSelector';
 import { GearSelector } from './GearSelector';
+import { SetupStatsStrip } from './SetupStatsStrip';
 import { SkillSelector } from './SkillSelector';
 
 interface SetupEditorProps {
@@ -589,12 +590,15 @@ export const SetupEditor: React.FC<SetupEditorProps> = ({
         </TabPanel>
 
         <TabPanel value={currentTab} index={2}>
-          <GearSelector
-            gear={setup.gear}
-            trialId={trialId}
-            pageIndex={pageIndex}
-            setupIndex={setupIndex}
-          />
+          <Stack spacing={2}>
+            <SetupStatsStrip setup={setup} />
+            <GearSelector
+              gear={setup.gear}
+              trialId={trialId}
+              pageIndex={pageIndex}
+              setupIndex={setupIndex}
+            />
+          </Stack>
         </TabPanel>
       </Box>
 

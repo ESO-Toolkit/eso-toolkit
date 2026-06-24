@@ -5,5 +5,7 @@ export { AttributeBar } from './AttributeBar';
 export { AnimatedCounter } from './AnimatedCounter';
 export { SectionCard } from './SectionCard';
 export { GearSlotCard } from './GearSlotCard';
-export { StatGauge } from './StatGauge';
-export { StatBreakdown } from './StatBreakdown';
+// StatGauge / StatBreakdown were relocated to the neutral src/components/stats so
+// the Loadout Manager can reuse them without importing build-editor components.
+// Re-exported here for backward-compatible import paths.
+export { StatGauge, StatBreakdown } from '@/components/stats';

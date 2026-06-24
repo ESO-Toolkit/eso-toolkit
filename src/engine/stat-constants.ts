@@ -6,6 +6,7 @@
  */
 
 import type { GameMode } from '@features/build-editor/types/build.types';
+import type { ArmorWeight } from '@features/loadout-manager/types/loadout.types';
 
 // ─── Caps ───────────────────────────────────────────────────────────────────
 
@@ -528,6 +529,161 @@ export const CLASS_MASTERY_CRIT_PASSIVES: ClassMasteryCritPassive[] = [
 
 /** Base resistance at level 50 (before any gear) */
 export const BASE_ARMOR_RESISTANCE = 0;
+
+// ─── Health / Survivability constants ───────────────────────────────────────
+//
+// Researched and adversarially cross-verified (UESP / ESO-Hub / Fextralife / ESO
+// Academy / ESO forums / eso-skillbook) for the live PC patch (Update 46+, CP160),
+// 2026-06. Every value cites its source. ⚠️ These feed calculateHealth /
+// calculateEHP and are flagged for IN-GAME VALIDATION — the math cannot be
+// verified without a game client (see PR "NEEDS IN-GAME VALIDATION").
+
+/**
+ * Base Max Health pool of a Level 50 / CP160 character with 0 attribute points,
+ * no gear and no buffs. UESP formula Health = 300×Level + 1000 (Level caps at 50,
+ * Champion Points do not add to the base pool) → 16,000.
+ * Source: https://en.uesp.net/wiki/Online:Health and Online:Light_Armor
+ * ("Max Health 16000 ... for a Level 50 CP 160 character").
+ */
+export const BASE_MAX_HEALTH = 16000;
+
+/**
+ * Max Health granted per attribute point invested in Health (Magicka/Stamina are
+ * 111 each — Health is intentionally larger).
+ * Source: https://en.uesp.net/wiki/Online:Health ("Every stat point allocated to
+ * health increases the stat by 122 points ... all 64 stat points ... 23,808").
+ */
+export const HEALTH_PER_ATTRIBUTE_POINT = 122;
+
+/**
+ * Total attribute points a max-level (CP160) character distributes.
+ * Source: Fextralife Attributes ("a total of 64 Attribute points by ... Champion 160").
+ */
+export const TOTAL_ATTRIBUTE_POINTS = 64;
+
+/** Mundus id for The Lord (Max Health) — matches ESO_MUNDUS_STONES in esoStaticData. */
+export const LORD_MUNDUS_ID = 'lord';
+
+/**
+ * The Lord mundus — flat Max Health at CP160, gold quality, 0 Divines.
+ * Source: eso-hub The Lord ("increases Maximum Health by 2225, and with 7 Divines
+ * armor pieces ... by 3639"). https://eso-hub.com/en/mundus-stones/the-lord
+ */
+export const MUNDUS_LORD_BASE_HEALTH = 2225;
+
+/**
+ * Per gold/legendary Divines-trait armor piece, a mundus stone's effect increases
+ * by 9.1% (per-piece % is additive, then applied to the base value).
+ * Source: UESP Online:Divines ("gold gives 9.1%").
+ */
+export const DIVINES_MUNDUS_PCT_PER_GOLD_PIECE = 0.091;
+
+/**
+ * Published 7-Divines result for The Lord (gold). The additive-then-multiply
+ * formula yields 3,642; the game shows 3,639 (internal per-piece rounding), so the
+ * 7-piece case is pinned to this published value.
+ * Source: eso-hub The Lord (same page as above).
+ */
+export const MUNDUS_LORD_7_DIVINES_HEALTH = 3639;
+
+/**
+ * Races granting FLAT Max Health (max-rank passive), keyed by race id.
+ * ⚠️ Corrected premise: Nord's Max Health is from "Resist Frost" (+1000), NOT
+ * "Rugged" (Rugged = +2600 resistance, zero Max Health). These are the only four
+ * races granting flat Max Health.
+ * Sources: eso-skillbook.com/skill/{tough,resist-frost,argonian-resistance,
+ * unflinching-rage}; Fextralife racial pages corroborate. Orc's +2125 on-damage
+ * heal is a separate effect, not part of the pool.
+ */
+export const RACE_HEALTH_PASSIVES: Record<string, { name: string; value: number }> = {
+  imperial: { name: 'Tough', value: 2000 },
+  nord: { name: 'Resist Frost', value: 1000 },
+  argonian: { name: 'Argonian Resistance', value: 1000 },
+  orc: { name: 'Unflinching Rage', value: 1000 },
+};
+
+/**
+ * Class skill-line passives granting FLAT Max Health, modeled like other always-on
+ * class passives (applied when the skill line is active). Only the Necromancer's
+ * Bone Tyrant "Last Gasp" grants flat Max Health in the current patch.
+ * Source: eso-hub Last Gasp ("Rank II increases your Max Health by 2412") @CP160.
+ * Note: the 2412 figure is the CP160 tooltip value (internally 1250 base × level
+ * scaling); other classes' Max Health passives are %-based / state-dependent and
+ * are intentionally not modeled here.
+ */
+export const CLASS_HEALTH_PASSIVES: Array<{ skillLineId: string; name: string; value: number }> = [
+  { skillLineId: 'class.bone-tyrant', name: 'Last Gasp', value: 2412 },
+];
+
+/**
+ * Minor Toughness — the ONLY named buff that raises the Max Health POOL (+10%).
+ * There is no Major Toughness in the live game. ⚠️ Major/Minor Fortitude raise
+ * Health RECOVERY (regen), NOT Max Health, so they are intentionally excluded.
+ * Source: eso-hub Minor Toughness ("increases your Max Health by 10%").
+ */
+export const MINOR_TOUGHNESS_NAME = 'Minor Toughness';
+export const MINOR_TOUGHNESS_MAX_HEALTH = 0.1;
+
+// ── Resistance → mitigation → Effective HP ──────────────────────────────────
+
+/**
+ * Resistance → mitigation (CP160): 660 resistance = 1% mitigation. Linear, no
+ * diminishing returns, hard cap 50% at 33,000 resistance.
+ *   mitigationFraction = clamp(resistance / 660, 0, 50) / 100
+ * Sources: ESO forums 470967 ("1 percent mitigation = 660 resists"); esoacademy
+ * ("33,000 resistance = 50% mitigation"). Precise in-game testing gives 662/33,100;
+ * 660/33,000 is the community/calculator standard every guide quotes (spot-check
+ * candidate for in-game validation).
+ */
+export const RESISTANCE_PER_1PCT_MITIGATION = 660;
+export const RESISTANCE_HARD_CAP = 33000;
+export const MITIGATION_HARD_CAP = 0.5;
+
+/**
+ * Per-piece BASE Armor (= equal Physical AND Spell Resistance), CP160 gold /
+ * Legendary, non-traited. Keyed by slot's `slotType` (see EQUIP_SLOTS).
+ *   perPiece = chestBaseline × slotMultiplier
+ *   multipliers: Chest 1.0 · Head/Shoulders/Legs/Feet 0.875 · Hands 0.5 · Waist 0.375
+ * ⚠️ Corrected premise: for BASE armor, Legs sits in the 0.875 tier with Head/
+ * Shoulders/Feet — it does NOT group with Chest (the "large piece" grouping is the
+ * separate enchant-glyph system and must not be applied to base resistance).
+ * 7-piece totals (sum of the cited per-piece values): Heavy 14,897 · Medium 11,199
+ * · Light 7,501. (⚠️ The research synthesis quoted 13,897/10,442/6,991 as totals,
+ * but those don't sum the per-piece values it cited — an arithmetic slip; the
+ * per-piece values are the cited primitives and are used here. Flag for in-game
+ * validation.) Jewelry and weapons give 0 base resistance.
+ * Sources: ESO forums 244590 "Armor Values"; Fextralife Heavy Armor; slot
+ * multipliers UESP Online:Armor; weight scaling esoacademy (Heavy 100/Med 75/Light 50%).
+ */
+export const ARMOR_BASE_PER_PIECE: Record<ArmorWeight, Record<string, number>> = {
+  heavy: {
+    chest: 2772,
+    head: 2425,
+    shoulders: 2425,
+    legs: 2425,
+    feet: 2425,
+    hand: 1386,
+    waist: 1039,
+  },
+  medium: {
+    chest: 2084,
+    head: 1823,
+    shoulders: 1823,
+    legs: 1823,
+    feet: 1823,
+    hand: 1042,
+    waist: 781,
+  },
+  light: {
+    chest: 1396,
+    head: 1221,
+    shoulders: 1221,
+    legs: 1221,
+    feet: 1221,
+    hand: 698,
+    waist: 523,
+  },
+};
 
 // ─── Default stat overrides (common PvE assumptions) ────────────────────────
 

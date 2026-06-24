@@ -38,7 +38,10 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 
-import { calculateBuildStats } from '@/engine/stat-engine';
+import { StatBreakdown } from '@/components/stats/StatBreakdown';
+import { StatGauge } from '@/components/stats/StatGauge';
+import { StatHealthBadge } from '@/components/stats/StatHealthBadge';
+import { calculateBuildStats, calculateSurvivability } from '@/engine/stat-engine';
 
 import { GearSetTooltip } from '../components/GearSetTooltip';
 import { LazySkillTooltip as SkillTooltipCard } from '../components/LazySkillTooltip';
@@ -49,8 +52,6 @@ import { getTraitName } from '../data/esoTraits';
 import { useAuth } from '../features/auth/AuthContext';
 import { staggerContainer, fadeInUp } from '../features/build-editor/components/motion/variants';
 import { GlassPanel } from '../features/build-editor/components/primitives/GlassPanel';
-import { StatBreakdown } from '../features/build-editor/components/primitives/StatBreakdown';
-import { StatGauge } from '../features/build-editor/components/primitives/StatGauge';
 import { CP_PASSIVES_BY_TREE } from '../features/build-editor/data/championPassives';
 import { CLASS_SKILL_LINES } from '../features/build-editor/data/esoStaticData';
 import { BE_TOKENS } from '../features/build-editor/theme/buildEditorTokens';
@@ -1844,6 +1845,10 @@ const ViewStats: React.FC<{ setup: BuildSetup; build: Build }> = ({ setup, build
     () => calculateBuildStats(setup, vBuild, setup.statOverrides),
     [setup, vBuild],
   );
+  const survivability = React.useMemo(
+    () => calculateSurvivability(setup, vBuild, setup.statOverrides),
+    [setup, vBuild],
+  );
 
   return (
     <Box>
@@ -1861,6 +1866,9 @@ const ViewStats: React.FC<{ setup: BuildSetup; build: Build }> = ({ setup, build
         <StatGauge label="Crit Damage" result={stats.critDamage} isPercent />
         <StatGauge label="Crit Chance" result={stats.critChance} isPercent />
         <StatGauge label="Armor" result={stats.armor} />
+      </Box>
+      <Box sx={{ mb: 2 }}>
+        <StatHealthBadge survivability={survivability} variant="full" />
       </Box>
       <StatBreakdown label="Penetration" result={stats.penetration} />
       <StatBreakdown label="Critical Damage" result={stats.critDamage} isPercent />
