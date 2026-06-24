@@ -58,7 +58,9 @@ const StatHealthBadgeComponent: React.FC<StatHealthBadgeProps> = ({
         <Stack
           direction="row"
           spacing={1}
-          aria-label={`Max Health ${health.total.toLocaleString()}, Effective HP ${ehp.toLocaleString()}, ${mitigationPct}% mitigation`}
+          role="group"
+          tabIndex={0}
+          aria-label={`Max Health ${health.total.toLocaleString()}, Effective HP ${ehp.toLocaleString()} (worst-case of Physical ${physical.ehp.toLocaleString()} and Spell ${spell.ehp.toLocaleString()}), ${mitigationPct}% mitigation. Estimate pending in-game validation.`}
           sx={{
             display: 'inline-flex',
             alignItems: 'center',

@@ -11,7 +11,7 @@
 import { ExpandMore as ExpandIcon, InfoOutlined } from '@mui/icons-material';
 import { Box, Collapse, Stack, Tooltip, Typography } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-import React, { useMemo, useState } from 'react';
+import React, { useId, useMemo, useState } from 'react';
 
 import { StatBreakdown } from '@/components/stats/StatBreakdown';
 import { StatGauge } from '@/components/stats/StatGauge';
@@ -35,6 +35,7 @@ const SetupStatsStripComponent: React.FC<SetupStatsStripProps> = ({ setup, conte
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const [breakdownExpanded, setBreakdownExpanded] = useState(false);
+  const breakdownId = useId();
 
   const gearPresent = hasAnyGear(setup.gear ?? {});
 
@@ -122,12 +123,14 @@ const SetupStatsStripComponent: React.FC<SetupStatsStripProps> = ({ setup, conte
               gap: 0.5,
               cursor: 'pointer',
               mt: 1,
-              py: 0.5,
+              py: 0.75,
+              minHeight: 44,
               borderRadius: 1,
               '&:hover': { background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)' },
             }}
             role="button"
             aria-expanded={breakdownExpanded}
+            aria-controls={breakdownId}
             tabIndex={0}
             onKeyDown={(e: React.KeyboardEvent) => {
               if (e.key === 'Enter' || e.key === ' ') {
@@ -148,7 +151,7 @@ const SetupStatsStripComponent: React.FC<SetupStatsStripProps> = ({ setup, conte
               Source Breakdown
             </Typography>
           </Box>
-          <Collapse in={breakdownExpanded} timeout={200}>
+          <Collapse in={breakdownExpanded} timeout={200} id={breakdownId}>
             <Stack spacing={0.5} sx={{ pl: 1, pt: 0.5 }}>
               <StatBreakdown label="Penetration" result={stats.penetration} />
               <StatBreakdown label="Critical Damage" result={stats.critDamage} isPercent />
