@@ -10,8 +10,10 @@
  * stay mounted for the rest of the session. This keeps the initial React render
  * bounded to ~3 sections instead of all 11.
  *
- * Mobile (<960px): Single column, sections collapsible (SectionCard's
- * <Collapse unmountOnExit> already handles lazy mounting), bottom nav bar.
+ * Mobile (<960px): Single column, bottom nav bar. Sections start expanded so
+ * the user lands on actionable content rather than a wall of collapsed headers;
+ * each section can still be collapsed manually via its header. (SectionCard's
+ * <Collapse> mounts the content immediately when expanded.)
  */
 
 import {
@@ -65,10 +67,11 @@ export const BuildEditorLayout: React.FC = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const progress = useSectionProgress();
   const isDirty = useSelector(selectIsDirty);
-  // On mobile, SectionCard's <Collapse unmountOnExit> already lazy-mounts content,
-  // so LazySection would be redundant — pass eager=true there. On desktop, the
-  // first two rows (Identity, Character, Subclassing) sit above the fold and
-  // should render immediately without IntersectionObserver wait.
+  // On mobile, sections start expanded (defaultExpanded) and SectionCard's
+  // <Collapse> mounts their content immediately, so LazySection would be
+  // redundant — pass eager=true there. On desktop, the first two rows (Identity,
+  // Character, Subclassing) sit above the fold and should render immediately
+  // without IntersectionObserver wait.
   const lazyDesktop = !isMobile;
   // Lazy read via the store — subscribing to `build` here would force the
   // whole layout (and every SectionCard child) to re-render on every edit.
@@ -178,7 +181,7 @@ export const BuildEditorLayout: React.FC = () => {
                 icon={<GeneralIcon />}
                 complete={progress.general}
                 variant="primary"
-                defaultExpanded={!isMobile}
+                defaultExpanded
               >
                 <GeneralSection />
               </SectionCard>
@@ -190,7 +193,7 @@ export const BuildEditorLayout: React.FC = () => {
                 title="Character"
                 icon={<CharacterIcon />}
                 complete={progress.character}
-                defaultExpanded={!isMobile}
+                defaultExpanded
                 headerAction={<SectionHeaderActions section="character" />}
               >
                 <CharacterSection />
@@ -204,7 +207,7 @@ export const BuildEditorLayout: React.FC = () => {
                 title="Subclassing"
                 icon={<SubclassingIcon />}
                 complete={progress.subclassing}
-                defaultExpanded={!isMobile}
+                defaultExpanded
               >
                 <SubclassingSection />
               </SectionCard>
@@ -216,7 +219,7 @@ export const BuildEditorLayout: React.FC = () => {
                 title="Class Mastery"
                 icon={<ClassMasteryIcon />}
                 complete={progress['class-mastery']}
-                defaultExpanded={!isMobile}
+                defaultExpanded
               >
                 <ClassMasterySection />
               </SectionCard>
@@ -235,7 +238,7 @@ export const BuildEditorLayout: React.FC = () => {
                 complete={progress.equipment}
                 variant="primary"
                 gridRow={isMobile ? undefined : 'span 2'}
-                defaultExpanded={!isMobile}
+                defaultExpanded
                 headerAction={<SectionHeaderActions section="gear" />}
               >
                 <EquipmentSection />
@@ -249,7 +252,7 @@ export const BuildEditorLayout: React.FC = () => {
                 icon={<SkillsIcon />}
                 complete={progress.skills}
                 variant="primary"
-                defaultExpanded={!isMobile}
+                defaultExpanded
                 headerAction={<SectionHeaderActions section="skills" />}
               >
                 <SkillsSection />
@@ -262,7 +265,7 @@ export const BuildEditorLayout: React.FC = () => {
                 title="Consumables"
                 icon={<ConsumableIcon />}
                 complete={progress.consumables}
-                defaultExpanded={!isMobile}
+                defaultExpanded
                 headerAction={<SectionHeaderActions section="consumables" />}
               >
                 <ConsumablesSection />
@@ -282,7 +285,7 @@ export const BuildEditorLayout: React.FC = () => {
                 complete={progress.champion}
                 variant="primary"
                 gridColumn={isMobile ? undefined : 'span 2'}
-                defaultExpanded={!isMobile}
+                defaultExpanded
                 headerAction={<SectionHeaderActions section="champion" />}
               >
                 <ChampionSection />
@@ -296,7 +299,7 @@ export const BuildEditorLayout: React.FC = () => {
                 title="Passives"
                 icon={<PassiveIcon />}
                 complete={progress.passives}
-                defaultExpanded={!isMobile}
+                defaultExpanded
                 headerAction={<SectionHeaderActions section="passives" />}
               >
                 <PassivesSection />
@@ -316,7 +319,7 @@ export const BuildEditorLayout: React.FC = () => {
                 complete={progress.stats}
                 variant="primary"
                 gridColumn={isMobile ? undefined : 'span 2'}
-                defaultExpanded={!isMobile}
+                defaultExpanded
               >
                 <StatsSection />
               </SectionCard>
@@ -334,7 +337,7 @@ export const BuildEditorLayout: React.FC = () => {
                 icon={<GuideIcon />}
                 complete={progress.guide}
                 gridColumn={isMobile ? undefined : 'span 2'}
-                defaultExpanded={!isMobile}
+                defaultExpanded
               >
                 <GuideSection />
               </SectionCard>
@@ -353,7 +356,7 @@ export const BuildEditorLayout: React.FC = () => {
                 complete={progress.settings}
                 variant="subtle"
                 gridColumn={isMobile ? undefined : 'span 2'}
-                defaultExpanded={!isMobile}
+                defaultExpanded
               >
                 <SettingsSection />
               </SectionCard>
