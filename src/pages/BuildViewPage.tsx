@@ -71,7 +71,7 @@ import {
 import { useViewTransitionNavigate } from '../hooks/useViewTransitionNavigate';
 import { selectSavedBuilds } from '../store/saved_builds';
 import { CHAMPION_POINT_ABILITIES, ChampionPointAbilityId } from '../types/champion-points';
-import { decodeBuildFromURL } from '../utils/buildEncoding';
+import { decodeBuildFromURL, encodeBuildToURL } from '../utils/buildEncoding';
 import { getGearSetTooltipPropsByName } from '../utils/gearSetTooltipMapper';
 import { sanitizeImageUrl, sanitizeYoutubeUrl } from '../utils/sanitize-url';
 import { useSetPieceCounts } from '../utils/setPieceCounting';
@@ -2108,17 +2108,55 @@ export const BuildViewPage: React.FC = () => {
       void buildHubApi
         .get(idParam, accessToken)
         .then(({ build: hubBuild }) =>
-          decodeBuildFromURL(hubBuild.build_data).then((decoded) => {
-            // The Hub record's `visibility` column is authoritative — the value
-            // embedded in build_data can be stale (e.g. a build published before
-            // dialog re-encode, or edited out-of-band). Override the decoded
-            // value with server truth so downstream share/copy gating can't be
+          decodeBuildFromURL(hubBuild.build_data).then(async (decoded) => {
+            // The Hub record's columns are authoritative — the values embedded
+            // in build_data (visibility `vs`, name `n`, shortDescription `d`)
+            // can be stale: a build published before the dialog synced
+            // title/description into the blob, one whose publish-time re-encode
+            // fell back to the original blob, or one edited out-of-band.
+            // Override the decoded values with server truth so the opened build
+            // matches its Hub card and downstream share/copy gating can't be
             // fooled by a stale blob.
-            const authoritative =
-              decoded && hubBuild.visibility
-                ? { ...decoded, settings: { ...decoded.settings, visibility: hubBuild.visibility } }
-                : decoded;
-            onDecoded(authoritative, hubBuild.build_data);
+            if (!decoded) {
+              onDecoded(decoded, hubBuild.build_data);
+              return;
+            }
+            const authoritative = {
+              ...decoded,
+              name: hubBuild.title ?? decoded.name,
+              shortDescription: hubBuild.description ?? decoded.shortDescription,
+              settings: {
+                ...decoded.settings,
+                visibility: hubBuild.visibility ?? decoded.settings.visibility,
+              },
+            };
+            // When server truth diverged from the blob, re-encode so the
+            // retained payload — used by the share `?b=` link and the
+            // Remix/Edit → /build-editor?b= path — carries the authoritative
+            // metadata too. Otherwise Remix reopens the editor with the stale
+            // values and a later publish would reintroduce them.
+            const visibilityDiverged =
+              authoritative.settings.visibility !== decoded.settings.visibility;
+            let buildData = hubBuild.build_data;
+            if (
+              visibilityDiverged ||
+              authoritative.name !== decoded.name ||
+              authoritative.shortDescription !== decoded.shortDescription
+            ) {
+              const reencoded = await encodeBuildToURL(authoritative);
+              if (reencoded) {
+                buildData = reencoded;
+              } else if (visibilityDiverged) {
+                // Re-encode failed and the blob's embedded visibility no longer
+                // matches the authoritative Hub value. Fail closed: never retain
+                // a blob that Open-in-Editor (?b=) could reopen at a more
+                // permissive visibility than the server enforces — drop it so no
+                // stale-visibility payload leaks. (Title/description-only drift
+                // keeps the original blob: cosmetic staleness, never a leak.)
+                buildData = '';
+              }
+            }
+            onDecoded(authoritative, buildData);
           }),
         )
         .catch(handleFetchError);
@@ -2184,6 +2222,21 @@ export const BuildViewPage: React.FC = () => {
   const isOwned = Boolean(ownedSavedBuild);
 
   const handleOpenInEditor = (): void => {
+    if (!encodedParam) {
+      // No usable self-contained payload to hand the editor — the retained blob
+      // was dropped (fail-closed on a visibility mismatch we couldn't re-encode)
+      // or never set. The editor loads only from a non-empty ?b=; navigating
+      // with an empty one opens a blank editor while ?id= still acts as the
+      // save target, so a save would overwrite the owner's saved build with
+      // blank data. Refuse to navigate (even for owned builds) and surface an
+      // error instead.
+      setSnackbar({
+        open: true,
+        message: 'This build cannot be opened in the editor right now. Try reloading the page.',
+        severity: 'error',
+      });
+      return;
+    }
     const base = `/build-editor?b=${encodeURIComponent(encodedParam)}`;
     // Forward drill that morphs the shared build-hero header into the editor's
     // header — consistent with every other build navigation (which uses

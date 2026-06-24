@@ -1203,6 +1203,8 @@ export const BuildCompletionHeader: React.FC = () => {
           role={build.role}
           gameMode={build.gameMode}
           visibility={build.settings.visibility}
+          defaultTitle={build.name}
+          defaultDescription={build.shortDescription}
           onClose={() => setPublishOpen(false)}
           onPublished={() => {
             enqueueSnackbar('Build published to the Hub!', { variant: 'success' });
