@@ -38,6 +38,8 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 
+import { StatBreakdown } from '@/components/stats/StatBreakdown';
+import { StatGauge } from '@/components/stats/StatGauge';
 import { calculateBuildStats } from '@/engine/stat-engine';
 
 import { GearSetTooltip } from '../components/GearSetTooltip';
@@ -49,8 +51,6 @@ import { getTraitName } from '../data/esoTraits';
 import { useAuth } from '../features/auth/AuthContext';
 import { staggerContainer, fadeInUp } from '../features/build-editor/components/motion/variants';
 import { GlassPanel } from '../features/build-editor/components/primitives/GlassPanel';
-import { StatBreakdown } from '../features/build-editor/components/primitives/StatBreakdown';
-import { StatGauge } from '../features/build-editor/components/primitives/StatGauge';
 import { CP_PASSIVES_BY_TREE } from '../features/build-editor/data/championPassives';
 import { CLASS_SKILL_LINES } from '../features/build-editor/data/esoStaticData';
 import { BE_TOKENS } from '../features/build-editor/theme/buildEditorTokens';

@@ -9,6 +9,8 @@ import { useTheme } from '@mui/material/styles';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useDispatch, useSelector, useStore } from 'react-redux';
 
+import { StatBreakdown } from '@/components/stats/StatBreakdown';
+import { StatGauge } from '@/components/stats/StatGauge';
 import {
   CLASS_PASSIVES,
   CRIT_CHANCE_DIVISOR,
@@ -29,8 +31,6 @@ import {
   selectClassMasteryPassives,
 } from '../../store/buildEditorSelectors';
 import { setStatOverrides as setStatOverridesAction } from '../../store/buildEditorSlice';
-import { StatBreakdown } from '../primitives/StatBreakdown';
-import { StatGauge } from '../primitives/StatGauge';
 
 const StatsSectionComponent: React.FC = () => {
   const dispatch = useDispatch();

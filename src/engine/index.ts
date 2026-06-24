@@ -8,3 +8,4 @@
 export * from './stat-engine';
 export * from './stat-constants';
 export * from './stat-types';
+export * from './loadout-adapter';
