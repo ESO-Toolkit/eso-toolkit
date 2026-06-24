@@ -1,3 +1,17 @@
+import type { SvgIconComponent } from '@mui/icons-material';
+import AcUnitIcon from '@mui/icons-material/AcUnit';
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
+import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
+import BarChartIcon from '@mui/icons-material/BarChart';
+import BlurOnIcon from '@mui/icons-material/BlurOn';
+import BoltIcon from '@mui/icons-material/Bolt';
+import CoronavirusIcon from '@mui/icons-material/Coronavirus';
+import GpsFixedIcon from '@mui/icons-material/GpsFixed';
+import LocalFireDepartmentIcon from '@mui/icons-material/LocalFireDepartment';
+import LoopIcon from '@mui/icons-material/Loop';
+import ScienceIcon from '@mui/icons-material/Science';
+import SportsMartialArtsIcon from '@mui/icons-material/SportsMartialArts';
+import WaterDropIcon from '@mui/icons-material/WaterDrop';
 import {
   Box,
   Typography,
@@ -18,75 +32,101 @@ import {
   ListItem,
   ListItemText,
   Divider,
-  Avatar,
+  ToggleButton,
+  ToggleButtonGroup,
 } from '@mui/material';
-import type { Theme } from '@mui/material/styles';
 import React from 'react';
 
-import { ReportDamageBreakdown } from '../../types/reportSummaryTypes';
+import { glassCardSurfaceSx, SUMMARY_ACCENTS } from '../../theme/glassCardSurface';
+import { AbilityTypeDamageBreakdown, ReportDamageBreakdown } from '../../types/reportSummaryTypes';
 
-// Damage type icon mapping (from insights panel)
-const DAMAGE_TYPE_ICONS: Record<string, string> = {
-  'Direct Damage': '🎯',
-  Direct: '🎯',
-  'Damage over Time': '🔄',
-  DOT: '🔄',
-  'Area of Effect': '💥',
-  AOE: '💥',
-  'Single Target': '🎯',
-  Magic: '✨',
-  Martial: '⚔️',
-  Physical: '⚔️',
-  Fire: '🔥',
-  Frost: '❄️',
-  Shock: '⚡',
-  Poison: '☠️',
-  Disease: '🦠',
-  Bleed: '🩸',
-  'Status Effects': '🌟',
+import {
+  accentTableSx,
+  gradientTitleSx,
+  innerPanelSx,
+  listRowHoverSx,
+  metricPillSx,
+  rankBadgeSx,
+  sectionIconBadgeSx,
+} from './summaryStyles';
+
+/** Icon + accent color per damage-type label (keyed by both long and short names). */
+const DAMAGE_TYPE_PRESENTATION: Record<string, { Icon: SvgIconComponent; color: string }> = {
+  Magic: { Icon: AutoAwesomeIcon, color: '#818CF8' },
+  Martial: { Icon: SportsMartialArtsIcon, color: '#C08457' },
+  Physical: { Icon: SportsMartialArtsIcon, color: '#C08457' },
+  Direct: { Icon: GpsFixedIcon, color: '#FBBF24' },
+  'Direct Damage': { Icon: GpsFixedIcon, color: '#FBBF24' },
+  'Damage over Time': { Icon: LoopIcon, color: '#34D399' },
+  DOT: { Icon: LoopIcon, color: '#34D399' },
+  'Area of Effect': { Icon: BlurOnIcon, color: '#F87171' },
+  AOE: { Icon: BlurOnIcon, color: '#F87171' },
+  Poison: { Icon: ScienceIcon, color: '#84CC16' },
+  Fire: { Icon: LocalFireDepartmentIcon, color: '#FB923C' },
+  Frost: { Icon: AcUnitIcon, color: '#60A5FA' },
+  Shock: { Icon: BoltIcon, color: '#A78BFA' },
+  'Status Effects': { Icon: AutoFixHighIcon, color: '#FBBF24' },
+  Bleed: { Icon: WaterDropIcon, color: '#EF4444' },
+  Disease: { Icon: CoronavirusIcon, color: '#A78BFA' },
 };
 
-// Damage type color mapping (from insights panel)
-const DAMAGE_TYPE_COLORS: Record<string, string> = {
-  'Direct Damage': '#F59E0B',
-  Direct: '#F59E0B',
-  'Damage over Time': '#10B981',
-  DOT: '#10B981',
-  'Area of Effect': '#EF4444',
-  AOE: '#EF4444',
-  'Single Target': '#3B82F6',
-  Magic: '#6366F1',
-  Martial: '#8B5A2B',
-  Physical: '#8B5A2B',
-  Fire: '#EF4444',
-  Frost: '#3B82F6',
-  Shock: '#8B5CF6',
-  Poison: '#10B981',
-  Disease: '#8B5CF6',
-  Bleed: '#DC2626',
-  'Status Effects': '#F59E0B',
-};
+const DEFAULT_PRESENTATION = { Icon: BlurOnIcon, color: '#94A3B8' };
 
-// Gradient mapping for damage types (saturated → deep shade)
-const DAMAGE_TYPE_GRADIENTS: Record<string, string> = {
-  'Direct Damage': 'linear-gradient(90deg, #f59e0b 0%, #92400e 100%)',
-  Direct: 'linear-gradient(90deg, #f59e0b 0%, #92400e 100%)',
-  'Damage over Time': 'linear-gradient(90deg, #10b981 0%, #064e3b 100%)',
-  DOT: 'linear-gradient(90deg, #10b981 0%, #064e3b 100%)',
-  'Area of Effect': 'linear-gradient(90deg, #ef4444 0%, #b91c1c 100%)',
-  AOE: 'linear-gradient(90deg, #ef4444 0%, #b91c1c 100%)',
-  'Single Target': 'linear-gradient(90deg, #3b82f6 0%, #1e3a8a 100%)',
-  Magic: 'linear-gradient(90deg, #6366f1 0%, #312e81 100%)',
-  Martial: 'linear-gradient(90deg, #92591e 0%, #3b1f0a 100%)',
-  Physical: 'linear-gradient(90deg, #92591e 0%, #3b1f0a 100%)',
-  Fire: 'linear-gradient(90deg, #ef4444 0%, #b91c1c 100%)',
-  Frost: 'linear-gradient(90deg, #3b82f6 0%, #1e3a8a 100%)',
-  Shock: 'linear-gradient(90deg, #8b5cf6 0%, #4c1d95 100%)',
-  Poison: 'linear-gradient(90deg, #10b981 0%, #064e3b 100%)',
-  Disease: 'linear-gradient(90deg, #8b5cf6 0%, #4c1d95 100%)',
-  Bleed: 'linear-gradient(90deg, #ef4444 0%, #991b1b 100%)',
-  'Status Effects': 'linear-gradient(90deg, #f59e0b 0%, #92400e 100%)',
-};
+/** Renders a damage-type breakdown as labelled rows with a thin themed bar. */
+const DamageTypeList: React.FC<{ items: AbilityTypeDamageBreakdown[] }> = ({ items }) => (
+  <Paper variant="outlined" sx={(theme) => innerPanelSx(theme.palette.mode === 'dark')}>
+    <List disablePadding>
+      {items.map((type, index) => {
+        const { Icon, color } = DAMAGE_TYPE_PRESENTATION[type.abilityType] ?? DEFAULT_PRESENTATION;
+        return (
+          <React.Fragment key={type.abilityType}>
+            <ListItem
+              sx={(theme) => ({
+                py: 1.5,
+                gap: 1.5,
+                ...listRowHoverSx(theme.palette.mode === 'dark', SUMMARY_ACCENTS.damage),
+              })}
+            >
+              <Icon sx={{ color, flexShrink: 0 }} aria-hidden />
+              <Box sx={{ flex: 1, minWidth: 0 }}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'baseline',
+                    justifyContent: 'space-between',
+                    gap: 1,
+                  }}
+                >
+                  <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                    {type.abilityType}
+                  </Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                    {type.percentage.toFixed(1)}%
+                  </Typography>
+                </Box>
+                <LinearProgress
+                  variant="determinate"
+                  value={Math.max(0, Math.min(100, type.percentage))}
+                  aria-label={`${type.abilityType} share of damage`}
+                  sx={{
+                    my: 0.5,
+                    height: 6,
+                    borderRadius: 3,
+                    '& .MuiLinearProgress-bar': { backgroundColor: color },
+                  }}
+                />
+                <Typography variant="caption" color="text.secondary">
+                  {formatDamage(type.totalDamage)} • {formatNumber(type.hitCount)} hits
+                </Typography>
+              </Box>
+            </ListItem>
+            {index < items.length - 1 && <Divider />}
+          </React.Fragment>
+        );
+      })}
+    </List>
+  </Paper>
+);
 
 interface DamageBreakdownSectionProps {
   damageBreakdown?: ReportDamageBreakdown;
@@ -94,16 +134,21 @@ interface DamageBreakdownSectionProps {
   error?: string;
 }
 
-const DamageBreakdownSection: React.FC<DamageBreakdownSectionProps> = ({
+const DamageBreakdownSectionComponent: React.FC<DamageBreakdownSectionProps> = ({
   damageBreakdown,
   isLoading,
   error,
 }) => {
+  const [typeView, setTypeView] = React.useState<'combined' | 'split'>('combined');
+
   if (error) {
     return (
-      <Card elevation={2}>
+      <Card
+        elevation={0}
+        sx={(theme) => glassCardSurfaceSx(theme.palette.mode === 'dark', SUMMARY_ACCENTS.damage)}
+      >
         <CardContent>
-          <Typography variant="h5" gutterBottom>
+          <Typography variant="h5" component="h2" gutterBottom>
             Damage Breakdown
           </Typography>
           <Alert severity="error">Failed to load damage data: {error}</Alert>
@@ -112,11 +157,18 @@ const DamageBreakdownSection: React.FC<DamageBreakdownSectionProps> = ({
     );
   }
 
-  if (isLoading || !damageBreakdown) {
+  // Render the full skeleton only until the Tier-1 damage leaderboard arrives.
+  // Once player data is present we show it immediately and skeleton just the
+  // slower, raw-event-derived "Damage by Type" panels (see typeBreakdownLoading).
+  const hasPlayerData = !!damageBreakdown && damageBreakdown.playerBreakdown.length > 0;
+  if (!damageBreakdown || (isLoading && !hasPlayerData)) {
     return (
-      <Card elevation={2}>
+      <Card
+        elevation={0}
+        sx={(theme) => glassCardSurfaceSx(theme.palette.mode === 'dark', SUMMARY_ACCENTS.damage)}
+      >
         <CardContent>
-          <Typography variant="h5" gutterBottom>
+          <Typography variant="h5" component="h2" gutterBottom>
             Damage Breakdown
           </Typography>
           <DamageBreakdownSkeleton />
@@ -129,61 +181,97 @@ const DamageBreakdownSection: React.FC<DamageBreakdownSectionProps> = ({
   const highestDamage =
     damageBreakdown.playerBreakdown.length > 0 ? damageBreakdown.playerBreakdown[0].totalDamage : 1;
 
+  // The damage-type breakdown comes from the slower raw-event pass; while the
+  // Tier-1 leaderboard is already shown, skeleton just this block until it lands.
+  const typeBreakdownLoading = isLoading && damageBreakdown.abilityTypeBreakdown.length === 0;
+
+  if (damageBreakdown.playerBreakdown.length === 0) {
+    return (
+      <Card
+        elevation={0}
+        sx={(theme) => glassCardSurfaceSx(theme.palette.mode === 'dark', SUMMARY_ACCENTS.damage)}
+      >
+        <CardContent>
+          <Typography variant="h5" component="h2" gutterBottom>
+            Damage Breakdown
+          </Typography>
+          <Alert severity="info">No player damage was recorded for this report.</Alert>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
-    <Card elevation={2}>
+    <Card
+      elevation={0}
+      sx={(theme) => glassCardSurfaceSx(theme.palette.mode === 'dark', SUMMARY_ACCENTS.damage)}
+    >
       <CardContent>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
-          <Typography variant="h5">Damage Breakdown</Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3, flexWrap: 'wrap' }}>
+          <Box sx={sectionIconBadgeSx(SUMMARY_ACCENTS.damage)}>
+            <BarChartIcon />
+          </Box>
+          <Typography
+            variant="h5"
+            component="h2"
+            sx={(theme) => gradientTitleSx(theme.palette.mode === 'dark', SUMMARY_ACCENTS.damage)}
+          >
+            Damage Breakdown
+          </Typography>
           <Chip
             label={formatDamage(damageBreakdown.totalDamage)}
-            color="primary"
-            variant="outlined"
+            sx={(theme) => metricPillSx(theme.palette.mode === 'dark', SUMMARY_ACCENTS.damage)}
           />
           <Chip
             label={`${formatNumber(damageBreakdown.dps)} DPS`}
-            color="secondary"
-            variant="outlined"
+            sx={(theme) => metricPillSx(theme.palette.mode === 'dark', SUMMARY_ACCENTS.info)}
           />
         </Box>
 
         {/* Top Players List */}
         <Box sx={{ mb: 4 }}>
-          <Typography variant="h6" gutterBottom>
+          <Typography variant="h6" component="h3" gutterBottom>
             Top Damage Dealers
           </Typography>
-          <Paper variant="outlined">
+          <Paper variant="outlined" sx={(theme) => innerPanelSx(theme.palette.mode === 'dark')}>
             <List>
               {damageBreakdown.playerBreakdown.slice(0, 5).map((player, index) => (
                 <React.Fragment key={player.playerId}>
-                  <ListItem>
+                  <ListItem
+                    sx={(theme) =>
+                      listRowHoverSx(theme.palette.mode === 'dark', SUMMARY_ACCENTS.damage)
+                    }
+                  >
+                    <Box
+                      component="span"
+                      sx={(theme) => rankBadgeSx(index + 1, theme.palette.mode === 'dark')}
+                    >
+                      {index + 1}
+                    </Box>
                     <ListItemText
+                      sx={{ ml: 1.5 }}
                       primary={
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                          <Typography variant="subtitle1">
-                            #{index + 1} {player.playerName}
-                          </Typography>
-                          {player.role && (
-                            <Chip
-                              label={player.role}
-                              size="small"
-                              color={getRoleColor(player.role)}
-                            />
-                          )}
-                        </Box>
+                        <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                          {player.playerName}
+                        </Typography>
                       }
                       secondary={
-                        <Box sx={{ mt: 1 }}>
-                          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                            <Typography variant="body2">
+                        <Box component="span" sx={{ display: 'block', mt: 1 }}>
+                          <Box
+                            sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}
+                            component="span"
+                          >
+                            <Typography variant="body2" component="span">
                               {formatDamage(player.totalDamage)} • {formatNumber(player.dps)} DPS
                             </Typography>
-                            <Typography variant="body2">
+                            <Typography variant="body2" component="span">
                               {player.damagePercentage.toFixed(1)}% of total
                             </Typography>
                           </Box>
                           <LinearProgress
                             variant="determinate"
-                            value={(player.totalDamage / highestDamage) * 100}
+                            value={Math.min(100, (player.totalDamage / highestDamage) * 100)}
+                            aria-label={`${player.playerName} relative damage`}
                             sx={{
                               height: 6,
                               borderRadius: 3,
@@ -198,179 +286,109 @@ const DamageBreakdownSection: React.FC<DamageBreakdownSectionProps> = ({
                       }
                     />
                   </ListItem>
-                  {index < 4 && <Divider />}
+                  {index < Math.min(4, damageBreakdown.playerBreakdown.length - 1) && <Divider />}
                 </React.Fragment>
               ))}
             </List>
           </Paper>
         </Box>
 
-        {/* Damage Type Breakdown */}
+        {/* Damage Type Breakdown (raw-event derived — streams in after the leaderboard) */}
         <Box sx={{ mb: 4 }}>
-          <Typography variant="h6" gutterBottom>
-            Damage Type Distribution
-          </Typography>
-          <Box sx={{ maxHeight: 350, overflowY: 'auto' }}>
-            <List disablePadding>
-              {damageBreakdown.abilityTypeBreakdown.map((type, index) => {
-                const icon = DAMAGE_TYPE_ICONS[type.abilityType] || '💥';
-                const color = DAMAGE_TYPE_COLORS[type.abilityType] || '#6B7280';
-                const gradient =
-                  DAMAGE_TYPE_GRADIENTS[type.abilityType] ||
-                  `linear-gradient(90deg, ${color}88 0%, ${color} 100%)`; // Fallback
+          {typeBreakdownLoading ? (
+            <>
+              <Typography variant="h6" component="h3" gutterBottom>
+                Damage by Type
+              </Typography>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                <Skeleton variant="rounded" height={64} />
+                <Skeleton variant="rounded" height={64} />
+                <Skeleton variant="rounded" height={64} />
+              </Box>
+            </>
+          ) : (
+            <>
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  flexWrap: 'wrap',
+                  gap: 1,
+                  mb: 1,
+                }}
+              >
+                <Typography variant="h6" component="h3">
+                  Damage by Type
+                </Typography>
+                <ToggleButtonGroup
+                  size="small"
+                  exclusive
+                  value={typeView}
+                  onChange={(_event, value) => value && setTypeView(value)}
+                  aria-label="Damage by type view"
+                >
+                  <ToggleButton value="combined">Combined</ToggleButton>
+                  <ToggleButton value="split">Split (100%)</ToggleButton>
+                </ToggleButtonGroup>
+              </Box>
 
-                return (
-                  <React.Fragment key={type.abilityType}>
-                    <ListItem sx={{ py: 1.5, pl: 0.5, pr: 1.5 }}>
-                      <Box sx={{ width: '100%' }}>
-                        {/* Progress bar container with content inside */}
-                        <Box
-                          sx={{
-                            position: 'relative',
-                            height: 48,
-                            borderRadius: 2,
-                            overflow: 'hidden',
-                            bgcolor: (theme: Theme) =>
-                              theme.palette.mode === 'dark'
-                                ? 'rgba(255,255,255,0.08)'
-                                : 'rgba(0,0,0,0.06)',
-                          }}
-                        >
-                          {/* Progress bar fill */}
-                          <Box
-                            sx={{
-                              position: 'absolute',
-                              top: 0,
-                              left: 0,
-                              height: '100%',
-                              width: `${Math.max(0, Math.min(100, type.percentage))}%`,
-                              background: gradient,
-                              borderRadius: 2,
-                              transition: 'width 0.3s ease-in-out',
-                            }}
-                          />
-
-                          {/* Content overlay */}
-                          <Box
-                            sx={{
-                              position: 'relative',
-                              height: '100%',
-                              display: 'flex',
-                              alignItems: 'center',
-                              px: 2,
-                              zIndex: 1,
-                            }}
-                          >
-                            {/* Icon */}
-                            <Avatar
-                              sx={{
-                                width: 32,
-                                height: 32,
-                                bgcolor: 'transparent',
-                                fontSize: '1.2rem',
-                                filter:
-                                  'drop-shadow(0px 0px 2px rgba(0,0,0,0.8)) drop-shadow(0px 0px 4px rgba(255,255,255,0.3))',
-                                textShadow:
-                                  '0px 0px 2px rgba(0,0,0,0.9), 0px 0px 4px rgba(255,255,255,0.4)',
-                              }}
-                              variant="rounded"
-                            >
-                              {icon}
-                            </Avatar>
-
-                            {/* Labels */}
-                            <Box sx={{ flex: 1, minWidth: 0, ml: 1.5 }}>
-                              <Typography
-                                variant="body2"
-                                sx={{
-                                  fontWeight: 700,
-                                  color: 'white',
-                                  textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
-                                  lineHeight: 1.2,
-                                }}
-                              >
-                                {type.abilityType}
-                              </Typography>
-                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.25 }}>
-                                <Typography
-                                  variant="caption"
-                                  sx={{
-                                    color: 'rgba(255,255,255,0.9)',
-                                    textShadow: '1px 1px 1px rgba(0,0,0,0.8)',
-                                    fontWeight: 500,
-                                  }}
-                                >
-                                  {formatDamage(type.totalDamage)} dmg
-                                </Typography>
-                                <Typography
-                                  variant="caption"
-                                  sx={{
-                                    color: 'rgba(255,255,255,0.7)',
-                                    textShadow: '1px 1px 1px rgba(0,0,0,0.8)',
-                                  }}
-                                >
-                                  •
-                                </Typography>
-                                <Typography
-                                  variant="caption"
-                                  sx={{
-                                    color: 'rgba(255,255,255,0.9)',
-                                    textShadow: '1px 1px 1px rgba(0,0,0,0.8)',
-                                    fontWeight: 500,
-                                  }}
-                                >
-                                  {formatNumber(type.hitCount)} hits
-                                </Typography>
-                              </Box>
-                            </Box>
-
-                            {/* Percentage */}
-                            <Box
-                              sx={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'flex-end',
-                                minWidth: 60,
-                              }}
-                            >
-                              <Typography
-                                variant="h6"
-                                sx={{
-                                  fontWeight: 700,
-                                  color: 'white',
-                                  textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
-                                }}
-                              >
-                                {type.percentage.toFixed(1)}%
-                              </Typography>
-                            </Box>
-                          </Box>
-                        </Box>
-                      </Box>
-                    </ListItem>
-                    {index < damageBreakdown.abilityTypeBreakdown.length - 1 && <Divider />}
-                  </React.Fragment>
-                );
-              })}
-            </List>
-          </Box>
+              {typeView === 'combined' ? (
+                <>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ display: 'block', mb: 1.5 }}
+                  >
+                    Categories overlap (a fire DOT counts as Fire, Magic and Damage over Time), so
+                    percentages can add up to more than 100%.
+                  </Typography>
+                  <DamageTypeList items={damageBreakdown.abilityTypeBreakdown} />
+                </>
+              ) : (
+                <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 2 }}>
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Typography variant="subtitle2" gutterBottom>
+                      By delivery
+                    </Typography>
+                    <DamageTypeList items={damageBreakdown.deliveryBreakdown ?? []} />
+                  </Box>
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Typography variant="subtitle2" gutterBottom>
+                      By school
+                    </Typography>
+                    <DamageTypeList items={damageBreakdown.schoolBreakdown ?? []} />
+                  </Box>
+                </Box>
+              )}
+            </>
+          )}
         </Box>
 
         {/* Player Details Table */}
         <Box>
-          <Typography variant="h6" gutterBottom>
+          <Typography variant="h6" component="h3" gutterBottom id="player-performance-heading">
             Player Performance Details
           </Typography>
-          <TableContainer component={Paper} variant="outlined">
-            <Table size="small">
+          <TableContainer
+            component={Paper}
+            variant="outlined"
+            sx={(theme) => innerPanelSx(theme.palette.mode === 'dark')}
+          >
+            <Table
+              size="small"
+              aria-labelledby="player-performance-heading"
+              sx={(theme) => accentTableSx(theme.palette.mode === 'dark', SUMMARY_ACCENTS.damage)}
+            >
               <TableHead>
                 <TableRow>
                   <TableCell>Player</TableCell>
-                  <TableCell>Role</TableCell>
                   <TableCell align="right">Total Damage</TableCell>
                   <TableCell align="right">DPS</TableCell>
                   <TableCell align="right">% of Total</TableCell>
-                  <TableCell align="right">Performance</TableCell>
+                  <TableCell align="right" sx={{ display: { xs: 'none', sm: 'table-cell' } }}>
+                    Performance
+                  </TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -379,18 +397,17 @@ const DamageBreakdownSection: React.FC<DamageBreakdownSectionProps> = ({
                     <TableCell component="th" scope="row">
                       {player.playerName}
                     </TableCell>
-                    <TableCell>
-                      {player.role && (
-                        <Chip label={player.role} size="small" color={getRoleColor(player.role)} />
-                      )}
-                    </TableCell>
                     <TableCell align="right">{formatDamage(player.totalDamage)}</TableCell>
                     <TableCell align="right">{formatNumber(player.dps)}</TableCell>
                     <TableCell align="right">{player.damagePercentage.toFixed(1)}%</TableCell>
-                    <TableCell align="right" sx={{ width: { xs: 80, sm: 120 } }}>
+                    <TableCell
+                      align="right"
+                      sx={{ width: { sm: 120 }, display: { xs: 'none', sm: 'table-cell' } }}
+                    >
                       <LinearProgress
                         variant="determinate"
-                        value={(player.totalDamage / highestDamage) * 100}
+                        value={Math.min(100, (player.totalDamage / highestDamage) * 100)}
+                        aria-label={`${player.playerName} relative damage`}
                         sx={{
                           height: 8,
                           borderRadius: 4,
@@ -441,10 +458,8 @@ const DamageBreakdownSkeleton: React.FC = () => {
   );
 };
 
-// Export memoized component
-// eslint-disable-next-line import/no-default-export
-export default React.memo(DamageBreakdownSection);
-export { DamageBreakdownSection };
+export const DamageBreakdownSection = React.memo(DamageBreakdownSectionComponent);
+DamageBreakdownSection.displayName = 'DamageBreakdownSection';
 
 // Helper functions
 function formatDamage(damage: number): string {
@@ -458,21 +473,6 @@ function formatDamage(damage: number): string {
 
 function formatNumber(num: number): string {
   return new Intl.NumberFormat().format(Math.round(num));
-}
-
-function getRoleColor(
-  role: string,
-): 'primary' | 'secondary' | 'error' | 'warning' | 'info' | 'success' {
-  switch (role.toLowerCase()) {
-    case 'tank':
-      return 'primary';
-    case 'healer':
-      return 'success';
-    case 'dps':
-      return 'error';
-    default:
-      return 'secondary';
-  }
 }
 
 function getPerformanceGradientColor(percentage: number): string {

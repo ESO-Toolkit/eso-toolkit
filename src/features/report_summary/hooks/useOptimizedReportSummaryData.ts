@@ -4,11 +4,8 @@ import { useSelector, useStore } from 'react-redux';
 import { useEsoLogsClientInstance } from '../../../EsoLogsClientContext';
 import { FightFragment } from '../../../graphql/gql/graphql';
 import { DeathAnalysisInput, DeathAnalysisService } from '../../../services/DeathAnalysisService';
-import { selectDamageEventsForContext } from '../../../store/events_data/damageEventsSelectors';
 import { fetchDamageEvents } from '../../../store/events_data/damageEventsSlice';
-import { selectDeathEventsForContext } from '../../../store/events_data/deathEventsSelectors';
 import { fetchDeathEvents } from '../../../store/events_data/deathEventsSlice';
-import { fetchHealingEvents } from '../../../store/events_data/healingEventsSlice';
 import {
   selectAbilitiesByIdForContext,
   selectActorsByIdForContext,
@@ -16,14 +13,30 @@ import {
 import { selectReportFights } from '../../../store/report/reportSelectors';
 import { RootState } from '../../../store/storeWithHistory';
 import { useAppDispatch } from '../../../store/useAppDispatch';
+import { DamageEvent, DeathEvent } from '../../../types/combatlogEvents';
 import {
   ReportSummaryData,
   FetchReportSummaryParams,
   ReportInfo,
+  ReportDeathAnalysis,
   PlayerDamageBreakdown,
   AbilityTypeDamageBreakdown,
   FightDamageBreakdown,
 } from '../../../types/reportSummaryTypes';
+import { isBossFight, wasKill } from '../../report_details/fightGrouping';
+import {
+  categorizeDamageEvents,
+  partitionDamageEvents,
+  type DamageCategoryKey,
+  type DamagePartition,
+} from '../../report_details/insights/damageTypeCategorization';
+import {
+  fetchSummaryTables,
+  type SummaryDamageTotals,
+  type SummaryDeathsData,
+} from '../reportSummaryTables';
+import { fetchResurrectionEvents, type ResurrectionEvent } from '../resurrectionEvents';
+import { fetchSummaryFriendlyDamageEvents } from '../summaryDamageEvents';
 
 interface UseOptimizedReportSummaryDataReturn {
   reportSummaryData: ReportSummaryData | null;
@@ -33,10 +46,143 @@ interface UseOptimizedReportSummaryDataReturn {
   fetchData: (params: FetchReportSummaryParams) => Promise<void>;
 }
 
+/** Damage-type buckets, in default render order, mapped to display labels. */
+const CATEGORY_LABELS: ReadonlyArray<{ key: DamageCategoryKey; label: string }> = [
+  { key: 'magic', label: 'Magic' },
+  { key: 'martial', label: 'Martial' },
+  { key: 'direct', label: 'Direct' },
+  { key: 'poison', label: 'Poison' },
+  { key: 'dot', label: 'Damage over Time' },
+  { key: 'aoe', label: 'Area of Effect' },
+  { key: 'statusEffects', label: 'Status Effects' },
+  { key: 'fire', label: 'Fire' },
+];
+
 /**
- * Optimized version that fetches events in batches with rate limiting to avoid
- * overwhelming the ESO Logs API. Processes fights in small batches (3 at a time)
- * with delays between batches to stay within API rate limits.
+ * A fight that contributes to the summary: present, with a valid, positive-
+ * duration window. Shared so the header's pre-aggregation fight count matches
+ * the count the aggregation ultimately reports (no count flicker on resolve).
+ * Uses `!= null` (not truthiness) so a fight whose startTime is 0 isn't dropped.
+ */
+export function isUsableFight(fight: FightFragment | null): fight is FightFragment {
+  return (
+    fight != null &&
+    fight.startTime != null &&
+    fight.endTime != null &&
+    fight.endTime > fight.startTime
+  );
+}
+
+/**
+ * Per-fight event fetches are raced against this bound so a single hung request
+ * can never freeze the whole summary. The batch loop `await`s a
+ * `Promise.allSettled` over each fight's fetches; without a timeout, one stuck
+ * request would block every later batch indefinitely (observed live as a
+ * permanently stalled progress bar). It is deliberately generous — it only
+ * trips on a genuinely stalled request, not a slow-but-progressing one.
+ */
+const PER_FIGHT_EVENT_TIMEOUT_MS = 60_000;
+
+/**
+ * Rejects if `promise` has not settled within `ms`. The underlying thunk keeps
+ * running; we simply stop waiting and let this fight's data count as failed
+ * (recorded in `fightErrors`), exactly like any other per-fight fetch failure.
+ */
+export function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+  let timer: ReturnType<typeof setTimeout>;
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new Error(`Timed out fetching ${label} after ${ms} ms`)), ms);
+  });
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer)) as Promise<T>;
+}
+
+/** Build the header/metadata block from report data + the cleaned fight list. */
+function buildReportInfo(
+  reportCode: string,
+  cleanFights: FightFragment[],
+  reportData:
+    | {
+        title?: string | null;
+        startTime?: number | null;
+        endTime?: number | null;
+        zone?: { name?: string | null } | null;
+        owner?: { name?: string | null } | null;
+      }
+    | null
+    | undefined,
+): ReportInfo {
+  const firstFight = cleanFights[0];
+  const lastFight = cleanFights[cleanFights.length - 1];
+  // Prefer the report's absolute start/end (epoch ms). Fight timestamps are
+  // report-relative, so using them here renders the date as 1970.
+  const sessionStart = firstFight?.startTime ?? 0;
+  const sessionEnd = lastFight?.endTime ?? lastFight?.startTime ?? sessionStart;
+  const reportStart = reportData?.startTime ?? sessionStart;
+  const reportEnd = reportData?.endTime ?? sessionEnd;
+  return {
+    reportId: reportCode,
+    title: reportData?.title || 'Report',
+    startTime: reportStart,
+    endTime: reportEnd,
+    // Wall-clock span of the session (not summed combat time, the DPS denominator).
+    duration: Math.max(0, reportEnd - reportStart),
+    zoneName: reportData?.zone?.name || 'Unknown Zone',
+    ownerName: reportData?.owner?.name || undefined,
+  };
+}
+
+/**
+ * The Tier-1 summary committed as soon as the aggregated tables arrive: the
+ * player damage table + report DPS AND the full death analysis render
+ * immediately, while the per-event damage-type breakdown stays empty (its
+ * section shows a skeleton) until the raw Friendlies pass fills it in.
+ *
+ * `deathAnalysis` is the table-derived analysis when the Deaths table returned
+ * deaths, else undefined (its section keeps its skeleton — never a false
+ * "Flawless Performance!"). The Tier-1 death analysis omits resurrection data
+ * (it streams in behind), so A9 "Time Alive" is refined at the final commit; on
+ * a report with no resurrections (the common case) the two are identical.
+ */
+function buildTier1Summary(
+  reportInfo: ReportInfo,
+  cleanFights: FightFragment[],
+  tier1: SummaryDamageTotals,
+  deathAnalysis: ReportDeathAnalysis | undefined,
+): ReportSummaryData {
+  return {
+    reportInfo,
+    fights: cleanFights,
+    damageBreakdown: {
+      totalDamage: tier1.totalDamage,
+      dps: tier1.dps,
+      playerBreakdown: tier1.playerBreakdown,
+      abilityTypeBreakdown: [],
+      deliveryBreakdown: [],
+      schoolBreakdown: [],
+      targetBreakdown: [],
+    },
+    deathAnalysis,
+    loadingStates: {
+      isLoading: true,
+      fightDataLoading: {},
+      damageEventsLoading: false,
+      deathEventsLoading: false,
+      playerDataLoading: false,
+      masterDataLoading: false,
+    },
+    errors: { generalErrors: [], fightErrors: {}, fetchErrors: {} },
+  };
+}
+
+/**
+ * Fetches every fight's damage/death events (plus best-effort resurrections) in
+ * small concurrent batches, reusing the shared Redux event slices, and
+ * aggregates them into the report-wide damage breakdown + death analysis.
+ *
+ * Events are consumed directly from each `dispatch(...).unwrap()` result rather
+ * than re-read from Redux afterwards: the event slices trim their cache to
+ * EVENT_CACHE_MAX_ENTRIES, so a read-back pass would miss the earliest fights of
+ * any report larger than that cap.
  */
 export function useOptimizedReportSummaryData(
   reportCode: string,
@@ -56,7 +202,7 @@ export function useOptimizedReportSummaryData(
   const [reportSummaryData, setReportSummaryData] = React.useState<ReportSummaryData | null>(null);
   // Identifies the latest fetch so a superseded run (reportCode change, or the
   // `fights` selector reference churning and re-firing the effect) can't commit
-  // stale results or race the newer run's setReportSummaryData.
+  // stale results or race the newer run's state updates.
   const runIdRef = React.useRef(0);
 
   const fetchData = React.useCallback(
@@ -64,174 +210,280 @@ export function useOptimizedReportSummaryData(
       if (!client || !fights) return;
 
       const runId = ++runIdRef.current;
+      const isCurrent = (): boolean => runId === runIdRef.current;
 
       try {
         setIsLoading(true);
         setError(null);
 
-        // Filter fights same as report fight selector - exclude invalid timestamps/zero duration
-        const cleanFights = fights
-          .filter((fight): fight is FightFragment => fight !== null)
-          .filter((fight) => fight.startTime && fight.endTime && fight.endTime > fight.startTime);
-        const totalTasks = cleanFights.length * 3 + 2; // 3 event types per fight + analysis tasks
+        // Filter fights same as the report fight selector / fightGrouping —
+        // exclude null entries and invalid/zero-duration windows. Use `!= null`
+        // (not truthiness) so a fight whose startTime is 0 isn't dropped.
+        const cleanFights = fights.filter(isUsableFight);
+        const totalTasks = cleanFights.length * 2 + 2; // 2 consumed event types per fight + analysis tasks
 
-        setProgress({
-          current: 0,
-          total: totalTasks,
-          currentTask: 'Starting optimized data fetch...',
-        });
+        // Summed active fight time — the denominator for active-combat DPS. Shared
+        // by the Tier-1 leaderboard and the raw-event fallback so both agree.
+        const totalActiveDuration = cleanFights.reduce(
+          (sum, fight) => sum + ((fight.endTime ?? fight.startTime) - fight.startTime),
+          0,
+        );
+        // Report metadata is available immediately (no event data needed), so the
+        // header + Tier-1 leaderboard can render before the raw-event passes finish.
+        const reportInfo = buildReportInfo(reportCode, cleanFights, store.getState().report.data);
 
-        // **RATE-LIMITED BATCH PROCESSING**
-        // Process fights in batches to avoid overwhelming the API
-        const BATCH_SIZE = 3; // Process 3 fights at a time
-        const BATCH_DELAY_MS = 500; // Wait 500ms between batches
-
-        let completedTasks = 0;
-
-        for (let i = 0; i < cleanFights.length; i += BATCH_SIZE) {
-          const batch = cleanFights.slice(i, i + BATCH_SIZE);
-          const batchNum = Math.floor(i / BATCH_SIZE) + 1;
-          const totalBatches = Math.ceil(cleanFights.length / BATCH_SIZE);
-
+        if (isCurrent()) {
           setProgress({
-            current: completedTasks,
+            current: 0,
             total: totalTasks,
-            currentTask: `Processing batch ${batchNum}/${totalBatches} (${batch.length} fights)...`,
+            currentTask: 'Starting data fetch...',
           });
-
-          // Process this batch of fights in parallel
-          const batchPromises = batch.map(async (fight, batchIndex) => {
-            const fightIndex = i + batchIndex;
-            const _baseFightProgress = fightIndex * 3;
-
-            // Fetch all event types for this fight in parallel
-            const [damageEvents, deathEvents, healingEvents] = await Promise.all([
-              dispatch(
-                fetchDamageEvents({
-                  reportCode,
-                  fight,
-                  client,
-                }),
-              )
-                .unwrap()
-                .then((result) => {
-                  completedTasks++;
-                  setProgress({
-                    current: completedTasks,
-                    total: totalTasks,
-                    currentTask: `Completed damage events for ${fight.name}`,
-                  });
-                  return result;
-                }),
-
-              dispatch(
-                fetchDeathEvents({
-                  reportCode,
-                  fight,
-                  client,
-                }),
-              )
-                .unwrap()
-                .then((result) => {
-                  completedTasks++;
-                  setProgress({
-                    current: completedTasks,
-                    total: totalTasks,
-                    currentTask: `Completed death events for ${fight.name}`,
-                  });
-                  return result;
-                }),
-
-              dispatch(
-                fetchHealingEvents({
-                  reportCode,
-                  fight,
-                  client,
-                }),
-              )
-                .unwrap()
-                .then((result) => {
-                  completedTasks++;
-                  setProgress({
-                    current: completedTasks,
-                    total: totalTasks,
-                    currentTask: `Completed healing events for ${fight.name}`,
-                  });
-                  return result;
-                }),
-            ]);
-
-            return {
-              fight,
-              damageEvents,
-              deathEvents,
-              healingEvents,
-            };
-          });
-
-          // Wait for this batch to complete
-          await Promise.all(batchPromises);
-
-          // Add delay between batches (except for the last batch)
-          if (i + BATCH_SIZE < cleanFights.length) {
-            await new Promise((resolve) => setTimeout(resolve, BATCH_DELAY_MS));
-          }
         }
 
-        // All fights processed
-        setProgress({
-          current: cleanFights.length * 3,
-          total: totalTasks,
-          currentTask: 'Analyzing death patterns...',
-        });
-
-        // Now that all events are cached in Redux, retrieve them for analysis
-        const state = store.getState();
-
-        // Perform death analysis using Redux-cached data
-        setProgress({
-          current: totalTasks - 1,
-          total: totalTasks,
-          currentTask: 'Analyzing death patterns...',
-        });
-
-        const fightDeathData: DeathAnalysisInput[] = cleanFights.map((fight) => {
-          const deathEvents = selectDeathEventsForContext(state, {
-            reportCode,
-            fightId: fight.id,
-          });
-          const actors = selectActorsByIdForContext(state, {
-            reportCode,
-            fightId: fight.id,
-          });
-          const abilities = selectAbilitiesByIdForContext(state, {
-            reportCode,
-            fightId: fight.id,
-          });
-
+        // Reads the report-wide master data (actors/abilities) fresh. It is not
+        // loaded on the /summary route at first paint, so the table-derived maps
+        // below fill the gaps; once it is warm, the real records take precedence.
+        const readMasterData = (): {
+          realActors: ReturnType<typeof selectActorsByIdForContext>;
+          realAbilities: ReturnType<typeof selectAbilitiesByIdForContext>;
+        } => {
+          const s = store.getState();
+          const ff = cleanFights[0];
           return {
-            deathEvents,
+            realActors: ff ? selectActorsByIdForContext(s, { reportCode, fightId: ff.id }) : {},
+            realAbilities: ff
+              ? selectAbilitiesByIdForContext(s, { reportCode, fightId: ff.id })
+              : {},
+          };
+        };
+
+        // Builds the death analysis from the aggregated Deaths table. The service's
+        // analysis logic is the unchanged source of truth; only its inputs are
+        // adapted from the table — synthesized death events plus each death's recap
+        // damage (the A8 killing-blow join). Resurrection casts (A9) are layered in
+        // as they arrive; the table maps are overlaid by real master data.
+        const buildTableDeathAnalysis = (
+          deaths: SummaryDeathsData,
+          rezByFight: Map<number, ResurrectionEvent[]>,
+        ): ReportDeathAnalysis => {
+          const { realActors, realAbilities } = readMasterData();
+          const actors = { ...deaths.tableActors, ...realActors };
+          const abilities = { ...deaths.tableAbilities, ...realAbilities };
+          const fightDeathData: DeathAnalysisInput[] = cleanFights.map((fight) => ({
+            deathEvents: deaths.deathEventsByFight.get(fight.id) ?? [],
+            damageEvents: deaths.recapDamageByFight.get(fight.id) ?? [],
+            resurrectEvents: rezByFight.get(fight.id) ?? [],
             fightId: fight.id,
             fightName: fight.name,
             fightStartTime: fight.startTime,
             fightEndTime: fight.endTime ?? fight.startTime,
             actors,
             abilities,
-          };
-        });
+            kill: wasKill(fight),
+            isBoss: isBossFight(fight),
+          }));
+          return DeathAnalysisService.analyzeReportDeaths(fightDeathData);
+        };
 
-        // Perform comprehensive death analysis
-        const deathAnalysis = DeathAnalysisService.analyzeReportDeaths(fightDeathData);
+        // ---- Tier-1: one server-side aggregated request (damage + deaths tables) ----
+        // Renders the player damage leaderboard + report DPS AND the full death
+        // analysis almost immediately, while only the per-event damage-type
+        // breakdown streams in behind it. Best-effort: on failure/timeout the
+        // raw-event passes below are the authoritative fallback. Timed out so a
+        // hung request can't delay the rest of the summary.
+        let tier1: SummaryDamageTotals | null = null;
+        let tableDeaths: SummaryDeathsData | null = null;
+        const fightIds = cleanFights.map((fight) => Number(fight.id));
+        if (fightIds.length > 0) {
+          const tables = await withTimeout(
+            fetchSummaryTables({ reportCode, client, fightIds, totalActiveDuration }),
+            PER_FIGHT_EVENT_TIMEOUT_MS,
+            'summary tables',
+          ).catch(() => null);
+          tier1 = tables?.damage && tables.damage.playerBreakdown.length > 0 ? tables.damage : null;
+          tableDeaths = tables?.deaths ?? null;
 
-        // Calculate comprehensive damage breakdown
-        const totalDuration = cleanFights.reduce(
-          (sum, fight) => sum + ((fight.endTime ?? fight.startTime) - fight.startTime),
-          0,
-        );
+          // Only commit a Tier-1 death analysis when the table actually returned
+          // deaths — never synthesize a 0-death "Flawless Performance!" from an
+          // empty/unparseable payload (the section keeps its skeleton instead).
+          const tier1DeathAnalysis =
+            tableDeaths && tableDeaths.deathCount > 0
+              ? buildTableDeathAnalysis(tableDeaths, new Map())
+              : undefined;
 
-        // Build player damage breakdown
+          if (isCurrent() && tier1) {
+            setReportSummaryData(
+              buildTier1Summary(reportInfo, cleanFights, tier1, tier1DeathAnalysis),
+            );
+          }
+        }
+
+        // When the Deaths table is unavailable, fall back to the raw per-fight
+        // death-events fetch. In that fallback the per-fight damage fetch below
+        // pulls BOTH hostilities (so the A8 killing-blow join still finds the
+        // incoming lethal hits); the Enemies crawl is dropped only on the normal,
+        // table-backed path.
+        const needRawDeaths = tableDeaths == null;
+
+        // Per-fight events captured straight from the thunk results (see note
+        // above re: cache eviction). Failures are recorded per-fight rather than
+        // aborting the whole summary.
+        const damageByFight = new Map<number, DamageEvent[]>();
+        const deathByFight = new Map<number, DeathEvent[]>();
+        const resurrectByFight = new Map<number, ResurrectionEvent[]>();
+        const fightErrors: Record<number, string> = {};
+        let successfulFights = 0;
+        let completedTasks = 0;
+
+        // **CONCURRENCY-LIMITED BATCH PROCESSING**
+        // Fetch a few fights at a time so we never fire dozens of requests at
+        // once; the Apollo RetryLink already backs off on real rate limits.
+        const BATCH_SIZE = 3;
+
+        for (let i = 0; i < cleanFights.length; i += BATCH_SIZE) {
+          const batch = cleanFights.slice(i, i + BATCH_SIZE);
+          const batchNum = Math.floor(i / BATCH_SIZE) + 1;
+          const totalBatches = Math.ceil(cleanFights.length / BATCH_SIZE);
+
+          if (isCurrent()) {
+            setProgress({
+              current: completedTasks,
+              total: totalTasks,
+              currentTask: `Processing batch ${batchNum}/${totalBatches} (${batch.length} fights)...`,
+            });
+          }
+
+          await Promise.all(
+            batch.map(async (fight) => {
+              // Damage (for the per-event damage-type breakdown) + best-effort
+              // resurrections (for A9 time alive). On the normal path the A8 hit
+              // size comes from the Deaths table recap, so only the Friendlies
+              // stream is needed; in the raw-death fallback there is no recap to
+              // join against, so we fetch BOTH hostilities (the full pre-table
+              // behaviour) — the incoming Enemies damage is what
+              // `computeKillingBlowHitSize` joins, without it A8 would be 0.
+              const [damageRes, deathRes, rezRes] = await Promise.allSettled([
+                needRawDeaths
+                  ? withTimeout(
+                      dispatch(fetchDamageEvents({ reportCode, fight, client })).unwrap(),
+                      PER_FIGHT_EVENT_TIMEOUT_MS,
+                      `damage events for ${fight.name}`,
+                    )
+                  : withTimeout(
+                      fetchSummaryFriendlyDamageEvents({ reportCode, fight, client }),
+                      PER_FIGHT_EVENT_TIMEOUT_MS,
+                      `damage events for ${fight.name}`,
+                    ),
+                needRawDeaths
+                  ? withTimeout(
+                      dispatch(fetchDeathEvents({ reportCode, fight, client })).unwrap(),
+                      PER_FIGHT_EVENT_TIMEOUT_MS,
+                      `death events for ${fight.name}`,
+                    )
+                  : Promise.resolve<DeathEvent[]>([]),
+                withTimeout(
+                  fetchResurrectionEvents({ reportCode, fight, client }),
+                  PER_FIGHT_EVENT_TIMEOUT_MS,
+                  `resurrection events for ${fight.name}`,
+                ),
+              ]);
+
+              if (damageRes.status === 'fulfilled') {
+                damageByFight.set(fight.id, damageRes.value as DamageEvent[]);
+              }
+              if (needRawDeaths && deathRes.status === 'fulfilled') {
+                deathByFight.set(fight.id, deathRes.value as DeathEvent[]);
+              }
+              // Resurrects are best-effort — a failure here never fails the fight.
+              if (rezRes.status === 'fulfilled') {
+                resurrectByFight.set(fight.id, rezRes.value as ResurrectionEvent[]);
+              }
+              // A fight "succeeded" if its Friendlies damage loaded (the kept
+              // crawl); in the raw-death fallback a death-only success also counts.
+              if (
+                damageRes.status === 'fulfilled' ||
+                (needRawDeaths && deathRes.status === 'fulfilled')
+              ) {
+                successfulFights += 1;
+              }
+
+              const failure = [damageRes, deathRes].find(
+                (r): r is PromiseRejectedResult => r.status === 'rejected',
+              );
+              if (failure) {
+                fightErrors[fight.id] =
+                  failure.reason instanceof Error
+                    ? failure.reason.message
+                    : 'Failed to load some events';
+              }
+
+              completedTasks += 2;
+              if (isCurrent()) {
+                setProgress({
+                  current: completedTasks,
+                  total: totalTasks,
+                  currentTask: `Loaded events for ${fight.name}`,
+                });
+              }
+            }),
+          );
+        }
+
+        // If literally every fight failed to load AND no Tier-1 table data is
+        // available, there's nothing to show.
+        const haveTier1Data = Boolean(tier1) || Boolean(tableDeaths);
+        if (cleanFights.length > 0 && successfulFights === 0 && !haveTier1Data) {
+          throw new Error('Failed to load event data for any fight in this report.');
+        }
+
+        if (isCurrent()) {
+          setProgress({
+            current: totalTasks - 1,
+            total: totalTasks,
+            currentTask: 'Analyzing damage and death patterns...',
+          });
+        }
+
+        // Master data (actors/abilities) is report-wide and not subject to the
+        // event-cache eviction, so a single lookup is correct for every fight.
+        const state = store.getState();
+        const firstFight = cleanFights[0];
+        const actorsById = firstFight
+          ? selectActorsByIdForContext(state, { reportCode, fightId: firstFight.id })
+          : {};
+        const abilitiesById = firstFight
+          ? selectAbilitiesByIdForContext(state, { reportCode, fightId: firstFight.id })
+          : {};
+
+        // ---- Death analysis ----
+        // Prefer the aggregated Deaths table (A8 hit size from each death's recap,
+        // A9 from the resurrection casts just fetched). Fall back to the raw
+        // per-fight death events when the table was unavailable; that path fetched
+        // both damage hostilities above, so A8 joins the incoming lethal hits too.
+        const deathAnalysis: ReportDeathAnalysis = tableDeaths
+          ? buildTableDeathAnalysis(tableDeaths, resurrectByFight)
+          : DeathAnalysisService.analyzeReportDeaths(
+              cleanFights.map((fight) => ({
+                deathEvents: deathByFight.get(fight.id) ?? [],
+                damageEvents: damageByFight.get(fight.id) ?? [],
+                resurrectEvents: resurrectByFight.get(fight.id) ?? [],
+                fightId: fight.id,
+                fightName: fight.name,
+                fightStartTime: fight.startTime,
+                fightEndTime: fight.endTime ?? fight.startTime,
+                actors: actorsById,
+                abilities: abilitiesById,
+                // Authoritative outcome / classification from the API (not heuristics).
+                kill: wasKill(fight),
+                isBoss: isBossFight(fight),
+              })),
+            );
+
+        // ---- Damage breakdown (raw-event fallback for when Tier-1 is absent) ----
+        // `totalActiveDuration` was computed up-front (shared with the Tier-1 DPS).
+        // Per-player totals + per-fight breakdown (player-outgoing damage only).
         const playerDamageMap = new Map<
-          string,
+          number,
           {
             name: string;
             totalDamage: number;
@@ -239,67 +491,47 @@ export function useOptimizedReportSummaryData(
           }
         >();
 
-        cleanFights.forEach((fight) => {
-          const damageEvents = selectDamageEventsForContext(state, {
-            reportCode,
-            fightId: fight.id,
-          });
-          const actors = selectActorsByIdForContext(state, {
-            reportCode,
-            fightId: fight.id,
-          });
-
+        for (const fight of cleanFights) {
+          const damageEvents = damageByFight.get(fight.id) ?? [];
           const fightDuration = (fight.endTime ?? fight.startTime) - fight.startTime;
 
-          damageEvents.forEach((event) => {
-            const sourceId = event.sourceID?.toString() || 'unknown';
-            const actor = actors[event.sourceID];
+          for (const event of damageEvents) {
+            // Count player-outgoing damage only (excludes damage taken / friendly
+            // fire), so totals and percentages describe damage *done*.
+            if (event.sourceIsFriendly !== true || event.targetIsFriendly) continue;
+
+            const sourceId = event.sourceID;
+            const actor = actorsById[sourceId];
             const actorName = actor?.name || `Actor ${sourceId}`;
 
-            if (!playerDamageMap.has(sourceId)) {
-              playerDamageMap.set(sourceId, {
-                name: actorName,
-                totalDamage: 0,
-                fightData: new Map(),
-              });
+            let playerData = playerDamageMap.get(sourceId);
+            if (!playerData) {
+              playerData = { name: actorName, totalDamage: 0, fightData: new Map() };
+              playerDamageMap.set(sourceId, playerData);
             }
-
-            const playerData = playerDamageMap.get(sourceId)!;
             playerData.totalDamage += event.amount || 0;
 
-            if (!playerData.fightData.has(fight.id)) {
-              playerData.fightData.set(fight.id, {
-                damage: 0,
-                duration: fightDuration,
-                fightName: fight.name,
-              });
+            let fightData = playerData.fightData.get(fight.id);
+            if (!fightData) {
+              fightData = { damage: 0, duration: fightDuration, fightName: fight.name };
+              playerData.fightData.set(fight.id, fightData);
             }
-
-            const fightData = playerData.fightData.get(fight.id)!;
             fightData.damage += event.amount || 0;
-          });
-        });
+          }
+        }
 
         const totalDamage = Array.from(playerDamageMap.values()).reduce(
           (sum, player) => sum + player.totalDamage,
           0,
         );
-        const dps = totalDuration > 0 ? (totalDamage / totalDuration) * 1000 : 0;
+        const dps = totalActiveDuration > 0 ? (totalDamage / totalActiveDuration) * 1000 : 0;
 
-        // The actor map is identical for all players (always firstFight.id), so
-        // resolve it once instead of re-invoking the selector per player inside
-        // the filter.
-        const firstFight = cleanFights[0];
-        const playerActors = firstFight
-          ? selectActorsByIdForContext(state, { reportCode, fightId: firstFight.id })
-          : {};
-
-        // Convert to PlayerDamageBreakdown array - filter to only actual players
         const playerBreakdown: PlayerDamageBreakdown[] = Array.from(playerDamageMap.entries())
-          // Only include if type is 'player' (exclude NPCs and pets)
-          .filter(([playerId]) => playerActors[Number(playerId)]?.type?.toLowerCase() === 'player')
+          // Only include actual players (exclude NPCs and pets/atronachs).
+          .filter(([playerId]) => actorsById[playerId]?.type?.toLowerCase() === 'player')
           .map(([playerId, data]) => {
-            const playerDps = totalDuration > 0 ? (data.totalDamage / totalDuration) * 1000 : 0;
+            const playerDps =
+              totalActiveDuration > 0 ? (data.totalDamage / totalActiveDuration) * 1000 : 0;
             const damagePercentage = totalDamage > 0 ? (data.totalDamage / totalDamage) * 100 : 0;
 
             const fightBreakdown: FightDamageBreakdown[] = Array.from(data.fightData.entries()).map(
@@ -313,7 +545,7 @@ export function useOptimizedReportSummaryData(
             );
 
             return {
-              playerId,
+              playerId: playerId.toString(),
               playerName: data.name,
               totalDamage: data.totalDamage,
               dps: playerDps,
@@ -323,207 +555,57 @@ export function useOptimizedReportSummaryData(
           })
           .sort((a, b) => b.totalDamage - a.totalDamage);
 
-        // Build ability type breakdown using same categorization as insights panel
-        // Define damage type constants (matching insights panel logic)
-        const MAGIC_DAMAGE_TYPES = new Set(['64', '4', '16', '512']); // Magic, Fire, Frost, Shock
-        const MARTIAL_DAMAGE_TYPES = new Set(['1', '2', '8', '256']); // Physical, Bleed, Poison, Disease
-        const AOE_ABILITY_IDS = new Set([
-          126633, 75752, 133494, 227072, 172672, 102136, 183123, 186370, 189869, 185407, 191078,
-          183006, 32711, 32714, 32948, 20252, 20930, 98438, 32792, 32794, 115572, 117809, 117854,
-          117715, 118011, 123082, 118766, 122392, 118314, 143944, 143946, 118720, 23202, 23667,
-          29809, 29806, 23232, 23214, 23196, 23208, 24329, 77186, 94424, 181331, 88802, 100218,
-          26869, 80172, 26794, 44432, 26879, 26871, 108936, 62912, 62951, 62990, 85127, 40267,
-          40252, 61502, 62547, 62529, 38891, 38792, 126474, 38745, 42029, 85432, 41990, 80107,
-          126720, 41839, 217348, 217459, 222678, 40161, 38690, 63474, 63471, 40469, 215779,
-        ]);
-        const STATUS_EFFECT_ABILITY_IDS = new Set([
-          18084, 95136, 95134, 178127, 148801, 178118, 21929, 178123,
-        ]);
-        const RAPID_STRIKES_ID = 18429; // Known ability that should count as direct despite being tick=true
+        // Damage-by-type via the shared categorization. `categorized.totalDamage`
+        // equals the player-outgoing `totalDamage` above (same filtered
+        // population), so percentages here are comparable to the player table.
+        const allDamageEvents = cleanFights.flatMap((fight) => damageByFight.get(fight.id) ?? []);
+        const categorized = categorizeDamageEvents(allDamageEvents, abilitiesById);
+        const denominator = categorized.totalDamage;
 
-        // Track different damage categories
-        const damageCategories = {
-          magic: { damage: 0, hitCount: 0 },
-          martial: { damage: 0, hitCount: 0 },
-          direct: { damage: 0, hitCount: 0 },
-          poison: { damage: 0, hitCount: 0 },
-          dot: { damage: 0, hitCount: 0 },
-          aoe: { damage: 0, hitCount: 0 },
-          statusEffects: { damage: 0, hitCount: 0 },
-          fire: { damage: 0, hitCount: 0 },
-        };
+        const abilityTypeBreakdown: AbilityTypeDamageBreakdown[] = CATEGORY_LABELS.filter(
+          ({ key }) => categorized[key].totalDamage > 0,
+        )
+          .map(({ key, label }) => ({
+            abilityType: label,
+            totalDamage: categorized[key].totalDamage,
+            percentage: denominator > 0 ? (categorized[key].totalDamage / denominator) * 100 : 0,
+            hitCount: categorized[key].hitCount,
+          }))
+          .sort((a, b) => b.totalDamage - a.totalDamage);
 
-        cleanFights.forEach((fight) => {
-          const damageEvents = selectDamageEventsForContext(state, {
-            reportCode,
-            fightId: fight.id,
-          });
-          const abilities = selectAbilitiesByIdForContext(state, {
-            reportCode,
-            fightId: fight.id,
-          });
+        // Exclusive partitions (each sums to 100%) — the alternate presentation.
+        const partitions = partitionDamageEvents(allDamageEvents, abilitiesById);
+        const toBreakdown = (partition: DamagePartition): AbilityTypeDamageBreakdown[] =>
+          partition.buckets
+            .filter((bucket) => bucket.totalDamage > 0)
+            .map((bucket) => ({
+              abilityType: bucket.label,
+              totalDamage: bucket.totalDamage,
+              percentage:
+                partition.totalDamage > 0 ? (bucket.totalDamage / partition.totalDamage) * 100 : 0,
+              hitCount: bucket.hitCount,
+            }))
+            .sort((a, b) => b.totalDamage - a.totalDamage);
+        const deliveryBreakdown = toBreakdown(partitions.byDelivery);
+        const schoolBreakdown = toBreakdown(partitions.bySchool);
 
-          damageEvents.forEach((event) => {
-            // Only count friendly damage to hostile targets
-            if (event.sourceIsFriendly !== true || event.targetIsFriendly) {
-              return;
-            }
-
-            const ability = abilities[event.abilityGameID];
-            const amount = event.amount || 0;
-            const isDirectDamage = event.tick !== true || event.abilityGameID === RAPID_STRIKES_ID;
-
-            // Direct damage
-            if (isDirectDamage) {
-              damageCategories.direct.damage += amount;
-              damageCategories.direct.hitCount += 1;
-            }
-
-            // DOT damage
-            if (event.tick === true) {
-              damageCategories.dot.damage += amount;
-              damageCategories.dot.hitCount += 1;
-            }
-
-            // Poison damage (type 8 or 256)
-            if (ability?.type === '8' || ability?.type === '256') {
-              damageCategories.poison.damage += amount;
-              damageCategories.poison.hitCount += 1;
-            }
-
-            // Fire damage (type 4)
-            if (ability?.type === '4') {
-              damageCategories.fire.damage += amount;
-              damageCategories.fire.hitCount += 1;
-            }
-
-            // AOE damage
-            if (AOE_ABILITY_IDS.has(event.abilityGameID)) {
-              damageCategories.aoe.damage += amount;
-              damageCategories.aoe.hitCount += 1;
-            }
-
-            // Status effects
-            if (STATUS_EFFECT_ABILITY_IDS.has(event.abilityGameID)) {
-              damageCategories.statusEffects.damage += amount;
-              damageCategories.statusEffects.hitCount += 1;
-            }
-
-            // Magic damage (combines Magic, Fire, Frost, Shock)
-            if (ability?.type && MAGIC_DAMAGE_TYPES.has(ability.type)) {
-              damageCategories.magic.damage += amount;
-              damageCategories.magic.hitCount += 1;
-            }
-
-            // Martial damage (combines Physical, Bleed, Poison, Disease)
-            if (ability?.type && MARTIAL_DAMAGE_TYPES.has(ability.type)) {
-              damageCategories.martial.damage += amount;
-              damageCategories.martial.hitCount += 1;
-            }
-          });
-        });
-
-        // Build breakdown array from categories
-        const abilityTypeBreakdown: AbilityTypeDamageBreakdown[] = [];
-
-        if (damageCategories.magic.damage > 0) {
-          abilityTypeBreakdown.push({
-            abilityType: 'Magic',
-            totalDamage: damageCategories.magic.damage,
-            percentage: (damageCategories.magic.damage / totalDamage) * 100,
-            hitCount: damageCategories.magic.hitCount,
-          });
-        }
-
-        if (damageCategories.martial.damage > 0) {
-          abilityTypeBreakdown.push({
-            abilityType: 'Martial',
-            totalDamage: damageCategories.martial.damage,
-            percentage: (damageCategories.martial.damage / totalDamage) * 100,
-            hitCount: damageCategories.martial.hitCount,
-          });
-        }
-
-        if (damageCategories.direct.damage > 0) {
-          abilityTypeBreakdown.push({
-            abilityType: 'Direct',
-            totalDamage: damageCategories.direct.damage,
-            percentage: (damageCategories.direct.damage / totalDamage) * 100,
-            hitCount: damageCategories.direct.hitCount,
-          });
-        }
-
-        if (damageCategories.poison.damage > 0) {
-          abilityTypeBreakdown.push({
-            abilityType: 'Poison',
-            totalDamage: damageCategories.poison.damage,
-            percentage: (damageCategories.poison.damage / totalDamage) * 100,
-            hitCount: damageCategories.poison.hitCount,
-          });
-        }
-
-        if (damageCategories.dot.damage > 0) {
-          abilityTypeBreakdown.push({
-            abilityType: 'Damage over Time',
-            totalDamage: damageCategories.dot.damage,
-            percentage: (damageCategories.dot.damage / totalDamage) * 100,
-            hitCount: damageCategories.dot.hitCount,
-          });
-        }
-
-        if (damageCategories.aoe.damage > 0) {
-          abilityTypeBreakdown.push({
-            abilityType: 'Area of Effect',
-            totalDamage: damageCategories.aoe.damage,
-            percentage: (damageCategories.aoe.damage / totalDamage) * 100,
-            hitCount: damageCategories.aoe.hitCount,
-          });
-        }
-
-        if (damageCategories.statusEffects.damage > 0) {
-          abilityTypeBreakdown.push({
-            abilityType: 'Status Effects',
-            totalDamage: damageCategories.statusEffects.damage,
-            percentage: (damageCategories.statusEffects.damage / totalDamage) * 100,
-            hitCount: damageCategories.statusEffects.hitCount,
-          });
-        }
-
-        if (damageCategories.fire.damage > 0) {
-          abilityTypeBreakdown.push({
-            abilityType: 'Fire',
-            totalDamage: damageCategories.fire.damage,
-            percentage: (damageCategories.fire.damage / totalDamage) * 100,
-            hitCount: damageCategories.fire.hitCount,
-          });
-        }
-
-        // Sort by damage descending
-        const _sortedAbilityTypeBreakdown: AbilityTypeDamageBreakdown[] = abilityTypeBreakdown.sort(
-          (a, b) => b.totalDamage - a.totalDamage,
-        );
-
-        // Get actual report metadata from Redux store
-        const reportData = state.report.data;
-        const reportInfo: ReportInfo = {
-          reportId: reportCode,
-          title: reportData?.title || 'Report',
-          startTime: cleanFights[0]?.startTime ?? Date.now(),
-          endTime: cleanFights[cleanFights.length - 1]?.endTime ?? Date.now(),
-          duration: totalDuration,
-          zoneName: reportData?.zone?.name || 'Unknown Zone',
-          ownerName: 'Report Owner', // Owner info not available in ReportFragment
-        };
-
+        // ---- Final commit ----
+        // Prefer the Tier-1 aggregated leaderboard (already on screen) so the
+        // player table doesn't re-flicker; fall back to the raw-event totals when
+        // Tier-1 was unavailable. Per-fight `fightBreakdown` is not rendered, so
+        // Tier-1's empty value is fine.
+        const t1 = tier1 && tier1.playerBreakdown.length > 0 ? tier1 : null;
         const summaryData: ReportSummaryData = {
           reportInfo,
           fights: cleanFights,
           damageBreakdown: {
-            totalDamage,
-            dps,
-            playerBreakdown,
+            totalDamage: t1 ? t1.totalDamage : totalDamage,
+            dps: t1 ? t1.dps : dps,
+            playerBreakdown: t1 ? t1.playerBreakdown : playerBreakdown,
             abilityTypeBreakdown,
-            targetBreakdown: [], // Target breakdown can be added later if needed
+            deliveryBreakdown,
+            schoolBreakdown,
+            targetBreakdown: [],
           },
           deathAnalysis,
           loadingStates: {
@@ -536,12 +618,12 @@ export function useOptimizedReportSummaryData(
           },
           errors: {
             generalErrors: [],
-            fightErrors: {},
+            fightErrors,
             fetchErrors: {},
           },
         };
 
-        if (runId !== runIdRef.current) return; // superseded by a newer fetch
+        if (!isCurrent()) return; // superseded by a newer fetch
         setReportSummaryData(summaryData);
         setProgress({
           current: totalTasks,
@@ -549,15 +631,36 @@ export function useOptimizedReportSummaryData(
           currentTask: 'Complete!',
         });
       } catch (err) {
-        if (runId !== runIdRef.current) return; // superseded by a newer fetch
+        if (!isCurrent()) return; // superseded by a newer fetch
         setError(err instanceof Error ? err.message : 'An error occurred');
       } finally {
         // Only the latest run owns the loading flag.
-        if (runId === runIdRef.current) setIsLoading(false);
+        if (isCurrent()) setIsLoading(false);
       }
     },
     [dispatch, client, fights, reportCode, store],
   );
+
+  // Drop the previous report's committed data the moment the report changes.
+  // The sections now render as soon as their data is present (the death section
+  // no longer gates on isLoading, so the Tier-1 commit can paint fast); without
+  // this reset, navigating from one report's summary to another would briefly
+  // show the PRIOR report's death analysis / leaderboard during the new report's
+  // load. Keyed on reportCode ONLY (not the fetch deps) so same-report effect
+  // re-fires — e.g. the `fights` selector reference churning — never wipe a valid
+  // in-progress commit.
+  //
+  // Bump the run id here too: the auto-fetch below is deferred until the new
+  // report's fights load, so without superseding the old run its still-in-flight
+  // request would pass `isCurrent()` and re-commit the previous report's data
+  // right after this reset. The old run's setState calls are now all fenced off.
+  React.useEffect(() => {
+    runIdRef.current += 1;
+    setReportSummaryData(null);
+    setProgress(null);
+    setError(null);
+    setIsLoading(false);
+  }, [reportCode]);
 
   // Auto-fetch data when dependencies are ready
   React.useEffect(() => {

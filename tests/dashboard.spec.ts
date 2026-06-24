@@ -49,7 +49,7 @@ test.describe('Raid Dashboard', () => {
 
     test.skip('should show dashboard button on report summary page', async ({ page }) => {
       // SKIPPED: Summary page takes very long to process all fight data in test environment
-      // The dashboard button exists in the code (ReportSummaryPage.tsx line 171-177)
+      // The dashboard button is rendered by ReportActionBar on the summary page,
       // but the page may not finish loading within reasonable test timeouts
 
       // Navigate to the report summary page

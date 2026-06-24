@@ -1,4 +1,19 @@
-import { Box, Typography, Card, CardContent, LinearProgress, Alert, Chip } from '@mui/material';
+import BarChartIcon from '@mui/icons-material/BarChart';
+import DangerousIcon from '@mui/icons-material/Dangerous';
+import InsightsIcon from '@mui/icons-material/Insights';
+import {
+  Box,
+  Typography,
+  Card,
+  CardContent,
+  LinearProgress,
+  Alert,
+  Chip,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
+} from '@mui/material';
 import React, { Suspense } from 'react';
 import { useParams } from 'react-router-dom';
 
@@ -6,12 +21,24 @@ import { DynamicMetaTags } from '../../components/DynamicMetaTags';
 import { ReportActionBar } from '../../components/ReportActionBar';
 import { ReportFragment } from '../../graphql/gql/graphql';
 import { useReportData } from '../../hooks';
+import { glassCardSurfaceSx, SUMMARY_ACCENTS } from '../../theme/glassCardSurface';
 import { ReportSummaryData } from '../../types/reportSummaryTypes';
 
 // Lazy load heavy sections for better performance
-const DamageBreakdownSection = React.lazy(() => import('./DamageBreakdownSection'));
-const EnhancedDeathAnalysisSection = React.lazy(() => import('./EnhancedDeathAnalysisSection'));
-import { useOptimizedReportSummaryData } from './hooks/useOptimizedReportSummaryData';
+const DamageBreakdownSection = React.lazy(() =>
+  import('./DamageBreakdownSection').then((m) => ({ default: m.DamageBreakdownSection })),
+);
+const EnhancedDeathAnalysisSection = React.lazy(() =>
+  import('./EnhancedDeathAnalysisSection').then((m) => ({
+    default: m.EnhancedDeathAnalysisSection,
+  })),
+);
+
+import {
+  isUsableFight,
+  useOptimizedReportSummaryData,
+} from './hooks/useOptimizedReportSummaryData';
+import { chipPillSx, SEMANTIC_ACCENTS } from './summaryStyles';
 
 export const ReportSummaryPage: React.FC = () => {
   const { reportId } = useParams<{ reportId: string }>();
@@ -21,6 +48,13 @@ export const ReportSummaryPage: React.FC = () => {
 
   // Get basic report data
   const { reportData, isReportLoading } = useReportData();
+
+  // The fight list ships with the report metadata, well before the (slow)
+  // per-fight event aggregation finishes — used to show the fight count in the
+  // header immediately instead of flashing "0 Fights" during the summary load.
+  // Uses the same validity filter as the aggregation (isUsableFight) so the
+  // count never visibly drops when summaryData resolves.
+  const reportFightCount = reportData?.fights?.filter(isUsableFight).length;
 
   // Get aggregated summary data using optimized Redux-based hook
   const {
@@ -46,8 +80,12 @@ export const ReportSummaryPage: React.FC = () => {
     };
   }, [stableReportId, reportData]);
 
-  // Show loading state
-  if (isReportLoading || isSummaryLoading) {
+  // Show the full-page loading view only while the report *metadata* itself is
+  // loading — without it there is no header/zone/title to anchor the page. The
+  // slow per-fight event aggregation (isSummaryLoading) no longer blocks the
+  // whole page: the header renders immediately and each section shows its own
+  // skeleton until its data lands (progressive render).
+  if (isReportLoading) {
     return (
       <Box sx={{ p: 3 }}>
         <DynamicMetaTags {...metaTags} />
@@ -78,7 +116,34 @@ export const ReportSummaryPage: React.FC = () => {
         reportData={reportData}
         summaryData={summaryData ?? undefined}
         reportId={stableReportId}
+        fallbackFightCount={reportFightCount}
       />
+
+      {isSummaryLoading && (
+        <Box sx={{ mb: 2 }}>
+          {progress && (
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+              <Typography variant="caption" color="text.secondary">
+                {progress.currentTask}
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                {progress.current}/{progress.total}
+              </Typography>
+            </Box>
+          )}
+          <LinearProgress
+            variant={progress ? 'determinate' : 'indeterminate'}
+            value={progress ? (progress.current / progress.total) * 100 : undefined}
+            sx={{ height: 6, borderRadius: 3 }}
+          />
+        </Box>
+      )}
+
+      {summaryData && Object.keys(summaryData.errors.fightErrors).length > 0 && (
+        <Alert severity="warning" sx={{ mb: 2 }}>
+          {`Some events couldn't be loaded for ${Object.keys(summaryData.errors.fightErrors).length} fight(s); the summary below is based on the data that loaded.`}
+        </Alert>
+      )}
 
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mt: 1 }}>
         {/* Damage Breakdown Section */}
@@ -111,12 +176,15 @@ interface ReportSummaryHeaderProps {
   reportData: ReportFragment | null;
   summaryData?: ReportSummaryData;
   reportId: string;
+  /** Fight count from report master data, shown until the aggregation lands. */
+  fallbackFightCount?: number;
 }
 
 const ReportSummaryHeader: React.FC<ReportSummaryHeaderProps> = ({
   reportData,
   summaryData,
   reportId,
+  fallbackFightCount,
 }) => {
   return (
     <>
@@ -127,26 +195,43 @@ const ReportSummaryHeader: React.FC<ReportSummaryHeaderProps> = ({
       />
 
       {/* Summary metadata chips */}
-      <Card elevation={2} sx={{ mb: 3 }}>
+      <Card
+        elevation={0}
+        sx={(theme) => ({ ...glassCardSurfaceSx(theme.palette.mode === 'dark'), mb: 3 })}
+      >
         <CardContent sx={{ py: 2, '&:last-child': { pb: 2 } }}>
           <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap', alignItems: 'center' }}>
             <Chip
-              label={`${summaryData?.fights.length || 0} Fights`}
-              color="primary"
-              variant="outlined"
+              label={`${summaryData?.fights.length ?? fallbackFightCount ?? 0} Fights`}
               size="small"
+              sx={(theme) => chipPillSx(theme.palette.mode === 'dark', SEMANTIC_ACCENTS.cyan)}
             />
             {reportData?.zone?.name && (
-              <Chip label={reportData.zone.name} size="small" color="secondary" />
+              <Chip
+                label={reportData.zone.name}
+                size="small"
+                sx={(theme) => chipPillSx(theme.palette.mode === 'dark', SEMANTIC_ACCENTS.violet)}
+              />
             )}
             {summaryData?.reportInfo.duration && (
-              <Chip label={formatDuration(summaryData.reportInfo.duration)} size="small" />
+              <Chip
+                label={formatDuration(summaryData.reportInfo.duration)}
+                size="small"
+                sx={(theme) => chipPillSx(theme.palette.mode === 'dark', SEMANTIC_ACCENTS.slate)}
+              />
             )}
-            {summaryData?.deathAnalysis.totalDeaths !== undefined && (
+            {summaryData?.deathAnalysis?.totalDeaths !== undefined && (
               <Chip
                 label={`${summaryData.deathAnalysis.totalDeaths} Total Deaths`}
                 size="small"
-                color={summaryData.deathAnalysis.totalDeaths === 0 ? 'success' : 'warning'}
+                sx={(theme) =>
+                  chipPillSx(
+                    theme.palette.mode === 'dark',
+                    summaryData.deathAnalysis?.totalDeaths === 0
+                      ? SEMANTIC_ACCENTS.green
+                      : SEMANTIC_ACCENTS.coral,
+                  )
+                }
               />
             )}
             {summaryData?.reportInfo && (
@@ -172,9 +257,9 @@ interface ReportSummaryLoadingViewProps {
 
 const ReportSummaryLoadingView: React.FC<ReportSummaryLoadingViewProps> = ({ progress }) => {
   return (
-    <Card elevation={2}>
+    <Card elevation={0} sx={(theme) => glassCardSurfaceSx(theme.palette.mode === 'dark')}>
       <CardContent>
-        <Typography variant="h5" gutterBottom>
+        <Typography variant="h5" component="h2" gutterBottom>
           Loading Report Summary
         </Typography>
 
@@ -203,13 +288,38 @@ const ReportSummaryLoadingView: React.FC<ReportSummaryLoadingViewProps> = ({ pro
 
         {!progress && <LinearProgress sx={{ mb: 2 }} />}
 
-        <Typography variant="body2" color="text.secondary">
-          📊 Aggregating damage data across all fights
-          <br />
-          💀 Analyzing death patterns and mechanics
-          <br />
-          🎯 Identifying improvement opportunities
-        </Typography>
+        <List dense disablePadding>
+          <ListItem disableGutters>
+            <ListItemIcon sx={{ minWidth: 32 }}>
+              <BarChartIcon fontSize="small" color="action" aria-hidden />
+            </ListItemIcon>
+            <ListItemText>
+              <Typography variant="body2" color="text.secondary">
+                Aggregating damage data across all fights
+              </Typography>
+            </ListItemText>
+          </ListItem>
+          <ListItem disableGutters>
+            <ListItemIcon sx={{ minWidth: 32 }}>
+              <DangerousIcon fontSize="small" color="action" aria-hidden />
+            </ListItemIcon>
+            <ListItemText>
+              <Typography variant="body2" color="text.secondary">
+                Analyzing death patterns and mechanics
+              </Typography>
+            </ListItemText>
+          </ListItem>
+          <ListItem disableGutters>
+            <ListItemIcon sx={{ minWidth: 32 }}>
+              <InsightsIcon fontSize="small" color="action" aria-hidden />
+            </ListItemIcon>
+            <ListItemText>
+              <Typography variant="body2" color="text.secondary">
+                Identifying improvement opportunities
+              </Typography>
+            </ListItemText>
+          </ListItem>
+        </List>
       </CardContent>
     </Card>
   );
@@ -222,9 +332,12 @@ interface ReportSummaryErrorViewProps {
 
 const ReportSummaryErrorView: React.FC<ReportSummaryErrorViewProps> = ({ error, reportId }) => {
   return (
-    <Card elevation={2}>
+    <Card
+      elevation={0}
+      sx={(theme) => glassCardSurfaceSx(theme.palette.mode === 'dark', SUMMARY_ACCENTS.death)}
+    >
       <CardContent>
-        <Typography variant="h5" gutterBottom color="error">
+        <Typography variant="h5" component="h2" gutterBottom color="error">
           Failed to Load Report Summary
         </Typography>
 
