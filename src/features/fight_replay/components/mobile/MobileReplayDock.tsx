@@ -15,9 +15,11 @@
 import AddLocationAltRoundedIcon from '@mui/icons-material/AddLocationAltRounded';
 import BoltRoundedIcon from '@mui/icons-material/BoltRounded';
 import DeleteSweepRoundedIcon from '@mui/icons-material/DeleteSweepRounded';
+import DrawRoundedIcon from '@mui/icons-material/DrawRounded';
 import EditLocationAltRoundedIcon from '@mui/icons-material/EditLocationAltRounded';
 import GroupRoundedIcon from '@mui/icons-material/GroupRounded';
 import InsightsRoundedIcon from '@mui/icons-material/InsightsRounded';
+import IosShareRoundedIcon from '@mui/icons-material/IosShareRounded';
 import LabelRoundedIcon from '@mui/icons-material/LabelRounded';
 import PlaylistPlayRoundedIcon from '@mui/icons-material/PlaylistPlayRounded';
 import RedoRoundedIcon from '@mui/icons-material/RedoRounded';
@@ -29,15 +31,18 @@ import { Box, Switch, Typography } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { useOptimizedTimelineScrubbing } from '../../../../hooks/useOptimizedTimelineScrubbing';
 import { useTimelineMarkers } from '../../../../hooks/useTimelineMarkers';
 import type { TrialChapter } from '../../trial_chapters/types';
+import type { ShapeKind, ShapeStyle } from '../../types/mapMarkers';
 import { ChapterList } from '../ChapterList';
 import type { TrialReplayNav } from '../FightReplay3D';
+import { LiveScrubRail } from '../LiveScrubRail';
+import { LiveTrialStrip } from '../LiveTrialStrip';
 import { PlaybackButtons } from '../PlaybackButtons';
+import { ShapeToolbar } from '../ShapeToolbar';
 import { ShareButton } from '../ShareButton';
-import { TimelineSlider } from '../TimelineSlider';
-import { TrialTimeline, type TrialTimelineSeekTarget } from '../TrialTimeline';
+import { TimeReadout } from '../TimeReadout';
+import { type TrialTimelineSeekTarget } from '../TrialTimeline';
 
 import { MobileSheet } from './MobileSheet';
 
@@ -52,7 +57,6 @@ const formatTime = (ms: number): string => {
 
 interface MobileReplayDockProps {
   // Transport
-  currentTime: number;
   duration: number;
   isPlaying: boolean;
   playbackSpeed: number;
@@ -108,9 +112,20 @@ interface MobileReplayDockProps {
   onUndoMarkers?: () => void;
   canRedoMarkers?: boolean;
   onRedoMarkers?: () => void;
+  // Draw shapes — the touch home for the desktop shape toolbar. Omit onSelectDrawTool to hide the
+  // whole Shapes section. Selecting a tool closes the sheet so the map is reachable for tapping.
+  drawTool?: ShapeKind | null;
+  drawStyle?: ShapeStyle;
+  onSelectDrawTool?: (tool: ShapeKind | null) => void;
+  onDrawStyleChange?: (patch: Partial<ShapeStyle>) => void;
+  shapeCount?: number;
+  onClearShapes?: () => void;
+  /** Opens the manage / import / share-code modal. The page deck that normally hosts it is
+      desktop-only, so this is the phone's only route to importing or copying marker/shape codes. */
+  onOpenMarkersManager?: () => void;
 }
 
-type SheetId = 'chapters' | 'settings' | null;
+type SheetId = 'chapters' | 'markers' | 'settings' | null;
 
 /**
  * A settings row: leading icon + label/description, trailing control. Generous 56px tap target.
@@ -273,7 +288,6 @@ const MarkerActionButton: React.FC<{
 );
 
 const MobileReplayDockComponent: React.FC<MobileReplayDockProps> = ({
-  currentTime,
   duration,
   isPlaying,
   playbackSpeed,
@@ -315,6 +329,13 @@ const MobileReplayDockComponent: React.FC<MobileReplayDockProps> = ({
   onUndoMarkers,
   canRedoMarkers = false,
   onRedoMarkers,
+  drawTool = null,
+  drawStyle,
+  onSelectDrawTool,
+  onDrawStyleChange,
+  shapeCount = 0,
+  onClearShapes,
+  onOpenMarkersManager,
 }) => {
   const [sheet, setSheet] = useState<SheetId>(null);
 
@@ -368,29 +389,25 @@ const MobileReplayDockComponent: React.FC<MobileReplayDockProps> = ({
     onAddMarkerAtCenter?.();
   }, [onAddMarkerAtCenter]);
 
-  const {
-    displayTime,
-    isDragging,
-    isScrubbingMode,
-    handleSliderChange,
-    handleSliderChangeStart,
-    handleSliderChangeEnd,
-    optimizedStep,
-  } = useOptimizedTimelineScrubbing({
-    duration,
-    currentTime,
-    onTimeChange,
-    isPlaying,
-    onPlayingChange,
-    timeRef,
-  });
+  // Arming a draw tool closes the sheet so the map is reachable for tap-to-draw (the sheet covers
+  // the arena). Disarming (tool === null) keeps the sheet open.
+  const handleSelectDrawTool = useCallback(
+    (tool: ShapeKind | null) => {
+      onSelectDrawTool?.(tool);
+      if (tool) setSheet(null);
+    },
+    [onSelectDrawTool],
+  );
 
-  useEffect(() => {
-    onScrubbingModeChange?.(isScrubbingMode);
-  }, [isScrubbingMode, onScrubbingModeChange]);
-  useEffect(() => {
-    onDraggingChange?.(isDragging);
-  }, [isDragging, onDraggingChange]);
+  // "Codes" opens the import / export / clear modal. Close the sheet first so the dialog lands in
+  // front of the arena rather than behind the drawer.
+  const handleOpenManager = useCallback(() => {
+    setSheet(null);
+    onOpenMarkersManager?.();
+  }, [onOpenMarkersManager]);
+
+  const noopStyleChange = useCallback(() => {}, []);
+  const noopClearShapes = useCallback(() => {}, []);
 
   const { markers } = useTimelineMarkers();
   // Keep only the structural beats on the thin mobile rail (deaths reachable via clusters/chapters).
@@ -429,15 +446,14 @@ const MobileReplayDockComponent: React.FC<MobileReplayDockProps> = ({
         borderTop: `1px solid ${theme.palette.divider}`,
       })}
     >
-      <TimelineSlider
-        displayTime={displayTime}
+      <LiveScrubRail
+        timeRef={timeRef}
         duration={duration}
-        isDragging={isDragging}
-        isScrubbingMode={isScrubbingMode}
-        optimizedStep={optimizedStep}
-        onSliderChange={handleSliderChange}
-        onSliderChangeEnd={handleSliderChangeEnd}
-        onSliderChangeStart={handleSliderChangeStart}
+        isPlaying={isPlaying}
+        onTimeChange={onTimeChange}
+        onPlayingChange={onPlayingChange}
+        onScrubbingModeChange={onScrubbingModeChange}
+        onDraggingChange={onDraggingChange}
         markers={railMarkers}
         onMarkerClick={handleMarkerClick}
         density="compact"
@@ -469,17 +485,20 @@ const MobileReplayDockComponent: React.FC<MobileReplayDockProps> = ({
         }}
       >
         <Typography
+          component="div"
           sx={{
             fontFamily: 'Space Grotesk, Inter, system-ui',
             fontVariantNumeric: 'tabular-nums',
             fontSize: '0.8rem',
             fontWeight: 600,
-            color: isScrubbingMode || isDragging ? 'info.main' : 'text.primary',
+            color: 'text.primary',
             flex: '0 0 auto',
             whiteSpace: 'nowrap',
           }}
         >
-          {formatTime(displayTime)}
+          {/* Live timecode — rAF-driven from timeRef so it stays smooth without re-rendering the
+              dock every tick. */}
+          <TimeReadout timeRef={timeRef} format={formatTime} />
           <Box
             component="span"
             sx={{ color: 'text.secondary', fontWeight: 500, fontSize: '0.68rem' }}
@@ -503,6 +522,15 @@ const MobileReplayDockComponent: React.FC<MobileReplayDockProps> = ({
               active={sheet === 'chapters'}
               opensSheet
               onClick={() => setSheet((s) => (s === 'chapters' ? null : 'chapters'))}
+            />
+          )}
+          {(onToggleMarkersEditMode || onSelectDrawTool) && (
+            <DockButton
+              icon={<DrawRoundedIcon fontSize="small" />}
+              label="Markers"
+              active={sheet === 'markers'}
+              opensSheet
+              onClick={() => setSheet((s) => (s === 'markers' ? null : 'markers'))}
             />
           )}
           <DockButton
@@ -576,13 +604,15 @@ const MobileReplayDockComponent: React.FC<MobileReplayDockProps> = ({
                 </Typography>
               )}
 
-              {/* Whole-run scrubber — the tall touch variant (≥44px interactive band). */}
+              {/* Whole-run scrubber — the tall touch variant (≥44px interactive band). Driven off
+                  timeRef (LiveTrialStrip) so it doesn't depend on the per-tick currentTime state —
+                  that lets the dock drop the currentTime prop and keep its React.memo during playback. */}
               <Box sx={{ mb: 1.5 }}>
-                <TrialTimeline
+                <LiveTrialStrip
+                  timeRef={timeRef}
                   timeline={trialNav.timeline}
                   currentFightId={trialNav.currentFightId}
                   currentFightStartTime={currentFightStartTime}
-                  currentLocalMs={currentTime}
                   onSeek={handleSheetTrialSeek}
                   variant="sheet"
                 />
@@ -606,9 +636,125 @@ const MobileReplayDockComponent: React.FC<MobileReplayDockProps> = ({
         </MobileSheet>
       )}
 
-      {/* Settings sheet — playback speed · display toggles · share. Body rendered only while open
-          (same reason as above: its ShareButton takes `currentTime`, so a mounted-but-closed sheet
-          reconciled at the playback tick). */}
+      {/* Markers & Shapes drawer — the touch home for the desktop "Map Markers" deck (markers +
+          drawn shapes), which sits behind the immersive overlay and is unreachable on a phone.
+          Its own dock button (not buried in Settings). Arming a tool / entering edit mode closes
+          the sheet so the map is reachable; the in-canvas HUD then drives Finish/Cancel/Undo. */}
+      <MobileSheet
+        open={sheet === 'markers'}
+        title="Markers & Shapes"
+        onClose={() => setSheet(null)}
+      >
+        {sheet === 'markers' && (
+          <>
+            {/* Quick actions — one shared undo/redo history spans markers AND shapes, so it lives
+                up top where it's always findable (the thing people hunt for first), beside the
+                gateway to import / export / clear codes. These stay put as you edit or draw. */}
+            <Box
+              sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 0.75, mb: 2.5 }}
+            >
+              <MarkerActionButton
+                icon={<UndoRoundedIcon fontSize="small" />}
+                label="Undo"
+                onClick={() => onUndoMarkers?.()}
+                disabled={!onUndoMarkers || !canUndoMarkers}
+              />
+              <MarkerActionButton
+                icon={<RedoRoundedIcon fontSize="small" />}
+                label="Redo"
+                onClick={() => onRedoMarkers?.()}
+                disabled={!onRedoMarkers || !canRedoMarkers}
+              />
+              <MarkerActionButton
+                icon={<IosShareRoundedIcon fontSize="small" />}
+                label="Codes"
+                onClick={handleOpenManager}
+                disabled={!onOpenMarkersManager}
+              />
+            </Box>
+
+            {onToggleMarkersEditMode && (
+              <>
+                <Typography
+                  variant="overline"
+                  sx={{ color: 'text.secondary', fontWeight: 700, letterSpacing: '0.08em' }}
+                >
+                  Markers
+                </Typography>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75, mt: 1, mb: 2.5 }}>
+                  <SettingRow
+                    icon={<EditLocationAltRoundedIcon fontSize="small" />}
+                    label="Edit markers"
+                    description="Place, move, and remove map markers"
+                    active={markersEditMode}
+                    control={
+                      <Switch
+                        checked={markersEditMode}
+                        onChange={handleToggleEditMarkers}
+                        slotProps={{ input: { 'aria-label': 'Edit markers' } }}
+                      />
+                    }
+                  />
+                  {markersEditMode && (
+                    <>
+                      <Typography
+                        variant="caption"
+                        sx={{ color: 'text.secondary', px: 0.5, lineHeight: 1.4 }}
+                      >
+                        Press and hold the map to place a marker · drag a marker to move it · press
+                        and hold a marker to edit or remove it
+                      </Typography>
+                      {/* Single full-width gesture-free placement (undo/redo moved to the quick
+                          actions row above). */}
+                      <MarkerActionButton
+                        icon={<AddLocationAltRoundedIcon fontSize="small" />}
+                        label="Add here"
+                        onClick={handleAddMarkerAtCenter}
+                        disabled={!onAddMarkerAtCenter}
+                      />
+                    </>
+                  )}
+                </Box>
+              </>
+            )}
+
+            {onSelectDrawTool && drawStyle && (
+              <>
+                <Typography
+                  variant="overline"
+                  sx={{ color: 'text.secondary', fontWeight: 700, letterSpacing: '0.08em' }}
+                >
+                  Draw shapes
+                </Typography>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75, mt: 1, mb: 1 }}>
+                  <Typography
+                    variant="caption"
+                    sx={{ color: 'text.secondary', px: 0.5, lineHeight: 1.4 }}
+                  >
+                    Pick a tool, then tap the map to place points. Circle/rect/ruler take two taps;
+                    use the on-map Finish button (or double-tap) to finish a line or zone.
+                  </Typography>
+                  {/* Undo/redo intentionally omitted here — they live in the quick actions row at
+                      the top of the drawer (one shared history), so this toolbar stays focused on
+                      tool + style. */}
+                  <ShapeToolbar
+                    activeTool={drawTool}
+                    onSelectTool={handleSelectDrawTool}
+                    style={drawStyle}
+                    onStyleChange={onDrawStyleChange ?? noopStyleChange}
+                    shapeCount={shapeCount}
+                    onClearShapes={onClearShapes ?? noopClearShapes}
+                  />
+                </Box>
+              </>
+            )}
+          </>
+        )}
+      </MobileSheet>
+
+      {/* Settings sheet — playback speed · display toggles · share. Body rendered only while open so
+          a closed sheet doesn't reconcile its subtree. (ShareButton reads the live timeRef, not a
+          per-tick prop.) */}
       <MobileSheet
         open={sheet === 'settings'}
         title="Settings"
@@ -730,68 +876,6 @@ const MobileReplayDockComponent: React.FC<MobileReplayDockProps> = ({
               />
             </Box>
 
-            {/* Markers — the touch home for the desktop "Edit Markers" tools. The page-toolbar
-                marker controls sit behind the immersive overlay, so on a phone this sheet is the
-                only place to manage markers. Hidden entirely when the host wires no marker toggle. */}
-            {onToggleMarkersEditMode && (
-              <>
-                <Typography
-                  variant="overline"
-                  sx={{ color: 'text.secondary', fontWeight: 700, letterSpacing: '0.08em' }}
-                >
-                  Markers
-                </Typography>
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75, mt: 1, mb: 2.5 }}>
-                  <SettingRow
-                    icon={<EditLocationAltRoundedIcon fontSize="small" />}
-                    label="Edit markers"
-                    description="Place, move, and remove map markers"
-                    active={markersEditMode}
-                    control={
-                      <Switch
-                        checked={markersEditMode}
-                        onChange={handleToggleEditMarkers}
-                        slotProps={{ input: { 'aria-label': 'Edit markers' } }}
-                      />
-                    }
-                  />
-                  {markersEditMode && (
-                    <>
-                      <Typography
-                        variant="caption"
-                        sx={{ color: 'text.secondary', px: 0.5, lineHeight: 1.4 }}
-                      >
-                        Press and hold the map to place a marker · drag a marker to move it · press
-                        and hold a marker to edit or remove it
-                      </Typography>
-                      <Box
-                        sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 0.75 }}
-                      >
-                        <MarkerActionButton
-                          icon={<AddLocationAltRoundedIcon fontSize="small" />}
-                          label="Add here"
-                          onClick={handleAddMarkerAtCenter}
-                          disabled={!onAddMarkerAtCenter}
-                        />
-                        <MarkerActionButton
-                          icon={<UndoRoundedIcon fontSize="small" />}
-                          label="Undo"
-                          onClick={() => onUndoMarkers?.()}
-                          disabled={!onUndoMarkers || !canUndoMarkers}
-                        />
-                        <MarkerActionButton
-                          icon={<RedoRoundedIcon fontSize="small" />}
-                          label="Redo"
-                          onClick={() => onRedoMarkers?.()}
-                          disabled={!onRedoMarkers || !canRedoMarkers}
-                        />
-                      </Box>
-                    </>
-                  )}
-                </Box>
-              </>
-            )}
-
             <Typography
               variant="overline"
               sx={{ color: 'text.secondary', fontWeight: 700, letterSpacing: '0.08em' }}
@@ -824,7 +908,6 @@ const MobileReplayDockComponent: React.FC<MobileReplayDockProps> = ({
               <ShareButton
                 reportId={reportId}
                 fightId={fightId}
-                currentTime={currentTime}
                 selectedActorIdRef={selectedActorIdRef}
                 timeRef={timeRef}
               />

@@ -1,4 +1,6 @@
-import { MapMarkersState, ReplayMarker } from '../types/mapMarkers';
+import { decodeMorMarkersString } from '@/utils/morMarkersDecoder';
+
+import { MapMarkersState, ReplayMarker, ReplayShape } from '../types/mapMarkers';
 
 import {
   COMMON_ELMS_ICON_KEYS,
@@ -7,6 +9,7 @@ import {
   applyElmsIconTemplate,
   arenaPointToWorld,
   createMarkerFromElmsIcon,
+  encodeInGameMor,
   encodeMarkersToElms,
   encodeMarkersToMor,
   ensureFormat,
@@ -451,5 +454,78 @@ describe('applyElmsIconTemplate / withMarkerEdit', () => {
   it('withMarkerEdit is a no-op for an unknown marker id', () => {
     const state = stateFromMarkers([manualMarker(1)]);
     expect(withMarkerEdit(state, 'nope', { text: 'x' })).toBe(state);
+  });
+});
+
+describe('encodeInGameMor (bake shapes to a real in-game M0R string)', () => {
+  function shape(overrides: Partial<ReplayShape>): ReplayShape {
+    return {
+      id: 'x',
+      source: 'manual',
+      kind: 'polygon',
+      vertices: [
+        [100000, 100000],
+        [110000, 100000],
+        [110000, 110000],
+        [100000, 110000],
+      ],
+      worldY: 8000,
+      style: { colour: [1, 0.5, 0, 1], width: 4, dashed: false, fill: true },
+      ...overrides,
+    };
+  }
+
+  it('emits a valid M0R string that decodes back to ground-flat dots tracing the outline', () => {
+    const state: MapMarkersState = { format: 'mor', zoneId: 636, markers: [], shapes: [shape({})] };
+    const { code, markerCount, dotCount } = encodeInGameMor(state, 5); // 5m spacing
+
+    // It is a real M0R string (same grammar the addon parses).
+    expect(code.startsWith('<')).toBe(true);
+    expect(code.endsWith('>')).toBe(true);
+
+    const decoded = decodeMorMarkersString(code);
+    expect(decoded).not.toBeNull();
+    expect(decoded!.zone).toBe(636);
+    expect(decoded!.markers).toHaveLength(markerCount);
+    expect(dotCount).toBe(markerCount); // shapes-only export
+
+    // ~ perimeter(400m)/5m ≈ 80 dots; allow slack for end effects.
+    expect(decoded!.markers.length).toBeGreaterThan(40);
+
+    // Every dot sits inside the polygon's bounding box (on the outline) and lies flat (pitch ~ -90°).
+    for (const m of decoded!.markers) {
+      expect(m.x).toBeGreaterThanOrEqual(100000 - 1);
+      expect(m.x).toBeLessThanOrEqual(110000 + 1);
+      expect(m.z).toBeGreaterThanOrEqual(100000 - 1);
+      expect(m.z).toBeLessThanOrEqual(110000 + 1);
+      expect(m.orientation?.[0]).toBeCloseTo(-Math.PI / 2, 2);
+    }
+  });
+
+  it('coarsens spacing to stay under the marker cap', () => {
+    const state: MapMarkersState = {
+      format: 'mor',
+      zoneId: 636,
+      markers: [],
+      shapes: [shape({})], // 400m perimeter
+    };
+    const { markerCount, spacingMeters } = encodeInGameMor(state, 0.5, 50); // would be ~800 dots at 0.5m
+    expect(markerCount).toBeLessThanOrEqual(55);
+    expect(spacingMeters).toBeGreaterThan(0.5); // spacing was widened to fit
+  });
+
+  it('includes real markers alongside baked dots and throws when there is nothing to export', () => {
+    const withMarkers: MapMarkersState = {
+      format: 'mor',
+      zoneId: 636,
+      markers: [manualMarker(1)],
+      shapes: [shape({})],
+    };
+    const { markerCount, dotCount } = encodeInGameMor(withMarkers, 10);
+    expect(markerCount).toBe(dotCount + 1);
+
+    expect(() =>
+      encodeInGameMor({ format: 'mor', zoneId: 636, markers: [], shapes: [] }),
+    ).toThrow();
   });
 });

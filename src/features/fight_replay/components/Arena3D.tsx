@@ -29,7 +29,7 @@ import { Logger, LogLevel } from '../../../utils/logger';
 import { MapTimeline } from '../../../utils/mapTimelineUtils';
 import { getActorPositionAtClosestTimestamp } from '../../../workers/calculations/CalculateActorPositions';
 import { ARENA_HEIGHT } from '../constants/replayDesign';
-import { MapMarkersState, ReplayMarker } from '../types/mapMarkers';
+import { MapMarkersState, ReplayMarker, ShapeKind, ShapeStyle } from '../types/mapMarkers';
 import { computeRobustActorFraming } from '../utils/cameraFraming';
 import { portalToFullscreen } from '../utils/fullscreenPortal';
 import {
@@ -42,6 +42,7 @@ import { decidePreviewMode } from '../utils/previewMode';
 
 import { ADD_MARKER_AT_CENTER_EVENT, Arena3DScene, GroundContextMenuPayload } from './Arena3DScene';
 import { BossHealthPanel } from './BossHealthPanel';
+import { DrawingHud } from './DrawingHud';
 import { LockedPlayerStatsPanel } from './LockedPlayerStatsPanel';
 import { MarkerContextMenuPayload } from './Marker3D';
 import { MarkerIconPicker } from './MarkerIconPicker';
@@ -116,6 +117,14 @@ interface Arena3DProps {
   onToggleMarkersEditMode?: () => void;
   /** Drag-to-move commit for a marker (arena-space coordinates). */
   onMarkerMove?: (markerId: string, arenaPoint: { x: number; z: number }) => void;
+  /** Active shape draw tool (null when not drawing). */
+  drawTool?: ShapeKind | null;
+  /** Style applied to freshly drawn shapes. */
+  drawStyle?: ShapeStyle;
+  /** Commit a finished shape's ARENA points (FightReplay converts to world + persists). */
+  onShapeDrawn?: (kind: ShapeKind, arenaPoints: Array<[number, number]>) => void;
+  /** Disarm/select a draw tool — wired to the in-canvas drawing HUD's Done button. */
+  onSelectDrawTool?: (tool: ShapeKind | null) => void;
   /** Opens the marker edit dialog (owned by FightReplay) for the given marker. */
   onEditMarker?: (markerId: string) => void;
   /** Marker undo/redo (mobile tools sheet — Ctrl+Z/Ctrl+Shift+Z have no touch equivalent). */
@@ -148,6 +157,14 @@ interface Arena3DProps {
   onToggleNames?: () => void;
   performanceMode?: boolean;
   onTogglePerformance?: () => void;
+  /** Auto quality level from the governor (0 = full); drives the "Performance mode (auto)" chip. */
+  autoQualityLevel?: number;
+  /** Governor requests a new quality level (escalate/recover one effect tier). */
+  onQualityLevelChange?: (level: number) => void;
+  /** True when the user forced full quality via the chip — the governor stands down. */
+  qualityAutoDisabled?: boolean;
+  /** Chip action: force full quality (disable the auto governor for the session). */
+  onForceFullQuality?: () => void;
   statsPanelEnabled?: boolean;
   onToggleStats?: () => void;
   /** True when the replay block is fullscreen/immersive (drives the fill-height layout + toggle icon). */
@@ -193,6 +210,10 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
   markersEditMode = false,
   onToggleMarkersEditMode,
   onMarkerMove,
+  drawTool = null,
+  drawStyle,
+  onShapeDrawn,
+  onSelectDrawTool,
   onEditMarker,
   canUndoMarkers = false,
   onUndoMarkers,
@@ -209,6 +230,10 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
   onToggleNames,
   performanceMode: performanceModeProp,
   onTogglePerformance,
+  autoQualityLevel = 0,
+  onQualityLevelChange,
+  qualityAutoDisabled = false,
+  onForceFullQuality,
   statsPanelEnabled: statsPanelEnabledProp,
   onToggleStats,
   reservedInset,
@@ -227,6 +252,13 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
   const perfTier = usePerfTier();
   const prefersReducedMotion = usePrefersReducedMotion();
   const previewMode = decidePreviewMode(perfTier, prefersReducedMotion);
+  // Stable [min, max] DPR range for the Canvas. Memoized so a re-render doesn't hand R3F a new array
+  // and re-apply the DPR — that would overwrite AdaptiveResolution's runtime downscale (which owns
+  // the pixel ratio after mount). Only a genuine perf-tier change produces a new range.
+  const canvasDprRange = useMemo<[number, number]>(
+    () => (perfTier === 'low' ? [1, 1.5] : [1, 2]),
+    [perfTier],
+  );
   const [showKeyboardHelp, setShowKeyboardHelp] = useState(false);
 
   // Persisted viewer prefs (localStorage). Arena3D owns the names + performance slices; the
@@ -302,6 +334,19 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
   useEffect(() => {
     persistPrefs({ statsPanelSections });
   }, [persistPrefs, statsPanelSections]);
+
+  // In-canvas drawing HUD wiring. The Finish/Cancel buttons bump a signal the ShapeDrawLayer
+  // reacts to (touch has no Enter/Esc); the layer reports its in-progress point count back up so
+  // the HUD can show it + gate Finish. Reset the count whenever the tool changes.
+  const [drawFinishSignal, setDrawFinishSignal] = useState(0);
+  const [drawCancelSignal, setDrawCancelSignal] = useState(0);
+  const [drawPointCount, setDrawPointCount] = useState(0);
+  const handleDrawFinish = useCallback(() => setDrawFinishSignal((n) => n + 1), []);
+  const handleDrawCancel = useCallback(() => setDrawCancelSignal((n) => n + 1), []);
+  const handleDrawPointsChange = useCallback((n: number) => setDrawPointCount(n), []);
+  useEffect(() => {
+    setDrawPointCount(0);
+  }, [drawTool]);
 
   // Player IDs for the DOM player-list overlay (derived from the same lookup the scene uses).
   const availablePlayerIds = useMemo(() => (lookup ? getVisiblePlayerIds(lookup) : []), [lookup]);
@@ -731,7 +776,7 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
           // models"). 1.5× restores most of that crispness while still trimming the fill cost vs a full
           // 2× for genuinely weak GPUs. Reactive — changes apply without a remount. (This is a perf
           // lever, not the floor-sharpness fix; the floor crispness win comes from the unsharp mask.)
-          dpr={perfTier === 'low' ? [1, 1.5] : [1, 2]}
+          dpr={canvasDprRange}
           camera={{
             position: initialCameraPosition,
             fov: 30,
@@ -808,6 +853,12 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
             onMarkerContextMenu={handleMarkerContextMenu}
             markersEditMode={markersEditMode}
             onMarkerMove={onMarkerMove}
+            drawTool={drawTool}
+            drawStyle={drawStyle}
+            onShapeDrawn={onShapeDrawn}
+            drawFinishSignal={drawFinishSignal}
+            drawCancelSignal={drawCancelSignal}
+            onDrawPointsChange={handleDrawPointsChange}
             fight={fight}
             initialTarget={initialCameraTarget}
             initialPosition={initialCameraPosition}
@@ -817,6 +868,9 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
             playerVisibility={playerVisibility}
             playerColorOverrides={playerColorOverrides}
             performanceMode={performanceMode}
+            autoQualityLevel={autoQualityLevel}
+            onQualityLevelChange={onQualityLevelChange}
+            qualityAutoDisabled={qualityAutoDisabled}
             mobileImmersive={mobileImmersive}
           />
         </Canvas>
@@ -948,6 +1002,36 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
         {/* Player-list + boss-health HUDs are DOM overlays (above) rendered as siblings of
             the <Canvas>, not in-canvas textured planes — crisp text, real scroll, native
             MUI styling. */}
+
+        {/* In-canvas drawing HUD — floating controls over the arena while a tool is armed, so
+            drawing is controllable without a keyboard (essential on touch). */}
+        {drawTool && (
+          <Box
+            sx={{
+              position: 'absolute',
+              top: 12,
+              left: 0,
+              right: 0,
+              display: 'flex',
+              justifyContent: 'center',
+              px: 1,
+              zIndex: 6,
+              pointerEvents: 'none',
+            }}
+          >
+            <DrawingHud
+              tool={drawTool}
+              pointCount={drawPointCount}
+              onFinish={handleDrawFinish}
+              onCancel={handleDrawCancel}
+              onDone={() => onSelectDrawTool?.(null)}
+              canUndo={!!canUndoMarkers}
+              onUndo={() => onUndoMarkers?.()}
+              canRedo={!!canRedoMarkers}
+              onRedo={() => onRedoMarkers?.()}
+            />
+          </Box>
+        )}
 
         {/* Add-marker picker: one flat surface with every icon (bottom sheet on touch,
             popover at the click point on desktop). Kept mounted so close transitions run. */}
@@ -1367,6 +1451,44 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
           </Typography>
         </Box>
       )}
+
+      {/* Auto-quality chip — shown only when the governor has silently reduced effects to hold
+          framerate on a weak/throttled device (not when the user chose performance mode themselves,
+          and not in the inline preview). A tap forces full quality back and stands the governor down.
+          Anchored bottom-CENTER just above the transport: the bottom-left lane is owned by the
+          locked-player stats panel (which grows upward) and the bottom-right by the control stack, so
+          center is the one bottom lane that never collides. */}
+      {!mobilePreview &&
+        onForceFullQuality &&
+        !performanceMode &&
+        !qualityAutoDisabled &&
+        autoQualityLevel > 0 && (
+          <Tooltip title="Effects were automatically reduced to keep playback smooth on this device. Tap to force full quality.">
+            <Chip
+              icon={<Bolt sx={{ fontSize: '0.95rem' }} />}
+              label="Performance mode (auto)"
+              size="small"
+              onClick={onForceFullQuality}
+              aria-label="Effects auto-reduced for performance. Tap to force full quality."
+              sx={{
+                position: 'absolute',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                bottom: (reservedInset ?? 80) + 12,
+                zIndex: 4,
+                cursor: 'pointer',
+                color: '#e2e8f0',
+                backgroundColor: 'rgba(13,20,48,0.82)',
+                backdropFilter: 'blur(8px)',
+                WebkitBackdropFilter: 'blur(8px)',
+                border: '1px solid rgba(252,211,77,0.4)',
+                fontSize: '0.72rem',
+                '& .MuiChip-icon': { color: '#fcd34d' },
+                '&:hover': { backgroundColor: 'rgba(13,20,48,0.95)' },
+              }}
+            />
+          </Tooltip>
+        )}
     </div>
   );
 };

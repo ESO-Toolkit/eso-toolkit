@@ -10,13 +10,49 @@ import {
 } from '@/utils/elmsMarkersDecoder';
 import { decodeMorMarkersString } from '@/utils/morMarkersDecoder';
 
-import { MapMarkersState, MarkerFormat, ReplayMarker } from '../types/mapMarkers';
+import {
+  MapMarkersState,
+  MarkerFormat,
+  MarkerSource,
+  ReplayMarker,
+  ReplayShape,
+  ShapeData,
+  ShapeStyle,
+} from '../types/mapMarkers';
+
+import { CLASS_ICON_OPTIONS } from './markerIconCatalog';
+import { shapeOutlineLengthMeters, shapeSampleWorld } from './shapeGeometry';
 
 const COLOR_TOLERANCE = 0.05;
 const SIZE_TOLERANCE = 0.05;
 
 export const COMMON_ELMS_ICON_KEYS: number[] = [
-  1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 21, 18, 72, 73, 74, 75, 76, 77, 14, 15, 16, 17, 20, 22,
+  1,
+  2,
+  3,
+  4,
+  5,
+  6,
+  7,
+  8,
+  9,
+  10,
+  21,
+  18,
+  72,
+  73,
+  74,
+  75,
+  76,
+  77,
+  14,
+  15,
+  16,
+  17,
+  20,
+  22,
+  // esotk-native class icon markers (101-107)
+  ...CLASS_ICON_OPTIONS.map((option) => option.iconKey),
 ];
 
 const ICON_LABEL_OVERRIDES: Record<number, string> = {
@@ -48,6 +84,10 @@ const ICON_LABEL_OVERRIDES: Record<number, string> = {
   76: 'Arrow South',
   77: 'Arrow West',
 };
+// Class icon labels (keys 101-107).
+CLASS_ICON_OPTIONS.forEach((option) => {
+  ICON_LABEL_OVERRIDES[option.iconKey] = option.label;
+});
 
 function deriveLabel(iconKey: number): string {
   if (ICON_LABEL_OVERRIDES[iconKey]) {
@@ -78,7 +118,7 @@ export interface MarkerMenuOption {
   sample?: string;
 }
 
-export type MarkerGroupKey = 'numbers' | 'roles' | 'arrows' | 'shapes' | 'squares';
+export type MarkerGroupKey = 'numbers' | 'roles' | 'arrows' | 'shapes' | 'squares' | 'classes';
 
 interface MarkerGroupDefinition {
   key: MarkerGroupKey;
@@ -97,6 +137,7 @@ const GROUP_LABEL_OVERRIDES: Partial<Record<MarkerGroupKey, string>> = {
   arrows: 'Directional Arrows',
   shapes: 'Shapes',
   squares: 'Squares',
+  classes: 'Classes',
 };
 
 const MARKER_GROUPS: MarkerGroupDefinition[] = [
@@ -123,6 +164,11 @@ const MARKER_GROUPS: MarkerGroupDefinition[] = [
   {
     key: 'squares',
     iconKeys: [15, 16, 17, 20, 22],
+  },
+  {
+    // ESO class icons — render via bundled glyphs, transfer in-game as M0R class icons (^15-^21).
+    key: 'classes',
+    iconKeys: CLASS_ICON_OPTIONS.map((option) => option.iconKey),
   },
 ];
 
@@ -279,13 +325,16 @@ function orientationsMatch(
 }
 
 function findElmsIconKeyForMarker(marker: MorMarker): number | null {
-  if (typeof marker.elmsIconKey === 'number') {
+  // Class icon markers (keys >= 100) are esotk-native with no Elms representation; let them fall
+  // through so Elms export fails gracefully (their in-game transfer path is M0R, not Elms).
+  if (typeof marker.elmsIconKey === 'number' && marker.elmsIconKey < 100) {
     return marker.elmsIconKey;
   }
 
   for (const [key, definition] of Object.entries(ELMS_ICON_MAP)) {
     const iconKey = Number(key);
     if (Number.isNaN(iconKey)) continue;
+    if (iconKey >= 100) continue;
 
     if (definition.bgTexture) {
       if (!marker.bgTexture) continue;
@@ -742,4 +791,229 @@ export function ensureFormat(state: MapMarkersState, format: MarkerFormat): MapM
     ...state,
     format,
   };
+}
+
+// ---------------------------------------------------------------------------
+// Drawn shapes (esotk-native: polyline / polygon / circle / rect / ruler)
+// ---------------------------------------------------------------------------
+
+function generateShapeId(index: number): string {
+  return `shape-${index}-${uuidv4()}`;
+}
+
+/** Deep-clone a shape's mutable geometry/style so reducers never alias prior-state arrays. */
+function cloneShapeData(data: ShapeData): ShapeData {
+  const cloned: ShapeData = {
+    kind: data.kind,
+    vertices: data.vertices.map((vertex) => [vertex[0], vertex[1]] as [number, number]),
+    worldY: data.worldY,
+    style: {
+      colour: [...data.style.colour] as [number, number, number, number],
+      width: data.style.width,
+      dashed: data.style.dashed,
+      fill: data.style.fill,
+    },
+  };
+  if (data.radius !== undefined) cloned.radius = data.radius;
+  if (data.label !== undefined) cloned.label = data.label;
+  if (data.time !== undefined) cloned.time = [data.time[0], data.time[1]];
+  return cloned;
+}
+
+export function buildReplayShape(
+  data: ShapeData,
+  source: MarkerSource,
+  index: number,
+): ReplayShape {
+  return {
+    ...cloneShapeData(data),
+    id: generateShapeId(index),
+    source,
+  };
+}
+
+/** Fields the shape edit UI can change. `null` clears an optional field; omit to leave unchanged. */
+export interface ShapeEditPatch {
+  style?: Partial<ShapeStyle>;
+  label?: string | null;
+  time?: [number, number] | null;
+  /** Circle radius in metres. */
+  radius?: number;
+}
+
+export function withNewShape(
+  state: MapMarkersState,
+  data: ShapeData,
+  source: MarkerSource = 'manual',
+): MapMarkersState {
+  const shape = buildReplayShape(data, source, state.shapes?.length ?? 0);
+  return {
+    ...state,
+    shapes: [...(state.shapes ?? []), shape],
+  };
+}
+
+/** Replace the whole shapes set (used by share-code import). Keeps markers untouched. */
+export function withShapesReplaced(
+  state: MapMarkersState,
+  datas: ShapeData[],
+  source: MarkerSource = 'imported',
+): MapMarkersState {
+  return {
+    ...state,
+    shapes: datas.map((data, index) => buildReplayShape(data, source, index)),
+  };
+}
+
+export function withoutShape(state: MapMarkersState, shapeId: string): MapMarkersState {
+  if (!state.shapes?.some((shape) => shape.id === shapeId)) {
+    return state;
+  }
+  return {
+    ...state,
+    shapes: state.shapes.filter((shape) => shape.id !== shapeId),
+  };
+}
+
+/** Move a shape to new WORLD-space vertices (drag-to-move / vertex edit commit). */
+export function withShapeVertices(
+  state: MapMarkersState,
+  shapeId: string,
+  vertices: Array<[number, number]>,
+): MapMarkersState {
+  if (!state.shapes) return state;
+  return {
+    ...state,
+    shapes: state.shapes.map((shape) =>
+      shape.id === shapeId
+        ? {
+            ...shape,
+            vertices: vertices.map((vertex) => [vertex[0], vertex[1]] as [number, number]),
+          }
+        : shape,
+    ),
+  };
+}
+
+/** Apply a style/label/time/radius edit to one shape as a single transition. */
+export function withShapeEdit(
+  state: MapMarkersState,
+  shapeId: string,
+  patch: ShapeEditPatch,
+): MapMarkersState {
+  if (!state.shapes) return state;
+
+  return {
+    ...state,
+    shapes: state.shapes.map((shape) => {
+      if (shape.id !== shapeId) {
+        return shape;
+      }
+
+      const next: ReplayShape = {
+        ...shape,
+        style: {
+          ...shape.style,
+          colour: [...shape.style.colour] as [number, number, number, number],
+        },
+        vertices: shape.vertices.map((vertex) => [vertex[0], vertex[1]] as [number, number]),
+      };
+
+      if (patch.style) {
+        next.style = {
+          ...next.style,
+          ...patch.style,
+          colour: patch.style.colour
+            ? ([...patch.style.colour] as [number, number, number, number])
+            : next.style.colour,
+        };
+      }
+
+      if (patch.label !== undefined) {
+        next.label = patch.label && patch.label.trim().length > 0 ? patch.label : undefined;
+      }
+
+      if (patch.time !== undefined) {
+        next.time = patch.time ? ([patch.time[0], patch.time[1]] as [number, number]) : undefined;
+      }
+
+      if (patch.radius !== undefined && Number.isFinite(patch.radius) && patch.radius > 0) {
+        next.radius = patch.radius;
+      }
+
+      return next;
+    }),
+  };
+}
+
+// ---------------------------------------------------------------------------
+// In-game export: bake markers + shapes into a real M0RMarkers string
+// ---------------------------------------------------------------------------
+
+/** Circle texture used for baked shape dots (built-in M0R ^1). */
+const SHAPE_DOT_TEXTURE = 'M0RMarkers/textures/circle.dds';
+/** Lay baked dots flat on the floor (pitch -90°), so a sampled line reads as a ground boundary. */
+const GROUND_FLAT_ORIENTATION: [number, number] = [-Math.PI / 2, 0];
+
+export interface InGameMorResult {
+  /** The M0RMarkers `<...>` string to paste into the addon in-game. */
+  code: string;
+  /** Total markers in the export (real markers + baked shape dots). */
+  markerCount: number;
+  /** How many of those are baked shape dots. */
+  dotCount: number;
+  /** Effective spacing between dots in metres (auto-coarsened to fit the cap). */
+  spacingMeters: number;
+}
+
+/**
+ * Bake markers + drawn shapes into ONE M0RMarkers import string that renders IN THE GAME.
+ *
+ * ESO marker addons cannot draw lines/areas — only point markers — so each shape's OUTLINE is
+ * sampled into a row of ground-flat circle dots in the shape's colour (fills can't transfer; only
+ * the boundary does). Dot spacing is coarsened automatically so real markers + dots stay under
+ * `maxMarkers` (the addon's storage ceiling is ~19k chars / a few hundred markers).
+ */
+export function encodeInGameMor(
+  state: MapMarkersState,
+  spacingMeters = 2,
+  maxMarkers = 500,
+): InGameMorResult {
+  const realMarkers = state.markers ?? [];
+  const shapes = state.shapes ?? [];
+
+  // Coarsen spacing so real markers + baked dots fit the cap.
+  const totalLenMeters = shapes.reduce((sum, shape) => sum + shapeOutlineLengthMeters(shape), 0);
+  const budget = Math.max(0, maxMarkers - realMarkers.length);
+  let spacing = Math.max(0.25, spacingMeters);
+  if (budget > 0 && totalLenMeters / spacing > budget) {
+    spacing = totalLenMeters / budget;
+  }
+  const spacingCm = spacing * 100;
+
+  const dots: ReplayMarker[] = [];
+  shapes.forEach((shape, shapeIndex) => {
+    shapeSampleWorld(shape, spacingCm).forEach(([x, z], pointIndex) => {
+      dots.push({
+        id: `bake-${shapeIndex}-${pointIndex}`,
+        source: 'manual',
+        x,
+        y: shape.worldY,
+        z,
+        size: 1,
+        bgTexture: SHAPE_DOT_TEXTURE,
+        colour: [...shape.style.colour] as [number, number, number, number],
+        text: '',
+        orientation: [...GROUND_FLAT_ORIENTATION] as [number, number],
+      });
+    });
+  });
+
+  const combined = [...realMarkers, ...dots];
+  if (combined.length === 0) {
+    throw new Error('No markers or shapes available to export.');
+  }
+
+  const code = encodeMarkersToMor({ ...state, markers: combined, shapes: undefined });
+  return { code, markerCount: combined.length, dotCount: dots.length, spacingMeters: spacing };
 }

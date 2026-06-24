@@ -117,7 +117,17 @@ const ChapterStop: React.FC<ChapterStopProps> = ({
       <ChapterGlyph chapter={chapter} size={isBoss ? 36 : 28} />
 
       <Box sx={{ minWidth: 0, flex: 1 }}>
-        <Typography variant="body2" noWrap sx={{ fontWeight: active ? 700 : 600, lineHeight: 1.2 }}>
+        <Typography
+          variant="body2"
+          noWrap
+          sx={{
+            fontWeight: active ? 700 : 600,
+            lineHeight: 1.2,
+            // Native <button> doesn't inherit `color`, so without this the name falls back to the
+            // UA's black button text (invisible on the dark card). Mirror ChapterList's mapping.
+            color: isBoss ? 'text.primary' : 'text.secondary',
+          }}
+        >
           {chapter.name}
           {chapter.attempt > 1 && (
             <Box component="span" sx={{ color: 'text.secondary', fontWeight: 500 }}>

@@ -26,6 +26,9 @@ import { MarkerEditDialog } from './components/MarkerEditDialog';
 import { MarkerExportButton } from './components/MarkerExportButton';
 import { MarkersPanel } from './components/MarkersPanel';
 import { ReplayStatePanel } from './components/ReplayStatePanel';
+import { ShapeEditDialog } from './components/ShapeEditDialog';
+import { ShapesPanel } from './components/ShapesPanel';
+import { ShapeToolbar } from './components/ShapeToolbar';
 import { markerDeckSurface } from './constants/replayDesign';
 import { useIsMobileReplay } from './hooks/useIsMobileReplay';
 import { useMapMarkersManager } from './hooks/useMapMarkersManager';
@@ -34,13 +37,52 @@ import { buildTrialTimeline } from './trial_chapters/trialTimeline';
 import type { TrialChapter } from './trial_chapters/types';
 import { useReplayNavigation } from './trial_chapters/useReplayNavigation';
 import { useReplayPrefetch } from './trial_chapters/useReplayPrefetch';
-import { encodeMarkersToElms, encodeMarkersToMor } from './utils/mapMarkerConverters';
+import type { ShapeData, ShapeKind, ShapeStyle } from './types/mapMarkers';
+import {
+  arenaPointToWorld,
+  encodeInGameMor,
+  encodeMarkersToElms,
+} from './utils/mapMarkerConverters';
+import { worldDistanceMeters } from './utils/shapeGeometry';
+import { encodeShapes } from './utils/shapeShareCodec';
 
 function formatDuration(milliseconds: number): string {
   const totalSeconds = Math.floor(milliseconds / 1000);
   const minutes = Math.floor(totalSeconds / 60);
   const seconds = totalSeconds % 60;
   return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+}
+
+/** Copy text to the clipboard, falling back to a hidden textarea + execCommand on older/insecure
+ * contexts. Returns whether the copy succeeded. */
+async function copyTextToClipboard(text: string): Promise<boolean> {
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+  } catch {
+    // fall through to the legacy path
+  }
+  try {
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    textArea.style.position = 'fixed';
+    textArea.style.left = '-9999px';
+    textArea.style.top = '-9999px';
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    let ok = false;
+    try {
+      ok = document.execCommand('copy');
+    } finally {
+      document.body.removeChild(textArea);
+    }
+    return ok;
+  } catch {
+    return false;
+  }
 }
 
 /** True when the keydown target is a text-entry element (don't steal undo/redo from inputs). */
@@ -77,6 +119,7 @@ export const FightReplay: React.FC = () => {
   // marker state, storage, map-scale resolution and history; the page just renders the controls.
   const {
     markersState,
+    activeMapData,
     restoredCount,
     canUndo,
     canRedo,
@@ -86,6 +129,10 @@ export const FightReplay: React.FC = () => {
     removeMarker,
     moveMarker,
     editMarker,
+    addShape,
+    removeShape,
+    clearShapes,
+    editShape,
     undo,
     redo,
   } = useMapMarkersManager({ fight, onError: handleMarkersError });
@@ -94,7 +141,76 @@ export const FightReplay: React.FC = () => {
   // in the 3D arena (the Alt+right-click chords keep working regardless, for muscle memory).
   // On touch the same mode maps to long-press gestures instead of right-clicks.
   const [markersEditMode, setMarkersEditMode] = useState(false);
-  const toggleMarkersEditMode = useCallback(() => setMarkersEditMode((prev) => !prev), []);
+
+  // Active shape draw tool + the style applied to freshly drawn shapes. Draw mode and marker edit
+  // mode are mutually exclusive: arming one disarms the other so the marker grab-proxies never
+  // steal the draw layer's floor clicks.
+  const [drawTool, setDrawTool] = useState<ShapeKind | null>(null);
+  const [drawStyle, setDrawStyle] = useState<ShapeStyle>({
+    colour: [1, 0.5, 0, 1],
+    width: 4,
+    dashed: false,
+    fill: true,
+  });
+
+  const toggleMarkersEditMode = useCallback(() => {
+    setMarkersEditMode((prev) => {
+      const next = !prev;
+      if (next) setDrawTool(null);
+      return next;
+    });
+  }, []);
+
+  const handleSelectTool = useCallback((tool: ShapeKind | null) => {
+    setDrawTool(tool);
+    if (tool) setMarkersEditMode(false);
+  }, []);
+
+  const handleStyleChange = useCallback((patch: Partial<ShapeStyle>) => {
+    setDrawStyle((prev) => ({ ...prev, ...patch }));
+  }, []);
+
+  // Convert a finished shape's arena points to world coords for the active map, then persist it.
+  const handleShapeDrawn = useCallback(
+    (kind: ShapeKind, arenaPoints: Array<[number, number]>) => {
+      if (!activeMapData) {
+        setCopySnackbar({
+          type: 'error',
+          message: 'Map scale data is unavailable for this fight.',
+        });
+        return;
+      }
+
+      const worldPoints = arenaPoints.map(([x, z]) => {
+        const world = arenaPointToWorld(activeMapData, { x, z });
+        return [world.x, world.z] as [number, number];
+      });
+
+      const worldY =
+        activeMapData.y ?? markersState?.markers[0]?.y ?? markersState?.shapes?.[0]?.worldY ?? 0;
+
+      let vertices = worldPoints;
+      let radius: number | undefined;
+
+      if (kind === 'circle') {
+        radius = worldDistanceMeters(worldPoints[0], worldPoints[1]);
+        if (!(radius > 0)) return;
+        vertices = [worldPoints[0]];
+      } else if (kind === 'rect' || kind === 'ruler') {
+        vertices = [worldPoints[0], worldPoints[1]];
+      }
+
+      const data: ShapeData = {
+        kind,
+        vertices,
+        worldY,
+        style: { ...drawStyle, colour: [...drawStyle.colour] },
+        ...(radius !== undefined ? { radius } : {}),
+      };
+      addShape(data);
+    },
+    [activeMapData, addShape, drawStyle, markersState],
+  );
 
   // Markers tools live behind a collapsed toggle so the deck no longer permanently shoulders the
   // arena down the page (most viewers never place a marker). Default collapsed, but FORCED open
@@ -114,19 +230,28 @@ export const FightReplay: React.FC = () => {
     [markersState, editingMarkerId],
   );
 
+  // The shape currently open in the shape edit dialog (from the shapes list).
+  const [editingShapeId, setEditingShapeId] = useState<string | null>(null);
+  const editingShape = useMemo(
+    () => markersState?.shapes?.find((shape) => shape.id === editingShapeId) ?? null,
+    [markersState, editingShapeId],
+  );
+  const fightDurationMs = fight ? fight.endTime - fight.startTime : 0;
+
   // Surface restored-from-storage marker sets so users know why markers appeared.
   useEffect(() => {
     if (restoredCount > 0) {
       setCopySnackbar({
         type: 'info',
-        message: `Restored ${restoredCount} saved marker${restoredCount === 1 ? '' : 's'} for this zone.`,
+        message: `Restored ${restoredCount} saved item${restoredCount === 1 ? '' : 's'} (markers & shapes) for this zone.`,
       });
     }
   }, [restoredCount]);
 
-  // Undo/redo keyboard shortcuts while edit mode is on (Ctrl/Cmd+Z, Ctrl/Cmd+Shift+Z or Ctrl+Y).
+  // Undo/redo keyboard shortcuts while editing markers OR drawing shapes (Ctrl/Cmd+Z,
+  // Ctrl/Cmd+Shift+Z or Ctrl+Y). The shared history covers both.
   useEffect(() => {
-    if (!markersEditMode) {
+    if (!markersEditMode && !drawTool) {
       return;
     }
 
@@ -147,7 +272,7 @@ export const FightReplay: React.FC = () => {
 
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [markersEditMode, undo, redo]);
+  }, [markersEditMode, drawTool, undo, redo]);
 
   // Handle loading markers from modal
   const handleLoadMarkers = useCallback(
@@ -160,61 +285,76 @@ export const FightReplay: React.FC = () => {
 
   const handleExportMarkers = useCallback(
     async (format: 'elms' | 'mor') => {
-      if (!markersState || markersState.markers.length === 0) {
-        setCopySnackbar({ type: 'error', message: 'No markers available to export.' });
+      const hasMarkers = !!markersState && markersState.markers.length > 0;
+      const hasShapes = !!markersState?.shapes && markersState.shapes.length > 0;
+
+      // Elms can only carry point markers.
+      if (format === 'elms') {
+        if (!markersState || !hasMarkers) {
+          setCopySnackbar({ type: 'error', message: 'No markers available to export.' });
+          return;
+        }
+        try {
+          const encoded = encodeMarkersToElms(markersState);
+          const ok = await copyTextToClipboard(encoded);
+          setCopySnackbar(
+            ok
+              ? { type: 'success', message: 'Elms markers copied to clipboard.' }
+              : { type: 'error', message: 'Unable to copy Elms markers right now.' },
+          );
+        } catch (error) {
+          setCopySnackbar({
+            type: 'error',
+            message: error instanceof Error ? error.message : 'Unable to export Elms markers.',
+          });
+        }
         return;
       }
 
-      const successMessage =
-        format === 'elms'
-          ? 'Elms markers copied to clipboard.'
-          : 'M0R markers copied to clipboard.';
-      const fallbackFailureMessage =
-        format === 'elms'
-          ? 'Unable to copy Elms markers to clipboard right now.'
-          : 'Unable to copy M0R markers to clipboard right now.';
-
+      // M0R is the IN-GAME export: markers + drawn shapes baked into a single addon string. ESO
+      // addons can't draw lines, so each shape's outline becomes a row of ground-flat marker dots.
+      if (!markersState || (!hasMarkers && !hasShapes)) {
+        setCopySnackbar({ type: 'error', message: 'No markers or shapes available to export.' });
+        return;
+      }
       try {
-        const encoded =
-          format === 'elms' ? encodeMarkersToElms(markersState) : encodeMarkersToMor(markersState);
-
-        if (navigator.clipboard && window.isSecureContext) {
-          await navigator.clipboard.writeText(encoded);
-          setCopySnackbar({ type: 'success', message: successMessage });
+        const { code, markerCount, dotCount, spacingMeters } = encodeInGameMor(markersState);
+        const ok = await copyTextToClipboard(code);
+        if (!ok) {
+          setCopySnackbar({ type: 'error', message: 'Unable to copy the M0R string right now.' });
           return;
         }
-
-        const textArea = document.createElement('textarea');
-        textArea.value = encoded;
-        textArea.style.position = 'fixed';
-        textArea.style.left = '-9999px';
-        textArea.style.top = '-9999px';
-        document.body.appendChild(textArea);
-        textArea.focus();
-        textArea.select();
-
-        let fallbackSucceeded = false;
-        try {
-          fallbackSucceeded = document.execCommand('copy');
-        } finally {
-          document.body.removeChild(textArea);
-        }
-
-        if (fallbackSucceeded) {
-          setCopySnackbar({ type: 'success', message: successMessage });
-          return;
-        }
-
-        throw new Error(fallbackFailureMessage);
+        const shapeNote =
+          dotCount > 0 ? ` (${dotCount} shape dots at ~${spacingMeters.toFixed(1)}m spacing)` : '';
+        setCopySnackbar({
+          type: 'success',
+          message: `M0R import copied — ${markerCount} markers${shapeNote}. Paste it into M0RMarkers in-game.`,
+        });
       } catch (error) {
         setCopySnackbar({
           type: 'error',
-          message: error instanceof Error ? error.message : fallbackFailureMessage,
+          message: error instanceof Error ? error.message : 'Unable to export M0R markers.',
         });
       }
     },
     [markersState],
   );
+
+  // Copy the drawn shapes as an esotk-native share code (M0R/Elms can't carry shapes).
+  const handleExportShapes = useCallback(async () => {
+    const shapes = markersState?.shapes;
+    if (!markersState || !shapes || shapes.length === 0) {
+      setCopySnackbar({ type: 'error', message: 'No shapes available to export.' });
+      return;
+    }
+    const code = encodeShapes(shapes, markersState.zoneId);
+    const ok = await copyTextToClipboard(code);
+    setCopySnackbar(
+      ok
+        ? { type: 'success', message: 'Shapes code copied to clipboard.' }
+        : { type: 'error', message: 'Unable to copy the shapes code right now.' },
+    );
+  }, [markersState]);
 
   // Handle navigation back to fight details
   const handleBackToFight = useCallback((): void => {
@@ -525,6 +665,14 @@ export const FightReplay: React.FC = () => {
         markersEditMode={markersEditMode}
         onToggleMarkersEditMode={toggleMarkersEditMode}
         onMarkerMove={moveMarker}
+        drawTool={drawTool}
+        drawStyle={drawStyle}
+        onShapeDrawn={handleShapeDrawn}
+        onSelectDrawTool={handleSelectTool}
+        onDrawStyleChange={handleStyleChange}
+        shapeCount={markersState?.shapes?.length ?? 0}
+        onClearShapes={clearShapes}
+        onOpenMarkersManager={() => setMarkersModalOpen(true)}
         onEditMarker={setEditingMarkerId}
         canUndoMarkers={canUndo}
         onUndoMarkers={undo}
@@ -608,8 +756,11 @@ export const FightReplay: React.FC = () => {
           language) so the marker tools read as one intentional cluster instead of naked buttons
           on the page, while staying calm enough never to compete with the arena hero below. The
           actions stay quiet/outlined; the Edit toggle flips to contained only to signal its
-          active state. */}
-      {fight && (
+          active state. DESKTOP-ONLY: on mobile this whole deck sits behind the immersive overlay
+          (unreachable on a phone), so the touch home for these tools is the dock's dedicated
+          "Markers" drawer — rendering the deck here too would just stack a redundant, cramped
+          copy below the arena. */}
+      {fight && !isMobileReplay && (
         <Box sx={{ mb: 2 }}>
           {/* Collapsed by default: one quiet toggle keeps the markers tools (a power feature most
               viewers never touch) from permanently pushing the arena down the page. It expands the
@@ -762,6 +913,30 @@ export const FightReplay: React.FC = () => {
                     </Typography>
                   </Box>
                 )}
+                {/* Draw shapes — esotk-native lines / zones / circles / rects / rulers. Sits under
+                    the marker actions as the second half of the command strip. */}
+                <Box sx={{ borderTop: 1, borderColor: 'divider', pt: 1.5 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+                      Draw Shapes
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      lines · zones · circles · rulers
+                    </Typography>
+                  </Box>
+                  <ShapeToolbar
+                    activeTool={drawTool}
+                    onSelectTool={handleSelectTool}
+                    style={drawStyle}
+                    onStyleChange={handleStyleChange}
+                    shapeCount={markersState?.shapes?.length ?? 0}
+                    onClearShapes={clearShapes}
+                    canUndo={canUndo}
+                    onUndo={undo}
+                    canRedo={canRedo}
+                    onRedo={redo}
+                  />
+                </Box>
               </Box>
 
               {/* Marker management list: edit/delete each marker, undo/redo, clear all. Kept just
@@ -782,6 +957,18 @@ export const FightReplay: React.FC = () => {
                   />
                 </Box>
               )}
+
+              {/* Shape management list: per-shape edit/delete + clear-all. */}
+              {markersState?.shapes && markersState.shapes.length > 0 && (
+                <Box sx={{ mt: 1.5 }}>
+                  <ShapesPanel
+                    shapes={markersState.shapes}
+                    onEditShape={setEditingShapeId}
+                    onRemoveShape={removeShape}
+                    onClearShapes={clearShapes}
+                  />
+                </Box>
+              )}
             </Box>
           </Collapse>
         </Box>
@@ -796,6 +983,9 @@ export const FightReplay: React.FC = () => {
           markersState={markersState}
           onLoadMarkers={handleLoadMarkers}
           onClearMarkers={clearMarkers}
+          onExportElms={() => handleExportMarkers('elms')}
+          onExportMor={() => handleExportMarkers('mor')}
+          onExportShapes={handleExportShapes}
         />
       )}
 
@@ -805,6 +995,14 @@ export const FightReplay: React.FC = () => {
         onClose={() => setEditingMarkerId(null)}
         onApply={editMarker}
         onDelete={removeMarker}
+      />
+
+      <ShapeEditDialog
+        open={editingShape !== null}
+        shape={editingShape}
+        fightDurationMs={fightDurationMs}
+        onClose={() => setEditingShapeId(null)}
+        onSubmit={editShape}
       />
 
       {/* 3D Arena (swaps state inline; the shell + rail persist). */}

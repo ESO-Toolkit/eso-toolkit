@@ -10,18 +10,21 @@ import { usePerfTier } from '../../../hooks/usePerfTier';
 import { Logger, LogLevel } from '../../../utils/logger';
 import { MapTimeline } from '../../../utils/mapTimelineUtils';
 import { TimestampPositionLookup } from '../../../workers/calculations/CalculateActorPositions';
-import { MapMarkersState } from '../types/mapMarkers';
+import { MapMarkersState, ShapeKind, ShapeStyle } from '../types/mapMarkers';
 import { LongPressTracker } from '../utils/longPress';
 import { DEFAULT_ACTOR_SCALE, computeActorScaleFromFightArea } from '../utils/mapScaling';
 import { extractPlayerPaths, DEFAULT_PATH_SAMPLING } from '../utils/pathUtils';
 import { getPlayerPathColor } from '../utils/playerColors';
+import { QUALITY_LEVEL, qualityFlagsForLevel } from '../utils/qualityGovernor';
 import { resolveTouchPolicy } from '../utils/touchPolicy';
 
+import { AdaptiveResolution } from './AdaptiveResolution';
 import { ArenaEnvironmentShell, type CosmicVariant } from './ArenaEnvironmentShell';
 import { BloomComposer, type BloomComposerHandle } from './BloomComposer';
 import { CameraFollower } from './CameraFollower';
 import { CameraResetControls } from './CameraResetControls';
 import { CanvasWheelZoom } from './CanvasWheelZoom';
+import { DrawnShapes } from './DrawnShapes';
 import { DynamicMapTexture } from './DynamicMapTexture';
 import { InstancedReplayFigures3D } from './InstancedReplayFigures3D';
 import { KeyboardCameraControls } from './KeyboardCameraControls';
@@ -29,6 +32,8 @@ import { MapMarkers } from './MapMarkers';
 import { MarkerContextMenuPayload } from './Marker3D';
 import { PerformanceMonitorCanvas } from './PerformanceMonitor';
 import { PlayerPathTrail3D } from './PlayerPathTrail3D';
+import { QualityGovernor } from './QualityGovernor';
+import { ShapeDrawLayer } from './ShapeDrawLayer';
 
 // Stable empty Map for the optional playerVisibility prop default — a fresh `new Map()` in
 // the default would change identity every render and churn child memoization.
@@ -69,6 +74,8 @@ interface AnimationFrameSceneActorsProps {
   playerColorOverrides?: Map<number, string>;
   /** When true, player figures stop casting shadows (perf headroom for large fights). */
   performanceMode?: boolean;
+  /** Repaint + shadow-dirty signal for async caster changes (humanoid/boss GLB load). */
+  markDirty?: () => void;
 }
 
 export interface GroundContextMenuPayload {
@@ -151,6 +158,7 @@ const AnimationFrameSceneActors: React.FC<AnimationFrameSceneActorsProps> = ({
   playerVisibility,
   playerColorOverrides,
   performanceMode,
+  markDirty,
 }) => {
   // Performance settings based on scrubbing mode
   const shouldRenderEffects = scrubbingMode?.shouldRenderEffects ?? true;
@@ -167,6 +175,7 @@ const AnimationFrameSceneActors: React.FC<AnimationFrameSceneActorsProps> = ({
       playerVisibility={playerVisibility}
       playerColorOverrides={playerColorOverrides}
       performanceMode={performanceMode}
+      markDirty={markDirty}
     />
   );
 };
@@ -189,6 +198,24 @@ interface RenderLoopProps {
    * refills it from per-frame signals (time, camera, follow) below.
    */
   renderBudgetRef: React.RefObject<number>;
+  /**
+   * "An actor (shadow caster) may have moved" signal, shared with the parent. The directional
+   * sun's shadow map is CAMERA-INDEPENDENT (the shadow camera is the light's fixed ortho frustum
+   * over the arena), so it only needs regenerating when a caster moves — playback/scrub (time
+   * changed) or a scene commit that changes the cast set (visibility / perf mode / fight). We turn
+   * three's per-render `shadowMap.autoUpdate` OFF and flag `needsUpdate` only on those frames, so
+   * orbiting a PAUSED scene (a very common inspect gesture) no longer re-renders the 2048² shadow
+   * pass every frame. Pixels are identical — same shadow, just not recomputed when nothing casting
+   * it moved. The parent sets it on every commit (safe superset); RenderLoop sets it on time change.
+   */
+  shadowDirtyRef: React.RefObject<boolean>;
+  /**
+   * Set true on every frame this loop actually painted (budget > 0), false when it skipped. Lets the
+   * adaptive-resolution controller tell a genuinely idle (workload-free, vsync-paced) frame from a
+   * paused-but-painted one (camera/follow), so it learns the real display interval and measures only
+   * true playback frames.
+   */
+  paintedRef: React.RefObject<boolean>;
   /**
    * Optional bloom composer. When present (non-performance mode) the gated render goes through the
    * composer (RenderPass → bloom → OutputPass) so bright celestials glow; otherwise a plain gl.render.
@@ -216,11 +243,26 @@ const RenderLoop: React.FC<RenderLoopProps> = ({
   timeRef,
   followingActorIdRef,
   renderBudgetRef,
+  shadowDirtyRef,
+  paintedRef,
   composerRef,
 }) => {
   const { gl, scene, camera, controls } = useThree();
 
   const lastRenderedTimeRef = useRef<number | null>(null);
+
+  // Take manual control of the shadow map: three regenerates it on EVERY render by default, but the
+  // directional sun's shadow only changes when a caster moves (see shadowDirtyRef). We flag it dirty
+  // ourselves below. Restore three's default on unmount so the renderer is left as we found it.
+  useEffect(() => {
+    const prevAuto = gl.shadowMap.autoUpdate;
+    gl.shadowMap.autoUpdate = false;
+    gl.shadowMap.needsUpdate = true; // first frame must populate the shadow map
+    return () => {
+      gl.shadowMap.autoUpdate = prevAuto;
+      gl.shadowMap.needsUpdate = true;
+    };
+  }, [gl]);
 
   // Refill the budget whenever the user moves the camera via OrbitControls.
   useEffect(() => {
@@ -229,6 +271,8 @@ const RenderLoop: React.FC<RenderLoopProps> = ({
     }
     const markDirty = (): void => {
       renderBudgetRef.current = RENDER_TAIL_FRAMES;
+      // NOTE: deliberately does NOT flag the shadow dirty — a camera move never changes a
+      // directional shadow map, so orbiting a paused scene reuses the existing shadow for free.
     };
     // OrbitControls extends EventDispatcher and emits 'change' on every camera mutation.
     const orbit = controls as unknown as {
@@ -244,9 +288,11 @@ const RenderLoop: React.FC<RenderLoopProps> = ({
   useFrame(() => {
     const currentTime = timeRef.current;
 
-    // Time advanced (playback or scrub) → the scene changed; refill the budget.
+    // Time advanced (playback or scrub) → the scene changed; refill the budget. Actors (shadow
+    // casters) moved, so the shadow map must regenerate this paint.
     if (lastRenderedTimeRef.current !== currentTime) {
       renderBudgetRef.current = RENDER_TAIL_FRAMES;
+      shadowDirtyRef.current = true;
     }
 
     // Keep rendering whenever an actor is followed/selected. Load-bearing for TWO reasons,
@@ -261,9 +307,19 @@ const RenderLoop: React.FC<RenderLoopProps> = ({
       renderBudgetRef.current = RENDER_TAIL_FRAMES;
     }
 
+    // Record whether this frame paints, for the adaptive-resolution controller (idle vs rendered).
+    paintedRef.current = renderBudgetRef.current > 0;
+
     if (renderBudgetRef.current > 0) {
       renderBudgetRef.current -= 1;
       lastRenderedTimeRef.current = currentTime;
+      // Regenerate the shadow map only on frames where a caster may have moved (time change or a
+      // scene commit). three clears needsUpdate back to false after it renders the shadow, so a
+      // pure camera-orbit frame (budget refilled by OrbitControls 'change') reuses the last shadow.
+      if (shadowDirtyRef.current) {
+        gl.shadowMap.needsUpdate = true;
+        shadowDirtyRef.current = false;
+      }
       const composer = composerRef.current;
       if (composer) {
         composer.render();
@@ -443,6 +499,16 @@ export interface Arena3DSceneProps {
   markersEditMode?: boolean;
   /** Drag-to-move commit for a marker (arena-space coordinates). */
   onMarkerMove?: (markerId: string, arenaPoint: { x: number; z: number }) => void;
+  /** Active draw tool (null when not drawing) — arms the click-to-draw layer. */
+  drawTool?: ShapeKind | null;
+  /** Style applied to a freshly drawn shape. */
+  drawStyle?: ShapeStyle;
+  /** Commit a finished shape's ARENA points (parent converts to world + persists). */
+  onShapeDrawn?: (kind: ShapeKind, arenaPoints: Array<[number, number]>) => void;
+  /** In-canvas HUD Finish/Cancel signals + point-count reporting for the draw layer. */
+  drawFinishSignal?: number;
+  drawCancelSignal?: number;
+  onDrawPointsChange?: (count: number) => void;
   fight: FightFragment;
   initialTarget?: [number, number, number];
   /**
@@ -467,8 +533,17 @@ export interface Arena3DSceneProps {
    * so the DOM player panel and the in-canvas figures share one source of truth.
    */
   playerColorOverrides?: Map<number, string>;
-  /** When true, player figures stop casting shadows (perf headroom for large fights). */
+  /** Manual performance mode (the Bolt toggle): drop bloom + IBL/cosmic + shadows all at once. */
   performanceMode?: boolean;
+  /**
+   * Auto quality level from the governor (0 = full). Combined with `performanceMode` to derive which
+   * effects render. Owned by FightReplay3D so the scene + the "auto" chip stay in lockstep.
+   */
+  autoQualityLevel?: number;
+  /** Governor requests a new level (escalate/recover one effect tier). */
+  onQualityLevelChange?: (level: number) => void;
+  /** True when the user forced full quality via the chip — the governor stands down. */
+  qualityAutoDisabled?: boolean;
   /**
    * True when the replay is a mobile device inside the pseudo-fullscreen overlay. Drives the touch
    * gesture policy: OrbitControls pan is disabled so two fingers are exclusively pinch-zoom
@@ -495,6 +570,12 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
   onMarkerContextMenu,
   markersEditMode = false,
   onMarkerMove,
+  drawTool = null,
+  drawStyle,
+  onShapeDrawn,
+  drawFinishSignal = 0,
+  drawCancelSignal = 0,
+  onDrawPointsChange,
   fight,
   initialTarget,
   initialPosition,
@@ -504,6 +585,9 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
   playerVisibility = EMPTY_VISIBILITY,
   playerColorOverrides = EMPTY_COLOR_OVERRIDES,
   performanceMode = false,
+  autoQualityLevel = 0,
+  onQualityLevelChange,
+  qualityAutoDisabled = false,
   mobileImmersive = false,
 }) => {
   // Touch-gesture policy for OrbitControls. `mobileImmersive` already folds in (mobile && immersive),
@@ -517,8 +601,19 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
   // playback is paused. RenderLoop also tops it up from per-frame signals (time / camera /
   // follow). A ref, never state: a state flag would re-render every frame.
   const renderBudgetRef = useRef(RENDER_TAIL_FRAMES);
+  // "A shadow caster may have moved" flag (see RenderLoop). Set on every commit (a safe superset:
+  // visibility/perf-mode/fight changes can alter the cast set) so the shadow re-renders alongside
+  // the commit's repaint; RenderLoop also sets it on every playhead change.
+  const shadowDirtyRef = useRef(true);
+  // Whether the RenderLoop painted the most recent frame (see RenderLoopProps.paintedRef). Read by
+  // AdaptiveResolution to classify frames (idle vs rendered).
+  const paintedRef = useRef(false);
+  // DPR-exhaustion status: AdaptiveResolution writes it (true when DPR is at floor or its
+  // effectiveness guard fired); QualityGovernor reads it to gate effect escalation (DPR first).
+  const dprExhaustedRef = useRef(false);
   useEffect(() => {
     renderBudgetRef.current = RENDER_TAIL_FRAMES;
+    shadowDirtyRef.current = true;
   });
 
   // Bloom composer handle, published by <BloomComposer> and consumed by RenderLoop. Null in
@@ -529,6 +624,18 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
   // Without this the composer target is single-sampled and bloom-on tiers would render aliased edges.
   const perfTier = usePerfTier();
   const bloomSamples = perfTier === 'high' ? 4 : perfTier === 'medium' ? 2 : 0;
+  // Render-resolution cap by tier — must mirror the Canvas `dpr` ceiling in Arena3D
+  // (`perfTier === 'low' ? [1, 1.5] : [1, 2]`). Threaded to AdaptiveResolution as its full-quality
+  // ceiling so the scaler tracks tier changes instead of a value captured at mount.
+  const dprCap = perfTier === 'low' ? 1.5 : 2;
+
+  // Effective quality level → which effects render. The manual performance toggle forces the
+  // bloom+IBL/cosmic+shadows tier (its established behavior); the auto governor's level adds on top
+  // (and is ignored when the user forced full quality via the chip). qualityFlagsForLevel then maps
+  // the level to concrete on/off flags consumed by the effect components below.
+  const manualLevel = performanceMode ? QUALITY_LEVEL.NO_SHADOWS : QUALITY_LEVEL.FULL;
+  const effectiveLevel = Math.max(manualLevel, qualityAutoDisabled ? 0 : autoQualityLevel);
+  const qualityFlags = qualityFlagsForLevel(effectiveLevel);
 
   // Lets scene children that mutate visible three.js state from an ASYNC callback (outside
   // any React commit, time change, camera move, or follow) tell the RenderLoop to repaint —
@@ -538,6 +645,9 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
   // budget. Stable identity so it never churns child memoization.
   const markSceneDirty = useCallback(() => {
     renderBudgetRef.current = RENDER_TAIL_FRAMES;
+    // An async scene mutation (e.g. a CDN map texture resolving) may also coincide with a changed
+    // cast set; flagging the shadow dirty here is a cheap safe superset (these events are rare).
+    shadowDirtyRef.current = true;
   }, []);
 
   // Touch path for placing markers: press-and-hold on the ground (edit mode only) opens the
@@ -777,16 +887,45 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
         slowFrameThreshold={33}
         maxSlowFrameLogsPerMinute={10}
       />
-      {/* Bloom post-processing (skipped in performance mode). Publishes its render handle to
-          composerRef; RenderLoop routes the gated render through it so bright celestials glow. */}
-      {!performanceMode && <BloomComposer composerRef={composerRef} samples={bloomSamples} />}
+      {/* Bloom post-processing (dropped at quality tier 1+ / performance mode). Publishes its render
+          handle to composerRef; RenderLoop routes the gated render through it so celestials glow. */}
+      {qualityFlags.bloom && <BloomComposer composerRef={composerRef} samples={bloomSamples} />}
       {/* Manual render loop - lowest priority to render after all updates, gated on-demand */}
       <RenderLoop
         timeRef={timeRef}
         followingActorIdRef={followingActorIdRef}
         renderBudgetRef={renderBudgetRef}
+        shadowDirtyRef={shadowDirtyRef}
+        paintedRef={paintedRef}
         composerRef={composerRef}
       />
+      {/* Dynamic render-resolution scaler — holds ~120fps on weaker GPUs / 4K / heavy fights by
+          trading resolution only under sustained load, and stays at full quality (no change) when
+          there's headroom. Inert on capable hardware. */}
+      <AdaptiveResolution
+        timeRef={timeRef}
+        dprCap={dprCap}
+        paintedRef={paintedRef}
+        markDirty={markSceneDirty}
+        exhaustedRef={dprExhaustedRef}
+      />
+      {/* Adaptive quality governor — the tier BELOW resolution scaling. When a weak/throttled GPU
+          stays below target after DPR is at floor, it drops effects (bloom → IBL/cosmic → shadows)
+          and restores them as headroom returns. Inert on capable hardware. */}
+      {onQualityLevelChange && (
+        <QualityGovernor
+          timeRef={timeRef}
+          dprExhaustedRef={dprExhaustedRef}
+          paintedRef={paintedRef}
+          level={qualityAutoDisabled ? 0 : autoQualityLevel}
+          onLevelChange={onQualityLevelChange}
+          // Stand down while the user forced full quality OR turned on manual performance mode:
+          // under manual mode every level renders the same (all effects already off), so the
+          // governor would ratchet autoQualityLevel up on no-op escalations and leak that latched
+          // level into effectiveLevel the moment manual mode is turned back off.
+          disabled={qualityAutoDisabled || performanceMode}
+        />
+      )}
       {/* Camera follower system */}
       <CameraFollower lookup={lookup} timeRef={timeRef} followingActorIdRef={followingActorIdRef} />
       {/* In-canvas camera keys: r = reset to fitted initial view, g = frame all actors. Lives in
@@ -812,7 +951,7 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
         centerX={arenaDimensions.centerX}
         centerZ={arenaDimensions.centerZ}
         size={arenaDimensions.size}
-        castShadows={!performanceMode}
+        castShadows={qualityFlags.shadows}
       />
       {/* Procedural image-based lighting for the actor figures. The body/cap materials are
           MeshStandard with metalness 0.1–0.2, so without an environment they reflect pure black and
@@ -821,7 +960,7 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
           `Environment preset`, which would fetch an HDR from a CDN. The env cube renders ONCE at
           mount (no per-frame cost, so it respects the on-demand RenderLoop), and `background={false}`
           keeps it off the visible backdrop — it only lights the figures. Dropped in performance mode. */}
-      {!performanceMode && (
+      {qualityFlags.environment && (
         <Environment resolution={64} frames={1} background={false}>
           <Lightformer intensity={1.6} position={[0, 6, 4]} scale={[12, 12, 1]} color="#fbf3e0" />
           <Lightformer intensity={0.7} position={[-6, 3, -4]} scale={[8, 8, 1]} color="#9fc2ff" />
@@ -836,7 +975,7 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
         size={arenaDimensions.size}
         centerX={arenaDimensions.centerX}
         centerZ={arenaDimensions.centerZ}
-        performanceMode={performanceMode}
+        performanceMode={!qualityFlags.cosmic}
         variant={cosmicVariant}
       />
       {/* Map Texture - Arena floor background with dynamic phase-based switching */}
@@ -901,7 +1040,8 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
         onActorClick={onActorClick}
         playerVisibility={playerVisibility}
         playerColorOverrides={playerColorOverrides}
-        performanceMode={performanceMode}
+        performanceMode={!qualityFlags.shadows}
+        markDirty={markSceneDirty}
       />
       {/* Boss health + player list are now DOM overlays rendered by Arena3D as siblings of
           the <Canvas> (crisp text, real scroll region, native MUI styling) — not in-canvas
@@ -914,6 +1054,16 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
           onMarkerContextMenu={onMarkerContextMenu}
           editable={markersEditMode}
           onMarkerMove={onMarkerMove}
+          markDirty={markSceneDirty}
+        />
+      )}
+      {/* Drawn shapes (esotk-native lines/zones/circles/rects/rulers) — rendered alongside markers,
+          time-gated against the same playback clock. */}
+      {markersState && markersState.shapes && markersState.shapes.length > 0 && (
+        <DrawnShapes
+          markersState={markersState}
+          fight={fight}
+          timeRef={timeRef}
           markDirty={markSceneDirty}
         />
       )}
@@ -980,6 +1130,20 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
         <planeGeometry args={[arenaDimensions.size, arenaDimensions.size]} />
         <meshBasicMaterial visible={false} transparent opacity={0} />
       </mesh>
+      {/* Click-to-draw layer (active only while a shape tool is armed). */}
+      {drawTool && drawStyle && onShapeDrawn && (
+        <ShapeDrawLayer
+          tool={drawTool}
+          style={drawStyle}
+          planeCenter={[arenaDimensions.centerX, arenaDimensions.centerZ]}
+          planeSize={arenaDimensions.size}
+          onCommit={onShapeDrawn}
+          markDirty={markSceneDirty}
+          finishSignal={drawFinishSignal}
+          cancelSignal={drawCancelSignal}
+          onPointsChange={onDrawPointsChange}
+        />
+      )}
       {/* Controls - dynamically positioned based on fight area. Zoom is handled by CanvasWheelZoom
           (cooperative wheel: plain wheel scrolls the page through the canvas, Ctrl/⌘+wheel or
           fullscreen zooms) instead of OrbitControls' built-in wheel zoom, which preventDefault()s
@@ -994,7 +1158,9 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
       <OrbitControls
         enablePan={touchPolicy.enablePan}
         enableZoom={false}
-        enableRotate={touchPolicy.enableRotate}
+        // Suppress camera rotation while a draw tool is armed so a placement click never spins the
+        // view. Declarative (not an imperative one-shot) so drei re-applies it on every re-render.
+        enableRotate={touchPolicy.enableRotate && !drawTool}
         minDistance={cameraSettings.minDistance}
         maxDistance={cameraSettings.maxDistance}
         maxPolarAngle={Math.PI / 2 - 0.1} // Prevent camera from going below ground (slightly above horizon)
