@@ -62,6 +62,8 @@ export const Footer: React.FC = React.memo(() => {
 
       { label: 'Calculation Knowledge Base', href: '/docs/calculations' },
 
+      { label: 'Discord Bot Guide', href: '/docs/discord-roster-bot' },
+
       { label: "What's New", href: '/whats-new' },
 
       { label: 'About', href: '/about' },

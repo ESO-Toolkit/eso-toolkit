@@ -790,11 +790,14 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                   fontSize: '0.85rem',
                   px: 3,
                   textTransform: 'none',
+                  color: '#fff',
+                  textShadow: '0 1px 2px rgba(0,0,0,0.35)',
                   background: 'linear-gradient(135deg, #5865F2 0%, #4752C4 100%)',
-                  boxShadow: '0 4px 16px rgba(88,101,242,0.3)',
+                  boxShadow: '0 4px 16px rgba(88,101,242,0.35)',
                   '&:hover': {
-                    background: 'linear-gradient(135deg, #6973F5 0%, #5865F2 100%)',
-                    boxShadow: '0 6px 20px rgba(88,101,242,0.4)',
+                    color: '#fff',
+                    background: 'linear-gradient(135deg, #4752C4 0%, #3a44a8 100%)',
+                    boxShadow: '0 6px 22px rgba(88,101,242,0.5)',
                   },
                 }}
               >
@@ -1092,11 +1095,14 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                         fontSize: '0.82rem',
                         py: 0.9,
                         textTransform: 'none',
+                        color: '#fff',
+                        textShadow: '0 1px 2px rgba(0,0,0,0.35)',
                         background: 'linear-gradient(135deg, #5865F2 0%, #4752C4 100%)',
-                        boxShadow: '0 4px 16px rgba(88,101,242,0.28)',
+                        boxShadow: '0 4px 16px rgba(88,101,242,0.32)',
                         '&:hover': {
-                          background: 'linear-gradient(135deg, #6973F5 0%, #5865F2 100%)',
-                          boxShadow: '0 6px 20px rgba(88,101,242,0.36)',
+                          color: '#fff',
+                          background: 'linear-gradient(135deg, #4752C4 0%, #3a44a8 100%)',
+                          boxShadow: '0 6px 22px rgba(88,101,242,0.45)',
                         },
                       }}
                     >
@@ -2230,11 +2236,14 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                     fontWeight: 600,
                     fontSize: '0.85rem',
                     px: 3,
+                    color: '#fff',
+                    textShadow: '0 1px 2px rgba(0,0,0,0.35)',
                     background: 'linear-gradient(135deg, #5865F2 0%, #4752C4 100%)',
-                    boxShadow: '0 4px 16px rgba(88,101,242,0.3)',
+                    boxShadow: '0 4px 16px rgba(88,101,242,0.35)',
                     '&:hover': {
-                      background: 'linear-gradient(135deg, #6973F5 0%, #5865F2 100%)',
-                      boxShadow: '0 6px 20px rgba(88,101,242,0.4)',
+                      color: '#fff',
+                      background: 'linear-gradient(135deg, #4752C4 0%, #3a44a8 100%)',
+                      boxShadow: '0 6px 22px rgba(88,101,242,0.5)',
                     },
                   }}
                 >
@@ -2345,11 +2354,14 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                   fontWeight: 600,
                   fontSize: '0.82rem',
                   px: 2.5,
+                  color: '#fff',
+                  textShadow: '0 1px 2px rgba(0,0,0,0.35)',
                   background: `linear-gradient(135deg, ${accent} 0%, #4752C4 100%)`,
-                  boxShadow: `0 4px 12px ${alpha(accent, 0.2)}`,
+                  boxShadow: `0 4px 12px ${alpha(accent, 0.28)}`,
                   '&:hover': {
-                    background: 'linear-gradient(135deg, #6973F5 0%, #5865F2 100%)',
-                    boxShadow: `0 6px 16px ${alpha(accent, 0.3)}`,
+                    color: '#fff',
+                    background: `linear-gradient(135deg, #4752C4 0%, #3a44a8 100%)`,
+                    boxShadow: `0 6px 16px ${alpha(accent, 0.4)}`,
                   },
                   '&.Mui-disabled': {
                     background: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)',

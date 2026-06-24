@@ -31,6 +31,7 @@ import {
   useTheme,
 } from '@mui/material';
 import React from 'react';
+import { Link as RouterLink } from 'react-router-dom';
 
 import discordIcon from '../../../assets/discord-icon.svg';
 import { getBotInviteUrl } from '../../auth/discord-auth';
@@ -232,11 +233,16 @@ export const DiscordAdminGuideContent: React.FC<DiscordAdminGuideContentProps> =
               px: 2.5,
               py: 0.9,
               textTransform: 'none',
+              // Force white text + shadow so the label keeps AA contrast on the
+              // blurple gradient regardless of the active theme's contrastText.
+              color: '#fff',
+              textShadow: '0 1px 2px rgba(0,0,0,0.35)',
               background: 'linear-gradient(135deg, #5865F2 0%, #4752C4 100%)',
-              boxShadow: '0 4px 16px rgba(88,101,242,0.3)',
+              boxShadow: '0 4px 16px rgba(88,101,242,0.35)',
               '&:hover': {
-                background: 'linear-gradient(135deg, #6973F5 0%, #5865F2 100%)',
-                boxShadow: '0 6px 20px rgba(88,101,242,0.4)',
+                color: '#fff',
+                background: 'linear-gradient(135deg, #4752C4 0%, #3a44a8 100%)',
+                boxShadow: '0 6px 22px rgba(88,101,242,0.5)',
               },
             }}
           >
@@ -271,6 +277,32 @@ export const DiscordAdminGuideContent: React.FC<DiscordAdminGuideContentProps> =
             </Button>
           </Tooltip>
         </Stack>
+
+        {/* Let admins read what the bot actually does before they install.
+            Navigates in-SPA (no target=_blank) so it gets the smooth view
+            transition instead of cold-loading the app in a new tab. */}
+        <Typography
+          variant="caption"
+          sx={{ display: 'block', mt: 1.5, color: 'text.secondary', fontSize: '0.78rem' }}
+        >
+          New to the bot?{' '}
+          <Box
+            component={RouterLink}
+            to="/docs/discord-roster-bot"
+            sx={{
+              // Deliberately NOT blurple — the invite CTAs above are blurple, so a
+              // matching link colour blends into them. Use a muted, underlined
+              // link that reads as secondary next to the primary actions.
+              color: 'text.secondary',
+              fontWeight: 600,
+              textDecoration: 'underline',
+              textUnderlineOffset: '2px',
+              '&:hover': { color: 'text.primary' },
+            }}
+          >
+            See what it does and how to operate it →
+          </Box>
+        </Typography>
       </Box>
 
       {/* Permissions disclosure */}
