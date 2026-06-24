@@ -15,7 +15,8 @@ import React, { useMemo, useState } from 'react';
 
 import { StatBreakdown } from '@/components/stats/StatBreakdown';
 import { StatGauge } from '@/components/stats/StatGauge';
-import { calculateBuildStats, loadoutSetupToEngineInputs } from '@/engine';
+import { StatHealthBadge } from '@/components/stats/StatHealthBadge';
+import { calculateBuildStats, calculateSurvivability, loadoutSetupToEngineInputs } from '@/engine';
 import type { LoadoutStatContext } from '@/engine';
 
 import type { GearConfig, LoadoutSetup } from '../types/loadout.types';
@@ -37,9 +38,12 @@ const SetupStatsStripComponent: React.FC<SetupStatsStripProps> = ({ setup, conte
 
   const gearPresent = hasAnyGear(setup.gear ?? {});
 
-  const stats = useMemo(() => {
+  const { stats, survivability } = useMemo(() => {
     const { setup: engineSetup, build } = loadoutSetupToEngineInputs(setup, context);
-    return calculateBuildStats(engineSetup, build);
+    return {
+      stats: calculateBuildStats(engineSetup, build),
+      survivability: calculateSurvivability(engineSetup, build),
+    };
   }, [setup, context]);
 
   const labelSx = {
@@ -72,6 +76,12 @@ const SetupStatsStripComponent: React.FC<SetupStatsStripProps> = ({ setup, conte
             sx={{ fontSize: 14, color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.35)' }}
           />
         </Tooltip>
+        {gearPresent && (
+          <>
+            <Box sx={{ flex: 1 }} />
+            <StatHealthBadge survivability={survivability} variant="compact" />
+          </>
+        )}
       </Stack>
 
       {!gearPresent ? (

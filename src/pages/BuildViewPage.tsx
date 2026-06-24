@@ -40,7 +40,8 @@ import { useLocation } from 'react-router-dom';
 
 import { StatBreakdown } from '@/components/stats/StatBreakdown';
 import { StatGauge } from '@/components/stats/StatGauge';
-import { calculateBuildStats } from '@/engine/stat-engine';
+import { StatHealthBadge } from '@/components/stats/StatHealthBadge';
+import { calculateBuildStats, calculateSurvivability } from '@/engine/stat-engine';
 
 import { GearSetTooltip } from '../components/GearSetTooltip';
 import { LazySkillTooltip as SkillTooltipCard } from '../components/LazySkillTooltip';
@@ -1844,6 +1845,10 @@ const ViewStats: React.FC<{ setup: BuildSetup; build: Build }> = ({ setup, build
     () => calculateBuildStats(setup, vBuild, setup.statOverrides),
     [setup, vBuild],
   );
+  const survivability = React.useMemo(
+    () => calculateSurvivability(setup, vBuild, setup.statOverrides),
+    [setup, vBuild],
+  );
 
   return (
     <Box>
@@ -1861,6 +1866,9 @@ const ViewStats: React.FC<{ setup: BuildSetup; build: Build }> = ({ setup, build
         <StatGauge label="Crit Damage" result={stats.critDamage} isPercent />
         <StatGauge label="Crit Chance" result={stats.critChance} isPercent />
         <StatGauge label="Armor" result={stats.armor} />
+      </Box>
+      <Box sx={{ mb: 2 }}>
+        <StatHealthBadge survivability={survivability} variant="full" />
       </Box>
       <StatBreakdown label="Penetration" result={stats.penetration} />
       <StatBreakdown label="Critical Damage" result={stats.critDamage} isPercent />

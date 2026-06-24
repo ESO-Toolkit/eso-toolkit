@@ -8,3 +8,5 @@
  */
 export { StatGauge } from './StatGauge';
 export { StatBreakdown } from './StatBreakdown';
+export { StatHealthBadge } from './StatHealthBadge';
+export type { StatHealthBadgeProps } from './StatHealthBadge';

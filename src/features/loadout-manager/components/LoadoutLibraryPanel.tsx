@@ -35,6 +35,8 @@ import {
 import React, { useState } from 'react';
 import { useSelector } from 'react-redux';
 
+import { StatHealthBadge } from '@/components/stats/StatHealthBadge';
+import { calculateSurvivability, loadoutSetupToEngineInputs } from '@/engine';
 import {
   deleteSavedLoadout,
   renameSavedLoadout,
@@ -85,6 +87,17 @@ const LibraryCard: React.FC<LibraryCardProps> = ({
 }) => {
   const conditionSummary = getSetupConditionSummary(entry.setup);
   const progressSections = getSetupProgressSections(entry.setup);
+  // Gear-derived survivability chip for the card. Skipped when the loadout has no
+  // gear (EHP would be base-only and meaningless).
+  const survivability = React.useMemo(() => {
+    const gear = entry.setup.gear ?? {};
+    const hasGear = Object.entries(gear).some(
+      ([key, piece]) => key !== 'mythic' && Boolean(piece?.id),
+    );
+    if (!hasGear) return null;
+    const { setup, build } = loadoutSetupToEngineInputs(entry.setup);
+    return calculateSurvivability(setup, build);
+  }, [entry.setup]);
 
   return (
     <Card
@@ -177,6 +190,11 @@ const LibraryCard: React.FC<LibraryCardProps> = ({
             ))
           )}
         </Stack>
+        {survivability && (
+          <Box sx={{ mt: 1 }}>
+            <StatHealthBadge survivability={survivability} variant="compact" />
+          </Box>
+        )}
       </CardContent>
       <Divider sx={{ opacity: 0.5 }} />
       <CardActions sx={{ gap: 1, px: 2, py: 1 }}>

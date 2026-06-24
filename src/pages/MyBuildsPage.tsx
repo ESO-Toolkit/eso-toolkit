@@ -27,6 +27,9 @@ import { useTheme } from '@mui/material/styles';
 import React, { useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 
+import { StatHealthBadge } from '@/components/stats/StatHealthBadge';
+import { calculateSurvivability } from '@/engine';
+
 import { useAuth } from '../features/auth/AuthContext';
 import { PublishBuildDialog } from '../features/build-hub/components/PublishBuildDialog';
 import { useViewTransitionNavigate } from '../hooks/useViewTransitionNavigate';
@@ -107,6 +110,12 @@ const BuildCardItem: React.FC<BuildCardProps> = ({
 }) => {
   const classLabel = CLASS_LABELS[saved.build.esoClass] ?? saved.build.esoClass;
   const roleLabel = ROLE_LABELS[saved.build.role] ?? saved.build.role;
+  // Survivability for the build's primary setup — gives the card an at-a-glance
+  // Health / EHP chip. Null if the build has no setups.
+  const survivability = React.useMemo(() => {
+    const primary = saved.build.setups?.[0];
+    return primary ? calculateSurvivability(primary, saved.build) : null;
+  }, [saved.build]);
 
   return (
     <Card
@@ -162,6 +171,11 @@ const BuildCardItem: React.FC<BuildCardProps> = ({
           >
             {saved.build.shortDescription}
           </Typography>
+        )}
+        {survivability && (
+          <Box sx={{ mt: 1 }}>
+            <StatHealthBadge survivability={survivability} variant="compact" />
+          </Box>
         )}
       </CardContent>
       <Divider sx={{ opacity: 0.5 }} />
