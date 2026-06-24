@@ -1,6 +1,10 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
+import {
+  AOE_ABILITY_IDS,
+  STATUS_EFFECT_ABILITY_IDS,
+} from '../features/report_details/insights/damageTypeCategorization';
 import { ReportActorFragment, ReportAbilityFragment } from '../graphql/gql/graphql';
-import { DeathEvent } from '../types/combatlogEvents';
+import { DamageTypeFlags } from '../types/abilities';
+import { DamageEvent, DeathEvent } from '../types/combatlogEvents';
 import {
   ReportDeathAnalysis,
   PlayerDeathAnalysis,
@@ -19,12 +23,20 @@ const logger = new Logger({ contextPrefix: 'DeathAnalysis' });
 
 export interface DeathAnalysisInput {
   deathEvents: DeathEvent[];
+  /** Damage events for the same fight, used to join each death to its lethal hit. */
+  damageEvents: DamageEvent[];
+  /** Resurrection casts for the fight (target = revived player), for time-alive math. */
+  resurrectEvents: { targetID: number; timestamp: number }[];
   fightId: number;
   fightName: string;
   fightStartTime: number;
   fightEndTime: number;
   actors: Record<string, ReportActorFragment>;
   abilities: Record<string, ReportAbilityFragment>;
+  /** Authoritative kill flag for the fight (ESO Logs `fight.kill`); null/undefined when unknown. */
+  kill?: boolean | null;
+  /** Whether this fight is a boss encounter (ESO Logs `encounterID` != 0). */
+  isBoss?: boolean;
 }
 
 export interface DeathCause {
@@ -56,13 +68,29 @@ export class DeathAnalysisService {
     // Collect all death events across fights (filter to player deaths only)
     const allDeathEvents: DeathEvent[] = [];
     const fightAnalyses: FightDeathAnalysis[] = [];
+    // Per-death true killing-blow hit size, joined from the fight's damage stream.
+    const killingBlowByDeath = new Map<string, number>();
 
     // Analyze each fight individually first
     for (const fightData of fightDeathData) {
       const fightAnalysis = this.analyzeFightDeaths(fightData);
       fightAnalyses.push(fightAnalysis);
       // Only collect player deaths (targetIsFriendly === true)
-      allDeathEvents.push(...fightData.deathEvents.filter((d) => d.targetIsFriendly));
+      const playerDeaths = fightData.deathEvents.filter((d) => d.targetIsFriendly);
+      allDeathEvents.push(...playerDeaths);
+
+      // Join each death to its lethal hit (skip the sort when nothing died).
+      if (playerDeaths.length > 0) {
+        const sortedDamage = [...(fightData.damageEvents ?? [])].sort(
+          (a, b) => a.timestamp - b.timestamp,
+        );
+        for (const death of playerDeaths) {
+          killingBlowByDeath.set(
+            this.deathKey(death),
+            this.computeKillingBlowHitSize(sortedDamage, death),
+          );
+        }
+      }
     }
 
     // Get combined actors and abilities data
@@ -84,6 +112,7 @@ export class DeathAnalysisService {
       allDeathEvents,
       combinedActors,
       combinedAbilities,
+      killingBlowByDeath,
     );
     const deathPatterns = this.identifyDeathPatterns(
       allDeathEvents,
@@ -113,7 +142,8 @@ export class DeathAnalysisService {
    * Analyze deaths within a single fight
    */
   static analyzeFightDeaths(fightData: DeathAnalysisInput): FightDeathAnalysis {
-    const { deathEvents, fightId, fightName, fightStartTime, fightEndTime } = fightData;
+    const { deathEvents, fightId, fightName, fightStartTime, fightEndTime, kill } = fightData;
+    const isBoss = fightData.isBoss ?? true;
 
     // Filter to only player deaths (targetIsFriendly === true)
     const playerDeaths = deathEvents.filter((death) => death.targetIsFriendly);
@@ -124,7 +154,8 @@ export class DeathAnalysisService {
         fightName,
         totalDeaths: 0,
         deathRate: 0,
-        success: true, // No deaths = success
+        success: kill ?? true, // No deaths: trust the kill flag, else assume success
+        isBoss,
         mechanicBreakdown: [],
       };
     }
@@ -163,8 +194,9 @@ export class DeathAnalysisService {
       (a, b) => b.deathCount - a.deathCount,
     );
 
-    // Determine success (heuristic: fights with high death rates are likely wipes)
-    const success = deathRate < 2.0; // Less than 2 deaths per minute = success
+    // Prefer the authoritative kill flag; fall back to a death-rate heuristic only
+    // when the outcome is unknown (e.g. legacy logs, or trash without a kill flag).
+    const success = kill != null ? kill : deathRate < 2.0;
 
     return {
       fightId,
@@ -172,6 +204,7 @@ export class DeathAnalysisService {
       totalDeaths: playerDeaths.length,
       deathRate,
       success,
+      isBoss,
       mechanicBreakdown,
     };
   }
@@ -262,29 +295,46 @@ export class DeathAnalysisService {
         const fightAnalysis = fightAnalyses.find((f) => f.fightId === fightId);
         const fightName = fightAnalysis?.fightName || `Fight ${fightId}`;
 
-        // Calculate time alive using fight start/end from analysis
-        // Get the fight data to access start time
+        // Fight bounds for the alive-interval math.
         const fightData = fightDeathData.find((f) => f.fightId === fightId);
         const fightStartTime = fightData?.fightStartTime || 0;
-        const fightEndTime = fightData?.fightEndTime || fightStartTime;
+        const fightEndTime = fightData?.fightEndTime ?? fightStartTime;
 
-        // Time alive is from fight start to first death
-        const firstDeathTime = Math.min(...deaths.map((d) => d.timestamp));
-        const timeAlive = Math.max(0, firstDeathTime - fightStartTime);
+        const deathTimes = deaths.map((d) => d.timestamp).sort((a, b) => a - b);
+
+        // Time alive is from fight start to first death.
+        const timeAlive = Math.max(0, deathTimes[0] - fightStartTime);
+
+        // True time alive sums every alive interval, resuming at each resurrection.
+        const rezTimes = (fightData?.resurrectEvents ?? [])
+          .filter((r) => r.targetID === targetId)
+          .map((r) => r.timestamp)
+          .sort((a, b) => a - b);
+        const timeAliveTotal = this.computeTimeAliveTotal(
+          fightStartTime,
+          fightEndTime,
+          deathTimes,
+          rezTimes,
+        );
 
         fightDeaths.push({
           fightId,
           fightName,
           deathCount: deaths.length,
           timeAlive,
+          timeAliveTotal,
           deathTimestamps: deaths.map((d) => d.timestamp),
         });
       }
 
-      // Calculate average time alive
+      // Averages across the fights this player died in.
       const averageTimeAlive =
         fightDeaths.length > 0
           ? fightDeaths.reduce((sum, fight) => sum + fight.timeAlive, 0) / fightDeaths.length
+          : 0;
+      const averageTimeAliveTotal =
+        fightDeaths.length > 0
+          ? fightDeaths.reduce((sum, fight) => sum + fight.timeAliveTotal, 0) / fightDeaths.length
           : 0;
 
       analyses.push({
@@ -293,6 +343,7 @@ export class DeathAnalysisService {
         role: this.guessPlayerRole(actor, playerData.deaths), // Simple role guessing
         totalDeaths: playerData.deaths.length,
         averageTimeAlive,
+        averageTimeAliveTotal,
         fightDeaths,
         topCausesOfDeath,
       });
@@ -302,12 +353,79 @@ export class DeathAnalysisService {
   }
 
   /**
+   * Total time a player was alive in a fight: sum the intervals from fight start
+   * (and from each resurrection) to the next death or to fight end. `deathTimes`
+   * and `rezTimes` must be sorted ascending.
+   */
+  private static computeTimeAliveTotal(
+    fightStartTime: number,
+    fightEndTime: number,
+    deathTimes: number[],
+    rezTimes: number[],
+  ): number {
+    let total = 0;
+    let aliveStart: number | null = fightStartTime;
+    for (const deathTs of deathTimes) {
+      if (aliveStart === null || deathTs < aliveStart) continue;
+      total += deathTs - aliveStart;
+      // Resume the next alive interval at the first resurrection after this death.
+      const rez = rezTimes.find((r) => r > deathTs);
+      aliveStart = rez ?? null;
+    }
+    // Survived to fight end after the last revive (no trailing death).
+    if (aliveStart !== null) total += Math.max(0, fightEndTime - aliveStart);
+    return total;
+  }
+
+  /** Stable identity for a death event (one per victim per timestamp per fight). */
+  private static deathKey(death: DeathEvent): string {
+    return `${death.fight}:${death.targetID}:${death.timestamp}`;
+  }
+
+  /**
+   * True killing-blow hit size for a death: the most-recent damage dealt to the
+   * victim within the second before death, summed with any simultaneous (<=50ms)
+   * hits. Mirrors the per-death join used by the per-fight Death panel. Returns 0
+   * when no matching damage was loaded.
+   */
+  private static computeKillingBlowHitSize(sortedDamage: DamageEvent[], death: DeathEvent): number {
+    const TIME_WINDOW_MS = 1000;
+    const SIMULTANEOUS_MS = 50;
+    const deathTs = death.timestamp;
+
+    // Binary-search the first index with timestamp >= deathTs - window.
+    let lo = 0;
+    let hi = sortedDamage.length - 1;
+    const lowerTarget = deathTs - TIME_WINDOW_MS;
+    while (lo <= hi) {
+      const mid = (lo + hi) >> 1;
+      if (sortedDamage[mid].timestamp >= lowerTarget) hi = mid - 1;
+      else lo = mid + 1;
+    }
+
+    const recent: DamageEvent[] = [];
+    for (let i = lo; i < sortedDamage.length; i++) {
+      const ev = sortedDamage[i];
+      if (ev.timestamp > deathTs) break;
+      if (ev.targetID === death.targetID && (ev.amount || 0) > 0) recent.push(ev);
+    }
+    if (recent.length === 0) return 0;
+
+    // Most-recent hit plus everything within the simultaneous window of it.
+    const latestTs = recent[recent.length - 1].timestamp;
+    return recent
+      .filter((ev) => latestTs - ev.timestamp <= SIMULTANEOUS_MS)
+      .reduce((sum, ev) => sum + (ev.amount || 0), 0);
+  }
+
+  /**
    * Analyze deaths by ability/mechanic
    */
   static analyzeMechanicDeaths(
     deathEvents: DeathEvent[],
     actors: Record<string, ReportActorFragment>,
     abilities: Record<string, ReportAbilityFragment>,
+    killingBlowByDeath: Map<string, number> = new Map(),
   ): MechanicDeathAnalysis[] {
     const mechanicMap = new Map<
       number,
@@ -359,6 +477,15 @@ export class DeathAnalysisService {
             mechanicData.deaths.length
           : 0;
 
+      // True killing-blow hit size, averaged from the per-death damage-event join.
+      const averageKillingBlowHitSize =
+        mechanicData.deaths.length > 0
+          ? mechanicData.deaths.reduce(
+              (sum, death) => sum + (killingBlowByDeath.get(this.deathKey(death)) ?? 0),
+              0,
+            ) / mechanicData.deaths.length
+          : 0;
+
       // Get affected player names
       const playersAffected = Array.from(mechanicData.playersAffected)
         .map((playerId) => actors[playerId]?.name || `Player ${playerId}`)
@@ -374,6 +501,7 @@ export class DeathAnalysisService {
         playersAffected,
         fightsWithDeaths,
         averageKillingBlowDamage,
+        averageKillingBlowHitSize,
         category: this.categorizeAbility(ability, mechanicData.deaths),
       });
     }
@@ -459,13 +587,11 @@ export class DeathAnalysisService {
    */
   private static guessPlayerRole(
     actor: ReportActorFragment | undefined,
-    deaths: DeathEvent[],
+    _deaths: DeathEvent[],
   ): string | undefined {
-    // This is a simplified heuristic - in reality you'd use more sophisticated logic
+    // Role is not derivable from death events alone (it needs cast/buff/debuff
+    // signals — see features/role_detection). Return undefined rather than guess.
     if (!actor) return undefined;
-
-    // Could analyze gear, abilities used, etc. to determine role
-    // For now, return undefined to avoid incorrect assumptions
     return undefined;
   }
 
@@ -476,50 +602,34 @@ export class DeathAnalysisService {
     ability: ReportAbilityFragment | undefined,
     deaths: DeathEvent[],
   ): MechanicCategory {
-    if (!ability || !ability.name) return MechanicCategory.OTHER;
+    if (!ability) return MechanicCategory.OTHER;
 
-    const abilityName = ability.name.toLowerCase();
-
-    // Area effect abilities
-    if (
-      abilityName.includes('aoe') ||
-      abilityName.includes('area') ||
-      abilityName.includes('blast') ||
-      abilityName.includes('explosion')
-    ) {
+    // Categorize by stable game data (ability id + damage-type bitmask) rather
+    // than English name substrings, which mislabel abilities and break on
+    // localized clients.
+    const abilityId = deaths[0]?.abilityGameID;
+    if (abilityId != null && AOE_ABILITY_IDS.has(abilityId)) {
       return MechanicCategory.AREA_EFFECT;
     }
-
-    // Execute phase abilities
-    if (abilityName.includes('execute') || abilityName.includes('enrage')) {
-      return MechanicCategory.EXECUTE_PHASE;
+    if (abilityId != null && STATUS_EFFECT_ABILITY_IDS.has(abilityId)) {
+      return MechanicCategory.DAMAGE_OVER_TIME;
     }
 
-    // Damage over time effects
+    const typeNum = ability.type != null ? Number(ability.type) : 0;
+    const hasFlag = (flag: DamageTypeFlags): boolean => {
+      const f = Number(flag);
+      return (typeNum & f) === f;
+    };
+
+    // Bleed / Poison / Disease read as damage-over-time mechanics.
     if (
-      abilityName.includes('dot') ||
-      abilityName.includes('bleed') ||
-      abilityName.includes('poison') ||
-      abilityName.includes('burn')
+      hasFlag(DamageTypeFlags.BLEED) ||
+      hasFlag(DamageTypeFlags.POISON) ||
+      hasFlag(DamageTypeFlags.DISEASE)
     ) {
       return MechanicCategory.DAMAGE_OVER_TIME;
     }
 
-    // Environmental damage
-    if (
-      abilityName.includes('fall') ||
-      abilityName.includes('lava') ||
-      abilityName.includes('environmental')
-    ) {
-      return MechanicCategory.ENVIRONMENTAL;
-    }
-
-    // High damage abilities
-    const avgDamage = deaths.reduce((sum, d) => sum + (d.amount || 0), 0) / deaths.length;
-    if (avgDamage > 50000) {
-      return MechanicCategory.BURST_DAMAGE;
-    }
-
-    return MechanicCategory.DIRECT_DAMAGE;
+    return typeNum !== 0 ? MechanicCategory.DIRECT_DAMAGE : MechanicCategory.OTHER;
   }
 }

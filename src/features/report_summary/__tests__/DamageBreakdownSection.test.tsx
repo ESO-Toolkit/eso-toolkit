@@ -1,9 +1,11 @@
-import { render, screen } from '@testing-library/react';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
+import { render, screen, within } from '@testing-library/react';
 
-import { DamageBreakdownSection } from '../DamageBreakdownSection';
 import { ReportDamageBreakdown } from '../../../types/reportSummaryTypes';
+import { DamageBreakdownSection } from '../DamageBreakdownSection';
 
+// Production-realistic shape: the live hook never populates `role` or
+// `targetBreakdown`, and emits full damage-type labels.
 const mockDamageBreakdown: ReportDamageBreakdown = {
   totalDamage: 2500000,
   dps: 12500,
@@ -11,7 +13,6 @@ const mockDamageBreakdown: ReportDamageBreakdown = {
     {
       playerId: '1',
       playerName: 'Top DPS Player',
-      role: 'DPS',
       totalDamage: 1500000,
       dps: 7500,
       damagePercentage: 60,
@@ -20,7 +21,6 @@ const mockDamageBreakdown: ReportDamageBreakdown = {
     {
       playerId: '2',
       playerName: 'Second DPS Player',
-      role: 'DPS',
       totalDamage: 800000,
       dps: 4000,
       damagePercentage: 32,
@@ -29,7 +29,6 @@ const mockDamageBreakdown: ReportDamageBreakdown = {
     {
       playerId: '3',
       playerName: 'Tank Player',
-      role: 'Tank',
       totalDamage: 200000,
       dps: 1000,
       damagePercentage: 8,
@@ -37,33 +36,11 @@ const mockDamageBreakdown: ReportDamageBreakdown = {
     },
   ],
   abilityTypeBreakdown: [
-    {
-      abilityType: 'Direct Damage',
-      totalDamage: 1250000,
-      percentage: 50,
-      hitCount: 625,
-    },
-    {
-      abilityType: 'DOT',
-      totalDamage: 750000,
-      percentage: 30,
-      hitCount: 375,
-    },
-    {
-      abilityType: 'AOE',
-      totalDamage: 500000,
-      percentage: 20,
-      hitCount: 250,
-    },
+    { abilityType: 'Direct', totalDamage: 1250000, percentage: 50, hitCount: 625 },
+    { abilityType: 'Damage over Time', totalDamage: 750000, percentage: 30, hitCount: 375 },
+    { abilityType: 'Area of Effect', totalDamage: 500000, percentage: 20, hitCount: 250 },
   ],
-  targetBreakdown: [
-    {
-      targetId: 'boss1',
-      targetName: 'Main Boss',
-      totalDamage: 2500000,
-      percentage: 100,
-    },
-  ],
+  targetBreakdown: [],
 };
 
 const renderWithTheme = (component: React.ReactElement) => {
@@ -96,12 +73,20 @@ describe('DamageBreakdownSection', () => {
     );
 
     expect(screen.getByText('Top Damage Dealers')).toBeInTheDocument();
-    expect(screen.getByText('#1 Top DPS Player')).toBeInTheDocument();
-    expect(screen.getByText('#2 Second DPS Player')).toBeInTheDocument();
-    expect(screen.getByText('#3 Tank Player')).toBeInTheDocument();
+    // Each top dealer now shows a medal rank badge (the ordinal) beside the name;
+    // scope to the dealers list since the same names also appear in the table below.
+    const dealers = within(
+      screen.getByText('Top Damage Dealers').closest('.MuiBox-root') as HTMLElement,
+    );
+    expect(dealers.getByText('Top DPS Player')).toBeInTheDocument();
+    expect(dealers.getByText('Second DPS Player')).toBeInTheDocument();
+    expect(dealers.getByText('Tank Player')).toBeInTheDocument();
+    expect(dealers.getByText('1')).toBeInTheDocument();
+    expect(dealers.getByText('2')).toBeInTheDocument();
+    expect(dealers.getByText('3')).toBeInTheDocument();
   });
 
-  it('shows damage type distribution', () => {
+  it('shows damage by type with an overlap disclaimer', () => {
     renderWithTheme(
       <DamageBreakdownSection
         damageBreakdown={mockDamageBreakdown}
@@ -110,10 +95,11 @@ describe('DamageBreakdownSection', () => {
       />,
     );
 
-    expect(screen.getByText('Damage Type Distribution')).toBeInTheDocument();
-    expect(screen.getByText('Direct Damage')).toBeInTheDocument();
-    expect(screen.getByText('DOT')).toBeInTheDocument();
-    expect(screen.getByText('AOE')).toBeInTheDocument();
+    expect(screen.getByText('Damage by Type')).toBeInTheDocument();
+    expect(screen.getByText('Direct')).toBeInTheDocument();
+    expect(screen.getByText('Damage over Time')).toBeInTheDocument();
+    expect(screen.getByText('Area of Effect')).toBeInTheDocument();
+    expect(screen.getByText(/percentages can add up to more than 100%/i)).toBeInTheDocument();
   });
 
   it('displays player performance details table', () => {
@@ -130,7 +116,7 @@ describe('DamageBreakdownSection', () => {
     expect(screen.getByText('60.0%')).toBeInTheDocument(); // Top DPS percentage
   });
 
-  it('shows role chips for players', () => {
+  it('does not render dead role UI (the hook never populates role)', () => {
     renderWithTheme(
       <DamageBreakdownSection
         damageBreakdown={mockDamageBreakdown}
@@ -139,11 +125,21 @@ describe('DamageBreakdownSection', () => {
       />,
     );
 
-    // Check for DPS and Tank role chips
-    const roleChips = screen.getAllByText('DPS');
-    expect(roleChips.length).toBeGreaterThan(0);
-    const tankChips = screen.getAllByText('Tank');
-    expect(tankChips.length).toBeGreaterThan(0);
+    // No Role column header and no standalone role chips.
+    expect(screen.queryByRole('columnheader', { name: 'Role' })).not.toBeInTheDocument();
+    expect(screen.queryByText('Tank')).not.toBeInTheDocument();
+  });
+
+  it('shows an empty state when there is no player damage', () => {
+    renderWithTheme(
+      <DamageBreakdownSection
+        damageBreakdown={{ ...mockDamageBreakdown, playerBreakdown: [] }}
+        isLoading={false}
+        error={undefined}
+      />,
+    );
+
+    expect(screen.getByText('No player damage was recorded for this report.')).toBeInTheDocument();
   });
 
   it('shows loading skeleton when isLoading is true', () => {
@@ -152,7 +148,6 @@ describe('DamageBreakdownSection', () => {
     );
 
     expect(screen.getByText('Damage Breakdown')).toBeInTheDocument();
-    // Should show skeleton elements - check for Skeleton components by class
     const skeletons = document.querySelectorAll('.MuiSkeleton-root');
     expect(skeletons.length).toBeGreaterThan(0);
   });
@@ -171,13 +166,8 @@ describe('DamageBreakdownSection', () => {
   it('formats damage values correctly', () => {
     const smallDamageBreakdown: ReportDamageBreakdown = {
       ...mockDamageBreakdown,
-      totalDamage: 1500, // Small number
-      playerBreakdown: [
-        {
-          ...mockDamageBreakdown.playerBreakdown[0],
-          totalDamage: 1500,
-        },
-      ],
+      totalDamage: 1500,
+      playerBreakdown: [{ ...mockDamageBreakdown.playerBreakdown[0], totalDamage: 1500 }],
     };
 
     renderWithTheme(
@@ -190,29 +180,5 @@ describe('DamageBreakdownSection', () => {
 
     const formattedValues = screen.getAllByText('1.5K');
     expect(formattedValues.length).toBeGreaterThan(0); // Values >= 1000 are formatted
-  });
-
-  it('handles missing role gracefully', () => {
-    const breakdownWithoutRole: ReportDamageBreakdown = {
-      ...mockDamageBreakdown,
-      playerBreakdown: [
-        {
-          ...mockDamageBreakdown.playerBreakdown[0],
-          role: undefined,
-        },
-      ],
-    };
-
-    renderWithTheme(
-      <DamageBreakdownSection
-        damageBreakdown={breakdownWithoutRole}
-        isLoading={false}
-        error={undefined}
-      />,
-    );
-
-    // Should render without crashing
-    expect(screen.getByText('Damage Breakdown')).toBeInTheDocument();
-    expect(screen.getByText('Top DPS Player')).toBeInTheDocument();
   });
 });

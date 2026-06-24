@@ -222,7 +222,17 @@ export const MyBuildsPage: React.FC = () => {
 
   const handleEdit = async (saved: SavedBuild): Promise<void> => {
     const encoded = await encodeBuildToURL(saved.build);
-    navigate(`/build-editor?b=${encoded}&id=${saved.id}`, {
+    if (!encoded) {
+      // Fail closed: never open the editor pointed at this saved build (?id=)
+      // with no payload — saving there would overwrite it with blank state.
+      return;
+    }
+    // Hand the encoded build to the editor via router state, NOT a ?b= URL
+    // param — a build may be Private, and the full blob must not land in the
+    // address bar/history/Referer. Only the non-sensitive save-target (?id=)
+    // stays in the URL.
+    navigate(`/build-editor?id=${saved.id}`, {
+      state: { buildData: encoded },
       vtType: 'forward',
       morph: { ref: { current: cardRefs.current.get(saved.id) ?? null }, name: 'build-hero' },
     });
@@ -353,6 +363,8 @@ export const MyBuildsPage: React.FC = () => {
           role={publishTarget.saved.build.role}
           gameMode={publishTarget.saved.build.gameMode ?? 'pve'}
           visibility={publishTarget.saved.build.settings.visibility}
+          defaultTitle={publishTarget.saved.build.name}
+          defaultDescription={publishTarget.saved.build.shortDescription}
           token={accessToken}
           onClose={() => setPublishTarget(null)}
           onPublished={() => setPublishTarget(null)}

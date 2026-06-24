@@ -1,0 +1,246 @@
+import { ReportActorFragment, ReportAbilityFragment } from '../../graphql/gql/graphql';
+import { DamageEvent, DeathEvent } from '../../types/combatlogEvents';
+import { MechanicCategory } from '../../types/reportSummaryTypes';
+import { DeathAnalysisInput, DeathAnalysisService } from '../DeathAnalysisService';
+
+const makeDeath = (partial: Partial<DeathEvent>): DeathEvent =>
+  ({
+    timestamp: 1000,
+    type: 'death',
+    sourceID: 50, // hostile source by default
+    sourceIsFriendly: false,
+    targetID: 1, // a player by default
+    targetInstance: 0,
+    targetIsFriendly: true,
+    abilityGameID: 9000,
+    fight: 1,
+    castTrackID: 0,
+    sourceResources: {} as DeathEvent['sourceResources'],
+    targetResources: {} as DeathEvent['targetResources'],
+    amount: 0,
+    ...partial,
+  }) as DeathEvent;
+
+const makeDamage = (partial: Partial<DamageEvent>): DamageEvent =>
+  ({
+    timestamp: 0,
+    type: 'damage',
+    sourceID: 50,
+    sourceIsFriendly: false,
+    targetID: 1, // the dead player by default
+    targetIsFriendly: false,
+    abilityGameID: 9000,
+    fight: 1,
+    hitType: 1,
+    amount: 0,
+    castTrackID: 0,
+    sourceResources: {} as DamageEvent['sourceResources'],
+    targetResources: {} as DamageEvent['targetResources'],
+    ...partial,
+  }) as DamageEvent;
+
+const actors: Record<string, ReportActorFragment> = {
+  1: { id: 1, name: 'Alice', type: 'Player' } as ReportActorFragment,
+  2: { id: 2, name: 'Bob', type: 'Player' } as ReportActorFragment,
+  50: { id: 50, name: 'Boss', type: 'NPC' } as ReportActorFragment,
+};
+
+const abilities: Record<string, ReportAbilityFragment> = {
+  9000: { gameID: 9000, name: 'Meteor' } as unknown as ReportAbilityFragment,
+  9001: { gameID: 9001, name: 'Cleave' } as unknown as ReportAbilityFragment,
+  // 126633 (Elemental Ring) is in the canonical AOE_ABILITY_IDS set.
+  126633: {
+    gameID: 126633,
+    name: 'Elemental Ring',
+    type: '64',
+  } as unknown as ReportAbilityFragment,
+};
+
+const input = (partial: Partial<DeathAnalysisInput>): DeathAnalysisInput => ({
+  deathEvents: [],
+  damageEvents: [],
+  resurrectEvents: [],
+  fightId: 1,
+  fightName: 'Boss',
+  fightStartTime: 0,
+  fightEndTime: 60_000,
+  actors,
+  abilities,
+  ...partial,
+});
+
+describe('DeathAnalysisService.analyzeReportDeaths', () => {
+  it('counts only player (friendly-target) deaths', () => {
+    const result = DeathAnalysisService.analyzeReportDeaths([
+      input({
+        deathEvents: [
+          makeDeath({ targetID: 1 }), // player death — counts
+          makeDeath({ targetID: 50, targetIsFriendly: false }), // an NPC dying — ignored
+        ],
+      }),
+    ]);
+    expect(result.totalDeaths).toBe(1);
+  });
+
+  it('excludes deaths dealt by a friendly source from the deadliest-ability table', () => {
+    const result = DeathAnalysisService.analyzeReportDeaths([
+      input({
+        deathEvents: [
+          makeDeath({ abilityGameID: 9000 }), // hostile kill — counts
+          makeDeath({ abilityGameID: 9001, sourceIsFriendly: true }), // self/ally — excluded
+        ],
+      }),
+    ]);
+    // Both are player deaths…
+    expect(result.totalDeaths).toBe(2);
+    // …but only the hostile one is attributed to a mechanic, and its share is 100%.
+    expect(result.mechanicDeaths).toHaveLength(1);
+    expect(result.mechanicDeaths[0].mechanicId).toBe(9000);
+    expect(result.mechanicDeaths[0].percentage).toBeCloseTo(100);
+  });
+
+  it('divides a player’s cause-of-death percentages by their hostile deaths', () => {
+    const result = DeathAnalysisService.analyzeReportDeaths([
+      input({
+        deathEvents: [
+          makeDeath({ targetID: 1, abilityGameID: 9000 }),
+          makeDeath({ targetID: 1, abilityGameID: 9000 }),
+          makeDeath({ targetID: 1, abilityGameID: 9001 }),
+        ],
+      }),
+    ]);
+    const alice = result.playerDeaths.find((p) => p.playerName === 'Alice');
+    expect(alice?.totalDeaths).toBe(3);
+    const meteor = alice?.topCausesOfDeath.find((c) => c.abilityId === 9000);
+    expect(meteor?.deathCount).toBe(2);
+    expect(meteor?.percentage).toBeCloseTo((2 / 3) * 100);
+  });
+
+  it('ignores deaths whose target is not a player actor', () => {
+    const result = DeathAnalysisService.analyzeReportDeaths([
+      input({
+        deathEvents: [makeDeath({ targetID: 50, targetIsFriendly: true })], // NPC marked friendly
+      }),
+    ]);
+    expect(result.playerDeaths).toHaveLength(0);
+  });
+
+  it('treats a zero-duration fight as success with deathRate 0 (no Infinity)', () => {
+    const result = DeathAnalysisService.analyzeReportDeaths([
+      input({ fightStartTime: 5000, fightEndTime: 5000, deathEvents: [makeDeath({})] }),
+    ]);
+    const fight = result.fightDeaths[0];
+    expect(fight.deathRate).toBe(0);
+    expect(fight.success).toBe(true);
+    expect(Number.isFinite(fight.deathRate)).toBe(true);
+  });
+
+  it('averages killing-blow amount per mechanic', () => {
+    const result = DeathAnalysisService.analyzeReportDeaths([
+      input({
+        deathEvents: [
+          makeDeath({ abilityGameID: 9000, amount: 1000 }),
+          makeDeath({ abilityGameID: 9000, amount: 3000 }),
+        ],
+      }),
+    ]);
+    expect(result.mechanicDeaths[0].averageKillingBlowDamage).toBe(2000);
+  });
+
+  it('uses the authoritative kill flag for success, not the death-rate heuristic', () => {
+    // 1 death over 60s = 1/min, which the old heuristic (<2/min) called a success.
+    // With kill:false it must read as a wipe.
+    const wipe = DeathAnalysisService.analyzeReportDeaths([
+      input({ kill: false, isBoss: true, deathEvents: [makeDeath({})] }),
+    ]);
+    expect(wipe.fightDeaths[0].success).toBe(false);
+    expect(wipe.fightDeaths[0].isBoss).toBe(true);
+
+    // A kill that happened to have deaths must still read as a kill.
+    const kill = DeathAnalysisService.analyzeReportDeaths([
+      input({
+        kill: true,
+        isBoss: true,
+        fightStartTime: 0,
+        fightEndTime: 10_000,
+        deathEvents: [makeDeath({}), makeDeath({}), makeDeath({})],
+      }),
+    ]);
+    expect(kill.fightDeaths[0].success).toBe(true);
+  });
+
+  it('categorizes a mechanic by ability id / damage-type flags, not its name', () => {
+    const result = DeathAnalysisService.analyzeReportDeaths([
+      input({ deathEvents: [makeDeath({ abilityGameID: 126633 })] }),
+    ]);
+    expect(result.mechanicDeaths[0].category).toBe(MechanicCategory.AREA_EFFECT);
+  });
+
+  it('joins each death to its lethal damage for the true killing-blow hit size', () => {
+    // Player 1 dies at t=5000 to Meteor (9000). The killing blow is the most-recent
+    // damage to them, summed with any simultaneous (<=50ms) hits; earlier hits and
+    // hits to other victims or after death are excluded.
+    const result = DeathAnalysisService.analyzeReportDeaths([
+      input({
+        deathEvents: [
+          makeDeath({ targetID: 1, abilityGameID: 9000, timestamp: 5000, amount: 1234 }),
+        ],
+        damageEvents: [
+          makeDamage({ targetID: 1, timestamp: 4000, amount: 99999 }), // in window, not simultaneous
+          makeDamage({ targetID: 1, timestamp: 4960, amount: 5000 }), // simultaneous with the lethal hit
+          makeDamage({ targetID: 1, timestamp: 4980, amount: 30000 }), // the lethal (most recent) hit
+          makeDamage({ targetID: 2, timestamp: 4990, amount: 88888 }), // different victim, excluded
+          makeDamage({ targetID: 1, timestamp: 6000, amount: 7777 }), // after death, excluded
+        ],
+      }),
+    ]);
+
+    const meteor = result.mechanicDeaths.find((m) => m.mechanicId === 9000)!;
+    expect(meteor.averageKillingBlowHitSize).toBe(35000); // 30000 + 5000 simultaneous
+    expect(meteor.averageKillingBlowDamage).toBe(1234); // overkill stays the death.amount
+  });
+
+  it('counts time alive across resurrections, not just time to first death', () => {
+    // Player 1 dies at 3000, is rezzed at 5000, dies again at 8000 and stays dead
+    // until fight end (10000). Fight runs 0–10000.
+    const result = DeathAnalysisService.analyzeReportDeaths([
+      input({
+        fightStartTime: 0,
+        fightEndTime: 10_000,
+        deathEvents: [
+          makeDeath({ targetID: 1, timestamp: 3000 }),
+          makeDeath({ targetID: 1, timestamp: 8000 }),
+        ],
+        resurrectEvents: [{ targetID: 1, timestamp: 5000 }],
+      }),
+    ]);
+
+    const player = result.playerDeaths.find((p) => p.playerId === '1')!;
+    expect(Math.round(player.averageTimeAlive / 1000)).toBe(3); // to first death
+    expect(Math.round(player.averageTimeAliveTotal / 1000)).toBe(6); // (3000-0) + (8000-5000)
+  });
+
+  it('includes post-resurrection survival up to fight end', () => {
+    // Dies at 4000, rezzed at 6000, survives to fight end (10000).
+    const result = DeathAnalysisService.analyzeReportDeaths([
+      input({
+        fightStartTime: 0,
+        fightEndTime: 10_000,
+        deathEvents: [makeDeath({ targetID: 1, timestamp: 4000 })],
+        resurrectEvents: [{ targetID: 1, timestamp: 6000 }],
+      }),
+    ]);
+
+    const player = result.playerDeaths.find((p) => p.playerId === '1')!;
+    expect(Math.round(player.averageTimeAlive / 1000)).toBe(4); // to first death
+    expect(Math.round(player.averageTimeAliveTotal / 1000)).toBe(8); // 4000 + (10000-6000)
+  });
+
+  it('reports a flawless run when there are no deaths', () => {
+    const result = DeathAnalysisService.analyzeReportDeaths([input({ deathEvents: [] })]);
+    expect(result.totalDeaths).toBe(0);
+    expect(result.playerDeaths).toHaveLength(0);
+    expect(result.mechanicDeaths).toHaveLength(0);
+    expect(result.fightDeaths[0].success).toBe(true);
+  });
+});

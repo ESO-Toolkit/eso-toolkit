@@ -1,6 +1,7 @@
 import BoltIcon from '@mui/icons-material/Bolt';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import SkullIcon from '@mui/icons-material/Dangerous';
+import DeleteSweepIcon from '@mui/icons-material/DeleteSweep';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import GroupIcon from '@mui/icons-material/Group';
 import PersonIcon from '@mui/icons-material/Person';
@@ -38,12 +39,28 @@ import {
 } from '@mui/material';
 import React from 'react';
 
+import { glassCardSurfaceSx, SUMMARY_ACCENTS } from '../../theme/glassCardSurface';
 import {
   ReportDeathAnalysis,
-  MechanicCategory,
   DeathPatternType,
   FightDeathAnalysis,
 } from '../../types/reportSummaryTypes';
+
+import {
+  accentTableSx,
+  CATEGORY_ACCENTS,
+  chipPillSx,
+  fightAccordionSx,
+  gradientTitleSx,
+  innerPanelSx,
+  patternCalloutSx,
+  SEMANTIC_ACCENTS,
+  SEVERITY_ACCENTS,
+  sectionIconBadgeSx,
+  statLabelSx,
+  statTileSx,
+  statValueSx,
+} from './summaryStyles';
 
 interface EnhancedDeathAnalysisSectionProps {
   deathAnalysis?: ReportDeathAnalysis;
@@ -65,22 +82,13 @@ function groupFightsByType(fightDeaths: FightDeathAnalysis[]): FightGroup[] {
   const encounters: FightDeathAnalysis[] = [];
   const trash: FightDeathAnalysis[] = [];
 
-  // Separate encounters from trash based on naming patterns
-  // Encounters typically have boss names, trash fights are generic
+  // Boss vs trash is decided by the API encounterID (threaded through as isBoss),
+  // not by guessing from the fight name.
   for (const fight of fightDeaths) {
-    const name = fight.fightName.toLowerCase();
-    // Trash fights typically contain: "trash", "adds", or are unnamed/generic
-    const isTrash =
-      name.includes('trash') ||
-      name.includes('adds') ||
-      name === 'unknown' ||
-      name === 'unnamed' ||
-      /^fight \d+$/i.test(fight.fightName);
-
-    if (isTrash) {
-      trash.push(fight);
-    } else {
+    if (fight.isBoss) {
       encounters.push(fight);
+    } else {
+      trash.push(fight);
     }
   }
 
@@ -115,9 +123,10 @@ function groupFightsByType(fightDeaths: FightDeathAnalysis[]): FightGroup[] {
  * - Death patterns and actionable insights
  * - Per-fight breakdown (encounters shown by default, trash fights collapsible)
  */
-export const EnhancedDeathAnalysisSection: React.FC<EnhancedDeathAnalysisSectionProps> = ({
+const EnhancedDeathAnalysisSectionComponent: React.FC<EnhancedDeathAnalysisSectionProps> = ({
   deathAnalysis,
-  isLoading,
+  // `isLoading` is still part of the props (the page passes it) but no longer
+  // gates rendering: the section paints as soon as `deathAnalysis` is present.
   error,
 }) => {
   const theme = useTheme();
@@ -142,11 +151,16 @@ export const EnhancedDeathAnalysisSection: React.FC<EnhancedDeathAnalysisSection
 
   if (error) {
     return (
-      <Card elevation={2}>
+      <Card
+        elevation={0}
+        sx={(theme) => glassCardSurfaceSx(theme.palette.mode === 'dark', SUMMARY_ACCENTS.death)}
+      >
         <CardContent>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
             <SkullIcon color="error" />
-            <Typography variant="h5">Death Analysis</Typography>
+            <Typography variant="h5" component="h2">
+              Death Analysis
+            </Typography>
           </Box>
           <Alert severity="error">
             <Typography variant="h6">Analysis Failed</Typography>
@@ -157,13 +171,25 @@ export const EnhancedDeathAnalysisSection: React.FC<EnhancedDeathAnalysisSection
     );
   }
 
-  if (isLoading) {
+  // Render the section as soon as the death analysis is present — even while the
+  // rest of the summary is still loading — so the Tier-1 (Deaths table) commit
+  // paints the death section fast instead of waiting for the per-event pass.
+  // `!deathAnalysis` (not `isLoading`) still gates the success branch, so the
+  // skeleton holds until real data arrives and a false "Flawless Performance!"
+  // can never flash — the hook only commits a death analysis once the Deaths
+  // table actually returned deaths.
+  if (!deathAnalysis) {
     return (
-      <Card elevation={2}>
+      <Card
+        elevation={0}
+        sx={(theme) => glassCardSurfaceSx(theme.palette.mode === 'dark', SUMMARY_ACCENTS.death)}
+      >
         <CardContent>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
             <SkullIcon />
-            <Typography variant="h5">Death Analysis</Typography>
+            <Typography variant="h5" component="h2">
+              Death Analysis
+            </Typography>
           </Box>
           <LinearProgress sx={{ mb: 2 }} />
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
@@ -182,12 +208,23 @@ export const EnhancedDeathAnalysisSection: React.FC<EnhancedDeathAnalysisSection
   const hasDeaths = deathAnalysis && deathAnalysis.totalDeaths > 0;
 
   return (
-    <Card elevation={2}>
+    <Card
+      elevation={0}
+      sx={(theme) => glassCardSurfaceSx(theme.palette.mode === 'dark', SUMMARY_ACCENTS.death)}
+    >
       <CardContent>
         {/* Header */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
-          <SkullIcon color={hasDeaths ? 'error' : 'success'} />
-          <Typography variant="h5">Death Analysis</Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 3 }}>
+          <Box sx={sectionIconBadgeSx(SUMMARY_ACCENTS.death)}>
+            <SkullIcon />
+          </Box>
+          <Typography
+            variant="h5"
+            component="h2"
+            sx={(t) => gradientTitleSx(t.palette.mode === 'dark', SUMMARY_ACCENTS.death)}
+          >
+            Death Analysis
+          </Typography>
         </Box>
 
         {!hasDeaths ? (
@@ -195,7 +232,7 @@ export const EnhancedDeathAnalysisSection: React.FC<EnhancedDeathAnalysisSection
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <CheckCircleIcon fontSize="large" />
               <Box>
-                <Typography variant="h6">Flawless Performance! 🎉</Typography>
+                <Typography variant="h6">Flawless Performance!</Typography>
                 <Typography>
                   No deaths recorded across all fights. Excellent execution by the entire team!
                 </Typography>
@@ -209,18 +246,13 @@ export const EnhancedDeathAnalysisSection: React.FC<EnhancedDeathAnalysisSection
               <Grid size={{ xs: 12, md: 3 }}>
                 <Card
                   variant="outlined"
-                  sx={{
-                    background:
-                      theme.palette.mode === 'dark'
-                        ? 'linear-gradient(135deg, rgba(244, 67, 54, 0.1) 0%, rgba(244, 67, 54, 0.05) 100%)'
-                        : 'linear-gradient(135deg, rgba(244, 67, 54, 0.05) 0%, rgba(244, 67, 54, 0.02) 100%)',
-                  }}
+                  sx={statTileSx(theme.palette.mode === 'dark', SUMMARY_ACCENTS.death)}
                 >
                   <CardContent sx={{ textAlign: 'center' }}>
-                    <Typography variant="h4" color="error" sx={{ fontWeight: 'bold' }}>
+                    <Typography sx={{ ...statValueSx, color: `rgb(${SUMMARY_ACCENTS.death})` }}>
                       {deathAnalysis.totalDeaths}
                     </Typography>
-                    <Typography variant="body2" color="text.secondary">
+                    <Typography component="span" sx={statLabelSx}>
                       Total Deaths
                     </Typography>
                   </CardContent>
@@ -228,12 +260,15 @@ export const EnhancedDeathAnalysisSection: React.FC<EnhancedDeathAnalysisSection
               </Grid>
 
               <Grid size={{ xs: 12, md: 3 }}>
-                <Card variant="outlined">
+                <Card
+                  variant="outlined"
+                  sx={statTileSx(theme.palette.mode === 'dark', SUMMARY_ACCENTS.info)}
+                >
                   <CardContent sx={{ textAlign: 'center' }}>
-                    <Typography variant="h4" color="primary" sx={{ fontWeight: 'bold' }}>
+                    <Typography sx={{ ...statValueSx, color: `rgb(${SUMMARY_ACCENTS.info})` }}>
                       {deathAnalysis.playerDeaths.length}
                     </Typography>
-                    <Typography variant="body2" color="text.secondary">
+                    <Typography component="span" sx={statLabelSx}>
                       Players Affected
                     </Typography>
                   </CardContent>
@@ -241,12 +276,15 @@ export const EnhancedDeathAnalysisSection: React.FC<EnhancedDeathAnalysisSection
               </Grid>
 
               <Grid size={{ xs: 12, md: 3 }}>
-                <Card variant="outlined">
+                <Card
+                  variant="outlined"
+                  sx={statTileSx(theme.palette.mode === 'dark', SUMMARY_ACCENTS.damage)}
+                >
                   <CardContent sx={{ textAlign: 'center' }}>
-                    <Typography variant="h4" color="warning.main" sx={{ fontWeight: 'bold' }}>
+                    <Typography sx={{ ...statValueSx, color: `rgb(${SUMMARY_ACCENTS.damage})` }}>
                       {deathAnalysis.mechanicDeaths.length}
                     </Typography>
-                    <Typography variant="body2" color="text.secondary">
+                    <Typography component="span" sx={statLabelSx}>
                       Deadly Abilities
                     </Typography>
                   </CardContent>
@@ -254,12 +292,15 @@ export const EnhancedDeathAnalysisSection: React.FC<EnhancedDeathAnalysisSection
               </Grid>
 
               <Grid size={{ xs: 12, md: 3 }}>
-                <Card variant="outlined">
+                <Card
+                  variant="outlined"
+                  sx={statTileSx(theme.palette.mode === 'dark', '167, 139, 250')}
+                >
                   <CardContent sx={{ textAlign: 'center' }}>
-                    <Typography variant="h4" color="info.main" sx={{ fontWeight: 'bold' }}>
+                    <Typography sx={{ ...statValueSx, color: 'rgb(167, 139, 250)' }}>
                       {deathAnalysis.deathPatterns.length}
                     </Typography>
-                    <Typography variant="body2" color="text.secondary">
+                    <Typography component="span" sx={statLabelSx}>
                       Patterns Found
                     </Typography>
                   </CardContent>
@@ -272,6 +313,7 @@ export const EnhancedDeathAnalysisSection: React.FC<EnhancedDeathAnalysisSection
               <Box sx={{ mb: 4 }}>
                 <Typography
                   variant="h6"
+                  component="h3"
                   gutterBottom
                   sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
                 >
@@ -282,7 +324,12 @@ export const EnhancedDeathAnalysisSection: React.FC<EnhancedDeathAnalysisSection
                   <Alert
                     key={index}
                     severity={getSeverityLevel(pattern.severity)}
-                    sx={{ mb: 2 }}
+                    sx={(theme) =>
+                      patternCalloutSx(
+                        theme.palette.mode === 'dark',
+                        SEVERITY_ACCENTS[pattern.severity] ?? SEMANTIC_ACCENTS.cyan,
+                      )
+                    }
                     icon={<WarningIcon />}
                   >
                     <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 'bold' }}>
@@ -309,13 +356,22 @@ export const EnhancedDeathAnalysisSection: React.FC<EnhancedDeathAnalysisSection
                           Affected players:
                         </Typography>
                         {pattern.affectedPlayers.slice(0, 5).map((player, index) => (
-                          <Chip key={`${player}-${index}`} label={player} size="small" />
+                          <Chip
+                            key={`${player}-${index}`}
+                            label={player}
+                            size="small"
+                            sx={(theme) =>
+                              chipPillSx(theme.palette.mode === 'dark', SEMANTIC_ACCENTS.slate)
+                            }
+                          />
                         ))}
                         {pattern.affectedPlayers.length > 5 && (
                           <Chip
                             label={`+${pattern.affectedPlayers.length - 5} more`}
                             size="small"
-                            variant="outlined"
+                            sx={(theme) =>
+                              chipPillSx(theme.palette.mode === 'dark', SEMANTIC_ACCENTS.slate)
+                            }
                           />
                         )}
                       </Box>
@@ -329,14 +385,23 @@ export const EnhancedDeathAnalysisSection: React.FC<EnhancedDeathAnalysisSection
             <Box sx={{ mb: 4 }}>
               <Typography
                 variant="h6"
+                component="h3"
                 gutterBottom
                 sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
               >
                 <BoltIcon />
                 Deadliest Abilities & Mechanics
               </Typography>
-              <TableContainer component={Paper} variant="outlined">
-                <Table size="small">
+              <TableContainer
+                component={Paper}
+                variant="outlined"
+                sx={(theme) => innerPanelSx(theme.palette.mode === 'dark')}
+              >
+                <Table
+                  size="small"
+                  aria-label="Deadliest abilities and mechanics"
+                  sx={(t) => accentTableSx(t.palette.mode === 'dark', SUMMARY_ACCENTS.death)}
+                >
                   <TableHead>
                     <TableRow>
                       <TableCell sx={{ fontWeight: 'bold' }}>Ability/Mechanic</TableCell>
@@ -350,7 +415,9 @@ export const EnhancedDeathAnalysisSection: React.FC<EnhancedDeathAnalysisSection
                         Category
                       </TableCell>
                       <TableCell align="right" sx={{ fontWeight: 'bold' }}>
-                        Avg Damage
+                        <Tooltip title="Average true killing-blow hit size — the actual lethal damage, summed across simultaneous hits, joined from the damage stream. Overkill (how far the blow exceeded remaining health) is shown beneath.">
+                          <span>Avg Hit Size</span>
+                        </Tooltip>
                       </TableCell>
                       <TableCell align="center" sx={{ fontWeight: 'bold' }}>
                         Players Hit
@@ -371,8 +438,10 @@ export const EnhancedDeathAnalysisSection: React.FC<EnhancedDeathAnalysisSection
                           <Chip
                             label={mechanic.totalDeaths}
                             size="small"
-                            color="error"
-                            sx={{ minWidth: 40 }}
+                            sx={(theme) => ({
+                              ...chipPillSx(theme.palette.mode === 'dark', SEMANTIC_ACCENTS.coral),
+                              minWidth: 40,
+                            })}
                           />
                         </TableCell>
                         <TableCell align="right">
@@ -384,13 +453,25 @@ export const EnhancedDeathAnalysisSection: React.FC<EnhancedDeathAnalysisSection
                           <Chip
                             label={mechanic.category}
                             size="small"
-                            color={getCategoryColor(mechanic.category)}
-                            sx={{ fontSize: '0.7rem' }}
+                            sx={(theme) =>
+                              chipPillSx(
+                                theme.palette.mode === 'dark',
+                                CATEGORY_ACCENTS[mechanic.category] ?? SEMANTIC_ACCENTS.slate,
+                              )
+                            }
                           />
                         </TableCell>
                         <TableCell align="right">
-                          <Typography variant="body2" color="text.secondary">
-                            {Math.round(mechanic.averageKillingBlowDamage).toLocaleString()}
+                          <Typography variant="body2">
+                            {Math.round(mechanic.averageKillingBlowHitSize).toLocaleString()}
+                          </Typography>
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
+                            sx={{ display: 'block' }}
+                          >
+                            {Math.round(mechanic.averageKillingBlowDamage).toLocaleString()}{' '}
+                            overkill
                           </Typography>
                         </TableCell>
                         <TableCell align="center">
@@ -419,14 +500,23 @@ export const EnhancedDeathAnalysisSection: React.FC<EnhancedDeathAnalysisSection
             <Box sx={{ mb: 4 }}>
               <Typography
                 variant="h6"
+                component="h3"
                 gutterBottom
                 sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
               >
                 <PersonIcon />
                 Player Death Analysis
               </Typography>
-              <TableContainer component={Paper} variant="outlined">
-                <Table size="small">
+              <TableContainer
+                component={Paper}
+                variant="outlined"
+                sx={(theme) => innerPanelSx(theme.palette.mode === 'dark')}
+              >
+                <Table
+                  size="small"
+                  aria-label="Player death analysis"
+                  sx={(t) => accentTableSx(t.palette.mode === 'dark', SUMMARY_ACCENTS.death)}
+                >
                   <TableHead>
                     <TableRow>
                       <TableCell sx={{ fontWeight: 'bold' }}>Player</TableCell>
@@ -434,7 +524,14 @@ export const EnhancedDeathAnalysisSection: React.FC<EnhancedDeathAnalysisSection
                         Deaths
                       </TableCell>
                       <TableCell align="right" sx={{ fontWeight: 'bold' }}>
-                        Avg Time Alive
+                        <Tooltip title="Average time from the start of a fight to the player's first death, across fights where they died">
+                          <span>Time to First Death</span>
+                        </Tooltip>
+                      </TableCell>
+                      <TableCell align="right" sx={{ fontWeight: 'bold' }}>
+                        <Tooltip title="Average true time alive per fight — counts time after a resurrection, not just up to the first death">
+                          <span>Time Alive</span>
+                        </Tooltip>
                       </TableCell>
                       <TableCell align="left" sx={{ fontWeight: 'bold' }}>
                         Top Cause of Death
@@ -450,32 +547,32 @@ export const EnhancedDeathAnalysisSection: React.FC<EnhancedDeathAnalysisSection
                               {player.playerName.charAt(0)}
                             </Avatar>
                             {player.playerName}
-                            {player.role && (
-                              <Chip
-                                label={player.role}
-                                size="small"
-                                color={getRoleColor(player.role)}
-                                sx={{ fontSize: '0.7rem' }}
-                              />
-                            )}
                           </Box>
                         </TableCell>
                         <TableCell align="right">
                           <Chip
                             label={player.totalDeaths}
                             size="small"
-                            color={
-                              player.totalDeaths === 0
-                                ? 'success'
-                                : player.totalDeaths >= 3
-                                  ? 'error'
-                                  : 'warning'
+                            sx={(theme) =>
+                              chipPillSx(
+                                theme.palette.mode === 'dark',
+                                player.totalDeaths === 0
+                                  ? SEMANTIC_ACCENTS.green
+                                  : player.totalDeaths >= 3
+                                    ? SEMANTIC_ACCENTS.coral
+                                    : SEMANTIC_ACCENTS.amber,
+                              )
                             }
                           />
                         </TableCell>
                         <TableCell align="right">
                           <Typography variant="body2" color="text.secondary">
                             {Math.round(player.averageTimeAlive / 1000)}s
+                          </Typography>
+                        </TableCell>
+                        <TableCell align="right">
+                          <Typography variant="body2" color="text.secondary">
+                            {Math.round(player.averageTimeAliveTotal / 1000)}s
                           </Typography>
                         </TableCell>
                         <TableCell>
@@ -512,7 +609,9 @@ export const EnhancedDeathAnalysisSection: React.FC<EnhancedDeathAnalysisSection
                   mb: 2,
                 }}
               >
-                <Typography variant="h6">Deaths by Fight</Typography>
+                <Typography variant="h6" component="h3">
+                  Deaths by Fight
+                </Typography>
                 {trashStats.count > 0 && (
                   <FormControlLabel
                     control={
@@ -520,21 +619,15 @@ export const EnhancedDeathAnalysisSection: React.FC<EnhancedDeathAnalysisSection
                         checked={showTrashFights}
                         onChange={(e) => setShowTrashFights(e.target.checked)}
                         size="small"
-                        slotProps={{ input: { 'aria-label': 'Toggle trash fights' } }}
-                        sx={{
-                          '& .MuiSwitch-switchBase.Mui-checked': {
-                            color: '#38bdf8',
-                            '&:hover': {
-                              backgroundColor: 'rgba(56, 189, 248, 0.08)',
-                            },
-                          },
-                          '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-                            backgroundColor: '#38bdf8',
-                          },
-                        }}
+                        color="info"
                       />
                     }
-                    label={`🗑️ ${trashStats.count} trash (${trashStats.deaths} deaths)`}
+                    label={
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                        <DeleteSweepIcon fontSize="small" aria-hidden />
+                        {`${trashStats.count} trash (${trashStats.deaths} deaths)`}
+                      </Box>
+                    }
                     sx={{ ml: 2, mr: 0 }}
                   />
                 )}
@@ -546,7 +639,10 @@ export const EnhancedDeathAnalysisSection: React.FC<EnhancedDeathAnalysisSection
                   {group.type === 'encounter' && (
                     <Box>
                       {group.fights.map((fight) => (
-                        <Accordion key={fight.fightId} sx={{ mb: 1 }}>
+                        <Accordion
+                          key={fight.fightId}
+                          sx={(theme) => fightAccordionSx(theme.palette.mode === 'dark')}
+                        >
                           <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                             <Box
                               sx={{ display: 'flex', alignItems: 'center', gap: 2, width: '100%' }}
@@ -557,12 +653,24 @@ export const EnhancedDeathAnalysisSection: React.FC<EnhancedDeathAnalysisSection
                               <Chip
                                 label={`${fight.totalDeaths} deaths`}
                                 size="small"
-                                color={fight.totalDeaths === 0 ? 'success' : 'error'}
+                                sx={(theme) =>
+                                  chipPillSx(
+                                    theme.palette.mode === 'dark',
+                                    fight.totalDeaths === 0
+                                      ? SEMANTIC_ACCENTS.green
+                                      : SEMANTIC_ACCENTS.coral,
+                                  )
+                                }
                               />
                               <Chip
                                 label={fight.success ? 'Kill' : 'Wipe'}
                                 size="small"
-                                color={fight.success ? 'success' : 'error'}
+                                sx={(theme) =>
+                                  chipPillSx(
+                                    theme.palette.mode === 'dark',
+                                    fight.success ? SEMANTIC_ACCENTS.green : SEMANTIC_ACCENTS.coral,
+                                  )
+                                }
                               />
                             </Box>
                           </AccordionSummary>
@@ -599,7 +707,10 @@ export const EnhancedDeathAnalysisSection: React.FC<EnhancedDeathAnalysisSection
                           Trash Fights
                         </Typography>
                         {group.fights.map((fight) => (
-                          <Accordion key={fight.fightId} sx={{ mb: 1 }}>
+                          <Accordion
+                            key={fight.fightId}
+                            sx={(theme) => fightAccordionSx(theme.palette.mode === 'dark')}
+                          >
                             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                               <Box
                                 sx={{
@@ -615,12 +726,26 @@ export const EnhancedDeathAnalysisSection: React.FC<EnhancedDeathAnalysisSection
                                 <Chip
                                   label={`${fight.totalDeaths} deaths`}
                                   size="small"
-                                  color={fight.totalDeaths === 0 ? 'success' : 'error'}
+                                  sx={(theme) =>
+                                    chipPillSx(
+                                      theme.palette.mode === 'dark',
+                                      fight.totalDeaths === 0
+                                        ? SEMANTIC_ACCENTS.green
+                                        : SEMANTIC_ACCENTS.coral,
+                                    )
+                                  }
                                 />
                                 <Chip
                                   label={fight.success ? 'Clear' : 'Wipe'}
                                   size="small"
-                                  color={fight.success ? 'success' : 'error'}
+                                  sx={(theme) =>
+                                    chipPillSx(
+                                      theme.palette.mode === 'dark',
+                                      fight.success
+                                        ? SEMANTIC_ACCENTS.green
+                                        : SEMANTIC_ACCENTS.coral,
+                                    )
+                                  }
                                 />
                               </Box>
                             </AccordionSummary>
@@ -657,37 +782,6 @@ export const EnhancedDeathAnalysisSection: React.FC<EnhancedDeathAnalysisSection
 };
 
 // Helper functions
-function getCategoryColor(
-  category: MechanicCategory,
-): 'primary' | 'secondary' | 'error' | 'warning' | 'info' | 'success' {
-  switch (category) {
-    case MechanicCategory.AREA_EFFECT:
-      return 'warning';
-    case MechanicCategory.BURST_DAMAGE:
-      return 'error';
-    case MechanicCategory.EXECUTE_PHASE:
-      return 'error';
-    case MechanicCategory.DAMAGE_OVER_TIME:
-      return 'info';
-    case MechanicCategory.ENVIRONMENTAL:
-      return 'secondary';
-    case MechanicCategory.DIRECT_DAMAGE:
-      return 'primary';
-    default:
-      return 'primary';
-  }
-}
-
-function getRoleColor(
-  role: string,
-): 'primary' | 'secondary' | 'error' | 'warning' | 'info' | 'success' {
-  const lowerRole = role.toLowerCase();
-  if (lowerRole.includes('tank')) return 'info';
-  if (lowerRole.includes('heal')) return 'success';
-  if (lowerRole.includes('dps') || lowerRole.includes('damage')) return 'error';
-  return 'primary';
-}
-
 function getPatternTypeLabel(type: DeathPatternType): string {
   return type.replace(/_/g, ' ');
 }
@@ -705,5 +799,5 @@ function getSeverityLevel(severity: 'High' | 'Medium' | 'Low'): 'error' | 'warni
   }
 }
 
-// eslint-disable-next-line import/no-default-export
-export default React.memo(EnhancedDeathAnalysisSection);
+export const EnhancedDeathAnalysisSection = React.memo(EnhancedDeathAnalysisSectionComponent);
+EnhancedDeathAnalysisSection.displayName = 'EnhancedDeathAnalysisSection';
