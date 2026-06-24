@@ -291,10 +291,14 @@ export const DiscordAdminGuideContent: React.FC<DiscordAdminGuideContentProps> =
             target="_blank"
             rel="noopener noreferrer"
             sx={{
-              color: '#5865F2',
+              // Deliberately NOT blurple — the invite CTAs above are blurple, so a
+              // matching link colour blends into them. Use a muted, underlined
+              // link that reads as secondary next to the primary actions.
+              color: 'text.secondary',
               fontWeight: 600,
-              textDecoration: 'none',
-              '&:hover': { textDecoration: 'underline' },
+              textDecoration: 'underline',
+              textUnderlineOffset: '2px',
+              '&:hover': { color: 'text.primary' },
             }}
           >
             See what it does and how to operate it →
