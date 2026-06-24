@@ -1,5 +1,6 @@
 import {
   Add as AddIcon,
+  CompareArrows as CompareIcon,
   Delete as DeleteIcon,
   Edit as EditIcon,
   Handyman as HandymanIcon,
@@ -12,6 +13,7 @@ import {
   Card,
   CardActions,
   CardContent,
+  Checkbox,
   Chip,
   Container,
   Dialog,
@@ -27,6 +29,7 @@ import { useTheme } from '@mui/material/styles';
 import React, { useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 
+import { BuildComparator, makeBuildColumn, type ComparatorColumn } from '@/components/stats';
 import { StatHealthBadge } from '@/components/stats/StatHealthBadge';
 import { calculateSurvivability } from '@/engine';
 
@@ -97,6 +100,10 @@ interface BuildCardProps {
   onDelete: (saved: SavedBuild) => void;
   isDarkMode: boolean;
   cardRef?: (el: HTMLDivElement | null) => void;
+  /** Compare mode: show a selection checkbox. */
+  selectable?: boolean;
+  selected?: boolean;
+  onToggleSelect?: (saved: SavedBuild) => void;
 }
 
 const BuildCardItem: React.FC<BuildCardProps> = ({
@@ -107,6 +114,9 @@ const BuildCardItem: React.FC<BuildCardProps> = ({
   onDelete,
   isDarkMode,
   cardRef,
+  selectable = false,
+  selected = false,
+  onToggleSelect,
 }) => {
   const classLabel = CLASS_LABELS[saved.build.esoClass] ?? saved.build.esoClass;
   const roleLabel = ROLE_LABELS[saved.build.role] ?? saved.build.role;
@@ -134,17 +144,30 @@ const BuildCardItem: React.FC<BuildCardProps> = ({
     >
       <CardContent sx={{ pb: 1 }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-          <Typography
-            variant="h6"
-            sx={{
-              fontWeight: 700,
-              fontSize: '1rem',
-              color: isDarkMode ? '#f1f5f9' : '#0f172a',
-              wordBreak: 'break-word',
-            }}
-          >
-            {saved.build.name || 'Unnamed Build'}
-          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, minWidth: 0 }}>
+            {selectable && (
+              <Checkbox
+                checked={selected}
+                onChange={() => onToggleSelect?.(saved)}
+                size="small"
+                sx={{ p: 0.25, ml: -0.5 }}
+                slotProps={{
+                  input: { 'aria-label': `Select ${saved.build.name || 'build'} to compare` },
+                }}
+              />
+            )}
+            <Typography
+              variant="h6"
+              sx={{
+                fontWeight: 700,
+                fontSize: '1rem',
+                color: isDarkMode ? '#f1f5f9' : '#0f172a',
+                wordBreak: 'break-word',
+              }}
+            >
+              {saved.build.name || 'Unnamed Build'}
+            </Typography>
+          </Box>
           <Box sx={{ display: 'flex', gap: 0.5, ml: 1, flexShrink: 0 }}>
             <Chip label={classLabel} size="small" sx={{ fontSize: '0.7rem' }} />
             <Chip label={roleLabel} size="small" variant="outlined" sx={{ fontSize: '0.7rem' }} />
@@ -233,6 +256,42 @@ export const MyBuildsPage: React.FC = () => {
     saved: SavedBuild;
   } | null>(null);
   const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+  const [compareMode, setCompareMode] = useState(false);
+  const [compareIds, setCompareIds] = useState<string[]>([]);
+  const [comparatorOpen, setComparatorOpen] = useState(false);
+
+  const toggleCompare = (saved: SavedBuild): void => {
+    setCompareIds((prev) =>
+      prev.includes(saved.id) ? prev.filter((id) => id !== saved.id) : [...prev, saved.id],
+    );
+  };
+
+  const exitCompareMode = (): void => {
+    setCompareMode(false);
+    setCompareIds([]);
+  };
+
+  // Build a comparator column per selected build (its primary setup). Builds with
+  // no setups are skipped.
+  const comparatorColumns = React.useMemo<ComparatorColumn[]>(() => {
+    return compareIds
+      .map((id) => savedBuilds.find((b) => b.id === id))
+      .filter((b): b is SavedBuild => Boolean(b))
+      .map((b) => {
+        const setup = b.build.setups?.[0];
+        if (!setup) return null;
+        const classLabel = CLASS_LABELS[b.build.esoClass] ?? b.build.esoClass;
+        const roleLabel = ROLE_LABELS[b.build.role] ?? b.build.role;
+        return makeBuildColumn(
+          b.id,
+          b.build.name || 'Unnamed',
+          setup,
+          b.build,
+          `${classLabel} · ${roleLabel}`,
+        );
+      })
+      .filter((c): c is ComparatorColumn => Boolean(c));
+  }, [compareIds, savedBuilds]);
 
   const handleEdit = async (saved: SavedBuild): Promise<void> => {
     const encoded = await encodeBuildToURL(saved.build);
@@ -300,14 +359,42 @@ export const MyBuildsPage: React.FC = () => {
               : `${savedBuilds.length} saved build${savedBuilds.length === 1 ? '' : 's'}`}
           </Typography>
         </Box>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={() => navigate('/build-editor', { vtType: 'forward' })}
-          sx={{ textTransform: 'none', fontWeight: 600, borderRadius: 2 }}
-        >
-          New Build
-        </Button>
+        <Stack direction="row" spacing={1}>
+          {savedBuilds.length >= 2 &&
+            (compareMode ? (
+              <>
+                <Button onClick={exitCompareMode} sx={{ textTransform: 'none' }}>
+                  Cancel
+                </Button>
+                <Button
+                  variant="contained"
+                  startIcon={<CompareIcon />}
+                  disabled={comparatorColumns.length < 2}
+                  onClick={() => setComparatorOpen(true)}
+                  sx={{ textTransform: 'none', fontWeight: 600, borderRadius: 2 }}
+                >
+                  Compare ({compareIds.length})
+                </Button>
+              </>
+            ) : (
+              <Button
+                variant="outlined"
+                startIcon={<CompareIcon />}
+                onClick={() => setCompareMode(true)}
+                sx={{ textTransform: 'none', fontWeight: 600, borderRadius: 2 }}
+              >
+                Compare
+              </Button>
+            ))}
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => navigate('/build-editor', { vtType: 'forward' })}
+            sx={{ textTransform: 'none', fontWeight: 600, borderRadius: 2 }}
+          >
+            New Build
+          </Button>
+        </Stack>
       </Box>
 
       {savedBuilds.length === 0 ? (
@@ -347,10 +434,28 @@ export const MyBuildsPage: React.FC = () => {
                 if (el) cardRefs.current.set(saved.id, el);
                 else cardRefs.current.delete(saved.id);
               }}
+              selectable={compareMode}
+              selected={compareIds.includes(saved.id)}
+              onToggleSelect={toggleCompare}
             />
           ))}
         </Stack>
       )}
+
+      <Dialog
+        open={comparatorOpen}
+        onClose={() => setComparatorOpen(false)}
+        maxWidth="lg"
+        fullWidth
+      >
+        <DialogTitle sx={{ fontWeight: 700 }}>Compare Builds</DialogTitle>
+        <DialogContent>
+          <BuildComparator columns={comparatorColumns} />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setComparatorOpen(false)}>Close</Button>
+        </DialogActions>
+      </Dialog>
 
       <DeleteDialog
         open={pendingDelete !== null}
