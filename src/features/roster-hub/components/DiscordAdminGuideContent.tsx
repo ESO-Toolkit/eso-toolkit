@@ -278,8 +278,9 @@ export const DiscordAdminGuideContent: React.FC<DiscordAdminGuideContentProps> =
           </Tooltip>
         </Stack>
 
-        {/* Let admins read what the bot actually does before they install. Opens
-            in a new tab so an in-progress publish (modal context) is preserved. */}
+        {/* Let admins read what the bot actually does before they install.
+            Navigates in-SPA (no target=_blank) so it gets the smooth view
+            transition instead of cold-loading the app in a new tab. */}
         <Typography
           variant="caption"
           sx={{ display: 'block', mt: 1.5, color: 'text.secondary', fontSize: '0.78rem' }}
@@ -288,8 +289,6 @@ export const DiscordAdminGuideContent: React.FC<DiscordAdminGuideContentProps> =
           <Box
             component={RouterLink}
             to="/docs/discord-roster-bot"
-            target="_blank"
-            rel="noopener noreferrer"
             sx={{
               // Deliberately NOT blurple — the invite CTAs above are blurple, so a
               // matching link colour blends into them. Use a muted, underlined
