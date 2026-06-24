@@ -11,6 +11,7 @@ import React from 'react';
 import { useDispatch } from 'react-redux';
 import { Link as RouterLink } from 'react-router-dom';
 
+import { getFoodCategoryIconSources } from '@/assets/consumables/foodCategoryIcons';
 import { ESO_CONSUMABLES, ESO_CONSUMABLE_LOOKUP, EsoConsumable } from '@/data/esoConsumables';
 
 import { updateFood } from '../store/loadoutSlice';
@@ -37,32 +38,11 @@ const FOOD_SELECTOR_KB_URL = '/docs/loadout/food-selector';
 
 const MIN_SEARCH_LENGTH = 2;
 
-const UESP_ICON_CDN = 'https://esoicons.uesp.net/esoui/art/treeicons';
-
-/** Maps provisioning categories to their UESP tree icons */
-const CATEGORY_ICON_MAP: Record<string, string> = {
-  'Meat Dishes': 'provisioner_indexicon_meat_up',
-  'Fruit Dishes': 'provisioner_indexicon_stew_up',
-  'Vegetable Dishes': 'provisioner_indexicon_baked_up',
-  Savouries: 'provisioner_indexicon_meat_up',
-  Ragout: 'provisioner_indexicon_stew_up',
-  Entremet: 'provisioner_indexicon_baked_up',
-  Gourmet: 'provisioner_indexicon_stew_up',
-  Delicacies: 'provisioner_indexicon_spirits_up',
-  'Alcoholic Drinks': 'provisioner_indexicon_beer_up',
-  Tea: 'provisioner_indexicon_spirits_up',
-  Tonics: 'provisioner_indexicon_wine_up',
-  Liqueurs: 'provisioner_indexicon_spirits_up',
-  Tinctures: 'provisioner_indexicon_beer_up',
-  'Cordial Teas': 'provisioner_indexicon_wine_up',
-  Distillates: 'provisioner_indexicon_spirits_up',
-};
-
-const getCategoryIconUrl = (category?: string): string | null => {
-  if (!category) return null;
-  const icon = CATEGORY_ICON_MAP[category];
-  return icon ? `${UESP_ICON_CDN}/${icon}.png` : null;
-};
+// Food category icons are bundled locally (same-origin / unblockable) so they
+// never depend on a CDN that ad/privacy/DNS filters block. See
+// assets/consumables/foodCategoryIcons.
+const getCategoryIconUrl = (category?: string): string | null =>
+  getFoodCategoryIconSources(category)[0] ?? null;
 
 const toDisplayConsumable = (item: EsoConsumable): DisplayConsumable => ({
   id: item.id,

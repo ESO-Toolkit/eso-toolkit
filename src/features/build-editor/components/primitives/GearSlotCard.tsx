@@ -18,8 +18,13 @@ import { Box, ButtonBase, IconButton, Stack, Tooltip, Typography } from '@mui/ma
 import { useTheme } from '@mui/material/styles';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { ResilientImg } from '@/components/ResilientImg';
+
 import type { ArmorWeight } from '../../../loadout-manager/types/loadout.types';
-import { fetchItemIconUrl, getItemIconUrl } from '../../../loadout-manager/utils/itemIconResolver';
+import {
+  fetchItemIconSources,
+  getItemIconSources,
+} from '../../../loadout-manager/utils/itemIconResolver';
 import type { EquipSlotDef } from '../../data/esoStaticData';
 import {
   getEnchantShortName,
@@ -188,11 +193,10 @@ const GearSlotCardComponent: React.FC<GearSlotCardProps> = ({
   const isDark = useTheme().palette.mode === 'dark';
   const hasItem = Boolean(itemId && (itemName || setName));
 
-  // Icon resolution
-  const [iconUrl, setIconUrl] = useState<string | null>(() =>
-    itemId ? getItemIconUrl(itemId) : null,
+  // Icon resolution (RPGLogs primary, UESP fallback, slot glyph if both fail).
+  const [iconSources, setIconSources] = useState<string[]>(() =>
+    itemId ? getItemIconSources(itemId) : [],
   );
-  const [iconFailed, setIconFailed] = useState(false);
 
   // Trait/enchant popover state
   const [pickerMode, setPickerMode] = useState<'trait' | 'enchant' | null>(null);
@@ -219,28 +223,22 @@ const GearSlotCardComponent: React.FC<GearSlotCardProps> = ({
 
   useEffect(() => {
     if (!itemId) {
-      setIconUrl(null);
-      setIconFailed(false);
+      setIconSources([]);
       return;
     }
     let cancelled = false;
-    setIconFailed(false);
-    const sync = getItemIconUrl(itemId);
-    if (sync) {
-      setIconUrl(sync);
+    const sync = getItemIconSources(itemId);
+    if (sync.length) {
+      setIconSources(sync);
       return;
     }
     // Clear the previous item's icon while the async fetch is in flight so we
-    // don't show the old item's art next to the new item; show the fallback if
-    // the fetch fails rather than leaving the stale icon forever.
-    setIconUrl(null);
-    fetchItemIconUrl(itemId)
-      .then((url) => {
-        if (!cancelled) setIconUrl(url);
-      })
-      .catch(() => {
-        if (!cancelled) setIconFailed(true);
-      });
+    // don't show the old item's art next to the new item; <ResilientImg> shows
+    // the slot glyph if every source ultimately fails.
+    setIconSources([]);
+    void fetchItemIconSources(itemId).then((sources) => {
+      if (!cancelled) setIconSources(sources);
+    });
     return () => {
       cancelled = true;
     };
@@ -403,28 +401,26 @@ const GearSlotCardComponent: React.FC<GearSlotCardProps> = ({
               : 'rgba(var(--be-accent-rgb, 15,23,42), 0.04)',
           }}
         >
-          {iconUrl && !iconFailed ? (
-            <img
-              src={iconUrl}
-              alt={primaryLabel ?? slotDef.name}
-              onError={() => setIconFailed(true)}
-              style={{
-                width: ICON_SIZE - 4,
-                height: ICON_SIZE - 4,
-                objectFit: 'contain',
-              }}
-            />
-          ) : (
-            <SlotSvgIcon
-              slotType={slotDef.slotType}
-              size={20}
-              color={
-                isDark
-                  ? 'rgba(var(--be-accent-rgb, 56,189,248), 0.60)'
-                  : 'rgba(var(--be-accent-rgb, 15,23,42), 0.40)'
-              }
-            />
-          )}
+          <ResilientImg
+            sources={iconSources}
+            alt={primaryLabel ?? slotDef.name}
+            style={{
+              width: ICON_SIZE - 4,
+              height: ICON_SIZE - 4,
+              objectFit: 'contain',
+            }}
+            fallback={
+              <SlotSvgIcon
+                slotType={slotDef.slotType}
+                size={20}
+                color={
+                  isDark
+                    ? 'rgba(var(--be-accent-rgb, 56,189,248), 0.60)'
+                    : 'rgba(var(--be-accent-rgb, 15,23,42), 0.40)'
+                }
+              />
+            }
+          />
         </Box>
 
         {/* Info column */}

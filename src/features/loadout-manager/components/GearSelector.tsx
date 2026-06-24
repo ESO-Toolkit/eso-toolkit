@@ -11,6 +11,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useDispatch } from 'react-redux';
 
 import { GearPickerDialog } from '@/components/gear';
+import { ResilientImg } from '@/components/ResilientImg';
 import { useLogger } from '@/hooks/useLogger';
 
 import { validateItemForSlot, getItemInfo, type SlotType } from '../data/itemIdMap';
@@ -20,7 +21,7 @@ import { GearConfig, GearPiece } from '../types/loadout.types';
 import {
   applyWeaponTypeToName,
   fetchIsTwoHandedWeapon,
-  fetchItemIconUrl,
+  fetchItemIconSources,
   isTwoHandedFromName,
   isTwoHandedWeapon,
 } from '../utils/itemIconResolver';
@@ -245,8 +246,7 @@ const GearTile: React.FC<GearTileProps> = ({
   const isMythic = gearPiece?.trait?.toLowerCase() === 'mythic';
 
   const [itemData, setItemData] = useState<{ name: string; setName?: string } | null>(null);
-  const [iconUrl, setIconUrl] = useState<string | null>(null);
-  const [iconFailed, setIconFailed] = useState(false);
+  const [iconSources, setIconSources] = useState<string[]>([]);
 
   const resolvedItemId = useMemo(() => resolveGearPieceItemId(gearPiece), [gearPiece]);
   const collectionItem = useMemo(
@@ -270,29 +270,26 @@ const GearTile: React.FC<GearTileProps> = ({
     }
   }, [gearPiece?.link, gearPiece?.name, logger, slotName]);
 
-  // Fetch item icon from UESP
+  // Resolve item icon sources (RPGLogs primary, UESP fallback).
   useEffect(() => {
     if (resolvedItemId && resolvedItemId > 0) {
       let cancelled = false;
-      setIconFailed(false);
       // Clear the previous item's icon immediately so we don't show A's icon
       // next to B's name while B's (possibly slow/failing) fetch resolves.
-      setIconUrl(null);
-      fetchItemIconUrl(resolvedItemId)
-        .then((url) => {
-          if (!cancelled) setIconUrl(url ?? null);
-        })
-        .catch(() => {
-          /* silently fail; SVG fallback will show */
-        });
+      setIconSources([]);
+      void fetchItemIconSources(resolvedItemId).then((sources) => {
+        if (!cancelled) setIconSources(sources);
+      });
       return () => {
         cancelled = true;
       };
     }
-    setIconUrl(null);
+    setIconSources([]);
     return undefined;
   }, [resolvedItemId]);
 
+  // Primary URL drives the weapon-type label; <ResilientImg> handles CDN fallback.
+  const iconUrl = iconSources[0] ?? null;
   const setName = gearPiece?.setName || itemData?.setName;
   const rawPrimaryItemName = gearPiece?.name || itemData?.name || setName;
   // Swap generic "Weapon"/"Gear" suffixes for the specific type, following
@@ -372,12 +369,11 @@ const GearTile: React.FC<GearTileProps> = ({
           opacity: addDisabled && !hasGear ? 0.35 : 1,
         }}
       >
-        {/* Item icon: actual image from UESP or SVG fallback */}
-        {hasGear && iconUrl && !iconFailed ? (
-          <img
-            src={iconUrl}
+        {/* Item icon: actual image (RPGLogs→UESP) or SVG slot fallback */}
+        {hasGear ? (
+          <ResilientImg
+            sources={iconSources}
             alt={gearLabel}
-            onError={() => setIconFailed(true)}
             style={{
               width: tileSize * 0.55,
               height: tileSize * 0.55,
@@ -385,6 +381,15 @@ const GearTile: React.FC<GearTileProps> = ({
               borderRadius: 4,
               filter: isMythic ? 'drop-shadow(0 0 3px rgba(255,167,38,0.6))' : 'none',
             }}
+            fallback={
+              <SlotIcon
+                name={slotName}
+                size={tileSize * 0.4}
+                color={
+                  isMythic ? theme.palette.warning.light : theme.palette.primary.light
+                }
+              />
+            }
           />
         ) : (
           <SlotIcon

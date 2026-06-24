@@ -34,38 +34,18 @@ import {
 import { useTheme } from '@mui/material/styles';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
+import { getFoodCategoryIconSources } from '@/assets/consumables/foodCategoryIcons';
 import { ESO_CONSUMABLE_LOOKUP, ESO_CONSUMABLES } from '@/data/esoConsumables';
 import type { EsoConsumable } from '@/data/esoConsumables';
 
 import { GlassPanel } from '../primitives/GlassPanel';
 
-// ─── Food category → UESP tree icon mapping ──────────────────────────────────
+// ─── Food category icons (bundled-local, same-origin / unblockable) ───────────
+// Resolve the primary (bundled) source so these icons never depend on a CDN
+// that ad/privacy/DNS filters block. See assets/consumables/foodCategoryIcons.
 
-const UESP_ICON_CDN = 'https://esoicons.uesp.net/esoui/art/treeicons';
-
-const CATEGORY_ICON_MAP: Record<string, string> = {
-  'Meat Dishes': 'provisioner_indexicon_meat_up',
-  'Fruit Dishes': 'provisioner_indexicon_stew_up',
-  'Vegetable Dishes': 'provisioner_indexicon_baked_up',
-  Savouries: 'provisioner_indexicon_meat_up',
-  Ragout: 'provisioner_indexicon_stew_up',
-  Entremet: 'provisioner_indexicon_baked_up',
-  Gourmet: 'provisioner_indexicon_stew_up',
-  Delicacies: 'provisioner_indexicon_spirits_up',
-  'Alcoholic Drinks': 'provisioner_indexicon_beer_up',
-  Tea: 'provisioner_indexicon_spirits_up',
-  Tonics: 'provisioner_indexicon_wine_up',
-  Liqueurs: 'provisioner_indexicon_spirits_up',
-  Tinctures: 'provisioner_indexicon_beer_up',
-  'Cordial Teas': 'provisioner_indexicon_wine_up',
-  Distillates: 'provisioner_indexicon_spirits_up',
-};
-
-const getCategoryIconUrl = (category?: string): string | null => {
-  if (!category) return null;
-  const icon = CATEGORY_ICON_MAP[category];
-  return icon ? `${UESP_ICON_CDN}/${icon}.png` : null;
-};
+const getCategoryIconUrl = (category?: string): string | null =>
+  getFoodCategoryIconSources(category)[0] ?? null;
 
 // ─── Style helpers ────────────────────────────────────────────────────────────
 

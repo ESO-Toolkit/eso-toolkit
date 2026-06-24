@@ -38,10 +38,15 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 
+import {
+  getFoodCategoryIconSources,
+  getPotionCategoryIconSources,
+} from '@/assets/consumables/foodCategoryIcons';
 import { calculateBuildStats } from '@/engine/stat-engine';
 
 import { GearSetTooltip } from '../components/GearSetTooltip';
 import { LazySkillTooltip as SkillTooltipCard } from '../components/LazySkillTooltip';
+import { ResilientImg } from '../components/ResilientImg';
 import { ESO_CONSUMABLE_LOOKUP } from '../data/esoConsumables';
 import { getEnchantName } from '../data/esoEnchants';
 import { ESO_POTION_LOOKUP } from '../data/esoPotions';
@@ -65,8 +70,8 @@ import { getItemInfo, getSetItemsBySlot } from '../features/loadout-manager/data
 import { getSkillById, preloadSkillData } from '../features/loadout-manager/data/skillLineSkills';
 import type { SlotType } from '../features/loadout-manager/data/slotTypes';
 import {
-  getItemIconUrl,
-  fetchItemIconUrl,
+  getItemIconSources,
+  fetchItemIconSources,
   deriveItemNameForSlot,
 } from '../features/loadout-manager/utils/itemIconResolver';
 import { useViewTransitionNavigate } from '../hooks/useViewTransitionNavigate';
@@ -74,17 +79,19 @@ import { selectSavedBuilds } from '../store/saved_builds';
 import { CHAMPION_POINT_ABILITIES, ChampionPointAbilityId } from '../types/champion-points';
 import { decodeBuildFromURL } from '../utils/buildEncoding';
 import { getGearSetTooltipPropsByName } from '../utils/gearSetTooltipMapper';
+import { abilityIconSources } from '../utils/iconCdn';
 import { sanitizeImageUrl, sanitizeYoutubeUrl } from '../utils/sanitize-url';
 import { useSetPieceCounts } from '../utils/setPieceCounting';
 import { buildTooltipPropsFromAbilityId } from '../utils/skillTooltipMapper';
 
 // ─── Icon CDNs ────────────────────────────────────────────────────────────────
 
-const SKILL_ICON_URL = 'https://assets.rpglogs.com/img/eso/abilities/';
-
-/** Resolve an icon value to a full URL, handling both short names and full URLs. */
-const resolveIconUrl = (icon: string): string =>
-  icon.startsWith('http') ? icon : `${SKILL_ICON_URL}${icon}.png`;
+/**
+ * Ordered, most-reliable-first icon sources for a skill icon value (bare name
+ * or full URL). Feeds <ResilientImg> so a blocked CDN falls through to the
+ * fallback instead of leaving an empty slot.
+ */
+const resolveIconSources = (icon: string): string[] => abilityIconSources(icon);
 
 /**
  * Ensure the skill cache is populated before rendering skill slots.
@@ -428,7 +435,8 @@ const SkillSlot: React.FC<{
   const isDark = theme.palette.mode === 'dark';
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const skill = abilityId ? getSkillById(abilityId) : null;
-  const iconUrl = skill?.icon ? resolveIconUrl(skill.icon) : null;
+  const iconSources = skill?.icon ? resolveIconSources(skill.icon) : [];
+  const iconUrl = iconSources[0] ?? null;
   const size = isUltimate
     ? isMobile
       ? ULT_SIZE_MOBILE
@@ -533,40 +541,36 @@ const SkillSlot: React.FC<{
             },
           }}
         >
-          {iconUrl ? (
-            <img
-              src={iconUrl}
-              alt={skill?.name ?? `Ability ${abilityId}`}
-              loading="lazy"
-              style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-              onError={(e) => {
-                (e.target as HTMLImageElement).style.display = 'none';
-              }}
-            />
-          ) : (
-            <Box
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                height: '100%',
-              }}
-            >
-              <Typography
+          <ResilientImg
+            sources={iconSources}
+            alt={skill?.name ?? `Ability ${abilityId}`}
+            loading="lazy"
+            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+            fallback={
+              <Box
                 sx={{
-                  fontSize: isUltimate ? 16 : 13,
-                  fontWeight: 800,
-                  fontFamily: 'Space Grotesk, Inter, system-ui',
-                  letterSpacing: 0.4,
-                  color: isDark ? 'rgba(255,255,255,0.16)' : 'rgba(0,0,0,0.13)',
-                  lineHeight: 1,
-                  userSelect: 'none',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  height: '100%',
                 }}
               >
-                {label}
-              </Typography>
-            </Box>
-          )}
+                <Typography
+                  sx={{
+                    fontSize: isUltimate ? 16 : 13,
+                    fontWeight: 800,
+                    fontFamily: 'Space Grotesk, Inter, system-ui',
+                    letterSpacing: 0.4,
+                    color: isDark ? 'rgba(255,255,255,0.16)' : 'rgba(0,0,0,0.13)',
+                    lineHeight: 1,
+                    userSelect: 'none',
+                  }}
+                >
+                  {label}
+                </Typography>
+              </Box>
+            }
+          />
         </Box>
       </Tooltip>
 
@@ -640,20 +644,24 @@ const GearSlotDisplay: React.FC<{
     return slotItems[0] ?? null; // use first match (all CP160 variants share the same icon)
   })();
 
-  const [iconUrl, setIconUrl] = useState<string | null>(() =>
-    resolvedIconId != null ? getItemIconUrl(resolvedIconId) : null,
+  const [iconSources, setIconSources] = useState<string[]>(() =>
+    resolvedIconId != null ? getItemIconSources(resolvedIconId) : [],
   );
 
   useEffect(() => {
-    if (iconUrl || resolvedIconId == null) return undefined;
+    if (iconSources.length > 0 || resolvedIconId == null) return undefined;
     let active = true;
-    void fetchItemIconUrl(resolvedIconId).then((url) => {
-      if (active && url) setIconUrl(url);
+    void fetchItemIconSources(resolvedIconId).then((sources) => {
+      if (active && sources.length) setIconSources(sources);
     });
     return () => {
       active = false;
     };
-  }, [resolvedIconId, iconUrl]);
+  }, [resolvedIconId, iconSources.length]);
+
+  // Primary (RPGLogs) URL drives the weapon-type label; <ResilientImg> falls
+  // through to UESP if the primary is blocked, but the label only needs the name.
+  const iconUrl = iconSources[0] ?? null;
 
   // Swap the generic " Weapon"/" Off-Hand"/" Gear" suffix for a specific
   // type (Sword, Dagger, Bow, …) parsed from the resolved icon URL. Uses
@@ -710,21 +718,17 @@ const GearSlotDisplay: React.FC<{
           justifyContent: 'center',
         }}
       >
-        {iconUrl ? (
-          <img
-            src={iconUrl}
-            alt={displayName}
-            loading="lazy"
-            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-            onError={(e) => {
-              (e.target as HTMLImageElement).style.display = 'none';
-            }}
-          />
-        ) : (
-          <Typography sx={{ fontSize: 16, lineHeight: 1, userSelect: 'none' }}>
-            {GEAR_SLOT_ICONS[slotIndex] ?? '\u{1F4E6}'}
-          </Typography>
-        )}
+        <ResilientImg
+          sources={iconSources}
+          alt={displayName}
+          loading="lazy"
+          style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+          fallback={
+            <Typography sx={{ fontSize: 16, lineHeight: 1, userSelect: 'none' }}>
+              {GEAR_SLOT_ICONS[slotIndex] ?? '\u{1F4E6}'}
+            </Typography>
+          }
+        />
       </Box>
 
       {/* Slot label */}
@@ -883,11 +887,15 @@ const SetupDisplay: React.FC<{ setup: BuildSetup; build: Build; races?: string[]
     Object.keys(setup.cp.fitness.passives).length +
     Object.keys(setup.cp.craft.passives).length;
 
+  const foodEntry =
+    setup.consumables.food.id != null
+      ? ESO_CONSUMABLE_LOOKUP[setup.consumables.food.id]
+      : undefined;
   const foodName =
     setup.consumables.food.id != null
-      ? (ESO_CONSUMABLE_LOOKUP[setup.consumables.food.id]?.name ??
-        `Food #${setup.consumables.food.id}`)
+      ? (foodEntry?.name ?? `Food #${setup.consumables.food.id}`)
       : null;
+  const foodIconSources = getFoodCategoryIconSources(foodEntry?.category);
   const mundusLabel = setup.mundusStone
     ? (MUNDUS_LABELS[setup.mundusStone] ?? setup.mundusStone)
     : null;
@@ -1226,17 +1234,43 @@ const SetupDisplay: React.FC<{ setup: BuildSetup; build: Build; races?: string[]
                             : 'transparent',
                         }}
                       >
-                        <Box
-                          sx={{
-                            width: 7,
-                            height: 7,
-                            borderRadius: '50%',
-                            flexShrink: 0,
-                            background: isSet ? color : 'transparent',
-                            border: isSet ? 'none' : `1.5px dashed ${alpha(color, 0.5)}`,
-                            boxShadow: isSet ? `0 0 6px ${alpha(color, 0.55)}` : 'none',
-                          }}
-                        />
+                        {isSet && foodIconSources.length > 0 ? (
+                          <ResilientImg
+                            sources={foodIconSources}
+                            alt=""
+                            style={{
+                              width: 22,
+                              height: 22,
+                              flexShrink: 0,
+                              objectFit: 'contain',
+                              filter: `drop-shadow(0 0 4px ${alpha(color, 0.45)})`,
+                            }}
+                            fallback={
+                              <Box
+                                sx={{
+                                  width: 7,
+                                  height: 7,
+                                  borderRadius: '50%',
+                                  flexShrink: 0,
+                                  background: color,
+                                  boxShadow: `0 0 6px ${alpha(color, 0.55)}`,
+                                }}
+                              />
+                            }
+                          />
+                        ) : (
+                          <Box
+                            sx={{
+                              width: 7,
+                              height: 7,
+                              borderRadius: '50%',
+                              flexShrink: 0,
+                              background: isSet ? color : 'transparent',
+                              border: isSet ? 'none' : `1.5px dashed ${alpha(color, 0.5)}`,
+                              boxShadow: isSet ? `0 0 6px ${alpha(color, 0.55)}` : 'none',
+                            }}
+                          />
+                        )}
                         <Typography
                           sx={{
                             fontSize: { xs: '0.65rem', sm: '0.52rem' },
@@ -1282,6 +1316,9 @@ const SetupDisplay: React.FC<{ setup: BuildSetup; build: Build; races?: string[]
                         const color = '#26c6da';
                         const potionLookup = ESO_POTION_LOOKUP[p.id];
                         const potionName = p.name || potionLookup?.name || 'Unknown Potion';
+                        const potionIconSources = getPotionCategoryIconSources(
+                          potionLookup?.category,
+                        );
                         const potionEffects =
                           p.effects.length > 0
                             ? p.effects
@@ -1302,16 +1339,42 @@ const SetupDisplay: React.FC<{ setup: BuildSetup; build: Build; races?: string[]
                               background: isDark ? alpha(color, 0.07) : alpha(color, 0.04),
                             }}
                           >
-                            <Box
-                              sx={{
-                                width: 7,
-                                height: 7,
-                                borderRadius: '50%',
-                                flexShrink: 0,
-                                background: color,
-                                boxShadow: `0 0 6px ${alpha(color, 0.55)}`,
-                              }}
-                            />
+                            {potionIconSources.length > 0 ? (
+                              <ResilientImg
+                                sources={potionIconSources}
+                                alt=""
+                                style={{
+                                  width: 22,
+                                  height: 22,
+                                  flexShrink: 0,
+                                  objectFit: 'contain',
+                                  filter: `drop-shadow(0 0 4px ${alpha(color, 0.45)})`,
+                                }}
+                                fallback={
+                                  <Box
+                                    sx={{
+                                      width: 7,
+                                      height: 7,
+                                      borderRadius: '50%',
+                                      flexShrink: 0,
+                                      background: color,
+                                      boxShadow: `0 0 6px ${alpha(color, 0.55)}`,
+                                    }}
+                                  />
+                                }
+                              />
+                            ) : (
+                              <Box
+                                sx={{
+                                  width: 7,
+                                  height: 7,
+                                  borderRadius: '50%',
+                                  flexShrink: 0,
+                                  background: color,
+                                  boxShadow: `0 0 6px ${alpha(color, 0.55)}`,
+                                }}
+                              />
+                            )}
                             <Typography
                               sx={{
                                 fontSize: { xs: '0.65rem', sm: '0.52rem' },
@@ -1623,7 +1686,7 @@ const SetupDisplay: React.FC<{ setup: BuildSetup; build: Build; races?: string[]
                 <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap' }}>
                   {classMasteryIds.map((passiveId) => {
                     const skill = getSkillById(passiveId);
-                    const iconUrl = skill?.icon ? resolveIconUrl(skill.icon) : null;
+                    const iconSources = skill?.icon ? resolveIconSources(skill.icon) : [];
                     return (
                       <Tooltip
                         key={passiveId}
@@ -1665,23 +1728,18 @@ const SetupDisplay: React.FC<{ setup: BuildSetup; build: Build; races?: string[]
                             }`,
                           }}
                         >
-                          {iconUrl && (
-                            <img
-                              src={iconUrl}
-                              alt=""
-                              loading="lazy"
-                              style={{
-                                width: 24,
-                                height: 24,
-                                borderRadius: 6,
-                                objectFit: 'cover',
-                                display: 'block',
-                              }}
-                              onError={(e) => {
-                                (e.target as HTMLImageElement).style.display = 'none';
-                              }}
-                            />
-                          )}
+                          <ResilientImg
+                            sources={iconSources}
+                            alt=""
+                            loading="lazy"
+                            style={{
+                              width: 24,
+                              height: 24,
+                              borderRadius: 6,
+                              objectFit: 'cover',
+                              display: 'block',
+                            }}
+                          />
                           <Typography
                             sx={{
                               fontSize: '0.7rem',
@@ -1712,7 +1770,7 @@ const SetupDisplay: React.FC<{ setup: BuildSetup; build: Build; races?: string[]
                   key: string | number,
                 ): React.ReactNode => {
                   const skill = getSkillById(passiveId);
-                  const iconUrl = skill?.icon ? resolveIconUrl(skill.icon) : null;
+                  const iconSources = skill?.icon ? resolveIconSources(skill.icon) : [];
                   return (
                     <Box
                       key={key}
@@ -1745,32 +1803,28 @@ const SetupDisplay: React.FC<{ setup: BuildSetup; build: Build; races?: string[]
                           justifyContent: 'center',
                         }}
                       >
-                        {iconUrl ? (
-                          <img
-                            src={iconUrl}
-                            alt={skill?.name ?? `Passive ${passiveId}`}
-                            loading="lazy"
-                            style={{
-                              width: '100%',
-                              height: '100%',
-                              objectFit: 'cover',
-                              display: 'block',
-                            }}
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).style.display = 'none';
-                            }}
-                          />
-                        ) : (
-                          <Box
-                            sx={{
-                              width: 5,
-                              height: 5,
-                              borderRadius: '50%',
-                              background: 'var(--be-accent, #38bdf8)',
-                              opacity: 0.4,
-                            }}
-                          />
-                        )}
+                        <ResilientImg
+                          sources={iconSources}
+                          alt={skill?.name ?? `Passive ${passiveId}`}
+                          loading="lazy"
+                          style={{
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'cover',
+                            display: 'block',
+                          }}
+                          fallback={
+                            <Box
+                              sx={{
+                                width: 5,
+                                height: 5,
+                                borderRadius: '50%',
+                                background: 'var(--be-accent, #38bdf8)',
+                                opacity: 0.4,
+                              }}
+                            />
+                          }
+                        />
                       </Box>
                       <Typography
                         sx={{

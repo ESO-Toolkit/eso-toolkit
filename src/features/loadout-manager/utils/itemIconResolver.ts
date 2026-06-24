@@ -9,12 +9,21 @@
  * Falls back to the UESP API for items not in the local data (e.g., new
  * items added after the last data refresh).
  *
- * CDN: https://esoicons.uesp.net/esoui/art/icons/{iconName}.png
+ * Icons render from the RELIABLE RPGLogs CDN by default
+ * (https://assets.rpglogs.com/img/eso/abilities/{iconName}.png — the same host
+ * that serves every skill icon), with the UESP CDN
+ * (https://esoicons.uesp.net/esoui/art/icons/{iconName}.png) kept as a
+ * fallback for the rare name RPGLogs lacks. UESP alone is frequently blocked by
+ * ad/privacy/DNS filters, which used to make ALL gear icons vanish for affected
+ * users; see {@link getItemIconSources} + <ResilientImg> for the resilient
+ * render path. The pre-fetched local JSON maps item id → bare icon NAME, so the
+ * CDN choice is purely a URL-construction concern.
  *
  * To refresh the local data:
  *   node scripts/fetch-item-icons.mjs
  */
 
+import { iconSourcesFromName, RPGLOGS_ICON_BASE } from '@/utils/iconCdn';
 import { Logger } from '@/utils/logger';
 
 import { getItemInfo } from '../data/itemIdMap';
@@ -72,33 +81,39 @@ export function isIconDataReady(): boolean {
 
 const logger = new Logger({ contextPrefix: 'ItemIconResolver' });
 
-/** Base URL for the UESP icon CDN */
-const UESP_ICON_CDN = 'https://esoicons.uesp.net';
-
 /** Base URL for the UESP item data API (fallback only) */
 const UESP_API = 'https://esolog.uesp.net/exportJson.php';
 
-/** Runtime cache for items resolved via API fallback */
+/**
+ * Runtime cache for items resolved via API fallback. Stores the bare icon NAME
+ * (no CDN prefix / extension) — same canonical form as the local data — so the
+ * cached value feeds both single-URL and multi-CDN (`getItemIconSources`)
+ * lookups uniformly.
+ */
 const fallbackCache = new Map<number, string | null>();
 
 /** Pending fetch promises so we don't start duplicate requests */
 const pendingFetches = new Map<number, Promise<string | null>>();
 
 /**
- * Build a CDN URL from an icon name.
- *   "gear_undnarlimor_head_a" → "https://esoicons.uesp.net/esoui/art/icons/gear_undnarlimor_head_a.png"
+ * Build the PRIMARY (RPGLogs) CDN URL from an icon name.
+ *   "gear_undnarlimor_head_a" → "https://assets.rpglogs.com/img/eso/abilities/gear_undnarlimor_head_a.png"
+ * Use {@link getItemIconSources} when you can render through <ResilientImg> and
+ * want the UESP fallback too.
  */
 function iconNameToUrl(iconName: string): string {
-  return `${UESP_ICON_CDN}/esoui/art/icons/${iconName}.png`;
+  return `${RPGLOGS_ICON_BASE}${iconName}.png`;
 }
 
 /**
- * Look up an item's icon URL from the local pre-fetched data.
- * Returns a CDN URL, or null if the item isn't in the local data.
+ * Resolve an item's bare icon NAME from local pre-fetched data, then the warmed
+ * API fallback cache. Returns null if neither has it yet.
  */
-function lookupLocal(itemId: number): string | null {
-  const iconName = lookupIconName(itemId);
-  return iconName ? iconNameToUrl(iconName) : null;
+function resolveIconName(itemId: number): string | null {
+  const local = lookupIconName(itemId);
+  if (local) return local;
+  if (fallbackCache.has(itemId)) return fallbackCache.get(itemId) ?? null;
+  return null;
 }
 
 /** Look up the raw icon filename (without CDN prefix or extension) from local data. */
@@ -186,7 +201,10 @@ const WEAPON_ICON_TOKEN_RE = new RegExp(
  */
 export function parseWeaponTypeFromIconUrl(url: string | null | undefined): string | null {
   if (!url) return null;
-  const fileMatch = url.match(/\/icons\/([^/?#]+)\.png(?:[?#]|$)/i);
+  // CDN-agnostic: UESP serves under `/esoui/art/icons/<name>.png`, RPGLogs under
+  // `/img/eso/abilities/<name>.png`. Match either path segment so the label
+  // stays correct regardless of which CDN produced the URL.
+  const fileMatch = url.match(/\/(?:icons|abilities)\/([^/?#]+)\.png(?:[?#]|$)/i);
   if (!fileMatch) return null;
   const tokenMatch = fileMatch[1].match(WEAPON_ICON_TOKEN_RE);
   return tokenMatch ? (WEAPON_ICON_TOKEN_LABELS[tokenMatch[1]] ?? null) : null;
@@ -415,7 +433,7 @@ export function getWeaponTypeLabel(
 }
 
 /**
- * Fetch the icon URL for a single item from UESP (fallback).
+ * Fetch the bare icon NAME for a single item from UESP (fallback).
  * Only called for items not present in the local JSON data.
  */
 async function fetchIconFromUESP(itemId: number): Promise<string | null> {
@@ -433,9 +451,9 @@ async function fetchIconFromUESP(itemId: number): Promise<string | null> {
     if (!item?.icon || typeof item.icon !== 'string') return null;
     if (item.icon.includes('icon_missing')) return null;
 
-    // Convert DDS path → PNG CDN URL
+    // Strip the DDS path down to the bare icon name (CDN-agnostic).
     const match = item.icon.match(/([^/]+)\.dds$/i);
-    return match ? iconNameToUrl(match[1]) : null;
+    return match ? match[1] : null;
   } catch (err) {
     logger.warn('Failed to fetch icon from UESP', {
       itemId,
@@ -446,29 +464,39 @@ async function fetchIconFromUESP(itemId: number): Promise<string | null> {
 }
 
 /**
- * Get the icon URL for a given item ID (synchronous).
- *
- * Checks the local pre-fetched data first (instant), then
- * the runtime fallback cache. Returns null if not available locally
- * and no fallback result is cached yet.
+ * Get the bare icon NAME for a given item ID (synchronous). Checks local
+ * pre-fetched data first, then the warmed API-fallback cache. Returns null if
+ * neither has it yet.
  */
-export function getItemIconUrl(itemId: number | null | undefined): string | null {
+export function getItemIconName(itemId: number | null | undefined): string | null {
   if (!itemId || itemId <= 0) return null;
-
-  // 1. Check local pre-fetched data (instant, ~154K items)
-  const local = lookupLocal(itemId);
-  if (local) return local;
-
-  // 2. Check runtime fallback cache
-  if (fallbackCache.has(itemId)) {
-    return fallbackCache.get(itemId) ?? null;
-  }
-
-  return null;
+  return resolveIconName(itemId);
 }
 
 /**
- * Async version: resolve an item's icon URL.
+ * Get the PRIMARY icon URL for a given item ID (synchronous).
+ *
+ * Prefer {@link getItemIconSources} + <ResilientImg> for rendering so a blocked
+ * primary CDN falls through to the fallback. This single-URL form remains for
+ * callers that only need one string (and now points at the reliable RPGLogs
+ * CDN). Returns null when no icon is resolvable yet.
+ */
+export function getItemIconUrl(itemId: number | null | undefined): string | null {
+  const name = getItemIconName(itemId);
+  return name ? iconNameToUrl(name) : null;
+}
+
+/**
+ * Ordered, most-reliable-first CDN URLs for an item's icon (synchronous).
+ * Empty array when no icon is resolvable yet. Feed straight into <ResilientImg
+ * sources=…> so a blocked/flaky CDN degrades to the next instead of vanishing.
+ */
+export function getItemIconSources(itemId: number | null | undefined): string[] {
+  return iconSourcesFromName(getItemIconName(itemId));
+}
+
+/**
+ * Async version: resolve an item's PRIMARY icon URL.
  *
  * Returns instantly from local data when possible, otherwise
  * falls back to a UESP API call (deduplicated).
@@ -477,12 +505,13 @@ export async function fetchItemIconUrl(itemId: number): Promise<string | null> {
   if (itemId <= 0) return null;
 
   // 1. Check local pre-fetched data (instant)
-  const local = lookupLocal(itemId);
-  if (local) return local;
+  const localName = lookupIconName(itemId);
+  if (localName) return iconNameToUrl(localName);
 
   // 2. Check runtime fallback cache
   if (fallbackCache.has(itemId)) {
-    return fallbackCache.get(itemId) ?? null;
+    const cached = fallbackCache.get(itemId);
+    return cached ? iconNameToUrl(cached) : null;
   }
 
   // 3. Join an existing in-flight fetch
@@ -491,10 +520,10 @@ export async function fetchItemIconUrl(itemId: number): Promise<string | null> {
 
   // 4. Fall back to UESP API for unknown items
   logger.info('Item not in local data, fetching from UESP', { itemId });
-  const fetchPromise = fetchIconFromUESP(itemId).then((url) => {
-    fallbackCache.set(itemId, url);
+  const fetchPromise = fetchIconFromUESP(itemId).then((name) => {
+    fallbackCache.set(itemId, name);
     pendingFetches.delete(itemId);
-    return url;
+    return name ? iconNameToUrl(name) : null;
   });
 
   pendingFetches.set(itemId, fetchPromise);
@@ -502,11 +531,23 @@ export async function fetchItemIconUrl(itemId: number): Promise<string | null> {
 }
 
 /**
+ * Async version of {@link getItemIconSources}: warms the API fallback for items
+ * absent from local data, then returns the ordered multi-CDN source list.
+ */
+export async function fetchItemIconSources(itemId: number): Promise<string[]> {
+  if (itemId <= 0) return [];
+  await fetchItemIconUrl(itemId);
+  return getItemIconSources(itemId);
+}
+
+/**
  * Pre-populate results for a batch of item IDs.
  * Only makes API calls for items not already in the local data.
  */
 export async function prefetchItemIcons(itemIds: number[]): Promise<void> {
-  const needsFetch = itemIds.filter((id) => id > 0 && !lookupLocal(id) && !fallbackCache.has(id));
+  const needsFetch = itemIds.filter(
+    (id) => id > 0 && !lookupIconName(id) && !fallbackCache.has(id),
+  );
 
   const unique = [...new Set(needsFetch)];
   for (const id of unique) {
