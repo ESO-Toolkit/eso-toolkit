@@ -9,6 +9,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 // load/visibility flow and exercise the not-found branch (notFound || !build).
 jest.mock('../utils/buildEncoding', () => ({
   decodeBuildFromURL: jest.fn(async () => null),
+  encodeBuildToURL: jest.fn(async () => ''),
 }));
 
 jest.mock('../features/loadout-manager/data/skillLineSkills', () => ({
@@ -24,7 +25,8 @@ jest.mock('react-redux', () => ({
   useSelector: jest.fn(() => []),
 }));
 
-// Capture "Open in Editor" navigation without running the real View Transition.
+// Mock the view-transition navigate so we can assert the exact target the
+// Edit/Remix button navigates to without pulling in startViewTransition/morph.
 const mockNavigate = jest.fn();
 jest.mock('../hooks/useViewTransitionNavigate', () => ({
   useViewTransitionNavigate: () => mockNavigate,
@@ -46,11 +48,12 @@ jest.mock('../features/build-viewer/components/BuildViewShell', () => ({
 import { useSelector } from 'react-redux';
 
 import { buildHubApi } from '../features/build-hub/api/build-hub-api';
-import { decodeBuildFromURL } from '../utils/buildEncoding';
+import { decodeBuildFromURL, encodeBuildToURL } from '../utils/buildEncoding';
 import { BuildViewPage } from './BuildViewPage';
 
 const mockGet = buildHubApi.get as jest.MockedFunction<typeof buildHubApi.get>;
 const mockDecode = decodeBuildFromURL as jest.MockedFunction<typeof decodeBuildFromURL>;
+const mockEncode = encodeBuildToURL as jest.MockedFunction<typeof encodeBuildToURL>;
 const mockUseSelector = useSelector as jest.MockedFunction<typeof useSelector>;
 
 const renderWithStaleState = (buildId: string, staleBuildData: string) =>
@@ -102,7 +105,9 @@ describe('BuildViewPage visibility enforcement', () => {
     // clearAllMocks wipes implementations; re-assert defaults so bare jest.fn()s
     // never return undefined (which would break `.then` / `savedBuilds.find`).
     mockDecode.mockResolvedValue(null);
+    mockEncode.mockResolvedValue('');
     mockUseSelector.mockReturnValue([]);
+    mockNavigate.mockReset();
   });
 
   it('resolves ?id= builds only through the visibility-checked API, never router state', async () => {
@@ -175,6 +180,148 @@ describe('BuildViewPage visibility enforcement', () => {
     // Owner-authorized private build loads via the id path and renders.
     await waitFor(() => expect(screen.getByTestId('build-shell')).toBeInTheDocument());
     expect(screen.queryByText(/No build found/i)).not.toBeInTheDocument();
+  });
+
+  it('overrides stale embedded name/description with the authoritative Hub title/description on ?id= loads', async () => {
+    // The blob carries a STALE name/description (e.g. the publish-time re-encode
+    // fell back to the original blob, or the build predates dialog title sync).
+    // The Hub record's title/description columns are authoritative, so the
+    // opened build must match its Hub card — not the stale blob.
+    mockGet.mockResolvedValue({
+      build: {
+        build_data: 'blob-with-stale-name',
+        visibility: 'public',
+        title: 'Authoritative Title',
+        description: 'Authoritative description',
+      },
+    } as Awaited<ReturnType<typeof buildHubApi.get>>);
+    mockDecode.mockResolvedValue({
+      ...(fullBuild('public') as Record<string, unknown>),
+      name: 'Stale Name',
+      shortDescription: 'Stale description',
+    } as never);
+
+    render(
+      <MemoryRouter initialEntries={[{ pathname: '/bv', search: '?id=build-7' }]}>
+        <Routes>
+          <Route path="/bv" element={<BuildViewPage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => expect(screen.getByTestId('build-shell')).toBeInTheDocument());
+    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Authoritative Title');
+    expect(screen.getByText('Authoritative description')).toBeInTheDocument();
+    expect(screen.queryByText('Stale Name')).not.toBeInTheDocument();
+    expect(screen.queryByText('Stale description')).not.toBeInTheDocument();
+    // The retained payload (share `?b=` link + Remix/Edit → /build-editor?b=) is
+    // re-encoded with server truth so the editor never reopens with the stale
+    // metadata that a later republish could reintroduce.
+    await waitFor(() =>
+      expect(mockEncode).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: 'Authoritative Title',
+          shortDescription: 'Authoritative description',
+        }),
+      ),
+    );
+  });
+
+  it('does not re-encode the retained payload when the blob already matches the Hub metadata', async () => {
+    mockGet.mockResolvedValue({
+      build: {
+        build_data: 'fresh-blob',
+        visibility: 'public',
+        title: 'Same Title',
+        description: 'Same description',
+      },
+    } as Awaited<ReturnType<typeof buildHubApi.get>>);
+    mockDecode.mockResolvedValue({
+      ...(fullBuild('public') as Record<string, unknown>),
+      name: 'Same Title',
+      shortDescription: 'Same description',
+    } as never);
+
+    render(
+      <MemoryRouter initialEntries={[{ pathname: '/bv', search: '?id=build-8' }]}>
+        <Routes>
+          <Route path="/bv" element={<BuildViewPage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => expect(screen.getByTestId('build-shell')).toBeInTheDocument());
+    expect(mockEncode).not.toHaveBeenCalled();
+  });
+
+  it('fails closed: a private ?id= build with a stale public blob + failed re-encode never leaks the blob to the editor', async () => {
+    // The owner-authorized API returns a now-Private row, but its stored blob
+    // still encodes Public. The authoritative visibility is Private, so when the
+    // re-encode fails we must NOT retain the stale Public blob for the editor —
+    // Open-in-Editor would otherwise reopen the build as Public.
+    mockGet.mockResolvedValue({
+      build: {
+        build_data: 'stale-public-blob',
+        visibility: 'private',
+        title: 'My Private Build',
+        description: '',
+      },
+    } as Awaited<ReturnType<typeof buildHubApi.get>>);
+    mockDecode.mockResolvedValue(fullBuild('public'));
+    mockEncode.mockResolvedValue(''); // re-encode fails
+
+    render(
+      <MemoryRouter initialEntries={[{ pathname: '/bv', search: '?id=build-private' }]}>
+        <Routes>
+          <Route path="/bv" element={<BuildViewPage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => expect(screen.getByTestId('build-shell')).toBeInTheDocument());
+    await waitFor(() => expect(mockEncode).toHaveBeenCalled());
+
+    // Remix/Edit must not open the editor with the dropped payload — the guard
+    // refuses to navigate rather than dropping the user into an empty/unrelated
+    // editor (and certainly never with the stale Public blob).
+    fireEvent.click(
+      screen.getByRole('button', { name: /open your own editable copy|edit your saved build/i }),
+    );
+    expect(mockNavigate).not.toHaveBeenCalled();
+  });
+
+  it('fails closed for an OWNED build too: dropped payload never opens the editor with an empty ?b= (no save-target corruption)', async () => {
+    // Same dropped-payload scenario, but the viewer owns a local saved copy of
+    // the build. Navigating /build-editor?b=&id=<savedId> would open a blank
+    // editor while ?id= stays the save target — a save would overwrite the
+    // saved build with blank data. The guard must refuse to navigate.
+    mockUseSelector.mockReturnValue([{ id: 'saved-1', build: { id: 'b1' } }]);
+    mockGet.mockResolvedValue({
+      build: {
+        build_data: 'stale-public-blob',
+        visibility: 'private',
+        title: 'My Private Build',
+        description: '',
+      },
+    } as Awaited<ReturnType<typeof buildHubApi.get>>);
+    mockDecode.mockResolvedValue(fullBuild('public')); // id 'b1', matches the saved build
+    mockEncode.mockResolvedValue(''); // re-encode fails → payload dropped
+
+    render(
+      <MemoryRouter initialEntries={[{ pathname: '/bv', search: '?id=build-private' }]}>
+        <Routes>
+          <Route path="/bv" element={<BuildViewPage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => expect(screen.getByTestId('build-shell')).toBeInTheDocument());
+    await waitFor(() => expect(mockEncode).toHaveBeenCalled());
+
+    fireEvent.click(
+      screen.getByRole('button', { name: /edit your saved build|open your own editable copy/i }),
+    );
+    expect(mockNavigate).not.toHaveBeenCalled();
   });
 
   it('rejects a Private ?b= payload (forwarded/address-bar link) as not-found', async () => {

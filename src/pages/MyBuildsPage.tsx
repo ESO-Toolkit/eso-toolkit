@@ -363,6 +363,8 @@ export const MyBuildsPage: React.FC = () => {
           role={publishTarget.saved.build.role}
           gameMode={publishTarget.saved.build.gameMode ?? 'pve'}
           visibility={publishTarget.saved.build.settings.visibility}
+          defaultTitle={publishTarget.saved.build.name}
+          defaultDescription={publishTarget.saved.build.shortDescription}
           token={accessToken}
           onClose={() => setPublishTarget(null)}
           onPublished={() => setPublishTarget(null)}

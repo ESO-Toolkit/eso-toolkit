@@ -46,6 +46,15 @@ interface PublishBuildDialogProps {
   gameMode: string;
   /** The build's current visibility choice (from build.settings.visibility). */
   visibility?: HubBuildVisibility;
+  /**
+   * Seeds the Title field in create mode (typically the build's `name`). The
+   * user can still edit it — publishing what they leave here keeps the Hub
+   * listing in sync with the build's own identity. Ignored in edit mode (the
+   * existing published title wins).
+   */
+  defaultTitle?: string;
+  /** Seeds the Description field in create mode (typically `shortDescription`). */
+  defaultDescription?: string;
   onClose: () => void;
   onPublished: () => void;
   token: string;
@@ -62,6 +71,8 @@ export const PublishBuildDialog: React.FC<PublishBuildDialogProps> = ({
   role,
   gameMode,
   visibility = 'public',
+  defaultTitle = '',
+  defaultDescription = '',
   onClose,
   onPublished,
   token,
@@ -92,29 +103,60 @@ export const PublishBuildDialog: React.FC<PublishBuildDialogProps> = ({
     }
     setLoading(true);
     setError(null);
+    const trimmedTitle = title.trim();
+    const trimmedDescription = description.trim();
     try {
-      // The encoded blob also embeds settings.visibility (as `vs`). If the user
-      // changed visibility in this dialog, re-encode so the blob matches the
-      // selected value — otherwise client-side share gating that reads the
-      // decoded build would act on a stale visibility (e.g. treat a now-private
-      // build as shareable). Fall back to the original blob if re-encode fails.
+      // The encoded blob embeds the build's name/shortDescription (`n`/`d`) and
+      // visibility (`vs`). Keep them in sync with what's actually being
+      // published so the Hub card, the description column, and the build you
+      // open from the listing all agree — and so client-side share gating that
+      // reads the decoded build acts on the selected visibility, not a stale
+      // one. Visibility is special: a `?b=` blob bypasses the owner-gated API,
+      // so if the selected visibility can't be written into the blob we fail
+      // closed rather than publish a self-contained payload that is more
+      // permissive than the row. Title/description-only drift can safely keep
+      // the original blob (cosmetic staleness; the server re-validates anyway).
       let syncedBuildData = buildData;
+      let resyncError: string | null = null;
       try {
         const decoded = await decodeBuildFromURL(buildData);
-        if (decoded && decoded.settings.visibility !== selectedVisibility) {
-          const reencoded = await encodeBuildToURL({
-            ...decoded,
-            settings: { ...decoded.settings, visibility: selectedVisibility },
-          });
-          if (reencoded) syncedBuildData = reencoded;
+        if (decoded) {
+          const visibilityDiverged = decoded.settings.visibility !== selectedVisibility;
+          const needsResync =
+            visibilityDiverged ||
+            decoded.name !== trimmedTitle ||
+            decoded.shortDescription !== trimmedDescription;
+          if (needsResync) {
+            const reencoded = await encodeBuildToURL({
+              ...decoded,
+              name: trimmedTitle,
+              shortDescription: trimmedDescription,
+              settings: { ...decoded.settings, visibility: selectedVisibility },
+            });
+            if (reencoded) {
+              syncedBuildData = reencoded;
+            } else if (visibilityDiverged) {
+              resyncError = 'Could not apply the selected visibility. Please try again.';
+            }
+          }
+        } else {
+          // The blob we'd publish can't be decoded (empty, corrupt, or larger
+          // than the decode cap). Publishing it would create an unopenable Hub
+          // row and we can't verify/sync its embedded visibility. Fail closed.
+          resyncError = 'Could not prepare this build for publishing. Please try again.';
         }
       } catch {
-        /* keep original blob; server `visibility` metadata is still authoritative */
+        resyncError = 'Could not prepare this build for publishing. Please try again.';
+      }
+
+      if (resyncError) {
+        setError(resyncError);
+        return;
       }
 
       const payload: PublishBuildPayload = {
-        title: title.trim(),
-        description: description.trim(),
+        title: trimmedTitle,
+        description: trimmedDescription,
         eso_class: esoClass,
         role,
         game_mode: gameMode,
@@ -149,15 +191,19 @@ export const PublishBuildDialog: React.FC<PublishBuildDialogProps> = ({
         setIsAnonymous(editingBuild.is_anonymous ?? false);
         setSelectedVisibility(editingBuild.visibility ?? visibility);
       } else {
-        setTitle('');
-        setDescription('');
+        // Create mode: pre-fill from the build's own name / short description so
+        // the author doesn't retype what they already named. Fully editable —
+        // whatever they leave is what gets published (and synced back into the
+        // encoded blob on publish, see handlePublish).
+        setTitle(defaultTitle);
+        setDescription(defaultDescription);
         setSelectedTags([]);
         setIsAnonymous(false);
         setSelectedVisibility(visibility);
       }
       setError(null);
     }
-  }, [open, editingBuild, visibility]);
+  }, [open, editingBuild, visibility, defaultTitle, defaultDescription]);
 
   const atTagLimit = selectedTags.length >= MAX_TAGS;
 
@@ -191,7 +237,11 @@ export const PublishBuildDialog: React.FC<PublishBuildDialogProps> = ({
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           slotProps={{ htmlInput: { maxLength: 100 } }}
-          helperText={`${title.length}/100`}
+          helperText={
+            isEditMode
+              ? `${title.length}/100`
+              : `Shown on your Build Hub card — edit for a different public title · ${title.length}/100`
+          }
           required
           fullWidth
           size="small"
