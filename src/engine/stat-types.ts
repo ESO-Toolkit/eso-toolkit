@@ -42,6 +42,36 @@ export interface StatResult {
   items: StatItem[];
 }
 
+// ─── Survivability (health + EHP) ───────────────────────────────────────────
+
+/**
+ * One resistance channel (physical or spell): its total resistance, the damage
+ * mitigation fraction it yields, and the resulting Effective HP.
+ */
+export interface ResistanceProfile {
+  /** Total resistance for this channel (base gear armor + modeled additions). */
+  resistance: number;
+  /** Damage mitigation fraction in [0, 0.5] from the 660-per-1% curve (50% cap). */
+  mitigation: number;
+  /** Effective HP for this channel = health / (1 − mitigation), rounded. */
+  ehp: number;
+}
+
+/**
+ * Survivability bundle. `health` and `resistance` are additive StatResults
+ * (inspectable breakdowns); `physical` / `spell` are the two EHP channels.
+ *
+ * Under the current model physical and spell resistance are symmetric (gear armor
+ * adds to both equally), so the two channels are usually equal — the split is kept
+ * so a future phys/spell-specific source can diverge them without an API change.
+ */
+export interface Survivability {
+  health: StatResult;
+  resistance: StatResult;
+  physical: ResistanceProfile;
+  spell: ResistanceProfile;
+}
+
 // ─── Full build stats bundle ────────────────────────────────────────────────
 
 export interface BuildStats {
@@ -49,6 +79,14 @@ export interface BuildStats {
   critDamage: StatResult;
   critChance: StatResult;
   armor: StatResult;
+  /** Max Health pool — additive breakdown (base + attributes + race + mundus + class). */
+  health: StatResult;
+  /**
+   * Effective HP. `total` is the worst-case (lower of physical/spell) EHP; `items`
+   * carry the per-channel Physical/Spell EHP (informational, not summed). For the
+   * full split + mitigation use `calculateSurvivability`.
+   */
+  ehp: StatResult;
 }
 
 // ─── User-controlled overrides ──────────────────────────────────────────────
