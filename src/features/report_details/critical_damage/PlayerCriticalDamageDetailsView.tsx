@@ -55,6 +55,9 @@ export interface PlayerCriticalDamageData {
   timeAtCapPercentage: number;
   criticalDamageAlerts: CriticalDamageAlert[];
   inactiveCombatIntervals: Array<{ start: number; end: number }>;
+  /** Active combat intervals (absolute timestamps). Used to keep time-at-cap filtered to
+   * active combat when toggleable critical-damage sources are turned off. */
+  activeCombatIntervals?: Array<{ start: number; end: number }>;
 }
 
 interface CriticalMultiplierInfo {

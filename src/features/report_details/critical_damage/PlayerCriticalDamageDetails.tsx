@@ -4,6 +4,7 @@ import { FightFragment } from '../../../graphql/gql/graphql';
 import { usePlayerData } from '../../../hooks';
 import type { PhaseTransitionInfo } from '../../../hooks/usePhaseTransitions';
 import { CriticalDamageValues } from '../../../types/abilities';
+import { filterDataPointsByActiveCombat } from '../../../utils/activeCombatTimeUtils';
 import { CriticalDamageSourceWithActiveState } from '../../../utils/CritDamageUtils';
 
 import {
@@ -130,10 +131,17 @@ export const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsPr
         ? Math.max(...adjustedDataPoints.map((point) => point.criticalDamage))
         : 0;
 
+    // Time at cap must stay filtered to active-combat data points, matching the worker's
+    // calculation. Fall back to all data points if active intervals weren't provided.
+    const activeCombatIntervals = criticalDamageData.activeCombatIntervals;
+    const capDataPoints = activeCombatIntervals
+      ? filterDataPointsByActiveCombat(adjustedDataPoints, activeCombatIntervals)
+      : adjustedDataPoints;
+
     const adjustedTimeAtCapPercentage =
-      adjustedDataPoints.length > 0
-        ? (adjustedDataPoints.filter((point) => point.criticalDamage >= 125).length /
-            adjustedDataPoints.length) *
+      capDataPoints.length > 0
+        ? (capDataPoints.filter((point) => point.criticalDamage >= 125).length /
+            capDataPoints.length) *
           100
         : 0;
 
