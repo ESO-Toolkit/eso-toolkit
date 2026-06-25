@@ -150,8 +150,14 @@ export const CalculatorPage: React.FC = () => {
       </Container>
 
       {/* Keep the stat calculator mounted (display:none) so switching back is
-          instant and its sticky-footer measurements aren't torn down. */}
-      <Box sx={{ display: tab === 'stats' ? 'block' : 'none' }}>
+          instant and its sticky-footer measurements aren't torn down. The
+          `u-tab-enter` entrance animation re-runs every time this wrapper flips
+          from display:none back to block (CSS animations restart on that
+          transition), so the Stats tab fades in on first load AND on every
+          switch-back — matching the Ultimate and Scribing tabs. It uses a
+          `backwards`-fill fade (no lingering transform) so the calculator's
+          sticky results footer is unaffected. */}
+      <Box className="u-tab-enter" sx={{ display: tab === 'stats' ? 'block' : 'none' }}>
         <Calculator />
       </Box>
 

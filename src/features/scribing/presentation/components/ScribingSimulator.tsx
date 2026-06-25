@@ -186,7 +186,11 @@ export const ScribingSimulator: React.FC<ScribingSimulatorProps> = ({
 
   return (
     <Container maxWidth="lg" className={className}>
-      <Box sx={{ py: { xs: 2, md: 3 } }}>
+      {/* `u-tab-enter` fades the bench in once scribing data is ready, matching
+          the Ultimate calculator's entrance. Applied to the ready-state content
+          (not the outer Container) so the real UI animates when it appears,
+          rather than the loading spinner. */}
+      <Box className="u-tab-enter" sx={{ py: { xs: 2, md: 3 } }}>
         {/* ── Build controls — slot legend + primary action & utility rail ── */}
         <Box
           sx={{
