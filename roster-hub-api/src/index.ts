@@ -1022,6 +1022,18 @@ const isObjectBody = (v: unknown): boolean =>
   typeof v === 'object' && v !== null && !Array.isArray(v);
 
 /**
+ * True when a same-or-newer delete tombstone would block this input's insert. The
+ * upsert's `WHERE NOT EXISTS (… deleted_at >= client_updated_at)` guard skips such
+ * rows, so they never consume quota — both the preflight and the post-write quota
+ * check must exclude them, else a cross-device-deleted id falsely counts against
+ * the cap. An empty clientUpdatedAt sorts oldest, so any tombstone blocks it.
+ */
+const isTombstoneBlocked = (tombstoneAt: Map<string, string>, input: UserLoadoutInput): boolean => {
+  const ts = tombstoneAt.get(input.id);
+  return ts !== undefined && ts >= input.clientUpdatedAt;
+};
+
+/**
  * Validate + normalise a single loadout payload into the query-layer input
  * shape. Returns a string error message on failure, or the sanitised input.
  */
@@ -1250,11 +1262,20 @@ app.post('/loadouts/sync', async (c) => {
 
   // Preflight the per-user ceiling for a friendly 409 (the upsert ALSO enforces it
   // atomically, so this is advisory — the DB is the source of truth under races).
-  const existingCount = await countUserLoadouts(c.env.DB, user.id);
-  const existingIds = new Set(
-    (await listUserLoadouts(c.env.DB, user.id)).map((l) => l.id),
-  );
-  const newCount = inputs.filter((i) => !existingIds.has(i.id)).length;
+  // Count only inserts that would actually land: a stale id carrying a same-or-newer
+  // tombstone (deleted on another device after this client pulled) is skipped by the
+  // upsert's tombstone guard, so excluding it keeps a deleted id from falsely pushing
+  // the batch over the cap and 409-ing before the client can purge it.
+  const [existingCount, existingRows, preTombstones] = await Promise.all([
+    countUserLoadouts(c.env.DB, user.id),
+    listUserLoadouts(c.env.DB, user.id),
+    listLoadoutTombstones(c.env.DB, user.id),
+  ]);
+  const existingIds = new Set(existingRows.map((l) => l.id));
+  const preTombstoneAt = new Map(preTombstones.map((t) => [t.id, t.deleted_at]));
+  const newCount = inputs.filter(
+    (i) => !existingIds.has(i.id) && !isTombstoneBlocked(preTombstoneAt, i),
+  ).length;
   if (existingCount + newCount > MAX_LOADOUTS_PER_USER)
     return c.json(
       { error: `Sync would exceed the ${MAX_LOADOUTS_PER_USER}-loadout limit. Delete some first.` },
@@ -1278,12 +1299,10 @@ app.post('/loadouts/sync', async (c) => {
   // a same-or-newer tombstone was quota-rejected. Surface a 409 (with the full
   // server state) so the client can't report a clean sync while those went unsaved.
   const savedIds = new Set(loadouts.map((l) => l.id));
-  const tombstoneAt = new Map(deletions.map((t) => [t.id, t.deleted_at]));
-  const quotaSkipped = inputs.filter((i) => {
-    if (existingIds.has(i.id) || savedIds.has(i.id)) return false;
-    const ts = tombstoneAt.get(i.id);
-    return !(ts !== undefined && ts >= i.clientUpdatedAt);
-  });
+  const postTombstoneAt = new Map(deletions.map((t) => [t.id, t.deleted_at]));
+  const quotaSkipped = inputs.filter(
+    (i) => !existingIds.has(i.id) && !savedIds.has(i.id) && !isTombstoneBlocked(postTombstoneAt, i),
+  );
   if (quotaSkipped.length > 0)
     return c.json(
       {
