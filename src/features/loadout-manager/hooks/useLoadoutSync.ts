@@ -18,6 +18,7 @@ import {
   replaceAllLoadouts,
   selectSavedLoadouts,
   selectLoadoutsLastSyncedAt,
+  selectLoadoutsSyncedUserId,
   setLastSyncedAt,
   setSyncedUserId,
   type SavedLoadout,
@@ -84,7 +85,15 @@ export function useLoadoutSync(): UseLoadoutSyncResult {
   const isLoggedIn = auth?.isLoggedIn ?? false;
   const accessToken = auth?.accessToken ?? '';
   const currentUserId = auth?.currentUser?.id ? String(auth.currentUser.id) : undefined;
-  const lastSyncedAt = useSelector(selectLoadoutsLastSyncedAt);
+  const persistedLastSyncedAt = useSelector(selectLoadoutsLastSyncedAt);
+  const syncedUserId = useSelector(selectLoadoutsSyncedUserId);
+  // Surface "Last synced" only when it belongs to the signed-in account — on a
+  // shared browser the persisted timestamp may be from a previously signed-in user,
+  // and showing it to the new user would be misleading.
+  const lastSyncedAt =
+    syncedUserId !== undefined && syncedUserId === currentUserId
+      ? persistedLastSyncedAt
+      : undefined;
   const [status, setStatus] = useState<LoadoutSyncStatus>('idle');
   const [error, setError] = useState<string | null>(null);
 

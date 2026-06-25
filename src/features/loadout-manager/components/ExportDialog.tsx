@@ -78,12 +78,27 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({
   const [exportFormat, setExportFormat] = useState<ExportFormat>('json');
   const [accountName, setAccountName] = useState('');
   const [copied, setCopied] = useState(false);
+  // The account id this field was last prefilled for, so a shared-browser sign-in
+  // as a DIFFERENT user resets the prefill instead of leaking the prior user's
+  // name into the new user's export, while a same-user update keeps a manual edit.
+  const prefillUserId = React.useRef<string | number | undefined>(undefined);
 
   // Prefill the account name from the signed-in ESO Logs name (often, but not
   // always, the in-game @UserID — the user can correct it).
   React.useEffect(() => {
-    if (currentUser?.name) setAccountName((prev) => prev || currentUser.name);
-  }, [currentUser?.name]);
+    if (!currentUser) return; // signed out — leave the field as the user left it
+    const uid = currentUser.id;
+    if (prefillUserId.current !== uid) {
+      // First prefill, or a different account on this shared browser: drop any
+      // carried-over value and seed this account's name. Record the identity now so
+      // a late name update — or the user's own manual edit — isn't reset again.
+      prefillUserId.current = uid;
+      setAccountName(currentUser.name ?? '');
+    } else if (currentUser.name) {
+      // Same account, name (re)available: fill an empty field but keep a manual edit.
+      setAccountName((prev) => prev || currentUser.name);
+    }
+  }, [currentUser]);
 
   const currentTrial = TRIALS.find((t) => t.id === currentTrialId);
   const currentCharacterName =
