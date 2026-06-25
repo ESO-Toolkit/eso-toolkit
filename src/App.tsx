@@ -5,6 +5,8 @@ import { Provider as ReduxProvider } from 'react-redux';
 import { Routes, Route, BrowserRouter } from 'react-router-dom';
 import { PersistGate } from 'redux-persist/integration/react';
 
+import { ScribingSimulatorSkeleton } from '@features/scribing/presentation/components/ScribingSimulatorSkeleton';
+
 import { AnalyticsListener } from './components/AnalyticsListener';
 import { BuildEditorSkeleton } from './components/BuildEditorSkeleton';
 import { CalculatorTabsSkeleton } from './components/CalculatorTabsSkeleton';
@@ -251,19 +253,23 @@ const ReportFightsLoadingFallback: React.FC = () => (
 // `#ultimate` deep-link opens straight onto the Ultimate tab — match the skeleton
 // to the tab the page is about to render so the layout doesn't swap on mount.
 const CalculatorLoadingFallback: React.FC = () => {
-  const isUltimate =
-    typeof window !== 'undefined' &&
-    window.location.hash.replace('#', '').toLowerCase() === 'ultimate';
+  const hash =
+    typeof window !== 'undefined' ? window.location.hash.replace('#', '').toLowerCase() : '';
+  const active: 'stats' | 'ultimate' | 'scribing' =
+    hash === 'ultimate' ? 'ultimate' : hash === 'scribing' ? 'scribing' : 'stats';
   return (
     <DelayedFallback>
-      {/* CalculatorPage always renders the Stats/Ultimate tab strip above the
-          calculator, so reserve its space here — otherwise it pops in and pushes
-          the content down when the page chunk resolves. */}
-      <CalculatorTabsSkeleton selected={isUltimate ? 'ultimate' : 'stats'} />
-      {isUltimate ? (
+      {/* CalculatorPage always renders the Stats/Ultimate/Scribing tab strip
+          above the calculator, so reserve its space here (with all three tabs)
+          — otherwise the strip pops in and pushes the content down when the page
+          chunk resolves, and the about-to-be-active tab is pre-selected. */}
+      <CalculatorTabsSkeleton selected={active} />
+      {active === 'ultimate' ? (
         <Container maxWidth="lg" sx={{ py: 3 }}>
           <UltimateCalculatorSkeleton />
         </Container>
+      ) : active === 'scribing' ? (
+        <ScribingSimulatorSkeleton />
       ) : (
         <SmartCalculatorSkeleton />
       )}
