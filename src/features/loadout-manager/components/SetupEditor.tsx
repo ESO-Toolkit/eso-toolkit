@@ -34,6 +34,7 @@ import React, { useState } from 'react';
 import { useDispatch } from 'react-redux';
 
 import { useAuth } from '@/features/auth/AuthContext';
+import { tokenHasUserSubject } from '@/features/auth/tokenUtils';
 import { useLogger } from '@/hooks/useLogger';
 import { saveLoadout } from '@/store/saved_loadouts';
 
@@ -102,7 +103,7 @@ export const SetupEditor: React.FC<SetupEditorProps> = ({
   variant = 'page',
 }) => {
   const dispatch = useDispatch();
-  const { currentUser, isLoggedIn, userLoading } = useAuth();
+  const { currentUser, userLoading, accessToken } = useAuth();
   const logger = useLogger('SetupEditor');
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === 'dark';
@@ -244,14 +245,14 @@ export const SetupEditor: React.FC<SetupEditorProps> = ({
     if (!name) {
       return;
     }
-    // A signed-in user must NOT save a loadout stamped to the wrong (or no) account.
-    // Block while the identity is unresolved OR mid-refetch: right after an account
-    // switch the new token is live but `currentUser` still holds the PREVIOUS account
-    // (so its id is present-but-stale) until `userLoading` clears. Saving in that
-    // window would stamp ownerUserId from the old account, hiding the new user's row
-    // from them and exposing it under the old account on a shared browser. A
-    // logged-out guest still saves unowned legitimately and can claim it later.
-    if (isLoggedIn && (userLoading || !currentUser?.id)) {
+    // Only an ACCOUNT session (a user-subject token) must resolve its identity before
+    // we stamp ownerUserId. Block such a session while the id is unresolved or
+    // mid-refetch — right after an account switch the new token is live but currentUser
+    // hasn't caught up — so we never stamp a loadout to the wrong/previous account.
+    // A report-scope token (isLoggedIn but no user subject) or a logged-out guest has
+    // no account, so it saves unowned and can claim later; gating on isLoggedIn here
+    // would wrongly block report-scope users from ever saving a local loadout.
+    if (tokenHasUserSubject(accessToken) && (userLoading || !currentUser?.id)) {
       showSnackbar('Your account is still loading — try saving again in a moment.', 'info');
       return;
     }

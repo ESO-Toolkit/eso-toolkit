@@ -648,6 +648,18 @@ const GearSlotDisplay: React.FC<{
     resolvedIconId != null ? getItemIconSources(resolvedIconId) : [],
   );
 
+  // This row is keyed only by slot, so React reuses the instance when a different
+  // build/setup puts a NEW item in the same slot. The mount-only initializer above
+  // would otherwise keep the previous item's icon (the effect below bails when
+  // iconSources is non-empty), showing stale gear art and the wrong weapon-type
+  // label. Re-seed synchronously whenever the resolved id changes so the new item's
+  // icon is correct immediately (the effect then fills async fallbacks if needed).
+  const prevIconIdRef = useRef(resolvedIconId);
+  if (prevIconIdRef.current !== resolvedIconId) {
+    prevIconIdRef.current = resolvedIconId;
+    setIconSources(resolvedIconId != null ? getItemIconSources(resolvedIconId) : []);
+  }
+
   useEffect(() => {
     if (iconSources.length > 0 || resolvedIconId == null) return undefined;
     let active = true;
