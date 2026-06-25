@@ -1,0 +1,65 @@
+/**
+ * Hub route chunk preloading.
+ *
+ * The three "hub" pages — /roster-hub, /build-hub, /pack-hub — are peers in the
+ * top navigation and users frequently slide laterally between them. Each is a
+ * `React.lazy` code-split chunk.
+ *
+ * Why preload them: navigating to a hub whose chunk is still COLD breaks the
+ * native View Transition. react-router wraps navigation in `startTransition`, so
+ * while the lazy route suspends React keeps the *previous* page committed (the
+ * null Suspense fallback never paints). The View Transition therefore captures a
+ * non-destination "new" snapshot — effectively the page you just left — and the
+ * real content only commits after the transition has finished, so the slide looks
+ * like it plays against a duplicate of the old page and the destination then pops
+ * in. Once the chunk is warm React resolves it synchronously, the real content is
+ * captured in the snapshot, and the slide is clean — which is exactly why the
+ * glitch "goes away once triggered".
+ *
+ * Warming all three chunks shortly after the header mounts makes the first hop
+ * behave like a warm one, so the View Transition always captures real content.
+ *
+ * These importers are the SINGLE SOURCE OF TRUTH for the hub route chunks:
+ * `App.tsx` builds its `React.lazy` routes from the same functions, so preloading
+ * warms the exact chunk the route will later load (no path drift, guaranteed
+ * chunk identity).
+ */
+
+export const importRosterHubPage = (): Promise<typeof import('../features/roster-hub/components/RosterHubPage')> =>
+  import('../features/roster-hub/components/RosterHubPage');
+
+export const importBuildHubPage = (): Promise<typeof import('../features/build-hub/components/BuildHubPage')> =>
+  import('../features/build-hub/components/BuildHubPage');
+
+export const importPackHubPage = (): Promise<typeof import('../features/pack-hub/components/PackHubPage')> =>
+  import('../features/pack-hub/components/PackHubPage');
+
+const hubRouteImporters: ReadonlyArray<() => Promise<unknown>> = [
+  importRosterHubPage,
+  importBuildHubPage,
+  importPackHubPage,
+];
+
+let warmed = false;
+
+/**
+ * Warm the three hub route chunks so a subsequent hub navigation captures real
+ * destination content in its View Transition snapshot.
+ *
+ * Idempotent — only the first call triggers the imports; later calls are no-ops,
+ * so it is safe to invoke on every header mount. Import rejections are swallowed:
+ * a failed *preload* must never surface as an unhandled rejection — the route's
+ * own Suspense boundary and ErrorBoundary handle a genuine load failure when (and
+ * if) the user actually navigates there.
+ *
+ * @param importers Injectable for tests; defaults to the real hub route chunks.
+ */
+export function preloadHubRoutes(
+  importers: ReadonlyArray<() => Promise<unknown>> = hubRouteImporters,
+): void {
+  if (warmed) return;
+  warmed = true;
+  for (const load of importers) {
+    void load().catch(() => {});
+  }
+}
