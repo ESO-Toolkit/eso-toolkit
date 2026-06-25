@@ -3,6 +3,7 @@ import React from 'react';
 import { FightFragment } from '../../../graphql/gql/graphql';
 import { usePlayerData } from '../../../hooks';
 import type { PhaseTransitionInfo } from '../../../hooks/usePhaseTransitions';
+import { useSelectedReportAndFight } from '../../../ReportFightContext';
 import { CriticalDamageValues } from '../../../types/abilities';
 import { filterDataPointsByActiveCombat } from '../../../utils/activeCombatTimeUtils';
 import { CriticalDamageSourceWithActiveState } from '../../../utils/CritDamageUtils';
@@ -49,6 +50,7 @@ export const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsPr
   globalFightingFinesseEnabled: globalFightingFinesseEnabledProp,
 }) => {
   const { playerData } = usePlayerData();
+  const { reportId, fightId } = useSelectedReportAndFight();
 
   // Get player data
   const player = React.useMemo(() => {
@@ -212,6 +214,8 @@ export const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsPr
       onSourceToggle={handleSourceToggle}
       criticalMultiplier={null}
       fightDurationMs={fightDurationMs}
+      reportId={reportId}
+      fightId={fightId}
       onExpandChange={onExpandChange}
       phaseTransitionInfo={phaseTransitionInfo}
     />

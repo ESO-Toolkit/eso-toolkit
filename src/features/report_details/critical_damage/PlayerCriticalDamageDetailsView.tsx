@@ -85,9 +85,51 @@ interface PlayerCriticalDamageDetailsViewProps {
   onSourceToggle?: (sourceId: string, nextValue: boolean) => void;
   criticalMultiplier: CriticalMultiplierInfo | null;
   fightDurationMs: number;
+  /** Report code for building "View on ESO Logs" deep links. */
+  reportId?: string | null;
+  /** Fight id for building "View on ESO Logs" deep links. */
+  fightId?: string | null;
   onExpandChange?: (event: React.SyntheticEvent, isExpanded: boolean) => void;
   phaseTransitionInfo?: PhaseTransitionInfo;
 }
+
+/**
+ * Builds an ESO Logs auras deep link for a critical-damage source ability, scoped
+ * to the current report, fight and player. Returns undefined when the report or
+ * fight context is unavailable so callers can omit the link entirely.
+ */
+const buildEsoLogsSourceUrl = (
+  reportId: string | null | undefined,
+  fightId: string | null | undefined,
+  abilityId: number,
+  playerId: number,
+  isDebuff: boolean,
+): string | undefined => {
+  if (!reportId || !fightId) {
+    return undefined;
+  }
+
+  const params = new URLSearchParams({
+    fight: fightId,
+    type: 'auras',
+    hostility: isDebuff ? '1' : '0',
+    ability: String(abilityId),
+  });
+
+  if (isDebuff) {
+    // Crit-damage debuffs (e.g. Minor/Major Brittle) live on the enemy, so surface
+    // them on the hostile side via the auras spell filter. They aren't scoped to the
+    // player, who is the caster rather than the recipient.
+    params.set('spells', 'auras');
+  } else {
+    // Buffs/auras (e.g. Minor/Major Force) are active ON the player regardless of who
+    // provided them, so scope by the player as the aura target — not the source, which
+    // would filter to auras the player cast and miss buffs granted by groupmates.
+    params.set('target', String(playerId));
+  }
+
+  return `https://www.esologs.com/reports/${encodeURIComponent(reportId)}?${params.toString()}`;
+};
 
 export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetailsViewProps> = ({
   id,
@@ -101,6 +143,8 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
   criticalMultiplier,
   fightDurationMs,
   player,
+  reportId,
+  fightId,
   onExpandChange,
   phaseTransitionInfo,
 }) => {
@@ -119,14 +163,21 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
         description: source.description,
         sourceType: source.source,
         interactive: isInteractive,
-        // Add link if it's a known ability that can be looked up
+        // Deep link the source ability to the matching auras view on ESO Logs,
+        // scoped to this report, fight and player.
         link:
           'ability' in source
-            ? `https://www.esoui.com/downloads/info7-ESOUIAddOnCollection.html`
+            ? buildEsoLogsSourceUrl(
+                reportId,
+                fightId,
+                source.ability,
+                id,
+                source.source === 'debuff',
+              )
             : undefined,
       };
     });
-  }, [criticalDamageSources, toggleableSourceNames]);
+  }, [criticalDamageSources, toggleableSourceNames, reportId, fightId, id]);
 
   const { theme } = useEChartsTheme();
 
