@@ -493,6 +493,7 @@ export const LoadoutLibraryPanel: React.FC<LoadoutLibraryPanelProps> = ({ onLoad
             fullWidth
             margin="dense"
             label="Name"
+            slotProps={{ htmlInput: { maxLength: 100 } }}
           />
           <TextField
             value={renameDescription}
@@ -502,6 +503,7 @@ export const LoadoutLibraryPanel: React.FC<LoadoutLibraryPanelProps> = ({ onLoad
             label="Description (optional)"
             multiline
             minRows={2}
+            slotProps={{ htmlInput: { maxLength: 500 } }}
           />
         </DialogContent>
         <DialogActions>

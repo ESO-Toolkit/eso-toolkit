@@ -16,6 +16,15 @@ interface LoadoutDataBlob {
   updatedAt?: string;
 }
 
+// Mirror the worker's field caps (roster-hub-api parseLoadoutBody). The worker
+// rejects the WHOLE /loadouts/sync batch on the first over-cap field, so one
+// oversized local loadout would block every other loadout from syncing. Clamp here
+// so the payload is always acceptable (over-long legacy values are truncated).
+const MAX_NAME_LENGTH = 100;
+const MAX_DESCRIPTION_LENGTH = 500;
+const MAX_TRIAL_ID_LENGTH = 64;
+const MAX_CHARACTER_NAME_LENGTH = 64;
+
 export function savedLoadoutToPayload(loadout: SavedLoadout): LoadoutSyncPayload {
   const blob: LoadoutDataBlob = {
     setup: loadout.setup,
@@ -25,10 +34,10 @@ export function savedLoadoutToPayload(loadout: SavedLoadout): LoadoutSyncPayload
   };
   return {
     id: loadout.id,
-    name: loadout.name,
-    description: loadout.description ?? '',
-    trial_id: loadout.meta?.trialId ?? '',
-    character_name: loadout.meta?.characterName ?? '',
+    name: loadout.name.slice(0, MAX_NAME_LENGTH),
+    description: (loadout.description ?? '').slice(0, MAX_DESCRIPTION_LENGTH),
+    trial_id: (loadout.meta?.trialId ?? '').slice(0, MAX_TRIAL_ID_LENGTH),
+    character_name: (loadout.meta?.characterName ?? '').slice(0, MAX_CHARACTER_NAME_LENGTH),
     loadout_data: JSON.stringify(blob),
     client_updated_at: loadout.updatedAt ?? '',
   };

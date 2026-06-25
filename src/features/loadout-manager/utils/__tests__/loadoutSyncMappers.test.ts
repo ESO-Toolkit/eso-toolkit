@@ -56,6 +56,20 @@ describe('savedLoadoutToPayload', () => {
     expect(payload.trial_id).toBe('');
     expect(payload.character_name).toBe('');
   });
+
+  it('clamps over-cap fields to the server limits so one entry cannot 400 the batch', () => {
+    const payload = savedLoadoutToPayload(
+      makeSavedLoadout({
+        name: 'n'.repeat(250),
+        description: 'd'.repeat(900),
+        meta: { trialId: 't'.repeat(120), characterName: 'c'.repeat(120) },
+      }),
+    );
+    expect(payload.name).toHaveLength(100);
+    expect(payload.description).toHaveLength(500);
+    expect(payload.trial_id).toHaveLength(64);
+    expect(payload.character_name).toHaveLength(64);
+  });
 });
 
 describe('rowToSavedLoadout', () => {
