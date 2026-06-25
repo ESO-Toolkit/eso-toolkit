@@ -1013,6 +1013,15 @@ interface LoadoutBody {
 }
 
 /**
+ * A request body (or sync entry) must be a non-null, non-array object before we
+ * read fields off it. `JSON.parse` also accepts `null`, numbers, strings, and
+ * arrays, and blindly reading `.name`/`.id` off `null` throws — surfacing as a
+ * 500 for what is really a 400-class bad request. Guard the shape explicitly.
+ */
+const isObjectBody = (v: unknown): boolean =>
+  typeof v === 'object' && v !== null && !Array.isArray(v);
+
+/**
  * Validate + normalise a single loadout payload into the query-layer input
  * shape. Returns a string error message on failure, or the sanitised input.
  */
@@ -1095,6 +1104,7 @@ app.post('/loadouts', async (c) => {
   } catch {
     return c.json({ error: 'Invalid JSON' }, 400);
   }
+  if (!isObjectBody(body)) return c.json({ error: 'Request body must be a loadout object' }, 400);
 
   if (body.id !== undefined && !isValidLoadoutId(body.id))
     return c.json({ error: 'id must be a url-safe string ≤ 64 chars' }, 400);
@@ -1140,6 +1150,7 @@ app.put('/loadouts/:id', async (c) => {
   } catch {
     return c.json({ error: 'Invalid JSON' }, 400);
   }
+  if (!isObjectBody(body)) return c.json({ error: 'Request body must be a loadout object' }, 400);
 
   const parsed = parseLoadoutBody(body, id);
   if (typeof parsed === 'string') return c.json({ error: parsed }, 400);
@@ -1202,6 +1213,7 @@ app.post('/loadouts/sync', async (c) => {
   } catch {
     return c.json({ error: 'Invalid JSON' }, 400);
   }
+  if (!isObjectBody(body)) return c.json({ error: 'Request body must be an object' }, 400);
 
   if (!Array.isArray(body.loadouts))
     return c.json({ error: 'loadouts must be an array' }, 400);
@@ -1218,6 +1230,7 @@ app.post('/loadouts/sync', async (c) => {
   // and the batch can't double-insert a repeated id.
   const byId = new Map<string, UserLoadoutInput>();
   for (const raw of body.loadouts) {
+    if (!isObjectBody(raw)) return c.json({ error: 'Each loadout must be an object' }, 400);
     const id = raw.id !== undefined ? raw.id : newLoadoutId();
     if (!isValidLoadoutId(id)) return c.json({ error: 'Each loadout id must be url-safe ≤ 64 chars' }, 400);
     const parsed = parseLoadoutBody(raw, id);
@@ -1248,6 +1261,31 @@ app.post('/loadouts/sync', async (c) => {
     listUserLoadouts(c.env.DB, user.id),
     listLoadoutTombstones(c.env.DB, user.id),
   ]);
+
+  // The per-account cap is enforced atomically INSIDE upsertUserLoadouts, so a
+  // concurrent sync can fill the account between the advisory preflight above and
+  // the write — silently skipping some brand-new inserts. Detect that here: a new
+  // id (not pre-existing) that is absent from the saved library AND not blocked by
+  // a same-or-newer tombstone was quota-rejected. Surface a 409 (with the full
+  // server state) so the client can't report a clean sync while those went unsaved.
+  const savedIds = new Set(loadouts.map((l) => l.id));
+  const tombstoneAt = new Map(deletions.map((t) => [t.id, t.deleted_at]));
+  const quotaSkipped = inputs.filter((i) => {
+    if (existingIds.has(i.id) || savedIds.has(i.id)) return false;
+    const ts = tombstoneAt.get(i.id);
+    return !(ts !== undefined && ts >= i.clientUpdatedAt);
+  });
+  if (quotaSkipped.length > 0)
+    return c.json(
+      {
+        error: `Sync hit the ${MAX_LOADOUTS_PER_USER}-loadout account limit; ${quotaSkipped.length} loadout(s) were not saved. Delete some, then sync again.`,
+        skipped: quotaSkipped.map((i) => i.id),
+        loadouts,
+        deletions,
+      },
+      409,
+    );
+
   return c.json({ loadouts, deletions });
 });
 
