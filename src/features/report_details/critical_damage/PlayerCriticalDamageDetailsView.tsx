@@ -85,9 +85,45 @@ interface PlayerCriticalDamageDetailsViewProps {
   onSourceToggle?: (sourceId: string, nextValue: boolean) => void;
   criticalMultiplier: CriticalMultiplierInfo | null;
   fightDurationMs: number;
+  /** Report code for building "View on ESO Logs" deep links. */
+  reportId?: string | null;
+  /** Fight id for building "View on ESO Logs" deep links. */
+  fightId?: string | null;
   onExpandChange?: (event: React.SyntheticEvent, isExpanded: boolean) => void;
   phaseTransitionInfo?: PhaseTransitionInfo;
 }
+
+/**
+ * Builds an ESO Logs auras deep link for a critical-damage source ability, scoped
+ * to the current report, fight and player. Returns undefined when the report or
+ * fight context is unavailable so callers can omit the link entirely.
+ */
+const buildEsoLogsSourceUrl = (
+  reportId: string | null | undefined,
+  fightId: string | null | undefined,
+  abilityId: number,
+  playerId: number,
+  isDebuff: boolean,
+): string | undefined => {
+  if (!reportId || !fightId) {
+    return undefined;
+  }
+
+  const params = new URLSearchParams({
+    fight: fightId,
+    type: 'auras',
+    hostility: isDebuff ? '1' : '0',
+    ability: String(abilityId),
+    source: String(playerId),
+  });
+
+  if (isDebuff) {
+    // ESO Logs needs the auras spell filter to surface debuffs the player applied.
+    params.set('spells', 'auras');
+  }
+
+  return `https://www.esologs.com/reports/${encodeURIComponent(reportId)}?${params.toString()}`;
+};
 
 export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetailsViewProps> = ({
   id,
@@ -101,6 +137,8 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
   criticalMultiplier,
   fightDurationMs,
   player,
+  reportId,
+  fightId,
   onExpandChange,
   phaseTransitionInfo,
 }) => {
@@ -119,14 +157,21 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
         description: source.description,
         sourceType: source.source,
         interactive: isInteractive,
-        // Add link if it's a known ability that can be looked up
+        // Deep link the source ability to the matching auras view on ESO Logs,
+        // scoped to this report, fight and player.
         link:
           'ability' in source
-            ? `https://www.esoui.com/downloads/info7-ESOUIAddOnCollection.html`
+            ? buildEsoLogsSourceUrl(
+                reportId,
+                fightId,
+                source.ability,
+                id,
+                source.source === 'debuff',
+              )
             : undefined,
       };
     });
-  }, [criticalDamageSources, toggleableSourceNames]);
+  }, [criticalDamageSources, toggleableSourceNames, reportId, fightId, id]);
 
   const { theme } = useEChartsTheme();
 
