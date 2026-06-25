@@ -10,9 +10,9 @@
  * signed-in ESO Logs name, but editable) — see the install guide for why.
  *
  * Wizard's Wardrobe loadouts are written into the **account-wide** record
- * (`$AccountWide.accountWideStorage`) rather than a character record, because the
- * in-game numeric character id is unknowable from outside the game. The install
- * guide tells the user to switch WW to "Account Wide" once to see them.
+ * (`$AccountWide`, with setups/pages keyed by zone tag) rather than a character
+ * record, because the in-game numeric character id is unknowable from outside the
+ * game. The install guide tells the user to switch WW to "Account Wide" once to see them.
  */
 
 import type { LoadoutState, WizardWardrobeExport } from '../types/loadout.types';
@@ -66,17 +66,16 @@ function buildWizardWardrobeSavedVariables(
   return {
     Default: {
       [accountName]: {
+        // Setups/pages live DIRECTLY on the account-wide record (keyed by zone tag),
+        // exactly as the real Wizard's Wardrobe SavedVariables file stores them and
+        // as this app's own importer (extractWizardWardrobeData) reads them. An
+        // earlier `accountWideStorage` wrapper round-tripped as empty on re-import.
         $AccountWide: {
           version: 1,
-          // accountWideStorage is an addon-specific key (allowed by the
-          // character record's index signature); WW reads setups/pages from here
-          // when the player is in "Account Wide" mode.
-          accountWideStorage: {
-            setups: exportData.setups ?? {},
-            pages: exportData.pages ?? {},
-            prebuffs: {},
-            autoEquipSetups: false,
-          },
+          setups: exportData.setups ?? {},
+          pages: exportData.pages ?? {},
+          prebuffs: {},
+          autoEquipSetups: false,
         },
       },
     },

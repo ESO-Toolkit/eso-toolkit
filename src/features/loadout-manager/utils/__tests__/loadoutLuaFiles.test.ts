@@ -1,5 +1,6 @@
 import type { LoadoutSetup, LoadoutState } from '../../types/loadout.types';
 import { detectAlphaGearData } from '../alphaGearConverter';
+import { extractWizardWardrobeData } from '../luaParser';
 import {
   generateAlphaGearLua,
   generateBlankAlphaGearLua,
@@ -68,21 +69,29 @@ describe('Wizard’s Wardrobe .lua generation', () => {
     const sv = parseWizardsWardrobeSavedVariables(contents);
     const account = sv.Default?.['@Brayden'];
     expect(account).toBeDefined();
+    // Setups live directly on the account-wide record (as the real WW file does).
     const accountWide = account?.['$AccountWide'] as Record<string, unknown>;
-    const storage = accountWide?.accountWideStorage as Record<string, unknown>;
-    expect(storage).toBeDefined();
-    const setups = storage.setups as Record<string, unknown>;
+    expect(accountWide).toBeDefined();
+    const setups = accountWide.setups as Record<string, unknown>;
     expect(setups.DSR).toBeDefined();
+  });
+
+  it('round-trips back through the app’s own Wizard’s Wardrobe importer', () => {
+    // The export is worthless if the app can't re-import it: the importer reads
+    // $AccountWide.setups directly, so the generated file must store setups there.
+    const { contents } = generateWizardWardrobeLua(makeState(), 'Brayden', 'Hero');
+    const extracted = extractWizardWardrobeData(parseLuaAssignments(contents));
+    expect(extracted).not.toBeNull();
+    expect(extracted?.['$AccountWide']?.setups?.DSR).toBeDefined();
   });
 
   it('blank starter is valid and empty but keyed to the account', () => {
     const { contents } = generateBlankWizardWardrobeLua('@Brayden');
     const sv = parseWizardsWardrobeSavedVariables(contents);
     const accountWide = sv.Default?.['@Brayden']?.['$AccountWide'] as Record<string, unknown>;
-    const storage = accountWide?.accountWideStorage as Record<string, unknown>;
-    expect(storage).toBeDefined();
+    expect(accountWide).toBeDefined();
     // Empty setups serialize to an empty Lua table → parses to {} (or []).
-    const setups = storage.setups as Record<string, unknown>;
+    const setups = accountWide.setups as Record<string, unknown>;
     expect(Object.keys(setups)).toHaveLength(0);
   });
 
