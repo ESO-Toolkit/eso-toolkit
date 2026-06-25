@@ -43,6 +43,7 @@ import {
   deleteSavedLoadout,
   renameSavedLoadout,
   saveLoadout,
+  selectLoadoutsSyncedUserId,
   selectVisibleLoadouts,
   type SavedLoadout,
 } from '@/store/saved_loadouts';
@@ -248,9 +249,11 @@ export const LoadoutLibraryPanel: React.FC<LoadoutLibraryPanelProps> = ({ onLoad
     claimLocalLoadouts,
     removeFromAccount,
   } = useLoadoutSync();
-  // Show only loadouts this user may see: their own + unowned. Another account's
-  // synced loadouts stay in storage but are hidden here (no cross-user exposure).
-  const savedLoadouts = useSelector(selectVisibleLoadouts(currentUserId));
+  // Show only loadouts this user may see: their own + unowned (the latter only while
+  // the browser isn't bound to another account). Another account's synced loadouts
+  // stay in storage but are hidden here (no cross-user exposure).
+  const syncedUserId = useSelector(selectLoadoutsSyncedUserId);
+  const savedLoadouts = useSelector(selectVisibleLoadouts(currentUserId, syncedUserId));
   const [syncMessage, setSyncMessage] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 

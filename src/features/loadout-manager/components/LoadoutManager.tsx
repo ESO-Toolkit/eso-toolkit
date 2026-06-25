@@ -51,7 +51,11 @@ import { useNavigate } from 'react-router-dom';
 import { WorkInProgressDisclaimer } from '@/components/WorkInProgressDisclaimer';
 import { useAuth } from '@/features/auth/AuthContext';
 import { useDropdownMenuProps } from '@/hooks/useDropdownMenuDirection';
-import { selectVisibleLoadouts, type SavedLoadout } from '@/store/saved_loadouts';
+import {
+  selectLoadoutsSyncedUserId,
+  selectVisibleLoadouts,
+  type SavedLoadout,
+} from '@/store/saved_loadouts';
 import type { RootState } from '@/store/storeWithHistory';
 
 import { preloadChampionPointData } from '../data/championPointData';
@@ -154,8 +158,9 @@ export const LoadoutManager: React.FC = () => {
   );
   const currentCharacter = useSelector((state: RootState) => state.loadout.currentCharacter);
   const { currentUser } = useAuth();
+  const syncedUserId = useSelector(selectLoadoutsSyncedUserId);
   const savedLoadoutCount = useSelector(
-    selectVisibleLoadouts(currentUser?.id ? String(currentUser.id) : undefined),
+    selectVisibleLoadouts(currentUser?.id ? String(currentUser.id) : undefined, syncedUserId),
   ).length;
 
   const [view, setView] = useState<'setups' | 'library'>('setups');

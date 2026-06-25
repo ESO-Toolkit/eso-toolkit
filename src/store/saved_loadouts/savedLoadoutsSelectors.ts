@@ -15,14 +15,23 @@ export const selectLoadoutsSyncedUserId = (state: RootState): string | undefined
   state.savedLoadouts.syncedUserId;
 
 /**
- * Loadouts the given user may see: unowned (local/guest) ones plus those owned by
- * this user. Another account's synced loadouts are hidden — not deleted — so a
- * shared browser never shows or exports a previous user's private library, and no
- * unsynced data is ever lost.
+ * Loadouts the given user may see: those they own, plus unowned (local/guest) ones —
+ * but unowned rows are shown ONLY while the browser isn't bound to a DIFFERENT
+ * account (`syncedUserId`). Another account's owned loadouts are always hidden — not
+ * deleted — so a shared browser never shows or exports a previous user's private
+ * library, and no unsynced data is lost.
+ *
+ * Scoping unowned rows to `syncedUserId` closes a shared-browser gap: legacy data
+ * (pre-account, so `ownerUserId === undefined`) would otherwise be visible to — and
+ * claimable by — any later account. Once an account has synced here, only that
+ * account (or a fresh, unbound browser) sees the unowned rows.
  */
 export const selectVisibleLoadouts =
-  (currentUserId: string | undefined) =>
+  (currentUserId: string | undefined, syncedUserId?: string | undefined) =>
   (state: RootState): RootState['savedLoadouts']['loadouts'] =>
-    state.savedLoadouts.loadouts.filter(
-      (l) => l.ownerUserId === undefined || l.ownerUserId === currentUserId,
-    );
+    state.savedLoadouts.loadouts.filter((l) => {
+      if (l.ownerUserId !== undefined) return l.ownerUserId === currentUserId;
+      // Unowned (guest/legacy): visible only on a browser not yet bound to another
+      // account, or to the account that owns the binding.
+      return syncedUserId === undefined || syncedUserId === currentUserId;
+    });
