@@ -8,6 +8,7 @@ import {
   rowToSavedLoadout,
   sameLibrary,
   savedLoadoutToPayload,
+  selectOutgoing,
   stampOwner,
 } from '../loadoutSyncMappers';
 
@@ -132,6 +133,41 @@ describe('mergeLoadoutsByNewest', () => {
     });
     const merged = mergeLoadoutsByNewest([localNew], [remoteOld]);
     expect(merged[0].name).toBe('Local');
+  });
+});
+
+describe('selectOutgoing', () => {
+  it('drops rows identical to the just-pulled server slice (pull-only sync pushes nothing)', () => {
+    const server = [
+      makeSavedLoadout({ id: 'a', updatedAt: '2026-06-10T00:00:00.000Z' }),
+      makeSavedLoadout({ id: 'b', updatedAt: '2026-06-11T00:00:00.000Z' }),
+    ];
+    // merged === server (new device: no local rows, library is the pulled set)
+    expect(selectOutgoing(server, server)).toEqual([]);
+  });
+
+  it('keeps locally new ids and rows strictly newer than the server copy', () => {
+    const server = [makeSavedLoadout({ id: 'a', updatedAt: '2026-06-10T00:00:00.000Z' })];
+    const newer = makeSavedLoadout({ id: 'a', updatedAt: '2026-06-20T00:00:00.000Z' });
+    const brandNew = makeSavedLoadout({ id: 'c', updatedAt: '2026-06-05T00:00:00.000Z' });
+    const out = selectOutgoing([newer, brandNew], server);
+    expect(out.map((l) => l.id).sort()).toEqual(['a', 'c']);
+  });
+
+  it('drops a local row older than the server copy (server already has newer)', () => {
+    const server = [makeSavedLoadout({ id: 'a', updatedAt: '2026-06-20T00:00:00.000Z' })];
+    const stale = makeSavedLoadout({ id: 'a', updatedAt: '2026-06-01T00:00:00.000Z' });
+    expect(selectOutgoing([stale], server)).toEqual([]);
+  });
+
+  it('treats an equal timestamp as already-synced (not strictly newer)', () => {
+    const server = [makeSavedLoadout({ id: 'a', updatedAt: '2026-06-10T00:00:00.000Z' })];
+    const same = makeSavedLoadout({
+      id: 'a',
+      name: 'edited',
+      updatedAt: '2026-06-10T00:00:00.000Z',
+    });
+    expect(selectOutgoing([same], server)).toEqual([]);
   });
 });
 

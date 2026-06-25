@@ -90,6 +90,24 @@ export function mergeLoadoutsByNewest(
 }
 
 /**
+ * Of a merged library, the rows worth POSTing back to the account: those whose id
+ * is absent from the just-pulled `remote` slice, or whose `updatedAt` is strictly
+ * newer than the remote copy. Rows identical to (or older than) what the server
+ * already has are dropped, so a pull-only sync (new device, or a library already
+ * matching the server) never re-POSTs the rows it just fetched — that would burn
+ * the write rate limit on every refresh and, once throttled, 429 the whole sync
+ * before the pulled state could commit. `remote` must be the PURE server slice
+ * (never merged with local), so the diff reflects true server state.
+ */
+export function selectOutgoing(merged: SavedLoadout[], remote: SavedLoadout[]): SavedLoadout[] {
+  const remoteById = new Map(remote.map((r) => [r.id, r]));
+  return merged.filter((l) => {
+    const r = remoteById.get(l.id);
+    return r === undefined || time(l.updatedAt) > time(r.updatedAt);
+  });
+}
+
+/**
  * Drop loadouts killed by an account deletion tombstone — but only when the local
  * copy is NOT newer than the delete. A local edit that post-dates the tombstone
  * (updatedAt > deleted_at) is kept so it can be pushed and revive the loadout

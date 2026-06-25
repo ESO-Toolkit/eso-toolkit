@@ -32,6 +32,7 @@ import {
   rowToSavedLoadout,
   sameLibrary,
   savedLoadoutToPayload,
+  selectOutgoing,
   stampOwner,
 } from '../utils/loadoutSyncMappers';
 
@@ -126,7 +127,11 @@ export function useLoadoutSync(): UseLoadoutSyncResult {
       try {
         // Pull the account: its library (stamped as owned by this user) + tombstones.
         const pull = await loadoutsApi.list(token);
-        let committedMine = stampOwner(rowsToLoadouts(pull), owner);
+        // `serverMine` is the PURE server slice — never merged with local — and is
+        // the diff base for what to push. `committedMine` is the running merged view
+        // (server ∪ local, newest-wins) used for the final commit.
+        let serverMine = stampOwner(rowsToLoadouts(pull), owner);
+        let committedMine = serverMine;
         let tombstones = tombstoneMap(pull);
 
         // Push→re-read until quiescent. Each pass operates ONLY on the current user's
@@ -139,26 +144,27 @@ export function useLoadoutSync(): UseLoadoutSyncResult {
             owner,
             claimUnowned,
           );
-          const toPush = purgeDeleted(mergeLoadoutsByNewest(mine, committedMine), tombstones);
+          const merged = purgeDeleted(mergeLoadoutsByNewest(mine, committedMine), tombstones);
 
-          if (toPush.length > MAX_ACCOUNT_LOADOUTS) {
+          if (merged.length > MAX_ACCOUNT_LOADOUTS) {
             setError(
-              `You have ${toPush.length} loadouts on this account, over the ${MAX_ACCOUNT_LOADOUTS} limit. Delete some, then sync again.`,
+              `You have ${merged.length} loadouts on this account, over the ${MAX_ACCOUNT_LOADOUTS} limit. Delete some, then sync again.`,
             );
             setStatus('error');
             return undefined;
           }
 
-          // Push (chunked). Each /sync returns the full server library + tombstones;
-          // the LAST response is authoritative for this pass. With nothing to push
-          // (e.g. tombstones purged every local row) reuse the already-fetched pull
-          // rather than POSTing an empty batch — an empty /sync still spends a
-          // write-rate-limit slot, which would otherwise block a user at the write
-          // cap from even applying the server-side deletes they just pulled.
+          // Push ONLY rows new-or-newer than the server's copy (diff vs the pure
+          // server slice). A pull-only sync thus never re-POSTs the rows it just
+          // fetched — which would spend a write-rate-limit slot every refresh and,
+          // once throttled, 429 the sync and drop the freshly pulled library. Nothing
+          // outgoing ⇒ no POST at all, so the pulled state still commits below.
+          const toPush = selectOutgoing(merged, serverMine);
           let authoritative: LoadoutListResponse = pull;
           const batches = chunk(toPush.map(savedLoadoutToPayload), SYNC_BATCH_SIZE);
           for (const batch of batches) authoritative = await loadoutsApi.sync(batch, token);
-          committedMine = stampOwner(rowsToLoadouts(authoritative), owner);
+          serverMine = stampOwner(rowsToLoadouts(authoritative), owner);
+          committedMine = serverMine;
           tombstones = tombstoneMap(authoritative);
 
           const { mine: mineAfter } = partitionByOwner(
