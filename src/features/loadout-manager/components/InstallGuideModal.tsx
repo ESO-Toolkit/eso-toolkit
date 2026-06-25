@@ -84,10 +84,20 @@ export const InstallGuideModal: React.FC<InstallGuideModalProps> = ({
   const isDarkMode = theme.palette.mode === 'dark';
   const [tab, setTab] = useState(0);
   const [accountName, setAccountName] = useState(defaultAccountName ?? '');
+  // The account name this field was last prefilled from, so a shared-browser switch
+  // to a DIFFERENT signed-in user replaces the field instead of keeping the prior
+  // user's name (which would download a starter file keyed to the wrong account).
+  const prefillSource = React.useRef<string | undefined>(undefined);
 
-  // Keep the prefill in sync if the signed-in user resolves after first render.
+  // Keep the prefill in sync if the signed-in user resolves after first render, and
+  // adopt the new account on a user switch. A manual edit is preserved while the
+  // source account is unchanged (the effect doesn't re-run for it).
   React.useEffect(() => {
-    if (defaultAccountName) setAccountName((prev) => prev || defaultAccountName);
+    if (!defaultAccountName) return;
+    if (prefillSource.current !== defaultAccountName) {
+      prefillSource.current = defaultAccountName;
+      setAccountName(defaultAccountName);
+    }
   }, [defaultAccountName]);
 
   const addon = ADDONS[tab];

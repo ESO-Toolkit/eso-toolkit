@@ -30,6 +30,7 @@ import { useLogger } from '@/hooks/useLogger';
 
 import { TRIALS } from '../data/trialConfigs';
 import { selectCurrentTrial, selectCurrentSetups, selectLoadoutState } from '../store/selectors';
+import type { LoadoutSetup } from '../types/loadout.types';
 import { downloadTextFile } from '../utils/downloadFile';
 import { validateGearConfig } from '../utils/itemSlotValidator';
 import { generateAlphaGearLua, generateWizardWardrobeLua } from '../utils/loadoutLuaFiles';
@@ -106,14 +107,33 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({
     loadoutState.currentCharacter ??
     undefined;
   const isLuaFileFormat = LUA_FILE_FORMATS.includes(exportFormat);
+  // Validate the SAME setups each format actually serializes, not just the current
+  // page — otherwise a blocking gear error on a trial/page the user isn't looking at
+  // would pass the gate and write an invalid SavedVariables file. wizard-file exports
+  // the current character's setups across every trial/page; alphagear exports every
+  // character's; JSON exports only the current page (`setups`).
+  const exportedSetups = React.useMemo<LoadoutSetup[]>(() => {
+    const setupsForCharacter = (characterId: string | undefined): LoadoutSetup[] => {
+      const pagesByTrial = characterId ? loadoutState.pages[characterId] : undefined;
+      if (!pagesByTrial) return [];
+      return Object.values(pagesByTrial).flatMap((pages) => pages.flatMap((p) => p.setups));
+    };
+    if (exportFormat === 'wizard-file')
+      return setupsForCharacter(
+        loadoutState.currentCharacter || Object.keys(loadoutState.pages)[0],
+      );
+    if (exportFormat === 'alphagear')
+      return loadoutState.characters.flatMap((ch) => setupsForCharacter(ch.id));
+    return setups;
+  }, [exportFormat, loadoutState, setups]);
   const validationReports = React.useMemo(
     () =>
-      setups.map((setup, index) => ({
+      exportedSetups.map((setup, index) => ({
         index,
         name: setup.name || `Setup ${index + 1}`,
         validation: validateGearConfig(setup.gear ?? {}),
       })),
-    [setups],
+    [exportedSetups],
   );
   const blockingErrors = React.useMemo(
     () =>
