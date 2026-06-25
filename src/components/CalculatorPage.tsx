@@ -13,9 +13,11 @@
  */
 
 import { BoltOutlined, HistoryEduOutlined, TuneOutlined } from '@mui/icons-material';
-import { Box, CircularProgress, Container, Tab, Tabs } from '@mui/material';
+import { Box, Container, Tab, Tabs } from '@mui/material';
 import React, { Suspense } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+
+import { ScribingSimulatorSkeleton } from '@features/scribing/presentation/components/ScribingSimulatorSkeleton';
 
 import { Calculator } from './Calculator';
 import { UltimateCalculatorSkeleton } from './UltimateCalculatorSkeleton';
@@ -41,19 +43,6 @@ function tabFromHash(hash: string): TopTab {
   const h = hash.replace('#', '').toLowerCase();
   return (VALID_TABS as readonly string[]).includes(h) ? (h as TopTab) : 'stats';
 }
-
-/** Lightweight fallback while a lazy tab chunk loads. */
-const TabFallback: React.FC = () => (
-  <Container maxWidth="lg" sx={{ py: 3 }}>
-    <Box
-      role="status"
-      aria-live="polite"
-      sx={{ display: 'flex', justifyContent: 'center', py: 10 }}
-    >
-      <CircularProgress aria-label="Loading" />
-    </Box>
-  </Container>
-);
 
 export const CalculatorPage: React.FC = () => {
   const location = useLocation();
@@ -170,7 +159,7 @@ export const CalculatorPage: React.FC = () => {
       )}
 
       {tab === 'scribing' && (
-        <Suspense fallback={<TabFallback />}>
+        <Suspense fallback={<ScribingSimulatorSkeleton />}>
           {/* ScribingSimulator provides its own <Container>. */}
           <ScribingSimulator />
         </Suspense>

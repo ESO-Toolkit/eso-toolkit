@@ -8,16 +8,7 @@
  */
 
 import { Verified as VerifiedIcon, PlaceOutlined as AltarIcon } from '@mui/icons-material';
-import {
-  Alert,
-  Box,
-  CircularProgress,
-  Container,
-  Stack,
-  Typography,
-  alpha,
-  useTheme,
-} from '@mui/material';
+import { Alert, Box, Container, Stack, Typography, alpha, useTheme } from '@mui/material';
 import React from 'react';
 
 import { useLogger } from '@/contexts/LoggerContext';
@@ -34,6 +25,7 @@ import {
   ScribedSkillCard,
   ScriptSlotPicker,
 } from './ScribingSimulatorComponents';
+import { ScribingSimulatorSkeleton } from './ScribingSimulatorSkeleton';
 import { glassPanelSx } from './scribingStyles';
 
 export interface ScribingSimulatorProps {
@@ -149,18 +141,10 @@ export const ScribingSimulator: React.FC<ScribingSimulatorProps> = ({
   }, []);
 
   if (isLoading) {
-    return (
-      <Container maxWidth="lg" className={className}>
-        <Box
-          role="status"
-          aria-live="polite"
-          sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 2, py: 10 }}
-        >
-          <CircularProgress aria-label="Loading scribing data" />
-          <Typography variant="h6">Loading scribing data…</Typography>
-        </Box>
-      </Container>
-    );
+    // Skeleton placeholder (not a spinner) so the Scribing tab matches the
+    // skeleton-based loaders the Stats and Ultimate tabs use, and the frame
+    // doesn't jump when the real bench mounts.
+    return <ScribingSimulatorSkeleton className={className} />;
   }
 
   if (error) {
