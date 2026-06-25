@@ -1252,7 +1252,12 @@ app.post('/loadouts/sync', async (c) => {
   const byId = new Map<string, UserLoadoutInput>();
   for (const raw of body.loadouts) {
     if (!isObjectBody(raw)) return c.json({ error: 'Each loadout must be an object' }, 400);
-    const id = raw.id !== undefined ? raw.id : newLoadoutId();
+    // Bulk sync must be idempotent on retry, so every entry must carry its own stable
+    // id (the client always sends one). Generating an id here would insert a fresh
+    // duplicate on each retry and could fill the quota — reject a missing id instead.
+    if (raw.id === undefined)
+      return c.json({ error: 'Each loadout must include a stable id' }, 400);
+    const id = raw.id;
     if (!isValidLoadoutId(id)) return c.json({ error: 'Each loadout id must be url-safe ≤ 64 chars' }, 400);
     const parsed = parseLoadoutBody(raw, id);
     if (typeof parsed === 'string') return c.json({ error: parsed }, 400);

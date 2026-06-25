@@ -314,6 +314,14 @@ export const LoadoutLibraryPanel: React.FC<LoadoutLibraryPanelProps> = ({ onLoad
 
   const handleConfirmDelete = async (): Promise<void> => {
     if (!pendingDelete) return;
+    // A claim sync ("Add to account") uploads unowned rows BEFORE stamping them as
+    // owned, so deleting one mid-sync would still look local-only here and skip the
+    // remote delete — leaving the just-uploaded copy on the server to be resurrected
+    // on the next sync. Hold deletes until the sync settles.
+    if (syncStatus === 'syncing') {
+      setDeleteError('Finishing sync — try deleting again in a moment.');
+      return;
+    }
     const target = pendingDelete;
     setDeleteError(null);
     // Remove from the account FIRST, but ONLY for a row this account actually owns
@@ -521,7 +529,12 @@ export const LoadoutLibraryPanel: React.FC<LoadoutLibraryPanelProps> = ({ onLoad
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setPendingDelete(null)}>Cancel</Button>
-          <Button onClick={handleConfirmDelete} color="error" variant="contained">
+          <Button
+            onClick={handleConfirmDelete}
+            color="error"
+            variant="contained"
+            disabled={syncStatus === 'syncing'}
+          >
             Delete
           </Button>
         </DialogActions>
