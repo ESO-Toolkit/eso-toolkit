@@ -114,12 +114,18 @@ const buildEsoLogsSourceUrl = (
     type: 'auras',
     hostility: isDebuff ? '1' : '0',
     ability: String(abilityId),
-    source: String(playerId),
   });
 
   if (isDebuff) {
-    // ESO Logs needs the auras spell filter to surface debuffs the player applied.
+    // Crit-damage debuffs (e.g. Minor/Major Brittle) live on the enemy, so surface
+    // them on the hostile side via the auras spell filter. They aren't scoped to the
+    // player, who is the caster rather than the recipient.
     params.set('spells', 'auras');
+  } else {
+    // Buffs/auras (e.g. Minor/Major Force) are active ON the player regardless of who
+    // provided them, so scope by the player as the aura target — not the source, which
+    // would filter to auras the player cast and miss buffs granted by groupmates.
+    params.set('target', String(playerId));
   }
 
   return `https://www.esologs.com/reports/${encodeURIComponent(reportId)}?${params.toString()}`;
