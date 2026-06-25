@@ -58,6 +58,9 @@ export interface PlayerCriticalDamageDataExtended {
   staticCriticalDamage: number;
   /** Inactive combat intervals (gaps in boss damage) in seconds relative to fight start */
   inactiveCombatIntervals: Array<{ start: number; end: number }>;
+  /** Active combat intervals (boss taking damage) in absolute timestamps; used to recompute
+   * active-combat-filtered stats (e.g. time at cap) when toggleable sources are adjusted. */
+  activeCombatIntervals: Array<{ start: number; end: number }>;
 }
 
 export interface CriticalDamageCalculationResult {
@@ -260,6 +263,7 @@ export function calculateCriticalDamageData(
       criticalDamageSources: playerData.allSources,
       staticCriticalDamage: playerData.staticCriticalDamage,
       inactiveCombatIntervals,
+      activeCombatIntervals: activeCombatTimeResult.activeCombatIntervals,
     };
   });
 
