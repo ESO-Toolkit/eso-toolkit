@@ -85,6 +85,12 @@ export function useLoadoutSync(): UseLoadoutSyncResult {
   const isLoggedIn = auth?.isLoggedIn ?? false;
   const accessToken = auth?.accessToken ?? '';
   const currentUserId = auth?.currentUser?.id ? String(auth.currentUser.id) : undefined;
+  // True while the account identity is mid-resolve. On an account switch the new
+  // token goes live immediately but currentUser keeps the PREVIOUS account until the
+  // refetch finishes — syncing in that window would call the API with the new token
+  // yet stamp the returned rows with the old account's id (a cross-account leak on a
+  // shared browser), so we block sync until this clears.
+  const userLoading = auth?.userLoading ?? false;
   const persistedLastSyncedAt = useSelector(selectLoadoutsLastSyncedAt);
   const syncedUserId = useSelector(selectLoadoutsSyncedUserId);
   // Surface "Last synced" only when it belongs to the signed-in account — on a
@@ -114,6 +120,16 @@ export function useLoadoutSync(): UseLoadoutSyncResult {
     async (claimUnowned: boolean): Promise<number | undefined> => {
       const token = requireAuth();
       if (!token) return undefined;
+
+      // Block while the signed-in identity is still resolving (e.g. just after an
+      // account switch: the new token is live but currentUser is mid-refetch). The
+      // token and the owner id must belong to the SAME account, or we'd hit the API
+      // as the new user yet stamp the returned rows with the old user's id.
+      if (userLoading) {
+        setError('Your account is still loading — try syncing again in a moment.');
+        setStatus('error');
+        return undefined;
+      }
 
       // Fail CLOSED if the account identity hasn't resolved yet (logged in but the
       // user query is still loading/failed). Without a concrete id we'd stamp pulled
@@ -235,7 +251,7 @@ export function useLoadoutSync(): UseLoadoutSyncResult {
         return undefined;
       }
     },
-    [requireAuth, currentUserId, dispatch, store],
+    [requireAuth, currentUserId, userLoading, dispatch, store],
   );
 
   /** Normal sync: only this account's already-owned loadouts. */
