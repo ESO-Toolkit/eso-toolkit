@@ -316,12 +316,15 @@ export const LoadoutLibraryPanel: React.FC<LoadoutLibraryPanelProps> = ({ onLoad
     if (!pendingDelete) return;
     const target = pendingDelete;
     setDeleteError(null);
-    // When signed in, remove from the account FIRST — sync is non-destructive,
-    // so a local-only delete would be resurrected on the next sync (and the data
-    // would linger on the server). removeFromAccount treats a 404 (never synced)
-    // as success. If the remote delete genuinely fails, keep the local copy so
-    // local and account stay consistent, and tell the user.
-    if (isLoggedIn) {
+    // Remove from the account FIRST, but ONLY for a row this account actually owns
+    // — sync is non-destructive, so deleting an owned loadout locally without also
+    // removing it server-side would resurrect it on the next sync. A local-only
+    // (unowned) or other-account row isn't pushed by a normal sync, so a remote
+    // DELETE is pointless there and, if the user is write-rate-limited, would fail
+    // and block deleting the local copy too. removeFromAccount treats a 404 (never
+    // synced) as success. If the remote delete genuinely fails, keep the local copy
+    // so local and account stay consistent, and tell the user.
+    if (currentUserId !== undefined && target.ownerUserId === currentUserId) {
       const removed = await removeFromAccount(target.id);
       if (!removed) {
         setDeleteError(

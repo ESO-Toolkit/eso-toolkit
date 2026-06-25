@@ -150,14 +150,14 @@ export function useLoadoutSync(): UseLoadoutSyncResult {
           }
 
           // Push (chunked). Each /sync returns the full server library + tombstones;
-          // the LAST response is authoritative for this pass.
+          // the LAST response is authoritative for this pass. With nothing to push
+          // (e.g. tombstones purged every local row) reuse the already-fetched pull
+          // rather than POSTing an empty batch — an empty /sync still spends a
+          // write-rate-limit slot, which would otherwise block a user at the write
+          // cap from even applying the server-side deletes they just pulled.
           let authoritative: LoadoutListResponse = pull;
           const batches = chunk(toPush.map(savedLoadoutToPayload), SYNC_BATCH_SIZE);
-          if (batches.length === 0) {
-            authoritative = await loadoutsApi.sync([], token);
-          } else {
-            for (const batch of batches) authoritative = await loadoutsApi.sync(batch, token);
-          }
+          for (const batch of batches) authoritative = await loadoutsApi.sync(batch, token);
           committedMine = stampOwner(rowsToLoadouts(authoritative), owner);
           tombstones = tombstoneMap(authoritative);
 

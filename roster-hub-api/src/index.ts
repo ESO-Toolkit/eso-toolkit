@@ -1132,6 +1132,15 @@ app.post('/loadouts', async (c) => {
   await recordRateLimitEvent(c.env.DB, user.id, 'loadout_write');
   await upsertUserLoadout(c.env.DB, user.id, parsed);
   const loadout = await getUserLoadoutById(c.env.DB, id, user.id);
+  // The cap is gated atomically inside upsertUserLoadout, so two new creates can
+  // both clear the advisory preflight above yet one insert gets skipped at the
+  // ceiling. A null readback means this new row was quota-rejected — return 409
+  // instead of `201 { loadout: null }`, which would read as a successful save.
+  if (!loadout)
+    return c.json(
+      { error: `Loadout limit reached (${MAX_LOADOUTS_PER_USER}). Delete some to add more.` },
+      409,
+    );
   return c.json({ loadout }, 201);
 });
 
