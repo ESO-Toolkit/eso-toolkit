@@ -234,6 +234,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       return;
     }
 
+    // The account (token subject) this fetch is for. If the token switches to a
+    // DIFFERENT account while the request is in flight (cross-tab switch / rebind),
+    // its result is stale — applying currentUser/userLoading would restore the
+    // previous account under the new token. Re-check after every await before
+    // mutating state. A same-account token refresh keeps the subject, so it stays
+    // valid.
+    const requestSubject = getAccessTokenSubject(accessToken);
+    const isStale = (): boolean => getAccessTokenSubject(accessTokenRef.current) !== requestSubject;
+
     setUserLoading(true);
     setUserError(null);
     addBreadcrumb('Auth: Fetching current user', 'auth', {
@@ -245,6 +254,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const result = await esoLogsClient.query<GetCurrentUserQuery>({
         query: GetCurrentUserDocument,
       });
+      if (isStale()) return;
 
       const fetchedUser = result?.userData?.currentUser ?? null;
 
@@ -257,6 +267,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       if (fetchedUser) {
         const banCheck = await checkUserBan(fetchedUser);
+        if (isStale()) return;
         if (banCheck.isBanned) {
           const reason = banCheck.reason || DEFAULT_BAN_REASON;
           setIsBanned(true);
@@ -293,6 +304,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         addBreadcrumb('Auth: No user data returned', 'auth');
       }
     } catch (error) {
+      if (isStale()) return;
       logger.error('Failed to fetch current user', error instanceof Error ? error : undefined);
       setUserError(error instanceof Error ? error.message : 'Failed to fetch user data');
       setIsBanned(false);
@@ -302,7 +314,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         errorMessage: error instanceof Error ? error.message : String(error),
       });
     } finally {
-      setUserLoading(false);
+      // Only the fetch that still matches the live token owns the loading flag; a
+      // superseded one must not clear the newer request's userLoading.
+      if (!isStale()) setUserLoading(false);
     }
   }, [
     esoLogsClient,

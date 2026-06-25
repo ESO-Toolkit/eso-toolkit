@@ -10,7 +10,7 @@
  * deletions are explicit (removeFromAccount) and are not propagated by sync.
  */
 
-import { useCallback, useContext, useState } from 'react';
+import { useCallback, useContext, useRef, useState } from 'react';
 import { useDispatch, useSelector, useStore } from 'react-redux';
 
 import { AuthContext } from '@/features/auth/AuthContext';
@@ -91,6 +91,10 @@ export function useLoadoutSync(): UseLoadoutSyncResult {
   // yet stamp the returned rows with the old account's id (a cross-account leak on a
   // shared browser), so we block sync until this clears.
   const userLoading = auth?.userLoading ?? false;
+  // Mirror the live account id so an in-flight sync can detect an account switch that
+  // landed mid-flight and refuse to commit under the now-stale owner.
+  const currentUserIdRef = useRef(currentUserId);
+  currentUserIdRef.current = currentUserId;
   const persistedLastSyncedAt = useSelector(selectLoadoutsLastSyncedAt);
   const syncedUserId = useSelector(selectLoadoutsSyncedUserId);
   // Surface "Last synced" only when it belongs to the signed-in account — on a
@@ -210,6 +214,16 @@ export function useLoadoutSync(): UseLoadoutSyncResult {
           );
 
           if (sameLibrary(mine, mineAfter)) break;
+        }
+
+        // If the account switched WHILE this sync was in flight (cross-tab / rebind),
+        // `owner` is now stale: committing would stamp the previous account's id over
+        // the live store, re-claim unowned rows for it, and bind the browser to it.
+        // The pushed rows already landed on the correct (token) server account, so just
+        // drop the local commit — the now-active account will sync on its own.
+        if (currentUserIdRef.current !== owner) {
+          setStatus('idle');
+          return undefined;
         }
 
         // Commit against the LIVE store (re-read here, no await before dispatch).
