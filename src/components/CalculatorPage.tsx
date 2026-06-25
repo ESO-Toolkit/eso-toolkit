@@ -49,6 +49,15 @@ export const CalculatorPage: React.FC = () => {
   const navigate = useNavigate();
   const tab = tabFromHash(location.hash);
 
+  // The Scribing tab lazy-loads on first visit, then stays mounted (toggled with
+  // display:none, like the Stats tab) instead of being torn down on every tab
+  // switch. Its hook re-runs an async data load on each mount, so a conditional
+  // mount would flash the loading skeleton every single time you returned to the
+  // tab. Keeping it mounted means the skeleton shows only on the first visit —
+  // matching the Stats and Ultimate tabs, which don't re-show their loaders.
+  const scribingEverActiveRef = React.useRef(false);
+  if (tab === 'scribing') scribingEverActiveRef.current = true;
+
   const handleChange = (_: React.SyntheticEvent, next: TopTab): void => {
     // Route the tab through React Router so the URL hash stays the single source
     // of truth. Preserve the live query string (the Scribing tab mirrors its
@@ -158,11 +167,15 @@ export const CalculatorPage: React.FC = () => {
         </Container>
       )}
 
-      {tab === 'scribing' && (
-        <Suspense fallback={<ScribingSimulatorSkeleton />}>
-          {/* ScribingSimulator provides its own <Container>. */}
-          <ScribingSimulator />
-        </Suspense>
+      {scribingEverActiveRef.current && (
+        <Box sx={{ display: tab === 'scribing' ? 'block' : 'none' }}>
+          <Suspense fallback={<ScribingSimulatorSkeleton />}>
+            {/* ScribingSimulator provides its own <Container> and entrance fade.
+                Kept mounted (display toggle) so its data isn't reloaded — and the
+                skeleton isn't re-shown — on every switch back to this tab. */}
+            <ScribingSimulator />
+          </Suspense>
+        </Box>
       )}
     </Box>
   );
