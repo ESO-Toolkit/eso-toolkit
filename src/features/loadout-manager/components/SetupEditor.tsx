@@ -102,7 +102,7 @@ export const SetupEditor: React.FC<SetupEditorProps> = ({
   variant = 'page',
 }) => {
   const dispatch = useDispatch();
-  const { currentUser, isLoggedIn } = useAuth();
+  const { currentUser, isLoggedIn, userLoading } = useAuth();
   const logger = useLogger('SetupEditor');
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === 'dark';
@@ -244,11 +244,14 @@ export const SetupEditor: React.FC<SetupEditorProps> = ({
     if (!name) {
       return;
     }
-    // A signed-in user whose account id hasn't resolved yet must NOT be saved as
-    // unowned — unowned loadouts are visible to (and claimable by) any later account
-    // on this browser, which would defeat owner scoping. Defer until the id is known.
-    // (A logged-out guest legitimately saves unowned and can claim it later.)
-    if (isLoggedIn && !currentUser?.id) {
+    // A signed-in user must NOT save a loadout stamped to the wrong (or no) account.
+    // Block while the identity is unresolved OR mid-refetch: right after an account
+    // switch the new token is live but `currentUser` still holds the PREVIOUS account
+    // (so its id is present-but-stale) until `userLoading` clears. Saving in that
+    // window would stamp ownerUserId from the old account, hiding the new user's row
+    // from them and exposing it under the old account on a shared browser. A
+    // logged-out guest still saves unowned legitimately and can claim it later.
+    if (isLoggedIn && (userLoading || !currentUser?.id)) {
       showSnackbar('Your account is still loading — try saving again in a moment.', 'info');
       return;
     }
