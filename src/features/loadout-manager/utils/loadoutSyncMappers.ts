@@ -43,6 +43,38 @@ export function savedLoadoutToPayload(loadout: SavedLoadout): LoadoutSyncPayload
   };
 }
 
+// Worker caps the per-field clamp above can't fix: oversized loadout_data, an empty
+// name, or a future/malformed client timestamp (e.g. a skewed device clock). Mirror
+// roster-hub-api parseLoadoutBody so an unsyncable row is dropped from the push
+// instead of 400-ing the whole batch (and blocking the pull reconciliation).
+const MAX_LOADOUT_DATA_CHARS = 20_000;
+const MAX_CLIENT_TIMESTAMP_LENGTH = 40;
+const CLOCK_SKEW_MS = 5 * 60 * 1000;
+const ISO_UTC_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,3})?Z$/;
+
+const isAcceptableClientTimestamp = (s: string, now: number): boolean => {
+  if (s === '') return true; // empty sorts oldest; the worker accepts it
+  if (s.length > MAX_CLIENT_TIMESTAMP_LENGTH || !ISO_UTC_RE.test(s)) return false;
+  const ms = Date.parse(s);
+  return Number.isFinite(ms) && ms <= now + CLOCK_SKEW_MS;
+};
+
+/**
+ * True when a payload satisfies the worker's per-field contract, so it can be pushed.
+ * `/loadouts/sync` rejects the WHOLE batch on the first bad entry, so the caller
+ * filters these out (and warns) rather than letting one bad local row block every
+ * other loadout and the pulled-library reconciliation. `now` is injectable for tests.
+ */
+export function isSyncablePayload(p: LoadoutSyncPayload, now: number = Date.now()): boolean {
+  if (!p.name.trim() || p.name.length > MAX_NAME_LENGTH) return false;
+  if (p.description.length > MAX_DESCRIPTION_LENGTH) return false;
+  if (p.trial_id.length > MAX_TRIAL_ID_LENGTH) return false;
+  if (p.character_name.length > MAX_CHARACTER_NAME_LENGTH) return false;
+  if (!isAcceptableClientTimestamp(p.client_updated_at, now)) return false;
+  if (!p.loadout_data.trim() || p.loadout_data.length > MAX_LOADOUT_DATA_CHARS) return false;
+  return true;
+}
+
 /**
  * Reconstruct a SavedLoadout from a server row. The authoritative timestamps and
  * setup live inside loadout_data (the client's own ISO times, so merges compare

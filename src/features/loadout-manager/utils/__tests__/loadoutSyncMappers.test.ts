@@ -2,6 +2,7 @@ import type { SavedLoadout } from '@/store/saved_loadouts';
 
 import type { UserLoadoutRow } from '../../types/loadout-sync.types';
 import {
+  isSyncablePayload,
   mergeLoadoutsByNewest,
   partitionByOwner,
   purgeDeleted,
@@ -69,6 +70,40 @@ describe('savedLoadoutToPayload', () => {
     expect(payload.description).toHaveLength(500);
     expect(payload.trial_id).toHaveLength(64);
     expect(payload.character_name).toHaveLength(64);
+  });
+});
+
+describe('isSyncablePayload', () => {
+  const now = Date.parse('2026-06-10T00:00:00.000Z');
+  const base = () =>
+    savedLoadoutToPayload(makeSavedLoadout({ updatedAt: '2026-06-09T00:00:00.000Z' }));
+
+  it('accepts a normal payload', () => {
+    expect(isSyncablePayload(base(), now)).toBe(true);
+  });
+
+  it('rejects a future client_updated_at beyond clock skew', () => {
+    expect(
+      isSyncablePayload({ ...base(), client_updated_at: '2026-06-10T01:00:00.000Z' }, now),
+    ).toBe(false);
+  });
+
+  it('accepts a slightly-future timestamp within clock skew', () => {
+    expect(
+      isSyncablePayload({ ...base(), client_updated_at: '2026-06-10T00:04:00.000Z' }, now),
+    ).toBe(true);
+  });
+
+  it('rejects a malformed timestamp', () => {
+    expect(isSyncablePayload({ ...base(), client_updated_at: 'not-a-date' }, now)).toBe(false);
+  });
+
+  it('rejects oversized loadout_data', () => {
+    expect(isSyncablePayload({ ...base(), loadout_data: 'x'.repeat(20_001) }, now)).toBe(false);
+  });
+
+  it('rejects an empty name', () => {
+    expect(isSyncablePayload({ ...base(), name: '   ' }, now)).toBe(false);
   });
 });
 

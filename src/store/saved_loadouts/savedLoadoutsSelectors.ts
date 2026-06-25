@@ -31,7 +31,11 @@ export const selectVisibleLoadouts =
   (state: RootState): RootState['savedLoadouts']['loadouts'] =>
     state.savedLoadouts.loadouts.filter((l) => {
       if (l.ownerUserId !== undefined) return l.ownerUserId === currentUserId;
-      // Unowned (guest/legacy): visible only on a browser not yet bound to another
-      // account, or to the account that owns the binding.
-      return syncedUserId === undefined || syncedUserId === currentUserId;
+      // Unowned (guest/legacy): hidden ONLY from a DIFFERENT SIGNED-IN account on a
+      // browser already bound to another account. Visible to a signed-OUT guest — a
+      // signed-out viewer isn't "another account", and their own just-saved local rows
+      // must not vanish — as well as to the bound account and on an unbound browser.
+      return (
+        currentUserId === undefined || syncedUserId === undefined || syncedUserId === currentUserId
+      );
     });

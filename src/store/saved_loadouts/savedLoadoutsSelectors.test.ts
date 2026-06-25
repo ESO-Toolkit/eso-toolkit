@@ -37,4 +37,11 @@ describe('selectVisibleLoadouts', () => {
     // B signs in on a browser bound to A: B sees neither A's owned rows nor the guest rows.
     expect(selectVisibleLoadouts('B', 'A')(state).map((l) => l.id)).toEqual([]);
   });
+
+  it('still shows unowned rows to a signed-out guest on a bound browser', () => {
+    const state = stateWith([owned, guest]);
+    // Signed out (currentUserId undefined) on a browser bound to A: the guest keeps
+    // their own local saves visible, but A's owned rows stay hidden.
+    expect(selectVisibleLoadouts(undefined, 'A')(state).map((l) => l.id)).toEqual(['guest']);
+  });
 });

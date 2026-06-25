@@ -26,7 +26,9 @@ import {
 import type { RootState } from '@/store/storeWithHistory';
 
 import { loadoutsApi, type LoadoutListResponse } from '../api/loadouts-api';
+import type { LoadoutSyncPayload } from '../types/loadout-sync.types';
 import {
+  isSyncablePayload,
   mergeLoadoutsByNewest,
   partitionByOwner,
   purgeDeleted,
@@ -166,6 +168,10 @@ export function useLoadoutSync(): UseLoadoutSyncResult {
         // + skipped). We still reconcile the authoritative library below; these are
         // surfaced afterwards as a non-fatal warning so the user knows to free space.
         const skippedIds = new Set<string>();
+        // Ids dropped from the push because the worker would 400 them (oversized data,
+        // a future/malformed timestamp). They stay local and are surfaced as a warning
+        // — one bad row must not fail the batch or block the pull reconciliation.
+        const invalidIds = new Set<string>();
 
         // Push→re-read until quiescent. Each pass operates ONLY on the current user's
         // slice; other accounts' loadouts are never read, pushed, or deleted. Re-reading
@@ -194,7 +200,16 @@ export function useLoadoutSync(): UseLoadoutSyncResult {
           // outgoing ⇒ no POST at all, so the pulled state still commits below.
           const toPush = selectOutgoing(merged, serverMine);
           let authoritative: LoadoutListResponse = pull;
-          const batches = chunk(toPush.map(savedLoadoutToPayload), SYNC_BATCH_SIZE);
+          // Drop rows the worker would reject so one bad local row can't 400 the whole
+          // batch (which would also block the pulled library from committing). They
+          // stay local and are reported afterwards.
+          const syncablePayloads: LoadoutSyncPayload[] = [];
+          for (const l of toPush) {
+            const payload = savedLoadoutToPayload(l);
+            if (isSyncablePayload(payload)) syncablePayloads.push(payload);
+            else invalidIds.add(l.id);
+          }
+          const batches = chunk(syncablePayloads, SYNC_BATCH_SIZE);
           for (const batch of batches) {
             authoritative = await loadoutsApi.sync(batch, token);
             authoritative.skipped?.forEach((id) => skippedIds.add(id));
@@ -248,11 +263,21 @@ export function useLoadoutSync(): UseLoadoutSyncResult {
         dispatch(setSyncedUserId(owner));
         dispatch(setLastSyncedAt(new Date().toISOString()));
         // Partial sync: the saved rows ARE reconciled above (so nothing is duplicated),
-        // but the account cap left some unsaved. Surface that as an error the user can
-        // act on while keeping the committed state; otherwise report a clean success.
-        if (skippedIds.size > 0) {
+        // but some rows couldn't be pushed — either the account cap (server skipped) or
+        // a worker-rejected payload (filtered locally). Both sets are disjoint (rejected
+        // rows were never pushed). Surface a non-fatal warning while keeping the
+        // committed state; otherwise report a clean success.
+        const unsavable = skippedIds.size + invalidIds.size;
+        if (unsavable > 0) {
+          const reasons: string[] = [];
+          if (skippedIds.size)
+            reasons.push(
+              `${skippedIds.size} over the ${MAX_ACCOUNT_LOADOUTS}-loadout account limit`,
+            );
+          if (invalidIds.size)
+            reasons.push(`${invalidIds.size} the server rejected (name, timestamp, or size)`);
           setError(
-            `Synced, but ${skippedIds.size} loadout${skippedIds.size === 1 ? '' : 's'} couldn't be saved — your account is at the ${MAX_ACCOUNT_LOADOUTS}-loadout limit. Delete some, then sync again.`,
+            `Synced, but ${unsavable} loadout${unsavable === 1 ? '' : 's'} couldn't be saved (${reasons.join('; ')}). Fix or delete them, then sync again.`,
           );
           setStatus('error');
           return undefined;
