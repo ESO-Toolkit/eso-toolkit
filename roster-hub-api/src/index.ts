@@ -73,6 +73,7 @@ import {
   clearRevivedTombstones,
   countUserLoadouts,
   checkLoadoutWriteRateLimit,
+  consumeLoadoutWriteRateLimit,
   MAX_LOADOUTS_PER_USER,
   type UserLoadoutInput,
 } from './db/queries';
@@ -1141,7 +1142,11 @@ app.post('/loadouts', async (c) => {
       );
   }
 
-  await recordRateLimitEvent(c.env.DB, user.id, 'loadout_write');
+  // Atomically consume the write token here (the early check above is just a fast
+  // fail) so concurrent requests can't all pass a stale count and exceed the cap.
+  const consumed = await consumeLoadoutWriteRateLimit(c.env.DB, user.id);
+  if (!consumed)
+    return c.json({ error: 'Rate limit exceeded. Too many loadout writes this hour.' }, 429);
   await upsertUserLoadout(c.env.DB, user.id, parsed);
   const loadout = await getUserLoadoutById(c.env.DB, id, user.id);
   // The cap is gated atomically inside upsertUserLoadout, so two new creates can
@@ -1180,7 +1185,11 @@ app.put('/loadouts/:id', async (c) => {
   if (!allowed)
     return c.json({ error: 'Rate limit exceeded. Too many loadout writes this hour.' }, 429);
 
-  await recordRateLimitEvent(c.env.DB, user.id, 'loadout_write');
+  // Atomically consume the write token here (the early check above is just a fast
+  // fail) so concurrent requests can't all pass a stale count and exceed the cap.
+  const consumed = await consumeLoadoutWriteRateLimit(c.env.DB, user.id);
+  if (!consumed)
+    return c.json({ error: 'Rate limit exceeded. Too many loadout writes this hour.' }, 429);
   const { id: _omit, ...data } = parsed;
   const updated = await updateUserLoadout(c.env.DB, id, user.id, data);
   if (!updated) return c.json({ error: 'Not found or forbidden' }, 404);
@@ -1210,7 +1219,11 @@ app.delete('/loadouts/:id', async (c) => {
   const allowed = await checkLoadoutWriteRateLimit(c.env.DB, user.id);
   if (!allowed)
     return c.json({ error: 'Rate limit exceeded. Too many loadout writes this hour.' }, 429);
-  await recordRateLimitEvent(c.env.DB, user.id, 'loadout_write');
+  // Atomically consume the write token here (the early check above is just a fast
+  // fail) so concurrent requests can't all pass a stale count and exceed the cap.
+  const consumed = await consumeLoadoutWriteRateLimit(c.env.DB, user.id);
+  if (!consumed)
+    return c.json({ error: 'Rate limit exceeded. Too many loadout writes this hour.' }, 429);
 
   const result = await deleteUserLoadout(c.env.DB, id, user.id, deletedAt);
   if (result === 'not-found') return c.json({ error: 'Not found or forbidden' }, 404);
@@ -1287,7 +1300,11 @@ app.post('/loadouts/sync', async (c) => {
       409,
     );
 
-  await recordRateLimitEvent(c.env.DB, user.id, 'loadout_write');
+  // Atomically consume the write token here (the early check above is just a fast
+  // fail) so concurrent requests can't all pass a stale count and exceed the cap.
+  const consumed = await consumeLoadoutWriteRateLimit(c.env.DB, user.id);
+  if (!consumed)
+    return c.json({ error: 'Rate limit exceeded. Too many loadout writes this hour.' }, 429);
   await upsertUserLoadouts(c.env.DB, user.id, inputs);
   // An edit that post-dated a delete just revived its loadout — drop the now-stale
   // tombstone so other devices don't re-purge the revived copy on their next pull.
@@ -1301,23 +1318,20 @@ app.post('/loadouts/sync', async (c) => {
   // concurrent sync can fill the account between the advisory preflight above and
   // the write — silently skipping some brand-new inserts. Detect that here: a new
   // id (not pre-existing) that is absent from the saved library AND not blocked by
-  // a same-or-newer tombstone was quota-rejected. Surface a 409 (with the full
-  // server state) so the client can't report a clean sync while those went unsaved.
+  // a same-or-newer tombstone was quota-rejected. The rows that DID land are already
+  // committed, so return 200 with the authoritative state plus `skipped` rather than
+  // a 409: a 409 reads as a total failure, so the client would discard this server
+  // state, leaving the just-saved rows unstamped locally and duplicable on the next
+  // sync. The client reconciles the returned library and surfaces `skipped` as a
+  // non-fatal "couldn't save N (at the limit)" warning.
   const savedIds = new Set(loadouts.map((l) => l.id));
   const postTombstoneAt = new Map(deletions.map((t) => [t.id, t.deleted_at]));
-  const quotaSkipped = inputs.filter(
-    (i) => !existingIds.has(i.id) && !savedIds.has(i.id) && !isTombstoneBlocked(postTombstoneAt, i),
-  );
-  if (quotaSkipped.length > 0)
-    return c.json(
-      {
-        error: `Sync hit the ${MAX_LOADOUTS_PER_USER}-loadout account limit; ${quotaSkipped.length} loadout(s) were not saved. Delete some, then sync again.`,
-        skipped: quotaSkipped.map((i) => i.id),
-        loadouts,
-        deletions,
-      },
-      409,
-    );
+  const skipped = inputs
+    .filter(
+      (i) => !existingIds.has(i.id) && !savedIds.has(i.id) && !isTombstoneBlocked(postTombstoneAt, i),
+    )
+    .map((i) => i.id);
+  if (skipped.length > 0) return c.json({ loadouts, deletions, skipped });
 
   return c.json({ loadouts, deletions });
 });

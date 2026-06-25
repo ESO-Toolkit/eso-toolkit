@@ -78,6 +78,15 @@ export function rowToSavedLoadout(row: UserLoadoutRow): SavedLoadout | null {
 const time = (iso: string | undefined): number => (iso ? Date.parse(iso) || 0 : 0);
 
 /**
+ * Stable content fingerprint used ONLY to break exact-timestamp ties deterministically,
+ * so two devices that diverged at the same millisecond converge on the same survivor
+ * instead of one side silently dropping its edit. Compares the user-meaningful fields
+ * (updatedAt is equal in a tie, so it's excluded).
+ */
+const contentKey = (l: SavedLoadout): string =>
+  JSON.stringify([l.name, l.description ?? '', l.meta ?? null, l.setup]);
+
+/**
  * Merge local and remote libraries by id, keeping whichever side has the newer
  * `updatedAt` for shared ids (ties favour remote, so a just-pushed sync settles
  * deterministically). Non-destructive: ids present on only one side are kept.
@@ -91,7 +100,17 @@ export function mergeLoadoutsByNewest(
   for (const l of local) byId.set(l.id, l);
   for (const r of remote) {
     const existing = byId.get(r.id);
-    if (!existing || time(r.updatedAt) >= time(existing.updatedAt)) {
+    if (!existing) {
+      byId.set(r.id, r);
+      continue;
+    }
+    const tr = time(r.updatedAt);
+    const te = time(existing.updatedAt);
+    // Newer wins; on an EXACT-timestamp tie the greater content fingerprint wins, so
+    // divergent same-millisecond edits resolve the same way on every device (no silent
+    // per-device drift). Identical content keeps remote, so a just-pushed row still
+    // settles deterministically without churn.
+    if (tr > te || (tr === te && contentKey(r) >= contentKey(existing))) {
       byId.set(r.id, r);
     }
   }
@@ -112,7 +131,14 @@ export function selectOutgoing(merged: SavedLoadout[], remote: SavedLoadout[]): 
   const remoteById = new Map(remote.map((r) => [r.id, r]));
   return merged.filter((l) => {
     const r = remoteById.get(l.id);
-    return r === undefined || time(l.updatedAt) > time(r.updatedAt);
+    if (r === undefined) return true;
+    const tl = time(l.updatedAt);
+    const tr = time(r.updatedAt);
+    // Push when newer, or when an exact-timestamp tie resolves in this row's favor (its
+    // content fingerprint wins the same tie-break the merge uses). That gets a divergent
+    // same-timestamp edit to the server instead of letting it be silently overwritten,
+    // while pushing only the deterministic winner — so devices converge, no ping-pong.
+    return tl > tr || (tl === tr && contentKey(l) > contentKey(r));
   });
 }
 

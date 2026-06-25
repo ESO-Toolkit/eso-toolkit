@@ -1963,3 +1963,30 @@ export async function checkLoadoutWriteRateLimit(db: D1Database, userId: string)
     .first<{ cnt: number }>();
   return (row?.cnt ?? 0) < LOADOUT_WRITE_RATE_LIMIT_MAX;
 }
+
+/**
+ * Atomically consume one loadout-write rate-limit token: insert an event ONLY if
+ * the in-window count is still under the cap, and report whether it landed. Unlike
+ * a separate check-then-record, the conditional INSERT…SELECT…WHERE is a single
+ * serialized write, so concurrent requests (especially the 200-row bulk /sync) can't
+ * all read an under-cap count and then each blow past the hourly limit. Returns true
+ * iff a token was consumed (the caller may proceed).
+ */
+export async function consumeLoadoutWriteRateLimit(
+  db: D1Database,
+  userId: string,
+): Promise<boolean> {
+  const result = await db
+    .prepare(
+      `INSERT INTO rate_limit_events (user_id, action, created_at)
+       SELECT ?, 'loadout_write', datetime('now')
+       WHERE (
+         SELECT COUNT(*) FROM rate_limit_events
+         WHERE user_id = ? AND action = 'loadout_write'
+           AND created_at > datetime('now', '-${LOADOUT_WRITE_RATE_LIMIT_WINDOW_SEC} seconds')
+       ) < ${LOADOUT_WRITE_RATE_LIMIT_MAX}`,
+    )
+    .bind(userId, userId)
+    .run();
+  return (result.meta?.changes ?? 0) > 0;
+}

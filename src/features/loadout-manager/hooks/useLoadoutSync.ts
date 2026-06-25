@@ -142,6 +142,10 @@ export function useLoadoutSync(): UseLoadoutSyncResult {
         let serverMine = stampOwner(rowsToLoadouts(pull), owner);
         let committedMine = serverMine;
         let tombstones = tombstoneMap(pull);
+        // Ids the account-cap race left unsaved on a partial /sync (server returns 200
+        // + skipped). We still reconcile the authoritative library below; these are
+        // surfaced afterwards as a non-fatal warning so the user knows to free space.
+        const skippedIds = new Set<string>();
 
         // Push→re-read until quiescent. Each pass operates ONLY on the current user's
         // slice; other accounts' loadouts are never read, pushed, or deleted. Re-reading
@@ -171,7 +175,10 @@ export function useLoadoutSync(): UseLoadoutSyncResult {
           const toPush = selectOutgoing(merged, serverMine);
           let authoritative: LoadoutListResponse = pull;
           const batches = chunk(toPush.map(savedLoadoutToPayload), SYNC_BATCH_SIZE);
-          for (const batch of batches) authoritative = await loadoutsApi.sync(batch, token);
+          for (const batch of batches) {
+            authoritative = await loadoutsApi.sync(batch, token);
+            authoritative.skipped?.forEach((id) => skippedIds.add(id));
+          }
           serverMine = stampOwner(rowsToLoadouts(authoritative), owner);
           committedMine = serverMine;
           tombstones = tombstoneMap(authoritative);
@@ -210,6 +217,16 @@ export function useLoadoutSync(): UseLoadoutSyncResult {
         dispatch(replaceAllLoadouts([...others, ...finalMine]));
         dispatch(setSyncedUserId(owner));
         dispatch(setLastSyncedAt(new Date().toISOString()));
+        // Partial sync: the saved rows ARE reconciled above (so nothing is duplicated),
+        // but the account cap left some unsaved. Surface that as an error the user can
+        // act on while keeping the committed state; otherwise report a clean success.
+        if (skippedIds.size > 0) {
+          setError(
+            `Synced, but ${skippedIds.size} loadout${skippedIds.size === 1 ? '' : 's'} couldn't be saved — your account is at the ${MAX_ACCOUNT_LOADOUTS}-loadout limit. Delete some, then sync again.`,
+          );
+          setStatus('error');
+          return undefined;
+        }
         setStatus('idle');
         return finalMine.length;
       } catch (e) {

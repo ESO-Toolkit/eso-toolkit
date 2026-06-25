@@ -148,6 +148,16 @@ describe('mergeLoadoutsByNewest', () => {
     const merged = mergeLoadoutsByNewest([localNew], [remoteOld]);
     expect(merged[0].name).toBe('Local');
   });
+
+  it('breaks an exact-timestamp tie deterministically by content (convergent both ways)', () => {
+    const ts = '2026-06-10T00:00:00.000Z';
+    const lo = makeSavedLoadout({ id: 'x', name: 'AAA', updatedAt: ts });
+    const hi = makeSavedLoadout({ id: 'x', name: 'zzz', updatedAt: ts });
+    // The greater content fingerprint survives regardless of argument order, so two
+    // devices that diverged at the same millisecond converge on the same row.
+    expect(mergeLoadoutsByNewest([lo], [hi])[0].name).toBe('zzz');
+    expect(mergeLoadoutsByNewest([hi], [lo])[0].name).toBe('zzz');
+  });
 });
 
 describe('selectOutgoing', () => {
@@ -174,14 +184,20 @@ describe('selectOutgoing', () => {
     expect(selectOutgoing([stale], server)).toEqual([]);
   });
 
-  it('treats an equal timestamp as already-synced (not strictly newer)', () => {
+  it('does not push an equal-timestamp row with identical content (already synced)', () => {
     const server = [makeSavedLoadout({ id: 'a', updatedAt: '2026-06-10T00:00:00.000Z' })];
-    const same = makeSavedLoadout({
-      id: 'a',
-      name: 'edited',
-      updatedAt: '2026-06-10T00:00:00.000Z',
-    });
-    expect(selectOutgoing([same], server)).toEqual([]);
+    const identical = makeSavedLoadout({ id: 'a', updatedAt: '2026-06-10T00:00:00.000Z' });
+    expect(selectOutgoing([identical], server)).toEqual([]);
+  });
+
+  it('pushes an equal-timestamp divergent edit whose content wins the tie-break', () => {
+    const server = [
+      makeSavedLoadout({ id: 'a', name: 'AAA', updatedAt: '2026-06-10T00:00:00.000Z' }),
+    ];
+    // Same timestamp, lexicographically-greater content → the deterministic winner is pushed
+    // instead of being silently overwritten.
+    const local = makeSavedLoadout({ id: 'a', name: 'zzz', updatedAt: '2026-06-10T00:00:00.000Z' });
+    expect(selectOutgoing([local], server).map((l) => l.id)).toEqual(['a']);
   });
 });
 

@@ -35,6 +35,12 @@ export interface LoadoutListResponse {
   loadouts: UserLoadoutRow[];
   /** Tombstones — loadouts deleted on the account, with delete times. */
   deletions: LoadoutTombstone[];
+  /**
+   * Ids from a /loadouts/sync batch that the account-cap race left unsaved. Present
+   * (non-empty) only on a partial sync: the rest of `loadouts` is authoritative and
+   * should still be reconciled; the client surfaces these as a non-fatal warning.
+   */
+  skipped?: string[];
 }
 
 export const loadoutsApi = {
