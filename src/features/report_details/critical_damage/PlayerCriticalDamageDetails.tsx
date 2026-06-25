@@ -12,6 +12,12 @@ import {
 } from './PlayerCriticalDamageDetailsView';
 
 const FIGHTING_FINESSE_SOURCE_NAME = 'Fighting Finesse';
+const BACKSTABBER_SOURCE_NAME = 'Backstabber';
+
+// Backstabber only applies while flanking (rear/side arc), which can't be detected
+// from log data. Default it OFF so the displayed critical damage reflects the
+// unconditional baseline; users can toggle it on if they were reliably flanking.
+const BACKSTABBER_DEFAULT_ENABLED = false;
 
 interface PlayerCriticalDamageDataExtended extends PlayerCriticalDamageData {
   criticalDamageSources: CriticalDamageSourceWithActiveState[];
@@ -57,10 +63,20 @@ export const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsPr
     );
   }, [criticalDamageData?.criticalDamageSources]);
 
+  const backstabberSource = React.useMemo(() => {
+    return criticalDamageData?.criticalDamageSources?.find(
+      (source) => source.source === 'always_on' && source.name === BACKSTABBER_SOURCE_NAME,
+    );
+  }, [criticalDamageData?.criticalDamageSources]);
+
   const [localFightingFinesseEnabled, setLocalFightingFinesseEnabled] = React.useState<boolean>(
     () => {
       return fightingFinesseSource?.wasActive ?? true;
     },
+  );
+
+  const [backstabberEnabled, setBackstabberEnabled] = React.useState<boolean>(
+    BACKSTABBER_DEFAULT_ENABLED,
   );
 
   React.useEffect(() => {
@@ -78,16 +94,30 @@ export const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsPr
   // Individual state always takes priority (local state)
   const fightingFinesseEnabled = localFightingFinesseEnabled;
 
+  // Total critical damage to subtract for toggleable always-on sources that are
+  // currently disabled. Both Fighting Finesse and Backstabber are baked into the
+  // static critical damage, so turning either off removes its contribution.
+  const critDamageAdjustment = React.useMemo(() => {
+    let adjustment = 0;
+    if (fightingFinesseSource && !fightingFinesseEnabled) {
+      adjustment += CriticalDamageValues.FIGHTING_FINESSE;
+    }
+    if (backstabberSource && !backstabberEnabled) {
+      adjustment += CriticalDamageValues.BACKSTABBER;
+    }
+    return adjustment;
+  }, [fightingFinesseSource, fightingFinesseEnabled, backstabberSource, backstabberEnabled]);
+
   const adjustedCriticalDamageData = React.useMemo(() => {
     if (!criticalDamageData) {
       return null;
     }
 
-    if (!fightingFinesseSource || fightingFinesseEnabled) {
+    if (critDamageAdjustment === 0) {
       return criticalDamageData;
     }
 
-    const adjustment = CriticalDamageValues.FIGHTING_FINESSE;
+    const adjustment = critDamageAdjustment;
 
     const adjustedDataPoints = criticalDamageData.dataPoints.map((point) => ({
       ...point,
@@ -115,7 +145,7 @@ export const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsPr
       timeAtCapPercentage: adjustedTimeAtCapPercentage,
       staticCriticalDamage: Math.max(0, criticalDamageData.staticCriticalDamage - adjustment),
     };
-  }, [criticalDamageData, fightingFinesseEnabled, fightingFinesseSource]);
+  }, [criticalDamageData, critDamageAdjustment]);
 
   const adjustedCriticalDamageSources = React.useMemo(() => {
     const sources = criticalDamageData?.criticalDamageSources ?? [];
@@ -126,21 +156,34 @@ export const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsPr
           wasActive: fightingFinesseEnabled,
         };
       }
+      if (source.source === 'always_on' && source.name === BACKSTABBER_SOURCE_NAME) {
+        return {
+          ...source,
+          wasActive: backstabberEnabled,
+        };
+      }
       return source;
     });
-  }, [criticalDamageData?.criticalDamageSources, fightingFinesseEnabled]);
+  }, [criticalDamageData?.criticalDamageSources, fightingFinesseEnabled, backstabberEnabled]);
 
   const toggleableSourceNames = React.useMemo(() => {
-    return adjustedCriticalDamageSources.some(
-      (source) => source.source === 'always_on' && source.name === FIGHTING_FINESSE_SOURCE_NAME,
-    )
-      ? new Set<string>([FIGHTING_FINESSE_SOURCE_NAME])
-      : undefined;
+    const names = new Set<string>();
+    for (const source of adjustedCriticalDamageSources) {
+      if (
+        source.source === 'always_on' &&
+        (source.name === FIGHTING_FINESSE_SOURCE_NAME || source.name === BACKSTABBER_SOURCE_NAME)
+      ) {
+        names.add(source.name);
+      }
+    }
+    return names.size > 0 ? names : undefined;
   }, [adjustedCriticalDamageSources]);
 
   const handleSourceToggle = React.useCallback((sourceName: string, nextValue: boolean) => {
     if (sourceName === FIGHTING_FINESSE_SOURCE_NAME) {
       setLocalFightingFinesseEnabled(nextValue);
+    } else if (sourceName === BACKSTABBER_SOURCE_NAME) {
+      setBackstabberEnabled(nextValue);
     }
   }, []);
 
