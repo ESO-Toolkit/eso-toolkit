@@ -51,7 +51,7 @@ export const ReportsResultsMeta: React.FC<ReportsResultsMetaProps> = ({
         )}
         {hiddenEmptyCount > 0 && (
           <Tooltip
-            title="Logs with no combat data — usually caused by an upload or parsing issue on ESO Logs — are hidden from this list because there is nothing to view"
+            title="Logs with no combat data yet — still processing on ESO Logs, or with a parsing issue — are hidden from this list because there is nothing to view"
             arrow
           >
             <Typography

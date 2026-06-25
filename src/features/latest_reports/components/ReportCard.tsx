@@ -13,6 +13,7 @@ import React, { useCallback, useState } from 'react';
 
 import type { UserReportSummaryFragment } from '../../../graphql/gql/graphql';
 import {
+  EMPTY_REPORT_TOOLTIP,
   formatReportDateTime,
   formatReportDuration,
   getReportVisibilityColor,
@@ -180,10 +181,7 @@ export const ReportCard: React.FC<ReportCardProps> = ({ report, onSelect, showOw
               {title}
             </Typography>
             {empty && (
-              <Tooltip
-                title="This log may contain no fight data due to an upload or parsing issue on ESO Logs"
-                arrow
-              >
+              <Tooltip title={EMPTY_REPORT_TOOLTIP} arrow>
                 <Chip
                   label="Empty"
                   size="small"

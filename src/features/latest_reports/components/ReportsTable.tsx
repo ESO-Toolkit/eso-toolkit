@@ -8,6 +8,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  Tooltip,
   Typography,
   useTheme,
 } from '@mui/material';
@@ -15,9 +16,11 @@ import React from 'react';
 
 import type { UserReportSummaryFragment } from '../../../graphql/gql/graphql';
 import {
+  EMPTY_REPORT_TOOLTIP,
   formatReportDateTime,
   formatReportDuration,
   getReportVisibilityColor,
+  isReportEmpty,
 } from '../../reports/reportFormatting';
 
 interface ReportsTableProps {
@@ -48,6 +51,11 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({ reports, onSelect })
           {reports.map((report) => {
             const title = report.title || 'Untitled Report';
             const zoneName = report.zone?.name || 'Unknown Zone';
+            // Flag no-combat logs so the (default) table view forewarns the user
+            // before they open one — matching the card view's "Empty" badge.
+            // Load-bearing now that the list fails open and shows whole pages of
+            // still-processing logs instead of hiding them.
+            const empty = isReportEmpty(report);
             return (
               <TableRow
                 key={report.code}
@@ -95,22 +103,35 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({ reports, onSelect })
               >
                 <TableCell sx={{ verticalAlign: 'top', whiteSpace: 'normal' }}>
                   <Box>
-                    <Typography
-                      variant="body2"
-                      sx={{
-                        color: 'primary.main',
-                        fontWeight: 'medium',
-                        overflowWrap: 'anywhere',
-                        wordBreak: 'break-word',
-                        lineHeight: 1.4,
-                        display: '-webkit-box',
-                        WebkitLineClamp: 2,
-                        WebkitBoxOrient: 'vertical',
-                        overflow: 'hidden',
-                      }}
-                    >
-                      {title}
-                    </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 0.75 }}>
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          color: 'primary.main',
+                          fontWeight: 'medium',
+                          overflowWrap: 'anywhere',
+                          wordBreak: 'break-word',
+                          lineHeight: 1.4,
+                          display: '-webkit-box',
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: 'vertical',
+                          overflow: 'hidden',
+                        }}
+                      >
+                        {title}
+                      </Typography>
+                      {empty && (
+                        <Tooltip title={EMPTY_REPORT_TOOLTIP} arrow>
+                          <Chip
+                            label="Empty"
+                            size="small"
+                            color="warning"
+                            variant="outlined"
+                            sx={{ flexShrink: 0, fontSize: '0.65rem', height: 18, mt: 0.25 }}
+                          />
+                        </Tooltip>
+                      )}
+                    </Box>
                     <Typography
                       variant="caption"
                       sx={{ color: 'text.secondary', display: 'block', mt: 0.25 }}
