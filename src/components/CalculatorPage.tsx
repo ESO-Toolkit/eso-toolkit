@@ -1,7 +1,7 @@
 /**
  * /calculator host page — a top-level tab switcher between the existing stat
- * calculator (Penetration / Critical / Armor), the Ultimate Calculator, and the
- * Scribing planner.
+ * calculator (Penetration / Critical / Armor), the Ultimate Calculator, the
+ * Scribing planner, and the Gear Upgrade optimizer.
  *
  * The Stats tab renders the original `Calculator` unchanged, so its sticky
  * footer and internal pen/crit/armor tabs keep working exactly as before — this
@@ -12,7 +12,12 @@
  * the user is already on /calculator.
  */
 
-import { BoltOutlined, HistoryEduOutlined, TuneOutlined } from '@mui/icons-material';
+import {
+  BoltOutlined,
+  HistoryEduOutlined,
+  TrendingUpOutlined,
+  TuneOutlined,
+} from '@mui/icons-material';
 import { Box, Container, Tab, Tabs } from '@mui/material';
 import React, { Suspense } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -34,11 +39,17 @@ const ScribingSimulator = React.lazy(() =>
   })),
 );
 
-type TopTab = 'stats' | 'ultimate' | 'scribing';
+const GearUpgradeCalculator = React.lazy(() =>
+  import('@features/gear-upgrade/GearUpgradeCalculator').then((m) => ({
+    default: m.GearUpgradeCalculator,
+  })),
+);
 
-const VALID_TABS: readonly TopTab[] = ['stats', 'ultimate', 'scribing'];
+type TopTab = 'stats' | 'ultimate' | 'scribing' | 'gear';
 
-/** Map the URL hash (#ultimate / #scribing) to a tab, defaulting to Stats. */
+const VALID_TABS: readonly TopTab[] = ['stats', 'ultimate', 'scribing', 'gear'];
+
+/** Map the URL hash (#ultimate / #scribing / #gear) to a tab, defaulting to Stats. */
 function tabFromHash(hash: string): TopTab {
   const h = hash.replace('#', '').toLowerCase();
   return (VALID_TABS as readonly string[]).includes(h) ? (h as TopTab) : 'stats';
@@ -73,10 +84,12 @@ export const CalculatorPage: React.FC = () => {
           value={tab}
           onChange={handleChange}
           aria-label="Calculator type"
-          variant="standard"
+          variant="scrollable"
+          scrollButtons={false}
           sx={(theme) => ({
             minHeight: 46,
             display: 'inline-flex',
+            maxWidth: '100%',
             p: 0.5,
             borderRadius: 3,
             border: `1px solid ${theme.palette.divider}`,
@@ -88,11 +101,15 @@ export const CalculatorPage: React.FC = () => {
             // filled pill behind the active tab instead.
             '& .MuiTabs-indicator': { display: 'none' },
             '& .MuiTabs-flexContainer': { gap: 0.5 },
+            // Let the pills swipe-scroll horizontally when they overflow a narrow
+            // screen instead of being clipped.
+            '& .MuiTabs-scroller': { overflowX: 'auto !important' },
             '& .MuiTab-root': {
               textTransform: 'none',
               fontWeight: 600,
               minHeight: 38,
               borderRadius: 2.25,
+              whiteSpace: 'nowrap',
               px: { xs: 1.5, sm: 2 },
               color: theme.palette.text.secondary,
               transition: 'background-color 0.18s ease, color 0.18s ease',
@@ -144,6 +161,12 @@ export const CalculatorPage: React.FC = () => {
             iconPosition="start"
             label="Scribing"
           />
+          <Tab
+            value="gear"
+            icon={<TrendingUpOutlined fontSize="small" />}
+            iconPosition="start"
+            label="Gear Upgrades"
+          />
         </Tabs>
       </Container>
 
@@ -176,6 +199,14 @@ export const CalculatorPage: React.FC = () => {
             <ScribingSimulator />
           </Suspense>
         </Box>
+      )}
+
+      {tab === 'gear' && (
+        <Container maxWidth="lg" sx={{ py: 3 }}>
+          <Suspense fallback={<UltimateCalculatorSkeleton />}>
+            <GearUpgradeCalculator />
+          </Suspense>
+        </Container>
       )}
     </Box>
   );

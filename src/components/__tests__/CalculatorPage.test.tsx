@@ -24,6 +24,13 @@ jest.mock(
   }),
   { virtual: true },
 );
+jest.mock(
+  '@features/gear-upgrade/GearUpgradeCalculator',
+  () => ({
+    GearUpgradeCalculator: () => <div data-testid="gear-upgrade-calculator">GEAR UPGRADES</div>,
+  }),
+  { virtual: true },
+);
 
 import { CalculatorPage } from '../CalculatorPage';
 
@@ -40,13 +47,25 @@ function renderPage(initialPath = '/calculator') {
 }
 
 describe('CalculatorPage', () => {
-  it('shows all three top-level tabs and defaults to Stats', () => {
+  it('shows all top-level tabs and defaults to Stats', () => {
     renderPage();
     expect(screen.getByRole('tab', { name: /Stats/i })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: /Ultimate/i })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: /Scribing/i })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /Gear Upgrades/i })).toBeInTheDocument();
     // Stat calculator is rendered by default.
     expect(screen.getByTestId('stat-calculator')).toBeInTheDocument();
+  });
+
+  it('switches to the Gear Upgrades tab and lazy-loads the optimizer', async () => {
+    renderPage();
+    fireEvent.click(screen.getByRole('tab', { name: /Gear Upgrades/i }));
+    await waitFor(() => expect(screen.getByTestId('gear-upgrade-calculator')).toBeInTheDocument());
+  });
+
+  it('honors a #gear deep-link on first render', async () => {
+    renderPage('/calculator#gear');
+    await waitFor(() => expect(screen.getByTestId('gear-upgrade-calculator')).toBeInTheDocument());
   });
 
   it('switches to the Ultimate tab and lazy-loads the calculator', async () => {
