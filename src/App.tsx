@@ -46,6 +46,11 @@ import store, { persistor } from './store/storeWithHistory';
 import { initializeAnalytics } from './utils/analytics';
 import { getBaseUrl } from './utils/envUtils';
 import { initializeErrorTracking, addBreadcrumb } from './utils/errorTracking';
+import {
+  importRosterHubPage,
+  importBuildHubPage,
+  importPackHubPage,
+} from './utils/hubRoutePreload';
 // Initialize error tracking before the app starts
 initializeErrorTracking();
 
@@ -186,7 +191,7 @@ const GearSetsPage = React.lazy(() =>
 );
 
 const RosterHubPage = React.lazy(() =>
-  import('./features/roster-hub/components/RosterHubPage').then((module) => ({
+  importRosterHubPage().then((module) => ({
     default: module.RosterHubPage,
   })),
 );
@@ -208,13 +213,13 @@ const TempBuildViewPage = React.lazy(() =>
 );
 
 const BuildHubPage = React.lazy(() =>
-  import('./features/build-hub/components/BuildHubPage').then((module) => ({
+  importBuildHubPage().then((module) => ({
     default: module.BuildHubPage,
   })),
 );
 
 const PackHubPage = React.lazy(() =>
-  import('./features/pack-hub/components/PackHubPage').then((module) => ({
+  importPackHubPage().then((module) => ({
     default: module.PackHubPage,
   })),
 );

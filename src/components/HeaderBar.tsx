@@ -43,6 +43,7 @@ import {
   useViewTransitionNavigate,
   type ViewTransitionType,
 } from '../hooks/useViewTransitionNavigate';
+import { preloadHubRoutes } from '../utils/hubRoutePreload';
 
 import { PerfTierToggle } from './PerfTierToggle';
 import { ThemeToggle } from './ThemeToggle';
@@ -523,6 +524,29 @@ export const HeaderBar: React.FC = () => {
     }
   }, [isLoggedIn, currentUser, userLoading, userError, refetchUser]);
 
+  // Warm the three hub route chunks (/roster-hub, /build-hub, /pack-hub) during
+  // idle time so the first lateral slide between them captures real destination
+  // content in its View Transition snapshot rather than a cold-chunk placeholder.
+  // Deferred to idle so it never competes with the page's own critical resources.
+  React.useEffect(() => {
+    const ric = (
+      window as unknown as {
+        requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
+        cancelIdleCallback?: (handle: number) => void;
+      }
+    ).requestIdleCallback;
+    if (typeof ric === 'function') {
+      const handle = ric(() => preloadHubRoutes(), { timeout: 2500 });
+      return () => {
+        (
+          window as unknown as { cancelIdleCallback?: (handle: number) => void }
+        ).cancelIdleCallback?.(handle);
+      };
+    }
+    const timer = window.setTimeout(() => preloadHubRoutes(), 200);
+    return () => window.clearTimeout(timer);
+  }, []);
+
   const userLabel = React.useMemo(() => {
     if (userDisplayName) return userDisplayName;
     if (userLoading) return 'Loading…';
@@ -845,6 +869,11 @@ export const HeaderBar: React.FC = () => {
                 <Button
                   key={item.text}
                   color="inherit"
+                  // Warm the hub chunks the instant the user shows intent (hover or
+                  // keyboard focus) so even a click faster than the idle preload still
+                  // captures real content in the slide's View Transition snapshot.
+                  onPointerEnter={() => preloadHubRoutes()}
+                  onFocus={() => preloadHubRoutes()}
                   onClick={() =>
                     navigate(item.path, { vtType: getLateralTransitionType(item.path) })
                   }
