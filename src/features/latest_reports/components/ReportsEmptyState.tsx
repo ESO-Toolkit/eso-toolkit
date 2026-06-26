@@ -28,7 +28,10 @@ export function selectEmptyStateKind(input: EmptyStateInput): EmptyStateKind {
   if (searchActive && loadedCount > 0) return 'search-no-match';
   // The server returned nothing for the active zone/date filter.
   if (serverFilterActive && loadedCount === 0) return 'filter-no-results';
-  // Every row on this page was an empty (no-combat) log.
+  // Every row on this page was an empty (no-combat) log. Kept as defense-in-depth:
+  // `useLatestReportsQuery` now fails open (`selectReportsForDisplay`) and shows
+  // the reports instead of hiding the whole page, so this branch is no longer
+  // reachable from that surface — do NOT "simplify" the hook to re-arm the wall.
   if (loadedCount === 0 && hiddenEmptyCount > 0) return 'all-hidden';
   return 'cold-empty';
 }

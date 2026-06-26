@@ -99,6 +99,15 @@ export interface ReportEmptinessFields {
   fights?: ReadonlyArray<unknown> | null;
 }
 
+/**
+ * Shared tooltip copy for the per-report "Empty" badge (card + table views).
+ * Leads with the common, self-healing case — a just-uploaded log that ESO Logs
+ * has not finished parsing yet — rather than implying the upload failed, while
+ * still covering the rarer permanent parse failure.
+ */
+export const EMPTY_REPORT_TOOLTIP =
+  'No combat data yet — this log may still be processing on ESO Logs, or its fights failed to parse.';
+
 export const isReportEmpty = (report: ReportEmptinessFields): boolean => {
   // When the query selected fights, prefer that authoritative signal — but only
   // an empty list (resolver succeeded, zero fights) or a list with at least one
@@ -127,4 +136,36 @@ export const partitionReportsByData = <T extends ReportEmptinessFields>(
 ): { reportsWithData: T[]; emptyCount: number } => {
   const reportsWithData = reports.filter((report) => !isReportEmpty(report));
   return { reportsWithData, emptyCount: reports.length - reportsWithData.length };
+};
+
+/**
+ * Decides which loaded reports a public *browse* list should display while
+ * hiding empty (no-combat) logs — but WITHOUT ever blanking out the whole page.
+ *
+ * Hiding individual empty logs is correct when a page also carries real reports:
+ * it removes dead links that open to "No fights available". The failure mode is
+ * hiding *every* report on a page. During a busy upload window the freshest page
+ * can be dominated — or, at a peak, entirely composed — of just-uploaded logs
+ * that have not finished parsing yet (`segments: 0`, `fights: []`). Hiding all of
+ * them strands the user on a dead-end "every report on this page is empty" wall,
+ * even though those reports exist and self-heal within minutes as ESO Logs
+ * finishes parsing them. A *permanently* broken full page is statistically
+ * impossible — broken slip-throughs are well under 1% of logs — so an all-empty
+ * page is overwhelmingly a transient upload burst, not 25 genuinely dead logs.
+ *
+ * Therefore, when every loaded report would be hidden, fail OPEN and show them
+ * all (`hiddenEmptyCount: 0`). The reports stay individually openable and the
+ * list is never a dead end; the worst case is a recent log that opens to "No
+ * fights available" until it finishes parsing — strictly better than telling the
+ * user there is nothing here. This mirrors the fail-open fallback already used by
+ * `useLatestReport` (prefer a report with data, but never hide the only ones).
+ */
+export const selectReportsForDisplay = <T extends ReportEmptinessFields>(
+  reports: T[],
+): { reportsToShow: T[]; hiddenEmptyCount: number } => {
+  const { reportsWithData, emptyCount } = partitionReportsByData(reports);
+  if (reports.length > 0 && reportsWithData.length === 0) {
+    return { reportsToShow: reports, hiddenEmptyCount: 0 };
+  }
+  return { reportsToShow: reportsWithData, hiddenEmptyCount: emptyCount };
 };

@@ -12,6 +12,7 @@ import React from 'react';
 
 import { useViewTransitionNavigate } from '../../hooks/useViewTransitionNavigate';
 import {
+  EMPTY_REPORT_TOOLTIP,
   formatReportDateTime,
   formatReportDuration,
   isReportEmpty,
@@ -186,10 +187,7 @@ const LogRow: React.FC<{ report: ProfileReportSummary }> = ({ report }) => {
             {title}
           </Typography>
           {isReportEmpty(report) && (
-            <Tooltip
-              title="This log contains no combat data, likely due to an upload or parsing issue on ESO Logs"
-              arrow
-            >
+            <Tooltip title={EMPTY_REPORT_TOOLTIP} arrow>
               {/* Re-enable pointer events (the parent disables them for the
                   full-bleed row button) so the tooltip is reachable. */}
               <Chip

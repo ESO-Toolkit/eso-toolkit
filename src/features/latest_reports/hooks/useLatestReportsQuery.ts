@@ -7,7 +7,7 @@ import {
   GetLatestReportsQueryVariables,
   UserReportSummaryFragment,
 } from '../../../graphql/gql/graphql';
-import { partitionReportsByData } from '../../reports/reportFormatting';
+import { selectReportsForDisplay } from '../../reports/reportFormatting';
 
 import { rangeToEpochMs, type DateRangePreset } from './rangeToEpochMs';
 
@@ -113,7 +113,11 @@ export function useLatestReportsQuery(input: LatestReportsQueryInput): LatestRep
       const fetched = (reportPagination.data ?? []).filter(
         (report): report is NonNullable<typeof report> => report !== null,
       );
-      const { reportsWithData, emptyCount } = partitionReportsByData(fetched);
+      // Hide empty (no-combat) logs, but never the whole page: if every report
+      // the server returned would be hidden — e.g. a busy upload window where the
+      // freshest page is dominated by still-parsing logs — fail open and show
+      // them all so the user is never stranded on an "every report is empty" wall.
+      const { reportsToShow, hiddenEmptyCount } = selectReportsForDisplay(fetched);
 
       const currentPage = reportPagination.current_page || 1;
       const lastPage = reportPagination.last_page;
@@ -121,8 +125,8 @@ export function useLatestReportsQuery(input: LatestReportsQueryInput): LatestRep
       const totalPages = lastPage > 0 ? lastPage : hasMorePages ? currentPage + 1 : currentPage;
 
       setState({
-        reports: reportsWithData,
-        hiddenEmptyCount: emptyCount,
+        reports: reportsToShow,
+        hiddenEmptyCount,
         loading: false,
         error: null,
         pagination: {
