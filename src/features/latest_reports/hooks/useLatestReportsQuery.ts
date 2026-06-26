@@ -179,6 +179,13 @@ export function useLatestReportsQuery(input: LatestReportsQueryInput): LatestRep
           errorPolicy: 'all',
           fetchPolicy: 'network-only',
         });
+        // The request-id guard keeps the DISPLAYED state from the newest load. A
+        // superseded same-variable response can still write its (seconds-older)
+        // snapshot into Apollo's shared cache before this check — but that is within
+        // cache-and-network's tolerance: the only effect is a future cache-only peek
+        // briefly showing that snapshot, which the same mount's network read then
+        // corrects. We intentionally don't use no-cache here (that would leave the
+        // peek with nothing to paint) or hand-roll abort/writeQuery for it.
         if (requestId !== requestIdRef.current) return; // superseded by a newer load
         if (!applyReportData(fresh, false)) {
           setState((prev) => ({
