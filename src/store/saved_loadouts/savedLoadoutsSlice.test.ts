@@ -7,6 +7,7 @@ import savedLoadoutsReducer, {
   updateSavedLoadout,
   renameSavedLoadout,
   deleteSavedLoadout,
+  bindUnownedOwnerUserId,
 } from './savedLoadoutsSlice';
 import type { SavedLoadout } from './savedLoadoutsSlice';
 
@@ -197,6 +198,23 @@ describe('savedLoadoutsSlice', () => {
       const { loadouts } = store.getState().savedLoadouts;
       expect(loadouts).toHaveLength(1);
       expect(loadouts[0].ownerUserId).toBe('u2'); // the other account's row is untouched
+    });
+  });
+
+  describe('bindUnownedOwnerUserId', () => {
+    it('binds the unowned namespace to the first account', () => {
+      const store = createTestStore();
+      store.dispatch(bindUnownedOwnerUserId('A'));
+      expect(store.getState().savedLoadouts.unownedOwnerUserId).toBe('A');
+    });
+
+    it('is write-once: a later account never overwrites the binding', () => {
+      const store = createTestStore();
+      store.dispatch(bindUnownedOwnerUserId('A'));
+      // B syncs on the same browser — the binding must stay pinned to A, otherwise B
+      // would re-expose A's unowned (guest/legacy) rows.
+      store.dispatch(bindUnownedOwnerUserId('B'));
+      expect(store.getState().savedLoadouts.unownedOwnerUserId).toBe('A');
     });
   });
 });

@@ -40,9 +40,18 @@ interface SavedLoadoutsState {
   /**
    * The account id the local library was last synced with. Used to detect a
    * shared browser switching accounts, so one user's local loadouts are never
-   * pushed into another user's account.
+   * pushed into another user's account. MUTABLE — overwritten on each sync so it
+   * always reflects the latest account (this is what scopes `lastSyncedAt`).
    */
   syncedUserId?: string;
+  /**
+   * WRITE-ONCE binding of the unowned (guest/legacy) namespace to the FIRST
+   * account that synced on this browser. Unlike `syncedUserId`, later syncs by a
+   * different account never overwrite it (see {@link bindUnownedOwnerUserId}), so
+   * a second account can't re-expose — or claim — the first account's
+   * pre-account loadouts. Reset only by clearing the persisted loadout data.
+   */
+  unownedOwnerUserId?: string;
 }
 
 const initialState: SavedLoadoutsState = {
@@ -158,6 +167,18 @@ const savedLoadoutsSlice = createSlice({
     setSyncedUserId(state, action: PayloadAction<string | undefined>) {
       state.syncedUserId = action.payload;
     },
+    /**
+     * Bind the unowned (guest/legacy) namespace to an account — WRITE ONCE. The
+     * first concrete account to sync wins; every later write is ignored, so a
+     * second account that syncs on the same browser can never re-point the binding
+     * at itself and thereby re-expose the first account's pre-account loadouts.
+     * Dispatched on every successful sync (it only takes effect the first time).
+     */
+    bindUnownedOwnerUserId(state, action: PayloadAction<string>) {
+      if (state.unownedOwnerUserId === undefined) {
+        state.unownedOwnerUserId = action.payload;
+      }
+    },
   },
 });
 
@@ -169,5 +190,6 @@ export const {
   replaceAllLoadouts,
   setLastSyncedAt,
   setSyncedUserId,
+  bindUnownedOwnerUserId,
 } = savedLoadoutsSlice.actions;
 export default savedLoadoutsSlice.reducer;

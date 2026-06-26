@@ -52,7 +52,7 @@ import { WorkInProgressDisclaimer } from '@/components/WorkInProgressDisclaimer'
 import { useAuth } from '@/features/auth/AuthContext';
 import { useDropdownMenuProps } from '@/hooks/useDropdownMenuDirection';
 import {
-  selectLoadoutsSyncedUserId,
+  selectUnownedOwnerUserId,
   selectVisibleLoadouts,
   type SavedLoadout,
 } from '@/store/saved_loadouts';
@@ -158,9 +158,9 @@ export const LoadoutManager: React.FC = () => {
   );
   const currentCharacter = useSelector((state: RootState) => state.loadout.currentCharacter);
   const { currentUser } = useAuth();
-  const syncedUserId = useSelector(selectLoadoutsSyncedUserId);
+  const unownedOwnerUserId = useSelector(selectUnownedOwnerUserId);
   const savedLoadoutCount = useSelector(
-    selectVisibleLoadouts(currentUser?.id ? String(currentUser.id) : undefined, syncedUserId),
+    selectVisibleLoadouts(currentUser?.id ? String(currentUser.id) : undefined, unownedOwnerUserId),
   ).length;
 
   const [view, setView] = useState<'setups' | 'library'>('setups');

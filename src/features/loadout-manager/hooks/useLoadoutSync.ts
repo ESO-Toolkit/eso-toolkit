@@ -21,6 +21,7 @@ import {
   selectLoadoutsSyncedUserId,
   setLastSyncedAt,
   setSyncedUserId,
+  bindUnownedOwnerUserId,
   type SavedLoadout,
 } from '@/store/saved_loadouts';
 import type { RootState } from '@/store/storeWithHistory';
@@ -261,6 +262,10 @@ export function useLoadoutSync(): UseLoadoutSyncResult {
         );
         dispatch(replaceAllLoadouts([...others, ...finalMine]));
         dispatch(setSyncedUserId(owner));
+        // Bind the unowned namespace to this account on the FIRST successful sync.
+        // The reducer is write-once, so dispatching it on every sync is safe — a
+        // later account never re-points it and can't re-expose these guest rows.
+        dispatch(bindUnownedOwnerUserId(owner));
         dispatch(setLastSyncedAt(new Date().toISOString()));
         // Partial sync: the saved rows ARE reconciled above (so nothing is duplicated),
         // but some rows couldn't be pushed — either the account cap (server skipped) or
