@@ -2,14 +2,34 @@ import { ThemeProvider, createTheme } from '@mui/material';
 import { configureStore } from '@reduxjs/toolkit';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import '@testing-library/jest-dom';
+import type { ComponentProps } from 'react';
 import { Provider } from 'react-redux';
 
+import { AuthContext } from '@/features/auth/AuthContext';
 import savedLoadoutsReducer from '@/store/saved_loadouts/savedLoadoutsSlice';
 import type { SavedLoadout } from '@/store/saved_loadouts/savedLoadoutsSlice';
 
 import type { LoadoutSetup } from '../types/loadout.types';
 
 import { LoadoutLibraryPanel } from './LoadoutLibraryPanel';
+
+type AuthValue = ComponentProps<typeof AuthContext.Provider>['value'];
+
+// Minimal AuthContext value. The panel only reads isLoggedIn/accessToken/currentUser.id/
+// userLoading (via useLoadoutSync's defensive useContext), so the rest are inert stubs.
+const makeAuth = (userId: number | null): AuthValue =>
+  ({
+    accessToken: userId !== null ? 'test-token' : '',
+    isLoggedIn: userId !== null,
+    isBanned: false,
+    banReason: null,
+    currentUser: userId !== null ? { id: userId } : null,
+    userLoading: false,
+    userError: null,
+    setAccessToken: () => {},
+    rebindAccessToken: () => {},
+    refetchUser: async () => {},
+  }) as unknown as AuthValue;
 
 const makeSetup = (name = 'My Setup'): LoadoutSetup => ({
   name,
@@ -102,5 +122,55 @@ describe('LoadoutLibraryPanel', () => {
     fireEvent.click(within(dialog).getByRole('button', { name: 'Save' }));
 
     expect(store.getState().savedLoadouts.loadouts[0].name).toBe('Renamed Tank');
+  });
+});
+
+// Pins the call-site wiring (the panel must feed selectVisibleLoadouts the IMMUTABLE
+// `unownedOwnerUserId`, not the mutable `syncedUserId`). The store-level selector test
+// can't catch a wrong field choice here, and the other panel tests render signed-out
+// (currentUserId undefined), where the selector short-circuits and ignores the binding.
+describe('LoadoutLibraryPanel — unowned visibility wiring (signed-in second account)', () => {
+  const renderAs = (
+    savedLoadouts: {
+      loadouts: SavedLoadout[];
+      syncedUserId?: string;
+      unownedOwnerUserId?: string;
+    },
+    userId: number,
+  ) => {
+    const store = configureStore({
+      reducer: { savedLoadouts: savedLoadoutsReducer },
+      preloadedState: { savedLoadouts: savedLoadouts },
+    });
+    return render(
+      <Provider store={store}>
+        <AuthContext.Provider value={makeAuth(userId)}>
+          <ThemeProvider theme={createTheme({ palette: { mode: 'dark' } })}>
+            <LoadoutLibraryPanel />
+          </ThemeProvider>
+        </AuthContext.Provider>
+      </Provider>,
+    );
+  };
+
+  it('hides the first account’s unowned rows from a different signed-in account', () => {
+    // Browser first bound to account 1 (unownedOwnerUserId), then account 2 synced
+    // (syncedUserId moved to 2). Account 2 is viewing. The immutable binding (1) must
+    // win: account 2 sees its own row but NOT account 1's legacy guest loadout. If the
+    // call site fed the mutable syncedUserId (2) instead, the secret row would appear.
+    renderAs(
+      {
+        loadouts: [
+          makeEntry({ id: 'legacy', name: 'Account 1 Secret', ownerUserId: undefined }),
+          makeEntry({ id: 'mine', name: 'Account 2 Own', ownerUserId: '2' }),
+        ],
+        unownedOwnerUserId: '1',
+        syncedUserId: '2',
+      },
+      2,
+    );
+
+    expect(screen.getByText('Account 2 Own')).toBeInTheDocument();
+    expect(screen.queryByText('Account 1 Secret')).not.toBeInTheDocument();
   });
 });

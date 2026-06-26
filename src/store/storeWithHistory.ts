@@ -8,6 +8,7 @@ import {
 import {
   persistStore,
   persistReducer,
+  createMigrate,
   FLUSH,
   PAUSE,
   PERSIST,
@@ -27,6 +28,7 @@ import dashboardReducer from './dashboard/dashboardSlice';
 import { eventsReducer } from './events_data';
 import masterDataReducer from './master_data/masterDataSlice';
 import parseAnalysisReducer from './parse_analysis/parseAnalysisSlice';
+import { persistMigrations, PERSIST_VERSION } from './persistMigrations';
 import playerDataReducer from './player_data/playerDataSlice';
 import reportReducer from './report/reportSlice';
 import { savedBuildsReducer } from './saved_builds';
@@ -112,6 +114,9 @@ export type RootState = ReturnType<typeof rootReducer>;
 // Persist config
 const persistConfig = {
   key: 'root',
+  version: PERSIST_VERSION,
+  // Backfill the write-once unowned-loadout binding on upgrade (see persistMigrations).
+  migrate: createMigrate(persistMigrations, { debug: false }),
   storage,
   transforms: [uiTransform], // Apply transform to exclude report-specific UI state
   whitelist: ['ui', 'loadout', 'dashboard', 'savedRosters', 'savedBuilds', 'savedLoadouts'], // Persist essential data, loadout, saved rosters, saved builds, and saved loadouts
