@@ -68,6 +68,17 @@ describe('Scribing Architecture Integration', () => {
 
       expect(isValid).toBe(false);
     });
+
+    it('accepts a partial selection but rejects an unknown script (one contract)', async () => {
+      // Empty slots are allowed (in-progress build).
+      await expect(repository.validateCombination(GRIMOIRE_SLUG, FOCUS_SLUG, '', '')).resolves.toBe(
+        true,
+      );
+      // A provided-but-unknown script id is invalid.
+      await expect(
+        repository.validateCombination(GRIMOIRE_SLUG, 'not-a-real-focus', '', ''),
+      ).resolves.toBe(false);
+    });
   });
 
   describe('Ability Mapping Service', () => {
@@ -114,7 +125,6 @@ describe('Scribing Architecture Integration', () => {
 
       expect(result.isValid).toBe(true);
       expect(result.calculatedSkill.name).toBeDefined();
-      expect(result.calculatedSkill.cost).toBeGreaterThan(0);
       expect(result.combination.grimoire).toBe(GRIMOIRE_NAME);
       // The physical focus transforms "Traveling Knife" -> "Sundering Knife".
       expect(result.calculatedSkill.name).toBe('Sundering Knife');
@@ -130,6 +140,27 @@ describe('Scribing Architecture Integration', () => {
       expect(result.isValid).toBe(false);
       expect(result.errors).toBeDefined();
       expect(result.errors?.length).toBeGreaterThan(0);
+    });
+
+    it('should reject an unknown script id instead of silently dropping it', async () => {
+      const result = await simulatorService.simulate({
+        grimoireId: GRIMOIRE_SLUG,
+        focusScriptId: 'not-a-real-focus',
+      });
+
+      expect(result.isValid).toBe(false);
+      expect(result.errors?.some((e) => /Unknown script/i.test(e))).toBe(true);
+    });
+
+    it('validateCombination agrees with simulate for partial + bad selections', async () => {
+      // Partial but valid (grimoire + one compatible focus).
+      await expect(simulatorService.validateCombination(GRIMOIRE_SLUG, FOCUS_SLUG)).resolves.toBe(
+        true,
+      );
+      // Unknown script id is invalid.
+      await expect(
+        simulatorService.validateCombination(GRIMOIRE_SLUG, 'not-a-real-focus'),
+      ).resolves.toBe(false);
     });
 
     it('should get available combinations', async () => {

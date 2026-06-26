@@ -122,17 +122,45 @@ export interface ScribingSimulationResponse {
     name: string;
     description: string;
     resourceType: ResourceType;
-    cost: number;
-    castTime: number;
-    range: number;
+    /**
+     * No exact cost number is reported — a scribed skill's cost depends on the
+     * Focus script and character stats. `costVaries` flags grimoires (e.g. Soul
+     * Burst) whose cost is inherently variable (highest-resource).
+     */
+    costVaries?: boolean;
+    /**
+     * Cast time (ms) / range (m) are omitted rather than fabricated: the
+     * simulator conveys cast behaviour and target via the descriptive
+     * `castType` / `targetType` strings instead of inexact numbers.
+     */
+    castTime?: number;
+    range?: number;
     duration?: number;
     damage?: {
       type: DamageType;
       amount: number;
     };
     effects: string[];
+    /** Resulting in-game ability id (for icon/name resolution). */
+    abilityId?: number;
+    /** ESO Logs ability-icon filename (no extension). */
+    icon?: string;
+    /** Skill line the grimoire belongs to. */
+    skillLine?: string;
+    targetType?: string;
+    castType?: string;
+    /** One structured entry per chosen Focus/Signature/Affix script. */
+    scriptBreakdown?: Array<{
+      slot: 'focus' | 'signature' | 'affix';
+      name: string;
+      effect: string;
+      category?: string;
+      acquisition?: string;
+    }>;
   };
   isValid: boolean;
+  /** Non-fatal warnings (e.g. an incompatible script was ignored). */
+  warnings?: string[];
   errors?: string[];
 }
 

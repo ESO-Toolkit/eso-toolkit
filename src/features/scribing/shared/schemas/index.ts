@@ -21,14 +21,23 @@ export const DamageTypeSchema = z.enum([
 ]);
 export const ScriptTypeSchema = z.enum(['Focus', 'Signature', 'Affix']);
 export const SkillLineSchema = z.enum([
-  'Support',
+  // Weapon lines
+  'Two Handed',
+  'One Hand and Shield',
+  'Dual Wield',
+  'Bow',
   'Destruction Staff',
   'Restoration Staff',
-  'Assault',
-  'Mage Guild',
+  // Guild lines
+  'Mages Guild',
   'Fighters Guild',
-  'Psijic Order',
   'Soul Magic',
+  // Alliance War lines
+  'Assault',
+  'Support',
+  // Back-compat (legacy detection metadata)
+  'Mage Guild',
+  'Psijic Order',
   'Vampire',
   'Werewolf',
 ]);
@@ -43,10 +52,16 @@ export const GrimoireSchema = z.object({
     first: z.number().min(0),
     additional: z.number().min(0),
   }),
+  costVaries: z.boolean().optional(),
   description: z.string(),
   iconUrl: z.string().url().optional(),
+  icon: z.string().optional(),
   abilityIds: z.array(z.number()).optional(),
   resource: ResourceTypeSchema.optional(),
+  acquisition: z.string().optional(),
+  baseEffect: z.string().optional(),
+  targetType: z.string().optional(),
+  castType: z.string().optional(),
   nameTransformations: z
     .record(
       z.string(),
@@ -66,6 +81,8 @@ export const ScriptSchema = z.object({
   icon: z.string(),
   compatibleGrimoires: z.array(z.string()),
   description: z.string(),
+  category: z.string().optional(),
+  acquisition: z.string().optional(),
   questReward: z.string().optional(),
   freeLocation: z.string().optional(),
   abilityIds: z.array(z.number()).optional(),
@@ -265,9 +282,9 @@ export const ScribingSimulationResponseSchema = z.object({
     name: z.string().min(1),
     description: z.string(),
     resourceType: ResourceTypeSchema,
-    cost: z.number().min(0),
-    castTime: z.number().min(0),
-    range: z.number().min(0),
+    costVaries: z.boolean().optional(),
+    castTime: z.number().min(0).optional(),
+    range: z.number().min(0).optional(),
     duration: z.number().min(0).optional(),
     damage: z
       .object({
@@ -276,8 +293,25 @@ export const ScribingSimulationResponseSchema = z.object({
       })
       .optional(),
     effects: z.array(z.string()),
+    abilityId: z.number().optional(),
+    icon: z.string().optional(),
+    skillLine: z.string().optional(),
+    targetType: z.string().optional(),
+    castType: z.string().optional(),
+    scriptBreakdown: z
+      .array(
+        z.object({
+          slot: z.enum(['focus', 'signature', 'affix']),
+          name: z.string(),
+          effect: z.string(),
+          category: z.string().optional(),
+          acquisition: z.string().optional(),
+        }),
+      )
+      .optional(),
   }),
   isValid: z.boolean(),
+  warnings: z.array(z.string()).optional(),
   errors: z.array(z.string()).optional(),
 });
 

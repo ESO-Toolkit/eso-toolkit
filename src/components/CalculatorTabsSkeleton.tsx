@@ -1,25 +1,26 @@
 /**
- * Static placeholder for the /calculator page's top tab strip (Stats / Ultimate).
+ * Static placeholder for the /calculator page's top tab strip
+ * (Stats / Ultimate / Scribing).
  *
  * The App-level Suspense fallback replaces the *entire* `CalculatorPage` while
  * its chunk loads — including the tab bar that `CalculatorPage` always renders
  * above the calculator. Without this, the tab strip pops in when the chunk
  * resolves and pushes the skeleton/content down. Rendering this shell (with the
  * about-to-be-active tab pre-selected) reserves that space so first paint
- * matches the loaded page.
+ * matches the loaded page — and shows all three tabs, not a momentary subset.
  *
  * It mirrors `CalculatorPage`'s `<Tabs>` styling so the swap is seamless; the
  * labels/icons are the real ones (they're static chrome, not data) so there's
  * no shimmer-to-content flash.
  */
 
-import { BoltOutlined, TuneOutlined } from '@mui/icons-material';
+import { BoltOutlined, HistoryEduOutlined, TuneOutlined } from '@mui/icons-material';
 import { Box, Container, useTheme } from '@mui/material';
 import React from 'react';
 
 interface CalculatorTabsSkeletonProps {
   /** Which tab the loading page is about to show. */
-  selected?: 'stats' | 'ultimate';
+  selected?: 'stats' | 'ultimate' | 'scribing';
 }
 
 export const CalculatorTabsSkeleton: React.FC<CalculatorTabsSkeletonProps> = ({
@@ -82,6 +83,10 @@ export const CalculatorTabsSkeleton: React.FC<CalculatorTabsSkeletonProps> = ({
         <Box sx={pillSx(selected === 'ultimate')}>
           <BoltOutlined fontSize="small" />
           <Box component="span">Ultimate</Box>
+        </Box>
+        <Box sx={pillSx(selected === 'scribing')}>
+          <HistoryEduOutlined fontSize="small" />
+          <Box component="span">Scribing</Box>
         </Box>
       </Box>
     </Container>

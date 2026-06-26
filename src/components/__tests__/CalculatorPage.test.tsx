@@ -1,6 +1,7 @@
 import { ThemeProvider, createTheme } from '@mui/material';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import React from 'react';
+import { MemoryRouter } from 'react-router-dom';
 
 // Mock the heavy children so the test exercises only the tab-switching wrapper.
 jest.mock('../Calculator', () => ({
@@ -16,28 +17,34 @@ jest.mock(
   }),
   { virtual: true },
 );
+jest.mock(
+  '@features/scribing/presentation/components/ScribingSimulator',
+  () => ({
+    ScribingSimulator: () => <div data-testid="scribing-simulator">SCRIBING PLANNER</div>,
+  }),
+  { virtual: true },
+);
 
 import { CalculatorPage } from '../CalculatorPage';
 
 const theme = createTheme();
 
-function renderPage() {
+function renderPage(initialPath = '/calculator') {
   return render(
-    <ThemeProvider theme={theme}>
-      <CalculatorPage />
-    </ThemeProvider>,
+    <MemoryRouter initialEntries={[initialPath]}>
+      <ThemeProvider theme={theme}>
+        <CalculatorPage />
+      </ThemeProvider>
+    </MemoryRouter>,
   );
 }
 
 describe('CalculatorPage', () => {
-  beforeEach(() => {
-    window.location.hash = '';
-  });
-
-  it('shows both top-level tabs and defaults to Stats', () => {
+  it('shows all three top-level tabs and defaults to Stats', () => {
     renderPage();
     expect(screen.getByRole('tab', { name: /Stats/i })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: /Ultimate/i })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /Scribing/i })).toBeInTheDocument();
     // Stat calculator is rendered by default.
     expect(screen.getByTestId('stat-calculator')).toBeInTheDocument();
   });
@@ -48,7 +55,13 @@ describe('CalculatorPage', () => {
     await waitFor(() => expect(screen.getByTestId('ultimate-calculator')).toBeInTheDocument());
   });
 
-  it('keeps the stat calculator mounted (hidden) when on the Ultimate tab', async () => {
+  it('switches to the Scribing tab and lazy-loads the planner', async () => {
+    renderPage();
+    fireEvent.click(screen.getByRole('tab', { name: /Scribing/i }));
+    await waitFor(() => expect(screen.getByTestId('scribing-simulator')).toBeInTheDocument());
+  });
+
+  it('keeps the stat calculator mounted (hidden) when on another tab', async () => {
     renderPage();
     fireEvent.click(screen.getByRole('tab', { name: /Ultimate/i }));
     await waitFor(() => screen.getByTestId('ultimate-calculator'));
@@ -58,8 +71,12 @@ describe('CalculatorPage', () => {
   });
 
   it('honors a #ultimate deep-link on first render', async () => {
-    window.location.hash = '#ultimate';
-    renderPage();
+    renderPage('/calculator#ultimate');
     await waitFor(() => expect(screen.getByTestId('ultimate-calculator')).toBeInTheDocument());
+  });
+
+  it('honors a #scribing deep-link on first render', async () => {
+    renderPage('/calculator#scribing');
+    await waitFor(() => expect(screen.getByTestId('scribing-simulator')).toBeInTheDocument());
   });
 });

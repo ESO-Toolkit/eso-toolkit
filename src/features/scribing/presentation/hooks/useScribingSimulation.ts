@@ -1,219 +1,252 @@
 /**
- * Custom hook for scribing simulation business logic
+ * Live scribing-simulation hook.
+ *
+ * Loads the (small, bundled) scribing dataset once, then derives the compatible
+ * scripts and the resulting scribed skill synchronously via the pure engine on
+ * every selection change — no per-keystroke async round-trips and no manual
+ * "simulate" step. Selection is mirrored to the URL query string so a build is
+ * shareable.
  */
 
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useLogger } from '@/contexts/LoggerContext';
 
-import { ScribingSimulatorService } from '../../application/simulators/ScribingSimulatorService';
-import { JsonScribingDataRepository } from '../../infrastructure/data/JsonScribingDataRepository';
 import {
-  ScribingSimulationRequest,
-  ScribingSimulationResponse,
-  Grimoire,
-  FocusScript,
-  SignatureScript,
-  AffixScript,
-} from '../../shared/types';
+  deriveScribedSkill,
+  getCompatibleScripts,
+  summarizeScribedSkill,
+  type CompatibleScripts,
+  type ScribedSkillResult,
+} from '../../application/scribingEngine';
+import { JsonScribingDataRepository } from '../../infrastructure/data/JsonScribingDataRepository';
+import type { Grimoire, ScribingData } from '../../shared/types';
+
+export interface ScribingSelection {
+  grimoireId: string;
+  focusId?: string;
+  signatureId?: string;
+  affixId?: string;
+}
 
 export interface UseScribingSimulationOptions {
-  autoSimulate?: boolean;
   defaultGrimoire?: string;
 }
 
 export interface UseScribingSimulationResult {
-  // Data
-  grimoires: Grimoire[];
-  availableFocusScripts: FocusScript[];
-  availableSignatureScripts: SignatureScript[];
-  availableAffixScripts: AffixScript[];
-
-  // Current selection
-  selectedGrimoire: string;
-  selectedFocusScript: string;
-  selectedSignatureScript: string;
-  selectedAffixScript: string;
-
-  // Selection methods
-  setSelectedGrimoire: (id: string) => void;
-  setSelectedFocusScript: (id: string) => void;
-  setSelectedSignatureScript: (id: string) => void;
-  setSelectedAffixScript: (id: string) => void;
-
-  // Simulation
-  simulationResult: ScribingSimulationResponse | null;
-  isSimulating: boolean;
-  simulationError: string | null;
-  simulate: () => Promise<void>;
-
-  // State
   isLoading: boolean;
   error: string | null;
   isReady: boolean;
+
+  grimoires: Grimoire[];
+  selection: ScribingSelection;
+  selectedGrimoire: Grimoire | null;
+  compatible: CompatibleScripts;
+  result: ScribedSkillResult | null;
+
+  setGrimoire: (id: string) => void;
+  setFocus: (id: string | undefined) => void;
+  setSignature: (id: string | undefined) => void;
+  setAffix: (id: string | undefined) => void;
+  reset: () => void;
+  randomize: () => void;
+
+  shareUrl: string;
+  summary: string;
+}
+
+const EMPTY_COMPATIBLE: CompatibleScripts = {
+  focusScripts: [],
+  signatureScripts: [],
+  affixScripts: [],
+};
+
+function readSelectionFromUrl(fallbackGrimoire: string): ScribingSelection {
+  if (typeof window === 'undefined') return { grimoireId: fallbackGrimoire };
+  const params = new URLSearchParams(window.location.search);
+  return {
+    grimoireId: params.get('grimoire') || fallbackGrimoire,
+    focusId: params.get('focus') || undefined,
+    signatureId: params.get('signature') || undefined,
+    affixId: params.get('affix') || undefined,
+  };
+}
+
+function pickRandom<T>(items: T[]): T | undefined {
+  if (!items.length) return undefined;
+  // Math.random is fine here — purely cosmetic "surprise me".
+  return items[Math.floor(Math.random() * items.length)];
 }
 
 export function useScribingSimulation(
   options: UseScribingSimulationOptions = {},
 ): UseScribingSimulationResult {
   const logger = useLogger('useScribingSimulation');
-
-  // Services
   const [repository] = useState(() => new JsonScribingDataRepository());
-  const [simulatorService] = useState(() => new ScribingSimulatorService(repository));
 
-  // Data state
-  const [grimoires, setGrimoires] = useState<Grimoire[]>([]);
-  const [availableFocusScripts, setAvailableFocusScripts] = useState<FocusScript[]>([]);
-  const [availableSignatureScripts, setAvailableSignatureScripts] = useState<SignatureScript[]>([]);
-  const [availableAffixScripts, setAvailableAffixScripts] = useState<AffixScript[]>([]);
-
-  // Selection state
-  const [selectedGrimoire, setSelectedGrimoire] = useState<string>(options.defaultGrimoire || '');
-  const [selectedFocusScript, setSelectedFocusScript] = useState<string>('');
-  const [selectedSignatureScript, setSelectedSignatureScript] = useState<string>('');
-  const [selectedAffixScript, setSelectedAffixScript] = useState<string>('');
-
-  // Simulation state
-  const [simulationResult, setSimulationResult] = useState<ScribingSimulationResponse | null>(null);
-  const [isSimulating, setIsSimulating] = useState(false);
-  const [simulationError, setSimulationError] = useState<string | null>(null);
-
-  // Loading state
+  const [data, setData] = useState<ScribingData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selection, setSelection] = useState<ScribingSelection>({ grimoireId: '' });
+  const initialisedRef = useRef(false);
 
-  // Load initial data
+  // Load + adapt the dataset once.
   useEffect(() => {
-    const loadData = async (): Promise<void> => {
+    let cancelled = false;
+    (async (): Promise<void> => {
       try {
         setIsLoading(true);
         setError(null);
+        const loaded = await repository.loadScribingData();
+        if (cancelled) return;
+        setData(loaded);
 
-        const [grimoireList] = await Promise.all([repository.getAllGrimoires()]);
-
-        setGrimoires(grimoireList);
-
-        // Set default grimoire if not already set
-        if (!selectedGrimoire && grimoireList.length > 0) {
-          setSelectedGrimoire(grimoireList[0].id);
-        }
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load scribing data');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadData();
-  }, [repository, selectedGrimoire]);
-
-  // Load compatible scripts when grimoire changes
-  useEffect(() => {
-    const loadCompatibleScripts = async (): Promise<void> => {
-      if (!selectedGrimoire) {
-        setAvailableFocusScripts([]);
-        setAvailableSignatureScripts([]);
-        setAvailableAffixScripts([]);
-        return;
-      }
-
-      try {
-        const compatibleScripts = await simulatorService.getAvailableCombinations(selectedGrimoire);
-
-        setAvailableFocusScripts(compatibleScripts.focusScripts);
-        setAvailableSignatureScripts(compatibleScripts.signatureScripts);
-        setAvailableAffixScripts(compatibleScripts.affixScripts);
-
-        // Reset script selections when grimoire changes
-        setSelectedFocusScript('');
-        setSelectedSignatureScript('');
-        setSelectedAffixScript('');
-      } catch (err) {
-        logger.error('Failed to load compatible scripts', err instanceof Error ? err : undefined, {
-          selectedGrimoire,
+        const grimoireIds = Object.keys(loaded.grimoires);
+        const fallback = options.defaultGrimoire ?? grimoireIds[0] ?? '';
+        const fromUrl = readSelectionFromUrl(fallback);
+        // Only honour a URL grimoire that actually exists, and drop any script a
+        // hand-crafted/stale link carries that the grimoire does not support.
+        const grimoireId = loaded.grimoires[fromUrl.grimoireId] ? fromUrl.grimoireId : fallback;
+        const compat = getCompatibleScripts(loaded, grimoireId);
+        const keep = (id: string | undefined, list: { id: string }[]): string | undefined =>
+          id && list.some((s) => s.id === id) ? id : undefined;
+        setSelection({
+          grimoireId,
+          focusId: keep(fromUrl.focusId, compat.focusScripts),
+          signatureId: keep(fromUrl.signatureId, compat.signatureScripts),
+          affixId: keep(fromUrl.affixId, compat.affixScripts),
         });
+        initialisedRef.current = true;
+      } catch (err) {
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : 'Failed to load scribing data');
+        }
+      } finally {
+        if (!cancelled) setIsLoading(false);
       }
+    })();
+    return () => {
+      cancelled = true;
     };
+  }, [repository, options.defaultGrimoire]);
 
-    loadCompatibleScripts();
-  }, [selectedGrimoire, simulatorService, logger]);
+  const grimoires = useMemo<Grimoire[]>(() => (data ? Object.values(data.grimoires) : []), [data]);
 
-  // Auto-simulate when selections change (if enabled)
+  const selectedGrimoire = useMemo<Grimoire | null>(
+    () => (data && selection.grimoireId ? (data.grimoires[selection.grimoireId] ?? null) : null),
+    [data, selection.grimoireId],
+  );
+
+  const compatible = useMemo<CompatibleScripts>(
+    () =>
+      data && selection.grimoireId
+        ? getCompatibleScripts(data, selection.grimoireId)
+        : EMPTY_COMPATIBLE,
+    [data, selection.grimoireId],
+  );
+
+  const result = useMemo<ScribedSkillResult | null>(
+    () => (data && selection.grimoireId ? deriveScribedSkill(data, selection) : null),
+    [data, selection],
+  );
+
+  // Mirror the selection to the URL (after the first load settles).
   useEffect(() => {
-    if (options.autoSimulate && selectedGrimoire) {
-      simulate();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    selectedGrimoire,
-    selectedFocusScript,
-    selectedSignatureScript,
-    selectedAffixScript,
-    options.autoSimulate,
-  ]);
+    if (!initialisedRef.current || typeof window === 'undefined' || !selection.grimoireId) return;
+    const params = new URLSearchParams(window.location.search);
+    params.set('grimoire', selection.grimoireId);
+    const setOrDelete = (key: string, value?: string): void => {
+      if (value) params.set(key, value);
+      else params.delete(key);
+    };
+    setOrDelete('focus', selection.focusId);
+    setOrDelete('signature', selection.signatureId);
+    setOrDelete('affix', selection.affixId);
+    // Preserve the hash (e.g. `#scribing` when hosted as the Calculator tab) so
+    // mirroring the build doesn't knock the page off the active tab.
+    const next = `${window.location.pathname}?${params.toString()}${window.location.hash}`;
+    window.history.replaceState(null, '', next);
+  }, [selection]);
 
-  const simulate = async (): Promise<void> => {
-    if (!selectedGrimoire) {
-      setSimulationError('Please select a grimoire');
-      return;
-    }
+  // Changing the grimoire drops any scripts it doesn't support.
+  const setGrimoire = useCallback(
+    (id: string) => {
+      setSelection((prev) => {
+        if (prev.grimoireId === id) return prev;
+        if (!data) return { grimoireId: id };
+        const next = getCompatibleScripts(data, id);
+        const keep = (scriptId: string | undefined, list: { id: string }[]): string | undefined =>
+          scriptId && list.some((s) => s.id === scriptId) ? scriptId : undefined;
+        return {
+          grimoireId: id,
+          focusId: keep(prev.focusId, next.focusScripts),
+          signatureId: keep(prev.signatureId, next.signatureScripts),
+          affixId: keep(prev.affixId, next.affixScripts),
+        };
+      });
+    },
+    [data],
+  );
 
-    try {
-      setIsSimulating(true);
-      setSimulationError(null);
+  const setFocus = useCallback((id: string | undefined) => {
+    setSelection((prev) => ({ ...prev, focusId: id }));
+  }, []);
+  const setSignature = useCallback((id: string | undefined) => {
+    setSelection((prev) => ({ ...prev, signatureId: id }));
+  }, []);
+  const setAffix = useCallback((id: string | undefined) => {
+    setSelection((prev) => ({ ...prev, affixId: id }));
+  }, []);
 
-      const request: ScribingSimulationRequest = {
-        grimoireId: selectedGrimoire,
-        focusScriptId: selectedFocusScript || undefined,
-        signatureScriptId: selectedSignatureScript || undefined,
-        affixScriptId: selectedAffixScript || undefined,
-        characterLevel: 160,
-      };
+  const reset = useCallback(() => {
+    setSelection((prev) => ({ grimoireId: prev.grimoireId }));
+  }, []);
 
-      const result = await simulatorService.simulate(request);
-      setSimulationResult(result);
+  const randomize = useCallback(() => {
+    if (!data) return;
+    const grimoire = pickRandom(Object.values(data.grimoires));
+    if (!grimoire) return;
+    const next = getCompatibleScripts(data, grimoire.id);
+    setSelection({
+      grimoireId: grimoire.id,
+      focusId: pickRandom(next.focusScripts)?.id,
+      signatureId: pickRandom(next.signatureScripts)?.id,
+      affixId: pickRandom(next.affixScripts)?.id,
+    });
+    logger.info('Randomised scribing selection', { grimoire: grimoire.id });
+  }, [data, logger]);
 
-      if (!result.isValid && result.errors?.length) {
-        setSimulationError(result.errors.join(', '));
-      }
-    } catch (err) {
-      setSimulationError(err instanceof Error ? err.message : 'Simulation failed');
-    } finally {
-      setIsSimulating(false);
-    }
-  };
+  const shareUrl = useMemo<string>(() => {
+    if (typeof window === 'undefined' || !selection.grimoireId) return '';
+    const params = new URLSearchParams();
+    params.set('grimoire', selection.grimoireId);
+    if (selection.focusId) params.set('focus', selection.focusId);
+    if (selection.signatureId) params.set('signature', selection.signatureId);
+    if (selection.affixId) params.set('affix', selection.affixId);
+    // Keep the hash so a shared link re-opens on the same tab (#scribing).
+    return `${window.location.origin}${window.location.pathname}?${params.toString()}${window.location.hash}`;
+  }, [selection]);
+
+  const summary = useMemo<string>(() => (result ? summarizeScribedSkill(result) : ''), [result]);
 
   const isReady = !isLoading && !error && grimoires.length > 0;
 
   return {
-    // Data
-    grimoires,
-    availableFocusScripts,
-    availableSignatureScripts,
-    availableAffixScripts,
-
-    // Current selection
-    selectedGrimoire,
-    selectedFocusScript,
-    selectedSignatureScript,
-    selectedAffixScript,
-
-    // Selection methods
-    setSelectedGrimoire,
-    setSelectedFocusScript,
-    setSelectedSignatureScript,
-    setSelectedAffixScript,
-
-    // Simulation
-    simulationResult,
-    isSimulating,
-    simulationError,
-    simulate,
-
-    // State
     isLoading,
     error,
     isReady,
+    grimoires,
+    selection,
+    selectedGrimoire,
+    compatible,
+    result,
+    setGrimoire,
+    setFocus,
+    setSignature,
+    setAffix,
+    reset,
+    randomize,
+    shareUrl,
+    summary,
   };
 }

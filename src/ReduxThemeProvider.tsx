@@ -866,6 +866,19 @@ export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           '.u-fade-in': {
             animation: 'tooltipEnter 220ms cubic-bezier(0.26, 0.53, 0.74, 1.48) both',
           },
+          // Tab/page entrance — same feel as `.u-fade-in` (the Ultimate tab's
+          // entrance) but with `backwards` fill instead of `both`. `both` retains
+          // the final keyframe's `transform: translateY(0) scale(1)` forever, and
+          // *any* non-`none` transform on an ancestor establishes a containing
+          // block that breaks the Stats calculator's `position: sticky` results
+          // footer (the styled container deliberately forces `transform: none`
+          // for this reason). `backwards` applies the start frame before the run
+          // and then reverts to the element's base style (no transform) once the
+          // animation ends, so it's safe to wrap sticky/fixed content while
+          // staying visually identical to the Ultimate tab's fade-in.
+          '.u-tab-enter': {
+            animation: 'tooltipEnter 220ms cubic-bezier(0.26, 0.53, 0.74, 1.48) backwards',
+          },
           '.u-hover-glow': {
             transition: 'box-shadow .2s ease',
             '&:hover': {
@@ -884,6 +897,7 @@ export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           '@media (prefers-reduced-motion: reduce)': {
             '.u-fade-in': { animation: 'none !important' },
             '.u-fade-in-up': { animation: 'none !important' },
+            '.u-tab-enter': { animation: 'none !important' },
             '*, *::before, *::after': {
               animationDuration: '0.01ms !important',
               animationIterationCount: '1 !important',

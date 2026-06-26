@@ -7,7 +7,7 @@ const PUBLIC_ROUTES = [
   { path: '/text-editor', title: 'Text Editor' },
   { path: '/logs', title: 'Log Analyzer' },
   { path: '/leaderboards', title: 'Leaderboards' },
-  { path: '/scribing-simulator', title: 'Scribing Simulator' },
+  { path: '/calculator#scribing', title: 'Scribing (Calculator tab)' },
   { path: '/docs/calculations', title: 'Calculation Knowledge Base' },
   { path: '/login', title: 'Log In' },
 ];

@@ -42,6 +42,8 @@ export const Footer: React.FC = React.memo(() => {
 
       { label: 'Loadout Manager', href: '/loadout-manager' },
 
+      { label: 'Scribing', href: '/calculator#scribing' },
+
       { label: 'Gear Sets', href: '/gear-sets' },
     ],
 
