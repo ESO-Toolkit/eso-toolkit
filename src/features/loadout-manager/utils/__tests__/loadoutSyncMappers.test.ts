@@ -93,6 +93,19 @@ describe('savedLoadoutToPayload', () => {
     expect(padded.description).toBe('x');
     expect(padded.content_fingerprint).toBe(clean.content_fingerprint);
   });
+
+  it('normalizes a clamp-boundary space so a >cap name stays convergent', () => {
+    // 99 'a's + a space at index 99 + trailing chars: clamping to 100 would leave a
+    // trailing space the server's cleanText strips, re-diverging the fingerprint — the
+    // trailing trim removes it so the sent value is idempotent under cleanText.
+    const longName = 'a'.repeat(99) + ' ' + 'b'.repeat(20);
+    const payload = savedLoadoutToPayload(makeSavedLoadout({ name: longName }));
+    expect(payload.name).toBe('a'.repeat(99));
+    expect(payload.name).toBe(payload.name.trim()); // idempotent under the worker's trim
+    expect(payload.content_fingerprint).toBe(
+      contentFingerprint(payload.name, payload.description, payload.loadout_data),
+    );
+  });
 });
 
 describe('contentFingerprint', () => {

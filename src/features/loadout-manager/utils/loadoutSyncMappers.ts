@@ -62,14 +62,14 @@ export function savedLoadoutToPayload(loadout: SavedLoadout): LoadoutSyncPayload
     createdAt: loadout.createdAt,
     updatedAt: loadout.updatedAt,
   };
-  // Trim BEFORE clamping to mirror the worker's cleanText (= trim) so the fingerprint is
-  // computed over EXACTLY what the server stores. Without this, a name/description with
-  // surrounding whitespace would fingerprint differently after a pull (the server trimmed
-  // the column but stored the over-untrimmed fingerprint verbatim) and re-push on every
-  // sync — the churn this tie-break exists to remove. Sending the trimmed value too keeps
-  // the local copy byte-identical to the server's after a round-trip.
-  const name = loadout.name.trim().slice(0, MAX_NAME_LENGTH);
-  const description = (loadout.description ?? '').trim().slice(0, MAX_DESCRIPTION_LENGTH);
+  // Normalize to EXACTLY what the worker stores (cleanText = trim) so the fingerprint
+  // survives a pull→re-push and never causes per-sync churn. Trim → clamp → trim again:
+  // the leading trim matches cleanText, and the trailing trim covers the case where the
+  // clamp truncates at a space (a >cap name whose boundary char is whitespace), which the
+  // server's cleanText would otherwise strip and re-diverge the fingerprint. Sending the
+  // normalized value keeps the local copy byte-identical to the server's after sync.
+  const name = loadout.name.trim().slice(0, MAX_NAME_LENGTH).trim();
+  const description = (loadout.description ?? '').trim().slice(0, MAX_DESCRIPTION_LENGTH).trim();
   const loadoutData = JSON.stringify(blob);
   return {
     id: loadout.id,
