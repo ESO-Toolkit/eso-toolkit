@@ -40,26 +40,34 @@ const hubRouteImporters: ReadonlyArray<() => Promise<unknown>> = [
   importPackHubPage,
 ];
 
-let warmed = false;
+// Importers that are currently loading or have already loaded successfully.
+// Repeated calls skip these so we never re-fire a healthy preload. A REJECTED
+// preload is removed again (in the .catch) so a later call can retry: a transient
+// background failure (e.g. an idle preload during a network blip) must not
+// permanently poison hub warming and leave hover/focus/idle unable to re-warm.
+const warming = new Set<() => Promise<unknown>>();
 
 /**
  * Warm the three hub route chunks so a subsequent hub navigation captures real
  * destination content in its View Transition snapshot.
  *
- * Idempotent — only the first call triggers the imports; later calls are no-ops,
- * so it is safe to invoke on every header mount. Import rejections are swallowed:
- * a failed *preload* must never surface as an unhandled rejection — the route's
- * own Suspense boundary and ErrorBoundary handle a genuine load failure when (and
- * if) the user actually navigates there.
+ * Safe to invoke repeatedly (every header mount, plus hover/focus): an importer
+ * already loading or loaded is skipped, but one whose previous attempt rejected is
+ * retried. Import rejections are swallowed — a failed *preload* must never surface
+ * as an unhandled rejection; the route's own Suspense boundary and ErrorBoundary
+ * handle a genuine load failure if and when the user actually navigates there.
  *
  * @param importers Injectable for tests; defaults to the real hub route chunks.
  */
 export function preloadHubRoutes(
   importers: ReadonlyArray<() => Promise<unknown>> = hubRouteImporters,
 ): void {
-  if (warmed) return;
-  warmed = true;
   for (const load of importers) {
-    void load().catch(() => {});
+    if (warming.has(load)) continue;
+    warming.add(load);
+    void load().catch(() => {
+      // Transient failure — allow a later call (hover/focus/idle) to retry.
+      warming.delete(load);
+    });
   }
 }
