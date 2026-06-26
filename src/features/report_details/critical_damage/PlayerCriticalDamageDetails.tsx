@@ -21,6 +21,11 @@ const BACKSTABBER_SOURCE_NAME = 'Backstabber';
 // unconditional baseline; users can toggle it on if they were reliably flanking.
 const BACKSTABBER_DEFAULT_ENABLED = false;
 
+// Fighting Finesse is a slottable Champion Point that may not be slotted, and can't be
+// confirmed from log data. Default it OFF so the displayed critical damage reflects the
+// unconditional baseline; users can toggle it on (per-player or globally) when slotted.
+const FIGHTING_FINESSE_DEFAULT_ENABLED = false;
+
 interface PlayerCriticalDamageDataExtended extends PlayerCriticalDamageData {
   criticalDamageSources: CriticalDamageSourceWithActiveState[];
   staticCriticalDamage: number;
@@ -73,19 +78,27 @@ export const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsPr
   }, [criticalDamageData?.criticalDamageSources]);
 
   const [localFightingFinesseEnabled, setLocalFightingFinesseEnabled] = React.useState<boolean>(
-    () => {
-      return fightingFinesseSource?.wasActive ?? true;
-    },
+    FIGHTING_FINESSE_DEFAULT_ENABLED,
   );
 
   const [backstabberEnabled, setBackstabberEnabled] = React.useState<boolean>(
     BACKSTABBER_DEFAULT_ENABLED,
   );
 
+  // Reset the per-player toggles to their defaults when the fight/report context changes.
+  // This component instance can be reused across fights (rows are keyed only by player.id),
+  // so without this a toggle flipped on for one fight would leak into the next. Fall back to
+  // the global Fighting Finesse setting so an explicit global toggle still applies.
+  // (We can't key on the always-on source's wasActive — it is always true and never changes.)
   React.useEffect(() => {
-    const defaultActive = fightingFinesseSource?.wasActive ?? true;
-    setLocalFightingFinesseEnabled((prev) => (prev === defaultActive ? prev : defaultActive));
-  }, [fightingFinesseSource?.wasActive]);
+    setLocalFightingFinesseEnabled(
+      globalFightingFinesseEnabledProp ?? FIGHTING_FINESSE_DEFAULT_ENABLED,
+    );
+    setBackstabberEnabled(BACKSTABBER_DEFAULT_ENABLED);
+    // globalFightingFinesseEnabledProp is intentionally read but not a trigger here; the
+    // effect below handles global-toggle changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reportId, fightId]);
 
   // Sync local state with global state when global changes
   React.useEffect(() => {

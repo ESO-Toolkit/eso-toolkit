@@ -51,9 +51,10 @@ export const CriticalDamagePanel: React.FC<CriticalDamagePanelProps> = ({
   // Track which panels are expanded
   const [expandedPanels, setExpandedPanels] = React.useState<Record<string, boolean>>({});
 
-  // Global fighting finesse toggle state (default to true - enabled)
+  // Global fighting finesse toggle state (default to false - disabled, since Fighting Finesse
+  // is a slottable Champion Point that can't be confirmed from log data)
   const [globalFightingFinesseEnabled, setGlobalFightingFinesseEnabled] =
-    React.useState<boolean>(true);
+    React.useState<boolean>(false);
 
   const handleExpandChange = React.useCallback(
     (playerId: number) => (event: React.SyntheticEvent, isExpanded: boolean) => {
