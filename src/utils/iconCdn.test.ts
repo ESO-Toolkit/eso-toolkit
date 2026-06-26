@@ -1,4 +1,9 @@
-import { abilityIconSources, iconSourcesFromName, RPGLOGS_ICON_BASE, UESP_ICON_BASE } from './iconCdn';
+import {
+  abilityIconSources,
+  iconSourcesFromName,
+  RPGLOGS_ICON_BASE,
+  UESP_ICON_BASE,
+} from './iconCdn';
 
 describe('iconSourcesFromName', () => {
   it('returns RPGLogs first, UESP second for a bare icon name', () => {

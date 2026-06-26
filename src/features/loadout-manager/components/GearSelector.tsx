@@ -385,9 +385,7 @@ const GearTile: React.FC<GearTileProps> = ({
               <SlotIcon
                 name={slotName}
                 size={tileSize * 0.4}
-                color={
-                  isMythic ? theme.palette.warning.light : theme.palette.primary.light
-                }
+                color={isMythic ? theme.palette.warning.light : theme.palette.primary.light}
               />
             }
           />

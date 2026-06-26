@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 
-export interface ResilientImgProps
-  extends Omit<React.ImgHTMLAttributes<HTMLImageElement>, 'src'> {
+export interface ResilientImgProps extends Omit<React.ImgHTMLAttributes<HTMLImageElement>, 'src'> {
   /**
    * Ordered list of equivalent image URLs, most-reliable first. The component
    * renders the first one and advances to the next whenever a source fails to

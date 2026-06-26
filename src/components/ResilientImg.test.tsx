@@ -46,12 +46,7 @@ describe('ResilientImg', () => {
   it('forwards extra img props and still calls a caller onError', () => {
     const onError = jest.fn();
     render(
-      <ResilientImg
-        sources={['a.png', 'b.png']}
-        alt="icon"
-        className="foo"
-        onError={onError}
-      />,
+      <ResilientImg sources={['a.png', 'b.png']} alt="icon" className="foo" onError={onError} />,
     );
     const img = screen.getByAltText('icon');
     expect(img).toHaveClass('foo');
