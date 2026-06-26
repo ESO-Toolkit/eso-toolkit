@@ -34,6 +34,9 @@ export const selectHasFetchedAll = (state: RootState): boolean => state.userRepo
 
 export const selectLastFetched = (state: RootState): number | null => state.userReports.lastFetched;
 
+export const selectLoadedUserId = (state: RootState): number | null =>
+  state.userReports.loadedUserId;
+
 // Get all cached reports as an array
 export const selectAllReportsArray = createSelector([selectAllReports], (reportsMap) =>
   Object.values(reportsMap),
@@ -151,14 +154,17 @@ export const selectHasActiveFilters = createSelector([selectFilters], (filters) 
 // doing so would cause a new object to be returned on every Redux action, triggering
 // unnecessary re-renders in all consumers (ESO-595).
 export const selectCacheInfo = createSelector(
-  [selectAllReports, selectPages, selectHasFetchedAll, selectLastFetched],
-  (reports, pages, hasFetchedAll, lastFetched) => ({
+  [selectAllReports, selectPages, selectHasFetchedAll, selectLastFetched, selectLoadedUserId],
+  (reports, pages, hasFetchedAll, lastFetched, loadedUserId) => ({
     totalCachedReports: Object.keys(reports).length,
     cachedPages: Object.keys(pages)
       .map(Number)
       .sort((a, b) => a - b),
     lastFetched,
     hasFetchedAll,
+    // Owner of the cached rows; the My Reports page invalidates the cache when
+    // this no longer matches the logged-in user (private-data isolation).
+    loadedUserId,
     isStale: lastFetched ? Date.now() - lastFetched > 5 * 60 * 1000 : true, // 5 minutes
   }),
 );

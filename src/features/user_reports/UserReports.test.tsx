@@ -993,4 +993,184 @@ describe('UserReports Component', () => {
       expect(screen.queryByText('Report 1')).not.toBeInTheDocument();
     });
   });
+
+  describe('Account switch (private-data isolation)', () => {
+    const userA = { id: 111, name: 'Alice' };
+    const userB = { id: 222, name: 'Bob' };
+
+    const authFor = (user: { id: number; name: string } | null) => ({
+      accessToken: validToken,
+      isLoggedIn: true,
+      isBanned: false,
+      banReason: null,
+      currentUser: user,
+      userLoading: false,
+      userError: null,
+      setAccessToken: jest.fn(),
+      rebindAccessToken: jest.fn(),
+      refetchUser: jest.fn(),
+    });
+
+    const aliceReports = {
+      reportData: {
+        reports: {
+          data: [
+            {
+              code: 'ALICE_PRIVATE_1',
+              startTime: 1640995200000,
+              endTime: 1640998800000,
+              title: "Alice's Private Raid",
+              visibility: 'private',
+              zone: { name: 'Cloudrest' },
+              owner: { name: 'Alice' },
+            },
+          ],
+          total: 1,
+          current_page: 1,
+          per_page: 100,
+          last_page: 1,
+          has_more_pages: false,
+        },
+      },
+    };
+
+    const bobReports = {
+      reportData: {
+        reports: {
+          data: [
+            {
+              code: 'BOB_OWN_1',
+              startTime: 1641081600000,
+              endTime: 1641085200000,
+              title: "Bob's Own Raid",
+              visibility: 'private',
+              zone: { name: 'Sunspire' },
+              owner: { name: 'Bob' },
+            },
+          ],
+          total: 1,
+          current_page: 1,
+          per_page: 100,
+          last_page: 1,
+          has_more_pages: false,
+        },
+      },
+    };
+
+    const treeFor = (store: ReturnType<typeof createMockStore>) => (
+      <Provider store={store}>
+        <MemoryRouter initialEntries={['/my-reports']}>
+          <ThemeProvider theme={defaultTheme}>
+            <LoggerProvider config={{ enableConsole: false, enableStorage: false }}>
+              <EsoLogsClientProvider>
+                <AuthProvider>
+                  <UserReports />
+                </AuthProvider>
+              </EsoLogsClientProvider>
+            </LoggerProvider>
+          </ThemeProvider>
+        </MemoryRouter>
+      </Provider>
+    );
+
+    // Returns reports scoped to the requested userID, mirroring the real API
+    // (getUserReports is keyed by userID). Empty for any unknown user.
+    const queryByUser =
+      (reportsByUser: Record<number, unknown>) => (params: { variables?: { userID?: number } }) => {
+        const userID = params.variables?.userID;
+        if (userID !== undefined && reportsByUser[userID]) {
+          return Promise.resolve(reportsByUser[userID]);
+        }
+        // Fallback (e.g. the current-user query, which the auth mock bypasses).
+        return Promise.resolve(mockUserData);
+      };
+
+    it("refetches for the new user and never renders the previous user's rows after an in-session switch", async () => {
+      const store = createMockStore();
+      mockLocalStorage.getItem.mockReturnValue(validToken);
+      mockClient.query.mockImplementation(queryByUser({ 111: aliceReports, 222: bobReports }));
+
+      // Alice logs in and warms My Reports.
+      (useAuth as jest.Mock).mockReturnValue(authFor(userA));
+      const { rerender } = render(treeFor(store));
+      await waitFor(() => expect(screen.getByText("Alice's Private Raid")).toBeInTheDocument());
+      expect(store.getState().userReports.loadedUserId).toBe(111);
+
+      // Bob logs in in the same session (token swap, no full reload): the slice
+      // is a singleton, so without user-scoping Bob would see Alice's rows.
+      (useAuth as jest.Mock).mockReturnValue(authFor(userB));
+      rerender(treeFor(store));
+
+      await waitFor(() => expect(screen.getByText("Bob's Own Raid")).toBeInTheDocument());
+      // Alice's private report must be gone.
+      expect(screen.queryByText("Alice's Private Raid")).not.toBeInTheDocument();
+      expect(store.getState().userReports.loadedUserId).toBe(222);
+
+      // Bob's data must have been fetched fresh from the network for his userID.
+      const bobNetworkCall = mockClient.query.mock.calls.find(
+        (c) => c[0].variables?.userID === 222 && c[0].fetchPolicy === 'network-only',
+      );
+      expect(bobNetworkCall).toBeDefined();
+    });
+
+    it("clears the previous user's rows even when the new user has no reports", async () => {
+      const emptyForBob = {
+        reportData: {
+          reports: {
+            data: [],
+            total: 0,
+            current_page: 1,
+            per_page: 100,
+            last_page: 1,
+            has_more_pages: false,
+          },
+        },
+      };
+
+      const store = createMockStore();
+      mockLocalStorage.getItem.mockReturnValue(validToken);
+      mockClient.query.mockImplementation(queryByUser({ 111: aliceReports, 222: emptyForBob }));
+
+      (useAuth as jest.Mock).mockReturnValue(authFor(userA));
+      const { rerender } = render(treeFor(store));
+      await waitFor(() => expect(screen.getByText("Alice's Private Raid")).toBeInTheDocument());
+
+      // Switch to Bob, who has zero reports — the scariest leak is a foreign row
+      // surviving because the empty fetch never replaces it.
+      (useAuth as jest.Mock).mockReturnValue(authFor(userB));
+      rerender(treeFor(store));
+
+      await waitFor(() =>
+        expect(screen.queryByText("Alice's Private Raid")).not.toBeInTheDocument(),
+      );
+      expect(store.getState().userReports.loadedUserId).toBe(222);
+      expect(store.getState().userReports.totalCount).toBe(0);
+    });
+
+    it("does not surface the previous user's rows when logged in without an identifiable user", async () => {
+      // A report-scopes-only token (no user subject) keeps isLoggedIn true while
+      // currentUser is null. The load effect cannot refetch (no owner), so the
+      // render guard + branch-3 purge must ensure the prior user's rows are
+      // neither shown nor retained.
+      const store = createMockStore();
+      mockLocalStorage.getItem.mockReturnValue(validToken);
+      mockClient.query.mockImplementation(queryByUser({ 111: aliceReports }));
+
+      (useAuth as jest.Mock).mockReturnValue(authFor(userA));
+      const { rerender } = render(treeFor(store));
+      await waitFor(() => expect(screen.getByText("Alice's Private Raid")).toBeInTheDocument());
+      expect(store.getState().userReports.loadedUserId).toBe(111);
+
+      // Swap in the scopes-only identity: still logged in, no currentUser.
+      (useAuth as jest.Mock).mockReturnValue(authFor(null));
+      rerender(treeFor(store));
+
+      await waitFor(() =>
+        expect(screen.queryByText("Alice's Private Raid")).not.toBeInTheDocument(),
+      );
+      // Cache is purged (not merely hidden) so nothing of Alice's lingers.
+      expect(store.getState().userReports.loadedUserId).toBeNull();
+      expect(store.getState().userReports.totalCount).toBe(0);
+    });
+  });
 });

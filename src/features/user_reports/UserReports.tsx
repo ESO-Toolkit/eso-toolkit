@@ -47,6 +47,7 @@ import {
   setSort,
   clearSearchText,
   clearCache,
+  resetForUser,
   selectPaginatedReports,
   selectFilteredCount,
   selectFilteredTotalPages,
@@ -72,6 +73,11 @@ import {
 import { useReportPageLayout } from '../reports/useReportPageLayout';
 
 const REPORTS_PER_PAGE = 10;
+
+// Stable empty list returned by the render-time owner guard so a cache that
+// belongs to a different user (or to no current user) never paints its rows.
+// Module-level to keep a stable reference across renders.
+const EMPTY_REPORTS: ReturnType<typeof selectPaginatedReports> = [];
 
 // Skeleton row component that matches the exact table structure
 const ReportsTableSkeletonRow: React.FC<{ index: number }> = function ReportsTableSkeletonRow({
@@ -197,7 +203,7 @@ export const UserReports: React.FC = () => {
   }, []);
 
   // Redux selectors
-  const paginatedReports = useSelector(selectPaginatedReports);
+  const rawPaginatedReports = useSelector(selectPaginatedReports);
   const filteredCount = useSelector(selectFilteredCount);
   const filteredTotalPages = useSelector(selectFilteredTotalPages);
   const loading = useSelector(selectLoading);
@@ -209,6 +215,18 @@ export const UserReports: React.FC = () => {
   const sort = useSelector(selectSort);
   const hasActiveFilters = useSelector(selectHasActiveFilters);
   const cacheInfo = useSelector(selectCacheInfo);
+
+  // Private-data isolation — render-time owner guard. The cache purge on an
+  // account switch is dispatched from a post-paint effect below, so without a
+  // guard evaluated DURING render the table could paint the previous user's
+  // private rows for a single frame before that effect runs. It also covers the
+  // logged-in-but-no-currentUser edge (a report-scopes-only token with no user
+  // subject), where the load effect intentionally does not refetch: there is no
+  // current user to match, so the prior user's rows must not be surfaced. Hold
+  // the rows back until the cache's recorded owner matches the signed-in user.
+  const cacheMatchesUser =
+    cacheInfo.loadedUserId === null || cacheInfo.loadedUserId === currentUser?.id;
+  const paginatedReports = cacheMatchesUser ? rawPaginatedReports : EMPTY_REPORTS;
 
   // Get the current page from URL query parameter
   const currentPageFromUrl = parseInt(searchParams.get('page') || '1', 10);
@@ -360,14 +378,54 @@ export const UserReports: React.FC = () => {
       return;
     }
 
-    // Fetch all reports when user is logged in and we have currentUser data.
-    // Guard with hasFetchedAll (not totalCachedReports) so we don't re-dispatch
-    // after a failed fetch or when the user genuinely has zero reports (ESO-595).
-    if (currentUser?.id && !cacheInfo.hasFetchedAll && !isFetchingAll && !hasError) {
+    const userId = currentUser?.id;
+
+    // Private-data isolation. The userReports slice is a session-long singleton:
+    // AuthContext swaps currentUser on logout/login with no full reload and no
+    // clearCache, and userReports is excluded from redux-persist. So an in-session
+    // account switch (A logs out, B logs in; or a cross-tab token swap) leaves A's
+    // rows + hasFetchedAll=true in Redux, and the load gate below would skip B's
+    // fetch — rendering A's private reports under B's header. When the cached owner
+    // no longer matches the logged-in user, rebind the slice to the current user
+    // and refetch fresh before doing anything else. resetForUser sets the new owner
+    // up front (so any of the previous account's in-flight pages are dropped by the
+    // slice identity guard) and forceNetwork bypasses Apollo's session-long cache so
+    // we never re-serve another account's rows.
+    if (userId && cacheInfo.loadedUserId !== null && cacheInfo.loadedUserId !== userId) {
+      setHasError(false);
+      setInitialLoading(true);
+      staleRevalidationLatchedRef.current = false;
+      dispatch(resetForUser(userId));
       dispatch(
         fetchAllUserReports({
           client,
-          userId: currentUser.id,
+          userId,
+          limit: 100,
+          forceNetwork: true,
+        }),
+      )
+        .unwrap()
+        .catch((err) => {
+          setHasError(true);
+          logger.error(
+            'Failed to fetch reports after account switch',
+            err instanceof Error ? err : new Error(String(err)),
+          );
+        })
+        .finally(() => {
+          setInitialLoading(false);
+        });
+      return;
+    }
+
+    // Fetch all reports when user is logged in and we have currentUser data.
+    // Guard with hasFetchedAll (not totalCachedReports) so we don't re-dispatch
+    // after a failed fetch or when the user genuinely has zero reports (ESO-595).
+    if (userId && !cacheInfo.hasFetchedAll && !isFetchingAll && !hasError) {
+      dispatch(
+        fetchAllUserReports({
+          client,
+          userId,
           limit: 100,
         }),
       )
@@ -383,8 +441,16 @@ export const UserReports: React.FC = () => {
           setInitialLoading(false);
         });
     } else if (currentUser === null && !userLoading) {
-      // Handle case where user is logged in but currentUser is null
+      // Handle case where user is logged in but currentUser is null (e.g. a
+      // report-scopes-only token with no user subject). There is no identifiable
+      // owner to refetch for, so drop any prior user's cached rows rather than
+      // leave them in the slice (the render guard hides them, this clears the
+      // state). Guard on loadedUserId so this clears at most once — clearCache
+      // resets it to null, so the effect does not re-dispatch on the next render.
       setInitialLoading(false);
+      if (cacheInfo.loadedUserId !== null) {
+        dispatch(clearCache());
+      }
     } else if (cacheInfo.hasFetchedAll) {
       setInitialLoading(false);
       // Revisiting an already-loaded list. If it has gone stale, revalidate in
@@ -405,7 +471,7 @@ export const UserReports: React.FC = () => {
       // toggles isFetchingAll, re-entering this effect (and .pending re-clears the
       // Redux error). Manual Refresh stays the recovery path.
       if (
-        currentUser?.id &&
+        userId &&
         isStale &&
         !isFetchingAll &&
         !hasError &&
@@ -415,7 +481,7 @@ export const UserReports: React.FC = () => {
         dispatch(
           fetchAllUserReports({
             client,
-            userId: currentUser.id,
+            userId,
             limit: 100,
             forceNetwork: true,
           }),
@@ -438,6 +504,7 @@ export const UserReports: React.FC = () => {
     userLoading,
     cacheInfo.hasFetchedAll,
     cacheInfo.lastFetched,
+    cacheInfo.loadedUserId,
     isFetchingAll,
     hasError,
     dispatch,
