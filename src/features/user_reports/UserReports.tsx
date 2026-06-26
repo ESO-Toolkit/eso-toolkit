@@ -226,6 +226,14 @@ export const UserReports: React.FC = () => {
   // Track fetch error to prevent infinite re-fetch loop (ESO-595)
   const [hasError, setHasError] = React.useState(false);
 
+  // Guards the background stale-revisit revalidation against an infinite retry
+  // loop: a failed background fetch leaves the list stale (lastFetched unchanged)
+  // and toggles isFetchingAll, which would otherwise re-enter the effect and
+  // re-dispatch forever. We attempt it at most once per stale window and only
+  // re-arm after a SUCCESSFUL revalidation (a failure leaves it latched, so
+  // recovery is via manual Refresh).
+  const staleRevalidationLatchedRef = React.useRef(false);
+
   // Fetch page data
   const fetchPage = useCallback(
     async (page: number) => {
@@ -261,12 +269,16 @@ export const UserReports: React.FC = () => {
       dispatch(clearCache());
       dispatch(setCurrentPage(1));
       setSearchParams({ page: '1' });
-      // Fetch all reports again
+      // Fetch all reports again, bypassing Apollo's cache. clearCache() only
+      // clears Redux; without forceNetwork the cache-first default would
+      // re-serve the same stale getUserReports pages (e.g. a log that has since
+      // finished processing would still show its "Empty" badge).
       dispatch(
         fetchAllUserReports({
           client,
           userId: currentUser.id,
           limit: 100,
+          forceNetwork: true,
         }),
       );
     }
@@ -375,12 +387,57 @@ export const UserReports: React.FC = () => {
       setInitialLoading(false);
     } else if (cacheInfo.hasFetchedAll) {
       setInitialLoading(false);
+      // Revisiting an already-loaded list. If it has gone stale, revalidate in
+      // the background so a log that has since finished processing on ESO Logs
+      // loses its "Empty" badge without the user clicking Refresh. Redux keeps the
+      // existing rows on screen during the refetch (no flash) and forceNetwork
+      // bypasses Apollo's cache-first default. Staleness is computed here with a
+      // live clock: the memoized selectCacheInfo.isStale is frozen at its
+      // last-input-change time, so it never flips to stale on an otherwise static
+      // store.
+      const STALE_AFTER_MS = 5 * 60 * 1000; // matches selectCacheInfo's TTL
+      const isStale =
+        cacheInfo.lastFetched === null || Date.now() - cacheInfo.lastFetched > STALE_AFTER_MS;
+      // Skip when the last load errored (fetchAllUserReports.rejected also sets
+      // hasFetchedAll, so a failed initial load lands here) and when this stale
+      // window's attempt is already latched — without the latch a background
+      // failure would re-dispatch forever, since it leaves the list stale and
+      // toggles isFetchingAll, re-entering this effect (and .pending re-clears the
+      // Redux error). Manual Refresh stays the recovery path.
+      if (
+        currentUser?.id &&
+        isStale &&
+        !isFetchingAll &&
+        !hasError &&
+        !staleRevalidationLatchedRef.current
+      ) {
+        staleRevalidationLatchedRef.current = true;
+        dispatch(
+          fetchAllUserReports({
+            client,
+            userId: currentUser.id,
+            limit: 100,
+            forceNetwork: true,
+          }),
+        )
+          .unwrap()
+          .then(() => {
+            // Re-arm only on success so a later stale window can revalidate again;
+            // a successful fetch also refreshes lastFetched, so this won't loop.
+            staleRevalidationLatchedRef.current = false;
+          })
+          .catch(() => {
+            // Keep showing the existing rows; leave the latch set so a failed
+            // background refresh does not retry until the user clicks Refresh.
+          });
+      }
     }
   }, [
     isLoggedIn,
     currentUser,
     userLoading,
     cacheInfo.hasFetchedAll,
+    cacheInfo.lastFetched,
     isFetchingAll,
     hasError,
     dispatch,

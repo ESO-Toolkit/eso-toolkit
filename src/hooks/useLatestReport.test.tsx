@@ -67,6 +67,17 @@ describe('useLatestReport', () => {
     expect(result.current.report?.code).toBe('AAA');
   });
 
+  it('reads live state (network-only) so the landing pick is never a stale cached report', async () => {
+    mockClient.query.mockResolvedValue(reportsResult([makeReport('AAA')]));
+
+    const { result } = renderHook(() => useLatestReport());
+
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(mockClient.query).toHaveBeenCalledWith(
+      expect.objectContaining({ fetchPolicy: 'network-only' }),
+    );
+  });
+
   it('skips empty logs and returns the newest report with data', async () => {
     mockClient.query.mockResolvedValue(
       reportsResult([

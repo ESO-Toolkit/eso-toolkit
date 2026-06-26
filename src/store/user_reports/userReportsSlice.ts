@@ -80,39 +80,51 @@ export const fetchUserReportsPage = createAsyncThunk<
     userId: number;
     page: number;
     limit?: number;
+    /** Bypass Apollo's cache for an explicit refresh (see fetchPolicy note). */
+    forceNetwork?: boolean;
   },
   { rejectValue: string }
->('userReports/fetchPage', async ({ client, userId, page, limit = 100 }, { rejectWithValue }) => {
-  try {
-    const result: GetUserReportsQuery = await client.query({
-      query: GetUserReportsDocument,
-      variables: {
-        limit,
+>(
+  'userReports/fetchPage',
+  async ({ client, userId, page, limit = 100, forceNetwork = false }, { rejectWithValue }) => {
+    try {
+      const result: GetUserReportsQuery = await client.query({
+        query: GetUserReportsDocument,
+        variables: {
+          limit,
+          page,
+          userID: userId,
+        },
+        // Ordinary loads/navigation reuse Apollo's cache; an explicit Refresh
+        // passes forceNetwork so it bypasses the session-long singleton cache
+        // and reflects logs that have finished processing on ESO Logs (clearing
+        // stale "Empty" badges). Without this, handleRefresh clears Redux but the
+        // cache-first default re-serves the same stale getUserReports page.
+        // Mirrors the split in useLatestReportsQuery.
+        fetchPolicy: forceNetwork ? 'network-only' : 'cache-first',
+      });
+
+      const reportPagination = result.reportData?.reports;
+
+      if (!reportPagination) {
+        return rejectWithValue('No reports data available');
+      }
+
+      const reports = (reportPagination.data || []).filter(
+        (report): report is UserReportSummaryFragment => report !== null,
+      );
+
+      return {
+        reports,
         page,
-        userID: userId,
-      },
-    });
-
-    const reportPagination = result.reportData?.reports;
-
-    if (!reportPagination) {
-      return rejectWithValue('No reports data available');
+        totalCount: reportPagination.total,
+        perPage: reportPagination.per_page,
+      };
+    } catch (error) {
+      return rejectWithValue(error instanceof Error ? error.message : 'Failed to fetch reports');
     }
-
-    const reports = (reportPagination.data || []).filter(
-      (report): report is UserReportSummaryFragment => report !== null,
-    );
-
-    return {
-      reports,
-      page,
-      totalCount: reportPagination.total,
-      perPage: reportPagination.per_page,
-    };
-  } catch (error) {
-    return rejectWithValue(error instanceof Error ? error.message : 'Failed to fetch reports');
-  }
-});
+  },
+);
 
 // Async thunk to fetch all user reports across all pages
 export const fetchAllUserReports = createAsyncThunk<
@@ -121,11 +133,16 @@ export const fetchAllUserReports = createAsyncThunk<
     client: EsoLogsClient;
     userId: number;
     limit?: number;
+    /** Forwarded to each page fetch so an explicit Refresh bypasses the cache. */
+    forceNetwork?: boolean;
   },
   { rejectValue: string; state: { userReports: UserReportsState } }
 >(
   'userReports/fetchAll',
-  async ({ client, userId, limit = 100 }, { dispatch, rejectWithValue, signal }) => {
+  async (
+    { client, userId, limit = 100, forceNetwork = false },
+    { dispatch, rejectWithValue, signal },
+  ) => {
     try {
       // Fetch first page to get total count
       const firstPageResult = await dispatch(
@@ -134,6 +151,7 @@ export const fetchAllUserReports = createAsyncThunk<
           userId,
           page: 1,
           limit,
+          forceNetwork,
         }),
       ).unwrap();
 
@@ -153,6 +171,7 @@ export const fetchAllUserReports = createAsyncThunk<
             userId,
             page,
             limit,
+            forceNetwork,
           }),
         ).unwrap();
       }

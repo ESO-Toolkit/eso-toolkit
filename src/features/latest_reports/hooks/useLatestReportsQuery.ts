@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { useEsoLogsClientInstance } from '../../../EsoLogsClientContext';
 import {
@@ -85,27 +85,19 @@ export function useLatestReportsQuery(input: LatestReportsQueryInput): LatestRep
 
   const { page, zoneId, range, customFrom, customTo } = input;
 
-  const fetchReports = useCallback(async (): Promise<void> => {
-    setState((prev) => ({ ...prev, loading: true, error: null }));
+  // Identifies the latest fetch so a slower, superseded request (e.g. the page or
+  // filters changed mid-flight) can't overwrite newer state — including the
+  // two-step cache-only + network-only sequence below. Mirrors useLatestReport.
+  const requestIdRef = useRef(0);
 
-    try {
-      const variables = buildVariables({ page, zoneId, range, customFrom, customTo });
-      const result = await client.query<GetLatestReportsQuery>({
-        query: GetLatestReportsDocument,
-        variables,
-        errorPolicy: 'all',
-      });
-
+  // Map a GetLatestReports response into hook state. Returns false when the
+  // payload carried no reports pagination — an empty cache-only read, or a
+  // degraded response — so the caller can decide whether that is an error
+  // (network read) or simply "nothing cached yet" (cache peek).
+  const applyReportData = useCallback(
+    (result: GetLatestReportsQuery, loading: boolean): boolean => {
       const reportPagination = result.reportData?.reports;
-      if (!reportPagination) {
-        setState((prev) => ({
-          ...prev,
-          loading: false,
-          error:
-            'No reports data available. This may be due to authentication issues or API limitations.',
-        }));
-        return;
-      }
+      if (!reportPagination) return false;
 
       // Keep the non-null narrowing on the query's own row type (which now also
       // carries `fights`) rather than the bare summary fragment, so the empty-log
@@ -127,7 +119,7 @@ export function useLatestReportsQuery(input: LatestReportsQueryInput): LatestRep
       setState({
         reports: reportsToShow,
         hiddenEmptyCount,
-        loading: false,
+        loading,
         error: null,
         pagination: {
           currentPage,
@@ -139,18 +131,91 @@ export function useLatestReportsQuery(input: LatestReportsQueryInput): LatestRep
           to: reportPagination.to ?? null,
         },
       });
-    } catch (error) {
-      setState((prev) => ({
-        ...prev,
-        loading: false,
-        error: error instanceof Error ? error.message : 'Failed to fetch latest reports',
-      }));
-    }
-  }, [client, page, zoneId, range, customFrom, customTo]);
+      return true;
+    },
+    [],
+  );
+
+  const fetchReports = useCallback(
+    async (skipCachePeek = false): Promise<void> => {
+      const requestId = ++requestIdRef.current;
+      setState((prev) => ({ ...prev, loading: true, error: null }));
+
+      const variables = buildVariables({ page, zoneId, range, customFrom, customTo });
+      try {
+        // cache-and-network, hand-composed: client.query() doesn't accept that
+        // fetchPolicy, so on a normal load we first read the cache (cache-only
+        // never touches the network) to paint an already-seen view instantly — no
+        // skeleton flash, and the last-known list stays put if the network is slow
+        // or down — and THEN always revalidate from the network below. That second
+        // read is what matters for the empty-log UX: the freshest page is dominated
+        // by just-uploaded logs still parsing on ESO Logs (segments: 0, fights: [])
+        // that self-heal within minutes, so revalidating on every mount means a
+        // healed log's stale "Empty" badge can never survive a re-visit (the prior
+        // cache-first default re-served the old snapshot with no round-trip). The
+        // cache stays warm because each network read writes back to it. An explicit
+        // Refresh skips the peek — the list is already on screen — and just
+        // revalidates.
+        if (!skipCachePeek) {
+          try {
+            const cached = await client.query<GetLatestReportsQuery>({
+              query: GetLatestReportsDocument,
+              variables,
+              errorPolicy: 'all',
+              fetchPolicy: 'cache-only',
+            });
+            // Drop the peek if a newer load has superseded this one.
+            if (requestId === requestIdRef.current) {
+              applyReportData(cached, true); // keep loading: true; the network result follows
+            }
+          } catch {
+            // Nothing usable in the cache yet — fall through to the network read.
+          }
+        }
+
+        const fresh = await client.query<GetLatestReportsQuery>({
+          query: GetLatestReportsDocument,
+          variables,
+          errorPolicy: 'all',
+          fetchPolicy: 'network-only',
+        });
+        // The request-id guard keeps the DISPLAYED state from the newest load. A
+        // superseded same-variable response can still write its (seconds-older)
+        // snapshot into Apollo's shared cache before this check — but that is within
+        // cache-and-network's tolerance: the only effect is a future cache-only peek
+        // briefly showing that snapshot, which the same mount's network read then
+        // corrects. We intentionally don't use no-cache here (that would leave the
+        // peek with nothing to paint) or hand-roll abort/writeQuery for it.
+        if (requestId !== requestIdRef.current) return; // superseded by a newer load
+        if (!applyReportData(fresh, false)) {
+          setState((prev) => ({
+            ...prev,
+            loading: false,
+            error:
+              'No reports data available. This may be due to authentication issues or API limitations.',
+          }));
+        }
+      } catch (error) {
+        if (requestId !== requestIdRef.current) return; // superseded by a newer load
+        // Keep whatever is already shown (e.g. the cache peek) and surface the
+        // error rather than blanking the list.
+        setState((prev) => ({
+          ...prev,
+          loading: false,
+          error: error instanceof Error ? error.message : 'Failed to fetch latest reports',
+        }));
+      }
+    },
+    [client, page, zoneId, range, customFrom, customTo, applyReportData],
+  );
 
   useEffect(() => {
+    // Mount + page/zone/date changes: peek the cache for an instant paint, then
+    // revalidate from the network (see fetchReports).
     void fetchReports();
   }, [fetchReports]);
 
-  return { ...state, refetch: () => void fetchReports() };
+  // Refresh just revalidates from the network — the list is already on screen, so
+  // there is no cache to peek, and this is what clears a healed log's stale badge.
+  return { ...state, refetch: () => void fetchReports(true) };
 }

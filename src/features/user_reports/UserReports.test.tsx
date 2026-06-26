@@ -435,6 +435,110 @@ describe('UserReports Component', () => {
       await waitFor(() => {
         expect(mockClient.query).toHaveBeenCalled();
       });
+
+      // Refresh must bypass Apollo's cache (forceNetwork → network-only) so a log
+      // that has since finished processing on ESO Logs no longer shows a stale
+      // "Empty" badge. clearCache() only clears Redux, not the Apollo cache.
+      expect(mockClient.query).toHaveBeenCalledWith(
+        expect.objectContaining({ fetchPolicy: 'network-only' }),
+      );
+    });
+  });
+
+  describe('Stale revisit revalidation', () => {
+    const loggedInAuth = () => ({
+      accessToken: validToken,
+      isLoggedIn: true,
+      isBanned: false,
+      banReason: null,
+      currentUser: { id: 12345, name: 'TestUser' },
+      userLoading: false,
+      userError: null,
+      setAccessToken: jest.fn(),
+      rebindAccessToken: jest.fn(),
+      refetchUser: jest.fn(),
+    });
+
+    const treeFor = (store: ReturnType<typeof createMockStore>) => (
+      <Provider store={store}>
+        <MemoryRouter initialEntries={['/my-reports']}>
+          <ThemeProvider theme={defaultTheme}>
+            <LoggerProvider config={{ enableConsole: false, enableStorage: false }}>
+              <EsoLogsClientProvider>
+                <AuthProvider>
+                  <UserReports />
+                </AuthProvider>
+              </EsoLogsClientProvider>
+            </LoggerProvider>
+          </ThemeProvider>
+        </MemoryRouter>
+      </Provider>
+    );
+
+    it('revalidates in the background (network-only) when a warm list is revisited stale', async () => {
+      const store = createMockStore();
+      mockLocalStorage.getItem.mockReturnValue(validToken);
+      (useAuth as jest.Mock).mockReturnValue(loggedInAuth());
+      mockClient.query.mockImplementation((params) =>
+        Promise.resolve(
+          params.query === mockGetCurrentUserDocument ? mockUserData : mockReportsData,
+        ),
+      );
+
+      // First visit warms the Redux store (initial load is cache-first, never forced).
+      const first = render(treeFor(store));
+      await waitFor(() => expect(screen.getByText('Test Report 1')).toBeInTheDocument());
+      expect(mockClient.query).not.toHaveBeenCalledWith(
+        expect.objectContaining({ fetchPolicy: 'network-only' }),
+      );
+      first.unmount();
+
+      // Simulate the 5-minute TTL elapsing, then revisit (remount on the same store).
+      const nowSpy = jest.spyOn(Date, 'now').mockReturnValue(Date.now() + 6 * 60 * 1000);
+      try {
+        render(treeFor(store));
+        await waitFor(() =>
+          expect(mockClient.query).toHaveBeenCalledWith(
+            expect.objectContaining({ fetchPolicy: 'network-only' }),
+          ),
+        );
+      } finally {
+        nowSpy.mockRestore();
+      }
+    });
+
+    it('does not loop when a stale background revalidation fails', async () => {
+      const store = createMockStore();
+      mockLocalStorage.getItem.mockReturnValue(validToken);
+      (useAuth as jest.Mock).mockReturnValue(loggedInAuth());
+      // Initial load succeeds (cache-first); the forced revalidation rejects.
+      mockClient.query.mockImplementation((params) => {
+        if (params.query === mockGetCurrentUserDocument) return Promise.resolve(mockUserData);
+        if (params.fetchPolicy === 'network-only') return Promise.reject(new Error('network down'));
+        return Promise.resolve(mockReportsData);
+      });
+
+      const first = render(treeFor(store));
+      await waitFor(() => expect(screen.getByText('Test Report 1')).toBeInTheDocument());
+      first.unmount();
+
+      const nowSpy = jest.spyOn(Date, 'now').mockReturnValue(Date.now() + 6 * 60 * 1000);
+      try {
+        render(treeFor(store));
+        // Let the rejected revalidation settle and any effect re-runs flush.
+        await waitFor(() =>
+          expect(
+            mockClient.query.mock.calls.filter((c) => c[0].fetchPolicy === 'network-only').length,
+          ).toBe(1),
+        );
+        await new Promise((resolve) => setTimeout(resolve, 50));
+        // The latch must keep it at exactly one attempt — no retry storm.
+        expect(
+          mockClient.query.mock.calls.filter((c) => c[0].fetchPolicy === 'network-only').length,
+        ).toBe(1);
+      } finally {
+        nowSpy.mockRestore();
+      }
     });
   });
 
