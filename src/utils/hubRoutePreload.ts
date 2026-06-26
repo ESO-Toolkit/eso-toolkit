@@ -25,14 +25,17 @@
  * chunk identity).
  */
 
-export const importRosterHubPage = (): Promise<typeof import('../features/roster-hub/components/RosterHubPage')> =>
-  import('../features/roster-hub/components/RosterHubPage');
+export const importRosterHubPage = (): Promise<
+  typeof import('../features/roster-hub/components/RosterHubPage')
+> => import('../features/roster-hub/components/RosterHubPage');
 
-export const importBuildHubPage = (): Promise<typeof import('../features/build-hub/components/BuildHubPage')> =>
-  import('../features/build-hub/components/BuildHubPage');
+export const importBuildHubPage = (): Promise<
+  typeof import('../features/build-hub/components/BuildHubPage')
+> => import('../features/build-hub/components/BuildHubPage');
 
-export const importPackHubPage = (): Promise<typeof import('../features/pack-hub/components/PackHubPage')> =>
-  import('../features/pack-hub/components/PackHubPage');
+export const importPackHubPage = (): Promise<
+  typeof import('../features/pack-hub/components/PackHubPage')
+> => import('../features/pack-hub/components/PackHubPage');
 
 const hubRouteImporters: ReadonlyArray<() => Promise<unknown>> = [
   importRosterHubPage,

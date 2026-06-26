@@ -43,7 +43,11 @@ import store, { persistor } from './store/storeWithHistory';
 import { initializeAnalytics } from './utils/analytics';
 import { getBaseUrl } from './utils/envUtils';
 import { initializeErrorTracking, addBreadcrumb } from './utils/errorTracking';
-import { importRosterHubPage, importBuildHubPage, importPackHubPage } from './utils/hubRoutePreload';
+import {
+  importRosterHubPage,
+  importBuildHubPage,
+  importPackHubPage,
+} from './utils/hubRoutePreload';
 // Initialize error tracking before the app starts
 initializeErrorTracking();
 
