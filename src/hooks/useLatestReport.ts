@@ -62,6 +62,14 @@ export const useLatestReport = (): LatestReportState & { refetch: () => Promise<
           page: 1,
           userID,
         },
+        // This landing shortcut only picks the newest non-empty report to link
+        // to, so always read live state: the Apollo client defaults to
+        // cache-first against a session-long cache, which would keep pointing at
+        // a stale "latest" pick (e.g. a since-healed empty log) after the data
+        // moved on. There is no list to keep painted here, so the simple
+        // network-only read is the right call (matches the explicit-refresh path
+        // in useLatestReportsQuery / userReportsSlice).
+        fetchPolicy: 'network-only',
       });
 
       const reportPagination = reportsResult.reportData?.reports;

@@ -379,12 +379,43 @@ export const UserReports: React.FC = () => {
       setInitialLoading(false);
     } else if (cacheInfo.hasFetchedAll) {
       setInitialLoading(false);
+      // Revisiting an already-loaded list. If it has gone stale, revalidate in
+      // the background so a log that has since finished processing on ESO Logs
+      // loses its "Empty" badge without the user clicking Refresh. Redux keeps the
+      // existing rows on screen during the refetch (no flash) and forceNetwork
+      // bypasses Apollo's cache-first default. Staleness is computed here with a
+      // live clock: the memoized selectCacheInfo.isStale is frozen at its
+      // last-input-change time, so it never flips to stale on an otherwise static
+      // store.
+      const STALE_AFTER_MS = 5 * 60 * 1000; // matches selectCacheInfo's TTL
+      const isStale =
+        cacheInfo.lastFetched === null || Date.now() - cacheInfo.lastFetched > STALE_AFTER_MS;
+      // Skip when the last load errored: fetchAllUserReports.rejected also sets
+      // hasFetchedAll, so without this guard a failed initial load would land
+      // here, re-dispatch, and loop — re-clearing the error each time via
+      // fetchAllUserReports.pending. The ESO-595 guard above relies on the same
+      // "don't auto-retry after an error" rule; manual Refresh stays the recovery.
+      if (currentUser?.id && isStale && !isFetchingAll && !hasError) {
+        dispatch(
+          fetchAllUserReports({
+            client,
+            userId: currentUser.id,
+            limit: 100,
+            forceNetwork: true,
+          }),
+        )
+          .unwrap()
+          .catch(() => {
+            // Keep showing the existing rows if the background refresh fails.
+          });
+      }
     }
   }, [
     isLoggedIn,
     currentUser,
     userLoading,
     cacheInfo.hasFetchedAll,
+    cacheInfo.lastFetched,
     isFetchingAll,
     hasError,
     dispatch,

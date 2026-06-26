@@ -30,10 +30,7 @@ const makeReport = (code: string, { empty = false }: { empty?: boolean } = {}) =
   owner: { name: 'Tester' },
 });
 
-const pageResult = (
-  reports: ReturnType<typeof makeReport>[],
-  opts: { hasMore?: boolean } = {},
-) => ({
+const pageResult = (reports: ReturnType<typeof makeReport>[]) => ({
   reportData: {
     reports: {
       data: reports,
@@ -42,11 +39,14 @@ const pageResult = (
       to: reports.length,
       current_page: 1,
       per_page: 25,
-      last_page: opts.hasMore ? 2 : 1,
-      has_more_pages: opts.hasMore ?? false,
+      last_page: 1,
+      has_more_pages: false,
     },
   },
 });
+
+// A cache-only read with nothing usable cached (cold cache).
+const EMPTY_CACHE = { reportData: { reports: null } };
 
 const baseInput: LatestReportsQueryInput = {
   page: 1,
@@ -56,6 +56,26 @@ const baseInput: LatestReportsQueryInput = {
   customTo: null,
 };
 
+/**
+ * Route mocked client.query calls by fetchPolicy: cache-only reads drain
+ * `cache`, network-only reads drain `network`. This mirrors the hand-composed
+ * cache-and-network in the hook (a cache-only peek followed by a network-only
+ * revalidation).
+ */
+function primeClient(opts: { cache?: unknown[]; network?: unknown[] }) {
+  const cache = [...(opts.cache ?? [])];
+  const network = [...(opts.network ?? [])];
+  mockClient.query.mockImplementation((params: { fetchPolicy?: string }) => {
+    if (params.fetchPolicy === 'cache-only') {
+      return Promise.resolve(cache.shift() ?? EMPTY_CACHE);
+    }
+    return Promise.resolve(network.shift() ?? pageResult([]));
+  });
+}
+
+const fetchPolicies = () =>
+  mockClient.query.mock.calls.map((c) => (c[0] as { fetchPolicy?: string }).fetchPolicy);
+
 beforeEach(() => {
   mockClient.query.mockReset();
 });
@@ -63,26 +83,37 @@ beforeEach(() => {
 // ─── Tests ───────────────────────────────────────────────────────────────────
 
 describe('useLatestReportsQuery', () => {
-  it('uses cache-first on mount (cheap on API points, resilient re-navigation)', async () => {
-    mockClient.query.mockResolvedValueOnce(pageResult([makeReport('AAA')]));
+  it('does cache-and-network on mount: a cache-only peek, then a network-only revalidation', async () => {
+    // Cache holds a stale snapshot; the network returns the healed page.
+    primeClient({
+      cache: [pageResult([makeReport('STALE', { empty: true })])],
+      network: [pageResult([makeReport('FRESH')])],
+    });
 
     const { result } = renderHook(() => useLatestReportsQuery(baseInput));
     await waitFor(() => expect(result.current.loading).toBe(false));
 
-    expect(mockClient.query).toHaveBeenCalledTimes(1);
-    // Ordinary loads reuse the cache; only an explicit Refresh forces the network
-    // (asserted below). Page/filter changes vary the variables, so they miss the
-    // cache and hit the network without needing network-only.
-    expect(mockClient.query).toHaveBeenCalledWith(
-      expect.objectContaining({ fetchPolicy: 'cache-first', errorPolicy: 'all' }),
-    );
+    // Two reads: peek the cache (no network), then revalidate from the network.
+    expect(fetchPolicies()).toEqual(['cache-only', 'network-only']);
+    // The network result wins — a healed log never stays stale across a re-visit.
+    expect(result.current.reports.map((r) => r.code)).toEqual(['FRESH']);
+    expect(result.current.hiddenEmptyCount).toBe(0);
+  });
+
+  it('falls back to the network read when nothing is cached (cold cache)', async () => {
+    primeClient({ network: [pageResult([makeReport('AAA')])] });
+
+    const { result } = renderHook(() => useLatestReportsQuery(baseInput));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    expect(fetchPolicies()).toEqual(['cache-only', 'network-only']);
     expect(result.current.reports.map((r) => r.code)).toEqual(['AAA']);
   });
 
   it('hides empty logs on a mixed page (but reports how many were hidden)', async () => {
-    mockClient.query.mockResolvedValueOnce(
-      pageResult([makeReport('REAL'), makeReport('EMPTY', { empty: true })]),
-    );
+    primeClient({
+      network: [pageResult([makeReport('REAL'), makeReport('EMPTY', { empty: true })])],
+    });
 
     const { result } = renderHook(() => useLatestReportsQuery(baseInput));
     await waitFor(() => expect(result.current.loading).toBe(false));
@@ -92,9 +123,9 @@ describe('useLatestReportsQuery', () => {
   });
 
   it('fails open and shows them all when the whole page is empty (never a dead-end wall)', async () => {
-    mockClient.query.mockResolvedValueOnce(
-      pageResult([makeReport('E1', { empty: true }), makeReport('E2', { empty: true })]),
-    );
+    primeClient({
+      network: [pageResult([makeReport('E1', { empty: true }), makeReport('E2', { empty: true })])],
+    });
 
     const { result } = renderHook(() => useLatestReportsQuery(baseInput));
     await waitFor(() => expect(result.current.loading).toBe(false));
@@ -103,30 +134,26 @@ describe('useLatestReportsQuery', () => {
     expect(result.current.hiddenEmptyCount).toBe(0);
   });
 
-  it('refetch (explicit Refresh) forces network-only to replace healed empties; mount stays cache-first', async () => {
-    mockClient.query
-      // First load: an all-empty page is shown via fail-open.
-      .mockResolvedValueOnce(pageResult([makeReport('PENDING', { empty: true })]))
-      // After the log finishes parsing upstream, a forced refetch returns it healed.
-      .mockResolvedValueOnce(pageResult([makeReport('HEALED')]));
+  it('refetch (explicit Refresh) revalidates network-only and skips the cache peek', async () => {
+    primeClient({
+      // Mount: cold cache, network shows the still-processing page (fail-open).
+      network: [
+        pageResult([makeReport('PENDING', { empty: true })]),
+        // Refresh: the log has since healed upstream.
+        pageResult([makeReport('HEALED')]),
+      ],
+    });
 
     const { result } = renderHook(() => useLatestReportsQuery(baseInput));
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.reports.map((r) => r.code)).toEqual(['PENDING']);
-    // Mount read through the cache.
-    expect(mockClient.query).toHaveBeenNthCalledWith(
-      1,
-      expect.objectContaining({ fetchPolicy: 'cache-first' }),
-    );
+    // Mount = cache peek + network revalidate.
+    expect(fetchPolicies()).toEqual(['cache-only', 'network-only']);
 
     act(() => result.current.refetch());
     await waitFor(() => expect(result.current.reports.map((r) => r.code)).toEqual(['HEALED']));
 
-    expect(mockClient.query).toHaveBeenCalledTimes(2);
-    // Refresh bypassed the cache.
-    expect(mockClient.query).toHaveBeenNthCalledWith(
-      2,
-      expect.objectContaining({ fetchPolicy: 'network-only' }),
-    );
+    // Refresh added exactly one network-only read, with no extra cache peek.
+    expect(fetchPolicies()).toEqual(['cache-only', 'network-only', 'network-only']);
   });
 });

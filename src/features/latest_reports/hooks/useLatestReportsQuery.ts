@@ -85,79 +85,102 @@ export function useLatestReportsQuery(input: LatestReportsQueryInput): LatestRep
 
   const { page, zoneId, range, customFrom, customTo } = input;
 
+  // Map a GetLatestReports response into hook state. Returns false when the
+  // payload carried no reports pagination — an empty cache-only read, or a
+  // degraded response — so the caller can decide whether that is an error
+  // (network read) or simply "nothing cached yet" (cache peek).
+  const applyReportData = useCallback(
+    (result: GetLatestReportsQuery, loading: boolean): boolean => {
+      const reportPagination = result.reportData?.reports;
+      if (!reportPagination) return false;
+
+      // Keep the non-null narrowing on the query's own row type (which now also
+      // carries `fights`) rather than the bare summary fragment, so the empty-log
+      // partition below can read the authoritative fight count.
+      const fetched = (reportPagination.data ?? []).filter(
+        (report): report is NonNullable<typeof report> => report !== null,
+      );
+      // Hide empty (no-combat) logs, but never the whole page: if every report
+      // the server returned would be hidden — e.g. a busy upload window where the
+      // freshest page is dominated by still-parsing logs — fail open and show
+      // them all so the user is never stranded on an "every report is empty" wall.
+      const { reportsToShow, hiddenEmptyCount } = selectReportsForDisplay(fetched);
+
+      const currentPage = reportPagination.current_page || 1;
+      const lastPage = reportPagination.last_page;
+      const hasMorePages = reportPagination.has_more_pages || false;
+      const totalPages = lastPage > 0 ? lastPage : hasMorePages ? currentPage + 1 : currentPage;
+
+      setState({
+        reports: reportsToShow,
+        hiddenEmptyCount,
+        loading,
+        error: null,
+        pagination: {
+          currentPage,
+          totalPages,
+          totalReports: reportPagination.total ?? 0,
+          perPage: reportPagination.per_page || REPORTS_PER_PAGE,
+          hasMorePages,
+          from: reportPagination.from ?? null,
+          to: reportPagination.to ?? null,
+        },
+      });
+      return true;
+    },
+    [],
+  );
+
   const fetchReports = useCallback(
-    async (fetchPolicy: 'cache-first' | 'network-only' = 'cache-first'): Promise<void> => {
+    async (skipCachePeek = false): Promise<void> => {
       setState((prev) => ({ ...prev, loading: true, error: null }));
 
+      const variables = buildVariables({ page, zoneId, range, customFrom, customTo });
       try {
-        const variables = buildVariables({ page, zoneId, range, customFrom, customTo });
-        const result = await client.query<GetLatestReportsQuery>({
+        // cache-and-network, hand-composed: client.query() doesn't accept that
+        // fetchPolicy, so on a normal load we first read the cache (cache-only
+        // never touches the network) to paint an already-seen view instantly — no
+        // skeleton flash, and the last-known list stays put if the network is slow
+        // or down — and THEN always revalidate from the network below. That second
+        // read is what matters for the empty-log UX: the freshest page is dominated
+        // by just-uploaded logs still parsing on ESO Logs (segments: 0, fights: [])
+        // that self-heal within minutes, so revalidating on every mount means a
+        // healed log's stale "Empty" badge can never survive a re-visit (the prior
+        // cache-first default re-served the old snapshot with no round-trip). The
+        // cache stays warm because each network read writes back to it. An explicit
+        // Refresh skips the peek — the list is already on screen — and just
+        // revalidates.
+        if (!skipCachePeek) {
+          try {
+            const cached = await client.query<GetLatestReportsQuery>({
+              query: GetLatestReportsDocument,
+              variables,
+              errorPolicy: 'all',
+              fetchPolicy: 'cache-only',
+            });
+            applyReportData(cached, true); // keep loading: true; the network result follows
+          } catch {
+            // Nothing usable in the cache yet — fall through to the network read.
+          }
+        }
+
+        const fresh = await client.query<GetLatestReportsQuery>({
           query: GetLatestReportsDocument,
           variables,
           errorPolicy: 'all',
-          // Normal loads (mount, page/zone/date change) use the default
-          // cache-first: page/filter changes vary the variables so they always
-          // miss the cache and hit the network anyway, while a plain re-mount of
-          // the same view reuses the cached page — cheap on API points and
-          // resilient if the network is briefly down or rate-limited. Only an
-          // explicit Refresh passes 'network-only' (see `refetch` below).
-          //
-          // This is load-bearing for the empty-log UX: the Apollo client
-          // defaults to cache-first against a session-long singleton cache, so
-          // before this split an explicit Refresh re-served the previous
-          // snapshot without a round-trip. Latest Reports' freshest page is
-          // dominated by just-uploaded logs still parsing on ESO Logs
-          // (segments: 0, fights: []) that self-heal within minutes; without a
-          // forced network read, Refresh could never clear a healed log's stale
-          // "Empty" badge. Forcing the network only on Refresh fixes that
-          // without making every mount a paid, cache-bypassing fetch.
-          fetchPolicy,
+          fetchPolicy: 'network-only',
         });
-
-        const reportPagination = result.reportData?.reports;
-        if (!reportPagination) {
+        if (!applyReportData(fresh, false)) {
           setState((prev) => ({
             ...prev,
             loading: false,
             error:
               'No reports data available. This may be due to authentication issues or API limitations.',
           }));
-          return;
         }
-
-        // Keep the non-null narrowing on the query's own row type (which now also
-        // carries `fights`) rather than the bare summary fragment, so the empty-log
-        // partition below can read the authoritative fight count.
-        const fetched = (reportPagination.data ?? []).filter(
-          (report): report is NonNullable<typeof report> => report !== null,
-        );
-        // Hide empty (no-combat) logs, but never the whole page: if every report
-        // the server returned would be hidden — e.g. a busy upload window where the
-        // freshest page is dominated by still-parsing logs — fail open and show
-        // them all so the user is never stranded on an "every report is empty" wall.
-        const { reportsToShow, hiddenEmptyCount } = selectReportsForDisplay(fetched);
-
-        const currentPage = reportPagination.current_page || 1;
-        const lastPage = reportPagination.last_page;
-        const hasMorePages = reportPagination.has_more_pages || false;
-        const totalPages = lastPage > 0 ? lastPage : hasMorePages ? currentPage + 1 : currentPage;
-
-        setState({
-          reports: reportsToShow,
-          hiddenEmptyCount,
-          loading: false,
-          error: null,
-          pagination: {
-            currentPage,
-            totalPages,
-            totalReports: reportPagination.total ?? 0,
-            perPage: reportPagination.per_page || REPORTS_PER_PAGE,
-            hasMorePages,
-            from: reportPagination.from ?? null,
-            to: reportPagination.to ?? null,
-          },
-        });
       } catch (error) {
+        // Keep whatever is already shown (e.g. the cache peek) and surface the
+        // error rather than blanking the list.
         setState((prev) => ({
           ...prev,
           loading: false,
@@ -165,15 +188,16 @@ export function useLatestReportsQuery(input: LatestReportsQueryInput): LatestRep
         }));
       }
     },
-    [client, page, zoneId, range, customFrom, customTo],
+    [client, page, zoneId, range, customFrom, customTo, applyReportData],
   );
 
   useEffect(() => {
-    // Mount + filter/page changes: cache-first (see fetchReports).
-    void fetchReports('cache-first');
+    // Mount + page/zone/date changes: peek the cache for an instant paint, then
+    // revalidate from the network (see fetchReports).
+    void fetchReports();
   }, [fetchReports]);
 
-  // Refresh is the user's explicit "give me the live state" action, so it bypasses
-  // the cache — this is what actually clears a healed log's stale "Empty" badge.
-  return { ...state, refetch: () => void fetchReports('network-only') };
+  // Refresh just revalidates from the network — the list is already on screen, so
+  // there is no cache to peek, and this is what clears a healed log's stale badge.
+  return { ...state, refetch: () => void fetchReports(true) };
 }

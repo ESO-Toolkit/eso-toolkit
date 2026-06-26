@@ -445,6 +445,69 @@ describe('UserReports Component', () => {
     });
   });
 
+  describe('Stale revisit revalidation', () => {
+    const loggedInAuth = () => ({
+      accessToken: validToken,
+      isLoggedIn: true,
+      isBanned: false,
+      banReason: null,
+      currentUser: { id: 12345, name: 'TestUser' },
+      userLoading: false,
+      userError: null,
+      setAccessToken: jest.fn(),
+      rebindAccessToken: jest.fn(),
+      refetchUser: jest.fn(),
+    });
+
+    const treeFor = (store: ReturnType<typeof createMockStore>) => (
+      <Provider store={store}>
+        <MemoryRouter initialEntries={['/my-reports']}>
+          <ThemeProvider theme={defaultTheme}>
+            <LoggerProvider config={{ enableConsole: false, enableStorage: false }}>
+              <EsoLogsClientProvider>
+                <AuthProvider>
+                  <UserReports />
+                </AuthProvider>
+              </EsoLogsClientProvider>
+            </LoggerProvider>
+          </ThemeProvider>
+        </MemoryRouter>
+      </Provider>
+    );
+
+    it('revalidates in the background (network-only) when a warm list is revisited stale', async () => {
+      const store = createMockStore();
+      mockLocalStorage.getItem.mockReturnValue(validToken);
+      (useAuth as jest.Mock).mockReturnValue(loggedInAuth());
+      mockClient.query.mockImplementation((params) =>
+        Promise.resolve(
+          params.query === mockGetCurrentUserDocument ? mockUserData : mockReportsData,
+        ),
+      );
+
+      // First visit warms the Redux store (initial load is cache-first, never forced).
+      const first = render(treeFor(store));
+      await waitFor(() => expect(screen.getByText('Test Report 1')).toBeInTheDocument());
+      expect(mockClient.query).not.toHaveBeenCalledWith(
+        expect.objectContaining({ fetchPolicy: 'network-only' }),
+      );
+      first.unmount();
+
+      // Simulate the 5-minute TTL elapsing, then revisit (remount on the same store).
+      const nowSpy = jest.spyOn(Date, 'now').mockReturnValue(Date.now() + 6 * 60 * 1000);
+      try {
+        render(treeFor(store));
+        await waitFor(() =>
+          expect(mockClient.query).toHaveBeenCalledWith(
+            expect.objectContaining({ fetchPolicy: 'network-only' }),
+          ),
+        );
+      } finally {
+        nowSpy.mockRestore();
+      }
+    });
+  });
+
   describe('Error handling', () => {
     it('should display error message when fetching user data fails', async () => {
       // Mock auth to return userError state
