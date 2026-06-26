@@ -1677,6 +1677,8 @@ export interface UserLoadoutInput {
   loadoutData: string;
   /** Client-authored ISO edit time; '' when the client didn't supply one. */
   clientUpdatedAt: string;
+  /** Client content hash; breaks an exact-`clientUpdatedAt` tie. '' when not supplied. */
+  contentFingerprint: string;
 }
 
 export async function listUserLoadouts(db: D1Database, userId: string): Promise<UserLoadoutRow[]> {
@@ -1734,8 +1736,8 @@ export async function upsertUserLoadout(
     db
       .prepare(
         `INSERT INTO user_loadouts
-           (id, user_id, name, description, trial_id, character_name, loadout_data, client_updated_at, created_at, updated_at)
-         SELECT ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now')
+           (id, user_id, name, description, trial_id, character_name, loadout_data, client_updated_at, content_fingerprint, created_at, updated_at)
+         SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now')
          WHERE EXISTS (SELECT 1 FROM user_loadouts e WHERE e.user_id = ? AND e.id = ?)
             OR (SELECT COUNT(*) FROM user_loadouts c WHERE c.user_id = ?) < ${MAX_LOADOUTS_PER_USER}
          ON CONFLICT(user_id, id) DO UPDATE SET
@@ -1745,6 +1747,7 @@ export async function upsertUserLoadout(
            character_name = excluded.character_name,
            loadout_data = excluded.loadout_data,
            client_updated_at = excluded.client_updated_at,
+           content_fingerprint = excluded.content_fingerprint,
            updated_at = datetime('now')`,
       )
       .bind(
@@ -1756,6 +1759,7 @@ export async function upsertUserLoadout(
         data.characterName,
         data.loadoutData,
         data.clientUpdatedAt,
+        data.contentFingerprint,
         userId,
         data.id,
         userId,
@@ -1779,7 +1783,7 @@ export async function updateUserLoadout(
   const result = await db
     .prepare(
       `UPDATE user_loadouts
-         SET name = ?, description = ?, trial_id = ?, character_name = ?, loadout_data = ?, client_updated_at = ?, updated_at = datetime('now')
+         SET name = ?, description = ?, trial_id = ?, character_name = ?, loadout_data = ?, client_updated_at = ?, content_fingerprint = ?, updated_at = datetime('now')
        WHERE id = ? AND user_id = ?`,
     )
     .bind(
@@ -1789,6 +1793,7 @@ export async function updateUserLoadout(
       data.characterName,
       data.loadoutData,
       data.clientUpdatedAt,
+      data.contentFingerprint,
       id,
       userId,
     )
@@ -1908,8 +1913,8 @@ export async function upsertUserLoadouts(
         // stale tombstone so the revival isn't re-purged. Existing rows still take
         // the last-write-wins path on conflict.
         `INSERT INTO user_loadouts
-           (id, user_id, name, description, trial_id, character_name, loadout_data, client_updated_at, created_at, updated_at)
-         SELECT ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now')
+           (id, user_id, name, description, trial_id, character_name, loadout_data, client_updated_at, content_fingerprint, created_at, updated_at)
+         SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now')
          WHERE NOT EXISTS (
            SELECT 1 FROM user_loadout_deletions d
            WHERE d.user_id = ? AND d.loadout_id = ? AND d.deleted_at >= ?
@@ -1930,8 +1935,17 @@ export async function upsertUserLoadouts(
            character_name = excluded.character_name,
            loadout_data = excluded.loadout_data,
            client_updated_at = excluded.client_updated_at,
+           content_fingerprint = excluded.content_fingerprint,
            updated_at = datetime('now')
-         WHERE excluded.client_updated_at >= user_loadouts.client_updated_at`,
+         -- Last-write-wins, with a DETERMINISTIC tie-break on an exact client_updated_at
+         -- collision: the greater content_fingerprint wins regardless of arrival order, so
+         -- the server settles a same-millisecond divergent edit the same way the client
+         -- merge does (mergeLoadoutsByNewest/selectOutgoing) instead of by who arrived
+         -- last. Both compare the SAME client-sent fixed-width hex hash, so JS and SQLite
+         -- BINARY order agree. A legacy '' fingerprint sorts oldest (loses any real tie).
+         WHERE excluded.client_updated_at > user_loadouts.client_updated_at
+            OR (excluded.client_updated_at = user_loadouts.client_updated_at
+                AND excluded.content_fingerprint >= user_loadouts.content_fingerprint)`,
       )
       .bind(
         l.id,
@@ -1942,6 +1956,7 @@ export async function upsertUserLoadouts(
         l.characterName,
         l.loadoutData,
         l.clientUpdatedAt,
+        l.contentFingerprint,
         userId,
         l.id,
         l.clientUpdatedAt,

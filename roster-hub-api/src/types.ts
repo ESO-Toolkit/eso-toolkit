@@ -147,6 +147,7 @@ export interface UserLoadoutRow {
   character_name: string;
   loadout_data: string; // compact JSON of the SavedLoadout payload
   client_updated_at: string; // client-authored ISO edit time (last-write-wins key)
+  content_fingerprint: string; // client content hash; equal-timestamp tie-break key ('' = legacy)
   created_at: string;
   updated_at: string;
 }

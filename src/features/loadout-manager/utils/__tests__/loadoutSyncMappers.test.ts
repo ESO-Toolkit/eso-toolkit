@@ -2,6 +2,7 @@ import type { SavedLoadout } from '@/store/saved_loadouts';
 
 import type { UserLoadoutRow } from '../../types/loadout-sync.types';
 import {
+  contentFingerprint,
   isSyncablePayload,
   mergeLoadoutsByNewest,
   partitionByOwner,
@@ -71,6 +72,35 @@ describe('savedLoadoutToPayload', () => {
     expect(payload.trial_id).toHaveLength(64);
     expect(payload.character_name).toHaveLength(64);
   });
+
+  it('carries a fixed-width hex content_fingerprint matching the helper', () => {
+    const payload = savedLoadoutToPayload(makeSavedLoadout());
+    expect(payload.content_fingerprint).toMatch(/^[0-9a-f]{14}$/);
+    expect(payload.content_fingerprint).toBe(
+      contentFingerprint(payload.name, payload.description, payload.loadout_data),
+    );
+  });
+});
+
+describe('contentFingerprint', () => {
+  it('is deterministic and fixed-width (14-char) hex', () => {
+    const a = contentFingerprint('name', 'desc', '{"x":1}');
+    const b = contentFingerprint('name', 'desc', '{"x":1}');
+    expect(a).toBe(b);
+    expect(a).toMatch(/^[0-9a-f]{14}$/);
+  });
+
+  it('changes when any compared field changes', () => {
+    const base = contentFingerprint('name', 'desc', '{"x":1}');
+    expect(contentFingerprint('NAME', 'desc', '{"x":1}')).not.toBe(base);
+    expect(contentFingerprint('name', 'DESC', '{"x":1}')).not.toBe(base);
+    expect(contentFingerprint('name', 'desc', '{"x":2}')).not.toBe(base);
+  });
+
+  it('is not fooled by shifting a field boundary (NUL-separated)', () => {
+    // Without a separator, ("ab","c") and ("a","bc") would concatenate identically.
+    expect(contentFingerprint('ab', 'c', 'd')).not.toBe(contentFingerprint('a', 'bc', 'd'));
+  });
 });
 
 describe('isSyncablePayload', () => {
@@ -119,6 +149,7 @@ describe('rowToSavedLoadout', () => {
       character_name: p.character_name,
       loadout_data: p.loadout_data,
       client_updated_at: p.client_updated_at,
+      content_fingerprint: p.content_fingerprint,
       created_at: '2026-06-01 00:00:00',
       updated_at: '2026-06-10 00:00:00',
     };
@@ -186,12 +217,17 @@ describe('mergeLoadoutsByNewest', () => {
 
   it('breaks an exact-timestamp tie deterministically by content (convergent both ways)', () => {
     const ts = '2026-06-10T00:00:00.000Z';
-    const lo = makeSavedLoadout({ id: 'x', name: 'AAA', updatedAt: ts });
-    const hi = makeSavedLoadout({ id: 'x', name: 'zzz', updatedAt: ts });
-    // The greater content fingerprint survives regardless of argument order, so two
-    // devices that diverged at the same millisecond converge on the same row.
-    expect(mergeLoadoutsByNewest([lo], [hi])[0].name).toBe('zzz');
-    expect(mergeLoadoutsByNewest([hi], [lo])[0].name).toBe('zzz');
+    const a = makeSavedLoadout({ id: 'x', name: 'AAA', updatedAt: ts });
+    const b = makeSavedLoadout({ id: 'x', name: 'zzz', updatedAt: ts });
+    // The greater content fingerprint (the exact value the server compares) survives,
+    // and it's the same winner regardless of argument order — so two devices that
+    // diverged at the same millisecond converge instead of one silently dropping its edit.
+    const expected =
+      savedLoadoutToPayload(b).content_fingerprint >= savedLoadoutToPayload(a).content_fingerprint
+        ? 'zzz'
+        : 'AAA';
+    expect(mergeLoadoutsByNewest([a], [b])[0].name).toBe(expected);
+    expect(mergeLoadoutsByNewest([b], [a])[0].name).toBe(expected);
   });
 });
 
@@ -225,14 +261,19 @@ describe('selectOutgoing', () => {
     expect(selectOutgoing([identical], server)).toEqual([]);
   });
 
-  it('pushes an equal-timestamp divergent edit whose content wins the tie-break', () => {
-    const server = [
-      makeSavedLoadout({ id: 'a', name: 'AAA', updatedAt: '2026-06-10T00:00:00.000Z' }),
-    ];
-    // Same timestamp, lexicographically-greater content → the deterministic winner is pushed
-    // instead of being silently overwritten.
-    const local = makeSavedLoadout({ id: 'a', name: 'zzz', updatedAt: '2026-06-10T00:00:00.000Z' });
-    expect(selectOutgoing([local], server).map((l) => l.id)).toEqual(['a']);
+  it('pushes an equal-timestamp divergent edit only when its content wins the tie-break', () => {
+    const ts = '2026-06-10T00:00:00.000Z';
+    const a = makeSavedLoadout({ id: 'a', name: 'AAA', updatedAt: ts });
+    const b = makeSavedLoadout({ id: 'a', name: 'zzz', updatedAt: ts });
+    // The greater fingerprint is the deterministic winner the server keeps. The winning
+    // local row is pushed (so the server adopts it); the losing local row is not (the
+    // server already holds the winner) — no ping-pong, devices converge.
+    const [winner, loser] =
+      savedLoadoutToPayload(a).content_fingerprint > savedLoadoutToPayload(b).content_fingerprint
+        ? [a, b]
+        : [b, a];
+    expect(selectOutgoing([winner], [loser]).map((l) => l.id)).toEqual(['a']);
+    expect(selectOutgoing([loser], [winner])).toEqual([]);
   });
 });
 

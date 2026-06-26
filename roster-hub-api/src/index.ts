@@ -1011,6 +1011,7 @@ interface LoadoutBody {
   character_name?: string;
   loadout_data?: string;
   client_updated_at?: string;
+  content_fingerprint?: string;
 }
 
 /**
@@ -1046,6 +1047,11 @@ function parseLoadoutBody(body: LoadoutBody, id: string): UserLoadoutInput | str
   const loadoutData = typeof body.loadout_data === 'string' ? body.loadout_data : '';
   const clientUpdatedAt =
     typeof body.client_updated_at === 'string' ? body.client_updated_at : '';
+  // Optional: clients before this column omit it (''), in which case equal-timestamp
+  // ties fall back to arrival order as before. We only store/compare the value — never
+  // recompute it — so any opaque string is accepted (a length cap bounds storage).
+  const contentFingerprint =
+    typeof body.content_fingerprint === 'string' ? body.content_fingerprint : '';
 
   if (!name.trim()) return 'name is required';
   if (name.length > 100) return 'name must be ≤ 100 characters';
@@ -1055,6 +1061,7 @@ function parseLoadoutBody(body: LoadoutBody, id: string): UserLoadoutInput | str
   if (clientUpdatedAt.length > 40) return 'client_updated_at must be ≤ 40 characters';
   if (!isValidClientTimestamp(clientUpdatedAt))
     return 'client_updated_at must be an ISO-8601 UTC timestamp not in the future';
+  if (contentFingerprint.length > 64) return 'content_fingerprint must be ≤ 64 characters';
   if (!loadoutData.trim()) return 'loadout_data is required';
   if (loadoutData.length > MAX_LOADOUT_DATA_CHARS)
     return `loadout_data must be ≤ ${MAX_LOADOUT_DATA_CHARS} characters`;
@@ -1072,6 +1079,7 @@ function parseLoadoutBody(body: LoadoutBody, id: string): UserLoadoutInput | str
     characterName: cleanText(characterName),
     loadoutData,
     clientUpdatedAt: canonicalTimestamp(clientUpdatedAt),
+    contentFingerprint,
   };
 }
 

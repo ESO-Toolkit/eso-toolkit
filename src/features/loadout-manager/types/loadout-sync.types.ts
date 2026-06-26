@@ -14,6 +14,8 @@ export interface UserLoadoutRow {
   loadout_data: string;
   /** Client-authored ISO edit time (the SavedLoadout's updatedAt). */
   client_updated_at: string;
+  /** Client-computed content fingerprint (hex); '' on rows written before the column. */
+  content_fingerprint: string;
   created_at: string;
   updated_at: string;
 }
@@ -35,4 +37,10 @@ export interface LoadoutSyncPayload {
   loadout_data: string;
   /** Client-authored ISO edit time; drives server-side last-write-wins on sync. */
   client_updated_at: string;
+  /**
+   * Content fingerprint (hex) over name + description + loadout_data. The worker compares
+   * it to settle an exact `client_updated_at` tie deterministically (same winner the
+   * client merge picks), instead of by arrival order.
+   */
+  content_fingerprint: string;
 }
