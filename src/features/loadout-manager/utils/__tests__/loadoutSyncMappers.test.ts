@@ -80,6 +80,19 @@ describe('savedLoadoutToPayload', () => {
       contentFingerprint(payload.name, payload.description, payload.loadout_data),
     );
   });
+
+  it('trims name/description so the fingerprint matches what the server stores (no churn)', () => {
+    // The worker stores cleanText(name) = name.trim(); fingerprinting the untrimmed value
+    // would make a whitespace-padded name re-push on every sync. Trimming here keeps the
+    // sent value and the fingerprint byte-identical to the server's stored row.
+    const clean = savedLoadoutToPayload(makeSavedLoadout({ name: 'My DPS', description: 'x' }));
+    const padded = savedLoadoutToPayload(
+      makeSavedLoadout({ name: '  My DPS  ', description: '  x  ' }),
+    );
+    expect(padded.name).toBe('My DPS');
+    expect(padded.description).toBe('x');
+    expect(padded.content_fingerprint).toBe(clean.content_fingerprint);
+  });
 });
 
 describe('contentFingerprint', () => {
@@ -97,8 +110,9 @@ describe('contentFingerprint', () => {
     expect(contentFingerprint('name', 'desc', '{"x":2}')).not.toBe(base);
   });
 
-  it('is not fooled by shifting a field boundary (NUL-separated)', () => {
-    // Without a separator, ("ab","c") and ("a","bc") would concatenate identically.
+  it('is not fooled by shifting a field boundary (fields are JSON-encoded)', () => {
+    // A naive concatenation would make ("ab","c") and ("a","bc") collide; JSON.stringify
+    // keeps the boundaries unambiguous.
     expect(contentFingerprint('ab', 'c', 'd')).not.toBe(contentFingerprint('a', 'bc', 'd'));
   });
 });
