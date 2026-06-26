@@ -24,10 +24,34 @@ export interface SavedLoadout {
   updatedAt: string; // ISO
   setup: LoadoutSetup;
   meta?: SavedLoadoutMeta;
+  /**
+   * The account this loadout belongs to, stamped when it is synced to an account.
+   * Undefined = unowned/local (a guest- or pre-sign-in-built loadout). Used to
+   * hide (never delete) other users' synced loadouts on a shared browser and to
+   * avoid pushing them into the wrong account. Claimed only on an explicit sync.
+   */
+  ownerUserId?: string;
 }
 
 interface SavedLoadoutsState {
   loadouts: SavedLoadout[];
+  /** ISO timestamp of the last successful account sync, if any. */
+  lastSyncedAt?: string;
+  /**
+   * The account id the local library was last synced with. Used to detect a
+   * shared browser switching accounts, so one user's local loadouts are never
+   * pushed into another user's account. MUTABLE — overwritten on each sync so it
+   * always reflects the latest account (this is what scopes `lastSyncedAt`).
+   */
+  syncedUserId?: string;
+  /**
+   * WRITE-ONCE binding of the unowned (guest/legacy) namespace to the FIRST
+   * account that synced on this browser. Unlike `syncedUserId`, later syncs by a
+   * different account never overwrite it (see {@link bindUnownedOwnerUserId}), so
+   * a second account can't re-expose — or claim — the first account's
+   * pre-account loadouts. Reset only by clearing the persisted loadout data.
+   */
+  unownedOwnerUserId?: string;
 }
 
 const initialState: SavedLoadoutsState = {
@@ -39,6 +63,12 @@ interface SaveLoadoutInput {
   setup: LoadoutSetup;
   description?: string;
   meta?: SavedLoadoutMeta;
+  /**
+   * The account saving this loadout, when signed in. Stamping ownership at save
+   * time (not at sync) means a loadout built while signed in is never treated as
+   * unowned guest data and can't be claimed/pushed into a different account.
+   */
+  ownerUserId?: string;
 }
 
 const savedLoadoutsSlice = createSlice({
@@ -49,7 +79,7 @@ const savedLoadoutsSlice = createSlice({
       reducer(state, action: PayloadAction<SavedLoadout>) {
         state.loadouts.unshift(action.payload);
       },
-      prepare({ name, setup, description, meta }: SaveLoadoutInput) {
+      prepare({ name, setup, description, meta, ownerUserId }: SaveLoadoutInput) {
         const now = new Date().toISOString();
         return {
           payload: {
@@ -60,6 +90,7 @@ const savedLoadoutsSlice = createSlice({
             updatedAt: now,
             setup,
             meta,
+            ownerUserId,
           } satisfies SavedLoadout,
         };
       },
@@ -68,13 +99,19 @@ const savedLoadoutsSlice = createSlice({
       state,
       action: PayloadAction<{
         id: string;
+        ownerUserId?: string;
         setup: LoadoutSetup;
         name?: string;
         description?: string;
         meta?: SavedLoadoutMeta;
       }>,
     ) {
-      const idx = state.loadouts.findIndex((l) => l.id === action.payload.id);
+      // Match on (id, ownerUserId): the same client id can exist under different
+      // accounts in the persisted slice, so id alone could mutate another (hidden)
+      // account's loadout.
+      const idx = state.loadouts.findIndex(
+        (l) => l.id === action.payload.id && l.ownerUserId === action.payload.ownerUserId,
+      );
       if (idx === -1) {
         return;
       }
@@ -93,9 +130,16 @@ const savedLoadoutsSlice = createSlice({
     },
     renameSavedLoadout(
       state,
-      action: PayloadAction<{ id: string; name: string; description?: string }>,
+      action: PayloadAction<{
+        id: string;
+        ownerUserId?: string;
+        name: string;
+        description?: string;
+      }>,
     ) {
-      const idx = state.loadouts.findIndex((l) => l.id === action.payload.id);
+      const idx = state.loadouts.findIndex(
+        (l) => l.id === action.payload.id && l.ownerUserId === action.payload.ownerUserId,
+      );
       if (idx === -1) {
         return;
       }
@@ -105,12 +149,47 @@ const savedLoadoutsSlice = createSlice({
       }
       state.loadouts[idx].updatedAt = new Date().toISOString();
     },
-    deleteSavedLoadout(state, action: PayloadAction<string>) {
-      state.loadouts = state.loadouts.filter((l) => l.id !== action.payload);
+    deleteSavedLoadout(state, action: PayloadAction<{ id: string; ownerUserId?: string }>) {
+      state.loadouts = state.loadouts.filter(
+        (l) => !(l.id === action.payload.id && l.ownerUserId === action.payload.ownerUserId),
+      );
+    },
+    /**
+     * Replace the entire library — used by account sync after merging the local
+     * and remote sets so the store reflects loadouts pulled from other devices.
+     */
+    replaceAllLoadouts(state, action: PayloadAction<SavedLoadout[]>) {
+      state.loadouts = action.payload;
+    },
+    setLastSyncedAt(state, action: PayloadAction<string | undefined>) {
+      state.lastSyncedAt = action.payload;
+    },
+    setSyncedUserId(state, action: PayloadAction<string | undefined>) {
+      state.syncedUserId = action.payload;
+    },
+    /**
+     * Bind the unowned (guest/legacy) namespace to an account — WRITE ONCE. The
+     * first concrete account to sync wins; every later write is ignored, so a
+     * second account that syncs on the same browser can never re-point the binding
+     * at itself and thereby re-expose the first account's pre-account loadouts.
+     * Dispatched on every successful sync (it only takes effect the first time).
+     */
+    bindUnownedOwnerUserId(state, action: PayloadAction<string>) {
+      if (state.unownedOwnerUserId === undefined) {
+        state.unownedOwnerUserId = action.payload;
+      }
     },
   },
 });
 
-export const { saveLoadout, updateSavedLoadout, renameSavedLoadout, deleteSavedLoadout } =
-  savedLoadoutsSlice.actions;
+export const {
+  saveLoadout,
+  updateSavedLoadout,
+  renameSavedLoadout,
+  deleteSavedLoadout,
+  replaceAllLoadouts,
+  setLastSyncedAt,
+  setSyncedUserId,
+  bindUnownedOwnerUserId,
+} = savedLoadoutsSlice.actions;
 export default savedLoadoutsSlice.reducer;

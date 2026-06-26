@@ -33,6 +33,8 @@ import {
 import React, { useState } from 'react';
 import { useDispatch } from 'react-redux';
 
+import { useAuth } from '@/features/auth/AuthContext';
+import { tokenHasUserSubject } from '@/features/auth/tokenUtils';
 import { useLogger } from '@/hooks/useLogger';
 import { saveLoadout } from '@/store/saved_loadouts';
 
@@ -101,6 +103,7 @@ export const SetupEditor: React.FC<SetupEditorProps> = ({
   variant = 'page',
 }) => {
   const dispatch = useDispatch();
+  const { currentUser, userLoading, accessToken } = useAuth();
   const logger = useLogger('SetupEditor');
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === 'dark';
@@ -242,6 +245,17 @@ export const SetupEditor: React.FC<SetupEditorProps> = ({
     if (!name) {
       return;
     }
+    // Only an ACCOUNT session (a user-subject token) must resolve its identity before
+    // we stamp ownerUserId. Block such a session while the id is unresolved or
+    // mid-refetch — right after an account switch the new token is live but currentUser
+    // hasn't caught up — so we never stamp a loadout to the wrong/previous account.
+    // A report-scope token (isLoggedIn but no user subject) or a logged-out guest has
+    // no account, so it saves unowned and can claim later; gating on isLoggedIn here
+    // would wrongly block report-scope users from ever saving a local loadout.
+    if (tokenHasUserSubject(accessToken) && (userLoading || !currentUser?.id)) {
+      showSnackbar('Your account is still loading — try saving again in a moment.', 'info');
+      return;
+    }
     // Clone so later edits to the working setup don't mutate the library entry.
     const clonedSetup: LoadoutSetup = JSON.parse(JSON.stringify(setup));
     dispatch(
@@ -250,6 +264,7 @@ export const SetupEditor: React.FC<SetupEditorProps> = ({
         setup: clonedSetup,
         description: saveDescription.trim() || undefined,
         meta: { trialId },
+        ownerUserId: currentUser?.id ? String(currentUser.id) : undefined,
       }),
     );
     setSaveDialogOpen(false);

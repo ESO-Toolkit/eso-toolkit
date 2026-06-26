@@ -7,6 +7,7 @@ import savedLoadoutsReducer, {
   updateSavedLoadout,
   renameSavedLoadout,
   deleteSavedLoadout,
+  bindUnownedOwnerUserId,
 } from './savedLoadoutsSlice';
 import type { SavedLoadout } from './savedLoadoutsSlice';
 
@@ -173,11 +174,47 @@ describe('savedLoadoutsSlice', () => {
       const b: SavedLoadout = { ...a, id: 'b', name: 'B', setup: makeSetup('B') };
       const store = createTestStore([a, b]);
 
-      store.dispatch(deleteSavedLoadout('a'));
+      store.dispatch(deleteSavedLoadout({ id: 'a' }));
 
       const { loadouts } = store.getState().savedLoadouts;
       expect(loadouts).toHaveLength(1);
       expect(loadouts[0].id).toBe('b');
+    });
+
+    it('only removes the matching owner when an id exists under two accounts', () => {
+      const mine: SavedLoadout = {
+        id: 'dup',
+        name: 'Mine',
+        createdAt: '2020-01-01T00:00:00.000Z',
+        updatedAt: '2020-01-01T00:00:00.000Z',
+        setup: makeSetup('Mine'),
+        ownerUserId: 'u1',
+      };
+      const other: SavedLoadout = { ...mine, name: 'Other', ownerUserId: 'u2' };
+      const store = createTestStore([mine, other]);
+
+      store.dispatch(deleteSavedLoadout({ id: 'dup', ownerUserId: 'u1' }));
+
+      const { loadouts } = store.getState().savedLoadouts;
+      expect(loadouts).toHaveLength(1);
+      expect(loadouts[0].ownerUserId).toBe('u2'); // the other account's row is untouched
+    });
+  });
+
+  describe('bindUnownedOwnerUserId', () => {
+    it('binds the unowned namespace to the first account', () => {
+      const store = createTestStore();
+      store.dispatch(bindUnownedOwnerUserId('A'));
+      expect(store.getState().savedLoadouts.unownedOwnerUserId).toBe('A');
+    });
+
+    it('is write-once: a later account never overwrites the binding', () => {
+      const store = createTestStore();
+      store.dispatch(bindUnownedOwnerUserId('A'));
+      // B syncs on the same browser — the binding must stay pinned to A, otherwise B
+      // would re-expose A's unowned (guest/legacy) rows.
+      store.dispatch(bindUnownedOwnerUserId('B'));
+      expect(store.getState().savedLoadouts.unownedOwnerUserId).toBe('A');
     });
   });
 });

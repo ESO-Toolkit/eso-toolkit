@@ -17,6 +17,8 @@ import {
   deriveItemNameForSlot,
   fetchIsTwoHandedWeapon,
   GENERIC_WEAPON_SUFFIXES,
+  getItemIconName,
+  getItemIconSources,
   getItemIconUrl,
   isIconDataReady,
   isTwoHandedFromName,
@@ -36,6 +38,53 @@ describe('isIconDataReady', () => {
   it('reports ready once icon data has been preloaded', () => {
     // beforeAll awaited preloadIconData, so it must be ready here.
     expect(isIconDataReady()).toBe(true);
+  });
+});
+
+describe('multi-CDN icon resolution', () => {
+  // 97219 = a concrete Mother's Sorrow weapon (slot-specific, in local data).
+  it('getItemIconName returns the bare icon filename (no CDN, no extension)', () => {
+    const name = getItemIconName(97219);
+    expect(name).toBeTruthy();
+    expect(name).toMatch(/^gear_/);
+    expect(name).not.toContain('http');
+    expect(name).not.toContain('.png');
+  });
+
+  it('getItemIconUrl resolves to the reliable RPGLogs CDN (primary)', () => {
+    expect(getItemIconUrl(97219)).toMatch(
+      /^https:\/\/assets\.rpglogs\.com\/img\/eso\/abilities\/gear_.+\.png$/,
+    );
+  });
+
+  it('getItemIconSources returns RPGLogs first, UESP fallback second', () => {
+    const sources = getItemIconSources(97219);
+    expect(sources).toHaveLength(2);
+    expect(sources[0]).toMatch(/^https:\/\/assets\.rpglogs\.com\/img\/eso\/abilities\/gear_/);
+    expect(sources[1]).toMatch(/^https:\/\/esoicons\.uesp\.net\/esoui\/art\/icons\/gear_/);
+    // Both URLs reference the SAME icon filename.
+    const nameFrom = (u: string) => u.replace(/.*\//, '').replace(/\.png$/, '');
+    expect(nameFrom(sources[0])).toBe(nameFrom(sources[1]));
+  });
+
+  it('returns empty / null for invalid ids', () => {
+    expect(getItemIconSources(0)).toEqual([]);
+    expect(getItemIconSources(null)).toEqual([]);
+    expect(getItemIconName(undefined)).toBeNull();
+    expect(getItemIconUrl(-5)).toBeNull();
+  });
+
+  it('parseWeaponTypeFromIconUrl handles the RPGLogs /abilities/ path too', () => {
+    expect(
+      parseWeaponTypeFromIconUrl(
+        'https://assets.rpglogs.com/img/eso/abilities/gear_argonian_bow_d.png',
+      ),
+    ).toBe('Bow');
+    expect(
+      parseWeaponTypeFromIconUrl(
+        'https://assets.rpglogs.com/img/eso/abilities/gear_argonian_1hsword_d.png',
+      ),
+    ).toBe('Sword');
   });
 });
 
@@ -249,7 +298,8 @@ describe('deriveItemNameForSlot (integration — real itemIds through local icon
     // Sanity-check the upstream link first — if the icon JSON changes shape,
     // we want a specific failure here, not a silent regression elsewhere.
     const iconUrl = getItemIconUrl(itemId);
-    expect(iconUrl).toMatch(/\/icons\/gear_/);
+    // Primary CDN is RPGLogs (reliable); UESP is only the <ResilientImg> fallback.
+    expect(iconUrl).toMatch(/^https:\/\/assets\.rpglogs\.com\/img\/eso\/abilities\/gear_/);
     expect(deriveItemNameForSlot(itemId, slotType)).toBe(expected);
   });
 

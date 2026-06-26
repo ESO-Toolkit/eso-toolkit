@@ -4,6 +4,17 @@ export {
   updateSavedLoadout,
   renameSavedLoadout,
   deleteSavedLoadout,
+  replaceAllLoadouts,
+  setLastSyncedAt,
+  setSyncedUserId,
+  bindUnownedOwnerUserId,
 } from './savedLoadoutsSlice';
-export { selectSavedLoadouts, selectSavedLoadoutById } from './savedLoadoutsSelectors';
+export {
+  selectSavedLoadouts,
+  selectSavedLoadoutById,
+  selectLoadoutsLastSyncedAt,
+  selectLoadoutsSyncedUserId,
+  selectUnownedOwnerUserId,
+  selectVisibleLoadouts,
+} from './savedLoadoutsSelectors';
 export type { SavedLoadout, SavedLoadoutMeta } from './savedLoadoutsSlice';

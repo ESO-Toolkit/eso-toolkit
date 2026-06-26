@@ -5,6 +5,7 @@ import {
   Edit,
   FileDownload,
   FileUpload,
+  HelpOutlined as HelpOutline,
   MoreVert,
   Backpack as BackpackIcon,
   Search as SearchIcon,
@@ -48,8 +49,13 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 
 import { WorkInProgressDisclaimer } from '@/components/WorkInProgressDisclaimer';
+import { useAuth } from '@/features/auth/AuthContext';
 import { useDropdownMenuProps } from '@/hooks/useDropdownMenuDirection';
-import { selectSavedLoadouts, type SavedLoadout } from '@/store/saved_loadouts';
+import {
+  selectUnownedOwnerUserId,
+  selectVisibleLoadouts,
+  type SavedLoadout,
+} from '@/store/saved_loadouts';
 import type { RootState } from '@/store/storeWithHistory';
 
 import { preloadChampionPointData } from '../data/championPointData';
@@ -92,6 +98,7 @@ import {
 
 import { CharacterSelector } from './CharacterSelector';
 import { ExportDialog } from './ExportDialog';
+import { InstallGuideModal } from './InstallGuideModal';
 import { LoadoutLibraryPanel } from './LoadoutLibraryPanel';
 import { SetupEditor } from './SetupEditor';
 import { SetupList } from './SetupList';
@@ -150,13 +157,18 @@ export const LoadoutManager: React.FC = () => {
     currentTrial ? selectTrialPages(state, currentTrial) : [],
   );
   const currentCharacter = useSelector((state: RootState) => state.loadout.currentCharacter);
-  const savedLoadoutCount = useSelector(selectSavedLoadouts).length;
+  const { currentUser } = useAuth();
+  const unownedOwnerUserId = useSelector(selectUnownedOwnerUserId);
+  const savedLoadoutCount = useSelector(
+    selectVisibleLoadouts(currentUser?.id ? String(currentUser.id) : undefined, unownedOwnerUserId),
+  ).length;
 
   const [view, setView] = useState<'setups' | 'library'>('setups');
   const [selectedSetupIndex, setSelectedSetupIndex] = useState<number | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
+  const [installGuideOpen, setInstallGuideOpen] = useState(false);
   const [renameDialogOpen, setRenameDialogOpen] = useState(false);
   const [renameTargetIndex, setRenameTargetIndex] = useState<number | null>(null);
   const [renameValue, setRenameValue] = useState('');
@@ -738,6 +750,32 @@ export const LoadoutManager: React.FC = () => {
                       </IconButton>
                     </span>
                   </Tooltip>
+                  <Box
+                    sx={{
+                      width: '1px',
+                      height: 20,
+                      flexShrink: 0,
+                      backgroundColor: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)',
+                    }}
+                  />
+                  <Tooltip title="Set up in-game (install guide)" arrow>
+                    <IconButton
+                      size="small"
+                      onClick={() => setInstallGuideOpen(true)}
+                      aria-label="Install guide"
+                      sx={{
+                        borderRadius: 0,
+                        px: 1,
+                        '&:hover': {
+                          backgroundColor: isDarkMode
+                            ? 'rgba(255,255,255,0.08)'
+                            : 'rgba(0,0,0,0.05)',
+                        },
+                      }}
+                    >
+                      <HelpOutline fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
                 </Box>
 
                 <Tooltip title="More actions" arrow>
@@ -1046,7 +1084,20 @@ export const LoadoutManager: React.FC = () => {
       </Drawer>
 
       {/* Export dialog */}
-      <ExportDialog open={exportDialogOpen} onClose={() => setExportDialogOpen(false)} />
+      <ExportDialog
+        open={exportDialogOpen}
+        onClose={() => setExportDialogOpen(false)}
+        onOpenInstallGuide={() => {
+          setExportDialogOpen(false);
+          setInstallGuideOpen(true);
+        }}
+      />
+
+      <InstallGuideModal
+        open={installGuideOpen}
+        onClose={() => setInstallGuideOpen(false)}
+        defaultAccountName={currentUser?.name}
+      />
 
       {/* Overflow menu */}
       <Menu
@@ -1088,6 +1139,17 @@ export const LoadoutManager: React.FC = () => {
             <FileDownload fontSize="small" />
           </ListItemIcon>
           <ListItemText>Export</ListItemText>
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            setInstallGuideOpen(true);
+            setOverflowAnchor(null);
+          }}
+        >
+          <ListItemIcon>
+            <HelpOutline fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>Set up in-game</ListItemText>
         </MenuItem>
         <Divider />
         <MenuItem
