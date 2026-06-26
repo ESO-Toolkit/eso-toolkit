@@ -94,6 +94,16 @@ export function useLatestReportsQuery(input: LatestReportsQueryInput): LatestRep
         query: GetLatestReportsDocument,
         variables,
         errorPolicy: 'all',
+        // Always hit the network. The Apollo client defaults to cache-first and
+        // the session-long singleton cache persists across mounts, so without
+        // this an explicit Refresh — or navigating back to the page — re-serves
+        // the previous snapshot without a round-trip. That matters here because
+        // Latest Reports' freshest page is dominated by just-uploaded logs that
+        // are still parsing on ESO Logs (segments: 0, fights: []); those self-
+        // heal within minutes, but a cached read would keep showing them (or a
+        // stale "Empty" badge) until a filter change or hard reload busts the
+        // cache. Mirrors useProfileUploadedReports, the sibling reports list.
+        fetchPolicy: 'network-only',
       });
 
       const reportPagination = result.reportData?.reports;
