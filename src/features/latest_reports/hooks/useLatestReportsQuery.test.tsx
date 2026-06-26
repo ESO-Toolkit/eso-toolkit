@@ -156,4 +156,41 @@ describe('useLatestReportsQuery', () => {
     // Refresh added exactly one network-only read, with no extra cache peek.
     expect(fetchPolicies()).toEqual(['cache-only', 'network-only', 'network-only']);
   });
+
+  it('ignores a superseded in-flight load when page/filter changes (out-of-order responses)', async () => {
+    // Page 1's network read resolves LATE; page 2's resolves immediately.
+    let resolvePage1Network: (v: unknown) => void = () => {};
+    const page1Network = new Promise((res) => {
+      resolvePage1Network = res;
+    });
+
+    mockClient.query.mockImplementation(
+      (params: { fetchPolicy?: string; variables?: { page?: number } }) => {
+        if (params.fetchPolicy === 'cache-only') return Promise.resolve(EMPTY_CACHE);
+        return params.variables?.page === 1
+          ? page1Network
+          : Promise.resolve(pageResult([makeReport('PAGE2')]));
+      },
+    );
+
+    const { result, rerender } = renderHook(
+      (props: LatestReportsQueryInput) => useLatestReportsQuery(props),
+      {
+        initialProps: { ...baseInput, page: 1 },
+      },
+    );
+
+    // Switch to page 2 before page 1's network resolves.
+    rerender({ ...baseInput, page: 2 });
+    await waitFor(() => expect(result.current.reports.map((r) => r.code)).toEqual(['PAGE2']));
+
+    // Resolve page 1 late — the superseded response must be dropped, not applied.
+    resolvePage1Network(pageResult([makeReport('PAGE1-STALE')]));
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(result.current.reports.map((r) => r.code)).toEqual(['PAGE2']);
+  });
 });

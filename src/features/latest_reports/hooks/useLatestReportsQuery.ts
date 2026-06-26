@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { useEsoLogsClientInstance } from '../../../EsoLogsClientContext';
 import {
@@ -85,6 +85,11 @@ export function useLatestReportsQuery(input: LatestReportsQueryInput): LatestRep
 
   const { page, zoneId, range, customFrom, customTo } = input;
 
+  // Identifies the latest fetch so a slower, superseded request (e.g. the page or
+  // filters changed mid-flight) can't overwrite newer state — including the
+  // two-step cache-only + network-only sequence below. Mirrors useLatestReport.
+  const requestIdRef = useRef(0);
+
   // Map a GetLatestReports response into hook state. Returns false when the
   // payload carried no reports pagination — an empty cache-only read, or a
   // degraded response — so the caller can decide whether that is an error
@@ -133,6 +138,7 @@ export function useLatestReportsQuery(input: LatestReportsQueryInput): LatestRep
 
   const fetchReports = useCallback(
     async (skipCachePeek = false): Promise<void> => {
+      const requestId = ++requestIdRef.current;
       setState((prev) => ({ ...prev, loading: true, error: null }));
 
       const variables = buildVariables({ page, zoneId, range, customFrom, customTo });
@@ -158,7 +164,10 @@ export function useLatestReportsQuery(input: LatestReportsQueryInput): LatestRep
               errorPolicy: 'all',
               fetchPolicy: 'cache-only',
             });
-            applyReportData(cached, true); // keep loading: true; the network result follows
+            // Drop the peek if a newer load has superseded this one.
+            if (requestId === requestIdRef.current) {
+              applyReportData(cached, true); // keep loading: true; the network result follows
+            }
           } catch {
             // Nothing usable in the cache yet — fall through to the network read.
           }
@@ -170,6 +179,7 @@ export function useLatestReportsQuery(input: LatestReportsQueryInput): LatestRep
           errorPolicy: 'all',
           fetchPolicy: 'network-only',
         });
+        if (requestId !== requestIdRef.current) return; // superseded by a newer load
         if (!applyReportData(fresh, false)) {
           setState((prev) => ({
             ...prev,
@@ -179,6 +189,7 @@ export function useLatestReportsQuery(input: LatestReportsQueryInput): LatestRep
           }));
         }
       } catch (error) {
+        if (requestId !== requestIdRef.current) return; // superseded by a newer load
         // Keep whatever is already shown (e.g. the cache peek) and surface the
         // error rather than blanking the list.
         setState((prev) => ({

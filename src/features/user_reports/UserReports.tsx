@@ -226,6 +226,14 @@ export const UserReports: React.FC = () => {
   // Track fetch error to prevent infinite re-fetch loop (ESO-595)
   const [hasError, setHasError] = React.useState(false);
 
+  // Guards the background stale-revisit revalidation against an infinite retry
+  // loop: a failed background fetch leaves the list stale (lastFetched unchanged)
+  // and toggles isFetchingAll, which would otherwise re-enter the effect and
+  // re-dispatch forever. We attempt it at most once per stale window and only
+  // re-arm after a SUCCESSFUL revalidation (a failure leaves it latched, so
+  // recovery is via manual Refresh).
+  const staleRevalidationLatchedRef = React.useRef(false);
+
   // Fetch page data
   const fetchPage = useCallback(
     async (page: number) => {
@@ -390,12 +398,20 @@ export const UserReports: React.FC = () => {
       const STALE_AFTER_MS = 5 * 60 * 1000; // matches selectCacheInfo's TTL
       const isStale =
         cacheInfo.lastFetched === null || Date.now() - cacheInfo.lastFetched > STALE_AFTER_MS;
-      // Skip when the last load errored: fetchAllUserReports.rejected also sets
-      // hasFetchedAll, so without this guard a failed initial load would land
-      // here, re-dispatch, and loop — re-clearing the error each time via
-      // fetchAllUserReports.pending. The ESO-595 guard above relies on the same
-      // "don't auto-retry after an error" rule; manual Refresh stays the recovery.
-      if (currentUser?.id && isStale && !isFetchingAll && !hasError) {
+      // Skip when the last load errored (fetchAllUserReports.rejected also sets
+      // hasFetchedAll, so a failed initial load lands here) and when this stale
+      // window's attempt is already latched — without the latch a background
+      // failure would re-dispatch forever, since it leaves the list stale and
+      // toggles isFetchingAll, re-entering this effect (and .pending re-clears the
+      // Redux error). Manual Refresh stays the recovery path.
+      if (
+        currentUser?.id &&
+        isStale &&
+        !isFetchingAll &&
+        !hasError &&
+        !staleRevalidationLatchedRef.current
+      ) {
+        staleRevalidationLatchedRef.current = true;
         dispatch(
           fetchAllUserReports({
             client,
@@ -405,8 +421,14 @@ export const UserReports: React.FC = () => {
           }),
         )
           .unwrap()
+          .then(() => {
+            // Re-arm only on success so a later stale window can revalidate again;
+            // a successful fetch also refreshes lastFetched, so this won't loop.
+            staleRevalidationLatchedRef.current = false;
+          })
           .catch(() => {
-            // Keep showing the existing rows if the background refresh fails.
+            // Keep showing the existing rows; leave the latch set so a failed
+            // background refresh does not retry until the user clicks Refresh.
           });
       }
     }

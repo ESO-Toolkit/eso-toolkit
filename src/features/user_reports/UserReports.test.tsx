@@ -506,6 +506,40 @@ describe('UserReports Component', () => {
         nowSpy.mockRestore();
       }
     });
+
+    it('does not loop when a stale background revalidation fails', async () => {
+      const store = createMockStore();
+      mockLocalStorage.getItem.mockReturnValue(validToken);
+      (useAuth as jest.Mock).mockReturnValue(loggedInAuth());
+      // Initial load succeeds (cache-first); the forced revalidation rejects.
+      mockClient.query.mockImplementation((params) => {
+        if (params.query === mockGetCurrentUserDocument) return Promise.resolve(mockUserData);
+        if (params.fetchPolicy === 'network-only') return Promise.reject(new Error('network down'));
+        return Promise.resolve(mockReportsData);
+      });
+
+      const first = render(treeFor(store));
+      await waitFor(() => expect(screen.getByText('Test Report 1')).toBeInTheDocument());
+      first.unmount();
+
+      const nowSpy = jest.spyOn(Date, 'now').mockReturnValue(Date.now() + 6 * 60 * 1000);
+      try {
+        render(treeFor(store));
+        // Let the rejected revalidation settle and any effect re-runs flush.
+        await waitFor(() =>
+          expect(
+            mockClient.query.mock.calls.filter((c) => c[0].fetchPolicy === 'network-only').length,
+          ).toBe(1),
+        );
+        await new Promise((resolve) => setTimeout(resolve, 50));
+        // The latch must keep it at exactly one attempt — no retry storm.
+        expect(
+          mockClient.query.mock.calls.filter((c) => c[0].fetchPolicy === 'network-only').length,
+        ).toBe(1);
+      } finally {
+        nowSpy.mockRestore();
+      }
+    });
   });
 
   describe('Error handling', () => {
