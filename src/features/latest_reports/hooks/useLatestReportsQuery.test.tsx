@@ -63,17 +63,18 @@ beforeEach(() => {
 // ─── Tests ───────────────────────────────────────────────────────────────────
 
 describe('useLatestReportsQuery', () => {
-  it('fetches with fetchPolicy network-only so Refresh / re-navigation never re-serves cached empties', async () => {
+  it('uses cache-first on mount (cheap on API points, resilient re-navigation)', async () => {
     mockClient.query.mockResolvedValueOnce(pageResult([makeReport('AAA')]));
 
     const { result } = renderHook(() => useLatestReportsQuery(baseInput));
     await waitFor(() => expect(result.current.loading).toBe(false));
 
     expect(mockClient.query).toHaveBeenCalledTimes(1);
-    // The fix: without network-only the cache-first default would re-serve the
-    // session-long cached snapshot (stale still-processing empties) on Refresh.
+    // Ordinary loads reuse the cache; only an explicit Refresh forces the network
+    // (asserted below). Page/filter changes vary the variables, so they miss the
+    // cache and hit the network without needing network-only.
     expect(mockClient.query).toHaveBeenCalledWith(
-      expect.objectContaining({ fetchPolicy: 'network-only', errorPolicy: 'all' }),
+      expect.objectContaining({ fetchPolicy: 'cache-first', errorPolicy: 'all' }),
     );
     expect(result.current.reports.map((r) => r.code)).toEqual(['AAA']);
   });
@@ -102,7 +103,7 @@ describe('useLatestReportsQuery', () => {
     expect(result.current.hiddenEmptyCount).toBe(0);
   });
 
-  it('refetch re-hits the network (so an explicit Refresh actually replaces healed empties)', async () => {
+  it('refetch (explicit Refresh) forces network-only to replace healed empties; mount stays cache-first', async () => {
     mockClient.query
       // First load: an all-empty page is shown via fail-open.
       .mockResolvedValueOnce(pageResult([makeReport('PENDING', { empty: true })]))
@@ -112,12 +113,19 @@ describe('useLatestReportsQuery', () => {
     const { result } = renderHook(() => useLatestReportsQuery(baseInput));
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.reports.map((r) => r.code)).toEqual(['PENDING']);
+    // Mount read through the cache.
+    expect(mockClient.query).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({ fetchPolicy: 'cache-first' }),
+    );
 
     act(() => result.current.refetch());
     await waitFor(() => expect(result.current.reports.map((r) => r.code)).toEqual(['HEALED']));
 
     expect(mockClient.query).toHaveBeenCalledTimes(2);
-    expect(mockClient.query).toHaveBeenLastCalledWith(
+    // Refresh bypassed the cache.
+    expect(mockClient.query).toHaveBeenNthCalledWith(
+      2,
       expect.objectContaining({ fetchPolicy: 'network-only' }),
     );
   });

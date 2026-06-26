@@ -85,82 +85,95 @@ export function useLatestReportsQuery(input: LatestReportsQueryInput): LatestRep
 
   const { page, zoneId, range, customFrom, customTo } = input;
 
-  const fetchReports = useCallback(async (): Promise<void> => {
-    setState((prev) => ({ ...prev, loading: true, error: null }));
+  const fetchReports = useCallback(
+    async (fetchPolicy: 'cache-first' | 'network-only' = 'cache-first'): Promise<void> => {
+      setState((prev) => ({ ...prev, loading: true, error: null }));
 
-    try {
-      const variables = buildVariables({ page, zoneId, range, customFrom, customTo });
-      const result = await client.query<GetLatestReportsQuery>({
-        query: GetLatestReportsDocument,
-        variables,
-        errorPolicy: 'all',
-        // Always hit the network. The Apollo client defaults to cache-first and
-        // the session-long singleton cache persists across mounts, so without
-        // this an explicit Refresh — or navigating back to the page — re-serves
-        // the previous snapshot without a round-trip. That matters here because
-        // Latest Reports' freshest page is dominated by just-uploaded logs that
-        // are still parsing on ESO Logs (segments: 0, fights: []); those self-
-        // heal within minutes, but a cached read would keep showing them (or a
-        // stale "Empty" badge) until a filter change or hard reload busts the
-        // cache. Mirrors useProfileUploadedReports, the sibling reports list.
-        fetchPolicy: 'network-only',
-      });
+      try {
+        const variables = buildVariables({ page, zoneId, range, customFrom, customTo });
+        const result = await client.query<GetLatestReportsQuery>({
+          query: GetLatestReportsDocument,
+          variables,
+          errorPolicy: 'all',
+          // Normal loads (mount, page/zone/date change) use the default
+          // cache-first: page/filter changes vary the variables so they always
+          // miss the cache and hit the network anyway, while a plain re-mount of
+          // the same view reuses the cached page — cheap on API points and
+          // resilient if the network is briefly down or rate-limited. Only an
+          // explicit Refresh passes 'network-only' (see `refetch` below).
+          //
+          // This is load-bearing for the empty-log UX: the Apollo client
+          // defaults to cache-first against a session-long singleton cache, so
+          // before this split an explicit Refresh re-served the previous
+          // snapshot without a round-trip. Latest Reports' freshest page is
+          // dominated by just-uploaded logs still parsing on ESO Logs
+          // (segments: 0, fights: []) that self-heal within minutes; without a
+          // forced network read, Refresh could never clear a healed log's stale
+          // "Empty" badge. Forcing the network only on Refresh fixes that
+          // without making every mount a paid, cache-bypassing fetch.
+          fetchPolicy,
+        });
 
-      const reportPagination = result.reportData?.reports;
-      if (!reportPagination) {
+        const reportPagination = result.reportData?.reports;
+        if (!reportPagination) {
+          setState((prev) => ({
+            ...prev,
+            loading: false,
+            error:
+              'No reports data available. This may be due to authentication issues or API limitations.',
+          }));
+          return;
+        }
+
+        // Keep the non-null narrowing on the query's own row type (which now also
+        // carries `fights`) rather than the bare summary fragment, so the empty-log
+        // partition below can read the authoritative fight count.
+        const fetched = (reportPagination.data ?? []).filter(
+          (report): report is NonNullable<typeof report> => report !== null,
+        );
+        // Hide empty (no-combat) logs, but never the whole page: if every report
+        // the server returned would be hidden — e.g. a busy upload window where the
+        // freshest page is dominated by still-parsing logs — fail open and show
+        // them all so the user is never stranded on an "every report is empty" wall.
+        const { reportsToShow, hiddenEmptyCount } = selectReportsForDisplay(fetched);
+
+        const currentPage = reportPagination.current_page || 1;
+        const lastPage = reportPagination.last_page;
+        const hasMorePages = reportPagination.has_more_pages || false;
+        const totalPages = lastPage > 0 ? lastPage : hasMorePages ? currentPage + 1 : currentPage;
+
+        setState({
+          reports: reportsToShow,
+          hiddenEmptyCount,
+          loading: false,
+          error: null,
+          pagination: {
+            currentPage,
+            totalPages,
+            totalReports: reportPagination.total ?? 0,
+            perPage: reportPagination.per_page || REPORTS_PER_PAGE,
+            hasMorePages,
+            from: reportPagination.from ?? null,
+            to: reportPagination.to ?? null,
+          },
+        });
+      } catch (error) {
         setState((prev) => ({
           ...prev,
           loading: false,
-          error:
-            'No reports data available. This may be due to authentication issues or API limitations.',
+          error: error instanceof Error ? error.message : 'Failed to fetch latest reports',
         }));
-        return;
       }
-
-      // Keep the non-null narrowing on the query's own row type (which now also
-      // carries `fights`) rather than the bare summary fragment, so the empty-log
-      // partition below can read the authoritative fight count.
-      const fetched = (reportPagination.data ?? []).filter(
-        (report): report is NonNullable<typeof report> => report !== null,
-      );
-      // Hide empty (no-combat) logs, but never the whole page: if every report
-      // the server returned would be hidden — e.g. a busy upload window where the
-      // freshest page is dominated by still-parsing logs — fail open and show
-      // them all so the user is never stranded on an "every report is empty" wall.
-      const { reportsToShow, hiddenEmptyCount } = selectReportsForDisplay(fetched);
-
-      const currentPage = reportPagination.current_page || 1;
-      const lastPage = reportPagination.last_page;
-      const hasMorePages = reportPagination.has_more_pages || false;
-      const totalPages = lastPage > 0 ? lastPage : hasMorePages ? currentPage + 1 : currentPage;
-
-      setState({
-        reports: reportsToShow,
-        hiddenEmptyCount,
-        loading: false,
-        error: null,
-        pagination: {
-          currentPage,
-          totalPages,
-          totalReports: reportPagination.total ?? 0,
-          perPage: reportPagination.per_page || REPORTS_PER_PAGE,
-          hasMorePages,
-          from: reportPagination.from ?? null,
-          to: reportPagination.to ?? null,
-        },
-      });
-    } catch (error) {
-      setState((prev) => ({
-        ...prev,
-        loading: false,
-        error: error instanceof Error ? error.message : 'Failed to fetch latest reports',
-      }));
-    }
-  }, [client, page, zoneId, range, customFrom, customTo]);
+    },
+    [client, page, zoneId, range, customFrom, customTo],
+  );
 
   useEffect(() => {
-    void fetchReports();
+    // Mount + filter/page changes: cache-first (see fetchReports).
+    void fetchReports('cache-first');
   }, [fetchReports]);
 
-  return { ...state, refetch: () => void fetchReports() };
+  // Refresh is the user's explicit "give me the live state" action, so it bypasses
+  // the cache — this is what actually clears a healed log's stale "Empty" badge.
+  return { ...state, refetch: () => void fetchReports('network-only') };
 }

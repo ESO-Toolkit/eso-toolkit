@@ -261,12 +261,16 @@ export const UserReports: React.FC = () => {
       dispatch(clearCache());
       dispatch(setCurrentPage(1));
       setSearchParams({ page: '1' });
-      // Fetch all reports again
+      // Fetch all reports again, bypassing Apollo's cache. clearCache() only
+      // clears Redux; without forceNetwork the cache-first default would
+      // re-serve the same stale getUserReports pages (e.g. a log that has since
+      // finished processing would still show its "Empty" badge).
       dispatch(
         fetchAllUserReports({
           client,
           userId: currentUser.id,
           limit: 100,
+          forceNetwork: true,
         }),
       );
     }

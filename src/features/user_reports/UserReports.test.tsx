@@ -435,6 +435,13 @@ describe('UserReports Component', () => {
       await waitFor(() => {
         expect(mockClient.query).toHaveBeenCalled();
       });
+
+      // Refresh must bypass Apollo's cache (forceNetwork → network-only) so a log
+      // that has since finished processing on ESO Logs no longer shows a stale
+      // "Empty" badge. clearCache() only clears Redux, not the Apollo cache.
+      expect(mockClient.query).toHaveBeenCalledWith(
+        expect.objectContaining({ fetchPolicy: 'network-only' }),
+      );
     });
   });
 
