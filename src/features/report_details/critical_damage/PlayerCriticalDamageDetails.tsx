@@ -85,11 +85,20 @@ export const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsPr
     BACKSTABBER_DEFAULT_ENABLED,
   );
 
+  // Reset the per-player toggles to their defaults when the fight/report context changes.
+  // This component instance can be reused across fights (rows are keyed only by player.id),
+  // so without this a toggle flipped on for one fight would leak into the next. Fall back to
+  // the global Fighting Finesse setting so an explicit global toggle still applies.
+  // (We can't key on the always-on source's wasActive — it is always true and never changes.)
   React.useEffect(() => {
-    setLocalFightingFinesseEnabled((prev) =>
-      prev === FIGHTING_FINESSE_DEFAULT_ENABLED ? prev : FIGHTING_FINESSE_DEFAULT_ENABLED,
+    setLocalFightingFinesseEnabled(
+      globalFightingFinesseEnabledProp ?? FIGHTING_FINESSE_DEFAULT_ENABLED,
     );
-  }, [fightingFinesseSource?.wasActive]);
+    setBackstabberEnabled(BACKSTABBER_DEFAULT_ENABLED);
+    // globalFightingFinesseEnabledProp is intentionally read but not a trigger here; the
+    // effect below handles global-toggle changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reportId, fightId]);
 
   // Sync local state with global state when global changes
   React.useEffect(() => {
