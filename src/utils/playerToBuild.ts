@@ -39,7 +39,12 @@ import {
 import type { PlayerGear, PlayerTalent } from '../types/playerDetails';
 
 import type { ClassAnalysisResult } from './classDetectionUtils';
-import { gearCategoryForSlot, resolveEnchantId, resolveTraitId } from './combatLogGearMapping';
+import {
+  gearCategoryForSlot,
+  resolveEnchantId,
+  resolveTraitId,
+  resolveWeaponItemId,
+} from './combatLogGearMapping';
 import type { PotionType } from './potionDetectionUtils';
 
 // ─── Gear Slot Mapping ──────────────────────────────────────────────────────
@@ -192,7 +197,25 @@ export function convertGear(gear: PlayerGear[]): GearConfig {
     const equipSlot = PLAYER_GEAR_SLOT_TO_EQUIP_SLOT[slotIdx];
     if (equipSlot === undefined) continue;
 
-    const piece: GearPiece = { id: item.id };
+    const category = gearCategoryForSlot(slotIdx);
+
+    // For weapons, the raw combat-log id is often a GENERIC set-weapon id that
+    // resolves the set but no weapon type. Re-resolve the Build Editor's
+    // type-specific variant id (Dagger / Inferno Staff / …) so the editor shows
+    // the right weapon. Requires icon data preloaded by the caller; falls back
+    // to the raw id otherwise. Off-hand slots (11, 13) use the 'offhand' slot.
+    const piece: GearPiece =
+      category === 'weapon'
+        ? {
+            id: resolveWeaponItemId({
+              combatLogId: item.id,
+              weaponType: item.type,
+              icon: item.icon,
+              setName: item.setName,
+              slotType: slotIdx === 11 || slotIdx === 13 ? 'offhand' : 'weapon',
+            }),
+          }
+        : { id: item.id };
 
     const weight = resolveArmorWeight(slotIdx, item.type);
     if (weight) piece.weight = weight;
@@ -200,7 +223,6 @@ export function convertGear(gear: PlayerGear[]): GearConfig {
     // Carry trait + enchant across, mapped from the log's numeric codes to the
     // Build Editor's per-category string IDs (consistent with what the report's
     // gear panel displays). Unmappable codes are simply left off the piece.
-    const category = gearCategoryForSlot(slotIdx);
     const trait = resolveTraitId(item.trait, category);
     if (trait) piece.trait = trait;
     const enchant = resolveEnchantId(item.enchantType, category);

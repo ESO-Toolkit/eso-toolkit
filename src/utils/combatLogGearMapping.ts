@@ -32,6 +32,12 @@ import {
   JEWELRY_ENCHANTS,
   type GearCategory,
 } from '@/features/build-editor/data/gear-traits-enchants';
+import { getSetItemsBySlot } from '@/features/loadout-manager/data/itemIdMap';
+import type { SlotType } from '@/features/loadout-manager/data/slotTypes';
+import {
+  deriveItemNameForSlot,
+  parseWeaponTypeFromIconUrl,
+} from '@/features/loadout-manager/utils/itemIconResolver';
 import { TRAIT_NAMES, ENCHANTMENT_NAMES } from '@/utils/gearMappings';
 
 /** Strip case, spaces, hyphens and apostrophes so display names match leniently. */
@@ -155,3 +161,104 @@ export const __ENCHANT_LISTS_BY_CATEGORY = {
   jewelry: JEWELRY_ENCHANTS,
 } as const;
 export const __ENCHANT_ID_BY_CATEGORY = ENCHANT_ID_BY_CATEGORY;
+
+// ─── Weapon-type-specific item id resolution ─────────────────────────────────
+// The Build Editor derives a weapon's TYPE (Dagger / Sword / Inferno Staff / …)
+// from its item id, via the per-set type-specific variant ids the gear picker
+// uses. A combat log, however, often reports a GENERIC set-weapon id (e.g.
+// 117218 = "Powerful Assault Gear", no slot/type) — which resolves the set name
+// but never a weapon type. We have the authoritative `PlayerGear.type`
+// (WeaponType enum) + `icon` from the log, so we re-resolve the editor's
+// type-specific variant id for the piece's set + weapon type.
+//
+// NOTE: this reads the loadout-manager icon data, which is loaded asynchronously
+// (preloadIconData). Callers that want weapon types resolved must await
+// preloadIconData() before invoking convertGear; without it, every candidate
+// stays unresolved and we fall back to the raw combat-log id (graceful).
+
+/** WeaponType enum (src/types/playerDetails.ts) → the editor's weapon-type label. */
+const WEAPON_TYPE_LABEL: Record<number, string> = {
+  1: 'Axe',
+  2: 'Mace',
+  3: 'Sword',
+  4: 'Greatsword',
+  5: 'Battle Axe',
+  6: 'Maul',
+  9: 'Restoration Staff',
+  11: 'Dagger',
+  12: 'Inferno Staff',
+  13: 'Ice Staff',
+  14: 'Shield',
+  15: 'Lightning Staff',
+};
+
+function longestCommonPrefix(strings: string[]): string {
+  if (strings.length === 0) return '';
+  let prefix = strings[0];
+  for (const s of strings.slice(1)) {
+    let i = 0;
+    while (i < prefix.length && i < s.length && prefix[i] === s[i]) i++;
+    prefix = prefix.slice(0, i);
+    if (!prefix) break;
+  }
+  return prefix;
+}
+
+/**
+ * The weapon-type label implied by a combat-log piece: prefer the WeaponType
+ * enum (distinguishes staff elements, which a generic staff icon cannot), then
+ * fall back to parsing the log's icon token (covers Bow and any unmapped type).
+ */
+function weaponTypeLabel(weaponType: number | undefined | null, icon?: string): string | undefined {
+  if (weaponType != null) {
+    const fromEnum = WEAPON_TYPE_LABEL[weaponType];
+    if (fromEnum) return fromEnum;
+  }
+  // parseWeaponTypeFromIconUrl wants a `/icons/<file>.png` shaped URL.
+  const fromIcon = icon ? parseWeaponTypeFromIconUrl(`/icons/${icon}.png`) : null;
+  // A bare "Staff" can't pick between elements — ignore it (the enum path above
+  // already handles the four staff elements); keep only specific labels.
+  return fromIcon && fromIcon !== 'Staff' ? fromIcon : undefined;
+}
+
+/**
+ * Resolve the Build Editor item id for a weapon piece so the editor shows the
+ * correct weapon type. Returns the original id unchanged when the type can't be
+ * determined or no matching set variant exists (e.g. icon data not yet loaded).
+ */
+export function resolveWeaponItemId(opts: {
+  combatLogId: number;
+  weaponType: number | undefined | null;
+  icon?: string;
+  setName?: string;
+  slotType: Extract<SlotType, 'weapon' | 'offhand'>;
+}): number {
+  const { combatLogId, weaponType, icon, setName, slotType } = opts;
+  if (!setName) return combatLogId;
+
+  const targetLabel = weaponTypeLabel(weaponType, icon);
+  if (!targetLabel) return combatLogId;
+
+  // Resolution is idempotent: a combat-log id that already pins this weapon type
+  // re-resolves to the same (or an equivalent same-type) variant, while a generic
+  // set-weapon id gets upgraded to the type-specific one.
+
+  // Pull the set's type-specific variants. Off-hand 1H weapons (dual wield)
+  // live in the weapon pool, so search both and dedupe.
+  const ids = new Set<number>([
+    ...getSetItemsBySlot(setName, slotType),
+    ...(slotType === 'offhand' ? getSetItemsBySlot(setName, 'weapon') : []),
+  ]);
+  if (ids.size === 0) return combatLogId;
+
+  const named = [...ids].map((cid) => ({ cid, name: deriveItemNameForSlot(cid, slotType) || '' }));
+  // Strip the shared "<Set> " prefix so the remaining label compares exactly —
+  // prevents "Axe" from matching "Battle Axe" (or "Sword" → "Greatsword").
+  const prefix = named.length > 1 ? longestCommonPrefix(named.map((n) => n.name)) : '';
+  for (const { cid, name } of named) {
+    const label = (prefix ? name.slice(prefix.length) : name).trim();
+    if (label === targetLabel || (named.length === 1 && name.endsWith(` ${targetLabel}`)))
+      return cid;
+  }
+  return combatLogId;
+}

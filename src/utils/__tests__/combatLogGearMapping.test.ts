@@ -8,6 +8,7 @@ import {
   gearCategoryForSlot,
   resolveTraitId,
   resolveEnchantId,
+  resolveWeaponItemId,
   __ENCHANT_ID_BY_CATEGORY,
   __ENCHANT_LISTS_BY_CATEGORY,
 } from '@/utils/combatLogGearMapping';
@@ -107,6 +108,35 @@ describe('resolveEnchantId', () => {
     expect(resolveEnchantId(0, 'weapon')).toBeUndefined();
     expect(resolveEnchantId(undefined, 'armor')).toBeUndefined();
     expect(resolveEnchantId(null, 'jewelry')).toBeUndefined();
+  });
+});
+
+describe('resolveWeaponItemId (graceful fallback)', () => {
+  // The happy path (mapping a generic set-weapon id to its type-specific variant)
+  // needs the async-loaded icon data, which isn't available offline — that path is
+  // covered by live verification. These assert the no-data fallbacks never throw
+  // and never invent an id.
+  it('returns the original id when no set name is given', () => {
+    expect(
+      resolveWeaponItemId({ combatLogId: 117218, weaponType: 13, setName: undefined, slotType: 'weapon' }),
+    ).toBe(117218);
+  });
+
+  it('returns the original id when the weapon type is unknown/none', () => {
+    expect(
+      resolveWeaponItemId({ combatLogId: 999, weaponType: 0, setName: 'Powerful Assault', slotType: 'weapon' }),
+    ).toBe(999);
+  });
+
+  it('returns a number without throwing for a real set when icon data is absent', () => {
+    const out = resolveWeaponItemId({
+      combatLogId: 117218,
+      weaponType: 13,
+      icon: 'gear_breton_staff_d',
+      setName: 'Powerful Assault',
+      slotType: 'weapon',
+    });
+    expect(typeof out).toBe('number');
   });
 });
 
