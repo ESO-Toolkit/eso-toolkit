@@ -101,6 +101,16 @@ describe('resolveEnchantId', () => {
     expect(resolveEnchantId(28, 'jewelry')).toBeUndefined();
   });
 
+  it('resolves the Weakening glyph under both of its codes (14 "Weakening" and 32 "Reduce Physical Harm")', () => {
+    // Code 32 is overloaded: on a weapon it is the Weakening glyph, but on jewelry
+    // the very same code is the defensive "Decrease Physical Harm" glyph. The
+    // per-category gate must resolve each correctly without crossing over.
+    expect(resolveEnchantId(32, 'weapon')).toBe('weakening');
+    expect(resolveEnchantId(32, 'jewelry')).toBe('decrease-physical-harm');
+    // No "Reduce Physical Harm" glyph exists for armor.
+    expect(resolveEnchantId(32, 'armor')).toBeUndefined();
+  });
+
   it('resolves common armor enchants', () => {
     expect(resolveEnchantId(22, 'armor')).toBe('magicka'); // "Increase Magicka"
     expect(resolveEnchantId(31, 'armor')).toBe('stamina'); // "Increase Stamina"

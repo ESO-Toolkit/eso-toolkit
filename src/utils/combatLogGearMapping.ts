@@ -113,6 +113,12 @@ const ENCHANT_ID_BY_CATEGORY: Record<GearCategory, Record<string, string>> = {
     // Maelstrom Ice Staff) silently drops its enchant on Extract Build.
     reducearmor: 'crushing',
     weakening: 'weakening',
+    // Same dual-code pattern as Crusher above: the Weakening weapon glyph reports
+    // as code 14 ("Weakening") OR code 32 ("Reduce Physical Harm" — Weakening
+    // lowers the target's Weapon/Spell Damage). Code 32 ALSO means the defensive
+    // "Decrease Physical Harm" glyph on jewelry, so this alias is weapon-scoped;
+    // the jewelry table keeps its own (correct) mapping for the same code.
+    reducephysicalharm: 'weakening',
     flamedamage: 'flame',
     firedamage: 'flame',
     flame: 'flame',
