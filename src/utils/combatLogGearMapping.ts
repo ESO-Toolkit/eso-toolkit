@@ -192,16 +192,21 @@ const WEAPON_TYPE_LABEL: Record<number, string> = {
   15: 'Lightning Staff',
 };
 
-function longestCommonPrefix(strings: string[]): string {
-  if (strings.length === 0) return '';
-  let prefix = strings[0];
-  for (const s of strings.slice(1)) {
-    let i = 0;
-    while (i < prefix.length && i < s.length && prefix[i] === s[i]) i++;
-    prefix = prefix.slice(0, i);
-    if (!prefix) break;
+// Known weapon-type labels, LONGEST first, so a candidate name's specific type
+// reads as its longest matching suffix — "Battle Axe" wins over "Axe", "Greatsword"
+// over "Sword". This (vs a cross-candidate common-prefix strip) avoids both the
+// "Axe" ⊂ "Battle Axe" substring collision and the prefix over-strip that happened
+// when a set's weapon pool was type-homogeneous or shared leading letters.
+const WEAPON_LABELS_LONGEST_FIRST: string[] = [
+  ...new Set([...Object.values(WEAPON_TYPE_LABEL), 'Bow']),
+].sort((a, b) => b.length - a.length);
+
+/** The specific weapon-type label a resolved item name ends with, if any. */
+function candidateWeaponLabel(name: string): string | undefined {
+  for (const label of WEAPON_LABELS_LONGEST_FIRST) {
+    if (name.endsWith(` ${label}`)) return label;
   }
-  return prefix;
+  return undefined;
 }
 
 /**
@@ -251,14 +256,16 @@ export function resolveWeaponItemId(opts: {
   ]);
   if (ids.size === 0) return combatLogId;
 
-  const named = [...ids].map((cid) => ({ cid, name: deriveItemNameForSlot(cid, slotType) || '' }));
-  // Strip the shared "<Set> " prefix so the remaining label compares exactly —
-  // prevents "Axe" from matching "Battle Axe" (or "Sword" → "Greatsword").
-  const prefix = named.length > 1 ? longestCommonPrefix(named.map((n) => n.name)) : '';
-  for (const { cid, name } of named) {
-    const label = (prefix ? name.slice(prefix.length) : name).trim();
-    if (label === targetLabel || (named.length === 1 && name.endsWith(` ${targetLabel}`)))
-      return cid;
+  // Match each candidate by its own longest-known-type-label suffix (independent
+  // of the other candidates), so a narrow or type-homogeneous pool resolves the
+  // same as a full one and a 1H "Axe" target never matches a "Battle Axe" item.
+  for (const cid of ids) {
+    const name = deriveItemNameForSlot(cid, slotType);
+    if (name && candidateWeaponLabel(name) === targetLabel) return cid;
   }
   return combatLogId;
 }
+
+// Exported for testing the longest-suffix disambiguation (the only part of the
+// weapon-type resolution exercisable without the async icon data).
+export { candidateWeaponLabel as __candidateWeaponLabel };

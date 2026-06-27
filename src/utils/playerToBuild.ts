@@ -181,7 +181,14 @@ function resolveRole(playerRole?: string): CombatRole {
 
 // ─── Gear Conversion ────────────────────────────────────────────────────────
 
-export function convertGear(gear: PlayerGear[]): GearConfig {
+export function convertGear(
+  gear: PlayerGear[],
+  // Weapon-type resolution reads the loadout-manager icon data, which is loaded
+  // asynchronously and lives in a session-global cache — so it's only run when a
+  // caller has awaited preloadIconData() and opts in. Off by default keeps other
+  // callers (e.g. logToRoster) deterministic and unchanged.
+  opts: { resolveWeaponType?: boolean } = {},
+): GearConfig {
   const config: GearConfig = {};
 
   for (let i = 0; i < gear.length; i++) {
@@ -205,7 +212,7 @@ export function convertGear(gear: PlayerGear[]): GearConfig {
     // the right weapon. Requires icon data preloaded by the caller; falls back
     // to the raw id otherwise. Off-hand slots (11, 13) use the 'offhand' slot.
     const piece: GearPiece =
-      category === 'weapon'
+      category === 'weapon' && opts.resolveWeaponType
         ? {
             id: resolveWeaponItemId({
               combatLogId: item.id,
@@ -422,7 +429,7 @@ export interface PlayerBuildExtractionData {
 export function playerToBuild(data: PlayerBuildExtractionData): Build {
   const { esoClass, classSkillLines } = resolveClassFromAnalysis(data.classAnalysis);
   const role = resolveRole(data.role);
-  const gearConfig = convertGear(data.gear);
+  const gearConfig = convertGear(data.gear, { resolveWeaponType: true });
   const { skills, passives: rawPassives } = convertSkills(data.talents);
   const cp = convertChampionPoints(data.championPoints);
 

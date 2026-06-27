@@ -9,6 +9,7 @@ import {
   resolveTraitId,
   resolveEnchantId,
   resolveWeaponItemId,
+  __candidateWeaponLabel,
   __ENCHANT_ID_BY_CATEGORY,
   __ENCHANT_LISTS_BY_CATEGORY,
 } from '@/utils/combatLogGearMapping';
@@ -108,6 +109,24 @@ describe('resolveEnchantId', () => {
     expect(resolveEnchantId(0, 'weapon')).toBeUndefined();
     expect(resolveEnchantId(undefined, 'armor')).toBeUndefined();
     expect(resolveEnchantId(null, 'jewelry')).toBeUndefined();
+  });
+});
+
+describe('candidateWeaponLabel (longest-suffix disambiguation)', () => {
+  it('reads the longest known type label, so short labels never shadow long ones', () => {
+    expect(__candidateWeaponLabel('Powerful Assault Axe')).toBe('Axe');
+    expect(__candidateWeaponLabel('Powerful Assault Battle Axe')).toBe('Battle Axe'); // not "Axe"
+    expect(__candidateWeaponLabel('Powerful Assault Sword')).toBe('Sword');
+    expect(__candidateWeaponLabel('Powerful Assault Greatsword')).toBe('Greatsword'); // not "Sword"
+    expect(__candidateWeaponLabel('Powerful Assault Inferno Staff')).toBe('Inferno Staff');
+    expect(__candidateWeaponLabel('Powerful Assault Ice Staff')).toBe('Ice Staff');
+    expect(__candidateWeaponLabel('Powerful Assault Dagger')).toBe('Dagger');
+    expect(__candidateWeaponLabel('Mechanical Acuity Bow')).toBe('Bow');
+  });
+
+  it('returns undefined for a generic (typeless) weapon name', () => {
+    expect(__candidateWeaponLabel('Powerful Assault Gear')).toBeUndefined();
+    expect(__candidateWeaponLabel('Powerful Assault Weapon')).toBeUndefined();
   });
 });
 
