@@ -38,7 +38,7 @@ describe('ClassMasteryCluster', () => {
     );
 
     expect(screen.getByTestId('class-mastery-cluster')).toBeInTheDocument();
-    expect(screen.getByText('Mastery')).toBeInTheDocument();
+    expect(screen.getByText('Class Mastery')).toBeInTheDocument();
     expect(masteryIcons()).toHaveLength(2);
     expect(screen.getByLabelText('Above and Beyond — Class Mastery passive')).toBeInTheDocument();
     expect(
