@@ -66,11 +66,26 @@ describe('convertGear — traits & enchants', () => {
   it('carries trait + enchant across, mapped to the editor IDs per category', () => {
     const gear: PlayerGear[] = [
       // Head (armor): Divines (40) + Increase Magicka (22)
-      gearPiece({ slot: 0, type: ArmorType.LIGHT, trait: 40 as PlayerGear['trait'], enchantType: 22 }),
+      gearPiece({
+        slot: 0,
+        type: ArmorType.LIGHT,
+        trait: 40 as PlayerGear['trait'],
+        enchantType: 22,
+      }),
       // Ring 1 (jewelry, slot 8): Bloodthirsty (53) + Spell Damage (47)
-      gearPiece({ slot: 8, type: ArmorType.JEWELRY, trait: 53 as PlayerGear['trait'], enchantType: 47 }),
+      gearPiece({
+        slot: 8,
+        type: ArmorType.JEWELRY,
+        trait: 53 as PlayerGear['trait'],
+        enchantType: 47,
+      }),
       // Main hand (weapon, slot 10): Sharpened (32) + Weapon Damage (27)
-      gearPiece({ slot: 10, type: WeaponType.INFERNO_STAFF, trait: 32 as PlayerGear['trait'], enchantType: 27 }),
+      gearPiece({
+        slot: 10,
+        type: WeaponType.INFERNO_STAFF,
+        trait: 32 as PlayerGear['trait'],
+        enchantType: 27,
+      }),
     ];
 
     const config = convertGear(gear);
@@ -98,7 +113,12 @@ describe('convertGear — traits & enchants', () => {
   it('omits trait/enchant that cannot be mapped (no wrong values)', () => {
     const gear: PlayerGear[] = [
       // Ornate (43) is crafting-only; enchantType 0 = none
-      gearPiece({ slot: 0, type: ArmorType.LIGHT, trait: 43 as PlayerGear['trait'], enchantType: 0 }),
+      gearPiece({
+        slot: 0,
+        type: ArmorType.LIGHT,
+        trait: 43 as PlayerGear['trait'],
+        enchantType: 0,
+      }),
     ];
     const config = convertGear(gear);
     expect(config[0].id).toBe(100);
@@ -208,9 +228,24 @@ describe('extract → encode → decode round-trip', () => {
     const cmIds = dkLine.skills.slice(0, 2).map((s) => s.id);
 
     const gear: PlayerGear[] = [
-      gearPiece({ slot: 0, type: ArmorType.LIGHT, trait: 40 as PlayerGear['trait'], enchantType: 22 }), // Divines + Increase Magicka
-      gearPiece({ slot: 8, type: ArmorType.JEWELRY, trait: 53 as PlayerGear['trait'], enchantType: 47 }), // Bloodthirsty + Spell Damage
-      gearPiece({ slot: 10, type: WeaponType.INFERNO_STAFF, trait: 32 as PlayerGear['trait'], enchantType: 27 }), // Sharpened + Weapon Damage
+      gearPiece({
+        slot: 0,
+        type: ArmorType.LIGHT,
+        trait: 40 as PlayerGear['trait'],
+        enchantType: 22,
+      }), // Divines + Increase Magicka
+      gearPiece({
+        slot: 8,
+        type: ArmorType.JEWELRY,
+        trait: 53 as PlayerGear['trait'],
+        enchantType: 47,
+      }), // Bloodthirsty + Spell Damage
+      gearPiece({
+        slot: 10,
+        type: WeaponType.INFERNO_STAFF,
+        trait: 32 as PlayerGear['trait'],
+        enchantType: 27,
+      }), // Sharpened + Weapon Damage
     ];
 
     const original = playerToBuild({
