@@ -65,6 +65,7 @@ import { type BarSwapAnalysisResult } from '../../parse_analysis/utils/parseAnal
 import { SCRIBING_DETECTION_SCHEMA_VERSION } from '../../scribing/analysis/scribingDetectionAnalysis';
 import { ScribedSkillData } from '../../scribing/types';
 
+import { ClassMasteryCluster } from './ClassMasteryCluster';
 import { MetricsScrollRow } from './MetricsScrollRow';
 import type { StatChipId } from './statChipConfig';
 import { formatStatValue, STAT_CHIP_IDS, STAT_CHIP_META } from './statChipConfig';
@@ -1353,6 +1354,9 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                     </OneLineAutoFit>
                   </Box>
                 </Box>
+
+                {/* Class Mastery passives (non-subclassed only) — renders nothing otherwise */}
+                <ClassMasteryCluster classAnalysis={classAnalysis} />
 
                 {/* Talents */}
                 {talents.length > 0 && (
