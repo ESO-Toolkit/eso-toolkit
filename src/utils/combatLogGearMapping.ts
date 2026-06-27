@@ -106,6 +106,12 @@ const ENCHANT_ID_BY_CATEGORY: Record<GearCategory, Record<string, string>> = {
     absorbstamina: 'absorb-stamina',
     crusher: 'crushing',
     crushing: 'crushing',
+    // ESO Logs reports the Crusher weapon glyph under two enchant codes: code 13
+    // decodes to "Crusher", but code 28 decodes to "Reduce Armor" (Crusher's
+    // in-game effect — "Reduces the target's Physical and Spell Resistance").
+    // Without this alias the latter (common on tank/support back bars, e.g. a
+    // Maelstrom Ice Staff) silently drops its enchant on Extract Build.
+    reducearmor: 'crushing',
     weakening: 'weakening',
     flamedamage: 'flame',
     firedamage: 'flame',

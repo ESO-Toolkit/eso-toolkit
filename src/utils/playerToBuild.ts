@@ -457,6 +457,13 @@ export function playerToBuild(data: PlayerBuildExtractionData): Build {
   const setup: BuildSetup = {
     id: uuidv4(),
     name: 'Default',
+    // Attribute point allocation (the 64-point Magicka/Health/Stamina spread) is
+    // NOT present in ESO Logs combatant data — combatantInfo carries only gear,
+    // talents and auras (its `stats` array comes back empty). Final max-resource
+    // pools can't be back-solved into points either: gear, CP, mundus, food, set
+    // bonuses, race passives and percentage multipliers all confound the math, so
+    // any derived spread would be a guess. We leave attributes unset (0/0/0) for
+    // the user to fill in rather than transfer a wrong allocation.
     attributes: { magicka: 0, health: 0, stamina: 0 },
     curse: 'none',
     mundusStone,

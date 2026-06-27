@@ -90,6 +90,17 @@ describe('resolveEnchantId', () => {
     expect(resolveEnchantId(9, 'weapon')).toBe('foulness'); // "Disease Damage"
   });
 
+  it('resolves the Crusher glyph under both of its codes (13 "Crusher" and 28 "Reduce Armor")', () => {
+    // ESO Logs reports the Crusher weapon glyph as code 28 ("Reduce Armor") on
+    // many tank/support back bars (e.g. a Maelstrom Ice Staff). Regression guard
+    // for the Extract Build drop where the back-bar enchant silently vanished.
+    expect(resolveEnchantId(28, 'weapon')).toBe('crushing');
+    // The code stays weapon-scoped — it must not resolve on armor/jewelry, where
+    // "Reduce Armor" is not a valid glyph.
+    expect(resolveEnchantId(28, 'armor')).toBeUndefined();
+    expect(resolveEnchantId(28, 'jewelry')).toBeUndefined();
+  });
+
   it('resolves common armor enchants', () => {
     expect(resolveEnchantId(22, 'armor')).toBe('magicka'); // "Increase Magicka"
     expect(resolveEnchantId(31, 'armor')).toBe('stamina'); // "Increase Stamina"
@@ -137,13 +148,23 @@ describe('resolveWeaponItemId (graceful fallback)', () => {
   // and never invent an id.
   it('returns the original id when no set name is given', () => {
     expect(
-      resolveWeaponItemId({ combatLogId: 117218, weaponType: 13, setName: undefined, slotType: 'weapon' }),
+      resolveWeaponItemId({
+        combatLogId: 117218,
+        weaponType: 13,
+        setName: undefined,
+        slotType: 'weapon',
+      }),
     ).toBe(117218);
   });
 
   it('returns the original id when the weapon type is unknown/none', () => {
     expect(
-      resolveWeaponItemId({ combatLogId: 999, weaponType: 0, setName: 'Powerful Assault', slotType: 'weapon' }),
+      resolveWeaponItemId({
+        combatLogId: 999,
+        weaponType: 0,
+        setName: 'Powerful Assault',
+        slotType: 'weapon',
+      }),
     ).toBe(999);
   });
 
