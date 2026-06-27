@@ -47,6 +47,7 @@ import { OneLineAutoFit } from '../../../components/OneLineAutoFit';
 import { PlayerIcon } from '../../../components/PlayerIcon';
 import { GrimoireData } from '../../../components/ScribingSkillsDisplay';
 import { CLASS_MASTERY_LINE_NAME } from '../../../data/skill-lines/class/classMastery';
+import { preloadIconData } from '../../../features/loadout-manager/utils/itemIconResolver';
 import type { PlayerRoleResult } from '../../../features/role_detection';
 import { getRoleEmoji, ROLE_LABELS, toBroadRole } from '../../../hooks/useRoleDetection';
 import { selectPlayersByIdForContext } from '../../../store/player_data/playerDataSelectors';
@@ -589,6 +590,12 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
       // don't intercept — the async encodeBuildToURL would break the gesture chain.
       const tab = window.open('', '_blank');
       try {
+        // Warm the item icon/weapon-type data so playerToBuild can resolve each
+        // weapon's specific type (Dagger / Inferno Staff / …) into the Build
+        // Editor's type-specific item id. Best-effort — extraction still works
+        // (weapons just fall back to their set name) if this fails.
+        await preloadIconData().catch(() => {});
+
         const broadRole: string = detectedRole
           ? toBroadRole(detectedRole.role)
           : (player.role ?? 'dps');

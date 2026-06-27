@@ -11,6 +11,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { ESO_CONSUMABLES } from '../data/esoConsumables';
 import { ESO_POTIONS } from '../data/esoPotions';
+import { CLASS_MASTERY_LINE_NAME } from '../data/skill-lines/class/classMastery';
 import {
   CLASS_SKILL_LINES,
   ESO_MUNDUS_STONES,
@@ -25,6 +26,10 @@ import type {
   CombatRole,
   ESOClass,
 } from '../features/build-editor/types/build.types';
+import {
+  partitionClassMasteryPicks,
+  sanitizeClassMasteryPicks,
+} from '../features/build-editor/utils/classMasteryTransfer';
 import type { GearConfig, GearPiece } from '../features/loadout-manager/types/loadout.types';
 import {
   RED_CHAMPION_POINTS,
@@ -34,6 +39,12 @@ import {
 import type { PlayerGear, PlayerTalent } from '../types/playerDetails';
 
 import type { ClassAnalysisResult } from './classDetectionUtils';
+import {
+  gearCategoryForSlot,
+  resolveEnchantId,
+  resolveTraitId,
+  resolveWeaponItemId,
+} from './combatLogGearMapping';
 import type { PotionType } from './potionDetectionUtils';
 
 // ─── Gear Slot Mapping ──────────────────────────────────────────────────────
@@ -170,20 +181,59 @@ function resolveRole(playerRole?: string): CombatRole {
 
 // ─── Gear Conversion ────────────────────────────────────────────────────────
 
-export function convertGear(gear: PlayerGear[]): GearConfig {
+export function convertGear(
+  gear: PlayerGear[],
+  // Weapon-type resolution reads the loadout-manager icon data, which is loaded
+  // asynchronously and lives in a session-global cache — so it's only run when a
+  // caller has awaited preloadIconData() and opts in. Off by default keeps other
+  // callers (e.g. logToRoster) deterministic and unchanged.
+  opts: { resolveWeaponType?: boolean } = {},
+): GearConfig {
   const config: GearConfig = {};
 
-  for (let slotIdx = 0; slotIdx < gear.length; slotIdx++) {
-    const item = gear[slotIdx];
+  for (let i = 0; i < gear.length; i++) {
+    const item = gear[i];
     if (!item || item.id === 0) continue; // Empty slot
+
+    // Prefer the item's explicit slot field. For the normal dense combat-log
+    // gear array slot === index, so this is a no-op there; keying off item.slot
+    // keeps convertGear correct if it is ever handed a filtered or reordered
+    // array. Fall back to the index only when slot is missing.
+    const slotIdx = typeof item.slot === 'number' ? item.slot : i;
 
     const equipSlot = PLAYER_GEAR_SLOT_TO_EQUIP_SLOT[slotIdx];
     if (equipSlot === undefined) continue;
 
-    const piece: GearPiece = { id: item.id };
+    const category = gearCategoryForSlot(slotIdx);
+
+    // For weapons, the raw combat-log id is often a GENERIC set-weapon id that
+    // resolves the set but no weapon type. Re-resolve the Build Editor's
+    // type-specific variant id (Dagger / Inferno Staff / …) so the editor shows
+    // the right weapon. Requires icon data preloaded by the caller; falls back
+    // to the raw id otherwise. Off-hand slots (11, 13) use the 'offhand' slot.
+    const piece: GearPiece =
+      category === 'weapon' && opts.resolveWeaponType
+        ? {
+            id: resolveWeaponItemId({
+              combatLogId: item.id,
+              weaponType: item.type,
+              icon: item.icon,
+              setName: item.setName,
+              slotType: slotIdx === 11 || slotIdx === 13 ? 'offhand' : 'weapon',
+            }),
+          }
+        : { id: item.id };
 
     const weight = resolveArmorWeight(slotIdx, item.type);
     if (weight) piece.weight = weight;
+
+    // Carry trait + enchant across, mapped from the log's numeric codes to the
+    // Build Editor's per-category string IDs (consistent with what the report's
+    // gear panel displays). Unmappable codes are simply left off the piece.
+    const trait = resolveTraitId(item.trait, category);
+    if (trait) piece.trait = trait;
+    const enchant = resolveEnchantId(item.enchantType, category);
+    if (enchant) piece.enchant = enchant;
 
     config[equipSlot] = piece;
   }
@@ -379,9 +429,26 @@ export interface PlayerBuildExtractionData {
 export function playerToBuild(data: PlayerBuildExtractionData): Build {
   const { esoClass, classSkillLines } = resolveClassFromAnalysis(data.classAnalysis);
   const role = resolveRole(data.role);
-  const gearConfig = convertGear(data.gear);
-  const { skills, passives } = convertSkills(data.talents);
+  const gearConfig = convertGear(data.gear, { resolveWeaponType: true });
+  const { skills, passives: rawPassives } = convertSkills(data.talents);
   const cp = convertChampionPoints(data.championPoints);
+
+  // Class Mastery picks (U50) live on the top-level build.classMasteryPassives
+  // field, NOT setup.passives. Source them from the report's class-detection
+  // result — the "Class Mastery" skill-line entry's detected ability IDs — plus
+  // any Class Mastery IDs that slipped in via talent passives, then split those
+  // IDs back out of the regular passive list so the editor stays WYSIWYG.
+  const cmFromAnalysis = data.classAnalysis?.skillLines?.find(
+    (sl) => sl.skillLine === CLASS_MASTERY_LINE_NAME,
+  )?.skillIds;
+  const { passives, classMasteryPassives: cmFromPassives } = partitionClassMasteryPicks(
+    rawPassives,
+    esoClass,
+  );
+  const classMasteryPassives = sanitizeClassMasteryPicks(
+    [...(cmFromAnalysis ? Array.from(cmFromAnalysis) : []), ...cmFromPassives],
+    esoClass,
+  );
   const mundusStone = data.mundusBuffs.length > 0 ? resolveMundusId(data.mundusBuffs[0].name) : '';
   const description = buildGearDescription(data.gear);
 
@@ -390,6 +457,13 @@ export function playerToBuild(data: PlayerBuildExtractionData): Build {
   const setup: BuildSetup = {
     id: uuidv4(),
     name: 'Default',
+    // Attribute point allocation (the 64-point Magicka/Health/Stamina spread) is
+    // NOT present in ESO Logs combatant data — combatantInfo carries only gear,
+    // talents and auras (its `stats` array comes back empty). Final max-resource
+    // pools can't be back-solved into points either: gear, CP, mundus, food, set
+    // bonuses, race passives and percentage multipliers all confound the math, so
+    // any derived spread would be a guess. We leave attributes unset (0/0/0) for
+    // the user to fill in rather than transfer a wrong allocation.
     attributes: { magicka: 0, health: 0, stamina: 0 },
     curse: 'none',
     mundusStone,
@@ -410,6 +484,7 @@ export function playerToBuild(data: PlayerBuildExtractionData): Build {
     shortDescription: description,
     esoClass,
     classSkillLines,
+    classMasteryPassives,
     role,
     gameMode: 'pve',
     races: [],
