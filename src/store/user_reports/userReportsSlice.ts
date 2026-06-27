@@ -44,6 +44,14 @@ export interface UserReportsState {
   // Prevents the data-loading useEffect from re-dispatching after an error or
   // when the user genuinely has zero reports (ESO-595).
   hasFetchedAll: boolean;
+  // The ESO Logs user id whose reports currently populate this slice (null when
+  // empty). The slice is a session-long singleton that is NOT cleared on
+  // logout/login — AuthContext swaps currentUser with no full reload or
+  // clearCache, and userReports is excluded from redux-persist. Recording the
+  // owner lets the My Reports page detect an in-session account switch and purge
+  // before it renders the previous user's private reports under a new user's
+  // header (private-data isolation).
+  loadedUserId: number | null;
 }
 
 const initialState: UserReportsState = {
@@ -65,6 +73,7 @@ const initialState: UserReportsState = {
   error: null,
   lastFetched: null,
   hasFetchedAll: false,
+  loadedUserId: null,
 };
 
 // Async thunk to fetch a page of user reports
@@ -210,6 +219,23 @@ const userReportsSlice = createSlice({
       state.totalCount = 0;
       state.lastFetched = null;
       state.hasFetchedAll = false;
+      // Drop the owner so the next user's pages pass the fulfilled identity
+      // guard below and a fresh fetch is not mistaken for a foreign-user write.
+      state.loadedUserId = null;
+    },
+    // Like clearCache, but immediately rebinds the slice to a specific user.
+    // Used by the My Reports page on a detected account switch: setting the new
+    // owner up front means any of the *previous* account's in-flight page
+    // requests (which are not individually aborted) are rejected by the
+    // fulfilled identity guard instead of momentarily rendering under the new
+    // user's header (private-data isolation).
+    resetForUser: (state, action: PayloadAction<number>) => {
+      state.reports = {};
+      state.pages = {};
+      state.totalCount = 0;
+      state.lastFetched = null;
+      state.hasFetchedAll = false;
+      state.loadedUserId = action.payload;
     },
     resetFilters: (state) => {
       state.filters = initialState.filters;
@@ -224,6 +250,20 @@ const userReportsSlice = createSlice({
         state.error = null;
       })
       .addCase(fetchUserReportsPage.fulfilled, (state, action) => {
+        const incomingUserId = action.meta.arg.userId;
+
+        // Identity guard (private-data isolation). Once the slice belongs to a
+        // user, drop a page that resolves for a *different* user. After an
+        // in-session account switch the previous account's in-flight bulk fetch
+        // can still resolve (its individual page requests are not aborted); this
+        // stops those late pages from writing the old user's rows into the new
+        // user's slice. Under normal flow the slice was cleared on the switch
+        // (loadedUserId === null here), so the page applies.
+        if (state.loadedUserId !== null && state.loadedUserId !== incomingUserId) {
+          state.loading = false;
+          return;
+        }
+
         const { reports, page, totalCount } = action.payload;
 
         // Store reports in normalized structure
@@ -241,6 +281,8 @@ const userReportsSlice = createSlice({
         state.totalCount = totalCount;
         state.loading = false;
         state.lastFetched = Date.now();
+        // Record (or confirm) the owner of the data now in the slice.
+        state.loadedUserId = incomingUserId;
       })
       .addCase(fetchUserReportsPage.rejected, (state, action) => {
         state.loading = false;
@@ -263,7 +305,14 @@ const userReportsSlice = createSlice({
   },
 });
 
-export const { setCurrentPage, setFilters, setSort, clearSearchText, clearCache, resetFilters } =
-  userReportsSlice.actions;
+export const {
+  setCurrentPage,
+  setFilters,
+  setSort,
+  clearSearchText,
+  clearCache,
+  resetForUser,
+  resetFilters,
+} = userReportsSlice.actions;
 
 export default userReportsSlice.reducer;

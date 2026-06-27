@@ -12,6 +12,7 @@ import {
   selectLoading,
   selectIsFetchingAll,
   selectError,
+  selectLoadedUserId,
   selectAllReportsArray,
   selectIsPageCached,
   selectPageReports,
@@ -81,6 +82,8 @@ const createMockState = (overrides?: Partial<RootState['userReports']>): RootSta
       isFetchingAll: false,
       error: null,
       lastFetched: Date.now(),
+      hasFetchedAll: true,
+      loadedUserId: 1,
       ...overrides,
     },
   } as RootState;
@@ -146,6 +149,16 @@ describe('userReportsSelectors', () => {
     it('should select error', () => {
       const state = createMockState({ error: 'Test error' });
       expect(selectError(state)).toBe('Test error');
+    });
+
+    it('should select loadedUserId', () => {
+      const state = createMockState({ loadedUserId: 999 });
+      expect(selectLoadedUserId(state)).toBe(999);
+    });
+
+    it('should select null loadedUserId when no user is loaded', () => {
+      const state = createMockState({ loadedUserId: null });
+      expect(selectLoadedUserId(state)).toBeNull();
     });
   });
 
@@ -386,6 +399,13 @@ describe('userReportsSelectors', () => {
       expect(cacheInfo.cachedPages).toEqual([1, 2]);
       expect(cacheInfo.lastFetched).toBeGreaterThan(0);
       expect(typeof cacheInfo.isStale).toBe('boolean');
+    });
+
+    it('should expose the cached owner (loadedUserId) for account-switch detection', () => {
+      const state = createMockState({ loadedUserId: 42 });
+      const cacheInfo = selectCacheInfo(state);
+
+      expect(cacheInfo.loadedUserId).toBe(42);
     });
 
     it('should mark cache as stale after 5 minutes', () => {

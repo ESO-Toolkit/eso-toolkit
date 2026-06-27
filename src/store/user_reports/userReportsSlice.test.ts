@@ -8,6 +8,7 @@ import userReportsReducer, {
   setSort,
   clearSearchText,
   clearCache,
+  resetForUser,
   resetFilters,
   fetchUserReportsPage,
   fetchAllUserReports,
@@ -40,6 +41,8 @@ const createTestStore = (initialState?: Partial<UserReportsState>) => {
             isFetchingAll: false,
             error: null,
             lastFetched: null,
+            hasFetchedAll: false,
+            loadedUserId: null,
             ...initialState,
           },
         }
@@ -153,6 +156,8 @@ describe('userReportsSlice', () => {
         },
         totalCount: 2,
         lastFetched: Date.now(),
+        hasFetchedAll: true,
+        loadedUserId: 111,
       });
 
       store.dispatch(clearCache());
@@ -162,6 +167,38 @@ describe('userReportsSlice', () => {
       expect(state.pages).toEqual({});
       expect(state.totalCount).toBe(0);
       expect(state.lastFetched).toBeNull();
+      expect(state.hasFetchedAll).toBe(false);
+      // Owner is dropped so the next user's pages are not mistaken for a foreign
+      // write by the fulfilled identity guard.
+      expect(state.loadedUserId).toBeNull();
+    });
+
+    it('should handle resetForUser by clearing data and rebinding the owner', () => {
+      const store = createTestStore({
+        reports: {
+          ABC123: mockReports[0],
+          DEF456: mockReports[1],
+        },
+        pages: {
+          1: ['ABC123', 'DEF456'],
+        },
+        totalCount: 2,
+        lastFetched: Date.now(),
+        hasFetchedAll: true,
+        loadedUserId: 111,
+      });
+
+      store.dispatch(resetForUser(222));
+
+      const state = store.getState().userReports;
+      // Previous user's rows are purged...
+      expect(state.reports).toEqual({});
+      expect(state.pages).toEqual({});
+      expect(state.totalCount).toBe(0);
+      expect(state.lastFetched).toBeNull();
+      expect(state.hasFetchedAll).toBe(false);
+      // ...and the slice is rebound to the new user up front.
+      expect(state.loadedUserId).toBe(222);
     });
   });
 
@@ -290,6 +327,72 @@ describe('userReportsSlice', () => {
       const state = store.getState().userReports;
       expect(Object.keys(state.reports).length).toBe(2);
       expect(state.pages[1].length).toBe(2);
+    });
+
+    it('records the owner (loadedUserId) of the fetched reports', async () => {
+      const store = createTestStore();
+
+      mockClient.query.mockResolvedValue({
+        reportData: {
+          reports: {
+            data: mockReports,
+            total: 2,
+            current_page: 1,
+            per_page: 10,
+            last_page: 1,
+            has_more_pages: false,
+          },
+        },
+      });
+
+      await store.dispatch(
+        fetchUserReportsPage({
+          client: mockClient as never,
+          userId: 777,
+          page: 1,
+          limit: 10,
+        }),
+      );
+
+      const state = store.getState().userReports;
+      expect(state.loadedUserId).toBe(777);
+      expect(state.reports).toHaveProperty('ABC123');
+    });
+
+    it('drops a fulfilled page belonging to a different user (identity guard)', async () => {
+      // Slice already owned by user 111 (e.g. a previous account's in-flight
+      // bulk fetch is still resolving after a switch).
+      const store = createTestStore({ loadedUserId: 111 });
+
+      mockClient.query.mockResolvedValue({
+        reportData: {
+          reports: {
+            data: mockReports,
+            total: 2,
+            current_page: 1,
+            per_page: 10,
+            last_page: 1,
+            has_more_pages: false,
+          },
+        },
+      });
+
+      // A page resolves for a *different* user (222) — it must not pollute 111's
+      // slice (private-data isolation).
+      await store.dispatch(
+        fetchUserReportsPage({
+          client: mockClient as never,
+          userId: 222,
+          page: 1,
+          limit: 10,
+        }),
+      );
+
+      const state = store.getState().userReports;
+      expect(state.reports).toEqual({});
+      expect(state.pages[1]).toBeUndefined();
+      expect(state.loadedUserId).toBe(111);
+      expect(state.loading).toBe(false);
     });
   });
 
