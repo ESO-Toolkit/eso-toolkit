@@ -11,6 +11,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { ESO_CONSUMABLES } from '../data/esoConsumables';
 import { ESO_POTIONS } from '../data/esoPotions';
+import { CLASS_MASTERY_LINE_NAME } from '../data/skill-lines/class/classMastery';
 import {
   CLASS_SKILL_LINES,
   ESO_MUNDUS_STONES,
@@ -25,6 +26,10 @@ import type {
   CombatRole,
   ESOClass,
 } from '../features/build-editor/types/build.types';
+import {
+  partitionClassMasteryPicks,
+  sanitizeClassMasteryPicks,
+} from '../features/build-editor/utils/classMasteryTransfer';
 import type { GearConfig, GearPiece } from '../features/loadout-manager/types/loadout.types';
 import {
   RED_CHAMPION_POINTS,
@@ -34,6 +39,7 @@ import {
 import type { PlayerGear, PlayerTalent } from '../types/playerDetails';
 
 import type { ClassAnalysisResult } from './classDetectionUtils';
+import { gearCategoryForSlot, resolveEnchantId, resolveTraitId } from './combatLogGearMapping';
 import type { PotionType } from './potionDetectionUtils';
 
 // ─── Gear Slot Mapping ──────────────────────────────────────────────────────
@@ -173,9 +179,15 @@ function resolveRole(playerRole?: string): CombatRole {
 export function convertGear(gear: PlayerGear[]): GearConfig {
   const config: GearConfig = {};
 
-  for (let slotIdx = 0; slotIdx < gear.length; slotIdx++) {
-    const item = gear[slotIdx];
+  for (let i = 0; i < gear.length; i++) {
+    const item = gear[i];
     if (!item || item.id === 0) continue; // Empty slot
+
+    // Prefer the item's explicit slot field. For the normal dense combat-log
+    // gear array slot === index, so this is a no-op there; keying off item.slot
+    // keeps convertGear correct if it is ever handed a filtered or reordered
+    // array. Fall back to the index only when slot is missing.
+    const slotIdx = typeof item.slot === 'number' ? item.slot : i;
 
     const equipSlot = PLAYER_GEAR_SLOT_TO_EQUIP_SLOT[slotIdx];
     if (equipSlot === undefined) continue;
@@ -184,6 +196,15 @@ export function convertGear(gear: PlayerGear[]): GearConfig {
 
     const weight = resolveArmorWeight(slotIdx, item.type);
     if (weight) piece.weight = weight;
+
+    // Carry trait + enchant across, mapped from the log's numeric codes to the
+    // Build Editor's per-category string IDs (consistent with what the report's
+    // gear panel displays). Unmappable codes are simply left off the piece.
+    const category = gearCategoryForSlot(slotIdx);
+    const trait = resolveTraitId(item.trait, category);
+    if (trait) piece.trait = trait;
+    const enchant = resolveEnchantId(item.enchantType, category);
+    if (enchant) piece.enchant = enchant;
 
     config[equipSlot] = piece;
   }
@@ -380,8 +401,25 @@ export function playerToBuild(data: PlayerBuildExtractionData): Build {
   const { esoClass, classSkillLines } = resolveClassFromAnalysis(data.classAnalysis);
   const role = resolveRole(data.role);
   const gearConfig = convertGear(data.gear);
-  const { skills, passives } = convertSkills(data.talents);
+  const { skills, passives: rawPassives } = convertSkills(data.talents);
   const cp = convertChampionPoints(data.championPoints);
+
+  // Class Mastery picks (U50) live on the top-level build.classMasteryPassives
+  // field, NOT setup.passives. Source them from the report's class-detection
+  // result — the "Class Mastery" skill-line entry's detected ability IDs — plus
+  // any Class Mastery IDs that slipped in via talent passives, then split those
+  // IDs back out of the regular passive list so the editor stays WYSIWYG.
+  const cmFromAnalysis = data.classAnalysis?.skillLines?.find(
+    (sl) => sl.skillLine === CLASS_MASTERY_LINE_NAME,
+  )?.skillIds;
+  const { passives, classMasteryPassives: cmFromPassives } = partitionClassMasteryPicks(
+    rawPassives,
+    esoClass,
+  );
+  const classMasteryPassives = sanitizeClassMasteryPicks(
+    [...(cmFromAnalysis ? Array.from(cmFromAnalysis) : []), ...cmFromPassives],
+    esoClass,
+  );
   const mundusStone = data.mundusBuffs.length > 0 ? resolveMundusId(data.mundusBuffs[0].name) : '';
   const description = buildGearDescription(data.gear);
 
@@ -410,6 +448,7 @@ export function playerToBuild(data: PlayerBuildExtractionData): Build {
     shortDescription: description,
     esoClass,
     classSkillLines,
+    classMasteryPassives,
     role,
     gameMode: 'pve',
     races: [],
