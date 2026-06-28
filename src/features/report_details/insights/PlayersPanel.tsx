@@ -38,6 +38,11 @@ import { useBuffLookupTask } from '../../../hooks/workerTasks/useBuffLookupTask'
 import { usePlayerTravelDistanceTask } from '../../../hooks/workerTasks/usePlayerTravelDistanceTask';
 import type { ReportFightContextInput } from '../../../store/contextTypes';
 import {
+  buildFallbackPlayersFromMasterData,
+  hasPlayerEntries,
+} from '../../../store/player_data/playerDataFallback';
+import type { PlayerDetailsWithRole } from '../../../store/player_data/playerDataSlice';
+import {
   KnownAbilities,
   MundusStones,
   RED_CHAMPION_POINTS,
@@ -72,6 +77,8 @@ import {
   type BarSwapAnalysisResult,
 } from '../../parse_analysis/utils/parseAnalysisUtils';
 
+import { PlayersPanelView } from './PlayersPanelView';
+
 // Recipe lookup stubs — full recipe resolution pending unified detection service
 const findScribingRecipe = async (_skillId: unknown, _skillName?: string): Promise<null> => null;
 const formatScribingRecipeForDisplay = (
@@ -93,8 +100,6 @@ const formatScribingRecipeForDisplay = (
   recipeSummary: '',
   tooltipInfo: '',
 });
-
-import { PlayersPanelView } from './PlayersPanelView';
 
 // This panel now uses report actors from masterData
 
@@ -133,7 +138,10 @@ export const PlayersPanel: React.FC<PlayersPanelProps> = ({ context: contextOver
 
   // Use hooks to get data
   const { reportMasterData, isMasterDataLoading } = useReportMasterData();
-  const { playerData, isPlayerDataLoading } = usePlayerData({ context: resolvedContext });
+  const { playerData, isPlayerDataLoading } = usePlayerData({
+    context: resolvedContext,
+    includeFallback: false,
+  });
   const { combatantInfoEvents, isCombatantInfoEventsLoading } = useCombatantInfoEvents({
     context: resolvedContext,
   });
@@ -166,6 +174,25 @@ export const PlayersPanel: React.FC<PlayersPanelProps> = ({ context: contextOver
     combatantInfoEvents,
   });
 
+  const playersById = React.useMemo<Record<string | number, PlayerDetailsWithRole>>(() => {
+    if (hasPlayerEntries(playerData?.playersById)) {
+      return playerData.playersById;
+    }
+
+    return buildFallbackPlayersFromMasterData({
+      friendlyPlayerIds: fight?.friendlyPlayers ?? undefined,
+      actorsById: reportMasterData.actorsById,
+      combatantInfoEvents,
+      rolesByPlayerId,
+    });
+  }, [
+    playerData?.playersById,
+    fight?.friendlyPlayers,
+    reportMasterData.actorsById,
+    combatantInfoEvents,
+    rolesByPlayerId,
+  ]);
+
   const fightIdNumber = resolvedContext.fightId;
 
   const allBuffEvents = React.useMemo(
@@ -186,16 +213,16 @@ export const PlayersPanel: React.FC<PlayersPanelProps> = ({ context: contextOver
   );
 
   const scribingPlayerAbilities = React.useMemo<PlayerAbilityList[]>(() => {
-    if (!playerData?.playersById) {
+    if (!hasPlayerEntries(playersById)) {
       return [];
     }
 
-    const playerIds = new Set(Object.values(playerData.playersById).map((p) => p.id));
+    const playerIds = new Set(Object.values(playersById).map((p) => p.id));
 
     const abilitiesByPlayer = new Map<number, Set<number>>();
 
     // Scan talent GUIDs (works when ESO Logs provides the transformed ID)
-    Object.values(playerData.playersById).forEach((player) => {
+    Object.values(playersById).forEach((player) => {
       const talents = player.combatantInfo?.talents ?? [];
       talents.forEach((talent) => {
         if (typeof talent.guid === 'number' && isScribingAbility(talent.guid)) {
@@ -227,7 +254,7 @@ export const PlayersPanel: React.FC<PlayersPanelProps> = ({ context: contextOver
         abilityIds: Array.from(abilityIds),
       }))
       .filter((entry) => entry.abilityIds.length > 0);
-  }, [playerData, castEvents]);
+  }, [playersById, castEvents]);
 
   const existingScribingAbilities = React.useMemo(() => {
     if (!scribingResult || fightIdNumber === null || scribingResult.fightId !== fightIdNumber) {
@@ -383,9 +410,9 @@ export const PlayersPanel: React.FC<PlayersPanelProps> = ({ context: contextOver
   // Compute bar swap analysis (including bar setup pattern) per player
   const barSwapByPlayer = React.useMemo(() => {
     const result: Record<string, BarSwapAnalysisResult> = {};
-    if (!fight || !castEvents || !playerData?.playersById) return result;
+    if (!fight || !castEvents || !hasPlayerEntries(playersById)) return result;
     const { startTime, endTime } = fight;
-    for (const player of Object.values(playerData.playersById)) {
+    for (const player of Object.values(playersById)) {
       if (!player?.id) continue;
       result[String(player.id)] = analyzeBarSwaps(
         castEvents,
@@ -395,7 +422,7 @@ export const PlayersPanel: React.FC<PlayersPanelProps> = ({ context: contextOver
       );
     }
     return result;
-  }, [fight, castEvents, playerData?.playersById]);
+  }, [fight, castEvents, playersById]);
 
   const { abilitiesById } = reportMasterData;
 
@@ -478,8 +505,8 @@ export const PlayersPanel: React.FC<PlayersPanelProps> = ({ context: contextOver
       /^(?:Boon:|Bonus\s*\(2\):)?\s*The\s+(Warrior|Mage|Serpent|Thief|Lady|Steed|Lord|Apprentice|Ritual|Lover|Atronach|Shadow|Tower)\b/i;
 
     // Initialize arrays for each player
-    if (playerData) {
-      Object.values(playerData?.playersById).forEach((actor) => {
+    if (hasPlayerEntries(playersById)) {
+      Object.values(playersById).forEach((actor) => {
         if (actor?.id) {
           const playerId = String(actor.id);
           result[playerId] = [];
@@ -539,7 +566,7 @@ export const PlayersPanel: React.FC<PlayersPanelProps> = ({ context: contextOver
     }
 
     return result;
-  }, [combatantInfoEvents, abilitiesById, playerData, friendlyBuffEvents]);
+  }, [combatantInfoEvents, abilitiesById, playersById, friendlyBuffEvents]);
 
   // Classify each player's potion usage from the live fight event stream (Path B detection).
   const potionResultsByPlayer = React.useMemo((): Record<string, PotionStreamResult> => {
@@ -568,8 +595,8 @@ export const PlayersPanel: React.FC<PlayersPanelProps> = ({ context: contextOver
     ]);
 
     // Initialize arrays for each player
-    if (playerData) {
-      Object.values(playerData?.playersById).forEach((actor) => {
+    if (hasPlayerEntries(playersById)) {
+      Object.values(playersById).forEach((actor) => {
         if (actor?.id) {
           const playerId = String(actor.id);
           result[playerId] = [];
@@ -622,7 +649,7 @@ export const PlayersPanel: React.FC<PlayersPanelProps> = ({ context: contextOver
     }
 
     return result;
-  }, [combatantInfoEvents, abilitiesById, playerData]);
+  }, [combatantInfoEvents, abilitiesById, playersById]);
 
   // Compute CPM (casts per minute) per player for the current fight, including all casts
   const cpmByPlayer = React.useMemo(() => {
@@ -693,11 +720,11 @@ export const PlayersPanel: React.FC<PlayersPanelProps> = ({ context: contextOver
   const aurasByPlayer = React.useMemo(() => {
     const result: Record<string, Array<{ name: string; id: number; stacks?: number }>> = {};
 
-    if (!playerData?.playersById || !combatantInfoEvents || !abilitiesById) {
+    if (!hasPlayerEntries(playersById) || !combatantInfoEvents || !abilitiesById) {
       return result;
     }
 
-    Object.values(playerData.playersById).forEach((actor) => {
+    Object.values(playersById).forEach((actor) => {
       if (!actor?.id) {
         return;
       }
@@ -734,16 +761,16 @@ export const PlayersPanel: React.FC<PlayersPanelProps> = ({ context: contextOver
     });
 
     return result;
-  }, [abilitiesById, combatantInfoEvents, playerData?.playersById]);
+  }, [abilitiesById, combatantInfoEvents, playersById]);
 
   const playerGear = React.useMemo(() => {
     const result: Record<number, PlayerGearSetRecord[]> = {};
 
-    if (!playerData?.playersById) {
+    if (!hasPlayerEntries(playersById)) {
       return result;
     }
 
-    for (const player of Object.values(playerData.playersById)) {
+    for (const player of Object.values(playersById)) {
       const gear = player?.combatantInfo?.gear ?? [];
 
       const setDataByBase: Record<string, PlayerGearItemData> = {};
@@ -831,16 +858,16 @@ export const PlayersPanel: React.FC<PlayersPanelProps> = ({ context: contextOver
     }
 
     return result;
-  }, [playerData?.playersById]);
+  }, [playersById]);
 
   // Calculate max resources (health, stamina, magicka) per player using all resource events throughout the fight
   const maxResourcesByPlayer = React.useMemo(() => {
     const result: Record<string, { health: number; stamina: number; magicka: number }> = {};
 
-    if (!playerData?.playersById || !fight) return result;
+    if (!hasPlayerEntries(playersById) || !fight) return result;
 
     // Initialize with 0 for each player
-    Object.values(playerData.playersById).forEach((player) => {
+    Object.values(playersById).forEach((player) => {
       if (player?.id) {
         result[String(player.id)] = { health: 0, stamina: 0, magicka: 0 };
       }
@@ -937,7 +964,7 @@ export const PlayersPanel: React.FC<PlayersPanelProps> = ({ context: contextOver
     }
 
     return result;
-  }, [playerData?.playersById, resourceEvents, damageEvents, healingEvents, fight]);
+  }, [playersById, resourceEvents, damageEvents, healingEvents, fight]);
 
   // Extract individual max resources for backward compatibility
   const maxHealthByPlayer = React.useMemo(() => {
@@ -968,11 +995,16 @@ export const PlayersPanel: React.FC<PlayersPanelProps> = ({ context: contextOver
   const buildIssuesByPlayer = React.useMemo(() => {
     const result: Record<string, BuildIssue[]> = {};
 
-    if (!playerData?.playersById || !friendlyBuffLookup || !fight?.startTime || !fight?.endTime) {
+    if (
+      !hasPlayerEntries(playersById) ||
+      !friendlyBuffLookup ||
+      !fight?.startTime ||
+      !fight?.endTime
+    ) {
       return result;
     }
 
-    Object.values(playerData.playersById).forEach((player) => {
+    Object.values(playersById).forEach((player) => {
       if (!player?.id) return;
 
       const playerId = String(player.id);
@@ -1012,7 +1044,7 @@ export const PlayersPanel: React.FC<PlayersPanelProps> = ({ context: contextOver
 
     return result;
   }, [
-    playerData?.playersById,
+    playersById,
     friendlyBuffLookup,
     fight?.startTime,
     fight?.endTime,
@@ -1073,7 +1105,7 @@ export const PlayersPanel: React.FC<PlayersPanelProps> = ({ context: contextOver
   const classAnalysisByPlayer = React.useMemo(() => {
     const result: Record<string, ClassAnalysisResult> = {};
 
-    if (!abilitiesById || !playerData?.playersById) {
+    if (!abilitiesById || !hasPlayerEntries(playersById)) {
       return result;
     }
 
@@ -1081,7 +1113,7 @@ export const PlayersPanel: React.FC<PlayersPanelProps> = ({ context: contextOver
     const classMapping = createSkillLineAbilityMapping(abilitiesById);
 
     // Analyze each player's class usage
-    Object.values(playerData.playersById).forEach((player) => {
+    Object.values(playersById).forEach((player) => {
       if (!player?.id) return;
 
       const playerId = String(player.id);
@@ -1108,7 +1140,7 @@ export const PlayersPanel: React.FC<PlayersPanelProps> = ({ context: contextOver
     return result;
   }, [
     abilitiesById,
-    playerData?.playersById,
+    playersById,
     combatantInfoEvents,
     castEvents,
     damageEvents,
@@ -1227,10 +1259,10 @@ export const PlayersPanel: React.FC<PlayersPanelProps> = ({ context: contextOver
   }, [scribingSkillsByPlayer, scribingRecipes]);
 
   return (
-    <PlayerAvatarsProvider players={playerData?.playersById}>
+    <PlayerAvatarsProvider players={playersById}>
       <div data-testid="players-panel-loaded">
         <PlayersPanelView
-          playerActors={playerData?.playersById}
+          playerActors={playersById}
           mundusBuffsByPlayer={mundusBuffsByPlayer}
           championPointsByPlayer={championPointsByPlayer}
           scribingSkillsByPlayer={enhancedScribingSkillsByPlayer}

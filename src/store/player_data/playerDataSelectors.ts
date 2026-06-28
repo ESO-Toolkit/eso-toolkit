@@ -1,10 +1,14 @@
 import { createSelector } from '@reduxjs/toolkit';
 
+import type { FightFragment, ReportActorFragment } from '../../graphql/gql/graphql';
+import type { CombatantInfoEvent } from '../../types/combatlogEvents';
 import type { ReportFightContext, ReportFightContextInput } from '../contextTypes';
+import type { ReportEntry } from '../report/reportSlice';
 import type { RootState } from '../storeWithHistory';
 import { createReportFightContextSelector } from '../utils/contextSelectors';
 import { resolveCacheKey } from '../utils/keyedCacheState';
 
+import { buildFallbackPlayersFromMasterData, hasPlayerEntries } from './playerDataFallback';
 import type { PlayerDataEntry, PlayerDataState, PlayerDetailsWithRole } from './playerDataSlice';
 
 export const selectPlayerDataState = (state: RootState): PlayerDataState => state.playerData;
@@ -20,6 +24,59 @@ const selectPlayerDataEntryByContext = (
   return state.playerData.entries[key] ?? null;
 };
 
+const selectReportEntryByContext = (
+  state: RootState,
+  context: ReportFightContext,
+): ReportEntry | null => {
+  const reportId =
+    context.reportCode ?? state.report.activeContext.reportId ?? state.report.reportId ?? null;
+  if (!reportId) {
+    return null;
+  }
+
+  const { key } = resolveCacheKey({ reportCode: reportId });
+  return state.report.entries[key] ?? null;
+};
+
+const selectFightByContext = (
+  state: RootState,
+  context: ReportFightContext,
+): FightFragment | null => {
+  if (context.fightId === null) {
+    return null;
+  }
+
+  const registryEntry = selectReportEntryByContext(state, context);
+  const registryFight = registryEntry?.fightsById[context.fightId] ?? null;
+  if (registryFight) {
+    return registryFight;
+  }
+
+  return state.report.data?.fights?.find((fight) => fight?.id === context.fightId) ?? null;
+};
+
+const selectActorsByIdByContext = (
+  state: RootState,
+  context: ReportFightContext,
+): Record<string | number, ReportActorFragment> => {
+  if (!context.reportCode) {
+    return {};
+  }
+  const { key } = resolveCacheKey({ reportCode: context.reportCode });
+  return state.masterData.entries[key]?.actorsById ?? {};
+};
+
+const selectCombatantInfoEventsByContext = (
+  state: RootState,
+  context: ReportFightContext,
+): CombatantInfoEvent[] => {
+  if (!context.reportCode) {
+    return [];
+  }
+  const { key } = resolveCacheKey(context);
+  return state.events.combatantInfo.entries[key]?.events ?? [];
+};
+
 export const selectPlayerDataEntryForContext = createReportFightContextSelector<
   RootState,
   [typeof selectPlayerDataEntryByContext],
@@ -28,9 +85,32 @@ export const selectPlayerDataEntryForContext = createReportFightContextSelector<
 
 export const selectPlayersByIdForContext = createReportFightContextSelector<
   RootState,
-  [typeof selectPlayerDataEntryByContext],
+  [
+    typeof selectPlayerDataEntryByContext,
+    typeof selectFightByContext,
+    typeof selectActorsByIdByContext,
+    typeof selectCombatantInfoEventsByContext,
+  ],
   Record<string | number, PlayerDetailsWithRole>
->([selectPlayerDataEntryByContext], (entry) => entry?.playersById ?? {});
+>(
+  [
+    selectPlayerDataEntryByContext,
+    selectFightByContext,
+    selectActorsByIdByContext,
+    selectCombatantInfoEventsByContext,
+  ],
+  (entry, fight, actorsById, combatantInfoEvents) => {
+    if (hasPlayerEntries(entry?.playersById)) {
+      return entry.playersById;
+    }
+
+    return buildFallbackPlayersFromMasterData({
+      friendlyPlayerIds: fight?.friendlyPlayers ?? undefined,
+      actorsById,
+      combatantInfoEvents,
+    });
+  },
+);
 
 export const selectIsPlayerDataLoadingForContext = createReportFightContextSelector<
   RootState,
@@ -72,11 +152,16 @@ type PlayerSelectorByContext = (
   context: ReportFightContextInput,
 ) => PlayerDataEntry['playersById'][string] | undefined;
 
+const selectEffectivePlayersByIdByContext = (
+  state: RootState,
+  context: ReportFightContext,
+): Record<string | number, PlayerDetailsWithRole> => selectPlayersByIdForContext(state, context);
+
 export const createSelectPlayerByIdForContext = (
   playerId: string | number,
 ): PlayerSelectorByContext =>
   createReportFightContextSelector<
     RootState,
-    [typeof selectPlayerDataEntryByContext],
+    [typeof selectEffectivePlayersByIdByContext],
     PlayerDataEntry['playersById'][string] | undefined
-  >([selectPlayerDataEntryByContext], (entry) => entry?.playersById[playerId]);
+  >([selectEffectivePlayersByIdByContext], (playersById) => playersById[playerId]);
