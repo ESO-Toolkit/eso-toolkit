@@ -13,4 +13,5 @@ export type {
   PlayerDataPayload,
   PlayerDetailsWithRole,
 } from './playerDataSlice';
+export * from './playerDataFallback';
 export * from './playerDataSelectors';
