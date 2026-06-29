@@ -74,6 +74,26 @@ export interface CompanionEffect {
   duration?: number;
 }
 
+/** One active scribing script slotted on a crafted ability. */
+export interface CompanionScribingScript {
+  id: number;
+  /** Script slot: 1 = focus, 2 = signature, 3 = affix. */
+  slot?: number;
+  name?: string;
+  icon?: string;
+}
+
+/** One scribed skill captured from the local action bars. */
+export interface CompanionScribedSkill {
+  /** Crafted ability / grimoire id from the action slot. */
+  abilityId: number;
+  name?: string;
+  bar?: string;
+  slot?: number;
+  /** Active scripts keyed by script slot. */
+  scripts: Record<number, CompanionScribingScript>;
+}
+
 /** One captured build snapshot, taken on combat end or on demand. */
 export interface CompanionSnapshot {
   schemaVersion?: number;
@@ -101,6 +121,7 @@ export interface CompanionSnapshot {
   attributes?: CompanionAttributes;
   effects?: CompanionEffect[];
   bars?: { front?: Record<number, number>; back?: Record<number, number> };
+  scribing?: CompanionScribedSkill[];
 }
 
 /** Parsed companion file: snapshots grouped by account. */
@@ -225,6 +246,43 @@ function normalizeEffects(v: LuaValue | undefined): CompanionEffect[] | undefine
   return out.length > 0 ? out : undefined;
 }
 
+function normalizeScribing(v: LuaValue | undefined): CompanionScribedSkill[] | undefined {
+  const arr = luaArray(v);
+  if (arr.length === 0) return undefined;
+
+  const out: CompanionScribedSkill[] = [];
+  for (const item of arr) {
+    if (!isRecord(item)) continue;
+    const abilityId = asNumber(item.abilityId);
+    if (typeof abilityId !== 'number') continue;
+
+    const scripts: Record<number, CompanionScribingScript> = {};
+    for (const [scriptSlot, scriptRaw] of numericEntries(item.scripts)) {
+      if (!isRecord(scriptRaw)) continue;
+      const id = asNumber(scriptRaw.id);
+      if (typeof id !== 'number') continue;
+      const slot = asNumber(scriptRaw.slot) ?? scriptSlot;
+      scripts[slot] = {
+        id,
+        slot,
+        name: asString(scriptRaw.name),
+        icon: asString(scriptRaw.icon),
+      };
+    }
+
+    if (Object.keys(scripts).length === 0) continue;
+    out.push({
+      abilityId,
+      name: asString(item.name),
+      bar: asString(item.bar),
+      slot: asNumber(item.slot),
+      scripts,
+    });
+  }
+
+  return out.length > 0 ? out : undefined;
+}
+
 interface SnapshotDefaults {
   account?: string;
   schemaVersion?: number;
@@ -273,6 +331,7 @@ function normalizeSnapshot(v: LuaValue, defaults: SnapshotDefaults = {}): Compan
     attributes,
     effects: normalizeEffects(v.effects),
     bars,
+    scribing: normalizeScribing(v.scribing),
   };
 }
 

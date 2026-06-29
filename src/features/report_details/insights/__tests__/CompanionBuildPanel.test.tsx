@@ -61,6 +61,19 @@ describe('CompanionBuildPanel', () => {
           { id: 68406, name: 'Major Intellect', duration: 47_000 },
           { id: 68408, name: 'Major Endurance', duration: 47_000 },
         ]}
+        scribing={[
+          {
+            abilityId: 217340,
+            name: 'Shattering Knife',
+            bar: 'front',
+            slot: 3,
+            scripts: {
+              1: { id: 1, slot: 1, name: 'Magic Damage' },
+              2: { id: 31, slot: 2, name: 'Class Mastery' },
+              3: { id: 42, slot: 3, name: 'Major Breach' },
+            },
+          },
+        ]}
       />,
     );
 
@@ -69,6 +82,10 @@ describe('CompanionBuildPanel', () => {
     expect(screen.getByText('Mundus: Shadow')).toBeInTheDocument();
     expect(
       screen.getByText('Potion: Tri-Stat Potion (Health, Magicka & Stamina)'),
+    ).toBeInTheDocument();
+    expect(screen.getByText('Captured Scribing')).toBeInTheDocument();
+    expect(
+      screen.getByText('Shattering Knife: Magic Damage / Class Mastery / Major Breach'),
     ).toBeInTheDocument();
     expect(screen.getByText('Captured Stats')).toBeInTheDocument();
     expect(screen.getByText('Physical Pen: 12,345')).toBeInTheDocument();

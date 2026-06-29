@@ -76,8 +76,9 @@ What is **never** emitted and therefore impossible for ESO Logs to show:
 | **Vampire/Werewolf stage, riding skills, CP curve preset**                                                                                 | Minor but cheap.                                                                                            | misc API                                                                     |
 
 **Takeaway:** the highest-value, _uniquely-addon_ data is **CP allocation + final
-stats + attributes**. Gear and slotted skills are mostly redundant with the log
-(useful as a verification/fallback, and to fill console/non-logged sessions).
+stats + attributes + authoritative scribing scripts**. Gear and slotted skills are
+mostly redundant with the log (useful as a verification/fallback, and to fill
+console/non-logged sessions).
 
 ---
 
@@ -743,6 +744,10 @@ ESOTKCompanionSV = { ["Default"] = { ["@account"] = { ["$AccountWide"] = {
     stats  = { maxMag=, maxStam=, maxHealth=, spellDmg=, weaponDmg=,
                critRating=, critDmg=, penPhys=, penSpell=,
                recovMag=, recovStam=, recovHealth=, resistPhys=, resistSpell= },
+    scribing = {
+      { abilityId=217340, name="Shattering Knife", bar="front", slot=3,
+        scripts = { [1]={id=,name=}, [2]={id=,name="Class Mastery"}, [3]={id=,name=} } },
+    },
     -- redundant with the log (optional / verification only):
     bars = { front={…}, back={…} }, gear = { [slot]={link,trait,enchant,quality,setId} },
     -- live-layer output:
@@ -1041,6 +1046,7 @@ Every readiness check below was confirmed against real add-on source / API refer
 | **Potion**                       | `GetSlotItemLink(quickslotIndex)`                                                                                                                   | ESOUI                           |
 | **Attributes**                   | `GetAttributeSpentPoints(attributeType)` → points                                                                                                   | eso-api dump                    |
 | **Self penetration / crit**      | `GetPlayerStat(STAT_*)` — `STAT_SPELL_POWER/STAT_POWER/STAT_CRITICAL_STRIKE/STAT_SPELL_CRITICAL/STAT_PHYSICAL_PENETRATION/STAT_SPELL_PENETRATION/…` | esoui API constants             |
+| **Scribing scripts**             | `GetCraftedAbilityActiveScriptIds(craftedAbilityId)` + script/name/icon helpers                                                                     | local add-on source             |
 
 > **Index-vs-id gotcha (confirmed from ZOS source).** `GetNumChampionDisciplineSkills`
 > and `GetChampionSkillId` take the discipline **index**; `GetChampionDisciplineType`
@@ -1074,12 +1080,13 @@ The report-page upload UI is now wired through `PlayersPanel` local state and
      absolute UNIX ms).
 3. **Compute per-player props:**
    `buildCompanionBuildsForReport(result.all, matchableReport, { coaching: { assumedGroupPen } })`
-   → `Map<actorId, { championPoints, coaching, stats, effects, snapshot, fightId }>`.
+   → `Map<actorId, { championPoints, coaching, stats, effects, scribing, snapshot, fightId }>`.
 4. **Render:** players come from `selectPlayersByIdForContext` keyed by `player.id`
    (already imported in `PlayerCard.tsx`; cards are rendered via
    `PlayersPanel`/`PlayersPanelView`/`LazyPlayerCard`). Pass
    `companionBuild={companionBuildsByPlayer[player.id]}` to each `PlayerCard`. Absent ⇒ panel renders
-   nothing (no change to existing cards).
+   nothing (no change to existing cards). When present, the panel shows CP allocation,
+   captured buffs, final stats, stat coaching and authoritative captured scribing scripts.
 
 **Notes:** `displayName` ↔ `snapshot.account` (optional cross-check). For _exact_
 effective penetration, later pass the boss's Major Breach/Crusher uptime from the log as

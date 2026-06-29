@@ -3,7 +3,7 @@
 
   ESO Logs (the encounter log) records what happened in combat but is structurally
   blind to a chunk of the build that produced it. The single biggest gap is the
-  **champion point allocation** — the log carries CP *rank* and the slotted stars as
+  **champion point allocation** - the log carries CP *rank* and the slotted stars as
   buffs, but never the points spent across every star. This add-on reads that (and the
   other un-logged build data) live from the official API and writes it to
   SavedVariables, which ESO Toolkit (esotk.com) ingests and renders on player cards,
@@ -11,7 +11,7 @@
 
   Design notes
   - Read-only. We only read state and write our own SavedVariables. No input
-    automation, no combat decisions — same ToS-safe posture as CombatMetrics/Hodor.
+    automation, no combat decisions - same ToS-safe posture as CombatMetrics/Hodor.
   - Robust to API drift. ESO bumps the API every season and renames/retires functions
     and STAT_/constants. Every capture subsystem runs inside pcall and every global
     constant is nil-guarded, so a single missing symbol degrades one field instead of
@@ -121,7 +121,7 @@ local function captureChampionPoints()
   return cp
 end
 
--- Final derived stats the log never carries (crit, penetration, recovery, …).
+-- Final derived stats the log never carries (crit, penetration, recovery, ...).
 local function captureStats()
   return {
     maxMagicka      = stat("STAT_MAGICKA_MAX"),
@@ -188,6 +188,51 @@ local function captureBars()
   return bars
 end
 
+local function scriptInfo(scriptId, scriptSlot)
+  if not scriptId or scriptId == 0 then return nil end
+  return {
+    id = scriptId,
+    slot = scriptSlot,
+    name = call("GetCraftedAbilityScriptDisplayName", scriptId),
+    icon = call("GetCraftedAbilityScriptIcon", scriptId),
+  }
+end
+
+-- Authoritative scribing setup. Logs can reveal many scribed effects, but not every
+-- active script reliably; the local action bar API can read the grimoire + scripts.
+local function captureScribing()
+  local scribing = {}
+  local cats = { front = _G["HOTBAR_CATEGORY_PRIMARY"], back = _G["HOTBAR_CATEGORY_BACKUP"] }
+  for label, cat in pairs(cats) do
+    if cat ~= nil then
+      for slot = 3, 8 do -- 3..7 = abilities, 8 = ultimate
+        local craftedAbilityId = call("GetSlotBoundId", slot, cat)
+        if craftedAbilityId and craftedAbilityId ~= 0 then
+          local s1, s2, s3 = call("GetCraftedAbilityActiveScriptIds", craftedAbilityId)
+          local scripts = {}
+          local i1 = scriptInfo(s1, 1)
+          local i2 = scriptInfo(s2, 2)
+          local i3 = scriptInfo(s3, 3)
+          if i1 then scripts[1] = i1 end
+          if i2 then scripts[2] = i2 end
+          if i3 then scripts[3] = i3 end
+
+          if next(scripts) ~= nil then
+            scribing[#scribing + 1] = {
+              abilityId = craftedAbilityId,
+              name = call("GetCraftedAbilityDisplayName", craftedAbilityId) or call("GetAbilityName", craftedAbilityId),
+              bar = label,
+              slot = slot,
+              scripts = scripts,
+            }
+          end
+        end
+      end
+    end
+  end
+  return scribing
+end
+
 -- ----------------------------------------------------------------------------
 -- snapshot
 -- ----------------------------------------------------------------------------
@@ -230,6 +275,7 @@ local function Snapshot(reason)
     attrs     = tryCapture("attributes", captureAttributes),
     effects   = tryCapture("longTermEffects", captureLongTermEffects),
     bars      = tryCapture("bars", captureBars),
+    scribing  = tryCapture("scribing", captureScribing),
   }
 
   if not snap.ts or not snap.char then
@@ -247,7 +293,7 @@ local function Snapshot(reason)
 
   if SV.verbose then
     local pts = snap.cp and snap.cp.total or "?"
-    d("[ESOTK] snapshot saved (" .. tostring(reason) .. ") — CP " .. tostring(pts)
+    d("[ESOTK] snapshot saved (" .. tostring(reason) .. ") - CP " .. tostring(pts)
       .. ", " .. tostring(#snaps) .. " stored. Upload SavedVariables/ESOTKCompanion.lua to esotk.com.")
   end
 end
@@ -302,7 +348,7 @@ local function OnAddOnLoaded(_, addonName)
     end
   end
 
-  d("[ESOTK] Companion loaded. Capturing champion points + build on combat end. Type /esotk to snapshot now.")
+  d("[ESOTK] Companion loaded. Capturing champion points, stats and scribing on combat end. Type /esotk to snapshot now.")
 end
 
 EVENT_MANAGER:RegisterForEvent(ADDON.name, EVENT_ADD_ON_LOADED, OnAddOnLoaded)

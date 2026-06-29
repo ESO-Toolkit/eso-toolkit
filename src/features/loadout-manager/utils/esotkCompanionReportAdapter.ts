@@ -37,7 +37,9 @@ export interface CompanionBuildForPlayer {
   stats?: CompanionSnapshot['stats'];
   /** Long-term/self effects captured by the add-on (food, mundus, potion clusters). */
   effects?: CompanionSnapshot['effects'];
-  /** The snapshot this was built from (raw stats/effects available for detail views). */
+  /** Scribed skills captured authoritatively from the local action bars. */
+  scribing?: CompanionSnapshot['scribing'];
+  /** The snapshot this was built from (raw stats/effects/scribing available for detail views). */
   snapshot: CompanionSnapshot;
   /** The fight the snapshot best matched, if any. */
   fightId?: number | string;
@@ -71,6 +73,7 @@ export function buildCompanionBuildsForReport(
       coaching: computeStatCoaching(match.snapshot.stats, opts.coaching),
       stats: match.snapshot.stats,
       effects: match.snapshot.effects,
+      scribing: match.snapshot.scribing,
       snapshot: match.snapshot,
       fightId: match.fightId,
     });

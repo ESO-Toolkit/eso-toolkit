@@ -30,6 +30,19 @@ const snapshot: CompanionSnapshot = {
   },
   stats: { physicalPen: PVE_PENETRATION_CAP + 3200 },
   effects: [{ id: 13984, name: 'Boon: The Lover', duration: 0 }],
+  scribing: [
+    {
+      abilityId: 217340,
+      name: 'Shattering Knife',
+      bar: 'front',
+      slot: 3,
+      scripts: {
+        1: { id: 1, slot: 1, name: 'Magic Damage' },
+        2: { id: 31, slot: 2, name: 'Class Mastery' },
+        3: { id: 42, slot: 3, name: 'Major Breach' },
+      },
+    },
+  ],
 };
 
 describe('buildCompanionBuildsForReport', () => {
@@ -47,6 +60,7 @@ describe('buildCompanionBuildsForReport', () => {
     expect(build.coaching.find((i) => i.id === 'penetration')!.severity).toBe('warn');
     expect(build.stats).toBe(snapshot.stats);
     expect(build.effects).toBe(snapshot.effects);
+    expect(build.scribing).toBe(snapshot.scribing);
     expect(build.fightId).toBe('f1');
     expect(build.snapshot).toBe(snapshot);
   });

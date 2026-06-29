@@ -116,7 +116,7 @@ const formatScribingRecipeForDisplay = (
 
 type CompanionBuildRenderProps = Pick<
   CompanionBuildForPlayer,
-  'championPoints' | 'coaching' | 'stats' | 'effects'
+  'championPoints' | 'coaching' | 'stats' | 'effects' | 'scribing'
 >;
 
 interface CompanionUploadState {
@@ -276,6 +276,7 @@ export const PlayersPanel: React.FC<PlayersPanelProps> = ({ context: contextOver
         coaching: build.coaching,
         stats: build.stats,
         effects: build.effects,
+        scribing: build.scribing,
       };
     });
     return byPlayer;

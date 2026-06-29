@@ -10,7 +10,7 @@ interface MockLazyPlayerCardProps {
   player: Pick<PlayerDetailsWithRole, 'id'>;
   companionBuild?: Pick<
     CompanionBuildForPlayer,
-    'championPoints' | 'coaching' | 'stats' | 'effects'
+    'championPoints' | 'coaching' | 'stats' | 'effects' | 'scribing'
   >;
 }
 
@@ -80,6 +80,7 @@ describe('PlayersPanelView companion builds', () => {
               coaching: [],
               stats: { physicalPen: 12345 },
               effects: [],
+              scribing: [],
             },
           },
           companionUpload: {

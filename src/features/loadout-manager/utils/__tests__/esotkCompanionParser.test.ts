@@ -82,6 +82,38 @@ ESOTKCompanionSV =
                             ["front"] = { [3] = 28800, [4] = 38901 },
                             ["back"] = { [3] = 46324 },
                         },
+                        ["scribing"] =
+                        {
+                            [1] =
+                            {
+                                ["abilityId"] = 217340,
+                                ["name"] = "Shattering Knife",
+                                ["bar"] = "front",
+                                ["slot"] = 3,
+                                ["scripts"] =
+                                {
+                                    [1] =
+                                    {
+                                        ["id"] = 1,
+                                        ["slot"] = 1,
+                                        ["name"] = "Magic Damage",
+                                        ["icon"] = "script_magic",
+                                    },
+                                    [2] =
+                                    {
+                                        ["id"] = 31,
+                                        ["slot"] = 2,
+                                        ["name"] = "Class Mastery",
+                                    },
+                                    [3] =
+                                    {
+                                        ["id"] = 42,
+                                        ["slot"] = 3,
+                                        ["name"] = "Major Breach",
+                                    },
+                                },
+                            },
+                        },
                     },
                     [2] =
                     {
@@ -158,6 +190,9 @@ describe('parseESOTKCompanionSavedVariables', () => {
     expect(snap.effects).toEqual([{ id: 13984, name: 'Boon: The Lover', duration: 0 }]);
     expect(snap.bars!.front).toEqual({ 3: 28800, 4: 38901 });
     expect(snap.bars!.back).toEqual({ 3: 46324 });
+    expect(snap.scribing![0].abilityId).toBe(217340);
+    expect(snap.scribing![0].name).toBe('Shattering Knife');
+    expect(snap.scribing![0].scripts[2].name).toBe('Class Mastery');
   });
 
   it('falls back to bucket metadata when a snapshot omits account/schema/season', () => {

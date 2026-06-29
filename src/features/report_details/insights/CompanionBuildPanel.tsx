@@ -19,6 +19,7 @@ import type {
 } from '@/features/loadout-manager/utils/esotkCompanionCoaching';
 import type {
   CompanionEffect,
+  CompanionScribedSkill,
   CompanionStats,
 } from '@/features/loadout-manager/utils/esotkCompanionParser';
 import { MundusStones } from '@/types/abilities';
@@ -40,6 +41,8 @@ export interface CompanionBuildPanelProps {
   stats?: CompanionStats;
   /** Long-term/self effects captured by the add-on. */
   effects?: CompanionEffect[];
+  /** Scribed skills captured directly from the add-on action bar snapshot. */
+  scribing?: CompanionScribedSkill[];
 }
 
 const SECTION_TITLE_SX = {
@@ -132,6 +135,31 @@ function statRows(
   return rows;
 }
 
+function scribedSkillRows(
+  scribing: CompanionScribedSkill[] | undefined,
+): Array<{ id: string; label: string; title: string }> {
+  return (scribing ?? [])
+    .map((skill) => {
+      const scripts = Object.values(skill.scripts)
+        .sort((a, b) => (a.slot ?? 0) - (b.slot ?? 0))
+        .map((script) => script.name || `Script ${script.id}`);
+      if (scripts.length === 0) return null;
+
+      const skillName = skill.name || `Ability ${skill.abilityId}`;
+      const barSlotParts = [
+        skill.bar,
+        skill.slot !== undefined ? `slot ${skill.slot}` : undefined,
+      ].filter(Boolean);
+      const barSlot = barSlotParts.length > 0 ? ` (${barSlotParts.join(' ')})` : '';
+      return {
+        id: `${skill.abilityId}:${skill.bar ?? ''}:${skill.slot ?? ''}`,
+        label: `${skillName}: ${scripts.join(' / ')}`,
+        title: `Scribed skill captured by ESOTK Companion${barSlot} (Ability ID: ${skill.abilityId})`,
+      };
+    })
+    .filter((row): row is { id: string; label: string; title: string } => Boolean(row));
+}
+
 function StarChips({
   stars,
   variant,
@@ -172,9 +200,11 @@ export const CompanionBuildPanel: React.FC<CompanionBuildPanelProps> = ({
   coaching,
   stats,
   effects,
+  scribing,
 }) => {
   const theme = useTheme();
   const rows = React.useMemo(() => statRows(stats), [stats]);
+  const capturedScribing = React.useMemo(() => scribedSkillRows(scribing), [scribing]);
   const auras = React.useMemo(() => effectAuras(effects), [effects]);
   const food = React.useMemo(() => detectFoodFromAuras(auras), [auras]);
   const mundus = React.useMemo(() => detectMundus(effects), [effects]);
@@ -187,12 +217,13 @@ export const CompanionBuildPanel: React.FC<CompanionBuildPanelProps> = ({
   const hasCoaching = coaching.length > 0;
   const hasStats = rows.length > 0;
   const hasConsumables = Boolean(food || mundus || hasPotion);
-  if (!hasCp && !hasCoaching && !hasStats && !hasConsumables) return null;
+  const hasScribing = capturedScribing.length > 0;
+  if (!hasCp && !hasCoaching && !hasStats && !hasConsumables && !hasScribing) return null;
 
   return (
     <Box sx={{ mt: 1 }} data-testid="companion-build-panel">
       {hasCp && championPoints && (
-        <Box sx={{ mb: hasConsumables || hasStats || hasCoaching ? 2 : 0 }}>
+        <Box sx={{ mb: hasConsumables || hasScribing || hasStats || hasCoaching ? 2 : 0 }}>
           <Typography variant="body2" sx={SECTION_TITLE_SX}>
             Champion Points
             {championPoints.total !== undefined && (
@@ -249,7 +280,7 @@ export const CompanionBuildPanel: React.FC<CompanionBuildPanelProps> = ({
       )}
 
       {hasConsumables && (
-        <Box sx={{ mb: hasStats || hasCoaching ? 2 : 0 }}>
+        <Box sx={{ mb: hasScribing || hasStats || hasCoaching ? 2 : 0 }}>
           <Typography variant="body2" sx={SECTION_TITLE_SX}>
             Captured Buffs
           </Typography>
@@ -278,6 +309,26 @@ export const CompanionBuildPanel: React.FC<CompanionBuildPanelProps> = ({
                 sx={{ '& .MuiChip-label': { fontSize: '0.58rem' } }}
               />
             )}
+          </Box>
+        </Box>
+      )}
+
+      {hasScribing && (
+        <Box sx={{ mb: hasStats || hasCoaching ? 2 : 0 }}>
+          <Typography variant="body2" sx={SECTION_TITLE_SX}>
+            Captured Scribing
+          </Typography>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
+            {capturedScribing.map((row) => (
+              <Chip
+                key={row.id}
+                size="small"
+                variant="outlined"
+                label={row.label}
+                title={row.title}
+                sx={{ '& .MuiChip-label': { fontSize: '0.58rem' } }}
+              />
+            ))}
           </Box>
         </Box>
       )}

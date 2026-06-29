@@ -5,9 +5,10 @@ so they show on player cards — starting with **champion points**.
 
 ESO Logs records what happened in combat, but the encounter log never carries the full
 **champion point allocation**, your **final stats** (crit, penetration, recovery), your
-**attribute split**, or your **mundus/food**. This add-on reads them live from the
-official ESO API and writes them to SavedVariables; ESOTK matches each snapshot to your
-uploaded log (by character + server + timestamp) and overlays the build on the report.
+**attribute split**, your **mundus/food**, or the exact **scribing scripts** on your
+bars. This add-on reads them live from the official ESO API and writes them to
+SavedVariables; ESOTK matches each snapshot to your uploaded log by character, server and
+timestamp, then overlays the build on the report.
 
 > Read-only, ToS-safe (no automation), PC-only (console can't export SavedVariables).
 > See the full strategy in
@@ -22,6 +23,7 @@ uploaded log (by character + server + timestamp) and overlays the build on the r
 | **Attributes** — Magicka/Health/Stamina split                                                                                                        | Not logged.                                                                                   |
 | **Long-term effects** — raw buff IDs (mundus is permanent, food is long)                                                                             | ESOTK resolves mundus/food by ID (language-agnostic).                                         |
 | **Both action bars** — front/back ability IDs                                                                                                        | Lets ESOTK derive subclass skill lines and verify the matched actor.                          |
+| **Scribing scripts** — grimoire + active focus/signature/affix script IDs                                                                            | Captures Class Mastery and other scripts authoritatively instead of guessing from log events. |
 
 ## Install
 
@@ -38,8 +40,8 @@ uploaded log (by character + server + timestamp) and overlays the build on the r
 - `/esotk verbose` — toggle chat confirmations
 
 Then upload `Documents/Elder Scrolls Online/live/SavedVariables/ESOTKCompanion.lua`
-to ESOTK (or let it read the folder), and your champion points + build appear on the
-player card for the matching log.
+to ESOTK (or let it read the folder), and your champion points, stats, buffs and
+scribed skills appear on the player card for the matching log.
 
 ## SavedVariables shape (`ESOTKCompanionSV`)
 
@@ -63,6 +65,15 @@ ESOTKCompanionSV = { Default = { ["@account"] = { ["$AccountWide"] = {
     attrs  = { magicka=0, health=64, stamina=0 },
     effects = { { id=13984, name="Boon: The Lover", duration=0 }, … },
     bars   = { front = { [3]=, …, [8]= }, back = { … } },
+    scribing = {
+      { abilityId=217340, name="Shattering Knife", bar="front", slot=3,
+        scripts = {
+          [1] = { id=, slot=1, name=, icon= },
+          [2] = { id=, slot=2, name="Class Mastery", icon= },
+          [3] = { id=, slot=3, name=, icon= },
+        },
+      },
+    },
   } },
 } } } }
 ```
@@ -77,10 +88,8 @@ Verified against real add-on source / API references (not guessed):
 | `GetChampionSkillName(skillId)` — single arg                                                                                                                                                              | ✅ verified                        | DynamicCP `src/API.lua`         |
 | Slotted stars: `GetSlotBoundId(slot, HOTBAR_CATEGORY_CHAMPION)`, slots 1–12 (Craft 1-4 / Warfare 5-8 / Fitness 9-12)                                                                                      | ✅ verified                        | DynamicCP `OFFSETS`             |
 | `GetAttributeSpentPoints(attributeType)` → points                                                                                                                                                         | ✅ verified                        | eso-api dump                    |
-| `GetItemLinkSetInfo(link, equipped)` → hasSet,…,numEquipped,maxEquipped,setId · `GetItemLink(BAG_WORN, slot)`                                                                                             | ✅ verified                        | ESOUI wiki / forums             |
 | Mundus = buff-based via `GetUnitBuffInfo` ability id (no direct getter)                                                                                                                                   | ✅ verified                        | ESOUI                           |
-| Potion: `GetSlotItemLink(quickslot)`                                                                                                                                                                      | ✅ verified                        | ESOUI                           |
-| `GetUnitPower(unitTag, powerType)` → current,max,effectiveMax                                                                                                                                             | ✅ verified                        | UESP                            |
+| Scribing: `GetCraftedAbilityActiveScriptIds(craftedAbilityId)`, `GetCraftedAbilityScriptDisplayName(scriptId)`, `GetCraftedAbilityDisplayName(craftedAbilityId)`                                          | ✅ verified                        | local add-on source             |
 | **Discipline enumeration**: `GetNumChampionDisciplines()`, `GetChampionDisciplineId(index)`, `GetNumChampionDisciplineSkills(index)`, `GetChampionSkillId(index, index)`, `GetChampionDisciplineType(id)` | ✅ verified — **note index vs id** | esoui `championdatamanager.lua` |
 | `STAT_*` constants (`STAT_POWER` for weapon damage, spell dmg, crit, pen, regen, resist, max)                                                                                                             | ✅ verified (names)                | esoui API constants             |
 
