@@ -1115,6 +1115,34 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
 
                 {/* Boss Encounters (always visible) */}
                 {trialRun.encounters.map((encounter) => {
+                  const trashCount = encounter.preTrash.length + encounter.postTrash.length;
+                  const hasTrash = trashCount > 0;
+
+                  // Aggregate attempt summary chips — only meaningful with >1 attempt.
+                  const summary = summarizeEncounter(encounter);
+                  const metaChips: Array<{ label: string; color: string }> = [];
+                  if (summary.attempts > 1) {
+                    if (summary.kills > 1) {
+                      metaChips.push({
+                        label: `${summary.kills} kills`,
+                        color: getThemeColors.circleGreen,
+                      });
+                    }
+                    if (!summary.killed && summary.bestPercent != null) {
+                      metaChips.push({
+                        label: `Best ${Math.round(summary.bestPercent)}%`,
+                        color: getThemeColors.circleOrange,
+                      });
+                    }
+                    if (summary.resets > 0) {
+                      metaChips.push({
+                        label: `${summary.resets} reset${summary.resets > 1 ? 's' : ''}`,
+                        color: darkMode ? '#94a3b8' : '#64748b',
+                      });
+                    }
+                  }
+                  const hasMeta = hasTrash || metaChips.length > 0;
+
                   return (
                     <Box
                       key={encounter.id}
@@ -1129,16 +1157,28 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                       <Box
                         sx={{
                           display: 'flex',
-                          alignItems: 'center',
+                          flexWrap: { xs: 'wrap', sm: 'nowrap' },
+                          alignItems: { xs: 'flex-start', sm: 'center' },
                           justifyContent: 'space-between',
+                          columnGap: { xs: 1, sm: 2 },
+                          rowGap: 0.75,
                           mb: 1,
                         }}
                       >
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                        {/* Title: boss avatar + name + difficulty + attempt count */}
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 1.5,
+                            minWidth: 0,
+                            flex: { xs: '1 1 100%', sm: '1 1 auto' },
+                          }}
+                        >
                           <BossAvatar bossName={encounter.name} size={32} />
                           <Typography
                             variant="subtitle2"
-                            sx={{ color: 'text.primary', fontWeight: 'medium' }}
+                            sx={{ color: 'text.primary', fontWeight: 'medium', minWidth: 0 }}
                           >
                             {encounter.name}{' '}
                             {(() => {
@@ -1175,33 +1215,26 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                               ({encounter.bossFights.length})
                             </Box>
                           </Typography>
-                          {(() => {
-                            // Aggregate attempt summary — only meaningful with >1 attempt.
-                            const summary = summarizeEncounter(encounter);
-                            if (summary.attempts <= 1) return null;
-                            const chips: Array<{ label: string; color: string }> = [];
-                            if (summary.kills > 1) {
-                              chips.push({
-                                label: `${summary.kills} kills`,
-                                color: getThemeColors.circleGreen,
-                              });
-                            }
-                            if (!summary.killed && summary.bestPercent != null) {
-                              chips.push({
-                                label: `Best ${Math.round(summary.bestPercent)}%`,
-                                color: getThemeColors.circleOrange,
-                              });
-                            }
-                            if (summary.resets > 0) {
-                              chips.push({
-                                label: `${summary.resets} reset${summary.resets > 1 ? 's' : ''}`,
-                                color: darkMode ? '#94a3b8' : '#64748b',
-                              });
-                            }
-                            if (chips.length === 0) return null;
-                            return (
+                        </Box>
+
+                        {/* Meta: attempt chips + trash toggle. Drops to its own
+                            full-width, right-aligned row on mobile so a long boss
+                            name never collides with the chips or the trash switch. */}
+                        {hasMeta && (
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 1,
+                              flexShrink: 0,
+                              flexWrap: 'wrap',
+                              width: { xs: '100%', sm: 'auto' },
+                              justifyContent: 'flex-end',
+                            }}
+                          >
+                            {metaChips.length > 0 && (
                               <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
-                                {chips.map((chip) => (
+                                {metaChips.map((chip) => (
                                   <Chip
                                     key={chip.label}
                                     label={chip.label}
@@ -1217,41 +1250,41 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                                   />
                                 ))}
                               </Box>
-                            );
-                          })()}
-                        </Box>
-                        {(encounter.preTrash.length > 0 || encounter.postTrash.length > 0) && (
-                          <FormControlLabel
-                            control={
-                              <Switch
-                                checked={showTrashForEncounter.has(encounter.id)}
-                                onChange={(e) => {
-                                  e.stopPropagation();
-                                  toggleTrashForEncounter(encounter.id);
-                                }}
-                                size="small"
-                                slotProps={{
-                                  input: {
-                                    'aria-label': `Show ${encounter.preTrash.length + encounter.postTrash.length} trash fights for this encounter`,
-                                  },
-                                }}
-                                sx={{
-                                  '& .MuiSwitch-switchBase.Mui-checked': {
-                                    color: '#38bdf8',
-                                    '&:hover': {
-                                      backgroundColor: 'rgba(56, 189, 248, 0.08)',
-                                    },
-                                  },
-                                  '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-                                    backgroundColor: '#38bdf8',
-                                  },
-                                }}
+                            )}
+                            {hasTrash && (
+                              <FormControlLabel
+                                control={
+                                  <Switch
+                                    checked={showTrashForEncounter.has(encounter.id)}
+                                    onChange={(e) => {
+                                      e.stopPropagation();
+                                      toggleTrashForEncounter(encounter.id);
+                                    }}
+                                    size="small"
+                                    slotProps={{
+                                      input: {
+                                        'aria-label': `Show ${trashCount} trash fights for this encounter`,
+                                      },
+                                    }}
+                                    sx={{
+                                      '& .MuiSwitch-switchBase.Mui-checked': {
+                                        color: '#38bdf8',
+                                        '&:hover': {
+                                          backgroundColor: 'rgba(56, 189, 248, 0.08)',
+                                        },
+                                      },
+                                      '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                                        backgroundColor: '#38bdf8',
+                                      },
+                                    }}
+                                  />
+                                }
+                                label={`🗑️ ${trashCount}`}
+                                sx={{ ml: 0, mr: 0 }}
+                                onClick={(e) => e.stopPropagation()}
                               />
-                            }
-                            label={`🗑️ ${encounter.preTrash.length + encounter.postTrash.length}`}
-                            sx={{ ml: 2, mr: 0 }}
-                            onClick={(e) => e.stopPropagation()}
-                          />
+                            )}
+                          </Box>
                         )}
                       </Box>
 
