@@ -19,6 +19,7 @@ const MAX_BODY_BYTES = 64 * 1024;
 const MAX_PLAYERS = 100;
 const MAX_SCRIBED_SKILLS = 12;
 const MAX_CLASS_MASTERY_PICKS = 2;
+const MAX_CHAMPION_POINT_PASSIVES = 12;
 const MAX_ABILITY_ID = 1_000_000;
 
 type ReportEvidenceContext = Context<{ Bindings: Env }>;
@@ -34,16 +35,20 @@ interface KalpaPlayerBuildEvidence {
   championPoints?: number | null;
   className?: string | null;
   classMasteryPassives: number[];
+  championPointPassives?: number[];
+  food?: KalpaAbilityEvidence;
   scribedSkills?: KalpaScribedSkillEvidence[];
   evidence: string;
   confidence: string;
 }
 
-interface KalpaScribedSkillEvidence {
+interface KalpaAbilityEvidence {
   abilityId: number;
   name?: string | null;
   icon?: string | null;
 }
+
+type KalpaScribedSkillEvidence = KalpaAbilityEvidence;
 
 interface KalpaBuildEvidence {
   schemaVersion: number;
@@ -115,18 +120,24 @@ function sanitizeNumberArray(value: unknown, maxLength: number): number[] {
   return result;
 }
 
+function sanitizeAbilityEvidence(value: unknown): KalpaAbilityEvidence | undefined {
+  if (!isRecord(value)) return undefined;
+  const abilityId = boundedInteger(value.abilityId, 1, MAX_ABILITY_ID);
+  if (abilityId == null) return undefined;
+  return {
+    abilityId,
+    name: boundedString(value.name, 96),
+    icon: boundedString(value.icon, 64),
+  };
+}
+
 function sanitizeScribedSkills(value: unknown): KalpaScribedSkillEvidence[] {
   if (!Array.isArray(value)) return [];
   const result: KalpaScribedSkillEvidence[] = [];
   for (const entry of value) {
-    if (!isRecord(entry)) continue;
-    const abilityId = boundedInteger(entry.abilityId, 1, MAX_ABILITY_ID);
-    if (abilityId == null) continue;
-    result.push({
-      abilityId,
-      name: boundedString(entry.name, 96),
-      icon: boundedString(entry.icon, 64),
-    });
+    const skill = sanitizeAbilityEvidence(entry);
+    if (!skill) continue;
+    result.push(skill);
     if (result.length >= MAX_SCRIBED_SKILLS) break;
   }
   return result;
@@ -142,6 +153,11 @@ function validatePlayerEvidence(value: unknown): KalpaPlayerBuildEvidence | null
   if (!unitId) return null;
 
   const scribedSkills = sanitizeScribedSkills(value.scribedSkills);
+  const championPointPassives = sanitizeNumberArray(
+    value.championPointPassives,
+    MAX_CHAMPION_POINT_PASSIVES,
+  );
+  const food = sanitizeAbilityEvidence(value.food);
   const player: KalpaPlayerBuildEvidence = {
     unitId,
     characterName: boundedString(value.characterName, 96),
@@ -156,6 +172,8 @@ function validatePlayerEvidence(value: unknown): KalpaPlayerBuildEvidence | null
     evidence: boundedString(value.evidence, 48) ?? '',
     confidence: boundedString(value.confidence, 32) ?? '',
   };
+  if (championPointPassives.length > 0) player.championPointPassives = championPointPassives;
+  if (food) player.food = food;
   if (scribedSkills.length > 0) player.scribedSkills = scribedSkills;
   return player;
 }
