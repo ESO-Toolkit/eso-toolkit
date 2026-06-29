@@ -1055,18 +1055,18 @@ Every readiness check below was confirmed against real add-on source / API refer
 
 The ESOTK side is built and unit-tested (parser → matcher → view-model + coaching →
 `buildCompanionBuildsForReport` → `CompanionBuildPanel` → `PlayerCard.companionBuild`).
-The only remaining work is the report-page upload UI, and the wiring is paint-by-numbers
-against these **verified** store/types (confirmed by reading the code, not assumed):
+The report-page upload UI is now wired through `PlayersPanel` local state and
+`PlayersPanelView.companionBuildsByPlayer`, using these **verified** store/types
+(confirmed by reading the code, not assumed):
 
 1. **Ingest the file.** Reuse the existing Lua-import UX (Loadout Manager already does a
    `FileReader` `.lua` upload). Run the bytes through
    `parseESOTKCompanionSavedVariables(text)` → `CompanionParseResult` (`.all` snapshots).
 2. **Build `MatchableReport`** from report state:
    - `actors`: from report `masterData` actors — `ReportActorFragment` has
-     `{ id, name, displayName, anonymous }` (`src/graphql/gql/graphql.ts`). Map
+     `{ id, name, displayName, anonymous, server }` (`src/graphql/gql/graphql.ts`). Map
      `id`→actor id, `name`→character (the match key). `anonymous === true` ⇒ names are
-     hidden, so the matcher falls back to manual attach (already handled). There is **no
-     per-actor `server`** field — match on name; use report-level server only if needed.
+     hidden, so no automatic match is possible. Use `server` when ESO Logs exposes it.
    - `fights`: `selectReportFights` / `selectReportFightsForContext`
      (`src/store/report/reportSelectors.ts`) — each fight has `id`, `startTime`,
      `endTime` (ms offsets from report start).
@@ -1074,18 +1074,18 @@ against these **verified** store/types (confirmed by reading the code, not assum
      absolute UNIX ms).
 3. **Compute per-player props:**
    `buildCompanionBuildsForReport(result.all, matchableReport, { coaching: { assumedGroupPen } })`
-   → `Map<actorId, { championPoints, coaching, snapshot, fightId }>`.
+   → `Map<actorId, { championPoints, coaching, stats, effects, snapshot, fightId }>`.
 4. **Render:** players come from `selectPlayersByIdForContext` keyed by `player.id`
    (already imported in `PlayerCard.tsx`; cards are rendered via
    `PlayersPanel`/`PlayersPanelView`/`LazyPlayerCard`). Pass
-   `companionBuild={builds.get(player.id)}` to each `PlayerCard`. Absent ⇒ panel renders
+   `companionBuild={companionBuildsByPlayer[player.id]}` to each `PlayerCard`. Absent ⇒ panel renders
    nothing (no change to existing cards).
 
 **Notes:** `displayName` ↔ `snapshot.account` (optional cross-check). For _exact_
 effective penetration, later pass the boss's Major Breach/Crusher uptime from the log as
 `assumedGroupPen` with `groupPenIsExact: true` (§11.1.1); until then the standard-kit
-estimate is fine. Hold the parsed snapshots in local component state or a small slice —
-they're per-session, not persisted server-side.
+estimate is fine. Parsed snapshots are currently held in local component state; they're
+per-session, not persisted server-side.
 
 ---
 

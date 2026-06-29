@@ -2,6 +2,15 @@ import React from 'react';
 import { useSelector } from 'react-redux';
 
 import { useLogger } from '@/contexts/LoggerContext';
+import type { MatchableReport } from '@/features/loadout-manager/utils/esotkCompanionMatcher';
+import {
+  parseESOTKCompanionSavedVariables,
+  type CompanionSnapshot,
+} from '@/features/loadout-manager/utils/esotkCompanionParser';
+import {
+  buildCompanionBuildsForReport,
+  type CompanionBuildForPlayer,
+} from '@/features/loadout-manager/utils/esotkCompanionReportAdapter';
 import {
   SCRIBING_DETECTION_SCHEMA_VERSION,
   type CombatEventData,
@@ -42,6 +51,8 @@ import {
   hasPlayerEntries,
 } from '../../../store/player_data/playerDataFallback';
 import type { PlayerDetailsWithRole } from '../../../store/player_data/playerDataSlice';
+import { selectReportRegistryEntryForContext } from '../../../store/report/reportSelectors';
+import type { RootState } from '../../../store/storeWithHistory';
 import {
   KnownAbilities,
   MundusStones,
@@ -103,6 +114,52 @@ const formatScribingRecipeForDisplay = (
 
 // This panel now uses report actors from masterData
 
+type CompanionBuildRenderProps = Pick<
+  CompanionBuildForPlayer,
+  'championPoints' | 'coaching' | 'stats' | 'effects'
+>;
+
+interface CompanionUploadState {
+  fileName?: string;
+  snapshotCount: number;
+  error?: string;
+}
+
+function buildMatchableReport(
+  playersById: Record<string | number, PlayerDetailsWithRole>,
+  reportEntry: ReturnType<typeof selectReportRegistryEntryForContext>,
+): MatchableReport | null {
+  const data = reportEntry?.data;
+  if (!data?.startTime) return null;
+
+  const actors = Object.values(playersById)
+    .filter((player) => player.id !== undefined && player.name)
+    .map((player) => ({
+      id: player.id,
+      name: player.name,
+      server: player.server,
+    }));
+  if (actors.length === 0) return null;
+
+  const fights =
+    reportEntry?.fightIds
+      .map((fightId) => reportEntry.fightsById[fightId])
+      .filter((fight): fight is NonNullable<typeof fight> => Boolean(fight))
+      .map((fight) => ({
+        id: fight.id,
+        startTime: fight.startTime,
+        endTime: fight.endTime,
+        zoneId: fight.gameZone?.id,
+      })) ?? [];
+
+  return {
+    startTime: data.startTime,
+    endTime: data.endTime,
+    actors,
+    fights,
+  };
+}
+
 interface PlayersPanelProps {
   context?: ReportFightContextInput;
 }
@@ -116,6 +173,9 @@ export const PlayersPanel: React.FC<PlayersPanelProps> = ({ context: contextOver
   const fight = useFightForContext(resolvedContext);
   const reportId = resolvedContext.reportCode;
   const fightId = resolvedContext.fightId !== null ? String(resolvedContext.fightId) : null;
+  const reportEntry = useSelector((state: RootState) =>
+    selectReportRegistryEntryForContext(state, resolvedContext),
+  );
 
   // State for storing scribing recipe information
   const [scribingRecipes, setScribingRecipes] = React.useState<
@@ -135,6 +195,10 @@ export const PlayersPanel: React.FC<PlayersPanelProps> = ({ context: contextOver
       >
     >
   >({});
+  const [companionSnapshots, setCompanionSnapshots] = React.useState<CompanionSnapshot[]>([]);
+  const [companionUpload, setCompanionUpload] = React.useState<CompanionUploadState>({
+    snapshotCount: 0,
+  });
 
   // Use hooks to get data
   const { reportMasterData, isMasterDataLoading } = useReportMasterData();
@@ -192,6 +256,75 @@ export const PlayersPanel: React.FC<PlayersPanelProps> = ({ context: contextOver
     combatantInfoEvents,
     rolesByPlayerId,
   ]);
+
+  const companionReport = React.useMemo(
+    () => buildMatchableReport(playersById, reportEntry),
+    [playersById, reportEntry],
+  );
+
+  const companionBuildsByPlayer = React.useMemo<Record<string, CompanionBuildRenderProps>>(() => {
+    if (!companionReport || companionSnapshots.length === 0) return {};
+
+    const builds = buildCompanionBuildsForReport(companionSnapshots, companionReport, {
+      targetFightId: resolvedContext.fightId ?? undefined,
+    });
+
+    const byPlayer: Record<string, CompanionBuildRenderProps> = {};
+    builds.forEach((build, actorId) => {
+      byPlayer[String(actorId)] = {
+        championPoints: build.championPoints,
+        coaching: build.coaching,
+        stats: build.stats,
+        effects: build.effects,
+      };
+    });
+    return byPlayer;
+  }, [companionReport, companionSnapshots, resolvedContext.fightId]);
+
+  const handleCompanionFileSelected = React.useCallback(
+    async (file: File): Promise<void> => {
+      try {
+        const text = await file.text();
+        const parsed = parseESOTKCompanionSavedVariables(text);
+        if (!parsed || parsed.all.length === 0) {
+          setCompanionSnapshots([]);
+          setCompanionUpload({
+            fileName: file.name,
+            snapshotCount: 0,
+            error: 'No ESOTK Companion snapshots found',
+          });
+          return;
+        }
+
+        setCompanionSnapshots(parsed.all);
+        setCompanionUpload({
+          fileName: file.name,
+          snapshotCount: parsed.all.length,
+        });
+        logger.info('Loaded ESOTK Companion snapshots', {
+          fileName: file.name,
+          snapshotCount: parsed.all.length,
+        });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Failed to read companion file';
+        setCompanionSnapshots([]);
+        setCompanionUpload({
+          fileName: file.name,
+          snapshotCount: 0,
+          error: message,
+        });
+        logger.error(
+          'Failed to load ESOTK Companion snapshots',
+          error instanceof Error ? error : undefined,
+          {
+            fileName: file.name,
+            error: message,
+          },
+        );
+      }
+    },
+    [logger],
+  );
 
   const fightIdNumber = resolvedContext.fightId;
 
@@ -1292,6 +1425,12 @@ export const PlayersPanel: React.FC<PlayersPanelProps> = ({ context: contextOver
           barSwapByPlayer={barSwapByPlayer}
           potionResultsByPlayer={potionResultsByPlayer}
           rolesByPlayerId={rolesByPlayerId}
+          companionBuildsByPlayer={companionBuildsByPlayer}
+          companionUpload={{
+            ...companionUpload,
+            matchedCount: Object.keys(companionBuildsByPlayer).length,
+          }}
+          onCompanionFileSelected={handleCompanionFileSelected}
         />
       </div>
     </PlayerAvatarsProvider>
