@@ -75,8 +75,10 @@ import {
 } from '../../../utils/gearUtilities';
 import {
   classNameToEsoClass,
+  fetchKalpaBuildEvidenceForReport,
   findKalpaBuildEvidenceForPlayer,
   loadKalpaBuildEvidenceForReport,
+  type KalpaBuildEvidence,
   type KalpaPlayerBuildEvidence,
 } from '../../../utils/kalpaBuildEvidence';
 import {
@@ -190,10 +192,30 @@ export const PlayersPanel: React.FC<PlayersPanelProps> = ({ context: contextOver
     context: resolvedContext,
     includeFallback: false,
   });
-  const kalpaBuildEvidence = React.useMemo(
-    () => loadKalpaBuildEvidenceForReport(reportId),
-    [reportId],
-  );
+  const [kalpaBuildEvidence, setKalpaBuildEvidence] = React.useState<
+    KalpaBuildEvidence | undefined
+  >(() => loadKalpaBuildEvidenceForReport(reportId));
+  React.useEffect(() => {
+    let cancelled = false;
+    const localEvidence = loadKalpaBuildEvidenceForReport(reportId);
+    setKalpaBuildEvidence(localEvidence);
+
+    if (!reportId || localEvidence) {
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    void fetchKalpaBuildEvidenceForReport(reportId).then((evidence) => {
+      if (!cancelled && evidence) {
+        setKalpaBuildEvidence(evidence);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [reportId]);
   const { combatantInfoEvents, isCombatantInfoEventsLoading } = useCombatantInfoEvents({
     context: resolvedContext,
   });

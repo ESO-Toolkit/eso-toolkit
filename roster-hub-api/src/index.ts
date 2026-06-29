@@ -66,6 +66,7 @@ import {
 } from './db/queries';
 import { moderateImage, MAX_IMAGE_BYTES } from './image-moderation';
 import { handleGraphqlProxy } from './graphql-proxy';
+import { getReportBuildEvidence, putReportBuildEvidence } from './report-build-evidence';
 import type { Env, RecommendedAddonEntry, RecommendedAddons } from './types';
 
 const app = new Hono<{ Bindings: Env }>();
@@ -226,6 +227,9 @@ function getCacheTier(path: string): CacheTier | null {
   if (/^\/(rosters|packs)$/.test(path)) return { edgeTtl: 30, swr: 300 };
   if (/^\/(rosters|packs)\/[^/]+$/.test(path)) return { edgeTtl: 10, swr: 60 };
   if (/^\/rosters\/[^/]+\/comments$/.test(path)) return { edgeTtl: 15, swr: 60 };
+  if (/^\/reports\/[A-Za-z0-9]+\/build-evidence$/.test(path)) {
+    return { edgeTtl: 300, swr: 3600 };
+  }
   if (path === '/search-addons') return { edgeTtl: 60, swr: 300 };
   return null;
 }
@@ -271,6 +275,8 @@ app.use('*', async (c, next) => {
 // a server-side OAuth token so unauthenticated users can query public data.
 
 app.post('/graphql', handleGraphqlProxy);
+app.get('/reports/:reportCode/build-evidence', getReportBuildEvidence);
+app.put('/reports/:reportCode/build-evidence', putReportBuildEvidence);
 
 // ─── Health check ─────────────────────────────────────────────────────────────
 
@@ -1802,7 +1808,8 @@ app.get('/fetch-guide', async (c) => {
   }
   const bucket = fetchGuideRateCounts.get(ip);
   if (bucket && bucket.expires > now) {
-    if (bucket.count >= FETCH_GUIDE_RATE_LIMIT) return c.json({ error: 'Rate limit exceeded.' }, 429);
+    if (bucket.count >= FETCH_GUIDE_RATE_LIMIT)
+      return c.json({ error: 'Rate limit exceeded.' }, 429);
     bucket.count++;
   } else {
     fetchGuideRateCounts.set(ip, { count: 1, expires: now + 60_000 });

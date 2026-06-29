@@ -1,5 +1,7 @@
 export interface Env {
   DB: D1Database;
+  /** Gzipped report build-evidence sidecars, keyed by ESO Logs report code. */
+  REPORT_BUILD_EVIDENCE?: R2Bucket;
   AI: Ai;
   ALLOWED_ORIGINS: string;
   IMGBB_API_KEY: string;

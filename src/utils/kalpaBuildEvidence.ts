@@ -1,10 +1,12 @@
 import type { ESOClass } from '@/features/build-editor/types/build.types';
 import type { PlayerDetailsEntry } from '@/types/playerDetails';
 
+import { getRosterHubBaseUrl } from './envUtils';
 import { safeSessionStorageGet, safeSessionStorageSet } from './safeStorage';
 
 export const KALPA_BUILD_EVIDENCE_PARAM = 'kalpaBuildEvidence';
 export const KALPA_BUILD_EVIDENCE_SOURCE = 'kalpa-native-player-info';
+const KALPA_BUILD_EVIDENCE_FETCH_TIMEOUT_MS = 8_000;
 
 interface LocationLike {
   search: string;
@@ -22,10 +24,15 @@ export interface KalpaPlayerBuildEvidence {
   championPoints?: number | null;
   className?: string | null;
   classMasteryPassives: number[];
-  frontBarSkillIds: number[];
-  backBarSkillIds: number[];
+  scribedSkills?: KalpaScribedSkillEvidence[];
   evidence: string;
   confidence: string;
+}
+
+export interface KalpaScribedSkillEvidence {
+  abilityId: number;
+  name?: string | null;
+  icon?: string | null;
 }
 
 export interface KalpaBuildEvidence {
@@ -112,6 +119,39 @@ export function loadKalpaBuildEvidenceForReport(
       : undefined;
   } catch {
     return undefined;
+  }
+}
+
+export async function fetchKalpaBuildEvidenceForReport(
+  reportCode?: string | null,
+): Promise<KalpaBuildEvidence | undefined> {
+  if (!reportCode) return undefined;
+
+  const local = loadKalpaBuildEvidenceForReport(reportCode);
+  if (local) return local;
+
+  const controller = new AbortController();
+  const timer = window.setTimeout(() => controller.abort(), KALPA_BUILD_EVIDENCE_FETCH_TIMEOUT_MS);
+  try {
+    const res = await fetch(
+      `${getRosterHubBaseUrl()}/reports/${encodeURIComponent(reportCode)}/build-evidence`,
+      {
+        headers: { Accept: 'application/json' },
+        signal: controller.signal,
+      },
+    );
+    if (res.status === 404) return undefined;
+    if (!res.ok) return undefined;
+
+    const evidence = validateKalpaBuildEvidence(await res.json());
+    if (!evidence || !evidenceBelongsToReport(evidence, reportCode)) return undefined;
+
+    safeSessionStorageSet(storageKeyForReport(reportCode), JSON.stringify(evidence));
+    return evidence;
+  } catch {
+    return undefined;
+  } finally {
+    window.clearTimeout(timer);
   }
 }
 
@@ -210,8 +250,8 @@ function validateKalpaPlayerEvidence(value: unknown): KalpaPlayerBuildEvidence |
   if (!isRecord(value) || typeof value.unitId !== 'string') return undefined;
 
   const classMasteryPassives = sanitizeNumberArray(value.classMasteryPassives);
-
-  return {
+  const scribedSkills = sanitizeScribedSkills(value.scribedSkills);
+  const player: KalpaPlayerBuildEvidence = {
     unitId: value.unitId,
     characterName: typeof value.characterName === 'string' ? value.characterName : undefined,
     accountName: typeof value.accountName === 'string' ? value.accountName : undefined,
@@ -224,11 +264,26 @@ function validateKalpaPlayerEvidence(value: unknown): KalpaPlayerBuildEvidence |
       : undefined,
     className: typeof value.className === 'string' ? value.className : undefined,
     classMasteryPassives,
-    frontBarSkillIds: sanitizeNumberArray(value.frontBarSkillIds),
-    backBarSkillIds: sanitizeNumberArray(value.backBarSkillIds),
     evidence: typeof value.evidence === 'string' ? value.evidence : '',
     confidence: typeof value.confidence === 'string' ? value.confidence : '',
   };
+  if (scribedSkills.length > 0) player.scribedSkills = scribedSkills;
+  return player;
+}
+
+function sanitizeScribedSkills(value: unknown): KalpaScribedSkillEvidence[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((entry): KalpaScribedSkillEvidence | undefined => {
+      if (!isRecord(entry)) return undefined;
+      if (!Number.isInteger(entry.abilityId)) return undefined;
+      return {
+        abilityId: entry.abilityId as number,
+        name: typeof entry.name === 'string' ? entry.name : undefined,
+        icon: typeof entry.icon === 'string' ? entry.icon : undefined,
+      };
+    })
+    .filter((entry): entry is KalpaScribedSkillEvidence => entry != null);
 }
 
 function sanitizeNumberArray(value: unknown): number[] {

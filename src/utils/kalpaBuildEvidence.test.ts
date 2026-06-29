@@ -2,6 +2,7 @@ import type { PlayerDetailsEntry } from '@/types/playerDetails';
 
 import {
   decodeKalpaBuildEvidenceParam,
+  fetchKalpaBuildEvidenceForReport,
   findKalpaBuildEvidenceForPlayer,
   getKalpaEvidenceParamFromLocation,
   KALPA_BUILD_EVIDENCE_PARAM,
@@ -9,6 +10,10 @@ import {
   loadKalpaBuildEvidenceForReport,
   type KalpaBuildEvidence,
 } from './kalpaBuildEvidence';
+
+jest.mock('./envUtils', () => ({
+  getRosterHubBaseUrl: () => 'https://worker.example.test',
+}));
 
 function encodeEvidence(evidence: KalpaBuildEvidence): string {
   const binary = encodeURIComponent(JSON.stringify(evidence)).replace(
@@ -52,8 +57,9 @@ const evidence: KalpaBuildEvidence = {
       championPoints: 1700,
       className: 'Sorcerer',
       classMasteryPassives: [263870, 263871],
-      frontBarSkillIds: [38901, 29489],
-      backBarSkillIds: [23231, 23234],
+      scribedSkills: [
+        { abilityId: 220543, name: 'Dazing Trample', icon: 'ability_grimoire_assault' },
+      ],
       evidence: 'raw-player-info',
       confidence: 'exact',
     },
@@ -61,8 +67,16 @@ const evidence: KalpaBuildEvidence = {
 };
 
 describe('kalpaBuildEvidence', () => {
+  const originalFetch = globalThis.fetch;
+
   beforeEach(() => {
     sessionStorage.clear();
+    globalThis.fetch = originalFetch;
+  });
+
+  afterEach(() => {
+    globalThis.fetch = originalFetch;
+    jest.restoreAllMocks();
   });
 
   it('reads the evidence param from hash-route queries and decodes it', () => {
@@ -126,5 +140,59 @@ describe('kalpaBuildEvidence', () => {
         player({ guid: 0, name: 'Unknown', displayName: '@tester' }),
       ),
     ).toBeUndefined();
+  });
+
+  it('preserves scribing sidecar facts without needing normal bars or gear', () => {
+    const scribingEvidence: KalpaBuildEvidence = {
+      ...evidence,
+      players: [
+        {
+          ...evidence.players[0],
+          scribedSkills: [
+            { abilityId: 217784, name: 'Leashing Soul', icon: 'ability_grimoire_soulmagic1' },
+          ],
+        },
+      ],
+    };
+
+    expect(decodeKalpaBuildEvidenceParam(encodeEvidence(scribingEvidence))).toEqual(
+      scribingEvidence,
+    );
+  });
+
+  it('fetches persisted report evidence from the Worker and caches it', async () => {
+    const fetchMock = jest.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => evidence,
+    });
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+    await expect(fetchKalpaBuildEvidenceForReport('REPORT123')).resolves.toEqual(evidence);
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://worker.example.test/reports/REPORT123/build-evidence',
+      expect.objectContaining({
+        headers: { Accept: 'application/json' },
+      }),
+    );
+    expect(loadKalpaBuildEvidenceForReport('REPORT123', { search: '', hash: '' })).toEqual(
+      evidence,
+    );
+  });
+
+  it('ignores missing or mismatched persisted report evidence', async () => {
+    globalThis.fetch = jest.fn().mockResolvedValueOnce({
+      ok: false,
+      status: 404,
+      json: async () => ({ error: 'Not found' }),
+    }) as unknown as typeof fetch;
+    await expect(fetchKalpaBuildEvidenceForReport('REPORT123')).resolves.toBeUndefined();
+
+    globalThis.fetch = jest.fn().mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: async () => ({ ...evidence, reportCode: 'OTHER' }),
+    }) as unknown as typeof fetch;
+    await expect(fetchKalpaBuildEvidenceForReport('REPORT123')).resolves.toBeUndefined();
   });
 });
