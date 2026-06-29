@@ -16,6 +16,8 @@ ESOTKCompanionSV =
                 {
                     [1] =
                     {
+                        ["schemaVersion"] = 2,
+                        ["season"] = "U51",
                         ["ts"] = 1749384000,
                         ["char"] = "Casts-A-Lot",
                         ["account"] = "@brayden",
@@ -100,6 +102,7 @@ describe('parseESOTKCompanionSavedVariables', () => {
   it('detects the companion format', () => {
     expect(isESOTKCompanionFormat(SAMPLE)).toBe(true);
     expect(isESOTKCompanionFormat('SomethingElseSV = {}')).toBe(false);
+    expect(isESOTKCompanionFormat('ESOTKCompanionSV = {}')).toBe(false);
   });
 
   it('returns null for non-companion files', () => {
@@ -146,6 +149,8 @@ describe('parseESOTKCompanionSavedVariables', () => {
     expect(snap.char).toBe('Casts-A-Lot');
     expect(snap.server).toBe('NA');
     expect(snap.ts).toBe(1749384000);
+    expect(snap.schemaVersion).toBe(2);
+    expect(snap.season).toBe('U51');
     expect(snap.classId).toBe(6);
     expect(snap.className).toBe('Arcanist');
     expect(snap.raceId).toBe(4);
@@ -153,6 +158,13 @@ describe('parseESOTKCompanionSavedVariables', () => {
     expect(snap.effects).toEqual([{ id: 13984, name: 'Boon: The Lover', duration: 0 }]);
     expect(snap.bars!.front).toEqual({ 3: 28800, 4: 38901 });
     expect(snap.bars!.back).toEqual({ 3: 46324 });
+  });
+
+  it('falls back to bucket metadata when a snapshot omits account/schema/season', () => {
+    const snap = parseESOTKCompanionSavedVariables(SAMPLE)!.all[1];
+    expect(snap.account).toBe('@brayden');
+    expect(snap.schemaVersion).toBe(1);
+    expect(snap.season).toBe('U50');
   });
 
   it('drops snapshots missing the match keys (ts / char)', () => {

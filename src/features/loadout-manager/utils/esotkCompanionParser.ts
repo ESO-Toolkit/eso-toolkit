@@ -47,7 +47,7 @@ export interface CompanionStats {
   weaponDamage?: number;
   spellCrit?: number;
   weaponCrit?: number;
-  /** Crit damage as a percent bonus (base 50). Optional — derived, no single STAT_ constant. */
+  /** Crit damage as a percent bonus (base 50), when the ESO API exposes it. */
   critDamage?: number;
   spellPen?: number;
   physicalPen?: number;
@@ -76,6 +76,8 @@ export interface CompanionEffect {
 
 /** One captured build snapshot, taken on combat end or on demand. */
 export interface CompanionSnapshot {
+  schemaVersion?: number;
+  season?: string;
   /** UNIX seconds (server/UTC) from GetTimeStamp() — primary match key vs report time. */
   ts: number;
   /** Character name — match key vs report masterData actors. */
@@ -223,7 +225,13 @@ function normalizeEffects(v: LuaValue | undefined): CompanionEffect[] | undefine
   return out.length > 0 ? out : undefined;
 }
 
-function normalizeSnapshot(v: LuaValue): CompanionSnapshot | null {
+interface SnapshotDefaults {
+  account?: string;
+  schemaVersion?: number;
+  season?: string;
+}
+
+function normalizeSnapshot(v: LuaValue, defaults: SnapshotDefaults = {}): CompanionSnapshot | null {
   if (!isRecord(v)) return null;
   const ts = asNumber(v.ts);
   const char = asString(v.char);
@@ -245,9 +253,11 @@ function normalizeSnapshot(v: LuaValue): CompanionSnapshot | null {
     : undefined;
 
   return {
+    schemaVersion: asNumber(v.schemaVersion) ?? defaults.schemaVersion,
+    season: asString(v.season) ?? defaults.season,
     ts,
     char,
-    account: asString(v.account),
+    account: asString(v.account) ?? defaults.account,
     server: asString(v.server),
     zoneId: asNumber(v.zoneId),
     classId: asNumber(v.classId),
@@ -268,7 +278,7 @@ function normalizeSnapshot(v: LuaValue): CompanionSnapshot | null {
 
 /** Quick check whether a Lua file looks like an ESOTK Companion save. */
 export function isESOTKCompanionFormat(luaContent: string): boolean {
-  return luaContent.includes(SV_TABLE_NAME);
+  return luaContent.includes(SV_TABLE_NAME) && luaContent.includes('Default');
 }
 
 /**
@@ -321,7 +331,11 @@ export function parseESOTKCompanionSavedVariables(luaContent: string): Companion
       if (s) season = s;
 
       for (const snapRaw of luaArray(bucket.snapshots)) {
-        const snap = normalizeSnapshot(snapRaw);
+        const snap = normalizeSnapshot(snapRaw, {
+          account: accountKey,
+          schemaVersion: sv,
+          season: s,
+        });
         if (snap) accountSnapshots.push(snap);
       }
     }

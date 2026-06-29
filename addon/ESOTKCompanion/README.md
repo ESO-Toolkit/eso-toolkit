@@ -49,6 +49,7 @@ Account-wide via `ZO_SavedVars`, a ring buffer of per-fight snapshots:
 ESOTKCompanionSV = { Default = { ["@account"] = { ["$AccountWide"] = {
   schemaVersion = 1, season = "U50", enabled = true,
   snapshots = { [1] = {
+    schemaVersion = 1, season = "U50",
     ts = 1749384000, char = "Charname", account = "@account", server = "NA",
     zoneId = 1196, classId = 6, className = "Arcanist",
     raceId = 4, raceName = "Khajiit", level = 50, cpRank = 3600,
@@ -81,7 +82,7 @@ Verified against real add-on source / API references (not guessed):
 | Potion: `GetSlotItemLink(quickslot)`                                                                                                                                                                      | ✅ verified                        | ESOUI                           |
 | `GetUnitPower(unitTag, powerType)` → current,max,effectiveMax                                                                                                                                             | ✅ verified                        | UESP                            |
 | **Discipline enumeration**: `GetNumChampionDisciplines()`, `GetChampionDisciplineId(index)`, `GetNumChampionDisciplineSkills(index)`, `GetChampionSkillId(index, index)`, `GetChampionDisciplineType(id)` | ✅ verified — **note index vs id** | esoui `championdatamanager.lua` |
-| `STAT_*` constants (spell/weapon dmg, crit, pen, regen, resist, max)                                                                                                                                      | ✅ verified (names)                | esoui API constants             |
+| `STAT_*` constants (`STAT_POWER` for weapon damage, spell dmg, crit, pen, regen, resist, max)                                                                                                             | ✅ verified (names)                | esoui API constants             |
 
 > **Gotcha confirmed from source:** `GetNumChampionDisciplineSkills` and
 > `GetChampionSkillId` take the discipline **index**, while `GetChampionDisciplineType`

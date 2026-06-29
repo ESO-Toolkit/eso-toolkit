@@ -68,6 +68,12 @@ describe('computeStatCoaching — crit', () => {
     expect(cc.detail).toContain('100%');
   });
 
+  it('caps displayed crit chance at 100%', () => {
+    const cc = computeStatCoaching({ weaponCrit: 30000 }).find((i) => i.id === 'critChance')!;
+    expect(cc.value).toBe(100);
+    expect(cc.detail).toContain('100%');
+  });
+
   it('returns nothing for undefined stats', () => {
     expect(computeStatCoaching(undefined)).toEqual([]);
   });

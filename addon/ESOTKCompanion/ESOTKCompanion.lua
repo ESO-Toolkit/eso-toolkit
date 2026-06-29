@@ -54,13 +54,18 @@ local function call(fnName, ...)
   return r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12
 end
 
--- Read a GetPlayerStat value only if the STAT_ constant is defined this API version.
-local function stat(constName)
-  local c = _G[constName]
-  if c == nil then return nil end
+-- Read a GetPlayerStat value only if one of the STAT_ constants exists this API version.
+local function stat(...)
   local opt = _G["BONUS_OPTION_DEFAULT"] or 0
-  local v = call("GetPlayerStat", c, opt)
-  return v
+  for i = 1, select("#", ...) do
+    local constName = select(i, ...)
+    local c = _G[constName]
+    if c ~= nil then
+      local v = call("GetPlayerStat", c, opt)
+      if v ~= nil then return v end
+    end
+  end
+  return nil
 end
 
 -- ----------------------------------------------------------------------------
@@ -122,8 +127,8 @@ local function captureStats()
     maxMagicka      = stat("STAT_MAGICKA_MAX"),
     maxHealth       = stat("STAT_HEALTH_MAX"),
     maxStamina      = stat("STAT_STAMINA_MAX"),
-    spellDamage     = stat("STAT_SPELL_POWER"),
-    weaponDamage    = stat("STAT_WEAPON_POWER"),
+    spellDamage     = stat("STAT_SPELL_POWER", "STAT_WEAPON_AND_SPELL_DAMAGE"),
+    weaponDamage    = stat("STAT_POWER", "STAT_WEAPON_POWER", "STAT_WEAPON_AND_SPELL_DAMAGE"),
     spellCrit       = stat("STAT_SPELL_CRITICAL"),
     weaponCrit      = stat("STAT_CRITICAL_STRIKE"),
     critDamage      = stat("STAT_CRITICAL_DAMAGE"),
@@ -190,7 +195,9 @@ end
 local function tryCapture(label, fn)
   local ok, result = pcall(fn)
   if ok then return result end
-  d("[ESOTK] capture '" .. label .. "' failed: " .. tostring(result))
+  if SV and SV.verbose and type(d) == "function" then
+    d("[ESOTK] capture '" .. label .. "' failed: " .. tostring(result))
+  end
   return nil
 end
 
@@ -200,6 +207,8 @@ local function Snapshot(reason)
   local zoneIndex = call("GetUnitZoneIndex", "player")
 
   local snap = {
+    schemaVersion = ADDON.schemaVersion,
+    season    = ADDON.season,
     -- match keys (see ESOTK matcher): character + server + UTC timestamp
     ts        = call("GetTimeStamp"),               -- UNIX seconds, server/UTC
     char      = call("GetUnitName", "player"),

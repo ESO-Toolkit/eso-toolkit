@@ -50,7 +50,7 @@ export interface CoachingOptions {
 }
 
 function critChancePercent(rating: number): number {
-  return Math.round((rating / CRIT_RATING_FOR_100_PERCENT) * 1000) / 10; // one decimal
+  return Math.min(100, Math.round((rating / CRIT_RATING_FOR_100_PERCENT) * 1000) / 10); // one decimal
 }
 
 function penetrationInsight(stats: CompanionStats, opts: CoachingOptions): CoachingInsight | null {

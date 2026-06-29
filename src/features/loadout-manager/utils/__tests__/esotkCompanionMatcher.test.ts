@@ -19,8 +19,8 @@ const report: MatchableReport = {
     { id: 2, name: 'Tanky-Mctankface', server: 'NA' },
   ],
   fights: [
-    { id: 'f1', startTime: 0, endTime: 5 * 60 * 1000 },
-    { id: 'f2', startTime: 30 * 60 * 1000, endTime: 35 * 60 * 1000 },
+    { id: 'f1', startTime: 0, endTime: 5 * 60 * 1000, zoneId: 1196 },
+    { id: 'f2', startTime: 30 * 60 * 1000, endTime: 35 * 60 * 1000, zoneId: 1196 },
   ],
 };
 
@@ -84,6 +84,22 @@ describe('matchCompanionSnapshots', () => {
 
     expect(matches.get(1)?.snapshot).toBe(secondFight);
     expect(matches.get(1)?.fightId).toBe('f2');
+  });
+
+  it('rejects snapshots whose zone disagrees with the target fight', () => {
+    const s = snap({
+      ts: REPORT_START_S + 60,
+      char: 'Casts-A-Lot',
+      server: 'NA',
+      zoneId: 9999,
+    });
+
+    const { matches, unmatched } = matchCompanionSnapshots([s], report, {
+      targetFightId: 'f1',
+    });
+
+    expect(matches.has(1)).toBe(false);
+    expect(unmatched).toContain(s);
   });
 
   it('rejects snapshots outside the report window (beyond slop)', () => {

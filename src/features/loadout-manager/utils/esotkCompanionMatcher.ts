@@ -30,6 +30,8 @@ export interface MatchableFight {
   startTime: number;
   /** ms offset from report start. */
   endTime: number;
+  /** Optional zone id for disambiguating same-character snapshots near the same time. */
+  zoneId?: number;
 }
 
 /** Minimal report shape required to match snapshots. */
@@ -81,6 +83,12 @@ function sameId(a: MatchableFight['id'], b: MatchableFight['id']): boolean {
   return String(a) === String(b);
 }
 
+function zoneMatches(snapshot: CompanionSnapshot, fight: MatchableFight): boolean {
+  return (
+    snapshot.zoneId === undefined || fight.zoneId === undefined || snapshot.zoneId === fight.zoneId
+  );
+}
+
 /** Snapshot ts is UNIX seconds; report times are UNIX ms. */
 function snapshotMs(snapshot: CompanionSnapshot): number {
   return snapshot.ts * 1000;
@@ -100,11 +108,13 @@ function findNearestFightCandidate(
   tsMs: number,
   reportStart: number,
   fights: MatchableFight[] | undefined,
+  snapshot: CompanionSnapshot,
 ): { fight: MatchableFight; distanceMs: number } | undefined {
   if (!fights || fights.length === 0) return undefined;
   let best: { fight: MatchableFight; distanceMs: number } | undefined;
   let bestDist = Number.POSITIVE_INFINITY;
   for (const fight of fights) {
+    if (!zoneMatches(snapshot, fight)) continue;
     const start = reportStart + fight.startTime;
     const end = reportStart + fight.endTime;
     const dist = distanceToWindow(tsMs, start, end);
@@ -119,6 +129,7 @@ function findNearestFightCandidate(
 function candidateDistance(
   tsMs: number,
   report: MatchableReport,
+  snapshot: CompanionSnapshot,
   opts: MatchCompanionSnapshotsOptions,
 ): { fightId?: MatchableFight['id']; distanceMs: number } | null {
   const reportStart = report.startTime;
@@ -128,6 +139,7 @@ function candidateDistance(
   if (targetFightId !== undefined) {
     const fight = report.fights?.find((f) => sameId(f.id, targetFightId));
     if (!fight) return null;
+    if (!zoneMatches(snapshot, fight)) return null;
 
     const start = reportStart + fight.startTime;
     const end = reportStart + fight.endTime;
@@ -137,9 +149,13 @@ function candidateDistance(
 
   if (!withinWindow(tsMs, reportStart, reportEnd)) return null;
 
-  const fightCandidate = findNearestFightCandidate(tsMs, reportStart, report.fights);
+  const fightCandidate = findNearestFightCandidate(tsMs, reportStart, report.fights, snapshot);
   if (fightCandidate) {
     return { fightId: fightCandidate.fight.id, distanceMs: fightCandidate.distanceMs };
+  }
+
+  if (snapshot.zoneId !== undefined && report.fights?.some((fight) => fight.zoneId !== undefined)) {
+    return null;
   }
 
   return { distanceMs: distanceToWindow(tsMs, reportStart, reportEnd) };
@@ -171,7 +187,7 @@ export function matchCompanionSnapshots(
       if (actorServer && snapshotServer && actorServer !== snapshotServer) continue;
 
       const tsMs = snapshotMs(snapshot);
-      const candidate = candidateDistance(tsMs, report, opts);
+      const candidate = candidateDistance(tsMs, report, snapshot, opts);
       if (!candidate) continue;
 
       if (

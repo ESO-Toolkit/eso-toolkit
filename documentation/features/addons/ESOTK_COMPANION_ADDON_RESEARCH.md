@@ -727,6 +727,7 @@ ESOTKCompanionSV = { ["Default"] = { ["@account"] = { ["$AccountWide"] = {
   schemaVersion = 1,
   season        = "U50",                 -- per-season/patch tag (§17)
   snapshots = { [1] = {
+    schemaVersion = 1, season = "U50",
     ts      = 1749384000,                -- GetTimeStamp() — UTC match key (§15)
     char    = "Charname", server = "NA", -- match key vs masterData.actors
     zoneId  = 1196, zone = "Crimson Veldt",
@@ -1029,17 +1030,17 @@ from local data.
 Every readiness check below was confirmed against real add-on source / API references
 (see Sources), so the add-on reads them from the player's _own_ client with no inspection:
 
-| Requirement                      | Confirmed read                                                                                                                                             | Source                          |
-| -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------- |
-| **Champion points** (enumerate)  | `GetNumChampionDisciplines()`, `GetChampionDisciplineId(index)`, `GetNumChampionDisciplineSkills(index)`, `GetChampionSkillId(index, index)`               | esoui `championdatamanager.lua` |
-| **Champion points** (allocation) | `GetNumPointsSpentOnChampionSkill(skillId)` — single arg                                                                                                   | DynamicCP `src/API.lua`         |
-| **Champion points** (slotted)    | `GetSlotBoundId(slot, HOTBAR_CATEGORY_CHAMPION)`, slots 1–12                                                                                               | DynamicCP `OFFSETS`             |
-| **Gear set**                     | `GetItemLink(BAG_WORN, slot)` → `GetItemLinkSetInfo(link, true)` → `setId`, `numEquipped`                                                                  | ESOUI                           |
-| **Food**                         | active buff via `GetUnitBuffInfo("player", i)` ability id                                                                                                  | ESOUI                           |
-| **Mundus**                       | active buff id (no direct getter — match a known mundus boon id list)                                                                                      | ESOUI                           |
-| **Potion**                       | `GetSlotItemLink(quickslotIndex)`                                                                                                                          | ESOUI                           |
-| **Attributes**                   | `GetAttributeSpentPoints(attributeType)` → points                                                                                                          | eso-api dump                    |
-| **Self penetration / crit**      | `GetPlayerStat(STAT_*)` — `STAT_SPELL_POWER/STAT_WEAPON_POWER/STAT_CRITICAL_STRIKE/STAT_SPELL_CRITICAL/STAT_PHYSICAL_PENETRATION/STAT_SPELL_PENETRATION/…` | esoui API constants             |
+| Requirement                      | Confirmed read                                                                                                                                      | Source                          |
+| -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------- |
+| **Champion points** (enumerate)  | `GetNumChampionDisciplines()`, `GetChampionDisciplineId(index)`, `GetNumChampionDisciplineSkills(index)`, `GetChampionSkillId(index, index)`        | esoui `championdatamanager.lua` |
+| **Champion points** (allocation) | `GetNumPointsSpentOnChampionSkill(skillId)` — single arg                                                                                            | DynamicCP `src/API.lua`         |
+| **Champion points** (slotted)    | `GetSlotBoundId(slot, HOTBAR_CATEGORY_CHAMPION)`, slots 1–12                                                                                        | DynamicCP `OFFSETS`             |
+| **Gear set**                     | `GetItemLink(BAG_WORN, slot)` → `GetItemLinkSetInfo(link, true)` → `setId`, `numEquipped`                                                           | ESOUI                           |
+| **Food**                         | active buff via `GetUnitBuffInfo("player", i)` ability id                                                                                           | ESOUI                           |
+| **Mundus**                       | active buff id (no direct getter — match a known mundus boon id list)                                                                               | ESOUI                           |
+| **Potion**                       | `GetSlotItemLink(quickslotIndex)`                                                                                                                   | ESOUI                           |
+| **Attributes**                   | `GetAttributeSpentPoints(attributeType)` → points                                                                                                   | eso-api dump                    |
+| **Self penetration / crit**      | `GetPlayerStat(STAT_*)` — `STAT_SPELL_POWER/STAT_POWER/STAT_CRITICAL_STRIKE/STAT_SPELL_CRITICAL/STAT_PHYSICAL_PENETRATION/STAT_SPELL_PENETRATION/…` | esoui API constants             |
 
 > **Index-vs-id gotcha (confirmed from ZOS source).** `GetNumChampionDisciplineSkills`
 > and `GetChampionSkillId` take the discipline **index**; `GetChampionDisciplineType`
