@@ -116,6 +116,23 @@ export const StatChipIcon: React.FC<StatChipIconProps> = ({
           </g>
         );
       // ── Mundus: standing stone with glow ──────────────────────
+      case 'race':
+        return (
+          <g style={strokeSx}>
+            <circle cx="12" cy="7" r="3.3" />
+            <path d="M5.5 19 C6.5 15 8.7 13 12 13 C15.3 13 17.5 15 18.5 19" />
+            <path d="M8.2 16.5 L15.8 16.5" />
+            <circle cx="12" cy="7" r="0.9" style={fillSx} />
+          </g>
+        );
+      case 'cpLevel':
+        return (
+          <g style={strokeSx}>
+            <path d="M12 3 L14.4 8.1 L20 8.8 L15.9 12.8 L16.9 18.5 L12 15.7 L7.1 18.5 L8.1 12.8 L4 8.8 L9.6 8.1 Z" />
+            <path d="M9.2 21 L14.8 21" />
+            <circle cx="12" cy="11.5" r="1" style={fillSx} />
+          </g>
+        );
       case 'mundus':
         return (
           <g style={strokeSx}>

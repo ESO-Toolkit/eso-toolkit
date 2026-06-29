@@ -5,6 +5,8 @@ import {
   fetchKalpaBuildEvidenceForReport,
   findKalpaBuildEvidenceForPlayer,
   getKalpaEvidenceParamFromLocation,
+  kalpaRaceIdToBuildRace,
+  kalpaRaceIdToLabel,
   KALPA_BUILD_EVIDENCE_PARAM,
   KALPA_BUILD_EVIDENCE_SOURCE,
   loadKalpaBuildEvidenceForReport,
@@ -57,6 +59,12 @@ const evidence: KalpaBuildEvidence = {
       championPoints: 1700,
       className: 'Sorcerer',
       classMasteryPassives: [263870, 263871],
+      championPointPassives: [142210, 142079],
+      food: {
+        abilityId: 68411,
+        name: 'Increase All Primary Stats',
+        icon: 'store_tricolor_food_01',
+      },
       scribedSkills: [
         { abilityId: 220543, name: 'Dazing Trample', icon: 'ability_grimoire_assault' },
       ],
@@ -158,6 +166,13 @@ describe('kalpaBuildEvidence', () => {
     expect(decodeKalpaBuildEvidenceParam(encodeEvidence(scribingEvidence))).toEqual(
       scribingEvidence,
     );
+  });
+
+  it('maps native race ids to build editor ids and labels', () => {
+    expect(kalpaRaceIdToBuildRace(9)).toBe('khajiit');
+    expect(kalpaRaceIdToLabel(9)).toBe('Khajiit');
+    expect(kalpaRaceIdToBuildRace(999)).toBeUndefined();
+    expect(kalpaRaceIdToLabel(null)).toBeUndefined();
   });
 
   it('fetches persisted report evidence from the Worker and caches it', async () => {

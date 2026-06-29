@@ -15,6 +15,8 @@ export const STAT_CHIP_IDS = [
   'totalCritDamage',
   'critDps',
   // Existing stats
+  'race',
+  'cpLevel',
   'mundus',
   'food',
   'potion',
@@ -77,6 +79,16 @@ export const STAT_CHIP_META: Record<StatChipId, StatChipMeta> = {
     tooltip: 'Critical damage per second',
     roleFilter: ['dps'],
   },
+  race: {
+    id: 'race',
+    label: 'Race',
+    tooltip: 'Character race from Kalpa native log evidence',
+  },
+  cpLevel: {
+    id: 'cpLevel',
+    label: 'CP Level',
+    tooltip: 'Champion Point level from Kalpa native log evidence',
+  },
   mundus: {
     id: 'mundus',
     label: 'Mundus',
@@ -135,6 +147,8 @@ const CHIP_CATEGORY: Record<StatChipId, ChipCategory> = {
   totalDamage: 'damage',
   totalCritDamage: 'damage',
   critDps: 'damage',
+  race: 'neutral',
+  cpLevel: 'neutral',
   mundus: 'neutral',
   food: 'neutral',
   potion: 'neutral',
@@ -170,6 +184,8 @@ export function formatStatValue(value: number): string {
 export const DEFAULT_VISIBLE_CHIPS: StatChipId[] = [
   'dps',
   'critChance',
+  'race',
+  'cpLevel',
   'mundus',
   'food',
   'potion',

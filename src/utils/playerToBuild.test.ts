@@ -131,4 +131,28 @@ describe('playerToBuild Class Mastery extraction', () => {
     expect(build.esoClass).toBe('sorcerer');
     expect(build.classMasteryPassives).toEqual([]);
   });
+
+  it('carries exact Kalpa race and food evidence into extracted builds', () => {
+    const build = playerToBuild({
+      playerName: 'Arc Spark',
+      role: 'dps',
+      gear: [],
+      talents: [...emptySkillBars()],
+      mundusBuffs: [],
+      championPoints: [],
+      classAnalysis: sorcererClassAnalysis,
+      kalpaBuildEvidence: {
+        unitId: '1',
+        className: 'Sorcerer',
+        raceId: 9,
+        classMasteryPassives: [],
+        food: { abilityId: 68411, name: 'Increase All Primary Stats' },
+        evidence: 'raw-player-info',
+        confidence: 'exact',
+      },
+    });
+
+    expect(build.races).toEqual(['khajiit']);
+    expect(build.setups[0].consumables.food).toEqual({ name: 'Increase All Primary Stats' });
+  });
 });

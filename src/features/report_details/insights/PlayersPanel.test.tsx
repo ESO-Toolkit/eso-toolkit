@@ -7,7 +7,7 @@ import {
   KnownAbilities,
 } from '../../../types/abilities';
 
-import { classAnalysisFromKalpaEvidence } from './PlayersPanel';
+import { buildChampionPointEntry, classAnalysisFromKalpaEvidence } from './PlayersPanel';
 
 describe('Champion Points Constants', () => {
   it('should have the correct champion point ability IDs', () => {
@@ -36,6 +36,15 @@ describe('Champion Points Constants', () => {
 
     // No overlap between blue and green
     expect(blueIds.some((id) => GREEN_CHAMPION_POINTS.has(id))).toBe(false);
+  });
+
+  it('builds readable CP entries for Kalpa-only champion point ids', () => {
+    expect(buildChampionPointEntry(KnownAbilities.GILDED_FINGERS, {})).toEqual({
+      id: KnownAbilities.GILDED_FINGERS,
+      name: 'Gilded Fingers',
+      color: 'green',
+    });
+    expect(buildChampionPointEntry(999999, {})).toBeUndefined();
   });
 });
 

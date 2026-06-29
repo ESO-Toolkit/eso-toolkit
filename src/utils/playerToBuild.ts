@@ -48,7 +48,11 @@ import {
   resolveTraitId,
   resolveWeaponItemId,
 } from './combatLogGearMapping';
-import { classNameToEsoClass, type KalpaPlayerBuildEvidence } from './kalpaBuildEvidence';
+import {
+  classNameToEsoClass,
+  kalpaRaceIdToBuildRace,
+  type KalpaPlayerBuildEvidence,
+} from './kalpaBuildEvidence';
 import type { PotionType } from './potionDetectionUtils';
 
 // ─── Gear Slot Mapping ──────────────────────────────────────────────────────
@@ -486,6 +490,17 @@ function resolveClassMasteryPassives(
   };
 }
 
+function resolveFoodFromKalpaEvidence(
+  kalpaBuildEvidence?: KalpaPlayerBuildEvidence,
+): { id?: number; name?: string } | undefined {
+  const food = kalpaBuildEvidence?.food;
+  if (!food?.abilityId) return undefined;
+  return {
+    id: food.abilityId,
+    name: food.name ?? `Food (${food.abilityId})`,
+  };
+}
+
 /**
  * Converts combat log player data into a Build suitable for the Build Editor.
  * Extracts gear (with slot mapping), skills, passives, mundus, CP, and class.
@@ -503,6 +518,8 @@ export function playerToBuild(data: PlayerBuildExtractionData): Build {
   const { passives, classMasteryPassives } = resolveClassMasteryPassives(data, esoClass);
   const mundusStone = data.mundusBuffs.length > 0 ? resolveMundusId(data.mundusBuffs[0].name) : '';
   const description = buildGearDescription(data.gear);
+  const food = data.food ?? resolveFoodFromKalpaEvidence(data.kalpaBuildEvidence);
+  const race = kalpaRaceIdToBuildRace(data.kalpaBuildEvidence?.raceId);
 
   const now = new Date().toISOString();
 
@@ -524,7 +541,7 @@ export function playerToBuild(data: PlayerBuildExtractionData): Build {
     cp,
     consumables: {
       potions: resolvePotions(data.potionType),
-      food: resolveFood(data.food),
+      food: resolveFood(food),
     },
     passives,
     screenshots: [],
@@ -539,7 +556,7 @@ export function playerToBuild(data: PlayerBuildExtractionData): Build {
     classMasteryPassives,
     role,
     gameMode: 'pve',
-    races: [],
+    races: race ? [race] : [],
     setups: [setup],
     guide: { content: '', youtubeUrl: '', bannerImageUrl: '' },
     settings: { visibility: 'private', dlc: 'Base Game', setupOrder: [0] },

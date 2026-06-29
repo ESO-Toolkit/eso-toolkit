@@ -24,9 +24,17 @@ export interface KalpaPlayerBuildEvidence {
   championPoints?: number | null;
   className?: string | null;
   classMasteryPassives: number[];
+  championPointPassives?: number[];
+  food?: KalpaFoodEvidence;
   scribedSkills?: KalpaScribedSkillEvidence[];
   evidence: string;
   confidence: string;
+}
+
+export interface KalpaFoodEvidence {
+  abilityId: number;
+  name?: string | null;
+  icon?: string | null;
 }
 
 export interface KalpaScribedSkillEvidence {
@@ -61,6 +69,40 @@ export function classNameToEsoClass(className?: string | null): ESOClass | undef
     default:
       return undefined;
   }
+}
+
+const KALPA_RACE_ID_TO_BUILD_RACE: Record<number, string> = {
+  1: 'breton',
+  2: 'redguard',
+  3: 'orc',
+  4: 'darkelf',
+  5: 'nord',
+  6: 'argonian',
+  7: 'highelf',
+  8: 'woodelf',
+  9: 'khajiit',
+  10: 'imperial',
+};
+
+const KALPA_RACE_ID_TO_LABEL: Record<number, string> = {
+  1: 'Breton',
+  2: 'Redguard',
+  3: 'Orc',
+  4: 'Dark Elf',
+  5: 'Nord',
+  6: 'Argonian',
+  7: 'High Elf',
+  8: 'Wood Elf',
+  9: 'Khajiit',
+  10: 'Imperial',
+};
+
+export function kalpaRaceIdToBuildRace(raceId?: number | null): string | undefined {
+  return typeof raceId === 'number' ? KALPA_RACE_ID_TO_BUILD_RACE[raceId] : undefined;
+}
+
+export function kalpaRaceIdToLabel(raceId?: number | null): string | undefined {
+  return typeof raceId === 'number' ? KALPA_RACE_ID_TO_LABEL[raceId] : undefined;
 }
 
 export function decodeKalpaBuildEvidenceParam(
@@ -250,6 +292,8 @@ function validateKalpaPlayerEvidence(value: unknown): KalpaPlayerBuildEvidence |
   if (!isRecord(value) || typeof value.unitId !== 'string') return undefined;
 
   const classMasteryPassives = sanitizeNumberArray(value.classMasteryPassives);
+  const championPointPassives = sanitizeNumberArray(value.championPointPassives);
+  const food = sanitizeFoodEvidence(value.food);
   const scribedSkills = sanitizeScribedSkills(value.scribedSkills);
   const player: KalpaPlayerBuildEvidence = {
     unitId: value.unitId,
@@ -267,8 +311,22 @@ function validateKalpaPlayerEvidence(value: unknown): KalpaPlayerBuildEvidence |
     evidence: typeof value.evidence === 'string' ? value.evidence : '',
     confidence: typeof value.confidence === 'string' ? value.confidence : '',
   };
+  if (championPointPassives.length > 0) player.championPointPassives = championPointPassives;
+  if (food) player.food = food;
   if (scribedSkills.length > 0) player.scribedSkills = scribedSkills;
   return player;
+}
+
+function sanitizeFoodEvidence(value: unknown): KalpaFoodEvidence | undefined {
+  if (!isRecord(value) || !Number.isInteger(value.abilityId) || (value.abilityId as number) <= 0) {
+    return undefined;
+  }
+
+  return {
+    abilityId: value.abilityId as number,
+    name: typeof value.name === 'string' ? value.name : undefined,
+    icon: typeof value.icon === 'string' ? value.icon : undefined,
+  };
 }
 
 function sanitizeScribedSkills(value: unknown): KalpaScribedSkillEvidence[] {

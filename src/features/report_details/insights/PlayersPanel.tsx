@@ -24,6 +24,7 @@ import {
 } from '../../../features/build-editor/data/esoStaticData';
 import type { ESOClass } from '../../../features/build-editor/types/build.types';
 import { sanitizeClassMasteryPicks } from '../../../features/build-editor/utils/classMasteryTransfer';
+import type { ReportAbilityFragment } from '../../../graphql/gql/graphql';
 import {
   useCastEvents,
   useCombatantInfoEvents,
@@ -125,6 +126,76 @@ const ESO_CLASS_LABEL: Record<Exclude<ESOClass, 'any-class'>, string> = {
   necromancer: 'Necromancer',
   arcanist: 'Arcanist',
 };
+
+type ChampionPointColor = 'red' | 'blue' | 'green';
+type ChampionPointEntry = { name: string; id: number; color: ChampionPointColor };
+
+const CHAMPION_POINT_NAME_BY_ID: Record<number, string> = {
+  [KnownAbilities.BITING_AURA]: 'Biting Aura',
+  [KnownAbilities.BLOODY_RENEWAL]: 'Bloody Renewal',
+  [KnownAbilities.BOUNDLESS_VITALITY]: 'Boundless Vitality',
+  [KnownAbilities.BULWARK]: 'Bulwark',
+  [KnownAbilities.DEADLY_AIM]: 'Deadly Aim',
+  [KnownAbilities.DUELISTS_REBUFF]: "Duelist's Rebuff",
+  [KnownAbilities.ELUSIVE_MIST]: 'Elusive Mist',
+  [KnownAbilities.ENLIVENING_OVERFLOW]: 'Enlivening Overflow',
+  [KnownAbilities.EXPERT_EVASION]: 'Expert Evasion',
+  [KnownAbilities.EXPLOITER]: 'Exploiter',
+  [KnownAbilities.FIGHTING_FINESSE]: 'Fighting Finesse',
+  [KnownAbilities.FORTUNES_FAVOR]: "Fortune's Favor",
+  [KnownAbilities.FROM_THE_BRINK]: 'From the Brink',
+  [KnownAbilities.GILDED_FINGERS]: 'Gilded Fingers',
+  [KnownAbilities.HASTY_RETREAT]: 'Hasty Retreat',
+  [KnownAbilities.HEROS_VIGOR]: "Hero's Vigor",
+  [KnownAbilities.IRONCLAD]: 'Ironclad',
+  [KnownAbilities.JUGGERNAUT]: 'Juggernaut',
+  [KnownAbilities.LIQUID_EFFICIENCY]: 'Liquid Efficiency',
+  [KnownAbilities.MASTER_AT_ARMS]: 'Master-at-Arms',
+  [KnownAbilities.METICULOUS_DISASSEMBLY]: 'Meticulous Disassembly',
+  [KnownAbilities.PLENTIFUL_HARVEST]: 'Plentiful Harvest',
+  [KnownAbilities.PROFESSIONAL_UPKEEP]: 'Professional Upkeep',
+  [KnownAbilities.RATIONER]: 'Rationer',
+  [KnownAbilities.REAVING_BLOWS]: 'Reaving Blows',
+  [KnownAbilities.REJUVENATOR]: 'Rejuvenator',
+  [KnownAbilities.SIPHONING_SPELLS]: 'Siphoning Spells',
+  [KnownAbilities.SLIPPERY]: 'Slippery',
+  [KnownAbilities.SPRINTER]: 'Sprinter',
+  [KnownAbilities.SUSTAINED_BY_SUFFERING]: 'Sustained by Suffering',
+  [KnownAbilities.UNASSAILABLE]: 'Unassailable',
+};
+
+function championPointColorForId(abilityId: number): ChampionPointColor | undefined {
+  if (RED_CHAMPION_POINTS.has(abilityId as KnownAbilities)) return 'red';
+  if (BLUE_CHAMPION_POINTS.has(abilityId as KnownAbilities)) return 'blue';
+  if (GREEN_CHAMPION_POINTS.has(abilityId as KnownAbilities)) return 'green';
+  return undefined;
+}
+
+export function buildChampionPointEntry(
+  abilityId: number,
+  abilitiesById: Record<string | number, ReportAbilityFragment>,
+): ChampionPointEntry | undefined {
+  const color = championPointColorForId(abilityId);
+  if (!color) return undefined;
+  return {
+    name:
+      abilitiesById[abilityId]?.name ||
+      CHAMPION_POINT_NAME_BY_ID[abilityId] ||
+      `Unknown CP (${abilityId})`,
+    id: abilityId,
+    color,
+  };
+}
+
+function sortChampionPointEntries(entries: ChampionPointEntry[]): ChampionPointEntry[] {
+  const colorOrder: Record<ChampionPointColor, number> = { red: 0, blue: 1, green: 2 };
+  return entries.sort((a, b) => {
+    if (colorOrder[a.color] !== colorOrder[b.color]) {
+      return colorOrder[a.color] - colorOrder[b.color];
+    }
+    return a.name.localeCompare(b.name);
+  });
+}
 
 export function classAnalysisFromKalpaEvidence(
   evidence?: KalpaPlayerBuildEvidence,
@@ -682,19 +753,9 @@ export const PlayersPanel: React.FC<PlayersPanelProps> = ({ context: contextOver
 
   // Calculate champion points per player using champion point constants from combatantinfo auras
   const championPointsByPlayer = React.useMemo(() => {
-    const result: Record<
-      string,
-      Array<{ name: string; id: number; color: 'red' | 'blue' | 'green' }>
-    > = {};
+    const result: Record<string, ChampionPointEntry[]> = {};
 
-    if (!combatantInfoEvents || !abilitiesById) return result;
-
-    // Get all champion point ability IDs from the constants
-    const allChampionPoints = new Set<number>([
-      ...Array.from(RED_CHAMPION_POINTS),
-      ...Array.from(BLUE_CHAMPION_POINTS),
-      ...Array.from(GREEN_CHAMPION_POINTS),
-    ]);
+    if (!abilitiesById) return result;
 
     // Initialize arrays for each player
     if (hasPlayerEntries(playersById)) {
@@ -702,56 +763,45 @@ export const PlayersPanel: React.FC<PlayersPanelProps> = ({ context: contextOver
         if (actor?.id) {
           const playerId = String(actor.id);
           result[playerId] = [];
+          const seen = new Set<number>();
+          const addChampionPoint = (abilityId: number): void => {
+            if (seen.has(abilityId)) return;
+            const entry = buildChampionPointEntry(abilityId, abilitiesById);
+            if (!entry) return;
+            seen.add(abilityId);
+            result[playerId].push(entry);
+          };
 
           // Gather ALL combatantinfo events for this player and union champion points across them
-          const combatantInfoEventsForPlayer = combatantInfoEvents.filter(
-            (event: CombatantInfoEvent): event is CombatantInfoEvent =>
-              event.type === 'combatantinfo' &&
-              'sourceID' in event &&
-              String(event.sourceID) === playerId,
-          );
+          const combatantInfoEventsForPlayer =
+            combatantInfoEvents?.filter(
+              (event: CombatantInfoEvent): event is CombatantInfoEvent =>
+                event.type === 'combatantinfo' &&
+                'sourceID' in event &&
+                String(event.sourceID) === playerId,
+            ) ?? [];
 
           if (combatantInfoEventsForPlayer.length > 0) {
-            const seen = new Set<number>();
             for (const cie of combatantInfoEventsForPlayer) {
               const auras = cie.auras || [];
               for (const aura of auras as CombatantAura[]) {
-                const abilityId = aura.ability;
-                if (!allChampionPoints.has(abilityId) || seen.has(abilityId)) continue;
-
-                seen.add(abilityId);
-                const ability = abilitiesById[abilityId];
-                const name = ability?.name || `Unknown CP (${abilityId})`;
-
-                // Determine color based on which set it belongs to
-                let color: 'red' | 'blue' | 'green';
-                if (RED_CHAMPION_POINTS.has(abilityId)) {
-                  color = 'red';
-                } else if (BLUE_CHAMPION_POINTS.has(abilityId)) {
-                  color = 'blue';
-                } else {
-                  color = 'green';
-                }
-
-                result[playerId].push({ name, id: abilityId, color });
+                addChampionPoint(aura.ability);
               }
             }
           }
 
-          // Sort by color (red, blue, green) then by name
-          result[playerId].sort((a, b) => {
-            const colorOrder = { red: 0, blue: 1, green: 2 };
-            if (colorOrder[a.color] !== colorOrder[b.color]) {
-              return colorOrder[a.color] - colorOrder[b.color];
-            }
-            return a.name.localeCompare(b.name);
-          });
+          for (const abilityId of kalpaBuildEvidenceByPlayer[playerId]?.championPointPassives ??
+            []) {
+            addChampionPoint(abilityId);
+          }
+
+          sortChampionPointEntries(result[playerId]);
         }
       });
     }
 
     return result;
-  }, [combatantInfoEvents, abilitiesById, playersById]);
+  }, [combatantInfoEvents, abilitiesById, playersById, kalpaBuildEvidenceByPlayer]);
 
   // Compute CPM (casts per minute) per player for the current fight, including all casts
   const cpmByPlayer = React.useMemo(() => {
