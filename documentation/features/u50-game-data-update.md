@@ -76,22 +76,22 @@ addon (`tools/eso-tooltip-dump` on `feat/tooltip-data-pipeline`) will supply exa
 2. **Class Mastery passives (35 new, 5 per class)**: new passive-only skill line per class for
    non-subclassed characters (2 of 5 active via Class Mastery Points). **IDs SELF-SOURCED
    2026-06-10** from the U50 in-game tooltip dump (skill-tree walk enumerates them; exact names
-   + descriptions in `data/tooltip-dump.json`; ESO Logs `gameData.ability` still returns null
-   for them). Grouped by class:
-   - Dragonknight: 238232 Inexorable Descent, 240268 Booming Voice, 259224 Wildfire Embers,
+   - descriptions in `data/tooltip-dump.json`; ESO Logs `gameData.ability` still returns null
+     for them). Grouped by class:
+   * Dragonknight: 238232 Inexorable Descent, 240268 Booming Voice, 259224 Wildfire Embers,
      263220 Resolute Defense, 263247 Lead from the Front
-   - Arcanist: 263316 Abyssal Emergence, 263398 Fate Realigned, 263410 Unbound Potential,
+   * Arcanist: 263316 Abyssal Emergence, 263398 Fate Realigned, 263410 Unbound Potential,
      263412 Erudite's Rigor, 263416 Ink-Scribe's Verve
-   - Necromancer: 263448 Nothing Wasted, 263465 Malevolent Promise, 263509 Cycle Unending,
+   * Necromancer: 263448 Nothing Wasted, 263465 Malevolent Promise, 263509 Cycle Unending,
      263549 Pound of Flesh, 263554 Veil's Forfeit
-   - Warden: 263519 Tundra's Maw, 263520 Wild Adaptation, 263521 Glacial Obstinance,
+   * Warden: 263519 Tundra's Maw, 263520 Wild Adaptation, 263521 Glacial Obstinance,
      263522 Green-Keeper's Hide, 263523 Bountiful Harvest (patch notes called it
      "Nature's Bounty")
-   - Templar: 263585 Bastion of Light, 263586 Devout Guardian, 263587 Bright Harbinger,
+   * Templar: 263585 Bastion of Light, 263586 Devout Guardian, 263587 Bright Harbinger,
      263588 Judgment's Brand, 263589 Steadfast Candescence
-   - Nightblade: 263603 Nocturnal Inspiration, 263604 An Eye for Exploitation,
+   * Nightblade: 263603 Nocturnal Inspiration, 263604 An Eye for Exploitation,
      263605 Above and Beyond, 263606 Cutthroat's Focus, 263607 Share the Spoils
-   - Sorcerer: 263870 Conservation of Energy, 263871 Font of Power, 263872 Static
+   * Sorcerer: 263870 Conservation of Energy, 263871 Font of Power, 263872 Static
      Reverberation, 263873 Calculated Defense, 263874 Sphere of Influence
 
    **Skill-line data entries SHIPPED 2026-06-10**: `src/data/skill-lines/class/classMastery.ts`
@@ -112,14 +112,16 @@ addon (`tools/eso-tooltip-dump` on `feat/tooltip-data-pipeline`) will supply exa
    exclude it; picks live in their own slice field, not `setup.passives`).
 
    **Buff tracking for the group-buff passives** (Lead from the Front 263247:
-   Major Berserk 61745 + Major Protection; Bountiful Harvest 263523: Major
-   Heroism 61709; Ink-Scribe's Verve 263416: Major Force 61747; Tundra's Maw
-   263519: Major Brittle 145977 via Chilled): the granted buffs use the existing
-   tracked Major effect IDs, and every consumer (buff-uptime panels, stat
-   engines `CritDamageUtils`/`damageReductionUtils`/`PenetrationUtils`,
-   locked-player live stats) keys on the BUFF effect ID, not the granting
-   ability — uptime and stat modeling work with no code change. **TODO (needs
-   the first real U50 log containing these passives — none exists yet):**
+   Major Berserk 61745 + Major Protection 61722; Erudite's Rigor 263412:
+   Major Vitality 61713 + Minor Cowardice 46202; Bountiful Harvest 263523:
+   Major Heroism 61709; Ink-Scribe's Verve 263416: Major Force 61747; Tundra's
+   Maw 263519: Major Brittle 145977 via Chilled): the granted buffs use tracked
+   Major/Minor effect IDs, and consumers should key on the buff/debuff effect
+   ID when modeling the group-facing effect. **Insights default curation shipped
+   2026-06-29**: `BuffUptimesPanel` / `DebuffUptimesPanel` now include both the
+   known Class Mastery source/proc rows and the granted named effect rows so
+   they are visible without toggling "Show All". **TODO (needs more real U50
+   logs containing these passives):**
 
    1. Role detection: `OFFENSIVE_BUFF_CATEGORIES`
       (`src/features/role_detection/constants.ts`) counts group applications of
@@ -137,6 +139,7 @@ addon (`tools/eso-tooltip-dump` on `feat/tooltip-data-pipeline`) will supply exa
    3. Tundra's Maw: verify the Warden applying Chilled gets debuff-applied
       credit for Major Brittle 145977 (insights debuff attribution uses event
       `sourceID`).
+
 3. **The Prowler's Talisman set ID**: not yet in ESO Logs `gameData.item_sets`
    (scanned 2026-06-09). Add to `KnownSetIDs` when it appears (post-July 8).
 4. **Season One wave (July 8, 2026)**: Thieves Guild questline, Dynamic Encounters,

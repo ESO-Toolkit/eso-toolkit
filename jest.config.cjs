@@ -52,8 +52,8 @@ module.exports = {
 
   // Test file patterns
   testMatch: [
-    '<rootDir>/src/**/__tests__/**/*.(test|spec).{js,jsx,ts,tsx}',
-    '<rootDir>/src/**/*.(test|spec).{js,jsx,ts,tsx}',
+    '**/src/**/__tests__/**/*.{test,spec}.{js,jsx,ts,tsx}',
+    '**/src/**/*.{test,spec}.{js,jsx,ts,tsx}',
   ],
 
   // Module file extensions
@@ -115,6 +115,7 @@ module.exports = {
   testPathIgnorePatterns: [
     'node_modules',
     '<rootDir>/build/',
+    'discord-bot/',
     'scribing-e2e\\.(test|spec)\\.(ts|tsx)$',
   ],
   transformIgnorePatterns: [

@@ -28,6 +28,7 @@ import {
 import { calculateElementalWeaknessStacks } from '../../../workers/calculations/CalculateElementalWeaknessStacks';
 import { calculateStaggerStacks } from '../../../workers/calculations/CalculateStaggerStacks';
 import { calculateTouchOfZenStacks } from '../../../workers/calculations/CalculateTouchOfZenStacks';
+import { ClassSkillId } from '../../loadout-manager/data/classSkillIds';
 
 import { DebuffUptimesView } from './DebuffUptimesView';
 import { EffectUptimeTimelineModal } from './EffectUptimeTimelineModal';
@@ -38,8 +39,17 @@ interface DebuffUptimesPanelProps {
   selectedPlayerId?: number | null; // Optional: if provided, show per-player uptimes with group average deltas
 }
 
+export const CLASS_MASTERY_DEBUFF_ABILITIES = new Set<number>([
+  // U50 Class Mastery debuffs. Include source/passive rows when ESO Logs emits
+  // them and the named debuff rows used for group uptime comparisons.
+  ClassSkillId.ARCANIST_ERUDITE_S_RIGOR,
+  ClassSkillId.WARDEN_TUNDRA_S_MAW,
+  KnownAbilities.MAJOR_BRITTLE,
+  KnownAbilities.MINOR_COWARDICE,
+]);
+
 // Define the specific status effect debuff abilities to track
-export const IMPORTANT_DEBUFF_ABILITIES = new Set([
+export const IMPORTANT_DEBUFF_ABILITIES = new Set<number>([
   KnownAbilities.BURNING,
   KnownAbilities.CRUSHER,
   KnownAbilities.ENGULFING_FLAMES_BUFF,
@@ -56,6 +66,7 @@ export const IMPORTANT_DEBUFF_ABILITIES = new Set([
   KnownAbilities.HEAT_SHOCK,
   KnownAbilities.STAGGER, // Pre-U49 legacy debuff ID
   KnownAbilities.TOUCH_OF_ZEN,
+  ...CLASS_MASTERY_DEBUFF_ABILITIES,
 ]);
 
 /**

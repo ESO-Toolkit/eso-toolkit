@@ -11,8 +11,9 @@ import { KnownAbilities } from '../../../types/abilities';
 import { computeBuffUptimes } from '../../../utils/buffUptimeCalculator';
 import { createDebuffLookup } from '../../../utils/BuffLookupUtils';
 import { DebuffEvent } from '../../../types/combatlogEvents';
+import { ClassSkillId } from '../../loadout-manager/data/classSkillIds';
 
-import { IMPORTANT_DEBUFF_ABILITIES } from './DebuffUptimesPanel';
+import { CLASS_MASTERY_DEBUFF_ABILITIES, IMPORTANT_DEBUFF_ABILITIES } from './DebuffUptimesPanel';
 
 describe('DebuffUptimesPanel', () => {
   describe('IMPORTANT_DEBUFF_ABILITIES', () => {
@@ -27,10 +28,12 @@ describe('DebuffUptimesPanel', () => {
         KnownAbilities.ENGULFING_FLAMES_BUFF,
         KnownAbilities.HEAT_SHOCK,
         KnownAbilities.MAJOR_BREACH,
+        KnownAbilities.MAJOR_BRITTLE,
         KnownAbilities.MAJOR_COWARDICE,
         KnownAbilities.MAJOR_VULNERABILITY,
         KnownAbilities.MINOR_BREACH,
         KnownAbilities.MINOR_BRITTLE,
+        KnownAbilities.MINOR_COWARDICE,
         KnownAbilities.MINOR_LIFESTEAL,
         KnownAbilities.MINOR_VULNERABILITY,
         KnownAbilities.NAZARAY_DEBUFF,
@@ -38,6 +41,8 @@ describe('DebuffUptimesPanel', () => {
         KnownAbilities.RUNIC_SUNDER_DEBUFF,
         KnownAbilities.STAGGER, // Pre-U49 legacy debuff ID
         KnownAbilities.TOUCH_OF_ZEN,
+        ClassSkillId.ARCANIST_ERUDITE_S_RIGOR,
+        ClassSkillId.WARDEN_TUNDRA_S_MAW,
       ];
 
       expectedDebuffs.forEach((debuff) => {
@@ -52,6 +57,20 @@ describe('DebuffUptimesPanel', () => {
       expect(IMPORTANT_DEBUFF_ABILITIES.has(KnownAbilities.MAJOR_COURAGE)).toBe(false);
       expect(IMPORTANT_DEBUFF_ABILITIES.has(KnownAbilities.MAJOR_RESOLVE)).toBe(false);
       expect(IMPORTANT_DEBUFF_ABILITIES.has(KnownAbilities.EMPOWER)).toBe(false);
+    });
+
+    it('should include U50 Class Mastery debuff sources and granted effects', () => {
+      const expectedClassMasteryDebuffs = [
+        ClassSkillId.ARCANIST_ERUDITE_S_RIGOR,
+        ClassSkillId.WARDEN_TUNDRA_S_MAW,
+        KnownAbilities.MAJOR_BRITTLE,
+        KnownAbilities.MINOR_COWARDICE,
+      ];
+
+      expectedClassMasteryDebuffs.forEach((debuff) => {
+        expect(CLASS_MASTERY_DEBUFF_ABILITIES.has(debuff)).toBe(true);
+        expect(IMPORTANT_DEBUFF_ABILITIES.has(debuff)).toBe(true);
+      });
     });
   });
 
