@@ -18,6 +18,11 @@ import {
 import type { GrimoireData } from '../../../components/ScribingSkillsDisplay';
 import { PlayerAvatarsProvider } from '../../../contexts/PlayerAvatarsContext';
 import {
+  CLASS_SKILL_LINES,
+  getDefaultLinesForClass,
+} from '../../../features/build-editor/data/esoStaticData';
+import type { ESOClass } from '../../../features/build-editor/types/build.types';
+import {
   useCastEvents,
   useCombatantInfoEvents,
   useCriticalDamageTask,
@@ -69,6 +74,12 @@ import {
   PlayerGearSetRecord,
 } from '../../../utils/gearUtilities';
 import {
+  classNameToEsoClass,
+  findKalpaBuildEvidenceForPlayer,
+  loadKalpaBuildEvidenceForReport,
+  type KalpaPlayerBuildEvidence,
+} from '../../../utils/kalpaBuildEvidence';
+import {
   classifyPotionEventsFromBuffStream,
   type PotionStreamResult,
 } from '../../../utils/potionDetectionUtils';
@@ -100,6 +111,43 @@ const formatScribingRecipeForDisplay = (
   recipeSummary: '',
   tooltipInfo: '',
 });
+
+const ESO_CLASS_LABEL: Record<Exclude<ESOClass, 'any-class'>, string> = {
+  dragonknight: 'Dragonknight',
+  sorcerer: 'Sorcerer',
+  nightblade: 'Nightblade',
+  templar: 'Templar',
+  warden: 'Warden',
+  necromancer: 'Necromancer',
+  arcanist: 'Arcanist',
+};
+
+function classAnalysisFromKalpaEvidence(
+  evidence?: KalpaPlayerBuildEvidence,
+): ClassAnalysisResult | undefined {
+  const esoClass = classNameToEsoClass(evidence?.className);
+  if (!esoClass || esoClass === 'any-class') {
+    return undefined;
+  }
+
+  const className = ESO_CLASS_LABEL[esoClass];
+  const skillLines = getDefaultLinesForClass(esoClass)
+    .map((lineId) => CLASS_SKILL_LINES.find((line) => line.id === lineId))
+    .filter((line): line is (typeof CLASS_SKILL_LINES)[number] => line != null)
+    .map((line) => ({
+      skillLine: line.label,
+      className,
+      count: 0,
+      skillIds: new Set(evidence?.classMasteryPassives ?? []),
+    }));
+
+  return skillLines.length > 0
+    ? {
+        primary: skillLines[0].skillLine,
+        skillLines,
+      }
+    : undefined;
+}
 
 // This panel now uses report actors from masterData
 
@@ -142,6 +190,10 @@ export const PlayersPanel: React.FC<PlayersPanelProps> = ({ context: contextOver
     context: resolvedContext,
     includeFallback: false,
   });
+  const kalpaBuildEvidence = React.useMemo(
+    () => loadKalpaBuildEvidenceForReport(reportId),
+    [reportId],
+  );
   const { combatantInfoEvents, isCombatantInfoEventsLoading } = useCombatantInfoEvents({
     context: resolvedContext,
   });
@@ -192,6 +244,22 @@ export const PlayersPanel: React.FC<PlayersPanelProps> = ({ context: contextOver
     combatantInfoEvents,
     rolesByPlayerId,
   ]);
+
+  const kalpaBuildEvidenceByPlayer = React.useMemo(() => {
+    const result: Record<string, KalpaPlayerBuildEvidence> = {};
+    if (!hasPlayerEntries(playersById)) {
+      return result;
+    }
+
+    Object.values(playersById).forEach((player) => {
+      const evidence = findKalpaBuildEvidenceForPlayer(kalpaBuildEvidence, player);
+      if (evidence) {
+        result[String(player.id)] = evidence;
+      }
+    });
+
+    return result;
+  }, [kalpaBuildEvidence, playersById]);
 
   const fightIdNumber = resolvedContext.fightId;
 
@@ -1134,7 +1202,8 @@ export const PlayersPanel: React.FC<PlayersPanelProps> = ({ context: contextOver
         classMapping,
       );
 
-      result[playerId] = analysis;
+      result[playerId] =
+        classAnalysisFromKalpaEvidence(kalpaBuildEvidenceByPlayer[playerId]) ?? analysis;
     });
 
     return result;
@@ -1146,6 +1215,7 @@ export const PlayersPanel: React.FC<PlayersPanelProps> = ({ context: contextOver
     damageEvents,
     friendlyBuffEvents,
     debuffEvents,
+    kalpaBuildEvidenceByPlayer,
   ]);
 
   // Effect to lookup scribing recipes for detected skills
@@ -1268,6 +1338,7 @@ export const PlayersPanel: React.FC<PlayersPanelProps> = ({ context: contextOver
           scribingSkillsByPlayer={enhancedScribingSkillsByPlayer}
           buildIssuesByPlayer={buildIssuesByPlayer}
           classAnalysisByPlayer={classAnalysisByPlayer}
+          kalpaBuildEvidenceByPlayer={kalpaBuildEvidenceByPlayer}
           deathsByPlayer={deathsByPlayer}
           resurrectsByPlayer={resurrectsByPlayer}
           cpmByPlayer={cpmByPlayer}

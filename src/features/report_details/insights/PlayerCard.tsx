@@ -59,6 +59,7 @@ import type { PlayerGear } from '../../../types/playerDetails';
 import { type ClassAnalysisResult } from '../../../utils/classDetectionUtils';
 import { BuildIssue } from '../../../utils/detectBuildIssues';
 import { PlayerGearSetRecord } from '../../../utils/gearUtilities';
+import type { KalpaPlayerBuildEvidence } from '../../../utils/kalpaBuildEvidence';
 import { resolveActorName } from '../../../utils/resolveActorName';
 import { abbreviateSkillLine } from '../../../utils/skillLineDetectionUtils';
 import { buildTooltipProps } from '../../../utils/skillTooltipMapper';
@@ -138,6 +139,7 @@ interface PlayerCardProps {
   scribingSkills: GrimoireData[];
   buildIssues: BuildIssue[];
   classAnalysis?: ClassAnalysisResult;
+  kalpaBuildEvidence?: KalpaPlayerBuildEvidence;
   deaths: number;
   resurrects: number;
   cpm: number;
@@ -280,6 +282,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
     scribingSkills,
     buildIssues,
     classAnalysis,
+    kalpaBuildEvidence,
     deaths,
     resurrects,
     cpm,
@@ -608,6 +611,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
           mundusBuffs,
           championPoints,
           classAnalysis,
+          kalpaBuildEvidence,
           food: foodAura ? { id: foodAura.id, name: foodAura.name } : undefined,
           potionType: potionStreamResult?.type,
         });
@@ -629,6 +633,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
       mundusBuffs,
       championPoints,
       classAnalysis,
+      kalpaBuildEvidence,
       detectedRole,
       foodAura,
       potionStreamResult,

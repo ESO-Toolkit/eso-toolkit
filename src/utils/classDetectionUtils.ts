@@ -11,6 +11,7 @@
 import { KnownAbilities, AURA_EXCLUDED_ABILITIES } from '@/types/abilities';
 
 import * as classSkillLines from '../data/skill-lines/class';
+import { CLASS_MASTERY_LINE_NAME } from '../data/skill-lines/class/classMastery';
 import type { SkillLineData } from '../data/types/skill-line-types';
 // Import types
 import { ReportAbilityFragment } from '../graphql/gql/graphql';
@@ -64,9 +65,27 @@ interface SkillLineMeta {
 
 const ABILITY_ID_TO_SKILL_LINE = new Map<number, SkillLineMeta>();
 const ABILITY_NAME_TO_SKILL_LINE = new Map<string, SkillLineMeta>();
+const BASE_CLASS_SKILL_LINES_BY_CLASS = new Map<string, SkillLineMeta[]>();
 
 function normalizeName(value?: string | null): string {
   return value?.toLowerCase().trim() ?? '';
+}
+
+function skillLineKey(meta: SkillLineMeta): string {
+  return `${meta.className}\u0000${meta.skillLineName}`;
+}
+
+function registerBaseClassSkillLine(meta: SkillLineMeta): void {
+  if (meta.skillLineName === CLASS_MASTERY_LINE_NAME) {
+    return;
+  }
+
+  const classKey = normalizeName(meta.className);
+  const lines = BASE_CLASS_SKILL_LINES_BY_CLASS.get(classKey) ?? [];
+  if (!lines.some((line) => line.skillLineName === meta.skillLineName)) {
+    lines.push(meta);
+    BASE_CLASS_SKILL_LINES_BY_CLASS.set(classKey, lines);
+  }
 }
 
 function registerSkillLineMeta(): void {
@@ -76,6 +95,8 @@ function registerSkillLineMeta(): void {
       className: skillLine.class || 'Unknown',
       skillLineName: skillLine.name,
     };
+
+    registerBaseClassSkillLine(meta);
 
     for (const skill of skillLine.skills) {
       if (typeof skill.id === 'number' && !ABILITY_ID_TO_SKILL_LINE.has(skill.id)) {
@@ -116,6 +137,57 @@ export interface ClassAnalysisResult {
     count: number;
     skillIds: Set<number>;
   }>;
+}
+
+interface SkillLineCount {
+  skillLine: string;
+  className: string;
+  count: number;
+  skillIds: Set<number>;
+  order: number;
+}
+
+function addSkillLineEvidence(
+  skillLineAbilityCounts: Map<string, SkillLineCount>,
+  meta: SkillLineMeta,
+  abilityId?: number,
+): void {
+  const key = skillLineKey(meta);
+  let entry = skillLineAbilityCounts.get(key);
+  if (!entry) {
+    entry = {
+      skillLine: meta.skillLineName,
+      className: meta.className,
+      count: 0,
+      skillIds: new Set<number>(),
+      order: skillLineAbilityCounts.size,
+    };
+    skillLineAbilityCounts.set(key, entry);
+  }
+
+  if (abilityId !== undefined) {
+    entry.count++;
+    entry.skillIds.add(abilityId);
+  }
+}
+
+function addNativeClassLinesFromClassMastery(
+  skillLineAbilityCounts: Map<string, SkillLineCount>,
+  classMasteryClasses: Set<string>,
+): void {
+  for (const className of classMasteryClasses) {
+    const nativeLines = BASE_CLASS_SKILL_LINES_BY_CLASS.get(normalizeName(className)) ?? [];
+    nativeLines.forEach((meta) => {
+      addSkillLineEvidence(skillLineAbilityCounts, meta);
+    });
+  }
+}
+
+function resolveSkillLineMeta(
+  abilityId: number,
+  skillLineMapping?: Record<number, { className: string; skillLineName: string }>,
+): SkillLineMeta | undefined {
+  return skillLineMapping?.[abilityId] ?? ABILITY_ID_TO_SKILL_LINE.get(abilityId);
 }
 
 function shouldSkipAbility(abilityName: string | undefined | null, abilityId: number): boolean {
@@ -281,10 +353,8 @@ export function analyzePlayerClassUsage(
   abilitiesData: AbilitiesData | ReportAbilitiesData,
   skillLineMapping?: Record<number, { className: string; skillLineName: string }>,
 ): ClassAnalysisResult {
-  const skillLineAbilityCounts: Record<
-    string,
-    { className: string; count: number; skillIds: Set<number> }
-  > = {};
+  const skillLineAbilityCounts = new Map<string, SkillLineCount>();
+  const classMasteryClasses = new Set<string>();
 
   // Create skill line mapping if not provided
   if (!skillLineMapping) {
@@ -297,30 +367,27 @@ export function analyzePlayerClassUsage(
 
   // Check each ability ID against our skill line mapping
   for (const abilityId of abilityArray) {
-    const skillLineInfo = skillLineMapping[abilityId];
+    const skillLineInfo = resolveSkillLineMeta(abilityId, skillLineMapping);
     if (skillLineInfo) {
-      const { skillLineName, className } = skillLineInfo;
-      if (!skillLineAbilityCounts[skillLineName]) {
-        skillLineAbilityCounts[skillLineName] = {
-          className,
-          count: 0,
-          skillIds: new Set<number>(),
-        };
+      if (skillLineInfo.skillLineName === CLASS_MASTERY_LINE_NAME) {
+        classMasteryClasses.add(skillLineInfo.className);
+        continue;
       }
-      skillLineAbilityCounts[skillLineName].count++;
-      skillLineAbilityCounts[skillLineName].skillIds.add(abilityId);
+      addSkillLineEvidence(skillLineAbilityCounts, skillLineInfo, abilityId);
     }
   }
 
+  addNativeClassLinesFromClassMastery(skillLineAbilityCounts, classMasteryClasses);
+
   // Sort skill lines by ability count and create the array
-  const skillLines = Object.entries(skillLineAbilityCounts)
-    .map(([skillLine, { className, count, skillIds }]) => ({
+  const skillLines = Array.from(skillLineAbilityCounts.values())
+    .sort((a, b) => b.count - a.count || a.order - b.order)
+    .map(({ skillLine, className, count, skillIds }) => ({
       skillLine,
       className,
       count,
       skillIds,
-    }))
-    .sort((a, b) => b.count - a.count);
+    }));
 
   const primarySkillLine = skillLines.length > 0 ? skillLines[0].skillLine : null;
 
@@ -379,10 +446,8 @@ export function analyzePlayerClassFromEvents(
  * roster import) without full combat event streams.
  */
 export function detectClassFromTalents(talents: PlayerTalent[]): ClassAnalysisResult {
-  const skillLineCounts: Record<
-    string,
-    { className: string; count: number; skillIds: Set<number> }
-  > = {};
+  const skillLineCounts = new Map<string, SkillLineCount>();
+  const classMasteryClasses = new Set<string>();
 
   for (const talent of talents) {
     const id = talent.guid;
@@ -391,22 +456,24 @@ export function detectClassFromTalents(talents: PlayerTalent[]): ClassAnalysisRe
     const meta = ABILITY_ID_TO_SKILL_LINE.get(id);
     if (!meta) continue;
 
-    const { skillLineName, className } = meta;
-    if (!skillLineCounts[skillLineName]) {
-      skillLineCounts[skillLineName] = { className, count: 0, skillIds: new Set() };
+    if (meta.skillLineName === CLASS_MASTERY_LINE_NAME) {
+      classMasteryClasses.add(meta.className);
+      continue;
     }
-    skillLineCounts[skillLineName].count++;
-    skillLineCounts[skillLineName].skillIds.add(id);
+
+    addSkillLineEvidence(skillLineCounts, meta, id);
   }
 
-  const skillLines = Object.entries(skillLineCounts)
-    .map(([skillLine, { className, count, skillIds }]) => ({
+  addNativeClassLinesFromClassMastery(skillLineCounts, classMasteryClasses);
+
+  const skillLines = Array.from(skillLineCounts.values())
+    .sort((a, b) => b.count - a.count || a.order - b.order)
+    .map(({ skillLine, className, count, skillIds }) => ({
       skillLine,
       className,
       count,
       skillIds,
-    }))
-    .sort((a, b) => b.count - a.count);
+    }));
 
   // `primary` is the primary *skill-line* name, matching the documented
   // contract of analyzePlayerClassUsage (see playerToBuild.ts) and its tests.

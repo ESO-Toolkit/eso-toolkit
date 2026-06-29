@@ -7,6 +7,7 @@ import type { PlayerDetailsWithRole } from '../../../store/player_data/playerDat
 import type { ClassAnalysisResult } from '../../../utils/classDetectionUtils';
 import type { BuildIssue } from '../../../utils/detectBuildIssues';
 import type { PlayerGearSetRecord } from '../../../utils/gearUtilities';
+import type { KalpaPlayerBuildEvidence } from '../../../utils/kalpaBuildEvidence';
 import type { PotionStreamResult } from '../../../utils/potionDetectionUtils';
 import type { BarSwapAnalysisResult } from '../../parse_analysis/utils/parseAnalysisUtils';
 
@@ -29,6 +30,7 @@ export interface PlayerCardProps {
   scribingSkills: GrimoireData[];
   buildIssues: BuildIssue[];
   classAnalysis?: ClassAnalysisResult;
+  kalpaBuildEvidence?: KalpaPlayerBuildEvidence;
   deaths: number;
   resurrects: number;
   cpm: number;

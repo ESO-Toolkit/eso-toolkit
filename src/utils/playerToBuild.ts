@@ -11,7 +11,10 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { ESO_CONSUMABLES } from '../data/esoConsumables';
 import { ESO_POTIONS } from '../data/esoPotions';
-import { CLASS_MASTERY_LINE_NAME } from '../data/skill-lines/class/classMastery';
+import {
+  CLASS_MASTERY_LINE_NAME,
+  CLASS_MASTERY_SKILL_IDS,
+} from '../data/skill-lines/class/classMastery';
 import {
   CLASS_SKILL_LINES,
   ESO_MUNDUS_STONES,
@@ -45,6 +48,7 @@ import {
   resolveTraitId,
   resolveWeaponItemId,
 } from './combatLogGearMapping';
+import { classNameToEsoClass, type KalpaPlayerBuildEvidence } from './kalpaBuildEvidence';
 import type { PotionType } from './potionDetectionUtils';
 
 // ─── Gear Slot Mapping ──────────────────────────────────────────────────────
@@ -166,6 +170,27 @@ export function resolveClassFromAnalysis(classAnalysis?: ClassAnalysisResult): {
   return { esoClass: 'any-class', classSkillLines: [null, null, null] };
 }
 
+function resolveClassFromKalpaEvidence(kalpaBuildEvidence?: KalpaPlayerBuildEvidence): {
+  esoClass: ESOClass;
+  classSkillLines: [ClassSkillLineId | null, ClassSkillLineId | null, ClassSkillLineId | null];
+} | null {
+  const esoClass = classNameToEsoClass(kalpaBuildEvidence?.className);
+  if (!esoClass) {
+    return null;
+  }
+  return { esoClass, classSkillLines: getDefaultLinesForClass(esoClass) };
+}
+
+function resolveBuildClass(data: PlayerBuildExtractionData): {
+  esoClass: ESOClass;
+  classSkillLines: [ClassSkillLineId | null, ClassSkillLineId | null, ClassSkillLineId | null];
+} {
+  return (
+    resolveClassFromKalpaEvidence(data.kalpaBuildEvidence) ??
+    resolveClassFromAnalysis(data.classAnalysis)
+  );
+}
+
 // ─── Role Mapping ───────────────────────────────────────────────────────────
 
 function resolveRole(playerRole?: string): CombatRole {
@@ -278,7 +303,7 @@ export function convertSkills(talents: PlayerTalent[]): {
 
   // Remaining talents are passives
   for (const t of passiveTalents) {
-    if (t?.guid) passives.push(t.guid);
+    if (t?.guid && !CLASS_MASTERY_SKILL_IDS.has(t.guid)) passives.push(t.guid);
   }
 
   return { skills, passives };
@@ -416,10 +441,49 @@ export interface PlayerBuildExtractionData {
   championPoints: Array<{ name: string; id: number; color: 'red' | 'blue' | 'green' }>;
   /** Class analysis result from ability detection */
   classAnalysis?: ClassAnalysisResult;
+  /** Exact native Kalpa raw-log evidence, when the report was opened from Kalpa. */
+  kalpaBuildEvidence?: KalpaPlayerBuildEvidence;
   /** Detected food aura (buff name + aura ID — NOT the consumable item ID) */
   food?: { id?: number; name?: string };
   /** Classified potion type from the live event stream */
   potionType?: PotionType;
+}
+
+function extractPassiveTalentIds(talents: PlayerTalent[]): number[] {
+  return talents.slice(12).flatMap((talent) => (talent?.guid ? [talent.guid] : []));
+}
+
+function resolveClassMasteryPassives(
+  data: PlayerBuildExtractionData,
+  esoClass: ESOClass,
+): {
+  passives: number[];
+  classMasteryPassives: number[];
+} {
+  const { passives, classMasteryPassives: cmFromPassives } = partitionClassMasteryPicks(
+    extractPassiveTalentIds(data.talents),
+    esoClass,
+  );
+  const cmFromAnalysis = data.classAnalysis?.skillLines?.find(
+    (sl) => sl.skillLine === CLASS_MASTERY_LINE_NAME,
+  )?.skillIds;
+  const cmFromKalpa = sanitizeClassMasteryPicks(
+    data.kalpaBuildEvidence?.classMasteryPassives,
+    esoClass,
+  );
+  const hasExactKalpaClassMastery =
+    data.kalpaBuildEvidence?.evidence === 'raw-player-info' ||
+    (data.kalpaBuildEvidence?.classMasteryPassives?.length ?? 0) > 0;
+
+  return {
+    passives,
+    classMasteryPassives: hasExactKalpaClassMastery
+      ? cmFromKalpa
+      : sanitizeClassMasteryPicks(
+          [...(cmFromAnalysis ? Array.from(cmFromAnalysis) : []), ...cmFromPassives],
+          esoClass,
+        ),
+  };
 }
 
 /**
@@ -427,28 +491,16 @@ export interface PlayerBuildExtractionData {
  * Extracts gear (with slot mapping), skills, passives, mundus, CP, and class.
  */
 export function playerToBuild(data: PlayerBuildExtractionData): Build {
-  const { esoClass, classSkillLines } = resolveClassFromAnalysis(data.classAnalysis);
+  const { esoClass, classSkillLines } = resolveBuildClass(data);
   const role = resolveRole(data.role);
   const gearConfig = convertGear(data.gear, { resolveWeaponType: true });
-  const { skills, passives: rawPassives } = convertSkills(data.talents);
+  const { skills } = convertSkills(data.talents);
   const cp = convertChampionPoints(data.championPoints);
 
   // Class Mastery picks (U50) live on the top-level build.classMasteryPassives
-  // field, NOT setup.passives. Source them from the report's class-detection
-  // result — the "Class Mastery" skill-line entry's detected ability IDs — plus
-  // any Class Mastery IDs that slipped in via talent passives, then split those
-  // IDs back out of the regular passive list so the editor stays WYSIWYG.
-  const cmFromAnalysis = data.classAnalysis?.skillLines?.find(
-    (sl) => sl.skillLine === CLASS_MASTERY_LINE_NAME,
-  )?.skillIds;
-  const { passives, classMasteryPassives: cmFromPassives } = partitionClassMasteryPicks(
-    rawPassives,
-    esoClass,
-  );
-  const classMasteryPassives = sanitizeClassMasteryPicks(
-    [...(cmFromAnalysis ? Array.from(cmFromAnalysis) : []), ...cmFromPassives],
-    esoClass,
-  );
+  // field, NOT setup.passives. Exact Kalpa player-info evidence wins when
+  // present; otherwise combine report class-analysis and passive talent IDs.
+  const { passives, classMasteryPassives } = resolveClassMasteryPassives(data, esoClass);
   const mundusStone = data.mundusBuffs.length > 0 ? resolveMundusId(data.mundusBuffs[0].name) : '';
   const description = buildGearDescription(data.gear);
 
