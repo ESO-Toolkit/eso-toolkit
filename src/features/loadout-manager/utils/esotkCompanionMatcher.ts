@@ -47,7 +47,7 @@ export interface CompanionMatch {
   snapshot: CompanionSnapshot;
   /** The fight whose window best contains/precedes the snapshot, if any. */
   fightId?: number | string;
-  /** ms between the snapshot and the report window (0 when inside it). */
+  /** ms between the snapshot and the selected fight/report window (0 when inside it). */
   distanceMs: number;
 }
 
@@ -58,6 +58,11 @@ export interface CompanionMatchResult {
   unmatched: CompanionSnapshot[];
 }
 
+export interface MatchCompanionSnapshotsOptions {
+  /** Prefer snapshots for this fight. Use the currently selected report fight when known. */
+  targetFightId?: MatchableFight['id'];
+}
+
 const SIX_HOURS_MS = 6 * 60 * 60 * 1000;
 /** Allow a snapshot slightly outside the report window (clock skew / pre-pull capture). */
 const WINDOW_SLOP_MS = 5 * 60 * 1000;
@@ -65,6 +70,15 @@ const WINDOW_SLOP_MS = 5 * 60 * 1000;
 function normalizeName(name: string): string {
   // ESO names may carry the @ display or a leading icon; compare on the bare name.
   return name.replace(/^@/, '').trim().toLowerCase();
+}
+
+function normalizeServer(server: string | undefined): string | undefined {
+  const normalized = server?.trim().toLowerCase();
+  return normalized || undefined;
+}
+
+function sameId(a: MatchableFight['id'], b: MatchableFight['id']): boolean {
+  return String(a) === String(b);
 }
 
 /** Snapshot ts is UNIX seconds; report times are UNIX ms. */
@@ -82,13 +96,13 @@ function distanceToWindow(tsMs: number, start: number, end: number): number {
   return 0;
 }
 
-function findNearestFight(
+function findNearestFightCandidate(
   tsMs: number,
   reportStart: number,
   fights: MatchableFight[] | undefined,
-): MatchableFight | undefined {
+): { fight: MatchableFight; distanceMs: number } | undefined {
   if (!fights || fights.length === 0) return undefined;
-  let best: MatchableFight | undefined;
+  let best: { fight: MatchableFight; distanceMs: number } | undefined;
   let bestDist = Number.POSITIVE_INFINITY;
   for (const fight of fights) {
     const start = reportStart + fight.startTime;
@@ -96,10 +110,39 @@ function findNearestFight(
     const dist = distanceToWindow(tsMs, start, end);
     if (dist < bestDist) {
       bestDist = dist;
-      best = fight;
+      best = { fight, distanceMs: dist };
     }
   }
   return best;
+}
+
+function candidateDistance(
+  tsMs: number,
+  report: MatchableReport,
+  opts: MatchCompanionSnapshotsOptions,
+): { fightId?: MatchableFight['id']; distanceMs: number } | null {
+  const reportStart = report.startTime;
+  const reportEnd = report.endTime ?? reportStart + SIX_HOURS_MS;
+
+  const targetFightId = opts.targetFightId;
+  if (targetFightId !== undefined) {
+    const fight = report.fights?.find((f) => sameId(f.id, targetFightId));
+    if (!fight) return null;
+
+    const start = reportStart + fight.startTime;
+    const end = reportStart + fight.endTime;
+    if (!withinWindow(tsMs, start, end)) return null;
+    return { fightId: fight.id, distanceMs: distanceToWindow(tsMs, start, end) };
+  }
+
+  if (!withinWindow(tsMs, reportStart, reportEnd)) return null;
+
+  const fightCandidate = findNearestFightCandidate(tsMs, reportStart, report.fights);
+  if (fightCandidate) {
+    return { fightId: fightCandidate.fight.id, distanceMs: fightCandidate.distanceMs };
+  }
+
+  return { distanceMs: distanceToWindow(tsMs, reportStart, reportEnd) };
 }
 
 /**
@@ -110,10 +153,8 @@ function findNearestFight(
 export function matchCompanionSnapshots(
   snapshots: CompanionSnapshot[],
   report: MatchableReport,
+  opts: MatchCompanionSnapshotsOptions = {},
 ): CompanionMatchResult {
-  const reportStart = report.startTime;
-  const reportEnd = report.endTime ?? reportStart + SIX_HOURS_MS;
-
   const matches = new Map<MatchableActor['id'], CompanionMatch>();
   const matchedSnapshots = new Set<CompanionSnapshot>();
 
@@ -125,15 +166,25 @@ export function matchCompanionSnapshots(
     for (const snapshot of snapshots) {
       if (normalizeName(snapshot.char) !== actorName) continue;
       // If both sides declare a server, they must agree.
-      if (actor.server && snapshot.server && actor.server !== snapshot.server) continue;
+      const actorServer = normalizeServer(actor.server);
+      const snapshotServer = normalizeServer(snapshot.server);
+      if (actorServer && snapshotServer && actorServer !== snapshotServer) continue;
 
       const tsMs = snapshotMs(snapshot);
-      if (!withinWindow(tsMs, reportStart, reportEnd)) continue;
+      const candidate = candidateDistance(tsMs, report, opts);
+      if (!candidate) continue;
 
-      const distanceMs = distanceToWindow(tsMs, reportStart, reportEnd);
-      if (!best || distanceMs < best.distanceMs) {
-        const fight = findNearestFight(tsMs, reportStart, report.fights);
-        best = { actor, snapshot, fightId: fight?.id, distanceMs };
+      if (
+        !best ||
+        candidate.distanceMs < best.distanceMs ||
+        (candidate.distanceMs === best.distanceMs && tsMs > snapshotMs(best.snapshot))
+      ) {
+        best = {
+          actor,
+          snapshot,
+          fightId: candidate.fightId,
+          distanceMs: candidate.distanceMs,
+        };
       }
     }
 

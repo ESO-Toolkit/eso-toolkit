@@ -39,10 +39,19 @@ local SV  -- SavedVariables handle (ESOTKCompanionSV, account-wide)
 -- Call fn(...) only if it exists; returns nil otherwise (API may rename functions).
 local function call(fnName, ...)
   local fn = _G[fnName]
-  if type(fn) == "function" then
-    return fn(...)
+  if type(fn) ~= "function" then
+    return nil
   end
-  return nil
+
+  local ok, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12 = pcall(fn, ...)
+  if not ok then
+    if SV and SV.verbose and type(d) == "function" then
+      d("[ESOTK] API call '" .. tostring(fnName) .. "' failed: " .. tostring(r1))
+    end
+    return nil
+  end
+
+  return r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12
 end
 
 -- Read a GetPlayerStat value only if the STAT_ constant is defined this API version.
@@ -117,6 +126,7 @@ local function captureStats()
     weaponDamage    = stat("STAT_WEAPON_POWER"),
     spellCrit       = stat("STAT_SPELL_CRITICAL"),
     weaponCrit      = stat("STAT_CRITICAL_STRIKE"),
+    critDamage      = stat("STAT_CRITICAL_DAMAGE"),
     spellPen        = stat("STAT_SPELL_PENETRATION"),
     physicalPen     = stat("STAT_PHYSICAL_PENETRATION"),
     magickaRegen    = stat("STAT_MAGICKA_REGEN_COMBAT"),
@@ -187,6 +197,8 @@ end
 local function Snapshot(reason)
   if not SV or SV.enabled == false then return end
 
+  local zoneIndex = call("GetUnitZoneIndex", "player")
+
   local snap = {
     -- match keys (see ESOTK matcher): character + server + UTC timestamp
     ts        = call("GetTimeStamp"),               -- UNIX seconds, server/UTC
@@ -194,9 +206,11 @@ local function Snapshot(reason)
     account   = call("GetDisplayName"),
     server    = call("GetWorldName"),
     -- context
-    zoneId    = call("GetZoneId", call("GetUnitZoneIndex", "player")),
+    zoneId    = zoneIndex and call("GetZoneId", zoneIndex) or nil,
     classId   = call("GetUnitClassId", "player"),
+    className = call("GetUnitClass", "player"),
     raceId    = call("GetUnitRaceId", "player"),
+    raceName  = call("GetUnitRace", "player"),
     level     = call("GetUnitLevel", "player"),
     cpRank    = call("GetUnitChampionPoints", "player"),
     role      = call("GetGroupMemberSelectedRole", "player"),
@@ -208,6 +222,13 @@ local function Snapshot(reason)
     effects   = tryCapture("longTermEffects", captureLongTermEffects),
     bars      = tryCapture("bars", captureBars),
   }
+
+  if not snap.ts or not snap.char then
+    if SV.verbose and type(d) == "function" then
+      d("[ESOTK] snapshot skipped: missing timestamp or character name.")
+    end
+    return
+  end
 
   local snaps = SV.snapshots
   snaps[#snaps + 1] = snap

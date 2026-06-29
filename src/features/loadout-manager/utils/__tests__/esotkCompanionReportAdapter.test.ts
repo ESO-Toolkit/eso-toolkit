@@ -13,7 +13,10 @@ const report: MatchableReport = {
     { id: 1, name: 'Casts-A-Lot', server: 'NA' },
     { id: 2, name: 'Tanky', server: 'NA' },
   ],
-  fights: [{ id: 'f1', startTime: 0, endTime: 5 * 60 * 1000 }],
+  fights: [
+    { id: 'f1', startTime: 0, endTime: 5 * 60 * 1000 },
+    { id: 'f2', startTime: 30 * 60 * 1000, endTime: 35 * 60 * 1000 },
+  ],
 };
 
 const snapshot: CompanionSnapshot = {
@@ -56,6 +59,28 @@ describe('buildCompanionBuildsForReport', () => {
     }).get(1)!;
     // 7200 + 11030 ≈ on cap → good
     expect(build.coaching.find((i) => i.id === 'penetration')!.severity).toBe('good');
+  });
+
+  it('passes the target fight through to snapshot matching', () => {
+    const firstFightSnapshot: CompanionSnapshot = {
+      ts: REPORT_START_S + 5 * 60 + 2,
+      char: 'Casts-A-Lot',
+      server: 'NA',
+      stats: { physicalPen: 5000 },
+    };
+    const secondFightSnapshot: CompanionSnapshot = {
+      ts: REPORT_START_S + 35 * 60 + 2,
+      char: 'Casts-A-Lot',
+      server: 'NA',
+      stats: { physicalPen: PVE_PENETRATION_CAP },
+    };
+
+    const build = buildCompanionBuildsForReport([firstFightSnapshot, secondFightSnapshot], report, {
+      targetFightId: 'f2',
+    }).get(1)!;
+
+    expect(build.snapshot).toBe(secondFightSnapshot);
+    expect(build.fightId).toBe('f2');
   });
 
   it('returns an empty map when nothing matches', () => {

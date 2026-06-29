@@ -15,13 +15,13 @@ uploaded log (by character + server + timestamp) and overlays the build on the r
 
 ## What it captures
 
-| Field | Why it's a gap |
-|---|---|
-| **Champion points** — full per-star allocation, the 12 slotted stars, total | The log has CP *rank* only, never the allocation. **The headline feature.** |
-| **Final stats** — max mag/stam/health, spell/weapon damage, crit, **penetration**, recovery, resistances | Computed client-side, never logged. Powers ESOTK's "you're over the 18,200 pen cap" coaching. |
-| **Attributes** — Magicka/Health/Stamina split | Not logged. |
-| **Long-term effects** — raw buff IDs (mundus is permanent, food is long) | ESOTK resolves mundus/food by ID (language-agnostic). |
-| **Both action bars** — front/back ability IDs | Lets ESOTK derive subclass skill lines and verify the matched actor. |
+| Field                                                                                                                                                | Why it's a gap                                                                                |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| **Champion points** — full per-star allocation, the 12 slotted stars, total                                                                          | The log has CP _rank_ only, never the allocation. **The headline feature.**                   |
+| **Final stats** — max mag/stam/health, spell/weapon damage, crit chance, crit damage when exposed by the API, **penetration**, recovery, resistances | Computed client-side, never logged. Powers ESOTK's "you're over the 18,200 pen cap" coaching. |
+| **Attributes** — Magicka/Health/Stamina split                                                                                                        | Not logged.                                                                                   |
+| **Long-term effects** — raw buff IDs (mundus is permanent, food is long)                                                                             | ESOTK resolves mundus/food by ID (language-agnostic).                                         |
+| **Both action bars** — front/back ability IDs                                                                                                        | Lets ESOTK derive subclass skill lines and verify the matched actor.                          |
 
 ## Install
 
@@ -50,14 +50,15 @@ ESOTKCompanionSV = { Default = { ["@account"] = { ["$AccountWide"] = {
   schemaVersion = 1, season = "U50", enabled = true,
   snapshots = { [1] = {
     ts = 1749384000, char = "Charname", account = "@account", server = "NA",
-    zoneId = 1196, classId = 6, raceId = 4, level = 50, cpRank = 3600,
+    zoneId = 1196, classId = 6, className = "Arcanist",
+    raceId = 4, raceName = "Khajiit", level = 50, cpRank = 3600,
     role = 1, reason = "combatEnd",
     cp = {
       total = 3600,
       disciplines = { [<disciplineId>] = { id=, type=, spent=, skills = { [<skillId>] = <points> } } },
       slotted = { [1] = <skillId>, … [12] = <skillId> },
     },
-    stats  = { spellDamage=, physicalPen=, weaponCrit=, … },
+    stats  = { spellDamage=, physicalPen=, weaponCrit=, critDamage=, … },
     attrs  = { magicka=0, health=64, stamina=0 },
     effects = { { id=13984, name="Boon: The Lover", duration=0 }, … },
     bars   = { front = { [3]=, …, [8]= }, back = { … } },
@@ -69,18 +70,18 @@ ESOTKCompanionSV = { Default = { ["@account"] = { ["$AccountWide"] = {
 
 Verified against real add-on source / API references (not guessed):
 
-| Call | Status | Source |
-|---|---|---|
-| `GetNumPointsSpentOnChampionSkill(skillId)` — **single arg** | ✅ verified | DynamicCP `src/API.lua` |
-| `GetChampionSkillName(skillId)` — single arg | ✅ verified | DynamicCP `src/API.lua` |
-| Slotted stars: `GetSlotBoundId(slot, HOTBAR_CATEGORY_CHAMPION)`, slots 1–12 (Craft 1-4 / Warfare 5-8 / Fitness 9-12) | ✅ verified | DynamicCP `OFFSETS` |
-| `GetAttributeSpentPoints(attributeType)` → points | ✅ verified | eso-api dump |
-| `GetItemLinkSetInfo(link, equipped)` → hasSet,…,numEquipped,maxEquipped,setId · `GetItemLink(BAG_WORN, slot)` | ✅ verified | ESOUI wiki / forums |
-| Mundus = buff-based via `GetUnitBuffInfo` ability id (no direct getter) | ✅ verified | ESOUI |
-| Potion: `GetSlotItemLink(quickslot)` | ✅ verified | ESOUI |
-| `GetUnitPower(unitTag, powerType)` → current,max,effectiveMax | ✅ verified | UESP |
+| Call                                                                                                                                                                                                      | Status                             | Source                          |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- | ------------------------------- |
+| `GetNumPointsSpentOnChampionSkill(skillId)` — **single arg**                                                                                                                                              | ✅ verified                        | DynamicCP `src/API.lua`         |
+| `GetChampionSkillName(skillId)` — single arg                                                                                                                                                              | ✅ verified                        | DynamicCP `src/API.lua`         |
+| Slotted stars: `GetSlotBoundId(slot, HOTBAR_CATEGORY_CHAMPION)`, slots 1–12 (Craft 1-4 / Warfare 5-8 / Fitness 9-12)                                                                                      | ✅ verified                        | DynamicCP `OFFSETS`             |
+| `GetAttributeSpentPoints(attributeType)` → points                                                                                                                                                         | ✅ verified                        | eso-api dump                    |
+| `GetItemLinkSetInfo(link, equipped)` → hasSet,…,numEquipped,maxEquipped,setId · `GetItemLink(BAG_WORN, slot)`                                                                                             | ✅ verified                        | ESOUI wiki / forums             |
+| Mundus = buff-based via `GetUnitBuffInfo` ability id (no direct getter)                                                                                                                                   | ✅ verified                        | ESOUI                           |
+| Potion: `GetSlotItemLink(quickslot)`                                                                                                                                                                      | ✅ verified                        | ESOUI                           |
+| `GetUnitPower(unitTag, powerType)` → current,max,effectiveMax                                                                                                                                             | ✅ verified                        | UESP                            |
 | **Discipline enumeration**: `GetNumChampionDisciplines()`, `GetChampionDisciplineId(index)`, `GetNumChampionDisciplineSkills(index)`, `GetChampionSkillId(index, index)`, `GetChampionDisciplineType(id)` | ✅ verified — **note index vs id** | esoui `championdatamanager.lua` |
-| `STAT_*` constants (spell/weapon dmg, crit, pen, regen, resist, max) | ✅ verified (names) | esoui API constants |
+| `STAT_*` constants (spell/weapon dmg, crit, pen, regen, resist, max)                                                                                                                                      | ✅ verified (names)                | esoui API constants             |
 
 > **Gotcha confirmed from source:** `GetNumChampionDisciplineSkills` and
 > `GetChampionSkillId` take the discipline **index**, while `GetChampionDisciplineType`

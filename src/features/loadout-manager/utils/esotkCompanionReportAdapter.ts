@@ -40,6 +40,8 @@ export interface CompanionBuildForPlayer {
 }
 
 export interface BuildCompanionBuildsOptions {
+  /** Current report fight id. When supplied, picks snapshots nearest to that fight. */
+  targetFightId?: number | string;
   /** Coaching options (penetration target, assumed group pen, …). */
   coaching?: CoachingOptions;
 }
@@ -56,7 +58,9 @@ export function buildCompanionBuildsForReport(
   const out = new Map<MatchableActor['id'], CompanionBuildForPlayer>();
   if (snapshots.length === 0 || report.actors.length === 0) return out;
 
-  const { matches } = matchCompanionSnapshots(snapshots, report);
+  const { matches } = matchCompanionSnapshots(snapshots, report, {
+    targetFightId: opts.targetFightId,
+  });
   for (const [actorId, match] of matches) {
     out.set(actorId, {
       championPoints: buildChampionPointsViewModel(match.snapshot.championPoints),

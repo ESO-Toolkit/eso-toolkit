@@ -19,8 +19,8 @@ export const PVE_PENETRATION_CAP = 18200;
 export const STANDARD_GROUP_PEN = 11030;
 /** Crit damage hard cap (percent bonus over base); total crit hit = 225%. */
 export const CRIT_DAMAGE_CAP = 125;
-/** Crit rating per 1% crit chance. */
-export const CRIT_RATING_PER_PERCENT = 21918;
+/** Crit rating corresponding to 100 percentage points of crit chance. */
+export const CRIT_RATING_FOR_100_PERCENT = 21918;
 
 export type CoachingSeverity = 'good' | 'info' | 'warn' | 'error';
 
@@ -50,7 +50,7 @@ export interface CoachingOptions {
 }
 
 function critChancePercent(rating: number): number {
-  return Math.round((rating / CRIT_RATING_PER_PERCENT) * 1000) / 10; // one decimal
+  return Math.round((rating / CRIT_RATING_FOR_100_PERCENT) * 1000) / 10; // one decimal
 }
 
 function penetrationInsight(stats: CompanionStats, opts: CoachingOptions): CoachingInsight | null {

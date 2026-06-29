@@ -86,7 +86,9 @@ export interface CompanionSnapshot {
   server?: string;
   zoneId?: number;
   classId?: number;
+  className?: string;
   raceId?: number;
+  raceName?: string;
   level?: number;
   cpRank?: number;
   role?: number;
@@ -249,7 +251,9 @@ function normalizeSnapshot(v: LuaValue): CompanionSnapshot | null {
     server: asString(v.server),
     zoneId: asNumber(v.zoneId),
     classId: asNumber(v.classId),
+    className: asString(v.className),
     raceId: asNumber(v.raceId),
+    raceName: asString(v.raceName),
     level: asNumber(v.level),
     cpRank: asNumber(v.cpRank),
     role: asNumber(v.role),

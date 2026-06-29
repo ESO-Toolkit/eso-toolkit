@@ -730,7 +730,7 @@ ESOTKCompanionSV = { ["Default"] = { ["@account"] = { ["$AccountWide"] = {
     ts      = 1749384000,                -- GetTimeStamp() — UTC match key (§15)
     char    = "Charname", server = "NA", -- match key vs masterData.actors
     zoneId  = 1196, zone = "Crimson Veldt",
-    classId = 6, raceId = 4, role = "dps",
+    classId = 6, className = "Arcanist", raceId = 4, raceName = "Khajiit", role = "dps",
     -- gaps the log can't see:
     cp = { warfare = { [starId]=pts }, fitness = {…}, craft = {…},
            slotted = { [1]=starId, …, [12]=starId } },

@@ -49,10 +49,8 @@ describe('matchCompanionSnapshots', () => {
     const near = snap({ ts: REPORT_START_S + 31 * 60, char: 'Casts-A-Lot' });
     const far = snap({ ts: REPORT_START_S + 2 * 60, char: 'Casts-A-Lot' });
     const { matches } = matchCompanionSnapshots([far, near], report);
-    // both are in-window (distance 0); the matcher keeps the first 0-distance hit,
-    // so assert it matched one of them and reported zero distance
     expect(matches.get(1)?.distanceMs).toBe(0);
-    expect([near, far]).toContain(matches.get(1)?.snapshot);
+    expect(matches.get(1)?.snapshot).toBe(near);
   });
 
   it('rejects server mismatch', () => {
@@ -60,6 +58,32 @@ describe('matchCompanionSnapshots', () => {
     const { matches, unmatched } = matchCompanionSnapshots([s], report);
     expect(matches.has(1)).toBe(false);
     expect(unmatched).toContain(s);
+  });
+
+  it('matches server names case-insensitively', () => {
+    const s = snap({ ts: REPORT_START_S + 60, char: 'Casts-A-Lot', server: 'na' });
+    const { matches } = matchCompanionSnapshots([s], report);
+    expect(matches.get(1)?.snapshot).toBe(s);
+  });
+
+  it('uses the target fight to select the correct combat-end snapshot', () => {
+    const firstFight = snap({
+      ts: REPORT_START_S + 5 * 60 + 2,
+      char: 'Casts-A-Lot',
+      server: 'NA',
+    });
+    const secondFight = snap({
+      ts: REPORT_START_S + 35 * 60 + 2,
+      char: 'Casts-A-Lot',
+      server: 'NA',
+    });
+
+    const { matches } = matchCompanionSnapshots([firstFight, secondFight], report, {
+      targetFightId: 'f2',
+    });
+
+    expect(matches.get(1)?.snapshot).toBe(secondFight);
+    expect(matches.get(1)?.fightId).toBe('f2');
   });
 
   it('rejects snapshots outside the report window (beyond slop)', () => {

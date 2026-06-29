@@ -22,7 +22,9 @@ ESOTKCompanionSV =
                         ["server"] = "NA",
                         ["zoneId"] = 1196,
                         ["classId"] = 6,
+                        ["className"] = "Arcanist",
                         ["raceId"] = 4,
+                        ["raceName"] = "Khajiit",
                         ["level"] = 50,
                         ["cpRank"] = 3600,
                         ["role"] = 1,
@@ -56,6 +58,7 @@ ESOTKCompanionSV =
                             ["spellDamage"] = 4500,
                             ["physicalPen"] = 18200,
                             ["weaponCrit"] = 8000,
+                            ["critDamage"] = 125,
                         },
                         ["attrs"] =
                         {
@@ -134,6 +137,7 @@ describe('parseESOTKCompanionSavedVariables', () => {
     expect(snap.stats!.spellDamage).toBe(4500);
     expect(snap.stats!.physicalPen).toBe(18200);
     expect(snap.stats!.weaponCrit).toBe(8000);
+    expect(snap.stats!.critDamage).toBe(125);
     expect(snap.attributes).toEqual({ magicka: 0, health: 0, stamina: 64 });
   });
 
@@ -142,6 +146,10 @@ describe('parseESOTKCompanionSavedVariables', () => {
     expect(snap.char).toBe('Casts-A-Lot');
     expect(snap.server).toBe('NA');
     expect(snap.ts).toBe(1749384000);
+    expect(snap.classId).toBe(6);
+    expect(snap.className).toBe('Arcanist');
+    expect(snap.raceId).toBe(4);
+    expect(snap.raceName).toBe('Khajiit');
     expect(snap.effects).toEqual([{ id: 13984, name: 'Boon: The Lover', duration: 0 }]);
     expect(snap.bars!.front).toEqual({ 3: 28800, 4: 38901 });
     expect(snap.bars!.back).toEqual({ 3: 46324 });
