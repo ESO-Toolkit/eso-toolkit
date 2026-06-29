@@ -29,6 +29,7 @@ const snapshot: CompanionSnapshot = {
     slotted: { 5: 25 },
   },
   stats: { physicalPen: PVE_PENETRATION_CAP + 3200 },
+  effects: [{ id: 13984, name: 'Boon: The Lover', duration: 0 }],
 };
 
 describe('buildCompanionBuildsForReport', () => {
@@ -44,6 +45,8 @@ describe('buildCompanionBuildsForReport', () => {
     expect(build.championPoints!.total).toBe(3600);
     expect(build.championPoints!.allocated[0].name).toBe('Deadly Aim');
     expect(build.coaching.find((i) => i.id === 'penetration')!.severity).toBe('warn');
+    expect(build.stats).toBe(snapshot.stats);
+    expect(build.effects).toBe(snapshot.effects);
     expect(build.fightId).toBe('f1');
     expect(build.snapshot).toBe(snapshot);
   });

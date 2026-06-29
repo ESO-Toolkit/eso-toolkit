@@ -33,6 +33,10 @@ export interface CompanionBuildForPlayer {
   championPoints: ChampionPointsViewModel | null;
   /** Stat-aware coaching insights (penetration vs cap, crit caps, …). */
   coaching: CoachingInsight[];
+  /** Final sheet stats captured by the add-on. */
+  stats?: CompanionSnapshot['stats'];
+  /** Long-term/self effects captured by the add-on (food, mundus, potion clusters). */
+  effects?: CompanionSnapshot['effects'];
   /** The snapshot this was built from (raw stats/effects available for detail views). */
   snapshot: CompanionSnapshot;
   /** The fight the snapshot best matched, if any. */
@@ -65,6 +69,8 @@ export function buildCompanionBuildsForReport(
     out.set(actorId, {
       championPoints: buildChampionPointsViewModel(match.snapshot.championPoints),
       coaching: computeStatCoaching(match.snapshot.stats, opts.coaching),
+      stats: match.snapshot.stats,
+      effects: match.snapshot.effects,
       snapshot: match.snapshot,
       fightId: match.fightId,
     });

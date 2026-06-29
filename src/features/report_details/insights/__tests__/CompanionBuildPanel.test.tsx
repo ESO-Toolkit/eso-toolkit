@@ -47,4 +47,32 @@ describe('CompanionBuildPanel', () => {
     expect(screen.getByText('Over the penetration cap')).toBeInTheDocument();
     expect(screen.getByText(/3,200 over/)).toBeInTheDocument();
   });
+
+  it('renders captured consumables and sheet stats from companion effects', () => {
+    render(
+      <CompanionBuildPanel
+        championPoints={null}
+        coaching={[]}
+        stats={{ physicalPen: 12345, weaponCrit: 10959, critDamage: 125 }}
+        effects={[
+          { id: 13984, name: 'Boon: The Shadow', duration: 0 },
+          { id: 9998, name: 'Bewitched Sugar Skulls', duration: 3_600_000 },
+          { id: 68405, name: 'Major Fortitude', duration: 47_000 },
+          { id: 68406, name: 'Major Intellect', duration: 47_000 },
+          { id: 68408, name: 'Major Endurance', duration: 47_000 },
+        ]}
+      />,
+    );
+
+    expect(screen.getByText('Captured Buffs')).toBeInTheDocument();
+    expect(screen.getByText('Food: Bewitched Sugar Skulls')).toBeInTheDocument();
+    expect(screen.getByText('Mundus: Shadow')).toBeInTheDocument();
+    expect(
+      screen.getByText('Potion: Tri-Stat Potion (Health, Magicka & Stamina)'),
+    ).toBeInTheDocument();
+    expect(screen.getByText('Captured Stats')).toBeInTheDocument();
+    expect(screen.getByText('Physical Pen: 12,345')).toBeInTheDocument();
+    expect(screen.getByText('Weapon Crit: 50%')).toBeInTheDocument();
+    expect(screen.getByText('Crit Damage: 125%')).toBeInTheDocument();
+  });
 });

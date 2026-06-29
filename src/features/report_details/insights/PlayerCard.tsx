@@ -21,8 +21,7 @@ import type { Theme } from '@mui/material/styles';
 import React, { useCallback, useState } from 'react';
 import { useSelector } from 'react-redux';
 
-import type { ChampionPointsViewModel } from '@/features/loadout-manager/utils/esotkCompanionChampionPoints';
-import type { CoachingInsight } from '@/features/loadout-manager/utils/esotkCompanionCoaching';
+import type { CompanionBuildForPlayer } from '@/features/loadout-manager/utils/esotkCompanionReportAdapter';
 import { abilityIconUrl } from '@/utils/abilityIconCorrections';
 import { getArmorWeightCounts } from '@/utils/armorUtils';
 import { encodeBuildToURL } from '@/utils/buildEncoding';
@@ -183,7 +182,10 @@ interface PlayerCardProps {
    * stat-aware coaching) that ESO Logs can't see. Optional — when absent the panel
    * renders nothing, so existing cards are unaffected.
    */
-  companionBuild?: { championPoints: ChampionPointsViewModel | null; coaching: CoachingInsight[] };
+  companionBuild?: Pick<
+    CompanionBuildForPlayer,
+    'championPoints' | 'coaching' | 'stats' | 'effects'
+  >;
 }
 
 // Helper function to consolidate build issues
@@ -2028,6 +2030,8 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                     <CompanionBuildPanel
                       championPoints={companionBuild.championPoints}
                       coaching={companionBuild.coaching}
+                      stats={companionBuild.stats}
+                      effects={companionBuild.effects}
                     />
                   )}
                 </Box>

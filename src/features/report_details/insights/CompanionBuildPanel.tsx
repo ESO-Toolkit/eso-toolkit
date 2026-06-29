@@ -17,14 +17,29 @@ import type {
   CoachingInsight,
   CoachingSeverity,
 } from '@/features/loadout-manager/utils/esotkCompanionCoaching';
+import type {
+  CompanionEffect,
+  CompanionStats,
+} from '@/features/loadout-manager/utils/esotkCompanionParser';
+import { MundusStones } from '@/types/abilities';
 import { ChampionPointTree } from '@/types/champion-points';
+import { detectFoodFromAuras } from '@/utils/foodDetectionUtils';
 import { buildVariantSx } from '@/utils/playerCardStyleUtils';
+import {
+  detectPotionType,
+  describePotionType,
+  type PotionType,
+} from '@/utils/potionDetectionUtils';
 
 export interface CompanionBuildPanelProps {
   /** Champion-point view-model from the ESOTK Companion add-on, or null if none captured. */
   championPoints: ChampionPointsViewModel | null;
   /** Stat-aware coaching insights (penetration vs cap, crit caps, …). */
   coaching: CoachingInsight[];
+  /** Final sheet stats captured by the add-on. */
+  stats?: CompanionStats;
+  /** Long-term/self effects captured by the add-on. */
+  effects?: CompanionEffect[];
 }
 
 const SECTION_TITLE_SX = {
@@ -50,6 +65,72 @@ const SEVERITY_META: Record<
   warn: { color: 'warning', Icon: WarningIcon },
   error: { color: 'error', Icon: ErrorIcon },
 };
+
+const CRIT_RATING_FOR_100_PERCENT = 21_918;
+const MUNDUS_IDS = new Set(
+  Object.values(MundusStones).filter((value): value is number => typeof value === 'number'),
+);
+const MUNDUS_NAME_RX =
+  /^(?:Boon:|Bonus\s*\(2\):)?\s*The\s+(Warrior|Mage|Serpent|Thief|Lady|Steed|Lord|Apprentice|Ritual|Lover|Atronach|Shadow|Tower)\b/i;
+
+function formatNumber(value: number): string {
+  return Math.round(value).toLocaleString();
+}
+
+function critPercent(rating: number): string {
+  const pct = Math.min(100, Math.round((rating / CRIT_RATING_FOR_100_PERCENT) * 1000) / 10);
+  return `${pct}%`;
+}
+
+function effectAuras(effects: CompanionEffect[] | undefined): Array<{ name: string; id: number }> {
+  return effects?.map((effect) => ({ name: effect.name ?? '', id: effect.id })) ?? [];
+}
+
+function detectMundus(effects: CompanionEffect[] | undefined): { name: string; id: number } | null {
+  for (const effect of effects ?? []) {
+    const name = effect.name ?? '';
+    if (!MUNDUS_IDS.has(effect.id) && !MUNDUS_NAME_RX.test(name)) continue;
+    return {
+      id: effect.id,
+      name: name.replace(/^(?:Boon:|Bonus\s*\(2\):)\s*/i, '').trim() || `Mundus ${effect.id}`,
+    };
+  }
+  return null;
+}
+
+function statRows(
+  stats: CompanionStats | undefined,
+): Array<{ id: string; label: string; value: string }> {
+  if (!stats) return [];
+  const rows: Array<{ id: string; label: string; value: string }> = [];
+  const add = (
+    id: string,
+    label: string,
+    value: number | undefined,
+    formatter = formatNumber,
+  ): void => {
+    if (typeof value === 'number') rows.push({ id, label, value: formatter(value) });
+  };
+
+  add('spellDamage', 'Spell Damage', stats.spellDamage);
+  add('weaponDamage', 'Weapon Damage', stats.weaponDamage);
+  add('spellCrit', 'Spell Crit', stats.spellCrit, critPercent);
+  add('weaponCrit', 'Weapon Crit', stats.weaponCrit, critPercent);
+  add('critDamage', 'Crit Damage', stats.critDamage, (value) => `${formatNumber(value)}%`);
+  add('spellPen', 'Spell Pen', stats.spellPen);
+  add('physicalPen', 'Physical Pen', stats.physicalPen);
+  add('maxMagicka', 'Max Magicka', stats.maxMagicka);
+  add('maxStamina', 'Max Stamina', stats.maxStamina);
+  add('maxHealth', 'Max Health', stats.maxHealth);
+  add('magickaRegen', 'Mag Regen', stats.magickaRegen);
+  add('staminaRegen', 'Stam Regen', stats.staminaRegen);
+  add('healthRegen', 'Health Regen', stats.healthRegen);
+  add('physicalResist', 'Physical Resist', stats.physicalResist);
+  add('spellResist', 'Spell Resist', stats.spellResist);
+  add('critResist', 'Crit Resist', stats.critResist);
+
+  return rows;
+}
 
 function StarChips({
   stars,
@@ -89,19 +170,29 @@ function StarChips({
 export const CompanionBuildPanel: React.FC<CompanionBuildPanelProps> = ({
   championPoints,
   coaching,
+  stats,
+  effects,
 }) => {
   const theme = useTheme();
+  const rows = React.useMemo(() => statRows(stats), [stats]);
+  const auras = React.useMemo(() => effectAuras(effects), [effects]);
+  const food = React.useMemo(() => detectFoodFromAuras(auras), [auras]);
+  const mundus = React.useMemo(() => detectMundus(effects), [effects]);
+  const potionType = React.useMemo<PotionType>(() => detectPotionType(auras, 0), [auras]);
+  const hasPotion = potionType !== 'none' && potionType !== 'unknown';
 
   const hasCp =
     championPoints !== null &&
     (championPoints.allocated.length > 0 || championPoints.slotted.length > 0);
   const hasCoaching = coaching.length > 0;
-  if (!hasCp && !hasCoaching) return null;
+  const hasStats = rows.length > 0;
+  const hasConsumables = Boolean(food || mundus || hasPotion);
+  if (!hasCp && !hasCoaching && !hasStats && !hasConsumables) return null;
 
   return (
     <Box sx={{ mt: 1 }} data-testid="companion-build-panel">
       {hasCp && championPoints && (
-        <Box sx={{ mb: hasCoaching ? 2 : 0 }}>
+        <Box sx={{ mb: hasConsumables || hasStats || hasCoaching ? 2 : 0 }}>
           <Typography variant="body2" sx={SECTION_TITLE_SX}>
             Champion Points
             {championPoints.total !== undefined && (
@@ -154,6 +245,60 @@ export const CompanionBuildPanel: React.FC<CompanionBuildPanelProps> = ({
               </Box>
             </Box>
           )}
+        </Box>
+      )}
+
+      {hasConsumables && (
+        <Box sx={{ mb: hasStats || hasCoaching ? 2 : 0 }}>
+          <Typography variant="body2" sx={SECTION_TITLE_SX}>
+            Captured Buffs
+          </Typography>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
+            {food && (
+              <Chip
+                size="small"
+                label={`Food: ${food.name || food.id}`}
+                title={`Food buff captured by ESOTK Companion (ID: ${food.id})`}
+                sx={{ '& .MuiChip-label': { fontSize: '0.58rem' } }}
+              />
+            )}
+            {mundus && (
+              <Chip
+                size="small"
+                label={`Mundus: ${mundus.name.replace(/^The\s+/i, '')}`}
+                title={`Mundus captured by ESOTK Companion (ID: ${mundus.id})`}
+                sx={{ '& .MuiChip-label': { fontSize: '0.58rem' } }}
+              />
+            )}
+            {hasPotion && (
+              <Chip
+                size="small"
+                label={`Potion: ${describePotionType(potionType)}`}
+                title="Potion-type buff cluster captured by ESOTK Companion"
+                sx={{ '& .MuiChip-label': { fontSize: '0.58rem' } }}
+              />
+            )}
+          </Box>
+        </Box>
+      )}
+
+      {hasStats && (
+        <Box sx={{ mb: hasCoaching ? 2 : 0 }}>
+          <Typography variant="body2" sx={SECTION_TITLE_SX}>
+            Captured Stats
+          </Typography>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
+            {rows.map((row) => (
+              <Chip
+                key={row.id}
+                size="small"
+                variant="outlined"
+                label={`${row.label}: ${row.value}`}
+                title={`${row.label} captured by ESOTK Companion`}
+                sx={{ '& .MuiChip-label': { fontSize: '0.58rem' } }}
+              />
+            ))}
+          </Box>
         </Box>
       )}
 
