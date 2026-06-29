@@ -17,11 +17,13 @@ import {
 
 import type { GrimoireData } from '../../../components/ScribingSkillsDisplay';
 import { PlayerAvatarsProvider } from '../../../contexts/PlayerAvatarsContext';
+import { CLASS_MASTERY_LINE_NAME } from '../../../data/skill-lines/class/classMastery';
 import {
   CLASS_SKILL_LINES,
   getDefaultLinesForClass,
 } from '../../../features/build-editor/data/esoStaticData';
 import type { ESOClass } from '../../../features/build-editor/types/build.types';
+import { sanitizeClassMasteryPicks } from '../../../features/build-editor/utils/classMasteryTransfer';
 import {
   useCastEvents,
   useCombatantInfoEvents,
@@ -124,7 +126,7 @@ const ESO_CLASS_LABEL: Record<Exclude<ESOClass, 'any-class'>, string> = {
   arcanist: 'Arcanist',
 };
 
-function classAnalysisFromKalpaEvidence(
+export function classAnalysisFromKalpaEvidence(
   evidence?: KalpaPlayerBuildEvidence,
 ): ClassAnalysisResult | undefined {
   const esoClass = classNameToEsoClass(evidence?.className);
@@ -133,15 +135,25 @@ function classAnalysisFromKalpaEvidence(
   }
 
   const className = ESO_CLASS_LABEL[esoClass];
-  const skillLines = getDefaultLinesForClass(esoClass)
+  const classMasteryPassives = sanitizeClassMasteryPicks(evidence?.classMasteryPassives, esoClass);
+  const skillLines: ClassAnalysisResult['skillLines'] = getDefaultLinesForClass(esoClass)
     .map((lineId) => CLASS_SKILL_LINES.find((line) => line.id === lineId))
     .filter((line): line is (typeof CLASS_SKILL_LINES)[number] => line != null)
     .map((line) => ({
       skillLine: line.label,
       className,
       count: 0,
-      skillIds: new Set(evidence?.classMasteryPassives ?? []),
+      skillIds: new Set<number>(),
     }));
+
+  if (classMasteryPassives.length > 0) {
+    skillLines.push({
+      skillLine: CLASS_MASTERY_LINE_NAME,
+      className,
+      count: classMasteryPassives.length,
+      skillIds: new Set(classMasteryPassives),
+    });
+  }
 
   return skillLines.length > 0
     ? {
