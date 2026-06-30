@@ -350,6 +350,42 @@ describe('kalpaBuildEvidence', () => {
     );
   });
 
+  it('refreshes stale session storage from the Worker when remote evidence is available', async () => {
+    const staleEvidence: KalpaBuildEvidence = {
+      ...evidence,
+      extractorVersion: 1,
+      players: [
+        {
+          ...evidence.players[0],
+          unitOccurrenceId: undefined,
+          championPoints: 1700,
+        },
+      ],
+    };
+    const freshEvidence: KalpaBuildEvidence = {
+      ...evidence,
+      extractorVersion: 2,
+      players: [
+        {
+          ...evidence.players[0],
+          unitOccurrenceId: '1',
+          championPoints: 1800,
+        },
+      ],
+    };
+    sessionStorage.setItem('kalpa.buildEvidence.REPORT123', JSON.stringify(staleEvidence));
+    globalThis.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => freshEvidence,
+    }) as unknown as typeof fetch;
+
+    await expect(fetchKalpaBuildEvidenceForReport('REPORT123')).resolves.toEqual(freshEvidence);
+    expect(loadKalpaBuildEvidenceForReport('REPORT123', { search: '', hash: '' })).toEqual(
+      freshEvidence,
+    );
+  });
+
   it('ignores missing or mismatched persisted report evidence', async () => {
     globalThis.fetch = jest.fn().mockResolvedValueOnce({
       ok: false,

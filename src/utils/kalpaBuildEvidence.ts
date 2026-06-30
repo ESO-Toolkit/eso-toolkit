@@ -179,8 +179,6 @@ export async function fetchKalpaBuildEvidenceForReport(
   if (!reportCode) return undefined;
 
   const local = loadKalpaBuildEvidenceForReport(reportCode);
-  if (local) return local;
-
   const controller = new AbortController();
   const timer = window.setTimeout(() => controller.abort(), KALPA_BUILD_EVIDENCE_FETCH_TIMEOUT_MS);
   try {
@@ -191,16 +189,16 @@ export async function fetchKalpaBuildEvidenceForReport(
         signal: controller.signal,
       },
     );
-    if (res.status === 404) return undefined;
-    if (!res.ok) return undefined;
+    if (res.status === 404) return local;
+    if (!res.ok) return local;
 
     const evidence = validateKalpaBuildEvidence(await res.json());
-    if (!evidence || !evidenceBelongsToReport(evidence, reportCode)) return undefined;
+    if (!evidence || !evidenceBelongsToReport(evidence, reportCode)) return local;
 
     safeSessionStorageSet(storageKeyForReport(reportCode), JSON.stringify(evidence));
     return evidence;
   } catch {
-    return undefined;
+    return local;
   } finally {
     window.clearTimeout(timer);
   }
