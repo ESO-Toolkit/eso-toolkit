@@ -56,6 +56,7 @@ function makeProps(overrides: Partial<PlayersPanelViewProps> = {}): PlayersPanel
     scribingSkillsByPlayer: {},
     buildIssuesByPlayer: {},
     classAnalysisByPlayer: {},
+    kalpaBuildEvidenceByPlayer: {},
     deathsByPlayer: {},
     resurrectsByPlayer: {},
     cpmByPlayer: {},
