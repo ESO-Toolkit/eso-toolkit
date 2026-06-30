@@ -31,6 +31,14 @@ interface GearDetailsPanelProps {
   onPlayerChange: (playerId: string | number) => void;
 }
 
+const WEAPON_SLOTS = [10, 11, 12, 13];
+const ARMOR_SLOTS = [0, 1, 2, 3, 4, 5, 6];
+const JEWELRY_SLOTS = [7, 8, 9];
+
+const isWeaponSlot = (slot: number): boolean => WEAPON_SLOTS.includes(slot);
+const isArmorSlot = (slot: number): boolean => ARMOR_SLOTS.includes(slot);
+const isJewelrySlot = (slot: number): boolean => JEWELRY_SLOTS.includes(slot);
+
 // Helper function to get slot name from slot number
 const getSlotName = (slot: number): string => {
   const slotNames: Record<number, string> = {
@@ -54,14 +62,68 @@ const getSlotName = (slot: number): string => {
 
 // Helper function to get slot icon
 const getSlotIcon = (slot: number): string => {
-  const weaponSlots = [10, 11, 12, 13];
-  const armorSlots = [0, 1, 2, 3, 4, 5, 6];
-  const jewelrySlots = [7, 8, 9];
-
-  if (weaponSlots.includes(slot)) return '⚔️';
-  if (armorSlots.includes(slot)) return '🛡️';
-  if (jewelrySlots.includes(slot)) return '💍';
+  if (isWeaponSlot(slot)) return '⚔️';
+  if (isArmorSlot(slot)) return '🛡️';
+  if (isJewelrySlot(slot)) return '💍';
   return '❓';
+};
+
+const getArmorTypeLabel = (type: number): string | null => {
+  switch (type) {
+    case ArmorType.LIGHT:
+      return 'Light';
+    case ArmorType.MEDIUM:
+      return 'Medium';
+    case ArmorType.HEAVY:
+      return 'Heavy';
+    case ArmorType.JEWELRY:
+      return 'Jewelry';
+    default:
+      return null;
+  }
+};
+
+const getWeaponTypeLabel = (type: number): string | null => {
+  switch (type) {
+    case WeaponType.AXE:
+      return 'Axe';
+    case WeaponType.MACE:
+      return 'Mace';
+    case WeaponType.SWORD:
+      return 'Sword';
+    case WeaponType.TWO_HANDED_SWORD:
+      return '2H Sword';
+    case WeaponType.TWO_HANDED_AXE:
+      return '2H Axe';
+    case WeaponType.MAUL:
+      return 'Maul';
+    case WeaponType.DAGGER:
+      return 'Dagger';
+    case WeaponType.INFERNO_STAFF:
+      return 'Inferno Staff';
+    case WeaponType.FROST_STAFF:
+      return 'Frost Staff';
+    case WeaponType.LIGHTNING_STAFF:
+      return 'Lightning Staff';
+    case WeaponType.RESO_STAFF:
+      return 'Resto Staff';
+    case WeaponType.SHIELD:
+      return 'Shield';
+    default:
+      return null;
+  }
+};
+
+const getGearTypeLabel = (gear: PlayerGear): string => {
+  if (isWeaponSlot(gear.slot)) {
+    return getWeaponTypeLabel(gear.type) ?? getArmorTypeLabel(gear.type) ?? '—';
+  }
+
+  if (isArmorSlot(gear.slot) || isJewelrySlot(gear.slot)) {
+    return getArmorTypeLabel(gear.type) ?? getWeaponTypeLabel(gear.type) ?? '—';
+  }
+
+  return getArmorTypeLabel(gear.type) ?? getWeaponTypeLabel(gear.type) ?? '—';
 };
 
 export const GearDetailsPanel: React.FC<GearDetailsPanelProps> = ({
@@ -214,47 +276,8 @@ export const GearDetailsPanel: React.FC<GearDetailsPanelProps> = ({
       {
         id: 'type',
         header: 'Type',
-        accessorFn: (row: Record<string, unknown>) => {
-          const getTypeLabel = (t: number): string => {
-            switch (t) {
-              case ArmorType.LIGHT:
-                return 'Light';
-              case ArmorType.MEDIUM:
-                return 'Medium';
-              case ArmorType.HEAVY:
-                return 'Heavy';
-              case ArmorType.JEWELRY:
-                return 'Jewelry';
-              case WeaponType.AXE:
-                return 'Axe';
-              case WeaponType.MACE:
-                return 'Mace';
-              case WeaponType.SWORD:
-                return 'Sword';
-              case WeaponType.TWO_HANDED_SWORD:
-                return '2H Sword';
-              case WeaponType.TWO_HANDED_AXE:
-                return '2H Axe';
-              case WeaponType.MAUL:
-                return 'Maul';
-              case WeaponType.DAGGER:
-                return 'Dagger';
-              case WeaponType.INFERNO_STAFF:
-                return 'Inferno Staff';
-              case WeaponType.FROST_STAFF:
-                return 'Frost Staff';
-              case WeaponType.LIGHTNING_STAFF:
-                return 'Lightning Staff';
-              case WeaponType.RESO_STAFF:
-                return 'Resto Staff';
-              case WeaponType.SHIELD:
-                return 'Shield';
-              default:
-                return '—';
-            }
-          };
-          return getTypeLabel((row as unknown as PlayerGear).type);
-        },
+        accessorFn: (row: Record<string, unknown>) =>
+          getGearTypeLabel(row as unknown as PlayerGear),
         size: 80,
         cell: (info: CellContext<Record<string, unknown>, unknown>) => (
           <Typography

@@ -1,5 +1,8 @@
 import type { ReportActorFragment } from '@/graphql/gql/graphql';
 import type { CombatantInfoEvent } from '@/types/combatlogEvents';
+import type { PlayerGear } from '@/types/playerDetails';
+
+import setNamesRaw from '../../../data/libsets-set-names.json';
 
 import type { PlayerDetailsWithRole } from './playerDataSlice';
 
@@ -18,6 +21,12 @@ interface BuildFallbackPlayersInput {
   combatantInfoEvents: readonly CombatantInfoEvent[];
   rolesByPlayerId?: Record<number, RoleDetectionResultLike>;
 }
+
+interface LibSetsSetNamesFile {
+  sets: Record<string, Record<string, string>>;
+}
+
+const setNamesData = setNamesRaw as LibSetsSetNamesFile;
 
 const normalizeDisplayName = (displayName: string | null | undefined): string => {
   if (!displayName || displayName === 'nil') {
@@ -39,6 +48,26 @@ const toBroadRole = (role: string | undefined): PlayerDetailsWithRole['role'] =>
       return 'dps';
   }
 };
+
+const resolveSetName = (setId: number | null | undefined): string | undefined => {
+  if (typeof setId !== 'number' || setId <= 0) {
+    return undefined;
+  }
+
+  const names = setNamesData.sets[String(setId)];
+  return names?.en ?? Object.values(names ?? {})[0];
+};
+
+const normalizeFallbackGear = (gear: readonly PlayerGear[] | undefined): PlayerGear[] =>
+  (gear ?? []).map((piece, index) => {
+    const setName = piece.setName ?? resolveSetName(piece.setID);
+    return {
+      ...piece,
+      slot: typeof piece.slot === 'number' ? piece.slot : index,
+      setName,
+      name: piece.name ?? (piece.id ? setName : undefined),
+    };
+  });
 
 const getCandidatePlayerIds = ({
   friendlyPlayerIds,
@@ -128,7 +157,7 @@ export const buildFallbackPlayersFromMasterData = ({
       combatantInfo: {
         stats: [],
         talents: [],
-        gear: latestCombatantInfo?.gear ?? [],
+        gear: normalizeFallbackGear(latestCombatantInfo?.gear),
       },
       role: toBroadRole(rolesByPlayerId[playerId]?.role),
     };
