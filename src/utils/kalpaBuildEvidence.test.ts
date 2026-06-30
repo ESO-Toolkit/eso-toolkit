@@ -253,6 +253,40 @@ describe('kalpaBuildEvidence', () => {
     ).toBe(anonymousEvidence.players[0]);
   });
 
+  it('excludes exact anonymous sidecar rows without blocking reused unit ids', () => {
+    const anonymousEvidence: KalpaBuildEvidence = {
+      ...evidence,
+      players: [
+        {
+          ...evidence.players[0],
+          unitId: '45',
+          characterName: undefined,
+          accountName: undefined,
+          characterId: undefined,
+          className: 'Templar',
+          championPointPassives: [142079, 142092],
+        },
+        {
+          ...evidence.players[0],
+          unitId: '45',
+          characterName: undefined,
+          accountName: undefined,
+          characterId: undefined,
+          className: 'Nightblade',
+          championPointPassives: [142079, 156008],
+        },
+      ],
+    };
+
+    expect(
+      findAnonymousKalpaBuildEvidenceForPlayer(anonymousEvidence, {
+        classNames: ['Nightblade'],
+        championPointPassiveIds: [142079, 156008],
+        excludedPlayers: new Set([anonymousEvidence.players[0]]),
+      }),
+    ).toBe(anonymousEvidence.players[1]);
+  });
+
   it('does not use identified sidecar rows for anonymous matching and can redact identities', () => {
     expect(
       findAnonymousKalpaBuildEvidenceForPlayer(evidence, {

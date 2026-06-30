@@ -857,9 +857,7 @@ export const PlayersPanel: React.FC<PlayersPanelProps> = ({ context: contextOver
       return result;
     }
 
-    const excludedUnitIds = new Set(
-      Object.values(identityKalpaBuildEvidenceByPlayer).map((candidate) => candidate.unitId),
-    );
+    const assignedAnonymousEvidence = new Set<KalpaPlayerBuildEvidence>();
 
     Object.values(playersById).forEach((player) => {
       if (!player?.id || result[String(player.id)]) return;
@@ -871,12 +869,12 @@ export const PlayersPanel: React.FC<PlayersPanelProps> = ({ context: contextOver
         ),
         championPointPassiveIds: publicChampionPointsByPlayer[playerId]?.map((entry) => entry.id),
         scribedSkillIds: publicScribedSkillIdsByPlayer[playerId],
-        excludedUnitIds,
+        excludedPlayers: assignedAnonymousEvidence,
       });
 
       if (!match) return;
       result[playerId] = redactKalpaPlayerIdentity(match);
-      excludedUnitIds.add(match.unitId);
+      assignedAnonymousEvidence.add(match);
     });
 
     return result;

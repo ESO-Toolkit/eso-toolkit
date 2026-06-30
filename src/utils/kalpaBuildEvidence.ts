@@ -54,7 +54,7 @@ export interface KalpaAnonymousMatchSignals {
   classNames?: Array<string | null | undefined>;
   championPointPassiveIds?: number[];
   scribedSkillIds?: number[];
-  excludedUnitIds?: Set<string>;
+  excludedPlayers?: Set<KalpaPlayerBuildEvidence>;
 }
 
 export function classNameToEsoClass(className?: string | null): ESOClass | undefined {
@@ -264,7 +264,7 @@ export function findAnonymousKalpaBuildEvidenceForPlayer(
   if (publicCpIds.length < 2 && publicScribedIds.length === 0) return undefined;
 
   const matches = evidence.players
-    .filter((candidate) => !signals.excludedUnitIds?.has(candidate.unitId))
+    .filter((candidate) => !signals.excludedPlayers?.has(candidate))
     .filter((candidate) => !hasSidecarIdentity(candidate))
     .filter((candidate) => {
       const candidateClass = classNameToEsoClass(candidate.className);
