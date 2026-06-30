@@ -2,11 +2,14 @@ import type { ESOClass } from '@/features/build-editor/types/build.types';
 import type { PlayerDetailsEntry } from '@/types/playerDetails';
 
 import { getRosterHubBaseUrl } from './envUtils';
+import { fromBase64Url, inflateBytes } from './rosterEncoding';
 import { safeSessionStorageGet, safeSessionStorageSet } from './safeStorage';
 
 export const KALPA_BUILD_EVIDENCE_PARAM = 'kalpaBuildEvidence';
+export const KALPA_BUILD_EVIDENCE_DEFLATE_PARAM = 'kalpaBuildEvidenceDeflate';
 export const KALPA_BUILD_EVIDENCE_SOURCE = 'kalpa-native-player-info';
 const KALPA_BUILD_EVIDENCE_FETCH_TIMEOUT_MS = 8_000;
+const MAX_KALPA_BUILD_EVIDENCE_COMPRESSED_BYTES = 256 * 1024;
 
 interface LocationLike {
   search: string;
@@ -133,17 +136,39 @@ export function decodeKalpaBuildEvidenceParam(
   }
 }
 
+export async function decodeKalpaBuildEvidenceDeflateParam(
+  encoded?: string | null,
+): Promise<KalpaBuildEvidence | undefined> {
+  if (!encoded) return undefined;
+
+  try {
+    const bytes = fromBase64Url(encoded);
+    if (bytes.length > MAX_KALPA_BUILD_EVIDENCE_COMPRESSED_BYTES) return undefined;
+    return validateKalpaBuildEvidence(JSON.parse(await inflateBytes(bytes)));
+  } catch {
+    return undefined;
+  }
+}
+
 export function getKalpaEvidenceParamFromLocation(
   locationLike: LocationLike = window.location,
 ): string | null {
-  const searchParam = new URLSearchParams(locationLike.search).get(KALPA_BUILD_EVIDENCE_PARAM);
+  return getLocationQueryParam(KALPA_BUILD_EVIDENCE_PARAM, locationLike);
+}
+
+export function getKalpaEvidenceDeflateParamFromLocation(
+  locationLike: LocationLike = window.location,
+): string | null {
+  return getLocationQueryParam(KALPA_BUILD_EVIDENCE_DEFLATE_PARAM, locationLike);
+}
+
+function getLocationQueryParam(paramName: string, locationLike: LocationLike): string | null {
+  const searchParam = new URLSearchParams(locationLike.search).get(paramName);
   if (searchParam) return searchParam;
 
   const queryStart = locationLike.hash.indexOf('?');
   if (queryStart < 0) return null;
-  return new URLSearchParams(locationLike.hash.slice(queryStart + 1)).get(
-    KALPA_BUILD_EVIDENCE_PARAM,
-  );
+  return new URLSearchParams(locationLike.hash.slice(queryStart + 1)).get(paramName);
 }
 
 export function loadKalpaBuildEvidenceForReport(
@@ -178,7 +203,9 @@ export async function fetchKalpaBuildEvidenceForReport(
 ): Promise<KalpaBuildEvidence | undefined> {
   if (!reportCode) return undefined;
 
-  const local = loadKalpaBuildEvidenceForReport(reportCode);
+  const local =
+    (await loadKalpaBuildEvidenceDeflateForReport(reportCode)) ??
+    loadKalpaBuildEvidenceForReport(reportCode);
   const controller = new AbortController();
   const timer = window.setTimeout(() => controller.abort(), KALPA_BUILD_EVIDENCE_FETCH_TIMEOUT_MS);
   try {
@@ -202,6 +229,18 @@ export async function fetchKalpaBuildEvidenceForReport(
   } finally {
     window.clearTimeout(timer);
   }
+}
+
+async function loadKalpaBuildEvidenceDeflateForReport(
+  reportCode: string,
+  locationLike: LocationLike = window.location,
+): Promise<KalpaBuildEvidence | undefined> {
+  const encodedParam = getKalpaEvidenceDeflateParamFromLocation(locationLike);
+  const decodedParam = await decodeKalpaBuildEvidenceDeflateParam(encodedParam);
+  if (!decodedParam || !evidenceBelongsToReport(decodedParam, reportCode)) return undefined;
+
+  safeSessionStorageSet(storageKeyForReport(reportCode), JSON.stringify(decodedParam));
+  return decodedParam;
 }
 
 export function findKalpaBuildEvidenceForPlayer(

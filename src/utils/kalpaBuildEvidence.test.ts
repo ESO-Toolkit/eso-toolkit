@@ -1,3 +1,6 @@
+import { deflateRawSync } from 'node:zlib';
+import { DecompressionStream as NodeDecompressionStream } from 'node:stream/web';
+
 import type { PlayerDetailsEntry } from '@/types/playerDetails';
 
 import {
@@ -5,15 +8,25 @@ import {
   fetchKalpaBuildEvidenceForReport,
   findAnonymousKalpaBuildEvidenceForPlayer,
   findKalpaBuildEvidenceForPlayer,
+  getKalpaEvidenceDeflateParamFromLocation,
   getKalpaEvidenceParamFromLocation,
-  kalpaRaceIdToBuildRace,
-  kalpaRaceIdToLabel,
+  KALPA_BUILD_EVIDENCE_DEFLATE_PARAM,
   KALPA_BUILD_EVIDENCE_PARAM,
   KALPA_BUILD_EVIDENCE_SOURCE,
+  kalpaRaceIdToBuildRace,
+  kalpaRaceIdToLabel,
   loadKalpaBuildEvidenceForReport,
   redactKalpaPlayerIdentity,
   type KalpaBuildEvidence,
 } from './kalpaBuildEvidence';
+
+const globalWithStreams = globalThis as typeof globalThis & {
+  DecompressionStream?: typeof DecompressionStream;
+};
+
+if (typeof globalWithStreams.DecompressionStream === 'undefined') {
+  globalWithStreams.DecompressionStream = NodeDecompressionStream as typeof DecompressionStream;
+}
 
 jest.mock('./envUtils', () => ({
   getRosterHubBaseUrl: () => 'https://worker.example.test',
@@ -25,6 +38,14 @@ function encodeEvidence(evidence: KalpaBuildEvidence): string {
     (_match, hex: string) => String.fromCharCode(Number.parseInt(hex, 16)),
   );
   return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/u, '');
+}
+
+function encodeDeflateEvidence(evidence: KalpaBuildEvidence): string {
+  return deflateRawSync(JSON.stringify(evidence))
+    .toString('base64')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/u, '');
 }
 
 function player(overrides: Partial<PlayerDetailsEntry>): PlayerDetailsEntry {
@@ -88,6 +109,7 @@ describe('kalpaBuildEvidence', () => {
 
   afterEach(() => {
     globalThis.fetch = originalFetch;
+    window.history.replaceState(null, '', '/');
     jest.restoreAllMocks();
   });
 
@@ -100,6 +122,31 @@ describe('kalpaBuildEvidence', () => {
 
     expect(raw).toBe(encoded);
     expect(decodeKalpaBuildEvidenceParam(raw)).toEqual(evidence);
+  });
+
+  it('reads compressed evidence params from hash-route queries and falls back to them on Worker miss', async () => {
+    const encoded = encodeDeflateEvidence(evidence);
+    const raw = getKalpaEvidenceDeflateParamFromLocation({
+      search: '',
+      hash: `#/report/REPORT123?${KALPA_BUILD_EVIDENCE_DEFLATE_PARAM}=${encoded}`,
+    });
+    expect(raw).toBe(encoded);
+
+    const fetchMock = jest.fn().mockResolvedValue({
+      ok: false,
+      status: 404,
+    });
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+    window.history.replaceState(
+      null,
+      '',
+      `/#/report/REPORT123?${KALPA_BUILD_EVIDENCE_DEFLATE_PARAM}=${encoded}`,
+    );
+
+    await expect(fetchKalpaBuildEvidenceForReport('REPORT123')).resolves.toEqual(evidence);
+    expect(loadKalpaBuildEvidenceForReport('REPORT123', { search: '', hash: '' })).toEqual(
+      evidence,
+    );
   });
 
   it('persists matching report evidence in session storage and reloads it without the URL param', () => {
