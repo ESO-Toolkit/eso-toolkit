@@ -101,6 +101,9 @@ const LazyGearSetTooltipContent: React.FC<{
 
 type TalentTooltipProps = ReturnType<typeof buildTooltipProps>;
 
+const OBSERVED_SKILLS_TOOLTIP =
+  "Inferred from this fight's casts, damage, buffs, debuffs, heals, and resources. This is not an exact slotted bar; unused skills cannot be recovered from public log data.";
+
 /**
  * Renders a talent/skill tooltip's content, resolving the (expensive) rich tooltip props only
  * when this component mounts — i.e. when MUI opens the tooltip on hover. The resolver caches per
@@ -1470,6 +1473,30 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                   <Box sx={{ mb: 1.5 }}>
                     {displayTalents.length > 0 && (
                       <>
+                        {isObservedTalentFallback && (
+                          <Box sx={{ mb: 0.75, display: 'flex', alignItems: 'center' }}>
+                            <Tooltip title={OBSERVED_SKILLS_TOOLTIP} arrow>
+                              <Chip
+                                icon={<InfoIcon sx={{ fontSize: '0.85rem !important' }} />}
+                                label="Observed skills"
+                                size="small"
+                                color="warning"
+                                variant="outlined"
+                                data-testid="observed-skills-chip"
+                                sx={{
+                                  height: 22,
+                                  borderRadius: 1,
+                                  fontSize: '0.68rem',
+                                  fontWeight: 600,
+                                  '& .MuiChip-icon': {
+                                    ml: 0.6,
+                                    mr: -0.25,
+                                  },
+                                }}
+                              />
+                            </Tooltip>
+                          </Box>
+                        )}
                         <Box sx={{ mb: 1.25, flexWrap: 'wrap', gap: 1.25, display: 'flex' }}>
                           {displayTalents.slice(0, 6).map((talent, idx) => {
                             const isUltimate = !isObservedTalentFallback && idx === 5;
@@ -1557,12 +1584,16 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                                         height: isUltimate ? 34 : 32,
                                         border: isUltimate
                                           ? '1.5px solid #b3b3b3f2'
-                                          : theme.palette.mode === 'dark'
-                                            ? '1px solid #b5b8bd59'
-                                            : '1px solid #1e3a8a',
+                                          : isObservedTalentFallback
+                                            ? `1px dashed ${theme.palette.warning.main}`
+                                            : theme.palette.mode === 'dark'
+                                              ? '1px solid #b5b8bd59'
+                                              : '1px solid #1e3a8a',
                                         boxShadow: isUltimate
                                           ? 'inset 0 2px 4px rgb(0 0 0 / 100%), 0 0 0 1px rgb(255 255 255 / 18%), 0 0 10px rgb(255 255 255 / 25%), 0 2px 6px rgb(0 0 0 / 60%)'
-                                          : 'none',
+                                          : isObservedTalentFallback
+                                            ? `0 0 0 2px ${theme.palette.warning.main}22`
+                                            : 'none',
                                       }}
                                     />
                                   </Tooltip>
@@ -1659,12 +1690,16 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                                           height: isUltimate ? 34 : 32,
                                           border: isUltimate
                                             ? '1.5px solid #b3b3b3f2'
-                                            : theme.palette.mode === 'dark'
-                                              ? '1px solid #b5b8bd59'
-                                              : '1px solid #1e3a8a',
+                                            : isObservedTalentFallback
+                                              ? `1px dashed ${theme.palette.warning.main}`
+                                              : theme.palette.mode === 'dark'
+                                                ? '1px solid #b5b8bd59'
+                                                : '1px solid #1e3a8a',
                                           boxShadow: isUltimate
                                             ? 'inset 0 2px 4px rgb(0 0 0 / 100%), 0 0 0 1px rgb(255 255 255 / 18%), 0 0 10px rgb(255 255 255 / 25%), 0 2px 6px rgb(0 0 0 / 60%)'
-                                            : 'none',
+                                            : isObservedTalentFallback
+                                              ? `0 0 0 2px ${theme.palette.warning.main}22`
+                                              : 'none',
                                         }}
                                       />
                                     </Tooltip>

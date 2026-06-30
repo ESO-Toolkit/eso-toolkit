@@ -264,10 +264,20 @@ export const TalentsGridPanel: React.FC<TalentsGridPanelProps> = ({ fight }) => 
     );
   }
 
+  const hasObservedRows = talentRows.some((row) => row.source !== 'ESO Logs');
+  const hasExactRows = talentRows.some(
+    (row) => row.source === 'ESO Logs' || row.source === 'Mixed',
+  );
+  const rowLabel = hasObservedRows ? 'Skills' : 'Talents';
+  const title =
+    hasObservedRows && !hasExactRows
+      ? 'Player Observed Skills Overview'
+      : 'Player Talents Overview';
+
   return (
     <Box sx={{ p: 2 }}>
       <Typography variant="h5" gutterBottom>
-        Player Talents Overview
+        {title}
       </Typography>
 
       <Stack spacing={3}>
@@ -280,7 +290,7 @@ export const TalentsGridPanel: React.FC<TalentsGridPanelProps> = ({ fight }) => 
                   {talentRows.length}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  Unique Talents
+                  Unique {rowLabel}
                 </Typography>
               </CardContent>
             </Card>
@@ -302,7 +312,7 @@ export const TalentsGridPanel: React.FC<TalentsGridPanelProps> = ({ fight }) => 
           <DataGrid
             data={talentRows as unknown as Record<string, unknown>[]}
             columns={columns as ColumnDef<Record<string, unknown>>[]}
-            title={`Talents (${talentRows.length} unique)`}
+            title={`${rowLabel} (${talentRows.length} unique)`}
             height={600}
             initialPageSize={25}
             pageSizeOptions={[25, 50, 100]}
