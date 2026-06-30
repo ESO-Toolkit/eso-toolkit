@@ -30,6 +30,7 @@ import { PlayerDetailsWithRole } from '../../../store/player_data/playerDataSlic
 import { type ClassAnalysisResult } from '../../../utils/classDetectionUtils';
 import { BuildIssue } from '../../../utils/detectBuildIssues';
 import { PlayerGearSetRecord } from '../../../utils/gearUtilities';
+import type { KalpaPlayerBuildEvidence } from '../../../utils/kalpaBuildEvidence';
 import { type PotionStreamResult } from '../../../utils/potionDetectionUtils';
 import { resolveActorName } from '../../../utils/resolveActorName';
 import { type BarSwapAnalysisResult } from '../../parse_analysis/utils/parseAnalysisUtils';
@@ -51,6 +52,7 @@ interface PlayersPanelViewProps {
   scribingSkillsByPlayer: Record<string, GrimoireData[]>;
   buildIssuesByPlayer: Record<string, BuildIssue[]>;
   classAnalysisByPlayer: Record<string, ClassAnalysisResult>;
+  kalpaBuildEvidenceByPlayer: Record<string, KalpaPlayerBuildEvidence>;
   deathsByPlayer: Record<string, number>;
   resurrectsByPlayer: Record<string, number>;
   cpmByPlayer: Record<string, number>;
@@ -133,6 +135,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
     scribingSkillsByPlayer,
     buildIssuesByPlayer,
     classAnalysisByPlayer,
+    kalpaBuildEvidenceByPlayer,
     deathsByPlayer,
     resurrectsByPlayer,
     cpmByPlayer,
@@ -217,6 +220,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
         const scribingSkills = scribingSkillsByPlayer?.[String(player.id)] ?? [];
         const buildIssues = buildIssuesByPlayer[String(player.id)] || [];
         const classAnalysis = classAnalysisByPlayer[String(player.id)];
+        const kalpaBuildEvidence = kalpaBuildEvidenceByPlayer[String(player.id)];
         const deaths = deathsByPlayer?.[String(player.id)] ?? 0;
         const resurrects = resurrectsByPlayer?.[String(player.id)] ?? 0;
         const cpm = Math.round(cpmByPlayer?.[String(player.id)] ?? 0);
@@ -249,6 +253,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
           scribingSkills,
           buildIssues,
           classAnalysis,
+          kalpaBuildEvidence,
           deaths,
           resurrects,
           cpm,
@@ -280,6 +285,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
       scribingSkillsByPlayer,
       buildIssuesByPlayer,
       classAnalysisByPlayer,
+      kalpaBuildEvidenceByPlayer,
       deathsByPlayer,
       resurrectsByPlayer,
       cpmByPlayer,
@@ -840,6 +846,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
                 scribingSkills={playerData.scribingSkills}
                 buildIssues={playerData.buildIssues}
                 classAnalysis={playerData.classAnalysis}
+                kalpaBuildEvidence={playerData.kalpaBuildEvidence}
                 deaths={playerData.deaths}
                 resurrects={playerData.resurrects}
                 cpm={playerData.cpm}

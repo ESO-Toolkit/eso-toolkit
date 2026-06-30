@@ -3,12 +3,15 @@ import {
   createSkillLineAbilityMapping,
   analyzePlayerClassUsage,
   analyzePlayerClassFromEvents,
+  detectClassFromTalents,
   GameAbility,
   AbilitiesData,
   ReportAbilitiesData,
   ClassAnalysisResult,
 } from './classDetectionUtils';
+import { ClassSkillId } from '../features/loadout-manager/data/classSkillIds';
 import { KnownAbilities } from '../types/abilities';
+import type { PlayerTalent } from '../types/playerDetails';
 
 describe('classDetectionUtils', () => {
   const playerId = '123'; // Fixed: use string version of the sourceID used in mock events
@@ -435,6 +438,36 @@ describe('classDetectionUtils', () => {
 
       expect(result.skillLines[0].count).toBe(3); // Should count duplicates
     });
+
+    it('should fall back to canonical class skill IDs when report abilities omit them', () => {
+      const result = analyzePlayerClassUsage([ClassSkillId.SORCERER_CRYSTAL_SHARD], {}, {});
+
+      expect(result.primary).toBe('Dark Magic');
+      expect(result.skillLines).toHaveLength(1);
+      expect(result.skillLines[0]).toEqual({
+        skillLine: 'Dark Magic',
+        className: 'Sorcerer',
+        count: 1,
+        skillIds: new Set([ClassSkillId.SORCERER_CRYSTAL_SHARD]),
+      });
+    });
+
+    it('should infer native class lines from Class Mastery passives missing from report abilities', () => {
+      const result = analyzePlayerClassUsage(
+        [ClassSkillId.SORCERER_CONSERVATION_OF_ENERGY, ClassSkillId.SORCERER_FONT_OF_POWER],
+        {},
+        {},
+      );
+
+      const skillLineNames = result.skillLines.map((line) => line.skillLine);
+      expect(skillLineNames).toEqual(
+        expect.arrayContaining(['Daedric Summoning', 'Dark Magic', 'Storm Calling']),
+      );
+      expect(skillLineNames).not.toContain('Class Mastery');
+      expect(new Set(result.skillLines.map((line) => line.className))).toEqual(
+        new Set(['Sorcerer']),
+      );
+    });
   });
 
   describe('analyzePlayerClassFromEvents', () => {
@@ -530,6 +563,33 @@ describe('classDetectionUtils', () => {
 
       expect(result.primary).toBeNull();
       expect(result.skillLines).toHaveLength(0);
+    });
+  });
+
+  describe('detectClassFromTalents', () => {
+    const talentFor = (guid: number): PlayerTalent => ({
+      guid,
+      name: `Talent ${guid}`,
+      type: 0,
+      abilityIcon: '',
+      flags: 0,
+    });
+
+    it('should use Class Mastery talent IDs to infer pure-class native skill lines', () => {
+      const result = detectClassFromTalents([
+        talentFor(ClassSkillId.SORCERER_CONSERVATION_OF_ENERGY),
+        talentFor(ClassSkillId.SORCERER_FONT_OF_POWER),
+      ]);
+
+      const skillLineNames = result.skillLines.map((line) => line.skillLine);
+      expect(skillLineNames).toContain(result.primary);
+      expect(skillLineNames).toEqual(
+        expect.arrayContaining(['Daedric Summoning', 'Dark Magic', 'Storm Calling']),
+      );
+      expect(skillLineNames).not.toContain('Class Mastery');
+      expect(new Set(result.skillLines.map((line) => line.className))).toEqual(
+        new Set(['Sorcerer']),
+      );
     });
   });
 

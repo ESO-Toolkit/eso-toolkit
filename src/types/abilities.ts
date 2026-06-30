@@ -1365,7 +1365,7 @@ export const HEALTH_AND_REGEN_FOOD = Object.freeze(
   new Set([89971, 72824, 61322, 66132, 66137, 66586, 66590, 66594, 89953, 89954, 89939, 73553]),
 ); // Added: Jester foods with regen, Unique Food: H All Reg
 export const HEALTH_FOOD = Object.freeze(
-  new Set([84732, 84733, 89973, 17407, 61259, 66125, 66551, 72957, 72960, 72962]),
+  new Set([84732, 84733, 89959, 89973, 17407, 61259, 66125, 66551, 72957, 72960, 72962]),
 );
 export const MAGICKA_FOOD = Object.freeze(
   new Set([
@@ -1373,7 +1373,7 @@ export const MAGICKA_FOOD = Object.freeze(
   ]),
 ); // Added: Jesters Food Max M, Witchfest Food Max M variants
 export const STAMINA_FOOD = Object.freeze(
-  new Set([61255, 86673, 61261, 66130, 66576, 68412, 85485, 61328, 61314, 86669]),
+  new Set([61255, 86673, 89958, 61261, 66130, 66576, 68412, 85485, 61328, 61314, 86669]),
 );
 export const INCREASE_MAX_HEALTH_AND_STAMINA = Object.freeze(
   new Set([89957, 107789, 61255, 61264, 61278]),

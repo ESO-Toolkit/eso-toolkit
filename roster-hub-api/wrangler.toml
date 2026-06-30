@@ -9,6 +9,11 @@ binding = "DB"
 database_name = "roster-hub-db"
 database_id = "22ff9f6a-ddb4-43bc-a0ef-89881124cfa2"
 
+[[r2_buckets]]
+binding = "REPORT_BUILD_EVIDENCE"
+bucket_name = "esotk-report-build-evidence"
+preview_bucket_name = "esotk-report-build-evidence-dev"
+
 # Workers AI binding — powers image moderation on upload
 [ai]
 binding = "AI"
