@@ -15,6 +15,7 @@ interface LocationLike {
 
 export interface KalpaPlayerBuildEvidence {
   unitId: string;
+  unitOccurrenceId?: string | null;
   characterName?: string | null;
   accountName?: string | null;
   characterId?: string | null;
@@ -45,6 +46,7 @@ export interface KalpaScribedSkillEvidence {
 
 export interface KalpaBuildEvidence {
   schemaVersion: number;
+  extractorVersion?: number | null;
   source: string;
   reportCode?: string | null;
   players: KalpaPlayerBuildEvidence[];
@@ -350,6 +352,9 @@ function validateKalpaBuildEvidence(value: unknown): KalpaBuildEvidence | undefi
 
   return {
     schemaVersion: 1,
+    extractorVersion: Number.isInteger(value.extractorVersion)
+      ? (value.extractorVersion as number)
+      : undefined,
     source: KALPA_BUILD_EVIDENCE_SOURCE,
     reportCode: typeof value.reportCode === 'string' ? value.reportCode : undefined,
     players,
@@ -365,6 +370,8 @@ function validateKalpaPlayerEvidence(value: unknown): KalpaPlayerBuildEvidence |
   const scribedSkills = sanitizeScribedSkills(value.scribedSkills);
   const player: KalpaPlayerBuildEvidence = {
     unitId: value.unitId,
+    unitOccurrenceId:
+      typeof value.unitOccurrenceId === 'string' ? value.unitOccurrenceId : undefined,
     characterName: typeof value.characterName === 'string' ? value.characterName : undefined,
     accountName: typeof value.accountName === 'string' ? value.accountName : undefined,
     characterId: typeof value.characterId === 'string' ? value.characterId : undefined,

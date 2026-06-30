@@ -47,11 +47,13 @@ function player(overrides: Partial<PlayerDetailsEntry>): PlayerDetailsEntry {
 
 const evidence: KalpaBuildEvidence = {
   schemaVersion: 1,
+  extractorVersion: 2,
   source: KALPA_BUILD_EVIDENCE_SOURCE,
   reportCode: 'REPORT123',
   players: [
     {
       unitId: '1',
+      unitOccurrenceId: '1',
       characterName: 'Arc Spark',
       accountName: '@tester',
       characterId: '111',

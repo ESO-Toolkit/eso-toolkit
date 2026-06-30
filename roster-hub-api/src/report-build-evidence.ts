@@ -26,6 +26,7 @@ type ReportEvidenceContext = Context<{ Bindings: Env }>;
 
 interface KalpaPlayerBuildEvidence {
   unitId: string;
+  unitOccurrenceId?: string | null;
   characterName?: string | null;
   accountName?: string | null;
   characterId?: string | null;
@@ -52,6 +53,7 @@ type KalpaScribedSkillEvidence = KalpaAbilityEvidence;
 
 interface KalpaBuildEvidence {
   schemaVersion: number;
+  extractorVersion?: number | null;
   source: string;
   reportCode: string;
   players: KalpaPlayerBuildEvidence[];
@@ -160,6 +162,7 @@ function validatePlayerEvidence(value: unknown): KalpaPlayerBuildEvidence | null
   const food = sanitizeAbilityEvidence(value.food);
   const player: KalpaPlayerBuildEvidence = {
     unitId,
+    unitOccurrenceId: boundedString(value.unitOccurrenceId, 48),
     characterName: boundedString(value.characterName, 96),
     accountName: boundedString(value.accountName, 96),
     characterId: boundedString(value.characterId, 32),
@@ -199,6 +202,7 @@ function validateEvidence(value: unknown, reportCode: string): KalpaBuildEvidenc
 
   return {
     schemaVersion: SCHEMA_VERSION,
+    extractorVersion: boundedInteger(value.extractorVersion, 1, 10_000),
     source: SOURCE,
     reportCode,
     players,
@@ -308,6 +312,8 @@ export async function putReportBuildEvidence(c: ReportEvidenceContext): Promise<
     },
     customMetadata: {
       schemaVersion: String(SCHEMA_VERSION),
+      extractorVersion:
+        evidence.extractorVersion != null ? String(evidence.extractorVersion) : 'unknown',
       source: SOURCE,
       ownerUserId: user.id,
       ownerName: user.name,
