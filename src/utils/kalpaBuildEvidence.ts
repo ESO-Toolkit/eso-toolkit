@@ -50,6 +50,13 @@ export interface KalpaBuildEvidence {
   players: KalpaPlayerBuildEvidence[];
 }
 
+export interface KalpaAnonymousMatchSignals {
+  classNames?: Array<string | null | undefined>;
+  championPointPassiveIds?: number[];
+  scribedSkillIds?: number[];
+  excludedUnitIds?: Set<string>;
+}
+
 export function classNameToEsoClass(className?: string | null): ESOClass | undefined {
   switch (className?.trim().toLowerCase()) {
     case 'dragonknight':
@@ -239,6 +246,54 @@ export function findKalpaBuildEvidenceForPlayer(
   });
 }
 
+export function findAnonymousKalpaBuildEvidenceForPlayer(
+  evidence: KalpaBuildEvidence | undefined,
+  signals: KalpaAnonymousMatchSignals,
+): KalpaPlayerBuildEvidence | undefined {
+  if (!evidence?.players?.length) return undefined;
+
+  const classNames = new Set(
+    (signals.classNames ?? [])
+      .map((className) => classNameToEsoClass(className))
+      .filter((className): className is ESOClass => Boolean(className)),
+  );
+  if (classNames.size === 0) return undefined;
+
+  const publicCpIds = uniquePositiveNumbers(signals.championPointPassiveIds);
+  const publicScribedIds = uniquePositiveNumbers(signals.scribedSkillIds);
+  if (publicCpIds.length < 2 && publicScribedIds.length === 0) return undefined;
+
+  const matches = evidence.players
+    .filter((candidate) => !signals.excludedUnitIds?.has(candidate.unitId))
+    .filter((candidate) => !hasSidecarIdentity(candidate))
+    .filter((candidate) => {
+      const candidateClass = classNameToEsoClass(candidate.className);
+      if (!candidateClass || !classNames.has(candidateClass)) return false;
+
+      const candidateCpIds = new Set(uniquePositiveNumbers(candidate.championPointPassives));
+      const cpOverlap = publicCpIds.filter((id) => candidateCpIds.has(id)).length;
+      if (cpOverlap >= 2) return true;
+
+      const candidateScribedIds = new Set(
+        (candidate.scribedSkills ?? []).map((skill) => skill.abilityId).filter((id) => id > 0),
+      );
+      return publicScribedIds.some((id) => candidateScribedIds.has(id));
+    });
+
+  return matches.length === 1 ? matches[0] : undefined;
+}
+
+export function redactKalpaPlayerIdentity(
+  evidence: KalpaPlayerBuildEvidence,
+): KalpaPlayerBuildEvidence {
+  return {
+    ...evidence,
+    characterName: undefined,
+    accountName: undefined,
+    characterId: undefined,
+  };
+}
+
 function storageKeyForReport(reportCode: string): string {
   return `kalpa.buildEvidence.${reportCode}`;
 }
@@ -253,6 +308,19 @@ function uniqueMatch(
 ): KalpaPlayerBuildEvidence | undefined {
   const matches = candidates.filter(predicate);
   return matches.length === 1 ? matches[0] : undefined;
+}
+
+function hasSidecarIdentity(candidate: KalpaPlayerBuildEvidence): boolean {
+  return Boolean(
+    normalizeName(candidate.characterName) ||
+    normalizeAccount(candidate.accountName) ||
+    normalizeCharacterId(candidate.characterId),
+  );
+}
+
+function uniquePositiveNumbers(values: number[] | undefined): number[] {
+  if (!Array.isArray(values)) return [];
+  return Array.from(new Set(values.filter((id) => Number.isInteger(id) && id > 0)));
 }
 
 function normalizeName(value?: string | null): string {

@@ -79,8 +79,10 @@ import {
 import {
   classNameToEsoClass,
   fetchKalpaBuildEvidenceForReport,
+  findAnonymousKalpaBuildEvidenceForPlayer,
   findKalpaBuildEvidenceForPlayer,
   loadKalpaBuildEvidenceForReport,
+  redactKalpaPlayerIdentity,
   type KalpaBuildEvidence,
   type KalpaPlayerBuildEvidence,
 } from '../../../utils/kalpaBuildEvidence';
@@ -350,7 +352,7 @@ export const PlayersPanel: React.FC<PlayersPanelProps> = ({ context: contextOver
     rolesByPlayerId,
   ]);
 
-  const kalpaBuildEvidenceByPlayer = React.useMemo(() => {
+  const identityKalpaBuildEvidenceByPlayer = React.useMemo(() => {
     const result: Record<string, KalpaPlayerBuildEvidence> = {};
     if (!hasPlayerEntries(playersById)) {
       return result;
@@ -468,6 +470,16 @@ export const PlayersPanel: React.FC<PlayersPanelProps> = ({ context: contextOver
 
     return pending;
   }, [scribingPlayerAbilities, existingScribingAbilities]);
+
+  const publicScribedSkillIdsByPlayer = React.useMemo(() => {
+    const result: Record<string, number[]> = {};
+
+    scribingPlayerAbilities.forEach(({ playerId, abilityIds }) => {
+      result[String(playerId)] = abilityIds;
+    });
+
+    return result;
+  }, [scribingPlayerAbilities]);
 
   // Get friendly buff lookup data for build issues detection
   const { buffLookupData: friendlyBuffLookup, isBuffLookupLoading } = useBuffLookupTask({
@@ -598,6 +610,43 @@ export const PlayersPanel: React.FC<PlayersPanelProps> = ({ context: contextOver
   }, [fight, castEvents, playersById]);
 
   const { abilitiesById } = reportMasterData;
+
+  const publicClassAnalysisByPlayer = React.useMemo(() => {
+    const result: Record<string, ClassAnalysisResult> = {};
+
+    if (!abilitiesById || !hasPlayerEntries(playersById)) {
+      return result;
+    }
+
+    const classMapping = createSkillLineAbilityMapping(abilitiesById);
+
+    Object.values(playersById).forEach((player) => {
+      if (!player?.id) return;
+
+      const playerId = String(player.id);
+      result[playerId] = analyzePlayerClassFromEvents(
+        playerId,
+        abilitiesById,
+        combatantInfoEvents,
+        castEvents,
+        damageEvents,
+        friendlyBuffEvents,
+        debuffEvents,
+        player.combatantInfo?.talents,
+        classMapping,
+      );
+    });
+
+    return result;
+  }, [
+    abilitiesById,
+    playersById,
+    combatantInfoEvents,
+    castEvents,
+    damageEvents,
+    friendlyBuffEvents,
+    debuffEvents,
+  ]);
 
   // Fetch critical damage data for the inline crit summary on DPS player cards
   const { criticalDamageData } = useCriticalDamageTask({ context: resolvedContext });
@@ -751,8 +800,9 @@ export const PlayersPanel: React.FC<PlayersPanelProps> = ({ context: contextOver
     );
   }, [friendlyBuffEvents, resourceEvents, abilitiesById]);
 
-  // Calculate champion points per player using champion point constants from combatantinfo auras
-  const championPointsByPlayer = React.useMemo(() => {
+  // Public ESO Logs CP auras, kept separate so anonymous sidecar matching can
+  // use them as a fingerprint before native-only CP passives are merged in.
+  const publicChampionPointsByPlayer = React.useMemo(() => {
     const result: Record<string, ChampionPointEntry[]> = {};
 
     if (!abilitiesById) return result;
@@ -790,18 +840,85 @@ export const PlayersPanel: React.FC<PlayersPanelProps> = ({ context: contextOver
             }
           }
 
-          for (const abilityId of kalpaBuildEvidenceByPlayer[playerId]?.championPointPassives ??
-            []) {
-            addChampionPoint(abilityId);
-          }
-
           sortChampionPointEntries(result[playerId]);
         }
       });
     }
 
     return result;
-  }, [combatantInfoEvents, abilitiesById, playersById, kalpaBuildEvidenceByPlayer]);
+  }, [combatantInfoEvents, abilitiesById, playersById]);
+
+  const kalpaBuildEvidenceByPlayer = React.useMemo(() => {
+    const result: Record<string, KalpaPlayerBuildEvidence> = {
+      ...identityKalpaBuildEvidenceByPlayer,
+    };
+
+    if (!kalpaBuildEvidence?.players?.length || !hasPlayerEntries(playersById)) {
+      return result;
+    }
+
+    const excludedUnitIds = new Set(
+      Object.values(identityKalpaBuildEvidenceByPlayer).map((candidate) => candidate.unitId),
+    );
+
+    Object.values(playersById).forEach((player) => {
+      if (!player?.id || !player.anonymous || result[String(player.id)]) return;
+
+      const playerId = String(player.id);
+      const match = findAnonymousKalpaBuildEvidenceForPlayer(kalpaBuildEvidence, {
+        classNames: publicClassAnalysisByPlayer[playerId]?.skillLines.map(
+          (skillLine) => skillLine.className,
+        ),
+        championPointPassiveIds: publicChampionPointsByPlayer[playerId]?.map((entry) => entry.id),
+        scribedSkillIds: publicScribedSkillIdsByPlayer[playerId],
+        excludedUnitIds,
+      });
+
+      if (!match) return;
+      result[playerId] = redactKalpaPlayerIdentity(match);
+      excludedUnitIds.add(match.unitId);
+    });
+
+    return result;
+  }, [
+    identityKalpaBuildEvidenceByPlayer,
+    kalpaBuildEvidence,
+    playersById,
+    publicClassAnalysisByPlayer,
+    publicChampionPointsByPlayer,
+    publicScribedSkillIdsByPlayer,
+  ]);
+
+  const championPointsByPlayer = React.useMemo(() => {
+    const result: Record<string, ChampionPointEntry[]> = {};
+    if (!abilitiesById || !hasPlayerEntries(playersById)) return result;
+
+    Object.values(playersById).forEach((actor) => {
+      if (!actor?.id) return;
+      const playerId = String(actor.id);
+      const seen = new Set<number>();
+      result[playerId] = [];
+
+      const addChampionPoint = (abilityId: number): void => {
+        if (seen.has(abilityId)) return;
+        const entry = buildChampionPointEntry(abilityId, abilitiesById);
+        if (!entry) return;
+        seen.add(abilityId);
+        result[playerId].push(entry);
+      };
+
+      for (const entry of publicChampionPointsByPlayer[playerId] ?? []) {
+        addChampionPoint(entry.id);
+      }
+      for (const abilityId of kalpaBuildEvidenceByPlayer[playerId]?.championPointPassives ?? []) {
+        addChampionPoint(abilityId);
+      }
+
+      sortChampionPointEntries(result[playerId]);
+    });
+
+    return result;
+  }, [abilitiesById, playersById, publicChampionPointsByPlayer, kalpaBuildEvidenceByPlayer]);
 
   // Compute CPM (casts per minute) per player for the current fight, including all casts
   const cpmByPlayer = React.useMemo(() => {
@@ -1257,50 +1374,30 @@ export const PlayersPanel: React.FC<PlayersPanelProps> = ({ context: contextOver
   const classAnalysisByPlayer = React.useMemo(() => {
     const result: Record<string, ClassAnalysisResult> = {};
 
-    if (!abilitiesById || !hasPlayerEntries(playersById)) {
+    if (!hasPlayerEntries(playersById)) {
       return result;
     }
 
-    // Create class mapping once from the abilitiesById data
-    const classMapping = createSkillLineAbilityMapping(abilitiesById);
-
-    // Analyze each player's class usage
     Object.values(playersById).forEach((player) => {
       if (!player?.id) return;
 
       const playerId = String(player.id);
+      const publicAnalysis = publicClassAnalysisByPlayer[playerId] ?? {
+        primary: null,
+        skillLines: [],
+      };
+      const evidence = kalpaBuildEvidenceByPlayer[playerId];
+      const kalpaAnalysis = classAnalysisFromKalpaEvidence(evidence);
+      const shouldUseKalpaAnalysis =
+        Boolean(kalpaAnalysis) &&
+        ((evidence?.classMasteryPassives?.length ?? 0) > 0 ||
+          publicAnalysis.skillLines.length === 0);
 
-      // Get player talents
-      const playerTalents = player?.combatantInfo?.talents;
-
-      // Use the new utility function that handles event extraction and analysis
-      const analysis = analyzePlayerClassFromEvents(
-        playerId,
-        abilitiesById,
-        combatantInfoEvents,
-        castEvents,
-        damageEvents,
-        friendlyBuffEvents,
-        debuffEvents,
-        playerTalents,
-        classMapping,
-      );
-
-      result[playerId] =
-        classAnalysisFromKalpaEvidence(kalpaBuildEvidenceByPlayer[playerId]) ?? analysis;
+      result[playerId] = shouldUseKalpaAnalysis && kalpaAnalysis ? kalpaAnalysis : publicAnalysis;
     });
 
     return result;
-  }, [
-    abilitiesById,
-    playersById,
-    combatantInfoEvents,
-    castEvents,
-    damageEvents,
-    friendlyBuffEvents,
-    debuffEvents,
-    kalpaBuildEvidenceByPlayer,
-  ]);
+  }, [playersById, publicClassAnalysisByPlayer, kalpaBuildEvidenceByPlayer]);
 
   // Effect to lookup scribing recipes for detected skills
   React.useEffect(() => {

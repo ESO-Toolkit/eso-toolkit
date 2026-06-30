@@ -3,6 +3,7 @@ import type { PlayerDetailsEntry } from '@/types/playerDetails';
 import {
   decodeKalpaBuildEvidenceParam,
   fetchKalpaBuildEvidenceForReport,
+  findAnonymousKalpaBuildEvidenceForPlayer,
   findKalpaBuildEvidenceForPlayer,
   getKalpaEvidenceParamFromLocation,
   kalpaRaceIdToBuildRace,
@@ -10,6 +11,7 @@ import {
   KALPA_BUILD_EVIDENCE_PARAM,
   KALPA_BUILD_EVIDENCE_SOURCE,
   loadKalpaBuildEvidenceForReport,
+  redactKalpaPlayerIdentity,
   type KalpaBuildEvidence,
 } from './kalpaBuildEvidence';
 
@@ -148,6 +150,123 @@ describe('kalpaBuildEvidence', () => {
         player({ guid: 0, name: 'Unknown', displayName: '@tester' }),
       ),
     ).toBeUndefined();
+  });
+
+  it('matches anonymous sidecar rows by unique class and CP fingerprint', () => {
+    const anonymousEvidence: KalpaBuildEvidence = {
+      ...evidence,
+      players: [
+        {
+          ...evidence.players[0],
+          unitId: '40',
+          characterName: undefined,
+          accountName: undefined,
+          characterId: undefined,
+          className: 'Nightblade',
+          championPointPassives: [142210, 142079, 142092, 156008],
+        },
+        {
+          ...evidence.players[0],
+          unitId: '41',
+          characterName: undefined,
+          accountName: undefined,
+          characterId: undefined,
+          className: 'Sorcerer',
+          championPointPassives: [142210, 142079, 142092, 156008],
+        },
+      ],
+    };
+
+    expect(
+      findAnonymousKalpaBuildEvidenceForPlayer(anonymousEvidence, {
+        classNames: ['Nightblade', 'Warden'],
+        championPointPassiveIds: [142079, 142092, 156008],
+      }),
+    ).toBe(anonymousEvidence.players[0]);
+  });
+
+  it('does not guess anonymous sidecar rows when the fingerprint is ambiguous', () => {
+    const ambiguous: KalpaBuildEvidence = {
+      ...evidence,
+      players: [
+        {
+          ...evidence.players[0],
+          unitId: '40',
+          characterName: undefined,
+          accountName: undefined,
+          characterId: undefined,
+          className: 'Nightblade',
+          championPointPassives: [142079, 142092],
+        },
+        {
+          ...evidence.players[0],
+          unitId: '41',
+          characterName: undefined,
+          accountName: undefined,
+          characterId: undefined,
+          className: 'Nightblade',
+          championPointPassives: [142079, 142092],
+        },
+      ],
+    };
+
+    expect(
+      findAnonymousKalpaBuildEvidenceForPlayer(ambiguous, {
+        classNames: ['Nightblade'],
+        championPointPassiveIds: [142079, 142092],
+      }),
+    ).toBeUndefined();
+  });
+
+  it('can match anonymous sidecar rows by unique class and scribed skill fingerprint', () => {
+    const anonymousEvidence: KalpaBuildEvidence = {
+      ...evidence,
+      players: [
+        {
+          ...evidence.players[0],
+          unitId: '40',
+          characterName: undefined,
+          accountName: undefined,
+          characterId: undefined,
+          className: 'Templar',
+          championPointPassives: [],
+          scribedSkills: [{ abilityId: 217784, name: 'Leashing Soul' }],
+        },
+        {
+          ...evidence.players[0],
+          unitId: '41',
+          characterName: undefined,
+          accountName: undefined,
+          characterId: undefined,
+          className: 'Templar',
+          championPointPassives: [],
+          scribedSkills: [{ abilityId: 220543, name: 'Dazing Trample' }],
+        },
+      ],
+    };
+
+    expect(
+      findAnonymousKalpaBuildEvidenceForPlayer(anonymousEvidence, {
+        classNames: ['Templar'],
+        scribedSkillIds: [217784],
+      }),
+    ).toBe(anonymousEvidence.players[0]);
+  });
+
+  it('does not use identified sidecar rows for anonymous matching and can redact identities', () => {
+    expect(
+      findAnonymousKalpaBuildEvidenceForPlayer(evidence, {
+        classNames: ['Sorcerer'],
+        championPointPassiveIds: [142210, 142079],
+      }),
+    ).toBeUndefined();
+
+    expect(redactKalpaPlayerIdentity(evidence.players[0])).toEqual({
+      ...evidence.players[0],
+      characterName: undefined,
+      accountName: undefined,
+      characterId: undefined,
+    });
   });
 
   it('preserves scribing sidecar facts without needing normal bars or gear', () => {
