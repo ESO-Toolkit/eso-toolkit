@@ -25,6 +25,7 @@ import { GrimoireData } from '../../../components/ScribingSkillsDisplay';
 import { DetectedRole, type PlayerRoleResult } from '../../../features/role_detection';
 import { toBroadRole, type BroadRole } from '../../../hooks/useRoleDetection';
 import { PlayerDetailsWithRole } from '../../../store/player_data/playerDataSlice';
+import type { PlayerTalent } from '../../../types/playerDetails';
 import { type ClassAnalysisResult } from '../../../utils/classDetectionUtils';
 import { BuildIssue } from '../../../utils/detectBuildIssues';
 import { PlayerGearSetRecord } from '../../../utils/gearUtilities';
@@ -47,6 +48,7 @@ interface PlayersPanelViewProps {
     Array<{ name: string; id: number; color: 'red' | 'blue' | 'green' }>
   >;
   aurasByPlayer: Record<string, Array<{ name: string; id: number; stacks?: number }>>;
+  observedSkillsByPlayer: Record<string, PlayerTalent[]>;
   scribingSkillsByPlayer: Record<string, GrimoireData[]>;
   buildIssuesByPlayer: Record<string, BuildIssue[]>;
   classAnalysisByPlayer: Record<string, ClassAnalysisResult>;
@@ -116,6 +118,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
     mundusBuffsByPlayer,
     championPointsByPlayer,
     aurasByPlayer,
+    observedSkillsByPlayer,
     scribingSkillsByPlayer,
     buildIssuesByPlayer,
     classAnalysisByPlayer,
@@ -189,6 +192,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
         const mundusBuffs = mundusBuffsByPlayer?.[String(player.id)] ?? [];
         const championPoints = championPointsByPlayer?.[String(player.id)] ?? [];
         const auras = aurasByPlayer?.[String(player.id)] ?? [];
+        const observedSkills = observedSkillsByPlayer?.[String(player.id)] ?? [];
         const scribingSkills = scribingSkillsByPlayer?.[String(player.id)] ?? [];
         const buildIssues = buildIssuesByPlayer[String(player.id)] || [];
         const classAnalysis = classAnalysisByPlayer[String(player.id)];
@@ -221,6 +225,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
           mundusBuffs,
           championPoints,
           auras,
+          observedSkills,
           scribingSkills,
           buildIssues,
           classAnalysis,
@@ -252,6 +257,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
       mundusBuffsByPlayer,
       championPointsByPlayer,
       aurasByPlayer,
+      observedSkillsByPlayer,
       scribingSkillsByPlayer,
       buildIssuesByPlayer,
       classAnalysisByPlayer,
@@ -735,6 +741,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
                 mundusBuffs={playerData.mundusBuffs}
                 championPoints={playerData.championPoints}
                 auras={playerData.auras}
+                observedSkills={playerData.observedSkills}
                 scribingSkills={playerData.scribingSkills}
                 buildIssues={playerData.buildIssues}
                 classAnalysis={playerData.classAnalysis}

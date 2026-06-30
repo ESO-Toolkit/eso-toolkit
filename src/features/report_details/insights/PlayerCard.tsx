@@ -55,7 +55,7 @@ import { PlayerDetailsWithRole } from '../../../store/player_data/playerDataSlic
 import { selectActiveReportContext } from '../../../store/report/reportSelectors';
 import type { RootState } from '../../../store/storeWithHistory';
 import { selectScribingDetectionsResult } from '../../../store/worker_results';
-import type { PlayerGear } from '../../../types/playerDetails';
+import type { PlayerGear, PlayerTalent } from '../../../types/playerDetails';
 import { type ClassAnalysisResult } from '../../../utils/classDetectionUtils';
 import { BuildIssue } from '../../../utils/detectBuildIssues';
 import { PlayerGearSetRecord } from '../../../utils/gearUtilities';
@@ -139,6 +139,7 @@ interface PlayerCardProps {
   mundusBuffs: Array<{ name: string; id: number }>;
   championPoints: Array<{ name: string; id: number; color: 'red' | 'blue' | 'green' }>;
   auras: Array<{ name: string; id: number; stacks?: number }>;
+  observedSkills?: PlayerTalent[];
   scribingSkills: GrimoireData[];
   buildIssues: BuildIssue[];
   classAnalysis?: ClassAnalysisResult;
@@ -282,6 +283,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
     mundusBuffs,
     championPoints,
     auras,
+    observedSkills,
     scribingSkills,
     buildIssues,
     classAnalysis,
@@ -327,6 +329,11 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
       () => player?.combatantInfo?.talents ?? [],
       [player?.combatantInfo?.talents],
     );
+    const displayTalents = React.useMemo(
+      () => (talents.length > 0 ? talents : (observedSkills ?? [])),
+      [observedSkills, talents],
+    );
+    const isObservedTalentFallback = talents.length === 0 && displayTalents.length > 0;
     const gear = React.useMemo(
       () => (player?.combatantInfo?.gear ?? []).filter((g) => g.id !== 0),
       [player?.combatantInfo?.gear],
@@ -1459,15 +1466,15 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                 <ClassMasteryCluster classAnalysis={classAnalysis} />
 
                 {/* Talents and gear */}
-                {(talents.length > 0 || gear.length > 0) && (
+                {(displayTalents.length > 0 || gear.length > 0) && (
                   <Box sx={{ mb: 1.5 }}>
-                    {talents.length > 0 && (
+                    {displayTalents.length > 0 && (
                       <>
                         <Box sx={{ mb: 1.25, flexWrap: 'wrap', gap: 1.25, display: 'flex' }}>
-                          {talents.slice(0, 6).map((talent, idx) => {
-                            const isUltimate = idx === 5;
+                          {displayTalents.slice(0, 6).map((talent, idx) => {
+                            const isUltimate = !isObservedTalentFallback && idx === 5;
                             return (
-                              <React.Fragment key={idx}>
+                              <React.Fragment key={`${talent.guid}-${idx}`}>
                                 {isUltimate && (
                                   <Box
                                     sx={{
@@ -1564,12 +1571,12 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                             );
                           })}
                         </Box>
-                        {talents.length > 6 && (
+                        {displayTalents.length > 6 && (
                           <Box sx={{ flexWrap: 'wrap', gap: 1.25, mt: 0.25, display: 'flex' }}>
-                            {talents.slice(6).map((talent, idx) => {
-                              const isUltimate = idx === 5;
+                            {displayTalents.slice(6).map((talent, idx) => {
+                              const isUltimate = !isObservedTalentFallback && idx === 5;
                               return (
-                                <React.Fragment key={idx}>
+                                <React.Fragment key={`${talent.guid}-${idx}`}>
                                   {isUltimate && (
                                     <Box
                                       sx={{

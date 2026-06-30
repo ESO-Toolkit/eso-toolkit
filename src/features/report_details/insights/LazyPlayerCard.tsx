@@ -4,6 +4,7 @@ import { PlayerCardSkeleton } from '../../../components/PlayersSkeleton';
 import type { GrimoireData } from '../../../components/ScribingSkillsDisplay';
 import type { PlayerRoleResult } from '../../../features/role_detection';
 import type { PlayerDetailsWithRole } from '../../../store/player_data/playerDataSlice';
+import type { PlayerTalent } from '../../../types/playerDetails';
 import type { ClassAnalysisResult } from '../../../utils/classDetectionUtils';
 import type { BuildIssue } from '../../../utils/detectBuildIssues';
 import type { PlayerGearSetRecord } from '../../../utils/gearUtilities';
@@ -27,6 +28,7 @@ export interface PlayerCardProps {
   mundusBuffs: Array<{ name: string; id: number }>;
   championPoints: Array<{ name: string; id: number; color: 'red' | 'blue' | 'green' }>;
   auras: Array<{ name: string; id: number; stacks?: number }>;
+  observedSkills?: PlayerTalent[];
   scribingSkills: GrimoireData[];
   buildIssues: BuildIssue[];
   classAnalysis?: ClassAnalysisResult;

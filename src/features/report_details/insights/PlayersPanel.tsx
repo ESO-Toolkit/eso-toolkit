@@ -86,6 +86,7 @@ import {
   type KalpaBuildEvidence,
   type KalpaPlayerBuildEvidence,
 } from '../../../utils/kalpaBuildEvidence';
+import { deriveObservedPlayerSkills } from '../../../utils/observedSkillFallback';
 import {
   classifyPotionEventsFromBuffStream,
   type PotionStreamResult,
@@ -610,6 +611,47 @@ export const PlayersPanel: React.FC<PlayersPanelProps> = ({ context: contextOver
   }, [fight, castEvents, playersById]);
 
   const { abilitiesById } = reportMasterData;
+
+  const observedSkillsByPlayer = React.useMemo(() => {
+    const result: Record<string, ReturnType<typeof deriveObservedPlayerSkills>> = {};
+
+    if (!abilitiesById || !hasPlayerEntries(playersById)) {
+      return result;
+    }
+
+    Object.values(playersById).forEach((player) => {
+      if (!player?.id || (player.combatantInfo?.talents?.length ?? 0) > 0) {
+        return;
+      }
+
+      const observedSkills = deriveObservedPlayerSkills({
+        playerId: player.id,
+        abilitiesById,
+        gear: player.combatantInfo?.gear,
+        castEvents,
+        damageEvents,
+        friendlyBuffEvents,
+        debuffEvents,
+        healingEvents,
+        resourceEvents,
+      });
+
+      if (observedSkills.length > 0) {
+        result[String(player.id)] = observedSkills;
+      }
+    });
+
+    return result;
+  }, [
+    abilitiesById,
+    playersById,
+    castEvents,
+    damageEvents,
+    friendlyBuffEvents,
+    debuffEvents,
+    healingEvents,
+    resourceEvents,
+  ]);
 
   const publicClassAnalysisByPlayer = React.useMemo(() => {
     const result: Record<string, ClassAnalysisResult> = {};
@@ -1522,6 +1564,7 @@ export const PlayersPanel: React.FC<PlayersPanelProps> = ({ context: contextOver
           resurrectsByPlayer={resurrectsByPlayer}
           cpmByPlayer={cpmByPlayer}
           aurasByPlayer={aurasByPlayer}
+          observedSkillsByPlayer={observedSkillsByPlayer}
           maxHealthByPlayer={maxHealthByPlayer}
           maxStaminaByPlayer={maxStaminaByPlayer}
           maxMagickaByPlayer={maxMagickaByPlayer}

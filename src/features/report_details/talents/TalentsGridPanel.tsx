@@ -5,9 +5,19 @@ import React, { useCallback, useMemo } from 'react';
 import { DataGrid } from '../../../components/LazyDataGrid';
 import { useLogger } from '../../../contexts/LoggerContext';
 import { FightFragment } from '../../../graphql/gql/graphql';
-import { usePlayerData } from '../../../hooks';
+import {
+  useCastEvents,
+  useDamageEvents,
+  useDebuffEvents,
+  useFriendlyBuffEvents,
+  useHealingEvents,
+  usePlayerData,
+  useReportMasterData,
+  useResourceEvents,
+} from '../../../hooks';
 import { PlayerTalent } from '../../../types/playerDetails';
 import { abilityIconUrl } from '../../../utils/abilityIconCorrections';
+import { deriveObservedPlayerSkills } from '../../../utils/observedSkillFallback';
 import { resolveActorName } from '../../../utils/resolveActorName';
 
 interface TalentsGridPanelProps {
@@ -20,6 +30,7 @@ interface TalentRow {
   type: number;
   abilityIcon: string;
   flags: number;
+  source: 'ESO Logs' | 'Observed' | 'Mixed';
   playerKeys: Set<string>;
   playerNames: string[];
   rawTalentData: PlayerTalent;
@@ -27,6 +38,13 @@ interface TalentRow {
 
 export const TalentsGridPanel: React.FC<TalentsGridPanelProps> = ({ fight }) => {
   const { playerData } = usePlayerData();
+  const { reportMasterData } = useReportMasterData();
+  const { castEvents } = useCastEvents();
+  const { damageEvents } = useDamageEvents();
+  const { friendlyBuffEvents } = useFriendlyBuffEvents();
+  const { debuffEvents } = useDebuffEvents();
+  const { healingEvents } = useHealingEvents();
+  const { resourceEvents } = useResourceEvents();
   const logger = useLogger('TalentsGridPanel');
 
   // Transform talent data for DataGrid
@@ -44,13 +62,29 @@ export const TalentsGridPanel: React.FC<TalentsGridPanelProps> = ({ fight }) => 
 
       const playerName = resolveActorName(player, fightPlayer);
       const combatantInfo = player.combatantInfo;
-      const talents = combatantInfo?.talents || [];
+      const talents = combatantInfo?.talents?.length
+        ? combatantInfo.talents
+        : deriveObservedPlayerSkills({
+            playerId: fightPlayer,
+            abilitiesById: reportMasterData.abilitiesById,
+            gear: combatantInfo?.gear,
+            castEvents,
+            damageEvents,
+            friendlyBuffEvents,
+            debuffEvents,
+            healingEvents,
+            resourceEvents,
+          });
+      const talentSource = combatantInfo?.talents?.length ? 'ESO Logs' : 'Observed';
 
       const playerKey = String(fightPlayer);
 
       talents.forEach((talent: PlayerTalent) => {
         const existingTalent = talentMap.get(talent.guid);
         if (existingTalent) {
+          if (existingTalent.source !== talentSource) {
+            existingTalent.source = 'Mixed';
+          }
           // Count each distinct player once per talent guid, even if the
           // player's talents array lists the same guid more than once.
           if (!existingTalent.playerKeys.has(playerKey)) {
@@ -64,6 +98,7 @@ export const TalentsGridPanel: React.FC<TalentsGridPanelProps> = ({ fight }) => 
             type: talent.type || 0,
             abilityIcon: talent.abilityIcon || '',
             flags: talent.flags || 0,
+            source: talentSource,
             playerKeys: new Set([playerKey]),
             playerNames: [playerName],
             rawTalentData: talent,
@@ -73,7 +108,17 @@ export const TalentsGridPanel: React.FC<TalentsGridPanelProps> = ({ fight }) => 
     });
 
     return Array.from(talentMap.values());
-  }, [playerData, fight]);
+  }, [
+    playerData,
+    fight,
+    reportMasterData.abilitiesById,
+    castEvents,
+    damageEvents,
+    friendlyBuffEvents,
+    debuffEvents,
+    healingEvents,
+    resourceEvents,
+  ]);
 
   // Create column helper
   const columnHelper = createColumnHelper<TalentRow>();
@@ -143,6 +188,18 @@ export const TalentsGridPanel: React.FC<TalentsGridPanelProps> = ({ fight }) => 
         ),
         size: 80,
       }),
+      columnHelper.accessor('source', {
+        header: 'Source',
+        cell: (info) => (
+          <Chip
+            label={info.getValue()}
+            size="small"
+            color={info.getValue() === 'ESO Logs' ? 'primary' : 'default'}
+            variant={info.getValue() === 'ESO Logs' ? 'filled' : 'outlined'}
+          />
+        ),
+        size: 120,
+      }),
       columnHelper.display({
         id: 'playerCount',
         header: 'Players',
@@ -200,7 +257,8 @@ export const TalentsGridPanel: React.FC<TalentsGridPanelProps> = ({ fight }) => 
           No talent data available for this fight
         </Typography>
         <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-          Talent information may not be available for this report or fight.
+          Talent information may not be available for this report or fight, and no observed player
+          skills were found in the loaded events.
         </Typography>
       </Box>
     );
