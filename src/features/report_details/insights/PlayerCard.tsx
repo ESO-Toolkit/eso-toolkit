@@ -59,6 +59,10 @@ import type { PlayerGear } from '../../../types/playerDetails';
 import { type ClassAnalysisResult } from '../../../utils/classDetectionUtils';
 import { BuildIssue } from '../../../utils/detectBuildIssues';
 import { PlayerGearSetRecord } from '../../../utils/gearUtilities';
+import {
+  kalpaRaceIdToLabel,
+  type KalpaPlayerBuildEvidence,
+} from '../../../utils/kalpaBuildEvidence';
 import { resolveActorName } from '../../../utils/resolveActorName';
 import { abbreviateSkillLine } from '../../../utils/skillLineDetectionUtils';
 import { buildTooltipProps } from '../../../utils/skillTooltipMapper';
@@ -138,6 +142,7 @@ interface PlayerCardProps {
   scribingSkills: GrimoireData[];
   buildIssues: BuildIssue[];
   classAnalysis?: ClassAnalysisResult;
+  kalpaBuildEvidence?: KalpaPlayerBuildEvidence;
   deaths: number;
   resurrects: number;
   cpm: number;
@@ -280,6 +285,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
     scribingSkills,
     buildIssues,
     classAnalysis,
+    kalpaBuildEvidence,
     deaths,
     resurrects,
     cpm,
@@ -369,6 +375,26 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
     );
 
     const foodAura = detectFoodFromAuras(auras);
+    const kalpaFoodAura = React.useMemo(() => {
+      const food = kalpaBuildEvidence?.food;
+      if (!food?.abilityId) return undefined;
+      return {
+        id: food.abilityId,
+        name: food.name ?? `Food (${food.abilityId})`,
+      };
+    }, [kalpaBuildEvidence?.food]);
+    const effectiveFoodAura = foodAura ?? kalpaFoodAura;
+    const foodEvidenceSource = foodAura
+      ? 'combatant auras'
+      : kalpaFoodAura
+        ? 'Kalpa native evidence'
+        : undefined;
+    const kalpaRaceLabel = kalpaRaceIdToLabel(kalpaBuildEvidence?.raceId);
+    const kalpaChampionPoints =
+      Number.isInteger(kalpaBuildEvidence?.championPoints) &&
+      (kalpaBuildEvidence?.championPoints ?? 0) >= 0
+        ? (kalpaBuildEvidence?.championPoints as number)
+        : undefined;
     const distanceDisplay = React.useMemo(() => {
       if (distanceTraveled == null) {
         return null;
@@ -549,12 +575,12 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
 
     // Memoize food information
     const foodInfo = React.useMemo(() => {
-      if (!foodAura) return { display: 'NONE', color: '#888' };
+      if (!effectiveFoodAura) return { display: 'NONE', color: '#888' };
       return {
-        display: abbreviateFood(foodAura.name),
-        color: getFoodColor(foodAura.id),
+        display: abbreviateFood(effectiveFoodAura.name),
+        color: getFoodColor(effectiveFoodAura.id),
       };
-    }, [foodAura]);
+    }, [effectiveFoodAura]);
 
     // Memoize potion information — prefer the live-stream result (Path B) when available.
     const potionInfo = React.useMemo(() => {
@@ -608,7 +634,10 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
           mundusBuffs,
           championPoints,
           classAnalysis,
-          food: foodAura ? { id: foodAura.id, name: foodAura.name } : undefined,
+          kalpaBuildEvidence,
+          food: effectiveFoodAura
+            ? { id: effectiveFoodAura.id, name: effectiveFoodAura.name }
+            : undefined,
           potionType: potionStreamResult?.type,
         });
 
@@ -629,8 +658,9 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
       mundusBuffs,
       championPoints,
       classAnalysis,
+      kalpaBuildEvidence,
       detectedRole,
-      foodAura,
+      effectiveFoodAura,
       potionStreamResult,
     ]);
 
@@ -840,6 +870,64 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
       }
 
       // --- Existing chips ---
+      if (kalpaRaceLabel) {
+        add(
+          'race',
+          <Tooltip
+            title={`Race: ${kalpaRaceLabel} (Kalpa native evidence)`}
+            enterTouchDelay={0}
+            leaveTouchDelay={3000}
+          >
+            <span
+              style={{ display: 'inline-flex', alignItems: 'center' }}
+              data-testid={`race-${player.id}`}
+            >
+              <StatChipIcon chipId="race" />
+              <span style={{ margin: '0 1px' }} />
+              <Box
+                component="span"
+                sx={{
+                  fontWeight: 700,
+                  fontSize: { xs: 13, sm: 11, md: 10 },
+                  letterSpacing: '.01em',
+                }}
+              >
+                {kalpaRaceLabel}
+              </Box>
+            </span>
+          </Tooltip>,
+        );
+      }
+
+      if (kalpaChampionPoints != null) {
+        add(
+          'cpLevel',
+          <Tooltip
+            title={`Champion Points: ${kalpaChampionPoints.toLocaleString()} (Kalpa native evidence)`}
+            enterTouchDelay={0}
+            leaveTouchDelay={3000}
+          >
+            <span
+              style={{ display: 'inline-flex', alignItems: 'center' }}
+              data-testid={`cp-level-${player.id}`}
+            >
+              <StatChipIcon chipId="cpLevel" />
+              <span style={{ margin: '0 1px' }} />
+              <Box
+                component="span"
+                sx={{
+                  fontWeight: 700,
+                  fontSize: { xs: 13, sm: 11, md: 10 },
+                  letterSpacing: '.01em',
+                }}
+              >
+                CP {kalpaChampionPoints.toLocaleString()}
+              </Box>
+            </span>
+          </Tooltip>,
+        );
+      }
+
       if (mundusBuffs.length > 0) {
         add('mundus', <MundusChip mundusBuffs={mundusBuffs} />);
       }
@@ -847,7 +935,9 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
       add(
         'food',
         <Tooltip
-          title={`Food/Drink: ${foodAura ? foodAura.name : 'None'}`}
+          title={`Food/Drink: ${effectiveFoodAura ? effectiveFoodAura.name : 'None'}${
+            foodEvidenceSource ? ` (${foodEvidenceSource})` : ''
+          }`}
           enterTouchDelay={0}
           leaveTouchDelay={3000}
         >
@@ -1014,8 +1104,11 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
       totalDamage,
       totalCritDamage,
       critDps,
+      kalpaRaceLabel,
+      kalpaChampionPoints,
       mundusBuffs,
-      foodAura,
+      effectiveFoodAura,
+      foodEvidenceSource,
       foodInfo,
       potionInfo,
       deaths,
