@@ -228,7 +228,7 @@ function getCacheTier(path: string): CacheTier | null {
   if (/^\/(rosters|packs)\/[^/]+$/.test(path)) return { edgeTtl: 10, swr: 60 };
   if (/^\/rosters\/[^/]+\/comments$/.test(path)) return { edgeTtl: 15, swr: 60 };
   if (/^\/reports\/[A-Za-z0-9]+\/build-evidence$/.test(path)) {
-    return { edgeTtl: 300, swr: 3600 };
+    return { edgeTtl: 60, swr: 300 };
   }
   if (path === '/search-addons') return { edgeTtl: 60, swr: 300 };
   return null;

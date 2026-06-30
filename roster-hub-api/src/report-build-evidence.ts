@@ -259,7 +259,7 @@ export async function getReportBuildEvidence(c: ReportEvidenceContext): Promise<
   return new Response(body, {
     headers: {
       'Content-Type': 'application/json; charset=utf-8',
-      'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=3600',
+      'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
       Vary: 'Origin',
     },
   });
@@ -308,7 +308,7 @@ export async function putReportBuildEvidence(c: ReportEvidenceContext): Promise<
     httpMetadata: {
       contentType: 'application/json; charset=utf-8',
       contentEncoding: 'gzip',
-      cacheControl: 'public, max-age=300',
+      cacheControl: 'public, max-age=60',
     },
     customMetadata: {
       schemaVersion: String(SCHEMA_VERSION),
