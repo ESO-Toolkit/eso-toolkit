@@ -862,7 +862,7 @@ export const PlayersPanel: React.FC<PlayersPanelProps> = ({ context: contextOver
     );
 
     Object.values(playersById).forEach((player) => {
-      if (!player?.id || !player.anonymous || result[String(player.id)]) return;
+      if (!player?.id || result[String(player.id)]) return;
 
       const playerId = String(player.id);
       const match = findAnonymousKalpaBuildEvidenceForPlayer(kalpaBuildEvidence, {
