@@ -300,15 +300,17 @@ export function findAnonymousKalpaBuildEvidenceForPlayer(
 
   const publicCpIds = uniquePositiveNumbers(signals.championPointPassiveIds);
   const publicScribedIds = uniquePositiveNumbers(signals.scribedSkillIds);
-  if (publicCpIds.length < 2 && publicScribedIds.length === 0) return undefined;
-
-  const matches = evidence.players
+  const classMatches = evidence.players
     .filter((candidate) => !signals.excludedPlayers?.has(candidate))
     .filter((candidate) => !hasSidecarIdentity(candidate))
     .filter((candidate) => {
       const candidateClass = classNameToEsoClass(candidate.className);
-      if (!candidateClass || !classNames.has(candidateClass)) return false;
+      return Boolean(candidateClass && classNames.has(candidateClass));
+    });
 
+  const hasPublicFingerprint = publicCpIds.length >= 2 || publicScribedIds.length > 0;
+  if (hasPublicFingerprint) {
+    const matches = classMatches.filter((candidate) => {
       const candidateCpIds = new Set(uniquePositiveNumbers(candidate.championPointPassives));
       const cpOverlap = publicCpIds.filter((id) => candidateCpIds.has(id)).length;
       if (cpOverlap >= 2) return true;
@@ -319,7 +321,13 @@ export function findAnonymousKalpaBuildEvidenceForPlayer(
       return publicScribedIds.some((id) => candidateScribedIds.has(id));
     });
 
-  return matches.length === 1 ? matches[0] : undefined;
+    return matches.length === 1 ? matches[0] : undefined;
+  }
+
+  if (classNames.size !== 1) return undefined;
+
+  const rawPlayerInfoMatches = classMatches.filter(isExactRawPlayerInfoEvidence);
+  return rawPlayerInfoMatches.length === 1 ? rawPlayerInfoMatches[0] : undefined;
 }
 
 export function redactKalpaPlayerIdentity(
@@ -355,6 +363,10 @@ function hasSidecarIdentity(candidate: KalpaPlayerBuildEvidence): boolean {
     normalizeAccount(candidate.accountName) ||
     normalizeCharacterId(candidate.characterId),
   );
+}
+
+function isExactRawPlayerInfoEvidence(candidate: KalpaPlayerBuildEvidence): boolean {
+  return candidate.evidence === 'raw-player-info' && candidate.confidence === 'exact';
 }
 
 function uniquePositiveNumbers(values: number[] | undefined): number[] {

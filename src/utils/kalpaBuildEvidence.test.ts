@@ -302,6 +302,91 @@ describe('kalpaBuildEvidence', () => {
     ).toBe(anonymousEvidence.players[0]);
   });
 
+  it('matches anonymous raw player info by unique single class when no public fingerprint exists', () => {
+    const anonymousEvidence: KalpaBuildEvidence = {
+      ...evidence,
+      players: [
+        {
+          ...evidence.players[0],
+          unitId: '20',
+          characterName: undefined,
+          accountName: undefined,
+          characterId: undefined,
+          className: 'Sorcerer',
+          raceId: 1,
+          championPoints: 0,
+          championPointPassives: [],
+          scribedSkills: [],
+          evidence: 'raw-player-info',
+          confidence: 'exact',
+        },
+        {
+          ...evidence.players[0],
+          unitId: '104',
+          characterName: undefined,
+          accountName: undefined,
+          characterId: undefined,
+          className: 'Sorcerer',
+          raceId: 1,
+          championPoints: 1134,
+          championPointPassives: [],
+          scribedSkills: [],
+          evidence: 'raw-unit-added',
+          confidence: 'partial',
+        },
+      ],
+    };
+
+    expect(
+      findAnonymousKalpaBuildEvidenceForPlayer(anonymousEvidence, {
+        classNames: ['Sorcerer'],
+      }),
+    ).toBe(anonymousEvidence.players[0]);
+  });
+
+  it('does not use raw player info fallback when anonymous class-only matching is ambiguous', () => {
+    const ambiguous: KalpaBuildEvidence = {
+      ...evidence,
+      players: [
+        {
+          ...evidence.players[0],
+          unitId: '20',
+          characterName: undefined,
+          accountName: undefined,
+          characterId: undefined,
+          className: 'Sorcerer',
+          championPointPassives: [],
+          scribedSkills: [],
+          evidence: 'raw-player-info',
+          confidence: 'exact',
+        },
+        {
+          ...evidence.players[0],
+          unitId: '21',
+          characterName: undefined,
+          accountName: undefined,
+          characterId: undefined,
+          className: 'Sorcerer',
+          championPointPassives: [],
+          scribedSkills: [],
+          evidence: 'raw-player-info',
+          confidence: 'exact',
+        },
+      ],
+    };
+
+    expect(
+      findAnonymousKalpaBuildEvidenceForPlayer(ambiguous, {
+        classNames: ['Sorcerer'],
+      }),
+    ).toBeUndefined();
+    expect(
+      findAnonymousKalpaBuildEvidenceForPlayer(ambiguous, {
+        classNames: ['Sorcerer', 'Templar'],
+      }),
+    ).toBeUndefined();
+  });
+
   it('excludes exact anonymous sidecar rows without blocking reused unit ids', () => {
     const anonymousEvidence: KalpaBuildEvidence = {
       ...evidence,
