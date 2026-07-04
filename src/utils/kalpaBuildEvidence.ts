@@ -30,12 +30,19 @@ export interface KalpaPlayerBuildEvidence {
   classMasteryPassives: number[];
   championPointPassives?: number[];
   food?: KalpaFoodEvidence;
+  mundus?: KalpaMundusEvidence;
   scribedSkills?: KalpaScribedSkillEvidence[];
   evidence: string;
   confidence: string;
 }
 
 export interface KalpaFoodEvidence {
+  abilityId: number;
+  name?: string | null;
+  icon?: string | null;
+}
+
+export interface KalpaMundusEvidence {
   abilityId: number;
   name?: string | null;
   icon?: string | null;
@@ -408,6 +415,7 @@ function validateKalpaPlayerEvidence(value: unknown): KalpaPlayerBuildEvidence |
   const classMasteryPassives = sanitizeNumberArray(value.classMasteryPassives);
   const championPointPassives = sanitizeNumberArray(value.championPointPassives);
   const food = sanitizeFoodEvidence(value.food);
+  const mundus = sanitizeMundusEvidence(value.mundus);
   const scribedSkills = sanitizeScribedSkills(value.scribedSkills);
   const player: KalpaPlayerBuildEvidence = {
     unitId: value.unitId,
@@ -429,11 +437,24 @@ function validateKalpaPlayerEvidence(value: unknown): KalpaPlayerBuildEvidence |
   };
   if (championPointPassives.length > 0) player.championPointPassives = championPointPassives;
   if (food) player.food = food;
+  if (mundus) player.mundus = mundus;
   if (scribedSkills.length > 0) player.scribedSkills = scribedSkills;
   return player;
 }
 
 function sanitizeFoodEvidence(value: unknown): KalpaFoodEvidence | undefined {
+  if (!isRecord(value) || !Number.isInteger(value.abilityId) || (value.abilityId as number) <= 0) {
+    return undefined;
+  }
+
+  return {
+    abilityId: value.abilityId as number,
+    name: typeof value.name === 'string' ? value.name : undefined,
+    icon: typeof value.icon === 'string' ? value.icon : undefined,
+  };
+}
+
+function sanitizeMundusEvidence(value: unknown): KalpaMundusEvidence | undefined {
   if (!isRecord(value) || !Number.isInteger(value.abilityId) || (value.abilityId as number) <= 0) {
     return undefined;
   }

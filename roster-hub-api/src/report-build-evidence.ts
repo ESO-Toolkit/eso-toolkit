@@ -38,6 +38,7 @@ interface KalpaPlayerBuildEvidence {
   classMasteryPassives: number[];
   championPointPassives?: number[];
   food?: KalpaAbilityEvidence;
+  mundus?: KalpaAbilityEvidence;
   scribedSkills?: KalpaScribedSkillEvidence[];
   evidence: string;
   confidence: string;
@@ -169,6 +170,7 @@ function validatePlayerEvidence(value: unknown): KalpaPlayerBuildEvidence | null
     MAX_CHAMPION_POINT_PASSIVES,
   );
   const food = sanitizeAbilityEvidence(value.food);
+  const mundus = sanitizeAbilityEvidence(value.mundus);
   const player: KalpaPlayerBuildEvidence = {
     unitId,
     unitOccurrenceId: boundedString(value.unitOccurrenceId, 48),
@@ -186,6 +188,7 @@ function validatePlayerEvidence(value: unknown): KalpaPlayerBuildEvidence | null
   };
   if (championPointPassives.length > 0) player.championPointPassives = championPointPassives;
   if (food) player.food = food;
+  if (mundus) player.mundus = mundus;
   if (scribedSkills.length > 0) player.scribedSkills = scribedSkills;
   return player;
 }

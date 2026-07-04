@@ -395,6 +395,24 @@ describe('kalpaBuildEvidence', () => {
     );
   });
 
+  it('round-trips the Mundus stone evidence', () => {
+    const mundusEvidence: KalpaBuildEvidence = {
+      ...evidence,
+      players: [
+        {
+          ...evidence.players[0],
+          mundus: {
+            abilityId: 13984,
+            name: 'Boon: The Shadow',
+            icon: 'ability_mundusstones_012',
+          },
+        },
+      ],
+    };
+
+    expect(decodeKalpaBuildEvidenceParam(encodeEvidence(mundusEvidence))).toEqual(mundusEvidence);
+  });
+
   it('maps native race ids to build editor ids and labels', () => {
     expect(kalpaRaceIdToBuildRace(9)).toBe('khajiit');
     expect(kalpaRaceIdToLabel(9)).toBe('Khajiit');
