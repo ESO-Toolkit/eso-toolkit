@@ -5,7 +5,7 @@ import React from 'react';
 import { useLogger } from '@/hooks/useLogger';
 
 import { useSkillScribingData } from '../features/scribing/hooks/useScribingDetection';
-import type { ScribedSkillAffixInfo } from '../features/scribing/types';
+import type { ScribedSkillAffixInfo, ScribedSkillData } from '../features/scribing/types';
 import { highlightMetrics } from '../utils/highlightMetrics';
 
 export interface SkillStat {
@@ -40,6 +40,13 @@ export interface SkillTooltipProps {
   // Fight and player context for automatic scribing detection
   fightId?: string;
   playerId?: number;
+  // Ground-truth scripts recovered by Kalpa from the raw log (ABILITY_INFO). When
+  // present these override the inferred detection for the matching scribed skill.
+  groundTruthScripts?: {
+    focusScript?: string | null;
+    signatureScript?: string | null;
+    affixScript?: string | null;
+  };
 }
 
 type PaletteKey = 'primary' | 'secondary' | 'success' | 'warning' | 'error' | 'info';
@@ -134,6 +141,61 @@ const nameGradientSx = (isDark: boolean): Record<string, unknown> => ({
   fontSize: { xs: '0.92rem', sm: '1rem' },
 });
 
+// Provenance label for Kalpa-sourced scripts. Renders as "via Kalpa native evidence",
+// matching how PlayerCard tags other sidecar-derived facts (food/race/CP).
+const KALPA_NATIVE_EVIDENCE_LABEL = 'Kalpa native evidence';
+
+type GroundTruthScripts = {
+  focusScript?: string | null;
+  signatureScript?: string | null;
+  affixScript?: string | null;
+};
+
+/**
+ * Overlay Kalpa's raw-log ground-truth signature/affix scripts onto the inferred scribing
+ * data. Ground truth wins because it is exact (the inference is probabilistic and may be
+ * absent when the skill was never cast). Returns the inferred data unchanged when there is
+ * no ground truth, so the existing display is byte-identical in that case. When there is
+ * ground truth but no inference at all, a minimal shell is synthesized so the scripts still
+ * render. (Focus is intentionally not surfaced — it is already encoded in the skill name.)
+ */
+function mergeGroundTruthScripts(
+  base: ScribedSkillData | null,
+  groundTruth: GroundTruthScripts | undefined,
+  name: string,
+): ScribedSkillData | null {
+  const hasGroundTruth = Boolean(
+    groundTruth && (groundTruth.signatureScript || groundTruth.affixScript),
+  );
+  if (!hasGroundTruth || !groundTruth) return base;
+
+  const next: ScribedSkillData = base
+    ? { ...base }
+    : { grimoireName: name.replace(/\s*\(.*\)\s*$/, '').trim() || name, effects: [] };
+
+  if (groundTruth.signatureScript) {
+    next.signatureScript = {
+      name: groundTruth.signatureScript,
+      confidence: 1,
+      detectionMethod: KALPA_NATIVE_EVIDENCE_LABEL,
+      evidence: [],
+    };
+  }
+  if (groundTruth.affixScript) {
+    next.affixScripts = [
+      {
+        id: 'kalpa-native-affix',
+        name: groundTruth.affixScript,
+        description: '',
+        confidence: 1,
+        detectionMethod: KALPA_NATIVE_EVIDENCE_LABEL,
+        evidence: { buffIds: [], debuffIds: [], abilityNames: [], occurrenceCount: 0 },
+      },
+    ];
+  }
+  return next;
+}
+
 /**
  * Minimal, reusable tooltip card for ESO skills. Designed to sit inside popovers/menus
  * but also works standalone in a column layout. Uses the app's dark theme and subtle
@@ -153,6 +215,7 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
   scribedSkillData,
   fightId,
   playerId,
+  groundTruthScripts,
 }) => {
   const theme = useTheme();
   const logger = useLogger();
@@ -167,10 +230,13 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
 
   // Prefer hook-detected data only when it has meaningful results (was actually cast),
   // otherwise the prop-based data from PlayerCard's worker detection is more accurate
-  const finalScribedData =
+  const baseScribedData =
     (detectedScribingData?.wasCastInFight ? detectedScribingData : null) ??
     scribedSkillData ??
     null;
+  // Kalpa's raw-log scripts are ground truth, so they win over inference (which can be
+  // probabilistic or missing entirely when a scribed skill was never cast in the fight).
+  const finalScribedData = mergeGroundTruthScripts(baseScribedData, groundTruthScripts, name);
 
   // Ensure at least one icon source is provided
   if (!iconUrl && !iconSlug) {
