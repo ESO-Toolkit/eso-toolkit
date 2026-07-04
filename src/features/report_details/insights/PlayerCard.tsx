@@ -62,6 +62,7 @@ import { PlayerGearSetRecord } from '../../../utils/gearUtilities';
 import {
   kalpaRaceIdToLabel,
   type KalpaPlayerBuildEvidence,
+  type KalpaScribedSkillEvidence,
 } from '../../../utils/kalpaBuildEvidence';
 import { resolveActorName } from '../../../utils/resolveActorName';
 import { abbreviateSkillLine } from '../../../utils/skillLineDetectionUtils';
@@ -114,12 +115,32 @@ const LazyTalentTooltipContent: React.FC<{
   resolveScribedSkillData: (talentGuid: number, talentName: string) => ScribedSkillData | undefined;
   fightId?: string;
   playerId: number;
-}> = ({ talent, isUltimate, resolveProps, resolveScribedSkillData, fightId, playerId }) => {
+  kalpaScribedByAbilityId?: Map<number, KalpaScribedSkillEvidence>;
+}> = ({
+  talent,
+  isUltimate,
+  resolveProps,
+  resolveScribedSkillData,
+  fightId,
+  playerId,
+  kalpaScribedByAbilityId,
+}) => {
   const rich = resolveProps(talent);
   const base = {
     name: talent.name,
     description: `${talent.name} (ID: ${talent.guid})`,
   };
+
+  const groundTruth = kalpaScribedByAbilityId?.get(talent.guid);
+  const groundTruthScripts =
+    groundTruth &&
+    (groundTruth.focusScript || groundTruth.signatureScript || groundTruth.affixScript)
+      ? {
+          focusScript: groundTruth.focusScript,
+          signatureScript: groundTruth.signatureScript,
+          affixScript: groundTruth.affixScript,
+        }
+      : undefined;
 
   return (
     <SkillTooltip
@@ -130,6 +151,7 @@ const LazyTalentTooltipContent: React.FC<{
       scribedSkillData={rich?.scribedSkillData ?? resolveScribedSkillData(talent.guid, talent.name)}
       fightId={fightId}
       playerId={playerId}
+      groundTruthScripts={groundTruthScripts}
     />
   );
 };
@@ -383,6 +405,15 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
         name: food.name ?? `Food (${food.abilityId})`,
       };
     }, [kalpaBuildEvidence?.food]);
+    // Ground-truth scribing scripts from the Kalpa sidecar, keyed by ability id so the
+    // talent tooltip can prefer them over its inferred detection.
+    const kalpaScribedByAbilityId = React.useMemo(() => {
+      const byAbility = new Map<number, KalpaScribedSkillEvidence>();
+      for (const skill of kalpaBuildEvidence?.scribedSkills ?? []) {
+        if (Number.isInteger(skill.abilityId)) byAbility.set(skill.abilityId, skill);
+      }
+      return byAbility;
+    }, [kalpaBuildEvidence?.scribedSkills]);
     const effectiveFoodAura = foodAura ?? kalpaFoodAura;
     const foodEvidenceSource = foodAura
       ? 'combatant auras'
@@ -1492,6 +1523,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                                     resolveScribedSkillData={resolveScribedSkillData}
                                     fightId={fightId || undefined}
                                     playerId={player.id}
+                                    kalpaScribedByAbilityId={kalpaScribedByAbilityId}
                                   />
                                 }
                                 placement="top-start"
@@ -1594,6 +1626,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                                       resolveScribedSkillData={resolveScribedSkillData}
                                       fightId={fightId || undefined}
                                       playerId={player.id}
+                                      kalpaScribedByAbilityId={kalpaScribedByAbilityId}
                                     />
                                   }
                                   placement="top-start"
