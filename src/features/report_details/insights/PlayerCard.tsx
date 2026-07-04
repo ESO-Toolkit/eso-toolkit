@@ -253,9 +253,11 @@ function consolidateBuildIssues(buildIssues: BuildIssue[]): {
 
 interface MundusChipProps {
   mundusBuffs: Array<{ name: string; id: number }>;
+  // Provenance of the mundus, appended to the tooltip (e.g. "Kalpa native evidence").
+  source?: string;
 }
 
-const MundusChip: React.FC<MundusChipProps> = ({ mundusBuffs }) => {
+const MundusChip: React.FC<MundusChipProps> = ({ mundusBuffs, source }) => {
   if (mundusBuffs.length === 0) return null;
 
   // Since players can only have 1 mundus at a time, get the first/only one
@@ -263,7 +265,11 @@ const MundusChip: React.FC<MundusChipProps> = ({ mundusBuffs }) => {
   const mundusName = mundusBuff.name.replace(/^Boon:\s*/i, '').replace(/^The\s+/i, '');
 
   return (
-    <Tooltip title={`Mundus: ${mundusName}`} enterTouchDelay={0} leaveTouchDelay={3000}>
+    <Tooltip
+      title={`Mundus: ${mundusName}${source ? ` (${source})` : ''}`}
+      enterTouchDelay={0}
+      leaveTouchDelay={3000}
+    >
       <Box
         component="span"
         sx={{
@@ -420,6 +426,24 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
       : kalpaFoodAura
         ? 'Kalpa native evidence'
         : undefined;
+
+    // Mundus fallback: ESO Logs derives the boon from combat auras, but that can be missed
+    // when it isn't re-applied in-window. Fall back to the Kalpa sidecar's exact PLAYER_INFO
+    // reading, mirroring the food fallback above.
+    const kalpaMundus = React.useMemo(() => {
+      const mundus = kalpaBuildEvidence?.mundus;
+      if (!mundus?.abilityId) return undefined;
+      return {
+        id: mundus.abilityId,
+        name: mundus.name ?? `Mundus (${mundus.abilityId})`,
+      };
+    }, [kalpaBuildEvidence?.mundus]);
+    const effectiveMundusBuffs = React.useMemo(
+      () => (mundusBuffs.length > 0 ? mundusBuffs : kalpaMundus ? [kalpaMundus] : []),
+      [mundusBuffs, kalpaMundus],
+    );
+    const mundusSource =
+      mundusBuffs.length === 0 && kalpaMundus ? 'Kalpa native evidence' : undefined;
     const kalpaRaceLabel = kalpaRaceIdToLabel(kalpaBuildEvidence?.raceId);
     const kalpaChampionPoints =
       Number.isInteger(kalpaBuildEvidence?.championPoints) &&
@@ -662,7 +686,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
           role: broadRole,
           gear: player?.combatantInfo?.gear ?? [],
           talents,
-          mundusBuffs,
+          mundusBuffs: effectiveMundusBuffs,
           championPoints,
           classAnalysis,
           kalpaBuildEvidence,
@@ -686,7 +710,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
     }, [
       player,
       talents,
-      mundusBuffs,
+      effectiveMundusBuffs,
       championPoints,
       classAnalysis,
       kalpaBuildEvidence,
@@ -959,8 +983,8 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
         );
       }
 
-      if (mundusBuffs.length > 0) {
-        add('mundus', <MundusChip mundusBuffs={mundusBuffs} />);
+      if (effectiveMundusBuffs.length > 0) {
+        add('mundus', <MundusChip mundusBuffs={effectiveMundusBuffs} source={mundusSource} />);
       }
 
       add(
@@ -1137,7 +1161,8 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
       critDps,
       kalpaRaceLabel,
       kalpaChampionPoints,
-      mundusBuffs,
+      effectiveMundusBuffs,
+      mundusSource,
       effectiveFoodAura,
       foodEvidenceSource,
       foodInfo,
