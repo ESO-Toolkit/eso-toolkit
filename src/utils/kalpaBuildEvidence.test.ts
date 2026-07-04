@@ -413,6 +413,22 @@ describe('kalpaBuildEvidence', () => {
     expect(decodeKalpaBuildEvidenceParam(encodeEvidence(mundusEvidence))).toEqual(mundusEvidence);
   });
 
+  it('round-trips the full passives list', () => {
+    const passivesEvidence: KalpaBuildEvidence = {
+      ...evidence,
+      players: [
+        {
+          ...evidence.players[0],
+          passives: [142079, 999999, 45301],
+        },
+      ],
+    };
+
+    expect(decodeKalpaBuildEvidenceParam(encodeEvidence(passivesEvidence))).toEqual(
+      passivesEvidence,
+    );
+  });
+
   it('maps native race ids to build editor ids and labels', () => {
     expect(kalpaRaceIdToBuildRace(9)).toBe('khajiit');
     expect(kalpaRaceIdToLabel(9)).toBe('Khajiit');

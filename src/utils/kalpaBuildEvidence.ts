@@ -29,6 +29,8 @@ export interface KalpaPlayerBuildEvidence {
   className?: string | null;
   classMasteryPassives: number[];
   championPointPassives?: number[];
+  /** Full long-term-effect ability ids from the raw PLAYER_INFO (classified client-side). */
+  passives?: number[];
   food?: KalpaFoodEvidence;
   mundus?: KalpaMundusEvidence;
   scribedSkills?: KalpaScribedSkillEvidence[];
@@ -414,6 +416,7 @@ function validateKalpaPlayerEvidence(value: unknown): KalpaPlayerBuildEvidence |
 
   const classMasteryPassives = sanitizeNumberArray(value.classMasteryPassives);
   const championPointPassives = sanitizeNumberArray(value.championPointPassives);
+  const passives = sanitizeNumberArray(value.passives);
   const food = sanitizeFoodEvidence(value.food);
   const mundus = sanitizeMundusEvidence(value.mundus);
   const scribedSkills = sanitizeScribedSkills(value.scribedSkills);
@@ -436,6 +439,7 @@ function validateKalpaPlayerEvidence(value: unknown): KalpaPlayerBuildEvidence |
     confidence: typeof value.confidence === 'string' ? value.confidence : '',
   };
   if (championPointPassives.length > 0) player.championPointPassives = championPointPassives;
+  if (passives.length > 0) player.passives = passives;
   if (food) player.food = food;
   if (mundus) player.mundus = mundus;
   if (scribedSkills.length > 0) player.scribedSkills = scribedSkills;
