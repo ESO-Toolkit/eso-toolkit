@@ -47,6 +47,12 @@ interface KalpaAbilityEvidence {
   abilityId: number;
   name?: string | null;
   icon?: string | null;
+  // Scribing scripts, only ever populated on scribed-skill entries (Kalpa reads them
+  // from the raw ABILITY_INFO line, which ESO Logs strips from its API). Food entries
+  // never carry these, so they serialize away as undefined.
+  focusScript?: string | null;
+  signatureScript?: string | null;
+  affixScript?: string | null;
 }
 
 type KalpaScribedSkillEvidence = KalpaAbilityEvidence;
@@ -130,6 +136,9 @@ function sanitizeAbilityEvidence(value: unknown): KalpaAbilityEvidence | undefin
     abilityId,
     name: boundedString(value.name, 96),
     icon: boundedString(value.icon, 64),
+    focusScript: boundedString(value.focusScript, 96),
+    signatureScript: boundedString(value.signatureScript, 96),
+    affixScript: boundedString(value.affixScript, 96),
   };
 }
 

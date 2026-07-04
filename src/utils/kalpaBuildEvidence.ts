@@ -45,6 +45,10 @@ export interface KalpaScribedSkillEvidence {
   abilityId: number;
   name?: string | null;
   icon?: string | null;
+  /** Ground-truth equipped scripts, recovered by Kalpa from the raw ABILITY_INFO line. */
+  focusScript?: string | null;
+  signatureScript?: string | null;
+  affixScript?: string | null;
 }
 
 export interface KalpaBuildEvidence {
@@ -451,6 +455,10 @@ function sanitizeScribedSkills(value: unknown): KalpaScribedSkillEvidence[] {
         abilityId: entry.abilityId as number,
         name: typeof entry.name === 'string' ? entry.name : undefined,
         icon: typeof entry.icon === 'string' ? entry.icon : undefined,
+        focusScript: typeof entry.focusScript === 'string' ? entry.focusScript : undefined,
+        signatureScript:
+          typeof entry.signatureScript === 'string' ? entry.signatureScript : undefined,
+        affixScript: typeof entry.affixScript === 'string' ? entry.affixScript : undefined,
       };
     })
     .filter((entry): entry is KalpaScribedSkillEvidence => entry != null);
