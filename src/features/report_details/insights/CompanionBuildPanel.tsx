@@ -35,7 +35,7 @@ import {
 export interface CompanionBuildPanelProps {
   /** Champion-point view-model from the ESOTK Companion add-on, or null if none captured. */
   championPoints: ChampionPointsViewModel | null;
-  /** Stat-aware coaching insights (penetration vs cap, crit caps, …). */
+  /** Stat-aware coaching insights (self penetration + crit chance, point-in-time). */
   coaching: CoachingInsight[];
   /** Final sheet stats captured by the add-on. */
   stats?: CompanionStats;
@@ -235,8 +235,9 @@ function SheetStatGroup({
 
 /**
  * Renders the build data captured by the ESOTK Companion add-on that ESO Logs can't see:
- * the full champion-point allocation (grouped by tree) and stat-aware coaching
- * (penetration vs cap, crit caps). Presentational only — feed it the view-model from
+ * the full champion-point allocation (grouped by tree), the character sheet at capture
+ * (point-in-time, volatile chips separated from stable), and plain stat-reading coaching
+ * (self penetration, crit chance). Presentational only — feed it the view-model from
  * `buildChampionPointsViewModel` and insights from `computeStatCoaching`.
  *
  * Renders nothing when there's no companion data, so it's safe to always mount.

@@ -27,7 +27,7 @@ import type { CompanionSnapshot } from './esotkCompanionParser';
 export interface CompanionBuildForPlayer {
   /** Champion-point view-model, or null when none was captured. */
   championPoints: ChampionPointsViewModel | null;
-  /** Stat-aware coaching insights (penetration vs cap, crit caps, …). */
+  /** Stat-aware coaching insights (self penetration + crit chance, point-in-time). */
   coaching: CoachingInsight[];
   /** Final sheet stats captured by the add-on. */
   stats?: CompanionSnapshot['stats'];
