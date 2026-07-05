@@ -71,18 +71,25 @@ export function buildChampionPointsViewModel(
 ): ChampionPointsViewModel | null {
   if (!cp) return null;
 
+  // Prefer ESOTK's canonical (English) name for known ids; otherwise fall back to the
+  // name the addon captured from the client, so even ids the map doesn't know read
+  // cleanly instead of as "Unknown". Only canonical-map hits count as verified.
+  const resolveName = (id: number): { name: string; verified: boolean } => {
+    if (isChampionPointVerified(id)) {
+      return { name: getChampionPointAbilityName(id), verified: true };
+    }
+    const captured = cp.names?.[id];
+    if (captured) return { name: captured, verified: false };
+    return { name: getChampionPointAbilityName(id), verified: false };
+  };
+
   const allocated: AllocatedStar[] = [];
   for (const discipline of Object.values(cp.disciplines)) {
     for (const [skillIdStr, points] of Object.entries(discipline.skills)) {
       const id = Number(skillIdStr);
       if (!Number.isFinite(id) || points <= 0) continue;
-      allocated.push({
-        id,
-        name: getChampionPointAbilityName(id),
-        points,
-        tree: treeForStar(id),
-        verified: isChampionPointVerified(id),
-      });
+      const { name, verified } = resolveName(id);
+      allocated.push({ id, name, points, tree: treeForStar(id), verified });
     }
   }
   allocated.sort((a, b) => b.points - a.points || a.id - b.id);
@@ -93,7 +100,7 @@ export function buildChampionPointsViewModel(
   }
 
   const slotted: SlottedStar[] = Object.entries(cp.slotted)
-    .map(([slotStr, id]) => ({ slot: Number(slotStr), id, name: getChampionPointAbilityName(id) }))
+    .map(([slotStr, id]) => ({ slot: Number(slotStr), id, name: resolveName(id).name }))
     .filter((s) => Number.isFinite(s.slot) && Number.isFinite(s.id) && s.id > 0)
     .sort((a, b) => a.slot - b.slot);
 

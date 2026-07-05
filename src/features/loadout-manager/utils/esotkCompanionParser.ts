@@ -36,6 +36,12 @@ export interface CompanionChampionPoints {
   disciplines: Record<number, CompanionCpDiscipline>;
   /** The 12 slotted stars, keyed by slot (1-12) → champion skill id. */
   slotted: Record<number, number>;
+  /**
+   * Client-provided star names, keyed by champion skill id. Ground truth from the game
+   * (localized), used as a fallback when ESOTK's canonical id→name map doesn't know an id
+   * — so even obscure passive stars read cleanly. Absent on pre-name-capture snapshots.
+   */
+  names?: Record<number, string>;
 }
 
 /** Final derived stats the log/API never carries. */
@@ -190,6 +196,15 @@ function numericMap(v: LuaValue | undefined): Record<number, number> {
   return out;
 }
 
+/** Build a `{ [numericId]: string }` map from a Lua table of numeric→string entries. */
+function numericStringMap(v: LuaValue | undefined): Record<number, string> {
+  const out: Record<number, string> = {};
+  for (const [id, val] of numericEntries(v)) {
+    if (typeof val === 'string' && val) out[id] = val;
+  }
+  return out;
+}
+
 function normalizeChampionPoints(v: LuaValue | undefined): CompanionChampionPoints | undefined {
   if (!isRecord(v)) return undefined;
   const disciplines: Record<number, CompanionCpDiscipline> = {};
@@ -202,10 +217,12 @@ function normalizeChampionPoints(v: LuaValue | undefined): CompanionChampionPoin
       skills: numericMap(d.skills),
     };
   }
+  const names = numericStringMap(v.names);
   return {
     total: asNumber(v.total),
     disciplines,
     slotted: numericMap(v.slotted),
+    ...(Object.keys(names).length > 0 ? { names } : {}),
   };
 }
 

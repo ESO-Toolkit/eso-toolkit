@@ -53,4 +53,17 @@ describe('buildChampionPointsViewModel', () => {
     expect(vm.slotted.map((s) => s.slot)).toEqual([1, 5, 9]);
     expect(vm.slotted.find((s) => s.slot === 5)!.name).toBe('Deadly Aim');
   });
+
+  it('falls back to the addon-captured name for ids the canonical map does not know', () => {
+    const withNames: CompanionChampionPoints = {
+      disciplines: { 1: { id: 1, type: 1, spent: 10, skills: { 999999: 10 } } },
+      slotted: { 5: 999999 },
+      names: { 999999: 'Some Obscure Star' },
+    };
+    const vm = buildChampionPointsViewModel(withNames)!;
+    const star = vm.allocated.find((s) => s.id === 999999)!;
+    expect(star.name).toBe('Some Obscure Star'); // captured name, not "Unknown"
+    expect(star.verified).toBe(false); // still not a canonical-map hit
+    expect(vm.slotted.find((s) => s.slot === 5)!.name).toBe('Some Obscure Star');
+  });
 });

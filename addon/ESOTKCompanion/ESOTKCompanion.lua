@@ -85,7 +85,9 @@ end
 --   slotted: GetSlotBoundId(slot, HOTBAR_CATEGORY_CHAMPION), slots 1..12
 --            (Craft 1-4 / Warfare 5-8 / Fitness 9-12 per DynamicCP OFFSETS)
 local function captureChampionPoints()
-  local cp = { total = call("GetUnitChampionPoints", "player"), disciplines = {}, slotted = {} }
+  -- names[skillId] = localized star name straight from the client, so ESOTK can
+  -- read every star cleanly even for ids its canonical map doesn't know yet.
+  local cp = { total = call("GetUnitChampionPoints", "player"), disciplines = {}, slotted = {}, names = {} }
 
   local numDisciplines = call("GetNumChampionDisciplines") or 0
   for disciplineIndex = 1, numDisciplines do
@@ -99,6 +101,7 @@ local function captureChampionPoints()
           local points = call("GetNumPointsSpentOnChampionSkill", skillId) -- single arg
           if points and points > 0 then
             skills[skillId] = points -- key by skillId so ESOTK can name it
+            cp.names[skillId] = call("GetChampionSkillName", skillId)
             spent = spent + points
           end
         end
@@ -116,7 +119,11 @@ local function captureChampionPoints()
   local champCat = _G["HOTBAR_CATEGORY_CHAMPION"]
   if champCat ~= nil then
     for slot = 1, 12 do
-      cp.slotted[slot] = call("GetSlotBoundId", slot, champCat)
+      local boundId = call("GetSlotBoundId", slot, champCat)
+      cp.slotted[slot] = boundId
+      if boundId and boundId ~= 0 then
+        cp.names[boundId] = call("GetChampionSkillName", boundId)
+      end
     end
   end
 
