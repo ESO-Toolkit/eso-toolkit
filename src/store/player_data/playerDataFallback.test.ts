@@ -80,7 +80,9 @@ describe('buildFallbackPlayersFromMasterData', () => {
       type: 'Nightblade',
       role: 'dps',
     });
-    expect(players[1].combatantInfo.gear).toBe(gear);
+    expect(players[1].combatantInfo.gear).toEqual([
+      { id: 10, setName: 'Test Set', slot: 0, name: 'Test Set' },
+    ]);
     expect(players[96]).toMatchObject({
       id: 96,
       name: 'Angair Doomfang',
@@ -105,5 +107,44 @@ describe('buildFallbackPlayersFromMasterData', () => {
       displayName: '',
       role: 'dps',
     });
+  });
+
+  it('normalizes combatant-info gear from event payloads', () => {
+    const gear = [
+      { id: 157729, setID: 475 },
+      { id: 0, setID: 0 },
+      { id: 223189, setID: 845, slot: 5 },
+    ] as CombatantInfoEvent['gear'];
+
+    const players = buildFallbackPlayersFromMasterData({
+      actorsById: {
+        1: actor({ id: 1, name: 'Fallback Player' }),
+      },
+      combatantInfoEvents: [combatantInfo(1, 100, gear)],
+    });
+
+    expect(players[1].combatantInfo.gear).toEqual([
+      {
+        id: 157729,
+        setID: 475,
+        slot: 0,
+        setName: 'Aegis Caller',
+        name: 'Aegis Caller',
+      },
+      {
+        id: 0,
+        setID: 0,
+        slot: 1,
+        setName: undefined,
+        name: undefined,
+      },
+      {
+        id: 223189,
+        setID: 845,
+        slot: 5,
+        setName: "Huntsman's Warmask",
+        name: "Huntsman's Warmask",
+      },
+    ]);
   });
 });

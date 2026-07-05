@@ -55,7 +55,7 @@ import { PlayerDetailsWithRole } from '../../../store/player_data/playerDataSlic
 import { selectActiveReportContext } from '../../../store/report/reportSelectors';
 import type { RootState } from '../../../store/storeWithHistory';
 import { selectScribingDetectionsResult } from '../../../store/worker_results';
-import type { PlayerGear } from '../../../types/playerDetails';
+import type { PlayerGear, PlayerTalent } from '../../../types/playerDetails';
 import { type ClassAnalysisResult } from '../../../utils/classDetectionUtils';
 import { BuildIssue } from '../../../utils/detectBuildIssues';
 import { PlayerGearSetRecord } from '../../../utils/gearUtilities';
@@ -101,6 +101,9 @@ const LazyGearSetTooltipContent: React.FC<{
 
 type TalentTooltipProps = ReturnType<typeof buildTooltipProps>;
 
+const OBSERVED_SKILLS_TOOLTIP =
+  "Inferred from this fight's casts, damage, buffs, debuffs, heals, and resources. This is not an exact slotted bar; unused skills cannot be recovered from public log data.";
+
 /**
  * Renders a talent/skill tooltip's content, resolving the (expensive) rich tooltip props only
  * when this component mounts — i.e. when MUI opens the tooltip on hover. The resolver caches per
@@ -139,6 +142,7 @@ interface PlayerCardProps {
   mundusBuffs: Array<{ name: string; id: number }>;
   championPoints: Array<{ name: string; id: number; color: 'red' | 'blue' | 'green' }>;
   auras: Array<{ name: string; id: number; stacks?: number }>;
+  observedSkills?: PlayerTalent[];
   scribingSkills: GrimoireData[];
   buildIssues: BuildIssue[];
   classAnalysis?: ClassAnalysisResult;
@@ -282,6 +286,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
     mundusBuffs,
     championPoints,
     auras,
+    observedSkills,
     scribingSkills,
     buildIssues,
     classAnalysis,
@@ -327,6 +332,11 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
       () => player?.combatantInfo?.talents ?? [],
       [player?.combatantInfo?.talents],
     );
+    const displayTalents = React.useMemo(
+      () => (talents.length > 0 ? talents : (observedSkills ?? [])),
+      [observedSkills, talents],
+    );
+    const isObservedTalentFallback = talents.length === 0 && displayTalents.length > 0;
     const gear = React.useMemo(
       () => (player?.combatantInfo?.gear ?? []).filter((g) => g.id !== 0),
       [player?.combatantInfo?.gear],
@@ -1458,212 +1468,248 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                 {/* Class Mastery passives (non-subclassed only) — renders nothing otherwise */}
                 <ClassMasteryCluster classAnalysis={classAnalysis} />
 
-                {/* Talents */}
-                {talents.length > 0 && (
+                {/* Talents and gear */}
+                {(displayTalents.length > 0 || gear.length > 0) && (
                   <Box sx={{ mb: 1.5 }}>
-                    <Box sx={{ mb: 1.25, flexWrap: 'wrap', gap: 1.25, display: 'flex' }}>
-                      {talents.slice(0, 6).map((talent, idx) => {
-                        const isUltimate = idx === 5;
-                        return (
-                          <React.Fragment key={idx}>
-                            {isUltimate && (
-                              <Box
+                    {displayTalents.length > 0 && (
+                      <>
+                        {isObservedTalentFallback && (
+                          <Box sx={{ mb: 0.75, display: 'flex', alignItems: 'center' }}>
+                            <Tooltip title={OBSERVED_SKILLS_TOOLTIP} arrow>
+                              <Chip
+                                icon={<InfoIcon sx={{ fontSize: '0.85rem !important' }} />}
+                                label="Observed skills"
+                                size="small"
+                                color="warning"
+                                variant="outlined"
+                                data-testid="observed-skills-chip"
                                 sx={{
-                                  width: 2,
-                                  height: 34,
-                                  bgcolor: 'rgba(124,207,252,0.55)',
-                                  borderRadius: 0.5,
-                                  flexShrink: 0,
+                                  height: 22,
+                                  borderRadius: 1,
+                                  fontSize: '0.68rem',
+                                  fontWeight: 600,
+                                  '& .MuiChip-icon': {
+                                    ml: 0.6,
+                                    mr: -0.25,
+                                  },
                                 }}
                               />
-                            )}
-                            <Box
-                              component="span"
-                              sx={{ display: 'inline-flex', alignItems: 'center' }}
-                            >
-                              <Tooltip
-                                enterTouchDelay={0}
-                                leaveTouchDelay={3000}
-                                title={
-                                  <LazyTalentTooltipContent
-                                    talent={talent}
-                                    isUltimate={isUltimate}
-                                    resolveProps={getTalentTooltipProps}
-                                    resolveScribedSkillData={resolveScribedSkillData}
-                                    fightId={fightId || undefined}
-                                    playerId={player.id}
-                                  />
-                                }
-                                placement="top-start"
-                                enterDelay={0}
-                                arrow
-                                slotProps={{
-                                  popper: {
-                                    disablePortal: true,
-                                    modifiers: [
-                                      {
-                                        name: 'preventOverflow',
-                                        options: {
-                                          altAxis: true,
-                                          altBoundary: true,
-                                          tether: false,
-                                          rootBoundary: 'document',
-                                          padding: 16,
-                                        },
-                                      },
-                                      {
-                                        name: 'flip',
-                                        enabled: true,
-                                        options: {
-                                          altBoundary: true,
-                                          rootBoundary: 'document',
-                                          padding: 16,
-                                          fallbackPlacements: ['bottom'],
-                                        },
-                                      },
-                                      {
-                                        name: 'arrow',
-                                        enabled: true,
-                                      },
-                                    ],
-                                  },
-                                  tooltip: {
-                                    sx: {
-                                      maxWidth: 320,
-                                      p: 0,
-                                      backgroundColor: 'transparent !important',
-                                      border: 'none !important',
-                                      boxShadow: 'none !important',
-                                    },
-                                  },
-                                  arrow: { sx: { display: 'none' } },
-                                }}
-                              >
-                                <Avatar
-                                  src={abilityIconUrl(talent.abilityIcon, talent.guid)}
-                                  alt={talent.name}
-                                  variant="rounded"
-                                  sx={{
-                                    width: isUltimate ? 34 : 32,
-                                    height: isUltimate ? 34 : 32,
-                                    border: isUltimate
-                                      ? '1.5px solid #b3b3b3f2'
-                                      : theme.palette.mode === 'dark'
-                                        ? '1px solid #b5b8bd59'
-                                        : '1px solid #1e3a8a',
-                                    boxShadow: isUltimate
-                                      ? 'inset 0 2px 4px rgb(0 0 0 / 100%), 0 0 0 1px rgb(255 255 255 / 18%), 0 0 10px rgb(255 255 255 / 25%), 0 2px 6px rgb(0 0 0 / 60%)'
-                                      : 'none',
-                                  }}
-                                />
-                              </Tooltip>
-                            </Box>
-                          </React.Fragment>
-                        );
-                      })}
-                    </Box>
-                    {talents.length > 6 && (
-                      <Box sx={{ flexWrap: 'wrap', gap: 1.25, mt: 0.25, display: 'flex' }}>
-                        {talents.slice(6).map((talent, idx) => {
-                          const isUltimate = idx === 5;
-                          return (
-                            <React.Fragment key={idx}>
-                              {isUltimate && (
-                                <Box
-                                  sx={{
-                                    width: 2,
-                                    height: 34,
-                                    bgcolor: 'rgba(124,207,252,0.55)',
-                                    borderRadius: 0.5,
-                                    flexShrink: 0,
-                                  }}
-                                />
-                              )}
-                              <Box
-                                component="span"
-                                sx={{ display: 'inline-flex', alignItems: 'center' }}
-                              >
-                                <Tooltip
-                                  enterTouchDelay={0}
-                                  leaveTouchDelay={3000}
-                                  title={
-                                    <LazyTalentTooltipContent
-                                      talent={talent}
-                                      isUltimate={isUltimate}
-                                      resolveProps={getTalentTooltipProps}
-                                      resolveScribedSkillData={resolveScribedSkillData}
-                                      fightId={fightId || undefined}
-                                      playerId={player.id}
-                                    />
-                                  }
-                                  placement="top-start"
-                                  enterDelay={0}
-                                  arrow
-                                  slotProps={{
-                                    popper: {
-                                      disablePortal: true,
-                                      modifiers: [
-                                        {
-                                          name: 'preventOverflow',
-                                          options: {
-                                            altAxis: true,
-                                            altBoundary: true,
-                                            tether: false,
-                                            rootBoundary: 'document',
-                                            padding: 16,
-                                          },
-                                        },
-                                        {
-                                          name: 'flip',
-                                          enabled: true,
-                                          options: {
-                                            altBoundary: true,
-                                            rootBoundary: 'document',
-                                            padding: 16,
-                                            fallbackPlacements: ['bottom'],
-                                          },
-                                        },
-                                        {
-                                          name: 'arrow',
-                                          enabled: true,
-                                        },
-                                      ],
-                                    },
-                                    tooltip: {
-                                      sx: {
-                                        maxWidth: 320,
-                                        p: 0,
-                                        backgroundColor: 'transparent !important',
-                                        border: 'none !important',
-                                        boxShadow: 'none !important',
-                                      },
-                                    },
-                                    arrow: { sx: { display: 'none' } },
-                                  }}
-                                >
-                                  <Avatar
-                                    src={abilityIconUrl(talent.abilityIcon, talent.guid)}
-                                    alt={talent.name}
-                                    variant="rounded"
+                            </Tooltip>
+                          </Box>
+                        )}
+                        <Box sx={{ mb: 1.25, flexWrap: 'wrap', gap: 1.25, display: 'flex' }}>
+                          {displayTalents.slice(0, 6).map((talent, idx) => {
+                            const isUltimate = !isObservedTalentFallback && idx === 5;
+                            return (
+                              <React.Fragment key={`${talent.guid}-${idx}`}>
+                                {isUltimate && (
+                                  <Box
                                     sx={{
-                                      width: isUltimate ? 34 : 32,
-                                      height: isUltimate ? 34 : 32,
-                                      border: isUltimate
-                                        ? '1.5px solid #b3b3b3f2'
-                                        : theme.palette.mode === 'dark'
-                                          ? '1px solid #b5b8bd59'
-                                          : '1px solid #1e3a8a',
-                                      boxShadow: isUltimate
-                                        ? 'inset 0 2px 4px rgb(0 0 0 / 100%), 0 0 0 1px rgb(255 255 255 / 18%), 0 0 10px rgb(255 255 255 / 25%), 0 2px 6px rgb(0 0 0 / 60%)'
-                                        : 'none',
+                                      width: 2,
+                                      height: 34,
+                                      bgcolor: 'rgba(124,207,252,0.55)',
+                                      borderRadius: 0.5,
+                                      flexShrink: 0,
                                     }}
                                   />
-                                </Tooltip>
-                              </Box>
-                            </React.Fragment>
-                          );
-                        })}
-                      </Box>
+                                )}
+                                <Box
+                                  component="span"
+                                  sx={{ display: 'inline-flex', alignItems: 'center' }}
+                                >
+                                  <Tooltip
+                                    enterTouchDelay={0}
+                                    leaveTouchDelay={3000}
+                                    title={
+                                      <LazyTalentTooltipContent
+                                        talent={talent}
+                                        isUltimate={isUltimate}
+                                        resolveProps={getTalentTooltipProps}
+                                        resolveScribedSkillData={resolveScribedSkillData}
+                                        fightId={fightId || undefined}
+                                        playerId={player.id}
+                                      />
+                                    }
+                                    placement="top-start"
+                                    enterDelay={0}
+                                    arrow
+                                    slotProps={{
+                                      popper: {
+                                        disablePortal: true,
+                                        modifiers: [
+                                          {
+                                            name: 'preventOverflow',
+                                            options: {
+                                              altAxis: true,
+                                              altBoundary: true,
+                                              tether: false,
+                                              rootBoundary: 'document',
+                                              padding: 16,
+                                            },
+                                          },
+                                          {
+                                            name: 'flip',
+                                            enabled: true,
+                                            options: {
+                                              altBoundary: true,
+                                              rootBoundary: 'document',
+                                              padding: 16,
+                                              fallbackPlacements: ['bottom'],
+                                            },
+                                          },
+                                          {
+                                            name: 'arrow',
+                                            enabled: true,
+                                          },
+                                        ],
+                                      },
+                                      tooltip: {
+                                        sx: {
+                                          maxWidth: 320,
+                                          p: 0,
+                                          backgroundColor: 'transparent !important',
+                                          border: 'none !important',
+                                          boxShadow: 'none !important',
+                                        },
+                                      },
+                                      arrow: { sx: { display: 'none' } },
+                                    }}
+                                  >
+                                    <Avatar
+                                      src={abilityIconUrl(talent.abilityIcon, talent.guid)}
+                                      alt={talent.name}
+                                      variant="rounded"
+                                      sx={{
+                                        width: isUltimate ? 34 : 32,
+                                        height: isUltimate ? 34 : 32,
+                                        border: isUltimate
+                                          ? '1.5px solid #b3b3b3f2'
+                                          : isObservedTalentFallback
+                                            ? `1px dashed ${theme.palette.warning.main}`
+                                            : theme.palette.mode === 'dark'
+                                              ? '1px solid #b5b8bd59'
+                                              : '1px solid #1e3a8a',
+                                        boxShadow: isUltimate
+                                          ? 'inset 0 2px 4px rgb(0 0 0 / 100%), 0 0 0 1px rgb(255 255 255 / 18%), 0 0 10px rgb(255 255 255 / 25%), 0 2px 6px rgb(0 0 0 / 60%)'
+                                          : isObservedTalentFallback
+                                            ? `0 0 0 2px ${theme.palette.warning.main}22`
+                                            : 'none',
+                                      }}
+                                    />
+                                  </Tooltip>
+                                </Box>
+                              </React.Fragment>
+                            );
+                          })}
+                        </Box>
+                        {displayTalents.length > 6 && (
+                          <Box sx={{ flexWrap: 'wrap', gap: 1.25, mt: 0.25, display: 'flex' }}>
+                            {displayTalents.slice(6).map((talent, idx) => {
+                              const isUltimate = !isObservedTalentFallback && idx === 5;
+                              return (
+                                <React.Fragment key={`${talent.guid}-${idx}`}>
+                                  {isUltimate && (
+                                    <Box
+                                      sx={{
+                                        width: 2,
+                                        height: 34,
+                                        bgcolor: 'rgba(124,207,252,0.55)',
+                                        borderRadius: 0.5,
+                                        flexShrink: 0,
+                                      }}
+                                    />
+                                  )}
+                                  <Box
+                                    component="span"
+                                    sx={{ display: 'inline-flex', alignItems: 'center' }}
+                                  >
+                                    <Tooltip
+                                      enterTouchDelay={0}
+                                      leaveTouchDelay={3000}
+                                      title={
+                                        <LazyTalentTooltipContent
+                                          talent={talent}
+                                          isUltimate={isUltimate}
+                                          resolveProps={getTalentTooltipProps}
+                                          resolveScribedSkillData={resolveScribedSkillData}
+                                          fightId={fightId || undefined}
+                                          playerId={player.id}
+                                        />
+                                      }
+                                      placement="top-start"
+                                      enterDelay={0}
+                                      arrow
+                                      slotProps={{
+                                        popper: {
+                                          disablePortal: true,
+                                          modifiers: [
+                                            {
+                                              name: 'preventOverflow',
+                                              options: {
+                                                altAxis: true,
+                                                altBoundary: true,
+                                                tether: false,
+                                                rootBoundary: 'document',
+                                                padding: 16,
+                                              },
+                                            },
+                                            {
+                                              name: 'flip',
+                                              enabled: true,
+                                              options: {
+                                                altBoundary: true,
+                                                rootBoundary: 'document',
+                                                padding: 16,
+                                                fallbackPlacements: ['bottom'],
+                                              },
+                                            },
+                                            {
+                                              name: 'arrow',
+                                              enabled: true,
+                                            },
+                                          ],
+                                        },
+                                        tooltip: {
+                                          sx: {
+                                            maxWidth: 320,
+                                            p: 0,
+                                            backgroundColor: 'transparent !important',
+                                            border: 'none !important',
+                                            boxShadow: 'none !important',
+                                          },
+                                        },
+                                        arrow: { sx: { display: 'none' } },
+                                      }}
+                                    >
+                                      <Avatar
+                                        src={abilityIconUrl(talent.abilityIcon, talent.guid)}
+                                        alt={talent.name}
+                                        variant="rounded"
+                                        sx={{
+                                          width: isUltimate ? 34 : 32,
+                                          height: isUltimate ? 34 : 32,
+                                          border: isUltimate
+                                            ? '1.5px solid #b3b3b3f2'
+                                            : isObservedTalentFallback
+                                              ? `1px dashed ${theme.palette.warning.main}`
+                                              : theme.palette.mode === 'dark'
+                                                ? '1px solid #b5b8bd59'
+                                                : '1px solid #1e3a8a',
+                                          boxShadow: isUltimate
+                                            ? 'inset 0 2px 4px rgb(0 0 0 / 100%), 0 0 0 1px rgb(255 255 255 / 18%), 0 0 10px rgb(255 255 255 / 25%), 0 2px 6px rgb(0 0 0 / 60%)'
+                                            : isObservedTalentFallback
+                                              ? `0 0 0 2px ${theme.palette.warning.main}22`
+                                              : 'none',
+                                        }}
+                                      />
+                                    </Tooltip>
+                                  </Box>
+                                </React.Fragment>
+                              );
+                            })}
+                          </Box>
+                        )}
+                      </>
                     )}
                     {gear.length > 0 && (
                       <Box sx={{ mt: 1.25, pt: 0.9, pb: 0 }}>

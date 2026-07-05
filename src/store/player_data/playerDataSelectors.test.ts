@@ -194,7 +194,9 @@ describe('playerDataSelectors fallback players', () => {
       type: 'Nightblade',
       role: 'dps',
     });
-    expect(players[1].combatantInfo.gear).toEqual([{ id: 10, setName: 'Fallback Set' }]);
+    expect(players[1].combatantInfo.gear).toEqual([
+      { id: 10, setName: 'Fallback Set', slot: 0, name: 'Fallback Set' },
+    ]);
     expect(players[96]).toMatchObject({
       id: 96,
       name: 'Angair Doomfang',
