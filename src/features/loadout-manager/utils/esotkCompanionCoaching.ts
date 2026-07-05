@@ -63,7 +63,7 @@ function critChanceInsight(stats: CompanionStats): CoachingInsight | null {
     severity: 'info',
     label: 'Crit chance',
     value: pct,
-    detail: `${pct}% crit chance (${rating.toLocaleString()} rating). Weigh more crit chance vs. weapon/spell damage against your current crit damage.`,
+    detail: `${pct}% crit chance (${rating.toLocaleString()} rating). Weigh more crit chance vs. weapon/spell damage against the crit damage shown on this card.`,
   };
 }
 

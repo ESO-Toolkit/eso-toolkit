@@ -58,9 +58,9 @@ const SECTION_TITLE_SX = {
  */
 const STABLE_STAT_IDS = new Set(['maxMagicka', 'maxStamina', 'maxHealth']);
 
-/** Caption/tooltip conveying that these are point-in-time, not comparable across players. */
+/** Caption/tooltip conveying that the volatile group is point-in-time, not comparable across players. */
 const CAPTURED_SHEET_TOOLTIP =
-  'Character sheet at capture — read on leaving combat (buffs fading), point-in-time, not comparable across players.';
+  'Character sheet at capture — read on leaving combat (buffs fading). The volatile group is a point-in-time reading, not comparable across players; the stable group (max resources) is steady.';
 
 // Display order + the chip style variant each tree maps to (matches PlayerCard's CP chips).
 const TREE_ORDER: { tree: ChampionTreeKey; label: string; variant: string }[] = [

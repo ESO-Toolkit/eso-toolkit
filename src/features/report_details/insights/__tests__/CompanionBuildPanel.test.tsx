@@ -45,6 +45,8 @@ describe('CompanionBuildPanel', () => {
     render(<CompanionBuildPanel championPoints={null} coaching={coaching} />);
     expect(screen.getByText('Build Coaching')).toBeInTheDocument();
     expect(screen.getByText('Penetration (character sheet)')).toBeInTheDocument();
+    // Coaching without a stats prop must not render the captured-sheet section.
+    expect(screen.queryByText('Sheet at Capture')).toBeNull();
   });
 
   it('renders captured consumables and sheet stats from companion effects', () => {
@@ -94,5 +96,28 @@ describe('CompanionBuildPanel', () => {
     // Max-resource pools are grouped as Stable.
     expect(screen.getByText('Stable')).toBeInTheDocument();
     expect(screen.getByText('Max Magicka: 38,000')).toBeInTheDocument();
+    // The point-in-time honesty surface: volatile chips carry a "point-in-time" title.
+    const volatileChips = screen.getAllByTitle(/point-in-time character-sheet reading/i);
+    expect(volatileChips.some((el) => el.textContent?.includes('Physical Pen'))).toBe(true);
+  });
+
+  it('shows only the Stable group when all captured stats are stable', () => {
+    render(
+      <CompanionBuildPanel championPoints={null} coaching={[]} stats={{ maxMagicka: 38000 }} />,
+    );
+    expect(screen.getByText('Sheet at Capture')).toBeInTheDocument();
+    expect(screen.getByText('Stable')).toBeInTheDocument();
+    expect(screen.getByText('Max Magicka: 38,000')).toBeInTheDocument();
+    expect(screen.queryByText('Volatile (buff-dependent)')).toBeNull();
+  });
+
+  it('shows only the Volatile group when all captured stats are volatile', () => {
+    render(
+      <CompanionBuildPanel championPoints={null} coaching={[]} stats={{ physicalPen: 12345 }} />,
+    );
+    expect(screen.getByText('Sheet at Capture')).toBeInTheDocument();
+    expect(screen.getByText('Volatile (buff-dependent)')).toBeInTheDocument();
+    expect(screen.getByText('Physical Pen: 12,345')).toBeInTheDocument();
+    expect(screen.queryByText('Stable')).toBeNull();
   });
 });

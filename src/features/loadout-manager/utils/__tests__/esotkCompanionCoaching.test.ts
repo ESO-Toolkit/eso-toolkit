@@ -11,10 +11,19 @@ describe('computeStatCoaching — penetration', () => {
     expect(pen.detail).toMatch(/point-in-time/i);
   });
 
-  it('uses the higher of physical/spell penetration', () => {
+  it('uses the higher of physical/spell penetration (spell higher)', () => {
     const stats: CompanionStats = { physicalPen: 5000, spellPen: 9000 };
     const pen = computeStatCoaching(stats).find((i) => i.id === 'penetration')!;
     expect(pen.value).toBe(9000);
+    // Below the cap, but still no over/under verdict — the cap comparison is gone.
+    expect(pen.severity).toBe('info');
+  });
+
+  it('uses the higher of physical/spell penetration (physical higher)', () => {
+    const stats: CompanionStats = { physicalPen: 9000, spellPen: 5000 };
+    const pen = computeStatCoaching(stats).find((i) => i.id === 'penetration')!;
+    expect(pen.value).toBe(9000);
+    expect(pen.severity).toBe('info');
   });
 
   it('skips penetration when there is no data', () => {

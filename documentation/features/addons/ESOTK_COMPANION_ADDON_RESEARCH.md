@@ -62,18 +62,18 @@ encounter) actually carries **more than most people realise**:
 
 What is **never** emitted and therefore impossible for ESO Logs to show:
 
-| Missing data                                                                                                                               | Why it matters                                                                                              | API source (in-game)                                                         |
-| ------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
-| **Champion Point _allocation_** — points spent per star across all 3 trees, not just the 4 slotted                                         | The #1 ask. Two players with identical gear can have wildly different CP and the log can't tell them apart. | `GetNumPointsSpentOnChampionSkill`, `GetChampionPointsPlayerProgressionData` |
-| **Final derived stats**: max mag/stam/health, spell/weapon damage, **crit %, crit damage, penetration, recovery, resistances, mitigation** | These are computed client-side and never logged. The single most requested "why is my DPS low" diagnostic.  | `GetPlayerStat(STAT_*)`                                                      |
-| **Attribute point split** (Mag/Health/Stam)                                                                                                | Build correctness check.                                                                                    | `GetAttributeSpentPoints(attribute)`                                         |
-| **Exact enchant magnitude** & **trait quality nuance**                                                                                     | Log gives enchant _type/level_, not the rolled value.                                                       | `GetItemLink` + `GetItemLinkEnchantInfo`                                     |
-| **Mundus stone (named)**                                                                                                                   | Only inferable from a buff ID today.                                                                        | buff detection / `GetItemLink` of the boon                                   |
-| **Active food/drink (named, with duration)**                                                                                               | Inferable from buff today; add-on can name it + flag "no food".                                             | buff scan                                                                    |
-| **Skill/CP passives unlocked, skill point spend**                                                                                          | Build completeness.                                                                                         | skill-line API                                                               |
-| **Scribing scripts actually slotted** (grimoire + 3 scripts)                                                                               | ESOTK already _detects_ scribing from events; the add-on can report it **authoritatively**.                 | scribing API                                                                 |
-| **Companion build** (gear/skills)                                                                                                          | Solo/duo content.                                                                                           | companion API                                                                |
-| **Vampire/Werewolf stage, riding skills, CP curve preset**                                                                                 | Minor but cheap.                                                                                            | misc API                                                                     |
+| Missing data                                                                                                                                                                                                                                                                                 | Why it matters                                                                                              | API source (in-game)                                                         |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| **Champion Point _allocation_** — points spent per star across all 3 trees, not just the 4 slotted                                                                                                                                                                                           | The #1 ask. Two players with identical gear can have wildly different CP and the log can't tell them apart. | `GetNumPointsSpentOnChampionSkill`, `GetChampionPointsPlayerProgressionData` |
+| **Final derived stats**: max mag/stam/health, spell/weapon damage, **crit %, penetration, recovery, resistances, mitigation** (read once on leaving combat, so the time-varying stats are point-in-time; **crit damage** has no ESO stat constant and is derived from the log, not captured) | These are computed client-side and never logged. The single most requested "why is my DPS low" diagnostic.  | `GetPlayerStat(STAT_*)`                                                      |
+| **Attribute point split** (Mag/Health/Stam)                                                                                                                                                                                                                                                  | Build correctness check.                                                                                    | `GetAttributeSpentPoints(attribute)`                                         |
+| **Exact enchant magnitude** & **trait quality nuance**                                                                                                                                                                                                                                       | Log gives enchant _type/level_, not the rolled value.                                                       | `GetItemLink` + `GetItemLinkEnchantInfo`                                     |
+| **Mundus stone (named)**                                                                                                                                                                                                                                                                     | Only inferable from a buff ID today.                                                                        | buff detection / `GetItemLink` of the boon                                   |
+| **Active food/drink (named, with duration)**                                                                                                                                                                                                                                                 | Inferable from buff today; add-on can name it + flag "no food".                                             | buff scan                                                                    |
+| **Skill/CP passives unlocked, skill point spend**                                                                                                                                                                                                                                            | Build completeness.                                                                                         | skill-line API                                                               |
+| **Scribing scripts actually slotted** (grimoire + 3 scripts)                                                                                                                                                                                                                                 | ESOTK already _detects_ scribing from events; the add-on can report it **authoritatively**.                 | scribing API                                                                 |
+| **Companion build** (gear/skills)                                                                                                                                                                                                                                                            | Solo/duo content.                                                                                           | companion API                                                                |
+| **Vampire/Werewolf stage, riding skills, CP curve preset**                                                                                                                                                                                                                                   | Minor but cheap.                                                                                            | misc API                                                                     |
 
 **Takeaway:** the highest-value, _uniquely-addon_ data is **CP allocation + final
 stats + attributes + authoritative scribing scripts**. Gear and slotted skills are
@@ -1079,20 +1079,23 @@ The report-page upload UI is now wired through `PlayersPanel` local state and
    - `startTime` / `endTime`: from the `ReportEntry` (`src/store/report/reportSlice.ts`,
      absolute UNIX ms).
 3. **Compute per-player props:**
-   `buildCompanionBuildsForReport(result.all, matchableReport, { coaching: { assumedGroupPen } })`
+   `buildCompanionBuildsForReport(result.all, matchableReport, { targetFightId })`
    → `Map<actorId, { championPoints, coaching, stats, effects, scribing, snapshot, fightId }>`.
 4. **Render:** players come from `selectPlayersByIdForContext` keyed by `player.id`
    (already imported in `PlayerCard.tsx`; cards are rendered via
    `PlayersPanel`/`PlayersPanelView`/`LazyPlayerCard`). Pass
    `companionBuild={companionBuildsByPlayer[player.id]}` to each `PlayerCard`. Absent ⇒ panel renders
    nothing (no change to existing cards). When present, the panel shows CP allocation,
-   captured buffs, final stats, stat coaching and authoritative captured scribing scripts.
+   captured buffs, the character sheet at capture (point-in-time, volatile stats separated
+   from stable), plain stat-reading coaching (self penetration, crit chance) and
+   authoritative captured scribing scripts.
 
-**Notes:** `displayName` ↔ `snapshot.account` (optional cross-check). For _exact_
-effective penetration, later pass the boss's Major Breach/Crusher uptime from the log as
-`assumedGroupPen` with `groupPenIsExact: true` (§11.1.1); until then the standard-kit
-estimate is fine. Parsed snapshots are currently held in local component state; they're
-per-session, not persisted server-side.
+**Notes:** `displayName` ↔ `snapshot.account` (optional cross-check). Penetration is
+surfaced as a plain point-in-time self-pen reading only — the shipped `computeStatCoaching`
+takes no group-pen option and issues no over/under-cap verdict. An _exact_ effective-pen
+verdict (self-pen + the boss's Major Breach/Crusher/Alkosh uptimes from the log, §11.1.1)
+is the job of the future log-derived penetration engine, not the snapshot. Parsed snapshots
+are currently held in local component state; they're per-session, not persisted server-side.
 
 ---
 
