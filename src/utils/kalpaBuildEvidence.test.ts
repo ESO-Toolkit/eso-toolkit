@@ -370,6 +370,65 @@ describe('kalpaBuildEvidence', () => {
     );
   });
 
+  it('round-trips ground-truth focus/signature/affix scripts on scribed skills', () => {
+    const scribingEvidence: KalpaBuildEvidence = {
+      ...evidence,
+      players: [
+        {
+          ...evidence.players[0],
+          scribedSkills: [
+            {
+              abilityId: 217784,
+              name: 'Leashing Soul',
+              icon: 'ability_grimoire_soulmagic1',
+              focusScript: 'Pull',
+              signatureScript: 'Lingering Torment',
+              affixScript: 'Defile',
+            },
+          ],
+        },
+      ],
+    };
+
+    expect(decodeKalpaBuildEvidenceParam(encodeEvidence(scribingEvidence))).toEqual(
+      scribingEvidence,
+    );
+  });
+
+  it('round-trips the Mundus stone evidence', () => {
+    const mundusEvidence: KalpaBuildEvidence = {
+      ...evidence,
+      players: [
+        {
+          ...evidence.players[0],
+          mundus: {
+            abilityId: 13984,
+            name: 'Boon: The Shadow',
+            icon: 'ability_mundusstones_012',
+          },
+        },
+      ],
+    };
+
+    expect(decodeKalpaBuildEvidenceParam(encodeEvidence(mundusEvidence))).toEqual(mundusEvidence);
+  });
+
+  it('round-trips the full passives list', () => {
+    const passivesEvidence: KalpaBuildEvidence = {
+      ...evidence,
+      players: [
+        {
+          ...evidence.players[0],
+          passives: [142079, 999999, 45301],
+        },
+      ],
+    };
+
+    expect(decodeKalpaBuildEvidenceParam(encodeEvidence(passivesEvidence))).toEqual(
+      passivesEvidence,
+    );
+  });
+
   it('maps native race ids to build editor ids and labels', () => {
     expect(kalpaRaceIdToBuildRace(9)).toBe('khajiit');
     expect(kalpaRaceIdToLabel(9)).toBe('Khajiit');

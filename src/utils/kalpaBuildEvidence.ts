@@ -29,7 +29,10 @@ export interface KalpaPlayerBuildEvidence {
   className?: string | null;
   classMasteryPassives: number[];
   championPointPassives?: number[];
+  /** Full long-term-effect ability ids from the raw PLAYER_INFO (classified client-side). */
+  passives?: number[];
   food?: KalpaFoodEvidence;
+  mundus?: KalpaMundusEvidence;
   scribedSkills?: KalpaScribedSkillEvidence[];
   evidence: string;
   confidence: string;
@@ -41,10 +44,20 @@ export interface KalpaFoodEvidence {
   icon?: string | null;
 }
 
+export interface KalpaMundusEvidence {
+  abilityId: number;
+  name?: string | null;
+  icon?: string | null;
+}
+
 export interface KalpaScribedSkillEvidence {
   abilityId: number;
   name?: string | null;
   icon?: string | null;
+  /** Ground-truth equipped scripts, recovered by Kalpa from the raw ABILITY_INFO line. */
+  focusScript?: string | null;
+  signatureScript?: string | null;
+  affixScript?: string | null;
 }
 
 export interface KalpaBuildEvidence {
@@ -403,7 +416,9 @@ function validateKalpaPlayerEvidence(value: unknown): KalpaPlayerBuildEvidence |
 
   const classMasteryPassives = sanitizeNumberArray(value.classMasteryPassives);
   const championPointPassives = sanitizeNumberArray(value.championPointPassives);
+  const passives = sanitizeNumberArray(value.passives);
   const food = sanitizeFoodEvidence(value.food);
+  const mundus = sanitizeMundusEvidence(value.mundus);
   const scribedSkills = sanitizeScribedSkills(value.scribedSkills);
   const player: KalpaPlayerBuildEvidence = {
     unitId: value.unitId,
@@ -424,12 +439,26 @@ function validateKalpaPlayerEvidence(value: unknown): KalpaPlayerBuildEvidence |
     confidence: typeof value.confidence === 'string' ? value.confidence : '',
   };
   if (championPointPassives.length > 0) player.championPointPassives = championPointPassives;
+  if (passives.length > 0) player.passives = passives;
   if (food) player.food = food;
+  if (mundus) player.mundus = mundus;
   if (scribedSkills.length > 0) player.scribedSkills = scribedSkills;
   return player;
 }
 
 function sanitizeFoodEvidence(value: unknown): KalpaFoodEvidence | undefined {
+  if (!isRecord(value) || !Number.isInteger(value.abilityId) || (value.abilityId as number) <= 0) {
+    return undefined;
+  }
+
+  return {
+    abilityId: value.abilityId as number,
+    name: typeof value.name === 'string' ? value.name : undefined,
+    icon: typeof value.icon === 'string' ? value.icon : undefined,
+  };
+}
+
+function sanitizeMundusEvidence(value: unknown): KalpaMundusEvidence | undefined {
   if (!isRecord(value) || !Number.isInteger(value.abilityId) || (value.abilityId as number) <= 0) {
     return undefined;
   }
@@ -451,6 +480,10 @@ function sanitizeScribedSkills(value: unknown): KalpaScribedSkillEvidence[] {
         abilityId: entry.abilityId as number,
         name: typeof entry.name === 'string' ? entry.name : undefined,
         icon: typeof entry.icon === 'string' ? entry.icon : undefined,
+        focusScript: typeof entry.focusScript === 'string' ? entry.focusScript : undefined,
+        signatureScript:
+          typeof entry.signatureScript === 'string' ? entry.signatureScript : undefined,
+        affixScript: typeof entry.affixScript === 'string' ? entry.affixScript : undefined,
       };
     })
     .filter((entry): entry is KalpaScribedSkillEvidence => entry != null);

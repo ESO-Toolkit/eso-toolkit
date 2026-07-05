@@ -20,6 +20,7 @@ const MAX_PLAYERS = 300;
 const MAX_SCRIBED_SKILLS = 12;
 const MAX_CLASS_MASTERY_PICKS = 2;
 const MAX_CHAMPION_POINT_PASSIVES = 12;
+const MAX_PASSIVES = 256;
 const MAX_ABILITY_ID = 1_000_000;
 
 type ReportEvidenceContext = Context<{ Bindings: Env }>;
@@ -37,7 +38,9 @@ interface KalpaPlayerBuildEvidence {
   className?: string | null;
   classMasteryPassives: number[];
   championPointPassives?: number[];
+  passives?: number[];
   food?: KalpaAbilityEvidence;
+  mundus?: KalpaAbilityEvidence;
   scribedSkills?: KalpaScribedSkillEvidence[];
   evidence: string;
   confidence: string;
@@ -47,6 +50,12 @@ interface KalpaAbilityEvidence {
   abilityId: number;
   name?: string | null;
   icon?: string | null;
+  // Scribing scripts, only ever populated on scribed-skill entries (Kalpa reads them
+  // from the raw ABILITY_INFO line, which ESO Logs strips from its API). Food entries
+  // never carry these, so they serialize away as undefined.
+  focusScript?: string | null;
+  signatureScript?: string | null;
+  affixScript?: string | null;
 }
 
 type KalpaScribedSkillEvidence = KalpaAbilityEvidence;
@@ -130,6 +139,9 @@ function sanitizeAbilityEvidence(value: unknown): KalpaAbilityEvidence | undefin
     abilityId,
     name: boundedString(value.name, 96),
     icon: boundedString(value.icon, 64),
+    focusScript: boundedString(value.focusScript, 96),
+    signatureScript: boundedString(value.signatureScript, 96),
+    affixScript: boundedString(value.affixScript, 96),
   };
 }
 
@@ -159,7 +171,9 @@ function validatePlayerEvidence(value: unknown): KalpaPlayerBuildEvidence | null
     value.championPointPassives,
     MAX_CHAMPION_POINT_PASSIVES,
   );
+  const passives = sanitizeNumberArray(value.passives, MAX_PASSIVES);
   const food = sanitizeAbilityEvidence(value.food);
+  const mundus = sanitizeAbilityEvidence(value.mundus);
   const player: KalpaPlayerBuildEvidence = {
     unitId,
     unitOccurrenceId: boundedString(value.unitOccurrenceId, 48),
@@ -176,7 +190,9 @@ function validatePlayerEvidence(value: unknown): KalpaPlayerBuildEvidence | null
     confidence: boundedString(value.confidence, 32) ?? '',
   };
   if (championPointPassives.length > 0) player.championPointPassives = championPointPassives;
+  if (passives.length > 0) player.passives = passives;
   if (food) player.food = food;
+  if (mundus) player.mundus = mundus;
   if (scribedSkills.length > 0) player.scribedSkills = scribedSkills;
   return player;
 }
