@@ -911,6 +911,13 @@ export const PlayersPanel: React.FC<PlayersPanelProps> = ({ context: contextOver
       for (const abilityId of kalpaBuildEvidenceByPlayer[playerId]?.championPointPassives ?? []) {
         addChampionPoint(abilityId);
       }
+      // Kalpa's full passives list carries every slotted long-term effect. addChampionPoint
+      // filters each id through the authoritative CP classifier (championPointColorForId),
+      // so this picks up CP stars beyond the legacy championPointPassives subset while
+      // silently skipping non-CP passives — no false positives.
+      for (const abilityId of kalpaBuildEvidenceByPlayer[playerId]?.passives ?? []) {
+        addChampionPoint(abilityId);
+      }
 
       sortChampionPointEntries(result[playerId]);
     });
