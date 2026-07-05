@@ -40,12 +40,11 @@ describe('CompanionBuildPanel', () => {
     expect(screen.getAllByText(/Deadly Aim/).length).toBeGreaterThanOrEqual(1);
   });
 
-  it('renders stat-coaching insights with the failure detail', () => {
+  it('renders stat-coaching insights as point-in-time readings', () => {
     const coaching = computeStatCoaching({ physicalPen: PVE_PENETRATION_CAP + 3200 });
     render(<CompanionBuildPanel championPoints={null} coaching={coaching} />);
     expect(screen.getByText('Build Coaching')).toBeInTheDocument();
-    expect(screen.getByText('Over the penetration cap')).toBeInTheDocument();
-    expect(screen.getByText(/3,200 over/)).toBeInTheDocument();
+    expect(screen.getByText('Penetration (character sheet)')).toBeInTheDocument();
   });
 
   it('renders captured consumables and sheet stats from companion effects', () => {
@@ -53,7 +52,7 @@ describe('CompanionBuildPanel', () => {
       <CompanionBuildPanel
         championPoints={null}
         coaching={[]}
-        stats={{ physicalPen: 12345, weaponCrit: 10959, critDamage: 125 }}
+        stats={{ physicalPen: 12345, weaponCrit: 10959, maxMagicka: 38000 }}
         effects={[
           { id: 13984, name: 'Boon: The Shadow', duration: 0 },
           { id: 9998, name: 'Bewitched Sugar Skulls', duration: 3_600_000 },
@@ -87,9 +86,13 @@ describe('CompanionBuildPanel', () => {
     expect(
       screen.getByText('Shattering Knife: Magic Damage / Class Mastery / Major Breach'),
     ).toBeInTheDocument();
-    expect(screen.getByText('Captured Stats')).toBeInTheDocument();
+    expect(screen.getByText('Sheet at Capture')).toBeInTheDocument();
+    // Volatile (buff-dependent) chips.
+    expect(screen.getByText('Volatile (buff-dependent)')).toBeInTheDocument();
     expect(screen.getByText('Physical Pen: 12,345')).toBeInTheDocument();
     expect(screen.getByText('Weapon Crit: 50%')).toBeInTheDocument();
-    expect(screen.getByText('Crit Damage: 125%')).toBeInTheDocument();
+    // Max-resource pools are grouped as Stable.
+    expect(screen.getByText('Stable')).toBeInTheDocument();
+    expect(screen.getByText('Max Magicka: 38,000')).toBeInTheDocument();
   });
 });

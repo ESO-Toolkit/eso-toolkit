@@ -15,11 +15,7 @@ import {
   buildChampionPointsViewModel,
   type ChampionPointsViewModel,
 } from './esotkCompanionChampionPoints';
-import {
-  computeStatCoaching,
-  type CoachingInsight,
-  type CoachingOptions,
-} from './esotkCompanionCoaching';
+import { computeStatCoaching, type CoachingInsight } from './esotkCompanionCoaching';
 import {
   matchCompanionSnapshots,
   type MatchableActor,
@@ -48,8 +44,6 @@ export interface CompanionBuildForPlayer {
 export interface BuildCompanionBuildsOptions {
   /** Current report fight id. When supplied, picks snapshots nearest to that fight. */
   targetFightId?: number | string;
-  /** Coaching options (penetration target, assumed group pen, …). */
-  coaching?: CoachingOptions;
 }
 
 /**
@@ -70,7 +64,7 @@ export function buildCompanionBuildsForReport(
   for (const [actorId, match] of matches) {
     out.set(actorId, {
       championPoints: buildChampionPointsViewModel(match.snapshot.championPoints),
-      coaching: computeStatCoaching(match.snapshot.stats, opts.coaching),
+      coaching: computeStatCoaching(match.snapshot.stats),
       stats: match.snapshot.stats,
       effects: match.snapshot.effects,
       scribing: match.snapshot.scribing,

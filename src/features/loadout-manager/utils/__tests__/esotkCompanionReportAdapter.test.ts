@@ -57,25 +57,12 @@ describe('buildCompanionBuildsForReport', () => {
     const build = buildCompanionBuildsForReport([snapshot], report).get(1)!;
     expect(build.championPoints!.total).toBe(3600);
     expect(build.championPoints!.allocated[0].name).toBe('Deadly Aim');
-    expect(build.coaching.find((i) => i.id === 'penetration')!.severity).toBe('warn');
+    expect(build.coaching.find((i) => i.id === 'penetration')!.severity).toBe('info');
     expect(build.stats).toBe(snapshot.stats);
     expect(build.effects).toBe(snapshot.effects);
     expect(build.scribing).toBe(snapshot.scribing);
     expect(build.fightId).toBe('f1');
     expect(build.snapshot).toBe(snapshot);
-  });
-
-  it('passes coaching options through (assumed group pen)', () => {
-    const selfPenSnap: CompanionSnapshot = {
-      ts: REPORT_START_S + 60,
-      char: 'Casts-A-Lot',
-      stats: { physicalPen: 7200 },
-    };
-    const build = buildCompanionBuildsForReport([selfPenSnap], report, {
-      coaching: { assumedGroupPen: 11030 },
-    }).get(1)!;
-    // 7200 + 11030 ≈ on cap → good
-    expect(build.coaching.find((i) => i.id === 'penetration')!.severity).toBe('good');
   });
 
   it('passes the target fight through to snapshot matching', () => {

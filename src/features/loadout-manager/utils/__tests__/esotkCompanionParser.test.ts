@@ -171,8 +171,6 @@ describe('parseESOTKCompanionSavedVariables', () => {
     expect(snap.stats!.spellDamage).toBe(4500);
     expect(snap.stats!.physicalPen).toBe(18200);
     expect(snap.stats!.weaponCrit).toBe(8000);
-    // Crit damage is never captured (no ESO stat constant) — ESOTK computes it instead.
-    expect(snap.stats!.critDamage).toBeUndefined();
     expect(snap.attributes).toEqual({ magicka: 0, health: 0, stamina: 64 });
   });
 

@@ -4,7 +4,6 @@ import { buildChampionPointsViewModel } from '@/features/loadout-manager/utils/e
 import {
   computeStatCoaching,
   PVE_PENETRATION_CAP,
-  STANDARD_GROUP_PEN,
 } from '@/features/loadout-manager/utils/esotkCompanionCoaching';
 
 import { CompanionBuildPanel } from './CompanionBuildPanel';
@@ -25,7 +24,7 @@ const meta: Meta<typeof CompanionBuildPanel> = {
     docs: {
       description: {
         component:
-          'Renders the build data the ESOTK Companion add-on captures that ESO Logs cannot see: the full champion-point allocation (grouped by tree) and stat-aware coaching (penetration vs the 18,200 cap, crit caps).',
+          'Renders the build data the ESOTK Companion add-on captures that ESO Logs cannot see: the full champion-point allocation (grouped by tree) and the character sheet at capture (point-in-time, buff-dependent stats separated from stable ones), plus plain stat readings for penetration and crit chance.',
       },
     },
   },
@@ -34,25 +33,31 @@ const meta: Meta<typeof CompanionBuildPanel> = {
 export default meta;
 type Story = StoryObj<typeof CompanionBuildPanel>;
 
-/** Over-penetration: a DPS wasting stats above the cap. */
-export const OverPenetration: Story = {
+/** High self-penetration reading captured on the character sheet. */
+export const HighPenetration: Story = {
   args: {
     championPoints,
-    coaching: computeStatCoaching(
-      { physicalPen: 12000, critDamage: 130, weaponCrit: 14000 },
-      { assumedGroupPen: STANDARD_GROUP_PEN, groupPenIsExact: false },
-    ),
+    coaching: computeStatCoaching({ physicalPen: PVE_PENETRATION_CAP + 3000, weaponCrit: 14000 }),
+    stats: {
+      physicalPen: PVE_PENETRATION_CAP + 3000,
+      weaponCrit: 14000,
+      spellDamage: 4800,
+      maxMagicka: 38000,
+    },
   },
 };
 
-/** On-cap, healthy build. */
-export const OnCap: Story = {
+/** Typical self-penetration reading captured on the character sheet. */
+export const TypicalPenetration: Story = {
   args: {
     championPoints,
-    coaching: computeStatCoaching(
-      { physicalPen: PVE_PENETRATION_CAP - STANDARD_GROUP_PEN, critDamage: 120, weaponCrit: 12000 },
-      { assumedGroupPen: STANDARD_GROUP_PEN, groupPenIsExact: false },
-    ),
+    coaching: computeStatCoaching({ physicalPen: 9500, weaponCrit: 12000 }),
+    stats: {
+      physicalPen: 9500,
+      weaponCrit: 12000,
+      spellDamage: 4200,
+      maxStamina: 34000,
+    },
   },
 };
 

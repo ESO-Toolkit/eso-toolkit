@@ -51,6 +51,17 @@ const SECTION_TITLE_SX = {
   fontFamily: 'Space Grotesk, sans-serif',
 } as const;
 
+/**
+ * The captured sheet reads once on leaving combat (buffs fading), so most stats are a
+ * volatile point-in-time value. Only max-resource pools are stable at that instant; keep
+ * them in their own group so a reader doesn't compare a volatile chip across players.
+ */
+const STABLE_STAT_IDS = new Set(['maxMagicka', 'maxStamina', 'maxHealth']);
+
+/** Caption/tooltip conveying that these are point-in-time, not comparable across players. */
+const CAPTURED_SHEET_TOOLTIP =
+  'Character sheet at capture — read on leaving combat (buffs fading), point-in-time, not comparable across players.';
+
 // Display order + the chip style variant each tree maps to (matches PlayerCard's CP chips).
 const TREE_ORDER: { tree: ChampionTreeKey; label: string; variant: string }[] = [
   { tree: ChampionPointTree.Warfare, label: 'Warfare', variant: 'championBlue' },
@@ -119,7 +130,6 @@ function statRows(
   add('weaponDamage', 'Weapon Damage', stats.weaponDamage);
   add('spellCrit', 'Spell Crit', stats.spellCrit, critPercent);
   add('weaponCrit', 'Weapon Crit', stats.weaponCrit, critPercent);
-  add('critDamage', 'Crit Damage', stats.critDamage, (value) => `${formatNumber(value)}%`);
   add('spellPen', 'Spell Pen', stats.spellPen);
   add('physicalPen', 'Physical Pen', stats.physicalPen);
   add('maxMagicka', 'Max Magicka', stats.maxMagicka);
@@ -187,6 +197,42 @@ function StarChips({
   );
 }
 
+/** A labeled group of captured-sheet stat chips (volatile vs stable). */
+function SheetStatGroup({
+  caption,
+  rows,
+  volatile: isVolatile,
+}: {
+  caption: string;
+  rows: Array<{ id: string; label: string; value: string }>;
+  volatile: boolean;
+}): React.ReactElement | null {
+  if (rows.length === 0) return null;
+  return (
+    <Box sx={{ mb: 0.75 }}>
+      <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 0.25 }}>
+        {caption}
+      </Typography>
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
+        {rows.map((row) => (
+          <Chip
+            key={row.id}
+            size="small"
+            variant="outlined"
+            label={`${row.label}: ${row.value}`}
+            title={
+              isVolatile
+                ? `${row.label} — point-in-time character-sheet reading captured by ESOTK Companion (buffs fading)`
+                : `${row.label} captured by ESOTK Companion`
+            }
+            sx={{ '& .MuiChip-label': { fontSize: '0.58rem' } }}
+          />
+        ))}
+      </Box>
+    </Box>
+  );
+}
+
 /**
  * Renders the build data captured by the ESOTK Companion add-on that ESO Logs can't see:
  * the full champion-point allocation (grouped by tree) and stat-aware coaching
@@ -204,6 +250,8 @@ export const CompanionBuildPanel: React.FC<CompanionBuildPanelProps> = ({
 }) => {
   const theme = useTheme();
   const rows = React.useMemo(() => statRows(stats), [stats]);
+  const volatileRows = React.useMemo(() => rows.filter((r) => !STABLE_STAT_IDS.has(r.id)), [rows]);
+  const stableRows = React.useMemo(() => rows.filter((r) => STABLE_STAT_IDS.has(r.id)), [rows]);
   const capturedScribing = React.useMemo(() => scribedSkillRows(scribing), [scribing]);
   const auras = React.useMemo(() => effectAuras(effects), [effects]);
   const food = React.useMemo(() => detectFoodFromAuras(auras), [auras]);
@@ -335,21 +383,17 @@ export const CompanionBuildPanel: React.FC<CompanionBuildPanelProps> = ({
 
       {hasStats && (
         <Box sx={{ mb: hasCoaching ? 2 : 0 }}>
-          <Typography variant="body2" sx={SECTION_TITLE_SX}>
-            Captured Stats
+          <Typography
+            variant="body2"
+            sx={{ ...SECTION_TITLE_SX, display: 'flex', alignItems: 'center', gap: 0.5 }}
+          >
+            Sheet at Capture
+            <Tooltip title={CAPTURED_SHEET_TOOLTIP} placement="top-start">
+              <InfoIcon sx={{ fontSize: '0.9rem', color: 'text.secondary', cursor: 'help' }} />
+            </Tooltip>
           </Typography>
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
-            {rows.map((row) => (
-              <Chip
-                key={row.id}
-                size="small"
-                variant="outlined"
-                label={`${row.label}: ${row.value}`}
-                title={`${row.label} captured by ESOTK Companion`}
-                sx={{ '& .MuiChip-label': { fontSize: '0.58rem' } }}
-              />
-            ))}
-          </Box>
+          <SheetStatGroup caption="Volatile (buff-dependent)" rows={volatileRows} volatile />
+          <SheetStatGroup caption="Stable" rows={stableRows} volatile={false} />
         </Box>
       )}
 

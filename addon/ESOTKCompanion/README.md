@@ -19,7 +19,7 @@ timestamp, then overlays the build on the report.
 | Field                                                                                                                                                | Why it's a gap                                                                                |
 | ---------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
 | **Champion points** — full per-star allocation, the 12 slotted stars, total                                                                          | The log has CP _rank_ only, never the allocation. **The headline feature.**                   |
-| **Final stats** — max mag/stam/health, spell/weapon damage, crit chance, crit damage when exposed by the API, **penetration**, recovery, resistances | Computed client-side, never logged. Powers ESOTK's "you're over the 18,200 pen cap" coaching. |
+| **Final stats** — max mag/stam/health, spell/weapon damage, crit chance, **penetration**, recovery, resistances | Computed client-side, never logged. Shown as a point-in-time character-sheet reading (read on leaving combat, buffs fading). Crit damage has no ESO stat constant, so ESOTK derives it from the log instead. |
 | **Attributes** — Magicka/Health/Stamina split                                                                                                        | Not logged.                                                                                   |
 | **Long-term effects** — raw buff IDs (mundus is permanent, food is long)                                                                             | ESOTK resolves mundus/food by ID (language-agnostic).                                         |
 | **Both action bars** — front/back ability IDs                                                                                                        | Lets ESOTK derive subclass skill lines and verify the matched actor.                          |
@@ -61,7 +61,7 @@ ESOTKCompanionSV = { Default = { ["@account"] = { ["$AccountWide"] = {
       disciplines = { [<disciplineId>] = { id=, type=, spent=, skills = { [<skillId>] = <points> } } },
       slotted = { [1] = <skillId>, … [12] = <skillId> },
     },
-    stats  = { spellDamage=, physicalPen=, weaponCrit=, critDamage=, … },
+    stats  = { spellDamage=, physicalPen=, weaponCrit=, … },
     attrs  = { magicka=0, health=64, stamina=0 },
     effects = { { id=13984, name="Boon: The Lover", duration=0 }, … },
     bars   = { front = { [3]=, …, [8]= }, back = { … } },

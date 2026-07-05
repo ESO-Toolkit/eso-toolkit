@@ -53,12 +53,6 @@ export interface CompanionStats {
   weaponDamage?: number;
   spellCrit?: number;
   weaponCrit?: number;
-  /**
-   * Crit damage percent. NOT captured by the addon — ESO exposes no crit-damage stat
-   * constant, so ESOTK computes it from CP + sets + mundus. Kept optional/defensive in
-   * case a future source provides it; expect it to be undefined from real snapshots.
-   */
-  critDamage?: number;
   spellPen?: number;
   physicalPen?: number;
   magickaRegen?: number;
@@ -236,7 +230,6 @@ function normalizeStats(v: LuaValue | undefined): CompanionStats | undefined {
     'weaponDamage',
     'spellCrit',
     'weaponCrit',
-    'critDamage',
     'spellPen',
     'physicalPen',
     'magickaRegen',
