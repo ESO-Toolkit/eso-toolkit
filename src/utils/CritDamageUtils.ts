@@ -106,6 +106,38 @@ export interface CriticalDamageAlwaysOnSource extends BaseCriticalDamageSource {
   source: 'always_on';
 }
 
+/**
+ * Per-player evidence from a matched ESOTK Companion snapshot for the two crit-damage
+ * champion stars that emit no event/aura and are otherwise assumed for every player.
+ * `undefined` (no matched snapshot) means "assume active", preserving the pre-companion
+ * behaviour byte-for-byte.
+ */
+export interface CompanionCritEvidence {
+  fightingFinesseSlotted: boolean;
+  backstabberSlotted: boolean;
+}
+
+/**
+ * Whether an always-on crit-damage source is active for a player. Fighting Finesse and
+ * Backstabber are gated on real slotted-CP evidence when a companion snapshot matched;
+ * every other always-on source (Dexterity, gear-derived) stays unconditionally active.
+ * With no evidence, all always-on sources are active — the assume-active default.
+ */
+export function isAlwaysOnSourceActive(
+  source: CriticalDamageAlwaysOnSource,
+  evidence?: CompanionCritEvidence,
+): boolean {
+  if (!evidence) return true;
+  switch (source.key) {
+    case AlwaysOnCriticalDamageSources.FIGHTING_FINESSE:
+      return evidence.fightingFinesseSlotted;
+    case AlwaysOnCriticalDamageSources.BACKSTABBER:
+      return evidence.backstabberSlotted;
+    default:
+      return true;
+  }
+}
+
 export enum ComputedCriticalDamageSources {
   FATED_FORTUNE,
   SUL_XAN_TORMENT,
@@ -359,6 +391,7 @@ export function getEnabledCriticalDamageSources(
   buffLookup: BuffLookupData,
   debuffLookup: BuffLookupData,
   combatantInfo: CombatantInfoEvent | null,
+  evidence?: CompanionCritEvidence,
 ): CriticalDamageSource[] {
   const result = [];
 
@@ -382,7 +415,7 @@ export function getEnabledCriticalDamageSources(
         isActive = isComputedSourceActive(combatantInfo, source, debuffLookup, buffLookup);
         break;
       case 'always_on':
-        isActive = true;
+        isActive = isAlwaysOnSourceActive(source, evidence);
         break;
     }
 
@@ -398,6 +431,7 @@ export function getAllCriticalDamageSourcesWithActiveState(
   buffLookup: BuffLookupData,
   debuffLookup: BuffLookupData,
   combatantInfo: CombatantInfoEvent | null,
+  evidence?: CompanionCritEvidence,
 ): CriticalDamageSourceWithActiveState[] {
   const result: CriticalDamageSourceWithActiveState[] = [];
 
@@ -421,7 +455,7 @@ export function getAllCriticalDamageSourcesWithActiveState(
         wasActive = isComputedSourceActive(combatantInfo, source, debuffLookup, buffLookup);
         break;
       case 'always_on':
-        wasActive = true;
+        wasActive = isAlwaysOnSourceActive(source, evidence);
         break;
     }
 
@@ -440,6 +474,7 @@ export function calculateCriticalDamageAtTimestamp(
   combatantInfo: CombatantInfoEvent,
   playerData: PlayerDetailsWithRole,
   timestamp: number,
+  evidence?: CompanionCritEvidence,
 ): number {
   const baseCriticalDamage = 50; // Base critical damage percentage
 
@@ -498,7 +533,7 @@ export function calculateCriticalDamageAtTimestamp(
         }
         break;
       case 'always_on':
-        alwaysOnCriticalDamage += getCritDamageFromAlwaysOnSource(source, combatantInfo);
+        alwaysOnCriticalDamage += getCritDamageFromAlwaysOnSource(source, combatantInfo, evidence);
         break;
     }
   }
@@ -514,7 +549,10 @@ export function calculateCriticalDamageAtTimestamp(
   );
 }
 
-export function calculateStaticCriticalDamage(combatantInfo: CombatantInfoEvent): number {
+export function calculateStaticCriticalDamage(
+  combatantInfo: CombatantInfoEvent,
+  evidence?: CompanionCritEvidence,
+): number {
   const baseCriticalDamage = 50; // Base critical damage percentage
 
   let gearCriticalDamage = 0;
@@ -538,7 +576,7 @@ export function calculateStaticCriticalDamage(combatantInfo: CombatantInfoEvent)
         }
         break;
       case 'always_on':
-        alwaysOnCriticalDamage += getCritDamageFromAlwaysOnSource(source, combatantInfo);
+        alwaysOnCriticalDamage += getCritDamageFromAlwaysOnSource(source, combatantInfo, evidence);
         break;
     }
   }
@@ -701,7 +739,11 @@ export function getCritDamageFromComputedSource(
 export function getCritDamageFromAlwaysOnSource(
   source: CriticalDamageAlwaysOnSource,
   combatantInfo: CombatantInfoEvent | null,
+  evidence?: CompanionCritEvidence,
 ): number {
+  // Companion evidence can prove Fighting Finesse / Backstabber aren't slotted for this
+  // player; when it does, the star contributes nothing. No evidence => assume active.
+  if (!isAlwaysOnSourceActive(source, evidence)) return 0;
   switch (source.key) {
     case AlwaysOnCriticalDamageSources.DEXTERITY: {
       const medPieces = combatantInfo?.gear?.filter(

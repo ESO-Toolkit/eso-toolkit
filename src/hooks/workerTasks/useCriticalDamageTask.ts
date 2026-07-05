@@ -17,6 +17,7 @@ import { usePlayerData } from '../usePlayerData';
 import { useSelectedTargetIds } from '../useSelectedTargetIds';
 
 import { useBuffLookupTask } from './useBuffLookupTask';
+import { useCompanionCritEvidence } from './useCompanionCritEvidence';
 import { useDebuffLookupTask } from './useDebuffLookupTask';
 import { useWorkerTaskDependencies } from './useWorkerTaskDependencies';
 
@@ -39,6 +40,7 @@ export function useCriticalDamageTask(_options?: UseCriticalDamageTaskOptions): 
   const { debuffLookupData, isDebuffLookupLoading } = useDebuffLookupTask();
   const { damageEvents, isDamageEventsLoading } = useDamageEvents();
   const selectedTargetIds = useSelectedTargetIds();
+  const companionCritEvidence = useCompanionCritEvidence(_options?.context);
 
   // For now, we'll use placeholder data until the dependencies are properly integrated
   React.useEffect(() => {
@@ -66,6 +68,7 @@ export function useCriticalDamageTask(_options?: UseCriticalDamageTaskOptions): 
             debuffsLookup: debuffLookupData || { buffIntervals: {} },
             damageEvents: damageEvents,
             selectedTargetIds: Array.from(selectedTargetIds),
+            companionCritEvidence,
           }),
         );
         return () => {
@@ -84,6 +87,7 @@ export function useCriticalDamageTask(_options?: UseCriticalDamageTaskOptions): 
     damageEvents,
     isDamageEventsLoading,
     selectedTargetIds,
+    companionCritEvidence,
     isBuffLookupLoading,
     isDebuffLookupLoading,
     isCombatantInfoEventsLoading,

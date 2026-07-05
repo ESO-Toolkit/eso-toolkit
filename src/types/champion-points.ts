@@ -32,6 +32,7 @@ export enum ChampionPointAbilityId {
   // === WARFARE (Blue) === ✅
   // Should be 33 total, only 21 mapped so far
   ArcaneSupremacy = 3,
+  Backstabber = 31,
   BitingAura = 23,
   Bulwark = 159,
   DeadlyAim = 25,
@@ -171,6 +172,14 @@ export const CHAMPION_POINT_ABILITIES: Partial<
     name: 'Fighting Finesse',
     tree: ChampionPointTree.Warfare,
     verified: true,
+  },
+  [ChampionPointAbilityId.Backstabber]: {
+    id: ChampionPointAbilityId.Backstabber,
+    name: 'Backstabber',
+    tree: ChampionPointTree.Warfare,
+    // id 31 sourced from DynamicCP convertDataIndices.lua + presetData.lua and cross-checked
+    // against five already-verified repo ids; not screenshot-verified, so `verified` stays false.
+    verified: false,
   },
   [ChampionPointAbilityId.ForceOfNature]: {
     id: ChampionPointAbilityId.ForceOfNature,

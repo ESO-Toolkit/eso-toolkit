@@ -24,6 +24,11 @@ import {
   ComputedCriticalDamageSources,
   CriticalDamageComputedSource,
   getCritDamageFromComputedSource,
+  isAlwaysOnSourceActive,
+  getAllCriticalDamageSourcesWithActiveState,
+  AlwaysOnCriticalDamageSources,
+  type CompanionCritEvidence,
+  type CriticalDamageAlwaysOnSource,
 } from './CritDamageUtils';
 
 describe('CritDamageUtils with BuffLookup', () => {
@@ -448,6 +453,110 @@ describe('CritDamageUtils with BuffLookup', () => {
             s.source === 'computed',
         ),
       ).toBe(true);
+    });
+  });
+});
+
+describe('CritDamageUtils — companion crit evidence gating', () => {
+  const alwaysOn = (key: AlwaysOnCriticalDamageSources): CriticalDamageAlwaysOnSource =>
+    CRITICAL_DAMAGE_SOURCES.find(
+      (s): s is CriticalDamageAlwaysOnSource => s.source === 'always_on' && s.key === key,
+    )!;
+  const ff = alwaysOn(AlwaysOnCriticalDamageSources.FIGHTING_FINESSE);
+  const bs = alwaysOn(AlwaysOnCriticalDamageSources.BACKSTABBER);
+  const dex = alwaysOn(AlwaysOnCriticalDamageSources.DEXTERITY);
+  const emptyLookup: BuffLookupData = { buffIntervals: {} };
+  const neither: CompanionCritEvidence = {
+    fightingFinesseSlotted: false,
+    backstabberSlotted: false,
+  };
+  const both: CompanionCritEvidence = { fightingFinesseSlotted: true, backstabberSlotted: true };
+
+  describe('isAlwaysOnSourceActive', () => {
+    it('assumes every always-on source active when there is no evidence', () => {
+      expect(isAlwaysOnSourceActive(ff)).toBe(true);
+      expect(isAlwaysOnSourceActive(bs)).toBe(true);
+      expect(isAlwaysOnSourceActive(dex)).toBe(true);
+    });
+
+    it('gates FF/Backstabber on evidence but never gates Dexterity', () => {
+      expect(isAlwaysOnSourceActive(ff, neither)).toBe(false);
+      expect(isAlwaysOnSourceActive(bs, neither)).toBe(false);
+      expect(isAlwaysOnSourceActive(dex, neither)).toBe(true);
+      expect(isAlwaysOnSourceActive(ff, both)).toBe(true);
+      expect(isAlwaysOnSourceActive(bs, both)).toBe(true);
+    });
+  });
+
+  describe('getCritDamageFromAlwaysOnSource', () => {
+    it('returns the star value with no evidence (byte-identical fallback)', () => {
+      expect(getCritDamageFromAlwaysOnSource(ff, null)).toBe(CriticalDamageValues.FIGHTING_FINESSE);
+      expect(getCritDamageFromAlwaysOnSource(bs, null)).toBe(CriticalDamageValues.BACKSTABBER);
+    });
+
+    it('returns 0 when evidence says the star is not slotted', () => {
+      expect(getCritDamageFromAlwaysOnSource(ff, null, neither)).toBe(0);
+      expect(getCritDamageFromAlwaysOnSource(bs, null, neither)).toBe(0);
+    });
+
+    it('returns the value when evidence says the star is slotted', () => {
+      expect(getCritDamageFromAlwaysOnSource(ff, null, both)).toBe(
+        CriticalDamageValues.FIGHTING_FINESSE,
+      );
+      expect(getCritDamageFromAlwaysOnSource(bs, null, both)).toBe(
+        CriticalDamageValues.BACKSTABBER,
+      );
+    });
+  });
+
+  describe('calculateStaticCriticalDamage', () => {
+    it('drops exactly FF+Backstabber when neither is slotted, vs the no-evidence baseline', () => {
+      const combatant = createMockCombatantInfoEvent({});
+      const baseline = calculateStaticCriticalDamage(combatant);
+      const gated = calculateStaticCriticalDamage(combatant, neither);
+      expect(baseline - gated).toBe(
+        CriticalDamageValues.FIGHTING_FINESSE + CriticalDamageValues.BACKSTABBER,
+      );
+    });
+
+    it('matches the baseline when both stars are slotted', () => {
+      const combatant = createMockCombatantInfoEvent({});
+      expect(calculateStaticCriticalDamage(combatant, both)).toBe(
+        calculateStaticCriticalDamage(combatant),
+      );
+    });
+  });
+
+  describe('getAllCriticalDamageSourcesWithActiveState', () => {
+    it('sets wasActive per evidence while keeping every source present', () => {
+      const combatant = createMockCombatantInfoEvent({});
+      const ev: CompanionCritEvidence = {
+        fightingFinesseSlotted: false,
+        backstabberSlotted: true,
+      };
+      const sources = getAllCriticalDamageSourcesWithActiveState(
+        emptyLookup,
+        emptyLookup,
+        combatant,
+        ev,
+      );
+      const ffOut = sources.find((s) => s.source === 'always_on' && s.name === 'Fighting Finesse')!;
+      const bsOut = sources.find((s) => s.source === 'always_on' && s.name === 'Backstabber')!;
+      expect(ffOut.wasActive).toBe(false);
+      expect(bsOut.wasActive).toBe(true);
+      // The sources remain in the list — they're shown inactive, not removed.
+      expect(sources.filter((s) => s.source === 'always_on')).toHaveLength(3);
+    });
+
+    it('keeps both stars active when there is no evidence (regression guard)', () => {
+      const combatant = createMockCombatantInfoEvent({});
+      const sources = getAllCriticalDamageSourcesWithActiveState(
+        emptyLookup,
+        emptyLookup,
+        combatant,
+      );
+      expect(sources.find((s) => s.name === 'Fighting Finesse')!.wasActive).toBe(true);
+      expect(sources.find((s) => s.name === 'Backstabber')!.wasActive).toBe(true);
     });
   });
 });

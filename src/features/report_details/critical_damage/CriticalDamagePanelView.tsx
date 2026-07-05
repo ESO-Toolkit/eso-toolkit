@@ -4,7 +4,10 @@ import React from 'react';
 import { FightFragment } from '../../../graphql/gql/graphql';
 import type { PhaseTransitionInfo } from '../../../hooks/usePhaseTransitions';
 import { PlayerDetailsWithRole } from '../../../store/player_data/playerDataSlice';
-import { CriticalDamageSourceWithActiveState } from '../../../utils/CritDamageUtils';
+import {
+  type CompanionCritEvidence,
+  CriticalDamageSourceWithActiveState,
+} from '../../../utils/CritDamageUtils';
 
 import { PlayerCriticalDamageDetails } from './PlayerCriticalDamageDetails';
 import { PlayerCriticalDamageData } from './PlayerCriticalDamageDetailsView';
@@ -24,6 +27,8 @@ interface CriticalDamagePanelProps {
   phaseTransitionInfo?: PhaseTransitionInfo;
   globalFightingFinesseEnabled: boolean;
   onGlobalFightingFinesseToggle: (enabled: boolean) => void;
+  /** Per-player companion crit evidence, keyed by player id; absent when no snapshot matched. */
+  companionCritEvidence?: Record<number, CompanionCritEvidence>;
 }
 
 /**
@@ -39,6 +44,7 @@ export const CriticalDamagePanelView: React.FC<CriticalDamagePanelProps> = ({
   phaseTransitionInfo,
   globalFightingFinesseEnabled,
   onGlobalFightingFinesseToggle,
+  companionCritEvidence,
 }) => {
   return (
     <Box sx={{ px: { xs: 0, sm: 2 }, py: 2 }}>
@@ -104,6 +110,7 @@ export const CriticalDamagePanelView: React.FC<CriticalDamagePanelProps> = ({
               isLoading={isLoading}
               phaseTransitionInfo={phaseTransitionInfo}
               globalFightingFinesseEnabled={globalFightingFinesseEnabled}
+              companionCritEvidence={companionCritEvidence?.[player.id]}
             />
           );
         })}
