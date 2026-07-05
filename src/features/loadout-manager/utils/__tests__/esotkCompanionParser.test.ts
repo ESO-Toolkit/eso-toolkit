@@ -21,7 +21,7 @@ ESOTKCompanionSV =
                         ["ts"] = 1749384000,
                         ["char"] = "Casts-A-Lot",
                         ["account"] = "@brayden",
-                        ["server"] = "NA",
+                        ["server"] = "NA Megaserver",
                         ["zoneId"] = 1196,
                         ["classId"] = 6,
                         ["className"] = "Arcanist",
@@ -60,7 +60,6 @@ ESOTKCompanionSV =
                             ["spellDamage"] = 4500,
                             ["physicalPen"] = 18200,
                             ["weaponCrit"] = 8000,
-                            ["critDamage"] = 125,
                         },
                         ["attrs"] =
                         {
@@ -119,7 +118,7 @@ ESOTKCompanionSV =
                     {
                         ["ts"] = 1749384600,
                         ["char"] = "Casts-A-Lot",
-                        ["server"] = "NA",
+                        ["server"] = "NA Megaserver",
                         ["reason"] = "manual",
                         ["cp"] = { ["total"] = 3600, ["disciplines"] = {}, ["slotted"] = {} },
                     },
@@ -172,14 +171,15 @@ describe('parseESOTKCompanionSavedVariables', () => {
     expect(snap.stats!.spellDamage).toBe(4500);
     expect(snap.stats!.physicalPen).toBe(18200);
     expect(snap.stats!.weaponCrit).toBe(8000);
-    expect(snap.stats!.critDamage).toBe(125);
+    // Crit damage is never captured (no ESO stat constant) — ESOTK computes it instead.
+    expect(snap.stats!.critDamage).toBeUndefined();
     expect(snap.attributes).toEqual({ magicka: 0, health: 0, stamina: 64 });
   });
 
   it('captures match keys, effects and bars', () => {
     const snap = parseESOTKCompanionSavedVariables(SAMPLE)!.all[0];
     expect(snap.char).toBe('Casts-A-Lot');
-    expect(snap.server).toBe('NA');
+    expect(snap.server).toBe('NA Megaserver');
     expect(snap.ts).toBe(1749384000);
     expect(snap.schemaVersion).toBe(2);
     expect(snap.season).toBe('U51');

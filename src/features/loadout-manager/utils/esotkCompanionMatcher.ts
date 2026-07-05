@@ -7,9 +7,11 @@
  * from it, plus the player actors. We attach each actor to the nearest in-window
  * snapshot. Pure and dependency-free so it can be unit-tested without the app.
  *
- * Known gaps handled by the caller, not here: anonymised reports (actor names hidden →
- * no match → fall back to a manual "attach to player" picker), and the direct-key path
- * (user supplied the report code) which bypasses matching entirely.
+ * Known gaps: on anonymised reports actor names are hidden, so nothing matches and every
+ * snapshot lands in `unmatched` — the caller should surface that (a manual "attach to
+ * player" picker is a planned fallback, not yet implemented; until then, show a notice
+ * rather than silently rendering nothing). The direct-key path (user supplied the report
+ * code) bypasses matching entirely and is handled upstream.
  */
 
 import type { CompanionSnapshot } from './esotkCompanionParser';
@@ -74,9 +76,20 @@ function normalizeName(name: string): string {
   return name.replace(/^@/, '').trim().toLowerCase();
 }
 
-function normalizeServer(server: string | undefined): string | undefined {
-  const normalized = server?.trim().toLowerCase();
-  return normalized || undefined;
+/**
+ * Classify a server/world string to a region. The two sides speak different
+ * vocabularies — the addon's `GetWorldName()` yields "NA Megaserver" / "EU Megaserver"
+ * while ESO Logs actors carry "PC-NA" / "PC-EU" (or console "XB-NA" / "PS-EU") — so a
+ * strict string compare rejects every real match. Returns undefined when the string
+ * carries no recognizable region; callers must then fall through to name + time rather
+ * than reject, so we never drop a match on an unclassifiable server.
+ */
+function toServerRegion(server: string | undefined): 'na' | 'eu' | undefined {
+  if (!server) return undefined;
+  const s = server.toUpperCase();
+  if (s.includes('EU')) return 'eu';
+  if (s.includes('NA')) return 'na';
+  return undefined;
 }
 
 function sameId(a: MatchableFight['id'], b: MatchableFight['id']): boolean {
@@ -181,10 +194,12 @@ export function matchCompanionSnapshots(
     let best: CompanionMatch | undefined;
     for (const snapshot of snapshots) {
       if (normalizeName(snapshot.char) !== actorName) continue;
-      // If both sides declare a server, they must agree.
-      const actorServer = normalizeServer(actor.server);
-      const snapshotServer = normalizeServer(snapshot.server);
-      if (actorServer && snapshotServer && actorServer !== snapshotServer) continue;
+      // If both sides declare a recognizable region, they must agree. The addon
+      // ("NA Megaserver") and ESO Logs ("PC-NA") use different vocabularies, so we
+      // compare by region and only reject on a provable conflict.
+      const actorRegion = toServerRegion(actor.server);
+      const snapshotRegion = toServerRegion(snapshot.server);
+      if (actorRegion && snapshotRegion && actorRegion !== snapshotRegion) continue;
 
       const tsMs = snapshotMs(snapshot);
       const candidate = candidateDistance(tsMs, report, snapshot, opts);

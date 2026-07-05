@@ -14,9 +14,11 @@ const REPORT_START_S = REPORT_START_MS / 1000;
 const report: MatchableReport = {
   startTime: REPORT_START_MS,
   endTime: REPORT_START_MS + 60 * 60 * 1000, // 1h
+  // ESO Logs actors carry region-tagged servers like "PC-NA" — a different vocabulary
+  // from the addon's "NA Megaserver", which is exactly what the region match must bridge.
   actors: [
-    { id: 1, name: 'Casts-A-Lot', server: 'NA' },
-    { id: 2, name: 'Tanky-Mctankface', server: 'NA' },
+    { id: 1, name: 'Casts-A-Lot', server: 'PC-NA' },
+    { id: 2, name: 'Tanky-Mctankface', server: 'PC-NA' },
   ],
   fights: [
     { id: 'f1', startTime: 0, endTime: 5 * 60 * 1000, zoneId: 1196 },
@@ -25,8 +27,8 @@ const report: MatchableReport = {
 };
 
 describe('matchCompanionSnapshots', () => {
-  it('matches an actor to an in-window snapshot by name and server', () => {
-    const s = snap({ ts: REPORT_START_S + 60, char: 'Casts-A-Lot', server: 'NA' });
+  it('matches an actor to an in-window snapshot across server vocabularies (NA Megaserver ↔ PC-NA)', () => {
+    const s = snap({ ts: REPORT_START_S + 60, char: 'Casts-A-Lot', server: 'NA Megaserver' });
     const { matches } = matchCompanionSnapshots([s], report);
     expect(matches.get(1)?.snapshot).toBe(s);
     expect(matches.get(1)?.distanceMs).toBe(0);
@@ -53,15 +55,22 @@ describe('matchCompanionSnapshots', () => {
     expect(matches.get(1)?.snapshot).toBe(near);
   });
 
-  it('rejects server mismatch', () => {
-    const s = snap({ ts: REPORT_START_S + 60, char: 'Casts-A-Lot', server: 'EU' });
+  it('rejects a provable region conflict (EU Megaserver ↔ PC-NA)', () => {
+    const s = snap({ ts: REPORT_START_S + 60, char: 'Casts-A-Lot', server: 'EU Megaserver' });
     const { matches, unmatched } = matchCompanionSnapshots([s], report);
     expect(matches.has(1)).toBe(false);
     expect(unmatched).toContain(s);
   });
 
-  it('matches server names case-insensitively', () => {
-    const s = snap({ ts: REPORT_START_S + 60, char: 'Casts-A-Lot', server: 'na' });
+  it('classifies region from either vocabulary, case-insensitively', () => {
+    const s = snap({ ts: REPORT_START_S + 60, char: 'Casts-A-Lot', server: 'na megaserver' });
+    const { matches } = matchCompanionSnapshots([s], report);
+    expect(matches.get(1)?.snapshot).toBe(s);
+  });
+
+  it('falls through to name + time when the snapshot server is unclassifiable', () => {
+    // e.g. "PTS" or an empty/unknown world — never reject on this alone.
+    const s = snap({ ts: REPORT_START_S + 60, char: 'Casts-A-Lot', server: 'PTS' });
     const { matches } = matchCompanionSnapshots([s], report);
     expect(matches.get(1)?.snapshot).toBe(s);
   });

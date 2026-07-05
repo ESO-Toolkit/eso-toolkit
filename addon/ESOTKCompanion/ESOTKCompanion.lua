@@ -56,7 +56,9 @@ end
 
 -- Read a GetPlayerStat value only if one of the STAT_ constants exists this API version.
 local function stat(...)
-  local opt = _G["BONUS_OPTION_DEFAULT"] or 0
+  -- Buff-inclusive final value, exactly as the in-game character sheet reads it.
+  -- (There is no BONUS_OPTION_DEFAULT constant; STAT_BONUS_OPTION_APPLY_BONUS == 0.)
+  local opt = _G["STAT_BONUS_OPTION_APPLY_BONUS"] or 0
   for i = 1, select("#", ...) do
     local constName = select(i, ...)
     local c = _G[constName]
@@ -131,7 +133,8 @@ local function captureStats()
     weaponDamage    = stat("STAT_POWER", "STAT_WEAPON_POWER", "STAT_WEAPON_AND_SPELL_DAMAGE"),
     spellCrit       = stat("STAT_SPELL_CRITICAL"),
     weaponCrit      = stat("STAT_CRITICAL_STRIKE"),
-    critDamage      = stat("STAT_CRITICAL_DAMAGE"),
+    -- Crit DAMAGE has no client-side stat constant; it is summed from CP +
+    -- sets + mundus + passives on the ESOTK side (see CritDamageUtils).
     spellPen        = stat("STAT_SPELL_PENETRATION"),
     physicalPen     = stat("STAT_PHYSICAL_PENETRATION"),
     magickaRegen    = stat("STAT_MAGICKA_REGEN_COMBAT"),
@@ -176,11 +179,20 @@ end
 local function captureBars()
   local bars = {}
   local cats = { front = _G["HOTBAR_CATEGORY_PRIMARY"], back = _G["HOTBAR_CATEGORY_BACKUP"] }
+  local ACT_CRAFTED = _G["ACTION_TYPE_CRAFTED_ABILITY"]
   for label, cat in pairs(cats) do
     if cat ~= nil then
       local barSlots = {}
       for slot = 3, 8 do  -- 3..7 = abilities, 8 = ultimate
-        barSlots[slot] = call("GetSlotBoundId", slot, cat)
+        local boundId = call("GetSlotBoundId", slot, cat)
+        -- Scribed (crafted) slots return a small craftedAbilityId, not the real
+        -- abilityId. Resolve it so the bar carries true abilityIds like the log does.
+        if ACT_CRAFTED ~= nil and boundId and boundId ~= 0
+          and call("GetSlotType", slot, cat) == ACT_CRAFTED then
+          barSlots[slot] = call("GetAbilityIdForCraftedAbilityId", boundId) or boundId
+        else
+          barSlots[slot] = boundId
+        end
       end
       bars[label] = barSlots
     end

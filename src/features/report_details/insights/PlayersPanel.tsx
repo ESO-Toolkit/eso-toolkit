@@ -441,6 +441,13 @@ export const PlayersPanel: React.FC<PlayersPanelProps> = ({ context: contextOver
     return byPlayer;
   }, [companionReport, companionSnapshots, resolvedContext.fightId]);
 
+  // Stable reference so PlayersPanelView's React.memo isn't defeated every render
+  // (an inline literal here re-renders the view even on the no-Companion default path).
+  const companionUploadState = React.useMemo(
+    () => ({ ...companionUpload, matchedCount: Object.keys(companionBuildsByPlayer).length }),
+    [companionUpload, companionBuildsByPlayer],
+  );
+
   const handleCompanionFileSelected = React.useCallback(
     async (file: File): Promise<void> => {
       try {
@@ -1677,10 +1684,7 @@ export const PlayersPanel: React.FC<PlayersPanelProps> = ({ context: contextOver
           potionResultsByPlayer={potionResultsByPlayer}
           rolesByPlayerId={rolesByPlayerId}
           companionBuildsByPlayer={companionBuildsByPlayer}
-          companionUpload={{
-            ...companionUpload,
-            matchedCount: Object.keys(companionBuildsByPlayer).length,
-          }}
+          companionUpload={companionUploadState}
           onCompanionFileSelected={handleCompanionFileSelected}
         />
       </div>
