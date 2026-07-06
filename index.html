@@ -19,8 +19,8 @@
       content="Advanced analytics and visualization tool for Elder Scrolls Online combat logs. Analyze damage, healing, buffs, and performance with beautiful charts and detailed breakdowns."
     />
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="/" />
-    <meta property="og:image" content="/android-chrome-512x512.png" />
+    <meta property="og:url" content="https://esotk.com/" />
+    <meta property="og:image" content="https://esotk.com/android-chrome-512x512.png" />
     <meta property="og:site_name" content="ESO Toolkit" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="ESO Toolkit" />
@@ -28,7 +28,8 @@
       name="twitter:description"
       content="Advanced analytics and visualization tool for Elder Scrolls Online combat logs. Analyze damage, healing, buffs, and performance with beautiful charts and detailed breakdowns."
     />
-    <meta name="twitter:image" content="/android-chrome-512x512.png" />
+    <meta name="twitter:image" content="https://esotk.com/android-chrome-512x512.png" />
+    <link rel="canonical" href="https://esotk.com/" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/manifest.json" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -61,6 +62,8 @@
             p.length > 1 &&
             p.charAt(0) === '/' &&
             p.charAt(1) !== '/' &&
+            p.charAt(1) !== '\\' &&
+            p.indexOf('\\') === -1 &&
             p.indexOf('://') === -1
           );
         }

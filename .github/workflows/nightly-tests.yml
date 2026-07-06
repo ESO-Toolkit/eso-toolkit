@@ -53,6 +53,11 @@ on:
 # - OAUTH_CLIENT_ID: ESO Logs OAuth client ID
 # - OAUTH_CLIENT_SECRET: ESO Logs OAuth client secret
 
+# Least-privilege default token. Jobs that need more (e.g. publishing reports)
+# declare their own job-level permissions, which override this default.
+permissions:
+  contents: read
+
 jobs:
   # Job to determine matrix configuration
   setup:

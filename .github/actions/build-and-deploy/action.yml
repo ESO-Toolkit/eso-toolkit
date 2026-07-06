@@ -70,6 +70,13 @@ runs:
         mkdir -p build/storybook
         cp -r storybook-static/* build/storybook/
 
+    # Strip source maps before publishing so original TypeScript source is not
+    # exposed on the public site. Rollbar symbolication uses maps produced by the
+    # separate rollbar-sourcemaps workflow, so removing them here is safe.
+    - name: Remove source maps from public artifact
+      shell: bash
+      run: find build -name '*.map' -type f -delete
+
     - name: Upload Pages artifact
       uses: actions/upload-pages-artifact@v3
       with:

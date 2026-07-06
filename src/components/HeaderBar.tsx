@@ -33,6 +33,7 @@ import { useLocation } from 'react-router-dom';
 import esoLogo from '../assets/ESOHelpers-logo-icon.svg';
 import {
   LOCAL_STORAGE_ACCESS_TOKEN_KEY,
+  LOCAL_STORAGE_REFRESH_TOKEN_KEY,
   setFallbackDestination,
   startPKCEAuth,
 } from '../features/auth/auth';
@@ -615,6 +616,7 @@ export const HeaderBar: React.FC = () => {
 
   const handleLogout = React.useCallback((): void => {
     localStorage.removeItem(LOCAL_STORAGE_ACCESS_TOKEN_KEY);
+    localStorage.removeItem(LOCAL_STORAGE_REFRESH_TOKEN_KEY);
     rebindAccessToken();
     navigate('/', { vtType: 'down' });
     setMobileOpen(false);
