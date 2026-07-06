@@ -122,7 +122,10 @@ describe('useLatestReportsQuery', () => {
     expect(result.current.hiddenEmptyCount).toBe(1);
   });
 
-  it('fails open and shows them all when the whole page is empty (never a dead-end wall)', async () => {
+  it('hides the whole page when every log is empty, reporting the hidden count', async () => {
+    // No fail-open: empty logs open to "No fights available", so an all-empty
+    // page renders the list's `all-hidden` state (driven by hiddenEmptyCount)
+    // instead of a page of dead links.
     primeClient({
       network: [pageResult([makeReport('E1', { empty: true }), makeReport('E2', { empty: true })])],
     });
@@ -130,13 +133,33 @@ describe('useLatestReportsQuery', () => {
     const { result } = renderHook(() => useLatestReportsQuery(baseInput));
     await waitFor(() => expect(result.current.loading).toBe(false));
 
-    expect(result.current.reports.map((r) => r.code)).toEqual(['E1', 'E2']);
-    expect(result.current.hiddenEmptyCount).toBe(0);
+    expect(result.current.reports).toEqual([]);
+    expect(result.current.hiddenEmptyCount).toBe(2);
+    // START is years old, so none of these hidden empties can still be parsing
+    // — the empty state must not promise a quick self-heal.
+    expect(result.current.hiddenRecentCount).toBe(0);
+  });
+
+  it('counts hidden empties that are recent enough to still be parsing', async () => {
+    const recentEmpty = {
+      ...makeReport('FRESH-EMPTY', { empty: true }),
+      startTime: Date.now() - 10 * 60 * 1000,
+      endTime: Date.now() - 10 * 60 * 1000, // ended 10 min ago → plausibly processing
+    };
+    primeClient({
+      network: [pageResult([recentEmpty as ReturnType<typeof makeReport>])],
+    });
+
+    const { result } = renderHook(() => useLatestReportsQuery(baseInput));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    expect(result.current.hiddenEmptyCount).toBe(1);
+    expect(result.current.hiddenRecentCount).toBe(1);
   });
 
   it('refetch (explicit Refresh) revalidates network-only and skips the cache peek', async () => {
     primeClient({
-      // Mount: cold cache, network shows the still-processing page (fail-open).
+      // Mount: cold cache, network shows a still-processing (hidden) page.
       network: [
         pageResult([makeReport('PENDING', { empty: true })]),
         // Refresh: the log has since healed upstream.
@@ -146,7 +169,9 @@ describe('useLatestReportsQuery', () => {
 
     const { result } = renderHook(() => useLatestReportsQuery(baseInput));
     await waitFor(() => expect(result.current.loading).toBe(false));
-    expect(result.current.reports.map((r) => r.code)).toEqual(['PENDING']);
+    // The still-processing log is hidden; its count drives the all-hidden state.
+    expect(result.current.reports).toEqual([]);
+    expect(result.current.hiddenEmptyCount).toBe(1);
     // Mount = cache peek + network revalidate.
     expect(fetchPolicies()).toEqual(['cache-only', 'network-only']);
 

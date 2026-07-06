@@ -14,6 +14,14 @@ import { useAppDispatch } from '../store/useAppDispatch';
 export function useReportData(): {
   reportData: ReportFragment | null;
   isReportLoading: boolean;
+  /** Why the report failed to load (fetch/API error) — null when healthy. */
+  reportError: string | null;
+  /**
+   * Re-fetches the report from the network, bypassing both the slice's
+   * freshness window and Apollo's cache. Backs the detail page's "Try again" /
+   * "Check again" actions and the still-processing auto-recheck.
+   */
+  refetchReport: () => void;
 } {
   const { client, isReady } = useEsoLogsClientContext();
   const dispatch = useAppDispatch();
@@ -30,8 +38,19 @@ export function useReportData(): {
   const combinedReportData = useSelector(selectCombinedReportData);
   const isReportLoading = useSelector(selectReportLoadingState);
 
+  const refetchReport = React.useCallback(() => {
+    if (reportId && isReady && client) {
+      void dispatch(fetchReportData({ reportId, client, force: true }));
+    }
+  }, [dispatch, reportId, client, isReady]);
+
   return React.useMemo(
-    () => ({ reportData: combinedReportData.data, isReportLoading }),
-    [combinedReportData.data, isReportLoading],
+    () => ({
+      reportData: combinedReportData.data,
+      isReportLoading,
+      reportError: combinedReportData.error ?? null,
+      refetchReport,
+    }),
+    [combinedReportData.data, combinedReportData.error, isReportLoading, refetchReport],
   );
 }

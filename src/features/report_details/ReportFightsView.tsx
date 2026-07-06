@@ -133,6 +133,12 @@ interface ReportFightsViewProps {
   reportId: string | undefined | null;
   reportStartTime: number | undefined | null;
   reportData: ReportFragment | null | undefined;
+  /** Why the report failed to load — shown instead of the "Empty Log" card. */
+  error?: string | null;
+  /** The report loaded but is a recent upload ESO Logs is still parsing. */
+  stillProcessing?: boolean;
+  /** Re-fetches the report from the network ("Try again" / "Check again"). */
+  onRetry?: () => void;
 }
 
 export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
@@ -142,6 +148,9 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
   reportId,
   reportStartTime,
   reportData,
+  error,
+  stillProcessing,
+  onRetry,
 }) => {
   const navigate = useNavigate();
   const darkMode = useSelector((state: RootState) => state.ui.darkMode);
@@ -387,6 +396,41 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
   }
 
   if (!fights?.length) {
+    // Three distinct no-fights situations, in priority order:
+    //  1. The fetch FAILED (rate limit, network, not-public…) and nothing is
+    //     loaded — an error, not an empty log; a retry usually fixes it.
+    //  2. The report loaded but is a recent upload ESO Logs is still parsing —
+    //     it self-heals within minutes (the container auto-re-checks).
+    //  3. The report loaded and is old with zero fights — a genuine
+    //     upload/parse failure that only re-uploading fixes.
+    const failedToLoad = Boolean(error) && !reportData;
+
+    const state = failedToLoad
+      ? {
+          title: 'Couldn’t load this report',
+          chip: { label: 'Error', color: 'error' as const },
+          // Lead with written guidance; the raw error (already humanized for
+          // rate-limit/network cases by EsoLogsClient) becomes secondary detail.
+          body: 'Something went wrong while fetching this report. This is usually temporary — trying again often fixes it.',
+          detail: error,
+          retryLabel: 'Try again',
+        }
+      : stillProcessing
+        ? {
+            title: 'This log is still processing',
+            chip: { label: 'Processing', color: 'info' as const },
+            body: 'ESO Logs has not finished parsing this recently uploaded log yet. That usually takes a few minutes — this page re-checks automatically, or you can check now.',
+            detail: null,
+            retryLabel: 'Check again',
+          }
+        : {
+            title: 'No fights available',
+            chip: { label: 'Empty Log', color: 'warning' as const },
+            body: 'This log contains no fight data, likely due to an upload or parsing issue on ESO Logs. Re-uploading the log on ESO Logs usually fixes it.',
+            detail: null,
+            retryLabel: 'Check again',
+          };
+
     return (
       <Card
         elevation={4}
@@ -403,21 +447,39 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
         <CardContent sx={{ p: { xs: 2, sm: 4 } }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
             <Typography variant="body1" sx={{ fontWeight: 'medium' }}>
-              No fights available
+              {state.title}
             </Typography>
             <Chip
-              label="Empty Log"
+              label={state.chip.label}
               size="small"
-              color="warning"
+              color={state.chip.color}
               variant="outlined"
               sx={{ fontSize: '0.7rem', height: 20 }}
             />
           </Box>
-          <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
-            This log contains no fight data, likely due to an upload or parsing issue on ESO Logs.
-            Re-uploading the log on ESO Logs usually fixes it.
+          <Typography variant="body2" sx={{ color: 'text.secondary', mb: state.detail ? 1 : 2 }}>
+            {state.body}
           </Typography>
+          {state.detail && (
+            <Typography
+              variant="caption"
+              component="p"
+              sx={{ color: 'text.secondary', fontStyle: 'italic', mb: 2 }}
+            >
+              {state.detail}
+            </Typography>
+          )}
           <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+            {onRetry && (
+              <Button
+                variant="contained"
+                size="small"
+                onClick={onRetry}
+                sx={{ textTransform: 'none' }}
+              >
+                {state.retryLabel}
+              </Button>
+            )}
             <Button
               variant="outlined"
               size="small"

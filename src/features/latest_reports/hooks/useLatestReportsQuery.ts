@@ -7,7 +7,11 @@ import {
   GetLatestReportsQueryVariables,
   UserReportSummaryFragment,
 } from '../../../graphql/gql/graphql';
-import { selectReportsForDisplay } from '../../reports/reportFormatting';
+import {
+  isRecentlyUploaded,
+  isReportEmpty,
+  partitionReportsByData,
+} from '../../reports/reportFormatting';
 
 import { rangeToEpochMs, type DateRangePreset } from './rangeToEpochMs';
 
@@ -28,6 +32,13 @@ export interface LatestReportsQueryState {
   reports: UserReportSummaryFragment[];
   /** Count of reports on the current page hidden for having no combat data. */
   hiddenEmptyCount: number;
+  /**
+   * How many of the hidden empties ended recently enough to still be parsing
+   * on ESO Logs (see isRecentlyUploaded). Lets the all-hidden empty state say
+   * "still processing — refresh in a few minutes" only when that is actually
+   * plausible, instead of promising it for months-old permanently-broken logs.
+   */
+  hiddenRecentCount: number;
   loading: boolean;
   error: string | null;
   pagination: LatestReportsPagination;
@@ -49,6 +60,15 @@ const INITIAL_PAGINATION: LatestReportsPagination = {
   hasMorePages: false,
   from: null,
   to: null,
+};
+
+const INITIAL_STATE: LatestReportsQueryState = {
+  reports: [],
+  hiddenEmptyCount: 0,
+  hiddenRecentCount: 0,
+  loading: true,
+  error: null,
+  pagination: INITIAL_PAGINATION,
 };
 
 function buildVariables(input: LatestReportsQueryInput): GetLatestReportsQueryVariables {
@@ -75,13 +95,7 @@ export function useLatestReportsQuery(input: LatestReportsQueryInput): LatestRep
   refetch: () => void;
 } {
   const client = useEsoLogsClientInstance();
-  const [state, setState] = useState<LatestReportsQueryState>({
-    reports: [],
-    hiddenEmptyCount: 0,
-    loading: true,
-    error: null,
-    pagination: INITIAL_PAGINATION,
-  });
+  const [state, setState] = useState<LatestReportsQueryState>(INITIAL_STATE);
 
   const { page, zoneId, range, customFrom, customTo } = input;
 
@@ -105,11 +119,20 @@ export function useLatestReportsQuery(input: LatestReportsQueryInput): LatestRep
       const fetched = (reportPagination.data ?? []).filter(
         (report): report is NonNullable<typeof report> => report !== null,
       );
-      // Hide empty (no-combat) logs, but never the whole page: if every report
-      // the server returned would be hidden — e.g. a busy upload window where the
-      // freshest page is dominated by still-parsing logs — fail open and show
-      // them all so the user is never stranded on an "every report is empty" wall.
-      const { reportsToShow, hiddenEmptyCount } = selectReportsForDisplay(fetched);
+      // Hide every empty (no-combat) log — they open to "No fights available",
+      // so listing them is listing dead links. When that hides the whole page
+      // (a busy upload window where the freshest page is dominated by
+      // still-parsing logs), the list renders its `all-hidden` state, which
+      // explains the logs are still processing and offers a refresh; empties
+      // self-heal upstream within minutes.
+      const { reportsWithData: reportsToShow, emptyCount: hiddenEmptyCount } =
+        partitionReportsByData(fetched);
+      // Of the hidden empties, how many are recent enough to plausibly still be
+      // parsing? Drives whether the all-hidden state promises a quick self-heal.
+      const hiddenRecentCount =
+        hiddenEmptyCount === 0
+          ? 0
+          : fetched.filter((report) => isReportEmpty(report) && isRecentlyUploaded(report)).length;
 
       const currentPage = reportPagination.current_page || 1;
       const lastPage = reportPagination.last_page;
@@ -119,6 +142,7 @@ export function useLatestReportsQuery(input: LatestReportsQueryInput): LatestRep
       setState({
         reports: reportsToShow,
         hiddenEmptyCount,
+        hiddenRecentCount,
         loading,
         error: null,
         pagination: {

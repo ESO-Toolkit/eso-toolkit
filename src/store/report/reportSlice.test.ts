@@ -1,9 +1,12 @@
 import { configureStore } from '@reduxjs/toolkit';
 
-import { DATA_FETCH_CACHE_TIMEOUT } from '../../Constants';
+import { DATA_FETCH_CACHE_TIMEOUT, EMPTY_REPORT_CACHE_TIMEOUT } from '../../Constants';
+import type { EsoLogsClient } from '../../esologsClient';
+import type { ReportFragment } from '../../graphql/gql/graphql';
 
 import reportSlice, {
   clearReport,
+  fetchReportData,
   ReportEntry,
   ReportState,
   setActiveReportContext,
@@ -178,6 +181,187 @@ describe('reportSlice caching logic', () => {
 
       const state = store.getState() as { report: ReportState };
       expect(state.report.activeContext).toEqual({ reportId: null, fightId: null });
+    });
+  });
+
+  describe('fetchReportData caching + force', () => {
+    const CODE = 'CACHE-TEST-1';
+
+    const makeReportData = (fights: Array<{ id: number }> | []): ReportFragment =>
+      ({
+        code: CODE,
+        title: 'Cached report',
+        startTime: 1000,
+        endTime: 2000,
+        visibility: 'public',
+        zone: null,
+        owner: null,
+        fights,
+        phases: null,
+      }) as unknown as ReportFragment;
+
+    const storeWithEntry = (entry: ReportEntry) => {
+      const { key } = resolveCacheKey({ reportCode: CODE });
+      return configureStore({
+        reducer: { report: reportSlice },
+        preloadedState: {
+          report: {
+            entries: { [key]: entry },
+            accessOrder: [key],
+            reportId: CODE,
+            data: entry.data,
+            loading: false,
+            error: null,
+            cacheMetadata: {
+              lastFetchedReportId: entry.data ? CODE : null,
+              lastFetchedTimestamp: entry.cacheMetadata.lastFetchedTimestamp,
+            },
+            activeContext: { reportId: CODE, fightId: null },
+            fightIndexByReport: {},
+          } satisfies ReportState,
+        },
+      });
+    };
+
+    const makeClient = () => {
+      const query = jest
+        .fn()
+        .mockResolvedValue({ reportData: { report: makeReportData([{ id: 1 }]) } });
+      return { client: { query } as unknown as EsoLogsClient, query };
+    };
+
+    it('skips the fetch entirely for a fresh cached report WITH fights', async () => {
+      const { client, query } = makeClient();
+      const testStore = storeWithEntry(
+        createReportEntry({
+          data: makeReportData([{ id: 1 }]),
+          status: 'succeeded',
+          cacheMetadata: { lastFetchedTimestamp: Date.now() - 60_000 }, // 1 min old
+        }),
+      );
+
+      await testStore.dispatch(fetchReportData({ reportId: CODE, client }));
+      expect(query).not.toHaveBeenCalled();
+    });
+
+    it('re-checks a cached EMPTY (zero-fight) report once the short empty-TTL passes, bypassing the Apollo cache', async () => {
+      const { client, query } = makeClient();
+      const testStore = storeWithEntry(
+        createReportEntry({
+          data: makeReportData([]),
+          status: 'succeeded',
+          // Older than the empty-report TTL but far fresher than the normal
+          // 30-minute window, which would have pinned "Empty Log".
+          cacheMetadata: { lastFetchedTimestamp: Date.now() - EMPTY_REPORT_CACHE_TIMEOUT - 1000 },
+        }),
+      );
+
+      await testStore.dispatch(fetchReportData({ reportId: CODE, client }));
+
+      expect(query).toHaveBeenCalledTimes(1);
+      // The cached snapshot is empty, so cache-first would re-serve it forever.
+      expect(query.mock.calls[0][0]).toMatchObject({ fetchPolicy: 'network-only' });
+    });
+
+    it('debounces rapid re-checks of an empty report inside the short TTL', async () => {
+      const { client, query } = makeClient();
+      const testStore = storeWithEntry(
+        createReportEntry({
+          data: makeReportData([]),
+          status: 'succeeded',
+          cacheMetadata: { lastFetchedTimestamp: Date.now() - 2000 }, // 2 s old
+        }),
+      );
+
+      await testStore.dispatch(fetchReportData({ reportId: CODE, client }));
+      expect(query).not.toHaveBeenCalled();
+    });
+
+    it('force bypasses the freshness window AND the Apollo cache', async () => {
+      const { client, query } = makeClient();
+      const testStore = storeWithEntry(
+        createReportEntry({
+          data: makeReportData([{ id: 1 }]),
+          status: 'succeeded',
+          cacheMetadata: { lastFetchedTimestamp: Date.now() }, // perfectly fresh
+        }),
+      );
+
+      await testStore.dispatch(fetchReportData({ reportId: CODE, client, force: true }));
+
+      expect(query).toHaveBeenCalledTimes(1);
+      expect(query.mock.calls[0][0]).toMatchObject({ fetchPolicy: 'network-only' });
+    });
+
+    it('uses the default (cacheable) fetch for a stale report WITH fights', async () => {
+      const { client, query } = makeClient();
+      const testStore = storeWithEntry(
+        createReportEntry({
+          data: makeReportData([{ id: 1 }]),
+          status: 'succeeded',
+          cacheMetadata: { lastFetchedTimestamp: Date.now() - DATA_FETCH_CACHE_TIMEOUT - 1000 },
+        }),
+      );
+
+      await testStore.dispatch(fetchReportData({ reportId: CODE, client }));
+
+      expect(query).toHaveBeenCalledTimes(1);
+      expect((query.mock.calls[0][0] as { fetchPolicy?: string }).fetchPolicy).toBeUndefined();
+    });
+
+    it('re-reads from the network when a cacheable read returns zero fights (stale Apollo hit)', async () => {
+      // The slice LRU can forget a report while Apollo's session cache still
+      // holds its empty snapshot; cache-first would then re-serve "Empty Log"
+      // forever. The thunk must retry exactly once, network-only.
+      const query = jest
+        .fn()
+        .mockResolvedValueOnce({ reportData: { report: makeReportData([]) } }) // stale cache hit
+        .mockResolvedValueOnce({ reportData: { report: makeReportData([{ id: 1 }]) } }); // healed
+      const client = { query } as unknown as EsoLogsClient;
+
+      // No cached entry data → bypassCache is false → first read is cacheable.
+      const testStore = storeWithEntry(createReportEntry());
+
+      const action = await testStore.dispatch(fetchReportData({ reportId: CODE, client }));
+
+      expect(query).toHaveBeenCalledTimes(2);
+      expect((query.mock.calls[0][0] as { fetchPolicy?: string }).fetchPolicy).toBeUndefined();
+      expect(query.mock.calls[1][0]).toMatchObject({ fetchPolicy: 'network-only' });
+      expect(
+        (action.payload as { data: ReportFragment }).data.fights?.filter(Boolean),
+      ).toHaveLength(1);
+    });
+
+    it('does not retry a network-only read that returns zero fights (genuinely empty)', async () => {
+      const query = jest.fn().mockResolvedValue({ reportData: { report: makeReportData([]) } });
+      const client = { query } as unknown as EsoLogsClient;
+
+      // Cached EMPTY data → bypassCache is already true → single network read.
+      const testStore = storeWithEntry(
+        createReportEntry({
+          data: makeReportData([]),
+          status: 'succeeded',
+          cacheMetadata: { lastFetchedTimestamp: Date.now() - EMPTY_REPORT_CACHE_TIMEOUT - 1000 },
+        }),
+      );
+
+      await testStore.dispatch(fetchReportData({ reportId: CODE, client }));
+
+      expect(query).toHaveBeenCalledTimes(1);
+      expect(query.mock.calls[0][0]).toMatchObject({ fetchPolicy: 'network-only' });
+    });
+
+    it('never stacks a request on an in-flight one, even when forced', async () => {
+      const { client, query } = makeClient();
+      const testStore = storeWithEntry(
+        createReportEntry({
+          status: 'loading',
+          currentRequest: { reportId: CODE, requestId: 'in-flight' },
+        }),
+      );
+
+      await testStore.dispatch(fetchReportData({ reportId: CODE, client, force: true }));
+      expect(query).not.toHaveBeenCalled();
     });
   });
 });

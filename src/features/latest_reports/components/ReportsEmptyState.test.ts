@@ -45,6 +45,20 @@ describe('selectEmptyStateKind', () => {
     ).toBe('cold-empty');
   });
 
+  it('prioritizes all-hidden over filter-no-results when rows came back but were all empty', () => {
+    // A zone/date filter is active AND the page's rows were all empty logs:
+    // "no reports match your filters" would be wrong — reports DID match, they
+    // just have no combat data yet.
+    expect(
+      selectEmptyStateKind({
+        serverFilterActive: true,
+        searchActive: false,
+        loadedCount: 0,
+        hiddenEmptyCount: 25,
+      }),
+    ).toBe('all-hidden');
+  });
+
   it('prioritizes search-no-match over filter-no-results when both could apply', () => {
     // Server filter active AND search active AND rows present-but-filtered-out:
     // the user's most recent action (typing) should drive the message.

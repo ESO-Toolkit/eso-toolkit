@@ -130,6 +130,18 @@ export const isReportEmpty = (report: ReportEmptinessFields): boolean => {
  * Splits a report list into reports that contain combat data and a count of
  * empty ones, so list surfaces can hide broken logs while telling the user
  * how many were hidden.
+ *
+ * Public *browse* lists (Latest Reports) hide every empty log unconditionally —
+ * including when that hides the whole page. An earlier iteration failed open
+ * and showed the full page of empties (with an "Empty" badge) when all rows
+ * would be hidden, reasoning that an all-empty page is a transient upload burst
+ * that self-heals; in practice that filled the list with dead links that open
+ * to "No fights available", which users read as broken. The all-hidden case is
+ * instead handled by the list's `all-hidden` empty state (see
+ * ReportsEmptyState), which explains that the logs are still processing and
+ * offers a refresh — an informative pause, not a dead end. Owner-facing
+ * surfaces (My Reports, profile logs) still SHOW empties with a badge so
+ * uploaders can see their own still-processing logs.
  */
 export const partitionReportsByData = <T extends ReportEmptinessFields>(
   reports: T[],
@@ -139,33 +151,21 @@ export const partitionReportsByData = <T extends ReportEmptinessFields>(
 };
 
 /**
- * Decides which loaded reports a public *browse* list should display while
- * hiding empty (no-combat) logs — but WITHOUT ever blanking out the whole page.
- *
- * Hiding individual empty logs is correct when a page also carries real reports:
- * it removes dead links that open to "No fights available". The failure mode is
- * hiding *every* report on a page. During a busy upload window the freshest page
- * can be dominated — or, at a peak, entirely composed — of just-uploaded logs
- * that have not finished parsing yet (`segments: 0`, `fights: []`). Hiding all of
- * them strands the user on a dead-end "every report on this page is empty" wall,
- * even though those reports exist and self-heal within minutes as ESO Logs
- * finishes parsing them. A *permanently* broken full page is statistically
- * impossible — broken slip-throughs are well under 1% of logs — so an all-empty
- * page is overwhelmingly a transient upload burst, not 25 genuinely dead logs.
- *
- * Therefore, when every loaded report would be hidden, fail OPEN and show them
- * all (`hiddenEmptyCount: 0`). The reports stay individually openable and the
- * list is never a dead end; the worst case is a recent log that opens to "No
- * fights available" until it finishes parsing — strictly better than telling the
- * user there is nothing here. This mirrors the fail-open fallback already used by
- * `useLatestReport` (prefer a report with data, but never hide the only ones).
+ * How long after a log's last recorded activity we still treat an empty
+ * (no-fights) report as "probably still being parsed by ESO Logs" rather than
+ * permanently broken. Just-uploaded logs routinely take minutes to parse;
+ * genuinely broken ones stay empty forever. 90 minutes comfortably covers the
+ * observed self-heal window while keeping old dead logs out of the
+ * "still processing" messaging.
  */
-export const selectReportsForDisplay = <T extends ReportEmptinessFields>(
-  reports: T[],
-): { reportsToShow: T[]; hiddenEmptyCount: number } => {
-  const { reportsWithData, emptyCount } = partitionReportsByData(reports);
-  if (reports.length > 0 && reportsWithData.length === 0) {
-    return { reportsToShow: reports, hiddenEmptyCount: 0 };
-  }
-  return { reportsToShow: reportsWithData, hiddenEmptyCount: emptyCount };
-};
+export const REPORT_PROCESSING_WINDOW_MS = 90 * 60 * 1000;
+
+/**
+ * True when the report's activity ended recently enough that an empty fights
+ * list most likely means "ESO Logs has not finished parsing yet" (see
+ * REPORT_PROCESSING_WINDOW_MS) rather than a permanent upload/parse failure.
+ */
+export const isRecentlyUploaded = (
+  report: { endTime: number },
+  now: number = Date.now(),
+): boolean => now - report.endTime < REPORT_PROCESSING_WINDOW_MS;
