@@ -16,10 +16,10 @@ import { ChampionPointsPicker } from '../../features/build-editor/components/pic
 import { EquipmentPicker } from '../../features/build-editor/components/pickers/EquipmentPicker';
 import { FoodPicker } from '../../features/build-editor/components/pickers/FoodPicker';
 import { PassivesPicker } from '../../features/build-editor/components/pickers/PassivesPicker';
-import { SkillBarPicker } from '../../features/build-editor/components/pickers/SkillBarPicker';
 import type { BuildChampionPoints } from '../../features/build-editor/types/build.types';
 import type { GearConfig, SkillsConfig } from '../../features/loadout-manager/types/loadout.types';
 import type { SkillLineConfig } from '../../types/roster';
+import { SkillBarPicker } from '../skills/SkillBarPicker';
 
 import { SkillLinePickerGroup } from './shared/skill-line-picker';
 

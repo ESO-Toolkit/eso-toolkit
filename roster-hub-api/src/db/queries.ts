@@ -18,6 +18,7 @@ import type {
   RosterTagRow,
   RosterTrialRow,
   RosterWithMeta,
+  UserLoadoutRow,
   UserProfileResponse,
   UserProfileRow,
 } from '../types';
@@ -1650,4 +1651,357 @@ export async function checkPackVoteRateLimit(db: D1Database, userId: string): Pr
     .bind(userId)
     .first<{ cnt: number }>();
   return (row?.cnt ?? 0) < 30;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// User loadouts — private, account-synced loadout library (no votes/comments)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Hard ceiling on how many loadouts one account may store. Bounds per-user
+ * storage (500 × ~3 KB ≈ 1.5 MB worst case) far below any free-plan limit while
+ * still dwarfing a heavy raider's real library.
+ */
+export const MAX_LOADOUTS_PER_USER = 500;
+
+/** Loadout write throttle: 120 create/update/sync writes per hour per user. */
+const LOADOUT_WRITE_RATE_LIMIT_WINDOW_SEC = 3600;
+const LOADOUT_WRITE_RATE_LIMIT_MAX = 120;
+
+export interface UserLoadoutInput {
+  id: string;
+  name: string;
+  description: string;
+  trialId: string;
+  characterName: string;
+  loadoutData: string;
+  /** Client-authored ISO edit time; '' when the client didn't supply one. */
+  clientUpdatedAt: string;
+  /** Client content hash; breaks an exact-`clientUpdatedAt` tie. '' when not supplied. */
+  contentFingerprint: string;
+}
+
+export async function listUserLoadouts(db: D1Database, userId: string): Promise<UserLoadoutRow[]> {
+  const rows = await db
+    .prepare(
+      'SELECT * FROM user_loadouts WHERE user_id = ? ORDER BY updated_at DESC, created_at DESC',
+    )
+    .bind(userId)
+    .all<UserLoadoutRow>();
+  return rows.results;
+}
+
+export async function getUserLoadoutById(
+  db: D1Database,
+  id: string,
+  userId: string,
+): Promise<UserLoadoutRow | null> {
+  const row = await db
+    .prepare('SELECT * FROM user_loadouts WHERE id = ? AND user_id = ?')
+    .bind(id, userId)
+    .first<UserLoadoutRow>();
+  return row ?? null;
+}
+
+export async function countUserLoadouts(db: D1Database, userId: string): Promise<number> {
+  const row = await db
+    .prepare('SELECT COUNT(*) AS cnt FROM user_loadouts WHERE user_id = ?')
+    .bind(userId)
+    .first<{ cnt: number }>();
+  return row?.cnt ?? 0;
+}
+
+/**
+ * Idempotent create-or-update of a single loadout, keyed on the client uuid.
+ * The `WHERE user_loadouts.user_id = excluded.user_id` guard on the upsert means
+ * a row whose id (astronomically unlikely) collides with another account is left
+ * untouched — you can only ever write your own rows.
+ */
+export async function upsertUserLoadout(
+  db: D1Database,
+  userId: string,
+  data: UserLoadoutInput,
+): Promise<void> {
+  // Single-loadout save/replace is a deliberate, explicit user action, so it
+  // overwrites unconditionally (within ownership). Bulk sync is the path that
+  // needs last-write-wins — see upsertUserLoadouts. The per-account cap is gated
+  // INSIDE the write (only for a NEW row) so it holds under concurrent creates;
+  // SQLite serializes writes so the COUNT reflects committed rows.
+  //
+  // The insert and the tombstone-clear run in ONE transactional batch, and the
+  // tombstone is cleared ONLY when the row actually exists afterwards. So if the
+  // quota guard blocks a new row, the durable delete marker is NOT lost (it would
+  // be, were the tombstone deleted up-front and the insert then no-op'd).
+  await db.batch([
+    db
+      .prepare(
+        `INSERT INTO user_loadouts
+           (id, user_id, name, description, trial_id, character_name, loadout_data, client_updated_at, content_fingerprint, created_at, updated_at)
+         SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now')
+         WHERE EXISTS (SELECT 1 FROM user_loadouts e WHERE e.user_id = ? AND e.id = ?)
+            OR (SELECT COUNT(*) FROM user_loadouts c WHERE c.user_id = ?) < ${MAX_LOADOUTS_PER_USER}
+         ON CONFLICT(user_id, id) DO UPDATE SET
+           name = excluded.name,
+           description = excluded.description,
+           trial_id = excluded.trial_id,
+           character_name = excluded.character_name,
+           loadout_data = excluded.loadout_data,
+           client_updated_at = excluded.client_updated_at,
+           content_fingerprint = excluded.content_fingerprint,
+           updated_at = datetime('now')`,
+      )
+      .bind(
+        data.id,
+        userId,
+        data.name,
+        data.description,
+        data.trialId,
+        data.characterName,
+        data.loadoutData,
+        data.clientUpdatedAt,
+        data.contentFingerprint,
+        userId,
+        data.id,
+        userId,
+      ),
+    db
+      .prepare(
+        `DELETE FROM user_loadout_deletions
+         WHERE user_id = ? AND loadout_id = ?
+           AND EXISTS (SELECT 1 FROM user_loadouts l WHERE l.user_id = ? AND l.id = ?)`,
+      )
+      .bind(userId, data.id, userId, data.id),
+  ]);
+}
+
+export async function updateUserLoadout(
+  db: D1Database,
+  id: string,
+  userId: string,
+  data: Omit<UserLoadoutInput, 'id'>,
+): Promise<boolean> {
+  const result = await db
+    .prepare(
+      `UPDATE user_loadouts
+         SET name = ?, description = ?, trial_id = ?, character_name = ?, loadout_data = ?, client_updated_at = ?, content_fingerprint = ?, updated_at = datetime('now')
+       WHERE id = ? AND user_id = ?`,
+    )
+    .bind(
+      data.name,
+      data.description,
+      data.trialId,
+      data.characterName,
+      data.loadoutData,
+      data.clientUpdatedAt,
+      data.contentFingerprint,
+      id,
+      userId,
+    )
+    .run();
+  return (result.meta.changes ?? 0) > 0;
+}
+
+export type DeleteLoadoutResult = 'deleted' | 'not-found' | 'conflict-newer';
+
+export async function deleteUserLoadout(
+  db: D1Database,
+  id: string,
+  userId: string,
+  deletedAt: string,
+): Promise<DeleteLoadoutResult> {
+  // Tombstone + row removal run in a SINGLE atomic batch (D1 batches are
+  // transactional — all-or-nothing) so a delete can never commit without its
+  // durable tombstone. The tombstone INSERT runs FIRST and is guarded on the row
+  // still existing AND being old enough (client_updated_at <= deletedAt) — i.e.
+  // the same version condition as the DELETE — so:
+  //   - a deletable row → tombstone + delete, atomically;
+  //   - a newer row (a concurrent edit won) → neither fires;
+  //   - a missing row → neither fires (no arbitrary-DELETE tombstone bloat).
+  const results = await db.batch([
+    db
+      .prepare(
+        `INSERT INTO user_loadout_deletions (user_id, loadout_id, deleted_at)
+         SELECT ?, ?, ?
+         WHERE EXISTS (
+           SELECT 1 FROM user_loadouts WHERE id = ? AND user_id = ? AND client_updated_at <= ?
+         )
+         ON CONFLICT(user_id, loadout_id) DO UPDATE SET deleted_at = excluded.deleted_at`,
+      )
+      .bind(userId, id, deletedAt, id, userId, deletedAt),
+    db
+      .prepare('DELETE FROM user_loadouts WHERE id = ? AND user_id = ? AND client_updated_at <= ?')
+      .bind(id, userId, deletedAt),
+  ]);
+
+  if ((results[1].meta.changes ?? 0) > 0) return 'deleted';
+
+  // Nothing deleted: classify for the caller (does not gate the delete decision,
+  // which already resolved atomically above).
+  const exists = await db
+    .prepare('SELECT 1 FROM user_loadouts WHERE id = ? AND user_id = ?')
+    .bind(id, userId)
+    .first();
+  return exists ? 'conflict-newer' : 'not-found';
+}
+
+export interface LoadoutTombstone {
+  id: string;
+  deleted_at: string;
+}
+
+/**
+ * Tombstones the account holds — returned during sync WITH their delete time so a
+ * client can tell whether a local edit post-dates the delete (revive) or not (purge).
+ */
+export async function listLoadoutTombstones(
+  db: D1Database,
+  userId: string,
+): Promise<LoadoutTombstone[]> {
+  const rows = await db
+    .prepare('SELECT loadout_id, deleted_at FROM user_loadout_deletions WHERE user_id = ?')
+    .bind(userId)
+    .all<{ loadout_id: string; deleted_at: string }>();
+  return rows.results.map((r) => ({ id: r.loadout_id, deleted_at: r.deleted_at }));
+}
+
+/**
+ * Drop tombstones whose loadout now exists with a strictly newer edit — i.e. an
+ * edit that post-dated the delete won and revived the loadout. Run after a bulk
+ * sync so a revived loadout isn't re-purged from other devices on the next pull.
+ */
+export async function clearRevivedTombstones(db: D1Database, userId: string): Promise<void> {
+  await db
+    .prepare(
+      `DELETE FROM user_loadout_deletions
+       WHERE user_id = ?
+         AND EXISTS (
+           SELECT 1 FROM user_loadouts l
+           WHERE l.user_id = user_loadout_deletions.user_id
+             AND l.id = user_loadout_deletions.loadout_id
+             AND l.client_updated_at > user_loadout_deletions.deleted_at
+         )`,
+    )
+    .bind(userId)
+    .run();
+}
+
+/**
+ * Bulk upsert (non-destructive): inserts new loadouts and updates existing ones
+ * by id. Never deletes — removals are explicit via deleteUserLoadout — so a
+ * device pushing a partial library can't wipe loadouts saved on another device.
+ *
+ * Last-write-wins: an existing row is only overwritten when the incoming
+ * client_updated_at is newer-or-equal. This closes the cross-device race where
+ * device A pulls, device B saves a newer edit, then A pushes its now-stale copy
+ * — A's older payload is rejected by the WHERE guard, preserving B's edit. Rows
+ * with no client timestamp on either side compare equal and still upsert.
+ */
+export async function upsertUserLoadouts(
+  db: D1Database,
+  userId: string,
+  loadouts: UserLoadoutInput[],
+): Promise<void> {
+  if (loadouts.length === 0) return;
+  const stmts = loadouts.map((l) =>
+    db
+      .prepare(
+        // INSERT…SELECT (not VALUES) so the tombstone guard also blocks INSERTING
+        // a brand-new row for a deleted id. The guard is VERSIONED: a delete only
+        // blocks an incoming edit that is older-or-equal (deleted_at >= the edit's
+        // client_updated_at). A strictly-newer edit post-dates the delete and is
+        // allowed to revive the loadout — clearRevivedTombstones then drops the
+        // stale tombstone so the revival isn't re-purged. Existing rows still take
+        // the last-write-wins path on conflict.
+        `INSERT INTO user_loadouts
+           (id, user_id, name, description, trial_id, character_name, loadout_data, client_updated_at, content_fingerprint, created_at, updated_at)
+         SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now')
+         WHERE NOT EXISTS (
+           SELECT 1 FROM user_loadout_deletions d
+           WHERE d.user_id = ? AND d.loadout_id = ? AND d.deleted_at >= ?
+         )
+         -- Enforce the per-account cap INSIDE the write so two concurrent syncs
+         -- can't both pass an outside-the-write preflight and overshoot it. Only
+         -- NEW rows are gated (an update to an existing row is always allowed).
+         -- SQLite serializes writes, so each statement — and each concurrent batch
+         -- — sees prior inserts in the COUNT, making the limit a hard ceiling.
+         AND (
+           EXISTS (SELECT 1 FROM user_loadouts e WHERE e.user_id = ? AND e.id = ?)
+           OR (SELECT COUNT(*) FROM user_loadouts c WHERE c.user_id = ?) < ${MAX_LOADOUTS_PER_USER}
+         )
+         ON CONFLICT(user_id, id) DO UPDATE SET
+           name = excluded.name,
+           description = excluded.description,
+           trial_id = excluded.trial_id,
+           character_name = excluded.character_name,
+           loadout_data = excluded.loadout_data,
+           client_updated_at = excluded.client_updated_at,
+           content_fingerprint = excluded.content_fingerprint,
+           updated_at = datetime('now')
+         -- Last-write-wins, with a DETERMINISTIC tie-break on an exact client_updated_at
+         -- collision: the greater content_fingerprint wins regardless of arrival order, so
+         -- the server settles a same-millisecond divergent edit the same way the client
+         -- merge does (mergeLoadoutsByNewest/selectOutgoing) instead of by who arrived
+         -- last. Both compare the SAME client-sent fixed-width hex hash, so JS and SQLite
+         -- BINARY order agree. A legacy '' fingerprint sorts oldest (loses any real tie).
+         WHERE excluded.client_updated_at > user_loadouts.client_updated_at
+            OR (excluded.client_updated_at = user_loadouts.client_updated_at
+                AND excluded.content_fingerprint >= user_loadouts.content_fingerprint)`,
+      )
+      .bind(
+        l.id,
+        userId,
+        l.name,
+        l.description,
+        l.trialId,
+        l.characterName,
+        l.loadoutData,
+        l.clientUpdatedAt,
+        l.contentFingerprint,
+        userId,
+        l.id,
+        l.clientUpdatedAt,
+        userId,
+        l.id,
+        userId,
+      ),
+  );
+  await db.batch(stmts);
+}
+
+export async function checkLoadoutWriteRateLimit(db: D1Database, userId: string): Promise<boolean> {
+  const row = await db
+    .prepare(
+      `SELECT COUNT(*) AS cnt FROM rate_limit_events
+       WHERE user_id = ? AND action = 'loadout_write' AND created_at > datetime('now', '-${LOADOUT_WRITE_RATE_LIMIT_WINDOW_SEC} seconds')`,
+    )
+    .bind(userId)
+    .first<{ cnt: number }>();
+  return (row?.cnt ?? 0) < LOADOUT_WRITE_RATE_LIMIT_MAX;
+}
+
+/**
+ * Atomically consume one loadout-write rate-limit token: insert an event ONLY if
+ * the in-window count is still under the cap, and report whether it landed. Unlike
+ * a separate check-then-record, the conditional INSERT…SELECT…WHERE is a single
+ * serialized write, so concurrent requests (especially the 200-row bulk /sync) can't
+ * all read an under-cap count and then each blow past the hourly limit. Returns true
+ * iff a token was consumed (the caller may proceed).
+ */
+export async function consumeLoadoutWriteRateLimit(
+  db: D1Database,
+  userId: string,
+): Promise<boolean> {
+  const result = await db
+    .prepare(
+      `INSERT INTO rate_limit_events (user_id, action, created_at)
+       SELECT ?, 'loadout_write', datetime('now')
+       WHERE (
+         SELECT COUNT(*) FROM rate_limit_events
+         WHERE user_id = ? AND action = 'loadout_write'
+           AND created_at > datetime('now', '-${LOADOUT_WRITE_RATE_LIMIT_WINDOW_SEC} seconds')
+       ) < ${LOADOUT_WRITE_RATE_LIMIT_MAX}`,
+    )
+    .bind(userId, userId)
+    .run();
+  return (result.meta?.changes ?? 0) > 0;
 }

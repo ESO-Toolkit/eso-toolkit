@@ -19,7 +19,7 @@ jest.mock('@features/loadout-manager/utils/itemIconResolver', () => {
   };
 });
 
-import { GearPickerDialog } from '../GearPicker';
+import { GearPickerDialog } from '../GearPickerDialog';
 
 describe('GearPickerDialog — icon-data load failure', () => {
   it('shows a recoverable error instead of an endless loading state', async () => {

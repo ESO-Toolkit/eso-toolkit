@@ -16,6 +16,8 @@ import { Box, ButtonBase, Checkbox, Stack, Typography } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { GearPickerDialog } from '@/components/gear';
+
 import { getItemInfo } from '../../../loadout-manager/data/itemIdMap';
 import type {
   ArmorWeight,
@@ -32,7 +34,6 @@ import { getLockedArmorWeight, resolveApparelWeight } from '../../data/setArmorW
 import { GearSlotCard } from '../primitives/GearSlotCard';
 
 import { BulkGearToolbar, type BulkGearPatch, type SlotCategory } from './BulkGearToolbar';
-import { GearPickerDialog } from './GearPicker';
 
 // ── 2H weapon logic ─────────────────────────────────────────────────────────
 //

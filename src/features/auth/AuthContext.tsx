@@ -76,7 +76,9 @@ interface AuthContextType {
   refetchUser: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+// Exported so features can read auth defensively (e.g. a panel that may render
+// outside the provider in isolation/tests) — prefer the `useAuth` hook in app code.
+export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [accessToken, setAccessToken] = useState<string>(
@@ -106,6 +108,23 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const accessTokenExpired = React.useMemo(() => isAccessTokenExpired(accessToken), [accessToken]);
   const lastUserPropertyPayload = React.useRef<string>('');
 
+  // Mirror the live token so a token-set path can compare the OUTGOING token's user
+  // identity to the current one without stale closures or effect-dependency churn.
+  const accessTokenRef = React.useRef(accessToken);
+  accessTokenRef.current = accessToken;
+
+  // Drop the cached currentUser the instant the token's user identity (JWT subject)
+  // changes — e.g. a cross-tab account switch via the storage event, or an in-app
+  // rebind. Runs in the SAME commit as the token update, so no identity-scoped
+  // consumer (loadout sync/save) ever pairs a new account's token with the previous
+  // account's currentUser. A same-account token refresh keeps the subject, so this
+  // never clears (no logged-in flicker).
+  const dropStaleUserOnAccountChange = useCallback((nextToken: string): void => {
+    if (getAccessTokenSubject(accessTokenRef.current) !== getAccessTokenSubject(nextToken)) {
+      setCurrentUser(null);
+    }
+  }, []);
+
   if (isDevelopment()) {
     logger.debug('render', {
       hasToken: !!accessToken,
@@ -127,6 +146,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   // Re-bind access token from localStorage
   const rebindAccessToken = useCallback(() => {
     const token = localStorage.getItem(LOCAL_STORAGE_ACCESS_TOKEN_KEY) || '';
+    dropStaleUserOnAccountChange(token);
     setAccessToken(token);
     setAuthToken(token);
     addBreadcrumb('Auth: Rebound access token from storage', 'auth', {
@@ -136,18 +156,19 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setIsBanned(false);
       setBanReason(null);
     }
-  }, [setAuthToken]);
+  }, [dropStaleUserOnAccountChange, setAuthToken]);
 
   // Update access token and notify EsoLogsClient
   const updateAccessToken = useCallback(
     (token: string) => {
+      dropStaleUserOnAccountChange(token);
       setAccessToken(token);
       setAuthToken(token);
       addBreadcrumb('Auth: Access token updated', 'auth', {
         tokenPresent: Boolean(token),
       });
     },
-    [setAuthToken],
+    [dropStaleUserOnAccountChange, setAuthToken],
   );
 
   // Schedule proactive token refresh 60 s before expiry so the session never
@@ -213,6 +234,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       return;
     }
 
+    // The account (token subject) this fetch is for. If the token switches to a
+    // DIFFERENT account while the request is in flight (cross-tab switch / rebind),
+    // its result is stale — applying currentUser/userLoading would restore the
+    // previous account under the new token. Re-check after every await before
+    // mutating state. A same-account token refresh keeps the subject, so it stays
+    // valid.
+    const requestSubject = getAccessTokenSubject(accessToken);
+    const isStale = (): boolean => getAccessTokenSubject(accessTokenRef.current) !== requestSubject;
+
     setUserLoading(true);
     setUserError(null);
     addBreadcrumb('Auth: Fetching current user', 'auth', {
@@ -224,6 +254,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const result = await esoLogsClient.query<GetCurrentUserQuery>({
         query: GetCurrentUserDocument,
       });
+      if (isStale()) return;
 
       const fetchedUser = result?.userData?.currentUser ?? null;
 
@@ -236,6 +267,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       if (fetchedUser) {
         const banCheck = await checkUserBan(fetchedUser);
+        if (isStale()) return;
         if (banCheck.isBanned) {
           const reason = banCheck.reason || DEFAULT_BAN_REASON;
           setIsBanned(true);
@@ -272,6 +304,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         addBreadcrumb('Auth: No user data returned', 'auth');
       }
     } catch (error) {
+      if (isStale()) return;
       logger.error('Failed to fetch current user', error instanceof Error ? error : undefined);
       setUserError(error instanceof Error ? error.message : 'Failed to fetch user data');
       setIsBanned(false);
@@ -281,7 +314,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         errorMessage: error instanceof Error ? error.message : String(error),
       });
     } finally {
-      setUserLoading(false);
+      // Only the fetch that still matches the live token owns the loading flag; a
+      // superseded one must not clear the newer request's userLoading.
+      if (!isStale()) setUserLoading(false);
     }
   }, [
     esoLogsClient,
@@ -296,6 +331,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     // Listen for changes to localStorage (e.g., from OAuthRedirect)
     const handler = (): void => {
       const token = localStorage.getItem(LOCAL_STORAGE_ACCESS_TOKEN_KEY) || '';
+      // A cross-tab account switch lands here: drop the previous account's currentUser
+      // in the same commit as the new token so no consumer pairs them.
+      dropStaleUserOnAccountChange(token);
       setAccessToken(token);
       setAuthToken(token);
       addBreadcrumb('Auth: Access token updated via storage event', 'auth', {
@@ -310,7 +348,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setAuthToken(initialToken);
 
     return () => window.removeEventListener('storage', handler);
-  }, [setAuthToken]);
+  }, [dropStaleUserOnAccountChange, setAuthToken]);
 
   const isLoggedIn =
     !!accessToken &&

@@ -35,27 +35,19 @@ import {
 import { useTheme } from '@mui/material/styles';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
+import { getPotionCategoryIconSources } from '@/assets/consumables/foodCategoryIcons';
 import { ESO_POTION_CATEGORIES, ESO_POTION_LOOKUP, ESO_POTIONS } from '@/data/esoPotions';
 import type { EsoPotion, PotionCategory } from '@/data/esoPotions';
 
 import type { BuildPotion } from '../../types/build.types';
 import { GlassPanel } from '../primitives/GlassPanel';
 
-// ─── Potion category → UESP alchemy icon mapping ────────────────────────────
-
-const UESP_ICON_CDN = 'https://esoicons.uesp.net/esoui/art/treeicons';
-
-const CATEGORY_ICON_MAP: Record<PotionCategory, string> = {
-  'Damage (Magicka)': 'provisioner_indexicon_spirits_up',
-  'Damage (Stamina)': 'provisioner_indexicon_meat_up',
-  Sustain: 'provisioner_indexicon_wine_up',
-  Defensive: 'provisioner_indexicon_baked_up',
-  Utility: 'provisioner_indexicon_beer_up',
-  Ultimate: 'provisioner_indexicon_stew_up',
-};
+// ─── Potion category icons (bundled-local, same-origin / unblockable) ─────────
+// Resolve the primary (bundled) source so these icons never depend on a CDN
+// that ad/privacy/DNS filters block. See assets/consumables/foodCategoryIcons.
 
 const getCategoryIconUrl = (category: PotionCategory): string =>
-  `${UESP_ICON_CDN}/${CATEGORY_ICON_MAP[category]}.png`;
+  getPotionCategoryIconSources(category)[0] ?? '';
 
 // ─── Category color mapping ─────────────────────────────────────────────────
 

@@ -2,6 +2,9 @@ import { Box, Tooltip } from '@mui/material';
 import React from 'react';
 
 import { PlayerGear } from '../types/playerDetails';
+import { abilityIconSources } from '../utils/iconCdn';
+
+import { ResilientImg } from './ResilientImg';
 
 export interface GearIconProps {
   /** The gear item ID used to construct the icon URL */
@@ -74,16 +77,17 @@ export const GearIcon: React.FC<GearIconProps> = ({
   useDesaturatedColors = false,
   onClick,
 }) => {
-  // Construct the gear icon URL - using the same pattern as ESO Logs
-  const iconUrl = `https://assets.rpglogs.com/img/eso/abilities/${gear.icon}.png`;
+  // ESO Logs serves gear icons by name on the RPGLogs CDN; the same name also
+  // resolves on UESP, so try RPGLogs first and fall through to UESP if it's
+  // blocked/unreachable.
+  const iconSources = abilityIconSources(gear.icon);
 
   // Choose color set based on whether we want desaturated colors
   const colors = useDesaturatedColors ? desaturatedQualityColors : qualityColors;
 
   const iconElement = (
-    // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
-    <img
-      src={iconUrl}
+    <ResilientImg
+      sources={iconSources}
       alt={alt}
       className={className}
       onClick={onClick}
@@ -109,10 +113,6 @@ export const GearIcon: React.FC<GearIconProps> = ({
         cursor: onClick ? 'pointer' : 'default',
         transition: 'all 0.2s ease-in-out',
         ...style,
-      }}
-      onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
-        const target = e.target as HTMLImageElement;
-        target.style.display = 'none';
       }}
     />
   );

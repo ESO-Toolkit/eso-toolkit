@@ -11,8 +11,8 @@ import { fireEvent, render, screen, within } from '@testing-library/react';
 import { useState } from 'react';
 
 import { SkillBarPicker } from '../SkillBarPicker';
-import { searchSkills } from '../../../../loadout-manager/data/skillLineSkills';
-import type { SkillsConfig } from '../../../../loadout-manager/types/loadout.types';
+import { searchSkills } from '@features/loadout-manager/data/skillLineSkills';
+import type { SkillsConfig } from '@features/loadout-manager/types/loadout.types';
 
 const emptySkills: SkillsConfig = { 0: {}, 1: {} };
 

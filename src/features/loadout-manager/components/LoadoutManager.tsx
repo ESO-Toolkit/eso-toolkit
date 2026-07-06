@@ -5,6 +5,7 @@ import {
   Edit,
   FileDownload,
   FileUpload,
+  HelpOutlined as HelpOutline,
   MoreVert,
   Backpack as BackpackIcon,
   Search as SearchIcon,
@@ -35,6 +36,8 @@ import {
   Snackbar,
   Stack,
   TextField,
+  ToggleButton,
+  ToggleButtonGroup,
   Tooltip,
   Typography,
   useMediaQuery,
@@ -46,7 +49,13 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 
 import { WorkInProgressDisclaimer } from '@/components/WorkInProgressDisclaimer';
+import { useAuth } from '@/features/auth/AuthContext';
 import { useDropdownMenuProps } from '@/hooks/useDropdownMenuDirection';
+import {
+  selectUnownedOwnerUserId,
+  selectVisibleLoadouts,
+  type SavedLoadout,
+} from '@/store/saved_loadouts';
 import type { RootState } from '@/store/storeWithHistory';
 
 import { preloadChampionPointData } from '../data/championPointData';
@@ -89,6 +98,8 @@ import {
 
 import { CharacterSelector } from './CharacterSelector';
 import { ExportDialog } from './ExportDialog';
+import { InstallGuideModal } from './InstallGuideModal';
+import { LoadoutLibraryPanel } from './LoadoutLibraryPanel';
 import { SetupEditor } from './SetupEditor';
 import { SetupList } from './SetupList';
 
@@ -146,11 +157,18 @@ export const LoadoutManager: React.FC = () => {
     currentTrial ? selectTrialPages(state, currentTrial) : [],
   );
   const currentCharacter = useSelector((state: RootState) => state.loadout.currentCharacter);
+  const { currentUser } = useAuth();
+  const unownedOwnerUserId = useSelector(selectUnownedOwnerUserId);
+  const savedLoadoutCount = useSelector(
+    selectVisibleLoadouts(currentUser?.id ? String(currentUser.id) : undefined, unownedOwnerUserId),
+  ).length;
 
+  const [view, setView] = useState<'setups' | 'library'>('setups');
   const [selectedSetupIndex, setSelectedSetupIndex] = useState<number | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
+  const [installGuideOpen, setInstallGuideOpen] = useState(false);
   const [renameDialogOpen, setRenameDialogOpen] = useState(false);
   const [renameTargetIndex, setRenameTargetIndex] = useState<number | null>(null);
   const [renameValue, setRenameValue] = useState('');
@@ -282,6 +300,31 @@ export const LoadoutManager: React.FC = () => {
       setDrawerOpen(true);
     }
     showSnackbar('Blank setup added.', 'success');
+  };
+
+  const handleLoadFromLibrary = (setup: LoadoutSetup, entry: SavedLoadout): void => {
+    if (!ensureTrialSelected()) {
+      return;
+    }
+    // addSetup no-ops when no character is selected (the working tree is keyed by
+    // character). currentTrial can fall back to a default, so guard on the
+    // character explicitly rather than reporting a phantom success.
+    if (!currentCharacter) {
+      showSnackbar('Pick or import a character before loading a loadout.', 'error');
+      return;
+    }
+    // Clone so future edits to the working setup don't mutate the library entry,
+    // and adopt the library entry's name so the inserted setup matches the card
+    // the user clicked (the embedded setup.name can be stale after a rename).
+    const cloned: LoadoutSetup = JSON.parse(JSON.stringify(setup));
+    cloned.name = entry.name;
+    dispatch(addSetup({ trialId: currentTrial!, pageIndex: currentPage, setup: cloned }));
+    setView('setups');
+    setSelectedSetupIndex(setups.length);
+    if (isMdDown) {
+      setDrawerOpen(true);
+    }
+    showSnackbar(`Loaded "${entry.name}" into the current page.`, 'success');
   };
 
   const handleDuplicateSetup = (index: number): void => {
@@ -707,6 +750,32 @@ export const LoadoutManager: React.FC = () => {
                       </IconButton>
                     </span>
                   </Tooltip>
+                  <Box
+                    sx={{
+                      width: '1px',
+                      height: 20,
+                      flexShrink: 0,
+                      backgroundColor: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)',
+                    }}
+                  />
+                  <Tooltip title="Set up in-game (install guide)" arrow>
+                    <IconButton
+                      size="small"
+                      onClick={() => setInstallGuideOpen(true)}
+                      aria-label="Install guide"
+                      sx={{
+                        borderRadius: 0,
+                        px: 1,
+                        '&:hover': {
+                          backgroundColor: isDarkMode
+                            ? 'rgba(255,255,255,0.08)'
+                            : 'rgba(0,0,0,0.05)',
+                        },
+                      }}
+                    >
+                      <HelpOutline fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
                 </Box>
 
                 <Tooltip title="More actions" arrow>
@@ -888,71 +957,93 @@ export const LoadoutManager: React.FC = () => {
           </Stack>
         </Paper>
 
-        {/* ── Main content: list + editor ───────────────────── */}
-        <Stack direction={{ xs: 'column', lg: 'row' }} spacing={2} sx={{ alignItems: 'stretch' }}>
-          {/* Setup list — narrower on desktop */}
-          <Box
-            sx={{
-              width: { xs: '100%', lg: '38%' },
-              flexShrink: 0,
-              minWidth: 0,
-              maxHeight: { lg: 'calc(100vh - 280px)' },
-              display: 'flex',
-            }}
-          >
-            <SetupList
-              setups={setups}
-              selectedIndex={selectedSetupIndex}
-              filterText={searchTerm}
-              onOpenDetails={handleOpenDetails}
-              onDuplicateSetup={handleDuplicateSetup}
-              onDeleteSetup={handleDeleteSetup}
-              onCopySetup={handleCopySetup}
-            />
-          </Box>
+        {/* ── View toggle: working setups vs saved library ───── */}
+        <ToggleButtonGroup
+          value={view}
+          exclusive
+          size="small"
+          onChange={(_event, next: 'setups' | 'library' | null) => {
+            if (next) setView(next);
+          }}
+          sx={{ alignSelf: 'flex-start' }}
+        >
+          <ToggleButton value="setups" sx={{ textTransform: 'none', px: 2 }}>
+            Setups
+          </ToggleButton>
+          <ToggleButton value="library" sx={{ textTransform: 'none', px: 2 }}>
+            Library{savedLoadoutCount > 0 ? ` (${savedLoadoutCount})` : ''}
+          </ToggleButton>
+        </ToggleButtonGroup>
 
-          {/* Editor — wider on desktop */}
-          {!isMdDown && (
-            <Box sx={{ flex: 1, minWidth: 0 }}>
-              {selectedSetup ? (
-                <SetupEditor
-                  setup={selectedSetup}
-                  setupIndex={selectedSetupIndex ?? 0}
-                  trialId={currentTrial ?? 'GEN'}
-                  pageIndex={currentPage}
-                  variant="page"
-                />
-              ) : (
-                <Paper
-                  elevation={0}
-                  sx={{
-                    height: '100%',
-                    minHeight: 200,
-                    borderRadius: 2,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    textAlign: 'center',
-                    px: 3,
-                    py: 4,
-                    color: 'text.secondary',
-                    backgroundColor: isDarkMode ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)',
-                    border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
-                  }}
-                >
-                  <Stack spacing={1} sx={{ alignItems: 'center' }}>
-                    <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                      Select a setup
-                    </Typography>
-                    <Typography variant="body2">
-                      Choose a loadout from the list to review gear, skills, and CP.
-                    </Typography>
-                  </Stack>
-                </Paper>
-              )}
+        {view === 'library' ? (
+          <LoadoutLibraryPanel onLoad={handleLoadFromLibrary} />
+        ) : (
+          /* ── Main content: list + editor ───────────────────── */
+          <Stack direction={{ xs: 'column', lg: 'row' }} spacing={2} sx={{ alignItems: 'stretch' }}>
+            {/* Setup list — narrower on desktop */}
+            <Box
+              sx={{
+                width: { xs: '100%', lg: '38%' },
+                flexShrink: 0,
+                minWidth: 0,
+                maxHeight: { lg: 'calc(100vh - 280px)' },
+                display: 'flex',
+              }}
+            >
+              <SetupList
+                setups={setups}
+                selectedIndex={selectedSetupIndex}
+                filterText={searchTerm}
+                onOpenDetails={handleOpenDetails}
+                onDuplicateSetup={handleDuplicateSetup}
+                onDeleteSetup={handleDeleteSetup}
+                onCopySetup={handleCopySetup}
+              />
             </Box>
-          )}
-        </Stack>
+
+            {/* Editor — wider on desktop */}
+            {!isMdDown && (
+              <Box sx={{ flex: 1, minWidth: 0 }}>
+                {selectedSetup ? (
+                  <SetupEditor
+                    setup={selectedSetup}
+                    setupIndex={selectedSetupIndex ?? 0}
+                    trialId={currentTrial ?? 'GEN'}
+                    pageIndex={currentPage}
+                    variant="page"
+                  />
+                ) : (
+                  <Paper
+                    elevation={0}
+                    sx={{
+                      height: '100%',
+                      minHeight: 200,
+                      borderRadius: 2,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      textAlign: 'center',
+                      px: 3,
+                      py: 4,
+                      color: 'text.secondary',
+                      backgroundColor: isDarkMode ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)',
+                      border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
+                    }}
+                  >
+                    <Stack spacing={1} sx={{ alignItems: 'center' }}>
+                      <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                        Select a setup
+                      </Typography>
+                      <Typography variant="body2">
+                        Choose a loadout from the list to review gear, skills, and CP.
+                      </Typography>
+                    </Stack>
+                  </Paper>
+                )}
+              </Box>
+            )}
+          </Stack>
+        )}
       </Stack>
 
       {/* Hidden file input */}
@@ -993,7 +1084,20 @@ export const LoadoutManager: React.FC = () => {
       </Drawer>
 
       {/* Export dialog */}
-      <ExportDialog open={exportDialogOpen} onClose={() => setExportDialogOpen(false)} />
+      <ExportDialog
+        open={exportDialogOpen}
+        onClose={() => setExportDialogOpen(false)}
+        onOpenInstallGuide={() => {
+          setExportDialogOpen(false);
+          setInstallGuideOpen(true);
+        }}
+      />
+
+      <InstallGuideModal
+        open={installGuideOpen}
+        onClose={() => setInstallGuideOpen(false)}
+        defaultAccountName={currentUser?.name}
+      />
 
       {/* Overflow menu */}
       <Menu
@@ -1035,6 +1139,17 @@ export const LoadoutManager: React.FC = () => {
             <FileDownload fontSize="small" />
           </ListItemIcon>
           <ListItemText>Export</ListItemText>
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            setInstallGuideOpen(true);
+            setOverflowAnchor(null);
+          }}
+        >
+          <ListItemIcon>
+            <HelpOutline fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>Set up in-game</ListItemText>
         </MenuItem>
         <Divider />
         <MenuItem

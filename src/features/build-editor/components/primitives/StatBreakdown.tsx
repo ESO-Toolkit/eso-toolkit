@@ -8,7 +8,7 @@ import { Box, Collapse, Typography } from '@mui/material';
 import { alpha, useTheme } from '@mui/material/styles';
 import React, { useState } from 'react';
 
-import type { StatItem, StatResult, StatSource } from '../../engine/stat-types';
+import type { StatItem, StatResult, StatSource } from '@/engine/stat-types';
 
 interface StatBreakdownProps {
   label: string;

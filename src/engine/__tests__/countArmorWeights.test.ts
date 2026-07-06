@@ -10,7 +10,7 @@
  *   97050 — Plague Doctor Chest    → locked HEAVY
  */
 
-import type { GearConfig } from '../../../loadout-manager/types/loadout.types';
+import type { GearConfig } from '@features/loadout-manager/types/loadout.types';
 import { countArmorWeights } from '../stat-engine';
 
 // Apparel slot indices (chest=2, shoulders=3, head=0) — any apparel slot works.

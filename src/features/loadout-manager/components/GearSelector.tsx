@@ -10,6 +10,8 @@ import { alpha, useTheme } from '@mui/material/styles';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useDispatch } from 'react-redux';
 
+import { GearPickerDialog } from '@/components/gear';
+import { ResilientImg } from '@/components/ResilientImg';
 import { useLogger } from '@/hooks/useLogger';
 
 import { validateItemForSlot, getItemInfo, type SlotType } from '../data/itemIdMap';
@@ -19,14 +21,12 @@ import { GearConfig, GearPiece } from '../types/loadout.types';
 import {
   applyWeaponTypeToName,
   fetchIsTwoHandedWeapon,
-  fetchItemIconUrl,
+  fetchItemIconSources,
   isTwoHandedFromName,
   isTwoHandedWeapon,
 } from '../utils/itemIconResolver';
 import { getItemData, getItemIdFromLink } from '../utils/itemLinkParser';
 import { registerManualSlot } from '../utils/wizardWardrobeSlotRegistry';
-
-import { ItemPickerDialog } from './ItemPickerDialog';
 
 interface GearSelectorProps {
   gear: GearConfig;
@@ -246,8 +246,7 @@ const GearTile: React.FC<GearTileProps> = ({
   const isMythic = gearPiece?.trait?.toLowerCase() === 'mythic';
 
   const [itemData, setItemData] = useState<{ name: string; setName?: string } | null>(null);
-  const [iconUrl, setIconUrl] = useState<string | null>(null);
-  const [iconFailed, setIconFailed] = useState(false);
+  const [iconSources, setIconSources] = useState<string[]>([]);
 
   const resolvedItemId = useMemo(() => resolveGearPieceItemId(gearPiece), [gearPiece]);
   const collectionItem = useMemo(
@@ -271,29 +270,26 @@ const GearTile: React.FC<GearTileProps> = ({
     }
   }, [gearPiece?.link, gearPiece?.name, logger, slotName]);
 
-  // Fetch item icon from UESP
+  // Resolve item icon sources (RPGLogs primary, UESP fallback).
   useEffect(() => {
     if (resolvedItemId && resolvedItemId > 0) {
       let cancelled = false;
-      setIconFailed(false);
       // Clear the previous item's icon immediately so we don't show A's icon
       // next to B's name while B's (possibly slow/failing) fetch resolves.
-      setIconUrl(null);
-      fetchItemIconUrl(resolvedItemId)
-        .then((url) => {
-          if (!cancelled) setIconUrl(url ?? null);
-        })
-        .catch(() => {
-          /* silently fail; SVG fallback will show */
-        });
+      setIconSources([]);
+      void fetchItemIconSources(resolvedItemId).then((sources) => {
+        if (!cancelled) setIconSources(sources);
+      });
       return () => {
         cancelled = true;
       };
     }
-    setIconUrl(null);
+    setIconSources([]);
     return undefined;
   }, [resolvedItemId]);
 
+  // Primary URL drives the weapon-type label; <ResilientImg> handles CDN fallback.
+  const iconUrl = iconSources[0] ?? null;
   const setName = gearPiece?.setName || itemData?.setName;
   const rawPrimaryItemName = gearPiece?.name || itemData?.name || setName;
   // Swap generic "Weapon"/"Gear" suffixes for the specific type, following
@@ -373,12 +369,11 @@ const GearTile: React.FC<GearTileProps> = ({
           opacity: addDisabled && !hasGear ? 0.35 : 1,
         }}
       >
-        {/* Item icon: actual image from UESP or SVG fallback */}
-        {hasGear && iconUrl && !iconFailed ? (
-          <img
-            src={iconUrl}
+        {/* Item icon: actual image (RPGLogs→UESP) or SVG slot fallback */}
+        {hasGear ? (
+          <ResilientImg
+            sources={iconSources}
             alt={gearLabel}
-            onError={() => setIconFailed(true)}
             style={{
               width: tileSize * 0.55,
               height: tileSize * 0.55,
@@ -386,6 +381,13 @@ const GearTile: React.FC<GearTileProps> = ({
               borderRadius: 4,
               filter: isMythic ? 'drop-shadow(0 0 3px rgba(255,167,38,0.6))' : 'none',
             }}
+            fallback={
+              <SlotIcon
+                name={slotName}
+                size={tileSize * 0.4}
+                color={isMythic ? theme.palette.warning.light : theme.palette.primary.light}
+              />
+            }
           />
         ) : (
           <SlotIcon
@@ -668,10 +670,24 @@ export const GearSelector: React.FC<GearSelectorProps> = ({
       return;
     }
 
-    // Validate item for slot
-    const validation = validateItemForSlot(itemId, pickerSlot.type);
-    if (!validation.valid) {
-      const errorMessage = validation.error ?? 'Item validation failed';
+    // Validate item for slot. The shared GearPickerDialog offers one-handed
+    // weapons as off-hand picks (dual wield), but validateItemForSlot's strict
+    // check rejects any item whose metadata slot is `weapon` against an
+    // `offhand` target. Mirror the picker's off-hand compatibility rule here so
+    // a dual-wield off-hand pick the picker presents isn't silently dropped:
+    // an off-hand slot accepts an off-hand item OR a one-handed (non-2H) weapon.
+    const offhandValidation = validateItemForSlot(itemId, pickerSlot.type);
+    let isValidForSlot = offhandValidation.valid;
+    if (!isValidForSlot && pickerSlot.type === 'offhand') {
+      const candidateInfo = getItemInfo(itemId);
+      isValidForSlot = Boolean(
+        candidateInfo &&
+        (candidateInfo.slot === 'offhand' ||
+          (candidateInfo.slot === 'weapon' && !isTwoHandedWeapon(itemId))),
+      );
+    }
+    if (!isValidForSlot) {
+      const errorMessage = offhandValidation.error ?? 'Item validation failed';
       logger.error(errorMessage, new Error(errorMessage), {
         itemId,
         slotType: pickerSlot.type,
@@ -892,9 +908,11 @@ export const GearSelector: React.FC<GearSelectorProps> = ({
         {renderTile(slotDef(21))}
       </Stack>
 
-      {/* Item Picker Dialog */}
+      {/* Shared, set-aware gear picker (src/components/gear). Replaces the
+          loadout-local ItemPickerDialog with the build editor's richer picker
+          core — same onSelect(itemId) contract, so WW export is unchanged. */}
       {pickerSlot && (
-        <ItemPickerDialog
+        <GearPickerDialog
           open={pickerOpen}
           onClose={handleClosePicker}
           onSelect={handleSelectItem}

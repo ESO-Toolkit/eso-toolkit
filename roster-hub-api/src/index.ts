@@ -63,6 +63,19 @@ import {
   checkPackVoteRateLimit,
   recordRateLimitEvent,
   pruneRateLimitEvents,
+  listUserLoadouts,
+  getUserLoadoutById,
+  upsertUserLoadout,
+  updateUserLoadout,
+  deleteUserLoadout,
+  upsertUserLoadouts,
+  listLoadoutTombstones,
+  clearRevivedTombstones,
+  countUserLoadouts,
+  checkLoadoutWriteRateLimit,
+  consumeLoadoutWriteRateLimit,
+  MAX_LOADOUTS_PER_USER,
+  type UserLoadoutInput,
 } from './db/queries';
 import { moderateImage, MAX_IMAGE_BYTES } from './image-moderation';
 import { handleGraphqlProxy } from './graphql-proxy';
@@ -957,6 +970,384 @@ app.delete('/builds/:buildId/comments/:commentId', async (c) => {
   const deleted = await deleteBuildComment(c.env.DB, c.req.param('commentId'), user.id);
   if (!deleted) return c.json({ error: 'Not found or forbidden' }, 404);
   return c.json({ ok: true });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// User loadouts — private, account-synced loadout library (owner-only)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const MAX_LOADOUT_DATA_CHARS = 20_000;
+const MAX_LOADOUT_SYNC_BATCH = 200;
+/** Loadout ids are client uuids — short, url-safe, bounded length. */
+const isValidLoadoutId = (s: unknown): s is string =>
+  typeof s === 'string' && /^[A-Za-z0-9_-]{1,64}$/.test(s);
+
+/** Tolerance for client clock skew when capping future edit timestamps. */
+const CLOCK_SKEW_MS = 5 * 60 * 1000;
+/** Strict ISO-8601 UTC, e.g. 2026-06-23T19:09:43.438Z (millis optional). */
+const ISO_UTC_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,3})?Z$/;
+
+/**
+ * The client edit timestamp drives last-write-wins, so it must be trustworthy:
+ * a malformed or far-future value could pin a row and make every later legit
+ * sync a silent no-op. Accept only ISO-8601 UTC that is not in the future
+ * (beyond clock skew). Empty is allowed and sorts as "oldest".
+ */
+const isValidClientTimestamp = (s: string): boolean => {
+  if (s === '') return true;
+  if (!ISO_UTC_RE.test(s)) return false;
+  const ms = Date.parse(s);
+  return Number.isFinite(ms) && ms <= Date.now() + CLOCK_SKEW_MS;
+};
+
+/**
+ * Canonicalize a valid timestamp to fixed-width ISO with milliseconds
+ * (YYYY-MM-DDTHH:MM:SS.sssZ) so lexicographic comparison orders correctly — a
+ * second-precision value must not sort after a same-second `.900` value. Stored
+ * client_updated_at and tombstone deleted_at both go through this so they're
+ * directly comparable. Empty stays empty (sorts oldest).
+ */
+const canonicalTimestamp = (s: string): string => (s === '' ? '' : new Date(s).toISOString());
+
+interface LoadoutBody {
+  id?: string;
+  name?: string;
+  description?: string;
+  trial_id?: string;
+  character_name?: string;
+  loadout_data?: string;
+  client_updated_at?: string;
+  content_fingerprint?: string;
+}
+
+/**
+ * A request body (or sync entry) must be a non-null, non-array object before we
+ * read fields off it. `JSON.parse` also accepts `null`, numbers, strings, and
+ * arrays, and blindly reading `.name`/`.id` off `null` throws — surfacing as a
+ * 500 for what is really a 400-class bad request. Guard the shape explicitly.
+ */
+const isObjectBody = (v: unknown): boolean =>
+  typeof v === 'object' && v !== null && !Array.isArray(v);
+
+/**
+ * True when a same-or-newer delete tombstone would block this input's insert. The
+ * upsert's `WHERE NOT EXISTS (… deleted_at >= client_updated_at)` guard skips such
+ * rows, so they never consume quota — both the preflight and the post-write quota
+ * check must exclude them, else a cross-device-deleted id falsely counts against
+ * the cap. An empty clientUpdatedAt sorts oldest, so any tombstone blocks it.
+ */
+const isTombstoneBlocked = (tombstoneAt: Map<string, string>, input: UserLoadoutInput): boolean => {
+  const ts = tombstoneAt.get(input.id);
+  return ts !== undefined && ts >= input.clientUpdatedAt;
+};
+
+/**
+ * Validate + normalise a single loadout payload into the query-layer input
+ * shape. Returns a string error message on failure, or the sanitised input.
+ */
+function parseLoadoutBody(body: LoadoutBody, id: string): UserLoadoutInput | string {
+  const name = typeof body.name === 'string' ? body.name : '';
+  const description = typeof body.description === 'string' ? body.description : '';
+  const trialId = typeof body.trial_id === 'string' ? body.trial_id : '';
+  const characterName = typeof body.character_name === 'string' ? body.character_name : '';
+  const loadoutData = typeof body.loadout_data === 'string' ? body.loadout_data : '';
+  const clientUpdatedAt =
+    typeof body.client_updated_at === 'string' ? body.client_updated_at : '';
+  // Optional: clients before this column omit it (''), in which case equal-timestamp
+  // ties fall back to arrival order as before. We only store/compare the value — never
+  // recompute it — so any opaque string is accepted (a length cap bounds storage).
+  const contentFingerprint =
+    typeof body.content_fingerprint === 'string' ? body.content_fingerprint : '';
+
+  if (!name.trim()) return 'name is required';
+  if (name.length > 100) return 'name must be ≤ 100 characters';
+  if (description.length > 500) return 'description must be ≤ 500 characters';
+  if (trialId.length > 64) return 'trial_id must be ≤ 64 characters';
+  if (characterName.length > 64) return 'character_name must be ≤ 64 characters';
+  if (clientUpdatedAt.length > 40) return 'client_updated_at must be ≤ 40 characters';
+  if (!isValidClientTimestamp(clientUpdatedAt))
+    return 'client_updated_at must be an ISO-8601 UTC timestamp not in the future';
+  if (contentFingerprint.length > 64) return 'content_fingerprint must be ≤ 64 characters';
+  if (!loadoutData.trim()) return 'loadout_data is required';
+  if (loadoutData.length > MAX_LOADOUT_DATA_CHARS)
+    return `loadout_data must be ≤ ${MAX_LOADOUT_DATA_CHARS} characters`;
+  try {
+    JSON.parse(loadoutData);
+  } catch {
+    return 'loadout_data must be valid JSON';
+  }
+
+  return {
+    id,
+    name: cleanText(name),
+    description: cleanText(description),
+    trialId: sanitize(trialId),
+    characterName: cleanText(characterName),
+    loadoutData,
+    clientUpdatedAt: canonicalTimestamp(clientUpdatedAt),
+    contentFingerprint,
+  };
+}
+
+const newLoadoutId = (): string =>
+  Array.from(crypto.getRandomValues(new Uint8Array(12)))
+    .map((b) => b.toString(36).padStart(2, '0'))
+    .join('')
+    .slice(0, 20);
+
+// ─── GET /loadouts — list the caller's own loadouts ───────────────────────────
+
+app.get('/loadouts', async (c) => {
+  const user = await validateToken(c.req.header('Authorization'), c.env);
+  if (!user) return c.json({ error: 'Unauthorized' }, 401);
+
+  const [loadouts, deletions] = await Promise.all([
+    listUserLoadouts(c.env.DB, user.id),
+    listLoadoutTombstones(c.env.DB, user.id),
+  ]);
+  return c.json({ loadouts, deletions });
+});
+
+// ─── GET /loadouts/:id — single own loadout ───────────────────────────────────
+
+app.get('/loadouts/:id', async (c) => {
+  const user = await validateToken(c.req.header('Authorization'), c.env);
+  if (!user) return c.json({ error: 'Unauthorized' }, 401);
+
+  const loadout = await getUserLoadoutById(c.env.DB, c.req.param('id'), user.id);
+  if (!loadout) return c.json({ error: 'Not found' }, 404);
+  return c.json({ loadout });
+});
+
+// ─── POST /loadouts — create/replace a loadout (idempotent by id) ─────────────
+
+app.post('/loadouts', async (c) => {
+  const user = await validateToken(c.req.header('Authorization'), c.env);
+  if (!user) return c.json({ error: 'Unauthorized' }, 401);
+
+  let body: LoadoutBody;
+  try {
+    body = await c.req.json<LoadoutBody>();
+  } catch {
+    return c.json({ error: 'Invalid JSON' }, 400);
+  }
+  if (!isObjectBody(body)) return c.json({ error: 'Request body must be a loadout object' }, 400);
+
+  if (body.id !== undefined && !isValidLoadoutId(body.id))
+    return c.json({ error: 'id must be a url-safe string ≤ 64 chars' }, 400);
+  const id = body.id ?? newLoadoutId();
+
+  const parsed = parseLoadoutBody(body, id);
+  if (typeof parsed === 'string') return c.json({ error: parsed }, 400);
+
+  const allowed = await checkLoadoutWriteRateLimit(c.env.DB, user.id);
+  if (!allowed)
+    return c.json({ error: 'Rate limit exceeded. Too many loadout writes this hour.' }, 429);
+
+  // Enforce the per-user ceiling only when this id is genuinely new (so editing
+  // an existing loadout at the cap still works).
+  const existing = await getUserLoadoutById(c.env.DB, id, user.id);
+  if (!existing) {
+    const count = await countUserLoadouts(c.env.DB, user.id);
+    if (count >= MAX_LOADOUTS_PER_USER)
+      return c.json(
+        { error: `Loadout limit reached (${MAX_LOADOUTS_PER_USER}). Delete some to add more.` },
+        409,
+      );
+  }
+
+  // Atomically consume the write token here (the early check above is just a fast
+  // fail) so concurrent requests can't all pass a stale count and exceed the cap.
+  const consumed = await consumeLoadoutWriteRateLimit(c.env.DB, user.id);
+  if (!consumed)
+    return c.json({ error: 'Rate limit exceeded. Too many loadout writes this hour.' }, 429);
+  await upsertUserLoadout(c.env.DB, user.id, parsed);
+  const loadout = await getUserLoadoutById(c.env.DB, id, user.id);
+  // The cap is gated atomically inside upsertUserLoadout, so two new creates can
+  // both clear the advisory preflight above yet one insert gets skipped at the
+  // ceiling. A null readback means this new row was quota-rejected — return 409
+  // instead of `201 { loadout: null }`, which would read as a successful save.
+  if (!loadout)
+    return c.json(
+      { error: `Loadout limit reached (${MAX_LOADOUTS_PER_USER}). Delete some to add more.` },
+      409,
+    );
+  return c.json({ loadout }, 201);
+});
+
+// ─── PUT /loadouts/:id — update own loadout ───────────────────────────────────
+
+app.put('/loadouts/:id', async (c) => {
+  const user = await validateToken(c.req.header('Authorization'), c.env);
+  if (!user) return c.json({ error: 'Unauthorized' }, 401);
+
+  const id = c.req.param('id');
+  if (!isValidLoadoutId(id)) return c.json({ error: 'Invalid loadout id' }, 400);
+
+  let body: LoadoutBody;
+  try {
+    body = await c.req.json<LoadoutBody>();
+  } catch {
+    return c.json({ error: 'Invalid JSON' }, 400);
+  }
+  if (!isObjectBody(body)) return c.json({ error: 'Request body must be a loadout object' }, 400);
+
+  const parsed = parseLoadoutBody(body, id);
+  if (typeof parsed === 'string') return c.json({ error: parsed }, 400);
+
+  const allowed = await checkLoadoutWriteRateLimit(c.env.DB, user.id);
+  if (!allowed)
+    return c.json({ error: 'Rate limit exceeded. Too many loadout writes this hour.' }, 429);
+
+  // Atomically consume the write token here (the early check above is just a fast
+  // fail) so concurrent requests can't all pass a stale count and exceed the cap.
+  const consumed = await consumeLoadoutWriteRateLimit(c.env.DB, user.id);
+  if (!consumed)
+    return c.json({ error: 'Rate limit exceeded. Too many loadout writes this hour.' }, 429);
+  const { id: _omit, ...data } = parsed;
+  const updated = await updateUserLoadout(c.env.DB, id, user.id, data);
+  if (!updated) return c.json({ error: 'Not found or forbidden' }, 404);
+  const loadout = await getUserLoadoutById(c.env.DB, id, user.id);
+  return c.json({ loadout });
+});
+
+// ─── DELETE /loadouts/:id — delete own loadout ────────────────────────────────
+
+app.delete('/loadouts/:id', async (c) => {
+  const user = await validateToken(c.req.header('Authorization'), c.env);
+  if (!user) return c.json({ error: 'Unauthorized' }, 401);
+
+  const id = c.req.param('id');
+  if (!isValidLoadoutId(id)) return c.json({ error: 'Invalid loadout id' }, 400);
+
+  // The delete time (client-domain, canonical) is the tombstone's version: an
+  // edit on another device that post-dates it revives the loadout. Default to
+  // server now if the client didn't send one.
+  const tsParam = c.req.query('ts') ?? '';
+  if (!isValidClientTimestamp(tsParam))
+    return c.json({ error: 'ts must be an ISO-8601 UTC timestamp not in the future' }, 400);
+  const deletedAt = canonicalTimestamp(tsParam) || new Date().toISOString();
+
+  // Rate-limit deletes as writes so arbitrary DELETE calls can't be used to
+  // hammer the DB or (via tombstones) bloat sync responses.
+  const allowed = await checkLoadoutWriteRateLimit(c.env.DB, user.id);
+  if (!allowed)
+    return c.json({ error: 'Rate limit exceeded. Too many loadout writes this hour.' }, 429);
+  // Atomically consume the write token here (the early check above is just a fast
+  // fail) so concurrent requests can't all pass a stale count and exceed the cap.
+  const consumed = await consumeLoadoutWriteRateLimit(c.env.DB, user.id);
+  if (!consumed)
+    return c.json({ error: 'Rate limit exceeded. Too many loadout writes this hour.' }, 429);
+
+  const result = await deleteUserLoadout(c.env.DB, id, user.id, deletedAt);
+  if (result === 'not-found') return c.json({ error: 'Not found or forbidden' }, 404);
+  if (result === 'conflict-newer')
+    return c.json({ error: 'Loadout was edited more recently on another device.' }, 409);
+  return c.json({ ok: true });
+});
+
+// ─── POST /loadouts/sync — non-destructive bulk upsert of the local library ───
+
+app.post('/loadouts/sync', async (c) => {
+  const user = await validateToken(c.req.header('Authorization'), c.env);
+  if (!user) return c.json({ error: 'Unauthorized' }, 401);
+
+  interface SyncBody {
+    loadouts?: LoadoutBody[];
+  }
+  let body: SyncBody;
+  try {
+    body = await c.req.json<SyncBody>();
+  } catch {
+    return c.json({ error: 'Invalid JSON' }, 400);
+  }
+  if (!isObjectBody(body)) return c.json({ error: 'Request body must be an object' }, 400);
+
+  if (!Array.isArray(body.loadouts))
+    return c.json({ error: 'loadouts must be an array' }, 400);
+  if (body.loadouts.length > MAX_LOADOUT_SYNC_BATCH)
+    return c.json({ error: `Cannot sync more than ${MAX_LOADOUT_SYNC_BATCH} loadouts at once` }, 400);
+
+  const allowed = await checkLoadoutWriteRateLimit(c.env.DB, user.id);
+  if (!allowed)
+    return c.json({ error: 'Rate limit exceeded. Too many loadout writes this hour.' }, 429);
+
+  // Validate every entry up front; reject the whole batch on the first bad one
+  // so a sync is all-or-nothing (no partial, surprising state). De-dupe by id
+  // (last occurrence wins) so the preflight count matches what actually inserts
+  // and the batch can't double-insert a repeated id.
+  const byId = new Map<string, UserLoadoutInput>();
+  for (const raw of body.loadouts) {
+    if (!isObjectBody(raw)) return c.json({ error: 'Each loadout must be an object' }, 400);
+    // Bulk sync must be idempotent on retry, so every entry must carry its own stable
+    // id (the client always sends one). Generating an id here would insert a fresh
+    // duplicate on each retry and could fill the quota — reject a missing id instead.
+    if (raw.id === undefined)
+      return c.json({ error: 'Each loadout must include a stable id' }, 400);
+    const id = raw.id;
+    if (!isValidLoadoutId(id)) return c.json({ error: 'Each loadout id must be url-safe ≤ 64 chars' }, 400);
+    const parsed = parseLoadoutBody(raw, id);
+    if (typeof parsed === 'string') return c.json({ error: parsed }, 400);
+    byId.set(id, parsed);
+  }
+  const inputs = [...byId.values()];
+
+  // Preflight the per-user ceiling for a friendly 409 (the upsert ALSO enforces it
+  // atomically, so this is advisory — the DB is the source of truth under races).
+  // Count only inserts that would actually land: a stale id carrying a same-or-newer
+  // tombstone (deleted on another device after this client pulled) is skipped by the
+  // upsert's tombstone guard, so excluding it keeps a deleted id from falsely pushing
+  // the batch over the cap and 409-ing before the client can purge it.
+  const [existingCount, existingRows, preTombstones] = await Promise.all([
+    countUserLoadouts(c.env.DB, user.id),
+    listUserLoadouts(c.env.DB, user.id),
+    listLoadoutTombstones(c.env.DB, user.id),
+  ]);
+  const existingIds = new Set(existingRows.map((l) => l.id));
+  const preTombstoneAt = new Map(preTombstones.map((t) => [t.id, t.deleted_at]));
+  const newCount = inputs.filter(
+    (i) => !existingIds.has(i.id) && !isTombstoneBlocked(preTombstoneAt, i),
+  ).length;
+  if (existingCount + newCount > MAX_LOADOUTS_PER_USER)
+    return c.json(
+      { error: `Sync would exceed the ${MAX_LOADOUTS_PER_USER}-loadout limit. Delete some first.` },
+      409,
+    );
+
+  // Atomically consume the write token here (the early check above is just a fast
+  // fail) so concurrent requests can't all pass a stale count and exceed the cap.
+  const consumed = await consumeLoadoutWriteRateLimit(c.env.DB, user.id);
+  if (!consumed)
+    return c.json({ error: 'Rate limit exceeded. Too many loadout writes this hour.' }, 429);
+  await upsertUserLoadouts(c.env.DB, user.id, inputs);
+  // An edit that post-dated a delete just revived its loadout — drop the now-stale
+  // tombstone so other devices don't re-purge the revived copy on their next pull.
+  await clearRevivedTombstones(c.env.DB, user.id);
+  const [loadouts, deletions] = await Promise.all([
+    listUserLoadouts(c.env.DB, user.id),
+    listLoadoutTombstones(c.env.DB, user.id),
+  ]);
+
+  // The per-account cap is enforced atomically INSIDE upsertUserLoadouts, so a
+  // concurrent sync can fill the account between the advisory preflight above and
+  // the write — silently skipping some brand-new inserts. Detect that here: a new
+  // id (not pre-existing) that is absent from the saved library AND not blocked by
+  // a same-or-newer tombstone was quota-rejected. The rows that DID land are already
+  // committed, so return 200 with the authoritative state plus `skipped` rather than
+  // a 409: a 409 reads as a total failure, so the client would discard this server
+  // state, leaving the just-saved rows unstamped locally and duplicable on the next
+  // sync. The client reconciles the returned library and surfaces `skipped` as a
+  // non-fatal "couldn't save N (at the limit)" warning.
+  const savedIds = new Set(loadouts.map((l) => l.id));
+  const postTombstoneAt = new Map(deletions.map((t) => [t.id, t.deleted_at]));
+  const skipped = inputs
+    .filter(
+      (i) => !existingIds.has(i.id) && !savedIds.has(i.id) && !isTombstoneBlocked(postTombstoneAt, i),
+    )
+    .map((i) => i.id);
+  if (skipped.length > 0) return c.json({ loadouts, deletions, skipped });
+
+  return c.json({ loadouts, deletions });
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
