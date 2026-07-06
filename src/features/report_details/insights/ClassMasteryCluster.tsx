@@ -19,10 +19,15 @@ import React from 'react';
 
 import { CLASS_COLOR_MAP } from '@/features/build-editor/theme/classColorMap';
 import type { ESOClass } from '@/features/build-editor/types/build.types';
+import type { CompanionClassMastery } from '@/features/loadout-manager/utils/esotkCompanionParser';
 import type { ClassAnalysisResult } from '@/utils/classDetectionUtils';
 import { toClassKey } from '@/utils/classNameUtils';
 
-import { getClassMasteryPicks, type ClassMasteryPick } from './classMasteryPicks';
+import {
+  getClassMasteryPicks,
+  getCompanionClassMasteryPicks,
+  type ClassMasteryPick,
+} from './classMasteryPicks';
 
 const ICON_URL = 'https://assets.rpglogs.com/img/eso/abilities/';
 
@@ -55,10 +60,11 @@ const firstMechanicsParagraph = (description: string): string =>
 
 // ── Overview tooltip ──────────────────────────────────────────────────────────
 
-const ClassMasteryOverview: React.FC<{ picks: ClassMasteryPick[]; accent: string }> = ({
-  picks,
-  accent,
-}) => (
+const ClassMasteryOverview: React.FC<{
+  picks: ClassMasteryPick[];
+  accent: string;
+  fromCompanion: boolean;
+}> = ({ picks, accent, fromCompanion }) => (
   <Box sx={{ maxWidth: 320 }}>
     <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 0.75, mb: 0.25 }}>
       <Typography
@@ -74,7 +80,7 @@ const ClassMasteryOverview: React.FC<{ picks: ClassMasteryPick[]; accent: string
         Class Mastery
       </Typography>
       <Typography sx={{ fontSize: 9.5, opacity: 0.6, letterSpacing: '0.02em' }}>
-        {picks.length} of 5 · non-subclassed
+        {picks.length} of 5 · {fromCompanion ? 'Companion' : 'non-subclassed'}
       </Typography>
     </Box>
     <Divider sx={{ borderColor: alpha(accent, 0.35), mb: 0.75 }} />
@@ -211,16 +217,28 @@ const ClassMasteryIcon: React.FC<ClassMasteryIconProps> = ({
 
 interface ClassMasteryClusterProps {
   classAnalysis?: ClassAnalysisResult;
+  /**
+   * The player's true Class Mastery picks from the ESOTK Companion capture, when a snapshot
+   * was matched. Preferred over the log-derived picks: the encounter log under-reports Class
+   * Mastery (combat-event-driven), so it can miss the 2nd of the 2 slotted passives.
+   */
+  companionClassMastery?: CompanionClassMastery;
 }
 
-const ClassMasteryClusterComponent: React.FC<ClassMasteryClusterProps> = ({ classAnalysis }) => {
+const ClassMasteryClusterComponent: React.FC<ClassMasteryClusterProps> = ({
+  classAnalysis,
+  companionClassMastery,
+}) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
-  const { className, picks } = React.useMemo(
-    () => getClassMasteryPicks(classAnalysis),
-    [classAnalysis],
-  );
+  // Prefer the companion's live-client capture (authoritative + complete); fall back to the
+  // log-derived picks when there's no matched snapshot.
+  const { className, picks, fromCompanion } = React.useMemo(() => {
+    const companion = getCompanionClassMasteryPicks(companionClassMastery?.picks);
+    if (companion.picks.length > 0) return { ...companion, fromCompanion: true };
+    return { ...getClassMasteryPicks(classAnalysis), fromCompanion: false };
+  }, [classAnalysis, companionClassMastery]);
 
   if (picks.length === 0) return null;
 
@@ -241,7 +259,7 @@ const ClassMasteryClusterComponent: React.FC<ClassMasteryClusterProps> = ({ clas
       placement="top-start"
       enterTouchDelay={0}
       leaveTouchDelay={4000}
-      title={<ClassMasteryOverview picks={picks} accent={accent} />}
+      title={<ClassMasteryOverview picks={picks} accent={accent} fromCompanion={fromCompanion} />}
       slotProps={{
         tooltip: {
           sx: {

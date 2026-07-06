@@ -98,6 +98,21 @@ export interface CompanionScribedSkill {
   scripts: Record<number, CompanionScribingScript>;
 }
 
+/**
+ * Class Mastery allocation read live from the client (U50 skill line 351). The encounter
+ * log under-reports these (it's combat-event-driven, so it often surfaces only 1 of the 2
+ * slotted), so the companion carries the TRUE purchased picks — prefer these over the
+ * log-derived picks when a snapshot is matched.
+ */
+export interface CompanionClassMastery {
+  /** In-game Class Mastery skill line id (351 on U50). */
+  lineId?: number;
+  /** Ability ids the player has actually purchased (allocated a Class Mastery Point to). */
+  picks: number[];
+  /** Client-provided passive names keyed by ability id (localized ground truth). */
+  names?: Record<number, string>;
+}
+
 /** One captured build snapshot, taken on combat end or on demand. */
 export interface CompanionSnapshot {
   schemaVersion?: number;
@@ -126,6 +141,7 @@ export interface CompanionSnapshot {
   effects?: CompanionEffect[];
   bars?: { front?: Record<number, number>; back?: Record<number, number> };
   scribing?: CompanionScribedSkill[];
+  classMastery?: CompanionClassMastery;
 }
 
 /** Parsed companion file: snapshots grouped by account. */
@@ -297,6 +313,27 @@ function normalizeScribing(v: LuaValue | undefined): CompanionScribedSkill[] | u
   return out.length > 0 ? out : undefined;
 }
 
+function normalizeClassMastery(v: LuaValue | undefined): CompanionClassMastery | undefined {
+  if (!isRecord(v)) return undefined;
+  // picks is a Lua sequence of ability ids; dedupe defensively (order preserved).
+  const seen = new Set<number>();
+  const picks: number[] = [];
+  for (const val of luaArray(v.picks)) {
+    const n = asNumber(val);
+    if (typeof n === 'number' && n > 0 && !seen.has(n)) {
+      seen.add(n);
+      picks.push(n);
+    }
+  }
+  if (picks.length === 0) return undefined;
+  const names = numericStringMap(v.names);
+  return {
+    lineId: asNumber(v.lineId),
+    picks,
+    ...(Object.keys(names).length > 0 ? { names } : {}),
+  };
+}
+
 interface SnapshotDefaults {
   account?: string;
   schemaVersion?: number;
@@ -346,6 +383,7 @@ function normalizeSnapshot(v: LuaValue, defaults: SnapshotDefaults = {}): Compan
     effects: normalizeEffects(v.effects),
     bars,
     scribing: normalizeScribing(v.scribing),
+    classMastery: normalizeClassMastery(v.classMastery),
   };
 }
 

@@ -90,7 +90,13 @@ interface PlayersPanelViewProps {
     string,
     Pick<
       CompanionBuildForPlayer,
-      'championPoints' | 'coaching' | 'stats' | 'effects' | 'scribing' | 'distanceMs'
+      | 'championPoints'
+      | 'coaching'
+      | 'stats'
+      | 'effects'
+      | 'scribing'
+      | 'classMastery'
+      | 'distanceMs'
     >
   >;
   /** Current companion upload status for the toolbar chip */

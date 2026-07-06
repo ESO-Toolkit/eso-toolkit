@@ -238,6 +238,32 @@ describe('normalizeCompanionSnapshots', () => {
     expect(snapshots[0].stats?.physicalPen).toBe(7778);
   });
 
+  it('normalizes the true Class Mastery allocation the log under-reports (raw Kalpa forward shape)', () => {
+    const raw = [
+      {
+        ts: 1749384000,
+        char: 'Grappa',
+        // Kalpa forwards Lua sequences/maps as numeric-string-keyed objects.
+        classMastery: {
+          lineId: 351,
+          picks: { '1': 263872, '2': 263873 },
+          names: { '263872': 'Static Reverberation', '263873': 'Calculated Defense' },
+        },
+      },
+    ];
+    const [snap] = normalizeCompanionSnapshots(raw);
+    expect(snap.classMastery?.lineId).toBe(351);
+    expect(snap.classMastery?.picks).toEqual([263872, 263873]);
+    expect(snap.classMastery?.names?.[263872]).toBe('Static Reverberation');
+  });
+
+  it('drops an empty Class Mastery capture (subclassed / pre-U50 → falls back to the log)', () => {
+    const [snap] = normalizeCompanionSnapshots([
+      { ts: 1, char: 'X', classMastery: { lineId: 351, picks: {} } },
+    ]);
+    expect(snap.classMastery).toBeUndefined();
+  });
+
   it('returns an empty array for empty input', () => {
     expect(normalizeCompanionSnapshots([])).toEqual([]);
   });

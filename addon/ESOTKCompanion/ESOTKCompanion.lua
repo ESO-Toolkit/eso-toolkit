@@ -258,6 +258,41 @@ local function captureScribing()
   return scribing
 end
 
+-- Class Mastery (U50 skill line id 351): a non-subclassed character slots 2 of 5 of its
+-- class's passives via Class Mastery Points (both points granted on unlock). The encounter
+-- log is combat-event-driven and UNDER-REPORTS these - a passive that hasn't registered in
+-- a session is simply absent, so the log frequently shows only 1 of the 2 slotted. We read
+-- the TRUE allocation from the client: find the Class Mastery line and keep the passives the
+-- player has actually purchased (allocated a point to). Language-agnostic - raw ability ids
+-- plus client names, like every other capture. Returns nil when the line is absent
+-- (subclassed, which disables it, or pre-U50), letting ESOTK fall back to the log.
+local CLASS_MASTERY_LINE_ID = 351
+local function captureClassMastery()
+  local skillTypeClass = _G["SKILL_TYPE_CLASS"]
+  if skillTypeClass == nil then return nil end
+  local numLines = call("GetNumSkillLines", skillTypeClass) or 0
+  for lineIndex = 1, numLines do
+    if call("GetSkillLineId", skillTypeClass, lineIndex) == CLASS_MASTERY_LINE_ID then
+      local picks, names = {}, {}
+      local numAbilities = call("GetNumSkillAbilities", skillTypeClass, lineIndex) or 0
+      for abilityIndex = 1, numAbilities do
+        -- GetSkillAbilityInfo => name, texture, earnedRank, passive, ultimate, purchased, ...
+        local name, _, _, passive, _, purchased =
+          call("GetSkillAbilityInfo", skillTypeClass, lineIndex, abilityIndex)
+        if passive and purchased then
+          local abilityId = call("GetSkillAbilityId", skillTypeClass, lineIndex, abilityIndex, false)
+          if abilityId and abilityId ~= 0 then
+            picks[#picks + 1] = abilityId
+            names[abilityId] = name
+          end
+        end
+      end
+      return { lineId = CLASS_MASTERY_LINE_ID, picks = picks, names = names }
+    end
+  end
+  return nil
+end
+
 -- ----------------------------------------------------------------------------
 -- snapshot
 -- ----------------------------------------------------------------------------
@@ -301,6 +336,7 @@ local function Snapshot(reason)
     effects   = tryCapture("longTermEffects", captureLongTermEffects),
     bars      = tryCapture("bars", captureBars),
     scribing  = tryCapture("scribing", captureScribing),
+    classMastery = tryCapture("classMastery", captureClassMastery),
   }
 
   if not snap.ts or not snap.char then
@@ -375,7 +411,7 @@ local function OnAddOnLoaded(_, addonName)
     end
   end
 
-  d("[ESOTK] Companion loaded. Capturing champion points, stats and scribing on combat end. Type /esotk to snapshot now.")
+  d("[ESOTK] Companion loaded. Capturing champion points, stats, scribing and class mastery on combat end. Type /esotk to snapshot now.")
 end
 
 EVENT_MANAGER:RegisterForEvent(ADDON.name, EVENT_ADD_ON_LOADED, OnAddOnLoaded)
