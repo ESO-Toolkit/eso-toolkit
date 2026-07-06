@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 
-import { DATA_FETCH_CACHE_TIMEOUT } from '../../Constants';
+import { DATA_FETCH_CACHE_TIMEOUT, EMPTY_REPORT_CACHE_TIMEOUT } from '../../Constants';
 import { EsoLogsClient } from '../../esologsClient';
 import { FightFragment, GetReportByCodeDocument, ReportFragment } from '../../graphql/gql/graphql';
 import { isSampleReport, getSampleReportUrl } from '../../utils/sampleReports';
@@ -147,6 +147,13 @@ const getEntry = (state: ReportState, reportId: string | null | undefined): Repo
   return state.entries[cacheKey] ?? null;
 };
 
+// True when a cached entry holds a report with at least one real fight. An
+// entry whose report parsed ZERO fights is usually a log ESO Logs is still
+// processing — it heals upstream within minutes — so both cache layers (this
+// slice's freshness window and Apollo's normalized cache) must not pin it.
+const entryHasFights = (entry: ReportEntry | null): boolean =>
+  Boolean(entry?.data?.fights?.some(Boolean));
+
 const ensureEntry = (state: ReportState, reportId: string): ReportEntry => {
   const { key } = resolveCacheKey({ reportCode: reportId });
   if (!state.entries[key]) {
@@ -192,11 +199,11 @@ const syncActiveReportState = (state: ReportState): void => {
 
 export const fetchReportData = createAsyncThunk<
   { reportId: string; data: ReportFragment },
-  { reportId: string; client: EsoLogsClient },
+  { reportId: string; client: EsoLogsClient; force?: boolean },
   { state: RootState; rejectValue: string }
 >(
   'report/fetchReportData',
-  async ({ reportId, client }, { rejectWithValue }) => {
+  async ({ reportId, client, force }, { getState, rejectWithValue }) => {
     try {
       // Bundled sample reports are served from static JSON in public/
       // so they never hit the ESO Logs API and work without authentication.
@@ -213,10 +220,39 @@ export const fetchReportData = createAsyncThunk<
         return { data: json.reportData.report, reportId };
       }
 
-      const response = await client.query({
+      // Apollo's cache-first default would re-serve a cached empty (zero-fight)
+      // snapshot forever, so a forced retry or a re-check of a known-empty
+      // report must go to the network — that is the only way a log that has
+      // since finished parsing on ESO Logs can heal in the UI. (The Worker
+      // proxy already refuses to edge-cache empty report responses.)
+      const entry = getEntry(getState().report as ReportState, reportId);
+      const bypassCache = Boolean(force) || (entry?.data != null && !entryHasFights(entry));
+
+      let response = await client.query({
         query: GetReportByCodeDocument,
         variables: { code: reportId },
+        ...(bypassCache ? { fetchPolicy: 'network-only' as const } : {}),
       });
+
+      // A zero-fight result from a cacheable read may be a stale Apollo
+      // cache-first hit: this slice's LRU (REPORT_CACHE_MAX_ENTRIES) can forget
+      // a report while Apollo's session cache still remembers its empty
+      // snapshot, which no server would still serve (the Worker proxy refuses
+      // to edge-cache empties). Re-read once from the network so a since-healed
+      // log cannot render "Empty Log" out of a local cache. For a genuinely
+      // empty report this costs one duplicate request on first visit — rare
+      // (well under 1% of logs) and cheap next to showing wrong data.
+      if (
+        !bypassCache &&
+        response.reportData?.report &&
+        !response.reportData.report.fights?.some(Boolean)
+      ) {
+        response = await client.query({
+          query: GetReportByCodeDocument,
+          variables: { code: reportId },
+          fetchPolicy: 'network-only' as const,
+        });
+      }
 
       if (!response.reportData?.report) {
         return rejectWithValue('Report not found or not public.');
@@ -235,7 +271,7 @@ export const fetchReportData = createAsyncThunk<
     }
   },
   {
-    condition: ({ reportId }, { getState }) => {
+    condition: ({ reportId, force }, { getState }) => {
       if (!reportId) {
         return false;
       }
@@ -243,17 +279,29 @@ export const fetchReportData = createAsyncThunk<
       const state = getState().report as ReportState;
       const entry = getEntry(state, reportId);
 
-      const lastFetchedTimestamp = entry?.cacheMetadata.lastFetchedTimestamp ?? null;
-      const isCached = Boolean(entry?.data);
-      const isFresh =
-        typeof lastFetchedTimestamp === 'number' &&
-        Date.now() - lastFetchedTimestamp < DATA_FETCH_CACHE_TIMEOUT;
-
-      if (isCached && isFresh) {
+      // Never stack a duplicate request on an in-flight one — a forced retry
+      // included (the pending fetch will deliver the same answer).
+      if (entry?.status === 'loading') {
         return false;
       }
 
-      if (entry?.status === 'loading') {
+      if (force) {
+        return true;
+      }
+
+      const lastFetchedTimestamp = entry?.cacheMetadata.lastFetchedTimestamp ?? null;
+      const isCached = Boolean(entry?.data);
+      // A cached report with zero fights goes stale almost immediately: it is
+      // usually a just-uploaded log ESO Logs is still parsing, so revisits must
+      // re-check instead of pinning "Empty Log" for the full cache window.
+      const freshnessWindow = entryHasFights(entry)
+        ? DATA_FETCH_CACHE_TIMEOUT
+        : EMPTY_REPORT_CACHE_TIMEOUT;
+      const isFresh =
+        typeof lastFetchedTimestamp === 'number' &&
+        Date.now() - lastFetchedTimestamp < freshnessWindow;
+
+      if (isCached && isFresh) {
         return false;
       }
 

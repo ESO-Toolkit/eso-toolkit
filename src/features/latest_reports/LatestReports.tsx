@@ -59,13 +59,14 @@ export const LatestReports: React.FC = () => {
   const { viewMode, density, setViewMode, setDensity } = useReportViewPrefs();
   const { zones } = useZoneOptions();
 
-  const { reports, hiddenEmptyCount, loading, error, pagination, refetch } = useLatestReportsQuery({
-    page: filters.page,
-    zoneId: filters.zoneId,
-    range: filters.range,
-    customFrom: filters.customFrom,
-    customTo: filters.customTo,
-  });
+  const { reports, hiddenEmptyCount, hiddenRecentCount, loading, error, pagination, refetch } =
+    useLatestReportsQuery({
+      page: filters.page,
+      zoneId: filters.zoneId,
+      range: filters.range,
+      customFrom: filters.customFrom,
+      customTo: filters.customTo,
+    });
 
   const { filtered, visibleCount, loadedCount, appliedQuery, isDebouncing } = useFilteredReports(
     reports,
@@ -137,6 +138,14 @@ export const LatestReports: React.FC = () => {
         visibleCount === 0
           ? `No reports match "${appliedQuery.trim()}". Try clearing the search or adjusting Zone and Date filters.`
           : `Showing ${visibleCount} of ${loadedCount} loaded reports.`;
+    } else if (loadedCount === 0 && hiddenEmptyCount > 0) {
+      const subject = hiddenEmptyCount === 1 ? 'The only log' : `All ${hiddenEmptyCount} logs`;
+      const verb =
+        hiddenEmptyCount === 1 ? 'has no combat data and was' : 'have no combat data and were';
+      message =
+        hiddenRecentCount > 0
+          ? `${subject} on page ${pagination.currentPage} ${verb} hidden. These logs are still processing — refresh to check again, or browse another page.`
+          : `${subject} on page ${pagination.currentPage} ${verb} hidden. These older logs never parsed — try another page or different filters.`;
     } else {
       message = `Showing ${loadedCount} reports on page ${pagination.currentPage} of ${pagination.totalPages}.`;
     }
@@ -147,18 +156,24 @@ export const LatestReports: React.FC = () => {
     appliedQuery,
     visibleCount,
     loadedCount,
+    hiddenEmptyCount,
+    hiddenRecentCount,
     pagination.currentPage,
     pagination.totalPages,
   ]);
 
   const emptyStateInput: EmptyStateInput = useMemo(
-    () => ({ serverFilterActive, searchActive, loadedCount, hiddenEmptyCount }),
-    [serverFilterActive, searchActive, loadedCount, hiddenEmptyCount],
+    () => ({ serverFilterActive, searchActive, loadedCount, hiddenEmptyCount, hiddenRecentCount }),
+    [serverFilterActive, searchActive, loadedCount, hiddenEmptyCount, hiddenRecentCount],
   );
 
   const showResults = filtered.length > 0;
-  const showEmptyState = !loading && filtered.length === 0;
-  const showInitialSkeleton = loading && reports.length === 0;
+  const showEmptyState = filtered.length === 0 && (!loading || hiddenEmptyCount > 0);
+  // Skeleton only when we know nothing about the page yet. An all-hidden page
+  // being refreshed keeps its empty state mounted instead: swapping it for a
+  // skeleton would unmount the Refresh button mid-click and drop keyboard focus
+  // to <body>; the corner "Refreshing…" pill provides the progress feedback.
+  const showInitialSkeleton = loading && reports.length === 0 && hiddenEmptyCount === 0;
 
   // --- Render -----------------------------------------------------------------
 
@@ -293,12 +308,14 @@ export const LatestReports: React.FC = () => {
                 query={appliedQuery}
                 onClearSearch={() => setFilters({ q: '' })}
                 onClearFilters={clearServerFilters}
+                onRefresh={refetch}
               />
             ) : null}
 
             {/* Re-fetch indicator — a non-blocking corner pill so prior results
-                stay fully interactive (scroll/click) while new data loads. */}
-            {loading && reports.length > 0 && (
+                (or the all-hidden empty state) stay fully interactive while new
+                data loads. */}
+            {loading && (reports.length > 0 || hiddenEmptyCount > 0) && (
               <Box
                 sx={{
                   position: 'absolute',

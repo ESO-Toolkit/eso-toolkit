@@ -20,19 +20,26 @@ export interface EmptyStateInput {
   loadedCount: number;
   /** Reports hidden on this page for having no combat data. */
   hiddenEmptyCount: number;
+  /**
+   * How many hidden empties are recent uploads plausibly still parsing on
+   * ESO Logs. When zero, the all-hidden copy must not promise that refreshing
+   * in a few minutes will surface them — old empties are permanent parse
+   * failures that never heal.
+   */
+  hiddenRecentCount?: number;
 }
 
 export function selectEmptyStateKind(input: EmptyStateInput): EmptyStateKind {
   const { serverFilterActive, searchActive, loadedCount, hiddenEmptyCount } = input;
   // The server returned rows but the client text query filtered them all out.
   if (searchActive && loadedCount > 0) return 'search-no-match';
+  // Every row on this page was an empty (no-combat) log, hidden by
+  // `useLatestReportsQuery` (empty logs open to "No fights available", so the
+  // list never shows them). This must win over `filter-no-results`: rows DID
+  // come back for the active filters — they just have no combat data yet.
+  if (loadedCount === 0 && hiddenEmptyCount > 0) return 'all-hidden';
   // The server returned nothing for the active zone/date filter.
   if (serverFilterActive && loadedCount === 0) return 'filter-no-results';
-  // Every row on this page was an empty (no-combat) log. Kept as defense-in-depth:
-  // `useLatestReportsQuery` now fails open (`selectReportsForDisplay`) and shows
-  // the reports instead of hiding the whole page, so this branch is no longer
-  // reachable from that surface — do NOT "simplify" the hook to re-arm the wall.
-  if (loadedCount === 0 && hiddenEmptyCount > 0) return 'all-hidden';
   return 'cold-empty';
 }
 
@@ -41,6 +48,8 @@ interface ReportsEmptyStateProps {
   query: string;
   onClearSearch: () => void;
   onClearFilters: () => void;
+  /** Revalidates the list from the network (the `all-hidden` recovery action). */
+  onRefresh?: () => void;
 }
 
 export const ReportsEmptyState: React.FC<ReportsEmptyStateProps> = ({
@@ -48,6 +57,7 @@ export const ReportsEmptyState: React.FC<ReportsEmptyStateProps> = ({
   query,
   onClearSearch,
   onClearFilters,
+  onRefresh,
 }) => {
   const kind = selectEmptyStateKind(input);
 
@@ -72,11 +82,30 @@ export const ReportsEmptyState: React.FC<ReportsEmptyStateProps> = ({
       body: 'No combat logs were found for the selected zone and date range. Try widening the date range or choosing a different zone.',
       action: { label: 'Clear filters', onClick: onClearFilters },
     },
-    'all-hidden': {
-      icon: <VisibilityOffIcon fontSize="large" color="action" />,
-      title: 'Every report on this page is empty',
-      body: 'All logs on this page contain no combat data, so they were hidden. Try another page.',
-    },
+    'all-hidden':
+      (input.hiddenRecentCount ?? 0) > 0
+        ? {
+            icon: <VisibilityOffIcon fontSize="large" color="action" />,
+            title:
+              input.hiddenEmptyCount === 1
+                ? 'The only log on this page has no combat data yet'
+                : `All ${input.hiddenEmptyCount} logs on this page have no combat data yet`,
+            body: 'They were hidden because opening one would only show an empty report. Just-uploaded logs usually finish processing on ESO Logs within a few minutes — refresh to check again, or browse another page.',
+            action: onRefresh ? { label: 'Refresh', onClick: onRefresh } : undefined,
+          }
+        : {
+            icon: <VisibilityOffIcon fontSize="large" color="action" />,
+            title:
+              input.hiddenEmptyCount === 1
+                ? 'The only log on this page contains no combat data'
+                : `None of the ${input.hiddenEmptyCount} logs on this page contain combat data`,
+            // These are old uploads whose fights never parsed — refreshing
+            // cannot surface them, so offer a real way out instead.
+            body: 'They were hidden because opening one would only show an empty report. These are older uploads whose combat data never parsed on ESO Logs, so refreshing will not change them — try another page or different filters.',
+            action: input.serverFilterActive
+              ? { label: 'Clear filters', onClick: onClearFilters }
+              : undefined,
+          },
     'cold-empty': {
       icon: <InboxIcon fontSize="large" color="action" />,
       title: 'No reports found',

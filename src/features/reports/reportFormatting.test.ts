@@ -1,4 +1,9 @@
-import { isReportEmpty, partitionReportsByData, selectReportsForDisplay } from './reportFormatting';
+import {
+  isRecentlyUploaded,
+  isReportEmpty,
+  partitionReportsByData,
+  REPORT_PROCESSING_WINDOW_MS,
+} from './reportFormatting';
 
 const baseReport = {
   startTime: 1_700_000_000_000,
@@ -101,63 +106,37 @@ describe('partitionReportsByData', () => {
   it('handles an empty list', () => {
     expect(partitionReportsByData([])).toEqual({ reportsWithData: [], emptyCount: 0 });
   });
-});
 
-describe('selectReportsForDisplay', () => {
-  it('hides empty logs but keeps the reports that have data, counting the hidden ones', () => {
-    const healthy = { ...baseReport, code: 'A' };
-    const inProgress = { ...baseReport, code: 'B', segments: 0, endTime: baseReport.startTime };
-    const brokenSlipThrough = { ...baseReport, code: 'C', fights: [] };
-
-    const { reportsToShow, hiddenEmptyCount } = selectReportsForDisplay([
-      healthy,
-      inProgress,
-      brokenSlipThrough,
-    ]);
-
-    expect(reportsToShow).toEqual([healthy]);
-    expect(hiddenEmptyCount).toBe(2);
-  });
-
-  it('fails open and shows every report when the whole page would be hidden', () => {
-    // The real-world dead-end: during a busy upload window the freshest page is
-    // dominated by just-uploaded logs that have not parsed fights yet
-    // (segments: 0, fights: []). Hiding all of them would strand the user on an
-    // "every report on this page is empty" wall, so we show them instead.
+  it('hides EVERY report when the whole page is empty (no fail-open)', () => {
+    // Empty logs open to "No fights available", so a browse list never shows
+    // them — even when that hides the entire page. The list surfaces its
+    // `all-hidden` empty state (still processing + refresh) instead of a page
+    // of dead links.
     const stillParsing = [
       { ...baseReport, code: 'A', segments: 0, endTime: baseReport.startTime, fights: [] },
       { ...baseReport, code: 'B', segments: 0, endTime: baseReport.startTime, fights: [] },
       { ...baseReport, code: 'C', segments: 0, endTime: baseReport.startTime, fights: [] },
     ];
 
-    const { reportsToShow, hiddenEmptyCount } = selectReportsForDisplay(stillParsing);
-
-    expect(reportsToShow).toEqual(stillParsing);
-    expect(hiddenEmptyCount).toBe(0);
-  });
-
-  it('fails open for a single empty report rather than showing nothing', () => {
-    const onlyEmpty = [{ ...baseReport, code: 'A', fights: [] }];
-    const { reportsToShow, hiddenEmptyCount } = selectReportsForDisplay(onlyEmpty);
-    expect(reportsToShow).toEqual(onlyEmpty);
-    expect(hiddenEmptyCount).toBe(0);
-  });
-
-  it('returns nothing (not a fail-open) when the server returned no reports at all', () => {
-    // An empty input is a genuine "no results" — there is nothing to fail open
-    // to, so we must not fabricate rows. The page shows its cold/filter empty
-    // state, never the "all hidden" wall.
-    expect(selectReportsForDisplay([])).toEqual({ reportsToShow: [], hiddenEmptyCount: 0 });
-  });
-
-  it('leaves a fully healthy page untouched', () => {
-    const reports = [
-      { ...baseReport, code: 'A' },
-      { ...baseReport, code: 'B' },
-    ];
-    expect(selectReportsForDisplay(reports)).toEqual({
-      reportsToShow: reports,
-      hiddenEmptyCount: 0,
+    expect(partitionReportsByData(stillParsing)).toEqual({
+      reportsWithData: [],
+      emptyCount: 3,
     });
+  });
+});
+
+describe('isRecentlyUploaded', () => {
+  const NOW = 1_700_000_000_000;
+
+  it('is true for a log whose activity ended inside the processing window', () => {
+    expect(isRecentlyUploaded({ endTime: NOW - 5 * 60 * 1000 }, NOW)).toBe(true);
+  });
+
+  it('is false for a log older than the processing window', () => {
+    expect(isRecentlyUploaded({ endTime: NOW - REPORT_PROCESSING_WINDOW_MS - 1 }, NOW)).toBe(false);
+  });
+
+  it('tolerates a slightly-future endTime (clock skew) as recent', () => {
+    expect(isRecentlyUploaded({ endTime: NOW + 60_000 }, NOW)).toBe(true);
   });
 });
