@@ -1,4 +1,8 @@
-import { isESOTKCompanionFormat, parseESOTKCompanionSavedVariables } from '../esotkCompanionParser';
+import {
+  isESOTKCompanionFormat,
+  normalizeCompanionSnapshots,
+  parseESOTKCompanionSavedVariables,
+} from '../esotkCompanionParser';
 
 const SAMPLE = `
 ESOTKCompanionSV =
@@ -209,5 +213,32 @@ describe('parseESOTKCompanionSavedVariables', () => {
     `;
     // both snapshots are unusable (one lacks ts, one lacks char) → no result
     expect(parseESOTKCompanionSavedVariables(broken)).toBeNull();
+  });
+});
+
+describe('normalizeCompanionSnapshots', () => {
+  it('normalizes raw snapshot tables (e.g. forwarded by Kalpa) into typed snapshots', () => {
+    const raw = [
+      {
+        ts: 1749384000,
+        char: 'Grappa',
+        server: 'NA',
+        cp: { total: 3600, slotted: { '5': 25, '6': 31 } },
+        stats: { physicalPen: 7778 },
+      },
+      { ts: 1749380000, char: 'Grappa' },
+      { nonsense: true }, // no ts/char → dropped
+    ];
+    const snapshots = normalizeCompanionSnapshots(raw);
+    expect(snapshots).toHaveLength(2);
+    expect(snapshots[0].char).toBe('Grappa');
+    expect(snapshots[0].championPoints?.total).toBe(3600);
+    // Numeric Lua slot keys survive the raw JSON → typed round-trip (Backstabber id 31 in slot 6).
+    expect(snapshots[0].championPoints?.slotted[6]).toBe(31);
+    expect(snapshots[0].stats?.physicalPen).toBe(7778);
+  });
+
+  it('returns an empty array for empty input', () => {
+    expect(normalizeCompanionSnapshots([])).toEqual([]);
   });
 });

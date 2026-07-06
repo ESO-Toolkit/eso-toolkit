@@ -149,6 +149,18 @@ describe('kalpaBuildEvidence', () => {
     );
   });
 
+  it('passes an ESOTK Companion block through validation', () => {
+    const withCompanion = {
+      ...evidence,
+      companion: {
+        snapshots: [{ ts: 1749384000, char: 'Casts-A-Lot', cp: { total: 3600 } }],
+      },
+    };
+    const decoded = decodeKalpaBuildEvidenceParam(encodeEvidence(withCompanion));
+    expect(decoded?.companion?.snapshots).toHaveLength(1);
+    expect(decoded?.companion?.snapshots?.[0]).toMatchObject({ char: 'Casts-A-Lot' });
+  });
+
   it('persists matching report evidence in session storage and reloads it without the URL param', () => {
     const encoded = encodeEvidence(evidence);
     const first = loadKalpaBuildEvidenceForReport('REPORT123', {

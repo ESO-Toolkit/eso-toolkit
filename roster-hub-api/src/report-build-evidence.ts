@@ -60,12 +60,19 @@ interface KalpaAbilityEvidence {
 
 type KalpaScribedSkillEvidence = KalpaAbilityEvidence;
 
+interface KalpaCompanionEvidence {
+  // Raw ESOTK Companion snapshot tables forwarded by Kalpa (each a JSON object mirroring the
+  // Lua snapshot). Persisted opaquely — the frontend normalizes them via esotkCompanionParser.
+  snapshots: Record<string, unknown>[];
+}
+
 interface KalpaBuildEvidence {
   schemaVersion: number;
   extractorVersion?: number | null;
   source: string;
   reportCode: string;
   players: KalpaPlayerBuildEvidence[];
+  companion?: KalpaCompanionEvidence;
 }
 
 interface ReportOwnerResponse {
@@ -197,6 +204,17 @@ function validatePlayerEvidence(value: unknown): KalpaPlayerBuildEvidence | null
   return player;
 }
 
+/** Cap forwarded companion snapshots (the overall payload is already size-bounded). */
+const MAX_COMPANION_SNAPSHOTS = 40;
+
+function validateCompanion(value: unknown): KalpaCompanionEvidence | undefined {
+  if (!isRecord(value) || !Array.isArray(value.snapshots)) return undefined;
+  const snapshots = value.snapshots
+    .filter((snapshot): snapshot is Record<string, unknown> => isRecord(snapshot))
+    .slice(0, MAX_COMPANION_SNAPSHOTS);
+  return snapshots.length > 0 ? { snapshots } : undefined;
+}
+
 function validateEvidence(value: unknown, reportCode: string): KalpaBuildEvidence | null {
   if (!isRecord(value)) return null;
   if (value.schemaVersion !== SCHEMA_VERSION || value.source !== SOURCE) return null;
@@ -216,12 +234,15 @@ function validateEvidence(value: unknown, reportCode: string): KalpaBuildEvidenc
 
   if (players.length === 0) return null;
 
+  const companion = validateCompanion(value.companion);
+
   return {
     schemaVersion: SCHEMA_VERSION,
     extractorVersion: boundedInteger(value.extractorVersion, 1, 10_000),
     source: SOURCE,
     reportCode,
     players,
+    ...(companion ? { companion } : {}),
   };
 }
 
