@@ -1,0 +1,373 @@
+--[[
+  ESOTK Companion — fills the gaps ESO Logs can't see.
+
+  ESO Logs (the encounter log) records what happened in combat but is structurally
+  blind to a chunk of the build that produced it. The single biggest gap is the
+  **champion point allocation** - the log carries CP *rank* and the slotted stars as
+  buffs, but never the points spent across every star. This add-on reads that (and the
+  other un-logged build data) live from the official API and writes it to
+  SavedVariables, which ESO Toolkit (esotk.com) ingests and renders on player cards,
+  matched to the log by character + server + timestamp.
+
+  Design notes
+  - Read-only. We only read state and write our own SavedVariables. No input
+    automation, no combat decisions - same ToS-safe posture as CombatMetrics/Hodor.
+  - Robust to API drift. ESO bumps the API every season and renames/retires functions
+    and STAT_/constants. Every capture subsystem runs inside pcall and every global
+    constant is nil-guarded, so a single missing symbol degrades one field instead of
+    crashing the add-on.
+  - Canonical snapshot moment. GetPlayerStat returns the *live* buff-inclusive value, so
+    a snapshot taken mid-fight includes group buffs and is not comparable across players.
+    We snapshot on leaving combat (and on demand), which is the closest practical
+    "self-buffed" baseline. The snapshot is tagged so ESOTK knows how it was taken.
+]]--
+
+local ADDON = {
+  name = "ESOTKCompanion",
+  schemaVersion = 1,
+  season = "U50",          -- bump per ESO season; ESOTK uses this to pick the right caps/data
+  maxSnapshots = 200,      -- ring buffer; oldest dropped beyond this
+  snapshotMode = "combatEnd",
+}
+
+local SV  -- SavedVariables handle (ESOTKCompanionSV, account-wide)
+
+-- ----------------------------------------------------------------------------
+-- helpers
+-- ----------------------------------------------------------------------------
+
+-- Call fn(...) only if it exists; returns nil otherwise (API may rename functions).
+local function call(fnName, ...)
+  local fn = _G[fnName]
+  if type(fn) ~= "function" then
+    return nil
+  end
+
+  local ok, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12 = pcall(fn, ...)
+  if not ok then
+    if SV and SV.verbose and type(d) == "function" then
+      d("[ESOTK] API call '" .. tostring(fnName) .. "' failed: " .. tostring(r1))
+    end
+    return nil
+  end
+
+  return r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12
+end
+
+-- Read a GetPlayerStat value only if one of the STAT_ constants exists this API version.
+local function stat(...)
+  -- Buff-inclusive final value, exactly as the in-game character sheet reads it.
+  -- (There is no BONUS_OPTION_DEFAULT constant; STAT_BONUS_OPTION_APPLY_BONUS == 0.)
+  local opt = _G["STAT_BONUS_OPTION_APPLY_BONUS"] or 0
+  for i = 1, select("#", ...) do
+    local constName = select(i, ...)
+    local c = _G[constName]
+    if c ~= nil then
+      local v = call("GetPlayerStat", c, opt)
+      if v ~= nil then return v end
+    end
+  end
+  return nil
+end
+
+-- ----------------------------------------------------------------------------
+-- capture subsystems (each wrapped in pcall by Snapshot())
+-- ----------------------------------------------------------------------------
+
+-- THE headline gap: full champion point allocation + slotted stars + total.
+-- VERIFIED against official ZOS source (esoui championdatamanager.lua) + DynamicCP:
+--   for disciplineIndex = 1, GetNumChampionDisciplines() do
+--     disciplineId = GetChampionDisciplineId(disciplineIndex)
+--     GetNumChampionDisciplineSkills(disciplineIndex)   -- takes the INDEX, not the id
+--     GetChampionSkillId(disciplineIndex, skillIndex)    -- takes the INDEX, not the id
+--     GetChampionDisciplineType(disciplineId)            -- takes the id
+--   GetNumPointsSpentOnChampionSkill(skillId)            -- ONE arg (skillId globally unique)
+--   slotted: GetSlotBoundId(slot, HOTBAR_CATEGORY_CHAMPION), slots 1..12
+--            (Craft 1-4 / Warfare 5-8 / Fitness 9-12 per DynamicCP OFFSETS)
+local function captureChampionPoints()
+  -- names[skillId] = localized star name straight from the client, so ESOTK can
+  -- read every star cleanly even for ids its canonical map doesn't know yet.
+  local cp = { total = call("GetUnitChampionPoints", "player"), disciplines = {}, slotted = {}, names = {} }
+
+  local numDisciplines = call("GetNumChampionDisciplines") or 0
+  for disciplineIndex = 1, numDisciplines do
+    local disciplineId = call("GetChampionDisciplineId", disciplineIndex)
+    if disciplineId then
+      local skills, spent = {}, 0
+      local numSkills = call("GetNumChampionDisciplineSkills", disciplineIndex) or 0 -- index
+      for skillIndex = 1, numSkills do
+        local skillId = call("GetChampionSkillId", disciplineIndex, skillIndex) -- (index, index)
+        if skillId then
+          local points = call("GetNumPointsSpentOnChampionSkill", skillId) -- single arg
+          if points and points > 0 then
+            skills[skillId] = points -- key by skillId so ESOTK can name it
+            cp.names[skillId] = call("GetChampionSkillName", skillId)
+            spent = spent + points
+          end
+        end
+      end
+      cp.disciplines[disciplineId] = {
+        id = disciplineId,
+        type = call("GetChampionDisciplineType", disciplineId), -- takes the id
+        spent = spent, -- summed from skills
+        skills = skills,
+      }
+    end
+  end
+
+  -- Slotted stars (verified): slots 1..12 via the champion hotbar category.
+  local champCat = _G["HOTBAR_CATEGORY_CHAMPION"]
+  if champCat ~= nil then
+    for slot = 1, 12 do
+      local boundId = call("GetSlotBoundId", slot, champCat)
+      cp.slotted[slot] = boundId
+      if boundId and boundId ~= 0 then
+        cp.names[boundId] = call("GetChampionSkillName", boundId)
+      end
+    end
+  end
+
+  return cp
+end
+
+-- Final derived stats the log never carries (crit, penetration, recovery, ...).
+local function captureStats()
+  return {
+    maxMagicka      = stat("STAT_MAGICKA_MAX"),
+    maxHealth       = stat("STAT_HEALTH_MAX"),
+    maxStamina      = stat("STAT_STAMINA_MAX"),
+    spellDamage     = stat("STAT_SPELL_POWER", "STAT_WEAPON_AND_SPELL_DAMAGE"),
+    weaponDamage    = stat("STAT_POWER", "STAT_WEAPON_POWER", "STAT_WEAPON_AND_SPELL_DAMAGE"),
+    spellCrit       = stat("STAT_SPELL_CRITICAL"),
+    weaponCrit      = stat("STAT_CRITICAL_STRIKE"),
+    -- Crit DAMAGE has no client-side stat constant; it is summed from CP +
+    -- sets + mundus + passives on the ESOTK side (see CritDamageUtils).
+    spellPen        = stat("STAT_SPELL_PENETRATION"),
+    physicalPen     = stat("STAT_PHYSICAL_PENETRATION"),
+    magickaRegen    = stat("STAT_MAGICKA_REGEN_COMBAT"),
+    staminaRegen    = stat("STAT_STAMINA_REGEN_COMBAT"),
+    healthRegen     = stat("STAT_HEALTH_REGEN_COMBAT"),
+    physicalResist  = stat("STAT_PHYSICAL_RESIST"),
+    spellResist     = stat("STAT_SPELL_RESIST"),
+    critResist      = stat("STAT_CRITICAL_RESISTANCE"),
+  }
+end
+
+-- Attribute point split (Magicka / Health / Stamina).
+local function captureAttributes()
+  local AM, AH, AS = _G["ATTRIBUTE_MAGICKA"], _G["ATTRIBUTE_HEALTH"], _G["ATTRIBUTE_STAMINA"]
+  return {
+    magicka = AM and call("GetAttributeSpentPoints", AM) or nil,
+    health  = AH and call("GetAttributeSpentPoints", AH) or nil,
+    stamina = AS and call("GetAttributeSpentPoints", AS) or nil,
+  }
+end
+
+-- Long-term effects (mundus is a permanent buff; food/drink is a long buff).
+-- We record raw ability IDs and let ESOTK resolve mundus/food by ID — language-agnostic.
+local function captureLongTermEffects()
+  local effects = {}
+  local n = call("GetNumBuffs", "player") or 0
+  for i = 1, n do
+    local name, started, ending, _, _, _, _, _, _, _, abilityId = call("GetUnitBuffInfo", "player", i)
+    if abilityId then
+      effects[#effects + 1] = {
+        id = abilityId,
+        name = name,
+        duration = (started and ending) and (ending - started) or 0, -- 0 == permanent (e.g. mundus)
+      }
+    end
+  end
+  return effects
+end
+
+-- Both action bars (front/back). Redundant with the log, but lets ESOTK derive
+-- subclass skill lines without a second source, and verifies the matched actor.
+local function captureBars()
+  local bars = {}
+  local cats = { front = _G["HOTBAR_CATEGORY_PRIMARY"], back = _G["HOTBAR_CATEGORY_BACKUP"] }
+  local ACT_CRAFTED = _G["ACTION_TYPE_CRAFTED_ABILITY"]
+  for label, cat in pairs(cats) do
+    if cat ~= nil then
+      local barSlots = {}
+      for slot = 3, 8 do  -- 3..7 = abilities, 8 = ultimate
+        local boundId = call("GetSlotBoundId", slot, cat)
+        -- Scribed (crafted) slots return a small craftedAbilityId, not the real
+        -- abilityId. Resolve it so the bar carries true abilityIds like the log does.
+        if ACT_CRAFTED ~= nil and boundId and boundId ~= 0
+          and call("GetSlotType", slot, cat) == ACT_CRAFTED then
+          barSlots[slot] = call("GetAbilityIdForCraftedAbilityId", boundId) or boundId
+        else
+          barSlots[slot] = boundId
+        end
+      end
+      bars[label] = barSlots
+    end
+  end
+  return bars
+end
+
+local function scriptInfo(scriptId, scriptSlot)
+  if not scriptId or scriptId == 0 then return nil end
+  return {
+    id = scriptId,
+    slot = scriptSlot,
+    name = call("GetCraftedAbilityScriptDisplayName", scriptId),
+    icon = call("GetCraftedAbilityScriptIcon", scriptId),
+  }
+end
+
+-- Authoritative scribing setup. Logs can reveal many scribed effects, but not every
+-- active script reliably; the local action bar API can read the grimoire + scripts.
+local function captureScribing()
+  local scribing = {}
+  local cats = { front = _G["HOTBAR_CATEGORY_PRIMARY"], back = _G["HOTBAR_CATEGORY_BACKUP"] }
+  for label, cat in pairs(cats) do
+    if cat ~= nil then
+      for slot = 3, 8 do -- 3..7 = abilities, 8 = ultimate
+        local craftedAbilityId = call("GetSlotBoundId", slot, cat)
+        if craftedAbilityId and craftedAbilityId ~= 0 then
+          local s1, s2, s3 = call("GetCraftedAbilityActiveScriptIds", craftedAbilityId)
+          local scripts = {}
+          local i1 = scriptInfo(s1, 1)
+          local i2 = scriptInfo(s2, 2)
+          local i3 = scriptInfo(s3, 3)
+          if i1 then scripts[1] = i1 end
+          if i2 then scripts[2] = i2 end
+          if i3 then scripts[3] = i3 end
+
+          if next(scripts) ~= nil then
+            scribing[#scribing + 1] = {
+              abilityId = craftedAbilityId,
+              name = call("GetCraftedAbilityDisplayName", craftedAbilityId) or call("GetAbilityName", craftedAbilityId),
+              bar = label,
+              slot = slot,
+              scripts = scripts,
+            }
+          end
+        end
+      end
+    end
+  end
+  return scribing
+end
+
+-- ----------------------------------------------------------------------------
+-- snapshot
+-- ----------------------------------------------------------------------------
+
+local function tryCapture(label, fn)
+  local ok, result = pcall(fn)
+  if ok then return result end
+  if SV and SV.verbose and type(d) == "function" then
+    d("[ESOTK] capture '" .. label .. "' failed: " .. tostring(result))
+  end
+  return nil
+end
+
+local function Snapshot(reason)
+  if not SV or SV.enabled == false then return end
+
+  local zoneIndex = call("GetUnitZoneIndex", "player")
+
+  local snap = {
+    schemaVersion = ADDON.schemaVersion,
+    season    = ADDON.season,
+    -- match keys (see ESOTK matcher): character + server + UTC timestamp
+    ts        = call("GetTimeStamp"),               -- UNIX seconds, server/UTC
+    char      = call("GetUnitName", "player"),
+    account   = call("GetDisplayName"),
+    server    = call("GetWorldName"),
+    -- context
+    zoneId    = zoneIndex and call("GetZoneId", zoneIndex) or nil,
+    classId   = call("GetUnitClassId", "player"),
+    className = call("GetUnitClass", "player"),
+    raceId    = call("GetUnitRaceId", "player"),
+    raceName  = call("GetUnitRace", "player"),
+    level     = call("GetUnitLevel", "player"),
+    cpRank    = call("GetUnitChampionPoints", "player"),
+    role      = call("GetGroupMemberSelectedRole", "player"),
+    reason    = reason,                              -- "combatEnd" | "manual"
+    -- the gaps ESO Logs can't see:
+    cp        = tryCapture("championPoints", captureChampionPoints),
+    stats     = tryCapture("stats", captureStats),
+    attrs     = tryCapture("attributes", captureAttributes),
+    effects   = tryCapture("longTermEffects", captureLongTermEffects),
+    bars      = tryCapture("bars", captureBars),
+    scribing  = tryCapture("scribing", captureScribing),
+  }
+
+  if not snap.ts or not snap.char then
+    if SV.verbose and type(d) == "function" then
+      d("[ESOTK] snapshot skipped: missing timestamp or character name.")
+    end
+    return
+  end
+
+  local snaps = SV.snapshots
+  snaps[#snaps + 1] = snap
+  while #snaps > ADDON.maxSnapshots do
+    table.remove(snaps, 1)  -- drop oldest
+  end
+
+  if SV.verbose then
+    local pts = snap.cp and snap.cp.total or "?"
+    d("[ESOTK] snapshot saved (" .. tostring(reason) .. ") - CP " .. tostring(pts)
+      .. ", " .. tostring(#snaps) .. " stored. Upload SavedVariables/ESOTKCompanion.lua to esotk.com.")
+  end
+end
+
+-- ----------------------------------------------------------------------------
+-- events & commands
+-- ----------------------------------------------------------------------------
+
+local combatDebounce = false
+local function OnCombatState(_, inCombat)
+  if inCombat then return end                 -- snapshot when leaving combat
+  if ADDON.snapshotMode ~= "combatEnd" then return end
+  if combatDebounce then return end
+  combatDebounce = true
+  -- small delay so end-of-fight buffs/stats settle before reading
+  zo_callLater(function()
+    combatDebounce = false
+    Snapshot("combatEnd")
+  end, 1500)
+end
+
+local function OnAddOnLoaded(_, addonName)
+  if addonName ~= ADDON.name then return end
+  EVENT_MANAGER:UnregisterForEvent(ADDON.name, EVENT_ADD_ON_LOADED)
+
+  SV = ZO_SavedVars:NewAccountWide("ESOTKCompanionSV", ADDON.schemaVersion, nil, {
+    schemaVersion = ADDON.schemaVersion,
+    season        = ADDON.season,
+    enabled       = true,
+    verbose       = true,
+    snapshots     = {},
+  })
+  -- keep season tag current even on existing saves
+  SV.schemaVersion = ADDON.schemaVersion
+  SV.season = ADDON.season
+
+  EVENT_MANAGER:RegisterForEvent(ADDON.name, EVENT_PLAYER_COMBAT_STATE, OnCombatState)
+
+  SLASH_COMMANDS["/esotk"] = function(arg)
+    arg = zo_strlower(arg or "")
+    if arg == "off" then
+      SV.enabled = false; d("[ESOTK] capture disabled.")
+    elseif arg == "on" then
+      SV.enabled = true; d("[ESOTK] capture enabled.")
+    elseif arg == "clear" then
+      SV.snapshots = {}; d("[ESOTK] snapshots cleared.")
+    elseif arg == "verbose" then
+      SV.verbose = not SV.verbose; d("[ESOTK] verbose = " .. tostring(SV.verbose))
+    else
+      Snapshot("manual")
+      d("[ESOTK] snapshot taken. /esotk on|off|clear|verbose")
+    end
+  end
+
+  d("[ESOTK] Companion loaded. Capturing champion points, stats and scribing on combat end. Type /esotk to snapshot now.")
+end
+
+EVENT_MANAGER:RegisterForEvent(ADDON.name, EVENT_ADD_ON_LOADED, OnAddOnLoaded)

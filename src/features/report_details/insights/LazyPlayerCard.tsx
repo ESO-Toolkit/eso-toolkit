@@ -2,6 +2,7 @@ import React, { Suspense } from 'react';
 
 import { PlayerCardSkeleton } from '../../../components/PlayersSkeleton';
 import type { GrimoireData } from '../../../components/ScribingSkillsDisplay';
+import type { CompanionBuildForPlayer } from '../../../features/loadout-manager/utils/esotkCompanionReportAdapter';
 import type { PlayerRoleResult } from '../../../features/role_detection';
 import type { PlayerDetailsWithRole } from '../../../store/player_data/playerDataSlice';
 import type { ClassAnalysisResult } from '../../../utils/classDetectionUtils';
@@ -68,6 +69,13 @@ export interface PlayerCardProps {
   detectedRole?: PlayerRoleResult;
   /** Whether the metrics row wraps chips vertically or scrolls horizontally */
   metricsLayout?: MetricsLayout;
+  /**
+   * Build data captured by the ESOTK Companion add-on that ESO Logs can't see.
+   */
+  companionBuild?: Pick<
+    CompanionBuildForPlayer,
+    'championPoints' | 'coaching' | 'stats' | 'effects' | 'scribing'
+  >;
   /** Test ID for testing */
   'data-testid'?: string;
 }

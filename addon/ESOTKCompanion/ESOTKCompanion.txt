@@ -1,0 +1,18 @@
+; ESOTK Companion — in-game add-on manifest
+; Captures the build/character data ESO Logs cannot see (champion point
+; allocation, final stats, attributes, mundus/food, scribing) and writes it to
+; SavedVariables for ESO Toolkit (esotk.com) to read and show on player cards.
+;
+; APIVersion: bump every ESO season (U50 = June 2026). Keep two versions listed
+; so the add-on keeps loading across a patch boundary.
+
+## Title: ESOTK Companion
+## Author: ESO Toolkit
+## Version: 0.1.0
+## AddOnVersion: 1
+## APIVersion: 101047 101049
+## SavedVariables: ESOTKCompanionSV
+## Description: Captures champion points, final stats, attributes and scribing ESO Logs can't see, for ESO Toolkit player cards.
+## OptionalDependsOn: LibAddonMenu-2.0
+
+ESOTKCompanion.lua

@@ -21,6 +21,7 @@ import type { Theme } from '@mui/material/styles';
 import React, { useCallback, useState } from 'react';
 import { useSelector } from 'react-redux';
 
+import type { CompanionBuildForPlayer } from '@/features/loadout-manager/utils/esotkCompanionReportAdapter';
 import { abilityIconUrl } from '@/utils/abilityIconCorrections';
 import { getArmorWeightCounts } from '@/utils/armorUtils';
 import { encodeBuildToURL } from '@/utils/buildEncoding';
@@ -72,6 +73,7 @@ import { SCRIBING_DETECTION_SCHEMA_VERSION } from '../../scribing/analysis/scrib
 import { ScribedSkillData } from '../../scribing/types';
 
 import { ClassMasteryCluster } from './ClassMasteryCluster';
+import { CompanionBuildPanel } from './CompanionBuildPanel';
 import { MetricsScrollRow } from './MetricsScrollRow';
 import type { StatChipId } from './statChipConfig';
 import { formatStatValue, STAT_CHIP_IDS, STAT_CHIP_META } from './statChipConfig';
@@ -202,6 +204,15 @@ interface PlayerCardProps {
   detectedRole?: PlayerRoleResult;
   /** Whether the metrics row wraps chips vertically or scrolls horizontally */
   metricsLayout?: 'scroll' | 'wrap';
+  /**
+   * Build data captured by the ESOTK Companion add-on (champion-point allocation +
+   * stat-aware coaching) that ESO Logs can't see. Optional — when absent the panel
+   * renders nothing, so existing cards are unaffected.
+   */
+  companionBuild?: Pick<
+    CompanionBuildForPlayer,
+    'championPoints' | 'coaching' | 'stats' | 'effects' | 'scribing'
+  >;
 }
 
 // Helper function to consolidate build issues
@@ -338,6 +349,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
     visibleChips,
     detectedRole,
     metricsLayout = 'scroll',
+    companionBuild,
   }) => {
     const theme = useTheme();
 
@@ -2163,6 +2175,16 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                         ))}
                       </Box>
                     </Box>
+                  )}
+
+                  {companionBuild && (
+                    <CompanionBuildPanel
+                      championPoints={companionBuild.championPoints}
+                      coaching={companionBuild.coaching}
+                      stats={companionBuild.stats}
+                      effects={companionBuild.effects}
+                      scribing={companionBuild.scribing}
+                    />
                   )}
                 </Box>
 

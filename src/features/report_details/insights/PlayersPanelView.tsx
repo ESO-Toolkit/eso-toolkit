@@ -1,6 +1,7 @@
 import SearchIcon from '@mui/icons-material/Search';
 import SortIcon from '@mui/icons-material/Sort';
 import TuneIcon from '@mui/icons-material/Tune';
+import UploadFileIcon from '@mui/icons-material/UploadFile';
 import ViewStreamIcon from '@mui/icons-material/ViewStream';
 import WrapTextIcon from '@mui/icons-material/WrapText';
 import {
@@ -22,6 +23,7 @@ import React, { useState, useMemo, useCallback } from 'react';
 
 import { PlayersSkeleton } from '../../../components/PlayersSkeleton';
 import { GrimoireData } from '../../../components/ScribingSkillsDisplay';
+import type { CompanionBuildForPlayer } from '../../../features/loadout-manager/utils/esotkCompanionReportAdapter';
 import { DetectedRole, type PlayerRoleResult } from '../../../features/role_detection';
 import { toBroadRole, type BroadRole } from '../../../hooks/useRoleDetection';
 import { PlayerDetailsWithRole } from '../../../store/player_data/playerDataSlice';
@@ -83,6 +85,20 @@ interface PlayersPanelViewProps {
   potionResultsByPlayer?: Record<string, PotionStreamResult>;
   /** Detected roles from the role detection algorithm, keyed by player ID */
   rolesByPlayerId?: Record<number, PlayerRoleResult>;
+  /** Per-player companion build data parsed from an uploaded ESOTKCompanion SavedVariables file */
+  companionBuildsByPlayer?: Record<
+    string,
+    Pick<CompanionBuildForPlayer, 'championPoints' | 'coaching' | 'stats' | 'effects' | 'scribing'>
+  >;
+  /** Current companion upload status for the toolbar chip */
+  companionUpload?: {
+    fileName?: string;
+    snapshotCount: number;
+    matchedCount: number;
+    error?: string;
+  };
+  /** Called when a user selects an ESOTKCompanion SavedVariables file */
+  onCompanionFileSelected?: (file: File) => Promise<void>;
 }
 
 type SortOption =
@@ -143,6 +159,9 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
     barSwapByPlayer,
     potionResultsByPlayer,
     rolesByPlayerId,
+    companionBuildsByPlayer,
+    companionUpload,
+    onCompanionFileSelected,
   }) => {
     const theme = useTheme();
     const isDarkMode = theme.palette.mode === 'dark';
@@ -155,6 +174,15 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
     const { metricsLayout, toggleMetricsLayout } = useMetricsLayout();
     const handleOpenChipModal = useCallback(() => setChipModalOpen(true), []);
     const handleCloseChipModal = useCallback(() => setChipModalOpen(false), []);
+    const handleCompanionInputChange = useCallback(
+      (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        event.target.value = '';
+        if (!file || !onCompanionFileSelected) return;
+        void onCompanionFileSelected(file);
+      },
+      [onCompanionFileSelected],
+    );
 
     // Helper: get the effective broad role for a player, preferring detected role
     const getEffectiveBroadRole = useCallback(
@@ -214,6 +242,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
         const totalCritDamage = totalCritDamageByPlayer?.[String(player.id)];
         const critDps = critDpsByPlayer?.[String(player.id)];
         const critChance = critChanceByPlayer?.[String(player.id)];
+        const companionBuild = companionBuildsByPlayer?.[String(player.id)];
 
         return {
           key: player.id,
@@ -244,6 +273,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
           totalCritDamage,
           critDps,
           critChance,
+          companionBuild,
         };
       });
     }, [
@@ -274,6 +304,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
       totalCritDamageByPlayer,
       critDpsByPlayer,
       critChanceByPlayer,
+      companionBuildsByPlayer,
     ]);
 
     // Filter, search, and sort players
@@ -349,6 +380,17 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
         </Box>
       );
     }
+
+    const companionStatusLabel = companionUpload?.error
+      ? 'Companion: error'
+      : companionUpload?.fileName
+        ? `Companion: ${companionUpload.matchedCount} matched`
+        : null;
+    const companionStatusTitle =
+      companionUpload?.error ??
+      (companionUpload?.fileName
+        ? `${companionUpload.snapshotCount.toLocaleString()} snapshots loaded from ${companionUpload.fileName}`
+        : undefined);
 
     return (
       <Box
@@ -527,6 +569,72 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
 
           {/* Action buttons */}
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            {onCompanionFileSelected && (
+              <>
+                <Tooltip title="Upload ESOTK Companion SavedVariables" arrow>
+                  <Button
+                    component="label"
+                    size="small"
+                    startIcon={<UploadFileIcon sx={{ fontSize: '1rem !important' }} />}
+                    aria-label="Upload ESOTK Companion SavedVariables"
+                    sx={{
+                      textTransform: 'none',
+                      whiteSpace: 'nowrap',
+                      fontSize: '0.8rem',
+                      fontWeight: 500,
+                      borderRadius: '10px',
+                      px: 1.5,
+                      py: 0.75,
+                      color: isDarkMode ? '#e2e8f0' : '#334155',
+                      background: isDarkMode
+                        ? alpha(theme.palette.common.white, 0.04)
+                        : alpha(theme.palette.common.black, 0.03),
+                      border: `1px solid ${isDarkMode ? 'rgba(56, 189, 248, 0.12)' : 'rgba(59, 130, 246, 0.1)'}`,
+                      transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                      '&:hover': {
+                        background: isDarkMode
+                          ? 'rgba(56, 189, 248, 0.1)'
+                          : 'rgba(59, 130, 246, 0.08)',
+                        borderColor: isDarkMode
+                          ? 'rgba(56, 189, 248, 0.25)'
+                          : 'rgba(59, 130, 246, 0.2)',
+                        color: isDarkMode ? '#93c5fd' : '#2563eb',
+                      },
+                    }}
+                  >
+                    Companion
+                    <input
+                      hidden
+                      type="file"
+                      accept=".lua,text/plain"
+                      aria-label="ESOTK Companion SavedVariables file"
+                      onChange={handleCompanionInputChange}
+                    />
+                  </Button>
+                </Tooltip>
+                {companionStatusLabel && (
+                  <Chip
+                    size="small"
+                    label={companionStatusLabel}
+                    title={companionStatusTitle}
+                    color={
+                      companionUpload?.error
+                        ? 'error'
+                        : companionUpload?.matchedCount
+                          ? 'success'
+                          : 'warning'
+                    }
+                    variant="outlined"
+                    sx={{
+                      height: 30,
+                      borderRadius: '10px',
+                      '& .MuiChip-label': { fontSize: '0.72rem', fontWeight: 600 },
+                    }}
+                  />
+                )}
+              </>
+            )}
+
             <Tooltip title="Choose which stat chips are shown on each player card" arrow>
               <Badge
                 badgeContent={visibleChips.length}
@@ -763,6 +871,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
                 visibleChips={visibleChips}
                 detectedRole={rolesByPlayerId?.[Number(playerData.player.id)]}
                 metricsLayout={metricsLayout}
+                companionBuild={playerData.companionBuild}
               />
             </Box>
           ))}
