@@ -120,4 +120,16 @@ describe('CompanionBuildPanel', () => {
     expect(screen.getByText('Physical Pen: 12,345')).toBeInTheDocument();
     expect(screen.queryByText('Stable')).toBeNull();
   });
+
+  it('flags a build borrowed from an adjacent pull', () => {
+    render(
+      <CompanionBuildPanel championPoints={cpViewModel} coaching={[]} distanceMs={5 * 60 * 1000} />,
+    );
+    expect(screen.getByText(/Nearest capture · 5 min away/)).toBeInTheDocument();
+  });
+
+  it('does not flag a build captured inside the fight window', () => {
+    render(<CompanionBuildPanel championPoints={cpViewModel} coaching={[]} distanceMs={0} />);
+    expect(screen.queryByText(/Nearest capture/)).toBeNull();
+  });
 });

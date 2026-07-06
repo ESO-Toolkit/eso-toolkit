@@ -39,6 +39,12 @@ export interface CompanionBuildForPlayer {
   snapshot: CompanionSnapshot;
   /** The fight the snapshot best matched, if any. */
   fightId?: number | string;
+  /**
+   * How far (ms) the matched snapshot sits outside the report/fight window — 0 when the
+   * capture is inside it. A large value means the build was borrowed from an adjacent pull,
+   * so the UI can flag it as approximate ("nearest capture, N min away").
+   */
+  distanceMs: number;
 }
 
 export interface BuildCompanionBuildsOptions {
@@ -70,6 +76,7 @@ export function buildCompanionBuildsForReport(
       scribing: match.snapshot.scribing,
       snapshot: match.snapshot,
       fightId: match.fightId,
+      distanceMs: match.distanceMs,
     });
   }
   return out;

@@ -55,6 +55,22 @@ describe('matchCompanionSnapshots', () => {
     expect(matches.get(1)?.snapshot).toBe(near);
   });
 
+  it('prefers a combat-end capture over a manual one at equal distance', () => {
+    // Both inside f1's window (distance 0). The manual snapshot is newer, but a combat-end
+    // capture is the canonical end-of-fight build and should win the tie despite being older.
+    const combatEnd = snap({ ts: REPORT_START_S + 60, char: 'Casts-A-Lot', reason: 'combatEnd' });
+    const manual = snap({ ts: REPORT_START_S + 120, char: 'Casts-A-Lot', reason: 'manual' });
+    const { matches } = matchCompanionSnapshots([manual, combatEnd], report);
+    expect(matches.get(1)?.snapshot).toBe(combatEnd);
+  });
+
+  it('falls back to the newer snapshot when reason and distance both tie', () => {
+    const older = snap({ ts: REPORT_START_S + 60, char: 'Casts-A-Lot', reason: 'combatEnd' });
+    const newer = snap({ ts: REPORT_START_S + 120, char: 'Casts-A-Lot', reason: 'combatEnd' });
+    const { matches } = matchCompanionSnapshots([older, newer], report);
+    expect(matches.get(1)?.snapshot).toBe(newer);
+  });
+
   it('rejects a provable region conflict (EU Megaserver ↔ PC-NA)', () => {
     const s = snap({ ts: REPORT_START_S + 60, char: 'Casts-A-Lot', server: 'EU Megaserver' });
     const { matches, unmatched } = matchCompanionSnapshots([s], report);
