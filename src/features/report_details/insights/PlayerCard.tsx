@@ -211,7 +211,7 @@ interface PlayerCardProps {
    */
   companionBuild?: Pick<
     CompanionBuildForPlayer,
-    'championPoints' | 'coaching' | 'stats' | 'effects' | 'scribing' | 'distanceMs'
+    'championPoints' | 'coaching' | 'stats' | 'effects' | 'scribing' | 'classMastery' | 'distanceMs'
   >;
 }
 
@@ -1523,8 +1523,12 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                   </Box>
                 </Box>
 
-                {/* Class Mastery passives (non-subclassed only) — renders nothing otherwise */}
-                <ClassMasteryCluster classAnalysis={classAnalysis} />
+                {/* Class Mastery passives (non-subclassed only) — renders nothing otherwise.
+                    Prefers the Companion's true capture over the log's under-reported picks. */}
+                <ClassMasteryCluster
+                  classAnalysis={classAnalysis}
+                  companionClassMastery={companionBuild?.classMastery}
+                />
 
                 {/* Talents */}
                 {talents.length > 0 && (

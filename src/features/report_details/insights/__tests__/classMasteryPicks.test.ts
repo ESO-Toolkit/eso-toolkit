@@ -1,6 +1,6 @@
 import type { ClassAnalysisResult } from '@/utils/classDetectionUtils';
 
-import { getClassMasteryPicks } from '../classMasteryPicks';
+import { getClassMasteryPicks, getCompanionClassMasteryPicks } from '../classMasteryPicks';
 
 // Canonical Class Mastery ability ids (from classSkillIds.ts / classMastery.ts).
 const NB_AN_EYE = 263604; // "An Eye for Exploitation"
@@ -112,5 +112,41 @@ describe('getClassMasteryPicks', () => {
     );
 
     expect(result.picks).toEqual([]);
+  });
+});
+
+describe('getCompanionClassMasteryPicks (live-client capture, preferred over the log)', () => {
+  it('resolves the true two purchased picks, deriving the class from the ids alone', () => {
+    const result = getCompanionClassMasteryPicks([SORC_STATIC, SORC_CALCULATED]);
+
+    expect(result.className).toBe('Sorcerer');
+    expect(result.picks.map((p) => p.name)).toEqual(['Static Reverberation', 'Calculated Defense']);
+    expect(result.picks[0].icon).toBeTruthy();
+    expect(result.picks[0].description).toBeTruthy();
+  });
+
+  it('recovers the full pair the encounter log under-reports (log often surfaces only one)', () => {
+    const result = getCompanionClassMasteryPicks([NB_AN_EYE, NB_ABOVE_AND_BEYOND]);
+
+    expect(result.picks).toHaveLength(2);
+    expect(result.picks.map((p) => p.id)).toEqual([NB_AN_EYE, NB_ABOVE_AND_BEYOND]);
+  });
+
+  it('caps at two and drops non-canonical noise ids', () => {
+    const result = getCompanionClassMasteryPicks([
+      SORC_CONSERVATION,
+      NOISE_A,
+      SORC_FONT,
+      SORC_STATIC,
+    ]);
+
+    expect(result.picks).toHaveLength(2);
+    expect(result.picks.map((p) => p.id)).toEqual([SORC_CONSERVATION, SORC_FONT]);
+  });
+
+  it('returns nothing for empty, undefined, or all-noise input', () => {
+    expect(getCompanionClassMasteryPicks(undefined)).toEqual({ className: '', picks: [] });
+    expect(getCompanionClassMasteryPicks([])).toEqual({ className: '', picks: [] });
+    expect(getCompanionClassMasteryPicks([NOISE_A, NOISE_B])).toEqual({ className: '', picks: [] });
   });
 });

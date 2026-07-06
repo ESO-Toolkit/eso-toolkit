@@ -19,7 +19,10 @@ import {
   getClassMasteryLine,
 } from '@/data/skill-lines/class/classMastery';
 import type { ESOClass } from '@/features/build-editor/types/build.types';
-import { sanitizeClassMasteryPicks } from '@/features/build-editor/utils/classMasteryTransfer';
+import {
+  classFromMasteryIds,
+  sanitizeClassMasteryPicks,
+} from '@/features/build-editor/utils/classMasteryTransfer';
 import type { ClassAnalysisResult } from '@/utils/classDetectionUtils';
 
 export interface ClassMasteryPick {
@@ -69,4 +72,41 @@ export function getClassMasteryPicks(
 
   if (picks.length === 0) return EMPTY;
   return { className, picks };
+}
+
+/**
+ * Resolve Class Mastery picks from the ESOTK Companion's live-client capture — the TRUE
+ * purchased allocation. Prefer this over {@link getClassMasteryPicks} whenever a companion
+ * snapshot is matched: the encounter log is combat-event-driven and under-reports Class
+ * Mastery (it often surfaces only 1 of the 2 slotted), whereas the add-on reads the two
+ * purchased passives straight from the client.
+ *
+ * The owning class is derived from the ability ids themselves (each of the 35 ids belongs to
+ * exactly one class), so this doesn't depend on log-side class detection. Cross-class noise,
+ * duplicates, and >2 picks are dropped by the shared sanitizer.
+ */
+export function getCompanionClassMasteryPicks(
+  ids: readonly number[] | undefined,
+): ClassMasteryPicksResult {
+  if (!ids || ids.length === 0) return EMPTY;
+  const esoClass = classFromMasteryIds([...ids]);
+  if (!esoClass) return EMPTY;
+
+  const validIds = sanitizeClassMasteryPicks([...ids], esoClass);
+  if (validIds.length === 0) return EMPTY;
+
+  const line = getClassMasteryLine(esoClass);
+  const picks = validIds
+    .map((id) => line?.skills.find((skill) => skill.id === id))
+    .filter((skill): skill is NonNullable<typeof skill> => Boolean(skill))
+    .map((skill) => ({
+      id: skill.id,
+      name: skill.name,
+      icon: skill.icon ?? '',
+      description: skill.description ?? '',
+    }));
+
+  if (picks.length === 0) return EMPTY;
+  // line.class is proper-cased ("Nightblade"), matching getClassMasteryPicks' className.
+  return { className: line?.class ?? '', picks };
 }

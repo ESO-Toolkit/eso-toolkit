@@ -74,7 +74,7 @@ export interface PlayerCardProps {
    */
   companionBuild?: Pick<
     CompanionBuildForPlayer,
-    'championPoints' | 'coaching' | 'stats' | 'effects' | 'scribing' | 'distanceMs'
+    'championPoints' | 'coaching' | 'stats' | 'effects' | 'scribing' | 'classMastery' | 'distanceMs'
   >;
   /** Test ID for testing */
   'data-testid'?: string;

@@ -35,6 +35,8 @@ export interface CompanionBuildForPlayer {
   effects?: CompanionSnapshot['effects'];
   /** Scribed skills captured authoritatively from the local action bars. */
   scribing?: CompanionSnapshot['scribing'];
+  /** True Class Mastery allocation read live from the client (the log under-reports it). */
+  classMastery?: CompanionSnapshot['classMastery'];
   /** The snapshot this was built from (raw stats/effects/scribing available for detail views). */
   snapshot: CompanionSnapshot;
   /** The fight the snapshot best matched, if any. */
@@ -74,6 +76,7 @@ export function buildCompanionBuildsForReport(
       stats: match.snapshot.stats,
       effects: match.snapshot.effects,
       scribing: match.snapshot.scribing,
+      classMastery: match.snapshot.classMastery,
       snapshot: match.snapshot,
       fightId: match.fightId,
       distanceMs: match.distanceMs,
