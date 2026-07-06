@@ -24,7 +24,13 @@
 
 local ADDON = {
   name = "ESOTKCompanion",
-  schemaVersion = 1,
+  schemaVersion = 1,       -- payload parse-schema (ESOTK reads this); may bump across seasons
+  -- ZO_SavedVars storage version. PINNED to 1 forever and DECOUPLED from schemaVersion above:
+  -- bumping the NewAccountWide version arg makes ZO_SavedVars DESTROY every stored snapshot, so
+  -- a schema bump must never ride it. The payload's own schemaVersion carries the parse-schema
+  -- instead, so it can change without wiping users' captured builds. Only ever bump this if a
+  -- deliberate, one-time wipe of all stored snapshots is actually intended.
+  savedVarsVersion = 1,
   season = "U50",          -- bump per ESO season; ESOTK uses this to pick the right caps/data
   maxSnapshots = 200,      -- ring buffer; oldest dropped beyond this
   snapshotMode = "combatEnd",
@@ -338,7 +344,9 @@ local function OnAddOnLoaded(_, addonName)
   if addonName ~= ADDON.name then return end
   EVENT_MANAGER:UnregisterForEvent(ADDON.name, EVENT_ADD_ON_LOADED)
 
-  SV = ZO_SavedVars:NewAccountWide("ESOTKCompanionSV", ADDON.schemaVersion, nil, {
+  -- Storage version is the pinned savedVarsVersion (NOT schemaVersion) so a parse-schema bump
+  -- never triggers ZO_SavedVars' destroy-on-version-change and wipes stored snapshots.
+  SV = ZO_SavedVars:NewAccountWide("ESOTKCompanionSV", ADDON.savedVarsVersion, nil, {
     schemaVersion = ADDON.schemaVersion,
     season        = ADDON.season,
     enabled       = true,
