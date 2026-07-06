@@ -1,5 +1,5 @@
 import { calculateCriticalDamageData } from './CalculateCriticalDamage';
-import { KnownAbilities } from '../../types/abilities';
+import { CriticalDamageValues, KnownAbilities } from '../../types/abilities';
 import {
   createMockCombatantInfoEvent,
   createMockBuffEvent,
@@ -801,6 +801,71 @@ describe('CalculateCriticalDamage', () => {
 
         // Should have no inactive intervals
         expect(playerData.inactiveCombatIntervals).toHaveLength(0);
+      });
+    });
+
+    describe('companion crit evidence gating', () => {
+      const FF_PLUS_BS = CriticalDamageValues.FIGHTING_FINESSE + CriticalDamageValues.BACKSTABBER;
+
+      const run = (
+        companionCritEvidence?: Record<
+          number,
+          { fightingFinesseSlotted: boolean; backstabberSlotted: boolean }
+        >,
+      ) =>
+        calculateCriticalDamageData({
+          fight: { startTime: FIGHT_START, endTime: FIGHT_END },
+          players: { [PLAYER_ID]: createMockPlayer() },
+          combatantInfoEvents: {
+            [PLAYER_ID]: createMockCombatantInfoEvent({
+              sourceID: PLAYER_ID,
+              timestamp: FIGHT_START,
+            }),
+          },
+          friendlyBuffsLookup: createMockBuffLookupData({}),
+          debuffsLookup: createMockBuffLookupData({}),
+          damageEvents: createMockDamageEvents(),
+          selectedTargetIds: [TARGET_ID],
+          companionCritEvidence,
+        });
+
+      it('lowers static crit damage by FF+Backstabber when neither is slotted', () => {
+        const baseline = run().playerDataMap[PLAYER_ID];
+        const gated = run({
+          [PLAYER_ID]: { fightingFinesseSlotted: false, backstabberSlotted: false },
+        }).playerDataMap[PLAYER_ID];
+
+        expect(baseline.staticCriticalDamage - gated.staticCriticalDamage).toBe(FF_PLUS_BS);
+        // The gate flows into every datapoint.
+        expect(gated.dataPoints[0].criticalDamage).toBe(
+          baseline.dataPoints[0].criticalDamage - FF_PLUS_BS,
+        );
+      });
+
+      it('marks FF/Backstabber sources inactive when not slotted', () => {
+        const gated = run({
+          [PLAYER_ID]: { fightingFinesseSlotted: false, backstabberSlotted: false },
+        }).playerDataMap[PLAYER_ID];
+        const ff = gated.criticalDamageSources.find(
+          (s) => s.source === 'always_on' && s.name === 'Fighting Finesse',
+        )!;
+        const bs = gated.criticalDamageSources.find(
+          (s) => s.source === 'always_on' && s.name === 'Backstabber',
+        )!;
+        expect(ff.wasActive).toBe(false);
+        expect(bs.wasActive).toBe(false);
+      });
+
+      it('is byte-identical to the baseline when evidence is omitted', () => {
+        expect(run()).toEqual(run(undefined));
+      });
+
+      it('leaves a player untouched when evidence is keyed to a different player id', () => {
+        const baseline = run().playerDataMap[PLAYER_ID];
+        const other = run({
+          999: { fightingFinesseSlotted: false, backstabberSlotted: false },
+        }).playerDataMap[PLAYER_ID];
+        expect(other.staticCriticalDamage).toBe(baseline.staticCriticalDamage);
       });
     });
   });

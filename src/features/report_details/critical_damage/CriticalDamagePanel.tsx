@@ -8,6 +8,7 @@ import {
   useFightForContext,
 } from '../../../hooks';
 import type { PhaseTransitionInfo } from '../../../hooks/usePhaseTransitions';
+import { useCompanionCritEvidence } from '../../../hooks/workerTasks/useCompanionCritEvidence';
 import type { ReportFightContextInput } from '../../../store/contextTypes';
 import { getSkeletonForTab, TabId } from '../../../utils/getSkeletonForTab';
 
@@ -30,6 +31,9 @@ export const CriticalDamagePanel: React.FC<CriticalDamagePanelProps> = ({
   const { playerData, isPlayerDataLoading } = usePlayerData({ context: resolvedContext });
   const { criticalDamageData, isCriticalDamageLoading, criticalDamageError } =
     useCriticalDamageTask({ context: resolvedContext });
+  // Built from the SAME snapshots + resolvedContext the crit-damage worker uses, so the
+  // detail view's evidence-driven defaults agree with the worker's baked-in wasActive.
+  const companionCritEvidence = useCompanionCritEvidence(resolvedContext);
 
   const isLoading = isCriticalDamageLoading || isPlayerDataLoading || !fight;
 
@@ -99,6 +103,7 @@ export const CriticalDamagePanel: React.FC<CriticalDamagePanelProps> = ({
       phaseTransitionInfo={phaseTransitionInfo}
       globalFightingFinesseEnabled={globalFightingFinesseEnabled}
       onGlobalFightingFinesseToggle={handleGlobalFightingFinesseToggle}
+      companionCritEvidence={companionCritEvidence}
     />
   );
 };

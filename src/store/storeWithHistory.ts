@@ -23,6 +23,7 @@ import type { EsoLogsClient } from '@/esologsClient';
 import buildEditorReducer from '../features/build-editor/store/buildEditorSlice';
 import loadoutReducer from '../features/loadout-manager/store/loadoutSlice';
 
+import { companionReducer } from './companion';
 import dashboardReducer from './dashboard/dashboardSlice';
 import { eventsReducer } from './events_data';
 import masterDataReducer from './master_data/masterDataSlice';
@@ -38,6 +39,7 @@ import { workerResultsReducer } from './worker_results';
 // Root reducer - adding essential slices
 const rootReducer = combineReducers({
   buildEditor: buildEditorReducer,
+  companion: companionReducer,
   dashboard: dashboardReducer,
   events: eventsReducer,
   loadout: loadoutReducer,

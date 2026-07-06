@@ -8,6 +8,7 @@ import { BuffLookupData } from '@/utils/BuffLookupUtils';
 import {
   calculateDynamicCriticalDamageAtTimestamp,
   calculateStaticCriticalDamage,
+  type CompanionCritEvidence,
   CriticalDamageSourceWithActiveState,
   getAllCriticalDamageSourcesWithActiveState,
 } from '@/utils/CritDamageUtils';
@@ -25,6 +26,12 @@ export interface CriticalDamageCalculationTask {
   debuffsLookup: BuffLookupData;
   damageEvents: DamageEvent[];
   selectedTargetIds?: number[];
+  /**
+   * Per-player ESOTK Companion evidence for the assumed crit-damage stars (Fighting
+   * Finesse / Backstabber), keyed by player id. Absent players fall back to assume-active,
+   * so non-companion reports are byte-identical. POJO of booleans — structured-clone safe.
+   */
+  companionCritEvidence?: Record<number, CompanionCritEvidence>;
 }
 
 export interface CriticalDamageDataPoint {
@@ -79,6 +86,7 @@ export function calculateCriticalDamageData(
     debuffsLookup,
     damageEvents,
     selectedTargetIds,
+    companionCritEvidence,
   } = data;
 
   // BuffLookupData is now a POJO, no deserialization needed
@@ -112,15 +120,19 @@ export function calculateCriticalDamageData(
         return null;
       }
 
+      // Companion evidence for the assumed crit stars, if this player matched a snapshot.
+      const critEvidence = companionCritEvidence?.[player.id];
+
       // Get all critical damage sources with active states for this player
       const allSources = getAllCriticalDamageSourcesWithActiveState(
         deserializedFriendlyBuffsLookup,
         deserializedDebuffsLookup,
         combatantInfo,
+        critEvidence,
       );
 
       // Calculate static critical damage for this player
-      const staticCriticalDamage = calculateStaticCriticalDamage(combatantInfo);
+      const staticCriticalDamage = calculateStaticCriticalDamage(combatantInfo, critEvidence);
 
       // Report progress
       onProgress?.((index + 1) / Object.keys(players).length);
