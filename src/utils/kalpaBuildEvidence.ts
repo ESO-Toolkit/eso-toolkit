@@ -60,12 +60,18 @@ export interface KalpaScribedSkillEvidence {
   affixScript?: string | null;
 }
 
+/** ESOTK Companion snapshots forwarded by Kalpa (raw tables the companion parser normalizes). */
+export interface KalpaCompanionEvidence {
+  snapshots: Array<Record<string, unknown>>;
+}
+
 export interface KalpaBuildEvidence {
   schemaVersion: number;
   extractorVersion?: number | null;
   source: string;
   reportCode?: string | null;
   players: KalpaPlayerBuildEvidence[];
+  companion?: KalpaCompanionEvidence;
 }
 
 export interface KalpaAnonymousMatchSignals {
@@ -408,7 +414,16 @@ function validateKalpaBuildEvidence(value: unknown): KalpaBuildEvidence | undefi
     source: KALPA_BUILD_EVIDENCE_SOURCE,
     reportCode: typeof value.reportCode === 'string' ? value.reportCode : undefined,
     players,
+    companion: validateCompanionEvidence(value.companion),
   };
+}
+
+function validateCompanionEvidence(value: unknown): KalpaCompanionEvidence | undefined {
+  if (!isRecord(value) || !Array.isArray(value.snapshots)) return undefined;
+  const snapshots = value.snapshots.filter((snapshot): snapshot is Record<string, unknown> =>
+    isRecord(snapshot),
+  );
+  return snapshots.length > 0 ? { snapshots } : undefined;
 }
 
 function validateKalpaPlayerEvidence(value: unknown): KalpaPlayerBuildEvidence | undefined {

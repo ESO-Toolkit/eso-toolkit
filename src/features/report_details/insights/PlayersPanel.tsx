@@ -3,7 +3,10 @@ import { useSelector } from 'react-redux';
 
 import { useLogger } from '@/contexts/LoggerContext';
 import { buildMatchableReport } from '@/features/loadout-manager/utils/buildMatchableReport';
-import { parseESOTKCompanionSavedVariables } from '@/features/loadout-manager/utils/esotkCompanionParser';
+import {
+  normalizeCompanionSnapshots,
+  parseESOTKCompanionSavedVariables,
+} from '@/features/loadout-manager/utils/esotkCompanionParser';
 import {
   buildCompanionBuildsForReport,
   type CompanionBuildForPlayer,
@@ -324,6 +327,20 @@ export const PlayersPanel: React.FC<PlayersPanelProps> = ({ context: contextOver
       cancelled = true;
     };
   }, [reportId]);
+
+  // Kalpa forwards the logger's ESOTK Companion snapshots inside the build-evidence sidecar.
+  // When they arrive, feed them into the shared companion store so the companion panel and the
+  // crit-damage graph pick them up automatically — exactly like a manual file upload. Skip when
+  // snapshots are already loaded (e.g. a manual upload) so we never clobber an explicit choice.
+  React.useEffect(() => {
+    const raw = kalpaBuildEvidence?.companion?.snapshots;
+    if (!raw?.length || companionSnapshots.length > 0) return;
+    const snapshots = normalizeCompanionSnapshots(raw);
+    if (snapshots.length > 0) {
+      dispatch(companionSnapshotsUploaded({ snapshots, snapshotCount: snapshots.length }));
+    }
+  }, [kalpaBuildEvidence, companionSnapshots.length, dispatch]);
+
   const { combatantInfoEvents, isCombatantInfoEventsLoading } = useCombatantInfoEvents({
     context: resolvedContext,
   });

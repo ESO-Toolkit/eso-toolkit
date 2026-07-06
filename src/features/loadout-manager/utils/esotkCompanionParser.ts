@@ -355,6 +355,20 @@ export function isESOTKCompanionFormat(luaContent: string): boolean {
 }
 
 /**
+ * Normalize raw companion snapshot tables into typed snapshots. Used for snapshots that
+ * arrive already parsed (e.g. forwarded JSON from Kalpa's build-evidence sidecar) rather than
+ * as a raw Lua file — each entry is the same table shape `normalizeSnapshot` expects.
+ */
+export function normalizeCompanionSnapshots(raw: readonly unknown[]): CompanionSnapshot[] {
+  const out: CompanionSnapshot[] = [];
+  for (const item of raw) {
+    const snapshot = normalizeSnapshot(item as LuaValue);
+    if (snapshot) out.push(snapshot);
+  }
+  return out;
+}
+
+/**
  * Parse an `ESOTKCompanionSV` saved-variables file into typed snapshots.
  * Returns `null` when the file is not an ESOTK Companion save.
  */
