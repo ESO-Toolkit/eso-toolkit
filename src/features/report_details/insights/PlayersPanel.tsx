@@ -256,7 +256,7 @@ export function classAnalysisFromKalpaEvidence(
 
 type CompanionBuildRenderProps = Pick<
   CompanionBuildForPlayer,
-  'championPoints' | 'coaching' | 'stats' | 'effects' | 'scribing'
+  'championPoints' | 'coaching' | 'stats' | 'effects' | 'scribing' | 'distanceMs'
 >;
 
 interface PlayersPanelProps {
@@ -412,6 +412,7 @@ export const PlayersPanel: React.FC<PlayersPanelProps> = ({ context: contextOver
         stats: build.stats,
         effects: build.effects,
         scribing: build.scribing,
+        distanceMs: build.distanceMs,
       };
     });
     return byPlayer;

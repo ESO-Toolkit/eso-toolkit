@@ -107,6 +107,32 @@ function snapshotMs(snapshot: CompanionSnapshot): number {
   return snapshot.ts * 1000;
 }
 
+/**
+ * Rank a snapshot's capture reason for tie-breaking. A combat-end capture is the canonical
+ * end-of-fight build; a manual `/esotk` snapshot may have been taken mid-adjustment, so it
+ * only wins a tie when no combat-end capture is equally close.
+ */
+function reasonRank(snapshot: CompanionSnapshot): number {
+  return snapshot.reason === 'combatEnd' ? 1 : 0;
+}
+
+/**
+ * Whether a candidate snapshot is a better match for an actor than the current best. Prefer
+ * the smaller time distance; on a distance tie prefer a combat-end capture over a manual one;
+ * on a further tie prefer the newer snapshot.
+ */
+function isPreferredMatch(
+  candidateSnapshot: CompanionSnapshot,
+  candidateDistanceMs: number,
+  best: CompanionMatch,
+): boolean {
+  if (candidateDistanceMs !== best.distanceMs) return candidateDistanceMs < best.distanceMs;
+  const candidateReason = reasonRank(candidateSnapshot);
+  const bestReason = reasonRank(best.snapshot);
+  if (candidateReason !== bestReason) return candidateReason > bestReason;
+  return snapshotMs(candidateSnapshot) > snapshotMs(best.snapshot);
+}
+
 function withinWindow(tsMs: number, start: number, end: number): boolean {
   return tsMs >= start - WINDOW_SLOP_MS && tsMs <= end + WINDOW_SLOP_MS;
 }
@@ -205,11 +231,7 @@ export function matchCompanionSnapshots(
       const candidate = candidateDistance(tsMs, report, snapshot, opts);
       if (!candidate) continue;
 
-      if (
-        !best ||
-        candidate.distanceMs < best.distanceMs ||
-        (candidate.distanceMs === best.distanceMs && tsMs > snapshotMs(best.snapshot))
-      ) {
+      if (!best || isPreferredMatch(snapshot, candidate.distanceMs, best)) {
         best = {
           actor,
           snapshot,

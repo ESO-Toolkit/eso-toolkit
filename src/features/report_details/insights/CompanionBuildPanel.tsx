@@ -43,7 +43,15 @@ export interface CompanionBuildPanelProps {
   effects?: CompanionEffect[];
   /** Scribed skills captured directly from the add-on action bar snapshot. */
   scribing?: CompanionScribedSkill[];
+  /**
+   * How far (ms) the matched capture sits outside this fight's window. When it's more than a
+   * minute away the build was borrowed from an adjacent pull, so we flag it as approximate.
+   */
+  distanceMs?: number;
 }
+
+/** Only badge a borrowed build once the capture is at least this far from the fight window. */
+const BORROWED_BUILD_THRESHOLD_MS = 60_000;
 
 const SECTION_TITLE_SX = {
   fontWeight: 'bold',
@@ -248,6 +256,7 @@ export const CompanionBuildPanel: React.FC<CompanionBuildPanelProps> = ({
   stats,
   effects,
   scribing,
+  distanceMs,
 }) => {
   const theme = useTheme();
   const rows = React.useMemo(() => statRows(stats), [stats]);
@@ -269,8 +278,28 @@ export const CompanionBuildPanel: React.FC<CompanionBuildPanelProps> = ({
   const hasScribing = capturedScribing.length > 0;
   if (!hasCp && !hasCoaching && !hasStats && !hasConsumables && !hasScribing) return null;
 
+  // When no capture landed inside this fight's window, the build was borrowed from the
+  // nearest adjacent pull — flag it so it isn't read as the exact build used in this fight.
+  const borrowedMinutes =
+    distanceMs && distanceMs >= BORROWED_BUILD_THRESHOLD_MS ? Math.round(distanceMs / 60_000) : 0;
+
   return (
     <Box sx={{ mt: 1 }} data-testid="companion-build-panel">
+      {borrowedMinutes > 0 && (
+        <Tooltip
+          title={`No ESOTK Companion capture landed inside this fight — showing the nearest snapshot, about ${borrowedMinutes} min away. It may not reflect the build used in this fight.`}
+          placement="top-start"
+        >
+          <Chip
+            size="small"
+            variant="outlined"
+            color="warning"
+            icon={<WarningIcon />}
+            label={`Nearest capture · ${borrowedMinutes} min away`}
+            sx={{ mb: 1, '& .MuiChip-label': { fontSize: '0.58rem' } }}
+          />
+        </Tooltip>
+      )}
       {hasCp && championPoints && (
         <Box sx={{ mb: hasConsumables || hasScribing || hasStats || hasCoaching ? 2 : 0 }}>
           <Typography variant="body2" sx={SECTION_TITLE_SX}>

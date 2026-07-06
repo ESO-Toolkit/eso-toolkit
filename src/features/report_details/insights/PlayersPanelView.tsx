@@ -88,7 +88,10 @@ interface PlayersPanelViewProps {
   /** Per-player companion build data parsed from an uploaded ESOTKCompanion SavedVariables file */
   companionBuildsByPlayer?: Record<
     string,
-    Pick<CompanionBuildForPlayer, 'championPoints' | 'coaching' | 'stats' | 'effects' | 'scribing'>
+    Pick<
+      CompanionBuildForPlayer,
+      'championPoints' | 'coaching' | 'stats' | 'effects' | 'scribing' | 'distanceMs'
+    >
   >;
   /** Current companion upload status for the toolbar chip */
   companionUpload?: {

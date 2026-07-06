@@ -211,7 +211,7 @@ interface PlayerCardProps {
    */
   companionBuild?: Pick<
     CompanionBuildForPlayer,
-    'championPoints' | 'coaching' | 'stats' | 'effects' | 'scribing'
+    'championPoints' | 'coaching' | 'stats' | 'effects' | 'scribing' | 'distanceMs'
   >;
 }
 
@@ -2184,6 +2184,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                       stats={companionBuild.stats}
                       effects={companionBuild.effects}
                       scribing={companionBuild.scribing}
+                      distanceMs={companionBuild.distanceMs}
                     />
                   )}
                 </Box>
