@@ -10,7 +10,14 @@ import { usePerfTier } from '../../../hooks/usePerfTier';
 import { Logger, LogLevel } from '../../../utils/logger';
 import { MapTimeline } from '../../../utils/mapTimelineUtils';
 import { TimestampPositionLookup } from '../../../workers/calculations/CalculateActorPositions';
+import { RenderPriority } from '../constants/renderPriorities';
 import { MapMarkersState, ShapeKind, ShapeStyle } from '../types/mapMarkers';
+import {
+  decideFrameCapPaint,
+  SEEK_JUMP_MS,
+  type FrameCapGateValue,
+  type FrameCapState,
+} from '../utils/frameCap';
 import { LongPressTracker } from '../utils/longPress';
 import { DEFAULT_ACTOR_SCALE, computeActorScaleFromFightArea } from '../utils/mapScaling';
 import { extractPlayerPaths, DEFAULT_PATH_SAMPLING } from '../utils/pathUtils';
@@ -190,6 +197,82 @@ const AnimationFrameSceneActors: React.FC<AnimationFrameSceneActorsProps> = ({
  */
 const RENDER_TAIL_FRAMES = 4;
 
+interface FrameCapGateProps {
+  /** Cap target from the quality flags, or null = uncapped (gate inert). */
+  frameCapFps: number | null;
+  timeRef: React.RefObject<number> | { current: number };
+  /** Live playback flag from FightReplay3D — the cap applies ONLY during continuous playback. */
+  isPlayingRef: React.RefObject<boolean>;
+  /** Shared per-rAF verdict consumed by RenderLoop / actors / names. */
+  capGateRef: React.RefObject<FrameCapGateValue>;
+}
+
+/**
+ * Computes the frame-cap verdict for THIS rAF at a priority before every other
+ * useFrame (including drei OrbitControls' internal -1). Pure decision logic in
+ * utils/frameCap.ts; this component owns the refs and the bypass triple:
+ *   1. not playing — paused scrubs/orbits/commit repaints stay snappy, and the
+ *      RENDER_TAIL drain + pause-restore repaints are never deferred;
+ *   2. a playhead jump > SEEK_JUMP_MS — timeline clicks, chapter jumps, A-B
+ *      loop wrap paint immediately mid-playback;
+ *   3. camera interaction — OrbitControls fires 'change' for drag, damping,
+ *      wheel and pinch (CanvasWheelZoom dispatches it synthetically), so
+ *      orbiting during capped playback paints at panel rate while it lasts.
+ */
+const FrameCapGate: React.FC<FrameCapGateProps> = ({
+  frameCapFps,
+  timeRef,
+  isPlayingRef,
+  capGateRef,
+}) => {
+  const { controls } = useThree();
+  const capStateRef = useRef<FrameCapState>({ nextDeadlineMs: null });
+  const lastTimeRef = useRef<number | null>(null);
+  const interactionRef = useRef(false);
+
+  useEffect(() => {
+    if (!controls) return;
+    const onChange = (): void => {
+      interactionRef.current = true;
+    };
+    const orbit = controls as unknown as {
+      addEventListener: (type: string, cb: () => void) => void;
+      removeEventListener: (type: string, cb: () => void) => void;
+    };
+    orbit.addEventListener('change', onChange);
+    return () => orbit.removeEventListener('change', onChange);
+  }, [controls]);
+
+  useFrame((_state, delta) => {
+    if (frameCapFps == null) {
+      capGateRef.current.skip = false;
+      // Fresh anchor whenever the cap re-engages.
+      capStateRef.current = { nextDeadlineMs: null };
+      lastTimeRef.current = null;
+      return;
+    }
+    const t = timeRef.current ?? 0;
+    const seekJump =
+      lastTimeRef.current !== null && Math.abs(t - lastTimeRef.current) > SEEK_JUMP_MS;
+    lastTimeRef.current = t;
+
+    const bypass = !isPlayingRef.current || seekJump || interactionRef.current;
+    interactionRef.current = false;
+
+    const decision = decideFrameCapPaint(
+      performance.now(),
+      delta * 1000,
+      capStateRef.current,
+      1000 / frameCapFps,
+      bypass,
+    );
+    capStateRef.current = decision.state;
+    capGateRef.current.skip = !decision.paint;
+  }, RenderPriority.FRAME_CAP_GATE);
+
+  return null;
+};
+
 interface RenderLoopProps {
   timeRef: React.RefObject<number> | { current: number };
   followingActorIdRef: React.RefObject<number | null>;
@@ -223,6 +306,8 @@ interface RenderLoopProps {
    * composer (RenderPass → bloom → OutputPass) so bright celestials glow; otherwise a plain gl.render.
    */
   composerRef: React.RefObject<BloomComposerHandle | null>;
+  /** Frame-cap verdict from FrameCapGate — skip=true defers this frame's paint (budget untouched). */
+  capGateRef: React.RefObject<FrameCapGateValue>;
 }
 
 /**
@@ -248,6 +333,7 @@ const RenderLoop: React.FC<RenderLoopProps> = ({
   shadowDirtyRef,
   paintedRef,
   composerRef,
+  capGateRef,
 }) => {
   const { gl, scene, camera, controls } = useThree();
 
@@ -307,6 +393,16 @@ const RenderLoop: React.FC<RenderLoopProps> = ({
     //     which the commit-refill effect covers.
     if (followingActorIdRef.current !== null) {
       renderBudgetRef.current = RENDER_TAIL_FRAMES;
+    }
+
+    // Frame cap: a capped-out frame defers the paint WITHOUT consuming budget or
+    // clearing shadowDirtyRef — both are only mutated inside the paint branch
+    // below, so they stay latched and the next allowed frame paints with the
+    // shadow regenerated. paintedRef=false tells the controllers this frame did
+    // not paint (they additionally freeze all sampling while the cap is active).
+    if (capGateRef.current.skip) {
+      paintedRef.current = false;
+      return;
     }
 
     // Record whether this frame paints, for the adaptive-resolution controller (idle vs rendered).
@@ -549,12 +645,21 @@ export interface Arena3DSceneProps {
   /** Governor requests a new level (escalate/recover one effect tier). */
   onQualityLevelChange?: (level: number) => void;
   /**
+   * Live playback flag (never re-renders). Consumed by FrameCapGate — the
+   * 30fps cap applies only during continuous playback; paused interaction
+   * always paints immediately.
+   */
+  isPlayingRef?: React.RefObject<boolean>;
+  /**
    * True when the replay is a mobile device inside the pseudo-fullscreen overlay. Drives the touch
    * gesture policy: OrbitControls pan is disabled so two fingers are exclusively pinch-zoom
    * (CanvasWheelZoom), leaving one-finger rotate clean. Desktop passes false (pan stays on).
    */
   mobileImmersive?: boolean;
 }
+
+/** Stable always-false fallback for the (defensive) case where no isPlayingRef is supplied. */
+const NEVER_PLAYING_REF: React.RefObject<boolean> = { current: false };
 
 /**
  * High-frequency 3D scene that updates independently of React state.
@@ -591,6 +696,7 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
   qualityPreset = 'auto',
   autoQualityLevel = 0,
   onQualityLevelChange,
+  isPlayingRef = NEVER_PLAYING_REF,
   mobileImmersive = false,
 }) => {
   // Touch-gesture policy for OrbitControls. `mobileImmersive` already folds in (mobile && immersive),
@@ -614,6 +720,8 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
   // DPR-exhaustion status: AdaptiveResolution writes it (true when DPR is at floor or its
   // effectiveness guard fired); QualityGovernor reads it to gate effect escalation (DPR first).
   const dprExhaustedRef = useRef(false);
+  // Frame-cap verdict for THIS rAF, written by FrameCapGate (priority -10) before any consumer runs.
+  const capGateRef = useRef<FrameCapGateValue>({ skip: false });
   useEffect(() => {
     renderBudgetRef.current = RENDER_TAIL_FRAMES;
     shadowDirtyRef.current = true;
@@ -894,6 +1002,13 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
       {/* Bloom post-processing (dropped at quality tier 1+ / performance mode). Publishes its render
           handle to composerRef; RenderLoop routes the gated render through it so celestials glow. */}
       {qualityFlags.bloom && <BloomComposer composerRef={composerRef} samples={bloomSamples} />}
+      {/* Frame-cap verdict — runs before every other useFrame; inert when uncapped */}
+      <FrameCapGate
+        frameCapFps={qualityFlags.frameCapFps}
+        timeRef={timeRef}
+        isPlayingRef={isPlayingRef}
+        capGateRef={capGateRef}
+      />
       {/* Manual render loop - lowest priority to render after all updates, gated on-demand */}
       <RenderLoop
         timeRef={timeRef}
@@ -902,6 +1017,7 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
         shadowDirtyRef={shadowDirtyRef}
         paintedRef={paintedRef}
         composerRef={composerRef}
+        capGateRef={capGateRef}
       />
       {/* Dynamic render-resolution scaler — holds ~120fps on weaker GPUs / 4K / heavy fights by
           trading resolution only under sustained load, and stays at full quality (no change) when
@@ -912,6 +1028,7 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
         paintedRef={paintedRef}
         markDirty={markSceneDirty}
         exhaustedRef={dprExhaustedRef}
+        frameCapActive={qualityFlags.frameCapFps != null}
       />
       {/* Adaptive quality governor — the tier BELOW resolution scaling. When a weak/throttled GPU
           stays below target after DPR is at floor, it drops effects (bloom → IBL/cosmic → shadows)

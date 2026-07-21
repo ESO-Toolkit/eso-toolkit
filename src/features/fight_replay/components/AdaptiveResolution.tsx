@@ -32,6 +32,18 @@ interface AdaptiveResolutionProps {
    * first crack at a shortfall. Pure status write — does not affect any DPR decision.
    */
   exhaustedRef?: React.RefObject<boolean>;
+  /**
+   * True while the 30fps frame cap is active (FRAME_CAP / BAREBONES rungs).
+   * Freezes ALL measurement — workload sampling, display-interval learning,
+   * and DPR decisions — because capped painted cadence (~33ms) would read as
+   * "device is slow" and drive DPR to the floor, and capped-idle deltas would
+   * poison the refresh-rate learner. DPR holds its current value (the 33ms
+   * budget has ~4× the headroom of 120fps; the barebones preset separately
+   * pins DPR via its maxDpr flag). The authority re-assert, exhaustion status,
+   * and pause-restore stay live. Windows reset on engage AND lift so no stale
+   * samples are ever acted on.
+   */
+  frameCapActive?: boolean;
 }
 
 // Rolling window of measured playback frame times before a decision is made (~0.6–0.7s at 120fps).
@@ -80,6 +92,7 @@ export const AdaptiveResolution: React.FC<AdaptiveResolutionProps> = ({
   paintedRef,
   markDirty,
   exhaustedRef,
+  frameCapActive = false,
 }) => {
   const setDpr = useThree((s) => s.setDpr);
   const gl = useThree((s) => s.gl);
@@ -138,6 +151,17 @@ export const AdaptiveResolution: React.FC<AdaptiveResolutionProps> = ({
     cooldownRef.current = 0; // re-evaluate immediately at the new tier (no stale cooldown stutter)
     playbackDprRef.current = null;
   }, [maxDpr, minDpr, setDpr, markDirty]);
+
+  // Frame-cap engage/lift: the measurement windows described a different regime — start fresh and
+  // act on nothing stale (mirrors the cap-change reset above). idleSamplesRef is deliberately KEPT:
+  // capped frames were never fed into it (the freeze below runs before the idle branch), the panel
+  // didn't change, and the resize/visibility resets still cover real display changes.
+  useEffect(() => {
+    samplesRef.current.length = 0;
+    cooldownRef.current = 0;
+    lastDeclineAvgRef.current = null;
+    guardActiveRef.current = false;
+  }, [frameCapActive]);
 
   // Re-learn the display interval after events that can change the refresh rate or produce bogus
   // first deltas: a resize (incl. fullscreen / moving to another monitor / a devicePixelRatio
@@ -238,6 +262,11 @@ export const AdaptiveResolution: React.FC<AdaptiveResolutionProps> = ({
         markDirty();
       }
     }
+
+    // Frame cap active: freeze all measurement (workload AND idle-interval learning) — capped
+    // cadence must never be read as slowness or learned as the panel refresh. Everything above
+    // (authority re-assert, exhaustion status, pause-restore/resume) stays live.
+    if (frameCapActive) return;
 
     if (!paintedRef.current) {
       // Render loop skipped this frame → genuinely idle → vsync-paced → a clean display-interval

@@ -1420,6 +1420,7 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
           onQualityPresetChange={handleQualityPresetChange}
           autoQualityLevel={autoQualityLevel}
           onQualityLevelChange={handleQualityLevelChange}
+          isPlayingRef={isPlayingRef}
           statsPanelEnabled={statsPanelEnabled}
           onToggleStats={toggleStats}
           // On mobile immersive the dedicated shell owns the close + all controls, so suppress

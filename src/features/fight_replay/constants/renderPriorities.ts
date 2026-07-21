@@ -12,6 +12,13 @@
  * 5. Manual render (executes last to output final frame)
  */
 export enum RenderPriority {
+  /**
+   * Frame-cap verdict — must run before EVERYTHING each rAF, including drei
+   * OrbitControls' internal useFrame at priority -1, so every gated consumer
+   * (RenderLoop, actors, names) reads this frame's verdict, never last frame's.
+   */
+  FRAME_CAP_GATE = -10,
+
   /** Follower camera updates */
   FOLLOWER_CAMERA = 0,
 

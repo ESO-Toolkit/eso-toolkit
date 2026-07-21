@@ -162,6 +162,8 @@ interface Arena3DProps {
   autoQualityLevel?: number;
   /** Governor requests a new quality level (escalate/recover one effect tier). */
   onQualityLevelChange?: (level: number) => void;
+  /** Live playback flag for the frame-cap gate (cap applies only while playing). */
+  isPlayingRef?: React.RefObject<boolean>;
   statsPanelEnabled?: boolean;
   onToggleStats?: () => void;
   /** True when the replay block is fullscreen/immersive (drives the fill-height layout + toggle icon). */
@@ -229,6 +231,7 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
   onQualityPresetChange,
   autoQualityLevel = 0,
   onQualityLevelChange,
+  isPlayingRef,
   statsPanelEnabled: statsPanelEnabledProp,
   onToggleStats,
   reservedInset,
@@ -874,6 +877,7 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
             qualityPreset={qualityPreset}
             autoQualityLevel={autoQualityLevel}
             onQualityLevelChange={onQualityLevelChange}
+            isPlayingRef={isPlayingRef}
             mobileImmersive={mobileImmersive}
           />
         </Canvas>
