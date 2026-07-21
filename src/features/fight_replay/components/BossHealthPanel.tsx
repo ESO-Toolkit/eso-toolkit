@@ -23,7 +23,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActorPosition,
   TimestampPositionLookup,
-  getAllActorPositionsAtTimestamp,
+  getActorPositionsByIdAtClosestTimestamp,
 } from '../../../workers/calculations/CalculateActorPositions';
 
 interface BossHealthPanelProps {
@@ -110,6 +110,8 @@ export const BossHealthPanel: React.FC<BossHealthPanelProps> = ({
     // Per-bar last-written values, so a moving playhead still only touches the DOM for bars whose
     // displayed value actually changed (e.g. a boss already at a steady % between samples).
     const lastWritten = new Map<number, { width: string; color: string; text: string }>();
+    // Reused across ticks (length-reset per tick) so the boss scan allocates nothing per frame.
+    const bossScratch: ActorPosition[] = [];
 
     const tick = (): void => {
       const currentTime = timeRef.current;
@@ -118,11 +120,17 @@ export const BossHealthPanel: React.FC<BossHealthPanelProps> = ({
         return;
       }
       lastTickTime = currentTime;
-      const allActors = getAllActorPositionsAtTimestamp(lookup, currentTime);
+      // By-reference record lookup + for-in, NOT getAllActorPositionsAtTimestamp:
+      // that helper Object.values-allocates a fresh array every moving rAF — a
+      // steady GC drip in the playback hot path. Integer-like keys enumerate in
+      // ascending order, so the same MAX_BOSSES bosses are chosen either way.
+      const positionsById = getActorPositionsByIdAtClosestTimestamp(lookup, currentTime);
 
       // Filter to bosses with health (same rule as the old HUD).
-      const bossActors: ActorPosition[] = [];
-      for (const actor of allActors) {
+      bossScratch.length = 0;
+      const bossActors = bossScratch;
+      for (const key in positionsById) {
+        const actor = positionsById[key as unknown as number];
         if (actor.type === 'boss' && actor.health) {
           bossActors.push(actor);
           if (bossActors.length >= MAX_BOSSES) break;
