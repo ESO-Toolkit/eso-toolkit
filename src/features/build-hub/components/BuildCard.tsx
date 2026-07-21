@@ -279,7 +279,6 @@ export const BuildCard: React.FC<BuildCardProps> = React.memo(
                         borderRadius: '6px',
                         fontSize: '0.72rem',
                         fontWeight: 700,
-                        backdropFilter: 'blur(8px)',
                         background: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)',
                         border: isDark
                           ? '1px solid rgba(255,255,255,0.12)'
@@ -307,7 +306,6 @@ export const BuildCard: React.FC<BuildCardProps> = React.memo(
                 mt: 0.5,
                 borderRadius: '8px',
                 background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.025)',
-                backdropFilter: 'blur(6px)',
                 border: isDark ? '1px solid rgba(255,255,255,0.06)' : '1px solid rgba(0,0,0,0.05)',
                 overflow: 'hidden',
               }}
