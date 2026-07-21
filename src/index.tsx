@@ -2,14 +2,11 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 
 import App from './App';
-import { preloadIconData } from './features/loadout-manager/utils/itemIconResolver';
 import './index.css';
 import './styles/view-transitions.css';
 import store, { type RootState } from './store/storeWithHistory';
 import { setPerfTier } from './store/ui/uiSlice';
 import { heuristicPerfTier } from './utils/detectPerfTier';
-
-preloadIconData();
 
 // First-paint perf-tier priming. For a first-time visitor with no
 // persisted store, the default is 'medium' — which would leave a low-end
@@ -59,3 +56,21 @@ root.render(
   // Note: Production builds don't use Strict Mode, so this only affects development.
   <App />,
 );
+
+// Warm the item-icon cache off the critical path. A STATIC import of
+// itemIconResolver here would drag the ~11 MB itemIdMap (+ ~2 MB set
+// collections) into the entry chunk, parsed before first paint on every
+// page — the dynamic import keeps that data in its own async chunk, and
+// idle scheduling keeps even the fetch out of the startup window. This is
+// best-effort: consumers that need the data (GearPicker, Extract Build)
+// await preloadIconData() themselves and retry on failure.
+const warmItemIconData = (): void => {
+  void import('./features/loadout-manager/utils/itemIconResolver')
+    .then((m) => m.preloadIconData())
+    .catch(() => {});
+};
+if (typeof window.requestIdleCallback === 'function') {
+  window.requestIdleCallback(warmItemIconData, { timeout: 5000 });
+} else {
+  window.setTimeout(warmItemIconData, 2000);
+}

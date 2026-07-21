@@ -308,8 +308,11 @@ ${downloadBtn}
           },
         },
       },
-      // Increase chunk size warning limit
-      chunkSizeWarningLimit: 1000,
+      // Keep the warning limit low so ENTRY-chunk regressions are loud in CI.
+      // Known-large ASYNC chunks (item-data, itemIcons, FightReplay, charts)
+      // will warn — informational; what must never regress is the eager index
+      // chunk creeping back toward its old 11 MB of item data.
+      chunkSizeWarningLimit: 600,
     },
 
     // Define global constants

@@ -2,6 +2,11 @@
  * @jest-environment jsdom
  */
 
+// Side-effect: registers the gearItemOracle with REAL item data — the armor
+// weight assertions below use concrete item ids (Mother's Sorrow, Plague
+// Doctor), and resolveApparelWeight resolves their set names via the oracle.
+import '../itemIconResolver';
+
 import { convertBuildToCSPS, exportBuildToCSPSLua } from '../../../build-editor/utils/cspsExport';
 import {
   convertCSPSCharacterToBuild,

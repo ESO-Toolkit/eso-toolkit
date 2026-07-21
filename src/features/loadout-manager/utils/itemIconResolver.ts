@@ -20,6 +20,8 @@ import { Logger } from '@/utils/logger';
 import { getItemInfo } from '../data/itemIdMap';
 import type { SlotType } from '../data/slotTypes';
 
+import { registerGearItemOracle } from './gearItemOracle';
+
 type IconData = {
   icons: string[];
   items: Record<string, number>;
@@ -514,3 +516,11 @@ export async function prefetchItemIcons(itemIds: number[]): Promise<void> {
     await new Promise((r) => setTimeout(r, 50));
   }
 }
+
+// Register the item-data-backed implementations for modules in the EAGER
+// bundle graph (buildEditorSlice, setArmorWeights) that must not import
+// itemIdMap statically — see gearItemOracle.ts for the invariant.
+registerGearItemOracle({
+  getSetNameForItem: (itemId) => getItemInfo(itemId)?.setName,
+  isTwoHandedWeapon: (itemId) => isTwoHandedWeapon(itemId),
+});

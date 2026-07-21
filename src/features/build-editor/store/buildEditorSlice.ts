@@ -8,13 +8,15 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { getClassMasteryLine } from '@/data/skill-lines/class/classMastery';
 
-import { getItemInfo } from '../../loadout-manager/data/itemIdMap';
 import type {
   ArmorWeight,
   GearConfig,
   SkillsConfig,
 } from '../../loadout-manager/types/loadout.types';
-import { isTwoHandedWeapon } from '../../loadout-manager/utils/itemIconResolver';
+// This slice lives in the ROOT store (imported by the entry chunk) and must
+// never static-import itemIdMap/itemIconResolver — the oracle indirection
+// keeps ~11 MB of item data out of the startup bundle (see gearItemOracle.ts).
+import { getSetNameForItem, isTwoHandedWeaponId } from '../../loadout-manager/utils/gearItemOracle';
 import { EQUIP_SLOTS, getDefaultLinesForClass } from '../data/esoStaticData';
 import { getLockedArmorWeight } from '../data/setArmorWeights';
 import { DEFAULT_STAT_OVERRIDES } from '../engine/stat-constants';
@@ -383,7 +385,7 @@ export const buildEditorSlice = createSlice({
           // trial drops) can't be re-weighted — the single-slot UI shows them as
           // read-only, so skip them here too rather than persist an impossible
           // weight that exports/roster display would read verbatim.
-          const setName = piece.id != null ? getItemInfo(Number(piece.id))?.setName : undefined;
+          const setName = piece.id != null ? getSetNameForItem(Number(piece.id)) : undefined;
           const isLocked = getLockedArmorWeight(setName) !== null;
           if (!isLocked) {
             if (weight === null) {
@@ -489,7 +491,7 @@ export const buildEditorSlice = createSlice({
           [20, 21],
         ] as const) {
           const mainId = target.gear[mainSlot]?.id;
-          if (mainId != null && isTwoHandedWeapon(Number(mainId))) {
+          if (mainId != null && isTwoHandedWeaponId(Number(mainId))) {
             delete target.gear[offSlot];
           }
         }
