@@ -109,6 +109,7 @@ import { useFriendlyBuffEvents } from '../hooks/events/useFriendlyBuffEvents';
 import { useReportData } from '../hooks/useReportData';
 import { useReportMasterData } from '../hooks/useReportMasterData';
 import { useRoleColors } from '../hooks/useRoleColors';
+import { useVisibilityGatedInterval } from '../hooks/useVisibilityGatedInterval';
 import { useSelectedReportAndFight } from '../ReportFightContext';
 import { setParseReport, clearParseReport } from '../store/parse_analysis/parseAnalysisSlice';
 import { setReportData } from '../store/report/reportSlice';
@@ -226,6 +227,20 @@ const extractReportInfo = (url: string): { reportId: string; fightId: string | n
 
 /** How often to poll for new fights added to the report while the page is open */
 const POLL_INTERVAL_MS = 15_000;
+
+/**
+ * Isolated 1-second countdown to the next poll. Owning the tick here keeps the
+ * per-second setState re-render confined to this leaf — previously the tick
+ * lived in the page and re-rendered the entire ~2,900-line component every
+ * second the page was open. Visibility-gated like the poll itself.
+ */
+const PollCountdown: React.FC<{ nextPollAt: number | null }> = ({ nextPollAt }) => {
+  const [now, setNow] = useState(() => Date.now());
+  useVisibilityGatedInterval(() => setNow(Date.now()), 1000, { enabled: nextPollAt !== null });
+  if (nextPollAt === null) return null;
+  const seconds = Math.max(0, Math.ceil((nextPollAt - now) / 1000));
+  return <>— next check in {seconds}s</>;
+};
 
 /**
  * Public demo log users can explore the parse analysis tool without their own log.
@@ -1049,39 +1064,34 @@ const ParseAnalysisPageContent: React.FC = () => {
     }
   }, [logUrl, analyzeReport, navigate]);
 
-  /** Seconds until the next poll fires — shown in the navigation strip */
-  const [pollCountdown, setPollCountdown] = useState(POLL_INTERVAL_MS / 1000);
+  /** Wall-clock deadline of the next poll — drives the isolated PollCountdown leaf. */
+  const [nextPollAt, setNextPollAt] = useState<number | null>(null);
 
-  // Mirror loading into a ref so the poll interval can read it without listing
-  // state.loading as a dependency (which tore down + recreated the timers and
-  // reset the visible countdown on every analyze).
+  // Mirror loading into a ref so the poll can read it without resetting the
+  // cadence (listing state.loading as a dependency tore the timer down and
+  // restarted the visible countdown on every analyze).
   const loadingRef = useRef(state.loading);
   useEffect(() => {
     loadingRef.current = state.loading;
   }, [state.loading]);
 
-  // Poll for new fights added to the report while the page is open.
-  // Restarts when the report changes; uses closure-captured values so the
-  // interval always reflects the latest fight count.
+  const pollEnabled = Boolean(state.reportCode && client && isReady && isLoggedIn);
+
+  // Arm/refresh the visible deadline when polling starts or stops.
   useEffect(() => {
-    if (!state.reportCode || !client || !isReady || !isLoggedIn) return;
+    setNextPollAt(pollEnabled ? Date.now() + POLL_INTERVAL_MS : null);
+  }, [pollEnabled, state.reportCode]);
 
-    const reportCode = state.reportCode;
-    const currentFightCount = availableFights.length;
-    const intervalSec = POLL_INTERVAL_MS / 1000;
-
-    setPollCountdown(intervalSec);
-
-    // 1-second countdown tick
-    const countdownId = setInterval(() => {
-      setPollCountdown((prev) => (prev <= 1 ? intervalSec : prev - 1));
-    }, 1000);
-
-    const timerId = setInterval(() => {
-      if (loadingRef.current) {
-        setPollCountdown(intervalSec); // reset visual while loading
-        return;
-      }
+  // Poll for new fights added to the report while the page is open.
+  // Visibility-gated: pauses while the tab is hidden, catches up on return.
+  // The hook reads the latest render values through its callback ref, so the
+  // fight count and report code are always current without cadence resets.
+  useVisibilityGatedInterval(
+    () => {
+      setNextPollAt(Date.now() + POLL_INTERVAL_MS);
+      if (loadingRef.current || !state.reportCode || !client) return;
+      const reportCode = state.reportCode;
+      const currentFightCount = availableFights.length;
       void (async () => {
         try {
           const response = await client.query<GetReportByCodeQuery>({
@@ -1112,20 +1122,10 @@ const ParseAnalysisPageContent: React.FC = () => {
           logger.debug('Fight poll error (ignored)', { error: err });
         }
       })();
-    }, POLL_INTERVAL_MS);
-
-    return () => {
-      clearInterval(countdownId);
-      clearInterval(timerId);
-    };
-  }, [
-    state.reportCode,
-    availableFights.length,
-    client,
-    isReady,
-    isLoggedIn,
-    handleAnalyzeFromParams,
-  ]);
+    },
+    POLL_INTERVAL_MS,
+    { enabled: pollEnabled },
+  );
 
   const handleSelectFight = useCallback(
     (fightId: number): void => {
@@ -2240,7 +2240,7 @@ const ParseAnalysisPageContent: React.FC = () => {
                 {availableFights.length === 1 ? 'Latest Fight' : 'Available Fights'}
               </Typography>
               <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                — next check in {pollCountdown}s
+                <PollCountdown nextPollAt={nextPollAt} />
               </Typography>
             </Stack>
             <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
