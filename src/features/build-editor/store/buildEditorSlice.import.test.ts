@@ -6,9 +6,11 @@
  */
 
 // Treat item id 9999 as a two-handed weapon so we can assert off-hand clearing
-// without coupling the test to the real itemIdMap.
-jest.mock('../../loadout-manager/utils/itemIconResolver', () => ({
-  isTwoHandedWeapon: (id: number) => id === 9999,
+// without coupling the test to the real itemIdMap. The slice reads item facts
+// through gearItemOracle (never itemIdMap directly — bundle-size seam).
+jest.mock('../../loadout-manager/utils/gearItemOracle', () => ({
+  isTwoHandedWeaponId: (id: number) => id === 9999,
+  getSetNameForItem: () => undefined,
 }));
 
 import { getClassMasteryLine } from '@/data/skill-lines/class/classMastery';

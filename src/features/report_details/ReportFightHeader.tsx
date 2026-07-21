@@ -26,7 +26,7 @@ import type { PlayerDetailsWithRole } from '@/store/player_data/playerDataSlice'
 import type { RootState } from '@/store/storeWithHistory';
 import { createDefaultRoster } from '@/types/roster';
 import { cleanArray } from '@/utils/cleanArray';
-import { convertLogPlayersToRoster, type LogPlayerDetails } from '@/utils/logToRoster';
+import type { LogPlayerDetails } from '@/utils/logToRoster';
 import { encodeRosterToURL } from '@/utils/rosterEncoding';
 
 function getWipeColor(percentage: number): string {
@@ -287,6 +287,12 @@ export const ReportFightHeader: React.FC = () => {
 
       const details: LogPlayerDetails = { tanks, healers, dps };
       const defaultRoster = createDefaultRoster();
+
+      // Dynamic import: logToRoster transitively pulls the ~11 MB itemIdMap
+      // (via playerToBuild → combatLogGearMapping); a static import here would
+      // drag it into the entry chunk since this header renders eagerly on the
+      // report route. Loaded on click instead — the handler already awaits.
+      const { convertLogPlayersToRoster } = await import('@/utils/logToRoster');
 
       // CombatantInfoEvents from Redux use the canonical type which has `ability` on auras;
       // convertLogPlayersToRoster expects the same shape via LogCombatantInfoEvent

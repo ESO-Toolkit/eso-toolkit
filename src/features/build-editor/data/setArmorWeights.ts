@@ -14,8 +14,11 @@
  * (regenerate with `node scripts/generate-set-armor-weights.mjs`).
  */
 
-import { getItemInfo } from '../../loadout-manager/data/itemIdMap';
 import type { ArmorWeight } from '../../loadout-manager/types/loadout.types';
+// Imported by buildEditorSlice (root store → entry chunk), so this module
+// must not static-import itemIdMap — set names resolve through the oracle
+// registered by itemIconResolver (see gearItemOracle.ts).
+import { getSetNameForItem } from '../../loadout-manager/utils/gearItemOracle';
 
 import { LOCKED_SET_ARMOR_WEIGHTS } from './setArmorWeights.generated';
 
@@ -72,7 +75,7 @@ export function resolveApparelWeight(
 ): ArmorWeight {
   const numericId = typeof id === 'number' ? id : Number(id);
   if (Number.isFinite(numericId) && numericId > 0) {
-    const locked = getLockedArmorWeight(getItemInfo(numericId)?.setName);
+    const locked = getLockedArmorWeight(getSetNameForItem(numericId));
     if (locked) return locked;
   }
   return storedWeight ?? 'heavy';

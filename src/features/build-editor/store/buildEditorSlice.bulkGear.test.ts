@@ -4,11 +4,13 @@
  * the single-slot UI shows as read-only. Trait/enchant still apply to any piece.
  *
  * The item/lock data is mocked so the test is deterministic: item 100 belongs to
- * a locked set, item 200 to a free (all-weight) set.
+ * a locked set, item 200 to a free (all-weight) set. The slice reads item facts
+ * through gearItemOracle (never itemIdMap directly — bundle-size seam).
  */
 
-jest.mock('../../loadout-manager/data/itemIdMap', () => ({
-  getItemInfo: (id: number) => ({ setName: id === 100 ? 'Locked Set' : 'Free Set' }),
+jest.mock('../../loadout-manager/utils/gearItemOracle', () => ({
+  getSetNameForItem: (id: number) => (id === 100 ? 'Locked Set' : 'Free Set'),
+  isTwoHandedWeaponId: () => false,
 }));
 jest.mock('../data/setArmorWeights', () => ({
   getLockedArmorWeight: (setName?: string | null) => (setName === 'Locked Set' ? 'medium' : null),
