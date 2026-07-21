@@ -14,6 +14,7 @@ import {
   staggerStacksReducer,
   elementalWeaknessStacksReducer,
   playerTravelDistancesReducer,
+  playerPanelAnalysisReducer,
   scribingDetectionsReducer,
 } from './taskSlices';
 
@@ -32,6 +33,7 @@ const workerResultsReducer = combineReducers({
   calculateDebuffLookup: debuffLookupReducer,
   calculateHostileBuffLookup: hostileBuffLookupReducer,
   calculatePlayerTravelDistances: playerTravelDistancesReducer,
+  calculatePlayerPanelAnalysis: playerPanelAnalysisReducer,
   calculateScribingDetections: scribingDetectionsReducer,
 });
 
@@ -49,6 +51,7 @@ export {
   staggerStacksActions,
   elementalWeaknessStacksActions,
   playerTravelDistancesActions,
+  playerPanelAnalysisActions,
   damageReductionActions,
   debuffLookupActions,
   hostileBuffLookupActions,
@@ -68,6 +71,7 @@ export {
   executeDebuffLookupTask,
   executeHostileBuffLookupTask,
   executeScribingDetectionsTask,
+  executePlayerPanelAnalysisTask,
 } from './taskSlices';
 
 // Export the factory function and types for potential reuse

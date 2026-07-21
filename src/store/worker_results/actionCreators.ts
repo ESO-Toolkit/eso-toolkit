@@ -28,6 +28,8 @@ import {
   executeElementalWeaknessStacksTask,
   playerTravelDistancesActions,
   executePlayerTravelDistancesTask,
+  playerPanelAnalysisActions,
+  executePlayerPanelAnalysisTask,
   scribingDetectionsActions,
   executeScribingDetectionsTask,
 } from './workerResultsSlice';
@@ -47,6 +49,7 @@ const taskActionsMap = {
   calculateStaggerStacks: staggerStacksActions,
   calculateElementalWeaknessStacks: elementalWeaknessStacksActions,
   calculatePlayerTravelDistances: playerTravelDistancesActions,
+  calculatePlayerPanelAnalysis: playerPanelAnalysisActions,
   calculateScribingDetections: scribingDetectionsActions,
 } as const;
 
@@ -68,6 +71,7 @@ const taskThunkMap: Record<
   calculateStaggerStacks: executeStaggerStacksTask,
   calculateElementalWeaknessStacks: executeElementalWeaknessStacksTask,
   calculatePlayerTravelDistances: executePlayerTravelDistancesTask,
+  calculatePlayerPanelAnalysis: executePlayerPanelAnalysisTask,
   calculateScribingDetections: executeScribingDetectionsTask,
 } as const;
 
