@@ -120,10 +120,26 @@ export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
               '*, *::before, *::after': { boxSizing: 'border-box' },
               '@media (prefers-reduced-motion: reduce)': {
                 '*, *::before, *::after': {
-                  animationDuration: '0.01ms !important',
-                  animationIterationCount: '1 !important',
+                  animationDuration: 'var(--perf-anim-duration, 0.01ms) !important',
+                  animationIterationCount: 'var(--perf-anim-iteration, 1) !important',
                   transitionDuration: '0.01ms !important',
                   scrollBehavior: 'auto !important',
+                },
+                // Progress indicators must keep moving — a frozen spinner reads
+                // as a hang. Same escape hatch as the data-perf='low' rule in
+                // index.css; durations match MUI's own timing so indicators
+                // look normal, not sped up.
+                '.MuiCircularProgress-root': {
+                  '--perf-anim-duration': '1.4s',
+                  '--perf-anim-iteration': 'infinite',
+                },
+                '.MuiLinearProgress-root': {
+                  '--perf-anim-duration': '2.1s',
+                  '--perf-anim-iteration': 'infinite',
+                },
+                '.MuiSkeleton-root': {
+                  '--perf-anim-duration': '2s',
+                  '--perf-anim-iteration': 'infinite',
                 },
               },
             },
@@ -899,10 +915,26 @@ export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             '.u-fade-in-up': { animation: 'none !important' },
             '.u-tab-enter': { animation: 'none !important' },
             '*, *::before, *::after': {
-              animationDuration: '0.01ms !important',
-              animationIterationCount: '1 !important',
+              animationDuration: 'var(--perf-anim-duration, 0.01ms) !important',
+              animationIterationCount: 'var(--perf-anim-iteration, 1) !important',
               transitionDuration: '0.01ms !important',
               scrollBehavior: 'auto !important',
+            },
+            // Progress indicators must keep moving — a frozen spinner reads as
+            // a hang. Same escape hatch as the data-perf='low' rule in
+            // index.css; durations match MUI's own timing so indicators look
+            // normal, not sped up.
+            '.MuiCircularProgress-root': {
+              '--perf-anim-duration': '1.4s',
+              '--perf-anim-iteration': 'infinite',
+            },
+            '.MuiLinearProgress-root': {
+              '--perf-anim-duration': '2.1s',
+              '--perf-anim-iteration': 'infinite',
+            },
+            '.MuiSkeleton-root': {
+              '--perf-anim-duration': '2s',
+              '--perf-anim-iteration': 'infinite',
             },
           },
         }}
