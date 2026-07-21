@@ -47,6 +47,10 @@ interface BatchedActorNames3DProps {
   playerVisibility?: Map<number, boolean>;
   /** The followed/locked-on actor — always kept legible and used as a declutter priority anchor. */
   selectedActorRef?: React.RefObject<number | null>;
+  /** Barebones budget: at most this many names visible (priority-ranked), null = unlimited. */
+  nameTagBudget?: number | null;
+  /** Frame-cap verdict — on capped-out frames the whole pass defers (idle-gate refs untouched). */
+  capGateRef?: React.RefObject<{ skip: boolean }>;
 }
 
 const GROUND_LEVEL = 0.05;
@@ -145,6 +149,8 @@ export const BatchedActorNames3D: React.FC<BatchedActorNames3DProps> = ({
   actorIds,
   playerVisibility = EMPTY_VISIBILITY,
   selectedActorRef,
+  nameTagBudget = null,
+  capGateRef,
 }) => {
   const { camera, size } = useThree();
 
@@ -187,6 +193,11 @@ export const BatchedActorNames3D: React.FC<BatchedActorNames3DProps> = ({
   const screenItems = useRef<NameScreenItem[]>([]);
 
   useFrame(() => {
+    // Frame cap: defer the whole pass. The idle-gate bookkeeping below stays
+    // untouched, so the next allowed frame sees the camera/time as "moved" and
+    // runs the full pass.
+    if (capGateRef?.current?.skip) return;
+
     const handles = handlesRef.current;
     if (!lookup || handles.size === 0) return;
 
@@ -293,7 +304,10 @@ export const BatchedActorNames3D: React.FC<BatchedActorNames3DProps> = ({
     });
 
     // --- Pass 2: resolve overlap once, then write opacity through the refs --------------------
-    const visibility = resolveNameVisibility(items, { fadedOpacity: FADED_OPACITY });
+    const visibility = resolveNameVisibility(items, {
+      fadedOpacity: FADED_OPACITY,
+      maxVisible: nameTagBudget,
+    });
 
     handles.forEach((handle, actorId) => {
       const text = handle.text;

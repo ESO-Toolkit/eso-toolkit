@@ -83,6 +83,13 @@ interface AnimationFrameSceneActorsProps {
   playerColorOverrides?: Map<number, string>;
   /** When true, player figures stop casting shadows (perf headroom for large fights). */
   performanceMode?: boolean;
+  /** Barebones flags (see QualityFlags): GLB figures, PBR materials, decorative accents, name budget. */
+  detailedFigures?: boolean;
+  richMaterials?: boolean;
+  figureAccents?: boolean;
+  nameTagBudget?: number | null;
+  /** Frame-cap verdict shared with the render gate. */
+  capGateRef?: React.RefObject<FrameCapGateValue>;
   /** Repaint + shadow-dirty signal for async caster changes (humanoid/boss GLB load). */
   markDirty?: () => void;
 }
@@ -167,6 +174,11 @@ const AnimationFrameSceneActors: React.FC<AnimationFrameSceneActorsProps> = ({
   playerVisibility,
   playerColorOverrides,
   performanceMode,
+  detailedFigures,
+  richMaterials,
+  figureAccents,
+  nameTagBudget,
+  capGateRef,
   markDirty,
 }) => {
   // Performance settings based on scrubbing mode
@@ -184,6 +196,11 @@ const AnimationFrameSceneActors: React.FC<AnimationFrameSceneActorsProps> = ({
       playerVisibility={playerVisibility}
       playerColorOverrides={playerColorOverrides}
       performanceMode={performanceMode}
+      detailedFigures={detailedFigures}
+      richMaterials={richMaterials}
+      figureAccents={figureAccents}
+      nameTagBudget={nameTagBudget}
+      capGateRef={capGateRef}
       markDirty={markDirty}
     />
   );
@@ -1162,6 +1179,11 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
         playerVisibility={playerVisibility}
         playerColorOverrides={playerColorOverrides}
         performanceMode={!qualityFlags.shadows}
+        detailedFigures={qualityFlags.detailedFigures}
+        richMaterials={qualityFlags.richMaterials}
+        figureAccents={qualityFlags.figureAccents}
+        nameTagBudget={qualityFlags.nameTagBudget}
+        capGateRef={capGateRef}
         markDirty={markSceneDirty}
       />
       {/* Boss health + player list are now DOM overlays rendered by Arena3D as siblings of
