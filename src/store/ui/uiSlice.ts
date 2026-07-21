@@ -15,6 +15,8 @@ export interface UIState {
   myReportsPage: number; // Persisted page number for my-reports
   perfTier: PerfTier;
   perfTierOverride: PerfTierOverride;
+  /** One-time "performance mode is on" notice shown to auto-detected-low users. */
+  perfLowNoticeSeen: boolean;
   chartIntensity: ChartIntensity;
 }
 
@@ -32,6 +34,7 @@ const initialState: UIState = {
   // empty persisted store.
   perfTier: 'medium',
   perfTierOverride: 'auto',
+  perfLowNoticeSeen: false,
   chartIntensity: 'subtle',
 };
 
@@ -83,6 +86,9 @@ const uiSlice = createSlice({
     setPerfTierOverride: (state, action: PayloadAction<PerfTierOverride>) => {
       state.perfTierOverride = action.payload;
     },
+    setPerfLowNoticeSeen: (state, action: PayloadAction<boolean>) => {
+      state.perfLowNoticeSeen = action.payload;
+    },
     setChartIntensity: (state, action: PayloadAction<ChartIntensity>) => {
       state.chartIntensity = action.payload;
     },
@@ -103,6 +109,7 @@ export const {
   setMyReportsPage,
   setPerfTier,
   setPerfTierOverride,
+  setPerfLowNoticeSeen,
   setChartIntensity,
 } = uiSlice.actions;
 export default uiSlice.reducer;

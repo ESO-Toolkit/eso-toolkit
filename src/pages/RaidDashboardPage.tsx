@@ -176,6 +176,10 @@ export const RaidDashboardPage: React.FC = () => {
                   borderRadius: '50%',
                   animation: autoRefreshEnabled ? 'spin 1.2s linear infinite' : 'none',
                   '@keyframes spin': { '100%': { transform: 'rotate(360deg)' } },
+                  // Activity indicator, not decoration — keep spinning on the
+                  // low perf tier (opts out of the index.css animation kill).
+                  '--perf-anim-duration': '1.2s',
+                  '--perf-anim-iteration': 'infinite',
                   flexShrink: 0,
                 }}
               />

@@ -213,3 +213,35 @@ describe('storeWithHistory - Redux Persist Transform', () => {
     });
   });
 });
+
+// The block above tests a re-created COPY of the transform. This one imports
+// the REAL transform so a persisted field missing from either of its two
+// spots (inbound allowlist / rehydrate defaults) fails here, not in the field.
+describe('storeWithHistory - real uiTransform', () => {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { uiTransform: realTransform } = jest.requireActual('./storeWithHistory');
+
+  it('round-trips perfLowNoticeSeen through persist and rehydrate', () => {
+    const state = {
+      darkMode: true,
+      selectedPlayerId: null,
+      selectedTabId: null,
+      selectedTargetIds: [],
+      selectedFriendlyPlayerId: null,
+      showExperimentalTabs: false,
+      sidebarOpen: false,
+      myReportsPage: 1,
+      perfTier: 'low',
+      perfTierOverride: 'auto',
+      perfLowNoticeSeen: true,
+      chartIntensity: 'subtle',
+    } as UIState;
+
+    const persisted = realTransform.in(state, 'ui', { ui: state });
+    expect(persisted.perfLowNoticeSeen).toBe(true);
+
+    const rehydrated = realTransform.out(persisted, 'ui', { ui: persisted });
+    expect(rehydrated.perfLowNoticeSeen).toBe(true);
+    expect(rehydrated.perfTier).toBe('low');
+  });
+});

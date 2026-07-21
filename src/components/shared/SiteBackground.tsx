@@ -9,6 +9,7 @@ import React from 'react';
 
 import { AuroraBackground } from '../../features/loadout-manager/components/AuroraBackground';
 import { NebulaBackground } from '../../features/loadout-manager/components/NebulaBackground';
+import { usePerfTier } from '../../hooks/usePerfTier';
 
 /**
  * SiteBackground - Global atmospheric background for the entire site
@@ -19,6 +20,13 @@ import { NebulaBackground } from '../../features/loadout-manager/components/Nebu
  */
 export const SiteBackground: React.FC = () => {
   const theme = useTheme();
+  const perfTier = usePerfTier();
+  // Low tier: skip the whole layer stack (4 fixed composited gradient planes
+  // even with animation off). CssBaseline's body background is a near-match
+  // flat fallback, and the backgrounds are decorative with no layout role.
+  if (perfTier === 'low') {
+    return null;
+  }
   if (theme.palette.mode === 'light') {
     return <AuroraBackground />;
   }

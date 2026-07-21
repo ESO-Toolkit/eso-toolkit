@@ -139,6 +139,43 @@ html[data-perf='low'] * {
   -webkit-backdrop-filter: none !important;
 }
 
+/* Animation kill for low tier — the animation-side sibling of the blur rule
+   above, and a tier-driven mirror of the OS reduced-motion block in
+   ReduxThemeProvider's GlobalStyles. Entrance animations (fill forwards/both)
+   complete instantly at their final state; infinite loops (landing orbs,
+   marquee, shimmers, electric borders, legendary chips) freeze at base
+   styles; MUI transitions are timeout-driven, so they snap without sticking.
+
+   The custom properties are the escape hatch: any subtree that must keep
+   animating for FEEDBACK (progress indicators) re-declares them — custom
+   properties inherit, so setting them on an indicator root covers its
+   internals (e.g. the CircularProgress SVG dash animation). New functional
+   animations (replay transport pulses, recording dots, …) must opt out the
+   same way or they will freeze on low tier. */
+html[data-perf='low'] *,
+html[data-perf='low'] *::before,
+html[data-perf='low'] *::after {
+  animation-duration: var(--perf-anim-duration, 0.01ms) !important;
+  animation-iteration-count: var(--perf-anim-iteration, 1) !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
+/* Progress indicators must keep moving — a frozen spinner reads as a hang.
+   Durations match MUI's own timing so indicators look normal, not sped up. */
+html[data-perf='low'] .MuiCircularProgress-root {
+  --perf-anim-duration: 1.4s;
+  --perf-anim-iteration: infinite;
+}
+html[data-perf='low'] .MuiLinearProgress-root {
+  --perf-anim-duration: 2.1s;
+  --perf-anim-iteration: infinite;
+}
+html[data-perf='low'] .MuiSkeleton-root {
+  --perf-anim-duration: 2s;
+  --perf-anim-iteration: infinite;
+}
+
 /* Opaque fallback for dark-mode glass dialog papers when backdrop-filter is
    stripped (data-perf='low'). Without blur the 12%-alpha gradient becomes
    effectively transparent. data-color-scheme is synced by ReduxThemeProvider.

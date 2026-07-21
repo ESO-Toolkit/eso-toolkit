@@ -77,6 +77,7 @@ export function createMockStore(options: MockStoreOptions = {}): EnhancedStore {
         myReportsPage: 1,
         perfTier: 'medium' as const,
         perfTierOverride: 'auto' as const,
+        perfLowNoticeSeen: false,
         chartIntensity: 'subtle' as const,
         ...(initialState.ui || {}),
       },
@@ -99,5 +100,6 @@ export const defaultMockUIState: UIState = {
   myReportsPage: 1,
   perfTier: 'medium',
   perfTierOverride: 'auto',
+  perfLowNoticeSeen: false,
   chartIntensity: 'subtle',
 };
