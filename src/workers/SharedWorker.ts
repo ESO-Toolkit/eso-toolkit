@@ -11,6 +11,7 @@ import { calculateDamageOverTimeData } from './calculations/CalculateDamageOverT
 import { calculateDamageReductionData } from './calculations/CalculateDamageReduction';
 import { calculateElementalWeaknessStacks } from './calculations/CalculateElementalWeaknessStacks';
 import { calculatePenetrationData } from './calculations/CalculatePenetration';
+import { calculatePlayerPanelAnalysis } from './calculations/CalculatePlayerPanelAnalysis';
 import { calculatePlayerTravelDistances } from './calculations/CalculatePlayerTravelDistances';
 import { calculateScribingDetections } from './calculations/CalculateScribingDetections';
 import { calculateStaggerStacks } from './calculations/CalculateStaggerStacks';
@@ -31,6 +32,7 @@ const SHARED_WORKER = {
   calculateElementalWeaknessStacks,
   calculateActorPositions,
   calculatePlayerTravelDistances,
+  calculatePlayerPanelAnalysis,
   calculateScribingDetections,
 };
 

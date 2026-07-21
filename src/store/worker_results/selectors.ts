@@ -162,6 +162,9 @@ export const selectDamageReductionResult = selectWorkerTaskResult('calculateDama
 export const selectDebuffLookupResult = selectWorkerTaskResult('calculateDebuffLookup');
 export const selectHostileBuffLookupResult = selectWorkerTaskResult('calculateHostileBuffLookup');
 export const selectScribingDetectionsResult = selectWorkerTaskResult('calculateScribingDetections');
+export const selectPlayerPanelAnalysisResult = selectWorkerTaskResult(
+  'calculatePlayerPanelAnalysis',
+);
 
 // Aggregate selectors
 export const selectAnyWorkerTaskLoading = createSelector([selectWorkerResults], (workerResults) =>

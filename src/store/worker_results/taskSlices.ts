@@ -91,6 +91,13 @@ export {
 } from './playerTravelDistancesSlice';
 
 export {
+  playerPanelAnalysisSlice,
+  playerPanelAnalysisActions,
+  executePlayerPanelAnalysisTask,
+  playerPanelAnalysisReducer,
+} from './playerPanelAnalysisSlice';
+
+export {
   scribingDetectionsSlice,
   scribingDetectionsActions,
   executeScribingDetectionsTask,
