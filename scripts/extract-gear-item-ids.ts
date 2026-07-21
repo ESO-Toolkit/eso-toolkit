@@ -2,7 +2,7 @@
  * Extract unique item IDs from WizardsWardrobe LUA file
  * 
  * This script scans the WW file and extracts all unique item IDs with their
- * item links, which can then be used to manually populate itemIdMap.ts
+ * item links, which can then be used to manually populate itemIdMap.json
  * 
  * Usage:
  *   npx ts-node scripts/extract-gear-item-ids.ts
@@ -12,10 +12,17 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
 
-import { itemIdMap } from '../src/features/loadout-manager/data/itemIdMap';
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// The item data ships as a JSON asset (fetched at runtime by the app's loader
+// module) — read it straight from disk here.
+const itemIdMap = JSON.parse(
+  fs.readFileSync(
+    path.join(__dirname, '..', 'src', 'features', 'loadout-manager', 'data', 'itemIdMap.json'),
+    'utf-8',
+  ),
+) as Record<number, { name: string; setName: string; type: string; slot?: string }>;
 
 interface ExtractedItem {
   itemId: number;
@@ -155,7 +162,7 @@ function main() {
   console.log('\n💡 Next steps:');
   console.log('   1. Open tmp/extracted-item-ids.csv');
   console.log('   2. Look up item names using ESO game or UESP wiki');
-  console.log('   3. Add mappings to src/features/loadout-manager/data/itemIdMap.ts');
+  console.log('   3. Add mappings to src/features/loadout-manager/data/itemIdMap.json');
 }
 
 function formatCsvValue(value: string): string {

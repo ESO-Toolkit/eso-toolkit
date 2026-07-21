@@ -51,6 +51,8 @@ import {
   getCanonicalItemsBySlot,
   getItemInfo,
   getItemsBySlot,
+  isItemDataReady,
+  preloadItemData,
   validateItemForSlot,
 } from '@features/loadout-manager/data/itemIdMap';
 import {
@@ -116,8 +118,10 @@ function isItemCompatibleWithTargetSlot(itemId: number, targetSlot: SlotType): b
 }
 
 function getOffhandCompatibleItems(): SlotItem[] {
-  const iconReady = isIconDataReady();
-  if (iconReady && offhandCompatibleItemsCache) return offhandCompatibleItemsCache;
+  // Cache only when BOTH data sources are in: the item list itself comes from
+  // the fetched item data, and the 2H classification comes from icon data.
+  const cacheable = isIconDataReady() && isItemDataReady();
+  if (cacheable && offhandCompatibleItemsCache) return offhandCompatibleItemsCache;
   const items: SlotItem[] = [];
   const seen = new Set<number>();
   for (const slot of ['offhand', 'weapon'] as const) {
@@ -128,7 +132,7 @@ function getOffhandCompatibleItems(): SlotItem[] {
       items.push(item);
     }
   }
-  if (iconReady) offhandCompatibleItemsCache = items;
+  if (cacheable) offhandCompatibleItemsCache = items;
   return items;
 }
 
@@ -269,16 +273,17 @@ function getSetGroupsForSlot(targetSlot: SlotType): SetGroupResult {
   const cached = SET_GROUPS_CACHE[targetSlot];
   if (cached) return cached;
   const result = buildSetGroups(targetSlot);
-  // Weapon groups key off icon-derived display names (see makeCanonicalKey). Only
-  // cache a weapon result when it's TRUSTWORTHY: icon data loaded AND every weapon
-  // resolved to a specific type. If the data is still loading OR stale/missing for
-  // some items, names stay generic and (despite the per-itemId key fallback) the
-  // result isn't the intended type-split — don't cache it, so a later open
-  // recomputes the correct grouping once the data is present. Non-weapon slots are
-  // icon-independent and always safe to cache.
+  // Only cache TRUSTWORTHY results. Every slot's grouping is built from the
+  // fetched item data, so nothing is cacheable before that loads (a pre-init
+  // result would latch near-empty groups for the page lifetime). Weapon groups
+  // additionally key off icon-derived display names (see makeCanonicalKey):
+  // they also need icon data loaded AND every weapon resolved to a specific
+  // type — if that data is stale/missing, names stay generic and the result
+  // isn't the intended type-split, so a later open must recompute.
   const cacheable =
-    !WEAPON_SLOTS_SET.has(targetSlot) ||
-    (isIconDataReady() && weaponGroupsFullyResolved(targetSlot, result.groups));
+    isItemDataReady() &&
+    (!WEAPON_SLOTS_SET.has(targetSlot) ||
+      (isIconDataReady() && weaponGroupsFullyResolved(targetSlot, result.groups)));
   if (cacheable) {
     SET_GROUPS_CACHE[targetSlot] = result;
   }
@@ -698,12 +703,15 @@ export const GearPickerDialog: React.FC<GearPickerDialogProps> = ({
   const [search, setSearch] = useState('');
   const [activeTab, setActiveTab] = useState<'all' | GearSetType>('all');
 
-  // Weapon-type splitting depends on lazily-loaded icon data. Track readiness so
-  // the grouped data recomputes (and re-caches) once it lands, instead of showing
-  // a single collapsed weapon row if the picker opens before icon data settles.
+  // The picker depends on TWO lazily-loaded data sources, tracked SEPARATELY:
+  // the fetched item data (set/item lists — required for EVERY slot) and icon
+  // data (weapon-type splitting — load-bearing only for weapon/offhand).
+  // Keeping them separate means an icon failure can't block apparel/jewelry
+  // browsing, which only needs the item map.
   const [iconReady, setIconReady] = useState(() => isIconDataReady());
-  // Set when the icon-data load fails. preloadIconData clears its rejected
-  // promise on failure, so reopening the dialog retries the load.
+  const [itemsReady, setItemsReady] = useState(() => isItemDataReady());
+  // Set when a load THIS SLOT depends on fails. Both preloads clear their
+  // rejected promise on failure, so reopening the dialog retries the load.
   const [iconError, setIconError] = useState(false);
 
   // Reset state on open (incl. clearing a prior load error so the retry fires).
@@ -715,39 +723,58 @@ export const GearPickerDialog: React.FC<GearPickerDialogProps> = ({
     }
   }, [open]);
 
-  // While open, make sure icon data is loaded so weapon types split correctly.
-  // On failure, surface a recoverable error (weapon rows stay non-selectable
-  // rather than letting a click equip the wrong collapsed variant); reopening
-  // the dialog clears the error and retries via the resettable promise.
+  // While open, make sure item + icon data are loaded so set groups populate
+  // and weapon types split correctly. Failures surface a recoverable error
+  // only when the failed load matters for this slot: item data always does;
+  // icon data only for weapon/offhand (weapon rows stay non-selectable rather
+  // than letting a click equip the wrong collapsed variant). Reopening the
+  // dialog clears the error and retries via the resettable promises.
   useEffect(() => {
-    if (!open || iconReady || iconError) return;
+    if (!open || (iconReady && itemsReady) || iconError) return;
     let cancelled = false;
-    preloadIconData()
-      .then(() => {
-        if (!cancelled) setIconReady(true);
-      })
-      .catch(() => {
-        if (cancelled) return;
-        // Another path may have resolved it; otherwise mark the error.
-        if (isIconDataReady()) setIconReady(true);
-        else setIconError(true);
-      });
+    if (!itemsReady) {
+      preloadItemData()
+        .then(() => {
+          if (!cancelled) setItemsReady(true);
+        })
+        .catch(() => {
+          if (cancelled) return;
+          // Another path may have resolved it; otherwise mark the error —
+          // without the item map NO slot has anything to show.
+          if (isItemDataReady()) setItemsReady(true);
+          else setIconError(true);
+        });
+    }
+    if (!iconReady) {
+      preloadIconData()
+        .then(() => {
+          if (!cancelled) setIconReady(true);
+        })
+        .catch(() => {
+          if (cancelled) return;
+          if (isIconDataReady()) setIconReady(true);
+          // Apparel/jewelry browsing proceeds on item data alone — only
+          // weapon slots need the icon-derived type split.
+          else if (WEAPON_SLOTS_SET.has(targetSlot)) setIconError(true);
+        });
+    }
     return () => {
       cancelled = true;
     };
-  }, [open, iconReady, iconError]);
+  }, [open, iconReady, itemsReady, iconError, targetSlot]);
 
   // A weapon slot whose types haven't loaded yet — used to suppress collapsed,
   // mis-selectable weapon rows in both browse and search until icon data lands.
   const weaponSlotPending = WEAPON_SLOTS_SET.has(targetSlot) && !iconReady;
 
   // Build grouped data for this slot (cached at module scope — per-slot work
-  // runs once per page, not once per picker open). `iconReady` is a dep so weapon
+  // runs once per page, not once per picker open). `itemsReady` is a dep so
+  // every slot recomputes once the item map lands; `iconReady` so weapon
   // groups recompute once icon data lands (apparel results are icon-independent).
   const { groups, byType } = useMemo(
     () => getSetGroupsForSlot(targetSlot),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [targetSlot, iconReady],
+    [targetSlot, iconReady, itemsReady],
   );
 
   // Available type tabs (only show tabs that have sets)
@@ -778,7 +805,7 @@ export const GearPickerDialog: React.FC<GearPickerDialogProps> = ({
   const canonicalItems = useMemo(
     () => getCanonicalItemsForTargetSlot(targetSlot, makeCanonicalKey(targetSlot)),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [targetSlot, iconReady],
+    [targetSlot, iconReady, itemsReady],
   );
 
   const isWeaponTargetSlot = WEAPON_SLOTS_SET.has(targetSlot);

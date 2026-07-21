@@ -68,6 +68,7 @@ import {
   fetchItemIconUrl,
   deriveItemNameForSlot,
 } from '../features/loadout-manager/utils/itemIconResolver';
+import { useItemDataReady } from '../hooks/useItemDataReady';
 import { useViewTransitionNavigate } from '../hooks/useViewTransitionNavigate';
 import { selectSavedBuilds } from '../store/saved_builds';
 import { CHAMPION_POINT_ABILITIES, ChampionPointAbilityId } from '../types/champion-points';
@@ -1997,6 +1998,12 @@ export const BuildViewPage: React.FC = () => {
   const isDark = theme.palette.mode === 'dark';
   const prefersReduced = useReducedMotion();
   const skillCacheReady = useSkillCacheReady();
+  // Item data (names, icons ids, set-piece counts, armor weights) is a fetched
+  // JSON asset — gate the render on it, because this page's icon state, stats
+  // memo, and set-piece counts all latch their first computed values. On a
+  // definitive fetch failure, render anyway with degraded labels (same as a
+  // lookup miss before the conversion).
+  const itemData = useItemDataReady();
   const location = useLocation();
   const navigate = useViewTransitionNavigate();
   const buildHeroRef = useRef<HTMLDivElement>(null);
@@ -2252,7 +2259,7 @@ export const BuildViewPage: React.FC = () => {
   };
 
   // ── Loading ──
-  if (loading || !skillCacheReady) {
+  if (loading || !skillCacheReady || (!itemData.ready && !itemData.failed)) {
     return (
       <Container maxWidth="lg" sx={{ pt: 4, pb: 6, px: { xs: 2, sm: 3 } }}>
         <Skeleton

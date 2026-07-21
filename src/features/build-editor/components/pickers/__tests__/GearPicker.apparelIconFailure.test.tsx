@@ -1,8 +1,8 @@
 /**
- * Regression test for the icon-data LOAD FAILURE path (adversarial review,
- * round 4). When preloadIconData rejects (chunk/network failure), the weapon
- * picker must surface a recoverable error state — NOT hang forever on
- * "loading…" — and the underlying promise must reset so reopening retries.
+ * Regression test (PR #1400 review): an ICON-data load failure must not block
+ * apparel/jewelry browsing — those slots only need the fetched item map.
+ * Weapon slots keep their error state (see GearPicker.iconError.test.tsx);
+ * apparel proceeds with real set groups and no error alert.
  */
 
 // Populate itemIdMap synchronously with the REAL generated data — must be
@@ -19,32 +19,31 @@ jest.mock('@features/loadout-manager/utils/itemIconResolver', () => {
     ...actual,
     isIconDataReady: () => false,
     preloadIconData: () => Promise.reject(new Error('chunk load failed')),
-    deriveItemNameForSlot: () => 'Generic Weapon',
   };
 });
 
 import { GearPickerDialog } from '../GearPicker';
 
-describe('GearPickerDialog — icon-data load failure', () => {
-  it('shows a recoverable error instead of an endless loading state', async () => {
+describe('GearPickerDialog — apparel browsing under icon-data failure', () => {
+  it('renders real set groups for a head slot with no error alert', async () => {
     render(
       <ThemeProvider theme={createTheme()}>
         <GearPickerDialog
           open
           onClose={() => {}}
           onSelect={() => {}}
-          targetSlot="weapon"
-          slotName="Main-Hand"
+          targetSlot="head"
+          slotName="Head"
           currentItemId={null}
         />
       </ThemeProvider>,
     );
 
-    // After the rejected preload settles, the browse list shows an error alert.
+    // Real apparel sets render from the item map alone.
     await waitFor(() => {
-      expect(screen.getByRole('alert')).toHaveTextContent(/couldn.t load weapon types/i);
+      expect(screen.getAllByText(/Mother's Sorrow/i).length).toBeGreaterThan(0);
     });
-    // And no weapon row is directly equippable in the failed state.
-    expect(screen.queryByRole('button', { name: /^Equip / })).toBeNull();
+    // The icon failure must not surface an error for an icon-independent slot.
+    expect(screen.queryByRole('alert')).toBeNull();
   });
 });

@@ -57,16 +57,20 @@ root.render(
   <App />,
 );
 
-// Warm the item-icon cache off the critical path. A STATIC import of
-// itemIconResolver here would drag the ~11 MB itemIdMap (+ ~2 MB set
+// Warm the item data + icon caches off the critical path. A STATIC import of
+// itemIconResolver here would drag the loadout data module graph (+ ~2 MB set
 // collections) into the entry chunk, parsed before first paint on every
-// page — the dynamic import keeps that data in its own async chunk, and
-// idle scheduling keeps even the fetch out of the startup window. This is
-// best-effort: consumers that need the data (GearPicker, Extract Build)
-// await preloadIconData() themselves and retry on failure.
+// page — the dynamic import keeps that code in its own async chunk, and
+// idle scheduling keeps even the fetches (icon JSON chunk + the ~12 MB
+// itemIdMap JSON asset) out of the startup window. This is best-effort:
+// consumers that need the data (GearPicker, Extract Build, /bv) await
+// preloadIconData()/preloadItemData() themselves and retry on failure.
 const warmItemIconData = (): void => {
   void import('./features/loadout-manager/utils/itemIconResolver')
     .then((m) => m.preloadIconData())
+    .catch(() => {});
+  void import('./features/loadout-manager/data/itemIdMap')
+    .then((m) => m.preloadItemData())
     .catch(() => {});
 };
 if (typeof window.requestIdleCallback === 'function') {

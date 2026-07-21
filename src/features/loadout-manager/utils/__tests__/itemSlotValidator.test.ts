@@ -2,6 +2,10 @@
  * Tests for Item Slot Validator
  */
 
+// Populate itemIdMap synchronously with the REAL generated data — must be
+// the FIRST import (module-scope reads elsewhere depend on it).
+import '@/test/initItemData';
+
 import { getCanonicalItemsBySlot, getItemsBySlot } from '../../data/itemIdMap';
 import type { GearConfig, GearPiece } from '../../types/loadout.types';
 import { deriveItemNameForSlot, preloadIconData } from '../itemIconResolver';

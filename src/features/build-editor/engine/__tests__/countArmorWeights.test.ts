@@ -10,6 +10,10 @@
  *   97050 — Plague Doctor Chest    → locked HEAVY
  */
 
+// Populate itemIdMap synchronously with the REAL generated data — must be
+// the FIRST import (module-scope reads elsewhere depend on it).
+import '@/test/initItemData';
+
 // Side-effect: registers the gearItemOracle with REAL item data — the concrete
 // item ids above resolve their set names (→ locked weights) through the oracle.
 import '../../../loadout-manager/utils/itemIconResolver';

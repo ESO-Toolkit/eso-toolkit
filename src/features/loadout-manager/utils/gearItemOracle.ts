@@ -3,11 +3,15 @@
  * bundle graph (the root redux store via buildEditorSlice, setArmorWeights)
  * consult the ~11 MB itemIdMap WITHOUT statically importing it.
  *
- * Why: the root store must stay item-data-free or the entry chunk regains
- * the full map (see vite.config.mjs manualChunks 'item-data'). Every surface
+ * Why: the root store must stay item-data-free so the entry chunk never
+ * regains the item-data module graph (kept async purely by import topology —
+ * the manualChunks pin was deliberately dropped, see PR #1393). Every surface
  * that can dispatch gear-mutating actions or resolve apparel weights renders
  * item names/icons and therefore loads `itemIconResolver` — which registers
  * the real implementations at module-eval, before any such action can fire.
+ * The item data itself now arrives via preloadItemData()'s JSON fetch, so a
+ * registered oracle can still answer undefined until that resolves — the
+ * fallbacks below describe that window too.
  *
  * Unregistered fallbacks are graceful: set names resolve to undefined (weight
  * treated as freely choosable) and no weapon counts as two-handed. In

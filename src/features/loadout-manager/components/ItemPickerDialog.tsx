@@ -22,6 +22,7 @@ import Autocomplete, { AutocompleteInputChangeReason } from '@mui/material/Autoc
 import type { FilterOptionsState } from '@mui/material/useAutocomplete';
 import React from 'react';
 
+import { useItemDataReady } from '@/hooks/useItemDataReady';
 import { useLogger } from '@/hooks/useLogger';
 
 import {
@@ -60,9 +61,15 @@ export const ItemPickerDialog: React.FC<ItemPickerDialogProps> = ({
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === 'dark';
   const [inputValue, setInputValue] = React.useState('');
-  const coverageStats = React.useMemo(() => getSlotCoverageStats(), []);
+  // Everything below reads the fetched item data — itemDataReady is a memo
+  // dependency so lists/stats computed against the still-empty map recompute
+  // once it lands (instead of latching "No confirmed items exist").
+  const { ready: itemDataReady } = useItemDataReady();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const coverageStats = React.useMemo(() => getSlotCoverageStats(), [itemDataReady]);
 
-  const slotItems = React.useMemo(() => getItemsBySlot(targetSlot), [targetSlot]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const slotItems = React.useMemo(() => getItemsBySlot(targetSlot), [targetSlot, itemDataReady]);
   const slotCoverageCount = coverageStats.bySlot[targetSlot] ?? 0;
   const slotCoveragePercent =
     coverageStats.totalItems > 0 ? (slotCoverageCount / coverageStats.totalItems) * 100 : 0;
@@ -183,9 +190,11 @@ export const ItemPickerDialog: React.FC<ItemPickerDialogProps> = ({
 
       <DialogContent dividers>
         <Stack spacing={3}>
-          <Alert severity={isWarning ? 'warning' : 'error'} icon={false}>
+          <Alert severity={!itemDataReady ? 'info' : isWarning ? 'warning' : 'error'} icon={false}>
             <Typography variant="body2">
-              {slotCoverageCount > 0 ? (
+              {!itemDataReady ? (
+                <>Loading the gear database…</>
+              ) : slotCoverageCount > 0 ? (
                 <>
                   Only <strong>{slotCoverageCount.toLocaleString()}</strong> confirmed{' '}
                   {slotName.toLowerCase()} items are available ({slotCoveragePercent.toFixed(2)}% of

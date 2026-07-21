@@ -25,6 +25,7 @@ import {
 import React, { useState } from 'react';
 import { useSelector } from 'react-redux';
 
+import { useItemDataReady } from '@/hooks/useItemDataReady';
 import { useLogger } from '@/hooks/useLogger';
 
 import { TRIALS } from '../data/trialConfigs';
@@ -68,6 +69,10 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({ open, onClose }) => 
   const [copied, setCopied] = useState(false);
 
   const currentTrial = TRIALS.find((t) => t.id === currentTrialId);
+  // Validation reads the fetched item data; itemDataReady is a dependency so a
+  // report computed against the still-empty map (every piece "not found" →
+  // export falsely blocked) is recomputed once the data lands.
+  const { ready: itemDataReady } = useItemDataReady();
   const validationReports = React.useMemo(
     () =>
       setups.map((setup, index) => ({
@@ -75,7 +80,8 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({ open, onClose }) => 
         name: setup.name || `Setup ${index + 1}`,
         validation: validateGearConfig(setup.gear ?? {}),
       })),
-    [setups],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [setups, itemDataReady],
   );
   const blockingErrors = React.useMemo(
     () =>

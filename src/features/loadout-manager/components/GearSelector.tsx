@@ -10,9 +10,15 @@ import { alpha, useTheme } from '@mui/material/styles';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useDispatch } from 'react-redux';
 
+import { useItemDataReady } from '@/hooks/useItemDataReady';
 import { useLogger } from '@/hooks/useLogger';
 
-import { validateItemForSlot, getItemInfo, type SlotType } from '../data/itemIdMap';
+import {
+  validateItemForSlot,
+  getItemInfo,
+  preloadItemData,
+  type SlotType,
+} from '../data/itemIdMap';
 import { getCollectionItem, findCollectionItemBySetAndSlotType } from '../data/itemSetCollections';
 import { updateGear } from '../store/loadoutSlice';
 import { GearConfig, GearPiece } from '../types/loadout.types';
@@ -241,6 +247,9 @@ const GearTile: React.FC<GearTileProps> = ({
 }) => {
   const theme = useTheme();
   const logger = useLogger('GearSelector:GearTile');
+  // Item-id resolution below reads the fetched item data — re-resolve once it
+  // lands so a tile mounted pre-init doesn't latch "Unknown item"/no icon.
+  const { ready: itemDataReady } = useItemDataReady();
 
   const hasGear = Boolean(gearPiece?.name || gearPiece?.link);
   const isMythic = gearPiece?.trait?.toLowerCase() === 'mythic';
@@ -249,7 +258,11 @@ const GearTile: React.FC<GearTileProps> = ({
   const [iconUrl, setIconUrl] = useState<string | null>(null);
   const [iconFailed, setIconFailed] = useState(false);
 
-  const resolvedItemId = useMemo(() => resolveGearPieceItemId(gearPiece), [gearPiece]);
+  const resolvedItemId = useMemo(
+    () => resolveGearPieceItemId(gearPiece),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [gearPiece, itemDataReady],
+  );
   const collectionItem = useMemo(
     () => (resolvedItemId ? getCollectionItem(resolvedItemId) : undefined),
     [resolvedItemId],
@@ -479,6 +492,7 @@ export const GearSelector: React.FC<GearSelectorProps> = ({
 }) => {
   const dispatch = useDispatch();
   const logger = useLogger('GearSelector');
+  const { ready: itemDataReady } = useItemDataReady();
   const [pickerOpen, setPickerOpen] = useState(false);
   type PickerSlotState = {
     index: number;
@@ -537,7 +551,11 @@ export const GearSelector: React.FC<GearSelectorProps> = ({
       states[slot] = null;
     });
     return states;
-  }, [gear]);
+    // itemDataReady: validation reads the fetched item data — a report built
+    // against the empty map (every piece "Not in database") must recompute
+    // once the data lands.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gear, itemDataReady]);
 
   const isTwoHandedByItemIdSync = (itemId: number | null): boolean => {
     if (!itemId) {
@@ -598,13 +616,18 @@ export const GearSelector: React.FC<GearSelectorProps> = ({
 
   useEffect(() => {
     let cancelled = false;
-    void Promise.all([
-      fetchIsTwoHandedWeapon(frontMainId),
-      fetchIsTwoHandedWeapon(backMainId),
-    ]).then(([front, back]) => {
-      if (cancelled) return;
-      setAsyncTwoHandedStatus({ front, back });
-    });
+    // fetchIsTwoHandedWeapon's slot guard reads the fetched item data before
+    // any icon lookup — await it so classification doesn't silently no-op
+    // against the still-empty map on first render.
+    void preloadItemData()
+      .catch(() => {})
+      .then(() =>
+        Promise.all([fetchIsTwoHandedWeapon(frontMainId), fetchIsTwoHandedWeapon(backMainId)]),
+      )
+      .then(([front, back]) => {
+        if (cancelled) return;
+        setAsyncTwoHandedStatus({ front, back });
+      });
     return () => {
       cancelled = true;
     };
