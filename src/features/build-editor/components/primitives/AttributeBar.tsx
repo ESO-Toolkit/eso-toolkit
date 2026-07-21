@@ -146,9 +146,16 @@ export const AttributeBar: React.FC<AttributeBarProps> = ({
           minWidth: 48,
         }}
       >
+        {/* Full-width fill revealed via animated clip-path instead of width:
+            width is a LAYOUT property, so the spring forced a reflow on every
+            animation frame; clip-path composites. Negative insets on the three
+            static sides keep the outer glow un-clipped (clip-path clips the
+            element's own box-shadow); `round 4px` preserves the rounded cap
+            at the moving edge. */}
         <motion.div
           style={{
             height: '100%',
+            width: '100%',
             borderRadius: 4,
             background: `linear-gradient(90deg, ${color} 0%, ${alpha(color, 0.55)} 100%)`,
             boxShadow:
@@ -157,7 +164,7 @@ export const AttributeBar: React.FC<AttributeBarProps> = ({
                 : 'none',
           }}
           initial={false}
-          animate={{ width: `${fillPercent}%` }}
+          animate={{ clipPath: `inset(-12px ${100 - fillPercent}% -12px -12px round 4px)` }}
           transition={
             prefersReduced ? { duration: 0 } : { type: 'spring', stiffness: 300, damping: 30 }
           }

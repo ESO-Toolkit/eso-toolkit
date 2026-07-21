@@ -1007,14 +1007,18 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
 
   return (
     <>
-      {/* Performance Monitor hooks - only active in development mode */}
-      {/* Only the monitoring hooks run inside Canvas, overlay is rendered outside */}
-      <PerformanceMonitorCanvas
-        fpsUpdateInterval={500}
-        memoryUpdateInterval={1000}
-        slowFrameThreshold={33}
-        maxSlowFrameLogsPerMinute={10}
-      />
+      {/* Performance Monitor hooks - only active in development mode.
+          Gate the MOUNT, not just the hook bodies: its three hooks each
+          register a useFrame whose prod path is a no-op early-return —
+          mounting them in prod still pays three subscriber calls per rAF. */}
+      {process.env.NODE_ENV === 'development' && (
+        <PerformanceMonitorCanvas
+          fpsUpdateInterval={500}
+          memoryUpdateInterval={1000}
+          slowFrameThreshold={33}
+          maxSlowFrameLogsPerMinute={10}
+        />
+      )}
       {/* Bloom post-processing (dropped at quality tier 1+ / performance mode). Publishes its render
           handle to composerRef; RenderLoop routes the gated render through it so celestials glow. */}
       {qualityFlags.bloom && <BloomComposer composerRef={composerRef} samples={bloomSamples} />}

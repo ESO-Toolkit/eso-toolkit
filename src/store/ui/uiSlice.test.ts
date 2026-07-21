@@ -5,6 +5,7 @@ import uiReducer, {
   setDarkMode,
   toggleDarkMode,
   syncWithSystemTheme,
+  setPerfLowNoticeSeen,
   setSelectedPlayerId,
   setSelectedTabId,
   setSelectedTargetIds,
@@ -39,6 +40,7 @@ describe('uiSlice', () => {
         myReportsPage: 1,
         perfTier: 'medium',
         perfTierOverride: 'auto',
+        perfLowNoticeSeen: false,
       });
     });
   });
@@ -238,6 +240,19 @@ describe('uiSlice', () => {
     });
   });
 
+  describe('setPerfLowNoticeSeen', () => {
+    it('should mark the low-tier notice as seen', () => {
+      store.dispatch(setPerfLowNoticeSeen(true));
+      const state = store.getState() as { ui: UIState };
+      expect(state.ui.perfLowNoticeSeen).toBe(true);
+    });
+
+    it('should default to unseen', () => {
+      const state = store.getState() as { ui: UIState };
+      expect(state.ui.perfLowNoticeSeen).toBe(false);
+    });
+  });
+
   describe('setSidebarOpen', () => {
     it('should set sidebar open to true', () => {
       store.dispatch(setSidebarOpen(true));
@@ -301,6 +316,7 @@ describe('uiSlice', () => {
         myReportsPage: 1,
         perfTier: 'medium',
         perfTierOverride: 'auto',
+        perfLowNoticeSeen: false,
       });
     });
 

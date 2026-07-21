@@ -171,8 +171,18 @@ export const UltimateSimulator: React.FC<UltimateSimulatorProps> = ({ className 
             </Stack>
           </Paper>
 
-          {/* Results */}
-          <Paper variant="outlined" sx={{ p: 3, flex: 1, minWidth: 0 }}>
+          {/* Results — dimmed while the deferred re-simulation lags the inputs
+              (slider drags stay responsive; numbers catch up on settle) */}
+          <Paper
+            variant="outlined"
+            sx={{
+              p: 3,
+              flex: 1,
+              minWidth: 0,
+              opacity: sim.isStale ? 0.55 : 1,
+              transition: 'opacity 0.15s ease',
+            }}
+          >
             <Typography variant="h6" gutterBottom>
               Results
             </Typography>

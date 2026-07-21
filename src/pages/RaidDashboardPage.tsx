@@ -19,6 +19,7 @@ import { WorkInProgressDisclaimer } from '../components/WorkInProgressDisclaimer
 import { useEsoLogsClientInstance } from '../EsoLogsClientContext';
 import { FightFragment } from '../graphql/gql/graphql';
 import { useReportData } from '../hooks';
+import { useVisibilityGatedInterval } from '../hooks/useVisibilityGatedInterval';
 import {
   addWidget,
   removeWidget,
@@ -49,16 +50,13 @@ export const RaidDashboardPage: React.FC = () => {
     }
   }, [reportId, client, dispatch]);
 
-  React.useEffect(() => {
-    if (!autoRefreshEnabled) return;
-
-    fetchLatestReport();
-    const interval = setInterval(() => {
-      fetchLatestReport();
-    }, REFETCH_INTERVAL);
-
-    return () => clearInterval(interval);
-  }, [fetchLatestReport, autoRefreshEnabled]);
+  // Visibility-gated: a backgrounded dashboard must not re-fetch the whole
+  // report every 5s (and re-render the widget tree) for nobody. On return, a
+  // catch-up fetch fires immediately if a full interval elapsed hidden.
+  useVisibilityGatedInterval(fetchLatestReport, REFETCH_INTERVAL, {
+    enabled: autoRefreshEnabled,
+    leading: true,
+  });
 
   const sortedFights = useMemo(() => {
     if (!reportData?.fights) return [];
@@ -176,6 +174,10 @@ export const RaidDashboardPage: React.FC = () => {
                   borderRadius: '50%',
                   animation: autoRefreshEnabled ? 'spin 1.2s linear infinite' : 'none',
                   '@keyframes spin': { '100%': { transform: 'rotate(360deg)' } },
+                  // Activity indicator, not decoration — keep spinning on the
+                  // low perf tier (opts out of the index.css animation kill).
+                  '--perf-anim-duration': '1.2s',
+                  '--perf-anim-iteration': 'infinite',
                   flexShrink: 0,
                 }}
               />

@@ -56,7 +56,9 @@ const rootReducer = combineReducers({
 
 // Transform to exclude report/fight-specific UI state from persistence
 // Only persist user preferences, not report-specific selections
-const uiTransform = createTransform<UIState, Partial<UIState>>(
+// (exported for tests — new persisted fields must appear in BOTH the inbound
+// allowlist and the rehydrate defaults, or they silently don't persist)
+export const uiTransform = createTransform<UIState, Partial<UIState>>(
   // Transform state on its way to being serialized and persisted
   (inboundState) => {
     const {
@@ -66,6 +68,7 @@ const uiTransform = createTransform<UIState, Partial<UIState>>(
       myReportsPage,
       perfTier,
       perfTierOverride,
+      perfLowNoticeSeen,
       chartIntensity,
     } = inboundState;
     return {
@@ -75,6 +78,9 @@ const uiTransform = createTransform<UIState, Partial<UIState>>(
       myReportsPage,
       perfTier,
       perfTierOverride,
+      // Must appear BOTH here and in the rehydrate defaults below, or the
+      // one-time low-tier notice re-fires on every reload.
+      perfLowNoticeSeen,
       // chartIntensity is a user preference, not report-specific state — without
       // this it was reset to 'subtle' on every reload.
       chartIntensity,
@@ -94,6 +100,7 @@ const uiTransform = createTransform<UIState, Partial<UIState>>(
       myReportsPage: 1,
       perfTier: 'medium',
       perfTierOverride: 'auto',
+      perfLowNoticeSeen: false,
       chartIntensity: 'subtle',
     };
 

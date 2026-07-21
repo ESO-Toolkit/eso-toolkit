@@ -244,6 +244,30 @@ export function getPathPointsUpToTime(path: PlayerPath, currentTime: number): Pa
 }
 
 /**
+ * Count of path points with timestamp <= currentTime — the allocation-free
+ * sibling of getPathPointsUpToTime for per-frame callers: same binary search,
+ * returns the count instead of slicing a fresh array every rAF.
+ */
+export function getPathPointCountUpToTime(path: PlayerPath, currentTime: number): number {
+  const { points } = path;
+  if (points.length === 0 || points[0].timestamp > currentTime) return 0;
+  if (points[points.length - 1].timestamp <= currentTime) return points.length;
+
+  let lo = 0;
+  let hi = points.length - 1;
+  while (lo < hi) {
+    const mid = (lo + hi + 1) >>> 1;
+    if (points[mid].timestamp <= currentTime) {
+      lo = mid;
+    } else {
+      hi = mid - 1;
+    }
+  }
+
+  return lo + 1;
+}
+
+/**
  * Create THREE.js geometry for path trail
  */
 export function createPathGeometry(points: PathPoint[]): THREE.BufferGeometry {
@@ -272,14 +296,21 @@ export function createPathGeometry(points: PathPoint[]): THREE.BufferGeometry {
 }
 
 /**
- * Update existing geometry with new path points (for performance)
+ * Update existing geometry with new path points (for performance).
+ * `count` limits the write/draw to the first N points so per-frame callers can
+ * pass the full time-sorted array + a count instead of slicing (no alloc).
  */
-export function updatePathGeometry(geometry: THREE.BufferGeometry, points: PathPoint[]): void {
+export function updatePathGeometry(
+  geometry: THREE.BufferGeometry,
+  points: PathPoint[],
+  count: number = points.length,
+): void {
+  const used = Math.min(count, points.length);
   const positionAttribute = geometry.getAttribute('position') as THREE.BufferAttribute;
   const timestampAttribute = geometry.getAttribute('timestamp') as THREE.BufferAttribute;
 
   // Ensure arrays are large enough
-  if (!positionAttribute || positionAttribute.count < points.length) {
+  if (!positionAttribute || positionAttribute.count < used) {
     // Recreate geometry if not large enough
     const newGeometry = createPathGeometry(points);
     geometry.copy(newGeometry);
@@ -288,14 +319,14 @@ export function updatePathGeometry(geometry: THREE.BufferGeometry, points: PathP
   }
 
   // Update existing attributes
-  for (let i = 0; i < points.length; i++) {
+  for (let i = 0; i < used; i++) {
     const point = points[i];
     positionAttribute.setXYZ(i, point.position[0], point.position[1], point.position[2]);
     timestampAttribute.setX(i, point.timestamp);
   }
 
   // Set draw range to only render valid points
-  geometry.setDrawRange(0, points.length);
+  geometry.setDrawRange(0, used);
 
   positionAttribute.needsUpdate = true;
   timestampAttribute.needsUpdate = true;

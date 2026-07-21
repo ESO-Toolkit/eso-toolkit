@@ -37,6 +37,8 @@ export const selectChartIntensity = (state: RootState): RootState['ui']['chartIn
   state.ui.chartIntensity ?? 'subtle';
 export const selectPerfTierOverride = (state: RootState): RootState['ui']['perfTierOverride'] =>
   state.ui.perfTierOverride;
+export const selectPerfLowNoticeSeen = (state: RootState): boolean =>
+  state.ui.perfLowNoticeSeen ?? false;
 // Tier the app should actually apply — override wins when set to anything
 // other than 'auto'. This is what feature gates should consume.
 export const selectEffectivePerfTier = createSelector(

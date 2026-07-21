@@ -10,6 +10,10 @@
  *   97050 — Plague Doctor Chest    → locked HEAVY
  */
 
+// Side-effect: registers the gearItemOracle with REAL item data — the concrete
+// item ids above resolve their set names (→ locked weights) through the oracle.
+import '../../../loadout-manager/utils/itemIconResolver';
+
 import type { GearConfig } from '../../../loadout-manager/types/loadout.types';
 import { countArmorWeights } from '../stat-engine';
 

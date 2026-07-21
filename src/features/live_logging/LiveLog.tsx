@@ -13,6 +13,7 @@ import { useAppDispatch } from '@/store/useAppDispatch';
 
 import { useEsoLogsClientInstance } from '../../EsoLogsClientContext';
 import { GetReportByCodeDocument } from '../../graphql/gql/graphql';
+import { useVisibilityGatedInterval } from '../../hooks/useVisibilityGatedInterval';
 import { ReportFightContext } from '../../ReportFightContext';
 import { reportError } from '../../utils/errorTracking';
 import { TabId } from '../../utils/getSkeletonForTab';
@@ -89,15 +90,11 @@ export const LiveLog: React.FC<React.PropsWithChildren> = (props) => {
     dispatch(setReportCacheMetadata({ lastFetchedReportId: reportId }));
   }, [reportId, client, latestFightId, dispatch]);
 
-  React.useEffect(() => {
-    void fetchLatestFightId();
-
-    const interval = setInterval(() => {
-      void fetchLatestFightId();
-    }, REFETCH_INTERVAL);
-
-    return () => clearInterval(interval);
-  }, [fetchLatestFightId]);
+  // Visibility-gated: the live-log poll pauses while the tab is hidden and
+  // catches up immediately on return (a full hidden interval → instant fetch).
+  useVisibilityGatedInterval(() => void fetchLatestFightId(), REFETCH_INTERVAL, {
+    leading: true,
+  });
 
   const reportFightCtxValue = React.useMemo(
     () => ({

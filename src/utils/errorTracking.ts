@@ -1,4 +1,4 @@
-import Rollbar from 'rollbar';
+import type Rollbar from 'rollbar';
 
 import {
   selectMasterDataErrorState,
@@ -51,16 +51,32 @@ interface ExtendedPerformance extends Performance {
  * (uncaught exceptions, unhandled rejections) is disabled outside production.
  * Manual bug reports are always sent regardless of environment.
  */
-export const initializeErrorTracking = (): void => {
+export const initializeErrorTracking = (): Promise<void> => {
   // GDPR: Only initialize if user has consented to error tracking
   if (!hasErrorTrackingConsent()) {
     logger.info('Error tracking disabled - user has not consented to error tracking');
-    return;
+    return Promise.resolve();
   }
 
+  // Rollbar is dynamically imported so its ~80 KB stays out of the entry
+  // chunk — and never downloads at all without consent. Every consumer
+  // null-guards `rollbar`, so the brief async window before it resolves
+  // behaves identically to the long-standing no-consent case. Re-invocation
+  // (consent changes) recreates the instance, matching the previous sync
+  // behavior; the module itself is cached after the first import.
+  return import('rollbar')
+    .then(({ default: RollbarCtor }) => {
+      rollbar = createRollbar(RollbarCtor);
+    })
+    .catch((error: unknown) => {
+      logger.warn('Failed to load error tracking module', { error });
+    });
+};
+
+const createRollbar = (RollbarCtor: typeof Rollbar): Rollbar => {
   const isProduction = process.env.NODE_ENV === 'production';
 
-  rollbar = new Rollbar({
+  return new RollbarCtor({
     accessToken: ERROR_TRACKING_CONFIG.accessToken,
     environment: ERROR_TRACKING_CONFIG.environment,
     codeVersion: ERROR_TRACKING_CONFIG.release,

@@ -16,6 +16,7 @@ import { HashRouteRedirect } from './components/HashRouteRedirect';
 import { HeaderBar } from './components/HeaderBar';
 import { KalpaBanner } from './components/KalpaBanner';
 import { LandingPage } from './components/LandingPage';
+import { PerfLowNotice } from './components/PerfLowNotice';
 import { PerfTierProvider } from './components/PerfTierProvider';
 import { ReportFightsSkeleton } from './components/ReportFightsSkeleton';
 import { RosterBuilderSkeleton } from './components/RosterBuilderSkeleton';
@@ -51,8 +52,9 @@ import {
   importBuildHubPage,
   importPackHubPage,
 } from './utils/hubRoutePreload';
-// Initialize error tracking before the app starts
-initializeErrorTracking();
+// Initialize error tracking before the app starts (async — loads the
+// Rollbar chunk off the entry path; consumers null-guard the instance)
+void initializeErrorTracking();
 
 // Initialize Google Analytics
 initializeAnalytics();
@@ -336,7 +338,7 @@ const App: React.FC = () => {
     const handleConsentChanged = (): void => {
       // Re-evaluate consent and reinitialize services accordingly
       initializeAnalytics();
-      initializeErrorTracking();
+      void initializeErrorTracking();
     };
 
     // Listen for custom consent-changed event from CookieConsent component
@@ -387,6 +389,8 @@ const App: React.FC = () => {
                       <AppRoutes />
                       {/* Update notification for new versions */}
                       {!window.location.search.includes('embed=1') && <UpdateNotification />}
+                      {/* One-time low-tier performance notice */}
+                      {!window.location.search.includes('embed=1') && <PerfLowNotice />}
                       {/* Cookie consent banner — suppressed in embed/iframe mode to prevent double-banner */}
                       {!window.location.search.includes('embed=1') && <CookieConsent />}
                     </SnackbarProvider>

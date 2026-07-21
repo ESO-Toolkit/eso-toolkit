@@ -966,6 +966,17 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
     mesh.setMatrixAt(index, obj.matrix);
   }, []);
 
+  // Memoized: building the signature allocated an array + string EVERY rAF,
+  // before the frame-cache early-return — the hottest allocation site in the
+  // actor loop. The HMR contract survives memoization: Fast Refresh re-runs
+  // useMemo on any edit to this file, so a paused boss-tune edit still
+  // produces a new signature and forces one recompose. The barebones flags are
+  // deps too — a preset flip while paused must recompose once.
+  const bossSignature = useMemo(
+    () => bossTuneSignature(performanceMode, detailedFigures, richMaterials, figureAccents),
+    [performanceMode, detailedFigures, richMaterials, figureAccents],
+  );
+
   useFrame((_state, rafDelta) => {
     // Frame cap: defer the whole recompose to the next painted frame, but bank
     // the skipped rAF time — the gait speed/EMA below divide by delta (units
@@ -983,12 +994,6 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
     const currentTime = timeRef ? timeRef.current : 0;
     const selectedActorId = selectedActorRef.current;
     const prevFrame = frameCacheRef.current;
-    const bossSignature = bossTuneSignature(
-      performanceMode,
-      detailedFigures,
-      richMaterials,
-      figureAccents,
-    );
 
     if (
       prevFrame &&
