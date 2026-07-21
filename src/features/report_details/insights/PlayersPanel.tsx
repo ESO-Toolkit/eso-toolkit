@@ -24,10 +24,19 @@ import {
 } from '@/store/companion';
 import { useAppDispatch } from '@/store/useAppDispatch';
 import {
+  executePlayerPanelAnalysisTask,
   executeScribingDetectionsTask,
+  selectPlayerPanelAnalysisResult,
   selectScribingDetectionsResult,
   selectScribingDetectionsTask,
 } from '@/store/worker_results';
+import {
+  computePlayerPanelAnalysis,
+  PLAYER_PANEL_ANALYSIS_SYNC_THRESHOLD,
+  type PlayerMaxResources,
+  type PlayerPanelAnalysisInput,
+  type PlayerPanelAnalysisResult,
+} from '@/utils/playerPanelAnalysis';
 
 import type { GrimoireData } from '../../../components/ScribingSkillsDisplay';
 import { PlayerAvatarsProvider } from '../../../contexts/PlayerAvatarsContext';
@@ -75,13 +84,8 @@ import {
 } from '../../../types/abilities';
 import { CombatantAura, CombatantInfoEvent } from '../../../types/combatlogEvents';
 import { PlayerGear } from '../../../types/playerDetails';
-import { BuffLookupData } from '../../../utils/BuffLookupUtils';
-import {
-  createSkillLineAbilityMapping,
-  analyzePlayerClassFromEvents,
-  type ClassAnalysisResult,
-} from '../../../utils/classDetectionUtils';
-import { detectBuildIssues, BuildIssue } from '../../../utils/detectBuildIssues';
+import { type ClassAnalysisResult } from '../../../utils/classDetectionUtils';
+import { type BuildIssue } from '../../../utils/detectBuildIssues';
 import {
   ARENA_SET_NAMES,
   isDoubleSetCount,
@@ -106,12 +110,17 @@ import {
   classifyPotionEventsFromBuffStream,
   type PotionStreamResult,
 } from '../../../utils/potionDetectionUtils';
-import {
-  analyzeBarSwaps,
-  type BarSwapAnalysisResult,
-} from '../../parse_analysis/utils/parseAnalysisUtils';
+import { type BarSwapAnalysisResult } from '../../parse_analysis/utils/parseAnalysisUtils';
 
 import { PlayersPanelView } from './PlayersPanelView';
+
+// Stable empty fallbacks for the combined analysis maps while the worker task
+// is in flight (or aborted on a fight switch) — fresh {} literals would churn
+// every downstream memo per render.
+const EMPTY_BAR_SWAP_RESULTS: Record<string, BarSwapAnalysisResult> = {};
+const EMPTY_CLASS_ANALYSIS_RESULTS: Record<string, ClassAnalysisResult> = {};
+const EMPTY_MAX_RESOURCES: Record<string, PlayerMaxResources> = {};
+const EMPTY_BUILD_ISSUES: Record<string, BuildIssue[]> = {};
 
 // Recipe lookup stubs — full recipe resolution pending unified detection service
 const findScribingRecipe = async (_skillId: unknown, _skillName?: string): Promise<null> => null;
@@ -718,60 +727,93 @@ export const PlayersPanel: React.FC<PlayersPanelProps> = ({ context: contextOver
   }, [fight, healingEvents]);
 
   // Compute bar swap analysis (including bar setup pattern) per player
-  const barSwapByPlayer = React.useMemo(() => {
-    const result: Record<string, BarSwapAnalysisResult> = {};
-    if (!fight || !castEvents || !hasPlayerEntries(playersById)) return result;
-    const { startTime, endTime } = fight;
-    for (const player of Object.values(playersById)) {
-      if (!player?.id) continue;
-      result[String(player.id)] = analyzeBarSwaps(
-        castEvents,
-        Number(player.id),
-        startTime,
-        endTime,
-      );
-    }
-    return result;
-  }, [fight, castEvents, playersById]);
-
   const { abilitiesById } = reportMasterData;
 
-  const publicClassAnalysisByPlayer = React.useMemo(() => {
-    const result: Record<string, ClassAnalysisResult> = {};
-
-    if (!abilitiesById || !hasPlayerEntries(playersById)) {
-      return result;
-    }
-
-    const classMapping = createSkillLineAbilityMapping(abilitiesById);
-
-    Object.values(playersById).forEach((player) => {
-      if (!player?.id) return;
-
-      const playerId = String(player.id);
-      result[playerId] = analyzePlayerClassFromEvents(
-        playerId,
-        abilitiesById,
-        combatantInfoEvents,
-        castEvents,
-        damageEvents,
-        friendlyBuffEvents,
-        debuffEvents,
-        player.combatantInfo?.talents,
-        classMapping,
-      );
-    });
-
-    return result;
+  // ── Combined per-player analysis (worker-offloaded) ────────────────────────
+  // Public class detection, bar swaps, max resources and build issues were the
+  // panel's dominant main-thread burst on fight open/switch — each one is
+  // O(players × events) or a full event-array pass. They now run as ONE worker
+  // task (a single structured-clone of the shared event arrays; the pool clones
+  // task.data per execute, so one combined task beats four), or inline for
+  // small fights where the clone would cost more than the compute itself.
+  const panelAnalysisInput = React.useMemo((): PlayerPanelAnalysisInput | null => {
+    if (!fight || !hasPlayerEntries(playersById) || !castEvents || !damageEvents) return null;
+    const players = Object.values(playersById)
+      .filter((p): p is NonNullable<typeof p> => Boolean(p?.id))
+      .map((p) => ({
+        id: Number(p.id),
+        role: p.role,
+        talents: p.combatantInfo?.talents,
+        gear: (p.combatantInfo?.gear ?? []).filter((g) => g.id !== 0),
+      }));
+    if (players.length === 0) return null;
+    return {
+      fightStartTime: fight.startTime,
+      fightEndTime: fight.endTime,
+      players,
+      castEvents,
+      damageEvents,
+      healingEvents: healingEvents ?? [],
+      resourceEvents: resourceEvents ?? [],
+      combatantInfoEvents: combatantInfoEvents ?? [],
+      friendlyBuffEvents: friendlyBuffEvents ?? [],
+      debuffEvents: debuffEvents ?? [],
+      abilitiesById,
+      friendlyBuffLookup: friendlyBuffLookup ?? { buffIntervals: {} },
+    };
   }, [
-    abilitiesById,
+    fight,
     playersById,
-    combatantInfoEvents,
     castEvents,
     damageEvents,
+    healingEvents,
+    resourceEvents,
+    combatantInfoEvents,
     friendlyBuffEvents,
     debuffEvents,
+    abilitiesById,
+    friendlyBuffLookup,
   ]);
+
+  // Small fights compute inline — identical output shape via the shared pure fn.
+  const panelAnalysisSync = React.useMemo(() => {
+    if (!panelAnalysisInput) return null;
+    const totalEvents =
+      panelAnalysisInput.castEvents.length +
+      panelAnalysisInput.damageEvents.length +
+      panelAnalysisInput.healingEvents.length +
+      panelAnalysisInput.resourceEvents.length;
+    if (totalEvents >= PLAYER_PANEL_ANALYSIS_SYNC_THRESHOLD) return null;
+    return computePlayerPanelAnalysis(panelAnalysisInput);
+  }, [panelAnalysisInput]);
+
+  React.useEffect(() => {
+    if (!panelAnalysisInput || panelAnalysisSync) return;
+    const promise = dispatch(executePlayerPanelAnalysisTask(panelAnalysisInput));
+    return () => {
+      promise.abort();
+    };
+  }, [dispatch, panelAnalysisInput, panelAnalysisSync]);
+
+  const panelAnalysisWorker = useSelector(
+    selectPlayerPanelAnalysisResult,
+  ) as PlayerPanelAnalysisResult | null;
+
+  // Fight-window guard: player ids overlap across fights in a report, so a
+  // stale result from the previous fight must never be consumed while the next
+  // fight's task is still in flight — cards render their loading/empty state
+  // instead (classAnalysis/barSwap are optional PlayerCard props already).
+  const panelAnalysis = React.useMemo(() => {
+    const candidate = panelAnalysisSync ?? panelAnalysisWorker;
+    if (!candidate || !fight) return null;
+    return candidate.fightStartTime === fight.startTime && candidate.fightEndTime === fight.endTime
+      ? candidate
+      : null;
+  }, [panelAnalysisSync, panelAnalysisWorker, fight]);
+
+  const barSwapByPlayer = panelAnalysis?.barSwapByPlayer ?? EMPTY_BAR_SWAP_RESULTS;
+  const publicClassAnalysisByPlayer =
+    panelAnalysis?.publicClassAnalysisByPlayer ?? EMPTY_CLASS_ANALYSIS_RESULTS;
 
   // Fetch critical damage data for the inline crit summary on DPS player cards
   const { criticalDamageData } = useCriticalDamageTask({ context: resolvedContext });
@@ -1260,110 +1302,11 @@ export const PlayersPanel: React.FC<PlayersPanelProps> = ({ context: contextOver
   }, [playersById]);
 
   // Calculate max resources (health, stamina, magicka) per player using all resource events throughout the fight
-  const maxResourcesByPlayer = React.useMemo(() => {
-    const result: Record<string, { health: number; stamina: number; magicka: number }> = {};
-
-    if (!hasPlayerEntries(playersById) || !fight) return result;
-
-    // Initialize with 0 for each player
-    Object.values(playersById).forEach((player) => {
-      if (player?.id) {
-        result[String(player.id)] = { health: 0, stamina: 0, magicka: 0 };
-      }
-    });
-
-    const updatePlayerResources = (
-      playerId: string,
-      resources: { maxHitPoints?: number; maxStamina?: number; maxMagicka?: number },
-    ): void => {
-      if (result[playerId] !== undefined && resources) {
-        if (resources.maxHitPoints) {
-          result[playerId].health = Math.max(result[playerId].health, resources.maxHitPoints);
-        }
-        if (resources.maxStamina) {
-          result[playerId].stamina = Math.max(result[playerId].stamina, resources.maxStamina);
-        }
-        if (resources.maxMagicka) {
-          result[playerId].magicka = Math.max(result[playerId].magicka, resources.maxMagicka);
-        }
-      }
-    };
-
-    // Look for max resources across all resource events within the fight timeframe
-    if (resourceEvents) {
-      resourceEvents.forEach((event) => {
-        if (event.type === 'resourcechange') {
-          // Only consider events within the current fight timeframe
-          const isInFightTimeframe =
-            event.timestamp >= fight.startTime && event.timestamp <= fight.endTime;
-
-          if (isInFightTimeframe) {
-            // Check source resources
-            if (event.sourceID && event.sourceResources) {
-              const playerId = String(event.sourceID);
-              updatePlayerResources(playerId, event.sourceResources);
-            }
-
-            // Check target resources
-            if (event.targetID && event.targetResources) {
-              const playerId = String(event.targetID);
-              updatePlayerResources(playerId, event.targetResources);
-            }
-          }
-        }
-      });
-    }
-
-    // Also check damage and healing events for additional resource data
-    if (damageEvents) {
-      damageEvents.forEach((event) => {
-        if (event.type === 'damage') {
-          const isInFightTimeframe =
-            event.timestamp >= fight.startTime && event.timestamp <= fight.endTime;
-
-          if (isInFightTimeframe) {
-            // Check source resources in damage events
-            if (event.sourceID && event.sourceResources) {
-              const playerId = String(event.sourceID);
-              updatePlayerResources(playerId, event.sourceResources);
-            }
-
-            // Check target resources in damage events
-            if (event.targetID && event.targetResources) {
-              const playerId = String(event.targetID);
-              updatePlayerResources(playerId, event.targetResources);
-            }
-          }
-        }
-      });
-    }
-
-    // Also check healing events for additional resource data
-    if (healingEvents) {
-      healingEvents.forEach((event) => {
-        if (event.type === 'heal') {
-          const isInFightTimeframe =
-            event.timestamp >= fight.startTime && event.timestamp <= fight.endTime;
-
-          if (isInFightTimeframe) {
-            // Check source resources in healing events
-            if (event.sourceID && event.sourceResources) {
-              const playerId = String(event.sourceID);
-              updatePlayerResources(playerId, event.sourceResources);
-            }
-
-            // Check target resources in healing events
-            if (event.targetID && event.targetResources) {
-              const playerId = String(event.targetID);
-              updatePlayerResources(playerId, event.targetResources);
-            }
-          }
-        }
-      });
-    }
-
-    return result;
-  }, [playersById, resourceEvents, damageEvents, healingEvents, fight]);
+  // Offloaded to the combined worker task (see panelAnalysis above).
+  const maxResourcesByPlayer = React.useMemo(
+    () => panelAnalysis?.maxResourcesByPlayer ?? EMPTY_MAX_RESOURCES,
+    [panelAnalysis],
+  );
 
   // Extract individual max resources for backward compatibility
   const maxHealthByPlayer = React.useMemo(() => {
@@ -1391,66 +1334,8 @@ export const PlayersPanel: React.FC<PlayersPanelProps> = ({ context: contextOver
   }, [maxResourcesByPlayer]);
 
   // Calculate build issues per player
-  const buildIssuesByPlayer = React.useMemo(() => {
-    const result: Record<string, BuildIssue[]> = {};
-
-    if (
-      !hasPlayerEntries(playersById) ||
-      !friendlyBuffLookup ||
-      !fight?.startTime ||
-      !fight?.endTime
-    ) {
-      return result;
-    }
-
-    Object.values(playersById).forEach((player) => {
-      if (!player?.id) return;
-
-      const playerId = String(player.id);
-      const gear = (player?.combatantInfo?.gear ?? []).filter((g) => g.id !== 0);
-      const resourceSnapshot = maxResourcesByPlayer[playerId];
-      const playerResourceProfile = resourceSnapshot
-        ? { stamina: resourceSnapshot.stamina, magicka: resourceSnapshot.magicka }
-        : undefined;
-
-      // Extract auras for this player from combatant info events
-      const playerAuras: CombatantAura[] = [];
-      if (combatantInfoEvents) {
-        const playerCombatantInfo = combatantInfoEvents.find(
-          (event) => event.sourceID === player.id,
-        );
-        if (playerCombatantInfo?.auras) {
-          playerAuras.push(...playerCombatantInfo.auras);
-        }
-      }
-
-      const emptyBuffLookup: BuffLookupData = { buffIntervals: {} };
-
-      const buildIssues = detectBuildIssues(
-        gear,
-        friendlyBuffLookup || emptyBuffLookup,
-        fight.startTime,
-        fight.endTime,
-        playerAuras,
-        player.role,
-        damageEvents,
-        player.id,
-        playerResourceProfile,
-      );
-
-      result[playerId] = buildIssues;
-    });
-
-    return result;
-  }, [
-    playersById,
-    friendlyBuffLookup,
-    fight?.startTime,
-    fight?.endTime,
-    damageEvents,
-    combatantInfoEvents,
-    maxResourcesByPlayer,
-  ]);
+  // Offloaded to the combined worker task (see panelAnalysis above).
+  const buildIssuesByPlayer = panelAnalysis?.buildIssuesByPlayer ?? EMPTY_BUILD_ISSUES;
 
   // Build scribing skills per player from the worker detection results
   const scribingSkillsByPlayer = React.useMemo(() => {
