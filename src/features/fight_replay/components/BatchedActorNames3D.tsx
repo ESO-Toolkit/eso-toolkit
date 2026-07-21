@@ -58,6 +58,9 @@ const DEAD_FILL_OPACITY = 0.62;
 // Faded overlappers keep a faint ghost rather than vanishing — enough to hint presence without
 // rejoining the blob. Outline fades proportionally so the dark halo doesn't outlive the fill.
 const FADED_OPACITY = 0.1;
+// Overlap-declutter cadence while the camera/playhead moves. 10Hz cuts the O(N) projections +
+// O(N²) box pass ~10× at trash-pull actor counts; label tracking stays per-frame regardless.
+const DECLUTTER_INTERVAL_MS = 100;
 // Rough on-screen label box, in world units before distance-scale, used only to size the
 // collision rectangle for the overlap pass. troika's true bounds aren't known until an async sync,
 // so we approximate width from glyph count; the declutter only needs the boxes to be in the right
@@ -176,6 +179,19 @@ export const BatchedActorNames3D: React.FC<BatchedActorNames3DProps> = ({
   // is "the followed name is always legible", so the gate must react to selection directly.
   const lastSelected = useRef<number | null | undefined>(undefined);
 
+  // Declutter cadence: the O(N) screen projections + O(N²) overlap resolve run
+  // at most every DECLUTTER_INTERVAL_MS while the playhead/camera moves (label
+  // TRACKING — position/orientation/scale/text — stays per-frame smooth).
+  // Troika applies fillOpacity as a raw uniform with no transition, so between
+  // ticks every label simply holds its last opacity: no flicker is possible,
+  // the only observable change is ≤100ms latency on a newly-overlapping fade.
+  // Selection changes and resizes force a tick (the "followed name is always
+  // legible" contract); actor appear/disappear flips are only discoverable
+  // mid-loop, so they arm forceDeclutter for the NEXT frame (≤1 rAF late — a
+  // fresh label may show at its default opacity for one frame, same as today).
+  const lastDeclutterAt = useRef(-Infinity);
+  const forceDeclutter = useRef(false);
+
   // Scratch objects reused every frame (no per-frame allocation in the hot loop).
   const scratchWorld = useRef(new THREE.Vector3());
   const scratchProjected = useRef(new THREE.Vector3());
@@ -207,6 +223,14 @@ export const BatchedActorNames3D: React.FC<BatchedActorNames3DProps> = ({
     lastSize.current.h = size.height;
     lastSelected.current = selectedActorId;
 
+    const nowMs = performance.now();
+    const declutterDue =
+      forceDeclutter.current ||
+      sizeChanged ||
+      selectionChanged ||
+      nowMs - lastDeclutterAt.current >= DECLUTTER_INTERVAL_MS;
+    forceDeclutter.current = false;
+
     // --- Pass 1: position / orient / scale / text every name; collect on-screen rectangles ----
     const items = screenItems.current;
     items.length = 0;
@@ -225,12 +249,16 @@ export const BatchedActorNames3D: React.FC<BatchedActorNames3DProps> = ({
         if (wasVisible !== false) {
           group.visible = false;
           lastVisible.current.set(actorId, false);
+          // A disappearance frees declutter space — resolve on the next frame.
+          if (!declutterDue) forceDeclutter.current = true;
         }
         return;
       }
       if (wasVisible === false || wasVisible === undefined) {
         group.visible = true;
         lastVisible.current.set(actorId, true);
+        // A fresh label must be resolved promptly (it mounts at full opacity).
+        if (!declutterDue) forceDeclutter.current = true;
       }
 
       // World-anchored position above the actor.
@@ -257,6 +285,10 @@ export const BatchedActorNames3D: React.FC<BatchedActorNames3DProps> = ({
         (text as unknown as { color: string }).color = color;
         lastData.current.set(actorId, { name: actor.name, color, alive });
       }
+
+      // Projection + collision box feed only the declutter pass — skip on
+      // non-tick frames (tracking above already ran; opacities hold).
+      if (!declutterDue) return;
 
       // Project the anchor to screen pixels and size an approximate collision box.
       scratchProjected.current.copy(scratchWorld.current).project(camera);
@@ -293,6 +325,8 @@ export const BatchedActorNames3D: React.FC<BatchedActorNames3DProps> = ({
     });
 
     // --- Pass 2: resolve overlap once, then write opacity through the refs --------------------
+    if (!declutterDue) return;
+    lastDeclutterAt.current = nowMs;
     const visibility = resolveNameVisibility(items, { fadedOpacity: FADED_OPACITY });
 
     handles.forEach((handle, actorId) => {

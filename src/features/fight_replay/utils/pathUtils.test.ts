@@ -1,3 +1,5 @@
+import * as THREE from 'three';
+
 import {
   ActorPosition,
   TimestampPositionLookup,
@@ -10,10 +12,12 @@ import {
   PlayerPath,
   calculateTrailOpacity,
   extractPlayerPaths,
+  getPathPointCountUpToTime,
   getPathPointsUpToTime,
   getPlayerInfo,
   getVisiblePlayerIds,
   smoothPath,
+  updatePathGeometry,
 } from './pathUtils';
 
 function makeActor(
@@ -258,6 +262,64 @@ describe('getPathPointsUpToTime', () => {
     const path = makePath([0, 100, 200, 300, 400]);
     expect(getPathPointsUpToTime(path, 250).map((p) => p.timestamp)).toEqual([0, 100, 200]);
     expect(getPathPointsUpToTime(path, 200).map((p) => p.timestamp)).toEqual([0, 100, 200]);
+  });
+
+  it('getPathPointCountUpToTime agrees with getPathPointsUpToTime everywhere', () => {
+    // Parity across empty / before-first / exact-timestamp / mid-gap / after-last —
+    // the count variant is the allocation-free hot-path sibling and must never drift.
+    const paths = [makePath([]), makePath([100]), makePath([0, 100, 200, 300, 400])];
+    const times = [-1, 0, 50, 100, 150, 200, 250, 300, 399, 400, 401, 9999];
+    for (const path of paths) {
+      for (const t of times) {
+        expect(getPathPointCountUpToTime(path, t)).toBe(getPathPointsUpToTime(path, t).length);
+      }
+    }
+  });
+});
+
+describe('updatePathGeometry partial count', () => {
+  function makePath(timestamps: number[]): PlayerPath {
+    return {
+      actorId: 1,
+      name: 'P1',
+      points: timestamps.map((t, i) => ({
+        position: [i, 0, i] as [number, number, number],
+        timestamp: t,
+        actorId: 1,
+      })),
+      color: '#fff',
+      visible: true,
+    };
+  }
+
+  it('writes and draws only the first `count` points', () => {
+    const path = makePath([0, 100, 200, 300]);
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(4 * 3), 3));
+    geometry.setAttribute('timestamp', new THREE.BufferAttribute(new Float32Array(4), 1));
+
+    updatePathGeometry(geometry, path.points, 2);
+
+    const pos = geometry.getAttribute('position') as THREE.BufferAttribute;
+    const ts = geometry.getAttribute('timestamp') as THREE.BufferAttribute;
+    expect(geometry.drawRange.count).toBe(2);
+    expect(pos.getX(1)).toBe(1);
+    expect(ts.getX(1)).toBe(100);
+    // Index 2 was never written — stays at the Float32Array default.
+    expect(pos.getX(2)).toBe(0);
+    expect(ts.getX(2)).toBe(0);
+  });
+
+  it('defaults to writing every point when count is omitted', () => {
+    const path = makePath([0, 100, 200]);
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(3 * 3), 3));
+    geometry.setAttribute('timestamp', new THREE.BufferAttribute(new Float32Array(3), 1));
+
+    updatePathGeometry(geometry, path.points);
+
+    expect(geometry.drawRange.count).toBe(3);
+    expect((geometry.getAttribute('timestamp') as THREE.BufferAttribute).getX(2)).toBe(200);
   });
 });
 

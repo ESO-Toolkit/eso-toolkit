@@ -918,11 +918,17 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
     mesh.setMatrixAt(index, obj.matrix);
   }, []);
 
+  // Memoized: building the signature allocated an array + string EVERY rAF,
+  // before the frame-cache early-return — the hottest allocation site in the
+  // actor loop. The HMR contract survives memoization: Fast Refresh re-runs
+  // useMemo on any edit to this file, so a paused boss-tune edit still
+  // produces a new signature and forces one recompose.
+  const bossSignature = useMemo(() => bossTuneSignature(performanceMode), [performanceMode]);
+
   useFrame((_state, delta) => {
     const currentTime = timeRef ? timeRef.current : 0;
     const selectedActorId = selectedActorRef.current;
     const prevFrame = frameCacheRef.current;
-    const bossSignature = bossTuneSignature(performanceMode);
 
     if (
       prevFrame &&

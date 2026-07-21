@@ -13,7 +13,7 @@ import { TimestampPositionLookup } from '../../../workers/calculations/Calculate
 import { RenderPriority } from '../constants/renderPriorities';
 import {
   PlayerPath,
-  getPathPointsUpToTime,
+  getPathPointCountUpToTime,
   createPathGeometry,
   updatePathGeometry,
   calculateTrailOpacity,
@@ -73,10 +73,20 @@ const TrailInstance: React.FC<TrailInstanceProps> = ({ path, timeRef, fadeTime, 
   // Create the Line object
   const line = useMemo(() => new THREE.Line(geometry, material), [geometry, material]);
 
+  // Frame cache: skip all per-frame work while the playhead is idle, and skip
+  // geometry writes/uploads unless the visible point COUNT changed (points
+  // sample every ~100ms, so during playback uploads drop from rAF-rate to
+  // ~10Hz). NaN/-1 seeded so a fresh geometry always gets one full write.
+  const lastTimeRef = useRef(Number.NaN);
+  const lastCountRef = useRef(-1);
+
   // Store refs
   useEffect(() => {
     geometryRef.current = geometry;
     materialRef.current = material;
+    // New geometry identity (points/color/width changed) → force a rewrite.
+    lastTimeRef.current = Number.NaN;
+    lastCountRef.current = -1;
 
     return () => {
       geometry.dispose();
@@ -97,26 +107,35 @@ const TrailInstance: React.FC<TrailInstanceProps> = ({ path, timeRef, fadeTime, 
 
     const currentTime = timeRef ? timeRef.current : 0;
 
-    // Get points up to current time
-    const visiblePoints = getPathPointsUpToTime(path, currentTime);
+    // Idle guard: everything below derives from the playhead alone. Without
+    // this, a paused scene (or paused orbit) rebuilt + re-uploaded the whole
+    // line geometry every rAF for every selected trail.
+    if (currentTime === lastTimeRef.current) return;
+    lastTimeRef.current = currentTime;
+
+    // Count-only lookup — no per-frame array allocation.
+    const count = getPathPointCountUpToTime(path, currentTime);
 
     // Update visibility
-    const shouldBeVisible = path.visible && visiblePoints.length > 1;
+    const shouldBeVisible = path.visible && count > 1;
     if (lineRef.current.visible !== shouldBeVisible) {
       lineRef.current.visible = shouldBeVisible;
     }
 
     if (!shouldBeVisible) return;
 
-    // Update geometry with current points
-    updatePathGeometry(geometryRef.current, visiblePoints);
-
-    // Update material opacity based on trail age
-    if (visiblePoints.length > 0) {
-      const newestPointTime = visiblePoints[visiblePoints.length - 1]?.timestamp || 0;
-      const opacity = calculateTrailOpacity(newestPointTime, currentTime, fadeTime);
-      materialRef.current.opacity = Math.max(0.3, opacity * 0.8); // Min 30% opacity
+    // Rewrite + re-upload the geometry only when the visible point count
+    // changed — identical content re-uploads were pure GPU-bandwidth waste.
+    if (count !== lastCountRef.current) {
+      updatePathGeometry(geometryRef.current, path.points, count);
+      lastCountRef.current = count;
     }
+
+    // Update material opacity based on trail age (cheap; every moving frame —
+    // calculateTrailOpacity is continuous in currentTime).
+    const newestPointTime = path.points[count - 1]?.timestamp || 0;
+    const opacity = calculateTrailOpacity(newestPointTime, currentTime, fadeTime);
+    materialRef.current.opacity = Math.max(0.3, opacity * 0.8); // Min 30% opacity
   }, RenderPriority.EFFECTS); // Medium priority after actors but before HUD
 
   // Don't render if path is empty or invisible
