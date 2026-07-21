@@ -5,10 +5,12 @@ import { RenderPriority } from '../constants/renderPriorities';
 import { computeTargetMs, estimateDisplayIntervalMs } from '../utils/adaptiveResolution';
 import { decideNextQualityLevel, QUALITY_LEVEL } from '../utils/qualityGovernor';
 
-// The controller currently escalates only as far as dropping shadows (the effect ladder). The
-// FRAME_CAP rung is defined in qualityGovernor for a follow-up — it needs the on-demand RenderLoop
-// (and ideally the per-frame actor update) gated to the cap to actually buy framerate, which is a
-// riskier change to the load-bearing render gate. Until then the auto-governor stops at NO_SHADOWS.
+// The auto-governor escalates only as far as dropping shadows. FRAME_CAP and BAREBONES are now
+// fully wired (FrameCapGate + RenderLoop + the barebones flags) but remain MANUAL-ONLY, reached via
+// the quality preset: a 30fps cap changes MOTION, not just fidelity — never something to spring on
+// a user over a transient stutter — and with measurement frozen under the cap the governor would
+// have no signal to ever recover out of it (a one-way door). Recovery under 'auto' therefore always
+// has headroom to climb back to full.
 const AUTO_MAX_LEVEL = QUALITY_LEVEL.NO_SHADOWS;
 
 interface QualityGovernorProps {

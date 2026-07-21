@@ -119,3 +119,14 @@ at `'low'` covers the common raid case without dropping the player's team.
 - User-facing override at **Settings → Performance mode** (auto / low /
   medium / high). Respect the override — don't ignore a user who picked
   `'low'` to save battery on a high-end phone.
+
+## Update (feat/replay-quality-presets)
+
+The replay now has its own 4-way quality preset (Auto / High / Performance /
+Barebones) persisted in `replay.prefs.v1`, replacing the boolean performance
+mode. Canvas `antialias` is preset-gated at mount; DPR range, floor
+Phong/sharpen/anisotropy, GLB figure/boss loads, figure accents and the
+name-tag budget are all driven from `qualityFlagsForLevel` in
+`fight_replay/utils/qualityGovernor.ts`. The 30fps FRAME_CAP rung is wired
+(FrameCapGate → RenderLoop/actors/names) and manual-only. Auto-detected 'low'
+tier seeds the governor at NO_SHADOWS on first visit (preset stays Auto).

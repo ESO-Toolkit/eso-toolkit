@@ -25,6 +25,12 @@ interface DynamicMapTextureProps {
    * until the next unrelated dirty event. Optional — absence simply means no on-demand gate.
    */
   onTextureChange?: () => void;
+  /**
+   * Floor extras (barebones flag `floorEnhancements`): Phong lighting, the
+   * unsharp-mask shader, and high anisotropy. False renders an unlit Basic
+   * material with plain trilinear sampling.
+   */
+  enhanced?: boolean;
 }
 
 // Map texture cache to avoid reloading the same textures
@@ -147,7 +153,7 @@ export function generateMaplessFloorTexture(): THREE.CanvasTexture {
  * so the contract is unit-testable without a live R3F canvas, which jsdom can't provide.
  */
 export function applyFloorTexture(
-  material: THREE.MeshPhongMaterial | null,
+  material: THREE.MeshPhongMaterial | THREE.MeshBasicMaterial | null,
   texture: THREE.Texture,
   onTextureChange?: () => void,
 ): void {
@@ -169,11 +175,21 @@ export const DynamicMapTexture: React.FC<DynamicMapTextureProps> = ({
   size,
   position,
   onTextureChange,
+  enhanced = true,
 }) => {
   const logger = useLogger();
   const meshRef = useRef<THREE.Mesh>(null);
-  const materialRef = useRef<THREE.MeshPhongMaterial>(null);
+  const materialRef = useRef<THREE.MeshPhongMaterial | THREE.MeshBasicMaterial>(null);
   const currentMapFileRef = useRef<string | null>(null);
+
+  // Material identity flips with `enhanced` (Phong <-> Basic below). Reset the
+  // map cache so the useFrame rebinds the current map texture to the NEW
+  // material — without this the swapped-in material renders map-less until the
+  // next phase change. onTextureChange nudges the on-demand render.
+  useEffect(() => {
+    currentMapFileRef.current = null;
+    onTextureChange?.();
+  }, [enhanced, onTextureChange]);
 
   const { fight } = useCurrentFight();
 
@@ -186,21 +202,26 @@ export const DynamicMapTexture: React.FC<DynamicMapTextureProps> = ({
   const perfTier = usePerfTier();
   const maxAnisotropy = useMemo(() => {
     const hw = gl.capabilities.getMaxAnisotropy();
-    const tierCap = perfTier === 'low' ? 4 : 16;
+    // Barebones (enhanced=false): plain trilinear only — grazing-angle crispness
+    // is a luxury the minimal floor gives up.
+    const tierCap = !enhanced ? 1 : perfTier === 'low' ? 4 : 16;
     return Math.min(hw, tierCap);
-  }, [gl, perfTier]);
+  }, [gl, perfTier, enhanced]);
 
   // Texture-space sharpen for the foreshortened floor map, scaled by perf tier (low tier = off).
   // Injected into the material's fragment shader (floorSharpen util) so it runs inside the scene's
   // on-demand gl.render — no per-frame cost, no post-processing pass. Re-applied when the tier
   // changes; setupFloorSharpen only recompiles once, then just updates the live strength uniform.
-  const sharpenStrength = sharpenStrengthForTier(perfTier);
+  const sharpenStrength = enhanced ? sharpenStrengthForTier(perfTier) : 0;
   useEffect(() => {
-    setupFloorSharpen(materialRef.current, sharpenStrength);
+    // Barebones renders the Basic material — no sharpen injection at all (the
+    // strength-0 path also covers the Phong material when the tier is low).
+    if (!enhanced) return;
+    setupFloorSharpen(materialRef.current as THREE.MeshPhongMaterial | null, sharpenStrength);
     // The shader recompile/uniform change happens outside any render trigger, so nudge the
     // on-demand RenderLoop to repaint (mirrors the texture-swap contract).
     onTextureChange?.();
-  }, [sharpenStrength, onTextureChange]);
+  }, [enhanced, sharpenStrength, onTextureChange]);
 
   // Create geometry
   const geometry = useMemo(() => new THREE.PlaneGeometry(size, size), [size]);
@@ -365,7 +386,9 @@ export const DynamicMapTexture: React.FC<DynamicMapTextureProps> = ({
       currentMapFileRef.current = null;
       applyFloorTexture(materialRef.current, maplessTexture, onTextureChange);
     }
-  }, [mapTimeline, maplessTexture, onTextureChange]);
+    // `enhanced` is a dep because the material IDENTITY flips with it — the
+    // slate must rebind to the freshly-mounted material.
+  }, [mapTimeline, maplessTexture, onTextureChange, enhanced]);
 
   // Cleanup on unmount: dispose only the per-instance resources this component created.
   // Do NOT clear the module-global textureCache here — it is shared across all live
@@ -394,19 +417,16 @@ export const DynamicMapTexture: React.FC<DynamicMapTextureProps> = ({
       scale={[-1, 1, 1]}
       receiveShadow
     >
-      <meshPhongMaterial
-        ref={materialRef}
-        // Opaque: at 0.8 over the dark #1a1a1a canvas background the map blended toward black,
-        // muting every pixel. Brightness/legibility are controlled via the sRGB texture + renderer
-        // exposure now, not via alpha. Opaque also drops the transparency-sort cost.
-        //
-        // White (full-brightness) in BOTH cases now: a non-empty timeline shows the real map, and an
-        // empty timeline shows the deliberate mapless slate texture (bound in the effect above) — both
-        // are sRGB textures that must not be multiplied down by a tinted base colour. (Previously the
-        // empty case had no texture and used a dark #2a2a2a tint to avoid a flat-white plane; the
-        // mapless texture replaces that.)
-        color="#ffffff"
-      />
+      {/* Opaque, white in BOTH material variants: the sRGB map texture must not be multiplied
+          down by a tinted base colour (see the brightness/legibility notes in git history).
+          Barebones (enhanced=false) swaps Phong -> Basic: unlit, so the biggest screen-space
+          surface skips per-fragment lighting entirely. The identity change re-runs the map
+          rebind effect above. */}
+      {enhanced ? (
+        <meshPhongMaterial ref={materialRef} color="#ffffff" />
+      ) : (
+        <meshBasicMaterial ref={materialRef} color="#ffffff" />
+      )}
     </mesh>
   );
 };

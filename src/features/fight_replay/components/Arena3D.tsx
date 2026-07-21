@@ -251,13 +251,6 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
   const perfTier = usePerfTier();
   const prefersReducedMotion = usePrefersReducedMotion();
   const previewMode = decidePreviewMode(perfTier, prefersReducedMotion);
-  // Stable [min, max] DPR range for the Canvas. Memoized so a re-render doesn't hand R3F a new array
-  // and re-apply the DPR — that would overwrite AdaptiveResolution's runtime downscale (which owns
-  // the pixel ratio after mount). Only a genuine perf-tier change produces a new range.
-  const canvasDprRange = useMemo<[number, number]>(
-    () => (perfTier === 'low' ? [1, 1.5] : [1, 2]),
-    [perfTier],
-  );
   const [showKeyboardHelp, setShowKeyboardHelp] = useState(false);
 
   // Persisted viewer prefs (localStorage). Arena3D owns the names + performance slices; the
@@ -287,6 +280,15 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
   const changeQualityPreset = useMemo(
     () => onQualityPresetChange ?? ((p: ReplayQualityPreset) => setQualityPresetLocal(p)),
     [onQualityPresetChange],
+  );
+  // Stable [min, max] DPR range for the Canvas. Memoized so a re-render doesn't hand R3F a new array
+  // and re-apply the DPR — that would overwrite AdaptiveResolution's runtime downscale (which owns
+  // the pixel ratio after mount). Barebones pins the range to 1 (mirrored by the maxDpr quality
+  // flag feeding AdaptiveResolution); the identity change on a preset/tier flip re-applies the
+  // Canvas dpr once, which AdaptiveResolution's authority re-assert reconciles.
+  const canvasDprRange = useMemo<[number, number]>(
+    () => (qualityPreset === 'barebones' ? [1, 1] : perfTier === 'low' ? [1, 1.5] : [1, 2]),
+    [perfTier, qualityPreset],
   );
   const toggleNames = useMemo(
     () => onToggleNames ?? (() => setNamesEnabledLocal((v) => !v)),
@@ -788,7 +790,12 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
             // Prevent context loss during Strict Mode remounts
             preserveDrawingBuffer: true,
             powerPreference: 'high-performance',
-            antialias: true,
+            // MSAA is a CONTEXT-CREATION option (not runtime-togglable), so it
+            // reads the PERSISTED preset once at mount: a returning barebones
+            // user gets no MSAA resolve cost. Deliberate asymmetry — switching
+            // preset mid-session keeps the mount-time AA until the next visit
+            // (barebones still lands DPR 1 + flat materials + the 30fps cap).
+            antialias: initialPrefs.qualityPreset !== 'barebones',
             // Fail if context cannot be created
             failIfMajorPerformanceCaveat: false,
           }}

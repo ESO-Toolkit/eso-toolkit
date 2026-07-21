@@ -5,6 +5,7 @@ import * as THREE from 'three';
 import type { DirectionalLight, Object3D } from 'three';
 
 import { FightFragment } from '@/graphql/gql/graphql';
+import type { ReplayQualityPreset } from '@/hooks/useReplayPrefs';
 
 import { usePerfTier } from '../../../hooks/usePerfTier';
 import { Logger, LogLevel } from '../../../utils/logger';
@@ -22,8 +23,6 @@ import { LongPressTracker } from '../utils/longPress';
 import { DEFAULT_ACTOR_SCALE, computeActorScaleFromFightArea } from '../utils/mapScaling';
 import { extractPlayerPaths, DEFAULT_PATH_SAMPLING } from '../utils/pathUtils';
 import { getPlayerPathColor } from '../utils/playerColors';
-import type { ReplayQualityPreset } from '@/hooks/useReplayPrefs';
-
 import { manualLevelForPreset, qualityFlagsForLevel } from '../utils/qualityGovernor';
 import { resolveTouchPolicy } from '../utils/touchPolicy';
 
@@ -1041,7 +1040,9 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
           there's headroom. Inert on capable hardware. */}
       <AdaptiveResolution
         timeRef={timeRef}
-        dprCap={dprCap}
+        // Barebones pins the ceiling to 1 via the maxDpr flag; the existing
+        // cap-change effect in AdaptiveResolution clamps + repaints on flips.
+        dprCap={Math.min(dprCap, qualityFlags.maxDpr ?? Number.POSITIVE_INFINITY)}
         paintedRef={paintedRef}
         markDirty={markSceneDirty}
         exhaustedRef={dprExhaustedRef}
@@ -1136,6 +1137,7 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
           size={arenaDimensions.size}
           position={[arenaDimensions.centerX, -0.02, arenaDimensions.centerZ]}
           onTextureChange={markSceneDirty}
+          enhanced={qualityFlags.floorEnhancements}
         />
       </Suspense>
       {/* Arena Grid — dialed back so the now-vivid map leads and the grid stays a quiet coordinate
@@ -1161,11 +1163,13 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
           dissolves the hard square plane edge into the background so the map no longer reads as a
           pasted swatch. Pure static paint (one transparent mesh, no per-frame work) → gate-friendly.
           Sized to the arena so the clear center always covers where the actors are. */}
-      <FloorVignette
-        centerX={arenaDimensions.centerX}
-        centerZ={arenaDimensions.centerZ}
-        size={arenaDimensions.size}
-      />
+      {qualityFlags.floorEnhancements && (
+        <FloorVignette
+          centerX={arenaDimensions.centerX}
+          centerZ={arenaDimensions.centerZ}
+          size={arenaDimensions.size}
+        />
+      )}
       {/* Direct useFrame Actors - Each actor uses useFrame independently */}
       <AnimationFrameSceneActors
         lookup={lookup}
