@@ -98,6 +98,10 @@ jest.mock('./components/UpdateNotification', () => ({
   UpdateNotification: () => null,
 }));
 
+jest.mock('./components/PerfLowNotice', () => ({
+  PerfLowNotice: () => null,
+}));
+
 jest.mock('./components/BugReportDialog', () => ({
   ModernFeedbackFab: () => null,
 }));

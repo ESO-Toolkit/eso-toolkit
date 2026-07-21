@@ -26,7 +26,8 @@ const OPTIONS: ReadonlyArray<{ value: OptionValue; label: string }> = [
   { value: 'auto', label: 'Auto' },
   { value: 'high', label: 'High' },
   { value: 'medium', label: 'Medium' },
-  { value: 'low', label: 'Low' },
+  // Menu label only — TIER_LABEL keeps the compact pill caption short ("Low").
+  { value: 'low', label: 'Low — minimal effects' },
 ];
 
 const TIER_LABEL: Record<PerfTier, string> = {
