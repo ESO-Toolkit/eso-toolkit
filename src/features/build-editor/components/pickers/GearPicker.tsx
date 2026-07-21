@@ -703,14 +703,15 @@ export const GearPickerDialog: React.FC<GearPickerDialogProps> = ({
   const [search, setSearch] = useState('');
   const [activeTab, setActiveTab] = useState<'all' | GearSetType>('all');
 
-  // The picker depends on TWO lazily-loaded data sources: the fetched item
-  // data (set/item lists for every slot) and icon data (weapon-type
-  // splitting). Track combined readiness so the grouped data recomputes (and
-  // re-caches) once both land, instead of showing empty groups or a single
-  // collapsed weapon row if the picker opens before they settle.
-  const [iconReady, setIconReady] = useState(() => isIconDataReady() && isItemDataReady());
-  // Set when either data load fails. Both preloads clear their rejected
-  // promise on failure, so reopening the dialog retries the load.
+  // The picker depends on TWO lazily-loaded data sources, tracked SEPARATELY:
+  // the fetched item data (set/item lists — required for EVERY slot) and icon
+  // data (weapon-type splitting — load-bearing only for weapon/offhand).
+  // Keeping them separate means an icon failure can't block apparel/jewelry
+  // browsing, which only needs the item map.
+  const [iconReady, setIconReady] = useState(() => isIconDataReady());
+  const [itemsReady, setItemsReady] = useState(() => isItemDataReady());
+  // Set when a load THIS SLOT depends on fails. Both preloads clear their
+  // rejected promise on failure, so reopening the dialog retries the load.
   const [iconError, setIconError] = useState(false);
 
   // Reset state on open (incl. clearing a prior load error so the retry fires).
@@ -723,39 +724,57 @@ export const GearPickerDialog: React.FC<GearPickerDialogProps> = ({
   }, [open]);
 
   // While open, make sure item + icon data are loaded so set groups populate
-  // and weapon types split correctly. On failure, surface a recoverable error
-  // (weapon rows stay non-selectable rather than letting a click equip the
-  // wrong collapsed variant); reopening the dialog clears the error and
-  // retries via the resettable promises.
+  // and weapon types split correctly. Failures surface a recoverable error
+  // only when the failed load matters for this slot: item data always does;
+  // icon data only for weapon/offhand (weapon rows stay non-selectable rather
+  // than letting a click equip the wrong collapsed variant). Reopening the
+  // dialog clears the error and retries via the resettable promises.
   useEffect(() => {
-    if (!open || iconReady || iconError) return;
+    if (!open || (iconReady && itemsReady) || iconError) return;
     let cancelled = false;
-    Promise.all([preloadIconData(), preloadItemData()])
-      .then(() => {
-        if (!cancelled) setIconReady(true);
-      })
-      .catch(() => {
-        if (cancelled) return;
-        // Another path may have resolved both; otherwise mark the error.
-        if (isIconDataReady() && isItemDataReady()) setIconReady(true);
-        else setIconError(true);
-      });
+    if (!itemsReady) {
+      preloadItemData()
+        .then(() => {
+          if (!cancelled) setItemsReady(true);
+        })
+        .catch(() => {
+          if (cancelled) return;
+          // Another path may have resolved it; otherwise mark the error —
+          // without the item map NO slot has anything to show.
+          if (isItemDataReady()) setItemsReady(true);
+          else setIconError(true);
+        });
+    }
+    if (!iconReady) {
+      preloadIconData()
+        .then(() => {
+          if (!cancelled) setIconReady(true);
+        })
+        .catch(() => {
+          if (cancelled) return;
+          if (isIconDataReady()) setIconReady(true);
+          // Apparel/jewelry browsing proceeds on item data alone — only
+          // weapon slots need the icon-derived type split.
+          else if (WEAPON_SLOTS_SET.has(targetSlot)) setIconError(true);
+        });
+    }
     return () => {
       cancelled = true;
     };
-  }, [open, iconReady, iconError]);
+  }, [open, iconReady, itemsReady, iconError, targetSlot]);
 
   // A weapon slot whose types haven't loaded yet — used to suppress collapsed,
   // mis-selectable weapon rows in both browse and search until icon data lands.
   const weaponSlotPending = WEAPON_SLOTS_SET.has(targetSlot) && !iconReady;
 
   // Build grouped data for this slot (cached at module scope — per-slot work
-  // runs once per page, not once per picker open). `iconReady` is a dep so weapon
+  // runs once per page, not once per picker open). `itemsReady` is a dep so
+  // every slot recomputes once the item map lands; `iconReady` so weapon
   // groups recompute once icon data lands (apparel results are icon-independent).
   const { groups, byType } = useMemo(
     () => getSetGroupsForSlot(targetSlot),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [targetSlot, iconReady],
+    [targetSlot, iconReady, itemsReady],
   );
 
   // Available type tabs (only show tabs that have sets)
@@ -786,7 +805,7 @@ export const GearPickerDialog: React.FC<GearPickerDialogProps> = ({
   const canonicalItems = useMemo(
     () => getCanonicalItemsForTargetSlot(targetSlot, makeCanonicalKey(targetSlot)),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [targetSlot, iconReady],
+    [targetSlot, iconReady, itemsReady],
   );
 
   const isWeaponTargetSlot = WEAPON_SLOTS_SET.has(targetSlot);
