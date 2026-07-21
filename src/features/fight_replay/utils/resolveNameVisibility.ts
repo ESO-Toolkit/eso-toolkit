@@ -52,6 +52,13 @@ export interface ResolveNameVisibilityOptions {
    * to 0 (axis-aligned box intersection) — kept as a knob for tuning density.
    */
   overlapSlack?: number;
+  /**
+   * Barebones budget: at most this many names stay visible; everything beyond
+   * fades regardless of overlap. Counted in the same priority-then-id order the
+   * declutter walks, so the followed player and bosses (higher priority) always
+   * claim their slots first. null/undefined = unlimited.
+   */
+  maxVisible?: number | null;
 }
 
 const DEFAULT_FADED_OPACITY = 0.12;
@@ -78,6 +85,7 @@ export function resolveNameVisibility(
 ): Map<number, number> {
   const fadedOpacity = options.fadedOpacity ?? DEFAULT_FADED_OPACITY;
   const overlapSlack = options.overlapSlack ?? 0;
+  const maxVisible = options.maxVisible ?? Number.POSITIVE_INFINITY;
 
   const result = new Map<number, number>();
   if (items.length === 0) return result;
@@ -93,6 +101,13 @@ export function resolveNameVisibility(
 
   for (const item of ordered) {
     const isPriority = item.priority > NamePriority.NORMAL;
+
+    // Budget exhausted (barebones): everything from here fades. Walked in
+    // priority order, so bosses/followed player claimed their slots first.
+    if (placed.length >= maxVisible) {
+      result.set(item.id, isPriority ? 1 : fadedOpacity);
+      continue;
+    }
 
     if (isPriority) {
       // Priority names always stay legible and always occupy space.

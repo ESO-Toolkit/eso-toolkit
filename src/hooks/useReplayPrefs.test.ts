@@ -27,6 +27,7 @@ describe('useReplayPrefs', () => {
       showPlayerPaths: true,
       showTrails: true,
       performanceMode: true,
+      qualityPreset: 'high',
       barCollapsed: true,
       statsPanelEnabled: false,
       statsPanelSections: { hero: true, dr: false, buffs: true, debuffs: false, abilities: true },
@@ -157,5 +158,46 @@ describe('useReplayPrefs', () => {
       });
     }).not.toThrow();
     setItem.mockRestore();
+  });
+
+  describe('qualityPreset migration', () => {
+    it('migrates legacy performanceMode: true to the performance preset', () => {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ performanceMode: true }));
+      const { result } = renderHook(() => useReplayPrefs());
+      expect(result.current.storedPrefs.qualityPreset).toBe('performance');
+      expect(result.current.initialPrefs.qualityPreset).toBe('performance');
+    });
+
+    it('does not synthesize a preset from performanceMode: false or absence', () => {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ performanceMode: false }));
+      const { result } = renderHook(() => useReplayPrefs());
+      expect(result.current.storedPrefs.qualityPreset).toBeUndefined();
+      expect(result.current.initialPrefs.qualityPreset).toBe('auto');
+    });
+
+    it('an explicit stored preset beats the legacy boolean', () => {
+      window.localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({ performanceMode: true, qualityPreset: 'barebones' }),
+      );
+      const { result } = renderHook(() => useReplayPrefs());
+      expect(result.current.initialPrefs.qualityPreset).toBe('barebones');
+    });
+
+    it('drops an invalid preset string (falls back to auto or the legacy mapping)', () => {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ qualityPreset: 'potato' }));
+      const { result } = renderHook(() => useReplayPrefs());
+      expect(result.current.initialPrefs.qualityPreset).toBe('auto');
+    });
+
+    it('round-trips a persisted preset', () => {
+      const { result } = renderHook(() => useReplayPrefs());
+      act(() => {
+        result.current.persistPrefs({ qualityPreset: 'high', performanceMode: false });
+      });
+      const raw = JSON.parse(window.localStorage.getItem(STORAGE_KEY) ?? '{}');
+      expect(raw.qualityPreset).toBe('high');
+      expect(raw.performanceMode).toBe(false);
+    });
   });
 });

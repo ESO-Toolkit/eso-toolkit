@@ -60,6 +60,20 @@ interface InstancedReplayFigures3DProps {
   /** When true, the humanoid figures stop casting shadows (drops the shadow-pass tri load). */
   performanceMode?: boolean;
   /**
+   * Barebones flag: humanoid pose-GLB flipbook + boss GLB. False skips BOTH
+   * fetches entirely — figures stay on the proven capsule fallback (5 fewer
+   * instanced layers, no per-frame gait math, no 1.1 MB of model downloads).
+   */
+  detailedFigures?: boolean;
+  /** Barebones flag: PBR (MeshStandard) body/pose/cap materials. False = Lambert (cheap shading). */
+  richMaterials?: boolean;
+  /** Barebones flag: decorative contact-shadow blob + facing wedge. False drops both layers. */
+  figureAccents?: boolean;
+  /** Frame-cap verdict — on capped-out frames the whole recompose defers (delta accumulates). */
+  capGateRef?: React.RefObject<{ skip: boolean }>;
+  /** Barebones name budget forwarded to the name-tag coordinator. */
+  nameTagBudget?: number | null;
+  /**
    * Repaint + shadow-dirty signal. Called when the async humanoid/boss GLB loads and swaps the
    * shadow-casting geometry: this child's setState does NOT re-run the parent scene's commit effect,
    * so without this a paused scene would keep the stale (capsule / no-boss) shadow map on the next
@@ -437,8 +451,14 @@ function isThreatActor(actor: ActorPosition): boolean {
 }
 
 // Signature folded into the FrameCache so a paused HMR edit of any live boss-tune constant (or a
-// performanceMode toggle) forces one recompose. Keep every value the per-frame boss compose reads.
-function bossTuneSignature(performanceMode: boolean): string {
+// performanceMode toggle) forces one recompose. Keep every value the per-frame boss compose reads,
+// plus the barebones flags — a preset flip while paused must recompose once too.
+function bossTuneSignature(
+  performanceMode: boolean,
+  detailedFigures: boolean,
+  richMaterials: boolean,
+  figureAccents: boolean,
+): string {
   return [
     BOSS_SCALE,
     BOSS_Y_OFFSET,
@@ -450,6 +470,9 @@ function bossTuneSignature(performanceMode: boolean): string {
     DEAD_DARKEN,
     DEAD_SQUASH_Y,
     performanceMode ? 1 : 0,
+    detailedFigures ? 1 : 0,
+    richMaterials ? 1 : 0,
+    figureAccents ? 1 : 0,
   ].join(',');
 }
 
@@ -480,6 +503,11 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
   playerVisibility = EMPTY_VISIBILITY,
   playerColorOverrides = EMPTY_COLOR_OVERRIDES,
   performanceMode = false,
+  detailedFigures = true,
+  richMaterials = true,
+  figureAccents = true,
+  capGateRef,
+  nameTagBudget = null,
   markDirty,
 }) => {
   const bodyHeight = 0.55 * scale;
@@ -490,12 +518,19 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
   const instanceCount = actorIds.length;
 
   // URL of the boss model this fight needs, or null if no actor maps to one. Gates the GLB load so
-  // non-Taleria fights never fetch/parse the 560 KB model.
-  const bossModelUrl = useMemo(() => getBossModelUrlInLookup(lookup, actorIds), [lookup, actorIds]);
+  // non-Taleria fights never fetch/parse the 560 KB model. Barebones (detailedFigures=false) keeps
+  // every boss on the capsule and never fetches.
+  const bossModelUrl = useMemo(
+    () => (detailedFigures ? getBossModelUrlInLookup(lookup, actorIds) : null),
+    [lookup, actorIds, detailedFigures],
+  );
 
   // Stable index → glyph-group membership. An actor's symbol is fixed (role/type don't change
   // mid-fight), so we can assign each actor to one glyph group once and only toggle visibility.
   const glyphSymbolByIndex = useRef<GlyphSymbol[]>([]);
+
+  // rAF time banked while the frame cap skipped recomposes (see the useFrame).
+  const skippedDeltaRef = useRef(0);
 
   // Async-loaded humanoid pose geometries (the 5-pose walk flipbook). Null until the GLB resolves;
   // players fall back to the capsule body until then. The array holds one BufferGeometry per pose in
@@ -503,6 +538,11 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
   // refills the on-demand render budget (Arena3DScene) so the swap actually paints while paused.
   const [poseGeometries, setPoseGeometries] = useState<THREE.BufferGeometry[] | null>(null);
   useEffect(() => {
+    // Barebones: never fetch the walk flipbook — the capsule fallback IS the figure.
+    if (!detailedFigures) {
+      setPoseGeometries(null);
+      return;
+    }
     let cancelled = false;
     const loader = new GLTFLoader();
     loader.load(
@@ -532,7 +572,7 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [detailedFigures]);
 
   // Async-loaded boss model. Null until the GLB resolves; the boss falls back to the capsule body
   // until then. On load we bake the mesh's node (world) transform into its geometry so the single
@@ -685,13 +725,21 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
 
   const materials = useMemo(
     () => ({
-      body: new THREE.MeshStandardMaterial({ roughness: 0.6, metalness: 0.1, transparent: true }),
-      humanoid: new THREE.MeshStandardMaterial({
-        roughness: 0.6,
-        metalness: 0.1,
-        transparent: true,
-      }),
-      cap: new THREE.MeshStandardMaterial({ roughness: 0.5, metalness: 0.2, transparent: true }),
+      // Barebones (richMaterials=false): Lambert instead of Standard — still
+      // light-responsive so depth reads, but per-fragment cost drops (no PBR).
+      // setColorAt / per-instance opacity behave identically on both. The memo
+      // dep means a preset flip recreates the instanced meshes (args identity)
+      // — a one-frame rebuild hitch on toggle; the commit refills the render
+      // budget so it paints, and the cleanup below disposes the old set.
+      body: richMaterials
+        ? new THREE.MeshStandardMaterial({ roughness: 0.6, metalness: 0.1, transparent: true })
+        : new THREE.MeshLambertMaterial({ transparent: true }),
+      humanoid: richMaterials
+        ? new THREE.MeshStandardMaterial({ roughness: 0.6, metalness: 0.1, transparent: true })
+        : new THREE.MeshLambertMaterial({ transparent: true }),
+      cap: richMaterials
+        ? new THREE.MeshStandardMaterial({ roughness: 0.5, metalness: 0.2, transparent: true })
+        : new THREE.MeshLambertMaterial({ transparent: true }),
       vision: new THREE.MeshBasicMaterial({
         vertexColors: true,
         transparent: true,
@@ -756,7 +804,7 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
         side: THREE.DoubleSide,
       }),
     }),
-    [],
+    [richMaterials],
   );
 
   // Per-symbol glyph materials (one texture each). Built once; transparent + per-instance opacity.
@@ -922,10 +970,27 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
   // before the frame-cache early-return — the hottest allocation site in the
   // actor loop. The HMR contract survives memoization: Fast Refresh re-runs
   // useMemo on any edit to this file, so a paused boss-tune edit still
-  // produces a new signature and forces one recompose.
-  const bossSignature = useMemo(() => bossTuneSignature(performanceMode), [performanceMode]);
+  // produces a new signature and forces one recompose. The barebones flags are
+  // deps too — a preset flip while paused must recompose once.
+  const bossSignature = useMemo(
+    () => bossTuneSignature(performanceMode, detailedFigures, richMaterials, figureAccents),
+    [performanceMode, detailedFigures, richMaterials, figureAccents],
+  );
 
-  useFrame((_state, delta) => {
+  useFrame((_state, rafDelta) => {
+    // Frame cap: defer the whole recompose to the next painted frame, but bank
+    // the skipped rAF time — the gait speed/EMA below divide by delta (units
+    // per SECOND), so the painted frame must see the FULL elapsed time or
+    // measured speed inflates ~4x at 120Hz (33ms of travel / 8.3ms delta).
+    // The frame cache is untouched on skips, so the next allowed frame always
+    // does a full recompose (stale signatures, async GLB loads included).
+    if (capGateRef?.current?.skip) {
+      skippedDeltaRef.current += rafDelta;
+      return;
+    }
+    const delta = rafDelta + skippedDeltaRef.current;
+    skippedDeltaRef.current = 0;
+
     const currentTime = timeRef ? timeRef.current : 0;
     const selectedActorId = selectedActorRef.current;
     const prevFrame = frameCacheRef.current;
@@ -1505,13 +1570,25 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
         onPointerOut={handleOut}
       />
       {/* Soft radial contact-shadow blob disc under each actor (one shared InstancedMesh, 1 draw
-          call). renderOrder 9 (set in the setup effect) paints it UNDER the anchor ring. */}
-      <instancedMesh ref={aoBlobRef} args={[geometries.aoBlob, materials.aoBlob, instanceCount]} />
+          call). renderOrder 9 (set in the setup effect) paints it UNDER the anchor ring. Decorative
+          accents (blob + facing wedge) unmount on barebones — every per-frame write to them is
+          ref-optional-chained, so a null ref is a clean no-op. */}
+      {figureAccents && (
+        <instancedMesh
+          ref={aoBlobRef}
+          args={[geometries.aoBlob, materials.aoBlob, instanceCount]}
+        />
+      )}
       <instancedMesh
         ref={anchorRingRef}
         args={[geometries.anchorRing, materials.anchorRing, instanceCount]}
       />
-      <instancedMesh ref={visionRef} args={[geometries.vision, materials.vision, instanceCount]} />
+      {figureAccents && (
+        <instancedMesh
+          ref={visionRef}
+          args={[geometries.vision, materials.vision, instanceCount]}
+        />
+      )}
       <instancedMesh
         ref={bodyRef}
         args={[geometries.body, materials.body, instanceCount]}
@@ -1571,6 +1648,8 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
           actorIds={actorIds}
           playerVisibility={playerVisibility}
           selectedActorRef={selectedActorRef}
+          nameTagBudget={nameTagBudget}
+          capGateRef={capGateRef}
         />
       )}
     </>

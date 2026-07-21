@@ -31,6 +31,7 @@ import { Box, Switch, Typography } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
+import type { ReplayQualityPreset } from '../../../../hooks/useReplayPrefs';
 import { useTimelineMarkers } from '../../../../hooks/useTimelineMarkers';
 import type { TrialChapter } from '../../trial_chapters/types';
 import type { ShapeKind, ShapeStyle } from '../../types/mapMarkers';
@@ -39,6 +40,7 @@ import type { TrialReplayNav } from '../FightReplay3D';
 import { LiveScrubRail } from '../LiveScrubRail';
 import { LiveTrialStrip } from '../LiveTrialStrip';
 import { PlaybackButtons } from '../PlaybackButtons';
+import { QUALITY_PRESET_OPTIONS } from '../ReplayQualityMenu';
 import { ShapeToolbar } from '../ShapeToolbar';
 import { ShareButton } from '../ShareButton';
 import { TimeReadout } from '../TimeReadout';
@@ -91,8 +93,8 @@ interface MobileReplayDockProps {
   onToggleTrails: () => void;
   namesEnabled: boolean;
   onToggleNames: () => void;
-  performanceMode: boolean;
-  onTogglePerformance: () => void;
+  qualityPreset: ReplayQualityPreset;
+  onQualityPresetChange: (preset: ReplayQualityPreset) => void;
   statsPanelEnabled: boolean;
   onToggleStats: () => void;
   /** Whether the camera is locked onto a player (gates the stats-panel toggle, as on desktop). */
@@ -316,8 +318,8 @@ const MobileReplayDockComponent: React.FC<MobileReplayDockProps> = ({
   onToggleTrails,
   namesEnabled,
   onToggleNames,
-  performanceMode,
-  onTogglePerformance,
+  qualityPreset,
+  onQualityPresetChange,
   statsPanelEnabled,
   onToggleStats,
   following,
@@ -863,17 +865,53 @@ const MobileReplayDockComponent: React.FC<MobileReplayDockProps> = ({
               )}
               <SettingRow
                 icon={<BoltRoundedIcon fontSize="small" />}
-                label="Performance mode"
-                description="Drop shadows for smoother large fights"
-                active={performanceMode}
-                control={
-                  <Switch
-                    checked={performanceMode}
-                    onChange={onTogglePerformance}
-                    slotProps={{ input: { 'aria-label': 'Performance mode' } }}
-                  />
+                label="Replay quality"
+                description={
+                  QUALITY_PRESET_OPTIONS.find((o) => o.value === qualityPreset)?.description ?? ''
                 }
+                active={qualityPreset !== 'auto'}
+                control={<span />}
               />
+              {/* 4-way preset picker — same pill-grid grammar as the speed picker above. */}
+              <Box
+                sx={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(4, 1fr)',
+                  gap: 0.75,
+                  mt: 0.5,
+                }}
+              >
+                {QUALITY_PRESET_OPTIONS.map(({ value, label }) => {
+                  const active = value === qualityPreset;
+                  return (
+                    <Box
+                      key={value}
+                      component="button"
+                      type="button"
+                      onClick={() => onQualityPresetChange(value)}
+                      aria-pressed={active}
+                      aria-label={`Replay quality: ${label}`}
+                      sx={(theme) => ({
+                        appearance: 'none',
+                        cursor: 'pointer',
+                        height: 40,
+                        borderRadius: 2,
+                        border: '1px solid',
+                        borderColor: active ? 'primary.main' : 'divider',
+                        backgroundColor: active
+                          ? alpha(theme.palette.primary.main, 0.16)
+                          : 'transparent',
+                        color: active ? 'primary.main' : 'text.primary',
+                        fontWeight: active ? 700 : 600,
+                        fontSize: '0.75rem',
+                        transition: 'background-color 120ms ease, border-color 120ms ease',
+                      })}
+                    >
+                      {value === 'barebones' ? 'Bare' : value === 'performance' ? 'Perf' : label}
+                    </Box>
+                  );
+                })}
+              </Box>
             </Box>
 
             <Typography

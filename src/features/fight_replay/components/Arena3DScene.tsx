@@ -5,17 +5,25 @@ import * as THREE from 'three';
 import type { DirectionalLight, Object3D } from 'three';
 
 import { FightFragment } from '@/graphql/gql/graphql';
+import type { ReplayQualityPreset } from '@/hooks/useReplayPrefs';
 
 import { usePerfTier } from '../../../hooks/usePerfTier';
 import { Logger, LogLevel } from '../../../utils/logger';
 import { MapTimeline } from '../../../utils/mapTimelineUtils';
 import { TimestampPositionLookup } from '../../../workers/calculations/CalculateActorPositions';
+import { RenderPriority } from '../constants/renderPriorities';
 import { MapMarkersState, ShapeKind, ShapeStyle } from '../types/mapMarkers';
+import {
+  decideFrameCapPaint,
+  SEEK_JUMP_MS,
+  type FrameCapGateValue,
+  type FrameCapState,
+} from '../utils/frameCap';
 import { LongPressTracker } from '../utils/longPress';
 import { DEFAULT_ACTOR_SCALE, computeActorScaleFromFightArea } from '../utils/mapScaling';
 import { extractPlayerPaths, DEFAULT_PATH_SAMPLING } from '../utils/pathUtils';
 import { getPlayerPathColor } from '../utils/playerColors';
-import { QUALITY_LEVEL, qualityFlagsForLevel } from '../utils/qualityGovernor';
+import { manualLevelForPreset, qualityFlagsForLevel } from '../utils/qualityGovernor';
 import { resolveTouchPolicy } from '../utils/touchPolicy';
 
 import { AdaptiveResolution } from './AdaptiveResolution';
@@ -74,6 +82,13 @@ interface AnimationFrameSceneActorsProps {
   playerColorOverrides?: Map<number, string>;
   /** When true, player figures stop casting shadows (perf headroom for large fights). */
   performanceMode?: boolean;
+  /** Barebones flags (see QualityFlags): GLB figures, PBR materials, decorative accents, name budget. */
+  detailedFigures?: boolean;
+  richMaterials?: boolean;
+  figureAccents?: boolean;
+  nameTagBudget?: number | null;
+  /** Frame-cap verdict shared with the render gate. */
+  capGateRef?: React.RefObject<FrameCapGateValue>;
   /** Repaint + shadow-dirty signal for async caster changes (humanoid/boss GLB load). */
   markDirty?: () => void;
 }
@@ -158,6 +173,11 @@ const AnimationFrameSceneActors: React.FC<AnimationFrameSceneActorsProps> = ({
   playerVisibility,
   playerColorOverrides,
   performanceMode,
+  detailedFigures,
+  richMaterials,
+  figureAccents,
+  nameTagBudget,
+  capGateRef,
   markDirty,
 }) => {
   // Performance settings based on scrubbing mode
@@ -175,6 +195,11 @@ const AnimationFrameSceneActors: React.FC<AnimationFrameSceneActorsProps> = ({
       playerVisibility={playerVisibility}
       playerColorOverrides={playerColorOverrides}
       performanceMode={performanceMode}
+      detailedFigures={detailedFigures}
+      richMaterials={richMaterials}
+      figureAccents={figureAccents}
+      nameTagBudget={nameTagBudget}
+      capGateRef={capGateRef}
       markDirty={markDirty}
     />
   );
@@ -187,6 +212,82 @@ const AnimationFrameSceneActors: React.FC<AnimationFrameSceneActorsProps> = ({
  * exactly one frame, to avoid a stale paint.
  */
 const RENDER_TAIL_FRAMES = 4;
+
+interface FrameCapGateProps {
+  /** Cap target from the quality flags, or null = uncapped (gate inert). */
+  frameCapFps: number | null;
+  timeRef: React.RefObject<number> | { current: number };
+  /** Live playback flag from FightReplay3D — the cap applies ONLY during continuous playback. */
+  isPlayingRef: React.RefObject<boolean>;
+  /** Shared per-rAF verdict consumed by RenderLoop / actors / names. */
+  capGateRef: React.RefObject<FrameCapGateValue>;
+}
+
+/**
+ * Computes the frame-cap verdict for THIS rAF at a priority before every other
+ * useFrame (including drei OrbitControls' internal -1). Pure decision logic in
+ * utils/frameCap.ts; this component owns the refs and the bypass triple:
+ *   1. not playing — paused scrubs/orbits/commit repaints stay snappy, and the
+ *      RENDER_TAIL drain + pause-restore repaints are never deferred;
+ *   2. a playhead jump > SEEK_JUMP_MS — timeline clicks, chapter jumps, A-B
+ *      loop wrap paint immediately mid-playback;
+ *   3. camera interaction — OrbitControls fires 'change' for drag, damping,
+ *      wheel and pinch (CanvasWheelZoom dispatches it synthetically), so
+ *      orbiting during capped playback paints at panel rate while it lasts.
+ */
+const FrameCapGate: React.FC<FrameCapGateProps> = ({
+  frameCapFps,
+  timeRef,
+  isPlayingRef,
+  capGateRef,
+}) => {
+  const { controls } = useThree();
+  const capStateRef = useRef<FrameCapState>({ nextDeadlineMs: null });
+  const lastTimeRef = useRef<number | null>(null);
+  const interactionRef = useRef(false);
+
+  useEffect(() => {
+    if (!controls) return;
+    const onChange = (): void => {
+      interactionRef.current = true;
+    };
+    const orbit = controls as unknown as {
+      addEventListener: (type: string, cb: () => void) => void;
+      removeEventListener: (type: string, cb: () => void) => void;
+    };
+    orbit.addEventListener('change', onChange);
+    return () => orbit.removeEventListener('change', onChange);
+  }, [controls]);
+
+  useFrame((_state, delta) => {
+    if (frameCapFps == null) {
+      capGateRef.current.skip = false;
+      // Fresh anchor whenever the cap re-engages.
+      capStateRef.current = { nextDeadlineMs: null };
+      lastTimeRef.current = null;
+      return;
+    }
+    const t = timeRef.current ?? 0;
+    const seekJump =
+      lastTimeRef.current !== null && Math.abs(t - lastTimeRef.current) > SEEK_JUMP_MS;
+    lastTimeRef.current = t;
+
+    const bypass = !isPlayingRef.current || seekJump || interactionRef.current;
+    interactionRef.current = false;
+
+    const decision = decideFrameCapPaint(
+      performance.now(),
+      delta * 1000,
+      capStateRef.current,
+      1000 / frameCapFps,
+      bypass,
+    );
+    capStateRef.current = decision.state;
+    capGateRef.current.skip = !decision.paint;
+  }, RenderPriority.FRAME_CAP_GATE);
+
+  return null;
+};
 
 interface RenderLoopProps {
   timeRef: React.RefObject<number> | { current: number };
@@ -221,6 +322,8 @@ interface RenderLoopProps {
    * composer (RenderPass → bloom → OutputPass) so bright celestials glow; otherwise a plain gl.render.
    */
   composerRef: React.RefObject<BloomComposerHandle | null>;
+  /** Frame-cap verdict from FrameCapGate — skip=true defers this frame's paint (budget untouched). */
+  capGateRef: React.RefObject<FrameCapGateValue>;
 }
 
 /**
@@ -246,6 +349,7 @@ const RenderLoop: React.FC<RenderLoopProps> = ({
   shadowDirtyRef,
   paintedRef,
   composerRef,
+  capGateRef,
 }) => {
   const { gl, scene, camera, controls } = useThree();
 
@@ -305,6 +409,16 @@ const RenderLoop: React.FC<RenderLoopProps> = ({
     //     which the commit-refill effect covers.
     if (followingActorIdRef.current !== null) {
       renderBudgetRef.current = RENDER_TAIL_FRAMES;
+    }
+
+    // Frame cap: a capped-out frame defers the paint WITHOUT consuming budget or
+    // clearing shadowDirtyRef — both are only mutated inside the paint branch
+    // below, so they stay latched and the next allowed frame paints with the
+    // shadow regenerated. paintedRef=false tells the controllers this frame did
+    // not paint (they additionally freeze all sampling while the cap is active).
+    if (capGateRef.current.skip) {
+      paintedRef.current = false;
+      return;
     }
 
     // Record whether this frame paints, for the adaptive-resolution controller (idle vs rendered).
@@ -533,17 +647,25 @@ export interface Arena3DSceneProps {
    * so the DOM player panel and the in-canvas figures share one source of truth.
    */
   playerColorOverrides?: Map<number, string>;
-  /** Manual performance mode (the Bolt toggle): drop bloom + IBL/cosmic + shadows all at once. */
-  performanceMode?: boolean;
   /**
-   * Auto quality level from the governor (0 = full). Combined with `performanceMode` to derive which
-   * effects render. Owned by FightReplay3D so the scene + the "auto" chip stay in lockstep.
+   * Replay quality preset: 'auto' arms the governor at full quality; 'high'
+   * pins full quality; 'performance' pins the no-shadows tier; 'barebones'
+   * pins the minimal-drawing 30fps floor. Owned by FightReplay3D.
+   */
+  qualityPreset?: ReplayQualityPreset;
+  /**
+   * Auto quality level from the governor (0 = full). Only applies while the
+   * preset is 'auto'. Owned by FightReplay3D so the scene + the chip stay in lockstep.
    */
   autoQualityLevel?: number;
   /** Governor requests a new level (escalate/recover one effect tier). */
   onQualityLevelChange?: (level: number) => void;
-  /** True when the user forced full quality via the chip — the governor stands down. */
-  qualityAutoDisabled?: boolean;
+  /**
+   * Live playback flag (never re-renders). Consumed by FrameCapGate — the
+   * 30fps cap applies only during continuous playback; paused interaction
+   * always paints immediately.
+   */
+  isPlayingRef?: React.RefObject<boolean>;
   /**
    * True when the replay is a mobile device inside the pseudo-fullscreen overlay. Drives the touch
    * gesture policy: OrbitControls pan is disabled so two fingers are exclusively pinch-zoom
@@ -551,6 +673,9 @@ export interface Arena3DSceneProps {
    */
   mobileImmersive?: boolean;
 }
+
+/** Stable always-false fallback for the (defensive) case where no isPlayingRef is supplied. */
+const NEVER_PLAYING_REF: React.RefObject<boolean> = { current: false };
 
 /**
  * High-frequency 3D scene that updates independently of React state.
@@ -584,10 +709,10 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
   showPlayerTrails = false,
   playerVisibility = EMPTY_VISIBILITY,
   playerColorOverrides = EMPTY_COLOR_OVERRIDES,
-  performanceMode = false,
+  qualityPreset = 'auto',
   autoQualityLevel = 0,
   onQualityLevelChange,
-  qualityAutoDisabled = false,
+  isPlayingRef = NEVER_PLAYING_REF,
   mobileImmersive = false,
 }) => {
   // Touch-gesture policy for OrbitControls. `mobileImmersive` already folds in (mobile && immersive),
@@ -611,6 +736,8 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
   // DPR-exhaustion status: AdaptiveResolution writes it (true when DPR is at floor or its
   // effectiveness guard fired); QualityGovernor reads it to gate effect escalation (DPR first).
   const dprExhaustedRef = useRef(false);
+  // Frame-cap verdict for THIS rAF, written by FrameCapGate (priority -10) before any consumer runs.
+  const capGateRef = useRef<FrameCapGateValue>({ skip: false });
   useEffect(() => {
     renderBudgetRef.current = RENDER_TAIL_FRAMES;
     shadowDirtyRef.current = true;
@@ -629,12 +756,13 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
   // ceiling so the scaler tracks tier changes instead of a value captured at mount.
   const dprCap = perfTier === 'low' ? 1.5 : 2;
 
-  // Effective quality level → which effects render. The manual performance toggle forces the
-  // bloom+IBL/cosmic+shadows tier (its established behavior); the auto governor's level adds on top
-  // (and is ignored when the user forced full quality via the chip). qualityFlagsForLevel then maps
-  // the level to concrete on/off flags consumed by the effect components below.
-  const manualLevel = performanceMode ? QUALITY_LEVEL.NO_SHADOWS : QUALITY_LEVEL.FULL;
-  const effectiveLevel = Math.max(manualLevel, qualityAutoDisabled ? 0 : autoQualityLevel);
+  // Effective quality level → which effects render. A fixed preset pins its
+  // level; the governor's level only adds on top while the preset is 'auto'.
+  // qualityFlagsForLevel maps the level to concrete on/off flags consumed by
+  // the effect components below.
+  const governorEnabled = qualityPreset === 'auto';
+  const manualLevel = manualLevelForPreset(qualityPreset);
+  const effectiveLevel = Math.max(manualLevel, governorEnabled ? autoQualityLevel : 0);
   const qualityFlags = qualityFlagsForLevel(effectiveLevel);
 
   // Lets scene children that mutate visible three.js state from an ASYNC callback (outside
@@ -894,6 +1022,13 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
       {/* Bloom post-processing (dropped at quality tier 1+ / performance mode). Publishes its render
           handle to composerRef; RenderLoop routes the gated render through it so celestials glow. */}
       {qualityFlags.bloom && <BloomComposer composerRef={composerRef} samples={bloomSamples} />}
+      {/* Frame-cap verdict — runs before every other useFrame; inert when uncapped */}
+      <FrameCapGate
+        frameCapFps={qualityFlags.frameCapFps}
+        timeRef={timeRef}
+        isPlayingRef={isPlayingRef}
+        capGateRef={capGateRef}
+      />
       {/* Manual render loop - lowest priority to render after all updates, gated on-demand */}
       <RenderLoop
         timeRef={timeRef}
@@ -902,16 +1037,20 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
         shadowDirtyRef={shadowDirtyRef}
         paintedRef={paintedRef}
         composerRef={composerRef}
+        capGateRef={capGateRef}
       />
       {/* Dynamic render-resolution scaler — holds ~120fps on weaker GPUs / 4K / heavy fights by
           trading resolution only under sustained load, and stays at full quality (no change) when
           there's headroom. Inert on capable hardware. */}
       <AdaptiveResolution
         timeRef={timeRef}
-        dprCap={dprCap}
+        // Barebones pins the ceiling to 1 via the maxDpr flag; the existing
+        // cap-change effect in AdaptiveResolution clamps + repaints on flips.
+        dprCap={Math.min(dprCap, qualityFlags.maxDpr ?? Number.POSITIVE_INFINITY)}
         paintedRef={paintedRef}
         markDirty={markSceneDirty}
         exhaustedRef={dprExhaustedRef}
+        frameCapActive={qualityFlags.frameCapFps != null}
       />
       {/* Adaptive quality governor — the tier BELOW resolution scaling. When a weak/throttled GPU
           stays below target after DPR is at floor, it drops effects (bloom → IBL/cosmic → shadows)
@@ -921,13 +1060,13 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
           timeRef={timeRef}
           dprExhaustedRef={dprExhaustedRef}
           paintedRef={paintedRef}
-          level={qualityAutoDisabled ? 0 : autoQualityLevel}
+          level={governorEnabled ? autoQualityLevel : 0}
           onLevelChange={onQualityLevelChange}
-          // Stand down while the user forced full quality OR turned on manual performance mode:
-          // under manual mode every level renders the same (all effects already off), so the
-          // governor would ratchet autoQualityLevel up on no-op escalations and leak that latched
-          // level into effectiveLevel the moment manual mode is turned back off.
-          disabled={qualityAutoDisabled || performanceMode}
+          // Stand down for any fixed preset: under a pinned level every governor
+          // escalation is a no-op layered beneath the manual level, so it would
+          // ratchet autoQualityLevel up and leak that latched level into
+          // effectiveLevel the moment the user returns to 'auto'.
+          disabled={!governorEnabled}
         />
       )}
       {/* Camera follower system */}
@@ -1002,6 +1141,7 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
           size={arenaDimensions.size}
           position={[arenaDimensions.centerX, -0.02, arenaDimensions.centerZ]}
           onTextureChange={markSceneDirty}
+          enhanced={qualityFlags.floorEnhancements}
         />
       </Suspense>
       {/* Arena Grid — dialed back so the now-vivid map leads and the grid stays a quiet coordinate
@@ -1027,11 +1167,13 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
           dissolves the hard square plane edge into the background so the map no longer reads as a
           pasted swatch. Pure static paint (one transparent mesh, no per-frame work) → gate-friendly.
           Sized to the arena so the clear center always covers where the actors are. */}
-      <FloorVignette
-        centerX={arenaDimensions.centerX}
-        centerZ={arenaDimensions.centerZ}
-        size={arenaDimensions.size}
-      />
+      {qualityFlags.floorEnhancements && (
+        <FloorVignette
+          centerX={arenaDimensions.centerX}
+          centerZ={arenaDimensions.centerZ}
+          size={arenaDimensions.size}
+        />
+      )}
       {/* Direct useFrame Actors - Each actor uses useFrame independently */}
       <AnimationFrameSceneActors
         lookup={lookup}
@@ -1045,6 +1187,11 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
         playerVisibility={playerVisibility}
         playerColorOverrides={playerColorOverrides}
         performanceMode={!qualityFlags.shadows}
+        detailedFigures={qualityFlags.detailedFigures}
+        richMaterials={qualityFlags.richMaterials}
+        figureAccents={qualityFlags.figureAccents}
+        nameTagBudget={qualityFlags.nameTagBudget}
+        capGateRef={capGateRef}
         markDirty={markSceneDirty}
       />
       {/* Boss health + player list are now DOM overlays rendered by Arena3D as siblings of

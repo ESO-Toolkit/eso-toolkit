@@ -11,8 +11,9 @@ import { usePlaybackAnimation } from '@/hooks/usePlaybackAnimation';
 import { useScrubbingMode } from '@/hooks/useScrubbingMode';
 
 import { FightFragment } from '../../../graphql/gql/graphql';
+import { usePerfTier } from '../../../hooks/usePerfTier';
 import { usePhaseBasedMap } from '../../../hooks/usePhaseBasedMap';
-import { useReplayPrefs } from '../../../hooks/useReplayPrefs';
+import { useReplayPrefs, type ReplayQualityPreset } from '../../../hooks/useReplayPrefs';
 import { useTimelineMarkers } from '../../../hooks/useTimelineMarkers';
 import { BuffEvent } from '../../../types/combatlogEvents';
 import {
@@ -31,6 +32,7 @@ import {
 import type { TrialChapter } from '../trial_chapters/types';
 import { MapMarkersState, ShapeKind, ShapeStyle } from '../types/mapMarkers';
 import { lockDocumentSelection } from '../utils/documentSelectionLock';
+import { QUALITY_LEVEL } from '../utils/qualityGovernor';
 import { clampReplayTime } from '../utils/replayTime';
 
 import { Arena3D } from './Arena3D';
@@ -244,30 +246,43 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
   // Arena3D still consumes + toggles these — they're passed down as controlled props — but the single
   // source of truth lives here, so the bottom dock and the in-canvas/desktop UI stay in lockstep.
   const [namesEnabled, setNamesEnabled] = useState(initialPrefs.showNames);
-  const [performanceMode, setPerformanceMode] = useState(initialPrefs.performanceMode);
   const [statsPanelEnabled, setStatsPanelEnabled] = useState(initialPrefs.statsPanelEnabled);
   const toggleNames = useCallback(() => setNamesEnabled((v) => !v), []);
-  const togglePerformance = useCallback(() => setPerformanceMode((v) => !v), []);
   const toggleStats = useCallback(() => setStatsPanelEnabled((v) => !v), []);
+
+  // Quality preset — one value replaces the old performanceMode +
+  // qualityAutoDisabled booleans: 'auto' (governor armed), 'high' (pinned
+  // full, the old chip-tap), 'performance' (old manual mode), 'barebones'
+  // (minimal-drawing 30fps floor). The derived legacy boolean feeds surfaces
+  // that still render a two-state toggle.
+  const [qualityPreset, setQualityPreset] = useState<ReplayQualityPreset>(
+    initialPrefs.qualityPreset,
+  );
+  const handleQualityPresetChange = useCallback(
+    (p: ReplayQualityPreset) => setQualityPreset(p),
+    [],
+  );
+  // Legacy persisted mirror of the preset (see the persist effect below).
+  const performanceMode = qualityPreset === 'performance' || qualityPreset === 'barebones';
 
   // Adaptive quality governor (the tier below resolution scaling). `autoQualityLevel` is the
   // governor's current effect-drop level (0 = full); the QualityGovernor inside the scene requests
-  // changes via handleQualityLevelChange. `qualityAutoDisabled` is set when the user taps the
-  // "Performance mode (auto)" chip to force full quality — the governor then stands down. Owned here
-  // so the scene (effect flags) and the chip share one source of truth.
-  const [autoQualityLevel, setAutoQualityLevel] = useState(0);
-  const [qualityAutoDisabled, setQualityAutoDisabled] = useState(false);
+  // changes via handleQualityLevelChange. Any preset other than 'auto' stands the governor down.
+  // Weak-device seeding: when the user has never chosen a preset and the mount-time perf tier is
+  // 'low', start the governor AT the no-shadows level — the preset stays 'auto' (so the auto chip
+  // shows and recovery can climb back on misclassified hardware), but a weak phone skips the janky
+  // first seconds the governor would need to measure its way down.
+  const perfTier = usePerfTier();
+  const [autoQualityLevel, setAutoQualityLevel] = useState(() =>
+    storedPrefs.qualityPreset === undefined && perfTier === 'low' ? QUALITY_LEVEL.NO_SHADOWS : 0,
+  );
   const handleQualityLevelChange = useCallback((level: number) => setAutoQualityLevel(level), []);
-  // When manual performance mode turns on it forces all effects off, so the governor stands down
-  // (gated in Arena3DScene). Clear any level it had latched so that turning manual mode back off
-  // snaps straight to full quality (effectiveLevel = max(0, 0)) instead of inheriting a stale level.
+  // A fixed preset pins the level, so clear any level the governor had latched —
+  // returning to 'auto' then snaps straight to full quality instead of
+  // inheriting a stale reduction.
   useEffect(() => {
-    if (performanceMode) setAutoQualityLevel(0);
-  }, [performanceMode]);
-  const handleForceFullQuality = useCallback(() => {
-    setQualityAutoDisabled(true);
-    setAutoQualityLevel(0);
-  }, []);
+    if (qualityPreset !== 'auto') setAutoQualityLevel(0);
+  }, [qualityPreset]);
 
   // Compact contextual badges for the transport bar (encounter · difficulty · outcome).
   // The encounter name is shortened to its trailing word(s) so it complements — rather than
@@ -777,15 +792,24 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
   // toggles desktop exposes — so it's persisted on every form factor (unlike the path/trail/bar
   // toggles, which are session-seeded on mobile and would clobber the user's desktop prefs).
   useEffect(() => {
+    // performanceMode is the LEGACY mirror of qualityPreset — written for one
+    // release so a rolled-back build still honors the user's choice.
     persistPrefs(
       isMobile
-        ? { playbackSpeed, showNames: namesEnabled, performanceMode, statsPanelEnabled }
+        ? {
+            playbackSpeed,
+            showNames: namesEnabled,
+            qualityPreset,
+            performanceMode,
+            statsPanelEnabled,
+          }
         : {
             playbackSpeed,
             showPlayerPaths: showPlayerPathsHUD,
             showTrails: showPlayerTrails,
             barCollapsed: !barVisible,
             showNames: namesEnabled,
+            qualityPreset,
             performanceMode,
             statsPanelEnabled,
           },
@@ -798,6 +822,7 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
     showPlayerTrails,
     barVisible,
     namesEnabled,
+    qualityPreset,
     performanceMode,
     statsPanelEnabled,
   ]);
@@ -1388,12 +1413,11 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
           // Controlled display settings (owned here so the mobile Settings sheet shares the state).
           namesEnabled={namesEnabled}
           onToggleNames={toggleNames}
-          performanceMode={performanceMode}
-          onTogglePerformance={togglePerformance}
+          qualityPreset={qualityPreset}
+          onQualityPresetChange={handleQualityPresetChange}
           autoQualityLevel={autoQualityLevel}
           onQualityLevelChange={handleQualityLevelChange}
-          qualityAutoDisabled={qualityAutoDisabled}
-          onForceFullQuality={handleForceFullQuality}
+          isPlayingRef={isPlayingRef}
           statsPanelEnabled={statsPanelEnabled}
           onToggleStats={toggleStats}
           // On mobile immersive the dedicated shell owns the close + all controls, so suppress
@@ -1661,8 +1685,8 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
             onToggleTrails={toggleTrails}
             namesEnabled={namesEnabled}
             onToggleNames={toggleNames}
-            performanceMode={performanceMode}
-            onTogglePerformance={togglePerformance}
+            qualityPreset={qualityPreset}
+            onQualityPresetChange={handleQualityPresetChange}
             statsPanelEnabled={statsPanelEnabled}
             onToggleStats={toggleStats}
             following={followingActorId != null}

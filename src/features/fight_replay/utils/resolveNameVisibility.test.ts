@@ -117,4 +117,39 @@ describe('resolveNameVisibility', () => {
     // With slack 0.2, the collision threshold shrinks to 80*0.8 = 64 < 70 → no collision.
     expect(resolveNameVisibility([a, b], { overlapSlack: 0.2 }).get(2)).toBe(1);
   });
+
+  describe('maxVisible budget (barebones)', () => {
+    it('caps visible names at the budget, keeping priority names first', () => {
+      // 5 well-separated names (no overlaps): 1 boss + 4 normals, budget 3.
+      const boss = item(10, 500, 500, NamePriority.BOSS);
+      const normals = [item(1, 0, 0), item(2, 200, 0), item(3, 400, 0), item(4, 600, 0)];
+      const result = resolveNameVisibility([...normals, boss], { maxVisible: 3 });
+
+      // Boss claims a slot first (priority order), then normals by id until the budget.
+      expect(result.get(10)).toBe(1);
+      expect(result.get(1)).toBe(1);
+      expect(result.get(2)).toBe(1);
+      expect(result.get(3)).toBeLessThan(1);
+      expect(result.get(4)).toBeLessThan(1);
+    });
+
+    it('priority names stay legible even past the budget', () => {
+      const bosses = [item(1, 0, 0, NamePriority.BOSS), item(2, 300, 0, NamePriority.BOSS)];
+      const result = resolveNameVisibility(bosses, { maxVisible: 1 });
+      expect(result.get(1)).toBe(1);
+      expect(result.get(2)).toBe(1);
+    });
+
+    it('null budget means unlimited (default behavior unchanged)', () => {
+      const items = [item(1, 0, 0), item(2, 300, 0), item(3, 600, 0)];
+      const result = resolveNameVisibility(items, { maxVisible: null });
+      expect([...result.values()].every((v) => v === 1)).toBe(true);
+    });
+
+    it('a budget larger than N is a no-op', () => {
+      const items = [item(1, 0, 0), item(2, 300, 0)];
+      const result = resolveNameVisibility(items, { maxVisible: 99 });
+      expect([...result.values()].every((v) => v === 1)).toBe(true);
+    });
+  });
 });
