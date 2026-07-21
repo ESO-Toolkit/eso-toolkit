@@ -7,7 +7,7 @@
  * needed in this first pass (a worker can be added later if source counts grow).
  */
 
-import { useMemo, useState, useCallback } from 'react';
+import { useMemo, useState, useCallback, useDeferredValue } from 'react';
 
 import { runMonteCarlo } from '../core/monteCarlo';
 import {
@@ -43,6 +43,8 @@ export interface UseUltimateSimulator {
   state: UltimateSimulatorState;
   sources: readonly UltimateSource[];
   result: MonteCarloResult;
+  /** True while `result` lags the latest inputs (deferred re-simulation pending). */
+  isStale: boolean;
   setFightDuration: (seconds: number) => void;
   setRuns: (runs: number) => void;
   setDecisiveEnabled: (enabled: boolean) => void;
@@ -55,35 +57,43 @@ export interface UseUltimateSimulator {
 export function useUltimateSimulator(): UseUltimateSimulator {
   const [state, setState] = useState<UltimateSimulatorState>(INITIAL_STATE);
 
+  // The Monte-Carlo run (default 10k iterations, capped 100k) is synchronous.
+  // Deriving it from a DEFERRED copy of the inputs lets React commit the
+  // urgent render (the slider thumb tracking the pointer) first and re-run the
+  // simulation at deferred priority — dragging an uptime slider no longer
+  // re-simulates on every pointer tick. `isStale` flags the lag for the view.
+  const deferredState = useDeferredValue(state);
+  const isStale = deferredState !== state;
+
   // Apply per-source uptime overrides on top of the preset.
   const sources = useMemo<readonly UltimateSource[]>(
     () =>
       RAID_CONTEXT_SOURCES.map((source) => {
-        const override = state.uptimeOverrides[source.id];
+        const override = deferredState.uptimeOverrides[source.id];
         return override === undefined ? source : { ...source, uptime: override };
       }),
-    [state.uptimeOverrides],
+    [deferredState.uptimeOverrides],
   );
 
   const result = useMemo<MonteCarloResult>(() => {
-    const decisive = state.decisiveEnabled
-      ? makeDecisiveConfig(state.decisiveQuality, state.decisiveTwoHanded)
+    const decisive = deferredState.decisiveEnabled
+      ? makeDecisiveConfig(deferredState.decisiveQuality, deferredState.decisiveTwoHanded)
       : null;
     return runMonteCarlo(
       {
-        fightDurationSeconds: state.fightDurationSeconds,
+        fightDurationSeconds: deferredState.fightDurationSeconds,
         sources,
         decisive,
       },
-      { runs: state.runs, baseSeed: DEFAULT_BASE_SEED },
+      { runs: deferredState.runs, baseSeed: DEFAULT_BASE_SEED },
     );
   }, [
     sources,
-    state.fightDurationSeconds,
-    state.runs,
-    state.decisiveEnabled,
-    state.decisiveQuality,
-    state.decisiveTwoHanded,
+    deferredState.fightDurationSeconds,
+    deferredState.runs,
+    deferredState.decisiveEnabled,
+    deferredState.decisiveQuality,
+    deferredState.decisiveTwoHanded,
   ]);
 
   const setFightDuration = useCallback(
@@ -125,6 +135,7 @@ export function useUltimateSimulator(): UseUltimateSimulator {
     state,
     sources,
     result,
+    isStale,
     setFightDuration,
     setRuns,
     setDecisiveEnabled,
