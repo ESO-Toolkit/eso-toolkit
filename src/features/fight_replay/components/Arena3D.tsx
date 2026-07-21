@@ -784,8 +784,17 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
             far: 1000,
           }}
           gl={{
-            // Prevent context loss during Strict Mode remounts
-            preserveDrawingBuffer: true,
+            // false (the WebGL default): with `true`, drivers must copy/resolve
+            // the full drawing buffer on every presented frame (and ANGLE loses
+            // its buffer-swap fast path) — pure GPU-bandwidth waste at fullscreen
+            // DPR. Nothing needs the preserved buffer: no readback path exists
+            // (no toDataURL/toBlob/readPixels on this canvas anywhere in src),
+            // the render gate repaints full frames, and a paused canvas keeps
+            // showing its last PRESENTED frame from the compositor regardless.
+            // The old `true` claimed to prevent Strict Mode context loss — it
+            // never did (Strict Mode is disabled app-wide; the real mitigations
+            // are the webglcontextlost/restored listeners below).
+            preserveDrawingBuffer: false,
             powerPreference: 'high-performance',
             antialias: true,
             // Fail if context cannot be created
