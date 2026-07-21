@@ -50,6 +50,7 @@ import { MobileReplayControls } from './MobileReplayControls';
 import { PerformanceMonitorExternal } from './PerformanceMonitor/PerformanceMonitorExternal';
 import { PlayerListPanel } from './PlayerListPanel';
 import { ReplayErrorBoundary } from './ReplayErrorBoundary';
+import { ReplayQualityMenu } from './ReplayQualityMenu';
 import { ReplayZoomHint } from './ReplayZoomHint';
 
 // Create logger instance for Arena3D
@@ -282,9 +283,6 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
   );
   const namesEnabled = namesEnabledProp ?? namesEnabledLocal;
   const qualityPreset = qualityPresetProp ?? qualityPresetLocal;
-  // Legacy boolean for surfaces that still render a two-state toggle
-  // (performance AND barebones both count as "reduced").
-  const performanceMode = qualityPreset === 'performance' || qualityPreset === 'barebones';
   const statsPanelEnabled = statsPanelEnabledProp ?? statsPanelEnabledLocal;
   const changeQualityPreset = useMemo(
     () => onQualityPresetChange ?? ((p: ReplayQualityPreset) => setQualityPresetLocal(p)),
@@ -293,10 +291,6 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
   const toggleNames = useMemo(
     () => onToggleNames ?? (() => setNamesEnabledLocal((v) => !v)),
     [onToggleNames],
-  );
-  const togglePerformance = useMemo(
-    () => () => changeQualityPreset(qualityPreset === 'performance' ? 'auto' : 'performance'),
-    [changeQualityPreset, qualityPreset],
   );
   const toggleStats = useMemo(
     () => onToggleStats ?? (() => setStatsPanelEnabledLocal((v) => !v)),
@@ -1234,37 +1228,20 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
         </Tooltip>
       )}
 
-      {/* Performance-mode toggle — drops player-figure shadows for extra headroom on very large
-          fights. Button-only (P/T are already bound to the player-paths HUD and trails). Desktop/
-          immersive-only on the right-edge stack; the mobile equivalent lives in the mobile cluster. */}
+      {/* Replay-quality selector — the old two-state Bolt toggle grown into a 4-preset menu
+          (Auto / High / Performance / Barebones). Same slot in the right-edge stack; the mobile
+          equivalent lives in the Settings sheet. */}
       {!isMobile && (
-        <Tooltip
-          title={
-            performanceMode
-              ? 'Performance mode on — figure shadows off'
-              : 'Performance mode — drop figure shadows for large fights'
-          }
-        >
-          <IconButton
-            aria-label={performanceMode ? 'Disable performance mode' : 'Enable performance mode'}
-            aria-pressed={performanceMode}
-            size="small"
-            onClick={togglePerformance}
-            sx={{
-              position: 'absolute',
-              // Raised to clear the docked control-bar overlay at the bottom of the canvas.
-              bottom: 200,
-              right: 16,
-              color: performanceMode ? '#fcd34d' : 'rgba(255, 255, 255, 0.55)',
-              backgroundColor: 'rgba(0, 0, 0, 0.85)',
-              '&:hover': {
-                backgroundColor: 'rgba(0, 0, 0, 0.95)',
-              },
-            }}
-          >
-            <Bolt fontSize="small" />
-          </IconButton>
-        </Tooltip>
+        <ReplayQualityMenu
+          qualityPreset={qualityPreset}
+          onQualityPresetChange={changeQualityPreset}
+          triggerSx={{
+            position: 'absolute',
+            // Raised to clear the docked control-bar overlay at the bottom of the canvas.
+            bottom: 200,
+            right: 16,
+          }}
+        />
       )}
 
       {/* Name-tag toggle - the on-screen affordance for the same state the N key flips, so the
@@ -1406,8 +1383,8 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
           onToggleTrails={() => onToggleTrails?.()}
           namesEnabled={namesEnabled}
           onToggleNames={toggleNames}
-          performanceMode={performanceMode}
-          onTogglePerformance={togglePerformance}
+          qualityPreset={qualityPreset}
+          onQualityPresetChange={changeQualityPreset}
           following={followingActorId != null}
           statsPanelEnabled={statsPanelEnabled}
           onToggleStats={toggleStats}

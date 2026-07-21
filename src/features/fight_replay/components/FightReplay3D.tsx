@@ -262,11 +262,8 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
     (p: ReplayQualityPreset) => setQualityPreset(p),
     [],
   );
+  // Legacy persisted mirror of the preset (see the persist effect below).
   const performanceMode = qualityPreset === 'performance' || qualityPreset === 'barebones';
-  const togglePerformance = useCallback(
-    () => setQualityPreset((p) => (p === 'performance' ? 'auto' : 'performance')),
-    [],
-  );
 
   // Adaptive quality governor (the tier below resolution scaling). `autoQualityLevel` is the
   // governor's current effect-drop level (0 = full); the QualityGovernor inside the scene requests
@@ -1688,8 +1685,8 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
             onToggleTrails={toggleTrails}
             namesEnabled={namesEnabled}
             onToggleNames={toggleNames}
-            performanceMode={performanceMode}
-            onTogglePerformance={togglePerformance}
+            qualityPreset={qualityPreset}
+            onQualityPresetChange={handleQualityPresetChange}
             statsPanelEnabled={statsPanelEnabled}
             onToggleStats={toggleStats}
             following={followingActorId != null}

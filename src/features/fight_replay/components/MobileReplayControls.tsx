@@ -16,6 +16,10 @@ import { IconButton, ListItemIcon, ListItemText, Menu, MenuItem, Tooltip } from 
 import { alpha } from '@mui/material/styles';
 import React, { useState } from 'react';
 
+import type { ReplayQualityPreset } from '../../../hooks/useReplayPrefs';
+
+import { QUALITY_PRESET_LABEL } from './ReplayQualityMenu';
+
 /**
  * Touch controls for the mobile pseudo-fullscreen replay overlay.
  *
@@ -48,8 +52,8 @@ export interface MobileReplayControlsProps {
   namesEnabled: boolean;
   onToggleNames: () => void;
   /** Performance mode (drop figure shadows) — button-only on desktop. */
-  performanceMode: boolean;
-  onTogglePerformance: () => void;
+  qualityPreset: ReplayQualityPreset;
+  onQualityPresetChange: (preset: ReplayQualityPreset) => void;
   /** Locked-player stats panel — J on desktop. Only meaningful while following a player. */
   following: boolean;
   statsPanelEnabled: boolean;
@@ -86,8 +90,8 @@ export const MobileReplayControls: React.FC<MobileReplayControlsProps> = ({
   onToggleTrails,
   namesEnabled,
   onToggleNames,
-  performanceMode,
-  onTogglePerformance,
+  qualityPreset,
+  onQualityPresetChange,
   following,
   statsPanelEnabled,
   onToggleStats,
@@ -212,10 +216,17 @@ export const MobileReplayControls: React.FC<MobileReplayControlsProps> = ({
       : []),
     {
       key: 'perf',
-      label: performanceMode ? 'Performance mode on' : 'Performance mode',
+      // Cycle control: each tap advances the preset; the label shows the live
+      // value so cycling in place reads clearly. Full picker = Settings sheet.
+      label: `Quality: ${QUALITY_PRESET_LABEL[qualityPreset]}`,
       icon: <Bolt fontSize="small" />,
-      active: performanceMode,
-      onTap: onTogglePerformance,
+      active: qualityPreset !== 'auto',
+      closesOnTap: false,
+      onTap: () => {
+        const order: ReplayQualityPreset[] = ['auto', 'high', 'performance', 'barebones'];
+        const next = order[(order.indexOf(qualityPreset) + 1) % order.length];
+        onQualityPresetChange(next);
+      },
     },
   ];
 
