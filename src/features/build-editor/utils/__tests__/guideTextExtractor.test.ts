@@ -4,6 +4,10 @@
  * so the existing buildTextParser resolves it.
  */
 
+// Populate itemIdMap synchronously with the REAL generated data — must be
+// the FIRST import (module-scope reads elsewhere depend on it).
+import '@/test/initItemData';
+
 import { parseBuildText } from '../buildTextParser';
 import { extractGuide, extractGuideImageUrls } from '../guideTextExtractor';
 

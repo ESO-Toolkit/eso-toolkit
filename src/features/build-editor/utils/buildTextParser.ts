@@ -15,7 +15,11 @@
 import { ESO_CONSUMABLES } from '@/data/esoConsumables';
 import { CHAMPION_POINT_ABILITIES, ChampionPointTree } from '@/types/champion-points';
 
-import { getAllSetNames, getSetItemsBySlot } from '../../loadout-manager/data/itemIdMap';
+import {
+  getAllSetNames,
+  getSetItemsBySlot,
+  isItemDataReady,
+} from '../../loadout-manager/data/itemIdMap';
 import { getSkillByName, preloadSkillData } from '../../loadout-manager/data/skillLineSkills';
 import type {
   ArmorWeight,
@@ -169,7 +173,12 @@ export function parseSetCellCandidates(cell: string): string[] {
 let canonicalSetNames: { name: string; key: string }[] | null = null;
 function allCanonicalSetNames(): { name: string; key: string }[] {
   if (!canonicalSetNames) {
-    canonicalSetNames = getAllSetNames().map((name) => ({ name, key: normKey(name) }));
+    const names = getAllSetNames().map((name) => ({ name, key: normKey(name) }));
+    // Only latch the index once the fetched item data is in — memoizing a
+    // pre-init (near-empty) list would break set matching for the whole
+    // session, even after the data lands and the user re-parses.
+    if (!isItemDataReady()) return names;
+    canonicalSetNames = names;
   }
   return canonicalSetNames;
 }

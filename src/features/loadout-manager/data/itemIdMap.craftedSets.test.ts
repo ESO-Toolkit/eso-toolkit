@@ -1,3 +1,7 @@
+// Populate itemIdMap synchronously with the REAL generated data — must be
+// the FIRST import (module-scope reads elsewhere depend on it).
+import '@/test/initItemData';
+
 import { getItemInfo, getSetItemsBySlot } from './itemIdMap';
 import type { SlotType } from './slotTypes';
 

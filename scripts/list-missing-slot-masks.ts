@@ -1,7 +1,14 @@
 import fs from 'fs';
 import path from 'path';
 
-import { itemIdMap } from '../src/features/loadout-manager/data/itemIdMap';
+// The item data ships as a JSON asset (fetched at runtime by the app's loader
+// module) — read it straight from disk here.
+const itemIdMap = JSON.parse(
+  fs.readFileSync(
+    path.join(__dirname, '..', 'src', 'features', 'loadout-manager', 'data', 'itemIdMap.json'),
+    'utf-8',
+  ),
+) as Record<number, { name: string; setName: string; type: string; slot?: string }>;
 
 interface GlobalsData {
   items: Record<string, unknown>;

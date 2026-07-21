@@ -9,6 +9,10 @@
  * search — this test locks that in.
  */
 
+// Populate itemIdMap synchronously with the REAL generated data — must be
+// the FIRST import (module-scope reads elsewhere depend on it).
+import '@/test/initItemData';
+
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 

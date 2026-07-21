@@ -2,6 +2,10 @@
  * @jest-environment jsdom
  */
 
+// Populate itemIdMap synchronously with the REAL generated data — must be
+// the FIRST import (set-id resolution reads it).
+import '@/test/initItemData';
+
 import { isClassMasteryEligible } from '../../../build-editor/utils/classMasteryEligibility';
 import {
   parseCSPSInput,

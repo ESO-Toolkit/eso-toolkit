@@ -32,6 +32,12 @@ jest.mock('../hooks/useViewTransitionNavigate', () => ({
   useViewTransitionNavigate: () => mockNavigate,
 }));
 
+// The page gates its render on the fetched item data; this suite exercises
+// visibility logic only, so report it ready.
+jest.mock('../hooks/useItemDataReady', () => ({
+  useItemDataReady: () => ({ ready: true, failed: false }),
+}));
+
 jest.mock('../features/build-hub/api/build-hub-api', () => ({
   buildHubApi: { get: jest.fn() },
 }));

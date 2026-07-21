@@ -5,6 +5,10 @@
  * asserted — only the structural extraction is.
  */
 
+// Populate itemIdMap synchronously with the REAL generated data — must be
+// the FIRST import (module-scope reads elsewhere depend on it).
+import '@/test/initItemData';
+
 import { readFileSync } from 'fs';
 import { join } from 'path';
 

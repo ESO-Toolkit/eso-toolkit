@@ -9,6 +9,10 @@ module.exports = {
     '\\.(css|less|scss|sass)$': 'identity-obj-proxy',
     '\\.(jpg|jpeg|png|gif|eot|otf|webp|svg|ttf|woff|woff2|mp4|webm|wav|mp3|m4a|aac|oga)$':
       '<rootDir>/src/test/__mocks__/fileMock.js',
+    // Vite `?url` asset imports (e.g. itemIdMap.json?url) resolve to a URL
+    // string at build time; map them to the file-stub string here. Tests that
+    // need the actual item DATA init synchronously via src/test/initItemData.ts.
+    '\\.json\\?url$': '<rootDir>/src/test/__mocks__/fileMock.js',
     // Worker mocks - Mock web workers that use import.meta.url.
     // CalculateActorPositions holds pure position-lookup helpers (no import.meta.url /
     // worker side effects) consumed directly by app + test code, so it must resolve to

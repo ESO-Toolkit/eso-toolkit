@@ -5,7 +5,8 @@
  * 1. SetItemIds: Maps setId -> array of item IDs (with decompression)
  * 2. SetNames: Maps setId -> multilingual set names
  * 
- * Output: TypeScript-compatible itemIdMap for comprehensive gear name resolution
+ * Output: itemIdMap.json — the data asset fetched at runtime by the
+ * hand-maintained loader module src/features/loadout-manager/data/itemIdMap.ts
  */
 
 import * as fs from 'fs';
@@ -658,183 +659,33 @@ function validateCoverage(itemMap: Record<number, ItemInfo>): void {
 // ============================================================
 
 /**
- * Generate TypeScript file content for itemIdMap.ts
+ * Generate the itemIdMap.json content — the data asset fetched at runtime by
+ * src/features/loadout-manager/data/itemIdMap.ts (a hand-maintained loader
+ * module: do NOT overwrite it from this script). Keys sort numerically so the
+ * output is deterministic; run prettier over the file after regenerating so
+ * it matches the committed formatting.
  */
-function generateTypeScriptFile(itemMap: Record<number, ItemInfo>): string {
-  const entries = Object.entries(itemMap)
-    .sort((a, b) => parseInt(a[0]) - parseInt(b[0])); // Sort by item ID
-
-  const itemEntries = entries
-    .map(([id, info]) => {
-      // Escape backslashes first, then single quotes, to avoid double-escaping
-      const name = info.name.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
-      const setName = info.setName.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
-      
-      // Build the object with conditional properties
-      const parts = [
-        `name: '${name}'`,
-        `setName: '${setName}'`,
-        `type: '${info.type}'`
-      ];
-      
+function generateItemIdMapJson(itemMap: Record<number, ItemInfo>): string {
+  const sorted: Record<number, ItemInfo> = {};
+  Object.entries(itemMap)
+    .sort((a, b) => parseInt(a[0]) - parseInt(b[0])) // Sort by item ID
+    .forEach(([id, info]) => {
+      const entry: ItemInfo = {
+        name: info.name,
+        setName: info.setName,
+        type: info.type,
+      };
       if (info.slot) {
-        parts.push(`slot: '${info.slot}'`);
+        entry.slot = info.slot;
       }
-      
       if (info.equipType !== undefined) {
-        parts.push(`equipType: ${info.equipType}`);
+        entry.equipType = info.equipType;
       }
-      
-      return `  ${id}: { ${parts.join(', ')} }`;
-    })
-    .join(',\n');
-
-  return `/**
- * Item ID to Item Info Mapping
- * 
- * Auto-generated from LibSets data (API 101048, 2025-11-13)
- * Source: https://github.com/Baertram/LibSets/tree/LibSets-reworked
- * 
- * Maps ESO item IDs to their names, set names, and types.
- * Includes optional slot and equipType information for monster sets.
- * Used by GearSelector to display gear information.
- */
-
-export type SlotType = 'head' | 'neck' | 'chest' | 'shoulders' | 'hand' | 'waist' | 'legs' | 'feet' | 'ring' | 'weapon' | 'offhand';
-
-export interface ItemInfo {
-  name: string;
-  setName: string;
-  type: string;
-  slot?: SlotType;          // Equipment slot (head, chest, etc.) - available for monster sets
-  equipType?: number;       // ESO EQUIP_TYPE constant value - available for monster sets
-}
-
-export interface SlotSetSummary {
-  setName: string;
-  itemCount: number;
-}
-
-export interface ItemValidationResult {
-  valid: boolean;
-  error?: string;
-  info?: ItemInfo;
-}
-
-const itemsBySlotCache: Partial<Record<SlotType, { itemId: number; info: ItemInfo }[]>> = {};
-const setSummaryCache: Partial<Record<SlotType, SlotSetSummary[]>> = {};
-
-export const itemIdMap: Record<number, ItemInfo> = {
-${itemEntries}
-};
-
-/**
- * Get item info by ID
- * @param itemId The item ID from combat logs
- * @returns Item info or undefined if not found
- */
-export function getItemInfo(itemId: number): ItemInfo | undefined {
-  return itemIdMap[itemId];
-}
-
-/**
- * Get item name by ID
- * @param itemId The item ID from combat logs
- * @returns Item name or undefined if not found
- */
-export function getItemName(itemId: number): string | undefined {
-  return itemIdMap[itemId]?.name;
-}
-
-/**
- * Check if item ID is mapped
- * @param itemId The item ID to check
- * @returns True if item is in the map
- */
-export function hasItemInfo(itemId: number): boolean {
-  return itemId in itemIdMap;
-}
-
-/**
- * Get all set names
- * @returns Array of unique set names
- */
-export function getAllSetNames(): string[] {
-  const setNames = new Set<string>();
-  Object.values(itemIdMap).forEach(info => setNames.add(info.setName));
-  return Array.from(setNames).sort();
-}
-
-/**
- * Get all item IDs for a specific set
- * @param setName The set name to search for
- * @returns Array of item IDs belonging to the set
- */
-export function getItemIdsBySet(setName: string): number[] {
-  return Object.entries(itemIdMap)
-    .filter(([, info]) => info.setName === setName)
-    .map(([id]) => parseInt(id, 10));
-}
-
-/**
- * Get item IDs for a specific set and slot
- * Useful for monster sets where you need a specific slot (head/shoulders)
- * @param setName The set name to search for
- * @param slot The equipment slot to filter by
- * @returns Array of item IDs matching the set and slot
- */
-export function getSetItemsBySlot(setName: string, slot: SlotType): number[] {
-  return Object.entries(itemIdMap)
-    .filter(([, info]) => info.setName === setName && info.slot === slot)
-    .map(([id]) => parseInt(id, 10));
-}
-
-export function getItemsBySlot(slot: SlotType): { itemId: number; info: ItemInfo }[] {
-  if (!itemsBySlotCache[slot]) {
-    itemsBySlotCache[slot] = Object.entries(itemIdMap)
-      .map(([id, info]) => ({ itemId: parseInt(id, 10), info }))
-      .filter(({ info }) => info.slot === slot)
-      .sort((a, b) => a.info.setName.localeCompare(b.info.setName) || a.info.name.localeCompare(b.info.name));
-  }
-  return itemsBySlotCache[slot]!;
-}
-
-export function getAvailableSetsForSlot(slot: SlotType): SlotSetSummary[] {
-  if (!setSummaryCache[slot]) {
-    const counts = new Map<string, number>();
-    getItemsBySlot(slot).forEach(({ info }) => {
-      counts.set(info.setName, (counts.get(info.setName) ?? 0) + 1);
+      sorted[parseInt(id, 10)] = entry;
     });
-
-    setSummaryCache[slot] = Array.from(counts.entries())
-      .map(([setName, itemCount]) => ({ setName, itemCount }))
-      .sort((a, b) => a.setName.localeCompare(b.setName));
-  }
-  return setSummaryCache[slot]!;
+  return JSON.stringify(sorted, null, 2) + '\n';
 }
 
-export function validateItemForSlot(itemId: number, slot: SlotType): ItemValidationResult {
-  const info = getItemInfo(itemId);
-  if (!info) {
-    return { valid: false, error: 'Item ' + itemId + ' not found' };
-  }
-
-  if (!info.slot) {
-    return { valid: false, error: 'Item ' + itemId + ' has no slot metadata', info };
-  }
-
-  if (info.slot !== slot) {
-    return {
-      valid: false,
-      error: 'Item slot mismatch: expected ' + slot + ', got ' + info.slot,
-      info,
-    };
-  }
-
-  return { valid: true, info };
-}
-`;
-}
 
 // ============================================================
 // MAIN EXECUTION
@@ -848,7 +699,7 @@ async function main() {
   const dataDir = path.join(__dirname, '..', 'tmp', 'libsets-data');
   const itemIdsFile = path.join(dataDir, 'LibSets_Data_SetItemIds.lua');
   const setNamesFile = path.join(dataDir, 'LibSets_Data_SetNames.lua');
-  const outputFile = path.join(__dirname, '..', 'src', 'features', 'loadout-manager', 'data', 'itemIdMap.ts');
+  const outputFile = path.join(__dirname, '..', 'src', 'features', 'loadout-manager', 'data', 'itemIdMap.json');
 
   // Ensure data directory exists
   if (!fs.existsSync(dataDir)) {
@@ -939,10 +790,11 @@ async function main() {
   validateCoverage(itemMap);
 
   // Generate output file
-  console.log('\n📝 Writing itemIdMap.ts...');
-  const tsContent = generateTypeScriptFile(itemMap);
-  fs.writeFileSync(outputFile, tsContent, 'utf-8');
+  console.log('\n📝 Writing itemIdMap.json...');
+  const jsonContent = generateItemIdMapJson(itemMap);
+  fs.writeFileSync(outputFile, jsonContent, 'utf-8');
   console.log(`   ✅ Written to: ${outputFile}`);
+  console.log('   ℹ️  Run prettier --write on the JSON so it matches the committed formatting.');
 
   // Summary
   console.log('\n✨ SUMMARY:');

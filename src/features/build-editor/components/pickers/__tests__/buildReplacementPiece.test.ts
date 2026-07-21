@@ -10,6 +10,10 @@
  * Concrete ids: 97232 = Mother's Sorrow Chest (locked LIGHT).
  */
 
+// Populate itemIdMap synchronously with the REAL generated data — must be
+// the FIRST import (locked-weight resolution reads it through the oracle).
+import '@/test/initItemData';
+
 import { buildReplacementPiece } from '../EquipmentPicker';
 
 describe('buildReplacementPiece', () => {

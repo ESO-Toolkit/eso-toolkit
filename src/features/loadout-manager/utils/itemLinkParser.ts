@@ -5,7 +5,7 @@
 
 import { Logger } from '@/utils/logger';
 
-import { getItemInfo, hasItemInfo } from '../data/itemIdMap';
+import { getItemInfo, hasItemInfo, isItemDataReady, preloadItemData } from '../data/itemIdMap';
 
 interface ItemData {
   id: number;
@@ -83,6 +83,11 @@ export async function getItemData(link: string): Promise<ItemData | null> {
     return itemCache.get(parsed.itemId)!;
   }
 
+  // The local database is a fetched JSON asset — await it so a link parsed
+  // right after page load resolves to the real name instead of the "Item <id>"
+  // placeholder (best-effort: on fetch failure fall through to the fallback).
+  await preloadItemData().catch(() => {});
+
   // Check local item database
   if (hasItemInfo(parsed.itemId)) {
     const localInfo = getItemInfo(parsed.itemId);
@@ -100,7 +105,11 @@ export async function getItemData(link: string): Promise<ItemData | null> {
   // Fetch from API as fallback
   const itemData = await fetchItemFromUESP(parsed.itemId);
   if (itemData) {
-    itemCache.set(parsed.itemId, itemData);
+    // Don't latch the placeholder while the local database never loaded — a
+    // later call should get another chance to resolve the real name.
+    if (isItemDataReady()) {
+      itemCache.set(parsed.itemId, itemData);
+    }
   }
 
   return itemData;

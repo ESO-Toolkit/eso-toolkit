@@ -16,7 +16,7 @@ import { Box, ButtonBase, Checkbox, Stack, Typography } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { getItemInfo } from '../../../loadout-manager/data/itemIdMap';
+import { getItemInfo, preloadItemData } from '../../../loadout-manager/data/itemIdMap';
 import type {
   ArmorWeight,
   GearConfig,
@@ -391,22 +391,27 @@ export const EquipmentPicker: React.FC<EquipmentPickerProps> = ({
   // state AND the auto-clear behavior.
   useEffect(() => {
     let cancelled = false;
-    void Promise.all([
-      fetchIsTwoHandedWeapon(frontMainId),
-      fetchIsTwoHandedWeapon(backMainId),
-    ]).then(([front, back]) => {
-      if (cancelled) return;
-      setTwoHandedStatus({ front, back });
-      const currentGear = gearRef.current;
-      const frontOffOccupied = currentGear[FRONT_OFF]?.id != null;
-      const backOffOccupied = currentGear[BACK_OFF]?.id != null;
-      if ((front && frontOffOccupied) || (back && backOffOccupied)) {
-        const next: GearConfig = { ...currentGear };
-        if (front && frontOffOccupied) next[FRONT_OFF] = { id: undefined };
-        if (back && backOffOccupied) next[BACK_OFF] = { id: undefined };
-        onChange(next);
-      }
-    });
+    // fetchIsTwoHandedWeapon's slot guard reads the fetched item data before
+    // any icon lookup — await it so classification (and the auto-clear below)
+    // doesn't silently no-op against the still-empty map on first render.
+    void preloadItemData()
+      .catch(() => {})
+      .then(() =>
+        Promise.all([fetchIsTwoHandedWeapon(frontMainId), fetchIsTwoHandedWeapon(backMainId)]),
+      )
+      .then(([front, back]) => {
+        if (cancelled) return;
+        setTwoHandedStatus({ front, back });
+        const currentGear = gearRef.current;
+        const frontOffOccupied = currentGear[FRONT_OFF]?.id != null;
+        const backOffOccupied = currentGear[BACK_OFF]?.id != null;
+        if ((front && frontOffOccupied) || (back && backOffOccupied)) {
+          const next: GearConfig = { ...currentGear };
+          if (front && frontOffOccupied) next[FRONT_OFF] = { id: undefined };
+          if (back && backOffOccupied) next[BACK_OFF] = { id: undefined };
+          onChange(next);
+        }
+      });
     return () => {
       cancelled = true;
     };

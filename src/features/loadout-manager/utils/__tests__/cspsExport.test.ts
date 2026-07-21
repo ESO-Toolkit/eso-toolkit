@@ -2,6 +2,10 @@
  * @jest-environment jsdom
  */
 
+// Populate itemIdMap synchronously with the REAL generated data — must be
+// the FIRST import (module-scope reads elsewhere depend on it).
+import '@/test/initItemData';
+
 // Side-effect: registers the gearItemOracle with REAL item data — the armor
 // weight assertions below use concrete item ids (Mother's Sorrow, Plague
 // Doctor), and resolveApparelWeight resolves their set names via the oracle.

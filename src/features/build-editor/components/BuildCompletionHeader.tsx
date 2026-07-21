@@ -56,6 +56,7 @@ import type { RootState } from '@/store/storeWithHistory';
 import { encodeBuildToURL } from '@/utils/buildEncoding';
 import { snapshotBuildToSlot } from '@/utils/rosterBuildBridge';
 
+import { preloadItemData } from '../../loadout-manager/data/itemIdMap';
 import { ESO_CLASSES } from '../data/esoStaticData';
 import { useBuildCompleteness } from '../hooks/useBuildCompleteness';
 import { selectActiveSetupIndex, selectBuild, selectIsDirty } from '../store/buildEditorSelectors';
@@ -381,8 +382,17 @@ export const BuildCompletionHeader: React.FC = () => {
   };
 
   // ── CSPS Import handlers ─────────────────────────────────────────────
-  const handleImportParse = (): void => {
+  const handleImportParse = async (): Promise<void> => {
     setImportError(null);
+    // CSPS set-id resolution reads the fetched item data; parsing against the
+    // still-empty map would store RAW CSPS set ids as gear ids (persisted via
+    // loadBuild) under a success snackbar. Surface a retryable error instead.
+    try {
+      await preloadItemData();
+    } catch {
+      setImportError('Item data failed to load — check your connection and try again.');
+      return;
+    }
     try {
       const result = parseCSPSInput(build.addonImportString);
 
@@ -408,9 +418,17 @@ export const BuildCompletionHeader: React.FC = () => {
     }
   };
 
-  const handleImportLoad = (): void => {
+  const handleImportLoad = async (): Promise<void> => {
     const character = cspsCharacters[selectedCharIndex];
     if (!character) return;
+    // Same item-data dependency as handleImportParse — never persist a build
+    // converted against the empty map.
+    try {
+      await preloadItemData();
+    } catch {
+      setImportError('Item data failed to load — check your connection and try again.');
+      return;
+    }
     try {
       const imported = convertCSPSCharacterToBuild(character);
       dispatch(loadBuild(imported));

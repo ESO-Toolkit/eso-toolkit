@@ -31,6 +31,8 @@ jest.mock('@features/loadout-manager/data/itemIdMap', () => {
   };
 
   return {
+    isItemDataReady: (): boolean => true,
+    preloadItemData: (): Promise<void> => Promise.resolve(),
     getAvailableSetsForSlot: (slot: string): MockSetSummary[] =>
       Array.from(new Set(getItemsBySlot(slot).map(({ info }) => info.setName))).map((setName) => ({
         setName,

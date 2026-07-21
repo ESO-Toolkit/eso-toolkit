@@ -32,6 +32,7 @@ import { useSnackbar } from 'notistack';
 import React, { useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
+import { preloadItemData } from '../../loadout-manager/data/itemIdMap';
 import {
   selectBuildClassSkillLines,
   selectBuildEsoClass,
@@ -121,7 +122,13 @@ export const ImportBuildTextPanel: React.FC<ImportBuildTextPanelProps> = ({
     };
   }, [parsed]);
 
-  const handleParse = (): void => {
+  const handleParse = async (): Promise<void> => {
+    // Gear matching reads the fetched item data (set names + per-slot ids) —
+    // await it so a parse right after page load doesn't report "0 of N
+    // matched" against the still-empty map. Best-effort: on fetch failure the
+    // parse still runs and gear degrades to unmatched, exactly as a bad paste
+    // would; the sections toggle below then reflects that honestly.
+    await preloadItemData().catch(() => {});
     const result = parseBuildText(raw);
     setParsed(result);
     // Turn off sections that found nothing so the review reflects reality.

@@ -5,6 +5,10 @@
  * "loading…" — and the underlying promise must reset so reopening retries.
  */
 
+// Populate itemIdMap synchronously with the REAL generated data — must be
+// the FIRST import (module-scope reads elsewhere depend on it).
+import '@/test/initItemData';
+
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { render, screen, waitFor } from '@testing-library/react';
 

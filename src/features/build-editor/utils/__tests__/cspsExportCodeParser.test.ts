@@ -1,3 +1,7 @@
+// Populate itemIdMap synchronously with the REAL generated data — must be
+// the FIRST import (set-id resolution reads it).
+import '@/test/initItemData';
+
 import { isClassMasteryEligible } from '../classMasteryEligibility';
 import {
   isCSPSExportCode,

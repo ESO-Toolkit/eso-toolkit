@@ -16,7 +16,7 @@
 
 import { useEffect, useState } from 'react';
 
-import { getItemInfo } from '@/features/loadout-manager/data/itemIdMap';
+import { getItemInfo, preloadItemData } from '@/features/loadout-manager/data/itemIdMap';
 import {
   isTwoHandedWeapon,
   fetchIsTwoHandedWeapon,
@@ -63,6 +63,11 @@ export function useSetPieceCounts(itemIds: number[]): Map<string, number> {
     let cancelled = false;
     const ids = key ? key.split(',').map(Number) : [];
     void (async () => {
+      // Item data feeds BOTH the set-name grouping and the 2H slot guard, and
+      // it now arrives via an async fetch — await it so this recount corrects a
+      // first render that ran against the still-empty map (best-effort: on
+      // fetch failure recount with whatever is present, same as before).
+      await preloadItemData().catch(() => {});
       const flags = new Map<number, boolean>();
       await Promise.all(
         [...new Set(ids)].map(async (id) => {
