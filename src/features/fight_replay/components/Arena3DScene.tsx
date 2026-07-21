@@ -15,7 +15,9 @@ import { LongPressTracker } from '../utils/longPress';
 import { DEFAULT_ACTOR_SCALE, computeActorScaleFromFightArea } from '../utils/mapScaling';
 import { extractPlayerPaths, DEFAULT_PATH_SAMPLING } from '../utils/pathUtils';
 import { getPlayerPathColor } from '../utils/playerColors';
-import { QUALITY_LEVEL, qualityFlagsForLevel } from '../utils/qualityGovernor';
+import type { ReplayQualityPreset } from '@/hooks/useReplayPrefs';
+
+import { manualLevelForPreset, qualityFlagsForLevel } from '../utils/qualityGovernor';
 import { resolveTouchPolicy } from '../utils/touchPolicy';
 
 import { AdaptiveResolution } from './AdaptiveResolution';
@@ -533,17 +535,19 @@ export interface Arena3DSceneProps {
    * so the DOM player panel and the in-canvas figures share one source of truth.
    */
   playerColorOverrides?: Map<number, string>;
-  /** Manual performance mode (the Bolt toggle): drop bloom + IBL/cosmic + shadows all at once. */
-  performanceMode?: boolean;
   /**
-   * Auto quality level from the governor (0 = full). Combined with `performanceMode` to derive which
-   * effects render. Owned by FightReplay3D so the scene + the "auto" chip stay in lockstep.
+   * Replay quality preset: 'auto' arms the governor at full quality; 'high'
+   * pins full quality; 'performance' pins the no-shadows tier; 'barebones'
+   * pins the minimal-drawing 30fps floor. Owned by FightReplay3D.
+   */
+  qualityPreset?: ReplayQualityPreset;
+  /**
+   * Auto quality level from the governor (0 = full). Only applies while the
+   * preset is 'auto'. Owned by FightReplay3D so the scene + the chip stay in lockstep.
    */
   autoQualityLevel?: number;
   /** Governor requests a new level (escalate/recover one effect tier). */
   onQualityLevelChange?: (level: number) => void;
-  /** True when the user forced full quality via the chip — the governor stands down. */
-  qualityAutoDisabled?: boolean;
   /**
    * True when the replay is a mobile device inside the pseudo-fullscreen overlay. Drives the touch
    * gesture policy: OrbitControls pan is disabled so two fingers are exclusively pinch-zoom
@@ -584,10 +588,9 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
   showPlayerTrails = false,
   playerVisibility = EMPTY_VISIBILITY,
   playerColorOverrides = EMPTY_COLOR_OVERRIDES,
-  performanceMode = false,
+  qualityPreset = 'auto',
   autoQualityLevel = 0,
   onQualityLevelChange,
-  qualityAutoDisabled = false,
   mobileImmersive = false,
 }) => {
   // Touch-gesture policy for OrbitControls. `mobileImmersive` already folds in (mobile && immersive),
@@ -629,12 +632,13 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
   // ceiling so the scaler tracks tier changes instead of a value captured at mount.
   const dprCap = perfTier === 'low' ? 1.5 : 2;
 
-  // Effective quality level → which effects render. The manual performance toggle forces the
-  // bloom+IBL/cosmic+shadows tier (its established behavior); the auto governor's level adds on top
-  // (and is ignored when the user forced full quality via the chip). qualityFlagsForLevel then maps
-  // the level to concrete on/off flags consumed by the effect components below.
-  const manualLevel = performanceMode ? QUALITY_LEVEL.NO_SHADOWS : QUALITY_LEVEL.FULL;
-  const effectiveLevel = Math.max(manualLevel, qualityAutoDisabled ? 0 : autoQualityLevel);
+  // Effective quality level → which effects render. A fixed preset pins its
+  // level; the governor's level only adds on top while the preset is 'auto'.
+  // qualityFlagsForLevel maps the level to concrete on/off flags consumed by
+  // the effect components below.
+  const governorEnabled = qualityPreset === 'auto';
+  const manualLevel = manualLevelForPreset(qualityPreset);
+  const effectiveLevel = Math.max(manualLevel, governorEnabled ? autoQualityLevel : 0);
   const qualityFlags = qualityFlagsForLevel(effectiveLevel);
 
   // Lets scene children that mutate visible three.js state from an ASYNC callback (outside
@@ -917,13 +921,13 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
           timeRef={timeRef}
           dprExhaustedRef={dprExhaustedRef}
           paintedRef={paintedRef}
-          level={qualityAutoDisabled ? 0 : autoQualityLevel}
+          level={governorEnabled ? autoQualityLevel : 0}
           onLevelChange={onQualityLevelChange}
-          // Stand down while the user forced full quality OR turned on manual performance mode:
-          // under manual mode every level renders the same (all effects already off), so the
-          // governor would ratchet autoQualityLevel up on no-op escalations and leak that latched
-          // level into effectiveLevel the moment manual mode is turned back off.
-          disabled={qualityAutoDisabled || performanceMode}
+          // Stand down for any fixed preset: under a pinned level every governor
+          // escalation is a no-op layered beneath the manual level, so it would
+          // ratchet autoQualityLevel up and leak that latched level into
+          // effectiveLevel the moment the user returns to 'auto'.
+          disabled={!governorEnabled}
         />
       )}
       {/* Camera follower system */}

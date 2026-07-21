@@ -23,7 +23,7 @@ import * as THREE from 'three';
 import { FightFragment } from '../../../graphql/gql/graphql';
 import { usePerfTier } from '../../../hooks/usePerfTier';
 import { usePrefersReducedMotion } from '../../../hooks/usePrefersReducedMotion';
-import { useReplayPrefs } from '../../../hooks/useReplayPrefs';
+import { useReplayPrefs, type ReplayQualityPreset } from '../../../hooks/useReplayPrefs';
 import { useActorPositionsTask } from '../../../hooks/workerTasks/useActorPositionsTask';
 import { Logger, LogLevel } from '../../../utils/logger';
 import { MapTimeline } from '../../../utils/mapTimelineUtils';
@@ -155,16 +155,13 @@ interface Arena3DProps {
    */
   namesEnabled?: boolean;
   onToggleNames?: () => void;
-  performanceMode?: boolean;
-  onTogglePerformance?: () => void;
+  /** Replay quality preset — 'auto' arms the governor; anything else pins a level. */
+  qualityPreset?: ReplayQualityPreset;
+  onQualityPresetChange?: (preset: ReplayQualityPreset) => void;
   /** Auto quality level from the governor (0 = full); drives the "Performance mode (auto)" chip. */
   autoQualityLevel?: number;
   /** Governor requests a new quality level (escalate/recover one effect tier). */
   onQualityLevelChange?: (level: number) => void;
-  /** True when the user forced full quality via the chip — the governor stands down. */
-  qualityAutoDisabled?: boolean;
-  /** Chip action: force full quality (disable the auto governor for the session). */
-  onForceFullQuality?: () => void;
   statsPanelEnabled?: boolean;
   onToggleStats?: () => void;
   /** True when the replay block is fullscreen/immersive (drives the fill-height layout + toggle icon). */
@@ -228,12 +225,10 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
   onToggleTrails,
   namesEnabled: namesEnabledProp,
   onToggleNames,
-  performanceMode: performanceModeProp,
-  onTogglePerformance,
+  qualityPreset: qualityPresetProp,
+  onQualityPresetChange,
   autoQualityLevel = 0,
   onQualityLevelChange,
-  qualityAutoDisabled = false,
-  onForceFullQuality,
   statsPanelEnabled: statsPanelEnabledProp,
   onToggleStats,
   reservedInset,
@@ -276,20 +271,29 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
   //    re-submits the full humanoid geometry per figure (~75k tris at 23 players), so dropping it
   //    roughly halves the figure tri load and buys headroom for very large fights.
   const [namesEnabledLocal, setNamesEnabledLocal] = useState(initialPrefs.showNames);
-  const [performanceModeLocal, setPerformanceModeLocal] = useState(initialPrefs.performanceMode);
+  const [qualityPresetLocal, setQualityPresetLocal] = useState<ReplayQualityPreset>(
+    initialPrefs.qualityPreset,
+  );
   const [statsPanelEnabledLocal, setStatsPanelEnabledLocal] = useState(
     initialPrefs.statsPanelEnabled,
   );
   const namesEnabled = namesEnabledProp ?? namesEnabledLocal;
-  const performanceMode = performanceModeProp ?? performanceModeLocal;
+  const qualityPreset = qualityPresetProp ?? qualityPresetLocal;
+  // Legacy boolean for surfaces that still render a two-state toggle
+  // (performance AND barebones both count as "reduced").
+  const performanceMode = qualityPreset === 'performance' || qualityPreset === 'barebones';
   const statsPanelEnabled = statsPanelEnabledProp ?? statsPanelEnabledLocal;
+  const changeQualityPreset = useMemo(
+    () => onQualityPresetChange ?? ((p: ReplayQualityPreset) => setQualityPresetLocal(p)),
+    [onQualityPresetChange],
+  );
   const toggleNames = useMemo(
     () => onToggleNames ?? (() => setNamesEnabledLocal((v) => !v)),
     [onToggleNames],
   );
   const togglePerformance = useMemo(
-    () => onTogglePerformance ?? (() => setPerformanceModeLocal((v) => !v)),
-    [onTogglePerformance],
+    () => () => changeQualityPreset(qualityPreset === 'performance' ? 'auto' : 'performance'),
+    [changeQualityPreset, qualityPreset],
   );
   const toggleStats = useMemo(
     () => onToggleStats ?? (() => setStatsPanelEnabledLocal((v) => !v)),
@@ -867,10 +871,9 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
             showPlayerTrails={showPlayerTrails}
             playerVisibility={playerVisibility}
             playerColorOverrides={playerColorOverrides}
-            performanceMode={performanceMode}
+            qualityPreset={qualityPreset}
             autoQualityLevel={autoQualityLevel}
             onQualityLevelChange={onQualityLevelChange}
-            qualityAutoDisabled={qualityAutoDisabled}
             mobileImmersive={mobileImmersive}
           />
         </Canvas>
@@ -1459,17 +1462,16 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
           locked-player stats panel (which grows upward) and the bottom-right by the control stack, so
           center is the one bottom lane that never collides. */}
       {!mobilePreview &&
-        onForceFullQuality &&
-        !performanceMode &&
-        !qualityAutoDisabled &&
+        onQualityPresetChange &&
+        qualityPreset === 'auto' &&
         autoQualityLevel > 0 && (
-          <Tooltip title="Effects were automatically reduced to keep playback smooth on this device. Tap to force full quality.">
+          <Tooltip title="Effects were automatically reduced to keep playback smooth on this device. Tap to pin full quality (High).">
             <Chip
               icon={<Bolt sx={{ fontSize: '0.95rem' }} />}
               label="Performance mode (auto)"
               size="small"
-              onClick={onForceFullQuality}
-              aria-label="Effects auto-reduced for performance. Tap to force full quality."
+              onClick={() => onQualityPresetChange('high')}
+              aria-label="Effects auto-reduced for performance. Tap to pin full quality."
               sx={{
                 position: 'absolute',
                 left: '50%',
