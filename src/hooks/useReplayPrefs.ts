@@ -25,6 +25,28 @@ const VERSION = 1;
 const STORAGE_KEY = `replay.prefs.v${VERSION}`;
 
 /**
+ * The user-facing replay quality preset — successor of the boolean
+ * performanceMode. 'auto' = full quality with the automatic governor armed;
+ * 'high' = pinned full quality (governor off); 'performance' = the old manual
+ * mode (no shadows/effects); 'barebones' = the minimal-drawing 30fps floor
+ * for old hardware. Defined here (not in the feature) so the persisted-shape
+ * module owns its own vocabulary; the quality ladder maps it to a level via
+ * manualLevelForPreset in fight_replay/utils/qualityGovernor.ts.
+ */
+export type ReplayQualityPreset = 'auto' | 'high' | 'performance' | 'barebones';
+
+export const REPLAY_QUALITY_PRESETS: readonly ReplayQualityPreset[] = [
+  'auto',
+  'high',
+  'performance',
+  'barebones',
+];
+
+export function isReplayQualityPreset(v: unknown): v is ReplayQualityPreset {
+  return typeof v === 'string' && (REPLAY_QUALITY_PRESETS as readonly string[]).includes(v);
+}
+
+/**
  * Which sections of the locked-player stats panel are shown. Each flag gates one section; a section
  * also only renders when it's relevant to the locked player's role (e.g. `dr` is tank-only). All
  * default true, so the panel shows everything until the user trims it from the panel's gear menu.
@@ -51,8 +73,12 @@ export interface ReplayPrefs {
   showPlayerPaths: boolean;
   /** Player trail paths visible (T key). */
   showTrails: boolean;
-  /** Performance mode (drop figure shadows) on. */
+  /** Performance mode (drop figure shadows) on. LEGACY — mirrored from
+   *  qualityPreset for one release so a rollback build still honors the
+   *  user's choice; readers should use qualityPreset. */
   performanceMode: boolean;
+  /** Replay quality preset (successor of performanceMode). */
+  qualityPreset: ReplayQualityPreset;
   /** Transport bar collapsed/hidden (cinema mode) — persists so the chosen state survives reload. */
   barCollapsed: boolean;
   /** Locked-player stats panel shown at all (disable toggle / key). */
@@ -86,6 +112,7 @@ export const DEFAULT_REPLAY_PREFS: ReplayPrefs = {
   showPlayerPaths: false,
   showTrails: false,
   performanceMode: false,
+  qualityPreset: 'auto',
   barCollapsed: false,
   statsPanelEnabled: true,
   statsPanelSections: DEFAULT_STATS_PANEL_SECTIONS,
@@ -112,6 +139,15 @@ const sanitize = (raw: unknown): Partial<ReplayPrefs> => {
   if (isBool(obj.showPlayerPaths)) out.showPlayerPaths = obj.showPlayerPaths;
   if (isBool(obj.showTrails)) out.showTrails = obj.showTrails;
   if (isBool(obj.performanceMode)) out.performanceMode = obj.performanceMode;
+  // Preset wins when present; otherwise migrate the legacy boolean so a user
+  // who had performance mode ON lands on the equivalent preset. (An old build
+  // doing read-merge-write drops the unknown qualityPreset key — the legacy
+  // mirror below makes that transient and self-healing.)
+  if (isReplayQualityPreset(obj.qualityPreset)) {
+    out.qualityPreset = obj.qualityPreset;
+  } else if (obj.performanceMode === true) {
+    out.qualityPreset = 'performance';
+  }
   if (isBool(obj.barCollapsed)) out.barCollapsed = obj.barCollapsed;
   if (isBool(obj.statsPanelEnabled)) out.statsPanelEnabled = obj.statsPanelEnabled;
   if (isBool(obj.continuousPlay)) out.continuousPlay = obj.continuousPlay;

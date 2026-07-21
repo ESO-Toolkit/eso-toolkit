@@ -1,9 +1,12 @@
 import {
   decideNextQualityLevel,
   qualityFlagsForLevel,
+  manualLevelForPreset,
   QUALITY_LEVEL,
   MAX_QUALITY_LEVEL,
   FRAME_CAP_FPS,
+  BAREBONES_NAME_TAG_BUDGET,
+  BAREBONES_MAX_DPR,
 } from './qualityGovernor';
 
 const TARGET = 1000 / 120; // ~8.33ms, matches the 120fps target
@@ -17,7 +20,73 @@ describe('qualityFlagsForLevel', () => {
       cosmic: true,
       shadows: true,
       frameCapFps: null,
+      richMaterials: true,
+      detailedFigures: true,
+      figureAccents: true,
+      floorEnhancements: true,
+      nameTagBudget: null,
+      maxDpr: null,
     });
+  });
+
+  it('levels 0-4 keep every barebones-only flag at full value (regression lock)', () => {
+    for (const l of [
+      QUALITY_LEVEL.FULL,
+      QUALITY_LEVEL.NO_BLOOM,
+      QUALITY_LEVEL.NO_ENV,
+      QUALITY_LEVEL.NO_SHADOWS,
+      QUALITY_LEVEL.FRAME_CAP,
+    ]) {
+      const f = qualityFlagsForLevel(l);
+      expect(f.richMaterials).toBe(true);
+      expect(f.detailedFigures).toBe(true);
+      expect(f.figureAccents).toBe(true);
+      expect(f.floorEnhancements).toBe(true);
+      expect(f.nameTagBudget).toBeNull();
+      expect(f.maxDpr).toBeNull();
+    }
+  });
+
+  it('barebones drops everything and inherits the frame cap', () => {
+    expect(qualityFlagsForLevel(QUALITY_LEVEL.BAREBONES)).toEqual({
+      bloom: false,
+      environment: false,
+      cosmic: false,
+      shadows: false,
+      frameCapFps: FRAME_CAP_FPS,
+      richMaterials: false,
+      detailedFigures: false,
+      figureAccents: false,
+      floorEnhancements: false,
+      nameTagBudget: BAREBONES_NAME_TAG_BUDGET,
+      maxDpr: BAREBONES_MAX_DPR,
+    });
+  });
+
+  it('the ladder is monotonic — each rung only ever turns things OFF', () => {
+    const asBits = (l: number): number[] => {
+      const f = qualityFlagsForLevel(l);
+      return [
+        f.bloom,
+        f.environment,
+        f.cosmic,
+        f.shadows,
+        f.frameCapFps === null,
+        f.richMaterials,
+        f.detailedFigures,
+        f.figureAccents,
+        f.floorEnhancements,
+        f.nameTagBudget === null,
+        f.maxDpr === null,
+      ].map((b) => (b ? 1 : 0));
+    };
+    for (let l = 1; l <= MAX_QUALITY_LEVEL; l++) {
+      const prev = asBits(l - 1);
+      const cur = asBits(l);
+      for (let i = 0; i < prev.length; i++) {
+        expect(cur[i]).toBeLessThanOrEqual(prev[i]);
+      }
+    }
   });
 
   it('drops effects in ladder order', () => {
@@ -37,7 +106,16 @@ describe('qualityFlagsForLevel', () => {
 
   it('clamps out-of-range levels', () => {
     expect(qualityFlagsForLevel(-3)).toEqual(qualityFlagsForLevel(0));
-    expect(qualityFlagsForLevel(99).frameCapFps).toBe(FRAME_CAP_FPS);
+    expect(qualityFlagsForLevel(99)).toEqual(qualityFlagsForLevel(QUALITY_LEVEL.BAREBONES));
+  });
+});
+
+describe('manualLevelForPreset', () => {
+  it('maps each preset to its pinned level', () => {
+    expect(manualLevelForPreset('auto')).toBe(QUALITY_LEVEL.FULL);
+    expect(manualLevelForPreset('high')).toBe(QUALITY_LEVEL.FULL);
+    expect(manualLevelForPreset('performance')).toBe(QUALITY_LEVEL.NO_SHADOWS);
+    expect(manualLevelForPreset('barebones')).toBe(QUALITY_LEVEL.BAREBONES);
   });
 });
 

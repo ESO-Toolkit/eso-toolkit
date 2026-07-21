@@ -18,6 +18,8 @@
  * exhausted (so mild shortfalls are absorbed by resolution, not by visibly dropping shadows).
  */
 
+import type { ReplayQualityPreset } from '@/hooks/useReplayPrefs';
+
 /** The ladder. Higher level = more aggressively degraded. 0 = full quality. */
 export const QUALITY_LEVEL = {
   FULL: 0,
@@ -27,14 +29,28 @@ export const QUALITY_LEVEL = {
   NO_ENV: 2,
   /** + drop the directional shadow pass (a second full scene render every frame the actors move). */
   NO_SHADOWS: 3,
-  /** + cap the render to a stable lower framerate (last resort: cuts every per-frame cost + judder). */
+  /** + cap the render to a stable lower framerate (cuts every per-frame cost; trades judder). */
   FRAME_CAP: 4,
+  /**
+   * + the manual-only "Barebones" floor for genuinely old hardware: flat
+   * (Lambert/Basic) materials, capsule-only figures (no GLB fetches), no
+   * decorative figure accents, minimal floor, DPR pinned to 1, and a hard cap
+   * on visible name tags. Sits ABOVE FRAME_CAP so the ladder stays monotonic
+   * and barebones inherits the 30fps cap. Never reached by the auto governor
+   * (see AUTO_MAX_LEVEL in QualityGovernor.tsx) — only via the quality preset.
+   */
+  BAREBONES: 5,
 } as const;
 
-export const MAX_QUALITY_LEVEL = QUALITY_LEVEL.FRAME_CAP;
+export const MAX_QUALITY_LEVEL = QUALITY_LEVEL.BAREBONES;
 
-/** The stable framerate the top rung caps to (a steady 30fps reads better than a fluctuating 35–50). */
+/** The stable framerate the frame-cap rungs cap to (a steady 30fps reads better than a fluctuating 35–50). */
 export const FRAME_CAP_FPS = 30;
+
+/** Barebones: only the N highest-priority name tags stay visible (selected + bosses rank first). */
+export const BAREBONES_NAME_TAG_BUDGET = 10;
+/** Barebones: hard DPR ceiling handed to AdaptiveResolution. */
+export const BAREBONES_MAX_DPR = 1;
 
 export interface QualityFlags {
   /** Bloom / post-processing on. */
@@ -47,6 +63,18 @@ export interface QualityFlags {
   shadows: boolean;
   /** Target render FPS cap, or null for uncapped (render every frame). */
   frameCapFps: number | null;
+  /** Rich shading: PBR (MeshStandard) figures + Phong floor. False = Lambert figures + Basic floor. */
+  richMaterials: boolean;
+  /** Humanoid pose-GLB flipbook + boss GLB. False = capsule-only figures (skips both fetches). */
+  detailedFigures: boolean;
+  /** Decorative figure layers: contact-shadow blob + vision wedge. */
+  figureAccents: boolean;
+  /** Floor extras: unsharp-mask shader, high anisotropy, edge vignette. */
+  floorEnhancements: boolean;
+  /** Max concurrently visible name tags (priority-ranked), or null for unlimited. */
+  nameTagBudget: number | null;
+  /** Hard DPR ceiling for AdaptiveResolution, or null for the tier default. */
+  maxDpr: number | null;
 }
 
 /** Map a quality level to the concrete effect flags the scene consumes. */
@@ -58,7 +86,29 @@ export function qualityFlagsForLevel(level: number): QualityFlags {
     cosmic: l < QUALITY_LEVEL.NO_ENV,
     shadows: l < QUALITY_LEVEL.NO_SHADOWS,
     frameCapFps: l >= QUALITY_LEVEL.FRAME_CAP ? FRAME_CAP_FPS : null,
+    richMaterials: l < QUALITY_LEVEL.BAREBONES,
+    detailedFigures: l < QUALITY_LEVEL.BAREBONES,
+    figureAccents: l < QUALITY_LEVEL.BAREBONES,
+    floorEnhancements: l < QUALITY_LEVEL.BAREBONES,
+    nameTagBudget: l >= QUALITY_LEVEL.BAREBONES ? BAREBONES_NAME_TAG_BUDGET : null,
+    maxDpr: l >= QUALITY_LEVEL.BAREBONES ? BAREBONES_MAX_DPR : null,
   };
+}
+
+/**
+ * The fixed quality level a preset pins the scene to. 'auto' and 'high' both
+ * return FULL — they differ only in whether the governor may raise the level
+ * on top (effectiveLevel = max(manualLevel, governorEnabled ? autoLevel : 0)).
+ */
+export function manualLevelForPreset(preset: ReplayQualityPreset): number {
+  switch (preset) {
+    case 'performance':
+      return QUALITY_LEVEL.NO_SHADOWS;
+    case 'barebones':
+      return QUALITY_LEVEL.BAREBONES;
+    default:
+      return QUALITY_LEVEL.FULL;
+  }
 }
 
 export interface QualityDecisionConfig {
