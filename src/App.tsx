@@ -51,8 +51,9 @@ import {
   importBuildHubPage,
   importPackHubPage,
 } from './utils/hubRoutePreload';
-// Initialize error tracking before the app starts
-initializeErrorTracking();
+// Initialize error tracking before the app starts (async — loads the
+// Rollbar chunk off the entry path; consumers null-guard the instance)
+void initializeErrorTracking();
 
 // Initialize Google Analytics
 initializeAnalytics();
@@ -336,7 +337,7 @@ const App: React.FC = () => {
     const handleConsentChanged = (): void => {
       // Re-evaluate consent and reinitialize services accordingly
       initializeAnalytics();
-      initializeErrorTracking();
+      void initializeErrorTracking();
     };
 
     // Listen for custom consent-changed event from CookieConsent component

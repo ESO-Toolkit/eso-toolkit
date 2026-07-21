@@ -63,16 +63,16 @@ jest.mock('../contexts/LoggerContext', () => ({
 }));
 
 /** Helper: initialize Rollbar in production mode with consent. */
-const initInProduction = (): void => {
+const initInProduction = async (): Promise<void> => {
   process.env.NODE_ENV = 'production';
   mockHasErrorTrackingConsent.mockReturnValue(true);
-  initializeErrorTracking();
+  await initializeErrorTracking();
 };
 
 describe('errorTracking', () => {
   let originalEnv: string | undefined;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     // jest.config.cjs has resetMocks: true which resets all mock implementations
     // before each test. Re-apply the Rollbar constructor implementation so that
     // `new Rollbar(config)` continues to return our shared mock instance.
@@ -92,8 +92,8 @@ describe('errorTracking', () => {
   // ─── initializeErrorTracking ──────────────────────────────────────────────
 
   describe('initializeErrorTracking', () => {
-    it('should initialize Rollbar in production with consent', () => {
-      initInProduction();
+    it('should initialize Rollbar in production with consent', async () => {
+      await initInProduction();
 
       expect(Rollbar).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -106,9 +106,9 @@ describe('errorTracking', () => {
       );
     });
 
-    it('should initialize Rollbar in development with auto-capture disabled', () => {
+    it('should initialize Rollbar in development with auto-capture disabled', async () => {
       process.env.NODE_ENV = 'development';
-      initializeErrorTracking();
+      await initializeErrorTracking();
 
       expect(Rollbar).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -119,16 +119,16 @@ describe('errorTracking', () => {
       );
     });
 
-    it('should not initialize Rollbar in production without consent', () => {
+    it('should not initialize Rollbar in production without consent', async () => {
       process.env.NODE_ENV = 'production';
       mockHasErrorTrackingConsent.mockReturnValue(false);
-      initializeErrorTracking();
+      await initializeErrorTracking();
 
       expect(Rollbar).not.toHaveBeenCalled();
     });
 
-    it('should configure checkIgnore to drop chrome extension errors (ESO-559)', () => {
-      initInProduction();
+    it('should configure checkIgnore to drop chrome extension errors (ESO-559)', async () => {
+      await initInProduction();
       const { checkIgnore } = (Rollbar as jest.Mock).mock.calls[0][0];
 
       const extensionPayload = {
@@ -137,8 +137,8 @@ describe('errorTracking', () => {
       expect(checkIgnore(false, [new Error('x')], extensionPayload)).toBe(true);
     });
 
-    it('should configure checkIgnore to drop firefox extension errors (ESO-559)', () => {
-      initInProduction();
+    it('should configure checkIgnore to drop firefox extension errors (ESO-559)', async () => {
+      await initInProduction();
       const { checkIgnore } = (Rollbar as jest.Mock).mock.calls[0][0];
 
       const extensionPayload = {
@@ -147,8 +147,8 @@ describe('errorTracking', () => {
       expect(checkIgnore(false, [new Error('x')], extensionPayload)).toBe(true);
     });
 
-    it('should configure checkIgnore to drop runtime.sendMessage errors (ESO-559)', () => {
-      initInProduction();
+    it('should configure checkIgnore to drop runtime.sendMessage errors (ESO-559)', async () => {
+      await initInProduction();
       const { checkIgnore } = (Rollbar as jest.Mock).mock.calls[0][0];
 
       const sendMessageError = new Error('Invalid call to runtime.sendMessage(). Tab not found.');
@@ -157,8 +157,8 @@ describe('errorTracking', () => {
       );
     });
 
-    it('should NOT drop normal application errors (ESO-559)', () => {
-      initInProduction();
+    it('should NOT drop normal application errors (ESO-559)', async () => {
+      await initInProduction();
       const { checkIgnore } = (Rollbar as jest.Mock).mock.calls[0][0];
 
       const appPayload = {
@@ -167,8 +167,8 @@ describe('errorTracking', () => {
       expect(checkIgnore(false, [new Error('TypeError')], appPayload)).toBe(false);
     });
 
-    it('should configure transform to add browser context fields', () => {
-      initInProduction();
+    it('should configure transform to add browser context fields', async () => {
+      await initInProduction();
       const { transform } = (Rollbar as jest.Mock).mock.calls[0][0];
 
       const payload: Record<string, unknown> = {};
@@ -184,7 +184,7 @@ describe('errorTracking', () => {
   // ─── captureApplicationContext ────────────────────────────────────────────
 
   describe('captureApplicationContext', () => {
-    it('should capture basic application context', () => {
+    it('should capture basic application context', async () => {
       const context = captureApplicationContext();
 
       expect(context).toEqual(
@@ -204,7 +204,7 @@ describe('errorTracking', () => {
       );
     });
 
-    it('should include Redux state when store is provided', () => {
+    it('should include Redux state when store is provided', async () => {
       const mockStore = {
         getState: jest.fn().mockReturnValue({
           router: { location: { pathname: '/' } },
@@ -242,7 +242,7 @@ describe('errorTracking', () => {
       });
     });
 
-    it('should handle missing APIs gracefully', () => {
+    it('should handle missing APIs gracefully', async () => {
       // The function should not throw even if some browser APIs are missing
       const context = captureApplicationContext();
 
@@ -256,12 +256,12 @@ describe('errorTracking', () => {
   // ─── reportError ──────────────────────────────────────────────────────────
 
   describe('reportError', () => {
-    beforeEach(() => {
+    beforeEach(async () => {
       // The outer beforeEach already clears mocks; this just sets up production state
-      initInProduction();
+      await initInProduction();
     });
 
-    it('should call rollbar.error with an Error object in production', () => {
+    it('should call rollbar.error with an Error object in production', async () => {
       const error = new Error('Test error');
       const context = { key: 'value' };
 
@@ -277,7 +277,7 @@ describe('errorTracking', () => {
       );
     });
 
-    it('should call rollbar.error with a string message in production', () => {
+    it('should call rollbar.error with a string message in production', async () => {
       reportError('Test error message');
 
       expect(mockRollbarInstance.error).toHaveBeenCalledWith(
@@ -286,21 +286,21 @@ describe('errorTracking', () => {
       );
     });
 
-    it('should not call rollbar in development', () => {
+    it('should not call rollbar in development', async () => {
       process.env.NODE_ENV = 'development';
       reportError(new Error('dev error'));
 
       expect(mockRollbarInstance.error).not.toHaveBeenCalled();
     });
 
-    it('should not call rollbar without consent', () => {
+    it('should not call rollbar without consent', async () => {
       mockHasErrorTrackingConsent.mockReturnValue(false);
       reportError(new Error('no consent'));
 
       expect(mockRollbarInstance.error).not.toHaveBeenCalled();
     });
 
-    it('should include context fields as extra payload', () => {
+    it('should include context fields as extra payload', async () => {
       reportError(new Error('ctx error'), { foo: 'bar', count: 42 });
 
       expect(mockRollbarInstance.error).toHaveBeenCalledWith(
@@ -309,7 +309,7 @@ describe('errorTracking', () => {
       );
     });
 
-    it('should handle undefined context gracefully', () => {
+    it('should handle undefined context gracefully', async () => {
       expect(() => reportError(new Error('no ctx'), undefined)).not.toThrow();
       expect(mockRollbarInstance.error).toHaveBeenCalled();
     });
@@ -330,11 +330,11 @@ describe('errorTracking', () => {
       url: 'https://example.com',
     };
 
-    beforeEach(() => {
-      initInProduction();
+    beforeEach(async () => {
+      await initInProduction();
     });
 
-    it('should call rollbar.error for high severity', () => {
+    it('should call rollbar.error for high severity', async () => {
       submitManualBugReport(mockBugReport);
 
       expect(mockRollbarInstance.error).toHaveBeenCalledWith(
@@ -347,22 +347,22 @@ describe('errorTracking', () => {
       );
     });
 
-    it('should call rollbar.critical for critical severity', () => {
+    it('should call rollbar.critical for critical severity', async () => {
       submitManualBugReport({ ...mockBugReport, severity: 'critical' });
       expect(mockRollbarInstance.critical).toHaveBeenCalled();
     });
 
-    it('should call rollbar.warning for medium severity', () => {
+    it('should call rollbar.warning for medium severity', async () => {
       submitManualBugReport({ ...mockBugReport, severity: 'medium' });
       expect(mockRollbarInstance.warning).toHaveBeenCalled();
     });
 
-    it('should call rollbar.info for low severity', () => {
+    it('should call rollbar.info for low severity', async () => {
       submitManualBugReport({ ...mockBugReport, severity: 'low' });
       expect(mockRollbarInstance.info).toHaveBeenCalled();
     });
 
-    it('should include bug report details in the payload', () => {
+    it('should include bug report details in the payload', async () => {
       submitManualBugReport(mockBugReport);
 
       expect(mockRollbarInstance.error).toHaveBeenCalledWith(
@@ -381,7 +381,7 @@ describe('errorTracking', () => {
       );
     });
 
-    it('should use navigator.userAgent and window.location.href as fallbacks', () => {
+    it('should use navigator.userAgent and window.location.href as fallbacks', async () => {
       submitManualBugReport({ ...mockBugReport, userAgent: undefined, url: undefined });
 
       expect(mockRollbarInstance.error).toHaveBeenCalledWith(
@@ -395,15 +395,15 @@ describe('errorTracking', () => {
       );
     });
 
-    it('should call rollbar in development (manual reports always sent with consent)', () => {
+    it('should call rollbar in development (manual reports always sent with consent)', async () => {
       process.env.NODE_ENV = 'development';
-      initializeErrorTracking();
+      await initializeErrorTracking();
       submitManualBugReport(mockBugReport);
 
       expect(mockRollbarInstance.error).toHaveBeenCalled();
     });
 
-    it('should not throw for minimal bug reports', () => {
+    it('should not throw for minimal bug reports', async () => {
       expect(() =>
         submitManualBugReport({
           title: 'Minimal',
@@ -418,11 +418,11 @@ describe('errorTracking', () => {
   // ─── setUserContext ───────────────────────────────────────────────────────
 
   describe('setUserContext', () => {
-    beforeEach(() => {
-      initInProduction();
+    beforeEach(async () => {
+      await initInProduction();
     });
 
-    it('should call rollbar.configure with person context in production', () => {
+    it('should call rollbar.configure with person context in production', async () => {
       setUserContext('user123', 'user@example.com', 'testuser');
 
       expect(mockRollbarInstance.configure).toHaveBeenCalledWith({
@@ -430,27 +430,27 @@ describe('errorTracking', () => {
       });
     });
 
-    it('should never forward email to Rollbar', () => {
+    it('should never forward email to Rollbar', async () => {
       setUserContext('user123', 'user@example.com', 'testuser');
 
       const call = mockRollbarInstance.configure.mock.calls[0][0];
       expect(JSON.stringify(call)).not.toContain('user@example.com');
     });
 
-    it('should handle optional username', () => {
+    it('should handle optional username', async () => {
       setUserContext('user123');
       expect(mockRollbarInstance.configure).toHaveBeenCalledWith({
         payload: { person: { id: 'user123', username: undefined } },
       });
     });
 
-    it('should not call rollbar in development', () => {
+    it('should not call rollbar in development', async () => {
       process.env.NODE_ENV = 'development';
       setUserContext('user123');
       expect(mockRollbarInstance.configure).not.toHaveBeenCalled();
     });
 
-    it('should not call rollbar without consent', () => {
+    it('should not call rollbar without consent', async () => {
       mockHasErrorTrackingConsent.mockReturnValue(false);
       setUserContext('user123');
       expect(mockRollbarInstance.configure).not.toHaveBeenCalled();
@@ -460,7 +460,7 @@ describe('errorTracking', () => {
   // ─── addBreadcrumb ────────────────────────────────────────────────────────
 
   describe('addBreadcrumb', () => {
-    it('should not throw in production or development', () => {
+    it('should not throw in production or development', async () => {
       expect(() =>
         addBreadcrumb('User clicked button', 'ui', { buttonId: 'submit' }),
       ).not.toThrow();
@@ -468,7 +468,7 @@ describe('errorTracking', () => {
       expect(() => addBreadcrumb('Page loaded', 'navigation')).not.toThrow();
     });
 
-    it('should handle optional data parameter', () => {
+    it('should handle optional data parameter', async () => {
       expect(() => addBreadcrumb('Page loaded', 'navigation')).not.toThrow();
     });
   });
@@ -491,7 +491,7 @@ describe('errorTracking', () => {
     });
 
     it('should propagate errors from operations and report them in production', async () => {
-      initInProduction();
+      await initInProduction();
 
       const error = new Error('Operation failed');
       const mockOperation = jest.fn().mockRejectedValue(error);
@@ -522,20 +522,20 @@ describe('errorTracking', () => {
   // ─── edge cases ───────────────────────────────────────────────────────────
 
   describe('edge cases', () => {
-    it('should handle undefined context in reportError without throwing', () => {
-      initInProduction();
+    it('should handle undefined context in reportError without throwing', async () => {
+      await initInProduction();
 
       const error = new Error('Test error');
       expect(() => reportError(error, undefined)).not.toThrow();
       expect(mockRollbarInstance.error).toHaveBeenCalled();
     });
 
-    it('should handle missing global APIs gracefully in captureApplicationContext', () => {
+    it('should handle missing global APIs gracefully in captureApplicationContext', async () => {
       expect(() => captureApplicationContext()).not.toThrow();
     });
 
-    it('should not throw for minimal bug reports', () => {
-      initInProduction();
+    it('should not throw for minimal bug reports', async () => {
+      await initInProduction();
 
       const partialBugReport = {
         title: 'Minimal Bug',
