@@ -64,7 +64,10 @@ const showcaseGlobalStyles = (
 
 import { useEsoLogsClientContext } from '../EsoLogsClientContext';
 import { useAuth } from '../features/auth/AuthContext';
+import { usePerfTier } from '../hooks/usePerfTier';
+import { usePrefersReducedMotion } from '../hooks/usePrefersReducedMotion';
 import { useViewTransitionNavigate } from '../hooks/useViewTransitionNavigate';
+import { shouldShowLandingFx } from '../utils/landingFx';
 
 import { AuthenticatedLandingSection } from './AuthenticatedLandingSection';
 import { Footer } from './Footer';
@@ -2218,6 +2221,8 @@ const ESORune = styled(Box)<{ delay?: number; x?: string; y?: string }>(
 export const LandingPage: React.FC = () => {
   const [showAnimations, setShowAnimations] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
+  const perfTier = usePerfTier();
+  const reducedMotion = usePrefersReducedMotion();
   const { isLoggedIn } = useAuth();
   const { isReady, isLoggedIn: clientIsLoggedIn } = useEsoLogsClientContext();
   const toolsSectionRef = useRef<HTMLDivElement>(null);
@@ -2227,14 +2232,21 @@ export const LandingPage: React.FC = () => {
     document.title = 'ESO Toolkit';
   }, []);
 
-  // Defer complex animations until after initial render
+  // Defer complex animations until after initial render — and keep them OFF
+  // entirely on the low perf tier / under OS reduced motion (this also gates
+  // the mounted particle layer below, which the CSS animation kill can't
+  // reach: frozen fixed-position particles still cost composite work).
   React.useEffect(() => {
+    if (!shouldShowLandingFx(perfTier, reducedMotion)) {
+      setShowAnimations(false);
+      return;
+    }
     const timer = setTimeout(() => {
       setShowAnimations(true);
     }, 100); // Small delay to ensure initial content is rendered first
 
     return () => clearTimeout(timer);
-  }, []);
+  }, [perfTier, reducedMotion]);
 
   // Intersection Observer for smooth scroll animations
   useEffect(() => {
@@ -2263,29 +2275,31 @@ export const LandingPage: React.FC = () => {
     <LandingContainer id="main-content">
       {showcaseGlobalStyles}
       <HeroSection id="home" showAnimations={showAnimations}>
-        <ParticleContainer>
-          {/* Floating particles with magical glow */}
-          <FloatingParticle delay={0} duration={8} x="15%" y="80%" size="6px" color="#60a5fa" />
-          <FloatingParticle delay={2} duration={12} x="25%" y="75%" size="4px" color="#a78bfa" />
-          <FloatingParticle delay={4} duration={10} x="35%" y="85%" size="5px" color="#34d399" />
-          <FloatingParticle delay={1} duration={9} x="50%" y="90%" size="3px" color="#fbbf24" />
-          <FloatingParticle delay={3} duration={11} x="65%" y="80%" size="6px" color="#f472b6" />
-          <FloatingParticle delay={5} duration={13} x="75%" y="75%" size="4px" color="#06b6d4" />
-          <FloatingParticle delay={6} duration={14} x="85%" y="85%" size="5px" color="#8b5cf6" />
+        {showAnimations && (
+          <ParticleContainer>
+            {/* Floating particles with magical glow */}
+            <FloatingParticle delay={0} duration={8} x="15%" y="80%" size="6px" color="#60a5fa" />
+            <FloatingParticle delay={2} duration={12} x="25%" y="75%" size="4px" color="#a78bfa" />
+            <FloatingParticle delay={4} duration={10} x="35%" y="85%" size="5px" color="#34d399" />
+            <FloatingParticle delay={1} duration={9} x="50%" y="90%" size="3px" color="#fbbf24" />
+            <FloatingParticle delay={3} duration={11} x="65%" y="80%" size="6px" color="#f472b6" />
+            <FloatingParticle delay={5} duration={13} x="75%" y="75%" size="4px" color="#06b6d4" />
+            <FloatingParticle delay={6} duration={14} x="85%" y="85%" size="5px" color="#8b5cf6" />
 
-          {/* Second layer of particles */}
-          <FloatingParticle delay={7} duration={15} x="20%" y="70%" size="3px" color="#3b82f6" />
-          <FloatingParticle delay={8} duration={10} x="40%" y="78%" size="4px" color="#10b981" />
-          <FloatingParticle delay={9} duration={12} x="60%" y="88%" size="5px" color="#f59e0b" />
-          <FloatingParticle delay={10} duration={11} x="80%" y="70%" size="3px" color="#ec4899" />
+            {/* Second layer of particles */}
+            <FloatingParticle delay={7} duration={15} x="20%" y="70%" size="3px" color="#3b82f6" />
+            <FloatingParticle delay={8} duration={10} x="40%" y="78%" size="4px" color="#10b981" />
+            <FloatingParticle delay={9} duration={12} x="60%" y="88%" size="5px" color="#f59e0b" />
+            <FloatingParticle delay={10} duration={11} x="80%" y="70%" size="3px" color="#ec4899" />
 
-          {/* ESO runes for magical atmosphere */}
-          <ESORune delay={0} x="18%" y="25%" />
-          <ESORune delay={3} x="82%" y="30%" />
-          <ESORune delay={6} x="50%" y="15%" />
-          <ESORune delay={9} x="25%" y="50%" />
-          <ESORune delay={12} x="75%" y="55%" />
-        </ParticleContainer>
+            {/* ESO runes for magical atmosphere */}
+            <ESORune delay={0} x="18%" y="25%" />
+            <ESORune delay={3} x="82%" y="30%" />
+            <ESORune delay={6} x="50%" y="15%" />
+            <ESORune delay={9} x="25%" y="50%" />
+            <ESORune delay={12} x="75%" y="55%" />
+          </ParticleContainer>
+        )}
 
         <HeroContent className="u-fade-in-up">
           <HeroTitle variant="h1" showAnimations={showAnimations}>
