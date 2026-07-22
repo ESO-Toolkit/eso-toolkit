@@ -37,7 +37,20 @@ export const detectPerfTier = async (): Promise<PerfTier> => {
 
   try {
     const gpuTier = await getGPUTier();
-    // detect-gpu returns tier 0..3. Tier 0 = blocklisted or <15 fps.
+    // detect-gpu RESOLVES (it does not throw) even when it can't actually
+    // benchmark the GPU — the `type` field says how trustworthy `tier` is:
+    //   BENCHMARK         — matched the GPU in the benchmark DB. Trust `tier`.
+    //   FALLBACK          — GPU wasn't in the DB, so `tier` is a screen-size
+    //                       guess that defaults to 1. Trusting it misclassifies
+    //                       capable desktops as 'low' — the reason auto felt
+    //                       inaccurate — so defer to the heuristic instead.
+    //   WEBGL_UNSUPPORTED — nothing was measured (no WebGL context). Same as a
+    //                       thrown benchmark: defer to the heuristic.
+    //   BLOCKLISTED       — driver on the known-bad list; pin to 'low'.
+    if (gpuTier.type === 'BLOCKLISTED') return 'low';
+    if (gpuTier.type !== 'BENCHMARK') return heuristic;
+
+    // detect-gpu returns tier 0..3. Tier 0 = <15 fps.
     // Mobile tier-3 and desktop tier-3 use the same internal classification,
     // so `isMobile` alone doesn't automatically demote — let the benchmark
     // speak. isMobile is worth a small demotion only when the benchmark is

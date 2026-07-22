@@ -120,7 +120,7 @@ describe('heuristicPerfTier', () => {
 
 describe('detectPerfTier', () => {
   it("returns 'high' when getGPUTier reports tier 3, even with unreported deviceMemory", async () => {
-    getGPUTierMock.mockResolvedValueOnce({ tier: 3, isMobile: false });
+    getGPUTierMock.mockResolvedValueOnce({ tier: 3, isMobile: false, type: 'BENCHMARK' });
     setNavigatorSignals({ deviceMemory: undefined, hardwareConcurrency: 16 });
     await expect(detectPerfTier()).resolves.toBe('high');
   });
@@ -139,24 +139,24 @@ describe('detectPerfTier', () => {
     await expect(detectPerfTier()).resolves.toBe('low');
   });
 
-  it("returns 'low' on GPU tier 0", async () => {
-    getGPUTierMock.mockResolvedValueOnce({ tier: 0, isMobile: false });
+  it("returns 'low' on benchmarked GPU tier 0", async () => {
+    getGPUTierMock.mockResolvedValueOnce({ tier: 0, isMobile: false, type: 'BENCHMARK' });
     await expect(detectPerfTier()).resolves.toBe('low');
   });
 
-  it("returns 'low' on GPU tier 1", async () => {
-    getGPUTierMock.mockResolvedValueOnce({ tier: 1, isMobile: true });
+  it("returns 'low' on benchmarked GPU tier 1", async () => {
+    getGPUTierMock.mockResolvedValueOnce({ tier: 1, isMobile: true, type: 'BENCHMARK' });
     await expect(detectPerfTier()).resolves.toBe('low');
   });
 
-  it("returns 'low' on mobile GPU tier 2", async () => {
+  it("returns 'low' on benchmarked mobile GPU tier 2", async () => {
     // Boundary case: mobile tier-2 is the 2020 Moto G Power zone.
-    getGPUTierMock.mockResolvedValueOnce({ tier: 2, isMobile: true });
+    getGPUTierMock.mockResolvedValueOnce({ tier: 2, isMobile: true, type: 'BENCHMARK' });
     await expect(detectPerfTier()).resolves.toBe('low');
   });
 
-  it("returns 'medium' on desktop GPU tier 2", async () => {
-    getGPUTierMock.mockResolvedValueOnce({ tier: 2, isMobile: false });
+  it("returns 'medium' on benchmarked desktop GPU tier 2", async () => {
+    getGPUTierMock.mockResolvedValueOnce({ tier: 2, isMobile: false, type: 'BENCHMARK' });
     await expect(detectPerfTier()).resolves.toBe('medium');
   });
 
@@ -164,7 +164,7 @@ describe('detectPerfTier', () => {
     // A thermally-throttled phone can have a benchmark that was good
     // when cool but has 2GB RAM and 2 cores — the weak-hardware floor
     // wins.
-    getGPUTierMock.mockResolvedValueOnce({ tier: 3, isMobile: true });
+    getGPUTierMock.mockResolvedValueOnce({ tier: 3, isMobile: true, type: 'BENCHMARK' });
     setNavigatorSignals({ deviceMemory: 2, hardwareConcurrency: 2 });
     await expect(detectPerfTier()).resolves.toBe('low');
   });
@@ -174,8 +174,38 @@ describe('detectPerfTier', () => {
     // stays on their hardware tier. MotionConfig handles the motion
     // reduction separately.
     setPrefersReducedMotion(true);
-    getGPUTierMock.mockResolvedValueOnce({ tier: 3, isMobile: false });
+    getGPUTierMock.mockResolvedValueOnce({ tier: 3, isMobile: false, type: 'BENCHMARK' });
     setNavigatorSignals({ deviceMemory: 32, hardwareConcurrency: 16 });
     await expect(detectPerfTier()).resolves.toBe('high');
+  });
+
+  it('does NOT trust a FALLBACK tier — a capable device defers to the heuristic', async () => {
+    // detect-gpu resolves with type:'FALLBACK' (tier defaults to 1) when the
+    // GPU isn't in its benchmark DB. Trusting that '1' was the root cause of
+    // auto misclassifying capable desktops as 'low'. With healthy hardware
+    // signals the heuristic's 'medium' floor should win instead.
+    getGPUTierMock.mockResolvedValueOnce({ tier: 1, isMobile: false, type: 'FALLBACK' });
+    setNavigatorSignals({ deviceMemory: 16, hardwareConcurrency: 12 });
+    await expect(detectPerfTier()).resolves.toBe('medium');
+  });
+
+  it("returns 'low' on a FALLBACK tier only when hardware signals are genuinely weak", async () => {
+    getGPUTierMock.mockResolvedValueOnce({ tier: 1, isMobile: false, type: 'FALLBACK' });
+    setNavigatorSignals({ deviceMemory: 2, hardwareConcurrency: 2 });
+    await expect(detectPerfTier()).resolves.toBe('low');
+  });
+
+  it("defers to the heuristic on WEBGL_UNSUPPORTED instead of assuming 'low'", async () => {
+    getGPUTierMock.mockResolvedValueOnce({ tier: 0, isMobile: false, type: 'WEBGL_UNSUPPORTED' });
+    setNavigatorSignals({ deviceMemory: 16, hardwareConcurrency: 12 });
+    await expect(detectPerfTier()).resolves.toBe('medium');
+  });
+
+  it("returns 'low' on a BLOCKLISTED GPU regardless of reported tier or hardware", async () => {
+    // Blocklisted drivers are flagged for known perf/stability problems, so
+    // pin to 'low' even if the fallback tier or hardware signals look capable.
+    getGPUTierMock.mockResolvedValueOnce({ tier: 2, isMobile: false, type: 'BLOCKLISTED' });
+    setNavigatorSignals({ deviceMemory: 16, hardwareConcurrency: 12 });
+    await expect(detectPerfTier()).resolves.toBe('low');
   });
 });

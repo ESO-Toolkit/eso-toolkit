@@ -95,122 +95,133 @@ export const AuroraBackground: React.FC = () => {
         `}
       </style>
 
-      {/* Layer 1: Base gradient wash */}
+      {/* Single fixed, non-interactive stacking context pinned BEHIND all app
+          content (zIndex: -1). Keeping the whole decorative stack here means
+          the inner layers — including the light motes — can never paint above
+          page elements, no matter what stacking context a given element
+          creates. The app's content surfaces are transparent by design, so the
+          background still shows through. */}
       <Box
         sx={{
           position: 'fixed',
           inset: 0,
-          zIndex: 0,
-          background: `
-            radial-gradient(ellipse at 25% 20%, rgba(165, 180, 252, 0.10) 0%, transparent 55%),
-            radial-gradient(ellipse at 75% 75%, rgba(56, 189, 248, 0.08) 0%, transparent 55%),
-            radial-gradient(ellipse at 50% 50%, rgba(236, 172, 190, 0.05) 0%, transparent 60%),
-            linear-gradient(160deg, #f0f4ff 0%, #f8fafc 35%, #fdf2f8 65%, #f0fdfa 100%)
-          `,
-          pointerEvents: 'none',
-        }}
-      />
-
-      {/* Layer 2: Pastel clouds — pre-diffused gradients, no filter:blur */}
-      <Box
-        sx={{
-          position: 'fixed',
-          inset: 0,
-          zIndex: 1,
+          zIndex: -1,
           pointerEvents: 'none',
         }}
       >
+        {/* Layer 1: Base gradient wash */}
         <Box
           sx={{
             position: 'absolute',
-            width: '85%',
-            height: '85%',
-            top: '0%',
-            left: '-5%',
-            background: 'radial-gradient(ellipse, rgba(165, 180, 252, 0.08) 0%, transparent 50%)',
-            animation: animate ? 'aurCloudDriftA 42s ease-in-out infinite' : 'none',
+            inset: 0,
+            zIndex: 0,
+            background: `
+              radial-gradient(ellipse at 25% 20%, rgba(165, 180, 252, 0.10) 0%, transparent 55%),
+              radial-gradient(ellipse at 75% 75%, rgba(56, 189, 248, 0.08) 0%, transparent 55%),
+              radial-gradient(ellipse at 50% 50%, rgba(236, 172, 190, 0.05) 0%, transparent 60%),
+              linear-gradient(160deg, #f0f4ff 0%, #f8fafc 35%, #fdf2f8 65%, #f0fdfa 100%)
+            `,
           }}
         />
+
+        {/* Layer 2: Pastel clouds — pre-diffused gradients, no filter:blur */}
         <Box
           sx={{
             position: 'absolute',
-            width: '75%',
-            height: '75%',
-            bottom: '0%',
-            right: '-5%',
-            background: 'radial-gradient(ellipse, rgba(56, 189, 248, 0.06) 0%, transparent 50%)',
-            animation: animate ? 'aurCloudDriftB 34s ease-in-out infinite reverse' : 'none',
+            inset: 0,
+            zIndex: 1,
           }}
-        />
+        >
+          <Box
+            sx={{
+              position: 'absolute',
+              width: '85%',
+              height: '85%',
+              top: '0%',
+              left: '-5%',
+              background: 'radial-gradient(ellipse, rgba(165, 180, 252, 0.08) 0%, transparent 50%)',
+              animation: animate ? 'aurCloudDriftA 42s ease-in-out infinite' : 'none',
+            }}
+          />
+          <Box
+            sx={{
+              position: 'absolute',
+              width: '75%',
+              height: '75%',
+              bottom: '0%',
+              right: '-5%',
+              background: 'radial-gradient(ellipse, rgba(56, 189, 248, 0.06) 0%, transparent 50%)',
+              animation: animate ? 'aurCloudDriftB 34s ease-in-out infinite reverse' : 'none',
+            }}
+          />
+          <Box
+            sx={{
+              position: 'absolute',
+              width: '65%',
+              height: '65%',
+              top: '20%',
+              right: '10%',
+              background: 'radial-gradient(ellipse, rgba(236, 172, 190, 0.06) 0%, transparent 50%)',
+              animation: animate ? 'aurCloudDriftC 48s ease-in-out infinite' : 'none',
+            }}
+          />
+          <Box
+            sx={{
+              position: 'absolute',
+              width: '60%',
+              height: '60%',
+              bottom: '10%',
+              left: '5%',
+              background: 'radial-gradient(ellipse, rgba(94, 234, 212, 0.05) 0%, transparent 50%)',
+              animation: animate ? 'aurCloudDriftA 52s ease-in-out infinite reverse' : 'none',
+            }}
+          />
+        </Box>
+
+        {/* Layer 3: Light-mote particles */}
+        {particleCount > 0 && (
+          <Box
+            sx={{
+              position: 'absolute',
+              inset: 0,
+              zIndex: 2,
+            }}
+          >
+            {motes.map((m) => (
+              <Box
+                key={m.id}
+                sx={{
+                  position: 'absolute',
+                  width: m.size,
+                  height: m.size,
+                  background: m.color,
+                  borderRadius: '50%',
+                  left: `${m.left}%`,
+                  top: `${m.top}%`,
+                  animation: `aurMoteFloat ${m.duration}s ease-in-out infinite`,
+                  animationDelay: `${m.delay}s`,
+                  boxShadow: m.hasGlow ? `0 0 ${m.size * 4}px ${m.color}` : 'none',
+                }}
+              />
+            ))}
+          </Box>
+        )}
+
+        {/* Layer 4: Subtle grid overlay */}
         <Box
           sx={{
             position: 'absolute',
-            width: '65%',
-            height: '65%',
-            top: '20%',
-            right: '10%',
-            background: 'radial-gradient(ellipse, rgba(236, 172, 190, 0.06) 0%, transparent 50%)',
-            animation: animate ? 'aurCloudDriftC 48s ease-in-out infinite' : 'none',
-          }}
-        />
-        <Box
-          sx={{
-            position: 'absolute',
-            width: '60%',
-            height: '60%',
-            bottom: '10%',
-            left: '5%',
-            background: 'radial-gradient(ellipse, rgba(94, 234, 212, 0.05) 0%, transparent 50%)',
-            animation: animate ? 'aurCloudDriftA 52s ease-in-out infinite reverse' : 'none',
+            inset: 0,
+            zIndex: 3,
+            backgroundImage: `
+              linear-gradient(transparent 24px, rgba(165, 180, 252, 0.03) 24px, rgba(165, 180, 252, 0.03) 25px, transparent 25px),
+              linear-gradient(90deg, transparent 24px, rgba(165, 180, 252, 0.03) 24px, rgba(165, 180, 252, 0.03) 25px, transparent 25px)
+            `,
+            backgroundSize: '50px 50px',
+            opacity: 0.35,
           }}
         />
       </Box>
-
-      {/* Layer 3: Light-mote particles */}
-      {particleCount > 0 && (
-        <Box
-          sx={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 2,
-            pointerEvents: 'none',
-          }}
-        >
-          {motes.map((m) => (
-            <Box
-              key={m.id}
-              sx={{
-                position: 'absolute',
-                width: m.size,
-                height: m.size,
-                background: m.color,
-                borderRadius: '50%',
-                left: `${m.left}%`,
-                top: `${m.top}%`,
-                animation: `aurMoteFloat ${m.duration}s ease-in-out infinite`,
-                animationDelay: `${m.delay}s`,
-                boxShadow: m.hasGlow ? `0 0 ${m.size * 4}px ${m.color}` : 'none',
-              }}
-            />
-          ))}
-        </Box>
-      )}
-
-      {/* Layer 4: Subtle grid overlay */}
-      <Box
-        sx={{
-          position: 'fixed',
-          inset: 0,
-          zIndex: 3,
-          backgroundImage: `
-            linear-gradient(transparent 24px, rgba(165, 180, 252, 0.03) 24px, rgba(165, 180, 252, 0.03) 25px, transparent 25px),
-            linear-gradient(90deg, transparent 24px, rgba(165, 180, 252, 0.03) 24px, rgba(165, 180, 252, 0.03) 25px, transparent 25px)
-          `,
-          backgroundSize: '50px 50px',
-          opacity: 0.35,
-          pointerEvents: 'none',
-        }}
-      />
     </>
   );
 };

@@ -76,112 +76,124 @@ export const NebulaBackground: React.FC = () => {
         `}
       </style>
 
-      {/* Layer 1: Base nebula background */}
+      {/* Single fixed, non-interactive stacking context pinned BEHIND all app
+          content (zIndex: -1). Keeping the whole decorative stack here means
+          the inner layers — including the star particles — can never paint
+          above page elements, no matter what stacking context a given element
+          creates. The app's content surfaces are transparent by design, so the
+          background still shows through. */}
       <Box
         sx={{
           position: 'fixed',
           inset: 0,
-          zIndex: 0,
-          background: `
-            radial-gradient(ellipse at 20% 30%, rgba(100, 50, 255, 0.15) 0%, transparent 50%),
-            radial-gradient(ellipse at 80% 70%, rgba(0, 217, 255, 0.12) 0%, transparent 50%),
-            radial-gradient(ellipse at 50% 50%, rgba(50, 0, 100, 0.1) 0%, transparent 60%),
-            linear-gradient(135deg, #050810 0%, #0a0f1e 50%, #050810 100%)
-          `,
-        }}
-      />
-
-      {/* Layer 2: Nebula clouds — pre-diffused gradients, no filter:blur */}
-      <Box
-        sx={{
-          position: 'fixed',
-          inset: 0,
-          zIndex: 1,
+          zIndex: -1,
           pointerEvents: 'none',
         }}
       >
+        {/* Layer 1: Base nebula background */}
         <Box
           sx={{
             position: 'absolute',
-            width: '90%',
-            height: '90%',
-            top: '5%',
-            left: '-5%',
-            background: 'radial-gradient(ellipse, rgba(120, 60, 230, 0.12) 0%, transparent 55%)',
-            animation: animate ? 'nebulaDriftSlow 40s ease-in-out infinite' : 'none',
+            inset: 0,
+            zIndex: 0,
+            background: `
+              radial-gradient(ellipse at 20% 30%, rgba(100, 50, 255, 0.15) 0%, transparent 50%),
+              radial-gradient(ellipse at 80% 70%, rgba(0, 217, 255, 0.12) 0%, transparent 50%),
+              radial-gradient(ellipse at 50% 50%, rgba(50, 0, 100, 0.1) 0%, transparent 60%),
+              linear-gradient(135deg, #050810 0%, #0a0f1e 50%, #050810 100%)
+            `,
           }}
         />
+
+        {/* Layer 2: Nebula clouds — pre-diffused gradients, no filter:blur */}
         <Box
           sx={{
             position: 'absolute',
-            width: '75%',
-            height: '75%',
-            bottom: '5%',
-            right: '-5%',
-            background: 'radial-gradient(ellipse, rgba(0, 217, 255, 0.09) 0%, transparent 55%)',
-            animation: animate ? 'nebulaDriftMedium 30s ease-in-out infinite reverse' : 'none',
+            inset: 0,
+            zIndex: 1,
           }}
-        />
+        >
+          <Box
+            sx={{
+              position: 'absolute',
+              width: '90%',
+              height: '90%',
+              top: '5%',
+              left: '-5%',
+              background: 'radial-gradient(ellipse, rgba(120, 60, 230, 0.12) 0%, transparent 55%)',
+              animation: animate ? 'nebulaDriftSlow 40s ease-in-out infinite' : 'none',
+            }}
+          />
+          <Box
+            sx={{
+              position: 'absolute',
+              width: '75%',
+              height: '75%',
+              bottom: '5%',
+              right: '-5%',
+              background: 'radial-gradient(ellipse, rgba(0, 217, 255, 0.09) 0%, transparent 55%)',
+              animation: animate ? 'nebulaDriftMedium 30s ease-in-out infinite reverse' : 'none',
+            }}
+          />
+          <Box
+            sx={{
+              position: 'absolute',
+              width: '65%',
+              height: '65%',
+              top: '25%',
+              right: '15%',
+              background: 'radial-gradient(ellipse, rgba(180, 60, 200, 0.07) 0%, transparent 55%)',
+              animation: animate ? 'nebulaDriftSlow 50s ease-in-out infinite' : 'none',
+            }}
+          />
+        </Box>
+
+        {/* Layer 3: Star particles */}
+        {particleCount > 0 && (
+          <Box
+            sx={{
+              position: 'absolute',
+              inset: 0,
+              zIndex: 2,
+            }}
+          >
+            {particles.map((p) => (
+              <Box
+                key={p.id}
+                sx={{
+                  position: 'absolute',
+                  width: p.size,
+                  height: p.size,
+                  background: `rgba(255, 255, 255, ${p.opacity})`,
+                  borderRadius: '50%',
+                  left: `${p.left}%`,
+                  top: `${p.top}%`,
+                  animation: `nebulaFloat ${p.duration}s ease-in-out infinite`,
+                  animationDelay: `${p.delay}s`,
+                  boxShadow: p.hasGlow
+                    ? `0 0 ${p.size * 3}px rgba(255, 255, 255, ${p.opacity * 0.6})`
+                    : 'none',
+                }}
+              />
+            ))}
+          </Box>
+        )}
+
+        {/* Layer 4: Subtle grid overlay */}
         <Box
           sx={{
             position: 'absolute',
-            width: '65%',
-            height: '65%',
-            top: '25%',
-            right: '15%',
-            background: 'radial-gradient(ellipse, rgba(180, 60, 200, 0.07) 0%, transparent 55%)',
-            animation: animate ? 'nebulaDriftSlow 50s ease-in-out infinite' : 'none',
+            inset: 0,
+            zIndex: 3,
+            backgroundImage: `
+              linear-gradient(transparent 24px, rgba(0, 217, 255, 0.025) 24px, rgba(0, 217, 255, 0.025) 25px, transparent 25px),
+              linear-gradient(90deg, transparent 24px, rgba(0, 217, 255, 0.025) 24px, rgba(0, 217, 255, 0.025) 25px, transparent 25px)
+            `,
+            backgroundSize: '50px 50px',
+            opacity: 0.4,
           }}
         />
       </Box>
-
-      {/* Layer 3: Star particles */}
-      {particleCount > 0 && (
-        <Box
-          sx={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 2,
-            pointerEvents: 'none',
-          }}
-        >
-          {particles.map((p) => (
-            <Box
-              key={p.id}
-              sx={{
-                position: 'absolute',
-                width: p.size,
-                height: p.size,
-                background: `rgba(255, 255, 255, ${p.opacity})`,
-                borderRadius: '50%',
-                left: `${p.left}%`,
-                top: `${p.top}%`,
-                animation: `nebulaFloat ${p.duration}s ease-in-out infinite`,
-                animationDelay: `${p.delay}s`,
-                boxShadow: p.hasGlow
-                  ? `0 0 ${p.size * 3}px rgba(255, 255, 255, ${p.opacity * 0.6})`
-                  : 'none',
-              }}
-            />
-          ))}
-        </Box>
-      )}
-
-      {/* Layer 4: Subtle grid overlay */}
-      <Box
-        sx={{
-          position: 'fixed',
-          inset: 0,
-          zIndex: 3,
-          backgroundImage: `
-            linear-gradient(transparent 24px, rgba(0, 217, 255, 0.025) 24px, rgba(0, 217, 255, 0.025) 25px, transparent 25px),
-            linear-gradient(90deg, transparent 24px, rgba(0, 217, 255, 0.025) 24px, rgba(0, 217, 255, 0.025) 25px, transparent 25px)
-          `,
-          backgroundSize: '50px 50px',
-          opacity: 0.4,
-          pointerEvents: 'none',
-        }}
-      />
     </>
   );
 };
