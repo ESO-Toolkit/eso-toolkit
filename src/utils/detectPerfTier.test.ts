@@ -179,7 +179,7 @@ describe('detectPerfTier', () => {
     await expect(detectPerfTier()).resolves.toBe('high');
   });
 
-  it("does NOT trust a FALLBACK tier — a capable device defers to the heuristic", async () => {
+  it('does NOT trust a FALLBACK tier — a capable device defers to the heuristic', async () => {
     // detect-gpu resolves with type:'FALLBACK' (tier defaults to 1) when the
     // GPU isn't in its benchmark DB. Trusting that '1' was the root cause of
     // auto misclassifying capable desktops as 'low'. With healthy hardware
