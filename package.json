@@ -35,7 +35,7 @@
     "axios": "^1.18.0",
     "comlink": "^4.4.2",
     "date-fns": "^4.4.0",
-    "dompurify": "^3.4.11",
+    "dompurify": "^3.4.12",
     "echarts": "^6.0.0",
     "framer-motion": "^12.39.0",
     "graphql": "^16.14.2",
