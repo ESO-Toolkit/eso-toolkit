@@ -1,0 +1,326 @@
+<!-- @dsCard group="Patterns" -->
+<meta charset="utf-8">
+<title>Background Layers — Nebula / Aurora</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; box-sizing:border-box; }
+  body { font-family:Inter,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif; background:#0b1220; padding:20px; }
+  h1,h2,h3 { font-family:'Space Grotesk',Inter,system-ui,sans-serif; font-weight:600; }
+
+  [data-color-scheme="dark"] {
+    --bg:#0b1220; --panel:#0f172a; --panel-2:#0d1430; --text:#e5e7eb; --muted:#94a3b8;
+    --accent:#38bdf8; --accent-2:#00e1ff; --ok:#22c55e; --warn:#ff9800; --danger:#ef4444;
+    --border:#1f2937;
+  }
+  [data-color-scheme="light"] {
+    --bg:#f8fafc; --panel:#ffffff; --panel-2:#f8fafc; --text:#1e293b; --muted:#64748b;
+    --accent:#0f172a; --accent-2:#1e293b; --ok:#059669; --warn:#f97316; --danger:#dc2626;
+    --border:#bcd9ff;
+  }
+  /* NOTE: light --accent is deliberately dark slate #0f172a, NOT a light blue.
+     Cyan #38bdf8 accents remain hard-coded in many dark-leaning recipes even in light mode. */
+
+  .ds-card { max-width:1100px; margin:0 auto; color:#e5e7eb; }
+  .ds-title { font-size:1.4rem; color:#e5e7eb; margin-bottom:4px; }
+  .ds-sub { font-size:.8rem; color:#94a3b8; margin-bottom:16px; }
+  .ds-modes { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  @media (max-width:760px){ .ds-modes { grid-template-columns:1fr; } }
+  .ds-mode { border-radius:16px; padding:18px; background:var(--bg); color:var(--text); border:1px solid var(--border); position:relative; overflow:hidden; }
+  .ds-mode > h2 { font-size:.72rem; text-transform:uppercase; letter-spacing:.12em; color:var(--muted); margin-bottom:14px; position:relative; z-index:1; }
+  .ds-src { font-size:.68rem; color:var(--muted); font-family:'JetBrains Mono',Consolas,monospace; margin-top:6px; }
+
+  h3.sect { font-size:.8rem; color:var(--text); margin:16px 0 8px; }
+  .note { font-size:.72rem; color:var(--muted); line-height:1.5; margin-top:8px; }
+  pre.code { background:#0d1430; border:1px solid #1f2937; border-radius:10px; padding:12px;
+    font-family:'JetBrains Mono',Consolas,monospace; font-size:.66rem; line-height:1.55;
+    color:#94a3b8; overflow-x:auto; margin-top:8px; white-space:pre; }
+  pre.code b { color:#e5e7eb; font-weight:500; }
+
+  /* ── Real keyframes, transcribed exactly ─────────────────────────────── */
+  /* NebulaBackground.tsx:44-61 */
+  @keyframes nebulaFloat {
+    0%, 100% { transform: translateY(0) translateX(0) scale(1); opacity: 0.3; }
+    25%      { transform: translateY(-15px) translateX(8px) scale(1.05); opacity: 0.7; }
+    50%      { transform: translateY(-25px) translateX(-5px) scale(0.95); opacity: 0.5; }
+    75%      { transform: translateY(-12px) translateX(12px) scale(1.02); opacity: 0.8; }
+  }
+  /* NebulaBackground.tsx:62-65 */
+  @keyframes nebulaDriftSlow {
+    0%, 100% { transform: scale(1) translate(0, 0) rotate(0deg); }
+    50% { transform: scale(1.15) translate(-30px, 15px) rotate(2deg); }
+  }
+  /* NebulaBackground.tsx:66-69 */
+  @keyframes nebulaDriftMedium {
+    0%, 100% { transform: scale(1) translate(0, 0) rotate(0deg); }
+    50% { transform: scale(1.2) translate(25px, -10px) rotate(-2deg); }
+  }
+  /* AuroraBackground.tsx:55-72 */
+  @keyframes aurMoteFloat {
+    0%, 100% { transform: translateY(0) translateX(0) scale(1); opacity: 0.25; }
+    25%      { transform: translateY(-12px) translateX(6px) scale(1.04); opacity: 0.55; }
+    50%      { transform: translateY(-20px) translateX(-4px) scale(0.96); opacity: 0.4; }
+    75%      { transform: translateY(-10px) translateX(10px) scale(1.02); opacity: 0.6; }
+  }
+  /* AuroraBackground.tsx:74-87 */
+  @keyframes aurCloudDriftA {
+    0%, 100% { transform: scale(1) translate(0, 0) rotate(0deg); }
+    50%      { transform: scale(1.12) translate(-25px, 12px) rotate(1.5deg); }
+  }
+  @keyframes aurCloudDriftB {
+    0%, 100% { transform: scale(1) translate(0, 0) rotate(0deg); }
+    50%      { transform: scale(1.18) translate(20px, -8px) rotate(-1.5deg); }
+  }
+  @keyframes aurCloudDriftC {
+    0%, 100% { transform: scale(1) translate(0, 0) rotate(0deg); }
+    50%      { transform: scale(1.1) translate(-15px, -10px) rotate(1deg); }
+  }
+
+  /* ── Composite stage ─────────────────────────────────────────────────── */
+  .bgl-stage { position:relative; height:280px; border-radius:12px; overflow:hidden; border:1px solid var(--border); }
+  .bgl-layer { position:absolute; inset:0; pointer-events:none; }
+
+  /* Layer 1 — base wash. NebulaBackground.tsx:99-104 */
+  .neb-base {
+    background:
+      radial-gradient(ellipse at 20% 30%, rgba(100, 50, 255, 0.15) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 70%, rgba(0, 217, 255, 0.12) 0%, transparent 50%),
+      radial-gradient(ellipse at 50% 50%, rgba(50, 0, 100, 0.1) 0%, transparent 60%),
+      linear-gradient(135deg, #050810 0%, #0a0f1e 50%, #050810 100%);
+  }
+  /* AuroraBackground.tsx:118-123 */
+  .aur-base {
+    background:
+      radial-gradient(ellipse at 25% 20%, rgba(165, 180, 252, 0.10) 0%, transparent 55%),
+      radial-gradient(ellipse at 75% 75%, rgba(56, 189, 248, 0.08) 0%, transparent 55%),
+      radial-gradient(ellipse at 50% 50%, rgba(236, 172, 190, 0.05) 0%, transparent 60%),
+      linear-gradient(160deg, #f0f4ff 0%, #f8fafc 35%, #fdf2f8 65%, #f0fdfa 100%);
+  }
+
+  /* Layer 2 — clouds: pre-diffused radial gradients, NO filter:blur (iOS Safari GPU). */
+  .cloud { position:absolute; }
+  /* NebulaBackground.tsx:116-126 */
+  .neb-c1 { width:90%; height:90%; top:5%; left:-5%;
+    background:radial-gradient(ellipse, rgba(120, 60, 230, 0.12) 0%, transparent 55%);
+    animation:nebulaDriftSlow 40s ease-in-out infinite; }
+  /* NebulaBackground.tsx:127-137 */
+  .neb-c2 { width:75%; height:75%; bottom:5%; right:-5%;
+    background:radial-gradient(ellipse, rgba(0, 217, 255, 0.09) 0%, transparent 55%);
+    animation:nebulaDriftMedium 30s ease-in-out infinite reverse; }
+  /* NebulaBackground.tsx:138-148 */
+  .neb-c3 { width:65%; height:65%; top:25%; right:15%;
+    background:radial-gradient(ellipse, rgba(180, 60, 200, 0.07) 0%, transparent 55%);
+    animation:nebulaDriftSlow 50s ease-in-out infinite; }
+  /* AuroraBackground.tsx:135-145 */
+  .aur-c1 { width:85%; height:85%; top:0%; left:-5%;
+    background:radial-gradient(ellipse, rgba(165, 180, 252, 0.08) 0%, transparent 50%);
+    animation:aurCloudDriftA 42s ease-in-out infinite; }
+  /* AuroraBackground.tsx:146-156 */
+  .aur-c2 { width:75%; height:75%; bottom:0%; right:-5%;
+    background:radial-gradient(ellipse, rgba(56, 189, 248, 0.06) 0%, transparent 50%);
+    animation:aurCloudDriftB 34s ease-in-out infinite reverse; }
+  /* AuroraBackground.tsx:157-167 */
+  .aur-c3 { width:65%; height:65%; top:20%; right:10%;
+    background:radial-gradient(ellipse, rgba(236, 172, 190, 0.06) 0%, transparent 50%);
+    animation:aurCloudDriftC 48s ease-in-out infinite; }
+  /* AuroraBackground.tsx:168-178 */
+  .aur-c4 { width:60%; height:60%; bottom:10%; left:5%;
+    background:radial-gradient(ellipse, rgba(94, 234, 212, 0.05) 0%, transparent 50%);
+    animation:aurCloudDriftA 52s ease-in-out infinite reverse; }
+
+  /* Layer 3 — particles. Randomized in JS at mount (NebulaBackground.tsx:25-36,
+     AuroraBackground.tsx:35-47); the set below is a representative HAND-PLACED
+     sample within the real ranges. Star: size 1-5px, opacity .15-.75, duration
+     8-23s, delay 0-8s; ~30% get glow `0 0 size*3px rgba(255,255,255,op*0.6)`.
+     Mote: size 1-4.5px, opacity .25-.75, duration 10-28s, delay 0-10s, colors
+     cycle MOTE_COLORS (AuroraBackground.tsx:17-23); ~25% glow `0 0 size*4px color`. */
+  .star { position:absolute; border-radius:50%; background:rgba(255,255,255,var(--o));
+    width:var(--s); height:var(--s); left:var(--x); top:var(--y);
+    animation:nebulaFloat var(--d) ease-in-out infinite; animation-delay:var(--dl); }
+  .mote { position:absolute; border-radius:50%; background:var(--c);
+    width:var(--s); height:var(--s); left:var(--x); top:var(--y);
+    animation:aurMoteFloat var(--d) ease-in-out infinite; animation-delay:var(--dl); }
+
+  /* Layer 4 — grid overlay. NebulaBackground.tsx:183-195 */
+  .neb-grid {
+    background-image:
+      linear-gradient(transparent 24px, rgba(0, 217, 255, 0.025) 24px, rgba(0, 217, 255, 0.025) 25px, transparent 25px),
+      linear-gradient(90deg, transparent 24px, rgba(0, 217, 255, 0.025) 24px, rgba(0, 217, 255, 0.025) 25px, transparent 25px);
+    background-size:50px 50px; opacity:0.4;
+  }
+  /* AuroraBackground.tsx:210-223 */
+  .aur-grid {
+    background-image:
+      linear-gradient(transparent 24px, rgba(165, 180, 252, 0.03) 24px, rgba(165, 180, 252, 0.03) 25px, transparent 25px),
+      linear-gradient(90deg, transparent 24px, rgba(165, 180, 252, 0.03) 24px, rgba(165, 180, 252, 0.03) 25px, transparent 25px);
+    background-size:50px 50px; opacity:0.35;
+  }
+  /* Amplified twins (10x line alpha) — for legibility only, NOT a real value */
+  .neb-grid-amp { background-image:
+      linear-gradient(transparent 24px, rgba(0,217,255,0.25) 24px, rgba(0,217,255,0.25) 25px, transparent 25px),
+      linear-gradient(90deg, transparent 24px, rgba(0,217,255,0.25) 24px, rgba(0,217,255,0.25) 25px, transparent 25px);
+    background-size:50px 50px; opacity:0.4; }
+  .aur-grid-amp { background-image:
+      linear-gradient(transparent 24px, rgba(165,180,252,0.3) 24px, rgba(165,180,252,0.3) 25px, transparent 25px),
+      linear-gradient(90deg, transparent 24px, rgba(165,180,252,0.3) 24px, rgba(165,180,252,0.3) 25px, transparent 25px);
+    background-size:50px 50px; opacity:0.35; }
+
+  /* Exploded strips */
+  .strip { position:relative; height:64px; border-radius:8px; overflow:hidden; border:1px solid var(--border); margin-top:10px; }
+  .strip .bgl-layer { position:absolute; inset:0; }
+  .strip-label { position:absolute; top:6px; left:8px; z-index:5; font-size:.6rem; text-transform:uppercase;
+    letter-spacing:.1em; font-weight:600; color:var(--muted); background:color-mix(in srgb, var(--bg) 70%, transparent);
+    padding:1px 6px; border-radius:6px; }
+  .half { position:absolute; inset:0; }
+  .half.r { left:50%; }
+  .half-tag { position:absolute; top:6px; right:8px; z-index:5; font-size:.58rem; color:var(--muted); }
+
+  table.tiers { width:100%; border-collapse:collapse; font-size:.72rem; margin-top:8px; }
+  table.tiers th, table.tiers td { text-align:left; padding:6px 10px; border-bottom:1px solid #1f2937; color:#e5e7eb; }
+  table.tiers th { color:#94a3b8; font-weight:600; text-transform:uppercase; font-size:.62rem; letter-spacing:.08em; }
+  .gate { border-radius:16px; padding:18px; background:#0f172a; border:1px solid #1f2937; margin-top:16px; }
+  .gate h2 { font-size:.72rem; text-transform:uppercase; letter-spacing:.12em; color:#94a3b8; margin-bottom:10px; }
+</style>
+<div class="ds-card">
+  <h1 class="ds-title">Background Layers — Nebula (dark) / Aurora (light)</h1>
+  <p class="ds-sub">The site-wide 4-layer atmospheric background: base gradient wash &rarr; drifting clouds &rarr; floating particles &rarr; grid overlay. One fixed, pointer-events:none stack at zIndex:-1. Sources: nebula-background-technique.md, src/features/loadout-manager/components/NebulaBackground.tsx, AuroraBackground.tsx, src/components/shared/SiteBackground.tsx</p>
+
+  <div class="ds-modes">
+    <section class="ds-mode" data-color-scheme="dark">
+      <h2>Dark — NebulaBackground</h2>
+
+      <h3 class="sect">Full composite (all 4 layers)</h3>
+      <div class="bgl-stage">
+        <div class="bgl-layer neb-base"></div>
+        <div class="bgl-layer">
+          <div class="cloud neb-c1"></div>
+          <div class="cloud neb-c2"></div>
+          <div class="cloud neb-c3"></div>
+        </div>
+        <div class="bgl-layer">
+          <span class="star" style="--s:2px; --o:.55; --x:8%;  --y:22%; --d:12s; --dl:0s;"></span>
+          <span class="star" style="--s:4px; --o:.7;  --x:21%; --y:64%; --d:16s; --dl:2s; box-shadow:0 0 12px rgba(255,255,255,0.42);"></span>
+          <span class="star" style="--s:1px; --o:.25; --x:33%; --y:12%; --d:9s;  --dl:5s;"></span>
+          <span class="star" style="--s:3px; --o:.6;  --x:45%; --y:44%; --d:20s; --dl:1s;"></span>
+          <span class="star" style="--s:5px; --o:.75; --x:56%; --y:75%; --d:14s; --dl:3s; box-shadow:0 0 15px rgba(255,255,255,0.45);"></span>
+          <span class="star" style="--s:2px; --o:.4;  --x:63%; --y:18%; --d:22s; --dl:6s;"></span>
+          <span class="star" style="--s:1px; --o:.2;  --x:71%; --y:52%; --d:10s; --dl:4s;"></span>
+          <span class="star" style="--s:3px; --o:.65; --x:79%; --y:30%; --d:18s; --dl:7s; box-shadow:0 0 9px rgba(255,255,255,0.39);"></span>
+          <span class="star" style="--s:2px; --o:.5;  --x:88%; --y:68%; --d:13s; --dl:2.5s;"></span>
+          <span class="star" style="--s:4px; --o:.35; --x:93%; --y:14%; --d:23s; --dl:1.5s;"></span>
+          <span class="star" style="--s:1px; --o:.3;  --x:15%; --y:85%; --d:8s;  --dl:6.5s;"></span>
+          <span class="star" style="--s:2px; --o:.45; --x:39%; --y:88%; --d:15s; --dl:0.5s;"></span>
+          <span class="star" style="--s:3px; --o:.55; --x:68%; --y:90%; --d:11s; --dl:3.5s;"></span>
+          <span class="star" style="--s:1px; --o:.15; --x:50%; --y:8%;  --d:19s; --dl:7.5s;"></span>
+        </div>
+        <div class="bgl-layer neb-grid"></div>
+      </div>
+      <div class="ds-src">Layers: base :99-104 &middot; clouds :116-148 &middot; particles :160-178 &middot; grid :183-195 — NebulaBackground.tsx</div>
+      <p class="note">Particles are randomized in JS at mount (useMemo, NebulaBackground.tsx:25-36) — this card shows a representative hand-placed set within the real ranges (size 1&ndash;5px, opacity 0.15&ndash;0.75, duration 8&ndash;23s, delay 0&ndash;8s, ~30% with glow halo <code>0 0 size&times;3px rgba(255,255,255,opacity&times;0.6)</code>).</p>
+
+      <h3 class="sect">Exploded — one layer per strip</h3>
+      <div class="strip"><div class="bgl-layer neb-base"></div><span class="strip-label">L1 base wash &middot; z0</span></div>
+      <div class="ds-src">3 radial ellipses (alpha .10&ndash;.15) over linear-gradient(135deg, #050810 0%, #0a0f1e 50%, #050810 100%) — :99-104</div>
+      <div class="strip" style="background:#050810;">
+        <div class="bgl-layer">
+          <div class="cloud neb-c1"></div><div class="cloud neb-c2"></div><div class="cloud neb-c3"></div>
+        </div><span class="strip-label">L2 clouds &middot; z1</span>
+      </div>
+      <div class="ds-src">3 clouds, pre-diffused radial gradients (NO filter:blur), nebulaDriftSlow 40s / nebulaDriftMedium 30s reverse / nebulaDriftSlow 50s — :116-148 (shown over the L1 base color)</div>
+      <div class="strip" style="background:#050810;">
+        <div class="bgl-layer">
+          <span class="star" style="--s:3px; --o:.6;  --x:10%; --y:40%; --d:14s; --dl:0s;"></span>
+          <span class="star" style="--s:5px; --o:.75; --x:30%; --y:60%; --d:18s; --dl:2s; box-shadow:0 0 15px rgba(255,255,255,0.45);"></span>
+          <span class="star" style="--s:2px; --o:.4;  --x:52%; --y:30%; --d:10s; --dl:4s;"></span>
+          <span class="star" style="--s:4px; --o:.65; --x:70%; --y:55%; --d:21s; --dl:1s; box-shadow:0 0 12px rgba(255,255,255,0.39);"></span>
+          <span class="star" style="--s:1px; --o:.3;  --x:86%; --y:35%; --d:9s;  --dl:6s;"></span>
+        </div><span class="strip-label">L3 particles &middot; z2</span>
+      </div>
+      <div class="ds-src">white dots rgba(255,255,255,op), nebulaFloat 4-step firefly path — :160-178 (hand-placed sample, shown over base color)</div>
+      <div class="strip" style="background:#050810;">
+        <div class="half"><div class="bgl-layer neb-grid"></div></div>
+        <div class="half r"><div class="bgl-layer neb-grid-amp"></div></div>
+        <span class="strip-label">L4 grid &middot; z3</span><span class="half-tag">left: exact &middot; right: line alpha &times;10 for legibility</span>
+      </div>
+      <div class="ds-src">1px cyan lines every 50px, rgba(0,217,255,0.025) at opacity 0.4 (effective alpha &asymp;.01 — felt, not seen) — :183-195</div>
+    </section>
+
+    <section class="ds-mode" data-color-scheme="light">
+      <h2>Light — AuroraBackground</h2>
+
+      <h3 class="sect">Full composite (all 4 layers)</h3>
+      <div class="bgl-stage">
+        <div class="bgl-layer aur-base"></div>
+        <div class="bgl-layer">
+          <div class="cloud aur-c1"></div>
+          <div class="cloud aur-c2"></div>
+          <div class="cloud aur-c3"></div>
+          <div class="cloud aur-c4"></div>
+        </div>
+        <div class="bgl-layer">
+          <span class="mote" style="--s:2.5px; --c:rgba(147, 130, 220, 0.45); --x:12%; --y:26%; --d:14s; --dl:0s;"></span>
+          <span class="mote" style="--s:4px;   --c:rgba(56, 189, 248, 0.40);  --x:26%; --y:62%; --d:20s; --dl:3s; box-shadow:0 0 16px rgba(56, 189, 248, 0.40);"></span>
+          <span class="mote" style="--s:1.5px; --c:rgba(94, 234, 212, 0.35);  --x:41%; --y:18%; --d:11s; --dl:6s;"></span>
+          <span class="mote" style="--s:3px;   --c:rgba(236, 172, 190, 0.35); --x:55%; --y:48%; --d:24s; --dl:1s;"></span>
+          <span class="mote" style="--s:4.5px; --c:rgba(165, 180, 252, 0.40); --x:67%; --y:74%; --d:16s; --dl:4s; box-shadow:0 0 18px rgba(165, 180, 252, 0.40);"></span>
+          <span class="mote" style="--s:2px;   --c:rgba(147, 130, 220, 0.45); --x:76%; --y:22%; --d:27s; --dl:8s;"></span>
+          <span class="mote" style="--s:1px;   --c:rgba(56, 189, 248, 0.40);  --x:85%; --y:56%; --d:12s; --dl:5s;"></span>
+          <span class="mote" style="--s:3.5px; --c:rgba(94, 234, 212, 0.35);  --x:92%; --y:34%; --d:22s; --dl:2s; box-shadow:0 0 14px rgba(94, 234, 212, 0.35);"></span>
+          <span class="mote" style="--s:2px;   --c:rgba(236, 172, 190, 0.35); --x:20%; --y:86%; --d:18s; --dl:9s;"></span>
+          <span class="mote" style="--s:1.5px; --c:rgba(165, 180, 252, 0.40); --x:48%; --y:90%; --d:13s; --dl:7s;"></span>
+        </div>
+        <div class="bgl-layer aur-grid"></div>
+      </div>
+      <div class="ds-src">Layers: base :118-123 &middot; clouds :135-178 &middot; motes :190-207 &middot; grid :210-223 — AuroraBackground.tsx</div>
+      <p class="note">Motes are randomized in JS at mount (AuroraBackground.tsx:35-47) — hand-placed sample within the real ranges (size 1&ndash;4.5px, opacity 0.25&ndash;0.75, duration 10&ndash;28s, delay 0&ndash;10s, colors cycle MOTE_COLORS :17-23, ~25% glow <code>0 0 size&times;4px color</code>).</p>
+
+      <h3 class="sect">Exploded — one layer per strip</h3>
+      <div class="strip"><div class="bgl-layer aur-base"></div><span class="strip-label">L1 base wash &middot; z0</span></div>
+      <div class="ds-src">3 pastel radial ellipses (alpha .05&ndash;.10) over linear-gradient(160deg, #f0f4ff 0%, #f8fafc 35%, #fdf2f8 65%, #f0fdfa 100%) — :118-123</div>
+      <div class="strip" style="background:#f8fafc;">
+        <div class="bgl-layer">
+          <div class="cloud aur-c1"></div><div class="cloud aur-c2"></div><div class="cloud aur-c3"></div><div class="cloud aur-c4"></div>
+        </div><span class="strip-label">L2 clouds &middot; z1</span>
+      </div>
+      <div class="ds-src">4 pastel clouds (NO filter:blur), aurCloudDriftA 42s / B 34s reverse / C 48s / A 52s reverse — :135-178</div>
+      <div class="strip" style="background:#f8fafc;">
+        <div class="bgl-layer">
+          <span class="mote" style="--s:3px;   --c:rgba(147, 130, 220, 0.45); --x:12%; --y:40%; --d:15s; --dl:0s;"></span>
+          <span class="mote" style="--s:4.5px; --c:rgba(56, 189, 248, 0.40);  --x:32%; --y:60%; --d:22s; --dl:2s; box-shadow:0 0 18px rgba(56, 189, 248, 0.40);"></span>
+          <span class="mote" style="--s:2px;   --c:rgba(94, 234, 212, 0.35);  --x:54%; --y:32%; --d:12s; --dl:5s;"></span>
+          <span class="mote" style="--s:3.5px; --c:rgba(236, 172, 190, 0.35); --x:72%; --y:55%; --d:26s; --dl:1s; box-shadow:0 0 14px rgba(236, 172, 190, 0.35);"></span>
+          <span class="mote" style="--s:1.5px; --c:rgba(165, 180, 252, 0.40); --x:88%; --y:38%; --d:11s; --dl:7s;"></span>
+        </div><span class="strip-label">L3 motes &middot; z2</span>
+      </div>
+      <div class="ds-src">tinted dots from MOTE_COLORS, aurMoteFloat path — :190-207 (hand-placed sample)</div>
+      <div class="strip" style="background:#f8fafc;">
+        <div class="half"><div class="bgl-layer aur-grid"></div></div>
+        <div class="half r"><div class="bgl-layer aur-grid-amp"></div></div>
+        <span class="strip-label">L4 grid &middot; z3</span><span class="half-tag">left: exact &middot; right: line alpha &times;10 for legibility</span>
+      </div>
+      <div class="ds-src">1px periwinkle lines every 50px, rgba(165,180,252,0.03) at opacity 0.35 — :210-223</div>
+    </section>
+  </div>
+
+  <div class="gate">
+    <h2>Performance gating</h2>
+    <table class="tiers">
+      <tr><th>data-perf tier</th><th>Nebula stars</th><th>Aurora motes</th><th>Cloud drift</th><th>Whole background</th></tr>
+      <tr><td>high</td><td>25</td><td>20</td><td>animated</td><td>rendered</td></tr>
+      <tr><td>medium</td><td>20</td><td>15</td><td>animated</td><td>rendered</td></tr>
+      <tr><td>low</td><td>0</td><td>0</td><td>animation: none</td><td><b>SiteBackground returns null</b> — CssBaseline flat body background is the fallback</td></tr>
+    </table>
+    <pre class="code"><b>// src/components/shared/SiteBackground.tsx:24-33</b>
+// Low tier: skip the whole layer stack (4 fixed composited gradient planes
+// even with animation off).
+if (perfTier === 'low') { return null; }
+if (theme.palette.mode === 'light') { return &lt;AuroraBackground /&gt;; }
+return &lt;NebulaBackground /&gt;;
+
+<b>// NebulaBackground.tsx:15-19</b>            <b>// AuroraBackground.tsx:25-29</b>
+PARTICLE_COUNTS = { low: 0,               PARTICLE_COUNTS = { low: 0,
+  medium: 20, high: 25 };                   medium: 15, high: 20 };
+<b>// Both: :38 / :49</b>  const animate = perfTier !== 'low';</pre>
+    <p class="note"><b>Doc vs implementation:</b> the root technique doc (nebula-background-technique.md) describes 45&ndash;60 particles and clouds with <code>filter: blur(60&ndash;80px)</code>. The production components deliberately ship <b>pre-diffused radial gradients with no filter:blur</b> and 20&ndash;25 particles max, "tuned to avoid iOS Safari GPU crashes" (NebulaBackground.tsx:6-7). The values in this card are the as-built component values. Both components also zero all animation under <code>prefers-reduced-motion: reduce</code> (NebulaBackground.tsx:70-75).</p>
+  </div>
+</div>

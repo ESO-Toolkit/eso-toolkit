@@ -1,0 +1,246 @@
+<!-- @dsCard group="Components" -->
+<meta charset="utf-8">
+<title>Metric Pills — 5 Intents &times; 3 Variants</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; box-sizing:border-box; }
+  body { font-family:Inter,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif; background:#0b1220; padding:20px; }
+  h1,h2,h3 { font-family:'Space Grotesk',Inter,system-ui,sans-serif; font-weight:600; }
+
+  [data-color-scheme="dark"] {
+    --bg:#0b1220; --panel:#0f172a; --panel-2:#0d1430; --text:#e5e7eb; --muted:#94a3b8;
+    --accent:#38bdf8; --accent-2:#00e1ff; --ok:#22c55e; --warn:#ff9800; --danger:#ef4444;
+    --border:#1f2937;
+  }
+  [data-color-scheme="light"] {
+    --bg:#f8fafc; --panel:#ffffff; --panel-2:#f8fafc; --text:#1e293b; --muted:#64748b;
+    --accent:#0f172a; --accent-2:#1e293b; --ok:#059669; --warn:#f97316; --danger:#dc2626;
+    --border:#bcd9ff;
+  }
+  /* NOTE: light --accent is deliberately dark slate #0f172a, NOT a light blue.
+     Cyan #38bdf8 accents remain hard-coded in many dark-leaning recipes even in light mode. */
+
+  .ds-card { max-width:1100px; margin:0 auto; color:#e5e7eb; }
+  .ds-title { font-size:1.4rem; color:#e5e7eb; margin-bottom:4px; }
+  .ds-sub { font-size:.8rem; color:#94a3b8; margin-bottom:16px; }
+  .ds-modes { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  @media (max-width:760px){ .ds-modes { grid-template-columns:1fr; } }
+  .ds-mode { border-radius:16px; padding:18px; background:var(--bg); color:var(--text); border:1px solid var(--border); position:relative; overflow:hidden; }
+  .ds-mode > h2 { font-size:.72rem; text-transform:uppercase; letter-spacing:.12em; color:var(--muted); margin-bottom:14px; position:relative; z-index:1; }
+  .ds-src { font-size:.68rem; color:var(--muted); font-family:'JetBrains Mono',Consolas,monospace; margin-top:6px; }
+
+  /* Mini-backdrop (simplified Nebula/Aurora) so backdrop-filter: blur(10px) is visible */
+  .ds-backdrop { position:absolute; inset:0; pointer-events:none; }
+  [data-color-scheme="dark"] .ds-backdrop {
+    background:
+      radial-gradient(ellipse 60% 40% at 20% 25%, rgba(56,189,248,.28), transparent 65%),
+      radial-gradient(ellipse 50% 45% at 80% 30%, rgba(129,140,248,.24), transparent 65%),
+      radial-gradient(ellipse 55% 50% at 55% 80%, rgba(192,132,252,.18), transparent 65%),
+      #0b1220;
+  }
+  [data-color-scheme="light"] .ds-backdrop {
+    background:
+      radial-gradient(ellipse 60% 40% at 20% 25%, rgba(125,211,252,.5), transparent 65%),
+      radial-gradient(ellipse 50% 45% at 80% 30%, rgba(196,181,253,.42), transparent 65%),
+      radial-gradient(ellipse 55% 50% at 55% 80%, rgba(167,243,208,.38), transparent 65%),
+      #f8fafc;
+  }
+  .demo-z { position:relative; z-index:1; }
+
+  /* ═══ MetricPill — src/components/MetricPill.tsx ═══ */
+
+  /* Intent palette — MetricPill.tsx:27-53 (exact 3-stop 135deg gradients) */
+  .i-success {
+    --mp-bg:linear-gradient(135deg, rgba(76, 217, 100, 0.25) 0%, rgba(76, 217, 100, 0.15) 50%, rgba(76, 217, 100, 0.08) 100%);
+    --mp-border:rgba(76, 217, 100, 0.3); --mp-text:#5ce572;
+  }
+  .i-warning {
+    --mp-bg:linear-gradient(135deg, rgba(255, 193, 7, 0.25) 0%, rgba(255, 193, 7, 0.15) 50%, rgba(255, 193, 7, 0.08) 100%);
+    --mp-border:rgba(255, 193, 7, 0.35); --mp-text:#ff9800;
+  }
+  .i-danger {
+    --mp-bg:linear-gradient(135deg, rgba(255, 68, 68, 0.25) 0%, rgba(255, 68, 68, 0.15) 50%, rgba(255, 68, 68, 0.08) 100%);
+    --mp-border:rgba(255, 68, 68, 0.3); --mp-text:#ff6666;
+  }
+  .i-info {
+    --mp-bg:linear-gradient(135deg, rgba(94, 234, 255, 0.25) 0%, rgba(94, 234, 255, 0.15) 50%, rgba(94, 234, 255, 0.08) 100%);
+    --mp-border:rgba(94, 234, 255, 0.35); --mp-text:#7ee8ff;
+  }
+  /* neutral text = theme.palette.text.primary in dark (#e5e7eb) */
+  .i-neutral {
+    --mp-bg:linear-gradient(135deg, rgba(148, 163, 184, 0.25) 0%, rgba(148, 163, 184, 0.15) 50%, rgba(148, 163, 184, 0.08) 100%);
+    --mp-border:rgba(148, 163, 184, 0.3); --mp-text:#e5e7eb;
+  }
+
+  /* Container — MetricPill.tsx:100-122. md size: minWidth {xs:50, sm:60}(→60),
+     px:1.5→12px, py:0.5→4px, borderRadius:1→10px (theme shape.borderRadius=10) */
+  .mp {
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    min-width:60px; padding:4px 12px; border-radius:10px;
+    backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+    outline:none; box-shadow:none;
+    transition:transform 120ms ease, box-shadow 120ms ease;
+    color:var(--mp-text);
+  }
+  .mp:hover { transform:translateY(-1px); }
+  /* Light mode: value/label text forced #000000; container gains a lift shadow */
+  [data-color-scheme="light"] .mp { color:#000000; }
+  [data-color-scheme="light"] .mp {
+    box-shadow:rgba(0, 0, 0, 0.16) 0px 10px 36px 0px, rgba(0, 0, 0, 0.06) 0px 0px 0px 1px;
+  }
+
+  /* Variants — MetricPill.tsx:57-81 */
+  .v-solid   { background:var(--mp-bg); border:1px solid var(--mp-border); }
+  .v-outline { background:transparent;  border:1px solid var(--mp-border); }
+  .v-mono    { background:transparent;  border:2px solid var(--mp-text); }
+
+  /* Double focus ring — MetricPill.tsx:119-121:
+     0 0 0 2px background.paper, 0 0 0 4px primary.main
+     dark: paper #0f172a, primary #38bdf8 · light: paper #ffffff, primary #0f172a
+     (ReduxThemeProvider.tsx:76-81) */
+  [data-color-scheme="dark"] .mp.is-focus { box-shadow:0 0 0 2px #0f172a, 0 0 0 4px #38bdf8; }
+  [data-color-scheme="light"] .mp.is-focus { box-shadow:0 0 0 2px #ffffff, 0 0 0 4px #0f172a; }
+
+  /* Label — MetricPill.tsx:124-140 (md: .65rem at sm breakpoint; mb:0.25→2px) */
+  .mp .lbl {
+    color:var(--muted); font-size:.65rem; font-weight:500; text-transform:uppercase;
+    letter-spacing:.05em; margin-bottom:2px;
+  }
+  [data-color-scheme="dark"] .mp .lbl { text-shadow:0 1px 2px rgba(0,0,0,0.5); }
+  [data-color-scheme="light"] .mp .lbl { text-shadow:0 1px 1px rgba(15, 23, 42, 0.1); }
+  /* Value — MetricPill.tsx:141-154 (md: .7rem at sm breakpoint) */
+  .mp .val { font-weight:600; font-size:.7rem; }
+  [data-color-scheme="dark"] .mp .val { text-shadow:0 1px 3px rgba(0,0,0,0.6); }
+  [data-color-scheme="light"] .mp .val { text-shadow:0 1px 2px rgba(15, 23, 42, 0.15); }
+  /* sm size — MetricPill.tsx:105,128,145: minWidth 70, label .65rem, value .8rem */
+  .mp.sz-sm { min-width:70px; }
+  .mp.sz-sm .val { font-size:.8rem; }
+
+  .row { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:6px; }
+  .row-name { font-size:.62rem; text-transform:uppercase; letter-spacing:.1em; font-weight:600; color:var(--muted); margin:12px 0 6px; }
+
+  /* Divergent chip palette (comparison only) — playerCardStyleUtils.ts:95-155 */
+  .chip-cmp { display:inline-flex; align-items:center; padding:4px 12px; border-radius:28px;
+    backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); font-size:.7rem; font-weight:500;
+    border:1px solid; }
+  .chip-gold { background:linear-gradient(135deg, rgba(255, 193, 7, 0.25) 0%, rgba(255, 193, 7, 0.15) 50%, rgba(255, 193, 7, 0.08) 100%);
+    border-color:rgba(255, 193, 7, 0.35); color:#ffd54f; }
+  .chip-silver { background:linear-gradient(135deg, rgba(236, 240, 241, 0.25) 0%, rgba(236, 240, 241, 0.15) 50%, rgba(236, 240, 241, 0.08) 100%);
+    border-color:rgba(236, 240, 241, 0.35); color:#ecf0f1; }
+  .cmp-vs { font-size:.66rem; color:var(--muted); align-self:center; }
+
+  .doc-panel { border-radius:16px; padding:18px; background:#0f172a; border:1px solid #1f2937; margin-top:16px; }
+  .doc-panel h2 { font-size:.72rem; text-transform:uppercase; letter-spacing:.12em; color:#94a3b8; margin-bottom:10px; }
+  .note { font-size:.72rem; color:#94a3b8; line-height:1.55; margin-top:8px; }
+  .note b { color:#e5e7eb; font-weight:600; }
+</style>
+<div class="ds-card">
+  <h1 class="ds-title">Metric Pills — 5 Intents &times; 3 Variants</h1>
+  <p class="ds-sub">Glass stat pill (G14): 3-stop 135deg intent gradient, blur(10px), label-over-value stack, double focus ring. Source: src/components/MetricPill.tsx</p>
+
+  <div class="ds-modes">
+    <section class="ds-mode" data-color-scheme="dark">
+      <div class="ds-backdrop"></div>
+      <h2 class="demo-z">Dark</h2>
+      <div class="demo-z">
+        <div class="row-name">variant="solid" (default)</div>
+        <div class="row">
+          <div class="mp v-solid i-success"><span class="lbl">Uptime</span><span class="val">98.2%</span></div>
+          <div class="mp v-solid i-warning"><span class="lbl">Deaths</span><span class="val">3</span></div>
+          <div class="mp v-solid i-danger"><span class="lbl">Wipes</span><span class="val">2</span></div>
+          <div class="mp v-solid i-info"><span class="lbl">DPS</span><span class="val">112.4k</span></div>
+          <div class="mp v-solid i-neutral"><span class="lbl">Pulls</span><span class="val">14</span></div>
+        </div>
+        <div class="ds-src">bg 3-stop gradient + 1px border + blur(10) — MetricPill.tsx:75-81, palette :27-53</div>
+
+        <div class="row-name">variant="outline"</div>
+        <div class="row">
+          <div class="mp v-outline i-success"><span class="lbl">Uptime</span><span class="val">98.2%</span></div>
+          <div class="mp v-outline i-warning"><span class="lbl">Deaths</span><span class="val">3</span></div>
+          <div class="mp v-outline i-danger"><span class="lbl">Wipes</span><span class="val">2</span></div>
+          <div class="mp v-outline i-info"><span class="lbl">DPS</span><span class="val">112.4k</span></div>
+          <div class="mp v-outline i-neutral"><span class="lbl">Pulls</span><span class="val">14</span></div>
+        </div>
+        <div class="ds-src">transparent bg, 1px intent border, blur(10) — MetricPill.tsx:57-63</div>
+
+        <div class="row-name">variant="mono"</div>
+        <div class="row">
+          <div class="mp v-mono i-success"><span class="lbl">Uptime</span><span class="val">98.2%</span></div>
+          <div class="mp v-mono i-warning"><span class="lbl">Deaths</span><span class="val">3</span></div>
+          <div class="mp v-mono i-danger"><span class="lbl">Wipes</span><span class="val">2</span></div>
+          <div class="mp v-mono i-info"><span class="lbl">DPS</span><span class="val">112.4k</span></div>
+          <div class="mp v-mono i-neutral"><span class="lbl">Pulls</span><span class="val">14</span></div>
+        </div>
+        <div class="ds-src">transparent bg, 2px solid intent-text border, blur(10) — MetricPill.tsx:66-73</div>
+
+        <div class="row-name">focus-visible + size="sm"</div>
+        <div class="row">
+          <div class="mp v-solid i-info is-focus"><span class="lbl">DPS</span><span class="val">112.4k</span></div>
+          <div class="mp v-solid i-success sz-sm"><span class="lbl">Uptime</span><span class="val">98.2%</span></div>
+        </div>
+        <div class="ds-src">focus: 0 0 0 2px #0f172a, 0 0 0 4px #38bdf8 (paper, primary) — :119-121 &middot; sm: minWidth 70, value .8rem — :105,145</div>
+
+        <div class="row-name">divergence vs glossy chip palette (dark values, as-is)</div>
+        <div class="row">
+          <div class="mp v-solid i-warning"><span class="lbl">warning</span><span class="val">#ff9800</span></div>
+          <span class="cmp-vs">vs</span>
+          <span class="chip-cmp chip-gold">gold chip #ffd54f</span>
+          <div class="mp v-solid i-neutral"><span class="lbl">neutral</span><span class="val">slate</span></div>
+          <span class="cmp-vs">vs</span>
+          <span class="chip-cmp chip-silver">silver chip</span>
+        </div>
+        <div class="ds-src">MetricPill.tsx:33-36,48-52 vs playerCardStyleUtils.ts:126-137 — different surfaces, both canonical</div>
+      </div>
+    </section>
+
+    <section class="ds-mode" data-color-scheme="light">
+      <div class="ds-backdrop"></div>
+      <h2 class="demo-z">Light</h2>
+      <div class="demo-z">
+        <div class="row-name">variant="solid" (default)</div>
+        <div class="row">
+          <div class="mp v-solid i-success"><span class="lbl">Uptime</span><span class="val">98.2%</span></div>
+          <div class="mp v-solid i-warning"><span class="lbl">Deaths</span><span class="val">3</span></div>
+          <div class="mp v-solid i-danger"><span class="lbl">Wipes</span><span class="val">2</span></div>
+          <div class="mp v-solid i-info"><span class="lbl">DPS</span><span class="val">112.4k</span></div>
+          <div class="mp v-solid i-neutral"><span class="lbl">Pulls</span><span class="val">14</span></div>
+        </div>
+        <div class="ds-src">same gradients; text forced #000000; lift shadow rgba(0,0,0,.16) 0 10px 36px + rgba(0,0,0,.06) ring — :61,111-114</div>
+
+        <div class="row-name">variant="outline"</div>
+        <div class="row">
+          <div class="mp v-outline i-success"><span class="lbl">Uptime</span><span class="val">98.2%</span></div>
+          <div class="mp v-outline i-warning"><span class="lbl">Deaths</span><span class="val">3</span></div>
+          <div class="mp v-outline i-danger"><span class="lbl">Wipes</span><span class="val">2</span></div>
+          <div class="mp v-outline i-info"><span class="lbl">DPS</span><span class="val">112.4k</span></div>
+          <div class="mp v-outline i-neutral"><span class="lbl">Pulls</span><span class="val">14</span></div>
+        </div>
+        <div class="ds-src">intent border stays; light text #000000 — MetricPill.tsx:57-63</div>
+
+        <div class="row-name">variant="mono"</div>
+        <div class="row">
+          <div class="mp v-mono i-success"><span class="lbl">Uptime</span><span class="val">98.2%</span></div>
+          <div class="mp v-mono i-warning"><span class="lbl">Deaths</span><span class="val">3</span></div>
+          <div class="mp v-mono i-danger"><span class="lbl">Wipes</span><span class="val">2</span></div>
+          <div class="mp v-mono i-info"><span class="lbl">DPS</span><span class="val">112.4k</span></div>
+          <div class="mp v-mono i-neutral"><span class="lbl">Pulls</span><span class="val">14</span></div>
+        </div>
+        <div class="ds-src">2px border keeps the DARK intent text color even in light mode (p.text) — MetricPill.tsx:66-73</div>
+
+        <div class="row-name">focus-visible + size="sm"</div>
+        <div class="row">
+          <div class="mp v-solid i-info is-focus"><span class="lbl">DPS</span><span class="val">112.4k</span></div>
+          <div class="mp v-solid i-success sz-sm"><span class="lbl">Uptime</span><span class="val">98.2%</span></div>
+        </div>
+        <div class="ds-src">focus: 0 0 0 2px #ffffff, 0 0 0 4px #0f172a (paper, primary) — :119-121</div>
+      </div>
+    </section>
+  </div>
+
+  <div class="doc-panel">
+    <h2>Palette divergence — document both, do not unify</h2>
+    <p class="note">MetricPill's intent palette (MetricPill.tsx:27-53) is a <b>divergent copy</b> of the glossy-chip variant palette (src/utils/playerCardStyleUtils.ts:95-155). Identical: <b>success</b> &equiv; chip <code>green</code>, <b>info</b> &equiv; chip <code>lightBlue</code>, <b>danger</b> gradient/border &equiv; chip <code>championRed</code> (both text #ff6666). Diverged: <b>warning</b> shares the gold gradient/border but uses text <code>#ff9800</code> where the chip <code>gold</code> uses <code>#ffd54f</code>; <b>neutral</b> is slate <code>rgba(148,163,184,&hellip;)</code> where the chip <code>silver</code> is <code>rgba(236,240,241,&hellip;)</code> with text <code>#ecf0f1</code>; light-mode text is forced <code>#000000</code> here vs <code>#1f2937</code> on chips (playerCardStyleUtils.ts:44). Pills are also flat (radius 10, no gloss); chips are the G4 glossy recipe (radius 28, shine sweep, gloss dome). Different surfaces — transcribe each as-is.</p>
+    <p class="note"><b>Other exact values:</b> hover <code>translateY(-1px)</code> with <code>transition: transform 120ms ease, box-shadow 120ms ease</code> (:115-118); dark container shadow <code>none</code> (:111-114); label textShadow dark <code>0 1px 2px rgba(0,0,0,0.5)</code> / light <code>0 1px 1px rgba(15,23,42,0.1)</code> (:133-136); value textShadow dark <code>0 1px 3px rgba(0,0,0,0.6)</code> / light <code>0 1px 2px rgba(15,23,42,0.15)</code> (:146-149).</p>
+  </div>
+</div>
