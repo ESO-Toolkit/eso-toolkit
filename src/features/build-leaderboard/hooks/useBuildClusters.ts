@@ -33,10 +33,13 @@ function buildLabelLookup(parses: readonly DpsParse[]): Map<string, string> {
     if (!build) continue;
 
     for (const [setId] of build.setCounts) {
-      labels.set(`fivePieceSets|${setId}`, setDisplayName(setId));
-      labels.set(`monsterSet|${setId}`, setDisplayName(setId));
-      labels.set(`mythic|${setId}`, setDisplayName(setId));
-      labels.set(`arena|${setId}`, setDisplayName(setId));
+      // Our own table wins when it knows the set; the API's name is the fallback
+      // for anything newer than our data, which top-parse gear routinely is.
+      const name = setDisplayName(setId, build.setNames?.[setId]);
+      labels.set(`fivePieceSets|${setId}`, name);
+      labels.set(`monsterSet|${setId}`, name);
+      labels.set(`mythic|${setId}`, name);
+      labels.set(`arena|${setId}`, name);
     }
   }
 

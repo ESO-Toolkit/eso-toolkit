@@ -47,6 +47,14 @@ export interface BuildSignatureV1 {
   };
   /** Raw setID → piece count, ascending by setID. The escape hatch. */
   setCounts: Array<[number, number]>;
+  /**
+   * setID → display name, as ESO Logs reports it.
+   *
+   * Carried through so the UI can label sets our own SET_DISPLAY_NAMES table does
+   * not know yet — which is routine, since top parses use sets newer than our
+   * data. Without this the page renders "Set 775" at users.
+   */
+  setNames: Record<number, string>;
   bars: {
     /** Ability IDs in slot order, ultimate last. */
     front: number[];
@@ -265,6 +273,12 @@ export function extractBuildSignature(
       extra: extra.sort((a, b) => a - b),
     },
     setCounts: [...counts.entries()].sort((a, b) => a[0] - b[0]),
+    setNames: Object.fromEntries(
+      entry.sets
+        .filter((set): set is { setId: number; name: string } => Boolean(set.name))
+        // Map perfected variants onto the canonical id the signature actually uses.
+        .map((set) => [aliases.get(set.setId) ?? set.setId, set.name]),
+    ),
     bars: splitBars(entry),
     skillLines: talentInfo.sl
       ? {

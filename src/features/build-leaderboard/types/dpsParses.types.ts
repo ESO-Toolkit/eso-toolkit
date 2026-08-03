@@ -20,6 +20,11 @@ export interface BuildSignature {
   };
   /** Raw setID → piece count. The escape hatch when slotting is wrong. */
   setCounts: Array<[number, number]>;
+  /**
+   * setID → name as ESO Logs reports it. Used to label sets our own
+   * SET_DISPLAY_NAMES table predates, which is routine for top-parse gear.
+   */
+  setNames?: Record<number, string>;
   bars: {
     /** Ability IDs in slot order; the last entry of each bar is the ultimate. */
     front: number[];
