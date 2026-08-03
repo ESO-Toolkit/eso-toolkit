@@ -13,5 +13,8 @@
     "outDir": "dist"
   },
   "include": ["src/**/*.ts"],
-  "exclude": ["node_modules", "dist"]
+  // Tests are typechecked by ts-jest against tsconfig.test.json, which supplies the
+  // jest globals. They must stay out of this config: it declares only
+  // @cloudflare/workers-types, and it is also what the deploy build compiles.
+  "exclude": ["node_modules", "dist", "src/**/*.test.ts", "src/**/*.spec.ts"]
 }

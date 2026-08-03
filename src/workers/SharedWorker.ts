@@ -17,6 +17,7 @@ import { calculateScribingDetections } from './calculations/CalculateScribingDet
 import { calculateStaggerStacks } from './calculations/CalculateStaggerStacks';
 import { calculateStatusEffectUptimes } from './calculations/CalculateStatusEffectUptimes';
 import { calculateTouchOfZenStacks } from './calculations/CalculateTouchOfZenStacks';
+import { clusterDpsBuilds } from './calculations/ClusterDpsBuilds';
 
 const SHARED_WORKER = {
   calculateBuffLookup,
@@ -34,12 +35,32 @@ const SHARED_WORKER = {
   calculatePlayerTravelDistances,
   calculatePlayerPanelAnalysis,
   calculateScribingDetections,
+  clusterDpsBuilds,
 };
 
 expose(SHARED_WORKER);
 
 export type SharedComputationWorker = typeof SHARED_WORKER;
 export type SharedComputationWorkerTaskType = keyof typeof SHARED_WORKER;
+
+/**
+ * Tasks that deliberately have NO slice in store/worker_results.
+ *
+ * That store is built for report/fight-scoped work: it keys a result cache to the
+ * loaded report and expects one slice per task. `clusterDpsBuilds` is scoped to a
+ * leaderboard query instead, and its consumer caches by query params in local
+ * state, so a slice would be dead machinery.
+ *
+ * Listing them here keeps the store's maps exhaustive over everything else — a
+ * future report-scoped task that forgets its slice still fails to compile.
+ */
+export type NonReduxWorkerTaskType = 'clusterDpsBuilds';
+
+/** Worker tasks that store/worker_results provides a slice for. */
+export type ReduxBackedWorkerTaskType = Exclude<
+  SharedComputationWorkerTaskType,
+  NonReduxWorkerTaskType
+>;
 export type SharedWorkerResultType<K extends SharedComputationWorkerTaskType> = ReturnType<
   (typeof SHARED_WORKER)[K]
 >;

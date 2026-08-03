@@ -1,6 +1,6 @@
 import { createSelector } from '@reduxjs/toolkit';
 
-import { SharedComputationWorkerTaskType, SharedWorkerResultType } from '@/workers/SharedWorker';
+import { ReduxBackedWorkerTaskType, SharedWorkerResultType } from '@/workers/SharedWorker';
 
 import { RootState } from '../storeWithHistory';
 
@@ -28,7 +28,7 @@ const selectWorkerTaskErrorCache = new Map<string, ReturnType<typeof createSelec
 const selectWorkerTaskLastUpdatedCache = new Map<string, ReturnType<typeof createSelector>>();
 
 // Generic selector for a specific worker task
-export const selectWorkerTask = <T extends SharedComputationWorkerTaskType>(
+export const selectWorkerTask = <T extends ReduxBackedWorkerTaskType>(
   taskName: T,
 ): ReturnType<
   typeof createSelector<[typeof selectWorkerResults], WorkerTaskState<SharedWorkerResultType<T>>>
@@ -66,7 +66,7 @@ export const selectPlayerTravelDistancesTask = selectWorkerTask('calculatePlayer
 export const selectScribingDetectionsTask = selectWorkerTask('calculateScribingDetections');
 
 // Selectors for specific task properties
-export const selectWorkerTaskResult = <T extends SharedComputationWorkerTaskType>(
+export const selectWorkerTaskResult = <T extends ReduxBackedWorkerTaskType>(
   taskName: T,
 ): ReturnType<
   typeof createSelector<[ReturnType<typeof selectWorkerTask<T>>], SharedWorkerResultType<T> | null>
@@ -85,7 +85,7 @@ export const selectWorkerTaskResult = <T extends SharedComputationWorkerTaskType
   return selector;
 };
 
-export const selectWorkerTaskLoading = <T extends SharedComputationWorkerTaskType>(
+export const selectWorkerTaskLoading = <T extends ReduxBackedWorkerTaskType>(
   taskName: T,
 ): ReturnType<typeof createSelector<[ReturnType<typeof selectWorkerTask<T>>], boolean>> => {
   const cached = selectWorkerTaskLoadingCache.get(taskName);
@@ -99,7 +99,7 @@ export const selectWorkerTaskLoading = <T extends SharedComputationWorkerTaskTyp
   return selector;
 };
 
-export const selectWorkerTaskProgress = <T extends SharedComputationWorkerTaskType>(
+export const selectWorkerTaskProgress = <T extends ReduxBackedWorkerTaskType>(
   taskName: T,
 ): ReturnType<typeof createSelector<[ReturnType<typeof selectWorkerTask<T>>], number | null>> => {
   const cached = selectWorkerTaskProgressCache.get(taskName);
@@ -113,7 +113,7 @@ export const selectWorkerTaskProgress = <T extends SharedComputationWorkerTaskTy
   return selector;
 };
 
-export const selectWorkerTaskError = <T extends SharedComputationWorkerTaskType>(
+export const selectWorkerTaskError = <T extends ReduxBackedWorkerTaskType>(
   taskName: T,
 ): ReturnType<typeof createSelector<[ReturnType<typeof selectWorkerTask<T>>], string | null>> => {
   const cached = selectWorkerTaskErrorCache.get(taskName);
@@ -127,7 +127,7 @@ export const selectWorkerTaskError = <T extends SharedComputationWorkerTaskType>
   return selector;
 };
 
-export const selectWorkerTaskLastUpdated = <T extends SharedComputationWorkerTaskType>(
+export const selectWorkerTaskLastUpdated = <T extends ReduxBackedWorkerTaskType>(
   taskName: T,
 ): ReturnType<typeof createSelector<[ReturnType<typeof selectWorkerTask<T>>], number | null>> => {
   const cached = selectWorkerTaskLastUpdatedCache.get(taskName);

@@ -774,6 +774,13 @@ export const HeaderBar: React.FC = () => {
         accent: '#eab308',
         path: '/leaderboards',
       },
+      {
+        text: 'Build Leaderboard',
+        desc: 'Top DPS builds by archetype',
+        icon: '🧬',
+        accent: '#22c55e',
+        path: '/build-leaderboard',
+      },
     );
 
     return items;

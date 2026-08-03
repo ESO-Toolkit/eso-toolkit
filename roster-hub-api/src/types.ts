@@ -249,3 +249,105 @@ export interface UserProfileResponse {
   /** ESO Logs EU-server account display name, if the user linked one. */
   eu_display_name: string | null;
 }
+
+// ─── DPS parses (top individual parses ingested from ESO Logs) ───────────────
+
+/** Row shape of the `dps_parses` table. Mirrors migration-dps-parses.sql. */
+export interface DpsParseRow {
+  encounter_id: number;
+  difficulty: number;
+  zone_id: number;
+  trial_id: string;
+  encounter_name: string;
+  hard_mode_level: number | null;
+  partition: number;
+
+  character_key: string;
+  character_name: string | null;
+  eso_class: string;
+  spec_name: string;
+  race: string | null;
+  server_region: string | null;
+  server_name: string | null;
+  guild_name: string | null;
+
+  report_code: string;
+  fight_id: number;
+  rank: number | null;
+  amount: number;
+  duration_ms: number | null;
+  log_start_ms: number | null;
+  log_date: string | null;
+  bracket_data: number | null;
+
+  set1_id: number | null;
+  set2_id: number | null;
+  monster_id: number | null;
+  mythic_id: number | null;
+  arena_set_id: number | null;
+  mundus_id: number | null;
+  food_ability_id: number | null;
+  signature_hash: string;
+
+  build_json: string;
+  combatant_json: string | null;
+
+  signature_version: number;
+  evidence_enriched: number;
+  ingested_at: string;
+  updated_at: string;
+}
+
+/**
+ * A parse as served by the read API.
+ *
+ * `build_json` is parsed server-side (unlike rosters/builds, which hand the client
+ * a raw string): there is exactly one consumer, the response is edge-cached, and
+ * doing 200 client-side JSON.parse calls on the render path of a page that then
+ * runs clustering is the wrong trade. `combatant_json` is deliberately absent —
+ * it is large and only the detail route serves it.
+ */
+export interface DpsParsePublic
+  extends Omit<
+    DpsParseRow,
+    'build_json' | 'combatant_json' | 'character_key' | 'character_name' | 'signature_version' | 'evidence_enriched'
+  > {
+  build: unknown;
+  /**
+   * Addressable id for the detail route: `encounterId-difficulty-characterKey`.
+   * Stable across re-ingests, so client deep links do not rot nightly.
+   */
+  parse_id: string;
+  /** Character name, or 'Anonymous' when name storage is disabled. */
+  character_label: string;
+  /** Attribution back to the source log. Required, not optional. */
+  source_url: string;
+}
+
+/** Picker feed for the encounter selector. */
+export interface DpsEncounterSummary {
+  encounter_id: number;
+  difficulty: number;
+  encounter_name: string;
+  zone_id: number;
+  trial_id: string;
+  parse_count: number;
+  top_amount: number;
+  class_count: number;
+  updated_at: string | null;
+}
+
+/** Row shape of the `dps_parse_sync_state` cron cursor. */
+export interface DpsParseSyncStateRow {
+  encounter_id: number;
+  difficulty: number;
+  encounter_name: string;
+  zone_id: number;
+  last_page: number;
+  last_partition: number | null;
+  last_synced_at: string | null;
+  last_status: string;
+  last_error: string;
+  rows_ingested: number;
+  empty_streak: number;
+}

@@ -1,0 +1,2655 @@
+{
+  "page": 1,
+  "hasMorePages": true,
+  "count": 100,
+  "rankings": [
+    {
+      "name": "Player1",
+      "class": "Nightblade",
+      "spec": "WerewolfDPS",
+      "amount": 60248.418477509,
+      "hardModeLevel": 0,
+      "duration": 766034,
+      "startTime": 1781465333634,
+      "report": {
+        "code": "25a47341cf521422",
+        "fightID": 11,
+        "startTime": 1781459929753
+      },
+      "server": {
+        "id": 2,
+        "name": "server-1",
+        "region": "EU"
+      },
+      "bracketData": 1946,
+      "displayName": "Player1",
+      "talents": [
+        {
+          "name": "Surprise Attack",
+          "id": 25260,
+          "icon": "ability_nightblade_002_a"
+        },
+        {
+          "name": "Relentless Focus",
+          "id": 61927,
+          "icon": "ability_nightblade_005_a"
+        },
+        {
+          "name": "Shadowy Disguise",
+          "id": 25380,
+          "icon": "ability_nightblade_004_a"
+        },
+        {
+          "name": "Killer's Blade",
+          "id": 34843,
+          "icon": "ability_nightblade_017_a"
+        },
+        {
+          "name": "Camouflaged Hunter",
+          "id": 40195,
+          "icon": "ability_fightersguild_002_b"
+        },
+        {
+          "name": "Werewolf Berserker",
+          "id": 39076,
+          "icon": "ability_werewolf_001_b"
+        },
+        {
+          "name": "Stampede",
+          "id": 38788,
+          "icon": "ability_2handed_003_a"
+        },
+        {
+          "name": "Sundering Trample",
+          "id": 220541,
+          "icon": "ability_grimoire_assault"
+        },
+        {
+          "name": "Barbed Trap",
+          "id": 40382,
+          "icon": "ability_fightersguild_004_a"
+        },
+        {
+          "name": "Dark Shade",
+          "id": 35434,
+          "icon": "ability_nightblade_001_a"
+        },
+        {
+          "name": "Siphoning Attacks",
+          "id": 36935,
+          "icon": "ability_nightblade_003_b"
+        },
+        {
+          "name": "Soul Harvest",
+          "id": 36514,
+          "icon": "ability_nightblade_007_b"
+        }
+      ],
+      "gear": [
+        {
+          "name": "Zaan Guise",
+          "quality": "primary",
+          "id": 129546,
+          "icon": "gear_undaunted_dragonpriest_head_a",
+          "cp": "160",
+          "trait": "1",
+          "enchantType": "35",
+          "enchantQuality": "5",
+          "setID": "350"
+        },
+        {
+          "name": "Perfected Null Arca Jack",
+          "quality": "primary",
+          "id": 207554,
+          "icon": "gear_lucentguardian_mediuam_shoulder_a",
+          "cp": "160",
+          "trait": "1",
+          "enchantType": "35",
+          "enchantQuality": "5",
+          "setID": "772"
+        },
+        {
+          "name": "Savage Werewolf's Arm Cops",
+          "quality": "primary",
+          "id": 141460,
+          "icon": "gear_silverdawn_medium_shoulder_a",
+          "cp": "160",
+          "trait": "1",
+          "enchantType": "35",
+          "enchantQuality": "5",
+          "setID": "403"
+        },
+        {
+          "name": "Perfected Null Arca Belt",
+          "quality": "primary",
+          "id": 207614,
+          "icon": "gear_lucentguardian_mediuam_waist_a",
+          "cp": "160",
+          "trait": "1",
+          "enchantType": "35",
+          "enchantQuality": "5",
+          "setID": "772"
+        },
+        {
+          "name": "Perfected Null Arca Bracers",
+          "quality": "primary",
+          "id": 207574,
+          "icon": "gear_lucentguardian_mediuam_hands_a",
+          "cp": "160",
+          "trait": "1",
+          "enchantType": "35",
+          "enchantQuality": "5",
+          "setID": "772"
+        },
+        {
+          "name": "Perfected Null Arca Guards",
+          "quality": "primary",
+          "id": 207594,
+          "icon": "gear_lucentguardian_mediuam_legs_a",
+          "cp": "160",
+          "trait": "1",
+          "enchantType": "35",
+          "enchantQuality": "5",
+          "setID": "772"
+        },
+        {
+          "name": "Perfected Null Arca Boots",
+          "quality": "primary",
+          "id": 207564,
+          "icon": "gear_lucentguardian_mediuam_feet_a",
+          "cp": "160",
+          "trait": "1",
+          "enchantType": "35",
+          "enchantQuality": "5",
+          "setID": "772"
+        },
+        {
+          "name": "Savage Werewolf's Necklace",
+          "quality": "primary",
+          "id": 141441,
+          "icon": "gear_breton_neck_a",
+          "cp": "160",
+          "trait": "16",
+          "enchantType": "19",
+          "enchantQuality": "5",
+          "setID": "403"
+        },
+        {
+          "name": "Savage Werewolf's Ring",
+          "quality": "primary",
+          "id": 141440,
+          "icon": "gear_breton_ring_a",
+          "cp": "160",
+          "trait": "16",
+          "enchantType": "19",
+          "enchantQuality": "5",
+          "setID": "403"
+        },
+        {
+          "name": "Unknown Item",
+          "quality": "primary",
+          "id": 224106,
+          "icon": "???",
+          "cp": "160",
+          "trait": "16",
+          "enchantType": "19",
+          "enchantQuality": "5",
+          "setID": "848"
+        },
+        {
+          "name": "Savage Werewolf's Dagger",
+          "quality": "primary",
+          "id": 141448,
+          "icon": "gear_silverdawn_dagger_a",
+          "cp": "160",
+          "trait": "23",
+          "enchantType": "24",
+          "enchantQuality": "5",
+          "setID": "403"
+        },
+        {
+          "name": "Savage Werewolf's Dagger",
+          "quality": "primary",
+          "id": 141448,
+          "icon": "gear_silverdawn_dagger_a",
+          "cp": "160",
+          "trait": "23",
+          "enchantType": "12",
+          "enchantQuality": "5",
+          "setID": "403"
+        },
+        {
+          "name": "The Maelstrom's Perfected Greatsword",
+          "quality": "primary",
+          "id": 166196,
+          "icon": "gear_dwarvenscavenged_2hsword_a",
+          "cp": "160",
+          "trait": "26",
+          "enchantType": "5",
+          "enchantQuality": "5",
+          "setID": "522"
+        },
+        {
+          "name": "Unknown Item",
+          "quality": "primary",
+          "id": 0,
+          "icon": "???",
+          "cp": "0",
+          "trait": "0",
+          "enchantType": "0",
+          "enchantQuality": "0",
+          "setID": "0"
+        },
+        {
+          "name": "Unknown Item",
+          "quality": "primary",
+          "id": 0,
+          "icon": "???",
+          "cp": "0",
+          "trait": "0",
+          "enchantType": "0",
+          "enchantQuality": "0",
+          "setID": "0"
+        },
+        {
+          "name": "Unknown Item",
+          "quality": "primary",
+          "id": 0,
+          "icon": "???",
+          "cp": "0",
+          "trait": "0",
+          "enchantType": "0",
+          "enchantQuality": "0",
+          "setID": "0"
+        }
+      ],
+      "sets": [
+        {
+          "name": "Zaan",
+          "id": 350
+        },
+        {
+          "name": "Perfected Slivers of the Null Arca",
+          "id": 772
+        },
+        {
+          "name": "Savage Werewolf",
+          "id": 403
+        },
+        {
+          "name": "Unknown Set",
+          "id": 848
+        },
+        {
+          "name": "Perfected Merciless Charge",
+          "id": 522
+        }
+      ]
+    },
+    {
+      "name": "Player2",
+      "class": "Arcanist",
+      "spec": "StaminaDPS",
+      "amount": 56398.003331712,
+      "hardModeLevel": 0,
+      "duration": 762971,
+      "startTime": 1781382591343,
+      "report": {
+        "code": "e92b2233bed9979d",
+        "fightID": 9,
+        "startTime": 1781378716626
+      },
+      "server": {
+        "id": 2,
+        "name": "server-2",
+        "region": "EU"
+      },
+      "bracketData": 1358,
+      "displayName": "Player2",
+      "talents": [
+        {
+          "name": "Barbed Trap",
+          "id": 40382,
+          "icon": "ability_fightersguild_004_a"
+        },
+        {
+          "name": "Pragmatic Fatecarver",
+          "id": 186366,
+          "icon": "ability_arcanist_002_b"
+        },
+        {
+          "name": "Cephaliarch's Flail",
+          "id": 183006,
+          "icon": "ability_arcanist_003_a"
+        },
+        {
+          "name": "Camouflaged Hunter",
+          "id": 40195,
+          "icon": "ability_fightersguild_002_b"
+        },
+        {
+          "name": "Quick Cloak",
+          "id": 38901,
+          "icon": "ability_dualwield_004_a"
+        },
+        {
+          "name": "Flawless Dawnbreaker",
+          "id": 40161,
+          "icon": "ability_fightersguild_005_a"
+        },
+        {
+          "name": "Scalding Rune",
+          "id": 40465,
+          "icon": "ability_mageguild_001_b"
+        },
+        {
+          "name": "Fulminating Rune",
+          "id": 182988,
+          "icon": "ability_arcanist_004_b"
+        },
+        {
+          "name": "Camouflaged Hunter",
+          "id": 40195,
+          "icon": "ability_fightersguild_002_b"
+        },
+        {
+          "name": "Elemental Blockade",
+          "id": 39011,
+          "icon": "ability_destructionstaff_002a"
+        },
+        {
+          "name": "Inspired Scholarship",
+          "id": 185842,
+          "icon": "ability_arcanist_005_a"
+        },
+        {
+          "name": "The Languid Eye",
+          "id": 189867,
+          "icon": "ability_arcanist_006_b"
+        }
+      ],
+      "gear": [
+        {
+          "name": "Valkyn Skoria Mask",
+          "quality": "primary",
+          "id": 59638,
+          "icon": "gear_undaunted_magma_head_a",
+          "cp": "160",
+          "trait": "1",
+          "enchantType": "35",
+          "enchantQuality": "5",
+          "setID": "169"
+        },
+        {
+          "name": "Spattering Disjunction Jack",
+          "quality": "primary",
+          "id": 208534,
+          "icon": "gear_arcanistclass_chest_a",
+          "cp": "160",
+          "trait": "1",
+          "enchantType": "35",
+          "enchantQuality": "5",
+          "setID": "775"
+        },
+        {
+          "name": "Perfected Null Arca Arm Cops",
+          "quality": "primary",
+          "id": 207604,
+          "icon": "gear_lucentguardian_mediuam_chest_a",
+          "cp": "160",
+          "trait": "1",
+          "enchantType": "35",
+          "enchantQuality": "5",
+          "setID": "772"
+        },
+        {
+          "name": "Spattering Disjunction Sash",
+          "quality": "primary",
+          "id": 208477,
+          "icon": "gear_arcanistclass_waist_a",
+          "cp": "160",
+          "trait": "1",
+          "enchantType": "22",
+          "enchantQuality": "5",
+          "setID": "775"
+        },
+        {
+          "name": "Spattering Disjunction Bracers",
+          "quality": "primary",
+          "id": 208536,
+          "icon": "gear_arcanistclass_hands_a",
+          "cp": "160",
+          "trait": "1",
+          "enchantType": "35",
+          "enchantQuality": "5",
+          "setID": "775"
+        },
+        {
+          "name": "Spattering Disjunction Guards",
+          "quality": "primary",
+          "id": 208538,
+          "icon": "gear_arcanistclass_legs_a",
+          "cp": "160",
+          "trait": "1",
+          "enchantType": "35",
+          "enchantQuality": "5",
+          "setID": "775"
+        },
+        {
+          "name": "Spattering Disjunction Boots",
+          "quality": "primary",
+          "id": 208542,
+          "icon": "gear_arcanistclass_feet_a",
+          "cp": "160",
+          "trait": "1",
+          "enchantType": "35",
+          "enchantQuality": "5",
+          "setID": "775"
+        },
+        {
+          "name": "Velothi Ur-Mage's Amulet",
+          "quality": "primary",
+          "id": 194512,
+          "icon": "u38_antiquities_goldandblueshalknecklace",
+          "cp": "160",
+          "trait": "13",
+          "enchantType": "21",
+          "enchantQuality": "5",
+          "setID": "694"
+        },
+        {
+          "name": "Perfected Null Arca Ring",
+          "quality": "primary",
+          "id": 207798,
+          "icon": "gear_breton_ring_a",
+          "cp": "160",
+          "trait": "13",
+          "enchantType": "19",
+          "enchantQuality": "5",
+          "setID": "772"
+        },
+        {
+          "name": "Perfected Null Arca Ring",
+          "quality": "primary",
+          "id": 207798,
+          "icon": "gear_breton_ring_a",
+          "cp": "160",
+          "trait": "13",
+          "enchantType": "19",
+          "enchantQuality": "5",
+          "setID": "772"
+        },
+        {
+          "name": "Perfected Null Arca Dagger",
+          "quality": "primary",
+          "id": 207494,
+          "icon": "gear_lucentguardian_dagger_a",
+          "cp": "160",
+          "trait": "28",
+          "enchantType": "12",
+          "enchantQuality": "5",
+          "setID": "772"
+        },
+        {
+          "name": "Perfected Null Arca Dagger",
+          "quality": "primary",
+          "id": 207499,
+          "icon": "gear_lucentguardian_dagger_a",
+          "cp": "160",
+          "trait": "23",
+          "enchantType": "24",
+          "enchantQuality": "5",
+          "setID": "772"
+        },
+        {
+          "name": "The Maelstrom's Perfected Inferno Staff",
+          "quality": "primary",
+          "id": 166198,
+          "icon": "gear_dwarvenscavenged_staff_a",
+          "cp": "160",
+          "trait": "26",
+          "enchantType": "5",
+          "enchantQuality": "5",
+          "setID": "526"
+        },
+        {
+          "name": "Unknown Item",
+          "quality": "primary",
+          "id": 0,
+          "icon": "???",
+          "cp": "0",
+          "trait": "0",
+          "enchantType": "0",
+          "enchantQuality": "0",
+          "setID": "0"
+        },
+        {
+          "name": "Unknown Item",
+          "quality": "primary",
+          "id": 0,
+          "icon": "???",
+          "cp": "0",
+          "trait": "0",
+          "enchantType": "0",
+          "enchantQuality": "0",
+          "setID": "0"
+        },
+        {
+          "name": "Unknown Item",
+          "quality": "primary",
+          "id": 0,
+          "icon": "???",
+          "cp": "0",
+          "trait": "0",
+          "enchantType": "0",
+          "enchantQuality": "0",
+          "setID": "0"
+        }
+      ],
+      "sets": [
+        {
+          "name": "Valkyn Skoria",
+          "id": 169
+        },
+        {
+          "name": "Spattering Disjunction",
+          "id": 775
+        },
+        {
+          "name": "Perfected Slivers of the Null Arca",
+          "id": 772
+        },
+        {
+          "name": "Velothi Ur-Mage's Amulet",
+          "id": 694
+        },
+        {
+          "name": "Perfected Crushing Wall",
+          "id": 526
+        }
+      ]
+    },
+    {
+      "name": "Player3",
+      "class": "Templar",
+      "spec": "StaminaDPS",
+      "amount": 48542.514170414,
+      "hardModeLevel": 0,
+      "duration": 682937,
+      "startTime": 1781636245537,
+      "report": {
+        "code": "db9bbaa187f974f1",
+        "fightID": 1,
+        "startTime": 1781636194953
+      },
+      "guild": {
+        "id": 5710,
+        "name": "guild-3",
+        "faction": 2
+      },
+      "server": {
+        "id": 2,
+        "name": "server-3",
+        "region": "EU"
+      },
+      "bracketData": 1945,
+      "displayName": "Player3",
+      "talents": [
+        {
+          "name": "Biting Jabs",
+          "id": 26792,
+          "icon": "ability_templar_recovery"
+        },
+        {
+          "name": "Quick Cloak",
+          "id": 38901,
+          "icon": "ability_dualwield_004_a"
+        },
+        {
+          "name": "Camouflaged Hunter",
+          "id": 40195,
+          "icon": "ability_fightersguild_002_b"
+        },
+        {
+          "name": "Power of the Light",
+          "id": 21763,
+          "icon": "ability_templar_power_of_the_light"
+        },
+        {
+          "name": "Radiant Glory",
+          "id": 63044,
+          "icon": "ability_templar_under_exposure"
+        },
+        {
+          "name": "Everlasting Sweep",
+          "id": 22144,
+          "icon": "ability_templar_empowering_sweep"
+        },
+        {
+          "name": "Vampire's Bane",
+          "id": 21729,
+          "icon": "ability_templar_vampire_bane"
+        },
+        {
+          "name": "Solar Barrage",
+          "id": 22095,
+          "icon": "ability_templar_solar_power"
+        },
+        {
+          "name": "Resolving Vigor",
+          "id": 61507,
+          "icon": "ability_ava_resolving_vigor"
+        },
+        {
+          "name": "Stampede",
+          "id": 38788,
+          "icon": "ability_2handed_003_a"
+        },
+        {
+          "name": "Ritual of Retribution",
+          "id": 22259,
+          "icon": "ability_templar_purifying_ritual"
+        },
+        {
+          "name": "Everlasting Sweep",
+          "id": 22144,
+          "icon": "ability_templar_empowering_sweep"
+        }
+      ],
+      "gear": [
+        {
+          "name": "Slimecraw Guise",
+          "quality": "primary",
+          "id": 94772,
+          "icon": "gear_undauntedcrocodile_head_a",
+          "cp": "160",
+          "trait": "1",
+          "enchantType": "35",
+          "enchantQuality": "5",
+          "setID": "270"
+        },
+        {
+          "name": "Perfected Null Arca Jack",
+          "quality": "primary",
+          "id": 207554,
+          "icon": "gear_lucentguardian_mediuam_shoulder_a",
+          "cp": "160",
+          "trait": "1",
+          "enchantType": "35",
+          "enchantQuality": "5",
+          "setID": "772"
+        },
+        {
+          "name": "Deadly Arm Cops",
+          "quality": "primary",
+          "id": 147370,
+          "icon": "gear_breton_medium_shoulders_d",
+          "cp": "160",
+          "trait": "1",
+          "enchantType": "35",
+          "enchantQuality": "5",
+          "setID": "127"
+        },
+        {
+          "name": "Perfected Null Arca Belt",
+          "quality": "primary",
+          "id": 207614,
+          "icon": "gear_lucentguardian_mediuam_waist_a",
+          "cp": "160",
+          "trait": "1",
+          "enchantType": "35",
+          "enchantQuality": "5",
+          "setID": "772"
+        },
+        {
+          "name": "Perfected Null Arca Bracers",
+          "quality": "primary",
+          "id": 207574,
+          "icon": "gear_lucentguardian_mediuam_hands_a",
+          "cp": "160",
+          "trait": "1",
+          "enchantType": "35",
+          "enchantQuality": "5",
+          "setID": "772"
+        },
+        {
+          "name": "Perfected Null Arca Guards",
+          "quality": "primary",
+          "id": 207594,
+          "icon": "gear_lucentguardian_mediuam_legs_a",
+          "cp": "160",
+          "trait": "1",
+          "enchantType": "35",
+          "enchantQuality": "5",
+          "setID": "772"
+        },
+        {
+          "name": "Perfected Null Arca Boots",
+          "quality": "primary",
+          "id": 207564,
+          "icon": "gear_lucentguardian_mediuam_feet_a",
+          "cp": "160",
+          "trait": "1",
+          "enchantType": "35",
+          "enchantQuality": "5",
+          "setID": "772"
+        },
+        {
+          "name": "Velothi Ur-Mage's Amulet",
+          "quality": "primary",
+          "id": 194512,
+          "icon": "u38_antiquities_goldandblueshalknecklace",
+          "cp": "160",
+          "trait": "13",
+          "enchantType": "19",
+          "enchantQuality": "5",
+          "setID": "694"
+        },
+        {
+          "name": "Deadly Ring",
+          "quality": "primary",
+          "id": 147512,
+          "icon": "gear_breton_ring_a",
+          "cp": "160",
+          "trait": "13",
+          "enchantType": "19",
+          "enchantQuality": "5",
+          "setID": "127"
+        },
+        {
+          "name": "Deadly Ring",
+          "quality": "primary",
+          "id": 147512,
+          "icon": "gear_breton_ring_a",
+          "cp": "160",
+          "trait": "13",
+          "enchantType": "19",
+          "enchantQuality": "5",
+          "setID": "127"
+        },
+        {
+          "name": "Deadly Dagger",
+          "quality": "primary",
+          "id": 87874,
+          "icon": "gear_breton_dagger_d",
+          "cp": "160",
+          "trait": "23",
+          "enchantType": "12",
+          "enchantQuality": "5",
+          "setID": "127"
+        },
+        {
+          "name": "Deadly Dagger",
+          "quality": "primary",
+          "id": 87874,
+          "icon": "gear_breton_dagger_d",
+          "cp": "160",
+          "trait": "23",
+          "enchantType": "24",
+          "enchantQuality": "5",
+          "setID": "127"
+        },
+        {
+          "name": "The Maelstrom's Perfected Greatsword",
+          "quality": "primary",
+          "id": 166196,
+          "icon": "gear_dwarvenscavenged_2hsword_a",
+          "cp": "160",
+          "trait": "26",
+          "enchantType": "5",
+          "enchantQuality": "5",
+          "setID": "522"
+        },
+        {
+          "name": "Unknown Item",
+          "quality": "primary",
+          "id": 0,
+          "icon": "???",
+          "cp": "0",
+          "trait": "0",
+          "enchantType": "0",
+          "enchantQuality": "0",
+          "setID": "0"
+        },
+        {
+          "name": "Unknown Item",
+          "quality": "primary",
+          "id": 0,
+          "icon": "???",
+          "cp": "0",
+          "trait": "0",
+          "enchantType": "0",
+          "enchantQuality": "0",
+          "setID": "0"
+        },
+        {
+          "name": "Unknown Item",
+          "quality": "primary",
+          "id": 0,
+          "icon": "???",
+          "cp": "0",
+          "trait": "0",
+          "enchantType": "0",
+          "enchantQuality": "0",
+          "setID": "0"
+        }
+      ],
+      "sets": [
+        {
+          "name": "Slimecraw",
+          "id": 270
+        },
+        {
+          "name": "Perfected Slivers of the Null Arca",
+          "id": 772
+        },
+        {
+          "name": "Deadly Strike",
+          "id": 127
+        },
+        {
+          "name": "Velothi Ur-Mage's Amulet",
+          "id": 694
+        },
+        {
+          "name": "Perfected Merciless Charge",
+          "id": 522
+        }
+      ]
+    },
+    {
+      "name": "Player4",
+      "class": "Arcanist",
+      "spec": "StaminaDPS",
+      "amount": 48319.037676063,
+      "hardModeLevel": 0,
+      "duration": 655164,
+      "startTime": 1781488026448,
+      "report": {
+        "code": "adefc3ef103554d2",
+        "fightID": 78,
+        "startTime": 1781474025679
+      },
+      "server": {
+        "id": 1,
+        "name": "server-4",
+        "region": "NA"
+      },
+      "bracketData": 1356,
+      "displayName": "Player4",
+      "talents": [
+        {
+          "name": "Cephaliarch's Flail",
+          "id": 183006,
+          "icon": "ability_arcanist_003_a"
+        },
+        {
+          "name": "Exhausting Fatecarver",
+          "id": 183122,
+          "icon": "ability_arcanist_002_a"
+        },
+        {
+          "name": "Quick Cloak",
+          "id": 38901,
+          "icon": "ability_dualwield_004_a"
+        },
+        {
+          "name": "Radiant Glory",
+          "id": 63044,
+          "icon": "ability_templar_under_exposure"
+        },
+        {
+          "name": "Camouflaged Hunter",
+          "id": 40195,
+          "icon": "ability_fightersguild_002_b"
+        },
+        {
+          "name": "Incapacitating Strike",
+          "id": 36508,
+          "icon": "ability_nightblade_007_a"
+        },
+        {
+          "name": "Inspired Scholarship",
+          "id": 185842,
+          "icon": "ability_arcanist_005_a"
+        },
+        {
+          "name": "Solar Barrage",
+          "id": 22095,
+          "icon": "ability_templar_solar_power"
+        },
+        {
+          "name": "Elemental Blockade",
+          "id": 39011,
+          "icon": "ability_destructionstaff_002a"
+        },
+        {
+          "name": "Echoing Vigor",
+          "id": 61505,
+          "icon": "ability_ava_echoing_vigor"
+        },
+        {
+          "name": "Relentless Focus",
+          "id": 61927,
+          "icon": "ability_nightblade_005_a"
+        },
+        {
+          "name": "The Languid Eye",
+          "id": 189867,
+          "icon": "ability_arcanist_006_b"
+        }
+      ],
+      "gear": [
+        {
+          "name": "Slimecraw Guise",
+          "quality": "primary",
+          "id": 94772,
+          "icon": "gear_undauntedcrocodile_head_a",
+          "cp": "160",
+          "trait": "1",
+          "enchantType": "35",
+          "enchantQuality": "5",
+          "setID": "270"
+        },
+        {
+          "name": "Perfected Null Arca Jack",
+          "quality": "primary",
+          "id": 207557,
+          "icon": "gear_lucentguardian_mediuam_shoulder_a",
+          "cp": "160",
+          "trait": "1",
+          "enchantType": "35",
+          "enchantQuality": "5",
+          "setID": "772"
+        },
+        {
+          "name": "Deadly Arm Cops",
+          "quality": "primary",
+          "id": 147370,
+          "icon": "gear_breton_medium_shoulders_d",
+          "cp": "160",
+          "trait": "1",
+          "enchantType": "35",
+          "enchantQuality": "5",
+          "setID": "127"
+        },
+        {
+          "name": "Perfected Null Arca Belt",
+          "quality": "primary",
+          "id": 207614,
+          "icon": "gear_lucentguardian_mediuam_waist_a",
+          "cp": "160",
+          "trait": "1",
+          "enchantType": "35",
+          "enchantQuality": "5",
+          "setID": "772"
+        },
+        {
+          "name": "Perfected Null Arca Bracers",
+          "quality": "primary",
+          "id": 207574,
+          "icon": "gear_lucentguardian_mediuam_hands_a",
+          "cp": "160",
+          "trait": "1",
+          "enchantType": "35",
+          "enchantQuality": "5",
+          "setID": "772"
+        },
+        {
+          "name": "Perfected Null Arca Guards",
+          "quality": "primary",
+          "id": 207598,
+          "icon": "gear_lucentguardian_mediuam_legs_a",
+          "cp": "160",
+          "trait": "1",
+          "enchantType": "35",
+          "enchantQuality": "5",
+          "setID": "772"
+        },
+        {
+          "name": "Perfected Null Arca Boots",
+          "quality": "primary",
+          "id": 207571,
+          "icon": "gear_lucentguardian_mediuam_feet_a",
+          "cp": "160",
+          "trait": "1",
+          "enchantType": "35",
+          "enchantQuality": "5",
+          "setID": "772"
+        },
+        {
+          "name": "Velothi Ur-Mage's Amulet",
+          "quality": "primary",
+          "id": 194512,
+          "icon": "u38_antiquities_goldandblueshalknecklace",
+          "cp": "160",
+          "trait": "13",
+          "enchantType": "19",
+          "enchantQuality": "5",
+          "setID": "694"
+        },
+        {
+          "name": "Deadly Ring",
+          "quality": "primary",
+          "id": 147512,
+          "icon": "gear_breton_ring_a",
+          "cp": "160",
+          "trait": "13",
+          "enchantType": "19",
+          "enchantQuality": "5",
+          "setID": "127"
+        },
+        {
+          "name": "Deadly Ring",
+          "quality": "primary",
+          "id": 147512,
+          "icon": "gear_breton_ring_a",
+          "cp": "160",
+          "trait": "13",
+          "enchantType": "19",
+          "enchantQuality": "5",
+          "setID": "127"
+        },
+        {
+          "name": "Deadly Dagger",
+          "quality": "primary",
+          "id": 87913,
+          "icon": "gear_breton_dagger_d",
+          "cp": "160",
+          "trait": "28",
+          "enchantType": "24",
+          "enchantQuality": "5",
+          "setID": "127"
+        },
+        {
+          "name": "Deadly Dagger",
+          "quality": "primary",
+          "id": 87874,
+          "icon": "gear_breton_dagger_d",
+          "cp": "160",
+          "trait": "23",
+          "enchantType": "12",
+          "enchantQuality": "5",
+          "setID": "127"
+        },
+        {
+          "name": "The Maelstrom's Perfected Inferno Staff",
+          "quality": "primary",
+          "id": 166215,
+          "icon": "gear_dwarvenscavenged_staff_a",
+          "cp": "160",
+          "trait": "26",
+          "enchantType": "5",
+          "enchantQuality": "5",
+          "setID": "526"
+        },
+        {
+          "name": "Unknown Item",
+          "quality": "primary",
+          "id": 0,
+          "icon": "???",
+          "cp": "0",
+          "trait": "0",
+          "enchantType": "0",
+          "enchantQuality": "0",
+          "setID": "0"
+        },
+        {
+          "name": "Unknown Item",
+          "quality": "primary",
+          "id": 0,
+          "icon": "???",
+          "cp": "0",
+          "trait": "0",
+          "enchantType": "0",
+          "enchantQuality": "0",
+          "setID": "0"
+        },
+        {
+          "name": "Unknown Item",
+          "quality": "primary",
+          "id": 0,
+          "icon": "???",
+          "cp": "0",
+          "trait": "0",
+          "enchantType": "0",
+          "enchantQuality": "0",
+          "setID": "0"
+        }
+      ],
+      "sets": [
+        {
+          "name": "Slimecraw",
+          "id": 270
+        },
+        {
+          "name": "Perfected Slivers of the Null Arca",
+          "id": 772
+        },
+        {
+          "name": "Deadly Strike",
+          "id": 127
+        },
+        {
+          "name": "Velothi Ur-Mage's Amulet",
+          "id": 694
+        },
+        {
+          "name": "Perfected Crushing Wall",
+          "id": 526
+        }
+      ]
+    },
+    {
+      "name": "Player5",
+      "class": "Nightblade",
+      "spec": "StaminaDPS",
+      "amount": 46180.8295562,
+      "hardModeLevel": 0,
+      "duration": 858676,
+      "startTime": 1781453790965,
+      "report": {
+        "code": "bd95d01ab3ebc3a5",
+        "fightID": 1,
+        "startTime": 1781453739714
+      },
+      "server": {
+        "id": 2,
+        "name": "server-5",
+        "region": "EU"
+      },
+      "bracketData": 2487,
+      "displayName": "Player5",
+      "talents": [
+        {
+          "name": "Surprise Attack",
+          "id": 25260,
+          "icon": "ability_nightblade_002_a"
+        },
+        {
+          "name": "Debilitate",
+          "id": 36943,
+          "icon": "ability_nightblade_006_a"
+        },
+        {
+          "name": "Killer's Blade",
+          "id": 34843,
+          "icon": "ability_nightblade_017_a"
+        },
+        {
+          "name": "Relentless Focus",
+          "id": 61927,
+          "icon": "ability_nightblade_005_a"
+        },
+        {
+          "name": "Shadowy Disguise",
+          "id": 25380,
+          "icon": "ability_nightblade_004_a"
+        },
+        {
+          "name": "Incapacitating Strike",
+          "id": 36508,
+          "icon": "ability_nightblade_007_a"
+        },
+        {
+          "name": "Stampede",
+          "id": 38788,
+          "icon": "ability_2handed_003_a"
+        },
+        {
+          "name": "Barbed Trap",
+          "id": 40382,
+          "icon": "ability_fightersguild_004_a"
+        },
+        {
+          "name": "Carve",
+          "id": 38745,
+          "icon": "ability_2handed_002_a"
+        },
+        {
+          "name": "Siphoning Attacks",
+          "id": 36935,
+          "icon": "ability_nightblade_003_b"
+        },
+        {
+          "name": "Dark Shade",
+          "id": 35434,
+          "icon": "ability_nightblade_001_a"
+        },
+        {
+          "name": "Veil of Blades",
+          "id": 36485,
+          "icon": "ability_nightblade_015_b"
+        }
+      ],
+      "gear": [
+        {
+          "name": "Unknown Item",
+          "quality": "primary",
+          "id": 223189,
+          "icon": "???",
+          "cp": "160",
+          "trait": "1",
+          "enchantType": "35",
+          "enchantQuality": "5",
+          "setID": "845"
+        },
+        {
+          "name": "Perfected Null Arca Jack",
+          "quality": "primary",
+          "id": 207554,
+          "icon": "gear_lucentguardian_mediuam_shoulder_a",
+          "cp": "160",
+          "trait": "1",
+          "enchantType": "35",
+          "enchantQuality": "5",
+          "setID": "772"
+        },
+        {
+          "name": "Slimecraw Arm Cops",
+          "quality": "primary",
+          "id": 95180,
+          "icon": "gear_undauntedcrocodile_shoulders_a",
+          "cp": "160",
+          "trait": "1",
+          "enchantType": "35",
+          "enchantQuality": "5",
+          "setID": "270"
+        },
+        {
+          "name": "Perfected Null Arca Belt",
+          "quality": "primary",
+          "id": 207614,
+          "icon": "gear_lucentguardian_mediuam_waist_a",
+          "cp": "160",
+          "trait": "1",
+          "enchantType": "35",
+          "enchantQuality": "5",
+          "setID": "772"
+        },
+        {
+          "name": "Perfected Null Arca Bracers",
+          "quality": "primary",
+          "id": 207574,
+          "icon": "gear_lucentguardian_mediuam_hands_a",
+          "cp": "160",
+          "trait": "1",
+          "enchantType": "35",
+          "enchantQuality": "5",
+          "setID": "772"
+        },
+        {
+          "name": "Perfected Null Arca Guards",
+          "quality": "primary",
+          "id": 207594,
+          "icon": "gear_lucentguardian_mediuam_legs_a",
+          "cp": "160",
+          "trait": "1",
+          "enchantType": "35",
+          "enchantQuality": "5",
+          "setID": "772"
+        },
+        {
+          "name": "Perfected Null Arca Boots",
+          "quality": "primary",
+          "id": 207564,
+          "icon": "gear_lucentguardian_mediuam_feet_a",
+          "cp": "160",
+          "trait": "1",
+          "enchantType": "35",
+          "enchantQuality": "5",
+          "setID": "772"
+        },
+        {
+          "name": "Aegis Caller's Amulet",
+          "quality": "primary",
+          "id": 157730,
+          "icon": "gear_breton_neck_a",
+          "cp": "160",
+          "trait": "13",
+          "enchantType": "19",
+          "enchantQuality": "5",
+          "setID": "475"
+        },
+        {
+          "name": "Aegis Caller's Ring",
+          "quality": "primary",
+          "id": 157729,
+          "icon": "gear_breton_ring_a",
+          "cp": "160",
+          "trait": "13",
+          "enchantType": "19",
+          "enchantQuality": "5",
+          "setID": "475"
+        },
+        {
+          "name": "Aegis Caller's Ring",
+          "quality": "primary",
+          "id": 157729,
+          "icon": "gear_breton_ring_a",
+          "cp": "160",
+          "trait": "13",
+          "enchantType": "19",
+          "enchantQuality": "5",
+          "setID": "475"
+        },
+        {
+          "name": "Aegis Caller's Dagger",
+          "quality": "primary",
+          "id": 157737,
+          "icon": "gear_pyrewatch_dagger_a",
+          "cp": "160",
+          "trait": "28",
+          "enchantType": "12",
+          "enchantQuality": "5",
+          "setID": "475"
+        },
+        {
+          "name": "Aegis Caller's Dagger",
+          "quality": "primary",
+          "id": 157737,
+          "icon": "gear_pyrewatch_dagger_a",
+          "cp": "160",
+          "trait": "23",
+          "enchantType": "24",
+          "enchantQuality": "5",
+          "setID": "475"
+        },
+        {
+          "name": "The Maelstrom's Perfected Greatsword",
+          "quality": "primary",
+          "id": 166196,
+          "icon": "gear_dwarvenscavenged_2hsword_a",
+          "cp": "160",
+          "trait": "26",
+          "enchantType": "5",
+          "enchantQuality": "5",
+          "setID": "522"
+        },
+        {
+          "name": "Unknown Item",
+          "quality": "primary",
+          "id": 0,
+          "icon": "???",
+          "cp": "0",
+          "trait": "0",
+          "enchantType": "0",
+          "enchantQuality": "0",
+          "setID": "0"
+        },
+        {
+          "name": "Unknown Item",
+          "quality": "primary",
+          "id": 0,
+          "icon": "???",
+          "cp": "0",
+          "trait": "0",
+          "enchantType": "0",
+          "enchantQuality": "0",
+          "setID": "0"
+        },
+        {
+          "name": "Unknown Item",
+          "quality": "primary",
+          "id": 0,
+          "icon": "???",
+          "cp": "0",
+          "trait": "0",
+          "enchantType": "0",
+          "enchantQuality": "0",
+          "setID": "0"
+        }
+      ],
+      "sets": [
+        {
+          "name": "Huntsman's Warmask",
+          "id": 845
+        },
+        {
+          "name": "Perfected Slivers of the Null Arca",
+          "id": 772
+        },
+        {
+          "name": "Slimecraw",
+          "id": 270
+        },
+        {
+          "name": "Aegis Caller",
+          "id": 475
+        },
+        {
+          "name": "Perfected Merciless Charge",
+          "id": 522
+        }
+      ]
+    },
+    {
+      "name": "Player6",
+      "class": "Warden",
+      "spec": "MagickaDPS",
+      "amount": 46168.429219914,
+      "hardModeLevel": 0,
+      "duration": 922809,
+      "startTime": 1781467356980,
+      "report": {
+        "code": "66d94aed01876793",
+        "fightID": 9,
+        "startTime": 1781460678658
+      },
+      "guild": {
+        "id": 5406,
+        "name": "guild-6",
+        "faction": 2
+      },
+      "server": {
+        "id": 2,
+        "name": "server-6",
+        "region": "EU"
+      },
+      "bracketData": 2342,
+      "displayName": "Player6",
+      "talents": [
+        {
+          "name": "Force Pulse",
+          "id": 46356,
+          "icon": "ability_destructionstaff_001b"
+        },
+        {
+          "name": "Winter's Revenge",
+          "id": 86169,
+          "icon": "ability_warden_004_b"
+        },
+        {
+          "name": "Subterranean Assault",
+          "id": 86019,
+          "icon": "ability_warden_015_b"
+        },
+        {
+          "name": "Elemental Susceptibility",
+          "id": 39089,
+          "icon": "ability_destructionstaff_011b"
+        },
+        {
+          "name": "Camouflaged Hunter",
+          "id": 40195,
+          "icon": "ability_fightersguild_002_b"
+        },
+        {
+          "name": "Wild Guardian",
+          "id": 85990,
+          "icon": "ability_warden_018_c"
+        },
+        {
+          "name": "Blue Betty",
+          "id": 86054,
+          "icon": "ability_warden_017"
+        },
+        {
+          "name": "Stampede",
+          "id": 38788,
+          "icon": "ability_2handed_003_a"
+        },
+        {
+          "name": "Ulfsild's Contingency",
+          "id": 222678,
+          "icon": "ability_grimoire_magesguild"
+        },
+        {
+          "name": "Arctic Blast",
+          "id": 86156,
+          "icon": "ability_warden_003_b"
+        },
+        {
+          "name": "Expansive Frost Cloak",
+          "id": 86126,
+          "icon": "ability_warden_001_a"
+        },
+        {
+          "name": "Wild Guardian",
+          "id": 85990,
+          "icon": "ability_warden_018_c"
+        }
+      ],
+      "gear": [
+        {
+          "name": "Iceheart Guise",
+          "quality": "primary",
+          "id": 94805,
+          "icon": "gear_undauntedatronach_head_a",
+          "cp": "160",
+          "trait": "1",
+          "enchantType": "22",
+          "enchantQuality": "5",
+          "setID": "274"
+        },
+        {
+          "name": "Perfected Null Arca Jack",
+          "quality": "primary",
+          "id": 207554,
+          "icon": "gear_lucentguardian_mediuam_shoulder_a",
+          "cp": "160",
+          "trait": "1",
+          "enchantType": "22",
+          "enchantQuality": "5",
+          "setID": "772"
+        },
+        {
+          "name": "Aerie's Cry Arm Cops",
+          "quality": "primary",
+          "id": 210255,
+          "icon": "gear_wardenclass_shoulders_a",
+          "cp": "160",
+          "trait": "1",
+          "enchantType": "22",
+          "enchantQuality": "5",
+          "setID": "781"
+        },
+        {
+          "name": "Perfected Null Arca Belt",
+          "quality": "primary",
+          "id": 207615,
+          "icon": "gear_lucentguardian_mediuam_waist_a",
+          "cp": "160",
+          "trait": "1",
+          "enchantType": "22",
+          "enchantQuality": "5",
+          "setID": "772"
+        },
+        {
+          "name": "Perfected Null Arca Bracers",
+          "quality": "primary",
+          "id": 207574,
+          "icon": "gear_lucentguardian_mediuam_hands_a",
+          "cp": "160",
+          "trait": "1",
+          "enchantType": "22",
+          "enchantQuality": "5",
+          "setID": "772"
+        },
+        {
+          "name": "Perfected Null Arca Guards",
+          "quality": "primary",
+          "id": 207594,
+          "icon": "gear_lucentguardian_mediuam_legs_a",
+          "cp": "160",
+          "trait": "1",
+          "enchantType": "22",
+          "enchantQuality": "5",
+          "setID": "772"
+        },
+        {
+          "name": "Perfected Null Arca Boots",
+          "quality": "primary",
+          "id": 207565,
+          "icon": "gear_lucentguardian_mediuam_feet_a",
+          "cp": "160",
+          "trait": "1",
+          "enchantType": "22",
+          "enchantQuality": "5",
+          "setID": "772"
+        },
+        {
+          "name": "Aerie's Cry Amulet",
+          "quality": "primary",
+          "id": 210078,
+          "icon": "gear_breton_neck_a",
+          "cp": "160",
+          "trait": "13",
+          "enchantType": "21",
+          "enchantQuality": "5",
+          "setID": "781"
+        },
+        {
+          "name": "Unknown Item",
+          "quality": "primary",
+          "id": 224106,
+          "icon": "???",
+          "cp": "160",
+          "trait": "13",
+          "enchantType": "21",
+          "enchantQuality": "5",
+          "setID": "848"
+        },
+        {
+          "name": "Aerie's Cry Ring",
+          "quality": "primary",
+          "id": 210077,
+          "icon": "gear_breton_ring_a",
+          "cp": "160",
+          "trait": "13",
+          "enchantType": "21",
+          "enchantQuality": "5",
+          "setID": "781"
+        },
+        {
+          "name": "Aerie's Cry Lightning Staff",
+          "quality": "primary",
+          "id": 210089,
+          "icon": "gear_wardenclass_staff",
+          "cp": "160",
+          "trait": "23",
+          "enchantType": "24",
+          "enchantQuality": "5",
+          "setID": "781"
+        },
+        {
+          "name": "Unknown Item",
+          "quality": "primary",
+          "id": 0,
+          "icon": "???",
+          "cp": "0",
+          "trait": "0",
+          "enchantType": "0",
+          "enchantQuality": "0",
+          "setID": "0"
+        },
+        {
+          "name": "The Maelstrom's Perfected Greatsword",
+          "quality": "primary",
+          "id": 166196,
+          "icon": "gear_dwarvenscavenged_2hsword_a",
+          "cp": "160",
+          "trait": "26",
+          "enchantType": "15",
+          "enchantQuality": "5",
+          "setID": "522"
+        },
+        {
+          "name": "Unknown Item",
+          "quality": "primary",
+          "id": 0,
+          "icon": "???",
+          "cp": "0",
+          "trait": "0",
+          "enchantType": "0",
+          "enchantQuality": "0",
+          "setID": "0"
+        },
+        {
+          "name": "Unknown Item",
+          "quality": "primary",
+          "id": 0,
+          "icon": "???",
+          "cp": "0",
+          "trait": "0",
+          "enchantType": "0",
+          "enchantQuality": "0",
+          "setID": "0"
+        },
+        {
+          "name": "Unknown Item",
+          "quality": "primary",
+          "id": 0,
+          "icon": "???",
+          "cp": "0",
+          "trait": "0",
+          "enchantType": "0",
+          "enchantQuality": "0",
+          "setID": "0"
+        }
+      ],
+      "sets": [
+        {
+          "name": "Iceheart",
+          "id": 274
+        },
+        {
+          "name": "Perfected Slivers of the Null Arca",
+          "id": 772
+        },
+        {
+          "name": "Aerie's Cry",
+          "id": 781
+        },
+        {
+          "name": "Unknown Set",
+          "id": 848
+        },
+        {
+          "name": "Perfected Merciless Charge",
+          "id": 522
+        }
+      ]
+    },
+    {
+      "name": "Player7",
+      "class": "Arcanist",
+      "spec": "StaminaDPS",
+      "amount": 45886.862733524,
+      "hardModeLevel": 0,
+      "duration": 660693,
+      "startTime": 1781125241386,
+      "report": {
+        "code": "698cf61d889aab4e",
+        "fightID": 15,
+        "startTime": 1781117732325
+      },
+      "guild": {
+        "id": 5603,
+        "name": "guild-7",
+        "faction": 0
+      },
+      "server": {
+        "id": 2,
+        "name": "server-7",
+        "region": "EU"
+      },
+      "bracketData": 2540,
+      "displayName": "Player7",
+      "talents": [
+        {
+          "name": "Cephaliarch's Flail",
+          "id": 183006,
+          "icon": "ability_arcanist_003_a"
+        },
+        {
+          "name": "Camouflaged Hunter",
+          "id": 40195,
+          "icon": "ability_fightersguild_002_b"
+        },
+        {
+          "name": "Radiant Glory",
+          "id": 63044,
+          "icon": "ability_templar_under_exposure"
+        },
+        {
+          "name": "Pragmatic Fatecarver",
+          "id": 186366,
+          "icon": "ability_arcanist_002_b"
+        },
+        {
+          "name": "Quick Cloak",
+          "id": 38901,
+          "icon": "ability_dualwield_004_a"
+        },
+        {
+          "name": "Soul Harvest",
+          "id": 36514,
+          "icon": "ability_nightblade_007_b"
+        },
+        {
+          "name": "Stampede",
+          "id": 38788,
+          "icon": "ability_2handed_003_a"
+        },
+        {
+          "name": "Inspired Scholarship",
+          "id": 185842,
+          "icon": "ability_arcanist_005_a"
+        },
+        {
+          "name": "Solar Barrage",
+          "id": 22095,
+          "icon": "ability_templar_solar_power"
+        },
+        {
+          "name": "Echoing Vigor",
+          "id": 61505,
+          "icon": "ability_ava_echoing_vigor"
+        },
+        {
+          "name": "Fulminating Rune",
+          "id": 182988,
+          "icon": "ability_arcanist_004_b"
+        },
+        {
+          "name": "The Languid Eye",
+          "id": 189867,
+          "icon": "ability_arcanist_006_b"
+        }
+      ],
+      "gear": [
+        {
+          "name": "Slimecraw Guise",
+          "quality": "primary",
+          "id": 94772,
+          "icon": "gear_undauntedcrocodile_head_a",
+          "cp": "160",
+          "trait": "1",
+          "enchantType": "35",
+          "enchantQuality": "5",
+          "setID": "270"
+        },
+        {
+          "name": "Deadly Jack",
+          "quality": "primary",
+          "id": 147372,
+          "icon": "gear_breton_medium_chest_d",
+          "cp": "160",
+          "trait": "1",
+          "enchantType": "35",
+          "enchantQuality": "5",
+          "setID": "127"
+        },
+        {
+          "name": "Perfected Null Arca Arm Cops",
+          "quality": "primary",
+          "id": 207604,
+          "icon": "gear_lucentguardian_mediuam_chest_a",
+          "cp": "160",
+          "trait": "1",
+          "enchantType": "35",
+          "enchantQuality": "5",
+          "setID": "772"
+        },
+        {
+          "name": "Perfected Null Arca Belt",
+          "quality": "primary",
+          "id": 207614,
+          "icon": "gear_lucentguardian_mediuam_waist_a",
+          "cp": "160",
+          "trait": "1",
+          "enchantType": "35",
+          "enchantQuality": "5",
+          "setID": "772"
+        },
+        {
+          "name": "Deadly Bracers",
+          "quality": "primary",
+          "id": 147374,
+          "icon": "gear_breton_medium_hands_d",
+          "cp": "160",
+          "trait": "1",
+          "enchantType": "35",
+          "enchantQuality": "5",
+          "setID": "127"
+        },
+        {
+          "name": "Deadly Guards",
+          "quality": "primary",
+          "id": 147376,
+          "icon": "gear_breton_medium_legs_d",
+          "cp": "160",
+          "trait": "1",
+          "enchantType": "35",
+          "enchantQuality": "5",
+          "setID": "127"
+        },
+        {
+          "name": "Perfected Null Arca Boots",
+          "quality": "primary",
+          "id": 207564,
+          "icon": "gear_lucentguardian_mediuam_feet_a",
+          "cp": "160",
+          "trait": "1",
+          "enchantType": "35",
+          "enchantQuality": "5",
+          "setID": "772"
+        },
+        {
+          "name": "Velothi Ur-Mage's Amulet",
+          "quality": "primary",
+          "id": 194512,
+          "icon": "u38_antiquities_goldandblueshalknecklace",
+          "cp": "160",
+          "trait": "13",
+          "enchantType": "19",
+          "enchantQuality": "5",
+          "setID": "694"
+        },
+        {
+          "name": "Perfected Null Arca Ring",
+          "quality": "primary",
+          "id": 207798,
+          "icon": "gear_breton_ring_a",
+          "cp": "160",
+          "trait": "13",
+          "enchantType": "21",
+          "enchantQuality": "5",
+          "setID": "772"
+        },
+        {
+          "name": "Perfected Null Arca Ring",
+          "quality": "primary",
+          "id": 207798,
+          "icon": "gear_breton_ring_a",
+          "cp": "160",
+          "trait": "13",
+          "enchantType": "21",
+          "enchantQuality": "5",
+          "setID": "772"
+        },
+        {
+          "name": "Deadly Dagger",
+          "quality": "primary",
+          "id": 87874,
+          "icon": "gear_breton_dagger_d",
+          "cp": "160",
+          "trait": "28",
+          "enchantType": "12",
+          "enchantQuality": "5",
+          "setID": "127"
+        },
+        {
+          "name": "Deadly Dagger",
+          "quality": "primary",
+          "id": 87874,
+          "icon": "gear_breton_dagger_d",
+          "cp": "160",
+          "trait": "23",
+          "enchantType": "24",
+          "enchantQuality": "5",
+          "setID": "127"
+        },
+        {
+          "name": "The Maelstrom's Perfected Greatsword",
+          "quality": "primary",
+          "id": 166196,
+          "icon": "gear_dwarvenscavenged_2hsword_a",
+          "cp": "160",
+          "trait": "26",
+          "enchantType": "5",
+          "enchantQuality": "5",
+          "setID": "522"
+        },
+        {
+          "name": "Unknown Item",
+          "quality": "primary",
+          "id": 0,
+          "icon": "???",
+          "cp": "0",
+          "trait": "0",
+          "enchantType": "0",
+          "enchantQuality": "0",
+          "setID": "0"
+        },
+        {
+          "name": "Unknown Item",
+          "quality": "primary",
+          "id": 0,
+          "icon": "???",
+          "cp": "0",
+          "trait": "0",
+          "enchantType": "0",
+          "enchantQuality": "0",
+          "setID": "0"
+        },
+        {
+          "name": "Unknown Item",
+          "quality": "primary",
+          "id": 0,
+          "icon": "???",
+          "cp": "0",
+          "trait": "0",
+          "enchantType": "0",
+          "enchantQuality": "0",
+          "setID": "0"
+        }
+      ],
+      "sets": [
+        {
+          "name": "Slimecraw",
+          "id": 270
+        },
+        {
+          "name": "Deadly Strike",
+          "id": 127
+        },
+        {
+          "name": "Perfected Slivers of the Null Arca",
+          "id": 772
+        },
+        {
+          "name": "Velothi Ur-Mage's Amulet",
+          "id": 694
+        },
+        {
+          "name": "Perfected Merciless Charge",
+          "id": 522
+        }
+      ]
+    },
+    {
+      "name": "Player8",
+      "class": "Arcanist",
+      "spec": "StaminaDPS",
+      "amount": 44280.507381717,
+      "hardModeLevel": 0,
+      "duration": 937519,
+      "startTime": 1781291448749,
+      "report": {
+        "code": "7ae86d6bc0f94332",
+        "fightID": 2,
+        "startTime": 1781290922341
+      },
+      "guild": {
+        "id": 2011,
+        "name": "guild-8",
+        "faction": 0
+      },
+      "server": {
+        "id": 2,
+        "name": "server-8",
+        "region": "EU"
+      },
+      "bracketData": 2103,
+      "displayName": "Player8",
+      "talents": [
+        {
+          "name": "Cephaliarch's Flail",
+          "id": 183006,
+          "icon": "ability_arcanist_003_a"
+        },
+        {
+          "name": "Quick Cloak",
+          "id": 38901,
+          "icon": "ability_dualwield_004_a"
+        },
+        {
+          "name": "Pragmatic Fatecarver",
+          "id": 186366,
+          "icon": "ability_arcanist_002_b"
+        },
+        {
+          "name": "Camouflaged Hunter",
+          "id": 40195,
+          "icon": "ability_fightersguild_002_b"
+        },
+        {
+          "name": "Barbed Trap",
+          "id": 40382,
+          "icon": "ability_fightersguild_004_a"
+        },
+        {
+          "name": "Flawless Dawnbreaker",
+          "id": 40161,
+          "icon": "ability_fightersguild_005_a"
+        },
+        {
+          "name": "Stampede",
+          "id": 38788,
+          "icon": "ability_2handed_003_a"
+        },
+        {
+          "name": "Scalding Rune",
+          "id": 40465,
+          "icon": "ability_mageguild_001_b"
+        },
+        {
+          "name": "Inspired Scholarship",
+          "id": 185842,
+          "icon": "ability_arcanist_005_a"
+        },
+        {
+          "name": "Fulminating Rune",
+          "id": 182988,
+          "icon": "ability_arcanist_004_b"
+        },
+        {
+          "name": "Resolving Vigor",
+          "id": 61507,
+          "icon": "ability_ava_resolving_vigor"
+        },
+        {
+          "name": "The Tide King's Gaze",
+          "id": 189837,
+          "icon": "ability_arcanist_006_a"
+        }
+      ],
+      "gear": [
+        {
+          "name": "Nerien'eth Mask",
+          "quality": "primary",
+          "id": 59602,
+          "icon": "gear_undaunted_lich_head_a",
+          "cp": "160",
+          "trait": "1",
+          "enchantType": "35",
+          "enchantQuality": "5",
+          "setID": "168"
+        },
+        {
+          "name": "Perfected Null Arca Jack",
+          "quality": "primary",
+          "id": 207554,
+          "icon": "gear_lucentguardian_mediuam_shoulder_a",
+          "cp": "160",
+          "trait": "1",
+          "enchantType": "35",
+          "enchantQuality": "5",
+          "setID": "772"
+        },
+        {
+          "name": "Nerien'eth Epaulets",
+          "quality": "primary",
+          "id": 59626,
+          "icon": "gear_undaunted_lich_shoulders_a",
+          "cp": "160",
+          "trait": "1",
+          "enchantType": "35",
+          "enchantQuality": "5",
+          "setID": "168"
+        },
+        {
+          "name": "Perfected Null Arca Belt",
+          "quality": "primary",
+          "id": 207614,
+          "icon": "gear_lucentguardian_mediuam_waist_a",
+          "cp": "160",
+          "trait": "1",
+          "enchantType": "35",
+          "enchantQuality": "5",
+          "setID": "772"
+        },
+        {
+          "name": "Perfected Null Arca Bracers",
+          "quality": "primary",
+          "id": 207574,
+          "icon": "gear_lucentguardian_mediuam_hands_a",
+          "cp": "160",
+          "trait": "1",
+          "enchantType": "35",
+          "enchantQuality": "5",
+          "setID": "772"
+        },
+        {
+          "name": "Perfected Null Arca Guards",
+          "quality": "primary",
+          "id": 207594,
+          "icon": "gear_lucentguardian_mediuam_legs_a",
+          "cp": "160",
+          "trait": "1",
+          "enchantType": "35",
+          "enchantQuality": "5",
+          "setID": "772"
+        },
+        {
+          "name": "Perfected Null Arca Boots",
+          "quality": "primary",
+          "id": 207564,
+          "icon": "gear_lucentguardian_mediuam_feet_a",
+          "cp": "160",
+          "trait": "1",
+          "enchantType": "35",
+          "enchantQuality": "5",
+          "setID": "772"
+        },
+        {
+          "name": "Velothi Ur-Mage's Amulet",
+          "quality": "primary",
+          "id": 194512,
+          "icon": "u38_antiquities_goldandblueshalknecklace",
+          "cp": "160",
+          "trait": "13",
+          "enchantType": "19",
+          "enchantQuality": "5",
+          "setID": "694"
+        },
+        {
+          "name": "Highland Sentinel Ring",
+          "quality": "primary",
+          "id": 205816,
+          "icon": "gear_breton_ring_a",
+          "cp": "160",
+          "trait": "13",
+          "enchantType": "19",
+          "enchantQuality": "5",
+          "setID": "764"
+        },
+        {
+          "name": "Highland Sentinel Ring",
+          "quality": "primary",
+          "id": 205816,
+          "icon": "gear_breton_ring_a",
+          "cp": "160",
+          "trait": "13",
+          "enchantType": "19",
+          "enchantQuality": "5",
+          "setID": "764"
+        },
+        {
+          "name": "Highland Sentinel Dagger",
+          "quality": "primary",
+          "id": 206114,
+          "icon": "gear_breton_dagger_d",
+          "cp": "160",
+          "trait": "28",
+          "enchantType": "12",
+          "enchantQuality": "5",
+          "setID": "764"
+        },
+        {
+          "name": "Highland Sentinel Dagger",
+          "quality": "primary",
+          "id": 206009,
+          "icon": "gear_breton_dagger_d",
+          "cp": "160",
+          "trait": "23",
+          "enchantType": "24",
+          "enchantQuality": "5",
+          "setID": "764"
+        },
+        {
+          "name": "The Maelstrom's Perfected Greatsword",
+          "quality": "primary",
+          "id": 166196,
+          "icon": "gear_dwarvenscavenged_2hsword_a",
+          "cp": "160",
+          "trait": "26",
+          "enchantType": "5",
+          "enchantQuality": "5",
+          "setID": "522"
+        },
+        {
+          "name": "Unknown Item",
+          "quality": "primary",
+          "id": 0,
+          "icon": "???",
+          "cp": "0",
+          "trait": "0",
+          "enchantType": "0",
+          "enchantQuality": "0",
+          "setID": "0"
+        },
+        {
+          "name": "Unknown Item",
+          "quality": "primary",
+          "id": 0,
+          "icon": "???",
+          "cp": "0",
+          "trait": "0",
+          "enchantType": "0",
+          "enchantQuality": "0",
+          "setID": "0"
+        },
+        {
+          "name": "Unknown Item",
+          "quality": "primary",
+          "id": 0,
+          "icon": "???",
+          "cp": "0",
+          "trait": "0",
+          "enchantType": "0",
+          "enchantQuality": "0",
+          "setID": "0"
+        }
+      ],
+      "sets": [
+        {
+          "name": "Nerien'eth",
+          "id": 168
+        },
+        {
+          "name": "Perfected Slivers of the Null Arca",
+          "id": 772
+        },
+        {
+          "name": "Velothi Ur-Mage's Amulet",
+          "id": 694
+        },
+        {
+          "name": "Highland Sentinel",
+          "id": 764
+        },
+        {
+          "name": "Perfected Merciless Charge",
+          "id": 522
+        }
+      ]
+    },
+    {
+      "name": "Player9",
+      "class": "DragonKnight",
+      "spec": "Tank",
+      "amount": 72043.411674619,
+      "hardModeLevel": 0,
+      "duration": 186747,
+      "startTime": 1781547856008,
+      "report": {
+        "code": "5c506e69dc2b18ac",
+        "fightID": 12,
+        "startTime": 1781542859641
+      },
+      "server": {
+        "id": 2,
+        "name": "server-9",
+        "region": "EU"
+      },
+      "bracketData": 3271,
+      "displayName": "Player9",
+      "talents": [
+        {
+          "name": "Unknown Ability",
+          "id": null,
+          "icon": "???"
+        },
+        {
+          "name": "Unknown Ability",
+          "id": null,
+          "icon": "???"
+        },
+        {
+          "name": "Unknown Ability",
+          "id": null,
+          "icon": "???"
+        },
+        {
+          "name": "Unknown Ability",
+          "id": null,
+          "icon": "???"
+        },
+        {
+          "name": "Unknown Ability",
+          "id": null,
+          "icon": "???"
+        },
+        {
+          "name": "Unknown Ability",
+          "id": null,
+          "icon": "???"
+        },
+        {
+          "name": "Unknown Ability",
+          "id": null,
+          "icon": "???"
+        },
+        {
+          "name": "Unknown Ability",
+          "id": null,
+          "icon": "???"
+        },
+        {
+          "name": "Unknown Ability",
+          "id": null,
+          "icon": "???"
+        },
+        {
+          "name": "Unknown Ability",
+          "id": null,
+          "icon": "???"
+        },
+        {
+          "name": "Unknown Ability",
+          "id": null,
+          "icon": "???"
+        },
+        {
+          "name": "Unknown Ability",
+          "id": null,
+          "icon": "???"
+        }
+      ],
+      "gear": [
+        {
+          "name": "Unknown Item",
+          "quality": "primary",
+          "id": null,
+          "icon": "???"
+        },
+        {
+          "name": "Unknown Item",
+          "quality": "primary",
+          "id": null,
+          "icon": "???"
+        },
+        {
+          "name": "Unknown Item",
+          "quality": "primary",
+          "id": null,
+          "icon": "???"
+        },
+        {
+          "name": "Unknown Item",
+          "quality": "primary",
+          "id": null,
+          "icon": "???"
+        },
+        {
+          "name": "Unknown Item",
+          "quality": "primary",
+          "id": null,
+          "icon": "???"
+        },
+        {
+          "name": "Unknown Item",
+          "quality": "primary",
+          "id": null,
+          "icon": "???"
+        },
+        {
+          "name": "Unknown Item",
+          "quality": "primary",
+          "id": null,
+          "icon": "???"
+        },
+        {
+          "name": "Unknown Item",
+          "quality": "primary",
+          "id": null,
+          "icon": "???"
+        },
+        {
+          "name": "Unknown Item",
+          "quality": "primary",
+          "id": null,
+          "icon": "???"
+        },
+        {
+          "name": "Unknown Item",
+          "quality": "primary",
+          "id": null,
+          "icon": "???"
+        },
+        {
+          "name": "Unknown Item",
+          "quality": "primary",
+          "id": null,
+          "icon": "???"
+        },
+        {
+          "name": "Unknown Item",
+          "quality": "primary",
+          "id": null,
+          "icon": "???"
+        },
+        {
+          "name": "Unknown Item",
+          "quality": "primary",
+          "id": null,
+          "icon": "???"
+        },
+        {
+          "name": "Unknown Item",
+          "quality": "primary",
+          "id": null,
+          "icon": "???"
+        },
+        {
+          "name": "Unknown Item",
+          "quality": "primary",
+          "id": null,
+          "icon": "???"
+        },
+        {
+          "name": "Unknown Item",
+          "quality": "primary",
+          "id": null,
+          "icon": "???"
+        }
+      ],
+      "sets": []
+    },
+    {
+      "name": "Player10",
+      "class": "Arcanist",
+      "spec": "StaminaDPS",
+      "amount": 68110.695218665,
+      "hardModeLevel": 0,
+      "duration": 186747,
+      "startTime": 1781547856008,
+      "report": {
+        "code": "5c506e69dc2b18ac",
+        "fightID": 12,
+        "startTime": 1781542859641
+      },
+      "server": {
+        "id": 2,
+        "name": "server-10",
+        "region": "EU"
+      },
+      "bracketData": 3600,
+      "displayName": "Player10",
+      "talents": [
+        {
+          "name": "Unknown Ability",
+          "id": null,
+          "icon": "???"
+        },
+        {
+          "name": "Unknown Ability",
+          "id": null,
+          "icon": "???"
+        },
+        {
+          "name": "Unknown Ability",
+          "id": null,
+          "icon": "???"
+        },
+        {
+          "name": "Unknown Ability",
+          "id": null,
+          "icon": "???"
+        },
+        {
+          "name": "Unknown Ability",
+          "id": null,
+          "icon": "???"
+        },
+        {
+          "name": "Unknown Ability",
+          "id": null,
+          "icon": "???"
+        },
+        {
+          "name": "Unknown Ability",
+          "id": null,
+          "icon": "???"
+        },
+        {
+          "name": "Unknown Ability",
+          "id": null,
+          "icon": "???"
+        },
+        {
+          "name": "Unknown Ability",
+          "id": null,
+          "icon": "???"
+        },
+        {
+          "name": "Unknown Ability",
+          "id": null,
+          "icon": "???"
+        },
+        {
+          "name": "Unknown Ability",
+          "id": null,
+          "icon": "???"
+        },
+        {
+          "name": "Unknown Ability",
+          "id": null,
+          "icon": "???"
+        }
+      ],
+      "gear": [
+        {
+          "name": "Unknown Item",
+          "quality": "primary",
+          "id": null,
+          "icon": "???"
+        },
+        {
+          "name": "Unknown Item",
+          "quality": "primary",
+          "id": null,
+          "icon": "???"
+        },
+        {
+          "name": "Unknown Item",
+          "quality": "primary",
+          "id": null,
+          "icon": "???"
+        },
+        {
+          "name": "Unknown Item",
+          "quality": "primary",
+          "id": null,
+          "icon": "???"
+        },
+        {
+          "name": "Unknown Item",
+          "quality": "primary",
+          "id": null,
+          "icon": "???"
+        },
+        {
+          "name": "Unknown Item",
+          "quality": "primary",
+          "id": null,
+          "icon": "???"
+        },
+        {
+          "name": "Unknown Item",
+          "quality": "primary",
+          "id": null,
+          "icon": "???"
+        },
+        {
+          "name": "Unknown Item",
+          "quality": "primary",
+          "id": null,
+          "icon": "???"
+        },
+        {
+          "name": "Unknown Item",
+          "quality": "primary",
+          "id": null,
+          "icon": "???"
+        },
+        {
+          "name": "Unknown Item",
+          "quality": "primary",
+          "id": null,
+          "icon": "???"
+        },
+        {
+          "name": "Unknown Item",
+          "quality": "primary",
+          "id": null,
+          "icon": "???"
+        },
+        {
+          "name": "Unknown Item",
+          "quality": "primary",
+          "id": null,
+          "icon": "???"
+        },
+        {
+          "name": "Unknown Item",
+          "quality": "primary",
+          "id": null,
+          "icon": "???"
+        },
+        {
+          "name": "Unknown Item",
+          "quality": "primary",
+          "id": null,
+          "icon": "???"
+        },
+        {
+          "name": "Unknown Item",
+          "quality": "primary",
+          "id": null,
+          "icon": "???"
+        },
+        {
+          "name": "Unknown Item",
+          "quality": "primary",
+          "id": null,
+          "icon": "???"
+        }
+      ],
+      "sets": []
+    }
+  ]
+}

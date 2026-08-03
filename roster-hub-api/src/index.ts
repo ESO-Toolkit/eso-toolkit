@@ -231,6 +231,11 @@ function getCacheTier(path: string): CacheTier | null {
     return { edgeTtl: 60, swr: 300 };
   }
   if (path === '/search-addons') return { edgeTtl: 60, swr: 300 };
+  // DPS leaderboard is cron-owned and refreshes once or twice a day, so it can be
+  // cached aggressively. Nothing here is user-specific.
+  if (path === '/dps-leaderboard/encounters') return { edgeTtl: 900, swr: 3600 };
+  if (path === '/dps-leaderboard/parses') return { edgeTtl: 600, swr: 3600 };
+  if (/^\/dps-leaderboard\/parses\/[^/]+\/build$/.test(path)) return { edgeTtl: 3600, swr: 86400 };
   return null;
 }
 
@@ -2028,40 +2033,165 @@ async function notifyDiscordSync(env: Env, rosterId: string): Promise<void> {
   }
 }
 
+// ─── DPS builds leaderboard ─────────────────────────────────────────────────
+// Read-only. This data is owned by the cron; there is no public write path.
+
+import {
+  getDpsParseCombatant,
+  listDpsEncounters,
+  listDpsParses,
+} from './db/dps-parse-queries';
+
+/** Which encounters have data — feeds the trial/boss picker. */
+app.get('/dps-leaderboard/encounters', async (c) => {
+  const encounters = await listDpsEncounters(c.env.DB);
+  return c.json({ encounters });
+});
+
+/**
+ * Serves both frontend tabs: `?encounter=` for the per-boss view, `?class=` for
+ * the per-class overview.
+ *
+ * At least one of them is REQUIRED. Without a filter this degenerates into an
+ * unbounded table scan, so an unfiltered request is a 400 rather than a slow 200.
+ */
+app.get('/dps-leaderboard/parses', async (c) => {
+  const num = (value: string | undefined): number | undefined => {
+    if (value === undefined) return undefined;
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : undefined;
+  };
+
+  const encounterId = num(c.req.query('encounter'));
+  const esoClass = c.req.query('class');
+
+  if (encounterId === undefined && !esoClass) {
+    return c.json({ error: 'Provide at least one of: encounter, class' }, 400);
+  }
+
+  const sortParam = c.req.query('sort');
+  const result = await listDpsParses(c.env.DB, {
+    encounterId,
+    difficulty: num(c.req.query('difficulty')),
+    esoClass,
+    signatureHash: c.req.query('signature'),
+    limit: num(c.req.query('limit')),
+    offset: num(c.req.query('offset')),
+    sort: sortParam === 'recent' ? 'recent' : 'amount',
+  });
+
+  return c.json(result);
+});
+
+/**
+ * Raw gear + talents for one parse.
+ *
+ * Split from the list route on purpose: this payload is ~3.7 KB per parse, so
+ * inlining it would make a 200-row page roughly 750 KB. Fetched only when the user
+ * opens an archetype in the Build Editor.
+ */
+app.get('/dps-leaderboard/parses/:parseId/build', async (c) => {
+  const build = await getDpsParseCombatant(c.env.DB, c.req.param('parseId'));
+  if (!build) return c.json({ error: 'Parse not found' }, 404);
+  return c.json(build);
+});
+
 // ─── POST /admin/sync-leaderboard — manual trigger ──────────────────────────
 
 import { syncLeaderboardRosters } from './leaderboard-sync/sync';
+import { syncDpsParses } from './leaderboard-sync/dps-parse-sync';
 
-app.post('/admin/sync-leaderboard', async (c) => {
-  const key = c.req.header('X-Internal-Key');
-  if (!key || !c.env.INTERNAL_API_KEY) {
-    return c.json({ error: 'Unauthorized' }, 401);
-  }
+/**
+ * Shared guard for the admin triggers. Compares SHA-256 digests with
+ * timingSafeEqual so the check is constant-time regardless of key length.
+ */
+async function isAuthorizedInternalRequest(
+  providedKey: string | undefined,
+  expectedKey: string | undefined,
+): Promise<boolean> {
+  if (!providedKey || !expectedKey) return false;
   const enc = new TextEncoder();
   const [hashA, hashB] = await Promise.all([
-    crypto.subtle.digest('SHA-256', enc.encode(key)),
-    crypto.subtle.digest('SHA-256', enc.encode(c.env.INTERNAL_API_KEY)),
+    crypto.subtle.digest('SHA-256', enc.encode(providedKey)),
+    crypto.subtle.digest('SHA-256', enc.encode(expectedKey)),
   ]);
-  if (
-    !(
-      crypto.subtle as unknown as { timingSafeEqual(a: ArrayBuffer, b: ArrayBuffer): boolean }
-    ).timingSafeEqual(hashA, hashB)
-  ) {
+  return (
+    crypto.subtle as unknown as { timingSafeEqual(a: ArrayBuffer, b: ArrayBuffer): boolean }
+  ).timingSafeEqual(hashA, hashB);
+}
+
+app.post('/admin/sync-leaderboard', async (c) => {
+  if (!(await isAuthorizedInternalRequest(c.req.header('X-Internal-Key'), c.env.INTERNAL_API_KEY))) {
     return c.json({ error: 'Unauthorized' }, 401);
   }
   const results = await syncLeaderboardRosters(c.env);
   return c.json({ results });
 });
 
+/**
+ * Manual DPS-parse ingest. Query params let a one-off backfill target a single
+ * encounter, or force a full pass outside the nightly budget:
+ *   ?encounterId=60&difficulty=122&pages=3&force=1
+ */
+app.post('/admin/sync-dps-parses', async (c) => {
+  if (!(await isAuthorizedInternalRequest(c.req.header('X-Internal-Key'), c.env.INTERNAL_API_KEY))) {
+    return c.json({ error: 'Unauthorized' }, 401);
+  }
+
+  const num = (value: string | undefined): number | undefined => {
+    if (value === undefined) return undefined;
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : undefined;
+  };
+
+  const results = await syncDpsParses(c.env, {
+    encounterId: num(c.req.query('encounterId')),
+    difficulty: num(c.req.query('difficulty')),
+    pages: num(c.req.query('pages')),
+    maxEncounters: num(c.req.query('maxEncounters')),
+    force: c.req.query('force') === '1',
+  });
+
+  return c.json({ results });
+});
+
 // ═══════════════════════════════════════════════════════════════════════════════
-// Worker export — fetch (Hono) + scheduled (cron: cleanup + leaderboard sync)
+// Worker export — fetch (Hono) + scheduled (cron)
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export default {
   fetch: app.fetch,
 
-  async scheduled(_event: ScheduledEvent, env: Env, _ctx: ExecutionContext): Promise<void> {
-    await cleanupExpiredTempBuilds(env.DB);
-    await syncLeaderboardRosters(env);
+  /**
+   * Two triggers (see wrangler.toml):
+   *   04:00 UTC — temp-build cleanup + roster sync + DPS parse ingest
+   *   16:00 UTC — DPS parse ingest only
+   *
+   * Each job is isolated in its own try/catch. Previously a throw in
+   * `cleanupExpiredTempBuilds` would silently skip the roster sync for that day.
+   */
+  async scheduled(event: ScheduledEvent, env: Env, _ctx: ExecutionContext): Promise<void> {
+    const isDailyRun = event.cron === '0 4 * * *';
+
+    if (isDailyRun) {
+      try {
+        await cleanupExpiredTempBuilds(env.DB);
+      } catch (error) {
+        console.error('[cron] temp-build cleanup failed:', error);
+      }
+
+      try {
+        await syncLeaderboardRosters(env);
+      } catch (error) {
+        console.error('[cron] roster sync failed:', error);
+      }
+    }
+
+    // Runs on both triggers: two passes a day cover the full boss rotation.
+    try {
+      await syncDpsParses(env);
+    } catch (error) {
+      console.error('[cron] dps parse sync failed:', error);
+    }
   },
 };
