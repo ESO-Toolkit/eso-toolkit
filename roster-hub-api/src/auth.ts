@@ -261,8 +261,17 @@ export async function validateToken(
   const cached = getCached(token);
   if (cached) return cached;
 
-  // Short-circuit tokens we recently rejected so a token-rotation flood can't
-  // force a fresh esologs introspection on every request.
+  // Short-circuit tokens we recently rejected, so a client REPLAYING a rejected
+  // token stops costing an introspection each time.
+  //
+  // Scope, precisely: this is keyed by token hash, so it does nothing against a
+  // caller minting a fresh JWT-shaped value per request — each unique token
+  // misses and reaches introspectToken. That path spends the CALLER's bearer
+  // token upstream, not the site's client credentials (unlike /graphql), so the
+  // exposure is one outbound subrequest per request rather than a drain on the
+  // shared OAuth budget. Closing it properly needs a limiter on failed
+  // validation attempts keyed by caller IP, which validateToken cannot see
+  // today — see the follow-up note in the PR.
   const tokenHash = hashToken(token);
   if (isNegativelyCached(tokenHash)) return null;
 
