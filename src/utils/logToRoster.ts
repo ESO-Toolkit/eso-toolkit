@@ -20,6 +20,7 @@ import {
   GREEN_CHAMPION_POINTS,
 } from '../types/abilities';
 import type { CombatantAura } from '../types/combatlogEvents';
+import { WeaponType } from '../types/playerDetails';
 import type { PlayerGear, PlayerTalent } from '../types/playerDetails';
 import {
   ALL_5PIECE_SETS,
@@ -33,10 +34,12 @@ import {
 } from '../types/roster';
 import type { DPSSlot, HealerSetup, RaidRoster, TankSetup } from '../types/roster';
 
+import { isWeaponSlot } from './armorUtils';
 import { detectClassFromTalents } from './classDetectionUtils';
 import { detectFoodFromAuras } from './foodDetectionUtils';
 import { convertChampionPoints, convertGear, convertSkills, resolveFood } from './playerToBuild';
 import { findSetIdByName, getSetDisplayName } from './setNameUtils';
+import { isAnyTwoHandedWeapon } from './weaponClassificationUtils';
 
 // ─── Input Types ─────────────────────────────────────────────────────────────
 // The GraphQL response returns loosely-typed JSON blobs for player details.
@@ -46,6 +49,10 @@ interface LogGearItem {
   setName?: string;
   setID?: number;
   permanentEnchant?: number;
+  /** WeaponType/ArmorType numeric code — present on real combatant gear. */
+  type?: number;
+  /** GearSlot index — present on real combatant gear (dense, slot === index). */
+  slot?: number;
 }
 
 interface LogCombatantInfo {
@@ -139,7 +146,17 @@ function categorizeSets(gear: LogGearItem[]): {
 
   for (const item of transformedGear) {
     if (!item.setName) continue;
-    const pieceCount = 1; // Each gear array entry is one equipped piece
+    // A two-handed weapon (staff, greatsword, battle axe, maul, bow) fills one
+    // slot but grants TWO set pieces — mirror the in-game math (and
+    // setPieceCounting.buildSetPieceCounts) so a 5-piece set completed via a 2H
+    // weapon clears the `count >= 5` gate instead of being demoted. Gate on a
+    // weapon slot: JEWELRY (type 4) collides with TWO_HANDED_SWORD (4).
+    const isTwoHanded =
+      typeof item.slot === 'number' &&
+      isWeaponSlot(item.slot) &&
+      item.type !== undefined &&
+      isAnyTwoHandedWeapon(item.type as WeaponType);
+    const pieceCount = isTwoHanded ? 2 : 1;
     rawCountMap.set(item.setName, (rawCountMap.get(item.setName) ?? 0) + pieceCount);
     if (isPerfected(item.setName)) {
       perfectedVersions.set(normalizeSetName(item.setName), item.setName);

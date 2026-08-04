@@ -2,7 +2,7 @@
  * Utilities for analyzing player gear and armor
  */
 
-import { ArmorType, GearType, PlayerGear } from '../types/playerDetails';
+import { ArmorType, GearSlot, GearType, PlayerGear } from '../types/playerDetails';
 
 /**
  * Item IDs for mythic armor pieces that ESOLogs misreports as Light.
@@ -54,6 +54,29 @@ export function resolveArmorType(item: PlayerGear): GearType {
 }
 
 /**
+ * True when a gear slot holds a body-armor piece (HEAD–FEET). Weapon slots
+ * (10–13) and jewelry (7–9) are excluded.
+ *
+ * Weight tallies MUST gate on this because WeaponType and ArmorType share
+ * numeric values (AXE=1=LIGHT, MACE=2=MEDIUM, SWORD=3=HEAVY): without a slot
+ * check a 1H melee weapon's `type` is miscounted as an armor weight.
+ */
+export function isBodyArmorSlot(slot: number): boolean {
+  return slot >= GearSlot.HEAD && slot <= GearSlot.FEET;
+}
+
+/**
+ * True when a gear slot holds a weapon (MAIN_HAND–BACKUP_OFF_HAND, 10–13).
+ *
+ * Callers that infer a two-handed weapon from `item.type` MUST gate on this:
+ * ArmorType.JEWELRY (4) shares its numeric value with WeaponType.TWO_HANDED_SWORD
+ * (4), so a jewelry piece's `type` would otherwise read as a greatsword.
+ */
+export function isWeaponSlot(slot: number): boolean {
+  return slot >= GearSlot.MAIN_HAND && slot <= GearSlot.BACKUP_OFF_HAND;
+}
+
+/**
  * Counts armor pieces by weight type
  * @param gear - Array of player gear
  * @returns Object with counts for each armor weight
@@ -69,6 +92,7 @@ export function getArmorWeightCounts(gear: PlayerGear[]): {
 
   for (const g of gear) {
     if (!g || g.id === 0) continue;
+    if (!isBodyArmorSlot(g.slot)) continue;
 
     switch (resolveArmorType(g)) {
       case ArmorType.HEAVY:

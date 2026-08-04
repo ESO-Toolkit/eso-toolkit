@@ -100,6 +100,48 @@ describe('armorUtils', () => {
       expect(result.light).toBe(1);
     });
 
+    it('should not count melee weapons whose type collides with an armor weight', () => {
+      // WeaponType.AXE=1=LIGHT, MACE=2=MEDIUM, SWORD=3=HEAVY. A melee weapon in a
+      // weapon slot must NOT be counted as armor despite the shared numeric value.
+      const gear: PlayerGear[] = [
+        createMockGear(ArmorType.LIGHT, 1), // Head (slot defaults to a body slot)
+        { ...createMockGear(WeaponType.AXE, 10), slot: GearSlot.MAIN_HAND },
+        { ...createMockGear(WeaponType.MACE, 11), slot: GearSlot.OFF_HAND },
+        { ...createMockGear(WeaponType.SWORD, 12), slot: GearSlot.BACKUP_MAIN_HAND },
+        { ...createMockGear(WeaponType.MACE, 13), slot: GearSlot.BACKUP_OFF_HAND },
+      ];
+
+      const result = getArmorWeightCounts(gear);
+
+      expect(result.heavy).toBe(0);
+      expect(result.medium).toBe(0);
+      expect(result.light).toBe(1);
+    });
+
+    it('should count only body-armor slots in a full stamina build with colliding weapons', () => {
+      // 5 medium body pieces + dual maces (MACE=2=MEDIUM) on both bars: the maces
+      // must not inflate the medium count.
+      const gear: PlayerGear[] = [
+        { ...createMockGear(ArmorType.MEDIUM, 1), slot: GearSlot.HEAD },
+        { ...createMockGear(ArmorType.MEDIUM, 2), slot: GearSlot.CHEST },
+        { ...createMockGear(ArmorType.MEDIUM, 3), slot: GearSlot.SHOULDERS },
+        { ...createMockGear(ArmorType.MEDIUM, 4), slot: GearSlot.WAIST },
+        { ...createMockGear(ArmorType.MEDIUM, 5), slot: GearSlot.HANDS },
+        { ...createMockGear(ArmorType.HEAVY, 6), slot: GearSlot.LEGS },
+        { ...createMockGear(ArmorType.LIGHT, 7), slot: GearSlot.FEET },
+        { ...createMockGear(WeaponType.MACE, 10), slot: GearSlot.MAIN_HAND },
+        { ...createMockGear(WeaponType.MACE, 11), slot: GearSlot.OFF_HAND },
+        { ...createMockGear(WeaponType.MACE, 12), slot: GearSlot.BACKUP_MAIN_HAND },
+        { ...createMockGear(WeaponType.MACE, 13), slot: GearSlot.BACKUP_OFF_HAND },
+      ];
+
+      const result = getArmorWeightCounts(gear);
+
+      expect(result.heavy).toBe(1);
+      expect(result.medium).toBe(5);
+      expect(result.light).toBe(1);
+    });
+
     it('should ignore gear with id = 0', () => {
       const gear: PlayerGear[] = [
         createMockGear(ArmorType.HEAVY, 0), // Should be ignored

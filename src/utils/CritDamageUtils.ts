@@ -4,7 +4,7 @@ import { CriticalDamageValues, KnownAbilities, KnownSetIDs } from '../types/abil
 import { CombatantInfoEvent } from '../types/combatlogEvents';
 import { ArmorType } from '../types/playerDetails';
 
-import { resolveArmorType } from './armorUtils';
+import { isBodyArmorSlot, resolveArmorType } from './armorUtils';
 import {
   BuffLookupData,
   isBuffActive as checkBuffActiveAtTimestamp,
@@ -746,8 +746,11 @@ export function getCritDamageFromAlwaysOnSource(
   if (!isAlwaysOnSourceActive(source, evidence)) return 0;
   switch (source.key) {
     case AlwaysOnCriticalDamageSources.DEXTERITY: {
+      // Only body-armor slots (0–6) count. WeaponType.MACE === ArmorType.MEDIUM
+      // (both 2), so without the slot gate an equipped mace would add phantom
+      // medium-armor crit damage.
       const medPieces = combatantInfo?.gear?.filter(
-        (item) => resolveArmorType(item) === ArmorType.MEDIUM,
+        (item) => isBodyArmorSlot(item.slot) && resolveArmorType(item) === ArmorType.MEDIUM,
       );
       return (medPieces?.length || 0) * CriticalDamageValues.DEXTERITY_PER_PIECE;
     }
