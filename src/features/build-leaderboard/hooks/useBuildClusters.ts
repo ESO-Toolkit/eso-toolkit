@@ -15,6 +15,12 @@ import { runBuildClustering } from '../clustering/runBuildClustering';
 import type { BuildCluster, ClusterBuildsResult } from '../types/clustering.types';
 import type { DpsParse } from '../types/dpsParses.types';
 
+/**
+ * Cached clustering results kept in memory. Comfortably covers toggling between
+ * a few encounters and classes; beyond that the least-recently-used is evicted.
+ */
+const MAX_CACHED_RESULTS = 12;
+
 export interface UseBuildClustersResult {
   result: ClusterBuildsResult | null;
   loading: boolean;
@@ -98,8 +104,33 @@ export function useBuildClusters(
 
   // Cache by the exact set of parses, so switching tabs back and forth does not
   // recompute. Parse ids are stable server-side, so this key is meaningful.
+  //
+  // Bounded: each entry holds every cluster's member id list, and a session that
+  // browses many encounters and classes would otherwise retain all of them for
+  // the lifetime of the page. The cap is well above the handful of views anyone
+  // toggles between, so it costs no practical hit rate.
   const cacheKey = useMemo(() => parses.map((parse) => parse.parse_id).join('|'), [parses]);
   const cache = useRef(new Map<string, ClusterBuildsResult>());
+
+  /** Read through, refreshing recency so the cap evicts the least-recently used. */
+  const readCache = (key: string): ClusterBuildsResult | undefined => {
+    const hit = cache.current.get(key);
+    if (!hit) return undefined;
+    cache.current.delete(key);
+    cache.current.set(key, hit);
+    return hit;
+  };
+
+  const writeCache = (key: string, value: ClusterBuildsResult): void => {
+    cache.current.delete(key);
+    cache.current.set(key, value);
+    // Map iterates in insertion order, so the first key is the oldest.
+    while (cache.current.size > MAX_CACHED_RESULTS) {
+      const oldest = cache.current.keys().next().value;
+      if (oldest === undefined) break;
+      cache.current.delete(oldest);
+    }
+  };
 
   useEffect(() => {
     // Every path that returns without starting a run MUST clear `loading`.
@@ -121,7 +152,7 @@ export function useBuildClusters(
       return undefined;
     }
 
-    const cached = cache.current.get(cacheKey);
+    const cached = readCache(cacheKey);
     if (cached) {
       settleWithoutRunning(cached, 100);
       return undefined;
@@ -145,7 +176,7 @@ export function useBuildClusters(
           ...clustered,
           clusters: clustered.clusters.map((cluster) => hydrateLabels(cluster, labels)),
         };
-        cache.current.set(cacheKey, hydrated);
+        writeCache(cacheKey, hydrated);
         setResult(hydrated);
       })
       .catch((err: unknown) => {

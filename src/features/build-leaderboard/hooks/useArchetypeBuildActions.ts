@@ -95,9 +95,11 @@ export function useArchetypeBuildActions(): UseArchetypeBuildActionsResult {
       build.name = cluster.label;
       build.shortDescription = `Top-parse archetype — ${cluster.size} of the fastest logs run this.`;
 
-      // saveBuild generates the id in its `prepare`, so read it back off the
-      // dispatched action rather than guessing.
-      const action = dispatch(saveBuild(build)) as unknown as { payload: { id: string } };
+      // saveBuild generates the id in its `prepare`, so build the action first and
+      // read the id off it, then dispatch. Reading it off the dispatch RESULT
+      // would need a cast, since middleware is free to change that return type.
+      const action = saveBuild(build);
+      dispatch(action);
       return { build, savedId: action.payload.id };
     },
     [dispatch],

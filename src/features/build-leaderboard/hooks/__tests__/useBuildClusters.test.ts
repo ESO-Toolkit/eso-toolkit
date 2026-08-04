@@ -132,6 +132,51 @@ describe('useBuildClusters', () => {
     expect(result.current.loading).toBe(false);
   });
 
+  /**
+   * The cache is a plain Map on a ref, so without a cap a session browsing many
+   * encounters retains every ClusterBuildsResult (each holding all member parse
+   * ids) for the lifetime of the page.
+   */
+  it('evicts least-recently-used entries instead of growing without bound', async () => {
+    mockedRun.mockResolvedValue(EMPTY_RESULT);
+
+    // Distinct parse sets => distinct cache keys.
+    const sets: DpsParse[][] = [];
+    for (let i = 0; i < 20; i++) {
+      resetFixtureIds();
+      sets.push(
+        Array.from({ length: 20 }, (_, j) =>
+          makeParse(NECRO_ARCHETYPE, j, { parse_id: `set${i}-parse${j}` }),
+        ),
+      );
+    }
+
+    const { result, rerender } = renderHook(
+      ({ input }: { input: DpsParse[] }) => useBuildClusters(input),
+      { initialProps: { input: sets[0] } },
+    );
+    await waitFor(() => expect(result.current.result).not.toBeNull());
+
+    for (let i = 1; i < sets.length; i++) {
+      rerender({ input: sets[i] });
+      // eslint-disable-next-line no-await-in-loop
+      await waitFor(() => expect(result.current.loading).toBe(false));
+    }
+
+    // 20 distinct sets clustered; the cap must have evicted the excess. Asserted
+    // via behaviour: the oldest key is gone, so returning to it re-runs.
+    const callsBefore = mockedRun.mock.calls.length;
+    rerender({ input: sets[0] });
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(mockedRun.mock.calls.length).toBeGreaterThan(callsBefore);
+
+    // …while a recent one is still cached and does NOT re-run.
+    const callsAfter = mockedRun.mock.calls.length;
+    rerender({ input: sets[sets.length - 1] });
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(mockedRun.mock.calls.length).toBe(callsAfter);
+  });
+
   it('clears loading when a cache hit interrupts an in-flight run', async () => {
     const parses = makeThreeArchetypeFixture();
     resetFixtureIds();

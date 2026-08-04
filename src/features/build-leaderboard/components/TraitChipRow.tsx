@@ -21,8 +21,6 @@ export interface TraitChipRowProps {
   flex: readonly ClusterTrait[];
   /** Traits below the flex threshold, revealed by "Show variations". */
   variations?: readonly ClusterTrait[];
-  /** Rendered before each chip label — gear or ability icon. */
-  renderIcon?: (trait: ClusterTrait) => React.ReactNode;
 }
 
 const percent = (share: number): string => `${Math.round(share * 100)}%`;
@@ -43,7 +41,6 @@ export const TraitChipRow: React.FC<TraitChipRowProps> = ({
   core,
   flex,
   variations = [],
-  renderIcon,
 }) => {
   const [showVariations, setShowVariations] = useState(false);
 
@@ -64,7 +61,6 @@ export const TraitChipRow: React.FC<TraitChipRowProps> = ({
   const renderChip = (trait: ClusterTrait, kind: 'core' | 'flex' | 'rare'): React.ReactNode => (
     <Tooltip key={`${trait.group}-${trait.id}`} title={alternativesText(trait, siblings)} arrow>
       <Chip
-        icon={renderIcon ? (renderIcon(trait) as React.ReactElement) : undefined}
         label={
           <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.75 }}>
             <span>{trait.label}</span>
