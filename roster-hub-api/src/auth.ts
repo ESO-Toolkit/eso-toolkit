@@ -148,7 +148,20 @@ interface EsoLogsResponse {
   };
 }
 
-async function introspectToken(token: string): Promise<AuthUser | null> {
+/**
+ * Outcome of asking ESO Logs about a token.
+ *
+ * `invalid` and `unavailable` are deliberately NOT the same answer: only the
+ * former is a statement about the token. Collapsing them means one upstream
+ * blip gets written into the rejection cache and a perfectly good session is
+ * locked out locally until it expires.
+ */
+type IntrospectionResult =
+  | { status: 'ok'; user: AuthUser }
+  | { status: 'invalid' }
+  | { status: 'unavailable' };
+
+async function introspectToken(token: string): Promise<IntrospectionResult> {
   try {
     const res = await fetch(ESOLOGS_GRAPHQL_URL, {
       method: 'POST',
@@ -159,18 +172,25 @@ async function introspectToken(token: string): Promise<AuthUser | null> {
       body: JSON.stringify({ query: CURRENT_USER_QUERY }),
     });
 
-    if (!res.ok) return null;
+    // Upstream rejecting the credential is a verdict on the token.
+    if (res.status === 401 || res.status === 403) return { status: 'invalid' };
+    // 429/5xx say nothing about the token — treat as "ask again later".
+    if (!res.ok) return { status: 'unavailable' };
 
     const json = (await res.json()) as EsoLogsResponse;
     const user = json.data?.userData?.currentUser;
-    if (!user?.id || !user?.name) return null;
+    if (!user?.id || !user?.name) return { status: 'invalid' };
 
     return {
-      id: String(user.id),
-      name: user.name,
+      status: 'ok',
+      user: {
+        id: String(user.id),
+        name: user.name,
+      },
     };
   } catch {
-    return null;
+    // Network failure or unparseable body — not evidence about the token.
+    return { status: 'unavailable' };
   }
 }
 
@@ -208,12 +228,16 @@ export async function validateToken(
   if (isNegativelyCached(tokenHash)) return null;
 
   // Introspect against ESO Logs API
-  const user = await introspectToken(token);
-  if (!user) {
+  const result = await introspectToken(token);
+  if (result.status === 'invalid') {
     setNegativeCache(tokenHash);
     return null;
   }
+  // Unavailable: reject THIS request, but never remember the failure — caching
+  // it would 401 a valid session for the whole negative-cache window without
+  // asking upstream again.
+  if (result.status === 'unavailable') return null;
 
-  setCache(token, user);
-  return user;
+  setCache(token, result.user);
+  return result.user;
 }
