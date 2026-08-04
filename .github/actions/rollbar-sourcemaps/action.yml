@@ -1,0 +1,76 @@
+name: 'Upload Sourcemaps to Rollbar'
+description: 'Uploads every ./build/assets/*.map to Rollbar for a given release version'
+inputs:
+  access_token:
+    description: 'Rollbar post_server_item token'
+    required: true
+  release_version:
+    description: >-
+      Release version the deployed bundle reports. MUST be the full 40-char
+      github.sha (deploy passes github.sha through to VITE_RELEASE_VERSION);
+      Rollbar only applies a sourcemap when code_version matches exactly.
+    required: true
+  deployment_url:
+    description: 'Origin the assets are served from (no trailing slash)'
+    required: false
+    default: 'https://esotk.com'
+  build_dir:
+    description: 'Directory holding the built assets'
+    required: false
+    default: './build'
+runs:
+  using: 'composite'
+  steps:
+    - name: Upload sourcemaps
+      shell: bash
+      env:
+        ROLLBAR_ACCESS_TOKEN: ${{ inputs.access_token }}
+        RELEASE_VERSION: ${{ inputs.release_version }}
+        DEPLOYMENT_URL: ${{ inputs.deployment_url }}
+        BUILD_DIR: ${{ inputs.build_dir }}
+      run: |
+        set -uo pipefail
+        UPLOAD_COUNT=0
+        FAIL_COUNT=0
+
+        echo "Searching for sourcemap files in ${BUILD_DIR}/assets/ ..."
+        if [ ! -d "${BUILD_DIR}/assets" ]; then
+          echo "❌ Error: ${BUILD_DIR}/assets directory not found"
+          exit 1
+        fi
+
+        while IFS= read -r -d '' mapfile; do
+          # Derive the URL of the corresponding minified JS/CSS file
+          filename=$(basename "${mapfile}" .map)
+          minified_url="${DEPLOYMENT_URL}/assets/${filename}"
+
+          echo "Uploading: ${mapfile} → ${minified_url}"
+
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            https://api.rollbar.com/api/1/sourcemap \
+            -F "access_token=${ROLLBAR_ACCESS_TOKEN}" \
+            -F "version=${RELEASE_VERSION}" \
+            -F "minified_url=${minified_url}" \
+            -F "source_map=@${mapfile}")
+
+          if [ "${HTTP_STATUS}" = "200" ]; then
+            UPLOAD_COUNT=$((UPLOAD_COUNT + 1))
+            echo "  ✅ Uploaded (HTTP ${HTTP_STATUS})"
+          else
+            FAIL_COUNT=$((FAIL_COUNT + 1))
+            echo "  ❌ Failed (HTTP ${HTTP_STATUS})"
+          fi
+        done < <(find "${BUILD_DIR}/assets" -name "*.map" -type f -print0)
+
+        echo ""
+        echo "Upload complete: ${UPLOAD_COUNT} succeeded, ${FAIL_COUNT} failed (release ${RELEASE_VERSION})"
+
+        if [ "${FAIL_COUNT}" -gt 0 ]; then
+          echo "⚠️ Some sourcemaps failed to upload. Check the ROLLBAR_SERVER_TOKEN secret."
+          exit 1
+        fi
+
+        if [ "${UPLOAD_COUNT}" -eq 0 ]; then
+          echo "❌ No sourcemaps found to upload"
+          exit 1
+        fi

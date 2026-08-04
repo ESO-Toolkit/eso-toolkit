@@ -334,9 +334,11 @@ ${downloadBtn}
       'process.env.NODE_ENV': JSON.stringify(mode),
       'process.env.GENERATE_SOURCEMAP': JSON.stringify(env.GENERATE_SOURCEMAP || 'true'),
       'process.env.FAST_REFRESH': JSON.stringify(env.FAST_REFRESH || 'true'),
-      // Build-time version information
-      'import.meta.env.VITE_BUILD_TIME': JSON.stringify(new Date().toISOString()),
-      'import.meta.env.VITE_BUILD_TIMESTAMP': JSON.stringify(Date.now()),
+      // NOTE: no build clock here. VITE_BUILD_TIME/VITE_BUILD_TIMESTAMP used to be
+      // injected via `define` (new Date()/Date.now()), which made every build
+      // byte-different and its content hashes unreproducible — nothing in src ever
+      // read them. Release identity comes from VITE_RELEASE_VERSION (the deploy
+      // commit sha), which is what Rollbar matches sourcemaps against.
     },
 
     // Dependency optimization
