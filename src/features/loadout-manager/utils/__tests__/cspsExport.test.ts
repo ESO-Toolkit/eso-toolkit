@@ -11,13 +11,12 @@ import '@/test/initItemData';
 // Doctor), and resolveApparelWeight resolves their set names via the oracle.
 import '../itemIconResolver';
 
+import type { Build, BuildSetup } from '../../../build-editor/types/build.types';
 import { convertBuildToCSPS, exportBuildToCSPSLua } from '../../../build-editor/utils/cspsExport';
 import {
   convertCSPSCharacterToBuild,
   parseCSPSInput,
 } from '../../../build-editor/utils/cspsImport';
-import type { Build, BuildSetup } from '../../../build-editor/types/build.types';
-import { parseLuaAssignments } from '../wizardsWardrobeSavedVariables';
 import {
   detectCSPSData,
   extractCSPSCharacters,
@@ -27,6 +26,7 @@ import {
   parseHotbar,
   parseAttributes,
 } from '../cspsConverter';
+import { parseLuaAssignments } from '../wizardsWardrobeSavedVariables';
 
 // ── Helpers ──────────────────────────────────────────────────────────
 

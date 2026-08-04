@@ -1,5 +1,5 @@
-import React from 'react';
 import { act, render, waitFor } from '@testing-library/react';
+import React from 'react';
 import { MemoryRouter, Route, Routes, useNavigate } from 'react-router-dom';
 
 import { AnalyticsListener } from './AnalyticsListener';

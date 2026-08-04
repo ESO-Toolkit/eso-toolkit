@@ -11,8 +11,8 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 
-import { PublishBuildDialog } from '../PublishBuildDialog';
 import type { HubBuild } from '../../types/build-hub.types';
+import { PublishBuildDialog } from '../PublishBuildDialog';
 
 const mockCreate = jest.fn();
 const mockUpdate = jest.fn();

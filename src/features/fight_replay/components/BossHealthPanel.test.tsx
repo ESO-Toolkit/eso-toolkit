@@ -12,11 +12,12 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 
-import { BossHealthPanel } from './BossHealthPanel';
 import {
   ActorPosition,
   TimestampPositionLookup,
 } from '../../../workers/calculations/CalculateActorPositions';
+
+import { BossHealthPanel } from './BossHealthPanel';
 
 function makeLookup(actors: ActorPosition[]): TimestampPositionLookup {
   const positionsByTimestamp: Record<number, Record<number, ActorPosition>> = { 0: {} };

@@ -1,5 +1,5 @@
-import { deflateRawSync } from 'node:zlib';
 import { DecompressionStream as NodeDecompressionStream } from 'node:stream/web';
+import { deflateRawSync } from 'node:zlib';
 
 import type { PlayerDetailsEntry } from '@/types/playerDetails';
 

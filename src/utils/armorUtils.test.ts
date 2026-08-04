@@ -4,9 +4,10 @@
  */
 
 import { ArmorType, WeaponType, GearSlot, GearTrait } from '../types/playerDetails';
+import type { PlayerGear } from '../types/playerDetails';
+
 import { getArmorWeightCounts, MythicArmorId, resolveArmorType } from './armorUtils';
 import { ItemQuality } from './gearUtilities';
-import type { PlayerGear } from '../types/playerDetails';
 
 describe('armorUtils', () => {
   const createMockGear = (type: ArmorType | WeaponType, id = 1): PlayerGear => ({

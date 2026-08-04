@@ -370,7 +370,7 @@ describe('fetchSummaryTables', () => {
     const client = makeClient(damagePayload, deathsPayload);
     const result = await fetchSummaryTables({
       reportCode: 'abc',
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       client: client as any,
       fightIds: [11, 13, 55, 57],
       totalActiveDuration: 10_000,
@@ -391,7 +391,7 @@ describe('fetchSummaryTables', () => {
     const client = makeClient(JSON.stringify(damagePayload), JSON.stringify(deathsPayload));
     const result = await fetchSummaryTables({
       reportCode: 'abc',
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       client: client as any,
       fightIds: [11],
       totalActiveDuration: 10_000,
@@ -404,7 +404,7 @@ describe('fetchSummaryTables', () => {
     const client = makeClient(damagePayload, null);
     const result = await fetchSummaryTables({
       reportCode: 'abc',
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       client: client as any,
       fightIds: [1],
       totalActiveDuration: 10_000,
@@ -418,7 +418,7 @@ describe('fetchSummaryTables', () => {
       const client = makeClient(damagePayload, deaths);
       return fetchSummaryTables({
         reportCode: 'abc',
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         client: client as any,
         fightIds: [1],
         totalActiveDuration: 10_000,

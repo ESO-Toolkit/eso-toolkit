@@ -1,8 +1,9 @@
-import React from 'react';
+import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import React from 'react';
+
 import '@testing-library/jest-dom';
-import { ThemeProvider, createTheme } from '@mui/material/styles';
 
 import { BuffUptime } from './BuffUptimeProgressBar';
 import { BuffUptimesView } from './BuffUptimesView';

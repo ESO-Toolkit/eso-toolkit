@@ -15,9 +15,9 @@
  * Minor Berserk drifting in at ~275ms light-attack cadence from another source).
  */
 
+import type { BuffEvent } from '../../../../types/combatlogEvents';
 import { computeScribingDetection } from '../scribingDetectionAnalysis';
 import type { CombatEventData } from '../scribingDetectionAnalysis';
-import type { BuffEvent } from '../../../../types/combatlogEvents';
 
 const SHOCKING_BANNER = 217706; // Banner Bearer (shock-damage focus) — the scribed skill in the log
 const MINOR_COURAGE = 147417; // the id real logs emit (was missing from the dataset pre-v6.4)

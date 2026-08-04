@@ -6,13 +6,14 @@
  * to avoid complications with async worker operations.
  */
 
-import { Remote } from 'comlink';
+import { Remote, releaseProxy } from 'comlink';
 
 import { ILogger } from '../utils/logger';
 
 import { SharedComputationWorker } from './SharedWorker';
-import { WorkerPool } from './WorkerPool';
 import { WorkerPoolConfig } from './types';
+import { createSharedWorker } from './workerFactories';
+import { WorkerPool } from './WorkerPool';
 
 // Mock the workerFactories module
 jest.mock('./workerFactories', () => ({
@@ -27,9 +28,6 @@ jest.mock('comlink', () => {
     releaseProxy: releaseProxySym,
   };
 });
-
-import { createSharedWorker } from './workerFactories';
-import { releaseProxy } from 'comlink';
 
 const mockCreateSharedWorker = createSharedWorker as jest.MockedFunction<typeof createSharedWorker>;
 

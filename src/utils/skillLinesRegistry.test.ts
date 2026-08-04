@@ -1,3 +1,5 @@
+import type { SkillLineData } from '../data/types/skill-line-types';
+
 import {
   SKILL_LINES_REGISTRY,
   ALL_SKILL_LINES,
@@ -5,7 +7,6 @@ import {
   findSkillById,
   getClassKey,
 } from './skillLinesRegistry';
-import type { SkillLineData } from '../data/types/skill-line-types';
 
 jest.mock('../data/skill-lines/class', () => ({
   ardentFlame: {

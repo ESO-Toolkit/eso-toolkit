@@ -1,3 +1,5 @@
+import { getBaseUrl } from '../../utils/envUtils';
+
 import {
   setPkceCodeVerifier,
   getPkceCodeVerifier,
@@ -21,7 +23,6 @@ import {
   buildAuthUrl,
   parseAppAuthPort,
 } from './auth';
-import { getBaseUrl } from '../../utils/envUtils';
 
 jest.mocked(getBaseUrl).mockReturnValue('https://esotk.com/');
 

@@ -1,8 +1,8 @@
 import { createMockState } from '../../test/utils/reduxMockFactories';
 import { DamageEvent } from '../../types/combatlogEvents';
 import { RootState } from '../storeWithHistory';
-
 import { resolveCacheKey } from '../utils/keyedCacheState';
+
 import { selectDamageEventsByPlayer } from './damageEventsSelectors';
 
 // Helper to create state with specific damage events

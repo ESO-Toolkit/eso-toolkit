@@ -1,9 +1,10 @@
+import type { DamageEvent } from '../types/combatlogEvents';
+
 import {
   calculateActiveCombatTime,
   filterDataPointsByActiveCombat,
   isTimestampInActiveCombat,
 } from './activeCombatTimeUtils';
-import type { DamageEvent } from '../types/combatlogEvents';
 
 describe('activeCombatTimeUtils', () => {
   const FIGHT_START = 10000;

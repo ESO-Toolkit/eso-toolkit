@@ -46,8 +46,9 @@ jest.mock('../../EsoLogsClientContext', () => ({
 }));
 
 // Now import after mocking
-import { AuthProvider, useAuth } from './AuthContext';
 import { checkUserBan } from '../../utils/banlist';
+
+import { AuthProvider, useAuth } from './AuthContext';
 
 // Mock localStorage
 const mockLocalStorage = {

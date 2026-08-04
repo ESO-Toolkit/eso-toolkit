@@ -10,9 +10,9 @@ import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { useState } from 'react';
 
-import { SkillBarPicker } from '../SkillBarPicker';
 import { searchSkills } from '../../../../loadout-manager/data/skillLineSkills';
 import type { SkillsConfig } from '../../../../loadout-manager/types/loadout.types';
+import { SkillBarPicker } from '../SkillBarPicker';
 
 const emptySkills: SkillsConfig = { 0: {}, 1: {} };
 

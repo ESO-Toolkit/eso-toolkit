@@ -3,6 +3,8 @@
  * Tests fight time conversion utilities and time range validation
  */
 
+import { FightFragment } from '../graphql/gql/graphql';
+
 import {
   fightTimeToTimestamp,
   timestampToFightTime,
@@ -10,7 +12,6 @@ import {
   isTimestampInFight,
   clampFightTime,
 } from './fightTimeUtils';
-import { FightFragment } from '../graphql/gql/graphql';
 
 // Mock fight data helper
 const createMockFight = (startTime: number, endTime: number): FightFragment => ({

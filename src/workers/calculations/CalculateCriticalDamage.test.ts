@@ -1,12 +1,9 @@
-import { calculateCriticalDamageData } from './CalculateCriticalDamage';
-import { CriticalDamageValues, KnownAbilities } from '../../types/abilities';
-import {
-  createMockCombatantInfoEvent,
-  createMockBuffEvent,
-  createMockDebuffEvent,
-} from '../../test/utils/combatLogMockFactories';
 import { PlayerDetailsWithRole } from '../../store/player_data/playerDataSlice';
+import { createMockCombatantInfoEvent } from '../../test/utils/combatLogMockFactories';
+import { CriticalDamageValues, KnownAbilities } from '../../types/abilities';
 import type { DamageEvent } from '../../types/combatlogEvents';
+
+import { calculateCriticalDamageData } from './CalculateCriticalDamage';
 
 describe('CalculateCriticalDamage', () => {
   const FIGHT_START = 10000;

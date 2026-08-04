@@ -1,3 +1,4 @@
+import type { DecisiveConfig, UltimateSource } from '../../shared/types';
 import { applyCostReduction, totalReductionFraction, CostReduction } from '../cost';
 import {
   expectedDecisivePerInstance,
@@ -6,7 +7,6 @@ import {
   timeToUltimate,
 } from '../expectedValue';
 import { runMonteCarlo } from '../monteCarlo';
-import type { DecisiveConfig, UltimateSource } from '../../shared/types';
 
 const SOURCES: UltimateSource[] = [
   {

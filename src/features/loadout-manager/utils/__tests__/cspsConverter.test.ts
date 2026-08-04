@@ -24,7 +24,6 @@ import {
   serializeChampionPoints,
   type CSPSSavedVariables,
   type CSPSCharacterData,
-  type CSPSComp1,
 } from '../cspsConverter';
 
 // ── Helper to build minimal CSPS saved variables ─────────────────────

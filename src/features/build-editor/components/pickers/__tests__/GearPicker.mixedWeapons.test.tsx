@@ -10,11 +10,11 @@
 // Populate itemIdMap synchronously with the REAL generated data — must be
 // the FIRST import (module-scope reads elsewhere depend on it).
 import '@/test/initItemData';
-
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 
 import { getItemsBySlot } from '../../../../loadout-manager/data/itemIdMap';
+import { GearPickerDialog } from '../GearPicker';
 
 // Pick a real weapon set and split its items: the first resolves to a specific
 // type, the rest are treated as unresolved (stale data). The mocked resolver
@@ -49,8 +49,6 @@ jest.mock('@features/loadout-manager/utils/itemIconResolver', () => {
     },
   };
 });
-
-import { GearPickerDialog } from '../GearPicker';
 
 const renderWeaponPicker = () =>
   render(

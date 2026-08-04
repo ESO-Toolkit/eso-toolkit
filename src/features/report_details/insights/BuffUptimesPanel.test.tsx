@@ -1,10 +1,10 @@
 import { KnownAbilities } from '../../../types/abilities';
+import { BuffLookupData } from '../../../utils/BuffLookupUtils';
 import {
   computeBuffUptimes,
   BuffInterval,
   BuffUptimeCalculatorOptions,
 } from '../../../utils/buffUptimeCalculator';
-import { BuffLookupData } from '../../../utils/BuffLookupUtils';
 
 /**
  * Tests for Aggressive Horn buff tracking (ESO-607).

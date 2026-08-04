@@ -19,11 +19,11 @@
  * which jsdom does not ship; the `node` environment provides spec-compatible globals.
  */
 
+import { deflateRawSync, inflateRawSync } from 'zlib';
+
 import { createDefaultRoster } from '../types/roster';
 import type { RaidRoster } from '../types/roster';
 import type { TrialBuildOverrides } from '../types/trial-encounters';
-
-import { deflateRawSync, inflateRawSync } from 'zlib';
 
 import {
   type CompactRoster,

@@ -2,8 +2,9 @@
  * Tests for Buff Checklist Utilities
  */
 
-import { BuffEvent, CombatantInfoEvent } from '../../../types/combatlogEvents';
 import type { AbilityData } from '../../../contexts/AbilityIdMapperContext';
+import { BuffEvent, CombatantInfoEvent } from '../../../types/combatlogEvents';
+
 import { analyzeBuffChecklist } from './buffChecklistUtils';
 
 // Mock ability mapper

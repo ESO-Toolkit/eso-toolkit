@@ -1,4 +1,8 @@
 import React from 'react';
+
+import { abilityIdMapper } from './abilityIdMapper';
+import { type SkillNode } from './skillLinesRegistry';
+import { findSkillByName, getClassKey } from './skillLinesRegistry';
 import {
   mapSkillToTooltipProps,
   buildTooltipPropsFromAbilityId,
@@ -6,8 +10,6 @@ import {
   buildTooltipProps,
   type MapSkillOptions,
 } from './skillTooltipMapper';
-import { SkillTooltipProps } from '../components/SkillTooltip';
-import { type SkillNode } from './skillLinesRegistry';
 
 // Mock the dependencies
 jest.mock('./abilityIdMapper', () => ({
@@ -25,38 +27,10 @@ jest.mock('./skillLinesRegistry', () => ({
 }));
 
 // Import the mocked modules for type assertions
-import { abilityIdMapper } from './abilityIdMapper';
-import { findSkillByName, getClassKey } from './skillLinesRegistry';
 
 const mockAbilityIdMapper = abilityIdMapper as jest.Mocked<typeof abilityIdMapper>;
 const mockFindSkillByName = findSkillByName as jest.MockedFunction<typeof findSkillByName>;
 const mockGetClassKey = getClassKey as jest.MockedFunction<typeof getClassKey>;
-
-// Helper function to create mock ability data with required properties
-const createMockAbilityData = (overrides = {}) => ({
-  gameID: 123,
-  name: 'Test Ability',
-  icon: 'test_icon.png',
-  ...overrides,
-});
-
-// Helper function to create mock skill search result with required properties
-const createMockSkillSearchResult = (overrides = {}) => ({
-  node: {
-    name: 'Test Ability',
-    description: 'Test description',
-    cost: '100 Magicka',
-  },
-  skillLineName: 'Test Line',
-  skillLineData: {
-    class: 'Test Class',
-    skillLines: {},
-  },
-  category: 'classes' as const,
-  abilityType: 'actives' as const,
-  parent: undefined,
-  ...overrides,
-});
 
 describe('skillTooltipMapper', () => {
   beforeEach(() => {
@@ -604,7 +578,7 @@ describe('skillTooltipMapper', () => {
       // Note: buildTooltipPropsFromAbilityId calls findSkillByName internally when abilityData.name exists
       mockFindSkillByName.mockReturnValue(null); // Simulate fallback case
 
-      const result = buildTooltipProps({
+      buildTooltipProps({
         abilityId: 123,
         abilityName: 'Some Other Ability',
         classKey: 'dragonknight',

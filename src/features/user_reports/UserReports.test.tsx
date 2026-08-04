@@ -1,8 +1,10 @@
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
-import '@testing-library/jest-dom';
-import { MemoryRouter } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { Provider } from 'react-redux';
+import { MemoryRouter } from 'react-router-dom';
+
+import '@testing-library/jest-dom';
+
 import { LoggerProvider } from '../../contexts/LoggerContext';
 import { createMockStore } from '../../test/utils/createMockStore';
 
@@ -82,7 +84,6 @@ jest.mock('../../graphql/gql/graphql', () => ({
 }));
 
 const mockGetCurrentUserDocument = { __mock: 'GetCurrentUserDocument' };
-const mockGetUserReportsDocument = { __mock: 'GetUserReportsDocument' };
 
 const mockUserData = {
   userData: {

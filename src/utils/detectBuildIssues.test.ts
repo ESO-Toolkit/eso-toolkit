@@ -1,5 +1,4 @@
 import { PlayerGear, ArmorType, WeaponType, GearTrait } from '../types/playerDetails';
-import { ItemQuality } from './gearUtilities';
 
 import { BuffLookupData } from './BuffLookupUtils';
 import {
@@ -8,6 +7,7 @@ import {
   GearLevelIssue,
   GearQualityIssue,
 } from './detectBuildIssues';
+import { ItemQuality } from './gearUtilities';
 
 describe('detectBuildIssues', () => {
   // Mock empty BuffLookupData for tests that don't need buff checking

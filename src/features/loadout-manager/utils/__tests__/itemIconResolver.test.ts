@@ -27,8 +27,8 @@ import {
   isTwoHandedWeapon,
   isWeaponTypeResolved,
   parseWeaponTypeFromIconUrl,
+  preloadIconData,
 } from '../itemIconResolver';
-import { preloadIconData } from '../itemIconResolver';
 
 beforeAll(async () => {
   await preloadIconData();

@@ -1,8 +1,8 @@
 import { BuffEvent, DebuffEvent } from '../../types/combatlogEvents';
-import { resolveCacheKey } from '../utils/keyedCacheState';
-import type { HostileBuffEventsEntry } from '../events_data/hostileBuffEventsSlice';
 import type { DebuffEventsEntry } from '../events_data/debuffEventsSlice';
+import type { HostileBuffEventsEntry } from '../events_data/hostileBuffEventsSlice';
 import { RootState } from '../storeWithHistory';
+import { resolveCacheKey } from '../utils/keyedCacheState';
 
 import {
   selectHostileBuffLookup,

@@ -6,11 +6,13 @@
  * for Shattering Knife skill from Player 1 in fight 11 of report m2Y9FqdpMjcaZh4R
  */
 
-import React from 'react';
-import { render } from '@testing-library/react';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
-import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
+import { render } from '@testing-library/react';
+import React from 'react';
+import { Provider } from 'react-redux';
+
+import { useSkillScribingData } from '../features/scribing/hooks/useScribingDetection';
 
 import { SkillTooltip } from './SkillTooltip';
 import type { SkillTooltipProps } from './SkillTooltip';
@@ -31,7 +33,6 @@ jest.mock('../features/scribing/hooks/useScribingDetection', () => ({
 }));
 
 // Import the mocked hook
-import { useSkillScribingData } from '../features/scribing/hooks/useScribingDetection';
 
 const mockUseSkillScribingData = useSkillScribingData as jest.MockedFunction<
   typeof useSkillScribingData

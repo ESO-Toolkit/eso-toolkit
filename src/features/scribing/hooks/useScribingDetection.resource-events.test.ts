@@ -13,6 +13,7 @@
  */
 
 import { describe, it, expect } from '@jest/globals';
+
 import type {
   UnifiedCastEvent,
   ResourceChangeEvent,

@@ -1,8 +1,8 @@
 import { createMockState } from '../../test/utils/reduxMockFactories';
 import { HealEvent } from '../../types/combatlogEvents';
 import { RootState } from '../storeWithHistory';
-
 import { resolveCacheKey } from '../utils/keyedCacheState';
+
 import {
   selectHealingEvents,
   selectHealingEventsEntryForContext,

@@ -1,11 +1,14 @@
-import React, { useEffect, useRef } from 'react';
 import { act, renderHook } from '@testing-library/react';
+import React, { useEffect, useRef } from 'react';
 import { Provider } from 'react-redux';
-import { createStore, combineReducers, Store } from 'redux';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { createStore, combineReducers, Store } from 'redux';
 
+import { ReportFightProvider, useReportFightDetailsNavigation } from './ReportFightContext';
 import { setSelectedTargetIds } from './store/ui/uiSlice';
 import { useAppDispatch } from './store/useAppDispatch';
+import { trackEvent } from './utils/analytics';
+import { TabId } from './utils/getSkeletonForTab';
 
 jest.mock('./contexts/AbilityIdMapperContext', () => ({
   AbilityIdMapperProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
@@ -15,10 +18,6 @@ jest.mock('./utils/analytics', () => ({
   trackEvent: jest.fn(),
   hashReportCode: (code: string) => `h_${code}`,
 }));
-
-import { ReportFightProvider, useReportFightDetailsNavigation } from './ReportFightContext';
-import { TabId } from './utils/getSkeletonForTab';
-import { trackEvent } from './utils/analytics';
 
 // Create a test hook that mimics the ReportFightProvider's target clearing behavior
 function useTestFightTargetClearer(fightId: string | null | undefined) {

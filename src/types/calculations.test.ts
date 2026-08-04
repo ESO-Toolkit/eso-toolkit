@@ -437,6 +437,7 @@ describe('calculations types', () => {
       const errorTask: BaseCalculationTask<string> = {
         data: 'invalid-data',
       };
+      expect(errorTask.data).toBe('invalid-data');
 
       const errorResult: BaseCalculationResult<never> = {
         success: false,
@@ -569,6 +570,7 @@ describe('calculations types', () => {
           buffIds: ['major_force', 'major_sorcery'],
         },
       };
+      expect(buffTask.data.buffIds).toEqual(['major_force', 'major_sorcery']);
 
       const buffResult: BaseCalculationResult<{
         uptime: Record<string, number>;

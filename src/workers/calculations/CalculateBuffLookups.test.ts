@@ -1,16 +1,16 @@
-import { calculateBuffLookup } from './CalculateBuffLookups';
-import { KnownAbilities } from '../../types/abilities';
 import {
   createMockBuffEvent,
   createMockDebuffEvent,
   createMockRemoveBuffEvent,
   createMockRemoveDebuffEvent,
 } from '../../test/utils/combatLogMockFactories';
+import { KnownAbilities } from '../../types/abilities';
+
+import { calculateBuffLookup } from './CalculateBuffLookups';
 
 describe('CalculateBuffLookups', () => {
   const FIGHT_START = 10000;
   const FIGHT_END = 30000;
-  const PLAYER_ID = 100;
   const TARGET_ID = 200;
 
   describe('calculateBuffLookup', () => {

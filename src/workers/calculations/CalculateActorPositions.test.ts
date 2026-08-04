@@ -1,7 +1,7 @@
-import { FightFragment, ReportActorFragment } from '../../graphql/gql/graphql';
-import { PlayerDetailsWithRole } from '../../store/player_data/playerDataSlice';
-import { DamageEvent, Resources, CastEvent } from '../../types/combatlogEvents';
-import { KnownAbilities } from '../../types/abilities';
+import {
+  createMockDeathEvent,
+  createMockResourceChangeEvent,
+} from '../../test/utils/combatLogMockFactories';
 import {
   createEnhancedMockFight,
   createEnhancedMockResources,
@@ -9,11 +9,6 @@ import {
   createMockPlayersById,
   createMockActorsById,
 } from '../../test/utils/enhancedMockFactories';
-import {
-  createMockDeathEvent,
-  createMockResourceChangeEvent,
-} from '../../test/utils/combatLogMockFactories';
-import { BuffLookupData } from '../../utils/BuffLookupUtils';
 import { convertCoordinatesWithBottomLeft, convertRotation } from '../../utils/coordinateUtils';
 
 import {
@@ -21,7 +16,6 @@ import {
   ActorPositionsCalculationTask,
   FightEvents,
   TimestampPositionLookup,
-  ActorPosition,
   getActorPositionAtClosestTimestamp,
   getAllActorPositionsAtTimestamp,
 } from './CalculateActorPositions';

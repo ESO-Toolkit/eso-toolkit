@@ -1,6 +1,7 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 
 import type { UserReportSummaryFragment } from '../../../graphql/gql/graphql';
+
 import { ReportCard } from './ReportCard';
 
 const report: UserReportSummaryFragment = {

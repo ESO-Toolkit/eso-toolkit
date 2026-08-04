@@ -1,11 +1,9 @@
 import { configureStore } from '@reduxjs/toolkit';
 
-import { clearAllEvents } from './clearAction';
-import { eventsReducer } from './index';
+import { resolveCacheKey } from '../utils/keyedCacheState';
 
-// Import individual slice actions to set up test data
-import { clearCastEvents } from './castEventsSlice';
-import castEventsReducer from './castEventsSlice';
+import castEventsReducer, { clearCastEvents } from './castEventsSlice';
+import { clearAllEvents } from './clearAction';
 import combatantInfoEventsReducer from './combatantInfoEventsSlice';
 import damageEventsReducer from './damageEventsSlice';
 import deathEventsReducer from './deathEventsSlice';
@@ -14,7 +12,10 @@ import friendlyBuffEventsReducer from './friendlyBuffEventsSlice';
 import healingEventsReducer from './healingEventsSlice';
 import hostileBuffEventsReducer from './hostileBuffEventsSlice';
 import resourceEventsReducer from './resourceEventsSlice';
-import { resolveCacheKey } from '../utils/keyedCacheState';
+
+import { eventsReducer } from './index';
+
+// Import individual slice actions to set up test data
 
 // Define store type
 const createTestStore = () =>

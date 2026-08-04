@@ -3,8 +3,9 @@ import { configureStore, combineReducers } from '@reduxjs/toolkit';
 import { DATA_FETCH_CACHE_TIMEOUT } from '../../Constants';
 import { EsoLogsClient } from '../../esologsClient';
 import { FightFragment, HostilityType } from '../../graphql/gql/graphql';
-import { ResourceChangeEvent } from '../../types/combatlogEvents';
 import { createMockResourceChangeEvent } from '../../test/utils/combatLogMockFactories';
+import { ResourceChangeEvent } from '../../types/combatlogEvents';
+import { resolveCacheKey } from '../utils/keyedCacheState';
 
 import resourceEventsReducer, {
   ResourceEventsState,
@@ -13,7 +14,6 @@ import resourceEventsReducer, {
   clearResourceEventsForContext,
   trimResourceEventsCache,
 } from './resourceEventsSlice';
-import { resolveCacheKey } from '../utils/keyedCacheState';
 
 jest.mock('../../esologsClient');
 

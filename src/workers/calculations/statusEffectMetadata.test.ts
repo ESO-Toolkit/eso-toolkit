@@ -1,9 +1,10 @@
+import { KnownAbilities } from '../../types/abilities';
+
 import {
   getStatusEffectIcon,
   getStatusEffectName,
   STATUS_EFFECT_METADATA,
 } from './statusEffectMetadata';
-import { KnownAbilities } from '../../types/abilities';
 
 // The exact set of status-effect ability ids the worker tracks. Kept in sync
 // with STATUS_EFFECT_BUFF_ABILITIES + STATUS_EFFECT_DEBUFF_ABILITIES in

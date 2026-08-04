@@ -2,8 +2,8 @@ import { render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import '@testing-library/jest-dom';
 
-import { AboutPage } from '../AboutPage';
 import { getBuildInfoAsync, getDisplayVersion, isDevelopmentBuild } from '../../utils/cacheBusting';
+import { AboutPage } from '../AboutPage';
 
 jest.mock('../../utils/cacheBusting', () => ({
   getBuildInfoAsync: jest.fn(),

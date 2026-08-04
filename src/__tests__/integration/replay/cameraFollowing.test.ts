@@ -15,22 +15,9 @@
  * - Proper cleanup when switching actors or unlocking camera
  */
 
-import { renderHook, act } from '@testing-library/react';
-import React, { useRef } from 'react';
-import { render } from '@testing-library/react';
-import type { TimestampPositionLookup } from '../../../workers/calculations/CalculateActorPositions';
-import { createMockPositionLookup, getPositionAtTimestamp } from './utils/testHelpers';
+import { act } from '@testing-library/react';
 
-// Mock CameraFollower component behavior
-interface CameraFollowerTestProps {
-  lookup: TimestampPositionLookup | null;
-  timeRef: React.RefObject<number>;
-  followingActorIdRef: React.RefObject<number | null>;
-  onCameraUpdate?: (
-    position: [number, number, number],
-    lookingAt: [number, number, number],
-  ) => void;
-}
+import { createMockPositionLookup, getPositionAtTimestamp } from './utils/testHelpers';
 
 describe('ESO-397: Camera Following Flow', () => {
   const FIGHT_DURATION = 60000; // 60 seconds
@@ -150,7 +137,6 @@ describe('ESO-397: Camera Following Flow', () => {
 
     it('should update camera target as actor moves through time', () => {
       const lookup = createMockPositions();
-      const timeRef = { current: 0 };
       const followingActorIdRef = { current: ACTOR_1_ID };
 
       // Get position at different times
@@ -183,7 +169,7 @@ describe('ESO-397: Camera Following Flow', () => {
       expect(actor1Position?.position[0]).toBeCloseTo(25, 1); // 10 + 15
 
       // Actor 2 should be somewhere on the circle
-      const [x, y, z] = actor2Position!.position;
+      const [x, , z] = actor2Position!.position;
       const distanceFromCenter = Math.sqrt(Math.pow(x - 30, 2) + Math.pow(z - 30, 2));
       expect(distanceFromCenter).toBeCloseTo(10, 1); // Radius of 10
     });
@@ -488,7 +474,7 @@ describe('ESO-397: Camera Following Flow', () => {
       expect(positions.length).toBeGreaterThan(2);
 
       // All positions should be on the circle (radius ~10 from center [30, 0, 30])
-      positions.forEach(([x, y, z]) => {
+      positions.forEach(([x, , z]) => {
         const distanceFromCenter = Math.sqrt(Math.pow(x - 30, 2) + Math.pow(z - 30, 2));
         expect(distanceFromCenter).toBeCloseTo(10, 0);
       });

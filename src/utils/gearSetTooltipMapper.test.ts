@@ -1,8 +1,9 @@
+import type { PlayerGear } from '../types/playerDetails';
+import { ArmorType, GearSlot, GearTrait } from '../types/playerDetails';
+
 import { createGearSetTooltipProps, getGearSetTooltipPropsByName } from './gearSetTooltipMapper';
 import { ItemQuality } from './gearUtilities';
 import type { PlayerGearSetRecord } from './gearUtilities';
-import type { PlayerGear } from '../types/playerDetails';
-import { ArmorType, GearSlot, GearTrait } from '../types/playerDetails';
 
 jest.mock('../data/Gear Sets/heavy', () => ({
   heavySet1: {

@@ -2,11 +2,11 @@
  * @jest-environment jsdom
  */
 
+import type { ChampionPointsConfig, WizardWardrobeExport } from '../../types/loadout.types';
 import {
   convertAllCharactersToLoadoutState,
   convertLoadoutStateToWizardWardrobe,
 } from '../wizardWardrobeConverter';
-import type { ChampionPointsConfig, WizardWardrobeExport } from '../../types/loadout.types';
 
 describe('wizardWardrobeConverter', () => {
   it('normalizes champion point arrays into 1-based slot maps', () => {

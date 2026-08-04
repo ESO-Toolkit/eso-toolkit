@@ -1,12 +1,13 @@
 import type { FightFragment, ReportFragment } from '../../graphql/gql/graphql';
+import type { RootState } from '../types';
+import { resolveCacheKey } from '../utils/keyedCacheState';
+
 import {
   selectReportFights,
   selectReportFightsForContext,
   selectReportRegistryEntryForContext,
 } from './reportSelectors';
 import type { ReportEntry, ReportState } from './reportSlice';
-import type { RootState } from '../types';
-import { resolveCacheKey } from '../utils/keyedCacheState';
 
 const createFight = (id: number): FightFragment =>
   ({

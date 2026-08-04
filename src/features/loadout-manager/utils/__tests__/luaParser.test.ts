@@ -2,12 +2,12 @@
  * @jest-environment jsdom
  */
 
+import type { WizardWardrobeExport } from '../../types/loadout.types';
 import {
   parseLuaSavedVariables,
   extractWizardWardrobeData,
   isWizardWardrobeFormat,
 } from '../luaParser';
-import type { WizardWardrobeExport } from '../../types/loadout.types';
 
 describe('Lua Parser', () => {
   describe('parseLuaSavedVariables', () => {

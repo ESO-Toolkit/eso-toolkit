@@ -1,11 +1,11 @@
+import { ChampionPointAbilityId } from '@/types/champion-points';
+
 import {
   parseLuaAssignments,
   parseWizardsWardrobeSavedVariables,
   serializeWizardsWardrobeSavedVariables,
   type WizardWardrobeSavedVariables,
 } from '../wizardsWardrobeSavedVariables';
-
-import { ChampionPointAbilityId } from '@/types/champion-points';
 
 describe('wizardsWardrobeSavedVariables', () => {
   it('parses WizardsWardrobeSV tables', () => {

@@ -3,21 +3,22 @@
  */
 
 import {
+  STAMINA_FOOD,
+  MAGICKA_FOOD,
+  INCREASE_MAX_HEALTH_AND_STAMINA,
+  MAX_STAMINA_AND_MAGICKA_RECOVERY,
+  KnownAbilities,
+  SYNERGY_ABILITY_IDS,
+} from '../../../types/abilities';
+import {
   BeginCastEvent,
   BuffEvent,
   CastEvent,
   DamageEvent,
   UnifiedCastEvent,
 } from '../../../types/combatlogEvents';
-import {
-  STAMINA_FOOD,
-  MAGICKA_FOOD,
-  INCREASE_MAX_HEALTH_AND_STAMINA,
-  TRI_STAT_FOOD,
-  MAX_STAMINA_AND_MAGICKA_RECOVERY,
-  KnownAbilities,
-  SYNERGY_ABILITY_IDS,
-} from '../../../types/abilities';
+import { TRIAL_DUMMY_BUFF_IDS } from '../constants/trialDummyConstants';
+
 import {
   detectFood,
   calculateCPM,
@@ -27,7 +28,6 @@ import {
   detectTrialDummyBuffs,
   LIGHT_ATTACK_ABILITY_IDS,
 } from './parseAnalysisUtils';
-import { TRIAL_DUMMY_BUFF_IDS } from '../constants/trialDummyConstants';
 
 describe('parseAnalysisUtils', () => {
   const PLAYER_ID = 1;

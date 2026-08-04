@@ -1,6 +1,7 @@
-import { calculateTouchOfZenStacks } from './CalculateTouchOfZenStacks';
 import { KnownAbilities } from '../../types/abilities';
 import { DamageEvent } from '../../types/combatlogEvents';
+
+import { calculateTouchOfZenStacks } from './CalculateTouchOfZenStacks';
 
 describe('CalculateTouchOfZenStacks', () => {
   const TARGET_ID = 200;

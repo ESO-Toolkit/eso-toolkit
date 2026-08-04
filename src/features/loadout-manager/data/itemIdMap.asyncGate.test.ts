@@ -48,7 +48,6 @@ function clearFetch(): void {
 function loadItemIdMap(): ItemIdMapModule {
   let mod!: ItemIdMapModule;
   jest.isolateModules(() => {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
     mod = require('./itemIdMap') as ItemIdMapModule;
   });
   return mod;

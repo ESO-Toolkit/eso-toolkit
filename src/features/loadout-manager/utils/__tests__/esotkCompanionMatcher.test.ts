@@ -1,5 +1,5 @@
-import type { CompanionSnapshot } from '../esotkCompanionParser';
 import { matchCompanionSnapshots, type MatchableReport } from '../esotkCompanionMatcher';
+import type { CompanionSnapshot } from '../esotkCompanionParser';
 
 function snap(
   partial: Partial<CompanionSnapshot> & { ts: number; char: string },

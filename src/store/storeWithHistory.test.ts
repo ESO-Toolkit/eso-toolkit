@@ -218,7 +218,6 @@ describe('storeWithHistory - Redux Persist Transform', () => {
 // the REAL transform so a persisted field missing from either of its two
 // spots (inbound allowlist / rehydrate defaults) fails here, not in the field.
 describe('storeWithHistory - real uiTransform', () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { uiTransform: realTransform } = jest.requireActual('./storeWithHistory');
 
   it('round-trips perfLowNoticeSeen through persist and rehydrate', () => {

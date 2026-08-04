@@ -1,4 +1,13 @@
 import Rollbar from 'rollbar';
+
+import {
+  ERROR_TRACKING_CONFIG,
+  ManualBugReport,
+  BugReportCategory,
+} from '../config/errorTrackingConfig';
+import { RootState } from '../store/storeWithHistory';
+
+import { hasErrorTrackingConsent } from './consentManager';
 import {
   initializeErrorTracking,
   captureApplicationContext,
@@ -9,19 +18,12 @@ import {
   addBreadcrumb,
   measurePerformance,
 } from './errorTracking';
-import {
-  ERROR_TRACKING_CONFIG,
-  ManualBugReport,
-  BugReportCategory,
-} from '../config/errorTrackingConfig';
-import { RootState } from '../store/storeWithHistory';
 
 // Mock consentManager — default: consent granted
 jest.mock('./consentManager', () => ({
   hasErrorTrackingConsent: jest.fn(() => true),
 }));
 
-import { hasErrorTrackingConsent } from './consentManager';
 const mockHasErrorTrackingConsent = hasErrorTrackingConsent as jest.MockedFunction<
   typeof hasErrorTrackingConsent
 >;

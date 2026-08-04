@@ -692,6 +692,8 @@ describe('workerTaskSliceFactory', () => {
         global.AbortController = class extends RealAbortController {
           constructor() {
             super();
+            // Capturing the instance RTK constructs is the whole point of this subclass.
+            // eslint-disable-next-line @typescript-eslint/no-this-alias
             abortControllerRef = this;
           }
         } as typeof AbortController;

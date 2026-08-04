@@ -2,8 +2,8 @@
  * Tests for role detection signal extraction
  */
 
-import { ArmorType, GearSlot, WeaponType } from '@/types/playerDetails';
 import { CombatantInfoEvent, DamageEvent, HealEvent } from '@/types/combatlogEvents';
+import { ArmorType, GearSlot, WeaponType } from '@/types/playerDetails';
 
 import { extractSignals, FightContext, RoleDetectionEvents } from '../extractSignals';
 

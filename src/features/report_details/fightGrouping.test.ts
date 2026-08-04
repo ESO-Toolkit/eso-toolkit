@@ -597,7 +597,7 @@ describe('edge cases', () => {
 // ── End-to-end checks against real committed ESO Logs reports ──────────────
 function loadSampleReport(code: string): { report: ReportFragment; fights: FightFragment[] } {
   const file = path.resolve(process.cwd(), 'public/sample-reports', code, 'report.json');
-  const raw = fs.readFileSync(file, 'utf8').replace(/^﻿/, '');
+  const raw = fs.readFileSync(file, 'utf8').replace(/^\uFEFF/, '');
   const json = JSON.parse(raw);
   const report = (json?.reportData?.report ?? json?.data?.reportData?.report) as ReportFragment;
   const fights = ((report as unknown as { fights?: FightFragment[] })?.fights ??
