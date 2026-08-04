@@ -395,13 +395,27 @@ export const DynamicMapTexture: React.FC<DynamicMapTextureProps> = ({
   // DynamicMapTexture instances, so disposing it on one unmount is a use-after-dispose
   // (blank/garbled floor) for every other instance and defeats the cross-mount cache.
   // clearMapTextureCache remains available for explicit app-level teardown.
+  // Split per-memo (not one effect keyed on all three) so an anisotropy/tier change — which rebuilds
+  // the fallback + mapless textures (dep: maxAnisotropy) but not the geometry (dep: size) — no longer
+  // disposes the still-mounted floor geometry out from under the live mesh. Each dispose fires only
+  // when its own resource is replaced or on unmount.
   useEffect(() => {
     return () => {
       geometry.dispose();
+    };
+  }, [geometry]);
+
+  useEffect(() => {
+    return () => {
       fallbackTexture.dispose();
+    };
+  }, [fallbackTexture]);
+
+  useEffect(() => {
+    return () => {
       maplessTexture.dispose();
     };
-  }, [geometry, fallbackTexture, maplessTexture]);
+  }, [maplessTexture]);
 
   return (
     <mesh

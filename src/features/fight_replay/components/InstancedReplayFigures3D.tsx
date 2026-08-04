@@ -824,17 +824,32 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
     return map;
   }, []);
 
+  // Dispose each memoized resource set ONLY when that set is itself replaced (or on unmount). Split
+  // into three per-memo effects rather than one keyed on [geometries, materials, glyphMaterials]:
+  // `materials` alone rebuilds on a barebones/quality toggle (dep: richMaterials), and the combined
+  // effect would then dispose the still-mounted geometries and glyph materials out from under the
+  // live instanced meshes (a visible actor flash until the next re-upload).
   useLayoutEffect(() => {
     return () => {
       Object.values(geometries).forEach((g) => g.dispose());
+    };
+  }, [geometries]);
+
+  useLayoutEffect(() => {
+    return () => {
       // material.dispose() does NOT dispose embedded textures; the aoBlob's alphaMap is created fresh
       // per mount (unlike the process-global glyph textures), so dispose it explicitly to avoid
       // leaking a 128² CanvasTexture on every mount/unmount cycle.
       materials.aoBlob.alphaMap?.dispose();
       Object.values(materials).forEach((m) => m.dispose());
+    };
+  }, [materials]);
+
+  useLayoutEffect(() => {
+    return () => {
       glyphMaterials.forEach((m) => m.dispose());
     };
-  }, [geometries, materials, glyphMaterials]);
+  }, [glyphMaterials]);
 
   // Dispose the loaded pose geometries when they are replaced or the component unmounts.
   useEffect(() => {

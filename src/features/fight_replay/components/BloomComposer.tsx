@@ -117,7 +117,20 @@ export const BloomComposer: React.FC<BloomComposerProps> = ({
     };
   }, [composer, composerRef]);
 
-  useEffect(() => () => composer.dispose(), [composer]);
+  // EffectComposer.dispose() frees only its own two render targets + copyPass — NOT the added
+  // passes. UnrealBloomPass owns 11 HalfFloat render targets (bright + 5 h-blur + 5 v-blur mips)
+  // released only by its OWN dispose(); RenderPass/OutputPass hold resources too. Dispose every pass
+  // before the composer so dropping bloom (governor tier drop, or a `samples` rebuild orphaning the
+  // old composer) actually frees that GPU memory instead of leaking it until nondeterministic GC.
+  useEffect(
+    () => () => {
+      for (const pass of composer.passes) {
+        (pass as { dispose?: () => void }).dispose?.();
+      }
+      composer.dispose();
+    },
+    [composer],
+  );
 
   return null;
 };

@@ -14,7 +14,7 @@ import {
   createMockResourceChangeEvent,
 } from '../../test/utils/combatLogMockFactories';
 import { BuffLookupData } from '../../utils/BuffLookupUtils';
-import { convertCoordinatesWithBottomLeft } from '../../utils/coordinateUtils';
+import { convertCoordinatesWithBottomLeft, convertRotation } from '../../utils/coordinateUtils';
 
 import {
   calculateActorPositions,
@@ -195,6 +195,94 @@ describe('calculateActorPositions', () => {
 
       const allPositions = getAllActorPositionsAtTimestamp(emptyLookup, 500);
       expect(allPositions).toEqual([]);
+    });
+  });
+
+  describe('facing interpolation', () => {
+    it('interpolates facing proportionally between samples (centi-radian wrap)', () => {
+      // Facing is stored in centi-radians (a full turn ≈ 628; convertRotation divides by 100). A real
+      // turn between two events must interpolate proportionally — the shortest-angle wrap has to be
+      // done in the centi-radian unit, not raw radians. With the old radian wrap any turn beyond
+      // ~1.8° folded into a tiny window, so the interpolated heading barely moved (or stepped
+      // backward) and then snapped at the next event. Here the actor turns from facing 0 to 200
+      // centi-radians over 1s; at the midpoint the heading must be ~100, not ~0.
+      const fight = createEnhancedMockFight({ startTime: 0, endTime: 3000 });
+      const events = createMockEvents();
+
+      const playerId = 101;
+      const enemyId = 202;
+      events.damage = [
+        createMockPositionalDamageEvent(
+          1000,
+          playerId,
+          enemyId,
+          createEnhancedMockResources(5000, 5000, 0),
+          createEnhancedMockResources(),
+        ),
+        createMockPositionalDamageEvent(
+          2000,
+          playerId,
+          enemyId,
+          createEnhancedMockResources(5000, 5000, 200),
+          createEnhancedMockResources(),
+        ),
+      ];
+
+      const result = calculateActorPositions({
+        fight,
+        events,
+        playersById: createMockPlayersById(),
+        actorsById: createMockActorsById(),
+      });
+
+      const mid = getActorPositionAtClosestTimestamp(result, playerId, 1500);
+      expect(mid).not.toBeNull();
+      // Heading at the midpoint ≈ convertRotation(100). The buggy radian wrap pinned it near
+      // convertRotation(0) (barely turned) — assert it is the interpolated value, not the start.
+      expect(mid?.rotation).toBeCloseTo(convertRotation(100), 1);
+      expect(mid?.rotation).not.toBeCloseTo(convertRotation(0), 1);
+    });
+
+    it('turns the SHORT way across the 0/full-turn seam', () => {
+      // From facing 620 (just shy of a full 628 turn) to facing 8: the short delta is +16 centi-rad
+      // (through the seam), NOT −612. The midpoint should sit near the seam (≈ 0 / a full turn), not
+      // halfway back around at ~314.
+      const fight = createEnhancedMockFight({ startTime: 0, endTime: 3000 });
+      const events = createMockEvents();
+
+      const playerId = 101;
+      const enemyId = 202;
+      events.damage = [
+        createMockPositionalDamageEvent(
+          1000,
+          playerId,
+          enemyId,
+          createEnhancedMockResources(5000, 5000, 620),
+          createEnhancedMockResources(),
+        ),
+        createMockPositionalDamageEvent(
+          2000,
+          playerId,
+          enemyId,
+          createEnhancedMockResources(5000, 5000, 8),
+          createEnhancedMockResources(),
+        ),
+      ];
+
+      const result = calculateActorPositions({
+        fight,
+        events,
+        playersById: createMockPlayersById(),
+        actorsById: createMockActorsById(),
+      });
+
+      const mid = getActorPositionAtClosestTimestamp(result, playerId, 1500);
+      expect(mid).not.toBeNull();
+      // Short-way midpoint facing = 620 + 16/2 = 628 ≡ a full turn. convertRotation is linear, so
+      // compare the raw interpolated heading rather than the wrapped angle: it must be far from the
+      // long-way midpoint (~314), i.e. it did NOT spin most of the way around.
+      expect(mid?.rotation).not.toBeCloseTo(convertRotation(314), 1);
+      expect(mid?.rotation).toBeCloseTo(convertRotation(628), 1);
     });
   });
 
