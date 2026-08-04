@@ -52,6 +52,49 @@ beforeEach(() => {
 });
 
 describe('useBuildClusters', () => {
+  /**
+   * A blanket "Ability <id>" fallback would mislabel gear sets, mundus and food
+   * as abilities — stating something false rather than merely being unhelpful.
+   */
+  it('falls back to a group-appropriate label for unresolved traits', async () => {
+    mockedRun.mockResolvedValue({
+      ...EMPTY_RESULT,
+      k: 1,
+      clusters: [
+        {
+          id: 'c0',
+          label: 'x',
+          size: 1,
+          share: 1,
+          memberParseIds: ['p1'],
+          medoidParseId: 'p1',
+          dps: { min: 0, q1: 0, median: 0, q3: 0, p90: 0, max: 0, mean: 0, count: 1 },
+          // Ids deliberately absent from the parses, so nothing resolves.
+          core: [
+            { group: 'frontBar', id: 987654, label: '', share: 1 },
+            { group: 'fivePieceSets', id: 987655, label: '', share: 1 },
+            { group: 'mundus', id: 987656, label: '', share: 1 },
+            { group: 'food', id: 987657, label: '', share: 1 },
+          ],
+          flex: [],
+          variations: [],
+          cohesion: 0,
+        },
+      ],
+    });
+
+    const { result } = renderHook(() => useBuildClusters(makeThreeArchetypeFixture()));
+    await waitFor(() => expect(result.current.result).not.toBeNull());
+
+    const byGroup = Object.fromEntries(
+      result.current.result!.clusters[0].core.map((t) => [t.group, t.label]),
+    );
+    expect(byGroup.frontBar).toBe('Ability 987654');
+    expect(byGroup.fivePieceSets).toBe('Set 987655');
+    expect(byGroup.mundus).toBe('Mundus 987656');
+    expect(byGroup.food).toBe('Food 987657');
+  });
+
   it('clusters a full set of parses', async () => {
     mockedRun.mockResolvedValue({ ...EMPTY_RESULT, k: 3 });
     const { result } = renderHook(() => useBuildClusters(makeThreeArchetypeFixture()));

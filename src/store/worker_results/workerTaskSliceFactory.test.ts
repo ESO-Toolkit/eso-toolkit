@@ -2,7 +2,7 @@ import { configureStore, combineReducers } from '@reduxjs/toolkit';
 
 import { workerManager } from '@/workers';
 import {
-  SharedComputationWorkerTaskType,
+  ReduxBackedWorkerTaskType,
   SharedWorkerInputType,
   SharedWorkerResultType,
 } from '@/workers/SharedWorker';
@@ -25,7 +25,10 @@ jest.mock('@/workers', () => ({
 describe('workerTaskSliceFactory', () => {
   let mockWorkerManager: jest.Mocked<typeof workerManager>;
 
-  const mockTaskName = 'calculateActorPositions' as SharedComputationWorkerTaskType;
+  // Must be the Redux-backed union, not the full worker task union: the wider one
+  // now includes clusterDpsBuilds, which deliberately has no slice and is not
+  // assignable to createWorkerTaskSlice's parameter.
+  const mockTaskName = 'calculateActorPositions' as ReduxBackedWorkerTaskType;
   const mockInput = { reportCode: 'test', fightId: 1 } as SharedWorkerInputType<
     typeof mockTaskName
   >;

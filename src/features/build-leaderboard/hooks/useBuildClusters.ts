@@ -12,7 +12,7 @@ import { buildCanonicalMaps, setDisplayName } from '../clustering/canonicalizati
 import { MIN_PARSES_TO_CLUSTER } from '../clustering/clusterBuilds';
 import { extractFeatureVectors } from '../clustering/featureExtraction';
 import { runBuildClustering } from '../clustering/runBuildClustering';
-import type { BuildCluster, ClusterBuildsResult } from '../types/clustering.types';
+import type { BuildCluster, ClusterBuildsResult, ClusterTrait } from '../types/clustering.types';
 import type { DpsParse } from '../types/dpsParses.types';
 
 /**
@@ -59,16 +59,40 @@ function buildLabelLookup(parses: readonly DpsParse[]): Map<string, string> {
   return labels;
 }
 
+/**
+ * Fallback label for a trait whose name we could not resolve.
+ *
+ * Group-aware on purpose: a blanket "Ability <id>" would mislabel gear sets,
+ * mundus and food as abilities, which is worse than a bare number — it states
+ * something false rather than merely being unhelpful.
+ */
+function fallbackLabel(group: ClusterTrait['group'], id: number | string): string {
+  if (typeof id !== 'number') return String(id);
+
+  switch (group) {
+    case 'frontBar':
+    case 'backBar':
+      return `Ability ${id}`;
+    case 'fivePieceSets':
+    case 'monsterSet':
+    case 'mythic':
+    case 'arena':
+      return `Set ${id}`;
+    case 'mundus':
+      return `Mundus ${id}`;
+    case 'food':
+      return `Food ${id}`;
+    default:
+      return String(id);
+  }
+}
+
 /** Fill in the human-readable labels the worker left blank. */
 function hydrateLabels(cluster: BuildCluster, labels: Map<string, string>): BuildCluster {
   const hydrate = (traits: BuildCluster['core']): BuildCluster['core'] =>
     traits.map((trait) => ({
       ...trait,
-      // Fall back to a labelled id rather than a bare number, so an unknown
-      // ability reads as missing data instead of looking like a UI bug.
-      label:
-        labels.get(`${trait.group}|${trait.id}`) ??
-        (typeof trait.id === 'number' ? `Ability ${trait.id}` : String(trait.id)),
+      label: labels.get(`${trait.group}|${trait.id}`) ?? fallbackLabel(trait.group, trait.id),
     }));
 
   const core = hydrate(cluster.core);
