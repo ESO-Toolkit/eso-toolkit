@@ -489,7 +489,7 @@ export function convertLogPlayersToRoster(
 
   const parsedTanks: TankSetup[] = tanks.map((tank, index) => {
     const gear = tank.combatantInfo?.gear ?? [];
-    const { fivePieceSets, monsterSets, otherSets } = categorizeSets(gear);
+    const { fivePieceSets, monsterSets, arenaWeapon, otherSets } = categorizeSets(gear);
     const extractedUltimate = extractUltimate(tank.combatantInfo);
     const existingUltimate = existingRoster.tanks[index]?.ultimate ?? null;
     const finalUltimate = resolveUltimate(extractedUltimate, existingUltimate);
@@ -512,6 +512,7 @@ export function convertLogPlayersToRoster(
             .filter((id): id is KnownSetIDs => id !== undefined),
         ),
       },
+      arenaWeapon,
       skillLines: extractSkillLines(tank.combatantInfo),
       ultimate: finalUltimate,
       specificSkills: [],

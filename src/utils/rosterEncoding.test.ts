@@ -228,6 +228,24 @@ describe('compactifyRoster / expandCompactRoster', () => {
       const expanded = expandCompactRoster(compact);
       expect(expanded.tanks[1].ultimate).toBe('Custom Ultimate String');
     });
+
+    it('round-trips arenaWeapon through the compact `aw` field', () => {
+      const roster = buildFullRoster();
+      roster.tanks[0].arenaWeapon = "Maelstrom's Frost Staff";
+
+      const compact = compactifyRoster(roster) as CompactRosterV3;
+      expect(compact.ts?.[0]?.aw).toBe("Maelstrom's Frost Staff");
+
+      const expanded = expandCompactRoster(compact);
+      expect(expanded.tanks[0].arenaWeapon).toBe("Maelstrom's Frost Staff");
+    });
+
+    it('omits `aw` when the tank has no arena weapon', () => {
+      const roster = buildFullRoster();
+      const compact = compactifyRoster(roster) as CompactRosterV3;
+      expect(compact.ts?.[0]?.aw).toBeUndefined();
+      expect(expandCompactRoster(compact).tanks[0].arenaWeapon).toBeUndefined();
+    });
   });
 
   describe('healer encoding', () => {

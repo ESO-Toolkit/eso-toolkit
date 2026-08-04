@@ -210,6 +210,8 @@ export function tankSlotToBuild(tank: TankSetup, tankNum: number): Build {
     tank.gearSets.monsterSet,
     tank.gearSets.additionalSets,
     tank.ultimate,
+    undefined,
+    tank.arenaWeapon,
   );
 
   const now = new Date().toISOString();

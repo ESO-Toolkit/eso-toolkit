@@ -27,6 +27,7 @@ interface CompactTank {
   pn?: string;
   rl?: string;
   gs?: CompactGear;
+  aw?: string;
   sl?: CompactSkills;
   ul?: number | string;
 }
@@ -81,11 +82,7 @@ function buildCompactTank(player: PlayerEntry, index: number): CompactTank {
   if (gear.monsterSet) gs.ms = gear.monsterSet;
   if (gear.additionalSets.length) gs.a = gear.additionalSets;
   if (Object.keys(gs).length > 0) ct.gs = gs;
-
-  // NOTE: tank arena weapon is intentionally not encoded — the client-side
-  // CompactTank/expandTank (src/utils/rosterEncoding.ts) has no arenaWeapon field,
-  // so emitting `aw` here would only be silently dropped on decode. Encoding it
-  // would require adding TankSetup.arenaWeapon in the frontend types first.
+  if (gear.arenaWeapon) ct.aw = gear.arenaWeapon;
 
   const talentInfo = detectTalentInfo(player.combatantInfo?.talents ?? []);
   if (talentInfo.sl) ct.sl = talentInfo.sl;
