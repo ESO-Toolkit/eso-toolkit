@@ -108,6 +108,43 @@ describe('roster-hub-api validateToken', () => {
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
+  it.each([
+    'Deadline expired while fetching report data',
+    'Operation expired',
+    'Upstream cache entry expired',
+  ])('treats a non-auth error mentioning "expired" as unavailable: %s', async (message) => {
+    // "expired" alone says nothing about the credential; only an expiry the
+    // message attributes to the token/session is a verdict on it.
+    const fetchMock = jest
+      .fn()
+      .mockResolvedValueOnce(jsonResponse({ errors: [{ message }] }))
+      .mockResolvedValue(jsonResponse(VALID_USER));
+    Object.defineProperty(globalThis, 'fetch', { value: fetchMock, configurable: true });
+
+    const auth = loadAuth();
+    const header = `Bearer ${makeToken(`exp-${message.length}`)}`;
+
+    expect(await auth.validateToken(header, {})).toBeNull();
+    expect(await auth.validateToken(header, {})).toEqual({ id: '42', name: 'Tester' });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it.each([
+    'Your token has expired',
+    'Session expired, please log in again',
+    'Invalid token supplied',
+  ])('caches an expiry the message attributes to the credential: %s', async (message) => {
+    const fetchMock = jest.fn(async () => jsonResponse({ errors: [{ message }] }));
+    Object.defineProperty(globalThis, 'fetch', { value: fetchMock, configurable: true });
+
+    const auth = loadAuth();
+    const header = `Bearer ${makeToken(`tokexp-${message.length}`)}`;
+
+    expect(await auth.validateToken(header, {})).toBeNull();
+    expect(await auth.validateToken(header, {})).toBeNull();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
   it('caches a GraphQL error that IS a verdict on the token', async () => {
     const fetchMock = jest.fn(async () =>
       jsonResponse({

@@ -155,12 +155,28 @@ interface EsoLogsResponse {
  * Only an explicitly unauthenticated/forbidden error is a verdict on the
  * credential; anything else is the upstream having a bad time.
  */
-const AUTH_ERROR_RE = /unauthenticated|unauthorized|forbidden|invalid[\s_-]*token|expired/i;
+const AUTH_ERROR_CODES = new Set([
+  'UNAUTHENTICATED',
+  'UNAUTHORIZED',
+  'FORBIDDEN',
+  'INVALID_TOKEN',
+  'TOKEN_EXPIRED',
+]);
+
+/**
+ * Deliberately narrow. "expired" on its own is NOT enough — an upstream
+ * "deadline expired" or "operation expired" says nothing about the credential,
+ * and misreading it as a rejection is what puts a good token in the negative
+ * cache. Expiry only counts when the message says what expired.
+ */
+const AUTH_ERROR_MESSAGE_RE =
+  /unauthenticated|unauthorized|forbidden|invalid[\s_-]*(token|credential|session)|(token|credential|session)[\s_-]*(has[\s_-]*)?expired|expired[\s_-]*(token|credential|session)/i;
 
 function errorsMeanInvalidToken(errors: NonNullable<EsoLogsResponse['errors']>): boolean {
   return errors.some((error) => {
-    const code = error.extensions?.code ?? '';
-    return AUTH_ERROR_RE.test(code) || AUTH_ERROR_RE.test(error.message ?? '');
+    const code = error.extensions?.code;
+    if (code && AUTH_ERROR_CODES.has(code.toUpperCase())) return true;
+    return AUTH_ERROR_MESSAGE_RE.test(error.message ?? '');
   });
 }
 
