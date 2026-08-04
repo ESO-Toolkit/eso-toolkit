@@ -145,9 +145,34 @@ const SLOT_GEAR_CATEGORY = new Map<number, GearCategory>(
 
 const GEAR_CATEGORIES: GearCategory[] = ['armor', 'weapon', 'jewelry'];
 
+/**
+ * Code bands per gear category, as the decode tables in `@/utils/gearMappings`
+ * are themselves laid out ("// Armor Traits", "// Jewelry Enchantments", …).
+ *
+ * The bands matter because the same DISPLAY NAME appears once per category —
+ * Infused is trait 26 (weapon), 38 (armor) and 49 (jewelry) — while
+ * resolveTraitId/resolveEnchantId only gate on whether the decoded NAME exists
+ * in the requested category, not on whether the CODE belongs to it. A plain
+ * ascending scan therefore resolved jewelry `infused` from weapon code 4, and
+ * the exported profile restored the wrong trait. Preferring an in-band code
+ * keeps export and import on the same entry.
+ */
+const TRAIT_CODE_BANDS: Record<GearCategory, [number, number]> = {
+  weapon: [1, 32],
+  armor: [33, 44],
+  jewelry: [45, 56],
+};
+
+const ENCHANT_CODE_BANDS: Record<GearCategory, [number, number]> = {
+  weapon: [1, 28],
+  armor: [29, 40],
+  jewelry: [41, 56],
+};
+
 function buildReverseCodeMap(
   codeNames: Record<number, string>,
   resolve: (code: number, category: GearCategory) => string | undefined,
+  bands: Record<GearCategory, [number, number]>,
 ): Record<GearCategory, Map<string, number>> {
   const maps: Record<GearCategory, Map<string, number>> = {
     armor: new Map(),
@@ -155,8 +180,14 @@ function buildReverseCodeMap(
     jewelry: new Map(),
   };
   for (const category of GEAR_CATEGORIES) {
-    for (const codeStr of Object.keys(codeNames)) {
-      const code = Number(codeStr);
+    const [low, high] = bands[category];
+    const codes = Object.keys(codeNames).map(Number);
+    // Two passes: an in-band code always wins. The out-of-band pass is a
+    // fallback for names the band does not carry (legacy/duplicate low codes),
+    // so nothing that used to export a code now exports 0.
+    const inBand = codes.filter((code) => code >= low && code <= high);
+    const outOfBand = codes.filter((code) => code < low || code > high);
+    for (const code of [...inBand, ...outOfBand]) {
       const kebab = resolve(code, category);
       if (kebab && !maps[category].has(kebab)) maps[category].set(kebab, code);
     }
@@ -164,8 +195,12 @@ function buildReverseCodeMap(
   return maps;
 }
 
-const TRAIT_CODE_BY_CATEGORY = buildReverseCodeMap(TRAIT_NAMES, resolveTraitId);
-const ENCHANT_CODE_BY_CATEGORY = buildReverseCodeMap(ENCHANTMENT_NAMES, resolveEnchantId);
+const TRAIT_CODE_BY_CATEGORY = buildReverseCodeMap(TRAIT_NAMES, resolveTraitId, TRAIT_CODE_BANDS);
+const ENCHANT_CODE_BY_CATEGORY = buildReverseCodeMap(
+  ENCHANTMENT_NAMES,
+  resolveEnchantId,
+  ENCHANT_CODE_BANDS,
+);
 
 /**
  * Resolve a gear trait/enchant value to the numeric ESO code CSPS stores.

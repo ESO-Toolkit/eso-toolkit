@@ -253,6 +253,35 @@ describe('GraphQL proxy persisted-query pinning', () => {
     expect(fetchMock.mock.calls.some((call) => String(call[0]).includes('esologs'))).toBe(false);
   });
 
+  it('does not spend rate-limit budget on requests served from the edge cache', async () => {
+    // A cold fight load fans out one request per 30s interval (friendly AND
+    // hostile, in parallel), so charging cached responses would 429 an honest
+    // page load — and a 429'd interval is swallowed into an empty event list,
+    // silently rendering a fight with missing events.
+    const { fetchMock } = stubUpstream();
+    Object.defineProperty(globalThis, 'caches', {
+      value: {
+        default: {
+          match: async () => new Response(JSON.stringify({ data: {} }), { status: 200 }),
+          put: async () => undefined,
+        },
+      },
+      configurable: true,
+    });
+
+    const proxy = loadProxy();
+    for (let i = 0; i < 300; i += 1) {
+      const { context } = createContext({
+        operation: 'getReportByCode',
+        body: { operationName: 'getReportByCode', query: PINNED_QUERY, variables: { code: 'abc' } },
+        ip: '10.0.0.7',
+      });
+      const response = await proxy(context);
+      expect(response.status).toBe(200);
+    }
+    expect(fetchMock.mock.calls.some((call) => String(call[0]).includes('esologs'))).toBe(false);
+  });
+
   it('still rejects an operation that is not allowlisted', async () => {
     const { fetchMock } = stubUpstream();
     const { context } = createContext({

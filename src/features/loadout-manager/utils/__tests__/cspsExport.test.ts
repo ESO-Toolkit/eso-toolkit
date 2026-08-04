@@ -11,6 +11,8 @@ import '@/test/initItemData';
 // Doctor), and resolveApparelWeight resolves their set names via the oracle.
 import '../itemIconResolver';
 
+import { resolveEnchantId, resolveTraitId } from '@/utils/combatLogGearMapping';
+
 import type { Build, BuildSetup } from '../../../build-editor/types/build.types';
 import { convertBuildToCSPS, exportBuildToCSPSLua } from '../../../build-editor/utils/cspsExport';
 import {
@@ -194,6 +196,62 @@ describe('cspsExport', () => {
       expect(gear[0]?.enchant).toBeGreaterThan(0);
       expect(gear[4]?.trait).toBeGreaterThan(0);
       expect(gear[4]?.enchant).toBeGreaterThan(0);
+    });
+
+    it('exports trait/enchant codes from the band that belongs to the gear category', () => {
+      // The decode tables carry one entry per category for the same display
+      // name (Infused is a weapon, an armor AND a jewelry trait), and the
+      // name-based resolver cannot tell them apart. Exporting jewelry Infused
+      // as an armor/weapon code restores the wrong trait, so the exported code
+      // must (a) sit in the category's band and (b) decode back to the same
+      // kebab id for that category.
+      const build = makeBuild({
+        setups: [
+          makeSetup({
+            gear: {
+              0: { id: 100, trait: 'infused', enchant: 'health' }, // head → armor
+              2: { id: 101, trait: 'divines' }, // chest → armor
+              4: { id: 50, trait: 'infused', enchant: 'crushing' }, // main-hand → weapon
+              20: { id: 51, trait: 'sharpened' }, // backup main-hand → weapon
+              11: { id: 60, trait: 'infused', enchant: 'increase-physical-damage' }, // ring → jewelry
+              12: { id: 61, trait: 'bloodthirsty' }, // ring 2 → jewelry
+            },
+          }),
+        ],
+      });
+      const csps = convertBuildToCSPS(build);
+      const charData = csps.Default!['@ESOToolkit'].$AccountWide.charData!['1'];
+      const gear = parseGearComp(decompressComp2(charData.comp2)!.gearComp);
+
+      const TRAIT_BANDS = { weapon: [1, 32], armor: [33, 44], jewelry: [45, 56] } as const;
+      const ENCHANT_BANDS = { weapon: [1, 28], armor: [29, 40], jewelry: [41, 56] } as const;
+      const cases = [
+        { slot: 0, category: 'armor', trait: 'infused', enchant: 'health' },
+        { slot: 2, category: 'armor', trait: 'divines' },
+        { slot: 4, category: 'weapon', trait: 'infused', enchant: 'crushing' },
+        { slot: 20, category: 'weapon', trait: 'sharpened' },
+        { slot: 11, category: 'jewelry', trait: 'infused', enchant: 'increase-physical-damage' },
+        { slot: 12, category: 'jewelry', trait: 'bloodthirsty' },
+      ] as const;
+
+      for (const { slot, category, trait, enchant } of cases) {
+        const traitCode = gear[slot]!.trait;
+        const [traitLow, traitHigh] = TRAIT_BANDS[category];
+        expect({ slot, traitCode }).toEqual({ slot, traitCode: expect.any(Number) });
+        expect(traitCode).toBeGreaterThanOrEqual(traitLow);
+        expect(traitCode).toBeLessThanOrEqual(traitHigh);
+        // Round-trip: the code the export writes must decode back to the same
+        // trait for this category.
+        expect(resolveTraitId(traitCode, category)).toBe(trait);
+
+        if (enchant) {
+          const enchantCode = gear[slot]!.enchant;
+          const [enchantLow, enchantHigh] = ENCHANT_BANDS[category];
+          expect(enchantCode).toBeGreaterThanOrEqual(enchantLow);
+          expect(enchantCode).toBeLessThanOrEqual(enchantHigh);
+          expect(resolveEnchantId(enchantCode, category)).toBe(enchant);
+        }
+      }
     });
 
     it('parses already-numeric trait/enchant strings unchanged on export', () => {

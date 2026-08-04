@@ -134,8 +134,18 @@ function reportResponseHasFights(responseBody: string): boolean {
 // This bucket caps per-IP request rate. Like the token cache above it lives in V8
 // isolate scope, so it is a coarse best-effort control (each edge isolate keeps its
 // own buckets), not a globally-consistent limiter.
-const RATE_LIMIT_CAPACITY = 60; // burst size (tokens)
-const RATE_LIMIT_REFILL_PER_SEC = 1; // sustained ≈ 60 requests / minute per IP
+//
+// A token is spent only when a request actually reaches upstream — cache hits
+// and singleflight piggybacks cost the shared budget nothing, so charging them
+// would only punish normal use. The budget also has to fit one honest cold
+// load: the buff slices split a fight into 30s intervals and issue them with
+// Promise.all (friendly AND hostile), so a 16-minute fight alone is ~64
+// requests before the report's other queries, and each can paginate. An
+// interval that gets a 429 is swallowed into an empty event list, so a bucket
+// too small does not merely slow the page down — it silently renders a fight
+// with missing events.
+const RATE_LIMIT_CAPACITY = 240; // burst size (tokens)
+const RATE_LIMIT_REFILL_PER_SEC = 4; // sustained ≈ 240 upstream requests / minute per IP
 const RATE_LIMIT_MAX_IPS = 10_000; // bound the Map so unique-IP floods can't grow it unbounded
 
 interface TokenBucket {
@@ -260,9 +270,6 @@ async function documentMatchesPin(env: Env, operation: string, queryDoc: string)
 
 export async function handleGraphqlProxy(c: Context<{ Bindings: Env }>): Promise<Response> {
   const clientIp = c.req.header('CF-Connecting-IP') ?? c.req.header('x-forwarded-for') ?? 'unknown';
-  if (!allowRequestFromIp(clientIp)) {
-    return c.json({ error: 'Rate limit exceeded' }, 429);
-  }
 
   let body: unknown;
   let bodyStr: string;
@@ -331,6 +338,13 @@ export async function handleGraphqlProxy(c: Context<{ Bindings: Env }>): Promise
   }
 
   const doFetch = async (): Promise<Response> => {
+    // Charged here, not at the top of the handler: only a call that actually
+    // reaches ESO Logs spends the shared credentials budget this protects, so
+    // cache hits and singleflight piggybacks stay free.
+    if (!allowRequestFromIp(clientIp)) {
+      return c.json({ error: 'Rate limit exceeded' }, 429);
+    }
+
     let token: string;
     try {
       token = await getCachedClientToken(c.env);

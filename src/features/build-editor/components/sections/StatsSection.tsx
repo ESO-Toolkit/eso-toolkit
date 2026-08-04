@@ -9,6 +9,7 @@ import { useTheme } from '@mui/material/styles';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useDispatch, useSelector, useStore } from 'react-redux';
 
+import { useItemDataReady } from '@/hooks/useItemDataReady';
 import type { RootState } from '@/store/storeWithHistory';
 
 import {
@@ -51,6 +52,10 @@ const StatsSectionComponent: React.FC = () => {
   // subscribed to, so it doesn't drive re-renders.
   const store = useStore<RootState>();
 
+  // The stat engine's Sharpened penetration depends on weapon two-handedness,
+  // which is only knowable once the fetched item data has loaded.
+  const { ready: itemDataReady } = useItemDataReady();
+
   const [buffsExpanded, setBuffsExpanded] = useState(false);
   const [breakdownExpanded, setBreakdownExpanded] = useState(false);
 
@@ -72,8 +77,22 @@ const StatsSectionComponent: React.FC = () => {
     // calculateBuildStats; including them in the deps ensures the memo
     // invalidates when they change even though we read `build` lazily from the
     // store.
+    // `itemDataReady` is a dep because the engine asks the item data whether a
+    // Sharpened weapon is two-handed (3276 pen vs 1638). Before the fetched
+    // item map lands that lookup answers "no", so without this the panel would
+    // sit on the one-handed number until some unrelated edit forced a
+    // recompute.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [setup, gameMode, races, classSkillLines, classMasteryPassives, overrides, store],
+    [
+      setup,
+      gameMode,
+      races,
+      classSkillLines,
+      classMasteryPassives,
+      overrides,
+      store,
+      itemDataReady,
+    ],
   );
 
   // Update helpers
