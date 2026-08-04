@@ -193,8 +193,10 @@ export const draconicPower: SkillLineData = {
       name: 'The Storm Voice',
       type: 'passive',
       icon: 'ability_dragonknight_031',
+      // Rank II (max rank) text. Renamed from Battle Roar in U49; the id 29463 is
+      // shared with the legacy DRAGONKNIGHT_BATTLE_ROAR alias.
       description:
-        'Given time, the smallest rock on the mountain can cascade into pure devastation.\n\nWhenever you deal damage you gain a stack of Landslide which increases your damage done by 1% per stack, up to 10 times. This effect can occur once every 10 seconds.\n\nEvery 2 seconds you do not deal damage, you lose a stack.',
+        'The syllables of that ancient tongue live in the mouth of every Dragonknight.\n\nWhen you cast an Ultimate ability, you restore 16 Health, 16 Magicka, and 16 Stamina for each point of the Ultimate spent.\n\nEach Dragonknight ability slotted increases this value by 6.',
       isPassive: true,
     },
     {
