@@ -146,6 +146,22 @@ interface EsoLogsResponse {
       };
     };
   };
+  errors?: Array<{ message?: string; extensions?: { code?: string } }>;
+}
+
+/**
+ * GraphQL reports failures inside a 200, so "no currentUser" alone does not
+ * mean "bad token" — a resolver blowing up or a rate limit looks identical.
+ * Only an explicitly unauthenticated/forbidden error is a verdict on the
+ * credential; anything else is the upstream having a bad time.
+ */
+const AUTH_ERROR_RE = /unauthenticated|unauthorized|forbidden|invalid[\s_-]*token|expired/i;
+
+function errorsMeanInvalidToken(errors: NonNullable<EsoLogsResponse['errors']>): boolean {
+  return errors.some((error) => {
+    const code = error.extensions?.code ?? '';
+    return AUTH_ERROR_RE.test(code) || AUTH_ERROR_RE.test(error.message ?? '');
+  });
 }
 
 /**
@@ -178,7 +194,14 @@ async function introspectToken(token: string): Promise<IntrospectionResult> {
     if (!res.ok) return { status: 'unavailable' };
 
     const json = (await res.json()) as EsoLogsResponse;
+    if (json.errors?.length) {
+      return errorsMeanInvalidToken(json.errors)
+        ? { status: 'invalid' }
+        : { status: 'unavailable' };
+    }
     const user = json.data?.userData?.currentUser;
+    // No errors and still no user: ESO Logs answered, and the answer is that
+    // this token identifies nobody.
     if (!user?.id || !user?.name) return { status: 'invalid' };
 
     return {

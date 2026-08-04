@@ -91,6 +91,39 @@ describe('roster-hub-api validateToken', () => {
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
+  it('retries after a GraphQL error returned inside a 200', async () => {
+    // GraphQL reports failures in a 200 body, so "no currentUser" is not
+    // evidence about the token — a resolver error or rate limit looks the same.
+    const fetchMock = jest
+      .fn()
+      .mockResolvedValueOnce(jsonResponse({ errors: [{ message: 'Internal server error' }] }))
+      .mockResolvedValue(jsonResponse(VALID_USER));
+    Object.defineProperty(globalThis, 'fetch', { value: fetchMock, configurable: true });
+
+    const auth = loadAuth();
+    const header = `Bearer ${makeToken('gqlerror')}`;
+
+    expect(await auth.validateToken(header, {})).toBeNull();
+    expect(await auth.validateToken(header, {})).toEqual({ id: '42', name: 'Tester' });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('caches a GraphQL error that IS a verdict on the token', async () => {
+    const fetchMock = jest.fn(async () =>
+      jsonResponse({
+        errors: [{ message: 'Unauthenticated.', extensions: { code: 'UNAUTHENTICATED' } }],
+      }),
+    );
+    Object.defineProperty(globalThis, 'fetch', { value: fetchMock, configurable: true });
+
+    const auth = loadAuth();
+    const header = `Bearer ${makeToken('gqlauth')}`;
+
+    expect(await auth.validateToken(header, {})).toBeNull();
+    expect(await auth.validateToken(header, {})).toBeNull();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
   it('retries after a network error instead of caching the failure', async () => {
     const fetchMock = jest
       .fn()
