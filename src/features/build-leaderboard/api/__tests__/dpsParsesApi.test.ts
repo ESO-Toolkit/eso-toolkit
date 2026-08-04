@@ -94,6 +94,70 @@ describe('normalizeParse', () => {
     expect(normalizeParse(validRow({ build }))?.build).toBeNull();
   });
 
+  /**
+   * Container checks alone let a string through into arrays that feature
+   * extraction sorts numerically, producing NaN comparisons and silently wrong
+   * clusters rather than a visible failure.
+   */
+  it.each([
+    [
+      'string in fivePiece',
+      {
+        sets: { fivePiece: ['1'], extra: [] },
+        bars: { front: [], back: [] },
+        setCounts: [],
+        missing: [],
+      },
+    ],
+    [
+      'string in bars.front',
+      {
+        sets: { fivePiece: [], extra: [] },
+        bars: { front: ['10'], back: [] },
+        setCounts: [],
+        missing: [],
+      },
+    ],
+    [
+      'NaN in bars.back',
+      {
+        sets: { fivePiece: [], extra: [] },
+        bars: { front: [], back: [Number.NaN] },
+        setCounts: [],
+        missing: [],
+      },
+    ],
+    [
+      'setCounts not pairs',
+      {
+        sets: { fivePiece: [], extra: [] },
+        bars: { front: [], back: [] },
+        setCounts: [[1]],
+        missing: [],
+      },
+    ],
+    [
+      'setCounts pair not numeric',
+      {
+        sets: { fivePiece: [], extra: [] },
+        bars: { front: [], back: [] },
+        setCounts: [[1, 'x']],
+        missing: [],
+      },
+    ],
+    [
+      'missing not strings',
+      {
+        sets: { fivePiece: [], extra: [] },
+        bars: { front: [], back: [] },
+        setCounts: [],
+        missing: [7],
+      },
+    ],
+  ])('nulls a build with wrong element types (%s)', (_label, build) => {
+    expect(normalizeParse(validRow({ build }))?.build).toBeNull();
+  });
+
   it('keeps a well-formed build', () => {
     const build = {
       v: 1,

@@ -101,7 +101,8 @@ export function useArchetypeBuildActions(): UseArchetypeBuildActionsResult {
   const [pendingAction, setPendingAction] = useState<PendingArchetypeAction | null>(null);
 
   const buildFor = useCallback(
-    async (cluster: BuildCluster): Promise<{ build: Build; savedId: string } | null> => {
+    // Resolves or throws — never null, so callers need no dead null branch.
+    async (cluster: BuildCluster): Promise<{ build: Build; savedId: string }> => {
       const response = await dpsParsesApi.getBuild(cluster.medoidParseId);
       const build = playerToBuild(toExtractionData(response));
       build.name = cluster.label;
@@ -124,9 +125,8 @@ export function useArchetypeBuildActions(): UseArchetypeBuildActionsResult {
       if (pendingAction) return;
       setPendingAction({ clusterId: cluster.id, kind: 'open' });
       try {
-        const result = await buildFor(cluster);
-        if (!result) return;
-        navigate(`/build-editor?id=${result.savedId}`);
+        const { savedId } = await buildFor(cluster);
+        navigate(`/build-editor?id=${savedId}`);
       } catch (err) {
         enqueueSnackbar(err instanceof Error ? err.message : 'Could not load that build', {
           variant: 'error',

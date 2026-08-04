@@ -107,15 +107,38 @@ function str(value: unknown): string {
  * feature extraction and take the whole page down. Anything that fails the shape
  * check becomes `null`, which every consumer already handles.
  */
+/** Every element finite and numeric — not merely "is an array". */
+function isNumberArray(value: unknown): value is number[] {
+  return Array.isArray(value) && value.every((v) => typeof v === 'number' && Number.isFinite(v));
+}
+
+/** setCounts is [setId, pieceCount] pairs. */
+function isSetCountArray(value: unknown): boolean {
+  return (
+    Array.isArray(value) &&
+    value.every(
+      (entry) =>
+        Array.isArray(entry) &&
+        entry.length === 2 &&
+        entry.every((n) => typeof n === 'number' && Number.isFinite(n)),
+    )
+  );
+}
+
 function normalizeBuild(raw: unknown): DpsParse['build'] {
   if (!isRecord(raw)) return null;
 
   const sets = raw.sets;
   const bars = raw.bars;
   if (!isRecord(sets) || !isRecord(bars)) return null;
-  if (!Array.isArray(sets.fivePiece) || !Array.isArray(sets.extra)) return null;
-  if (!Array.isArray(bars.front) || !Array.isArray(bars.back)) return null;
-  if (!Array.isArray(raw.setCounts) || !Array.isArray(raw.missing)) return null;
+
+  // Element types matter, not just the container: feature extraction sorts these
+  // numerically, so a string slipping through would produce NaN comparisons and
+  // silently wrong clusters rather than a visible failure.
+  if (!isNumberArray(sets.fivePiece) || !isNumberArray(sets.extra)) return null;
+  if (!isNumberArray(bars.front) || !isNumberArray(bars.back)) return null;
+  if (!isSetCountArray(raw.setCounts)) return null;
+  if (!Array.isArray(raw.missing) || !raw.missing.every((m) => typeof m === 'string')) return null;
 
   return raw as unknown as DpsParse['build'];
 }
