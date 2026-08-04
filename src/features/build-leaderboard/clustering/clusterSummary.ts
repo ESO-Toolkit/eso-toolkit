@@ -66,6 +66,15 @@ export function traitShares(
 
   // group|id → mass of parses carrying it
   const counts = new Map<string, { group: FeatureGroupKey; id: number | string; mass: number }>();
+  // Denominator PER GROUP, not one global total.
+  //
+  // A vector that declares a group missing has no opinion about it, so it must
+  // neither contribute traits nor dilute the share of those that do. The distance
+  // function already skips missing groups; counting them here made the two
+  // disagree — most visibly when barOrderKnown is false, where splitBars puts all
+  // twelve abilities in `front`, which would have surfaced as twelve "Front bar"
+  // chips for a layout we explicitly do not know.
+  const groupMass = new Map<FeatureGroupKey, number>();
 
   const add = (group: FeatureGroupKey, id: number | string | null, mass: number): void => {
     if (id === null || id === '' || id === 0) return;
@@ -77,19 +86,34 @@ export function traitShares(
 
   members.forEach((vector, index) => {
     const mass = multiplicity[index] ?? 1;
-    vector.fivePieceSets.forEach((id) => add('fivePieceSets', id, mass));
-    add('monsterSet', vector.monsterSet, mass);
-    add('mythic', vector.mythic, mass);
-    add('arena', vector.arena, mass);
-    vector.frontBar.forEach((id) => add('frontBar', id, mass));
-    vector.backBar.forEach((id) => add('backBar', id, mass));
-    add('mundus', vector.mundus, mass);
-    add('food', vector.food, mass);
-    add('race', vector.race, mass);
+    const missing = new Set(vector.missing);
+
+    const forGroup = (group: FeatureGroupKey, apply: () => void): void => {
+      if (missing.has(group)) return;
+      groupMass.set(group, (groupMass.get(group) ?? 0) + mass);
+      apply();
+    };
+
+    forGroup('fivePieceSets', () =>
+      vector.fivePieceSets.forEach((id) => add('fivePieceSets', id, mass)),
+    );
+    forGroup('monsterSet', () => add('monsterSet', vector.monsterSet, mass));
+    forGroup('mythic', () => add('mythic', vector.mythic, mass));
+    forGroup('arena', () => add('arena', vector.arena, mass));
+    forGroup('frontBar', () => vector.frontBar.forEach((id) => add('frontBar', id, mass)));
+    forGroup('backBar', () => vector.backBar.forEach((id) => add('backBar', id, mass)));
+    forGroup('mundus', () => add('mundus', vector.mundus, mass));
+    forGroup('food', () => add('food', vector.food, mass));
+    forGroup('race', () => add('race', vector.race, mass));
   });
 
   return [...counts.values()]
-    .map(({ group, id, mass }) => ({ group, id, label: '', share: mass / totalMass }))
+    .map(({ group, id, mass }) => ({
+      group,
+      id,
+      label: '',
+      share: mass / (groupMass.get(group) || totalMass),
+    }))
     .sort((a, b) => b.share - a.share || String(a.id).localeCompare(String(b.id)));
 }
 

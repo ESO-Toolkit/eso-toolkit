@@ -2,8 +2,14 @@
  * Types for the DPS-builds leaderboard API.
  *
  * Mirrors `DpsParsePublic` / `DpsEncounterSummary` in roster-hub-api/src/types.ts —
- * keep both in sync. Field names stay snake_case as the API serves them, matching
- * how the roster and build hub clients treat their rows.
+ * keep both in sync.
+ *
+ * Casing follows the API rather than being normalised, and the API is not
+ * uniform: list rows are snake_case because they are D1 columns served straight
+ * through (matching the roster and build hub clients), while
+ * `DpsParseBuildResponse` from /dps-leaderboard/parses/:parseId/build is camelCase
+ * because the Worker builds that payload by hand. Keep each side matching its
+ * endpoint instead of "fixing" one to match the other.
  */
 
 /** Build signature as extracted by the ingest. Mirrors BuildSignatureV1. */

@@ -158,6 +158,44 @@ describe('Core/Flex classification', () => {
   });
 });
 
+describe('traitShares and missing groups', () => {
+  /**
+   * When barOrderKnown is false, splitBars puts every ability in `front` and
+   * feature extraction marks both bars missing. Counting them anyway would
+   * surface chips for a layout we explicitly do not know — and dilute the shares
+   * of the parses that DO declare one.
+   *
+   * The unknown-layout parses here carry distinct ability ids precisely so the
+   * assertion can tell the two behaviours apart.
+   */
+  const GHOST_IDS = [999001, 999002, 999003, 999004, 999005, 999006];
+
+  function fixtureWithUnknownBars() {
+    resetFixtureIds();
+    const known = Array.from({ length: 10 }, (_, i) => makeParse(NECRO_ARCHETYPE, i + 1));
+    const unknown = Array.from({ length: 10 }, (_, i) => {
+      const p = makeParse(NECRO_ARCHETYPE, i + 1, { parse_id: `ghost-${i}` });
+      return {
+        ...p,
+        build: {
+          ...p.build!,
+          bars: { ...p.build!.bars, front: [...GHOST_IDS], back: [], barOrderKnown: false },
+        },
+      };
+    });
+    return [...known, ...unknown];
+  }
+
+  it('excludes traits from groups a parse declares missing', () => {
+    const result = clusterOf(fixtureWithUnknownBars());
+    const traits = result.clusters.flatMap((c) => [...c.core, ...c.flex, ...c.variations]);
+    const ids = new Set(traits.map((t) => Number(t.id)));
+
+    // Abilities that exist only on unknown-layout parses must not appear at all.
+    GHOST_IDS.forEach((id) => expect(ids.has(id)).toBe(false));
+  });
+});
+
 describe('trait variations', () => {
   /**
    * Regression: traits below the flex threshold were discarded entirely, so the
