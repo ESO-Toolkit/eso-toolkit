@@ -160,7 +160,7 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
             cluster={recommended}
             totalParses={result.totalParses}
             featured
-            esoClass={esoClass ?? recommended.core.find((t) => t.group === 'esoClass')?.label}
+            esoClass={esoClass ?? recommended.esoClass}
             variations={recommended.variations}
             sourceUrl={sourceUrlFor(recommended)}
             actionPending={pendingClusterId === recommended.id}

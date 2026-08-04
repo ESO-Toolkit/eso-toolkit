@@ -96,6 +96,14 @@ export interface BuildCluster {
   id: string;
   /** Human-readable summary, e.g. "Deadly Strike + Coral Riptide Arcanist". */
   label: string;
+  /**
+   * Class of the medoid build.
+   *
+   * Carried explicitly because `traitShares` does not emit an `esoClass` trait —
+   * the UI cannot dig it out of `core`, and the label needs it as a suffix to
+   * keep sibling cards distinguishable on the encounter tab.
+   */
+  esoClass: string;
   size: number;
   /** Share of all clustered parses. */
   share: number;

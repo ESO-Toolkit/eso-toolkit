@@ -259,7 +259,12 @@ ON CONFLICT (encounter_id, difficulty, character_key) DO UPDATE SET
   combatant_json = excluded.combatant_json,
   signature_version = excluded.signature_version,
   updated_at = datetime('now')
-WHERE excluded.partition > dps_parses.partition
+-- Rewrite when the parse improved, when a newer patch supersedes it, OR when the
+-- signature format has moved on. Without that last clause a signature change
+-- (a new field, a fixed categorisation) never reaches rows already stored: the
+-- re-ingest sees identical data, the amount is not greater, and nothing updates.
+WHERE excluded.signature_version > dps_parses.signature_version
+   OR excluded.partition > dps_parses.partition
    OR (excluded.partition = dps_parses.partition AND excluded.amount > dps_parses.amount)`;
 
 export type DpsParseInsert = Omit<DpsParseRow, 'ingested_at' | 'updated_at' | 'evidence_enriched'>;

@@ -79,6 +79,7 @@ export const BuildLeaderboardPage: React.FC = () => {
 
   const [encounters, setEncounters] = useState<DpsEncounterSummary[]>([]);
   const [encountersError, setEncountersError] = useState<string | null>(null);
+  const [encountersToken, setEncountersToken] = useState(0);
 
   useEffect(() => {
     document.title = 'Build Leaderboard | ESO Toolkit';
@@ -86,6 +87,7 @@ export const BuildLeaderboardPage: React.FC = () => {
 
   useEffect(() => {
     let cancelled = false;
+    setEncountersError(null);
     dpsParsesApi
       .listEncounters()
       .then((response) => {
@@ -99,7 +101,7 @@ export const BuildLeaderboardPage: React.FC = () => {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [encountersToken]);
 
   const selectedEncounter = useMemo(() => {
     if (encounters.length === 0) return null;
@@ -146,7 +148,20 @@ export const BuildLeaderboardPage: React.FC = () => {
     [navigate, parses],
   );
 
-  const combinedError = encountersError ?? error ?? clusterError;
+  // The class tab does not consult the encounters feed, so a failure there must
+  // not block it behind an error state.
+  const encounterTabError = tab === 'encounter' ? encountersError : null;
+  const combinedError = encounterTabError ?? error ?? clusterError;
+
+  // Retry has to re-run whatever actually failed. Always calling `reload` left a
+  // failed encounters feed unrecoverable without a full page refresh.
+  const handleRetry = useCallback(() => {
+    if (encounterTabError) {
+      setEncountersToken((token) => token + 1);
+      return;
+    }
+    reload();
+  }, [encounterTabError, reload]);
 
   return (
     <Container maxWidth="lg" sx={{ py: 3 }}>
@@ -214,7 +229,7 @@ export const BuildLeaderboardPage: React.FC = () => {
             clusterProgress={progress}
             error={combinedError}
             tooFewParses={tooFewParses}
-            onRetry={reload}
+            onRetry={handleRetry}
             onOpenInEditor={openInEditor}
             onSaveBuild={saveToMyBuilds}
             onViewSourceLog={handleViewSourceLog}
@@ -247,7 +262,7 @@ export const BuildLeaderboardPage: React.FC = () => {
             error={combinedError}
             tooFewParses={tooFewParses}
             esoClass={CLASS_LABELS[selectedClass] ?? selectedClass}
-            onRetry={reload}
+            onRetry={handleRetry}
             onOpenInEditor={openInEditor}
             onSaveBuild={saveToMyBuilds}
             onViewSourceLog={handleViewSourceLog}

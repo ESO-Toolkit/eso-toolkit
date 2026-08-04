@@ -31,8 +31,14 @@ import {
 import { detectTalentInfo } from './talent-mapper';
 import type { GearItem, TalentItem } from './esologs-client';
 
-/** Bumped when the extraction logic changes shape; stored per row. */
-export const SIGNATURE_VERSION = 1;
+/**
+ * Bumped when the extraction logic changes shape; stored per row.
+ *
+ * v2 added `setNames` and `abilityNames`. Bumping matters: the upsert only
+ * rewrites a row when the parse improved, so without a version change an
+ * existing row keeps its old signature forever and the new fields never appear.
+ */
+export const SIGNATURE_VERSION = 2;
 
 export interface BuildSignatureV1 {
   v: typeof SIGNATURE_VERSION;

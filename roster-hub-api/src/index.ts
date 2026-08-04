@@ -218,6 +218,19 @@ app.use('*', async (c, next) => {
 interface CacheTier {
   edgeTtl: number;
   swr: number;
+  /**
+   * Browser freshness, in seconds.
+   *
+   * REQUIRED for correctness, not just tuning. `s-maxage` binds shared caches
+   * only; a browser is a private cache, so without an explicit `max-age` it falls
+   * back to heuristic freshness and can hold a `public` response for hours.
+   * Observed live: after a re-ingest the page kept rendering the previous
+   * signature version until the cache was busted by hand.
+   *
+   * Defaults to 0 (always revalidate) so a route that forgets to set it is
+   * merely chatty rather than silently stale.
+   */
+  browserTtl?: number;
 }
 
 function getCacheTier(path: string): CacheTier | null {
@@ -233,9 +246,16 @@ function getCacheTier(path: string): CacheTier | null {
   if (path === '/search-addons') return { edgeTtl: 60, swr: 300 };
   // DPS leaderboard is cron-owned and refreshes once or twice a day, so it can be
   // cached aggressively. Nothing here is user-specific.
-  if (path === '/dps-leaderboard/encounters') return { edgeTtl: 900, swr: 3600 };
-  if (path === '/dps-leaderboard/parses') return { edgeTtl: 600, swr: 3600 };
-  if (/^\/dps-leaderboard\/parses\/[^/]+\/build$/.test(path)) return { edgeTtl: 3600, swr: 86400 };
+  if (path === '/dps-leaderboard/encounters') {
+    return { edgeTtl: 900, swr: 3600, browserTtl: 60 };
+  }
+  if (path === '/dps-leaderboard/parses') {
+    return { edgeTtl: 600, swr: 3600, browserTtl: 60 };
+  }
+  if (/^\/dps-leaderboard\/parses\/[^/]+\/build$/.test(path)) {
+    // Keyed to a specific parse, so its content is effectively immutable.
+    return { edgeTtl: 3600, swr: 86400, browserTtl: 3600 };
+  }
   return null;
 }
 
@@ -261,7 +281,7 @@ app.use('*', async (c, next) => {
     await next();
 
     if (c.res.status >= 200 && c.res.status < 300) {
-      const cc = `public, s-maxage=${tier.edgeTtl}, stale-while-revalidate=${tier.swr}`;
+      const cc = `public, max-age=${tier.browserTtl ?? 0}, s-maxage=${tier.edgeTtl}, stale-while-revalidate=${tier.swr}`;
       c.res.headers.set('Cache-Control', cc);
       c.res.headers.set('Vary', 'Authorization, Origin');
       c.executionCtx.waitUntil(cache.put(cacheKey, c.res.clone()));

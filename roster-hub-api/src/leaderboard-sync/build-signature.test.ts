@@ -3,7 +3,7 @@ import {
   parseCharacterRankingsPage,
   type ParsedCharacterRanking,
 } from './character-rankings-parser';
-import { computeSignatureHash, extractBuildSignature } from './build-signature';
+import { SIGNATURE_VERSION, computeSignatureHash, extractBuildSignature } from './build-signature';
 
 const entries = parseCharacterRankingsPage(fixture).rankings;
 
@@ -38,7 +38,8 @@ describe('extractBuildSignature', () => {
     entries.forEach((entry) => {
       const signature = extractBuildSignature(entry);
       expect(signature).not.toBeNull();
-      expect(signature?.v).toBe(1);
+      // Against the constant, not a literal, so a version bump needs no test edit.
+      expect(signature?.v).toBe(SIGNATURE_VERSION);
       expect(signature?.setCounts.length).toBeGreaterThan(0);
     });
   });

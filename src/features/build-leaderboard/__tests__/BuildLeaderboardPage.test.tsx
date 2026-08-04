@@ -108,6 +108,37 @@ describe('BuildLeaderboardPage', () => {
     );
   });
 
+  /**
+   * The class tab never consults the encounters feed, so a failure there must not
+   * block it behind an error state.
+   */
+  it('does not block the class tab when the encounters feed fails', async () => {
+    jest.spyOn(dpsParsesApi, 'listEncounters').mockRejectedValue(new Error('encounters exploded'));
+
+    renderPage('/build-leaderboard?tab=class&class=Warden');
+
+    await waitFor(() => expect(dpsParsesApi.listParses).toHaveBeenCalled());
+    expect(screen.queryByText(/encounters exploded/)).not.toBeInTheDocument();
+  });
+
+  it('shows the encounters failure on the encounter tab, and Retry refetches it', async () => {
+    const spy = jest
+      .spyOn(dpsParsesApi, 'listEncounters')
+      .mockRejectedValueOnce(new Error('encounters exploded'))
+      .mockResolvedValue({ encounters: ENCOUNTERS });
+
+    renderPage();
+
+    await screen.findByText(/encounters exploded/);
+    const callsBefore = spy.mock.calls.length;
+
+    // Retry must re-run the feed that failed, not the parses query.
+    await userEvent.click(screen.getByRole('button', { name: /retry/i }));
+
+    await waitFor(() => expect(spy.mock.calls.length).toBeGreaterThan(callsBefore));
+    await waitFor(() => expect(screen.queryByText(/encounters exploded/)).not.toBeInTheDocument());
+  });
+
   it('switches to the class tab and queries by class', async () => {
     renderPage('/build-leaderboard?tab=class&class=Warden');
 

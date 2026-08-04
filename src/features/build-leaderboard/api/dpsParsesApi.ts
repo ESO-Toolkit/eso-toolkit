@@ -99,6 +99,26 @@ function str(value: unknown): string {
 }
 
 /**
+ * Validate the parts of the build that downstream code dereferences without
+ * guarding — `toFeatureVector` reads `build.sets.fivePiece` and
+ * `build.bars.front/back` directly, so a malformed object would throw during
+ * feature extraction and take the whole page down. Anything that fails the shape
+ * check becomes `null`, which every consumer already handles.
+ */
+function normalizeBuild(raw: unknown): DpsParse['build'] {
+  if (!isRecord(raw)) return null;
+
+  const sets = raw.sets;
+  const bars = raw.bars;
+  if (!isRecord(sets) || !isRecord(bars)) return null;
+  if (!Array.isArray(sets.fivePiece) || !Array.isArray(sets.extra)) return null;
+  if (!Array.isArray(bars.front) || !Array.isArray(bars.back)) return null;
+  if (!Array.isArray(raw.setCounts) || !Array.isArray(raw.missing)) return null;
+
+  return raw as unknown as DpsParse['build'];
+}
+
+/**
  * Returns null for a row that cannot be ranked or displayed. A parse with no
  * amount is meaningless on a leaderboard, and one with no id cannot be opened.
  */
@@ -145,9 +165,7 @@ export function normalizeParse(raw: unknown): DpsParse | null {
     food_ability_id: num(raw.food_ability_id),
     signature_hash: str(raw.signature_hash),
 
-    // The server validates and reshapes this; the client only checks it is an
-    // object, so an unexpected shape degrades to "no build" downstream.
-    build: isRecord(raw.build) ? (raw.build as unknown as DpsParse['build']) : null,
+    build: normalizeBuild(raw.build),
     source_url: str(raw.source_url),
   };
 }

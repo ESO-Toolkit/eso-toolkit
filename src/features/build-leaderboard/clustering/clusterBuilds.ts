@@ -326,6 +326,7 @@ function buildClusters(
     clusters.push({
       id: '',
       label: labelCluster(core, flex, points[medoidIndex].esoClass),
+      esoClass: points[medoidIndex].esoClass,
       size: clusterMass.reduce((acc, m) => acc + m, 0),
       share: 0,
       memberParseIds: memberIds,
@@ -405,6 +406,7 @@ function buildSingleClusterResult(
       {
         id: 'c0',
         label: labelCluster(core, flex, points[0].esoClass),
+        esoClass: points[0].esoClass,
         size,
         share: 1,
         memberParseIds: memberIds,

@@ -100,18 +100,25 @@ function hydrateLabels(cluster: BuildCluster, labels: Map<string, string>): Buil
   const variations = hydrate(cluster.variations);
 
   // The label was generated before names were known; rebuild it from the
-  // now-resolved five-piece sets.
+  // now-resolved five-piece sets — keeping the class suffix, without which two
+  // sibling cards sharing gear are indistinguishable (nothing else on the
+  // encounter tab renders the class).
   const setNames = [...core, ...flex]
     .filter((trait) => trait.group === 'fivePieceSets')
     .slice(0, 2)
     .map((trait) => trait.label);
+
+  const rebuilt =
+    setNames.length > 0
+      ? [setNames.join(' + '), cluster.esoClass].filter(Boolean).join(' ')
+      : cluster.label;
 
   return {
     ...cluster,
     core,
     flex,
     variations,
-    label: setNames.length > 0 ? setNames.join(' + ') : cluster.label,
+    label: rebuilt,
   };
 }
 

@@ -58,6 +58,53 @@ describe('normalizeParse', () => {
     expect(normalizeParse(input)).toBeNull();
   });
 
+  /**
+   * toFeatureVector reads build.sets.fivePiece and build.bars.front/back without
+   * guarding, so a malformed build would throw during feature extraction and take
+   * the whole page down. Anything failing the shape check becomes null, which
+   * every consumer already handles.
+   */
+  it.each([
+    ['missing sets', { bars: { front: [], back: [] }, setCounts: [], missing: [] }],
+    ['missing bars', { sets: { fivePiece: [], extra: [] }, setCounts: [], missing: [] }],
+    [
+      'fivePiece not an array',
+      {
+        sets: { fivePiece: 'x', extra: [] },
+        bars: { front: [], back: [] },
+        setCounts: [],
+        missing: [],
+      },
+    ],
+    [
+      'bars.front not an array',
+      {
+        sets: { fivePiece: [], extra: [] },
+        bars: { front: null, back: [] },
+        setCounts: [],
+        missing: [],
+      },
+    ],
+    [
+      'setCounts not an array',
+      { sets: { fivePiece: [], extra: [] }, bars: { front: [], back: [] }, missing: [] },
+    ],
+    ['build is a string', 'nope'],
+  ])('nulls a malformed build (%s) rather than passing it through', (_label, build) => {
+    expect(normalizeParse(validRow({ build }))?.build).toBeNull();
+  });
+
+  it('keeps a well-formed build', () => {
+    const build = {
+      v: 1,
+      sets: { fivePiece: [1, 2], extra: [] },
+      bars: { front: [10], back: [20], barOrderKnown: true },
+      setCounts: [[1, 5]],
+      missing: ['race'],
+    };
+    expect(normalizeParse(validRow({ build }))?.build).toEqual(build);
+  });
+
   it('defaults optional fields instead of throwing', () => {
     const parse = normalizeParse({ parse_id: 'x', amount: 1 });
     expect(parse?.character_label).toBe('Anonymous');
