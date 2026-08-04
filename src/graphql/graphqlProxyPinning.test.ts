@@ -437,6 +437,66 @@ describe('GraphQL proxy persisted-query pinning', () => {
     }
   });
 
+  it('keeps a hash it already learned when a later refresh returns a stale manifest', async () => {
+    // An unanswered refresh must not evict what this isolate already knows:
+    // clobbering with a valid-but-previous manifest would start 400ing a
+    // document the live frontend is actively sending.
+    const docA = PINNED_QUERY.replace('reportData {', 'reportData { fieldA ');
+    const docB = PINNED_QUERY.replace('reportData {', 'reportData { fieldB ');
+    const hashA = await hashGraphqlDocument(docA);
+
+    let published = [hashA];
+    const fetchMock = jest.fn(async (input: unknown) => {
+      if (String(input).includes('graphql-manifest')) {
+        return new Response(
+          JSON.stringify({ version: 1, operations: { getReportByCode: published } }),
+          { status: 200 },
+        );
+      }
+      if (String(input).includes('oauth/token')) {
+        return new Response(JSON.stringify({ access_token: 'token', expires_in: 3600 }), {
+          status: 200,
+        });
+      }
+      return new Response(JSON.stringify({ data: {} }), { status: 200 });
+    });
+    Object.defineProperty(globalThis, 'fetch', { value: fetchMock, configurable: true });
+    Object.defineProperty(globalThis, 'caches', {
+      value: { default: { match: async () => undefined, put: async () => undefined } },
+      configurable: true,
+    });
+
+    const proxy = loadProxy();
+    const send = (query: string): Promise<Response> => {
+      const { context } = createContext({
+        operation: 'getReportByCode',
+        body: { operationName: 'getReportByCode', query, variables: { code: 'a' } },
+        ip: '10.0.0.11',
+        env: { GRAPHQL_MANIFEST_URL: 'https://esotk.test/graphql-manifest.json' },
+      });
+      return proxy(context);
+    };
+
+    const realNow = Date.now();
+    const nowSpy = jest.spyOn(Date, 'now').mockReturnValue(realNow);
+    try {
+      expect((await send(docA)).status).toBe(200);
+
+      // An unrelated document misses and the origin answers with a manifest
+      // that knows neither — a propagation blip, not a retraction.
+      published = ['0'.repeat(64)];
+      nowSpy.mockReturnValue(realNow + 30_000);
+      expect((await send(docB)).status).toBe(400);
+
+      // Document A must still be accepted, from cache, with no further fetch.
+      const before = fetchMock.mock.calls.length;
+      expect((await send(docA)).status).toBe(200);
+      expect(fetchMock.mock.calls.length).toBe(before + 1); // the upstream call only
+    } finally {
+      nowSpy.mockRestore();
+    }
+  });
+
   it('does not spend rate-limit budget on requests served from the edge cache', async () => {
     // A cold fight load fans out one request per 30s interval (friendly AND
     // hostile, in parallel), so charging cached responses would 429 an honest

@@ -224,6 +224,8 @@ const MANIFEST_MISS_BACKOFF_MS = 15 * 1000;
 const MANIFEST_MIN_REFRESH_INTERVAL_MS = 2 * 1000;
 /** Bound the back-off map so fabricated documents cannot grow it without limit. */
 const MANIFEST_MISS_MAX_KEYS = 1_000;
+/** Cap the hashes retained per operation as successive deploys are learned. */
+const MANIFEST_MAX_HASHES_PER_OPERATION = 8;
 
 /** The document a refresh is trying to resolve — see refreshRuntimeManifest. */
 interface WantedDocument {
@@ -290,14 +292,27 @@ async function refreshRuntimeManifest(env: Env, want: WantedDocument): Promise<v
         const clean = hashes.filter((h) => typeof h === 'string' && /^[0-9a-f]{64}$/.test(h));
         if (clean.length) next[operation] = clean;
       }
-      runtimeManifest = next;
+      // MERGE, never clobber: a valid-but-previous manifest would otherwise
+      // evict a hash this isolate had already learned from the live frontend,
+      // and the next request for that document would 400 until another refresh
+      // happened to land. Every retained entry was published by our own site at
+      // some point, and the per-operation cap keeps the set from growing across
+      // deploys.
+      const merged: Record<string, string[]> = { ...runtimeManifest };
+      for (const [operation, hashes] of Object.entries(next)) {
+        merged[operation] = [...new Set([...hashes, ...(merged[operation] ?? [])])].slice(
+          0,
+          MANIFEST_MAX_HASHES_PER_OPERATION,
+        );
+      }
+      runtimeManifest = merged;
       // A 200 is not the same as an ANSWER. Pages/CDN propagation can hand back
       // the PREVIOUS manifest — valid JSON that simply lacks the hash we just
       // missed on — and treating that as success would suppress the next
       // refresh for the full TTL and keep 400ing the frontend that is already
       // live. Only a manifest that actually contains the missed document has
       // resolved anything.
-      answeredTheMiss = (next[want.operation] ?? []).includes(want.hash);
+      answeredTheMiss = (merged[want.operation] ?? []).includes(want.hash);
     } catch {
       // keep the last known good manifest
     } finally {
