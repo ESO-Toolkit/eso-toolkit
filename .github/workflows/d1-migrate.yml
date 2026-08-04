@@ -16,10 +16,14 @@ on:
         options:
           - roster-hub-api
       database:
-        description: 'D1 database name (must match wrangler.toml)'
+        description: 'D1 database name'
         required: true
         default: roster-hub-db
-        type: string
+        # A choice rather than free text: there is exactly one database, and this
+        # value reaches a command line. No reason to accept arbitrary strings.
+        type: choice
+        options:
+          - roster-hub-db
       migration:
         description: 'Migration file, relative to the worker dir (e.g. src/db/migration-dps-parses.sql)'
         required: true
@@ -32,6 +36,14 @@ on:
 permissions:
   contents: read
 
+# One migration at a time per database. Concurrent dispatches could interleave
+# DDL in ways that are hard to reason about afterwards, and the run logs are the
+# audit trail. Never cancel in progress — a half-applied migration is worse than
+# a queued one.
+concurrency:
+  group: d1-migrate-${{ inputs.worker }}-${{ inputs.database }}
+  cancel-in-progress: false
+
 jobs:
   migrate:
     runs-on: ubuntu-latest
@@ -39,45 +51,64 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v7
 
-      # Guard rails: this job has production database write access, so validate
-      # the inputs before handing anything to wrangler.
+      # This job has production database write access, so inputs are validated
+      # before anything is handed to wrangler.
+      #
+      # Inputs are passed via `env:` and referenced as quoted shell variables,
+      # never interpolated into the script body. Direct `${{ }}` interpolation
+      # would let a crafted value break out of the surrounding quotes and run
+      # arbitrary commands — which would defeat the point of a validation step.
       - name: Validate inputs
         working-directory: ${{ inputs.worker }}
+        env:
+          DATABASE: ${{ inputs.database }}
+          MIGRATION: ${{ inputs.migration }}
+          CONFIRM: ${{ inputs.confirm }}
         run: |
           set -euo pipefail
 
-          if [ "${{ inputs.confirm }}" != "${{ inputs.database }}" ]; then
-            echo "::error::Confirmation '${{ inputs.confirm }}' does not match database '${{ inputs.database }}'."
+          if [ "$CONFIRM" != "$DATABASE" ]; then
+            echo "::error::Confirmation does not match the database name."
             exit 1
           fi
 
-          MIGRATION="${{ inputs.migration }}"
-
-          # Constrain to SQL files inside the worker's db directory. Blocks path
-          # traversal and stops this becoming a run-arbitrary-SQL button.
+          # Only migration files. src/db/ also holds schema.sql and seed.sql, and
+          # applying either to production would be destructive in a way this
+          # workflow should make impossible rather than merely discouraged.
           case "$MIGRATION" in
-            src/db/*.sql) ;;
-            *) echo "::error::Migration must match src/db/*.sql (got '$MIGRATION')."; exit 1 ;;
+            src/db/migration-*.sql) ;;
+            *) echo "::error::Migration must match src/db/migration-*.sql."; exit 1 ;;
           esac
+
+          # Belt and braces: reject path traversal and anything outside a
+          # conservative filename charset, so the value is safe as a CLI argument.
           case "$MIGRATION" in
             *..*) echo "::error::Migration path must not contain '..'."; exit 1 ;;
           esac
+          if ! printf '%s' "$MIGRATION" | grep -qE '^src/db/migration-[A-Za-z0-9._-]+\.sql$'; then
+            echo "::error::Migration path contains unexpected characters."
+            exit 1
+          fi
 
           if [ ! -f "$MIGRATION" ]; then
-            echo "::error::Migration file '$MIGRATION' not found in ${{ inputs.worker }}."
+            echo "::error::Migration file not found in this worker directory."
             exit 1
           fi
 
           # Surface the exact SQL in the run log, so the job output is a record of
           # what was applied.
-          echo "### Applying \`$MIGRATION\` to \`${{ inputs.database }}\`" >> "$GITHUB_STEP_SUMMARY"
-          echo '```sql' >> "$GITHUB_STEP_SUMMARY"
-          cat "$MIGRATION" >> "$GITHUB_STEP_SUMMARY"
-          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          {
+            echo "### Applying \`$MIGRATION\` to \`$DATABASE\`"
+            echo '```sql'
+            cat "$MIGRATION"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Apply migration
         uses: cloudflare/wrangler-action@ebbaa1584979971c8614a24965b4405ff95890e0 # v4.0.0
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           workingDirectory: ${{ inputs.worker }}
-          command: d1 execute ${{ inputs.database }} --remote --yes --file=${{ inputs.migration }}
+          # Quoted so the arguments survive intact. Both values are constrained
+          # above — `database` is a choice, `migration` passed the charset check.
+          command: d1 execute "${{ inputs.database }}" --remote --yes --file="${{ inputs.migration }}"
