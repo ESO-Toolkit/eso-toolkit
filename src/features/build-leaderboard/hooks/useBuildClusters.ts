@@ -140,7 +140,16 @@ export function useBuildClusters(
   // browses many encounters and classes would otherwise retain all of them for
   // the lifetime of the page. The cap is well above the handful of views anyone
   // toggles between, so it costs no practical hit rate.
-  const cacheKey = useMemo(() => parses.map((parse) => parse.parse_id).join('|'), [parses]);
+  // Keyed on CONTENT, not just identity. `parse_id` is deliberately stable across
+  // re-ingests (so deep links survive), which means the same id can carry a
+  // different build after the cron updates a character's best parse — an
+  // id-only key would then serve clusters computed from data that no longer
+  // exists. signature_hash covers build changes, amount covers a re-parse.
+  const cacheKey = useMemo(
+    () =>
+      parses.map((parse) => `${parse.parse_id}:${parse.signature_hash}:${parse.amount}`).join('|'),
+    [parses],
+  );
   const cache = useRef(new Map<string, ClusterBuildsResult>());
 
   /** Read through, refreshing recency so the cap evicts the least-recently used. */

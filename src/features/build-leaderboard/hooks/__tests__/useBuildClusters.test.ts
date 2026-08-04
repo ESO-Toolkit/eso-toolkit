@@ -220,6 +220,37 @@ describe('useBuildClusters', () => {
     expect(mockedRun.mock.calls.length).toBe(callsAfter);
   });
 
+  /**
+   * Regression: the cache was keyed on parse_id alone, which is deliberately
+   * stable across re-ingests. When the cron updates a character's best parse the
+   * id stays put while the build changes, so an id-only key served clusters
+   * computed from data that no longer exists.
+   */
+  it('recomputes when the same parse ids carry changed builds', async () => {
+    mockedRun.mockResolvedValue({ ...EMPTY_RESULT, k: 3 });
+    const parses = makeThreeArchetypeFixture();
+
+    const { result, rerender } = renderHook(
+      ({ input }: { input: DpsParse[] }) => useBuildClusters(input),
+      { initialProps: { input: parses } },
+    );
+    await waitFor(() => expect(result.current.result).not.toBeNull());
+    const callsAfterFirst = mockedRun.mock.calls.length;
+
+    // Same ids, same objects: must hit cache.
+    rerender({ input: [...parses] });
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(mockedRun.mock.calls.length).toBe(callsAfterFirst);
+
+    // Same ids, but one parse re-parsed higher with a different build.
+    const updated = parses.map((p, i) =>
+      i === 0 ? { ...p, amount: p.amount + 5000, signature_hash: 'changed' } : p,
+    );
+    rerender({ input: updated });
+
+    await waitFor(() => expect(mockedRun.mock.calls.length).toBeGreaterThan(callsAfterFirst));
+  });
+
   it('clears loading when a cache hit interrupts an in-flight run', async () => {
     const parses = makeThreeArchetypeFixture();
     resetFixtureIds();
