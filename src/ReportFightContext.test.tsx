@@ -13,6 +13,7 @@ jest.mock('./contexts/AbilityIdMapperContext', () => ({
 
 jest.mock('./utils/analytics', () => ({
   trackEvent: jest.fn(),
+  hashReportCode: (code: string) => `h_${code}`,
 }));
 
 import { ReportFightProvider, useReportFightDetailsNavigation } from './ReportFightContext';
@@ -146,7 +147,7 @@ describe('ReportFightContext analytics tracking', () => {
       TabId.DAMAGE_DONE,
       undefined,
       expect.objectContaining({
-        report_id: 'abc',
+        report_id: 'h_abc',
         fight_id: '1',
         target_tab: TabId.DAMAGE_DONE,
         previous_tab: TabId.INSIGHTS,
@@ -168,7 +169,7 @@ describe('ReportFightContext analytics tracking', () => {
       TabId.RAW_EVENTS,
       undefined,
       expect.objectContaining({
-        report_id: 'abc',
+        report_id: 'h_abc',
         fight_id: '1',
         target_tab: TabId.RAW_EVENTS,
         is_experimental_tab: true,
@@ -181,7 +182,7 @@ describe('ReportFightContext analytics tracking', () => {
       TabId.RAW_EVENTS,
       undefined,
       expect.objectContaining({
-        report_id: 'abc',
+        report_id: 'h_abc',
         fight_id: '1',
         target_tab: TabId.RAW_EVENTS,
         triggered_by_tab_selection: true,
@@ -202,7 +203,7 @@ describe('ReportFightContext analytics tracking', () => {
       'enable',
       undefined,
       expect.objectContaining({
-        report_id: 'abc',
+        report_id: 'h_abc',
         fight_id: '1',
         target_tab: TabId.INSIGHTS,
         enabled: true,
