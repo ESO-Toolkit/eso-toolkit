@@ -171,6 +171,44 @@ describe('cspsExport', () => {
       expect(gear[4]?.setId).toBe(50);
     });
 
+    it('maps kebab-case trait/enchant ids back to non-zero ESO codes on export', () => {
+      // A build edited natively in the Build Editor stores traits/enchants as
+      // kebab string ids ('divines', 'sharpened', …), NOT numeric strings.
+      // parseInt('divines') is NaN, so the old export collapsed every one to 0;
+      // they must instead resolve to their numeric ESO codes.
+      const build = makeBuild({
+        setups: [
+          makeSetup({
+            gear: {
+              0: { id: 100, trait: 'divines', enchant: 'magicka' }, // head (armor)
+              4: { id: 50, trait: 'sharpened', enchant: 'weapon-damage' }, // main-hand (weapon)
+            },
+          }),
+        ],
+      });
+      const csps = convertBuildToCSPS(build);
+      const charData = csps.Default!['@ESOToolkit'].$AccountWide.charData!['1'];
+      const gear = parseGearComp(decompressComp2(charData.comp2)!.gearComp);
+
+      expect(gear[0]?.trait).toBeGreaterThan(0);
+      expect(gear[0]?.enchant).toBeGreaterThan(0);
+      expect(gear[4]?.trait).toBeGreaterThan(0);
+      expect(gear[4]?.enchant).toBeGreaterThan(0);
+    });
+
+    it('parses already-numeric trait/enchant strings unchanged on export', () => {
+      // CSPS-imported pieces carry the raw numeric code as a string — parse
+      // those directly rather than routing them through the kebab reverse map.
+      const build = makeBuild({
+        setups: [makeSetup({ gear: { 0: { id: 100, trait: '5', enchant: '200' } } })],
+      });
+      const csps = convertBuildToCSPS(build);
+      const charData = csps.Default!['@ESOToolkit'].$AccountWide.charData!['1'];
+      const gear = parseGearComp(decompressComp2(charData.comp2)!.gearComp);
+      expect(gear[0]?.trait).toBe(5);
+      expect(gear[0]?.enchant).toBe(200);
+    });
+
     it('serializes resolved armor weight into the CSPS gear type', () => {
       // Concrete ids: 97232 = Mother's Sorrow Chest (locked LIGHT → type 1),
       // 97050 = Plague Doctor Chest (locked HEAVY → type 3). A weapon (slot 4)

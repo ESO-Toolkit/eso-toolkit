@@ -6,6 +6,7 @@
  */
 
 import type { GearConfig } from '../../loadout-manager/types/loadout.types';
+import { isTwoHandedWeapon } from '../../loadout-manager/utils/itemIconResolver';
 import { EQUIP_SLOTS } from '../data/esoStaticData';
 import { resolveApparelWeight } from '../data/setArmorWeights';
 import type { Build, BuildSetup, GameMode } from '../types/build.types';
@@ -22,6 +23,7 @@ import {
   CLASS_PASSIVES,
   CP_FIGHTING_FINESSE_CRIT_DMG,
   CP_FIGHTING_FINESSE_ID,
+  CP_FIGHTING_FINESSE_MAX_STAGES,
   CP_PIERCING_ID,
   CP_PIERCING_PER_STAGE,
   CP_PRECISION_ID,
@@ -40,7 +42,8 @@ import {
   TRAIT_DEFENDING_RESISTANCE,
   TRAIT_NIRNHONED_ARMOR_RESISTANCE,
   TRAIT_PRECISE_CRIT_RATING,
-  TRAIT_SHARPENED_PEN,
+  TRAIT_SHARPENED_PEN_1H,
+  TRAIT_SHARPENED_PEN_2H,
 } from './stat-constants';
 import type { BuildStats, StatItem, StatOverrides, StatResult, StatStatus } from './stat-types';
 
@@ -82,6 +85,11 @@ export function countDivinesPieces(gear: GearConfig): number {
 
 /** Weapon slots: front bar main + off, back bar main + off */
 const WEAPON_SLOTS = EQUIP_SLOTS.filter((s) => s.category === 'weapons').map((s) => s.slot);
+
+/** Item ids can be stored as strings — normalize to a number for id lookups. */
+function numericItemId(id: string | number | null | undefined): number {
+  return typeof id === 'number' ? id : Number(id);
+}
 
 /**
  * Count how many equipped weapons have a specific trait.
@@ -228,12 +236,22 @@ export function calculatePenetration(
     }
   }
 
-  // Sharpened weapon trait — auto-detected from gear
-  const sharpenedCount = countWeaponTrait(setup.gear, 'sharpened');
+  // Sharpened weapon trait — auto-detected from gear. Penetration is
+  // weapon-type aware: 1638 per one-handed weapon, 3276 per two-handed.
+  let sharpenedCount = 0;
+  let sharpenedPen = 0;
+  for (const slot of WEAPON_SLOTS) {
+    const piece = setup.gear[slot];
+    if (!piece?.id || piece.trait !== 'sharpened') continue;
+    sharpenedCount++;
+    sharpenedPen += isTwoHandedWeapon(numericItemId(piece.id))
+      ? TRAIT_SHARPENED_PEN_2H
+      : TRAIT_SHARPENED_PEN_1H;
+  }
   if (sharpenedCount > 0) {
     items.push({
       name: `Sharpened (${sharpenedCount} weapon${sharpenedCount > 1 ? 's' : ''})`,
-      value: sharpenedCount * TRAIT_SHARPENED_PEN,
+      value: sharpenedPen,
       source: 'gear',
       enabled: true,
       autoDetected: true,
@@ -321,9 +339,12 @@ export function calculateCritDamage(
     // marks it auto-detected so it can't be double-counted with the toggle.
     const grantingPassive = buffFromMastery.get(buff.name);
     const enabled = grantingPassive ? true : (overrides.buffs[buff.name] ?? buff.defaultEnabled);
+    // Stacking buffs (e.g. Elemental Catalyst, 5% × 3 elements) contribute their
+    // fully-stacked value; a flat buff just uses `value`.
+    const value = buff.per != null ? buff.per * (buff.maxStacks ?? 1) : buff.value;
     items.push({
       name: grantingPassive ? `${buff.name} (${grantingPassive})` : buff.name,
-      value: buff.value,
+      value,
       source: grantingPassive ? 'class' : 'buff',
       enabled,
       isPercent: true,
@@ -412,7 +433,8 @@ export function calculateCritDamage(
   if (hasFightingFinesse) {
     items.push({
       name: 'CP: Fighting Finesse',
-      value: CP_FIGHTING_FINESSE_CRIT_DMG,
+      // A slotted star is always fully invested → both stages (8%), not one.
+      value: CP_FIGHTING_FINESSE_CRIT_DMG * CP_FIGHTING_FINESSE_MAX_STAGES,
       source: 'cp',
       enabled: true,
       isPercent: true,
