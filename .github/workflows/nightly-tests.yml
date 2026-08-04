@@ -53,6 +53,12 @@ on:
 # - OAUTH_CLIENT_ID: ESO Logs OAuth client ID
 # - OAUTH_CLIENT_SECRET: ESO Logs OAuth client secret
 
+# Least-privilege default: without this, `setup` and `nightly-tests` inherit the
+# repository-default (possibly write-all) GITHUB_TOKEN. Jobs that need more declare
+# it themselves (they don't here — this suite only reads the repo and hits prod).
+permissions:
+  contents: read
+
 jobs:
   # Job to determine matrix configuration
   setup:

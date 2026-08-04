@@ -243,9 +243,11 @@ ${downloadBtn}
       host: true,
       strictPort: strictPortConfig,
       allowedHosts: ['host.docker.internal'],
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-      },
+      // No blanket 'Access-Control-Allow-Origin': '*' here. The /roster-hub-api
+      // proxy below makes every API call same-origin, so ACAO:* was unnecessary —
+      // and with host:true (0.0.0.0) it let any page in the dev's browser (or any
+      // LAN host) read /src/** and use the Origin-stripping proxy as a relay to the
+      // production Worker.
       proxy: {
         // Same-origin route to the roster-hub-api Worker (reports, roster/pack/build hubs,
         // the ESO Logs client proxy). The Worker's CORS allowlist only admits localhost
@@ -287,7 +289,16 @@ ${downloadBtn}
             if (id.includes('node_modules/@mui/')) return 'mui';
             if (id.includes('node_modules/@apollo/')) return 'apollo';
             if (id.includes('node_modules/@reduxjs/') || id.includes('node_modules/react-redux') || id.includes('node_modules/redux-persist')) return 'redux';
-            if (id.includes('node_modules/react-router-dom') || id.includes('node_modules/history')) return 'router';
+            // In react-router v7 `react-router-dom` is a tiny re-export shim; the
+            // real implementation lives in `react-router` (trailing slash avoids
+            // matching unrelated `react-router-dom`). Match both so the router
+            // vendor chunk holds the actual router code, not just the shim.
+            if (
+              id.includes('node_modules/react-router-dom') ||
+              id.includes('node_modules/react-router/') ||
+              id.includes('node_modules/history')
+            )
+              return 'router';
             if (id.includes('node_modules/echarts') || id.includes('node_modules/zrender')) return 'charts';
           },
           chunkFileNames: (chunkInfo) => {

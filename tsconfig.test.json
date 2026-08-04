@@ -1,0 +1,20 @@
+{
+  // Typecheck-only project for the test suite. The base tsconfig excludes every
+  // *.test.ts(x), so `tsc --noEmit` never covers the ~4300-test suite; this config
+  // re-includes them (with jest globals) so CI can typecheck tests via
+  // `tsc --noEmit -p tsconfig.test.json`. Kept separate so the main build/typecheck
+  // stays fast and test-only types don't leak into the app graph.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "types": ["node", "jest"]
+  },
+  "include": [
+    "src",
+    "playwright/*.config.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "build",
+    "src/data/skill-lines/**/*"
+  ]
+}
