@@ -101,6 +101,26 @@ describe('SkillBarPicker', () => {
     expect(screen.getAllByText('SLOTTED').length).toBeGreaterThan(0);
   });
 
+  it('exposes a keyboard-focusable clear control for a slotted skill', () => {
+    const searingStrike = searchSkills('Searing Strike', 10).find(
+      (s) => s.name === 'Searing Strike',
+    );
+    expect(searingStrike).toBeDefined();
+
+    const onChange = jest.fn();
+    render(<Harness initial={{ 0: { 3: searingStrike!.id }, 1: {} }} onChange={onChange} />);
+
+    // The remove overlay is announced as a button and is reachable by keyboard.
+    const removeBtn = screen.getByRole('button', { name: /Remove Searing Strike/i });
+    expect(removeBtn).toHaveAttribute('tabindex', '0');
+
+    // Activating it clears the slot.
+    fireEvent.click(removeBtn);
+    expect(onChange).toHaveBeenCalledTimes(1);
+    const updated = onChange.mock.calls[0][0] as SkillsConfig;
+    expect(updated[0][3]).toBeUndefined();
+  });
+
   it('reveals labeled morph names when a class skill line is expanded', () => {
     render(<Harness />);
     openFirstSlotPicker();

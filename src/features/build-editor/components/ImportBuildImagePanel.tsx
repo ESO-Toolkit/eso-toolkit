@@ -201,8 +201,15 @@ export const ImportBuildImagePanel: React.FC<ImportBuildImagePanelProps> = ({ on
               {!running && (
                 <Box
                   role="button"
+                  tabIndex={0}
                   aria-label={`Remove screenshot ${i + 1}`}
                   onClick={() => removeFile(i)}
+                  onKeyDown={(e: React.KeyboardEvent) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      removeFile(i);
+                    }
+                  }}
                   sx={{
                     position: 'absolute',
                     top: -6,
