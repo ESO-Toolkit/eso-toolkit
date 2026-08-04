@@ -9,6 +9,7 @@ import { useTheme } from '@mui/material/styles';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useDispatch, useSelector, useStore } from 'react-redux';
 
+import { useIconDataReady } from '@/hooks/useIconDataReady';
 import { useItemDataReady } from '@/hooks/useItemDataReady';
 import type { RootState } from '@/store/storeWithHistory';
 
@@ -53,8 +54,11 @@ const StatsSectionComponent: React.FC = () => {
   const store = useStore<RootState>();
 
   // The stat engine's Sharpened penetration depends on weapon two-handedness,
-  // which is only knowable once the fetched item data has loaded.
+  // and `isTwoHandedWeapon` needs BOTH fetched sources to answer: the item map
+  // (to confirm the piece is a weapon) and the icon data (which carries the
+  // weapon type). They load independently, so both are memo inputs.
   const { ready: itemDataReady } = useItemDataReady();
+  const { ready: iconDataReady } = useIconDataReady();
 
   const [buffsExpanded, setBuffsExpanded] = useState(false);
   const [breakdownExpanded, setBreakdownExpanded] = useState(false);
@@ -77,11 +81,11 @@ const StatsSectionComponent: React.FC = () => {
     // calculateBuildStats; including them in the deps ensures the memo
     // invalidates when they change even though we read `build` lazily from the
     // store.
-    // `itemDataReady` is a dep because the engine asks the item data whether a
-    // Sharpened weapon is two-handed (3276 pen vs 1638). Before the fetched
-    // item map lands that lookup answers "no", so without this the panel would
-    // sit on the one-handed number until some unrelated edit forced a
-    // recompute.
+    // `itemDataReady`/`iconDataReady` are deps because the engine asks those
+    // fetched sources whether a Sharpened weapon is two-handed (3276 pen vs
+    // 1638). Before they land the lookup answers "no", so without them the
+    // panel would sit on the one-handed number until some unrelated edit
+    // forced a recompute.
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [
       setup,
@@ -92,6 +96,7 @@ const StatsSectionComponent: React.FC = () => {
       overrides,
       store,
       itemDataReady,
+      iconDataReady,
     ],
   );
 

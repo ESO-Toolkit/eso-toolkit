@@ -55,10 +55,14 @@ describe('HeaderBar', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockUseAuth.mockReturnValue({
+      accessToken: '',
       isLoggedIn: false,
+      isBanned: false,
+      banReason: null,
       currentUser: null,
       userLoading: false,
       userError: null,
+      setAccessToken: jest.fn(),
       refetchUser: jest.fn(),
       rebindAccessToken: jest.fn(),
     } as ReturnType<typeof useAuth>);

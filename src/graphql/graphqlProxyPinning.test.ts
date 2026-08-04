@@ -253,6 +253,71 @@ describe('GraphQL proxy persisted-query pinning', () => {
     expect(fetchMock.mock.calls.some((call) => String(call[0]).includes('esologs'))).toBe(false);
   });
 
+  it('retries the published manifest after a failed fetch instead of caching the failure', async () => {
+    // A failed refresh must not pin the Worker to its stale manifest: that is
+    // exactly the deploy-order outage the union exists to prevent.
+    const newDocument = PINNED_QUERY.replace('reportData {', 'reportData { newlyAddedField ');
+    const newHash = await hashGraphqlDocument(newDocument);
+
+    let manifestAvailable = false;
+    const fetchMock = jest.fn(async (input: unknown) => {
+      if (String(input).includes('graphql-manifest')) {
+        return manifestAvailable
+          ? new Response(
+              JSON.stringify({ version: 1, operations: { getReportByCode: [newHash] } }),
+              { status: 200 },
+            )
+          : new Response('unavailable', { status: 503 });
+      }
+      if (String(input).includes('oauth/token')) {
+        return new Response(JSON.stringify({ access_token: 'token', expires_in: 3600 }), {
+          status: 200,
+        });
+      }
+      return new Response(JSON.stringify({ data: {} }), { status: 200 });
+    });
+    Object.defineProperty(globalThis, 'fetch', { value: fetchMock, configurable: true });
+    Object.defineProperty(globalThis, 'caches', {
+      value: { default: { match: async () => undefined, put: async () => undefined } },
+      configurable: true,
+    });
+
+    const proxy = loadProxy();
+    const send = (ip: string): Promise<Response> => {
+      const { context } = createContext({
+        operation: 'getReportByCode',
+        body: { operationName: 'getReportByCode', query: newDocument, variables: { code: 'a' } },
+        ip,
+        env: { GRAPHQL_MANIFEST_URL: 'https://esotk.test/graphql-manifest.json' },
+      });
+      return proxy(context);
+    };
+
+    // Pages is briefly unreachable → reject, and only back off briefly.
+    const realNow = Date.now();
+    const nowSpy = jest.spyOn(Date, 'now').mockReturnValue(realNow);
+    try {
+      expect((await send('10.0.0.8')).status).toBe(400);
+
+      manifestAvailable = true;
+      // Inside the short failure back-off the Worker does not re-fetch...
+      expect((await send('10.0.0.8')).status).toBe(400);
+      expect(
+        fetchMock.mock.calls.filter((call) => String(call[0]).includes('graphql-manifest')),
+      ).toHaveLength(1);
+
+      // ...but the failure never earns the full success TTL, so the next
+      // attempt seconds later picks up the freshly deployed manifest.
+      nowSpy.mockReturnValue(realNow + 20_000);
+      expect((await send('10.0.0.8')).status).toBe(200);
+      expect(
+        fetchMock.mock.calls.filter((call) => String(call[0]).includes('graphql-manifest')),
+      ).toHaveLength(2);
+    } finally {
+      nowSpy.mockRestore();
+    }
+  });
+
   it('does not spend rate-limit budget on requests served from the edge cache', async () => {
     // A cold fight load fans out one request per 30s interval (friendly AND
     // hostile, in parallel), so charging cached responses would 429 an honest

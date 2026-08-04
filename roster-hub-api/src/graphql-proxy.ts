@@ -209,6 +209,8 @@ const INTROSPECTION_RE = /\b__schema\b|\b__type\b/;
 // full compromise of the site.
 const RUNTIME_MANIFEST_URL = 'https://esotk.com/graphql-manifest.json';
 const RUNTIME_MANIFEST_TTL_MS = 5 * 60 * 1000;
+/** Back-off after a failed refresh — short, so a deploy is never gated on it. */
+const RUNTIME_MANIFEST_RETRY_MS = 15 * 1000;
 
 interface PublishedManifest {
   version?: number;
@@ -217,6 +219,7 @@ interface PublishedManifest {
 
 let runtimeManifest: Record<string, string[]> = {};
 let runtimeManifestFetchedAt = 0;
+let runtimeManifestTtlMs = RUNTIME_MANIFEST_TTL_MS;
 let runtimeManifestInFlight: Promise<void> | null = null;
 
 /**
@@ -226,13 +229,22 @@ let runtimeManifestInFlight: Promise<void> | null = null;
  */
 async function refreshRuntimeManifest(env: Env): Promise<void> {
   const now = Date.now();
-  if (now - runtimeManifestFetchedAt < RUNTIME_MANIFEST_TTL_MS) return;
+  if (now - runtimeManifestFetchedAt < runtimeManifestTtlMs) return;
   if (runtimeManifestInFlight) return runtimeManifestInFlight;
 
   runtimeManifestInFlight = (async () => {
+    let succeeded = false;
     try {
-      const res = await fetch(env.GRAPHQL_MANIFEST_URL || RUNTIME_MANIFEST_URL, {
-        cf: { cacheTtl: 300, cacheEverything: true },
+      // This runs ONLY after a bundled-hash miss, i.e. exactly when the site may
+      // have deployed a query the Worker has never seen. A cached copy is worth
+      // nothing here: it would be the same stale manifest that caused the miss.
+      // Bypass the edge cache and cache-bust the origin so we always read what
+      // Pages is serving right now.
+      const base = env.GRAPHQL_MANIFEST_URL || RUNTIME_MANIFEST_URL;
+      const url = `${base}${base.includes('?') ? '&' : '?'}t=${now}`;
+      const res = await fetch(url, {
+        headers: { 'Cache-Control': 'no-cache' },
+        cf: { cacheTtl: 0, cacheEverything: false },
       });
       if (!res.ok) return;
       const parsed = (await res.json()) as PublishedManifest;
@@ -246,9 +258,16 @@ async function refreshRuntimeManifest(env: Env): Promise<void> {
         if (clean.length) next[operation] = clean;
       }
       runtimeManifest = next;
+      succeeded = true;
     } catch {
       // keep the last known good manifest
     } finally {
+      // Only a SUCCESSFUL read earns the long TTL. Stamping it on failure would
+      // let one unreachable-Pages moment pin the proxy to a stale manifest —
+      // and 400 a freshly deployed frontend — for the whole window, which is
+      // the outage this union exists to prevent. Failures back off briefly so a
+      // miss storm still cannot hammer the origin.
+      runtimeManifestTtlMs = succeeded ? RUNTIME_MANIFEST_TTL_MS : RUNTIME_MANIFEST_RETRY_MS;
       runtimeManifestFetchedAt = Date.now();
       runtimeManifestInFlight = null;
     }

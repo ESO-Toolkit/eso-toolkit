@@ -149,7 +149,7 @@ describe('wizardWardrobeConverter', () => {
               skills: { 0: {}, 1: {} },
               cp: {},
               food: {
-                id: '153629',
+                id: 153629,
                 link: '|H0:item:153629:6:1:0:0:0:0:0:0:0:0:0:0:0:0:0:1:0:0:0:0|h|h',
               },
               gear: {},

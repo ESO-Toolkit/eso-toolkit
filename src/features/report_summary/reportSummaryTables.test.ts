@@ -1,3 +1,5 @@
+import { DeathPatternType } from '@/types/reportSummaryTypes';
+
 import { DeathAnalysisService, type DeathAnalysisInput } from '../../services/DeathAnalysisService';
 
 import { adaptDamageTable, adaptDeathsTable, fetchSummaryTables } from './reportSummaryTables';
@@ -333,7 +335,9 @@ describe('adaptDeathsTable', () => {
     expect(analysis.mechanicDeaths.every((m) => m.averageKillingBlowDamage === 0)).toBe(true);
     // The HIGH_DAMAGE_ABILITY pattern keys off averageKillingBlowDamage (>50k); with
     // it pinned at 0 the table path can never emit one (parity with the raw path).
-    expect(analysis.deathPatterns.some((p) => p.type === 'HIGH_DAMAGE_ABILITY')).toBe(false);
+    expect(
+      analysis.deathPatterns.some((p) => p.type === DeathPatternType.HIGH_DAMAGE_ABILITY),
+    ).toBe(false);
   });
 
   it('drops malformed entries instead of throwing', () => {

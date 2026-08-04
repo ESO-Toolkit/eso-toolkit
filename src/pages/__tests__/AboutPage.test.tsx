@@ -41,7 +41,11 @@ describe('AboutPage', () => {
       cacheBuster: 'v=abcdef12',
     };
 
-    mockGetBuildInfoAsync.mockResolvedValue(buildInfo);
+    // getBuildInfoAsync's return type is inferred from a const-asserted dev
+    // fallback, so its literal types do not accept an arbitrary BuildInfo.
+    mockGetBuildInfoAsync.mockResolvedValue(
+      buildInfo as unknown as Awaited<ReturnType<typeof getBuildInfoAsync>>,
+    );
     mockGetDisplayVersion.mockReturnValue('v0.0.0 (dev)');
     mockIsDevelopmentBuild.mockReturnValue(false);
 

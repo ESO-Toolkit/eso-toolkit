@@ -11,7 +11,11 @@
   // which is the point of the gate.
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "types": ["node", "jest"]
+    "types": ["node", "jest"],
+    // Its own incremental cache: inheriting the base tsBuildInfoFile would have
+    // both projects writing one file, so whichever ran last invalidated the
+    // other's state and the two gates could disagree.
+    "tsBuildInfoFile": "./node_modules/.cache/.tsbuildinfo.test"
   },
   "include": ["src", "playwright/*.config.ts"],
   "exclude": [
@@ -25,46 +29,39 @@
     "**/*.stories.tsx",
 
     // ── Quarantine (pre-existing test type errors; count at time of quarantine) ──
+    "src/features/report_details/synergy/synergyUtils.test.ts",
+    "src/features/report_summary/__tests__/ReportSummaryPage.test.tsx",
+    "src/features/report_summary/hooks/useOptimizedReportSummaryData.test.tsx",
+    "src/pages/ParseAnalysisPage.test.tsx",
+    "src/store/user_reports/userReportsSlice.test.ts",
+    "src/utils/BuffLookupUtils.test.ts",
+    "src/utils/classDetectionUtils.test.ts",
+    "src/workers/WorkerPool.test.ts",
     "src/components/dashboard/DeathCausesWidget.test.tsx",
-    "src/components/HeaderBar.test.tsx",
     "src/components/SkillTooltip.kalpa-ground-truth.test.tsx",
     "src/features/build-editor/engine/stat-engine.baseClassPassives.test.ts",
     "src/features/fight_replay/components/MapMarkers.integration.test.tsx",
-    "src/features/loadout-manager/utils/__tests__/luaParser.test.ts",
     "src/features/loadout-manager/utils/__tests__/wizardsWardrobeSavedVariables.test.ts",
-    "src/features/loadout-manager/utils/__tests__/wizardWardrobeConverter.test.ts",
     "src/features/loadout-manager/utils/__tests__/wizardWardrobeImport.integration.test.ts",
     "src/features/parse_analysis/utils/parseAnalysisUtils.test.ts",
-    "src/features/parse_analysis/utils/parseChecklistUtils.test.ts",
     "src/features/report_details/deaths/DeathEventPanel.test.tsx",
-    "src/features/report_details/insights/__tests__/PlayersPanelView.test.tsx",
     "src/features/report_details/insights/StatusEffectUptimesPanel.integration.test.ts",
-    "src/features/report_details/synergy/synergyUtils.test.ts",
     "src/features/report_summary/__tests__/EnhancedDeathAnalysisSection.test.tsx",
-    "src/features/report_summary/__tests__/ReportSummaryPage.test.tsx",
-    "src/features/report_summary/hooks/useOptimizedReportSummaryData.test.tsx",
-    "src/features/report_summary/reportSummaryTables.test.ts",
     "src/features/scribing/analysis/__tests__/scribingDetectionAnalysis.affix-accuracy.test.ts",
     "src/hooks/useSelectedFight.test.tsx",
     "src/hooks/useSelectedTargetIds.test.tsx",
-    "src/pages/__tests__/AboutPage.test.tsx",
-    "src/pages/ParseAnalysisPage.test.tsx",
     "src/pages/RaidDashboardPage.test.tsx",
     "src/player1-shattering-knife-new-architecture.test.ts",
     "src/store/report/reportSlice.test.ts",
     "src/store/storeWithHistory.test.ts",
     "src/store/user_reports/userReportsSelectors.test.ts",
-    "src/store/user_reports/userReportsSlice.test.ts",
     "src/store/worker_results/workerTaskSliceFactory.test.ts",
-    "src/utils/BuffLookupUtils.test.ts",
-    "src/utils/classDetectionUtils.test.ts",
     "src/utils/errorTracking.test.ts",
     "src/utils/skillTooltipMapper.test.ts",
     "src/workers/calculations/CalculateCriticalDamage.test.ts",
     "src/workers/calculations/CalculateDamageReduction.test.ts",
     "src/workers/calculations/CalculateElementalWeaknessStacks.test.ts",
     "src/workers/calculations/CalculatePenetration.test.ts",
-    "src/workers/calculations/CalculateStatusEffectUptimes.test.ts",
-    "src/workers/WorkerPool.test.ts"
+    "src/workers/calculations/CalculateStatusEffectUptimes.test.ts"
   ]
 }

@@ -225,19 +225,24 @@ describe('cspsExport', () => {
 
       const TRAIT_BANDS = { weapon: [1, 32], armor: [33, 44], jewelry: [45, 56] } as const;
       const ENCHANT_BANDS = { weapon: [1, 28], armor: [29, 40], jewelry: [41, 56] } as const;
-      const cases = [
+      const cases: {
+        slot: number;
+        category: 'armor' | 'weapon' | 'jewelry';
+        trait: string;
+        enchant?: string;
+      }[] = [
         { slot: 0, category: 'armor', trait: 'infused', enchant: 'health' },
         { slot: 2, category: 'armor', trait: 'divines' },
         { slot: 4, category: 'weapon', trait: 'infused', enchant: 'crushing' },
         { slot: 20, category: 'weapon', trait: 'sharpened' },
         { slot: 11, category: 'jewelry', trait: 'infused', enchant: 'increase-physical-damage' },
         { slot: 12, category: 'jewelry', trait: 'bloodthirsty' },
-      ] as const;
+      ];
 
       for (const { slot, category, trait, enchant } of cases) {
         const traitCode = gear[slot]!.trait;
         const [traitLow, traitHigh] = TRAIT_BANDS[category];
-        expect({ slot, traitCode }).toEqual({ slot, traitCode: expect.any(Number) });
+
         expect(traitCode).toBeGreaterThanOrEqual(traitLow);
         expect(traitCode).toBeLessThanOrEqual(traitHigh);
         // Round-trip: the code the export writes must decode back to the same
