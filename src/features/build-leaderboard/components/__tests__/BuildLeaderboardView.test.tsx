@@ -142,12 +142,28 @@ describe('BuildLeaderboardView happy path', () => {
     expect(cluster.memberParseIds).toContain(cluster.medoidParseId);
   });
 
-  it('disables the editor button while its fetch is in flight', () => {
+  it('labels and disables per action while one is in flight', () => {
     const { parses, result } = clusteredFixture();
-    renderView({ parses, result, pendingClusterId: result.recommendedClusterId });
+    const id = result.recommendedClusterId as string;
 
-    const featured = screen.getByTestId('start-here-card');
+    const { unmount } = renderView({
+      parses,
+      result,
+      pendingAction: { clusterId: id, kind: 'open' },
+    });
+
+    let featured = screen.getByTestId('start-here-card');
     expect(within(featured).getByRole('button', { name: /opening/i })).toBeDisabled();
+    // Save must not read "Opening…" and must also be locked out.
+    expect(within(featured).getByRole('button', { name: /save to my builds/i })).toBeDisabled();
+    unmount();
+
+    // A save in flight labels Save, not the primary button.
+    renderView({ parses, result, pendingAction: { clusterId: id, kind: 'save' } });
+    featured = screen.getByTestId('start-here-card');
+    expect(within(featured).getByRole('button', { name: /saving/i })).toBeDisabled();
+    expect(within(featured).queryByRole('button', { name: /opening/i })).not.toBeInTheDocument();
+    expect(within(featured).getByRole('button', { name: /open in build editor/i })).toBeDisabled();
   });
 
   it('expands a sibling card to reveal its detail', async () => {

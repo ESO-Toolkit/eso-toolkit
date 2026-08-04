@@ -63,10 +63,10 @@ module.exports = {
   // segment by default. Combined with `npm test`'s `--passWithNoTests`, that made
   // the suite exit green while running nothing at all.
   roots: ['<rootDir>/src'],
-  testMatch: [
-    '**/__tests__/**/*.(test|spec).{js,jsx,ts,tsx}',
-    '**/*.(test|spec).{js,jsx,ts,tsx}',
-  ],
+  // Brace alternation rather than `(test|spec)`. Both match under micromatch, but
+  // the parenthesised form reads like a literal to anyone scanning it and has
+  // repeatedly been mistaken for one.
+  testMatch: ['**/__tests__/**/*.{test,spec}.{js,jsx,ts,tsx}', '**/*.{test,spec}.{js,jsx,ts,tsx}'],
 
   // Module file extensions
   moduleFileExtensions: [

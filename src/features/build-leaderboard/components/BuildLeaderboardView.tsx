@@ -27,7 +27,7 @@ export interface BuildLeaderboardViewProps {
   onOpenInEditor?: (cluster: BuildCluster) => void;
   onSaveBuild?: (cluster: BuildCluster) => void;
   onViewSourceLog?: (cluster: BuildCluster) => void;
-  pendingClusterId?: string | null;
+  pendingAction?: { clusterId: string; kind: 'open' | 'save' } | null;
   /** Copy shown when there is no data at all for the current selection. */
   emptyMessage?: string;
 }
@@ -83,7 +83,7 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
   onOpenInEditor,
   onSaveBuild,
   onViewSourceLog,
-  pendingClusterId,
+  pendingAction,
   emptyMessage = 'No top parses recorded here yet.',
 }) => {
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -163,7 +163,8 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
             esoClass={esoClass ?? recommended.esoClass}
             variations={recommended.variations}
             sourceUrl={sourceUrlFor(recommended)}
-            actionPending={pendingClusterId === recommended.id}
+            pendingKind={pendingAction?.clusterId === recommended.id ? pendingAction.kind : null}
+            actionsDisabled={Boolean(pendingAction)}
             onOpenInEditor={onOpenInEditor}
             onSaveBuild={onSaveBuild}
             onViewSourceLog={onViewSourceLog}
@@ -183,7 +184,8 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
               }
               variations={cluster.variations}
               sourceUrl={sourceUrlFor(cluster)}
-              actionPending={pendingClusterId === cluster.id}
+              pendingKind={pendingAction?.clusterId === cluster.id ? pendingAction.kind : null}
+              actionsDisabled={Boolean(pendingAction)}
               onOpenInEditor={onOpenInEditor}
               onSaveBuild={onSaveBuild}
               onViewSourceLog={onViewSourceLog}

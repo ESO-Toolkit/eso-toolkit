@@ -71,7 +71,7 @@ function encounterKey(encounter: Pick<DpsEncounterSummary, 'encounter_id' | 'dif
 export const BuildLeaderboardPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { pendingClusterId, openInEditor, saveToMyBuilds } = useArchetypeBuildActions();
+  const { pendingAction, openInEditor, saveToMyBuilds } = useArchetypeBuildActions();
 
   const tab: TabKey = searchParams.get('tab') === 'class' ? 'class' : 'encounter';
   const selectedClass = searchParams.get('class') ?? ESO_CLASSES[0];
@@ -233,7 +233,7 @@ export const BuildLeaderboardPage: React.FC = () => {
             onOpenInEditor={openInEditor}
             onSaveBuild={saveToMyBuilds}
             onViewSourceLog={handleViewSourceLog}
-            pendingClusterId={pendingClusterId}
+            pendingAction={pendingAction}
             emptyMessage="No top parses recorded for this boss yet. Try another encounter."
           />
         </PanelErrorBoundary>
@@ -266,7 +266,7 @@ export const BuildLeaderboardPage: React.FC = () => {
             onOpenInEditor={openInEditor}
             onSaveBuild={saveToMyBuilds}
             onViewSourceLog={handleViewSourceLog}
-            pendingClusterId={pendingClusterId}
+            pendingAction={pendingAction}
             emptyMessage={`No ${CLASS_LABELS[selectedClass] ?? selectedClass} parses recorded yet.`}
           />
         </PanelErrorBoundary>

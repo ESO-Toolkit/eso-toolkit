@@ -24,8 +24,13 @@ export interface ArchetypeCardProps {
   onOpenInEditor?: (cluster: BuildCluster) => void;
   onSaveBuild?: (cluster: BuildCluster) => void;
   onViewSourceLog?: (cluster: BuildCluster) => void;
-  /** Busy state for the editor handoff, which needs a second fetch. */
-  actionPending?: boolean;
+  /**
+   * Which action is in flight for THIS card, if any. The kind matters: a shared
+   * boolean made the primary button read "Opening…" during a save.
+   */
+  pendingKind?: 'open' | 'save' | null;
+  /** True while any action anywhere is running, so buttons cannot double-fire. */
+  actionsDisabled?: boolean;
   /** Class name for the headline, e.g. "Arcanist". */
   esoClass?: string;
   /** Traits below the flex threshold, revealed on demand. */
@@ -56,7 +61,8 @@ export const ArchetypeCard: React.FC<ArchetypeCardProps> = ({
   onOpenInEditor,
   onSaveBuild,
   onViewSourceLog,
-  actionPending = false,
+  pendingKind = null,
+  actionsDisabled = false,
   esoClass,
   variations = [],
   sourceUrl,
@@ -183,13 +189,18 @@ export const ArchetypeCard: React.FC<ArchetypeCardProps> = ({
         <Button
           variant="contained"
           size="small"
-          disabled={actionPending}
+          disabled={actionsDisabled}
           onClick={() => onOpenInEditor?.(cluster)}
         >
-          {actionPending ? 'Opening…' : 'Open in Build Editor'}
+          {pendingKind === 'open' ? 'Opening…' : 'Open in Build Editor'}
         </Button>
-        <Button variant="outlined" size="small" onClick={() => onSaveBuild?.(cluster)}>
-          Save to My Builds
+        <Button
+          variant="outlined"
+          size="small"
+          disabled={actionsDisabled}
+          onClick={() => onSaveBuild?.(cluster)}
+        >
+          {pendingKind === 'save' ? 'Saving…' : 'Save to My Builds'}
         </Button>
         {/* Opens the parse in this app's own report viewer. */}
         <Button variant="text" size="small" onClick={() => onViewSourceLog?.(cluster)}>

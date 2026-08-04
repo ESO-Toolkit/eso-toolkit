@@ -25,7 +25,7 @@ module.exports = {
   // not match here: the checkout lives under a dot-directory (`.claude/worktrees/`)
   // and micromatch will not match a leading-dot path segment by default.
   roots: ['<rootDir>/roster-hub-api/src'],
-  testMatch: ['**/*.(test|spec).ts'],
+  testMatch: ['**/*.{test,spec}.ts'],
 
   transform: {
     '^.+\\.ts$': [

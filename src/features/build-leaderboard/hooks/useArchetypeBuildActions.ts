@@ -75,9 +75,21 @@ function toExtractionData(response: DpsParseBuildResponse): Parameters<typeof pl
   };
 }
 
+/** Which action is in flight, so the UI can label and disable accurately. */
+export interface PendingArchetypeAction {
+  clusterId: string;
+  kind: 'open' | 'save';
+}
+
 export interface UseArchetypeBuildActionsResult {
-  /** Cluster id whose fetch is in flight, for button busy state. */
-  pendingClusterId: string | null;
+  /**
+   * The action currently in flight, if any.
+   *
+   * Carries the kind as well as the id: a single boolean made "Save to My
+   * Builds" render the primary button as "Opening…", and left Save clickable
+   * during its own request so a double click saved the build twice.
+   */
+  pendingAction: PendingArchetypeAction | null;
   openInEditor: (cluster: BuildCluster) => Promise<void>;
   saveToMyBuilds: (cluster: BuildCluster) => Promise<void>;
 }
@@ -86,7 +98,7 @@ export function useArchetypeBuildActions(): UseArchetypeBuildActionsResult {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
-  const [pendingClusterId, setPendingClusterId] = useState<string | null>(null);
+  const [pendingAction, setPendingAction] = useState<PendingArchetypeAction | null>(null);
 
   const buildFor = useCallback(
     async (cluster: BuildCluster): Promise<{ build: Build; savedId: string } | null> => {
@@ -107,7 +119,10 @@ export function useArchetypeBuildActions(): UseArchetypeBuildActionsResult {
 
   const openInEditor = useCallback(
     async (cluster: BuildCluster) => {
-      setPendingClusterId(cluster.id);
+      // Ignore a repeat click while anything is already running, rather than
+      // firing a second fetch-and-save for the same build.
+      if (pendingAction) return;
+      setPendingAction({ clusterId: cluster.id, kind: 'open' });
       try {
         const result = await buildFor(cluster);
         if (!result) return;
@@ -117,15 +132,16 @@ export function useArchetypeBuildActions(): UseArchetypeBuildActionsResult {
           variant: 'error',
         });
       } finally {
-        setPendingClusterId(null);
+        setPendingAction(null);
       }
     },
-    [buildFor, navigate, enqueueSnackbar],
+    [buildFor, navigate, enqueueSnackbar, pendingAction],
   );
 
   const saveToMyBuilds = useCallback(
     async (cluster: BuildCluster) => {
-      setPendingClusterId(cluster.id);
+      if (pendingAction) return;
+      setPendingAction({ clusterId: cluster.id, kind: 'save' });
       try {
         await buildFor(cluster);
         enqueueSnackbar(`Saved “${cluster.label}” to My Builds`, { variant: 'success' });
@@ -134,11 +150,11 @@ export function useArchetypeBuildActions(): UseArchetypeBuildActionsResult {
           variant: 'error',
         });
       } finally {
-        setPendingClusterId(null);
+        setPendingAction(null);
       }
     },
-    [buildFor, enqueueSnackbar],
+    [buildFor, enqueueSnackbar, pendingAction],
   );
 
-  return { pendingClusterId, openInEditor, saveToMyBuilds };
+  return { pendingAction, openInEditor, saveToMyBuilds };
 }

@@ -169,7 +169,7 @@ describe('useArchetypeBuildActions', () => {
     expect(store.getState().savedBuilds.builds).toHaveLength(0);
   });
 
-  it('clears the pending flag after the action settles', async () => {
+  it('clears the pending action after it settles', async () => {
     const { wrapper } = makeWrapper();
     const { result } = renderHook(() => useArchetypeBuildActions(), { wrapper });
 
@@ -177,6 +177,63 @@ describe('useArchetypeBuildActions', () => {
       await result.current.openInEditor(CLUSTER);
     });
 
-    await waitFor(() => expect(result.current.pendingClusterId).toBeNull());
+    await waitFor(() => expect(result.current.pendingAction).toBeNull());
+  });
+
+  /**
+   * A single boolean could not tell the two apart, so saving rendered the primary
+   * button as "Opening…".
+   */
+  it('reports which action is in flight, not merely that one is', async () => {
+    let release: ((v: typeof BUILD_RESPONSE) => void) | undefined;
+    jest.spyOn(dpsParsesApi, 'getBuild').mockReturnValue(
+      new Promise((resolve) => {
+        release = resolve;
+      }),
+    );
+
+    const { wrapper } = makeWrapper();
+    const { result } = renderHook(() => useArchetypeBuildActions(), { wrapper });
+
+    act(() => {
+      void result.current.saveToMyBuilds(CLUSTER);
+    });
+
+    await waitFor(() => expect(result.current.pendingAction?.kind).toBe('save'));
+    expect(result.current.pendingAction?.clusterId).toBe(CLUSTER.id);
+
+    await act(async () => {
+      release?.(BUILD_RESPONSE);
+    });
+    await waitFor(() => expect(result.current.pendingAction).toBeNull());
+  });
+
+  /** Double-clicking Save must not save the build twice. */
+  it('ignores a second action while one is already running', async () => {
+    let release: ((v: typeof BUILD_RESPONSE) => void) | undefined;
+    const spy = jest.spyOn(dpsParsesApi, 'getBuild').mockReturnValue(
+      new Promise((resolve) => {
+        release = resolve;
+      }),
+    );
+
+    const { store, wrapper } = makeWrapper();
+    const { result } = renderHook(() => useArchetypeBuildActions(), { wrapper });
+
+    act(() => {
+      void result.current.saveToMyBuilds(CLUSTER);
+    });
+    await waitFor(() => expect(result.current.pendingAction).not.toBeNull());
+
+    // Second click while the first is still outstanding.
+    await act(async () => {
+      await result.current.saveToMyBuilds(CLUSTER);
+    });
+    expect(spy).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      release?.(BUILD_RESPONSE);
+    });
+    expect(store.getState().savedBuilds.builds).toHaveLength(1);
   });
 });
