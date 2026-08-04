@@ -19,6 +19,7 @@ import {
   generateOAuthState,
   OAUTH_STATE_KEY,
   buildAuthUrl,
+  parseAppAuthPort,
 } from './auth';
 import { getBaseUrl } from '../../utils/envUtils';
 
@@ -308,6 +309,31 @@ describe('OAuth Basic Functions', () => {
       expect(DEV_PREVIEW_OAUTH_RETURN_KEY).toBe('dev_preview_oauth_return_path');
     });
   });
+
+  describe('parseAppAuthPort', () => {
+    it('accepts valid 1-5 digit ports in range', () => {
+      expect(parseAppAuthPort('1')).toBe(1);
+      expect(parseAppAuthPort('8080')).toBe(8080);
+      expect(parseAppAuthPort('65535')).toBe(65535);
+      expect(parseAppAuthPort(8080)).toBe(8080);
+    });
+
+    it('rejects non-numeric or trailing-garbage strings (parseInt would accept "8080abc")', () => {
+      expect(parseAppAuthPort('8080abc')).toBeNull();
+      expect(parseAppAuthPort('abc')).toBeNull();
+      expect(parseAppAuthPort('80 80')).toBeNull();
+      expect(parseAppAuthPort('0x1f90')).toBeNull();
+    });
+
+    it('rejects out-of-range and empty/nullish values', () => {
+      expect(parseAppAuthPort('0')).toBeNull();
+      expect(parseAppAuthPort('65536')).toBeNull();
+      expect(parseAppAuthPort('999999')).toBeNull();
+      expect(parseAppAuthPort('')).toBeNull();
+      expect(parseAppAuthPort(null)).toBeNull();
+      expect(parseAppAuthPort(undefined)).toBeNull();
+    });
+  });
 });
 
 describe('refreshAccessToken', () => {
@@ -410,6 +436,23 @@ describe('refreshAccessToken', () => {
     expect(result1).toBe('token-1');
     expect(result2).toBe('token-1'); // cooldown returns cached token
     expect(mockFetch).toHaveBeenCalledTimes(1); // no second HTTP call
+  });
+
+  it('passes an AbortSignal to the token fetch so a hung request can time out (M10)', async () => {
+    mockLocalStorage.getItem.mockImplementation((key: string) =>
+      key === LOCAL_STORAGE_REFRESH_TOKEN_KEY ? 'refresh-token' : null,
+    );
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ access_token: 'token-1' }),
+    });
+
+    await refreshAccessToken();
+
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({ signal: expect.any(AbortSignal) }),
+    );
   });
 
   it('should allow a fresh call after the cooldown window expires', async () => {
