@@ -9,6 +9,14 @@
   // had type errors when the gate was introduced. The list may only ever shrink —
   // fix a file's errors, delete its line. New test files are covered from day one,
   // which is the point of the gate.
+  //
+  // SCOPE: this gate covers the jest suite under src/. The Playwright specs in
+  // tests/ are deliberately NOT in it yet — they need a resolver story first,
+  // because ~28 of their type errors are `import('/src/utils/foo.ts')` strings
+  // that are correct as written (Vite serves those paths to the browser at run
+  // time) and unresolvable from Node. `npm run lint` is scoped to ./src for the
+  // same reason. Wiring tests/ in is tracked as follow-up work, not silently
+  // implied by this file.
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "types": ["node", "jest"],

@@ -212,6 +212,12 @@ const RUNTIME_MANIFEST_TTL_MS = 5 * 60 * 1000;
 /** Back-off after a failed refresh — short, so a deploy is never gated on it. */
 const RUNTIME_MANIFEST_RETRY_MS = 15 * 1000;
 
+/** The document a refresh is trying to resolve — see refreshRuntimeManifest. */
+interface WantedDocument {
+  operation: string;
+  hash: string;
+}
+
 interface PublishedManifest {
   version?: number;
   operations?: Record<string, string[]>;
@@ -227,13 +233,13 @@ let runtimeManifestInFlight: Promise<void> | null = null;
  * previous value in place — a frontend that is down or slow must never turn
  * into a 400 storm on the proxy.
  */
-async function refreshRuntimeManifest(env: Env): Promise<void> {
+async function refreshRuntimeManifest(env: Env, want: WantedDocument): Promise<void> {
   const now = Date.now();
   if (now - runtimeManifestFetchedAt < runtimeManifestTtlMs) return;
   if (runtimeManifestInFlight) return runtimeManifestInFlight;
 
   runtimeManifestInFlight = (async () => {
-    let succeeded = false;
+    let answeredTheMiss = false;
     try {
       // This runs ONLY after a bundled-hash miss, i.e. exactly when the site may
       // have deployed a query the Worker has never seen. A cached copy is worth
@@ -258,16 +264,23 @@ async function refreshRuntimeManifest(env: Env): Promise<void> {
         if (clean.length) next[operation] = clean;
       }
       runtimeManifest = next;
-      succeeded = true;
+      // A 200 is not the same as an ANSWER. Pages/CDN propagation can hand back
+      // the PREVIOUS manifest — valid JSON that simply lacks the hash we just
+      // missed on — and treating that as success would suppress the next
+      // refresh for the full TTL and keep 400ing the frontend that is already
+      // live. Only a manifest that actually contains the missed document has
+      // resolved anything.
+      answeredTheMiss = (next[want.operation] ?? []).includes(want.hash);
     } catch {
       // keep the last known good manifest
     } finally {
-      // Only a SUCCESSFUL read earns the long TTL. Stamping it on failure would
-      // let one unreachable-Pages moment pin the proxy to a stale manifest —
-      // and 400 a freshly deployed frontend — for the whole window, which is
-      // the outage this union exists to prevent. Failures back off briefly so a
-      // miss storm still cannot hammer the origin.
-      runtimeManifestTtlMs = succeeded ? RUNTIME_MANIFEST_TTL_MS : RUNTIME_MANIFEST_RETRY_MS;
+      // Only a read that ANSWERED the miss earns the long TTL. A failed or
+      // still-stale read backs off briefly instead, so neither an unreachable
+      // Pages nor a mid-propagation CDN can pin this isolate to a manifest
+      // that rejects a deployed frontend — the outage this union exists to
+      // prevent — while the short back-off still stops a miss storm from
+      // hammering the origin.
+      runtimeManifestTtlMs = answeredTheMiss ? RUNTIME_MANIFEST_TTL_MS : RUNTIME_MANIFEST_RETRY_MS;
       runtimeManifestFetchedAt = Date.now();
       runtimeManifestInFlight = null;
     }
@@ -281,7 +294,9 @@ async function documentMatchesPin(env: Env, operation: string, queryDoc: string)
   const hash = await hashGraphqlDocument(queryDoc);
   if (bundled.includes(hash)) return true;
 
-  await refreshRuntimeManifest(env);
+  if ((runtimeManifest[operation] ?? []).includes(hash)) return true;
+
+  await refreshRuntimeManifest(env, { operation, hash });
   return (runtimeManifest[operation] ?? []).includes(hash);
 }
 
