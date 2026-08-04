@@ -55,6 +55,15 @@ export interface BuildSignatureV1 {
    * data. Without this the page renders "Set 775" at users.
    */
   setNames: Record<number, string>;
+  /**
+   * abilityId → display name, as ESO Logs reports it.
+   *
+   * Without this the skill-bar chips render raw numeric ids ("123704"), which is
+   * useless to a player — and the bars are half the point of the feature. The
+   * names only otherwise exist on the detail route, which the list view never
+   * calls.
+   */
+  abilityNames: Record<number, string>;
   bars: {
     /** Ability IDs in slot order, ultimate last. */
     front: number[];
@@ -125,7 +134,10 @@ function buildPerfectedAliasMap(entry: ParsedCharacterRanking): Map<number, numb
 
   for (const set of entry.sets) {
     if (!set.name) continue;
-    const base = set.name.replace(/^perfected\s+/i, '').trim().toLowerCase();
+    const base = set.name
+      .replace(/^perfected\s+/i, '')
+      .trim()
+      .toLowerCase();
     const ids = groups.get(base);
     if (ids) ids.push(set.setId);
     else groups.set(base, [set.setId]);
@@ -257,7 +269,9 @@ export function extractBuildSignature(
   // drift is visible after each patch instead of silently corrupting clusters.
   for (const [setId, count] of counts) {
     if (count >= 2 && !slotted.has(setId)) {
-      onWarn?.(`Unclassified set ${setId} worn as ${count} pieces — gear-categorizer tables may be stale`);
+      onWarn?.(
+        `Unclassified set ${setId} worn as ${count} pieces — gear-categorizer tables may be stale`,
+      );
     }
   }
 
@@ -278,6 +292,11 @@ export function extractBuildSignature(
         .filter((set): set is { setId: number; name: string } => Boolean(set.name))
         // Map perfected variants onto the canonical id the signature actually uses.
         .map((set) => [aliases.get(set.setId) ?? set.setId, set.name]),
+    ),
+    abilityNames: Object.fromEntries(
+      entry.talents
+        .filter((talent): talent is typeof talent & { name: string } => Boolean(talent.name))
+        .map((talent) => [talent.abilityId, talent.name]),
     ),
     bars: splitBars(entry),
     skillLines: talentInfo.sl

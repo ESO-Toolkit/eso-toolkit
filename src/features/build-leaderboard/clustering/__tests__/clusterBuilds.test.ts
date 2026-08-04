@@ -4,6 +4,7 @@ import { EMPTY_CANONICAL_MAPS, extractFeatureVectors } from '../featureExtractio
 import {
   ARCANIST_ARCHETYPE,
   NECRO_ARCHETYPE,
+  SETS,
   SORC_ARCHETYPE,
   makeParse,
   makeThreeArchetypeFixture,
@@ -153,6 +154,55 @@ describe('Core/Flex classification', () => {
     flexBack.forEach((trait) => {
       expect(trait.share).toBeGreaterThanOrEqual(0.35);
       expect(trait.share).toBeLessThan(0.8);
+    });
+  });
+});
+
+describe('trait variations', () => {
+  /**
+   * Regression: traits below the flex threshold were discarded entirely, so the
+   * UI's "Show variations" disclosure had nothing to reveal and could never
+   * activate. The data has to come back for that affordance to exist at all.
+   */
+  it('returns minority traits instead of discarding them', () => {
+    resetFixtureIds();
+    // 30 share one monster set; 4 swap it. Monster set is deliberately the
+    // lowest-weighted gear axis, so those 4 stay INSIDE the same cluster — which
+    // is the only way a minority trait can exist. (Varying a heavy axis would
+    // split them into their own cluster, where they'd be 100% and thus core.)
+    const parses = [
+      ...Array.from({ length: 30 }, (_, i) => makeParse(NECRO_ARCHETYPE, i + 1)),
+      ...Array.from({ length: 4 }, (_, i) =>
+        makeParse({ ...NECRO_ARCHETYPE, monster: SETS.zaan }, i + 1),
+      ),
+    ];
+
+    const result = clusterOf(parses);
+    const all = result.clusters.flatMap((c) => c.variations);
+
+    expect(all.length).toBeGreaterThan(0);
+    // Variations sit strictly below flex, and above the noise floor.
+    all.forEach((trait) => {
+      expect(trait.share).toBeLessThan(0.35);
+      expect(trait.share).toBeGreaterThanOrEqual(0.05);
+    });
+  });
+
+  it('keeps core, flex and variations mutually exclusive', () => {
+    const result = clusterOf(makeThreeArchetypeFixture());
+
+    result.clusters.forEach((cluster) => {
+      const key = (t: { group: string; id: number | string }) => `${t.group}|${t.id}`;
+      const core = new Set(cluster.core.map(key));
+      const flex = new Set(cluster.flex.map(key));
+      const variations = new Set(cluster.variations.map(key));
+
+      cluster.flex.forEach((t) => expect(core.has(key(t))).toBe(false));
+      cluster.variations.forEach((t) => {
+        expect(core.has(key(t))).toBe(false);
+        expect(flex.has(key(t))).toBe(false);
+      });
+      expect(variations.size).toBe(cluster.variations.length);
     });
   });
 });

@@ -25,6 +25,11 @@ export interface BuildSignature {
    * SET_DISPLAY_NAMES table predates, which is routine for top-parse gear.
    */
   setNames?: Record<number, string>;
+  /**
+   * abilityId → name. Without this the skill-bar chips render raw numeric ids,
+   * and the bars are half the point of an archetype card.
+   */
+  abilityNames?: Record<number, string>;
   bars: {
     /** Ability IDs in slot order; the last entry of each bar is the ultimate. */
     front: number[];

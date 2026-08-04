@@ -17,21 +17,14 @@ import {
   fetchTrialZones,
   getClientToken,
 } from './esologs-client';
-import {
-  buildDpsEncounterTargets,
-  type DpsEncounterTarget,
-} from './dps-encounter-targets';
+import { buildDpsEncounterTargets, type DpsEncounterTarget } from './dps-encounter-targets';
 import {
   hasRealCombatantInfo,
   isDpsSpec,
   parseCharacterRankingsPage,
   type ParsedCharacterRanking,
 } from './character-rankings-parser';
-import {
-  SIGNATURE_VERSION,
-  computeSignatureHash,
-  extractBuildSignature,
-} from './build-signature';
+import { SIGNATURE_VERSION, computeSignatureHash, extractBuildSignature } from './build-signature';
 import {
   getBlockedCharacterKeys,
   getSyncState,
@@ -322,12 +315,7 @@ async function syncOneEncounter(
 
     if (rows.length > 0) {
       await upsertDpsParses(env.DB, rows);
-      await pruneDpsParses(
-        env.DB,
-        target.encounterId,
-        target.difficulty,
-        KEEP_TOP_PER_ENCOUNTER,
-      );
+      await pruneDpsParses(env.DB, target.encounterId, target.difficulty, KEEP_TOP_PER_ENCOUNTER);
     }
 
     warnings.forEach((message) => {

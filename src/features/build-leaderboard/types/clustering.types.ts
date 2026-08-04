@@ -107,6 +107,14 @@ export interface BuildCluster {
   core: ClusterTrait[];
   /** Traits between FLEX and CORE thresholds — real alternatives exist. */
   flex: ClusterTrait[];
+  /**
+   * Traits below the flex threshold — minority picks, hidden behind the UI's
+   * "Show variations" disclosure.
+   *
+   * These must be returned rather than discarded: without them the disclosure
+   * has nothing to reveal and can never activate.
+   */
+  variations: ClusterTrait[];
   /** Mean intra-cluster distance, 0–1. Lower means a tighter archetype. */
   cohesion: number;
 }

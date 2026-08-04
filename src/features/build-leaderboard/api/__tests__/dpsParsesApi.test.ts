@@ -156,12 +156,61 @@ describe('dpsParsesApi.listParses', () => {
     await expect(dpsParsesApi.listParses({ encounterId: 4 })).rejects.toThrow('API error 500');
   });
 
-  it('converts an abort into a readable timeout error', async () => {
-    const abortError = new Error('aborted');
-    abortError.name = 'AbortError';
-    global.fetch = jest.fn().mockRejectedValue(abortError) as unknown as typeof fetch;
+  /**
+   * A fetch that behaves like the real one: it rejects with an AbortError only
+   * when its signal is aborted. That is what lets these two cases be told apart.
+   */
+  function pendingFetchRespectingSignal(): jest.Mock {
+    const mock = jest.fn(
+      (_url: string, init?: RequestInit) =>
+        new Promise((_resolve, reject) => {
+          init?.signal?.addEventListener('abort', () => {
+            const err = new Error('aborted');
+            err.name = 'AbortError';
+            reject(err);
+          });
+        }),
+    );
+    global.fetch = mock as unknown as typeof fetch;
+    return mock;
+  }
 
-    await expect(dpsParsesApi.listParses({ encounterId: 4 })).rejects.toThrow(/timed out/i);
+  it('reports a genuine timeout as a readable message', async () => {
+    jest.useFakeTimers();
+    pendingFetchRespectingSignal();
+
+    const promise = dpsParsesApi.listParses({ encounterId: 4 });
+    const assertion = expect(promise).rejects.toThrow(/timed out/i);
+    jest.advanceTimersByTime(20_000);
+
+    await assertion;
+    jest.useRealTimers();
+  });
+
+  /**
+   * A caller cancelling (unmount, superseded query) is not a failure. Dressing it
+   * up as "Request timed out" would show users an error for something that worked
+   * exactly as intended, so the AbortError is re-thrown as-is.
+   */
+  it('re-throws a caller cancellation as an AbortError, not a timeout', async () => {
+    pendingFetchRespectingSignal();
+
+    const controller = new AbortController();
+    const promise = dpsParsesApi.listParses({ encounterId: 4 }, controller.signal);
+    controller.abort();
+
+    await expect(promise).rejects.toMatchObject({ name: 'AbortError' });
+    await expect(promise).rejects.not.toThrow(/timed out/i);
+  });
+
+  it('removes its abort listener once the request settles', async () => {
+    mockJson({ parses: [], total: 0, limit: 100, offset: 0 });
+    const controller = new AbortController();
+    const removeSpy = jest.spyOn(controller.signal, 'removeEventListener');
+
+    await dpsParsesApi.listParses({ encounterId: 4 }, controller.signal);
+
+    expect(removeSpy).toHaveBeenCalledWith('abort', expect.any(Function));
   });
 
   it('normalizes the response body', async () => {

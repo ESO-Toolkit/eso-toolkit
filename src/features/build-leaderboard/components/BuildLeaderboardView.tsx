@@ -9,7 +9,6 @@ import { Alert, Box, Button, LinearProgress, Skeleton, Stack, Typography } from 
 import React, { useState } from 'react';
 
 import { MetricPill } from '../../../components/MetricPill';
-import { FLEX_SHARE_THRESHOLD } from '../clustering/clusterSummary';
 import type { BuildCluster, ClusterBuildsResult } from '../types/clustering.types';
 import type { DpsParse } from '../types/dpsParses.types';
 
@@ -141,12 +140,10 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
   }
 
   const quality = clusterQuality(result.silhouette);
+  const sourceUrlFor = (cluster: BuildCluster): string | undefined =>
+    parses.find((parse) => parse.parse_id === cluster.medoidParseId)?.source_url;
   const recommended = result.clusters.find((c) => c.id === result.recommendedClusterId);
   const others = result.clusters.filter((c) => c.id !== result.recommendedClusterId);
-
-  // Traits below the flex threshold, surfaced only via "Show variations".
-  const variationsFor = (cluster: BuildCluster): BuildCluster['flex'] =>
-    cluster.flex.filter((trait) => trait.share < FLEX_SHARE_THRESHOLD);
 
   return (
     <Box>
@@ -164,7 +161,8 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
             totalParses={result.totalParses}
             featured
             esoClass={esoClass ?? recommended.core.find((t) => t.group === 'esoClass')?.label}
-            variations={variationsFor(recommended)}
+            variations={recommended.variations}
+            sourceUrl={sourceUrlFor(recommended)}
             actionPending={pendingClusterId === recommended.id}
             onOpenInEditor={onOpenInEditor}
             onSaveBuild={onSaveBuild}
@@ -183,7 +181,8 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
               onToggleExpand={() =>
                 setExpandedId((current) => (current === cluster.id ? null : cluster.id))
               }
-              variations={variationsFor(cluster)}
+              variations={cluster.variations}
+              sourceUrl={sourceUrlFor(cluster)}
               actionPending={pendingClusterId === cluster.id}
               onOpenInEditor={onOpenInEditor}
               onSaveBuild={onSaveBuild}

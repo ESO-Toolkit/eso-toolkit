@@ -43,6 +43,10 @@ export function useDpsParses(
       setParses([]);
       setTotal(0);
       setError(null);
+      // Must clear explicitly: if a request was in flight, the previous cleanup
+      // set `cancelled`, so its `finally` skipped setLoading(false) and the flag
+      // would otherwise stay true forever with no query to resolve it.
+      setLoading(false);
       return undefined;
     }
 

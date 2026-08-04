@@ -30,6 +30,8 @@ export interface ArchetypeCardProps {
   esoClass?: string;
   /** Traits below the flex threshold, revealed on demand. */
   variations?: readonly ClusterTrait[];
+  /** Medoid parse's page on esologs.com, for attribution. */
+  sourceUrl?: string;
 }
 
 const compact = (value: number): string =>
@@ -57,6 +59,7 @@ export const ArchetypeCard: React.FC<ArchetypeCardProps> = ({
   actionPending = false,
   esoClass,
   variations = [],
+  sourceUrl,
 }) => {
   const showDetail = featured || expanded;
 
@@ -188,9 +191,24 @@ export const ArchetypeCard: React.FC<ArchetypeCardProps> = ({
         <Button variant="outlined" size="small" onClick={() => onSaveBuild?.(cluster)}>
           Save to My Builds
         </Button>
+        {/* Opens the parse in this app's own report viewer. */}
         <Button variant="text" size="small" onClick={() => onViewSourceLog?.(cluster)}>
-          View the source log
+          Open the parse
         </Button>
+        {/* Separate, explicit link to the origin — the data is ESO Logs', and the
+            attribution should point at them rather than at our rendering of it. */}
+        {sourceUrl && (
+          <Button
+            variant="text"
+            size="small"
+            href={sourceUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            sx={{ opacity: 0.75 }}
+          >
+            ESO Logs ↗
+          </Button>
+        )}
         {!featured && onToggleExpand && (
           <Button variant="text" size="small" onClick={onToggleExpand} sx={{ ml: 'auto' }}>
             {expanded ? 'Less' : 'Details'}

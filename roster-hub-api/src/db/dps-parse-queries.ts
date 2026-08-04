@@ -38,7 +38,9 @@ export const INCLUDE_CHARACTER_NAMES = true;
  * re-ingest: `character_key` is a hash of name+region, and the encounter and
  * difficulty are fixed. That keeps frontend deep links from rotting nightly.
  */
-export function toParseId(row: Pick<DpsParseRow, 'encounter_id' | 'difficulty' | 'character_key'>): string {
+export function toParseId(
+  row: Pick<DpsParseRow, 'encounter_id' | 'difficulty' | 'character_key'>,
+): string {
   return `${row.encounter_id}-${row.difficulty}-${row.character_key}`;
 }
 
@@ -260,10 +262,7 @@ ON CONFLICT (encounter_id, difficulty, character_key) DO UPDATE SET
 WHERE excluded.partition > dps_parses.partition
    OR (excluded.partition = dps_parses.partition AND excluded.amount > dps_parses.amount)`;
 
-export type DpsParseInsert = Omit<
-  DpsParseRow,
-  'ingested_at' | 'updated_at' | 'evidence_enriched'
->;
+export type DpsParseInsert = Omit<DpsParseRow, 'ingested_at' | 'updated_at' | 'evidence_enriched'>;
 
 /**
  * Insert-or-improve a batch of parses.

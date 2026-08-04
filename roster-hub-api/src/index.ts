@@ -2036,11 +2036,7 @@ async function notifyDiscordSync(env: Env, rosterId: string): Promise<void> {
 // ─── DPS builds leaderboard ─────────────────────────────────────────────────
 // Read-only. This data is owned by the cron; there is no public write path.
 
-import {
-  getDpsParseCombatant,
-  listDpsEncounters,
-  listDpsParses,
-} from './db/dps-parse-queries';
+import { getDpsParseCombatant, listDpsEncounters, listDpsParses } from './db/dps-parse-queries';
 
 /** Which encounters have data — feeds the trial/boss picker. */
 app.get('/dps-leaderboard/encounters', async (c) => {
@@ -2121,7 +2117,9 @@ async function isAuthorizedInternalRequest(
 }
 
 app.post('/admin/sync-leaderboard', async (c) => {
-  if (!(await isAuthorizedInternalRequest(c.req.header('X-Internal-Key'), c.env.INTERNAL_API_KEY))) {
+  if (
+    !(await isAuthorizedInternalRequest(c.req.header('X-Internal-Key'), c.env.INTERNAL_API_KEY))
+  ) {
     return c.json({ error: 'Unauthorized' }, 401);
   }
   const results = await syncLeaderboardRosters(c.env);
@@ -2134,7 +2132,9 @@ app.post('/admin/sync-leaderboard', async (c) => {
  *   ?encounterId=60&difficulty=122&pages=3&force=1
  */
 app.post('/admin/sync-dps-parses', async (c) => {
-  if (!(await isAuthorizedInternalRequest(c.req.header('X-Internal-Key'), c.env.INTERNAL_API_KEY))) {
+  if (
+    !(await isAuthorizedInternalRequest(c.req.header('X-Internal-Key'), c.env.INTERNAL_API_KEY))
+  ) {
     return c.json({ error: 'Unauthorized' }, 401);
   }
 

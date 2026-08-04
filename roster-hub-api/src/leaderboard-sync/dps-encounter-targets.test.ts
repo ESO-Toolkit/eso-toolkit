@@ -40,7 +40,12 @@ describe('pickDifficulty', () => {
 describe('buildDpsEncounterTargets', () => {
   it('produces one target per ranked boss', () => {
     const targets = buildDpsEncounterTargets([
-      zone({ encounters: [{ id: 60, name: 'Xoryn' }, { id: 57, name: 'Orphic' }] }),
+      zone({
+        encounters: [
+          { id: 60, name: 'Xoryn' },
+          { id: 57, name: 'Orphic' },
+        ],
+      }),
     ]);
 
     expect(targets).toHaveLength(2);
@@ -55,7 +60,12 @@ describe('buildDpsEncounterTargets', () => {
   it('excludes unranked sub-bosses', () => {
     const unranked = [...UNRANKED_ENCOUNTER_IDS][0];
     const targets = buildDpsEncounterTargets([
-      zone({ encounters: [{ id: unranked, name: 'Trash' }, { id: 60, name: 'Xoryn' }] }),
+      zone({
+        encounters: [
+          { id: unranked, name: 'Trash' },
+          { id: 60, name: 'Xoryn' },
+        ],
+      }),
     ]);
 
     expect(targets.map((t) => t.encounterId)).toEqual([60]);
@@ -104,8 +114,6 @@ describe('buildDpsEncounterTargets', () => {
 
   it('tolerates missing or malformed zone data', () => {
     expect(() => buildDpsEncounterTargets([])).not.toThrow();
-    expect(
-      buildDpsEncounterTargets([zone({ encounters: undefined as never })]),
-    ).toHaveLength(0);
+    expect(buildDpsEncounterTargets([zone({ encounters: undefined as never })])).toHaveLength(0);
   });
 });

@@ -21,18 +21,52 @@ import type { GearItem } from './esologs-client';
  */
 export const MONSTER_SET_IDS = new Set([
   // Quick Assignment monster sets
-  666, 578, 633, 634, 627, 687, 436, 738,
+  666,
+  578,
+  633,
+  634,
+  627,
+  687,
+  436,
+  738,
   // Tank monster sets
-  577, 534,
+  577,
+  534,
   // Healer monster sets
-  166, 576, 436, 738,
+  166,
+  576,
+  436,
+  738,
   // Flexible monster sets (Spaulder also appears here)
   627,
   // Support mythics (heal/tank)
-  691, 576,
+  691,
+  576,
   // DPS monster sets (used as 2-piece by DPS)
-  163, 168, 170, 183, 257, 266, 274, 276, 280, 350, 397, 432, 458, 479, 534, 620, 666, 687, 738,
-  577, 578, 633, 634, 627,
+  163,
+  168,
+  170,
+  183,
+  257,
+  266,
+  274,
+  276,
+  280,
+  350,
+  397,
+  432,
+  458,
+  479,
+  534,
+  620,
+  666,
+  687,
+  738,
+  577,
+  578,
+  633,
+  634,
+  627,
   // Added from live characterRankings data — these were landing in `additionalSets`
   // and leaving the monster slot empty. 270 alone accounted for 46 of 88 parses on
   // one encounter, so the table was materially incomplete.

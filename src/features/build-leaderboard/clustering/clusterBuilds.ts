@@ -62,6 +62,12 @@ const RECOMMEND_MIN_SHARE = 0.15;
  */
 const MAX_MERGE_DISTANCE = 0.5;
 
+/**
+ * Floor for a trait to be worth showing as a variation at all. Below this it is
+ * one person's idiosyncrasy, not an alternative worth telling a newcomer about.
+ */
+const MIN_VARIATION_SHARE = 0.05;
+
 const EMPTY_RESULT: ClusterBuildsResult = {
   clusters: [],
   k: 0,
@@ -306,6 +312,11 @@ function buildClusters(
     const flex = traits.filter(
       (trait) => trait.share >= FLEX_SHARE_THRESHOLD && trait.share < CORE_SHARE_THRESHOLD,
     );
+    // Minority picks, for the UI's "Show variations" disclosure. Floored at
+    // MIN_VARIATION_SHARE so one-off oddities don't become a wall of chips.
+    const variations = traits.filter(
+      (trait) => trait.share >= MIN_VARIATION_SHARE && trait.share < FLEX_SHARE_THRESHOLD,
+    );
 
     // Every collapsed parse contributes its own dps, so the spread is real.
     const amounts = indices.flatMap(
@@ -322,6 +333,7 @@ function buildClusters(
       dps: dpsFiveNumber(amounts),
       core,
       flex,
+      variations,
       cohesion: cohesionPairs === 0 ? 0 : cohesionSum / cohesionPairs,
     });
   }
@@ -381,6 +393,9 @@ function buildSingleClusterResult(
   const flex = traits.filter(
     (trait) => trait.share >= FLEX_SHARE_THRESHOLD && trait.share < CORE_SHARE_THRESHOLD,
   );
+  const variations = traits.filter(
+    (trait) => trait.share >= MIN_VARIATION_SHARE && trait.share < FLEX_SHARE_THRESHOLD,
+  );
 
   const memberIds = [...members.flat(), ...overflowIndices.flatMap((i) => collapsed.members[i])];
   const size = memberIds.length;
@@ -397,6 +412,7 @@ function buildSingleClusterResult(
         dps: dpsFiveNumber(new Array(size).fill(points[0].amount) as number[]),
         core,
         flex,
+        variations,
         cohesion: 0,
       },
     ],

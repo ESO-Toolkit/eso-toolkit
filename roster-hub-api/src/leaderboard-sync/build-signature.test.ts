@@ -1,5 +1,8 @@
 import fixture from './__fixtures__/character-rankings-page.json';
-import { parseCharacterRankingsPage, type ParsedCharacterRanking } from './character-rankings-parser';
+import {
+  parseCharacterRankingsPage,
+  type ParsedCharacterRanking,
+} from './character-rankings-parser';
 import { computeSignatureHash, extractBuildSignature } from './build-signature';
 
 const entries = parseCharacterRankingsPage(fixture).rankings;

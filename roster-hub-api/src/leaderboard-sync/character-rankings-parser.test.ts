@@ -124,8 +124,12 @@ describe('parseCharacterRankingsPage', () => {
   });
 
   it('tolerates has_more_pages as well as hasMorePages', () => {
-    expect(parseCharacterRankingsPage({ rankings: [], has_more_pages: true }).hasMorePages).toBe(true);
-    expect(parseCharacterRankingsPage({ rankings: [], hasMorePages: true }).hasMorePages).toBe(true);
+    expect(parseCharacterRankingsPage({ rankings: [], has_more_pages: true }).hasMorePages).toBe(
+      true,
+    );
+    expect(parseCharacterRankingsPage({ rankings: [], hasMorePages: true }).hasMorePages).toBe(
+      true,
+    );
   });
 
   it('drops entries with no amount or no report code', () => {

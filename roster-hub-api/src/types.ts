@@ -307,11 +307,15 @@ export interface DpsParseRow {
  * runs clustering is the wrong trade. `combatant_json` is deliberately absent —
  * it is large and only the detail route serves it.
  */
-export interface DpsParsePublic
-  extends Omit<
-    DpsParseRow,
-    'build_json' | 'combatant_json' | 'character_key' | 'character_name' | 'signature_version' | 'evidence_enriched'
-  > {
+export interface DpsParsePublic extends Omit<
+  DpsParseRow,
+  | 'build_json'
+  | 'combatant_json'
+  | 'character_key'
+  | 'character_name'
+  | 'signature_version'
+  | 'evidence_enriched'
+> {
   build: unknown;
   /**
    * Addressable id for the detail route: `encounterId-difficulty-characterKey`.

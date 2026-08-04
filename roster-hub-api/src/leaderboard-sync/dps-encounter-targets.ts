@@ -27,21 +27,41 @@ export const DEFAULT_DIFFICULTY = -1;
  * sets for its set-ID tables. Re-sync when a new trial ships.
  */
 export const UNRANKED_ENCOUNTER_IDS = new Set<number>([
-  1, 2, 3, // Aetherian Archive
-  5, 6, // Hel Ra Citadel
-  9, 10, 11, // Sanctum Ophidia
-  13, 14, // Maw of Lorkhaj
-  16, 17, 18, 19, // The Halls of Fabrication
-  21, 22, // Asylum Sanctorium
-  24, 25, 26, // Cloudrest
-  43, 44, // Sunspire
-  46, 47, // Kyne's Aegis
-  49, 50, // Rockgrove
-  52, 53, // Dreadsail Reef
-  55, 56, // Sanity's Edge
-  58, 59, // Lucent Citadel
-  61, 62, // Ossein Cage
-  1000, 1001, // Group arenas
+  1,
+  2,
+  3, // Aetherian Archive
+  5,
+  6, // Hel Ra Citadel
+  9,
+  10,
+  11, // Sanctum Ophidia
+  13,
+  14, // Maw of Lorkhaj
+  16,
+  17,
+  18,
+  19, // The Halls of Fabrication
+  21,
+  22, // Asylum Sanctorium
+  24,
+  25,
+  26, // Cloudrest
+  43,
+  44, // Sunspire
+  46,
+  47, // Kyne's Aegis
+  49,
+  50, // Rockgrove
+  52,
+  53, // Dreadsail Reef
+  55,
+  56, // Sanity's Edge
+  58,
+  59, // Lucent Citadel
+  61,
+  62, // Ossein Cage
+  1000,
+  1001, // Group arenas
 ]);
 
 export interface DpsEncounterTarget {

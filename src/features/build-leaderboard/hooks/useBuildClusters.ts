@@ -32,6 +32,13 @@ function buildLabelLookup(parses: readonly DpsParse[]): Map<string, string> {
     const build = parse.build;
     if (!build) continue;
 
+    // Ability names come from the signature; without them the skill-bar chips
+    // render raw numeric ids, which tells a player nothing.
+    for (const [abilityId, name] of Object.entries(build.abilityNames ?? {})) {
+      labels.set(`frontBar|${abilityId}`, name);
+      labels.set(`backBar|${abilityId}`, name);
+    }
+
     for (const [setId] of build.setCounts) {
       // Our own table wins when it knows the set; the API's name is the fallback
       // for anything newer than our data, which top-parse gear routinely is.
@@ -51,11 +58,16 @@ function hydrateLabels(cluster: BuildCluster, labels: Map<string, string>): Buil
   const hydrate = (traits: BuildCluster['core']): BuildCluster['core'] =>
     traits.map((trait) => ({
       ...trait,
-      label: labels.get(`${trait.group}|${trait.id}`) ?? String(trait.id),
+      // Fall back to a labelled id rather than a bare number, so an unknown
+      // ability reads as missing data instead of looking like a UI bug.
+      label:
+        labels.get(`${trait.group}|${trait.id}`) ??
+        (typeof trait.id === 'number' ? `Ability ${trait.id}` : String(trait.id)),
     }));
 
   const core = hydrate(cluster.core);
   const flex = hydrate(cluster.flex);
+  const variations = hydrate(cluster.variations);
 
   // The label was generated before names were known; rebuild it from the
   // now-resolved five-piece sets.
@@ -68,6 +80,7 @@ function hydrateLabels(cluster: BuildCluster, labels: Map<string, string>): Buil
     ...cluster,
     core,
     flex,
+    variations,
     label: setNames.length > 0 ? setNames.join(' + ') : cluster.label,
   };
 }

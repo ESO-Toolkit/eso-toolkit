@@ -21,10 +21,24 @@ const REQUEST_TIMEOUT_MS = 15_000;
 
 async function request<T>(path: string, signal?: AbortSignal): Promise<T> {
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
-  // Honour a caller's cancellation (component unmount, superseded query) as well
-  // as our own timeout.
-  signal?.addEventListener('abort', () => controller.abort(), { once: true });
+
+  // Tracked separately from the caller's signal: both abort the same controller,
+  // but only one of them means "timed out". Reporting a cancelled request (unmount,
+  // superseded query) as a timeout would show users an error for something that
+  // worked exactly as intended.
+  let timedOut = false;
+  const timer = setTimeout(() => {
+    timedOut = true;
+    controller.abort();
+  }, REQUEST_TIMEOUT_MS);
+
+  const onExternalAbort = (): void => controller.abort();
+  signal?.addEventListener('abort', onExternalAbort, { once: true });
+
+  const cleanup = (): void => {
+    clearTimeout(timer);
+    signal?.removeEventListener('abort', onExternalAbort);
+  };
 
   let res: Response;
   try {
@@ -33,13 +47,16 @@ async function request<T>(path: string, signal?: AbortSignal): Promise<T> {
       signal: controller.signal,
     });
   } catch (err) {
-    clearTimeout(timer);
+    cleanup();
     if (err instanceof Error && err.name === 'AbortError') {
+      // Re-throw the caller's cancellation as an AbortError so callers can keep
+      // ignoring it, rather than dressing it up as a failure.
+      if (!timedOut) throw err;
       throw new Error('Request timed out. Check your connection and try again.');
     }
     throw err;
   }
-  clearTimeout(timer);
+  cleanup();
 
   if (!res.ok) {
     const text = await res.text();
