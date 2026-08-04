@@ -196,7 +196,7 @@ export const draconicPower: SkillLineData = {
       // Rank II (max rank) text. Renamed from Battle Roar in U49; the id 29463 is
       // shared with the legacy DRAGONKNIGHT_BATTLE_ROAR alias.
       description:
-        'The syllables of that ancient tongue live in the mouth of every Dragonknight.\n\nWhen you cast an Ultimate ability, you restore 16 Health, 16 Magicka, and 16 Stamina for each point of the Ultimate spent.\n\nEach Dragonknight ability slotted increases this value by 6.',
+        'The syllables of that ancient tongue live in the mouth of every Dragonknight.\n\nWhen you cast an Ultimate ability, you restore 16 Health, 16 Magicka, and 16 Stamina for every Ultimate spent. Each Dragonknight ability slotted increases this value by 6.',
       isPassive: true,
     },
     {
