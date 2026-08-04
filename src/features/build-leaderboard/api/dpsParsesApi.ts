@@ -49,10 +49,12 @@ async function request<T>(path: string, signal?: AbortSignal): Promise<T> {
 
   let res: Response;
   try {
-    res = await fetch(`${BASE_URL}${path}`, {
-      headers: { 'Content-Type': 'application/json' },
-      signal: controller.signal,
-    });
+    // Deliberately no Content-Type: these are GETs with no body, and that header
+    // is not CORS-safelisted — setting it forces an OPTIONS preflight on every
+    // cross-origin request, doubling the round trips for nothing. (It also has to
+    // survive the Worker's origin allowlist, so it turns a benign request into one
+    // that can fail outright.)
+    res = await fetch(`${BASE_URL}${path}`, { signal: controller.signal });
   } catch (err) {
     cleanup();
     if (err instanceof Error && err.name === 'AbortError') {

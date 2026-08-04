@@ -178,6 +178,20 @@ describe('dpsParsesApi.listParses', () => {
    * The server rejects an unfiltered query with a 400 to prevent a full table
    * scan; failing fast here avoids a guaranteed-useless round trip.
    */
+  /**
+   * Content-Type is not a CORS-safelisted request header, so setting it on a
+   * bodyless GET forces an OPTIONS preflight on every cross-origin call — an
+   * extra round trip that also has to clear the Worker's origin allowlist.
+   */
+  it('sends no Content-Type on GETs, avoiding a CORS preflight', async () => {
+    const fetchMock = mockJson({ parses: [], total: 0, limit: 100, offset: 0 });
+    await dpsParsesApi.listParses({ encounterId: 4 });
+
+    const init = fetchMock.mock.calls[0][1] ?? {};
+    const headers = (init.headers ?? {}) as Record<string, string>;
+    expect(Object.keys(headers)).toHaveLength(0);
+  });
+
   it('throws before requesting when no filter is supplied', async () => {
     const fetchMock = mockJson({});
     await expect(dpsParsesApi.listParses({})).rejects.toThrow(/at least one/i);
