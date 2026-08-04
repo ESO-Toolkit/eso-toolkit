@@ -13,6 +13,8 @@ import { webcrypto } from 'node:crypto';
 
 import { print } from 'graphql';
 
+import { hashGraphqlDocument } from '../../roster-hub-api/src/graphql-document-hash';
+
 import { GetReportByCodeDocument } from './gql/graphql';
 
 /**
@@ -24,6 +26,7 @@ interface ProxyEnv {
   ESOLOGS_CLIENT_ID: string;
   ESOLOGS_CLIENT_SECRET: string;
   GRAPHQL_HASH_PINNING?: string;
+  GRAPHQL_MANIFEST_URL?: string;
 }
 
 // jsdom has no SubtleCrypto; the Worker runtime and Node both do.
@@ -72,10 +75,24 @@ if (typeof globalThis.Request === 'undefined') {
   Object.defineProperty(globalThis, 'Request', { value: TestRequest, configurable: true });
 }
 
-// Required (not imported) so the crypto/Response shims above are installed first.
-const { handleGraphqlProxy } = require('../../roster-hub-api/src/graphql-proxy') as {
-  handleGraphqlProxy: (c: unknown) => Promise<Response>;
-};
+/**
+ * Load a FRESH copy of the Worker module for each test. The proxy keeps module
+ * scope state — the upstream token cache, the per-IP rate-limit buckets and the
+ * runtime-manifest TTL — and a cached manifest from one test would otherwise
+ * decide the outcome of the next. Required rather than imported so the crypto
+ * and Response shims above are installed first.
+ */
+function loadProxy(): (c: unknown) => Promise<Response> {
+  let handler!: (c: unknown) => Promise<Response>;
+  jest.isolateModules(() => {
+    handler = (
+      require('../../roster-hub-api/src/graphql-proxy') as {
+        handleGraphqlProxy: (c: unknown) => Promise<Response>;
+      }
+    ).handleGraphqlProxy;
+  });
+  return handler;
+}
 
 interface FakeContextOptions {
   operation: string;
@@ -114,8 +131,14 @@ function createContext({ operation, body, ip, env }: FakeContextOptions): {
 }
 
 /** Upstream + edge-cache stubs so an ACCEPTED request has somewhere to go. */
-function stubUpstream(): { fetchMock: jest.Mock } {
+function stubUpstream(options: { publishedManifest?: unknown } = {}): { fetchMock: jest.Mock } {
   const fetchMock = jest.fn(async (input: unknown) => {
+    if (String(input).includes('graphql-manifest.json')) {
+      if (options.publishedManifest === undefined) {
+        return new Response('not found', { status: 404 });
+      }
+      return new Response(JSON.stringify(options.publishedManifest), { status: 200 });
+    }
     if (String(input).includes('oauth/token')) {
       return new Response(JSON.stringify({ access_token: 'token', expires_in: 3600 }), {
         status: 200,
@@ -144,7 +167,7 @@ describe('GraphQL proxy persisted-query pinning', () => {
       ip: '10.0.0.1',
     });
 
-    const response = await handleGraphqlProxy(context);
+    const response = await loadProxy()(context);
 
     expect(response.status).toBe(200);
     const upstreamCalls = fetchMock.mock.calls.filter(
@@ -162,11 +185,12 @@ describe('GraphQL proxy persisted-query pinning', () => {
       ip: '10.0.0.2',
     });
 
-    const response = await handleGraphqlProxy(context);
+    const response = await loadProxy()(context);
 
     expect(response.status).toBe(400);
     // The point of the pin: the site's client credentials never leave the Worker.
-    expect(fetchMock).not.toHaveBeenCalled();
+    // (A manifest fetch may happen; what must not happen is an upstream call.)
+    expect(fetchMock.mock.calls.some((call) => String(call[0]).includes('esologs'))).toBe(false);
   });
 
   it('honours the GRAPHQL_HASH_PINNING=off escape hatch', async () => {
@@ -179,12 +203,54 @@ describe('GraphQL proxy persisted-query pinning', () => {
       env: { GRAPHQL_HASH_PINNING: 'off' },
     });
 
-    const response = await handleGraphqlProxy(context);
+    const response = await loadProxy()(context);
 
     expect(response.status).toBe(200);
     expect(
       fetchMock.mock.calls.filter((call) => !String(call[0]).includes('oauth/token')),
     ).toHaveLength(1);
+  });
+
+  it('accepts a document the live frontend publishes but this Worker was not built with', async () => {
+    // Deploy skew: Pages auto-deploys, the Worker deploy is manual, so a new
+    // frontend document must not 400 until someone redeploys the Worker.
+    const newDocument = PINNED_QUERY.replace('reportData {', 'reportData { newlyAddedField ');
+    const newHash = await hashGraphqlDocument(newDocument);
+    const { fetchMock } = stubUpstream({
+      publishedManifest: { version: 1, operations: { getReportByCode: [newHash] } },
+    });
+    const { context } = createContext({
+      operation: 'getReportByCode',
+      body: { operationName: 'getReportByCode', query: newDocument, variables: { code: 'abc' } },
+      ip: '10.0.0.5',
+      env: { GRAPHQL_MANIFEST_URL: 'https://esotk.test/graphql-manifest.json' },
+    });
+
+    const response = await loadProxy()(context);
+
+    expect(response.status).toBe(200);
+    expect(fetchMock.mock.calls.some((call) => String(call[0]).includes('graphql-manifest'))).toBe(
+      true,
+    );
+  });
+
+  it('does not let the published manifest widen the operation allowlist', async () => {
+    const rogue = 'query getSecretAdminThing { a }';
+    const rogueHash = await hashGraphqlDocument(rogue);
+    const { fetchMock } = stubUpstream({
+      publishedManifest: { version: 1, operations: { getSecretAdminThing: [rogueHash] } },
+    });
+    const { context } = createContext({
+      operation: 'getSecretAdminThing',
+      body: { operationName: 'getSecretAdminThing', query: rogue },
+      ip: '10.0.0.6',
+      env: { GRAPHQL_MANIFEST_URL: 'https://esotk.test/graphql-manifest.json' },
+    });
+
+    const response = await loadProxy()(context);
+
+    expect(response.status).toBe(400);
+    expect(fetchMock.mock.calls.some((call) => String(call[0]).includes('esologs'))).toBe(false);
   });
 
   it('still rejects an operation that is not allowlisted', async () => {
@@ -195,9 +261,9 @@ describe('GraphQL proxy persisted-query pinning', () => {
       ip: '10.0.0.4',
     });
 
-    const response = await handleGraphqlProxy(context);
+    const response = await loadProxy()(context);
 
     expect(response.status).toBe(400);
-    expect(fetchMock).not.toHaveBeenCalled();
+    expect(fetchMock.mock.calls.some((call) => String(call[0]).includes('esologs'))).toBe(false);
   });
 });

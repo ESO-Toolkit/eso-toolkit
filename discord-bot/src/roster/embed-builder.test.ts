@@ -83,6 +83,23 @@ describe('buildRosterText', () => {
     expect(text).toContain('GEAR: `Turning Tide` `Claw of Yolnahkriin`');
   });
 
+  it('appends the arena weapon to the gear line', () => {
+    const withArena: DecodedRoster = {
+      ...mockDecoded,
+      tanks: [{ ...mockDecoded.tanks[0], arenaWeapon: "Maelstrom's Frost Staff" }],
+    };
+    const text = buildRosterText(mockSnapshot, withArena);
+    expect(text).toContain("GEAR: `Turning Tide` `Claw of Yolnahkriin` `Maelstrom's Frost Staff`");
+  });
+
+  it('still renders a gear line for an arena weapon with no sets', () => {
+    const arenaOnly: DecodedRoster = {
+      ...mockDecoded,
+      tanks: [{ playerName: 'TankPlayer1', roleLabel: 'MT', arenaWeapon: "Maelstrom's Bow" }],
+    };
+    expect(buildRosterText(mockSnapshot, arenaOnly)).toContain("GEAR: `Maelstrom's Bow`");
+  });
+
   it('formats ultimates in brackets', () => {
     const text = buildRosterText(mockSnapshot, mockDecoded);
     expect(text).toContain('[Aggressive Warhorn]');

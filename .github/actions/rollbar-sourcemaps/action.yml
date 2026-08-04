@@ -39,6 +39,19 @@ runs:
           exit 1
         fi
 
+        # Rollbar applies a sourcemap only when the client's code_version matches
+        # the uploaded version EXACTLY. The bundle bakes that version in at build
+        # time (vite.config `define` of process.env.REACT_APP_VERSION), so if the
+        # string is not in the emitted JS the upload would be silently orphaned —
+        # which is precisely how prod traces stayed minified before. Fail loudly
+        # instead of uploading maps nothing will ever match.
+        if ! grep -rqlF "${RELEASE_VERSION}" "${BUILD_DIR}/assets"; then
+          echo "❌ Release ${RELEASE_VERSION} does not appear in the built bundle."
+          echo "   The client would report a different code_version and every uploaded"
+          echo "   map would be orphaned. Check that REACT_APP_VERSION reached the build."
+          exit 1
+        fi
+
         while IFS= read -r -d '' mapfile; do
           # Derive the URL of the corresponding minified JS/CSS file
           filename=$(basename "${mapfile}" .map)

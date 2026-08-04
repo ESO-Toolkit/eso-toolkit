@@ -31,7 +31,7 @@ const makeReport = (
   endTime: 1_700_000_360_000,
   visibility: 'public',
   segments: 3,
-  zone: { name: 'Rockgrove' },
+  zone: { id: 1027, name: 'Rockgrove' },
   owner: { name: 'Tester' },
   ...overrides,
 });

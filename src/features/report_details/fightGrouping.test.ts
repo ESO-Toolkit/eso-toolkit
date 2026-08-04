@@ -136,7 +136,12 @@ describe('resolveFightZone', () => {
 
   it('resolves a name-only gameZone that matches a canonical trial', () => {
     const zone = resolveFightZone(
-      makeFight({ gameZone: { id: null, name: 'Sunspire' }, encounterID: 21 }),
+      // ESO Logs can return a gameZone with a null id; the resolver falls back
+      // to the name, which is exactly what this asserts.
+      makeFight({
+        gameZone: { id: null, name: 'Sunspire' } as unknown as FightFragment['gameZone'],
+        encounterID: 21,
+      }),
     );
     expect(zone.type).toBe('trial');
     expect(zone.zoneId).toBe(ZONE_SUNSPIRE);

@@ -28,6 +28,13 @@ import { hashGraphqlDocument } from '../roster-hub-api/src/graphql-document-hash
 const REPO_ROOT = resolve(__dirname, '..');
 const SRC_DIR = join(REPO_ROOT, 'src');
 const OUT_FILE = join(REPO_ROOT, 'roster-hub-api', 'src', 'graphql-query-manifest.ts');
+/**
+ * Published with the frontend so the Worker can pick up a manifest newer than
+ * the one bundled into it. Pages auto-deploys on merge while the Worker deploy
+ * is manual, so without this a query change would 400 every request until
+ * someone remembered to deploy the Worker.
+ */
+const PUBLIC_MANIFEST = join(REPO_ROOT, 'public', 'graphql-manifest.json');
 
 /**
  * gql`...` templates. `$` is allowed (GraphQL variables) but `${` is not: an
@@ -142,9 +149,15 @@ ${entries}
 `;
 }
 
+/** The JSON the frontend publishes at /graphql-manifest.json. */
+export function renderPublicManifest(manifest: Record<string, string[]>): string {
+  return `${JSON.stringify({ version: 1, operations: manifest }, null, 2)}\n`;
+}
+
 async function main(): Promise<void> {
   const manifest = await buildManifest();
   writeFileSync(OUT_FILE, render(manifest), 'utf8');
+  writeFileSync(PUBLIC_MANIFEST, renderPublicManifest(manifest), 'utf8');
   const pinned = Object.keys(manifest).length;
   const total = ALLOWED_OPERATIONS.size;
   console.log(

@@ -12,6 +12,8 @@
  *      wire body is never byte-identical to the source
  */
 import { webcrypto } from 'node:crypto';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 
 import { ApolloClient, InMemoryCache, createHttpLink, gql } from '@apollo/client';
 import { print } from 'graphql';
@@ -59,6 +61,20 @@ describe('GraphQL persisted-query manifest', () => {
     // An allowlisted name with no pinned document would accept ANY body under
     // that name — exactly the hole the pin closes.
     expect(unpinned).toEqual([]);
+  });
+
+  it('publishes the same manifest for the Worker to read at runtime', () => {
+    // public/graphql-manifest.json ships with the frontend so the Worker can
+    // accept documents from a Pages deploy that outran the Worker deploy. If it
+    // drifts from the bundled manifest that safety net is gone.
+    const published = JSON.parse(
+      readFileSync(resolve(__dirname, '../../public/graphql-manifest.json'), 'utf8'),
+    ) as { version: number; operations: Record<string, string[]> };
+
+    expect(published.version).toBe(1);
+    expect(published.operations).toEqual(
+      JSON.parse(JSON.stringify(GRAPHQL_QUERY_HASHES)) as Record<string, string[]>,
+    );
   });
 
   it('pins no operation that is not allowlisted', () => {

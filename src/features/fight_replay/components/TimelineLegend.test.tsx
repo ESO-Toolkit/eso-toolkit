@@ -52,6 +52,7 @@ const custom: CustomMarker = {
   timestamp: 60000,
   type: 'custom',
   label: 'Note',
+  deletable: true,
 };
 
 const cluster: ClusterMarker = {

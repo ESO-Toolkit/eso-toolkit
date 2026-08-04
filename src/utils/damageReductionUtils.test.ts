@@ -87,14 +87,15 @@ describe('damageReductionUtils', () => {
   ): BuffLookupData => {
     const buffIntervals: Record<
       string,
-      Array<{ start: number; end: number; targetID: number }>
+      Array<{ start: number; end: number; targetID: number; sourceID: number }>
     > = {};
     abilities.forEach(({ ability, intervals }) => {
       buffIntervals[ability.toString()] = intervals.map(([start, end]) => ({
         start,
         end,
-        targetID: 123,
-      })); // Use same player ID as tests
+        targetID: 123, // Use same player ID as tests
+        sourceID: 123,
+      }));
     });
     return { buffIntervals };
   };

@@ -128,6 +128,7 @@ interface CompactTank {
   lb?: string[];
   rn?: string;
   gs?: CompactGear;
+  aw?: string;
   sl?: CompactSkills;
   ul?: number | string;
   grs?: string[];
@@ -146,6 +147,7 @@ interface CompactHealer {
   s1?: number;
   s2?: number;
   ms?: number;
+  aw?: string;
   a?: number[];
   sl?: CompactSkills;
   hb?: number;
@@ -168,6 +170,7 @@ interface CompactDPS {
   s1?: number;
   s2?: number;
   ms?: number;
+  aw?: string;
   as?: number[];
   gs?: number[];
   sl?: CompactSkills;
@@ -269,6 +272,7 @@ function decodeTank(t: CompactTank): DecodedRosterSlot {
     playerName: t.pn,
     roleLabel: t.rl,
     sets: collectSets([t.gs?.s1, t.gs?.s2, t.gs?.ms], t.gs?.a),
+    arenaWeapon: t.aw,
     buildRefName: t.br?.bn,
     buildRefId: t.br?.bi,
     positionTag: t.pt,
@@ -288,6 +292,7 @@ function decodeHealer(h: CompactHealer): DecodedRosterSlot {
     playerName: h.pn,
     roleLabel: h.rl,
     sets: collectSets([h.s1, h.s2, h.ms], h.a),
+    arenaWeapon: h.aw,
     buildRefName: h.br?.bn,
     buildRefId: h.br?.bi,
     positionTag: h.pt,
@@ -325,6 +330,7 @@ function decodeDPS(d: CompactDPS): DecodedRosterSlot {
     roleLabel: d.rl,
     slotNumber: d.sn,
     sets: sets.length > 0 ? sets : undefined,
+    arenaWeapon: d.aw,
     buildRefName: d.br?.bn,
     buildRefId: d.br?.bi,
     positionTag: d.pt,

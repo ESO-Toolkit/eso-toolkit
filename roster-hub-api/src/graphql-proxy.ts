@@ -183,15 +183,77 @@ const INTROSPECTION_RE = /\b__schema\b|\b__type\b/;
 // hash(es) pinned in the generated manifest, and a body that does not hash to
 // one of them is refused.
 //
-// `GRAPHQL_HASH_PINNING=off` is an escape hatch for the one failure mode that
-// would otherwise take the site down: a frontend deploy whose documents do not
-// match the manifest shipped with the Worker. Setting it re-enables name-only
-// validation until a corrected manifest is deployed.
-async function documentMatchesPin(operation: string, queryDoc: string): Promise<boolean> {
-  const pinned = GRAPHQL_QUERY_HASHES[operation];
-  if (!pinned || pinned.length === 0) return false;
+// `GRAPHQL_HASH_PINNING=off` is a last-resort escape hatch that restores
+// name-only validation without a code change.
+//
+// DEPLOY SKEW: Pages auto-deploys on merge to main, the Worker deploy is
+// manual, so the frontend's documents routinely move before this Worker's
+// bundled manifest does. Pinning against the bundle alone would turn any query
+// edit into a site outage. The frontend therefore publishes the same manifest
+// at /graphql-manifest.json, and the accepted set is the UNION of:
+//   - the manifest bundled with this Worker (the previous release, and the
+//     answer when the site is unreachable)
+//   - the manifest the live frontend is currently serving
+// which covers skew in both directions. Only our own origin can widen the set,
+// and a frontend that can be made to serve an attacker's manifest is already a
+// full compromise of the site.
+const RUNTIME_MANIFEST_URL = 'https://esotk.com/graphql-manifest.json';
+const RUNTIME_MANIFEST_TTL_MS = 5 * 60 * 1000;
+
+interface PublishedManifest {
+  version?: number;
+  operations?: Record<string, string[]>;
+}
+
+let runtimeManifest: Record<string, string[]> = {};
+let runtimeManifestFetchedAt = 0;
+let runtimeManifestInFlight: Promise<void> | null = null;
+
+/**
+ * Refresh the published manifest at most once per TTL. Any failure leaves the
+ * previous value in place — a frontend that is down or slow must never turn
+ * into a 400 storm on the proxy.
+ */
+async function refreshRuntimeManifest(env: Env): Promise<void> {
+  const now = Date.now();
+  if (now - runtimeManifestFetchedAt < RUNTIME_MANIFEST_TTL_MS) return;
+  if (runtimeManifestInFlight) return runtimeManifestInFlight;
+
+  runtimeManifestInFlight = (async () => {
+    try {
+      const res = await fetch(env.GRAPHQL_MANIFEST_URL || RUNTIME_MANIFEST_URL, {
+        cf: { cacheTtl: 300, cacheEverything: true },
+      });
+      if (!res.ok) return;
+      const parsed = (await res.json()) as PublishedManifest;
+      const operations = parsed?.operations;
+      if (!operations || typeof operations !== 'object') return;
+      const next: Record<string, string[]> = {};
+      for (const [operation, hashes] of Object.entries(operations)) {
+        if (!ALLOWED_OPERATIONS.has(operation)) continue; // never widen the allowlist itself
+        if (!Array.isArray(hashes)) continue;
+        const clean = hashes.filter((h) => typeof h === 'string' && /^[0-9a-f]{64}$/.test(h));
+        if (clean.length) next[operation] = clean;
+      }
+      runtimeManifest = next;
+    } catch {
+      // keep the last known good manifest
+    } finally {
+      runtimeManifestFetchedAt = Date.now();
+      runtimeManifestInFlight = null;
+    }
+  })();
+
+  return runtimeManifestInFlight;
+}
+
+async function documentMatchesPin(env: Env, operation: string, queryDoc: string): Promise<boolean> {
+  const bundled = GRAPHQL_QUERY_HASHES[operation] ?? [];
   const hash = await hashGraphqlDocument(queryDoc);
-  return pinned.includes(hash);
+  if (bundled.includes(hash)) return true;
+
+  await refreshRuntimeManifest(env);
+  return (runtimeManifest[operation] ?? []).includes(hash);
 }
 
 // ─── Proxy handler ────────────────────────────────────────────────────────────
@@ -240,7 +302,7 @@ export async function handleGraphqlProxy(c: Context<{ Bindings: Env }>): Promise
 
   if (
     c.env.GRAPHQL_HASH_PINNING !== 'off' &&
-    !(await documentMatchesPin(operationHint, parsed.query))
+    !(await documentMatchesPin(c.env, operationHint, parsed.query))
   ) {
     return c.json(
       { error: 'Query document does not match the pinned document for this operation' },

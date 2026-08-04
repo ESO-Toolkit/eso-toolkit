@@ -22,6 +22,13 @@ export interface Env {
    * (pinning enforced) in normal operation.
    */
   GRAPHQL_HASH_PINNING?: string;
+  /**
+   * Where the live frontend publishes its GraphQL query manifest. The proxy
+   * unions it with the manifest bundled here so a frontend deploy that lands
+   * before the Worker deploy does not start rejecting valid queries.
+   * Defaults to https://esotk.com/graphql-manifest.json.
+   */
+  GRAPHQL_MANIFEST_URL?: string;
 }
 
 // ─── Addon recommendation types (shared between rosters & packs) ─────────────

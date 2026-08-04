@@ -59,10 +59,17 @@ function formatPosition(positionTag?: string, playerNumber?: string): string {
   return '';
 }
 
-/** Format gear sets as a GEAR: `Set1` `Set2` line. */
-function formatGearLine(sets?: string[]): string {
-  if (!sets?.length) return '';
-  return `GEAR: ${sets.map((s) => `\`${s}\``).join(' ')}`;
+/**
+ * Format gear sets as a GEAR: `Set1` `Set2` line.
+ *
+ * The arena weapon rides on the same line (as it does on the web roster card)
+ * so a log-imported roster does not silently lose it on the way to Discord.
+ */
+function formatGearLine(sets?: string[], arenaWeapon?: string): string {
+  const entries = [...(sets ?? [])];
+  if (arenaWeapon) entries.push(arenaWeapon);
+  if (!entries.length) return '';
+  return `GEAR: ${entries.map((s) => `\`${s}\``).join(' ')}`;
 }
 
 /** Format skill lines as a LINES: `Line1` `Line2` line. */
@@ -108,7 +115,7 @@ export function buildRosterText(
 
     lines.push(`${arrow}🛡️ **${label}**:${ult}${pos}${roleNote}${labelsPart}${player}`);
 
-    const gear = formatGearLine(tank.sets);
+    const gear = formatGearLine(tank.sets, tank.arenaWeapon);
     if (gear) lines.push(gear);
 
     const sl = formatSkillLinesLine(tank.skillLines);
@@ -136,7 +143,7 @@ export function buildRosterText(
 
     lines.push(`${arrow}💖 **${label}**:${pos}${roleNote}${ult}${buff}${cp}${labelsPart}${player}`);
 
-    const gear = formatGearLine(h.sets);
+    const gear = formatGearLine(h.sets, h.arenaWeapon);
     if (gear) lines.push(gear);
 
     const sl = formatSkillLinesLine(h.skillLines);
@@ -166,7 +173,7 @@ export function buildRosterText(
 
     lines.push(`${arrow}⚔️ **#${slotNum}${jailType}**:${pos}${roleNote}${labelsPart}${player}`);
 
-    const gear = formatGearLine(dd.sets);
+    const gear = formatGearLine(dd.sets, dd.arenaWeapon);
     if (gear) lines.push(gear);
 
     const sl = formatSkillLinesLine(dd.skillLines);

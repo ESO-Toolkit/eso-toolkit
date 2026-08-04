@@ -21,13 +21,8 @@ const createMockFight = (startTime: number, endTime: number): FightFragment => (
   name: 'Test Fight',
   difficulty: 0,
   bossPercentage: 100,
-  fightPercentage: 100,
   kill: true,
-  partial: false,
-  standardComposition: true,
-  hasEcho: false,
-  keystoneLevel: 0,
-  keystoneAffixes: [],
+  encounterID: 1,
 });
 
 describe('fightTimeUtils', () => {
