@@ -1,7 +1,16 @@
 import FilterListIcon from '@mui/icons-material/FilterList';
 import LayersIcon from '@mui/icons-material/Layers';
 import SaveAltIcon from '@mui/icons-material/SaveAlt';
-import { Box, Typography, Card, CardContent, Collapse, IconButton, Tooltip } from '@mui/material';
+import {
+  Box,
+  Typography,
+  Card,
+  CardContent,
+  Collapse,
+  IconButton,
+  Tooltip,
+  ButtonBase,
+} from '@mui/material';
 import { getInstanceByDom } from 'echarts/core';
 import React from 'react';
 
@@ -247,6 +256,16 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
       return next;
     });
   }, []);
+
+  // Shared Enter/Space activation for the legend/filter chips (role="button").
+  const handleChipKeyDown =
+    (action: () => void) =>
+    (e: React.KeyboardEvent): void => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        action();
+      }
+    };
 
   const visibleBuffLegendEntries = React.useMemo(() => {
     if (!stacked || uptimeSeries.length === 0) return [];
@@ -621,8 +640,11 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
               >
                 Players
               </Typography>
-              <Box
+              <ButtonBase
                 onClick={() => setHiddenPlayerIds(new Set())}
+                onKeyDown={handleChipKeyDown(() => setHiddenPlayerIds(new Set()))}
+                aria-label="Show all players"
+                aria-pressed={!hasActiveFilters}
                 sx={{
                   height: 30,
                   borderRadius: '15px',
@@ -658,16 +680,19 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
                 }}
               >
                 All
-              </Box>
+              </ButtonBase>
               {playerOptions.map((p) => {
                 const color = playerColorMap.get(p.id) ?? PLAYER_COLORS[0];
                 const rgb = hexToRgb(color);
                 const isHidden = hiddenPlayerIds.has(p.id);
                 const isSoloed = hiddenPlayerIds.size === playerOptions.length - 1 && !isHidden;
                 return (
-                  <Box
+                  <ButtonBase
                     key={p.id}
                     onClick={() => handlePlayerChipClick(p.id)}
+                    onKeyDown={handleChipKeyDown(() => handlePlayerChipClick(p.id))}
+                    aria-pressed={!isHidden}
+                    aria-label={p.name}
                     sx={{
                       height: 30,
                       borderRadius: '15px',
@@ -724,7 +749,7 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
                       }}
                     />
                     {p.name}
-                  </Box>
+                  </ButtonBase>
                 );
               })}
             </Box>
@@ -745,8 +770,11 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
                 >
                   Targets
                 </Typography>
-                <Box
+                <ButtonBase
                   onClick={() => setLocalTargetIds([])}
+                  onKeyDown={handleChipKeyDown(() => setLocalTargetIds([]))}
+                  aria-label="Show all targets"
+                  aria-pressed={localTargetIds === null}
                   sx={{
                     height: 30,
                     borderRadius: '15px',
@@ -785,7 +813,7 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
                   }}
                 >
                   All
-                </Box>
+                </ButtonBase>
                 {availableTargets.map((t) => {
                   const isActive = localTargetIds === null || localTargetIds.includes(t.id);
                   const isSoloed =
@@ -795,9 +823,12 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
                   const targetColor = theme.darkMode ? '#f43f5e' : '#e11d48';
                   const rgb = hexToRgb(targetColor);
                   return (
-                    <Box
+                    <ButtonBase
                       key={t.id}
                       onClick={() => handleTargetChipClick(t.id)}
+                      onKeyDown={handleChipKeyDown(() => handleTargetChipClick(t.id))}
+                      aria-pressed={isActive}
+                      aria-label={t.name}
                       sx={{
                         height: 30,
                         borderRadius: '15px',
@@ -857,7 +888,7 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
                         }}
                       />
                       {t.name}
-                    </Box>
+                    </ButtonBase>
                   );
                 })}
               </Box>
@@ -879,8 +910,11 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
                 >
                   Buffs
                 </Typography>
-                <Box
+                <ButtonBase
                   onClick={() => setHiddenBuffNames(new Set())}
+                  onKeyDown={handleChipKeyDown(() => setHiddenBuffNames(new Set()))}
+                  aria-label="Show all buffs"
+                  aria-pressed={hiddenBuffNames.size === 0}
                   sx={{
                     height: 30,
                     borderRadius: '15px',
@@ -919,16 +953,19 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
                   }}
                 >
                   All
-                </Box>
+                </ButtonBase>
                 {buffOptions.map((b, index) => {
                   const color = UPTIME_COLORS[index % UPTIME_COLORS.length];
                   const rgb = hexToRgb(color);
                   const isHidden = hiddenBuffNames.has(b);
                   const isSoloed = hiddenBuffNames.size === buffOptions.length - 1 && !isHidden;
                   return (
-                    <Box
+                    <ButtonBase
                       key={b}
                       onClick={() => handleBuffChipClick(b)}
+                      onKeyDown={handleChipKeyDown(() => handleBuffChipClick(b))}
+                      aria-pressed={!isHidden}
+                      aria-label={b}
                       sx={{
                         height: 30,
                         borderRadius: '15px',
@@ -984,7 +1021,7 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
                         }}
                       />
                       {b}
-                    </Box>
+                    </ButtonBase>
                   );
                 })}
               </Box>

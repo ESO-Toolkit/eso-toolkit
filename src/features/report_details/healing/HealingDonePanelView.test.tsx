@@ -129,7 +129,7 @@ describe('HealingDonePanelView', () => {
     expect(screen.getByText(/Overheal:.*Raw HPS: 2,084/)).toBeInTheDocument();
   });
 
-  it('exposes mobile sort controls as accessible, keyboard-operable buttons', async () => {
+  it('exposes both mobile chips and desktop headers as accessible, keyboard-operable sort buttons', async () => {
     const rows = [createMockHealingRow()];
     render(
       <TestWrapper>
@@ -137,16 +137,18 @@ describe('HealingDonePanelView', () => {
       </TestWrapper>,
     );
 
-    // Each mobile sort chip is a button with an accessible name conveying its field.
-    expect(screen.getByRole('button', { name: /^Sort by Name/ })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /^Sort by HPS/ })).toBeInTheDocument();
-    const rawHpsSort = screen.getByRole('button', { name: /^Sort by Raw HPS/ });
-    expect(rawHpsSort).toBeInTheDocument();
-    // Focusable via keyboard (role="button" + tabIndex).
-    expect(rawHpsSort).toHaveAttribute('tabindex', '0');
+    // Sort controls are buttons with accessible names conveying their field. Both the
+    // mobile chip and the desktop header render in jsdom (responsive display is CSS-only),
+    // so each field surfaces at least one — and Raw HPS surfaces both.
+    expect(screen.getAllByRole('button', { name: /^Sort by Name/ }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole('button', { name: /^Sort by HPS/ }).length).toBeGreaterThan(0);
+    const rawHpsSorts = screen.getAllByRole('button', { name: /^Sort by Raw HPS/ });
+    expect(rawHpsSorts.length).toBeGreaterThanOrEqual(2);
+    // All are focusable via keyboard (role="button" + tabIndex, or native <button>).
+    rawHpsSorts.forEach((btn) => expect(btn).toHaveAttribute('tabindex', '0'));
   });
 
-  it('sorts via keyboard (Enter) on the mobile Raw HPS control', async () => {
+  it('sorts via keyboard (Enter) on a Raw HPS sort control', async () => {
     const rows = [
       createMockHealingRow({ id: '1', name: 'LowRawHPS', rawHps: 1000 }),
       createMockHealingRow({ id: '2', name: 'HighRawHPS', rawHps: 3000 }),
@@ -158,14 +160,14 @@ describe('HealingDonePanelView', () => {
     );
 
     const user = userEvent.setup();
-    const rawHpsSort = screen.getByRole('button', { name: /^Sort by Raw HPS/ });
+    const rawHpsSort = screen.getAllByRole('button', { name: /^Sort by Raw HPS/ })[0];
     rawHpsSort.focus();
     await user.keyboard('{Enter}');
 
     // Active sort state is reflected in the accessible name.
     expect(
-      screen.getByRole('button', { name: /^Sort by Raw HPS, descending/ }),
-    ).toBeInTheDocument();
+      screen.getAllByRole('button', { name: /^Sort by Raw HPS, descending/ }).length,
+    ).toBeGreaterThan(0);
     // And rows are ordered by rawHps descending.
     const allText = document.body.textContent || '';
     expect(allText.indexOf('HighRawHPS')).toBeLessThan(allText.indexOf('LowRawHPS'));

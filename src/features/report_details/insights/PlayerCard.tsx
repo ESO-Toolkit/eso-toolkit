@@ -15,6 +15,7 @@ import {
   AccordionSummary,
   AccordionDetails,
   Tooltip,
+  ButtonBase,
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import type { Theme } from '@mui/material/styles';
@@ -1766,8 +1767,11 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                               title="Open this player's gear, skills, and CP in the Build Editor"
                               arrow
                             >
-                              <Box
+                              <ButtonBase
                                 onClick={handleExtractBuild}
+                                disabled={extractLoading}
+                                aria-label="Extract build to editor"
+                                aria-busy={extractLoading}
                                 sx={{
                                   display: 'flex',
                                   alignItems: 'center',
@@ -1813,13 +1817,14 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                                 >
                                   {extractLoading ? 'LOADING…' : 'EXTRACT'}
                                 </Typography>
-                              </Box>
+                              </ButtonBase>
                             </Tooltip>
-                            <Box
+                            <ButtonBase
                               onClick={() => {
                                 setCurrentGearPlayerId(player.id);
                                 setGearDetailsOpen(true);
                               }}
+                              aria-label="Open gear details"
                               sx={{
                                 display: 'flex',
                                 alignItems: 'center',
@@ -1864,7 +1869,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                               >
                                 INFO
                               </Typography>
-                            </Box>
+                            </ButtonBase>
                           </Box>
                         </Box>
                         <Box
