@@ -54,6 +54,56 @@ function setCache(token: string, user: AuthUser): void {
   tokenCache.set(token, { user, expiresAt: Date.now() + CACHE_TTL_MS });
 }
 
+// ─── Negative (rejection) cache ──────────────────────────────────────────────
+// Without this, every request bearing a junk/expired token re-introspects against
+// esologs.com — an attacker rotating random tokens can force an unbounded number of
+// outbound HTTPS calls (DoS / upstream-quota burn). We cache rejections for a short
+// TTL keyed by a hash of the token (never the raw bearer value) so repeats are cheap.
+const negativeCache = new Map<string, number>(); // tokenHash → expiresAt (ms)
+const NEGATIVE_CACHE_TTL_MS = 30 * 1000; // 30 seconds
+const NEGATIVE_CACHE_MAX_SIZE = 500;
+
+/** cyrb53 — fast, well-distributed non-cryptographic string hash (returns hex). */
+function hashToken(token: string): string {
+  let h1 = 0xdeadbeef ^ token.length;
+  let h2 = 0x41c6ce57 ^ token.length;
+  for (let i = 0; i < token.length; i++) {
+    const ch = token.charCodeAt(i);
+    h1 = Math.imul(h1 ^ ch, 2654435761);
+    h2 = Math.imul(h2 ^ ch, 1597334677);
+  }
+  h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+  h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+  const hash = 4294967296 * (2097151 & h2) + (h1 >>> 0);
+  return hash.toString(16);
+}
+
+function isNegativelyCached(tokenHash: string): boolean {
+  const expiresAt = negativeCache.get(tokenHash);
+  if (expiresAt === undefined) return false;
+  if (Date.now() > expiresAt) {
+    negativeCache.delete(tokenHash);
+    return false;
+  }
+  return true;
+}
+
+function setNegativeCache(tokenHash: string): void {
+  if (negativeCache.size >= NEGATIVE_CACHE_MAX_SIZE) {
+    const now = Date.now();
+    for (const [key, expiresAt] of negativeCache) {
+      if (now > expiresAt) negativeCache.delete(key);
+    }
+    // Still full after purging expired → evict oldest (Map preserves insertion order).
+    while (negativeCache.size >= NEGATIVE_CACHE_MAX_SIZE) {
+      const oldest = negativeCache.keys().next().value;
+      if (oldest !== undefined) negativeCache.delete(oldest);
+      else break;
+    }
+  }
+  negativeCache.set(tokenHash, Date.now() + NEGATIVE_CACHE_TTL_MS);
+}
+
 // ─── JWT payload decode (no signature verification) ──────────────────────────
 
 interface JWTPayload {
@@ -138,19 +188,31 @@ export async function validateToken(
   const token = authHeader.slice(7);
   if (!token) return null;
 
-  // Quick local expiry check (avoids unnecessary API call)
+  // Reject anything that isn't a well-formed 3-part JWT *before* spending an
+  // outbound introspection call — junk/garbage bearer values never reach esologs.com.
   const payload = decodeJWTPayload(token);
-  if (payload?.exp && payload.exp < Math.floor(Date.now() / 1000)) {
+  if (!payload) return null;
+
+  // Quick local expiry check (avoids unnecessary API call)
+  if (payload.exp && payload.exp < Math.floor(Date.now() / 1000)) {
     return null;
   }
 
-  // Check in-memory cache
+  // Check in-memory cache (positive)
   const cached = getCached(token);
   if (cached) return cached;
 
+  // Short-circuit tokens we recently rejected so a token-rotation flood can't
+  // force a fresh esologs introspection on every request.
+  const tokenHash = hashToken(token);
+  if (isNegativelyCached(tokenHash)) return null;
+
   // Introspect against ESO Logs API
   const user = await introspectToken(token);
-  if (!user) return null;
+  if (!user) {
+    setNegativeCache(tokenHash);
+    return null;
+  }
 
   setCache(token, user);
   return user;

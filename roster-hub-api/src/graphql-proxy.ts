@@ -158,9 +158,64 @@ function reportResponseHasFights(responseBody: string): boolean {
   }
 }
 
+// ─── Per-IP rate limiting (token bucket, best-effort per-isolate) ─────────────
+//
+// The proxy forwards every request to esologs.com with the site's shared
+// client-credentials token, so the upstream OAuth points budget is common to all
+// callers. `/graphql` has no auth, so without a limiter a single client can spend
+// that shared budget arbitrarily fast and take report loading down for everyone.
+// This bucket caps per-IP request rate. Like the token cache above it lives in V8
+// isolate scope, so it is a coarse best-effort control (each edge isolate keeps its
+// own buckets), not a globally-consistent limiter.
+const RATE_LIMIT_CAPACITY = 60; // burst size (tokens)
+const RATE_LIMIT_REFILL_PER_SEC = 1; // sustained ≈ 60 requests / minute per IP
+const RATE_LIMIT_MAX_IPS = 10_000; // bound the Map so unique-IP floods can't grow it unbounded
+
+interface TokenBucket {
+  tokens: number;
+  updatedAt: number; // Unix ms
+}
+
+const ipBuckets = new Map<string, TokenBucket>();
+
+/** Consume one token for `ip`; returns false when the bucket is empty (rate limited). */
+function allowRequestFromIp(ip: string): boolean {
+  const now = Date.now();
+  let bucket = ipBuckets.get(ip);
+  if (!bucket) {
+    if (ipBuckets.size >= RATE_LIMIT_MAX_IPS) {
+      // Evict the oldest entry to bound memory (Map preserves insertion order).
+      const oldest = ipBuckets.keys().next().value;
+      if (oldest !== undefined) ipBuckets.delete(oldest);
+    }
+    bucket = { tokens: RATE_LIMIT_CAPACITY, updatedAt: now };
+    ipBuckets.set(ip, bucket);
+  } else {
+    const elapsedSec = (now - bucket.updatedAt) / 1000;
+    bucket.tokens = Math.min(
+      RATE_LIMIT_CAPACITY,
+      bucket.tokens + elapsedSec * RATE_LIMIT_REFILL_PER_SEC,
+    );
+    bucket.updatedAt = now;
+  }
+  if (bucket.tokens < 1) return false;
+  bucket.tokens -= 1;
+  return true;
+}
+
+// GraphQL introspection has no place in a persisted-query proxy; block it so a
+// caller can't map the schema through the site's credentials.
+const INTROSPECTION_RE = /\b__schema\b|\b__type\b/;
+
 // ─── Proxy handler ────────────────────────────────────────────────────────────
 
 export async function handleGraphqlProxy(c: Context<{ Bindings: Env }>): Promise<Response> {
+  const clientIp =
+    c.req.header('CF-Connecting-IP') ?? c.req.header('x-forwarded-for') ?? 'unknown';
+  if (!allowRequestFromIp(clientIp)) {
+    return c.json({ error: 'Rate limit exceeded' }, 429);
+  }
+
   let body: unknown;
   let bodyStr: string;
   try {
@@ -191,6 +246,10 @@ export async function handleGraphqlProxy(c: Context<{ Bindings: Env }>): Promise
   const docOps = extractOperationNames(parsed.query);
   if (docOps.length !== 1 || docOps[0] !== operationHint) {
     return c.json({ error: 'Query document must contain exactly the declared operation' }, 400);
+  }
+
+  if (INTROSPECTION_RE.test(parsed.query)) {
+    return c.json({ error: 'Introspection is not permitted' }, 400);
   }
 
   const isCacheable = Boolean(operationHint && CACHEABLE_OPERATIONS.has(operationHint));
