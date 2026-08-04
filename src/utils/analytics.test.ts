@@ -7,6 +7,7 @@ import { waitFor } from '@testing-library/react';
 import ReactGA from 'react-ga4';
 
 import {
+  hashReportCode,
   initializeAnalytics,
   setAnalyticsUserId,
   setUserProperties,
@@ -154,6 +155,20 @@ describe('analytics', () => {
     });
   });
 
+  describe('hashReportCode', () => {
+    it('is deterministic for the same code', () => {
+      expect(hashReportCode('abc123')).toBe(hashReportCode('abc123'));
+    });
+
+    it('does not return the raw code', () => {
+      expect(hashReportCode('abc123')).not.toBe('abc123');
+    });
+
+    it('distinguishes different codes', () => {
+      expect(hashReportCode('abc123')).not.toBe(hashReportCode('xyz789'));
+    });
+  });
+
   describe('trackPageView', () => {
     it('should track page view when measurement ID is set', () => {
       getEnvVarSpy.mockReturnValue(mockMeasurementId);
@@ -171,7 +186,7 @@ describe('analytics', () => {
       );
     });
 
-    it('should normalize report paths and extract report code', () => {
+    it('should normalize report paths and send only the hashed report code', () => {
       getEnvVarSpy.mockReturnValue(mockMeasurementId);
 
       trackPageView('/report/abc123/insights');
@@ -180,10 +195,13 @@ describe('analytics', () => {
         expect.objectContaining({
           hitType: 'pageview',
           page: '/report/[code]/insights',
-          report_code: 'abc123',
+          report_code: hashReportCode('abc123'),
           location: expect.stringContaining('/report/[code]/insights'),
         }),
       );
+      // The raw report code is the access credential — it must never reach GA4.
+      const sent = (ReactGA.send as jest.Mock).mock.calls[0][0];
+      expect(sent.report_code).not.toBe('abc123');
     });
 
     it('should normalize report and fight paths', () => {
@@ -195,7 +213,7 @@ describe('analytics', () => {
         expect.objectContaining({
           hitType: 'pageview',
           page: '/report/[code]/fight/[fightId]/damage',
-          report_code: 'xyz789',
+          report_code: hashReportCode('xyz789'),
           fight_id: '5',
           location: expect.stringContaining('/report/[code]/fight/[fightId]/damage'),
         }),
@@ -211,7 +229,7 @@ describe('analytics', () => {
         expect.objectContaining({
           hitType: 'pageview',
           page: '/report/[code]',
-          report_code: 'test123',
+          report_code: hashReportCode('test123'),
         }),
       );
     });

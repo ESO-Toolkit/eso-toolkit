@@ -5,6 +5,7 @@ import {
   reportError,
   submitManualBugReport,
   setUserContext,
+  clearUserContext,
   addBreadcrumb,
   measurePerformance,
 } from './errorTracking';
@@ -454,6 +455,33 @@ describe('errorTracking', () => {
       mockHasErrorTrackingConsent.mockReturnValue(false);
       setUserContext('user123');
       expect(mockRollbarInstance.configure).not.toHaveBeenCalled();
+    });
+  });
+
+  // ─── clearUserContext ─────────────────────────────────────────────────────
+
+  describe('clearUserContext', () => {
+    it('clears the Rollbar person context on logout', async () => {
+      await initInProduction();
+      setUserContext('user123', undefined, 'testuser');
+      mockRollbarInstance.configure.mockClear();
+
+      clearUserContext();
+
+      expect(mockRollbarInstance.configure).toHaveBeenCalledWith({
+        payload: { person: null },
+      });
+    });
+
+    it('does not forward the previous username once cleared', async () => {
+      await initInProduction();
+      setUserContext('user123', undefined, 'testuser');
+      mockRollbarInstance.configure.mockClear();
+
+      clearUserContext();
+
+      const call = mockRollbarInstance.configure.mock.calls[0][0];
+      expect(JSON.stringify(call)).not.toContain('testuser');
     });
   });
 

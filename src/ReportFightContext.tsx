@@ -5,7 +5,7 @@ import { AbilityIdMapperProvider } from './contexts/AbilityIdMapperContext';
 import { setActiveReportContext } from './store/report/reportSlice';
 import { setSelectedTargetIds } from './store/ui/uiSlice';
 import { useAppDispatch } from './store/useAppDispatch';
-import { trackEvent } from './utils/analytics';
+import { trackEvent, hashReportCode } from './utils/analytics';
 import { TabId } from './utils/getSkeletonForTab';
 
 interface ReportFightContextType {
@@ -140,7 +140,7 @@ export const ReportFightProvider: React.FC<{ children: ReactNode }> = ({ childre
       const experimentalParam = shouldShowExperimental ? '?experimental=true' : '';
 
       trackEvent('Report Detail', 'Select Tab', newTabId, undefined, {
-        report_id: reportId,
+        report_id: reportId ? hashReportCode(reportId) : undefined,
         fight_id: fightId,
         previous_tab: selectedTabId,
         target_tab: newTabId,
@@ -149,7 +149,7 @@ export const ReportFightProvider: React.FC<{ children: ReactNode }> = ({ childre
       });
       if (isExperimentalTab && !showExperimentalTabs) {
         trackEvent('Report Detail', 'Enable Experimental Tabs', newTabId, undefined, {
-          report_id: reportId,
+          report_id: reportId ? hashReportCode(reportId) : undefined,
           fight_id: fightId,
           triggered_by_tab_selection: true,
           target_tab: newTabId,
@@ -192,7 +192,7 @@ export const ReportFightProvider: React.FC<{ children: ReactNode }> = ({ childre
         enabled ? 'enable' : 'disable',
         undefined,
         {
-          report_id: reportId,
+          report_id: reportId ? hashReportCode(reportId) : undefined,
           fight_id: fightId,
           target_tab: targetTab,
           previous_tab: selectedTabId,

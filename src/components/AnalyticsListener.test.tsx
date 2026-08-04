@@ -101,6 +101,30 @@ describe('AnalyticsListener', () => {
     });
   });
 
+  it('strips search and hash from the tracked path', async () => {
+    render(
+      <MemoryRouter initialEntries={['/calculator?b=secret-build-blob#scribing']}>
+        <AnalyticsListener />
+        <Routes>
+          <Route path="/calculator" element={<div>Calculator</div>} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    const trackPageView = getTrackPageViewMock();
+
+    await waitFor(() => {
+      expect(trackPageView).toHaveBeenCalledWith('/calculator', 'Test Title');
+    });
+
+    const trackedPaths = trackPageView.mock.calls.map((call) => call[0] as string);
+    trackedPaths.forEach((path) => {
+      expect(path).not.toContain('secret-build-blob');
+      expect(path).not.toContain('#');
+      expect(path).not.toContain('?');
+    });
+  });
+
   it('re-tracks the active route when the username resolves later', async () => {
     setMockAuthState({ currentUser: null });
 
