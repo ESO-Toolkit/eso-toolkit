@@ -208,9 +208,22 @@ const INTROSPECTION_RE = /\b__schema\b|\b__type\b/;
 // and a frontend that can be made to serve an attacker's manifest is already a
 // full compromise of the site.
 const RUNTIME_MANIFEST_URL = 'https://esotk.com/graphql-manifest.json';
-const RUNTIME_MANIFEST_TTL_MS = 5 * 60 * 1000;
-/** Back-off after a failed refresh — short, so a deploy is never gated on it. */
-const RUNTIME_MANIFEST_RETRY_MS = 15 * 1000;
+/**
+ * How long a document that the published manifest did NOT explain stays
+ * "recently tried". Suppression is per document, never global: a successful
+ * refresh for one new query must not stop the NEXT deploy's query from being
+ * discovered, or a second deploy inside the window would 400 the live site —
+ * the very outage this union prevents.
+ */
+const MANIFEST_MISS_BACKOFF_MS = 15 * 1000;
+/**
+ * Floor between origin reads regardless of which document missed, so a caller
+ * rotating fabricated documents cannot turn every rejected request into a
+ * fetch of our Pages origin. A genuine new deploy still resolves within it.
+ */
+const MANIFEST_MIN_REFRESH_INTERVAL_MS = 2 * 1000;
+/** Bound the back-off map so fabricated documents cannot grow it without limit. */
+const MANIFEST_MISS_MAX_KEYS = 1_000;
 
 /** The document a refresh is trying to resolve — see refreshRuntimeManifest. */
 interface WantedDocument {
@@ -225,17 +238,31 @@ interface PublishedManifest {
 
 let runtimeManifest: Record<string, string[]> = {};
 let runtimeManifestFetchedAt = 0;
-let runtimeManifestTtlMs = RUNTIME_MANIFEST_TTL_MS;
 let runtimeManifestInFlight: Promise<void> | null = null;
+/** `operation:hash` → earliest ms at which it is worth asking the origin again. */
+const manifestMissBackoff = new Map<string, number>();
+
+function markManifestMiss(key: string, now: number): void {
+  if (manifestMissBackoff.size >= MANIFEST_MISS_MAX_KEYS) {
+    const oldest = manifestMissBackoff.keys().next().value; // insertion-ordered
+    if (oldest !== undefined) manifestMissBackoff.delete(oldest);
+  }
+  manifestMissBackoff.set(key, now + MANIFEST_MISS_BACKOFF_MS);
+}
 
 /**
- * Refresh the published manifest at most once per TTL. Any failure leaves the
- * previous value in place — a frontend that is down or slow must never turn
- * into a 400 storm on the proxy.
+ * Read the manifest the live frontend publishes, to resolve `want`.
+ *
+ * Any failure leaves the previous value in place — a frontend that is down or
+ * slow must never turn into a 400 storm on the proxy.
  */
 async function refreshRuntimeManifest(env: Env, want: WantedDocument): Promise<void> {
   const now = Date.now();
-  if (now - runtimeManifestFetchedAt < runtimeManifestTtlMs) return;
+  const missKey = `${want.operation}:${want.hash}`;
+  // Only THIS document's recent failure suppresses a retry; a different missing
+  // document is always worth one look, subject to the global floor below.
+  if (now < (manifestMissBackoff.get(missKey) ?? 0)) return;
+  if (now - runtimeManifestFetchedAt < MANIFEST_MIN_REFRESH_INTERVAL_MS) return;
   if (runtimeManifestInFlight) return runtimeManifestInFlight;
 
   runtimeManifestInFlight = (async () => {
@@ -274,14 +301,14 @@ async function refreshRuntimeManifest(env: Env, want: WantedDocument): Promise<v
     } catch {
       // keep the last known good manifest
     } finally {
-      // Only a read that ANSWERED the miss earns the long TTL. A failed or
-      // still-stale read backs off briefly instead, so neither an unreachable
-      // Pages nor a mid-propagation CDN can pin this isolate to a manifest
-      // that rejects a deployed frontend — the outage this union exists to
-      // prevent — while the short back-off still stops a miss storm from
-      // hammering the origin.
-      runtimeManifestTtlMs = answeredTheMiss ? RUNTIME_MANIFEST_TTL_MS : RUNTIME_MANIFEST_RETRY_MS;
-      runtimeManifestFetchedAt = Date.now();
+      // A read that did not answer the miss — unreachable Pages, or a
+      // mid-propagation CDN handing back the previous manifest — backs THIS
+      // document off briefly. It never blocks a different document, so the
+      // next deploy is still discovered immediately.
+      const finishedAt = Date.now();
+      if (answeredTheMiss) manifestMissBackoff.delete(missKey);
+      else markManifestMiss(missKey, finishedAt);
+      runtimeManifestFetchedAt = finishedAt;
       runtimeManifestInFlight = null;
     }
   })();

@@ -379,6 +379,64 @@ describe('GraphQL proxy persisted-query pinning', () => {
     }
   });
 
+  it('discovers a second deploy without waiting out the first refresh', async () => {
+    // Suppression must be per document. A successful refresh for deploy A's
+    // query must not stop deploy B's query — landing minutes later — from being
+    // looked up, or the live frontend 400s until the window expires.
+    const docA = PINNED_QUERY.replace('reportData {', 'reportData { fieldA ');
+    const docB = PINNED_QUERY.replace('reportData {', 'reportData { fieldB ');
+    const hashA = await hashGraphqlDocument(docA);
+    const hashB = await hashGraphqlDocument(docB);
+
+    let published = [hashA];
+    const fetchMock = jest.fn(async (input: unknown) => {
+      if (String(input).includes('graphql-manifest')) {
+        return new Response(
+          JSON.stringify({ version: 1, operations: { getReportByCode: published } }),
+          { status: 200 },
+        );
+      }
+      if (String(input).includes('oauth/token')) {
+        return new Response(JSON.stringify({ access_token: 'token', expires_in: 3600 }), {
+          status: 200,
+        });
+      }
+      return new Response(JSON.stringify({ data: {} }), { status: 200 });
+    });
+    Object.defineProperty(globalThis, 'fetch', { value: fetchMock, configurable: true });
+    Object.defineProperty(globalThis, 'caches', {
+      value: { default: { match: async () => undefined, put: async () => undefined } },
+      configurable: true,
+    });
+
+    const proxy = loadProxy();
+    const send = (query: string, ip: string): Promise<Response> => {
+      const { context } = createContext({
+        operation: 'getReportByCode',
+        body: { operationName: 'getReportByCode', query, variables: { code: 'a' } },
+        ip,
+        env: { GRAPHQL_MANIFEST_URL: 'https://esotk.test/graphql-manifest.json' },
+      });
+      return proxy(context);
+    };
+
+    const realNow = Date.now();
+    const nowSpy = jest.spyOn(Date, 'now').mockReturnValue(realNow);
+    try {
+      expect((await send(docA, '10.0.0.10')).status).toBe(200);
+
+      // Deploy B lands 30s later — well inside any success window.
+      published = [hashB];
+      nowSpy.mockReturnValue(realNow + 30_000);
+      expect((await send(docB, '10.0.0.10')).status).toBe(200);
+      expect(
+        fetchMock.mock.calls.filter((call) => String(call[0]).includes('graphql-manifest')),
+      ).toHaveLength(2);
+    } finally {
+      nowSpy.mockRestore();
+    }
+  });
+
   it('does not spend rate-limit budget on requests served from the edge cache', async () => {
     // A cold fight load fans out one request per 30s interval (friendly AND
     // hostile, in parallel), so charging cached responses would 429 an honest
