@@ -199,7 +199,6 @@ export const SampleReportButton: React.FC = () => {
 
       const attemptKey = `${zone.id}:${encounter.id}:${difficultyId ?? 'any'}`;
       if (attemptedKeys.has(attemptKey)) {
-        attempt -= 1;
         continue;
       }
       attemptedKeys.add(attemptKey);

@@ -906,6 +906,43 @@ describe('parseAnalysisUtils', () => {
       expect(result.castDetails[0].precedingCastType).toBe('light');
       expect(result.castDetails[0].timeSincePrecedingCast).toBe(100);
     });
+
+    it('does not count a stale light attack separated by a long idle gap as a weave', () => {
+      const castEvents: CastEvent[] = [
+        {
+          timestamp: FIGHT_START + 1000, // Light attack cast
+          type: 'cast',
+          sourceID: PLAYER_ID,
+          sourceIsFriendly: true,
+          targetID: 2,
+          targetIsFriendly: false,
+          abilityGameID: LIGHT_ATTACK_ID,
+          fight: 1,
+        },
+        {
+          timestamp: FIGHT_START + 31000, // Skill 30s later — well outside the weave window
+          type: 'cast',
+          sourceID: PLAYER_ID,
+          sourceIsFriendly: true,
+          targetID: 2,
+          targetIsFriendly: false,
+          abilityGameID: 12345, // Regular skill
+          fight: 1,
+        },
+      ];
+
+      const damageEvents: DamageEvent[] = [];
+
+      const result = analyzeWeaving(castEvents, damageEvents, PLAYER_ID, FIGHT_START, FIGHT_END);
+
+      expect(result.totalSkills).toBe(1);
+      expect(result.properWeaves).toBe(0);
+      expect(result.weaveAccuracy).toBe(0);
+      expect(result.missedWeaves).toBe(1);
+      // The 30s gap must not pollute the timing average.
+      expect(result.averageWeaveTiming).toBe(0);
+      expect(result.castDetails[0].isProperWeave).toBe(false);
+    });
   });
 
   describe('detectTrialDummyBuffs', () => {
