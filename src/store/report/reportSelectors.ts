@@ -23,6 +23,14 @@ export const selectReportEntryById = (state: RootState, reportId: string): Repor
   return state.report.entries[key] ?? null;
 };
 
+// Narrow input for the fights selector: only the raw report.data fights array is
+// read on the non-registry path. Keying on this (instead of the whole report
+// slice) keeps the memoized fights array from being rebuilt on every unrelated
+// report-slice action (fight switches, still-processing refetches, cache-metadata
+// writes).
+const selectReportDataFights = (state: RootState): Array<FightFragment | null> | null =>
+  state.report.data?.fights ?? null;
+
 const selectReportRegistryEntryByContext = (
   state: RootState,
   context: ReportFightContext,
@@ -58,11 +66,11 @@ export const selectActiveReportEntry = createSelector(
 
 export const selectReportFightsForContext = createReportFightContextSelector<
   RootState,
-  [typeof selectReport, typeof selectReportRegistryEntryByContext],
+  [typeof selectReportDataFights, typeof selectReportRegistryEntryByContext],
   Array<FightFragment | null> | null
->([selectReport, selectReportRegistryEntryByContext], (...args) => {
-  const [report, registryEntry, context] = args as [
-    RootState['report'],
+>([selectReportDataFights, selectReportRegistryEntryByContext], (...args) => {
+  const [dataFights, registryEntry, context] = args as [
+    Array<FightFragment | null> | null,
     ReportEntry | null,
     ReportFightContext,
   ];
@@ -74,7 +82,7 @@ export const selectReportFightsForContext = createReportFightContextSelector<
   }
 
   if (!context.reportCode) {
-    return report.data?.fights ?? null;
+    return dataFights;
   }
 
   return null;

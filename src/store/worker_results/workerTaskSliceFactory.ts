@@ -150,14 +150,21 @@ export const createWorkerTaskSlice = <T extends SharedComputationWorkerTaskType>
           return true; // Allow execution if state doesn't exist yet
         }
 
-        // Prevent execution if already loading
-        if (taskState.isLoading) {
-          return false;
-        }
-
         // Check if we have cached results for the same input
         const inputHash = createInputHash(input);
         const isSameInput = taskState.cacheMetadata.lastInputHash === inputHash;
+
+        // Prevent execution only if a task for the SAME input is already loading.
+        // Hooks abort the in-flight thunk in effect cleanup and dispatch a
+        // replacement in the same synchronous flush, but RTK delivers abort's
+        // `rejected` (which clears isLoading) on a microtask — so a plain
+        // `isLoading` gate here would drop the replacement whenever the desired
+        // input changed (e.g. back-and-forth fight nav). Allowing a differing
+        // input to proceed lets the newer request run; the stale request's
+        // result is discarded by the latestRequestId guard in extraReducers.
+        if (taskState.isLoading && isSameInput) {
+          return false;
+        }
 
         // Optional: Add cache timeout (uncomment if needed)
         // const CACHE_TIMEOUT = 5 * 60 * 1000; // 5 minutes

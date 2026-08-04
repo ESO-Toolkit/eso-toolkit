@@ -211,6 +211,25 @@ describe('playerDataSelectors fallback players', () => {
     expect(players[96]?.displayName).toBe('@blueblaze103');
   });
 
+  it('returns a stable reference across dispatches while cache entries are absent (M11)', () => {
+    // Fallback mode: no master-data actors and no combatant-info events cached
+    // yet. The absent-entry input selectors must return stable references so the
+    // memoized selector does not rebuild the players object on every dispatch.
+    const state = createState({ playersById: {} });
+    const loose = state as unknown as {
+      masterData: { entries: Record<string, unknown> };
+      events: { combatantInfo: { entries: Record<string, unknown> } };
+    };
+    loose.masterData.entries = {};
+    loose.events.combatantInfo.entries = {};
+
+    const ctx = { reportCode: 'A', fightId: 12 } as const;
+    const first = selectPlayersByIdForContext(state, ctx);
+    const second = selectPlayersByIdForContext(state, ctx);
+
+    expect(second).toBe(first);
+  });
+
   it('keeps real player details when the API provides them', () => {
     const realPlayers = {
       1: player({

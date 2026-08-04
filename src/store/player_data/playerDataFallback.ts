@@ -3,6 +3,10 @@ import type { CombatantInfoEvent } from '@/types/combatlogEvents';
 
 import type { PlayerDetailsWithRole } from './playerDataSlice';
 
+// Stable reference for the "no candidates" result so repeat calls with empty
+// inputs don't hand consumers a fresh object each time.
+const EMPTY_PLAYERS_BY_ID: Record<string | number, PlayerDetailsWithRole> = {};
+
 export const hasPlayerEntries = (
   players: Record<string | number, PlayerDetailsWithRole> | null | undefined,
 ): players is Record<string | number, PlayerDetailsWithRole> =>
@@ -93,7 +97,7 @@ export const buildFallbackPlayersFromMasterData = ({
 }: BuildFallbackPlayersInput): Record<string | number, PlayerDetailsWithRole> => {
   const candidatePlayerIds = getCandidatePlayerIds({ friendlyPlayerIds, combatantInfoEvents });
   if (candidatePlayerIds.size === 0) {
-    return {};
+    return EMPTY_PLAYERS_BY_ID;
   }
 
   const latestCombatantInfoByPlayer = getLatestCombatantInfoByPlayer(
