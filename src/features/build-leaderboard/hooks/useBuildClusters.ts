@@ -102,18 +102,28 @@ export function useBuildClusters(
   const cache = useRef(new Map<string, ClusterBuildsResult>());
 
   useEffect(() => {
-    if (parses.length === 0 || tooFewParses) {
-      setResult(null);
+    // Every path that returns without starting a run MUST clear `loading`.
+    //
+    // A previous run's cleanup sets its `cancelled` flag, so that run's
+    // `.finally()` deliberately skips `setLoading(false)` to avoid writing state
+    // for work nobody is waiting on. Nothing else clears the flag — so an early
+    // return that forgets leaves the UI stuck on "Grouping N parses…" forever.
+    // Routing both early returns through this helper makes that hard to miss.
+    const settleWithoutRunning = (next: ClusterBuildsResult | null, pct: number): void => {
+      setResult(next);
       setError(null);
-      setProgress(0);
+      setProgress(pct);
+      setLoading(false);
+    };
+
+    if (parses.length === 0 || tooFewParses) {
+      settleWithoutRunning(null, 0);
       return undefined;
     }
 
     const cached = cache.current.get(cacheKey);
     if (cached) {
-      setResult(cached);
-      setError(null);
-      setProgress(100);
+      settleWithoutRunning(cached, 100);
       return undefined;
     }
 
