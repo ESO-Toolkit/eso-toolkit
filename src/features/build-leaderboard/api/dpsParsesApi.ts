@@ -33,7 +33,14 @@ async function request<T>(path: string, signal?: AbortSignal): Promise<T> {
   }, REQUEST_TIMEOUT_MS);
 
   const onExternalAbort = (): void => controller.abort();
-  signal?.addEventListener('abort', onExternalAbort, { once: true });
+  if (signal?.aborted) {
+    // Already aborted before we got here: the 'abort' event has been and gone, so
+    // a listener would never fire and the fetch would run to the full timeout
+    // before anyone noticed the caller had given up.
+    controller.abort();
+  } else {
+    signal?.addEventListener('abort', onExternalAbort, { once: true });
+  }
 
   const cleanup = (): void => {
     clearTimeout(timer);

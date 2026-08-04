@@ -161,14 +161,22 @@ describe('dpsParsesApi.listParses', () => {
    * when its signal is aborted. That is what lets these two cases be told apart.
    */
   function pendingFetchRespectingSignal(): jest.Mock {
+    const abortError = (): Error => {
+      const err = new Error('aborted');
+      err.name = 'AbortError';
+      return err;
+    };
+
     const mock = jest.fn(
       (_url: string, init?: RequestInit) =>
         new Promise((_resolve, reject) => {
-          init?.signal?.addEventListener('abort', () => {
-            const err = new Error('aborted');
-            err.name = 'AbortError';
-            reject(err);
-          });
+          // Real fetch rejects straight away for an already-aborted signal; a
+          // listener would never fire, since the event has already been emitted.
+          if (init?.signal?.aborted) {
+            reject(abortError());
+            return;
+          }
+          init?.signal?.addEventListener('abort', () => reject(abortError()));
         }),
     );
     global.fetch = mock as unknown as typeof fetch;
@@ -201,6 +209,25 @@ describe('dpsParsesApi.listParses', () => {
 
     await expect(promise).rejects.toMatchObject({ name: 'AbortError' });
     await expect(promise).rejects.not.toThrow(/timed out/i);
+  });
+
+  /**
+   * A signal that is already aborted has had its 'abort' event; a listener added
+   * afterwards never fires. Without an explicit check the request would run to
+   * the full 15s timeout before anyone noticed the caller had given up.
+   */
+  it('aborts immediately when handed an already-aborted signal', async () => {
+    const fetchMock = pendingFetchRespectingSignal();
+    const controller = new AbortController();
+    controller.abort();
+
+    await expect(
+      dpsParsesApi.listParses({ encounterId: 4 }, controller.signal),
+    ).rejects.toMatchObject({ name: 'AbortError' });
+
+    // The fetch is issued, but with an already-aborted signal, so it settles at
+    // once rather than hanging until the timeout.
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
   it('removes its abort listener once the request settles', async () => {

@@ -56,6 +56,18 @@ const CLASS_LABELS: Record<string, string> = {
   DragonKnight: 'Dragonknight',
 };
 
+/**
+ * Identity of a picker entry.
+ *
+ * The encounters feed groups by (encounter_id, difficulty), so one boss can
+ * legitimately appear more than once — normal and veteran, say. Keying on
+ * encounter_id alone would collide React keys and make the second difficulty
+ * unselectable, since the lookup would always resolve to the first match.
+ */
+function encounterKey(encounter: Pick<DpsEncounterSummary, 'encounter_id' | 'difficulty'>): string {
+  return `${encounter.encounter_id}:${encounter.difficulty}`;
+}
+
 export const BuildLeaderboardPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -91,7 +103,7 @@ export const BuildLeaderboardPage: React.FC = () => {
 
   const selectedEncounter = useMemo(() => {
     if (encounters.length === 0) return null;
-    const fromUrl = encounters.find((e) => String(e.encounter_id) === encounterParam);
+    const fromUrl = encounters.find((e) => encounterKey(e) === encounterParam);
     return fromUrl ?? encounters[0];
   }, [encounters, encounterParam]);
 
@@ -182,11 +194,11 @@ export const BuildLeaderboardPage: React.FC = () => {
             <Select
               labelId="dps-encounter-label"
               label="Trial & boss"
-              value={selectedEncounter ? String(selectedEncounter.encounter_id) : ''}
+              value={selectedEncounter ? encounterKey(selectedEncounter) : ''}
               onChange={(event) => setParam({ boss: String(event.target.value) })}
             >
               {encounters.map((encounter) => (
-                <MenuItem key={encounter.encounter_id} value={String(encounter.encounter_id)}>
+                <MenuItem key={encounterKey(encounter)} value={encounterKey(encounter)}>
                   {encounter.trial_id ? `${encounter.trial_id} — ` : ''}
                   {encounter.encounter_name} ({encounter.parse_count})
                 </MenuItem>
