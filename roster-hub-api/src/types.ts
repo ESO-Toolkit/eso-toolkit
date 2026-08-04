@@ -15,6 +15,13 @@ export interface Env {
   DISCORD_WEBHOOK_SECRET?: string;
   /** Internal API key for admin endpoints — set via `wrangler secret put INTERNAL_API_KEY` */
   INTERNAL_API_KEY?: string;
+  /**
+   * Set to 'off' to fall back to name-only validation on /graphql, disabling
+   * persisted-query hash pinning. Escape hatch for a frontend deploy whose
+   * documents drift from the manifest bundled with this Worker; leave unset
+   * (pinning enforced) in normal operation.
+   */
+  GRAPHQL_HASH_PINNING?: string;
 }
 
 // ─── Addon recommendation types (shared between rosters & packs) ─────────────

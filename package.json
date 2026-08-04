@@ -237,6 +237,7 @@
     "test:debug:ui": "playwright test --config=playwright/debug.config.ts --ui",
     "typecheck": "tsc --noEmit",
     "typecheck:test": "tsc --noEmit -p tsconfig.test.json",
+    "generate:graphql-manifest": "tsx --tsconfig tsconfig/scripts.json scripts/generate-graphql-manifest.ts",
     "check:no-esohub": "node scripts/check-no-esohub.cjs",
     "check:provenance": "node scripts/check-tooltip-provenance.mjs",
     "validate": "npm run typecheck && npm run typecheck:test && npm run lint && npm run format:check",

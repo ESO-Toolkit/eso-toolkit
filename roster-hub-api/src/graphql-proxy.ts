@@ -10,6 +10,9 @@
 
 import type { Context } from 'hono';
 
+import { ALLOWED_OPERATIONS } from './graphql-allowed-operations';
+import { hashGraphqlDocument } from './graphql-document-hash';
+import { GRAPHQL_QUERY_HASHES } from './graphql-query-manifest';
 import type { Env } from './types';
 
 const ESOLOGS_TOKEN_URL = 'https://www.esologs.com/oauth/token';
@@ -71,42 +74,6 @@ const CACHEABLE_OPERATIONS = new Set([
 ]);
 
 const CACHE_TTL_SECONDS = 600; // 10 minutes
-
-const ALLOWED_OPERATIONS = new Set([
-  'getBuffEvents',
-  'getDebuffEvents',
-  'getDamageEvents',
-  'getResourceEvents',
-  'getCombatantInfoEvents',
-  'getCastEvents',
-  'getHealingEvents',
-  'getDeathEvents',
-  'getPlayersForReport',
-  'getReportByCode',
-  'getReportMasterData',
-  'getReportPlayersOnly',
-  'getAbilities',
-  'getAbility',
-  'getClass',
-  'getClasses',
-  'getTrialZones',
-  'getEncounterFightRankings',
-  'getEncounterInfo',
-  'getTrialZonesMetadata',
-  'getLatestReports',
-  'getGuildById',
-  'getGuilds',
-  'getGuildByName',
-  'getGuildAttendance',
-  'getGuildMembers',
-  'getBatchEventsForSummary',
-  'getAllEventsForSummary',
-  'getAllEventsTimeBased',
-  'getReportDamageEvents',
-  'getReportDeathEvents',
-  'getReportHealingEvents',
-  'getProfileUploadedReports',
-]);
 
 const MAX_BODY_BYTES = 100_000; // 100 KB
 
@@ -207,11 +174,30 @@ function allowRequestFromIp(ip: string): boolean {
 // caller can't map the schema through the site's credentials.
 const INTROSPECTION_RE = /\b__schema\b|\b__type\b/;
 
+// ─── Persisted-query pinning ─────────────────────────────────────────────────
+//
+// Validating only the operation NAME left the proxy wide open: any body at all
+// could be sent under, say, `getReportByCode` and it would be forwarded to ESO
+// Logs with the site's client-credentials token — an unmetered query proxy on
+// our OAuth budget. Every allowlisted operation therefore has its document
+// hash(es) pinned in the generated manifest, and a body that does not hash to
+// one of them is refused.
+//
+// `GRAPHQL_HASH_PINNING=off` is an escape hatch for the one failure mode that
+// would otherwise take the site down: a frontend deploy whose documents do not
+// match the manifest shipped with the Worker. Setting it re-enables name-only
+// validation until a corrected manifest is deployed.
+async function documentMatchesPin(operation: string, queryDoc: string): Promise<boolean> {
+  const pinned = GRAPHQL_QUERY_HASHES[operation];
+  if (!pinned || pinned.length === 0) return false;
+  const hash = await hashGraphqlDocument(queryDoc);
+  return pinned.includes(hash);
+}
+
 // ─── Proxy handler ────────────────────────────────────────────────────────────
 
 export async function handleGraphqlProxy(c: Context<{ Bindings: Env }>): Promise<Response> {
-  const clientIp =
-    c.req.header('CF-Connecting-IP') ?? c.req.header('x-forwarded-for') ?? 'unknown';
+  const clientIp = c.req.header('CF-Connecting-IP') ?? c.req.header('x-forwarded-for') ?? 'unknown';
   if (!allowRequestFromIp(clientIp)) {
     return c.json({ error: 'Rate limit exceeded' }, 429);
   }
@@ -250,6 +236,16 @@ export async function handleGraphqlProxy(c: Context<{ Bindings: Env }>): Promise
 
   if (INTROSPECTION_RE.test(parsed.query)) {
     return c.json({ error: 'Introspection is not permitted' }, 400);
+  }
+
+  if (
+    c.env.GRAPHQL_HASH_PINNING !== 'off' &&
+    !(await documentMatchesPin(operationHint, parsed.query))
+  ) {
+    return c.json(
+      { error: 'Query document does not match the pinned document for this operation' },
+      400,
+    );
   }
 
   const isCacheable = Boolean(operationHint && CACHEABLE_OPERATIONS.has(operationHint));
