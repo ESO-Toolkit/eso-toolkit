@@ -29,6 +29,11 @@ jobs:
         uses: actions/checkout@v7
         with:
           fetch-depth: 0
+          # Build the RELEASE being backfilled, not whatever ref this workflow
+          # was dispatched from. release_version only names the version string;
+          # without this the job would bake that sha into a different commit's
+          # assets and upload maps that match nothing that was ever deployed.
+          ref: ${{ inputs.release_version != '' && inputs.release_version || github.sha }}
 
       - uses: ./.github/actions/setup-node-with-cache
 
