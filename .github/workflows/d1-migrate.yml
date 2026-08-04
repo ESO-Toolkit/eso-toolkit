@@ -1,0 +1,83 @@
+name: Run D1 Migration
+
+# Applies a SQL migration to a remote D1 database.
+#
+# Manual-only: schema changes should be a deliberate act, not a side effect of a
+# push. Until this existed, migrations under roster-hub-api/src/db/ had to be
+# applied by hand from a developer machine holding Cloudflare credentials.
+
+on:
+  workflow_dispatch:
+    inputs:
+      worker:
+        description: 'Worker whose wrangler.toml defines the database binding'
+        required: true
+        type: choice
+        options:
+          - roster-hub-api
+      database:
+        description: 'D1 database name (must match wrangler.toml)'
+        required: true
+        default: roster-hub-db
+        type: string
+      migration:
+        description: 'Migration file, relative to the worker dir (e.g. src/db/migration-dps-parses.sql)'
+        required: true
+        type: string
+      confirm:
+        description: 'Type the database name again to confirm you are writing to production'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v7
+
+      # Guard rails: this job has production database write access, so validate
+      # the inputs before handing anything to wrangler.
+      - name: Validate inputs
+        working-directory: ${{ inputs.worker }}
+        run: |
+          set -euo pipefail
+
+          if [ "${{ inputs.confirm }}" != "${{ inputs.database }}" ]; then
+            echo "::error::Confirmation '${{ inputs.confirm }}' does not match database '${{ inputs.database }}'."
+            exit 1
+          fi
+
+          MIGRATION="${{ inputs.migration }}"
+
+          # Constrain to SQL files inside the worker's db directory. Blocks path
+          # traversal and stops this becoming a run-arbitrary-SQL button.
+          case "$MIGRATION" in
+            src/db/*.sql) ;;
+            *) echo "::error::Migration must match src/db/*.sql (got '$MIGRATION')."; exit 1 ;;
+          esac
+          case "$MIGRATION" in
+            *..*) echo "::error::Migration path must not contain '..'."; exit 1 ;;
+          esac
+
+          if [ ! -f "$MIGRATION" ]; then
+            echo "::error::Migration file '$MIGRATION' not found in ${{ inputs.worker }}."
+            exit 1
+          fi
+
+          # Surface the exact SQL in the run log, so the job output is a record of
+          # what was applied.
+          echo "### Applying \`$MIGRATION\` to \`${{ inputs.database }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo '```sql' >> "$GITHUB_STEP_SUMMARY"
+          cat "$MIGRATION" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Apply migration
+        uses: cloudflare/wrangler-action@ebbaa1584979971c8614a24965b4405ff95890e0 # v4.0.0
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          workingDirectory: ${{ inputs.worker }}
+          command: d1 execute ${{ inputs.database }} --remote --yes --file=${{ inputs.migration }}
