@@ -233,15 +233,81 @@ async function introspectToken(token: string): Promise<IntrospectionResult> {
   }
 }
 
+// ─── Per-IP limiter on FAILED validations ────────────────────────────────────
+//
+// The rejection cache below is keyed by token hash, so it stops a client
+// REPLAYING one bad token — but not a caller minting a fresh JWT-shaped value
+// per request, where every token misses the cache and costs one outbound
+// introspection subrequest. This bucket closes that: budget is spent only when
+// a validation actually FAILS, so a legitimate session (which succeeds, then
+// rides the positive cache) never touches it, while a rotating-token flood
+// runs itself out of credit and is refused without calling upstream.
+//
+// Isolate-scoped and therefore best-effort, exactly like the /graphql limiter.
+const AUTH_FAIL_CAPACITY = 20; // consecutive failed validations per IP
+const AUTH_FAIL_REFILL_PER_SEC = 0.5; // ~30 failures / minute sustained
+const AUTH_FAIL_MAX_IPS = 10_000;
+
+interface FailBucket {
+  tokens: number;
+  updatedAt: number;
+}
+
+const authFailBuckets = new Map<string, FailBucket>();
+
+function failBucketFor(ip: string, now: number): FailBucket {
+  let bucket = authFailBuckets.get(ip);
+  if (!bucket) {
+    if (authFailBuckets.size >= AUTH_FAIL_MAX_IPS) {
+      const oldest = authFailBuckets.keys().next().value; // insertion-ordered
+      if (oldest !== undefined) authFailBuckets.delete(oldest);
+    }
+    bucket = { tokens: AUTH_FAIL_CAPACITY, updatedAt: now };
+    authFailBuckets.set(ip, bucket);
+    return bucket;
+  }
+  const elapsedSec = (now - bucket.updatedAt) / 1000;
+  bucket.tokens = Math.min(
+    AUTH_FAIL_CAPACITY,
+    bucket.tokens + elapsedSec * AUTH_FAIL_REFILL_PER_SEC,
+  );
+  bucket.updatedAt = now;
+  return bucket;
+}
+
+/** True when this IP still has budget to spend on an introspection that may fail. */
+function mayAttemptIntrospection(ip: string | undefined): boolean {
+  if (!ip) return true; // no caller identity to key on — do not lock everyone out
+  return failBucketFor(ip, Date.now()).tokens >= 1;
+}
+
+/** Charge one unit after a validation attempt that did not authenticate anybody. */
+function chargeFailedValidation(ip: string | undefined): void {
+  if (!ip) return;
+  const bucket = failBucketFor(ip, Date.now());
+  bucket.tokens = Math.max(0, bucket.tokens - 1);
+}
+
+/** Caller IP as Cloudflare reports it, for the failed-validation limiter. */
+export function clientIpFromHeaders(
+  header: (name: string) => string | undefined | null,
+): string | undefined {
+  return header('CF-Connecting-IP') ?? header('x-forwarded-for') ?? undefined;
+}
+
 // ─── Public API ──────────────────────────────────────────────────────────────
 
 /**
  * Validates an ESO Logs Bearer token and returns the authenticated user.
  * Returns null if the token is missing, expired, or rejected by ESO Logs.
+ *
+ * `clientIp` is optional only so existing callers keep compiling; pass it
+ * wherever it is available, or the failed-validation limiter cannot engage.
  */
 export async function validateToken(
   authHeader: string | undefined,
   _env: Env,
+  clientIp?: string,
 ): Promise<AuthUser | null> {
   if (!authHeader?.startsWith('Bearer ')) return null;
   const token = authHeader.slice(7);
@@ -262,29 +328,29 @@ export async function validateToken(
   if (cached) return cached;
 
   // Short-circuit tokens we recently rejected, so a client REPLAYING a rejected
-  // token stops costing an introspection each time.
-  //
-  // Scope, precisely: this is keyed by token hash, so it does nothing against a
-  // caller minting a fresh JWT-shaped value per request — each unique token
-  // misses and reaches introspectToken. That path spends the CALLER's bearer
-  // token upstream, not the site's client credentials (unlike /graphql), so the
-  // exposure is one outbound subrequest per request rather than a drain on the
-  // shared OAuth budget. Closing it properly needs a limiter on failed
-  // validation attempts keyed by caller IP, which validateToken cannot see
-  // today — see the follow-up note in the PR.
+  // token stops costing an introspection each time. Rotating tokens defeat this
+  // by construction (every hash is new), which is what the per-IP failed-
+  // validation bucket above is for.
   const tokenHash = hashToken(token);
   if (isNegativelyCached(tokenHash)) return null;
+
+  // Out of failure budget: refuse without spending an outbound subrequest.
+  if (!mayAttemptIntrospection(clientIp)) return null;
 
   // Introspect against ESO Logs API
   const result = await introspectToken(token);
   if (result.status === 'invalid') {
     setNegativeCache(tokenHash);
+    chargeFailedValidation(clientIp);
     return null;
   }
   // Unavailable: reject THIS request, but never remember the failure — caching
   // it would 401 a valid session for the whole negative-cache window without
   // asking upstream again.
-  if (result.status === 'unavailable') return null;
+  if (result.status === 'unavailable') {
+    chargeFailedValidation(clientIp);
+    return null;
+  }
 
   setCache(token, result.user);
   return result.user;

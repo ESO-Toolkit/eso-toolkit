@@ -8,7 +8,7 @@
 
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
-import { validateToken } from './auth';
+import { clientIpFromHeaders, validateToken } from './auth';
 import {
   listRosters,
   getRosterById,
@@ -352,7 +352,11 @@ app.get('/health', async (c) => {
 // ─── GET /rosters — list with filtering & pagination ─────────────────────────
 
 app.get('/rosters', async (c) => {
-  const user = await validateToken(c.req.header('Authorization'), c.env);
+  const user = await validateToken(
+    c.req.header('Authorization'),
+    c.env,
+    clientIpFromHeaders((n) => c.req.header(n)),
+  );
 
   const trial = c.req.query('trial') ?? undefined;
   const tag = c.req.query('tag') ?? undefined;
@@ -373,7 +377,11 @@ app.get('/rosters', async (c) => {
 // ─── GET /rosters/:id — single roster ────────────────────────────────────────
 
 app.get('/rosters/:id', async (c) => {
-  const user = await validateToken(c.req.header('Authorization'), c.env);
+  const user = await validateToken(
+    c.req.header('Authorization'),
+    c.env,
+    clientIpFromHeaders((n) => c.req.header(n)),
+  );
   const roster = await getRosterById(c.env.DB, c.req.param('id'), user?.id);
 
   if (!roster) {
@@ -385,7 +393,11 @@ app.get('/rosters/:id', async (c) => {
 // ─── POST /rosters — publish a roster ────────────────────────────────────────
 
 app.post('/rosters', async (c) => {
-  const user = await validateToken(c.req.header('Authorization'), c.env);
+  const user = await validateToken(
+    c.req.header('Authorization'),
+    c.env,
+    clientIpFromHeaders((n) => c.req.header(n)),
+  );
   if (!user) return c.json({ error: 'Unauthorized' }, 401);
 
   interface CreateBody {
@@ -486,7 +498,11 @@ app.post('/rosters', async (c) => {
 // ─── PUT /rosters/:id — update own roster ────────────────────────────────────
 
 app.put('/rosters/:id', async (c) => {
-  const user = await validateToken(c.req.header('Authorization'), c.env);
+  const user = await validateToken(
+    c.req.header('Authorization'),
+    c.env,
+    clientIpFromHeaders((n) => c.req.header(n)),
+  );
   if (!user) return c.json({ error: 'Unauthorized' }, 401);
 
   if (!(await checkUpdateRateLimit(c.env.DB, user.id, 'roster_update')))
@@ -581,7 +597,11 @@ app.put('/rosters/:id', async (c) => {
 // ─── DELETE /rosters/:id — delete own roster ─────────────────────────────────
 
 app.delete('/rosters/:id', async (c) => {
-  const user = await validateToken(c.req.header('Authorization'), c.env);
+  const user = await validateToken(
+    c.req.header('Authorization'),
+    c.env,
+    clientIpFromHeaders((n) => c.req.header(n)),
+  );
   if (!user) return c.json({ error: 'Unauthorized' }, 401);
 
   const deleted = await deleteRoster(c.env.DB, c.req.param('id'), user.id);
@@ -592,7 +612,11 @@ app.delete('/rosters/:id', async (c) => {
 // ─── POST /rosters/:id/vote — toggle upvote ──────────────────────────────────
 
 app.post('/rosters/:id/vote', async (c) => {
-  const user = await validateToken(c.req.header('Authorization'), c.env);
+  const user = await validateToken(
+    c.req.header('Authorization'),
+    c.env,
+    clientIpFromHeaders((n) => c.req.header(n)),
+  );
   if (!user) return c.json({ error: 'Unauthorized' }, 401);
 
   const rosterId = c.req.param('id');
@@ -630,7 +654,11 @@ app.get('/rosters/:id/comments', async (c) => {
 // ─── POST /rosters/:id/comments — add a comment ────────────────────────────
 
 app.post('/rosters/:id/comments', async (c) => {
-  const user = await validateToken(c.req.header('Authorization'), c.env);
+  const user = await validateToken(
+    c.req.header('Authorization'),
+    c.env,
+    clientIpFromHeaders((n) => c.req.header(n)),
+  );
   if (!user) return c.json({ error: 'Unauthorized' }, 401);
 
   const rosterId = c.req.param('id');
@@ -692,7 +720,11 @@ app.post('/rosters/:id/comments', async (c) => {
 // ─── DELETE /rosters/:rosterId/comments/:commentId — delete own comment ─────
 
 app.delete('/rosters/:rosterId/comments/:commentId', async (c) => {
-  const user = await validateToken(c.req.header('Authorization'), c.env);
+  const user = await validateToken(
+    c.req.header('Authorization'),
+    c.env,
+    clientIpFromHeaders((n) => c.req.header(n)),
+  );
   if (!user) return c.json({ error: 'Unauthorized' }, 401);
 
   const deleted = await deleteComment(c.env.DB, c.req.param('commentId'), user.id);
@@ -707,7 +739,11 @@ app.delete('/rosters/:rosterId/comments/:commentId', async (c) => {
 // ─── GET /builds — list with filtering & pagination ──────────────────────────
 
 app.get('/builds', async (c) => {
-  const user = await validateToken(c.req.header('Authorization'), c.env);
+  const user = await validateToken(
+    c.req.header('Authorization'),
+    c.env,
+    clientIpFromHeaders((n) => c.req.header(n)),
+  );
 
   const esoClass = c.req.query('class') ?? undefined;
   const role = c.req.query('role') ?? undefined;
@@ -732,7 +768,11 @@ app.get('/builds', async (c) => {
 // ─── GET /builds/:id — single build ──────────────────────────────────────────
 
 app.get('/builds/:id', async (c) => {
-  const user = await validateToken(c.req.header('Authorization'), c.env);
+  const user = await validateToken(
+    c.req.header('Authorization'),
+    c.env,
+    clientIpFromHeaders((n) => c.req.header(n)),
+  );
   const build = await getBuildById(c.env.DB, c.req.param('id'), user?.id);
 
   if (!build) {
@@ -744,7 +784,11 @@ app.get('/builds/:id', async (c) => {
 // ─── POST /builds — publish a build ──────────────────────────────────────────
 
 app.post('/builds', async (c) => {
-  const user = await validateToken(c.req.header('Authorization'), c.env);
+  const user = await validateToken(
+    c.req.header('Authorization'),
+    c.env,
+    clientIpFromHeaders((n) => c.req.header(n)),
+  );
   if (!user) return c.json({ error: 'Unauthorized' }, 401);
 
   interface CreateBuildBody {
@@ -836,7 +880,11 @@ app.post('/builds', async (c) => {
 // ─── PUT /builds/:id — update own build ──────────────────────────────────────
 
 app.put('/builds/:id', async (c) => {
-  const user = await validateToken(c.req.header('Authorization'), c.env);
+  const user = await validateToken(
+    c.req.header('Authorization'),
+    c.env,
+    clientIpFromHeaders((n) => c.req.header(n)),
+  );
   if (!user) return c.json({ error: 'Unauthorized' }, 401);
 
   // Rate-limit BEFORE decompressing attacker-controlled build_data.
@@ -920,7 +968,11 @@ app.put('/builds/:id', async (c) => {
 // ─── DELETE /builds/:id — delete own build ────────────────────────────────────
 
 app.delete('/builds/:id', async (c) => {
-  const user = await validateToken(c.req.header('Authorization'), c.env);
+  const user = await validateToken(
+    c.req.header('Authorization'),
+    c.env,
+    clientIpFromHeaders((n) => c.req.header(n)),
+  );
   if (!user) return c.json({ error: 'Unauthorized' }, 401);
 
   const deleted = await deleteBuild(c.env.DB, c.req.param('id'), user.id);
@@ -931,7 +983,11 @@ app.delete('/builds/:id', async (c) => {
 // ─── POST /builds/:id/vote — toggle upvote ────────────────────────────────────
 
 app.post('/builds/:id/vote', async (c) => {
-  const user = await validateToken(c.req.header('Authorization'), c.env);
+  const user = await validateToken(
+    c.req.header('Authorization'),
+    c.env,
+    clientIpFromHeaders((n) => c.req.header(n)),
+  );
   if (!user) return c.json({ error: 'Unauthorized' }, 401);
 
   const buildId = c.req.param('id');
@@ -950,7 +1006,11 @@ app.post('/builds/:id/vote', async (c) => {
 // ─── GET /builds/:id/comments ─────────────────────────────────────────────────
 
 app.get('/builds/:id/comments', async (c) => {
-  const user = await validateToken(c.req.header('Authorization'), c.env);
+  const user = await validateToken(
+    c.req.header('Authorization'),
+    c.env,
+    clientIpFromHeaders((n) => c.req.header(n)),
+  );
   const buildId = c.req.param('id');
   const build = await getBuildById(c.env.DB, buildId, user?.id);
   if (!build) return c.json({ error: 'Not found' }, 404);
@@ -962,7 +1022,11 @@ app.get('/builds/:id/comments', async (c) => {
 // ─── POST /builds/:id/comments ────────────────────────────────────────────────
 
 app.post('/builds/:id/comments', async (c) => {
-  const user = await validateToken(c.req.header('Authorization'), c.env);
+  const user = await validateToken(
+    c.req.header('Authorization'),
+    c.env,
+    clientIpFromHeaders((n) => c.req.header(n)),
+  );
   if (!user) return c.json({ error: 'Unauthorized' }, 401);
 
   const buildId = c.req.param('id');
@@ -1017,7 +1081,11 @@ app.post('/builds/:id/comments', async (c) => {
 // ─── DELETE /builds/:buildId/comments/:commentId ──────────────────────────────
 
 app.delete('/builds/:buildId/comments/:commentId', async (c) => {
-  const user = await validateToken(c.req.header('Authorization'), c.env);
+  const user = await validateToken(
+    c.req.header('Authorization'),
+    c.env,
+    clientIpFromHeaders((n) => c.req.header(n)),
+  );
   if (!user) return c.json({ error: 'Unauthorized' }, 401);
 
   const deleted = await deleteBuildComment(c.env.DB, c.req.param('commentId'), user.id);
@@ -1120,7 +1188,11 @@ app.get('/temp-builds/:id', async (c) => {
 // ─── POST /images/upload — upload with AI moderation ─────────────────────────
 
 app.post('/images/upload', async (c) => {
-  const user = await validateToken(c.req.header('Authorization'), c.env);
+  const user = await validateToken(
+    c.req.header('Authorization'),
+    c.env,
+    clientIpFromHeaders((n) => c.req.header(n)),
+  );
   if (!user) return c.json({ error: 'Unauthorized' }, 401);
 
   // Rate limit: 10 uploads per hour
@@ -1250,7 +1322,11 @@ app.post('/images/upload', async (c) => {
 // ─── POST /images/:id/report — flag an image ────────────────────────────────
 
 app.post('/images/:id/report', async (c) => {
-  const user = await validateToken(c.req.header('Authorization'), c.env);
+  const user = await validateToken(
+    c.req.header('Authorization'),
+    c.env,
+    clientIpFromHeaders((n) => c.req.header(n)),
+  );
   if (!user) return c.json({ error: 'Unauthorized' }, 401);
 
   const imageId = c.req.param('id');
@@ -1296,7 +1372,11 @@ app.post('/images/:id/report', async (c) => {
 // ─── DELETE /images/:id — delete own image ───────────────────────────────────
 
 app.delete('/images/:id', async (c) => {
-  const user = await validateToken(c.req.header('Authorization'), c.env);
+  const user = await validateToken(
+    c.req.header('Authorization'),
+    c.env,
+    clientIpFromHeaders((n) => c.req.header(n)),
+  );
   if (!user) return c.json({ error: 'Unauthorized' }, 401);
 
   const result = await deleteImageUpload(c.env.DB, c.req.param('id'), user.id);
@@ -1346,7 +1426,11 @@ app.get('/users/:username', async (c) => {
 // ─── PUT /users/me/bio — update own bio ──────────────────────────────────────
 
 app.put('/users/me/bio', async (c) => {
-  const user = await validateToken(c.req.header('Authorization'), c.env);
+  const user = await validateToken(
+    c.req.header('Authorization'),
+    c.env,
+    clientIpFromHeaders((n) => c.req.header(n)),
+  );
   if (!user) return c.json({ error: 'Unauthorized' }, 401);
 
   // Rate limit: 1 bio update per 60 seconds using the profile row's updated_at
@@ -1383,7 +1467,11 @@ app.put('/users/me/bio', async (c) => {
 const MAX_AVATAR_BYTES = 2 * 1024 * 1024;
 
 app.put('/users/me/avatar', async (c) => {
-  const user = await validateToken(c.req.header('Authorization'), c.env);
+  const user = await validateToken(
+    c.req.header('Authorization'),
+    c.env,
+    clientIpFromHeaders((n) => c.req.header(n)),
+  );
   if (!user) return c.json({ error: 'Unauthorized' }, 401);
 
   // Rate limit: 1 avatar upload per hour
@@ -1510,7 +1598,11 @@ app.put('/users/me/avatar', async (c) => {
 // ─── DELETE /users/me/avatar — remove avatar ────────────────────────────────
 
 app.delete('/users/me/avatar', async (c) => {
-  const user = await validateToken(c.req.header('Authorization'), c.env);
+  const user = await validateToken(
+    c.req.header('Authorization'),
+    c.env,
+    clientIpFromHeaders((n) => c.req.header(n)),
+  );
   if (!user) return c.json({ error: 'Unauthorized' }, 401);
 
   const { avatarDeleteUrl } = await deleteUserAvatar(c.env.DB, user.id);
@@ -1521,7 +1613,11 @@ app.delete('/users/me/avatar', async (c) => {
 // ─── PUT /users/me/display-names — sync ESO @handles ────────────────────────
 
 app.put('/users/me/display-names', async (c) => {
-  const user = await validateToken(c.req.header('Authorization'), c.env);
+  const user = await validateToken(
+    c.req.header('Authorization'),
+    c.env,
+    clientIpFromHeaders((n) => c.req.header(n)),
+  );
   if (!user) return c.json({ error: 'Unauthorized' }, 401);
 
   // Rate limit: 1 display-name update per 60 seconds (shares the profile row's
@@ -1612,7 +1708,11 @@ const VALID_PACK_TYPES = ['addon-pack', 'build-pack', 'roster-pack'];
 // ─── GET /packs — list with filtering & pagination ──────────────────────────
 
 app.get('/packs', async (c) => {
-  const user = await validateToken(c.req.header('Authorization'), c.env);
+  const user = await validateToken(
+    c.req.header('Authorization'),
+    c.env,
+    clientIpFromHeaders((n) => c.req.header(n)),
+  );
 
   const packType = c.req.query('type') ?? undefined;
   const tag = c.req.query('tag') ?? undefined;
@@ -1633,7 +1733,11 @@ app.get('/packs', async (c) => {
 // ─── GET /packs/:id — single pack ──────────────────────────────────────────
 
 app.get('/packs/:id', async (c) => {
-  const user = await validateToken(c.req.header('Authorization'), c.env);
+  const user = await validateToken(
+    c.req.header('Authorization'),
+    c.env,
+    clientIpFromHeaders((n) => c.req.header(n)),
+  );
   const pack = await getPackById(c.env.DB, c.req.param('id'), user?.id);
 
   if (!pack) return c.json({ error: 'Not found' }, 404);
@@ -1643,7 +1747,11 @@ app.get('/packs/:id', async (c) => {
 // ─── POST /packs — create a pack ───────────────────────────────────────────
 
 app.post('/packs', async (c) => {
-  const user = await validateToken(c.req.header('Authorization'), c.env);
+  const user = await validateToken(
+    c.req.header('Authorization'),
+    c.env,
+    clientIpFromHeaders((n) => c.req.header(n)),
+  );
   if (!user) return c.json({ error: 'Unauthorized' }, 401);
 
   interface CreatePackBody {
@@ -1713,7 +1821,11 @@ app.post('/packs', async (c) => {
 // ─── PUT /packs/:id — update own pack ──────────────────────────────────────
 
 app.put('/packs/:id', async (c) => {
-  const user = await validateToken(c.req.header('Authorization'), c.env);
+  const user = await validateToken(
+    c.req.header('Authorization'),
+    c.env,
+    clientIpFromHeaders((n) => c.req.header(n)),
+  );
   if (!user) return c.json({ error: 'Unauthorized' }, 401);
 
   if (!(await checkUpdateRateLimit(c.env.DB, user.id, 'pack_update')))
@@ -1776,7 +1888,11 @@ app.put('/packs/:id', async (c) => {
 // ─── DELETE /packs/:id — delete own pack ────────────────────────────────────
 
 app.delete('/packs/:id', async (c) => {
-  const user = await validateToken(c.req.header('Authorization'), c.env);
+  const user = await validateToken(
+    c.req.header('Authorization'),
+    c.env,
+    clientIpFromHeaders((n) => c.req.header(n)),
+  );
   if (!user) return c.json({ error: 'Unauthorized' }, 401);
 
   const deleted = await deletePack(c.env.DB, c.req.param('id'), user.id);
@@ -1787,7 +1903,11 @@ app.delete('/packs/:id', async (c) => {
 // ─── POST /packs/:id/vote — toggle upvote ──────────────────────────────────
 
 app.post('/packs/:id/vote', async (c) => {
-  const user = await validateToken(c.req.header('Authorization'), c.env);
+  const user = await validateToken(
+    c.req.header('Authorization'),
+    c.env,
+    clientIpFromHeaders((n) => c.req.header(n)),
+  );
   if (!user) return c.json({ error: 'Unauthorized' }, 401);
 
   const pack = await getPackById(c.env.DB, c.req.param('id'));

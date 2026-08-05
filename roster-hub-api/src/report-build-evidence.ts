@@ -8,7 +8,7 @@
 
 import type { Context } from 'hono';
 
-import { validateToken } from './auth';
+import { clientIpFromHeaders, validateToken } from './auth';
 import type { AuthUser, Env } from './types';
 
 const SOURCE = 'kalpa-native-player-info';
@@ -309,7 +309,11 @@ export async function putReportBuildEvidence(c: ReportEvidenceContext): Promise<
   const bucket = ensureBucket(c);
   if (!bucket) return c.json({ error: 'Build evidence storage is not configured' }, 503);
 
-  const user = await validateToken(c.req.header('Authorization'), c.env);
+  const user = await validateToken(
+    c.req.header('Authorization'),
+    c.env,
+    clientIpFromHeaders((n) => c.req.header(n)),
+  );
   if (!user) return c.json({ error: 'Unauthorized' }, 401);
 
   const ownerVerified = await verifyReportOwner(
