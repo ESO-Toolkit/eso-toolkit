@@ -1,6 +1,7 @@
-import { calculateElementalWeaknessStacks } from './CalculateElementalWeaknessStacks';
 import { KnownAbilities } from '../../types/abilities';
 import { BuffLookupData } from '../../utils/BuffLookupUtils';
+
+import { calculateElementalWeaknessStacks } from './CalculateElementalWeaknessStacks';
 
 describe('CalculateElementalWeaknessStacks', () => {
   const FLAME_WEAKNESS_ID = KnownAbilities.FLAME_WEAKNESS;
@@ -343,8 +344,6 @@ describe('CalculateElementalWeaknessStacks', () => {
   });
 
   it('should calculate correct uptime percentages', () => {
-    const fightDuration = FIGHT_END - FIGHT_START; // 20000ms
-
     const debuffsLookup = createMockBuffLookupData({
       [FLAME_WEAKNESS_ID.toString()]: [
         { start: FIGHT_START, end: FIGHT_START + 10000, targetID: TARGET_ID }, // 50% of fight

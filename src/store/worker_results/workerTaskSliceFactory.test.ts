@@ -437,6 +437,40 @@ describe('workerTaskSliceFactory', () => {
 
         expect(mockWorkerManager.executeTask).toHaveBeenCalledTimes(1);
       });
+
+      it('should execute a different input dispatched while another input is still loading (H4)', async () => {
+        // Fight-nav race: a heavy task for input A is still in flight when the
+        // hook aborts it and dispatches a replacement for input B in the same
+        // synchronous flush. Because RTK delivers the abort's `rejected` (which
+        // clears isLoading) on a microtask, isLoading is still true when B's
+        // condition runs — the replacement must NOT be dropped on that basis.
+        let resolveA: (value: unknown) => void = () => {};
+        const aPromise = new Promise((resolve) => {
+          resolveA = resolve;
+        });
+        mockWorkerManager.executeTask
+          .mockReturnValueOnce(aPromise as never) // input A stays pending
+          .mockResolvedValueOnce(mockResult); // input B resolves
+
+        const differentInput = { reportCode: 'different', fightId: 2 } as SharedWorkerInputType<
+          typeof mockTaskName
+        >;
+
+        const firstExecution = store.dispatch(workerSlice.executeTask(mockInput));
+        // Dispatch B while A is still loading (A has not resolved).
+        const secondExecution = store.dispatch(workerSlice.executeTask(differentInput));
+
+        // The replacement for B must have been scheduled despite A still loading.
+        expect(mockWorkerManager.executeTask).toHaveBeenCalledTimes(2);
+        expect(mockWorkerManager.executeTask).toHaveBeenLastCalledWith(
+          mockTaskName,
+          differentInput,
+          expect.any(Function),
+        );
+
+        resolveA(mockResult);
+        await Promise.allSettled([firstExecution, secondExecution]);
+      });
     });
 
     describe('race condition handling', () => {
@@ -658,6 +692,8 @@ describe('workerTaskSliceFactory', () => {
         global.AbortController = class extends RealAbortController {
           constructor() {
             super();
+            // Capturing the instance RTK constructs is the whole point of this subclass.
+            // eslint-disable-next-line @typescript-eslint/no-this-alias
             abortControllerRef = this;
           }
         } as typeof AbortController;

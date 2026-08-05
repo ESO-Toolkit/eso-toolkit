@@ -9,7 +9,6 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 
-import { TimelineLegend } from './TimelineLegend';
 import {
   PhaseMarker,
   DeathMarker,
@@ -17,6 +16,8 @@ import {
   ClusterMarker,
   TimelineAnnotation,
 } from '../../../types/timelineAnnotations';
+
+import { TimelineLegend } from './TimelineLegend';
 
 const phase: PhaseMarker = {
   id: 'phase-1',
@@ -51,6 +52,7 @@ const custom: CustomMarker = {
   timestamp: 60000,
   type: 'custom',
   label: 'Note',
+  deletable: true,
 };
 
 const cluster: ClusterMarker = {

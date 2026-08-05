@@ -34,8 +34,8 @@ jest.mock('react-redux', () => ({
   useSelector: jest.fn(() => false),
 }));
 
-import { loadBuild } from '@features/build-editor/store/buildEditorSlice';
 import { decodeBuildFromURL } from '@/utils/buildEncoding';
+import { loadBuild } from '@features/build-editor/store/buildEditorSlice';
 
 import { BuildEditorPage } from './BuildEditorPage';
 

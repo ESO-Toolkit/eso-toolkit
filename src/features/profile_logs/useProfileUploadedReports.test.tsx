@@ -1,8 +1,8 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
-import { parseEsoLogsUserId, useProfileUploadedReports } from './useProfileUploadedReports';
 import type { ProfileReportSummary } from './profileLogsQueries';
+import { parseEsoLogsUserId, useProfileUploadedReports } from './useProfileUploadedReports';
 
 // ─── Mocks ───────────────────────────────────────────────────────────────────
 

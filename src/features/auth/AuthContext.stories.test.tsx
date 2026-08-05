@@ -1,9 +1,10 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 
-import { AuthProvider } from './AuthContext';
-import { EsoLogsClientProvider } from '../../EsoLogsClientContext';
 import { LoggerProvider, LogLevel } from '../../contexts/LoggerContext';
+import { EsoLogsClientProvider } from '../../EsoLogsClientContext';
+
+import { AuthProvider } from './AuthContext';
 
 // Mock the ESO Logs client for tests
 const mockClient = {

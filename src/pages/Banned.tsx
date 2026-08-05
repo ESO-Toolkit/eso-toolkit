@@ -4,8 +4,13 @@ import type { Theme } from '@mui/material/styles';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { LOCAL_STORAGE_ACCESS_TOKEN_KEY } from '../features/auth/auth';
+import {
+  LOCAL_STORAGE_ACCESS_TOKEN_KEY,
+  LOCAL_STORAGE_REFRESH_TOKEN_KEY,
+} from '../features/auth/auth';
 import { useAuth } from '../features/auth/AuthContext';
+import { persistor } from '../store/storeWithHistory';
+import { clearUserContext } from '../utils/errorTracking';
 
 /**
  * Banned page - displayed when a user's account has been banned
@@ -19,7 +24,14 @@ export const Banned: React.FC = () => {
   }, []);
 
   const handleLogout = (): void => {
+    // Drop both tokens — leaving the long-lived refresh_token behind lets a
+    // 401-triggered refresh silently re-mint a session after logout.
     localStorage.removeItem(LOCAL_STORAGE_ACCESS_TOKEN_KEY);
+    localStorage.removeItem(LOCAL_STORAGE_REFRESH_TOKEN_KEY);
+    clearUserContext();
+    // Purge account-bound persisted state (loadouts/builds) so it can't outlive
+    // the session on a shared machine.
+    void persistor.purge();
     setAccessToken('');
     navigate('/');
   };

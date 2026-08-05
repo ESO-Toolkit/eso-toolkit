@@ -6,6 +6,7 @@
 import { Close as CloseIcon } from '@mui/icons-material';
 import {
   Box,
+  ButtonBase,
   Dialog,
   DialogContent,
   DialogTitle,
@@ -314,8 +315,13 @@ const SkillSlotIcon: React.FC<SkillSlotIconProps> = ({
         }
         arrow
       >
-        <Box
+        <ButtonBase
           onClick={() => setIsSelecting(true)}
+          aria-label={
+            currentSkill
+              ? `Slot ${slotLabel}: ${currentSkill.name}. Activate to change skill.`
+              : `Empty ${isUltimate ? 'ultimate' : 'skill'} slot ${slotLabel}. Activate to assign.`
+          }
           sx={{
             width: iconSize,
             height: iconSize,
@@ -323,6 +329,7 @@ const SkillSlotIcon: React.FC<SkillSlotIconProps> = ({
             cursor: 'pointer',
             position: 'relative',
             overflow: 'hidden',
+            display: 'block',
             border: `${isUltimate ? 2 : 1}px solid ${currentSkill ? filledBorder : emptyBorder}`,
             backgroundColor: currentSkill
               ? isDarkMode
@@ -344,6 +351,10 @@ const SkillSlotIcon: React.FC<SkillSlotIconProps> = ({
             },
             // Reveal clear overlay on hover
             '&:hover .skill-clear-overlay': { opacity: 1 },
+            '&.Mui-focusVisible': {
+              outline: `2px solid ${alpha(theme.palette.primary.main, 0.8)}`,
+              outlineOffset: 2,
+            },
           }}
         >
           {/* Skill icon or empty slot placeholder */}
@@ -413,7 +424,7 @@ const SkillSlotIcon: React.FC<SkillSlotIconProps> = ({
               <CloseIcon sx={{ fontSize: isUltimate ? 22 : 18, color: 'rgba(255,255,255,0.9)' }} />
             </Box>
           )}
-        </Box>
+        </ButtonBase>
       </Tooltip>
 
       {/* Ultimate accent dot */}

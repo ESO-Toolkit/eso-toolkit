@@ -24,6 +24,18 @@ inputs:
     description: 'Base URL for the AI-upscaled fight-replay map tiles (R2 bucket public URL)'
     required: false
     default: 'https://pub-87ec3d93bfd4456faec17c57e05093d9.r2.dev'
+  rollbar_server_token:
+    description: >-
+      Rollbar post_server_item token. When set together with
+      enable_sourcemaps, THIS build's own sourcemaps are uploaded before the
+      deploy, so the maps always match the bundle that ships. Leave empty to
+      skip the upload.
+    required: false
+    default: ''
+  deployment_url:
+    description: 'Origin the deployed assets are served from (used to derive Rollbar minified_url)'
+    required: false
+    default: 'https://esotk.com'
 outputs:
   deployment-url:
     description: 'URL where the site was deployed'
@@ -56,6 +68,24 @@ runs:
         VITE_DISCORD_CLIENT_ID: ${{ inputs.vite_discord_client_id }}
         VITE_ROSTER_HUB_API_URL: ${{ inputs.vite_roster_hub_api_url }}
         VITE_HIRES_MAP_BASE: ${{ inputs.vite_hires_map_base }}
+
+    # Upload the sourcemaps produced by the build ABOVE, not by a second build:
+    # a rebuild elsewhere sees different VITE_* inputs and a freshly generated
+    # whats-new payload, so its content hashes never match the deployed
+    # filenames and Rollbar orphans every map (audit P2-M5).
+    - name: Upload sourcemaps to Rollbar
+      if: inputs.enable_sourcemaps == 'true' && inputs.rollbar_server_token != ''
+      # Never let an observability upload block a site deploy. The step still
+      # fails loudly in the run (including the release-in-bundle guard, which
+      # is the whole point of catching an orphaned upload), but Rollbar being
+      # unreachable — or a map that would not match — must not stop the build
+      # that is already good from shipping.
+      continue-on-error: true
+      uses: ./.github/actions/rollbar-sourcemaps
+      with:
+        access_token: ${{ inputs.rollbar_server_token }}
+        release_version: ${{ inputs.release_version }}
+        deployment_url: ${{ inputs.deployment_url }}
 
     - name: Build Storybook
       shell: bash

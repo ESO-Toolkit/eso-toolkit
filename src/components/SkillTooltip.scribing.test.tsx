@@ -1,8 +1,11 @@
-import React from 'react';
-import { render } from '@testing-library/react';
-import '@testing-library/jest-dom';
-import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { CssBaseline } from '@mui/material';
+import { ThemeProvider, createTheme } from '@mui/material/styles';
+import { render } from '@testing-library/react';
+import React from 'react';
+
+import '@testing-library/jest-dom';
+
+import { useSkillScribingData } from '../features/scribing/hooks/useScribingDetection';
 
 import { SkillTooltip } from './SkillTooltip';
 import type { SkillTooltipProps } from './SkillTooltip';
@@ -22,7 +25,6 @@ jest.mock('../hooks/useLogger', () => ({
 }));
 
 // Import the mocked hook
-import { useSkillScribingData } from '../features/scribing/hooks/useScribingDetection';
 
 const mockUseSkillScribingData = useSkillScribingData as jest.MockedFunction<
   typeof useSkillScribingData
@@ -116,7 +118,7 @@ describe('SkillTooltip - Scribing Skills Snapshots', () => {
           <>
             Twirl and throw an enchanted dagger at an enemy, which returns to you after a short
             delay and hits additional enemies in the path. The dagger shatters on impact, reducing
-            the target's armor and dealing additional damage over time.
+            the target&apos;s armor and dealing additional damage over time.
           </>
         ),
         headerBadge: 'Active',

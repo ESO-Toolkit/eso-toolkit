@@ -3,8 +3,9 @@
  * Tests actor name resolution with various fallback scenarios
  */
 
-import { resolveActorName } from './resolveActorName';
 import { ReportActor, ReportActorFragment } from '../graphql/gql/graphql';
+
+import { resolveActorName } from './resolveActorName';
 
 // Create mock actors for testing
 const createMockActor = (

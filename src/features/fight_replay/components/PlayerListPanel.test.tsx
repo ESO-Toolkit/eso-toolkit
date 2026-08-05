@@ -12,11 +12,12 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import React from 'react';
 
-import { PlayerListPanel } from './PlayerListPanel';
 import {
   ActorPosition,
   TimestampPositionLookup,
 } from '../../../workers/calculations/CalculateActorPositions';
+
+import { PlayerListPanel } from './PlayerListPanel';
 
 function makeLookup(players: ActorPosition[]): TimestampPositionLookup {
   const positionsByTimestamp: Record<number, Record<number, ActorPosition>> = { 0: {} };

@@ -1,0 +1,45 @@
+{
+  "version": 1,
+  "operations": {
+    "getAbilities": ["6deeebb58a5e29cd3320a0e7a3a29374ecc42324686a9439eee148df67a14136"],
+    "getAbility": ["fcd88ee561f74d82898574853ae554cddfd4bb62146d6125861b10157bb9c172"],
+    "getBatchEventsForSummary": [
+      "dfc9d8dbab1a50e8b31df8926ad2b747006b9d3c4750410b96f43966bb89ce7c"
+    ],
+    "getBuffEvents": ["448a872d0802753cb01c0d6348025db299f95356bd387837de05c8d74aa32c3f"],
+    "getCastEvents": [
+      "d79cb6352852b3aab2623c505a4775b7c8d345a4a76f35ab904db39dfb24940d",
+      "f44c68ec2b1d1835b4e913df64f7d26e7d1732932907f3ae5b9b1e612b553821"
+    ],
+    "getClass": ["b0e6a32a3d3fa529662157dec884fd6b9ac2404fcefd13c4db4fbd4e0f740df5"],
+    "getClasses": ["a11004eecd5756bde6fd6029609409e635112cb904829ac9f3ea37d6622b7146"],
+    "getCombatantInfoEvents": ["d12c271f26bc5d0debbfb6c5ce693324807c6425045f222b5d44137c8599f07d"],
+    "getDamageEvents": ["46f7c0193383ea244a4860f0afca09cc91d50cd9c9297c72ac962c3d5e0d81df"],
+    "getDeathEvents": ["7dc5556e68cfdbdeacdbc2a2d9f71da949152b93a161e433deec908b52e5d19b"],
+    "getDebuffEvents": ["dba1c61a0e6d859368bf5756e2878fac6d6f8607c6ea041d58e8614bacb6f28c"],
+    "getEncounterFightRankings": [
+      "b5b1fb81627867e91e9c34ab41201c06489319c6ada13cde482c9cbc21bec1e8"
+    ],
+    "getEncounterInfo": ["6fb234a8dc1b49619069f140b98799d014144d77ad479504b91fb2286d296773"],
+    "getGuildAttendance": ["96a0944d381ca84c2b14fa97a1ef1874946afd9df3fb568687d205d44ae21960"],
+    "getGuildById": ["ee3ec15e9b00adc8c642db29e23bb9f4393e877b124e2038ee10f0fb31d9a0a6"],
+    "getGuildByName": ["31ad303916cc52656fd3672bc0b584911a26dad4bbefa21e8120936010aacced"],
+    "getGuildMembers": ["21e1eeb24aa1ec9bb7801e576e0d93ae37daae99173dbd663aedfbdc16e9ef82"],
+    "getGuilds": ["e4c0017f143dbb899dfdcb85b413f415bbee1e0d12265a09cdabed173a66f7a4"],
+    "getHealingEvents": ["f33c31b47693eb046ec29f0fe56dc9a78dea93011fcc2e9d35678d83d71efe1c"],
+    "getLatestReports": ["97707396500187e1b54e966cbd6a958d8a45664317a46657d6c4e8665429e26b"],
+    "getPlayersForReport": [
+      "658769fecab5a744df73fd071a9c1c2178f0b93620959f361c08bd4eb562a567",
+      "f0fff2c9dea884cd41f77f7cd16fb36a4717eb75d71fa376ef7bdf63fe77662a"
+    ],
+    "getProfileUploadedReports": [
+      "9eed0e60d39d7d9f862bf68d4cae3ec042870a4161cac30858c5197dfd668638"
+    ],
+    "getReportByCode": ["28c9851d8df4ca338dd42d8f720363c7513dfc73094edf906c84070107143ad0"],
+    "getReportMasterData": ["ea4c777cb404b01a0f571203dce9c4a343cae8bad23a1e0f7f16d4bb9670dc44"],
+    "getReportPlayersOnly": ["8faaf3dedf2ea037db22fc8915b4c6afe76b43e30d379f6461d8b64ebbcc76bb"],
+    "getResourceEvents": ["f4587ba192cde9f8c2776a4975fe8fad136846e0ff6016d1b2626f74d1b988df"],
+    "getTrialZones": ["08c827c4d171ca7c723f38091f03718fd260416f8ba6e308447a0070d56052af"],
+    "getTrialZonesMetadata": ["55a8febf64e12bd5e8a0c27d1ed4f2cedb4db7bbd749eab515ac014b85d5b76b"]
+  }
+}

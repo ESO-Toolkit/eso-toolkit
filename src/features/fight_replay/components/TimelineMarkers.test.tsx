@@ -9,13 +9,14 @@
 import { render, fireEvent } from '@testing-library/react';
 import React from 'react';
 
-import { TimelineMarkers } from './TimelineMarkers';
 import {
   PhaseMarker,
   DeathMarker,
   CustomMarker,
   ClusterMarker,
 } from '../../../types/timelineAnnotations';
+
+import { TimelineMarkers } from './TimelineMarkers';
 
 describe('TimelineMarkers', () => {
   const mockPhaseMarker: PhaseMarker = {

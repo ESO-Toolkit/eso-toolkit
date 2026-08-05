@@ -20,6 +20,7 @@ import PsychologyIcon from '@mui/icons-material/Psychology';
 import RestaurantIcon from '@mui/icons-material/Restaurant';
 import {
   Box,
+  ButtonBase,
   Divider,
   IconButton,
   ListItemIcon,
@@ -238,10 +239,15 @@ const LoadoutRow: React.FC<LoadoutRowProps> = ({
 
   return (
     <>
-      <Box
+      <ButtonBase
+        component="div"
         onClick={() => onOpenDetails(index)}
+        aria-label={`Loadout ${setup.name}${selected ? ' (selected)' : ''}. Activate to open details.`}
         sx={(theme: Theme) => ({
           display: 'flex',
+          width: '100%',
+          justifyContent: 'flex-start',
+          textAlign: 'left',
           alignItems: 'center',
           gap: 1.25,
           px: 1.5,
@@ -265,6 +271,10 @@ const LoadoutRow: React.FC<LoadoutRowProps> = ({
               : isDarkMode
                 ? 'rgba(255,255,255,0.03)'
                 : 'rgba(0,0,0,0.02)',
+          },
+          '&.Mui-focusVisible': {
+            outline: `2px solid ${theme.palette.primary.main}`,
+            outlineOffset: -2,
           },
         })}
       >
@@ -338,7 +348,7 @@ const LoadoutRow: React.FC<LoadoutRowProps> = ({
         >
           <MoreVertIcon fontSize="small" />
         </IconButton>
-      </Box>
+      </ButtonBase>
 
       {/* Context menu */}
       <Menu

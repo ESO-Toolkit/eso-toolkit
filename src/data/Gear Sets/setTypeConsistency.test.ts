@@ -1,10 +1,11 @@
+import type { GearSetData } from '../../types/gearSet';
+
 import * as arenaSets from './arena';
 import * as heavySets from './heavy';
 import * as lightSets from './light';
 import * as mediumSets from './medium';
 import * as mythicSets from './mythics';
 import * as sharedSets from './shared';
-import type { GearSetData } from '../../types/gearSet';
 
 /**
  * A gear set's category (setType) is a property of the SET, not of its armor

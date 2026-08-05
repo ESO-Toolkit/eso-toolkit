@@ -1,4 +1,4 @@
-import { GraphqlTestHarness } from '../../../graphql/testing/graphqlTestHarness';
+import type { EsoLogsClient } from '../../../esologsClient';
 import {
   FightRankingMetricType,
   GetEncounterFightRankingsDocument,
@@ -7,7 +7,7 @@ import {
   GetTrialZonesDocument,
   GetTrialZonesQuery,
 } from '../../../graphql/gql/graphql';
-import type { EsoLogsClient } from '../../../esologsClient';
+import { GraphqlTestHarness } from '../../../graphql/testing/graphqlTestHarness';
 import { parseFightRankings, parseTrialZones } from '../LeaderboardLogsPage';
 type HarnessWithStub = {
   harness: GraphqlTestHarness;

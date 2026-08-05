@@ -3,8 +3,8 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import React from 'react';
 import { Provider } from 'react-redux';
 
-import { EsoLogsClientProvider } from '../../../EsoLogsClientContext';
 import { LoggerProvider } from '../../../contexts/LoggerContext';
+import { EsoLogsClientProvider } from '../../../EsoLogsClientContext';
 
 import { useOptimizedReportSummaryData, withTimeout } from './useOptimizedReportSummaryData';
 
@@ -145,7 +145,7 @@ const makeWrapper = (
   const wrapper = ({ children }: { children: React.ReactNode }) => (
     <Provider store={store}>
       <LoggerProvider>
-        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+        {}
         <EsoLogsClientProvider client={client as any}>{children}</EsoLogsClientProvider>
       </LoggerProvider>
     </Provider>

@@ -1,7 +1,8 @@
 import { ReportAbilityFragment } from '../graphql/gql/graphql';
 import { selectAbilitiesById } from '../store/master_data/masterDataSelectors';
 import store from '../store/storeWithHistory';
-import { abilityIdMapper, AbilityData } from './abilityIdMapper';
+
+import { abilityIdMapper } from './abilityIdMapper';
 import { DataLoadError, ValidationError } from './NestedError';
 
 // Mock worker factories to avoid import.meta issues

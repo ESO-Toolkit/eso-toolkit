@@ -1,19 +1,17 @@
-import React from 'react';
+import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { render } from '@testing-library/react';
+import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
-import { ThemeProvider } from '@mui/material/styles';
-import { createTheme } from '@mui/material/styles';
 
-import { KnownAbilities } from '../../../types/abilities';
-import { DamageEvent, DeathEvent } from '../../../types/combatlogEvents';
 import { FightFragment, ReportActorFragment } from '../../../graphql/gql/graphql';
-import { BuffLookupData } from '../../../utils/BuffLookupUtils';
 import {
   createMockDamageEvent,
   createMockDeathEvent,
   createMockFight,
-  createMockResources,
 } from '../../../test/utils/combatLogMockFactories';
+import { KnownAbilities } from '../../../types/abilities';
+import { DamageEvent } from '../../../types/combatlogEvents';
+import { BuffLookupData } from '../../../utils/BuffLookupUtils';
 
 import { DeathEventPanel } from './DeathEventPanel';
 

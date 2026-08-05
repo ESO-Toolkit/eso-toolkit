@@ -110,8 +110,13 @@ const CPSlot: React.FC<CPSlotProps> = ({
 
   return (
     <Tooltip title={entry ? entry.name : 'Click to cycle champion perks'} placement="top" arrow>
-      <Box
+      <ButtonBase
         onClick={handleClick}
+        aria-label={
+          entry
+            ? `Champion perk slot ${slotIndex + 1}: ${entry.name}. Activate to cycle to the next perk.`
+            : `Empty champion perk slot ${slotIndex + 1}. Activate to slot a perk.`
+        }
         sx={{
           flex: '1 1 calc(50% - 6px)',
           minHeight: 68,
@@ -120,6 +125,8 @@ const CPSlot: React.FC<CPSlotProps> = ({
           overflow: 'hidden',
           display: 'flex',
           alignItems: 'center',
+          justifyContent: 'flex-start',
+          textAlign: 'left',
           gap: 1.25,
           px: 1.5,
           py: 1,
@@ -158,6 +165,10 @@ const CPSlot: React.FC<CPSlotProps> = ({
             borderColor: isDark ? `rgba(${tree.colorRgb}, 0.50)` : `rgba(${tree.colorRgb}, 0.35)`,
             boxShadow: `0 6px 20px rgba(${tree.colorRgb}, 0.14)`,
             transform: 'translateY(-1px)',
+          },
+          '&.Mui-focusVisible': {
+            outline: `2px solid rgba(${tree.colorRgb}, 0.7)`,
+            outlineOffset: 2,
           },
           '&::before': {
             content: '""',
@@ -252,7 +263,7 @@ const CPSlot: React.FC<CPSlotProps> = ({
             </Typography>
           )}
         </Box>
-      </Box>
+      </ButtonBase>
     </Tooltip>
   );
 };

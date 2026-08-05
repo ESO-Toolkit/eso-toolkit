@@ -4,7 +4,7 @@
 import { render } from '@testing-library/react';
 import React from 'react';
 
-import { FightFragment } from '../../../graphql/generated';
+import { FightFragment } from '../../../graphql/gql/graphql';
 import { ZONE_SCALE_DATA } from '../../../types/zoneScaleData';
 import { parseMarkersInput } from '../utils/mapMarkerConverters';
 

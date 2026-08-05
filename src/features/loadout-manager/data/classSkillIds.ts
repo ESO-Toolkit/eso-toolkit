@@ -75,8 +75,10 @@ export enum ClassSkillId {
   DRAGONKNIGHT_BATTLE_ROAR = 29463, // Battle Roar (pre-U49 name)
   // eslint-disable-next-line @typescript-eslint/no-duplicate-enum-values -- intentional U49 alias (Battle Roar → The Storm Voice)
   DRAGONKNIGHT_THE_STORM_VOICE = 29463, // The Storm Voice (U49, renamed from Battle Roar)
-  // eslint-disable-next-line @typescript-eslint/no-duplicate-enum-values -- intentional U49 alias (Landslide new passive, ID pending)
-  DRAGONKNIGHT_LANDSLIDE = 29463, // Landslide (U49, new Earthen Heart passive — ID pending; references 29463 until corrected)
+  // Sentinel: Landslide's real game ID is not yet known. A negative placeholder keeps it
+  // distinct from every real (positive) ability id so findSkillById can't confuse it with
+  // Battle Roar / The Storm Voice (29463). Replace with the real id once confirmed.
+  DRAGONKNIGHT_LANDSLIDE = -29463, // Landslide (U49, new Earthen Heart passive — ID pending)
   DRAGONKNIGHT_BURNING_EMBERS = 20660, // Burning Embers
   DRAGONKNIGHT_BURNING_HEART = 29457, // Burning Heart (pre-U49 name)
   // eslint-disable-next-line @typescript-eslint/no-duplicate-enum-values -- intentional U49 alias (Burning Heart → A Soul Ablaze)

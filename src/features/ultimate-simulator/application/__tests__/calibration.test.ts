@@ -1,5 +1,5 @@
-import { calibrateFromEvents, isUltimateResourceEvent } from '../calibration';
 import type { ResourceChangeEvent, Resources } from '../../../../types/combatlogEvents';
+import { calibrateFromEvents, isUltimateResourceEvent } from '../calibration';
 
 const MAX_ULT = 500;
 

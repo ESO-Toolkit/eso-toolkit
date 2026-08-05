@@ -2,6 +2,8 @@ import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { render } from '@testing-library/react';
 import React from 'react';
 
+import { usePerfTier } from '../../hooks/usePerfTier';
+
 import { SiteBackground } from './SiteBackground';
 
 // Tier is the unit under test — mock the hook so no store is needed.
@@ -9,7 +11,6 @@ jest.mock('../../hooks/usePerfTier', () => ({
   usePerfTier: jest.fn(),
 }));
 
-import { usePerfTier } from '../../hooks/usePerfTier';
 const mockUsePerfTier = usePerfTier as jest.MockedFunction<typeof usePerfTier>;
 
 const renderWithMode = (mode: 'light' | 'dark') =>

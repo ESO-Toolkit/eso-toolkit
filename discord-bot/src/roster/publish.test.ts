@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { resolvePublishTarget } from './publish';
+import { mintDirectRosterId, resolvePublishTarget } from './publish';
 import type { GuildConfig } from './types';
 
 const baseConfig = (overrides: Partial<GuildConfig> = {}): GuildConfig => ({
@@ -26,5 +26,25 @@ describe('resolvePublishTarget', () => {
 
   it('falls back to creating a channel when the default channel is an empty string', () => {
     expect(resolvePublishTarget(baseConfig({ defaultChannelId: '' }))).toEqual({ mode: 'create' });
+  });
+});
+
+describe('mintDirectRosterId', () => {
+  it('keeps the direct- prefix and a KV-key-safe, length-bounded id', () => {
+    const id = mintDirectRosterId();
+    expect(id.startsWith('direct-')).toBe(true);
+    expect(id.length).toBeLessThanOrEqual(64);
+    // Must satisfy the GET /discord/roster/:id/data validation regex.
+    expect(/^[a-zA-Z0-9_-]+$/.test(id)).toBe(true);
+  });
+
+  it('mints a full 32-hex-char (128-bit) suffix with no truncation', () => {
+    const suffix = mintDirectRosterId().split('-').at(-1) ?? '';
+    expect(suffix).toMatch(/^[0-9a-f]{32}$/);
+  });
+
+  it('does not collide across many mints (non-enumerable entropy)', () => {
+    const ids = new Set(Array.from({ length: 1000 }, () => mintDirectRosterId()));
+    expect(ids.size).toBe(1000);
   });
 });

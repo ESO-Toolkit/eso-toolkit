@@ -2,11 +2,11 @@
  * @jest-environment jsdom
  */
 
+import type { ChampionPointsConfig, WizardWardrobeExport } from '../../types/loadout.types';
 import {
   convertAllCharactersToLoadoutState,
   convertLoadoutStateToWizardWardrobe,
 } from '../wizardWardrobeConverter';
-import type { ChampionPointsConfig, WizardWardrobeExport } from '../../types/loadout.types';
 
 describe('wizardWardrobeConverter', () => {
   it('normalizes champion point arrays into 1-based slot maps', () => {
@@ -149,7 +149,7 @@ describe('wizardWardrobeConverter', () => {
               skills: { 0: {}, 1: {} },
               cp: {},
               food: {
-                id: '153629',
+                id: 153629,
                 link: '|H0:item:153629:6:1:0:0:0:0:0:0:0:0:0:0:0:0:0:1:0:0:0:0|h|h',
               },
               gear: {},

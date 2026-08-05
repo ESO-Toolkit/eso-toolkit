@@ -2,12 +2,12 @@
  * @jest-environment jsdom
  */
 
+import type { WizardWardrobeExport } from '../../types/loadout.types';
 import {
   parseLuaSavedVariables,
   extractWizardWardrobeData,
   isWizardWardrobeFormat,
 } from '../luaParser';
-import type { WizardWardrobeExport } from '../../types/loadout.types';
 
 describe('Lua Parser', () => {
   describe('parseLuaSavedVariables', () => {
@@ -210,7 +210,9 @@ describe('Lua Parser', () => {
       // The first element of the array is an object with numeric keys
       const firstPage = wizardData?.setups['SS']?.[0];
       expect(firstPage).toBeDefined();
-      expect(firstPage?.name).toBe('Lokke HM');
+      // Wizard's Wardrobe puts the page name alongside the numeric setup keys;
+      // WizardWardrobeExport['setups'] only models the numeric entries.
+      expect((firstPage as { name?: string } | undefined)?.name).toBe('Lokke HM');
     });
 
     it('should return null for missing Wizard Wardrobe data', () => {

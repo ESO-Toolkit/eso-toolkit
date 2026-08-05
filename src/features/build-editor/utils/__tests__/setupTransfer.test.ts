@@ -3,8 +3,8 @@
  */
 
 import type { SkillsConfig } from '../../../loadout-manager/types/loadout.types';
-import type { BuildSetup } from '../../types/build.types';
 import { getDefaultLinesForClass } from '../../data/esoStaticData';
+import type { BuildSetup } from '../../types/build.types';
 import {
   buildHasContent,
   buildIdentityTouched,

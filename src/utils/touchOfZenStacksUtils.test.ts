@@ -1,11 +1,11 @@
+import { KnownAbilities } from '../types/abilities';
+import { DamageEvent } from '../types/combatlogEvents';
+
+import { BuffLookupData } from './BuffLookupUtils';
 import {
   calculateTouchOfZenStackEnhancement,
   formatTouchOfZenStackInfo,
-  type TouchOfZenStackInfo,
 } from './touchOfZenStacksUtils';
-import { KnownAbilities } from '../types/abilities';
-import { DamageEvent } from '../types/combatlogEvents';
-import { BuffLookupData } from './BuffLookupUtils';
 
 // Mock KnownAbilities
 jest.mock('../types/abilities', () => ({

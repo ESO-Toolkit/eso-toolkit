@@ -1,13 +1,12 @@
 import { render, screen, waitFor } from '@testing-library/react';
-import { act } from 'react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
+import React, { act } from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import '@testing-library/jest-dom';
 
 import { useAuth } from '../../features/auth/AuthContext';
-import { WhoAmIPage } from '../WhoAmIPage';
 import { trackEvent, trackPageView } from '../../utils/analytics';
+import { WhoAmIPage } from '../WhoAmIPage';
 
 jest.mock('../../features/auth/AuthContext', () => ({
   useAuth: jest.fn(),

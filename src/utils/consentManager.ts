@@ -160,6 +160,12 @@ const APP_STORAGE_KEYS = [
 ] as const;
 
 /**
+ * Live credentials that must never be written into the downloadable export —
+ * a leaked OAuth token is an account-takeover vector, not portable user data.
+ */
+const REDACTED_EXPORT_KEYS: ReadonlySet<string> = new Set(['access_token', 'refresh_token']);
+
+/**
  * Export all application data stored in localStorage as a JSON object.
  * GDPR Article 20 — Right to data portability.
  */
@@ -169,6 +175,10 @@ export const exportUserData = (): Record<string, unknown> => {
     try {
       const value = localStorage.getItem(key);
       if (value !== null) {
+        if (REDACTED_EXPORT_KEYS.has(key)) {
+          data[key] = '[redacted]';
+          continue;
+        }
         try {
           data[key] = JSON.parse(value);
         } catch {

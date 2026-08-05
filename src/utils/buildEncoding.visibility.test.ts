@@ -25,6 +25,7 @@ import type {
   BuildSetup,
   BuildVisibility,
 } from '../features/build-editor/types/build.types';
+
 import { decodeBuildFromURL, encodeBuildToURL } from './buildEncoding';
 
 const makeEmptyCP = (): BuildChampionPoints => ({

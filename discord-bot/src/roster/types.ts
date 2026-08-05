@@ -87,6 +87,8 @@ export interface DecodedRosterSlot {
   playerName?: string | undefined;
   roleLabel?: string | undefined;
   sets?: string[] | undefined;
+  /** Arena weapon (free text), encoded as `aw` for every role */
+  arenaWeapon?: string | undefined;
   buildRefName?: string | undefined;
   buildRefId?: string | undefined;
   positionTag?: string | undefined;

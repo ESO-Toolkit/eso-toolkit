@@ -4,10 +4,10 @@ import React from 'react';
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
 
+import { LoggerProvider, LogLevel } from './contexts/LoggerContext';
+import { EsoLogsClientProvider } from './EsoLogsClientContext';
 import { AuthProvider } from './features/auth/AuthContext';
 import { OAuthRedirect } from './OAuthRedirect';
-import { EsoLogsClientProvider } from './EsoLogsClientContext';
-import { LoggerProvider, LogLevel } from './contexts/LoggerContext';
 
 // Mock the ESO Logs client for tests
 const mockClient = {

@@ -64,6 +64,16 @@ export const PlayerCardModal: React.FC<PlayerCardModalProps> = ({
 
   const canNavigate = orderedPlayerIds.length > 1;
 
+  // Track the currently displayed/target index synchronously. currentIndex is derived
+  // from the currentPlayerId prop, which only updates when a transition completes
+  // (onPlayerChange fires after 500ms). During a transition it's stale, so computing the
+  // next index from it makes mashed arrow keys repeat the same player. This ref advances
+  // immediately on each navigation so every press moves one step.
+  const displayedIndexRef = React.useRef(currentIndex);
+  React.useEffect(() => {
+    if (!isTransitioning) displayedIndexRef.current = currentIndex;
+  }, [currentIndex, isTransitioning]);
+
   // Track the nested transition timers so we can cancel them when the modal
   // closes / unmounts (otherwise the inner callbacks still fire onPlayerChange,
   // mutating the parent's selected player after dismissal) and when a new
@@ -77,6 +87,7 @@ export const PlayerCardModal: React.FC<PlayerCardModalProps> = ({
   const navigateTo = React.useCallback(
     (nextIndex: number) => {
       clearNavTimers();
+      displayedIndexRef.current = nextIndex;
       setFadeStage('out');
       setIsTransitioning(true);
 
@@ -101,13 +112,15 @@ export const PlayerCardModal: React.FC<PlayerCardModalProps> = ({
 
   const goToPreviousPlayer = React.useCallback(() => {
     if (!canNavigate) return;
-    navigateTo(currentIndex > 0 ? currentIndex - 1 : orderedPlayerIds.length - 1);
-  }, [canNavigate, currentIndex, orderedPlayerIds, navigateTo]);
+    const from = displayedIndexRef.current;
+    navigateTo(from > 0 ? from - 1 : orderedPlayerIds.length - 1);
+  }, [canNavigate, orderedPlayerIds, navigateTo]);
 
   const goToNextPlayer = React.useCallback(() => {
     if (!canNavigate) return;
-    navigateTo(currentIndex < orderedPlayerIds.length - 1 ? currentIndex + 1 : 0);
-  }, [canNavigate, currentIndex, orderedPlayerIds, navigateTo]);
+    const from = displayedIndexRef.current;
+    navigateTo(from < orderedPlayerIds.length - 1 ? from + 1 : 0);
+  }, [canNavigate, orderedPlayerIds, navigateTo]);
 
   // Cancel pending transition timers on close and unmount.
   React.useEffect(() => {

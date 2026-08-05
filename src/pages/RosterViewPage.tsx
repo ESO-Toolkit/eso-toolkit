@@ -266,6 +266,7 @@ const TankCard: React.FC<TankCardProps> = ({ tank, slotNum, label, color, isDark
     tank.playerName ||
     tank.labels?.length ||
     gearSets.length > 0 ||
+    tank.arenaWeapon ||
     skillLines ||
     tank.ultimate ||
     tank.notes;
@@ -426,7 +427,7 @@ const TankCard: React.FC<TankCardProps> = ({ tank, slotNum, label, color, isDark
           </Typography>
         )}
 
-        {gearSets.length > 0 && (
+        {(gearSets.length > 0 || tank.arenaWeapon) && (
           <Box sx={{ mb: 1 }}>
             <Typography
               sx={{
@@ -448,6 +449,9 @@ const TankCard: React.FC<TankCardProps> = ({ tank, slotNum, label, color, isDark
                   chip={<Chip label={entry.name} size="small" sx={getSetChipSx(entry, theme)} />}
                 />
               ))}
+              {tank.arenaWeapon && (
+                <Chip label={tank.arenaWeapon} size="small" sx={buildVariantSx('blue', theme)} />
+              )}
             </Box>
           </Box>
         )}

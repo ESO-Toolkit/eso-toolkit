@@ -3,8 +3,9 @@
  * Based on the encoding format from https://github.com/M0RGaming/M0RMarkers/blob/main/main.lua#L318
  */
 
+import { MorMarker } from '../types/mapMarkers';
+
 import { decodeMorMarkersString } from './morMarkersDecoder';
-import { DecodedMorMarkers, MorMarker } from '../types/mapMarkers';
 
 describe('morMarkersDecoder', () => {
   describe('decodeMorMarkersString', () => {

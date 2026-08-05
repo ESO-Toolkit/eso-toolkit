@@ -1,15 +1,15 @@
 import { KnownAbilities, PenetrationValues } from '../types/abilities';
 import { DebuffEvent, CombatantInfoEvent, CombatantAura } from '../types/combatlogEvents';
+import { ArmorType, GearTrait, PlayerGear } from '../types/playerDetails';
 
 import { createDebuffLookup, createBuffLookup } from './BuffLookupUtils';
+import { ItemQuality } from './gearUtilities';
 import {
   getAllPenetrationSourcesWithActiveState,
   calculateStaticPenetration,
   calculateDynamicPenetrationAtTimestamp,
   calculatePenetrationAtTimestamp,
 } from './PenetrationUtils';
-import { ArmorType, GearTrait, PlayerGear } from '../types/playerDetails';
-import { ItemQuality } from './gearUtilities';
 
 function createArmorPiece(type: ArmorType, slot: number): PlayerGear {
   return {

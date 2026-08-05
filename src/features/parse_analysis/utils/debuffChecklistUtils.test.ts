@@ -2,8 +2,9 @@
  * Tests for Debuff Checklist Utilities
  */
 
-import { DebuffEvent } from '../../../types/combatlogEvents';
 import type { AbilityData } from '../../../contexts/AbilityIdMapperContext';
+import { DebuffEvent } from '../../../types/combatlogEvents';
+
 import { analyzeDebuffChecklist } from './debuffChecklistUtils';
 
 describe('analyzeDebuffChecklist', () => {

@@ -82,6 +82,21 @@ export function generateOAuthState(): string {
   return Array.from(array, (dec) => dec.toString(16).padStart(8, '0')).join('');
 }
 
+/**
+ * Parse and validate a desktop-app callback port. Accepts only a 1-5 digit
+ * value in the valid TCP range (1-65535); returns the parsed integer or null.
+ * Shared by AppAuth (input validation) and OAuthRedirect (callback), so both
+ * sides agree on exactly what counts as a valid port and never interpolate a
+ * raw, unvalidated string into the localhost callback URL.
+ */
+export function parseAppAuthPort(raw: string | number | null | undefined): number | null {
+  if (raw === null || raw === undefined) return null;
+  const str = String(raw);
+  if (!/^\d{1,5}$/.test(str)) return null;
+  const port = Number(str);
+  return port >= 1 && port <= 65535 ? port : null;
+}
+
 export function setIntendedDestination(path: string): void {
   localStorage.setItem(INTENDED_DESTINATION_KEY, path);
   localStorage.setItem(INTENDED_DESTINATION_PROTECTED_KEY, '1');
@@ -150,15 +165,16 @@ export async function buildAuthUrl(verifier: string, state: string): Promise<str
   return `https://www.esologs.com/oauth/authorize?response_type=code&client_id=${CLIENT_ID}&code_challenge=${challenge}&code_challenge_method=S256&redirect_uri=${encodeURIComponent(getRedirectUri())}&scope=${encodeURIComponent(scope)}&state=${encodeURIComponent(state)}`;
 }
 
-export async function startPKCEAuth(): Promise<void> {
+export async function startPKCEAuth(state?: string): Promise<void> {
   const verifier = generateCodeVerifier();
   setPkceCodeVerifier(verifier);
 
-  // CSRF protection: generate a random state, persist it, and echo it on the
-  // authorize URL. OAuthRedirect validates the returned state before exchanging
-  // the authorization code.
-  const state = generateOAuthState();
-  setOAuthState(state);
+  // CSRF protection: persist the state and echo it on the authorize URL.
+  // OAuthRedirect validates the returned state before exchanging the
+  // authorization code. Callers may pass a pre-generated state (the desktop-app
+  // flow binds its callback port to that exact value); otherwise generate one.
+  const oauthState = state ?? generateOAuthState();
+  setOAuthState(oauthState);
 
   // For dev-preview deployments, store the current base path so the shared
   // OAuth bounce page knows which PR preview to redirect back to.
@@ -169,7 +185,7 @@ export async function startPKCEAuth(): Promise<void> {
 
   let authUrl: string | undefined;
   try {
-    authUrl = await buildAuthUrl(verifier, state);
+    authUrl = await buildAuthUrl(verifier, oauthState);
     window.location.href = authUrl;
   } catch (err) {
     logger.error(
@@ -195,6 +211,12 @@ let pendingRefreshPromise: Promise<string | null> | null = null;
 // error-link 401 refresh starts (pendingRefreshPromise is already cleared).
 let lastSuccessfulRefresh: { token: string; timestamp: number } | null = null;
 const REFRESH_COOLDOWN_MS = 10_000;
+
+// Abort a hung token request after this window (matches roster-hub-api's
+// REQUEST_TIMEOUT_MS). Without it a network-level stall leaves the shared
+// pendingRefreshPromise unsettled — and every 401 retry awaiting it — until the
+// browser's own multi-minute socket timeout.
+const REFRESH_TIMEOUT_MS = 15_000;
 
 /** @internal Reset module-level refresh state — for tests only. */
 export function _resetRefreshState(): void {
@@ -227,6 +249,8 @@ export async function refreshAccessToken(): Promise<string | null> {
   }
 
   pendingRefreshPromise = (async (): Promise<string | null> => {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), REFRESH_TIMEOUT_MS);
     try {
       const body = new URLSearchParams({
         grant_type: 'refresh_token',
@@ -238,6 +262,7 @@ export async function refreshAccessToken(): Promise<string | null> {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: body.toString(),
+        signal: controller.signal,
       });
 
       if (!response.ok) {
@@ -266,6 +291,7 @@ export async function refreshAccessToken(): Promise<string | null> {
       localStorage.removeItem(LOCAL_STORAGE_REFRESH_TOKEN_KEY);
       return null;
     } finally {
+      clearTimeout(timer);
       pendingRefreshPromise = null;
     }
   })();

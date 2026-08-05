@@ -21,9 +21,10 @@ export const AnalyticsListener: React.FC = () => {
   usernameReadyRef.current = usernameReady;
 
   const resolvedPath = useMemo(() => {
-    const path = `${location.pathname}${location.search}${location.hash}`;
-    return path || '/';
-  }, [location.hash, location.pathname, location.search]);
+    // Only the pathname is sent to GA4. `search`/`hash` carry sensitive payloads
+    // (the calculator build blob, private report codes) that must not leave the client.
+    return location.pathname || '/';
+  }, [location.pathname]);
 
   useEffect(() => {
     const title = typeof document !== 'undefined' ? document.title : undefined;

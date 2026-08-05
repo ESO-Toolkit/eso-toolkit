@@ -4,10 +4,11 @@
  */
 
 import { describe, it, expect, beforeEach } from '@jest/globals';
-import { JsonScribingDataRepository } from '../../infrastructure/data/JsonScribingDataRepository';
-import { AbilityMappingService } from '../../core/services/AbilityMappingService';
-import { ScribingSimulatorService } from '../../application/simulators/ScribingSimulatorService';
+
 import { ScribingDetectionService } from '../../application/services/ScribingDetectionService';
+import { ScribingSimulatorService } from '../../application/simulators/ScribingSimulatorService';
+import { AbilityMappingService } from '../../core/services/AbilityMappingService';
+import { JsonScribingDataRepository } from '../../infrastructure/data/JsonScribingDataRepository';
 
 // Real-data fixtures from the bundled data/scribing-complete.json. The
 // repository now imports + adapts that dataset directly (no runtime fetch).

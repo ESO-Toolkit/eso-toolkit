@@ -1,12 +1,13 @@
 import type { FightFragment, ReportFragment } from '../../graphql/gql/graphql';
+import type { RootState } from '../types';
+import { resolveCacheKey } from '../utils/keyedCacheState';
+
 import {
   selectReportFights,
   selectReportFightsForContext,
   selectReportRegistryEntryForContext,
 } from './reportSelectors';
 import type { ReportEntry, ReportState } from './reportSlice';
-import type { RootState } from '../types';
-import { resolveCacheKey } from '../utils/keyedCacheState';
 
 const createFight = (id: number): FightFragment =>
   ({
@@ -104,5 +105,20 @@ describe('report selectors with context helpers', () => {
     const fights = selectReportFights(state);
 
     expect(fights?.map((fight) => fight?.id)).toEqual([1, 2]);
+  });
+
+  it('keeps a stable fights reference when unrelated report-slice fields change (M12)', () => {
+    // The fights array must only be rebuilt when the registry entry (or the raw
+    // report.data fights) actually changes — not on every report-slice write.
+    const reportState = createReportState();
+    const state1 = createRootState(reportState);
+    const first = selectReportFightsForContext(state1, { reportCode: 'R-1', fightId: 2 });
+
+    // A new report-slice object with only an unrelated field flipped, but the
+    // same registry entry and report.data references.
+    const state2 = createRootState({ ...reportState, loading: true });
+    const second = selectReportFightsForContext(state2, { reportCode: 'R-1', fightId: 2 });
+
+    expect(second).toBe(first);
   });
 });

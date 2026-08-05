@@ -1,7 +1,3 @@
-import { createRng } from '../rng';
-import { simulateFight } from '../simulate';
-import { runMonteCarlo } from '../monteCarlo';
-import type { SimulationConfig, UltimateSource } from '../../shared/types';
 import {
   SHEET_VALIDATION_SOURCES,
   SHEET_FIGHT_DURATION_SECONDS,
@@ -11,6 +7,10 @@ import {
   SHEET_DECISIVE_HALF_PER_INSTANCE,
   SHEET_DECISIVE_FULL_PER_INSTANCE,
 } from '../../shared/constants/sheetValidation';
+import type { SimulationConfig, UltimateSource } from '../../shared/types';
+import { runMonteCarlo } from '../monteCarlo';
+import { createRng } from '../rng';
+import { simulateFight } from '../simulate';
 
 describe('seeded RNG', () => {
   it('is deterministic for the same seed', () => {

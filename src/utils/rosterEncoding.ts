@@ -114,6 +114,7 @@ export interface CompactTank {
   lb?: string[]; // labels
   rn?: string; // roleNotes
   gs?: CompactGear; // gearSets
+  aw?: string; // arenaWeapon (free text)
   sl?: CompactSkills; // skillLines
   ul?: number | string; // ultimate: SupportUltimate index or custom string
   ss?: (number | string)[]; // specificSkills: ability IDs (new) or names (legacy)
@@ -515,6 +516,7 @@ function compactTank(t: TankSetup): CompactTank {
   if (t.roleNotes) c.rn = t.roleNotes;
   const gs = compactGear(t.gearSets);
   if (gs) c.gs = gs;
+  if (t.arenaWeapon) c.aw = t.arenaWeapon;
   const sl = compactSkills(t.skillLines);
   if (sl) c.sl = sl;
   const ul = encodeUltimate(t.ultimate);
@@ -544,6 +546,7 @@ function expandTank(c?: CompactTank, slotNumber = 1): TankSetup {
     labels: c?.lb,
     roleNotes: c?.rn,
     gearSets: expandGear(c?.gs),
+    arenaWeapon: c?.aw,
     skillLines: expandSkills(c?.sl),
     ultimate: decodeUltimate(c?.ul),
     specificSkills: decodeSpecificSkills(c?.ss),

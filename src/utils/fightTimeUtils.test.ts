@@ -3,6 +3,8 @@
  * Tests fight time conversion utilities and time range validation
  */
 
+import { FightFragment } from '../graphql/gql/graphql';
+
 import {
   fightTimeToTimestamp,
   timestampToFightTime,
@@ -10,7 +12,6 @@ import {
   isTimestampInFight,
   clampFightTime,
 } from './fightTimeUtils';
-import { FightFragment } from '../graphql/gql/graphql';
 
 // Mock fight data helper
 const createMockFight = (startTime: number, endTime: number): FightFragment => ({
@@ -20,13 +21,8 @@ const createMockFight = (startTime: number, endTime: number): FightFragment => (
   name: 'Test Fight',
   difficulty: 0,
   bossPercentage: 100,
-  fightPercentage: 100,
   kill: true,
-  partial: false,
-  standardComposition: true,
-  hasEcho: false,
-  keystoneLevel: 0,
-  keystoneAffixes: [],
+  encounterID: 1,
 });
 
 describe('fightTimeUtils', () => {

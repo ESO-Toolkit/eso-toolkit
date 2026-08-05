@@ -134,7 +134,7 @@ describe('uiSlice', () => {
     it('should default to dark mode when matchMedia is not available', () => {
       // Mock window to not have matchMedia
       const originalWindow = global.window;
-      // @ts-ignore
+      // @ts-expect-error — deleting a non-optional global to simulate SSR
       delete global.window;
 
       store.dispatch(syncWithSystemTheme());

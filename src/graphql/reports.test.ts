@@ -1,4 +1,3 @@
-import { gql } from '@apollo/client';
 import { print } from 'graphql';
 
 import {

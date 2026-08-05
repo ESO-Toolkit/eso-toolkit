@@ -982,6 +982,7 @@ const SkillSlotTile: React.FC<SkillSlotTileProps> = ({
             <Box
               className="skill-clear"
               role="button"
+              tabIndex={0}
               aria-label={`Remove ${skill.name}`}
               onClick={(e: React.MouseEvent) => {
                 e.stopPropagation();
@@ -1004,6 +1005,11 @@ const SkillSlotTile: React.FC<SkillSlotTileProps> = ({
                 opacity: 0,
                 transition: 'opacity 150ms',
                 cursor: 'pointer',
+                '&:focus-visible': {
+                  opacity: 1,
+                  outline: '2px solid rgba(255,255,255,0.9)',
+                  outlineOffset: -2,
+                },
               }}
             >
               <CloseIcon sx={{ fontSize: isUlt ? 22 : 17, color: 'rgba(255,255,255,0.90)' }} />

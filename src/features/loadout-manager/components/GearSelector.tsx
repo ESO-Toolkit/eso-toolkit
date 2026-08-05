@@ -5,7 +5,7 @@
  */
 
 import { Close } from '@mui/icons-material';
-import { Box, IconButton, Stack, Tooltip, Typography } from '@mui/material';
+import { Box, ButtonBase, IconButton, Stack, Tooltip, Typography } from '@mui/material';
 import { alpha, useTheme } from '@mui/material/styles';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useDispatch } from 'react-redux';
@@ -360,8 +360,17 @@ const GearTile: React.FC<GearTileProps> = ({
       arrow
       slotProps={{ tooltip: { sx: { whiteSpace: 'pre-line', textAlign: 'center' } } }}
     >
-      <Box
+      <ButtonBase
+        component="div"
         onClick={handleClick}
+        aria-label={
+          hasGear
+            ? `${slotName}: ${gearLabel}. Activate to change item.`
+            : addDisabled
+              ? `${slotName} slot locked${disabledReason ? `: ${disabledReason}` : ''}`
+              : `Empty ${slotName} slot. Activate to equip.`
+        }
+        aria-disabled={addDisabled && !hasGear ? true : undefined}
         sx={{
           position: 'relative',
           width: tileSize,
@@ -382,6 +391,10 @@ const GearTile: React.FC<GearTileProps> = ({
               ? alpha(equippedBorder, 0.18)
               : alpha(theme.palette.primary.main, 0.08),
             transform: 'scale(1.05)',
+          },
+          '&.Mui-focusVisible': {
+            outline: `2px solid ${theme.palette.primary.main}`,
+            outlineOffset: 2,
           },
           opacity: addDisabled && !hasGear ? 0.35 : 1,
         }}
@@ -469,14 +482,14 @@ const GearTile: React.FC<GearTileProps> = ({
               color: 'white',
               opacity: 0,
               transition: 'opacity 150ms',
-              '.MuiBox-root:hover > &': { opacity: 1 },
+              '.MuiButtonBase-root:hover > &': { opacity: 1 },
               '&:hover': { bgcolor: 'error.dark', opacity: 1 },
             }}
           >
             <Close sx={{ fontSize: 10 }} />
           </IconButton>
         )}
-      </Box>
+      </ButtonBase>
     </Tooltip>
   );
 };

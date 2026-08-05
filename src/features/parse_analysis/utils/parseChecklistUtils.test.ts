@@ -595,8 +595,8 @@ describe('buildParseChecklist', () => {
           majorBuffs: [],
           minorBuffs: [],
           supportBuffs: [],
+          redundantBuffs: [],
           summary: {
-            totalTrackedBuffs: 0,
             totalDummyBuffs: 0,
             totalPlayerBuffs: 0,
             totalRedundantBuffs: 0,

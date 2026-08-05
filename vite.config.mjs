@@ -51,26 +51,28 @@ export default defineConfig(({ command, mode }) => {
   return {
     base: process.env.VITE_BASE_URL || '/',
     plugins: [
-      ...( httpsEnabled ? [mkcert()] : []),
-      ...( httpsEnabled ? [{
-        name: 'serve-mkcert-ca',
-        configureServer() {
-          const caPort = serverPort; // HTTP proxy takes the user-facing port
-          const httpsPort = serverPort + 1; // Vite HTTPS moves to port+1
+      ...(httpsEnabled ? [mkcert()] : []),
+      ...(httpsEnabled
+        ? [
+            {
+              name: 'serve-mkcert-ca',
+              configureServer() {
+                const caPort = serverPort; // HTTP proxy takes the user-facing port
+                const httpsPort = serverPort + 1; // Vite HTTPS moves to port+1
 
-          const buildHtml = (host) => {
-            const httpsOrigin = `https://${host.replace(`:${caPort}`, `:${httpsPort}`)}`;
-            const caPath = getMkcertCaPath();
-            // Embed cert as a base64 data: URI so Chrome on Android can't block it as an "insecure download"
-            let downloadBtn;
-            if (fs.existsSync(caPath)) {
-              const certB64 = fs.readFileSync(caPath).toString('base64');
-              const dataUri = `data:application/x-x509-ca-cert;base64,${certB64}`;
-              downloadBtn = `<a class="btn" href="${dataUri}" download="mkcert-rootCA.crt">⬇ Download Certificate</a>`;
-            } else {
-              downloadBtn = `<p style="color:red">CA file not found. Start the server once with <code>VITE_HTTPS=true</code> to generate it.</p>`;
-            }
-            return `<!DOCTYPE html><html><head><meta charset="utf-8">
+                const buildHtml = (host) => {
+                  const httpsOrigin = `https://${host.replace(`:${caPort}`, `:${httpsPort}`)}`;
+                  const caPath = getMkcertCaPath();
+                  // Embed cert as a base64 data: URI so Chrome on Android can't block it as an "insecure download"
+                  let downloadBtn;
+                  if (fs.existsSync(caPath)) {
+                    const certB64 = fs.readFileSync(caPath).toString('base64');
+                    const dataUri = `data:application/x-x509-ca-cert;base64,${certB64}`;
+                    downloadBtn = `<a class="btn" href="${dataUri}" download="mkcert-rootCA.crt">⬇ Download Certificate</a>`;
+                  } else {
+                    downloadBtn = `<p style="color:red">CA file not found. Start the server once with <code>VITE_HTTPS=true</code> to generate it.</p>`;
+                  }
+                  return `<!DOCTYPE html><html><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Install Dev CA Certificate</title>
 <style>body{font-family:sans-serif;max-width:520px;margin:2rem auto;padding:0 1rem;line-height:1.6}
@@ -92,92 +94,106 @@ ${downloadBtn}
 </ol>
 <p>After installing, open <a href="${httpsOrigin}">${httpsOrigin}</a> — no cert warning and login will work.</p>
 </body></html>`;
-          };
+                };
 
-          // Load the mkcert CA cert once — used for both TLS proxy validation and cert download
-          const mkcertCaPath = getMkcertCaPath();
-          if (!fs.existsSync(mkcertCaPath)) {
-            throw new Error(
-              `mkcert CA not found at ${mkcertCaPath}. ` +
-                'Start the dev server once with VITE_HTTPS=true so mkcert can generate the local CA, then restart.',
-            );
-          }
-          const mkcertCa = fs.readFileSync(mkcertCaPath);
-          const trustOptions = { ca: mkcertCa };
+                // Load the mkcert CA cert once — used for both TLS proxy validation and cert download
+                const mkcertCaPath = getMkcertCaPath();
+                if (!fs.existsSync(mkcertCaPath)) {
+                  throw new Error(
+                    `mkcert CA not found at ${mkcertCaPath}. ` +
+                      'Start the dev server once with VITE_HTTPS=true so mkcert can generate the local CA, then restart.',
+                  );
+                }
+                const mkcertCa = fs.readFileSync(mkcertCaPath);
+                const trustOptions = { ca: mkcertCa };
 
-          const httpServer = http.createServer((req, res) => {
-            if (req.url === '/install-ca' || req.url === '/mkcert-ca.pem' || req.url === '/mkcert-ca.crt') {
-              if (req.url === '/mkcert-ca.pem' || req.url === '/mkcert-ca.crt') {
-                res.writeHead(200, {
-                  'Content-Type': 'application/x-x509-ca-cert',
-                  'Content-Disposition': 'attachment; filename="mkcert-rootCA.crt"',
+                const httpServer = http.createServer((req, res) => {
+                  if (
+                    req.url === '/install-ca' ||
+                    req.url === '/mkcert-ca.pem' ||
+                    req.url === '/mkcert-ca.crt'
+                  ) {
+                    if (req.url === '/mkcert-ca.pem' || req.url === '/mkcert-ca.crt') {
+                      res.writeHead(200, {
+                        'Content-Type': 'application/x-x509-ca-cert',
+                        'Content-Disposition': 'attachment; filename="mkcert-rootCA.crt"',
+                      });
+                      res.end(mkcertCa);
+                      return;
+                    }
+                    res.writeHead(200, { 'Content-Type': 'text/html' });
+                    res.end(buildHtml(req.headers.host || `localhost:${caPort}`));
+                    return;
+                  }
+
+                  // Everything else: reverse-proxy to the HTTPS Vite server
+                  const proxyReq = https.request(
+                    {
+                      hostname: 'localhost',
+                      port: httpsPort,
+                      path: req.url,
+                      method: req.method,
+                      headers: { ...req.headers, host: `localhost:${httpsPort}` },
+                      ...trustOptions,
+                    },
+                    (proxyRes) => {
+                      res.writeHead(proxyRes.statusCode, proxyRes.headers);
+                      proxyRes.pipe(res);
+                    },
+                  );
+                  proxyReq.on('error', (err) => {
+                    res.writeHead(502, { 'Content-Type': 'text/plain' });
+                    res.end(`Proxy error: ${err.message}`);
+                  });
+                  req.pipe(proxyReq);
                 });
-                res.end(mkcertCa);
-                return;
-              }
-              res.writeHead(200, { 'Content-Type': 'text/html' });
-              res.end(buildHtml(req.headers.host || `localhost:${caPort}`));
-              return;
-            }
 
-            // Everything else: reverse-proxy to the HTTPS Vite server
-            const proxyReq = https.request(
-              {
-                hostname: 'localhost',
-                port: httpsPort,
-                path: req.url,
-                method: req.method,
-                headers: { ...req.headers, host: `localhost:${httpsPort}` },
-                ...trustOptions,
-              },
-              (proxyRes) => {
-                res.writeHead(proxyRes.statusCode, proxyRes.headers);
-                proxyRes.pipe(res);
-              },
-            );
-            proxyReq.on('error', (err) => {
-              res.writeHead(502, { 'Content-Type': 'text/plain' });
-              res.end(`Proxy error: ${err.message}`);
-            });
-            req.pipe(proxyReq);
-          });
+                // Proxy WebSocket upgrades (Vite HMR) from ws:// to wss://
+                httpServer.on('upgrade', (req, socket, head) => {
+                  const proxySocket = tls.connect(
+                    {
+                      host: 'localhost',
+                      port: httpsPort,
+                      ...trustOptions,
+                    },
+                    () => {
+                      const reqHeaders = [
+                        `${req.method} ${req.url} HTTP/1.1`,
+                        `Host: localhost:${httpsPort}`,
+                        `Upgrade: websocket`,
+                        `Connection: Upgrade`,
+                        ...Object.entries(req.headers)
+                          .filter(
+                            ([k]) => !['host', 'connection', 'upgrade'].includes(k.toLowerCase()),
+                          )
+                          .map(([k, v]) => `${k}: ${v}`),
+                        '\r\n',
+                      ].join('\r\n');
+                      proxySocket.write(reqHeaders);
+                      if (head && head.length) proxySocket.write(head);
+                      socket.pipe(proxySocket);
+                      proxySocket.pipe(socket);
+                    },
+                  );
+                  proxySocket.on('error', () => socket.destroy());
+                  socket.on('error', () => proxySocket.destroy());
+                });
 
-          // Proxy WebSocket upgrades (Vite HMR) from ws:// to wss://
-          httpServer.on('upgrade', (req, socket, head) => {
-            const proxySocket = tls.connect(
-              {
-                host: 'localhost',
-                port: httpsPort,
-                ...trustOptions,
+                httpServer.listen(caPort, '0.0.0.0', () => {
+                  console.info(
+                    `\n  \x1b[36m➜\x1b[0m  HTTP dev proxy  (desktop):  \x1b[1mhttp://localhost:${caPort}/\x1b[0m`,
+                  );
+                  console.info(
+                    `  \x1b[36m➜\x1b[0m  CA install page (phone):    \x1b[1mhttp://192.x.x.x:${caPort}/install-ca\x1b[0m`,
+                  );
+                  console.info(
+                    `  \x1b[36m➜\x1b[0m  HTTPS (phone, after cert):  \x1b[1mhttps://192.x.x.x:${httpsPort}/\x1b[0m`,
+                  );
+                });
               },
-              () => {
-                const reqHeaders = [
-                  `${req.method} ${req.url} HTTP/1.1`,
-                  `Host: localhost:${httpsPort}`,
-                  `Upgrade: websocket`,
-                  `Connection: Upgrade`,
-                  ...Object.entries(req.headers)
-                    .filter(([k]) => !['host', 'connection', 'upgrade'].includes(k.toLowerCase()))
-                    .map(([k, v]) => `${k}: ${v}`),
-                  '\r\n',
-                ].join('\r\n');
-                proxySocket.write(reqHeaders);
-                if (head && head.length) proxySocket.write(head);
-                socket.pipe(proxySocket);
-                proxySocket.pipe(socket);
-              },
-            );
-            proxySocket.on('error', () => socket.destroy());
-            socket.on('error', () => proxySocket.destroy());
-          });
-
-          httpServer.listen(caPort, '0.0.0.0', () => {
-            console.info(`\n  \x1b[36m➜\x1b[0m  HTTP dev proxy  (desktop):  \x1b[1mhttp://localhost:${caPort}/\x1b[0m`);
-            console.info(`  \x1b[36m➜\x1b[0m  CA install page (phone):    \x1b[1mhttp://192.x.x.x:${caPort}/install-ca\x1b[0m`);
-            console.info(`  \x1b[36m➜\x1b[0m  HTTPS (phone, after cert):  \x1b[1mhttps://192.x.x.x:${httpsPort}/\x1b[0m`);
-          });
-        },
-      }] : []),
+            },
+          ]
+        : []),
       svgr({
         svgrOptions: {
           ref: true,
@@ -189,12 +205,7 @@ ${downloadBtn}
       react({
         // Exclude Web Workers from React Refresh to avoid "window is not defined" errors
         // Workers run in a separate context without window/document globals
-        exclude: [
-          /node_modules/,
-          /\/workers\//,
-          /\.worker\./,
-          /SharedWorker/,
-        ],
+        exclude: [/node_modules/, /\/workers\//, /\.worker\./, /SharedWorker/],
       }),
       // ESLint plugin disabled due to ESLint 9 compatibility issues
       // Use 'npm run lint' for linting during development
@@ -243,9 +254,11 @@ ${downloadBtn}
       host: true,
       strictPort: strictPortConfig,
       allowedHosts: ['host.docker.internal'],
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-      },
+      // No blanket 'Access-Control-Allow-Origin': '*' here. The /roster-hub-api
+      // proxy below makes every API call same-origin, so ACAO:* was unnecessary —
+      // and with host:true (0.0.0.0) it let any page in the dev's browser (or any
+      // LAN host) read /src/** and use the Origin-stripping proxy as a relay to the
+      // production Worker.
       proxy: {
         // Same-origin route to the roster-hub-api Worker (reports, roster/pack/build hubs,
         // the ESO Logs client proxy). The Worker's CORS allowlist only admits localhost
@@ -286,9 +299,24 @@ ${downloadBtn}
             if (id.includes('node_modules/react/')) return 'vendor';
             if (id.includes('node_modules/@mui/')) return 'mui';
             if (id.includes('node_modules/@apollo/')) return 'apollo';
-            if (id.includes('node_modules/@reduxjs/') || id.includes('node_modules/react-redux') || id.includes('node_modules/redux-persist')) return 'redux';
-            if (id.includes('node_modules/react-router-dom') || id.includes('node_modules/history')) return 'router';
-            if (id.includes('node_modules/echarts') || id.includes('node_modules/zrender')) return 'charts';
+            if (
+              id.includes('node_modules/@reduxjs/') ||
+              id.includes('node_modules/react-redux') ||
+              id.includes('node_modules/redux-persist')
+            )
+              return 'redux';
+            // In react-router v7 `react-router-dom` is a tiny re-export shim; the
+            // real implementation lives in `react-router` (trailing slash avoids
+            // matching unrelated `react-router-dom`). Match both so the router
+            // vendor chunk holds the actual router code, not just the shim.
+            if (
+              id.includes('node_modules/react-router-dom') ||
+              id.includes('node_modules/react-router/') ||
+              id.includes('node_modules/history')
+            )
+              return 'router';
+            if (id.includes('node_modules/echarts') || id.includes('node_modules/zrender'))
+              return 'charts';
           },
           chunkFileNames: (chunkInfo) => {
             if (
@@ -323,9 +351,21 @@ ${downloadBtn}
       'process.env.NODE_ENV': JSON.stringify(mode),
       'process.env.GENERATE_SOURCEMAP': JSON.stringify(env.GENERATE_SOURCEMAP || 'true'),
       'process.env.FAST_REFRESH': JSON.stringify(env.FAST_REFRESH || 'true'),
-      // Build-time version information
-      'import.meta.env.VITE_BUILD_TIME': JSON.stringify(new Date().toISOString()),
-      'import.meta.env.VITE_BUILD_TIMESTAMP': JSON.stringify(Date.now()),
+      // Release identity for Rollbar. errorTrackingConfig reads
+      // process.env.REACT_APP_VERSION, and without this define the bundler
+      // rewrites `process.env` to `{}` — so every production error reported
+      // codeVersion "1.0.0" and NO uploaded sourcemap could ever match it
+      // (Rollbar applies a map only when code_version matches exactly). The
+      // deploy sets REACT_APP_VERSION to the full commit sha, which is the same
+      // version the sourcemaps are uploaded under.
+      'process.env.REACT_APP_VERSION': JSON.stringify(
+        env.REACT_APP_VERSION || process.env.REACT_APP_VERSION || '',
+      ),
+      // NOTE: no build clock here. VITE_BUILD_TIME/VITE_BUILD_TIMESTAMP used to be
+      // injected via `define` (new Date()/Date.now()), which made every build
+      // byte-different and its content hashes unreproducible — nothing in src ever
+      // read them. Release identity comes from VITE_RELEASE_VERSION (the deploy
+      // commit sha), which is what Rollbar matches sourcemaps against.
     },
 
     // Dependency optimization

@@ -15,7 +15,7 @@ describe('ShareButton', () => {
     });
     Object.defineProperty(window, 'isSecureContext', { configurable: true, value: true });
     // Ensure the Web Share API path is not taken.
-    delete (navigator as Navigator & { share?: unknown }).share;
+    delete (navigator as { share?: unknown }).share;
   });
 
   afterEach(() => {

@@ -296,6 +296,12 @@ const CHANNEL_GAP_THRESHOLD_MS = 600;
 // ESO complete within a few seconds.
 const MAX_CHANNEL_DURATION_MS = 5000;
 
+// A light attack only counts as a weave into the following skill if it lands within
+// ~1s (one global cooldown) before the skill. A larger gap means the light attack and
+// skill are unrelated (idle time, a downtime gap), so it must not be scored as a weave
+// nor contribute its inflated timing to the weave-timing average.
+const WEAVE_WINDOW_MS = 1000;
+
 /**
  * Detect food/drink buffs on a player
  * Checks both buff events and combatant info auras
@@ -1313,9 +1319,12 @@ export function analyzeWeaving(
       return;
     }
 
-    // Determine if this is a proper weave (light attack immediately before skill)
+    // Determine if this is a proper weave: a light attack immediately before the skill
+    // AND within the weave window. A stale light attack separated by a long idle gap
+    // does not count and must not pollute the weave-timing average.
     const isProperWeave = precedingCast
-      ? LIGHT_ATTACK_ABILITY_IDS.has(precedingCast.abilityGameID)
+      ? LIGHT_ATTACK_ABILITY_IDS.has(precedingCast.abilityGameID) &&
+        castEvent.timestamp - precedingCast.timestamp <= WEAVE_WINDOW_MS
       : false;
 
     if (isProperWeave && precedingCast) {

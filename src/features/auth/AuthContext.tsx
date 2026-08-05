@@ -59,7 +59,8 @@ const buildUserPropertyPayload = (
     has_eu_display_name: hasEu,
     display_name_count: displayNameCount,
     has_user_subject: options.hasSubject,
-    username: user?.name || undefined, // Add username for easier user tracking
+    // Never send `user.name` (the real ESO account name / public /u/<name> slug):
+    // GA4 prohibits PII. The pseudonymous user_id (setAnalyticsUserId) is the identity.
   };
 };
 

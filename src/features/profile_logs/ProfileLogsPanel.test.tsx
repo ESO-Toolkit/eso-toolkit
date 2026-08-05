@@ -1,10 +1,11 @@
-import { fireEvent, render, screen } from '@testing-library/react';
-import '@testing-library/jest-dom';
 import { ThemeProvider, createTheme } from '@mui/material';
+import { fireEvent, render, screen } from '@testing-library/react';
+
+import '@testing-library/jest-dom';
 
 import { ProfileLogsPanel } from './ProfileLogsPanel';
-import type { UseProfileUploadedReportsResult } from './useProfileUploadedReports';
 import type { ProfileReportSummary } from './profileLogsQueries';
+import type { UseProfileUploadedReportsResult } from './useProfileUploadedReports';
 
 // ─── Mocks ───────────────────────────────────────────────────────────────────
 

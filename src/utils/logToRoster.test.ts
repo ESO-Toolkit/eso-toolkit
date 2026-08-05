@@ -1,4 +1,5 @@
 import { KnownSetIDs } from '../types/abilities';
+import { GearSlot, WeaponType } from '../types/playerDetails';
 import { createDefaultRoster } from '../types/roster';
 
 import {
@@ -66,5 +67,65 @@ describe('convertLogPlayersToRoster — perfected set IDs', () => {
 
     expect(allIds).toContain(KnownSetIDs.SAXHLEEL_CHAMPION);
     expect(allIds).not.toContain(KnownSetIDs.PERFECTED_SAXHLEEL_CHAMPION);
+  });
+});
+
+describe('convertLogPlayersToRoster — two-handed weapon set counting', () => {
+  /**
+   * A two-handed weapon grants two set pieces from one equipped item. A 5-piece
+   * set completed via 3 body pieces + a 2H staff (3 + 2 = 5) must land in a
+   * primary set slot, not be demoted to additionalSets by a naive 1-per-slot count.
+   */
+  it('counts a staff as 2 pieces so a staff-completed 5pc set fills a primary slot', () => {
+    const details: LogPlayerDetails = {
+      tanks: [
+        {
+          name: 'StaffTank',
+          id: 1,
+          combatantInfo: {
+            gear: [
+              ...pieces('Saxhleel Champion', 3),
+              {
+                setName: 'Saxhleel Champion',
+                type: WeaponType.LIGHTNING_STAFF,
+                slot: GearSlot.MAIN_HAND,
+              },
+            ],
+          },
+        },
+      ],
+    };
+
+    const result = convertLogPlayersToRoster(details, NO_EVENTS, createDefaultRoster());
+    const sets = result.tanks[0].gearSets;
+
+    expect([sets.set1, sets.set2]).toContain(KnownSetIDs.SAXHLEEL_CHAMPION);
+  });
+
+  it('does not double-count a one-handed weapon (only 4 pieces stays sub-5)', () => {
+    const details: LogPlayerDetails = {
+      tanks: [
+        {
+          name: 'DaggerTank',
+          id: 1,
+          combatantInfo: {
+            gear: [
+              ...pieces('Saxhleel Champion', 3),
+              {
+                setName: 'Saxhleel Champion',
+                type: WeaponType.DAGGER,
+                slot: GearSlot.MAIN_HAND,
+              },
+            ],
+          },
+        },
+      ],
+    };
+
+    const result = convertLogPlayersToRoster(details, NO_EVENTS, createDefaultRoster());
+    const sets = result.tanks[0].gearSets;
+
+    // 3 body + 1 dagger = 4 pieces < 5, so it must NOT occupy a primary 5pc slot.
+    expect([sets.set1, sets.set2]).not.toContain(KnownSetIDs.SAXHLEEL_CHAMPION);
   });
 });

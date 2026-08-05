@@ -46,8 +46,9 @@ jest.mock('../../EsoLogsClientContext', () => ({
 }));
 
 // Now import after mocking
-import { AuthProvider, useAuth } from './AuthContext';
 import { checkUserBan } from '../../utils/banlist';
+
+import { AuthProvider, useAuth } from './AuthContext';
 
 // Mock localStorage
 const mockLocalStorage = {
@@ -181,7 +182,6 @@ describe('AuthContext', () => {
         expect.objectContaining({
           auth_state: 'guest',
           has_user_subject: false,
-          username: undefined,
         }),
       );
     });
@@ -229,7 +229,6 @@ describe('AuthContext', () => {
           auth_state: 'authenticated',
           has_user_subject: true,
           account_region: 'multi',
-          username: 'testuser',
         }),
       );
     });
@@ -247,7 +246,6 @@ describe('AuthContext', () => {
         expect.objectContaining({
           auth_state: 'guest',
           has_user_subject: false,
-          username: undefined,
         }),
       );
     });

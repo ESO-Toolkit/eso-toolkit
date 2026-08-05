@@ -5,7 +5,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-import { parseAlphaGearSavedVariables, parseLuaSavedVariables } from '../luaParser';
 import {
   detectAlphaGearData,
   extractAlphaGearCharacters,
@@ -13,9 +12,23 @@ import {
   convertLoadoutStateToAlphaGear,
   serializeAlphaGearToLua,
 } from '../alphaGearConverter';
+import { parseAlphaGearSavedVariables, parseLuaSavedVariables } from '../luaParser';
 
 const SAMPLE_FILE = path.join(process.cwd(), 'tmp', 'AlphaGear.lua');
 const hasSampleFile = fs.existsSync(SAMPLE_FILE);
+
+// When the real fixture is absent the whole suite `describe.skip`s — which
+// otherwise reports as a silent green run, hiding that none of the 13
+// integration tests actually executed. The fixture lives in gitignored tmp/ and
+// is never present in CI, so make the skip LOUD via a console warning (rather
+// than a hard failure that could never pass) so a fixture-less run is visible.
+if (!hasSampleFile) {
+  console.warn(
+    `[alphaGearImport.integration] SKIPPED — real fixture missing at ${SAMPLE_FILE}. ` +
+      'These 13 integration tests did NOT run; a green result here proves nothing. ' +
+      'Provide tmp/AlphaGear.lua to exercise the AlphaGear import pipeline.',
+  );
+}
 
 const describeIf = hasSampleFile ? describe : describe.skip;
 

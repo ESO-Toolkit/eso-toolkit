@@ -1,12 +1,14 @@
-import { render, screen, within } from '@testing-library/react';
+import { configureStore } from '@reduxjs/toolkit';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { Provider } from 'react-redux';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import { configureStore } from '@reduxjs/toolkit';
 
-import dashboardReducer from '../store/dashboard/dashboardSlice';
+import { useEsoLogsClientInstance } from '../EsoLogsClientContext';
 import { FightFragment } from '../graphql/gql/graphql';
+import { useReportData } from '../hooks/useReportData';
+import dashboardReducer from '../store/dashboard/dashboardSlice';
 
 import { RaidDashboardPage } from './RaidDashboardPage';
 
@@ -43,9 +45,6 @@ jest.mock('../components/dashboard/AddWidgetDialog', () => ({
 // Mock hooks
 jest.mock('../hooks/useReportData');
 jest.mock('../EsoLogsClientContext');
-
-import { useReportData } from '../hooks/useReportData';
-import { useEsoLogsClientInstance } from '../EsoLogsClientContext';
 
 const mockUseReportData = useReportData as jest.MockedFunction<typeof useReportData>;
 const mockUseEsoLogsClient = useEsoLogsClientInstance as jest.MockedFunction<
@@ -277,7 +276,7 @@ describe('RaidDashboardPage', () => {
       renderWithRouter(store);
 
       const initialWidgets = screen.getAllByTestId(/^widget-/);
-      const initialCount = initialWidgets.length;
+      expect(initialWidgets.length).toBeGreaterThan(0);
 
       // Find and click remove button on first widget
       // (This would require the actual widget to render remove buttons)

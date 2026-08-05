@@ -58,7 +58,7 @@ describe('classNameUtils', () => {
 
     it('should not have duplicate entries pointing to wrong classes', () => {
       // Ensure each alias maps to the correct canonical name
-      Object.entries(CLASS_ALIASES).forEach(([alias, canonical]) => {
+      Object.entries(CLASS_ALIASES).forEach(([, canonical]) => {
         expect(typeof canonical).toBe('string');
         expect(canonical.length).toBeGreaterThan(0);
         expect(canonical).not.toContain(' '); // Canonical names should not have spaces

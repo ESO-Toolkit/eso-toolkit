@@ -4,6 +4,7 @@
  */
 
 import { describe, it, expect } from '@jest/globals';
+
 import { sampleReplayFixture, samplePositionData } from './fixtures/sampleFightData';
 import {
   createMockPositionLookup,

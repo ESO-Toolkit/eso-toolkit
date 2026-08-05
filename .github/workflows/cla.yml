@@ -8,15 +8,20 @@ on:
   merge_group:
     types: [checks_requested]
 
+# Least-privilege default. The elevated write scopes belong only to cla-assistant
+# (it stores signatures, comments on the PR, and sets a commit status); the no-op
+# merge-queue job needs nothing.
 permissions:
-  actions: write
-  contents: write
-  pull-requests: write
-  statuses: write
+  contents: read
 
 jobs:
   cla-assistant:
     runs-on: ubuntu-latest
+    permissions:
+      actions: write
+      contents: write
+      pull-requests: write
+      statuses: write
     steps:
       - name: Generate CLA bot token
         id: app-token
@@ -79,6 +84,7 @@ jobs:
   cla-merge-queue:
     runs-on: ubuntu-latest
     if: github.event_name == 'merge_group'
+    permissions: {}
     steps:
       - name: CLA already verified on PR
         run: echo "CLA was verified when the PR was opened. Bypassing for merge queue."

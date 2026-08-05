@@ -170,6 +170,14 @@ const BOSS_DEATH_VISIBILITY_WINDOW_MS = 2000;
 const SAMPLE_INTERVAL_MS = 4.7; // 240Hz sampling rate (better performance vs quality balance)
 const MAX_TIMESTAMPS = 72000; // Cap at 5 minutes worth of 240Hz data to prevent excessive computation
 
+// Facing values in event resources are stored in CENTI-radians: a full turn is 2π·ROTATION_SCALE,
+// matching coordinateUtils' ROTATION_SCALE divisor in convertRotation (`facing / 100`). The facing
+// interpolation's shortest-angle wrap must use this unit — wrapping against 2π (raw radians) folds
+// any turn beyond ~1.8° into a tiny window, so headings held-then-jumped instead of turning. Kept
+// in lockstep with coordinateUtils.ts's ROTATION_SCALE (not exported from there).
+const ROTATION_SCALE = 100;
+const FACING_FULL_TURN = 2 * Math.PI * ROTATION_SCALE; // ≈ 628 centi-radians per revolution
+
 // ---- Multi-instance NPC splitting --------------------------------------------------------------
 //
 // ESO Logs assigns ONE ReportFightNPC `id` to ALL simultaneous copies of an NPC (the schema:
@@ -752,7 +760,15 @@ export function calculateActorPositions(
     if (timeDiff === 0) return pos1;
 
     const progress = Math.max(0, Math.min(1, (timestamp - pos1.timestamp) / timeDiff));
-    const angleDiff = ((pos2.facing - pos1.facing + Math.PI) % (2 * Math.PI)) - Math.PI;
+    // Shortest-angle facing delta in the stored centi-radian unit. The extra `+ FACING_FULL_TURN`
+    // before the second `%` makes the modulo positive regardless of the raw difference's sign (JS
+    // `%` keeps the sign of the dividend), yielding a delta in [-half, +half) so headings turn the
+    // short way and interpolate smoothly between event samples.
+    const half = FACING_FULL_TURN / 2;
+    const angleDiff =
+      ((((pos2.facing - pos1.facing + half) % FACING_FULL_TURN) + FACING_FULL_TURN) %
+        FACING_FULL_TURN) -
+      half;
 
     // Interpolate health if both positions have health data
     let health: { current: number; max: number; percentage: number } | undefined;

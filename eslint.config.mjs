@@ -24,8 +24,6 @@ export default [
       'src/data/abilities.json',
       '**/*.stories.ts',
       '**/*.stories.tsx',
-      '**/*.test.ts',
-      '**/*.test.tsx',
     ],
   },
   // Base configuration for all files
@@ -212,18 +210,41 @@ export default [
     },
   },
 
-  // Configuration for test files (unit tests and Playwright specs)
+  // Configuration for test files (unit tests and Playwright specs).
+  // Tests ARE linted (import hygiene, unused vars, hook rules all still apply);
+  // only the rules that exist to discipline shipped app code are relaxed.
   {
     files: ['**/*.test.ts', '**/*.test.tsx', '**/*.spec.ts', '**/*.spec.tsx'],
     languageOptions: {
       parserOptions: {
+        // No type-aware linting for tests: they are not in tsconfig.json's
+        // program. Type errors are caught by `npm run typecheck:test`
+        // (tsconfig.test.json) instead.
         project: null,
+      },
+      globals: {
+        test: 'readonly',
+        beforeAll: 'readonly',
+        afterAll: 'readonly',
+        afterEach: 'readonly',
       },
     },
     rules: {
       // Playwright specs use dynamic import() strings that run in the browser context;
       // the Node-side resolver cannot resolve paths like '/src/utils/foo.ts'.
       'import/no-unresolved': 'off',
+      // Undefined identifiers in TS are a compiler concern, and duplicating the
+      // browser/node/jest global list here only produces false positives on
+      // things like Response, KeyboardEvent or Buffer. See typescript-eslint's
+      // own guidance to disable no-undef on TypeScript sources.
+      'no-undef': 'off',
+      // Tests legitimately log, assert on `any`-shaped fixtures, use inline
+      // arrow callbacks without return annotations, and require() modules to
+      // exercise module-load side effects.
+      'no-console': 'off',
+      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/explicit-function-return-type': 'off',
+      '@typescript-eslint/no-require-imports': 'off',
     },
   },
 

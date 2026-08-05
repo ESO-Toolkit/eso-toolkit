@@ -102,15 +102,10 @@ export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({
     <span aria-hidden="true"> {getSortGlyph(field)}</span>
   );
 
-  // Map current sort state to an aria-sort value for the column header
-  const getAriaSort = (field: SortField): 'ascending' | 'descending' | 'none' => {
-    if (sortField !== field) return 'none';
-    return sortDirection === 'asc' ? 'ascending' : 'descending';
-  };
-
-  // Accessible name for the mobile sort buttons, conveying the active sort state
-  // (these chips are standalone buttons, not grid column headers, so aria-sort does
-  // not apply — the state is folded into the label instead).
+  // Accessible name for the sort buttons, conveying the active sort state. Both the
+  // mobile chips and the desktop headers are standalone buttons, not grid column headers
+  // (there is no table/row ancestor), so aria-sort does not apply — the state is folded
+  // into the label instead.
   const getSortButtonLabel = (label: string, field: SortField): string => {
     if (sortField !== field) return `Sort by ${label}`;
     return `Sort by ${label}, ${sortDirection === 'asc' ? 'ascending' : 'descending'}`;
@@ -415,8 +410,9 @@ export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({
             }}
           >
             <Box
-              role="columnheader"
-              aria-sort={getAriaSort('name')}
+              role="button"
+              tabIndex={0}
+              aria-label={getSortButtonLabel('Name', 'name')}
               sx={{
                 cursor: 'pointer',
                 userSelect: 'none',
@@ -425,12 +421,14 @@ export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({
                 },
               }}
               onClick={() => handleSort('name')}
+              onKeyDown={handleSortKeyDown('name')}
             >
               Name{getSortIcon('name')}
             </Box>
             <Box
-              role="columnheader"
-              aria-sort={getAriaSort('raw')}
+              role="button"
+              tabIndex={0}
+              aria-label={getSortButtonLabel('Amount', 'raw')}
               sx={{
                 cursor: 'pointer',
                 userSelect: 'none',
@@ -439,12 +437,14 @@ export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({
                 },
               }}
               onClick={() => handleSort('raw')}
+              onKeyDown={handleSortKeyDown('raw')}
             >
               Amount{getSortIcon('raw')}
             </Box>
             <Box
-              role="columnheader"
-              aria-sort={getAriaSort('hps')}
+              role="button"
+              tabIndex={0}
+              aria-label={getSortButtonLabel('HPS', 'hps')}
               sx={{
                 textAlign: 'right',
                 cursor: 'pointer',
@@ -454,12 +454,14 @@ export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({
                 },
               }}
               onClick={() => handleSort('hps')}
+              onKeyDown={handleSortKeyDown('hps')}
             >
               HPS{getSortIcon('hps')}
             </Box>
             <Box
-              role="columnheader"
-              aria-sort={getAriaSort('overheal')}
+              role="button"
+              tabIndex={0}
+              aria-label={getSortButtonLabel('Overheal', 'overheal')}
               sx={{
                 textAlign: 'right',
                 cursor: 'pointer',
@@ -469,12 +471,14 @@ export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({
                 },
               }}
               onClick={() => handleSort('overheal')}
+              onKeyDown={handleSortKeyDown('overheal')}
             >
               Overheal{getSortIcon('overheal')}
             </Box>
             <Box
-              role="columnheader"
-              aria-sort={getAriaSort('rawHps')}
+              role="button"
+              tabIndex={0}
+              aria-label={getSortButtonLabel('Raw HPS', 'rawHps')}
               sx={{
                 textAlign: 'right',
                 cursor: 'pointer',
@@ -484,11 +488,11 @@ export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({
                 },
               }}
               onClick={() => handleSort('rawHps')}
+              onKeyDown={handleSortKeyDown('rawHps')}
             >
               Raw HPS{getSortIcon('rawHps')}
             </Box>
             <Box
-              role="columnheader"
               sx={{
                 textAlign: 'center',
               }}
@@ -498,7 +502,6 @@ export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({
               </span>
             </Box>
             <Box
-              role="columnheader"
               sx={{
                 textAlign: 'center',
               }}

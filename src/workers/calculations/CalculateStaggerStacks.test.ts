@@ -1,6 +1,7 @@
-import { DamageEvent } from '../../types/combatlogEvents';
-import { calculateStaggerStacks } from './CalculateStaggerStacks';
 import { KnownAbilities } from '../../types/abilities';
+import { DamageEvent } from '../../types/combatlogEvents';
+
+import { calculateStaggerStacks } from './CalculateStaggerStacks';
 
 describe('CalculateStaggerStacks', () => {
   const MAGMA_FIST_ID = KnownAbilities.MAGMA_FIST;

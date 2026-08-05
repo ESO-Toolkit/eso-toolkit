@@ -142,6 +142,8 @@ jobs:
       - uses: ./.github/actions/setup-node-with-cache
       - name: Typecheck
         run: npm run typecheck
+      - name: Typecheck tests
+        run: npm run typecheck:test
       - name: Check no ESO-Hub references
         run: npm run check:no-esohub
       - name: Check tooltip provenance

@@ -39,8 +39,10 @@ import {
   BLUE_CHAMPION_POINTS,
   GREEN_CHAMPION_POINTS,
 } from '../types/abilities';
+import { WeaponType } from '../types/playerDetails';
 import type { PlayerGear, PlayerTalent } from '../types/playerDetails';
 
+import { isWeaponSlot } from './armorUtils';
 import type { ClassAnalysisResult } from './classDetectionUtils';
 import {
   gearCategoryForSlot,
@@ -54,6 +56,7 @@ import {
   type KalpaPlayerBuildEvidence,
 } from './kalpaBuildEvidence';
 import type { PotionType } from './potionDetectionUtils';
+import { isAnyTwoHandedWeapon } from './weaponClassificationUtils';
 
 // ─── Gear Slot Mapping ──────────────────────────────────────────────────────
 // CombatantInfo PlayerGear uses sequential slot indices (GearSlot enum),
@@ -418,7 +421,12 @@ function buildGearDescription(gear: PlayerGear[]): string {
   for (const item of gear) {
     if (item.id === 0 || !item.setName) continue;
     const name = item.setName.replace(/^perfected\s+/i, '');
-    setCounts.set(name, (setCounts.get(name) ?? 0) + 1);
+    // A two-handed weapon occupies one slot but grants two set pieces (matches
+    // P2-M3 in logToRoster and setPieceCounting.buildSetPieceCounts). Gate on a
+    // weapon slot: JEWELRY (type 4) collides with TWO_HANDED_SWORD (4).
+    const pieceCount =
+      isWeaponSlot(item.slot) && isAnyTwoHandedWeapon(item.type as WeaponType) ? 2 : 1;
+    setCounts.set(name, (setCounts.get(name) ?? 0) + pieceCount);
   }
 
   const parts: string[] = [];

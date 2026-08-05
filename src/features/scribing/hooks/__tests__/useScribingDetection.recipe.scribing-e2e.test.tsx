@@ -2,9 +2,10 @@
  * Debug Test: Verify useScribingDetection returns proper recipe data
  */
 
+import { configureStore } from '@reduxjs/toolkit';
 import { renderHook, waitFor } from '@testing-library/react';
 import { Provider } from 'react-redux';
-import { configureStore } from '@reduxjs/toolkit';
+
 import { LoggerProvider } from '../../../../contexts/LoggerContext';
 import { useScribingDetection } from '../useScribingDetection';
 

@@ -6,13 +6,14 @@
  * to avoid complications with async worker operations.
  */
 
-import { Remote } from 'comlink';
+import { Remote, releaseProxy } from 'comlink';
 
 import { ILogger } from '../utils/logger';
 
 import { SharedComputationWorker } from './SharedWorker';
-import { WorkerPool } from './WorkerPool';
 import { WorkerPoolConfig } from './types';
+import { createSharedWorker } from './workerFactories';
+import { WorkerPool } from './WorkerPool';
 
 // Mock the workerFactories module
 jest.mock('./workerFactories', () => ({
@@ -27,9 +28,6 @@ jest.mock('comlink', () => {
     releaseProxy: releaseProxySym,
   };
 });
-
-import { createSharedWorker } from './workerFactories';
-import { releaseProxy } from 'comlink';
 
 const mockCreateSharedWorker = createSharedWorker as jest.MockedFunction<typeof createSharedWorker>;
 
@@ -338,6 +336,26 @@ describe('WorkerPool', () => {
       pool.destroy();
 
       expect(releaseProxyFn).toHaveBeenCalled();
+    });
+
+    it('rejects queued (not just pending) tasks on destroy() so awaiters do not hang', async () => {
+      // The single worker is occupied by a never-resolving task, so the second
+      // task sits in the queue. destroy() must settle BOTH — the queued one used
+      // to be dropped silently, hanging any caller awaiting it.
+      mockWorker.calculateBuffLookup.mockImplementationOnce(() => new Promise<never>(() => {}));
+
+      const pool = new WorkerPool({ maxWorkers: 1 });
+
+      const running = pool.execute('calculateBuffLookup', {}); // occupies the only worker
+      const queued = pool.execute('calculateDebuffLookup', {}); // sits in the queue
+
+      // Attach expectations before destroy so the rejections are observed.
+      const runningAssertion = expect(running).rejects.toThrow(/destroyed/i);
+      const queuedAssertion = expect(queued).rejects.toThrow(/destroyed/i);
+
+      pool.destroy();
+
+      await Promise.all([runningAssertion, queuedAssertion]);
     });
 
     it('should clear intervals on destroy()', () => {

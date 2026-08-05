@@ -1,7 +1,8 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 
-import { GearIcon } from './GearIcon';
 import { PlayerGear, GearTrait } from '../types/playerDetails';
+
+import { GearIcon } from './GearIcon';
 
 // Mock gear data for testing
 const mockGear: PlayerGear = {

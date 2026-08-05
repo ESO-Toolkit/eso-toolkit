@@ -5,7 +5,7 @@ import Typography from '@mui/material/Typography';
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
-import { APP_AUTH_PORT_KEY } from './AppAuth';
+import { consumeAppAuthPortBinding, type AppAuthPortBinding } from './AppAuth';
 import {
   getPkceCodeVerifier,
   CLIENT_ID,
@@ -35,7 +35,21 @@ export const OAuthRedirect: React.FC = () => {
   // failing on an already-consumed state.
   const stateValidRef = useRef<boolean | null>(null);
 
+  // The desktop-app port binding is consumed (read + removed) exactly once at the
+  // top of the effect below. Cached here so StrictMode's double-invoke in dev
+  // reuses the first run's value instead of finding the key already cleared.
+  // `undefined` = not yet read; `null` = read, no valid binding.
+  const appPortBindingRef = useRef<AppAuthPortBinding | null | undefined>(undefined);
+
   useEffect(() => {
+    // Consume the desktop-app port binding BEFORE any early return, so a binding
+    // from an abandoned app-auth attempt can never leak into a later normal
+    // login in the same tab (which would silently POST tokens to a stale port).
+    if (appPortBindingRef.current === undefined) {
+      appPortBindingRef.current = consumeAppAuthPortBinding();
+    }
+    const appPortBinding = appPortBindingRef.current;
+
     // Parse parameters directly from window.location since OAuth redirects
     // add query params to the full URL, not just the hash part
     const code = params.get('code');
@@ -92,19 +106,15 @@ export const OAuthRedirect: React.FC = () => {
           throw new Error('Invalid token response — missing access_token');
         }
 
-        // Check if this is a desktop app auth flow
-        const appPort = sessionStorage.getItem(APP_AUTH_PORT_KEY);
-        if (appPort) {
-          sessionStorage.removeItem(APP_AUTH_PORT_KEY);
-          const portNum = Number(appPort);
-          if (!Number.isInteger(portNum) || portNum < 1 || portNum > 65535) {
-            setError('Invalid desktop app port.');
-            return;
-          }
+        // Check if this is a desktop app auth flow. Only honour the port when it
+        // was bound to THIS request's OAuth state (already validated above), so a
+        // port can never be replayed against an unrelated login.
+        if (appPortBinding && appPortBinding.state === stateParam) {
           // Send tokens to the desktop app's localhost server in the background.
           // We POST JSON so the desktop app can respond with a confirmation,
-          // letting us verify delivery before showing the success page.
-          const callbackUrl = `http://localhost:${appPort}/callback`;
+          // letting us verify delivery before showing the success page. The URL is
+          // built from the parsed integer port, never a raw string.
+          const callbackUrl = `http://localhost:${appPortBinding.port}/callback`;
           try {
             const callbackResp = await fetch(callbackUrl, {
               method: 'POST',

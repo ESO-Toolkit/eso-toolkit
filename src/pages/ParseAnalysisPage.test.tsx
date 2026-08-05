@@ -1,14 +1,17 @@
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
-import '@testing-library/jest-dom';
-import React from 'react';
-import { MemoryRouter } from 'react-router-dom';
-import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import React from 'react';
+import { Provider } from 'react-redux';
+import { MemoryRouter } from 'react-router-dom';
 
+import '@testing-library/jest-dom';
+
+import { LoggerProvider } from '../contexts/LoggerContext';
 import { FightFragment } from '../graphql/gql/graphql';
 import { ReportFightProvider } from '../ReportFightContext';
-import { LoggerProvider } from '../contexts/LoggerContext';
 import masterDataReducer from '../store/master_data/masterDataSlice';
+
+import { ParseAnalysisPage } from './ParseAnalysisPage';
 
 // Mock GraphQL client
 const mockQuery = jest.fn();
@@ -95,8 +98,6 @@ jest.mock('../hooks/useReportData', () => ({
     isReportLoading: false,
   }),
 }));
-
-import { ParseAnalysisPage } from './ParseAnalysisPage';
 
 const mockTrialDummyFight: FightFragment = {
   __typename: 'ReportFight',

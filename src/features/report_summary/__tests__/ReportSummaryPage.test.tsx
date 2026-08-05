@@ -1,14 +1,14 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
-import { BrowserRouter } from 'react-router-dom';
-import { Provider } from 'react-redux';
-import { configureStore } from '@reduxjs/toolkit';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
+import { configureStore } from '@reduxjs/toolkit';
+import { render, screen, waitFor, within } from '@testing-library/react';
+import { Provider } from 'react-redux';
+import { BrowserRouter } from 'react-router-dom';
 
-import { ReportSummaryPage } from '../ReportSummaryPage';
+import { LoggerProvider } from '../../../contexts/LoggerContext';
 import { EsoLogsClientProvider } from '../../../EsoLogsClientContext';
 import { ReportFightProvider } from '../../../ReportFightContext';
 import { AuthProvider } from '../../auth/AuthContext';
-import { LoggerProvider } from '../../../contexts/LoggerContext';
+import { ReportSummaryPage } from '../ReportSummaryPage';
 
 // Mock the hooks
 jest.mock('../../../hooks/useReportData', () => ({

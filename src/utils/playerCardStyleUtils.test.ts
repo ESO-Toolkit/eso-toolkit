@@ -1,4 +1,5 @@
 import { createTheme, Theme } from '@mui/material/styles';
+
 import { buildVariantSx, getGearChipProps } from './playerCardStyleUtils';
 
 // Mock the gearUtilities module

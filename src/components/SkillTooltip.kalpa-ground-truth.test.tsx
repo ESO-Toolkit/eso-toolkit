@@ -1,8 +1,11 @@
-import React from 'react';
-import { render } from '@testing-library/react';
-import '@testing-library/jest-dom';
-import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { CssBaseline } from '@mui/material';
+import { ThemeProvider, createTheme } from '@mui/material/styles';
+import { render } from '@testing-library/react';
+import React from 'react';
+
+import '@testing-library/jest-dom';
+
+import { useSkillScribingData } from '../features/scribing/hooks/useScribingDetection';
 
 import { SkillTooltip } from './SkillTooltip';
 import type { SkillTooltipProps } from './SkillTooltip';
@@ -14,8 +17,6 @@ jest.mock('../features/scribing/hooks/useScribingDetection', () => ({
 jest.mock('../hooks/useLogger', () => ({
   useLogger: () => ({ warn: jest.fn(), info: jest.fn(), error: jest.fn() }),
 }));
-
-import { useSkillScribingData } from '../features/scribing/hooks/useScribingDetection';
 
 const mockUseSkillScribingData = useSkillScribingData as jest.MockedFunction<
   typeof useSkillScribingData
