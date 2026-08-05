@@ -68,6 +68,8 @@ import { moderateImage, MAX_IMAGE_BYTES } from './image-moderation';
 import { handleGraphqlProxy } from './graphql-proxy';
 import { getReportBuildEvidence, putReportBuildEvidence } from './report-build-evidence';
 import type { Env, RecommendedAddonEntry, RecommendedAddons } from './types';
+import { getDpsParseCombatant, listDpsEncounters, listDpsParses } from './db/dps-parse-queries';
+import { syncDpsParses } from './leaderboard-sync/dps-parse-sync';
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -2151,12 +2153,6 @@ async function notifyDiscordSync(env: Env, rosterId: string): Promise<void> {
 // ─── DPS builds leaderboard ─────────────────────────────────────────────────
 // Read-only. This data is owned by the cron; there is no public write path.
 
-import {
-  getDpsParseCombatant,
-  listDpsEncounters,
-  listDpsParses,
-} from './db/dps-parse-queries';
-
 /** Which encounters have data — feeds the trial/boss picker. */
 app.get('/dps-leaderboard/encounters', async (c) => {
   const encounters = await listDpsEncounters(c.env.DB);
@@ -2214,7 +2210,6 @@ app.get('/dps-leaderboard/parses/:parseId/build', async (c) => {
 // ─── POST /admin/sync-leaderboard — manual trigger ──────────────────────────
 
 import { syncLeaderboardRosters } from './leaderboard-sync/sync';
-import { syncDpsParses } from './leaderboard-sync/dps-parse-sync';
 
 /**
  * Shared guard for the admin triggers. Compares SHA-256 digests with
@@ -2236,7 +2231,9 @@ async function isAuthorizedInternalRequest(
 }
 
 app.post('/admin/sync-leaderboard', async (c) => {
-  if (!(await isAuthorizedInternalRequest(c.req.header('X-Internal-Key'), c.env.INTERNAL_API_KEY))) {
+  if (
+    !(await isAuthorizedInternalRequest(c.req.header('X-Internal-Key'), c.env.INTERNAL_API_KEY))
+  ) {
     return c.json({ error: 'Unauthorized' }, 401);
   }
   const results = await syncLeaderboardRosters(c.env);
@@ -2249,7 +2246,9 @@ app.post('/admin/sync-leaderboard', async (c) => {
  *   ?encounterId=60&difficulty=122&pages=3&force=1
  */
 app.post('/admin/sync-dps-parses', async (c) => {
-  if (!(await isAuthorizedInternalRequest(c.req.header('X-Internal-Key'), c.env.INTERNAL_API_KEY))) {
+  if (
+    !(await isAuthorizedInternalRequest(c.req.header('X-Internal-Key'), c.env.INTERNAL_API_KEY))
+  ) {
     return c.json({ error: 'Unauthorized' }, 401);
   }
 

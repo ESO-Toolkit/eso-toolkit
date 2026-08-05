@@ -11,38 +11,16 @@ import type { GearItem } from './esologs-client';
 // Copied from src/types/roster.ts and src/types/abilities.ts.
 // These are the ESO Logs `setID` values (same as the KnownSetIDs enum).
 
-/**
- * Monster sets (2-piece) and mythic sets (1-piece) — go in the monsterSet slot.
- *
- * Exported so the DPS-parse signature can recover the real monster set after
- * pulling a mythic out of this slot: `categorizeGear` assigns a DPS mythic to
- * `monsterSet` first and never revisits it, leaving the actual monster set in
- * `additionalSets`.
- */
-export const MONSTER_SET_IDS = new Set([
-  // Quick Assignment monster sets
-  666,
-  578,
-  633,
-  634,
-  627,
-  687,
-  436,
-  738,
-  // Tank monster sets
-  577,
-  534,
-  // Healer monster sets
-  166,
-  576,
-  436,
-  738,
-  // Flexible monster sets (Spaulder also appears here)
-  627,
-  // Support mythics (heal/tank)
-  691,
-  576,
-  // DPS monster sets (used as 2-piece by DPS)
+// Monster-set ids grouped by the role that wears them. Sets legitimately appear
+// in more than one list; see MONSTER_SET_IDS below for why they stay that way.
+const QUICK_ASSIGNMENT_MONSTER_IDS = [666, 578, 633, 634, 627, 687, 436, 738];
+const TANK_MONSTER_IDS = [577, 534];
+const HEALER_MONSTER_IDS = [166, 576, 436, 738];
+/** Worn across roles rather than belonging to one (Spaulder of Ruin). */
+const FLEXIBLE_MONSTER_IDS = [627];
+/** Mythics worn by support roles — 1-piece, but they occupy the same slot. */
+const SUPPORT_MYTHIC_IDS = [691, 576];
+const DPS_MONSTER_IDS = [
   163,
   168,
   170,
@@ -72,6 +50,31 @@ export const MONSTER_SET_IDS = new Set([
   // one encounter, so the table was materially incomplete.
   270, // Slimecraw (commonly worn as a 1-piece helm)
   169, // Valkyn Skoria
+];
+
+/**
+ * Monster sets (2-piece) and mythic sets (1-piece) — go in the monsterSet slot.
+ *
+ * Exported so the DPS-parse signature can recover the real monster set after
+ * pulling a mythic out of this slot: `categorizeGear` assigns a DPS mythic to
+ * `monsterSet` first and never revisits it, leaving the actual monster set in
+ * `additionalSets`.
+ *
+ * Built as a union of the per-role lists rather than one flat literal. The
+ * overlap between them is real — a set can be worn by several roles — so the
+ * lists are the honest representation and the repetition is information, not
+ * noise. Flattened into a single literal it read as an accident, and there was
+ * no way to tell whether an id you were about to add was already covered by
+ * another role's section. This list needs auditing after every patch, so that
+ * distinction matters more here than in most constants.
+ */
+export const MONSTER_SET_IDS = new Set([
+  ...QUICK_ASSIGNMENT_MONSTER_IDS,
+  ...TANK_MONSTER_IDS,
+  ...HEALER_MONSTER_IDS,
+  ...FLEXIBLE_MONSTER_IDS,
+  ...SUPPORT_MYTHIC_IDS,
+  ...DPS_MONSTER_IDS,
 ]);
 
 /**
