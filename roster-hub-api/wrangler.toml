@@ -28,7 +28,12 @@ binding = "AI"
 # Two DPS passes a day cover the full ~35-boss rotation (20 encounters per run).
 # The handler branches on `event.cron`; see the `scheduled` export in src/index.ts.
 [triggers]
-crons = ["0 4 * * *", "0 16 * * *"]
+# ONE trigger, two fire times. The account is on the Workers Free plan, capped
+# at 5 cron triggers across ALL workers, and 4 are used by other projects — so a
+# second entry here fails to register (code 10072) and that pass silently never
+# runs. A list expression costs one slot and fires at both hours; the handler
+# tells the passes apart by fire time (src/cron-schedule.ts).
+crons = ["0 4,16 * * *"]
 
 [vars]
 ALLOWED_ORIGINS = "https://esotk.com,https://www.esotk.com,https://esohelpers.com,https://www.esohelpers.com,https://eso-toolkit.github.io,http://localhost:3000,http://localhost:3001,http://localhost:3002,http://localhost:3003,http://localhost:5173"
