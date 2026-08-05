@@ -202,8 +202,15 @@ export const ArchetypeCard: React.FC<ArchetypeCardProps> = ({
         >
           {pendingKind === 'save' ? 'Saving…' : 'Save to My Builds'}
         </Button>
-        {/* Opens the parse in this app's own report viewer. */}
-        <Button variant="text" size="small" onClick={() => onViewSourceLog?.(cluster)}>
+        {/* Opens the parse in this app's own report viewer. Disabled with the
+            others: navigating away mid-request unmounts the card while a fetch
+            and save are still outstanding. */}
+        <Button
+          variant="text"
+          size="small"
+          disabled={actionsDisabled}
+          onClick={() => onViewSourceLog?.(cluster)}
+        >
           Open the parse
         </Button>
         {/* Separate, explicit link to the origin — the data is ESO Logs', and the

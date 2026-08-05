@@ -65,6 +65,42 @@ describe('useDpsParses', () => {
     expect(result.current.loading).toBe(false);
   });
 
+  /**
+   * The request used to come from a ref that was rewritten every render, so it
+   * could hold newer options than the key that triggered the running effect.
+   * Deriving both from the same serialized key makes them impossible to diverge.
+   */
+  it('requests exactly the query its effect was keyed on', async () => {
+    const spy = jest.spyOn(dpsParsesApi, 'listParses').mockResolvedValue(EMPTY);
+
+    const { rerender } = renderHook(
+      ({ options }: { options: ListParsesOptions | null }) => useDpsParses(options),
+      { initialProps: { options: { encounterId: 4 } as ListParsesOptions | null } },
+    );
+    await waitFor(() => expect(spy).toHaveBeenCalled());
+
+    // Rapid successive changes: every call must match one of the requested
+    // queries, never a mix of old and new.
+    rerender({ options: { encounterId: 7 } });
+    rerender({ options: { esoClass: 'Warden' } });
+
+    await waitFor(() => expect(spy.mock.calls.length).toBeGreaterThan(1));
+
+    spy.mock.calls.forEach(([opts]) => {
+      const o = opts as ListParsesOptions;
+      const matchesOne =
+        (o.encounterId === 4 && !o.esoClass) ||
+        (o.encounterId === 7 && !o.esoClass) ||
+        (o.esoClass === 'Warden' && o.encounterId === undefined);
+      expect(matchesOne).toBe(true);
+    });
+
+    // The final request corresponds to the final query.
+    const last = spy.mock.calls[spy.mock.calls.length - 1][0] as ListParsesOptions;
+    expect(last.esoClass).toBe('Warden');
+    expect(last.encounterId).toBeUndefined();
+  });
+
   it('surfaces a failure and clears loading', async () => {
     jest.spyOn(dpsParsesApi, 'listParses').mockRejectedValue(new Error('boom'));
 

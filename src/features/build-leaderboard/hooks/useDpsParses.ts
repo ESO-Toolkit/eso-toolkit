@@ -6,7 +6,7 @@
  * report-keyed cache that does not fit a leaderboard query.
  */
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { dpsParsesApi, type ListParsesOptions } from '../api/dpsParsesApi';
 import type { DpsParse } from '../types/dpsParses.types';
@@ -32,14 +32,22 @@ export function useDpsParses(
   const [error, setError] = useState<string | null>(null);
   const [reloadToken, setReloadToken] = useState(0);
 
-  // Serialized here so the effect depends on the VALUE, not on a fresh object
-  // identity every render.
+  // Serialized so the effect depends on the VALUE, not on a fresh object identity
+  // every render.
   const key = options ? JSON.stringify({ ...options, limit }) : null;
-  const optionsRef = useRef(options);
-  optionsRef.current = options;
+
+  // The request is derived FROM the key rather than read from a ref. A ref is
+  // rewritten on every render, so it could hold newer options than the key that
+  // triggered the running effect — firing a request for one query while the
+  // effect believes it is serving another. Deriving both from the same string
+  // makes that divergence impossible.
+  const request = useMemo<(ListParsesOptions & { limit: number }) | null>(
+    () => (key ? (JSON.parse(key) as ListParsesOptions & { limit: number }) : null),
+    [key],
+  );
 
   useEffect(() => {
-    if (!key) {
+    if (!request) {
       setParses([]);
       setTotal(0);
       setError(null);
@@ -57,7 +65,7 @@ export function useDpsParses(
     setError(null);
 
     dpsParsesApi
-      .listParses({ ...(optionsRef.current as ListParsesOptions), limit }, controller.signal)
+      .listParses(request, controller.signal)
       .then((response) => {
         if (cancelled) return;
         setParses(response.parses);
@@ -78,7 +86,7 @@ export function useDpsParses(
       cancelled = true;
       controller.abort();
     };
-  }, [key, limit, reloadToken]);
+  }, [request, reloadToken]);
 
   const reload = useCallback(() => setReloadToken((token) => token + 1), []);
 
