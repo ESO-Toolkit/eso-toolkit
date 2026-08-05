@@ -9,6 +9,7 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { clientIpFromHeaders, validateToken } from './auth';
+import { isFullDailyRun } from './cron-schedule';
 import {
   listRosters,
   getRosterById,
@@ -2397,15 +2398,20 @@ export default {
   fetch: app.fetch,
 
   /**
-   * Two triggers (see wrangler.toml):
+   * ONE trigger firing twice a day (see wrangler.toml, `0 4,16 * * *`):
    *   04:00 UTC — temp-build cleanup + roster sync + DPS parse ingest
    *   16:00 UTC — DPS parse ingest only
+   *
+   * It is a single combined expression because the account is at the free-plan
+   * cap of five cron triggers; two separate crons fail to register and the
+   * second pass then never runs. `event.cron` is identical for both firings, so
+   * the pass is derived from the fire time — see cron-schedule.ts.
    *
    * Each job is isolated in its own try/catch. Previously a throw in
    * `cleanupExpiredTempBuilds` would silently skip the roster sync for that day.
    */
   async scheduled(event: ScheduledEvent, env: Env, _ctx: ExecutionContext): Promise<void> {
-    const isDailyRun = event.cron === '0 4 * * *';
+    const isDailyRun = isFullDailyRun(event.scheduledTime);
 
     if (isDailyRun) {
       try {
