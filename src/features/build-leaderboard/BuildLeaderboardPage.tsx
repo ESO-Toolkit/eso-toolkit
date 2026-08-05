@@ -79,6 +79,10 @@ export const BuildLeaderboardPage: React.FC = () => {
 
   const [encounters, setEncounters] = useState<DpsEncounterSummary[]>([]);
   const [encountersError, setEncountersError] = useState<string | null>(null);
+  // Tracked so the encounter tab does not flash "No top parses recorded…" while
+  // the picker feed is still in flight: until it resolves there is no encounter
+  // to query, so useDpsParses sits idle and the view would read that as "empty".
+  const [encountersLoading, setEncountersLoading] = useState(true);
   const [encountersToken, setEncountersToken] = useState(0);
 
   useEffect(() => {
@@ -88,6 +92,7 @@ export const BuildLeaderboardPage: React.FC = () => {
   useEffect(() => {
     let cancelled = false;
     setEncountersError(null);
+    setEncountersLoading(true);
     dpsParsesApi
       .listEncounters()
       .then((response) => {
@@ -97,6 +102,9 @@ export const BuildLeaderboardPage: React.FC = () => {
         if (!cancelled) {
           setEncountersError(err instanceof Error ? err.message : 'Failed to load encounters');
         }
+      })
+      .finally(() => {
+        if (!cancelled) setEncountersLoading(false);
       });
     return () => {
       cancelled = true;
@@ -224,7 +232,7 @@ export const BuildLeaderboardPage: React.FC = () => {
           <BuildLeaderboardView
             parses={parses}
             result={result}
-            loading={loading}
+            loading={loading || encountersLoading}
             clustering={clustering}
             clusterProgress={progress}
             error={combinedError}

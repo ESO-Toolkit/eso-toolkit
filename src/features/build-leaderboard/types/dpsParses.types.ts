@@ -37,10 +37,19 @@ export interface BuildSignature {
    */
   abilityNames?: Record<number, string>;
   bars: {
-    /** Ability IDs in slot order; the last entry of each bar is the ultimate. */
+    /**
+     * Ability IDs in slot order, six per bar.
+     *
+     * The ultimate is the LAST element of this array, not a separate entry —
+     * `frontUltimate` below is a convenience alias for `front[5]`, not an extra
+     * ability. Render `front`/`back` alone; adding the ultimate fields on top
+     * would show it twice.
+     */
     front: number[];
     back: number[];
+    /** Alias for `front[5]`. Already present in `front`. */
     frontUltimate?: number;
+    /** Alias for `back[5]`. Already present in `back`. */
     backUltimate?: number;
     /** False when the 12-talent invariant didn't hold and the split is a guess. */
     barOrderKnown: boolean;

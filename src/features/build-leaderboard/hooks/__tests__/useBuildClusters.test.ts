@@ -251,6 +251,34 @@ describe('useBuildClusters', () => {
     await waitFor(() => expect(mockedRun.mock.calls.length).toBeGreaterThan(callsAfterFirst));
   });
 
+  /**
+   * resolveBaseAbilityId feeds buildCanonicalMaps, which changes the feature
+   * vectors and therefore every distance. It cannot go in the cache key (it is a
+   * function), so the cache has to be dropped when its identity changes.
+   */
+  it('recomputes when the ability resolver changes', async () => {
+    mockedRun.mockResolvedValue({ ...EMPTY_RESULT, k: 3 });
+    const parses = makeThreeArchetypeFixture();
+    const resolverA = (id: number): number => id;
+    const resolverB = (id: number): number => id + 1;
+
+    const { result, rerender } = renderHook(
+      ({ r }: { r: (id: number) => number }) => useBuildClusters(parses, r),
+      { initialProps: { r: resolverA } },
+    );
+    await waitFor(() => expect(result.current.result).not.toBeNull());
+    const afterFirst = mockedRun.mock.calls.length;
+
+    // Same parses, same resolver: cache hit, no recompute.
+    rerender({ r: resolverA });
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(mockedRun.mock.calls.length).toBe(afterFirst);
+
+    // Same parses, DIFFERENT resolver: must recompute.
+    rerender({ r: resolverB });
+    await waitFor(() => expect(mockedRun.mock.calls.length).toBeGreaterThan(afterFirst));
+  });
+
   it('clears loading when a cache hit interrupts an in-flight run', async () => {
     const parses = makeThreeArchetypeFixture();
     resetFixtureIds();

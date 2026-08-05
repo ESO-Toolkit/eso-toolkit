@@ -1,6 +1,6 @@
 import { configureStore } from '@reduxjs/toolkit';
 import { ThemeProvider, createTheme } from '@mui/material';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { Provider } from 'react-redux';
@@ -137,6 +137,31 @@ describe('BuildLeaderboardPage', () => {
 
     await waitFor(() => expect(spy.mock.calls.length).toBeGreaterThan(callsBefore));
     await waitFor(() => expect(screen.queryByText(/encounters exploded/)).not.toBeInTheDocument());
+  });
+
+  /**
+   * Until the picker feed resolves there is no encounter to query, so
+   * useDpsParses sits idle and the view would read that as "empty" — flashing
+   * "No top parses recorded…" before any data could possibly have arrived.
+   */
+  it('does not flash the empty state while the encounters feed is loading', async () => {
+    let release: ((v: { encounters: typeof ENCOUNTERS }) => void) | undefined;
+    jest.spyOn(dpsParsesApi, 'listEncounters').mockReturnValue(
+      new Promise((resolve) => {
+        release = resolve;
+      }),
+    );
+
+    renderPage();
+
+    // In flight: no misleading empty-state copy.
+    expect(screen.queryByText(/no top parses recorded/i)).not.toBeInTheDocument();
+
+    await act(async () => {
+      release?.({ encounters: ENCOUNTERS });
+    });
+
+    await waitFor(() => expect(dpsParsesApi.listParses).toHaveBeenCalled());
   });
 
   it('switches to the class tab and queries by class', async () => {

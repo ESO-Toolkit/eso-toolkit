@@ -152,6 +152,17 @@ export function useBuildClusters(
   );
   const cache = useRef(new Map<string, ClusterBuildsResult>());
 
+  // The cache key describes the PARSES, but the clustering also depends on
+  // resolveBaseAbilityId: it feeds buildCanonicalMaps, which changes the feature
+  // vectors and therefore every distance. Since a function cannot go in the key,
+  // drop the whole cache when the resolver identity changes — otherwise the
+  // cache-hit path would return clusters computed under the previous mapping.
+  const lastResolver = useRef(resolveBaseAbilityId);
+  if (lastResolver.current !== resolveBaseAbilityId) {
+    lastResolver.current = resolveBaseAbilityId;
+    cache.current.clear();
+  }
+
   /** Read through, refreshing recency so the cap evicts the least-recently used. */
   const readCache = (key: string): ClusterBuildsResult | undefined => {
     const hit = cache.current.get(key);
