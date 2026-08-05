@@ -52,6 +52,12 @@ const ESO_CLASSES = [
   'Warden',
 ] as const;
 
+type EsoClass = (typeof ESO_CLASSES)[number];
+
+function isEsoClass(value: string | null): value is EsoClass {
+  return value !== null && (ESO_CLASSES as readonly string[]).includes(value);
+}
+
 const CLASS_LABELS: Record<string, string> = {
   DragonKnight: 'Dragonknight',
 };
@@ -74,7 +80,12 @@ export const BuildLeaderboardPage: React.FC = () => {
   const { pendingAction, openInEditor, saveToMyBuilds } = useArchetypeBuildActions();
 
   const tab: TabKey = searchParams.get('tab') === 'class' ? 'class' : 'encounter';
-  const selectedClass = searchParams.get('class') ?? ESO_CLASSES[0];
+  // Clamped to the known classes: an unrecognised ?class= would otherwise leave
+  // the toggle group with nothing selected AND fire an API request for a class
+  // that cannot exist.
+  const selectedClass = isEsoClass(searchParams.get('class'))
+    ? (searchParams.get('class') as EsoClass)
+    : ESO_CLASSES[0];
   const encounterParam = searchParams.get('boss');
 
   const [encounters, setEncounters] = useState<DpsEncounterSummary[]>([]);

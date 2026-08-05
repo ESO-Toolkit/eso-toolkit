@@ -28,7 +28,11 @@ export function useDpsParses(
 ): UseDpsParsesResult {
   const [parses, setParses] = useState<DpsParse[]>([]);
   const [total, setTotal] = useState(0);
-  const [loading, setLoading] = useState(false);
+  // Starts true when there is already a query to run. The effect only flips it
+  // after the first paint, so initialising to false let the view render its
+  // empty state for a frame — telling the user there is no data before the
+  // request had even been issued.
+  const [loading, setLoading] = useState(() => options !== null);
   const [error, setError] = useState<string | null>(null);
   const [reloadToken, setReloadToken] = useState(0);
 

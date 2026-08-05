@@ -164,6 +164,21 @@ describe('BuildLeaderboardPage', () => {
     await waitFor(() => expect(dpsParsesApi.listParses).toHaveBeenCalled());
   });
 
+  /**
+   * An unrecognised ?class= would leave the toggle group with nothing selected
+   * and fire a request for a class that cannot exist.
+   */
+  it('clamps an unknown class param instead of querying for it', async () => {
+    renderPage('/build-leaderboard?tab=class&class=NotAClass');
+
+    await waitFor(() => expect(dpsParsesApi.listParses).toHaveBeenCalled());
+
+    const calls = (dpsParsesApi.listParses as jest.Mock).mock.calls;
+    calls.forEach(([opts]) => expect(opts.esoClass).not.toBe('NotAClass'));
+    // Falls back to the first known class.
+    expect(calls[calls.length - 1][0].esoClass).toBe('Arcanist');
+  });
+
   it('switches to the class tab and queries by class', async () => {
     renderPage('/build-leaderboard?tab=class&class=Warden');
 
