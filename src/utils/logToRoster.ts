@@ -20,7 +20,6 @@ import {
   GREEN_CHAMPION_POINTS,
 } from '../types/abilities';
 import type { CombatantAura } from '../types/combatlogEvents';
-import { WeaponType } from '../types/playerDetails';
 import type { PlayerGear, PlayerTalent } from '../types/playerDetails';
 import {
   ALL_5PIECE_SETS,
@@ -155,7 +154,7 @@ function categorizeSets(gear: LogGearItem[]): {
       typeof item.slot === 'number' &&
       isWeaponSlot(item.slot) &&
       item.type !== undefined &&
-      isAnyTwoHandedWeapon(item.type as WeaponType);
+      isAnyTwoHandedWeapon(item.type);
     const pieceCount = isTwoHanded ? 2 : 1;
     rawCountMap.set(item.setName, (rawCountMap.get(item.setName) ?? 0) + pieceCount);
     if (isPerfected(item.setName)) {

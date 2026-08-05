@@ -645,7 +645,9 @@ describe('damageReductionUtils', () => {
       const gear = new Array(14).fill(null);
       const invalidGear = {
         ...createMockGearPiece(ArmorType.HEAVY),
-        type: 'INVALID' as unknown as ArmorType,
+        // Deliberately non-numeric: `type` is a raw code, so this exercises the
+        // runtime guard rather than a value the type system could have caught.
+        type: 'INVALID' as unknown as number,
       };
       gear[GearSlot.CHEST] = invalidGear;
 

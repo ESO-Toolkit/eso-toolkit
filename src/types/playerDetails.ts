@@ -30,6 +30,10 @@ export enum GearSlot {
   BACKUP_OFF_HAND = 13,
 }
 
+/**
+ * Armor weight codes as reported by ESO Logs. Named constants for comparison
+ * only — see the note on {@link GearType}; not an exhaustive domain.
+ */
 export enum ArmorType {
   LIGHT = 1,
   MEDIUM = 2,
@@ -37,6 +41,14 @@ export enum ArmorType {
   JEWELRY = 4,
 }
 
+/**
+ * Weapon type codes as reported by ESO Logs. Named constants for comparison
+ * only — see the note on {@link GearType}; not an exhaustive domain.
+ *
+ * NOTE: these values overlap ArmorType numerically (AXE=1=LIGHT,
+ * TWO_HANDED_SWORD=4=JEWELRY), so callers must gate on the gear slot before
+ * interpreting a type code — see `isBodyArmorSlot` / `isWeaponSlot`.
+ */
 export enum WeaponType {
   AXE = 1,
   MACE = 2,
@@ -52,8 +64,22 @@ export enum WeaponType {
   LIGHTNING_STAFF = 15,
 }
 
+/**
+ * The gear type codes this app has names for. Deliberately NOT the type of
+ * `PlayerGear.type`: real log payloads (and the ESO Logs characterRankings API,
+ * which omits item type entirely and yields 0) carry codes outside this union.
+ * Use it when you genuinely hold a known constant; read raw values as `number`.
+ */
 export type GearType = WeaponType | ArmorType;
 
+/**
+ * The gear trait codes this app reasons about. ESO has ~30 traits and logs
+ * report all of them (plus 0 for "no trait / not reported"), so this enum is a
+ * named-constant lookup for specific comparisons — NOT the domain of
+ * `PlayerGear.trait`. Full code→name decoding lives in `TRAIT_NAMES`
+ * (`src/utils/gearMappings.ts`); add a member here only when code needs to
+ * compare against that trait by name.
+ */
 export enum GearTrait {
   SHARPENED = 32,
   REINFORCED = 8,
@@ -66,11 +92,17 @@ export interface PlayerGear {
   icon: string;
   name?: string;
   championPoints: number;
-  trait: GearTrait;
+  /** Raw ESO trait code; 0 = no trait / not reported. Compare via {@link GearTrait}. */
+  trait: number;
   enchantType: number;
   enchantQuality: number;
   setID: number;
-  type: GearType;
+  /**
+   * Raw ESO gear type code; 0 = not reported (the characterRankings API never
+   * reports it). Compare via {@link WeaponType} / {@link ArmorType}, gating on
+   * the slot first because the two enums share numeric values.
+   */
+  type: number;
   setName?: string;
   flags?: number;
 }

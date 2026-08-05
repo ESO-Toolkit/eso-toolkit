@@ -40,7 +40,7 @@ export function isPerfectedGear(gear: PlayerGear): boolean {
 
 export function isDoubleSetCount(gear: PlayerGear, slot: number, allGear: PlayerGear[]): boolean {
   return (
-    DOUBLE_SET_TYPES.has(gear.type as WeaponType) &&
+    DOUBLE_SET_TYPES.has(gear.type) &&
     ((slot === GearSlot.MAIN_HAND && allGear[GearSlot.OFF_HAND].id === 0) ||
       (slot === GearSlot.BACKUP_MAIN_HAND && allGear[GearSlot.BACKUP_OFF_HAND].id === 0))
   );
@@ -267,7 +267,7 @@ export function countOneHandedSharpenedWeapons(combatantInfo: CombatantInfoEvent
       if (
         weapon &&
         weapon.id !== 0 &&
-        isOneHandedWeapon(weapon.type as WeaponType) &&
+        isOneHandedWeapon(weapon.type) &&
         weapon.trait === GearTrait.SHARPENED
       ) {
         count++;
@@ -292,7 +292,7 @@ export function hasTwoHandedSharpenedWeapon(combatantInfo: CombatantInfoEvent): 
       if (
         weapon &&
         weapon.id !== 0 &&
-        isTwoHandedWeapon(weapon.type as WeaponType) &&
+        isTwoHandedWeapon(weapon.type) &&
         weapon.trait === GearTrait.SHARPENED
       ) {
         return true;
@@ -402,10 +402,10 @@ export function countDualWieldWeapons(combatantInfo: CombatantInfoEvent | null):
       if (
         mainHandWeapon &&
         mainHandWeapon.id !== 0 &&
-        isOneHandedWeapon(mainHandWeapon.type as WeaponType) &&
+        isOneHandedWeapon(mainHandWeapon.type) &&
         offHandWeapon &&
         offHandWeapon.id !== 0 &&
-        isOneHandedWeapon(offHandWeapon.type as WeaponType)
+        isOneHandedWeapon(offHandWeapon.type)
       ) {
         // Count both weapons in the dual wield setup
         count += 2;
