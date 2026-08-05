@@ -774,7 +774,11 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
                   onClick={() => setLocalTargetIds([])}
                   onKeyDown={handleChipKeyDown(() => setLocalTargetIds([]))}
                   aria-label="Show all targets"
-                  aria-pressed={localTargetIds === null}
+                  // Must track the DATA path, not just `null`: clicking this
+                  // chip sets localTargetIds to [], which renders all targets,
+                  // so keying off null alone told screen readers "not selected"
+                  // at the exact moment All became active.
+                  aria-pressed={effectiveTargetIds.size === 0}
                   sx={{
                     height: 30,
                     borderRadius: '15px',
