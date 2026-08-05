@@ -25,8 +25,16 @@ export type FeatureWeights = Record<FeatureGroupKey, number>;
 /**
  * One parse reduced to the axes clustering compares.
  *
- * Set and ability IDs are already canonicalized (perfected sets and ability morphs
- * collapsed onto their base) so the distance function is pure arithmetic.
+ * Set ids are canonicalized (perfected collapsed onto base) so the distance
+ * function is pure arithmetic.
+ *
+ * Ability ids are carried at BOTH resolutions, on purpose. `frontBar`/`backBar`
+ * keep the exact, still-morphed ids; only `frontBarBase`/`backBarBase` collapse
+ * morphs. The distance function needs both: two players running opposite morphs
+ * of the same skill are more alike than two running unrelated skills, but they
+ * are not identical, and collapsing the exact ids would erase that distinction.
+ * Do not "fix" the bars to be canonicalized — it silently flattens morph choice,
+ * which is often the only thing separating two archetypes.
  */
 export interface ParseFeatureVector {
   parseId: string;

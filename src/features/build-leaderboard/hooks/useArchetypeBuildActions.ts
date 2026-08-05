@@ -18,7 +18,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { saveBuild } from '../../../store/saved_builds/savedBuildsSlice';
 import type { GearTrait, GearType, PlayerGear, PlayerTalent } from '../../../types/playerDetails';
-import type { ItemQuality } from '../../../utils/gearUtilities';
+import { ItemQuality } from '../../../utils/gearUtilities';
 import { playerToBuild } from '../../../utils/playerToBuild';
 import type { Build } from '../../build-editor/types/build.types';
 import { dpsParsesApi } from '../api/dpsParsesApi';
@@ -29,7 +29,7 @@ import type { DpsParseBuildResponse } from '../types/dpsParses.types';
  * `characterRankings` reports enchant quality but not item quality; every top
  * parse is gold in practice, and this only affects display.
  */
-const ASSUMED_ITEM_QUALITY = 5;
+const ASSUMED_ITEM_QUALITY = ItemQuality.LEGENDARY;
 
 /**
  * Map the stored combatant payload onto the shape `playerToBuild` consumes.
@@ -44,7 +44,7 @@ function toExtractionData(response: DpsParseBuildResponse): Parameters<typeof pl
   const gear: PlayerGear[] = response.combatant.gear.map((piece) => ({
     id: piece.itemId,
     slot: piece.slot,
-    quality: ASSUMED_ITEM_QUALITY as ItemQuality,
+    quality: ASSUMED_ITEM_QUALITY,
     icon: piece.icon ?? '',
     name: piece.name,
     championPoints: piece.cp ?? 160,

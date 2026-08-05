@@ -6,7 +6,7 @@
  */
 
 import { Alert, Box, Button, LinearProgress, Skeleton, Stack, Typography } from '@mui/material';
-import React, { useRef, useState } from 'react';
+import React, { useState } from 'react';
 
 import { MetricPill } from '../../../components/MetricPill';
 import type { BuildCluster, ClusterBuildsResult } from '../types/clustering.types';
@@ -89,11 +89,18 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
   // Reset whenever the clustered result changes. Cluster ids are positional
   // ('c0', 'c1', …) and get reused across runs, so an id held over from the
   // previous encounter or class would expand a completely unrelated archetype.
+  //
+  // This is React's documented "adjust state when a prop changes" form, not an
+  // effect: React restarts the render before painting, so the wrong card never
+  // reaches the screen, whereas an effect would flash it for a frame. The
+  // previous result is tracked in state rather than a ref deliberately — a ref
+  // mutated during render survives a render that concurrent React discards,
+  // which would desync it from the state it guards.
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const lastResult = useRef(result);
-  if (lastResult.current !== result) {
-    lastResult.current = result;
-    if (expandedId !== null) setExpandedId(null);
+  const [lastResult, setLastResult] = useState(result);
+  if (lastResult !== result) {
+    setLastResult(result);
+    setExpandedId(null);
   }
 
   if (error) {

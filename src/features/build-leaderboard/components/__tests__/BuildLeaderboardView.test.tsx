@@ -213,6 +213,59 @@ describe('BuildLeaderboardView happy path', () => {
     await waitFor(() => expect(detailCount()).toBe(collapsed));
   });
 
+  /**
+   * The reset runs during render, which is React's documented form for adjusting
+   * state on a prop change. StrictMode double-invokes render, so if that were
+   * unsafe here it would show up as a warning or a wrong result — this pins that
+   * it does neither, and is the evidence for keeping it out of an effect.
+   */
+  it('resets safely under StrictMode double-rendering', async () => {
+    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      const { parses, result } = clusteredFixture();
+      const view = (
+        nextParses: DpsParse[],
+        nextResult: ClusterBuildsResult,
+      ): React.ReactElement => (
+        <React.StrictMode>
+          <ThemeProvider theme={theme}>
+            <BuildLeaderboardView
+              parses={nextParses}
+              result={nextResult}
+              loading={false}
+              clustering={false}
+              clusterProgress={0}
+              error={null}
+              tooFewParses={false}
+            />
+          </ThemeProvider>
+        </React.StrictMode>
+      );
+
+      const { rerender } = render(view(parses, result));
+      const detailCount = (): number => screen.queryAllByText(/consistency/i).length;
+      const collapsed = detailCount();
+
+      const [card] = screen.getAllByTestId('archetype-card');
+      await userEvent.click(within(card).getByRole('button', { name: /details/i }));
+      expect(detailCount()).toBe(collapsed + 1);
+
+      resetFixtureIds();
+      const nextParses = makeThreeArchetypeFixture().slice(0, 35);
+      rerender(
+        view(
+          nextParses,
+          clusterBuilds({ vectors: extractFeatureVectors(nextParses, EMPTY_CANONICAL_MAPS) }),
+        ),
+      );
+
+      await waitFor(() => expect(detailCount()).toBe(collapsed));
+      expect(consoleError).not.toHaveBeenCalled();
+    } finally {
+      consoleError.mockRestore();
+    }
+  });
+
   it('expands a sibling card to reveal its detail', async () => {
     const { parses, result } = clusteredFixture();
     renderView({ parses, result });
