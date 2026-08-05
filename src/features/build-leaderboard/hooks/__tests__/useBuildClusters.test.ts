@@ -309,4 +309,36 @@ describe('useBuildClusters', () => {
     });
     expect(result.current.loading).toBe(false);
   });
+  /**
+   * Reloading the parses is not a retry for a clustering failure. The effect is
+   * keyed on `cacheKey`, derived from the parse contents, so a refetch that
+   * returns the same rows yields the same key and never re-runs — and the error
+   * path writes nothing to the cache, so the page would sit on the error until a
+   * full reload. The rerender below deliberately passes a NEW array holding the
+   * SAME parses, which is exactly what a refetch produces.
+   */
+  it('re-runs clustering on demand when the parses are unchanged', async () => {
+    const parses = makeThreeArchetypeFixture();
+
+    mockedRun.mockRejectedValueOnce(new Error('worker died'));
+    const { result, rerender } = renderHook(
+      ({ input }: { input: DpsParse[] }) => useBuildClusters(input),
+      { initialProps: { input: parses } },
+    );
+    await waitFor(() => expect(result.current.error).toBe('worker died'));
+
+    // A parses reload: new array identity, identical contents. On its own this
+    // must NOT clear the error, which is what made the Retry button a no-op.
+    mockedRun.mockResolvedValue({ ...EMPTY_RESULT, k: 4 });
+    rerender({ input: [...parses] });
+    expect(result.current.error).toBe('worker died');
+    expect(result.current.result).toBeNull();
+
+    await act(async () => {
+      result.current.recluster();
+    });
+
+    await waitFor(() => expect(result.current.result?.k).toBe(4));
+    expect(result.current.error).toBeNull();
+  });
 });

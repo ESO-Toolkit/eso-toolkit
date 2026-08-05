@@ -6,7 +6,7 @@
  * be pulled into a worker bundle.
  */
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { buildCanonicalMaps, setDisplayName } from '../clustering/canonicalization';
 import { MIN_PARSES_TO_CLUSTER } from '../clustering/clusterBuilds';
@@ -28,6 +28,17 @@ export interface UseBuildClustersResult {
   error: string | null;
   /** True when there is too little data for clustering to mean anything. */
   tooFewParses: boolean;
+  /**
+   * Re-run clustering over the parses already loaded.
+   *
+   * Needed because reloading the parses is NOT a retry for a clustering
+   * failure: the effect is keyed on `cacheKey`, which is derived from the parse
+   * contents, so a refetch that returns the same rows produces the same key and
+   * the effect never fires again. Nothing is written to the cache on the error
+   * path either, so without this the page stays on the clustering error until a
+   * full reload.
+   */
+  recluster: () => void;
 }
 
 /** Ability and set names pulled from the parses themselves, for trait labels. */
@@ -130,6 +141,7 @@ export function useBuildClusters(
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [reclusterToken, setReclusterToken] = useState(0);
 
   const tooFewParses = parses.length > 0 && parses.length < MIN_PARSES_TO_CLUSTER;
 
@@ -245,7 +257,9 @@ export function useBuildClusters(
     // `parses` is covered by cacheKey; depending on the array itself would rerun
     // on every render.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cacheKey, tooFewParses, resolveBaseAbilityId]);
+  }, [cacheKey, tooFewParses, resolveBaseAbilityId, reclusterToken]);
 
-  return { result, loading, progress, error, tooFewParses };
+  const recluster = useCallback(() => setReclusterToken((token) => token + 1), []);
+
+  return { result, loading, progress, error, tooFewParses, recluster };
 }

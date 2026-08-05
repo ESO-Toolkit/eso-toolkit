@@ -9,9 +9,29 @@ import { MemoryRouter } from 'react-router-dom';
 import savedBuildsReducer from '../../../store/saved_builds/savedBuildsSlice';
 import { dpsParsesApi } from '../api/dpsParsesApi';
 import { BuildLeaderboardPage } from '../BuildLeaderboardPage';
+import {
+  makeThreeArchetypeFixture,
+  resetFixtureIds,
+} from '../clustering/__fixtures__/dpsParses.fixture';
+import { runBuildClustering } from '../clustering/runBuildClustering';
 import type { DpsEncounterSummary } from '../types/dpsParses.types';
 
 jest.mock('notistack', () => ({ useSnackbar: () => ({ enqueueSnackbar: jest.fn() }) }));
+
+/**
+ * Wrapped, not replaced: the default delegates to the real clustering so these
+ * page tests keep exercising production output, and only the failure test
+ * overrides it. `resetMocks: true` wipes any implementation set inside the
+ * factory, so the delegation is re-established in beforeEach.
+ */
+jest.mock('../clustering/runBuildClustering', () => ({
+  __esModule: true,
+  runBuildClustering: jest.fn(),
+}));
+
+const actualClustering = jest.requireActual<typeof import('../clustering/runBuildClustering')>(
+  '../clustering/runBuildClustering',
+);
 
 const theme = createTheme();
 
@@ -61,6 +81,9 @@ function renderPage(initialEntry = '/build-leaderboard') {
 
 beforeEach(() => {
   jest.restoreAllMocks();
+  (runBuildClustering as jest.MockedFunction<typeof runBuildClustering>).mockImplementation(
+    actualClustering.runBuildClustering,
+  );
   jest.spyOn(dpsParsesApi, 'listEncounters').mockResolvedValue({ encounters: ENCOUNTERS });
   jest
     .spyOn(dpsParsesApi, 'listParses')
@@ -188,5 +211,32 @@ describe('BuildLeaderboardPage', () => {
         expect.anything(),
       ),
     );
+  });
+  /**
+   * Retry has to re-run the step that failed. When clustering is what broke,
+   * refetching the parses is not a retry: identical rows produce an identical
+   * cache key, so the clustering effect never fires again and the button does
+   * nothing at all until a full page reload.
+   */
+  it('recovers from a clustering failure without refetching the parses', async () => {
+    resetFixtureIds();
+    const parses = makeThreeArchetypeFixture();
+    jest
+      .spyOn(dpsParsesApi, 'listParses')
+      .mockResolvedValue({ parses, total: parses.length, limit: 100, offset: 0 });
+
+    const clusterSpy = runBuildClustering as jest.MockedFunction<typeof runBuildClustering>;
+    clusterSpy.mockRejectedValueOnce(new Error('clustering exploded'));
+
+    renderPage();
+
+    await screen.findByText(/clustering exploded/);
+    const fetchCalls = (dpsParsesApi.listParses as jest.Mock).mock.calls.length;
+
+    await userEvent.click(screen.getByRole('button', { name: /retry/i }));
+
+    await waitFor(() => expect(screen.getByTestId('start-here-card')).toBeInTheDocument());
+    // The parses were never in question, so they must not be requested again.
+    expect((dpsParsesApi.listParses as jest.Mock).mock.calls).toHaveLength(fetchCalls);
   });
 });

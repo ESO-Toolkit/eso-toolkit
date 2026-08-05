@@ -144,6 +144,7 @@ export const BuildLeaderboardPage: React.FC = () => {
     progress,
     error: clusterError,
     tooFewParses,
+    recluster,
   } = useBuildClusters(parses);
 
   const setParam = useCallback(
@@ -173,14 +174,21 @@ export const BuildLeaderboardPage: React.FC = () => {
   const combinedError = encounterTabError ?? error ?? clusterError;
 
   // Retry has to re-run whatever actually failed. Always calling `reload` left a
-  // failed encounters feed unrecoverable without a full page refresh.
+  // failed encounters feed unrecoverable without a full page refresh — and, for a
+  // clustering failure, refetching the parses is not a retry at all: identical
+  // rows produce an identical cache key, so the clustering effect never re-runs
+  // and the button silently does nothing. Each failure gets its own retry.
   const handleRetry = useCallback(() => {
     if (encounterTabError) {
       setEncountersToken((token) => token + 1);
       return;
     }
-    reload();
-  }, [encounterTabError, reload]);
+    if (error) {
+      reload();
+      return;
+    }
+    if (clusterError) recluster();
+  }, [encounterTabError, error, clusterError, reload, recluster]);
 
   return (
     <Container maxWidth="lg" sx={{ py: 3 }}>
