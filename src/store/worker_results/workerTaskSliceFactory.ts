@@ -2,7 +2,7 @@ import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 import { workerManager } from '@/workers';
 import {
-  SharedComputationWorkerTaskType,
+  ReduxBackedWorkerTaskType,
   SharedWorkerInputType,
   SharedWorkerResultType,
 } from '@/workers/SharedWorker';
@@ -60,7 +60,7 @@ const createInitialTaskState = <T>(): WorkerTaskState<T> => ({
 });
 
 // Define the return type separately to avoid circular reference
-type WorkerTaskSliceReturn<T extends SharedComputationWorkerTaskType> = {
+type WorkerTaskSliceReturn<T extends ReduxBackedWorkerTaskType> = {
   actions: {
     startTask: () => PayloadAction<void>;
     updateProgress: (
@@ -87,7 +87,7 @@ type WorkerTaskSliceReturn<T extends SharedComputationWorkerTaskType> = {
 };
 
 // Generic function to create a worker task slice
-export const createWorkerTaskSlice = <T extends SharedComputationWorkerTaskType>(
+export const createWorkerTaskSlice = <T extends ReduxBackedWorkerTaskType>(
   taskName: T,
   createInputHash: (input: SharedWorkerInputType<T>) => string,
 ): WorkerTaskSliceReturn<T> => {

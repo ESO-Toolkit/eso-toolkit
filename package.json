@@ -182,6 +182,7 @@
     "test:all": "jest",
     "test:changed-since": "jest --changedSince=main",
     "test:integration": "jest --config=jest/integration.config.cjs --watchAll=false",
+    "test:worker": "jest --config=jest/worker.config.cjs --watchAll=false",
     "test:integration:watch": "jest --config=jest/integration.config.cjs --watch",
     "test:integration:coverage": "jest --config=jest/integration.config.cjs --coverage --watchAll=false",
     "test:coverage": "cross-env COVERAGE=true jest --coverage --watchAll=false",

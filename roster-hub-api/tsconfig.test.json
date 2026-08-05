@@ -1,0 +1,25 @@
+{
+  // Standalone on purpose — does NOT extend ./tsconfig.json or the repo root.
+  //
+  // ./tsconfig.json emits ES2022 modules for wrangler's bundler and declares only
+  // @cloudflare/workers-types; jest needs CommonJS plus the jest globals. The repo
+  // root config is frontend-shaped (JSX, DOM lib, path aliases) and equally wrong
+  // for a Worker. Extending either would mean overriding more than it inherits.
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022"],
+    "module": "CommonJS",
+    // node10 resolution is deprecated in TS 6 but is what CommonJS + jest needs.
+    // Same opt-out the repo root uses.
+    "ignoreDeprecations": "6.0",
+    "moduleResolution": "node",
+    "types": ["node", "jest"],
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "strict": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "isolatedModules": true
+  },
+  "include": ["src/**/*.ts", "src/**/*.json"]
+}

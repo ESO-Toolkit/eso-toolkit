@@ -17,6 +17,7 @@ const ROUTE_NAMES: Record<string, string> = {
   '/my-reports': 'My Reports',
   '/latest-reports': 'Latest Reports',
   '/leaderboards': 'Leaderboards',
+  '/build-leaderboard': 'Build Leaderboard',
   '/sample-report': 'Sample Report',
   '/privacy': 'Privacy Policy',
   '/terms': 'Terms of Service',

@@ -11,25 +11,80 @@ import type { GearItem } from './esologs-client';
 // Copied from src/types/roster.ts and src/types/abilities.ts.
 // These are the ESO Logs `setID` values (same as the KnownSetIDs enum).
 
-/** Monster sets (2-piece) and mythic sets (1-piece) — go in the monsterSet slot */
-const MONSTER_SET_IDS = new Set([
-  // Quick Assignment monster sets
-  666, 578, 633, 634, 627, 687, 436, 738,
-  // Tank monster sets
-  577, 534,
-  // Healer monster sets
-  166, 576, 436, 738,
-  // Flexible monster sets (Spaulder also appears here)
+// Monster-set ids grouped by the role that wears them. Sets legitimately appear
+// in more than one list; see MONSTER_SET_IDS below for why they stay that way.
+const QUICK_ASSIGNMENT_MONSTER_IDS = [666, 578, 633, 634, 627, 687, 436, 738];
+const TANK_MONSTER_IDS = [577, 534];
+const HEALER_MONSTER_IDS = [166, 576, 436, 738];
+/** Worn across roles rather than belonging to one (Spaulder of Ruin). */
+const FLEXIBLE_MONSTER_IDS = [627];
+/** Mythics worn by support roles — 1-piece, but they occupy the same slot. */
+const SUPPORT_MYTHIC_IDS = [691, 576];
+const DPS_MONSTER_IDS = [
+  163,
+  168,
+  170,
+  183,
+  257,
+  266,
+  274,
+  276,
+  280,
+  350,
+  397,
+  432,
+  458,
+  479,
+  534,
+  620,
+  666,
+  687,
+  738,
+  577,
+  578,
+  633,
+  634,
   627,
-  // Support mythics (heal/tank)
-  691, 576,
-  // DPS monster sets (used as 2-piece by DPS)
-  163, 168, 170, 183, 257, 266, 274, 276, 280, 350, 397, 432, 458, 479, 534, 620, 666, 687, 738,
-  577, 578, 633, 634, 627,
+  // Added from live characterRankings data — these were landing in `additionalSets`
+  // and leaving the monster slot empty. 270 alone accounted for 46 of 88 parses on
+  // one encounter, so the table was materially incomplete.
+  270, // Slimecraw (commonly worn as a 1-piece helm)
+  169, // Valkyn Skoria
+];
+
+/**
+ * Monster sets (2-piece) and mythic sets (1-piece) — go in the monsterSet slot.
+ *
+ * Exported so the DPS-parse signature can recover the real monster set after
+ * pulling a mythic out of this slot: `categorizeGear` assigns a DPS mythic to
+ * `monsterSet` first and never revisits it, leaving the actual monster set in
+ * `additionalSets`.
+ *
+ * Built as a union of the per-role lists rather than one flat literal. The
+ * overlap between them is real — a set can be worn by several roles — so the
+ * lists are the honest representation and the repetition is information, not
+ * noise. Flattened into a single literal it read as an accident, and there was
+ * no way to tell whether an id you were about to add was already covered by
+ * another role's section. This list needs auditing after every patch, so that
+ * distinction matters more here than in most constants.
+ */
+export const MONSTER_SET_IDS = new Set([
+  ...QUICK_ASSIGNMENT_MONSTER_IDS,
+  ...TANK_MONSTER_IDS,
+  ...HEALER_MONSTER_IDS,
+  ...FLEXIBLE_MONSTER_IDS,
+  ...SUPPORT_MYTHIC_IDS,
+  ...DPS_MONSTER_IDS,
 ]);
 
-/** DPS mythic items — go in the monsterSet slot (override monster sets for DPS) */
-const DPS_MYTHIC_IDS = new Set([
+/**
+ * DPS mythic items — go in the monsterSet slot (override monster sets for DPS).
+ *
+ * Exported because the DPS-parse build signature must split mythics back OUT of
+ * `monsterSet`: for clustering they are a distinct build axis, and collapsing them
+ * into the monster slot would make an Oakensoul build look like a Zaan build.
+ */
+export const DPS_MYTHIC_SET_IDS = new Set([
   596, // Death Dealer's Fete
   594, // Harpooner's Wading Kilt
   625, // Markyn Ring of Majesty
@@ -41,8 +96,12 @@ const DPS_MYTHIC_IDS = new Set([
   743, // Huntsman's Warmask
 ]);
 
-/** Arena weapon sets — 2-piece sets from solo/group arenas in weapon slots */
-const ARENA_WEAPON_IDS = new Set([
+/**
+ * Arena weapon sets — 2-piece sets from solo/group arenas in weapon slots.
+ * Exported so the DPS-parse signature can recover the arena set ID; `CategorizedGear`
+ * only carries the display name, which is not stable enough to hash on.
+ */
+export const ARENA_WEAPON_SET_IDS = new Set([
   // Dragonstar Arena
   310, 311, 309, 312,
   // Maelstrom Arena
@@ -115,7 +174,7 @@ export function categorizeGear(gear: GearItem[], isDPS: boolean): CategorizedGea
 
   // 1. Arena weapons
   for (const [setId, { name }] of counts) {
-    if (ARENA_WEAPON_IDS.has(setId)) {
+    if (ARENA_WEAPON_SET_IDS.has(setId)) {
       result.arenaWeapon = name ?? `Arena Set ${setId}`;
       assigned.add(setId);
       break; // Only one arena weapon
@@ -125,7 +184,7 @@ export function categorizeGear(gear: GearItem[], isDPS: boolean): CategorizedGea
   // 2. DPS mythics (only for DPS players)
   if (isDPS) {
     for (const [setId] of counts) {
-      if (DPS_MYTHIC_IDS.has(setId) && !assigned.has(setId)) {
+      if (DPS_MYTHIC_SET_IDS.has(setId) && !assigned.has(setId)) {
         result.monsterSet = setId;
         assigned.add(setId);
         break;

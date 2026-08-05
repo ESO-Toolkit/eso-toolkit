@@ -100,6 +100,11 @@ const LeaderboardLogsPage = React.lazy(() =>
     default: module.LeaderboardLogsPage,
   })),
 );
+const BuildLeaderboardPage = React.lazy(() =>
+  import('./features/build-leaderboard/BuildLeaderboardPage').then((module) => ({
+    default: module.BuildLeaderboardPage,
+  })),
+);
 const FightReplay = React.lazy(() =>
   import('./features/fight_replay/FightReplay').then((module) => ({ default: module.FightReplay })),
 );
@@ -603,6 +608,16 @@ const AppRoutes: React.FC = () => {
                 <ErrorBoundary>
                   <Suspense fallback={<LoadingFallback />}>
                     <LeaderboardLogsPage />
+                  </Suspense>
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="/build-leaderboard"
+              element={
+                <ErrorBoundary>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <BuildLeaderboardPage />
                   </Suspense>
                 </ErrorBoundary>
               }

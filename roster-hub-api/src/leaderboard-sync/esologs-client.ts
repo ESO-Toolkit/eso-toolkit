@@ -64,15 +64,29 @@ async function gql<T>(
 
 // ─── Zone/Encounter Queries ──────────────────────────────────────────────────
 
-interface ZoneEncounter {
+export interface ZoneEncounter {
   id: number;
   name: string;
 }
 
-interface ZoneData {
+export interface ZoneDifficulty {
+  id: number;
+  name: string;
+  sizes: number[];
+}
+
+export interface ZonePartition {
+  id: number;
+  name: string;
+}
+
+export interface ZoneData {
   id: number;
   name: string;
   encounters: ZoneEncounter[];
+  /** Present for the DPS-parse pipeline; the roster sync ignores these. */
+  difficulties?: ZoneDifficulty[];
+  partitions?: ZonePartition[];
 }
 
 interface TrialZonesResponse {
@@ -81,12 +95,17 @@ interface TrialZonesResponse {
   };
 }
 
+// `difficulties` and `partitions` are for the DPS-parse target list. They are
+// cheap scalar fields on a query the cron already makes, so fetching them here
+// avoids a second round trip; the roster sync simply doesn't read them.
 const GET_TRIAL_ZONES = `{
   worldData {
     zones {
       id
       name
       encounters { id name }
+      difficulties { id name sizes }
+      partitions { id name }
     }
   }
 }`;
@@ -247,6 +266,110 @@ export async function fetchPlayerDetails(
     };
   } catch {
     // Report might be private or deleted
+    return null;
+  }
+}
+
+// ─── Character Rankings (top DPS parses) ─────────────────────────────────────
+
+export interface CharacterRankingsParams {
+  encounterId: number;
+  /** Omit for the API default. */
+  difficulty?: number;
+  /** Omit for the latest partition, which is what "current meta" means. */
+  partition?: number;
+  page?: number;
+  /**
+   * Always pass 'dps' explicitly. The probe found that `default` returned entries
+   * with combat info stripped on an encounter where `dps` returned it in full.
+   */
+  metric?: 'dps' | 'bossdps' | 'default';
+  className?: string;
+  size?: number;
+}
+
+interface CharacterRankingsResponse {
+  worldData: {
+    encounter: {
+      id: number;
+      name: string;
+      characterRankings: unknown;
+    } | null;
+  };
+}
+
+const GET_CHARACTER_RANKINGS = `
+query (
+  $encounterId: Int!
+  $difficulty: Int
+  $partition: Int
+  $page: Int
+  $metric: CharacterRankingMetricType
+  $className: String
+  $size: Int
+) {
+  worldData {
+    encounter(id: $encounterId) {
+      id
+      name
+      characterRankings(
+        difficulty: $difficulty
+        partition: $partition
+        page: $page
+        metric: $metric
+        className: $className
+        size: $size
+        includeCombatantInfo: true
+      )
+    }
+  }
+}`;
+
+/**
+ * Fetch one page of top individual parses, gear and skill bars included.
+ *
+ * Returns the RAW `characterRankings` value — it is an untyped JSON scalar, so all
+ * interpretation lives in character-rankings-parser.ts.
+ */
+export async function fetchCharacterRankings(
+  token: string,
+  params: CharacterRankingsParams,
+): Promise<unknown> {
+  const data = await gql<CharacterRankingsResponse>(token, GET_CHARACTER_RANKINGS, {
+    encounterId: params.encounterId,
+    difficulty: params.difficulty,
+    partition: params.partition,
+    page: params.page ?? 1,
+    metric: params.metric ?? 'dps',
+    className: params.className,
+    size: params.size,
+  });
+
+  return data.worldData?.encounter?.characterRankings ?? null;
+}
+
+// ─── Rate limit ──────────────────────────────────────────────────────────────
+
+export interface RateLimitSnapshot {
+  limitPerHour: number;
+  pointsSpentThisHour: number;
+  pointsResetIn: number;
+}
+
+const GET_RATE_LIMIT = `{ rateLimitData { limitPerHour pointsSpentThisHour pointsResetIn } }`;
+
+/**
+ * Current API point budget, or null if unavailable.
+ *
+ * Measured cost is ~1.1 points per characterRankings page against a 9000/hour
+ * limit, so this is a guard rail rather than a real constraint — callers should
+ * degrade to plain 429 backoff when it returns null rather than refusing to run.
+ */
+export async function fetchRateLimitData(token: string): Promise<RateLimitSnapshot | null> {
+  try {
+    const data = await gql<{ rateLimitData?: RateLimitSnapshot }>(token, GET_RATE_LIMIT);
+    return data.rateLimitData ?? null;
+  } catch {
     return null;
   }
 }

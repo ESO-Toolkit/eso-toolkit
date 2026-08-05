@@ -2,7 +2,7 @@ import { configureStore, combineReducers } from '@reduxjs/toolkit';
 
 import { workerManager } from '@/workers';
 import {
-  SharedComputationWorkerTaskType,
+  ReduxBackedWorkerTaskType,
   SharedWorkerInputType,
   SharedWorkerResultType,
 } from '@/workers/SharedWorker';
@@ -25,7 +25,7 @@ jest.mock('@/workers', () => ({
 describe('workerTaskSliceFactory', () => {
   let mockWorkerManager: jest.Mocked<typeof workerManager>;
 
-  const mockTaskName = 'calculateActorPositions' as SharedComputationWorkerTaskType;
+  const mockTaskName = 'calculateActorPositions' as ReduxBackedWorkerTaskType;
   const mockInput = { reportCode: 'test', fightId: 1 } as SharedWorkerInputType<
     typeof mockTaskName
   >;

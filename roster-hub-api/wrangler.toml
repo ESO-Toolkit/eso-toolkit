@@ -23,9 +23,12 @@ binding = "AI"
 #   ESOLOGS_CLIENT_ID        — ESO Logs OAuth client ID (leaderboard sync + GQL proxy)
 #   ESOLOGS_CLIENT_SECRET    — ESO Logs OAuth client secret (leaderboard sync + GQL proxy)
 
-# Cleanup expired temp builds daily at 04:00 UTC
+# 04:00 UTC — temp-build cleanup + #1 roster sync + DPS parse ingest
+# 16:00 UTC — DPS parse ingest only
+# Two DPS passes a day cover the full ~35-boss rotation (20 encounters per run).
+# The handler branches on `event.cron`; see the `scheduled` export in src/index.ts.
 [triggers]
-crons = ["0 4 * * *"]
+crons = ["0 4 * * *", "0 16 * * *"]
 
 [vars]
 ALLOWED_ORIGINS = "https://esotk.com,https://www.esotk.com,https://esohelpers.com,https://www.esohelpers.com,https://eso-toolkit.github.io,http://localhost:3000,http://localhost:3001,http://localhost:3002,http://localhost:3003,http://localhost:5173"

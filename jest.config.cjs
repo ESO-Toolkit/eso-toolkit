@@ -55,10 +55,18 @@ module.exports = {
   },
 
   // Test file patterns
-  testMatch: [
-    '<rootDir>/src/**/__tests__/**/*.(test|spec).{js,jsx,ts,tsx}',
-    '<rootDir>/src/**/*.(test|spec).{js,jsx,ts,tsx}',
-  ],
+  //
+  // Scoped via `roots` with RELATIVE testMatch globs. An absolute `<rootDir>/src/**`
+  // glob silently matches zero files whenever the checkout lives under a
+  // dot-directory — which is exactly the case for agent worktrees under
+  // `.claude/worktrees/`, since micromatch will not match a leading-dot path
+  // segment by default. Combined with `npm test`'s `--passWithNoTests`, that made
+  // the suite exit green while running nothing at all.
+  roots: ['<rootDir>/src'],
+  // Brace alternation rather than `(test|spec)`. Both match under micromatch, but
+  // the parenthesised form reads like a literal to anyone scanning it and has
+  // repeatedly been mistaken for one.
+  testMatch: ['**/__tests__/**/*.{test,spec}.{js,jsx,ts,tsx}', '**/*.{test,spec}.{js,jsx,ts,tsx}'],
 
   // Module file extensions
   moduleFileExtensions: [

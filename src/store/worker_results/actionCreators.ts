@@ -1,4 +1,4 @@
-import { SharedComputationWorkerTaskType, SharedWorkerInputType } from '@/workers/SharedWorker';
+import { ReduxBackedWorkerTaskType, SharedWorkerInputType } from '@/workers/SharedWorker';
 
 import {
   actorPositionsActions,
@@ -55,8 +55,8 @@ const taskActionsMap = {
 
 // Map task names to their corresponding thunk actions
 const taskThunkMap: Record<
-  SharedComputationWorkerTaskType,
-  (input: SharedWorkerInputType<SharedComputationWorkerTaskType>) => unknown
+  ReduxBackedWorkerTaskType,
+  (input: SharedWorkerInputType<ReduxBackedWorkerTaskType>) => unknown
 > = {
   calculateActorPositions: executeActorPositionsTask,
   calculateBuffLookup: executeBuffLookupTask,
@@ -76,21 +76,21 @@ const taskThunkMap: Record<
 } as const;
 
 // Utility functions to get actions for a specific task
-export const getTaskActions = <T extends SharedComputationWorkerTaskType>(
+export const getTaskActions = <T extends ReduxBackedWorkerTaskType>(
   taskName: T,
 ): (typeof taskActionsMap)[T] => {
   return taskActionsMap[taskName];
 };
 
 // Utility function to get thunk action for a specific task
-export const getTaskThunk = <T extends SharedComputationWorkerTaskType>(
+export const getTaskThunk = <T extends ReduxBackedWorkerTaskType>(
   taskName: T,
 ): (typeof taskThunkMap)[T] => {
   return taskThunkMap[taskName];
 };
 
 // Helper function to execute a task using the thunk
-export const executeWorkerTask = <T extends SharedComputationWorkerTaskType>(
+export const executeWorkerTask = <T extends ReduxBackedWorkerTaskType>(
   taskName: T,
   input: SharedWorkerInputType<T>,
 ): unknown => {
@@ -99,40 +99,40 @@ export const executeWorkerTask = <T extends SharedComputationWorkerTaskType>(
 };
 
 // Helper functions for common operations (using regular actions, not thunks)
-export const createStartTaskAction = <T extends SharedComputationWorkerTaskType>(
+export const createStartTaskAction = <T extends ReduxBackedWorkerTaskType>(
   taskName: T,
 ): { payload: void; type: string } => {
   return getTaskActions(taskName).startTask();
 };
 
-export const createProgressUpdateAction = <T extends SharedComputationWorkerTaskType>(
+export const createProgressUpdateAction = <T extends ReduxBackedWorkerTaskType>(
   taskName: T,
   progress: number,
 ): { payload: { progress: number }; type: string } => {
   return getTaskActions(taskName).updateProgress({ progress });
 };
 
-export const createCompleteTaskAction = <T extends SharedComputationWorkerTaskType>(
+export const createCompleteTaskAction = <T extends ReduxBackedWorkerTaskType>(
   taskName: T,
   result: unknown,
 ): { payload: { result: unknown }; type: string } => {
   return getTaskActions(taskName).completeTask({ result: result as never });
 };
 
-export const createFailTaskAction = <T extends SharedComputationWorkerTaskType>(
+export const createFailTaskAction = <T extends ReduxBackedWorkerTaskType>(
   taskName: T,
   error: string,
 ): { payload: { error: string }; type: string } => {
   return getTaskActions(taskName).failTask({ error });
 };
 
-export const createClearTaskAction = <T extends SharedComputationWorkerTaskType>(
+export const createClearTaskAction = <T extends ReduxBackedWorkerTaskType>(
   taskName: T,
 ): { payload: void; type: string } => {
   return getTaskActions(taskName).clearResult();
 };
 
-export const createResetTaskAction = <T extends SharedComputationWorkerTaskType>(
+export const createResetTaskAction = <T extends ReduxBackedWorkerTaskType>(
   taskName: T,
 ): { payload: void; type: string } => {
   return getTaskActions(taskName).resetTask();
