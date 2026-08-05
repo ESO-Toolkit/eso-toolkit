@@ -17,7 +17,7 @@ import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 
 import { saveBuild } from '../../../store/saved_builds/savedBuildsSlice';
-import type { GearTrait, GearType, PlayerGear, PlayerTalent } from '../../../types/playerDetails';
+import type { PlayerGear, PlayerTalent } from '../../../types/playerDetails';
 import { ItemQuality } from '../../../utils/gearUtilities';
 import { playerToBuild } from '../../../utils/playerToBuild';
 import type { Build } from '../../build-editor/types/build.types';
@@ -35,8 +35,9 @@ const ASSUMED_ITEM_QUALITY = ItemQuality.LEGENDARY;
  * Map the stored combatant payload onto the shape `playerToBuild` consumes.
  *
  * Two fields are absent upstream and defaulted here:
- *  - `type` (GearType): not returned. convertGear is called with
- *    `resolveWeaponType`, so it infers weapon types from the item itself.
+ *  - `type`: not returned, so it is left at 0 ("not reported"). convertGear is
+ *    called with `resolveWeaponType`, so it infers weapon types from the item
+ *    itself.
  *  - `quality`: the API's `quality` field is a bar designation
  *    ("primary"/"backup"), NOT an item tier — deliberately not forwarded.
  */
@@ -48,11 +49,11 @@ function toExtractionData(response: DpsParseBuildResponse): Parameters<typeof pl
     icon: piece.icon ?? '',
     name: piece.name,
     championPoints: piece.cp ?? 160,
-    trait: (piece.trait ?? 0) as GearTrait,
+    trait: piece.trait ?? 0,
     enchantType: piece.enchantType ?? 0,
     enchantQuality: piece.enchantQuality ?? 0,
     setID: piece.setId,
-    type: 0 as GearType,
+    type: 0,
     setName: response.combatant.sets.find((set) => set.setId === piece.setId)?.name,
   }));
 
