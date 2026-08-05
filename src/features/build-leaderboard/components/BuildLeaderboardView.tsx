@@ -6,7 +6,7 @@
  */
 
 import { Alert, Box, Button, LinearProgress, Skeleton, Stack, Typography } from '@mui/material';
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 
 import { MetricPill } from '../../../components/MetricPill';
 import type { BuildCluster, ClusterBuildsResult } from '../types/clustering.types';
@@ -86,7 +86,15 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
   pendingAction,
   emptyMessage = 'No top parses recorded here yet.',
 }) => {
+  // Reset whenever the clustered result changes. Cluster ids are positional
+  // ('c0', 'c1', …) and get reused across runs, so an id held over from the
+  // previous encounter or class would expand a completely unrelated archetype.
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const lastResult = useRef(result);
+  if (lastResult.current !== result) {
+    lastResult.current = result;
+    if (expandedId !== null) setExpandedId(null);
+  }
 
   if (error) {
     return (

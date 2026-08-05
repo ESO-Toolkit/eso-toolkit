@@ -1,17 +1,17 @@
 import { ThemeProvider, createTheme } from '@mui/material';
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
-import { clusterBuilds } from '../../clustering/clusterBuilds';
-import { EMPTY_CANONICAL_MAPS, extractFeatureVectors } from '../../clustering/featureExtraction';
 import {
   makeThreeArchetypeFixture,
   resetFixtureIds,
 } from '../../clustering/__fixtures__/dpsParses.fixture';
-import { BuildLeaderboardView } from '../BuildLeaderboardView';
+import { clusterBuilds } from '../../clustering/clusterBuilds';
+import { EMPTY_CANONICAL_MAPS, extractFeatureVectors } from '../../clustering/featureExtraction';
 import type { ClusterBuildsResult } from '../../types/clustering.types';
 import type { DpsParse } from '../../types/dpsParses.types';
+import { BuildLeaderboardView } from '../BuildLeaderboardView';
 
 const theme = createTheme();
 
@@ -164,6 +164,53 @@ describe('BuildLeaderboardView happy path', () => {
     expect(within(featured).getByRole('button', { name: /saving/i })).toBeDisabled();
     expect(within(featured).queryByRole('button', { name: /opening/i })).not.toBeInTheDocument();
     expect(within(featured).getByRole('button', { name: /open in build editor/i })).toBeDisabled();
+  });
+
+  /**
+   * Cluster ids are positional ('c0', 'c1', …) and are reused by every run, so a
+   * held-over id survives a change of encounter or class and silently expands an
+   * unrelated archetype.
+   */
+  it('collapses the expanded card when the clustered result changes', async () => {
+    const { parses, result } = clusteredFixture();
+    const { rerender } = renderView({ parses, result });
+
+    // The featured card always shows its detail, so count rather than assert presence.
+    const detailCount = (): number => screen.queryAllByText(/consistency/i).length;
+    const collapsed = detailCount();
+
+    const [card] = screen.getAllByTestId('archetype-card');
+    await userEvent.click(within(card).getByRole('button', { name: /details/i }));
+    expect(detailCount()).toBe(collapsed + 1);
+
+    // Simulate switching to another encounter: a different parse set, a fresh
+    // result object — but ids starting from 'c0' all over again.
+    resetFixtureIds();
+    const nextParses = makeThreeArchetypeFixture().slice(0, 35);
+    const nextResult = clusterBuilds({
+      vectors: extractFeatureVectors(nextParses, EMPTY_CANONICAL_MAPS),
+    });
+    // The premise of the bug: the two runs share ids while describing different builds.
+    const nextIds = new Set(nextResult.clusters.map((c) => c.id));
+    expect(result.clusters.some((c) => nextIds.has(c.id))).toBe(true);
+
+    rerender(
+      <ThemeProvider theme={theme}>
+        <BuildLeaderboardView
+          parses={nextParses}
+          result={nextResult}
+          loading={false}
+          clustering={false}
+          clusterProgress={0}
+          error={null}
+          tooFewParses={false}
+        />
+      </ThemeProvider>,
+    );
+
+    expect(screen.getAllByTestId('archetype-card').length).toBeGreaterThan(0);
+    // Collapse unmounts on the exit transition, so the detail leaves the DOM a tick later.
+    await waitFor(() => expect(detailCount()).toBe(collapsed));
   });
 
   it('expands a sibling card to reveal its detail', async () => {
