@@ -4,7 +4,10 @@ import type { Theme } from '@mui/material/styles';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { LOCAL_STORAGE_ACCESS_TOKEN_KEY } from '../features/auth/auth';
+import {
+  LOCAL_STORAGE_ACCESS_TOKEN_KEY,
+  LOCAL_STORAGE_REFRESH_TOKEN_KEY,
+} from '../features/auth/auth';
 import { useAuth } from '../features/auth/AuthContext';
 
 /**
@@ -20,6 +23,7 @@ export const Banned: React.FC = () => {
 
   const handleLogout = (): void => {
     localStorage.removeItem(LOCAL_STORAGE_ACCESS_TOKEN_KEY);
+    localStorage.removeItem(LOCAL_STORAGE_REFRESH_TOKEN_KEY);
     setAccessToken('');
     navigate('/');
   };

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://esotk.com/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>
+  <url><loc>https://esotk.com/calculator</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://esotk.com/text-editor</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://esotk.com/logs</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://esotk.com/leaderboards</loc><changefreq>daily</changefreq><priority>0.8</priority></url>
+  <url><loc>https://esotk.com/sample-report</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://esotk.com/ultimate-simulator</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://esotk.com/loadout-manager</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://esotk.com/build-editor</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://esotk.com/roster-builder</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://esotk.com/roster-hub</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://esotk.com/build-hub</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://esotk.com/pack-hub</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://esotk.com/gear-sets</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://esotk.com/docs/calculations</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://esotk.com/docs/loadout/food-selector</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://esotk.com/docs/discord-roster-bot</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://esotk.com/about</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://esotk.com/whats-new</loc><changefreq>weekly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://esotk.com/privacy</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
+</urlset>
