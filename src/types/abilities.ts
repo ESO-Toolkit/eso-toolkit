@@ -405,10 +405,12 @@ export enum KnownAbilities {
   MAJOR_EVASION = 61716,
   MAJOR_EXPEDITION = 61736,
   MAJOR_HEROISM = 61709,
+  MAJOR_PROTECTION = 61722,
   MAJOR_RESOLVE = 61694,
   MAJOR_SAVAGERY = 61667, // Fixed: was incorrectly 61898 (which is Minor Savagery)
   MAJOR_SLAYER = 93109,
   MAJOR_SORCERY = 61687, // Major Sorcery buff (was incorrectly 61685 which is "Minor Sorcery")
+  MAJOR_VITALITY = 61713,
   MAJOR_VULNERABILITY = 106754,
 
   // Minor Buffs and Debuffs
@@ -417,6 +419,7 @@ export enum KnownAbilities {
   MINOR_BRITTLE = 146697,
   MINOR_BRUTALITY = 61662,
   MINOR_COURAGE = 121878,
+  MINOR_COWARDICE = 46202,
   MINOR_EVASION = 61715,
   MINOR_EXPEDITION = 61735,
   MINOR_FORCE = 61746,

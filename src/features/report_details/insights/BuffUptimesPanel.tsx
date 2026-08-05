@@ -11,6 +11,7 @@ import {
   computeBuffUptimes,
   computeBuffUptimesWithGroupAverage,
 } from '../../../utils/buffUptimeCalculator';
+import { ClassSkillId } from '../../loadout-manager/data/classSkillIds';
 
 import { BuffUptimesView } from './BuffUptimesView';
 import { EffectUptimeTimelineModal } from './EffectUptimeTimelineModal';
@@ -21,8 +22,22 @@ interface BuffUptimesPanelProps {
   selectedPlayerId?: number | null; // Optional: if provided, show per-player uptimes with group average deltas
 }
 
-// Define the specific status effect debuff abilities to track
-export const IMPORTANT_BUFF_ABILITIES = new Set([
+export const CLASS_MASTERY_BUFF_ABILITIES = new Set<number>([
+  // U50 group-facing Class Mastery passives. Include both the source/proc row
+  // when ESO Logs exposes it and the granted named effect row players compare.
+  ClassSkillId.DRAGONKNIGHT_LEAD_FROM_THE_FRONT,
+  ClassSkillId.ARCANIST_ERUDITE_S_RIGOR,
+  ClassSkillId.ARCANIST_INK_SCRIBE_S_VERVE,
+  ClassSkillId.WARDEN_BOUNTIFUL_HARVEST,
+  KnownAbilities.MAJOR_BERSERK,
+  KnownAbilities.MAJOR_FORCE,
+  KnownAbilities.MAJOR_HEROISM,
+  KnownAbilities.MAJOR_PROTECTION,
+  KnownAbilities.MAJOR_VITALITY,
+]);
+
+// Define the specific status effect buff abilities to track
+export const IMPORTANT_BUFF_ABILITIES = new Set<number>([
   KnownAbilities.MINOR_SAVAGERY,
   KnownAbilities.MAJOR_SAVAGERY,
   KnownAbilities.MINOR_SORCERY,
@@ -58,6 +73,7 @@ export const IMPORTANT_BUFF_ABILITIES = new Set([
   KnownAbilities.PILLAGERS_PROFIT_BUFF,
   KnownAbilities.OZEZANS_PLATING,
   KnownAbilities.AGGRESSIVE_HORN_BUFF,
+  ...CLASS_MASTERY_BUFF_ABILITIES,
 ]);
 
 /**

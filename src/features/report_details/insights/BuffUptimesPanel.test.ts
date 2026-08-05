@@ -8,8 +8,9 @@
  */
 
 import { KnownAbilities } from '../../../types/abilities';
+import { ClassSkillId } from '../../loadout-manager/data/classSkillIds';
 
-import { IMPORTANT_BUFF_ABILITIES } from './BuffUptimesPanel';
+import { CLASS_MASTERY_BUFF_ABILITIES, IMPORTANT_BUFF_ABILITIES } from './BuffUptimesPanel';
 
 describe('BuffUptimesPanel', () => {
   describe('IMPORTANT_BUFF_ABILITIES', () => {
@@ -47,13 +48,20 @@ describe('BuffUptimesPanel', () => {
         KnownAbilities.MINOR_BRUTALITY,
         KnownAbilities.MAJOR_BRUTALITY,
         KnownAbilities.MINOR_FORCE,
+        KnownAbilities.MAJOR_FORCE,
         KnownAbilities.MINOR_SLAYER,
         KnownAbilities.MAJOR_SLAYER,
         KnownAbilities.GRAND_REJUVENATION,
         KnownAbilities.MAJOR_BERSERK,
+        KnownAbilities.MAJOR_PROTECTION,
+        KnownAbilities.MAJOR_VITALITY,
         KnownAbilities.PILLAGERS_PROFIT_BUFF,
         KnownAbilities.OZEZANS_PLATING,
         KnownAbilities.AGGRESSIVE_HORN_BUFF,
+        ClassSkillId.DRAGONKNIGHT_LEAD_FROM_THE_FRONT,
+        ClassSkillId.ARCANIST_ERUDITE_S_RIGOR,
+        ClassSkillId.ARCANIST_INK_SCRIBE_S_VERVE,
+        ClassSkillId.WARDEN_BOUNTIFUL_HARVEST,
       ];
 
       expectedBuffs.forEach((buff) => {
@@ -68,6 +76,25 @@ describe('BuffUptimesPanel', () => {
       expect(IMPORTANT_BUFF_ABILITIES.has(KnownAbilities.MAJOR_BREACH)).toBe(false);
       expect(IMPORTANT_BUFF_ABILITIES.has(KnownAbilities.MINOR_BREACH)).toBe(false);
       expect(IMPORTANT_BUFF_ABILITIES.has(KnownAbilities.NAZARAY_DEBUFF)).toBe(false);
+    });
+
+    it('should include U50 Class Mastery group buff sources and granted effects', () => {
+      const expectedClassMasteryBuffs = [
+        ClassSkillId.DRAGONKNIGHT_LEAD_FROM_THE_FRONT,
+        ClassSkillId.ARCANIST_ERUDITE_S_RIGOR,
+        ClassSkillId.ARCANIST_INK_SCRIBE_S_VERVE,
+        ClassSkillId.WARDEN_BOUNTIFUL_HARVEST,
+        KnownAbilities.MAJOR_BERSERK,
+        KnownAbilities.MAJOR_FORCE,
+        KnownAbilities.MAJOR_HEROISM,
+        KnownAbilities.MAJOR_PROTECTION,
+        KnownAbilities.MAJOR_VITALITY,
+      ];
+
+      expectedClassMasteryBuffs.forEach((buff) => {
+        expect(CLASS_MASTERY_BUFF_ABILITIES.has(buff)).toBe(true);
+        expect(IMPORTANT_BUFF_ABILITIES.has(buff)).toBe(true);
+      });
     });
 
     it("should have correct ability ID for Pillager's Profit buff", () => {
