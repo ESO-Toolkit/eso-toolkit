@@ -1,5 +1,6 @@
-import { calculateStatusEffectUptimes } from './CalculateStatusEffectUptimes';
 import { KnownAbilities } from '../../types/abilities';
+
+import { calculateStatusEffectUptimes } from './CalculateStatusEffectUptimes';
 
 describe('CalculateStatusEffectUptimes', () => {
   const FIGHT_START = 10000;

@@ -1,17 +1,16 @@
+import { ClassSkillId } from '../features/loadout-manager/data/classSkillIds';
+import { KnownAbilities } from '../types/abilities';
+import type { PlayerTalent } from '../types/playerDetails';
+
 import {
   extractPlayerAbilityIds,
   createSkillLineAbilityMapping,
   analyzePlayerClassUsage,
   analyzePlayerClassFromEvents,
   detectClassFromTalents,
-  GameAbility,
   AbilitiesData,
   ReportAbilitiesData,
-  ClassAnalysisResult,
 } from './classDetectionUtils';
-import { ClassSkillId } from '../features/loadout-manager/data/classSkillIds';
-import { KnownAbilities } from '../types/abilities';
-import type { PlayerTalent } from '../types/playerDetails';
 
 describe('classDetectionUtils', () => {
   const playerId = '123'; // Fixed: use string version of the sourceID used in mock events

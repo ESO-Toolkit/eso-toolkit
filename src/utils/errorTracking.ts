@@ -316,6 +316,20 @@ export const setUserContext = (userId: string, email?: string, username?: string
 };
 
 /**
+ * Clear the Rollbar person context on logout.
+ * Without this, the singleton keeps the previous user's { id, username } and
+ * attributes post-logout errors (including a second user on a shared browser)
+ * to the wrong person.
+ */
+export const clearUserContext = (): void => {
+  if (rollbar) {
+    // Rollbar's runtime treats a null person as "unset", but the typings only
+    // model an object, so cast to satisfy strict TS.
+    rollbar.configure({ payload: { person: null } } as unknown as Rollbar.Configuration);
+  }
+};
+
+/**
  * Record a breadcrumb for user actions.
  * Rollbar automatically captures rich telemetry (DOM events, network, console);
  * this function provides a consistent call-site API and logs locally in development.

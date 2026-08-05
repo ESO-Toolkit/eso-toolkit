@@ -17,6 +17,8 @@
  * native globals, which are spec-compatible with the browser version.
  */
 
+import { deflateRawSync, inflateRawSync } from 'zlib';
+
 import type { BuildChampionPoints } from '../features/build-editor/types/build.types';
 import type { SkillsConfig } from '../features/loadout-manager/types/loadout.types';
 import { KnownSetIDs } from '../types/abilities';
@@ -72,7 +74,10 @@ function buildFullRoster() {
       isFlex: false,
     },
     ultimate: SupportUltimate.WARHORN,
-    specificSkills: ['Heroic Slash'],
+    // Legacy shape: specificSkills used to hold ability NAMES before it became
+    // number[] (ability ids). decodeSpecificSkills still accepts both, and this
+    // fixture keeps a legacy value in the round trip on purpose.
+    specificSkills: ['Heroic Slash'] as unknown as number[],
     notes: 'Tank notes',
   };
 
@@ -228,6 +233,24 @@ describe('compactifyRoster / expandCompactRoster', () => {
       const expanded = expandCompactRoster(compact);
       expect(expanded.tanks[1].ultimate).toBe('Custom Ultimate String');
     });
+
+    it('round-trips arenaWeapon through the compact `aw` field', () => {
+      const roster = buildFullRoster();
+      roster.tanks[0].arenaWeapon = "Maelstrom's Frost Staff";
+
+      const compact = compactifyRoster(roster) as CompactRosterV3;
+      expect(compact.ts?.[0]?.aw).toBe("Maelstrom's Frost Staff");
+
+      const expanded = expandCompactRoster(compact);
+      expect(expanded.tanks[0].arenaWeapon).toBe("Maelstrom's Frost Staff");
+    });
+
+    it('omits `aw` when the tank has no arena weapon', () => {
+      const roster = buildFullRoster();
+      const compact = compactifyRoster(roster) as CompactRosterV3;
+      expect(compact.ts?.[0]?.aw).toBeUndefined();
+      expect(expandCompactRoster(compact).tanks[0].arenaWeapon).toBeUndefined();
+    });
   });
 
   describe('healer encoding', () => {
@@ -382,7 +405,7 @@ describe('compactifyRoster / expandCompactRoster', () => {
 
     it('round-trips all 21 CLASS_SKILL_LINES entries', () => {
       // Every known skill line should survive a round-trip
-      CLASS_SKILL_LINES.forEach((line, idx) => {
+      CLASS_SKILL_LINES.forEach((line) => {
         const roster = createDefaultRoster();
         roster.tanks[0] = {
           ...defaultTankSetup(1),
@@ -900,8 +923,6 @@ describe('toBase64Url / fromBase64Url', () => {
 // produce / consume deflate-raw bytes in the same format as the browser
 // implementation, which lets us test the decode path thoroughly.
 // ============================================================
-
-import { deflateRawSync, inflateRawSync } from 'zlib';
 
 /** Build a compact-format encoded roster string using Node's zlib (test helper only). */
 function encodeRosterSync(roster: RaidRoster): string {

@@ -13,6 +13,13 @@ import type { PlayerDataEntry, PlayerDataState, PlayerDetailsWithRole } from './
 
 export const selectPlayerDataState = (state: RootState): PlayerDataState => state.playerData;
 
+// Stable empty fallbacks so the input selectors return the SAME reference when
+// a cache entry is absent. Returning a fresh `{}`/`[]` each call would make
+// createSelector see changed inputs on every dispatch and re-run the combiner
+// (rebuilding the fallback players object) during high-frequency event bursts.
+const EMPTY_ACTORS_BY_ID: Record<string | number, ReportActorFragment> = {};
+const EMPTY_COMBATANT_INFO_EVENTS: CombatantInfoEvent[] = [];
+
 const selectPlayerDataEntryByContext = (
   state: RootState,
   context: ReportFightContext,
@@ -60,10 +67,10 @@ const selectActorsByIdByContext = (
   context: ReportFightContext,
 ): Record<string | number, ReportActorFragment> => {
   if (!context.reportCode) {
-    return {};
+    return EMPTY_ACTORS_BY_ID;
   }
   const { key } = resolveCacheKey({ reportCode: context.reportCode });
-  return state.masterData.entries[key]?.actorsById ?? {};
+  return state.masterData.entries[key]?.actorsById ?? EMPTY_ACTORS_BY_ID;
 };
 
 const selectCombatantInfoEventsByContext = (
@@ -71,10 +78,10 @@ const selectCombatantInfoEventsByContext = (
   context: ReportFightContext,
 ): CombatantInfoEvent[] => {
   if (!context.reportCode) {
-    return [];
+    return EMPTY_COMBATANT_INFO_EVENTS;
   }
   const { key } = resolveCacheKey(context);
-  return state.events.combatantInfo.entries[key]?.events ?? [];
+  return state.events.combatantInfo.entries[key]?.events ?? EMPTY_COMBATANT_INFO_EVENTS;
 };
 
 export const selectPlayerDataEntryForContext = createReportFightContextSelector<

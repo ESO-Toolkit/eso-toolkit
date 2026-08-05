@@ -1,6 +1,7 @@
 import { act, renderHook } from '@testing-library/react';
 
 import type { UserReportSummaryFragment } from '../../../graphql/gql/graphql';
+
 import { SEARCH_DEBOUNCE_MS, useFilteredReports } from './useFilteredReports';
 
 const makeReport = (over: Partial<UserReportSummaryFragment>): UserReportSummaryFragment => ({

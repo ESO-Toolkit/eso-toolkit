@@ -2,14 +2,17 @@
  * Comprehensive test to verify what we're actually detecting for Shattering Knife
  */
 
-import { render, screen, waitFor } from '@testing-library/react';
-import '@testing-library/jest-dom';
-import { Provider } from 'react-redux';
-import { configureStore } from '@reduxjs/toolkit';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
+import { configureStore } from '@reduxjs/toolkit';
+import { render, waitFor } from '@testing-library/react';
+import { Provider } from 'react-redux';
+
+import '@testing-library/jest-dom';
+
+import { useSkillScribingData } from '../features/scribing/hooks/useScribingDetection';
+import { resolveCacheKey } from '../store/utils/keyedCacheState';
 
 import { SkillTooltip } from './SkillTooltip';
-import { resolveCacheKey } from '../store/utils/keyedCacheState';
 
 // Mock the logger to avoid context issues
 jest.mock('../hooks/useLogger', () => ({
@@ -26,7 +29,6 @@ jest.mock('../features/scribing/hooks/useScribingDetection', () => ({
 }));
 
 // Import the mocked hook
-import { useSkillScribingData } from '../features/scribing/hooks/useScribingDetection';
 
 const mockUseSkillScribingData = useSkillScribingData as jest.MockedFunction<
   typeof useSkillScribingData

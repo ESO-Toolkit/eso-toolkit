@@ -2,6 +2,7 @@ import { CombatantInfoEvent } from '../types/combatlogEvents';
 import { WeaponType, GearSlot, GearTrait, PlayerGear } from '../types/playerDetails';
 
 import {
+  ItemQuality,
   countOneHandedSharpenedWeapons,
   hasTwoHandedSharpenedWeapon,
   countAxesInWeaponSlots,
@@ -28,7 +29,8 @@ describe('gearUtilities', () => {
       defaultGear[i] = {
         id: 0, // id = 0 means no gear in that slot
         slot: i,
-        quality: 0,
+        // ItemQuality models the five real tiers (1-5); an empty slot reports 0.
+        quality: 0 as ItemQuality,
         icon: '',
         name: '',
         championPoints: 0,

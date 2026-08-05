@@ -221,6 +221,13 @@ interface FrameCapGateProps {
   isPlayingRef: React.RefObject<boolean>;
   /** Shared per-rAF verdict consumed by RenderLoop / actors / names. */
   capGateRef: React.RefObject<FrameCapGateValue>;
+  /**
+   * Set true by CameraFollower only for the instant it calls OrbitControls.update(). The 'change'
+   * that update() emits is programmatic follow motion, not user interaction, so it must NOT arm the
+   * interaction bypass — otherwise following an actor during playback fires 'change' every frame and
+   * defeats the frame cap (M8).
+   */
+  suppressInteractionRef: React.RefObject<boolean>;
 }
 
 /**
@@ -240,6 +247,7 @@ const FrameCapGate: React.FC<FrameCapGateProps> = ({
   timeRef,
   isPlayingRef,
   capGateRef,
+  suppressInteractionRef,
 }) => {
   const { controls } = useThree();
   const capStateRef = useRef<FrameCapState>({ nextDeadlineMs: null });
@@ -249,6 +257,10 @@ const FrameCapGate: React.FC<FrameCapGateProps> = ({
   useEffect(() => {
     if (!controls) return;
     const onChange = (): void => {
+      // Ignore the synthetic 'change' CameraFollower's own update() dispatches — that is follow
+      // motion, not a user gesture, and must not bypass the frame cap (M8). Real drag/wheel/pinch
+      // 'change' events fire with this flag false and still arm the bypass.
+      if (suppressInteractionRef.current) return;
       interactionRef.current = true;
     };
     const orbit = controls as unknown as {
@@ -257,7 +269,7 @@ const FrameCapGate: React.FC<FrameCapGateProps> = ({
     };
     orbit.addEventListener('change', onChange);
     return () => orbit.removeEventListener('change', onChange);
-  }, [controls]);
+  }, [controls, suppressInteractionRef]);
 
   useFrame((_state, delta) => {
     if (frameCapFps == null) {
@@ -738,6 +750,11 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
   const dprExhaustedRef = useRef(false);
   // Frame-cap verdict for THIS rAF, written by FrameCapGate (priority -10) before any consumer runs.
   const capGateRef = useRef<FrameCapGateValue>({ skip: false });
+  // True only for the instant CameraFollower calls OrbitControls.update() itself. That update()
+  // emits a synthetic 'change' event, which is programmatic follow motion — not user interaction —
+  // so FrameCapGate must not let it arm the frame-cap bypass (M8: otherwise following an actor
+  // during playback fires 'change' every frame and the barebones 30fps cap does nothing).
+  const followerUpdatingRef = useRef(false);
   useEffect(() => {
     renderBudgetRef.current = RENDER_TAIL_FRAMES;
     shadowDirtyRef.current = true;
@@ -1028,6 +1045,7 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
         timeRef={timeRef}
         isPlayingRef={isPlayingRef}
         capGateRef={capGateRef}
+        suppressInteractionRef={followerUpdatingRef}
       />
       {/* Manual render loop - lowest priority to render after all updates, gated on-demand */}
       <RenderLoop
@@ -1070,7 +1088,12 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
         />
       )}
       {/* Camera follower system */}
-      <CameraFollower lookup={lookup} timeRef={timeRef} followingActorIdRef={followingActorIdRef} />
+      <CameraFollower
+        lookup={lookup}
+        timeRef={timeRef}
+        followingActorIdRef={followingActorIdRef}
+        suppressInteractionRef={followerUpdatingRef}
+      />
       {/* In-canvas camera keys: r = reset to fitted initial view, g = frame all actors. Lives in
           the Canvas because it needs the camera + controls (the DOM keydown has no handle). */}
       {initialPosition && initialTarget && (

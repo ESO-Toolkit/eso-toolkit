@@ -1,11 +1,14 @@
-import React, { useEffect, useRef } from 'react';
 import { act, renderHook } from '@testing-library/react';
+import React, { useEffect, useRef } from 'react';
 import { Provider } from 'react-redux';
-import { createStore, combineReducers, Store } from 'redux';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { createStore, combineReducers, Store } from 'redux';
 
+import { ReportFightProvider, useReportFightDetailsNavigation } from './ReportFightContext';
 import { setSelectedTargetIds } from './store/ui/uiSlice';
 import { useAppDispatch } from './store/useAppDispatch';
+import { trackEvent } from './utils/analytics';
+import { TabId } from './utils/getSkeletonForTab';
 
 jest.mock('./contexts/AbilityIdMapperContext', () => ({
   AbilityIdMapperProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
@@ -13,11 +16,8 @@ jest.mock('./contexts/AbilityIdMapperContext', () => ({
 
 jest.mock('./utils/analytics', () => ({
   trackEvent: jest.fn(),
+  hashReportCode: (code: string) => `h_${code}`,
 }));
-
-import { ReportFightProvider, useReportFightDetailsNavigation } from './ReportFightContext';
-import { TabId } from './utils/getSkeletonForTab';
-import { trackEvent } from './utils/analytics';
 
 // Create a test hook that mimics the ReportFightProvider's target clearing behavior
 function useTestFightTargetClearer(fightId: string | null | undefined) {
@@ -146,7 +146,7 @@ describe('ReportFightContext analytics tracking', () => {
       TabId.DAMAGE_DONE,
       undefined,
       expect.objectContaining({
-        report_id: 'abc',
+        report_id: 'h_abc',
         fight_id: '1',
         target_tab: TabId.DAMAGE_DONE,
         previous_tab: TabId.INSIGHTS,
@@ -168,7 +168,7 @@ describe('ReportFightContext analytics tracking', () => {
       TabId.RAW_EVENTS,
       undefined,
       expect.objectContaining({
-        report_id: 'abc',
+        report_id: 'h_abc',
         fight_id: '1',
         target_tab: TabId.RAW_EVENTS,
         is_experimental_tab: true,
@@ -181,7 +181,7 @@ describe('ReportFightContext analytics tracking', () => {
       TabId.RAW_EVENTS,
       undefined,
       expect.objectContaining({
-        report_id: 'abc',
+        report_id: 'h_abc',
         fight_id: '1',
         target_tab: TabId.RAW_EVENTS,
         triggered_by_tab_selection: true,
@@ -202,7 +202,7 @@ describe('ReportFightContext analytics tracking', () => {
       'enable',
       undefined,
       expect.objectContaining({
-        report_id: 'abc',
+        report_id: 'h_abc',
         fight_id: '1',
         target_tab: TabId.INSIGHTS,
         enabled: true,

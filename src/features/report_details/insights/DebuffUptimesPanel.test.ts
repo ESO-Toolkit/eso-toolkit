@@ -8,9 +8,9 @@
  */
 
 import { KnownAbilities } from '../../../types/abilities';
-import { computeBuffUptimes } from '../../../utils/buffUptimeCalculator';
-import { createDebuffLookup } from '../../../utils/BuffLookupUtils';
 import { DebuffEvent } from '../../../types/combatlogEvents';
+import { createDebuffLookup } from '../../../utils/BuffLookupUtils';
+import { computeBuffUptimes } from '../../../utils/buffUptimeCalculator';
 
 import { IMPORTANT_DEBUFF_ABILITIES } from './DebuffUptimesPanel';
 

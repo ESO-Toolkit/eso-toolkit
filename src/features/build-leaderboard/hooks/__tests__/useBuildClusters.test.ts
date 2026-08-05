@@ -7,9 +7,9 @@ import {
   resetFixtureIds,
 } from '../../clustering/__fixtures__/dpsParses.fixture';
 import { runBuildClustering } from '../../clustering/runBuildClustering';
-import { useBuildClusters } from '../useBuildClusters';
 import type { ClusterBuildsResult } from '../../types/clustering.types';
 import type { DpsParse } from '../../types/dpsParses.types';
+import { useBuildClusters } from '../useBuildClusters';
 
 jest.mock('../../clustering/runBuildClustering');
 
@@ -64,6 +64,7 @@ describe('useBuildClusters', () => {
         {
           id: 'c0',
           label: 'x',
+          esoClass: 'Arcanist',
           size: 1,
           share: 1,
           memberParseIds: ['p1'],
@@ -202,7 +203,7 @@ describe('useBuildClusters', () => {
 
     for (let i = 1; i < sets.length; i++) {
       rerender({ input: sets[i] });
-      // eslint-disable-next-line no-await-in-loop
+
       await waitFor(() => expect(result.current.loading).toBe(false));
     }
 

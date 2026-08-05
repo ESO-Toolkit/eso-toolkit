@@ -75,13 +75,17 @@ interface SetRowProps {
   onInfo: (set: AssignableSet) => void;
 }
 
+// Shared empty fallback so unassigned rows don't each allocate a fresh [],
+// which would give SetRow a new `assignedTo` reference every render and defeat memo.
+const EMPTY: string[] = [];
+
 const roleIcon = (role: SetRole, color: string): React.ReactElement => {
   if (role === 'tank') return <ShieldIcon sx={{ fontSize: 14, color }} />;
   if (role === 'healer') return <FavoriteIcon sx={{ fontSize: 14, color }} />;
   return <SwapHorizIcon sx={{ fontSize: 14, color }} />;
 };
 
-const SetRow: React.FC<SetRowProps> = ({
+const SetRowInner: React.FC<SetRowProps> = ({
   set,
   isDark,
   assignedTo,
@@ -202,6 +206,9 @@ const SetRow: React.FC<SetRowProps> = ({
     </Box>
   );
 };
+
+const SetRow = React.memo(SetRowInner);
+SetRow.displayName = 'SetRow';
 
 // ─── Browser ──────────────────────────────────────────────────────────────────
 
@@ -447,7 +454,7 @@ const AllSetsBrowserInner: React.FC<AllSetsBrowserProps> = ({
                 key={set.id}
                 set={set}
                 isDark={isDark}
-                assignedTo={assignments.get(set.name) ?? []}
+                assignedTo={assignments.get(set.name) ?? EMPTY}
                 roleColors={roleColors}
                 onSetClick={onSetClick}
                 onInfo={handleInfo}

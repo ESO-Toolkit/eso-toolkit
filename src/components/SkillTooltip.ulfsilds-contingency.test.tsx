@@ -1,8 +1,11 @@
-import React from 'react';
-import { render } from '@testing-library/react';
-import '@testing-library/jest-dom';
-import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { CssBaseline } from '@mui/material';
+import { ThemeProvider, createTheme } from '@mui/material/styles';
+import { render } from '@testing-library/react';
+import React from 'react';
+
+import '@testing-library/jest-dom';
+
+import { useSkillScribingData } from '../features/scribing/hooks/useScribingDetection';
 
 import { SkillTooltip } from './SkillTooltip';
 import type { SkillTooltipProps } from './SkillTooltip';
@@ -22,7 +25,6 @@ jest.mock('../hooks/useLogger', () => ({
 }));
 
 // Import the mocked hook
-import { useSkillScribingData } from '../features/scribing/hooks/useScribingDetection';
 
 const mockUseSkillScribingData = useSkillScribingData as jest.MockedFunction<
   typeof useSkillScribingData
@@ -150,7 +152,7 @@ describe("SkillTooltip - Ulfsild's Contingency (Fight 11, Player 7)", () => {
       };
 
       // Render the component
-      const { container, getByText } = render(
+      const { container } = render(
         <TestWrapper>
           <SkillTooltip {...tooltipProps} />
         </TestWrapper>,
@@ -223,7 +225,7 @@ describe("SkillTooltip - Ulfsild's Contingency (Fight 11, Player 7)", () => {
         playerId: 7,
       };
 
-      const { container, getByText } = render(
+      const { container } = render(
         <TestWrapper>
           <SkillTooltip {...tooltipProps} />
         </TestWrapper>,
@@ -406,7 +408,7 @@ describe("SkillTooltip - Ulfsild's Contingency (Fight 11, Player 7)", () => {
         playerId: 7,
       };
 
-      const { container, getByText } = render(
+      const { container } = render(
         <TestWrapper>
           <SkillTooltip {...tooltipProps} />
         </TestWrapper>,

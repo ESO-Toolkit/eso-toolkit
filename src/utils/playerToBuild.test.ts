@@ -1,7 +1,15 @@
 import { ClassSkillId } from '../features/loadout-manager/data/classSkillIds';
-import type { PlayerTalent } from '../types/playerDetails';
+import {
+  ArmorType,
+  GearSlot,
+  GearTrait,
+  WeaponType,
+  type PlayerGear,
+  type PlayerTalent,
+} from '../types/playerDetails';
 
 import type { ClassAnalysisResult } from './classDetectionUtils';
+import { ItemQuality } from './gearUtilities';
 import { convertSkills, playerToBuild } from './playerToBuild';
 
 const talentFor = (guid: number): PlayerTalent => ({
@@ -10,6 +18,25 @@ const talentFor = (guid: number): PlayerTalent => ({
   type: 0,
   abilityIcon: '',
   flags: 0,
+});
+
+const gearPiece = (
+  slot: number,
+  type: WeaponType | ArmorType,
+  setName: string,
+  id: number,
+): PlayerGear => ({
+  id,
+  slot,
+  quality: ItemQuality.LEGENDARY,
+  icon: '',
+  championPoints: 160,
+  trait: GearTrait.REINFORCED,
+  enchantType: 0,
+  enchantQuality: 0,
+  setID: 0,
+  type,
+  setName,
 });
 
 const emptySkillBars = (): PlayerTalent[] => Array.from({ length: 12 }, () => talentFor(0));
@@ -154,5 +181,42 @@ describe('playerToBuild Class Mastery extraction', () => {
 
     expect(build.races).toEqual(['khajiit']);
     expect(build.setups[0].consumables.food).toEqual({ name: 'Increase All Primary Stats' });
+  });
+});
+
+describe('playerToBuild gear description — two-handed weapon counting', () => {
+  const baseArgs = {
+    playerName: 'Desc Tester',
+    role: 'dps' as const,
+    talents: [] as PlayerTalent[],
+    mundusBuffs: [],
+    championPoints: [],
+  };
+
+  it('counts a 2H staff as 2 pieces and jewelry as 1 in the {n}pc summary', () => {
+    // 2 body + 1 staff (2H, +2) + 1 necklace (jewelry, +1) = 5 pieces.
+    const build = playerToBuild({
+      ...baseArgs,
+      gear: [
+        gearPiece(GearSlot.HEAD, ArmorType.LIGHT, "Ansuul's Torment", 1),
+        gearPiece(GearSlot.CHEST, ArmorType.LIGHT, "Ansuul's Torment", 2),
+        gearPiece(GearSlot.NECK, ArmorType.JEWELRY, "Ansuul's Torment", 3),
+        gearPiece(GearSlot.MAIN_HAND, WeaponType.LIGHTNING_STAFF, "Ansuul's Torment", 4),
+      ],
+    });
+
+    expect(build.shortDescription).toBe("5pc Ansuul's Torment");
+  });
+
+  it('counts a 1H weapon as a single piece', () => {
+    const build = playerToBuild({
+      ...baseArgs,
+      gear: [
+        gearPiece(GearSlot.HEAD, ArmorType.MEDIUM, 'Order of Diagna', 1),
+        gearPiece(GearSlot.MAIN_HAND, WeaponType.DAGGER, 'Order of Diagna', 2),
+      ],
+    });
+
+    expect(build.shortDescription).toBe('2pc Order of Diagna');
   });
 });

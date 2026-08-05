@@ -2,6 +2,7 @@ import { configureStore } from '@reduxjs/toolkit';
 
 import { EsoLogsClient } from '../../esologsClient';
 import { ReportAbilityFragment, ReportActorFragment } from '../../graphql/gql/graphql';
+import { resolveCacheKey } from '../utils/keyedCacheState';
 
 import masterDataReducer, {
   MasterDataEntry,
@@ -14,7 +15,6 @@ import masterDataReducer, {
   resetLoadingState,
   trimMasterDataCache,
 } from './masterDataSlice';
-import { resolveCacheKey } from '../utils/keyedCacheState';
 
 jest.mock('../../esologsClient');
 

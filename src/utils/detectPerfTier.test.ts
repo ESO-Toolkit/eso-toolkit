@@ -4,7 +4,7 @@ import { detectPerfTier, heuristicPerfTier, prefersReducedMotion } from './detec
 // benchmark JSON or probe WebGL under jsdom. The package is ESM-only
 // (exports: .mjs), which the CJS test resolver can't walk — `virtual:
 // true` tells Jest to skip resolution and use the factory directly.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 const getGPUTierMock = jest.fn() as jest.MockedFunction<any>;
 jest.mock(
   '@pmndrs/detect-gpu',
@@ -23,7 +23,7 @@ const setNavigatorSignals = ({ deviceMemory, hardwareConcurrency }: NavSignals):
   // Delete-then-define lets us simulate browsers that omit the API
   // entirely (Firefox/Safari don't expose deviceMemory, and some
   // low-end / sandbox environments omit hardwareConcurrency too).
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   delete (navigator as any).deviceMemory;
   if (deviceMemory !== undefined) {
     Object.defineProperty(navigator, 'deviceMemory', {
@@ -31,7 +31,7 @@ const setNavigatorSignals = ({ deviceMemory, hardwareConcurrency }: NavSignals):
       configurable: true,
     });
   }
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   delete (navigator as any).hardwareConcurrency;
   if (hardwareConcurrency !== undefined) {
     Object.defineProperty(navigator, 'hardwareConcurrency', {

@@ -10,7 +10,7 @@ import {
 } from '../test/utils/playerMockFactories';
 import { KnownAbilities, CriticalDamageValues } from '../types/abilities';
 import { BuffEvent, DebuffEvent } from '../types/combatlogEvents';
-import { ArmorType } from '../types/playerDetails';
+import { ArmorType, GearSlot, WeaponType } from '../types/playerDetails';
 
 import { BuffLookupData, createBuffLookup, createDebuffLookup } from './BuffLookupUtils';
 import {
@@ -220,6 +220,30 @@ describe('CritDamageUtils with BuffLookup', () => {
 
         const damage = getCritDamageFromAlwaysOnSource(dexteritySource, combatantWith3Medium);
         expect(damage).toBe(6); // 3 pieces * 2% each
+      }
+    });
+
+    it('should not count equipped maces as medium armor for Dexterity', () => {
+      // WeaponType.MACE === ArmorType.MEDIUM === 2. Maces in weapon slots must not
+      // add phantom Dexterity crit damage — only the two real medium body pieces count.
+      const dexteritySource = CRITICAL_DAMAGE_SOURCES.find(
+        (s) => s.name === 'Dexterity' && 'key' in s,
+      );
+
+      if (dexteritySource && 'key' in dexteritySource && dexteritySource.source === 'always_on') {
+        const combatant = createMockCombatantInfoEvent({
+          gear: [
+            createGearItem(ArmorType.MEDIUM, undefined, GearSlot.HEAD),
+            createGearItem(ArmorType.MEDIUM, undefined, GearSlot.CHEST),
+            createGearItem(WeaponType.MACE, undefined, GearSlot.MAIN_HAND),
+            createGearItem(WeaponType.MACE, undefined, GearSlot.OFF_HAND),
+            createGearItem(WeaponType.MACE, undefined, GearSlot.BACKUP_MAIN_HAND),
+            createGearItem(WeaponType.MACE, undefined, GearSlot.BACKUP_OFF_HAND),
+          ],
+        });
+
+        const damage = getCritDamageFromAlwaysOnSource(dexteritySource, combatant);
+        expect(damage).toBe(4); // 2 body pieces * 2% — maces excluded
       }
     });
   });

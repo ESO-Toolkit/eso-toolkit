@@ -2,6 +2,7 @@ import { gql } from '@apollo/client';
 import type { DocumentNode } from 'graphql';
 
 import { EsoLogsClient } from '../../esologsClient';
+
 import { GraphqlTestHarness } from './graphqlTestHarness';
 
 const createStubClient = () => {

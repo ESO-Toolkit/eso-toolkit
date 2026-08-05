@@ -9,8 +9,7 @@
  * - Input field interaction prevention
  */
 
-import { renderHook } from '@testing-library/react';
-import { act } from '@testing-library/react';
+import { renderHook, act } from '@testing-library/react';
 import { useEffect, useRef } from 'react';
 
 interface KeyState {

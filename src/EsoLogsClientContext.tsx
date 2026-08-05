@@ -55,6 +55,13 @@ export const EsoLogsClientProvider: React.FC<{ children: ReactNode }> = ({ child
           });
         }
       } else {
+        // Empty token = logout. Go through the same clearing path as
+        // clearAuthToken so this.accessToken is dropped and the shared Apollo
+        // cache is reset — otherwise the authLink keeps attaching the old
+        // Bearer and the cache keeps the previous user's private results.
+        if (client.getAccessToken() !== '') {
+          client.updateAccessToken('');
+        }
         addBreadcrumb('Auth: EsoLogsClient token cleared via setAuthToken', 'auth', {
           tokenPresent: false,
         });

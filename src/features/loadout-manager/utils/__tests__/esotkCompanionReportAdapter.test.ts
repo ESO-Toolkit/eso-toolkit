@@ -1,7 +1,7 @@
-import { buildCompanionBuildsForReport } from '../esotkCompanionReportAdapter';
 import { PVE_PENETRATION_CAP } from '../esotkCompanionCoaching';
 import type { MatchableReport } from '../esotkCompanionMatcher';
 import type { CompanionSnapshot } from '../esotkCompanionParser';
+import { buildCompanionBuildsForReport } from '../esotkCompanionReportAdapter';
 
 const REPORT_START_MS = 1_749_384_000_000;
 const REPORT_START_S = REPORT_START_MS / 1000;

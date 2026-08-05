@@ -87,6 +87,21 @@ export const initializeAnalytics = (): void => {
 };
 
 /**
+ * Pseudonymize a report code before it reaches GA4.
+ * Report codes are the access credential for unlisted/private reports, so the
+ * raw value must never leave the client. This FNV-1a digest is deterministic
+ * (so analytics can still group by report) but non-reversible.
+ */
+export const hashReportCode = (reportCode: string): string => {
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < reportCode.length; i++) {
+    hash ^= reportCode.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  return (hash >>> 0).toString(16).padStart(8, '0');
+};
+
+/**
  * Normalize path by replacing report codes with [code] placeholder
  * Also extracts the report code for separate tracking
  *
@@ -189,9 +204,10 @@ export const trackPageView = (path: string, title?: string): void => {
         payload.location = locationOverride;
       }
 
-      // Add report code and fight ID as custom dimensions
+      // Add report code (hashed — never the raw access credential) and fight ID
+      // as custom dimensions
       if (reportCode) {
-        payload.report_code = reportCode;
+        payload.report_code = hashReportCode(reportCode);
       }
       if (fightId) {
         payload.fight_id = fightId;

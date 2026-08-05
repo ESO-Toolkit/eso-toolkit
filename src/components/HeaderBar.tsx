@@ -33,6 +33,7 @@ import { useLocation } from 'react-router-dom';
 import esoLogo from '../assets/ESOHelpers-logo-icon.svg';
 import {
   LOCAL_STORAGE_ACCESS_TOKEN_KEY,
+  LOCAL_STORAGE_REFRESH_TOKEN_KEY,
   setFallbackDestination,
   startPKCEAuth,
 } from '../features/auth/auth';
@@ -43,6 +44,8 @@ import {
   useViewTransitionNavigate,
   type ViewTransitionType,
 } from '../hooks/useViewTransitionNavigate';
+import { persistor } from '../store/storeWithHistory';
+import { clearUserContext } from '../utils/errorTracking';
 import { preloadHubRoutes } from '../utils/hubRoutePreload';
 
 import { PerfTierToggle } from './PerfTierToggle';
@@ -495,6 +498,10 @@ const getAvatarProps = (name: string): { gradient: string; color: string; initia
   return { gradient: `linear-gradient(135deg, ${c1}, ${c2})`, color: c1, initials };
 };
 
+// Focusable-control selector for the mobile sheet's focus trap / initial focus.
+const SHEET_FOCUSABLE_SELECTOR =
+  'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+
 export const HeaderBar: React.FC = () => {
   const { isLoggedIn, currentUser, userLoading, userError, refetchUser, rebindAccessToken } =
     useAuth();
@@ -511,6 +518,8 @@ export const HeaderBar: React.FC = () => {
   const [profileAnchorEl, setProfileAnchorEl] = React.useState<null | HTMLElement>(null);
   const sheetRef = React.useRef<HTMLDivElement>(null);
   const dragStartY = React.useRef(0);
+  // Trigger element to restore focus to when the mobile sheet closes.
+  const sheetRestoreFocusRef = React.useRef<HTMLElement | null>(null);
 
   const userDisplayName = React.useMemo(() => {
     if (!currentUser) return '';
@@ -607,6 +616,39 @@ export const HeaderBar: React.FC = () => {
     return () => document.removeEventListener('keydown', handleEscape);
   }, [mobileOpen]);
 
+  // Dialog focus contract (mirrors the replay MobileSheet): on open, save the
+  // trigger and move focus into the sheet; on close, restore focus to it. The
+  // sheet is `inert` while closed so its controls also leave the tab order.
+  React.useEffect(() => {
+    if (mobileOpen) {
+      sheetRestoreFocusRef.current =
+        document.activeElement instanceof HTMLElement ? document.activeElement : null;
+      sheetRef.current?.querySelector<HTMLElement>(SHEET_FOCUSABLE_SELECTOR)?.focus();
+      return;
+    }
+    const restore = sheetRestoreFocusRef.current;
+    sheetRestoreFocusRef.current = null;
+    restore?.focus?.();
+  }, [mobileOpen]);
+
+  // Trap Tab within the sheet while open (wrap-around).
+  const handleSheetKeyDown = React.useCallback((e: React.KeyboardEvent): void => {
+    if (e.key !== 'Tab') return;
+    const root = sheetRef.current;
+    if (!root) return;
+    const focusables = root.querySelectorAll<HTMLElement>(SHEET_FOCUSABLE_SELECTOR);
+    if (focusables.length === 0) return;
+    const first = focusables[0];
+    const last = focusables[focusables.length - 1];
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault();
+      first.focus();
+    }
+  }, []);
+
   const handleLogin = React.useCallback((): void => {
     setFallbackDestination(location.pathname + location.search + location.hash);
     startPKCEAuth();
@@ -614,7 +656,14 @@ export const HeaderBar: React.FC = () => {
   }, [location]);
 
   const handleLogout = React.useCallback((): void => {
+    // Drop both tokens — leaving the long-lived refresh_token behind lets a
+    // 401-triggered refresh silently re-mint a session after logout.
     localStorage.removeItem(LOCAL_STORAGE_ACCESS_TOKEN_KEY);
+    localStorage.removeItem(LOCAL_STORAGE_REFRESH_TOKEN_KEY);
+    clearUserContext();
+    // Purge account-bound persisted state (loadouts/builds) so it can't outlive
+    // the session on a shared machine.
+    void persistor.purge();
     rebindAccessToken();
     navigate('/', { vtType: 'down' });
     setMobileOpen(false);
@@ -1483,6 +1532,10 @@ export const HeaderBar: React.FC = () => {
         aria-modal={mobileOpen}
         aria-label="Navigation menu"
         id="mobile-nav-menu"
+        // Closed: inert removes the off-screen sheet's controls from the tab
+        // order and the a11y tree while preserving the slide-down animation.
+        inert={mobileOpen ? undefined : true}
+        onKeyDown={handleSheetKeyDown}
       >
         {/* Drag Handle */}
         <Box

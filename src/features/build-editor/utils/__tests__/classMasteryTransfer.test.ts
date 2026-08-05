@@ -1,3 +1,4 @@
+import type { Build } from '../../types/build.types';
 import {
   classFromMasteryIds,
   classOfClassMasteryId,
@@ -6,7 +7,6 @@ import {
   sanitizeClassMasteryPicks,
   stripClassMasteryIds,
 } from '../classMasteryTransfer';
-import type { Build } from '../../types/build.types';
 
 /** A minimal build-shaped object for the migration helper. */
 function leakyBuild(

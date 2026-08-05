@@ -480,18 +480,30 @@ export interface DirectPublishRequest {
 }
 
 /**
+ * Mint a synthetic id for a direct-publish roster.
+ *
+ * The suffix is the full 16-byte (128-bit) random value in hex with no
+ * truncation: direct-* rosters are readable by an unauthenticated
+ * GET /discord/roster/:id/data, so the id must not be enumerable — a
+ * bracketable ms timestamp plus a short suffix would leave private-guild
+ * payloads guessable. Exported for unit testing.
+ */
+export function mintDirectRosterId(): string {
+  const rand = crypto.getRandomValues(new Uint8Array(16));
+  const suffix = Array.from(rand)
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
+  return `direct-${Date.now().toString(36)}-${suffix}`;
+}
+
+/**
  * Publish a roster directly from raw data (e.g. from the roster builder).
  * Does not require the roster to exist on the Hub — builds a synthetic
  * snapshot from the provided fields.
  */
 export async function publishDirect(env: Env, req: DirectPublishRequest): Promise<PublishResult> {
-  // Build a synthetic snapshot from the raw data
-  const rand = crypto.getRandomValues(new Uint8Array(4));
-  const suffix = Array.from(rand)
-    .map((b) => b.toString(36))
-    .join('')
-    .slice(0, 6);
-  const syntheticId = `direct-${Date.now().toString(36)}-${suffix}`;
+  // Build a synthetic snapshot from the raw data.
+  const syntheticId = mintDirectRosterId();
 
   // Acquire lock keyed on the *content* (not the random synthetic ID): a rapid
   // double-click sends two identical requests that would each mint a different

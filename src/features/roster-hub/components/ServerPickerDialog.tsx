@@ -30,6 +30,7 @@ import {
   Avatar,
   Box,
   Button,
+  ButtonBase,
   Chip,
   CircularProgress,
   Dialog,
@@ -39,6 +40,7 @@ import {
   FormControl,
   IconButton,
   InputLabel,
+  Link,
   MenuItem,
   Select,
   type SelectChangeEvent,
@@ -1198,18 +1200,22 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                   )}
 
                   {/* Disconnect link */}
-                  <Typography
+                  <Link
+                    component="button"
+                    type="button"
                     variant="caption"
                     onClick={() => {
                       clearDiscordAuth();
                     }}
                     sx={{
                       display: 'block',
+                      width: '100%',
                       textAlign: 'center',
                       mt: 0.5,
                       color: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)',
                       cursor: 'pointer',
                       fontSize: '0.7rem',
+                      textDecoration: 'none',
                       '&:hover': {
                         color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.5)',
                         textDecoration: 'underline',
@@ -1217,10 +1223,12 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                     }}
                   >
                     Disconnect Discord
-                  </Typography>
+                  </Link>
                 </Box>
               ) : (
                 <Box
+                  role="listbox"
+                  aria-label="Discord servers"
                   sx={{
                     display: 'grid',
                     gridTemplateColumns: '1fr',
@@ -1240,11 +1248,20 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                     const isNew = newGuildIds.has(guild.id);
 
                     return (
-                      <Box
+                      <ButtonBase
                         key={guild.id}
+                        component="div"
+                        role="option"
+                        aria-selected={false}
+                        aria-label={`Select Discord server ${guild.name}${
+                          configured ? ', ready' : ', setup needed'
+                        }`}
                         onClick={() => handleSelectGuild(guild)}
                         sx={{
                           display: 'flex',
+                          width: '100%',
+                          justifyContent: 'flex-start',
+                          textAlign: 'left',
                           alignItems: 'center',
                           gap: 1.25,
                           p: 1,
@@ -1262,6 +1279,10 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                           '&:hover': {
                             background: isDark ? 'rgba(88,101,242,0.1)' : 'rgba(88,101,242,0.05)',
                             borderColor: isDark ? 'rgba(88,101,242,0.25)' : 'rgba(88,101,242,0.2)',
+                          },
+                          '&.Mui-focusVisible': {
+                            outline: '2px solid #5865F2',
+                            outlineOffset: 2,
                           },
                         }}
                       >
@@ -1345,7 +1366,7 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                             <SettingsIcon sx={{ fontSize: 18 }} />
                           </IconButton>
                         </Tooltip>
-                      </Box>
+                      </ButtonBase>
                     );
                   })}
                 </Box>
@@ -1459,18 +1480,22 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                     </Box>
                   </Box>
 
-                  <Typography
+                  <Link
+                    component="button"
+                    type="button"
                     variant="caption"
                     onClick={() => {
                       clearDiscordAuth();
                     }}
                     sx={{
                       display: 'block',
+                      width: '100%',
                       textAlign: 'center',
                       mt: 1.5,
                       color: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)',
                       cursor: 'pointer',
                       fontSize: '0.7rem',
+                      textDecoration: 'none',
                       '&:hover': {
                         color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.5)',
                         textDecoration: 'underline',
@@ -1478,7 +1503,7 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                     }}
                   >
                     Disconnect Discord
-                  </Typography>
+                  </Link>
                 </>
               )}
             </>

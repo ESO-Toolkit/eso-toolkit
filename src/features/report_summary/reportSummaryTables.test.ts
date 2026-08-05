@@ -1,3 +1,5 @@
+import { DeathPatternType } from '@/types/reportSummaryTypes';
+
 import { DeathAnalysisService, type DeathAnalysisInput } from '../../services/DeathAnalysisService';
 
 import { adaptDamageTable, adaptDeathsTable, fetchSummaryTables } from './reportSummaryTables';
@@ -333,7 +335,9 @@ describe('adaptDeathsTable', () => {
     expect(analysis.mechanicDeaths.every((m) => m.averageKillingBlowDamage === 0)).toBe(true);
     // The HIGH_DAMAGE_ABILITY pattern keys off averageKillingBlowDamage (>50k); with
     // it pinned at 0 the table path can never emit one (parity with the raw path).
-    expect(analysis.deathPatterns.some((p) => p.type === 'HIGH_DAMAGE_ABILITY')).toBe(false);
+    expect(
+      analysis.deathPatterns.some((p) => p.type === DeathPatternType.HIGH_DAMAGE_ABILITY),
+    ).toBe(false);
   });
 
   it('drops malformed entries instead of throwing', () => {
@@ -370,7 +374,7 @@ describe('fetchSummaryTables', () => {
     const client = makeClient(damagePayload, deathsPayload);
     const result = await fetchSummaryTables({
       reportCode: 'abc',
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       client: client as any,
       fightIds: [11, 13, 55, 57],
       totalActiveDuration: 10_000,
@@ -391,7 +395,7 @@ describe('fetchSummaryTables', () => {
     const client = makeClient(JSON.stringify(damagePayload), JSON.stringify(deathsPayload));
     const result = await fetchSummaryTables({
       reportCode: 'abc',
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       client: client as any,
       fightIds: [11],
       totalActiveDuration: 10_000,
@@ -404,7 +408,7 @@ describe('fetchSummaryTables', () => {
     const client = makeClient(damagePayload, null);
     const result = await fetchSummaryTables({
       reportCode: 'abc',
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       client: client as any,
       fightIds: [1],
       totalActiveDuration: 10_000,
@@ -418,7 +422,7 @@ describe('fetchSummaryTables', () => {
       const client = makeClient(damagePayload, deaths);
       return fetchSummaryTables({
         reportCode: 'abc',
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         client: client as any,
         fightIds: [1],
         totalActiveDuration: 10_000,

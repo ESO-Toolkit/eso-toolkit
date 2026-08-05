@@ -1,8 +1,8 @@
+import { createMockState } from '../../test/utils/reduxMockFactories';
 import { DamageEvent } from '../../types/combatlogEvents';
 import { selectDamageEventsByPlayer } from '../events_data/damageEventsSelectors';
-import { resolveCacheKey } from '../utils/keyedCacheState';
 import { RootState } from '../storeWithHistory';
-import { createMockState } from '../../test/utils/reduxMockFactories';
+import { resolveCacheKey } from '../utils/keyedCacheState';
 
 // Mock state for testing keyed damage events
 const createStateWithDamageEvents = (damageEvents: DamageEvent[]): RootState => {

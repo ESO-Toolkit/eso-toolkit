@@ -15,8 +15,6 @@ import {
   validateGearConfig,
   getSlotCoverageStats,
   canExportLoadout,
-  type ValidationResult,
-  type ItemSlotInfo,
 } from '../itemSlotValidator';
 
 const UNKNOWN_SLOT_ITEM_ID = 40259; // Shalidor's Curse gear piece lacking slot data

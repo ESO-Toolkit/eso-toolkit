@@ -82,6 +82,7 @@ describe('PlayersPanelView companion builds', () => {
               stats: { physicalPen: 12345 },
               effects: [],
               scribing: [],
+              distanceMs: 0,
             },
           },
           companionUpload: {

@@ -88,16 +88,10 @@ export class WorkerPool {
         this.logger.debug(`Queued task ${taskId} (${taskType})`, { taskId, taskType, priority });
       }
 
+      // The task timeout is armed when the task actually starts on a worker
+      // (see executeTaskOnWorker), not here — arming at enqueue would charge
+      // queue-wait time against the run budget.
       this.processNextTask();
-
-      // Set up timeout
-      if (this.config.taskTimeout) {
-        task.timeoutId = setTimeout(() => {
-          if (this.pendingTasks.has(taskId)) {
-            this.handleTaskTimeout(taskId, taskType);
-          }
-        }, this.config.taskTimeout);
-      }
     });
   }
 
@@ -121,8 +115,16 @@ export class WorkerPool {
       releaseAndTerminate(workerInfo.worker);
     }
 
-    // Reject all pending tasks
+    // Reject all pending (running) tasks and clear their timeout timers
     for (const task of this.pendingTasks.values()) {
+      this.cleanupTask(task);
+      task.reject(new Error('WorkerPool destroyed'));
+    }
+
+    // Reject queued tasks too — callers awaiting them would otherwise hang
+    // forever (destroy runs from beforeunload and mid-flight in tests).
+    for (const task of this.taskQueue) {
+      this.cleanupTask(task);
       task.reject(new Error('WorkerPool destroyed'));
     }
 
@@ -219,6 +221,18 @@ export class WorkerPool {
     workerInfo.lastUsed = Date.now();
 
     this.pendingTasks.set(task.id, task);
+
+    // Arm the task timeout on the queued→running transition (cleared in
+    // cleanupTask). Measuring from start gives every task its full run budget
+    // regardless of how long it waited in the queue, and never leaves a task
+    // that outwaited its timer running with no timeout at all.
+    if (this.config.taskTimeout) {
+      task.timeoutId = setTimeout(() => {
+        if (this.pendingTasks.has(task.id)) {
+          this.handleTaskTimeout(task.id, task.type);
+        }
+      }, this.config.taskTimeout);
+    }
 
     let result: unknown;
 

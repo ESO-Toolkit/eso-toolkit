@@ -1,8 +1,8 @@
 import { renderHook, waitFor } from '@testing-library/react';
 
 import { dpsParsesApi } from '../../api/dpsParsesApi';
-import { useDpsParses } from '../useDpsParses';
 import type { ListParsesOptions } from '../../api/dpsParsesApi';
+import { useDpsParses } from '../useDpsParses';
 
 const EMPTY = { parses: [], total: 0, limit: 100, offset: 0 };
 

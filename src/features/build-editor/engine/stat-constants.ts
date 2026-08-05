@@ -450,8 +450,10 @@ export const CP_PRECISION_ID = 'precision';
 export const CP_FORCE_OF_NATURE_PEN = 220;
 export const CP_FORCE_OF_NATURE_ID = 276; // ChampionPointAbilityId.ForceOfNature
 
-/** Fighting Finesse (slottable): 4% crit damage per stage (max 2) */
+/** Fighting Finesse (slottable): 4% crit damage per stage, max 2 stages (8%). */
 export const CP_FIGHTING_FINESSE_CRIT_DMG = 4;
+/** A slotted Fighting Finesse star is always fully invested (both stages). */
+export const CP_FIGHTING_FINESSE_MAX_STAGES = 2;
 export const CP_FIGHTING_FINESSE_ID = 12; // ChampionPointAbilityId.FightingFinesse
 
 /** Backstabber: Not in the slottable enum but tracked via calculator */
@@ -467,8 +469,13 @@ export const BALORGH_MULTIPLIER = 23;
 
 // ─── Trait stat contributions (gold quality, CP160) ─────────────────────────
 
-/** Sharpened weapon trait: flat penetration per weapon */
-export const TRAIT_SHARPENED_PEN = 2752;
+/**
+ * Sharpened weapon trait: flat penetration per weapon (gold quality, CP160).
+ * Weapon-type aware — a one-handed weapon grants 1638, a two-handed weapon
+ * 3276 (a 2H is a single equipped item but pens as two 1H worth).
+ */
+export const TRAIT_SHARPENED_PEN_1H = 1638;
+export const TRAIT_SHARPENED_PEN_2H = 3276;
 
 /** Precise weapon trait: flat crit rating per weapon */
 export const TRAIT_PRECISE_CRIT_RATING = 2295;

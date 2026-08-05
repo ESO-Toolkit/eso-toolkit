@@ -15,6 +15,20 @@ export interface Env {
   DISCORD_WEBHOOK_SECRET?: string;
   /** Internal API key for admin endpoints — set via `wrangler secret put INTERNAL_API_KEY` */
   INTERNAL_API_KEY?: string;
+  /**
+   * Set to 'off' to fall back to name-only validation on /graphql, disabling
+   * persisted-query hash pinning. Escape hatch for a frontend deploy whose
+   * documents drift from the manifest bundled with this Worker; leave unset
+   * (pinning enforced) in normal operation.
+   */
+  GRAPHQL_HASH_PINNING?: string;
+  /**
+   * Where the live frontend publishes its GraphQL query manifest. The proxy
+   * unions it with the manifest bundled here so a frontend deploy that lands
+   * before the Worker deploy does not start rejecting valid queries.
+   * Defaults to https://esotk.com/graphql-manifest.json.
+   */
+  GRAPHQL_MANIFEST_URL?: string;
 }
 
 // ─── Addon recommendation types (shared between rosters & packs) ─────────────

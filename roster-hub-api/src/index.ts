@@ -124,6 +124,34 @@ const sanitizeTrialIds = (ids: unknown): string[] => {
   return [...new Set(ids.filter(isValidTrialId).map(sanitize))].slice(0, 10);
 };
 
+// ─── Per-user update rate limiting ────────────────────────────────────────────
+// PUT handlers replace up-to-50 KB blobs; without a cap an authed user could issue
+// unbounded D1 writes. Backed by the append-only rate_limit_events table (like the
+// vote limiters) so it can't be reset by deleting rows.
+const UPDATE_RATE_LIMIT_WINDOW_SEC = 3600;
+const UPDATE_RATE_LIMIT_MAX = 60; // 60 updates per hour per resource type per user
+
+async function checkUpdateRateLimit(
+  db: D1Database,
+  userId: string,
+  action: string,
+): Promise<boolean> {
+  const row = await db
+    .prepare(
+      `SELECT COUNT(*) AS cnt FROM rate_limit_events
+       WHERE user_id = ? AND action = ? AND created_at > datetime('now', '-${UPDATE_RATE_LIMIT_WINDOW_SEC} seconds')`,
+    )
+    .bind(userId, action)
+    .first<{ cnt: number }>();
+  return (row?.cnt ?? 0) < UPDATE_RATE_LIMIT_MAX;
+}
+
+const UPDATE_RATE_LIMIT_MESSAGE =
+  'Rate limit exceeded. You are updating too quickly — please try again later.';
+
+/** Validate an ESO @handle: leading @, then 3-20 word/./- chars. */
+const isValidDisplayName = (v: string): boolean => /^@[\w.\-]{3,20}$/.test(v);
+
 /** Allowed build visibility values. Mirrors BuildVisibility in the frontend. */
 const BUILD_VISIBILITIES = ['public', 'private', 'link-only'] as const;
 
@@ -222,10 +250,10 @@ interface CacheTier {
    * Browser freshness, in seconds.
    *
    * REQUIRED for correctness, not just tuning. `s-maxage` binds shared caches
-   * only; a browser is a private cache, so without an explicit `max-age` it falls
-   * back to heuristic freshness and can hold a `public` response for hours.
-   * Observed live: after a re-ingest the page kept rendering the previous
-   * signature version until the cache was busted by hand.
+   * only; a browser is a private cache, so without an explicit `max-age` it
+   * falls back to heuristic freshness and can hold a `public` response for
+   * hours. Observed live: after a re-ingest the page kept rendering the
+   * previous signature version until the cache was busted by hand.
    *
    * Defaults to 0 (always revalidate) so a route that forgets to set it is
    * merely chatty rather than silently stale.
@@ -244,8 +272,8 @@ function getCacheTier(path: string): CacheTier | null {
     return { edgeTtl: 60, swr: 300 };
   }
   if (path === '/search-addons') return { edgeTtl: 60, swr: 300 };
-  // DPS leaderboard is cron-owned and refreshes once or twice a day, so it can be
-  // cached aggressively. Nothing here is user-specific.
+  // DPS leaderboard is cron-owned and refreshes once or twice a day, so it can
+  // be cached aggressively. Nothing here is user-specific.
   if (path === '/dps-leaderboard/encounters') {
     return { edgeTtl: 900, swr: 3600, browserTtl: 60 };
   }
@@ -459,6 +487,9 @@ app.put('/rosters/:id', async (c) => {
   const user = await validateToken(c.req.header('Authorization'), c.env);
   if (!user) return c.json({ error: 'Unauthorized' }, 401);
 
+  if (!(await checkUpdateRateLimit(c.env.DB, user.id, 'roster_update')))
+    return c.json({ error: UPDATE_RATE_LIMIT_MESSAGE }, 429);
+
   interface UpdateBody {
     title: string;
     description?: string;
@@ -536,6 +567,7 @@ app.put('/rosters/:id', async (c) => {
   });
 
   if (!updated) return c.json({ error: 'Not found or forbidden' }, 404);
+  await recordRateLimitEvent(c.env.DB, user.id, 'roster_update');
   const roster = await getRosterById(c.env.DB, c.req.param('id'), user.id);
 
   // Notify Discord bot to refresh any linked channels (fire-and-forget)
@@ -757,6 +789,12 @@ app.post('/builds', async (c) => {
   if (body.visibility !== undefined && !isValidVisibility(body.visibility))
     return c.json({ error: 'visibility must be one of public, private, link-only' }, 400);
 
+  // Rate-limit BEFORE decompressing attacker-controlled build_data (matches the
+  // /temp-builds ordering) so a flood can't force unbounded inflate work per request.
+  const createAllowed = await checkBuildCreateRateLimit(c.env.DB, user.id);
+  if (!createAllowed)
+    return c.json({ error: 'Rate limit exceeded. You can only publish 5 builds per hour.' }, 429);
+
   // Visibility is authoritative only when we can actually decode it from
   // build_data. Fail closed if the blob is undecodable — never store a caller's
   // claimed visibility for a payload the server couldn't verify (that would let
@@ -768,10 +806,6 @@ app.post('/builds', async (c) => {
   if (body.visibility !== undefined && body.visibility !== embeddedVisibility)
     return c.json({ error: 'visibility does not match the encoded build.' }, 400);
   const visibility: (typeof BUILD_VISIBILITIES)[number] = embeddedVisibility;
-
-  const createAllowed = await checkBuildCreateRateLimit(c.env.DB, user.id);
-  if (!createAllowed)
-    return c.json({ error: 'Rate limit exceeded. You can only publish 5 builds per hour.' }, 429);
 
   const id = Array.from(crypto.getRandomValues(new Uint8Array(10)))
     .map((b) => b.toString(36).padStart(2, '0'))
@@ -802,6 +836,10 @@ app.post('/builds', async (c) => {
 app.put('/builds/:id', async (c) => {
   const user = await validateToken(c.req.header('Authorization'), c.env);
   if (!user) return c.json({ error: 'Unauthorized' }, 401);
+
+  // Rate-limit BEFORE decompressing attacker-controlled build_data.
+  if (!(await checkUpdateRateLimit(c.env.DB, user.id, 'build_update')))
+    return c.json({ error: UPDATE_RATE_LIMIT_MESSAGE }, 429);
 
   interface UpdateBuildBody {
     title: string;
@@ -872,6 +910,7 @@ app.put('/builds/:id', async (c) => {
   });
 
   if (!updated) return c.json({ error: 'Not found or forbidden' }, 404);
+  await recordRateLimitEvent(c.env.DB, user.id, 'build_update');
   const build = await getBuildById(c.env.DB, c.req.param('id'), user.id);
   return c.json({ build });
 });
@@ -1483,29 +1522,81 @@ app.put('/users/me/display-names', async (c) => {
   const user = await validateToken(c.req.header('Authorization'), c.env);
   if (!user) return c.json({ error: 'Unauthorized' }, 401);
 
-  const body = await c.req.json<{
-    na_display_name?: string | null;
-    eu_display_name?: string | null;
-  }>();
+  // Rate limit: 1 display-name update per 60 seconds (shares the profile row's
+  // updated_at with the bio route). Prevents flooding unbounded D1 writes and
+  // rapid @handle churn.
+  const recent = await c.env.DB.prepare(
+    "SELECT 1 FROM user_profiles WHERE author_id = ? AND updated_at > datetime('now', '-60 seconds')",
+  )
+    .bind(user.id)
+    .first();
+  if (recent) {
+    return c.json(
+      { error: 'Rate limit exceeded. Wait 60 seconds between display-name updates.' },
+      429,
+    );
+  }
+
+  let body: { na_display_name?: string | null; eu_display_name?: string | null };
+  try {
+    body = await c.req.json();
+  } catch {
+    return c.json({ error: 'Invalid JSON' }, 400);
+  }
 
   const na = body.na_display_name?.trim() || null;
   const eu = body.eu_display_name?.trim() || null;
 
-  await updateDisplayNames(c.env.DB, user.id, user.name, na, eu);
+  // Validate @handle shape/length so a caller can't claim an arbitrary or oversized
+  // handle. A UNIQUE index per column (migration-display-names-unique.sql) then
+  // blocks two accounts binding the same @handle (avatar-impersonation guard).
+  if (na !== null && !isValidDisplayName(na))
+    return c.json({ error: 'na_display_name must be a valid @handle' }, 400);
+  if (eu !== null && !isValidDisplayName(eu))
+    return c.json({ error: 'eu_display_name must be a valid @handle' }, 400);
+
+  try {
+    await updateDisplayNames(c.env.DB, user.id, user.name, na, eu);
+  } catch (err) {
+    if (err instanceof Error && /UNIQUE constraint failed/i.test(err.message)) {
+      return c.json({ error: 'That @handle is already claimed by another account.' }, 409);
+    }
+    throw err;
+  }
   return c.json({ ok: true });
 });
 
 // ─── POST /users/avatars/lookup — batch avatar lookup by @displayName+server ─
 
 app.post('/users/avatars/lookup', async (c) => {
-  const body = await c.req.json<{ players: PlayerLookupEntry[] }>();
+  let body: { players?: unknown };
+  try {
+    body = await c.req.json();
+  } catch {
+    return c.json({ error: 'Invalid JSON' }, 400);
+  }
 
   if (!Array.isArray(body.players) || body.players.length === 0) {
     return c.json({ avatars: {} });
   }
 
-  // Cap at 24 entries (max group size in ESO)
-  const players = body.players.slice(0, 24);
+  // Validate each entry before it reaches D1 — drop anything that isn't a
+  // { server: 'na'|'eu', display_name: string } so a malformed element can't throw
+  // a TypeError (unauthenticated 500 amplifier).
+  const players: PlayerLookupEntry[] = body.players
+    .filter(
+      (p): p is PlayerLookupEntry =>
+        !!p &&
+        typeof p === 'object' &&
+        typeof (p as PlayerLookupEntry).display_name === 'string' &&
+        (p as PlayerLookupEntry).display_name.length <= 64 &&
+        ((p as PlayerLookupEntry).server === 'na' || (p as PlayerLookupEntry).server === 'eu'),
+    )
+    // Cap at 24 entries (max group size in ESO)
+    .slice(0, 24);
+
+  if (players.length === 0) return c.json({ avatars: {} });
+
   const avatars = await lookupAvatarsByDisplayNames(c.env.DB, players);
   return c.json({ avatars });
 });
@@ -1623,6 +1714,9 @@ app.put('/packs/:id', async (c) => {
   const user = await validateToken(c.req.header('Authorization'), c.env);
   if (!user) return c.json({ error: 'Unauthorized' }, 401);
 
+  if (!(await checkUpdateRateLimit(c.env.DB, user.id, 'pack_update')))
+    return c.json({ error: UPDATE_RATE_LIMIT_MESSAGE }, 429);
+
   interface UpdatePackBody {
     title: string;
     description?: string;
@@ -1672,6 +1766,7 @@ app.put('/packs/:id', async (c) => {
   });
 
   if (!updated) return c.json({ error: 'Not found or forbidden' }, 404);
+  await recordRateLimitEvent(c.env.DB, user.id, 'pack_update');
   const pack = await getPackById(c.env.DB, c.req.param('id'), user.id);
   return c.json({ pack });
 });
@@ -2056,7 +2151,11 @@ async function notifyDiscordSync(env: Env, rosterId: string): Promise<void> {
 // ─── DPS builds leaderboard ─────────────────────────────────────────────────
 // Read-only. This data is owned by the cron; there is no public write path.
 
-import { getDpsParseCombatant, listDpsEncounters, listDpsParses } from './db/dps-parse-queries';
+import {
+  getDpsParseCombatant,
+  listDpsEncounters,
+  listDpsParses,
+} from './db/dps-parse-queries';
 
 /** Which encounters have data — feeds the trial/boss picker. */
 app.get('/dps-leaderboard/encounters', async (c) => {
@@ -2137,9 +2236,7 @@ async function isAuthorizedInternalRequest(
 }
 
 app.post('/admin/sync-leaderboard', async (c) => {
-  if (
-    !(await isAuthorizedInternalRequest(c.req.header('X-Internal-Key'), c.env.INTERNAL_API_KEY))
-  ) {
+  if (!(await isAuthorizedInternalRequest(c.req.header('X-Internal-Key'), c.env.INTERNAL_API_KEY))) {
     return c.json({ error: 'Unauthorized' }, 401);
   }
   const results = await syncLeaderboardRosters(c.env);
@@ -2152,9 +2249,7 @@ app.post('/admin/sync-leaderboard', async (c) => {
  *   ?encounterId=60&difficulty=122&pages=3&force=1
  */
 app.post('/admin/sync-dps-parses', async (c) => {
-  if (
-    !(await isAuthorizedInternalRequest(c.req.header('X-Internal-Key'), c.env.INTERNAL_API_KEY))
-  ) {
+  if (!(await isAuthorizedInternalRequest(c.req.header('X-Internal-Key'), c.env.INTERNAL_API_KEY))) {
     return c.json({ error: 'Unauthorized' }, 401);
   }
 

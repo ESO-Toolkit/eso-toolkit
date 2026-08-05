@@ -67,6 +67,21 @@ describe('decodeRosterData — gear sets', () => {
     const decoded = await decodeRosterData(data);
     expect(decoded.dps[0]?.sets).toEqual(["Hunding's Rage", "Mother's Sorrow", 'Pale Order']);
   });
+
+  it('decodes the arena weapon for every role', async () => {
+    // roster-hub-api's leaderboard encoder emits `aw` for tanks, healers and DPS;
+    // dropping it here would silently lose it on the way to Discord.
+    const data = await encodeRoster({
+      v: 3,
+      ts: [{ gs: { s1: 80 }, aw: "Maelstrom's Frost Staff" }],
+      hs: [{ s1: 80, aw: 'Asylum Restoration Staff' }],
+      dp: [{ sn: 1, s1: 80, aw: "Maelstrom's Bow" }],
+    });
+    const decoded = await decodeRosterData(data);
+    expect(decoded.tanks[0]?.arenaWeapon).toBe("Maelstrom's Frost Staff");
+    expect(decoded.healers[0]?.arenaWeapon).toBe('Asylum Restoration Staff');
+    expect(decoded.dps[0]?.arenaWeapon).toBe("Maelstrom's Bow");
+  });
 });
 
 describe('decodeRosterData — malformed input is tolerated', () => {

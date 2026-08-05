@@ -1,11 +1,11 @@
-import React from 'react';
 import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import '@testing-library/jest-dom';
 
-import { HeaderBar } from './HeaderBar';
 import { useAuth } from '../features/auth/AuthContext';
+
+import { HeaderBar } from './HeaderBar';
 
 const mockNavigate = jest.fn();
 
@@ -55,10 +55,14 @@ describe('HeaderBar', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockUseAuth.mockReturnValue({
+      accessToken: '',
       isLoggedIn: false,
+      isBanned: false,
+      banReason: null,
       currentUser: null,
       userLoading: false,
       userError: null,
+      setAccessToken: jest.fn(),
       refetchUser: jest.fn(),
       rebindAccessToken: jest.fn(),
     } as ReturnType<typeof useAuth>);

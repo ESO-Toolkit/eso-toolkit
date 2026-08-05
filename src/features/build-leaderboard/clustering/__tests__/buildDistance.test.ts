@@ -1,3 +1,11 @@
+import type { ParseFeatureVector } from '../../types/clustering.types';
+import {
+  ARCANIST_ARCHETYPE,
+  NECRO_ARCHETYPE,
+  SETS,
+  makeParse,
+  resetFixtureIds,
+} from '../__fixtures__/dpsParses.fixture';
 import {
   DEFAULT_FEATURE_WEIGHTS,
   buildDistance,
@@ -7,14 +15,6 @@ import {
   jaccardDistance,
 } from '../buildDistance';
 import { EMPTY_CANONICAL_MAPS, toFeatureVector } from '../featureExtraction';
-import {
-  ARCANIST_ARCHETYPE,
-  NECRO_ARCHETYPE,
-  SETS,
-  makeParse,
-  resetFixtureIds,
-} from '../__fixtures__/dpsParses.fixture';
-import type { ParseFeatureVector } from '../../types/clustering.types';
 
 function vectorFor(spec: Parameters<typeof makeParse>[0], index = 0): ParseFeatureVector {
   const vector = toFeatureVector(makeParse(spec, index), EMPTY_CANONICAL_MAPS);

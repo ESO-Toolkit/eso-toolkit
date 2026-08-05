@@ -21,7 +21,7 @@ export function getItemDescription(name: string): string | undefined {
 
   // Dynamic trait names
   if (name.startsWith('Sharpened (')) {
-    return 'Weapon trait. Grants 2752 Physical and Spell Penetration per weapon with the Sharpened trait.';
+    return 'Weapon trait. Grants Physical and Spell Penetration per weapon with the Sharpened trait: 1638 for a one-handed weapon, 3276 for a two-handed weapon.';
   }
   if (name.startsWith('Precise (')) {
     return 'Weapon trait. Grants 2295 Critical Rating (~10.5% Critical Chance) per weapon with the Precise trait.';

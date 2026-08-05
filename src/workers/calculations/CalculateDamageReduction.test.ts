@@ -1,17 +1,13 @@
-import { calculateDamageReductionData } from './CalculateDamageReduction';
-import { KnownAbilities } from '../../types/abilities';
-import {
-  createMockCombatantInfoEvent,
-  createMockBuffEvent,
-  createMockDebuffEvent,
-} from '../../test/utils/combatLogMockFactories';
 import { PlayerDetailsWithRole } from '../../store/player_data/playerDataSlice';
+import { createMockCombatantInfoEvent } from '../../test/utils/combatLogMockFactories';
+import { KnownAbilities } from '../../types/abilities';
+
+import { calculateDamageReductionData } from './CalculateDamageReduction';
 
 describe('CalculateDamageReduction', () => {
   const FIGHT_START = 10000;
   const FIGHT_END = 20000; // 10 second fight
   const PLAYER_ID = 100;
-  const TARGET_ID = 200;
 
   const createMockPlayer = (overrides?: Partial<PlayerDetailsWithRole>): PlayerDetailsWithRole => ({
     id: PLAYER_ID,

@@ -215,6 +215,16 @@ describe('consentManager', () => {
       const data = exportUserData();
       expect(data['persist:root']).toBeDefined();
     });
+
+    it('redacts live OAuth tokens instead of exporting them', () => {
+      localStorage.setItem('access_token', 'live-access-token');
+      localStorage.setItem('refresh_token', 'live-refresh-token');
+      const data = exportUserData();
+      expect(data.access_token).toBe('[redacted]');
+      expect(data.refresh_token).toBe('[redacted]');
+      expect(JSON.stringify(data)).not.toContain('live-access-token');
+      expect(JSON.stringify(data)).not.toContain('live-refresh-token');
+    });
   });
 
   describe('deleteAllUserData', () => {

@@ -4,6 +4,7 @@
  */
 
 import { WeaponType } from '../types/playerDetails';
+
 import {
   isOneHandedWeapon,
   isTwoHandedWeapon,

@@ -2,7 +2,7 @@
  * Tests for PerformanceOverlay Component
  */
 
-import { render, screen, fireEvent, within } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import React from 'react';
 
 import { PerformanceOverlay } from './PerformanceOverlay';

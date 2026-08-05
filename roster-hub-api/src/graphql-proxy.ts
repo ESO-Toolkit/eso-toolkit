@@ -10,6 +10,9 @@
 
 import type { Context } from 'hono';
 
+import { ALLOWED_OPERATIONS } from './graphql-allowed-operations';
+import { hashGraphqlDocument } from './graphql-document-hash';
+import { GRAPHQL_QUERY_HASHES } from './graphql-query-manifest';
 import type { Env } from './types';
 
 const ESOLOGS_TOKEN_URL = 'https://www.esologs.com/oauth/token';
@@ -72,42 +75,6 @@ const CACHEABLE_OPERATIONS = new Set([
 
 const CACHE_TTL_SECONDS = 600; // 10 minutes
 
-const ALLOWED_OPERATIONS = new Set([
-  'getBuffEvents',
-  'getDebuffEvents',
-  'getDamageEvents',
-  'getResourceEvents',
-  'getCombatantInfoEvents',
-  'getCastEvents',
-  'getHealingEvents',
-  'getDeathEvents',
-  'getPlayersForReport',
-  'getReportByCode',
-  'getReportMasterData',
-  'getReportPlayersOnly',
-  'getAbilities',
-  'getAbility',
-  'getClass',
-  'getClasses',
-  'getTrialZones',
-  'getEncounterFightRankings',
-  'getEncounterInfo',
-  'getTrialZonesMetadata',
-  'getLatestReports',
-  'getGuildById',
-  'getGuilds',
-  'getGuildByName',
-  'getGuildAttendance',
-  'getGuildMembers',
-  'getBatchEventsForSummary',
-  'getAllEventsForSummary',
-  'getAllEventsTimeBased',
-  'getReportDamageEvents',
-  'getReportDeathEvents',
-  'getReportHealingEvents',
-  'getProfileUploadedReports',
-]);
-
 const MAX_BODY_BYTES = 100_000; // 100 KB
 
 const OPERATION_NAME_RE = /\b(?:query|mutation|subscription)\s+([A-Za-z_]\w*)/g;
@@ -158,9 +125,228 @@ function reportResponseHasFights(responseBody: string): boolean {
   }
 }
 
+// ─── Per-IP rate limiting (token bucket, best-effort per-isolate) ─────────────
+//
+// The proxy forwards every request to esologs.com with the site's shared
+// client-credentials token, so the upstream OAuth points budget is common to all
+// callers. `/graphql` has no auth, so without a limiter a single client can spend
+// that shared budget arbitrarily fast and take report loading down for everyone.
+// This bucket caps per-IP request rate. Like the token cache above it lives in V8
+// isolate scope, so it is a coarse best-effort control (each edge isolate keeps its
+// own buckets), not a globally-consistent limiter.
+//
+// A token is spent only when a request actually reaches upstream — cache hits
+// and singleflight piggybacks cost the shared budget nothing, so charging them
+// would only punish normal use. The budget also has to fit one honest cold
+// load: the buff slices split a fight into 30s intervals and issue them with
+// Promise.all (friendly AND hostile), so a 16-minute fight alone is ~64
+// requests before the report's other queries, and each can paginate. An
+// interval that gets a 429 is swallowed into an empty event list, so a bucket
+// too small does not merely slow the page down — it silently renders a fight
+// with missing events.
+const RATE_LIMIT_CAPACITY = 240; // burst size (tokens)
+const RATE_LIMIT_REFILL_PER_SEC = 4; // sustained ≈ 240 upstream requests / minute per IP
+const RATE_LIMIT_MAX_IPS = 10_000; // bound the Map so unique-IP floods can't grow it unbounded
+
+interface TokenBucket {
+  tokens: number;
+  updatedAt: number; // Unix ms
+}
+
+const ipBuckets = new Map<string, TokenBucket>();
+
+/** Consume one token for `ip`; returns false when the bucket is empty (rate limited). */
+function allowRequestFromIp(ip: string): boolean {
+  const now = Date.now();
+  let bucket = ipBuckets.get(ip);
+  if (!bucket) {
+    if (ipBuckets.size >= RATE_LIMIT_MAX_IPS) {
+      // Evict the oldest entry to bound memory (Map preserves insertion order).
+      const oldest = ipBuckets.keys().next().value;
+      if (oldest !== undefined) ipBuckets.delete(oldest);
+    }
+    bucket = { tokens: RATE_LIMIT_CAPACITY, updatedAt: now };
+    ipBuckets.set(ip, bucket);
+  } else {
+    const elapsedSec = (now - bucket.updatedAt) / 1000;
+    bucket.tokens = Math.min(
+      RATE_LIMIT_CAPACITY,
+      bucket.tokens + elapsedSec * RATE_LIMIT_REFILL_PER_SEC,
+    );
+    bucket.updatedAt = now;
+  }
+  if (bucket.tokens < 1) return false;
+  bucket.tokens -= 1;
+  return true;
+}
+
+// GraphQL introspection has no place in a persisted-query proxy; block it so a
+// caller can't map the schema through the site's credentials.
+const INTROSPECTION_RE = /\b__schema\b|\b__type\b/;
+
+// ─── Persisted-query pinning ─────────────────────────────────────────────────
+//
+// Validating only the operation NAME left the proxy wide open: any body at all
+// could be sent under, say, `getReportByCode` and it would be forwarded to ESO
+// Logs with the site's client-credentials token — an unmetered query proxy on
+// our OAuth budget. Every allowlisted operation therefore has its document
+// hash(es) pinned in the generated manifest, and a body that does not hash to
+// one of them is refused.
+//
+// `GRAPHQL_HASH_PINNING=off` is a last-resort escape hatch that restores
+// name-only validation without a code change.
+//
+// DEPLOY SKEW: Pages auto-deploys on merge to main, the Worker deploy is
+// manual, so the frontend's documents routinely move before this Worker's
+// bundled manifest does. Pinning against the bundle alone would turn any query
+// edit into a site outage. The frontend therefore publishes the same manifest
+// at /graphql-manifest.json, and the accepted set is the UNION of:
+//   - the manifest bundled with this Worker (the previous release, and the
+//     answer when the site is unreachable)
+//   - the manifest the live frontend is currently serving
+// which covers skew in both directions. Only our own origin can widen the set,
+// and a frontend that can be made to serve an attacker's manifest is already a
+// full compromise of the site.
+const RUNTIME_MANIFEST_URL = 'https://esotk.com/graphql-manifest.json';
+/**
+ * How long a document that the published manifest did NOT explain stays
+ * "recently tried". Suppression is per document, never global: a successful
+ * refresh for one new query must not stop the NEXT deploy's query from being
+ * discovered, or a second deploy inside the window would 400 the live site —
+ * the very outage this union prevents.
+ */
+const MANIFEST_MISS_BACKOFF_MS = 15 * 1000;
+/**
+ * Floor between origin reads regardless of which document missed, so a caller
+ * rotating fabricated documents cannot turn every rejected request into a
+ * fetch of our Pages origin. A genuine new deploy still resolves within it.
+ */
+const MANIFEST_MIN_REFRESH_INTERVAL_MS = 2 * 1000;
+/** Bound the back-off map so fabricated documents cannot grow it without limit. */
+const MANIFEST_MISS_MAX_KEYS = 1_000;
+/** Cap the hashes retained per operation as successive deploys are learned. */
+const MANIFEST_MAX_HASHES_PER_OPERATION = 8;
+
+/** The document a refresh is trying to resolve — see refreshRuntimeManifest. */
+interface WantedDocument {
+  operation: string;
+  hash: string;
+}
+
+interface PublishedManifest {
+  version?: number;
+  operations?: Record<string, string[]>;
+}
+
+let runtimeManifest: Record<string, string[]> = {};
+let runtimeManifestFetchedAt = 0;
+let runtimeManifestInFlight: Promise<void> | null = null;
+/** `operation:hash` → earliest ms at which it is worth asking the origin again. */
+const manifestMissBackoff = new Map<string, number>();
+
+function markManifestMiss(key: string, now: number): void {
+  if (manifestMissBackoff.size >= MANIFEST_MISS_MAX_KEYS) {
+    const oldest = manifestMissBackoff.keys().next().value; // insertion-ordered
+    if (oldest !== undefined) manifestMissBackoff.delete(oldest);
+  }
+  manifestMissBackoff.set(key, now + MANIFEST_MISS_BACKOFF_MS);
+}
+
+/**
+ * Read the manifest the live frontend publishes, to resolve `want`.
+ *
+ * Any failure leaves the previous value in place — a frontend that is down or
+ * slow must never turn into a 400 storm on the proxy.
+ */
+async function refreshRuntimeManifest(env: Env, want: WantedDocument): Promise<void> {
+  const now = Date.now();
+  const missKey = `${want.operation}:${want.hash}`;
+  // Only THIS document's recent failure suppresses a retry; a different missing
+  // document is always worth one look, subject to the global floor below.
+  if (now < (manifestMissBackoff.get(missKey) ?? 0)) return;
+  if (now - runtimeManifestFetchedAt < MANIFEST_MIN_REFRESH_INTERVAL_MS) return;
+  if (runtimeManifestInFlight) return runtimeManifestInFlight;
+
+  runtimeManifestInFlight = (async () => {
+    let answeredTheMiss = false;
+    try {
+      // This runs ONLY after a bundled-hash miss, i.e. exactly when the site may
+      // have deployed a query the Worker has never seen. A cached copy is worth
+      // nothing here: it would be the same stale manifest that caused the miss.
+      // Bypass the edge cache and cache-bust the origin so we always read what
+      // Pages is serving right now.
+      const base = env.GRAPHQL_MANIFEST_URL || RUNTIME_MANIFEST_URL;
+      const url = `${base}${base.includes('?') ? '&' : '?'}t=${now}`;
+      const res = await fetch(url, {
+        headers: { 'Cache-Control': 'no-cache' },
+        cf: { cacheTtl: 0, cacheEverything: false },
+      });
+      if (!res.ok) return;
+      const parsed = (await res.json()) as PublishedManifest;
+      const operations = parsed?.operations;
+      if (!operations || typeof operations !== 'object') return;
+      const next: Record<string, string[]> = {};
+      for (const [operation, hashes] of Object.entries(operations)) {
+        if (!ALLOWED_OPERATIONS.has(operation)) continue; // never widen the allowlist itself
+        if (!Array.isArray(hashes)) continue;
+        const clean = hashes.filter((h) => typeof h === 'string' && /^[0-9a-f]{64}$/.test(h));
+        if (clean.length) next[operation] = clean;
+      }
+      // MERGE, never clobber: a valid-but-previous manifest would otherwise
+      // evict a hash this isolate had already learned from the live frontend,
+      // and the next request for that document would 400 until another refresh
+      // happened to land. Every retained entry was published by our own site at
+      // some point, and the per-operation cap keeps the set from growing across
+      // deploys.
+      const merged: Record<string, string[]> = { ...runtimeManifest };
+      for (const [operation, hashes] of Object.entries(next)) {
+        merged[operation] = [...new Set([...hashes, ...(merged[operation] ?? [])])].slice(
+          0,
+          MANIFEST_MAX_HASHES_PER_OPERATION,
+        );
+      }
+      runtimeManifest = merged;
+      // A 200 is not the same as an ANSWER. Pages/CDN propagation can hand back
+      // the PREVIOUS manifest — valid JSON that simply lacks the hash we just
+      // missed on — and treating that as success would suppress the next
+      // refresh for the full TTL and keep 400ing the frontend that is already
+      // live. Only a manifest that actually contains the missed document has
+      // resolved anything.
+      answeredTheMiss = (merged[want.operation] ?? []).includes(want.hash);
+    } catch {
+      // keep the last known good manifest
+    } finally {
+      // A read that did not answer the miss — unreachable Pages, or a
+      // mid-propagation CDN handing back the previous manifest — backs THIS
+      // document off briefly. It never blocks a different document, so the
+      // next deploy is still discovered immediately.
+      const finishedAt = Date.now();
+      if (answeredTheMiss) manifestMissBackoff.delete(missKey);
+      else markManifestMiss(missKey, finishedAt);
+      runtimeManifestFetchedAt = finishedAt;
+      runtimeManifestInFlight = null;
+    }
+  })();
+
+  return runtimeManifestInFlight;
+}
+
+async function documentMatchesPin(env: Env, operation: string, queryDoc: string): Promise<boolean> {
+  const bundled = GRAPHQL_QUERY_HASHES[operation] ?? [];
+  const hash = await hashGraphqlDocument(queryDoc);
+  if (bundled.includes(hash)) return true;
+
+  if ((runtimeManifest[operation] ?? []).includes(hash)) return true;
+
+  await refreshRuntimeManifest(env, { operation, hash });
+  return (runtimeManifest[operation] ?? []).includes(hash);
+}
+
 // ─── Proxy handler ────────────────────────────────────────────────────────────
 
 export async function handleGraphqlProxy(c: Context<{ Bindings: Env }>): Promise<Response> {
+  const clientIp = c.req.header('CF-Connecting-IP') ?? c.req.header('x-forwarded-for') ?? 'unknown';
+
   let body: unknown;
   let bodyStr: string;
   try {
@@ -193,6 +379,20 @@ export async function handleGraphqlProxy(c: Context<{ Bindings: Env }>): Promise
     return c.json({ error: 'Query document must contain exactly the declared operation' }, 400);
   }
 
+  if (INTROSPECTION_RE.test(parsed.query)) {
+    return c.json({ error: 'Introspection is not permitted' }, 400);
+  }
+
+  if (
+    c.env.GRAPHQL_HASH_PINNING !== 'off' &&
+    !(await documentMatchesPin(c.env, operationHint, parsed.query))
+  ) {
+    return c.json(
+      { error: 'Query document does not match the pinned document for this operation' },
+      400,
+    );
+  }
+
   const isCacheable = Boolean(operationHint && CACHEABLE_OPERATIONS.has(operationHint));
 
   // Check edge cache first — cache hits avoid upstream entirely
@@ -214,6 +414,13 @@ export async function handleGraphqlProxy(c: Context<{ Bindings: Env }>): Promise
   }
 
   const doFetch = async (): Promise<Response> => {
+    // Charged here, not at the top of the handler: only a call that actually
+    // reaches ESO Logs spends the shared credentials budget this protects, so
+    // cache hits and singleflight piggybacks stay free.
+    if (!allowRequestFromIp(clientIp)) {
+      return c.json({ error: 'Rate limit exceeded' }, 429);
+    }
+
     let token: string;
     try {
       token = await getCachedClientToken(c.env);

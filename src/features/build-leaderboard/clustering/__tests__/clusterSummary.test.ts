@@ -1,5 +1,5 @@
-import { traitShares } from '../clusterSummary';
 import type { FeatureGroupKey, ParseFeatureVector } from '../../types/clustering.types';
+import { traitShares } from '../clusterSummary';
 
 function vector(overrides: Partial<ParseFeatureVector> = {}): ParseFeatureVector {
   return {

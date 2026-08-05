@@ -6,7 +6,7 @@
  * is available natively in the Workers runtime.
  */
 
-import { escapeHtml } from '../sanitize';
+import { cleanText } from '../sanitize';
 import type { PlayerDetails, PlayerEntry, RankingEntry } from './esologs-client';
 import { categorizeGear } from './gear-categorizer';
 
@@ -70,7 +70,10 @@ function buildCompactTank(player: PlayerEntry, index: number): CompactTank {
   const gear = categorizeGear(player.combatantInfo?.gear ?? [], false);
   const ct: CompactTank = {};
 
-  if (player.name) ct.pn = escapeHtml(player.name);
+  // Identity/display name: store RAW (never HTML-escape). The client decodes this
+  // into a React text node, which escapes on output — escaping here too would
+  // double-escape (e.g. "Spike'jo" → "Spike&#x27;jo" shown literally). See sanitize.ts.
+  if (player.name) ct.pn = cleanText(player.name);
   ct.rl = `T${index + 1}`;
 
   const gs: CompactGear = {};
@@ -79,7 +82,6 @@ function buildCompactTank(player: PlayerEntry, index: number): CompactTank {
   if (gear.monsterSet) gs.ms = gear.monsterSet;
   if (gear.additionalSets.length) gs.a = gear.additionalSets;
   if (Object.keys(gs).length > 0) ct.gs = gs;
-
   if (gear.arenaWeapon) ct.aw = gear.arenaWeapon;
 
   const talentInfo = detectTalentInfo(player.combatantInfo?.talents ?? []);
@@ -93,7 +95,8 @@ function buildCompactHealer(player: PlayerEntry, index: number): CompactHealer {
   const gear = categorizeGear(player.combatantInfo?.gear ?? [], false);
   const ch: CompactHealer = {};
 
-  if (player.name) ch.pn = escapeHtml(player.name);
+  // Store the display name RAW (never HTML-escape identity fields; see sanitize.ts).
+  if (player.name) ch.pn = cleanText(player.name);
   ch.rl = `H${index + 1}`;
 
   if (gear.set1) ch.s1 = gear.set1;
@@ -113,7 +116,8 @@ function buildCompactDPS(player: PlayerEntry, index: number): CompactDPS {
   const gear = categorizeGear(player.combatantInfo?.gear ?? [], true);
   const cd: CompactDPS = { sn: index + 1 };
 
-  if (player.name) cd.pn = escapeHtml(player.name);
+  // Store the display name RAW (never HTML-escape identity fields; see sanitize.ts).
+  if (player.name) cd.pn = cleanText(player.name);
 
   if (gear.set1) cd.s1 = gear.set1;
   if (gear.set2) cd.s2 = gear.set2;
@@ -205,7 +209,9 @@ export async function encodeRoster(roster: CompactRosterV3): Promise<string> {
  * Build a display title for a #1 roster.
  */
 export function buildRosterTitle(ranking: RankingEntry, trialName: string): string {
-  const teamName = escapeHtml(ranking.guild?.name ?? 'Unknown');
+  // Store RAW — this becomes the roster `title` column, rendered as a React text
+  // node (escaped on output). Escaping here double-escapes guild names with ' & etc.
+  const teamName = cleanText(ranking.guild?.name ?? 'Unknown');
   return `${teamName} — ${trialName} #1`;
 }
 
@@ -213,7 +219,8 @@ export function buildRosterTitle(ranking: RankingEntry, trialName: string): stri
  * Build a description for a #1 roster.
  */
 export function buildRosterDescription(ranking: RankingEntry, trialName: string): string {
-  const teamName = escapeHtml(ranking.guild?.name ?? 'Unknown');
+  // Store RAW — becomes the roster `description` column (escaped on output).
+  const teamName = cleanText(ranking.guild?.name ?? 'Unknown');
   const server = ranking.server?.region?.toUpperCase() ?? '';
   const score = ranking.score ? ` • Score: ${ranking.score.toLocaleString()}` : '';
   return `Auto-imported #1 ${trialName} roster from ${teamName}${server ? ` (${server})` : ''}${score}`;

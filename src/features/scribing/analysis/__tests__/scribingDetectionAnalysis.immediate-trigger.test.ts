@@ -13,8 +13,6 @@
  */
 
 import { describe, it, expect } from '@jest/globals';
-import type { BuffEvent, UnifiedCastEvent } from '../../../../types/combatlogEvents';
-import type { CombatEventData } from '../scribingDetectionAnalysis';
 
 // Mock the scribing data import
 jest.mock('../../../../../data/scribing-complete.json', () => ({

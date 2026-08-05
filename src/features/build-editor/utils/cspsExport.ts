@@ -10,6 +10,9 @@
  * the addon's in-game import if available.
  */
 
+import { resolveEnchantId, resolveTraitId } from '@/utils/combatLogGearMapping';
+import { ENCHANTMENT_NAMES, TRAIT_NAMES } from '@/utils/gearMappings';
+
 import type { GearPiece } from '../../loadout-manager/types/loadout.types';
 import {
   compressComp1,
@@ -29,6 +32,7 @@ import {
   type CSPSSavedVariables,
 } from '../../loadout-manager/utils/cspsConverter';
 import { EQUIP_SLOTS } from '../data/esoStaticData';
+import { getGearCategory, type GearCategory } from '../data/gear-traits-enchants';
 import { ARMOR_WEIGHT_TO_ESO_TYPE, resolveApparelWeight } from '../data/setArmorWeights';
 import type {
   Build,
@@ -122,6 +126,96 @@ const APPAREL_SLOT_SET = new Set<number>(
   EQUIP_SLOTS.filter((s) => s.category === 'apparel').map((s) => s.slot),
 );
 
+// Build editor equip slot → gear category (armor / weapon / jewelry), used to
+// scope the trait/enchant code lookups (the same code can mean different
+// things per category, so the reverse maps are category-keyed).
+const SLOT_GEAR_CATEGORY = new Map<number, GearCategory>(
+  EQUIP_SLOTS.map((s) => [s.slot, getGearCategory(s.category)]),
+);
+
+// ── Build editor kebab id → numeric ESO code ─────────────────────────────────
+// Gear pieces edited natively in the Build Editor (and pieces from Extract
+// Build) carry kebab trait/enchant string ids (`'sharpened'`, `'infused'`).
+// CSPS stores the numeric ESO codes, so the export must translate them — the
+// INVERSE of the code→kebab decode `combatLogGearMapping` performs via
+// TRAIT_NAMES / ENCHANTMENT_NAMES. We derive the reverse maps by running the
+// same importer over every known code (ascending, so the lowest/canonical code
+// wins per kebab), keeping export and import in lockstep. CSPS-imported pieces
+// instead hold the raw numeric code as a string and are parsed directly.
+
+const GEAR_CATEGORIES: GearCategory[] = ['armor', 'weapon', 'jewelry'];
+
+/**
+ * Code bands per gear category, as the decode tables in `@/utils/gearMappings`
+ * are themselves laid out ("// Armor Traits", "// Jewelry Enchantments", …).
+ *
+ * The bands matter because the same DISPLAY NAME appears once per category —
+ * Infused is trait 26 (weapon), 38 (armor) and 49 (jewelry) — while
+ * resolveTraitId/resolveEnchantId only gate on whether the decoded NAME exists
+ * in the requested category, not on whether the CODE belongs to it. A plain
+ * ascending scan therefore resolved jewelry `infused` from weapon code 4, and
+ * the exported profile restored the wrong trait. Preferring an in-band code
+ * keeps export and import on the same entry.
+ */
+const TRAIT_CODE_BANDS: Record<GearCategory, [number, number]> = {
+  weapon: [1, 32],
+  armor: [33, 44],
+  jewelry: [45, 56],
+};
+
+const ENCHANT_CODE_BANDS: Record<GearCategory, [number, number]> = {
+  weapon: [1, 28],
+  armor: [29, 40],
+  jewelry: [41, 56],
+};
+
+function buildReverseCodeMap(
+  codeNames: Record<number, string>,
+  resolve: (code: number, category: GearCategory) => string | undefined,
+  bands: Record<GearCategory, [number, number]>,
+): Record<GearCategory, Map<string, number>> {
+  const maps: Record<GearCategory, Map<string, number>> = {
+    armor: new Map(),
+    weapon: new Map(),
+    jewelry: new Map(),
+  };
+  for (const category of GEAR_CATEGORIES) {
+    const [low, high] = bands[category];
+    const codes = Object.keys(codeNames).map(Number);
+    // Two passes: an in-band code always wins. The out-of-band pass is a
+    // fallback for names the band does not carry (legacy/duplicate low codes),
+    // so nothing that used to export a code now exports 0.
+    const inBand = codes.filter((code) => code >= low && code <= high);
+    const outOfBand = codes.filter((code) => code < low || code > high);
+    for (const code of [...inBand, ...outOfBand]) {
+      const kebab = resolve(code, category);
+      if (kebab && !maps[category].has(kebab)) maps[category].set(kebab, code);
+    }
+  }
+  return maps;
+}
+
+const TRAIT_CODE_BY_CATEGORY = buildReverseCodeMap(TRAIT_NAMES, resolveTraitId, TRAIT_CODE_BANDS);
+const ENCHANT_CODE_BY_CATEGORY = buildReverseCodeMap(
+  ENCHANTMENT_NAMES,
+  resolveEnchantId,
+  ENCHANT_CODE_BANDS,
+);
+
+/**
+ * Resolve a gear trait/enchant value to the numeric ESO code CSPS stores.
+ * Kebab ids map back through the inverse decode table; an already-numeric
+ * string is parsed as-is; anything unknown → 0 (no trait/enchant).
+ */
+function resolveGearCode(value: string | undefined, reverse: Map<string, number>): number {
+  if (!value) return 0;
+  if (/^\d+$/.test(value)) {
+    const code = parseInt(value, 10);
+    return code > 0 ? code : 0;
+  }
+  return reverse.get(value) ?? 0;
+}
+
 /**
  * Convert build editor gear config to CSPS gear entries.
  */
@@ -140,12 +234,14 @@ function convertGearConfigToCSPS(gear: Record<number, GearPiece>): Record<number
       ? ARMOR_WEIGHT_TO_ESO_TYPE[resolveApparelWeight(piece.id, piece.weight)]
       : 0;
 
+    const category = SLOT_GEAR_CATEGORY.get(slot) ?? 'armor';
+
     result[slot] = {
       setId,
       type,
-      trait: piece.trait ? parseInt(piece.trait, 10) || 0 : 0,
+      trait: resolveGearCode(piece.trait, TRAIT_CODE_BY_CATEGORY[category]),
       quality: 0,
-      enchant: piece.enchant ? parseInt(piece.enchant, 10) || 0 : 0,
+      enchant: resolveGearCode(piece.enchant, ENCHANT_CODE_BY_CATEGORY[category]),
     };
   }
 

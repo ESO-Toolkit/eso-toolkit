@@ -1,4 +1,5 @@
 import { Logger, LogLevel } from '../../utils/logger';
+
 import { MockLogger } from './loggerMock';
 
 describe('MockLogger', () => {

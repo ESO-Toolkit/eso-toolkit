@@ -3,6 +3,7 @@ import { configureStore } from '@reduxjs/toolkit';
 import { DATA_FETCH_CACHE_TIMEOUT, EMPTY_REPORT_CACHE_TIMEOUT } from '../../Constants';
 import type { EsoLogsClient } from '../../esologsClient';
 import type { ReportFragment } from '../../graphql/gql/graphql';
+import { resolveCacheKey } from '../utils/keyedCacheState';
 
 import reportSlice, {
   clearReport,
@@ -11,7 +12,6 @@ import reportSlice, {
   ReportState,
   setActiveReportContext,
 } from './reportSlice';
-import { resolveCacheKey } from '../utils/keyedCacheState';
 
 const createReportEntry = (overrides: Partial<ReportEntry> = {}): ReportEntry => ({
   data: null,

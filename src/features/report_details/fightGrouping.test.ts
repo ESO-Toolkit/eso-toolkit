@@ -136,7 +136,12 @@ describe('resolveFightZone', () => {
 
   it('resolves a name-only gameZone that matches a canonical trial', () => {
     const zone = resolveFightZone(
-      makeFight({ gameZone: { id: null, name: 'Sunspire' }, encounterID: 21 }),
+      // ESO Logs can return a gameZone with a null id; the resolver falls back
+      // to the name, which is exactly what this asserts.
+      makeFight({
+        gameZone: { id: null, name: 'Sunspire' } as unknown as FightFragment['gameZone'],
+        encounterID: 21,
+      }),
     );
     expect(zone.type).toBe('trial');
     expect(zone.zoneId).toBe(ZONE_SUNSPIRE);
@@ -597,7 +602,7 @@ describe('edge cases', () => {
 // ── End-to-end checks against real committed ESO Logs reports ──────────────
 function loadSampleReport(code: string): { report: ReportFragment; fights: FightFragment[] } {
   const file = path.resolve(process.cwd(), 'public/sample-reports', code, 'report.json');
-  const raw = fs.readFileSync(file, 'utf8').replace(/^﻿/, '');
+  const raw = fs.readFileSync(file, 'utf8').replace(/^\uFEFF/, '');
   const json = JSON.parse(raw);
   const report = (json?.reportData?.report ?? json?.data?.reportData?.report) as ReportFragment;
   const fights = ((report as unknown as { fights?: FightFragment[] })?.fights ??

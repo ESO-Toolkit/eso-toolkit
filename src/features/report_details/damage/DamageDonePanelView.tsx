@@ -1,4 +1,13 @@
-import { Box, Typography, Avatar, LinearProgress, Tooltip, Chip, Stack } from '@mui/material';
+import {
+  Box,
+  Typography,
+  Avatar,
+  LinearProgress,
+  Tooltip,
+  Chip,
+  Stack,
+  ButtonBase,
+} from '@mui/material';
 import React, { useState, useMemo } from 'react';
 
 import type { FightFragment } from '../../../graphql/gql/graphql';
@@ -123,6 +132,33 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
     return sortDirection === 'asc' ? ' ↑' : ' ↓';
   };
 
+  // Accessible name for the sort buttons (mobile chips and desktop headers), folding the
+  // active sort state into the label since these are standalone buttons, not grid headers.
+  const getSortButtonLabel = (label: string, field: SortField): string => {
+    if (sortField !== field) return `Sort by ${label}`;
+    return `Sort by ${label}, ${sortDirection === 'asc' ? 'ascending' : 'descending'}`;
+  };
+
+  // Keyboard activation (Enter/Space) for the role="button" sort controls.
+  const handleSortKeyDown =
+    (field: SortField) =>
+    (e: React.KeyboardEvent): void => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        handleSort(field);
+      }
+    };
+
+  // Keyboard activation (Enter/Space) for a player-name drill-down button.
+  const handlePlayerKeyDown =
+    (playerId: string) =>
+    (e: React.KeyboardEvent): void => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        onPlayerClick?.(playerId);
+      }
+    };
+
   // Format numbers for display with commas as thousand separators
   const formatNumber = (num: number): string => {
     return Math.round(num).toLocaleString();
@@ -236,7 +272,11 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
           ].map(({ field, label, icon, accent }) => (
             <Box
               key={field}
+              role="button"
+              tabIndex={0}
+              aria-label={getSortButtonLabel(label, field)}
               onClick={() => handleSort(field)}
+              onKeyDown={handleSortKeyDown(field)}
               sx={{
                 px: 2,
                 py: 1,
@@ -420,6 +460,9 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
             }}
           >
             <Box
+              role="button"
+              tabIndex={0}
+              aria-label={getSortButtonLabel('Name', 'name')}
               sx={{
                 cursor: 'pointer',
                 userSelect: 'none',
@@ -428,10 +471,14 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                 },
               }}
               onClick={() => handleSort('name')}
+              onKeyDown={handleSortKeyDown('name')}
             >
               Name{getSortIcon('name')}
             </Box>
             <Box
+              role="button"
+              tabIndex={0}
+              aria-label={getSortButtonLabel('DPS', 'dps')}
               sx={{
                 textAlign: 'right',
                 cursor: 'pointer',
@@ -441,10 +488,14 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                 },
               }}
               onClick={() => handleSort('dps')}
+              onKeyDown={handleSortKeyDown('dps')}
             >
               DPS{getSortIcon('dps')}
             </Box>
             <Box
+              role="button"
+              tabIndex={0}
+              aria-label={getSortButtonLabel('Active DPS', 'activeDps')}
               sx={{
                 textAlign: 'right',
                 cursor: 'pointer',
@@ -455,6 +506,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                 position: 'relative',
               }}
               onClick={() => handleSort('activeDps')}
+              onKeyDown={handleSortKeyDown('activeDps')}
             >
               <Box
                 sx={{
@@ -468,6 +520,9 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
               </Box>
             </Box>
             <Box
+              role="button"
+              tabIndex={0}
+              aria-label={getSortButtonLabel('Crit %', 'criticalDamage')}
               sx={{
                 textAlign: 'right',
                 cursor: 'pointer',
@@ -477,6 +532,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                 },
               }}
               onClick={() => handleSort('criticalDamage')}
+              onKeyDown={handleSortKeyDown('criticalDamage')}
             >
               Crit %{getSortIcon('criticalDamage')}
             </Box>
@@ -521,6 +577,29 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
             const percentageOfTotal = ((row.total / totalDamage) * 100).toFixed(2);
             const playerColor = getPlayerColor(row.role);
 
+            // Shared name typography/colour so the interactive button and the
+            // non-interactive fallback render identically.
+            const nameBaseSx = {
+              fontWeight: 500,
+              fontSize: '0.875rem',
+              fontFamily: '"Space Grotesk", "Inter", system-ui',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+              ...(roleColors.isDarkMode
+                ? {
+                    color: roleColors.getPlayerColor(row.role),
+                    textShadow: '0 1px 3px rgba(0,0,0,0.5)',
+                  }
+                : {
+                    background: roleColors.getGradientColor(row.role),
+                    backgroundClip: 'text',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: row.role === 'dps' ? '#ffbd7d00' : 'transparent',
+                    textShadow: '0 1px 1px rgba(0,0,0,0.2)',
+                  }),
+            };
+
             return (
               <Box
                 key={row.id}
@@ -554,35 +633,25 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                         sx={{ width: 32, height: 32, flexShrink: 0 }}
                       />
                     )}
-                    <Box
-                      onClick={onPlayerClick ? () => onPlayerClick(row.id) : undefined}
-                      sx={{
-                        fontWeight: 500,
-                        fontSize: '0.875rem',
-                        fontFamily: '"Space Grotesk", "Inter", system-ui',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                        ...(onPlayerClick && {
+                    {onPlayerClick ? (
+                      <ButtonBase
+                        onClick={() => onPlayerClick(row.id)}
+                        onKeyDown={handlePlayerKeyDown(row.id)}
+                        aria-label={`View ${row.name} details`}
+                        sx={{
+                          ...nameBaseSx,
+                          display: 'block',
+                          textAlign: 'left',
+                          maxWidth: '100%',
                           cursor: 'pointer',
                           '&:hover': { textDecoration: 'underline' },
-                        }),
-                        ...(roleColors.isDarkMode
-                          ? {
-                              color: roleColors.getPlayerColor(row.role),
-                              textShadow: '0 1px 3px rgba(0,0,0,0.5)',
-                            }
-                          : {
-                              background: roleColors.getGradientColor(row.role),
-                              backgroundClip: 'text',
-                              WebkitBackgroundClip: 'text',
-                              WebkitTextFillColor: row.role === 'dps' ? '#ffbd7d00' : 'transparent',
-                              textShadow: '0 1px 1px rgba(0,0,0,0.2)',
-                            }),
-                      }}
-                    >
-                      {row.name}
-                    </Box>
+                        }}
+                      >
+                        {row.name}
+                      </ButtonBase>
+                    ) : (
+                      <Box sx={nameBaseSx}>{row.name}</Box>
+                    )}
                   </Box>
 
                   {/* Progress Bar Row */}
@@ -900,24 +969,42 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                       />
                     )}
                     <Box sx={{ minWidth: 0, flex: 1 }}>
-                      <Box
-                        onClick={onPlayerClick ? () => onPlayerClick(row.id) : undefined}
-                        sx={{
-                          fontSize: '0.875rem',
-                          fontWeight: 700,
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
-                          display: 'block',
-                          color: roleColors.isDarkMode ? playerColor : 'inherit',
-                          ...(onPlayerClick && {
+                      {onPlayerClick ? (
+                        <ButtonBase
+                          onClick={() => onPlayerClick(row.id)}
+                          onKeyDown={handlePlayerKeyDown(row.id)}
+                          aria-label={`View ${row.name} details`}
+                          sx={{
+                            fontSize: '0.875rem',
+                            fontWeight: 700,
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                            display: 'block',
+                            textAlign: 'left',
+                            maxWidth: '100%',
+                            color: roleColors.isDarkMode ? playerColor : 'inherit',
                             cursor: 'pointer',
                             '&:hover': { textDecoration: 'underline' },
-                          }),
-                        }}
-                      >
-                        {row.name}
-                      </Box>
+                          }}
+                        >
+                          {row.name}
+                        </ButtonBase>
+                      ) : (
+                        <Box
+                          sx={{
+                            fontSize: '0.875rem',
+                            fontWeight: 700,
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                            display: 'block',
+                            color: roleColors.isDarkMode ? playerColor : 'inherit',
+                          }}
+                        >
+                          {row.name}
+                        </Box>
+                      )}
                       <Typography
                         sx={{
                           fontSize: '0.75rem',

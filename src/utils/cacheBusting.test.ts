@@ -11,9 +11,9 @@ import {
   isDevelopmentBuild,
   __resetVersionInfoForTesting,
 } from './cacheBusting';
+import { getBaseUrl } from './envUtils';
 
 // Import the mocked function - it's already mocked globally in setupTests.ts
-import { getBaseUrl } from './envUtils';
 const mockGetBaseUrl = getBaseUrl as jest.MockedFunction<typeof getBaseUrl>;
 
 // Mock fetch globally
@@ -154,7 +154,6 @@ describe('cacheBusting', () => {
   describe('shouldInvalidateCache', () => {
     // Use the same base timestamp as mockVersionInfo for consistent testing
     const now = baseTimestamp + 30 * 60 * 1000; // 30 minutes after build time
-    const oneHourAgo = now - 60 * 60 * 1000;
     const twoHoursAgo = now - 2 * 60 * 60 * 1000;
 
     beforeEach(() => {

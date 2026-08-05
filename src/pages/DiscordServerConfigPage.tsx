@@ -773,6 +773,8 @@ export const DiscordServerConfigPage: React.FC = () => {
                   )}
 
                   <Box
+                    role="listbox"
+                    aria-label="Discord servers"
                     sx={{
                       display: 'grid',
                       gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 1fr' },
@@ -784,7 +786,19 @@ export const DiscordServerConfigPage: React.FC = () => {
                       return (
                         <Paper
                           key={guild.id}
+                          role="option"
+                          aria-selected={false}
+                          tabIndex={0}
+                          aria-label={`Configure Discord server ${guild.name}${
+                            configured ? ', configured' : ', not configured'
+                          }`}
                           onClick={() => setSelectedGuild(guild)}
+                          onKeyDown={(e: React.KeyboardEvent) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
+                              setSelectedGuild(guild);
+                            }
+                          }}
                           sx={{
                             background: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
                             border: isDark
@@ -806,6 +820,10 @@ export const DiscordServerConfigPage: React.FC = () => {
                                 : 'rgba(88,101,242,0.04)',
                               transform: 'translateY(-2px)',
                               boxShadow: '0 4px 20px rgba(88,101,242,0.15)',
+                            },
+                            '&:focus-visible': {
+                              outline: '2px solid #5865F2',
+                              outlineOffset: 2,
                             },
                           }}
                         >

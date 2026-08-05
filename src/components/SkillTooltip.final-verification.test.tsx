@@ -3,7 +3,9 @@
  */
 
 import { render } from '@testing-library/react';
+
 import '@testing-library/jest-dom';
+import { useSkillScribingData } from '../features/scribing/hooks/useScribingDetection';
 
 import { SkillTooltip } from './SkillTooltip';
 
@@ -22,7 +24,6 @@ jest.mock('../features/scribing/hooks/useScribingDetection', () => ({
 }));
 
 // Import the mocked hook
-import { useSkillScribingData } from '../features/scribing/hooks/useScribingDetection';
 
 const mockUseSkillScribingData = useSkillScribingData as jest.MockedFunction<
   typeof useSkillScribingData

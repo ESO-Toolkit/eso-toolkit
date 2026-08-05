@@ -5,13 +5,14 @@
  * localhost); see FIGHT-REPLAY-UX-AUDIT-2026-05-30.md.
  */
 
-import { collapseClusters } from './useTimelineMarkers';
 import {
   ClusterMarker,
   DeathMarker,
   PhaseMarker,
   TimelineAnnotation,
 } from '../types/timelineAnnotations';
+
+import { collapseClusters } from './useTimelineMarkers';
 
 const phase = (id: number, timestamp: number): PhaseMarker => ({
   id: `phase-${id}`,

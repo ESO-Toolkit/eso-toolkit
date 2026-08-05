@@ -12,6 +12,7 @@ describe('activePercentageUtils', () => {
       startTime: 0,
       endTime: 10000, // 10 seconds
       difficulty: 1,
+      encounterID: 1,
       name: 'Test Fight',
       friendlyPlayers: [],
       enemyPlayers: [],

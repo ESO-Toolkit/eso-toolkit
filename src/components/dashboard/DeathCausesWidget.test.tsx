@@ -2,6 +2,8 @@ import { render, screen } from '@testing-library/react';
 import React from 'react';
 
 import { FightFragment } from '../../graphql/gql/graphql';
+import { useDeathEvents } from '../../hooks/events/useDeathEvents';
+import { usePlayerData } from '../../hooks/usePlayerData';
 import { DeathEvent } from '../../types/combatlogEvents';
 
 import { DeathCausesWidget } from './DeathCausesWidget';
@@ -9,9 +11,6 @@ import { DeathCausesWidget } from './DeathCausesWidget';
 // Mock hooks
 jest.mock('../../hooks/events/useDeathEvents');
 jest.mock('../../hooks/usePlayerData');
-
-import { useDeathEvents } from '../../hooks/events/useDeathEvents';
-import { usePlayerData } from '../../hooks/usePlayerData';
 
 const mockUseDeathEvents = useDeathEvents as jest.MockedFunction<typeof useDeathEvents>;
 const mockUsePlayerData = usePlayerData as jest.MockedFunction<typeof usePlayerData>;

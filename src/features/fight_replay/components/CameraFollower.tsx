@@ -22,6 +22,13 @@ interface CameraFollowerProps {
   lookup: TimestampPositionLookup | null;
   timeRef: React.RefObject<number> | { current: number };
   followingActorIdRef: React.RefObject<number | null>;
+  /**
+   * Set true by us for the instant we call OrbitControls.update(). update() dispatches a synthetic
+   * 'change' event; that is programmatic follow motion, NOT a user gesture, so FrameCapGate reads
+   * this flag to avoid arming the frame-cap bypass on it. Without this, following an actor during
+   * playback fires 'change' every frame and defeats the barebones 30fps cap (M8).
+   */
+  suppressInteractionRef?: React.RefObject<boolean>;
 }
 
 /**
@@ -47,6 +54,7 @@ export const CameraFollower: React.FC<CameraFollowerProps> = ({
   lookup,
   timeRef,
   followingActorIdRef,
+  suppressInteractionRef,
 }) => {
   const { camera, controls } = useThree();
   const prefersReducedMotion = usePrefersReducedMotion();
@@ -100,8 +108,21 @@ export const CameraFollower: React.FC<CameraFollowerProps> = ({
     camera.position.add(_delta.current);
 
     // OrbitControls owns orientation. Do NOT call camera.lookAt() — it would override the
-    // user's drag-rotation every frame.
-    (controls as ControlsWithTarget & { update?: () => void }).update?.();
+    // user's drag-rotation every frame. Flag our own update() so FrameCapGate can tell the
+    // synthetic 'change' it dispatches (programmatic follow motion) from a real user gesture and not
+    // arm the frame-cap bypass on it (M8). Restore the flag in `finally` so a throw can't leave it
+    // latched (which would silently disarm interaction detection for the rest of the session).
+    const orbit = controls as ControlsWithTarget & { update?: () => void };
+    if (suppressInteractionRef) {
+      suppressInteractionRef.current = true;
+      try {
+        orbit.update?.();
+      } finally {
+        suppressInteractionRef.current = false;
+      }
+    } else {
+      orbit.update?.();
+    }
   }, RenderPriority.FOLLOWER_CAMERA);
 
   return null;

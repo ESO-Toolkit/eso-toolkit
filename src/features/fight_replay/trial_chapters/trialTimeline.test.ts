@@ -1,4 +1,3 @@
-import type { TrialChapter } from './types';
 import {
   buildTrialTimeline,
   entryForFight,
@@ -6,6 +5,7 @@ import {
   localToGlobal,
   nextEntryAfter,
 } from './trialTimeline';
+import type { TrialChapter } from './types';
 
 const seg = (overrides: Partial<TrialChapter>): TrialChapter => ({
   fightId: '1',

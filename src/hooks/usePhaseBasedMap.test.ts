@@ -1,9 +1,9 @@
 import { renderHook } from '@testing-library/react';
 
-import { usePhaseBasedMap } from './usePhaseBasedMap';
+import type { FightFragment } from '../graphql/gql/graphql';
 import { createMapTimeline, getMapAtTimestamp } from '../utils/mapTimelineUtils';
 
-import type { FightFragment } from '../graphql/gql/graphql';
+import { usePhaseBasedMap } from './usePhaseBasedMap';
 
 // Mock fight data for testing. phaseTransitions is optional: a multi-map timeline is only built
 // from explicit phase timing (or detected phases) — without it, the fight resolves to its single

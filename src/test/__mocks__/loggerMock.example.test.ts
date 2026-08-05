@@ -6,6 +6,7 @@
  */
 
 import { Logger, LogLevel } from '../../utils/logger';
+
 import { MockLogger } from './loggerMock';
 
 // Example service that uses Logger

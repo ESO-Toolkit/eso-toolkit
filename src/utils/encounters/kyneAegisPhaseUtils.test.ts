@@ -1,9 +1,10 @@
+import type { BuffEvent } from '../../types/combatlogEvents';
+
 import {
   KYNE_S_AEGIS_PHASE_BUFF_IDS,
   detectKyneAegisPhaseTransitions,
   hasKyneAegisPhaseSignature,
 } from './kyneAegisPhaseUtils';
-import type { BuffEvent } from '../../types/combatlogEvents';
 
 const createBuffEvent = (abilityId: number, timestamp: number): BuffEvent => ({
   timestamp,

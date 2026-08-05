@@ -37,23 +37,25 @@ const logger = new Logger({
 });
 
 export class EsoLogsClient {
-  /** Guards against infinite token-refresh loops in the error link. */
-  private isRefreshingToken = false;
-
   private static readonly CACHE = new InMemoryCache({
     typePolicies: {
       Query: {
         fields: {
           gameData: {
-            merge(_existing, incoming) {
-              // Always return incoming, never cache gameData
-              return incoming;
+            merge(existing, incoming) {
+              // Shallow-merge so fields fetched by one query aren't discarded when
+              // a sibling query writes a different subtree of gameData.
+              return incoming && typeof incoming === 'object'
+                ? { ...existing, ...incoming }
+                : incoming;
             },
           },
           reportData: {
-            merge(_existing, incoming) {
-              // Always return incoming, never cache reportData
-              return incoming;
+            merge(existing, incoming) {
+              // Shallow-merge so sibling reportData fields survive partial writes.
+              return incoming && typeof incoming === 'object'
+                ? { ...existing, ...incoming }
+                : incoming;
             },
           },
         },
@@ -144,73 +146,69 @@ export class EsoLogsClient {
       }
 
       if (hasAuthError) {
-        // Guard: if we already refreshed for a previous auth error and the
-        // retried request still fails with an auth error, stop retrying to
-        // avoid an infinite refresh→retry→401→refresh loop.
-        if (this.isRefreshingToken) {
-          logger.error('Token refresh already attempted — aborting to prevent infinite loop');
+        // Loop guard is PER-OPERATION, not client-wide: if THIS op was already
+        // retried with a freshly refreshed token and still fails auth, the
+        // refresh genuinely didn't help — clear tokens and stop. Concurrent ops
+        // that 401 during the same expiry window each get their own single
+        // refresh-and-retry attempt instead of one op's in-flight refresh
+        // tripping a shared guard that wipes everyone's tokens (H2).
+        if (operation.getContext().retriedAfterRefresh) {
+          logger.error('Auth error persisted after token refresh — clearing tokens');
           localStorage.removeItem(LOCAL_STORAGE_ACCESS_TOKEN_KEY);
           localStorage.removeItem(LOCAL_STORAGE_REFRESH_TOKEN_KEY);
           return;
         }
 
         logger.warn('Authentication error detected - attempting to refresh token');
-        this.isRefreshingToken = true;
 
         // Create a new observable that will retry the request after refreshing the token
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         return new Observable((observer: any) => {
           let innerSub: { unsubscribe: () => void } | undefined;
+          // refreshAccessToken() dedupes concurrent callers via its shared
+          // pendingRefreshPromise, so several ops that 401 at once all await the
+          // SAME refresh instead of racing (and burning) the single-use token.
           refreshAccessToken()
             .then((newToken) => {
               if (newToken) {
-                // Update the operation context with the new token
+                // Update the operation context with the new token and mark it as
+                // retried, so a second auth failure on this op hits the guard
+                // above (clear tokens) rather than looping through refresh again.
                 operation.setContext({
                   headers: {
                     ...operation.getContext().headers,
                     Authorization: `Bearer ${newToken}`,
                   },
+                  retriedAfterRefresh: true,
                 });
 
                 // Update our internal token
                 this.accessToken = newToken;
 
                 // Retry the request
-                const subscriber = {
+                innerSub = forward(operation).subscribe({
                   next: observer.next.bind(observer),
-                  error: (err: unknown) => {
-                    this.isRefreshingToken = false;
-                    observer.error(err);
-                  },
-                  complete: () => {
-                    this.isRefreshingToken = false;
-                    observer.complete();
-                  },
-                };
-
-                innerSub = forward(operation).subscribe(subscriber);
+                  error: observer.error.bind(observer),
+                  complete: observer.complete.bind(observer),
+                });
               } else {
                 // Refresh failed, clear tokens and notify user
                 logger.error('Token refresh failed - user needs to re-authenticate');
                 localStorage.removeItem(LOCAL_STORAGE_ACCESS_TOKEN_KEY);
                 localStorage.removeItem(LOCAL_STORAGE_REFRESH_TOKEN_KEY);
-                this.isRefreshingToken = false;
                 observer.error(new Error('Authentication failed. Please log in again.'));
               }
             })
             .catch((err) => {
               logger.error('Error during token refresh', err);
-              this.isRefreshingToken = false;
               observer.error(err);
             });
 
           // If the consumer unsubscribes (component unmount / cancelled query)
           // while the refresh or forwarded request is in flight, tear down the
-          // inner subscription and clear the guard — otherwise isRefreshingToken
-          // can stay stuck at true and block all future refreshes on this client.
+          // inner subscription.
           return () => {
             innerSub?.unsubscribe();
-            this.isRefreshingToken = false;
           };
         });
       }
@@ -276,9 +274,6 @@ export class EsoLogsClient {
    */
   public updateAccessToken(newAccessToken: string): void {
     this.accessToken = newAccessToken;
-    // Reset refresh guard — a previous error link's Observable may have been
-    // abandoned mid-flight, leaving the flag stuck at true.
-    this.isRefreshingToken = false;
     // Clear cached data from the previous session to avoid leaking stale
     // query results across different user identities.
     EsoLogsClient.CACHE.reset();

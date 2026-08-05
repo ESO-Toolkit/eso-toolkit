@@ -3,14 +3,15 @@
  * Tests damage event processing, charged atronach attribution, and event grouping
  */
 
+import { ReportActor } from '../graphql/gql/graphql';
+import { DamageEvent } from '../types/combatlogEvents';
+
 import {
   getChargedReportActors,
   getPetOwnerMap,
   getDamageEventsByPlayer,
   CHARGED_ATRONACH_GAME_ID,
 } from './damageEventUtils';
-import { ReportActor } from '../graphql/gql/graphql';
-import { DamageEvent } from '../types/combatlogEvents';
 
 // Mock data helpers
 const createMockActor = (

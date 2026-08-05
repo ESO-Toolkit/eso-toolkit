@@ -6,6 +6,7 @@
  */
 
 import { describe, it, expect, beforeEach } from '@jest/globals';
+
 import { ScribingDetectionService } from './features/scribing/application/services/ScribingDetectionService';
 
 // Mock data for Shattering Knife (ability ID 217340)

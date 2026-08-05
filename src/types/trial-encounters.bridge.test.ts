@@ -6,8 +6,9 @@
  * bridges the two, and must stay total/1:1 across all 15 trials.
  */
 
-import { resolveTrialId, getTrialById, TRIAL_ENCOUNTERS } from './trial-encounters';
 import { TRIALS } from '../features/loadout-manager/data/trialConfigs';
+
+import { resolveTrialId, getTrialById, TRIAL_ENCOUNTERS } from './trial-encounters';
 
 describe('resolveTrialId', () => {
   it('resolves short codes case-insensitively', () => {

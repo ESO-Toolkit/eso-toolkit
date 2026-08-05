@@ -513,6 +513,7 @@ export const TextEditor: React.FC = () => {
 
   const editorRef = useRef<HTMLDivElement>(null);
   const savedRangeRef = useRef<Range | null>(null);
+  const colorPickerRef = useRef<HTMLDivElement>(null);
 
   // Calculate optimal position for color picker
   const calculateOptimalPosition = useCallback((anchorElement: Element) => {
@@ -721,6 +722,14 @@ export const TextEditor: React.FC = () => {
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [showColorPicker, applyPreviewColor, cancelColorSelection]);
+
+  // Move focus into the color picker when it opens (non-modal dialog);
+  // focus is restored to the editor in closeColorPicker.
+  useEffect(() => {
+    if (showColorPicker) {
+      colorPickerRef.current?.focus();
+    }
+  }, [showColorPicker]);
 
   // Enhanced selection restoration with visual feedback
   // Duplicate functions removed - moved above to avoid use-before-define errors
@@ -1135,6 +1144,8 @@ export const TextEditor: React.FC = () => {
             <Portal>
               <ClickAwayListener onClickAway={cancelColorSelection}>
                 <Box
+                  ref={colorPickerRef}
+                  tabIndex={-1}
                   sx={{
                     position: 'fixed',
                     left: `${colorPickerPosition.x}px`,
@@ -1159,7 +1170,6 @@ export const TextEditor: React.FC = () => {
                     transition: isDragging ? 'none' : 'all 0.2s ease-out',
                   }}
                   role="dialog"
-                  aria-modal="true"
                   aria-labelledby="color-picker-title"
                   onMouseDown={(e: React.MouseEvent<HTMLDivElement>) => {
                     // Don't start drag if clicking on the hex input

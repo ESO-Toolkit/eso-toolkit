@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
+import { useSelector } from 'react-redux';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 
 // The page pulls in a large tree of presentational + data modules that are
@@ -51,10 +52,9 @@ jest.mock('../features/build-viewer/components/BuildViewShell', () => ({
   ),
 }));
 
-import { useSelector } from 'react-redux';
-
 import { buildHubApi } from '../features/build-hub/api/build-hub-api';
 import { decodeBuildFromURL, encodeBuildToURL } from '../utils/buildEncoding';
+
 import { BuildViewPage } from './BuildViewPage';
 
 const mockGet = buildHubApi.get as jest.MockedFunction<typeof buildHubApi.get>;

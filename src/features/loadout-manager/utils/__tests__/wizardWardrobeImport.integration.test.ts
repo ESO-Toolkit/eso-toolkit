@@ -2,10 +2,6 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import {
-  convertAllCharactersToLoadoutState,
-  convertLoadoutStateToWizardWardrobe,
-} from '../wizardWardrobeConverter';
-import {
   extractWizardWardrobeData,
   parseWizardWardrobeSavedVariablesWithFallback,
 } from '../luaParser';
@@ -14,6 +10,10 @@ import {
   serializeWizardsWardrobeSavedVariables,
   type WizardWardrobeSavedVariables,
 } from '../wizardsWardrobeSavedVariables';
+import {
+  convertAllCharactersToLoadoutState,
+  convertLoadoutStateToWizardWardrobe,
+} from '../wizardWardrobeConverter';
 
 describe('Wizard Wardrobe import integration', () => {
   it('parses the sample SavedVariables file and builds loadout state', () => {

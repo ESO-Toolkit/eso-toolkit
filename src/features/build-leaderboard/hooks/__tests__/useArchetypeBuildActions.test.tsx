@@ -6,9 +6,9 @@ import { MemoryRouter } from 'react-router-dom';
 
 import savedBuildsReducer from '../../../../store/saved_builds/savedBuildsSlice';
 import { dpsParsesApi } from '../../api/dpsParsesApi';
-import { useArchetypeBuildActions } from '../useArchetypeBuildActions';
 import type { BuildCluster } from '../../types/clustering.types';
 import type { DpsParseBuildResponse } from '../../types/dpsParses.types';
+import { useArchetypeBuildActions } from '../useArchetypeBuildActions';
 
 const mockNavigate = jest.fn();
 const mockEnqueue = jest.fn();

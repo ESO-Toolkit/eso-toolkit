@@ -10,7 +10,6 @@ import {
   describeResourceRestored,
   detectPotionType,
   getPotionColor,
-  type PotionStreamResult,
   type PotionType,
   type ResourceRestored,
 } from './potionDetectionUtils';

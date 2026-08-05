@@ -1,8 +1,9 @@
+import { createMockDamageEvent } from '../../test/utils/combatLogMockFactories';
+
 import {
   calculateDamageOverTimeData,
   DamageOverTimeCalculationTask,
 } from './CalculateDamageOverTime';
-import { createMockDamageEvent } from '../../test/utils/combatLogMockFactories';
 
 describe('CalculateDamageOverTime', () => {
   const FIGHT_START = 1000000;

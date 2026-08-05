@@ -3,6 +3,7 @@ import { configureStore } from '@reduxjs/toolkit';
 import { DATA_FETCH_CACHE_TIMEOUT } from '../../Constants';
 import { EsoLogsClient } from '../../esologsClient';
 import { GetPlayersForReportDocument } from '../../graphql/gql/graphql';
+import { resolveCacheKey } from '../utils/keyedCacheState';
 
 import playerDataReducer, {
   PlayerDataEntry,
@@ -13,7 +14,6 @@ import playerDataReducer, {
   resetPlayerDataLoading,
   trimPlayerDataCache,
 } from './playerDataSlice';
-import { resolveCacheKey } from '../utils/keyedCacheState';
 
 // Mock the esologsClient
 jest.mock('../../esologsClient');

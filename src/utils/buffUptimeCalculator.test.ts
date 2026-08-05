@@ -83,7 +83,7 @@ describe('buffUptimeCalculator', () => {
     start: number,
     end: number,
     targetID: number,
-    sourceID?: number,
+    sourceID = 0,
   ): BuffInterval => ({
     start,
     end,

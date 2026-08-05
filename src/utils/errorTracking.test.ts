@@ -1,13 +1,5 @@
 import Rollbar from 'rollbar';
-import {
-  initializeErrorTracking,
-  captureApplicationContext,
-  reportError,
-  submitManualBugReport,
-  setUserContext,
-  addBreadcrumb,
-  measurePerformance,
-} from './errorTracking';
+
 import {
   ERROR_TRACKING_CONFIG,
   ManualBugReport,
@@ -15,12 +7,23 @@ import {
 } from '../config/errorTrackingConfig';
 import { RootState } from '../store/storeWithHistory';
 
+import { hasErrorTrackingConsent } from './consentManager';
+import {
+  initializeErrorTracking,
+  captureApplicationContext,
+  reportError,
+  submitManualBugReport,
+  setUserContext,
+  clearUserContext,
+  addBreadcrumb,
+  measurePerformance,
+} from './errorTracking';
+
 // Mock consentManager — default: consent granted
 jest.mock('./consentManager', () => ({
   hasErrorTrackingConsent: jest.fn(() => true),
 }));
 
-import { hasErrorTrackingConsent } from './consentManager';
 const mockHasErrorTrackingConsent = hasErrorTrackingConsent as jest.MockedFunction<
   typeof hasErrorTrackingConsent
 >;
@@ -454,6 +457,33 @@ describe('errorTracking', () => {
       mockHasErrorTrackingConsent.mockReturnValue(false);
       setUserContext('user123');
       expect(mockRollbarInstance.configure).not.toHaveBeenCalled();
+    });
+  });
+
+  // ─── clearUserContext ─────────────────────────────────────────────────────
+
+  describe('clearUserContext', () => {
+    it('clears the Rollbar person context on logout', async () => {
+      await initInProduction();
+      setUserContext('user123', undefined, 'testuser');
+      mockRollbarInstance.configure.mockClear();
+
+      clearUserContext();
+
+      expect(mockRollbarInstance.configure).toHaveBeenCalledWith({
+        payload: { person: null },
+      });
+    });
+
+    it('does not forward the previous username once cleared', async () => {
+      await initInProduction();
+      setUserContext('user123', undefined, 'testuser');
+      mockRollbarInstance.configure.mockClear();
+
+      clearUserContext();
+
+      const call = mockRollbarInstance.configure.mock.calls[0][0];
+      expect(JSON.stringify(call)).not.toContain('testuser');
     });
   });
 

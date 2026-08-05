@@ -2,8 +2,8 @@ import { ThemeProvider, createTheme } from '@mui/material';
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 
-import { TraitChipRow } from '../TraitChipRow';
 import type { ClusterTrait, FeatureGroupKey } from '../../types/clustering.types';
+import { TraitChipRow } from '../TraitChipRow';
 
 const theme = createTheme();
 

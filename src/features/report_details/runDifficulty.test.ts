@@ -133,7 +133,7 @@ describe('determineRunDifficulty', () => {
 // minis on Veteran) — NOT "Partial Veteran HM".
 function loadSampleReport(code: string): { report: ReportFragment; fights: FightFragment[] } {
   const file = path.resolve(process.cwd(), 'public/sample-reports', code, 'report.json');
-  const raw = fs.readFileSync(file, 'utf8').replace(/^﻿/, '');
+  const raw = fs.readFileSync(file, 'utf8').replace(/^\uFEFF/, '');
   const json = JSON.parse(raw);
   const report = (json?.reportData?.report ?? json?.data?.reportData?.report) as ReportFragment;
   const fights = ((report as unknown as { fights?: FightFragment[] })?.fights ??

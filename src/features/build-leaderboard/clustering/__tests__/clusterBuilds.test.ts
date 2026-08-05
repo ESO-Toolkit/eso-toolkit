@@ -1,6 +1,5 @@
 import { createRng } from '../../../ultimate-simulator/core/rng';
-import { clusterBuilds } from '../clusterBuilds';
-import { EMPTY_CANONICAL_MAPS, extractFeatureVectors } from '../featureExtraction';
+import type { DpsParse } from '../../types/dpsParses.types';
 import {
   ARCANIST_ARCHETYPE,
   NECRO_ARCHETYPE,
@@ -10,7 +9,8 @@ import {
   makeThreeArchetypeFixture,
   resetFixtureIds,
 } from '../__fixtures__/dpsParses.fixture';
-import type { DpsParse } from '../../types/dpsParses.types';
+import { clusterBuilds } from '../clusterBuilds';
+import { EMPTY_CANONICAL_MAPS, extractFeatureVectors } from '../featureExtraction';
 
 function clusterOf(parses: DpsParse[]) {
   return clusterBuilds({ vectors: extractFeatureVectors(parses, EMPTY_CANONICAL_MAPS) });
@@ -94,7 +94,7 @@ describe('clusterBuilds', () => {
 
   it('collapses identical builds instead of splitting them', () => {
     resetFixtureIds();
-    const identical = Array.from({ length: 40 }, (_, i) =>
+    const identical = Array.from({ length: 40 }, () =>
       // Same index => no jitter, so all 40 are byte-identical builds.
       makeParse(NECRO_ARCHETYPE, 1, { amount: 300_000 }),
     );

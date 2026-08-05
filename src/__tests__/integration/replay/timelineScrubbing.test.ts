@@ -17,9 +17,10 @@
  */
 
 import { renderHook, act, waitFor } from '@testing-library/react';
-import { useOptimizedTimelineScrubbing } from '@/hooks/useOptimizedTimelineScrubbing';
+
 import { useAnimationTimeRef } from '@/hooks/useAnimationTimeRef';
-import type { TimestampPositionLookup } from '@/workers/calculations/CalculateActorPositions';
+import { useOptimizedTimelineScrubbing } from '@/hooks/useOptimizedTimelineScrubbing';
+
 import { createMockPositionLookup, getPositionAtTimestamp } from './utils/testHelpers';
 
 describe('ESO-396: Timeline Scrubbing Flow', () => {

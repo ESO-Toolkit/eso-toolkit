@@ -231,7 +231,6 @@ describe('compactifyRoster / expandCompactRoster – buildRef and food', () => {
 // ============================================================
 
 const canUseStreams = typeof globalThis.CompressionStream !== 'undefined';
-// eslint-disable-next-line jest/no-disabled-tests
 const describeWithStreams = canUseStreams ? describe : describe.skip;
 
 describeWithStreams('encodeRosterToURL / decodeRosterFromURL – DPS gear round-trip', () => {

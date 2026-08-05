@@ -18,8 +18,9 @@ const pointerLeave = (el: Element) => {
   fireEvent(el, new MouseEvent('pointerleave', { bubbles: true, cancelable: true }));
 };
 
-import { TimelineScrubPreview } from './TimelineScrubPreview';
 import { DeathMarker, PhaseMarker } from '../../../types/timelineAnnotations';
+
+import { TimelineScrubPreview } from './TimelineScrubPreview';
 
 const phase: PhaseMarker = {
   id: 'phase-1',

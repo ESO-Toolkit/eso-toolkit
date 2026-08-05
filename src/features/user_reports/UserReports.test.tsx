@@ -1,8 +1,10 @@
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
-import '@testing-library/jest-dom';
-import { MemoryRouter } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { Provider } from 'react-redux';
+import { MemoryRouter } from 'react-router-dom';
+
+import '@testing-library/jest-dom';
+
 import { LoggerProvider } from '../../contexts/LoggerContext';
 import { createMockStore } from '../../test/utils/createMockStore';
 
@@ -57,15 +59,23 @@ Object.defineProperty(window, 'localStorage', {
   writable: true,
 });
 
-// Mock date-fns
+// Mock date-fns. NOTE: jest.config's resetMocks:true wipes this factory impl before
+// every test (jest-mock 30 drops even the initial jest.fn(impl)), so it MUST be
+// re-applied in beforeEach — otherwise format() returns undefined and the rendered
+// date column is silently blank/untested.
 jest.mock('date-fns', () => ({
-  format: jest.fn((date, formatStr) => {
+  format: jest.fn(),
+}));
+
+const applyDateFnsFormatMock = () => {
+  const { format } = jest.requireMock('date-fns') as { format: jest.Mock };
+  format.mockImplementation((date: Date, formatStr: string) => {
     if (formatStr === 'MMM dd, yyyy HH:mm') {
       return 'Jan 01, 2024 10:00';
     }
     return 'formatted-date';
-  }),
-}));
+  });
+};
 
 // Mock GraphQL documents
 jest.mock('../../graphql/gql/graphql', () => ({
@@ -74,7 +84,6 @@ jest.mock('../../graphql/gql/graphql', () => ({
 }));
 
 const mockGetCurrentUserDocument = { __mock: 'GetCurrentUserDocument' };
-const mockGetUserReportsDocument = { __mock: 'GetUserReportsDocument' };
 
 const mockUserData = {
   userData: {
@@ -203,6 +212,8 @@ describe('UserReports Component', () => {
     jest.clearAllMocks();
     mockSetAuthToken.mockClear();
     mockClearAuthToken.mockClear();
+    // resetMocks:true wiped the date-fns factory impl — restore it each test.
+    applyDateFnsFormatMock();
   });
 
   describe('Authentication handling', () => {
@@ -287,6 +298,11 @@ describe('UserReports Component', () => {
         expect(screen.getByText('Cloudrest')).toBeInTheDocument();
         expect(screen.getByText('Sunspire')).toBeInTheDocument();
       });
+
+      // Exercise the date-fns format path: both reports render the mocked
+      // 'MMM dd, yyyy HH:mm' output. This asserts the mock is actually applied
+      // (with resetMocks:true a wiped impl would render blank dates instead).
+      expect(screen.getAllByText('Jan 01, 2024 10:00').length).toBeGreaterThanOrEqual(2);
     });
 
     it('should pass userID parameter when fetching reports', async () => {

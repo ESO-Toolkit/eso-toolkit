@@ -38,8 +38,17 @@ export const OneLineAutoFit: React.FC<OneLineAutoFitProps> = React.memo(
 
       updateScale();
       window.addEventListener('resize', updateScale);
-      return () => window.removeEventListener('resize', updateScale);
-    }, [minScale]);
+      // Recompute when the inner content resizes (e.g. navigating from a short name to a
+      // long one), which a window-resize listener alone never catches.
+      const inner = innerRef.current;
+      const observer = inner ? new ResizeObserver(updateScale) : null;
+      if (inner && observer) observer.observe(inner);
+      return () => {
+        window.removeEventListener('resize', updateScale);
+        observer?.disconnect();
+      };
+      // `children` is included so the scale recomputes when the content changes.
+    }, [minScale, children]);
 
     return (
       <Box

@@ -242,6 +242,7 @@ export interface TankSetup {
   labels?: string[]; // Multiple labels/tags for the player
   roleNotes?: string | null; // Role-specific notes for the player
   gearSets: TankGearSet;
+  arenaWeapon?: string; // Arena weapon (e.g., "Maelstrom's Frost Staff")
   skillLines: SkillLineConfig;
   ultimate: string | null; // Allows preset ultimates or custom text
   specificSkills: number[];

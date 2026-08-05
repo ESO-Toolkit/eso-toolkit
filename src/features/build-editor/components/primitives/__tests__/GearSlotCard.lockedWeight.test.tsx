@@ -8,8 +8,8 @@
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { fireEvent, render, screen } from '@testing-library/react';
 
-import { GearSlotCard } from '../GearSlotCard';
 import type { EquipSlotDef } from '../../../data/esoStaticData';
+import { GearSlotCard } from '../GearSlotCard';
 
 const chestSlot: EquipSlotDef = {
   slot: 2,
