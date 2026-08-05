@@ -75,6 +75,12 @@ runs:
     # filenames and Rollbar orphans every map (audit P2-M5).
     - name: Upload sourcemaps to Rollbar
       if: inputs.enable_sourcemaps == 'true' && inputs.rollbar_server_token != ''
+      # Never let an observability upload block a site deploy. The step still
+      # fails loudly in the run (including the release-in-bundle guard, which
+      # is the whole point of catching an orphaned upload), but Rollbar being
+      # unreachable — or a map that would not match — must not stop the build
+      # that is already good from shipping.
+      continue-on-error: true
       uses: ./.github/actions/rollbar-sourcemaps
       with:
         access_token: ${{ inputs.rollbar_server_token }}
