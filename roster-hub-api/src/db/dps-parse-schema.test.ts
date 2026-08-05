@@ -1,6 +1,11 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
+// Imported explicitly rather than relying on the global from
+// @cloudflare/workers-types, the way dps-parse-queries.test.ts does: that global
+// comes from tsconfig.json's `types`, which the test config does not set.
+import type { D1Database } from '@cloudflare/workers-types';
+
 import {
   DPS_PARSE_SCHEMA_STATEMENTS,
   ensureDpsParsesSchema,
@@ -61,7 +66,7 @@ function fakeDb(onRun?: () => void) {
       },
     }),
   };
-  return { db: db as never, statements };
+  return { db: db as unknown as D1Database, statements };
 }
 
 describe('ensureDpsParsesSchema', () => {
@@ -102,7 +107,8 @@ describe('ensureDpsParsesSchema', () => {
       }),
     };
 
-    await expect(ensureDpsParsesSchema(failing as never)).rejects.toThrow('D1 unavailable');
-    await expect(ensureDpsParsesSchema(failing as never)).resolves.toBeUndefined();
+    const db = failing as unknown as D1Database;
+    await expect(ensureDpsParsesSchema(db)).rejects.toThrow('D1 unavailable');
+    await expect(ensureDpsParsesSchema(db)).resolves.toBeUndefined();
   });
 });
