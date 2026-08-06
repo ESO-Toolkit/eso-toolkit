@@ -35,6 +35,7 @@ const baseProps: SkillTooltipProps = {
   abilityId: 217784,
   iconSlug: 'ability_grimoire_soulmagic1',
   lineText: 'Scribing — Wield Soul',
+  description: '',
 };
 
 describe('SkillTooltip - Kalpa ground-truth scripts', () => {
@@ -96,7 +97,7 @@ describe('SkillTooltip - Kalpa ground-truth scripts', () => {
 
   it('renders ground-truth scripts even when the skill was never cast (no inference)', () => {
     mockUseSkillScribingData.mockReturnValue({
-      scribedSkillData: undefined,
+      scribedSkillData: null,
       loading: false,
       error: null,
     });
