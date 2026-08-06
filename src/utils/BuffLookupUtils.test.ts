@@ -37,6 +37,7 @@ describe('BuffLookupUtils', () => {
     targetID,
     targetIsFriendly: true,
     abilityGameID,
+    extraAbilityGameID: 0,
     fight: 1,
   });
 
@@ -53,6 +54,7 @@ describe('BuffLookupUtils', () => {
     targetID,
     targetIsFriendly: false,
     abilityGameID,
+    extraAbilityGameID: 0,
     fight: 1,
   });
 
@@ -68,6 +70,7 @@ describe('BuffLookupUtils', () => {
     targetID,
     targetIsFriendly: false,
     abilityGameID,
+    extraAbilityGameID: 0,
     fight: 1,
   });
 

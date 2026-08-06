@@ -17,6 +17,8 @@ const analysis: ReportDeathAnalysis = {
       playerName: 'Alice',
       totalDeaths: 1,
       averageTimeAlive: 45_000, // 45s — stored in ms, rendered as seconds
+      // Distinct from averageTimeAlive so the ms->s assertions stay unambiguous.
+      averageTimeAliveTotal: 90_000,
       fightDeaths: [],
       topCausesOfDeath: [],
     },
@@ -29,6 +31,7 @@ const analysis: ReportDeathAnalysis = {
       percentage: 100,
       playersAffected: ['Alice'],
       fightsWithDeaths: [1],
+      averageKillingBlowHitSize: 0,
       averageKillingBlowDamage: 1000,
       category: MechanicCategory.DIRECT_DAMAGE,
     },

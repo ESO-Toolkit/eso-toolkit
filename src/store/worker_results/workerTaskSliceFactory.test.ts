@@ -25,11 +25,42 @@ jest.mock('@/workers', () => ({
 describe('workerTaskSliceFactory', () => {
   let mockWorkerManager: jest.Mocked<typeof workerManager>;
 
-  const mockTaskName = 'calculateActorPositions' as ReduxBackedWorkerTaskType;
-  const mockInput = { reportCode: 'test', fightId: 1 } as SharedWorkerInputType<
+  const mockTaskName = 'calculateActorPositions' satisfies ReduxBackedWorkerTaskType;
+  // This suite exercises the slice's STATE MACHINE — loading flags, result
+  // caching, request-id races, abort handling — not payload shape. The real
+  // task type wants a whole FightFragment plus FightEvents; an opaque stand-in
+  // keeps the tests about what they are actually asserting.
+  const mockInput = { reportCode: 'test', fightId: 1 } as unknown as SharedWorkerInputType<
     typeof mockTaskName
   >;
-  const mockResult = { positions: [{ x: 1, y: 2 }] } as SharedWorkerResultType<typeof mockTaskName>;
+  const mockResult = { positions: [{ x: 1, y: 2 }] } as unknown as SharedWorkerResultType<
+    typeof mockTaskName
+  >;
+
+  /**
+   * Store type derived from a REAL configureStore call. A bare
+   * `ReturnType<typeof configureStore>` resolves to the no-argument overload,
+   * whose Dispatch lacks the thunk signature, so `store.dispatch(someThunk)`
+   * would not typecheck even though it is exactly what the slice is for.
+   */
+  function makeTaskStore(taskName: ReduxBackedWorkerTaskType, reducer: TaskSlice['reducer']) {
+    const store = configureStore({
+      reducer: {
+        workerResults: combineReducers({ [taskName]: reducer }),
+      },
+    });
+    // The slice's thunks are typed against the app's FULL RootState, while this
+    // suite deliberately mounts only the worker slice — so the dispatch overload
+    // does not line up even though the runtime behaviour is identical. Widen the
+    // dispatch rather than dragging every app reducer into a unit test.
+    return store as Omit<typeof store, 'dispatch'> & {
+      dispatch: ((action: unknown) => Promise<unknown> & { abort: (reason?: string) => void }) &
+        typeof store.dispatch;
+    };
+  }
+  type TaskStore = ReturnType<typeof makeTaskStore>;
+  /** Slice instantiated for THIS suite's task, so input/result types stay concrete. */
+  type TaskSlice = ReturnType<typeof createWorkerTaskSlice<typeof mockTaskName>>;
 
   const createInputHash = (input: SharedWorkerInputType<typeof mockTaskName>): string => {
     return JSON.stringify(input);
@@ -87,18 +118,12 @@ describe('workerTaskSliceFactory', () => {
   });
 
   describe('reducer actions', () => {
-    let store: ReturnType<typeof configureStore>;
-    let workerSlice: ReturnType<typeof createWorkerTaskSlice>;
+    let store: TaskStore;
+    let workerSlice: TaskSlice;
 
     beforeEach(() => {
       workerSlice = createWorkerTaskSlice(mockTaskName, createInputHash);
-      store = configureStore({
-        reducer: {
-          workerResults: combineReducers({
-            [mockTaskName]: workerSlice.reducer,
-          }),
-        },
-      });
+      store = makeTaskStore(mockTaskName, workerSlice.reducer);
     });
 
     describe('startTask', () => {
@@ -278,18 +303,12 @@ describe('workerTaskSliceFactory', () => {
   });
 
   describe('executeTask async thunk', () => {
-    let store: ReturnType<typeof configureStore>;
-    let workerSlice: ReturnType<typeof createWorkerTaskSlice>;
+    let store: TaskStore;
+    let workerSlice: TaskSlice;
 
     beforeEach(() => {
       workerSlice = createWorkerTaskSlice(mockTaskName, createInputHash);
-      store = configureStore({
-        reducer: {
-          workerResults: combineReducers({
-            [mockTaskName]: workerSlice.reducer,
-          }),
-        },
-      });
+      store = makeTaskStore(mockTaskName, workerSlice.reducer);
     });
 
     describe('pending', () => {
@@ -412,9 +431,10 @@ describe('workerTaskSliceFactory', () => {
       });
 
       it('should execute if input is different', async () => {
-        const differentInput = { reportCode: 'different', fightId: 2 } as SharedWorkerInputType<
-          typeof mockTaskName
-        >;
+        const differentInput = {
+          reportCode: 'different',
+          fightId: 2,
+        } as unknown as SharedWorkerInputType<typeof mockTaskName>;
 
         mockWorkerManager.executeTask
           .mockResolvedValueOnce(mockResult)
@@ -452,9 +472,10 @@ describe('workerTaskSliceFactory', () => {
           .mockReturnValueOnce(aPromise as never) // input A stays pending
           .mockResolvedValueOnce(mockResult); // input B resolves
 
-        const differentInput = { reportCode: 'different', fightId: 2 } as SharedWorkerInputType<
-          typeof mockTaskName
-        >;
+        const differentInput = {
+          reportCode: 'different',
+          fightId: 2,
+        } as unknown as SharedWorkerInputType<typeof mockTaskName>;
 
         const firstExecution = store.dispatch(workerSlice.executeTask(mockInput));
         // Dispatch B while A is still loading (A has not resolved).
@@ -477,10 +498,10 @@ describe('workerTaskSliceFactory', () => {
       it('should handle concurrent requests with latest result winning', async () => {
         // Test that when multiple requests are dispatched rapidly,
         // the system handles them gracefully and the latest completion is preserved
-        const firstResult = { positions: [{ x: 1, y: 1 }] } as SharedWorkerResultType<
+        const firstResult = { positions: [{ x: 1, y: 1 }] } as unknown as SharedWorkerResultType<
           typeof mockTaskName
         >;
-        const secondResult = { positions: [{ x: 2, y: 2 }] } as SharedWorkerResultType<
+        const secondResult = { positions: [{ x: 2, y: 2 }] } as unknown as SharedWorkerResultType<
           typeof mockTaskName
         >;
 
@@ -493,9 +514,10 @@ describe('workerTaskSliceFactory', () => {
         const firstExecution = store.dispatch(workerSlice.executeTask(mockInput));
 
         // Dispatch second request with different input (bypasses cache condition)
-        const secondInput = { reportCode: 'second', fightId: 2 } as SharedWorkerInputType<
-          typeof mockTaskName
-        >;
+        const secondInput = {
+          reportCode: 'second',
+          fightId: 2,
+        } as unknown as SharedWorkerInputType<typeof mockTaskName>;
         const secondExecution = store.dispatch(workerSlice.executeTask(secondInput));
 
         // Wait for both to complete
@@ -533,16 +555,17 @@ describe('workerTaskSliceFactory', () => {
       });
 
       it('should return cached result without calling worker', async () => {
-        const firstInput = { reportCode: 'first', fightId: 1 } as SharedWorkerInputType<
+        const firstInput = { reportCode: 'first', fightId: 1 } as unknown as SharedWorkerInputType<
           typeof mockTaskName
         >;
-        const secondInput = { reportCode: 'second', fightId: 2 } as SharedWorkerInputType<
+        const secondInput = {
+          reportCode: 'second',
+          fightId: 2,
+        } as unknown as SharedWorkerInputType<typeof mockTaskName>;
+        const firstResult = { positions: [{ x: 1, y: 1 }] } as unknown as SharedWorkerResultType<
           typeof mockTaskName
         >;
-        const firstResult = { positions: [{ x: 1, y: 1 }] } as SharedWorkerResultType<
-          typeof mockTaskName
-        >;
-        const secondResult = { positions: [{ x: 2, y: 2 }] } as SharedWorkerResultType<
+        const secondResult = { positions: [{ x: 2, y: 2 }] } as unknown as SharedWorkerResultType<
           typeof mockTaskName
         >;
 
@@ -577,11 +600,13 @@ describe('workerTaskSliceFactory', () => {
         const inputs = Array.from({ length: 4 }, (_, i) => ({
           reportCode: `report-${i}`,
           fightId: i,
-        })) as SharedWorkerInputType<typeof mockTaskName>[];
+        })) as unknown as SharedWorkerInputType<typeof mockTaskName>[];
 
         const results = inputs.map(
           (_, i) =>
-            ({ positions: [{ x: i, y: i }] }) as SharedWorkerResultType<typeof mockTaskName>,
+            ({ positions: [{ x: i, y: i }] }) as unknown as SharedWorkerResultType<
+              typeof mockTaskName
+            >,
         );
 
         results.forEach((r) => mockWorkerManager.executeTask.mockResolvedValueOnce(r));
@@ -699,13 +724,7 @@ describe('workerTaskSliceFactory', () => {
         } as typeof AbortController;
 
         const abortSlice = createWorkerTaskSlice(mockTaskName, abortingHash);
-        const abortStore = configureStore({
-          reducer: {
-            workerResults: combineReducers({
-              [mockTaskName]: abortSlice.reducer,
-            }),
-          },
-        });
+        const abortStore = makeTaskStore(mockTaskName, abortSlice.reducer);
 
         try {
           const promise = abortStore.dispatch(abortSlice.executeTask(mockInput));

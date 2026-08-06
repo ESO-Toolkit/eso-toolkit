@@ -5,6 +5,7 @@ import { createStore, combineReducers, Store } from 'redux';
 
 import { FightFragment, ReportFragment } from '../graphql/gql/graphql';
 import { ReportFightContext } from '../ReportFightContext';
+import type { TabId } from '../utils/getSkeletonForTab';
 
 import { useReportData } from './useReportData';
 import { useSelectedFight } from './useSelectedFight';
@@ -16,6 +17,7 @@ jest.mock('./useReportData');
 // Mock fight data
 const mockFight1: FightFragment = {
   __typename: 'ReportFight',
+  encounterID: 0,
   id: 1,
   startTime: 1000,
   endTime: 2000,
@@ -32,6 +34,7 @@ const mockFight1: FightFragment = {
 
 const mockFight2: FightFragment = {
   __typename: 'ReportFight',
+  encounterID: 0,
   id: 2,
   startTime: 2000,
   endTime: 3000,
@@ -81,9 +84,16 @@ const TestWrapper: React.FC<TestWrapperProps> = ({
 }) => {
   const store = createMockStore();
 
+  // The hook only reads reportId/fightId; the rest of the context is required by
+  // the type, so stub it rather than widening the context contract for a test.
   const contextValue = {
     reportId,
     fightId,
+    tabId: null,
+    selectedTabId: 'summary' as TabId,
+    showExperimentalTabs: false,
+    setSelectedTab: jest.fn(),
+    setShowExperimentalTabs: jest.fn(),
   };
 
   return (
@@ -102,6 +112,8 @@ describe('useSelectedFight', () => {
     mockUseReportData.mockReturnValue({
       reportData: mockReportData,
       isReportLoading: false,
+      reportError: null,
+      refetchReport: jest.fn(),
     });
 
     const { result } = renderHook(() => useSelectedFight(), {
@@ -115,6 +127,8 @@ describe('useSelectedFight', () => {
     mockUseReportData.mockReturnValue({
       reportData: mockReportData,
       isReportLoading: true,
+      reportError: null,
+      refetchReport: jest.fn(),
     });
 
     const { result } = renderHook(() => useSelectedFight(), {
@@ -128,6 +142,8 @@ describe('useSelectedFight', () => {
     mockUseReportData.mockReturnValue({
       reportData: null,
       isReportLoading: false,
+      reportError: null,
+      refetchReport: jest.fn(),
     });
 
     const { result } = renderHook(() => useSelectedFight(), {
@@ -146,6 +162,8 @@ describe('useSelectedFight', () => {
     mockUseReportData.mockReturnValue({
       reportData: emptyReportData,
       isReportLoading: false,
+      reportError: null,
+      refetchReport: jest.fn(),
     });
 
     const { result } = renderHook(() => useSelectedFight(), {
@@ -159,6 +177,8 @@ describe('useSelectedFight', () => {
     mockUseReportData.mockReturnValue({
       reportData: mockReportData,
       isReportLoading: false,
+      reportError: null,
+      refetchReport: jest.fn(),
     });
 
     const { result } = renderHook(() => useSelectedFight(), {
@@ -172,6 +192,8 @@ describe('useSelectedFight', () => {
     mockUseReportData.mockReturnValue({
       reportData: mockReportData,
       isReportLoading: false,
+      reportError: null,
+      refetchReport: jest.fn(),
     });
 
     const { result } = renderHook(() => useSelectedFight(), {
@@ -185,6 +207,8 @@ describe('useSelectedFight', () => {
     mockUseReportData.mockReturnValue({
       reportData: mockReportData,
       isReportLoading: false,
+      reportError: null,
+      refetchReport: jest.fn(),
     });
 
     const { result } = renderHook(() => useSelectedFight(), {
@@ -198,6 +222,8 @@ describe('useSelectedFight', () => {
     mockUseReportData.mockReturnValue({
       reportData: mockReportData,
       isReportLoading: false,
+      reportError: null,
+      refetchReport: jest.fn(),
     });
 
     const { result } = renderHook(() => useSelectedFight(), {
@@ -211,6 +237,8 @@ describe('useSelectedFight', () => {
     mockUseReportData.mockReturnValue({
       reportData: mockReportData,
       isReportLoading: false,
+      reportError: null,
+      refetchReport: jest.fn(),
     });
 
     const { result, rerender } = renderHook(() => useSelectedFight(), {
@@ -232,6 +260,8 @@ describe('useSelectedFight', () => {
     mockUseReportData.mockReturnValue({
       reportData: mockReportData,
       isReportLoading: false,
+      reportError: null,
+      refetchReport: jest.fn(),
     });
 
     const { result } = renderHook(() => useSelectedFight(), {
@@ -250,6 +280,8 @@ describe('useSelectedFight', () => {
     mockUseReportData.mockReturnValue({
       reportData: reportDataWithUndefinedFights,
       isReportLoading: false,
+      reportError: null,
+      refetchReport: jest.fn(),
     });
 
     const { result } = renderHook(() => useSelectedFight(), {
@@ -263,6 +295,8 @@ describe('useSelectedFight', () => {
     mockUseReportData.mockReturnValue({
       reportData: mockReportData,
       isReportLoading: false,
+      reportError: null,
+      refetchReport: jest.fn(),
     });
 
     const { result, rerender } = renderHook(() => useSelectedFight(), {

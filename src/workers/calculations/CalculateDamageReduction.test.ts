@@ -31,9 +31,22 @@ describe('CalculateDamageReduction', () => {
   });
 
   const createMockBuffLookupData = (
-    intervals: Record<string, Array<{ start: number; end: number; targetID: number }>>,
+    intervals: Record<
+      string,
+      Array<{ start: number; end: number; targetID: number; sourceID?: number }>
+    >,
   ) => ({
-    buffIntervals: intervals,
+    // BuffTimeInterval requires sourceID; these fixtures never vary it,
+
+    // so default it rather than restating it at every call site.
+
+    buffIntervals: Object.fromEntries(
+      Object.entries(intervals).map(([ability, list]) => [
+        ability,
+
+        list.map((interval) => ({ sourceID: 0, ...interval })),
+      ]),
+    ),
   });
 
   describe('calculateDamageReductionData', () => {

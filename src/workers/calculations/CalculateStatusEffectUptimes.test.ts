@@ -81,10 +81,10 @@ describe('CalculateStatusEffectUptimes', () => {
         expect(burningResult.icon).toBe('ability_mage_062');
 
         // Check target segmentation
-        expect(Object.keys(burningResult.targetData)).toHaveLength(1);
-        expect(burningResult.targetData[TARGET_ID_1]).toBeDefined();
+        expect(Object.keys(burningResult.targetData!)).toHaveLength(1);
+        expect(burningResult.targetData![TARGET_ID_1]).toBeDefined();
 
-        const targetData = burningResult.targetData[TARGET_ID_1];
+        const targetData = burningResult.targetData![TARGET_ID_1];
         expect(targetData.totalDuration).toBe(5000); // 5 seconds
         expect(targetData.uptime).toBe(5); // Converted to seconds
         expect(targetData.uptimePercentage).toBeCloseTo(25, 1); // 5/20 * 100 = 25%
@@ -110,19 +110,19 @@ describe('CalculateStatusEffectUptimes', () => {
         const burningResult = result[0];
 
         // Check that both targets are segmented correctly
-        expect(Object.keys(burningResult.targetData)).toHaveLength(2);
-        expect(burningResult.targetData[TARGET_ID_1]).toBeDefined();
-        expect(burningResult.targetData[TARGET_ID_2]).toBeDefined();
+        expect(Object.keys(burningResult.targetData!)).toHaveLength(2);
+        expect(burningResult.targetData![TARGET_ID_1]).toBeDefined();
+        expect(burningResult.targetData![TARGET_ID_2]).toBeDefined();
 
         // Target 1: 5 seconds (1000-6000ms)
-        const target1Data = burningResult.targetData[TARGET_ID_1];
+        const target1Data = burningResult.targetData![TARGET_ID_1];
         expect(target1Data.totalDuration).toBe(5000);
         expect(target1Data.uptime).toBe(5);
         expect(target1Data.uptimePercentage).toBeCloseTo(25, 1);
         expect(target1Data.applications).toBe(1);
 
         // Target 2: 7 seconds (3000-10000ms)
-        const target2Data = burningResult.targetData[TARGET_ID_2];
+        const target2Data = burningResult.targetData![TARGET_ID_2];
         expect(target2Data.totalDuration).toBe(7000);
         expect(target2Data.uptime).toBe(7);
         expect(target2Data.uptimePercentage).toBeCloseTo(35, 1);
@@ -148,8 +148,8 @@ describe('CalculateStatusEffectUptimes', () => {
         expect(result).toHaveLength(1);
         const poisonedResult = result[0];
 
-        expect(Object.keys(poisonedResult.targetData)).toHaveLength(1);
-        const targetData = poisonedResult.targetData[TARGET_ID_1];
+        expect(Object.keys(poisonedResult.targetData!)).toHaveLength(1);
+        const targetData = poisonedResult.targetData![TARGET_ID_1];
 
         // Total: 3s + 4s + 3s = 10 seconds
         expect(targetData.totalDuration).toBe(10000);
@@ -177,20 +177,20 @@ describe('CalculateStatusEffectUptimes', () => {
         const overchargedResult = result[0];
 
         expect(overchargedResult.isDebuff).toBe(false);
-        expect(Object.keys(overchargedResult.targetData)).toHaveLength(2);
+        expect(Object.keys(overchargedResult.targetData!)).toHaveLength(2);
 
         // Hostile-buff branch also resolves a canonical name + icon.
         expect(overchargedResult.abilityName).toBe('Overcharged');
         expect(overchargedResult.icon).toBe('death_recap_magic_dot_heavy');
 
         // Target 1: 6 seconds (2000-8000ms)
-        const target1Data = overchargedResult.targetData[TARGET_ID_1];
+        const target1Data = overchargedResult.targetData![TARGET_ID_1];
         expect(target1Data.totalDuration).toBe(6000);
         expect(target1Data.uptime).toBe(6);
         expect(target1Data.uptimePercentage).toBeCloseTo(30, 1);
 
         // Target 2: 7 seconds (5000-12000ms)
-        const target2Data = overchargedResult.targetData[TARGET_ID_2];
+        const target2Data = overchargedResult.targetData![TARGET_ID_2];
         expect(target2Data.totalDuration).toBe(7000);
         expect(target2Data.uptime).toBe(7);
         expect(target2Data.uptimePercentage).toBeCloseTo(35, 1);
@@ -235,19 +235,19 @@ describe('CalculateStatusEffectUptimes', () => {
         );
 
         // Burning affects both targets
-        expect(Object.keys(burningResult!.targetData)).toHaveLength(2);
-        expect(burningResult!.targetData[TARGET_ID_1]).toBeDefined();
-        expect(burningResult!.targetData[TARGET_ID_2]).toBeDefined();
+        expect(Object.keys(burningResult!.targetData!)).toHaveLength(2);
+        expect(burningResult!.targetData![TARGET_ID_1]).toBeDefined();
+        expect(burningResult!.targetData![TARGET_ID_2]).toBeDefined();
 
         // Poisoned affects only target 1
-        expect(Object.keys(poisonedResult!.targetData)).toHaveLength(1);
-        expect(poisonedResult!.targetData[TARGET_ID_1]).toBeDefined();
-        expect(poisonedResult!.targetData[TARGET_ID_2]).toBeUndefined();
+        expect(Object.keys(poisonedResult!.targetData!)).toHaveLength(1);
+        expect(poisonedResult!.targetData![TARGET_ID_1]).toBeDefined();
+        expect(poisonedResult!.targetData![TARGET_ID_2]).toBeUndefined();
 
         // Sundered affects only target 2
-        expect(Object.keys(sunderedResult!.targetData)).toHaveLength(1);
-        expect(sunderedResult!.targetData[TARGET_ID_1]).toBeUndefined();
-        expect(sunderedResult!.targetData[TARGET_ID_2]).toBeDefined();
+        expect(Object.keys(sunderedResult!.targetData!)).toHaveLength(1);
+        expect(sunderedResult!.targetData![TARGET_ID_1]).toBeUndefined();
+        expect(sunderedResult!.targetData![TARGET_ID_2]).toBeDefined();
       });
     });
 
@@ -276,17 +276,17 @@ describe('CalculateStatusEffectUptimes', () => {
         expect(result).toHaveLength(1);
         const burningResult = result[0];
 
-        expect(Object.keys(burningResult.targetData)).toHaveLength(2);
+        expect(Object.keys(burningResult.targetData!)).toHaveLength(2);
 
         // Target 1: Clipped to fight duration (20 seconds)
-        const target1Data = burningResult.targetData[TARGET_ID_1];
+        const target1Data = burningResult.targetData![TARGET_ID_1];
         expect(target1Data.totalDuration).toBe(FIGHT_DURATION);
         expect(target1Data.uptime).toBe(20);
         expect(target1Data.uptimePercentage).toBeCloseTo(100, 1);
         expect(target1Data.applications).toBe(1); // Only the valid interval counts
 
         // Target 2: Normal 5-second interval
-        const target2Data = burningResult.targetData[TARGET_ID_2];
+        const target2Data = burningResult.targetData![TARGET_ID_2];
         expect(target2Data.totalDuration).toBe(5000);
         expect(target2Data.uptime).toBe(5);
         expect(target2Data.uptimePercentage).toBeCloseTo(25, 1);
@@ -363,7 +363,7 @@ describe('CalculateStatusEffectUptimes', () => {
         expect(result).toHaveLength(1);
         const burningResult = result[0];
 
-        const targetData = burningResult.targetData[TARGET_ID_1];
+        const targetData = burningResult.targetData![TARGET_ID_1];
         expect(targetData.totalDuration).toBe(5000); // Only the valid interval
         expect(targetData.applications).toBe(1); // Zero-duration interval should be ignored
       });
@@ -400,13 +400,13 @@ describe('CalculateStatusEffectUptimes', () => {
 
         // Should be sorted by target count: Poisoned (3) > Hemorrhaging (2) > Burning (1)
         expect(result[0].abilityGameID).toBe(KnownAbilities.POISONED.toString());
-        expect(Object.keys(result[0].targetData)).toHaveLength(3);
+        expect(Object.keys(result[0].targetData!)).toHaveLength(3);
 
         expect(result[1].abilityGameID).toBe(KnownAbilities.HEMMORRHAGING.toString());
-        expect(Object.keys(result[1].targetData)).toHaveLength(2);
+        expect(Object.keys(result[1].targetData!)).toHaveLength(2);
 
         expect(result[2].abilityGameID).toBe(KnownAbilities.BURNING.toString());
-        expect(Object.keys(result[2].targetData)).toHaveLength(1);
+        expect(Object.keys(result[2].targetData!)).toHaveLength(1);
       });
 
       it('should set correct unique keys and metadata', () => {

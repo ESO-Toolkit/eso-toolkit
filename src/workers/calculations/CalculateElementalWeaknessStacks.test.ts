@@ -13,9 +13,22 @@ describe('CalculateElementalWeaknessStacks', () => {
   const TARGET_ID = 123;
 
   const createMockBuffLookupData = (
-    intervals: Record<string, Array<{ start: number; end: number; targetID: number }>>,
+    intervals: Record<
+      string,
+      Array<{ start: number; end: number; targetID: number; sourceID?: number }>
+    >,
   ): BuffLookupData => ({
-    buffIntervals: intervals,
+    // BuffTimeInterval requires sourceID; these fixtures never vary it,
+
+    // so default it rather than restating it at every call site.
+
+    buffIntervals: Object.fromEntries(
+      Object.entries(intervals).map(([ability, list]) => [
+        ability,
+
+        list.map((interval) => ({ sourceID: 0, ...interval })),
+      ]),
+    ),
   });
 
   it('should return empty results when no elemental weakness debuffs are present', () => {
