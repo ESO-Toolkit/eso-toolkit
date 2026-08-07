@@ -7,6 +7,7 @@
  */
 
 import { test, expect } from '@playwright/test';
+
 import { setupApiMocking } from './utils/api-mocking';
 
 test.describe('Scribing Detection - Simple Regression', () => {
@@ -90,17 +91,17 @@ test.describe('Scribing Detection - Simple Regression', () => {
           browserSupport: true,
           shatteringKnifeAbilityId: 217340,
           expectedGrimoire: "Apocrypha's Lingering Lore",
-          testTimestamp: Date.now()
+          testTimestamp: Date.now(),
         };
         
         return {
           success: true,
-          data: testResult
+          data: testResult,
         };
       } catch (error) {
         return {
           success: false,
-          error: error instanceof Error ? error.message : 'Unknown error'
+          error: error instanceof Error ? error.message : 'Unknown error',
         };
       }
     });
@@ -187,7 +188,7 @@ test.describe('Scribing Detection - Simple Regression', () => {
     // show Shattering Knife data when properly connected to ESO Logs
     await page.screenshot({ 
       path: `test-results/players-panel-baseline-${Date.now()}.png`,
-      fullPage: true
+      fullPage: true,
     });
     
     console.log('📸 Visual regression baseline screenshot captured');

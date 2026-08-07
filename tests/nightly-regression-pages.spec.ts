@@ -1,4 +1,5 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
+
 import { TEST_TIMEOUTS, waitForAppMount } from './selectors';
 
 /**
@@ -21,7 +22,10 @@ import { TEST_TIMEOUTS, waitForAppMount } from './selectors';
  * test can fail with a useful assertion message rather than an unhandled error.
  */
 async function expectPageLoads(
-  page: Parameters<Parameters<typeof test>[1]>[0],
+  // `Page` directly: deriving this from `typeof test` picked the wrong overload
+  // (TestDetails), which collapsed the parameter to `never` and made every
+  // `page.*` call in this file a type error.
+  page: Page,
   path: string,
   screenshotName: string,
 ): Promise<void> {

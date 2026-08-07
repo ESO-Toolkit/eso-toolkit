@@ -12,13 +12,14 @@
  */
 
 import { test, expect } from '@playwright/test';
+
 import { setupApiMocking } from './utils/api-mocking';
 
 test.describe('Scribing Detection - Regression Tests', () => {
   const REPORT_ID = 'm2Y9FqdpMjcaZh4R';
   const FIGHT_ID = '11';
-  const PLAYER_1_ID = '1';
-  const SHATTERING_KNIFE_ABILITY_ID = '217340';
+  const _PLAYER_1_ID = '1';
+  const _SHATTERING_KNIFE_ABILITY_ID = '217340';
   
   // Use relative path that works with Playwright's base URL
   const TEST_PATH = `/report/${REPORT_ID}/fight/${FIGHT_ID}/players`;
@@ -49,7 +50,7 @@ test.describe('Scribing Detection - Regression Tests', () => {
     // Wait for Players Panel to be visible
     await page.waitForSelector('[data-testid="players-panel"]', { 
       state: 'visible',
-      timeout: 10000 
+      timeout: 10000, 
     });
     
     console.log('✅ Players Panel found, looking for Player 1...');
@@ -94,7 +95,7 @@ test.describe('Scribing Detection - Regression Tests', () => {
           // Take a screenshot for debugging
           await page.screenshot({ 
             path: `test-results/shattering-knife-not-detected-${Date.now()}.png`,
-            fullPage: true
+            fullPage: true,
           });
           
           // This should fail the test if detection isn't working
@@ -132,7 +133,7 @@ test.describe('Scribing Detection - Regression Tests', () => {
             console.log('❌ FAILURE: Tooltip shows Shattering Knife was NOT cast');
             await page.screenshot({ 
               path: `test-results/shattering-knife-tooltip-failed-${Date.now()}.png`,
-              fullPage: true
+              fullPage: true,
             });
             expect(wasCast).toBeTruthy();
           }
@@ -173,7 +174,7 @@ test.describe('Scribing Detection - Regression Tests', () => {
         scribingRequests.push({
           url,
           status: response.status(),
-          statusText: response.statusText()
+          statusText: response.statusText(),
         });
         
         console.log(`📡 Captured scribing-related request: ${url} (${response.status()})`);
@@ -205,7 +206,7 @@ test.describe('Scribing Detection - Regression Tests', () => {
         await route.fulfill({
           status: 500,
           contentType: 'application/json',
-          body: JSON.stringify({ error: 'Scribing detection service unavailable' })
+          body: JSON.stringify({ error: 'Scribing detection service unavailable' }),
         });
       } else {
         // Allow other requests to proceed normally
@@ -233,7 +234,7 @@ test.describe('Scribing Detection - Regression Tests', () => {
     const criticalErrors = errors.filter(error => 
       !error.includes('ResizeObserver') && 
       !error.includes('Not implemented') &&
-      !error.includes('network error') // Expected network errors are ok
+      !error.includes('network error'), // Expected network errors are ok
     );
     
     expect(criticalErrors).toHaveLength(0);
@@ -251,7 +252,7 @@ test.describe('Scribing Detection - Regression Tests', () => {
         expectedGrimoire: "Apocrypha's Lingering Lore",
         expectedFocus: "Shattering Knife",
         castEvents: [] as any[],
-        detectionResults: null as any
+        detectionResults: null as any,
       };
     });
     
@@ -279,14 +280,14 @@ test.describe('Scribing Detection - Regression Tests', () => {
               focus: testData.expectedFocus,
               casts: 3, // We know there are 3 casts in the test data
               abilityId: abilityId,
-              wasCastInFight: true
-            }]
+              wasCastInFight: true,
+            }],
           }],
           summary: {
             totalCombinations: 1,
             totalCasts: 3,
-            playersDetected: 1
-          }
+            playersDetected: 1,
+          },
         };
         
         testData.detectionResults = mockDetectionResult;
@@ -302,13 +303,13 @@ test.describe('Scribing Detection - Regression Tests', () => {
           wasCastInFight: shatteringKnifeCombo.wasCastInFight,
           castCount: shatteringKnifeCombo.casts,
           grimoire: shatteringKnifeCombo.grimoire,
-          focus: shatteringKnifeCombo.focus
+          focus: shatteringKnifeCombo.focus,
         };
         
       } catch (error) {
         return {
           success: false,
-          error: error instanceof Error ? error.message : 'Unknown error'
+          error: error instanceof Error ? error.message : 'Unknown error',
         };
       }
     });
@@ -338,7 +339,7 @@ test.describe('Scribing Detection - Regression Tests', () => {
     // Wait for Players Panel to load
     await page.waitForSelector('[data-testid="players-panel"]', { 
       state: 'visible',
-      timeout: 10000 
+      timeout: 10000, 
     });
     
     // Wait for any dynamic content to stabilize
@@ -347,14 +348,14 @@ test.describe('Scribing Detection - Regression Tests', () => {
     // Take full page screenshot
     await page.screenshot({ 
       path: `test-results/shattering-knife-regression-baseline-${Date.now()}.png`,
-      fullPage: true
+      fullPage: true,
     });
     
     // Take focused screenshot of Players Panel
     const playersPanel = page.locator('[data-testid="players-panel"]').first();
     if (await playersPanel.isVisible()) {
       await playersPanel.screenshot({ 
-        path: `test-results/players-panel-shattering-knife-${Date.now()}.png`
+        path: `test-results/players-panel-shattering-knife-${Date.now()}.png`,
       });
     }
     

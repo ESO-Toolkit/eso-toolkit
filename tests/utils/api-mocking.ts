@@ -1,6 +1,7 @@
-import { Page } from '@playwright/test';
 import * as fs from 'fs';
 import * as path from 'path';
+
+import { Page } from '@playwright/test';
 
 // Cache for loaded event data to avoid repeated file reads
 const eventDataCache = new Map<string, any>();
@@ -60,7 +61,7 @@ function loadEventData(reportCode: string, fightId: string, eventType: string) {
 /**
  * Load fight info metadata
  */
-function loadFightInfo(reportCode: string, fightId: string) {
+function _loadFightInfo(reportCode: string, fightId: string) {
   try {
     const dataPath = path.join(process.cwd(), 'data-downloads', reportCode, `fight-${fightId}`, 'fight-info.json');
     if (fs.existsSync(dataPath)) {
@@ -73,7 +74,7 @@ function loadFightInfo(reportCode: string, fightId: string) {
   return null;
 }
 
-function normalizeGraphQLPayload(data: any): any {
+function _normalizeGraphQLPayload(data: any): any {
   // If the data already has 'data' key, return as-is
   if (data && typeof data === 'object' && 'data' in data) {
     return data;
@@ -102,7 +103,7 @@ async function handleEsoLogsRequest(route: any) {
       const requestBody = await request.postDataJSON();
       operationName = requestBody?.operationName ?? '';
       variables = requestBody?.variables ?? {};
-    } catch (error) {
+    } catch {
       // Silent fail
     }
   } else {
@@ -110,7 +111,9 @@ async function handleEsoLogsRequest(route: any) {
     if (variablesParam) {
       try {
         variables = JSON.parse(decodeURIComponent(variablesParam));
-      } catch (e) {}
+      } catch {
+        // Silent fail — a malformed `variables` param just leaves `variables` unset.
+      }
     }
   }
   
@@ -119,7 +122,7 @@ async function handleEsoLogsRequest(route: any) {
       status: 200,
       contentType: 'application/json',
       body: JSON.stringify({
-        data: { userData: { currentUser: { id: 12345, name: 'TestUser', naDisplayName: '@TestUser', euDisplayName: '@TestUser' } } }
+        data: { userData: { currentUser: { id: 12345, name: 'TestUser', naDisplayName: '@TestUser', euDisplayName: '@TestUser' } } },
       }),
     });
     return;
@@ -179,7 +182,7 @@ async function handleEsoLogsRequest(route: any) {
     'getHealingEvents': 'healing-events',
     'getResourceEvents': 'resource-events',
     'getDeathEvents': 'death-events',
-    'getCombatantInfoEvents': 'combatant-info-events'
+    'getCombatantInfoEvents': 'combatant-info-events',
   };
   
   for (const [queryName, eventType] of Object.entries(eventTypeMap)) {
@@ -204,11 +207,11 @@ async function handleEsoLogsRequest(route: any) {
                 report: {
                   events: {
                     data: [],
-                    nextPageTimestamp: null
-                  }
-                }
-              }
-            }
+                    nextPageTimestamp: null,
+                  },
+                },
+              },
+            },
           }),
         });
         return;

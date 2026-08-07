@@ -1,4 +1,4 @@
-import { test, expect, devices } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 
 test.describe('Responsive Layout Tests', () => {
   const testReportId = '98b3845e3c1ed2a6191e-67039068743d5eeb2855';

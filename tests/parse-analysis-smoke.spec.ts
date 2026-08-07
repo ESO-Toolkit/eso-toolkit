@@ -1,4 +1,5 @@
 import { test, expect, Page } from '@playwright/test';
+
 import { setupTestPage } from './setup/global-test-setup';
 
 /**

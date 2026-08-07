@@ -1,4 +1,5 @@
 import { Page, expect } from '@playwright/test';
+
 import { TEST_DATA } from '../selectors';
 
 /**
@@ -76,7 +77,7 @@ export const EXPERIMENTAL_TAB_IDS = [
 export async function getFirstFightId(
   page: Page, 
   reportId: string, 
-  timeouts: TestTimeouts = DEFAULT_TIMEOUTS
+  timeouts: TestTimeouts = DEFAULT_TIMEOUTS,
 ): Promise<string> {
   await page.goto(`/report/${reportId}`, {
     waitUntil: 'domcontentloaded',
@@ -106,7 +107,7 @@ export async function navigateToFightTab(
   reportId: string,
   fightId: string,
   tabId: string,
-  timeouts: TestTimeouts = DEFAULT_TIMEOUTS
+  timeouts: TestTimeouts = DEFAULT_TIMEOUTS,
 ): Promise<void> {
   await page.goto(`/report/${reportId}/fight/${fightId}/${tabId}`, {
     waitUntil: 'domcontentloaded',
@@ -122,7 +123,7 @@ export async function navigateToFightTab(
 export async function takeNamedScreenshot(
   page: Page,
   name: string,
-  options: { fullPage?: boolean; timeout?: number } = {}
+  options: { fullPage?: boolean; timeout?: number } = {},
 ): Promise<void> {
   const { fullPage = true, timeout = DEFAULT_TIMEOUTS.screenshot } = options;
   
@@ -143,7 +144,7 @@ export async function checkForCriticalErrors(page: Page): Promise<string[]> {
     !error.includes('ResizeObserver') && 
     !error.includes('Not implemented') &&
     !error.includes('Non-Error promise rejection') &&
-    !error.includes('ChunkLoadError') // Ignore chunk loading errors in dev
+    !error.includes('ChunkLoadError'), // Ignore chunk loading errors in dev
   );
   
   return criticalErrors;
@@ -154,7 +155,7 @@ export async function checkForCriticalErrors(page: Page): Promise<string[]> {
  */
 export async function waitForDataGrid(
   page: Page,
-  timeouts: TestTimeouts = DEFAULT_TIMEOUTS
+  timeouts: TestTimeouts = DEFAULT_TIMEOUTS,
 ): Promise<boolean> {
   const dataGrid = page.locator('.MuiDataGrid-root');
   
@@ -174,7 +175,7 @@ export async function waitForDataGrid(
  */
 export async function testDataGridInteractions(
   page: Page,
-  screenshotPrefix: string
+  screenshotPrefix: string,
 ): Promise<void> {
   const dataGrid = page.locator('.MuiDataGrid-root');
   
@@ -211,7 +212,7 @@ export async function testDataGridInteractions(
 export async function verifyTabActive(
   page: Page,
   tabId: string,
-  timeouts: TestTimeouts = DEFAULT_TIMEOUTS
+  _timeouts: TestTimeouts = DEFAULT_TIMEOUTS,
 ): Promise<void> {
   // Check that the tab is marked as active
   const activeTab = page.locator(`[role="tab"][aria-selected="true"]`);
@@ -226,7 +227,7 @@ export async function verifyTabActive(
     '.visualization',
     '.analysis-content',
     'canvas',
-    'svg'
+    'svg',
   ];
 
   let contentFound = false;
@@ -314,7 +315,7 @@ export async function safePickDropdownOption(
  */
 export async function testTargetSelector(
   page: Page,
-  screenshotPrefix: string
+  screenshotPrefix: string,
 ): Promise<void> {
   const targetSelector = page.locator('[data-testid="target-selector"], .MuiFormControl-root').first();
 
@@ -381,7 +382,7 @@ export async function generateTestReport(
   fightId: string | undefined,
   duration: number,
   errors: string[],
-  networkIssues: { failed: any[]; slow: any[] }
+  networkIssues: { failed: any[]; slow: any[] },
 ): Promise<void> {
   const report = {
     testName,

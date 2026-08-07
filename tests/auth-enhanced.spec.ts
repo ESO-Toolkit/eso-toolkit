@@ -1,6 +1,7 @@
-import { test, expect, Page } from '@playwright/test';
-import { setupApiMocking } from './utils/api-mocking';
+import { test, expect } from '@playwright/test';
+
 import { createAuthTestUtils } from './auth-utils';
+import { setupApiMocking } from './utils/api-mocking';
 
 /**
  * Enhanced Authentication Tests (ESO-507)
@@ -38,7 +39,7 @@ test.describe('Enhanced Authentication Tests', () => {
 
       // Check that we're either on login page or showing error
       const url = page.url();
-      const isOnLoginOrError = url.includes('/login') || url.includes('error');
+      const _isOnLoginOrError = url.includes('/login') || url.includes('error');
       
       // At minimum, page should not be blank
       const bodyContent = await page.locator('body').textContent();
@@ -180,7 +181,7 @@ test.describe('Enhanced Authentication Tests', () => {
     });
 
     test('should handle timeout during user data fetch', async ({ page }) => {
-      const authUtils = createAuthTestUtils(page);
+      const _authUtils = createAuthTestUtils(page);
 
       // Set a valid token directly
       await page.goto('/');
@@ -244,7 +245,7 @@ test.describe('Enhanced Authentication Tests', () => {
       await page.waitForLoadState('domcontentloaded');
 
       // Create an expired token
-      const expiredToken = await page.evaluate(() => {
+      await page.evaluate(() => {
         const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
         const payload = btoa(JSON.stringify({
           sub: 'user_123',
@@ -315,7 +316,7 @@ test.describe('Enhanced Authentication Tests', () => {
       await page.waitForLoadState('domcontentloaded');
 
       // Create a token that expires in 3 seconds (more buffer for reload)
-      const expiryTime = await page.evaluate(() => {
+      await page.evaluate(() => {
         const exp = Math.floor(Date.now() / 1000) + 3;
         const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
         const payload = btoa(JSON.stringify({
@@ -730,7 +731,7 @@ test.describe('Enhanced Authentication Tests', () => {
       await page.waitForTimeout(1000);
 
       // Should show auth prompt or redirect to login
-      const url = page.url();
+      const _url = page.url();
       const bodyContent = await page.locator('body').textContent();
       
       // At minimum, page should load (may show login prompt or redirect)

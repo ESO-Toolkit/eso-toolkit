@@ -1,5 +1,5 @@
-import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
+import { test, expect } from '@playwright/test';
 
 const PUBLIC_ROUTES = [
   { path: '/', title: 'ESO Toolkit' },

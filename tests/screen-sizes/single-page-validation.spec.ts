@@ -1,6 +1,8 @@
 import { test, expect } from '@playwright/test';
-import { setupAuthentication } from './utils';
+
 import { waitForLoadingComplete } from '../utils/skeleton-detector';
+
+import { setupAuthentication } from './utils';
 
 test.describe('Single Screen Size Test - Optimized for CI', () => {
   test('players panel loads correctly with optimized detection', async ({ page }) => {
@@ -15,7 +17,7 @@ test.describe('Single Screen Size Test - Optimized for CI', () => {
     // Navigate directly without preloading complexity
     await page.goto('/report/nbKdDtT4NcZyVrvX/fight/117', {
       waitUntil: 'networkidle',
-      timeout: 30000
+      timeout: 30000,
     });
     
     console.log('⏳ Waiting for content to load with optimized detection...');
@@ -23,7 +25,7 @@ test.describe('Single Screen Size Test - Optimized for CI', () => {
     // Use our improved loading detection with CI-friendly timeout
     await waitForLoadingComplete(page, { 
       timeout: 20000,  // Reasonable timeout for CI
-      expectedPreloaded: false 
+      expectedPreloaded: false, 
     });
     
     const loadTime = Date.now() - startTime;
@@ -52,7 +54,7 @@ test.describe('Single Screen Size Test - Optimized for CI', () => {
     console.log('📸 Taking screenshot for verification...');
     await page.screenshot({ 
       path: 'test-results-screen-sizes/ci-optimized-test.png',
-      fullPage: true 
+      fullPage: true, 
     });
     
     console.log('🎯 Test completed successfully - content detection working in CI');

@@ -1,6 +1,8 @@
-import { test, expect } from '@playwright/test';
-import { setupAuthentication } from './utils';
+import { test } from '@playwright/test';
+
 import { createSkeletonDetector } from '../utils/skeleton-detector';
+
+import { setupAuthentication } from './utils';
 
 test.describe('Diagnostic Test - Content Detection Analysis', () => {
   test('analyze what content detection is actually finding', async ({ page }) => {
@@ -11,7 +13,7 @@ test.describe('Diagnostic Test - Content Detection Analysis', () => {
     console.log('📍 Navigating to players panel...');
     await page.goto('/report/nbKdDtT4NcZyVrvX/fight/117', {
       waitUntil: 'networkidle',
-      timeout: 30000
+      timeout: 30000,
     });
     
     // Wait a moment for page to settle
@@ -48,7 +50,7 @@ test.describe('Diagnostic Test - Content Detection Analysis', () => {
         allDivs,
         playerDataElement: hasPlayerData ? hasPlayerData.tagName + '.' + hasPlayerData.className : null,
         tableDataElement: hasTableData ? hasTableData.tagName + '.' + hasTableData.className : null,
-        insightsDataElement: hasInsightsData ? hasInsightsData.tagName + '.' + hasInsightsData.className : null
+        insightsDataElement: hasInsightsData ? hasInsightsData.tagName + '.' + hasInsightsData.className : null,
       };
     });
     
@@ -87,7 +89,7 @@ test.describe('Diagnostic Test - Content Detection Analysis', () => {
     // Take screenshot for manual inspection
     await page.screenshot({ 
       path: 'test-results-screen-sizes/diagnostic-analysis.png',
-      fullPage: true 
+      fullPage: true, 
     });
     
     console.log('📸 Diagnostic screenshot saved');

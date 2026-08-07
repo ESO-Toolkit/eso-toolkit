@@ -1,10 +1,12 @@
+import * as fs from 'fs';
+import * as path from 'path';
+
 import { chromium, FullConfig } from '@playwright/test';
 import axios from 'axios';
 import * as dotenv from 'dotenv';
-import * as fs from 'fs';
-import * as path from 'path';
-import { getBaseUrl } from './selectors';
+
 import { EsoLogsNodeCache } from '../src/utils/esoLogsNodeCache';
+
 import { clearCache } from './screen-sizes/cache-utils';
 
 /**
@@ -17,7 +19,7 @@ import { clearCache } from './screen-sizes/cache-utils';
 // Load environment variables
 dotenv.config();
 
-async function globalSetup(config: FullConfig) {
+async function globalSetup(_config: FullConfig) {
   console.log('🚀 Starting lightweight global setup for screen size tests...');
 
   // Clear all cached ESO Logs API responses to ensure fresh data
@@ -206,7 +208,7 @@ async function getClientCredentialsToken(clientId: string, clientSecret: string)
  * Pre-cache getCurrentUser response to mock it during tests
  * This prevents repeated API calls for the same user data
  */
-async function preCacheCurrentUser(accessToken: string): Promise<void> {
+async function preCacheCurrentUser(_accessToken: string): Promise<void> {
   console.log('💾 Pre-caching getCurrentUser response...');
 
   // Create a simple mock response for getCurrentUser

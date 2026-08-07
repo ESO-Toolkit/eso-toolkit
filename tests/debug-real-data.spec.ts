@@ -12,9 +12,10 @@
  * 5. Check console output for detection logs
  */
 
-import { test, expect } from '@playwright/test';
 import * as fs from 'fs';
 import * as path from 'path';
+
+import { test } from '@playwright/test';
 
 // ============================================================================
 // CONFIGURATION - Update these for your debugging needs
@@ -54,7 +55,7 @@ function getAccessToken(): string | null {
     if (fs.existsSync(authStatePath)) {
       const authState = JSON.parse(fs.readFileSync(authStatePath, 'utf-8'));
       const origin = authState.origins?.find((o: any) => 
-        o.origin.includes('localhost') || o.origin.includes('3000')
+        o.origin.includes('localhost') || o.origin.includes('3000'),
       );
       const token = origin?.localStorage?.find((item: any) => item.name === 'access_token')?.value;
       if (token) {
@@ -189,7 +190,7 @@ test.describe('Debug - Real Data from ESO Logs', () => {
     await page.waitForTimeout(2000);
 
     // Get all scribing-related data from the page
-    const scribingData = await page.evaluate((playerName) => {
+    const scribingData = await page.evaluate((_playerName) => {
       // Try to access Redux store if available
       const state = (window as any).__REDUX_DEVTOOLS_EXTENSION__?.getState?.();
       
@@ -212,7 +213,7 @@ test.describe('Debug - Real Data from ESO Logs', () => {
     // Take a screenshot for reference
     await page.screenshot({ 
       path: `test-results/debug-${PLAYER_NAME}-${Date.now()}.png`,
-      fullPage: true 
+      fullPage: true, 
     });
     
     console.log(`\n✓ Screenshot saved to test-results/`);

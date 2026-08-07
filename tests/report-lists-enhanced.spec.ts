@@ -1,6 +1,7 @@
 import { test, expect, Page } from '@playwright/test';
-import { setupApiMocking } from './utils/api-mocking';
+
 import { createAuthTestUtils } from './auth-utils';
+import { setupApiMocking } from './utils/api-mocking';
 
 /**
  * Enhanced Report Lists Tests (ESO-506)
@@ -670,7 +671,7 @@ test.describe('Enhanced Report Lists Tests', () => {
 
         // Should show loading indicator
         const loadingIndicator = page.locator('.MuiCircularProgress-root, .MuiSkeleton-root');
-        const hasLoading = await loadingIndicator.first().isVisible({ timeout: 2000 }).catch(() => false);
+        await loadingIndicator.first().isVisible({ timeout: 2000 }).catch(() => false);
 
         // Resolve the promise to let the request complete
         resolvePromise!(true);
@@ -712,7 +713,7 @@ test.describe('Enhanced Report Lists Tests', () => {
 
         // May show error message
         const errorMessage = page.locator('text=/error|failed|unavailable/i');
-        const hasError = await errorMessage.first().isVisible().catch(() => false);
+        await errorMessage.first().isVisible().catch(() => false);
         
         // Error message may or may not be shown, but page should not crash
         expect(bodyContent!.length).toBeGreaterThan(10);
@@ -899,7 +900,7 @@ test.describe('Enhanced Report Lists Tests', () => {
 
         // Should show table on desktop
         const table = page.locator('table.MuiTable-root');
-        const hasTable = await table.isVisible().catch(() => false);
+        await table.isVisible().catch(() => false);
 
         // Desktop may show table or card layout
         const bodyContent = await page.locator('body').textContent();
@@ -1090,7 +1091,7 @@ test.describe('Enhanced Report Lists Tests', () => {
         const bodyContent = await page.locator('body').textContent();
         
         // Either redirected to login or showing auth prompt
-        const hasAuthPrompt = url.includes('/login') || 
+        const _hasAuthPrompt = url.includes('/login') || 
                              bodyContent?.toLowerCase().includes('login') ||
                              bodyContent?.toLowerCase().includes('please log in');
         

@@ -1,8 +1,9 @@
-import { test, expect } from '@playwright/test';
 import * as fs from 'fs';
 import * as path from 'path';
 
-import { SELECTORS, TEST_TIMEOUTS, TEST_DATA, getBaseUrl } from './selectors';
+import { test, expect } from '@playwright/test';
+
+import { SELECTORS, TEST_TIMEOUTS, TEST_DATA } from './selectors';
 import {
   resolveWorkingReportId,
   safePickDropdownOption,
@@ -16,9 +17,9 @@ import {
  * that require real data to function properly.
  */
 
-const REAL_REPORT_IDS = TEST_DATA.REAL_REPORT_IDS.slice(0, 3); // Use first 3 for better coverage
+const _REAL_REPORT_IDS = TEST_DATA.REAL_REPORT_IDS.slice(0, 3); // Use first 3 for better coverage
 // Resolved dynamically in test.beforeAll to survive report ID expiry — see ESO-740.
-let REPORT_WITH_FIGHTS = TEST_DATA.REAL_REPORT_IDS[0];
+let REPORT_WITH_FIGHTS: string = TEST_DATA.REAL_REPORT_IDS[0];
 
 /**
  * Enhanced error handling wrapper for browser operations
@@ -27,10 +28,11 @@ async function withBrowserStability<T>(operation: () => Promise<T>, context: str
   try {
     return await operation();
   } catch (error) {
-    if (error.message && (
-      error.message.includes('Target page, context or browser has been closed') ||
-      error.message.includes('Browser has been closed') ||
-      error.message.includes('Page has been closed')
+    const message = error instanceof Error ? error.message : '';
+    if (message && (
+      message.includes('Target page, context or browser has been closed') ||
+      message.includes('Browser has been closed') ||
+      message.includes('Page has been closed')
     )) {
       console.log(`⚠️ Browser stability issue during ${context}, skipping this test scenario`);
       test.skip(true, `Browser was closed during ${context}`);
@@ -76,12 +78,12 @@ function hasRealAuthentication(): boolean {
       hasStateToken,
       hasMetadataToken: !!hasMetadataToken,
       isNotExpired,
-      expiresAt: authMetadata?.expiresAt ? new Date(authMetadata.expiresAt).toISOString() : 'unknown'
+      expiresAt: authMetadata?.expiresAt ? new Date(authMetadata.expiresAt).toISOString() : 'unknown',
     });
     
     return hasStateToken && hasMetadataToken && isNotExpired;
   } catch (error) {
-    console.log('🔍 Auth check error:', error.message);
+    console.log('🔍 Auth check error:', error instanceof Error ? error.message : error);
     return false;
   }
 }
@@ -90,11 +92,11 @@ function hasRealAuthentication(): boolean {
  * Helper function to check if fights are available and get a usable fight button
  * This uses the same robust logic as the working fight replay test
  */
-async function findUsableFightButton(
+async function _findUsableFightButton(
   page: any,
 ): Promise<{ hasFights: boolean; fightButton: any; fightId: string }> {
   // Check if fight links are available (may not be present for all reports)
-  const firstFightLink = page.locator(SELECTORS.ANY_FIGHT_BUTTON).first();
+  const _firstFightLink = page.locator(SELECTORS.ANY_FIGHT_BUTTON).first();
 
   // Check if fights exist in DOM first, then check usability
   const fightButtonCount = await page.locator(SELECTORS.ANY_FIGHT_BUTTON).count();
@@ -141,7 +143,7 @@ async function findUsableFightButton(
             break;
           }
         }
-      } catch (error) {
+      } catch {
         // Continue to next button if this one fails
         continue;
       }
@@ -223,7 +225,7 @@ test.describe('Nightly Regression - Interactive Features', () => {
       // Try networkidle but fallback to content check if it times out
       try {
         await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.networkIdle });
-      } catch (error) {
+      } catch {
         console.log('⚠️ NetworkIdle timeout for fight replay, checking for content instead...');
         await page.waitForTimeout(5000); // Longer wait for production site
       }
@@ -243,7 +245,7 @@ test.describe('Nightly Regression - Interactive Features', () => {
         });
         contentFound = true;
         console.log('✅ Standard content indicators found');
-      } catch (error) {
+      } catch {
         console.log('⚠️ Standard fight list/loading indicators not found, trying alternate detection...');
       }
       
@@ -254,7 +256,7 @@ test.describe('Nightly Regression - Interactive Features', () => {
           await expect(reportContent.first()).toBeVisible({ timeout: 15000 }); // Longer timeout
           contentFound = true;
           console.log('✅ Found report content via broader search');
-        } catch (error) {
+        } catch {
           console.log('⚠️ Broad report content search also failed');
         }
       }
@@ -272,7 +274,7 @@ test.describe('Nightly Regression - Interactive Features', () => {
             contentFound = true;
             console.log(`✅ Found meaningful page content (${textContent.length} characters)`);
           }
-        } catch (error) {
+        } catch {
           console.log('⚠️ Even basic content detection failed');
         }
       }
@@ -306,7 +308,7 @@ test.describe('Nightly Regression - Interactive Features', () => {
           currentUrl,
           pageTitle,
           bodyTextLength: bodyText?.length || 0,
-          bodyTextPreview: bodyText?.substring(0, 200)
+          bodyTextPreview: bodyText?.substring(0, 200),
         });
         
         // Take screenshot for debugging but with error handling
@@ -314,7 +316,7 @@ test.describe('Nightly Regression - Interactive Features', () => {
           await page.screenshot({ 
             path: 'test-results/fight-replay-no-content-debug.png', 
             fullPage: true,
-            timeout: TEST_TIMEOUTS.screenshot 
+            timeout: TEST_TIMEOUTS.screenshot, 
           });
         } catch (screenshotError) {
           console.log('⚠️ Could not capture debug screenshot:', screenshotError);
@@ -344,7 +346,7 @@ test.describe('Nightly Regression - Interactive Features', () => {
       });
 
       // Check if fight links are available (may not be present for all reports)
-      const firstFightLink = page.locator(SELECTORS.ANY_FIGHT_BUTTON).first();
+      const _firstFightLink = page.locator(SELECTORS.ANY_FIGHT_BUTTON).first();
 
       // Check if fights exist in DOM first, then check usability
       const fightButtonCount = await page.locator(SELECTORS.ANY_FIGHT_BUTTON).count();
@@ -605,7 +607,7 @@ test.describe('Nightly Regression - Interactive Features', () => {
       }
     });
 
-    test('should test rotation analysis visualization', async ({ page }, testInfo) => {
+    test('should test rotation analysis visualization', async ({ page }, _testInfo) => {
       const reportId = REPORT_WITH_FIGHTS;
 
       // Use known fight ID directly — avoids an extra landing-page API round-trip
@@ -622,7 +624,7 @@ test.describe('Nightly Regression - Interactive Features', () => {
       await page.waitForTimeout(8000); // Complex analysis takes time
 
       // Look for rotation analysis elements
-      const rotationElements = page.locator(
+      const _rotationElements = page.locator(
         '.rotation, .timeline, .ability-sequence, .analysis, canvas, .chart',
       );
 
@@ -705,7 +707,7 @@ test.describe('Nightly Regression - Interactive Features', () => {
       await page.waitForTimeout(5000);
 
       // Look for talents grid
-      const talentsElements = page.locator(
+      const _talentsElements = page.locator(
         '.talents, .skill-tree, .abilities-grid, .talent-grid, .MuiGrid-container',
       );
 
@@ -756,7 +758,7 @@ test.describe('Nightly Regression - Interactive Features', () => {
       // Try networkidle but fallback to content check if it times out
       try {
         await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.networkIdle });
-      } catch (error) {
+      } catch {
         console.log('⚠️ NetworkIdle timeout for heatmap visualization, checking for content instead...');
         await page.waitForTimeout(3000);
       }

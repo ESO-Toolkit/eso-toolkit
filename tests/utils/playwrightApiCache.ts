@@ -4,12 +4,21 @@
  */
 
 import { Page, Route } from '@playwright/test';
+
 import { EsoLogsNodeCache } from '../../src/utils/esoLogsNodeCache';
 
 interface InterceptConfig {
   enableLogging?: boolean;
   cacheTTL?: number;
   apiBaseUrls?: string[];
+}
+
+/** Shape this cache stores per API response. `EsoLogsNodeCache.get` is generic. */
+interface CachedApiResponse {
+  status?: number;
+  headers?: Record<string, string>;
+  data?: unknown;
+  timestamp?: number;
 }
 
 export class PlaywrightApiCache {
@@ -56,7 +65,7 @@ export class PlaywrightApiCache {
         const operationName = this.extractOperationName(request);
         
         // Try to get from cache
-        const cachedResponse = await this.cache.get(cacheKey);
+        const cachedResponse = await this.cache.get<CachedApiResponse>(cacheKey);
         
         if (cachedResponse && this.isCacheValid(cachedResponse)) {
           // Serve from cache
@@ -188,7 +197,7 @@ export class PlaywrightApiCache {
   /**
    * Log cache hit
    */
-  private logCacheHit(operationName: string | null, url: string): void {
+  private logCacheHit(operationName: string | null, _url: string): void {
     if (!this.config.enableLogging) return;
     
     const count = this.interceptCount.get(operationName || 'unknown') || 0;
@@ -200,7 +209,7 @@ export class PlaywrightApiCache {
   /**
    * Log cache miss
    */
-  private logCacheMiss(operationName: string | null, url: string): void {
+  private logCacheMiss(operationName: string | null, _url: string): void {
     if (!this.config.enableLogging) return;
     
     console.log(`🔴 Cache MISS [${operationName}] - fetching from API`);
@@ -209,7 +218,7 @@ export class PlaywrightApiCache {
   /**
    * Log cache store
    */
-  private logCacheStore(operationName: string | null, url: string): void {
+  private logCacheStore(operationName: string | null, _url: string): void {
     if (!this.config.enableLogging) return;
     
     console.log(`💾 Cache STORED [${operationName}]`);

@@ -33,7 +33,7 @@ export const SKELETON_SELECTORS = {
     '[data-testid="text-editor-skeleton"]',
     '[data-testid="calculator-skeleton"]',
     '[data-testid="calculator-skeleton-lite"]',
-    '[data-testid="ultimate-calculator-skeleton"]'
+    '[data-testid="ultimate-calculator-skeleton"]',
   ].join(', '),
 
   // Loading fallback components - these might be persistent, not reliable for loading detection
@@ -60,7 +60,7 @@ export const SKELETON_SELECTORS = {
     '[data-testid="text-editor-skeleton"]:not([data-permanent])',
     '[data-testid="calculator-skeleton"]:not([data-permanent])',
     '[data-testid="calculator-skeleton-lite"]:not([data-permanent])',
-    '[data-testid="ultimate-calculator-skeleton"]:not([data-permanent])'
+    '[data-testid="ultimate-calculator-skeleton"]:not([data-permanent])',
   ].join(', '),
 } as const;
 
@@ -193,7 +193,7 @@ export class SkeletonDetector {
             '.MuiSkeleton-root:not([data-permanent]):not([style*="display: none"])',
             '.MuiCircularProgress-root:not([style*="display: none"])',
             '.loading-spinner:not([style*="display: none"])',
-            '[data-testid*="loading"]:not([style*="display: none"])'
+            '[data-testid*="loading"]:not([style*="display: none"])',
           ];
 
           const foundLoadingElements = [];
@@ -215,7 +215,7 @@ export class SkeletonDetector {
                   className: element.className,
                   testId: element.getAttribute('data-testid'),
                   text: element.textContent?.slice(0, 50),
-                  dimensions: `${rect.width}x${rect.height}`
+                  dimensions: `${rect.width}x${rect.height}`,
                 });
               }
             }
@@ -248,7 +248,7 @@ export class SkeletonDetector {
 
       console.log('✅ Content fully loaded - verified stable state with no loading indicators');
       
-    } catch (error) {
+    } catch {
       console.warn('⚠️ Content loading detection timed out after', actualTimeout, 'ms');
       
       // Instead of falling back to problematic skeleton detection, 
@@ -309,12 +309,12 @@ export class SkeletonDetector {
               return elements.length === 0;
             },
             selector,
-            { timeout: preloadedTimeout }
+            { timeout: preloadedTimeout },
           );
           
           console.log('✅ Skeletons disappeared quickly - preloaded data rendered successfully');
           
-        } catch (preloadError) {
+        } catch {
           console.warn('⚠️ Skeletons persist despite preloaded data - cache may not be effective');
           // Fall back to normal timeout
         }
@@ -338,7 +338,7 @@ export class SkeletonDetector {
           return elements.length === 0;
         },
         selector,
-        { timeout: timeout }
+        { timeout: timeout },
       );
 
       // Wait additional time for content to stabilize
@@ -377,7 +377,7 @@ export class SkeletonDetector {
     options?: {
       timeout?: number;
       stabilityTimeout?: number;
-    }
+    },
   ): Promise<void> {
     const timeout = options?.timeout ?? SKELETON_TIMEOUTS.DISAPPEAR;
     const stabilityTimeout = options?.stabilityTimeout ?? SKELETON_TIMEOUTS.STABLE;
@@ -464,7 +464,7 @@ export class SkeletonDetector {
     
     if (skeletonInfo.hasSkeletons) {
       throw new Error(
-        `Expected no skeletons, but found ${skeletonInfo.count} skeleton(s) of types: ${skeletonInfo.types.join(', ')}`
+        `Expected no skeletons, but found ${skeletonInfo.count} skeleton(s) of types: ${skeletonInfo.types.join(', ')}`,
       );
     }
   }
@@ -519,7 +519,7 @@ export async function waitForLoadingComplete(
   options: {
     timeout?: number;
     expectedPreloaded?: boolean;
-  } = {}
+  } = {},
 ): Promise<void> {
   const { timeout = 45000, expectedPreloaded } = options;
   
@@ -533,7 +533,7 @@ export async function waitForLoadingComplete(
     // Use content detection for preloaded data (more reliable)
     await detector.waitForContentLoaded({ 
       timeout: Math.min(timeout, 10000),
-      expectPreloaded: true 
+      expectPreloaded: true, 
     });
   } else {
     console.log('🔄 Data not preloaded - using content detection with fallback');
@@ -541,12 +541,12 @@ export async function waitForLoadingComplete(
     try {
       await detector.waitForContentLoaded({ 
         timeout: Math.min(timeout, 25000),
-        expectPreloaded: false 
+        expectPreloaded: false, 
       });
-    } catch (error) {
+    } catch {
       console.warn('⚠️ Content detection failed, falling back to skeleton detection');
       await detector.waitForSkeletonsToDisappear({ 
-        timeout: Math.min(timeout, 15000) 
+        timeout: Math.min(timeout, 15000), 
       });
     }
   }
@@ -569,25 +569,25 @@ export const skeletonHelpers = {
     if (isPreloaded) {
       return detector.waitForContentLoaded({ 
         timeout: Math.min(timeout || 45000, 10000),
-        expectPreloaded: true 
+        expectPreloaded: true, 
       });
     } else {
       return detector.waitForContentLoaded({ 
         timeout: timeout || 30000,
-        expectPreloaded: false 
+        expectPreloaded: false, 
       });
     }
   },
   waitForPlayers: async (page: Page, timeout?: number) => {
     const isPreloaded = await isDataPreloaded(page);
     return createSkeletonDetector(page).waitForSkeletonTypeToDisappear(SKELETON_SELECTORS.PLAYERS, { 
-      timeout: isPreloaded ? Math.min(timeout || 45000, 10000) : timeout 
+      timeout: isPreloaded ? Math.min(timeout || 45000, 10000) : timeout, 
     });
   },
   waitForCalculator: async (page: Page, timeout?: number) => {
     const isPreloaded = await isDataPreloaded(page);
     return createSkeletonDetector(page).waitForSkeletonTypeToDisappear(SKELETON_SELECTORS.CALCULATOR, { 
-      timeout: isPreloaded ? Math.min(timeout || 45000, 10000) : timeout 
+      timeout: isPreloaded ? Math.min(timeout || 45000, 10000) : timeout, 
     });
   },
   
@@ -598,7 +598,7 @@ export const skeletonHelpers = {
   waitForContent: async (page: Page, timeout?: number, expectPreloaded?: boolean) => {
     return createSkeletonDetector(page).waitForContentLoaded({ 
       timeout, 
-      expectPreloaded 
+      expectPreloaded, 
     });
   },
   

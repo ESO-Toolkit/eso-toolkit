@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+
 import { EsoLogAggregatorPage } from './utils/EsoLogAggregatorPage';
 
 test.describe('Focused Players Panel Test - Real Data', () => {
@@ -71,7 +72,7 @@ test.describe('Focused Players Panel Test - Real Data', () => {
     await page.screenshot({ 
       path: 'test-results/debug-page-state.png', 
       fullPage: true,
-      timeout: 30000
+      timeout: 30000,
     });
 
     // Check what's in the main content area
@@ -180,15 +181,15 @@ test.describe('Focused Players Panel Test - Real Data', () => {
     await page.screenshot({ 
       path: 'test-results/players-panel-initial.png', 
       fullPage: true,
-      timeout: 30000
+      timeout: 30000,
     });
 
     // Wait for player cards to start loading - look for any loading indicators or skeleton content
-    const playerLoadingStates = page.locator(
+    const _playerLoadingStates = page.locator(
       '[data-testid*="loading"], ' +
       '.MuiSkeleton-root, ' +
       '[data-testid*="skeleton"], ' +
-      '[data-testid*="player"]'
+      '[data-testid*="player"]',
     );
 
     // Give some time for loading states to appear
@@ -198,7 +199,7 @@ test.describe('Focused Players Panel Test - Real Data', () => {
     await page.screenshot({ 
       path: 'test-results/players-panel-loading.png', 
       fullPage: true,
-      timeout: 30000
+      timeout: 30000,
     });
 
     // Wait for player cards or content to load
@@ -210,7 +211,7 @@ test.describe('Focused Players Panel Test - Real Data', () => {
       '.player-card',
       '[role="img"]', // Class icons
       '.MuiAvatar-root', // Player avatars
-      '.MuiGrid-item' // Grid items containing players
+      '.MuiGrid-item', // Grid items containing players
     ];
 
     let playerContentFound = false;
@@ -243,7 +244,7 @@ test.describe('Focused Players Panel Test - Real Data', () => {
         '.error, ' +
         '.MuiAlert-root, ' +
         'text=/error/i, ' +
-        'text=/failed/i'
+        'text=/failed/i',
       );
       const errorCount = await errorMessages.count();
       if (errorCount > 0) {
@@ -260,7 +261,7 @@ test.describe('Focused Players Panel Test - Real Data', () => {
     await page.screenshot({ 
       path: 'test-results/players-panel-loaded.png', 
       fullPage: true,
-      timeout: 30000
+      timeout: 30000,
     });
 
     // Try to find specific player-related content to verify loading
@@ -283,7 +284,7 @@ test.describe('Focused Players Panel Test - Real Data', () => {
       const firstPlayerCard = page.locator('.MuiCard-root').first();
       await firstPlayerCard.screenshot({ 
         path: 'test-results/players-panel-card-detail.png',
-        timeout: 30000
+        timeout: 30000,
       });
       console.log('Took close-up screenshot of first player card');
     }
@@ -311,7 +312,7 @@ test.describe('Focused Players Panel Test - Real Data', () => {
       !error.includes('ResizeObserver') && 
       !error.includes('Not implemented') &&
       !error.includes('non-passive event listener') &&
-      !error.toLowerCase().includes('warning')
+      !error.toLowerCase().includes('warning'),
     );
 
     if (criticalErrors.length > 0) {

@@ -210,11 +210,23 @@ export default [
     },
   },
 
-  // Configuration for test files (unit tests and Playwright specs).
+  // Configuration for test files (unit tests, Playwright specs, and the page
+  // objects / fixtures / setup helpers those specs import).
   // Tests ARE linted (import hygiene, unused vars, hook rules all still apply);
   // only the rules that exist to discipline shipped app code are relaxed.
+  //
+  // `tests/**/*.ts` is listed explicitly because those helpers are not named
+  // *.spec.ts and are not in tsconfig.json's program either — without it they
+  // inherit the base block's `project` and every one of them fails to parse.
   {
-    files: ['**/*.test.ts', '**/*.test.tsx', '**/*.spec.ts', '**/*.spec.tsx'],
+    files: [
+      '**/*.test.ts',
+      '**/*.test.tsx',
+      '**/*.spec.ts',
+      '**/*.spec.tsx',
+      'tests/**/*.ts',
+      'tests/**/*.tsx',
+    ],
     languageOptions: {
       parserOptions: {
         // No type-aware linting for tests: they are not in tsconfig.json's
@@ -269,6 +281,10 @@ export default [
       '**/*Slice.ts',
       '**/store/**/*.ts',
       'src/graphql.d.ts',
+      // Playwright resolves `globalSetup` by importing the module's DEFAULT
+      // export; a named export is not an option here.
+      'tests/global-setup.ts',
+      'tests/global-setup-ci.ts',
     ],
     rules: {
       'import/no-default-export': 'off',

@@ -1,6 +1,8 @@
-import { test, expect } from '@playwright/test';
-import { setupAuthentication } from './utils';
+import { test } from '@playwright/test';
+
 import { createSkeletonDetector } from '../utils/skeleton-detector';
+
+import { setupAuthentication } from './utils';
 
 // Test configuration
 const TEST_REPORT_CODE = 'nbKdDtT4NcZyVrvX';
@@ -17,7 +19,7 @@ test.describe('ESO Log Aggregator - Simplified Screen Size Tests', () => {
     // Navigate directly to the page
     await page.goto(`/report/${TEST_REPORT_CODE}/fight/${TEST_FIGHT_ID}`, {
       waitUntil: 'networkidle',
-      timeout: 60000
+      timeout: 60000,
     });
 
     // Wait for content to be fully loaded using our improved detection
@@ -35,7 +37,7 @@ test.describe('ESO Log Aggregator - Simplified Screen Size Tests', () => {
     // Take screenshot
     await page.screenshot({ 
       path: 'test-results-screen-sizes/players-panel-simplified.png',
-      fullPage: true 
+      fullPage: true, 
     });
     
     console.log('✅ Players panel simplified screenshot completed');
@@ -50,7 +52,7 @@ test.describe('ESO Log Aggregator - Simplified Screen Size Tests', () => {
     // Navigate directly to the insights page
     await page.goto(`/report/${TEST_REPORT_CODE}/fight/${TEST_FIGHT_ID}/insights`, {
       waitUntil: 'networkidle',
-      timeout: 60000
+      timeout: 60000,
     });
 
     // Wait for content to be fully loaded using our improved detection
@@ -68,7 +70,7 @@ test.describe('ESO Log Aggregator - Simplified Screen Size Tests', () => {
     // Take screenshot
     await page.screenshot({ 
       path: 'test-results-screen-sizes/insights-panel-simplified.png',
-      fullPage: true 
+      fullPage: true, 
     });
     
     console.log('✅ Insights panel simplified screenshot completed');

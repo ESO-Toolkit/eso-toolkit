@@ -1,16 +1,16 @@
 import { test, expect, devices } from '@playwright/test';
 
 // Mobile device configurations
-const MOBILE_DEVICES = [
+const _MOBILE_DEVICES = [
   { ...devices['Pixel 5'], name: 'Pixel 5' },
   { ...devices['iPhone 12'], name: 'iPhone 12' },
 ];
 
 // Tablet device configuration
-const TABLET_DEVICE = { ...devices['iPad Pro'], name: 'iPad Pro' };
+const _TABLET_DEVICE = { ...devices['iPad Pro'], name: 'iPad Pro' };
 
 // Desktop breakpoints to test
-const DESKTOP_BREAKPOINTS = [
+const _DESKTOP_BREAKPOINTS = [
   { width: 1280, height: 720, name: 'Desktop Small' },
   { width: 1920, height: 1080, name: 'Desktop Large' },
 ];
@@ -197,7 +197,7 @@ test.describe('Report Page Responsiveness', () => {
       { viewport: { width: 1920, height: 1080 }, name: 'Desktop' },
     ];
 
-    testDeviceConfigs.forEach((deviceConfig, index) => {
+    testDeviceConfigs.forEach((deviceConfig, _index) => {
       test.describe(`Consistency - ${deviceConfig.name}`, () => {
         test.use({ ...deviceConfig });
 
@@ -249,8 +249,14 @@ test.describe('Report Page Responsiveness', () => {
       const clsScore = await page.evaluate(() => {
         return new Promise((resolve) => {
           let cls = 0;
+          // `layout-shift` entries carry `value`/`hadRecentInput`, but the DOM lib
+          // types getEntries() as plain PerformanceEntry.
+          type LayoutShiftEntry = PerformanceEntry & {
+            value: number;
+            hadRecentInput: boolean;
+          };
           new PerformanceObserver((list) => {
-            for (const entry of list.getEntries()) {
+            for (const entry of list.getEntries() as LayoutShiftEntry[]) {
               if (!entry.hadRecentInput) {
                 cls += entry.value;
               }

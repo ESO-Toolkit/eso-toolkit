@@ -31,7 +31,7 @@ export function createAuthTestUtils(page: Page): AuthTestUtils {
           try {
             const token = localStorage.getItem('access_token');
             return !!token && token.length > 0;
-          } catch (e) {
+          } catch {
             // localStorage might not be accessible in this context
             return false;
           }
@@ -54,7 +54,7 @@ export function createAuthTestUtils(page: Page): AuthTestUtils {
         return await page.evaluate(() => {
           try {
             return localStorage.getItem('access_token');
-          } catch (e) {
+          } catch {
             // localStorage might not be accessible in this context
             return null;
           }

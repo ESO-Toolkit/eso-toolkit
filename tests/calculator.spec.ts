@@ -50,7 +50,7 @@ test.describe('Calculator Page', () => {
       // Filter out known acceptable errors (if any)
       const criticalErrors = errors.filter(error => 
         !error.includes('favicon') && 
-        !error.includes('source map')
+        !error.includes('source map'),
       );
       
       expect(criticalErrors).toHaveLength(0);
@@ -274,7 +274,7 @@ test.describe('Calculator Page', () => {
   });
 
   test.describe('Responsive Behavior', () => {
-    test('should work on mobile viewport', async ({ page, viewport }) => {
+    test('should work on mobile viewport', async ({ page }) => {
       // Set mobile viewport
       await page.setViewportSize({ width: 375, height: 667 });
       await page.reload();

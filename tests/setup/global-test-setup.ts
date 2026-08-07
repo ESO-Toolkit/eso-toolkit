@@ -6,6 +6,7 @@
  */
 
 import { Page } from '@playwright/test';
+
 import { blockAnalytics, disableAnalyticsInit } from '../utils/block-analytics';
 
 /**

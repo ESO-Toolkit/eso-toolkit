@@ -102,7 +102,13 @@ test.describe('Responsive Performance Tests', () => {
 
       // Assertions for performance thresholds
       const thresholds = PERFORMANCE_THRESHOLDS;
-      const mobileThreshold = thresholds.mobile;
+      // PERFORMANCE_THRESHOLDS is keyed metric-first (firstPaint.mobile), not
+      // device-first — `thresholds.mobile` was undefined, so every assertion
+      // below threw a TypeError instead of comparing anything.
+      const mobileThreshold = {
+        firstPaint: thresholds.firstPaint.mobile,
+        largestContentfulPaint: thresholds.largestContentfulPaint.mobile,
+      };
 
       // Test total load time
       expect(totalLoadTime).toBeLessThan(mobileThreshold.largestContentfulPaint + 1000);
@@ -134,7 +140,7 @@ test.describe('Responsive Performance Tests', () => {
       await page.waitForTimeout(2000);
       const loadTime = Date.now() - startTime;
 
-      expect(loadTime).toBeLessThan(PERFORMANCE_THRESHOLDS.tablet.largestContentfulPaint);
+      expect(loadTime).toBeLessThan(PERFORMANCE_THRESHOLDS.largestContentfulPaint.tablet);
     });
   });
 
@@ -148,7 +154,7 @@ test.describe('Responsive Performance Tests', () => {
       await page.waitForTimeout(2000);
       const loadTime = Date.now() - startTime;
 
-      expect(loadTime).toBeLessThan(PERFORMANCE_THRESHOLDS.desktop.largestContentfulPaint);
+      expect(loadTime).toBeLessThan(PERFORMANCE_THRESHOLDS.largestContentfulPaint.desktop);
     });
   });
 
@@ -281,7 +287,7 @@ test.describe('Responsive Performance Tests', () => {
       expect(memoryGrowthMB).toBeLessThan(50);
 
       // Memory should not grow monotonically (indicates potential leak)
-      const finalMemory = memorySnapshots[memorySnapshots.length - 1];
+      const _finalMemory = memorySnapshots[memorySnapshots.length - 1];
       const memoryTrend = memorySnapshots.slice(-5); // Last 5 measurements
 
       let increasingCount = 0;
@@ -335,7 +341,7 @@ test.describe('Responsive Performance Tests', () => {
 
       // Analyze resource loading order
       const cssResources = resourceLoadOrder.filter(url => url.includes('.css'));
-      const jsResources = resourceLoadOrder.filter(url => url.includes('.js'));
+      const _jsResources = resourceLoadOrder.filter(url => url.includes('.js'));
       const imageResources = resourceLoadOrder.filter(url => url.match(/\.(png|jpg|jpeg|gif|webp)/));
 
       // CSS should load before images typically

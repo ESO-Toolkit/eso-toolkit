@@ -231,7 +231,7 @@ test.describe('Parse Analysis Page', () => {
 
       // Defensive check: Should show loading indicator
       const loadingIndicator = page.locator('.MuiCircularProgress-root, text=/loading|analyzing/i');
-      const hasLoading = await loadingIndicator.first().isVisible({ timeout: 2000 }).catch(() => false);
+      await loadingIndicator.first().isVisible({ timeout: 2000 }).catch(() => false);
 
       // Resolve promise to continue
       resolvePromise!(true);
@@ -273,7 +273,7 @@ test.describe('Parse Analysis Page', () => {
       await page.waitForLoadState('networkidle');
 
       // Defensive check: Look for food-related text or icons
-      const foodIndicator = page.locator('text=/food|drink|stamina recovery|magicka recovery/i');
+      const _foodIndicator = page.locator('text=/food|drink|stamina recovery|magicka recovery/i');
       // Food indicator may or may not be visible depending on analysis state
       const bodyContent = await page.locator('body').textContent();
       expect(bodyContent).toBeTruthy();
@@ -287,7 +287,7 @@ test.describe('Parse Analysis Page', () => {
       await page.waitForLoadState('networkidle');
 
       // Defensive check: Look for CPM-related text
-      const cpmText = page.locator('text=/cpm|casts per minute/i');
+      const _cpmText = page.locator('text=/cpm|casts per minute/i');
       // CPM may or may not be visible without analysis
       const bodyContent = await page.locator('body').textContent();
       expect(bodyContent).toBeTruthy();
@@ -301,7 +301,7 @@ test.describe('Parse Analysis Page', () => {
       await page.waitForLoadState('networkidle');
 
       // Defensive check: Look for weave-related text
-      const weaveText = page.locator('text=/weave|light attack|proper weaves/i');
+      const _weaveText = page.locator('text=/weave|light attack|proper weaves/i');
       // Weave section may not be visible without analysis
       const bodyContent = await page.locator('body').textContent();
       expect(bodyContent).toBeTruthy();
@@ -315,7 +315,7 @@ test.describe('Parse Analysis Page', () => {
       await page.waitForLoadState('networkidle');
 
       // Defensive check: Look for DPS-related text
-      const dpsText = page.locator('text=/dps|damage per second/i');
+      const _dpsText = page.locator('text=/dps|damage per second/i');
       // DPS section may not be visible without analysis
       const bodyContent = await page.locator('body').textContent();
       expect(bodyContent).toBeTruthy();
@@ -329,7 +329,7 @@ test.describe('Parse Analysis Page', () => {
       await page.waitForLoadState('networkidle');
 
       // Defensive check: Look for rotation-related text
-      const rotationText = page.locator('text=/rotation|opener|skill frequency/i');
+      const _rotationText = page.locator('text=/rotation|opener|skill frequency/i');
       // Rotation section may not be visible without analysis
       const bodyContent = await page.locator('body').textContent();
       expect(bodyContent).toBeTruthy();
@@ -343,7 +343,7 @@ test.describe('Parse Analysis Page', () => {
       await page.waitForLoadState('networkidle');
 
       // Defensive check: Look for buff-related text
-      const buffText = page.locator('text=/buff|trial dummy|player buffs/i');
+      const _buffText = page.locator('text=/buff|trial dummy|player buffs/i');
       // Buff checklist may not be visible without analysis
       const bodyContent = await page.locator('body').textContent();
       expect(bodyContent).toBeTruthy();
@@ -387,7 +387,7 @@ test.describe('Parse Analysis Page', () => {
 
       // May show error message
       const errorText = page.locator('text=/error|not found|failed/i');
-      const hasError = await errorText.first().isVisible().catch(() => false);
+      await errorText.first().isVisible().catch(() => false);
       // Error message may or may not be visible, but page should not crash
       expect(bodyContent!.length).toBeGreaterThan(10);
     });
@@ -469,7 +469,7 @@ test.describe('Parse Analysis Page', () => {
       const bodyContent = await page.locator('body').textContent();
 
       // Should redirect to login or show auth prompt
-      const hasAuthPrompt = url.includes('/login') || 
+      const _hasAuthPrompt = url.includes('/login') || 
                            bodyContent?.toLowerCase().includes('login') ||
                            bodyContent?.toLowerCase().includes('please log in');
 
@@ -485,7 +485,7 @@ test.describe('Parse Analysis Page', () => {
       await page.waitForLoadState('networkidle');
 
       // Defensive check: Look for activity/uptime-related text
-      const activityText = page.locator('text=/activity|uptime|active time|downtime/i');
+      const _activityText = page.locator('text=/activity|uptime|active time|downtime/i');
       // Activity section may not be visible without analysis
       const bodyContent = await page.locator('body').textContent();
       expect(bodyContent).toBeTruthy();

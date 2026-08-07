@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+
 import { createSkeletonDetector, skeletonHelpers, SKELETON_SELECTORS } from './utils/skeleton-detector';
 
 test.describe('Skeleton Detection Smoke Tests', () => {
@@ -75,7 +76,7 @@ test.describe('Skeleton Detection Smoke Tests', () => {
     
     // Check for calculator-specific skeleton
     const hasCalculatorSkeleton = await skeletonDetector.hasSkeletonType(
-      SKELETON_SELECTORS.CALCULATOR
+      SKELETON_SELECTORS.CALCULATOR,
     );
     
     console.log('Calculator skeleton detected:', hasCalculatorSkeleton);
@@ -84,13 +85,13 @@ test.describe('Skeleton Detection Smoke Tests', () => {
       console.log('Waiting for calculator skeleton to disappear...');
       await skeletonDetector.waitForSkeletonTypeToDisappear(
         SKELETON_SELECTORS.CALCULATOR,
-        { timeout: 30000 }
+        { timeout: 30000 },
       );
     }
     
     // Verify calculator skeleton is gone
     const stillHasCalculatorSkeleton = await skeletonDetector.hasSkeletonType(
-      SKELETON_SELECTORS.CALCULATOR
+      SKELETON_SELECTORS.CALCULATOR,
     );
     expect(stillHasCalculatorSkeleton).toBeFalsy();
     

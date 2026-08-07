@@ -358,6 +358,8 @@ test.describe('Roster Builder — Complete Feature Coverage', () => {
 
       const encoded = await encodeRosterToURL(roster);
       const decoded = await decodeRosterFromURL(encoded);
+      // Fail loudly rather than null-dereferencing on the next line.
+      if (!decoded) throw new Error('decodeRosterFromURL returned null');
 
       return {
         encoded,
@@ -398,7 +400,7 @@ test.describe('Roster Builder — Complete Feature Coverage', () => {
     await page.goto('/roster-builder');
     await page.waitForLoadState('networkidle');
 
-    const { encoded, roster } = await generateFullRoster(page);
+    const { encoded } = await generateFullRoster(page);
 
     // Navigate to the share URL
     const shareUrl = `${page.url().split('?')[0]}?r=${encoded}`;
@@ -520,6 +522,8 @@ test.describe('Roster Builder — Complete Feature Coverage', () => {
 
       const encoded = await encodeRosterToURL(roster);
       const decoded = await decodeRosterFromURL(encoded);
+      // Fail loudly rather than null-dereferencing on the next line.
+      if (!decoded) throw new Error('decodeRosterFromURL returned null');
 
       return {
         tank1SkillLines: decoded.tanks[0].skillLines,
@@ -555,6 +559,8 @@ test.describe('Roster Builder — Complete Feature Coverage', () => {
 
       const encoded = await encodeRosterToURL(roster);
       const decoded = await decodeRosterFromURL(encoded);
+      // Fail loudly rather than null-dereferencing on the next line.
+      if (!decoded) throw new Error('decodeRosterFromURL returned null');
 
       return {
         jailDD1Type: decoded.dpsSlots[4].jailDDType,
@@ -600,6 +606,8 @@ test.describe('Roster Builder — Complete Feature Coverage', () => {
 
       const encoded = await encodeRosterToURL(roster);
       const decoded = await decodeRosterFromURL(encoded);
+      // Fail loudly rather than null-dereferencing on the next line.
+      if (!decoded) throw new Error('decodeRosterFromURL returned null');
 
       return {
         tank1Ultimate: decoded.tanks[0].ultimate,
@@ -652,6 +660,8 @@ test.describe('Roster Builder — Complete Feature Coverage', () => {
 
       const encoded = await encodeRosterToURL(roster);
       const decoded = await decodeRosterFromURL(encoded);
+      // Fail loudly rather than null-dereferencing on the next line.
+      if (!decoded) throw new Error('decodeRosterFromURL returned null');
 
       return {
         rosterGroups: decoded.availableGroups,
@@ -705,6 +715,8 @@ test.describe('Roster Builder — Complete Feature Coverage', () => {
 
       const encoded = await encodeRosterToURL(roster);
       const decoded = await decodeRosterFromURL(encoded);
+      // Fail loudly rather than null-dereferencing on the next line.
+      if (!decoded) throw new Error('decodeRosterFromURL returned null');
 
       return {
         tank1: {
@@ -778,8 +790,10 @@ test.describe('Roster Builder — Complete Feature Coverage', () => {
 
       const encoded = await encodeRosterToURL(roster);
       const decoded = await decodeRosterFromURL(encoded);
+      // Fail loudly rather than null-dereferencing on the next line.
+      if (!decoded) throw new Error('decodeRosterFromURL returned null');
 
-      return decoded.dpsSlots.map((slot, i) => ({
+      return decoded.dpsSlots.map((slot, _i) => ({
         slotNumber: slot.slotNumber,
         playerName: slot.playerName,
         roleLabel: slot.roleLabel,
@@ -812,6 +826,8 @@ test.describe('Roster Builder — Complete Feature Coverage', () => {
 
       const encoded = await encodeRosterToURL(roster);
       const decoded = await decodeRosterFromURL(encoded);
+      // Fail loudly rather than null-dereferencing on the next line.
+      if (!decoded) throw new Error('decodeRosterFromURL returned null');
 
       return decoded.notes;
     });
