@@ -35,6 +35,14 @@ binding = "AI"
 # tells the passes apart by fire time (src/cron-schedule.ts).
 crons = ["0 4,16 * * *"]
 
+# Persistent logs. Every cron job runs inside its own try/catch that only
+# `console.error`s, so without this a failing scheduled pass is INVISIBLE — which
+# is exactly how `dps_parses` went unnoticed as missing from the database for two
+# days while the cron fired on schedule and aborted on the first query.
+[observability]
+enabled = true
+head_sampling_rate = 1
+
 [vars]
 ALLOWED_ORIGINS = "https://esotk.com,https://www.esotk.com,https://esohelpers.com,https://www.esohelpers.com,https://eso-toolkit.github.io,http://localhost:3000,http://localhost:3001,http://localhost:3002,http://localhost:3003,http://localhost:5173"
 DISCORD_BOT_URL = "https://eso-toolkit-discord-bot.eso-toolkit.workers.dev"
