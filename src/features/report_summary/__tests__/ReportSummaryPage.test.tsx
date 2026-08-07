@@ -105,12 +105,6 @@ const createMockStore = () => {
 };
 
 // Mock Apollo client
-const mockClient = {
-  query: jest.fn().mockResolvedValue({ data: {} }),
-  mutate: jest.fn().mockResolvedValue({ data: {} }),
-  watchQuery: jest.fn(),
-};
-
 const renderWithProviders = (component: React.ReactElement) => {
   const store = createMockStore();
   const theme = createTheme();
@@ -120,7 +114,10 @@ const renderWithProviders = (component: React.ReactElement) => {
       <BrowserRouter>
         <ThemeProvider theme={theme}>
           <LoggerProvider>
-            <EsoLogsClientProvider client={mockClient}>
+            {/* EsoLogsClientProvider builds its own client and takes only
+                `children` — the `client` prop passed here was silently
+                ignored, so `mockClient` never reached the tree. */}
+            <EsoLogsClientProvider>
               <AuthProvider>
                 <ReportFightProvider>{component}</ReportFightProvider>
               </AuthProvider>
