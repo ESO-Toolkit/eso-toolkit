@@ -198,9 +198,23 @@ export async function syncDpsParses(
     return [{ encounter: '(no targets)', encounterId: 0, status: 'error', rows: 0 }];
   }
 
-  const targets = await selectTargets(env, allTargets, opts);
   const pages = Math.max(1, opts.pages ?? PAGES_PER_ENCOUNTER);
-  const blocked = await getBlockedCharacterKeys(env.DB);
+
+  // Pre-flight database reads, guarded because they sit OUTSIDE the per-encounter
+  // try/catch below. A schema-level problem here throws past every encounter at
+  // once, and the cron handler's own catch only `console.error`s it — so the run
+  // wrote nothing, advanced no cursor, and left no trace. Returning it as a result
+  // instead means `/admin/sync-dps-parses` answers with the real reason.
+  let targets: DpsEncounterTarget[];
+  let blocked: Set<string>;
+  try {
+    targets = await selectTargets(env, allTargets, opts);
+    blocked = await getBlockedCharacterKeys(env.DB);
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error);
+    console.error('[dps-sync] preflight failed:', detail);
+    return [{ encounter: '(preflight failed)', encounterId: 0, status: 'error', rows: 0, detail }];
+  }
 
   for (const target of targets) {
     if (subrequests + pages > MAX_SUBREQUESTS_PER_RUN) {
