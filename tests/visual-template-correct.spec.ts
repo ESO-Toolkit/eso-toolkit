@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+
 import { createSkeletonDetector } from './utils/skeleton-detector';
 
 /**
@@ -42,7 +43,7 @@ test.describe('Visual Regression - Correct Pattern Template', () => {
     // Wait for ALL skeletons to disappear
     await skeletonDetector.waitForSkeletonsToDisappear({ 
       timeout: 45000, // Generous timeout for complex data loading
-      stabilityTimeout: 1000 // Wait 1s after skeletons disappear for stability
+      stabilityTimeout: 1000, // Wait 1s after skeletons disappear for stability
     });
     
     console.log('✅ All skeletons have disappeared - UI is ready');
@@ -59,7 +60,7 @@ test.describe('Visual Regression - Correct Pattern Template', () => {
     // Step 6: NOW it's safe to take the screenshot
     await expect(page).toHaveScreenshot('players-page-full.png', {
       fullPage: true,
-      animations: 'disabled'
+      animations: 'disabled',
     });
     
     console.log('📸 Screenshot captured successfully');

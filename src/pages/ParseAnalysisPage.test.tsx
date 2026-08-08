@@ -158,21 +158,11 @@ describe('ParseAnalysisPage', () => {
       reducer: {
         masterData: masterDataReducer,
       },
-      preloadedState: {
-        masterData: {
-          abilitiesById: {},
-          actorsById: {},
-          loading: false,
-          loaded: false,
-          error: null,
-          cacheMetadata: {
-            lastFetchedReportId: null,
-            lastFetchedTimestamp: null,
-            actorCount: 0,
-            abilityCount: 0,
-          },
-        },
-      },
+      // No preloadedState: this used to hand-roll `{ abilitiesById, actorsById,
+      // loading, loaded, error, cacheMetadata }`, a shape the slice stopped
+      // using when it moved to a keyed cache (`{ entries, accessOrder }`). The
+      // reducer's own initial state is that same empty cache, which is exactly
+      // what these tests want.
     });
   };
 

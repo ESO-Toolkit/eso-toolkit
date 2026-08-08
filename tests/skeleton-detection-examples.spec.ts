@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+
 import { setupAuthentication } from './screen-sizes/utils';
 import { createEsoPage } from './utils/EsoLogAggregatorPage';
 import { SKELETON_SELECTORS, skeletonHelpers } from './utils/skeleton-detector';
@@ -12,7 +13,7 @@ test.describe('Skeleton Detection Examples', () => {
     await esoPage.goToCalculator();
     await esoPage.waitForPageLoad({
       expectSkeletons: true,
-      timeout: 30000
+      timeout: 30000,
     });
     
     // Verify no skeletons remain after loading
@@ -69,7 +70,7 @@ test.describe('Skeleton Detection Examples', () => {
       expectSkeletons: true,
       appearTimeout: 10000,
       disappearTimeout: 45000,
-      stabilityTimeout: 3000
+      stabilityTimeout: 3000,
     });
     
     // Verify final state
@@ -85,7 +86,7 @@ test.describe('Skeleton Detection Examples', () => {
     
     // Check for specific skeleton types
     const hasCalculatorSkeleton = await esoPage.skeletons.hasSkeletonType(
-      SKELETON_SELECTORS.CALCULATOR
+      SKELETON_SELECTORS.CALCULATOR,
     );
     
     if (hasCalculatorSkeleton) {
@@ -93,7 +94,7 @@ test.describe('Skeleton Detection Examples', () => {
       
       await esoPage.skeletons.waitForSkeletonTypeToDisappear(
         SKELETON_SELECTORS.CALCULATOR,
-        { timeout: 30000 }
+        { timeout: 30000 },
       );
       
       console.log('Calculator skeleton has disappeared');
@@ -101,7 +102,7 @@ test.describe('Skeleton Detection Examples', () => {
     
     // Verify no calculator skeletons remain
     const stillHasSkeleton = await esoPage.skeletons.hasSkeletonType(
-      SKELETON_SELECTORS.CALCULATOR
+      SKELETON_SELECTORS.CALCULATOR,
     );
     expect(stillHasSkeleton).toBeFalsy();
   });
@@ -148,7 +149,7 @@ test.describe('Skeleton Detection Examples', () => {
     await esoPage.goToRoute('/');
     await esoPage.waitForPageLoad({
       expectSkeletons: false, // Don't expect skeletons on home page
-      timeout: 15000
+      timeout: 15000,
     });
     
     // Verify the page loaded correctly

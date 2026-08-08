@@ -9,7 +9,7 @@ test.describe('Report Summary Page', () => {
         id: 1,
         name: 'Test User',
         naDisplayName: 'TestUser',
-        euDisplayName: 'TestUser'
+        euDisplayName: 'TestUser',
       }));
     });
   });
@@ -73,7 +73,7 @@ test.describe('Report Summary Page', () => {
       route.fulfill({
         status: 500,
         contentType: 'application/json',
-        body: JSON.stringify({ error: 'Internal server error' })
+        body: JSON.stringify({ error: 'Internal server error' }),
       });
     });
     

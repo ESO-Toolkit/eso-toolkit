@@ -102,8 +102,9 @@ test.describe('Share link round-trip — DPS gear not silently dropped', () => {
       // Access the rosterEncoding module's public API via a test hook we inject.
       // We construct a minimal roster with DPS gear and encode it.
       const { encodeRosterToURL } = await import('/src/utils/rosterEncoding.ts');
-      const { createDefaultRoster, KnownSetIDs: _K } = await import('/src/types/roster.ts');
-      // KnownSetIDs is in abilities, not roster — build a minimal object directly
+      // KnownSetIDs is a TYPE living in ./abilities, never a runtime export of
+      // roster.ts — destructuring it here only ever produced `undefined`.
+      const { createDefaultRoster } = await import('/src/types/roster.ts');
       const roster = createDefaultRoster();
       roster.rosterName = 'E2E DPS Gear Test';
       roster.dpsSlots[0] = {

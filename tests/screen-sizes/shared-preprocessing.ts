@@ -4,9 +4,11 @@
  */
 
 import { Page } from '@playwright/test';
-import { enableApiCaching } from './utils';
-import { isOfflineDataAvailable, enableOfflineMode } from './offline-data';
+
 import { getBaseUrl } from '../selectors';
+
+import { isOfflineDataAvailable, enableOfflineMode } from './offline-data';
+import { enableApiCaching } from './utils';
 
 // Test configuration constants
 const TEST_REPORT_CODE = 'nbKdDtT4NcZyVrvX';
@@ -58,7 +60,7 @@ async function prefetchReportData(page: Page, accessToken?: string): Promise<voi
       await page.goto(APP_BASE_URL, { timeout: 30000 });
       const storageToken = await page.evaluate(() => localStorage.getItem('access_token'));
       token = storageToken || undefined;
-    } catch (error) {
+    } catch {
       log('verbose', '⚠️ Could not access localStorage or navigate to app, skipping direct API pre-fetching');
       return;
     }
@@ -84,7 +86,7 @@ async function prefetchReportData(page: Page, accessToken?: string): Promise<voi
           }
         }
       }`,
-      variables: { code: TEST_REPORT_CODE }
+      variables: { code: TEST_REPORT_CODE },
     },
     // Report master data
     {
@@ -99,7 +101,7 @@ async function prefetchReportData(page: Page, accessToken?: string): Promise<voi
           }
         }
       }`,
-      variables: { code: TEST_REPORT_CODE }
+      variables: { code: TEST_REPORT_CODE },
     },
     // Players for the specific fight
     {
@@ -115,8 +117,8 @@ async function prefetchReportData(page: Page, accessToken?: string): Promise<voi
           }
         }
       }`,
-      variables: { code: TEST_REPORT_CODE }
-    }
+      variables: { code: TEST_REPORT_CODE },
+    },
   ];
 
   for (const { name, query, variables } of queries) {
@@ -125,7 +127,7 @@ async function prefetchReportData(page: Page, accessToken?: string): Promise<voi
       
       const response = await page.evaluate(async ({ query, variables, token }: { query: string; variables: any; token: string | undefined }) => {
         const headers: Record<string, string> = {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
         };
         if (token) {
           headers['Authorization'] = `Bearer ${token}`;
@@ -172,7 +174,7 @@ async function triggerComprehensiveDataLoading(page: Page, reportBaseUrl: string
 
       await page.goto(`${reportBaseUrl}${panel.path}`, {
         waitUntil: 'networkidle',
-        timeout: 30000 
+        timeout: 30000, 
       });
 
       // Wait for panel-specific content to load
@@ -220,19 +222,19 @@ export async function preprocessWorkerComputations(page: Page): Promise<Preproce
   log('verbose', '📊 Phase 2: Loading main report page with all data...');
   await page.goto(REPORT_BASE_URL, { 
     waitUntil: 'networkidle',
-    timeout: 60000
+    timeout: 60000,
   });
 
   // Wait for the main app to load
   await page.waitForSelector('[data-testid="main-content"], main, .MuiContainer-root, .App', { 
-    timeout: 45000 
+    timeout: 45000, 
   });
 
   // Phase 3: Navigate to insights to trigger heavy worker computations
   log('verbose', '🔬 Phase 3: Loading insights panel to trigger worker computations...');
   await page.goto(`${REPORT_BASE_URL}/insights`, { 
     waitUntil: 'networkidle',
-    timeout: 60000 
+    timeout: 60000, 
   });
 
   // Phase 4: Ensure comprehensive data loading
@@ -276,7 +278,7 @@ export async function preprocessWorkerComputations(page: Page): Promise<Preproce
       if (workerDataFound) break;
       
       await page.waitForTimeout(500);
-    } catch (error) {
+    } catch {
       // Continue trying on errors
     }
   }

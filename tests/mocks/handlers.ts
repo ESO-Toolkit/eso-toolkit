@@ -128,7 +128,7 @@ export const handlers = [
   }),
 
   // Mock getPlayersForReport query for player data
-  graphql.query('getPlayersForReport', ({ variables }) => {
+  graphql.query('getPlayersForReport', () => {
     return HttpResponse.json({
       data: {
         reportData: {
@@ -142,8 +142,8 @@ export const handlers = [
                 icon: 'https://assets.rpglogs.com/img/eso/classes/dragonknight.png',
                 server: 'NA',
                 combatantInfo: {
-                  specs: [{ role: 'Tank' }]
-                }
+                  specs: [{ role: 'Tank' }],
+                },
               },
               {
                 id: 2,
@@ -153,8 +153,8 @@ export const handlers = [
                 icon: 'https://assets.rpglogs.com/img/eso/classes/templar.png',
                 server: 'NA',
                 combatantInfo: {
-                  specs: [{ role: 'Healer' }]
-                }
+                  specs: [{ role: 'Healer' }],
+                },
               },
               {
                 id: 3,
@@ -164,8 +164,8 @@ export const handlers = [
                 icon: 'https://assets.rpglogs.com/img/eso/classes/necromancer.png',
                 server: 'NA',
                 combatantInfo: {
-                  specs: [{ role: 'DPS' }]
-                }
+                  specs: [{ role: 'DPS' }],
+                },
               },
               {
                 id: 4,
@@ -175,13 +175,13 @@ export const handlers = [
                 icon: 'https://assets.rpglogs.com/img/eso/classes/nightblade.png',
                 server: 'NA',
                 combatantInfo: {
-                  specs: [{ role: 'DPS' }]
-                }
-              }
-            ]
-          }
-        }
-      }
+                  specs: [{ role: 'DPS' }],
+                },
+              },
+            ],
+          },
+        },
+      },
     });
   }),
 

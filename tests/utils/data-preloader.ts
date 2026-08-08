@@ -1,7 +1,9 @@
 import { Page, expect } from '@playwright/test';
-import { createSkeletonDetector } from './skeleton-detector';
-import { setupAuthentication } from '../screen-sizes/utils';
+
 import { setupWithSharedPreprocessing } from '../screen-sizes/shared-preprocessing';
+import { setupAuthentication } from '../screen-sizes/utils';
+
+import { createSkeletonDetector } from './skeleton-detector';
 
 /**
  * Enhanced data pre-loading utilities for AI-driven Playwright tests
@@ -43,7 +45,7 @@ export interface PreloadedDataState {
  */
 export async function preloadAllReportData(
   page: Page,
-  options: DataPreloadOptions = {}
+  options: DataPreloadOptions = {},
 ): Promise<PreloadedDataState> {
   const startTime = Date.now();
   console.log('🚀 Starting comprehensive data pre-loading...');
@@ -55,12 +57,12 @@ export async function preloadAllReportData(
     tabs = ['overview', 'players', 'damage', 'healing', 'insights'],
     timeout = 90000,
     verifyLoaded = true,
-    aggressiveWarmup = true
+    aggressiveWarmup = true,
   } = options;
 
   const preloadedState: PreloadedDataState = {
     cacheWarmed: false,
-    preloadTimestamp: startTime
+    preloadTimestamp: startTime,
   };
 
   try {
@@ -119,7 +121,7 @@ export async function preloadAllReportData(
  */
 async function warmGraphQLCache(
   page: Page, 
-  options: { reportCode: string; fightId: string; tabs: string[] }
+  options: { reportCode: string; fightId: string; tabs: string[] },
 ): Promise<void> {
   const { reportCode, fightId, tabs } = options;
 
@@ -146,7 +148,7 @@ async function warmGraphQLCache(
           }
         }
       }`,
-      variables: { code: reportCode }
+      variables: { code: reportCode },
     },
     {
       name: 'getCurrentUser',
@@ -158,8 +160,8 @@ async function warmGraphQLCache(
           }
         }
       }`,
-      variables: {}
-    }
+      variables: {},
+    },
   ];
 
   // Tab-specific queries
@@ -180,8 +182,8 @@ async function warmGraphQLCache(
             }
           }
         }`,
-        variables: { code: reportCode, fightIds: [parseInt(fightId)] }
-      }
+        variables: { code: reportCode, fightIds: [parseInt(fightId)] },
+      },
     ],
     damage: [
       {
@@ -195,8 +197,8 @@ async function warmGraphQLCache(
             }
           }
         }`,
-        variables: { code: reportCode, fightIds: [parseInt(fightId)] }
-      }
+        variables: { code: reportCode, fightIds: [parseInt(fightId)] },
+      },
     ],
     healing: [
       {
@@ -210,9 +212,9 @@ async function warmGraphQLCache(
             }
           }
         }`,
-        variables: { code: reportCode, fightIds: [parseInt(fightId)] }
-      }
-    ]
+        variables: { code: reportCode, fightIds: [parseInt(fightId)] },
+      },
+    ],
   };
 
   // Execute core queries first
@@ -234,7 +236,7 @@ async function warmGraphQLCache(
  */
 async function executeGraphQLQuery(
   page: Page,
-  query: { name: string; query: string; variables: any }
+  query: { name: string; query: string; variables: any },
 ): Promise<void> {
   try {
     console.log(`🔄 Warming cache for ${query.name}...`);
@@ -244,9 +246,9 @@ async function executeGraphQLQuery(
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
         },
-        body: JSON.stringify({ query, variables })
+        body: JSON.stringify({ query, variables }),
       });
       
       if (!response.ok) {
@@ -268,7 +270,7 @@ async function executeGraphQLQuery(
  */
 async function preloadTabData(
   page: Page,
-  options: { reportCode: string; fightId: string; tab: string; timeout: number }
+  options: { reportCode: string; fightId: string; tab: string; timeout: number },
 ): Promise<void> {
   const { reportCode, fightId, tab, timeout } = options;
   
@@ -288,7 +290,7 @@ async function preloadTabData(
   try {
     await skeletonDetector.waitForContentLoaded({ 
       timeout: Math.min(timeout, 15000), // Shorter timeout - data should load fast from cache
-      expectPreloaded: false // This is during cache warming, not using preloaded data yet
+      expectPreloaded: false, // This is during cache warming, not using preloaded data yet
     });
     console.log(`✅ ${tab} tab data loaded successfully`);
   } catch (error) {
@@ -305,7 +307,7 @@ async function preloadTabData(
  */
 async function verifyDataPreloaded(
   page: Page,
-  options: { reportCode: string; fightId: string; tabs: string[] }
+  options: { reportCode: string; fightId: string; tabs: string[] },
 ): Promise<void> {
   const { reportCode, fightId, tabs } = options;
   
@@ -345,7 +347,7 @@ async function verifyDataPreloaded(
  */
 export async function ensureDataPreloadedForScreenshot(
   page: Page,
-  options: DataPreloadOptions = {}
+  options: DataPreloadOptions = {},
 ): Promise<void> {
   console.log('📸 Ensuring data is preloaded before screenshot...');
   
@@ -369,7 +371,7 @@ export async function ensureDataPreloadedForScreenshot(
 export async function navigateWithPreloadedData(
   page: Page,
   url: string,
-  options: { timeout?: number; verifyInstantLoad?: boolean } = {}
+  options: { timeout?: number; verifyInstantLoad?: boolean } = {},
 ): Promise<void> {
   const { timeout = 30000, verifyInstantLoad = true } = options;
   
@@ -386,7 +388,7 @@ export async function navigateWithPreloadedData(
     try {
       await skeletonDetector.waitForContentLoaded({ 
         timeout: 8000, // Slightly longer timeout for content detection
-        expectPreloaded: true 
+        expectPreloaded: true, 
       });
       const loadTime = Date.now() - startTime;
       
@@ -418,7 +420,7 @@ export async function takeScreenshotWithPreloadedData(
   options: DataPreloadOptions & {
     fullPage?: boolean;
     clip?: { x: number; y: number; width: number; height: number };
-  } = {}
+  } = {},
 ): Promise<void> {
   const { fullPage = true, clip, ...preloadOptions } = options;
   
@@ -442,7 +444,7 @@ export async function takeScreenshotWithPreloadedData(
   await expect(page).toHaveScreenshot(screenshotName, {
     fullPage,
     clip,
-    animations: 'disabled'
+    animations: 'disabled',
   });
   
   console.log(`✅ Screenshot '${screenshotName}' captured successfully`);
@@ -454,14 +456,14 @@ export async function takeScreenshotWithPreloadedData(
  */
 export async function warmCacheForVisualTestSuite(
   page: Page,
-  options: DataPreloadOptions = {}
+  options: DataPreloadOptions = {},
 ): Promise<void> {
   console.log('🔥 Warming cache for visual test suite...');
   
-  const preloadedState = await preloadAllReportData(page, {
+  await preloadAllReportData(page, {
     ...options,
     aggressiveWarmup: true,
-    verifyLoaded: true
+    verifyLoaded: true,
   });
   
   console.log('✅ Cache warmed for visual test suite - subsequent tests should be fast');

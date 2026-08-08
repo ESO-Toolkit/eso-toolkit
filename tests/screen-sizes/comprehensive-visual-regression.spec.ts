@@ -1,5 +1,7 @@
 import { test, expect } from '@playwright/test';
+
 import { createSkeletonDetector } from '../utils/skeleton-detector';
+
 import { enableApiCaching } from './utils';
 
 /**
@@ -37,7 +39,7 @@ test.describe('Comprehensive Visual Regression - All Device Types', () => {
     console.log('⏳ Waiting for content to load...');
     await skeletonDetector.waitForContentLoaded({ 
       timeout: 30000,
-      expectPreloaded: false 
+      expectPreloaded: false, 
     });
     
     // Verify content is present
@@ -56,7 +58,7 @@ test.describe('Comprehensive Visual Regression - All Device Types', () => {
     console.log('📸 Performing visual regression comparison for mobile...');
     await expect(page).toHaveScreenshot('mobile-devices.png', {
       fullPage: true,
-      animations: 'disabled'
+      animations: 'disabled',
     });
     
     console.log('✅ Mobile visual regression test completed successfully');
@@ -79,7 +81,7 @@ test.describe('Comprehensive Visual Regression - All Device Types', () => {
     console.log('⏳ Waiting for content to load...');
     await skeletonDetector.waitForContentLoaded({ 
       timeout: 30000,
-      expectPreloaded: false 
+      expectPreloaded: false, 
     });
     
     // Verify content is present
@@ -98,7 +100,7 @@ test.describe('Comprehensive Visual Regression - All Device Types', () => {
     console.log('📸 Performing visual regression comparison for tablet...');
     await expect(page).toHaveScreenshot('tablet-devices.png', {
       fullPage: true,
-      animations: 'disabled'
+      animations: 'disabled',
     });
     
     console.log('✅ Tablet visual regression test completed successfully');
@@ -121,7 +123,7 @@ test.describe('Comprehensive Visual Regression - All Device Types', () => {
     console.log('⏳ Waiting for content to load...');
     await skeletonDetector.waitForContentLoaded({ 
       timeout: 30000,
-      expectPreloaded: false 
+      expectPreloaded: false, 
     });
     
     // Verify content is present
@@ -140,7 +142,7 @@ test.describe('Comprehensive Visual Regression - All Device Types', () => {
     console.log('📸 Performing visual regression comparison for desktop...');
     await expect(page).toHaveScreenshot('desktop-devices.png', {
       fullPage: true,
-      animations: 'disabled'
+      animations: 'disabled',
     });
     
     console.log('✅ Desktop visual regression test completed successfully');
@@ -163,7 +165,7 @@ test.describe('Comprehensive Visual Regression - All Device Types', () => {
     console.log('⏳ Waiting for content to load...');
     await skeletonDetector.waitForContentLoaded({ 
       timeout: 30000,
-      expectPreloaded: false 
+      expectPreloaded: false, 
     });
     
     // Verify content is present
@@ -182,7 +184,7 @@ test.describe('Comprehensive Visual Regression - All Device Types', () => {
     console.log('📸 Performing visual regression comparison for insights...');
     await expect(page).toHaveScreenshot('insights-panel.png', {
       fullPage: true,
-      animations: 'disabled'
+      animations: 'disabled',
     });
     
     console.log('✅ Insights panel visual regression test completed successfully');
@@ -216,7 +218,7 @@ test.describe('Comprehensive Visual Regression - All Device Types', () => {
     console.log('📸 Performing visual regression comparison for login page...');
     await expect(page).toHaveScreenshot('login-page.png', {
       fullPage: true,
-      animations: 'disabled'
+      animations: 'disabled',
     });
     
     console.log('✅ Login page visual regression test completed successfully');
@@ -250,7 +252,7 @@ test.describe('Comprehensive Visual Regression - All Device Types', () => {
     console.log('📸 Performing visual regression comparison for landing page...');
     await expect(page).toHaveScreenshot('landing-page.png', {
       fullPage: true,
-      animations: 'disabled'
+      animations: 'disabled',
     });
     
     console.log('✅ Landing page visual regression test completed successfully');
@@ -284,7 +286,7 @@ test.describe('Comprehensive Visual Regression - All Device Types', () => {
     console.log('📸 Performing visual regression comparison for calculator page...');
     await expect(page).toHaveScreenshot('calculator-page.png', {
       fullPage: true,
-      animations: 'disabled'
+      animations: 'disabled',
     });
     
     console.log('✅ Calculator page visual regression test completed successfully');

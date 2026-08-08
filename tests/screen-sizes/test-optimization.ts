@@ -95,9 +95,9 @@ export async function waitForVisualStabilityWithMocks(page: Page): Promise<void>
     // Wait for the app layout structure to be present
     await page.waitForSelector('[role="banner"], header, nav, main, #root > *', { 
       timeout: 10000,
-      state: 'visible'
+      state: 'visible',
     });
-  } catch (error) {
+  } catch {
     console.log('⚠️ App structure timeout, but continuing anyway...');
   }
   
@@ -141,7 +141,7 @@ export async function waitForVisualStabilityWithMocks(page: Page): Promise<void>
       return !hasLoadingIndicators && !hasLoadingText && hasContent;
     }, { timeout: 15000 }); // Shorter timeout since mocks should be fast
     
-  } catch (error) {
+  } catch {
     console.log('⚠️ Fast content loading timeout, but proceeding...');
   }
   

@@ -19,7 +19,7 @@ import { SELECTORS, TEST_TIMEOUTS, TEST_DATA, waitForAppMount } from './selector
 const REAL_REPORT_IDS = TEST_DATA.REAL_REPORT_IDS;
 const MAIN_TABS = TEST_DATA.MAIN_TABS;
 
-const EXPERIMENTAL_TABS = [
+const _EXPERIMENTAL_TABS = [
   'location-heatmap',
   'raw-events',
   'target-events',
@@ -161,7 +161,7 @@ test.describe('Nightly Regression Tests - Real Data', () => {
           await expect(page.locator(SELECTORS.FIGHT_LIST_OR_LOADING).first()).toBeVisible({
             timeout: 15000, // Shorter timeout for first attempt
           });
-        } catch (error) {
+        } catch {
           console.log('ℹ️ Standard loading selectors not found, checking for any content...');
           // Fallback: wait for any visible content that indicates the page loaded
           const hasAnyContent = await page
@@ -203,7 +203,7 @@ test.describe('Nightly Regression Tests - Real Data', () => {
           try {
             // Wait for the fight button to be attached to DOM
             await fightButton.waitFor({ state: 'attached', timeout: 10000 });
-          } catch (e) {
+          } catch {
             console.log('ℹ️ Fight button wait failed, proceeding with fallback navigation');
             fightButton = null;
           }
@@ -366,14 +366,14 @@ test.describe('Nightly Regression Tests - Real Data', () => {
       const firstFightButton = page.locator(SELECTORS.ANY_FIGHT_BUTTON).first();
 
       // Try to find visible fight button, but use fallback if not found
-      let fightId = '5'; // Default fallback to known fight ID
+      let _fightId = '5'; // Default fallback to known fight ID
       let foundVisibleButton = false;
 
       try {
         await expect(firstFightButton).toBeVisible({ timeout: 5000 });
         foundVisibleButton = true;
         console.log('✅ Found visible fight button');
-      } catch (error) {
+      } catch {
         console.log('ℹ️ No visible fight button found, using known fight ID from test data');
       }
 
@@ -385,7 +385,7 @@ test.describe('Nightly Regression Tests - Real Data', () => {
         const fightIdMatch = page.url().match(/\/fight\/(\d+)/);
         const extractedFightId = fightIdMatch?.[1];
         if (extractedFightId) {
-          fightId = extractedFightId;
+          _fightId = extractedFightId;
         }
       }
 
@@ -440,17 +440,17 @@ test.describe('Nightly Regression Tests - Real Data', () => {
               .catch(() => false);
 
             if (hasAnyContent) {
-              console.log(`✅ Experimental tab ${tabId} loaded with content`);
+              console.log(`✅ Experimental tab ${tabLabel} loaded with content`);
             } else {
               console.log(
-                `⚠️ Experimental tab ${tabId} may not have content (this is acceptable for experimental features)`,
+                `⚠️ Experimental tab ${tabLabel} may not have content (this is acceptable for experimental features)`,
               );
             }
 
             // Take a quick screenshot (with error handling)
             try {
               await page.screenshot({
-                path: `test-results/nightly-regression-${reportId}-experimental-${tabId}.png`,
+                path: `test-results/nightly-regression-${reportId}-experimental-${tabLabel}.png`,
                 fullPage: false,
                 timeout: 5000,
               });
@@ -458,7 +458,7 @@ test.describe('Nightly Regression Tests - Real Data', () => {
               console.log('Screenshot failed but continuing test:', (screenshotError as Error).message);
             }
           } catch (navigationError) {
-            console.log(`⚠️ Failed to navigate to experimental tab ${tabId}: ${(navigationError as Error).message}`);
+            console.log(`⚠️ Failed to navigate to experimental tab ${tabLabel}: ${(navigationError as Error).message}`);
             console.log(`This is acceptable - experimental tabs may not be fully implemented`);
           }
         });
@@ -467,7 +467,7 @@ test.describe('Nightly Regression Tests - Real Data', () => {
   });
 
   test.describe('Interactive Features', () => {
-    test('should test player selection and filtering', async ({ page }, testInfo) => {
+    test('should test player selection and filtering', async ({ page }, _testInfo) => {
       const reportId = REAL_REPORT_IDS[0];
 
       // Navigate to report and click into a fight via the SPA
@@ -665,10 +665,10 @@ test.describe('Nightly Regression Tests - Real Data', () => {
   test.describe('Performance and Error Monitoring', () => {
     test('should monitor load times and network requests', async ({ page }, testInfo) => {
       const reportId = REAL_REPORT_IDS[0];
-      const performanceFightId = TEST_DATA.KNOWN_FIGHT_ID;
+      const _performanceFightId = TEST_DATA.KNOWN_FIGHT_ID;
 
       // Track performance metrics
-      const startTime = Date.now();
+      const _startTime = Date.now();
 
       // Navigate to report and click into a fight to measure load time
       const insightsStartTime = Date.now();
@@ -742,7 +742,7 @@ test.describe('Nightly Regression Tests - Real Data', () => {
       // Try networkidle but fallback to content check if it times out
       try {
         await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.networkIdle });
-      } catch (error) {
+      } catch {
         console.log('⚠️ NetworkIdle timeout for visual regression test, checking for content instead...');
       }
 

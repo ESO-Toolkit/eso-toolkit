@@ -528,7 +528,7 @@ test.describe('Live Logging System', () => {
       const bodyContent = await page.locator('body').textContent();
 
       // ✅ Defensive: Should redirect to login or show auth prompt
-      const hasAuthPrompt = url.includes('/login') || 
+      const _hasAuthPrompt = url.includes('/login') || 
                            bodyContent?.toLowerCase().includes('login') ||
                            bodyContent?.toLowerCase().includes('please log in');
 

@@ -22,7 +22,7 @@ export function createEmptyAuthState(): void {
 
     const emptyAuthState = {
       cookies: [],
-      origins: []
+      origins: [],
     };
     
     fs.writeFileSync(AUTH_STATE_PATH, JSON.stringify(emptyAuthState, null, 2));

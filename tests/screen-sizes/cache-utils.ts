@@ -1,6 +1,7 @@
+import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
-import crypto from 'crypto';
+
 import { OperationVariables } from '@apollo/client';
 
 /**
@@ -29,7 +30,7 @@ export function ensureCacheDir(): void {
 export function generateCacheKey(
   operationName: string,
   variables: OperationVariables = {},
-  endpoint: 'client' | 'user' = 'client'
+  endpoint: 'client' | 'user' = 'client',
 ): string {
   // Sort variables to ensure consistent key generation
   const sortedVars = JSON.stringify(variables, Object.keys(variables).sort());
@@ -119,7 +120,7 @@ export function getCacheStats(): { fileCount: number; totalSize: number; files: 
     return {
       fileCount: files.length,
       totalSize,
-      files
+      files,
     };
   } catch (error) {
     console.warn('Failed to get cache stats:', error);

@@ -10,22 +10,39 @@
   // fix a file's errors, delete its line. New test files are covered from day one,
   // which is the point of the gate.
   //
-  // SCOPE: this gate covers the jest suite under src/. The Playwright specs in
-  // tests/ are deliberately NOT in it yet — they need a resolver story first,
-  // because ~28 of their type errors are `import('/src/utils/foo.ts')` strings
-  // that are correct as written (Vite serves those paths to the browser at run
-  // time) and unresolvable from Node. `npm run lint` is scoped to ./src for the
-  // same reason. Wiring tests/ in is tracked as follow-up work, not silently
-  // implied by this file.
+  // SCOPE: this gate covers the jest suite under src/ AND the Playwright specs
+  // under tests/. The resolver problem that used to keep tests/ out — specs
+  // importing app code as `import('/src/utils/foo.ts')`, a URL Vite serves to
+  // the browser rather than a Node path — is solved by the `/src/*` entry in
+  // `paths` below, so those imports are typechecked against the real modules
+  // instead of being suppressed. `npm run lint` covers ./src and ./tests to
+  // match.
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "types": ["node", "jest"],
+    // Playwright specs reach into app code with `await import('/src/utils/x.ts')`
+    // inside `page.evaluate`. That specifier is a URL Vite serves to the browser,
+    // not a Node path, so it is correct as written and unresolvable by default.
+    // Mapping it to the real file typechecks those imports properly instead of
+    // suppressing them. `paths` REPLACES rather than merges, so the inherited
+    // aliases are repeated here.
+    "allowImportingTsExtensions": true,
+    "paths": {
+      "/src/*": ["src/*"],
+      "@/*": ["src/*"],
+      "@components/*": ["src/components/*"],
+      "@features/*": ["src/features/*"],
+      "@store/*": ["src/store/*"],
+      "@types/*": ["src/types/*"],
+      "@utils/*": ["src/utils/*"],
+      "@graphql/*": ["src/graphql/*"]
+    },
     // Its own incremental cache: inheriting the base tsBuildInfoFile would have
     // both projects writing one file, so whichever ran last invalidated the
     // other's state and the two gates could disagree.
     "tsBuildInfoFile": "./node_modules/.cache/.tsbuildinfo.test"
   },
-  "include": ["src", "playwright/*.config.ts"],
+  "include": ["src", "tests", "playwright/*.config.ts"],
   "exclude": [
     "node_modules",
     "build",
@@ -46,11 +63,8 @@
     "src/features/report_details/deaths/DeathEventPanel.test.tsx",
     "src/features/report_details/insights/StatusEffectUptimesPanel.integration.test.ts",
     "src/features/report_details/synergy/synergyUtils.test.ts",
-    "src/features/report_summary/__tests__/ReportSummaryPage.test.tsx",
-    "src/features/report_summary/hooks/useOptimizedReportSummaryData.test.tsx",
     "src/features/scribing/analysis/__tests__/scribingDetectionAnalysis.affix-accuracy.test.ts",
     "src/hooks/useSelectedTargetIds.test.tsx",
-    "src/pages/ParseAnalysisPage.test.tsx",
     "src/pages/RaidDashboardPage.test.tsx",
     "src/player1-shattering-knife-new-architecture.test.ts",
     "src/store/report/reportSlice.test.ts",
@@ -60,8 +74,15 @@
     "src/utils/classDetectionUtils.test.ts",
     "src/utils/errorTracking.test.ts",
     "src/utils/skillTooltipMapper.test.ts",
-    "src/workers/WorkerPool.test.ts"
+    "src/workers/WorkerPool.test.ts",
 
-    // ── Quarantine (pre-existing test type errors; count at time of quarantine) ──
+    // ── Quarantine: Playwright specs, same shrink-only rule ──
+    // Everything else under tests/ typechecks. These two are the remainder of
+    // the errors that surfaced once the `/src/*` path mapping made the in-page
+    // dynamic imports resolvable; both are `page.evaluate` return values typed
+    // as `unknown` plus roster fixtures built from string literals where the
+    // app types want unions.
+    "tests/performance.spec.ts",
+    "tests/roster-builder.comprehensive.smoke.spec.ts"
   ]
 }

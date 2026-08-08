@@ -1,7 +1,8 @@
 import { test, expect } from '@playwright/test';
-import { createAuthTestUtils, AuthEnv } from './auth-utils';
-import { createEsoPage } from './utils/EsoLogAggregatorPage';
+
+import { createAuthTestUtils } from './auth-utils';
 import { TEST_TIMEOUTS, waitForAppMount } from './selectors';
+import { createEsoPage } from './utils/EsoLogAggregatorPage';
 
 /**
  * Nightly Regression Tests - Authentication and User Reports
@@ -35,7 +36,7 @@ test.describe('Nightly Regression - Authentication and Reports', () => {
         '    - ESO_LOGS_TEST_EMAIL\n' +
         '    - ESO_LOGS_TEST_PASSWORD\n\n' +
         'If running in CI/CD, ensure these are configured as repository secrets.\n' +
-        'If running locally, set these in your environment or .env file.'
+        'If running locally, set these in your environment or .env file.',
       );
     }
 

@@ -1,4 +1,5 @@
 import { Page } from '@playwright/test';
+
 import { createSkeletonDetector, SkeletonDetector } from './skeleton-detector';
 
 // Default timeouts matching the existing test configuration
@@ -194,7 +195,7 @@ export class EsoLogAggregatorPage {
     
     if (options?.expectSkeletons !== false) {
       await this.skeletons.waitForSkeletonsToDisappear({ 
-        timeout: options?.timeout 
+        timeout: options?.timeout, 
       });
     }
   }
@@ -208,7 +209,7 @@ export class EsoLogAggregatorPage {
       expectSkeletons?: boolean;
       timeout?: number;
       navigationTimeout?: number;
-    }
+    },
   ) {
     await this.page.goto(url, { 
       waitUntil: 'domcontentloaded',

@@ -1,5 +1,6 @@
 import { Page } from '@playwright/test';
 import { config as dotenvConfig } from 'dotenv';
+
 import { EsoLogsNodeCache } from '../../src/utils/esoLogsNodeCache';
 
 /**
@@ -11,6 +12,14 @@ dotenvConfig();
 
 // Global cache instance for network interception
 const networkCache = new EsoLogsNodeCache();
+
+/** Shape this cache stores per API response. `EsoLogsNodeCache.get` is generic. */
+interface CachedApiResponse {
+  status?: number;
+  headers?: Record<string, string>;
+  data?: unknown;
+  timestamp?: number;
+}
 
 // Check if cache logging is enabled (defaults to true in test environment)
 const enableCacheLogging = process.env.ENABLE_CACHE_LOGGING !== 'false';
@@ -71,7 +80,11 @@ async function setupNetworkCaching(page: Page): Promise<void> {
       const endpoint = 'network'; // Use consistent endpoint for network-intercepted requests
       
       // Try to get from cache using proper file cache parameters
-      const cachedResponse = await networkCache.get(operationName, variables, endpoint);
+      const cachedResponse = await networkCache.get<CachedApiResponse>(
+        operationName,
+        variables,
+        endpoint,
+      );
       
       if (cachedResponse) {
         log(`🟢 Network Cache HIT for ${operationName}`);
@@ -281,7 +294,7 @@ export async function getRealOAuthToken(): Promise<any> {
 /**
  * Create a mock JWT token that won't be considered expired
  */
-function createMockJWT(): string {
+function _createMockJWT(): string {
   // JWT structure: header.payload.signature
   const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
   
@@ -320,7 +333,7 @@ export async function setupAuthentication(page: Page): Promise<void> {
         token_type: tokenData.token_type || 'Bearer',
         expires_in: tokenData.expires_in || 3600,
         refresh_token: tokenData.refresh_token,
-        scope: tokenData.scope
+        scope: tokenData.scope,
       };
     } else {
       // Create mock token for fallback
@@ -338,7 +351,7 @@ export async function setupAuthentication(page: Page): Promise<void> {
         token_type: 'Bearer',
         expires_in: 3600,
         refresh_token: 'mock_refresh_token',
-        scope: 'view-user-profile view-private-reports'
+        scope: 'view-user-profile view-private-reports',
       };
     }
     
@@ -356,7 +369,7 @@ export async function setupAuthentication(page: Page): Promise<void> {
       id: 12345,
       name: 'TestUser',
       displayName: '@TestUser',
-      avatar: null
+      avatar: null,
     }));
   }, realTokenData);
 }
@@ -392,7 +405,7 @@ export async function disableApiCaching(page: Page): Promise<void> {
 /**
  * Clears the ESO Logs API cache
  */
-export async function clearApiCache(page: Page): Promise<void> {
+export async function clearApiCache(_page: Page): Promise<void> {
   // Clear network-level cache
   try {
     await networkCache.clear();
@@ -456,7 +469,7 @@ export class ScreenSizeTestUtils {
       const networkIdleTimeout = Math.min(finalTimeout, isFastMode ? 20000 : 30000);
       await this.page.waitForLoadState('networkidle', { timeout: networkIdleTimeout });
       debugLog(`✓ Network idle achieved in ${networkIdleTimeout}ms`);
-    } catch (error) {
+    } catch {
       debugLog('Network idle timeout - continuing anyway (this is normal with heavy client processing)');
     }
     
@@ -502,7 +515,7 @@ export class ScreenSizeTestUtils {
           transition-duration: 0s !important;
           transition-delay: 0s !important;
         }
-      `
+      `,
     });
   }
 
@@ -527,7 +540,7 @@ export class ScreenSizeTestUtils {
         input, textarea {
           caret-color: transparent !important;
         }
-      `
+      `,
     });
   }
 
@@ -721,7 +734,7 @@ export async function waitForReportDataLoaded(page: Page): Promise<void> {
     try {
       await page.waitForLoadState('networkidle', { timeout: networkIdleTimeout });
       debugLog('✓ Network idle achieved - data requests completed');
-    } catch (error) {
+    } catch {
       debugLog('⚠ Network idle timeout - continuing anyway');
     }
 
@@ -733,7 +746,7 @@ export async function waitForReportDataLoaded(page: Page): Promise<void> {
       '[class*="skeleton"]',
       '[data-testid*="skeleton"]',
       '.skeleton',
-      '.loading-skeleton'
+      '.loading-skeleton',
     ].join(', '), { state: 'hidden', timeout: skeletonTimeout }).catch(() => {
       debugLog('⚠ No loading skeletons found or they persisted');
     });
@@ -783,7 +796,7 @@ export async function waitForReportDataLoaded(page: Page): Promise<void> {
       '[class*="healing"]',
       '[class*="player"]',
       '.card',
-      '.panel'
+      '.panel',
     ].join(', ')).count();
     
     if (hasDataContent > 0) {
@@ -824,9 +837,10 @@ export async function waitForHeavyClientProcessing(page: Page): Promise<void> {
   });
   
   // Check if there are any active network requests
-  const activeRequests = await page.evaluate(() => {
-    // @ts-ignore - accessing internal playwright state if available
-    return typeof window !== 'undefined' && window.performance 
+  await page.evaluate(() => {
+    // Standard Performance API — no suppression needed; the directive that used
+    // to sit here was doing nothing.
+    return typeof window !== 'undefined' && window.performance
       ? window.performance.getEntriesByType('navigation').length
       : 0;
   });

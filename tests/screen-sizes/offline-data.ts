@@ -6,9 +6,10 @@
  * external services.
  */
 
-import { Page } from '@playwright/test';
 import fs from 'fs';
 import path from 'path';
+
+import { Page } from '@playwright/test';
 
 // Test configuration - matches the test data
 const TEST_REPORT_CODE = 'nbKdDtT4NcZyVrvX';
@@ -103,7 +104,7 @@ export function isOfflineDataAvailable(): boolean {
       '../player-data.json',
       'events/damage-events.json',
       'events/buff-events.json',
-      'events/all-events.json'
+      'events/all-events.json',
     ];
     
     for (const filename of coreFiles) {
@@ -114,7 +115,7 @@ export function isOfflineDataAvailable(): boolean {
     }
 
     return true;
-  } catch (error) {
+  } catch {
     return false;
   }
 }
@@ -122,7 +123,7 @@ export function isOfflineDataAvailable(): boolean {
 /**
  * Load offline data for a specific operation
  */
-export function loadOfflineData(operationName: string, variables?: any): any {
+export function loadOfflineData(operationName: string, _variables?: any): any {
   // Handle special mock operations
   if (operationName === 'getCurrentUser') {
     console.log(`📂 Using mock data for ${operationName}`);
@@ -131,9 +132,9 @@ export function loadOfflineData(operationName: string, variables?: any): any {
         currentUser: {
           id: 'test-user',
           name: 'Test User',
-          battletag: 'TestUser#1234'
-        }
-      }
+          battletag: 'TestUser#1234',
+        },
+      },
     };
   }
 
@@ -239,7 +240,7 @@ export function getOfflineDataInfo(): { available: boolean; path: string; files:
     try {
       const allFiles = fs.readdirSync(TEST_DATA_DIR);
       files.push(...allFiles.filter(f => f.endsWith('.json')));
-    } catch (error) {
+    } catch {
       // Ignore error
     }
   }

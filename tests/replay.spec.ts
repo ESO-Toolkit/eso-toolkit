@@ -311,7 +311,7 @@ test.describe('3D Replay System', () => {
       // Optional: Check for navigation elements
       const backButton = page.locator('button').filter({ hasText: /back/i });
       const backLink = page.locator('a').filter({ hasText: /back/i });
-      const hasBack = (await backButton.count()) > 0 || (await backLink.count()) > 0;
+      const _hasBack = (await backButton.count()) > 0 || (await backLink.count()) > 0;
       
       // Navigation is optional - main check is page renders
       expect(true).toBeTruthy();

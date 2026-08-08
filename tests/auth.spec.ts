@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+
 import { setupApiMocking } from './utils/api-mocking';
 
 test.describe('Authentication Flow', () => {

@@ -1,6 +1,8 @@
-import { test, expect } from '@playwright/test';
-import { setupAuthentication } from './utils';
+import { test } from '@playwright/test';
+
 import { createSkeletonDetector } from '../utils/skeleton-detector';
+
+import { setupAuthentication } from './utils';
 
 // Test configuration
 const TEST_REPORT_CODE = 'nbKdDtT4NcZyVrvX';
@@ -17,7 +19,7 @@ test.describe('Sample Screenshot Test', () => {
     // Navigate directly to the page
     await page.goto(`/report/${TEST_REPORT_CODE}/fight/${TEST_FIGHT_ID}`, {
       waitUntil: 'networkidle',
-      timeout: 60000
+      timeout: 60000,
     });
 
     // Wait for content to be fully loaded using our improved detection
@@ -35,7 +37,7 @@ test.describe('Sample Screenshot Test', () => {
     // Take screenshot in a known location
     await page.screenshot({ 
       path: 'sample-screenshot-for-verification.png',
-      fullPage: true 
+      fullPage: true, 
     });
     
     console.log('✅ Sample screenshot saved as sample-screenshot-for-verification.png');

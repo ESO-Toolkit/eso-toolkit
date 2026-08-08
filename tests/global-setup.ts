@@ -1,12 +1,16 @@
+import * as fs from 'fs';
+import * as path from 'path';
+
 import { chromium, FullConfig } from '@playwright/test';
 import axios from 'axios';
 import * as dotenv from 'dotenv';
-import * as fs from 'fs';
-import * as path from 'path';
-import { getBaseUrl } from './selectors';
+
+
 import { EsoLogsNodeCache } from '../src/utils/esoLogsNodeCache';
+
 import { clearCache } from './screen-sizes/cache-utils';
 import { preprocessWorkerComputations } from './screen-sizes/shared-preprocessing';
+import { getBaseUrl } from './selectors';
 
 /**
  * Global setup for Playwright nightly tests
@@ -160,7 +164,7 @@ async function ensureApiKeyAuth(apiKey: string): Promise<AuthMetadata> {
   return metadata;
 }
 
-async function globalSetup(config: FullConfig) {
+async function globalSetup(_config: FullConfig) {
   console.log('🚀 Starting global setup for nightly tests...');
 
   // Clear all cached ESO Logs API responses to ensure fresh data
@@ -410,7 +414,7 @@ async function getClientCredentialsToken(
  * Pre-cache getCurrentUser response to avoid API spam during tests
  * This creates a mock response in the cache without making an API call
  */
-async function preCacheCurrentUser(accessToken: string): Promise<void> {
+async function preCacheCurrentUser(_accessToken: string): Promise<void> {
   console.log('💾 Pre-caching getCurrentUser response...');
   console.log('💾 Pre-caching getCurrentUser response...');
   

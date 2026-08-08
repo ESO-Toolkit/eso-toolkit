@@ -1,21 +1,14 @@
-import { test, expect } from '@playwright/test';
-import { setupWithSharedPreprocessing } from './shared-preprocessing';
-import { 
-  injectMockWorkerResults, 
-  waitForVisualStabilityWithMocks, 
-  shouldUseMockWorkerResults 
-} from './test-optimization';
-import { 
-  preloadAllReportData, 
+import { test } from '@playwright/test';
+
+import {
   takeScreenshotWithPreloadedData,
   navigateWithPreloadedData,
-  warmCacheForVisualTestSuite
+  warmCacheForVisualTestSuite,
 } from '../utils/data-preloader';
-import { 
-  SkeletonDetector,
-  createSkeletonDetector,
-  waitForLoadingComplete 
-} from '../utils/skeleton-detector';
+import { createSkeletonDetector } from '../utils/skeleton-detector';
+
+import { setupWithSharedPreprocessing } from './shared-preprocessing';
+import { injectMockWorkerResults, shouldUseMockWorkerResults } from './test-optimization';
 
 // Test configuration - focused on visual regression only
 const TEST_REPORT_CODE = 'nbKdDtT4NcZyVrvX';
@@ -39,7 +32,7 @@ async function setupTestEnvironment(page: any) {
  * Enhanced waiting for data loading using content detection instead of skeleton detection
  * More reliable than waiting for skeletons to disappear since many "skeletons" are permanent UI elements
  */
-async function waitForPanelLoadingComplete(page: any, panelName: string = 'panel') {
+async function _waitForPanelLoadingComplete(page: any, panelName: string = 'panel') {
   console.log(`⏳ Waiting for ${panelName} to stabilize...`);
   
   try {
@@ -55,7 +48,7 @@ async function waitForPanelLoadingComplete(page: any, panelName: string = 'panel
         // Step 1: Wait for player card containers to appear
         await page.waitForSelector('[data-testid^="player-card-"], .MuiCard-root', { 
           state: 'visible', 
-          timeout: 12000 
+          timeout: 12000, 
         });
         console.log(`✅ Player card containers found in ${panelName}`);
         
@@ -84,7 +77,7 @@ async function waitForPanelLoadingComplete(page: any, panelName: string = 'panel
         
         console.log(`✅ Player cards with content loaded in ${panelName}`);
         
-      } catch (error) {
+      } catch {
         console.log(`⚠️ Player cards timeout, using fallback in ${panelName}...`);
         
         try {
@@ -94,7 +87,7 @@ async function waitForPanelLoadingComplete(page: any, panelName: string = 'panel
           }, undefined, { timeout: 6000 });
           
           console.log(`✅ Content fallback succeeded in ${panelName}`);
-        } catch (fallbackError) {
+        } catch {
           console.log(`⚠️ Content fallback failed, proceeding anyway in ${panelName}...`);
         }
       }
@@ -126,7 +119,7 @@ async function waitForPanelLoadingComplete(page: any, panelName: string = 'panel
         
         console.log(`✅ Insights content loaded in ${panelName}`);
         
-      } catch (error) {
+      } catch {
         console.log(`⚠️ Insights timeout, using fallback in ${panelName}...`);
         
         try {
@@ -136,7 +129,7 @@ async function waitForPanelLoadingComplete(page: any, panelName: string = 'panel
           }, undefined, { timeout: 6000 });
           
           console.log(`✅ Basic insights UI fallback succeeded in ${panelName}`);
-        } catch (fallbackError) {
+        } catch {
           console.log(`⚠️ Insights fallback failed, proceeding anyway in ${panelName}...`);
         }
       }
@@ -159,7 +152,7 @@ async function waitForPanelLoadingComplete(page: any, panelName: string = 'panel
 /**
  * Navigate to report page - simplified
  */
-async function navigateToReport(page: any, path: string = '') {
+async function _navigateToReport(page: any, path: string = '') {
   const url = `http://localhost:3000/report/${TEST_REPORT_CODE}/fight/${TEST_FIGHT_ID}${path}`;
   // Use config timeout and domcontentloaded since we have comprehensive preprocessing
   await page.goto(url, { waitUntil: 'domcontentloaded' });
@@ -168,7 +161,7 @@ async function navigateToReport(page: any, path: string = '') {
 /**
  * Debug helper to log current Redux state
  */
-async function debugReduxState(page: any, label: string = '') {
+async function _debugReduxState(page: any, label: string = '') {
   try {
     await page.evaluate((debugLabel: string) => {
       const store = (window as any).__REDUX_STORE__;
@@ -201,7 +194,7 @@ async function debugReduxState(page: any, label: string = '') {
 /**
  * Enhanced wait for content - waits for worker results to be available
  */
-async function waitForVisualStability(page: any) {
+async function _waitForVisualStability(page: any) {
   // Wait for React app to mount first
   try {
     await page.waitForSelector('#root', { timeout: 15000 });
@@ -209,9 +202,9 @@ async function waitForVisualStability(page: any) {
     // Wait for the app layout structure to be present
     await page.waitForSelector('[role="banner"], header, nav, main, #root > *', { 
       timeout: 15000,
-      state: 'visible'
+      state: 'visible',
     });
-  } catch (error) {
+  } catch {
     console.log('⚠️ App structure timeout, but continuing anyway...');
     // Fall back to basic DOM ready check
     await page.waitForFunction(() => document.readyState === 'complete', { timeout: 5000 });
@@ -250,7 +243,7 @@ async function waitForVisualStability(page: any) {
     
     console.log('✅ Worker results detected in Redux store');
     
-  } catch (error) {
+  } catch {
     console.log('⚠️ Worker results timeout - checking for basic content instead...');
     
     // Fallback: wait for basic content to be loaded
@@ -273,7 +266,7 @@ async function waitForVisualStability(page: any) {
         
         return !hasLoadingIndicators && !hasLoadingText && hasContent;
       }, { timeout: 30000 });
-    } catch (fallbackError) {
+    } catch {
       console.log('⚠️ Fallback content loading timeout, proceeding with screenshot...');
     }
   }
@@ -295,7 +288,7 @@ test.describe('Visual Regression - Core Panels', () => {
         reportCode: TEST_REPORT_CODE,
         fightId: TEST_FIGHT_ID,
         tabs: ['overview', 'players', 'insights'],
-        aggressiveWarmup: true
+        aggressiveWarmup: true,
       });
       
       console.log('✅ Cache warmed successfully - visual regression tests should be fast now');
@@ -327,7 +320,7 @@ test.describe('Visual Regression - Core Panels', () => {
     // Take screenshot with preloaded data guarantee
     await takeScreenshotWithPreloadedData(page, 'players-panel.png', {
       fullPage: true,
-      reportCode: TEST_REPORT_CODE
+      reportCode: TEST_REPORT_CODE,
     });
 
     // Attach screenshot and metadata for documentation (after successful test)
@@ -339,7 +332,7 @@ test.describe('Visual Regression - Core Panels', () => {
       // Capture screenshot for attachment (reuse the same screenshot if possible)
       const screenshot = await page.screenshot({ 
         fullPage: true, 
-        animations: 'disabled'
+        animations: 'disabled',
       });
       
       // Attach screenshot with descriptive name
@@ -353,26 +346,26 @@ test.describe('Visual Regression - Core Panels', () => {
         device: {
           name: deviceName,
           viewport: viewport,
-          userAgent: await page.evaluate(() => navigator.userAgent)
+          userAgent: await page.evaluate(() => navigator.userAgent),
         },
         performance: {
           panelLoadTime: 'Fast with preloaded data',
-          screenshotCaptureTime: 'Instant with preloaded data'
+          screenshotCaptureTime: 'Instant with preloaded data',
         },
         testConfig: {
           testMode: 'offline',
           fastMode: !!process.env.PLAYWRIGHT_FAST_MODE,
-          panelType: 'players'
+          panelType: 'players',
         },
         timestamps: {
           testStartTime: new Date().toISOString(),
-          screenshotTime: new Date().toISOString()
+          screenshotTime: new Date().toISOString(),
         },
         environment: {
           testMode: process.env.PLAYWRIGHT_FAST_MODE ? 'fast' : 'full',
           deviceCategory: deviceName.toLowerCase().includes('mobile') ? 'mobile' : 
-                        deviceName.toLowerCase().includes('tablet') ? 'tablet' : 'desktop'
-        }
+                        deviceName.toLowerCase().includes('tablet') ? 'tablet' : 'desktop',
+        },
       };
       
       await testInfo.attach(`players-metadata-${deviceName.replace(/\s+/g, '-')}.json`, {
@@ -400,7 +393,7 @@ test.describe('Visual Regression - Core Panels', () => {
     // Take screenshot with preloaded data guarantee
     await takeScreenshotWithPreloadedData(page, 'insights-panel.png', {
       fullPage: true,
-      reportCode: TEST_REPORT_CODE
+      reportCode: TEST_REPORT_CODE,
     });
 
     // Attach screenshot and metadata for documentation (after successful test)
@@ -412,7 +405,7 @@ test.describe('Visual Regression - Core Panels', () => {
       // Capture screenshot for attachment (reuse the same screenshot if possible)
       const screenshot = await page.screenshot({ 
         fullPage: true, 
-        animations: 'disabled'
+        animations: 'disabled',
       });
       
       // Attach screenshot with descriptive name
@@ -426,26 +419,26 @@ test.describe('Visual Regression - Core Panels', () => {
         device: {
           name: deviceName,
           viewport: viewport,
-          userAgent: await page.evaluate(() => navigator.userAgent)
+          userAgent: await page.evaluate(() => navigator.userAgent),
         },
         performance: {
           panelLoadTime: 'Not measured for insights panel',
-          screenshotCaptureTime: `${Date.now() - Date.now()}ms` // Will be minimal since it's immediate
+          screenshotCaptureTime: `${Date.now() - Date.now()}ms`, // Will be minimal since it's immediate
         },
         testConfig: {
           testMode: 'offline',
           fastMode: !!process.env.PLAYWRIGHT_FAST_MODE,
-          panelType: 'insights'
+          panelType: 'insights',
         },
         timestamps: {
           testStartTime: new Date().toISOString(),
-          screenshotTime: new Date().toISOString()
+          screenshotTime: new Date().toISOString(),
         },
         environment: {
           testMode: process.env.PLAYWRIGHT_FAST_MODE ? 'fast' : 'full',
           deviceCategory: deviceName.toLowerCase().includes('mobile') ? 'mobile' : 
-                        deviceName.toLowerCase().includes('tablet') ? 'tablet' : 'desktop'
-        }
+                        deviceName.toLowerCase().includes('tablet') ? 'tablet' : 'desktop',
+        },
       };
       
       await testInfo.attach(`insights-metadata-${deviceName.replace(/\s+/g, '-')}.json`, {

@@ -27,7 +27,7 @@ export const SELECTORS = {
   
   // Tabs and navigation
   ACTIVE_TAB: '[role="tab"][aria-selected="true"]',
-  TAB_BY_TEXT: (tabText: string) => `[role="tab"]`,
+  TAB_BY_TEXT: (_tabText: string) => `[role="tab"]`,
   
   // Content areas
   MAIN_CONTENT: '[data-testid*="content"], [data-testid*="panel"], .MuiDataGrid-root, .chart-container',
@@ -62,7 +62,7 @@ export const SELECTOR_HELPERS = {
    */
   tabByName: (tabName: string) => {
     const escapedName = tabName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const regexPattern = escapedName.replace('-', '\\s');
+    const _regexPattern = escapedName.replace('-', '\\s');
     return `[role="tab"][aria-selected="true"]`;
   },
   

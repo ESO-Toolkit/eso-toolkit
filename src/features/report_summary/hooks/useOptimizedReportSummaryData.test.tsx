@@ -141,12 +141,12 @@ const makeWrapper = (
     },
     middleware: (getDefault) => getDefault({ serializableCheck: false, immutableCheck: false }),
   });
-  const client = { query: jest.fn(), mutate: jest.fn(), watchQuery: jest.fn() };
   const wrapper = ({ children }: { children: React.ReactNode }) => (
     <Provider store={store}>
       <LoggerProvider>
         {}
-        <EsoLogsClientProvider client={client as any}>{children}</EsoLogsClientProvider>
+        {/* Takes only `children`; the `client` prop was silently ignored. */}
+        <EsoLogsClientProvider>{children}</EsoLogsClientProvider>
       </LoggerProvider>
     </Provider>
   );
