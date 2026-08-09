@@ -326,17 +326,9 @@ test.describe('Nightly Regression - Interactive Features', () => {
         return;
       }
 
-      // Check if accordion is collapsed and expand it if needed
-      const accordion = page.locator('[data-testid*="trial-accordion"]').first();
-      if (await accordion.isVisible()) {
-        const isExpanded = await accordion.getAttribute('aria-expanded');
-        if (isExpanded === 'false' || isExpanded === null) {
-          const accordionSummary = accordion.locator('.MuiAccordionSummary-root');
-          await accordionSummary.click();
-          // Wait a moment for the accordion to expand
-          await page.waitForTimeout(2000);
-        }
-      }
+      // (No accordion expansion step: `[data-testid*="trial-accordion"]` matches nothing —
+      // the trial container in ReportFightsView is always expanded and imports no MUI
+      // Accordion, so the old block was dead code around an unguarded .click().)
 
       // Take screenshot of report page
       await page.screenshot({
@@ -419,60 +411,93 @@ test.describe('Nightly Regression - Interactive Features', () => {
         timeout: TEST_TIMEOUTS.navigation,
       });
 
-      // Wait for replay to load - this might take longer
-      await page.waitForTimeout(5000);
+      // The transport orb is the ONLY control in src/ whose accessible name is exactly
+      // "Play"/"Pause" (PlaybackButtons.tsx). An anchored RegExp name is matched
+      // case-sensitively against the FULL accessible name, so it can never re-match
+      // ", currently playing" (chapterAriaLabel in ChapterList.tsx, reused by
+      // ChapterRail.tsx), "Show playback controls", "Choose playback speed" or
+      // "Replay quality: …".
+      //
+      // Do NOT go back to `button[aria-label*="play"]`: CSS attribute matching is
+      // case-sensitive, so it never matched "Play" at all — it matched the lowercase
+      // "play" inside ", currently playing" and clicked the active chapter-rail stop
+      // instead, which is what hung this test for the full 30s actionTimeout on WebKit
+      // and let it pass vacuously everywhere else.
+      const playPause = page.getByRole('button', { name: /^(Play|Pause)$/ });
 
-      // Look for replay controls
-      const replayControls = page.locator(
-        'button[aria-label*="play"], button[aria-label*="pause"], .replay-controls, .play-button, .pause-button',
-      );
+      // When the fight has no actor-position data the arena renders a ReplayStatePanel
+      // instead of the transport (see FightReplay.tsx renderArena) — a legitimate skip,
+      // not a failure. Race the two terminal states rather than sleeping blindly.
+      const replayUnavailable = page
+        .getByText(/No position data for this fight|Couldn't load the replay|No fight selected/)
+        .first();
 
-      const hasReplayInterface = await replayControls
-        .first()
-        .isVisible({ timeout: TEST_TIMEOUTS.interaction });
+      const replayOutcome = await Promise.race([
+        playPause
+          .waitFor({ state: 'visible', timeout: TEST_TIMEOUTS.dataLoad })
+          .then(() => 'transport' as const),
+        replayUnavailable
+          .waitFor({ state: 'visible', timeout: TEST_TIMEOUTS.dataLoad })
+          .then(() => 'unavailable' as const),
+      ]).catch(() => 'missing' as const);
 
-      // Take screenshot whether replay loaded or not (for debugging)
+      // Viewport-only: a fullPage capture forces a full-document repaint of the WebGL
+      // arena, which starved WebKit's main thread for ~10s immediately before the click.
       await page.screenshot({
         path: `test-results/nightly-regression-replay-${reportId}-${fightId}.png`,
-        fullPage: true,
         timeout: TEST_TIMEOUTS.screenshot,
       });
 
-      if (hasReplayInterface) {
-        // Test play/pause functionality
-        const playButton = replayControls.first();
-        await playButton.click();
+      test.skip(
+        replayOutcome === 'unavailable',
+        `Fight ${fightId} has no 3D replay data to exercise`,
+      );
 
-        // Wait for replay to start
-        await page.waitForTimeout(3000);
+      // Hard assertion. This used to be an `if (hasReplayInterface)` gate, so when the
+      // locator matched nothing the entire interaction below was silently skipped.
+      await expect(playPause).toBeVisible({ timeout: TEST_TIMEOUTS.interaction });
+
+      // Read the starting label rather than hardcoding "Play" — keeps the assertion
+      // correct if a future autoplay path ever lands the page already playing.
+      const initialLabel = await playPause.getAttribute('aria-label');
+      expect(['Play', 'Pause']).toContain(initialLabel);
+      const toggledLabel = initialLabel === 'Play' ? 'Pause' : 'Play';
+
+      await playPause.click();
+      await expect(playPause).toHaveAttribute('aria-label', toggledLabel);
+
+      await page.waitForTimeout(3000);
+
+      await page.screenshot({
+        path: `test-results/nightly-regression-replay-playing-${reportId}.png`,
+        timeout: TEST_TIMEOUTS.screenshot,
+      });
+
+      // Toggle back — guarded because a short trash pull can run out during the wait
+      // above and self-pause, which would flip the label without a second click.
+      if ((await playPause.getAttribute('aria-label')) === toggledLabel) {
+        await playPause.click();
+        await expect(playPause).toHaveAttribute('aria-label', initialLabel!);
+      }
+
+      // Timeline scrubbing. MUI puts role="slider" on a visually hidden input inside the
+      // thumb, so the previous `click({ force: true })` landed on the playhead itself and
+      // could not seek — and its `.timeline-slider` / `.scrubber` fallbacks match nothing.
+      // Drive it by keyboard, and name the slider explicitly: a multi-fight trial run also
+      // renders TrialTimeline's "Trial timeline" slider.
+      const timeline = page.getByRole('slider', { name: 'Replay timeline' });
+      if (await timeline.count()) {
+        const timeBefore = await timeline.inputValue();
+        await timeline.press('ArrowRight');
+        await timeline.press('ArrowRight');
+        await expect
+          .poll(() => timeline.inputValue(), { timeout: TEST_TIMEOUTS.interaction })
+          .not.toBe(timeBefore);
 
         await page.screenshot({
-          path: `test-results/nightly-regression-replay-playing-${reportId}.png`,
-          fullPage: true,
+          path: `test-results/nightly-regression-replay-scrubbed-${reportId}.png`,
           timeout: TEST_TIMEOUTS.screenshot,
         });
-
-        // Test pause
-        const pauseButton = page.locator('button[aria-label*="pause"], .pause-button').first();
-
-        if (await pauseButton.isVisible({ timeout: 3000 })) {
-          await pauseButton.click();
-          await page.waitForTimeout(1000);
-        }
-
-        // Test timeline scrubbing if available
-        const timeline = page.locator('input[type="range"], .timeline-slider, .scrubber');
-        if (await timeline.first().isVisible({ timeout: 3000 })) {
-          // For sliders, force click is often needed due to overlay elements
-          await timeline.first().click({ force: true });
-          await page.waitForTimeout(2000);
-
-          await page.screenshot({
-            path: `test-results/nightly-regression-replay-scrubbed-${reportId}.png`,
-            fullPage: true,
-            timeout: TEST_TIMEOUTS.screenshot,
-          });
-        }
       }
 
       // Verify no critical errors occurred

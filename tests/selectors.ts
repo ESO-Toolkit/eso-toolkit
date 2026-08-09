@@ -49,8 +49,16 @@ export const SELECTORS = {
   // Report structure
   REPORT_TITLE: 'h1, h2, h3, h4, h5, h6',
   
-  // Replay controls
-  REPLAY_CONTROLS: 'button[aria-label*="play"], button[aria-label*="pause"], .replay-controls, .play-button, .pause-button',
+  // Replay controls.
+  //
+  // Prefer `page.getByRole('button', { name: /^(Play|Pause)$/ })` — an anchored RegExp
+  // matches the full accessible name case-sensitively.
+  //
+  // NEVER `aria-label*="play"`: CSS attribute matching is case-sensitive, so it misses the
+  // real orb (aria-label="Play"/"Pause") entirely and instead matches the lowercase "play"
+  // inside ", currently playing" on the active chapter-rail stop — plus "Replay quality: …",
+  // "Share current replay time", "Show playback controls" and "Choose playback speed".
+  REPLAY_PLAY_PAUSE: 'button[aria-label="Play"], button[aria-label="Pause"]',
 } as const;
 
 /**
