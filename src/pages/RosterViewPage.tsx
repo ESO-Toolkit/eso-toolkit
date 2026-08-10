@@ -15,8 +15,14 @@ import {
   Extension as ExtensionIcon,
   OpenInNew as OpenInNewIcon,
   SwapHoriz as PerFightIcon,
+  ExpandMore as ExpandMoreIcon,
+  UnfoldMore as UnfoldMoreIcon,
+  UnfoldLess as UnfoldLessIcon,
 } from '@mui/icons-material';
 import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
   Box,
   Button,
   Chip,
@@ -30,6 +36,7 @@ import {
   Alert,
   Tooltip,
   Typography,
+  useMediaQuery,
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
@@ -68,6 +75,7 @@ import {
 } from '../types/trial-encounters';
 import { encodeBuildToURL } from '../utils/buildEncoding';
 import { getGearSetTooltipPropsByName } from '../utils/gearSetTooltipMapper';
+import { buildSlotRows, summarizeFight } from '../utils/perFightRunSheet';
 import { buildVariantSx, getGearChipProps } from '../utils/playerCardStyleUtils';
 import { RICH_TOOLTIP_SLOT_PROPS } from '../utils/richTooltipSlotProps';
 import { DARK_ROLE_COLORS, LIGHT_ROLE_COLORS_SOLID } from '../utils/roleColors';
@@ -1157,7 +1165,16 @@ interface PerFightTrialGroupProps {
   trial: Trial;
   trialOverrides: TrialBuildOverrides;
   isDarkMode: boolean;
+  /** Deep-link target (?trial=&encounter=) so a linked fight starts expanded. */
+  deepLinkTarget?: { trial?: string; encounter?: string };
 }
+
+/** Short, color-coded pill for an encounter's type (boss / mini-boss / trash). */
+const ENCOUNTER_TYPE_LABEL: Record<string, string> = {
+  boss: 'Boss',
+  mini_boss: 'Mini-boss',
+  trash: 'Trash',
+};
 
 /** Read-only run-sheet group for ONE trial's per-fight overrides. */
 const PerFightTrialGroup: React.FC<PerFightTrialGroupProps> = ({
@@ -1165,7 +1182,10 @@ const PerFightTrialGroup: React.FC<PerFightTrialGroupProps> = ({
   trial,
   trialOverrides,
   isDarkMode,
+  deepLinkTarget,
 }) => {
+  const reduceMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
+
   const encountersWithOverrides = trial.encounters.filter((enc) =>
     encounterHasOverrides(trialOverrides.encounterBuilds[enc.id]),
   );
@@ -1174,9 +1194,42 @@ const PerFightTrialGroup: React.FC<PerFightTrialGroupProps> = ({
   const bgColor = isDarkMode ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)';
   const accentColor = isDarkMode ? '#9c88ff' : '#6c5ce7';
 
+  // Expanded-fight state lives here (not per-card) so "Expand/Collapse all" and
+  // deep-link auto-expand can drive it. Initialized lazily: if this group is the
+  // deep-link target, its fight starts open so the first paint already shows it
+  // expanded — the retry-until-mounted scroll then lands on a rendered, open
+  // card (no expand-then-scroll race).
+  const [expanded, setExpanded] = useState<Set<string>>(() => {
+    if (deepLinkTarget?.trial === trial.id && deepLinkTarget.encounter) {
+      return new Set([deepLinkTarget.encounter]);
+    }
+    return new Set();
+  });
+
+  const toggle = (encId: string): void => {
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(encId)) next.delete(encId);
+      else next.add(encId);
+      return next;
+    });
+  };
+  const expandAll = (): void => setExpanded(new Set(encountersWithOverrides.map((e) => e.id)));
+  const collapseAll = (): void => setExpanded(new Set());
+  const allExpanded =
+    encountersWithOverrides.length > 0 && expanded.size === encountersWithOverrides.length;
+
   return (
     <Box id={`pf-${trial.id}`} sx={{ mb: 2.5, scrollMarginTop: '80px' }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 0.75 }}>
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 0.75,
+          mb: 0.75,
+          flexWrap: 'wrap',
+        }}
+      >
         <Chip
           label={trial.shortName}
           size="small"
@@ -1204,6 +1257,33 @@ const PerFightTrialGroup: React.FC<PerFightTrialGroupProps> = ({
             {encountersWithOverrides.length > 1 ? 's' : ''}
           </Typography>
         )}
+        {/* Expand / collapse all — only meaningful with 2+ collapsible fights. */}
+        {!trialOverrides.useSameBuildForAll && encountersWithOverrides.length > 1 && (
+          <Button
+            size="small"
+            disableRipple
+            onClick={allExpanded ? collapseAll : expandAll}
+            startIcon={
+              allExpanded ? (
+                <UnfoldLessIcon sx={{ fontSize: '0.9rem' }} />
+              ) : (
+                <UnfoldMoreIcon sx={{ fontSize: '0.9rem' }} />
+              )
+            }
+            sx={{
+              ml: 'auto',
+              minHeight: 32,
+              px: 1,
+              textTransform: 'none',
+              fontSize: '0.68rem',
+              fontWeight: 600,
+              color: accentColor,
+              '&:focus-visible': { outline: '2px solid #38bdf8', outlineOffset: '2px' },
+            }}
+          >
+            {allExpanded ? 'Collapse all' : 'Expand all'}
+          </Button>
+        )}
       </Box>
       {trialOverrides.useSameBuildForAll ? (
         <Paper
@@ -1223,156 +1303,264 @@ const PerFightTrialGroup: React.FC<PerFightTrialGroupProps> = ({
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75 }}>
           {encountersWithOverrides.map((enc) => {
             const overrides = trialOverrides.encounterBuilds[enc.id];
-            // Build player keys + labels from the roster composition
-            const playerKeys: string[] = [];
-            const labelMap: Record<string, string> = {};
-            roster.tanks.forEach((_, i) => {
-              const key = `tank:${i}`;
-              playerKeys.push(key);
-              labelMap[key] = i === 0 ? 'MT' : i === 1 ? 'OT' : `T${i + 1}`;
-            });
-            roster.healers.forEach((_, i) => {
-              const key = `healer:${i}`;
-              playerKeys.push(key);
-              labelMap[key] = `H${i + 1}`;
-            });
+            const summary = summarizeFight(roster, overrides);
+            const rows = buildSlotRows(roster, overrides);
+            const isOpen = expanded.has(enc.id);
+            const typeLabel = ENCOUNTER_TYPE_LABEL[enc.type] ?? enc.type;
 
             return (
-              <Paper
+              <Accordion
                 key={enc.id}
                 id={`pf-${trial.id}-${enc.id}`}
+                expanded={isOpen}
+                onChange={() => toggle(enc.id)}
+                disableGutters
+                square={false}
                 elevation={0}
+                slotProps={{ transition: { unmountOnExit: true, timeout: reduceMotion ? 0 : 200 } }}
                 sx={{
-                  p: 1.25,
                   borderRadius: '10px',
                   backgroundColor: bgColor,
                   border: `1px solid ${borderColor}`,
                   scrollMarginTop: '80px',
+                  overflow: 'hidden',
+                  '&::before': { display: 'none' },
+                  '&.Mui-expanded': { margin: 0 },
                 }}
               >
-                <Typography
+                <AccordionSummary
+                  expandIcon={<ExpandMoreIcon sx={{ fontSize: '1.1rem', color: accentColor }} />}
+                  aria-label={`${enc.name} — ${summary.slotCount} build${
+                    summary.slotCount === 1 ? '' : 's'
+                  }, ${isOpen ? 'collapse' : 'expand'}`}
                   sx={{
-                    fontSize: '0.72rem',
-                    fontWeight: 700,
-                    color: accentColor,
-                    mb: 0.5,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.06em',
+                    // Comfortable tap target on phones (WCAG 2.5.5 ≥44px).
+                    minHeight: { xs: 48, sm: 44 },
+                    px: 1.25,
+                    '& .MuiAccordionSummary-content': {
+                      my: 0.75,
+                      alignItems: 'center',
+                      gap: 0.75,
+                      flexWrap: 'wrap',
+                      minWidth: 0,
+                    },
+                    '&.Mui-focusVisible': {
+                      outline: '2px solid #38bdf8',
+                      outlineOffset: '-2px',
+                      backgroundColor: 'transparent',
+                    },
                   }}
                 >
-                  {enc.name}
-                </Typography>
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                  {playerKeys.map((key) => {
-                    const o = overrides?.slots?.[key];
-                    if (!o) return null;
-                    const sets = [
-                      o.set1
-                        ? getSetDisplayName(o.set1 as import('../types/abilities').KnownSetIDs)
-                        : null,
-                      o.set2
-                        ? getSetDisplayName(o.set2 as import('../types/abilities').KnownSetIDs)
-                        : null,
-                      o.monsterSet
-                        ? getSetDisplayName(
-                            o.monsterSet as import('../types/abilities').KnownSetIDs,
-                          )
-                        : null,
-                    ].filter(Boolean);
-                    if (!sets.length && !o.ultimate && !o.notes) return null;
-                    return (
-                      <Box key={key} sx={{ display: 'flex', alignItems: 'center', gap: 0.4 }}>
-                        <Typography
+                  <Chip
+                    label={typeLabel}
+                    size="small"
+                    sx={{
+                      height: 17,
+                      fontSize: '0.55rem',
+                      fontWeight: 700,
+                      letterSpacing: '0.04em',
+                      textTransform: 'uppercase',
+                      flexShrink: 0,
+                      backgroundColor:
+                        enc.type === 'boss'
+                          ? `${accentColor}22`
+                          : isDarkMode
+                            ? 'rgba(255,255,255,0.08)'
+                            : 'rgba(0,0,0,0.06)',
+                      color: enc.type === 'boss' ? accentColor : 'text.secondary',
+                      '& .MuiChip-label': { px: 0.6 },
+                    }}
+                  />
+                  <Typography
+                    sx={{
+                      fontSize: '0.78rem',
+                      fontWeight: 700,
+                      color: accentColor,
+                      letterSpacing: '0.01em',
+                      flexShrink: 0,
+                    }}
+                  >
+                    {enc.name}
+                  </Typography>
+                  <Typography sx={{ fontSize: '0.66rem', color: 'text.disabled', flexShrink: 0 }}>
+                    {summary.slotCount} build{summary.slotCount === 1 ? '' : 's'}
+                  </Typography>
+                  {/* Teaser set names — hidden once expanded (full detail shows below)
+                      and on the very narrowest screens to protect the tap target. */}
+                  {!isOpen && summary.teaserSets.length > 0 && (
+                    <Box
+                      sx={{
+                        display: { xs: 'none', sm: 'flex' },
+                        alignItems: 'center',
+                        gap: 0.4,
+                        flexWrap: 'wrap',
+                        minWidth: 0,
+                      }}
+                    >
+                      {summary.teaserSets.map((s) => (
+                        <Chip
+                          key={s}
+                          label={s}
+                          size="small"
                           sx={{
-                            fontSize: '0.68rem',
-                            fontWeight: 700,
-                            color: 'text.disabled',
-                            minWidth: 20,
+                            height: 16,
+                            fontSize: '0.58rem',
+                            fontWeight: 500,
+                            maxWidth: 140,
+                            backgroundColor: `${accentColor}14`,
+                            color: accentColor,
+                            border: `1px solid ${accentColor}26`,
+                            '& .MuiChip-label': {
+                              px: 0.5,
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                            },
                           }}
-                        >
-                          {labelMap[key]}:
+                        />
+                      ))}
+                      {summary.hasMoreSets && (
+                        <Typography sx={{ fontSize: '0.62rem', color: 'text.disabled' }}>
+                          +more
                         </Typography>
-                        {sets.map((s) => (
-                          <Chip
-                            key={s}
-                            label={s}
-                            size="small"
+                      )}
+                    </Box>
+                  )}
+                </AccordionSummary>
+
+                <AccordionDetails sx={{ px: 1, pt: 0, pb: 1 }}>
+                  {/* One clearly-separated card per player slot so every role
+                      (MT/OT/H1…/D1–D8) is legible and nothing crams. Each card
+                      stacks: role + player name, then set chips, ultimate, and
+                      the per-fight note (the only place notes are surfaced). */}
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.6 }}>
+                    {rows.map((row) => (
+                      <Box
+                        key={row.key}
+                        sx={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: 0.4,
+                          p: 0.75,
+                          borderRadius: '8px',
+                          borderLeft: `2px solid ${accentColor}55`,
+                          backgroundColor: isDarkMode
+                            ? 'rgba(255,255,255,0.025)'
+                            : 'rgba(0,0,0,0.02)',
+                        }}
+                      >
+                        {/* Header line: role badge + player name */}
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.6 }}>
+                          <Box
                             sx={{
-                              height: 16,
-                              fontSize: '0.6rem',
-                              fontWeight: 500,
-                              backgroundColor: `${accentColor}18`,
-                              color: accentColor,
-                              border: `1px solid ${accentColor}30`,
-                              '& .MuiChip-label': { px: 0.5 },
+                              flexShrink: 0,
+                              px: 0.6,
+                              py: 0.1,
+                              borderRadius: '5px',
+                              backgroundColor: `${accentColor}20`,
+                              border: `1px solid ${accentColor}38`,
                             }}
-                          />
-                        ))}
-                        {o.ultimate && (
+                          >
+                            <Typography
+                              sx={{
+                                fontSize: '0.64rem',
+                                fontWeight: 800,
+                                letterSpacing: '0.02em',
+                                color: accentColor,
+                                lineHeight: 1.5,
+                              }}
+                            >
+                              {row.label}
+                            </Typography>
+                          </Box>
+                          {row.playerName && (
+                            <Typography
+                              sx={{
+                                fontSize: '0.72rem',
+                                fontWeight: 600,
+                                color: 'text.primary',
+                                letterSpacing: '-0.01em',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                              }}
+                            >
+                              {row.playerName}
+                            </Typography>
+                          )}
+                        </Box>
+
+                        {/* Set chips — wrap freely, never overflow horizontally */}
+                        {row.sets.length > 0 && (
+                          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.4, pl: 0.25 }}>
+                            {row.sets.map((s) => (
+                              <Chip
+                                key={s}
+                                label={s}
+                                size="small"
+                                sx={{
+                                  height: 18,
+                                  fontSize: '0.62rem',
+                                  fontWeight: 500,
+                                  maxWidth: '100%',
+                                  backgroundColor: `${accentColor}18`,
+                                  color: accentColor,
+                                  border: `1px solid ${accentColor}30`,
+                                  '& .MuiChip-label': { px: 0.5 },
+                                }}
+                              />
+                            ))}
+                          </Box>
+                        )}
+
+                        {/* Ultimate */}
+                        {row.ultimate && (
+                          <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 0.5, pl: 0.25 }}>
+                            <Typography
+                              sx={{
+                                fontSize: '0.6rem',
+                                fontWeight: 700,
+                                color: 'text.disabled',
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.04em',
+                                flexShrink: 0,
+                              }}
+                            >
+                              Ult
+                            </Typography>
+                            <Typography
+                              sx={{
+                                fontSize: '0.7rem',
+                                color: 'text.secondary',
+                                fontWeight: 500,
+                              }}
+                            >
+                              {row.ultimate}
+                            </Typography>
+                          </Box>
+                        )}
+
+                        {/* Per-fight note */}
+                        {row.notes && (
                           <Typography
                             sx={{
                               fontSize: '0.68rem',
                               color: 'text.secondary',
                               fontStyle: 'italic',
+                              lineHeight: 1.45,
+                              pl: 0.25,
+                              borderTop: `1px dashed ${isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}`,
+                              pt: 0.4,
+                              mt: 0.1,
                             }}
                           >
-                            {o.ultimate}
+                            {row.notes}
                           </Typography>
                         )}
                       </Box>
-                    );
-                  })}
-                  {Object.entries(overrides?.slots ?? {})
-                    .filter(([key]) => key.startsWith('dps:'))
-                    .map(([key, slot]) => {
-                      const dpsIdx = parseInt(key.split(':')[1], 10);
-                      const sets = [
-                        slot.set1
-                          ? getSetDisplayName(slot.set1 as import('../types/abilities').KnownSetIDs)
-                          : null,
-                        slot.set2
-                          ? getSetDisplayName(slot.set2 as import('../types/abilities').KnownSetIDs)
-                          : null,
-                        slot.monsterSet
-                          ? getSetDisplayName(
-                              slot.monsterSet as import('../types/abilities').KnownSetIDs,
-                            )
-                          : null,
-                      ].filter(Boolean);
-                      if (!sets.length && !slot.ultimate && !slot.notes) return null;
-                      return (
-                        <Box key={key} sx={{ display: 'flex', alignItems: 'center', gap: 0.4 }}>
-                          <Typography
-                            sx={{
-                              fontSize: '0.68rem',
-                              fontWeight: 700,
-                              color: 'text.disabled',
-                              minWidth: 20,
-                            }}
-                          >
-                            D{dpsIdx + 1}:
-                          </Typography>
-                          {sets.map((s) => (
-                            <Chip
-                              key={s}
-                              label={s}
-                              size="small"
-                              sx={{
-                                height: 16,
-                                fontSize: '0.6rem',
-                                fontWeight: 500,
-                                backgroundColor: `${accentColor}18`,
-                                color: accentColor,
-                                border: `1px solid ${accentColor}30`,
-                                '& .MuiChip-label': { px: 0.5 },
-                              }}
-                            />
-                          ))}
-                        </Box>
-                      );
-                    })}
-                </Box>
-              </Paper>
+                    ))}
+                  </Box>
+                </AccordionDetails>
+              </Accordion>
             );
           })}
         </Box>
@@ -1385,6 +1573,8 @@ interface PerFightSectionProps {
   roster: RaidRoster;
   overridesMap: Record<string, TrialBuildOverrides>;
   isDarkMode: boolean;
+  /** Deep-link target (?trial=&encounter=) so a linked fight starts expanded. */
+  deepLinkTarget?: { trial?: string; encounter?: string };
 }
 
 /**
@@ -1393,7 +1583,12 @@ interface PerFightSectionProps {
  * that has overrides but lost its tag is appended so its work is never hidden.
  * A sticky jump-bar appears at 4+ trials.
  */
-const PerFightSection: React.FC<PerFightSectionProps> = ({ roster, overridesMap, isDarkMode }) => {
+const PerFightSection: React.FC<PerFightSectionProps> = ({
+  roster,
+  overridesMap,
+  isDarkMode,
+  deepLinkTarget,
+}) => {
   const accentColor = isDarkMode ? '#9c88ff' : '#6c5ce7';
 
   // Order: tagged trials first (in roster.trials order), then any orphaned populated trials.
@@ -1487,6 +1682,7 @@ const PerFightSection: React.FC<PerFightSectionProps> = ({ roster, overridesMap,
           trial={g.trial}
           trialOverrides={g.ov}
           isDarkMode={isDarkMode}
+          deepLinkTarget={deepLinkTarget}
         />
       ))}
     </Box>
@@ -2034,6 +2230,7 @@ export const RosterViewPage: React.FC = () => {
           roster={roster}
           overridesMap={roster.trialOverrides}
           isDarkMode={isDarkMode}
+          deepLinkTarget={deepLinkTarget}
         />
       )}
 
