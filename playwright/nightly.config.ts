@@ -91,6 +91,17 @@ export default defineConfig({
     navigationTimeout: 60000,
     actionTimeout: 30000,
 
+    /* Emulate prefers-reduced-motion. SiteBackground is mounted on every route and runs
+       three infinite transform animations plus floating particles (NebulaBackground);
+       stacked on the GPU-less WebGL replay scene in CI that starves WebKit's main thread,
+       which is what inflated a scrollIntoViewIfNeeded to 13s and an actionability wait past
+       the 30s actionTimeout. The app already ships a prefers-reduced-motion kill switch, so
+       this exercises a supported code path and also makes screenshots deterministic.
+       Lives under contextOptions because Playwright 1.61 has no top-level `reducedMotion`
+       use-option; projects only override the keys they set, so this survives the
+       `...devices[...]` spreads below. */
+    contextOptions: { reducedMotion: 'reduce' },
+
     /* Always record traces for nightly runs */
     trace: 'retain-on-failure',
     video: 'retain-on-failure',
