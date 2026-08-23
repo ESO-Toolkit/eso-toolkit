@@ -11,24 +11,27 @@
  * dropdown entry that leads to an empty page.
  */
 
+import { InsightsOutlined, PublicOutlined, TuneOutlined } from '@mui/icons-material';
 import {
   Box,
-  Card,
-  Chip,
   Container,
   FormControl,
   InputLabel,
   MenuItem,
+  Paper,
   Select,
+  Stack,
   Tab,
   Tabs,
   ToggleButton,
   ToggleButtonGroup,
   Typography,
 } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
+import { ClassIcon } from '../../components/ClassIcon';
 import { PanelErrorBoundary } from '../../components/PanelErrorBoundary';
 
 import { dpsParsesApi } from './api/dpsParsesApi';
@@ -191,117 +194,306 @@ export const BuildLeaderboardPage: React.FC = () => {
   }, [encounterTabError, error, clusterError, reload, recluster]);
 
   return (
-    <Container maxWidth="lg" sx={{ py: 3 }}>
-      <Card
+    <Container maxWidth="xl" sx={{ py: { xs: 2, sm: 3.5 }, px: { xs: 1.5, sm: 3 } }}>
+      <Box
+        component="header"
         sx={(theme) => ({
-          p: 2.5,
-          mb: 3,
-          borderRadius: 3.5,
-          border: `1px solid ${theme.palette.divider}`,
-          background: 'linear-gradient(180deg, rgba(15,23,42,0.66) 0%, rgba(3,7,18,0.66) 100%)',
-          backdropFilter: 'blur(10px)',
-          WebkitBackdropFilter: 'blur(10px)',
+          position: 'relative',
+          display: 'flex',
+          alignItems: { xs: 'flex-start', md: 'center' },
+          justifyContent: 'space-between',
+          flexDirection: { xs: 'column', md: 'row' },
+          gap: { xs: 2, md: 4 },
+          mb: 2.5,
+          pb: 2.5,
+          overflow: 'hidden',
+          borderBottom: `1px solid ${alpha(theme.palette.divider, 0.65)}`,
+          '&::after': {
+            content: '""',
+            position: 'absolute',
+            width: 340,
+            height: 180,
+            right: -80,
+            top: -100,
+            pointerEvents: 'none',
+            background: `radial-gradient(circle, ${alpha(theme.palette.primary.main, 0.11)} 0%, transparent 70%)`,
+          },
         })}
       >
-        <Typography variant="h5" sx={{ fontWeight: 700, mb: 0.5 }}>
-          Build Leaderboard
-        </Typography>
-        <Typography variant="body2" sx={{ opacity: 0.8 }}>
-          The builds top DPS players actually run, grouped into archetypes. Green chips are the
-          pieces nearly everyone uses; amber ones have real alternatives.
-        </Typography>
-        {selectedEncounter?.updated_at && (
-          <Chip
-            size="small"
-            variant="outlined"
-            label={`Data as of ${selectedEncounter.updated_at.slice(0, 10)}`}
-            sx={{ mt: 1.5 }}
-          />
-        )}
-      </Card>
-
-      <Tabs
-        value={tab}
-        onChange={(_event, value: TabKey) => setParam({ tab: value })}
-        sx={{ mb: 2.5 }}
-      >
-        <Tab label="By Encounter" value="encounter" />
-        <Tab label="By Class" value="class" />
-      </Tabs>
-
-      {tab === 'encounter' ? (
-        <PanelErrorBoundary panelName="Encounter Builds">
-          <FormControl size="small" sx={{ minWidth: 280, mb: 2.5 }}>
-            <InputLabel id="dps-encounter-label">Trial &amp; boss</InputLabel>
-            <Select
-              labelId="dps-encounter-label"
-              label="Trial & boss"
-              value={selectedEncounter ? encounterKey(selectedEncounter) : ''}
-              onChange={(event) => setParam({ boss: String(event.target.value) })}
-            >
-              {encounters.map((encounter) => (
-                <MenuItem key={encounterKey(encounter)} value={encounterKey(encounter)}>
-                  {encounter.trial_id ? `${encounter.trial_id} — ` : ''}
-                  {encounter.encounter_name} ({encounter.parse_count})
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-
-          <BuildLeaderboardView
-            parses={parses}
-            result={result}
-            loading={loading || encountersLoading}
-            clustering={clustering}
-            clusterProgress={progress}
-            error={combinedError}
-            tooFewParses={tooFewParses}
-            onRetry={handleRetry}
-            onOpenInEditor={openInEditor}
-            onSaveBuild={saveToMyBuilds}
-            onViewSourceLog={handleViewSourceLog}
-            pendingAction={pendingAction}
-            emptyMessage="No top parses recorded for this boss yet. Try another encounter."
-          />
-        </PanelErrorBoundary>
-      ) : (
-        <PanelErrorBoundary panelName="Class Archetypes">
-          <ToggleButtonGroup
-            exclusive
-            size="small"
-            value={selectedClass}
-            onChange={(_event, value: string | null) => value && setParam({ class: value })}
-            sx={{ mb: 2.5, flexWrap: 'wrap' }}
+        <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: { xs: 1.25, sm: 1.75 } }}>
+          <Box
+            sx={(theme) => ({
+              width: { xs: 40, sm: 48 },
+              height: { xs: 40, sm: 48 },
+              borderRadius: 1.6,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: theme.palette.primary.main,
+              background: `linear-gradient(145deg, ${alpha(theme.palette.primary.main, 0.16)}, ${alpha(theme.palette.secondary.main, 0.055)})`,
+              border: `1px solid ${alpha(theme.palette.primary.main, 0.22)}`,
+              boxShadow: `0 0 24px ${alpha(theme.palette.primary.main, 0.09)}`,
+              flexShrink: 0,
+            })}
           >
-            {ESO_CLASSES.map((esoClass) => (
-              <ToggleButton key={esoClass} value={esoClass} sx={{ textTransform: 'none' }}>
-                {CLASS_LABELS[esoClass] ?? esoClass}
-              </ToggleButton>
-            ))}
-          </ToggleButtonGroup>
+            <InsightsOutlined sx={{ fontSize: { xs: 21, sm: 25 } }} />
+          </Box>
+          <Box>
+            <Typography
+              sx={{
+                color: 'text.disabled',
+                fontSize: '0.62rem',
+                fontWeight: 750,
+                letterSpacing: '0.11em',
+                textTransform: 'uppercase',
+                lineHeight: 1.2,
+                mb: 0.45,
+              }}
+            >
+              Combat intelligence
+            </Typography>
+            <Typography
+              component="h1"
+              sx={{
+                fontFamily: 'Space Grotesk, Inter, system-ui',
+                fontWeight: 730,
+                fontSize: { xs: '1.45rem', sm: '1.8rem' },
+                letterSpacing: '-0.035em',
+                lineHeight: 1.08,
+              }}
+            >
+              Build Leaderboard
+            </Typography>
+            <Typography
+              variant="body2"
+              sx={{ color: 'text.secondary', mt: 0.75, maxWidth: 650, lineHeight: 1.55 }}
+            >
+              See the build patterns behind the fastest parses, which pieces define them, and how
+              their real-world performance compares.
+            </Typography>
+          </Box>
+        </Box>
 
-          <BuildLeaderboardView
-            parses={parses}
-            result={result}
-            loading={loading}
-            clustering={clustering}
-            clusterProgress={progress}
-            error={combinedError}
-            tooFewParses={tooFewParses}
-            esoClass={CLASS_LABELS[selectedClass] ?? selectedClass}
-            onRetry={handleRetry}
-            onOpenInEditor={openInEditor}
-            onSaveBuild={saveToMyBuilds}
-            onViewSourceLog={handleViewSourceLog}
-            pendingAction={pendingAction}
-            emptyMessage={`No ${CLASS_LABELS[selectedClass] ?? selectedClass} parses recorded yet.`}
-          />
-        </PanelErrorBoundary>
-      )}
+        <Stack
+          direction={{ xs: 'row', sm: 'column' }}
+          spacing={{ xs: 1.5, sm: 0.5 }}
+          sx={{
+            color: 'text.secondary',
+            minWidth: { md: 220 },
+            flexWrap: 'wrap',
+            position: 'relative',
+            zIndex: 1,
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+            <PublicOutlined sx={{ fontSize: 15, color: 'text.disabled' }} />
+            <Typography variant="caption">Observed top parses from ESO Logs</Typography>
+          </Box>
+          {tab === 'encounter' && selectedEncounter?.updated_at && (
+            <Typography variant="caption" className="u-tabular" sx={{ pl: { sm: 2.75 } }}>
+              Updated {selectedEncounter.updated_at.slice(0, 10)}
+            </Typography>
+          )}
+        </Stack>
+      </Box>
 
-      <Box sx={{ mt: 4, opacity: 0.6 }}>
+      <Paper
+        component="section"
+        aria-label="Build leaderboard filters"
+        elevation={0}
+        sx={(theme) => ({
+          mb: 3,
+          borderRadius: 3,
+          overflow: 'hidden',
+          border: `1px solid ${alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.18 : 0.12)}`,
+          background:
+            theme.palette.mode === 'dark'
+              ? 'linear-gradient(145deg, rgba(15,23,42,0.62) 0%, rgba(3,7,18,0.48) 100%)'
+              : 'linear-gradient(145deg, rgba(255,255,255,0.94) 0%, rgba(244,249,255,0.82) 100%)',
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
+        })}
+      >
+        <Box
+          sx={(theme) => ({
+            px: { xs: 1.25, sm: 1.75 },
+            pt: 1.2,
+            display: 'flex',
+            alignItems: { xs: 'stretch', sm: 'center' },
+            justifyContent: 'space-between',
+            flexDirection: { xs: 'column', sm: 'row' },
+            gap: 0.75,
+            borderBottom: `1px solid ${alpha(theme.palette.divider, 0.55)}`,
+          })}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, color: 'text.secondary' }}>
+            <TuneOutlined sx={{ fontSize: 16 }} />
+            <Typography
+              sx={{
+                fontSize: '0.67rem',
+                fontWeight: 750,
+                letterSpacing: '0.08em',
+                textTransform: 'uppercase',
+              }}
+            >
+              Explore builds
+            </Typography>
+          </Box>
+          <Tabs
+            value={tab}
+            onChange={(_event, value: TabKey) => setParam({ tab: value })}
+            aria-label="Build leaderboard view"
+            sx={(theme) => ({
+              minHeight: 40,
+              '& .MuiTabs-indicator': { height: 2, borderRadius: '2px 2px 0 0' },
+              '& .MuiTab-root': {
+                minHeight: 40,
+                minWidth: { xs: 0, sm: 120 },
+                px: { xs: 1.25, sm: 2 },
+                fontSize: '0.76rem',
+                fontWeight: 650,
+                color: theme.palette.text.secondary,
+              },
+              '& .Mui-selected': { color: `${theme.palette.text.primary} !important` },
+            })}
+          >
+            <Tab label="By Encounter" value="encounter" />
+            <Tab label="By Class" value="class" />
+          </Tabs>
+        </Box>
+
+        <Box sx={{ p: { xs: 1.25, sm: 1.75 } }}>
+          {tab === 'encounter' ? (
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: { xs: 'stretch', sm: 'center' },
+                flexDirection: { xs: 'column', sm: 'row' },
+                gap: 1.25,
+              }}
+            >
+              <FormControl size="small" fullWidth sx={{ maxWidth: 560 }}>
+                <InputLabel id="dps-encounter-label">Trial &amp; boss</InputLabel>
+                <Select
+                  labelId="dps-encounter-label"
+                  label="Trial & boss"
+                  value={selectedEncounter ? encounterKey(selectedEncounter) : ''}
+                  onChange={(event) => setParam({ boss: String(event.target.value) })}
+                >
+                  {encounters.map((encounter) => (
+                    <MenuItem key={encounterKey(encounter)} value={encounterKey(encounter)}>
+                      {encounter.trial_id ? `${encounter.trial_id} — ` : ''}
+                      {encounter.encounter_name} ({encounter.parse_count})
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <Typography variant="caption" sx={{ color: 'text.disabled' }}>
+                Select a boss to compare the archetypes used in its fastest recorded clears.
+              </Typography>
+            </Box>
+          ) : (
+            <Box sx={{ overflowX: 'auto', pb: 0.25 }}>
+              <ToggleButtonGroup
+                exclusive
+                size="small"
+                value={selectedClass}
+                aria-label="ESO class"
+                onChange={(_event, value: string | null) => value && setParam({ class: value })}
+                sx={(theme) => ({
+                  minWidth: 'max-content',
+                  gap: 0.5,
+                  '& .MuiToggleButtonGroup-grouped': {
+                    m: 0,
+                    border: `1px solid ${alpha(theme.palette.divider, 0.75)} !important`,
+                    borderRadius: '8px !important',
+                  },
+                })}
+              >
+                {ESO_CLASSES.map((esoClass) => {
+                  const label = CLASS_LABELS[esoClass] ?? esoClass;
+                  return (
+                    <ToggleButton
+                      key={esoClass}
+                      value={esoClass}
+                      aria-label={label}
+                      sx={(theme) => ({
+                        display: 'flex',
+                        gap: 0.7,
+                        px: 1.2,
+                        py: 0.7,
+                        textTransform: 'none',
+                        color: theme.palette.text.secondary,
+                        '&.Mui-selected': {
+                          color: theme.palette.text.primary,
+                          backgroundColor: alpha(theme.palette.primary.main, 0.1),
+                          borderColor: `${alpha(theme.palette.primary.main, 0.28)} !important`,
+                        },
+                      })}
+                    >
+                      <ClassIcon className={label} size={15} alt="" />
+                      {label}
+                    </ToggleButton>
+                  );
+                })}
+              </ToggleButtonGroup>
+            </Box>
+          )}
+        </Box>
+      </Paper>
+
+      <Box key={tab} className="u-tab-enter">
+        {tab === 'encounter' ? (
+          <PanelErrorBoundary panelName="Encounter Builds">
+            <BuildLeaderboardView
+              parses={parses}
+              result={result}
+              loading={loading || encountersLoading}
+              clustering={clustering}
+              clusterProgress={progress}
+              error={combinedError}
+              tooFewParses={tooFewParses}
+              onRetry={handleRetry}
+              onOpenInEditor={openInEditor}
+              onSaveBuild={saveToMyBuilds}
+              onViewSourceLog={handleViewSourceLog}
+              pendingAction={pendingAction}
+              emptyMessage="No top parses recorded for this boss yet. Try another encounter."
+            />
+          </PanelErrorBoundary>
+        ) : (
+          <PanelErrorBoundary panelName="Class Archetypes">
+            <BuildLeaderboardView
+              parses={parses}
+              result={result}
+              loading={loading}
+              clustering={clustering}
+              clusterProgress={progress}
+              error={combinedError}
+              tooFewParses={tooFewParses}
+              esoClass={CLASS_LABELS[selectedClass] ?? selectedClass}
+              onRetry={handleRetry}
+              onOpenInEditor={openInEditor}
+              onSaveBuild={saveToMyBuilds}
+              onViewSourceLog={handleViewSourceLog}
+              pendingAction={pendingAction}
+              emptyMessage={`No ${CLASS_LABELS[selectedClass] ?? selectedClass} parses recorded yet.`}
+            />
+          </PanelErrorBoundary>
+        )}
+      </Box>
+
+      <Box
+        component="footer"
+        sx={(theme) => ({
+          mt: 4,
+          pt: 1.5,
+          borderTop: `1px solid ${alpha(theme.palette.divider, 0.5)}`,
+          color: 'text.disabled',
+        })}
+      >
         <Typography variant="caption">
-          Parse data from ESO Logs. Each archetype links back to the log it came from.
+          Parse data from ESO Logs. Each archetype links to the representative log it came from.
         </Typography>
       </Box>
     </Container>

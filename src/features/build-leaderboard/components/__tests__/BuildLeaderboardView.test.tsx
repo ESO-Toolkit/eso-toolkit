@@ -90,6 +90,22 @@ describe('BuildLeaderboardView happy path', () => {
     expect(screen.getAllByTestId('archetype-card')).toHaveLength(result.k - 1);
   });
 
+  it('compares every archetype on one shared performance rail', () => {
+    const { parses, result } = clusteredFixture();
+    renderView({ parses, result });
+
+    expect(screen.getByText('Performance spread')).toBeInTheDocument();
+    const comparisonRows = result.clusters.map((cluster) =>
+      screen.getByRole('button', {
+        name: (accessibleName) =>
+          accessibleName.startsWith(`${cluster.label}: median`) &&
+          accessibleName.includes('DPS') &&
+          accessibleName.includes('of parses'),
+      }),
+    );
+    expect(comparisonRows).toHaveLength(result.k);
+  });
+
   it('leads with the median, not the record', () => {
     const { parses, result } = clusteredFixture();
     renderView({ parses, result });
@@ -119,6 +135,16 @@ describe('BuildLeaderboardView happy path', () => {
     flex.forEach((chip) => expect(chip).not.toHaveAttribute('data-core'));
   });
 
+  it('shows the build composition before an alternative is expanded', () => {
+    const { parses, result } = clusteredFixture();
+    renderView({ parses, result });
+
+    const [alternative] = screen.getAllByTestId('archetype-card');
+    expect(within(alternative).getByText(/build composition/i)).toBeInTheDocument();
+    expect(alternative.querySelectorAll('[data-trait-kind="core"]').length).toBeGreaterThan(0);
+    expect(within(alternative).queryByText(/build consistency/i)).not.toBeInTheDocument();
+  });
+
   it('buckets grouping quality instead of showing a raw silhouette', () => {
     const { parses, result } = clusteredFixture();
     renderView({ parses, result });
@@ -145,25 +171,50 @@ describe('BuildLeaderboardView happy path', () => {
   it('labels and disables per action while one is in flight', () => {
     const { parses, result } = clusteredFixture();
     const id = result.recommendedClusterId as string;
+    const onOpenInEditor = jest.fn();
+    const onSaveBuild = jest.fn();
 
     const { unmount } = renderView({
       parses,
       result,
       pendingAction: { clusterId: id, kind: 'open' },
+      onOpenInEditor,
+      onSaveBuild,
     });
 
     let featured = screen.getByTestId('start-here-card');
     expect(within(featured).getByRole('button', { name: /opening/i })).toBeDisabled();
-    // Save must not read "Opening…" and must also be locked out.
-    expect(within(featured).getByRole('button', { name: /save to my builds/i })).toBeDisabled();
+    // Secondary actions share one overflow and must also be locked out.
+    expect(within(featured).getByRole('button', { name: /more actions/i })).toBeDisabled();
     unmount();
 
     // A save in flight labels Save, not the primary button.
-    renderView({ parses, result, pendingAction: { clusterId: id, kind: 'save' } });
+    renderView({
+      parses,
+      result,
+      pendingAction: { clusterId: id, kind: 'save' },
+      onOpenInEditor,
+      onSaveBuild,
+    });
     featured = screen.getByTestId('start-here-card');
     expect(within(featured).getByRole('button', { name: /saving/i })).toBeDisabled();
     expect(within(featured).queryByRole('button', { name: /opening/i })).not.toBeInTheDocument();
     expect(within(featured).getByRole('button', { name: /open in build editor/i })).toBeDisabled();
+  });
+
+  it('keeps secondary build actions in one overflow menu', async () => {
+    const onSaveBuild = jest.fn();
+    const { parses, result } = clusteredFixture();
+    renderView({ parses, result, onSaveBuild });
+
+    const featured = screen.getByTestId('start-here-card');
+    await userEvent.click(within(featured).getByRole('button', { name: /more actions/i }));
+    await userEvent.click(screen.getByRole('menuitem', { name: /save to my builds/i }));
+
+    expect(onSaveBuild).toHaveBeenCalledTimes(1);
+    expect(onSaveBuild).toHaveBeenCalledWith(
+      expect.objectContaining({ id: result.recommendedClusterId }),
+    );
   });
 
   /**
@@ -176,11 +227,11 @@ describe('BuildLeaderboardView happy path', () => {
     const { rerender } = renderView({ parses, result });
 
     // The featured card always shows its detail, so count rather than assert presence.
-    const detailCount = (): number => screen.queryAllByText(/consistency/i).length;
+    const detailCount = (): number => screen.queryAllByText(/^build consistency$/i).length;
     const collapsed = detailCount();
 
     const [card] = screen.getAllByTestId('archetype-card');
-    await userEvent.click(within(card).getByRole('button', { name: /details/i }));
+    await userEvent.click(within(card).getByRole('button', { name: /full breakdown/i }));
     expect(detailCount()).toBe(collapsed + 1);
 
     // Simulate switching to another encounter: a different parse set, a fresh
@@ -243,11 +294,11 @@ describe('BuildLeaderboardView happy path', () => {
       );
 
       const { rerender } = render(view(parses, result));
-      const detailCount = (): number => screen.queryAllByText(/consistency/i).length;
+      const detailCount = (): number => screen.queryAllByText(/^build consistency$/i).length;
       const collapsed = detailCount();
 
       const [card] = screen.getAllByTestId('archetype-card');
-      await userEvent.click(within(card).getByRole('button', { name: /details/i }));
+      await userEvent.click(within(card).getByRole('button', { name: /full breakdown/i }));
       expect(detailCount()).toBe(collapsed + 1);
 
       resetFixtureIds();
@@ -271,8 +322,8 @@ describe('BuildLeaderboardView happy path', () => {
     renderView({ parses, result });
 
     const [card] = screen.getAllByTestId('archetype-card');
-    await userEvent.click(within(card).getByRole('button', { name: /details/i }));
+    await userEvent.click(within(card).getByRole('button', { name: /full breakdown/i }));
 
-    expect(within(card).getByText(/consistency/i)).toBeInTheDocument();
+    expect(within(card).getByText(/^build consistency$/i)).toBeInTheDocument();
   });
 });

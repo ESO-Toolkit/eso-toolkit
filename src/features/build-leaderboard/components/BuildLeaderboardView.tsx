@@ -1,18 +1,29 @@
 /**
- * Presentational shell for a set of archetypes.
+ * Presentational shell for clustered build archetypes.
  *
- * Container/view split per repo convention: this file is prop-driven and is what
- * Storybook and the component tests target.
+ * The page leads with the shared-scale performance comparison, then renders
+ * full-width archetype rows whose build composition is always visible.
  */
 
-import { Alert, Box, Button, LinearProgress, Skeleton, Stack, Typography } from '@mui/material';
+import { ExpandMore, InfoOutlined } from '@mui/icons-material';
+import {
+  Alert,
+  Box,
+  Button,
+  Collapse,
+  LinearProgress,
+  Skeleton,
+  Stack,
+  Typography,
+} from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import React, { useState } from 'react';
 
-import { MetricPill } from '../../../components/MetricPill';
 import type { BuildCluster, ClusterBuildsResult } from '../types/clustering.types';
 import type { DpsParse } from '../types/dpsParses.types';
 
 import { ArchetypeCard } from './ArchetypeCard';
+import { DpsDistributionRail } from './DpsDistributionRail';
 
 export interface BuildLeaderboardViewProps {
   parses: readonly DpsParse[];
@@ -32,11 +43,7 @@ export interface BuildLeaderboardViewProps {
   emptyMessage?: string;
 }
 
-/**
- * Silhouette is bucketed, never shown as a raw float. It is a diagnostic, and
- * presenting "0.31" as a headline number implies a precision the metric does not
- * have.
- */
+/** Silhouette is bucketed, never shown as a raw float. */
 function clusterQuality(silhouette: number): { label: string; tooltip: string } {
   if (silhouette >= 0.5) {
     return {
@@ -57,17 +64,11 @@ function clusterQuality(silhouette: number): { label: string; tooltip: string } 
 }
 
 const SkeletonCards: React.FC = () => (
-  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
-    <Skeleton variant="rounded" height={260} sx={{ flex: '1 1 100%', borderRadius: 3.5 }} />
-    {[0, 1, 2].map((index) => (
-      <Skeleton
-        key={index}
-        variant="rounded"
-        height={190}
-        sx={{ flex: '1 1 320px', borderRadius: 3.5 }}
-      />
-    ))}
-  </Box>
+  <Stack spacing={2} aria-label="Loading build archetypes">
+    <Skeleton variant="rounded" height={190} sx={{ borderRadius: 3.5 }} />
+    <Skeleton variant="rounded" height={470} sx={{ borderRadius: 3.5 }} />
+    <Skeleton variant="rounded" height={390} sx={{ borderRadius: 3.5 }} />
+  </Stack>
 );
 
 export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
@@ -86,21 +87,15 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
   pendingAction,
   emptyMessage = 'No top parses recorded here yet.',
 }) => {
-  // Reset whenever the clustered result changes. Cluster ids are positional
-  // ('c0', 'c1', …) and get reused across runs, so an id held over from the
-  // previous encounter or class would expand a completely unrelated archetype.
-  //
-  // This is React's documented "adjust state when a prop changes" form, not an
-  // effect: React restarts the render before painting, so the wrong card never
-  // reaches the screen, whereas an effect would flash it for a frame. The
-  // previous result is tracked in state rather than a ref deliberately — a ref
-  // mutated during render survives a render that concurrent React discards,
-  // which would desync it from the state it guards.
+  // Cluster ids are positional and reused across queries. Reset all disclosure
+  // state during render so a different encounter cannot inherit stale UI state.
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [methodologyOpen, setMethodologyOpen] = useState(false);
   const [lastResult, setLastResult] = useState(result);
   if (lastResult !== result) {
     setLastResult(result);
     setExpandedId(null);
+    setMethodologyOpen(false);
   }
 
   if (error) {
@@ -122,13 +117,10 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
 
   if (loading) return <SkeletonCards />;
 
-  // Empty is not broken — an encounter with no ingested parses is a normal state,
-  // so this is `info`, matching the existing leaderboard page's distinction.
   if (parses.length === 0) {
     return <Alert severity="info">{emptyMessage}</Alert>;
   }
 
-  // A three-way split of six points is noise dressed up as insight.
   if (tooFewParses) {
     return (
       <Alert severity="info" data-testid="too-few-parses">
@@ -141,14 +133,31 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
   if (clustering || !result) {
     return (
       <Box>
-        <LinearProgress
-          variant={clusterProgress > 0 ? 'determinate' : 'indeterminate'}
-          value={clusterProgress}
-          sx={{ mb: 2, borderRadius: 1 }}
-        />
-        <Typography variant="body2" aria-live="polite" sx={{ mb: 2, opacity: 0.8 }}>
-          Grouping {parses.length} parses into builds…
-        </Typography>
+        <Box
+          sx={(theme) => ({
+            mb: 2,
+            p: 1.5,
+            borderRadius: 2,
+            border: `1px solid ${alpha(theme.palette.primary.main, 0.16)}`,
+            backgroundColor: alpha(theme.palette.primary.main, 0.045),
+          })}
+        >
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 1, mb: 0.75 }}>
+            <Typography variant="body2" aria-live="polite" sx={{ color: 'text.secondary' }}>
+              Grouping {parses.length} parses into build archetypes…
+            </Typography>
+            {clusterProgress > 0 && (
+              <Typography className="u-tabular" variant="caption" sx={{ color: 'text.disabled' }}>
+                {Math.round(clusterProgress)}%
+              </Typography>
+            )}
+          </Box>
+          <LinearProgress
+            variant={clusterProgress > 0 ? 'determinate' : 'indeterminate'}
+            value={clusterProgress}
+            sx={{ borderRadius: 999, height: 4 }}
+          />
+        </Box>
         <SkeletonCards />
       </Box>
     );
@@ -157,22 +166,127 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
   const quality = clusterQuality(result.silhouette);
   const sourceUrlFor = (cluster: BuildCluster): string | undefined =>
     parses.find((parse) => parse.parse_id === cluster.medoidParseId)?.source_url;
-  const recommended = result.clusters.find((c) => c.id === result.recommendedClusterId);
-  const others = result.clusters.filter((c) => c.id !== result.recommendedClusterId);
+  const recommended = result.clusters.find((cluster) => cluster.id === result.recommendedClusterId);
+  const others = result.clusters.filter((cluster) => cluster.id !== result.recommendedClusterId);
+  const rankFor = (cluster: BuildCluster): number =>
+    result.clusters.findIndex((candidate) => candidate.id === cluster.id) + 1;
+
+  const handleComparisonSelect = (clusterId: string): void => {
+    if (clusterId !== result.recommendedClusterId) setExpandedId(clusterId);
+
+    const target = document.getElementById(`build-archetype-${clusterId}`);
+    if (!target?.scrollIntoView) return;
+    const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+    target.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'nearest' });
+  };
 
   return (
     <Box>
-      <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', gap: 1, mb: 2.5 }}>
-        <MetricPill label="Parses analysed" value={result.totalParses} />
-        <MetricPill label="Distinct builds" value={result.uniqueSignatures} />
-        <MetricPill label="Archetypes found" value={result.k} intent="info" />
-        <MetricPill label="Grouping quality" value={quality.label} tooltip={quality.tooltip} />
-      </Stack>
+      <Box
+        component="section"
+        aria-label="Leaderboard data notes"
+        sx={(theme) => ({
+          mb: 2.5,
+          borderTop: `1px solid ${alpha(theme.palette.divider, 0.58)}`,
+          borderBottom: `1px solid ${alpha(theme.palette.divider, 0.58)}`,
+        })}
+      >
+        <Button
+          variant="text"
+          size="small"
+          startIcon={<InfoOutlined />}
+          endIcon={
+            <ExpandMore
+              sx={{
+                transition: 'transform 160ms ease',
+                transform: methodologyOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+              }}
+            />
+          }
+          aria-expanded={methodologyOpen}
+          onClick={() => setMethodologyOpen((open) => !open)}
+          sx={{
+            width: '100%',
+            justifyContent: 'flex-start',
+            px: 0,
+            py: 1,
+            color: 'text.secondary',
+          }}
+        >
+          {result.totalParses} parses · {result.uniqueSignatures} distinct builds · {result.k}{' '}
+          archetypes · grouping quality {quality.label.toLowerCase()}
+        </Button>
+        <Collapse in={methodologyOpen} timeout="auto" unmountOnExit>
+          <Box
+            sx={(theme) => ({
+              display: 'grid',
+              gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, 1fr)' },
+              gap: 1.5,
+              pb: 1.5,
+              color: 'text.secondary',
+              '& > div': {
+                pl: 1.25,
+                borderLeft: `2px solid ${alpha(theme.palette.primary.main, 0.22)}`,
+              },
+            })}
+          >
+            <Box>
+              <Typography variant="caption" sx={{ display: 'block', fontWeight: 700 }}>
+                Core vs common options
+              </Typography>
+              <Typography variant="caption">
+                Core pieces appear in at least 80% of the archetype; common options appear in
+                35–79%.
+              </Typography>
+            </Box>
+            <Box>
+              <Typography variant="caption" sx={{ display: 'block', fontWeight: 700 }}>
+                Grouping quality: {quality.label}
+              </Typography>
+              <Typography variant="caption">{quality.tooltip}</Typography>
+            </Box>
+            <Box>
+              <Typography variant="caption" sx={{ display: 'block', fontWeight: 700 }}>
+                Representative builds
+              </Typography>
+              <Typography variant="caption">
+                Every action opens a real observed parse. Race, CP, mundus, and food are omitted
+                when the source does not provide them.
+              </Typography>
+            </Box>
+          </Box>
+        </Collapse>
+      </Box>
+
+      <DpsDistributionRail
+        clusters={result.clusters}
+        recommendedClusterId={result.recommendedClusterId}
+        onSelect={handleComparisonSelect}
+      />
 
       {recommended && (
-        <Box sx={{ mb: 3 }}>
+        <Box component="section" aria-labelledby="recommended-build-heading" sx={{ mb: 3 }}>
+          <Box
+            sx={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', mb: 1 }}
+          >
+            <Typography
+              id="recommended-build-heading"
+              sx={{
+                fontSize: '0.72rem',
+                fontWeight: 750,
+                letterSpacing: '0.08em',
+                textTransform: 'uppercase',
+              }}
+            >
+              Recommended starting point
+            </Typography>
+            <Typography variant="caption" sx={{ color: 'text.disabled' }}>
+              balanced for adoption and median performance
+            </Typography>
+          </Box>
           <ArchetypeCard
             cluster={recommended}
+            rank={rankFor(recommended)}
             totalParses={result.totalParses}
             featured
             esoClass={esoClass ?? recommended.esoClass}
@@ -187,27 +301,50 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
         </Box>
       )}
 
-      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
-        {others.map((cluster) => (
-          <Box key={cluster.id} sx={{ flex: '1 1 340px', minWidth: 0 }}>
-            <ArchetypeCard
-              cluster={cluster}
-              totalParses={result.totalParses}
-              expanded={expandedId === cluster.id}
-              onToggleExpand={() =>
-                setExpandedId((current) => (current === cluster.id ? null : cluster.id))
-              }
-              variations={cluster.variations}
-              sourceUrl={sourceUrlFor(cluster)}
-              pendingKind={pendingAction?.clusterId === cluster.id ? pendingAction.kind : null}
-              actionsDisabled={Boolean(pendingAction)}
-              onOpenInEditor={onOpenInEditor}
-              onSaveBuild={onSaveBuild}
-              onViewSourceLog={onViewSourceLog}
-            />
+      {others.length > 0 && (
+        <Box component="section" aria-labelledby="other-builds-heading">
+          <Box
+            sx={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', mb: 1 }}
+          >
+            <Typography
+              id="other-builds-heading"
+              sx={{
+                fontSize: '0.72rem',
+                fontWeight: 750,
+                letterSpacing: '0.08em',
+                textTransform: 'uppercase',
+              }}
+            >
+              Other observed archetypes
+            </Typography>
+            <Typography variant="caption" sx={{ color: 'text.disabled' }}>
+              {others.length} alternative{others.length === 1 ? '' : 's'}
+            </Typography>
           </Box>
-        ))}
-      </Box>
+          <Stack spacing={1.5}>
+            {others.map((cluster) => (
+              <ArchetypeCard
+                key={cluster.id}
+                cluster={cluster}
+                rank={rankFor(cluster)}
+                totalParses={result.totalParses}
+                expanded={expandedId === cluster.id}
+                onToggleExpand={() =>
+                  setExpandedId((current) => (current === cluster.id ? null : cluster.id))
+                }
+                esoClass={esoClass ?? cluster.esoClass}
+                variations={cluster.variations}
+                sourceUrl={sourceUrlFor(cluster)}
+                pendingKind={pendingAction?.clusterId === cluster.id ? pendingAction.kind : null}
+                actionsDisabled={Boolean(pendingAction)}
+                onOpenInEditor={onOpenInEditor}
+                onSaveBuild={onSaveBuild}
+                onViewSourceLog={onViewSourceLog}
+              />
+            ))}
+          </Stack>
+        </Box>
+      )}
     </Box>
   );
 };
