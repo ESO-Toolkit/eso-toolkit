@@ -867,6 +867,13 @@ local function handleSlash(args)
     d(string.format("[%s] Reference state: lvl=%s CP=%s equipped=%s | MagMax=%s StaMax=%s SpellDmg=%s WpnDmg=%s",
       ADDON_NAME, tostring(s.level), tostring(s.championPoints), tostring(s.equippedItemCount),
       tostring(s.magickaMax), tostring(s.staminaMax), tostring(s.spellPower), tostring(s.weaponPower)))
+    -- Crit (rating) + penetration too, so A/B gear-swap measurements can read
+    -- every offensive stat from this one command (see the gear-upgrade value
+    -- sourcing protocol). Crit DAMAGE is not a GetPlayerStat field — read it
+    -- from the in-game Character sheet instead.
+    d(string.format("[%s]   ...WpnCrit=%s SpellCrit=%s PhysPen=%s SpellPen=%s",
+      ADDON_NAME, tostring(s.weaponCrit), tostring(s.spellCrit),
+      tostring(s.physicalPen), tostring(s.spellPen)))
     return
   end
 
