@@ -32,8 +32,7 @@ export function enablePerInstanceOpacity(
   instanceCount: number,
 ): Float32Array {
   const existing = geometry.getAttribute(ATTRIBUTE_NAME) as
-    | THREE.InstancedBufferAttribute
-    | undefined;
+    THREE.InstancedBufferAttribute | undefined;
   let array: Float32Array;
   if (existing && existing.array instanceof Float32Array && existing.count === instanceCount) {
     array = existing.array;

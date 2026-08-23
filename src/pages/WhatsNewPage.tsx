@@ -131,8 +131,8 @@ const EntryCard: React.FC<{ entry: WhatsNewEntry }> = ({ entry }) => (
         </Stack>
       )}
 
-      {/* Summary (AI-generated) or raw description fallback */}
-      {(entry.summary || entry.description) && (
+      {/* Public summary. Raw PR bodies remain on GitHub and are not rendered here. */}
+      {entry.summary && (
         <Typography
           variant="body2"
           sx={{
@@ -143,7 +143,7 @@ const EntryCard: React.FC<{ entry: WhatsNewEntry }> = ({ entry }) => (
             overflow: 'auto',
           }}
         >
-          {entry.summary || entry.description}
+          {entry.summary}
         </Typography>
       )}
     </Stack>
@@ -192,7 +192,7 @@ export const WhatsNewPage: React.FC = () => {
         <Box>
           <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
             <NewReleasesIcon color="primary" sx={{ fontSize: 32 }} />
-            <Typography variant="h3" sx={{ fontWeight: 800 }}>
+            <Typography variant="h3" component="h1" sx={{ fontWeight: 800 }}>
               What&apos;s New
             </Typography>
           </Stack>

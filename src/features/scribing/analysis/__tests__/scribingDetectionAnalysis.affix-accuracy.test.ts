@@ -1,8 +1,9 @@
 /**
  * Regression tests for scribing AFFIX detection accuracy.
  *
- * Primary case: report 3q6hFmcMzBN1TpVA, fight 34, player 93 (@blueblaze103, Arcanist Banner Bearer).
- * The user ran the COURAGE affix but the app reported BERSERK. Two compounding root causes:
+ * Primary case: an Arcanist Banner Bearer synthetic fixture.
+ * The fixture runs the COURAGE affix while a nearby cadence could be mistaken for BERSERK. Two
+ * compounding root causes were covered by the regression:
  *   1. DATA: the Courage affix was missing the ability IDs real logs emit — Minor Courage 147417 and
  *      Major Courage 109966 — so Courage was never even a detection candidate (fixed in
  *      data/scribing-complete.json v6.4).
@@ -11,7 +12,7 @@
  *      and (c) emitted that 0.21-consistency / 0-immediate match with no confidence floor.
  *
  * These tests exercise the real computeScribingDetection() with synthetic combat events whose timing
- * signature mirrors the live log (banner pulses ~10s apart applying Minor Courage to ALLIES at +0ms;
+ * signature mirrors a representative log (banner pulses ~10s apart applying Minor Courage to ALLIES at +0ms;
  * Minor Berserk drifting in at ~275ms light-attack cadence from another source).
  */
 
@@ -52,7 +53,7 @@ function buff(
   } as BuffEvent;
 }
 
-function buildBlueblazeEvents(options: { includeCourage: boolean }): CombatEventData {
+function buildBannerBearerEvents(options: { includeCourage: boolean }): CombatEventData {
   const buffs: BuffEvent[] = [];
 
   BANNER_PULSES.forEach((pulse, i) => {
@@ -76,12 +77,12 @@ function buildBlueblazeEvents(options: { includeCourage: boolean }): CombatEvent
   return { buffs, debuffs: [], damage: [], casts: [], heals: [], resources: [] };
 }
 
-describe('Scribing affix detection accuracy — blueblaze103 Courage case', () => {
+describe('Scribing affix detection accuracy — Banner Bearer Courage case', () => {
   it('detects Courage (not Berserk) for an Arcanist Banner Bearer applying Minor Courage to allies', () => {
     const result = computeScribingDetection({
       abilityId: SHOCKING_BANNER,
       playerId: CASTER,
-      combatEvents: buildBlueblazeEvents({ includeCourage: true }),
+      combatEvents: buildBannerBearerEvents({ includeCourage: true }),
     });
 
     expect(result).not.toBeNull();
@@ -98,7 +99,7 @@ describe('Scribing affix detection accuracy — blueblaze103 Courage case', () =
     const result = computeScribingDetection({
       abilityId: SHOCKING_BANNER,
       playerId: CASTER,
-      combatEvents: buildBlueblazeEvents({ includeCourage: false }),
+      combatEvents: buildBannerBearerEvents({ includeCourage: false }),
     });
 
     expect(result).not.toBeNull();

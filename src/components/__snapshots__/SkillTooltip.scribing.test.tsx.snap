@@ -11,7 +11,7 @@ exports[`SkillTooltip - Scribing Skills Snapshots Shattering Knife (Player 1) sh
       class="MuiBox-root css-1so1mmd"
     >
       <div
-        class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorSuccess css-nvz7be-MuiChip-root"
+        class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorSuccess css-1fblkex-MuiChip-root"
       >
         <span
           class="MuiChip-label css-19m61dl-MuiChip-label"
@@ -20,7 +20,7 @@ exports[`SkillTooltip - Scribing Skills Snapshots Shattering Knife (Player 1) sh
         </span>
       </div>
       <span
-        class="MuiTypography-root MuiTypography-caption css-eodq80-MuiTypography-root"
+        class="MuiTypography-root MuiTypography-caption css-cqt06q-MuiTypography-root"
       >
         Scribing — Analyzing...
       </span>
@@ -44,7 +44,7 @@ exports[`SkillTooltip - Scribing Skills Snapshots Shattering Knife (Player 1) sh
           class="MuiBox-root css-dj12vk"
         >
           <h6
-            class="MuiTypography-root MuiTypography-subtitle1 css-81b99o-MuiTypography-root"
+            class="MuiTypography-root MuiTypography-subtitle1 css-b1j2mg-MuiTypography-root"
           >
             Shattering Knife
           </h6>
@@ -110,7 +110,7 @@ exports[`SkillTooltip - Scribing Skills Snapshots Shattering Knife (Player 1) sh
       class="MuiBox-root css-1so1mmd"
     >
       <div
-        class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorSuccess css-nvz7be-MuiChip-root"
+        class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorSuccess css-1fblkex-MuiChip-root"
       >
         <span
           class="MuiChip-label css-19m61dl-MuiChip-label"
@@ -119,7 +119,7 @@ exports[`SkillTooltip - Scribing Skills Snapshots Shattering Knife (Player 1) sh
         </span>
       </div>
       <span
-        class="MuiTypography-root MuiTypography-caption css-eodq80-MuiTypography-root"
+        class="MuiTypography-root MuiTypography-caption css-cqt06q-MuiTypography-root"
       >
         Scribing — Traveling Knife
       </span>
@@ -143,7 +143,7 @@ exports[`SkillTooltip - Scribing Skills Snapshots Shattering Knife (Player 1) sh
           class="MuiBox-root css-dj12vk"
         >
           <h6
-            class="MuiTypography-root MuiTypography-subtitle1 css-81b99o-MuiTypography-root"
+            class="MuiTypography-root MuiTypography-subtitle1 css-b1j2mg-MuiTypography-root"
           >
             Shattering Knife
           </h6>
@@ -227,7 +227,7 @@ exports[`SkillTooltip - Scribing Skills Snapshots Shattering Knife (Player 1) sh
           class="MuiBox-root css-13jj6ny"
         />
         <span
-          class="MuiTypography-root MuiTypography-caption css-2kffpi-MuiTypography-root"
+          class="MuiTypography-root MuiTypography-caption css-1urq5zi-MuiTypography-root"
         >
           Grimoire: 
           Traveling Knife
@@ -237,7 +237,7 @@ exports[`SkillTooltip - Scribing Skills Snapshots Shattering Knife (Player 1) sh
         class="MuiBox-root css-19idom"
       >
         <span
-          class="MuiTypography-root MuiTypography-caption css-1n0e06i-MuiTypography-root"
+          class="MuiTypography-root MuiTypography-caption css-yqjvh2-MuiTypography-root"
         >
           Focus Script
         </span>
@@ -258,7 +258,7 @@ exports[`SkillTooltip - Scribing Skills Snapshots Shattering Knife (Player 1) sh
         class="MuiBox-root css-19idom"
       >
         <span
-          class="MuiTypography-root MuiTypography-caption css-1d2dt6l-MuiTypography-root"
+          class="MuiTypography-root MuiTypography-caption css-8cax5d-MuiTypography-root"
         >
           Signature Script
         </span>
@@ -285,7 +285,7 @@ exports[`SkillTooltip - Scribing Skills Snapshots Shattering Knife (Player 1) sh
         class="MuiBox-root css-19idom"
       >
         <span
-          class="MuiTypography-root MuiTypography-caption css-1n0e06i-MuiTypography-root"
+          class="MuiTypography-root MuiTypography-caption css-yqjvh2-MuiTypography-root"
         >
           Affix Scripts
         </span>
@@ -323,7 +323,7 @@ exports[`SkillTooltip - Scribing Skills Snapshots Shattering Knife (Player 1) sh
         class="MuiBox-root css-0"
       >
         <span
-          class="MuiTypography-root MuiTypography-caption css-hkq2l3-MuiTypography-root"
+          class="MuiTypography-root MuiTypography-caption css-2yhiwk-MuiTypography-root"
         >
           Effects
         </span>
@@ -374,7 +374,7 @@ exports[`SkillTooltip - Scribing Skills Snapshots Shattering Knife (Player 1) sh
       class="MuiBox-root css-1so1mmd"
     >
       <div
-        class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorSuccess css-nvz7be-MuiChip-root"
+        class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorSuccess css-1fblkex-MuiChip-root"
       >
         <span
           class="MuiChip-label css-19m61dl-MuiChip-label"
@@ -383,7 +383,7 @@ exports[`SkillTooltip - Scribing Skills Snapshots Shattering Knife (Player 1) sh
         </span>
       </div>
       <span
-        class="MuiTypography-root MuiTypography-caption css-eodq80-MuiTypography-root"
+        class="MuiTypography-root MuiTypography-caption css-cqt06q-MuiTypography-root"
       >
         Scribing — Traveling Knife
       </span>
@@ -407,7 +407,7 @@ exports[`SkillTooltip - Scribing Skills Snapshots Shattering Knife (Player 1) sh
           class="MuiBox-root css-dj12vk"
         >
           <h6
-            class="MuiTypography-root MuiTypography-subtitle1 css-81b99o-MuiTypography-root"
+            class="MuiTypography-root MuiTypography-subtitle1 css-b1j2mg-MuiTypography-root"
           >
             Shattering Knife
           </h6>
@@ -463,7 +463,7 @@ exports[`SkillTooltip - Scribing Skills Snapshots Shattering Knife (Player 1) sh
           class="MuiBox-root css-13jj6ny"
         />
         <span
-          class="MuiTypography-root MuiTypography-caption css-2kffpi-MuiTypography-root"
+          class="MuiTypography-root MuiTypography-caption css-1urq5zi-MuiTypography-root"
         >
           Grimoire: 
           Traveling Knife
@@ -473,7 +473,7 @@ exports[`SkillTooltip - Scribing Skills Snapshots Shattering Knife (Player 1) sh
         class="MuiBox-root css-19idom"
       >
         <span
-          class="MuiTypography-root MuiTypography-caption css-1n0e06i-MuiTypography-root"
+          class="MuiTypography-root MuiTypography-caption css-yqjvh2-MuiTypography-root"
         >
           Focus Script
         </span>
@@ -494,7 +494,7 @@ exports[`SkillTooltip - Scribing Skills Snapshots Shattering Knife (Player 1) sh
         class="MuiBox-root css-19idom"
       >
         <span
-          class="MuiTypography-root MuiTypography-caption css-1d2dt6l-MuiTypography-root"
+          class="MuiTypography-root MuiTypography-caption css-8cax5d-MuiTypography-root"
         >
           Signature Script
         </span>
@@ -548,7 +548,7 @@ exports[`SkillTooltip - Scribing Skills Snapshots Shattering Knife (Player 1) sh
       class="MuiBox-root css-1so1mmd"
     >
       <div
-        class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorSuccess css-nvz7be-MuiChip-root"
+        class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorSuccess css-1fblkex-MuiChip-root"
       >
         <span
           class="MuiChip-label css-19m61dl-MuiChip-label"
@@ -557,7 +557,7 @@ exports[`SkillTooltip - Scribing Skills Snapshots Shattering Knife (Player 1) sh
         </span>
       </div>
       <span
-        class="MuiTypography-root MuiTypography-caption css-eodq80-MuiTypography-root"
+        class="MuiTypography-root MuiTypography-caption css-cqt06q-MuiTypography-root"
       >
         Unknown — Unknown Grimoire
       </span>
@@ -581,7 +581,7 @@ exports[`SkillTooltip - Scribing Skills Snapshots Shattering Knife (Player 1) sh
           class="MuiBox-root css-dj12vk"
         >
           <h6
-            class="MuiTypography-root MuiTypography-subtitle1 css-81b99o-MuiTypography-root"
+            class="MuiTypography-root MuiTypography-subtitle1 css-b1j2mg-MuiTypography-root"
           >
             Shattering Knife
           </h6>
@@ -647,7 +647,7 @@ exports[`SkillTooltip - Scribing Skills Snapshots Shattering Knife - Various Eff
       class="MuiBox-root css-1so1mmd"
     >
       <div
-        class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorSuccess css-nvz7be-MuiChip-root"
+        class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorSuccess css-1fblkex-MuiChip-root"
       >
         <span
           class="MuiChip-label css-19m61dl-MuiChip-label"
@@ -656,7 +656,7 @@ exports[`SkillTooltip - Scribing Skills Snapshots Shattering Knife - Various Eff
         </span>
       </div>
       <span
-        class="MuiTypography-root MuiTypography-caption css-eodq80-MuiTypography-root"
+        class="MuiTypography-root MuiTypography-caption css-cqt06q-MuiTypography-root"
       >
         Scribing — Traveling Knife
       </span>
@@ -680,7 +680,7 @@ exports[`SkillTooltip - Scribing Skills Snapshots Shattering Knife - Various Eff
           class="MuiBox-root css-dj12vk"
         >
           <h6
-            class="MuiTypography-root MuiTypography-subtitle1 css-81b99o-MuiTypography-root"
+            class="MuiTypography-root MuiTypography-subtitle1 css-b1j2mg-MuiTypography-root"
           >
             Shattering Knife
           </h6>
@@ -764,7 +764,7 @@ exports[`SkillTooltip - Scribing Skills Snapshots Shattering Knife - Various Eff
           class="MuiBox-root css-13jj6ny"
         />
         <span
-          class="MuiTypography-root MuiTypography-caption css-2kffpi-MuiTypography-root"
+          class="MuiTypography-root MuiTypography-caption css-1urq5zi-MuiTypography-root"
         >
           Grimoire: 
           Traveling Knife
@@ -774,7 +774,7 @@ exports[`SkillTooltip - Scribing Skills Snapshots Shattering Knife - Various Eff
         class="MuiBox-root css-19idom"
       >
         <span
-          class="MuiTypography-root MuiTypography-caption css-1n0e06i-MuiTypography-root"
+          class="MuiTypography-root MuiTypography-caption css-yqjvh2-MuiTypography-root"
         >
           Focus Script
         </span>
@@ -801,7 +801,7 @@ exports[`SkillTooltip - Scribing Skills Snapshots Shattering Knife - Various Eff
         class="MuiBox-root css-19idom"
       >
         <span
-          class="MuiTypography-root MuiTypography-caption css-1d2dt6l-MuiTypography-root"
+          class="MuiTypography-root MuiTypography-caption css-8cax5d-MuiTypography-root"
         >
           Signature Script
         </span>
@@ -835,7 +835,7 @@ exports[`SkillTooltip - Scribing Skills Snapshots Shattering Knife - Various Eff
         class="MuiBox-root css-0"
       >
         <span
-          class="MuiTypography-root MuiTypography-caption css-hkq2l3-MuiTypography-root"
+          class="MuiTypography-root MuiTypography-caption css-2yhiwk-MuiTypography-root"
         >
           Effects
         </span>

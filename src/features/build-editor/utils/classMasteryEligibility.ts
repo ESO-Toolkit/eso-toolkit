@@ -14,8 +14,7 @@ import type { Build, ESOClass } from '../types/build.types';
 export const CLASS_MASTERY_MAX_PICKS = 2;
 
 export type ClassMasteryGate =
-  | { eligible: true }
-  | { eligible: false; reason: 'no-class' | 'subclassed' };
+  { eligible: true } | { eligible: false; reason: 'no-class' | 'subclassed' };
 
 export function getClassMasteryGate(
   esoClass: ESOClass,

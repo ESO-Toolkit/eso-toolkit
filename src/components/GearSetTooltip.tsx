@@ -109,7 +109,7 @@ export const GearSetTooltip: React.FC<GearSetTooltipProps> = (props) => {
               variant="outlined"
               color="info"
               sx={{
-                fontFamily: 'Space Grotesk, Inter, system-ui',
+                fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                 fontWeight: 700,
                 letterSpacing: '.04em',
                 fontSize: '0.62rem',
@@ -128,7 +128,7 @@ export const GearSetTooltip: React.FC<GearSetTooltipProps> = (props) => {
               variant="caption"
               sx={{
                 color: 'text.secondary',
-                fontFamily: 'Space Grotesk, Inter, system-ui',
+                fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                 fontWeight: 600,
                 letterSpacing: '.02em',
                 fontSize: '0.68rem',
@@ -188,7 +188,7 @@ export const GearSetTooltip: React.FC<GearSetTooltipProps> = (props) => {
                 <Typography
                   variant="subtitle1"
                   sx={{
-                    fontFamily: 'Space Grotesk, Inter, system-ui',
+                    fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                     fontWeight: 800,
                     letterSpacing: '-.02em',
                     ...(isDark

@@ -12,7 +12,7 @@ exports[`SkillTooltip Integration Tests Edge Cases should handle JSX description
         class="MuiBox-root css-1so1mmd"
       >
         <div
-          class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorSuccess css-xbs52a-MuiChip-root"
+          class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorSuccess css-1p3uswe-MuiChip-root"
         >
           <span
             class="MuiChip-label css-19m61dl-MuiChip-label"
@@ -31,7 +31,7 @@ exports[`SkillTooltip Integration Tests Edge Cases should handle JSX description
             class="MuiBox-root css-dj12vk"
           >
             <h6
-              class="MuiTypography-root MuiTypography-subtitle1 css-1xpixvi-MuiTypography-root"
+              class="MuiTypography-root MuiTypography-subtitle1 css-9atyz0-MuiTypography-root"
             >
               Shattering Knife
             </h6>
@@ -78,7 +78,7 @@ exports[`SkillTooltip Integration Tests Edge Cases should handle minimal props g
         class="MuiBox-root css-1so1mmd"
       >
         <div
-          class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorSuccess css-xbs52a-MuiChip-root"
+          class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorSuccess css-1p3uswe-MuiChip-root"
         >
           <span
             class="MuiChip-label css-19m61dl-MuiChip-label"
@@ -97,7 +97,7 @@ exports[`SkillTooltip Integration Tests Edge Cases should handle minimal props g
             class="MuiBox-root css-dj12vk"
           >
             <h6
-              class="MuiTypography-root MuiTypography-subtitle1 css-1xpixvi-MuiTypography-root"
+              class="MuiTypography-root MuiTypography-subtitle1 css-9atyz0-MuiTypography-root"
             >
               Shattering Knife
             </h6>
@@ -129,7 +129,7 @@ exports[`SkillTooltip Integration Tests Edge Cases should handle non-scribing ab
         class="MuiBox-root css-1so1mmd"
       >
         <div
-          class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorSuccess css-xbs52a-MuiChip-root"
+          class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorSuccess css-1p3uswe-MuiChip-root"
         >
           <span
             class="MuiChip-label css-19m61dl-MuiChip-label"
@@ -138,7 +138,7 @@ exports[`SkillTooltip Integration Tests Edge Cases should handle non-scribing ab
           </span>
         </div>
         <span
-          class="MuiTypography-root MuiTypography-caption css-1bcwidj-MuiTypography-root"
+          class="MuiTypography-root MuiTypography-caption css-fzc3i0-MuiTypography-root"
         >
           Weapon Skills
         </span>
@@ -162,7 +162,7 @@ exports[`SkillTooltip Integration Tests Edge Cases should handle non-scribing ab
             class="MuiBox-root css-dj12vk"
           >
             <h6
-              class="MuiTypography-root MuiTypography-subtitle1 css-1xpixvi-MuiTypography-root"
+              class="MuiTypography-root MuiTypography-subtitle1 css-9atyz0-MuiTypography-root"
             >
               Bash
             </h6>
@@ -194,7 +194,7 @@ exports[`SkillTooltip Integration Tests Shattering Knife - Real Scribing Detecti
         class="MuiBox-root css-1so1mmd"
       >
         <div
-          class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorWarning css-zrdjvt-MuiChip-root"
+          class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorWarning css-27lwvf-MuiChip-root"
         >
           <span
             class="MuiChip-label css-19m61dl-MuiChip-label"
@@ -203,7 +203,7 @@ exports[`SkillTooltip Integration Tests Shattering Knife - Real Scribing Detecti
           </span>
         </div>
         <span
-          class="MuiTypography-root MuiTypography-caption css-1bcwidj-MuiTypography-root"
+          class="MuiTypography-root MuiTypography-caption css-fzc3i0-MuiTypography-root"
         >
           Scribing - Affix
         </span>
@@ -227,7 +227,7 @@ exports[`SkillTooltip Integration Tests Shattering Knife - Real Scribing Detecti
             class="MuiBox-root css-dj12vk"
           >
             <h6
-              class="MuiTypography-root MuiTypography-subtitle1 css-1xpixvi-MuiTypography-root"
+              class="MuiTypography-root MuiTypography-subtitle1 css-9atyz0-MuiTypography-root"
             >
               Shattering Knife
             </h6>
@@ -329,7 +329,7 @@ exports[`SkillTooltip Integration Tests Shattering Knife - Real Scribing Detecti
         class="MuiBox-root css-1so1mmd"
       >
         <div
-          class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorWarning css-zrdjvt-MuiChip-root"
+          class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorWarning css-27lwvf-MuiChip-root"
         >
           <span
             class="MuiChip-label css-19m61dl-MuiChip-label"
@@ -338,7 +338,7 @@ exports[`SkillTooltip Integration Tests Shattering Knife - Real Scribing Detecti
           </span>
         </div>
         <span
-          class="MuiTypography-root MuiTypography-caption css-1bcwidj-MuiTypography-root"
+          class="MuiTypography-root MuiTypography-caption css-fzc3i0-MuiTypography-root"
         >
           Scribing - Affix
         </span>
@@ -362,7 +362,7 @@ exports[`SkillTooltip Integration Tests Shattering Knife - Real Scribing Detecti
             class="MuiBox-root css-dj12vk"
           >
             <h6
-              class="MuiTypography-root MuiTypography-subtitle1 css-1xpixvi-MuiTypography-root"
+              class="MuiTypography-root MuiTypography-subtitle1 css-9atyz0-MuiTypography-root"
             >
               Shattering Knife
             </h6>
@@ -446,7 +446,7 @@ exports[`SkillTooltip Integration Tests Shattering Knife - Real Scribing Detecti
             class="MuiBox-root css-1nvjkr"
           />
           <span
-            class="MuiTypography-root MuiTypography-caption css-g0sr8l-MuiTypography-root"
+            class="MuiTypography-root MuiTypography-caption css-18oslwz-MuiTypography-root"
           >
             Grimoire: 
             Traveling Knife
@@ -456,7 +456,7 @@ exports[`SkillTooltip Integration Tests Shattering Knife - Real Scribing Detecti
           class="MuiBox-root css-0"
         >
           <span
-            class="MuiTypography-root MuiTypography-caption css-g4ss0z-MuiTypography-root"
+            class="MuiTypography-root MuiTypography-caption css-12odr5a-MuiTypography-root"
           >
             Effects
           </span>
@@ -506,7 +506,7 @@ exports[`SkillTooltip Integration Tests Shattering Knife - Real Scribing Detecti
         class="MuiBox-root css-1so1mmd"
       >
         <div
-          class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorWarning css-zrdjvt-MuiChip-root"
+          class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorWarning css-27lwvf-MuiChip-root"
         >
           <span
             class="MuiChip-label css-19m61dl-MuiChip-label"
@@ -515,7 +515,7 @@ exports[`SkillTooltip Integration Tests Shattering Knife - Real Scribing Detecti
           </span>
         </div>
         <span
-          class="MuiTypography-root MuiTypography-caption css-1bcwidj-MuiTypography-root"
+          class="MuiTypography-root MuiTypography-caption css-fzc3i0-MuiTypography-root"
         >
           Scribing - Affix
         </span>
@@ -539,7 +539,7 @@ exports[`SkillTooltip Integration Tests Shattering Knife - Real Scribing Detecti
             class="MuiBox-root css-dj12vk"
           >
             <h6
-              class="MuiTypography-root MuiTypography-subtitle1 css-1xpixvi-MuiTypography-root"
+              class="MuiTypography-root MuiTypography-subtitle1 css-9atyz0-MuiTypography-root"
             >
               Shattering Knife
             </h6>
@@ -641,7 +641,7 @@ exports[`SkillTooltip Integration Tests Shattering Knife - Real Scribing Detecti
         class="MuiBox-root css-1so1mmd"
       >
         <div
-          class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorSuccess css-xbs52a-MuiChip-root"
+          class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorSuccess css-1p3uswe-MuiChip-root"
         >
           <span
             class="MuiChip-label css-19m61dl-MuiChip-label"
@@ -650,7 +650,7 @@ exports[`SkillTooltip Integration Tests Shattering Knife - Real Scribing Detecti
           </span>
         </div>
         <span
-          class="MuiTypography-root MuiTypography-caption css-1bcwidj-MuiTypography-root"
+          class="MuiTypography-root MuiTypography-caption css-fzc3i0-MuiTypography-root"
         >
           Scribing - Focus
         </span>
@@ -674,7 +674,7 @@ exports[`SkillTooltip Integration Tests Shattering Knife - Real Scribing Detecti
             class="MuiBox-root css-dj12vk"
           >
             <h6
-              class="MuiTypography-root MuiTypography-subtitle1 css-1xpixvi-MuiTypography-root"
+              class="MuiTypography-root MuiTypography-subtitle1 css-9atyz0-MuiTypography-root"
             >
               Cephaliarch's Flail
             </h6>

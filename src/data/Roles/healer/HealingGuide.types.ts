@@ -67,11 +67,7 @@ export interface HealingGuideData {
 // Utility types for searching and filtering
 export type GearSetType = 'slayer' | 'buff' | 'monster' | 'debuff' | 'other' | 'arena_weapon';
 export type GearSetCategory =
-  | 'slayer_sets'
-  | 'buff_sets'
-  | 'monster_sets'
-  | 'debuff_sets'
-  | 'other_sets';
+  'slayer_sets' | 'buff_sets' | 'monster_sets' | 'debuff_sets' | 'other_sets';
 
 export interface SearchableGearSet extends GearSet {
   category: GearSetCategory;

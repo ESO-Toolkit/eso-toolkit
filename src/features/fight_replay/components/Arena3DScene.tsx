@@ -1,4 +1,7 @@
-import { Environment, Grid, Lightformer, OrbitControls } from '@react-three/drei';
+import { Environment } from '@react-three/drei/core/Environment.js';
+import { Grid } from '@react-three/drei/core/Grid.js';
+import { Lightformer } from '@react-three/drei/core/Lightformer.js';
+import { OrbitControls } from '@react-three/drei/core/OrbitControls.js';
 import { useFrame, useThree } from '@react-three/fiber';
 import React, { Suspense, useMemo, useCallback, useRef, useEffect } from 'react';
 import * as THREE from 'three';
@@ -28,6 +31,7 @@ import { resolveTouchPolicy } from '../utils/touchPolicy';
 
 import { AdaptiveResolution } from './AdaptiveResolution';
 import { ArenaEnvironmentShell, type CosmicVariant } from './ArenaEnvironmentShell';
+import { ADD_MARKER_AT_CENTER_EVENT } from './arenaEvents';
 import { BloomComposer, type BloomComposerHandle } from './BloomComposer';
 import { CameraFollower } from './CameraFollower';
 import { CameraResetControls } from './CameraResetControls';
@@ -103,8 +107,6 @@ export interface GroundContextMenuPayload {
  * in-canvas bridge below raycasts the SCREEN CENTER onto the arena floor and opens the
  * add-marker menu there. Long-press is the fast path; this is the always-works path.
  */
-export const ADD_MARKER_AT_CENTER_EVENT = 'replay:add-marker-at-center';
-
 const GROUND_PLANE = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0.019);
 
 const CenterAddMarkerBridge: React.FC<{

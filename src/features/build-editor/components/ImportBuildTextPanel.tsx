@@ -175,7 +175,7 @@ export const ImportBuildTextPanel: React.FC<ImportBuildTextPanelProps> = ({
         sx={{
           color: 'text.secondary',
           fontSize: 12,
-          fontFamily: 'Space Grotesk, Inter, system-ui',
+          fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
         }}
       >
         Paste a build guide&apos;s text and we&apos;ll detect the gear, skills, champion points and
@@ -306,7 +306,7 @@ export const ImportBuildTextPanel: React.FC<ImportBuildTextPanelProps> = ({
                 py: 0.25,
                 fontSize: 11,
                 borderRadius: 2,
-                fontFamily: 'Space Grotesk, Inter, system-ui',
+                fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                 '& .MuiAlert-message': { overflow: 'hidden' },
               }}
             >
@@ -325,7 +325,7 @@ export const ImportBuildTextPanel: React.FC<ImportBuildTextPanelProps> = ({
                 textTransform: 'uppercase',
                 color: 'text.secondary',
                 mb: 0.5,
-                fontFamily: 'Space Grotesk, Inter, system-ui',
+                fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
               }}
             >
               Apply to
@@ -339,7 +339,7 @@ export const ImportBuildTextPanel: React.FC<ImportBuildTextPanelProps> = ({
                 '& .MuiToggleButton-root': {
                   textTransform: 'none',
                   fontSize: 12,
-                  fontFamily: 'Space Grotesk, Inter, system-ui',
+                  fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                   px: 1.5,
                   py: 0.5,
                 },
@@ -356,7 +356,7 @@ export const ImportBuildTextPanel: React.FC<ImportBuildTextPanelProps> = ({
                   fontSize: 10.5,
                   color: 'text.secondary',
                   mt: 0.5,
-                  fontFamily: 'Space Grotesk, Inter, system-ui',
+                  fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                 }}
               >
                 You already have {MAX_SETUPS} setups — importing into the active setup.
@@ -436,7 +436,7 @@ const ReviewRow: React.FC<{
           sx={{
             fontSize: 12.5,
             fontWeight: 700,
-            fontFamily: 'Space Grotesk, Inter, system-ui',
+            fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
             lineHeight: 1.2,
           }}
         >
@@ -447,7 +447,7 @@ const ReviewRow: React.FC<{
           sx={{
             fontSize: 11,
             color: 'text.secondary',
-            fontFamily: 'Space Grotesk, Inter, system-ui',
+            fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
           }}
         >
           {detail}
@@ -464,7 +464,7 @@ const capitalize = (s: string): string => s.charAt(0).toUpperCase() + s.slice(1)
 const pillSx = {
   borderRadius: '99px',
   textTransform: 'none',
-  fontFamily: 'Space Grotesk, Inter, system-ui',
+  fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
   fontWeight: 600,
   fontSize: 12,
 } as const;

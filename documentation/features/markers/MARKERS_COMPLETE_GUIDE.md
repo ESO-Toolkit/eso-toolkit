@@ -20,11 +20,12 @@
 
 ## Overview
 
-The M0R (Markers on Replay) system integrates 3D map markers into the ESO Log Aggregator's arena visualization, allowing users to import, view, and interact with combat markers during fight replays.
+The M0R (Markers on Replay) system integrates 3D map markers into the ESO Toolkit's arena visualization, allowing users to import, view, and interact with combat markers during fight replays.
 
 ### What is M0R?
 
 M0R is a community-created tool for marking positions on ESO maps. This integration:
+
 - Imports M0R marker files (`.txt` format)
 - Displays markers in 3D arena view
 - Supports multiple marker types (shapes, icons, labels)
@@ -36,6 +37,7 @@ M0R is a community-created tool for marking positions on ESO maps. This integrat
 ## Features
 
 ### Core Functionality
+
 ✅ **Import M0R Files** - Load marker definitions from `.txt` files  
 ✅ **3D Visualization** - Render markers in React Three Fiber scene  
 ✅ **Multiple Shapes** - Support for circles, squares, arrows, icons  
@@ -88,13 +90,13 @@ Visual Output
 
 ### Key Files
 
-| File | Purpose |
-|------|---------|
+| File                                       | Purpose                     |
+| ------------------------------------------ | --------------------------- |
 | `src/features/markers/M0RMarkersLayer.tsx` | Main 3D rendering component |
-| `src/features/markers/parseM0RFile.ts` | File parser |
-| `src/features/markers/M0RMarkersModal.tsx` | Import UI modal |
-| `src/store/slices/markersSlice.ts` | Redux state management |
-| `src/utils/zoneScaling.ts` | Coordinate transformation |
+| `src/features/markers/parseM0RFile.ts`     | File parser                 |
+| `src/features/markers/M0RMarkersModal.tsx` | Import UI modal             |
+| `src/store/slices/markersSlice.ts`         | Redux state management      |
+| `src/utils/zoneScaling.ts`                 | Coordinate transformation   |
 
 ---
 
@@ -162,12 +164,14 @@ const arenaPosition = {
 Modal for importing M0R files with validation and preview.
 
 **Features**:
+
 - File drag-and-drop
 - Format validation
 - Preview marker count
 - Error handling
 
 **Usage**:
+
 ```typescript
 <M0RMarkersModal
   open={isOpen}
@@ -183,6 +187,7 @@ Modal for importing M0R files with validation and preview.
 Button to trigger marker import modal.
 
 **Fixes Applied**:
+
 - Performance optimization (debouncing)
 - Proper state management
 - Accessibility improvements
@@ -194,6 +199,7 @@ Button to trigger marker import modal.
 Hover tooltips showing marker details.
 
 **Content**:
+
 - Marker label
 - Position coordinates
 - Type and size
@@ -210,11 +216,13 @@ Hover tooltips showing marker details.
 **Symptoms**: Markers imported but not visible in 3D view
 
 **Causes**:
+
 1. Incorrect zone scaling
 2. Markers outside camera view
 3. Z-fighting with arena floor
 
 **Solutions**:
+
 ```typescript
 // 1. Verify zone scaling
 console.log('Zone scale factor:', zoneInfo.scaleFactor);
@@ -231,6 +239,7 @@ marker.position.y += 0.1; // Raise above floor
 **Symptoms**: FPS drops with 100+ markers
 
 **Solutions**:
+
 - Enable marker batching
 - Use instanced rendering
 - Implement marker LOD (Level of Detail)
@@ -238,9 +247,7 @@ marker.position.y += 0.1; // Raise above floor
 
 ```typescript
 // Implement culling
-const visibleMarkers = markers.filter(m => 
-  frustum.containsPoint(m.position)
-);
+const visibleMarkers = markers.filter((m) => frustum.containsPoint(m.position));
 ```
 
 #### WebGL Crash
@@ -273,43 +280,51 @@ const scaledSize = marker.size * zoneInfo.scaleFactor * SCALE_MULTIPLIER;
 ## Reference Documentation
 
 ### Original M0R Documentation
+
 Individual documentation files retained for historical reference:
 
 **Feature Implementation**:
+
 - `M0R_MARKERS_COMPLETE_SUMMARY.md` - Overall system summary
 - `M0R_MARKERS_IMPORT_FEATURE.md` - Import feature specifics
 - `M0R_MARKERS_IMPORT_IMPLEMENTATION_SUMMARY.md` - Implementation details
 - `MOR_MARKERS_IMPLEMENTATION.md` - Core implementation
 
 **3D Integration**:
+
 - `MOR_MARKERS_3D_INTEGRATION_STATUS.md` - Integration status
 - `MARKER_3D_BOUNDING_BOX.md` - Bounding box implementation
 - `MARKER_BOUNDING_BOX_FILTERING.md` - Filtering logic
 
 **Scaling & Coordinates**:
+
 - `MOR_MARKERS_SCALE_FACTOR_IMPLEMENTATION.md` - Scale factor logic
 - `MOR_MARKERS_ZONE_SCALE_INTEGRATION.md` - Zone scaling integration
 - `MOR_MARKERS_SCALE_MULTIPLIER_FIX.md` - Scale multiplier fix
 - `M0R_MARKERS_POSITIONING_FIX.md` - Positioning corrections
 
 **UI Components**:
+
 - `M0R_MARKERS_UI_VISUAL_GUIDE.md` - Visual design guide
 - `M0R_MARKERS_MODAL.md` - Modal component docs
 - `M0R_MARKERS_INFO_PANELS.md` - Info panel implementation
 - `M0R_MARKERS_SHAPES_IMPLEMENTATION.md` - Shape rendering
 
 **Fixes & Optimizations**:
+
 - `LOAD_MARKERS_BUTTON_FIX.md` - Button fixes
 - `M0R_MARKERS_BUTTON_PERFORMANCE_FIX.md` - Performance optimization
 - `MOR_MARKERS_WEBGL_CRASH_FIX.md` - WebGL crash resolution
 
 **Multi-Map Support**:
+
 - `MARKER_MULTI_MAP_EXPLANATION.md` - Multi-map handling
 - `MAP_MARKERS_COMPLETE_RENAME.md` - Rename refactoring
 - `MAP_MARKERS_FILE_REFERENCE.md` - File structure
 - `MAP_MARKERS_RENAME_SUMMARY.md` - Rename summary
 
 **Development Tools**:
+
 - `MARKER_DEBUG_GUIDE.md` - Debugging techniques
 - `MOR_MARKERS_PREMADES_VALIDATION.md` - Validation testing
 
@@ -322,11 +337,13 @@ Individual documentation files retained for historical reference:
 Parses M0R file content into marker objects.
 
 **Parameters**:
+
 - `text`: Raw file content
 
 **Returns**: Array of marker objects
 
 **Example**:
+
 ```typescript
 const markers = parseM0RFile(fileContent);
 ```
@@ -336,6 +353,7 @@ const markers = parseM0RFile(fileContent);
 Calculates scaling factors for zone coordinate transformation.
 
 **Parameters**:
+
 - `zoneId`: ESO zone identifier
 
 **Returns**: Scale info with factor and offset
@@ -345,16 +363,19 @@ Calculates scaling factors for zone coordinate transformation.
 ## Testing
 
 ### Unit Tests
+
 ```powershell
 npm test -- markers
 ```
 
 ### E2E Tests
+
 ```powershell
 npm run test:smoke:e2e -- markers
 ```
 
 ### Manual Testing Checklist
+
 - [ ] Import M0R file with various marker types
 - [ ] Verify markers render in correct positions
 - [ ] Test multi-map scenarios
@@ -368,6 +389,7 @@ npm run test:smoke:e2e -- markers
 ## Future Enhancements
 
 ### Planned Features
+
 - 🔮 **Marker editing** - Create/edit markers in-app
 - 🔮 **Marker animation** - Animated markers for mechanics
 - 🔮 **Marker persistence** - Save marker sets

@@ -128,7 +128,7 @@ export const AttributeBar: React.FC<AttributeBarProps> = ({
           minWidth: 60,
           color: 'text.primary',
           fontSize: 12,
-          fontFamily: 'Space Grotesk, Inter, system-ui',
+          fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
         }}
       >
         {label}
@@ -226,7 +226,7 @@ export const AttributeBar: React.FC<AttributeBarProps> = ({
                   textAlign: 'center',
                   fontWeight: 700,
                   fontSize: 13,
-                  fontFamily: 'Space Grotesk, Inter, system-ui',
+                  fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                   color,
                   fontVariantNumeric: 'tabular-nums',
                   background: alpha(color, isDark ? 0.12 : 0.08),
@@ -252,7 +252,7 @@ export const AttributeBar: React.FC<AttributeBarProps> = ({
                 display: 'block',
                 fontWeight: 700,
                 fontVariantNumeric: 'tabular-nums',
-                fontFamily: 'Space Grotesk, Inter, system-ui',
+                fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                 color: value > 0 ? color : 'text.disabled',
                 fontSize: 13,
                 textShadow: atMax && value > 0 ? `0 0 8px ${alpha(color, 0.6)}` : 'none',

@@ -109,7 +109,7 @@ export const StatBreakdown: React.FC<StatBreakdownProps> = ({
             flex: 1,
             fontSize: 12,
             fontWeight: 600,
-            fontFamily: 'Space Grotesk, Inter, system-ui',
+            fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
             color: isDark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.65)',
           }}
         >
@@ -119,7 +119,7 @@ export const StatBreakdown: React.FC<StatBreakdownProps> = ({
           sx={{
             fontSize: 12,
             fontWeight: 700,
-            fontFamily: 'Space Grotesk, Inter, system-ui',
+            fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
             fontVariantNumeric: 'tabular-nums',
             color: statusColors[result.status],
           }}
@@ -157,7 +157,7 @@ export const StatBreakdown: React.FC<StatBreakdownProps> = ({
                 sx={{
                   fontSize: 9,
                   fontWeight: 600,
-                  fontFamily: 'Space Grotesk, Inter, system-ui',
+                  fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                   textTransform: 'uppercase',
                   letterSpacing: 1,
                   color: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.28)',
@@ -179,7 +179,7 @@ export const StatBreakdown: React.FC<StatBreakdownProps> = ({
                   <Typography
                     sx={{
                       fontSize: 11,
-                      fontFamily: 'Space Grotesk, Inter, system-ui',
+                      fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                       color: isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.50)',
                     }}
                   >
@@ -206,7 +206,7 @@ export const StatBreakdown: React.FC<StatBreakdownProps> = ({
                     sx={{
                       fontSize: 11,
                       fontWeight: 600,
-                      fontFamily: 'Space Grotesk, Inter, system-ui',
+                      fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                       fontVariantNumeric: 'tabular-nums',
                       color: isDark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.65)',
                       flexShrink: 0,
@@ -225,7 +225,7 @@ export const StatBreakdown: React.FC<StatBreakdownProps> = ({
             <Typography
               sx={{
                 fontSize: 9,
-                fontFamily: 'Space Grotesk, Inter, system-ui',
+                fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                 color: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.18)',
                 mt: 0.5,
                 fontStyle: 'italic',

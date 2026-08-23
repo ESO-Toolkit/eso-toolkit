@@ -6,7 +6,6 @@ on:
 
 permissions:
   contents: read
-  pull-requests: write
 
 concurrency:
   group: 'pr-preview-${{ github.event.pull_request.number }}'
@@ -18,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout PR branch
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Setup Node.js and Install Dependencies
         uses: ./.github/actions/setup-node-with-cache
@@ -31,16 +30,41 @@ jobs:
           VITE_BASE_URL: '/dev-previews/pr-${{ github.event.pull_request.number }}/'
           VITE_ROSTER_HUB_API_URL: 'https://roster-hub-api.eso-toolkit.workers.dev'
           VITE_DISCORD_CLIENT_ID: ${{ vars.VITE_DISCORD_CLIENT_ID }}
-          # Serve the AI-upscaled replay map tiles from the R2 bucket (same default as the production
-          # build-and-deploy action). Without this the preview resolves tiles to its own app-relative
-          # /dev-previews/pr-N/maps-hires path — which isn't deployed (tiles are gitignored, R2-bound) —
-          # so every hi-res map 404s and falls back to the 768px RPGLogs CDN. Setting it here lets the
-          # preview show the same crisp tiles production will.
+          # Use the same R2-backed hi-res map tiles as production.
           VITE_HIRES_MAP_BASE: 'https://pub-87ec3d93bfd4456faec17c57e05093d9.r2.dev'
+
+      - name: Upload preview build
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: preview-build-${{ github.event.pull_request.number }}
+          path: build/
+          retention-days: 1
+
+  publish-preview:
+    needs: deploy-preview
+    if: >-
+      github.actor != 'dependabot[bot]' &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Checkout protected workflow assets
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: refs/heads/main
+          sparse-checkout: scripts/dev-previews-404.html
+
+      - name: Download preview build
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: preview-build-${{ github.event.pull_request.number }}
+          path: build
 
       - name: Generate GitHub App token
         id: app-token
-        uses: actions/create-github-app-token@v3
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3
         with:
           app-id: ${{ secrets.DEV_PREVIEWS_APP_ID }}
           private-key: ${{ secrets.DEV_PREVIEWS_APP_PRIVATE_KEY }}
@@ -55,80 +79,38 @@ jobs:
           PR_BRANCH: ${{ github.event.pull_request.head.ref }}
         run: |
           set -euo pipefail
-
           PREVIEW_DIR="pr-${PR_NUMBER}"
-
-          # Clone the dev-previews repo
           git clone "https://x-access-token:${GH_TOKEN}@github.com/ESO-Toolkit/dev-previews.git" /tmp/dev-previews
           cd /tmp/dev-previews
-
-          # Configure git
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
-          # Remove old preview for this PR (if exists) and copy new build
           rm -rf "${PREVIEW_DIR}"
           cp -r "${GITHUB_WORKSPACE}/build" "${PREVIEW_DIR}"
-
-          # Keep a root-level 404.html in the dev-previews repo so GitHub Pages
-          # can redirect SPA deep links (e.g. /dev-previews/pr-N/rv?r=…) back to
-          # the correct PR's index.html before React mounts and handles the route.
           cp "${GITHUB_WORKSPACE}/scripts/dev-previews-404.html" 404.html
-
-          # Update previews.json
           UPDATED_AT=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-          # Read existing previews, remove entry for this PR, add updated entry
-          if [ -f previews.json ]; then
-            EXISTING=$(cat previews.json)
-          else
-            EXISTING="[]"
-          fi
-
-          UPDATED=$(echo "${EXISTING}" | jq --arg pr "${PR_NUMBER}" \
-            --arg title "${PR_TITLE}" \
-            --arg branch "${PR_BRANCH}" \
-            --arg updatedAt "${UPDATED_AT}" \
-            '[.[] | select(.pr != ($pr | tonumber))] + [{"pr": ($pr | tonumber), "title": $title, "branch": $branch, "updatedAt": $updatedAt}]')
-
+          EXISTING=$(test -f previews.json && cat previews.json || echo '[]')
+          UPDATED=$(echo "${EXISTING}" | jq --arg pr "${PR_NUMBER}" --arg title "${PR_TITLE}" --arg branch "${PR_BRANCH}" --arg updatedAt "${UPDATED_AT}" '[.[] | select(.pr != ($pr | tonumber))] + [{"pr": ($pr | tonumber), "title": $title, "branch": $branch, "updatedAt": $updatedAt}]')
           echo "${UPDATED}" > previews.json
-
-          # Commit and push
           git add -A
           git commit -m "Deploy preview for PR #${PR_NUMBER}" --allow-empty
           git push
 
       - name: Comment on PR with preview URL
         continue-on-error: true
-        uses: actions/github-script@v9
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
         with:
           script: |
             const prNumber = context.payload.pull_request.number;
             const previewUrl = `https://eso-toolkit.github.io/dev-previews/pr-${prNumber}/`;
-            const body = `### 🔧 Dev Preview\n\nPreview deployed to: ${previewUrl}\n\n_Updated: ${new Date().toISOString()}_`;
-
-            // Find existing bot comment
+            const body = `### Dev Preview\n\nPreview deployed to: ${previewUrl}\n\n_Updated: ${new Date().toISOString()}_`;
             const { data: comments } = await github.rest.issues.listComments({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: prNumber,
+              owner: context.repo.owner, repo: context.repo.repo, issue_number: prNumber,
             });
-
-            const botComment = comments.find(c =>
-              c.user.type === 'Bot' && c.body.includes('Dev Preview')
-            );
-
-            if (botComment) {
-              await github.rest.issues.updateComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                comment_id: botComment.id,
-                body,
-              });
+            const existing = comments.find(comment => comment.user.type === 'Bot' && comment.body.includes('Dev Preview'));
+            if (existing) {
+              await github.rest.issues.updateComment({ owner: context.repo.owner, repo: context.repo.repo,
+                comment_id: existing.id, body });
             } else {
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: prNumber,
-                body,
-              });
+              await github.rest.issues.createComment({ owner: context.repo.owner, repo: context.repo.repo,
+                issue_number: prNumber, body });
             }

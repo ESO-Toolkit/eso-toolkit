@@ -146,6 +146,7 @@ describe('AuthContext', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    window.sessionStorage.clear();
     mockLocalStorage.getItem.mockReturnValue('');
     mockSetAuthToken.mockClear();
     mockClearAuthToken.mockClear();
@@ -235,6 +236,7 @@ describe('AuthContext', () => {
 
     mockSetUserProperties.mockClear();
     mockLocalStorage.getItem.mockReturnValue('');
+    window.sessionStorage.removeItem('access_token');
     fireEvent.click(screen.getByTestId('rebind-token'));
 
     await waitFor(() => {
@@ -379,6 +381,7 @@ describe('AuthContext', () => {
 
     // Simulate token removal
     mockLocalStorage.getItem.mockReturnValue('');
+    window.sessionStorage.removeItem('access_token');
 
     // Simulate rebinding token (which would happen in real app through storage event or explicit call)
     const rebindButton = screen.getByTestId('rebind-token');

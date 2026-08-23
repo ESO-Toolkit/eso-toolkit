@@ -1,8 +1,8 @@
 /**
  * ESO Stat Constants
  * All game constants for penetration, critical damage, critical chance, and armor.
- * Values ported from the legacy calculator (src/assets/calculator/calculator.js)
- * and cross-referenced with ESO game data.
+ * Values ported from the archived calculator dataset and cross-referenced with
+ * ESO game data.
  */
 
 import type { GameMode } from '../types/build.types';

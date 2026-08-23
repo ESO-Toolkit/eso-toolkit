@@ -1396,7 +1396,7 @@ export const EXPERIENCE_BOOST_FOOD = Object.freeze(new Set([91368, 91369])); // 
 // ── Potion Detection IDs ─────────────────────────────────────────────────────
 //
 // All IDs below were empirically validated from real ESO Logs report data:
-//   prV8jWb1NqFJc97Z fights 5 & 17, YArFDbq7BdhwL691 fight 72.
+//   Public sample report fixtures cover the representative fight data.
 //
 // ESO Logs does NOT expose a "Potion Cooldown Timer" buff.  Potion use is
 // detected instead via self-applied RESOURCE RESTORE events and co-occurring

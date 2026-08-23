@@ -1,13 +1,10 @@
 import { Block } from '@mui/icons-material';
-import { Box, Button, Container, Paper, Typography } from '@mui/material';
+import { Box, Button, Container, Link, Paper, Typography } from '@mui/material';
 import type { Theme } from '@mui/material/styles';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import {
-  LOCAL_STORAGE_ACCESS_TOKEN_KEY,
-  LOCAL_STORAGE_REFRESH_TOKEN_KEY,
-} from '../features/auth/auth';
+import { clearStoredTokens } from '../features/auth/auth';
 import { useAuth } from '../features/auth/AuthContext';
 import { persistor } from '../store/storeWithHistory';
 import { clearUserContext } from '../utils/errorTracking';
@@ -26,8 +23,7 @@ export const Banned: React.FC = () => {
   const handleLogout = (): void => {
     // Drop both tokens — leaving the long-lived refresh_token behind lets a
     // 401-triggered refresh silently re-mint a session after logout.
-    localStorage.removeItem(LOCAL_STORAGE_ACCESS_TOKEN_KEY);
-    localStorage.removeItem(LOCAL_STORAGE_REFRESH_TOKEN_KEY);
+    clearStoredTokens();
     clearUserContext();
     // Purge account-bound persisted state (loadouts/builds) so it can't outlive
     // the session on a shared machine.
@@ -73,7 +69,15 @@ export const Banned: React.FC = () => {
         </Typography>
 
         <Typography variant="body2" sx={{ mb: 4 }} color="text.secondary">
-          If you believe this is an error, please contact the administrator.
+          If you believe this is an error, please contact the administrator through{' '}
+          <Link
+            href="https://github.com/ESO-Toolkit/eso-toolkit/discussions"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            GitHub Discussions
+          </Link>
+          .
         </Typography>
 
         <Button variant="contained" color="primary" onClick={handleLogout} size="large">

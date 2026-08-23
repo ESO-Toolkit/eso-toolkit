@@ -149,7 +149,7 @@ export const StatGauge = React.memo<StatGaugeProps>(function StatGauge({
             lineHeight: 1,
             color: colors.text,
             fontVariantNumeric: 'tabular-nums',
-            fontFamily: 'Space Grotesk, Inter, system-ui',
+            fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
             textAlign: 'center',
           }}
         >
@@ -162,7 +162,7 @@ export const StatGauge = React.memo<StatGaugeProps>(function StatGauge({
         sx={{
           fontSize: 10.5,
           fontWeight: 600,
-          fontFamily: 'Space Grotesk, Inter, system-ui',
+          fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
           letterSpacing: 0.5,
           textTransform: 'uppercase',
           color: isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.50)',
@@ -177,7 +177,7 @@ export const StatGauge = React.memo<StatGaugeProps>(function StatGauge({
         sx={{
           fontSize: 9,
           fontWeight: 500,
-          fontFamily: 'Space Grotesk, Inter, system-ui',
+          fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
           color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.45)',
           textAlign: 'center',
         }}

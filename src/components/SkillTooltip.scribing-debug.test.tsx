@@ -125,7 +125,7 @@ describe('SkillTooltip Scribing Detection Debug', () => {
 
   describe('Shattering Knife Player 1 Investigation', () => {
     it('should investigate what scribing data is returned for Shattering Knife', () => {
-      const fightId = 'm2Y9FqdpMjcaZh4R-11';
+      const fightId = 'sample-report-fixture-11';
       const playerId = 1;
       const abilityId = 217340;
 
@@ -155,7 +155,7 @@ describe('SkillTooltip Scribing Detection Debug', () => {
         headerBadge: 'Ultimate',
         lineText: 'Scribing - Affix',
         iconSlug: 'ability_scribing_affix_001',
-        fightId: 'm2Y9FqdpMjcaZh4R-11',
+        fightId: 'sample-report-fixture-11',
         playerId: 1,
       };
 
@@ -200,7 +200,7 @@ describe('SkillTooltip Scribing Detection Debug', () => {
         render(
           <TestWrapper>
             <ScribingDataInspector
-              fightId="m2Y9FqdpMjcaZh4R-11"
+              fightId="sample-report-fixture-11"
               playerId={1}
               abilityId={ability.id}
             />

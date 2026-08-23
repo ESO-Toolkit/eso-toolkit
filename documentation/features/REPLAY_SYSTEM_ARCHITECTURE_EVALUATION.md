@@ -1,11 +1,13 @@
 <!-- AI Context: Load only when working on replay system architecture or performance optimization -->
+
 # Replay System Architecture Evaluation
 
 **Date**: October 14, 2025  
 **Evaluator**: GitHub Copilot  
-**System**: ESO Log Aggregator - Fight Replay System
+**System**: ESO Toolkit - Fight Replay System
 
 **When to use this document**:
+
 - Working on replay system architecture or refactoring
 - Performance optimization for replay playback
 - Understanding worker threading model
@@ -20,6 +22,7 @@ The fight replay system demonstrates a **highly sophisticated, performance-optim
 **Overall Grade**: **A- (Excellent)**
 
 **Strengths**:
+
 - Exceptional performance optimization strategies
 - Clean separation between high-frequency (60fps) and low-frequency (React) updates
 - Robust worker-based data processing pipeline
@@ -27,6 +30,7 @@ The fight replay system demonstrates a **highly sophisticated, performance-optim
 - Comprehensive timeline and scrubbing optimizations
 
 **Areas for Improvement**:
+
 - Some architectural complexity could be reduced
 - Documentation of data flow could be enhanced
 - Testing coverage for integration points
@@ -82,6 +86,7 @@ The fight replay system demonstrates a **highly sophisticated, performance-optim
 The system uses a unidirectional data flow with clear phases:
 
 #### **Phase 1: Data Ingestion & Processing**
+
 ```typescript
 // Event Collection
 useCastEvents() → castEvents[]
@@ -107,6 +112,7 @@ useActorPositionsTask() {
 ```
 
 **Key Innovation**: Pre-computed timestamp lookup with **O(1) mathematical indexing** when intervals are regular:
+
 ```typescript
 // O(1) lookup instead of O(log n) binary search
 const closestIndex = Math.round(targetTimestamp / intervalMs);
@@ -114,6 +120,7 @@ const closest = lookup.sortedTimestamps[boundedIndex];
 ```
 
 #### **Phase 2: Timeline Processing**
+
 ```typescript
 usePhaseBasedMap() {
   ↓
@@ -127,12 +134,14 @@ usePhaseBasedMap() {
 ```
 
 **Strengths**:
+
 - Clean separation of data preparation from rendering
 - Worker-based processing keeps UI responsive
 - Pre-computed lookups optimize runtime performance
 - Memoization prevents unnecessary recalculations
 
 **Weaknesses**:
+
 - High initial processing time for large fights
 - Worker task dependencies create coupling (though well-managed)
 
@@ -163,12 +172,14 @@ useFrame(() => {
 ```
 
 **Why This Works**:
+
 1. **Decouples rendering frequency from React**: 60fps 3D updates don't trigger React re-renders
 2. **Periodic synchronization**: React state updates only when needed (controls, timeline display)
 3. **Smooth playback**: `usePlaybackAnimation` updates timeRef via `requestAnimationFrame`
 4. **Scrubbing optimization**: `useOptimizedTimelineScrubbing` debounces updates during drag
 
 **Performance Impact**:
+
 - Without this: ~60 React re-renders/second → **severe performance degradation**
 - With this: ~2-10 React re-renders/second → **smooth 60fps**
 
@@ -179,6 +190,7 @@ useFrame(() => {
 **Rating**: Very Good
 
 #### **Component Hierarchy**:
+
 ```
 Arena3D (Canvas wrapper)
   └─ Scene (R3F scene)
@@ -195,22 +207,25 @@ Arena3D (Canvas wrapper)
 ```
 
 #### **Render Priority System** (RenderPriority enum):
+
 ```typescript
-FOLLOWER_CAMERA = 0  // Camera updates first
-CAMERA = 1           // Camera controls
-ACTORS = 2           // Actor positions
-HUD = 3              // UI elements
-EFFECTS = 4          // Visual effects
-RENDER = 999         // Manual render call (LAST)
+FOLLOWER_CAMERA = 0; // Camera updates first
+CAMERA = 1; // Camera controls
+ACTORS = 2; // Actor positions
+HUD = 3; // UI elements
+EFFECTS = 4; // Visual effects
+RENDER = 999; // Manual render call (LAST)
 ```
 
 **Strengths**:
+
 - Clear render order ensures correct visual output
 - Each actor uses independent `useFrame` (no central state bottleneck)
 - Shared geometries reduce memory usage dramatically
 - Manual render loop gives precise control
 
 **Weaknesses**:
+
 - Complexity: Multiple components with `useFrame` requires careful coordination
 - Priority system is somewhat manual (relies on developer discipline)
 - Potential for priority conflicts if not carefully managed
@@ -218,17 +233,18 @@ RENDER = 999         // Manual render call (LAST)
 #### **Performance Optimizations**:
 
 1. **Shared Geometries**:
+
 ```typescript
 // SharedActor3DGeometries.ts
 // Creates ONE set of geometries for ALL actors
-const { puckGeometry, visionConeGeometry, tauntRingGeometry } = 
-  useSharedActor3DGeometries(scale);
+const { puckGeometry, visionConeGeometry, tauntRingGeometry } = useSharedActor3DGeometries(scale);
 
 // Instead of N actors × 3 geometries = 3N geometries
 // We have 1 cache × 3 geometries = 3 geometries total!
 ```
 
 2. **Direct Material Updates** (no React re-renders):
+
 ```typescript
 useFrame(() => {
   // Direct THREE.js manipulation
@@ -243,6 +259,7 @@ useFrame(() => {
 ```
 
 3. **Texture Caching**:
+
 ```typescript
 // DynamicMapTexture.tsx
 const textureCache = new Map<string, THREE.Texture>();
@@ -250,6 +267,7 @@ const textureCache = new Map<string, THREE.Texture>();
 ```
 
 4. **Scrubbing Mode Optimizations**:
+
 ```typescript
 const scrubbingMode = useScrubbingMode({
   isScrubbingMode,
@@ -291,6 +309,7 @@ useOptimizedTimelineScrubbing({
 ```
 
 **Timeline Scrubbing Flow**:
+
 ```
 User drags slider
   ↓
@@ -306,6 +325,7 @@ React state updates → UI controls update
 ```
 
 **Share URL Feature**:
+
 - Deep linking support: `/report/{id}/fight/{id}/replay?time=12345&actorId=67`
 - Preserves timeline position and camera following state
 - Uses Web Share API when available, falls back to clipboard
@@ -320,13 +340,13 @@ React state updates → UI controls update
 // CameraFollower.tsx
 useFrame(() => {
   if (!followingActorIdRef.current) return;
-  
+
   const actorPosition = getActorPositionAtClosestTimestamp(
     lookup,
     followingActorIdRef.current,
-    timeRef.current
+    timeRef.current,
   );
-  
+
   if (actorPosition) {
     // Smooth lerp to target position
     targetPositionRef.current.lerp(newTargetPosition, smoothingFactor);
@@ -337,6 +357,7 @@ useFrame(() => {
 ```
 
 **Features**:
+
 - Actor following with smooth camera transitions
 - Maintains camera offset during follow
 - Disables OrbitControls when following
@@ -344,6 +365,7 @@ useFrame(() => {
 - Dynamic camera positioning based on fight bounding box
 
 **Dynamic Camera Positioning**:
+
 ```typescript
 // Arena3D.tsx - calculates optimal camera based on fight area
 const arenaDimensions = useMemo(() => {
@@ -352,17 +374,19 @@ const arenaDimensions = useMemo(() => {
   const rangeZ = arenaMaxZ - arenaMinZ;
   const size = Math.max(rangeX, rangeZ) * 1.2; // 20% padding
   // ...
-  const viewDistance = (size / 2) / Math.tan((30 * Math.PI) / 360);
+  const viewDistance = size / 2 / Math.tan((30 * Math.PI) / 360);
   // Optimal camera distance for FOV
 }, [fight]);
 ```
 
 **Strengths**:
+
 - Intelligent camera placement
 - Smooth following transitions
 - Respects scene scale
 
 **Weaknesses**:
+
 - Camera offset calculation could be more flexible
 - No cinematic camera presets
 - Limited collision detection with scene bounds
@@ -374,6 +398,7 @@ const arenaDimensions = useMemo(() => {
 **Rating**: Very Good
 
 #### **Redux Architecture**:
+
 ```
 store/
   worker_results/
@@ -385,13 +410,10 @@ store/
 ```
 
 **Worker Task Pattern**:
+
 ```typescript
 // Generic factory for worker tasks
-export function createWorkerTaskSlice({
-  name,
-  taskFn,
-  reducers,
-}) {
+export function createWorkerTaskSlice({ name, taskFn, reducers }) {
   return createSlice({
     name,
     initialState: {
@@ -411,12 +433,14 @@ export function createWorkerTaskSlice({
 ```
 
 **Strengths**:
+
 - Consistent pattern for all worker tasks
 - Loading/error states handled uniformly
 - Progress tracking for long-running tasks
 - Memoized selectors prevent unnecessary re-renders
 
 **Weaknesses**:
+
 - Redux might be overkill for some local state
 - Worker task dependencies create coupling
 - No optimistic updates during processing
@@ -442,22 +466,18 @@ export const AnimationFrameActor3D = ({
   const groupRef = useRef<THREE.Group>(null);
   const puckMaterialRef = useRef<THREE.MeshBasicMaterial>(null);
   const currentActorDataRef = useRef<ActorPosition | null>(null);
-  
+
   // High-frequency position updates
   useFrame(() => {
     const currentTime = timeRef.current;
-    const actorData = getActorPositionAtClosestTimestamp(
-      lookup,
-      actorId,
-      currentTime
-    );
-    
+    const actorData = getActorPositionAtClosestTimestamp(lookup, actorId, currentTime);
+
     if (!actorData) {
       isVisibleRef.current = false;
       if (groupRef.current) groupRef.current.visible = false;
       return;
     }
-    
+
     // Direct position updates (no React)
     const [x, y, z] = actorData.position;
     if (groupRef.current) {
@@ -465,19 +485,20 @@ export const AnimationFrameActor3D = ({
       groupRef.current.rotation.y = actorData.rotation;
       groupRef.current.visible = true;
     }
-    
+
     // Direct material color updates
     const color = getActorColor(actorData);
     if (puckMaterialRef.current) {
       puckMaterialRef.current.color.set(color);
     }
   }, RenderPriority.ACTORS);
-  
+
   // Mesh elements...
 };
 ```
 
 **Actor Visual Components**:
+
 1. **Puck** (cylinder): Actor body with role-based color
 2. **Vision Cone**: Directional indicator
 3. **Taunt Ring**: Shows when actor is taunted
@@ -485,6 +506,7 @@ export const AnimationFrameActor3D = ({
 5. **Name Billboard**: 2D text overlay (ActorNameBillboard)
 
 **Strengths**:
+
 - Each actor fully independent (no central bottleneck)
 - Direct THREE.js updates = maximum performance
 - Shared geometries across all actors
@@ -503,13 +525,13 @@ export const AnimationFrameActor3D = ({
 class BossHealthHUDRenderer {
   canvas: HTMLCanvasElement;
   texture: THREE.CanvasTexture;
-  
+
   updateHealthHUD(name, currentHealth, maxHealth, percentage, isDead) {
     // Draw to canvas
     context.fillStyle = 'rgba(0, 0, 0, 0.8)';
     context.fillRect(...);
     // ...render health bar, text, etc.
-    
+
     this.texture.needsUpdate = true;
   }
 }
@@ -517,13 +539,14 @@ class BossHealthHUDRenderer {
 useFrame(({ camera, size }) => {
   const bosses = getAllActorPositionsAtTimestamp(lookup, currentTime)
     .filter(actor => actor.type === 'boss' && !actor.isDead);
-  
+
   // Position HUDs in screen space (top-right corner)
   // Update positions relative to camera
 }, RenderPriority.HUD);
 ```
 
 **Features**:
+
 - Screen-space positioning (always visible)
 - Multiple boss support with stacking
 - High-quality text rendering via canvas
@@ -531,11 +554,13 @@ useFrame(({ camera, size }) => {
 - Auto-hides when boss is dead
 
 **Strengths**:
+
 - Canvas rendering = crisp text at any resolution
 - Efficient: Updates only when needed
 - Clear visual hierarchy
 
 **Weaknesses**:
+
 - Fixed positioning (top-right only)
 - No customization options for layout
 
@@ -568,7 +593,7 @@ createMapTimeline(fight, report, buffEvents) {
     report,
     buffEvents
   );
-  
+
   // Creates timeline entries based on actual phase changes
   return createTimelineFromPhaseTransitions(fight, availableMaps);
 }
@@ -583,15 +608,16 @@ export function getMapAtTimestamp(timeline, timestamp) {
 ```
 
 **DynamicMapTexture Integration**:
+
 ```typescript
 useFrame(() => {
   const currentTime = timeRef.current;
   const timestamp = fightTimeToTimestamp(fight, currentTime);
   const mapEntry = getMapAtTimestamp(mapTimeline, timestamp);
-  
+
   if (mapEntry?.mapFile !== currentMapFileRef.current) {
     // Load new texture (with caching)
-    loadTexture(mapEntry.mapFile).then(texture => {
+    loadTexture(mapEntry.mapFile).then((texture) => {
       if (materialRef.current) {
         materialRef.current.map = texture;
         materialRef.current.needsUpdate = true;
@@ -603,6 +629,7 @@ useFrame(() => {
 ```
 
 **Strengths**:
+
 - Pre-computed timeline = O(log n) lookups
 - Phase-aware map switching using buff events
 - Texture caching prevents redundant loads
@@ -622,11 +649,11 @@ export const MorMarkers: React.FC<{
   fight: FightFragment;
   scale: number;
 }> = ({ encodedString, fight, scale }) => {
-  const markers = useMemo(() => 
+  const markers = useMemo(() =>
     decodeMorMarkersString(encodedString),
     [encodedString]
   );
-  
+
   return (
     <>
       {markers.map(marker => (
@@ -643,12 +670,14 @@ export const MorMarkers: React.FC<{
 ```
 
 **Features**:
+
 - Imports M0R Markers format (community standard)
 - Coordinate transformation based on zone/map
 - Static 3D markers (icons, text, shapes)
 - Validation UI in FightReplay.tsx
 
 **Strengths**:
+
 - Community format support
 - Clean separation (optional feature)
 - Proper coordinate transformation
@@ -659,14 +688,14 @@ export const MorMarkers: React.FC<{
 
 ### Benchmarks
 
-| Metric | Value | Grade |
-|--------|-------|-------|
-| Initial Load Time | ~2-5s for large fights | B |
-| Frame Rate (Playback) | 60fps stable | A+ |
-| Frame Rate (Scrubbing) | 30-60fps | A |
-| Memory Usage | ~150-300MB | B+ |
-| Actor Count Support | 50+ actors smoothly | A |
-| Timeline Scrub Latency | <50ms | A+ |
+| Metric                 | Value                  | Grade |
+| ---------------------- | ---------------------- | ----- |
+| Initial Load Time      | ~2-5s for large fights | B     |
+| Frame Rate (Playback)  | 60fps stable           | A+    |
+| Frame Rate (Scrubbing) | 30-60fps               | A     |
+| Memory Usage           | ~150-300MB             | B+    |
+| Actor Count Support    | 50+ actors smoothly    | A     |
+| Timeline Scrub Latency | <50ms                  | A+    |
 
 ### Memory Optimization Strategies
 
@@ -751,10 +780,8 @@ export const MorMarkers: React.FC<{
 
 1. **God Component**: Arena3D is getting large (633 lines)
    - Consider: Extract Scene logic to separate file
-   
 2. **Prop Drilling**: Some deep prop passing
    - Consider: Context for deeply shared values
-   
 3. **Tight Coupling**: Worker tasks depend on each other
    - Consider: Dependency injection pattern
 
@@ -871,7 +898,6 @@ export const MorMarkers: React.FC<{
 1. **M0R Markers Input**: User-provided strings decoded
    - Add: Input sanitization
    - Add: Length limits
-   
 2. **Deep Linking**: URLs can specify any time/actor
    - Currently safe, but consider access control if needed
 
@@ -881,12 +907,12 @@ export const MorMarkers: React.FC<{
 
 ### Current Limits
 
-| Scenario | Current Support | Bottleneck |
-|----------|----------------|------------|
-| Actors | 50-100 | Memory + CPU |
-| Fight Duration | 10-30 minutes | Worker processing time |
-| Event Count | 100k-500k events | Worker processing + memory |
-| Concurrent Users | N/A (client-side) | - |
+| Scenario         | Current Support   | Bottleneck                 |
+| ---------------- | ----------------- | -------------------------- |
+| Actors           | 50-100            | Memory + CPU               |
+| Fight Duration   | 10-30 minutes     | Worker processing time     |
+| Event Count      | 100k-500k events  | Worker processing + memory |
+| Concurrent Users | N/A (client-side) | -                          |
 
 ### Scaling Strategies
 
@@ -932,7 +958,7 @@ export const MorMarkers: React.FC<{
 The fight replay system is **exceptionally well-designed** for its purpose. The architecture demonstrates deep understanding of:
 
 - React performance optimization techniques
-- 3D rendering performance requirements  
+- 3D rendering performance requirements
 - Web Worker utilization for heavy computation
 - Time-based animation systems
 - Data structure optimization (O(1) lookups)
@@ -941,15 +967,15 @@ The system successfully handles real-time 3D rendering of complex combat scenari
 
 ### Final Grades by Category
 
-| Category | Grade | Notes |
-|----------|-------|-------|
-| **Architecture** | A | Clear layers, good separation |
-| **Performance** | A+ | Exceptional optimization |
-| **Code Quality** | A- | TypeScript, good patterns |
-| **Maintainability** | B+ | Some complexity, good docs |
-| **Scalability** | B+ | Handles current needs well |
-| **Testing** | B | Unit tests good, integration needed |
-| **Documentation** | B | Good inline, missing architecture |
+| Category            | Grade | Notes                               |
+| ------------------- | ----- | ----------------------------------- |
+| **Architecture**    | A     | Clear layers, good separation       |
+| **Performance**     | A+    | Exceptional optimization            |
+| **Code Quality**    | A-    | TypeScript, good patterns           |
+| **Maintainability** | B+    | Some complexity, good docs          |
+| **Scalability**     | B+    | Handles current needs well          |
+| **Testing**         | B     | Unit tests good, integration needed |
+| **Documentation**   | B     | Good inline, missing architecture   |
 
 ### **Overall: A- (Excellent)**
 
@@ -960,6 +986,7 @@ This is production-quality code that shows strong software engineering practices
 ## Appendix: Key Files Reference
 
 ### Core Components
+
 - `src/features/fight_replay/FightReplay.tsx` - Entry point
 - `src/features/fight_replay/components/FightReplay3D.tsx` - Main orchestrator
 - `src/features/fight_replay/components/Arena3D.tsx` - 3D scene container
@@ -967,6 +994,7 @@ This is production-quality code that shows strong software engineering practices
 - `src/features/fight_replay/components/PlaybackControls.tsx` - UI controls
 
 ### Performance-Critical
+
 - `src/workers/calculations/CalculateActorPositions.ts` - O(1) lookup system
 - `src/features/fight_replay/components/SharedActor3DGeometries.ts` - Memory optimization
 - `src/hooks/useAnimationTimeRef.ts` - Dual time system
@@ -974,12 +1002,14 @@ This is production-quality code that shows strong software engineering practices
 - `src/hooks/useOptimizedTimelineScrubbing.ts` - Scrubbing performance
 
 ### Data Management
+
 - `src/store/worker_results/` - Redux state for worker results
 - `src/utils/mapTimelineUtils.ts` - Phase-aware map timeline
 - `src/hooks/usePhaseBasedMap.ts` - Map timeline hook
 - `src/hooks/workerTasks/useActorPositionsTask.ts` - Worker orchestration
 
 ### Utilities
+
 - `src/features/fight_replay/constants/renderPriorities.ts` - Render ordering
 - `src/utils/coordinateUtils.ts` - Coordinate transformations
 - `src/utils/fightTimeUtils.ts` - Time conversions
@@ -988,4 +1018,4 @@ This is production-quality code that shows strong software engineering practices
 
 **End of Evaluation**
 
-*For questions or clarifications about this architecture evaluation, please refer to the specific sections above or examine the referenced source files.*
+_For questions or clarifications about this architecture evaluation, please refer to the specific sections above or examine the referenced source files._

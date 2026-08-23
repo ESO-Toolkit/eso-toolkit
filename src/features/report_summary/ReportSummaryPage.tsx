@@ -74,7 +74,7 @@ export const ReportSummaryPage: React.FC = () => {
       };
     }
     return {
-      title: 'Report Summary - ESO Log Aggregator',
+      title: 'Report Summary | ESO Toolkit',
       description: 'Comprehensive report analysis with damage breakdown and death patterns.',
       url: window.location.href,
     };

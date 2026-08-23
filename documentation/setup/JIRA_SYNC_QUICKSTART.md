@@ -1,8 +1,8 @@
 # Jira-Branch Status Sync - Quick Start
 
-✅ **Script created**: [`scripts/sync-jira-status.ts`](scripts/sync-jira-status.ts)  
-✅ **Documentation**: [`scripts/README-sync-jira-status.md`](scripts/README-sync-jira-status.md)  
-✅ **Commands added** to [`package.json`](package.json)
+✅ **Script created**: [`scripts/sync-jira-status.ts`](../../scripts/sync-jira-status.ts)
+✅ **Documentation**: [`scripts/README-sync-jira-status.md`](../../scripts/README-sync-jira-status.md)
+✅ **Commands added** to [`package.json`](../../package.json)
 
 ## 🚀 Quick Commands
 
@@ -20,16 +20,19 @@ npm run sync-jira:verbose
 ## ⚠️ Before First Use
 
 ### 1. Install Atlassian CLI
+
 ```powershell
 npm install -g @atlassianlabs/jira-cli
 ```
 
 ### 2. Authenticate with Jira
+
 ```powershell
 acli jira auth login
 ```
 
 Or set environment variables:
+
 ```powershell
 $env:JIRA_EMAIL="your-email@example.com"
 $env:JIRA_API_TOKEN="your-api-token"
@@ -39,12 +42,12 @@ Get API token: https://id.atlassian.com/manage-profile/security/api-tokens
 
 ## 📊 What It Does
 
-| Branch State | Jira Status | Action |
-|-------------|-------------|--------|
-| Remote branch exists | To Do/Backlog | → **In Progress** |
-| Branch merged to main | In Progress/Review | → **Done** |
-| No activity for 30+ days | In Progress | → **To Do** |
-| Branch deleted | Any | No change |
+| Branch State             | Jira Status        | Action            |
+| ------------------------ | ------------------ | ----------------- |
+| Remote branch exists     | To Do/Backlog      | → **In Progress** |
+| Branch merged to main    | In Progress/Review | → **Done**        |
+| No activity for 30+ days | In Progress        | → **To Do**       |
+| Branch deleted           | Any                | No change         |
 
 ## 📝 Example Usage
 
@@ -76,7 +79,8 @@ Total updates: 1
 
 ## 📚 Full Documentation
 
-See [README-sync-jira-status.md](scripts/README-sync-jira-status.md) for:
+See [README-sync-jira-status.md](../../scripts/README-sync-jira-status.md) for:
+
 - Detailed configuration options
 - Troubleshooting guide
 - CI/CD integration examples

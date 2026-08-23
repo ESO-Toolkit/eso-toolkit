@@ -15,8 +15,9 @@
 // Populate itemIdMap synchronously with the REAL generated data — must be
 // the FIRST import (module-scope reads elsewhere depend on it).
 import '@/test/initItemData';
-
+import itemIconsData from '../../data/itemIcons.json';
 import {
+  __initIconDataFromJson,
   applyWeaponTypeToName,
   deriveItemNameForSlot,
   fetchIsTwoHandedWeapon,
@@ -27,18 +28,17 @@ import {
   isTwoHandedWeapon,
   isWeaponTypeResolved,
   parseWeaponTypeFromIconUrl,
-  preloadIconData,
 } from '../itemIconResolver';
 
-beforeAll(async () => {
-  await preloadIconData();
+beforeAll(() => {
+  __initIconDataFromJson(itemIconsData);
 });
 
 const CDN = 'https://esoicons.uesp.net/esoui/art/icons';
 
 describe('isIconDataReady', () => {
   it('reports ready once icon data has been preloaded', () => {
-    // beforeAll awaited preloadIconData, so it must be ready here.
+    // beforeAll initialized the same production payload synchronously.
     expect(isIconDataReady()).toBe(true);
   });
 });

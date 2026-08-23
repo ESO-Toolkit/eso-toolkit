@@ -180,6 +180,7 @@ export const BuildFilterBar: React.FC<BuildFilterBarProps> = React.memo(
           >
             <Select
               value={filters.esoClass}
+              inputProps={{ 'aria-label': 'Filter builds by class' }}
               onChange={(e: SelectChangeEvent) => onFilterChange('esoClass', e.target.value)}
               displayEmpty
               size="small"
@@ -208,6 +209,7 @@ export const BuildFilterBar: React.FC<BuildFilterBarProps> = React.memo(
 
             <Select
               value={filters.role}
+              inputProps={{ 'aria-label': 'Filter builds by role' }}
               onChange={(e: SelectChangeEvent) => onFilterChange('role', e.target.value)}
               displayEmpty
               size="small"
@@ -283,7 +285,10 @@ export const BuildFilterBar: React.FC<BuildFilterBarProps> = React.memo(
                           }
                         : {
                             background: 'transparent',
-                            color: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.45)',
+                            // Keep the unselected controls readable against both glass
+                            // surfaces; the previous 45% white/black treatment dipped
+                            // below WCAG AA on the dark theme.
+                            color: isDark ? 'rgba(255,255,255,0.58)' : 'rgba(0,0,0,0.62)',
                             '&:hover': {
                               color: isDark ? 'rgba(255,255,255,0.75)' : 'rgba(0,0,0,0.7)',
                               background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
@@ -377,7 +382,7 @@ export const BuildFilterBar: React.FC<BuildFilterBarProps> = React.memo(
               variant="caption"
               sx={{
                 whiteSpace: 'nowrap',
-                color: isDark ? 'rgba(255,255,255,0.28)' : 'rgba(0,0,0,0.35)',
+                color: isDark ? 'rgba(255,255,255,0.58)' : 'rgba(0,0,0,0.62)',
                 fontSize: '0.72rem',
                 fontWeight: 500,
               }}

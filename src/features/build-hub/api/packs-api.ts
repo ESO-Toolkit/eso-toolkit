@@ -1,16 +1,14 @@
 /**
- * Packs API client — talks to the eso-packs-worker (VITE_PACKS_API_URL).
+ * Compatibility client for the add-on-pack selector used by roster publishing.
  *
- * NOTE: This is separate from pack-hub-api.ts which talks to the roster-hub-api
- * worker (VITE_ROSTER_HUB_API_URL). The two backends serve different pack
- * scopes: this one serves build-hub packs, pack-hub-api serves roster-hub packs.
- * Both expose /packs endpoints but are distinct data stores.
+ * Packs are served by the same roster-hub-api Worker as the Pack Hub. This
+ * module delegates to the canonical client instead of silently sending
+ * production requests to a local Wrangler port when an optional API override
+ * is absent.
  */
 
-const PACKS_API_URL = (import.meta.env.VITE_PACKS_API_URL || 'http://localhost:8787').replace(
-  /\/+$/,
-  '',
-);
+import { packHubApi } from '../../pack-hub/api/pack-hub-api';
+import type { HubPack, PublishPackPayload } from '../../pack-hub/types/pack-hub.types';
 
 export interface PackAddonEntry {
   esouiId: number;
@@ -66,50 +64,90 @@ export interface PackIndexItem {
   updatedAt: string;
 }
 
-async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const res = await fetch(`${PACKS_API_URL}${path}`, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
+function toLegacyPack(pack: HubPack): Pack {
+  return {
+    id: pack.id,
+    name: pack.title,
+    description: pack.description,
+    type: pack.pack_type,
+    tags: pack.tags,
+    metadata: {
+      createdBy: pack.author_name,
+      createdAt: pack.created_at,
+      updatedAt: pack.updated_at,
+      version: 1,
     },
-  });
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({ error: res.statusText }));
-    throw new Error((body as { error?: string }).error ?? `HTTP ${res.status}`);
-  }
-  return res.json() as Promise<T>;
+    addons: pack.addons,
+  };
+}
+
+function toLegacyIndexItem(pack: HubPack): PackIndexItem {
+  return {
+    id: pack.id,
+    name: pack.title,
+    description: pack.description,
+    type: pack.pack_type,
+    tags: pack.tags,
+    addonCount: pack.addons.length,
+    // Build/roster references are not part of the roster-hub-api pack model.
+    buildCount: 0,
+    rosterCount: 0,
+    updatedAt: pack.updated_at,
+  };
 }
 
 export const packsApi = {
   /** List packs with optional filters. */
-  list: (params?: { type?: string; tag?: string; q?: string }) => {
-    const sp = new URLSearchParams();
-    if (params?.type) sp.set('type', params.type);
-    if (params?.tag) sp.set('tag', params.tag);
-    if (params?.q) sp.set('q', params.q);
-    const qs = sp.toString();
-    return apiFetch<{ items: PackIndexItem[] }>(`/packs${qs ? `?${qs}` : ''}`);
+  list: async (params?: { type?: string; tag?: string; q?: string }) => {
+    const { packs } = await packHubApi.list({
+      packType: params?.type,
+      tag: params?.tag,
+      sort: 'recent',
+      page: 1,
+    });
+    const query = params?.q?.trim().toLocaleLowerCase();
+    const filtered = query
+      ? packs.filter(
+          (pack) =>
+            pack.title.toLocaleLowerCase().includes(query) ||
+            pack.description.toLocaleLowerCase().includes(query) ||
+            pack.tags.some((tag) => tag.toLocaleLowerCase().includes(query)),
+        )
+      : packs;
+    return { items: filtered.map(toLegacyIndexItem) };
   },
 
   /** Get a single pack by ID. */
-  get: (id: string) => apiFetch<Pack>(`/packs/${id}`),
+  get: async (id: string) => {
+    const { pack } = await packHubApi.get(id);
+    return toLegacyPack(pack);
+  },
 
-  /** Create a new pack (requires admin API key). */
-  create: (pack: Pack, apiKey: string) =>
-    apiFetch<Pack>('/packs', {
-      method: 'POST',
-      headers: { 'X-API-Key': apiKey },
-      body: JSON.stringify(pack),
-    }),
+  /** Create a pack through the roster-hub-api OAuth endpoint. */
+  create: async (pack: Pack, token: string) => {
+    const payload: PublishPackPayload = {
+      title: pack.name,
+      description: pack.description,
+      pack_type: pack.type,
+      addons: pack.addons,
+      tags: pack.tags,
+    };
+    const { pack: created } = await packHubApi.create(payload, token);
+    return toLegacyPack(created);
+  },
 
-  /** Update an existing pack (requires admin API key). */
-  update: (id: string, pack: Pack, apiKey: string) =>
-    apiFetch<Pack>(`/packs/${id}`, {
-      method: 'PUT',
-      headers: { 'X-API-Key': apiKey },
-      body: JSON.stringify(pack),
-    }),
+  /** Update a pack through the roster-hub-api OAuth endpoint. */
+  update: async (id: string, pack: Pack, token: string) => {
+    const payload: PublishPackPayload = {
+      title: pack.name,
+      description: pack.description,
+      pack_type: pack.type,
+      addons: pack.addons,
+      tags: pack.tags,
+    };
+    const { pack: updated } = await packHubApi.update(id, payload, token);
+    return toLegacyPack(updated);
+  },
 };
 
 export const KALPA_DOWNLOAD_URL = 'https://github.com/ESO-Toolkit/kalpa';

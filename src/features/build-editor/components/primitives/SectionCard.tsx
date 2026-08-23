@@ -122,7 +122,7 @@ export const SectionCard = React.memo<SectionCardProps>(function SectionCard({
           component="h2"
           sx={{
             fontWeight: 700,
-            fontFamily: 'Space Grotesk, Inter, system-ui',
+            fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
             letterSpacing: 0.2,
             fontSize: { xs: 13, md: 14 },
             flex: 1,

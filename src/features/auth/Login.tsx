@@ -9,6 +9,7 @@ import {
   Typography,
   Container,
   Alert,
+  Link,
   useTheme,
   alpha,
 } from '@mui/material';
@@ -148,10 +149,16 @@ export const Login: React.FC = () => {
               </Typography>
               <Box component="ul" sx={{ m: 0, pl: 2, '& li': { mb: 0.5 } }}>
                 <Typography component="li" variant="body2">
-                  <strong>Does not collect or store</strong> any personal data on our servers
+                  <strong>Analyzes combat logs in your browser</strong>; authenticated requests may
+                  go to ESO Logs or ESO Toolkit services when you use those features
                 </Typography>
                 <Typography component="li" variant="body2">
-                  <strong>Stores all data locally</strong> in your browser&apos;s local storage
+                  <strong>Stores content you choose to publish</strong> on ESO Toolkit services,
+                  where it may be visible to other users
+                </Typography>
+                <Typography component="li" variant="body2">
+                  <strong>Runs analytics and error tracking only after you opt in</strong> through
+                  your privacy preferences
                 </Typography>
               </Box>
             </Alert>
@@ -162,10 +169,12 @@ export const Login: React.FC = () => {
         <Box sx={{ mt: 3, textAlign: 'center' }}>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
             <StorageIcon sx={{ fontSize: 16, verticalAlign: 'middle', mr: 1 }} />
-            All data is stored locally on your device
+            Preferences and session data are stored in your browser
           </Typography>
           <Typography variant="caption" color="text.secondary">
-            You can clear your data at any time through your browser settings
+            Review our <Link href="/privacy">Privacy Policy</Link> and{' '}
+            <Link href="/terms">Terms of Use</Link> before connecting. You can clear local data at
+            any time through your browser settings.
           </Typography>
         </Box>
       </Box>

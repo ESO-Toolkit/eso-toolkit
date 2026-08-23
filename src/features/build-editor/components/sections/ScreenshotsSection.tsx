@@ -54,7 +54,11 @@ const ScreenshotsSectionComponent: React.FC = () => {
     <Stack spacing={1.5}>
       <Typography
         variant="caption"
-        sx={{ color: 'text.disabled', fontSize: 10, fontFamily: 'Space Grotesk, Inter, system-ui' }}
+        sx={{
+          color: 'text.disabled',
+          fontSize: 10,
+          fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
+        }}
       >
         Screenshots of character stats, gear, or skills.
       </Typography>
@@ -75,7 +79,7 @@ const ScreenshotsSectionComponent: React.FC = () => {
               color: 'text.disabled',
               display: 'block',
               mb: 1.5,
-              fontFamily: 'Space Grotesk, Inter, system-ui',
+              fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
               fontStyle: 'italic',
             }}
           >
@@ -88,7 +92,7 @@ const ScreenshotsSectionComponent: React.FC = () => {
             onClick={() => inputRef.current?.click()}
             sx={{
               fontSize: 11,
-              fontFamily: 'Space Grotesk, Inter, system-ui',
+              fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
               fontWeight: 600,
               borderRadius: '99px',
               textTransform: 'none',
@@ -187,7 +191,7 @@ const ScreenshotsSectionComponent: React.FC = () => {
             sx={{
               alignSelf: 'flex-start',
               fontSize: 11,
-              fontFamily: 'Space Grotesk, Inter, system-ui',
+              fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
               fontWeight: 600,
               borderRadius: '99px',
               textTransform: 'none',

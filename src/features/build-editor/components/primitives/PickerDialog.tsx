@@ -94,7 +94,7 @@ const Search: React.FC<SearchProps> = ({
                     sx={{
                       fontSize: 10,
                       fontWeight: 600,
-                      fontFamily: 'Space Grotesk, Inter, system-ui',
+                      fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                       color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)',
                       whiteSpace: 'nowrap',
                     }}
@@ -128,7 +128,7 @@ const Search: React.FC<SearchProps> = ({
             background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)',
             borderRadius: 2,
             fontSize: isMobile ? 16 : 13,
-            fontFamily: 'Space Grotesk, Inter, system-ui',
+            fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
             transition: 'background 0.15s, border-color 0.15s',
             '&.Mui-focused': {
               background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.03)',
@@ -211,7 +211,7 @@ const Body = React.forwardRef<HTMLDivElement, BodyProps>(function Body(
           sx={{
             fontSize: 12,
             fontWeight: 500,
-            fontFamily: 'Space Grotesk, Inter, system-ui',
+            fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
             color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)',
             textAlign: 'center',
           }}
@@ -367,7 +367,7 @@ const PickerDialogRoot: React.FC<PickerDialogProps> = ({
           <Typography
             sx={{
               fontWeight: 700,
-              fontFamily: 'Space Grotesk, Inter, system-ui',
+              fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
               fontSize: isMobile ? '1.05rem' : '1rem',
               background: isDark
                 ? 'linear-gradient(135deg, #f1f5f9 0%, #94a3b8 100%)'
@@ -385,7 +385,7 @@ const PickerDialogRoot: React.FC<PickerDialogProps> = ({
               sx={{
                 fontSize: 11,
                 fontWeight: 600,
-                fontFamily: 'Space Grotesk, Inter, system-ui',
+                fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                 color: isDark ? 'rgba(255,255,255,0.40)' : 'rgba(0,0,0,0.35)',
                 flexShrink: 0,
               }}
@@ -401,7 +401,7 @@ const PickerDialogRoot: React.FC<PickerDialogProps> = ({
             sx={{
               fontSize: 9,
               fontWeight: 600,
-              fontFamily: 'Space Grotesk, Inter, system-ui',
+              fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
               color: isDark ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.16)',
               border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'}`,
               borderRadius: '4px',

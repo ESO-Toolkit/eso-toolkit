@@ -106,7 +106,7 @@ export const GearDetailsSheet: React.FC<GearDetailsSheetProps> = ({
             letterSpacing: '0.12em',
             textTransform: 'uppercase',
             color: 'text.disabled',
-            fontFamily: 'Space Grotesk, Inter, system-ui',
+            fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
           }}
         >
           Set details
@@ -122,7 +122,7 @@ export const GearDetailsSheet: React.FC<GearDetailsSheetProps> = ({
           <Typography
             component="h2"
             sx={{
-              fontFamily: 'Space Grotesk, Inter, system-ui',
+              fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
               fontWeight: 800,
               fontSize: '1.35rem',
               letterSpacing: '-0.02em',
@@ -144,7 +144,7 @@ export const GearDetailsSheet: React.FC<GearDetailsSheetProps> = ({
                 fontWeight: 700,
                 letterSpacing: '0.04em',
                 textTransform: 'uppercase',
-                fontFamily: 'Space Grotesk, Inter, system-ui',
+                fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                 color: catColor,
                 background: `${catColor}22`,
                 border: `1px solid ${catColor}44`,
@@ -159,7 +159,7 @@ export const GearDetailsSheet: React.FC<GearDetailsSheetProps> = ({
                 fontWeight: 700,
                 letterSpacing: '0.04em',
                 textTransform: 'uppercase',
-                fontFamily: 'Space Grotesk, Inter, system-ui',
+                fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                 color: roleColor,
                 background: `${roleColor}1f`,
                 border: `1px solid ${roleColor}40`,
@@ -173,7 +173,7 @@ export const GearDetailsSheet: React.FC<GearDetailsSheetProps> = ({
               mt: 1,
               fontSize: '0.78rem',
               color: 'text.secondary',
-              fontFamily: 'Space Grotesk, Inter, system-ui',
+              fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
             }}
           >
             {slotLine}

@@ -14,6 +14,7 @@ import {
   declineAllConsent,
   clearConsent,
   exportUserData,
+  getApplicationStorageEntries,
   deleteAllUserData,
   CURRENT_CONSENT_VERSION,
 } from '../consentManager';
@@ -23,6 +24,7 @@ const CONSENT_KEY = 'eso-log-aggregator-cookie-consent';
 describe('consentManager', () => {
   beforeEach(() => {
     localStorage.clear();
+    sessionStorage.clear();
   });
 
   // ─── getConsentState ──────────────────────────────────────────
@@ -219,11 +221,52 @@ describe('consentManager', () => {
     it('redacts live OAuth tokens instead of exporting them', () => {
       localStorage.setItem('access_token', 'live-access-token');
       localStorage.setItem('refresh_token', 'live-refresh-token');
+      sessionStorage.setItem('discord_access_token', 'live-discord-token');
       const data = exportUserData();
       expect(data.access_token).toBe('[redacted]');
       expect(data.refresh_token).toBe('[redacted]');
+      expect(data.discord_access_token).toBe('[redacted]');
       expect(JSON.stringify(data)).not.toContain('live-access-token');
       expect(JSON.stringify(data)).not.toContain('live-refresh-token');
+      expect(JSON.stringify(data)).not.toContain('live-discord-token');
+    });
+
+    it('includes all current app preferences and dynamic report evidence', () => {
+      localStorage.setItem('eso-build-editor-v1', JSON.stringify({ build: 'test' }));
+      localStorage.setItem('replay.prefs.v1', JSON.stringify({ speed: 2 }));
+      localStorage.setItem('latestReports.viewMode', 'cards');
+      localStorage.setItem('eso-toolkit-metrics-layout', 'wrap');
+      sessionStorage.setItem('kalpa.buildEvidence.private-report', JSON.stringify({ players: [] }));
+
+      const data = exportUserData();
+
+      expect(data['eso-build-editor-v1']).toEqual({ build: 'test' });
+      expect(data['replay.prefs.v1']).toEqual({ speed: 2 });
+      expect(data['latestReports.viewMode']).toBe('cards');
+      expect(data['eso-toolkit-metrics-layout']).toBe('wrap');
+      expect(data['kalpa.buildEvidence.private-report']).toEqual({ players: [] });
+    });
+
+    it('reports whether app data lives in local or session storage', () => {
+      sessionStorage.setItem('access_token', 'live-access-token');
+      localStorage.setItem('eso-logs-dark-mode', 'true');
+
+      const entries = getApplicationStorageEntries();
+
+      expect(entries).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            key: 'access_token',
+            area: 'sessionStorage',
+            present: true,
+          }),
+          expect.objectContaining({
+            key: 'eso-logs-dark-mode',
+            area: 'localStorage',
+            present: true,
+          }),
+        ]),
+      );
     });
   });
 
@@ -233,6 +276,7 @@ describe('consentManager', () => {
       localStorage.setItem('access_token', 'test');
       localStorage.setItem('refresh_token', 'test');
       localStorage.setItem(CONSENT_KEY, 'test');
+      sessionStorage.setItem('discord_access_token', 'test');
 
       deleteAllUserData();
 
@@ -240,12 +284,27 @@ describe('consentManager', () => {
       expect(localStorage.getItem('access_token')).toBeNull();
       expect(localStorage.getItem('refresh_token')).toBeNull();
       expect(localStorage.getItem(CONSENT_KEY)).toBeNull();
+      expect(sessionStorage.getItem('discord_access_token')).toBeNull();
     });
 
     it('does not remove unrelated keys', () => {
       localStorage.setItem('unrelated-key', 'keep-me');
       deleteAllUserData();
       expect(localStorage.getItem('unrelated-key')).toBe('keep-me');
+    });
+
+    it('removes every registered preference and dynamic report-evidence key', () => {
+      localStorage.setItem('eso-build-editor-v1', 'draft');
+      localStorage.setItem('replay.mapMarkers.v1', 'markers');
+      localStorage.setItem('latestReports.density', 'compact');
+      sessionStorage.setItem('kalpa.buildEvidence.private-report', 'evidence');
+
+      deleteAllUserData();
+
+      expect(localStorage.getItem('eso-build-editor-v1')).toBeNull();
+      expect(localStorage.getItem('replay.mapMarkers.v1')).toBeNull();
+      expect(localStorage.getItem('latestReports.density')).toBeNull();
+      expect(sessionStorage.getItem('kalpa.buildEvidence.private-report')).toBeNull();
     });
   });
 });

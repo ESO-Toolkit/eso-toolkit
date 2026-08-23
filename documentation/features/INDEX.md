@@ -1,6 +1,6 @@
 # Feature Documentation
 
-Feature-specific documentation for the ESO Log Aggregator.
+Feature-specific documentation for ESO Toolkit.
 
 ---
 

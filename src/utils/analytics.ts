@@ -12,6 +12,9 @@ import { Logger, LogLevel } from './logger';
 
 const logger = new Logger({ level: LogLevel.ERROR, contextPrefix: 'Analytics' });
 
+let analyticsInitialized = false;
+let activeMeasurementId: string | null = null;
+
 type BuildInfo = NonNullable<ReturnType<typeof getBuildInfo>>;
 type EventPayload = {
   action: string;
@@ -26,6 +29,73 @@ type EventPayload = {
  */
 const hasUserConsented = (): boolean => {
   return hasAnalyticsConsent();
+};
+
+const removeAnalyticsCookies = (): void => {
+  if (typeof document === 'undefined') return;
+
+  const cookieNames = document.cookie
+    .split(';')
+    .map((cookie) => cookie.split('=', 1)[0]?.trim())
+    .filter((name): name is string => Boolean(name) && /^_(?:ga|gid|gat|gac_)/.test(name));
+  const hostname = typeof window === 'undefined' ? '' : window.location.hostname;
+  const domainCandidates = new Set<string | undefined>([undefined]);
+  if (hostname) {
+    domainCandidates.add(hostname);
+    domainCandidates.add(`.${hostname}`);
+    const labels = hostname.split('.');
+    if (labels.length >= 2) domainCandidates.add(`.${labels.slice(-2).join('.')}`);
+  }
+
+  cookieNames.forEach((name) => {
+    domainCandidates.forEach((domain) => {
+      const domainAttribute = domain ? `; domain=${domain}` : '';
+      document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/${domainAttribute}; SameSite=Lax`;
+    });
+  });
+};
+
+/**
+ * Stop Google Analytics after consent is revoked.
+ *
+ * Google documents both the consent update and the `ga-disable-*` flag. The
+ * latter prevents the already-loaded tag from sending more data, while the
+ * reset/removal work lets a later opt-in start from a clean SDK state.
+ */
+export const disableAnalytics = (): void => {
+  const measurementId = activeMeasurementId ?? getEnvVar('VITE_GA_MEASUREMENT_ID');
+  const wasInitialized = analyticsInitialized;
+
+  if (wasInitialized) {
+    try {
+      ReactGA.gtag('consent', 'update', {
+        ad_storage: 'denied',
+        ad_user_data: 'denied',
+        ad_personalization: 'denied',
+        analytics_storage: 'denied',
+      });
+      ReactGA.gtag('set', { user_id: undefined });
+    } catch (error) {
+      logger.error('Failed to update Google Analytics consent', error as Error);
+    }
+  }
+
+  if (typeof window !== 'undefined' && measurementId) {
+    (window as unknown as Record<string, unknown>)[`ga-disable-${measurementId}`] = true;
+  }
+
+  analyticsInitialized = false;
+  activeMeasurementId = null;
+  ReactGA.reset();
+  removeAnalyticsCookies();
+
+  if (typeof document !== 'undefined') {
+    document
+      .querySelectorAll<HTMLScriptElement>(
+        'script[src^="https://www.googletagmanager.com/gtag/js"], script[src^="https://www.google-analytics.com/"]',
+      )
+      .forEach((script) => script.remove());
+  }
 };
 
 /**
@@ -43,6 +113,7 @@ export const initializeAnalytics = (): void => {
 
   // Skip initialization if user has not consented to cookies
   if (!hasUserConsented()) {
+    disableAnalytics();
     logger.info('Analytics not initialized - user has not consented to cookies');
     return;
   }
@@ -51,11 +122,17 @@ export const initializeAnalytics = (): void => {
 
   if (measurementId && typeof measurementId === 'string') {
     try {
+      if (analyticsInitialized && activeMeasurementId === measurementId) return;
+      if (typeof window !== 'undefined') {
+        (window as unknown as Record<string, unknown>)[`ga-disable-${measurementId}`] = false;
+      }
       ReactGA.initialize(measurementId, {
         gtagOptions: {
           send_page_view: false,
         },
       });
+      analyticsInitialized = true;
+      activeMeasurementId = measurementId;
 
       const applyBuildMetadata = (info: BuildInfo): void => {
         setUserProperties({

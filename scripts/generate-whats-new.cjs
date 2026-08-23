@@ -4,8 +4,9 @@
  * Generate whats-new.json from recent merged PRs
  *
  * This script fetches the most recent merged pull requests from the GitHub
- * repository and writes their descriptions and metadata to public/whats-new.json.
- * The file is served statically and used by the "What's New" UI component.
+ * repository and writes public-safe summaries and metadata to
+ * public/whats-new.json. Raw PR descriptions stay on GitHub because they may
+ * contain internal tickets, validation logs, or maintainer-only context.
  *
  * Usage:
  *   node scripts/generate-whats-new.cjs [--count <number>]
@@ -24,6 +25,41 @@ const path = require('path');
 const OUTPUT_PATH = path.join(__dirname, '..', 'public', 'whats-new.json');
 const DEFAULT_PR_COUNT = 15;
 const SUMMARY_CONCURRENCY = 5;
+
+function parseConventionalTitle(title) {
+  const match = title.match(
+    /^(feat|fix|perf|refactor|docs|test|build|ci|chore|revert)(?:\(([^)]*)\))?!?:\s*(.*)$/i,
+  );
+  return {
+    type: match?.[1]?.toLowerCase() || '',
+    scope: match?.[2]?.replace(/[-_]+/g, ' ').trim() || '',
+    subject: (match?.[3] || title).replace(/\s+/g, ' ').trim(),
+  };
+}
+
+/** Convert a conventional commit title into public display copy. */
+function generatePublicTitle(title) {
+  const { subject } = parseConventionalTitle(title);
+  if (!subject) return 'ESO Toolkit improvement';
+  return subject[0].toUpperCase() + subject.slice(1);
+}
+
+/** Legacy fallback detector, used only to replace previously cached technical copy. */
+function generateLegacyFallbackSummary(title) {
+  const sentence = generatePublicTitle(title);
+  return /[.!?]$/.test(sentence) ? sentence : `${sentence}.`;
+}
+
+/** Always-available player-facing fallback when the optional summary service is absent. */
+function generateFallbackSummary(title) {
+  const { type, scope } = parseConventionalTitle(title);
+  const area = scope ? `the ${scope} experience` : 'ESO Toolkit';
+
+  if (type === 'feat') return `Adds a new capability to ${area}.`;
+  if (type === 'perf') return `Makes ${area} faster and more responsive.`;
+  if (type === 'fix') return `Improves the reliability and consistency of ${area}.`;
+  return 'Improves reliability and usability across ESO Toolkit.';
+}
 
 /**
  * Parse command-line arguments
@@ -119,6 +155,22 @@ function cleanDescription(body) {
   return cleaned.trim();
 }
 
+/** Exclude maintenance that has no useful player-facing release note. */
+function isPublicFacingPR(pr) {
+  const author = pr.user?.login || '';
+  const title = pr.title.trim();
+
+  if (/^dependabot(?:\[bot\])?$/i.test(author)) return false;
+  if (/^(?:deps(?:-dev)?|chore|ci|build|test|refactor)(?:\([^)]*\))?!?:/i.test(title)) {
+    return false;
+  }
+  if (/\b(?:cron trigger|scheduled passes?|token validations? per ip)\b/i.test(title)) return false;
+
+  return !/^(?:fix|perf)(?:\((?:build|ci|deps|dev|discord-bot|lint|release|test|tooling|types)\))?!?:/i.test(
+    title,
+  );
+}
+
 /**
  * Fetch merged PRs from GitHub API
  */
@@ -139,12 +191,14 @@ async function fetchMergedPRs(owner, repo, count) {
     state: 'closed',
     sort: 'updated',
     direction: 'desc',
-    per_page: count * 2, // Fetch extra to filter for merged only
+    per_page: Math.min(count * 5, 100), // Fetch extra to exclude internal-only changes
   });
 
-  // Filter to only merged PRs and take the requested count
+  // Keep the public feed focused on player-visible work rather than dependency
+  // bumps and internal maintenance.
   const mergedPRs = pullRequests
     .filter((pr) => pr.merged_at !== null)
+    .filter(isPublicFacingPR)
     .slice(0, count);
 
   return mergedPRs.map((pr) => ({
@@ -160,7 +214,7 @@ async function fetchMergedPRs(owner, repo, count) {
 
 /**
  * Generate a friendly, non-technical summary via Z.AI GLM-5.
- * Returns null on failure so the caller can fall back to the raw description.
+ * Returns null on failure so the caller can use deterministic public copy.
  */
 async function generateSummary(title, description) {
   const apiKey = process.env.ZAI_API_KEY;
@@ -171,7 +225,7 @@ async function generateSummary(title, description) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
+        Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
         model: 'glm-5',
@@ -234,8 +288,9 @@ async function generateSummaries(entries) {
   let reusedCount = 0;
 
   for (const entry of entries) {
-    if (cached.has(entry.id)) {
-      entry.summary = cached.get(entry.id);
+    const cachedSummary = cached.get(entry.id);
+    if (cachedSummary && cachedSummary !== generateLegacyFallbackSummary(entry.title)) {
+      entry.summary = cachedSummary;
       reusedCount++;
     }
   }
@@ -253,7 +308,12 @@ async function generateSummaries(entries) {
   }
 
   if (!process.env.ZAI_API_KEY) {
-    console.log(`\u2139\ufe0f  ZAI_API_KEY not set \u2014 ${needsSummary.length} entries without summaries`);
+    needsSummary.forEach((entry) => {
+      entry.summary = generateFallbackSummary(entry.title);
+    });
+    console.log(
+      `\u2139\ufe0f  ZAI_API_KEY not set \u2014 generated ${needsSummary.length} deterministic summaries`,
+    );
     return entries;
   }
 
@@ -277,7 +337,12 @@ async function generateSummaries(entries) {
   }
 
   const successCount = entries.filter((e) => e.summary).length;
-  console.log(`\u2705 AI summaries: ${successCount}/${entries.length} total (${successCount - reusedCount} new)`);
+  entries.forEach((entry) => {
+    entry.summary ||= generateFallbackSummary(entry.title);
+  });
+  console.log(
+    `\u2705 AI summaries: ${successCount}/${entries.length} total (${successCount - reusedCount} new)`,
+  );
 
   return entries;
 }
@@ -307,7 +372,9 @@ async function main() {
 
   const repoInfo = getRepoInfo();
   if (!repoInfo) {
-    console.error('\u274c Could not determine GitHub repository. Set GITHUB_REPOSITORY or configure git remote.');
+    console.error(
+      '\u274c Could not determine GitHub repository. Set GITHUB_REPOSITORY or configure git remote.',
+    );
     process.exit(1);
   }
 
@@ -315,15 +382,27 @@ async function main() {
     let entries = await fetchMergedPRs(repoInfo.owner, repoInfo.repo, count);
     entries = await generateSummaries(entries);
 
+    // PR bodies often contain internal tickets, validation logs, and maintainer
+    // checklists. They remain available through the PR link but do not belong in
+    // the public application payload.
+    const publicEntries = entries.map(({ id, title, mergedAt, author, url, labels, summary }) => ({
+      id,
+      title: generatePublicTitle(title),
+      mergedAt,
+      author,
+      url,
+      labels,
+      summary: summary || generateFallbackSummary(title),
+    }));
     const output = {
       generatedAt: new Date().toISOString(),
-      entries,
+      entries: publicEntries,
     };
 
     fs.writeFileSync(OUTPUT_PATH, JSON.stringify(output, null, 2));
 
-    console.log(`\u2705 Generated whats-new.json with ${entries.length} entries`);
-    entries.forEach((e) => {
+    console.log(`\u2705 Generated whats-new.json with ${publicEntries.length} entries`);
+    publicEntries.forEach((e) => {
       const date = new Date(e.mergedAt).toLocaleDateString();
       console.log(`   #${e.id} (${date}) \u2014 ${e.title}`);
     });

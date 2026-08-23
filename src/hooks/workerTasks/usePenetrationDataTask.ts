@@ -116,8 +116,7 @@ export function usePenetrationDataTask(_options?: UsePenetrationDataTaskOptions)
     selectWorkerTaskLoading('calculatePenetrationData'),
   ) as boolean;
   const penetrationDataError = useSelector(selectWorkerTaskError('calculatePenetrationData')) as
-    | string
-    | null;
+    string | null;
   const penetrationDataProgress = useSelector(
     selectWorkerTaskProgress('calculatePenetrationData'),
   ) as number | null;

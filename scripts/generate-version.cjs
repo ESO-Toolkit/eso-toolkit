@@ -7,10 +7,12 @@
 
 const fs = require('fs');
 const path = require('path');
-const crypto = require('crypto');
-
-// Get build timestamp
-const buildTime = new Date().toISOString();
+// SOURCE_DATE_EPOCH makes CI artifacts reproducible. Local development keeps a
+// wall-clock timestamp so version.json remains useful outside a Git checkout.
+const sourceDateEpoch = process.env.SOURCE_DATE_EPOCH;
+const hasSourceDateEpoch = /^\d+$/.test(sourceDateEpoch || '');
+const buildTimestamp = hasSourceDateEpoch ? Number(sourceDateEpoch) * 1000 : Date.now();
+const buildTime = new Date(buildTimestamp).toISOString();
 
 // Get git commit hash (if available)
 let gitCommit = '';
@@ -19,8 +21,9 @@ try {
   gitCommit = execSync('git rev-parse HEAD', { encoding: 'utf8' }).trim();
 } catch (error) {
   console.warn('Could not get git commit hash:', error.message);
-  // Fallback to random hash for development
-  gitCommit = crypto.randomBytes(20).toString('hex');
+  // Keep local/offline builds deterministic instead of inventing a random
+  // release identity that cannot be traced back to source.
+  gitCommit = 'unknown';
 }
 
 // Get short commit hash
@@ -30,8 +33,8 @@ const shortCommit = gitCommit.substring(0, 8);
 const packageJson = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'package.json'), 'utf8'));
 const packageVersion = packageJson.version;
 
-// Generate a unique build ID combining timestamp and commit
-const buildId = `${packageVersion}-${shortCommit}-${Date.now()}`;
+// A commit-derived build ID is stable across rebuilds of the same source.
+const buildId = `${packageVersion}-${shortCommit}`;
 
 // Create version object
 const versionInfo = {
@@ -40,7 +43,7 @@ const versionInfo = {
   gitCommit,
   shortCommit,
   buildId,
-  timestamp: Date.now(),
+  timestamp: buildTimestamp,
   // Additional cache-busting parameter for URLs
   cacheBuster: `v=${buildId.replace(/[^a-zA-Z0-9]/g, '')}`,
 };

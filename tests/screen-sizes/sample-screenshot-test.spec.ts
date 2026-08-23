@@ -5,14 +5,13 @@ import { createSkeletonDetector } from '../utils/skeleton-detector';
 import { setupAuthentication } from './utils';
 
 // Test configuration
-const TEST_REPORT_CODE = 'nbKdDtT4NcZyVrvX';
-const TEST_FIGHT_ID = '117';
+const TEST_REPORT_CODE = process.env.SCREEN_SIZE_REPORT_CODE ?? 'F4f2bMwWtgVKxjB9';
+const TEST_FIGHT_ID = process.env.SCREEN_SIZE_FIGHT_ID ?? '5';
 
 test.describe('Sample Screenshot Test', () => {
-
   test('generate sample screenshot for verification', async ({ page }) => {
     console.log('📸 Generating sample screenshot with improved loading detection...');
-    
+
     // Set up authentication
     await setupAuthentication(page);
 
@@ -28,18 +27,28 @@ test.describe('Sample Screenshot Test', () => {
 
     // Verify content is actually loaded
     const fightTitleCount = await page.locator('[data-testid="fight-title"], h1').count();
-    const fightDetailsLoadedCount = await page.locator('[data-testid="fight-details-loaded"], [data-testid="report-details-loaded"]').count();
-    const reportFightDetailsCount = await page.locator('[data-testid="report-fight-details"]').count();
-    const navigationTabsCount = await page.locator('[role="tab"], .tab, [data-testid*="tab"]').count();
-    
-    console.log(`✅ Content verification - Fight title: ${fightTitleCount}, Fight details loaded: ${fightDetailsLoadedCount}, Report fight details: ${reportFightDetailsCount}, Navigation tabs: ${navigationTabsCount}`);
+    const fightDetailsLoadedCount = await page
+      .locator('[data-testid="fight-details-loaded"], [data-testid="report-details-loaded"]')
+      .count();
+    const reportFightDetailsCount = await page
+      .locator('[data-testid="report-fight-details"]')
+      .count();
+    const navigationTabsCount = await page
+      .locator('[role="tab"], .tab, [data-testid*="tab"]')
+      .count();
 
-    // Take screenshot in a known location
-    await page.screenshot({ 
-      path: 'sample-screenshot-for-verification.png',
-      fullPage: true, 
+    console.log(
+      `✅ Content verification - Fight title: ${fightTitleCount}, Fight details loaded: ${fightDetailsLoadedCount}, Report fight details: ${reportFightDetailsCount}, Navigation tabs: ${navigationTabsCount}`,
+    );
+
+    // Keep the manual-inspection capture with the other ignored test artifacts.
+    await page.screenshot({
+      path: 'test-results-screen-sizes/sample-screenshot-for-verification.png',
+      fullPage: true,
     });
-    
-    console.log('✅ Sample screenshot saved as sample-screenshot-for-verification.png');
+
+    console.log(
+      '✅ Sample screenshot saved as test-results-screen-sizes/sample-screenshot-for-verification.png',
+    );
   });
 });

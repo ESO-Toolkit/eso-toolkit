@@ -121,6 +121,7 @@ const EMPTY_BAR_SWAP_RESULTS: Record<string, BarSwapAnalysisResult> = {};
 const EMPTY_CLASS_ANALYSIS_RESULTS: Record<string, ClassAnalysisResult> = {};
 const EMPTY_MAX_RESOURCES: Record<string, PlayerMaxResources> = {};
 const EMPTY_BUILD_ISSUES: Record<string, BuildIssue[]> = {};
+const MAX_COMPANION_IMPORT_BYTES = 10 * 1024 * 1024;
 
 // Recipe lookup stubs — full recipe resolution pending unified detection service
 const findScribingRecipe = async (_skillId: unknown, _skillName?: string): Promise<null> => null;
@@ -438,6 +439,18 @@ export const PlayersPanel: React.FC<PlayersPanelProps> = ({ context: contextOver
   const handleCompanionFileSelected = React.useCallback(
     async (file: File): Promise<void> => {
       try {
+        if (file.size > MAX_COMPANION_IMPORT_BYTES) {
+          dispatch(
+            companionSnapshotsUploaded({
+              snapshots: [],
+              fileName: file.name,
+              snapshotCount: 0,
+              error: 'Companion file is too large to import (max 10MB)',
+            }),
+          );
+          return;
+        }
+
         const text = await file.text();
         const parsed = parseESOTKCompanionSavedVariables(text);
         if (!parsed || parsed.all.length === 0) {

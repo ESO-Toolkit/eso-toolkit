@@ -72,7 +72,7 @@ const getCategoryIconUrl = (category?: string): string | null => {
 const glassAddBtnSx = (isDark: boolean): Record<string, unknown> => ({
   alignSelf: 'flex-start' as const,
   fontSize: 11,
-  fontFamily: 'Space Grotesk, Inter, system-ui',
+  fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
   fontWeight: 600,
   borderRadius: '99px',
   textTransform: 'none' as const,
@@ -191,7 +191,7 @@ const FoodCategorySection: React.FC<FoodCategorySectionProps> = ({
             sx={{
               fontSize: 12,
               fontWeight: 600,
-              fontFamily: 'Space Grotesk, Inter, system-ui',
+              fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
               color: isDark ? 'rgba(255,255,255,0.80)' : 'rgba(0,0,0,0.75)',
             }}
           >
@@ -203,7 +203,7 @@ const FoodCategorySection: React.FC<FoodCategorySectionProps> = ({
             sx={{
               fontSize: 10,
               color: isDark ? 'rgba(255,255,255,0.30)' : 'rgba(0,0,0,0.30)',
-              fontFamily: 'Space Grotesk',
+              fontFamily: 'Space Grotesk Variable',
             }}
           >
             {group.items.length}
@@ -264,7 +264,7 @@ const FoodCategorySection: React.FC<FoodCategorySectionProps> = ({
                       sx={{
                         fontSize: 12,
                         fontWeight: 600,
-                        fontFamily: 'Space Grotesk, Inter, system-ui',
+                        fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                         lineHeight: 1.3,
                       }}
                     >
@@ -277,7 +277,7 @@ const FoodCategorySection: React.FC<FoodCategorySectionProps> = ({
                         height: 14,
                         fontSize: '0.55rem',
                         fontWeight: 700,
-                        fontFamily: 'Space Grotesk, Inter, system-ui',
+                        fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                         background:
                           item.type === 'food'
                             ? 'rgba(76, 175, 80, 0.18)'
@@ -388,7 +388,7 @@ const FoodPickerDialog: React.FC<FoodPickerDialogProps> = ({
       <DialogTitle
         sx={{
           fontWeight: 700,
-          fontFamily: 'Space Grotesk, Inter, system-ui',
+          fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
           fontSize: '1rem',
           pb: 1,
           background: isDark
@@ -487,7 +487,7 @@ const FoodPickerDialog: React.FC<FoodPickerDialogProps> = ({
                             sx={{
                               fontSize: 12,
                               fontWeight: 600,
-                              fontFamily: 'Space Grotesk, Inter, system-ui',
+                              fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                               lineHeight: 1.3,
                             }}
                           >
@@ -500,7 +500,7 @@ const FoodPickerDialog: React.FC<FoodPickerDialogProps> = ({
                               height: 14,
                               fontSize: '0.55rem',
                               fontWeight: 700,
-                              fontFamily: 'Space Grotesk, Inter, system-ui',
+                              fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                               background:
                                 item.type === 'food'
                                   ? 'rgba(76, 175, 80, 0.18)'
@@ -541,7 +541,7 @@ const FoodPickerDialog: React.FC<FoodPickerDialogProps> = ({
                     borderRadius: 1.5,
                     fontSize: 11,
                     fontWeight: activeTab === idx ? 700 : 500,
-                    fontFamily: 'Space Grotesk, Inter, system-ui',
+                    fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                     letterSpacing: 0.3,
                     flexShrink: 0,
                     color:
@@ -644,7 +644,7 @@ export const FoodPicker: React.FC<FoodPickerProps> = ({ food, onChange }) => {
                   sx={{
                     fontWeight: 700,
                     fontSize: 12,
-                    fontFamily: 'Space Grotesk, Inter, system-ui',
+                    fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                   }}
                 >
                   {currentFood.name}
@@ -656,7 +656,7 @@ export const FoodPicker: React.FC<FoodPickerProps> = ({ food, onChange }) => {
                     height: 16,
                     fontSize: '0.6rem',
                     fontWeight: 700,
-                    fontFamily: 'Space Grotesk, Inter, system-ui',
+                    fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                     background:
                       currentFood.type === 'food'
                         ? 'rgba(76, 175, 80, 0.18)'
@@ -671,7 +671,7 @@ export const FoodPicker: React.FC<FoodPickerProps> = ({ food, onChange }) => {
                 sx={{
                   color: 'text.disabled',
                   fontSize: 10,
-                  fontFamily: 'Space Grotesk, Inter, system-ui',
+                  fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                 }}
               >
                 {currentFood.category}
@@ -693,7 +693,7 @@ export const FoodPicker: React.FC<FoodPickerProps> = ({ food, onChange }) => {
             variant="caption"
             sx={{
               color: 'text.disabled',
-              fontFamily: 'Space Grotesk, Inter, system-ui',
+              fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
               fontStyle: 'italic',
             }}
           >

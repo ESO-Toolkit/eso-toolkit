@@ -1,9 +1,9 @@
 /**
  * Pack Hub API client — talks to the roster-hub-api Worker (VITE_ROSTER_HUB_API_URL).
  *
- * NOTE: This is separate from packs-api.ts (build-hub) which talks to the
- * eso-packs-worker (VITE_PACKS_API_URL). Both expose /packs endpoints but
- * serve different data stores. This one is used by roster-hub and pack-hub features.
+ * The build-hub packs client is a compatibility adapter around this canonical
+ * client. Both roster publishing and Pack Hub therefore use this Worker and
+ * the same D1 data store.
  */
 
 import { decodeHtmlEntities } from '../../../utils/decodeHtmlEntities';

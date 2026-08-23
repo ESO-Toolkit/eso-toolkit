@@ -1,12 +1,15 @@
-# ESO Log Aggregator - UI Components
+# ESO Toolkit - UI Components
 
 ## BossAvatar Component
 
-The `BossAvatar` component provides a standardized way to display boss avatars from Elder Scrolls Online trials and dungeons throughout the application.
+The `BossAvatar` component provides a standardized way to display original boss-identification
+sigils for Elder Scrolls Online trials and dungeons throughout the application. The sigils are
+generated deterministically from boss names and do not use extracted game artwork.
 
 ### Features
 
-- **Comprehensive Boss Coverage**: Includes avatars for all major trial and dungeon bosses
+- **Original Visuals**: Generates lightweight SVG sigils without shipping third-party boss artwork
+- **Comprehensive Boss Coverage**: Includes sigils for all major trial and dungeon bosses
 - **Alias Support**: Handles multiple name variations for the same boss (e.g., "Lord Falgravn" vs "Falgravn")
 - **Instance Number Handling**: Automatically strips instance numbers (e.g., "Z'maja #1" → "Z'maja")
 - **Material-UI Integration**: Built on MUI's Avatar component with consistent styling
@@ -170,12 +173,15 @@ The component automatically handles different case variations:
 
 ### Asset Management
 
-Both components use Vite's ES module imports for optimal bundling:
+Class icons use Vite's ES module imports for optimal bundling, while boss sigils are generated in
+code:
 
 ```tsx
 // Proper ES module imports
 import dkIcon from '@/assets/Class Icons/dragonknight.png';
-import zmajaAvatar from "@/assets/Cloudrest/Boss Avatars/z'maja.png";
+
+// BossAvatar generates a deterministic SVG data URI from its canonical name.
+const zmajaSigil = getBossAvatarSrc("Z'maja");
 ```
 
 This approach ensures:
@@ -220,7 +226,7 @@ Stories include:
 
 ### Performance Considerations
 
-- **Lazy Loading**: Assets are only loaded when components are used
+- **Lightweight Sigils**: Boss visuals are generated from canonical names without image requests
 - **Memoization**: Consider wrapping in `React.memo()` for lists with many icons
 - **Bundle Size**: ES module imports ensure optimal tree shaking
 - **Caching**: Browser caching works effectively with hashed asset names
@@ -253,12 +259,11 @@ const CLASS_ICON_MAP = {
 
 When adding new bosses or classes:
 
-1. **Add Asset**: Place the image file in the appropriate assets directory
-2. **Import Asset**: Add ES module import at the top of the component file
-3. **Update Mapping**: Add the mapping in the component's lookup object
-4. **Add Aliases**: Include any common name variations
-5. **Update Tests**: Add test cases for the new additions
-6. **Update Stories**: Include in the Storybook demonstrations
+1. **Bosses**: Add the canonical boss name and aliases to `bossAvatarGroups`; the component creates
+   the original sigil automatically.
+2. **Classes**: Add a properly licensed icon asset and import it in `ClassIcon`.
+3. **Update Tests**: Add coverage for the new names and aliases.
+4. **Update Stories**: Include the new option in the Storybook demonstrations.
 
 ### Best Practices
 

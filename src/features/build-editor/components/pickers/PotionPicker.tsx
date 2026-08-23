@@ -73,7 +73,7 @@ const CATEGORY_COLOR: Record<PotionCategory, string> = {
 const glassAddBtnSx = (isDark: boolean): Record<string, unknown> => ({
   alignSelf: 'flex-start' as const,
   fontSize: 11,
-  fontFamily: 'Space Grotesk, Inter, system-ui',
+  fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
   fontWeight: 600,
   borderRadius: '99px',
   textTransform: 'none' as const,
@@ -159,7 +159,7 @@ const PotionCategorySection: React.FC<PotionCategorySectionProps> = ({
             sx={{
               fontSize: 12,
               fontWeight: 600,
-              fontFamily: 'Space Grotesk, Inter, system-ui',
+              fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
               color: isDark ? 'rgba(255,255,255,0.80)' : 'rgba(0,0,0,0.75)',
             }}
           >
@@ -171,7 +171,7 @@ const PotionCategorySection: React.FC<PotionCategorySectionProps> = ({
             sx={{
               fontSize: 10,
               color: isDark ? 'rgba(255,255,255,0.30)' : 'rgba(0,0,0,0.30)',
-              fontFamily: 'Space Grotesk',
+              fontFamily: 'Space Grotesk Variable',
             }}
           >
             {group.items.length}
@@ -258,7 +258,7 @@ const PotionRow: React.FC<PotionRowProps> = ({ item, isSelected, catColor, onSel
             sx={{
               fontSize: 12,
               fontWeight: 600,
-              fontFamily: 'Space Grotesk, Inter, system-ui',
+              fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
               lineHeight: 1.3,
             }}
           >
@@ -271,7 +271,7 @@ const PotionRow: React.FC<PotionRowProps> = ({ item, isSelected, catColor, onSel
               height: 14,
               fontSize: '0.55rem',
               fontWeight: 700,
-              fontFamily: 'Space Grotesk, Inter, system-ui',
+              fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
               background: `${catColor}30`,
               color: catColor,
               border: 'none',
@@ -363,7 +363,7 @@ const PotionPickerDialog: React.FC<PotionPickerDialogProps> = ({
       <DialogTitle
         sx={{
           fontWeight: 700,
-          fontFamily: 'Space Grotesk, Inter, system-ui',
+          fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
           fontSize: '1rem',
           pb: 1,
           background: isDark
@@ -489,7 +489,7 @@ export const PotionPicker: React.FC<PotionPickerProps> = ({ potions, onChange })
             variant="caption"
             sx={{
               color: 'text.disabled',
-              fontFamily: 'Space Grotesk, Inter, system-ui',
+              fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
               fontStyle: 'italic',
             }}
           >
@@ -521,7 +521,7 @@ export const PotionPicker: React.FC<PotionPickerProps> = ({ potions, onChange })
                       sx={{
                         fontWeight: 700,
                         fontSize: 12,
-                        fontFamily: 'Space Grotesk, Inter, system-ui',
+                        fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                       }}
                     >
                       {p.name}
@@ -534,7 +534,7 @@ export const PotionPicker: React.FC<PotionPickerProps> = ({ potions, onChange })
                           height: 16,
                           fontSize: '0.6rem',
                           fontWeight: 700,
-                          fontFamily: 'Space Grotesk, Inter, system-ui',
+                          fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                           background: `${catColor}30`,
                           color: catColor,
                           border: 'none',
@@ -547,7 +547,7 @@ export const PotionPicker: React.FC<PotionPickerProps> = ({ potions, onChange })
                     sx={{
                       color: 'text.disabled',
                       fontSize: 10,
-                      fontFamily: 'Space Grotesk, Inter, system-ui',
+                      fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                     }}
                   >
                     {p.effects.join(' · ')}
@@ -559,7 +559,7 @@ export const PotionPicker: React.FC<PotionPickerProps> = ({ potions, onChange })
                         sx={{
                           fontSize: 9,
                           color: isDark ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.25)',
-                          fontFamily: 'Space Grotesk, Inter, system-ui',
+                          fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                           cursor: 'help',
                           display: 'block',
                         }}

@@ -4,7 +4,7 @@ import { TEST_DATA } from '../selectors';
 
 /**
  * Utility functions for nightly regression tests
- * 
+ *
  * These helpers provide common functionality needed across all nightly tests
  * and help ensure consistent testing patterns.
  */
@@ -31,22 +31,11 @@ export const DEFAULT_TIMEOUTS: TestTimeouts = {
 };
 
 /**
- * Known working report IDs for testing
- * These should be updated periodically to ensure they remain valid
- */
-export const KNOWN_REPORT_IDS = [
-  '3gjVGWB2dxCL8XAw', // Primary test report - should be a complete trial
-  'baJFfYC8trPhHMQp', // Secondary test report - different content type
-  'L4RQWvJkGXnfaPK6', // Tertiary test report
-  'VTqBNRdzCfp36gtL', // Quaternary test report
-] as const;
-
-/**
  * Main tab IDs that should be tested on every report
  */
 export const MAIN_TAB_IDS = [
   'insights',
-  'players', 
+  'players',
   'damage-done',
   'healing-done',
   'deaths',
@@ -60,7 +49,7 @@ export const MAIN_TAB_IDS = [
  */
 export const EXPERIMENTAL_TAB_IDS = [
   'location-heatmap',
-  'raw-events', 
+  'raw-events',
   'target-events',
   'diagnostics',
   'actors',
@@ -75,8 +64,8 @@ export const EXPERIMENTAL_TAB_IDS = [
  * Navigate to a report and extract the first available fight ID
  */
 export async function getFirstFightId(
-  page: Page, 
-  reportId: string, 
+  page: Page,
+  reportId: string,
   timeouts: TestTimeouts = DEFAULT_TIMEOUTS,
 ): Promise<string> {
   await page.goto(`/report/${reportId}`, {
@@ -85,17 +74,17 @@ export async function getFirstFightId(
   });
 
   await page.waitForLoadState('networkidle', { timeout: timeouts.dataLoad });
-  
-  const firstFightLink = page.locator('a[href*="/fight/"]').first();
-  await expect(firstFightLink).toBeVisible({ timeout: timeouts.dataLoad });
-  
-  const href = await firstFightLink.getAttribute('href');
-  const fightIdMatch = href?.match(/\/fight\/(\d+)/);
-  
+
+  const firstFightButton = page.locator('[data-testid^="fight-button-"]').first();
+  await expect(firstFightButton).toBeVisible({ timeout: timeouts.dataLoad });
+
+  const testId = await firstFightButton.getAttribute('data-testid');
+  const fightIdMatch = testId?.match(/^fight-button-(\d+)$/);
+
   if (!fightIdMatch) {
-    throw new Error(`Could not find fight ID in href: ${href}`);
+    throw new Error(`Could not find fight ID in data-testid: ${testId}`);
   }
-  
+
   return fightIdMatch[1];
 }
 
@@ -126,7 +115,7 @@ export async function takeNamedScreenshot(
   options: { fullPage?: boolean; timeout?: number } = {},
 ): Promise<void> {
   const { fullPage = true, timeout = DEFAULT_TIMEOUTS.screenshot } = options;
-  
+
   await page.screenshot({
     path: `test-results/nightly-regression-${name}.png`,
     fullPage,
@@ -139,14 +128,15 @@ export async function takeNamedScreenshot(
  */
 export async function checkForCriticalErrors(page: Page): Promise<string[]> {
   const errors = await page.evaluate(() => (window as any).testErrors || []);
-  
-  const criticalErrors = errors.filter((error: string) => 
-    !error.includes('ResizeObserver') && 
-    !error.includes('Not implemented') &&
-    !error.includes('Non-Error promise rejection') &&
-    !error.includes('ChunkLoadError'), // Ignore chunk loading errors in dev
+
+  const criticalErrors = errors.filter(
+    (error: string) =>
+      !error.includes('ResizeObserver') &&
+      !error.includes('Not implemented') &&
+      !error.includes('Non-Error promise rejection') &&
+      !error.includes('ChunkLoadError'), // Ignore chunk loading errors in dev
   );
-  
+
   return criticalErrors;
 }
 
@@ -157,16 +147,16 @@ export async function waitForDataGrid(
   page: Page,
   timeouts: TestTimeouts = DEFAULT_TIMEOUTS,
 ): Promise<boolean> {
-  const dataGrid = page.locator('.MuiDataGrid-root');
-  
+  const dataGrid = page.getByTestId('data-grid');
+
   if (!(await dataGrid.isVisible({ timeout: 5000 }))) {
     return false;
   }
 
   // Wait for rows to appear
-  const rows = page.locator('.MuiDataGrid-row');
+  const rows = dataGrid.locator('tbody tr');
   await expect(rows.first()).toBeVisible({ timeout: timeouts.dataLoad });
-  
+
   return true;
 }
 
@@ -177,31 +167,31 @@ export async function testDataGridInteractions(
   page: Page,
   screenshotPrefix: string,
 ): Promise<void> {
-  const dataGrid = page.locator('.MuiDataGrid-root');
-  
+  const dataGrid = page.getByTestId('data-grid');
+
   if (!(await dataGrid.isVisible({ timeout: 5000 }))) {
     return;
   }
 
   // Test column sorting
-  const columnHeaders = page.locator('.MuiDataGrid-columnHeader');
+  const columnHeaders = dataGrid.getByRole('columnheader');
   const headerCount = await columnHeaders.count();
-  
+
   if (headerCount > 0) {
     await columnHeaders.first().click();
     await page.waitForTimeout(2000);
-    
+
     await takeNamedScreenshot(page, `${screenshotPrefix}-sorted`);
   }
 
   // Test row selection
-  const rows = page.locator('.MuiDataGrid-row');
+  const rows = dataGrid.locator('tbody tr');
   const rowCount = await rows.count();
-  
+
   if (rowCount > 0) {
     await rows.first().click();
     await page.waitForTimeout(1000);
-    
+
     await takeNamedScreenshot(page, `${screenshotPrefix}-selected`);
   }
 }
@@ -221,8 +211,8 @@ export async function verifyTabActive(
   // Wait for main content to render (not just loading skeletons)
   const contentSelectors = [
     '[data-testid*="content"]',
-    '[data-testid*="panel"]', 
-    '.MuiDataGrid-root',
+    '[data-testid*="panel"]',
+    '[data-testid="data-grid"]',
     '.chart-container',
     '.visualization',
     '.analysis-content',
@@ -231,7 +221,7 @@ export async function verifyTabActive(
   ];
 
   let contentFound = false;
-  
+
   for (const selector of contentSelectors) {
     if (await page.locator(selector).isVisible({ timeout: 3000 })) {
       contentFound = true;
@@ -243,9 +233,9 @@ export async function verifyTabActive(
   if (!contentFound) {
     const skeletonOnly = await page.locator('.MuiSkeleton-root').count();
     const totalElements = await page.locator('*').count();
-    
+
     // If more than 50% skeletons, content probably hasn't loaded yet
-    if (skeletonOnly > 0 && (skeletonOnly / totalElements) > 0.5) {
+    if (skeletonOnly > 0 && skeletonOnly / totalElements > 0.5) {
       // Wait a bit longer for content
       await page.waitForTimeout(5000);
     }
@@ -284,10 +274,7 @@ export async function safePickDropdownOption(
     // whole string would only constrain the final selector in the list).
     const unselectedSelector = optionLocatorSelector
       .split(',')
-      .map(
-        (s) =>
-          `${s.trim()}:not([aria-selected="true"]):not(.Mui-selected):not([selected])`,
-      )
+      .map((s) => `${s.trim()}:not([aria-selected="true"]):not(.Mui-selected):not([selected])`)
       .join(', ');
     const unselectedOptions = page.locator(unselectedSelector);
 
@@ -313,11 +300,10 @@ export async function safePickDropdownOption(
 /**
  * Test target selector functionality if present
  */
-export async function testTargetSelector(
-  page: Page,
-  screenshotPrefix: string,
-): Promise<void> {
-  const targetSelector = page.locator('[data-testid="target-selector"], .MuiFormControl-root').first();
+export async function testTargetSelector(page: Page, screenshotPrefix: string): Promise<void> {
+  const targetSelector = page
+    .locator('[data-testid="target-selector"], .MuiFormControl-root')
+    .first();
 
   if (!(await targetSelector.isVisible({ timeout: 5000 }))) {
     return;
@@ -345,8 +331,11 @@ export async function monitorNetworkRequests(page: Page): Promise<{ failed: any[
 
   page.on('response', (response) => {
     const requestTime = Date.now();
-    
-    if (response.status() >= 400 && /^https?:\/\/(?:[\w.-]+\.)?esologs\.com(?:\/|$)/.test(response.url())) {
+
+    if (
+      response.status() >= 400 &&
+      /^https?:\/\/(?:[\w.-]+\.)?esologs\.com(?:\/|$)/.test(response.url())
+    ) {
       failedRequests.push({
         url: response.url(),
         status: response.status(),
@@ -354,20 +343,23 @@ export async function monitorNetworkRequests(page: Page): Promise<{ failed: any[
         timestamp: new Date().toISOString(),
       });
     }
-    
+
     // Track slow requests (>10 seconds)
-    response.finished().then(() => {
-      const duration = Date.now() - requestTime;
-      if (duration > 10000) {
-        slowRequests.push({
-          url: response.url(),
-          duration,
-          status: response.status(),
-        });
-      }
-    }).catch(() => {
-      // Ignore errors in timing measurement
-    });
+    response
+      .finished()
+      .then(() => {
+        const duration = Date.now() - requestTime;
+        if (duration > 10000) {
+          slowRequests.push({
+            url: response.url(),
+            duration,
+            status: response.status(),
+          });
+        }
+      })
+      .catch(() => {
+        // Ignore errors in timing measurement
+      });
   });
 
   return { failed: failedRequests, slow: slowRequests };
@@ -448,12 +440,12 @@ export async function setupRealDataTest(page: Page): Promise<void> {
   // Store errors for later access
   await page.addInitScript(() => {
     (window as any).testErrors = [];
-    
+
     // Capture JavaScript errors
     window.addEventListener('error', (event) => {
       (window as any).testErrors.push(event.error?.message || event.message);
     });
-    
+
     // Capture unhandled promise rejections
     window.addEventListener('unhandledrejection', (event) => {
       (window as any).testErrors.push(`Unhandled rejection: ${event.reason}`);
@@ -465,8 +457,8 @@ export async function setupRealDataTest(page: Page): Promise<void> {
  * Test experimental tabs toggle if available
  */
 export async function enableExperimentalTabs(page: Page): Promise<boolean> {
-  const experimentalToggle = page.locator('input[type="checkbox"]').filter({ hasText: /experimental/i });
-  
+  const experimentalToggle = page.getByRole('checkbox', { name: /show experimental tabs/i });
+
   if (await experimentalToggle.isVisible({ timeout: 5000 })) {
     if (!(await experimentalToggle.isChecked())) {
       await experimentalToggle.check();
@@ -474,6 +466,6 @@ export async function enableExperimentalTabs(page: Page): Promise<boolean> {
     }
     return true;
   }
-  
+
   return false;
 }

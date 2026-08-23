@@ -580,12 +580,12 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             {onCompanionFileSelected && (
               <>
-                <Tooltip title="Upload ESOTK Companion SavedVariables" arrow>
+                <Tooltip title="Load ESOTK Companion SavedVariables from this device" arrow>
                   <Button
                     component="label"
                     size="small"
                     startIcon={<UploadFileIcon sx={{ fontSize: '1rem !important' }} />}
-                    aria-label="Upload ESOTK Companion SavedVariables"
+                    aria-label="Load ESOTK Companion SavedVariables from this device"
                     sx={{
                       textTransform: 'none',
                       whiteSpace: 'nowrap',
@@ -616,7 +616,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
                       hidden
                       type="file"
                       accept=".lua,text/plain"
-                      aria-label="ESOTK Companion SavedVariables file"
+                      aria-label="ESOTK Companion SavedVariables file from this device"
                       onChange={handleCompanionInputChange}
                     />
                   </Button>

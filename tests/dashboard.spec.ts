@@ -3,26 +3,28 @@ import { test, expect } from '@playwright/test';
 import { setupApiMocking } from './utils/api-mocking';
 
 test.describe('Raid Dashboard', () => {
-  // Use a real report ID that has actual data files
-  const testReportId = '3gjVGWB2dxCL8XAw';
+  // Use the bundled public sample by default; live runs may opt in via env.
+  const testReportId = process.env.E2E_REPORT_CODE ?? 'F4f2bMwWtgVKxjB9';
 
   test.beforeEach(async ({ page }) => {
     // Set up API mocking for consistent testing
     await setupApiMocking(page);
-    
+
     // Set up mock auth token BEFORE navigating to any page
     // This JWT token has:
     // - sub: test-user
     // - exp: 9999999999 (far future)
     // - scopes: view-user-profile, view-private-reports
     await page.addInitScript(() => {
-      localStorage.setItem('access_token', 'eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.eyJzdWIiOiJ0ZXN0LXVzZXIiLCJleHAiOjk5OTk5OTk5OTksInNjb3BlcyI6WyJ2aWV3LXVzZXItcHJvZmlsZSIsInZpZXctcHJpdmF0ZS1yZXBvcnRzIl19.');
+      localStorage.setItem(
+        'access_token',
+        'eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.eyJzdWIiOiJ0ZXN0LXVzZXIiLCJleHAiOjk5OTk5OTk5OTksInNjb3BlcyI6WyJ2aWV3LXVzZXItcHJvZmlsZSIsInZpZXctcHJpdmF0ZS1yZXBvcnRzIl19.',
+      );
     });
   });
 
   test.describe('Navigation', () => {
     test('should show dashboard button on report fights page', async ({ page }) => {
-
       // Navigate to the report fights page
       await page.goto(`/report/${testReportId}`);
       await page.waitForLoadState('networkidle');
@@ -33,8 +35,6 @@ test.describe('Raid Dashboard', () => {
     });
 
     test('should navigate to dashboard when button is clicked', async ({ page }) => {
-
-
       // Navigate to the report fights page
       await page.goto(`/report/${testReportId}`);
       await page.waitForLoadState('networkidle');
@@ -68,7 +68,6 @@ test.describe('Raid Dashboard', () => {
     });
 
     test('should NOT show dashboard button on individual fight page', async ({ page }) => {
-
       const testFightId = '1';
 
       // Navigate to an individual fight page
@@ -83,22 +82,18 @@ test.describe('Raid Dashboard', () => {
 
   test.describe('Dashboard Page Load', () => {
     test('should load dashboard page successfully', async ({ page }) => {
-
-
       // Navigate directly to dashboard
       await page.goto(`/report/${testReportId}/dashboard`);
       await page.waitForLoadState('domcontentloaded');
 
       // Check that the page loaded without crashing
       await expect(page.locator('body')).toBeVisible();
-      
+
       // Verify URL
       expect(page.url()).toContain(`/report/${testReportId}/dashboard`);
     });
 
     test('should display page content', async ({ page }) => {
-
-
       await page.goto(`/report/${testReportId}/dashboard`);
       await page.waitForLoadState('domcontentloaded');
       await page.waitForTimeout(1000);
@@ -112,8 +107,6 @@ test.describe('Raid Dashboard', () => {
 
   test.describe('URL Routing', () => {
     test('should maintain report ID in URL', async ({ page }) => {
-
-
       await page.goto(`/report/${testReportId}/dashboard`);
       await page.waitForLoadState('domcontentloaded');
 
@@ -122,8 +115,6 @@ test.describe('Raid Dashboard', () => {
     });
 
     test('should be directly accessible via URL', async ({ page }) => {
-
-
       // Navigate directly to dashboard URL
       await page.goto(`/report/${testReportId}/dashboard`);
       await page.waitForLoadState('domcontentloaded');
@@ -157,7 +148,6 @@ test.describe('Raid Dashboard', () => {
     });
 
     test('should not crash with console errors', async ({ page }) => {
-
       const errors: string[] = [];
 
       page.on('pageerror', (error) => {
@@ -182,8 +172,6 @@ test.describe('Raid Dashboard', () => {
 
   test.describe('Responsive Layout', () => {
     test('should render on desktop viewport', async ({ page }) => {
-
-
       // Set viewport to desktop size
       await page.setViewportSize({ width: 1280, height: 720 });
 
@@ -198,8 +186,6 @@ test.describe('Raid Dashboard', () => {
     });
 
     test('should render on mobile viewport', async ({ page }) => {
-
-
       // Set viewport to mobile size
       await page.setViewportSize({ width: 375, height: 667 });
 
@@ -214,8 +200,6 @@ test.describe('Raid Dashboard', () => {
     });
 
     test('should render on tablet viewport', async ({ page }) => {
-
-
       // Set viewport to tablet size
       await page.setViewportSize({ width: 768, height: 1024 });
 
@@ -232,8 +216,6 @@ test.describe('Raid Dashboard', () => {
 
   test.describe('Navigation Integration', () => {
     test('should navigate from fights list to dashboard and back', async ({ page }) => {
-
-
       // Start at report fights page
       await page.goto(`/report/${testReportId}`);
       await page.waitForLoadState('networkidle');

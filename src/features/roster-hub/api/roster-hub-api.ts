@@ -1,7 +1,8 @@
 /**
  * Roster Hub API client.
- * Reads VITE_ROSTER_HUB_API_URL from the environment; falls back to localhost
- * during development so the Worker dev server Just Works.
+ * Reads VITE_ROSTER_HUB_API_URL from the environment. In development the
+ * shared env helper uses the Vite same-origin proxy; production builds use the
+ * deployed roster-hub-api Worker unless an explicit URL is supplied.
  */
 
 import { getBaseUrl, getRosterHubBaseUrl } from '../../../utils/envUtils';

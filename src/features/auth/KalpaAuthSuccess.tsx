@@ -238,7 +238,7 @@ export const KalpaAuthSuccess = (): React.JSX.Element => {
         <Typography
           variant="h4"
           sx={{
-            fontFamily: 'Space Grotesk, Inter, system-ui',
+            fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
             fontWeight: 700,
             textAlign: 'center',
             background: 'linear-gradient(135deg, #22c55e 0%, #38bdf8 50%, #00e1ff 100%)',

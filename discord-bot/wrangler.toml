@@ -1,6 +1,6 @@
 name = "eso-toolkit-discord-bot"
 main = "src/index.ts"
-compatibility_date = "2024-01-01"
+compatibility_date = "2026-08-23"
 compatibility_flags = ["nodejs_compat"]
 account_id = "75620f084ea25ade5ee57a71a830bba2"
 

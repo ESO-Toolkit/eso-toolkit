@@ -157,7 +157,7 @@ const SkillTile: React.FC<SkillTileProps> = ({ skill, onRemove }) => {
                 sx={{
                   fontSize: 11,
                   fontWeight: 800,
-                  fontFamily: 'Space Grotesk, Inter, system-ui',
+                  fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                   color: isDark ? 'rgba(255,255,255,0.16)' : 'rgba(0,0,0,0.13)',
                   userSelect: 'none',
                 }}
@@ -195,7 +195,7 @@ const SkillTile: React.FC<SkillTileProps> = ({ skill, onRemove }) => {
         sx={{
           fontSize: '0.58rem',
           fontWeight: 600,
-          fontFamily: 'Space Grotesk, Inter, system-ui',
+          fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
           color: isDark ? 'rgba(255,255,255,0.50)' : 'rgba(0,0,0,0.45)',
           lineHeight: 1.15,
           textAlign: 'center',
@@ -358,7 +358,7 @@ const SkillLineSection: React.FC<SkillLineSectionProps> = ({
           sx={{
             fontSize: 12,
             fontWeight: 600,
-            fontFamily: 'Space Grotesk, Inter, system-ui',
+            fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
             color: isDark ? 'rgba(255,255,255,0.80)' : 'rgba(0,0,0,0.75)',
           }}
         >
@@ -369,7 +369,7 @@ const SkillLineSection: React.FC<SkillLineSectionProps> = ({
             sx={{
               fontSize: 10,
               color: isDark ? 'rgba(255,255,255,0.30)' : 'rgba(0,0,0,0.30)',
-              fontFamily: 'Space Grotesk',
+              fontFamily: 'Space Grotesk Variable',
             }}
           >
             {groups.length}
@@ -393,7 +393,7 @@ const SkillLineSection: React.FC<SkillLineSectionProps> = ({
                 sx={{
                   fontSize: 10,
                   fontWeight: 600,
-                  fontFamily: 'Space Grotesk, Inter, system-ui',
+                  fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                   color: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.40)',
                   mb: 0.5,
                   letterSpacing: 0.3,
@@ -496,7 +496,7 @@ const PickerDialog: React.FC<PickerDialogProps> = ({ open, onClose, onSelect, se
       <DialogTitle
         sx={{
           fontWeight: 700,
-          fontFamily: 'Space Grotesk, Inter, system-ui',
+          fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
           fontSize: '1rem',
           pb: 1,
           background: isDark
@@ -609,7 +609,7 @@ const PickerDialog: React.FC<PickerDialogProps> = ({ open, onClose, onSelect, se
                           sx={{
                             fontSize: 12,
                             fontWeight: 600,
-                            fontFamily: 'Space Grotesk, Inter, system-ui',
+                            fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                             lineHeight: 1.3,
                           }}
                         >
@@ -657,7 +657,7 @@ const PickerDialog: React.FC<PickerDialogProps> = ({ open, onClose, onSelect, se
                     borderRadius: 1.5,
                     fontSize: 11,
                     fontWeight: activeTab === idx ? 700 : 500,
-                    fontFamily: 'Space Grotesk, Inter, system-ui',
+                    fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                     letterSpacing: 0.3,
                     flexShrink: 0,
                     color:
@@ -704,7 +704,7 @@ const PickerDialog: React.FC<PickerDialogProps> = ({ open, onClose, onSelect, se
                           sx={{
                             fontSize: 9,
                             fontWeight: 700,
-                            fontFamily: 'Space Grotesk, Inter, system-ui',
+                            fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                             letterSpacing: 1,
                             textTransform: 'uppercase',
                             color: clsColor,
@@ -797,7 +797,7 @@ export const SpecificSkillsPicker: React.FC<SpecificSkillsPickerProps> = ({ valu
           fontWeight: 700,
           letterSpacing: 0.8,
           textTransform: 'uppercase',
-          fontFamily: 'Space Grotesk, Inter, system-ui',
+          fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
           color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.45)',
         }}
       >

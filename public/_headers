@@ -1,17 +1,19 @@
-# NOTE: this file is INERT on GitHub Pages — Pages ignores Netlify/Cloudflare-style
-# `_headers`, so Vite just copies it to build/_headers as dead static text and
-# esotk.com currently serves NONE of these headers. To actually apply them the site
-# must move to a header-capable host (Cloudflare Pages/Workers, or a CF Transform
-# Rule in front of Pages). frame-ancestors/HSTS in particular cannot be set via a
-# <meta> tag, so an index.html meta CSP is only a partial interim. See audit M3.
+# NOTE: this file is INERT on GitHub Pages - Pages ignores Netlify/Cloudflare-style
+# `_headers`, so esotk.com currently serves NONE of these headers. The build step
+# replaces __CSP_INLINE_SCRIPT_HASHES__ in build/_headers with the same hash used by
+# the app-shell meta CSP. To apply this file, move the site to a header-capable host
+# (Cloudflare Pages/Workers, or a CF Transform Rule in front of Pages).
+# frame-ancestors, nosniff, HSTS, and Permissions-Policy cannot be set via a
+# <meta> tag, so the index.html policy remains only a partial interim control.
 #
-# The CSP host list below is kept in sync with the app's real network surface so it
-# is correct on the day the site migrates to a header-capable host. Validate in
-# report-only mode before enforcing.
+# The CSP host list below is kept in sync with the app's real network surface. The
+# broad img-src https: is intentional: build-guide imports may display user-supplied
+# HTTPS images, while scripts and network requests remain explicitly allowlisted.
+# Validate in report-only mode before enforcing on a new host.
 /*
   X-Content-Type-Options: nosniff
   X-Frame-Options: SAMEORIGIN
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(), microphone=(), geolocation=()
   Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
-  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com https://api.rollbar.com https://cdn.jsdelivr.net; worker-src 'self' blob: https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://assets.rpglogs.com https://esoicons.uesp.net https://i.ibb.co https://cdn.discordapp.com https://pub-87ec3d93bfd4456faec17c57e05093d9.r2.dev; connect-src 'self' https://www.esologs.com https://assets.rpglogs.com https://api.rollbar.com https://www.google-analytics.com https://roster-hub-api.eso-toolkit.workers.dev https://discord-bot.eso-toolkit.workers.dev https://discord.com https://esolog.uesp.net; frame-src 'self' kalpa:; object-src 'none'; base-uri 'self'; form-action 'self'
+  Content-Security-Policy: default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; frame-ancestors 'self'; script-src 'self' __CSP_INLINE_SCRIPT_HASHES__ 'wasm-unsafe-eval' https://www.googletagmanager.com https://cdn.jsdelivr.net; worker-src 'self' blob: https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob: https:; connect-src 'self' https://www.esologs.com https://roster-hub-api.eso-toolkit.workers.dev https://eso-toolkit-discord-bot.eso-toolkit.workers.dev https://api.github.com https://gist.githubusercontent.com https://api.rollbar.com https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://esolog.uesp.net https://cdn.jsdelivr.net https://tessdata.projectnaptha.com; frame-src 'self' kalpa:; manifest-src 'self'

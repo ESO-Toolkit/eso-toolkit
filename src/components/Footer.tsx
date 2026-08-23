@@ -6,7 +6,7 @@ import React from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 
 import discordIcon from '../assets/discord-icon.svg';
-import esoLogo from '../assets/ESOHelpers-logo-icon.svg';
+import esoLogo from '../assets/eso-toolkit-logo-icon.svg';
 
 import { useBugReport } from './BugReportDialog';
 
@@ -26,7 +26,7 @@ export const Footer: React.FC = React.memo(() => {
 
   const secondaryAccent = theme.palette.mode === 'dark' ? '#a855f7' : '#7c3aed';
 
-  const _currentYear = React.useMemo(() => new Date().getFullYear(), []);
+  const currentYear = React.useMemo(() => new Date().getFullYear(), []);
 
   const toolLinks = React.useMemo<FooterLink[]>(
     () => [
@@ -704,7 +704,7 @@ export const Footer: React.FC = React.memo(() => {
 
                 letterSpacing: '-0.02em',
 
-                fontFamily: 'Space Grotesk,Inter,system-ui',
+                fontFamily: 'Space Grotesk Variable,Inter Variable,system-ui',
 
                 lineHeight: 1.2,
 
@@ -869,7 +869,7 @@ export const Footer: React.FC = React.memo(() => {
 
                     letterSpacing: '-0.02em',
 
-                    fontFamily: 'Space Grotesk,Inter,system-ui',
+                    fontFamily: 'Space Grotesk Variable,Inter Variable,system-ui',
 
                     background:
                       theme.palette.mode === 'dark'
@@ -883,7 +883,7 @@ export const Footer: React.FC = React.memo(() => {
                     marginBottom: 0.75,
                   }}
                 >
-                  ESO Helper Tools
+                  ESO Toolkit
                 </Typography>
 
                 <Typography sx={{ color: theme.palette.text.secondary, lineHeight: 1.6 }}>
@@ -971,7 +971,7 @@ export const Footer: React.FC = React.memo(() => {
 
                       mb: { xs: 1.1, md: 1.3 },
 
-                      fontFamily: 'Space Grotesk,Inter,system-ui',
+                      fontFamily: 'Space Grotesk Variable,Inter Variable,system-ui',
                     }}
                   >
                     {section.title}
@@ -1090,9 +1090,9 @@ export const Footer: React.FC = React.memo(() => {
               lineHeight: 1.6,
             }}
           >
-            ESO Helper Tools is an independent project and is not affiliated with ZeniMax Online
-            Studios, Bethesda, or esologs.com. All trademarks are the property of their respective
-            owners.
+            © {currentYear} ESO Toolkit. This independent fan project is not affiliated with,
+            sponsored by, or endorsed by ZeniMax Online Studios, Bethesda, or ESO Logs. All
+            trademarks are the property of their respective owners.
           </Typography>
           <Box
             sx={{
@@ -1120,6 +1120,25 @@ export const Footer: React.FC = React.memo(() => {
               }}
             >
               Privacy Policy
+            </Link>
+
+            <Link
+              component={RouterLink}
+              to="/terms"
+              sx={{
+                fontSize: '0.8rem',
+                opacity: 0.6,
+                color: 'inherit',
+                textDecoration: 'none',
+                transition: 'opacity 0.2s ease',
+                minHeight: 44,
+                display: 'inline-flex',
+                alignItems: 'center',
+                px: 1,
+                '&:hover': { opacity: 1, color: accentColor },
+              }}
+            >
+              Terms of Use
             </Link>
 
             <Button

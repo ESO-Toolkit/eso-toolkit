@@ -10,9 +10,22 @@ bars. This add-on reads them live from the official ESO API and writes them to
 SavedVariables; ESOTK matches each snapshot to your uploaded log by character, server and
 timestamp, then overlays the build on the report.
 
-> Read-only, ToS-safe (no automation), PC-only (console can't export SavedVariables).
-> See the full strategy in
-> [`documentation/features/addons/ESOTK_COMPANION_ADDON_RESEARCH.md`](../../documentation/features/addons/ESOTK_COMPANION_ADDON_RESEARCH.md).
+Current companion release: **0.1.0** · **ESO Update 50** · API **101049–101050**.
+
+> Read-only (no input or combat automation), PC-only (console can't export SavedVariables).
+> See the full strategy in the
+> [companion add-on research document](https://github.com/ESO-Toolkit/eso-toolkit/blob/main/documentation/features/addons/ESOTK_COMPANION_ADDON_RESEARCH.md).
+
+## Relationship to the official ESOtk add-on
+
+This folder contains the optional **ESOTK Companion** integration for player-card build
+evidence. It is separate from the [official ESOtk add-on repository](https://github.com/ESO-Toolkit/esotk-addon),
+which provides roster/group validation and uses its own `ESOtk_SavedVars` data. Install this
+folder as `ESOTKCompanion`; do not rename it to `ESOtk` or merge the two manifests.
+
+The two add-ons intentionally use different slash commands: this companion uses
+`/esotkcompanion`, while the official ESOtk add-on uses `/esotk`. This avoids one add-on
+overwriting the other's command handler when both are enabled.
 
 ## What it captures
 
@@ -34,14 +47,24 @@ timestamp, then overlays the build on the report.
 ## Use
 
 - It snapshots **automatically when you leave combat**. No action needed.
-- `/esotk` — snapshot **now**
-- `/esotk on` / `/esotk off` — enable/disable capture
-- `/esotk clear` — wipe stored snapshots
-- `/esotk verbose` — toggle chat confirmations
+- `/esotkcompanion` — snapshot **now**
+- `/esotkcompanion on` / `/esotkcompanion off` — enable/disable capture
+- `/esotkcompanion clear` — wipe stored snapshots
+- `/esotkcompanion verbose` — toggle chat confirmations
 
-Then upload `Documents/Elder Scrolls Online/live/SavedVariables/ESOTKCompanion.lua`
-to ESOTK (or let it read the folder), and your champion points, stats, buffs and
-scribed skills appear on the player card for the matching log.
+Then select `Documents/Elder Scrolls Online/live/SavedVariables/ESOTKCompanion.lua`
+in ESO Toolkit. Your champion points, stats, buffs and scribed skills appear on the player
+card for the matching log.
+
+### Privacy
+
+The SavedVariables file contains your ESO account display name, character names, server,
+timestamps, and the captured build details listed below. ESO Toolkit reads a file only after you
+select it, parses it locally in your browser, and keeps the parsed snapshots only for the current
+browser session; the web app does not upload the file to an ESO Toolkit server. Use
+`/esotkcompanion clear`
+in game and then `/reloadui` if you want to remove the add-on's stored snapshots from disk. Review
+the file before sharing it with another person or posting it publicly.
 
 ## SavedVariables shape (`ESOTKCompanionSV`)
 

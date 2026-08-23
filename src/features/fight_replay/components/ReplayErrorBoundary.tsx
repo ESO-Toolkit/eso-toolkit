@@ -5,7 +5,7 @@
  * - WebGL capability detection and validation
  * - Graceful error handling with detailed error information
  * - Fallback UI with system requirements and troubleshooting steps
- * - Integration with Sentry for error reporting
+ * - Integration with Rollbar for error reporting
  * - Retry mechanism for transient errors
  *
  * @module ReplayErrorBoundary
@@ -161,7 +161,7 @@ const WebGLFallbackUI: React.FC<{
             <Stack spacing={1} sx={{ ml: 2 }}>
               <Typography variant="body2">
                 1. <strong>Update your browser</strong> to the latest version (
-                <Link href={browser.url} target="_blank" rel="noopener">
+                <Link href={browser.url} target="_blank" rel="noopener noreferrer">
                   Get {browser.name}
                 </Link>
                 )
@@ -256,7 +256,7 @@ const WebGLFallbackUI: React.FC<{
               variant="outlined"
               href="https://get.webgl.org/"
               target="_blank"
-              rel="noopener"
+              rel="noopener noreferrer"
               size="large"
             >
               Test WebGL
@@ -269,7 +269,7 @@ const WebGLFallbackUI: React.FC<{
             <Link
               href="https://github.com/ESO-Toolkit/eso-toolkit/wiki/WebGL-Troubleshooting"
               target="_blank"
-              rel="noopener"
+              rel="noopener noreferrer"
             >
               View troubleshooting guide
             </Link>
@@ -473,7 +473,7 @@ const ErrorFallbackUI: React.FC<{
             <Link
               href="https://github.com/ESO-Toolkit/eso-toolkit/issues"
               target="_blank"
-              rel="noopener"
+              rel="noopener noreferrer"
             >
               report an issue
             </Link>{' '}
@@ -615,7 +615,11 @@ export class ReplayErrorBoundary extends Component<
     });
 
     // Open issue tracker for bug reports
-    window.open('https://github.com/ESO-Toolkit/eso-toolkit/issues', '_blank', 'noopener');
+    window.open(
+      'https://github.com/ESO-Toolkit/eso-toolkit/issues',
+      '_blank',
+      'noopener,noreferrer',
+    );
   };
 
   render(): ReactNode {

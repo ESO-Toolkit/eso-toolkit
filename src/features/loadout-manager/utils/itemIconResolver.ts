@@ -17,6 +17,7 @@
 
 import { Logger } from '@/utils/logger';
 
+import itemIconsJsonUrl from '../data/itemIcons.json?url';
 import { getItemInfo } from '../data/itemIdMap';
 import type { SlotType } from '../data/slotTypes';
 
@@ -31,11 +32,39 @@ type IconData = {
 let iconData: IconData | null = null;
 let iconDataPromise: Promise<IconData> | null = null;
 
+/** Populate icon data from an already-parsed payload (used by the fetch path and Jest). */
+export function __initIconDataFromJson(data: IconData): void {
+  iconData = data;
+}
+
+/**
+ * Resolve the browser fetch implementation without assuming that a fetch
+ * global exists. Jest's jsdom environment intentionally does not provide one,
+ * and synchronous consumers should still be able to use the graceful
+ * "icon data not ready" fallback in that environment.
+ */
+function getRuntimeFetch(): typeof fetch | null {
+  if (typeof globalThis.fetch !== 'function') return null;
+  return globalThis.fetch.bind(globalThis);
+}
+
 function startIconDataLoad(): Promise<IconData> {
-  const promise = import('../data/itemIcons.json').then((m) => {
-    iconData = m.default as IconData;
-    return iconData;
-  });
+  const fetchImpl = getRuntimeFetch();
+  if (!fetchImpl) {
+    return Promise.reject(new Error('Item icon data fetch is unavailable'));
+  }
+
+  const promise = fetchImpl(itemIconsJsonUrl)
+    .then((response) => {
+      if (!response.ok) {
+        throw new Error(`Item icon data fetch failed: HTTP ${response.status}`);
+      }
+      return response.json() as Promise<IconData>;
+    })
+    .then((data) => {
+      __initIconDataFromJson(data);
+      return data;
+    });
   // On failure, clear the cached promise so the next caller retries instead of
   // re-awaiting a permanently rejected promise (which would dead-end the picker).
   promise.catch(() => {
@@ -46,13 +75,21 @@ function startIconDataLoad(): Promise<IconData> {
 
 function ensureIconData(): IconData | null {
   if (iconData) return iconData;
+  // Synchronous lookups are allowed before the async asset is ready. In
+  // environments without fetch (notably jsdom), leave the data unresolved so
+  // callers can use their generic-name fallback instead of throwing a
+  // ReferenceError. An explicit preload still reports the unavailable fetch
+  // through startIconDataLoad below.
+  if (!getRuntimeFetch()) return null;
   if (!iconDataPromise) iconDataPromise = startIconDataLoad();
   return null;
 }
 
-// Eagerly start loading icon data at module import time so synchronous
-// lookups resolve as early as possible.
-ensureIconData();
+// Eagerly start loading in browsers. Jest's jsdom environment initializes the
+// real fixture synchronously in the focused data tests instead.
+if (typeof fetch === 'function') {
+  ensureIconData();
+}
 
 export async function preloadIconData(): Promise<void> {
   if (iconData) return;

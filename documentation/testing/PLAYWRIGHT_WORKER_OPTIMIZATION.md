@@ -18,7 +18,7 @@ Created `tests/utils/worker-config.ts` with intelligent worker calculation based
 | Config File | Before | After |
 |-------------|---------|-------|
 | `playwright.nightly.config.ts` | `workers: process.env.CI ? 2 : 4` | Dynamic calculation, max 3 workers |
-| `playwright.screen-sizes.config.ts` | `workers: process.env.CI ? 2 : undefined` | Dynamic calculation, conservative for screenshots |
+| `playwright/screen-sizes-fast.config.ts` | `workers: process.env.CI ? 2 : undefined` | Dynamic calculation, conservative for screenshots |
 | `playwright.smoke.config.ts` | `workers: 1` | Dynamic calculation, max 2 workers |
 
 ### 3. **Environment Variable Support**
@@ -43,7 +43,7 @@ Added support for fine-tuning via environment variables:
 - **Min workers**: 2 (ensure parallelization)
 - **Reasoning**: More aggressive since these are comprehensive tests
 
-#### Screen Size Tests (`playwright.screen-sizes.config.ts`)
+#### Screen Size Tests (`playwright/screen-sizes-fast.config.ts`)
 - **Workers**: Up to 2 (same as before)
 - **Memory per worker**: 1500MB (higher for screenshots)
 - **Reasoning**: Screenshot comparisons can be memory-intensive

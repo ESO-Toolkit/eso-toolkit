@@ -65,7 +65,15 @@ const MOCK_REPORTS_RESPONSE = {
   data: {
     reportData: {
       __typename: 'ReportData',
-      reports: { __typename: 'ReportPagination', total: 0, data: [] },
+      reports: {
+        __typename: 'ReportPagination',
+        total: 0,
+        data: [],
+        current_page: 1,
+        per_page: 100,
+        last_page: 1,
+        has_more_pages: false,
+      },
     },
   },
 };

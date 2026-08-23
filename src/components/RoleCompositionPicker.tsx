@@ -163,7 +163,7 @@ export const RoleCompositionPicker = React.memo<RoleCompositionPickerProps>(
               color,
               minWidth: compact ? 20 : 16,
               textAlign: 'center',
-              fontFamily: '"Space Grotesk", monospace',
+              fontFamily: '"Space Grotesk Variable", monospace',
             }}
           >
             {count}
@@ -279,7 +279,7 @@ export const RoleCompositionPicker = React.memo<RoleCompositionPickerProps>(
                 fontSize: compact ? '1rem' : '0.9rem',
                 fontWeight: 700,
                 color: roleColors.dps,
-                fontFamily: '"Space Grotesk", monospace',
+                fontFamily: '"Space Grotesk Variable", monospace',
               }}
             >
               {local.dps}
@@ -293,7 +293,7 @@ export const RoleCompositionPicker = React.memo<RoleCompositionPickerProps>(
                 fontSize: '0.75rem',
                 fontWeight: 600,
                 color: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(15,23,42,0.3)',
-                fontFamily: '"Space Grotesk", monospace',
+                fontFamily: '"Space Grotesk Variable", monospace',
               }}
             >
               {ROSTER_SIZE}

@@ -292,7 +292,7 @@ const BuildCard: React.FC<BuildCardProps> = ({ build, isDarkMode, onDelete }) =>
               wordBreak: 'break-word',
               fontSize: '1.05rem',
               letterSpacing: '-0.01em',
-              fontFamily: 'Space Grotesk, Inter, system-ui',
+              fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
             }}
           >
             {build.title}
@@ -577,7 +577,7 @@ const RosterCard: React.FC<RosterCardProps> = ({ roster, isDarkMode, onDelete })
               wordBreak: 'break-word',
               fontSize: '1.05rem',
               letterSpacing: '-0.01em',
-              fontFamily: 'Space Grotesk, Inter, system-ui',
+              fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
             }}
           >
             {roster.title}
@@ -775,7 +775,9 @@ const BioDialog: React.FC<BioDialogProps> = ({ open, current, saving, onSave, on
       fullWidth
       slotProps={{ paper: { sx: DIALOG_PAPER_SX(isDarkMode, theme.palette.divider) } }}
     >
-      <DialogTitle sx={{ fontWeight: 700, fontFamily: 'Space Grotesk, Inter, system-ui' }}>
+      <DialogTitle
+        sx={{ fontWeight: 700, fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui' }}
+      >
         Edit Bio
       </DialogTitle>
       <DialogContent>
@@ -848,7 +850,7 @@ const SectionHeading: React.FC<SectionHeadingProps> = ({ icon, label, count }) =
         sx={{
           fontWeight: 700,
           color: theme.palette.text.primary,
-          fontFamily: 'Space Grotesk, Inter, system-ui',
+          fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
           letterSpacing: '-0.01em',
           fontSize: '1.15rem',
         }}
@@ -1210,7 +1212,7 @@ export const PublicProfilePage: React.FC = () => {
             fontWeight: 700,
             color: theme.palette.text.primary,
             mb: 1,
-            fontFamily: 'Space Grotesk, Inter, system-ui',
+            fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
           }}
         >
           Player not found
@@ -1433,7 +1435,7 @@ export const PublicProfilePage: React.FC = () => {
                 variant="h5"
                 sx={{
                   fontWeight: 800,
-                  fontFamily: 'Space Grotesk, Inter, system-ui',
+                  fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                   color: theme.palette.text.primary,
                   fontSize: { xs: '1.5rem', sm: '1.65rem' },
                   letterSpacing: '-0.02em',
@@ -1538,7 +1540,7 @@ export const PublicProfilePage: React.FC = () => {
                       fontWeight: 800,
                       fontVariantNumeric: 'tabular-nums',
                       color: accent,
-                      fontFamily: 'Space Grotesk, Inter, system-ui',
+                      fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                       fontSize: '1rem',
                       lineHeight: 1,
                     }}
@@ -1748,7 +1750,9 @@ export const PublicProfilePage: React.FC = () => {
         fullWidth
         slotProps={{ paper: { sx: DIALOG_PAPER_SX(isDarkMode, theme.palette.divider) } }}
       >
-        <DialogTitle sx={{ fontWeight: 700, fontFamily: 'Space Grotesk, Inter, system-ui' }}>
+        <DialogTitle
+          sx={{ fontWeight: 700, fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui' }}
+        >
           Delete {deleteTarget?.type}?
         </DialogTitle>
         <DialogContent>

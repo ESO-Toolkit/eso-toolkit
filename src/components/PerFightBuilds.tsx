@@ -706,7 +706,7 @@ export const PerFightBuilds: React.FC<PerFightBuildsProps> = React.memo(
             </Typography>
             <Typography
               sx={{
-                fontFamily: '"Space Grotesk", sans-serif',
+                fontFamily: '"Space Grotesk Variable", sans-serif',
                 fontWeight: 700,
                 fontSize: '0.85rem',
                 letterSpacing: '-0.02em',
@@ -1056,7 +1056,7 @@ export const PerFightBuilds: React.FC<PerFightBuildsProps> = React.memo(
                               />
                               <Typography
                                 sx={{
-                                  fontFamily: '"Space Grotesk", sans-serif',
+                                  fontFamily: '"Space Grotesk Variable", sans-serif',
                                   fontWeight: 700,
                                   fontSize: '0.9rem',
                                   letterSpacing: '-0.01em',
@@ -1278,7 +1278,7 @@ export const PerFightBuilds: React.FC<PerFightBuildsProps> = React.memo(
                 <Typography
                   id="pft-sheet-title"
                   sx={{
-                    fontFamily: '"Space Grotesk", sans-serif',
+                    fontFamily: '"Space Grotesk Variable", sans-serif',
                     fontWeight: 700,
                     fontSize: '1rem',
                     flex: 1,

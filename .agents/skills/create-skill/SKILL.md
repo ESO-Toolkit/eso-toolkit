@@ -115,7 +115,7 @@ New-Item -ItemType File -Path ".agents/skills/<folder-name>/SKILL.md"
 
 ### 5. Update AGENTS.md
 
-Add an entry to the "Agent Skills" table in [AGENTS.md](../../AGENTS.md) under the `### Agent Skills (SKILL.md files in .agents/skills/)` section:
+Add an entry to the "Agent Skills" table in [AGENTS.md](../../../AGENTS.md) under the `### Agent Skills (SKILL.md files in .agents/skills/)` section:
 
 ```markdown
 - **New Skill Name**: [.agents/skills/<folder>/SKILL.md](.agents/skills/<folder>/SKILL.md) - Brief description

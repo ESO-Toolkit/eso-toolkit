@@ -214,7 +214,7 @@ const BuildNavRailComponent: React.FC<BuildNavRailProps> = ({ progress }) => {
                   sx={{
                     fontSize: 9,
                     fontWeight: 600,
-                    fontFamily: 'Space Grotesk, Inter, system-ui',
+                    fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                     lineHeight: 1,
                     letterSpacing: 0.2,
                   }}
@@ -252,7 +252,7 @@ const BuildNavRailComponent: React.FC<BuildNavRailProps> = ({ progress }) => {
               sx={{
                 fontSize: 9,
                 fontWeight: 600,
-                fontFamily: 'Space Grotesk, Inter, system-ui',
+                fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                 lineHeight: 1,
                 letterSpacing: 0.2,
               }}
@@ -296,7 +296,7 @@ const BuildNavRailComponent: React.FC<BuildNavRailProps> = ({ progress }) => {
             <Typography
               sx={{
                 fontWeight: 700,
-                fontFamily: 'Space Grotesk, Inter, system-ui',
+                fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                 fontSize: 14,
                 color: isDark ? 'rgba(255,255,255,0.80)' : 'rgba(0,0,0,0.70)',
               }}
@@ -343,7 +343,7 @@ const BuildNavRailComponent: React.FC<BuildNavRailProps> = ({ progress }) => {
                         sx: {
                           fontSize: 13,
                           fontWeight: done ? 600 : 400,
-                          fontFamily: 'Space Grotesk, Inter, system-ui',
+                          fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                         },
                       },
                     }}
@@ -409,7 +409,7 @@ const BuildNavRailComponent: React.FC<BuildNavRailProps> = ({ progress }) => {
             sx={{
               fontSize: 10,
               fontWeight: 600,
-              fontFamily: 'Space Grotesk, Inter, system-ui',
+              fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
               textTransform: 'uppercase',
               letterSpacing: 1.2,
               color: isDark ? 'rgba(255,255,255,0.50)' : 'rgba(0,0,0,0.45)',
@@ -475,7 +475,7 @@ const BuildNavRailComponent: React.FC<BuildNavRailProps> = ({ progress }) => {
                   sx={{
                     fontSize: 11.5,
                     fontWeight: 500,
-                    fontFamily: 'Space Grotesk, Inter, system-ui',
+                    fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                     letterSpacing: 0.15,
                     lineHeight: 1.2,
                     flex: 1,

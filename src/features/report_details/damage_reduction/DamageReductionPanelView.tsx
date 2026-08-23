@@ -42,7 +42,7 @@ export const DamageReductionPanelView: React.FC<DamageReductionPanelViewProps> =
         variant="h6"
         sx={{
           mb: 2,
-          fontFamily: 'Space Grotesk, sans-serif',
+          fontFamily: 'Space Grotesk Variable, sans-serif',
           textShadow:
             '0 2px 4px rgb(0 0 0 / 0%), 0 4px 8px rgba(0, 0, 0, 0.1), 0 8px 16px rgba(0, 0, 0, 0.2)',
         }}

@@ -11,17 +11,17 @@ import { waitForLoadingComplete } from './utils/skeleton-detector';
 test('any visual test', async ({ page }) => {
   // 1. PRE-LOAD all data first (NEW REQUIREMENT)
   await preloadAllReportData(page, {
-    reportCode: 'nbKdDtT4NcZyVrvX',
+    reportCode: 'F4f2bMwWtgVKxjB9',
     tabs: ['players', 'damage'],
-    aggressiveWarmup: true
+    aggressiveWarmup: true,
   });
-  
+
   // 2. Navigate (will be INSTANT with preloaded data)
   await page.goto('/your-url', { waitUntil: 'domcontentloaded' });
-  
+
   // 3. Wait for UI (should be FAST - 1-3 seconds)
   await waitForLoadingComplete(page, { timeout: 10000 }); // SHORT timeout!
-  
+
   // 4. Screenshot (guaranteed to have data)
   await takeScreenshotWithPreloadedData(page, 'your-test.png');
 });
@@ -30,18 +30,19 @@ test('any visual test', async ({ page }) => {
 ## ⚡ **Copy-Paste Templates**
 
 ### **Test Suite with Cache Warming (BEST PERFORMANCE):**
+
 ```typescript
 test.describe('My Visual Tests', () => {
   test.beforeAll(async ({ browser }) => {
     const context = await browser.newContext();
     const page = await context.newPage();
-    
+
     await warmCacheForVisualTestSuite(page, {
-      reportCode: 'nbKdDtT4NcZyVrvX',
+      reportCode: 'F4f2bMwWtgVKxjB9',
       tabs: ['overview', 'players', 'damage'],
-      aggressiveWarmup: true
+      aggressiveWarmup: true,
     });
-    
+
     await context.close();
   });
 
@@ -52,7 +53,7 @@ test.describe('My Visual Tests', () => {
   });
 
   test('fast screenshot 2', async ({ page }) => {
-    await navigateWithPreloadedData(page, '/url2'); 
+    await navigateWithPreloadedData(page, '/url2');
     await waitForLoadingComplete(page, { timeout: 8000 });
     await takeScreenshotWithPreloadedData(page, 'test2.png');
   });
@@ -60,13 +61,14 @@ test.describe('My Visual Tests', () => {
 ```
 
 ### **Single Test with Pre-Loading:**
+
 ```typescript
 test('single visual test', async ({ page }) => {
-  await preloadAllReportData(page, { 
-    reportCode: 'nbKdDtT4NcZyVrvX',
-    tabs: ['players'] 
+  await preloadAllReportData(page, {
+    reportCode: 'F4f2bMwWtgVKxjB9',
+    tabs: ['players'],
   });
-  
+
   await navigateWithPreloadedData(page, '/players-url');
   await waitForLoadingComplete(page, { timeout: 10000 });
   await takeScreenshotWithPreloadedData(page, 'players.png');
@@ -74,13 +76,14 @@ test('single visual test', async ({ page }) => {
 ```
 
 ### **Adaptive Pre-Loading (When Unsure):**
+
 ```typescript
 test('adaptive test', async ({ page }) => {
   // Checks if data is already preloaded, preloads if not
   await ensureDataPreloadedForScreenshot(page, {
-    reportCode: 'nbKdDtT4NcZyVrvX'
+    reportCode: 'F4f2bMwWtgVKxjB9',
   });
-  
+
   await page.goto('/url');
   await waitForLoadingComplete(page); // Auto-detects preload status
   await expect(page).toHaveScreenshot('adaptive.png');
@@ -91,18 +94,18 @@ test('adaptive test', async ({ page }) => {
 
 ```typescript
 // MANDATORY imports for ALL visual tests
-import { 
-  preloadAllReportData,           // Pre-load data before tests
-  takeScreenshotWithPreloadedData, // Screenshot with data guarantee  
+import {
+  preloadAllReportData, // Pre-load data before tests
+  takeScreenshotWithPreloadedData, // Screenshot with data guarantee
   ensureDataPreloadedForScreenshot, // Smart preload check
-  navigateWithPreloadedData,      // Navigate expecting instant load
-  warmCacheForVisualTestSuite     // One-time cache warming
+  navigateWithPreloadedData, // Navigate expecting instant load
+  warmCacheForVisualTestSuite, // One-time cache warming
 } from './utils/data-preloader';
 
-import { 
-  waitForLoadingComplete,         // Preload-aware skeleton detection
-  isDataPreloaded,               // Check preload status
-  createSkeletonDetector         // Enhanced skeleton detector
+import {
+  waitForLoadingComplete, // Preload-aware skeleton detection
+  isDataPreloaded, // Check preload status
+  createSkeletonDetector, // Enhanced skeleton detector
 } from './utils/skeleton-detector';
 ```
 
@@ -112,19 +115,19 @@ import {
 // OLD (without pre-loading): Slow and unreliable
 await waitForSkeletonsToDisappear({ timeout: 45000 }); // 45 seconds!
 
-// NEW (with pre-loading): Fast and reliable  
+// NEW (with pre-loading): Fast and reliable
 await waitForLoadingComplete(page, { timeout: 10000 }); // 10 seconds max!
-await preloadAllReportData(page, { timeout: 60000 });   // One-time setup
+await preloadAllReportData(page, { timeout: 60000 }); // One-time setup
 ```
 
 ## 🎯 **Performance Expectations**
 
-| Metric | Before Pre-Loading | After Pre-Loading |
-|--------|-------------------|-------------------|
-| **Navigation** | 15-45 seconds | 1-3 seconds |
-| **Test Duration** | 60-120 seconds | 5-15 seconds |
-| **Success Rate** | 50-70% | 95%+ |
-| **Cache Hits** | 0% | 90%+ |
+| Metric            | Before Pre-Loading | After Pre-Loading |
+| ----------------- | ------------------ | ----------------- |
+| **Navigation**    | 15-45 seconds      | 1-3 seconds       |
+| **Test Duration** | 60-120 seconds     | 5-15 seconds      |
+| **Success Rate**  | 50-70%             | 95%+              |
+| **Cache Hits**    | 0%                 | 90%+              |
 
 ## 🔍 **Debug When Tests Are Slow**
 
@@ -185,7 +188,7 @@ test('mobile', async ({ page }) => {
 });
 
 // Multiple viewports
-VIEWPORTS.forEach(viewport => {
+VIEWPORTS.forEach((viewport) => {
   test.describe(viewport.name, () => {
     test.use({ viewport });
     test('viewport test', async ({ page }) => {
@@ -204,15 +207,16 @@ npm run validate:playwright-ai
 
 # Should show:
 # ✅ Uses data pre-loading utilities
-# ✅ Uses preload-aware loading detection  
+# ✅ Uses preload-aware loading detection
 # ✅ Warms cache for test suite efficiency
 ```
 
 ## 📈 **Success Indicators**
 
 Your tests are working correctly if you see:
+
 - ⚡ **Navigation times < 5 seconds** consistently
-- 📊 **Skeleton counts drop to 0-2** quickly  
+- 📊 **Skeleton counts drop to 0-2** quickly
 - 🎯 **No timeout failures** on `waitForLoadingComplete`
 - 🚀 **Test duration < 20 seconds** per visual test
 - ✅ **95%+ success rate** in CI/CD
@@ -220,6 +224,7 @@ Your tests are working correctly if you see:
 ## 🆘 **When to Ask for Help**
 
 Contact for support if you experience:
+
 - Tests still taking >30 seconds despite pre-loading
 - Skeleton counts consistently >10 after preloading
 - Cache warming appears to have no effect

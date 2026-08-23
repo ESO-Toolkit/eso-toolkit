@@ -9,8 +9,10 @@ import { RootState } from '../store/storeWithHistory';
 
 import { hasErrorTrackingConsent } from './consentManager';
 import {
+  disableErrorTracking,
   initializeErrorTracking,
   captureApplicationContext,
+  sanitizeTelemetryUrl,
   reportError,
   submitManualBugReport,
   setUserContext,
@@ -80,6 +82,8 @@ describe('errorTracking', () => {
     // before each test. Re-apply the Rollbar constructor implementation so that
     // `new Rollbar(config)` continues to return our shared mock instance.
     (Rollbar as jest.Mock).mockImplementation(() => mockRollbarInstance);
+    disableErrorTracking();
+    mockRollbarInstance.configure.mockClear();
     // Re-apply consent default (also reset by resetMocks)
     mockHasErrorTrackingConsent.mockReturnValue(true);
     originalEnv = process.env.NODE_ENV;
@@ -93,6 +97,23 @@ describe('errorTracking', () => {
   });
 
   // ─── initializeErrorTracking ──────────────────────────────────────────────
+
+  describe('sanitizeTelemetryUrl', () => {
+    it('removes OAuth query and fragment values while preserving the path', () => {
+      expect(
+        sanitizeTelemetryUrl('https://esotk.com/oauth-redirect?code=secret&state=secret#token'),
+      ).toBe('https://esotk.com/oauth-redirect');
+    });
+
+    it('handles relative URLs and malformed values without retaining query data', () => {
+      expect(sanitizeTelemetryUrl('/report/private-code?fight=1#details')).toBe(
+        'http://localhost/report/private-code',
+      );
+      expect(sanitizeTelemetryUrl('not a valid url?token=secret')).toBe(
+        'http://localhost/not%20a%20valid%20url',
+      );
+    });
+  });
 
   describe('initializeErrorTracking', () => {
     it('should initialize Rollbar in production with consent', async () => {
@@ -126,6 +147,33 @@ describe('errorTracking', () => {
       process.env.NODE_ENV = 'production';
       mockHasErrorTrackingConsent.mockReturnValue(false);
       await initializeErrorTracking();
+
+      expect(Rollbar).not.toHaveBeenCalled();
+    });
+
+    it('disables an active Rollbar client when consent is revoked', async () => {
+      await initInProduction();
+      mockHasErrorTrackingConsent.mockReturnValue(false);
+
+      await initializeErrorTracking();
+
+      expect(mockRollbarInstance.configure).toHaveBeenCalledWith(
+        expect.objectContaining({
+          enabled: false,
+          autoInstrument: false,
+          captureUncaught: false,
+          captureUnhandledRejections: false,
+        }),
+      );
+    });
+
+    it('does not create Rollbar if consent is revoked while the module is loading', async () => {
+      process.env.NODE_ENV = 'production';
+      const initialization = initializeErrorTracking();
+      mockHasErrorTrackingConsent.mockReturnValue(false);
+      disableErrorTracking();
+
+      await initialization;
 
       expect(Rollbar).not.toHaveBeenCalled();
     });
@@ -182,6 +230,28 @@ describe('errorTracking', () => {
       expect(payload['viewport.size']).toBeDefined();
       expect(payload['connection.type']).toBeDefined();
     });
+
+    it('should remove query and fragment data from nested URL-like fields', async () => {
+      await initInProduction();
+      const { transform } = (Rollbar as jest.Mock).mock.calls[0][0];
+      const payload: Record<string, unknown> = {
+        request: {
+          url: 'https://esotk.com/oauth-redirect?code=secret#state',
+        },
+        body: {
+          trace: {
+            frames: [{ filename: 'https://esotk.com/assets/app.js?token=secret#chunk' }],
+          },
+        },
+      };
+
+      transform(payload);
+
+      expect((payload.request as { url: string }).url).toBe('https://esotk.com/oauth-redirect');
+      expect(
+        (payload.body as { trace: { frames: { filename: string }[] } }).trace.frames[0].filename,
+      ).toBe('https://esotk.com/assets/app.js');
+    });
   });
 
   // ─── captureApplicationContext ────────────────────────────────────────────
@@ -205,6 +275,16 @@ describe('errorTracking', () => {
           }),
         }),
       );
+    });
+
+    it('should not retain query strings or fragments in the captured URL', () => {
+      window.history.replaceState(null, '', '/oauth-redirect?code=secret#token');
+
+      const context = captureApplicationContext();
+
+      expect(context.url).toBe('http://localhost/oauth-redirect');
+      expect(context.url).not.toContain('secret');
+      window.history.replaceState(null, '', '/');
     });
 
     it('should include Redux state when store is provided', async () => {

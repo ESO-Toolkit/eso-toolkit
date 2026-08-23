@@ -221,7 +221,7 @@ const CPSlot: React.FC<CPSlotProps> = ({
               transform: 'rotate(-45deg)',
               fontWeight: 800,
               fontSize: 11,
-              fontFamily: 'Space Grotesk, Inter, system-ui',
+              fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
               color: cpId ? tree.color : isDark ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.22)',
               lineHeight: 1,
               textShadow: cpId ? `0 0 6px rgba(${tree.colorRgb}, 0.4)` : 'none',
@@ -241,7 +241,7 @@ const CPSlot: React.FC<CPSlotProps> = ({
                 display: 'block',
                 color: tree.color,
                 fontSize: 12,
-                fontFamily: 'Space Grotesk, Inter, system-ui',
+                fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                 textShadow: `0 0 8px rgba(${tree.colorRgb}, 0.3)`,
                 lineHeight: 1.3,
               }}
@@ -255,7 +255,7 @@ const CPSlot: React.FC<CPSlotProps> = ({
                 display: 'block',
                 color: isDark ? 'rgba(255,255,255,0.30)' : 'rgba(0,0,0,0.28)',
                 fontSize: 11,
-                fontFamily: 'Space Grotesk, Inter, system-ui',
+                fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                 fontStyle: 'italic',
               }}
             >
@@ -321,7 +321,7 @@ const PassiveRow: React.FC<PassiveRowProps> = ({
             fontWeight: 600,
             display: 'block',
             fontSize: 11,
-            fontFamily: 'Space Grotesk, Inter, system-ui',
+            fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
             color: points > 0 ? 'text.primary' : 'text.secondary',
           }}
         >
@@ -404,7 +404,7 @@ const PassiveRow: React.FC<PassiveRowProps> = ({
             textAlign: 'center',
             fontWeight: 700,
             fontVariantNumeric: 'tabular-nums',
-            fontFamily: 'Space Grotesk, Inter, system-ui',
+            fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
             color: points > 0 ? treeColor : 'text.disabled',
             fontSize: 10,
           }}
@@ -491,7 +491,7 @@ const TreePanel: React.FC<TreePanelProps> = ({ tree, cp, onSlotChange, onPassive
               letterSpacing: 1,
               textTransform: 'uppercase',
               color: isDark ? 'rgba(255,255,255,0.40)' : 'rgba(0,0,0,0.38)',
-              fontFamily: 'Space Grotesk, Inter, system-ui',
+              fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
             }}
           >
             Active Perks
@@ -502,7 +502,7 @@ const TreePanel: React.FC<TreePanelProps> = ({ tree, cp, onSlotChange, onPassive
               fontWeight: 600,
               fontSize: 10,
               color: tree.color,
-              fontFamily: 'Space Grotesk, Inter, system-ui',
+              fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
               opacity: 0.7,
             }}
           >
@@ -543,7 +543,7 @@ const TreePanel: React.FC<TreePanelProps> = ({ tree, cp, onSlotChange, onPassive
               letterSpacing: 1,
               textTransform: 'uppercase',
               color: isDark ? 'rgba(255,255,255,0.40)' : 'rgba(0,0,0,0.38)',
-              fontFamily: 'Space Grotesk, Inter, system-ui',
+              fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
             }}
           >
             Passive Stars
@@ -554,7 +554,7 @@ const TreePanel: React.FC<TreePanelProps> = ({ tree, cp, onSlotChange, onPassive
               fontWeight: 600,
               fontSize: 10,
               color: totalAllocated > 0 ? tree.color : 'text.disabled',
-              fontFamily: 'Space Grotesk, Inter, system-ui',
+              fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
             }}
           >
             {totalAllocated}/{totalMax}
@@ -740,7 +740,7 @@ export const ChampionPointsPicker: React.FC<ChampionPointsPickerProps> = ({ cp, 
                   fontWeight: isActive ? 700 : 500,
                   color: isActive ? t.color : 'text.secondary',
                   fontSize: 12,
-                  fontFamily: 'Space Grotesk, Inter, system-ui',
+                  fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                   letterSpacing: isActive ? 0.3 : 0,
                   textShadow: isActive ? `0 0 8px rgba(${t.colorRgb}, 0.4)` : 'none',
                   transition: 'all 0.2s',

@@ -42,7 +42,8 @@ export function useCriticalDamageTask(_options?: UseCriticalDamageTaskOptions): 
   const selectedTargetIds = useSelectedTargetIds();
   const companionCritEvidence = useCompanionCritEvidence(_options?.context);
 
-  // For now, we'll use placeholder data until the dependencies are properly integrated
+  // Start the worker once all required report dependencies are available. The
+  // selector below exposes the real worker result; there is no placeholder path.
   React.useEffect(() => {
     if (
       selectedFight &&
@@ -98,8 +99,7 @@ export function useCriticalDamageTask(_options?: UseCriticalDamageTaskOptions): 
     selectWorkerTaskLoading('calculateCriticalDamageData'),
   ) as boolean;
   const criticalDamageError = useSelector(selectWorkerTaskError('calculateCriticalDamageData')) as
-    | string
-    | null;
+    string | null;
   const criticalDamageProgress = useSelector(
     selectWorkerTaskProgress('calculateCriticalDamageData'),
   ) as number | null;

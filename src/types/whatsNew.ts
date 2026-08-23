@@ -7,9 +7,9 @@ export interface WhatsNewEntry {
   id: number;
   /** PR title */
   title: string;
-  /** Cleaned PR description (markdown) */
-  description: string;
-  /** AI-generated friendly summary for non-technical readers */
+  /** Legacy payload field; current generation does not publish raw PR bodies. */
+  description?: string;
+  /** Friendly public summary (AI-assisted when configured, deterministic otherwise). */
   summary?: string;
   /** ISO 8601 date when the PR was merged */
   mergedAt: string;

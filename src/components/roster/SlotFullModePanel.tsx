@@ -106,7 +106,7 @@ export const SlotFullModePanel: React.FC<SlotFullModePanelProps> = ({
                 borderRadius: '99px',
                 fontSize: 11,
                 fontWeight: isActive ? 700 : 500,
-                fontFamily: 'Space Grotesk, Inter, system-ui',
+                fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                 letterSpacing: 0.3,
                 color: isActive
                   ? 'var(--be-accent, #38bdf8)'

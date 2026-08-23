@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import fs from 'fs';
 import http from 'http';
 import https from 'https';
@@ -13,6 +14,34 @@ import svgr from 'vite-plugin-svgr';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+const CSP_INLINE_SCRIPT_HASH_MARKER = '__CSP_INLINE_SCRIPT_HASHES__';
+
+/**
+ * GitHub Pages cannot attach response headers, so the app shell carries a
+ * browser-enforced CSP meta tag as a defense-in-depth fallback. Keep the
+ * synchronous SPA route-restoration script inline (it must run before React)
+ * and derive its CSP hash from the final transformed HTML at build time.
+ */
+const cspInlineScriptHashPlugin = () => ({
+  name: 'csp-inline-script-hash',
+  transformIndexHtml: {
+    order: 'post',
+    handler(html) {
+      const hashes = Array.from(
+        html.matchAll(/<script\b(?![^>]*\bsrc\s*=)[^>]*>([\s\S]*?)<\/script>/gi),
+        ([, contents]) =>
+          `'sha256-${createHash('sha256').update(contents, 'utf8').digest('base64')}'`,
+      );
+
+      if (hashes.length === 0) {
+        throw new Error('CSP hash generation expected at least one inline script in index.html');
+      }
+
+      return html.replaceAll(CSP_INLINE_SCRIPT_HASH_MARKER, hashes.join(' '));
+    },
+  },
+});
 
 // https://vitejs.dev/config/
 // eslint-disable-next-line import/no-default-export
@@ -51,6 +80,7 @@ export default defineConfig(({ command, mode }) => {
   return {
     base: process.env.VITE_BASE_URL || '/',
     plugins: [
+      cspInlineScriptHashPlugin(),
       ...(httpsEnabled ? [mkcert()] : []),
       ...(httpsEnabled
         ? [
@@ -208,30 +238,12 @@ ${downloadBtn}
         exclude: [/node_modules/, /\/workers\//, /\.worker\./, /SharedWorker/],
       }),
       // ESLint plugin disabled due to ESLint 9 compatibility issues
-      // Use 'npm run lint' for linting during development
-      // Custom plugin to inject Google Analytics script
-      {
-        name: 'html-transform',
-        transformIndexHtml(html) {
-          const measurementId = env.VITE_GA_MEASUREMENT_ID;
-          if (measurementId) {
-            // Inject Google Analytics script into the head
-            return html.replace(
-              '</head>',
-              `  <!-- Google Analytics -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=${measurementId}"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-    gtag('config', '${measurementId}');
-  </script>
-</head>`,
-            );
-          }
-          return html;
-        },
-      },
+      // Use 'npm run lint' for linting during development.
+      //
+      // Do not inject Google Analytics into the app shell here. The analytics
+      // helper bootstraps GA only after the user grants analytics consent. A
+      // document-level script would contact Google before that decision and
+      // would make the consent banner and privacy policy inaccurate.
     ],
 
     // Path aliases (backup to tsconfigPaths plugin)
@@ -295,6 +307,18 @@ ${downloadBtn}
       rolldownOptions: {
         output: {
           manualChunks(id) {
+            // Keep the replay's GPU runtime independent from the route shell.
+            // Three.js and React Three Fiber are only needed after entering a
+            // fight replay and otherwise inflate the feature chunk substantially.
+            if (id.includes('node_modules/three-stdlib')) return 'three-stdlib';
+            if (id.includes('node_modules/three-mesh-bvh')) return 'three-mesh-bvh';
+            if (id.includes('node_modules/troika-three-text')) return 'troika-text';
+            if (id.includes('node_modules/camera-controls')) return 'camera-controls';
+            if (id.includes('node_modules/meshline')) return 'meshline';
+            if (id.includes('node_modules/maath')) return 'maath';
+            if (id.includes('node_modules/@use-gesture/')) return 'gesture';
+            if (id.includes('node_modules/suspend-react')) return 'suspend-react';
+            if (id.includes('node_modules/three')) return 'three';
             if (id.includes('node_modules/react-dom')) return 'vendor';
             if (id.includes('node_modules/react/')) return 'vendor';
             if (id.includes('node_modules/@mui/')) return 'mui';
@@ -315,8 +339,14 @@ ${downloadBtn}
               id.includes('node_modules/history')
             )
               return 'router';
-            if (id.includes('node_modules/echarts') || id.includes('node_modules/zrender'))
-              return 'charts';
+            // ECharts is already route-lazy; keep its independently imported
+            // registries split so a single chart request stays below the CI
+            // warning threshold while preserving the same module graph.
+            if (id.includes('node_modules/echarts/charts')) return 'charts-series';
+            if (id.includes('node_modules/echarts/components')) return 'charts-components';
+            if (id.includes('node_modules/echarts/renderers')) return 'charts-renderers';
+            if (id.includes('node_modules/echarts/core')) return 'charts-core';
+            if (id.includes('node_modules/zrender')) return 'zrender';
           },
           chunkFileNames: (chunkInfo) => {
             if (

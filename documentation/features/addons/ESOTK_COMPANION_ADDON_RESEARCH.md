@@ -496,8 +496,10 @@ The user is right that the win is integrating with what raids already run:
   for it (§12.1). Don't promise live gear/CP streaming.
 - **You can't read another player's build** directly — they must run the add-on and
   opt in to broadcast. Value scales with raid adoption (lean on raid-lead mandate).
-- **No in-combat automation / no input** — read, evaluate, display only. Stays ToS-safe
-  like Hodor/CombatMetrics.
+- **No in-combat automation / no input** — read, evaluate, display only. This design is
+  intended to stay within the read-only patterns used by established ESO add-ons, but
+  users and maintainers remain responsible for following the current ZeniMax terms and
+  add-on policies.
 - **PC-only** (no console add-ons); console raids get the web/log-only experience.
 - **FSA write-mode is Chromium-only** — import-code/broadcast are the cross-browser
   fallbacks for ruleset sync.
@@ -801,7 +803,7 @@ Build capture + compliance isn't only a PvE-trial play:
   Difficulty in 2026, §17) without building anything new — the same capture + ruleset
   engine, with content-aware caps (§20).
 
-## 22. Privacy, consent & staying ToS-safe
+## 22. Privacy, consent & policy-conscious design
 
 Builds are semi-personal and competitive, and the live layer shares them — so consent is
 a first-class design concern, not an afterthought:
@@ -816,10 +818,9 @@ a first-class design concern, not an afterthought:
 - **ESOTK-side retention/redaction** — companion data is ESOTK's (§15); honour
   delete/anonymise requests and don't surface a player's build on reports they didn't
   consent to. Respect ESO Logs' own anonymisation (don't de-anonymise via the companion).
-- **ToS line stays bright:** read state, evaluate, display, broadcast opt-in summaries —
-  **no input automation, no combat decision-making.** This is the same posture that
-  keeps CombatMetrics/Hodor sanctioned, and it must never be crossed for a "convenience"
-  feature.
+- **Policy boundary:** read state, evaluate, display, and broadcast opt-in summaries —
+  **no input automation or combat decision-making.** Re-check the current ZeniMax terms
+  and ESO add-on policies before releases; this document does not guarantee compliance.
 
 ## 23. Maintenance, dependencies & risk
 
@@ -1123,7 +1124,7 @@ are currently held in local component state; they're per-session, not persisted 
 - [ESO critical damage 125% hard cap / crit rating ÷ 21,918](https://eso-hub.com/en/guides/critical-damage) · [UESP: Critical Damage](https://en.uesp.net/wiki/Online:Critical_Damage)
 - [Penetration = personal sources vs group armour debuffs on the target (Breach/Crusher/Alkosh)](https://forums.elderscrollsonline.com/en/discussion/477907/penetration-calculation-and-how-it-works) · [Penetration overview — TerminalESO](https://terminaleso.wordpress.com/penetration/)
 - [Add-ons computing live pen-on-target by scanning boss debuffs — Dynamic Stats](https://esoui.com/downloads/info3917-Dynamicstats.html) · [Meterskull](https://www.esoui.com/downloads/info3941-MeterskullArmorPowerCriticalPenetrationMeter.html)
-- [LibGroupBroadcast — 32 bytes/sec group data limit](https://www.esoui.com/downloads/info1337-LibGroupSocket.html) · [LibGroupSocket source](https://github.com/ESOUIMods/LibGroupSocket/blob/master/LibGroupSocket.lua/)
+- [LibGroupBroadcast — 32 bytes/sec group data limit](https://www.esoui.com/downloads/info1337-LibGroupSocket.html) · [LibGroupBroadcast source](https://github.com/sirinsidiator/ESO-LibGroupBroadcast)
 - [LUI Extended (MIT, custom group/raid frames)](https://www.esoui.com/downloads/info818-LuiExtended.html) · [GitHub](https://github.com/DakJaniels/LuiExtended)
 - [ESOUI Wiki — UnitTag / group APIs](https://wiki.esoui.com/UnitTag)
 - [LibGroupCombatStats — developer API (RegisterAddon, callbacks)](https://github.com/m00nyONE/LibGroupCombatStats)

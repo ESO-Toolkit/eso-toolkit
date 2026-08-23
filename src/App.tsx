@@ -1,4 +1,4 @@
-import { Box, Container } from '@mui/material';
+import { Box, CircularProgress, Container, Typography } from '@mui/material';
 import { SnackbarProvider } from 'notistack';
 import React, { Suspense, useEffect, useState } from 'react';
 import { Provider as ReduxProvider } from 'react-redux';
@@ -123,6 +123,11 @@ const PrivacyPolicyPage = React.lazy(() =>
     default: module.PrivacyPolicyPage,
   })),
 );
+const TermsPage = React.lazy(() =>
+  import('./pages/TermsPage').then((module) => ({
+    default: module.TermsPage,
+  })),
+);
 const PrivacySettingsPage = React.lazy(() =>
   import('./pages/PrivacySettingsPage').then((module) => ({
     default: module.PrivacySettingsPage,
@@ -235,9 +240,28 @@ const PublicProfilePage = React.lazy(() =>
   import('./pages/PublicProfilePage').then((module) => ({ default: module.PublicProfilePage })),
 );
 
-// Null fallback for lazy-loaded routes — view transitions provide visual
-// feedback during navigation, so a skeleton loader is unnecessary and jarring.
-const LoadingFallback: React.FC = () => null;
+// Shared fallback for lazy-loaded routes and persistence hydration. Keep route
+// transitions visibly announced instead of presenting a blank page.
+const LoadingFallback: React.FC = () => (
+  <Box
+    role="status"
+    aria-live="polite"
+    aria-label="Loading page"
+    sx={{
+      minHeight: 'clamp(180px, 35vh, 320px)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      flexDirection: 'column',
+      gap: 2,
+      color: 'text.secondary',
+      p: 3,
+    }}
+  >
+    <CircularProgress size={32} aria-label="Loading" />
+    <Typography variant="body2">Loading…</Typography>
+  </Box>
+);
 
 // Delays rendering of skeleton fallbacks so fast page loads never flash them.
 // If the real content arrives within the delay window, the user sees nothing.
@@ -321,7 +345,39 @@ const MainApp: React.FC = () => {
     <ReduxThemeProvider>
       <KalpaBanner />
       <HeaderBar />
-      <Box component="main" id="main-content" tabIndex={-1} sx={{ outline: 'none' }}>
+      <Box sx={{ position: 'relative' }}>
+        <Box
+          component="a"
+          href="#main-content"
+          sx={{
+            position: 'absolute',
+            left: '-9999px',
+            top: 'auto',
+            width: 1,
+            height: 1,
+            overflow: 'hidden',
+            zIndex: 9999,
+            '&:focus': {
+              position: 'fixed',
+              top: 8,
+              left: 8,
+              width: 'auto',
+              height: 'auto',
+              overflow: 'visible',
+              bgcolor: 'primary.main',
+              color: 'primary.contrastText',
+              px: 2,
+              py: 1,
+              borderRadius: 1,
+              fontSize: '0.875rem',
+              fontWeight: 600,
+              textDecoration: 'none',
+              boxShadow: 4,
+            },
+          }}
+        >
+          Skip to main content
+        </Box>
         <LandingPage />
       </Box>
     </ReduxThemeProvider>
@@ -415,7 +471,6 @@ const AppRoutes: React.FC = () => {
   useWorkerManagerLogger();
 
   React.useEffect(() => {
-    document.title = 'ESO Toolkit';
     // Add breadcrumb for page load
     addBreadcrumb('App routes initialized', 'navigation', {
       title: document.title,
@@ -876,6 +931,16 @@ const AppRoutes: React.FC = () => {
                 <ErrorBoundary>
                   <Suspense fallback={<LoadingFallback />}>
                     <PrivacySettingsPage />
+                  </Suspense>
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="/terms"
+              element={
+                <ErrorBoundary>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <TermsPage />
                   </Suspense>
                 </ErrorBoundary>
               }

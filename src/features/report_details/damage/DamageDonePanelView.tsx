@@ -582,7 +582,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
             const nameBaseSx = {
               fontWeight: 500,
               fontSize: '0.875rem',
-              fontFamily: '"Space Grotesk", "Inter", system-ui',
+              fontFamily: '"Space Grotesk Variable", "Inter Variable", system-ui',
               overflow: 'hidden',
               textOverflow: 'ellipsis',
               whiteSpace: 'nowrap',

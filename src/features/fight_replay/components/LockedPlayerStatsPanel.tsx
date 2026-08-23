@@ -245,7 +245,7 @@ const PlayerStatsContent: React.FC<{
             }}
             sx={{
               display: 'block',
-              fontFamily: 'Space Grotesk, Inter, system-ui',
+              fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
               fontWeight: 700,
               fontSize: '1.25rem',
               lineHeight: 1.05,
@@ -341,7 +341,7 @@ const TankDamageReduction: React.FC<{
         component="span"
         ref={valueRef}
         sx={{
-          fontFamily: 'Space Grotesk, Inter, system-ui',
+          fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
           fontWeight: 700,
           fontSize: '0.95rem',
           fontVariantNumeric: 'tabular-nums',

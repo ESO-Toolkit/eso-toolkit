@@ -683,7 +683,11 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
       setExtractLoading(true);
       // Open the tab synchronously inside the click handler so popup blockers
       // don't intercept — the async encodeBuildToURL would break the gesture chain.
+      // Set opener to null immediately. Passing `noopener` to window.open would
+      // intentionally return no WindowProxy in modern browsers, preventing the
+      // later async navigation after the build payload is encoded.
       const tab = window.open('', '_blank');
+      if (tab) tab.opener = null;
       try {
         // Warm the item data + icon/weapon-type data so playerToBuild can
         // resolve each weapon's specific type (Dagger / Inferno Staff / …)
@@ -1756,7 +1760,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                             variant="body2"
                             sx={{
                               fontWeight: 'bold',
-                              fontFamily: 'Space Grotesk, sans-serif',
+                              fontFamily: 'Space Grotesk Variable, sans-serif',
                               fontSize: '0.8rem',
                             }}
                           >
@@ -2160,7 +2164,11 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                     <Box sx={{ mt: 1 }}>
                       <Typography
                         variant="body2"
-                        sx={{ fontWeight: 'bold', mb: 1, fontFamily: 'Space Grotesk, sans-serif' }}
+                        sx={{
+                          fontWeight: 'bold',
+                          mb: 1,
+                          fontFamily: 'Space Grotesk Variable, sans-serif',
+                        }}
                       >
                         Champion Points
                       </Typography>

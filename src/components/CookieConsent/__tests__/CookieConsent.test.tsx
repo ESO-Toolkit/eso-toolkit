@@ -76,7 +76,7 @@ describe('CookieConsent', () => {
       render(<CookieConsent />);
     });
 
-    const declineButton = screen.getByRole('button', { name: /decline all/i });
+    const declineButton = screen.getByRole('button', { name: /^decline all$/i });
 
     await act(async () => {
       fireEvent.click(declineButton);
@@ -173,12 +173,12 @@ describe('CookieConsent', () => {
     window.removeEventListener('consent-changed', handler);
   });
 
-  it('should hide banner when close button is clicked (equals decline)', async () => {
+  it('should hide banner when the decline shortcut is clicked', async () => {
     render(<CookieConsent />);
 
-    const closeButton = screen.getByRole('button', { name: /close/i });
+    const declineShortcut = screen.getByRole('button', { name: /decline all optional cookies/i });
     await act(async () => {
-      fireEvent.click(closeButton);
+      fireEvent.click(declineShortcut);
     });
 
     await waitFor(() => {

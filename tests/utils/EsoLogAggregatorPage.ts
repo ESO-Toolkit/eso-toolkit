@@ -9,7 +9,7 @@ const DEFAULT_TIMEOUTS = {
 };
 
 /**
- * Page Object Model for ESO Log Aggregator application
+ * Page Object Model for ESO Toolkit application
  * Centralizes URL construction and navigation logic for all test files
  */
 export class EsoLogAggregatorPage {
@@ -23,7 +23,7 @@ export class EsoLogAggregatorPage {
    * Navigate to the login page
    */
   async goToLogin() {
-    await this.page.goto('/login', { 
+    await this.page.goto('/login', {
       waitUntil: 'domcontentloaded',
       timeout: DEFAULT_TIMEOUTS.navigation,
     });
@@ -33,7 +33,7 @@ export class EsoLogAggregatorPage {
    * Navigate to the my reports page
    */
   async goToMyReports() {
-    await this.page.goto('/my-reports', { 
+    await this.page.goto('/my-reports', {
       waitUntil: 'domcontentloaded',
       timeout: DEFAULT_TIMEOUTS.navigation,
     });
@@ -43,7 +43,7 @@ export class EsoLogAggregatorPage {
    * Navigate to the latest reports page
    */
   async goToLatestReports() {
-    await this.page.goto('/latest-reports', { 
+    await this.page.goto('/latest-reports', {
       waitUntil: 'domcontentloaded',
       timeout: DEFAULT_TIMEOUTS.navigation,
     });
@@ -53,7 +53,7 @@ export class EsoLogAggregatorPage {
    * Navigate to the calculator page
    */
   async goToCalculator() {
-    await this.page.goto('/calculator', { 
+    await this.page.goto('/calculator', {
       waitUntil: 'domcontentloaded',
       timeout: DEFAULT_TIMEOUTS.navigation,
     });
@@ -64,7 +64,7 @@ export class EsoLogAggregatorPage {
    * @param reportId - The report ID to navigate to
    */
   async goToReport(reportId: string) {
-    await this.page.goto(`/report/${reportId}`, { 
+    await this.page.goto(`/report/${reportId}`, {
       waitUntil: 'domcontentloaded',
       timeout: DEFAULT_TIMEOUTS.navigation,
     });
@@ -75,7 +75,7 @@ export class EsoLogAggregatorPage {
    * @param reportId - The report ID to navigate to
    */
   async goToReportLive(reportId: string) {
-    await this.page.goto(`/report/${reportId}/live`, { 
+    await this.page.goto(`/report/${reportId}/live`, {
       waitUntil: 'domcontentloaded',
       timeout: DEFAULT_TIMEOUTS.navigation,
     });
@@ -87,7 +87,7 @@ export class EsoLogAggregatorPage {
    * @param fightId - The fight ID
    */
   async goToFight(reportId: string, fightId: string) {
-    await this.page.goto(`/report/${reportId}/fight/${fightId}`, { 
+    await this.page.goto(`/report/${reportId}/fight/${fightId}`, {
       waitUntil: 'domcontentloaded',
       timeout: DEFAULT_TIMEOUTS.navigation,
     });
@@ -100,7 +100,7 @@ export class EsoLogAggregatorPage {
    * @param tab - The tab name (e.g., 'insights', 'replay', 'players', 'damage-done', etc.)
    */
   async goToFightTab(reportId: string, fightId: string, tab: string) {
-    await this.page.goto(`/report/${reportId}/fight/${fightId}/${tab}`, { 
+    await this.page.goto(`/report/${reportId}/fight/${fightId}/${tab}`, {
       waitUntil: 'domcontentloaded',
       timeout: DEFAULT_TIMEOUTS.navigation,
     });
@@ -187,15 +187,12 @@ export class EsoLogAggregatorPage {
   /**
    * Wait for navigation and loading to complete (no skeletons)
    */
-  async waitForPageLoad(options?: { 
-    expectSkeletons?: boolean;
-    timeout?: number;
-  }) {
+  async waitForPageLoad(options?: { expectSkeletons?: boolean; timeout?: number }) {
     await this.waitForNavigation();
-    
+
     if (options?.expectSkeletons !== false) {
-      await this.skeletons.waitForSkeletonsToDisappear({ 
-        timeout: options?.timeout, 
+      await this.skeletons.waitForSkeletonsToDisappear({
+        timeout: options?.timeout,
       });
     }
   }
@@ -204,18 +201,18 @@ export class EsoLogAggregatorPage {
    * Navigate and wait for loading to complete
    */
   async navigateAndWaitForLoad(
-    url: string, 
-    options?: { 
+    url: string,
+    options?: {
       expectSkeletons?: boolean;
       timeout?: number;
       navigationTimeout?: number;
     },
   ) {
-    await this.page.goto(url, { 
+    await this.page.goto(url, {
       waitUntil: 'domcontentloaded',
       timeout: options?.navigationTimeout ?? DEFAULT_TIMEOUTS.navigation,
     });
-    
+
     await this.waitForPageLoad(options);
   }
 }

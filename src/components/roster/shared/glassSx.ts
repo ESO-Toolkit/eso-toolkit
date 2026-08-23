@@ -68,7 +68,7 @@ export const SECTION_HEADER_SX_DARK: Record<string, unknown> = {
   fontWeight: 700,
   letterSpacing: 0.8,
   textTransform: 'uppercase' as const,
-  fontFamily: 'Space Grotesk, Inter, system-ui',
+  fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
   color: 'rgba(255,255,255,0.5)',
   mb: 1,
 };
@@ -78,7 +78,7 @@ export const SECTION_HEADER_SX_LIGHT: Record<string, unknown> = {
   fontWeight: 700,
   letterSpacing: 0.8,
   textTransform: 'uppercase' as const,
-  fontFamily: 'Space Grotesk, Inter, system-ui',
+  fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
   color: 'rgba(0,0,0,0.45)',
   mb: 1,
 };

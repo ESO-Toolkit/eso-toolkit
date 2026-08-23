@@ -1,9 +1,10 @@
-name: Screen Size Testing - Comprehensive Visual Regression (14 Breakpoints)
+name: Screen Size Testing - Maintained Responsive Checks (14 Viewports)
 
-# Industry-leading visual regression testing across 14 comprehensive device breakpoints  
-# Covers 99%+ of real-world devices with pixel-perfect comparison using baseline snapshots
-# Tests: Mobile (4), Tablets (3), Desktop/Laptops (5), Edge Cases (2) = 14 total breakpoints
-# Features: OAuth authentication, network caching, automatic visual change detection
+# Maintained responsive behavior testing across 14 representative viewport profiles.
+# The suite checks public routes plus four privacy-safe report-route behavior checks.
+# No screenshots are checked in because report and generated artifacts may contain
+# player-provided names or stale branding.
+# Report-route checks may use optional OAuth credentials and network caching.
 
 # Permissions needed for external repository deployment
 permissions:
@@ -24,31 +25,33 @@ on:
           - tablet
           - desktop
           - high-end
-      update_snapshots:
-        description: 'Update visual regression snapshots'
-        required: false
-        default: false
-        type: boolean
 
 jobs:
   screen-size-testing:
-    name: Comprehensive Visual Regression Tests (All Device Categories)
+    name: Maintained Visual Regression Tests (Selected Device Category)
     runs-on: ubuntu-latest
-    timeout-minutes: 35  # Increased for 14 comprehensive breakpoints
+    timeout-minutes: 35 # Includes browser setup, optional data preload, and 14 profiles
 
     steps:
+      - name: Require protected main ref
+        run: |
+          if [ "$GITHUB_REF" != "refs/heads/main" ]; then
+            echo "::error::Privileged visual reports must be dispatched from protected main."
+            exit 1
+          fi
+
       - name: Checkout Repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
-          ref: ${{ github.head_ref || github.ref }}
+          ref: ${{ github.sha }}
 
       - name: Setup Node.js with NPM Cache
         uses: ./.github/actions/setup-node-with-cache
         with:
-          node-version: '20'
+          node-version: '24'
 
       - name: Cache Playwright Browsers
-        uses: actions/cache@v6
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         id: playwright-cache
         with:
           path: ~/.cache/ms-playwright
@@ -97,7 +100,7 @@ jobs:
           echo "✅ All browsers verified and ready"
 
       - name: Cache ESO Logs API Responses
-        uses: actions/cache@v6
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         id: api-cache
         with:
           path: cache/eso-logs-api/
@@ -113,7 +116,7 @@ jobs:
           echo "✅ ESO Logs API cache cleared"
 
       - name: Cache Test Data
-        uses: actions/cache@v6
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         id: test-data-cache
         with:
           path: data-downloads/
@@ -128,15 +131,15 @@ jobs:
           echo "📥 Downloading test data for offline testing..."
           echo "This will download ~3.87 GB of test data for screen size tests"
           echo "Cache miss - downloading fresh data (this happens ~weekly)"
-          
+
           npm run download-test-data || {
             echo "⚠️  Test data download failed, tests will fall back to online mode"
             echo "This doesn't fail the build - tests can still run with live API calls"
             exit 0
           }
-          
+
           # Verify download success
-          if [ -d "data-downloads/nbKdDtT4NcZyVrvX/fight-117" ]; then
+          if [ -d "data-downloads/${SCREEN_SIZE_REPORT_CODE:-F4f2bMwWtgVKxjB9}/fight-${SCREEN_SIZE_FIGHT_ID:-5}" ]; then
             DATA_SIZE=$(du -sh data-downloads/ | cut -f1)
             FILE_COUNT=$(find data-downloads/ -type f | wc -l)
             echo "✅ Test data downloaded successfully"
@@ -151,12 +154,12 @@ jobs:
           OAUTH_CLIENT_ID: ${{ secrets.OAUTH_CLIENT_ID }}
           OAUTH_CLIENT_SECRET: ${{ secrets.OAUTH_CLIENT_SECRET }}
           ESOLOGS_TOKEN_URL: https://www.esologs.com/oauth/token
-          NODE_OPTIONS: "--max-old-space-size=4096"
-        timeout-minutes: 15  # Reasonable timeout for download
+          NODE_OPTIONS: '--max-old-space-size=4096'
+        timeout-minutes: 15 # Reasonable timeout for download
 
       - name: Test Data Status
         run: |
-          if [ -d "data-downloads/nbKdDtT4NcZyVrvX/fight-117" ]; then
+          if [ -d "data-downloads/${SCREEN_SIZE_REPORT_CODE:-F4f2bMwWtgVKxjB9}/fight-${SCREEN_SIZE_FIGHT_ID:-5}" ]; then
             echo "🔌 Offline test data available - tests will use pre-downloaded data"
             echo "   ⚡ Expected performance: ~3x faster than online mode"
           else
@@ -165,7 +168,7 @@ jobs:
           fi
 
       - name: Cache Build Output
-        uses: actions/cache@v6
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         id: build-cache
         with:
           path: |
@@ -183,7 +186,7 @@ jobs:
           npm run generate-version
         env:
           CI: true
-          NODE_OPTIONS: "--max-old-space-size=4096"
+          NODE_OPTIONS: '--max-old-space-size=4096'
 
       - name: Use Cached Build
         if: steps.build-cache.outputs.cache-hit == 'true'
@@ -222,17 +225,6 @@ jobs:
         env:
           CI: true
 
-      - name: Check for Existing Snapshots
-        id: check_snapshots
-        run: |
-          if [ -d "tests/screen-sizes" ] && find tests/screen-sizes -name "*-snapshots" -type d | grep -q .; then
-            echo "snapshots_exist=true" >> $GITHUB_OUTPUT
-            echo "Found existing snapshots"
-          else
-            echo "snapshots_exist=false" >> $GITHUB_OUTPUT
-            echo "No snapshots found - will generate baseline snapshots"
-          fi
-
       - name: Verify Screen Size Test Configuration
         run: |
           echo "🔍 Verifying screen size test suite configuration..."
@@ -247,28 +239,23 @@ jobs:
       - name: Preload & Cache Test Data
         id: preload_data
         run: |
-          echo "🏭 Data preprocessing is now handled automatically by the visual regression tests"
+          echo "🏭 Data preprocessing is now handled automatically by the responsive checks"
           echo "The comprehensive-visual-regression.spec.ts includes built-in network caching and preprocessing"
           echo "This eliminates the need for a separate preprocessing step while maintaining performance"
           echo ""
-          echo "✅ Ready to run visual regression tests with automatic preprocessing!"
+          echo "✅ Ready to run responsive checks with automatic preprocessing!"
         env:
           CI: true
 
       - name: Run Screen Size Tests - All Devices (Fast Mode)
         if: ${{ github.event.inputs.device_categories == 'all' || github.event.inputs.device_categories == '' }}
         run: |
-          echo "🧪 Running comprehensive visual regression tests with automatic preprocessing..."
+          echo "🧪 Running comprehensive responsive checks with automatic preprocessing..."
           echo "Using comprehensive-visual-regression.spec.ts with built-in network caching and preprocessing"
-          
-          if [[ "${{ github.event.inputs.update_snapshots }}" == "true" ]] || [[ "${{ steps.check_snapshots.outputs.snapshots_exist }}" == "false" ]]; then
-            echo "Running with --update-snapshots (manual: ${{ github.event.inputs.update_snapshots }}, auto: ${{ steps.check_snapshots.outputs.snapshots_exist == 'false' }})"
-            npx playwright test --config=playwright/screen-sizes-fast.config.ts tests/screen-sizes/comprehensive-visual-regression.spec.ts --update-snapshots
-          else
-            echo "Running visual regression comparison against baseline snapshots"
-            npx playwright test --config=playwright/screen-sizes-fast.config.ts tests/screen-sizes/comprehensive-visual-regression.spec.ts
-          fi
-          
+
+          echo "Running privacy-safe responsive behavior checks (no checked-in snapshots)"
+          npx playwright test --config=playwright/screen-sizes-fast.config.ts tests/screen-sizes/comprehensive-visual-regression.spec.ts
+
           echo "✅ Screen size tests completed with optimized performance"
         env:
           CI: true
@@ -282,7 +269,7 @@ jobs:
           # Enable debugging for worker calculations
           PLAYWRIGHT_DEBUG_WORKERS: true
           # Memory optimization for CI
-          NODE_OPTIONS: "--max-old-space-size=4096"
+          NODE_OPTIONS: '--max-old-space-size=4096'
 
       - name: Performance Summary
         if: ${{ github.event.inputs.device_categories == 'all' || github.event.inputs.device_categories == '' }}
@@ -301,25 +288,19 @@ jobs:
           echo "   • Extensive network cache hits for subsequent requests"
           echo ""
           echo "🔬 Test Coverage:"
-          echo "   • 14 comprehensive device breakpoints covering 99%+ of real-world usage"
-          echo "   • 4 comprehensive visual regression tests across all device categories"
-          echo "   • Pixel-perfect comparison using toHaveScreenshot() with baseline images"
+          echo "   • 14 maintained viewport profiles across mobile, tablet, desktop, and edge cases"
+          echo "   • 4 privacy-safe report-route behavior checks plus public route assertions"
+          echo "   • No checked-in screenshots; generated artifacts remain CI-only and are not release assets"
           echo "   • Built-in network caching and automatic preprocessing"
           echo "   • Real ESO combat log data authentication"
           echo ""
-          echo "💡 Modern visual regression testing with automatic change detection!"
+          echo "💡 Privacy-safe responsive testing with automatic preprocessing!"
           echo "   Built-in preprocessing eliminates separate preloading steps!"
 
       - name: Run Screen Size Tests - Mobile Only
         if: ${{ github.event.inputs.device_categories == 'mobile' }}
         run: |
-          if [[ "${{ github.event.inputs.update_snapshots }}" == "true" ]] || [[ "${{ steps.check_snapshots.outputs.snapshots_exist }}" == "false" ]]; then
-            echo "Running with --update-snapshots"
-            npx playwright test --config=playwright/screen-sizes-fast.config.ts --project="Android*" --project="iPhone*" --project="Mobile*" tests/screen-sizes/comprehensive-visual-regression.spec.ts --update-snapshots
-          else
-            echo "Running without --update-snapshots"
-            npx playwright test --config=playwright/screen-sizes-fast.config.ts --project="Android*" --project="iPhone*" --project="Mobile*" tests/screen-sizes/comprehensive-visual-regression.spec.ts
-          fi
+          npx playwright test --config=playwright/screen-sizes-fast.config.ts --project="Android*" --project="iPhone*" --project="Mobile*" tests/screen-sizes/comprehensive-visual-regression.spec.ts
         env:
           CI: true
           BASE_URL: http://localhost:3000
@@ -331,13 +312,7 @@ jobs:
       - name: Run Screen Size Tests - Tablet Only
         if: ${{ github.event.inputs.device_categories == 'tablet' }}
         run: |
-          if [[ "${{ github.event.inputs.update_snapshots }}" == "true" ]] || [[ "${{ steps.check_snapshots.outputs.snapshots_exist }}" == "false" ]]; then
-            echo "Running with --update-snapshots"
-            npx playwright test --config=playwright/screen-sizes-fast.config.ts --project="*Tablet*" tests/screen-sizes/comprehensive-visual-regression.spec.ts --update-snapshots
-          else
-            echo "Running without --update-snapshots"
-            npx playwright test --config=playwright/screen-sizes-fast.config.ts --project="*Tablet*" tests/screen-sizes/comprehensive-visual-regression.spec.ts
-          fi
+          npx playwright test --config=playwright/screen-sizes-fast.config.ts --project="*Tablet*" tests/screen-sizes/comprehensive-visual-regression.spec.ts
         env:
           CI: true
           BASE_URL: http://localhost:3000
@@ -349,13 +324,7 @@ jobs:
       - name: Run Screen Size Tests - Desktop Only
         if: ${{ github.event.inputs.device_categories == 'desktop' }}
         run: |
-          if [[ "${{ github.event.inputs.update_snapshots }}" == "true" ]] || [[ "${{ steps.check_snapshots.outputs.snapshots_exist }}" == "false" ]]; then
-            echo "Running with --update-snapshots"
-            npx playwright test --config=playwright/screen-sizes-fast.config.ts --project="Desktop*" --project="Laptop*" --project="Surface*" tests/screen-sizes/comprehensive-visual-regression.spec.ts --update-snapshots
-          else
-            echo "Running without --update-snapshots"
-            npx playwright test --config=playwright/screen-sizes-fast.config.ts --project="Desktop*" --project="Laptop*" --project="Surface*" tests/screen-sizes/comprehensive-visual-regression.spec.ts
-          fi
+          npx playwright test --config=playwright/screen-sizes-fast.config.ts --project="Desktop*" --project="Laptop*" --project="Surface*" tests/screen-sizes/comprehensive-visual-regression.spec.ts
         env:
           CI: true
           BASE_URL: http://localhost:3000
@@ -367,13 +336,7 @@ jobs:
       - name: Run Screen Size Tests - High-End Only
         if: ${{ github.event.inputs.device_categories == 'high-end' }}
         run: |
-          if [[ "${{ github.event.inputs.update_snapshots }}" == "true" ]] || [[ "${{ steps.check_snapshots.outputs.snapshots_exist }}" == "false" ]]; then
-            echo "Running with --update-snapshots"
-            npx playwright test --config=playwright/screen-sizes-fast.config.ts --project="Breakpoint*" --project="Ultrawide*" tests/screen-sizes/comprehensive-visual-regression.spec.ts --update-snapshots
-          else
-            echo "Running without --update-snapshots"
-            npx playwright test --config=playwright/screen-sizes-fast.config.ts --project="Breakpoint*" --project="Ultrawide*" tests/screen-sizes/comprehensive-visual-regression.spec.ts
-          fi
+          npx playwright test --config=playwright/screen-sizes-fast.config.ts --project="Breakpoint*" --project="Ultrawide*" tests/screen-sizes/comprehensive-visual-regression.spec.ts
         env:
           CI: true
           BASE_URL: http://localhost:3000
@@ -387,13 +350,13 @@ jobs:
         run: |
           # Create reports directory with metadata
           mkdir -p screen-size-reports
-          
+
           # Debug: List all files and directories to understand what was created
           echo "=== Debug: Listing all directories and files ==="
           ls -la
           echo ""
           echo "=== Checking for report directories ==="
-          
+
           if [ -d "screen-size-report" ]; then
             echo "✓ Found configured screen-size-report directory"
             ls -la screen-size-report/
@@ -410,11 +373,10 @@ jobs:
               "timestamp": "$(date -Iseconds)",
               "branch": "${{ github.ref_name }}",
               "commit": "${{ github.sha }}",
-              "workflow": "Screen Size Testing - Core Panels & Insights Analysis",
+              "workflow": "Screen Size Testing - Maintained 14-Viewport Suite",
               "runId": "${{ github.run_id }}",
               "runNumber": "${{ github.run_number }}",
               "deviceCategories": "${{ github.event.inputs.device_categories || 'all' }}",
-              "updateSnapshots": "${{ github.event.inputs.update_snapshots }}",
               "screenshotCount": $SCREENSHOT_COUNT
             },
             "reportUrl": "https://ESO-Toolkit.github.io/eso-log-aggregator-reports/screen-size-tests/${{ github.ref_name }}/${{ github.run_number }}/index.html"
@@ -436,11 +398,10 @@ jobs:
               "timestamp": "$(date -Iseconds)",
               "branch": "${{ github.ref_name }}",
               "commit": "${{ github.sha }}",
-              "workflow": "Screen Size Testing - Core Panels & Insights Analysis (Fallback Mode)",
+              "workflow": "Screen Size Testing - Maintained 14-Viewport Suite (Fallback Mode)",
               "runId": "${{ github.run_id }}",
               "runNumber": "${{ github.run_number }}",
               "deviceCategories": "${{ github.event.inputs.device_categories || 'all' }}",
-              "updateSnapshots": "${{ github.event.inputs.update_snapshots }}",
               "screenshotCount": $SCREENSHOT_COUNT,
               "note": "Report generated from fallback playwright-report directory"
             },
@@ -468,7 +429,7 @@ jobs:
           fi
 
       - name: Upload Test Results
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         if: always()
         with:
           name: screen-size-test-results-${{ github.run_id }}
@@ -478,7 +439,7 @@ jobs:
           retention-days: 30
 
       - name: Upload Test Report
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         if: always()
         with:
           name: screen-size-test-report-complete
@@ -488,7 +449,7 @@ jobs:
       - name: Generate Deploy Token
         if: always()
         id: generate-deploy-token
-        uses: actions/create-github-app-token@v3
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3
         with:
           app-id: ${{ secrets.DEPLOY_APP_ID }}
           private-key: ${{ secrets.DEPLOY_APP_PRIVATE_KEY }}
@@ -514,19 +475,19 @@ jobs:
         run: |
           echo "# 📱 Screen Size Testing Complete" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          
+
           if [ -f "screen-size-reports/test-metadata.json" ]; then
             SCREENSHOT_COUNT=$(cat screen-size-reports/test-metadata.json | grep -o '"screenshotCount": [0-9]*' | grep -o '[0-9]*')
             echo "**Screenshots Generated:** $SCREENSHOT_COUNT" >> $GITHUB_STEP_SUMMARY
           fi
-          
+
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "## 🔗 View Results" >> $GITHUB_STEP_SUMMARY
-          
+
           BRANCH_NAME="${{ github.ref_name }}"
           REPORT_URL="https://ESO-Toolkit.github.io/eso-log-aggregator-reports/screen-size-tests/${BRANCH_NAME}/${{ github.run_number }}/"
           ARTIFACTS_URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-          
+
           echo "📊 **[Interactive Report: ${REPORT_URL}](${REPORT_URL})**" >> $GITHUB_STEP_SUMMARY
           echo "📦 **[Download Artifacts: ${ARTIFACTS_URL}](${ARTIFACTS_URL})**" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -536,9 +497,7 @@ jobs:
           echo "- **3-10s Load Times** - Reduced from previous 10-30+ seconds via preprocessing" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Features Tested" >> $GITHUB_STEP_SUMMARY
-          echo "- **Visual Regression Testing** - Pixel-perfect comparison against baseline snapshots" >> $GITHUB_STEP_SUMMARY
-          echo "- **14 Comprehensive Breakpoints** - Mobile (4), Tablets (3), Desktop/Laptops (5), Edge Cases (2)" >> $GITHUB_STEP_SUMMARY
-          echo "- **Players & Insights Panels** - Complete responsive layout validation" >> $GITHUB_STEP_SUMMARY
-          echo "- **Real Data** - Authentic ESO combat log data with OAuth authentication" >> $GITHUB_STEP_SUMMARY
-          echo "- **Industry-Leading Coverage** - 99%+ real-world device compatibility with visual regression testing" >> $GITHUB_STEP_SUMMARY
-
+          echo "- **Responsive Behavior Testing** - Public routes and report navigation checked without checked-in screenshots" >> $GITHUB_STEP_SUMMARY
+          echo "- **14 Maintained Viewports** - Mobile, tablet, laptop, desktop, breakpoint, and ultrawide profiles" >> $GITHUB_STEP_SUMMARY
+          echo "- **Report Route Behavior** - Four content/navigation checks without storing report screenshots" >> $GITHUB_STEP_SUMMARY
+          echo "- **Optional API Authentication** - OAuth credentials are read only from repository secrets when configured" >> $GITHUB_STEP_SUMMARY

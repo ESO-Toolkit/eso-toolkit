@@ -2,17 +2,17 @@
 
 /**
  * Download test data for screen size tests
- * 
+ *
  * This script downloads all the data needed for screen size tests using the
  * specific report code and fight ID that the tests use. It ensures consistent
  * test data and eliminates the need for API calls during test execution.
- * 
+ *
  * Usage:
  *   npm run download-test-data
- *   
+ *
  * The script will download data for:
- * - Report: nbKdDtT4NcZyVrvX 
- * - Fight: 117
+ * - Report: SCREEN_SIZE_REPORT_CODE or the bundled public sample
+ * - Fight: SCREEN_SIZE_FIGHT_ID or 5
  */
 
 import { execSync } from 'child_process';
@@ -20,8 +20,8 @@ import fs from 'fs';
 import path from 'path';
 
 // Test configuration - matches what the screen size tests use
-const TEST_REPORT_CODE = 'nbKdDtT4NcZyVrvX';
-const TEST_FIGHT_ID = '117';
+const TEST_REPORT_CODE = process.env.SCREEN_SIZE_REPORT_CODE ?? 'F4f2bMwWtgVKxjB9';
+const TEST_FIGHT_ID = process.env.SCREEN_SIZE_FIGHT_ID ?? '5';
 const DATA_DIR = path.join(process.cwd(), 'data-downloads');
 
 console.log('🎯 Downloading test data for screen size tests...');
@@ -39,9 +39,9 @@ try {
   console.log(`🚀 Executing: ${command}`);
   console.log('');
 
-  execSync(command, { 
+  execSync(command, {
     stdio: 'inherit',
-    cwd: process.cwd()
+    cwd: process.cwd(),
   });
 
   console.log('');
@@ -51,7 +51,6 @@ try {
   console.log(`   ${path.join(DATA_DIR, TEST_REPORT_CODE, `fight-${TEST_FIGHT_ID}`)}`);
   console.log('');
   console.log('🧪 Screen size tests can now run offline using this pre-downloaded data.');
-
 } catch (error) {
   console.error('');
   console.error('❌ Failed to download test data:');

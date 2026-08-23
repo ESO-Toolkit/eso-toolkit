@@ -34,8 +34,87 @@ const INTENDED_DESTINATION_PROTECTED_KEY = 'eso_intended_destination_protected';
 // redirect back to after the OAuth provider callback.
 export const DEV_PREVIEW_OAUTH_RETURN_KEY = 'dev_preview_oauth_return_path';
 
+/**
+ * Token key names are kept stable for migration and test compatibility. New
+ * sessions store OAuth tokens in sessionStorage so a token is not retained in
+ * persistent Web Storage after the browser is closed. Existing localStorage
+ * values are migrated once and removed.
+ */
 export const LOCAL_STORAGE_ACCESS_TOKEN_KEY = 'access_token';
 export const LOCAL_STORAGE_REFRESH_TOKEN_KEY = 'refresh_token';
+
+const readToken = (key: string): string => {
+  if (typeof window === 'undefined') return '';
+
+  try {
+    const sessionToken = window.sessionStorage.getItem(key);
+    if (sessionToken) return sessionToken;
+  } catch {
+    // Fall back to the legacy store below when sessionStorage is unavailable.
+  }
+
+  try {
+    const legacyToken = window.localStorage.getItem(key);
+    if (!legacyToken) return '';
+
+    // Migrate legacy persistent tokens to a tab-scoped store immediately.
+    try {
+      window.sessionStorage.setItem(key, legacyToken);
+      window.localStorage.removeItem(key);
+    } catch {
+      // Private/restricted browsing may reject either storage API. Keeping the
+      // legacy value preserves login functionality in that environment.
+    }
+    return legacyToken;
+  } catch {
+    return '';
+  }
+};
+
+export const getStoredAccessToken = (): string => readToken(LOCAL_STORAGE_ACCESS_TOKEN_KEY);
+
+export const getStoredRefreshToken = (): string => readToken(LOCAL_STORAGE_REFRESH_TOKEN_KEY);
+
+export const setStoredToken = (key: string, value: string): void => {
+  if (typeof window === 'undefined') return;
+  try {
+    window.sessionStorage.setItem(key, value);
+    // Remove any legacy copy so a refresh token cannot remain persistent.
+    try {
+      window.localStorage.removeItem(key);
+    } catch {
+      // A blocked legacy store does not change the sessionStorage write.
+    }
+    return;
+  } catch {
+    // Fall back to persistent storage only when sessionStorage is unavailable.
+  }
+
+  try {
+    window.localStorage.setItem(key, value);
+  } catch {
+    // Storage can be blocked; the caller still has the in-memory token.
+  }
+};
+
+export const removeStoredToken = (key: string): void => {
+  if (typeof window === 'undefined') return;
+  try {
+    window.sessionStorage.removeItem(key);
+  } catch {
+    // Ignore unavailable storage.
+  }
+  try {
+    window.localStorage.removeItem(key);
+  } catch {
+    // Ignore unavailable storage.
+  }
+};
+
+export const clearStoredTokens = (): void => {
+  removeStoredToken(LOCAL_STORAGE_ACCESS_TOKEN_KEY);
+  removeStoredToken(LOCAL_STORAGE_REFRESH_TOKEN_KEY);
+};
 
 export function setPkceCodeVerifier(verifier: string): void {
   sessionStorage.setItem(PKCE_CODE_VERIFIER_KEY, verifier);
@@ -111,8 +190,17 @@ export function setFallbackDestination(path: string): void {
 
 export function getIntendedDestination(): string {
   const dest = localStorage.getItem(INTENDED_DESTINATION_KEY) || '/';
-  if (dest.startsWith('/') && !dest.startsWith('//')) {
-    return dest;
+  // Keep post-login navigation on this origin. In addition to protocol-relative
+  // URLs, reject backslashes because URL parsers normalize them as separators
+  // and can turn a seemingly relative value into an external destination.
+  if (dest.startsWith('/') && !dest.startsWith('//') && !dest.includes('\\')) {
+    try {
+      if (new URL(dest, window.location.origin).origin === window.location.origin) {
+        return dest;
+      }
+    } catch {
+      // Fall through to the safe home route for malformed destinations.
+    }
   }
   return '/';
 }
@@ -241,7 +329,7 @@ export async function refreshAccessToken(): Promise<string | null> {
     return lastSuccessfulRefresh.token;
   }
 
-  const refreshToken = localStorage.getItem(LOCAL_STORAGE_REFRESH_TOKEN_KEY);
+  const refreshToken = getStoredRefreshToken();
 
   if (!refreshToken) {
     logger.warn('No refresh token available');
@@ -268,17 +356,16 @@ export async function refreshAccessToken(): Promise<string | null> {
       if (!response.ok) {
         logger.error('Token refresh failed', undefined, { status: response.status });
         // Clear invalid tokens
-        localStorage.removeItem(LOCAL_STORAGE_ACCESS_TOKEN_KEY);
-        localStorage.removeItem(LOCAL_STORAGE_REFRESH_TOKEN_KEY);
+        clearStoredTokens();
         return null;
       }
 
       const data = await response.json();
 
       // Store new tokens
-      localStorage.setItem(LOCAL_STORAGE_ACCESS_TOKEN_KEY, data.access_token);
+      setStoredToken(LOCAL_STORAGE_ACCESS_TOKEN_KEY, data.access_token);
       if (data.refresh_token) {
-        localStorage.setItem(LOCAL_STORAGE_REFRESH_TOKEN_KEY, data.refresh_token);
+        setStoredToken(LOCAL_STORAGE_REFRESH_TOKEN_KEY, data.refresh_token);
       }
 
       logger.info('Token refreshed successfully');
@@ -287,8 +374,7 @@ export async function refreshAccessToken(): Promise<string | null> {
     } catch (error) {
       logger.error('Token refresh error', error instanceof Error ? error : undefined);
       // Clear invalid tokens
-      localStorage.removeItem(LOCAL_STORAGE_ACCESS_TOKEN_KEY);
-      localStorage.removeItem(LOCAL_STORAGE_REFRESH_TOKEN_KEY);
+      clearStoredTokens();
       return null;
     } finally {
       clearTimeout(timer);

@@ -23,9 +23,29 @@ const logger = new Logger({
 
 // Module-level Rollbar instance — created on initializeErrorTracking()
 let rollbar: Rollbar | null = null;
+let initializationGeneration = 0;
 
 /** Returns the active Rollbar instance, or null if not initialized. */
 export const getTracker = (): Rollbar | null => rollbar;
+
+/**
+ * Disable an existing Rollbar client and invalidate any in-flight dynamic
+ * import. `autoInstrument: false` removes the SDK's network/console/DOM
+ * instrumentation; the capture flags make its installed global handlers inert.
+ */
+export const disableErrorTracking = (): void => {
+  initializationGeneration += 1;
+  if (!rollbar) return;
+
+  rollbar.configure({
+    enabled: false,
+    autoInstrument: false,
+    captureUncaught: false,
+    captureUnhandledRejections: false,
+    payload: { person: null },
+  } as unknown as Rollbar.Configuration);
+  rollbar = null;
+};
 
 // Extended Navigator interface for connection info
 interface ExtendedNavigator extends Navigator {
@@ -46,6 +66,52 @@ interface ExtendedPerformance extends Performance {
 }
 
 /**
+ * Remove query strings and fragments before a URL is sent to telemetry.
+ * OAuth callbacks commonly carry authorization codes, errors, and state in
+ * those components; none of them are useful for diagnosing a client error.
+ */
+export const sanitizeTelemetryUrl = (value: string): string => {
+  try {
+    const parsed = new URL(value, window.location.origin);
+    parsed.search = '';
+    parsed.hash = '';
+    if (/^https?:\/\/[^/]+(?:[?#].*)?$/i.test(value)) {
+      return parsed.origin;
+    }
+    return parsed.toString();
+  } catch {
+    // Keep malformed/relative values useful for diagnostics without retaining
+    // any query or fragment content.
+    return value.split(/[?#]/, 1)[0];
+  }
+};
+
+/**
+ * Redact URL-like fields from Rollbar's automatically collected payload.
+ * Rollbar's browser telemetry may include request/location fields in shapes
+ * that vary by SDK version, so this intentionally walks plain objects rather
+ * than relying on one private payload schema.
+ */
+const redactTelemetryUrls = (value: unknown, seen = new WeakSet<object>()): void => {
+  if (!value || typeof value !== 'object') return;
+  if (seen.has(value)) return;
+  seen.add(value);
+
+  if (Array.isArray(value)) {
+    value.forEach((entry) => redactTelemetryUrls(entry, seen));
+    return;
+  }
+
+  Object.entries(value as Record<string, unknown>).forEach(([key, entry]) => {
+    if (typeof entry === 'string' && /(?:url|uri|href|location|filename|source)$/i.test(key)) {
+      (value as Record<string, unknown>)[key] = sanitizeTelemetryUrl(entry);
+    } else {
+      redactTelemetryUrls(entry, seen);
+    }
+  });
+};
+
+/**
  * Initialize Rollbar error tracking.
  * Always initializes when the user has consented, but automatic error capture
  * (uncaught exceptions, unhandled rejections) is disabled outside production.
@@ -54,9 +120,14 @@ interface ExtendedPerformance extends Performance {
 export const initializeErrorTracking = (): Promise<void> => {
   // GDPR: Only initialize if user has consented to error tracking
   if (!hasErrorTrackingConsent()) {
+    disableErrorTracking();
     logger.info('Error tracking disabled - user has not consented to error tracking');
     return Promise.resolve();
   }
+
+  if (rollbar) return Promise.resolve();
+
+  const requestGeneration = ++initializationGeneration;
 
   // Rollbar is dynamically imported so its ~80 KB stays out of the entry
   // chunk — and never downloads at all without consent. Every consumer
@@ -66,6 +137,9 @@ export const initializeErrorTracking = (): Promise<void> => {
   // behavior; the module itself is cached after the first import.
   return import('rollbar')
     .then(({ default: RollbarCtor }) => {
+      if (requestGeneration !== initializationGeneration || !hasErrorTrackingConsent()) {
+        return;
+      }
       rollbar = createRollbar(RollbarCtor);
     })
     .catch((error: unknown) => {
@@ -115,6 +189,7 @@ const createRollbar = (RollbarCtor: typeof Rollbar): Rollbar => {
 
     // Enrich every payload with browser and performance context
     transform: (payload: Record<string, unknown>) => {
+      redactTelemetryUrls(payload);
       payload['browser.name'] = navigator.userAgent;
       payload['screen.resolution'] = `${window.screen.width}x${window.screen.height}`;
       payload['viewport.size'] = `${window.innerWidth}x${window.innerHeight}`;
@@ -151,7 +226,7 @@ export const captureApplicationContext = (store?: {
 }): Record<string, unknown> => {
   const context: Record<string, unknown> = {
     timestamp: new Date().toISOString(),
-    url: window.location.href,
+    url: sanitizeTelemetryUrl(window.location.href),
     userAgent: navigator.userAgent,
     viewport: {
       width: window.innerWidth,
@@ -271,7 +346,7 @@ export const submitManualBugReport = (
       expectedBehavior: bugReport.expectedBehavior,
       actualBehavior: bugReport.actualBehavior,
       userAgent: bugReport.userAgent || navigator.userAgent,
-      url: bugReport.url || window.location.href,
+      url: sanitizeTelemetryUrl(bugReport.url || window.location.href),
     },
     errorType: 'manual',
     category: bugReport.category,

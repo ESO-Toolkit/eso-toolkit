@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document provides instructions for AI agents working on the ESO Log Aggregator scribing detection system. It explains how signature and affix scripts are detected from combat logs.
+This document provides instructions for AI agents working on the ESO Toolkit scribing detection system. It explains how signature and affix scripts are detected from combat logs.
 
 ---
 
@@ -28,6 +28,7 @@ This document provides instructions for AI agents working on the ESO Log Aggrega
 **IMPORTANT**: Signature scripts do NOT always appear as buffs, debuffs, or damage events!
 
 **Example - Anchorite's Potency**:
+
 - Player casts Leashing Soul (ability 217784)
 - ~450-600ms later, Potent Soul (ability 216940) triggers
 - This appears as a **resourcechange event** granting +4 ultimate
@@ -42,20 +43,26 @@ This document provides instructions for AI agents working on the ESO Log Aggrega
 ### Core Files
 
 #### Detection Hook
+
 **File**: `src/features/scribing/hooks/useScribingDetection.ts`
+
 - Main detection logic
 - Lines 158-164: Resource event checking
 - Lines 100-180: Post-cast analysis window
 - Returns: `SignatureScriptDetectionResult` with confidence and evidence
 
 #### Database
+
 **File**: `data/scribing-complete.json`
+
 - Line 6502+: `signatureScripts` section with ability IDs
 - Maps ability IDs to signature script names
 - Example: `216940` → "Anchorite's Potency"
 
 #### UI Display
+
 **File**: `src/components/SkillTooltip.tsx`
+
 - Lines 612-670: Signature script section rendering
 - Displays name, confidence, and evidence
 - Format: "📜 Signature Script" with evidence details
@@ -106,7 +113,7 @@ const windowEnd = cast.timestamp + 1000; // 1000ms detection window
 const MIN_CONSISTENCY = 0.5; // 50% threshold
 
 // For each unique ability ID found:
-consistency = occurrences / totalCasts
+consistency = occurrences / totalCasts;
 
 // Example: Anchorite's Potency
 // - Ability 216940 appears in 6/6 casts
@@ -116,11 +123,11 @@ consistency = occurrences / totalCasts
 
 ### Detection Requirements
 
-| Requirement | Value | Notes |
-|-------------|-------|-------|
-| Detection Window | 1000ms | After each cast |
-| Min Consistency | 50% | Must appear in ≥50% of casts |
-| Max Confidence | 95% | Capped even at 100% consistency |
+| Requirement      | Value          | Notes                           |
+| ---------------- | -------------- | ------------------------------- |
+| Detection Window | 1000ms         | After each cast                 |
+| Min Consistency  | 50%            | Must appear in ≥50% of casts    |
+| Max Confidence   | 95%            | Capped even at 100% consistency |
 | Player Filtering | sourceID match | Only events from casting player |
 
 ---
@@ -129,20 +136,21 @@ consistency = occurrences / totalCasts
 
 ### Complete List
 
-| Event Type | File | Purpose | Critical For |
-|------------|------|---------|--------------|
-| **cast** | cast-events.json | Ability casts | Finding main ability usage |
-| **damage** | damage-events.json | Damage dealt | Damage-based signatures |
-| **healing** | healing-events.json | Healing done | Healing-based signatures |
-| **buff** | buff-events.json | Buffs applied | Buff-based signatures |
-| **debuff** | debuff-events.json | Debuffs applied | Debuff-based signatures |
-| **resource** | resource-events.json | Resources granted | **Resource-based signatures** ✅ |
-| death | death-events.json | Death events | (not currently used) |
-| combatantinfo | combatant-info-events.json | Player gear/stats | (not currently used) |
+| Event Type    | File                       | Purpose           | Critical For                     |
+| ------------- | -------------------------- | ----------------- | -------------------------------- |
+| **cast**      | cast-events.json           | Ability casts     | Finding main ability usage       |
+| **damage**    | damage-events.json         | Damage dealt      | Damage-based signatures          |
+| **healing**   | healing-events.json        | Healing done      | Healing-based signatures         |
+| **buff**      | buff-events.json           | Buffs applied     | Buff-based signatures            |
+| **debuff**    | debuff-events.json         | Debuffs applied   | Debuff-based signatures          |
+| **resource**  | resource-events.json       | Resources granted | **Resource-based signatures** ✅ |
+| death         | death-events.json          | Death events      | (not currently used)             |
+| combatantinfo | combatant-info-events.json | Player gear/stats | (not currently used)             |
 
 ### Event Structure Examples
 
 #### Resource Event (Anchorite's Potency)
+
 ```typescript
 {
   timestamp: 1450,
@@ -165,6 +173,7 @@ consistency = occurrences / totalCasts
 ```
 
 #### Cast Event
+
 ```typescript
 {
   timestamp: 1000,
@@ -185,17 +194,14 @@ consistency = occurrences / totalCasts
 ### When Searching for Signature Scripts
 
 ❌ **DON'T**:
+
 ```javascript
 // Only checking combat events
-const events = [
-  ...damageEvents,
-  ...healingEvents,
-  ...buffEvents,
-  ...debuffEvents
-];
+const events = [...damageEvents, ...healingEvents, ...buffEvents, ...debuffEvents];
 ```
 
 ✅ **DO**:
+
 ```javascript
 // Check ALL event types including resources
 const events = [
@@ -204,7 +210,7 @@ const events = [
   ...buffEvents,
   ...debuffEvents,
   ...resourceEvents, // ← Critical!
-  ...castEvents
+  ...castEvents,
 ];
 ```
 
@@ -231,8 +237,8 @@ const resources = useSelector(selectResourceEvents); // ← Added for resource d
 const scriptName = SIGNATURE_SCRIPT_ID_TO_NAME.get(abilityId);
 
 // Example:
-SIGNATURE_SCRIPT_ID_TO_NAME.get(216940) // → "Anchorite's Potency"
-SIGNATURE_SCRIPT_ID_TO_NAME.get(217512) // → "Anchorite's Potency"
+SIGNATURE_SCRIPT_ID_TO_NAME.get(216940); // → "Anchorite's Potency"
+SIGNATURE_SCRIPT_ID_TO_NAME.get(217512); // → "Anchorite's Potency"
 ```
 
 #### Finding Signature Scripts for a Grimoire
@@ -284,7 +290,7 @@ npm run test:watch -- useScribingDetection
 ✅ 38 tests total, all passing  
 ✅ 0 type errors  
 ✅ 0 lint errors  
-✅ Full coverage of resource event detection  
+✅ Full coverage of resource event detection
 
 ---
 
@@ -298,10 +304,8 @@ npm run test:watch -- useScribingDetection
 
 ```javascript
 // Add resource events to your search
-const resourceMatches = resourceEvents.filter(e => 
-  e.sourceID === playerId &&
-  e.timestamp > castTime &&
-  e.timestamp <= castTime + 1000
+const resourceMatches = resourceEvents.filter(
+  (e) => e.sourceID === playerId && e.timestamp > castTime && e.timestamp <= castTime + 1000,
 );
 ```
 
@@ -324,7 +328,7 @@ const events = Array.isArray(fileData) ? fileData : fileData.data;
 **Solution**: Filter by sourceID
 
 ```javascript
-const playerEvents = events.filter(e => e.sourceID === targetPlayerId);
+const playerEvents = events.filter((e) => e.sourceID === targetPlayerId);
 ```
 
 ### ❌ Pitfall #4: Not Checking Detection Window
@@ -335,9 +339,8 @@ const playerEvents = events.filter(e => e.sourceID === targetPlayerId);
 
 ```javascript
 const DETECTION_WINDOW = 1000;
-const validEvents = events.filter(e =>
-  e.timestamp > cast.timestamp &&
-  e.timestamp <= cast.timestamp + DETECTION_WINDOW
+const validEvents = events.filter(
+  (e) => e.timestamp > cast.timestamp && e.timestamp <= cast.timestamp + DETECTION_WINDOW,
 );
 ```
 
@@ -350,9 +353,10 @@ const validEvents = events.filter(e =>
 **Fight**: 11  
 **Player**: 1  
 **Ability**: Leashing Soul (217784)  
-**Signature**: Anchorite's Potency  
+**Signature**: Anchorite's Potency
 
 **Detection Pattern**:
+
 ```
 Cast #1: Leashing Soul @ 1000ms
   → Resource event: Potent Soul (216940) @ 1450ms (+450ms)
@@ -376,9 +380,10 @@ Confidence: 95% (capped)
 
 **Grimoire**: Ulfsild's Contingency  
 **Signature**: Gladiator's Tenacity  
-**Ability IDs**: 217649, 217654  
+**Ability IDs**: 217649, 217654
 
 **To Investigate**:
+
 1. Find players casting Ulfsild's Contingency
 2. Check ALL event types for abilities 217649, 217654
 3. Look for events within 1000ms of casts
@@ -430,12 +435,12 @@ Confidence: 95% (capped)
 
 Key signature script ability IDs to know:
 
-| Signature Script | Ability IDs | Event Type | Effect |
-|-----------------|-------------|------------|--------|
-| Anchorite's Potency | 216940, 217512 | **resource** | +4 ultimate |
-| Gladiator's Tenacity | 217649, 217654 | ? | Unknown |
-| Warrior's Opportunity | 217358 | ? | Unknown |
-| Growing Impact | 217655 | ? | Unknown |
+| Signature Script      | Ability IDs    | Event Type   | Effect      |
+| --------------------- | -------------- | ------------ | ----------- |
+| Anchorite's Potency   | 216940, 217512 | **resource** | +4 ultimate |
+| Gladiator's Tenacity  | 217649, 217654 | ?            | Unknown     |
+| Warrior's Opportunity | 217358         | ?            | Unknown     |
+| Growing Impact        | 217655         | ?            | Unknown     |
 
 ---
 
@@ -460,8 +465,8 @@ src/
 data/
   scribing-complete.json                 ← Signature/affix database
 data-downloads/
-  7zj1ma8kD9xn4cTq/
-    fight-11/
+  <report-code>/
+    fight-<fight-id>/
       events/
         cast-events.json                 ← Combat log data
         resource-events.json             ← Resource events
@@ -494,9 +499,9 @@ SIGNATURE_SCRIPT_ID_TO_NAME.get(abilityId)
 ### Constants
 
 ```typescript
-const DETECTION_WINDOW_MS = 1000;      // Post-cast analysis window
-const MIN_CONSISTENCY = 0.5;           // 50% threshold
-const MAX_CONFIDENCE = 0.95;           // 95% cap
+const DETECTION_WINDOW_MS = 1000; // Post-cast analysis window
+const MIN_CONSISTENCY = 0.5; // 50% threshold
+const MAX_CONFIDENCE = 0.95; // 95% cap
 ```
 
 ---
@@ -551,6 +556,7 @@ const MAX_CONFIDENCE = 0.95;           // 95% cap
 ## Version History
 
 **October 13, 2025**: Initial documentation created
+
 - Documented resource event detection discovery
 - Added Anchorite's Potency example
 - Comprehensive testing strategy
@@ -561,11 +567,13 @@ const MAX_CONFIDENCE = 0.95;           // 95% cap
 ## Contact Context
 
 This system detects scribing customizations from ESO combat logs:
+
 - **Focus Scripts**: Determine damage type/main effect
 - **Signature Scripts**: Add secondary effects (THIS DOCUMENT)
 - **Affix Scripts**: Add tertiary effects/modifiers
 
 The key insight is that signature scripts manifest in **different event types** depending on their effect:
+
 - Resource-granting → **resource events**
 - Buff-applying → buff events
 - Damage-dealing → damage events
@@ -575,6 +583,6 @@ The key insight is that signature scripts manifest in **different event types** 
 
 ---
 
-*Last Updated: October 13, 2025*  
-*Status: ✅ Resource event detection fully tested and documented*  
-*Tests: 38/38 passing*
+_Last Updated: October 13, 2025_
+_Status: ✅ Resource event detection fully tested and documented_
+_Tests: 38/38 passing_

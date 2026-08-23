@@ -53,7 +53,7 @@ export const PenetrationPanelView: React.FC<PenetrationPanelViewProps> = ({
           variant="h6"
           sx={{
             mb: 2,
-            fontFamily: 'Space Grotesk, sans-serif',
+            fontFamily: 'Space Grotesk Variable, sans-serif',
             textShadow:
               '0 2px 4px rgb(0 0 0 / 0%), 0 4px 8px rgba(0, 0, 0, 0.1), 0 8px 16px rgba(0, 0, 0, 0.2)',
           }}
@@ -75,7 +75,7 @@ export const PenetrationPanelView: React.FC<PenetrationPanelViewProps> = ({
         variant="h6"
         sx={{
           mb: 2,
-          fontFamily: 'Space Grotesk, sans-serif',
+          fontFamily: 'Space Grotesk Variable, sans-serif',
           textShadow:
             '0 2px 4px rgb(0 0 0 / 0%), 0 4px 8px rgba(0, 0, 0, 0.1), 0 8px 16px rgba(0, 0, 0, 0.2)',
         }}
@@ -165,7 +165,10 @@ export const PenetrationPanelView: React.FC<PenetrationPanelViewProps> = ({
         fullWidth
         aria-labelledby="cmx-dialog-title"
       >
-        <DialogTitle id="cmx-dialog-title" sx={{ fontFamily: 'Space Grotesk, sans-serif' }}>
+        <DialogTitle
+          id="cmx-dialog-title"
+          sx={{ fontFamily: 'Space Grotesk Variable, sans-serif' }}
+        >
           Why is my value different from CMX?
         </DialogTitle>
         <DialogContent dividers>

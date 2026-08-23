@@ -1,4 +1,4 @@
-# Contributing to ESO Log Aggregator
+# Contributing to ESO Toolkit
 
 Thank you for your interest in contributing! This is a community tool built for ESO players, and contributions are welcome.
 
@@ -11,7 +11,7 @@ Thank you for your interest in contributing! This is a community tool built for 
 ## Development Setup
 
 ```powershell
-# Install Node.js 20+ first, then:
+# Install Node.js 24 LTS first (see `.nvmrc`), then:
 npm ci
 npm run codegen     # generate GraphQL types
 npm run dev         # start dev server
@@ -26,7 +26,7 @@ See [README.md](README.md) for full setup and testing instructions.
 3. Run the full validation suite before pushing:
    ```powershell
    npm run validate  # typecheck + lint + format
-   npm test          # unit tests
+   npm run test:ci   # all unit tests, non-interactive
    ```
 4. Open a pull request against `main`. The PR template will walk you through the checklist.
 
@@ -49,6 +49,7 @@ See [README.md](README.md) for full setup and testing instructions.
 ## Reporting Bugs
 
 Open a [GitHub issue](https://github.com/ESO-Toolkit/eso-toolkit/issues/new) with:
+
 - Steps to reproduce
 - Expected vs. actual behaviour
 - Browser/OS and any relevant console errors
@@ -59,11 +60,14 @@ Please do **not** open a public issue for security vulnerabilities. See [SECURIT
 
 ## License
 
-This project uses the **Business Source License 1.1 (BUSL-1.1)**, which is _not_ an OSI-approved open source license. Key points for contributors:
+The repository `LICENSE` is a project-specific, source-available license that labels itself
+**Business Source License 1.1**. It uses BSL-style parameters, but contributors should not treat the
+custom text as an exact SPDX `BUSL-1.1` license or as an OSI-approved open-source license. Key points:
 
-- Your contributions will be distributed under the same BUSL-1.1 terms (see [LICENSE](LICENSE)).
+- Your contributions may be distributed under the terms in [LICENSE](LICENSE), subject to the CLA.
 - Non-production and non-commercial use is freely permitted.
-- Production / commercial use requires a separate agreement with the licensor until the code converts to Apache 2.0 (four years after each public release).
-- By signing the [CLA](CLA.md), you grant the project the right to distribute your contributions under these terms.
+- Uses outside the stated Additional Use Grant are not granted by the `LICENSE`.
+- The `LICENSE` specifies a four-year Change Date and Apache 2.0 as its Change License.
+- By signing the [CLA](CLA.md), you grant the project the rights described there to distribute your contributions under the project terms.
 
 If you have questions about how this affects your contribution, open a [discussion](https://github.com/ESO-Toolkit/eso-toolkit/discussions) before submitting your PR.

@@ -261,16 +261,10 @@ export interface RemoveDebuffStackEvent {
 }
 
 export type BuffEvent =
-  | ApplyBuffEvent
-  | ApplyBuffStackEvent
-  | RemoveBuffEvent
-  | RemoveBuffStackEvent;
+  ApplyBuffEvent | ApplyBuffStackEvent | RemoveBuffEvent | RemoveBuffStackEvent;
 
 export type DebuffEvent =
-  | ApplyDebuffEvent
-  | ApplyDebuffStackEvent
-  | RemoveDebuffEvent
-  | RemoveDebuffStackEvent;
+  ApplyDebuffEvent | ApplyDebuffStackEvent | RemoveDebuffEvent | RemoveDebuffStackEvent;
 
 export type LogEvent =
   | ApplyBuffStackEvent

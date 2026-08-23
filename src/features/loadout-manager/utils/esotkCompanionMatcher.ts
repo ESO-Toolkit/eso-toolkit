@@ -109,7 +109,7 @@ function snapshotMs(snapshot: CompanionSnapshot): number {
 
 /**
  * Rank a snapshot's capture reason for tie-breaking. A combat-end capture is the canonical
- * end-of-fight build; a manual `/esotk` snapshot may have been taken mid-adjustment, so it
+ * end-of-fight build; a manual `/esotkcompanion` snapshot may have been taken mid-adjustment, so it
  * only wins a tie when no combat-end capture is equally close.
  */
 function reasonRank(snapshot: CompanionSnapshot): number {

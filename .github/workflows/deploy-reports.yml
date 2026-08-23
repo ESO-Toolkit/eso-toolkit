@@ -15,8 +15,6 @@ on:
 
 permissions:
   contents: read
-  issues: write
-  pull-requests: write
 
 jobs:
   # ─── Build: Coverage ─────────────────────────────────────────────────────────
@@ -25,6 +23,14 @@ jobs:
   coverage:
     runs-on: ubuntu-latest
     steps:
+      - name: Require protected main ref for manual runs
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          if [ "$GITHUB_REF" != "refs/heads/main" ]; then
+            echo "::error::Manual report runs must be dispatched from protected main."
+            exit 1
+          fi
+
       - name: Skip coverage in merge queue (already verified on PR)
         # The job must still run so the required status check reports back to GitHub
         # instead of timing out and ejecting the PR from the merge queue.
@@ -33,7 +39,7 @@ jobs:
 
       - name: Checkout Repository
         if: github.event_name != 'merge_group'
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0
 
@@ -65,20 +71,20 @@ jobs:
 
       - name: Generate Coverage Badge JSON
         run: npm run coverage:badge-json
-        if: (github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch') && github.event_name != 'merge_group'
+        if: github.ref == 'refs/heads/main' && github.event_name != 'merge_group'
 
       # Consumed by the deploy job for the combined gh-pages push.
       # Short retention since this is an intermediate build artifact.
       - name: Upload Coverage Badge JSON
-        uses: actions/upload-artifact@v7
-        if: (github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch') && github.event_name != 'merge_group'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        if: github.ref == 'refs/heads/main' && github.event_name != 'merge_group'
         with:
           name: coverage-badge-json
           path: coverage/badge-json/
           retention-days: 1
 
       - name: Upload Coverage Badges (SVG)
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         if: always() && github.event_name != 'merge_group'
         with:
           name: coverage-badges-${{ github.run_number }}
@@ -86,7 +92,7 @@ jobs:
           retention-days: 90
 
       - name: Upload Coverage Report
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         if: always() && github.event_name != 'merge_group'
         with:
           name: coverage-report-${{ github.run_number }}
@@ -97,9 +103,9 @@ jobs:
           retention-days: 30
 
       - name: Comment Coverage on PR
-        if: github.event_name == 'pull_request'
+        if: ${{ false }} # PR comments run in the permission-scoped comment-coverage job below.
         continue-on-error: true
-        uses: actions/github-script@v9
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
         with:
           script: |
             const fs = require('fs');
@@ -159,9 +165,58 @@ jobs:
 
   # ─── Build: Storybook ────────────────────────────────────────────────────────
   # Only runs on main (and workflow_dispatch). PRs do not build storybook.
+  comment-coverage:
+    needs: coverage
+    if: always() && github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
+    steps:
+      - name: Download coverage report
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: coverage-report-${{ github.run_number }}
+          path: coverage
+      - name: Comment Coverage on PR
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
+        with:
+          script: |
+            const fs = require('fs');
+            const path = 'coverage/coverage-status.json';
+            let body = '## Coverage Report\n\n';
+            if (fs.existsSync(path)) {
+              const { coverage } = JSON.parse(fs.readFileSync(path, 'utf8'));
+              body += `| Metric | Coverage |\n|--------|----------|\n`;
+              for (const [name, value] of Object.entries(coverage)) {
+                body += `| ${name} | ${value.percentage.toFixed(1)}% |\n`;
+              }
+            } else {
+              body += 'Coverage data not found.';
+            }
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner, repo: context.repo.repo, issue_number: context.issue.number,
+            });
+            const existing = comments.find(comment =>
+              comment.user.login === 'github-actions[bot]' && comment.body.includes('Coverage Report'));
+            const payload = { owner: context.repo.owner, repo: context.repo.repo,
+              issue_number: context.issue.number, body };
+            if (existing) await github.rest.issues.updateComment({ ...payload, comment_id: existing.id });
+            else await github.rest.issues.createComment(payload);
+
   build-storybook:
     runs-on: ubuntu-latest
     steps:
+      - name: Require protected main ref for manual runs
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          if [ "$GITHUB_REF" != "refs/heads/main" ]; then
+            echo "::error::Manual report runs must be dispatched from protected main."
+            exit 1
+          fi
+
       - name: Skip storybook build in merge queue (only needed on main)
         # The job must still run so the required status check reports back to GitHub
         # instead of timing out and ejecting the PR from the merge queue.
@@ -170,7 +225,7 @@ jobs:
 
       - name: Checkout Repository
         if: github.event_name != 'merge_group'
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0
 
@@ -189,7 +244,7 @@ jobs:
       # Short retention since this is an intermediate build artifact.
       - name: Upload Storybook
         if: github.event_name != 'merge_group'
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: storybook-static
           path: storybook-static/
@@ -214,7 +269,7 @@ jobs:
         github.event_name == 'merge_group' ||
         github.event_name == 'pull_request' ||
         (
-          (github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch') &&
+          github.ref == 'refs/heads/main' &&
           needs.coverage.result == 'success' &&
           needs.build-storybook.result == 'success'
         )
@@ -232,14 +287,14 @@ jobs:
 
       - name: Download Coverage Badge JSON
         if: github.event_name != 'merge_group' && github.event_name != 'pull_request'
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
           name: coverage-badge-json
           path: deploy-staging/badges/
 
       - name: Download Storybook
         if: github.event_name != 'merge_group' && github.event_name != 'pull_request'
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
           name: storybook-static
           path: deploy-staging/storybook/
@@ -247,7 +302,7 @@ jobs:
       - name: Generate Deploy Token
         if: github.event_name != 'merge_group' && github.event_name != 'pull_request'
         id: generate-deploy-token
-        uses: actions/create-github-app-token@v3
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3
         with:
           app-id: ${{ secrets.DEPLOY_APP_ID }}
           private-key: ${{ secrets.DEPLOY_APP_PRIVATE_KEY }}

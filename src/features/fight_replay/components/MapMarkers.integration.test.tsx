@@ -19,6 +19,12 @@ jest.mock('@react-three/drei', () => ({
   OrbitControls: () => null,
 }));
 
+// Marker3D uses a tree-shakeable deep import in production. Keep this integration
+// test independent of Drei's untranspiled ESM implementation under Jest.
+jest.mock('@react-three/drei/core/Billboard.js', () => ({
+  Billboard: ({ children }: { children?: React.ReactNode }) => <group>{children}</group>,
+}));
+
 describe('MorMarkers Integration', () => {
   const mockFight: FightFragment = {
     id: 1,

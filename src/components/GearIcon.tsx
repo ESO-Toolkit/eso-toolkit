@@ -20,14 +20,7 @@ export interface GearIconProps {
   tooltipContent?: React.ReactNode;
   /** Tooltip placement */
   tooltipPlacement?:
-    | 'top'
-    | 'bottom'
-    | 'left'
-    | 'right'
-    | 'top-start'
-    | 'top-end'
-    | 'bottom-start'
-    | 'bottom-end';
+    'top' | 'bottom' | 'left' | 'right' | 'top-start' | 'top-end' | 'bottom-start' | 'bottom-end';
   /** Quality/rarity of the gear item for styling */
   quality?: 'normal' | 'fine' | 'superior' | 'epic' | 'legendary' | 'mythic';
   /** Whether the icon should be rounded */

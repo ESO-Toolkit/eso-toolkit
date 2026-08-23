@@ -1,8 +1,8 @@
 /**
  * Item ID to Item Info Mapping
  *
- * Data auto-generated from LibSets (API 101048, 2025-11-13)
- * Source: https://github.com/Baertram/LibSets/tree/LibSets-reworked
+ * Data refreshed from LibSets (API 101050, 2026-05-25)
+ * Source: https://github.com/Baertram/LibSets/tree/76f2adab4e495f0b3ddb9884cb10c47f32e9f4b1
  *
  * Maps ESO item IDs to their names, set names, and types.
  * Includes optional slot and equipType information for monster sets.
@@ -23,7 +23,11 @@
 import { getRegisteredSlot } from '../utils/wizardWardrobeSlotRegistry';
 
 import itemIdMapJsonUrl from './itemIdMap.json?url';
-import { getCollectionItem, getCollectionItemIdsBySlot } from './itemSetCollections';
+import {
+  getCollectionItem,
+  getCollectionItemIdsBySlot,
+  preloadItemSetCollections,
+} from './itemSetCollections';
 import type { SlotType } from './slotTypes';
 export type { SlotType } from './slotTypes';
 
@@ -165,16 +169,17 @@ export function __initItemIdMapFromJson(data: Record<number, ItemInfo>): void {
 }
 
 function startItemDataLoad(): Promise<void> {
-  const promise = fetch(itemIdMapJsonUrl)
-    .then((response) => {
+  const promise = Promise.all([
+    fetch(itemIdMapJsonUrl).then((response) => {
       if (!response.ok) {
         throw new Error(`Item data fetch failed: HTTP ${response.status}`);
       }
       return response.json() as Promise<Record<number, ItemInfo>>;
-    })
-    .then((data) => {
-      __initItemIdMapFromJson(data);
-    });
+    }),
+    preloadItemSetCollections(),
+  ]).then(([data]) => {
+    __initItemIdMapFromJson(data);
+  });
   // On failure, clear the cached promise so the next caller retries instead of
   // re-awaiting a permanently rejected promise (same contract as
   // preloadIconData — see itemIconResolver.ts).

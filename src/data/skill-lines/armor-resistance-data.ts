@@ -91,7 +91,7 @@ const getQualityValues = (
   return QUALITY_FALLBACK(fallbackValue);
 };
 // ESO Calculator Data - Armor Resistance
-// Extracted from Elder Tools - Resistances.csv
+// Ported from the archived Elder Tools resistance dataset.
 
 export interface CalculatorItem {
   name: string;
@@ -754,7 +754,7 @@ export const ARMOR_RESISTANCE_OPTIMAL_MIN = 33100;
 export const ARMOR_RESISTANCE_OPTIMAL_MAX = 33500;
 export const ARMOR_RESISTANCE_CAP = 33500;
 
-// Over-resistance and damage mitigation constants (from Elder Tools - Resistances.csv)
+// Over-resistance and damage mitigation constants from the archived resistance dataset.
 export const MAX_ARMOR_VALUE = 33100; // Maximum armor value before diminishing returns
 export const OVER_RESISTANCE_DIVISOR = 109; // Over-resistance calculation divisor
 export const MAX_DAMAGE_MITIGATION = 50; // Maximum damage mitigation percentage

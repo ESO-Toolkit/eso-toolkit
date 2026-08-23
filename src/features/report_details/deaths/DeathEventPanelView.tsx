@@ -506,10 +506,7 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
           const actor = actorsById[info.playerId];
           const playerName = resolveActorName(actor, info.playerId);
           const playerRole = playerMap.get(info.playerId)?.role as
-            | 'dps'
-            | 'healer'
-            | 'tank'
-            | undefined;
+            'dps' | 'healer' | 'tank' | undefined;
           const playerColor = roleColors.getPlayerColor(playerRole);
           const deathDuration = formatDeathDuration(info.deathDurationMs);
 

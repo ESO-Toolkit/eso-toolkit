@@ -9,7 +9,7 @@
 export const glassAddBtnSx = (isDark: boolean): Record<string, unknown> => ({
   alignSelf: 'flex-start' as const,
   fontSize: 11,
-  fontFamily: 'Space Grotesk, Inter, system-ui',
+  fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
   fontWeight: 600,
   borderRadius: '99px',
   textTransform: 'none' as const,

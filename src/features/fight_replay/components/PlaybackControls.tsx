@@ -362,7 +362,7 @@ const PlaybackControlsComponent: React.FC<PlaybackControlsProps> = ({
                 alignItems: 'baseline',
                 gap: 0.5,
                 flexShrink: 0,
-                fontFamily: 'Space Grotesk, Inter, system-ui',
+                fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                 fontVariantNumeric: 'tabular-nums',
                 color: 'text.primary',
               }}

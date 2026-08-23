@@ -48,11 +48,9 @@ export function useStaggerStacksTask(): {
     selectWorkerTaskLoading('calculateStaggerStacks'),
   ) as boolean;
   const staggerStacksError = useSelector(selectWorkerTaskError('calculateStaggerStacks')) as
-    | string
-    | null;
+    string | null;
   const staggerStacksProgress = useSelector(selectWorkerTaskProgress('calculateStaggerStacks')) as
-    | number
-    | null;
+    number | null;
 
   // Include all dependency loading states in the overall loading state
   const isStaggerStacksLoading = isStaggerStacksTaskLoading || isDamageEventsLoading;

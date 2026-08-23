@@ -37,7 +37,7 @@ const EditorTool = styled(Box)(({ theme }) => ({
   padding: '24px',
   borderRadius: '14px',
   border: '1px solid var(--border)',
-  fontFamily: 'Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
+  fontFamily: 'Inter Variable, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
   color: 'var(--text)',
   boxShadow:
     theme.palette.mode === 'dark'
@@ -493,10 +493,6 @@ const presetColors = ['#FFFF00', '#00FF00', '#FF0000', '#0080FF', '#FF8000', '#F
 export const TextEditor: React.FC = () => {
   const theme = useTheme();
 
-  useEffect(() => {
-    document.title = 'Text Editor | ESO Toolkit';
-  }, []);
-
   const [charCount, setCharCount] = useState(0);
   const [copyFeedback, setCopyFeedback] = useState('');
   const [showColorPicker, setShowColorPicker] = useState(false);
@@ -871,7 +867,7 @@ export const TextEditor: React.FC = () => {
 
 |c00FF00Progressive Raiding & Teaching:|r Whether you're a seasoned veteran or new to trials, our experienced raiders are eager to teach, share strategies, and grow together. We run regular end-game content like veteran trials, arenas, and dungeons—focusing on fun, improvement, and epic loot!
 
-|c00FF00Fully Equipped Guild Hall:|r Dive into @PatrickFoo's Hall of the Lunar Champion, our ultimate hub featuring:
+|c00FF00Fully Equipped Guild Hall:|r Visit your guild's Hall of the Lunar Champion, an ideal hub featuring:
 - All crafting stations for seamless gear upgrades.
 - Mundus stones for build optimization.
 - Target dummies to hone your DPS, healing, and tanking skills.`;
@@ -942,6 +938,22 @@ export const TextEditor: React.FC = () => {
           },
         }}
       >
+        <Typography
+          component="h1"
+          sx={{
+            position: 'absolute',
+            width: 1,
+            height: 1,
+            p: 0,
+            m: -1,
+            overflow: 'hidden',
+            clip: 'rect(0 0 0 0)',
+            whiteSpace: 'nowrap',
+            border: 0,
+          }}
+        >
+          ESO Text Editor
+        </Typography>
         <EditorTool>
           {/* Desktop Toolbar */}
           <Toolbar>
@@ -1127,7 +1139,7 @@ export const TextEditor: React.FC = () => {
                   fontSize: '14px',
                   fontWeight: 700,
                   color: theme.palette.mode === 'dark' ? '#e2b84d' : '#333333',
-                  fontFamily: 'Space Grotesk, Inter, system-ui',
+                  fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                   fontFeatureSettings: '"tnum"',
                 }}
               >

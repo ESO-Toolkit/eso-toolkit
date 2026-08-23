@@ -305,8 +305,7 @@ export const RotationAnalysisPanel: React.FC<RotationAnalysisPanelProps> = ({ fi
       (castEventsByPlayer[playerId] ||= []).push(castEvent);
 
       const playerInfo = playersById[playerId] as
-        | { displayName?: string; name?: string }
-        | undefined;
+        { displayName?: string; name?: string } | undefined;
       const playerName = playerInfo?.displayName || playerInfo?.name || `Player ${playerId}`;
 
       if (!analysisMap[playerId]) {

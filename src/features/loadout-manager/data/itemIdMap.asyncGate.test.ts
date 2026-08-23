@@ -33,6 +33,18 @@ const FIXTURE: Record<number, ItemInfo> = {
   900002: { name: 'Test Set Chest', setName: 'Test Set', type: 'Heavy', slot: 'chest' },
 };
 
+const COLLECTION_FIXTURE = {
+  metadata: {
+    generatedAt: 'test',
+    source: 'test',
+    totalPieces: 0,
+    totalItems: 0,
+    unknownSlotCount: 0,
+  },
+  slotMasks: {},
+  items: {},
+};
+
 function okJsonResponse(data: unknown): Partial<Response> {
   return { ok: true, status: 200, json: () => Promise.resolve(data) };
 }
@@ -66,7 +78,10 @@ describe('itemIdMap async init gate', () => {
 
   it('populates the map and flips ready on a successful fetch', async () => {
     const mod = loadItemIdMap();
-    const mockFetch = jest.fn().mockResolvedValue(okJsonResponse(FIXTURE));
+    const mockFetch = jest
+      .fn()
+      .mockResolvedValueOnce(okJsonResponse(FIXTURE))
+      .mockResolvedValueOnce(okJsonResponse(COLLECTION_FIXTURE));
     setFetch(mockFetch);
 
     expect(mod.isItemDataReady()).toBe(false);
@@ -77,14 +92,15 @@ describe('itemIdMap async init gate', () => {
 
     // Once ready, preloadItemData short-circuits — no additional fetch.
     await mod.preloadItemData();
-    expect(mockFetch).toHaveBeenCalledTimes(1);
+    expect(mockFetch).toHaveBeenCalledTimes(2);
   });
 
   it('rejects when the fetch resolves with a non-ok HTTP status', async () => {
     const mod = loadItemIdMap();
     const mockFetch = jest
       .fn()
-      .mockResolvedValue({ ok: false, status: 500, json: () => Promise.resolve({}) });
+      .mockResolvedValueOnce({ ok: false, status: 500, json: () => Promise.resolve({}) })
+      .mockResolvedValueOnce(okJsonResponse(COLLECTION_FIXTURE));
     setFetch(mockFetch);
 
     await expect(mod.preloadItemData()).rejects.toThrow('HTTP 500');
@@ -97,12 +113,12 @@ describe('itemIdMap async init gate', () => {
     setFetch(mockFetch);
 
     await expect(mod.preloadItemData()).rejects.toThrow('network down');
-    expect(mockFetch).toHaveBeenCalledTimes(1);
+    expect(mockFetch).toHaveBeenCalledTimes(2);
 
     // The rejected promise must NOT be re-awaited — a second call issues a fresh
     // fetch (itemDataPromise reset on failure).
     await expect(mod.preloadItemData()).rejects.toThrow('network down');
-    expect(mockFetch).toHaveBeenCalledTimes(2);
+    expect(mockFetch).toHaveBeenCalledTimes(4);
     expect(mod.isItemDataReady()).toBe(false);
   });
 
@@ -135,7 +151,9 @@ describe('itemIdMap async init gate', () => {
     const mockFetch = jest
       .fn()
       .mockRejectedValueOnce(new Error('network down'))
-      .mockResolvedValueOnce(okJsonResponse(FIXTURE));
+      .mockResolvedValueOnce(okJsonResponse(COLLECTION_FIXTURE))
+      .mockResolvedValueOnce(okJsonResponse(FIXTURE))
+      .mockResolvedValueOnce(okJsonResponse(COLLECTION_FIXTURE));
     setFetch(mockFetch);
 
     const first = renderHook(() => useItemDataReady());
@@ -149,6 +167,6 @@ describe('itemIdMap async init gate', () => {
     expect(second.result.current.failed).toBe(false);
     second.unmount();
 
-    expect(mockFetch).toHaveBeenCalledTimes(2);
+    expect(mockFetch).toHaveBeenCalledTimes(3);
   });
 });

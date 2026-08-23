@@ -100,7 +100,7 @@ $env:PORT = "3002" ; npm run dev
 
 **Key principle**: When a user asks about port conflicts in a worktree, always match the PID back to a working directory using `Get-CimInstance Win32_Process` so you can tell them exactly which worktree owns the port.
 
-See [CLAUDE.md](../../CLAUDE.md) for the full worktree port allocation table (3000–3009).
+See [CLAUDE.md](../../../CLAUDE.md) for the full worktree port allocation table (3000–3009).
 
 ### Playwright Browser Issues
 

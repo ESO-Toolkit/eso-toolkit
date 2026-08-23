@@ -279,7 +279,7 @@ export const BossHealthPanel: React.FC<BossHealthPanelProps> = ({
             <Typography
               noWrap
               sx={{
-                fontFamily: '"Space Grotesk", Inter, system-ui, sans-serif',
+                fontFamily: '"Space Grotesk Variable", Inter Variable, system-ui, sans-serif',
                 fontWeight: 700,
                 fontSize: isMobile ? '0.8rem' : { xs: '0.9rem', sm: '1rem' },
                 lineHeight: 1.2,

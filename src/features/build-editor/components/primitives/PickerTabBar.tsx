@@ -56,7 +56,7 @@ export const PickerTab: React.FC<PickerTabProps> = ({
         borderRadius: 1.5,
         fontSize: 11,
         fontWeight: isActive ? 700 : 500,
-        fontFamily: 'Space Grotesk, Inter, system-ui',
+        fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
         letterSpacing: 0.3,
         flexShrink: 0,
         color: isActive ? activeColor : isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.45)',

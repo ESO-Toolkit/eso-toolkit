@@ -240,7 +240,7 @@ export const HealerGuide: React.FC = () => {
               fontWeight: 900,
               lineHeight: 1.1,
               letterSpacing: '-.02em',
-              fontFamily: 'Space Grotesk,Inter,system-ui',
+              fontFamily: 'Space Grotesk Variable,Inter Variable,system-ui',
               background:
                 theme.palette.mode === 'dark'
                   ? 'linear-gradient(135deg, #ffffff 0%, #f8fafc 50%, #e2e8f0 100%)'

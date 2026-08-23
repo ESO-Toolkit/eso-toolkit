@@ -224,7 +224,7 @@ const WeightBadge: React.FC<{ weight: ArmorWeight }> = ({ weight }) => {
         borderRadius: 1,
         fontSize: '0.5rem',
         fontWeight: 700,
-        fontFamily: 'Space Grotesk, Inter, system-ui',
+        fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
         letterSpacing: 0.2,
         flexShrink: 0,
         color,
@@ -364,7 +364,7 @@ const SetBonusPreview: React.FC<{ bonuses: string[] }> = ({ bonuses }) => {
               fontSize: 10,
               lineHeight: 1.4,
               color: isDark ? 'rgba(255,255,255,0.50)' : 'rgba(0,0,0,0.50)',
-              fontFamily: 'Space Grotesk, Inter, system-ui',
+              fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
               mb: idx < bonuses.length - 1 ? 0.25 : 0,
             }}
           >
@@ -514,7 +514,7 @@ const SetCategorySection: React.FC<SetCategorySectionProps> = ({
               sx={{
                 fontSize: 12,
                 fontWeight: 600,
-                fontFamily: 'Space Grotesk, Inter, system-ui',
+                fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                 color: isDark ? 'rgba(255,255,255,0.80)' : 'rgba(0,0,0,0.75)',
               }}
             >
@@ -527,7 +527,7 @@ const SetCategorySection: React.FC<SetCategorySectionProps> = ({
                 height: 14,
                 fontSize: '0.5rem',
                 fontWeight: 700,
-                fontFamily: 'Space Grotesk, Inter, system-ui',
+                fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                 background: `${catColor}25`,
                 color: catColor,
                 border: 'none',
@@ -542,7 +542,7 @@ const SetCategorySection: React.FC<SetCategorySectionProps> = ({
                 sx={{
                   fontSize: 9,
                   fontStyle: 'italic',
-                  fontFamily: 'Space Grotesk',
+                  fontFamily: 'Space Grotesk Variable',
                   color: isDark ? 'rgba(255,255,255,0.30)' : 'rgba(0,0,0,0.30)',
                 }}
               >
@@ -557,7 +557,7 @@ const SetCategorySection: React.FC<SetCategorySectionProps> = ({
                   height: 14,
                   fontSize: '0.5rem',
                   fontWeight: 700,
-                  fontFamily: 'Space Grotesk',
+                  fontFamily: 'Space Grotesk Variable',
                   background: 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.15)',
                   color: 'var(--be-accent, #38bdf8)',
                   border: 'none',
@@ -658,7 +658,7 @@ const SetCategorySection: React.FC<SetCategorySectionProps> = ({
                       fontSize: 11.5,
                       fontWeight: variantSelected ? 700 : 500,
                       fontStyle: variantUnresolved ? 'italic' : 'normal',
-                      fontFamily: 'Space Grotesk, Inter, system-ui',
+                      fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                       color: variantSelected
                         ? 'var(--be-accent, #38bdf8)'
                         : isDark
@@ -888,7 +888,7 @@ export const GearPickerDialog: React.FC<GearPickerDialogProps> = ({
         <Typography
           sx={{
             fontWeight: 700,
-            fontFamily: 'Space Grotesk, Inter, system-ui',
+            fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
             fontSize: '1rem',
             background: isDark
               ? 'linear-gradient(135deg, #f1f5f9 0%, #94a3b8 100%)'
@@ -938,7 +938,7 @@ export const GearPickerDialog: React.FC<GearPickerDialogProps> = ({
                     sx={{
                       fontSize: 11,
                       fontWeight: 700,
-                      fontFamily: 'Space Grotesk, Inter, system-ui',
+                      fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                       color: isDark ? 'rgba(255,255,255,0.70)' : 'rgba(0,0,0,0.65)',
                     }}
                   >
@@ -953,7 +953,7 @@ export const GearPickerDialog: React.FC<GearPickerDialogProps> = ({
                       height: 14,
                       fontSize: '0.5rem',
                       fontWeight: 700,
-                      fontFamily: 'Space Grotesk',
+                      fontFamily: 'Space Grotesk Variable',
                       background: 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.12)',
                       color: 'var(--be-accent, #38bdf8)',
                       border: 'none',
@@ -964,7 +964,7 @@ export const GearPickerDialog: React.FC<GearPickerDialogProps> = ({
                   sx={{
                     fontSize: 9,
                     color: isDark ? 'rgba(255,255,255,0.30)' : 'rgba(0,0,0,0.30)',
-                    fontFamily: 'Space Grotesk',
+                    fontFamily: 'Space Grotesk Variable',
                   }}
                 >
                   Currently equipped · ID: {currentItemId}
@@ -1046,7 +1046,7 @@ export const GearPickerDialog: React.FC<GearPickerDialogProps> = ({
                   sx={{
                     fontSize: 10,
                     color: isDark ? 'rgba(255,255,255,0.30)' : 'rgba(0,0,0,0.30)',
-                    fontFamily: 'Space Grotesk',
+                    fontFamily: 'Space Grotesk Variable',
                     mb: 0.75,
                   }}
                 >
@@ -1099,7 +1099,7 @@ export const GearPickerDialog: React.FC<GearPickerDialogProps> = ({
                               sx={{
                                 fontSize: 12,
                                 fontWeight: 600,
-                                fontFamily: 'Space Grotesk, Inter, system-ui',
+                                fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                                 lineHeight: 1.3,
                               }}
                             >
@@ -1112,7 +1112,7 @@ export const GearPickerDialog: React.FC<GearPickerDialogProps> = ({
                                 height: 14,
                                 fontSize: '0.5rem',
                                 fontWeight: 700,
-                                fontFamily: 'Space Grotesk',
+                                fontFamily: 'Space Grotesk Variable',
                                 background: `${catColor}25`,
                                 color: catColor,
                                 border: 'none',
@@ -1170,7 +1170,7 @@ export const GearPickerDialog: React.FC<GearPickerDialogProps> = ({
                         borderRadius: 1.5,
                         fontSize: 10,
                         fontWeight: isActive ? 700 : 500,
-                        fontFamily: 'Space Grotesk, Inter, system-ui',
+                        fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                         letterSpacing: 0.3,
                         flexShrink: 0,
                         color: isActive

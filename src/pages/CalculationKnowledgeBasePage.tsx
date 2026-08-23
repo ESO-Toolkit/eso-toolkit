@@ -7,6 +7,8 @@ import remarkGfm from 'remark-gfm';
 
 import knowledgeBaseContent from '../../documentation/features/calculations/CALCULATION_KNOWLEDGE_BASE.md?raw';
 
+const knowledgeBaseBody = knowledgeBaseContent.replace(/^# .*?(?:\r?\n)+/, '');
+
 const markdownStyles = {
   '& h1': {
     fontSize: { xs: '1.875rem', md: '2.25rem' },
@@ -44,12 +46,13 @@ const markdownStyles = {
   '& li': {
     mb: 0.75,
   },
+  '& .calculation-table-region': {
+    overflowX: 'auto',
+    mb: 3,
+  },
   '& table': {
     width: '100%',
     borderCollapse: 'collapse',
-    mb: 3,
-    overflowX: 'auto',
-    display: 'block',
   },
   '& thead': {
     backgroundColor: 'action.hover',
@@ -95,6 +98,18 @@ const markdownStyles = {
 } as const;
 
 const markdownComponents: Components = {
+  table: ({ children, ...props }: React.ComponentPropsWithoutRef<'table'>) => (
+    <div
+      className="calculation-table-region"
+      role="region"
+      // A focusable region lets keyboard users scroll wide tables horizontally.
+      // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
+      tabIndex={0}
+      aria-label="Calculation reference table"
+    >
+      <table {...props}>{children}</table>
+    </div>
+  ),
   a: ({ href, children, ...props }: React.ComponentPropsWithoutRef<'a'>) => (
     <Link {...props} href={href} target="_blank" rel="noopener noreferrer">
       {children}
@@ -146,7 +161,7 @@ export const CalculationKnowledgeBasePage: React.FC = () => {
 
       <Box sx={markdownStyles}>
         <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
-          {knowledgeBaseContent}
+          {knowledgeBaseBody}
         </ReactMarkdown>
       </Box>
     </Container>

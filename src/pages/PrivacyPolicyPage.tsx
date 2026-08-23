@@ -100,7 +100,7 @@ export const PrivacyPolicyPage: React.FC = () => {
     window.dispatchEvent(new Event('consent-changed'));
   };
 
-  const effectiveDate = 'February 21, 2026';
+  const effectiveDate = 'August 23, 2026';
 
   return (
     <Container maxWidth="md" sx={{ py: { xs: 6, md: 8 } }}>
@@ -109,6 +109,7 @@ export const PrivacyPolicyPage: React.FC = () => {
         <Box>
           <Typography
             variant="h3"
+            component="h1"
             sx={{ fontWeight: 800, display: 'flex', alignItems: 'center', gap: 1.5 }}
           >
             <ShieldIcon sx={{ fontSize: 40 }} color="primary" />
@@ -142,24 +143,30 @@ export const PrivacyPolicyPage: React.FC = () => {
             Overview
           </Typography>
           <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
-            ESO Toolkit is a client-side web application for analyzing Elder Scrolls Online combat
-            logs. We are committed to protecting your privacy and being transparent about how your
-            data is used.
+            ESO Toolkit is a web application for analyzing Elder Scrolls Online combat logs and,
+            when you choose to use them, publishing builds, rosters, profiles, comments, and votes.
+            We process combat data in your browser where possible and explain below when data is
+            sent to ESO Toolkit or another service.
           </Typography>
           <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
             <strong>Key points:</strong>
           </Typography>
           <Box component="ul" sx={{ pl: 3, '& li': { mb: 1 } }}>
             <Typography component="li" variant="body2" sx={{ color: 'text.secondary' }}>
-              All combat log data is processed <strong>entirely in your browser</strong> — we never
-              upload or store it on our servers.
+              Combat log analysis is performed in your browser. Public ESO Logs data may be
+              retrieved through our Cloudflare Worker GraphQL proxy; we do not persist report
+              contents there or intentionally store raw combat logs on our servers. The browser
+              performs the analysis.
             </Typography>
             <Typography component="li" variant="body2" sx={{ color: 'text.secondary' }}>
-              We use third-party services (Google Analytics, Rollbar){' '}
-              <strong>only with your explicit consent</strong>.
+              Optional analytics and error tracking (Google Analytics and Rollbar) run only with
+              <strong> your explicit consent</strong>; required service providers are described
+              below.
             </Typography>
             <Typography component="li" variant="body2" sx={{ color: 'text.secondary' }}>
-              You can export or delete all your data at any time from this page.
+              You can export browser data or delete it locally from this page. Public content you
+              publish (such as a roster, build, profile, or comment) must be deleted through its
+              feature or by contacting the project.
             </Typography>
             <Typography component="li" variant="body2" sx={{ color: 'text.secondary' }}>
               We do not sell, rent, or share your personal data with third parties for marketing
@@ -189,7 +196,7 @@ export const PrivacyPolicyPage: React.FC = () => {
                 function.
               </Typography>
               <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
-                <strong>What we store (in your browser&apos;s localStorage):</strong>
+                <strong>What we store in your browser:</strong>
               </Typography>
               <Box component="ul" sx={{ pl: 3, '& li': { mb: 0.5 } }}>
                 <Typography component="li" variant="body2" sx={{ color: 'text.secondary' }}>
@@ -198,19 +205,27 @@ export const PrivacyPolicyPage: React.FC = () => {
                 </Typography>
                 <Typography component="li" variant="body2" sx={{ color: 'text.secondary' }}>
                   <strong>Authentication tokens:</strong> OAuth access and refresh tokens for ESO
-                  Logs (esologs.com)
+                  Logs (esologs.com) are kept in sessionStorage for the current browser tab. A
+                  legacy localStorage token is migrated and removed when encountered.
                 </Typography>
                 <Typography component="li" variant="body2" sx={{ color: 'text.secondary' }}>
                   <strong>Loadout &amp; dashboard data:</strong> Your saved builds and dashboard
                   configuration
                 </Typography>
                 <Typography component="li" variant="body2" sx={{ color: 'text.secondary' }}>
+                  <strong>Companion imports:</strong> Selected SavedVariables or import files may
+                  contain account, character, and build data. Companion parses these files locally,
+                  keeps the results only in ephemeral Redux session state, and does not upload them.
+                </Typography>
+                <Typography component="li" variant="body2" sx={{ color: 'text.secondary' }}>
                   <strong>Consent preferences:</strong> Your privacy choices
                 </Typography>
               </Box>
               <Typography variant="body2" sx={{ color: 'text.secondary', mt: 1 }}>
-                This data is stored locally in your browser and is never transmitted to our servers.
-                You can clear it by clearing your browser data or using the controls below.
+                Preferences and saved application data are stored locally in your browser.
+                Authentication tokens are sent to ESO Logs when you use authenticated features and
+                are not included in the export download. You can remove local data and tokens with
+                the controls below.
               </Typography>
             </AccordionDetails>
           </Accordion>
@@ -327,14 +342,31 @@ export const PrivacyPolicyPage: React.FC = () => {
             <AccordionDetails>
               <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
                 <strong>ESO Logs (esologs.com):</strong> When you authenticate, we use OAuth 2.0
-                PKCE flow to obtain access tokens. We query the ESO Logs API for your reports and
-                combat data. Your authentication tokens are stored locally and sent directly to
-                esologs.com — we do not proxy or store them on our servers.
+                PKCE to obtain an access token. User-specific requests are sent to the ESO Logs user
+                API with that token. Public report and game-data requests may use the ESO Toolkit
+                Cloudflare Worker GraphQL proxy, which forwards requests to ESO Logs and does not
+                intentionally persist report contents. Review the ESO Logs privacy policy for its
+                own processing and retention practices.
               </Typography>
               <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
-                <strong>Google Fonts:</strong> We load Inter and Space Grotesk fonts from
-                Google&apos;s CDN. This results in requests to fonts.googleapis.com and
-                fonts.gstatic.com, which may log your IP address per Google&apos;s privacy policy.
+                <strong>ESO Toolkit server features:</strong> If you publish a build or roster, edit
+                a profile, upload an avatar, comment, or vote, the submitted content, public display
+                name, ESO Logs account identifier, timestamps, and moderation metadata are sent to
+                our Cloudflare Worker API and stored in its database. Public profiles, builds,
+                rosters, comments, and vote counts can be visible to other visitors. We do not sell
+                this data.
+              </Typography>
+              <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
+                <strong>Discord:</strong> If you connect Discord to publish to a server, the Discord
+                OAuth flow and API may process your Discord account and server identifiers. ESO
+                Toolkit requests the permissions shown in the connection dialog, reads the server
+                list needed for publishing, and does not read message history. Discord handles its
+                own processing under its privacy policy.
+              </Typography>
+              <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
+                <strong>Self-hosted fonts:</strong> Inter, Space Grotesk Variable, and Material
+                Symbols Outlined are bundled with and served by ESO Toolkit. Your browser does not
+                request these fonts from Google or another external font provider.
               </Typography>
             </AccordionDetails>
           </Accordion>
@@ -356,8 +388,9 @@ export const PrivacyPolicyPage: React.FC = () => {
               application using the Export button below.
             </Typography>
             <Typography component="li" variant="body2" sx={{ color: 'text.secondary' }}>
-              <strong>Right to rectification (Article 16):</strong> Since all data is stored
-              locally, you can modify it directly through your browser&apos;s developer tools.
+              <strong>Right to rectification (Article 16):</strong> You can edit content you publish
+              through the relevant feature. Browser-only preferences can be changed or removed
+              locally.
             </Typography>
             <Typography component="li" variant="body2" sx={{ color: 'text.secondary' }}>
               <strong>Right to erasure (Article 17):</strong> Use the &quot;Delete All Data&quot;
@@ -461,6 +494,7 @@ export const PrivacyPolicyPage: React.FC = () => {
                   <Switch
                     checked={analyticsEnabled}
                     onChange={(e) => setAnalyticsEnabled(e.target.checked)}
+                    slotProps={{ input: { 'aria-label': 'Toggle analytics consent' } }}
                   />
                 }
                 label=""
@@ -496,6 +530,7 @@ export const PrivacyPolicyPage: React.FC = () => {
                   <Switch
                     checked={errorTrackingEnabled}
                     onChange={(e) => setErrorTrackingEnabled(e.target.checked)}
+                    slotProps={{ input: { 'aria-label': 'Toggle error tracking consent' } }}
                   />
                 }
                 label=""
@@ -550,8 +585,10 @@ export const PrivacyPolicyPage: React.FC = () => {
             Your Data
           </Typography>
           <Typography variant="body2" sx={{ color: 'text.secondary', mb: 3 }}>
-            Exercise your data rights. All data is stored locally in your browser — exporting gives
-            you a snapshot, and deleting removes everything permanently.
+            Exercise your data rights. Browser data is stored locally. Exporting gives you a
+            snapshot of that local data, while deleting removes it from this browser.
+            Server-published content is managed separately through the feature that created it or by
+            contacting the project.
           </Typography>
 
           {deleteComplete && (
@@ -597,16 +634,43 @@ export const PrivacyPolicyPage: React.FC = () => {
           </Typography>
           <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
             <strong>Local data:</strong> Stored until you clear your browser data or use the delete
-            controls above. We do not set expiration on localStorage items.
+            controls above. We do not set expiration on browser storage items.
           </Typography>
           <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
-            <strong>Google Analytics:</strong> Data retention is set by Google&apos;s default
-            policies (typically 14 months). We do not control data retention on Google&apos;s
-            servers.
+            <strong>Published content:</strong> Builds, rosters, profiles, comments, votes, and
+            moderation records remain on the ESO Toolkit API until you delete them through the
+            relevant feature, the project removes them under its moderation rules, or you contact us
+            with a deletion request. Backups and abuse-prevention records may persist for a limited
+            period where required for security or legal obligations.
           </Typography>
           <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
-            <strong>Rollbar:</strong> Error events are retained per Rollbar&apos;s data retention
-            policy (configurable per plan).
+            <strong>Google Analytics:</strong> Standard GA4 properties offer user- and event-level
+            retention settings of 2 or 14 months, so this data may be retained for up to 14 months.
+            Google explains that aggregated standard reports are not governed by that setting. See
+            Google&apos;s{' '}
+            <Link
+              href="https://support.google.com/analytics/answer/7667196"
+              target="_blank"
+              rel="noopener noreferrer"
+              underline="always"
+            >
+              data-retention documentation
+            </Link>
+            .
+          </Typography>
+          <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
+            <strong>Rollbar:</strong> Error-event retention depends on the project&apos;s Rollbar
+            plan and settings. Rollbar documents a 30-day default for free plans and up to 180 days
+            for paid plans, with shorter periods configurable on paid plans. See Rollbar&apos;s{' '}
+            <Link
+              href="https://docs.rollbar.com/docs/data-retention"
+              target="_blank"
+              rel="noopener noreferrer"
+              underline="always"
+            >
+              data-retention documentation
+            </Link>
+            .
           </Typography>
         </Box>
 
@@ -640,12 +704,13 @@ export const PrivacyPolicyPage: React.FC = () => {
             Contact
           </Typography>
           <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
-            For privacy-related inquiries, you can reach us through the project&apos;s{' '}
+            For privacy-related inquiries, deletion requests, or questions about server-stored
+            content, you can reach us through the project&apos;s{' '}
             <Link
               href="https://github.com/ESO-Toolkit/eso-toolkit"
               target="_blank"
               rel="noopener noreferrer"
-              underline="hover"
+              underline="always"
               sx={{
                 color: 'var(--accent)',
                 transition: 'color 0.15s ease-in-out',

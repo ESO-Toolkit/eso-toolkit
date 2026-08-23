@@ -13,7 +13,7 @@
  */
 
 import { BoltOutlined, HistoryEduOutlined, TuneOutlined } from '@mui/icons-material';
-import { Box, Container, Tab, Tabs } from '@mui/material';
+import { Box, Container, Tab, Tabs, Typography } from '@mui/material';
 import React, { Suspense } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
@@ -69,6 +69,9 @@ export const CalculatorPage: React.FC = () => {
   return (
     <Box sx={{ width: '100%' }}>
       <Container maxWidth="lg" sx={{ pt: { xs: 1.5, sm: 2.5 } }}>
+        <Typography component="h1" variant="h3" sx={{ mb: 2, fontWeight: 800 }}>
+          ESO Toolkit Calculator
+        </Typography>
         <Tabs
           value={tab}
           onChange={handleChange}

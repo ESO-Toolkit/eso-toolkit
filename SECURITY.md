@@ -8,7 +8,9 @@ We apply security fixes to the latest version of the application. Older versions
 
 Please **do not** open a public GitHub issue for security vulnerabilities.
 
-Use [GitHub's private vulnerability reporting](https://github.com/ESO-Toolkit/eso-toolkit/security/advisories/new) to submit a security advisory directly on the repository.
+Join the [ESO Toolkit Discord](https://discord.gg/mMjwcQYFdc) and privately contact a project maintainer.
+Do not include vulnerability details in a public channel, GitHub issue, or Discussion. GitHub private
+vulnerability reporting is not currently enabled for this repository.
 
 ### What to include
 
@@ -27,10 +29,14 @@ We ask that you give us reasonable time to address the issue before any public d
 
 ## Scope
 
-This project is a client-side web application. Areas of particular interest include:
+The project includes a browser application, Cloudflare Worker APIs, a Discord bot, CI/CD workflows,
+and game-data tooling. Areas of particular interest include:
 
 - Authentication / OAuth handling
 - Cross-site scripting (XSS) via log data parsing
+- Authorization, data exposure, and abuse controls in the roster/build APIs
+- Discord interaction verification and bot permissions
+- CI/CD, dependency, and deployment-supply-chain weaknesses
 - Dependency vulnerabilities (though these should be reported to the upstream package maintainers first)
 
 ## Out of Scope

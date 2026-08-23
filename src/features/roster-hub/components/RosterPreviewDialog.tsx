@@ -68,6 +68,7 @@ export const RosterPreviewDialog: React.FC<RosterPreviewDialogProps> = ({
   const [commentCount, setCommentCount] = React.useState(0);
   const [commentsFullscreen, setCommentsFullscreen] = React.useState(false);
   const commentsRegionRef = React.useRef<HTMLDivElement>(null);
+  const iframeRef = React.useRef<HTMLIFrameElement>(null);
   const COMMENT_HEIGHT = isMobile ? 220 : 300;
 
   // Reset state when roster changes
@@ -86,7 +87,18 @@ export const RosterPreviewDialog: React.FC<RosterPreviewDialogProps> = ({
     if (!roster || iframeLoaded || iframeError) return;
 
     const handleMessage = (event: MessageEvent): void => {
-      if (event.origin === window.location.origin && event.data?.type === 'roster-preview-ready') {
+      // Origin alone is not sufficient: another same-origin window could send
+      // the same message and mark an unrelated preview as ready. Bind the
+      // signal to the iframe that owns this dialog and accept only the small,
+      // expected data shape.
+      const isExpectedMessage =
+        event.origin === window.location.origin &&
+        event.source === iframeRef.current?.contentWindow &&
+        event.data !== null &&
+        typeof event.data === 'object' &&
+        event.data.type === 'roster-preview-ready';
+
+      if (isExpectedMessage) {
         setIframeLoaded(true);
       }
     };
@@ -477,6 +489,7 @@ export const RosterPreviewDialog: React.FC<RosterPreviewDialogProps> = ({
         )}
         {roster && !iframeError && (
           <iframe
+            ref={iframeRef}
             src={embedUrl}
             title={`Preview: ${roster.title}`}
             sandbox="allow-same-origin allow-scripts allow-popups"

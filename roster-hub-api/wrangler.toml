@@ -1,6 +1,6 @@
 name = "roster-hub-api"
 main = "src/index.ts"
-compatibility_date = "2024-10-22"
+compatibility_date = "2026-08-23"
 compatibility_flags = ["nodejs_compat"]
 account_id = "75620f084ea25ade5ee57a71a830bba2"
 
@@ -44,5 +44,5 @@ enabled = true
 head_sampling_rate = 1
 
 [vars]
-ALLOWED_ORIGINS = "https://esotk.com,https://www.esotk.com,https://esohelpers.com,https://www.esohelpers.com,https://eso-toolkit.github.io,http://localhost:3000,http://localhost:3001,http://localhost:3002,http://localhost:3003,http://localhost:5173"
+ALLOWED_ORIGINS = "https://esotk.com,https://www.esotk.com,https://eso-toolkit.github.io,http://localhost:3000,http://localhost:3001,http://localhost:3002,http://localhost:3003,http://localhost:5173"
 DISCORD_BOT_URL = "https://eso-toolkit-discord-bot.eso-toolkit.workers.dev"

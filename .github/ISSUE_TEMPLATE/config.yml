@@ -1,5 +1,5 @@
-blank_issues_enabled: true
+blank_issues_enabled: false
 contact_links:
   - name: Security Vulnerability
-    url: https://github.com/ESO-Toolkit/eso-toolkit/security/advisories/new
-    about: Please report security vulnerabilities privately via GitHub Security Advisories.
+    url: https://discord.gg/mMjwcQYFdc
+    about: Join Discord and privately contact a maintainer. Do not post vulnerability details publicly.

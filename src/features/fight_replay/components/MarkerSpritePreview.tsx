@@ -6,14 +6,7 @@ import { ELMS_ICON_MAP } from '@/utils/elmsMarkersDecoder';
 import { resolveMarkerIconUrl } from '../utils/markerIconAssets';
 
 type MarkerShape =
-  | 'blank'
-  | 'circle'
-  | 'square'
-  | 'diamond'
-  | 'hexagon'
-  | 'chevron'
-  | 'octagon'
-  | 'arrow';
+  'blank' | 'circle' | 'square' | 'diamond' | 'hexagon' | 'chevron' | 'octagon' | 'arrow';
 
 const TEXTURE_TO_SHAPE: Record<string, MarkerShape> = {
   'M0RMarkers/textures/blank.dds': 'blank',

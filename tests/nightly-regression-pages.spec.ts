@@ -1,6 +1,6 @@
 import { test, expect, type Page } from '@playwright/test';
 
-import { TEST_TIMEOUTS, waitForAppMount } from './selectors';
+import { TEST_DATA, TEST_TIMEOUTS, installPageErrorCapture, waitForAppMount } from './selectors';
 
 /**
  * Nightly Regression Tests - Pages & Features
@@ -28,6 +28,7 @@ async function expectPageLoads(
   page: Page,
   path: string,
   screenshotName: string,
+  heading: RegExp,
 ): Promise<void> {
   await page.goto(path, {
     waitUntil: 'domcontentloaded',
@@ -40,7 +41,10 @@ async function expectPageLoads(
 
   await waitForAppMount(page);
 
-  const bodyText = await page.locator('body').textContent().catch(() => '');
+  const bodyText = await page
+    .locator('body')
+    .textContent()
+    .catch(() => '');
   const contentLength = bodyText?.length ?? 0;
 
   if (contentLength < 50) {
@@ -50,6 +54,9 @@ async function expectPageLoads(
   }
 
   expect(contentLength, `${path} should render meaningful content`).toBeGreaterThan(50);
+  await expect(page.getByRole('heading', { name: heading }).first()).toBeVisible({
+    timeout: TEST_TIMEOUTS.dataLoad,
+  });
 
   // No uncaught JS errors
   const errors: string[] = await page.evaluate(() => (window as any).testErrors ?? []);
@@ -74,16 +81,7 @@ async function expectPageLoads(
 test.describe('Nightly Regression - Pages & Features', () => {
   test.beforeEach(async ({ page }) => {
     test.setTimeout(120000);
-
-    await page.addInitScript(() => {
-      (window as any).testErrors = [];
-      window.addEventListener('error', (ev) => {
-        (window as any).testErrors.push(ev.error?.message ?? ev.message);
-      });
-      window.addEventListener('unhandledrejection', (ev) => {
-        (window as any).testErrors.push(`Unhandled rejection: ${ev.reason}`);
-      });
-    });
+    await installPageErrorCapture(page);
   });
 
   // ---------------------------------------------------------------------------
@@ -98,15 +96,9 @@ test.describe('Nightly Regression - Pages & Features', () => {
       await page.waitForLoadState('networkidle', { timeout: 15000 }).catch(() => {});
       await waitForAppMount(page);
 
-      const hasNav = await page.locator('nav, header').first().isVisible({ timeout: 10000 }).catch(() => false);
-      const hasMain = await page.locator('main, #root, .app').first().isVisible({ timeout: 5000 }).catch(() => false);
-      const hasText = await page
-        .getByText(/eso|toolkit|log|report/i)
-        .first()
-        .isVisible({ timeout: 5000 })
-        .catch(() => false);
-
-      expect(hasNav || hasMain || hasText, 'Home page should render navigable content').toBeTruthy();
+      await expect(page.locator('form[aria-label="Analyze an ESO Logs report"]')).toBeVisible({
+        timeout: TEST_TIMEOUTS.dataLoad,
+      });
 
       await page.screenshot({
         path: 'test-results/nightly-regression-pages-home.png',
@@ -115,19 +107,14 @@ test.describe('Nightly Regression - Pages & Features', () => {
     });
 
     test("what's new page should load changelog content", async ({ page }) => {
-      await expectPageLoads(page, '/whats-new', 'whats-new');
+      await expectPageLoads(page, '/whats-new', 'whats-new', /what's new/i);
 
       // Should have some release notes / changelog entries
-      const hasContent = await page
-        .locator('h1, h2, h3, li, p')
-        .first()
-        .isVisible({ timeout: 8000 })
-        .catch(() => false);
-      expect(hasContent, "/whats-new should display changelog entries").toBeTruthy();
+      await expect(page.getByText(/recent updates and improvements/i)).toBeVisible();
     });
 
     test('about page should load with content', async ({ page }) => {
-      await expectPageLoads(page, '/about', 'about');
+      await expectPageLoads(page, '/about', 'about', /about eso toolkit/i);
     });
 
     test('sample report page should redirect to or display a report', async ({ page }) => {
@@ -135,19 +122,26 @@ test.describe('Nightly Regression - Pages & Features', () => {
         waitUntil: 'domcontentloaded',
         timeout: TEST_TIMEOUTS.navigation,
       });
-      await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad }).catch(() => {});
+      await page
+        .waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad })
+        .catch(() => {});
       await waitForAppMount(page);
 
       // Either redirects to a real report URL or renders inline
       const url = page.url();
       const isOnReport = url.includes('/report/');
       const hasReportContent = await page
-        .locator('.MuiAccordion-root, [data-testid="fight-list"], main')
+        .locator(
+          '[data-testid="fight-list"], [data-testid^="trial-section-"], [data-testid^="fight-button-"], [data-testid="fight-details-loaded"], [data-testid="report-fight-details-loaded"]',
+        )
         .first()
         .isVisible({ timeout: 5000 })
         .catch(() => false);
 
-      expect(isOnReport || hasReportContent, '/sample-report should load or redirect to a report').toBeTruthy();
+      expect(
+        isOnReport || hasReportContent,
+        '/sample-report should load or redirect to a report',
+      ).toBeTruthy();
 
       await page.screenshot({
         path: 'test-results/nightly-regression-pages-sample-report.png',
@@ -165,23 +159,15 @@ test.describe('Nightly Regression - Pages & Features', () => {
         waitUntil: 'domcontentloaded',
         timeout: TEST_TIMEOUTS.navigation,
       });
-      await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad }).catch(() => {});
+      await page
+        .waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad })
+        .catch(() => {});
       await waitForAppMount(page);
 
       // Should show a list of builds or a loading/empty state — not a blank crash
-      const hasContent = await page
-        .locator(
-          'main, .MuiContainer-root, .build-list, .build-card, [data-testid*="build"], a[href*="/b/"], .MuiCard-root',
-        )
-        .first()
-        .isVisible({ timeout: 10000 })
-        .catch(() => false);
-
-      const bodyText = await page.locator('body').textContent().catch(() => '');
-      expect(
-        hasContent || (bodyText?.length ?? 0) > 100,
-        '/build-hub should render content',
-      ).toBeTruthy();
+      await expect(page.getByRole('heading', { name: 'Build Hub' })).toBeVisible({
+        timeout: TEST_TIMEOUTS.dataLoad,
+      });
 
       await page.screenshot({
         path: 'test-results/nightly-regression-pages-build-hub.png',
@@ -190,7 +176,7 @@ test.describe('Nightly Regression - Pages & Features', () => {
     });
 
     test('pack hub should load', async ({ page }) => {
-      await expectPageLoads(page, '/pack-hub', 'pack-hub');
+      await expectPageLoads(page, '/pack-hub', 'pack-hub', /pack hub/i);
     });
 
     test('first available shared build should load', async ({ page }) => {
@@ -199,14 +185,15 @@ test.describe('Nightly Regression - Pages & Features', () => {
         waitUntil: 'domcontentloaded',
         timeout: TEST_TIMEOUTS.navigation,
       });
-      await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad }).catch(() => {});
+      await page
+        .waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad })
+        .catch(() => {});
       await waitForAppMount(page);
 
       const buildLink = page.locator('a[href*="/b/"], a[href*="/build-view"]').first();
 
       if (!(await buildLink.isVisible({ timeout: 5000 }).catch(() => false))) {
-        console.log('ℹ️ No build links found on /build-hub — skipping shared build test');
-        return;
+        test.skip(true, 'No shared builds are currently available on /build-hub');
       }
 
       const href = await buildLink.getAttribute('href');
@@ -216,13 +203,10 @@ test.describe('Nightly Regression - Pages & Features', () => {
       await page.waitForLoadState('domcontentloaded', { timeout: TEST_TIMEOUTS.navigation });
       await waitForAppMount(page);
 
-      const hasContent = await page
-        .locator('main, .MuiContainer-root, [data-testid*="build"]')
-        .first()
-        .isVisible({ timeout: 8000 })
-        .catch(() => false);
-
-      expect(hasContent, `Shared build ${href} should render content`).toBeTruthy();
+      await expect(page).toHaveTitle(/Build (View|Editor)|ESO Toolkit/i);
+      await expect(page.getByRole('heading').first()).toBeVisible({
+        timeout: TEST_TIMEOUTS.dataLoad,
+      });
 
       await page.screenshot({
         path: 'test-results/nightly-regression-pages-shared-build.png',
@@ -240,22 +224,14 @@ test.describe('Nightly Regression - Pages & Features', () => {
         waitUntil: 'domcontentloaded',
         timeout: TEST_TIMEOUTS.navigation,
       });
-      await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad }).catch(() => {});
+      await page
+        .waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad })
+        .catch(() => {});
       await waitForAppMount(page);
 
-      const hasContent = await page
-        .locator(
-          'main, .MuiContainer-root, .roster-list, .roster-card, [data-testid*="roster"], .MuiCard-root',
-        )
-        .first()
-        .isVisible({ timeout: 10000 })
-        .catch(() => false);
-
-      const bodyText = await page.locator('body').textContent().catch(() => '');
-      expect(
-        hasContent || (bodyText?.length ?? 0) > 100,
-        '/roster-hub should render content',
-      ).toBeTruthy();
+      await expect(page.getByRole('heading', { name: 'Roster Hub' })).toBeVisible({
+        timeout: TEST_TIMEOUTS.dataLoad,
+      });
 
       await page.screenshot({
         path: 'test-results/nightly-regression-pages-roster-hub.png',
@@ -268,14 +244,15 @@ test.describe('Nightly Regression - Pages & Features', () => {
         waitUntil: 'domcontentloaded',
         timeout: TEST_TIMEOUTS.navigation,
       });
-      await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad }).catch(() => {});
+      await page
+        .waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad })
+        .catch(() => {});
       await waitForAppMount(page);
 
       const rosterLink = page.locator('a[href*="/rv"], a[href*="/roster-view"]').first();
 
       if (!(await rosterLink.isVisible({ timeout: 5000 }).catch(() => false))) {
-        console.log('ℹ️ No roster links found on /roster-hub — skipping shared roster test');
-        return;
+        test.skip(true, 'No shared rosters are currently available on /roster-hub');
       }
 
       const href = await rosterLink.getAttribute('href');
@@ -285,13 +262,10 @@ test.describe('Nightly Regression - Pages & Features', () => {
       await page.waitForLoadState('domcontentloaded', { timeout: TEST_TIMEOUTS.navigation });
       await waitForAppMount(page);
 
-      const hasContent = await page
-        .locator('main, .MuiContainer-root, [data-testid*="roster"]')
-        .first()
-        .isVisible({ timeout: 8000 })
-        .catch(() => false);
-
-      expect(hasContent, `Shared roster ${href} should render content`).toBeTruthy();
+      await expect(page).toHaveTitle(/Roster|ESO Toolkit/i);
+      await expect(page.getByRole('heading').first()).toBeVisible({
+        timeout: TEST_TIMEOUTS.dataLoad,
+      });
 
       await page.screenshot({
         path: 'test-results/nightly-regression-pages-shared-roster.png',
@@ -309,7 +283,9 @@ test.describe('Nightly Regression - Pages & Features', () => {
         waitUntil: 'domcontentloaded',
         timeout: TEST_TIMEOUTS.navigation,
       });
-      await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad }).catch(() => {});
+      await page
+        .waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad })
+        .catch(() => {});
       await waitForAppMount(page);
 
       const hasSimulator = await page
@@ -320,11 +296,7 @@ test.describe('Nightly Regression - Pages & Features', () => {
         .isVisible({ timeout: 10000 })
         .catch(() => false);
 
-      const bodyText = await page.locator('body').textContent().catch(() => '');
-      expect(
-        hasSimulator || (bodyText?.length ?? 0) > 100,
-        '/scribing-simulator should render interactive UI',
-      ).toBeTruthy();
+      expect(hasSimulator, '/calculator#scribing should render the scribing controls').toBeTruthy();
 
       await page.screenshot({
         path: 'test-results/nightly-regression-pages-scribing-simulator.png',
@@ -337,7 +309,9 @@ test.describe('Nightly Regression - Pages & Features', () => {
         waitUntil: 'domcontentloaded',
         timeout: TEST_TIMEOUTS.navigation,
       });
-      await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad }).catch(() => {});
+      await page
+        .waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad })
+        .catch(() => {});
       await waitForAppMount(page);
 
       // Try to interact with the first available select/dropdown
@@ -346,8 +320,7 @@ test.describe('Nightly Regression - Pages & Features', () => {
         .first();
 
       if (!(await firstSelect.isVisible({ timeout: 5000 }).catch(() => false))) {
-        console.log('ℹ️ No interactive elements found on /scribing-simulator yet — page may still be loading');
-        return;
+        test.skip(true, 'Scribing controls are unavailable on the calculator page');
       }
 
       await firstSelect.click();
@@ -355,11 +328,10 @@ test.describe('Nightly Regression - Pages & Features', () => {
 
       // Look for an option in the dropdown
       const firstOption = page.locator('[role="option"], .MuiMenuItem-root, option').first();
-      if (await firstOption.isVisible({ timeout: 3000 }).catch(() => false)) {
-        await firstOption.click();
-        await page.waitForTimeout(1500);
-        console.log('✅ Scribing simulator responded to skill selection');
-      }
+      await expect(firstOption).toBeVisible({ timeout: TEST_TIMEOUTS.dataLoad });
+      await firstOption.click();
+      await page.waitForTimeout(1500);
+      console.log('✅ Scribing simulator responded to skill selection');
 
       // No JS errors after interaction
       const errors: string[] = await page.evaluate(() => (window as any).testErrors ?? []);
@@ -388,20 +360,14 @@ test.describe('Nightly Regression - Pages & Features', () => {
         waitUntil: 'domcontentloaded',
         timeout: TEST_TIMEOUTS.navigation,
       });
-      await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad }).catch(() => {});
+      await page
+        .waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad })
+        .catch(() => {});
       await waitForAppMount(page);
 
-      const hasTable = await page
-        .locator('.MuiDataGrid-root, table, .leaderboard, [data-testid*="leaderboard"]')
-        .first()
-        .isVisible({ timeout: 10000 })
-        .catch(() => false);
-
-      const bodyText = await page.locator('body').textContent().catch(() => '');
-      expect(
-        hasTable || (bodyText?.length ?? 0) > 100,
-        '/leaderboards should render data',
-      ).toBeTruthy();
+      await expect(page.getByRole('heading', { name: 'Leaderboard Logs' })).toBeVisible({
+        timeout: TEST_TIMEOUTS.dataLoad,
+      });
 
       // Verify no failed API requests for esologs.com
       // (errors already captured via addInitScript in beforeEach)
@@ -423,15 +389,16 @@ test.describe('Nightly Regression - Pages & Features', () => {
         waitUntil: 'domcontentloaded',
         timeout: TEST_TIMEOUTS.navigation,
       });
-      await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad }).catch(() => {});
+      await page
+        .waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad })
+        .catch(() => {});
       await waitForAppMount(page);
 
       // Look for a user profile link on the page
       const profileLink = page.locator('a[href*="/u/"]').first();
 
       if (!(await profileLink.isVisible({ timeout: 8000 }).catch(() => false))) {
-        console.log('ℹ️ No user profile links found on /latest-reports — skipping profile test');
-        return;
+        test.skip(true, 'No public profile links are currently available on /latest-reports');
       }
 
       const href = await profileLink.getAttribute('href');
@@ -441,16 +408,14 @@ test.describe('Nightly Regression - Pages & Features', () => {
         waitUntil: 'domcontentloaded',
         timeout: TEST_TIMEOUTS.navigation,
       });
-      await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad }).catch(() => {});
+      await page
+        .waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad })
+        .catch(() => {});
       await waitForAppMount(page);
 
-      const hasContent = await page
-        .locator('main, .profile, [data-testid*="profile"], h1, h2')
-        .first()
-        .isVisible({ timeout: 8000 })
-        .catch(() => false);
-
-      expect(hasContent, `User profile ${href} should render`).toBeTruthy();
+      await expect(page.getByRole('heading').first()).toBeVisible({
+        timeout: TEST_TIMEOUTS.dataLoad,
+      });
 
       await page.screenshot({
         path: 'test-results/nightly-regression-pages-user-profile.png',
@@ -471,14 +436,8 @@ test.describe('Nightly Regression - Pages & Features', () => {
         .isVisible({ timeout: 10000 })
         .catch(() => false);
       const redirectedAway = !page.url().includes('xyzzy');
-      const hasContent = await page
-        .locator('main, #root')
-        .first()
-        .isVisible({ timeout: 5000 })
-        .catch(() => false);
-
       expect(
-        hasError || redirectedAway || hasContent,
+        hasError || redirectedAway,
         'Invalid user profile should be handled gracefully',
       ).toBeTruthy();
     });
@@ -489,14 +448,11 @@ test.describe('Nightly Regression - Pages & Features', () => {
   // ---------------------------------------------------------------------------
   test.describe('Utility Pages', () => {
     test('gear sets page should load with content', async ({ page }) => {
-      await expectPageLoads(page, '/gear-sets', 'gear-sets');
+      await expectPageLoads(page, '/gear-sets', 'gear-sets', /gear sets/i);
 
-      const hasContent = await page
-        .locator('.MuiDataGrid-root, .MuiCard-root, table, [data-testid*="gear"], main')
-        .first()
-        .isVisible({ timeout: 8000 })
-        .catch(() => false);
-      expect(hasContent, '/gear-sets should render gear content').toBeTruthy();
+      await expect(page.getByRole('heading', { name: 'Gear Sets' })).toBeVisible({
+        timeout: TEST_TIMEOUTS.dataLoad,
+      });
     });
 
     test('logs browser should load with UI controls', async ({ page }) => {
@@ -504,20 +460,18 @@ test.describe('Nightly Regression - Pages & Features', () => {
         waitUntil: 'domcontentloaded',
         timeout: TEST_TIMEOUTS.navigation,
       });
-      await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad }).catch(() => {});
+      await page
+        .waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad })
+        .catch(() => {});
       await waitForAppMount(page);
 
       const hasUI = await page
-        .locator('input, select, .MuiTextField-root, .search, main, [data-testid*="log"]')
+        .locator('input, select, .MuiTextField-root, .search, [data-testid*="log"]')
         .first()
         .isVisible({ timeout: 10000 })
         .catch(() => false);
 
-      const bodyText = await page.locator('body').textContent().catch(() => '');
-      expect(
-        hasUI || (bodyText?.length ?? 0) > 100,
-        '/logs should render UI controls',
-      ).toBeTruthy();
+      expect(hasUI, '/logs should render UI controls').toBeTruthy();
 
       await page.screenshot({
         path: 'test-results/nightly-regression-pages-logs.png',
@@ -526,7 +480,7 @@ test.describe('Nightly Regression - Pages & Features', () => {
     });
 
     test('parse analysis page should load', async ({ page }) => {
-      await expectPageLoads(page, '/parse-analysis', 'parse-analysis');
+      await expectPageLoads(page, '/parse-analysis', 'parse-analysis', /parse analysis/i);
     });
   });
 
@@ -545,20 +499,18 @@ test.describe('Nightly Regression - Pages & Features', () => {
           waitUntil: 'domcontentloaded',
           timeout: TEST_TIMEOUTS.navigation,
         });
-        await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad }).catch(() => {});
+        await page
+          .waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad })
+          .catch(() => {});
         await waitForAppMount(page);
 
         const hasContent = await page
-          .locator('main, article, .content, p, h1, h2')
+          .locator('article, [role="article"], h1, h2')
           .first()
           .isVisible({ timeout: 8000 })
           .catch(() => false);
 
-        const bodyText = await page.locator('body').textContent().catch(() => '');
-        expect(
-          hasContent || (bodyText?.length ?? 0) > 100,
-          `${path} should render article content`,
-        ).toBeTruthy();
+        expect(hasContent, `${path} should render article content`).toBeTruthy();
 
         await page.screenshot({
           path: `test-results/nightly-regression-pages-${name}.png`,
@@ -583,8 +535,12 @@ test.describe('Nightly Regression - Pages & Features', () => {
           });
           await waitForAppMount(page);
 
-          const bodyText = await page.locator('body').textContent().catch(() => '');
-          if ((bodyText?.length ?? 0) > 100) {
+          const hasRoleHeading = await page
+            .getByRole('heading', { name: new RegExp(role.replace('-', ' '), 'i') })
+            .first()
+            .isVisible({ timeout: 5000 })
+            .catch(() => false);
+          if (hasRoleHeading) {
             loaded = true;
             console.log(`✅ Role guide ${role} loaded at ${candidate}`);
             await page.screenshot({
@@ -596,7 +552,7 @@ test.describe('Nightly Regression - Pages & Features', () => {
         }
 
         if (!loaded) {
-          console.log(`ℹ️ Role guide ${role} returned minimal content — route may not exist yet`);
+          test.skip(true, `Role guide route for ${role} is not currently available`);
         }
         // Not a hard failure since route paths for role guides are unconfirmed
       });
@@ -620,20 +576,41 @@ test.describe('Nightly Regression - Pages & Features', () => {
       expect(hasTitleContent).toBeTruthy();
 
       // Should have main navigation or landing content - be more flexible
-      const hasNav = await page.locator('nav').first().isVisible({ timeout: 5000 }).catch(() => false);
-      const hasHeader = await page.locator('header').first().isVisible({ timeout: 3000 }).catch(() => false);
-      const hasLanding = await page.locator('.landing').first().isVisible().catch(() => false);
-      const hasHero = await page.locator('.hero').first().isVisible().catch(() => false);
-      const hasButton = await page.locator('button').first().isVisible().catch(() => false);
-      const hasLink = await page.locator('a').first().isVisible().catch(() => false);
-      const hasEsoText = await page.getByText(/eso/i).first().isVisible().catch(() => false);
-      const hasMainContent = await page.locator('main, .app, #root, .content').first().isVisible().catch(() => false);
-      const hasAnyText = await page
-        .locator('body')
-        .textContent()
-        .then((text) => text && text.trim().length > 50)
+      const hasNav = await page
+        .locator('nav')
+        .first()
+        .isVisible({ timeout: 5000 })
         .catch(() => false);
-
+      const hasHeader = await page
+        .locator('header')
+        .first()
+        .isVisible({ timeout: 3000 })
+        .catch(() => false);
+      const hasLanding = await page
+        .locator('.landing')
+        .first()
+        .isVisible()
+        .catch(() => false);
+      const hasHero = await page
+        .locator('.hero')
+        .first()
+        .isVisible()
+        .catch(() => false);
+      const hasButton = await page
+        .locator('button')
+        .first()
+        .isVisible()
+        .catch(() => false);
+      const hasLink = await page
+        .locator('a')
+        .first()
+        .isVisible()
+        .catch(() => false);
+      const hasEsoText = await page
+        .getByText(/eso/i)
+        .first()
+        .isVisible()
+        .catch(() => false);
       const hasLandingContent =
         hasNav ||
         hasHeader ||
@@ -642,8 +619,7 @@ test.describe('Nightly Regression - Pages & Features', () => {
         hasButton ||
         hasLink ||
         hasEsoText ||
-        hasMainContent ||
-        hasAnyText;
+        hasEsoText;
 
       if (!hasLandingContent) {
         console.log('🔍 Landing page URL:', page.url());
@@ -669,16 +645,18 @@ test.describe('Nightly Regression - Pages & Features', () => {
       });
 
       // Look for search functionality
-      const searchInput = page.locator(
-        'input[placeholder*="search"], input[placeholder*="report"], input[type="search"]',
-      ).first();
+      const searchInput = page
+        .locator('input[placeholder*="search"], input[placeholder*="report"], input[type="search"]')
+        .first();
 
       if (await searchInput.isVisible({ timeout: 5000 })) {
         // Test report search with a known report ID
-        await searchInput.fill('3gjVGWB2dxCL8XAw');
+        await searchInput.fill(TEST_DATA.REAL_REPORT_IDS[0]);
 
         // Look for search button or enter key
-        const searchButton = page.locator('button:has-text("Search"), button[type="submit"]').first();
+        const searchButton = page
+          .locator('button:has-text("Search"), button[type="submit"]')
+          .first();
 
         if (await searchButton.isVisible({ timeout: 3000 })) {
           await searchButton.click();
@@ -701,6 +679,8 @@ test.describe('Nightly Regression - Pages & Features', () => {
           .isVisible({ timeout: 5000 });
 
         expect(isOnReport || hasResults).toBeTruthy();
+      } else {
+        test.skip(true, 'The landing page does not expose report search controls');
       }
     });
   });
@@ -709,12 +689,14 @@ test.describe('Nightly Regression - Pages & Features', () => {
     test('should handle invalid report IDs gracefully', async ({ page }) => {
       // Try to access a non-existent report — use longer timeout as the
       // server makes an API call to ESO Logs which can be slow for invalid IDs
-      await page.goto('/report/INVALID_REPORT_ID', {
-        waitUntil: 'domcontentloaded',
-        timeout: TEST_TIMEOUTS.dataLoad,
-      }).catch(() => {
-        // Navigation timeout is acceptable for invalid IDs — page may still render
-      });
+      await page
+        .goto('/report/INVALID_REPORT_ID', {
+          waitUntil: 'domcontentloaded',
+          timeout: TEST_TIMEOUTS.dataLoad,
+        })
+        .catch(() => {
+          // Navigation timeout is acceptable for invalid IDs — page may still render
+        });
 
       await waitForAppMount(page);
 
@@ -737,21 +719,14 @@ test.describe('Nightly Regression - Pages & Features', () => {
       const redirectedAway = !page.url().includes('INVALID_REPORT_ID');
 
       // Check if page shows any content (meaning it loaded and handled the request)
-      const hasContent = await page
-        .locator('main, .content, .app, #root')
-        .first()
-        .isVisible({ timeout: 5000 })
-        .catch(() => false);
       const currentUrl = page.url();
       const pageTitle = await page.title();
 
       // Any of these outcomes indicates the app handled the invalid ID appropriately:
       // 1. Shows an error message
       // 2. Redirects away from the invalid URL
-      // 3. Shows loading state (handling the request)
-      // 4. Shows normal page content (app loaded and handled gracefully)
-      const handledGracefully =
-        hasErrorText || hasErrorClass || redirectedAway || hasLoadingState || hasContent;
+      // 3. Shows a loading state while the request is being handled.
+      const handledGracefully = hasErrorText || hasErrorClass || redirectedAway || hasLoadingState;
 
       if (!handledGracefully) {
         console.log('🔍 Invalid report ID page URL:', currentUrl);
@@ -772,7 +747,7 @@ test.describe('Nightly Regression - Pages & Features', () => {
 
     test('should handle network issues gracefully', async ({ page }) => {
       // Navigate to a report first
-      await page.goto('/report/3gjVGWB2dxCL8XAw', {
+      await page.goto(`/report/${TEST_DATA.REAL_REPORT_IDS[0]}`, {
         waitUntil: 'domcontentloaded',
         timeout: TEST_TIMEOUTS.navigation,
       });
@@ -819,6 +794,8 @@ test.describe('Nightly Regression - Pages & Features', () => {
           path: 'test-results/nightly-regression-offline-handling.png',
           timeout: TEST_TIMEOUTS.screenshot,
         });
+      } else {
+        test.skip(true, 'The valid report has no fight link for offline navigation coverage');
       }
 
       // Restore online condition

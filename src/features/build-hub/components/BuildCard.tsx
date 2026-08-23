@@ -238,7 +238,7 @@ export const BuildCard: React.FC<BuildCardProps> = React.memo(
                 wordBreak: 'break-word',
                 fontSize: '1.05rem',
                 letterSpacing: '-0.01em',
-                fontFamily: 'Space Grotesk, Inter, system-ui',
+                fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
               }}
             >
               {build.title}

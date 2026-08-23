@@ -62,7 +62,7 @@ const LogsSectionHeading: React.FC<{ count: number | null }> = ({ count }) => {
         sx={{
           fontWeight: 700,
           color: theme.palette.text.primary,
-          fontFamily: 'Space Grotesk, Inter, system-ui',
+          fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
           letterSpacing: '-0.01em',
           fontSize: '1.15rem',
         }}

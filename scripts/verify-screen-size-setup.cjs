@@ -1,161 +1,95 @@
 #!/usr/bin/env node
 
 /**
- * GitHub Action Setup Verification Script
- * Verifies that the screen size testing GitHub Action is properly configured
+ * Verify the maintained public screen-size testing entry points.
+ *
+ * This is intentionally a repository-local check: it must not download test
+ * data, start a server, or create visual artifacts.
  */
 
 const fs = require('fs');
 const path = require('path');
 
-function checkFile(filePath, description) {
-  const exists = fs.existsSync(filePath);
-  console.log(`${exists ? '✅' : '❌'} ${description}: ${filePath}`);
+const root = process.cwd();
+const packageJsonPath = path.join(root, 'package.json');
+
+function checkFile(relativePath, description) {
+  const exists = fs.existsSync(path.join(root, relativePath));
+  console.log(`${exists ? '✅' : '❌'} ${description}: ${relativePath}`);
   return exists;
 }
 
-function checkDirectory(dirPath, description) {
-  const exists = fs.existsSync(dirPath) && fs.statSync(dirPath).isDirectory();
-  console.log(`${exists ? '✅' : '❌'} ${description}: ${dirPath}`);
-  return exists;
+function checkScript(scripts, name) {
+  const configured = typeof scripts[name] === 'string' && scripts[name].length > 0;
+  console.log(`${configured ? '✅' : '❌'} npm run ${name}`);
+  return configured;
 }
 
-function checkPackageScript(scriptName, packageJsonPath = './package.json') {
-  try {
-    const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
-    const exists = packageJson.scripts && packageJson.scripts[scriptName];
-    console.log(`${exists ? '✅' : '❌'} NPM Script "${scriptName}": ${exists ? 'configured' : 'missing'}`);
-    return !!exists;
-  } catch (error) {
-    console.log(`❌ Could not read package.json: ${error.message}`);
-    return false;
-  }
+function countBaselines() {
+  const snapshotDir = path.join(
+    root,
+    'tests',
+    'screen-sizes',
+    'comprehensive-visual-regression.spec.ts-snapshots',
+  );
+
+  if (!fs.existsSync(snapshotDir)) return 0;
+
+  return fs
+    .readdirSync(snapshotDir, { withFileTypes: true })
+    .filter((entry) => entry.isFile() && entry.name.endsWith('.png')).length;
 }
 
-console.log('🔍 GitHub Action Screen Size Testing Setup Verification\n');
+let packageJson;
+try {
+  packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
+} catch (error) {
+  console.error(`❌ Could not read package.json: ${error.message}`);
+  process.exit(1);
+}
 
-// Check core files
-console.log('📁 Core Files:');
-const coreFiles = [
-  ['.github/workflows/screen-size-testing.yml', 'Screen Size Testing Workflow'],
-  ['playwright.screen-sizes.config.ts', 'Playwright Screen Size Config'],
-  ['documentation/SCREEN_SIZE_TESTING.md', 'Screen Size Testing Documentation'],
-  ['documentation/GITHUB_ACTION_SETUP.md', 'GitHub Action Setup Guide'],
+console.log('🔍 Verifying maintained screen-size test setup\n');
+
+const requiredFiles = [
+  ['.github/workflows/screen-size-testing.yml', 'Screen-size workflow'],
+  ['playwright/screen-sizes-fast.config.ts', 'Maintained Playwright config'],
+  ['playwright/screen-sizes.config.ts', 'Exploratory matrix config'],
+  ['tests/screen-sizes/comprehensive-visual-regression.spec.ts', 'Maintained responsive spec'],
+  ['tests/screen-sizes/README.md', 'Test README'],
+  ['documentation/testing/SCREEN_SIZE_TESTING.md', 'Testing documentation'],
+  ['documentation/setup/GITHUB_ACTION_SETUP.md', 'GitHub Actions setup guide'],
 ];
 
-// External repository deployment (no separate index workflow needed)
-console.log('✅ Reports Deployment: External repository (ESO-Toolkit/eso-log-aggregator-reports)');
+let valid = requiredFiles.every(([filePath, description]) => checkFile(filePath, description));
 
-let allCoreFilesExist = true;
-coreFiles.forEach(([filePath, description]) => {
-  if (!checkFile(filePath, description)) {
-    allCoreFilesExist = false;
-  }
-});
-
-console.log('\n📂 Test Directories:');
-const testDirs = [
-  ['tests/screen-sizes', 'Screen Size Test Directory'],
-];
-
-let allTestDirsExist = true;
-testDirs.forEach(([dirPath, description]) => {
-  if (!checkDirectory(dirPath, description)) {
-    allTestDirsExist = false;
-  }
-});
-
-console.log('\n📋 NPM Scripts:');
+console.log('\n📋 npm scripts:');
 const requiredScripts = [
   'test:screen-sizes',
+  'test:screen-sizes:fast',
+  'test:screen-sizes:matrix',
   'test:screen-sizes:mobile',
-  'test:screen-sizes:tablet', 
+  'test:screen-sizes:tablet',
   'test:screen-sizes:desktop',
+  'test:screen-sizes:breakpoints',
   'test:screen-sizes:report',
-  'test:screen-sizes:update-snapshots',
 ];
+valid = requiredScripts.every((name) => checkScript(packageJson.scripts ?? {}, name)) && valid;
 
-let allScriptsExist = true;
-requiredScripts.forEach(scriptName => {
-  if (!checkPackageScript(scriptName)) {
-    allScriptsExist = false;
-  }
-});
+const maintainedCommand = packageJson.scripts?.['test:screen-sizes'] ?? '';
+const usesFastConfig = maintainedCommand.includes('playwright/screen-sizes-fast.config.ts');
+console.log(`${usesFastConfig ? '✅' : '❌'} Maintained command uses fast config`);
+valid = usesFastConfig && valid;
 
-console.log('\n🔧 Configuration Checks:');
+const baselineCount = countBaselines();
+// Checked-in screenshots are deliberately forbidden: report data can include
+// player-provided names, and public baselines become stale branding artifacts.
+const baselinesValid = baselineCount === 0;
+console.log(
+  `${baselinesValid ? '✅' : '❌'} Checked-in visual baselines: ${baselineCount}/0 PNG files (privacy policy)`,
+);
+valid = baselinesValid && valid;
 
-// Check Playwright config
-let playwrightConfigValid = false;
-try {
-  const configContent = fs.readFileSync('playwright.screen-sizes.config.ts', 'utf8');
-  const hasOutputDir = configContent.includes('outputDir');
-  const hasProjects = configContent.includes('Mobile Portrait Small');
-  const hasReporter = configContent.includes('screen-size-report');
-  
-  console.log(`${hasOutputDir ? '✅' : '❌'} Playwright output directory configured`);
-  console.log(`${hasProjects ? '✅' : '❌'} Multiple device projects configured`);
-  console.log(`${hasReporter ? '✅' : '❌'} HTML reporter configured`);
-  
-  playwrightConfigValid = hasOutputDir && hasProjects && hasReporter;
-} catch (error) {
-  console.log(`❌ Could not validate Playwright config: ${error.message}`);
-}
-
-// Check .gitignore
-let gitignoreValid = false;
-try {
-  const gitignoreContent = fs.readFileSync('.gitignore', 'utf8');
-  const hasScreenSizeReports = gitignoreContent.includes('screen-size-report');
-  const hasTestResults = gitignoreContent.includes('test-results-screen-sizes');
-  const hasPngPatterns = gitignoreContent.includes('*-overview-*.png');
-  
-  console.log(`${hasScreenSizeReports ? '✅' : '❌'} .gitignore includes screen-size-report/`);
-  console.log(`${hasTestResults ? '✅' : '❌'} .gitignore includes test-results-screen-sizes/`);
-  console.log(`${hasPngPatterns ? '✅' : '❌'} .gitignore includes PNG file patterns`);
-  
-  gitignoreValid = hasScreenSizeReports && hasTestResults && hasPngPatterns;
-} catch (error) {
-  console.log(`❌ Could not validate .gitignore: ${error.message}`);
-}
-
-// Check test files
-console.log('\n🧪 Test Files:');
-const testFiles = [
-  ['tests/screen-sizes/home-page.spec.ts', 'Home Page Tests'],
-  ['tests/screen-sizes/log-analysis.spec.ts', 'Log Analysis Tests'],
-  ['tests/screen-sizes/cross-device.spec.ts', 'Cross Device Tests'],
-  ['tests/screen-sizes/visual-regression.spec.ts', 'Visual Regression Tests'],
-  ['tests/screen-sizes/comprehensive-report.spec.ts', 'Comprehensive Report Tests'],
-  ['tests/screen-sizes/utils.ts', 'Test Utilities'],
-  ['tests/screen-sizes/README.md', 'Test Directory README'],
-];
-
-let allTestFilesExist = true;
-testFiles.forEach(([filePath, description]) => {
-  if (!checkFile(filePath, description)) {
-    allTestFilesExist = false;
-  }
-});
-
-// Overall status
-console.log('\n🎯 Overall Status:');
-const overallValid = allCoreFilesExist && allTestDirsExist && allScriptsExist && playwrightConfigValid && gitignoreValid && allTestFilesExist;
-
-if (overallValid) {
-  console.log('✅ Screen Size Testing GitHub Action is fully configured!');
-  console.log('\n📋 Next Steps:');
-  console.log('1. Push changes to GitHub');
-  console.log('2. Enable GitHub Pages in repository settings (Source: GitHub Actions)');
-  console.log('3. Go to Actions tab → "Screen Size Testing" → "Run workflow"');
-  console.log('4. View results at: https://[username].github.io/[repository]/screen-size-reports/');
-} else {
-  console.log('❌ Screen Size Testing setup incomplete. Please check the missing items above.');
-}
-
-console.log('\n📚 Documentation:');
-console.log('- Setup Guide: documentation/GITHUB_ACTION_SETUP.md');
-console.log('- Testing Guide: documentation/SCREEN_SIZE_TESTING.md');
-console.log('- Test Directory: tests/screen-sizes/README.md');
-
-// Exit with appropriate code
-process.exit(overallValid ? 0 : 1);
+console.log(
+  `\n${valid ? '✅ Screen-size testing setup is valid.' : '❌ Screen-size testing setup is incomplete.'}`,
+);
+process.exit(valid ? 0 : 1);

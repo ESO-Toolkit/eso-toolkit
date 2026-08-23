@@ -253,7 +253,7 @@ const CombinedFilterDropdownComponent: React.FC<CombinedFilterDropdownProps> = (
         }
         sx={{
           textTransform: 'none',
-          fontFamily: 'Inter, system-ui',
+          fontFamily: 'Inter Variable, system-ui',
           fontWeight: 500,
           fontSize: '0.825rem',
           color: isDarkMode ? '#e2e8f0' : '#1e293b',
@@ -343,7 +343,7 @@ const CombinedFilterDropdownComponent: React.FC<CombinedFilterDropdownProps> = (
               <Typography
                 variant="caption"
                 sx={{
-                  fontFamily: 'Space Grotesk, Inter, system-ui',
+                  fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                   fontWeight: 700,
                   fontSize: '0.65rem',
                   letterSpacing: '0.08em',
@@ -390,7 +390,7 @@ const CombinedFilterDropdownComponent: React.FC<CombinedFilterDropdownProps> = (
                       sx: {
                         fontSize: '0.825rem',
                         fontWeight: isAllBosses ? 600 : 400,
-                        fontFamily: 'Inter, system-ui',
+                        fontFamily: 'Inter Variable, system-ui',
                         color: isAllBosses
                           ? isDarkMode
                             ? '#38bdf8'
@@ -443,7 +443,7 @@ const CombinedFilterDropdownComponent: React.FC<CombinedFilterDropdownProps> = (
                       sx: {
                         fontSize: '0.825rem',
                         fontWeight: isAllEnemies ? 600 : 400,
-                        fontFamily: 'Inter, system-ui',
+                        fontFamily: 'Inter Variable, system-ui',
                         color: isAllEnemies
                           ? isDarkMode
                             ? '#a855f7'
@@ -501,7 +501,7 @@ const CombinedFilterDropdownComponent: React.FC<CombinedFilterDropdownProps> = (
                           sx: {
                             fontSize: '0.825rem',
                             fontWeight: isSelected ? 600 : 400,
-                            fontFamily: 'Inter, system-ui',
+                            fontFamily: 'Inter Variable, system-ui',
                             color: isSelected
                               ? isDarkMode
                                 ? '#22c55e'
@@ -540,7 +540,7 @@ const CombinedFilterDropdownComponent: React.FC<CombinedFilterDropdownProps> = (
           <Typography
             variant="caption"
             sx={{
-              fontFamily: 'Space Grotesk, Inter, system-ui',
+              fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
               fontWeight: 700,
               fontSize: '0.65rem',
               letterSpacing: '0.08em',
@@ -575,7 +575,7 @@ const CombinedFilterDropdownComponent: React.FC<CombinedFilterDropdownProps> = (
                   sx: {
                     fontSize: '0.825rem',
                     fontWeight: !selectedFriendlyPlayerId ? 600 : 400,
-                    fontFamily: 'Inter, system-ui',
+                    fontFamily: 'Inter Variable, system-ui',
                     color: !selectedFriendlyPlayerId
                       ? isDarkMode
                         ? '#38bdf8'
@@ -620,7 +620,7 @@ const CombinedFilterDropdownComponent: React.FC<CombinedFilterDropdownProps> = (
                       sx: {
                         fontSize: '0.825rem',
                         fontWeight: isSelected ? 600 : 400,
-                        fontFamily: 'Inter, system-ui',
+                        fontFamily: 'Inter Variable, system-ui',
                         color: isSelected
                           ? isDarkMode
                             ? '#38bdf8'
@@ -633,7 +633,7 @@ const CombinedFilterDropdownComponent: React.FC<CombinedFilterDropdownProps> = (
                     secondary: {
                       sx: {
                         fontSize: '0.7rem',
-                        fontFamily: 'Inter, system-ui',
+                        fontFamily: 'Inter Variable, system-ui',
                         color: isDarkMode ? 'rgba(148, 163, 184, 0.6)' : 'rgba(100, 116, 139, 0.6)',
                         lineHeight: 1.3,
                       },

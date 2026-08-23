@@ -1,6 +1,6 @@
 # Contributor License Agreement (CLA)
 
-Thank you for your interest in contributing to ESO Log Aggregator.
+Thank you for your interest in contributing to ESO Toolkit.
 
 To protect both contributors and project maintainers, all contributors agree to the terms below by submitting a pull request.
 
@@ -24,7 +24,10 @@ You represent that:
 
 ## 4. Project License Compatibility
 
-You acknowledge that this repository is distributed under the Business Source License 1.1 (`BUSL-1.1`) with a delayed conversion to Apache License 2.0, as described in the root LICENSE file.
+You acknowledge that this repository is distributed under the project-specific source-available
+license described in the root [LICENSE](LICENSE) file. That file labels itself “Business Source
+License 1.1”, specifies a delayed Change License of Apache License 2.0, and controls the applicable
+terms. The repository does not represent the custom text as an exact SPDX `BUSL-1.1` match.
 
 You agree that your contributions may be distributed under the same terms and under any future open source or commercial licenses applied by the ESOTK team to this project.
 

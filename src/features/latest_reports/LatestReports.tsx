@@ -269,6 +269,7 @@ export const LatestReports: React.FC = () => {
           {/* Results */}
           <Box
             ref={resultsRef}
+            role="region"
             tabIndex={-1}
             aria-busy={loading}
             aria-label={`Reports, page ${pagination.currentPage}${

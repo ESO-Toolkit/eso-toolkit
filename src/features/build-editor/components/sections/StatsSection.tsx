@@ -144,7 +144,7 @@ const StatsSectionComponent: React.FC = () => {
     fontSize: 11,
     letterSpacing: 0.8,
     textTransform: 'uppercase' as const,
-    fontFamily: 'Space Grotesk, Inter, system-ui',
+    fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
   };
 
   if (!setup || !stats) return null;
@@ -236,7 +236,7 @@ const StatsSectionComponent: React.FC = () => {
                     <Typography
                       sx={{
                         fontSize: 11,
-                        fontFamily: 'Space Grotesk, Inter, system-ui',
+                        fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                         color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.55)',
                       }}
                     >

@@ -25,7 +25,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0
 
@@ -62,7 +62,7 @@ jobs:
       actions: read
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0
 
@@ -99,7 +99,7 @@ jobs:
         with:
           webhook-url: ${{ secrets.DISCORD_WEBHOOK_RELEASES }}
           status: success
-          title: "ESO Log Aggregator — New Release"
+          title: "ESO Toolkit — New Release"
           environment: production
           commits: ${{ steps.changelog.outputs.commits }}
           thread-name: "Deploy #${{ github.run_number }}"

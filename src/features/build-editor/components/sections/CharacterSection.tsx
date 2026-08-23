@@ -45,7 +45,7 @@ const CharacterSectionComponent: React.FC = () => {
               fontSize: 11,
               letterSpacing: 0.8,
               textTransform: 'uppercase',
-              fontFamily: 'Space Grotesk, Inter, system-ui',
+              fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
             }}
           >
             Attributes
@@ -56,7 +56,7 @@ const CharacterSectionComponent: React.FC = () => {
               variant="caption"
               sx={{
                 fontWeight: 700,
-                fontFamily: 'Space Grotesk, Inter, system-ui',
+                fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                 color: total >= ATTR_MAX ? 'var(--be-accent, #22c55e)' : 'text.disabled',
                 textShadow:
                   total >= ATTR_MAX
@@ -68,7 +68,7 @@ const CharacterSectionComponent: React.FC = () => {
             <Typography
               variant="caption"
               color="text.disabled"
-              sx={{ fontFamily: 'Space Grotesk, Inter, system-ui' }}
+              sx={{ fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui' }}
             >
               / {ATTR_MAX}
             </Typography>

@@ -141,7 +141,7 @@ export function buildBaseOption(theme: EChartsThemeOptions): Record<string, unkn
     animationDuration: theme.animationDuration,
     animationEasing: theme.animationEasing,
     textStyle: {
-      fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
+      fontFamily: 'Inter Variable, system-ui, -apple-system, sans-serif',
       color: theme.textColor,
     },
     grid: {
@@ -158,7 +158,7 @@ export function buildBaseOption(theme: EChartsThemeOptions): Record<string, unkn
       borderColor: theme.tooltipBorder,
       borderWidth: 1,
       textStyle: {
-        fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
+        fontFamily: 'Inter Variable, system-ui, -apple-system, sans-serif',
         color: theme.textColor,
         fontSize: 13,
       },
@@ -182,7 +182,7 @@ export function buildBaseOption(theme: EChartsThemeOptions): Record<string, unkn
     legend: {
       textStyle: {
         color: theme.textColor,
-        fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
+        fontFamily: 'Inter Variable, system-ui, -apple-system, sans-serif',
         fontSize: 12,
       },
       pageTextStyle: { color: theme.textColor },

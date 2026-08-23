@@ -1,6 +1,6 @@
 # Build and Deploy Composite Action
 
-This composite action handles building and deploying the ESO Log Aggregator React app and Storybook to GitHub Pages.
+This composite action handles building and deploying the ESO Toolkit React app and Storybook to GitHub Pages.
 
 ## Inputs
 
@@ -29,7 +29,7 @@ This composite action handles building and deploying the ESO Log Aggregator Reac
 
 ## What it does
 
-1. Sets up Node.js 20 with npm caching
+1. Sets up Node.js 24 LTS with npm caching
 2. Installs npm dependencies
 3. Sets release version environment variable (if provided)
 4. Configures the GitHub Pages build environment

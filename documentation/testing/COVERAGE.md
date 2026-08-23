@@ -1,6 +1,6 @@
 # Test Coverage Utilities
 
-This directory contains comprehensive test coverage utilities and configuration for the ESO Log Aggregator project.
+This directory contains comprehensive test coverage utilities and configuration for the ESO Toolkit project.
 
 ## 🎯 Coverage Overview
 
@@ -229,7 +229,7 @@ describe('DamageDisplay', () => {
   run: npm run coverage:badges
 
 - name: Upload Coverage Reports
-  uses: codecov/codecov-action@v3
+  uses: codecov/codecov-action@ab904c41d6ece82784817410c45d8b8c02684457 # v3
   with:
     files: ./coverage/lcov.info
 ```

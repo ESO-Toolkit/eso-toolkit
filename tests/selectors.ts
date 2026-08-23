@@ -13,42 +13,47 @@ export const SELECTORS = {
   FIGHT_BUTTON: (fightId: string | number) => `[data-testid="fight-button-${fightId}"]`,
   FIRST_FIGHT_BUTTON: '[data-testid^="fight-button-"]:first-of-type',
   ANY_FIGHT_BUTTON: '[data-testid^="fight-button-"]',
-  
+
   // Loading states - with fallbacks for live site
-  LOADING_INDICATOR: '[data-testid="loading-indicator"], .loading, .spinner, [aria-label*="loading"], [aria-busy="true"], .MuiCircularProgress-root, .MuiLinearProgress-root',
-  FIGHT_LIST_OR_LOADING: '[data-testid="fight-list"], [data-testid="loading-indicator"], .loading, .spinner, [aria-label*="loading"], [aria-busy="true"], .MuiAccordion-root, [data-testid*="trial-accordion"], .fight-button, button[id^="fight-button-"]',
-  
+  LOADING_INDICATOR:
+    '[data-testid="loading-indicator"], .loading, .spinner, [aria-label*="loading"], [aria-busy="true"], .MuiCircularProgress-root, .MuiLinearProgress-root',
+  FIGHT_LIST_OR_LOADING:
+    '[data-testid="fight-list"], [data-testid="loading-indicator"], .loading, .spinner, [aria-label*="loading"], [aria-busy="true"], .MuiAccordion-root, [data-testid*="trial-accordion"], .fight-button, button[id^="fight-button-"]',
+
   // More resilient content detection for reports
-  REPORT_CONTENT: '[data-testid="fight-list"], .MuiAccordion-root, [data-testid*="trial-accordion"], .content, .report-content, .fight-list, .MuiContainer-root, .main-content, [role="main"], main, section[class*="content"]',
-  
+  REPORT_CONTENT:
+    '[data-testid="fight-list"], [data-testid^="trial-section-"], [data-testid^="fight-button-"]',
+
   // Trial and encounter structure
   TRIAL_ACCORDION: (trialId: string) => `[data-testid="trial-accordion-${trialId}"]`,
   ENCOUNTER: (encounterId: string) => `[data-testid="encounter-${encounterId}"]`,
-  
+
   // Tabs and navigation
   ACTIVE_TAB: '[role="tab"][aria-selected="true"]',
   TAB_BY_TEXT: (_tabText: string) => `[role="tab"]`,
-  
+
   // Content areas
-  MAIN_CONTENT: '[data-testid*="content"], [data-testid*="panel"], .MuiDataGrid-root, .chart-container',
-  DATA_GRID: '.MuiDataGrid-root',
-  DATA_GRID_ROW: '.MuiDataGrid-row',
+  MAIN_CONTENT:
+    '[data-testid="fight-tab-content-container"], [data-testid*="content"], [data-testid*="panel"], [data-testid="data-grid"], .chart-container',
+  DATA_GRID: '[data-testid="data-grid"]',
+  DATA_GRID_ROW: '[data-testid="data-grid"] tbody tr',
   CHART_CONTAINER: '.chart-container',
-  
+
   // Specific tab content
-  DAMAGE_CONTENT: '.MuiDataGrid-root, .chart-container, [data-testid*="damage"], text=/\\d+[.,]\\d*/',
-  PLAYER_ROWS: '.MuiDataGrid-row',
-  
+  DAMAGE_CONTENT:
+    '[data-testid="damage-done-panel"], [data-testid="data-grid"], .chart-container, [data-testid*="damage"]',
+  PLAYER_ROWS: '[data-testid^="player-card-"], [data-testid="data-grid"] tbody tr',
+
   // Target and form controls
   TARGET_SELECTOR: '[data-testid="target-selector"], .MuiFormControl-root',
-  
+
   // Navigation buttons
   NEXT_FIGHT_BUTTON: 'button',
   PREV_FIGHT_BUTTON: 'button',
-  
+
   // Report structure
   REPORT_TITLE: 'h1, h2, h3, h4, h5, h6',
-  
+
   // Replay controls.
   //
   // Prefer `page.getByRole('button', { name: /^(Play|Pause)$/ })` — an anchored RegExp
@@ -73,27 +78,28 @@ export const SELECTOR_HELPERS = {
     const _regexPattern = escapedName.replace('-', '\\s');
     return `[role="tab"][aria-selected="true"]`;
   },
-  
+
   /**
    * Get selector for specific fight button by ID
    */
   fightButton: (fightId: string | number) => `[data-testid="fight-button-${fightId}"]`,
-  
+
   /**
    * Get selector for any fight button containing specific text
    */
-  fightButtonByText: (text: string) => `[data-testid="fight-list"] .MuiListItemButton-root:has-text("${text}")`,
-  
+  fightButtonByText: (text: string) =>
+    `[data-testid="fight-list"] .MuiListItemButton-root:has-text("${text}")`,
+
   /**
    * Get selector for trial accordion by name
    */
   trialByName: (trialName: string) => `[data-testid*="trial-accordion"]:has-text("${trialName}")`,
-  
+
   /**
    * Combine multiple selectors with OR logic
    */
   anyOf: (...selectors: string[]) => selectors.join(', '),
-  
+
   /**
    * Get first visible element from multiple selectors
    */
@@ -116,17 +122,17 @@ export const TEST_TIMEOUTS = {
 
 /**
  * Common test data
- * 
+ *
  * NOTE: ESO Logs reports expire/get deleted over time. Update these IDs periodically
  * with valid public reports from https://esotk.com/latest-reports
  */
 export const TEST_DATA = {
-  REAL_REPORT_IDS: [
-    'prV8jWb1NqFJc97Z', // Primary (updated 2026-01-21) - Rockgrove with 17 fights
-    '3gjVGWB2dxCL8XAw', // Backup #1 - validate periodically via /latest-reports
-    'baJFfYC8trPhHMQp', // Backup #2 - validate periodically via /latest-reports
-    'VTqBNRdzCfp36gtL', // Backup #3 - validate periodically via /latest-reports
-  ],
+  // Keep live report codes out of source control. CI or a local authenticated
+  // run may provide ESO_LOG_TEST_REPORT_IDS as a comma-separated list; the
+  // bundled public samples keep unauthenticated smoke tests deterministic.
+  REAL_REPORT_IDS: process.env.ESO_LOG_TEST_REPORT_IDS?.split(',')
+    .map((reportId) => reportId.trim())
+    .filter(Boolean) ?? ['F4f2bMwWtgVKxjB9', 'YArFDbq7BdhwL691'],
 
   /**
    * A known valid fight ID within REAL_REPORT_IDS[0].
@@ -135,10 +141,10 @@ export const TEST_DATA = {
    * the esologs API.
    */
   KNOWN_FIGHT_ID: '5',
-  
+
   MAIN_TABS: [
     'insights',
-    'players', 
+    'players',
     'damage-done',
     'healing-done',
     'deaths',
@@ -146,13 +152,8 @@ export const TEST_DATA = {
     'penetration',
     'damage-reduction',
   ],
-  
-  EXPERIMENTAL_TABS: [
-    'replay',
-    'timeline',
-    'buffs',
-    'resources',
-  ],
+
+  EXPERIMENTAL_TABS: ['replay', 'timeline', 'buffs', 'resources'],
 } as const;
 
 /**
@@ -160,9 +161,7 @@ export const TEST_DATA = {
  * Priority: NIGHTLY_BASE_URL > BASE_URL > default GitHub Pages URL
  */
 export function getBaseUrl(): string {
-  const url = process.env.NIGHTLY_BASE_URL ||
-              process.env.BASE_URL ||
-              'https://esotk.com/';
+  const url = process.env.NIGHTLY_BASE_URL || process.env.BASE_URL || 'https://esotk.com/';
   return url.replace(/\/+$/, '');
 }
 
@@ -178,4 +177,26 @@ export async function waitForAppMount(page: Page): Promise<void> {
     .catch(() => {
       console.log('⚠️ App mount wait timed out — SPA may not have hydrated');
     });
+}
+
+/**
+ * Capture uncaught page errors in a browser-side buffer before application code runs.
+ * Nightly assertions read this buffer after exercising a route; seeding an empty array
+ * without listeners would make those assertions pass vacuously.
+ */
+export async function installPageErrorCapture(page: Page): Promise<void> {
+  await page.addInitScript(() => {
+    type ErrorCaptureWindow = Window & { testErrors: string[] };
+    const target = window as unknown as ErrorCaptureWindow;
+    target.testErrors = [];
+
+    window.addEventListener('error', (event) => {
+      target.testErrors.push(event.error instanceof Error ? event.error.message : event.message);
+    });
+
+    window.addEventListener('unhandledrejection', (event) => {
+      const reason = event.reason instanceof Error ? event.reason.message : String(event.reason);
+      target.testErrors.push(`Unhandled rejection: ${reason}`);
+    });
+  });
 }

@@ -117,7 +117,7 @@ export const IconPickerGrid = <T extends string = string>({
             letterSpacing: 0.8,
             textTransform: 'uppercase',
             color: 'text.secondary',
-            fontFamily: 'Space Grotesk, Inter, system-ui',
+            fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
           }}
         >
           {label}
@@ -200,7 +200,7 @@ export const IconPickerGrid = <T extends string = string>({
                       lineHeight: 1.2,
                       textAlign: 'center',
                       fontSize: 11,
-                      fontFamily: 'Space Grotesk, Inter, system-ui',
+                      fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                       transition: 'color 0.15s',
                     }}
                   >

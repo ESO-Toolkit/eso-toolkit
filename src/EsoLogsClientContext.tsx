@@ -3,7 +3,7 @@ import React, { createContext, useContext, useMemo, ReactNode, useState, useCall
 
 import { useLogger } from './contexts/LoggerContext';
 import { EsoLogsClient } from './esologsClient';
-import { LOCAL_STORAGE_ACCESS_TOKEN_KEY } from './features/auth/auth';
+import { getStoredAccessToken } from './features/auth/auth';
 import { getRosterHubBaseUrl } from './utils/envUtils';
 import { addBreadcrumb } from './utils/errorTracking';
 
@@ -18,10 +18,11 @@ interface EsoLogsClientContextType {
 export const EsoLogsClientContext = createContext<EsoLogsClientContextType | undefined>(undefined);
 
 // Read the initial token once at module level so the first render is already
-// synchronised with AuthContext (which also reads from localStorage).  This
+// synchronised with AuthContext (which also reads from sessionStorage). Legacy
+// localStorage tokens are migrated by getStoredAccessToken(). This
 // eliminates the one-frame lag where AuthContext.isLoggedIn=true but
 // EsoLogsClientContext.isLoggedIn=false, which caused visible layout shifts.
-const initialToken = localStorage.getItem(LOCAL_STORAGE_ACCESS_TOKEN_KEY) || '';
+const initialToken = getStoredAccessToken();
 
 // Proxy URL for public /api/v2/client queries — routes through the Cloudflare
 // Worker so the server-side OAuth secret is never exposed to the browser.

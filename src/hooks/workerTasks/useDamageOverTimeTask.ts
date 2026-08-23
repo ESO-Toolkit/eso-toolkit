@@ -70,8 +70,7 @@ export function useDamageOverTimeTask(options?: UseDamageOverTimeTaskOptions): {
     selectWorkerTaskLoading('calculateDamageOverTimeData'),
   ) as boolean;
   const damageOverTimeError = useSelector(selectWorkerTaskError('calculateDamageOverTimeData')) as
-    | string
-    | null;
+    string | null;
   const damageOverTimeProgress = useSelector(
     selectWorkerTaskProgress('calculateDamageOverTimeData'),
   ) as number | null;

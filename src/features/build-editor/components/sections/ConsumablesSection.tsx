@@ -77,7 +77,7 @@ const ConsumablesSectionComponent: React.FC = () => {
                     fontWeight: isActive ? 700 : 500,
                     fontSize: 12,
                     color: isActive ? 'var(--be-accent, #38bdf8)' : 'text.secondary',
-                    fontFamily: 'Space Grotesk, Inter, system-ui',
+                    fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                   }}
                 >
                   {label}

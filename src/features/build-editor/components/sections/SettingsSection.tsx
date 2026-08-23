@@ -59,7 +59,7 @@ const SettingsSectionComponent: React.FC = () => {
             fontSize: 11,
             letterSpacing: 0.8,
             textTransform: 'uppercase',
-            fontFamily: 'Space Grotesk, Inter, system-ui',
+            fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
           }}
         >
           Setup Order
@@ -69,7 +69,7 @@ const SettingsSectionComponent: React.FC = () => {
           sx={{
             color: 'text.disabled',
             fontSize: 10,
-            fontFamily: 'Space Grotesk, Inter, system-ui',
+            fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
           }}
         >
           {setups.length} setup{setups.length !== 1 ? 's' : ''} configured. Manage setups in the

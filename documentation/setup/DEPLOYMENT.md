@@ -1,232 +1,87 @@
-# Production Deployment Guide
+# Production Deployment
 
-This guide covers production deployment options for the ESO Log Aggregator scribing analysis system.
+ESO Toolkit is a Vite-powered static web application. The supported production deployment is the GitHub Pages workflow in `.github/workflows/deploy.yml`; application APIs are separate Cloudflare Worker services configured through environment variables.
 
-## Deployment Options
+## Local release checks
 
-### 1. GitHub Pages (Current Default)
+Use Node.js 24 LTS (`.nvmrc`) and a clean, lockfile-driven install:
 
-The application is automatically deployed to GitHub Pages on push to the `main` branch.
-
-**Pros:**
-- Automatic deployment via GitHub Actions
-- Free hosting for static sites
-- SSL/TLS certificates included
-- CDN distribution
-
-**Cons:**
-- Static hosting only (no server-side API)
-- Limited to public repositories (unless GitHub Pro)
-
-### 2. Manual Deployment
-
-For custom deployment scenarios or integration with existing infrastructure.
-
-#### Build Process
 ```bash
-# Install dependencies
 npm ci
-
-# Generate GraphQL types
-npm run codegen
-
-# Build production assets
+npm run validate
+npm run test:ci
 npm run build
-
-# Run deployment checks
-node scripts/deploy.cjs validate
 ```
 
-#### Web Server Configuration
+For browser confidence, run the smoke and accessibility suites with the required test data and credentials:
 
-**Nginx Example:**
+```bash
+npm run test:smoke:e2e
+npm run test:a11y
+```
+
+Do not use `npm install` to repair a failing checkout or delete `package-lock.json`; report dependency changes as a reviewed pull request.
+
+## GitHub Pages
+
+The deployment workflow builds the `build/` directory and publishes it through GitHub Pages. The build creates static copies for the public legal routes and includes `404.html` as the fallback for other client-side routes. After deployment, verify the exact release commit and check:
+
+```bash
+curl --fail --silent --show-error --location --head https://esotk.com/
+curl --fail --silent --show-error --location https://esotk.com/privacy
+curl --fail --silent --show-error --location https://esotk.com/terms
+```
+
+GitHub Pages does not honor the `_headers` convention used by some static hosts. The Vite build therefore injects a hash-based CSP `<meta>` policy and a strict referrer `<meta>` policy into the app shell as defense in depth. Meta CSP cannot enforce `frame-ancestors`, `X-Content-Type-Options: nosniff`, HSTS, or `Permissions-Policy`; configure those at the custom-domain/CDN layer or migrate the static hosting provider, and do not assume `public/_headers` is active. The generated `build/_headers` file carries the matching inline-script hash for a future header-capable deployment.
+
+## Custom static hosting
+
+For a host that supports history fallbacks, route unknown paths to `index.html` and serve hashed assets with long-lived immutable caching. Keep `index.html`, legal pages, manifests, robots.txt, and sitemap.xml short-lived so a deployment can update asset references safely.
+
+Example Nginx configuration:
+
 ```nginx
 server {
-    listen 80;
-    server_name yourdomain.com;
-    root /var/www/eso-log-aggregator/build;
+    listen 443 ssl;
+    server_name example.com;
+    root /var/www/eso-toolkit/build;
     index index.html;
+
+    location /assets/ {
+        try_files $uri =404;
+        add_header Cache-Control "public, max-age=31536000, immutable";
+    }
 
     location / {
         try_files $uri $uri/ /index.html;
+        add_header Cache-Control "no-cache";
     }
 }
 ```
 
-**Apache Example:**
-```apache
-<VirtualHost *:80>
-    ServerName yourdomain.com
-    DocumentRoot /var/www/eso-log-aggregator/build
-    
-    <Directory /var/www/eso-log-aggregator/build>
-        Options -Indexes
-        AllowOverride All
-        Require all granted
-        
-        # Handle React Router
-        RewriteEngine On
-        RewriteBase /
-        RewriteRule ^index\.html$ - [L]
-        RewriteCond %{REQUEST_FILENAME} !-f
-        RewriteCond %{REQUEST_FILENAME} !-d
-        RewriteRule . /index.html [L]
-    </Directory>
-</VirtualHost>
-```
+Enable HTTPS, a restrictive Content-Security-Policy, HSTS, `X-Content-Type-Options: nosniff`, clickjacking protection, an appropriate Referrer-Policy, and a restrictive Permissions-Policy at the edge. Keep the policy aligned with the actual analytics, error tracking, font, image, API, and OAuth origins used by the release.
 
-## Deployment Checklist
+## Release checklist
 
-### Pre-deployment
-- [ ] Run full test suite: `npm run test:all`
-- [ ] Run E2E tests: `npm run test:nightly:chromium`
-- [ ] Generate coverage report: `npm run test:coverage`
-- [ ] Validate code quality: `npm run validate`
-- [ ] Build production assets: `npm run build`
-- [ ] Run deployment validation: `node scripts/deploy.cjs validate`
-
-### Post-deployment
-- [ ] Health check: `curl https://yourdomain.com/health`
-- [ ] Performance check: Load time < 2 seconds
-- [ ] Functionality check: Core features working
-- [ ] Monitor error rates in Rollbar (if configured)
-- [ ] Verify analytics tracking (if configured)
-
-## Monitoring and Observability
-
-### Built-in Endpoints
-
-**Health Check:**
-```
-GET /health
-Response: "healthy"
-```
-
-**Version Information:**
-```
-GET /version
-Response: {
-  "version": "1.0.0",
-  "buildTime": "2025-10-05T12:00:00Z",
-  "gitCommit": "abc123"
-}
-```
-
-**Deployment Metadata:**
-```
-GET /deployment
-Response: {
-  "deploymentTime": "2025-10-05T12:00:00Z",
-  "version": "1.0.0",
-  "environment": "production"
-}
-```
-
-### Error Monitoring
-
-**Error Tracking Integration:**
-Set `ERROR_TRACKING_TOKEN` environment variable to enable error tracking.
-
-**Log Aggregation:**
-Application logs are output in JSON format suitable for log aggregation systems.
-
-### Performance Monitoring
-
-**Metrics Available:**
-- Page load times
-- Bundle size analysis
-- Resource loading performance
-- User interaction metrics
-
-**Monitoring Tools:**
-- Browser DevTools Performance tab
-- Lighthouse CI integration
-- Custom performance middleware
-
-## Scaling Considerations
-
-### Horizontal Scaling
-- Deploy multiple instances behind a load balancer
-- Use sticky sessions if needed for user state
-- Consider CDN for static asset distribution
-
-### Vertical Scaling
-- Increase server memory for large log processing
-- Optimize build process for faster deployments
-- Enable HTTP/2 for better resource loading
-
-### Database Scaling
-Currently uses static JSON files. For high-volume usage:
-- Consider migrating to PostgreSQL or MongoDB
-- Implement caching layer (Redis)
-- Add database connection pooling
-
-## Security Hardening
-
-### Network Security
-- Use HTTPS in production (TLS 1.3 minimum)
-- Implement Content Security Policy headers
-- Enable HSTS headers
-- Consider rate limiting for API endpoints
-
-### Data Security
-- Sanitize log data during processing
-- Implement proper CORS headers
-- Validate all user inputs
-- Use environment variables for sensitive configuration
-
-## Backup and Recovery
-
-### Static Deployment
-- Source code is version controlled (Git)
-- Build artifacts can be recreated from source
-- Configuration stored in environment variables
-
-### Data Backup
-- ESO log data should be backed up separately
-- Analysis results can be regenerated
-- Consider automated backup scripts for user data
-
-### Disaster Recovery
-1. Restore from Git repository
-2. Rebuild production assets
-3. Redeploy using standard process
-4. Verify all endpoints and functionality
+- [ ] Confirm the release SHA is on `main` and all required checks are green.
+- [ ] Confirm `npm audit --omit=dev --audit-level=high` reports no production vulnerabilities.
+- [ ] Confirm analytics and error tracking are disabled until consent where required.
+- [ ] Confirm `privacy` and `terms` return HTTP 200 and contain the current policy text.
+- [ ] Confirm source maps are not present in the public build unless intentionally protected.
+- [ ] Verify metadata, manifest, robots.txt, sitemap.xml, and social preview URLs.
+- [ ] Test the landing page, a report deep link, authentication redirect, mobile layout, and reduced-motion mode.
+- [ ] Publish a tagged GitHub release with a changelog and known limitations.
 
 ## Troubleshooting
 
-### Common Issues
+If a clean build fails, preserve the lockfile and run:
 
-**Build Failures:**
 ```bash
-# Clear cache and reinstall
-rm -rf node_modules package-lock.json
-npm cache clean --force
+rm -rf node_modules
 npm ci
-
-# Rebuild with clean slate
-npm run clean
 npm run build
 ```
 
-**Memory Issues:**
-```bash
-# Increase Node.js memory limit
-export NODE_OPTIONS="--max-old-space-size=8192"
-npm run build
-```
+For Windows, remove only the worktree's `node_modules` directory and rerun `npm ci`. For API or OAuth failures, verify deployment environment variables and the service's own health/observability tooling; the static site does not expose `/health`, `/version`, or `/deployment` endpoints.
 
-**Health Check Failures:**
-```bash
-# Manual health check
-curl -v http://localhost/health
-```
-
-### Support Contacts
-- **Development Team:** GitHub Issues
-- **Infrastructure:** DevOps team
-- **Security Issues:** security@yourdomain.com
-
----
-
-For additional deployment scenarios or custom requirements, consult the development team or create a GitHub issue.
+Security issues should follow [SECURITY.md](../../SECURITY.md), not a public issue.

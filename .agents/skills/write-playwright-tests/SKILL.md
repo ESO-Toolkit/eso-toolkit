@@ -44,6 +44,7 @@ await expect(page).toHaveScreenshot('my-view.png', { fullPage: true, animations:
 ### Loading vs Permanent skeleton types
 
 **Wait for these to disappear (actual loading skeletons):**
+
 - `[data-testid="players-skeleton"]`
 - `[data-testid="penetration-skeleton"]`
 - `[data-testid="damage-done-table-skeleton"]`
@@ -52,6 +53,7 @@ await expect(page).toHaveScreenshot('my-view.png', { fullPage: true, animations:
 - `[data-testid="calculator-skeleton"]`
 
 **Ignore these (permanent UI elements, never disappear):**
+
 - `[data-testid="player-card-loading-fallback"]`
 - `[data-testid="skill-tooltip-loading-fallback"]`
 
@@ -104,13 +106,13 @@ import {
 ```typescript
 test('visual test with preloaded data', async ({ page }) => {
   await preloadAllReportData(page, {
-    reportCode: 'nbKdDtT4NcZyVrvX',
-    fightId: '117',
+    reportCode: 'F4f2bMwWtgVKxjB9',
+    fightId: '5',
     tabs: ['players'],
     timeout: 60000,
   });
 
-  await navigateWithPreloadedData(page, '/#/report/nbKdDtT4NcZyVrvX/fight/117/players');
+  await navigateWithPreloadedData(page, '/#/report/F4f2bMwWtgVKxjB9/fight/5/players');
   await takeScreenshotWithPreloadedData(page, 'players-view.png');
 });
 ```
@@ -124,7 +126,7 @@ test.describe('Report Visual Tests', () => {
     const page = await context.newPage();
 
     await warmCacheForVisualTestSuite(page, {
-      reportCode: 'nbKdDtT4NcZyVrvX',
+      reportCode: 'F4f2bMwWtgVKxjB9',
       tabs: ['overview', 'players', 'damage', 'healing'],
       aggressiveWarmup: true,
     });
@@ -133,12 +135,12 @@ test.describe('Report Visual Tests', () => {
   });
 
   test('players tab', async ({ page }) => {
-    await navigateWithPreloadedData(page, '/#/report/nbKdDtT4NcZyVrvX/fight/117/players');
+    await navigateWithPreloadedData(page, '/#/report/F4f2bMwWtgVKxjB9/fight/5/players');
     await takeScreenshotWithPreloadedData(page, 'players.png');
   });
 
   test('damage tab', async ({ page }) => {
-    await navigateWithPreloadedData(page, '/#/report/nbKdDtT4NcZyVrvX/fight/117/damage');
+    await navigateWithPreloadedData(page, '/#/report/F4f2bMwWtgVKxjB9/fight/5/damage');
     await takeScreenshotWithPreloadedData(page, 'damage.png');
   });
 });
@@ -148,11 +150,11 @@ test.describe('Report Visual Tests', () => {
 
 ```typescript
 await ensureDataPreloadedForScreenshot(page, {
-  reportCode: 'nbKdDtT4NcZyVrvX',
+  reportCode: 'F4f2bMwWtgVKxjB9',
   tabs: ['players'],
 });
 
-await page.goto('/#/report/nbKdDtT4NcZyVrvX/fight/117/players');
+await page.goto('/#/report/F4f2bMwWtgVKxjB9/fight/5/players');
 await waitForLoadingComplete(page, { timeout: 10000 }); // short — data is already cached
 await expect(page).toHaveScreenshot('adaptive-test.png');
 ```
@@ -161,11 +163,11 @@ await expect(page).toHaveScreenshot('adaptive-test.png');
 
 ```typescript
 interface DataPreloadOptions {
-  reportCode?: string;        // Default: 'nbKdDtT4NcZyVrvX'
-  fightId?: string;           // Default: '117'
-  tabs?: string[];            // ['overview', 'players', 'damage', 'healing', 'insights']
-  timeout?: number;           // Default: 90000ms
-  verifyLoaded?: boolean;     // Default: true
+  reportCode?: string; // Default: bundled public sample report
+  fightId?: string; // Default: '5'
+  tabs?: string[]; // ['overview', 'players', 'damage', 'healing', 'insights']
+  timeout?: number; // Default: 90000ms
+  verifyLoaded?: boolean; // Default: true
   aggressiveWarmup?: boolean; // Pre-warm GraphQL cache (default: true)
 }
 ```
@@ -190,6 +192,7 @@ await expect(page).toHaveScreenshot('assumed.png');
 ## Part 3 — Complete Test Patterns
 
 ### Pattern A — Simple page screenshot
+
 ```typescript
 test('visual regression', async ({ page }) => {
   await page.goto('/report/abc123/fight/117/players');
@@ -207,6 +210,7 @@ test('visual regression', async ({ page }) => {
 ```
 
 ### Pattern B — Multi-step navigation
+
 ```typescript
 test('workflow visual test', async ({ page }) => {
   await page.goto('/report/abc123');
@@ -226,6 +230,7 @@ test('workflow visual test', async ({ page }) => {
 ```
 
 ### Pattern C — Debug screenshot on failure
+
 ```typescript
 // Before waiting
 await page.screenshot({ path: 'debug-before-wait.png', fullPage: true });
@@ -250,17 +255,18 @@ Use **both** types for comprehensive coverage. Do NOT write only defensive tests
 
 ### Recommended ratio: ~80% defensive, ~20% strict
 
-| Scenario | Test Type |
-|----------|-----------|
-| Page loads without crashing | Defensive |
-| Responsive layout works | Defensive |
-| Navigation doesn't break | Defensive |
-| Specific report title appears | Strict |
-| Pagination shows correct pages | Strict |
-| Empty state triggers | Strict |
-| Error messages display | Strict |
+| Scenario                       | Test Type |
+| ------------------------------ | --------- |
+| Page loads without crashing    | Defensive |
+| Responsive layout works        | Defensive |
+| Navigation doesn't break       | Defensive |
+| Specific report title appears  | Strict    |
+| Pagination shows correct pages | Strict    |
+| Empty state triggers           | Strict    |
+| Error messages display         | Strict    |
 
 ### Defensive test example
+
 ```typescript
 test('report list page structure', async ({ page }) => {
   await page.goto('/latest-reports');
@@ -274,6 +280,7 @@ test('report list page structure', async ({ page }) => {
 ```
 
 ### Strict validation test example
+
 ```typescript
 test('report list displays mocked data', async ({ page }) => {
   const mockData = {
@@ -306,6 +313,7 @@ test('report list displays mocked data', async ({ page }) => {
 ```
 
 ### Unified auth + mock helper pattern (best practice)
+
 ```typescript
 async function setupAuth(page: Page, reportMockData?: any) {
   await page.evaluate(() => {
@@ -317,7 +325,9 @@ async function setupAuth(page: Page, reportMockData?: any) {
     const postData = route.request().postDataJSON();
 
     if (postData?.query?.includes('currentUser')) {
-      await route.fulfill({ /* mock auth */ });
+      await route.fulfill({
+        /* mock auth */
+      });
     } else if (postData?.query?.includes('getLatestReports') && reportMockData) {
       await route.fulfill({
         body: JSON.stringify({ data: { reportData: { reports: reportMockData } } }),
@@ -331,11 +341,12 @@ async function setupAuth(page: Page, reportMockData?: any) {
 }
 
 // Usage
-await setupAuth(page);              // defensive tests
-await setupAuth(page, mockData);    // strict tests
+await setupAuth(page); // defensive tests
+await setupAuth(page, mockData); // strict tests
 ```
 
 ### GraphQL mocking rules
+
 - ✅ Always include `__typename` fields — Apollo Client rejects responses without them
 - ✅ Mock `**/api/v2/**` (actual ESO Logs endpoint), NOT `**/graphql`
 
@@ -344,17 +355,20 @@ await setupAuth(page, mockData);    // strict tests
 ## Part 5 — Pre-Loading Troubleshooting
 
 ### Slow tests despite pre-loading
+
 1. Verify global setup ran — check `localStorage.getItem('access_token')`
 2. Check cache warm flags: `window.__DATA_PRELOADED__`, `window.__CACHE_WARMED__`
 3. Verify correct report code is being used
 4. Check authentication issues preventing cache access
 
 ### Skeletons still present after pre-loading
+
 - Data structure may have changed (stale cache)
 - Different GraphQL queries than expected
 - Some skeletons are permanent UI elements — check `data-testid`
 
 ### Expected performance with pre-loading
+
 - Navigation time: **1–3 seconds** (was 15–45 seconds)
 - Screenshot stability: **95%+** (was ~50%)
 - `waitForLoadingComplete` timeout: **10 seconds** (was 45 seconds)

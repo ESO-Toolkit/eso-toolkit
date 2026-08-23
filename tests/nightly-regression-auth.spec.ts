@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 import { createAuthTestUtils } from './auth-utils';
-import { TEST_TIMEOUTS, waitForAppMount } from './selectors';
+import { TEST_DATA, TEST_TIMEOUTS, installPageErrorCapture, waitForAppMount } from './selectors';
 import { createEsoPage } from './utils/EsoLogAggregatorPage';
 
 /**
@@ -22,21 +22,22 @@ test.describe('Nightly Regression - Authentication and Reports', () => {
   test.beforeEach(async ({ page }) => {
     // Fail hard if authentication credentials are not available
     const hasOAuthCredentials = process.env.OAUTH_CLIENT_ID && process.env.OAUTH_CLIENT_SECRET;
-    const hasUserCredentials = process.env.ESO_LOGS_TEST_EMAIL && process.env.ESO_LOGS_TEST_PASSWORD;
-    
+    const hasUserCredentials =
+      process.env.ESO_LOGS_TEST_EMAIL && process.env.ESO_LOGS_TEST_PASSWORD;
+
     if (!hasOAuthCredentials && !hasUserCredentials) {
       throw new Error(
         '🔑 AUTHENTICATION CREDENTIALS REQUIRED!\n\n' +
-        'Authentication tests cannot run without proper credentials.\n' +
-        'Please set one of the following environment variable combinations:\n\n' +
-        '  Option 1 (OAuth Client Credentials):\n' +
-        '    - OAUTH_CLIENT_ID\n' +
-        '    - OAUTH_CLIENT_SECRET\n\n' +
-        '  Option 2 (User Credentials):\n' +
-        '    - ESO_LOGS_TEST_EMAIL\n' +
-        '    - ESO_LOGS_TEST_PASSWORD\n\n' +
-        'If running in CI/CD, ensure these are configured as repository secrets.\n' +
-        'If running locally, set these in your environment or .env file.',
+          'Authentication tests cannot run without proper credentials.\n' +
+          'Please set one of the following environment variable combinations:\n\n' +
+          '  Option 1 (OAuth Client Credentials):\n' +
+          '    - OAUTH_CLIENT_ID\n' +
+          '    - OAUTH_CLIENT_SECRET\n\n' +
+          '  Option 2 (User Credentials):\n' +
+          '    - ESO_LOGS_TEST_EMAIL\n' +
+          '    - ESO_LOGS_TEST_PASSWORD\n\n' +
+          'If running in CI/CD, ensure these are configured as repository secrets.\n' +
+          'If running locally, set these in your environment or .env file.',
       );
     }
 
@@ -49,9 +50,7 @@ test.describe('Nightly Regression - Authentication and Reports', () => {
       errors.push(error.message);
     });
 
-    await page.addInitScript(() => {
-      (window as any).testErrors = [];
-    });
+    await installPageErrorCapture(page);
   });
 
   test.describe('Authentication Flow', () => {
@@ -158,7 +157,9 @@ test.describe('Nightly Regression - Authentication and Reports', () => {
       });
 
       // Wait for content to load
-      await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad }).catch(() => {});
+      await page
+        .waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad })
+        .catch(() => {});
 
       // Wait for the page to be fully rendered
       await waitForAppMount(page);
@@ -166,18 +167,18 @@ test.describe('Nightly Regression - Authentication and Reports', () => {
       // Check for various content indicators - be more flexible
       const hasReports = await page
         .locator(
-          '.MuiDataGrid-root, .report-card, .report-item, a[href*="/report/"], .reports, .data-grid, table, .list',
+          '[data-testid="data-grid"], .report-card, .report-item, a[href*="/report/"], .reports, table, .list',
         )
         .first()
         .isVisible()
         .catch(() => false);
       const hasLoginPrompt = await page
-        .locator('button:has-text(Login), a:has-text(Login), [data-testid*="login"]')
+        .locator('button:has-text("Login"), a:has-text("Login"), [data-testid*="login"]')
         .first()
         .isVisible()
         .catch(() => false);
-      const hasContent = await page
-        .locator('main, .content, .app, .page, #root')
+      const hasPageHeading = await page
+        .getByRole('heading', { name: /latest reports/i })
         .first()
         .isVisible()
         .catch(() => false);
@@ -188,7 +189,7 @@ test.describe('Nightly Regression - Authentication and Reports', () => {
         .catch(() => false);
 
       // Should have some kind of content indicating the page loaded
-      const hasAnyContent = hasReports || hasLoginPrompt || hasContent || hasText;
+      const hasAnyContent = hasReports || hasLoginPrompt || hasPageHeading || hasText;
 
       if (!hasAnyContent) {
         console.log('🔍 Page URL:', page.url());
@@ -237,7 +238,9 @@ test.describe('Nightly Regression - Authentication and Reports', () => {
         timeout: TEST_TIMEOUTS.navigation,
       });
 
-      await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad }).catch(() => {});
+      await page
+        .waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad })
+        .catch(() => {});
 
       // Wait for app to render
       await waitForAppMount(page);
@@ -250,11 +253,6 @@ test.describe('Nightly Regression - Authentication and Reports', () => {
         .catch(() => false);
       const hasTextInput = await page
         .locator('input[type=text]')
-        .first()
-        .isVisible()
-        .catch(() => false);
-      const hasAnyInput = await page
-        .locator('input')
         .first()
         .isVisible()
         .catch(() => false);
@@ -271,26 +269,12 @@ test.describe('Nightly Regression - Authentication and Reports', () => {
         .first()
         .isVisible()
         .catch(() => false);
-      const hasFormElements = await page
-        .locator('form, select, button')
-        .first()
-        .isVisible()
-        .catch(() => false);
-      const hasPageContent = await page
-        .locator('main, .content, .app, #root')
-        .first()
-        .isVisible()
-        .catch(() => false);
-
       const hasCalculatorContent =
         hasNumberInput ||
         hasTextInput ||
-        hasAnyInput ||
         hasCalculatorClass ||
         hasCalculationClass ||
-        hasCalculatorText ||
-        hasFormElements ||
-        hasPageContent;
+        (hasCalculatorText && (hasNumberInput || hasTextInput));
 
       if (!hasCalculatorContent) {
         console.log('🔍 Calculator page URL:', page.url());
@@ -355,14 +339,16 @@ test.describe('Nightly Regression - Authentication and Reports', () => {
         waitUntil: 'domcontentloaded',
         timeout: TEST_TIMEOUTS.navigation,
       });
-      await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad }).catch(() => {});
+      await page
+        .waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad })
+        .catch(() => {});
       await waitForAppMount(page);
 
       // Client credentials tokens don't carry a user subject, so /my-builds may
       // redirect to login. Both outcomes (loaded content OR redirect to login) are valid.
       const url = page.url();
       const hasContent = await page
-        .locator('main, .MuiContainer-root, .build-list, [data-testid*="build"]')
+        .locator('[data-testid*="build"], h1, h2')
         .first()
         .isVisible({ timeout: 5000 })
         .catch(() => false);
@@ -390,12 +376,14 @@ test.describe('Nightly Regression - Authentication and Reports', () => {
         waitUntil: 'domcontentloaded',
         timeout: TEST_TIMEOUTS.navigation,
       });
-      await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad }).catch(() => {});
+      await page
+        .waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad })
+        .catch(() => {});
       await waitForAppMount(page);
 
       const url = page.url();
       const hasContent = await page
-        .locator('main, .MuiContainer-root, [data-testid*="roster"]')
+        .locator('[data-testid*="roster"], h1, h2')
         .first()
         .isVisible({ timeout: 5000 })
         .catch(() => false);
@@ -423,12 +411,14 @@ test.describe('Nightly Regression - Authentication and Reports', () => {
         waitUntil: 'domcontentloaded',
         timeout: TEST_TIMEOUTS.navigation,
       });
-      await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad }).catch(() => {});
+      await page
+        .waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad })
+        .catch(() => {});
       await waitForAppMount(page);
 
       const url = page.url();
       const hasEditor = await page
-        .locator('main, [data-testid*="build"], [data-testid*="editor"], .MuiContainer-root')
+        .locator('[data-testid*="build"], [data-testid*="editor"], h1, h2')
         .first()
         .isVisible({ timeout: 5000 })
         .catch(() => false);
@@ -456,12 +446,14 @@ test.describe('Nightly Regression - Authentication and Reports', () => {
         waitUntil: 'domcontentloaded',
         timeout: TEST_TIMEOUTS.navigation,
       });
-      await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad }).catch(() => {});
+      await page
+        .waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad })
+        .catch(() => {});
       await waitForAppMount(page);
 
       const url = page.url();
       const hasBuilder = await page
-        .locator('main, [data-testid*="roster"], .MuiContainer-root')
+        .locator('[data-testid*="roster"], h1, h2')
         .first()
         .isVisible({ timeout: 5000 })
         .catch(() => false);
@@ -490,7 +482,7 @@ test.describe('Nightly Regression - Authentication and Reports', () => {
   // ---------------------------------------------------------------------------
   test.describe('Negative Scenarios', () => {
     test('invalid fight ID within a valid report should fallback gracefully', async ({ page }) => {
-      const reportId = '3gjVGWB2dxCL8XAw';
+      const reportId = TEST_DATA.REAL_REPORT_IDS[0];
       await page.goto(`/report/${reportId}/fight/99999/insights`, {
         waitUntil: 'domcontentloaded',
         timeout: TEST_TIMEOUTS.navigation,
@@ -503,12 +495,7 @@ test.describe('Nightly Regression - Authentication and Reports', () => {
         .isVisible()
         .catch(() => false);
       const redirected = !page.url().includes('99999');
-      const hasContent = await page.locator('main, #root').first().isVisible().catch(() => false);
-
-      expect(
-        hasError || redirected || hasContent,
-        'Invalid fight ID should be handled gracefully',
-      ).toBeTruthy();
+      expect(hasError || redirected, 'Invalid fight ID should be handled gracefully').toBeTruthy();
 
       // Page must remain navigable — no uncaught exceptions
       const errors: string[] = await page.evaluate(() => (window as any).testErrors ?? []);
@@ -532,7 +519,7 @@ test.describe('Nightly Regression - Authentication and Reports', () => {
         });
       });
 
-      await page.goto('/report/prV8jWb1NqFJc97Z', {
+      await page.goto(`/report/${TEST_DATA.REAL_REPORT_IDS[0]}`, {
         waitUntil: 'domcontentloaded',
         timeout: TEST_TIMEOUTS.navigation,
       });
@@ -551,10 +538,8 @@ test.describe('Nightly Regression - Authentication and Reports', () => {
         .first()
         .isVisible({ timeout: 3000 })
         .catch(() => false);
-      const hasContent = await page.locator('main, #root').first().isVisible().catch(() => false);
-
       expect(
-        hasLoadingOrError || hasText || hasContent,
+        hasLoadingOrError || hasText,
         'API timeout should show a loading/error state rather than crash',
       ).toBeTruthy();
 
@@ -577,15 +562,19 @@ test.describe('Nightly Regression - Authentication and Reports', () => {
         });
       });
 
-      await page.goto('/report/prV8jWb1NqFJc97Z', {
+      await page.goto(`/report/${TEST_DATA.REAL_REPORT_IDS[0]}`, {
         waitUntil: 'domcontentloaded',
         timeout: TEST_TIMEOUTS.navigation,
       });
       await waitForAppMount(page);
 
-      // App should not crash — any visible content is acceptable
-      const hasContent = await page.locator('main, #root, body').first().isVisible().catch(() => false);
-      expect(hasContent, 'A 429 response should not crash the page').toBeTruthy();
+      // A visible app shell is not evidence that the rate limit was handled.
+      const hasRateLimitMessage = await page
+        .getByText(/rate limit|too many requests|try again|temporarily unavailable|error|failed/i)
+        .first()
+        .isVisible({ timeout: TEST_TIMEOUTS.dataLoad })
+        .catch(() => false);
+      expect(hasRateLimitMessage, 'A 429 response should show a user-facing message').toBeTruthy();
 
       // No uncaught JS exceptions from the rate-limit scenario
       const errors: string[] = await page.evaluate(() => (window as any).testErrors ?? []);
@@ -596,7 +585,9 @@ test.describe('Nightly Regression - Authentication and Reports', () => {
           !e.includes('Non-Error promise rejection') &&
           !e.includes('ChunkLoadError'),
       );
-      expect(criticalErrors, '429 response should not cause uncaught JS exceptions').toHaveLength(0);
+      expect(criticalErrors, '429 response should not cause uncaught JS exceptions').toHaveLength(
+        0,
+      );
 
       await page.unrouteAll();
     });
@@ -629,4 +620,3 @@ test.describe('Nightly Regression - Authentication and Reports', () => {
     });
   });
 });
-

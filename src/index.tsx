@@ -1,6 +1,10 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 
+import '@fontsource-variable/inter';
+import '@fontsource-variable/material-symbols-outlined';
+import '@fontsource-variable/space-grotesk';
+
 import App from './App';
 import './index.css';
 import './styles/view-transitions.css';
@@ -73,8 +77,16 @@ const warmItemIconData = (): void => {
     .then((m) => m.preloadItemData())
     .catch(() => {});
 };
-if (typeof window.requestIdleCallback === 'function') {
-  window.requestIdleCallback(warmItemIconData, { timeout: 5000 });
-} else {
-  window.setTimeout(warmItemIconData, 2000);
+
+type NavigatorWithConnection = Navigator & {
+  connection?: { effectiveType?: string; saveData?: boolean };
+};
+const connection = (navigator as NavigatorWithConnection).connection;
+const shouldWarmLargeData =
+  !connection?.saveData && !['slow-2g', '2g'].includes(connection?.effectiveType ?? '');
+
+// Do not force a multi-megabyte background transfer in browsers without a true
+// idle callback. Feature consumers already await these datasets when needed.
+if (shouldWarmLargeData && typeof window.requestIdleCallback === 'function') {
+  window.requestIdleCallback(warmItemIconData, { timeout: 15000 });
 }

@@ -470,15 +470,12 @@ const HeroTitle = styled(Typography, {
     '50%': { opacity: 0.85 },
   },
   '& .light-text': {
-    fontFamily: 'Inter, sans-serif !important',
-    fontWeight: '100 !important',
-    background:
-      theme.palette.mode === 'dark'
-        ? 'white !important'
-        : 'linear-gradient(135deg, #475569 0%, #64748b 100%) !important',
-    WebkitBackgroundClip: 'text !important',
-    WebkitTextFillColor: 'transparent !important',
-    backgroundClip: 'text !important',
+    fontFamily: 'Inter Variable, sans-serif !important',
+    fontWeight: '300 !important',
+    color: `${theme.palette.mode === 'dark' ? '#f8fafc' : '#334155'} !important`,
+    background: 'none !important',
+    WebkitTextFillColor: 'currentColor !important',
+    textShadow: 'none !important',
     display: 'block',
     width: '100%',
     textAlign: 'center',
@@ -789,7 +786,7 @@ const CommunityCard = styled(Box, {
       color: a.number,
       pointerEvents: 'none',
       userSelect: 'none',
-      fontFamily: '"Inter", system-ui, sans-serif',
+      fontFamily: '"Inter Variable", system-ui, sans-serif',
       letterSpacing: '-0.04em',
     },
     // Animated gradient sweep on left border
@@ -2272,1207 +2269,1284 @@ export const LandingPage: React.FC = () => {
   }, []);
 
   return (
-    <LandingContainer id="main-content">
-      {showcaseGlobalStyles}
-      <HeroSection id="home" showAnimations={showAnimations}>
-        {showAnimations && (
-          <ParticleContainer>
-            {/* Floating particles with magical glow */}
-            <FloatingParticle delay={0} duration={8} x="15%" y="80%" size="6px" color="#60a5fa" />
-            <FloatingParticle delay={2} duration={12} x="25%" y="75%" size="4px" color="#a78bfa" />
-            <FloatingParticle delay={4} duration={10} x="35%" y="85%" size="5px" color="#34d399" />
-            <FloatingParticle delay={1} duration={9} x="50%" y="90%" size="3px" color="#fbbf24" />
-            <FloatingParticle delay={3} duration={11} x="65%" y="80%" size="6px" color="#f472b6" />
-            <FloatingParticle delay={5} duration={13} x="75%" y="75%" size="4px" color="#06b6d4" />
-            <FloatingParticle delay={6} duration={14} x="85%" y="85%" size="5px" color="#8b5cf6" />
-
-            {/* Second layer of particles */}
-            <FloatingParticle delay={7} duration={15} x="20%" y="70%" size="3px" color="#3b82f6" />
-            <FloatingParticle delay={8} duration={10} x="40%" y="78%" size="4px" color="#10b981" />
-            <FloatingParticle delay={9} duration={12} x="60%" y="88%" size="5px" color="#f59e0b" />
-            <FloatingParticle delay={10} duration={11} x="80%" y="70%" size="3px" color="#ec4899" />
-
-            {/* ESO runes for magical atmosphere */}
-            <ESORune delay={0} x="18%" y="25%" />
-            <ESORune delay={3} x="82%" y="30%" />
-            <ESORune delay={6} x="50%" y="15%" />
-            <ESORune delay={9} x="25%" y="50%" />
-            <ESORune delay={12} x="75%" y="55%" />
-          </ParticleContainer>
-        )}
-
-        <HeroContent className="u-fade-in-up">
-          <HeroTitle variant="h1" showAnimations={showAnimations}>
-            <span className="light-text">Essential Tools</span>
-            <span className="gradient-text">
-              For <span className="highlight-text">Your ESO Journey</span>
-            </span>
-          </HeroTitle>
-          <HeroSubtitle>
-            Optimize your builds, create stunning messages, and manage your guild with powerful,
-            easy-to-use tools designed for Elder Scrolls Online players.
-          </HeroSubtitle>
-
-          {isLoggedIn && isReady && clientIsLoggedIn ? (
-            <AuthenticatedLandingSection />
-          ) : isLoggedIn && (!isReady || !clientIsLoggedIn) ? (
-            <Box
-              role="status"
-              aria-live="polite"
-              sx={{ justifyContent: 'center', alignItems: 'center', display: 'flex', py: 4 }}
-            >
-              <CircularProgress size={24} sx={{ mr: 2 }} aria-label="Initializing" />
-              <Typography variant="body1" sx={{ color: 'text.secondary' }}>
-                Initializing...
-              </Typography>
-            </Box>
-          ) : (
-            <UnauthenticatedLandingSection />
-          )}
-        </HeroContent>
-      </HeroSection>
-
-      {/* ── Hero → Tools transition bridge ── */}
-      <ToolsBridge
-        sx={{
-          opacity: isVisible ? 1 : 0,
-          transform: isVisible ? 'translateY(0)' : 'translateY(30px)',
-          filter: isVisible ? 'blur(0)' : 'blur(4px)',
-          transition: 'all 0.8s cubic-bezier(0.16, 1, 0.3, 1)',
-        }}
-      >
-        <div className="bridge-rule" />
-        <div className="bridge-heading">
-          <span className="bridge-title">The&nbsp;</span>
-          <span className="bridge-accent">Arsenal</span>
-        </div>
-        <div className="bridge-caption">Craft &middot; Optimize &middot; Dominate</div>
-      </ToolsBridge>
-
-      <ToolsSection id="tools" ref={toolsSectionRef}>
-        <Box
-          sx={{
-            opacity: isVisible ? 1 : 0,
-            transform: isVisible ? 'translateY(0)' : 'translateY(20px)',
-            transition: 'all 0.6s ease-out 0.2s',
-          }}
-        >
-          <ToolsGrid>
-            <ToolCard index={0}>
-              <ToolIcon>
-                <CvIcon size="2rem" />
-              </ToolIcon>
-              <Typography
-                variant="h5"
-                component="h3"
-                sx={{ mb: 2, color: 'text.primary', fontWeight: 700 }}
-              >
-                Text-Editor
-              </Typography>
-              <Typography
-                sx={{ color: 'text.secondary', mb: 2, flex: 1, fontWeight: 200, lineHeight: 1.6 }}
-              >
-                Create eye-catching MOTD and group finder posts with our visual editor. Design
-                messages that stand out with custom styles and formatting.
-              </Typography>
-              <ToolFeatures>
-                <li>Visual interface for easy formatting</li>
-                <li>Custom styles and colors</li>
-                <li>Preview before posting</li>
-                <li>Save templates for reuse</li>
-              </ToolFeatures>
-              <ToolAction onClick={() => navigate('/text-editor', { vtType: 'up' })}>
-                Launch Editor
-              </ToolAction>
-            </ToolCard>
-
-            <ToolCard index={1}>
-              <ToolIcon>
-                <CalculatorIcon size="2rem" />
-              </ToolIcon>
-              <Typography
-                variant="h5"
-                component="h3"
-                sx={{ mb: 2, color: 'text.primary', fontWeight: 700 }}
-              >
-                Build Calculator
-              </Typography>
-              <Typography
-                sx={{ color: 'text.secondary', mb: 2, flex: 1, fontWeight: 200, lineHeight: 1.6 }}
-              >
-                Optimize your character&apos;s stats with our comprehensive calculator. Track
-                penetration, critical damage, and armor to hit those crucial caps.
-              </Typography>
-              <ToolFeatures>
-                <li>
-                  Penetration optimizer <span style={{ fontWeight: 300 }}>(18,200 cap)</span>
-                </li>
-                <li>
-                  Critical damage calculator <span style={{ fontWeight: 300 }}>(125% cap)</span>
-                </li>
-                <li>Armor resistance planner</li>
-                <li>Real-time cap status indicators</li>
-              </ToolFeatures>
-              <ToolAction onClick={() => navigate('/calculator', { vtType: 'up' })}>
-                Launch Calculator
-              </ToolAction>
-            </ToolCard>
-
-            <ToolCard index={2}>
-              <ToolIcon>
-                <FileLoopIcon size="2rem" />
-              </ToolIcon>
-              <Typography
-                variant="h5"
-                component="h3"
-                sx={{ mb: 2, color: 'text.primary', fontWeight: 700 }}
-              >
-                Log Analyzer
-              </Typography>
-              <Typography
-                sx={{ color: 'text.secondary', mb: 2, flex: 1, fontWeight: 200, lineHeight: 1.6 }}
-              >
-                Deep dive into your ESO combat logs with advanced analytics. Analyze player
-                performance, damage patterns, and raid insights with detailed breakdowns.
-              </Typography>
-              <ToolFeatures>
-                <li>Combat performance analysis</li>
-                <li>Player damage breakdowns</li>
-                <li>Skill usage tracking</li>
-                <li>Real-time fight insights</li>
-              </ToolFeatures>
-              <ToolAction onClick={() => navigate('/my-reports', { vtType: 'up' })}>
-                Open Log Analyzer
-              </ToolAction>
-            </ToolCard>
-
-            <ToolCard index={3}>
-              <ToolIcon>
-                <PeopleIcon size="2rem" />
-              </ToolIcon>
-              <Typography
-                variant="h5"
-                component="h3"
-                sx={{ mb: 2, color: 'text.primary', fontWeight: 700 }}
-              >
-                Roster Builder
-              </Typography>
-              <Typography
-                sx={{ color: 'text.secondary', mb: 2, flex: 1, fontWeight: 200, lineHeight: 1.6 }}
-              >
-                Build and manage your guild rosters with our web tools and Discord bot. Organize
-                members, assign roles, and track raid signups across platforms.
-              </Typography>
-              <ToolFeatures>
-                <li>Visual roster builder</li>
-                <li>Discord bot integration</li>
-                <li>Raid signup tracking</li>
-                <li>Role assignment system</li>
-              </ToolFeatures>
-              <ToolAction onClick={() => navigate('/roster-builder', { vtType: 'up' })}>
-                Open Roster Builder
-              </ToolAction>
-            </ToolCard>
-          </ToolsGrid>
-        </Box>
-      </ToolsSection>
-
-      <KalpaSection id="kalpa">
-        {/* Large watermark number for depth */}
-        <Typography
-          sx={(theme: Theme) => ({
-            position: 'absolute',
-            top: { xs: '-1rem', md: '-2rem' },
-            right: { xs: '1rem', md: '5%' },
-            fontSize: { xs: '12rem', sm: '16rem', md: '22rem' },
-            fontWeight: 900,
-            lineHeight: 1,
-            color: 'transparent',
-            WebkitTextStroke:
-              theme.palette.mode === 'dark'
-                ? '1px rgba(139, 92, 246, 0.06)'
-                : '1px rgba(139, 92, 246, 0.04)',
-            userSelect: 'none',
-            pointerEvents: 'none',
-            zIndex: 0,
-            fontFamily: '"Inter", "Helvetica Neue", sans-serif',
-            letterSpacing: '-0.05em',
-          })}
-        >
-          01
-        </Typography>
-        <KalpaContent>
-          <Box sx={{ position: 'relative', zIndex: 1 }}>
-            <Box
-              sx={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                mb: 2,
-                px: 1.2,
-                py: 0.4,
-                borderRadius: '6px',
-                background: (theme: Theme) =>
-                  theme.palette.mode === 'dark'
-                    ? 'rgba(139, 92, 246, 0.08)'
-                    : 'rgba(139, 92, 246, 0.04)',
-                border: (theme: Theme) =>
-                  theme.palette.mode === 'dark'
-                    ? '1px solid rgba(139, 92, 246, 0.15)'
-                    : '1px solid rgba(139, 92, 246, 0.1)',
-              }}
-            >
-              <Typography
-                sx={{
-                  fontSize: '0.75rem',
-                  fontWeight: 600,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.12em',
-                  color: '#8b5cf6',
-                }}
-              >
-                Desktop App
-              </Typography>
-              <Box
-                sx={{
-                  width: '6px',
-                  height: '6px',
-                  borderRadius: '50%',
-                  background: '#22c55e',
-                  boxShadow: '0 0 6px rgba(34, 197, 94, 0.5)',
-                }}
+    <>
+      <LandingContainer id="main-content" tabIndex={-1} sx={{ outline: 'none' }}>
+        {showcaseGlobalStyles}
+        <HeroSection id="home" showAnimations={showAnimations}>
+          {showAnimations && (
+            <ParticleContainer>
+              {/* Floating particles with magical glow */}
+              <FloatingParticle delay={0} duration={8} x="15%" y="80%" size="6px" color="#60a5fa" />
+              <FloatingParticle
+                delay={2}
+                duration={12}
+                x="25%"
+                y="75%"
+                size="4px"
+                color="#a78bfa"
               />
-            </Box>
-            <Typography
-              variant="h2"
-              sx={{
-                fontWeight: 800,
-                fontSize: { xs: '2.2rem', sm: '2.6rem', md: '3rem' },
-                lineHeight: 1.1,
-                color: 'text.primary',
-                mb: 2,
-                letterSpacing: '-0.02em',
-              }}
-            >
-              Meet{' '}
+              <FloatingParticle
+                delay={4}
+                duration={10}
+                x="35%"
+                y="85%"
+                size="5px"
+                color="#34d399"
+              />
+              <FloatingParticle delay={1} duration={9} x="50%" y="90%" size="3px" color="#fbbf24" />
+              <FloatingParticle
+                delay={3}
+                duration={11}
+                x="65%"
+                y="80%"
+                size="6px"
+                color="#f472b6"
+              />
+              <FloatingParticle
+                delay={5}
+                duration={13}
+                x="75%"
+                y="75%"
+                size="4px"
+                color="#06b6d4"
+              />
+              <FloatingParticle
+                delay={6}
+                duration={14}
+                x="85%"
+                y="85%"
+                size="5px"
+                color="#8b5cf6"
+              />
+
+              {/* Second layer of particles */}
+              <FloatingParticle
+                delay={7}
+                duration={15}
+                x="20%"
+                y="70%"
+                size="3px"
+                color="#3b82f6"
+              />
+              <FloatingParticle
+                delay={8}
+                duration={10}
+                x="40%"
+                y="78%"
+                size="4px"
+                color="#10b981"
+              />
+              <FloatingParticle
+                delay={9}
+                duration={12}
+                x="60%"
+                y="88%"
+                size="5px"
+                color="#f59e0b"
+              />
+              <FloatingParticle
+                delay={10}
+                duration={11}
+                x="80%"
+                y="70%"
+                size="3px"
+                color="#ec4899"
+              />
+
+              {/* ESO runes for magical atmosphere */}
+              <ESORune delay={0} x="18%" y="25%" />
+              <ESORune delay={3} x="82%" y="30%" />
+              <ESORune delay={6} x="50%" y="15%" />
+              <ESORune delay={9} x="25%" y="50%" />
+              <ESORune delay={12} x="75%" y="55%" />
+            </ParticleContainer>
+          )}
+
+          <HeroContent className="u-fade-in-up">
+            <HeroTitle variant="h1" showAnimations={showAnimations}>
+              <span className="light-text">Essential Tools</span>
+              <span className="gradient-text">
+                For <span className="highlight-text">Your ESO Journey</span>
+              </span>
+            </HeroTitle>
+            <HeroSubtitle>
+              Optimize your builds, create stunning messages, and manage your guild with powerful,
+              easy-to-use tools designed for Elder Scrolls Online players.
+            </HeroSubtitle>
+
+            {isLoggedIn && isReady && clientIsLoggedIn ? (
+              <AuthenticatedLandingSection />
+            ) : isLoggedIn && (!isReady || !clientIsLoggedIn) ? (
               <Box
-                component="span"
-                sx={{
-                  background:
-                    'linear-gradient(135deg, #a78bfa 0%, #8b5cf6 40%, #6366f1 70%, #818cf8 100%)',
-                  backgroundSize: '200% 200%',
-                  animation: 'kalpaAurora 6s ease-in-out infinite',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  backgroundClip: 'text',
-                }}
+                role="status"
+                aria-live="polite"
+                sx={{ justifyContent: 'center', alignItems: 'center', display: 'flex', py: 4 }}
               >
-                Kalpa
-              </Box>
-            </Typography>
-            <Typography
-              sx={{
-                color: 'text.secondary',
-                fontSize: { xs: '1rem', sm: '1.05rem' },
-                lineHeight: 1.7,
-                fontWeight: 300,
-                mb: 3,
-                maxWidth: '460px',
-              }}
-            >
-              A fast, open-source addon manager for ESO. Built with Rust and Tauri for native
-              performance — just 15 MB, no Java runtime required.
-            </Typography>
-
-            <KalpaFeatureList>
-              <KalpaFeatureRow delay={1}>
-                <span className="feature-index">01</span>
-                <span className="feature-title">One-click installs</span>
-                <span className="feature-desc">Install and update addons instantly</span>
-              </KalpaFeatureRow>
-              <KalpaFeatureRow delay={2}>
-                <span className="feature-index">02</span>
-                <span className="feature-title">Dependency resolution</span>
-                <span className="feature-desc">Automatically handles required libraries</span>
-              </KalpaFeatureRow>
-              <KalpaFeatureRow delay={3}>
-                <span className="feature-index">03</span>
-                <span className="feature-title">Addon profiles</span>
-                <span className="feature-desc">Switch loadouts per character or role</span>
-              </KalpaFeatureRow>
-              <KalpaFeatureRow delay={4}>
-                <span className="feature-index">04</span>
-                <span className="feature-title">Pack Hub</span>
-                <span className="feature-desc">Share and discover addon collections</span>
-              </KalpaFeatureRow>
-              <KalpaFeatureRow delay={5}>
-                <span className="feature-index">05</span>
-                <span className="feature-title">SavedVariables backup</span>
-                <span className="feature-desc">Never lose your addon settings again</span>
-              </KalpaFeatureRow>
-              <KalpaFeatureRow delay={6}>
-                <span className="feature-index">06</span>
-                <span className="feature-title">Minion migration</span>
-                <span className="feature-desc">One-click import from your old manager</span>
-              </KalpaFeatureRow>
-            </KalpaFeatureList>
-
-            <Box sx={{ mt: 3, display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
-              <Button
-                variant="contained"
-                href="https://github.com/ESO-Toolkit/kalpa"
-                target="_blank"
-                rel="noopener noreferrer"
-                sx={{
-                  background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
-                  color: '#fff',
-                  fontWeight: 600,
-                  textTransform: 'none',
-                  borderRadius: '10px',
-                  padding: '0.7rem 1.8rem',
-                  fontSize: '0.9rem',
-                  boxShadow: '0 4px 20px rgba(139, 92, 246, 0.25)',
-                  '&:hover': {
-                    background: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)',
-                    boxShadow: '0 8px 30px rgba(139, 92, 246, 0.35)',
-                    transform: 'translateY(-2px)',
-                  },
-                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                }}
-              >
-                Get Kalpa
-              </Button>
-              <Button
-                variant="outlined"
-                href="https://github.com/ESO-Toolkit/kalpa"
-                target="_blank"
-                rel="noopener noreferrer"
-                sx={(theme: Theme) => ({
-                  borderColor: 'rgba(139, 92, 246, 0.25)',
-                  color: theme.palette.mode === 'dark' ? '#c4b5fd' : '#7c3aed',
-                  fontWeight: 600,
-                  textTransform: 'none',
-                  borderRadius: '10px',
-                  padding: '0.7rem 1.8rem',
-                  fontSize: '0.9rem',
-                  '&:hover': {
-                    borderColor: 'rgba(139, 92, 246, 0.5)',
-                    background: 'rgba(139, 92, 246, 0.04)',
-                    transform: 'translateY(-2px)',
-                  },
-                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                })}
-              >
-                View on GitHub
-              </Button>
-            </Box>
-          </Box>
-
-          {/* Mock desktop app window */}
-          <KalpaAppWindow>
-            <KalpaWindowTitleBar>
-              <Box sx={{ display: 'flex', gap: '6px', mr: 1 }}>
-                <Box sx={{ width: 10, height: 10, borderRadius: '50%', background: '#ff5f57' }} />
-                <Box sx={{ width: 10, height: 10, borderRadius: '50%', background: '#febc2e' }} />
-                <Box sx={{ width: 10, height: 10, borderRadius: '50%', background: '#28c840' }} />
-              </Box>
-              <Typography
-                sx={(theme: Theme) => ({
-                  fontSize: '0.7rem',
-                  fontWeight: 500,
-                  color:
-                    theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)',
-                  letterSpacing: '0.02em',
-                  flex: 1,
-                  textAlign: 'center',
-                  mr: '36px',
-                })}
-              >
-                Kalpa — Addon Manager
-              </Typography>
-            </KalpaWindowTitleBar>
-
-            {/* Search bar */}
-            <Box
-              sx={(theme: Theme) => ({
-                mx: '0.75rem',
-                mt: '0.6rem',
-                mb: '0.4rem',
-                px: 1,
-                py: 0.5,
-                borderRadius: '6px',
-                background:
-                  theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
-                border:
-                  theme.palette.mode === 'dark'
-                    ? '1px solid rgba(255,255,255,0.06)'
-                    : '1px solid rgba(0,0,0,0.06)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 0.5,
-              })}
-            >
-              <Typography sx={{ fontSize: '0.7rem', opacity: 0.3 }}>🔍</Typography>
-              <Typography
-                sx={(theme: Theme) => ({
-                  fontSize: '0.72rem',
-                  color:
-                    theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.25)',
-                  fontWeight: 400,
-                })}
-              >
-                Search addons...
-              </Typography>
-            </Box>
-
-            {/* Mock addon list */}
-            <Box sx={{ py: 0.25 }}>
-              {[
-                { name: 'Dressing Room Reborn', version: 'v3.8.1', status: 'Updated' },
-                { name: 'Combat Metrics', version: 'v2.5.0', status: 'Update' },
-                { name: 'Azurah - Interface Enhanced', version: 'v4.1.2', status: 'Updated' },
-                { name: 'Inventory Insight', version: 'v1.9.4', status: 'Updated' },
-                { name: 'RaidNotifier', version: 'v3.2.1', status: 'Update' },
-                { name: 'Srendarr - Aura Tracker', version: 'v2.7.3', status: 'Updated' },
-                { name: 'Beam Me Up', version: 'v1.4.0', status: 'Updated' },
-                { name: 'Harvest Map', version: 'v5.1.6', status: 'Update' },
-              ].map((addon) => (
-                <KalpaAddonRow key={addon.name}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flex: 1, minWidth: 0 }}>
-                    <Box
-                      sx={{
-                        width: 24,
-                        height: 24,
-                        borderRadius: '5px',
-                        background:
-                          'linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(99, 102, 241, 0.1))',
-                        border: '1px solid rgba(139, 92, 246, 0.15)',
-                        flexShrink: 0,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      <Typography sx={{ fontSize: '0.6rem', opacity: 0.6 }}>📦</Typography>
-                    </Box>
-                    <Box sx={{ minWidth: 0 }}>
-                      <Typography
-                        sx={{
-                          fontSize: '0.75rem',
-                          fontWeight: 600,
-                          color: 'text.primary',
-                          whiteSpace: 'nowrap',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                        }}
-                      >
-                        {addon.name}
-                      </Typography>
-                      <Typography
-                        sx={{
-                          fontSize: '0.62rem',
-                          color: 'text.secondary',
-                          opacity: 0.6,
-                        }}
-                      >
-                        {addon.version}
-                      </Typography>
-                    </Box>
-                  </Box>
-                  <Box
-                    sx={{
-                      px: 0.8,
-                      py: 0.25,
-                      borderRadius: '4px',
-                      fontSize: '0.62rem',
-                      fontWeight: 600,
-                      flexShrink: 0,
-                      ...(addon.status === 'Update'
-                        ? {
-                            background:
-                              'linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(99, 102, 241, 0.1))',
-                            color: '#a78bfa',
-                            border: '1px solid rgba(139, 92, 246, 0.2)',
-                          }
-                        : {
-                            background: 'rgba(34, 197, 94, 0.08)',
-                            color: 'rgba(34, 197, 94, 0.7)',
-                            border: '1px solid rgba(34, 197, 94, 0.12)',
-                          }),
-                    }}
-                  >
-                    {addon.status}
-                  </Box>
-                </KalpaAddonRow>
-              ))}
-            </Box>
-
-            {/* Status bar */}
-            <Box
-              sx={(theme: Theme) => ({
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                px: '1rem',
-                py: '0.45rem',
-                borderTop:
-                  theme.palette.mode === 'dark'
-                    ? '1px solid rgba(255,255,255,0.04)'
-                    : '1px solid rgba(0,0,0,0.04)',
-              })}
-            >
-              <Typography sx={{ fontSize: '0.6rem', color: 'text.secondary', opacity: 0.5 }}>
-                8 addons installed
-              </Typography>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                <Box
-                  sx={{
-                    width: 5,
-                    height: 5,
-                    borderRadius: '50%',
-                    background: '#22c55e',
-                    boxShadow: '0 0 4px rgba(34, 197, 94, 0.4)',
-                  }}
-                />
-                <Typography sx={{ fontSize: '0.6rem', color: 'text.secondary', opacity: 0.5 }}>
-                  All synced
+                <CircularProgress size={24} sx={{ mr: 2 }} aria-label="Initializing" />
+                <Typography variant="body1" sx={{ color: 'text.secondary' }}>
+                  Initializing...
                 </Typography>
               </Box>
-            </Box>
-          </KalpaAppWindow>
-        </KalpaContent>
-      </KalpaSection>
+            ) : (
+              <UnauthenticatedLandingSection />
+            )}
+          </HeroContent>
+        </HeroSection>
 
-      <EsotkSection id="esotk-addon">
-        {/* Large watermark number for depth */}
-        <Typography
-          sx={(theme: Theme) => ({
-            position: 'absolute',
-            top: { xs: '-1rem', md: '-2rem' },
-            left: { xs: '1rem', md: '5%' },
-            fontSize: { xs: '12rem', sm: '16rem', md: '22rem' },
-            fontWeight: 900,
-            lineHeight: 1,
-            color: 'transparent',
-            WebkitTextStroke:
-              theme.palette.mode === 'dark'
-                ? '1px rgba(245, 158, 11, 0.06)'
-                : '1px rgba(180, 120, 20, 0.04)',
-            userSelect: 'none',
-            pointerEvents: 'none',
-            zIndex: 0,
-            fontFamily: '"Inter", "Helvetica Neue", sans-serif',
-            letterSpacing: '-0.05em',
-          })}
+        {/* ── Hero → Tools transition bridge ── */}
+        <ToolsBridge
+          sx={{
+            opacity: isVisible ? 1 : 0,
+            transform: isVisible ? 'translateY(0)' : 'translateY(30px)',
+            filter: isVisible ? 'blur(0)' : 'blur(4px)',
+            transition: 'all 0.8s cubic-bezier(0.16, 1, 0.3, 1)',
+          }}
         >
-          02
-        </Typography>
-        <EsotkContent>
-          {/* Text content (visually on right due to RTL direction) */}
-          <Box sx={{ position: 'relative', zIndex: 1 }}>
-            <Box
-              sx={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                mb: 2,
-                px: 1.2,
-                py: 0.4,
-                borderRadius: '6px',
-                background: (theme: Theme) =>
-                  theme.palette.mode === 'dark'
-                    ? 'rgba(245, 158, 11, 0.08)'
-                    : 'rgba(180, 120, 20, 0.04)',
-                border: (theme: Theme) =>
-                  theme.palette.mode === 'dark'
-                    ? '1px solid rgba(245, 158, 11, 0.15)'
-                    : '1px solid rgba(180, 120, 20, 0.1)',
-              }}
-            >
+          <div className="bridge-rule" />
+          <div className="bridge-heading">
+            <span className="bridge-title">The&nbsp;</span>
+            <span className="bridge-accent">Arsenal</span>
+          </div>
+          <div className="bridge-caption">Craft &middot; Optimize &middot; Dominate</div>
+        </ToolsBridge>
+
+        <ToolsSection id="tools" ref={toolsSectionRef}>
+          <Box
+            sx={{
+              opacity: isVisible ? 1 : 0,
+              transform: isVisible ? 'translateY(0)' : 'translateY(20px)',
+              transition: 'all 0.6s ease-out 0.2s',
+            }}
+          >
+            <ToolsGrid>
+              <ToolCard index={0}>
+                <ToolIcon>
+                  <CvIcon size="2rem" />
+                </ToolIcon>
+                <Typography
+                  variant="h5"
+                  component="h2"
+                  sx={{ mb: 2, color: 'text.primary', fontWeight: 700 }}
+                >
+                  Text-Editor
+                </Typography>
+                <Typography
+                  sx={{ color: 'text.secondary', mb: 2, flex: 1, fontWeight: 200, lineHeight: 1.6 }}
+                >
+                  Create eye-catching MOTD and group finder posts with our visual editor. Design
+                  messages that stand out with custom styles and formatting.
+                </Typography>
+                <ToolFeatures>
+                  <li>Visual interface for easy formatting</li>
+                  <li>Custom styles and colors</li>
+                  <li>Preview before posting</li>
+                  <li>Save templates for reuse</li>
+                </ToolFeatures>
+                <ToolAction onClick={() => navigate('/text-editor', { vtType: 'up' })}>
+                  Launch Editor
+                </ToolAction>
+              </ToolCard>
+
+              <ToolCard index={1}>
+                <ToolIcon>
+                  <CalculatorIcon size="2rem" />
+                </ToolIcon>
+                <Typography
+                  variant="h5"
+                  component="h2"
+                  sx={{ mb: 2, color: 'text.primary', fontWeight: 700 }}
+                >
+                  Build Calculator
+                </Typography>
+                <Typography
+                  sx={{ color: 'text.secondary', mb: 2, flex: 1, fontWeight: 200, lineHeight: 1.6 }}
+                >
+                  Optimize your character&apos;s stats with our comprehensive calculator. Track
+                  penetration, critical damage, and armor to hit those crucial caps.
+                </Typography>
+                <ToolFeatures>
+                  <li>
+                    Penetration optimizer <span style={{ fontWeight: 300 }}>(18,200 cap)</span>
+                  </li>
+                  <li>
+                    Critical damage calculator <span style={{ fontWeight: 300 }}>(125% cap)</span>
+                  </li>
+                  <li>Armor resistance planner</li>
+                  <li>Real-time cap status indicators</li>
+                </ToolFeatures>
+                <ToolAction onClick={() => navigate('/calculator', { vtType: 'up' })}>
+                  Launch Calculator
+                </ToolAction>
+              </ToolCard>
+
+              <ToolCard index={2}>
+                <ToolIcon>
+                  <FileLoopIcon size="2rem" />
+                </ToolIcon>
+                <Typography
+                  variant="h5"
+                  component="h2"
+                  sx={{ mb: 2, color: 'text.primary', fontWeight: 700 }}
+                >
+                  Log Analyzer
+                </Typography>
+                <Typography
+                  sx={{ color: 'text.secondary', mb: 2, flex: 1, fontWeight: 200, lineHeight: 1.6 }}
+                >
+                  Deep dive into your ESO combat logs with advanced analytics. Analyze player
+                  performance, damage patterns, and raid insights with detailed breakdowns.
+                </Typography>
+                <ToolFeatures>
+                  <li>Combat performance analysis</li>
+                  <li>Player damage breakdowns</li>
+                  <li>Skill usage tracking</li>
+                  <li>Real-time fight insights</li>
+                </ToolFeatures>
+                <ToolAction onClick={() => navigate('/my-reports', { vtType: 'up' })}>
+                  Open Log Analyzer
+                </ToolAction>
+              </ToolCard>
+
+              <ToolCard index={3}>
+                <ToolIcon>
+                  <PeopleIcon size="2rem" />
+                </ToolIcon>
+                <Typography
+                  variant="h5"
+                  component="h2"
+                  sx={{ mb: 2, color: 'text.primary', fontWeight: 700 }}
+                >
+                  Roster Builder
+                </Typography>
+                <Typography
+                  sx={{ color: 'text.secondary', mb: 2, flex: 1, fontWeight: 200, lineHeight: 1.6 }}
+                >
+                  Build and manage your guild rosters with our web tools and Discord bot. Organize
+                  members, assign roles, and track raid signups across platforms.
+                </Typography>
+                <ToolFeatures>
+                  <li>Visual roster builder</li>
+                  <li>Discord bot integration</li>
+                  <li>Raid signup tracking</li>
+                  <li>Role assignment system</li>
+                </ToolFeatures>
+                <ToolAction onClick={() => navigate('/roster-builder', { vtType: 'up' })}>
+                  Open Roster Builder
+                </ToolAction>
+              </ToolCard>
+            </ToolsGrid>
+          </Box>
+        </ToolsSection>
+
+        <KalpaSection id="kalpa">
+          {/* Large watermark number for depth */}
+          <Typography
+            sx={(theme: Theme) => ({
+              position: 'absolute',
+              top: { xs: '-1rem', md: '-2rem' },
+              right: { xs: '1rem', md: '5%' },
+              fontSize: { xs: '12rem', sm: '16rem', md: '22rem' },
+              fontWeight: 900,
+              lineHeight: 1,
+              color: 'transparent',
+              WebkitTextStroke:
+                theme.palette.mode === 'dark'
+                  ? '1px rgba(139, 92, 246, 0.06)'
+                  : '1px rgba(139, 92, 246, 0.04)',
+              userSelect: 'none',
+              pointerEvents: 'none',
+              zIndex: 0,
+              fontFamily: '"Inter Variable", "Helvetica Neue", sans-serif',
+              letterSpacing: '-0.05em',
+            })}
+          >
+            01
+          </Typography>
+          <KalpaContent>
+            <Box sx={{ position: 'relative', zIndex: 1 }}>
+              <Box
+                sx={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  mb: 2,
+                  px: 1.2,
+                  py: 0.4,
+                  borderRadius: '6px',
+                  background: (theme: Theme) =>
+                    theme.palette.mode === 'dark'
+                      ? 'rgba(139, 92, 246, 0.08)'
+                      : 'rgba(139, 92, 246, 0.04)',
+                  border: (theme: Theme) =>
+                    theme.palette.mode === 'dark'
+                      ? '1px solid rgba(139, 92, 246, 0.15)'
+                      : '1px solid rgba(139, 92, 246, 0.1)',
+                }}
+              >
+                <Typography
+                  sx={{
+                    fontSize: '0.75rem',
+                    fontWeight: 600,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.12em',
+                    color: '#8b5cf6',
+                  }}
+                >
+                  Desktop App
+                </Typography>
+                <Box
+                  sx={{
+                    width: '6px',
+                    height: '6px',
+                    borderRadius: '50%',
+                    background: '#22c55e',
+                    boxShadow: '0 0 6px rgba(34, 197, 94, 0.5)',
+                  }}
+                />
+              </Box>
+              <Typography
+                variant="h2"
+                sx={{
+                  fontWeight: 800,
+                  fontSize: { xs: '2.2rem', sm: '2.6rem', md: '3rem' },
+                  lineHeight: 1.1,
+                  color: 'text.primary',
+                  mb: 2,
+                  letterSpacing: '-0.02em',
+                }}
+              >
+                Meet{' '}
+                <Box
+                  component="span"
+                  sx={{
+                    background:
+                      'linear-gradient(135deg, #a78bfa 0%, #8b5cf6 40%, #6366f1 70%, #818cf8 100%)',
+                    backgroundSize: '200% 200%',
+                    animation: 'kalpaAurora 6s ease-in-out infinite',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text',
+                  }}
+                >
+                  Kalpa
+                </Box>
+              </Typography>
               <Typography
                 sx={{
-                  fontSize: '0.75rem',
-                  fontWeight: 600,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.12em',
-                  color: (theme: Theme) => (theme.palette.mode === 'dark' ? '#f59e0b' : '#b47814'),
+                  color: 'text.secondary',
+                  fontSize: { xs: '1rem', sm: '1.05rem' },
+                  lineHeight: 1.7,
+                  fontWeight: 300,
+                  mb: 3,
+                  maxWidth: '460px',
                 }}
               >
-                In-Game Addon
+                A fast, open-source addon manager for ESO. Built with Rust and Tauri for native
+                performance — just 15 MB, no Java runtime required.
               </Typography>
-              <Box
-                sx={{
-                  px: 0.8,
-                  py: 0.2,
-                  borderRadius: '4px',
-                  background: (theme: Theme) =>
-                    theme.palette.mode === 'dark'
-                      ? 'rgba(245, 158, 11, 0.18)'
-                      : 'rgba(180, 120, 20, 0.12)',
-                  fontSize: '0.65rem',
-                  fontWeight: 700,
-                  color: (theme: Theme) => (theme.palette.mode === 'dark' ? '#fbbf24' : '#92610e'),
-                  letterSpacing: '0.08em',
-                  animation: 'pulse 2s ease-in-out infinite',
-                  '@keyframes pulse': {
-                    '0%, 100%': { opacity: 1 },
-                    '50%': { opacity: 0.7 },
-                  },
-                }}
-              >
-                COMING SOON
+
+              <KalpaFeatureList>
+                <KalpaFeatureRow delay={1}>
+                  <span className="feature-index">01</span>
+                  <span className="feature-title">One-click installs</span>
+                  <span className="feature-desc">Install and update addons instantly</span>
+                </KalpaFeatureRow>
+                <KalpaFeatureRow delay={2}>
+                  <span className="feature-index">02</span>
+                  <span className="feature-title">Dependency resolution</span>
+                  <span className="feature-desc">Automatically handles required libraries</span>
+                </KalpaFeatureRow>
+                <KalpaFeatureRow delay={3}>
+                  <span className="feature-index">03</span>
+                  <span className="feature-title">Addon profiles</span>
+                  <span className="feature-desc">Switch loadouts per character or role</span>
+                </KalpaFeatureRow>
+                <KalpaFeatureRow delay={4}>
+                  <span className="feature-index">04</span>
+                  <span className="feature-title">Pack Hub</span>
+                  <span className="feature-desc">Share and discover addon collections</span>
+                </KalpaFeatureRow>
+                <KalpaFeatureRow delay={5}>
+                  <span className="feature-index">05</span>
+                  <span className="feature-title">SavedVariables backup</span>
+                  <span className="feature-desc">Never lose your addon settings again</span>
+                </KalpaFeatureRow>
+                <KalpaFeatureRow delay={6}>
+                  <span className="feature-index">06</span>
+                  <span className="feature-title">Minion migration</span>
+                  <span className="feature-desc">One-click import from your old manager</span>
+                </KalpaFeatureRow>
+              </KalpaFeatureList>
+
+              <Box sx={{ mt: 3, display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
+                <Button
+                  variant="contained"
+                  href="https://github.com/ESO-Toolkit/kalpa"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  sx={{
+                    background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
+                    color: '#fff',
+                    fontWeight: 600,
+                    textTransform: 'none',
+                    borderRadius: '10px',
+                    padding: '0.7rem 1.8rem',
+                    fontSize: '0.9rem',
+                    boxShadow: '0 4px 20px rgba(139, 92, 246, 0.25)',
+                    '&:hover': {
+                      background: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)',
+                      boxShadow: '0 8px 30px rgba(139, 92, 246, 0.35)',
+                      transform: 'translateY(-2px)',
+                    },
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                  }}
+                >
+                  Get Kalpa
+                </Button>
+                <Button
+                  variant="outlined"
+                  href="https://github.com/ESO-Toolkit/kalpa"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  sx={(theme: Theme) => ({
+                    borderColor: 'rgba(139, 92, 246, 0.25)',
+                    color: theme.palette.mode === 'dark' ? '#c4b5fd' : '#7c3aed',
+                    fontWeight: 600,
+                    textTransform: 'none',
+                    borderRadius: '10px',
+                    padding: '0.7rem 1.8rem',
+                    fontSize: '0.9rem',
+                    '&:hover': {
+                      borderColor: 'rgba(139, 92, 246, 0.5)',
+                      background: 'rgba(139, 92, 246, 0.04)',
+                      transform: 'translateY(-2px)',
+                    },
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                  })}
+                >
+                  View on GitHub
+                </Button>
               </Box>
             </Box>
-            <Typography
-              variant="h2"
-              sx={{
-                fontWeight: 800,
-                fontSize: { xs: '2.2rem', sm: '2.6rem', md: '3rem' },
-                lineHeight: 1.1,
-                color: 'text.primary',
-                mb: 2,
-                letterSpacing: '-0.02em',
-              }}
-            >
-              The{' '}
+
+            {/* Mock desktop app window */}
+            <KalpaAppWindow>
+              <KalpaWindowTitleBar>
+                <Box sx={{ display: 'flex', gap: '6px', mr: 1 }}>
+                  <Box sx={{ width: 10, height: 10, borderRadius: '50%', background: '#ff5f57' }} />
+                  <Box sx={{ width: 10, height: 10, borderRadius: '50%', background: '#febc2e' }} />
+                  <Box sx={{ width: 10, height: 10, borderRadius: '50%', background: '#28c840' }} />
+                </Box>
+                <Typography
+                  sx={(theme: Theme) => ({
+                    fontSize: '0.7rem',
+                    fontWeight: 500,
+                    color:
+                      theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)',
+                    letterSpacing: '0.02em',
+                    flex: 1,
+                    textAlign: 'center',
+                    mr: '36px',
+                  })}
+                >
+                  Kalpa — Addon Manager
+                </Typography>
+              </KalpaWindowTitleBar>
+
+              {/* Search bar */}
               <Box
-                component="span"
-                sx={{
-                  background: (theme: Theme) =>
-                    theme.palette.mode === 'dark'
-                      ? 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 40%, #d97706 70%, #f59e0b 100%)'
-                      : 'linear-gradient(135deg, #b47814 0%, #92610e 40%, #7a510c 70%, #b47814 100%)',
-                  backgroundSize: '200% 200%',
-                  animation: 'kalpaAurora 6s ease-in-out infinite',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  backgroundClip: 'text',
-                }}
-              >
-                ESOTK Addon
-              </Box>
-            </Typography>
-            <Typography
-              sx={{
-                color: 'text.secondary',
-                fontSize: { xs: '1rem', sm: '1.05rem' },
-                lineHeight: 1.7,
-                fontWeight: 300,
-                mb: 3,
-                maxWidth: '460px',
-              }}
-            >
-              We&apos;re building a companion addon that bridges the gap between web and game.
-              Roster validation, group management, and gear inspection — all directly inside your
-              ESO client. Currently in development.
-            </Typography>
-
-            <EsotkFeatureList>
-              <EsotkFeatureRow delay={1}>
-                <span className="feature-index">01</span>
-                <span className="feature-title">Roster import</span>
-                <span className="feature-desc">Validate and sync rosters from the web</span>
-              </EsotkFeatureRow>
-              <EsotkFeatureRow delay={2}>
-                <span className="feature-index">02</span>
-                <span className="feature-title">Group management</span>
-                <span className="feature-desc">View and organize your trial group in-game</span>
-              </EsotkFeatureRow>
-              <EsotkFeatureRow delay={3}>
-                <span className="feature-index">03</span>
-                <span className="feature-title">Gear inspection</span>
-                <span className="feature-desc">Check builds and equipment at a glance</span>
-              </EsotkFeatureRow>
-              <EsotkFeatureRow delay={4}>
-                <span className="feature-index">04</span>
-                <span className="feature-title">Slash commands</span>
-                <span className="feature-desc">Quick access via /esotk in chat</span>
-              </EsotkFeatureRow>
-              <EsotkFeatureRow delay={5}>
-                <span className="feature-index">05</span>
-                <span className="feature-title">Web toolkit sync</span>
-                <span className="feature-desc">Live connection to your ESOTK dashboard</span>
-              </EsotkFeatureRow>
-              <EsotkFeatureRow delay={6}>
-                <span className="feature-index">06</span>
-                <span className="feature-title">Real-time stats</span>
-                <span className="feature-desc">Group performance data as it happens</span>
-              </EsotkFeatureRow>
-            </EsotkFeatureList>
-
-            <Box sx={{ mt: 3, display: 'flex', gap: 1.5, flexWrap: 'wrap', alignItems: 'center' }}>
-              <Button
-                variant="outlined"
-                href="https://github.com/ESO-Toolkit/esotk-addon"
-                target="_blank"
-                rel="noopener noreferrer"
                 sx={(theme: Theme) => ({
-                  borderColor:
+                  mx: '0.75rem',
+                  mt: '0.6rem',
+                  mb: '0.4rem',
+                  px: 1,
+                  py: 0.5,
+                  borderRadius: '6px',
+                  background:
+                    theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
+                  border:
                     theme.palette.mode === 'dark'
-                      ? 'rgba(245, 158, 11, 0.25)'
-                      : 'rgba(180, 120, 20, 0.2)',
-                  color: theme.palette.mode === 'dark' ? '#fbbf24' : '#92610e',
-                  fontWeight: 600,
-                  textTransform: 'none',
-                  borderRadius: '10px',
-                  padding: '0.7rem 1.8rem',
-                  fontSize: '0.9rem',
-                  '&:hover': {
-                    borderColor:
-                      theme.palette.mode === 'dark'
-                        ? 'rgba(245, 158, 11, 0.5)'
-                        : 'rgba(180, 120, 20, 0.4)',
-                    background:
-                      theme.palette.mode === 'dark'
-                        ? 'rgba(245, 158, 11, 0.04)'
-                        : 'rgba(180, 120, 20, 0.03)',
-                    transform: 'translateY(-2px)',
-                  },
-                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                      ? '1px solid rgba(255,255,255,0.06)'
+                      : '1px solid rgba(0,0,0,0.06)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 0.5,
                 })}
               >
-                Follow on GitHub
-              </Button>
-              <Typography
-                sx={{
-                  fontSize: '0.8rem',
-                  color: 'text.disabled',
-                  fontWeight: 400,
-                  fontStyle: 'italic',
-                }}
-              >
-                Not yet available for download
-              </Typography>
-            </Box>
-          </Box>
-
-          {/* Game-UI panel (visually on left due to RTL direction) */}
-          <EsotkGamePanel>
-            <EsotkGamePanelInner>
-              <EsotkPanelTitleBar>
+                <Typography sx={{ fontSize: '0.7rem', opacity: 0.3 }}>🔍</Typography>
                 <Typography
                   sx={(theme: Theme) => ({
                     fontSize: '0.72rem',
-                    fontWeight: 600,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.15em',
                     color:
-                      theme.palette.mode === 'dark'
-                        ? 'rgba(245, 158, 11, 0.7)'
-                        : 'rgba(180, 120, 20, 0.6)',
+                      theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.25)',
+                    fontWeight: 400,
                   })}
                 >
-                  ESOTK — Group Panel
+                  Search addons...
                 </Typography>
-              </EsotkPanelTitleBar>
+              </Box>
 
-              {/* Mock in-game roster list */}
+              {/* Mock addon list */}
               <Box sx={{ py: 0.25 }}>
                 {[
-                  { name: 'Aethon Dragonguard', role: 'Tank', cls: 'Dragonknight', hp: '42,800' },
-                  { name: 'Selene Moonweaver', role: 'Healer', cls: 'Templar', hp: '28,200' },
-                  { name: 'Razum-dar Jr', role: 'DPS', cls: 'Nightblade', hp: '25,600' },
-                  { name: 'Valkyn Stormborn', role: 'DPS', cls: 'Sorcerer', hp: '26,100' },
-                  { name: 'Khajiit Has-Wares', role: 'DPS', cls: 'Necromancer', hp: '24,900' },
-                  { name: 'Tharn the Unbroken', role: 'Tank', cls: 'Warden', hp: '44,200' },
-                  { name: 'Mirri Elendis', role: 'Healer', cls: 'Arcanist', hp: '27,800' },
-                  { name: 'Fennorian Ravenwatch', role: 'DPS', cls: 'Dragonknight', hp: '25,300' },
-                ].map((player) => (
-                  <EsotkAddonRow key={player.name}>
+                  { name: 'Dressing Room Reborn', version: 'v3.8.1', status: 'Updated' },
+                  { name: 'Combat Metrics', version: 'v2.5.0', status: 'Update' },
+                  { name: 'Azurah - Interface Enhanced', version: 'v4.1.2', status: 'Updated' },
+                  { name: 'Inventory Insight', version: 'v1.9.4', status: 'Updated' },
+                  { name: 'RaidNotifier', version: 'v3.2.1', status: 'Update' },
+                  { name: 'Srendarr - Aura Tracker', version: 'v2.7.3', status: 'Updated' },
+                  { name: 'Beam Me Up', version: 'v1.4.0', status: 'Updated' },
+                  { name: 'Harvest Map', version: 'v5.1.6', status: 'Update' },
+                ].map((addon) => (
+                  <KalpaAddonRow key={addon.name}>
+                    <Box
+                      sx={{ display: 'flex', alignItems: 'center', gap: 1, flex: 1, minWidth: 0 }}
+                    >
+                      <Box
+                        sx={{
+                          width: 24,
+                          height: 24,
+                          borderRadius: '5px',
+                          background:
+                            'linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(99, 102, 241, 0.1))',
+                          border: '1px solid rgba(139, 92, 246, 0.15)',
+                          flexShrink: 0,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        <Typography sx={{ fontSize: '0.6rem', opacity: 0.6 }}>📦</Typography>
+                      </Box>
+                      <Box sx={{ minWidth: 0 }}>
+                        <Typography
+                          sx={{
+                            fontSize: '0.75rem',
+                            fontWeight: 600,
+                            color: 'text.primary',
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                          }}
+                        >
+                          {addon.name}
+                        </Typography>
+                        <Typography
+                          sx={{
+                            fontSize: '0.62rem',
+                            color: 'text.secondary',
+                            opacity: 0.6,
+                          }}
+                        >
+                          {addon.version}
+                        </Typography>
+                      </Box>
+                    </Box>
                     <Box
                       sx={{
-                        width: 8,
-                        height: 8,
-                        borderRadius: '2px',
-                        flexShrink: 0,
-                        background:
-                          player.role === 'Tank'
-                            ? 'linear-gradient(135deg, #60a5fa, #3b82f6)'
-                            : player.role === 'Healer'
-                              ? 'linear-gradient(135deg, #4ade80, #22c55e)'
-                              : 'linear-gradient(135deg, #f87171, #ef4444)',
-                        boxShadow:
-                          player.role === 'Tank'
-                            ? '0 0 4px rgba(59, 130, 246, 0.4)'
-                            : player.role === 'Healer'
-                              ? '0 0 4px rgba(34, 197, 94, 0.4)'
-                              : '0 0 4px rgba(239, 68, 68, 0.4)',
-                      }}
-                    />
-                    <Box sx={{ flex: 1, minWidth: 0 }}>
-                      <Typography
-                        sx={(theme: Theme) => ({
-                          fontSize: '0.73rem',
-                          fontWeight: 600,
-                          color:
-                            theme.palette.mode === 'dark'
-                              ? 'rgba(255,255,255,0.85)'
-                              : 'rgba(0,0,0,0.8)',
-                          whiteSpace: 'nowrap',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                        })}
-                      >
-                        {player.name}
-                      </Typography>
-                      <Typography
-                        sx={(theme: Theme) => ({
-                          fontSize: '0.6rem',
-                          color:
-                            theme.palette.mode === 'dark'
-                              ? 'rgba(255,255,255,0.35)'
-                              : 'rgba(0,0,0,0.35)',
-                        })}
-                      >
-                        {player.cls} · {player.role}
-                      </Typography>
-                    </Box>
-                    <Typography
-                      sx={(theme: Theme) => ({
+                        px: 0.8,
+                        py: 0.25,
+                        borderRadius: '4px',
                         fontSize: '0.62rem',
                         fontWeight: 600,
-                        color:
-                          theme.palette.mode === 'dark'
-                            ? 'rgba(245, 158, 11, 0.6)'
-                            : 'rgba(180, 120, 20, 0.5)',
-                        fontVariantNumeric: 'tabular-nums',
                         flexShrink: 0,
-                      })}
+                        ...(addon.status === 'Update'
+                          ? {
+                              background:
+                                'linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(99, 102, 241, 0.1))',
+                              color: '#a78bfa',
+                              border: '1px solid rgba(139, 92, 246, 0.2)',
+                            }
+                          : {
+                              background: 'rgba(34, 197, 94, 0.08)',
+                              color: 'rgba(34, 197, 94, 0.7)',
+                              border: '1px solid rgba(34, 197, 94, 0.12)',
+                            }),
+                      }}
                     >
-                      {player.hp}
-                    </Typography>
-                  </EsotkAddonRow>
+                      {addon.status}
+                    </Box>
+                  </KalpaAddonRow>
                 ))}
               </Box>
 
-              {/* Panel footer */}
+              {/* Status bar */}
               <Box
                 sx={(theme: Theme) => ({
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center',
                   px: '1rem',
-                  py: '0.5rem',
+                  py: '0.45rem',
                   borderTop:
                     theme.palette.mode === 'dark'
-                      ? '1px solid rgba(245, 158, 11, 0.08)'
-                      : '1px solid rgba(180, 120, 20, 0.05)',
+                      ? '1px solid rgba(255,255,255,0.04)'
+                      : '1px solid rgba(0,0,0,0.04)',
                 })}
               >
-                <Typography
-                  sx={(theme: Theme) => ({
-                    fontSize: '0.58rem',
-                    color:
-                      theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.25)',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.05em',
-                  })}
-                >
-                  8/12 members
+                <Typography sx={{ fontSize: '0.6rem', color: 'text.secondary', opacity: 0.5 }}>
+                  8 addons installed
                 </Typography>
-                <Typography
-                  sx={(theme: Theme) => ({
-                    fontSize: '0.58rem',
-                    color:
-                      theme.palette.mode === 'dark'
-                        ? 'rgba(245, 158, 11, 0.4)'
-                        : 'rgba(180, 120, 20, 0.3)',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.05em',
-                  })}
-                >
-                  /esotk roster
-                </Typography>
-              </Box>
-            </EsotkGamePanelInner>
-          </EsotkGamePanel>
-        </EsotkContent>
-      </EsotkSection>
-
-      <CommunitySection id="about">
-        <Box
-          sx={{
-            maxWidth: '1200px',
-            margin: '0 auto',
-            padding: '0 2rem',
-            position: 'relative',
-            zIndex: 1,
-            '@media (max-width: 899.95px)': {
-              padding: '0 1rem',
-            },
-          }}
-        >
-          <CommunityTitle>
-            <div className="community-headline">
-              <span className="community-title-light">Built by players,</span>
-              <span className="community-title-bold"> for players.</span>
-            </div>
-            <span className="community-caption">
-              Always updated · Always free · Elder Scrolls Online
-            </span>
-          </CommunityTitle>
-
-          {/* Infinite scrolling marquee */}
-          <MarqueeWrapper>
-            <MarqueeTrack>
-              {/* Doubled for seamless loop */}
-              {[0, 1].map((dupeIdx) => (
-                <Box key={dupeIdx} sx={{ display: 'flex', gap: '3rem' }}>
-                  <MarqueeItem>
-                    <CalculatorIcon size="1rem" /> Build Calculator
-                  </MarqueeItem>
-                  <MarqueeItem>
-                    <CvIcon size="1rem" /> Text-Editor
-                  </MarqueeItem>
-                  <MarqueeItem>
-                    <FileLoopIcon size="1rem" /> Log Analyzer
-                  </MarqueeItem>
-                  <MarqueeItem>
-                    <KalpaIcon size="1rem" /> Kalpa
-                  </MarqueeItem>
-                  <MarqueeItem>
-                    <AddonIcon size="1rem" /> ESOTK Addon
-                  </MarqueeItem>
-                  <MarqueeItem>
-                    <PeopleIcon size="1rem" /> Roster-Bot
-                  </MarqueeItem>
-                </Box>
-              ))}
-            </MarqueeTrack>
-          </MarqueeWrapper>
-
-          <CommunityGrid>
-            {/* Card 01 — Hero left */}
-            <CommunityCard accent="blue" data-number="01">
-              <Box
-                sx={{
-                  position: 'relative',
-                  zIndex: 1,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  height: '100%',
-                }}
-              >
-                <CommunityIcon accent="blue">🎮</CommunityIcon>
-                <Typography
-                  variant="h5"
-                  component="h3"
-                  sx={(t: Theme) => ({
-                    mb: 0.5,
-                    color: 'text.primary',
-                    fontWeight: 700,
-                    fontSize: '1.2rem',
-                    letterSpacing: '-0.02em',
-                    [t.breakpoints.down('sm')]: { fontSize: '1.05rem' },
-                  })}
-                >
-                  Built from Real Gameplay
-                </Typography>
-                <Typography
-                  sx={(t: Theme) => ({
-                    color: 'text.secondary',
-                    lineHeight: 1.65,
-                    fontSize: '0.88rem',
-                    maxWidth: '380px',
-                    [t.breakpoints.down('sm')]: { fontSize: '0.82rem' },
-                  })}
-                >
-                  Every tool is shaped by hundreds of hours of actual gameplay across all content
-                  types — not guesswork.
-                </Typography>
-                {/* Content-type chips */}
-                <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap', mt: 'auto', pt: 1.5 }}>
-                  {['Trials', 'PvP', 'Dungeons', 'Overland'].map((tag) => (
-                    <Box
-                      key={tag}
-                      sx={(t: Theme) => ({
-                        px: 1.25,
-                        py: 0.3,
-                        borderRadius: '6px',
-                        fontSize: '0.65rem',
-                        fontWeight: 600,
-                        letterSpacing: '0.05em',
-                        textTransform: 'uppercase',
-                        color:
-                          t.palette.mode === 'dark'
-                            ? 'rgba(56, 189, 248, 0.6)'
-                            : 'rgba(14, 165, 233, 0.7)',
-                        background:
-                          t.palette.mode === 'dark'
-                            ? 'rgba(56, 189, 248, 0.05)'
-                            : 'rgba(14, 165, 233, 0.04)',
-                        border: `1px solid ${t.palette.mode === 'dark' ? 'rgba(56, 189, 248, 0.08)' : 'rgba(14, 165, 233, 0.06)'}`,
-                      })}
-                    >
-                      {tag}
-                    </Box>
-                  ))}
-                </Box>
-              </Box>
-            </CommunityCard>
-
-            {/* Card 02 — Right side */}
-            <CommunityCard accent="purple" data-number="02">
-              <Box
-                sx={{
-                  position: 'relative',
-                  zIndex: 1,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  height: '100%',
-                }}
-              >
-                <CommunityIcon accent="purple">🔄</CommunityIcon>
-                <Typography
-                  variant="h5"
-                  component="h3"
-                  sx={(t: Theme) => ({
-                    mb: 0.5,
-                    color: 'text.primary',
-                    fontWeight: 700,
-                    fontSize: '1.1rem',
-                    letterSpacing: '-0.01em',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 0.75,
-                    [t.breakpoints.down('sm')]: { fontSize: '1rem' },
-                  })}
-                >
-                  Always Current
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                   <Box
                     sx={{
-                      width: '7px',
-                      height: '7px',
+                      width: 5,
+                      height: 5,
                       borderRadius: '50%',
-                      background: '#34d399',
-                      boxShadow: '0 0 6px rgba(52, 211, 153, 0.5)',
-                      animation: 'livePulse 2s ease-in-out infinite',
-                      '@keyframes livePulse': {
-                        '0%, 100%': { opacity: 1, transform: 'scale(1)' },
-                        '50%': { opacity: 0.4, transform: 'scale(0.75)' },
-                      },
+                      background: '#22c55e',
+                      boxShadow: '0 0 4px rgba(34, 197, 94, 0.4)',
                     }}
                   />
-                </Typography>
+                  <Typography sx={{ fontSize: '0.6rem', color: 'text.secondary', opacity: 0.5 }}>
+                    All synced
+                  </Typography>
+                </Box>
+              </Box>
+            </KalpaAppWindow>
+          </KalpaContent>
+        </KalpaSection>
+
+        <EsotkSection id="esotk-addon">
+          {/* Large watermark number for depth */}
+          <Typography
+            sx={(theme: Theme) => ({
+              position: 'absolute',
+              top: { xs: '-1rem', md: '-2rem' },
+              left: { xs: '1rem', md: '5%' },
+              fontSize: { xs: '12rem', sm: '16rem', md: '22rem' },
+              fontWeight: 900,
+              lineHeight: 1,
+              color: 'transparent',
+              WebkitTextStroke:
+                theme.palette.mode === 'dark'
+                  ? '1px rgba(245, 158, 11, 0.06)'
+                  : '1px rgba(180, 120, 20, 0.04)',
+              userSelect: 'none',
+              pointerEvents: 'none',
+              zIndex: 0,
+              fontFamily: '"Inter Variable", "Helvetica Neue", sans-serif',
+              letterSpacing: '-0.05em',
+            })}
+          >
+            02
+          </Typography>
+          <EsotkContent>
+            {/* Text content (visually on right due to RTL direction) */}
+            <Box sx={{ position: 'relative', zIndex: 1 }}>
+              <Box
+                sx={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  mb: 2,
+                  px: 1.2,
+                  py: 0.4,
+                  borderRadius: '6px',
+                  background: (theme: Theme) =>
+                    theme.palette.mode === 'dark'
+                      ? 'rgba(245, 158, 11, 0.08)'
+                      : 'rgba(180, 120, 20, 0.04)',
+                  border: (theme: Theme) =>
+                    theme.palette.mode === 'dark'
+                      ? '1px solid rgba(245, 158, 11, 0.15)'
+                      : '1px solid rgba(180, 120, 20, 0.1)',
+                }}
+              >
                 <Typography
-                  sx={(t: Theme) => ({
-                    color: 'text.secondary',
-                    lineHeight: 1.65,
-                    fontSize: '0.85rem',
-                    [t.breakpoints.down('sm')]: { fontSize: '0.8rem' },
-                  })}
-                >
-                  Updated with every patch, balance change, and meta shift so you&apos;re never
-                  behind.
-                </Typography>
-                <Typography
-                  sx={(t: Theme) => ({
-                    mt: 'auto',
-                    pt: 1.5,
-                    fontSize: '0.68rem',
-                    fontWeight: 500,
-                    color:
-                      t.palette.mode === 'dark'
-                        ? 'rgba(167, 139, 250, 0.4)'
-                        : 'rgba(139, 92, 246, 0.4)',
-                    letterSpacing: '0.04em',
+                  sx={{
+                    fontSize: '0.75rem',
+                    fontWeight: 600,
                     textTransform: 'uppercase',
+                    letterSpacing: '0.12em',
+                    color: (theme: Theme) =>
+                      theme.palette.mode === 'dark' ? '#f59e0b' : '#b47814',
+                  }}
+                >
+                  In-Game Addon
+                </Typography>
+                <Box
+                  sx={{
+                    px: 0.8,
+                    py: 0.2,
+                    borderRadius: '4px',
+                    background: (theme: Theme) =>
+                      theme.palette.mode === 'dark'
+                        ? 'rgba(245, 158, 11, 0.18)'
+                        : 'rgba(180, 120, 20, 0.12)',
+                    fontSize: '0.65rem',
+                    fontWeight: 700,
+                    color: (theme: Theme) =>
+                      theme.palette.mode === 'dark' ? '#fbbf24' : '#92610e',
+                    letterSpacing: '0.08em',
+                    animation: 'pulse 2s ease-in-out infinite',
+                    '@keyframes pulse': {
+                      '0%, 100%': { opacity: 1 },
+                      '50%': { opacity: 0.7 },
+                    },
+                  }}
+                >
+                  COMING SOON
+                </Box>
+              </Box>
+              <Typography
+                variant="h2"
+                sx={{
+                  fontWeight: 800,
+                  fontSize: { xs: '2.2rem', sm: '2.6rem', md: '3rem' },
+                  lineHeight: 1.1,
+                  color: 'text.primary',
+                  mb: 2,
+                  letterSpacing: '-0.02em',
+                }}
+              >
+                The{' '}
+                <Box
+                  component="span"
+                  sx={{
+                    background: (theme: Theme) =>
+                      theme.palette.mode === 'dark'
+                        ? 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 40%, #d97706 70%, #f59e0b 100%)'
+                        : 'linear-gradient(135deg, #b47814 0%, #92610e 40%, #7a510c 70%, #b47814 100%)',
+                    backgroundSize: '200% 200%',
+                    animation: 'kalpaAurora 6s ease-in-out infinite',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text',
+                  }}
+                >
+                  ESOTK Addon
+                </Box>
+              </Typography>
+              <Typography
+                sx={{
+                  color: 'text.secondary',
+                  fontSize: { xs: '1rem', sm: '1.05rem' },
+                  lineHeight: 1.7,
+                  fontWeight: 300,
+                  mb: 3,
+                  maxWidth: '460px',
+                }}
+              >
+                We&apos;re building a companion addon that bridges the gap between web and game.
+                Roster validation, group management, and gear inspection — all directly inside your
+                ESO client. Currently in development.
+              </Typography>
+
+              <EsotkFeatureList>
+                <EsotkFeatureRow delay={1}>
+                  <span className="feature-index">01</span>
+                  <span className="feature-title">Roster import</span>
+                  <span className="feature-desc">Validate and sync rosters from the web</span>
+                </EsotkFeatureRow>
+                <EsotkFeatureRow delay={2}>
+                  <span className="feature-index">02</span>
+                  <span className="feature-title">Group management</span>
+                  <span className="feature-desc">View and organize your trial group in-game</span>
+                </EsotkFeatureRow>
+                <EsotkFeatureRow delay={3}>
+                  <span className="feature-index">03</span>
+                  <span className="feature-title">Gear inspection</span>
+                  <span className="feature-desc">Check builds and equipment at a glance</span>
+                </EsotkFeatureRow>
+                <EsotkFeatureRow delay={4}>
+                  <span className="feature-index">04</span>
+                  <span className="feature-title">Slash commands</span>
+                  <span className="feature-desc">Quick access via /esotk in chat</span>
+                </EsotkFeatureRow>
+                <EsotkFeatureRow delay={5}>
+                  <span className="feature-index">05</span>
+                  <span className="feature-title">Web toolkit sync</span>
+                  <span className="feature-desc">Live connection to your ESOTK dashboard</span>
+                </EsotkFeatureRow>
+                <EsotkFeatureRow delay={6}>
+                  <span className="feature-index">06</span>
+                  <span className="feature-title">Real-time stats</span>
+                  <span className="feature-desc">Group performance data as it happens</span>
+                </EsotkFeatureRow>
+              </EsotkFeatureList>
+
+              <Box
+                sx={{ mt: 3, display: 'flex', gap: 1.5, flexWrap: 'wrap', alignItems: 'center' }}
+              >
+                <Button
+                  variant="outlined"
+                  href="https://github.com/ESO-Toolkit/esotk-addon"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  sx={(theme: Theme) => ({
+                    borderColor:
+                      theme.palette.mode === 'dark'
+                        ? 'rgba(245, 158, 11, 0.25)'
+                        : 'rgba(180, 120, 20, 0.2)',
+                    color: theme.palette.mode === 'dark' ? '#fbbf24' : '#92610e',
+                    fontWeight: 600,
+                    textTransform: 'none',
+                    borderRadius: '10px',
+                    padding: '0.7rem 1.8rem',
+                    fontSize: '0.9rem',
+                    '&:hover': {
+                      borderColor:
+                        theme.palette.mode === 'dark'
+                          ? 'rgba(245, 158, 11, 0.5)'
+                          : 'rgba(180, 120, 20, 0.4)',
+                      background:
+                        theme.palette.mode === 'dark'
+                          ? 'rgba(245, 158, 11, 0.04)'
+                          : 'rgba(180, 120, 20, 0.03)',
+                      transform: 'translateY(-2px)',
+                    },
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                   })}
                 >
-                  Tracking latest patches
+                  Follow on GitHub
+                </Button>
+                <Typography
+                  sx={{
+                    fontSize: '0.8rem',
+                    color: 'text.disabled',
+                    fontWeight: 400,
+                    fontStyle: 'italic',
+                  }}
+                >
+                  Not yet available for download
                 </Typography>
               </Box>
-            </CommunityCard>
+            </Box>
 
-            {/* Card 03 — Full-width bottom, horizontal layout */}
-            <CommunityCard accent="emerald" data-number="03">
-              <Box
-                sx={(t: Theme) => ({
-                  position: 'relative',
-                  zIndex: 1,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 2,
-                  [t.breakpoints.down('sm')]: {
+            {/* Game-UI panel (visually on left due to RTL direction) */}
+            <EsotkGamePanel>
+              <EsotkGamePanelInner>
+                <EsotkPanelTitleBar>
+                  <Typography
+                    sx={(theme: Theme) => ({
+                      fontSize: '0.72rem',
+                      fontWeight: 600,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.15em',
+                      color:
+                        theme.palette.mode === 'dark'
+                          ? 'rgba(245, 158, 11, 0.7)'
+                          : 'rgba(180, 120, 20, 0.6)',
+                    })}
+                  >
+                    ESOTK — Group Panel
+                  </Typography>
+                </EsotkPanelTitleBar>
+
+                {/* Mock in-game roster list */}
+                <Box sx={{ py: 0.25 }}>
+                  {[
+                    { name: 'Aethon Dragonguard', role: 'Tank', cls: 'Dragonknight', hp: '42,800' },
+                    { name: 'Selene Moonweaver', role: 'Healer', cls: 'Templar', hp: '28,200' },
+                    { name: 'Razum-dar Jr', role: 'DPS', cls: 'Nightblade', hp: '25,600' },
+                    { name: 'Valkyn Stormborn', role: 'DPS', cls: 'Sorcerer', hp: '26,100' },
+                    { name: 'Khajiit Has-Wares', role: 'DPS', cls: 'Necromancer', hp: '24,900' },
+                    { name: 'Tharn the Unbroken', role: 'Tank', cls: 'Warden', hp: '44,200' },
+                    { name: 'Mirri Elendis', role: 'Healer', cls: 'Arcanist', hp: '27,800' },
+                    {
+                      name: 'Fennorian Ravenwatch',
+                      role: 'DPS',
+                      cls: 'Dragonknight',
+                      hp: '25,300',
+                    },
+                  ].map((player) => (
+                    <EsotkAddonRow key={player.name}>
+                      <Box
+                        sx={{
+                          width: 8,
+                          height: 8,
+                          borderRadius: '2px',
+                          flexShrink: 0,
+                          background:
+                            player.role === 'Tank'
+                              ? 'linear-gradient(135deg, #60a5fa, #3b82f6)'
+                              : player.role === 'Healer'
+                                ? 'linear-gradient(135deg, #4ade80, #22c55e)'
+                                : 'linear-gradient(135deg, #f87171, #ef4444)',
+                          boxShadow:
+                            player.role === 'Tank'
+                              ? '0 0 4px rgba(59, 130, 246, 0.4)'
+                              : player.role === 'Healer'
+                                ? '0 0 4px rgba(34, 197, 94, 0.4)'
+                                : '0 0 4px rgba(239, 68, 68, 0.4)',
+                        }}
+                      />
+                      <Box sx={{ flex: 1, minWidth: 0 }}>
+                        <Typography
+                          sx={(theme: Theme) => ({
+                            fontSize: '0.73rem',
+                            fontWeight: 600,
+                            color:
+                              theme.palette.mode === 'dark'
+                                ? 'rgba(255,255,255,0.85)'
+                                : 'rgba(0,0,0,0.8)',
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                          })}
+                        >
+                          {player.name}
+                        </Typography>
+                        <Typography
+                          sx={(theme: Theme) => ({
+                            fontSize: '0.6rem',
+                            color:
+                              theme.palette.mode === 'dark'
+                                ? 'rgba(255,255,255,0.35)'
+                                : 'rgba(0,0,0,0.35)',
+                          })}
+                        >
+                          {player.cls} · {player.role}
+                        </Typography>
+                      </Box>
+                      <Typography
+                        sx={(theme: Theme) => ({
+                          fontSize: '0.62rem',
+                          fontWeight: 600,
+                          color:
+                            theme.palette.mode === 'dark'
+                              ? 'rgba(245, 158, 11, 0.6)'
+                              : 'rgba(180, 120, 20, 0.5)',
+                          fontVariantNumeric: 'tabular-nums',
+                          flexShrink: 0,
+                        })}
+                      >
+                        {player.hp}
+                      </Typography>
+                    </EsotkAddonRow>
+                  ))}
+                </Box>
+
+                {/* Panel footer */}
+                <Box
+                  sx={(theme: Theme) => ({
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    px: '1rem',
+                    py: '0.5rem',
+                    borderTop:
+                      theme.palette.mode === 'dark'
+                        ? '1px solid rgba(245, 158, 11, 0.08)'
+                        : '1px solid rgba(180, 120, 20, 0.05)',
+                  })}
+                >
+                  <Typography
+                    sx={(theme: Theme) => ({
+                      fontSize: '0.58rem',
+                      color:
+                        theme.palette.mode === 'dark'
+                          ? 'rgba(255,255,255,0.25)'
+                          : 'rgba(0,0,0,0.25)',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em',
+                    })}
+                  >
+                    8/12 members
+                  </Typography>
+                  <Typography
+                    sx={(theme: Theme) => ({
+                      fontSize: '0.58rem',
+                      color:
+                        theme.palette.mode === 'dark'
+                          ? 'rgba(245, 158, 11, 0.4)'
+                          : 'rgba(180, 120, 20, 0.3)',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em',
+                    })}
+                  >
+                    /esotk roster
+                  </Typography>
+                </Box>
+              </EsotkGamePanelInner>
+            </EsotkGamePanel>
+          </EsotkContent>
+        </EsotkSection>
+
+        <CommunitySection id="about">
+          <Box
+            sx={{
+              maxWidth: '1200px',
+              margin: '0 auto',
+              padding: '0 2rem',
+              position: 'relative',
+              zIndex: 1,
+              '@media (max-width: 899.95px)': {
+                padding: '0 1rem',
+              },
+            }}
+          >
+            <CommunityTitle>
+              <div className="community-headline">
+                <span className="community-title-light">Built by players,</span>
+                <span className="community-title-bold"> for players.</span>
+              </div>
+              <span className="community-caption">
+                Always updated · Always free · Elder Scrolls Online
+              </span>
+            </CommunityTitle>
+
+            {/* Infinite scrolling marquee */}
+            <MarqueeWrapper>
+              <MarqueeTrack>
+                {/* Doubled for seamless loop */}
+                {[0, 1].map((dupeIdx) => (
+                  <Box key={dupeIdx} sx={{ display: 'flex', gap: '3rem' }}>
+                    <MarqueeItem>
+                      <CalculatorIcon size="1rem" /> Build Calculator
+                    </MarqueeItem>
+                    <MarqueeItem>
+                      <CvIcon size="1rem" /> Text-Editor
+                    </MarqueeItem>
+                    <MarqueeItem>
+                      <FileLoopIcon size="1rem" /> Log Analyzer
+                    </MarqueeItem>
+                    <MarqueeItem>
+                      <KalpaIcon size="1rem" /> Kalpa
+                    </MarqueeItem>
+                    <MarqueeItem>
+                      <AddonIcon size="1rem" /> ESOTK Addon
+                    </MarqueeItem>
+                    <MarqueeItem>
+                      <PeopleIcon size="1rem" /> Roster-Bot
+                    </MarqueeItem>
+                  </Box>
+                ))}
+              </MarqueeTrack>
+            </MarqueeWrapper>
+
+            <CommunityGrid>
+              {/* Card 01 — Hero left */}
+              <CommunityCard accent="blue" data-number="01">
+                <Box
+                  sx={{
+                    position: 'relative',
+                    zIndex: 1,
+                    display: 'flex',
                     flexDirection: 'column',
-                    alignItems: 'flex-start',
-                    gap: 1,
-                  },
-                })}
-              >
-                <CommunityIcon accent="emerald" sx={{ mb: 0, flexShrink: 0 }}>
-                  💬
-                </CommunityIcon>
-                <Box sx={{ flex: 1, minWidth: 0 }}>
+                    height: '100%',
+                  }}
+                >
+                  <CommunityIcon accent="blue">🎮</CommunityIcon>
                   <Typography
                     variant="h5"
                     component="h3"
                     sx={(t: Theme) => ({
-                      mb: 0.25,
+                      mb: 0.5,
                       color: 'text.primary',
                       fontWeight: 700,
-                      fontSize: '1.1rem',
-                      letterSpacing: '-0.01em',
-                      [t.breakpoints.down('sm')]: { fontSize: '1rem' },
+                      fontSize: '1.2rem',
+                      letterSpacing: '-0.02em',
+                      [t.breakpoints.down('sm')]: { fontSize: '1.05rem' },
                     })}
                   >
-                    Community Driven
+                    Built from Real Gameplay
                   </Typography>
                   <Typography
                     sx={(t: Theme) => ({
                       color: 'text.secondary',
-                      lineHeight: 1.6,
+                      lineHeight: 1.65,
+                      fontSize: '0.88rem',
+                      maxWidth: '380px',
+                      [t.breakpoints.down('sm')]: { fontSize: '0.82rem' },
+                    })}
+                  >
+                    Every tool is shaped by hundreds of hours of actual gameplay across all content
+                    types — not guesswork.
+                  </Typography>
+                  {/* Content-type chips */}
+                  <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap', mt: 'auto', pt: 1.5 }}>
+                    {['Trials', 'PvP', 'Dungeons', 'Overland'].map((tag) => (
+                      <Box
+                        key={tag}
+                        sx={(t: Theme) => ({
+                          px: 1.25,
+                          py: 0.3,
+                          borderRadius: '6px',
+                          fontSize: '0.65rem',
+                          fontWeight: 600,
+                          letterSpacing: '0.05em',
+                          textTransform: 'uppercase',
+                          color:
+                            t.palette.mode === 'dark'
+                              ? 'rgba(56, 189, 248, 0.6)'
+                              : 'rgba(14, 165, 233, 0.7)',
+                          background:
+                            t.palette.mode === 'dark'
+                              ? 'rgba(56, 189, 248, 0.05)'
+                              : 'rgba(14, 165, 233, 0.04)',
+                          border: `1px solid ${t.palette.mode === 'dark' ? 'rgba(56, 189, 248, 0.08)' : 'rgba(14, 165, 233, 0.06)'}`,
+                        })}
+                      >
+                        {tag}
+                      </Box>
+                    ))}
+                  </Box>
+                </Box>
+              </CommunityCard>
+
+              {/* Card 02 — Right side */}
+              <CommunityCard accent="purple" data-number="02">
+                <Box
+                  sx={{
+                    position: 'relative',
+                    zIndex: 1,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    height: '100%',
+                  }}
+                >
+                  <CommunityIcon accent="purple">🔄</CommunityIcon>
+                  <Typography
+                    variant="h5"
+                    component="h3"
+                    sx={(t: Theme) => ({
+                      mb: 0.5,
+                      color: 'text.primary',
+                      fontWeight: 700,
+                      fontSize: '1.1rem',
+                      letterSpacing: '-0.01em',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 0.75,
+                      [t.breakpoints.down('sm')]: { fontSize: '1rem' },
+                    })}
+                  >
+                    Always Current
+                    <Box
+                      sx={{
+                        width: '7px',
+                        height: '7px',
+                        borderRadius: '50%',
+                        background: '#34d399',
+                        boxShadow: '0 0 6px rgba(52, 211, 153, 0.5)',
+                        animation: 'livePulse 2s ease-in-out infinite',
+                        '@keyframes livePulse': {
+                          '0%, 100%': { opacity: 1, transform: 'scale(1)' },
+                          '50%': { opacity: 0.4, transform: 'scale(0.75)' },
+                        },
+                      }}
+                    />
+                  </Typography>
+                  <Typography
+                    sx={(t: Theme) => ({
+                      color: 'text.secondary',
+                      lineHeight: 1.65,
                       fontSize: '0.85rem',
-                      maxWidth: '520px',
                       [t.breakpoints.down('sm')]: { fontSize: '0.8rem' },
                     })}
                   >
-                    Your feedback shapes development. Join Discord to suggest features and connect
-                    with players.
+                    Updated with every patch, balance change, and meta shift so you&apos;re never
+                    behind.
+                  </Typography>
+                  <Typography
+                    sx={(t: Theme) => ({
+                      mt: 'auto',
+                      pt: 1.5,
+                      fontSize: '0.68rem',
+                      fontWeight: 500,
+                      color:
+                        t.palette.mode === 'dark'
+                          ? 'rgba(167, 139, 250, 0.4)'
+                          : 'rgba(139, 92, 246, 0.4)',
+                      letterSpacing: '0.04em',
+                      textTransform: 'uppercase',
+                    })}
+                  >
+                    Tracking latest patches
                   </Typography>
                 </Box>
-                <Link
-                  href="https://discord.gg/esotk"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  underline="none"
+              </CommunityCard>
+
+              {/* Card 03 — Full-width bottom, horizontal layout */}
+              <CommunityCard accent="emerald" data-number="03">
+                <Box
                   sx={(t: Theme) => ({
-                    display: 'inline-block',
-                    px: 2,
-                    py: 0.75,
-                    borderRadius: '10px',
-                    fontSize: '0.78rem',
-                    fontWeight: 600,
-                    color: t.palette.mode === 'dark' ? '#34d399' : '#059669',
-                    background:
-                      t.palette.mode === 'dark'
-                        ? 'rgba(52, 211, 153, 0.06)'
-                        : 'rgba(16, 185, 129, 0.05)',
-                    border: `1px solid ${t.palette.mode === 'dark' ? 'rgba(52, 211, 153, 0.12)' : 'rgba(16, 185, 129, 0.1)'}`,
-                    transition: 'all 0.3s ease',
-                    whiteSpace: 'nowrap',
-                    flexShrink: 0,
-                    '&:hover': {
-                      background:
-                        t.palette.mode === 'dark'
-                          ? 'rgba(52, 211, 153, 0.1)'
-                          : 'rgba(16, 185, 129, 0.08)',
-                      transform: 'translateY(-1px)',
-                    },
+                    position: 'relative',
+                    zIndex: 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 2,
                     [t.breakpoints.down('sm')]: {
-                      alignSelf: 'flex-start',
+                      flexDirection: 'column',
+                      alignItems: 'flex-start',
+                      gap: 1,
                     },
                   })}
                 >
-                  Join Discord &rarr;
-                </Link>
-              </Box>
-            </CommunityCard>
-          </CommunityGrid>
-        </Box>
-      </CommunitySection>
-
+                  <CommunityIcon accent="emerald" sx={{ mb: 0, flexShrink: 0 }}>
+                    💬
+                  </CommunityIcon>
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Typography
+                      variant="h5"
+                      component="h3"
+                      sx={(t: Theme) => ({
+                        mb: 0.25,
+                        color: 'text.primary',
+                        fontWeight: 700,
+                        fontSize: '1.1rem',
+                        letterSpacing: '-0.01em',
+                        [t.breakpoints.down('sm')]: { fontSize: '1rem' },
+                      })}
+                    >
+                      Community Driven
+                    </Typography>
+                    <Typography
+                      sx={(t: Theme) => ({
+                        color: 'text.secondary',
+                        lineHeight: 1.6,
+                        fontSize: '0.85rem',
+                        maxWidth: '520px',
+                        [t.breakpoints.down('sm')]: { fontSize: '0.8rem' },
+                      })}
+                    >
+                      Your feedback shapes development. Join Discord to suggest features and connect
+                      with players.
+                    </Typography>
+                  </Box>
+                  <Link
+                    href="https://discord.gg/mMjwcQYFdc"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    underline="none"
+                    sx={(t: Theme) => ({
+                      display: 'inline-block',
+                      px: 2,
+                      py: 0.75,
+                      borderRadius: '10px',
+                      fontSize: '0.78rem',
+                      fontWeight: 600,
+                      color: t.palette.mode === 'dark' ? '#34d399' : '#059669',
+                      background:
+                        t.palette.mode === 'dark'
+                          ? 'rgba(52, 211, 153, 0.06)'
+                          : 'rgba(16, 185, 129, 0.05)',
+                      border: `1px solid ${t.palette.mode === 'dark' ? 'rgba(52, 211, 153, 0.12)' : 'rgba(16, 185, 129, 0.1)'}`,
+                      transition: 'all 0.3s ease',
+                      whiteSpace: 'nowrap',
+                      flexShrink: 0,
+                      '&:hover': {
+                        background:
+                          t.palette.mode === 'dark'
+                            ? 'rgba(52, 211, 153, 0.1)'
+                            : 'rgba(16, 185, 129, 0.08)',
+                        transform: 'translateY(-1px)',
+                      },
+                      [t.breakpoints.down('sm')]: {
+                        alignSelf: 'flex-start',
+                      },
+                    })}
+                  >
+                    Join Discord &rarr;
+                  </Link>
+                </Box>
+              </CommunityCard>
+            </CommunityGrid>
+          </Box>
+        </CommunitySection>
+      </LandingContainer>
       <Footer />
-    </LandingContainer>
+    </>
   );
 };

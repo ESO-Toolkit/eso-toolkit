@@ -1,6 +1,6 @@
 # NestedError Usage Examples
 
-This document provides examples of how to use the `NestedError` class for enhanced error handling throughout the ESO Log Aggregator application.
+This document provides examples of how to use the `NestedError` class for enhanced error handling throughout the ESO Toolkit application.
 
 ## Basic Usage
 

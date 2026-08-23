@@ -6,27 +6,27 @@ A reusable GitHub Action that sets up Node.js with npm caching configured for bo
 
 | Input          | Description            | Required | Default |
 | -------------- | ---------------------- | -------- | ------- |
-| `node-version` | Node.js version to use | No       | `'20'`  |
+| `node-version` | Node.js version to use | No       | `'24'`  |
 
 ## Example Usage
 
 ```yaml
 steps:
-  - uses: actions/checkout@v4
+  - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
   - uses: ./.github/actions/setup-node-with-cache
     # Optional: specify a different Node.js version
     # with:
-    #   node-version: '18'
+    #   node-version: '24'
   - name: Run tests
     run: npm test
 ```
 
 ## What This Action Does
 
-1. Sets up Node.js using `actions/setup-node@v4`
+1. Sets up Node.js using the immutable `actions/setup-node` v7 commit
 2. Configures npm caching with cache invalidation based on both `package.json` and `package-lock.json`
-3. Updates npm to the latest version to avoid known issues with optional dependencies
-4. Installs dependencies using `npm ci` with optimized flags to avoid common CI issues
+3. Uses the npm version bundled with the selected Node.js LTS release
+4. Installs dependencies using `npm ci --no-audit --no-fund` for reproducible, quiet CI jobs
 
 ## Benefits
 

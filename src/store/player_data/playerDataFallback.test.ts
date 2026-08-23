@@ -49,16 +49,16 @@ describe('buildFallbackPlayersFromMasterData', () => {
       actorsById: {
         1: actor({
           id: 1,
-          name: "Grappa'Ko'Laid",
-          displayName: "@Spike'jo",
+          name: 'SampleCharacter1',
+          displayName: '@SamplePlayer8',
           subType: 'Nightblade',
           gameID: 123,
         }),
         2: actor({ id: 2, name: 'Archive NPC', type: 'NPC', subType: 'NPC' }),
         96: actor({
           id: 96,
-          name: 'Angair Doomfang',
-          displayName: '@blueblaze103',
+          name: 'SampleCharacter2',
+          displayName: '@SamplePlayer9',
           subType: 'Necromancer',
         }),
       },
@@ -75,16 +75,16 @@ describe('buildFallbackPlayersFromMasterData', () => {
     expect(Object.keys(players)).toEqual(['1', '96']);
     expect(players[1]).toMatchObject({
       id: 1,
-      name: "Grappa'Ko'Laid",
-      displayName: "@Spike'jo",
+      name: 'SampleCharacter1',
+      displayName: '@SamplePlayer8',
       type: 'Nightblade',
       role: 'dps',
     });
     expect(players[1].combatantInfo.gear).toBe(gear);
     expect(players[96]).toMatchObject({
       id: 96,
-      name: 'Angair Doomfang',
-      displayName: '@blueblaze103',
+      name: 'SampleCharacter2',
+      displayName: '@SamplePlayer9',
       type: 'Necromancer',
       role: 'healer',
     });

@@ -16,7 +16,7 @@ export const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
  */
 export const devWebServer = {
   command: 'npm run dev',
-  url: 'http://localhost:3000',
+  url: BASE_URL,
   reuseExistingServer: !process.env.CI,
   timeout: 120000, // 2 minutes to start
   stdout: 'pipe' as const,

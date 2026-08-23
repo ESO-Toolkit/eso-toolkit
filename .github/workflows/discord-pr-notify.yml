@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Build and send Discord embed
-        uses: actions/github-script@v9
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_PR_UPDATES }}
           ZAI_API_KEY: ${{ secrets.ZAI_API_KEY }}

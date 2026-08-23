@@ -175,7 +175,7 @@ runs:
               color: $color,
               fields: $fields,
               timestamp: $timestamp,
-              footer: { text: "ESO Log Aggregator CI/CD" }
+              footer: { text: "ESO Toolkit CI/CD" }
             }]
           }')
 

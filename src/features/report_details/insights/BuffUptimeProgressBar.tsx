@@ -192,7 +192,7 @@ export const BuffUptimeProgressBar: React.FC<BuffUptimeProgressBarProps> = ({
         buff.dotAbilityIds,
       );
 
-      window.open(url, '_blank');
+      window.open(url, '_blank', 'noopener,noreferrer');
     },
     [
       reportId,
@@ -611,7 +611,7 @@ export const BuffUptimeProgressBar: React.FC<BuffUptimeProgressBarProps> = ({
                         buff.hostilityType,
                         buff.dotAbilityIds,
                       );
-                      window.open(url, '_blank');
+                      window.open(url, '_blank', 'noopener,noreferrer');
                     }}
                   >
                     {/* Individual stack progress bar */}

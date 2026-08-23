@@ -3,7 +3,7 @@ import { HealingGuideData } from './HealingGuide.types';
 export const healingGuideData: HealingGuideData = {
   metadata: {
     title: 'ESO Healer Overview',
-    author: 'ESO Helpers',
+    author: 'ESO Toolkit',
     content_type: 'role_guide',
     format_version: '1.0.0',
     extraction_date: '2025-09-08',

@@ -3,29 +3,29 @@ import { test, expect } from '@playwright/test';
 import { EsoLogAggregatorPage } from './utils/EsoLogAggregatorPage';
 
 test.describe('Focused Players Panel Test - Real Data', () => {
-  // Use real public ESO Logs report instead of local mock data  
-  const REPORT_CODE = 'nbKdDtT4NcZyVrvX';
-  const FIGHT_ID = '117';
+  // Use the bundled public sample by default; live runs may opt in via env.
+  const REPORT_CODE = process.env.E2E_REPORT_CODE ?? 'F4f2bMwWtgVKxjB9';
+  const FIGHT_ID = process.env.E2E_FIGHT_ID ?? '5';
 
   test.beforeEach(async ({ page }) => {
     // Don't call setupApiMocking - we want real API calls to esologs.com
-    
+
     // Set longer timeout for real API data loading
     test.setTimeout(120000); // 2 minutes per test
-    
+
     // Monitor console errors for debugging
     page.on('console', (msg) => {
       if (msg.type() === 'error' || msg.text().includes('GraphQL') || msg.text().includes('API')) {
         console.log('🖥️ Browser Console:', msg.type(), msg.text());
       }
     });
-    
+
     page.on('pageerror', (error) => {
       console.error('❌ Page Error:', error.message);
     });
   });
 
-  test('should navigate to players panel and show loaded player cards with screenshots', async ({ 
+  test('should navigate to players panel and show loaded player cards with screenshots', async ({
     page,
   }) => {
     const esoPage = new EsoLogAggregatorPage(page);
@@ -42,7 +42,7 @@ test.describe('Focused Players Panel Test - Real Data', () => {
 
     // Verify we're on the correct URL and not stuck on login
     expect(page.url()).toContain(`/report/${REPORT_CODE}/fight/${FIGHT_ID}`);
-    
+
     // Check if we hit an authentication issue (shouldn't with public reports)
     const currentUrl = page.url();
     if (currentUrl.includes('login')) {
@@ -52,13 +52,15 @@ test.describe('Focused Players Panel Test - Real Data', () => {
     // Debug: Check what's actually on the page
     console.log('✅ Page title:', await page.title());
     console.log('✅ Page URL:', page.url());
-    
+
     // Wait longer for real ESO data to populate
     console.log('⏳ Waiting for real ESO Logs data to load...');
     await page.waitForTimeout(10000);
-    
+
     // Check if we're seeing a login page or the actual players panel
-    const loginButton = page.locator('button:has-text("Connect to ESO Logs"), button:has-text("Login")');
+    const loginButton = page.locator(
+      'button:has-text("Connect to ESO Logs"), button:has-text("Login")',
+    );
     const hasLoginButton = await loginButton.isVisible().catch(() => false);
     console.log('Has login button:', hasLoginButton);
 
@@ -69,8 +71,8 @@ test.describe('Focused Players Panel Test - Real Data', () => {
     }
 
     // Take a debug screenshot to see what's actually on the page
-    await page.screenshot({ 
-      path: 'test-results/debug-page-state.png', 
+    await page.screenshot({
+      path: 'test-results/debug-page-state.png',
       fullPage: true,
       timeout: 30000,
     });
@@ -86,7 +88,7 @@ test.describe('Focused Players Panel Test - Real Data', () => {
       const testId = await element.getAttribute('data-testid');
       console.log(`  - ${testId}`);
     }
-    
+
     // Specifically look for any player-related test IDs
     const playerTestIds = await page.locator('[data-testid*="player"]').all();
     console.log('Player-related test IDs:');
@@ -103,44 +105,53 @@ test.describe('Focused Players Panel Test - Real Data', () => {
 
     // Try a more flexible approach - wait for any content to appear and then navigate to players
     console.log('Waiting for page content to load...');
-    
+
     // Wait for any content beyond just the header
     await page.waitForTimeout(5000); // Give the page time to load
-    
+
     // Try to navigate directly to players URL regardless of current page state
     console.log('Navigating directly to players tab...');
     await page.goto(`/report/${REPORT_CODE}/fight/${FIGHT_ID}/players`);
-    
+
     // Wait for navigation to complete
     await page.waitForLoadState('domcontentloaded');
     await page.waitForTimeout(3000);
-    
+
     // Now look for players-specific content and debug what we actually have
     console.log('Looking for players panel content...');
-    
+
     // Check for various players-related selectors
     const playersPanelView = page.locator('[data-testid="players-panel-view"]');
     const playersCards = page.locator('.MuiCard-root');
     const playersSkeleton = page.locator('.MuiSkeleton-root');
-    
-    const hasPlayersPanelView = await playersPanelView.isVisible({ timeout: 5000 }).catch(() => false);
-    const hasPlayersCards = await playersCards.first().isVisible({ timeout: 5000 }).catch(() => false);
-    const hasPlayersSkeleton = await playersSkeleton.first().isVisible({ timeout: 2000 }).catch(() => false);
-    
+
+    const hasPlayersPanelView = await playersPanelView
+      .isVisible({ timeout: 5000 })
+      .catch(() => false);
+    const hasPlayersCards = await playersCards
+      .first()
+      .isVisible({ timeout: 5000 })
+      .catch(() => false);
+    const hasPlayersSkeleton = await playersSkeleton
+      .first()
+      .isVisible({ timeout: 2000 })
+      .catch(() => false);
+
     console.log('Players panel view found:', hasPlayersPanelView);
     console.log('Players cards found:', hasPlayersCards);
     console.log('Players skeleton found:', hasPlayersSkeleton);
-    
+
     // Debug: What's actually in the first card?
     if (hasPlayersCards) {
       const firstCardText = await playersCards.first().textContent();
       console.log('First card content:', firstCardText?.slice(0, 200));
-      
+
       // Check if this looks like a skeleton card
-      const isSkeletonCard = firstCardText?.includes('loading') || (firstCardText?.trim().length || 0) < 10;
+      const isSkeletonCard =
+        firstCardText?.includes('loading') || (firstCardText?.trim().length || 0) < 10;
       console.log('First card appears to be skeleton:', isSkeletonCard);
     }
-    
+
     // If we found any players-related content, wait a bit more for it to fully load
     if (hasPlayersPanelView || hasPlayersCards || hasPlayersSkeleton) {
       console.log('Players content detected, waiting for it to fully load...');
@@ -151,35 +162,40 @@ test.describe('Focused Players Panel Test - Real Data', () => {
     console.log('Waiting for player cards to be fully loaded...');
     const playerCards = page.locator('.MuiCard-root');
     await expect(playerCards.first()).toBeVisible({ timeout: 10000 });
-    
+
     // Count how many player cards we have
     const cardCount = await playerCards.count();
     console.log(`Found ${cardCount} player cards`);
-    
+
     // Wait for actual player content to load (instead of waiting for skeletons to disappear)
     console.log('Waiting for player content to load...');
-    
+
     // Wait for player names or other text content to appear in cards
-    const hasPlayerContent = await page.waitForFunction(() => {
-      const cards = document.querySelectorAll('.MuiCard-root');
-      for (const card of cards) {
-        // Look for any meaningful text content beyond just loading states
-        const text = card.textContent || '';
-        if (text.length > 50 && !text.includes('loading') && !text.includes('Loading')) {
-          return true;
-        }
-      }
-      return false;
-    }, { timeout: 15000 }).catch(() => false);
-    
+    const hasPlayerContent = await page
+      .waitForFunction(
+        () => {
+          const cards = document.querySelectorAll('.MuiCard-root');
+          for (const card of cards) {
+            // Look for any meaningful text content beyond just loading states
+            const text = card.textContent || '';
+            if (text.length > 50 && !text.includes('loading') && !text.includes('Loading')) {
+              return true;
+            }
+          }
+          return false;
+        },
+        { timeout: 15000 },
+      )
+      .catch(() => false);
+
     console.log('Player content loaded:', hasPlayerContent);
-    
+
     // Wait a bit more for any remaining content to render
     await page.waitForTimeout(3000);
 
     // Take initial screenshot of the page loading state
-    await page.screenshot({ 
-      path: 'test-results/players-panel-initial.png', 
+    await page.screenshot({
+      path: 'test-results/players-panel-initial.png',
       fullPage: true,
       timeout: 30000,
     });
@@ -187,17 +203,17 @@ test.describe('Focused Players Panel Test - Real Data', () => {
     // Wait for player cards to start loading - look for any loading indicators or skeleton content
     const _playerLoadingStates = page.locator(
       '[data-testid*="loading"], ' +
-      '.MuiSkeleton-root, ' +
-      '[data-testid*="skeleton"], ' +
-      '[data-testid*="player"]',
+        '.MuiSkeleton-root, ' +
+        '[data-testid*="skeleton"], ' +
+        '[data-testid*="player"]',
     );
 
     // Give some time for loading states to appear
     await page.waitForTimeout(2000);
 
     // Take screenshot during loading state
-    await page.screenshot({ 
-      path: 'test-results/players-panel-loading.png', 
+    await page.screenshot({
+      path: 'test-results/players-panel-loading.png',
       fullPage: true,
       timeout: 30000,
     });
@@ -221,7 +237,7 @@ test.describe('Focused Players Panel Test - Real Data', () => {
       if (count > 0) {
         console.log(`Found ${count} elements matching ${selector}`);
         playerContentFound = true;
-        
+
         // Wait for the first few to be visible
         const elementsToWaitFor = Math.min(count, 3);
         for (let i = 0; i < elementsToWaitFor; i++) {
@@ -237,14 +253,14 @@ test.describe('Focused Players Panel Test - Real Data', () => {
 
     if (!playerContentFound) {
       console.log('No player content found, checking for error messages or empty states');
-      
+
       // Check if there are any error messages
       const errorMessages = page.locator(
         '[data-testid*="error"], ' +
-        '.error, ' +
-        '.MuiAlert-root, ' +
-        'text=/error/i, ' +
-        'text=/failed/i',
+          '.error, ' +
+          '.MuiAlert-root, ' +
+          'text=/error/i, ' +
+          'text=/failed/i',
       );
       const errorCount = await errorMessages.count();
       if (errorCount > 0) {
@@ -258,8 +274,8 @@ test.describe('Focused Players Panel Test - Real Data', () => {
 
     // Take final screenshot showing the fully loaded state (after skeletons are gone)
     console.log('Taking final loaded screenshot...');
-    await page.screenshot({ 
-      path: 'test-results/players-panel-loaded.png', 
+    await page.screenshot({
+      path: 'test-results/players-panel-loaded.png',
       fullPage: true,
       timeout: 30000,
     });
@@ -282,7 +298,7 @@ test.describe('Focused Players Panel Test - Real Data', () => {
     // Take a focused screenshot of the first player card only
     if (cardsVisible) {
       const firstPlayerCard = page.locator('.MuiCard-root').first();
-      await firstPlayerCard.screenshot({ 
+      await firstPlayerCard.screenshot({
         path: 'test-results/players-panel-card-detail.png',
         timeout: 30000,
       });
@@ -291,16 +307,20 @@ test.describe('Focused Players Panel Test - Real Data', () => {
 
     // Verify that we have some kind of player content loaded
     // This is lenient - we just want to verify the page loaded without major errors
-    const hasAnyContent = playerNameVisible || classIconVisible || cardsVisible || playerContentFound;
-    
+    const hasAnyContent =
+      playerNameVisible || classIconVisible || cardsVisible || playerContentFound;
+
     if (!hasAnyContent) {
       console.log('Warning: No clear player content detected, but test will continue');
-      console.log('Page content preview:', await page.textContent('body').then(text => text?.slice(0, 500)));
+      console.log(
+        'Page content preview:',
+        await page.textContent('body').then((text) => text?.slice(0, 500)),
+      );
     }
 
     // Final verification - ensure we're still on the correct page and no major errors occurred
     expect(page.url()).toContain('/players');
-    
+
     // Check that there are no critical console errors
     const errors: string[] = [];
     page.on('pageerror', (error) => {
@@ -308,11 +328,12 @@ test.describe('Focused Players Panel Test - Real Data', () => {
     });
 
     // Filter out known non-critical errors
-    const criticalErrors = errors.filter(error => 
-      !error.includes('ResizeObserver') && 
-      !error.includes('Not implemented') &&
-      !error.includes('non-passive event listener') &&
-      !error.toLowerCase().includes('warning'),
+    const criticalErrors = errors.filter(
+      (error) =>
+        !error.includes('ResizeObserver') &&
+        !error.includes('Not implemented') &&
+        !error.includes('non-passive event listener') &&
+        !error.toLowerCase().includes('warning'),
     );
 
     if (criticalErrors.length > 0) {

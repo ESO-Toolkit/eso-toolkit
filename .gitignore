@@ -1,7 +1,7 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # dependencies
-/node_modules
+node_modules/
 /.pnp
 .pnp.js
 
@@ -67,6 +67,7 @@ test-metadata.json
 
 # Local capture/build output (screenshots, videos, demos)
 /out/
+/.screenshots/
 
 # Recordings not yet wired into the app
 /public/recordings/

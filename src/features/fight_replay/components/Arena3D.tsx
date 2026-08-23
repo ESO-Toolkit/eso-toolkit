@@ -17,7 +17,7 @@ import {
   MenuItem,
 } from '@mui/material';
 import { Canvas } from '@react-three/fiber';
-import React, { useMemo, useState, useEffect, useCallback, useRef } from 'react';
+import React, { Suspense, useMemo, useState, useEffect, useCallback, useRef } from 'react';
 import * as THREE from 'three';
 
 import { FightFragment } from '../../../graphql/gql/graphql';
@@ -40,7 +40,8 @@ import {
 import { getVisiblePlayerIds } from '../utils/pathUtils';
 import { decidePreviewMode } from '../utils/previewMode';
 
-import { ADD_MARKER_AT_CENTER_EVENT, Arena3DScene, GroundContextMenuPayload } from './Arena3DScene';
+import type { GroundContextMenuPayload } from './Arena3DScene';
+import { ADD_MARKER_AT_CENTER_EVENT } from './arenaEvents';
 import { BossHealthPanel } from './BossHealthPanel';
 import { DrawingHud } from './DrawingHud';
 import { LockedPlayerStatsPanel } from './LockedPlayerStatsPanel';
@@ -58,6 +59,11 @@ const logger = new Logger({
   level: LogLevel.WARN,
   contextPrefix: 'Arena3D',
 });
+
+// Keep the actor/map renderer tree in its own request after the Canvas shell is ready.
+const Arena3DScene = React.lazy(() =>
+  import('./Arena3DScene').then((module) => ({ default: module.Arena3DScene })),
+);
 
 // Stable empty Set for the player-list overlay's selection fallback — avoids a fresh Set
 // each render churning the panel.
@@ -857,39 +863,41 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
           // user enters interaction via the Expand button. Desktop/immersive keep the default 'auto'.
           style={{ background: '#1a1a1a', pointerEvents: mobilePreview ? 'none' : 'auto' }}
         >
-          <Arena3DScene
-            timeRef={timeRef}
-            lookup={lookup}
-            showActorNames={showActorNames && namesEnabled}
-            mapTimeline={mapTimeline}
-            scrubbingMode={scrubbingMode}
-            followingActorIdRef={followingActorIdRef}
-            onActorClick={onActorClick}
-            markersState={markersState}
-            onGroundContextMenu={handleGroundContextMenu}
-            onMarkerContextMenu={handleMarkerContextMenu}
-            markersEditMode={markersEditMode}
-            onMarkerMove={onMarkerMove}
-            drawTool={drawTool}
-            drawStyle={drawStyle}
-            onShapeDrawn={onShapeDrawn}
-            drawFinishSignal={drawFinishSignal}
-            drawCancelSignal={drawCancelSignal}
-            onDrawPointsChange={handleDrawPointsChange}
-            fight={fight}
-            initialTarget={initialCameraTarget}
-            initialPosition={initialCameraPosition}
-            onUnfollow={handleUnlockCamera}
-            selectedPlayerIds={selectedPlayerIds}
-            showPlayerTrails={showPlayerTrails}
-            playerVisibility={playerVisibility}
-            playerColorOverrides={playerColorOverrides}
-            qualityPreset={qualityPreset}
-            autoQualityLevel={autoQualityLevel}
-            onQualityLevelChange={onQualityLevelChange}
-            isPlayingRef={isPlayingRef}
-            mobileImmersive={mobileImmersive}
-          />
+          <Suspense fallback={null}>
+            <Arena3DScene
+              timeRef={timeRef}
+              lookup={lookup}
+              showActorNames={showActorNames && namesEnabled}
+              mapTimeline={mapTimeline}
+              scrubbingMode={scrubbingMode}
+              followingActorIdRef={followingActorIdRef}
+              onActorClick={onActorClick}
+              markersState={markersState}
+              onGroundContextMenu={handleGroundContextMenu}
+              onMarkerContextMenu={handleMarkerContextMenu}
+              markersEditMode={markersEditMode}
+              onMarkerMove={onMarkerMove}
+              drawTool={drawTool}
+              drawStyle={drawStyle}
+              onShapeDrawn={onShapeDrawn}
+              drawFinishSignal={drawFinishSignal}
+              drawCancelSignal={drawCancelSignal}
+              onDrawPointsChange={handleDrawPointsChange}
+              fight={fight}
+              initialTarget={initialCameraTarget}
+              initialPosition={initialCameraPosition}
+              onUnfollow={handleUnlockCamera}
+              selectedPlayerIds={selectedPlayerIds}
+              showPlayerTrails={showPlayerTrails}
+              playerVisibility={playerVisibility}
+              playerColorOverrides={playerColorOverrides}
+              qualityPreset={qualityPreset}
+              autoQualityLevel={autoQualityLevel}
+              onQualityLevelChange={onQualityLevelChange}
+              isPlayingRef={isPlayingRef}
+              mobileImmersive={mobileImmersive}
+            />
+          </Suspense>
         </Canvas>
 
         {/* Mobile inline PREVIEW scrim — the report page shows a dimmed, non-interactive teaser of the

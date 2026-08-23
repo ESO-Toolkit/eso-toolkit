@@ -72,7 +72,7 @@ function buildCompactTank(player: PlayerEntry, index: number): CompactTank {
 
   // Identity/display name: store RAW (never HTML-escape). The client decodes this
   // into a React text node, which escapes on output — escaping here too would
-  // double-escape (e.g. "Spike'jo" → "Spike&#x27;jo" shown literally). See sanitize.ts.
+  // double-escape (e.g. "SamplePlayer'jo" → "SamplePlayer&#x27;jo" shown literally). See sanitize.ts.
   if (player.name) ct.pn = cleanText(player.name);
   ct.rl = `T${index + 1}`;
 
