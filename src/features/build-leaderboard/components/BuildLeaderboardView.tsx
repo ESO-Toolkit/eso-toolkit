@@ -1,4 +1,4 @@
-import { InfoOutlined } from '@mui/icons-material';
+import { CompareArrows, ExpandMore, InfoOutlined } from '@mui/icons-material';
 import {
   Alert,
   Box,
@@ -81,12 +81,13 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
 }) => {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [methodologyOpen, setMethodologyOpen] = useState(false);
+  const [comparisonOpen, setComparisonOpen] = useState(false);
   const [lastResult, setLastResult] = useState(result);
 
   if (lastResult !== result) {
     setLastResult(result);
     setExpandedId(null);
-    setMethodologyOpen(false);
+    setComparisonOpen(false);
   }
 
   if (error) {
@@ -151,11 +152,8 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
   const ordered = recommended
     ? [recommended, ...result.clusters.filter((cluster) => cluster.id !== recommended.id)]
     : result.clusters;
-  const rankFor = (cluster: BuildCluster): number =>
-    result.clusters.findIndex((candidate) => candidate.id === cluster.id) + 1;
-
   const handleComparisonSelect = (clusterId: string): void => {
-    if (clusterId !== result.recommendedClusterId) setExpandedId(clusterId);
+    setExpandedId(clusterId);
 
     const target = document.getElementById(`build-archetype-${clusterId}`);
     if (!target?.scrollIntoView) return;
@@ -175,12 +173,15 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
         })}
       >
         <Box sx={{ display: 'flex', minHeight: 34, alignItems: 'center', gap: 0.5 }}>
-          <Typography sx={{ flex: 1, color: 'text.secondary', fontSize: '0.72rem' }}>
+          <Typography
+            sx={{ flex: 1, color: 'text.secondary', fontSize: '0.76rem', lineHeight: 1.45 }}
+          >
+            Based on{' '}
             <Box component="span" className="u-tabular">
               {result.totalParses}
             </Box>{' '}
-            parses · {result.uniqueSignatures} distinct builds · {result.k} archetypes · Grouping
-            quality {quality.label.toLowerCase()}
+            top-ranked parses. The build is a starting point—your damage will vary with rotation,
+            buffs, and group.
           </Typography>
           <IconButton
             size="small"
@@ -204,9 +205,9 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
           >
             <Typography sx={{ color: 'text.secondary', fontSize: '0.7rem', lineHeight: 1.45 }}>
               <Box component="span" sx={{ color: 'text.primary', fontWeight: 650 }}>
-                Core and common.
+                What was analyzed.
               </Box>{' '}
-              Core pieces appear in at least 80%; common options appear in 35–79%.
+              {result.uniqueSignatures} distinct builds were grouped into {result.k} archetypes.
             </Typography>
             <Typography sx={{ color: 'text.secondary', fontSize: '0.7rem', lineHeight: 1.45 }}>
               <Box component="span" sx={{ color: 'text.primary', fontWeight: 650 }}>
@@ -216,20 +217,49 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
             </Typography>
             <Typography sx={{ color: 'text.secondary', fontSize: '0.7rem', lineHeight: 1.45 }}>
               <Box component="span" sx={{ color: 'text.primary', fontWeight: 650 }}>
-                Recommendation.
+                Core and common.
               </Box>{' '}
-              Highest median DPS among broadly adopted groups; actions open a real observed parse.
+              Core pieces appear in at least 80%; common options appear in 35–79%. Every action
+              opens a real observed parse.
             </Typography>
           </Box>
         </Collapse>
       </Box>
 
-      <DpsDistributionRail
-        clusters={result.clusters}
-        recommendedClusterId={result.recommendedClusterId}
-        selectedClusterId={expandedId ?? result.recommendedClusterId}
-        onSelect={handleComparisonSelect}
-      />
+      <Box
+        component="section"
+        aria-label="Build performance comparison"
+        sx={(theme) => ({
+          mb: 2,
+          borderBottom: `1px solid ${alpha(theme.palette.divider, 0.58)}`,
+        })}
+      >
+        <Button
+          variant="text"
+          startIcon={<CompareArrows />}
+          endIcon={
+            <ExpandMore
+              sx={{
+                transition: 'transform 160ms ease',
+                transform: comparisonOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+              }}
+            />
+          }
+          aria-expanded={comparisonOpen}
+          onClick={() => setComparisonOpen((open) => !open)}
+          sx={{ px: 0, py: 0.75, fontSize: '0.76rem' }}
+        >
+          {comparisonOpen ? 'Hide performance comparison' : `Compare all ${result.k} builds`}
+        </Button>
+        <Collapse in={comparisonOpen} timeout="auto" unmountOnExit>
+          <DpsDistributionRail
+            clusters={result.clusters}
+            recommendedClusterId={result.recommendedClusterId}
+            selectedClusterId={expandedId ?? result.recommendedClusterId}
+            onSelect={handleComparisonSelect}
+          />
+        </Collapse>
+      </Box>
 
       <Box
         sx={(theme) => ({
@@ -252,7 +282,7 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
           Archetypes
         </Typography>
         <Typography sx={{ color: 'text.disabled', fontSize: '0.68rem' }}>
-          sorted by share
+          recommended first · alternatives by usage
         </Typography>
       </Box>
 
@@ -267,14 +297,11 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
             <Box component="li" key={cluster.id}>
               <ArchetypeCard
                 cluster={cluster}
-                rank={rankFor(cluster)}
                 totalParses={result.totalParses}
                 featured={featured}
-                expanded={featured || expandedId === cluster.id}
-                onToggleExpand={
-                  featured
-                    ? undefined
-                    : () => setExpandedId((current) => (current === cluster.id ? null : cluster.id))
+                expanded={expandedId === cluster.id}
+                onToggleExpand={() =>
+                  setExpandedId((current) => (current === cluster.id ? null : cluster.id))
                 }
                 esoClass={esoClass ?? cluster.esoClass}
                 variations={cluster.variations}

@@ -90,11 +90,14 @@ describe('BuildLeaderboardView happy path', () => {
     expect(screen.getAllByTestId('archetype-card')).toHaveLength(result.k - 1);
   });
 
-  it('compares every archetype on one shared performance rail', () => {
+  it('keeps the expert comparison optional, then compares every archetype on one scale', async () => {
     const { parses, result } = clusteredFixture();
     renderView({ parses, result });
 
-    expect(screen.getByText('Performance spread')).toBeInTheDocument();
+    expect(screen.queryByText('Compare typical damage')).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: /compare all/i }));
+
+    expect(screen.getByText('Compare typical damage')).toBeInTheDocument();
     const comparisonRows = result.clusters.map((cluster) =>
       screen.getByRole('button', {
         name: (accessibleName) =>
@@ -112,7 +115,7 @@ describe('BuildLeaderboardView happy path', () => {
 
     const featured = screen.getByTestId('start-here-card');
     expect(within(featured).getByText(/median dps/i)).toBeInTheDocument();
-    expect(within(featured).getByText(/half of them beat/i)).toBeInTheDocument();
+    expect(within(featured).getByText(/half of these parses land above/i)).toBeInTheDocument();
   });
 
   /**
@@ -124,7 +127,7 @@ describe('BuildLeaderboardView happy path', () => {
     renderView({ parses, result });
 
     const featured = screen.getByTestId('start-here-card');
-    // Chips are not clickable, so they carry no button role — assert on the
+    // Traits are not clickable, so they carry no button role — assert on the
     // data-* markers the component sets for exactly this purpose.
     const core = featured.querySelectorAll('[data-trait-kind="core"]');
     const flex = featured.querySelectorAll('[data-trait-kind="flex"]');
@@ -145,10 +148,12 @@ describe('BuildLeaderboardView happy path', () => {
     expect(within(alternative).queryByText(/build consistency/i)).not.toBeInTheDocument();
   });
 
-  it('buckets grouping quality instead of showing a raw silhouette', () => {
+  it('keeps grouping diagnostics out of the default view and explains them on request', async () => {
     const { parses, result } = clusteredFixture();
     renderView({ parses, result });
 
+    expect(screen.queryByText(/grouping quality/i)).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: /how this leaderboard works/i }));
     expect(screen.getByText(/grouping quality/i)).toBeInTheDocument();
     // The raw float must never reach the user.
     expect(screen.queryByText(String(result.silhouette))).not.toBeInTheDocument();
@@ -226,8 +231,8 @@ describe('BuildLeaderboardView happy path', () => {
     const { parses, result } = clusteredFixture();
     const { rerender } = renderView({ parses, result });
 
-    // The featured card always shows its detail, so count rather than assert presence.
-    const detailCount = (): number => screen.queryAllByText(/^build consistency$/i).length;
+    // Count the mounted detail panels so the assertion works regardless of ordering.
+    const detailCount = (): number => screen.queryAllByText(/^gear & special$/i).length;
     const collapsed = detailCount();
 
     const [card] = screen.getAllByTestId('archetype-card');
@@ -294,7 +299,7 @@ describe('BuildLeaderboardView happy path', () => {
       );
 
       const { rerender } = render(view(parses, result));
-      const detailCount = (): number => screen.queryAllByText(/^build consistency$/i).length;
+      const detailCount = (): number => screen.queryAllByText(/^gear & special$/i).length;
       const collapsed = detailCount();
 
       const [card] = screen.getAllByTestId('archetype-card');
@@ -324,6 +329,6 @@ describe('BuildLeaderboardView happy path', () => {
     const [card] = screen.getAllByTestId('archetype-card');
     await userEvent.click(within(card).getByRole('button', { name: /full breakdown/i }));
 
-    expect(within(card).getByText(/^build consistency$/i)).toBeInTheDocument();
+    expect(within(card).getByText(/^gear & special$/i)).toBeInTheDocument();
   });
 });

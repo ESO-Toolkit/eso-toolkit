@@ -17,7 +17,6 @@ import { TraitChipRow } from './TraitChipRow';
 
 export interface ArchetypeCardProps {
   cluster: BuildCluster;
-  rank: number;
   totalParses: number;
   featured?: boolean;
   expanded?: boolean;
@@ -35,18 +34,15 @@ export interface ArchetypeCardProps {
 const compact = (value: number): string =>
   value >= 1000 ? `${(value / 1000).toFixed(1).replace(/\.0$/, '')}k` : String(Math.round(value));
 
-const percent = (value: number): string => `${Math.round(value * 100)}%`;
-
 const SPECIAL_GEAR_GROUPS = ['monsterSet', 'mythic', 'arena'] as const;
 const SIGNATURE_GROUPS = ['fivePieceSets', ...SPECIAL_GEAR_GROUPS, 'frontBar', 'backBar'] as const;
 
 function summarySentence(cluster: BuildCluster, totalParses: number): string {
-  return `${cluster.size} of ${totalParses} parses use this pattern. Half of them beat ${compact(cluster.dps.median)} DPS.`;
+  return `${cluster.size} of ${totalParses} top parses use this pattern. Half of these parses land above ${compact(cluster.dps.median)} DPS.`;
 }
 
 export const ArchetypeCard: React.FC<ArchetypeCardProps> = ({
   cluster,
-  rank,
   totalParses,
   featured = false,
   expanded = false,
@@ -63,7 +59,8 @@ export const ArchetypeCard: React.FC<ArchetypeCardProps> = ({
   const [menuAnchor, setMenuAnchor] = React.useState<HTMLElement | null>(null);
   const { getPlayerColor } = useRoleColors();
   const dpsColor = getPlayerColor('dps');
-  const showDetail = featured || expanded;
+  const showDetail = expanded;
+  const showActions = featured || showDetail;
   const className = esoClass ?? cluster.esoClass;
   const hasMoreActions = Boolean(
     onSaveBuild || onViewSourceLog || sourceUrl || pendingKind === 'save',
@@ -80,19 +77,20 @@ export const ArchetypeCard: React.FC<ArchetypeCardProps> = ({
         scrollMarginTop: 72,
         borderBottom: `1px solid ${alpha(theme.palette.divider, 0.72)}`,
         backgroundColor: 'transparent',
-        '&::before': showDetail
-          ? {
-              content: '""',
-              position: 'absolute',
-              top: 10,
-              bottom: 10,
-              left: 0,
-              width: 2,
-              backgroundColor: dpsColor,
-              transformOrigin: 'top',
-              animation: 'archetype-rule-in 180ms ease-out both',
-            }
-          : undefined,
+        '&::before':
+          featured || showDetail
+            ? {
+                content: '""',
+                position: 'absolute',
+                top: 10,
+                bottom: 10,
+                left: 0,
+                width: 2,
+                backgroundColor: dpsColor,
+                transformOrigin: 'top',
+                animation: 'archetype-rule-in 180ms ease-out both',
+              }
+            : undefined,
         '@keyframes archetype-rule-in': {
           from: { transform: 'scaleY(0)' },
           to: { transform: 'scaleY(1)' },
@@ -104,12 +102,12 @@ export const ArchetypeCard: React.FC<ArchetypeCardProps> = ({
         sx={{
           display: 'grid',
           gridTemplateColumns: {
-            xs: '26px minmax(0, 1fr) auto',
-            md: '30px minmax(180px, 1fr) 78px 58px 50px auto',
+            xs: 'minmax(0, 1fr) auto',
+            md: 'minmax(180px, 1fr) 78px 110px auto',
           },
           gridTemplateAreas: {
-            xs: '"rank title toggle" "rank metrics metrics"',
-            md: '"rank title median parses share toggle"',
+            xs: '"title toggle" "metrics metrics"',
+            md: '"title median usage toggle"',
           },
           minHeight: { xs: 72, md: 58 },
           alignItems: 'center',
@@ -119,14 +117,6 @@ export const ArchetypeCard: React.FC<ArchetypeCardProps> = ({
           py: { xs: 0.75, md: 0.5 },
         }}
       >
-        <Typography
-          aria-label={`Prevalence rank ${rank}`}
-          className="u-tabular"
-          sx={{ gridArea: 'rank', color: 'text.disabled', fontSize: '0.7rem' }}
-        >
-          {String(rank).padStart(2, '0')}
-        </Typography>
-
         <Box sx={{ gridArea: 'title', minWidth: 0 }}>
           <Box sx={{ display: 'flex', minWidth: 0, alignItems: 'center', gap: 0.7 }}>
             {className && <ClassIcon className={className} size={17} alt="" />}
@@ -148,13 +138,13 @@ export const ArchetypeCard: React.FC<ArchetypeCardProps> = ({
                 component="span"
                 sx={{ flex: '0 0 auto', color: dpsColor, fontSize: '0.68rem', fontWeight: 700 }}
               >
-                Recommended
+                Recommended starting point
               </Typography>
             )}
           </Box>
           {featured && (
             <Typography sx={{ mt: 0.25, color: 'text.secondary', fontSize: '0.7rem' }}>
-              Highest median among broadly adopted archetypes in this sample.
+              Highest typical damage among build patterns used often enough to trust.
             </Typography>
           )}
         </Box>
@@ -164,7 +154,7 @@ export const ArchetypeCard: React.FC<ArchetypeCardProps> = ({
             display: { xs: 'flex', md: 'contents' },
             gridArea: { xs: 'metrics', md: 'auto' },
             alignItems: 'baseline',
-            gap: 1.5,
+            gap: 2,
           }}
         >
           <Box sx={{ gridArea: { md: 'median' } }}>
@@ -173,21 +163,15 @@ export const ArchetypeCard: React.FC<ArchetypeCardProps> = ({
             </Typography>
             <Typography sx={{ color: 'text.disabled', fontSize: '0.62rem' }}>median DPS</Typography>
           </Box>
-          <Box sx={{ gridArea: { md: 'parses' } }}>
-            <Typography className="u-tabular" sx={{ fontSize: '0.78rem', fontWeight: 620 }}>
-              {cluster.size}
+          <Box sx={{ gridArea: { md: 'usage' } }}>
+            <Typography sx={{ color: 'text.secondary', fontSize: '0.7rem' }}>used by</Typography>
+            <Typography className="u-tabular" sx={{ fontSize: '0.76rem', fontWeight: 650 }}>
+              {cluster.size} of {totalParses}
             </Typography>
-            <Typography sx={{ color: 'text.disabled', fontSize: '0.62rem' }}>parses</Typography>
-          </Box>
-          <Box sx={{ gridArea: { md: 'share' } }}>
-            <Typography className="u-tabular" sx={{ fontSize: '0.78rem', fontWeight: 620 }}>
-              {percent(cluster.share)}
-            </Typography>
-            <Typography sx={{ color: 'text.disabled', fontSize: '0.62rem' }}>share</Typography>
           </Box>
         </Box>
 
-        {!featured && onToggleExpand ? (
+        {onToggleExpand ? (
           <Button
             variant="text"
             size="small"
@@ -211,8 +195,11 @@ export const ArchetypeCard: React.FC<ArchetypeCardProps> = ({
               '& .MuiButton-endIcon': { ml: { xs: 0, sm: 0.35 } },
             }}
           >
+            <Box component="span" sx={{ display: { xs: 'inline', sm: 'none' } }}>
+              {expanded ? 'Hide' : featured ? 'Evidence' : 'Details'}
+            </Box>
             <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>
-              {expanded ? 'Show less' : 'Full breakdown'}
+              {expanded ? 'Hide evidence' : featured ? 'See build evidence' : 'Full breakdown'}
             </Box>
           </Button>
         ) : (
@@ -222,13 +209,18 @@ export const ArchetypeCard: React.FC<ArchetypeCardProps> = ({
 
       {!showDetail && (
         <Box sx={{ px: { xs: 1, sm: 1.5 }, pb: 1 }}>
+          {featured && (
+            <Typography sx={{ mb: 0.75, color: 'text.secondary', fontSize: '0.76rem' }}>
+              {summarySentence(cluster, totalParses)}
+            </Typography>
+          )}
           <TraitChipRow
-            title="Build composition"
+            title={featured ? 'Common setup' : 'Build composition'}
             group={SIGNATURE_GROUPS}
             core={cluster.core}
             flex={cluster.flex}
             variations={variations}
-            maxVisible={5}
+            maxVisible={featured ? 4 : 3}
             showVariationsControl={false}
             variant="inline"
           />
@@ -237,9 +229,11 @@ export const ArchetypeCard: React.FC<ArchetypeCardProps> = ({
 
       <Collapse in={showDetail} timeout="auto" unmountOnExit>
         <Box sx={{ px: { xs: 1, sm: 1.5 }, pb: 1.5 }}>
-          <Typography sx={{ mb: 1, color: 'text.secondary', fontSize: '0.72rem' }}>
-            {summarySentence(cluster, totalParses)}
-          </Typography>
+          {!featured && (
+            <Typography sx={{ mb: 1, color: 'text.secondary', fontSize: '0.76rem' }}>
+              {summarySentence(cluster, totalParses)}
+            </Typography>
+          )}
 
           <Box
             sx={(theme) => ({
@@ -312,54 +306,46 @@ export const ArchetypeCard: React.FC<ArchetypeCardProps> = ({
               />
             </Box>
           </Box>
-
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              flexWrap: 'wrap',
-              gap: 0.75,
-              pt: 1,
-            }}
-          >
-            <Typography sx={{ mr: { sm: 'auto' }, color: 'text.secondary', fontSize: '0.7rem' }}>
-              Build consistency{' '}
-              <Box
-                component="span"
-                className="u-tabular"
-                sx={{ color: 'text.primary', fontWeight: 700 }}
-              >
-                {Math.round((1 - cluster.cohesion) * 100)}%
-              </Box>
-            </Typography>
-
-            {onOpenInEditor && (
-              <Button
-                variant="contained"
-                size="small"
-                disabled={actionsDisabled}
-                onClick={() => onOpenInEditor(cluster)}
-              >
-                {pendingKind === 'open' ? 'Opening…' : 'Open in Build Editor'}
-              </Button>
-            )}
-
-            {hasMoreActions && (
-              <Button
-                variant="text"
-                size="small"
-                startIcon={<MoreHoriz />}
-                disabled={actionsDisabled}
-                aria-haspopup="menu"
-                aria-expanded={Boolean(menuAnchor)}
-                onClick={(event) => setMenuAnchor(event.currentTarget)}
-              >
-                {pendingKind === 'save' ? 'Saving…' : 'More actions'}
-              </Button>
-            )}
-          </Box>
         </Box>
       </Collapse>
+
+      {showActions && (
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: 0.75,
+            px: { xs: 1, sm: 1.5 },
+            pb: 1.25,
+          }}
+        >
+          {onOpenInEditor && (
+            <Button
+              variant="contained"
+              size="small"
+              disabled={actionsDisabled}
+              onClick={() => onOpenInEditor(cluster)}
+            >
+              {pendingKind === 'open' ? 'Opening…' : 'Open in Build Editor'}
+            </Button>
+          )}
+
+          {hasMoreActions && (
+            <Button
+              variant="text"
+              size="small"
+              startIcon={<MoreHoriz />}
+              disabled={actionsDisabled}
+              aria-haspopup="menu"
+              aria-expanded={Boolean(menuAnchor)}
+              onClick={(event) => setMenuAnchor(event.currentTarget)}
+            >
+              {pendingKind === 'save' ? 'Saving…' : 'More actions'}
+            </Button>
+          )}
+        </Box>
+      )}
 
       <Menu
         anchorEl={menuAnchor}

@@ -36,8 +36,8 @@ export const DpsDistributionRail: React.FC<DpsDistributionRailProps> = ({
 
   if (clusters.length === 0) return null;
 
-  const observedFloor = Math.min(...clusters.map((cluster) => cluster.dps.min));
-  const observedCeiling = Math.max(...clusters.map((cluster) => cluster.dps.max));
+  const observedFloor = Math.min(...clusters.map((cluster) => cluster.dps.q1));
+  const observedCeiling = Math.max(...clusters.map((cluster) => cluster.dps.q3));
   const step = niceStep(Math.max(observedCeiling - observedFloor, 1));
   const floor = Math.floor(observedFloor / step) * step;
   const ceiling = Math.ceil(observedCeiling / step) * step || step;
@@ -85,10 +85,10 @@ export const DpsDistributionRail: React.FC<DpsDistributionRailProps> = ({
             textTransform: 'uppercase',
           }}
         >
-          Performance spread
+          Compare typical damage
         </Typography>
         <Typography sx={{ color: 'text.disabled', fontSize: '0.68rem' }}>
-          Shared DPS scale · higher is better
+          Shared scale · higher is better
         </Typography>
       </Box>
 
@@ -98,7 +98,7 @@ export const DpsDistributionRail: React.FC<DpsDistributionRailProps> = ({
             display: 'grid',
             gridTemplateColumns: {
               xs: 'minmax(0, 1fr)',
-              md: '24px minmax(160px, 250px) minmax(0, 1fr) 64px 44px',
+              md: 'minmax(160px, 250px) minmax(0, 1fr) 64px 44px',
             },
             columnGap: 1.25,
             minHeight: 19,
@@ -108,7 +108,7 @@ export const DpsDistributionRail: React.FC<DpsDistributionRailProps> = ({
             sx={{
               position: 'relative',
               display: { xs: 'none', md: 'block' },
-              gridColumn: 3,
+              gridColumn: 2,
               height: 18,
             }}
           >
@@ -141,11 +141,9 @@ export const DpsDistributionRail: React.FC<DpsDistributionRailProps> = ({
         {clusters.map((cluster, index) => {
           const recommended = cluster.id === recommendedClusterId;
           const selected = cluster.id === selectedClusterId;
-          const min = position(cluster.dps.min);
           const q1 = position(cluster.dps.q1);
           const median = position(cluster.dps.median);
           const q3 = position(cluster.dps.q3);
-          const max = position(cluster.dps.max);
 
           return (
             <ButtonBase
@@ -158,12 +156,12 @@ export const DpsDistributionRail: React.FC<DpsDistributionRailProps> = ({
                 width: '100%',
                 minHeight: { xs: 58, md: 42 },
                 gridTemplateColumns: {
-                  xs: '24px minmax(0, 1fr) 58px 38px',
-                  md: '24px minmax(160px, 250px) minmax(0, 1fr) 64px 44px',
+                  xs: 'minmax(0, 1fr) 58px 38px',
+                  md: 'minmax(160px, 250px) minmax(0, 1fr) 64px 44px',
                 },
                 gridTemplateAreas: {
-                  xs: '"rank label median share" "rank rail rail rail"',
-                  md: '"rank label rail median share"',
+                  xs: '"label median share" "rail rail rail"',
+                  md: '"label rail median share"',
                 },
                 alignItems: 'center',
                 columnGap: 1.25,
@@ -200,13 +198,6 @@ export const DpsDistributionRail: React.FC<DpsDistributionRailProps> = ({
                 },
               })}
             >
-              <Typography
-                className="u-tabular"
-                sx={{ gridArea: 'rank', color: 'text.disabled', fontSize: '0.68rem' }}
-              >
-                {String(index + 1).padStart(2, '0')}
-              </Typography>
-
               <Box sx={{ gridArea: 'label', minWidth: 0 }}>
                 <Typography
                   noWrap
@@ -239,26 +230,6 @@ export const DpsDistributionRail: React.FC<DpsDistributionRailProps> = ({
                   },
                 })}
               >
-                <Box
-                  sx={{
-                    position: 'absolute',
-                    top: 11,
-                    left: `${min}%`,
-                    width: `${Math.max(max - min, 0.7)}%`,
-                    height: 2,
-                    backgroundColor: alpha(dpsColor, 0.55),
-                    '&::before, &::after': {
-                      content: '""',
-                      position: 'absolute',
-                      top: -3,
-                      width: 1,
-                      height: 8,
-                      backgroundColor: alpha(dpsColor, 0.7),
-                    },
-                    '&::before': { left: 0 },
-                    '&::after': { right: 0 },
-                  }}
-                />
                 <Box
                   sx={{
                     position: 'absolute',
@@ -320,10 +291,12 @@ export const DpsDistributionRail: React.FC<DpsDistributionRailProps> = ({
           borderTop: `1px solid ${alpha(theme.palette.divider, 0.58)}`,
         })}
       >
-        <Typography sx={{ color: 'text.disabled', fontSize: '0.64rem' }}>
-          whisker full range · box middle 50% · mark median
+        <Typography sx={{ color: 'text.secondary', fontSize: '0.7rem' }}>
+          Band: where the middle half land · line: typical result
         </Typography>
-        <Typography sx={{ color: 'text.disabled', fontSize: '0.64rem' }}>median / share</Typography>
+        <Typography sx={{ color: 'text.secondary', fontSize: '0.7rem' }}>
+          typical / usage
+        </Typography>
       </Box>
     </Box>
   );

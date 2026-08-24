@@ -232,7 +232,16 @@ export const TraitChipRow: React.FC<TraitChipRowProps> = ({
     ];
 
     return (
-      <Box sx={{ display: 'flex', minWidth: 0, alignItems: 'baseline', gap: 0.75 }}>
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', sm: 'auto minmax(0, 1fr) auto' },
+          minWidth: 0,
+          alignItems: 'baseline',
+          columnGap: 0.75,
+          rowGap: 0.35,
+        }}
+      >
         <Typography sx={{ flex: '0 0 auto', color: 'text.disabled', fontSize: '0.7rem' }}>
           {title}
         </Typography>
@@ -242,8 +251,9 @@ export const TraitChipRow: React.FC<TraitChipRowProps> = ({
             minWidth: 0,
             overflow: 'hidden',
             alignItems: 'baseline',
+            flexWrap: 'wrap',
             gap: 0.65,
-            whiteSpace: 'nowrap',
+            maxHeight: 38,
           }}
         >
           {visible.map(({ trait, kind }, index) => (
@@ -256,12 +266,15 @@ export const TraitChipRow: React.FC<TraitChipRowProps> = ({
               {renderInlineTrait(trait, kind)}
             </React.Fragment>
           ))}
-          {hiddenPrimaryCount > 0 && (
-            <Typography component="span" sx={{ color: 'text.disabled', fontSize: '0.7rem' }}>
-              +{hiddenPrimaryCount} more in the full breakdown
-            </Typography>
-          )}
         </Box>
+        {hiddenPrimaryCount > 0 && (
+          <Typography
+            component="span"
+            sx={{ color: 'text.disabled', fontSize: '0.7rem', whiteSpace: 'nowrap' }}
+          >
+            +{hiddenPrimaryCount} more in the full breakdown
+          </Typography>
+        )}
       </Box>
     );
   }
