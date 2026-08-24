@@ -125,7 +125,7 @@ class BillboardTextRenderer {
   }
 
   private setLabelFont(fontSize: number): void {
-    this.context.font = `800 ${fontSize}px Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif`;
+    this.context.font = `800 ${fontSize}px Inter Variable, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif`;
   }
 
   private fitTextToWidth(name: string): { text: string; fontSize: number } {

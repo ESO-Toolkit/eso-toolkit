@@ -98,7 +98,7 @@ function drawGlyph(symbol: GlyphSymbol, color: string): THREE.CanvasTexture {
   ctx.fillStyle = color;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.font = `700 ${Math.round(GLYPH_TEXTURE_SIZE * 0.5)}px Inter, system-ui, Segoe UI, Arial, sans-serif`;
+  ctx.font = `700 ${Math.round(GLYPH_TEXTURE_SIZE * 0.5)}px Inter Variable, system-ui, Segoe UI, Arial, sans-serif`;
   ctx.fillText(glyphCharacter(symbol), center, center + 4);
 
   const texture = new THREE.CanvasTexture(canvas);
