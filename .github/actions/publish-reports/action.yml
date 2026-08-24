@@ -59,49 +59,136 @@ runs:
           echo "::error::Publish directory must stay within the workflow workspace."
           exit 1
         fi
+        if [[ "$source_dir" == "$workspace_dir" ]]; then
+          echo "::error::Publish directory must be a dedicated artifact directory, not the workspace root."
+          exit 1
+        fi
+        source_relative="${source_dir#"$workspace_dir"/}"
+        case "/$source_relative/" in
+          */.git/*)
+            echo "::error::Publish directory cannot target Git metadata."
+            exit 1
+            ;;
+        esac
         if [[ ! -d "$source_dir" ]]; then
           echo "::error::Publish directory does not exist: $source_dir"
           exit 1
         fi
-
-        destination_dir="${DESTINATION_DIR#./}"
-        if [[ "$DESTINATION_DIR" == "." ]]; then
-          destination_dir=""
-        fi
-        if [[ "$destination_dir" == /* || "$destination_dir" == ".." || "$destination_dir" == ../* || "$destination_dir" == */../* || "$destination_dir" == */.. ]]; then
-          echo "::error::Destination directory must stay within the reports branch."
+        if IFS= read -r -d '' git_metadata_path < <(find "$source_dir" -name .git -print0 -quit); then
+          echo "::error::Publish directory cannot contain Git metadata: $git_metadata_path"
           exit 1
         fi
 
         clone_dir="$(mktemp -d)"
         trap 'rm -rf "$clone_dir"' EXIT
 
+        if [[ "$DESTINATION_DIR" == /* ]]; then
+          echo "::error::Destination directory must stay within the reports branch."
+          exit 1
+        fi
+        destination_path="$(realpath -m "$clone_dir/$DESTINATION_DIR")"
+        if [[ "$destination_path" != "$clone_dir" && "$destination_path" != "$clone_dir"/* ]]; then
+          echo "::error::Destination directory must stay within the reports branch."
+          exit 1
+        fi
+        destination_dir="${destination_path#"$clone_dir"/}"
+        if [[ "$destination_path" == "$clone_dir" ]]; then
+          destination_dir=""
+        fi
+        case "/$destination_dir/" in
+          */.git/*)
+            echo "::error::Destination directory cannot target Git metadata."
+            exit 1
+            ;;
+        esac
+        case "$destination_dir" in
+          nightly-tests | screen-size-tests)
+            echo "::error::Publishers cannot replace a retained report root: $destination_dir"
+            exit 1
+            ;;
+        esac
+
         auth_header="$(printf 'x-access-token:%s' "$REPORTS_TOKEN" | base64 | tr -d '\n')"
         remote_url="https://github.com/${EXTERNAL_REPOSITORY}.git"
 
         git -c http.extraHeader="AUTHORIZATION: basic $auth_header" \
-          clone --depth 1 --branch "$TARGET_BRANCH" "$remote_url" "$clone_dir"
+          clone \
+          --filter=blob:none \
+          --no-checkout \
+          --depth 1 \
+          --branch "$TARGET_BRANCH" \
+          "$remote_url" "$clone_dir"
+
+        if [[ "$(git -C "$clone_dir" config --get remote.origin.promisor || true)" != "true" ]]; then
+          echo "::error::Reports repository does not support a blobless partial clone."
+          exit 1
+        fi
+        filter_probe_oid="$(git -C "$clone_dir" ls-tree -r HEAD | awk '$2 == "blob" && !found { oid = $3; found = 1 } END { print oid }')"
+        if [[ -n "$filter_probe_oid" ]] &&
+          GIT_NO_LAZY_FETCH=1 git -C "$clone_dir" cat-file -e "$filter_probe_oid" 2>/dev/null; then
+          echo "::error::Reports repository ignored the blobless partial-clone filter."
+          exit 1
+        fi
 
         git -C "$clone_dir" config user.name "github-actions[bot]"
         git -C "$clone_dir" config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        # Preserve the full tree in the index without downloading its 4.7 GB of blobs.
+        # Owned paths are copied into the otherwise-empty sparse worktree and staged below.
+        git -C "$clone_dir" read-tree HEAD
+        git -C "$clone_dir" sparse-checkout init --no-cone
+        printf '/.report-publisher-empty-worktree/\n' |
+          git -C "$clone_dir" sparse-checkout set --no-cone --stdin
+
+        root_entries=()
+        root_pathspecs=()
+        if [[ -z "$destination_dir" ]]; then
+          while IFS= read -r -d '' artifact_path; do
+            entry="${artifact_path##*/}"
+            case "$entry" in
+              .git | nightly-tests | screen-size-tests)
+                echo "::error::Root publisher cannot modify protected entry: $entry"
+                exit 1
+                ;;
+            esac
+            root_entries+=("$entry")
+            root_pathspecs+=(":(literal)$entry")
+          done < <(find "$source_dir" -mindepth 1 -maxdepth 1 -print0)
+
+          if (( ${#root_entries[@]} == 0 )); then
+            echo "No root report artifacts to publish."
+            exit 0
+          fi
+        fi
 
         sync_artifacts() {
-          local target_dir="$clone_dir"
           if [[ -n "$destination_dir" ]]; then
-            target_dir="$clone_dir/$destination_dir"
+            local target_dir="$clone_dir/$destination_dir"
             mkdir -p "$target_dir"
             rsync -a --delete "$source_dir/" "$target_dir/"
           else
-            # Root publishes coexist with the retained nightly and screen-size reports.
-            rsync -a "$source_dir/" "$target_dir/"
+            local entry
+            for entry in "${root_entries[@]}"; do
+              rm -rf -- "$clone_dir/$entry"
+              if [[ -d "$source_dir/$entry" && ! -L "$source_dir/$entry" ]]; then
+                mkdir -p -- "$clone_dir/$entry"
+                rsync -a "$source_dir/$entry/" "$clone_dir/$entry/"
+              else
+                rsync -a "$source_dir/$entry" "$clone_dir/"
+              fi
+            done
           fi
         }
 
         stage_artifacts() {
           if [[ -n "$destination_dir" ]]; then
-            git -C "$clone_dir" add -A -- "$destination_dir"
+            local destination_pathspec=":(literal)$destination_dir"
+            git -C "$clone_dir" ls-files -z -- "$destination_pathspec" |
+              git -C "$clone_dir" update-index --force-remove -z --stdin
+            git -C "$clone_dir" add --sparse -A -- "$destination_pathspec"
           else
-            git -C "$clone_dir" add -A -- .
+            git -C "$clone_dir" ls-files -z -- "${root_pathspecs[@]}" |
+              git -C "$clone_dir" update-index --force-remove -z --stdin
+            git -C "$clone_dir" add --sparse -A -- "${root_pathspecs[@]}"
           fi
         }
 
@@ -131,18 +218,13 @@ runs:
             exit 1
           fi
 
-          echo "Reports branch advanced; rebasing before retry $((attempt + 1))."
+          echo "Reports branch advanced; refreshing owned paths before retry $((attempt + 1))."
           sleep $((attempt * 2))
           git -C "$clone_dir" -c http.extraHeader="AUTHORIZATION: basic $auth_header" \
-            fetch origin \
+            fetch --filter=blob:none --depth 1 origin \
             "+refs/heads/$TARGET_BRANCH:refs/remotes/origin/$TARGET_BRANCH"
-
-          if git -C "$clone_dir" rebase "origin/$TARGET_BRANCH"; then
-            continue
-          fi
-
-          git -C "$clone_dir" rebase --abort
-          git -C "$clone_dir" reset --hard "origin/$TARGET_BRANCH"
+          git -C "$clone_dir" reset --mixed -q "origin/$TARGET_BRANCH"
+          git -C "$clone_dir" sparse-checkout reapply
           sync_artifacts
           if ! commit_artifacts; then
             echo "A concurrent publisher already uploaded these reports."
