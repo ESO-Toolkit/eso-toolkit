@@ -121,7 +121,7 @@ describe('BuildLeaderboardPage', () => {
     await userEvent.click(screen.getByLabelText(/trial & boss/i));
     const listbox = within(screen.getByRole('listbox'));
     // The lower-difficulty row, which shares encounter_id 60 with the default.
-    await userEvent.click(listbox.getByText(/\(40\)/));
+    await userEvent.click(listbox.getByText(/40 parses/i));
 
     await waitFor(() =>
       expect(dpsParsesApi.listParses).toHaveBeenCalledWith(
@@ -203,11 +203,15 @@ describe('BuildLeaderboardPage', () => {
   });
 
   it('switches to the class tab and queries by class', async () => {
-    renderPage('/build-leaderboard?tab=class&class=Warden');
+    renderPage();
+
+    const classTab = screen.getByRole('tab', { name: /by class/i });
+    await userEvent.click(classTab);
+    expect(classTab).toHaveAttribute('aria-selected', 'true');
 
     await waitFor(() =>
       expect(dpsParsesApi.listParses).toHaveBeenCalledWith(
-        expect.objectContaining({ esoClass: 'Warden' }),
+        expect.objectContaining({ esoClass: 'Arcanist' }),
         expect.anything(),
       ),
     );

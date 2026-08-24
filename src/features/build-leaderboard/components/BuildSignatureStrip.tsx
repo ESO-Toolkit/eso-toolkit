@@ -36,12 +36,16 @@ export interface BuildSignatureStripProps {
 
 export const BuildSignatureStrip: React.FC<BuildSignatureStripProps> = ({ cluster }) => (
   <Box
-    aria-label="Build anchors"
-    sx={{
-      display: 'grid',
-      gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, minmax(0, 1fr))' },
-      gap: { xs: 1, sm: 0 },
-    }}
+    aria-label="Defining setup"
+    sx={(theme) => ({
+      overflow: 'hidden',
+      border: `1px solid ${alpha(theme.palette.divider, 0.5)}`,
+      borderRadius: 2,
+      backgroundColor: alpha(
+        theme.palette.background.default,
+        theme.palette.mode === 'dark' ? 0.28 : 0.42,
+      ),
+    })}
   >
     {SIGNATURE_GROUPS.map((signatureGroup, index) => {
       const traits = traitsFor(cluster, signatureGroup.groups);
@@ -51,54 +55,70 @@ export const BuildSignatureStrip: React.FC<BuildSignatureStripProps> = ({ cluste
         <Box
           key={signatureGroup.key}
           sx={(theme) => ({
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', sm: '112px minmax(0, 1fr)' },
+            alignItems: 'baseline',
+            gap: { xs: 0.45, sm: 1.5 },
             minWidth: 0,
-            px: { xs: 0, sm: index === 0 ? 0 : 2 },
-            borderLeft: {
-              xs: 'none',
-              sm: index === 0 ? 'none' : `1px solid ${alpha(theme.palette.divider, 0.72)}`,
-            },
+            px: { xs: 1.15, sm: 1.35 },
+            py: 0.9,
+            borderTop: index === 0 ? 'none' : `1px solid ${alpha(theme.palette.divider, 0.42)}`,
           })}
         >
           <Typography
             sx={{
-              mb: 0.5,
               color: 'text.secondary',
-              fontSize: '0.7rem',
+              fontSize: '0.66rem',
               fontWeight: 700,
-              letterSpacing: '0.055em',
+              letterSpacing: '0.045em',
               textTransform: 'uppercase',
             }}
           >
             {signatureGroup.label}
           </Typography>
           {visible.length > 0 ? (
-            <Box sx={{ display: 'flex', minWidth: 0, flexDirection: 'column', gap: 0.35 }}>
-              {visible.map((trait) => (
-                <Typography
-                  key={`${trait.group}-${trait.id}`}
-                  data-core={trait.core ? 'true' : undefined}
-                  data-trait-kind={trait.core ? 'core' : 'flex'}
-                  data-testid={`trait-${trait.group}-${trait.id}`}
-                  title={trait.label}
-                  sx={{
-                    display: '-webkit-box',
-                    minHeight: { xs: 'auto', sm: '2.3em' },
-                    overflow: 'hidden',
-                    color: trait.core ? 'text.primary' : 'text.secondary',
-                    fontSize: '0.8rem',
-                    fontWeight: trait.core ? 650 : 450,
-                    lineHeight: 1.15,
-                    WebkitBoxOrient: 'vertical',
-                    WebkitLineClamp: 2,
-                  }}
-                >
-                  {trait.label}
-                </Typography>
+            <Box
+              sx={{
+                display: 'flex',
+                minWidth: 0,
+                alignItems: 'baseline',
+                flexWrap: 'wrap',
+                columnGap: 0.7,
+                rowGap: 0.3,
+              }}
+            >
+              {visible.map((trait, traitIndex) => (
+                <React.Fragment key={`${trait.group}-${trait.id}`}>
+                  {traitIndex > 0 && (
+                    <Box
+                      component="span"
+                      aria-hidden="true"
+                      sx={{ color: 'text.secondary', fontSize: '0.64rem', opacity: 0.56 }}
+                    >
+                      ·
+                    </Box>
+                  )}
+                  <Typography
+                    component="span"
+                    data-core={trait.core ? 'true' : undefined}
+                    data-trait-kind={trait.core ? 'core' : 'flex'}
+                    data-testid={`trait-${trait.group}-${trait.id}`}
+                    title={trait.label}
+                    sx={{
+                      color: trait.core ? 'text.primary' : 'text.secondary',
+                      fontSize: '0.79rem',
+                      fontWeight: trait.core ? 650 : 450,
+                      lineHeight: 1.3,
+                    }}
+                  >
+                    {trait.label}
+                  </Typography>
+                </React.Fragment>
               ))}
             </Box>
           ) : (
             <Typography sx={{ color: 'text.secondary', fontSize: '0.76rem' }}>
-              Not consistently recorded
+              No consistent signal
             </Typography>
           )}
         </Box>

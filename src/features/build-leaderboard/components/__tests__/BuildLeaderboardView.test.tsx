@@ -1,5 +1,5 @@
 import { ThemeProvider, createTheme } from '@mui/material';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
@@ -197,8 +197,16 @@ describe('BuildLeaderboardView workspace', () => {
     renderView({ parses, result });
     expect(screen.queryByText(/^gear & special$/i)).not.toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: /show build evidence/i }));
-    expect(screen.getByText(/^gear & special$/i)).toBeInTheDocument();
-    expect(screen.getByText(/^skill bars$/i)).toBeInTheDocument();
+    const evidenceDialog = screen.getByRole('dialog', { name: /build evidence/i });
+    expect(within(evidenceDialog).getByText(/^gear & special$/i)).toBeInTheDocument();
+    expect(within(evidenceDialog).getByText(/^skill bars$/i)).toBeInTheDocument();
+
+    await userEvent.click(
+      within(evidenceDialog).getByRole('button', { name: /close build evidence/i }),
+    );
+    await waitFor(() =>
+      expect(screen.queryByRole('dialog', { name: /build evidence/i })).not.toBeInTheDocument(),
+    );
   });
 
   it('resets selection and evidence when the clustered result changes', async () => {
@@ -226,10 +234,12 @@ describe('BuildLeaderboardView workspace', () => {
         />
       </ThemeProvider>,
     );
-    expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent(
-      recommendedCluster(nextResult).label,
+    await waitFor(() =>
+      expect(screen.queryByRole('dialog', { name: /build evidence/i })).not.toBeInTheDocument(),
     );
-    await waitFor(() => expect(screen.queryByText(/^gear & special$/i)).not.toBeInTheDocument());
+    expect(
+      within(screen.getByTestId('build-inspector')).getByRole('heading', { level: 2 }),
+    ).toHaveTextContent(recommendedCluster(nextResult).label);
   });
 
   it('resets safely under StrictMode double-rendering', async () => {

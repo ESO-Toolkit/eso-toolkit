@@ -239,23 +239,25 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
         elevation={0}
         sx={(theme) => ({
           overflow: 'hidden',
-          borderRadius: 3.5,
+          border: `1px solid ${alpha(theme.palette.divider, 0.78)}`,
+          borderRadius: 2.5,
           background:
             theme.palette.mode === 'dark'
-              ? 'linear-gradient(180deg, rgba(15,23,42,0.94) 0%, rgba(8,13,26,0.96) 100%)'
+              ? 'linear-gradient(180deg, rgba(15,23,42,0.96) 0%, rgba(8,13,26,0.98) 100%)'
               : theme.palette.background.paper,
           backdropFilter: 'blur(14px)',
           WebkitBackdropFilter: 'blur(14px)',
           boxShadow:
             theme.palette.mode === 'dark'
-              ? '0 18px 45px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.04)'
-              : '0 10px 30px rgba(15,23,42,0.08), inset 0 1px 0 rgba(255,255,255,0.8)',
+              ? '0 22px 55px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.045)'
+              : '0 12px 34px rgba(15,23,42,0.09), inset 0 1px 0 rgba(255,255,255,0.84)',
         })}
       >
         <Box
           sx={{
             display: 'grid',
-            gridTemplateColumns: { xs: '1fr', md: 'minmax(330px, 0.78fr) minmax(0, 1.45fr)' },
+            alignItems: 'stretch',
+            gridTemplateColumns: { xs: '1fr', md: 'minmax(340px, 0.9fr) minmax(0, 1.35fr)' },
           }}
         >
           <Box
@@ -265,14 +267,21 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
               minWidth: 0,
               order: { xs: 2, md: 1 },
               borderTop: { xs: `1px solid ${alpha(theme.palette.divider, 0.78)}`, md: 'none' },
-              borderRight: { xs: 'none', md: `1px solid ${alpha(theme.palette.divider, 0.78)}` },
+              borderRight: { xs: 'none', md: `1px solid ${alpha(theme.palette.divider, 0.62)}` },
+              backgroundColor: alpha(
+                theme.palette.background.default,
+                theme.palette.mode === 'dark' ? 0.14 : 0.24,
+              ),
             })}
           >
             <Box
               sx={{
                 display: 'grid',
                 minHeight: 48,
-                gridTemplateColumns: 'minmax(0, 1fr) 64px 52px 18px',
+                gridTemplateColumns: {
+                  xs: 'minmax(0, 1fr)',
+                  sm: 'minmax(0, 1fr) 64px 52px 18px',
+                },
                 alignItems: 'center',
                 columnGap: 1,
                 px: { xs: 1.5, sm: 2 },
@@ -281,10 +290,24 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
               <Typography id="build-patterns-heading" sx={{ fontSize: '0.76rem', fontWeight: 700 }}>
                 Build patterns
               </Typography>
-              <Typography sx={{ textAlign: 'right', color: 'text.secondary', fontSize: '0.7rem' }}>
+              <Typography
+                sx={{
+                  display: { xs: 'none', sm: 'block' },
+                  textAlign: 'right',
+                  color: 'text.secondary',
+                  fontSize: '0.7rem',
+                }}
+              >
                 Typical
               </Typography>
-              <Typography sx={{ textAlign: 'right', color: 'text.secondary', fontSize: '0.7rem' }}>
+              <Typography
+                sx={{
+                  display: { xs: 'none', sm: 'block' },
+                  textAlign: 'right',
+                  color: 'text.secondary',
+                  fontSize: '0.7rem',
+                }}
+              >
                 Parses
               </Typography>
             </Box>
@@ -305,7 +328,16 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
 
           <Box
             ref={inspectorRef}
-            sx={{ minWidth: 0, order: { xs: 1, md: 2 }, scrollMarginTop: 72 }}
+            sx={(theme) => ({
+              display: 'flex',
+              minWidth: 0,
+              order: { xs: 1, md: 2 },
+              scrollMarginTop: 72,
+              background:
+                theme.palette.mode === 'dark'
+                  ? `radial-gradient(circle at 100% 0%, ${alpha(theme.palette.primary.main, 0.055)}, transparent 38%)`
+                  : `radial-gradient(circle at 100% 0%, ${alpha(theme.palette.primary.main, 0.035)}, transparent 42%)`,
+            })}
           >
             <BuildInspector
               key={selected.id}

@@ -1,16 +1,5 @@
-import {
-  Box,
-  Container,
-  FormControl,
-  InputLabel,
-  MenuItem,
-  Select,
-  Tab,
-  Tabs,
-  ToggleButton,
-  ToggleButtonGroup,
-  Typography,
-} from '@mui/material';
+import { KeyboardArrowDownRounded } from '@mui/icons-material';
+import { Box, ButtonBase, Container, MenuItem, Select, Typography } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -48,6 +37,13 @@ const CLASS_LABELS: Record<string, string> = { DragonKnight: 'Dragonknight' };
 
 function encounterKey(encounter: Pick<DpsEncounterSummary, 'encounter_id' | 'difficulty'>): string {
   return `${encounter.encounter_id}:${encounter.difficulty}`;
+}
+
+function formatUpdatedAt(value: string): string {
+  const date = new Date(`${value.slice(0, 10)}T00:00:00Z`);
+  return Number.isNaN(date.getTime())
+    ? value.slice(0, 10)
+    : new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(date);
 }
 
 export const BuildLeaderboardPage: React.FC = () => {
@@ -159,22 +155,20 @@ export const BuildLeaderboardPage: React.FC = () => {
       <Box
         component="header"
         aria-label="Build leaderboard controls"
-        sx={(theme) => ({
-          mb: 2.5,
-          borderBottom: `1px solid ${alpha(theme.palette.divider, 0.78)}`,
-        })}
+        sx={{ mb: { xs: 2, sm: 2.5 } }}
       >
         <Box
-          sx={{
+          sx={(theme) => ({
             display: 'grid',
             gridTemplateColumns: {
               xs: '1fr auto',
               md: 'minmax(180px, 1fr) auto minmax(180px, 1fr)',
             },
-            minHeight: 44,
+            minHeight: 48,
             alignItems: 'center',
             columnGap: 2,
-          }}
+            borderBottom: `1px solid ${alpha(theme.palette.divider, 0.48)}`,
+          })}
         >
           <Typography
             component="h1"
@@ -188,37 +182,79 @@ export const BuildLeaderboardPage: React.FC = () => {
             Build Leaderboard
           </Typography>
 
-          <Tabs
-            value={tab}
-            onChange={(_event, value: TabKey) => setParam({ tab: value })}
+          <Box
+            role="tablist"
             aria-label="Build leaderboard view"
-            sx={{
-              minHeight: 44,
+            sx={(theme) => ({
+              display: 'inline-flex',
+              gap: 0.4,
+              p: 0.4,
               gridColumn: { xs: '1 / -1', md: 2 },
               gridRow: { xs: 2, md: 1 },
               justifySelf: { xs: 'stretch', md: 'center' },
-              '& .MuiTabs-flexContainer': { justifyContent: { xs: 'flex-start', md: 'center' } },
-              '& .MuiTabs-indicator': { height: 2 },
-              '& .MuiTab-root': {
-                minHeight: 44,
-                minWidth: 104,
-                px: 1.5,
-                fontSize: '0.74rem',
-                fontWeight: 650,
-                textTransform: 'none',
-              },
-            }}
+              width: { xs: '100%', md: 'auto' },
+              border: `1px solid ${alpha(theme.palette.divider, 0.62)}`,
+              borderRadius: 2,
+              backgroundColor: alpha(theme.palette.background.paper, 0.38),
+              boxShadow: `inset 0 1px 0 ${alpha(theme.palette.common.white, theme.palette.mode === 'dark' ? 0.035 : 0.7)}`,
+            })}
           >
-            <Tab label="By encounter" value="encounter" />
-            <Tab label="By class" value="class" />
-          </Tabs>
+            {(
+              [
+                ['encounter', 'By encounter'],
+                ['class', 'By class'],
+              ] as const
+            ).map(([value, label]) => {
+              const active = tab === value;
+              return (
+                <ButtonBase
+                  key={value}
+                  role="tab"
+                  aria-selected={active}
+                  onClick={() => setParam({ tab: value })}
+                  sx={(theme) => ({
+                    minHeight: 36,
+                    flex: { xs: 1, md: '0 0 auto' },
+                    minWidth: { md: 112 },
+                    px: 1.6,
+                    borderRadius: 1.5,
+                    color: active ? 'text.primary' : 'text.secondary',
+                    fontSize: '0.75rem',
+                    fontWeight: active ? 700 : 600,
+                    backgroundColor: active
+                      ? alpha(
+                          theme.palette.primary.main,
+                          theme.palette.mode === 'dark' ? 0.12 : 0.09,
+                        )
+                      : 'transparent',
+                    boxShadow: active
+                      ? `inset 0 0 0 1px ${alpha(theme.palette.primary.main, 0.22)}, 0 5px 16px ${alpha(theme.palette.common.black, theme.palette.mode === 'dark' ? 0.16 : 0.06)}`
+                      : 'none',
+                    transition:
+                      'background-color 160ms ease, box-shadow 160ms ease, color 160ms ease',
+                    '&:hover': {
+                      color: 'text.primary',
+                      backgroundColor: alpha(theme.palette.primary.main, active ? 0.14 : 0.055),
+                    },
+                    '&:focus-visible': {
+                      outline: `2px solid ${theme.palette.primary.main}`,
+                      outlineOffset: 2,
+                    },
+                    '@media (prefers-reduced-motion: reduce)': { transition: 'none' },
+                  })}
+                >
+                  {label}
+                </ButtonBase>
+              );
+            })}
+          </Box>
 
           <Typography
             className="u-tabular"
             sx={{ justifySelf: 'end', color: 'text.secondary', fontSize: '0.7rem' }}
           >
             {tab === 'encounter' && selectedEncounter?.updated_at
-              ? `Updated ${selectedEncounter.updated_at.slice(0, 10)}`
+              ? `Updated ${formatUpdatedAt(selectedEncounter.updated_at)}`
               : 'ESO Logs data'}
           </Typography>
         </Box>
@@ -226,76 +262,213 @@ export const BuildLeaderboardPage: React.FC = () => {
         <Box
           component="section"
           aria-label="Build leaderboard filters"
-          sx={(theme) => ({
-            display: 'flex',
-            minHeight: 52,
-            alignItems: 'center',
-            py: 0.75,
-            borderTop: `1px solid ${alpha(theme.palette.divider, 0.48)}`,
-          })}
+          sx={{ display: 'flex', minHeight: 64, alignItems: 'center', pt: 1.25 }}
         >
           {tab === 'encounter' ? (
-            <FormControl size="small" fullWidth sx={{ maxWidth: 560 }}>
-              <InputLabel id="dps-encounter-label">Trial &amp; boss</InputLabel>
+            <Box sx={{ width: '100%', maxWidth: 720 }}>
+              <Typography
+                id="dps-encounter-label"
+                sx={{ mb: 0.55, color: 'text.secondary', fontSize: '0.68rem', fontWeight: 650 }}
+              >
+                Encounter
+              </Typography>
               <Select
                 labelId="dps-encounter-label"
-                label="Trial & boss"
+                aria-label="Trial & boss"
                 value={selectedEncounter ? encounterKey(selectedEncounter) : ''}
                 onChange={(event) => setParam({ boss: String(event.target.value) })}
+                IconComponent={KeyboardArrowDownRounded}
+                MenuProps={{
+                  slotProps: {
+                    paper: {
+                      sx: (theme) => ({
+                        mt: 0.75,
+                        maxHeight: 404,
+                        border: `1px solid ${alpha(theme.palette.divider, 0.78)}`,
+                        borderRadius: 2,
+                        backgroundColor: alpha(
+                          theme.palette.background.paper,
+                          theme.palette.mode === 'dark' ? 0.96 : 0.98,
+                        ),
+                        backgroundImage: 'none',
+                        boxShadow: `0 24px 60px ${alpha(theme.palette.common.black, theme.palette.mode === 'dark' ? 0.42 : 0.16)}`,
+                        backdropFilter: 'blur(20px) saturate(125%)',
+                      }),
+                    },
+                    list: { sx: { py: 0.75 } },
+                  },
+                }}
+                renderValue={() => (
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      minWidth: 0,
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: 2,
+                    }}
+                  >
+                    <Typography
+                      noWrap
+                      sx={{
+                        minWidth: 0,
+                        fontSize: { xs: '0.92rem', sm: '1rem' },
+                        fontWeight: 650,
+                      }}
+                    >
+                      {selectedEncounter
+                        ? `${selectedEncounter.trial_id ? `${selectedEncounter.trial_id} · ` : ''}${selectedEncounter.encounter_name}`
+                        : 'Choose an encounter'}
+                    </Typography>
+                    {selectedEncounter && (
+                      <Typography
+                        className="u-tabular"
+                        sx={{ flex: '0 0 auto', color: 'text.secondary', fontSize: '0.72rem' }}
+                      >
+                        {selectedEncounter.parse_count} parses
+                      </Typography>
+                    )}
+                  </Box>
+                )}
+                sx={(theme) => ({
+                  width: '100%',
+                  minHeight: 52,
+                  borderRadius: 2.25,
+                  backgroundColor: alpha(
+                    theme.palette.background.paper,
+                    theme.palette.mode === 'dark' ? 0.62 : 0.88,
+                  ),
+                  boxShadow: `inset 0 1px 0 ${alpha(theme.palette.common.white, theme.palette.mode === 'dark' ? 0.04 : 0.78)}`,
+                  '& .MuiSelect-select': {
+                    display: 'block',
+                    py: 1.35,
+                    pl: 1.65,
+                    pr: 5.5,
+                    backgroundColor: 'transparent !important',
+                  },
+                  '& .MuiOutlinedInput-notchedOutline': {
+                    borderColor: alpha(theme.palette.divider, 0.76),
+                  },
+                  '&:hover': {
+                    transform: 'none',
+                    backgroundColor: alpha(theme.palette.background.paper, 0.88),
+                  },
+                  '&:hover .MuiOutlinedInput-notchedOutline': {
+                    borderColor: alpha(theme.palette.primary.main, 0.42),
+                  },
+                  '&.Mui-focused': {
+                    backgroundColor: alpha(theme.palette.background.paper, 0.96),
+                    boxShadow: `0 0 0 3px ${alpha(theme.palette.primary.main, 0.1)}, inset 0 1px 0 ${alpha(theme.palette.common.white, 0.05)}`,
+                  },
+                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                    borderWidth: 1,
+                    borderColor: alpha(theme.palette.primary.main, 0.72),
+                  },
+                  '& .MuiSelect-icon': { right: 14, color: 'text.secondary', fontSize: 21 },
+                })}
               >
                 {encounters.map((encounter) => (
-                  <MenuItem key={encounterKey(encounter)} value={encounterKey(encounter)}>
-                    {encounter.trial_id ? `${encounter.trial_id} — ` : ''}
-                    {encounter.encounter_name} ({encounter.parse_count})
+                  <MenuItem
+                    key={encounterKey(encounter)}
+                    value={encounterKey(encounter)}
+                    sx={(theme) => ({
+                      minHeight: 40,
+                      mx: 0.75,
+                      px: 1.25,
+                      borderRadius: 1.1,
+                      transition: 'background-color 140ms ease, box-shadow 140ms ease',
+                      '&.Mui-selected': {
+                        backgroundColor: alpha(theme.palette.primary.main, 0.13),
+                        boxShadow: `inset 2px 0 0 ${theme.palette.primary.main}`,
+                      },
+                      '&.Mui-selected:hover': {
+                        backgroundColor: alpha(theme.palette.primary.main, 0.18),
+                      },
+                      '&:hover': {
+                        backgroundColor: alpha(theme.palette.text.primary, 0.055),
+                      },
+                    })}
+                  >
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        width: '100%',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: 2,
+                      }}
+                    >
+                      <Typography sx={{ fontSize: '0.84rem', fontWeight: 600 }}>
+                        {encounter.trial_id ? `${encounter.trial_id} · ` : ''}
+                        {encounter.encounter_name}
+                      </Typography>
+                      <Typography
+                        className="u-tabular"
+                        sx={{ color: 'text.secondary', fontSize: '0.72rem' }}
+                      >
+                        {encounter.parse_count} parses
+                      </Typography>
+                    </Box>
                   </MenuItem>
                 ))}
               </Select>
-            </FormControl>
+            </Box>
           ) : (
             <Box sx={{ width: '100%', overflowX: 'auto', pb: 0.25 }}>
-              <ToggleButtonGroup
-                exclusive
-                size="small"
-                value={selectedClass}
+              <Box
+                role="radiogroup"
                 aria-label="ESO class"
-                onChange={(_event, value: string | null) => value && setParam({ class: value })}
                 sx={(theme) => ({
+                  display: 'inline-flex',
                   minWidth: 'max-content',
-                  gap: 0.5,
-                  '& .MuiToggleButtonGroup-grouped': {
-                    m: 0,
-                    border: `1px solid ${alpha(theme.palette.divider, 0.75)} !important`,
-                    borderRadius: '6px !important',
-                  },
+                  gap: 0.4,
+                  p: 0.4,
+                  border: `1px solid ${alpha(theme.palette.divider, 0.62)}`,
+                  borderRadius: 2,
+                  backgroundColor: alpha(theme.palette.background.paper, 0.42),
                 })}
               >
                 {ESO_CLASSES.map((esoClass) => {
                   const label = CLASS_LABELS[esoClass] ?? esoClass;
+                  const active = selectedClass === esoClass;
                   return (
-                    <ToggleButton
+                    <ButtonBase
                       key={esoClass}
-                      value={esoClass}
+                      role="radio"
+                      aria-checked={active}
                       aria-label={label}
+                      onClick={() => setParam({ class: esoClass })}
                       sx={(theme) => ({
                         display: 'flex',
                         gap: 0.7,
                         px: 1.1,
-                        py: 0.65,
-                        color: theme.palette.text.secondary,
-                        textTransform: 'none',
-                        '&.Mui-selected': {
-                          color: theme.palette.text.primary,
-                          backgroundColor: alpha(theme.palette.primary.main, 0.09),
-                          borderColor: `${alpha(theme.palette.primary.main, 0.3)} !important`,
+                        minHeight: 36,
+                        borderRadius: 1.5,
+                        color: active ? 'text.primary' : 'text.secondary',
+                        fontSize: '0.74rem',
+                        fontWeight: active ? 700 : 600,
+                        backgroundColor: active
+                          ? alpha(theme.palette.primary.main, 0.1)
+                          : 'transparent',
+                        boxShadow: active
+                          ? `inset 0 0 0 1px ${alpha(theme.palette.primary.main, 0.22)}`
+                          : 'none',
+                        '&:hover': {
+                          color: 'text.primary',
+                          backgroundColor: alpha(theme.palette.primary.main, active ? 0.13 : 0.05),
+                        },
+                        '&:focus-visible': {
+                          outline: `2px solid ${theme.palette.primary.main}`,
+                          outlineOffset: 1,
                         },
                       })}
                     >
                       <ClassIcon className={label} size={15} alt="" />
                       {label}
-                    </ToggleButton>
+                    </ButtonBase>
                   );
                 })}
-              </ToggleButtonGroup>
+              </Box>
             </Box>
           )}
         </Box>

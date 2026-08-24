@@ -35,29 +35,40 @@ export const ArchetypeRow: React.FC<ArchetypeRowProps> = ({
     sx={(theme) => ({
       position: 'relative',
       display: 'grid',
+      overflow: 'hidden',
       width: '100%',
-      minHeight: 78,
-      gridTemplateColumns: 'minmax(0, 1fr) 64px 52px 18px',
+      minHeight: { xs: 72, sm: 78 },
+      gridTemplateColumns: {
+        xs: 'minmax(0, 1fr) 18px',
+        sm: 'minmax(0, 1fr) 64px 52px 18px',
+      },
       alignItems: 'center',
       columnGap: 1,
       px: { xs: 1.5, sm: 2 },
-      borderTop: `1px solid ${alpha(theme.palette.divider, 0.58)}`,
-      backgroundColor: selected ? alpha(theme.palette.primary.main, 0.085) : 'transparent',
+      borderTop: `1px solid ${alpha(theme.palette.divider, 0.4)}`,
+      background: selected
+        ? `linear-gradient(90deg, ${alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.12 : 0.08)} 0%, ${alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.06 : 0.035)} 72%, transparent 100%)`
+        : 'transparent',
+      boxShadow: selected
+        ? `inset 0 1px 0 ${alpha(theme.palette.common.white, theme.palette.mode === 'dark' ? 0.035 : 0.58)}, inset -1px 0 0 ${alpha(theme.palette.primary.main, 0.06)}`
+        : 'none',
       color: 'text.primary',
       textAlign: 'left',
-      transition: 'background-color 150ms ease, color 150ms ease',
+      transition: 'background-color 150ms ease, color 150ms ease, box-shadow 150ms ease',
       '&::before': selected
         ? {
             content: '""',
             position: 'absolute',
-            inset: '12px auto 12px 0',
+            inset: '10px auto 10px 0',
             width: 3,
             borderRadius: '0 3px 3px 0',
             backgroundColor: theme.palette.primary.main,
+            boxShadow: `0 0 16px ${alpha(theme.palette.primary.main, 0.38)}`,
           }
         : undefined,
       '&:hover': {
-        backgroundColor: alpha(theme.palette.primary.main, selected ? 0.11 : 0.045),
+        backgroundColor: alpha(theme.palette.primary.main, selected ? 0.1 : 0.038),
+        '& .archetype-row-chevron': { transform: 'translateX(2px)' },
       },
       '&:focus-visible': {
         zIndex: 1,
@@ -68,7 +79,24 @@ export const ArchetypeRow: React.FC<ArchetypeRowProps> = ({
     })}
   >
     <Box sx={{ display: 'flex', minWidth: 0, alignItems: 'center', gap: 1 }}>
-      {showClassIcon && <ClassIcon className={cluster.esoClass} size={20} alt="" />}
+      {showClassIcon && (
+        <Box
+          sx={(theme) => ({
+            display: 'grid',
+            width: 28,
+            height: 28,
+            flex: '0 0 auto',
+            placeItems: 'center',
+            borderRadius: '50%',
+            backgroundColor: alpha(theme.palette.background.default, 0.34),
+            boxShadow: selected
+              ? `inset 0 0 0 1px ${alpha(theme.palette.primary.main, 0.2)}`
+              : 'none',
+          })}
+        >
+          <ClassIcon className={cluster.esoClass} size={19} alt="" />
+        </Box>
+      )}
       <Box sx={{ minWidth: 0 }}>
         <Typography
           sx={{
@@ -85,28 +113,72 @@ export const ArchetypeRow: React.FC<ArchetypeRowProps> = ({
           {label}
         </Typography>
         {recommended && (
-          <Typography sx={{ mt: 0.3, color: 'primary.main', fontSize: '0.7rem', fontWeight: 700 }}>
+          <Typography
+            sx={{
+              display: 'flex',
+              mt: 0.3,
+              alignItems: 'center',
+              gap: 0.55,
+              color: 'primary.main',
+              fontSize: '0.66rem',
+              fontWeight: 700,
+              '&::before': {
+                content: '""',
+                width: 4,
+                height: 4,
+                borderRadius: '50%',
+                backgroundColor: 'currentColor',
+              },
+            }}
+          >
             Recommended
           </Typography>
         )}
+        <Typography
+          className="u-tabular"
+          sx={{
+            display: { xs: 'block', sm: 'none' },
+            mt: 0.3,
+            color: 'text.secondary',
+            fontSize: '0.69rem',
+          }}
+        >
+          {compactDps(cluster.dps.median)} typical · {cluster.size} parses
+        </Typography>
       </Box>
     </Box>
 
     <Typography
       className="u-tabular"
-      sx={{ textAlign: 'right', fontSize: '0.84rem', fontWeight: 700 }}
+      sx={{
+        display: { xs: 'none', sm: 'block' },
+        textAlign: 'right',
+        fontSize: '0.84rem',
+        fontWeight: 700,
+      }}
     >
       {compactDps(cluster.dps.median)}
     </Typography>
     <Typography
       className="u-tabular"
-      sx={{ textAlign: 'right', color: 'text.secondary', fontSize: '0.76rem' }}
+      sx={{
+        display: { xs: 'none', sm: 'block' },
+        textAlign: 'right',
+        color: 'text.secondary',
+        fontSize: '0.76rem',
+      }}
     >
       {cluster.size}
     </Typography>
     <ChevronRight
       aria-hidden="true"
-      sx={{ color: selected ? 'primary.main' : 'text.secondary', fontSize: 18 }}
+      className="archetype-row-chevron"
+      sx={{
+        color: selected ? 'primary.main' : 'text.secondary',
+        fontSize: 18,
+        transition: 'transform 150ms ease, color 150ms ease',
+        '@media (prefers-reduced-motion: reduce)': { transition: 'none' },
+      }}
     />
   </ButtonBase>
 );
