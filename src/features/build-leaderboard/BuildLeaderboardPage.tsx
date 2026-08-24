@@ -1,5 +1,14 @@
-import { KeyboardArrowDownRounded } from '@mui/icons-material';
-import { Box, ButtonBase, Container, MenuItem, Select, Typography } from '@mui/material';
+import { InfoOutlined, KeyboardArrowDownRounded } from '@mui/icons-material';
+import {
+  Box,
+  ButtonBase,
+  Collapse,
+  Container,
+  IconButton,
+  MenuItem,
+  Select,
+  Typography,
+} from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -12,6 +21,7 @@ import { BuildLeaderboardView } from './components/BuildLeaderboardView';
 import { useArchetypeBuildActions } from './hooks/useArchetypeBuildActions';
 import { useBuildClusters } from './hooks/useBuildClusters';
 import { useDpsParses } from './hooks/useDpsParses';
+import { getLeaderboardClassTheme } from './theme/leaderboardTheme';
 import type { BuildCluster } from './types/clustering.types';
 import type { DpsEncounterSummary } from './types/dpsParses.types';
 
@@ -46,6 +56,16 @@ function formatUpdatedAt(value: string): string {
     : new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(date);
 }
 
+function clusterQuality(silhouette: number): { label: string; tooltip: string } {
+  if (silhouette >= 0.5) {
+    return { label: 'Strong', tooltip: 'These build patterns separate cleanly.' };
+  }
+  if (silhouette >= 0.25) {
+    return { label: 'Moderate', tooltip: 'The patterns are useful, though some builds overlap.' };
+  }
+  return { label: 'Limited', tooltip: 'Top players are using many similar variations.' };
+}
+
 export const BuildLeaderboardPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -61,6 +81,7 @@ export const BuildLeaderboardPage: React.FC = () => {
   const [encountersError, setEncountersError] = useState<string | null>(null);
   const [encountersLoading, setEncountersLoading] = useState(true);
   const [encountersToken, setEncountersToken] = useState(0);
+  const [methodologyOpen, setMethodologyOpen] = useState(false);
 
   useEffect(() => {
     document.title = 'Build Leaderboard | ESO Toolkit';
@@ -151,7 +172,10 @@ export const BuildLeaderboardPage: React.FC = () => {
   }, [encounterTabError, error, clusterError, reload, recluster]);
 
   return (
-    <Container maxWidth="xl" sx={{ px: { xs: 1.5, sm: 3 }, py: { xs: 1.5, sm: 2.5 } }}>
+    <Container
+      maxWidth={false}
+      sx={{ maxWidth: 1280, px: { xs: 1.5, sm: 2.5 }, py: { xs: 1.5, sm: 2.5 } }}
+    >
       <Box
         component="header"
         aria-label="Build leaderboard controls"
@@ -161,26 +185,30 @@ export const BuildLeaderboardPage: React.FC = () => {
           sx={(theme) => ({
             display: 'grid',
             gridTemplateColumns: {
-              xs: '1fr auto',
-              md: 'minmax(180px, 1fr) auto minmax(180px, 1fr)',
+              xs: '1fr',
+              sm: 'minmax(180px, 1fr) auto',
             },
-            minHeight: 48,
+            minHeight: { xs: 92, sm: 66 },
             alignItems: 'center',
             columnGap: 2,
+            rowGap: 0.75,
             borderBottom: `1px solid ${alpha(theme.palette.divider, 0.48)}`,
           })}
         >
-          <Typography
-            component="h1"
-            sx={{
-              fontFamily: 'Space Grotesk, Inter, system-ui',
-              fontSize: '1.125rem',
-              fontWeight: 700,
-              letterSpacing: '-0.025em',
-            }}
-          >
-            Build Leaderboard
-          </Typography>
+          <Box>
+            <Typography
+              component="h1"
+              sx={{
+                fontFamily: 'Space Grotesk, Inter, system-ui',
+                fontSize: { xs: '1.28rem', sm: '1.42rem' },
+                fontWeight: 700,
+                letterSpacing: '-0.035em',
+                lineHeight: 1.1,
+              }}
+            >
+              Build Leaderboard
+            </Typography>
+          </Box>
 
           <Box
             role="tablist"
@@ -189,10 +217,10 @@ export const BuildLeaderboardPage: React.FC = () => {
               display: 'inline-flex',
               gap: 0.4,
               p: 0.4,
-              gridColumn: { xs: '1 / -1', md: 2 },
-              gridRow: { xs: 2, md: 1 },
-              justifySelf: { xs: 'stretch', md: 'center' },
-              width: { xs: '100%', md: 'auto' },
+              gridColumn: { xs: 1, sm: 2 },
+              gridRow: { xs: 2, sm: 1 },
+              justifySelf: { xs: 'stretch', sm: 'end' },
+              width: { xs: '100%', sm: 'auto' },
               border: `1px solid ${alpha(theme.palette.divider, 0.62)}`,
               borderRadius: 2,
               backgroundColor: alpha(theme.palette.background.paper, 0.38),
@@ -248,33 +276,38 @@ export const BuildLeaderboardPage: React.FC = () => {
               );
             })}
           </Box>
-
-          <Typography
-            className="u-tabular"
-            sx={{ justifySelf: 'end', color: 'text.secondary', fontSize: '0.7rem' }}
-          >
-            {tab === 'encounter' && selectedEncounter?.updated_at
-              ? `Updated ${formatUpdatedAt(selectedEncounter.updated_at)}`
-              : 'ESO Logs data'}
-          </Typography>
         </Box>
 
         <Box
           component="section"
           aria-label="Build leaderboard filters"
-          sx={{ display: 'flex', minHeight: 64, alignItems: 'center', pt: 1.25 }}
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', md: 'minmax(0, 780px) minmax(260px, 1fr)' },
+            minHeight: 64,
+            alignItems: 'end',
+            gap: { xs: 1, md: 2 },
+            pt: 1.25,
+          }}
         >
           {tab === 'encounter' ? (
-            <Box sx={{ width: '100%', maxWidth: 720 }}>
+            <Box sx={{ width: '100%' }}>
               <Typography
                 id="dps-encounter-label"
-                sx={{ mb: 0.55, color: 'text.secondary', fontSize: '0.68rem', fontWeight: 650 }}
+                sx={{
+                  position: 'absolute',
+                  width: '1px',
+                  height: '1px',
+                  overflow: 'hidden',
+                  clip: 'rect(0 0 0 0)',
+                  whiteSpace: 'nowrap',
+                }}
               >
                 Encounter
               </Typography>
               <Select
                 labelId="dps-encounter-label"
-                aria-label="Trial & boss"
+                aria-label="Encounter"
                 value={selectedEncounter ? encounterKey(selectedEncounter) : ''}
                 onChange={(event) => setParam({ boss: String(event.target.value) })}
                 IconComponent={KeyboardArrowDownRounded}
@@ -304,30 +337,22 @@ export const BuildLeaderboardPage: React.FC = () => {
                       display: 'flex',
                       minWidth: 0,
                       alignItems: 'center',
-                      justifyContent: 'space-between',
-                      gap: 2,
+                      gap: 1,
                     }}
                   >
                     <Typography
                       noWrap
                       sx={{
                         minWidth: 0,
-                        fontSize: { xs: '0.92rem', sm: '1rem' },
-                        fontWeight: 650,
+                        fontFamily: 'Space Grotesk, Inter, system-ui',
+                        fontSize: { xs: '0.94rem', sm: '1.04rem' },
+                        fontWeight: 600,
                       }}
                     >
                       {selectedEncounter
                         ? `${selectedEncounter.trial_id ? `${selectedEncounter.trial_id} · ` : ''}${selectedEncounter.encounter_name}`
                         : 'Choose an encounter'}
                     </Typography>
-                    {selectedEncounter && (
-                      <Typography
-                        className="u-tabular"
-                        sx={{ flex: '0 0 auto', color: 'text.secondary', fontSize: '0.72rem' }}
-                      >
-                        {selectedEncounter.parse_count} parses
-                      </Typography>
-                    )}
                   </Box>
                 )}
                 sx={(theme) => ({
@@ -431,6 +456,7 @@ export const BuildLeaderboardPage: React.FC = () => {
                 {ESO_CLASSES.map((esoClass) => {
                   const label = CLASS_LABELS[esoClass] ?? esoClass;
                   const active = selectedClass === esoClass;
+                  const classTheme = getLeaderboardClassTheme(esoClass);
                   return (
                     <ButtonBase
                       key={esoClass}
@@ -447,15 +473,13 @@ export const BuildLeaderboardPage: React.FC = () => {
                         color: active ? 'text.primary' : 'text.secondary',
                         fontSize: '0.74rem',
                         fontWeight: active ? 700 : 600,
-                        backgroundColor: active
-                          ? alpha(theme.palette.primary.main, 0.1)
-                          : 'transparent',
+                        backgroundColor: active ? alpha(classTheme.accent, 0.12) : 'transparent',
                         boxShadow: active
-                          ? `inset 0 0 0 1px ${alpha(theme.palette.primary.main, 0.22)}`
+                          ? `inset 0 0 0 1px ${alpha(classTheme.accent, 0.34)}, 0 5px 18px ${alpha(classTheme.accent, 0.1)}`
                           : 'none',
                         '&:hover': {
                           color: 'text.primary',
-                          backgroundColor: alpha(theme.palette.primary.main, active ? 0.13 : 0.05),
+                          backgroundColor: alpha(classTheme.accent, active ? 0.16 : 0.055),
                         },
                         '&:focus-visible': {
                           outline: `2px solid ${theme.palette.primary.main}`,
@@ -471,7 +495,79 @@ export const BuildLeaderboardPage: React.FC = () => {
               </Box>
             </Box>
           )}
+          {result && (
+            <Box
+              sx={{
+                display: 'flex',
+                minWidth: 0,
+                minHeight: 44,
+                alignItems: 'center',
+                justifyContent: { xs: 'flex-start', md: 'flex-end' },
+                gap: 0.35,
+              }}
+            >
+              <Typography
+                className="u-tabular"
+                sx={{ color: 'text.secondary', fontSize: '0.72rem', whiteSpace: 'nowrap' }}
+              >
+                <Box component="span" sx={{ color: 'text.primary', fontWeight: 700 }}>
+                  {result.totalParses}
+                </Box>{' '}
+                top parses ·{' '}
+                <Box component="span" sx={{ color: 'text.primary', fontWeight: 700 }}>
+                  {result.k}
+                </Box>{' '}
+                patterns
+                {tab === 'encounter' && selectedEncounter?.updated_at
+                  ? ` · updated ${formatUpdatedAt(selectedEncounter.updated_at)}`
+                  : ' · ESO Logs data'}
+              </Typography>
+              <IconButton
+                size="small"
+                aria-label="How this leaderboard works"
+                aria-controls="build-leaderboard-methodology"
+                aria-expanded={methodologyOpen}
+                onClick={() => setMethodologyOpen((open) => !open)}
+              >
+                <InfoOutlined sx={{ fontSize: 17 }} />
+              </IconButton>
+            </Box>
+          )}
         </Box>
+        {result && (
+          <Collapse in={methodologyOpen} timeout="auto" unmountOnExit>
+            <Box
+              id="build-leaderboard-methodology"
+              sx={(theme) => ({
+                display: 'grid',
+                gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, 1fr)' },
+                gap: { xs: 0.75, sm: 2 },
+                mt: 1,
+                pt: 1,
+                borderTop: `1px solid ${alpha(theme.palette.divider, 0.62)}`,
+              })}
+            >
+              <Typography sx={{ color: 'text.secondary', fontSize: '0.72rem', lineHeight: 1.5 }}>
+                <Box component="span" sx={{ color: 'text.primary', fontWeight: 650 }}>
+                  Scope.
+                </Box>{' '}
+                {result.uniqueSignatures} distinct builds were grouped into {result.k} patterns.
+              </Typography>
+              <Typography sx={{ color: 'text.secondary', fontSize: '0.72rem', lineHeight: 1.5 }}>
+                <Box component="span" sx={{ color: 'text.primary', fontWeight: 650 }}>
+                  Confidence: {clusterQuality(result.silhouette).label}.
+                </Box>{' '}
+                {clusterQuality(result.silhouette).tooltip}
+              </Typography>
+              <Typography sx={{ color: 'text.secondary', fontSize: '0.72rem', lineHeight: 1.5 }}>
+                <Box component="span" sx={{ color: 'text.primary', fontWeight: 650 }}>
+                  Starting point.
+                </Box>{' '}
+                Results vary with rotation, buffs, and group composition.
+              </Typography>
+            </Box>
+          </Collapse>
+        )}
       </Box>
 
       <Box key={tab} className="u-tab-enter">
@@ -491,6 +587,7 @@ export const BuildLeaderboardPage: React.FC = () => {
               onViewSourceLog={handleViewSourceLog}
               pendingAction={pendingAction}
               emptyMessage="No top parses recorded for this boss yet. Try another encounter."
+              hideSummary
             />
           </PanelErrorBoundary>
         ) : (
@@ -510,6 +607,7 @@ export const BuildLeaderboardPage: React.FC = () => {
               onViewSourceLog={handleViewSourceLog}
               pendingAction={pendingAction}
               emptyMessage={`No ${CLASS_LABELS[selectedClass] ?? selectedClass} parses recorded yet.`}
+              hideSummary
             />
           </PanelErrorBoundary>
         )}

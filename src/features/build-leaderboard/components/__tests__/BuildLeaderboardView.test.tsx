@@ -3,17 +3,47 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
+import { dpsParsesApi } from '../../api/dpsParsesApi';
 import {
   makeThreeArchetypeFixture,
   resetFixtureIds,
 } from '../../clustering/__fixtures__/dpsParses.fixture';
 import { clusterBuilds } from '../../clustering/clusterBuilds';
 import { EMPTY_CANONICAL_MAPS, extractFeatureVectors } from '../../clustering/featureExtraction';
+import { clearRepresentativeBuildCache } from '../../hooks/useRepresentativeBuild';
 import type { ClusterBuildsResult } from '../../types/clustering.types';
-import type { DpsParse } from '../../types/dpsParses.types';
+import type { DpsParse, DpsParseBuildResponse } from '../../types/dpsParses.types';
 import { BuildLeaderboardView } from '../BuildLeaderboardView';
 
 const theme = createTheme();
+
+const REPRESENTATIVE_BUILD: DpsParseBuildResponse = {
+  parseId: 'representative-parse',
+  playerName: 'Top Parser',
+  combatant: {
+    gear: [
+      {
+        slot: 0,
+        itemId: 101,
+        setId: 11,
+        name: 'Deadly Strike Helm',
+        icon: 'gear_test_head',
+      },
+    ],
+    talents: Array.from({ length: 12 }, (_, slot) => ({
+      slot,
+      abilityId: 100_000 + slot,
+      name: `Observed ability ${slot + 1}`,
+      icon: `ability-test-${slot}`,
+    })),
+    sets: [{ setId: 11, name: 'Deadly Strike' }],
+  },
+};
+
+beforeEach(() => {
+  clearRepresentativeBuildCache();
+  jest.spyOn(dpsParsesApi, 'getBuild').mockResolvedValue(REPRESENTATIVE_BUILD);
+});
 
 function renderView(props: Partial<React.ComponentProps<typeof BuildLeaderboardView>> = {}) {
   const defaults: React.ComponentProps<typeof BuildLeaderboardView> = {
@@ -198,8 +228,17 @@ describe('BuildLeaderboardView workspace', () => {
     expect(screen.queryByText(/^gear & special$/i)).not.toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: /show build evidence/i }));
     const evidenceDialog = screen.getByRole('dialog', { name: /build evidence/i });
-    expect(within(evidenceDialog).getByText(/^gear & special$/i)).toBeInTheDocument();
-    expect(within(evidenceDialog).getByText(/^skill bars$/i)).toBeInTheDocument();
+    expect(within(evidenceDialog).getByText(/^gear sets$/i)).toBeInTheDocument();
+    expect(within(evidenceDialog).getByText(/^front bar$/i)).toBeInTheDocument();
+    expect(
+      await within(evidenceDialog).findByText(/observed representative loadout/i),
+    ).toBeInTheDocument();
+    expect(
+      within(evidenceDialog).getByRole('button', { name: /view deadly strike set details/i }),
+    ).toBeInTheDocument();
+    expect(
+      within(evidenceDialog).getByRole('button', { name: /observed ability 1$/i }),
+    ).toBeInTheDocument();
 
     await userEvent.click(
       within(evidenceDialog).getByRole('button', { name: /close build evidence/i }),
@@ -207,6 +246,10 @@ describe('BuildLeaderboardView workspace', () => {
     await waitFor(() =>
       expect(screen.queryByRole('dialog', { name: /build evidence/i })).not.toBeInTheDocument(),
     );
+
+    await userEvent.click(screen.getByRole('button', { name: /show build evidence/i }));
+    expect(await screen.findByText(/observed representative loadout/i)).toBeInTheDocument();
+    expect(dpsParsesApi.getBuild).toHaveBeenCalledTimes(1);
   });
 
   it('resets selection and evidence when the clustered result changes', async () => {
@@ -214,7 +257,7 @@ describe('BuildLeaderboardView workspace', () => {
     const { rerender } = renderView({ parses, result });
     await userEvent.click(screen.getAllByTestId('archetype-row')[0]);
     await userEvent.click(screen.getByRole('button', { name: /show build evidence/i }));
-    expect(screen.getByText(/^gear & special$/i)).toBeInTheDocument();
+    expect(screen.getByText(/^gear sets$/i)).toBeInTheDocument();
 
     resetFixtureIds();
     const nextParses = makeThreeArchetypeFixture().slice(0, 35);

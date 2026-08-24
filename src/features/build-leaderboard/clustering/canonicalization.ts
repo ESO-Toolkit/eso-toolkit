@@ -17,8 +17,8 @@ import type { DpsParse } from '../types/dpsParses.types';
 
 import type { CanonicalMaps } from './featureExtraction';
 
-/** Normalized set name used to group perfected and non-perfected variants. */
-function normalizeSetName(name: string): string {
+/** Normalized set name used to group and display-match perfected variants. */
+export function canonicalSetName(name: string): string {
   return name
     .replace(/^perfected\s+/i, '')
     .trim()
@@ -43,7 +43,7 @@ export function buildSetAliasMap(): Record<number, number> {
     const id = Number(rawId);
     if (!Number.isFinite(id) || typeof name !== 'string') continue;
 
-    const key = normalizeSetName(name);
+    const key = canonicalSetName(name);
     const ids = byName.get(key);
     if (ids) ids.push(id);
     else byName.set(key, [id]);

@@ -92,7 +92,7 @@ describe('TraitChipRow tooltip wording', () => {
       [trait('monsterSet', 999, 'Kjalnar', 0.2)],
     );
 
-    expect(screen.getByText(/core · 80%\+/i)).toBeInTheDocument();
+    expect(screen.getByText(/^core$/i)).toBeInTheDocument();
     expect(screen.getByText(/common options/i)).toBeInTheDocument();
     expect(screen.queryByText('Kjalnar')).not.toBeInTheDocument();
 

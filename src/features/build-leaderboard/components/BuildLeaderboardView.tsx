@@ -13,6 +13,7 @@ import {
 import { alpha } from '@mui/material/styles';
 import React, { useRef, useState } from 'react';
 
+import { getLeaderboardClassTheme } from '../theme/leaderboardTheme';
 import type { BuildCluster, ClusterBuildsResult } from '../types/clustering.types';
 import type { DpsParse } from '../types/dpsParses.types';
 
@@ -34,6 +35,7 @@ export interface BuildLeaderboardViewProps {
   onViewSourceLog?: (cluster: BuildCluster) => void;
   pendingAction?: { clusterId: string; kind: 'open' | 'save' } | null;
   emptyMessage?: string;
+  hideSummary?: boolean;
 }
 
 function clusterQuality(silhouette: number): { label: string; tooltip: string } {
@@ -77,6 +79,7 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
   onViewSourceLog,
   pendingAction,
   emptyMessage = 'No top parses recorded here yet.',
+  hideSummary = false,
 }) => {
   const [selectedId, setSelectedId] = useState<string | null>(
     result?.recommendedClusterId ?? result?.clusters[0]?.id ?? null,
@@ -159,8 +162,9 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
     result.clusters.find((cluster) => cluster.id === selectedId) ??
     recommended ??
     result.clusters[0];
-  const sourceUrlFor = (cluster: BuildCluster): string | undefined =>
-    parses.find((parse) => parse.parse_id === cluster.medoidParseId)?.source_url;
+  const selectedClassTheme = getLeaderboardClassTheme(selected.esoClass);
+  const representativeParseFor = (cluster: BuildCluster): DpsParse | undefined =>
+    parses.find((parse) => parse.parse_id === cluster.medoidParseId);
 
   const handleSelect = (clusterId: string): void => {
     setSelectedId(clusterId);
@@ -179,65 +183,68 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
 
   return (
     <Box>
-      <Box sx={{ mb: 1.5 }}>
-        <Box sx={{ display: 'flex', minHeight: 32, alignItems: 'center', gap: 0.5 }}>
-          <Typography sx={{ flex: 1, color: 'text.secondary', fontSize: '0.76rem' }}>
-            <Box
-              component="span"
-              className="u-tabular"
-              sx={{ color: 'text.primary', fontWeight: 650 }}
+      {!hideSummary && (
+        <Box sx={{ mb: 1.5 }}>
+          <Box sx={{ display: 'flex', minHeight: 32, alignItems: 'center', gap: 0.5 }}>
+            <Typography sx={{ flex: 1, color: 'text.secondary', fontSize: '0.76rem' }}>
+              <Box
+                component="span"
+                className="u-tabular"
+                sx={{ color: 'text.primary', fontWeight: 650 }}
+              >
+                {result.totalParses}
+              </Box>{' '}
+              top-ranked parses · {result.k} build patterns
+            </Typography>
+            <IconButton
+              size="small"
+              aria-label="How this leaderboard works"
+              aria-expanded={methodologyOpen}
+              onClick={() => setMethodologyOpen((open) => !open)}
             >
-              {result.totalParses}
-            </Box>{' '}
-            top-ranked parses · {result.k} build patterns
-          </Typography>
-          <IconButton
-            size="small"
-            aria-label="How this leaderboard works"
-            aria-expanded={methodologyOpen}
-            onClick={() => setMethodologyOpen((open) => !open)}
-          >
-            <InfoOutlined sx={{ fontSize: 17 }} />
-          </IconButton>
-        </Box>
-        <Collapse in={methodologyOpen} timeout="auto" unmountOnExit>
-          <Box
-            sx={(theme) => ({
-              display: 'grid',
-              gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, 1fr)' },
-              gap: { xs: 0.75, sm: 2 },
-              mt: 0.5,
-              pt: 1,
-              borderTop: `1px solid ${alpha(theme.palette.divider, 0.62)}`,
-            })}
-          >
-            <Typography sx={{ color: 'text.secondary', fontSize: '0.72rem', lineHeight: 1.5 }}>
-              <Box component="span" sx={{ color: 'text.primary', fontWeight: 650 }}>
-                Scope.
-              </Box>{' '}
-              {result.uniqueSignatures} distinct builds were grouped into {result.k} patterns.
-            </Typography>
-            <Typography sx={{ color: 'text.secondary', fontSize: '0.72rem', lineHeight: 1.5 }}>
-              <Box component="span" sx={{ color: 'text.primary', fontWeight: 650 }}>
-                Confidence: {quality.label}.
-              </Box>{' '}
-              {quality.tooltip}
-            </Typography>
-            <Typography sx={{ color: 'text.secondary', fontSize: '0.72rem', lineHeight: 1.5 }}>
-              <Box component="span" sx={{ color: 'text.primary', fontWeight: 650 }}>
-                Starting point.
-              </Box>{' '}
-              Results vary with rotation, buffs, and group composition.
-            </Typography>
+              <InfoOutlined sx={{ fontSize: 17 }} />
+            </IconButton>
           </Box>
-        </Collapse>
-      </Box>
+          <Collapse in={methodologyOpen} timeout="auto" unmountOnExit>
+            <Box
+              sx={(theme) => ({
+                display: 'grid',
+                gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, 1fr)' },
+                gap: { xs: 0.75, sm: 2 },
+                mt: 0.5,
+                pt: 1,
+                borderTop: `1px solid ${alpha(theme.palette.divider, 0.62)}`,
+              })}
+            >
+              <Typography sx={{ color: 'text.secondary', fontSize: '0.72rem', lineHeight: 1.5 }}>
+                <Box component="span" sx={{ color: 'text.primary', fontWeight: 650 }}>
+                  Scope.
+                </Box>{' '}
+                {result.uniqueSignatures} distinct builds were grouped into {result.k} patterns.
+              </Typography>
+              <Typography sx={{ color: 'text.secondary', fontSize: '0.72rem', lineHeight: 1.5 }}>
+                <Box component="span" sx={{ color: 'text.primary', fontWeight: 650 }}>
+                  Confidence: {quality.label}.
+                </Box>{' '}
+                {quality.tooltip}
+              </Typography>
+              <Typography sx={{ color: 'text.secondary', fontSize: '0.72rem', lineHeight: 1.5 }}>
+                <Box component="span" sx={{ color: 'text.primary', fontWeight: 650 }}>
+                  Starting point.
+                </Box>{' '}
+                Results vary with rotation, buffs, and group composition.
+              </Typography>
+            </Box>
+          </Collapse>
+        </Box>
+      )}
 
       <Paper
         component="section"
         aria-label="Build pattern workspace"
         elevation={0}
         sx={(theme) => ({
+          position: 'relative',
           overflow: 'hidden',
           border: `1px solid ${alpha(theme.palette.divider, 0.78)}`,
           borderRadius: 2.5,
@@ -251,13 +258,22 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
             theme.palette.mode === 'dark'
               ? '0 22px 55px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.045)'
               : '0 12px 34px rgba(15,23,42,0.09), inset 0 1px 0 rgba(255,255,255,0.84)',
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            inset: '0 0 auto 0',
+            zIndex: 2,
+            height: 2,
+            background: `linear-gradient(90deg, transparent, ${alpha(selectedClassTheme.accent, 0.72)} 38%, ${alpha(theme.palette.primary.main, 0.52)} 72%, transparent)`,
+            pointerEvents: 'none',
+          },
         })}
       >
         <Box
           sx={{
             display: 'grid',
             alignItems: 'stretch',
-            gridTemplateColumns: { xs: '1fr', md: 'minmax(340px, 0.9fr) minmax(0, 1.35fr)' },
+            gridTemplateColumns: { xs: '1fr', md: 'minmax(360px, 420px) minmax(0, 1fr)' },
           }}
         >
           <Box
@@ -270,14 +286,14 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
               borderRight: { xs: 'none', md: `1px solid ${alpha(theme.palette.divider, 0.62)}` },
               backgroundColor: alpha(
                 theme.palette.background.default,
-                theme.palette.mode === 'dark' ? 0.14 : 0.24,
+                theme.palette.mode === 'dark' ? 0.58 : 0.34,
               ),
             })}
           >
             <Box
               sx={{
                 display: 'grid',
-                minHeight: 48,
+                minHeight: 54,
                 gridTemplateColumns: {
                   xs: 'minmax(0, 1fr)',
                   sm: 'minmax(0, 1fr) 64px 52px 18px',
@@ -287,7 +303,15 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
                 px: { xs: 1.5, sm: 2 },
               }}
             >
-              <Typography id="build-patterns-heading" sx={{ fontSize: '0.76rem', fontWeight: 700 }}>
+              <Typography
+                id="build-patterns-heading"
+                sx={{
+                  fontFamily: 'Space Grotesk, Inter, system-ui',
+                  fontSize: '0.79rem',
+                  fontWeight: 700,
+                  letterSpacing: '-0.01em',
+                }}
+              >
                 Build patterns
               </Typography>
               <Typography
@@ -295,20 +319,26 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
                   display: { xs: 'none', sm: 'block' },
                   textAlign: 'right',
                   color: 'text.secondary',
-                  fontSize: '0.7rem',
+                  fontSize: '0.65rem',
+                  fontWeight: 600,
+                  letterSpacing: '0.045em',
+                  textTransform: 'uppercase',
                 }}
               >
-                Typical
+                Parses
               </Typography>
               <Typography
                 sx={{
                   display: { xs: 'none', sm: 'block' },
                   textAlign: 'right',
                   color: 'text.secondary',
-                  fontSize: '0.7rem',
+                  fontSize: '0.65rem',
+                  fontWeight: 600,
+                  letterSpacing: '0.045em',
+                  textTransform: 'uppercase',
                 }}
               >
-                Parses
+                Typical
               </Typography>
             </Box>
             <Box component="ol" sx={{ m: 0, p: 0, listStyle: 'none' }}>
@@ -316,7 +346,7 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
                 <ArchetypeRow
                   key={cluster.id}
                   cluster={cluster}
-                  label={displayLabel(cluster, cluster.esoClass)}
+                  label={displayLabel(cluster, esoClass)}
                   selected={cluster.id === selected.id}
                   recommended={cluster.id === result.recommendedClusterId}
                   showClassIcon={!esoClass}
@@ -335,9 +365,10 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
               scrollMarginTop: 72,
               background:
                 theme.palette.mode === 'dark'
-                  ? `radial-gradient(circle at 100% 0%, ${alpha(theme.palette.primary.main, 0.055)}, transparent 38%)`
-                  : `radial-gradient(circle at 100% 0%, ${alpha(theme.palette.primary.main, 0.035)}, transparent 42%)`,
+                  ? `radial-gradient(circle at 92% 2%, ${alpha(selectedClassTheme.accent, 0.13)}, transparent 34%), linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.62)}, ${alpha(theme.palette.background.default, 0.2)})`
+                  : `radial-gradient(circle at 92% 2%, ${alpha(selectedClassTheme.accent, 0.09)}, transparent 36%), linear-gradient(135deg, ${alpha(theme.palette.common.white, 0.54)}, transparent)`,
             })}
+            data-class-accent={selectedClassTheme.accent}
           >
             <BuildInspector
               key={selected.id}
@@ -348,7 +379,8 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
               evidenceOpen={evidenceOpen}
               onToggleEvidence={() => setEvidenceOpen((open) => !open)}
               variations={selected.variations}
-              sourceUrl={sourceUrlFor(selected)}
+              sourceUrl={representativeParseFor(selected)?.source_url}
+              representativeDps={representativeParseFor(selected)?.amount}
               pendingKind={pendingAction?.clusterId === selected.id ? pendingAction.kind : null}
               actionsDisabled={Boolean(pendingAction)}
               onOpenInEditor={onOpenInEditor}

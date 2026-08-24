@@ -100,7 +100,7 @@ describe('BuildLeaderboardPage', () => {
     renderPage();
 
     await waitFor(() => expect(dpsParsesApi.listEncounters).toHaveBeenCalled());
-    await userEvent.click(screen.getByLabelText(/trial & boss/i));
+    await userEvent.click(screen.getByLabelText(/^encounter$/i));
 
     const options = await screen.findAllByRole('option');
     expect(options).toHaveLength(2);
@@ -118,7 +118,7 @@ describe('BuildLeaderboardPage', () => {
     renderPage();
     await waitFor(() => expect(dpsParsesApi.listEncounters).toHaveBeenCalled());
 
-    await userEvent.click(screen.getByLabelText(/trial & boss/i));
+    await userEvent.click(screen.getByLabelText(/^encounter$/i));
     const listbox = within(screen.getByRole('listbox'));
     // The lower-difficulty row, which shares encounter_id 60 with the default.
     await userEvent.click(listbox.getByText(/40 parses/i));
