@@ -416,7 +416,7 @@ export const RosterCard: React.FC<RosterCardProps> = React.memo(
                 wordBreak: 'break-word',
                 fontSize: '1.05rem',
                 letterSpacing: '-0.01em',
-                fontFamily: 'Space Grotesk, Inter, system-ui',
+                fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
               }}
             >
               {roster.title}

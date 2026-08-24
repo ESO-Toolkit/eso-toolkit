@@ -110,7 +110,7 @@ const ClearSectionMenu: React.FC<SectionHeaderActionsProps> = ({ section }) => {
               fontWeight: 700,
               letterSpacing: 1,
               textTransform: 'uppercase',
-              fontFamily: 'Space Grotesk, Inter, system-ui',
+              fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
               color: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.45)',
             }}
           >
@@ -120,7 +120,7 @@ const ClearSectionMenu: React.FC<SectionHeaderActionsProps> = ({ section }) => {
         <MenuItem
           onClick={handleConfirm}
           sx={{
-            fontFamily: 'Space Grotesk, Inter, system-ui',
+            fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
             fontSize: 13,
             fontWeight: 600,
             color: 'error.main',

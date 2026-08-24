@@ -42,7 +42,7 @@
 
 ### Steps:
 1. Start the development server: `npm run dev`
-2. Navigate to the report: `m2Y9FqdpMjcaZh4R` (Fight 11)
+2. Navigate to the configured sample report and fight.
 3. Find Player 1 in the insights view
 4. Hover over or click on "Magical Trample" skill icon
 5. Look for the SkillTooltip popup

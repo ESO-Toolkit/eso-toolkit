@@ -161,7 +161,7 @@ const SetRowInner: React.FC<SetRowProps> = ({
               sx={{
                 fontSize: 12,
                 fontWeight: isAssigned ? 700 : 600,
-                fontFamily: 'Space Grotesk, Inter, system-ui',
+                fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                 color: isDark ? 'rgba(255,255,255,0.82)' : 'rgba(0,0,0,0.78)',
               }}
             >
@@ -174,7 +174,7 @@ const SetRowInner: React.FC<SetRowProps> = ({
                 height: 14,
                 fontSize: '0.5rem',
                 fontWeight: 700,
-                fontFamily: 'Space Grotesk, Inter, system-ui',
+                fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                 background: `${catColor}25`,
                 color: catColor,
                 border: 'none',
@@ -312,7 +312,7 @@ const AllSetsBrowserInner: React.FC<AllSetsBrowserProps> = ({
                   borderRadius: 1.5,
                   fontSize: 11,
                   fontWeight: isActive ? 700 : 500,
-                  fontFamily: 'Space Grotesk, Inter, system-ui',
+                  fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                   letterSpacing: 0.3,
                   color: isActive
                     ? (color ?? (isDark ? '#fff' : '#0f172a'))
@@ -380,7 +380,7 @@ const AllSetsBrowserInner: React.FC<AllSetsBrowserProps> = ({
                 borderRadius: 1.5,
                 fontSize: 10,
                 fontWeight: isActive ? 700 : 500,
-                fontFamily: 'Space Grotesk, Inter, system-ui',
+                fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                 letterSpacing: 0.3,
                 flexShrink: 0,
                 color: isActive
@@ -479,7 +479,7 @@ const AllSetsBrowserInner: React.FC<AllSetsBrowserProps> = ({
           sx={{
             fontSize: '0.68rem',
             color: 'text.secondary',
-            fontFamily: 'Space Grotesk, Inter, system-ui',
+            fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
             textTransform: 'uppercase',
             letterSpacing: '0.08em',
           }}

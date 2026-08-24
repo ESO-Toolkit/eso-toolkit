@@ -211,7 +211,7 @@ const SectionLabel: React.FC<{ label: string }> = ({ label }) => {
         textTransform: 'uppercase',
         letterSpacing: 1.6,
         fontSize: '0.55rem',
-        fontFamily: 'Space Grotesk, Inter, system-ui',
+        fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
         color: isDark ? 'rgba(255,255,255,0.30)' : 'rgba(0,0,0,0.32)',
         py: 0.25,
       }}
@@ -492,7 +492,7 @@ export const EquipmentPicker: React.FC<EquipmentPickerProps> = ({
               borderRadius: 1.5,
               fontSize: 11.5,
               fontWeight: 700,
-              fontFamily: 'Space Grotesk, Inter, system-ui',
+              fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
               color: isDark ? 'rgba(255,255,255,0.60)' : 'rgba(0,0,0,0.55)',
               border: `1px solid ${isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)'}`,
               transition: 'all 0.15s',

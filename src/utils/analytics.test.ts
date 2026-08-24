@@ -7,6 +7,7 @@ import { waitFor } from '@testing-library/react';
 import ReactGA from 'react-ga4';
 
 import {
+  disableAnalytics,
   hashReportCode,
   initializeAnalytics,
   setAnalyticsUserId,
@@ -59,6 +60,7 @@ describe('analytics', () => {
   const mockGetBuildInfoAsync = cacheBusting.getBuildInfoAsync as jest.Mock;
 
   beforeEach(() => {
+    disableAnalytics();
     jest.clearAllMocks();
     (ReactGA as unknown as { gtag: jest.Mock }).gtag = jest.fn();
     // Spy on getEnvVar
@@ -112,6 +114,48 @@ describe('analytics', () => {
       initializeAnalytics();
 
       expect(ReactGA.initialize).not.toHaveBeenCalled();
+    });
+
+    it('should not initialize GA before analytics consent is granted', () => {
+      localStorage.removeItem('eso-log-aggregator-cookie-consent');
+      getEnvVarSpy.mockReturnValue(mockMeasurementId);
+
+      initializeAnalytics();
+
+      expect(ReactGA.initialize).not.toHaveBeenCalled();
+    });
+
+    it('disables an active GA client when consent is revoked', () => {
+      getEnvVarSpy.mockReturnValue(mockMeasurementId);
+      document.cookie = '_ga=test-value; path=/';
+      initializeAnalytics();
+
+      localStorage.removeItem('eso-log-aggregator-cookie-consent');
+      initializeAnalytics();
+
+      expect(ReactGA.gtag).toHaveBeenCalledWith('consent', 'update', {
+        ad_storage: 'denied',
+        ad_user_data: 'denied',
+        ad_personalization: 'denied',
+        analytics_storage: 'denied',
+      });
+      expect(ReactGA.reset).toHaveBeenCalled();
+      expect(
+        (window as unknown as Record<string, unknown>)[`ga-disable-${mockMeasurementId}`],
+      ).toBe(true);
+      expect(document.cookie).not.toContain('_ga=');
+    });
+
+    it('clears the GA disable flag when consent is granted again', () => {
+      getEnvVarSpy.mockReturnValue(mockMeasurementId);
+      (window as unknown as Record<string, unknown>)[`ga-disable-${mockMeasurementId}`] = true;
+
+      initializeAnalytics();
+
+      expect(
+        (window as unknown as Record<string, unknown>)[`ga-disable-${mockMeasurementId}`],
+      ).toBe(false);
+      expect(ReactGA.initialize).toHaveBeenCalled();
     });
 
     it('should not initialize GA when measurement ID is empty string', () => {

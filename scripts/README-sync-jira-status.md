@@ -5,6 +5,7 @@ Automatically synchronizes Jira ticket statuses with Git branch states to keep y
 ## 🎯 Purpose
 
 This script analyzes your Git repository and updates Jira ticket statuses based on branch activity:
+
 - **Branch exists remotely** → Move ticket to "In Progress"
 - **Branch merged to main** → Move ticket to "Done"
 - **Multiple branches for same ticket** → Use most recent branch
@@ -38,6 +39,7 @@ $env:JIRA_API_TOKEN="your-api-token"
 ### 3. Verify Git Access
 
 Ensure you have access to the remote repository:
+
 ```powershell
 git fetch --all
 git branch -r  # Should list remote branches
@@ -52,6 +54,7 @@ npm run sync-jira
 ```
 
 This will:
+
 - ✅ Scan all branches matching `ESO-XXX` pattern
 - ✅ Check current Jira status for each ticket
 - ✅ Show proposed status changes
@@ -64,6 +67,7 @@ npm run sync-jira:apply
 ```
 
 This will:
+
 - ✅ Analyze branches and tickets
 - ✅ Display proposed changes
 - ⚠️ **Actually update Jira tickets**
@@ -76,43 +80,50 @@ npm run sync-jira:verbose
 ```
 
 Shows additional debugging information including:
+
 - Git command outputs
 - Jira API responses
 - Decision-making logic
 
 ## 📊 Status Transition Rules
 
-| Branch State | Current Jira Status | New Status | Condition |
-|-------------|---------------------|------------|-----------|
-| Exists remotely | To Do, Backlog | **In Progress** | Branch pushed to remote |
-| Merged to main | In Progress, In Review | **Done** | Branch merged successfully |
-| Deleted | Any | No change | Branch removed from remote |
-| Stale (30+ days) | In Progress | **To Do** | No commits in 30 days |
+| Branch State     | Current Jira Status    | New Status      | Condition                  |
+| ---------------- | ---------------------- | --------------- | -------------------------- |
+| Exists remotely  | To Do, Backlog         | **In Progress** | Branch pushed to remote    |
+| Merged to main   | In Progress, In Review | **Done**        | Branch merged successfully |
+| Deleted          | Any                    | No change       | Branch removed from remote |
+| Stale (30+ days) | In Progress            | **To Do**       | No commits in 30 days      |
 
 ## 🔍 How It Works
 
 ### 1. **Branch Discovery**
+
 ```powershell
 git branch -r --format="%(refname:short)|%(committerdate:iso8601)"
 ```
+
 - Finds all remote branches matching `ESO-XXX` pattern
 - Extracts ticket ID from branch name
 - Records last commit date
 
 ### 2. **Merge Status Check**
+
 ```powershell
 git branch -r --merged origin/main
 ```
+
 - Checks if branch has been merged to main
 - Handles both `master` and `main` branches
 
 ### 3. **Jira Status Query**
+
 ```typescript
 const ticket = await getJiraTicket(ticketId);
 // Returns: { key, status, summary }
 ```
 
 ### 4. **Rule Evaluation**
+
 ```typescript
 if (branch.isRemote && !branch.isMerged && ticket.status === 'To Do') {
   proposedStatus = 'In Progress';
@@ -120,6 +131,7 @@ if (branch.isRemote && !branch.isMerged && ticket.status === 'To Do') {
 ```
 
 ### 5. **Status Transition**
+
 ```typescript
 await updateJiraTicketStatus(ticketId, newStatus);
 // Uses Jira Transitions API
@@ -128,6 +140,7 @@ await updateJiraTicketStatus(ticketId, newStatus);
 ## 📝 Example Output
 
 ### Dry Run
+
 ```
 ╔═══════════════════════════════════════════════════════════════╗
 ║         Jira-Branch Status Sync Script                        ║
@@ -164,6 +177,7 @@ Total updates: 1
 ```
 
 ### Apply Mode
+
 ```
 🚀 Applying updates...
 
@@ -206,18 +220,21 @@ const DEFAULT_BRANCH = 'main';
 ## 🚨 Troubleshooting
 
 ### Issue: "Missing Jira credentials"
+
 ```
 ❌ Error: Missing Jira credentials
 Please set JIRA_EMAIL and JIRA_API_TOKEN environment variables
 ```
 
 **Solution:**
+
 ```powershell
 $env:JIRA_EMAIL="your-email@example.com"
 $env:JIRA_API_TOKEN="your-api-token"
 ```
 
 ### Issue: "No transition available"
+
 ```
 ⚠️  No transition available from current status to "In Progress" for ESO-123
 ```
@@ -225,21 +242,25 @@ $env:JIRA_API_TOKEN="your-api-token"
 **Solution:** The Jira workflow doesn't allow this transition. Check your workflow in Jira settings.
 
 ### Issue: "Branch not found in Jira"
+
 ```
 ⚠️  ESO-999 - Ticket not found in Jira
 ```
 
 **Solution:** Either:
+
 - Ticket doesn't exist (typo in branch name?)
 - You don't have permission to view it
 - Ticket is in a different project
 
 ### Issue: "Failed to get transitions"
+
 ```
 Error updating ESO-123: Failed to get transitions: HTTP 401
 ```
 
 **Solution:** Re-authenticate with Jira:
+
 ```powershell
 acli --server https://bkrupa.atlassian.net --user your-email --password your-api-token
 ```
@@ -247,28 +268,29 @@ acli --server https://bkrupa.atlassian.net --user your-email --password your-api
 ## 🔗 Integration with CI/CD
 
 ### GitHub Actions
+
 ```yaml
 name: Sync Jira Statuses
 on:
   push:
     branches: [main]
   schedule:
-    - cron: '0 9 * * 1'  # Every Monday at 9 AM
+    - cron: '0 9 * * 1' # Every Monday at 9 AM
 
 jobs:
   sync:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
-          fetch-depth: 0  # Full history for branch analysis
-      
-      - uses: actions/setup-node@v4
+          fetch-depth: 0 # Full history for branch analysis
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '20'
-      
+
       - run: npm ci
-      
+
       - name: Sync Jira Statuses
         env:
           JIRA_EMAIL: ${{ secrets.JIRA_EMAIL }}
@@ -277,6 +299,7 @@ jobs:
 ```
 
 ### Pre-Push Hook
+
 ```bash
 #!/bin/bash
 # .git/hooks/pre-push
@@ -296,6 +319,7 @@ exit 0  # Don't block push, just inform
 ## 🤝 Contributing
 
 When modifying this script:
+
 1. Test in dry-run mode first
 2. Test with a single ticket before batch operations
 3. Add error handling for new failure modes
@@ -303,4 +327,4 @@ When modifying this script:
 
 ## 📄 License
 
-Part of the ESO Log Aggregator project.
+Part of the ESO Toolkit project.

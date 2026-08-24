@@ -20,13 +20,7 @@ import type { UltimateSource } from './index';
 
 /** Canonical ESO class keys (matches src/utils/classNameUtils.ts). */
 export type EsoClass =
-  | 'dragonknight'
-  | 'templar'
-  | 'warden'
-  | 'nightblade'
-  | 'sorcerer'
-  | 'necromancer'
-  | 'arcanist';
+  'dragonknight' | 'templar' | 'warden' | 'nightblade' | 'sorcerer' | 'necromancer' | 'arcanist';
 
 export const ESO_CLASSES: readonly EsoClass[] = [
   'arcanist',

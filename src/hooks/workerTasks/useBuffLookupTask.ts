@@ -49,11 +49,9 @@ export function useBuffLookupTask(options?: UseBuffLookupTaskOptions): {
     selectWorkerTaskLoading('calculateBuffLookup'),
   ) as boolean;
   const buffLookupError = useSelector(selectWorkerTaskError('calculateBuffLookup')) as
-    | string
-    | null;
+    string | null;
   const buffLookupProgress = useSelector(selectWorkerTaskProgress('calculateBuffLookup')) as
-    | number
-    | null;
+    number | null;
 
   // Include all dependency loading states in the overall loading state
   const isBuffLookupLoading = isBuffLookupTaskLoading || isFriendlyBuffEventsLoading;

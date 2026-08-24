@@ -23,7 +23,7 @@ export const PenetrationSkeleton: React.FC<PenetrationSkeletonProps> = ({
           height={40}
           sx={{
             mb: 2,
-            fontFamily: 'Space Grotesk, sans-serif',
+            fontFamily: 'Space Grotesk Variable, sans-serif',
             background:
               'linear-gradient(90deg, rgba(0,0,0,0.08) 0%, rgba(0,0,0,0.12) 50%, rgba(0,0,0,0.08) 100%)',
           }}
@@ -55,7 +55,7 @@ export const PenetrationSkeleton: React.FC<PenetrationSkeletonProps> = ({
         height={40}
         sx={{
           mb: 2,
-          fontFamily: 'Space Grotesk, sans-serif',
+          fontFamily: 'Space Grotesk Variable, sans-serif',
           background:
             'linear-gradient(90deg, rgba(0,0,0,0.08) 0%, rgba(0,0,0,0.12) 50%, rgba(0,0,0,0.08) 100%)',
         }}

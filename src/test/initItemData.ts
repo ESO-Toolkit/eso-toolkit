@@ -9,6 +9,7 @@
  * preloadItemData()'s fetch; jsdom has no fetch, so tests use this seam.
  */
 import { __initItemIdMapFromJson, type ItemInfo } from '@/features/loadout-manager/data/itemIdMap';
+import { __initItemSetCollectionsFromJson } from '@/features/loadout-manager/data/itemSetCollections';
 
 // require() keeps the ~12 MB JSON literal out of the TypeScript program — a
 // static import would make tsc parse and type the whole file on every check.
@@ -20,3 +21,14 @@ const itemIdMapJson = require('../features/loadout-manager/data/itemIdMap.json')
 >;
 
 __initItemIdMapFromJson(itemIdMapJson);
+
+// The production collection index is populated by the fetched JSON asset. Jest
+// has no Vite asset server, so initialize the same shared index synchronously
+// for tests that exercise collection-backed slot/set lookups.
+const itemSetCollectionsJson =
+  // eslint-disable-next-line no-undef, @typescript-eslint/no-require-imports
+  require('../../data/eso-globals-item-set-collections.json') as Parameters<
+    typeof __initItemSetCollectionsFromJson
+  >[0];
+
+__initItemSetCollectionsFromJson(itemSetCollectionsJson);

@@ -1,5 +1,5 @@
 import { Home as HomeIcon, ArrowBack as ArrowBackIcon } from '@mui/icons-material';
-import { Box, Button, Container, Typography } from '@mui/material';
+import { Box, Button, Container, Link, Typography } from '@mui/material';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -101,7 +101,23 @@ export const NotFound: React.FC = () => {
 
         <Box sx={{ mt: 4 }}>
           <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-            Need help? Contact support or check the documentation.
+            Need help? Visit our{' '}
+            <Link
+              href="https://github.com/ESO-Toolkit/eso-toolkit/discussions"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              GitHub Discussions
+            </Link>{' '}
+            or{' '}
+            <Link
+              href="https://github.com/ESO-Toolkit/eso-toolkit#readme"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              documentation
+            </Link>
+            .
           </Typography>
         </Box>
       </Box>

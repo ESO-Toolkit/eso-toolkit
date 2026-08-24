@@ -28,6 +28,12 @@ function isValidRedirectPath(path: string): boolean {
     return false;
   }
 
+  // Browsers and URL parsers may normalize backslashes into path separators,
+  // which can turn an apparently relative value into a protocol-relative URL.
+  if (path.includes('\\')) {
+    return false;
+  }
+
   // Must not be empty after the leading slash
   if (path.length <= 1) {
     return false;

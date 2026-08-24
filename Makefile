@@ -1,4 +1,4 @@
-# ESO Log Aggregator Makefile
+# ESO Toolkit Makefile
 # This Makefile provides convenient commands for common development tasks
 # Cross-platform compatible (Windows, Linux, macOS) with colorized output
 
@@ -18,11 +18,11 @@ else
 	RM_ESLINT := rm -rf .eslintcache
 endif
 
-.PHONY: help install build test test-all lint lint-fix format fmt clean dev codegen fetch-abilities all os-info clear-cache clean-modules clean-all reinstall pre-commit pc check prod-build setup test-watch typecheck pr clean-test-data test-screen-sizes test-screen-sizes-mobile test-screen-sizes-tablet test-screen-sizes-desktop test-screen-sizes-report test-screen-sizes-update wt-setup kill-stale refresh
+.PHONY: help install build test test-all lint lint-fix format fmt clean dev codegen fetch-abilities all os-info clear-cache clean-modules clean-all reinstall pre-commit pc check prod-build setup test-watch typecheck pr clean-test-data test-screen-sizes test-screen-sizes-matrix test-screen-sizes-mobile test-screen-sizes-tablet test-screen-sizes-desktop test-screen-sizes-report wt-setup kill-stale refresh
 
 # Default target
 help:
-	@$(COLOR) header "ESO Log Aggregator - Available Commands"
+	@$(COLOR) header "ESO Toolkit - Available Commands"
 	@$(COLOR) info "Development Commands:"
 	@$(COLOR) color brightCyan "  help          - Show this help message"
 	@$(COLOR) color brightCyan "  os-info       - Show detected operating system"
@@ -61,7 +61,8 @@ help:
 	@$(COLOR) color brightCyan "  kill-stale          - Kill stale Node.js processes"
 	@$(COLOR) color brightCyan "  refresh             - Pull latest main and reinstall shared node_modules"
 	@$(COLOR) info "Screen Size Testing Commands:"
-	@$(COLOR) color brightBlue "  test-screen-sizes         - Run all screen size validation tests"
+	@$(COLOR) color brightBlue "  test-screen-sizes         - Run the maintained 14-viewport screen size suite"
+	@$(COLOR) color brightBlue "  test-screen-sizes-matrix  - Run exploratory checks without visual baselines"
 	@$(COLOR) color brightBlue "  test-screen-sizes-mobile  - Test mobile device screen sizes"
 	@$(COLOR) color brightBlue "  test-screen-sizes-tablet  - Test tablet device screen sizes"
 	@$(COLOR) color brightBlue "  test-screen-sizes-desktop - Test desktop screen sizes"
@@ -235,8 +236,13 @@ endif
 # Screen Size Testing Commands
 test-screen-sizes:
 	@$(COLOR) subheader "Running Screen Size Validation Tests"
-	@$(COLOR) info "Testing responsive layout across all device sizes..."
+	@$(COLOR) info "Testing the maintained 14-viewport suite..."
 	npm run test:screen-sizes
+
+test-screen-sizes-matrix:
+	@$(COLOR) subheader "Running Exploratory Screen Size Matrix"
+	@$(COLOR) info "Testing responsive behavior without baseline screenshot comparisons..."
+	npm run test:screen-sizes:matrix
 
 test-screen-sizes-mobile:
 	@$(COLOR) subheader "Testing Mobile Screen Sizes"
@@ -257,11 +263,6 @@ test-screen-sizes-report:
 	@$(COLOR) subheader "Opening Screen Size Test Report"
 	@$(COLOR) info "Launching HTML report in browser..."
 	npm run test:screen-sizes:report
-
-test-screen-sizes-update:
-	@$(COLOR) subheader "Updating Screen Size Test Snapshots"
-	@$(COLOR) warning "Updating visual regression baselines..."
-	npm run test:screen-sizes:update-snapshots
 
 # Set up a worktree's dependencies (node_modules junction + .env + .twig)
 # Usage: make wt-setup WT=D:/code/eso-log-aggregator-worktrees/ESO-123/my-feature

@@ -11,7 +11,7 @@ export const glassInputSx = (isDark: boolean, isMobile?: boolean): Record<string
 
   return {
     '& .MuiOutlinedInput-root': {
-      fontFamily: 'Space Grotesk, Inter, system-ui',
+      fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
       fontSize: isMobile ? 16 : 13,
       background: t.bg,
       borderRadius: '10px',

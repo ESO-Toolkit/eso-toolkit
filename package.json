@@ -6,11 +6,14 @@
       "last 1 safari version"
     ],
     "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
+      "baseline widely available"
     ]
   },
+  "engines": {
+    "node": ">=24.0.0 <25",
+    "npm": ">=10.0.0"
+  },
+  "packageManager": "npm@11.5.2",
   "dependencies": {
     "@apollo/client": "^4.2.12",
     "@dnd-kit/core": "^6.3.1",
@@ -18,6 +21,9 @@
     "@dnd-kit/utilities": "^3.2.2",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
+    "@fontsource-variable/inter": "^5.3.0",
+    "@fontsource-variable/material-symbols-outlined": "^5.3.3",
+    "@fontsource-variable/space-grotesk": "^5.3.0",
     "@graphql-typed-document-node/core": "^3.2.0",
     "@internationalized/date": "^3.12.2",
     "@octokit/rest": "^21.0.2",
@@ -78,7 +84,7 @@
     "@swc/core": "^1.15.47",
     "@types/jest": "^30.0.0",
     "@types/luaparse": "^0.2.13",
-    "@types/node": "^20.19.43",
+    "@types/node": "^24.13.3",
     "@types/redux-mock-store": "^1.5.0",
     "@types/three": "^0.185.4",
     "@types/uuid": "^10.0.0",
@@ -123,9 +129,18 @@
       ".storybook/public"
     ]
   },
-  "name": "eso-log-aggregator",
-  "license": "BUSL-1.1",
+  "name": "eso-toolkit",
+  "description": "Combat-log analysis, build planning, roster tools, and fight replay for The Elder Scrolls Online.",
+  "license": "SEE LICENSE IN LICENSE",
   "private": true,
+  "homepage": "https://esotk.com/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ESO-Toolkit/eso-toolkit.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ESO-Toolkit/eso-toolkit/issues"
+  },
   "scripts": {
     "analyze": "npm run build && npx vite-bundle-analyzer build/assets/*.js",
     "analyze-bundle": "npm run build && node scripts/analyze-bundle.cjs",
@@ -134,7 +149,7 @@
     "cache:clear": "node scripts/manage-cache-simple.js clear",
     "clean:test-data": "pwsh -File scripts/cleanup-test-data.ps1",
     "clean:test-data:force": "pwsh -File scripts/cleanup-test-data.ps1 -Force",
-    "build": "npm run prebuild && cross-env NODE_OPTIONS=\"--max-old-space-size=8192\" vite build",
+    "build": "cross-env NODE_OPTIONS=\"--max-old-space-size=8192\" vite build",
     "build-storybook": "cross-env NODE_OPTIONS=\"--max-old-space-size=8192\" storybook build",
     "clean:version": "node scripts/clean-version.cjs",
     "codegen": "npm run script -- scripts/run-codegen.ts",
@@ -170,7 +185,7 @@
     "lint": "cross-env NODE_OPTIONS=\"--max-old-space-size=4096\" eslint ./src ./tests --max-warnings 0",
     "lint:fix": "cross-env NODE_OPTIONS=\"--max-old-space-size=4096\" eslint ./src ./tests --fix",
     "lint:skills": "python scripts/lint-skills.py",
-    "postbuild": "echo Build completed with cache-busting enabled",
+    "postbuild": "node scripts/generate-static-routes.cjs && echo Build completed with cache-busting enabled",
     "prebuild": "node scripts/generate-version.cjs && node scripts/update-manifest.cjs",
     "preview": "vite preview",
     "start": "npm run dev",
@@ -179,7 +194,8 @@
     "sync-jira:apply": "npm run script -- scripts/sync-jira-status.ts --apply",
     "sync-jira:verbose": "npm run script -- scripts/sync-jira-status.ts --verbose",
     "test": "jest --onlyChanged --passWithNoTests",
-    "test:all": "jest",
+    "test:all": "jest --watchAll=false",
+    "test:ci": "jest --watchAll=false --passWithNoTests=false",
     "test:changed-since": "jest --changedSince=main",
     "test:integration": "jest --config=jest/integration.config.cjs --watchAll=false",
     "test:worker": "jest --config=jest/worker.config.cjs --watchAll=false",
@@ -206,18 +222,18 @@
     "test:nightly:sharded": "npm-run-all --parallel test:nightly:shard1 test:nightly:shard2 test:nightly:shard3",
     "test:nightly:sharded:chromium": "npm-run-all --parallel \"test:nightly:shard* -- --project=chromium-desktop\"",
     "test:nightly:sharded:firefox": "npm-run-all --parallel \"test:nightly:shard* -- --project=firefox-desktop\"",
-    "test:screen-sizes": "playwright test --config=playwright/screen-sizes.config.ts",
+    "test:screen-sizes": "playwright test --config=playwright/screen-sizes-fast.config.ts",
+    "test:screen-sizes:matrix": "playwright test --config=playwright/screen-sizes.config.ts --grep-invert \"visual regression\"",
     "test:screen-sizes:setup": "npm run download-test-data",
     "test:screen-sizes:fast": "playwright test --config=playwright/screen-sizes-fast.config.ts",
-    "test:screen-sizes:headed": "playwright test --config=playwright/screen-sizes.config.ts --headed",
-    "test:screen-sizes:ui": "playwright test --config=playwright/screen-sizes.config.ts --ui",
-    "test:screen-sizes:mobile": "playwright test --config=playwright/screen-sizes.config.ts --project=\"Mobile*\" --project=\"Android*\"",
-    "test:screen-sizes:tablet": "playwright test --config=playwright/screen-sizes.config.ts --project=\"Tablet*\"",
-    "test:screen-sizes:desktop": "playwright test --config=playwright/screen-sizes.config.ts --project=\"Desktop*\"",
-    "test:screen-sizes:breakpoints": "playwright test --config=playwright/screen-sizes.config.ts --project=\"Breakpoint*\"",
+    "test:screen-sizes:headed": "playwright test --config=playwright/screen-sizes-fast.config.ts --headed",
+    "test:screen-sizes:ui": "playwright test --config=playwright/screen-sizes-fast.config.ts --ui",
+    "test:screen-sizes:mobile": "playwright test --config=playwright/screen-sizes-fast.config.ts --project=\"Mobile*\" --project=\"Android*\" --project=\"iPhone*\"",
+    "test:screen-sizes:tablet": "playwright test --config=playwright/screen-sizes-fast.config.ts --project=\"*Tablet*\"",
+    "test:screen-sizes:desktop": "playwright test --config=playwright/screen-sizes-fast.config.ts --project=\"Desktop*\" --project=\"Laptop*\" --project=\"Surface*\"",
+    "test:screen-sizes:breakpoints": "playwright test --config=playwright/screen-sizes-fast.config.ts --project=\"Breakpoint*\"",
     "test:screen-sizes:report": "playwright show-report screen-size-report",
-    "test:screen-sizes:update-snapshots": "playwright test --config=playwright/screen-sizes.config.ts --update-snapshots",
-    "test:screen-sizes:debug": "playwright test --config=playwright/screen-sizes.config.ts --headed --project=\"Desktop Standard\" --max-failures=1 --debug",
+    "test:screen-sizes:debug": "playwright test --config=playwright/screen-sizes-fast.config.ts --headed --project=\"Desktop Standard\" --max-failures=1 --debug",
     "verify:screen-size-setup": "node scripts/verify-screen-size-setup.cjs",
     "test:nightly:webkit": "playwright test --config=playwright/nightly.config.ts --project=webkit-desktop",
     "test:a11y:headed": "playwright test --config=playwright/a11y.config.ts --headed",

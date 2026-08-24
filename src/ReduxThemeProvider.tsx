@@ -87,15 +87,15 @@ export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         },
         shape: { borderRadius: 10 },
         typography: {
-          // Inter variable as the default UI/body font; Space Grotesk for headings
+          // Inter variable as the default UI/body font; Space Grotesk Variable for headings
           fontFamily:
-            "Inter, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, 'Helvetica Neue', Arial",
-          h1: { fontFamily: 'Space Grotesk, Inter, system-ui', fontWeight: 600 },
-          h2: { fontFamily: 'Space Grotesk, Inter, system-ui', fontWeight: 600 },
-          h3: { fontFamily: 'Space Grotesk, Inter, system-ui', fontWeight: 600 },
-          h4: { fontFamily: 'Space Grotesk, Inter, system-ui', fontWeight: 600 },
-          h5: { fontFamily: 'Space Grotesk, Inter, system-ui', fontWeight: 600 },
-          h6: { fontFamily: 'Space Grotesk, Inter, system-ui', fontWeight: 600 },
+            "Inter Variable, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, 'Helvetica Neue', Arial",
+          h1: { fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui', fontWeight: 600 },
+          h2: { fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui', fontWeight: 600 },
+          h3: { fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui', fontWeight: 600 },
+          h4: { fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui', fontWeight: 600 },
+          h5: { fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui', fontWeight: 600 },
+          h6: { fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui', fontWeight: 600 },
         },
         components: {
           MuiCssBaseline: {
@@ -118,6 +118,11 @@ export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
                   'background-color 0.15s ease-in-out, color 0.15s ease-in-out, border-color 0.15s ease-in-out',
               },
               '*, *::before, *::after': { boxSizing: 'border-box' },
+              'button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, [role="button"]:focus-visible, [role="tab"]:focus-visible, [role="option"]:focus-visible':
+                {
+                  outline: `3px solid ${tokens.accent}`,
+                  outlineOffset: 2,
+                },
               '@media (prefers-reduced-motion: reduce)': {
                 '*, *::before, *::after': {
                   animationDuration: 'var(--perf-anim-duration, 0.01ms) !important',
@@ -404,7 +409,7 @@ export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           MuiDialogTitle: {
             styleOverrides: {
               root: {
-                fontFamily: 'Space Grotesk, Inter, system-ui',
+                fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                 fontWeight: 600,
                 borderBottom: darkMode
                   ? '1px solid rgba(56, 189, 248, 0.1)'

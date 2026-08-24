@@ -20,6 +20,7 @@ import { LogInputContainer } from './LandingPage';
 
 export const AuthenticatedLandingSection: React.FC = () => {
   const [logUrl, setLogUrl] = useState('');
+  const [logUrlError, setLogUrlError] = useState('');
   const navigate = useViewTransitionNavigate();
   const dispatch = useAppDispatch();
   const theme = useTheme();
@@ -27,6 +28,7 @@ export const AuthenticatedLandingSection: React.FC = () => {
 
   const handleLogUrlChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     setLogUrl(e.target.value);
+    if (logUrlError) setLogUrlError('');
   };
 
   const extractReportInfo = (url: string): { reportId: string; fightId: string | null } | null => {
@@ -55,7 +57,7 @@ export const AuthenticatedLandingSection: React.FC = () => {
   };
 
   const handleLoadLog = (): void => {
-    const result = extractReportInfo(logUrl);
+    const result = extractReportInfo(logUrl.trim());
     if (result) {
       dispatch(clearAllEvents());
       dispatch(clearMasterData());
@@ -67,7 +69,7 @@ export const AuthenticatedLandingSection: React.FC = () => {
         navigate(`/report/${result.reportId}`, { vtType: 'up' });
       }
     } else {
-      alert('Invalid ESOLogs report URL');
+      setLogUrlError('Enter a valid ESOLogs report URL, such as https://www.esologs.com/reports/…');
     }
   };
 
@@ -86,93 +88,109 @@ export const AuthenticatedLandingSection: React.FC = () => {
         },
       }}
     >
-      <LogInputContainer sx={{ m: 0 }}>
-        <TextField
-          label="ESOLogs.com Log URL"
-          variant="outlined"
-          value={logUrl}
-          onChange={handleLogUrlChange}
-          sx={{
-            flex: 1,
-            '& .MuiOutlinedInput-root': {
-              backgroundColor: 'transparent',
-              borderRadius: { xs: '8px 8px 0 0', sm: '16px 0 0 16px' },
-              height: { xs: '56px', sm: '64px' },
-              padding: '0 1.5rem',
-              border: 'none',
-              // The container handles the hover lift; neutralize the global
-              // MuiOutlinedInput hover styles so the input doesn't lift on its
-              // own or paint an opaque background over the container's top
-              // accent border.
-              '&:hover': {
-                backgroundColor: 'transparent !important',
-                transform: 'none',
-              },
-              '&.Mui-focused': {
+      <Box
+        component="form"
+        noValidate
+        onSubmit={(event) => {
+          event.preventDefault();
+          handleLoadLog();
+        }}
+        aria-label="Analyze an ESO Logs report"
+      >
+        <LogInputContainer sx={{ m: 0 }}>
+          <TextField
+            id="authenticated-log-url"
+            label="ESOLogs.com Log URL"
+            variant="outlined"
+            value={logUrl}
+            onChange={handleLogUrlChange}
+            error={Boolean(logUrlError)}
+            helperText={logUrlError || 'Paste a public ESO Logs report link to analyze it.'}
+            sx={{
+              flex: 1,
+              '& .MuiOutlinedInput-root': {
                 backgroundColor: 'transparent',
-              },
-              '& fieldset': {
+                borderRadius: { xs: '8px 8px 0 0', sm: '16px 0 0 16px' },
+                height: { xs: '56px', sm: '64px' },
+                padding: '0 1.5rem',
                 border: 'none',
-              },
-              '&:hover fieldset': {
-                border: 'none',
-              },
-              '&.Mui-focused fieldset': {
-                border: 'none',
-              },
-            },
-            '& .MuiInputLabel-root': {
-              color: theme.palette.mode === 'dark' ? '#94a3b8' : '#64748b',
-              left: '3.5rem',
-              top: { xs: '2px', sm: '4px' },
-              fontSize: { xs: '0.85rem', sm: '0.95rem' },
-              '&.Mui-focused': {
-                color: '#38bdf8',
-              },
-              '&.MuiInputLabel-shrink': {
-                transform: {
-                  xs: 'translate(3.5rem, -12px) scale(0.75)',
-                  sm: 'translate(3.5rem, -10px) scale(0.75)',
+                // The container handles the hover lift; neutralize the global
+                // MuiOutlinedInput hover styles so the input doesn't lift on its
+                // own or paint an opaque background over the container's top
+                // accent border.
+                '&:hover': {
+                  backgroundColor: 'transparent !important',
+                  transform: 'none',
                 },
-                backgroundColor:
-                  theme.palette.mode === 'dark'
-                    ? 'rgba(15, 23, 42, 0.9)'
-                    : 'rgba(248, 250, 252, 0.95)',
-                padding: '2px 8px',
-                borderRadius: '4px',
+                '&.Mui-focused': {
+                  backgroundColor: 'transparent',
+                },
+                '& fieldset': {
+                  border: 'none',
+                },
+                '&:hover fieldset': {
+                  border: 'none',
+                },
+                '&.Mui-focused fieldset': {
+                  border: 'none',
+                },
               },
-            },
-            '& .MuiInputBase-input': {
-              padding: { xs: '16px 0', sm: '18px 0' },
-              color: theme.palette.mode === 'dark' ? '#e5e7eb' : '#1e293b',
-              fontSize: { xs: '0.9rem', sm: '1rem' },
-            },
-          }}
-          slotProps={{
-            input: {
-              startAdornment: <LinkIcon sx={{ mr: 1, color: '#38bdf8', ml: 0 }} />,
-            },
-          }}
-        />
-        <Button
-          variant="contained"
-          color="secondary"
-          sx={{
-            minWidth: 200,
-            height: 64,
-            background: 'linear-gradient(135deg, #38bdf8 0%, #00e1ff 50%, #0ea5e9 100%)',
-            color: '#ffffff',
-            fontWeight: 700,
-            fontSize: { xs: '1rem', sm: '1.1rem' },
-            borderRadius: { xs: '0 0 8px 8px', sm: '0 16px 16px 0' },
-            border: 'none',
-            boxShadow: 'none',
-            position: 'relative',
-            overflow: 'hidden',
-            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-            textTransform: 'uppercase',
-            letterSpacing: '1px',
-            textShadow: `
+              '& .MuiInputLabel-root': {
+                color: theme.palette.mode === 'dark' ? '#94a3b8' : '#64748b',
+                left: '3.5rem',
+                top: { xs: '2px', sm: '4px' },
+                fontSize: { xs: '0.85rem', sm: '0.95rem' },
+                '&.Mui-focused': {
+                  color: '#38bdf8',
+                },
+                '&.MuiInputLabel-shrink': {
+                  transform: {
+                    xs: 'translate(3.5rem, -12px) scale(0.75)',
+                    sm: 'translate(3.5rem, -10px) scale(0.75)',
+                  },
+                  backgroundColor:
+                    theme.palette.mode === 'dark'
+                      ? 'rgba(15, 23, 42, 0.9)'
+                      : 'rgba(248, 250, 252, 0.95)',
+                  padding: '2px 8px',
+                  borderRadius: '4px',
+                },
+              },
+              '& .MuiInputBase-input': {
+                padding: { xs: '16px 0', sm: '18px 0' },
+                color: theme.palette.mode === 'dark' ? '#e5e7eb' : '#1e293b',
+                fontSize: { xs: '0.9rem', sm: '1rem' },
+              },
+            }}
+            slotProps={{
+              input: {
+                startAdornment: <LinkIcon sx={{ mr: 1, color: '#38bdf8', ml: 0 }} />,
+              },
+              htmlInput: {
+                'aria-invalid': Boolean(logUrlError),
+                'aria-describedby': 'authenticated-log-url-helper-text',
+              },
+            }}
+          />
+          <Button
+            variant="contained"
+            color="secondary"
+            sx={{
+              minWidth: 200,
+              height: 64,
+              background: 'linear-gradient(135deg, #38bdf8 0%, #00e1ff 50%, #0ea5e9 100%)',
+              color: '#ffffff',
+              fontWeight: 700,
+              fontSize: { xs: '1rem', sm: '1.1rem' },
+              borderRadius: { xs: '0 0 8px 8px', sm: '0 16px 16px 0' },
+              border: 'none',
+              boxShadow: 'none',
+              position: 'relative',
+              overflow: 'hidden',
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              textTransform: 'uppercase',
+              letterSpacing: '1px',
+              textShadow: `
               0 2px 4px rgba(0, 0, 0, 0),
               0 4px 8px rgba(0, 0, 0, 0.7),
               0 8px 16px rgba(0, 0, 0, 0.5),
@@ -180,47 +198,48 @@ export const AuthenticatedLandingSection: React.FC = () => {
               0 0 30px rgba(56, 189, 248, 0.4),
               0 1px 0 rgba(255, 255, 255, 0.2)
             `,
-            '&::before': {
-              content: '""',
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, transparent 50%)',
-              opacity: 0,
-              transition: 'opacity 0.3s ease',
-            },
-            '&::after': {
-              content: '""',
-              position: 'absolute',
-              top: 0,
-              left: '-100%',
-              width: '100%',
-              height: '100%',
-              background:
-                'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent)',
-              transition: 'left 0.6s ease',
-            },
-            '&:hover': {
-              background: 'linear-gradient(135deg, #0ea5e9 0%, #38bdf8 50%, #00e1ff 100%)',
-              transform: { xs: 'none', sm: 'scale(1.02)' },
               '&::before': {
-                opacity: 1,
+                content: '""',
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, transparent 50%)',
+                opacity: 0,
+                transition: 'opacity 0.3s ease',
               },
               '&::after': {
-                left: '100%',
+                content: '""',
+                position: 'absolute',
+                top: 0,
+                left: '-100%',
+                width: '100%',
+                height: '100%',
+                background:
+                  'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent)',
+                transition: 'left 0.6s ease',
               },
-            },
-            '&:active': {
-              transform: { xs: 'none', sm: 'scale(1.01)' },
-            },
-          }}
-          onClick={handleLoadLog}
-        >
-          Analyze Log
-        </Button>
-      </LogInputContainer>
+              '&:hover': {
+                background: 'linear-gradient(135deg, #0ea5e9 0%, #38bdf8 50%, #00e1ff 100%)',
+                transform: { xs: 'none', sm: 'scale(1.02)' },
+                '&::before': {
+                  opacity: 1,
+                },
+                '&::after': {
+                  left: '100%',
+                },
+              },
+              '&:active': {
+                transform: { xs: 'none', sm: 'scale(1.01)' },
+              },
+            }}
+            type="submit"
+          >
+            Analyze Log
+          </Button>
+        </LogInputContainer>
+      </Box>
 
       {/* Desktop Layout */}
       <Box

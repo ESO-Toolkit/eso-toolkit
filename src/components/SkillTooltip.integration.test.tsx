@@ -3,7 +3,7 @@
  *
  * Integration test for the SkillTooltip component with scribing detection
  * Tests the actual scribing detection logic with real fight data
- * for Shattering Knife skill from Player 1 in fight 11 of report m2Y9FqdpMjcaZh4R
+ * for Shattering Knife skill from the local sample fight fixture.
  */
 
 import { ThemeProvider, createTheme } from '@mui/material/styles';
@@ -93,7 +93,7 @@ describe('SkillTooltip Integration Tests', () => {
         { label: 'Area', value: 'Line', color: 'secondary' },
       ],
       // Use real fight data - this should trigger actual scribing detection
-      fightId: 'm2Y9FqdpMjcaZh4R-11',
+      fightId: 'sample-report-fixture-11',
       playerId: 1,
     };
 
@@ -156,7 +156,7 @@ describe('SkillTooltip Integration Tests', () => {
 
       const propsWithDifferentFight = {
         ...shatteringKnifeProps,
-        fightId: 'm2Y9FqdpMjcaZh4R-88', // Different fight
+        fightId: 'sample-report-fixture-88', // Different fight
         playerId: 2, // Different player
       };
 
@@ -178,7 +178,7 @@ describe('SkillTooltip Integration Tests', () => {
         headerBadge: 'Active',
         lineText: 'Scribing - Focus',
         iconSlug: 'ability_arcanist_003_a',
-        fightId: 'm2Y9FqdpMjcaZh4R-11',
+        fightId: 'sample-report-fixture-11',
         playerId: 4, // This player was using this ability according to the data
       };
 
@@ -218,7 +218,7 @@ describe('SkillTooltip Integration Tests', () => {
         headerBadge: 'Active',
         lineText: 'Weapon Skills',
         iconSlug: 'ability_warrior_031',
-        fightId: 'm2Y9FqdpMjcaZh4R-11',
+        fightId: 'sample-report-fixture-11',
         playerId: 1,
       };
 

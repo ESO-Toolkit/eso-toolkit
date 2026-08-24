@@ -136,8 +136,8 @@ export const handlers = [
             playerDetails: [
               {
                 id: 1,
-                name: 'Krazh-Kazak',
-                displayName: '@Krazh-Kazak',
+                name: 'SamplePlayer1',
+                displayName: '@SamplePlayer1',
                 type: 'Dragonknight',
                 icon: 'https://assets.rpglogs.com/img/eso/classes/dragonknight.png',
                 server: 'NA',
@@ -147,8 +147,8 @@ export const handlers = [
               },
               {
                 id: 2,
-                name: 'Sylvanas-Windruner',
-                displayName: '@Sylvanas-Windruner',
+                name: 'SamplePlayer2',
+                displayName: '@SamplePlayer2',
                 type: 'Templar',
                 icon: 'https://assets.rpglogs.com/img/eso/classes/templar.png',
                 server: 'NA',
@@ -158,8 +158,8 @@ export const handlers = [
               },
               {
                 id: 3,
-                name: 'Zakyrius',
-                displayName: '@Zakyrius',
+                name: 'SamplePlayer3',
+                displayName: '@SamplePlayer3',
                 type: 'Necromancer',
                 icon: 'https://assets.rpglogs.com/img/eso/classes/necromancer.png',
                 server: 'NA',
@@ -169,8 +169,8 @@ export const handlers = [
               },
               {
                 id: 4,
-                name: 'Dart-Shadow',
-                displayName: '@Dart-Shadow',
+                name: 'SamplePlayer4',
+                displayName: '@SamplePlayer4',
                 type: 'Nightblade',
                 icon: 'https://assets.rpglogs.com/img/eso/classes/nightblade.png',
                 server: 'NA',

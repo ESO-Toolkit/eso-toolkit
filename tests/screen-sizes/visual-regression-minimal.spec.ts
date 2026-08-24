@@ -11,8 +11,8 @@ import { setupWithSharedPreprocessing } from './shared-preprocessing';
 import { injectMockWorkerResults, shouldUseMockWorkerResults } from './test-optimization';
 
 // Test configuration - focused on visual regression only
-const TEST_REPORT_CODE = 'nbKdDtT4NcZyVrvX';
-const TEST_FIGHT_ID = '117';
+const TEST_REPORT_CODE = process.env.SCREEN_SIZE_REPORT_CODE ?? 'F4f2bMwWtgVKxjB9';
+const TEST_FIGHT_ID = process.env.SCREEN_SIZE_FIGHT_ID ?? '5';
 
 /**
  * Set up test environment for visual regression tests with shared preprocessing
@@ -20,7 +20,7 @@ const TEST_FIGHT_ID = '117';
  */
 async function setupTestEnvironment(page: any) {
   await setupWithSharedPreprocessing(page);
-  
+
   // Inject mock worker results for faster execution if enabled
   if (shouldUseMockWorkerResults()) {
     await injectMockWorkerResults(page);
@@ -34,115 +34,146 @@ async function setupTestEnvironment(page: any) {
  */
 async function _waitForPanelLoadingComplete(page: any, panelName: string = 'panel') {
   console.log(`⏳ Waiting for ${panelName} to stabilize...`);
-  
+
   try {
     // Wait for network to settle first (most important indicator)
     await page.waitForLoadState('networkidle', { timeout: 15000 });
     console.log(`🌐 Network idle achieved for ${panelName}`);
-    
+
     // For players panel, wait for actual content
     if (panelName.includes('players')) {
       console.log(`👥 Waiting for player cards in ${panelName}...`);
-      
+
       try {
         // Step 1: Wait for player card containers to appear
-        await page.waitForSelector('[data-testid^="player-card-"], .MuiCard-root', { 
-          state: 'visible', 
-          timeout: 12000, 
+        await page.waitForSelector('[data-testid^="player-card-"], .MuiCard-root', {
+          state: 'visible',
+          timeout: 12000,
         });
         console.log(`✅ Player card containers found in ${panelName}`);
-        
+
         // Step 2: Wait for actual content within cards
-        await page.waitForFunction(() => {
-          const playerCards = document.querySelectorAll('[data-testid^="player-card-"], .MuiCard-root');
-          if (playerCards.length === 0) return false;
-          
-          let cardsWithContent = 0;
-          for (const card of playerCards) {
-            const text = (card.textContent || '').trim();
-            const hasImages = card.querySelectorAll('img, svg, canvas').length > 0;
-            const hasDataElements = card.querySelectorAll('[data-testid]').length > 0;
-            const hasSubstantialText = text.length > 15 && !text.toLowerCase().includes('loading');
-            const hasProgressBars = card.querySelectorAll('.MuiLinearProgress-root, progress').length > 0;
-            const hasChips = card.querySelectorAll('.MuiChip-root').length > 0;
-            const hasButtons = card.querySelectorAll('button').length > 0;
-            
-            if (hasImages || hasDataElements || hasSubstantialText || hasProgressBars || hasChips || hasButtons) {
-              cardsWithContent++;
+        await page.waitForFunction(
+          () => {
+            const playerCards = document.querySelectorAll(
+              '[data-testid^="player-card-"], .MuiCard-root',
+            );
+            if (playerCards.length === 0) return false;
+
+            let cardsWithContent = 0;
+            for (const card of playerCards) {
+              const text = (card.textContent || '').trim();
+              const hasImages = card.querySelectorAll('img, svg, canvas').length > 0;
+              const hasDataElements = card.querySelectorAll('[data-testid]').length > 0;
+              const hasSubstantialText =
+                text.length > 15 && !text.toLowerCase().includes('loading');
+              const hasProgressBars =
+                card.querySelectorAll('.MuiLinearProgress-root, progress').length > 0;
+              const hasChips = card.querySelectorAll('.MuiChip-root').length > 0;
+              const hasButtons = card.querySelectorAll('button').length > 0;
+
+              if (
+                hasImages ||
+                hasDataElements ||
+                hasSubstantialText ||
+                hasProgressBars ||
+                hasChips ||
+                hasButtons
+              ) {
+                cardsWithContent++;
+              }
             }
-          }
-          
-          return cardsWithContent >= 1 && playerCards.length >= 1;
-        }, undefined, { timeout: 10000 });
-        
+
+            return cardsWithContent >= 1 && playerCards.length >= 1;
+          },
+          undefined,
+          { timeout: 10000 },
+        );
+
         console.log(`✅ Player cards with content loaded in ${panelName}`);
-        
       } catch {
         console.log(`⚠️ Player cards timeout, using fallback in ${panelName}...`);
-        
+
         try {
-          await page.waitForFunction(() => {
-            const contentElements = document.querySelectorAll('.MuiCard-root, .MuiPaper-root, table, [class*="content"], [class*="panel"]');
-            return contentElements.length > 0;
-          }, undefined, { timeout: 6000 });
-          
+          await page.waitForFunction(
+            () => {
+              const contentElements = document.querySelectorAll(
+                '.MuiCard-root, .MuiPaper-root, table, [class*="content"], [class*="panel"]',
+              );
+              return contentElements.length > 0;
+            },
+            undefined,
+            { timeout: 6000 },
+          );
+
           console.log(`✅ Content fallback succeeded in ${panelName}`);
         } catch {
           console.log(`⚠️ Content fallback failed, proceeding anyway in ${panelName}...`);
         }
       }
     }
-    
+
     // For insights panel, wait for charts or data tables
     if (panelName.includes('insights')) {
       console.log(`📊 Waiting for insights content in ${panelName}...`);
-      
+
       try {
-        await page.waitForFunction(() => {
-          const charts = document.querySelectorAll('canvas, svg, .MuiDataGrid-root, table');
-          const contentContainers = document.querySelectorAll('[class*="chart"], [class*="graph"], [class*="analysis"], [class*="insights"]');
-          
-          const hasVisibleCharts = Array.from(charts).some(element => {
-            const rect = element.getBoundingClientRect();
-            return rect.width > 50 && rect.height > 50;
-          });
-          
-          const hasContentContainers = Array.from(contentContainers).some(element => {
-            const rect = element.getBoundingClientRect();
-            return rect.width > 0 && rect.height > 0;
-          });
-          
-          const hasUIContent = document.querySelectorAll('.MuiCard-root, .MuiPaper-root').length > 0;
-          
-          return hasVisibleCharts || hasContentContainers || hasUIContent;
-        }, undefined, { timeout: 12000 });
-        
+        await page.waitForFunction(
+          () => {
+            const charts = document.querySelectorAll('canvas, svg, .MuiDataGrid-root, table');
+            const contentContainers = document.querySelectorAll(
+              '[class*="chart"], [class*="graph"], [class*="analysis"], [class*="insights"]',
+            );
+
+            const hasVisibleCharts = Array.from(charts).some((element) => {
+              const rect = element.getBoundingClientRect();
+              return rect.width > 50 && rect.height > 50;
+            });
+
+            const hasContentContainers = Array.from(contentContainers).some((element) => {
+              const rect = element.getBoundingClientRect();
+              return rect.width > 0 && rect.height > 0;
+            });
+
+            const hasUIContent =
+              document.querySelectorAll('.MuiCard-root, .MuiPaper-root').length > 0;
+
+            return hasVisibleCharts || hasContentContainers || hasUIContent;
+          },
+          undefined,
+          { timeout: 12000 },
+        );
+
         console.log(`✅ Insights content loaded in ${panelName}`);
-        
       } catch {
         console.log(`⚠️ Insights timeout, using fallback in ${panelName}...`);
-        
+
         try {
-          await page.waitForFunction(() => {
-            const basicUI = document.querySelectorAll('.MuiCard-root, .MuiPaper-root, [class*="content"]');
-            return basicUI.length > 0;
-          }, undefined, { timeout: 6000 });
-          
+          await page.waitForFunction(
+            () => {
+              const basicUI = document.querySelectorAll(
+                '.MuiCard-root, .MuiPaper-root, [class*="content"]',
+              );
+              return basicUI.length > 0;
+            },
+            undefined,
+            { timeout: 6000 },
+          );
+
           console.log(`✅ Basic insights UI fallback succeeded in ${panelName}`);
         } catch {
           console.log(`⚠️ Insights fallback failed, proceeding anyway in ${panelName}...`);
         }
       }
     }
-    
+
     // Additional wait for content to stabilize
     await page.waitForTimeout(1500);
     console.log(`✅ ${panelName} stabilized and ready for screenshot`);
-    
   } catch (error) {
     console.log(`⚠️ Content loading timeout for ${panelName}, proceeding anyway...`);
     console.log(`Error: ${error instanceof Error ? error.message : String(error)}`);
-    
+
     // Fallback to basic wait if content detection fails
     await page.waitForTimeout(3000);
     console.log(`✅ ${panelName} stabilized and ready for screenshot`);
@@ -169,25 +200,40 @@ async function _debugReduxState(page: any, label: string = '') {
         console.log(`🔍 ${debugLabel} - Redux store not available`);
         return;
       }
-      
+
       const state = store.getState();
       console.log(`🔍 ${debugLabel} - Redux state debug:`);
       console.log(`  - Report loaded: ${!!state.reportData?.selectedReport}`);
-      console.log(`  - Players loaded: ${!!state.playerData?.playersById && Object.keys(state.playerData?.playersById || {}).length > 0} (${Object.keys(state.playerData?.playersById || {}).length} players)`);
-      console.log(`  - Master data loaded: ${!!state.masterData?.actorsById && Object.keys(state.masterData?.actorsById || {}).length > 0}`);
-      
+      console.log(
+        `  - Players loaded: ${!!state.playerData?.playersById && Object.keys(state.playerData?.playersById || {}).length > 0} (${Object.keys(state.playerData?.playersById || {}).length} players)`,
+      );
+      console.log(
+        `  - Master data loaded: ${!!state.masterData?.actorsById && Object.keys(state.masterData?.actorsById || {}).length > 0}`,
+      );
+
       if (state.workerResults) {
-        const workerStats = Object.entries(state.workerResults).map(([taskName, task]: [string, any]) => {
-          const status = task.loading ? 'loading' : task.result ? 'completed' : task.error ? 'error' : 'idle';
-          return `${taskName}: ${status}`;
-        });
+        const workerStats = Object.entries(state.workerResults).map(
+          ([taskName, task]: [string, any]) => {
+            const status = task.loading
+              ? 'loading'
+              : task.result
+                ? 'completed'
+                : task.error
+                  ? 'error'
+                  : 'idle';
+            return `${taskName}: ${status}`;
+          },
+        );
         console.log(`  - Worker tasks: ${workerStats.join(', ')}`);
       } else {
         console.log('  - Worker results: none');
       }
     }, label);
   } catch (error) {
-    console.log(`Failed to debug Redux state for ${label}:`, error instanceof Error ? error.message : String(error));
+    console.log(
+      `Failed to debug Redux state for ${label}:`,
+      error instanceof Error ? error.message : String(error),
+    );
   }
 }
 
@@ -198,9 +244,9 @@ async function _waitForVisualStability(page: any) {
   // Wait for React app to mount first
   try {
     await page.waitForSelector('#root', { timeout: 15000 });
-    
+
     // Wait for the app layout structure to be present
-    await page.waitForSelector('[role="banner"], header, nav, main, #root > *', { 
+    await page.waitForSelector('[role="banner"], header, nav, main, #root > *', {
       timeout: 15000,
       state: 'visible',
     });
@@ -209,68 +255,82 @@ async function _waitForVisualStability(page: any) {
     // Fall back to basic DOM ready check
     await page.waitForFunction(() => document.readyState === 'complete', { timeout: 5000 });
   }
-  
+
   // Wait for Redux store and worker results to be ready
   try {
     console.log('🔍 Waiting for worker results to be available...');
-    
-    await page.waitForFunction(() => {
-      // Check if Redux store is available and has worker results
-      const store = (window as any).__REDUX_STORE__;
-      if (!store) return false;
-      
-      const state = store.getState();
-      
-      // Check if basic data is loaded first
-      const hasBasicData = 
-        state.reportData?.selectedReport && 
-        state.playerData?.playersById && 
-        Object.keys(state.playerData?.playersById || {}).length > 0;
-      
-      if (!hasBasicData) return false;
-      
-      // Check if worker results are available (at least some key ones)
-      const workerResults = state.workerResults || {};
-      
-      // Look for completed worker tasks (not just loading ones)
-      const hasWorkerResults = 
-        (workerResults.calculateBuffLookup?.result && !workerResults.calculateBuffLookup?.loading) ||
-        (workerResults.calculateDamageOverTimeData?.result && !workerResults.calculateDamageOverTimeData?.loading) ||
-        (workerResults.calculatePenetrationData?.result && !workerResults.calculatePenetrationData?.loading);
-      
-      return hasWorkerResults;
-    }, { timeout: 60000 }); // Extended timeout for worker computations
-    
+
+    await page.waitForFunction(
+      () => {
+        // Check if Redux store is available and has worker results
+        const store = (window as any).__REDUX_STORE__;
+        if (!store) return false;
+
+        const state = store.getState();
+
+        // Check if basic data is loaded first
+        const hasBasicData =
+          state.reportData?.selectedReport &&
+          state.playerData?.playersById &&
+          Object.keys(state.playerData?.playersById || {}).length > 0;
+
+        if (!hasBasicData) return false;
+
+        // Check if worker results are available (at least some key ones)
+        const workerResults = state.workerResults || {};
+
+        // Look for completed worker tasks (not just loading ones)
+        const hasWorkerResults =
+          (workerResults.calculateBuffLookup?.result &&
+            !workerResults.calculateBuffLookup?.loading) ||
+          (workerResults.calculateDamageOverTimeData?.result &&
+            !workerResults.calculateDamageOverTimeData?.loading) ||
+          (workerResults.calculatePenetrationData?.result &&
+            !workerResults.calculatePenetrationData?.loading);
+
+        return hasWorkerResults;
+      },
+      { timeout: 60000 },
+    ); // Extended timeout for worker computations
+
     console.log('✅ Worker results detected in Redux store');
-    
   } catch {
     console.log('⚠️ Worker results timeout - checking for basic content instead...');
-    
+
     // Fallback: wait for basic content to be loaded
     try {
-      await page.waitForFunction(() => {
-        // Check if there are any loading spinners or loading text visible
-        const loadingIndicators = document.querySelectorAll('[data-testid*="loading"], .loading, .spinner, [aria-label*="loading" i], .MuiCircularProgress-root');
-        const loadingText = document.body.innerText.toLowerCase();
-        
-        // Return true if no loading indicators are visible and we have content
-        const hasLoadingIndicators = Array.from(loadingIndicators).some(el => {
-          const element = el as HTMLElement;
-          return element.offsetParent !== null; // Check if visible
-        });
-        
-        const hasLoadingText = loadingText.includes('loading') && !loadingText.includes('data loaded');
-        
-        // Also check if we have actual content (not just empty containers)
-        const hasContent = document.querySelectorAll('[role="main"] > *, .panel, .card, .chart, [data-testid*="content"], [data-testid*="player-card"]').length > 0;
-        
-        return !hasLoadingIndicators && !hasLoadingText && hasContent;
-      }, { timeout: 30000 });
+      await page.waitForFunction(
+        () => {
+          // Check if there are any loading spinners or loading text visible
+          const loadingIndicators = document.querySelectorAll(
+            '[data-testid*="loading"], .loading, .spinner, [aria-label*="loading" i], .MuiCircularProgress-root',
+          );
+          const loadingText = document.body.innerText.toLowerCase();
+
+          // Return true if no loading indicators are visible and we have content
+          const hasLoadingIndicators = Array.from(loadingIndicators).some((el) => {
+            const element = el as HTMLElement;
+            return element.offsetParent !== null; // Check if visible
+          });
+
+          const hasLoadingText =
+            loadingText.includes('loading') && !loadingText.includes('data loaded');
+
+          // Also check if we have actual content (not just empty containers)
+          const hasContent =
+            document.querySelectorAll(
+              '[role="main"] > *, .panel, .card, .chart, [data-testid*="content"], [data-testid*="player-card"]',
+            ).length > 0;
+
+          return !hasLoadingIndicators && !hasLoadingText && hasContent;
+        },
+        { timeout: 30000 },
+      );
     } catch {
       console.log('⚠️ Fallback content loading timeout, proceeding with screenshot...');
     }
   }
-  
+
   // Brief final stabilization for animations and any remaining renders
   await page.waitForTimeout(process.env.CI ? 2000 : 3000);
 }
@@ -279,10 +339,10 @@ test.describe('Visual Regression - Core Panels', () => {
   // Cache warming for entire test suite
   test.beforeAll(async ({ browser }) => {
     console.log('🔥 Warming cache for visual regression test suite...');
-    
+
     const context = await browser.newContext();
     const page = await context.newPage();
-    
+
     try {
       await warmCacheForVisualTestSuite(page, {
         reportCode: TEST_REPORT_CODE,
@@ -290,9 +350,8 @@ test.describe('Visual Regression - Core Panels', () => {
         tabs: ['overview', 'players', 'insights'],
         aggressiveWarmup: true,
       });
-      
+
       console.log('✅ Cache warmed successfully - visual regression tests should be fast now');
-      
     } catch (error) {
       console.warn('⚠️ Cache warming failed:', error);
     } finally {
@@ -306,7 +365,7 @@ test.describe('Visual Regression - Core Panels', () => {
 
   test('players panel visual regression', async ({ page }) => {
     console.log('📸 Testing players panel visual regression with preloaded data...');
-    
+
     // Navigate to players panel using preloaded data
     const url = `/report/${TEST_REPORT_CODE}/fight/${TEST_FIGHT_ID}`;
     await navigateWithPreloadedData(page, url, { verifyInstantLoad: true });
@@ -328,13 +387,13 @@ test.describe('Visual Regression - Core Panels', () => {
       const testInfo = test.info();
       const deviceName = testInfo.project.name || 'Unknown Device';
       const viewport = page.viewportSize();
-      
+
       // Capture screenshot for attachment (reuse the same screenshot if possible)
-      const screenshot = await page.screenshot({ 
-        fullPage: true, 
+      const screenshot = await page.screenshot({
+        fullPage: true,
         animations: 'disabled',
       });
-      
+
       // Attach screenshot with descriptive name
       await testInfo.attach(`players-panel-${deviceName.replace(/\s+/g, '-')}.png`, {
         body: screenshot,
@@ -363,23 +422,29 @@ test.describe('Visual Regression - Core Panels', () => {
         },
         environment: {
           testMode: process.env.PLAYWRIGHT_FAST_MODE ? 'fast' : 'full',
-          deviceCategory: deviceName.toLowerCase().includes('mobile') ? 'mobile' : 
-                        deviceName.toLowerCase().includes('tablet') ? 'tablet' : 'desktop',
+          deviceCategory: deviceName.toLowerCase().includes('mobile')
+            ? 'mobile'
+            : deviceName.toLowerCase().includes('tablet')
+              ? 'tablet'
+              : 'desktop',
         },
       };
-      
+
       await testInfo.attach(`players-metadata-${deviceName.replace(/\s+/g, '-')}.json`, {
         body: Buffer.from(JSON.stringify(metadata, null, 2)),
         contentType: 'application/json',
       });
     } catch (error) {
-      console.warn('⚠️ Failed to attach screenshot or metadata:', error instanceof Error ? error.message : String(error));
+      console.warn(
+        '⚠️ Failed to attach screenshot or metadata:',
+        error instanceof Error ? error.message : String(error),
+      );
     }
   });
 
   test('insights panel visual regression', async ({ page }) => {
     console.log('📊 Testing insights panel visual regression with preloaded data...');
-    
+
     // Navigate to insights panel using preloaded data
     const url = `/report/${TEST_REPORT_CODE}/fight/${TEST_FIGHT_ID}/insights`;
     await navigateWithPreloadedData(page, url, { verifyInstantLoad: true });
@@ -401,13 +466,13 @@ test.describe('Visual Regression - Core Panels', () => {
       const testInfo = test.info();
       const deviceName = testInfo.project.name || 'Unknown Device';
       const viewport = page.viewportSize();
-      
+
       // Capture screenshot for attachment (reuse the same screenshot if possible)
-      const screenshot = await page.screenshot({ 
-        fullPage: true, 
+      const screenshot = await page.screenshot({
+        fullPage: true,
         animations: 'disabled',
       });
-      
+
       // Attach screenshot with descriptive name
       await testInfo.attach(`insights-panel-${deviceName.replace(/\s+/g, '-')}.png`, {
         body: screenshot,
@@ -436,17 +501,23 @@ test.describe('Visual Regression - Core Panels', () => {
         },
         environment: {
           testMode: process.env.PLAYWRIGHT_FAST_MODE ? 'fast' : 'full',
-          deviceCategory: deviceName.toLowerCase().includes('mobile') ? 'mobile' : 
-                        deviceName.toLowerCase().includes('tablet') ? 'tablet' : 'desktop',
+          deviceCategory: deviceName.toLowerCase().includes('mobile')
+            ? 'mobile'
+            : deviceName.toLowerCase().includes('tablet')
+              ? 'tablet'
+              : 'desktop',
         },
       };
-      
+
       await testInfo.attach(`insights-metadata-${deviceName.replace(/\s+/g, '-')}.json`, {
         body: Buffer.from(JSON.stringify(metadata, null, 2)),
         contentType: 'application/json',
       });
     } catch (error) {
-      console.warn('⚠️ Failed to attach screenshot or metadata:', error instanceof Error ? error.message : String(error));
+      console.warn(
+        '⚠️ Failed to attach screenshot or metadata:',
+        error instanceof Error ? error.message : String(error),
+      );
     }
   });
 });

@@ -1,5 +1,5 @@
 ## Title: ESO Tooltip Dump
-## Author: ESO Log Aggregator
+## Author: ESO Toolkit
 ## Version: 1.1.2
 ## AddOnVersion: 112
 ## APIVersion: 101050

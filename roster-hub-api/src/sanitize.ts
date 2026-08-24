@@ -2,7 +2,7 @@
 // specifically `author_name` and the na/eu display names. They are matched RAW
 // against the URL slug / request values in lookups (e.g. getUserProfile's
 // `author_name = ? COLLATE NOCASE`), so escaping `'` → `&#x27;` (etc.) at storage
-// time breaks resolution for any ESO name containing ' < > " & (e.g. "Spike'jo"
+// time breaks resolution for any ESO name containing ' < > " & (e.g. "SamplePlayer'jo"
 // → 404 "Player not found") and also renders as literal mojibake, since React
 // already escapes on output. Escape on OUTPUT, not on store. Free-text CONTENT
 // (titles, descriptions, bios, comment bodies) is still escaped via sanitize().

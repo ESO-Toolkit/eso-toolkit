@@ -105,7 +105,7 @@ const ScribingSectionLabel: React.FC<{
     variant="caption"
     sx={{
       color,
-      fontFamily: 'Space Grotesk, Inter, system-ui',
+      fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
       fontWeight: 700,
       letterSpacing: '.04em',
       fontSize: '0.68rem',
@@ -120,7 +120,7 @@ const ScribingSectionLabel: React.FC<{
 
 /** Shared gradient text styles for the skill name */
 const nameGradientSx = (isDark: boolean): Record<string, unknown> => ({
-  fontFamily: 'Space Grotesk, Inter, system-ui',
+  fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
   fontWeight: 800,
   letterSpacing: '-.02em',
   ...(isDark
@@ -349,7 +349,7 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
               variant="outlined"
               color={badgeColor as 'info' | 'warning' | 'success' | 'default'}
               sx={(theme: Theme) => ({
-                fontFamily: 'Space Grotesk, Inter, system-ui',
+                fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                 fontWeight: 700,
                 letterSpacing: '.04em',
                 fontSize: '0.62rem',
@@ -373,7 +373,7 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
               variant="caption"
               sx={{
                 color: 'text.secondary',
-                fontFamily: 'Space Grotesk, Inter, system-ui',
+                fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                 fontWeight: 600,
                 letterSpacing: '.02em',
                 fontSize: '0.68rem',
@@ -595,7 +595,7 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
                 <Typography
                   variant="caption"
                   sx={{
-                    fontFamily: 'Space Grotesk, Inter, system-ui',
+                    fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                     color: isDark ? '#94d2ff' : 'primary.main',
                     fontWeight: 700,
                     letterSpacing: '.03em',
@@ -623,7 +623,7 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
                     variant="caption"
                     sx={{
                       color: 'warning.main',
-                      fontFamily: 'Space Grotesk, Inter, system-ui',
+                      fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                       fontWeight: 700,
                       letterSpacing: '.02em',
                       fontSize: '0.72rem',

@@ -1,4 +1,4 @@
-# ESO Log Aggregator
+# ESO Toolkit
 
 <!-- Status Badges -->
 
@@ -16,24 +16,30 @@
 
 <!-- Additional Info Badges -->
 
-[![Live Demo](https://img.shields.io/badge/Live%20Demo-Visit%20Site-blue?style=flat&logo=github)](https://esotk.com/#/)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Visit%20Site-blue?style=flat&logo=github)](https://esotk.com/)
 [![Storybook](https://img.shields.io/badge/Storybook-View%20Components-FF4785?style=flat&logo=storybook&logoColor=white)](https://eso-toolkit.github.io/eso-log-aggregator-reports/storybook/)
-[![Node Version](https://img.shields.io/badge/node-%3E%3D20.0.0-brightgreen?style=flat&logo=node.js)](package.json)
+[![Node Version](https://img.shields.io/badge/node-24%20LTS-brightgreen?style=flat&logo=node.js)](package.json)
 [![TypeScript](https://img.shields.io/badge/TypeScript-Ready-blue?style=flat&logo=typescript)](https://www.typescriptlang.org/)
 
 > **Note**: Coverage badges are automatically generated and deployed to [eso-log-aggregator-reports](https://github.com/ESO-Toolkit/eso-log-aggregator-reports) via the Coverage & Reports Workflow. They show real-time coverage from the dedicated [Coverage & Reports Workflow](https://github.com/ESO-Toolkit/eso-toolkit/actions/workflows/deploy-reports.yml). Detailed coverage reports and PR comments are available in the workflow runs.
 
-This project contains only the web application, built with React, TypeScript, GraphQL, Apollo Client, Material UI, Storybook, Jest, and Playwright.
+This repository contains the ESO Toolkit web application and supporting packages for its Discord bot, worker/API services, game-data tooling, and companion add-on. The public web app is built with React, TypeScript, GraphQL, Apollo Client, Material UI, Storybook, Jest, and Playwright.
+
+ESO Toolkit is an independent community project and is not affiliated with or endorsed by ZeniMax Online Studios or Bethesda Softworks.
 
 ## Useful Links
 
-- [Live Site](https://esotk.com/#/)
+- [Live Site](https://esotk.com/)
+- [Privacy Policy](https://esotk.com/privacy)
+- [Terms of Use](https://esotk.com/terms)
+- [Community Discord](https://discord.gg/mMjwcQYFdc)
 - [Issue Tracker](https://github.com/ESO-Toolkit/eso-toolkit/issues)
 - [Storybook](https://eso-toolkit.github.io/eso-log-aggregator-reports/storybook/)
 
 ## Getting Started
 
 ### Install Dependencies
+
 ```powershell
 npm ci
 ```
@@ -65,7 +71,7 @@ npm run build
 - **Unit Tests (Jest):**
 
   ```powershell
-  npm test
+  npm run test:ci
   ```
 
 - **Unit Tests with Coverage:**
@@ -91,6 +97,10 @@ npm run build
   ```powershell
   npm run test:screen-sizes
   ```
+
+  The maintained suite covers 14 representative viewports, with 42 reviewed
+  baselines for public login, landing, and calculator pages. Report routes use
+  privacy-safe behavior checks instead of screenshots.
 
 - **Screen Size Testing (Mobile Only):**
 
@@ -136,18 +146,18 @@ npm run build
 - ✅ API mocking (ESO Logs, Rollbar, CDN)
 - ✅ Error handling and edge cases
 - ✅ Cross-browser compatibility
-- ✅ **Screen size validation (22+ devices)**
+- ✅ **Screen size validation (14 maintained viewports)**
 - ✅ **Visual regression testing**
 - ✅ **Responsive design validation**
 
 **Screen Size Testing:**
 
-- **Device Coverage**: Mobile, tablet, desktop, ultrawide displays
+- **Device Coverage**: 14 maintained mobile, tablet, desktop, and ultrawide viewports
 - **Visual Regression**: Automatic screenshot comparison across screen sizes
 - **Performance Testing**: Load time validation per viewport
 - **Accessibility**: Touch target and readability validation
 - **GitHub Integration**: On-demand testing via GitHub Actions
-- **Live Reports**: View results at `https://[username].github.io/[repo]/screen-size-reports/`
+- **Live Reports**: View results at `https://eso-toolkit.github.io/eso-log-aggregator-reports/screen-size-tests/<branch>/<run-number>/`
 
 **Offline Testing System:**
 
@@ -169,8 +179,6 @@ For offline testing, see [documentation/testing/OFFLINE_TESTING.md](documentatio
 - **Multi-Environment Support**: Development, CI/CD, and strict mode configurations
 - **Custom Thresholds**: Different targets for utils (90%), hooks (85%), store (85%)
 
-**Coverage Badges:** ![Coverage](coverage/badges/coverage-overall.svg)
-
 For detailed coverage documentation, see [documentation/testing/COVERAGE.md](documentation/testing/COVERAGE.md).
 
 ### Linting & Formatting
@@ -190,7 +198,7 @@ npm run storybook
 
 ## Architecture
 
-The ESO Log Aggregator uses a sophisticated architecture to achieve high-performance 3D visualization of combat encounters. The Fight Replay system renders 50+ actors at stable 60fps through advanced optimization patterns.
+ESO Toolkit uses a sophisticated architecture to achieve high-performance 3D visualization of combat encounters. The Fight Replay system renders 50+ actors at stable 60fps through advanced optimization patterns.
 
 ### System Overview
 
@@ -226,7 +234,7 @@ For detailed architecture documentation, see:
 1. **Install Dependencies**: `npm ci`
 2. **Generate GraphQL Types**: `npm run codegen`
 3. **Start Development**: `npm run dev`
-4. **Run Tests**: `npm test`
+4. **Run Tests**: `npm run test:ci`
 5. **Review Architecture**: Read [System Architecture](documentation/architecture/system-architecture.md)
 
 ### Performance Metrics
@@ -279,19 +287,24 @@ The `sample-data/` folder is automatically ignored by Git to prevent accidental 
 
 ## Troubleshooting
 
-- If you see module resolution errors, try deleting `node_modules` and `package-lock.json`, then run `npm ci`.
+- If you see module resolution errors, remove `node_modules` and run `npm ci`. Keep `package-lock.json` intact so installs remain reproducible.
 - Ensure all required dependencies are installed.
 - For GraphQL errors, re-run `npm run codegen`.
 
 ## License
 
-This project is licensed under the [Business Source License 1.1 (BUSL-1.1)](LICENSE).
+This project is source-available under the repository-specific license in [LICENSE](LICENSE). That
+file labels itself “Business Source License 1.1” and uses BSL-style parameters, but its text is
+project-specific; this repository does not assert an exact SPDX `BUSL-1.1` match or an OSI-approved
+open-source license.
 
 - **Non-production / non-commercial use** is permitted.
-- **Production and commercial use** requires a separate agreement with the [ESOTK team](https://github.com/ESO-Toolkit).
-- Each portion of the code **automatically converts to [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0)** four years after it is first publicly released.
+- Uses outside the stated Additional Use Grant are not granted by the `LICENSE`; obtain permission
+  from the licensor identified there before relying on any additional use.
+- The `LICENSE` specifies a four-year Change Date and [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0)
+  as its Change License. Read the `LICENSE` for the controlling wording and parameters.
 
-See the [LICENSE](LICENSE) file for full terms. If you have questions about permitted use, open a [discussion](https://github.com/ESO-Toolkit/eso-toolkit/discussions) or contact the maintainers.
+See the [LICENSE](LICENSE) file for full terms. The project-specific licensor, parameters, and attribution require owner confirmation; do not infer additional rights from the source repository. If you have questions about permitted use, open a [discussion](https://github.com/ESO-Toolkit/eso-toolkit/discussions).
 
 ---
 

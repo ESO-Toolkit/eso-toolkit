@@ -227,7 +227,7 @@ const SkillOptionRow: React.FC<SkillOptionRowProps> = ({
               sx={{
                 fontSize: 12.5,
                 fontWeight: 600,
-                fontFamily: 'Space Grotesk, Inter, system-ui',
+                fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                 lineHeight: 1.3,
                 whiteSpace: 'nowrap',
                 overflow: 'hidden',
@@ -243,7 +243,7 @@ const SkillOptionRow: React.FC<SkillOptionRowProps> = ({
                 fontSize: 8.5,
                 fontWeight: 700,
                 letterSpacing: 0.6,
-                fontFamily: 'Space Grotesk, Inter, system-ui',
+                fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                 color: badgeColor,
                 border: `1px solid ${alpha(badgeColor, 0.4)}`,
                 borderRadius: '4px',
@@ -266,7 +266,7 @@ const SkillOptionRow: React.FC<SkillOptionRowProps> = ({
                     fontSize: 8.5,
                     fontWeight: 700,
                     letterSpacing: 0.5,
-                    fontFamily: 'Space Grotesk, Inter, system-ui',
+                    fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                   }}
                 >
                   SLOTTED
@@ -334,7 +334,7 @@ const SkillOptionRow: React.FC<SkillOptionRowProps> = ({
                 sx={{
                   fontSize: 13,
                   fontWeight: 700,
-                  fontFamily: 'Space Grotesk, Inter, system-ui',
+                  fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                 }}
               >
                 {skill.name}
@@ -345,7 +345,7 @@ const SkillOptionRow: React.FC<SkillOptionRowProps> = ({
                   fontSize: 8.5,
                   fontWeight: 700,
                   letterSpacing: 0.6,
-                  fontFamily: 'Space Grotesk, Inter, system-ui',
+                  fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                   color: badgeColor,
                   border: `1px solid ${alpha(badgeColor, 0.4)}`,
                   borderRadius: '4px',
@@ -362,7 +362,7 @@ const SkillOptionRow: React.FC<SkillOptionRowProps> = ({
                   fontSize: 10,
                   color: muted,
                   mb: 0.5,
-                  fontFamily: 'Space Grotesk, Inter, system-ui',
+                  fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                 }}
               >
                 {skill.category}
@@ -437,7 +437,7 @@ const SkillLineSection: React.FC<SkillLineSectionProps> = ({
           sx={{
             fontSize: 12,
             fontWeight: 600,
-            fontFamily: 'Space Grotesk, Inter, system-ui',
+            fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
             color: isDark ? 'rgba(255,255,255,0.80)' : 'rgba(0,0,0,0.75)',
           }}
         >
@@ -448,7 +448,7 @@ const SkillLineSection: React.FC<SkillLineSectionProps> = ({
             sx={{
               fontSize: 10,
               color: isDark ? 'rgba(255,255,255,0.30)' : 'rgba(0,0,0,0.30)',
-              fontFamily: 'Space Grotesk',
+              fontFamily: 'Space Grotesk Variable',
             }}
           >
             {groups.length}
@@ -643,7 +643,7 @@ const SkillPickerDialog: React.FC<SkillPickerDialogProps> = ({
                   borderRadius: 1.5,
                   fontSize: 11,
                   fontWeight: activeTab === idx ? 700 : 500,
-                  fontFamily: 'Space Grotesk, Inter, system-ui',
+                  fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                   letterSpacing: 0.3,
                   flexShrink: 0,
                   color:
@@ -698,7 +698,7 @@ const SkillPickerDialog: React.FC<SkillPickerDialogProps> = ({
                       borderRadius: 1.5,
                       fontSize: 11,
                       fontWeight: myBuildOnly ? 700 : 500,
-                      fontFamily: 'Space Grotesk, Inter, system-ui',
+                      fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                       letterSpacing: 0.3,
                       flexShrink: 0,
                       display: 'flex',
@@ -754,7 +754,7 @@ const SkillPickerDialog: React.FC<SkillPickerDialogProps> = ({
                         sx={{
                           fontSize: 9,
                           fontWeight: 700,
-                          fontFamily: 'Space Grotesk, Inter, system-ui',
+                          fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                           letterSpacing: 1,
                           textTransform: 'uppercase',
                           color: clsColor,
@@ -854,7 +854,7 @@ const SkillSlotTile: React.FC<SkillSlotTileProps> = ({
           fontSize: '0.58rem',
           fontWeight: 700,
           letterSpacing: isUlt ? 0.8 : 0.5,
-          fontFamily: 'Space Grotesk, Inter, system-ui',
+          fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
           color: isUlt
             ? isDark
               ? 'rgba(255,179,0,0.55)'
@@ -959,7 +959,7 @@ const SkillSlotTile: React.FC<SkillSlotTileProps> = ({
                 sx={{
                   fontSize: isUlt ? 16 : 13,
                   fontWeight: 800,
-                  fontFamily: 'Space Grotesk, Inter, system-ui',
+                  fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                   letterSpacing: 0.4,
                   color:
                     skill && iconFailed
@@ -1023,7 +1023,7 @@ const SkillSlotTile: React.FC<SkillSlotTileProps> = ({
           sx={{
             fontSize: '0.65rem',
             fontWeight: 600,
-            fontFamily: 'Space Grotesk, Inter, system-ui',
+            fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
             color: isDark ? 'rgba(255,255,255,0.50)' : 'rgba(0,0,0,0.45)',
             lineHeight: 1.15,
             textAlign: 'center',
@@ -1070,7 +1070,7 @@ const SkillBarRow: React.FC<SkillBarProps> = ({ label, bar, onOpenPicker, onRemo
             letterSpacing: 1.2,
             textTransform: 'uppercase',
             fontSize: '0.65rem',
-            fontFamily: 'Space Grotesk, Inter, system-ui',
+            fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
             background: isDark
               ? 'linear-gradient(135deg, #f1f5f9 0%, #94a3b8 100%)'
               : 'linear-gradient(135deg, #0f172a 0%, #475569 100%)',
@@ -1096,7 +1096,7 @@ const SkillBarRow: React.FC<SkillBarProps> = ({ label, bar, onOpenPicker, onRemo
               color: 'text.secondary',
               fontSize: '0.62rem',
               fontWeight: 600,
-              fontFamily: 'Space Grotesk',
+              fontFamily: 'Space Grotesk Variable',
             }}
           >
             {filled} / 6
@@ -1266,7 +1266,7 @@ export const SkillBarPicker: React.FC<SkillBarPickerProps> = ({
                   fontWeight: 700,
                   letterSpacing: 1.5,
                   textTransform: 'uppercase',
-                  fontFamily: 'Space Grotesk, Inter, system-ui',
+                  fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                   color: isDark ? 'rgba(255,255,255,0.50)' : 'rgba(0,0,0,0.42)',
                 }}
               >
@@ -1338,7 +1338,11 @@ export const SkillBarPicker: React.FC<SkillBarPickerProps> = ({
       >
         <MenuItem
           onClick={() => handleCopyBar(0, 1)}
-          sx={{ fontFamily: 'Space Grotesk, Inter, system-ui', fontSize: 13, py: 0.75 }}
+          sx={{
+            fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
+            fontSize: 13,
+            py: 0.75,
+          }}
         >
           <ListItemIcon sx={{ minWidth: 30, color: 'var(--be-accent, #38bdf8)' }}>
             <CopyBarIcon sx={{ fontSize: 14 }} />
@@ -1350,7 +1354,11 @@ export const SkillBarPicker: React.FC<SkillBarPickerProps> = ({
         </MenuItem>
         <MenuItem
           onClick={() => handleCopyBar(1, 0)}
-          sx={{ fontFamily: 'Space Grotesk, Inter, system-ui', fontSize: 13, py: 0.75 }}
+          sx={{
+            fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
+            fontSize: 13,
+            py: 0.75,
+          }}
         >
           <ListItemIcon sx={{ minWidth: 30, color: 'var(--be-accent, #38bdf8)' }}>
             <CopyBarIcon sx={{ fontSize: 14 }} />

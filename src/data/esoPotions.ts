@@ -11,12 +11,7 @@
  */
 
 export type PotionCategory =
-  | 'Damage (Magicka)'
-  | 'Damage (Stamina)'
-  | 'Sustain'
-  | 'Defensive'
-  | 'Utility'
-  | 'Ultimate';
+  'Damage (Magicka)' | 'Damage (Stamina)' | 'Sustain' | 'Defensive' | 'Utility' | 'Ultimate';
 
 export interface EsoPotion {
   readonly id: number;

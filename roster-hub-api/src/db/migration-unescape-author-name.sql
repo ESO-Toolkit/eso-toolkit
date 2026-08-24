@@ -1,7 +1,7 @@
 -- Backfill: un-HTML-escape stored author_name values.
 --
 -- Until this change, every write path stored `author_name` as escapeHtml(user.name)
--- (e.g. "Spike'jo" → "Spike&#x27;jo"). But author_name is an IDENTITY / lookup key:
+-- (e.g. "SamplePlayer'jo" → "SamplePlayer&#x27;jo"). But author_name is an IDENTITY / lookup key:
 -- getUserProfile matches it raw against the URL slug (`author_name = ? COLLATE NOCASE`).
 -- Escaping it on store therefore broke profile resolution for any ESO name containing
 -- ' < > " & — the profile 404'd with "Player not found" — and rendered as mojibake.

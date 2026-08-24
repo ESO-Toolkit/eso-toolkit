@@ -1,4 +1,4 @@
-# ESO Log Aggregator - Documentation Index
+# ESO Toolkit - Documentation Index
 
 ---
 
@@ -12,7 +12,7 @@
 npm ci              # Install dependencies
 npm run codegen     # Generate GraphQL types
 npm run dev         # Start development server
-npm test            # Run tests
+npm run test:ci     # Run all unit tests once
 npm run validate    # Pre-commit checks
 ```
 
@@ -86,7 +86,6 @@ Infrastructure and configuration — [setup/](./setup/)
 | [GitHub Actions](./setup/GITHUB_ACTION_SETUP.md)              | CI/CD pipeline setup                      |
 | [Jira Sync](./setup/JIRA_SYNC_QUICKSTART.md)                  | Jira-branch status sync                   |
 | [Coverage Badges](./setup/COVERAGE_BADGES_SETUP.md)           | Badge configuration                       |
-| [Documentation Skill](./setup/DOCUMENTATION_SKILL_SETUP.md)   | MCP doc management                        |
 | [Mobile HTTPS Dev Server](./setup/MOBILE_HTTPS_QUICKSTART.md) | Test on phone over LAN with HTTPS + OAuth |
 
 ### AI Agent Guides

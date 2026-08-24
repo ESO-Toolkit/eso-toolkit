@@ -570,7 +570,7 @@ export const BuildCompletionHeader: React.FC = () => {
               border: 'none',
               outline: 'none',
               background: 'transparent',
-              fontFamily: 'Space Grotesk, Inter, system-ui',
+              fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
               fontWeight: 700,
               fontSize: isMobile ? 16 : 19,
               letterSpacing: '-0.3px',
@@ -594,7 +594,7 @@ export const BuildCompletionHeader: React.FC = () => {
                 border: 'none',
                 outline: 'none',
                 background: 'transparent',
-                fontFamily: 'Space Grotesk, Inter, system-ui',
+                fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                 fontWeight: 400,
                 fontSize: 12,
                 color: isDark ? 'rgba(255,255,255,0.40)' : 'rgba(0,0,0,0.40)',
@@ -633,7 +633,7 @@ export const BuildCompletionHeader: React.FC = () => {
               alignItems: 'center',
               px: 1.5,
               height: '100%',
-              fontFamily: 'Space Grotesk, Inter, system-ui',
+              fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
               fontSize: { xs: 11, md: 12 },
               fontWeight: 700,
               letterSpacing: '0.08em',
@@ -654,7 +654,7 @@ export const BuildCompletionHeader: React.FC = () => {
               height: '100%',
               position: 'relative',
               minWidth: 42,
-              fontFamily: 'Space Grotesk, Inter, system-ui',
+              fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
               fontSize: 12,
               fontWeight: 700,
               fontVariantNumeric: 'tabular-nums',
@@ -1254,7 +1254,7 @@ export const BuildCompletionHeader: React.FC = () => {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              fontFamily: 'Space Grotesk, Inter, system-ui',
+              fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
               fontWeight: 700,
               fontSize: 16,
               pb: 0.5,
@@ -1281,7 +1281,7 @@ export const BuildCompletionHeader: React.FC = () => {
                 '& .MuiToggleButton-root': {
                   textTransform: 'none',
                   fontSize: 12,
-                  fontFamily: 'Space Grotesk, Inter, system-ui',
+                  fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                   fontWeight: 600,
                   px: 1.5,
                   py: 0.5,
@@ -1309,7 +1309,7 @@ export const BuildCompletionHeader: React.FC = () => {
                     display: 'block',
                     mb: 2,
                     fontSize: 12,
-                    fontFamily: 'Space Grotesk, Inter, system-ui',
+                    fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                   }}
                 >
                   Paste a <strong>Caro&apos;s Skill Point Saver</strong> export code or
@@ -1344,7 +1344,7 @@ export const BuildCompletionHeader: React.FC = () => {
                         py: 0.25,
                         fontSize: 11,
                         borderRadius: 2,
-                        fontFamily: 'Space Grotesk, Inter, system-ui',
+                        fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                       }}
                     >
                       {importError}
@@ -1360,7 +1360,7 @@ export const BuildCompletionHeader: React.FC = () => {
                           mb: 1,
                           fontSize: 11,
                           fontWeight: 600,
-                          fontFamily: 'Space Grotesk, Inter, system-ui',
+                          fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                           color: 'text.secondary',
                         }}
                       >
@@ -1378,7 +1378,7 @@ export const BuildCompletionHeader: React.FC = () => {
                             sx={{
                               textTransform: 'none',
                               justifyContent: 'flex-start',
-                              fontFamily: 'Space Grotesk, Inter, system-ui',
+                              fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                               fontSize: 12,
                               borderRadius: 2,
                               ...(idx === selectedCharIndex
@@ -1477,7 +1477,7 @@ export const BuildCompletionHeader: React.FC = () => {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              fontFamily: 'Space Grotesk, Inter, system-ui',
+              fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
               fontWeight: 700,
               fontSize: 16,
               pb: 0.5,
@@ -1501,7 +1501,7 @@ export const BuildCompletionHeader: React.FC = () => {
                 display: 'block',
                 mb: 2,
                 fontSize: 12,
-                fontFamily: 'Space Grotesk, Inter, system-ui',
+                fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
               }}
             >
               Copy the encoded build string below or download it as a file. This data includes your
@@ -1572,7 +1572,7 @@ export const BuildCompletionHeader: React.FC = () => {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              fontFamily: 'Space Grotesk, Inter, system-ui',
+              fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
               fontWeight: 700,
               fontSize: 16,
               pb: 0.5,
@@ -1596,7 +1596,7 @@ export const BuildCompletionHeader: React.FC = () => {
                 display: 'block',
                 mb: 2,
                 fontSize: 12,
-                fontFamily: 'Space Grotesk, Inter, system-ui',
+                fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
               }}
             >
               Your build as a <strong>Caro&apos;s Skill Point Saver</strong> SavedVariables file.
@@ -1687,7 +1687,7 @@ export const BuildCompletionHeader: React.FC = () => {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              fontFamily: 'Space Grotesk, Inter, system-ui',
+              fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
               fontWeight: 700,
               fontSize: 16,
               pb: 0.5,
@@ -1711,7 +1711,7 @@ export const BuildCompletionHeader: React.FC = () => {
                 display: 'block',
                 mb: 2,
                 fontSize: 12,
-                fontFamily: 'Space Grotesk, Inter, system-ui',
+                fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
               }}
             >
               Share this link with anyone — no login required to view.

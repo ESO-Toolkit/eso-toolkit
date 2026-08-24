@@ -1,6 +1,6 @@
 # Buff Uptime Features
 
-This directory contains documentation for the buff uptime analysis features in the ESO Log Aggregator.
+This directory contains documentation for the buff uptime analysis features in ESO Toolkit.
 
 ## Features
 
@@ -9,11 +9,13 @@ This directory contains documentation for the buff uptime analysis features in t
 Show how individual players compare to the group average buff uptime with visual indicators.
 
 **Quick Links**:
+
 - [Quick Start Guide](./QUICK_START.md) - Get started in 5 minutes
 - [Technical Documentation](./BUFF_UPTIME_DELTA_DISPLAY.md) - Complete implementation details
 - [Implementation Summary](./IMPLEMENTATION_SUMMARY.md) - What was built and why
 
 **Visual Example**:
+
 ```
 Major Savagery  [████░░░░░░░░] 23% ↓ -8%   (Below average)
 Minor Savagery  [███████████] 99% ↑ +1%   (Above average)
@@ -22,11 +24,11 @@ Major Courage   [█████████░░] 84%         (At average)
 
 ## Documentation Index
 
-| Document | Purpose | Audience |
-|----------|---------|----------|
-| [QUICK_START.md](./QUICK_START.md) | Usage examples and integration | Developers |
-| [BUFF_UPTIME_DELTA_DISPLAY.md](./BUFF_UPTIME_DELTA_DISPLAY.md) | Technical specifications | Developers/Architects |
-| [IMPLEMENTATION_SUMMARY.md](./IMPLEMENTATION_SUMMARY.md) | What changed and why | Team/Stakeholders |
+| Document                                                       | Purpose                        | Audience              |
+| -------------------------------------------------------------- | ------------------------------ | --------------------- |
+| [QUICK_START.md](./QUICK_START.md)                             | Usage examples and integration | Developers            |
+| [BUFF_UPTIME_DELTA_DISPLAY.md](./BUFF_UPTIME_DELTA_DISPLAY.md) | Technical specifications       | Developers/Architects |
+| [IMPLEMENTATION_SUMMARY.md](./IMPLEMENTATION_SUMMARY.md)       | What changed and why           | Team/Stakeholders     |
 
 ## Feature Components
 
@@ -66,6 +68,7 @@ npm run storybook
 Navigate to: **Features > BuffUptimes > BuffUptimeProgressBar**
 
 **Available Stories**:
+
 - Group Average (no delta)
 - Above Average (positive delta)
 - Below Average (negative delta)
@@ -116,8 +119,8 @@ import { BuffUptimesPanel } from '@/features/report_details/insights/BuffUptimes
 ### Display Individual Player with Deltas
 
 ```typescript
-<BuffUptimesPanel 
-  fight={fight} 
+<BuffUptimesPanel
+  fight={fight}
   selectedPlayerId={12345}
 />
 ```
@@ -173,7 +176,7 @@ Buff uptimes are calculated as the **average of individual player uptimes**, not
 
 This means a self-buff like Major Savagery that only one player has will show as `(100% + 0% + 0% + … ) / N` rather than 100%. This is intentional — it reflects **group-wide coverage** rather than individual uptime.
 
-**Why this approach?** In a trial setting, what matters is not whether *someone* has a buff, but how well the group as a whole maintains it. A buff showing 30% across the group tells the raid leader that coverage needs improvement, even if the one player who provides it has 100% personal uptime.
+**Why this approach?** In a trial setting, what matters is not whether _someone_ has a buff, but how well the group as a whole maintains it. A buff showing 30% across the group tells the raid leader that coverage needs improvement, even if the one player who provides it has 100% personal uptime.
 
 ### Debuff Uptimes — Target-Averaged
 
@@ -213,11 +216,13 @@ When enabled, each player's uptime denominator changes from the full fight durat
 ## Future Enhancements
 
 ### Planned
+
 1. Player selector UI in main view
 2. Tooltip with exact group average value
 3. Role-based average comparison (DPS vs Support)
 
 ### Proposed
+
 4. Historical trending (compare to past pulls)
 5. Real-time alerts for significant drops
 6. AI-powered buff optimization suggestions
@@ -238,11 +243,12 @@ When enhancing buff uptime features:
 
 - [AI Agent Guidelines](../../ai-agents/AI_AGENT_GUIDELINES.md)
 - [Feature Documentation Index](../../INDEX.md)
-- [Testing Guide](../../testing/TESTING.md)
+- [Testing Guide](../../testing/SMOKE_TESTS.md)
 
 ## Changelog
 
 ### January 18, 2026
+
 - ✅ Initial implementation of delta display
 - ✅ Added `computeBuffUptimesWithGroupAverage()` utility
 - ✅ Enhanced `BuffUptimeProgressBar` with delta indicator
@@ -252,11 +258,12 @@ When enhancing buff uptime features:
 
 ## License
 
-Part of ESO Log Aggregator project. See root LICENSE file.
+Part of the ESO Toolkit project. See the root LICENSE file.
 
 ## Support
 
 For questions or issues:
+
 1. Check [QUICK_START.md](./QUICK_START.md) for common scenarios
 2. Review [BUFF_UPTIME_DELTA_DISPLAY.md](./BUFF_UPTIME_DELTA_DISPLAY.md) for technical details
 3. Open an issue on GitHub with the `buff-uptimes` label

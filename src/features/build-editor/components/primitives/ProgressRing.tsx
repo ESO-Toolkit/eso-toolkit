@@ -122,7 +122,7 @@ export const ProgressRing = React.memo<ProgressRingProps>(function ProgressRing(
             lineHeight: 1,
             color: 'text.primary',
             fontVariantNumeric: 'tabular-nums',
-            fontFamily: 'Space Grotesk, Inter, system-ui',
+            fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
             display: 'flex',
             alignItems: 'baseline',
           }}

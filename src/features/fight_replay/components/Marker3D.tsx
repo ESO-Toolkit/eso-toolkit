@@ -2,7 +2,7 @@
  * 3D Marker component for rendering map markers in the fight replay
  * Supports both M0R and Elms marker formats
  */
-import { Billboard } from '@react-three/drei';
+import { Billboard } from '@react-three/drei/core/Billboard.js';
 import { ThreeEvent, useThree } from '@react-three/fiber';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';

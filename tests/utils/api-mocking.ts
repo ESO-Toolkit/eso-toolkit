@@ -37,14 +37,21 @@ function loadPlayerData(reportCode: string) {
  */
 function loadEventData(reportCode: string, fightId: string, eventType: string) {
   const cacheKey = `${reportCode}-${fightId}-${eventType}`;
-  
+
   // Return cached data if available
   if (eventDataCache.has(cacheKey)) {
     return eventDataCache.get(cacheKey);
   }
-  
+
   try {
-    const dataPath = path.join(process.cwd(), 'data-downloads', reportCode, `fight-${fightId}`, 'events', `${eventType}.json`);
+    const dataPath = path.join(
+      process.cwd(),
+      'data-downloads',
+      reportCode,
+      `fight-${fightId}`,
+      'events',
+      `${eventType}.json`,
+    );
     if (fs.existsSync(dataPath)) {
       const data = fs.readFileSync(dataPath, 'utf8');
       const parsed = JSON.parse(data);
@@ -63,7 +70,13 @@ function loadEventData(reportCode: string, fightId: string, eventType: string) {
  */
 function _loadFightInfo(reportCode: string, fightId: string) {
   try {
-    const dataPath = path.join(process.cwd(), 'data-downloads', reportCode, `fight-${fightId}`, 'fight-info.json');
+    const dataPath = path.join(
+      process.cwd(),
+      'data-downloads',
+      reportCode,
+      `fight-${fightId}`,
+      'fight-info.json',
+    );
     if (fs.existsSync(dataPath)) {
       const data = fs.readFileSync(dataPath, 'utf8');
       return JSON.parse(data);
@@ -94,10 +107,10 @@ async function handleEsoLogsRequest(route: any) {
   const request = route.request();
   const url = new URL(request.url());
   const method = request.method();
-  
+
   let operationName = url.searchParams.get('operationName') ?? '';
   let variables: Record<string, unknown> = {};
-  
+
   if (method === 'POST') {
     try {
       const requestBody = await request.postDataJSON();
@@ -116,20 +129,30 @@ async function handleEsoLogsRequest(route: any) {
       }
     }
   }
-  
+
   if (operationName.includes('getCurrentUser')) {
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
       body: JSON.stringify({
-        data: { userData: { currentUser: { id: 12345, name: 'TestUser', naDisplayName: '@TestUser', euDisplayName: '@TestUser' } } },
+        data: {
+          userData: {
+            currentUser: {
+              id: 12345,
+              name: 'TestUser',
+              naDisplayName: '@TestUser',
+              euDisplayName: '@TestUser',
+            },
+          },
+        },
       }),
     });
     return;
   }
-  
+
   if (operationName.includes('getReportByCode')) {
-    const reportCode = (variables as any)?.code || '7zj1ma8kD9xn4cTq';
+    const reportCode =
+      (variables as any)?.code || process.env.ESO_LOG_FIXTURE_REPORT_ID || 'F4f2bMwWtgVKxjB9';
     const realData = loadReportData(reportCode);
     if (realData) {
       // The file has { reportData: ... }, wrap it in { data: { reportData: ... } }
@@ -142,9 +165,10 @@ async function handleEsoLogsRequest(route: any) {
       return;
     }
   }
-  
+
   if (operationName.includes('getPlayersForReport')) {
-    const reportCode = (variables as any)?.code || '7zj1ma8kD9xn4cTq';
+    const reportCode =
+      (variables as any)?.code || process.env.ESO_LOG_FIXTURE_REPORT_ID || 'F4f2bMwWtgVKxjB9';
     const realData = loadPlayerData(reportCode);
     if (realData) {
       // Wrap if needed
@@ -157,10 +181,14 @@ async function handleEsoLogsRequest(route: any) {
       return;
     }
   }
-  
+
   // Handle getReportMasterData - returns report metadata
   if (operationName.includes('getReportMasterData')) {
-    const reportCode = (variables as any)?.reportCode || (variables as any)?.code || '3gjVGWB2dxCL8XAw';
+    const reportCode =
+      (variables as any)?.reportCode ||
+      (variables as any)?.code ||
+      process.env.ESO_LOG_FIXTURE_REPORT_ID ||
+      'F4f2bMwWtgVKxjB9';
     const realData = loadReportData(reportCode);
     if (realData) {
       const payload = realData.data ? realData : { data: realData };
@@ -172,28 +200,35 @@ async function handleEsoLogsRequest(route: any) {
       return;
     }
   }
-  
+
   // Handle all event type queries
   const eventTypeMap: Record<string, string> = {
-    'getBuffEvents': 'buff-events-friendlies',
-    'getDebuffEvents': 'debuff-events-friendlies',
-    'getCastEvents': 'cast-events',
-    'getDamageEvents': 'damage-events',
-    'getHealingEvents': 'healing-events',
-    'getResourceEvents': 'resource-events',
-    'getDeathEvents': 'death-events',
-    'getCombatantInfoEvents': 'combatant-info-events',
+    getBuffEvents: 'buff-events-friendlies',
+    getDebuffEvents: 'debuff-events-friendlies',
+    getCastEvents: 'cast-events',
+    getDamageEvents: 'damage-events',
+    getHealingEvents: 'healing-events',
+    getResourceEvents: 'resource-events',
+    getDeathEvents: 'death-events',
+    getCombatantInfoEvents: 'combatant-info-events',
   };
-  
+
   for (const [queryName, eventType] of Object.entries(eventTypeMap)) {
     if (operationName.includes(queryName)) {
-      const reportCode = (variables as any)?.reportCode || (variables as any)?.code || '3gjVGWB2dxCL8XAw';
+      const reportCode =
+        (variables as any)?.reportCode ||
+        (variables as any)?.code ||
+        process.env.ESO_LOG_FIXTURE_REPORT_ID ||
+        'F4f2bMwWtgVKxjB9';
       const fightIDs = (variables as any)?.fightIDs || [32];
       const fightId = fightIDs[0]?.toString() || '32';
-      
+
       // Check if this is a filtered request (has sourceID, targetID, or abilityID)
-      const hasFilters = (variables as any)?.sourceID || (variables as any)?.targetID || (variables as any)?.abilityID;
-      
+      const hasFilters =
+        (variables as any)?.sourceID ||
+        (variables as any)?.targetID ||
+        (variables as any)?.abilityID;
+
       // Only load real data for unfiltered requests to avoid memory issues
       // Filtered requests return empty data since we don't implement server-side filtering
       if (hasFilters) {
@@ -216,10 +251,10 @@ async function handleEsoLogsRequest(route: any) {
         });
         return;
       }
-      
+
       // For unfiltered requests, return real data
       const realData = loadEventData(reportCode, fightId, eventType);
-      
+
       if (realData) {
         const payload = realData.data ? realData : { data: realData };
         await route.fulfill({
@@ -231,9 +266,9 @@ async function handleEsoLogsRequest(route: any) {
       }
     }
   }
-  
+
   // Fallback for unhandled operations
-  
+
   await route.fulfill({
     status: 200,
     contentType: 'application/json',

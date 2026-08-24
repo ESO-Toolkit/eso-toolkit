@@ -56,7 +56,7 @@ const BORROWED_BUILD_THRESHOLD_MS = 60_000;
 const SECTION_TITLE_SX = {
   fontWeight: 'bold',
   mb: 1,
-  fontFamily: 'Space Grotesk, sans-serif',
+  fontFamily: 'Space Grotesk Variable, sans-serif',
 } as const;
 
 /**

@@ -5,10 +5,10 @@
 // Populate itemIdMap synchronously with the REAL generated data — must be
 // the FIRST import (module-scope reads elsewhere depend on it).
 import '@/test/initItemData';
-
+import itemIconsData from '../../data/itemIcons.json';
 import { getCanonicalItemsBySlot, getItemsBySlot } from '../../data/itemIdMap';
 import type { GearConfig, GearPiece } from '../../types/loadout.types';
-import { deriveItemNameForSlot, preloadIconData } from '../itemIconResolver';
+import { __initIconDataFromJson, deriveItemNameForSlot } from '../itemIconResolver';
 import {
   hasKnownSlot,
   getItemSlotInfo,
@@ -21,11 +21,11 @@ const UNKNOWN_SLOT_ITEM_ID = 40259; // Shalidor's Curse gear piece lacking slot 
 const SECOND_UNKNOWN_SLOT_ITEM_ID = 43803; // Death's Wind gear piece without slot info
 
 // The weapon-type-aware canonical-key tests below rely on deriveItemNameForSlot,
-// which needs the lazily-imported icon data. Await it so weapon names resolve to
+// which needs the fetched icon data. Initialize it so weapon names resolve to
 // real types (Bow / staves) instead of the generic fallback — otherwise those
 // assertions are order-dependent on whether the JSON import has resolved.
-beforeAll(async () => {
-  await preloadIconData();
+beforeAll(() => {
+  __initIconDataFromJson(itemIconsData);
 });
 
 describe('itemSlotValidator', () => {

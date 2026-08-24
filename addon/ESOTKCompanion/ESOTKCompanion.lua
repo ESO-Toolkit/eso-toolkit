@@ -11,7 +11,7 @@
 
   Design notes
   - Read-only. We only read state and write our own SavedVariables. No input
-    automation, no combat decisions - same ToS-safe posture as CombatMetrics/Hodor.
+    automation and no combat decisions.
   - Robust to API drift. ESO bumps the API every season and renames/retires functions
     and STAT_/constants. Every capture subsystem runs inside pcall and every global
     constant is nil-guarded, so a single missing symbol degrades one field instead of
@@ -24,6 +24,7 @@
 
 local ADDON = {
   name = "ESOTKCompanion",
+  version = "0.1.0",
   schemaVersion = 1,       -- payload parse-schema (ESOTK reads this); may bump across seasons
   -- ZO_SavedVars storage version. PINNED to 1 forever and DECOUPLED from schemaVersion above:
   -- bumping the NewAccountWide version arg makes ZO_SavedVars DESTROY every stored snapshot, so
@@ -355,7 +356,7 @@ local function Snapshot(reason)
   if SV.verbose then
     local pts = snap.cp and snap.cp.total or "?"
     d("[ESOTK] snapshot saved (" .. tostring(reason) .. ") - CP " .. tostring(pts)
-      .. ", " .. tostring(#snaps) .. " stored. Upload SavedVariables/ESOTKCompanion.lua to esotk.com.")
+      .. ", " .. tostring(#snaps) .. " stored. Load SavedVariables/ESOTKCompanion.lua in ESO Toolkit when ready.")
   end
 end
 
@@ -395,7 +396,7 @@ local function OnAddOnLoaded(_, addonName)
 
   EVENT_MANAGER:RegisterForEvent(ADDON.name, EVENT_PLAYER_COMBAT_STATE, OnCombatState)
 
-  SLASH_COMMANDS["/esotk"] = function(arg)
+  SLASH_COMMANDS["/esotkcompanion"] = function(arg)
     arg = zo_strlower(arg or "")
     if arg == "off" then
       SV.enabled = false; d("[ESOTK] capture disabled.")
@@ -407,11 +408,11 @@ local function OnAddOnLoaded(_, addonName)
       SV.verbose = not SV.verbose; d("[ESOTK] verbose = " .. tostring(SV.verbose))
     else
       Snapshot("manual")
-      d("[ESOTK] snapshot taken. /esotk on|off|clear|verbose")
+      d("[ESOTK] snapshot taken. /esotkcompanion on|off|clear|verbose")
     end
   end
 
-  d("[ESOTK] Companion loaded. Capturing champion points, stats, scribing and class mastery on combat end. Type /esotk to snapshot now.")
+  d("[ESOTK] Companion loaded. Capturing champion points, stats, scribing and class mastery on combat end. Type /esotkcompanion to snapshot now.")
 end
 
 EVENT_MANAGER:RegisterForEvent(ADDON.name, EVENT_ADD_ON_LOADED, OnAddOnLoaded)

@@ -34,15 +34,21 @@ export const HelpSupportButton: React.FC = () => {
 
   const handleFeedback = (): void => {
     trackFeatureUsage('help-support', 'feedback');
-    // Open feedback form or external link
-    window.open('mailto:support@notaguild.com?subject=ESO Toolkit Feedback', '_blank');
+    window.open(
+      'https://github.com/ESO-Toolkit/eso-toolkit/discussions',
+      '_blank',
+      'noopener,noreferrer',
+    );
     handleClose();
   };
 
   const handleHelp = (): void => {
     trackFeatureUsage('help-support', 'help');
-    // Open help documentation or FAQ
-    window.open('https://docs.esologinsights.com', '_blank');
+    window.open(
+      'https://github.com/ESO-Toolkit/eso-toolkit#readme',
+      '_blank',
+      'noopener,noreferrer',
+    );
     handleClose();
   };
 

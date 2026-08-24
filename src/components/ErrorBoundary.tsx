@@ -5,7 +5,6 @@ import {
   Paper,
   Typography,
   Stack,
-  Alert,
   Collapse,
   Divider,
   Chip,
@@ -130,7 +129,11 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     });
 
     // Open issue tracker so users can file a report with the error details
-    window.open('https://github.com/ESO-Toolkit/eso-toolkit/issues', '_blank', 'noopener');
+    window.open(
+      'https://github.com/ESO-Toolkit/eso-toolkit/issues',
+      '_blank',
+      'noopener,noreferrer',
+    );
   };
 
   render(): ReactNode {
@@ -141,10 +144,12 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
       }
 
       const { error, errorInfo, showDetails, eventId } = this.state;
+      const canShowTechnicalDetails = process.env.NODE_ENV === 'development';
 
       return (
         <Box
           role="alert"
+          aria-labelledby="error-boundary-title"
           sx={{
             bgcolor: 'background.default',
             justifyContent: 'center',
@@ -154,7 +159,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
             p: 3,
           }}
         >
-          <Paper elevation={3} role="alert" sx={{ maxWidth: 600, width: '100%', p: 4 }}>
+          <Paper elevation={3} sx={{ maxWidth: 600, width: '100%', p: 4 }}>
             <Stack spacing={3} sx={{ alignItems: 'center' }}>
               <ErrorOutlined color="error" sx={{ fontSize: 64 }} />
 
@@ -168,21 +173,28 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
               </Typography>
 
               <Typography variant="body1" sx={{ color: 'text.secondary', textAlign: 'center' }}>
-                An unexpected error occurred. This has been automatically reported to our team. You
-                can try again, reload the page, or report the issue if it persists.
+                An unexpected error occurred. In production, an automatic diagnostic report may be
+                sent only if you have enabled Error Tracking in Privacy Settings. Otherwise, no
+                automatic report is sent. You can try again, reload the page, or report the issue if
+                it persists.
               </Typography>
 
-              {/* Error message — always visible so users can reference it */}
-              {error && (
-                <Alert severity="error" sx={{ width: '100%', textAlign: 'left' }}>
-                  <Typography variant="subtitle2" gutterBottom>
-                    <strong>Error:</strong>
-                  </Typography>
-                  <Typography variant="body2" sx={{ fontFamily: 'monospace', fontSize: '0.85rem' }}>
-                    {error.message || 'Unknown error'}
-                  </Typography>
-                </Alert>
-              )}
+              {/* Keep implementation details out of the public error surface. The
+                  event ID gives support a safe correlation handle without
+                  exposing URLs, stack traces, or internal messages. */}
+              <Box
+                sx={{
+                  width: '100%',
+                  p: 2,
+                  borderRadius: 1,
+                  bgcolor: 'error.main',
+                  color: 'error.contrastText',
+                }}
+              >
+                <Typography variant="body2">
+                  We couldn’t load this area. Please try again or reload the page.
+                </Typography>
+              </Box>
 
               {/* Compact error ID chip */}
               {eventId && (
@@ -196,7 +208,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
               )}
 
               {/* Technical details — stack traces in dev, error name in prod */}
-              {(error?.stack || errorInfo?.componentStack) && (
+              {canShowTechnicalDetails && (error?.stack || errorInfo?.componentStack) && (
                 <Box sx={{ width: '100%' }}>
                   <Button
                     variant="text"
@@ -289,7 +301,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
                 <Link
                   href="https://github.com/ESO-Toolkit/eso-toolkit/issues"
                   target="_blank"
-                  rel="noopener"
+                  rel="noopener noreferrer"
                 >
                   open an issue
                 </Link>{' '}

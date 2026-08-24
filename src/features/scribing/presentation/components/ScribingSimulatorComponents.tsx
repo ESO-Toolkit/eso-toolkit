@@ -470,7 +470,7 @@ export const ScriptSlotPicker: React.FC<ScriptSlotPickerProps> = ({
               sx={{
                 fontWeight: 700,
                 lineHeight: 1.1,
-                fontFamily: 'Space Grotesk, Inter, system-ui',
+                fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
               }}
             >
               {SLOT_LABELS[slot]} Script
@@ -636,25 +636,25 @@ export const ScriptSlotPicker: React.FC<ScriptSlotPickerProps> = ({
                       // Pointer-only affordance: tappable on touch (enterTouchDelay
                       // 0 so a tap reveals it immediately) and hoverable on desktop,
                       // with stopPropagation so it never selects the option. Kept
-                      // OUT of the tab order + a11y tree (tabIndex -1, aria-hidden):
+                      // OUT of the tab order + a11y tree (aria-hidden):
                       // the acquisition is already in the option's aria-label, so
-                      // keyboard/screen-reader users get it without a nested control.
+                      // keyboard/screen-reader users get it without a nested
+                      // interactive control.
                       <Tooltip
                         title={s.acquisition}
                         arrow
                         enterTouchDelay={0}
                         leaveTouchDelay={6000}
                       >
-                        <IconButton
+                        <Box
+                          component="span"
                           aria-hidden
-                          tabIndex={-1}
-                          size="small"
-                          disableRipple
+                          data-testid="script-acquisition-info"
                           onClick={(e) => e.stopPropagation()}
-                          sx={{ ml: 'auto', p: 0.5, color: 'text.disabled' }}
+                          sx={{ ml: 'auto', p: 0.5, color: 'text.disabled', lineHeight: 0 }}
                         >
                           <InfoIcon sx={{ fontSize: 16 }} />
-                        </IconButton>
+                        </Box>
                       </Tooltip>
                     )}
                   </Box>
@@ -781,7 +781,7 @@ export const ScribedSkillCard: React.FC<ScribedSkillCardProps> = ({ result }) =>
             sx={{
               fontWeight: 800,
               lineHeight: 1.15,
-              fontFamily: 'Space Grotesk, Inter, system-ui',
+              fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
             }}
             noWrap
           >

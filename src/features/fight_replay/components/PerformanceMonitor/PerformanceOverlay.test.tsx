@@ -5,6 +5,12 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import React from 'react';
 
+// PerformanceOverlay uses a tree-shakeable deep import in production. Mock the
+// browser-facing Drei wrapper so this DOM-only suite does not parse Drei ESM.
+jest.mock('@react-three/drei/web/Html.js', () => ({
+  Html: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
+}));
+
 import { PerformanceOverlay } from './PerformanceOverlay';
 
 describe('PerformanceOverlay', () => {

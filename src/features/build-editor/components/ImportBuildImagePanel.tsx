@@ -29,7 +29,7 @@ const isImage = (f: File): boolean => f.type.startsWith('image/');
 const pillSx = {
   borderRadius: '99px',
   textTransform: 'none',
-  fontFamily: 'Space Grotesk, Inter, system-ui',
+  fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
   fontWeight: 600,
   fontSize: 12,
 } as const;
@@ -118,7 +118,7 @@ export const ImportBuildImagePanel: React.FC<ImportBuildImagePanelProps> = ({ on
         sx={{
           color: 'text.secondary',
           fontSize: 12,
-          fontFamily: 'Space Grotesk, Inter, system-ui',
+          fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
         }}
       >
         Upload, drag, or paste a screenshot of a build (a guide&apos;s gear/skills panel, or your
@@ -161,7 +161,11 @@ export const ImportBuildImagePanel: React.FC<ImportBuildImagePanelProps> = ({ on
       >
         <AddImageIcon sx={{ fontSize: 28, color: 'var(--be-accent, #38bdf8)', opacity: 0.85 }} />
         <Typography
-          sx={{ fontSize: 13, fontWeight: 600, fontFamily: 'Space Grotesk, Inter, system-ui' }}
+          sx={{
+            fontSize: 13,
+            fontWeight: 600,
+            fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
+          }}
         >
           Click to upload, or drag &amp; drop / paste an image
         </Typography>

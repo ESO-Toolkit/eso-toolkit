@@ -489,7 +489,7 @@ const MobileReplayDockComponent: React.FC<MobileReplayDockProps> = ({
         <Typography
           component="div"
           sx={{
-            fontFamily: 'Space Grotesk, Inter, system-ui',
+            fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
             fontVariantNumeric: 'tabular-nums',
             fontSize: '0.8rem',
             fontWeight: 600,

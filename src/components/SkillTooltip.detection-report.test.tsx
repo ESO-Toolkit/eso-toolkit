@@ -35,7 +35,7 @@ const mockUseSkillScribingData = useSkillScribingData as jest.MockedFunction<
 >;
 
 // Create mock Redux store with REAL combat event data from Fight 11, Player 1
-// Data extracted from: data-downloads/m2Y9FqdpMjcaZh4R/fight-11/events/
+// Data extracted from a local sample fight fixture.
 //
 // IMPORTANT: All effect timestamps must be AFTER cast timestamps to ensure
 // we only detect effects caused by the ability, not pre-existing effects.
@@ -261,7 +261,7 @@ const createMockStore = () => {
     },
   ];
 
-  const reportCode = 'm2Y9FqdpMjcaZh4R';
+  const reportCode = 'sample-report-fixture';
   const fightId = 11;
   const { key: contextKey } = resolveCacheKey({ reportCode, fightId });
   const mockTimestamp = 1_700_000_000_000;
@@ -495,13 +495,13 @@ describe('📊 Comprehensive Shattering Knife Detection Report', () => {
     console.log('   - Ability: Shattering Knife');
     console.log('   - Ability ID: 217340');
     console.log('   - Player: Player 1');
-    console.log('   - Fight: m2Y9FqdpMjcaZh4R-11');
+    console.log('   - Fight: sample-report-fixture-11');
 
     const { container } = render(
       <TestWrapper>
         <SkillTooltip
           abilityId={217340}
-          fightId="m2Y9FqdpMjcaZh4R-11"
+          fightId="sample-report-fixture-11"
           playerId={1}
           name="Shattering Knife"
           description="Launch a magical blade that pierces through enemies."

@@ -15,7 +15,12 @@ import { isDevelopment } from '../../utils/envUtils';
 import { addBreadcrumb, setUserContext } from '../../utils/errorTracking';
 import { Logger, LogLevel } from '../../utils/logger';
 
-import { LOCAL_STORAGE_ACCESS_TOKEN_KEY, refreshAccessToken } from './auth';
+import {
+  getStoredAccessToken,
+  removeStoredToken,
+  LOCAL_STORAGE_ACCESS_TOKEN_KEY,
+  refreshAccessToken,
+} from './auth';
 import {
   getAccessTokenExpiry,
   getAccessTokenSubject,
@@ -80,18 +85,16 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [accessToken, setAccessToken] = useState<string>(
-    () => localStorage.getItem(LOCAL_STORAGE_ACCESS_TOKEN_KEY) || '',
-  );
+  const [accessToken, setAccessToken] = useState<string>(() => getStoredAccessToken());
   const [isBanned, setIsBanned] = useState<boolean>(false);
   const [banReason, setBanReason] = useState<string | null>(null);
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
-  // Initialize userLoading to true when a valid token exists in localStorage.
+  // Initialize userLoading to true when a valid token exists in browser storage.
   // This prevents child components (e.g. HeaderBar) from prematurely calling
   // refetchUser() before AuthProvider's effects have synced the token to the
   // EsoLogsClient — child effects run before parent effects in React.
   const [userLoading, setUserLoading] = useState<boolean>(() => {
-    const token = localStorage.getItem(LOCAL_STORAGE_ACCESS_TOKEN_KEY) || '';
+    const token = getStoredAccessToken();
     return !!token && tokenHasUserSubject(token) && !isAccessTokenExpired(token);
   });
   const [userError, setUserError] = useState<string | null>(null);
@@ -125,9 +128,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setAnalyticsUserId(subject);
   }, [accessToken]);
 
-  // Re-bind access token from localStorage
+  // Re-bind access token from browser storage (sessionStorage, with legacy migration).
   const rebindAccessToken = useCallback(() => {
-    const token = localStorage.getItem(LOCAL_STORAGE_ACCESS_TOKEN_KEY) || '';
+    const token = getStoredAccessToken();
     setAccessToken(token);
     setAuthToken(token);
     addBreadcrumb('Auth: Rebound access token from storage', 'auth', {
@@ -179,7 +182,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           // does not always issue one — the current access token is still
           // valid, so keep it) or a hard refresh failure (refreshAccessToken
           // already purged storage). Only log out in the latter case.
-          if (!localStorage.getItem(LOCAL_STORAGE_ACCESS_TOKEN_KEY)) {
+          if (!getStoredAccessToken()) {
             updateAccessToken('');
           }
         })
@@ -243,7 +246,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           setBanReason(reason);
           setUserError(reason);
           setCurrentUser(null);
-          localStorage.removeItem(LOCAL_STORAGE_ACCESS_TOKEN_KEY);
+          // Remove the access token from both session and legacy storage.
+          removeStoredToken(LOCAL_STORAGE_ACCESS_TOKEN_KEY);
           updateAccessToken('');
           addBreadcrumb('Auth: Banned user detected', 'auth', {
             userId: fetchedUser.id,
@@ -294,9 +298,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   ]);
 
   useEffect(() => {
-    // Listen for changes to localStorage (e.g., from OAuthRedirect)
+    // Listen for legacy storage changes (e.g., from OAuthRedirect in another context).
     const handler = (): void => {
-      const token = localStorage.getItem(LOCAL_STORAGE_ACCESS_TOKEN_KEY) || '';
+      const token = getStoredAccessToken();
       setAccessToken(token);
       setAuthToken(token);
       addBreadcrumb('Auth: Access token updated via storage event', 'auth', {
@@ -306,7 +310,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     window.addEventListener('storage', handler);
 
     // Initialize token on mount
-    const initialToken = localStorage.getItem(LOCAL_STORAGE_ACCESS_TOKEN_KEY) || '';
+    const initialToken = getStoredAccessToken();
     setAccessToken(initialToken);
     setAuthToken(initialToken);
 

@@ -16,7 +16,7 @@ const _DESKTOP_BREAKPOINTS = [
 ];
 
 test.describe('Report Page Responsiveness', () => {
-  const testReportId = '98b3845e3c1ed2a6191e-67039068743d5eeb2855';
+  const testReportId = process.env.E2E_REPORT_CODE ?? 'F4f2bMwWtgVKxjB9';
   const testUrl = `/r/${testReportId}`;
 
   // Test mobile devices - separate test files for each device

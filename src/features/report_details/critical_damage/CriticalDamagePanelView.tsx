@@ -62,7 +62,7 @@ export const CriticalDamagePanelView: React.FC<CriticalDamagePanelProps> = ({
         <Typography
           variant="h6"
           sx={{
-            fontFamily: 'Space Grotesk, sans-serif',
+            fontFamily: 'Space Grotesk Variable, sans-serif',
             textShadow: '0 1px 3px rgba(0, 0, 0, 0.2), 0 2px 6px rgba(0, 0, 0, 0.1)',
             mb: { xs: 0, sm: 0 },
           }}
@@ -78,7 +78,7 @@ export const CriticalDamagePanelView: React.FC<CriticalDamagePanelProps> = ({
           onClick={() => onGlobalFightingFinesseToggle(!globalFightingFinesseEnabled)}
           sx={{
             minWidth: '100px',
-            fontFamily: 'Space Grotesk, sans-serif',
+            fontFamily: 'Space Grotesk Variable, sans-serif',
             fontWeight: 600,
             textTransform: 'none',
             flexShrink: 0, // Prevent button from shrinking on smaller screens

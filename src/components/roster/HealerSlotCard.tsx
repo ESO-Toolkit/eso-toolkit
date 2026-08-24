@@ -132,7 +132,7 @@ export const HealerCard = React.memo<HealerCardProps>(
               <FavoriteIcon sx={{ fontSize: '0.85rem', color: healerRoleColors.healer }} />
               <Typography
                 sx={{
-                  fontFamily: '"Space Grotesk", sans-serif',
+                  fontFamily: '"Space Grotesk Variable", sans-serif',
                   fontWeight: 700,
                   fontSize: '0.65rem',
                   textTransform: 'uppercase',
@@ -413,7 +413,7 @@ export const HealerCard = React.memo<HealerCardProps>(
                     sx={{
                       fontSize: 11,
                       fontWeight: 600,
-                      fontFamily: 'Space Grotesk, Inter, system-ui',
+                      fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                       letterSpacing: 0.5,
                       color: healerIsDark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.6)',
                     }}

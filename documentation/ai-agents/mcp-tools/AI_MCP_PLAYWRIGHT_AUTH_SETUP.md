@@ -3,22 +3,23 @@
 > **Skill Available**: Use the **OAuth Auth Management** skill (`.agents/skills/auth/SKILL.md`) for automated token generation and injection. This document serves as the detailed reference with troubleshooting.
 
 **Last Updated**: November 12, 2025  
-**Purpose**: Guide for AI agents to authenticate with the ESO Log Aggregator application when using the Microsoft Playwright MCP browser automation tool
+**Purpose**: Guide for AI agents to authenticate with the ESO Toolkit application when using the Microsoft Playwright MCP browser automation tool
 
 ---
 
 ## Overview
 
-When using the Microsoft Playwright MCP browser tool (`mcp_microsoft_pla_browser_navigate` and related tools) to interact with the ESO Log Aggregator application, you need to authenticate the **application** (not the MCP tool itself) to see authenticated content.
+When using the Microsoft Playwright MCP browser tool (`mcp_microsoft_pla_browser_navigate` and related tools) to interact with the ESO Toolkit application, you need to authenticate the **application** (not the MCP tool itself) to see authenticated content.
 
 This guide shows how to:
+
 1. Generate an OAuth access token using client credentials from `.env`
 2. Store the token in the browser's localStorage
 3. Access authenticated features of the application
 
 ## Why Application Authentication is Required
 
-The ESO Log Aggregator uses ESO Logs OAuth for authentication. Many features require a valid access token stored in `localStorage` with key `access_token`. Without authentication, you'll see limited content and features.
+ESO Toolkit uses ESO Logs OAuth for authentication. Many features require a valid access token stored in `localStorage` with key `access_token`. Without authentication, you'll see limited content and features.
 
 ---
 
@@ -38,6 +39,7 @@ await page.context().storageState({ path: 'tests/auth-state.json' });
 Generate a fresh token using the client credentials from `.env`:
 
 **Step 1: Read OAuth credentials from .env**
+
 ```typescript
 // .env contains:
 // OAUTH_CLIENT_ID=your_client_id_here
@@ -48,6 +50,7 @@ const clientSecret = process.env.OAUTH_CLIENT_SECRET;
 ```
 
 **Step 2: Request OAuth token from ESO Logs**
+
 ```typescript
 const response = await fetch('https://www.esologs.com/oauth/token', {
   method: 'POST',
@@ -66,6 +69,7 @@ const accessToken = data.access_token;
 ```
 
 **Step 3: Store token in localStorage using MCP browser tool**
+
 ```typescript
 // Navigate to your app
 await mcp_microsoft_pla_browser_navigate({ url: 'http://localhost:5173' });
@@ -97,7 +101,7 @@ async function authenticateAppWithMCP() {
   // Step 1: Get OAuth credentials
   const clientId = process.env.OAUTH_CLIENT_ID;
   const clientSecret = process.env.OAUTH_CLIENT_SECRET;
-  
+
   if (!clientId || !clientSecret) {
     throw new Error('OAuth credentials not found in .env file');
   }
@@ -126,8 +130,8 @@ async function authenticateAppWithMCP() {
 
   // Step 3: Navigate to app with MCP tool
   console.log('🌐 Navigating to application...');
-  await mcp_microsoft_pla_browser_navigate({ 
-    url: 'http://localhost:5173' 
+  await mcp_microsoft_pla_browser_navigate({
+    url: 'http://localhost:5173',
   });
 
   // Step 4: Inject token into localStorage
@@ -136,38 +140,38 @@ async function authenticateAppWithMCP() {
     localStorage.setItem('access_token', token);
     localStorage.setItem('authenticated', 'true');
     localStorage.setItem('access_token_refreshed_at', String(Date.now()));
-    
+
     // Trigger storage event to notify the app
     window.dispatchEvent(
       new StorageEvent('storage', {
         key: 'access_token',
         newValue: token,
         storageArea: localStorage,
-      })
+      }),
     );
   }, accessToken);
 
   // Step 5: Reload to activate authentication
   console.log('🔄 Reloading to activate authentication...');
   await page.reload();
-  
+
   console.log('✅ Authentication complete! You can now access authenticated features.');
 }
 ```
 
 ---
 
-## localStorage Keys Used by ESO Log Aggregator
+## localStorage Keys Used by ESO Toolkit
 
 The application stores authentication data in these localStorage keys:
 
-| Key | Description | Required |
-|-----|-------------|----------|
-| `access_token` | JWT access token from ESO Logs OAuth | Yes |
-| `authenticated` | Boolean flag indicating auth status | Recommended |
-| `access_token_refreshed_at` | Timestamp of last token refresh | Recommended |
-| `access_token_expires_at` | Token expiration timestamp (if known) | Optional |
-| `refresh_token` | OAuth refresh token (if available) | Optional |
+| Key                         | Description                           | Required    |
+| --------------------------- | ------------------------------------- | ----------- |
+| `access_token`              | JWT access token from ESO Logs OAuth  | Yes         |
+| `authenticated`             | Boolean flag indicating auth status   | Recommended |
+| `access_token_refreshed_at` | Timestamp of last token refresh       | Recommended |
+| `access_token_expires_at`   | Token expiration timestamp (if known) | Optional    |
+| `refresh_token`             | OAuth refresh token (if available)    | Optional    |
 
 ### Minimal Authentication
 
@@ -185,15 +189,19 @@ await page.reload();
 For full compatibility with all auth features:
 
 ```typescript
-await page.evaluate((token, expiresIn) => {
-  const now = Date.now();
-  localStorage.setItem('access_token', token);
-  localStorage.setItem('authenticated', 'true');
-  localStorage.setItem('access_token_refreshed_at', String(now));
-  if (expiresIn) {
-    localStorage.setItem('access_token_expires_at', String(now + expiresIn * 1000));
-  }
-}, accessToken, data.expires_in);
+await page.evaluate(
+  (token, expiresIn) => {
+    const now = Date.now();
+    localStorage.setItem('access_token', token);
+    localStorage.setItem('authenticated', 'true');
+    localStorage.setItem('access_token_refreshed_at', String(now));
+    if (expiresIn) {
+      localStorage.setItem('access_token_expires_at', String(now + expiresIn * 1000));
+    }
+  },
+  accessToken,
+  data.expires_in,
+);
 ```
 
 ---
@@ -201,11 +209,13 @@ await page.evaluate((token, expiresIn) => {
 ## OAuth Client Credentials Flow Details
 
 ### Token Endpoint
+
 ```
 POST https://www.esologs.com/oauth/token
 ```
 
 ### Request Parameters
+
 ```
 grant_type: client_credentials
 client_id: <from .env>
@@ -213,6 +223,7 @@ client_secret: <from .env>
 ```
 
 ### Response Format
+
 ```json
 {
   "access_token": "eyJ0eXAiOiJKV1QiLC...",
@@ -222,6 +233,7 @@ client_secret: <from .env>
 ```
 
 ### Token Expiration
+
 - Client credentials tokens typically expire in 1 hour (3600 seconds)
 - The token includes expiration info in the JWT payload
 - Tokens can be refreshed using the same client credentials flow
@@ -254,6 +266,7 @@ console.log('User menu visible:', userMenuVisible);
 **Cause**: Token from `.env` credentials may have expired, or client credentials have limited scopes.
 
 **Solution**:
+
 ```typescript
 // Generate a fresh token
 const response = await fetch('https://www.esologs.com/oauth/token', {
@@ -272,6 +285,7 @@ const response = await fetch('https://www.esologs.com/oauth/token', {
 **Cause**: localStorage not set correctly, or page not reloaded.
 
 **Solution**:
+
 1. Verify token is in localStorage
 2. Trigger storage event
 3. Reload the page
@@ -290,6 +304,7 @@ await page.evaluate(() => {
 **Cause**: `.env` file not loaded or missing credentials.
 
 **Solution**:
+
 ```powershell
 # Check .env file exists
 cat .env
@@ -308,6 +323,7 @@ dotenv.config();
 **Cause**: Client credentials grant has limited scopes compared to user OAuth flow.
 
 **Solution**:
+
 - For full user profile access, you may need to use the browser-based OAuth flow
 - Client credentials are sufficient for most report and combat log access
 - See `tests/global-setup.ts` `performBrowserLogin()` for full OAuth flow
@@ -339,12 +355,14 @@ dotenv.config();
 
 ## Reference: Existing Authentication Implementations
 
-The ESO Log Aggregator project has several reference implementations you can study:
+The ESO Toolkit project has several reference implementations you can study:
 
 ### 1. Playwright Global Setup (`tests/global-setup.ts`)
+
 **What it does**: Authenticates tests using client credentials or browser OAuth flow
 
 **Key functions**:
+
 - `getClientCredentialsToken()` - OAuth client credentials flow
 - `createAuthStateWithToken()` - Saves token to auth-state.json
 - `performBrowserLogin()` - Full browser-based OAuth flow
@@ -352,25 +370,31 @@ The ESO Log Aggregator project has several reference implementations you can stu
 **Usage**: Automatically runs before Playwright tests
 
 ### 2. Auth Utilities (`tests/auth-utils.ts`)
+
 **What it does**: Helper functions for managing auth in tests
 
 **Key functions**:
+
 - `setAccessToken(token)` - Inject token into localStorage
 - `getAccessToken()` - Retrieve token from localStorage
 - `clearAuth()` - Remove authentication state
 
 ### 3. Application Auth Context (`src/features/auth/AuthContext.tsx`)
+
 **What it does**: React context managing auth state in the app
 
 **Key behavior**:
+
 - Reads `access_token` from localStorage on mount
 - Listens for storage events to sync auth across tabs
 - Validates token and fetches user data
 
 ### 4. OAuth Redirect (`src/OAuthRedirect.tsx`)
+
 **What it does**: Handles OAuth callback after user authorization
 
 **Key behavior**:
+
 - Exchanges authorization code for access token
 - Stores token in localStorage
 - Redirects to intended destination
@@ -382,12 +406,14 @@ The ESO Log Aggregator project has several reference implementations you can stu
 ### When to Authenticate
 
 ✅ **Authenticate when**:
+
 - Testing authenticated features (user profile, private reports)
 - Taking screenshots of logged-in state
 - Debugging auth-specific UI
 - Validating permissions and access control
 
 ❌ **Don't authenticate when**:
+
 - Testing public pages
 - Validating error states for unauthenticated users
 - Testing login/logout flows themselves
@@ -415,13 +441,13 @@ await page.reload();
 await page.waitForSelector('[data-testid="user-menu"]', { timeout: 5000 });
 
 // Step 3: Navigate to authenticated page
-await mcp_microsoft_pla_browser_navigate({ 
-  url: 'http://localhost:5173/reports/myreports' 
+await mcp_microsoft_pla_browser_navigate({
+  url: 'http://localhost:5173/reports/myreports',
 });
 
 // Step 4: Take screenshot
 await mcp_microsoft_pla_browser_take_screenshot({
-  filename: 'authenticated-reports.png'
+  filename: 'authenticated-reports.png',
 });
 ```
 
@@ -447,6 +473,7 @@ await mcp_microsoft_pla_browser_take_screenshot({
 ---
 
 **Notes for AI Agents**:
+
 - Always load `.env` to get OAuth credentials
 - Prefer using existing `tests/auth-state.json` when available
 - Remember to reload page after setting localStorage

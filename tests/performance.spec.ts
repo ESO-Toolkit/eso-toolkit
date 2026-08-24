@@ -4,15 +4,15 @@ import { test, expect, devices } from '@playwright/test';
 const PERFORMANCE_THRESHOLDS = {
   // Time to first meaningful paint
   firstPaint: {
-    mobile: 2000,    // 2s on mobile
-    tablet: 1500,    // 1.5s on tablet
-    desktop: 1000,   // 1s on desktop
+    mobile: 2000, // 2s on mobile
+    tablet: 1500, // 1.5s on tablet
+    desktop: 1000, // 1s on desktop
   },
   // Largest contentful paint
   largestContentfulPaint: {
-    mobile: 4000,    // 4s on mobile
-    tablet: 3000,    // 3s on tablet
-    desktop: 2500,   // 2.5s on desktop
+    mobile: 4000, // 4s on mobile
+    tablet: 3000, // 3s on tablet
+    desktop: 2500, // 2.5s on desktop
   },
   // Cumulative layout shift
   cumulativeLayoutShift: 0.1,
@@ -23,7 +23,7 @@ const PERFORMANCE_THRESHOLDS = {
 };
 
 test.describe('Responsive Performance Tests', () => {
-  const testReportId = '98b3845e3c1ed2a6191e-67039068743d5eeb2855';
+  const testReportId = process.env.E2E_REPORT_CODE ?? 'F4f2bMwWtgVKxjB9';
   const testUrl = `/r/${testReportId}`;
 
   // Core web vitals testing
@@ -123,10 +123,14 @@ test.describe('Responsive Performance Tests', () => {
       }
 
       if (performanceMetrics.firstContentfulPaint > 0) {
-        expect(performanceMetrics.firstContentfulPaint).toBeLessThan(mobileThreshold.firstPaint + 500);
+        expect(performanceMetrics.firstContentfulPaint).toBeLessThan(
+          mobileThreshold.firstPaint + 500,
+        );
       }
 
-      expect(performanceMetrics.cumulativeLayoutShift).toBeLessThan(thresholds.cumulativeLayoutShift);
+      expect(performanceMetrics.cumulativeLayoutShift).toBeLessThan(
+        thresholds.cumulativeLayoutShift,
+      );
     });
   });
 
@@ -206,7 +210,8 @@ test.describe('Responsive Performance Tests', () => {
 
           const observer = new PerformanceObserver((list) => {
             for (const entry of list.getEntries()) {
-              if (entry.duration > 50) { // Long task threshold
+              if (entry.duration > 50) {
+                // Long task threshold
                 longTasks.push(entry.duration);
                 totalBlockingTime += entry.duration - 50;
               }
@@ -259,8 +264,8 @@ test.describe('Responsive Performance Tests', () => {
       for (let i = 0; i < 10; i++) {
         // Resize viewport
         await page.setViewportSize({
-          width: 375 + (i * 150),
-          height: 667 + (i * 40),
+          width: 375 + i * 150,
+          height: 667 + i * 40,
         });
 
         // Scroll around
@@ -310,7 +315,7 @@ test.describe('Responsive Performance Tests', () => {
       // Simulate slow 3G connection
       await page.route('**/*', async (route) => {
         // Add artificial delay for all requests
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise((resolve) => setTimeout(resolve, 500));
         await route.continue();
       });
 
@@ -340,13 +345,17 @@ test.describe('Responsive Performance Tests', () => {
       await page.waitForLoadState('networkidle');
 
       // Analyze resource loading order
-      const cssResources = resourceLoadOrder.filter(url => url.includes('.css'));
-      const _jsResources = resourceLoadOrder.filter(url => url.includes('.js'));
-      const imageResources = resourceLoadOrder.filter(url => url.match(/\.(png|jpg|jpeg|gif|webp)/));
+      const cssResources = resourceLoadOrder.filter((url) => url.includes('.css'));
+      const _jsResources = resourceLoadOrder.filter((url) => url.includes('.js'));
+      const imageResources = resourceLoadOrder.filter((url) =>
+        url.match(/\.(png|jpg|jpeg|gif|webp)/),
+      );
 
       // CSS should load before images typically
-      const firstCssIndex = cssResources.length > 0 ? resourceLoadOrder.indexOf(cssResources[0]) : -1;
-      const firstImageIndex = imageResources.length > 0 ? resourceLoadOrder.indexOf(imageResources[0]) : -1;
+      const firstCssIndex =
+        cssResources.length > 0 ? resourceLoadOrder.indexOf(cssResources[0]) : -1;
+      const firstImageIndex =
+        imageResources.length > 0 ? resourceLoadOrder.indexOf(imageResources[0]) : -1;
 
       if (firstCssIndex !== -1 && firstImageIndex !== -1) {
         expect(firstCssIndex).toBeLessThan(firstImageIndex + 5); // Allow some flexibility
@@ -383,7 +392,8 @@ test.describe('Responsive Performance Tests', () => {
 
       // All interactions should be fast
       const maxInteractionTime = Math.max(...interactionTimes);
-      const avgInteractionTime = interactionTimes.reduce((a, b) => a + b, 0) / interactionTimes.length;
+      const avgInteractionTime =
+        interactionTimes.reduce((a, b) => a + b, 0) / interactionTimes.length;
 
       expect(maxInteractionTime).toBeLessThan(500); // Max 500ms response time
       expect(avgInteractionTime).toBeLessThan(300); // Average under 300ms
@@ -413,7 +423,7 @@ test.describe('Responsive Performance Tests', () => {
                   frameDrops,
                   totalFrames,
                   scrollDuration: scrollEndTime - scrollStartTime,
-                  smoothness: 1 - (frameDrops / totalFrames),
+                  smoothness: 1 - frameDrops / totalFrames,
                 });
                 return;
               }
@@ -424,7 +434,8 @@ test.describe('Responsive Performance Tests', () => {
 
               // Rough frame measurement
               totalFrames++;
-              if (Math.random() < 0.1) { // Assume 10% chance of frame drop
+              if (Math.random() < 0.1) {
+                // Assume 10% chance of frame drop
                 frameDrops++;
               }
             }, 50);

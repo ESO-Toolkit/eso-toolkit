@@ -24,7 +24,7 @@ interface ImportBuildLinkPanelProps {
 const pillSx = {
   borderRadius: '99px',
   textTransform: 'none',
-  fontFamily: 'Space Grotesk, Inter, system-ui',
+  fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
   fontWeight: 600,
   fontSize: 12,
 } as const;
@@ -90,7 +90,7 @@ export const ImportBuildLinkPanel: React.FC<ImportBuildLinkPanelProps> = ({ onCl
         sx={{
           color: 'text.secondary',
           fontSize: 12,
-          fontFamily: 'Space Grotesk, Inter, system-ui',
+          fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
         }}
       >
         Paste a build-guide link. We&apos;ll fetch the page and pull out the gear, skills, champion

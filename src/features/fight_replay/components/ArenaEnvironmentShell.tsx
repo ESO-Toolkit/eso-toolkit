@@ -1,4 +1,6 @@
-import { Billboard, Sparkles, Stars } from '@react-three/drei';
+import { Billboard } from '@react-three/drei/core/Billboard.js';
+import { Sparkles } from '@react-three/drei/core/Sparkles.js';
+import { Stars } from '@react-three/drei/core/Stars.js';
 import { useThree } from '@react-three/fiber';
 import React, { useEffect, useMemo } from 'react';
 import * as THREE from 'three';

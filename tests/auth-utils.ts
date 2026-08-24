@@ -201,15 +201,15 @@ export function createAuthTestUtils(page: Page): AuthTestUtils {
 
       // Check that we don't see login prompts
       const hasLoginButton = await page
-        .locator('button:has-text(Login)')
+        .getByRole('button', { name: /login/i })
         .isVisible()
         .catch(() => false);
       const hasLoginLink = await page
-        .locator('a:has-text(Login)')
+        .getByRole('link', { name: /login/i })
         .isVisible()
         .catch(() => false);
       const hasConnectButton = await page
-        .locator('button:has-text(Connect to ESO Logs)')
+        .getByRole('button', { name: /connect to eso logs/i })
         .isVisible()
         .catch(() => false);
 

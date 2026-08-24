@@ -59,6 +59,7 @@ export const BuildPreviewDialog: React.FC<BuildPreviewDialogProps> = ({
 
   const [iframeLoaded, setIframeLoaded] = React.useState(false);
   const [iframeError, setIframeError] = React.useState(false);
+  const iframeRef = React.useRef<HTMLIFrameElement>(null);
 
   React.useEffect(() => {
     if (build) {
@@ -72,7 +73,14 @@ export const BuildPreviewDialog: React.FC<BuildPreviewDialogProps> = ({
     if (!build || iframeLoaded || iframeError) return;
 
     const handleMessage = (event: MessageEvent): void => {
-      if (event.origin === window.location.origin && event.data?.type === 'build-preview-ready') {
+      const isExpectedMessage =
+        event.origin === window.location.origin &&
+        event.source === iframeRef.current?.contentWindow &&
+        event.data !== null &&
+        typeof event.data === 'object' &&
+        event.data.type === 'build-preview-ready';
+
+      if (isExpectedMessage) {
         setIframeLoaded(true);
       }
     };
@@ -341,6 +349,7 @@ export const BuildPreviewDialog: React.FC<BuildPreviewDialogProps> = ({
         )}
         {build && !iframeError && (
           <iframe
+            ref={iframeRef}
             src={embedUrl}
             title={`Preview: ${build.title}`}
             sandbox="allow-same-origin allow-scripts allow-popups"

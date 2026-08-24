@@ -187,7 +187,7 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
           <Typography
             variant="h5"
             sx={{
-              fontFamily: 'Space Grotesk, Inter, system-ui',
+              fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
               fontWeight: 600,
               background: `linear-gradient(135deg, ${theme.palette.success.main} 0%, ${theme.palette.success.light} 100%)`,
               WebkitBackgroundClip: 'text',
@@ -410,7 +410,7 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
             <Typography
               variant="h6"
               sx={{
-                fontFamily: 'Space Grotesk, Inter, system-ui',
+                fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                 fontWeight: 600,
                 background: accentGradient,
                 WebkitBackgroundClip: 'text',

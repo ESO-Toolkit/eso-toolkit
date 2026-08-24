@@ -112,15 +112,15 @@ const createState = ({
           actorsById: {
             1: actor({
               id: 1,
-              name: "Grappa'Ko'Laid",
-              displayName: "@Spike'jo",
+              name: 'SampleCharacter1',
+              displayName: '@SamplePlayer8',
               subType: 'Nightblade',
             }),
             2: actor({ id: 2, name: 'Archive NPC', type: 'NPC', subType: 'NPC' }),
             96: actor({
               id: 96,
-              name: 'Angair Doomfang',
-              displayName: '@blueblaze103',
+              name: 'SampleCharacter2',
+              displayName: '@SamplePlayer9',
               subType: 'Necromancer',
             }),
           },
@@ -189,16 +189,16 @@ describe('playerDataSelectors fallback players', () => {
     expect(Object.keys(players)).toEqual(['1', '96']);
     expect(players[1]).toMatchObject({
       id: 1,
-      name: "Grappa'Ko'Laid",
-      displayName: "@Spike'jo",
+      name: 'SampleCharacter1',
+      displayName: '@SamplePlayer8',
       type: 'Nightblade',
       role: 'dps',
     });
     expect(players[1].combatantInfo.gear).toEqual([{ id: 10, setName: 'Fallback Set' }]);
     expect(players[96]).toMatchObject({
       id: 96,
-      name: 'Angair Doomfang',
-      displayName: '@blueblaze103',
+      name: 'SampleCharacter2',
+      displayName: '@SamplePlayer9',
       type: 'Necromancer',
     });
     expect(players[2]).toBeUndefined();
@@ -207,8 +207,8 @@ describe('playerDataSelectors fallback players', () => {
   it('applies the same fallback to active player selectors', () => {
     const players = selectActivePlayersById(createState());
 
-    expect(players[1]?.name).toBe("Grappa'Ko'Laid");
-    expect(players[96]?.displayName).toBe('@blueblaze103');
+    expect(players[1]?.name).toBe('SampleCharacter1');
+    expect(players[96]?.displayName).toBe('@SamplePlayer9');
   });
 
   it('returns a stable reference across dispatches while cache entries are absent (M11)', () => {

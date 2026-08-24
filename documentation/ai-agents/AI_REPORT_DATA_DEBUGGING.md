@@ -11,12 +11,14 @@ This guide enables AI agents to debug production issues in ESO Logs reports by a
 ### 1. Download Report Data
 
 **Use Report Debugging Agent Skill** (preferred):
+
 ```
 @workspace Download report data for <report-code>
 @workspace Download fight data for <report-code> fight <fight-id>
 ```
 
 **Alternative (Manual Scripts)**:
+
 ```powershell
 # Download entire report (all fights)
 npm run script -- scripts/download-report-data.ts <report-code>
@@ -25,10 +27,10 @@ npm run script -- scripts/download-report-data.ts <report-code>
 npm run script -- scripts/download-report-data.ts <report-code> <fight-id>
 
 # Example: Download full report
-npm run script -- scripts/download-report-data.ts 3gjVGWB2dxCL8XAw
+npm run script -- scripts/download-report-data.ts <report-code>
 
-# Example: Download fight 32 only
-npm run script -- scripts/download-report-data.ts 3gjVGWB2dxCL8XAw 32
+# Example: Download a specific fight only
+npm run script -- scripts/download-report-data.ts <report-code> <fight-id>
 ```
 
 **Location**: Data is saved to `data-downloads/<report-code>/`
@@ -36,6 +38,7 @@ npm run script -- scripts/download-report-data.ts 3gjVGWB2dxCL8XAw 32
 ### 2. Analyze and Search
 
 **Use Report Debugging Agent Skill** (preferred):
+
 ```
 @workspace Analyze structure of report <report-code>
 @workspace Search for "Anchorite's Potency" in resource events of fight 32
@@ -50,25 +53,25 @@ npm run script -- scripts/download-report-data.ts 3gjVGWB2dxCL8XAw 32
 
 Located in `data-downloads/<report-code>/`:
 
-| File | Purpose | Key Use Cases |
-|------|---------|---------------|
-| `index.json` | Navigation guide and file inventory | Quick reference for what was downloaded |
-| `report-summary.json` | Human-readable report overview | Understand report context: fights, duration, zone |
-| `report-metadata.json` | Full GraphQL report data | Complete report details including all fights |
-| `master-data.json` | All actors and abilities | Cross-reference ability IDs and actor names |
-| `actors-by-type.json` | Actors organized by type | Find players, NPCs, pets quickly |
-| `abilities-by-type.json` | Abilities organized by type | Search abilities by type (buff, damage, etc.) |
-| `player-data.json` | Player rankings and details | Player performance metrics |
-| `player-details.json` | Detailed player information | Player specs, gear, roles |
+| File                     | Purpose                             | Key Use Cases                                     |
+| ------------------------ | ----------------------------------- | ------------------------------------------------- |
+| `index.json`             | Navigation guide and file inventory | Quick reference for what was downloaded           |
+| `report-summary.json`    | Human-readable report overview      | Understand report context: fights, duration, zone |
+| `report-metadata.json`   | Full GraphQL report data            | Complete report details including all fights      |
+| `master-data.json`       | All actors and abilities            | Cross-reference ability IDs and actor names       |
+| `actors-by-type.json`    | Actors organized by type            | Find players, NPCs, pets quickly                  |
+| `abilities-by-type.json` | Abilities organized by type         | Search abilities by type (buff, damage, etc.)     |
+| `player-data.json`       | Player rankings and details         | Player performance metrics                        |
+| `player-details.json`    | Detailed player information         | Player specs, gear, roles                         |
 
 ### Fight-Level Files
 
 Located in `data-downloads/<report-code>/fight-<id>/`:
 
-| File | Purpose | Key Use Cases |
-|------|---------|---------------|
-| `fight-info.json` | Fight metadata and summary | Fight duration, participants, boss info |
-| `encounter-info.json` | Encounter-specific details | Boss mechanics, fight phases |
+| File                  | Purpose                    | Key Use Cases                           |
+| --------------------- | -------------------------- | --------------------------------------- |
+| `fight-info.json`     | Fight metadata and summary | Fight duration, participants, boss info |
+| `encounter-info.json` | Encounter-specific details | Boss mechanics, fight phases            |
 
 ### Event Files
 
@@ -76,30 +79,31 @@ Located in `data-downloads/<report-code>/fight-<id>/events/`:
 
 #### Combined Event Files
 
-| File | Event Type | Description |
-|------|-----------|-------------|
-| `all-events.json` | All types | Chronologically ordered events (all types combined) |
-| `damage-events.json` | Damage | All damage events |
-| `healing-events.json` | Healing | All healing events |
-| `cast-events.json` | Casts | All cast/ability usage events |
-| `resource-events.json` | Resources | Resource changes (Magicka, Stamina, Ultimate) |
-| `death-events.json` | Deaths | Death events |
-| `combatant-info-events.json` | Combatant Info | Gear, stats, specs at combat start |
+| File                         | Event Type     | Description                                         |
+| ---------------------------- | -------------- | --------------------------------------------------- |
+| `all-events.json`            | All types      | Chronologically ordered events (all types combined) |
+| `damage-events.json`         | Damage         | All damage events                                   |
+| `healing-events.json`        | Healing        | All healing events                                  |
+| `cast-events.json`           | Casts          | All cast/ability usage events                       |
+| `resource-events.json`       | Resources      | Resource changes (Magicka, Stamina, Ultimate)       |
+| `death-events.json`          | Deaths         | Death events                                        |
+| `combatant-info-events.json` | Combatant Info | Gear, stats, specs at combat start                  |
 
 #### Buff/Debuff Event Files
 
 **IMPORTANT**: Buffs and debuffs are split by source target type!
 
-| File | Description |
-|------|-------------|
-| `buff-events.json` | All buff events (friendly + hostile sources) |
-| `buff-events-friendlies.json` | Buffs from friendly sources only |
-| `buff-events-enemies.json` | Buffs from hostile sources only |
-| `debuff-events.json` | All debuff events (friendly + hostile sources) |
-| `debuff-events-friendlies.json` | Debuffs from friendly sources only |
-| `debuff-events-enemies.json` | Debuffs from hostile sources only |
+| File                            | Description                                    |
+| ------------------------------- | ---------------------------------------------- |
+| `buff-events.json`              | All buff events (friendly + hostile sources)   |
+| `buff-events-friendlies.json`   | Buffs from friendly sources only               |
+| `buff-events-enemies.json`      | Buffs from hostile sources only                |
+| `debuff-events.json`            | All debuff events (friendly + hostile sources) |
+| `debuff-events-friendlies.json` | Debuffs from friendly sources only             |
+| `debuff-events-enemies.json`    | Debuffs from hostile sources only              |
 
 **Why separate files?**
+
 - Penetration analysis: Need friendly debuffs on enemies
 - Scribing detection: Many signature scripts appear in buff/debuff events
 - Uptime analysis: Distinguish team buffs from enemy buffs
@@ -107,11 +111,13 @@ Located in `data-downloads/<report-code>/fight-<id>/events/`:
 #### Metadata Files
 
 Each event type has corresponding metadata files:
+
 - `{type}-metadata.json`: Combined download info, pagination details
 - `{type}-friendlies-metadata.json`: Friendly-specific metadata (buffs/debuffs only)
 - `{type}-enemies-metadata.json`: Hostile-specific metadata (buffs/debuffs only)
 
 **Metadata includes**:
+
 - Total events downloaded
 - Number of pages fetched
 - Query filters used
@@ -127,15 +133,21 @@ Each event type has corresponding metadata files:
 **Investigation Steps**:
 
 1. **Check fight info**:
+
    ```typescript
-   const fightInfo = JSON.parse(fs.readFileSync('data-downloads/<code>/fight-<id>/fight-info.json'));
+   const fightInfo = JSON.parse(
+     fs.readFileSync('data-downloads/<code>/fight-<id>/fight-info.json'),
+   );
    // Verify player is in friendlyPlayers list
    // Check fight duration and timing
    ```
 
 2. **Review damage/healing events**:
+
    ```typescript
-   const damageEvents = JSON.parse(fs.readFileSync('data-downloads/<code>/fight-<id>/events/damage-events.json'));
+   const damageEvents = JSON.parse(
+     fs.readFileSync('data-downloads/<code>/fight-<id>/events/damage-events.json'),
+   );
    // Filter by sourceID to find player's damage
    // Check timestamps are within fight boundaries
    // Verify ability IDs are recognized
@@ -155,15 +167,21 @@ Each event type has corresponding metadata files:
 **Investigation Steps**:
 
 1. **Identify event source type**:
+
    ```typescript
    // For friendly buffs (e.g., Major Courage):
-   const friendlyBuffs = JSON.parse(fs.readFileSync('data-downloads/<code>/fight-<id>/events/buff-events-friendlies.json'));
-   
+   const friendlyBuffs = JSON.parse(
+     fs.readFileSync('data-downloads/<code>/fight-<id>/events/buff-events-friendlies.json'),
+   );
+
    // For enemy debuffs (e.g., Major Breach from player):
-   const friendlyDebuffs = JSON.parse(fs.readFileSync('data-downloads/<code>/fight-<id>/events/debuff-events-friendlies.json'));
+   const friendlyDebuffs = JSON.parse(
+     fs.readFileSync('data-downloads/<code>/fight-<id>/events/debuff-events-friendlies.json'),
+   );
    ```
 
 2. **Check event structure**:
+
    ```typescript
    // Verify apply/remove/refresh stacks
    // Check timestamps for gaps
@@ -172,7 +190,9 @@ Each event type has corresponding metadata files:
 
 3. **Review metadata**:
    ```typescript
-   const metadata = JSON.parse(fs.readFileSync('data-downloads/<code>/fight-<id>/events/buffs-metadata.json'));
+   const metadata = JSON.parse(
+     fs.readFileSync('data-downloads/<code>/fight-<id>/events/buffs-metadata.json'),
+   );
    // Check if pagination occurred
    // Verify all pages were downloaded
    ```
@@ -186,23 +206,35 @@ Each event type has corresponding metadata files:
 **Investigation Steps**:
 
 1. **Search ALL event types**:
+
    ```typescript
    // Check buffs (most common)
-   const buffs = JSON.parse(fs.readFileSync('data-downloads/<code>/fight-<id>/events/buff-events.json'));
-   
+   const buffs = JSON.parse(
+     fs.readFileSync('data-downloads/<code>/fight-<id>/events/buff-events.json'),
+   );
+
    // Check debuffs (some scripts)
-   const debuffs = JSON.parse(fs.readFileSync('data-downloads/<code>/fight-<id>/events/debuff-events.json'));
-   
+   const debuffs = JSON.parse(
+     fs.readFileSync('data-downloads/<code>/fight-<id>/events/debuff-events.json'),
+   );
+
    // Check resources (Anchorite's Potency!)
-   const resources = JSON.parse(fs.readFileSync('data-downloads/<code>/fight-<id>/events/resource-events.json'));
-   
+   const resources = JSON.parse(
+     fs.readFileSync('data-downloads/<code>/fight-<id>/events/resource-events.json'),
+   );
+
    // Check damage (some signature effects)
-   const damage = JSON.parse(fs.readFileSync('data-downloads/<code>/fight-<id>/events/damage-events.json'));
+   const damage = JSON.parse(
+     fs.readFileSync('data-downloads/<code>/fight-<id>/events/damage-events.json'),
+   );
    ```
 
 2. **Use all-events.json for chronological analysis**:
+
    ```typescript
-   const allEvents = JSON.parse(fs.readFileSync('data-downloads/<code>/fight-<id>/events/all-events.json'));
+   const allEvents = JSON.parse(
+     fs.readFileSync('data-downloads/<code>/fight-<id>/events/all-events.json'),
+   );
    // Search chronologically around cast times
    // Find signature effects within time windows
    ```
@@ -218,8 +250,11 @@ Each event type has corresponding metadata files:
 **Investigation Steps**:
 
 1. **Review resource events**:
+
    ```typescript
-   const resources = JSON.parse(fs.readFileSync('data-downloads/<code>/fight-<id>/events/resource-events.json'));
+   const resources = JSON.parse(
+     fs.readFileSync('data-downloads/<code>/fight-<id>/events/resource-events.json'),
+   );
    // Filter by sourceID for specific player
    // Check resource type (0=Magicka, 1=Stamina, 2=Ultimate)
    // Verify resource changes align with casts
@@ -227,7 +262,9 @@ Each event type has corresponding metadata files:
 
 2. **Correlate with cast events**:
    ```typescript
-   const casts = JSON.parse(fs.readFileSync('data-downloads/<code>/fight-<id>/events/cast-events.json'));
+   const casts = JSON.parse(
+     fs.readFileSync('data-downloads/<code>/fight-<id>/events/cast-events.json'),
+   );
    // Match resource costs with ability casts
    // Check for resource-generating abilities
    ```
@@ -239,15 +276,20 @@ Each event type has corresponding metadata files:
 **Investigation Steps**:
 
 1. **Check death events**:
+
    ```typescript
-   const deaths = JSON.parse(fs.readFileSync('data-downloads/<code>/fight-<id>/events/death-events.json'));
+   const deaths = JSON.parse(
+     fs.readFileSync('data-downloads/<code>/fight-<id>/events/death-events.json'),
+   );
    // Find death timestamp
    // Identify killing ability
    ```
 
 2. **Review surrounding damage**:
    ```typescript
-   const damage = JSON.parse(fs.readFileSync('data-downloads/<code>/fight-<id>/events/damage-events.json'));
+   const damage = JSON.parse(
+     fs.readFileSync('data-downloads/<code>/fight-<id>/events/damage-events.json'),
+   );
    // Filter damage in 5-10s window before death
    // Identify burst damage or DoT accumulation
    ```
@@ -259,15 +301,20 @@ Each event type has corresponding metadata files:
 **Investigation Steps**:
 
 1. **Check event counts**:
+
    ```typescript
-   const metadata = JSON.parse(fs.readFileSync('data-downloads/<code>/fight-<id>/events/all-events-metadata.json'));
+   const metadata = JSON.parse(
+     fs.readFileSync('data-downloads/<code>/fight-<id>/events/all-events-metadata.json'),
+   );
    // Look for extremely large event counts (>100k)
    // Check pagination details
    ```
 
 2. **Review all-events structure**:
    ```typescript
-   const allEvents = JSON.parse(fs.readFileSync('data-downloads/<code>/fight-<id>/events/all-events.json'));
+   const allEvents = JSON.parse(
+     fs.readFileSync('data-downloads/<code>/fight-<id>/events/all-events.json'),
+   );
    // Check if events are properly chronological
    // Verify event type distribution
    ```
@@ -278,22 +325,24 @@ Each event type has corresponding metadata files:
 
 ```typescript
 const actors = JSON.parse(fs.readFileSync('data-downloads/<code>/actors-by-type.json'));
-const playerName = "PlayerName";
-const player = actors.players.find(p => p.name === playerName);
+const playerName = 'PlayerName';
+const player = actors.players.find((p) => p.name === playerName);
 const playerId = player.id;
 ```
 
 ### Filtering Events by Time Range
 
 ```typescript
-const events = JSON.parse(fs.readFileSync('data-downloads/<code>/fight-<id>/events/damage-events.json'));
+const events = JSON.parse(
+  fs.readFileSync('data-downloads/<code>/fight-<id>/events/damage-events.json'),
+);
 const fightInfo = JSON.parse(fs.readFileSync('data-downloads/<code>/fight-<id>/fight-info.json'));
 
 const startTime = fightInfo.data.reportData.report.fights[0].startTime;
 const endTime = fightInfo.data.reportData.report.fights[0].endTime;
 
-const filteredEvents = events.data.reportData.report.events.data.filter(event => 
-  event.timestamp >= startTime && event.timestamp <= endTime
+const filteredEvents = events.data.reportData.report.events.data.filter(
+  (event) => event.timestamp >= startTime && event.timestamp <= endTime,
 );
 ```
 
@@ -304,7 +353,7 @@ const abilities = JSON.parse(fs.readFileSync('data-downloads/<code>/abilities-by
 
 function getAbilityName(abilityId) {
   for (const [type, abilitiesList] of Object.entries(abilities)) {
-    const ability = abilitiesList.find(a => a.gameID === abilityId);
+    const ability = abilitiesList.find((a) => a.gameID === abilityId);
     if (ability) return ability.name;
   }
   return `Unknown (${abilityId})`;
@@ -314,10 +363,12 @@ function getAbilityName(abilityId) {
 ### Event Type Distribution
 
 ```typescript
-const allEvents = JSON.parse(fs.readFileSync('data-downloads/<code>/fight-<id>/events/all-events.json'));
+const allEvents = JSON.parse(
+  fs.readFileSync('data-downloads/<code>/fight-<id>/events/all-events.json'),
+);
 const distribution = {};
 
-allEvents.data.reportData.report.events.data.forEach(event => {
+allEvents.data.reportData.report.events.data.forEach((event) => {
   const type = event.__typename || 'Unknown';
   distribution[type] = (distribution[type] || 0) + 1;
 });
@@ -346,9 +397,10 @@ console.log('Event Type Distribution:', distribution);
 When debugging report data issues:
 
 **Use Jira Agent Skill** (preferred):
+
 ```
 @workspace Move ESO-XXX to "In Progress"
-@workspace Add comment to ESO-XXX: Analysis of report 3gjVGWB2dxCL8XAw fight 32:
+@workspace Add comment to ESO-XXX: Analysis of report <report-code> fight <fight-id>:
 - Issue: Missing damage for player X
 - Root cause: Ability ID Y not in master data
 - Fix: Added ability mapping in abilities.json
@@ -356,6 +408,7 @@ When debugging report data issues:
 ```
 
 **Alternative (Manual)**:
+
 ```powershell
 acli jira workitem transition --key ESO-XXX --status "In Progress"
 acli jira workitem comment create -k ESO-XXX -b "Analysis findings..."
@@ -370,7 +423,7 @@ Use the **Jira Work Items** skill (`.agents/skills/jira/SKILL.md`) for Jira inte
 
 - **Scribing Detection**: [scribing/AI_SCRIBING_DETECTION_INSTRUCTIONS.md](scribing/AI_SCRIBING_DETECTION_INSTRUCTIONS.md)
 - **Scribing Quick Reference**: [scribing/AI_SCRIBING_QUICK_REFERENCE.md](scribing/AI_SCRIBING_QUICK_REFERENCE.md)
-- **Playwright Testing**: [playwright/AI_PLAYWRIGHT_TESTING_INSTRUCTIONS.md](playwright/AI_PLAYWRIGHT_TESTING_INSTRUCTIONS.md)
+- **Playwright Testing**: [playwright/AI_PLAYWRIGHT_INSTRUCTIONS.md](playwright/AI_PLAYWRIGHT_INSTRUCTIONS.md)
 - **AI Agent Guidelines**: [AI_AGENT_GUIDELINES.md](AI_AGENT_GUIDELINES.md)
 
 ## Script Reference
@@ -380,11 +433,13 @@ Use the **Jira Work Items** skill (`.agents/skills/jira/SKILL.md`) for Jira inte
 **Script**: `scripts/download-report-data.ts`
 
 **Usage**:
+
 ```powershell
 npm run script -- scripts/download-report-data.ts <report-code> [fight-id]
 ```
 
 **What it downloads**:
+
 - Report metadata and summary
 - Master data (actors and abilities)
 - Player data and details
@@ -397,6 +452,7 @@ npm run script -- scripts/download-report-data.ts <report-code> [fight-id]
 **Output location**: `data-downloads/<report-code>/`
 
 **Notes**:
+
 - Automatically added to .gitignore
 - Includes retry logic for API failures
 - Limits to 100,000 events per type
@@ -418,6 +474,7 @@ Get-ChildItem data-downloads/<report-code>/fight-<id>/events/*.json
 ```
 
 Expected event files per fight:
+
 - `all-events.json` + `all-events-metadata.json`
 - `damage-events.json` + `damage-metadata.json`
 - `healing-events.json` + `healing-metadata.json`

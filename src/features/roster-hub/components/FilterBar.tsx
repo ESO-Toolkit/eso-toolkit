@@ -162,6 +162,7 @@ export const FilterBar: React.FC<FilterBarProps> = React.memo(
             {/* Trial — glassmorphic select, no floating label */}
             <Select
               value={filters.trial}
+              inputProps={{ 'aria-label': 'Filter rosters by trial' }}
               onChange={handleTrialChange}
               displayEmpty
               size="small"
@@ -255,7 +256,7 @@ export const FilterBar: React.FC<FilterBarProps> = React.memo(
                           }
                         : {
                             background: 'transparent',
-                            color: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.45)',
+                            color: isDark ? 'rgba(255,255,255,0.58)' : 'rgba(0,0,0,0.62)',
                             '&:hover': {
                               color: isDark ? 'rgba(255,255,255,0.75)' : 'rgba(0,0,0,0.7)',
                               background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
@@ -361,7 +362,7 @@ export const FilterBar: React.FC<FilterBarProps> = React.memo(
               variant="caption"
               sx={{
                 whiteSpace: 'nowrap',
-                color: isDark ? 'rgba(255,255,255,0.28)' : 'rgba(0,0,0,0.35)',
+                color: isDark ? 'rgba(255,255,255,0.58)' : 'rgba(0,0,0,0.62)',
                 fontSize: '0.72rem',
                 fontWeight: 500,
               }}

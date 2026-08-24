@@ -86,6 +86,31 @@ updates:
       - 'dependencies'
       - 'auto-update'
 
+  # The bot is an independent npm package with its own lockfile and CI job.
+  - package-ecosystem: 'npm'
+    directory: '/discord-bot'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+      time: '09:00'
+      timezone: 'UTC'
+    labels:
+      - 'dependencies'
+      - 'auto-update'
+
+  # The roster API is deployed independently and must receive security updates
+  # even when the root application has no dependency changes.
+  - package-ecosystem: 'npm'
+    directory: '/roster-hub-api'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+      time: '09:00'
+      timezone: 'UTC'
+    labels:
+      - 'dependencies'
+      - 'auto-update'
+
   # Enable version updates for GitHub Actions
   - package-ecosystem: 'github-actions'
     directory: '/'

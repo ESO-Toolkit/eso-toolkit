@@ -68,15 +68,20 @@ describe('NotFound', () => {
     expect(mockNavigate).toHaveBeenCalledWith(-1);
   });
 
-  it('displays help text', () => {
+  it('displays actionable support and documentation links', () => {
     render(
       <MemoryRouter>
         <NotFound />
       </MemoryRouter>,
     );
 
-    expect(
-      screen.getByText(/Need help\? Contact support or check the documentation\./i),
-    ).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /github discussions/i })).toHaveAttribute(
+      'href',
+      'https://github.com/ESO-Toolkit/eso-toolkit/discussions',
+    );
+    expect(screen.getByRole('link', { name: /documentation/i })).toHaveAttribute(
+      'href',
+      'https://github.com/ESO-Toolkit/eso-toolkit#readme',
+    );
   });
 });

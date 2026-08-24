@@ -1,11 +1,13 @@
 # M0R Markers Complete Integration Summary
 
 ## Overview
-Complete implementation of M0RMarkers support in the ESO Log Aggregator fight replay system, including import, filtering, positioning, and shape rendering.
+
+Complete implementation of M0RMarkers support in the ESO Toolkit fight replay system, including import, filtering, positioning, and shape rendering.
 
 ## Feature Status: ✅ COMPLETE
 
 ### ✅ Core Features Implemented
+
 1. **Marker Import** - Load M0RMarkers strings via textarea input
 2. **Zone Validation** - Verify markers match current fight's zone
 3. **Map Detection** - Smart detection of which map within a zone
@@ -79,21 +81,21 @@ Render in 3D
 ## Key Algorithms
 
 ### 1. Coordinate Normalization
+
 ```typescript
 // ESO world space (cm) → Normalized (0-1) → Arena space (0-100)
 const normalizedX = (marker.x - minX) / (maxX - minX);
 const normalizedZ = (marker.z - minZ) / (maxZ - minZ);
-const arenaX = 100 - (normalizedX * 100); // X-flip
+const arenaX = 100 - normalizedX * 100; // X-flip
 const arenaZ = normalizedZ * 100;
 const arenaY = marker.size / 2; // Center vertically
 ```
 
 ### 2. Bounding Box Filtering
+
 ```typescript
 // 2D filtering (X, Z)
-const inXZBounds = 
-  marker.x >= minX && marker.x <= maxX &&
-  marker.z >= minZ && marker.z <= maxZ;
+const inXZBounds = marker.x >= minX && marker.x <= maxX && marker.z >= minZ && marker.z <= maxZ;
 
 // 3D filtering (X, Y, Z) for multi-floor maps
 if (mapY !== undefined) {
@@ -105,16 +107,20 @@ return inXZBounds;
 ```
 
 ### 3. Smart Map Detection
+
 ```typescript
 // Try explicit map ID first
-let mapData = zoneMaps.find(map => map.mapId === fight.maps[0]?.id);
+let mapData = zoneMaps.find((map) => map.mapId === fight.maps[0]?.id);
 
 // Fallback: match by marker coordinates
 if (!mapData && markers.length > 0) {
   const firstMarker = markers[0];
-  mapData = zoneMaps.find(map => 
-    firstMarker.x >= map.minX && firstMarker.x <= map.maxX &&
-    firstMarker.z >= map.minZ && firstMarker.z <= map.maxZ
+  mapData = zoneMaps.find(
+    (map) =>
+      firstMarker.x >= map.minX &&
+      firstMarker.x <= map.maxX &&
+      firstMarker.z >= map.minZ &&
+      firstMarker.z <= map.maxZ,
   );
 }
 ```
@@ -122,30 +128,37 @@ if (!mapData && markers.length > 0) {
 ## UI/UX Features
 
 ### Input Controls
+
 - **Load Markers Button**: Imports and displays markers
 - **Clear Button**: Removes all markers from arena
 - **Textarea**: Multi-line input for M0RMarkers string
 - **Keyboard Support**: Enter key to load, Escape to clear
 
 ### Visual Feedback
+
 Success state:
+
 ```
 [✓ 24 / 37 markers] [3D Filtering] [13 filtered out]
 ```
 
 Warning state:
+
 ```
 ⚠️ No markers match the current map (Kyne's Aegis - 3).
    All markers were filtered out by bounding box.
 ```
 
 Error state:
+
 ```
 ❌ Failed to decode M0R markers string. Check console for details.
 ```
 
 ### Console Logging
+
 Comprehensive logging at every step:
+
 - Decode success/failure
 - Zone/map lookup results
 - Bounding box filtering (with is3D flag)
@@ -155,18 +168,20 @@ Comprehensive logging at every step:
 ## Shape Support
 
 ### Rendered Shapes
-| bgTexture | Geometry | Common Use |
-|-----------|----------|------------|
-| circle.dds | CircleGeometry | General markers |
-| hexagon.dds | 6-sided ShapeGeometry | Tank positions (MT/OT) |
-| octagon.dds | 8-sided ShapeGeometry | Safe zones |
-| square.dds | 4-sided ShapeGeometry | Player positions |
-| diamond.dds | 45° rotated square | Add spawns |
-| chevron.dds | V-shaped arrow | Directional markers |
-| blank.dds | CircleGeometry | Text-only labels |
-| sharkpog.dds | CircleGeometry (placeholder) | Custom icon |
+
+| bgTexture    | Geometry                     | Common Use             |
+| ------------ | ---------------------------- | ---------------------- |
+| circle.dds   | CircleGeometry               | General markers        |
+| hexagon.dds  | 6-sided ShapeGeometry        | Tank positions (MT/OT) |
+| octagon.dds  | 8-sided ShapeGeometry        | Safe zones             |
+| square.dds   | 4-sided ShapeGeometry        | Player positions       |
+| diamond.dds  | 45° rotated square           | Add spawns             |
+| chevron.dds  | V-shaped arrow               | Directional markers    |
+| blank.dds    | CircleGeometry               | Text-only labels       |
+| sharkpog.dds | CircleGeometry (placeholder) | Custom icon            |
 
 ### Visual Properties
+
 - **Size**: Diameter in meters (from marker.size)
 - **Color**: RGB from marker.colour[0-2]
 - **Opacity**: Alpha from marker.colour[3]
@@ -176,12 +191,14 @@ Comprehensive logging at every step:
 ## Performance
 
 ### Optimizations
+
 1. **Marker Limit**: 200 max to prevent WebGL crashes
 2. **useMemo**: Decode, transform, and geometry creation cached
 3. **Efficient Filtering**: Early exit for out-of-bounds markers
 4. **Geometry Reuse**: Three.js efficiently handles multiple instances
 
 ### Typical Performance
+
 - **Decode**: <1ms for 37 markers
 - **Filter**: <1ms for coordinate checks
 - **Transform**: <1ms for 37 markers
@@ -190,20 +207,23 @@ Comprehensive logging at every step:
 ## Multi-Map Support
 
 ### Example: Kyne's Aegis (Zone 1196)
-| Map ID | Name | Bounds (X) | Bounds (Z) | Y Coord | Type |
-|--------|------|------------|------------|---------|------|
-| 1805 | Kyne's Aegis | 126070-148090 | 31770-53880 | - | 2D |
-| 1806 | Kyne's Aegis - 2 | 126070-148090 | 31770-53880 | 29960 | 3D |
-| 1807 | Kyne's Aegis - 3 | 126070-148090 | 31770-53880 | 21540 | 3D |
-| 1808 | Kyne's Aegis - 4 | 126070-148090 | 31770-53880 | 18210 | 3D |
+
+| Map ID | Name             | Bounds (X)    | Bounds (Z)  | Y Coord | Type |
+| ------ | ---------------- | ------------- | ----------- | ------- | ---- |
+| 1805   | Kyne's Aegis     | 126070-148090 | 31770-53880 | -       | 2D   |
+| 1806   | Kyne's Aegis - 2 | 126070-148090 | 31770-53880 | 29960   | 3D   |
+| 1807   | Kyne's Aegis - 3 | 126070-148090 | 31770-53880 | 21540   | 3D   |
+| 1808   | Kyne's Aegis - 4 | 126070-148090 | 31770-53880 | 18210   | 3D   |
 
 Maps 1806-1808 share X/Z bounds but differ in Y coordinate (height).
+
 - **2D Maps**: Filter by X and Z only
 - **3D Maps**: Filter by X, Y (with tolerance), and Z
 
 ## Error Handling
 
 ### Validation Checks
+
 1. ✅ Empty string check
 2. ✅ Decode exception handling
 3. ✅ Zone mismatch detection
@@ -212,6 +232,7 @@ Maps 1806-1808 share X/Z bounds but differ in Y coordinate (height).
 6. ✅ Marker count limit (200 max)
 
 ### User-Friendly Errors
+
 - Clear error messages in UI Alerts
 - Detailed logging in console for debugging
 - Graceful degradation (no crashes)
@@ -219,26 +240,31 @@ Maps 1806-1808 share X/Z bounds but differ in Y coordinate (height).
 ## Testing Scenarios
 
 ### Scenario 1: Standard Load
+
 - **Input**: Valid M0RMarkers string for current zone/map
 - **Expected**: Markers render at correct positions
 - **Verification**: Check marker count chip, visual positioning
 
 ### Scenario 2: Zone Mismatch
+
 - **Input**: M0RMarkers string from different zone
 - **Expected**: Error alert with zone mismatch message
 - **Verification**: No markers render, error logged
 
 ### Scenario 3: Multi-Floor Filtering
+
 - **Input**: Markers from all floors in Kyne's Aegis
 - **Expected**: Only markers matching current map's Y coordinate render
 - **Verification**: "3D Filtering" chip shown, correct subset rendered
 
 ### Scenario 4: Shape Variety
+
 - **Input**: Markers with various bgTexture values
 - **Expected**: Different shapes render (hexagon, square, diamond, etc.)
 - **Verification**: Visual inspection of shape variety
 
 ### Scenario 5: Text Labels
+
 - **Input**: Markers with text property set
 - **Expected**: White text with black outline overlaid on shapes
 - **Verification**: Text readable at various camera angles
@@ -283,6 +309,7 @@ Maps 1806-1808 share X/Z bounds but differ in Y coordinate (height).
 ## Future Enhancements
 
 ### Potential Improvements
+
 1. **Marker Editing**
    - Click to select marker
    - Move/delete selected marker
@@ -329,6 +356,7 @@ Maps 1806-1808 share X/Z bounds but differ in Y coordinate (height).
 ## Compatibility
 
 ### M0RMarkers ESO Addon
+
 - ✅ Import string format
 - ✅ All built-in shapes
 - ✅ Text labels
@@ -337,12 +365,14 @@ Maps 1806-1808 share X/Z bounds but differ in Y coordinate (height).
 - ❌ Custom DDS texture loading (uses geometry approximations)
 
 ### Elms Markers
+
 - ✅ Via M0RMarkers conversion
 - ✅ All Elms icon types mapped
 
 ## Changelog
 
 ### 2025-10-15 - Complete Implementation
+
 - ✅ M0RMarkers string import
 - ✅ Zone/map validation
 - ✅ Bounding box filtering (2D and 3D)
@@ -354,12 +384,14 @@ Maps 1806-1808 share X/Z bounds but differ in Y coordinate (height).
 ## Credits
 
 ### External References
+
 - **M0RMarkers**: https://github.com/M0RGaming/M0RMarkers
   - Marker format specification
   - Texture definitions
   - Elms conversion mappings
 
 ### Technologies Used
+
 - React 19+ with TypeScript
 - Three.js / React Three Fiber for 3D rendering
 - Material-UI for UI components

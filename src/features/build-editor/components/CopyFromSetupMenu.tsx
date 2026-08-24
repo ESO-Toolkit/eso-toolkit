@@ -130,7 +130,7 @@ const CopyFromSetupMenuComponent: React.FC<CopyFromSetupMenuProps> = ({ section 
               fontWeight: 700,
               letterSpacing: 1,
               textTransform: 'uppercase',
-              fontFamily: 'Space Grotesk, Inter, system-ui',
+              fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
               color: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.45)',
             }}
           >
@@ -142,7 +142,7 @@ const CopyFromSetupMenuComponent: React.FC<CopyFromSetupMenuProps> = ({ section 
             key={setup.id}
             onClick={() => handlePick(index, setup.name)}
             sx={{
-              fontFamily: 'Space Grotesk, Inter, system-ui',
+              fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
               fontSize: 13,
               py: 0.75,
             }}

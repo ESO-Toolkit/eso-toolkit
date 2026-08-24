@@ -124,7 +124,7 @@ export const RosterCardSections = React.memo<RosterCardSectionsProps>(function R
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <Typography
             sx={{
-              fontFamily: '"Space Grotesk", sans-serif',
+              fontFamily: '"Space Grotesk Variable", sans-serif',
               fontWeight: 700,
               fontSize: '1.05rem',
               letterSpacing: '-0.02em',

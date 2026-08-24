@@ -2,37 +2,14 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>ESO Log Insights by NotaGuild</title>
-    <script>
-      // GitHub Pages SPA redirect solution
-      // This script takes the current request URL and converts it to a redirect to index.html
-      // The redirect is stored in sessionStorage to be read by the app on load
-      
-      // Get the path after the domain
-      const pathSegmentsToKeep = 0;
-      const path = window.location.pathname.slice(1).split('/').slice(pathSegmentsToKeep).join('/');
-      const query = window.location.search;
-      const hash = window.location.hash;
-      
-      // Construct the full redirect path (always starting with /)
-      const redirectPath = '/' + path + query + hash;
-      
-      // Safely store the intended path in sessionStorage
-      // Wrap in try-catch to handle SecurityError in insecure contexts
-      try {
-        sessionStorage.setItem('redirectPath', redirectPath);
-      } catch (e) {
-        // If sessionStorage is not available (SecurityError, disabled cookies, etc.),
-        // fall back to URL parameter method
-        console.warn('Unable to access sessionStorage, using URL parameter fallback');
-      }
-      
-      // Redirect to the base URL with proper construction to avoid protocol-relative URLs
-      // Always ensure we have the origin and a single leading slash
-      const basePath = window.location.origin + '/';
-      const redirectUrl = basePath + '?redirect=' + encodeURIComponent(redirectPath);
-      window.location.replace(redirectUrl);
-    </script>
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; base-uri 'none'; form-action 'none'; script-src 'self'"
+    />
+    <meta name="referrer" content="no-referrer" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ESO Toolkit</title>
+    <script src="/404-redirect.js"></script>
   </head>
   <body>
     <!-- This page is only shown briefly while redirecting -->

@@ -69,7 +69,7 @@ const ClassMasteryOverview: React.FC<{
     <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 0.75, mb: 0.25 }}>
       <Typography
         sx={{
-          fontFamily: 'Space Grotesk, Inter, system-ui',
+          fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
           fontWeight: 700,
           fontSize: 11,
           letterSpacing: '0.1em',
@@ -109,7 +109,7 @@ const ClassMasteryOverview: React.FC<{
                 fontWeight: 700,
                 fontSize: 11.5,
                 lineHeight: 1.25,
-                fontFamily: 'Space Grotesk, Inter, system-ui',
+                fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
               }}
             >
               {pick.name}
@@ -334,7 +334,7 @@ const ClassMasteryClusterComponent: React.FC<ClassMasteryClusterProps> = ({
         <Typography
           component="span"
           sx={{
-            fontFamily: 'Space Grotesk, Inter, system-ui',
+            fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
             fontSize: { xs: 9.5, sm: 9, md: 8.5 },
             fontWeight: 700,
             letterSpacing: '0.08em',

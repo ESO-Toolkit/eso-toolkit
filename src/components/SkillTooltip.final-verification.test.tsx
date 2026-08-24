@@ -73,7 +73,7 @@ describe('🎉 SUCCESS: Scribing Detection is Now Working!', () => {
     const { container } = render(
       <SkillTooltip
         abilityId={217340} // Shattering Knife
-        fightId="m2Y9FqdpMjcaZh4R-11"
+        fightId="sample-report-fixture-11"
         playerId={1}
         name="Shattering Knife"
         description="Launch a magical blade that pierces through enemies, dealing Magic Damage."

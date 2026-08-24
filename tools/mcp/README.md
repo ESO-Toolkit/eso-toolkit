@@ -1,24 +1,24 @@
 # MCP Servers
 
-Custom Model Context Protocol servers for the ESO Log Aggregator project. These provide structured, validated tool interfaces that replace raw Bash commands for common agent operations.
+Custom Model Context Protocol servers for the ESO Toolkit project. These provide structured, validated tool interfaces that replace raw Bash commands for common agent operations.
 
 ## Servers
 
-| Server | ID | Tools | Purpose |
-|--------|-----|-------|---------|
-| **github-server** | `eso-logs-github` | 6 | PR lifecycle: list, view, create PRs; review threads |
-| **ci-server** | `eso-logs-ci` | 5 | CI triage: list runs, view details, fetch/search logs, rerun |
-| **worktree-server** | `eso-logs-worktree` | 7 | Worktree management: list, create, run, guard, push, status, diff |
+| Server              | ID                  | Tools | Purpose                                                           |
+| ------------------- | ------------------- | ----- | ----------------------------------------------------------------- |
+| **github-server**   | `eso-logs-github`   | 6     | PR lifecycle: list, view, create PRs; review threads              |
+| **ci-server**       | `eso-logs-ci`       | 5     | CI triage: list runs, view details, fetch/search logs, rerun      |
+| **worktree-server** | `eso-logs-worktree` | 7     | Worktree management: list, create, run, guard, push, status, diff |
 
 ## Configuration
 
 Servers are registered in three locations for cross-client support:
 
-| Client | Config File | Env Var Syntax |
-|--------|------------|----------------|
-| Claude Code CLI | `.claude/mcp.json` | `${VAR:-}` |
-| VS Code | `.vscode/mcp.json` | `${env:VAR}` |
-| GitHub Copilot | `.github/copilot/mcp.json` | `${VAR}` |
+| Client          | Config File                | Env Var Syntax |
+| --------------- | -------------------------- | -------------- |
+| Claude Code CLI | `.claude/mcp.json`         | `${VAR:-}`     |
+| VS Code         | `.vscode/mcp.json`         | `${env:VAR}`   |
+| GitHub Copilot  | `.github/copilot/mcp.json` | `${VAR}`       |
 
 ## Running a Server
 
@@ -31,6 +31,7 @@ node --import tsx tools/mcp/<server-name>/src/index.ts
 ## Authentication
 
 **github-server** and **ci-server** resolve GitHub tokens via:
+
 1. `GH_TOKEN` environment variable
 2. `GITHUB_TOKEN` environment variable
 3. `gh auth token` CLI fallback
@@ -39,11 +40,11 @@ node --import tsx tools/mcp/<server-name>/src/index.ts
 
 All three config files **must** register the same servers. Each client uses a different env var syntax and top-level key:
 
-| Client | Top-level key | Env var example |
-|--------|--------------|-----------------|
-| Claude Code CLI | `mcpServers` | `"${GH_TOKEN:-}"` |
-| VS Code | `servers` | `"${env:GH_TOKEN}"` |
-| GitHub Copilot | `servers` | `"${GH_TOKEN}"` |
+| Client          | Top-level key | Env var example     |
+| --------------- | ------------- | ------------------- |
+| Claude Code CLI | `mcpServers`  | `"${GH_TOKEN:-}"`   |
+| VS Code         | `servers`     | `"${env:GH_TOKEN}"` |
+| GitHub Copilot  | `servers`     | `"${GH_TOKEN}"`     |
 
 When adding or modifying a server, update **all three files** and verify parity with the [tooling-audit skill](../../.agents/skills/tooling-audit/SKILL.md).
 

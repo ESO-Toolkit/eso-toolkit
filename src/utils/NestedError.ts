@@ -1,6 +1,6 @@
 /**
  * Enhanced error class that supports error nesting and provides detailed error chains
- * for better debugging and error tracking in the ESO Log Aggregator application.
+ * for better debugging and error tracking in the ESO Toolkit application.
  */
 
 import { Logger, LogLevel } from './logger';
@@ -252,7 +252,7 @@ export class NestedError extends Error {
 }
 
 /**
- * Specific error types for common scenarios in the ESO Log Aggregator
+ * Specific error types for common scenarios in ESO Toolkit
  */
 export class DataLoadError extends NestedError {
   constructor(resource: string, innerError?: Error, context?: Record<string, unknown>) {

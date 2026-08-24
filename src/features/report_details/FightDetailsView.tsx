@@ -315,7 +315,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
                 border: 'none',
                 borderRadius: '6px',
                 color: isDarkMode ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)',
-                fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, sans-serif',
+                fontFamily: '"Inter Variable", -apple-system, BlinkMacSystemFont, sans-serif',
                 letterSpacing: '0.025em',
                 transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                 '&:hover': {
@@ -359,7 +359,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
                 color: isDarkMode ? 'rgba(255, 255, 255, 0.8)' : 'rgba(0, 0, 0, 0.7)',
                 fontWeight: 600,
                 fontSize: { xs: '0.7rem', md: '0.75rem' },
-                fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, sans-serif',
+                fontFamily: '"Inter Variable", -apple-system, BlinkMacSystemFont, sans-serif',
                 letterSpacing: '0.025em',
                 fontVariantNumeric: 'tabular-nums',
               }}

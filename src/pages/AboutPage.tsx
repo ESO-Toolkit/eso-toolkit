@@ -85,7 +85,7 @@ export const AboutPage: React.FC = () => {
     <Container maxWidth="md" sx={{ py: { xs: 6, md: 8 } }}>
       <Stack spacing={3}>
         <Box>
-          <Typography variant="h3" sx={{ fontWeight: 800 }}>
+          <Typography variant="h3" component="h1" sx={{ fontWeight: 800 }}>
             About ESO Toolkit
           </Typography>
           <Typography variant="subtitle1" sx={{ color: 'text.secondary', mt: 1 }}>

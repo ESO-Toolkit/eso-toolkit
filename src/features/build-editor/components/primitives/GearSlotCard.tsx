@@ -114,7 +114,7 @@ const InlineChip: React.FC<InlineChipProps> = ({
         borderRadius: 1,
         fontSize: 10,
         fontWeight: isSet ? 600 : 400,
-        fontFamily: 'Space Grotesk, Inter, system-ui',
+        fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
         lineHeight: 1,
         whiteSpace: 'nowrap',
         color: isSet ? activeColor : isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)',
@@ -326,7 +326,7 @@ const GearSlotCardComponent: React.FC<GearSlotCardProps> = ({
           sx={{
             fontSize: 12,
             fontWeight: 400,
-            fontFamily: 'Space Grotesk, Inter, system-ui',
+            fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
             color: isDark ? 'rgba(255,255,255,0.30)' : 'rgba(0,0,0,0.30)',
           }}
         >
@@ -435,7 +435,7 @@ const GearSlotCardComponent: React.FC<GearSlotCardProps> = ({
               sx={{
                 fontSize: 9,
                 fontWeight: 600,
-                fontFamily: 'Space Grotesk, Inter, system-ui',
+                fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                 textTransform: 'uppercase',
                 letterSpacing: 0.6,
                 color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)',
@@ -450,7 +450,7 @@ const GearSlotCardComponent: React.FC<GearSlotCardProps> = ({
               sx={{
                 fontSize: 12,
                 fontWeight: 600,
-                fontFamily: 'Space Grotesk, Inter, system-ui',
+                fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                 lineHeight: 1.2,
                 color: isDark ? 'rgba(255,255,255,0.85)' : 'rgba(0,0,0,0.80)',
               }}
@@ -488,7 +488,7 @@ const GearSlotCardComponent: React.FC<GearSlotCardProps> = ({
                       borderRadius: 1,
                       fontSize: 10,
                       fontWeight: 700,
-                      fontFamily: 'Space Grotesk, Inter, system-ui',
+                      fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                       lineHeight: 1,
                       cursor: 'default',
                       color: WEIGHT_COLORS[currentWeight],
@@ -526,7 +526,7 @@ const GearSlotCardComponent: React.FC<GearSlotCardProps> = ({
                       borderRadius: 1,
                       fontSize: 10,
                       fontWeight: 700,
-                      fontFamily: 'Space Grotesk, Inter, system-ui',
+                      fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                       lineHeight: 1,
                       color: WEIGHT_COLORS[currentWeight],
                       background: isDark

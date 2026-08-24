@@ -209,30 +209,13 @@ const STRIDE_LEN = 0.4;
 const GAIT_WALK_ENTER_SPEED = 0.18; // units/SECOND to start walking from idle
 const GAIT_WALK_EXIT_SPEED = 0.1; // units/SECOND to drop back to idle (must be < enter)
 
-// ---- Boss model (single non-instanced GLB) ----
-//
-// Unlike players (a crowd → instanced single-material figures with per-instance setColorAt), the BOSS
-// is ONE actor rendered as its own self-materialled GLB scene. So it is NOT a third instanced layer:
-// it's a single <primitive> whose world matrix is rebuilt every frame inside this component's existing
-// useFrame (reusing the one proven idle gate) from the boss actor's position + facing + the live-tune
-// constants below. A handful of draw calls for one boss is O(1) in actor count.
-//
-// AirAtronach_Coral_Boss.glb (verified offline, .scratch/inspect-boss*.mjs): 1 mesh / 1 material / NO
-// embedded textures / 19,862 tris / no skeleton / no animations. It is mis-oriented (largest axis is
-// WIDTH — but an Air Atronach IS a wide swirling elemental, so "tallest axis = up" is not a reliable
-// test here) and not grounded. rotateX(-90°) stands it more upright (H 1.79→2.84, min.y 1.18→-0.53).
-//
-// THESE ARE LIVE-TUNE CONSTANTS. They are read fresh in the per-frame matrix compose (NOT baked into
-// geometry behind a load effect), so editing one takes effect on the next HMR commit immediately —
-// the boss is one actor, so rebuilding its world matrix per frame is free, and a baked/memoized
-// offset would go stale on HMR (the scene identity is unchanged so the memo/effect never re-runs).
-// The ground+recenter offset is derived live from the raw bbox under the current ORIENT (see useFrame),
-// so it auto-adapts when ORIENT changes — nothing here is a measured hardcode to re-derive by hand.
-const BOSS_MODEL_URL = `${import.meta.env.BASE_URL}models/bosses/AirAtronach_Coral_Boss.glb`;
-// Boss name / species → model. Hardcoded + trivially extensible; unknown boss → capsule fallback (no
-// model). Match is case-insensitive substring so "Tideborn Taleria" and an "AirAtronach" species both
-// resolve. We do NOT port PR #877's mapping infra (creature catalog/scan JSON, viewer page).
-const BOSS_MODEL_NAME_KEYS = ['taleria', 'airatronach', 'air atronach'];
+// ---- Optional boss model (single non-instanced GLB) ----
+// No game-derived model is bundled. Bosses use the existing project-owned capsule renderer below
+// until a separately licensed model is available; keeping this nullable gate preserves the same
+// renderer path and avoids shipping extracted game geometry in a public build.
+const BOSS_MODEL_URL: string | null = null;
+// The hook is intentionally empty until a separately licensed model is supplied.
+const BOSS_MODEL_NAME_KEYS: readonly string[] = [];
 const ORIENT_EULER: [number, number, number] = [-Math.PI / 2, 0, 0]; // rotateX(-90°) to stand it up
 // World-unit scale. The oriented model is ≈2.84u tall (raw), so BOSS_SCALE≈0.9 makes it ≈2.5u —
 // clearly bigger than the ≈0.95u players without dwarfing the arena (the viewer's 3/maxDim≈0.87 is a
@@ -488,8 +471,7 @@ function flagColorNeedsUpdate(mesh: THREE.InstancedMesh | null | undefined): voi
 }
 function flagOpacityNeedsUpdate(mesh: THREE.InstancedMesh | null | undefined): void {
   const attr = mesh?.geometry.getAttribute('instanceOpacity') as
-    | THREE.InstancedBufferAttribute
-    | undefined;
+    THREE.InstancedBufferAttribute | undefined;
   if (attr) attr.needsUpdate = true;
 }
 

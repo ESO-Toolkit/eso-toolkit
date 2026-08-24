@@ -177,11 +177,12 @@ export const CookieConsent: React.FC = () => {
           <AccentBar />
 
           <Box sx={{ p: { xs: 2, sm: 2.5 }, position: 'relative' }}>
-            {/* Close button */}
+            {/* This action makes the same choice as Decline All; label it plainly
+                so dismissing the banner never creates an ambiguous consent state. */}
             <IconButton
               size="small"
               onClick={handleDeclineAll}
-              aria-label="Close"
+              aria-label="Decline all optional cookies"
               sx={{
                 position: 'absolute',
                 top: 8,
@@ -204,9 +205,10 @@ export const CookieConsent: React.FC = () => {
               </ShieldBadge>
               <Typography
                 variant="subtitle1"
+                component="h2"
                 sx={{
                   fontWeight: 600,
-                  fontFamily: 'Space Grotesk, Inter, system-ui',
+                  fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                   letterSpacing: '-0.01em',
                 }}
               >
@@ -351,9 +353,10 @@ export const CookieConsent: React.FC = () => {
             <ShieldIcon sx={{ color: theme.palette.primary.main, fontSize: 24 }} />
             <Typography
               variant="h6"
+              component="h3"
               sx={{
                 fontWeight: 600,
-                fontFamily: 'Space Grotesk, Inter, system-ui',
+                fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                 letterSpacing: '-0.01em',
               }}
             >
@@ -390,7 +393,7 @@ export const CookieConsent: React.FC = () => {
               sx={{ '& .MuiAccordionSummary-content': { my: 1.5 } }}
             >
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, width: '100%', pr: 2 }}>
-                <Typography variant="subtitle2" sx={{ fontWeight: 600, flex: 1 }}>
+                <Typography variant="subtitle2" component="h4" sx={{ fontWeight: 600, flex: 1 }}>
                   Essential
                 </Typography>
                 <Chip
@@ -416,9 +419,11 @@ export const CookieConsent: React.FC = () => {
             </AccordionSummary>
             <AccordionDetails sx={{ pt: 0 }}>
               <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.6 }}>
-                Required for core functionality. Stores your UI preferences (theme, layout), ESO
-                Logs authentication tokens, and this consent choice in your browser&apos;s
-                localStorage. No data is sent to external servers.
+                Required for core functionality. Stores your UI preferences, ESO Logs authentication
+                tokens, and this consent choice in your browser. Core requests may be sent to ESO
+                Logs or ESO Toolkit when you use authenticated or server-backed features; content
+                you publish may be stored as public service data. Optional analytics and error
+                tracking remain off until you enable them.
               </Typography>
             </AccordionDetails>
           </Accordion>
@@ -439,7 +444,7 @@ export const CookieConsent: React.FC = () => {
               sx={{ '& .MuiAccordionSummary-content': { my: 1.5 } }}
             >
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, width: '100%', pr: 2 }}>
-                <Typography variant="subtitle2" sx={{ fontWeight: 600, flex: 1 }}>
+                <Typography variant="subtitle2" component="h4" sx={{ fontWeight: 600, flex: 1 }}>
                   Analytics
                 </Typography>
                 <FormControlLabel
@@ -486,7 +491,7 @@ export const CookieConsent: React.FC = () => {
               sx={{ '& .MuiAccordionSummary-content': { my: 1.5 } }}
             >
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, width: '100%', pr: 2 }}>
-                <Typography variant="subtitle2" sx={{ fontWeight: 600, flex: 1 }}>
+                <Typography variant="subtitle2" component="h4" sx={{ fontWeight: 600, flex: 1 }}>
                   Error Tracking
                 </Typography>
                 <FormControlLabel
@@ -508,7 +513,7 @@ export const CookieConsent: React.FC = () => {
             </AccordionSummary>
             <AccordionDetails sx={{ pt: 0 }}>
               <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.6 }}>
-                Sentry monitors runtime errors and performance so we can quickly fix bugs. When
+                Rollbar monitors runtime errors and performance so we can quickly fix bugs. When
                 enabled, crash reports include browser info, UI state (no personal data), and
                 performance metrics. Your numeric user ID and username may be attached to help us
                 reproduce issues. We do <strong>not</strong> send your email address.

@@ -8,11 +8,12 @@
 
 ## Overview
 
-The ESO Log Aggregator Fight Replay System is a sophisticated 3D visualization engine that renders combat encounters in real-time at 60fps. The architecture is designed around **high-performance rendering** requirements while maintaining React's declarative programming model.
+The ESO Toolkit Fight Replay System is a sophisticated 3D visualization engine that renders combat encounters in real-time at 60fps. The architecture is designed around **high-performance rendering** requirements while maintaining React's declarative programming model.
 
 **Key Performance Metrics**:
+
 - ✅ **60fps** stable playback with 50+ actors
-- ✅ **<50ms** timeline scrubbing latency  
+- ✅ **<50ms** timeline scrubbing latency
 - ✅ **O(1)** position lookups via pre-computed indexing
 - ✅ **~150-300MB** memory footprint with geometry sharing
 
@@ -29,14 +30,14 @@ graph TD
     C --> D[Data Layer]
     D --> E[Worker Processing Layer]
     E --> F[State Layer]
-    
+
     A1[FightReplay.tsx<br/>FightReplay3D.tsx<br/>PlaybackControls.tsx] -.-> A
     B1[usePlaybackAnimation<br/>useAnimationTimeRef<br/>useScrubbingMode] -.-> B
     C1[Arena3D.tsx<br/>AnimationFrameActor3D.tsx<br/>CameraFollower.tsx] -.-> C
     D1[TimestampPositionLookup<br/>MapTimeline<br/>BuffLookupData] -.-> D
     E1[CalculateActorPositions<br/>BuffLookup<br/>Web Workers] -.-> E
     F1[Redux Store<br/>worker_results slices<br/>Memoized Selectors] -.-> F
-    
+
     style A fill:#e1f5ff
     style B fill:#fff4e1
     style C fill:#e8f5e9
@@ -54,11 +55,13 @@ graph TD
 **Purpose**: User interface and user experience
 
 **Components**:
+
 - `FightReplay.tsx` - Entry point, layout, controls container
 - `FightReplay3D.tsx` - Main orchestrator, data fetching, worker coordination
 - `PlaybackControls.tsx` - Timeline, play/pause, speed controls, sharing
 
 **Responsibilities**:
+
 - Render UI controls
 - Handle user input events
 - Manage layout and responsive design
@@ -66,6 +69,7 @@ graph TD
 - Deep linking and URL state management
 
 **Key Props Flow**:
+
 ```typescript
 FightReplay
   ├─ reportId: string
@@ -83,18 +87,21 @@ FightReplay
 **Purpose**: Coordinate high-frequency (60fps) and low-frequency (React) updates
 
 **Custom Hooks**:
+
 - `usePlaybackAnimation` - Manages smooth playback via requestAnimationFrame
 - `useAnimationTimeRef` - Dual time system (ref + state)
 - `useScrubbingMode` - Optimizes rendering during timeline scrubbing
 - `useOptimizedTimelineScrubbing` - Debounced timeline updates
 
 **Responsibilities**:
+
 - Decouple 3D rendering from React re-renders
 - Synchronize animation time with UI state
 - Optimize performance during interactions
 - Manage playback state (playing, paused, speed)
 
 **Key Innovation - Dual Time System**:
+
 ```typescript
 // Low-frequency React state (~2-10 updates/sec)
 const [currentTime, setCurrentTime] = useState(0);
@@ -116,6 +123,7 @@ useFrame(() => {
 **Purpose**: React Three Fiber scene, actors, camera, and HUD
 
 **Components**:
+
 - `Arena3D.tsx` - Canvas wrapper, scene container (633 lines)
 - `AnimationFrameActor3D.tsx` - Individual actor rendering
 - `CameraFollower.tsx` - Camera following system
@@ -124,18 +132,20 @@ useFrame(() => {
 - `SharedActor3DGeometries.ts` - Shared geometry pattern (95% memory reduction)
 
 **Render Priority System**:
+
 ```typescript
 enum RenderPriority {
-  FOLLOWER_CAMERA = 0,  // Camera updates first
-  CAMERA = 1,           // Camera controls
-  ACTORS = 2,           // Actor positions
-  HUD = 3,              // UI overlays
-  EFFECTS = 4,          // Visual effects
-  RENDER = 999          // Manual render call (LAST)
+  FOLLOWER_CAMERA = 0, // Camera updates first
+  CAMERA = 1, // Camera controls
+  ACTORS = 2, // Actor positions
+  HUD = 3, // UI overlays
+  EFFECTS = 4, // Visual effects
+  RENDER = 999, // Manual render call (LAST)
 }
 ```
 
 **Responsibilities**:
+
 - Render 3D scene at 60fps
 - Update actor positions without React re-renders
 - Follow selected actors with smooth camera
@@ -144,6 +154,7 @@ enum RenderPriority {
 - Render M0R markers (optional)
 
 **Performance Optimization**:
+
 - ✅ Shared geometries across all actors (3 geometries total instead of 3N)
 - ✅ Direct THREE.js material/position updates (no React)
 - ✅ Texture caching (one load per map)
@@ -159,12 +170,13 @@ enum RenderPriority {
 **Data Structures**:
 
 #### **TimestampPositionLookup**
+
 ```typescript
 interface TimestampPositionLookup {
   positionsByTimestamp: Record<timestamp, Record<actorId, ActorPosition>>;
   sortedTimestamps: number[];
   sampleInterval: number;
-  hasRegularIntervals: boolean;  // Enables O(1) lookups!
+  hasRegularIntervals: boolean; // Enables O(1) lookups!
 }
 
 interface ActorPosition {
@@ -179,6 +191,7 @@ interface ActorPosition {
 ```
 
 **O(1) Lookup Strategy**:
+
 ```typescript
 // When intervals are regular, use mathematical indexing
 if (lookup.hasRegularIntervals) {
@@ -190,6 +203,7 @@ if (lookup.hasRegularIntervals) {
 ```
 
 #### **MapTimeline**
+
 ```typescript
 interface MapTimeline {
   entries: MapTimelineEntry[];
@@ -198,7 +212,7 @@ interface MapTimeline {
 
 interface MapTimelineEntry {
   mapId: number;
-  startTime: number;  // Relative to fight start
+  startTime: number; // Relative to fight start
   endTime: number;
   mapFile?: string;
   mapName?: string;
@@ -206,6 +220,7 @@ interface MapTimelineEntry {
 ```
 
 #### **BuffLookupData**
+
 ```typescript
 interface BuffLookupData {
   buffsByTimestamp: Record<timestamp, BuffState[]>;
@@ -214,6 +229,7 @@ interface BuffLookupData {
 ```
 
 **Responsibilities**:
+
 - Provide O(1) or O(log n) lookups during playback
 - Pre-compute all derived data upfront
 - Cache expensive calculations
@@ -226,11 +242,13 @@ interface BuffLookupData {
 **Purpose**: Heavy computation in background threads
 
 **Web Workers**:
+
 - `CalculateActorPositions.ts` - Interpolate positions from cast events
 - `CalculateBuffLookup.ts` - Build buff state lookup tables
 - `CalculateDebuffLookup.ts` - Build debuff state lookup tables
 
 **Worker Task Pattern**:
+
 ```typescript
 // Generic factory for consistent worker task handling
 const actorPositionsSlice = createWorkerTaskSlice({
@@ -240,12 +258,13 @@ const actorPositionsSlice = createWorkerTaskSlice({
     data: null,
     loading: false,
     error: null,
-    progress: null
-  }
+    progress: null,
+  },
 });
 ```
 
 **Processing Pipeline**:
+
 ```
 Event Data (100k-500k events)
   ↓
@@ -264,6 +283,7 @@ Redux Store (actorPositionsSlice)
 ```
 
 **Responsibilities**:
+
 - Keep main thread responsive during processing
 - Report progress for long-running tasks
 - Handle errors gracefully
@@ -271,6 +291,7 @@ Redux Store (actorPositionsSlice)
 - Build optimized data structures
 
 **Task Dependencies**:
+
 - `debuffLookup` → depends on buff events
 - `actorPositions` → depends on cast events + debuffLookup (taunt detection)
 - `mapTimeline` → depends on buff events (phase detection)
@@ -282,21 +303,23 @@ Redux Store (actorPositionsSlice)
 **Purpose**: Redux store for application state
 
 **Redux Slices**:
+
 ```
 src/store/worker_results/
   ├── actorPositionsSlice.ts     // TimestampPositionLookup
-  ├── buffLookupSlice.ts         // BuffLookupData  
+  ├── buffLookupSlice.ts         // BuffLookupData
   ├── debuffLookupSlice.ts       // DebuffLookupData
   ├── workerTaskSliceFactory.ts  // Generic worker pattern
   └── selectors.ts               // Memoized selectors
 ```
 
 **Selector Pattern**:
+
 ```typescript
 // Memoized selector prevents unnecessary re-renders
 export const selectActorPositionsData = createSelector(
   [(state) => state.workerResults.actorPositions.data],
-  (data) => data
+  (data) => data,
 );
 
 // Used in components
@@ -304,6 +327,7 @@ const lookup = useSelector(selectActorPositionsData);
 ```
 
 **Responsibilities**:
+
 - Store worker computation results
 - Provide memoized selectors
 - Track loading/error states
@@ -329,6 +353,7 @@ The system uses **two parallel time representations**:
    - Source: `useRef(timeRef)`
 
 **Synchronization**:
+
 ```typescript
 // useAnimationTimeRef
 useEffect(() => {
@@ -343,11 +368,12 @@ useEffect(() => {
 ### Memory Management
 
 **Shared Geometry Pattern**:
+
 ```typescript
 // Instead of: 50 actors × 3 geometries = 150 geometry instances
 // We have: 1 cache × 3 geometries = 3 geometry instances
 
-const { puckGeometry, visionConeGeometry, tauntRingGeometry } = 
+const { puckGeometry, visionConeGeometry, tauntRingGeometry } =
   useSharedActor3DGeometries(scale);
 
 // Each actor references the SAME geometry
@@ -355,6 +381,7 @@ const { puckGeometry, visionConeGeometry, tauntRingGeometry } =
 ```
 
 **Texture Caching**:
+
 ```typescript
 // DynamicMapTexture.tsx
 const textureCache = new Map<string, THREE.Texture>();
@@ -370,11 +397,13 @@ function loadTexture(mapFile: string) {
 ### Error Handling
 
 **Current Implementation**:
+
 - ✅ Worker task errors captured in Redux state
 - ✅ Loading states shown in UI
 - ✅ TypeScript prevents type errors
 
 **Recommended Additions** (Priority 1):
+
 - ⚠️ React Error Boundaries around 3D components
 - ⚠️ WebGL support detection with fallback
 - ⚠️ Retry logic for failed worker tasks
@@ -401,7 +430,7 @@ sequenceDiagram
     Redux->>Data: Provide lookup structures
     UI->>Hooks: Initialize playback
     Hooks->>Hooks: Start animation loop (60fps)
-    
+
     loop 60fps Animation
         Hooks->>R3F: Update timeRef
         R3F->>Data: Query positions at time
@@ -409,7 +438,7 @@ sequenceDiagram
         R3F->>R3F: Update THREE.js objects
         R3F->>User: Render frame
     end
-    
+
     User->>UI: Scrub timeline
     UI->>Hooks: Update time (debounced)
     Hooks->>R3F: Update timeRef (immediate)
@@ -441,21 +470,25 @@ sequenceDiagram
 ## Key Files Reference
 
 ### Entry Points
+
 - `src/features/fight_replay/FightReplay.tsx`
 - `src/features/fight_replay/components/FightReplay3D.tsx`
 
 ### Performance-Critical
+
 - `src/workers/calculations/CalculateActorPositions.ts`
 - `src/features/fight_replay/components/AnimationFrameActor3D.tsx`
 - `src/features/fight_replay/components/SharedActor3DGeometries.ts`
 - `src/hooks/useAnimationTimeRef.ts`
 
 ### Data Structures
+
 - `src/types/TimestampPositionLookup.ts`
 - `src/types/MapTimeline.ts`
 - `src/utils/mapTimelineUtils.ts`
 
 ### State Management
+
 - `src/store/worker_results/actorPositionsSlice.ts`
 - `src/store/worker_results/workerTaskSliceFactory.ts`
 
@@ -470,4 +503,4 @@ sequenceDiagram
 
 ---
 
-**Next Steps**: See [REPLAY_SYSTEM_IMPLEMENTATION_PLAN.md](../../REPLAY_SYSTEM_IMPLEMENTATION_PLAN.md) for planned improvements.
+**Next Steps**: See [Replay System Architecture Evaluation](../features/REPLAY_SYSTEM_ARCHITECTURE_EVALUATION.md) for planned improvements.

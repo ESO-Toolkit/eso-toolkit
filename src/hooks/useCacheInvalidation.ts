@@ -25,6 +25,22 @@ interface CacheInvalidationActions {
   dismissUpdate: () => void;
 }
 
+// CacheStorage is shared by every feature in this origin. Only remove caches
+// created by this app; clearing all names can evict caches owned by embedded
+// tooling or a future integration and is unrelated to a release refresh.
+const APP_CACHE_NAME_PREFIX = 'eso-log-aggregator-';
+
+export const clearOwnedCaches = async (): Promise<void> => {
+  if (!('caches' in window)) return;
+
+  const cacheNames = await caches.keys();
+  await Promise.all(
+    cacheNames
+      .filter((cacheName) => cacheName.startsWith(APP_CACHE_NAME_PREFIX))
+      .map((cacheName) => caches.delete(cacheName)),
+  );
+};
+
 /**
  * Hook for managing cache invalidation and version checking
  */
@@ -107,35 +123,24 @@ export const useCacheInvalidation = (
   }, [state.versionLoaded, state.currentVersion, logger]);
 
   const forceReload = useCallback(() => {
-    // Clear all caches and reload
-    if ('caches' in window) {
-      caches
-        .keys()
-        .then((cacheNames) => {
-          return Promise.all(cacheNames.map((cacheName) => caches.delete(cacheName)));
-        })
-        .finally(() => {
-          location.reload();
-        });
-    } else {
-      location.reload();
-    }
+    // Clear only this app's caches and reload. A failed cache operation must
+    // never prevent the user from receiving the new application shell.
+    void clearOwnedCaches()
+      .catch(() => {})
+      .finally(() => {
+        location.reload();
+      });
   }, []);
 
   const clearCache = useCallback(async () => {
     try {
-      // Clear browser caches
-      if ('caches' in window) {
-        const cacheNames = await caches.keys();
-        await Promise.all(cacheNames.map((cacheName) => caches.delete(cacheName)));
-      }
+      // Clear only caches owned by this app. Do not clear sessionStorage: it
+      // can contain auth hand-off state and unrelated feature state.
+      await clearOwnedCaches();
 
       // Clear localStorage version info
       localStorage.removeItem('lastVersionCheck');
       localStorage.removeItem('availableVersion');
-
-      // Clear sessionStorage
-      sessionStorage.clear();
 
       setState((prev) => ({ ...prev, hasUpdate: false, serverVersion: undefined }));
     } catch (error) {

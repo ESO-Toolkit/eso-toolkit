@@ -74,7 +74,7 @@ const sectionLabelSx = {
   fontSize: 11,
   letterSpacing: 0.8,
   textTransform: 'uppercase' as const,
-  fontFamily: 'Space Grotesk, Inter, system-ui',
+  fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
 };
 
 const GeneralSectionComponent: React.FC = () => {
@@ -172,7 +172,7 @@ const GeneralSectionComponent: React.FC = () => {
                       letterSpacing: 0.6,
                       textTransform: 'uppercase',
                       color: alpha(color, isDark ? 0.75 : 0.65),
-                      fontFamily: 'Space Grotesk, Inter, system-ui',
+                      fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                       whiteSpace: 'nowrap',
                     }}
                   >
@@ -266,7 +266,7 @@ const GeneralSectionComponent: React.FC = () => {
                               lineHeight: 1.2,
                               textAlign: 'center',
                               fontSize: 11,
-                              fontFamily: 'Space Grotesk, Inter, system-ui',
+                              fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                               transition: 'color 0.15s',
                             }}
                           >
@@ -327,7 +327,7 @@ const GeneralSectionComponent: React.FC = () => {
                       letterSpacing: 0.6,
                       textTransform: 'uppercase',
                       color: alpha(color, isDark ? 0.75 : 0.65),
-                      fontFamily: 'Space Grotesk, Inter, system-ui',
+                      fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                       whiteSpace: 'nowrap',
                     }}
                   >
@@ -401,7 +401,7 @@ const GeneralSectionComponent: React.FC = () => {
                         fontWeight: selected ? 700 : 500,
                         color: selected ? color : 'text.secondary',
                         fontSize: 11,
-                        fontFamily: 'Space Grotesk, Inter, system-ui',
+                        fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                         transition: 'color 0.15s',
                       }}
                     >
@@ -412,7 +412,7 @@ const GeneralSectionComponent: React.FC = () => {
                       sx={{
                         fontSize: 10,
                         color: alpha(color, 0.5),
-                        fontFamily: 'Space Grotesk, Inter, system-ui',
+                        fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                       }}
                     >
                       · playable in any alliance

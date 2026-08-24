@@ -10,9 +10,8 @@
 ## Author: ESO Toolkit
 ## Version: 0.1.0
 ## AddOnVersion: 1
-## APIVersion: 101047 101049
+## APIVersion: 101049 101050
 ## SavedVariables: ESOTKCompanionSV
 ## Description: Captures champion points, final stats, attributes and scribing ESO Logs can't see, for ESO Toolkit player cards.
-## OptionalDependsOn: LibAddonMenu-2.0
 
 ESOTKCompanion.lua

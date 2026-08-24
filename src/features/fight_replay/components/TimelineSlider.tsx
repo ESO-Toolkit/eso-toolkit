@@ -263,7 +263,7 @@ export const TimelineSlider: React.FC<TimelineSliderProps> = ({
             <Typography
               component="span"
               sx={(theme) => ({
-                fontFamily: 'Space Grotesk, Inter, system-ui',
+                fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                 fontSize: { xs: '1.6rem', sm: '1.9rem' },
                 fontWeight: 600,
                 lineHeight: 1,

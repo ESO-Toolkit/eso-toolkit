@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Responsive Layout Tests', () => {
-  const testReportId = '98b3845e3c1ed2a6191e-67039068743d5eeb2855';
+  const testReportId = process.env.E2E_REPORT_CODE ?? 'F4f2bMwWtgVKxjB9';
   const testUrl = `/r/${testReportId}`;
 
   test('should not have horizontal overflow on mobile', async ({ page }) => {
@@ -72,7 +72,9 @@ test.describe('Responsive Layout Tests', () => {
       const hasOverflow = bodyWidth > viewportWidth + 1;
 
       if (hasOverflow) {
-        console.error(`Horizontal overflow detected on ${viewport.name} viewport: ${bodyWidth}px vs ${viewportWidth}px`);
+        console.error(
+          `Horizontal overflow detected on ${viewport.name} viewport: ${bodyWidth}px vs ${viewportWidth}px`,
+        );
       }
 
       expect(bodyWidth).toBeLessThanOrEqual(viewportWidth + 1);

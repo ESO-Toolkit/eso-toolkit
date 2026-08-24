@@ -342,8 +342,7 @@ function grimoireCompatibleSignatureIds(grimoireKey?: string): Set<number> | nul
   );
   // Class Flourish's shared extra-effect id is compatible with every grimoire that lists it.
   const classMastery = data.signatureScripts?.['class-mastery'] as
-    | { compatibleGrimoires?: string[] }
-    | undefined;
+    { compatibleGrimoires?: string[] } | undefined;
   if (classMastery?.compatibleGrimoires?.includes(grimoireKey)) {
     CLASS_MASTERY_EXTRA_EFFECT_IDS.forEach((id) => ids.add(id));
   }

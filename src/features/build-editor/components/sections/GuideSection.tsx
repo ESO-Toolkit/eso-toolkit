@@ -54,7 +54,7 @@ const sectionLabelSx = {
   fontSize: 11,
   letterSpacing: 0.8,
   textTransform: 'uppercase' as const,
-  fontFamily: 'Space Grotesk, Inter, system-ui',
+  fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
 };
 
 const GuideSectionComponent: React.FC = () => {
@@ -122,7 +122,7 @@ const GuideSectionComponent: React.FC = () => {
             display: 'block',
             mb: 1,
             fontSize: 10,
-            fontFamily: 'Space Grotesk, Inter, system-ui',
+            fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
           }}
         >
           Gear choices, rotation, tips, alternatives.
@@ -183,7 +183,7 @@ const GuideSectionComponent: React.FC = () => {
                 color: 'error.main',
                 mt: 0.5,
                 display: 'block',
-                fontFamily: 'Space Grotesk, Inter, system-ui',
+                fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
               }}
             >
               Invalid URL — must start with https://
@@ -231,7 +231,7 @@ const GuideSectionComponent: React.FC = () => {
             letterSpacing: 0.9,
             textTransform: 'uppercase',
             color: isDark ? 'rgba(255,255,255,0.28)' : 'rgba(0,0,0,0.28)',
-            fontFamily: 'Space Grotesk, Inter, system-ui',
+            fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
             px: 1,
           }}
         >
@@ -246,7 +246,7 @@ const GuideSectionComponent: React.FC = () => {
         sx={{
           color: 'text.disabled',
           fontSize: 10,
-          fontFamily: 'Space Grotesk, Inter, system-ui',
+          fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
           mt: -1,
         }}
       >
@@ -269,7 +269,7 @@ const GuideSectionComponent: React.FC = () => {
               color: 'text.disabled',
               display: 'block',
               mb: 1.5,
-              fontFamily: 'Space Grotesk, Inter, system-ui',
+              fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
               fontStyle: 'italic',
             }}
           >
@@ -282,7 +282,7 @@ const GuideSectionComponent: React.FC = () => {
             onClick={() => inputRef.current?.click()}
             sx={{
               fontSize: 11,
-              fontFamily: 'Space Grotesk, Inter, system-ui',
+              fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
               fontWeight: 600,
               borderRadius: '99px',
               textTransform: 'none',
@@ -383,7 +383,7 @@ const GuideSectionComponent: React.FC = () => {
             sx={{
               alignSelf: 'flex-start',
               fontSize: 11,
-              fontFamily: 'Space Grotesk, Inter, system-ui',
+              fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
               fontWeight: 600,
               borderRadius: '99px',
               textTransform: 'none',

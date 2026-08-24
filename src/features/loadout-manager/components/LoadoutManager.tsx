@@ -93,6 +93,7 @@ import { SetupEditor } from './SetupEditor';
 import { SetupList } from './SetupList';
 
 const MIN_PAGES = 1;
+const MAX_LOADOUT_IMPORT_BYTES = 10 * 1024 * 1024;
 
 const createBlankSetup = (name: string): LoadoutSetup => ({
   name,
@@ -398,6 +399,10 @@ export const LoadoutManager: React.FC = () => {
 
   const processImportFile = async (file: File): Promise<void> => {
     try {
+      if (file.size > MAX_LOADOUT_IMPORT_BYTES) {
+        throw new Error('File is too large to import (max 10MB).');
+      }
+
       const text = await file.text();
       const lowerName = file.name.toLowerCase();
 

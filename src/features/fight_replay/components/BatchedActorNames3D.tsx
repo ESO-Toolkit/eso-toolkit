@@ -1,4 +1,4 @@
-import { Text } from '@react-three/drei';
+import { Text } from '@react-three/drei/core/Text.js';
 import { useFrame, useThree } from '@react-three/fiber';
 import { forwardRef, useImperativeHandle, useMemo, useRef } from 'react';
 import * as THREE from 'three';

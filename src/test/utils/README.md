@@ -1,6 +1,6 @@
 # Test Utilities Documentation
 
-This directory contains organized testing utilities for mock data creation, test helpers, and common testing patterns used throughout the ESO Log Aggregator project.
+This directory contains organized testing utilities for mock data creation, test helpers, and common testing patterns used throughout the ESO Toolkit project.
 
 ## Directory Structure
 

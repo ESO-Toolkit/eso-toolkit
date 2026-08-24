@@ -1,12 +1,14 @@
-See the root LICENSE file for the full license text.
+See the root [LICENSE](../../LICENSE) file for the controlling text.
 
-This software is licensed under the Business Source License 1.1 (BUSL-1.1).
+This repository-specific source-available license labels itself “Business Source License 1.1” and
+uses BSL-style parameters. It is project-specific; this file does not assert an exact SPDX
+`BUSL-1.1` match or grant rights beyond the root `LICENSE`.
 
-Licensor: ESOTK team
-Change Date: Four years after each portion of the Licensed Work is first made publicly available.
-Change License: Apache License, Version 2.0
+The root `LICENSE` identifies the project licensor as “ESOTK team”, permits the listed
+non-production/non-commercial use, specifies a four-year Change Date, and names Apache License 2.0
+as its Change License. Confirm the licensor identity and permitted uses in the root file before
+redistributing these assets.
 
-For non-commercial and non-production use, you may use, copy, modify, and distribute this software.
-Commercial use requires a separate agreement with the ESOTK team.
-
-Full license: https://github.com/ESO-Toolkit/eso-toolkit/blob/main/LICENSE
+Boss portraits are original deterministic SVG sigils generated in
+`src/features/report_details/BossAvatar.tsx`; extracted game-character portrait files are not
+included in this directory.

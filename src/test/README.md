@@ -1,6 +1,6 @@
 # Testing Utilities
 
-This directory contains organized testing utilities for Storybook stories, component testing, and mock data creation throughout the ESO Log Aggregator project.
+This directory contains organized testing utilities for Storybook stories, component testing, and mock data creation throughout the ESO Toolkit project.
 
 ## Directory Structure
 

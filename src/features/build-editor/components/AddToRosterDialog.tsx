@@ -233,7 +233,7 @@ export const AddToRosterDialog: React.FC<Props> = ({ open, onClose, build }) => 
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
-    fontFamily: 'Space Grotesk, Inter, system-ui',
+    fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
     fontWeight: 700,
     fontSize: 16,
     pb: 1,
@@ -272,14 +272,14 @@ export const AddToRosterDialog: React.FC<Props> = ({ open, onClose, build }) => 
             <Typography
               variant="body2"
               color="text.secondary"
-              sx={{ fontFamily: 'Space Grotesk, Inter, system-ui', mb: 0.5 }}
+              sx={{ fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui', mb: 0.5 }}
             >
               No saved rosters yet.
             </Typography>
             <Typography
               variant="caption"
               color="text.disabled"
-              sx={{ fontFamily: 'Space Grotesk, Inter, system-ui' }}
+              sx={{ fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui' }}
             >
               Create a roster in the Roster Builder first, then come back here.
             </Typography>
@@ -316,7 +316,9 @@ export const AddToRosterDialog: React.FC<Props> = ({ open, onClose, build }) => 
         <Stack spacing={3}>
           {/* ── Roster picker ── */}
           <FormControl size="small" fullWidth>
-            <InputLabel sx={{ fontFamily: 'Space Grotesk, Inter, system-ui', fontSize: 13 }}>
+            <InputLabel
+              sx={{ fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui', fontSize: 13 }}
+            >
               Roster
             </InputLabel>
             <Select
@@ -327,7 +329,7 @@ export const AddToRosterDialog: React.FC<Props> = ({ open, onClose, build }) => 
                 setSelectedSlot(null);
               }}
               sx={{
-                fontFamily: 'Space Grotesk, Inter, system-ui',
+                fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                 fontSize: 13,
                 borderRadius: 2,
               }}
@@ -336,7 +338,10 @@ export const AddToRosterDialog: React.FC<Props> = ({ open, onClose, build }) => 
                 <MenuItem
                   key={sr.id}
                   value={sr.id}
-                  sx={{ fontFamily: 'Space Grotesk, Inter, system-ui', fontSize: 13 }}
+                  sx={{
+                    fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
+                    fontSize: 13,
+                  }}
                 >
                   {sr.roster.rosterName}
                 </MenuItem>
@@ -357,7 +362,7 @@ export const AddToRosterDialog: React.FC<Props> = ({ open, onClose, build }) => 
               <Typography
                 sx={{
                   display: 'block',
-                  fontFamily: 'Space Grotesk, Inter, system-ui',
+                  fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                   fontSize: 11,
                   fontWeight: 600,
                   letterSpacing: 0.8,
@@ -371,7 +376,7 @@ export const AddToRosterDialog: React.FC<Props> = ({ open, onClose, build }) => 
                 onClick={() => setShowAllSlots((prev) => !prev)}
                 sx={{
                   fontSize: 11,
-                  fontFamily: 'Space Grotesk, Inter, system-ui',
+                  fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                   fontWeight: 600,
                   color: showAllSlots ? 'var(--be-accent, #38bdf8)' : 'text.disabled',
                   px: 1,
@@ -468,7 +473,7 @@ export const AddToRosterDialog: React.FC<Props> = ({ open, onClose, build }) => 
                         sx={{
                           fontSize: 10,
                           fontWeight: 700,
-                          fontFamily: 'Space Grotesk, Inter, system-ui',
+                          fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                           letterSpacing: 0.4,
                           color: isSelected ? 'var(--be-accent, #38bdf8)' : 'text.primary',
                           lineHeight: 1,
@@ -480,7 +485,7 @@ export const AddToRosterDialog: React.FC<Props> = ({ open, onClose, build }) => 
                         <Typography
                           sx={{
                             fontSize: 8,
-                            fontFamily: 'Space Grotesk, Inter, system-ui',
+                            fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                             color: 'text.disabled',
                             lineHeight: 1,
                             maxWidth: 54,
@@ -502,7 +507,12 @@ export const AddToRosterDialog: React.FC<Props> = ({ open, onClose, build }) => 
           {/* ── Setup picker — only when multiple setups ── */}
           {build.setups.length > 1 && (
             <FormControl size="small" fullWidth>
-              <InputLabel sx={{ fontFamily: 'Space Grotesk, Inter, system-ui', fontSize: 13 }}>
+              <InputLabel
+                sx={{
+                  fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
+                  fontSize: 13,
+                }}
+              >
                 Setup
               </InputLabel>
               <Select
@@ -510,7 +520,7 @@ export const AddToRosterDialog: React.FC<Props> = ({ open, onClose, build }) => 
                 label="Setup"
                 onChange={(e) => setSelectedSetupIndex(e.target.value as number)}
                 sx={{
-                  fontFamily: 'Space Grotesk, Inter, system-ui',
+                  fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                   fontSize: 13,
                   borderRadius: 2,
                 }}
@@ -519,7 +529,10 @@ export const AddToRosterDialog: React.FC<Props> = ({ open, onClose, build }) => 
                   <MenuItem
                     key={setup.id}
                     value={i}
-                    sx={{ fontFamily: 'Space Grotesk, Inter, system-ui', fontSize: 13 }}
+                    sx={{
+                      fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
+                      fontSize: 13,
+                    }}
                   >
                     {setup.name || `Setup ${i + 1}`}
                   </MenuItem>
@@ -541,7 +554,7 @@ export const AddToRosterDialog: React.FC<Props> = ({ open, onClose, build }) => 
               <Typography
                 sx={{
                   fontSize: 12,
-                  fontFamily: 'Space Grotesk, Inter, system-ui',
+                  fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                   color: isDark ? '#4ade80' : '#059669',
                   lineHeight: 1.5,
                 }}

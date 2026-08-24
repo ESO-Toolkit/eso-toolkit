@@ -110,7 +110,7 @@ export const SlotActionPill = React.memo<SlotActionPillProps>(
                 borderRadius: '6px',
                 fontSize: '0.65rem',
                 fontWeight: 600,
-                fontFamily: 'Space Grotesk, Inter, system-ui',
+                fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                 backgroundColor: `${color}12`,
                 border: `1px solid ${color}30`,
                 color,

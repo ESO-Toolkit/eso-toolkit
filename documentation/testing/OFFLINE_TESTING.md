@@ -2,7 +2,7 @@
 
 ## Overview
 
-The ESO Log Aggregator now supports offline testing using pre-downloaded data, significantly improving test performance and reliability. This system automatically downloads test data during GitHub Actions runs and caches it for subsequent use.
+ESO Toolkit now supports offline testing using pre-downloaded data, significantly improving test performance and reliability. This system automatically downloads test data during GitHub Actions runs and caches it for subsequent use.
 
 ## 🚀 Key Benefits
 
@@ -42,10 +42,10 @@ npm run test:screen-sizes:fast
 
 ## 📊 Performance Comparison
 
-| Mode | Data Source | Typical Duration | Network Calls |
-|------|-------------|------------------|---------------|
-| **Offline** | Pre-downloaded files | ~2-3 minutes | None during tests |
-| **Online** | Live API calls | ~6-10 minutes | ~100+ GraphQL queries |
+| Mode        | Data Source          | Typical Duration | Network Calls         |
+| ----------- | -------------------- | ---------------- | --------------------- |
+| **Offline** | Pre-downloaded files | ~2-3 minutes     | None during tests     |
+| **Online**  | Live API calls       | ~6-10 minutes    | ~100+ GraphQL queries |
 
 ## 🔧 Technical Details
 
@@ -53,7 +53,7 @@ npm run test:screen-sizes:fast
 
 ```
 data-downloads/
-└── nbKdDtT4NcZyVrvX/          # Report code
+└── F4f2bMwWtgVKxjB9/          # Bundled public sample report code
     ├── player-data.json       # Player details and stats
     ├── master-data.json       # Actors and abilities
     └── fight-117/             # Fight-specific data
@@ -69,8 +69,9 @@ data-downloads/
 ### Automatic Mode Detection
 
 The test system automatically detects offline data availability by checking for required files:
+
 - `fight-info.json`
-- `encounter-info.json` 
+- `encounter-info.json`
 - `../player-data.json`
 - `events/damage-events.json`
 - `events/buff-events.json`
@@ -79,6 +80,7 @@ The test system automatically detects offline data availability by checking for 
 ### Route Interception
 
 When offline data is available, Playwright intercepts GraphQL requests and serves responses from local JSON files:
+
 - `getReportByCode` → `fight-info.json`
 - `getReportMasterData` → `encounter-info.json`
 - `getPlayersForReport` → `player-data.json`
@@ -90,6 +92,7 @@ When offline data is available, Playwright intercepts GraphQL requests and serve
 ### Required Secrets
 
 The repository needs these secrets configured:
+
 ```
 OAUTH_CLIENT_ID=your_eso_logs_client_id
 OAUTH_CLIENT_SECRET=your_eso_logs_client_secret
@@ -114,7 +117,7 @@ OAUTH_CLIENT_SECRET=your_eso_logs_client_secret
 
 ```bash
 # Check if offline data is available
-ls -la data-downloads/nbKdDtT4NcZyVrvX/fight-117/
+ls -la data-downloads/F4f2bMwWtgVKxjB9/fight-5/
 
 # Force re-download of test data
 rm -rf data-downloads/ && npm run download-test-data
@@ -134,6 +137,7 @@ npm run test:screen-sizes:fast -- --workers=1
 ### Test Logs
 
 Look for these indicators in test output:
+
 - `🔌 Using offline mode with pre-downloaded data` - Offline mode active
 - `🌐 Using online mode with API caching` - Online fallback mode
 - `📂 Loaded offline data for [operation] from [file]` - Successful offline data load
@@ -141,6 +145,7 @@ Look for these indicators in test output:
 ### GitHub Actions
 
 Monitor these metrics in workflow logs:
+
 - Cache hit/miss rates
 - Download duration and success
 - Test execution time improvements

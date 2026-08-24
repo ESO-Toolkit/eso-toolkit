@@ -2,13 +2,26 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
+    <!--
+      GitHub Pages cannot set response headers, so Vite replaces the inline
+      script hash marker below with a SHA-256 hash of the final route-restore
+      script at build time. This meta CSP is only a browser-side fallback:
+      frame-ancestors, nosniff, HSTS, and Permissions-Policy still require
+      response headers from a header-capable edge/host.
+    -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; script-src 'self' __CSP_INLINE_SCRIPT_HASHES__ 'wasm-unsafe-eval' https://www.googletagmanager.com https://cdn.jsdelivr.net; worker-src 'self' blob: https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob: https:; connect-src 'self' https://www.esologs.com https://roster-hub-api.eso-toolkit.workers.dev https://eso-toolkit-discord-bot.eso-toolkit.workers.dev https://api.github.com https://gist.githubusercontent.com https://api.rollbar.com https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://esolog.uesp.net https://cdn.jsdelivr.net https://tessdata.projectnaptha.com; frame-src 'self' kalpa:; manifest-src 'self'"
+    />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
     <link rel="icon" href="/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <!-- Force browsers and intermediaries to revalidate index.html so hashed assets stay in sync -->
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-  <meta http-equiv="Pragma" content="no-cache" />
-  <meta http-equiv="Expires" content="0" />
-    <meta name="theme-color" content="#000000" />
+    <!-- Force browsers and intermediaries to revalidate index.html so hashed assets stay in sync -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    <meta name="theme-color" content="#0b1220" />
+    <link rel="canonical" href="https://esotk.com/" />
     <meta
       name="description"
       content="ESO Toolkit — Advanced analytics and visualization tool for Elder Scrolls Online combat logs. Analyze damage, healing, buffs, and performance with beautiful charts and detailed breakdowns."
@@ -19,8 +32,11 @@
       content="Advanced analytics and visualization tool for Elder Scrolls Online combat logs. Analyze damage, healing, buffs, and performance with beautiful charts and detailed breakdowns."
     />
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="/" />
-    <meta property="og:image" content="/android-chrome-512x512.png" />
+    <meta property="og:url" content="https://esotk.com/" />
+    <meta property="og:image" content="https://esotk.com/social-preview.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="ESO Toolkit combat analytics social preview" />
     <meta property="og:site_name" content="ESO Toolkit" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="ESO Toolkit" />
@@ -28,22 +44,10 @@
       name="twitter:description"
       content="Advanced analytics and visualization tool for Elder Scrolls Online combat logs. Analyze damage, healing, buffs, and performance with beautiful charts and detailed breakdowns."
     />
-    <meta name="twitter:image" content="/android-chrome-512x512.png" />
+    <meta name="twitter:image" content="https://esotk.com/social-preview.png" />
+    <meta name="twitter:image:alt" content="ESO Toolkit combat analytics social preview" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/manifest.json" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&family=Space+Grotesk:wght@300..700&display=swap"
-      rel="stylesheet"
-    />
-    <!-- Material Symbols for ligature icons (e.g., skull, swords).
-         display=block (not swap): swapping a ligature icon font would flash the
-         raw ligature TEXT ("skull") before the glyph loads; block hides it. -->
-    <link
-      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=block"
-      rel="stylesheet"
-    />
     <title>ESO Toolkit</title>
     <script>
       // SPA deep-link restoration — runs synchronously before React mounts so the
@@ -63,7 +67,8 @@
             p.length > 1 &&
             p.charAt(0) === '/' &&
             p.charAt(1) !== '/' &&
-            p.indexOf('://') === -1
+            p.indexOf('://') === -1 &&
+            p.indexOf('\\') === -1
           );
         }
 

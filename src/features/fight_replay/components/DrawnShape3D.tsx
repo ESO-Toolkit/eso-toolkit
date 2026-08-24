@@ -10,7 +10,7 @@
  *   visibility flip is driven imperatively in useFrame (reading the shared timeRef) and pokes the
  *   on-demand render loop via markDirty so it repaints while paused.
  */
-import { Line } from '@react-three/drei';
+import { Line } from '@react-three/drei/core/Line.js';
 import { useFrame } from '@react-three/fiber';
 import React, { useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';

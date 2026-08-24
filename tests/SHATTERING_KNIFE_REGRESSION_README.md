@@ -32,7 +32,7 @@ This directory contains E2E regression tests to ensure Player 1's Shattering Kni
 
 ## Test Data
 
-**Report**: `m2Y9FqdpMjcaZh4R`
+**Report**: Bundled public sample by default; override with `E2E_REPORT_CODE`.
 **Fight**: `11`
 **Player**: `1` (Player 1)
 **Ability**: `217340` (Shattering Knife)
@@ -91,8 +91,8 @@ These tests will **FAIL** if:
 - API endpoints are modified
 
 ### Test Data Location
-- Fight data: `data-downloads/m2Y9FqdpMjcaZh4R/fight-11/`
-- Cast events: `data-downloads/m2Y9FqdpMjcaZh4R/fight-11/events/cast-events.json`
+- Fight data: `data-downloads/<report-code>/fight-<fight-id>/`
+- Cast events: `data-downloads/<report-code>/fight-<fight-id>/events/cast-events.json`
 - API mocking: `tests/utils/api-mocking.ts`
 
 ## Troubleshooting

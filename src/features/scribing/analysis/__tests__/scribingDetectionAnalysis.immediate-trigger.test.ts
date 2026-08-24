@@ -111,7 +111,7 @@ describe('Scribing Detection - Immediate Trigger Prioritization', () => {
       // This documents the real-world scenario from Fight 32
       const player7Scenario = {
         playerId: 7,
-        playerName: '@Mobitor',
+        playerName: '@SamplePlayer7',
         abilityId: 220542, // Magical Trample
 
         // Heroism (scribing affix)
@@ -142,7 +142,7 @@ describe('Scribing Detection - Immediate Trigger Prioritization', () => {
       // This documents Player 6 scenario where Protection still wins
       const player6Scenario = {
         playerId: 6,
-        playerName: '@Syoni',
+        playerName: '@SamplePlayer6',
         abilityId: 240150, // Ulfsild's Contingency
 
         candidates: [
@@ -398,8 +398,8 @@ describe('Scribing Detection - Immediate Trigger Prioritization', () => {
         title: 'Some scribing detection not working',
         problem: 'Protection passive buffs incorrectly detected as scribing affix',
         solution: 'Immediate trigger prioritization (0-10ms timing threshold)',
-        affectedPlayers: ['Player 7 (@Mobitor)'],
-        reportId: '3gjVGWB2dxCL8XAw',
+        affectedPlayers: ['Player 7 (@SamplePlayer7)'],
+        reportId: 'sample-report-fixture',
         fightId: 32,
       };
 

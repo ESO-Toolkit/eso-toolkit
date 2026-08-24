@@ -100,8 +100,7 @@ export function useActorPositionsTask(): UseActorPositionsTaskResult {
     selectWorkerTaskLoading('calculateActorPositions'),
   ) as boolean;
   const actorPositionsError = useSelector(selectWorkerTaskError('calculateActorPositions')) as
-    | string
-    | null;
+    string | null;
   const actorPositionsProgress = useSelector(
     selectWorkerTaskProgress('calculateActorPositions'),
   ) as number | null;

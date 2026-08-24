@@ -99,8 +99,11 @@ globalSetup: './tests/global-setup.ts'
 # Fast mode (uses preprocessing automatically)
 npm run test:screen-sizes:fast
 
-# Full mode (uses preprocessing automatically) 
+# Maintained 14-viewport mode (uses preprocessing automatically)
 npm run test:screen-sizes
+
+# Exploratory matrix without visual baselines
+npm run test:screen-sizes:matrix
 
 # Verification test
 npx playwright test tests/screen-sizes/preprocessing-test.spec.ts

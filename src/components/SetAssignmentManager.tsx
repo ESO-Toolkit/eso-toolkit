@@ -226,7 +226,7 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
               sx={{
                 fontSize: '0.65rem',
                 fontWeight: isPrimary ? 700 : 500,
-                fontFamily: '"Space Grotesk", sans-serif',
+                fontFamily: '"Space Grotesk Variable", sans-serif',
                 color: isPrimary ? color : `${color}99`,
                 textTransform: 'uppercase',
                 letterSpacing: '0.06em',
@@ -374,7 +374,7 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
               sx={{
                 fontSize: '0.65rem',
                 fontWeight: isPrimary ? 700 : 500,
-                fontFamily: '"Space Grotesk", sans-serif',
+                fontFamily: '"Space Grotesk Variable", sans-serif',
                 color: isPrimary ? color : `${color}99`,
                 textTransform: 'uppercase',
                 letterSpacing: '0.06em',
@@ -1258,7 +1258,7 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
             </Typography>
             <Typography
               sx={{
-                fontFamily: '"Space Grotesk", sans-serif',
+                fontFamily: '"Space Grotesk Variable", sans-serif',
                 fontWeight: 700,
                 fontSize: '1.05rem',
                 letterSpacing: '-0.02em',
@@ -1395,7 +1395,7 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
                         sx={{
                           fontSize: '0.65rem',
                           fontWeight: 700,
-                          fontFamily: '"Space Grotesk", sans-serif',
+                          fontFamily: '"Space Grotesk Variable", sans-serif',
                           color: roleColors.tank,
                           textTransform: 'uppercase',
                           letterSpacing: '0.1em',
@@ -1448,7 +1448,7 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
                         sx={{
                           fontSize: '0.65rem',
                           fontWeight: 700,
-                          fontFamily: '"Space Grotesk", sans-serif',
+                          fontFamily: '"Space Grotesk Variable", sans-serif',
                           color: roleColors.dps,
                           textTransform: 'uppercase',
                           letterSpacing: '0.1em',
@@ -1501,7 +1501,7 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
                         sx={{
                           fontSize: '0.65rem',
                           fontWeight: 700,
-                          fontFamily: '"Space Grotesk", sans-serif',
+                          fontFamily: '"Space Grotesk Variable", sans-serif',
                           color: roleColors.healer,
                           textTransform: 'uppercase',
                           letterSpacing: '0.1em',
@@ -1547,7 +1547,7 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
                     sx={{
                       fontSize: '0.62rem',
                       fontWeight: 600,
-                      fontFamily: '"Space Grotesk", sans-serif',
+                      fontFamily: '"Space Grotesk Variable", sans-serif',
                       color: 'text.secondary',
                       textTransform: 'uppercase',
                       letterSpacing: '0.1em',
@@ -1696,7 +1696,7 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
                         sx={{
                           fontSize: '0.65rem',
                           fontWeight: 700,
-                          fontFamily: '"Space Grotesk", sans-serif',
+                          fontFamily: '"Space Grotesk Variable", sans-serif',
                           color: roleColors.tank,
                           textTransform: 'uppercase',
                           letterSpacing: '0.1em',
@@ -1747,7 +1747,7 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
                         sx={{
                           fontSize: '0.65rem',
                           fontWeight: 700,
-                          fontFamily: '"Space Grotesk", sans-serif',
+                          fontFamily: '"Space Grotesk Variable", sans-serif',
                           color: roleColors.healer,
                           textTransform: 'uppercase',
                           letterSpacing: '0.1em',
@@ -1802,7 +1802,7 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
                     sx={{
                       fontSize: '0.65rem',
                       fontWeight: 700,
-                      fontFamily: '"Space Grotesk", sans-serif',
+                      fontFamily: '"Space Grotesk Variable", sans-serif',
                       color: roleColors.healer,
                       textTransform: 'uppercase',
                       letterSpacing: '0.1em',
@@ -1852,7 +1852,7 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
                 sx={{
                   fontSize: '0.68rem',
                   color: 'text.secondary',
-                  fontFamily: '"Space Grotesk", sans-serif',
+                  fontFamily: '"Space Grotesk Variable", sans-serif',
                   textTransform: 'uppercase',
                   letterSpacing: '0.08em',
                   fontWeight: 500,

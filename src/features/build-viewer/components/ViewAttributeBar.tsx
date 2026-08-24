@@ -67,7 +67,7 @@ export const ViewAttributeBar: React.FC<ViewAttributeBarProps> = ({ label, color
           minWidth: 60,
           color: 'text.primary',
           fontSize: 12,
-          fontFamily: 'Space Grotesk, Inter, system-ui',
+          fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
         }}
       >
         {label}
@@ -109,7 +109,7 @@ export const ViewAttributeBar: React.FC<ViewAttributeBarProps> = ({ label, color
           textAlign: 'center',
           fontWeight: 700,
           fontVariantNumeric: 'tabular-nums',
-          fontFamily: 'Space Grotesk, Inter, system-ui',
+          fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
           color: isEmpty ? (isDark ? 'rgba(255,255,255,0.30)' : 'rgba(0,0,0,0.28)') : color,
           fontSize: 13,
           textShadow: isEmpty ? 'none' : `0 0 8px ${alpha(color, 0.4)}`,

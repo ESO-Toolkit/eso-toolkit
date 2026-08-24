@@ -87,7 +87,7 @@ export const ReplayStatePanel: React.FC<ReplayStatePanelProps> = ({
       <Typography
         variant="h6"
         component="p"
-        sx={{ fontFamily: 'Space Grotesk, Inter, system-ui', fontWeight: 600 }}
+        sx={{ fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui', fontWeight: 600 }}
       >
         {title}
       </Typography>

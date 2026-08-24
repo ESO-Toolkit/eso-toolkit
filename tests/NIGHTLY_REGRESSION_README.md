@@ -32,7 +32,7 @@ The nightly regression tests are split into four main test suites:
    - Data integrity verification for Shattering Knife
    - **Status**: AVAILABLE - For detailed scribing feature validation
 
-3. **`nightly-regression-interactive.spec.ts`** - Advanced interactive features
+5. **`nightly-regression-interactive.spec.ts`** - Advanced interactive features
    - Fight replay functionality
    - Live logging interface
    - Advanced visualizations (heatmaps, rotation analysis, talents)
@@ -41,20 +41,27 @@ The nightly regression tests are split into four main test suites:
 ## Prerequisites
 
 ### 1. Running Dev Server
+
 The tests require a running development server:
+
 ```bash
 npm start
 ```
+
 The dev server should be accessible at `http://localhost:3000`.
 
 ### 2. Real Data Access
+
 These tests are designed to work with **real ESO Logs data**, not mocked responses. Ensure:
+
 - Your dev server can reach `esologs.com` APIs
 - You have valid API access (authentication may be required for some features)
 - The test report IDs in the tests are still valid and accessible
 
 ### 3. Network Connection
+
 Tests make real API calls and may take longer than regular tests. Ensure you have:
+
 - Stable internet connection
 - No corporate firewall blocking `esologs.com`
 - Sufficient bandwidth for loading large datasets
@@ -62,14 +69,17 @@ Tests make real API calls and may take longer than regular tests. Ensure you hav
 ## Running Tests
 
 ### Quick Start
+
 Use the provided runner scripts for an interactive experience:
 
 **Windows (Command Prompt):**
+
 ```cmd
 run-nightly-tests.bat
 ```
 
 **Windows (PowerShell) or Cross-platform:**
+
 ```powershell
 .\run-nightly-tests.ps1
 ```
@@ -77,11 +87,13 @@ run-nightly-tests.bat
 ### Manual Execution
 
 **Run all tests across all browsers:**
+
 ```bash
 npm run test:nightly:all
 ```
 
 **Run specific browser tests:**
+
 ```bash
 npm run test:nightly:chromium    # Fastest, recommended for development
 npm run test:nightly:firefox     # Firefox testing
@@ -90,16 +102,19 @@ npm run test:nightly:mobile      # Mobile browsers
 ```
 
 **Run with visible browser (debugging):**
+
 ```bash
 npm run test:nightly:headed
 ```
 
 **Run specific test file:**
+
 ```bash
 npx playwright test tests/nightly-regression.spec.ts --config=playwright.nightly.config.ts
 ```
 
 **View test report:**
+
 ```bash
 npm run test:nightly:report
 ```
@@ -117,22 +132,24 @@ The tests use a specialized Playwright configuration (`playwright.nightly.config
 
 ## Test Data
 
-The tests use known report IDs that should contain comprehensive data:
+The tests use the bundled public sample reports by default. Authenticated live
+report IDs must be supplied through `ESO_LOG_TEST_REPORT_IDS`:
 
 ```typescript
-const REAL_REPORT_IDS = [
-  '3gjVGWB2dxCL8XAw', // Primary test report
-  'baJFfYC8trPhHMQp', // Secondary test report  
-  'L4RQWvJkGXnfaPK6', // Tertiary test report
-  'VTqBNRdzCfp36gtL', // Quaternary test report
+const REAL_REPORT_IDS = process.env.ESO_LOG_TEST_REPORT_IDS?.split(',').filter(Boolean) ?? [
+  'F4f2bMwWtgVKxjB9',
+  'YArFDbq7BdhwL691',
 ];
 ```
 
-**Note:** These report IDs may become invalid over time. Update them in the test files if tests start failing due to missing reports.
+**Note:** The public sample reports are bundled under `public/sample-reports/`.
+Do not commit private or personal live-report IDs; pass those through the
+environment variable when needed.
 
 ## What Gets Tested
 
 ### Core Functionality
+
 - ✅ Report landing pages load correctly
 - ✅ Fight lists display properly
 - ✅ All main tabs render with real data:
@@ -146,6 +163,7 @@ const REAL_REPORT_IDS = [
   - Damage Reduction
 
 ### Interactive Features
+
 - ✅ Fight replay controls and timeline
 - ✅ Live logging interface
 - ✅ Data grid sorting and filtering
@@ -154,12 +172,14 @@ const REAL_REPORT_IDS = [
 - ✅ Player selection and drill-down
 
 ### Advanced Visualizations
+
 - ✅ Location heatmaps
 - ✅ Rotation analysis charts
 - ✅ Talents/abilities grids
 - ✅ Experimental tab features
 
 ### Authentication & Navigation
+
 - ✅ Login page and flows
 - ✅ Protected route handling
 - ✅ Latest reports browsing
@@ -168,6 +188,7 @@ const REAL_REPORT_IDS = [
 - ✅ Search and filtering
 
 ### Performance & Reliability
+
 - ✅ Load times under 30 seconds
 - ✅ No memory leaks during tab switching
 - ✅ Large dataset handling
@@ -179,21 +200,25 @@ const REAL_REPORT_IDS = [
 After running tests, you'll find:
 
 ### Screenshots
+
 - `test-results-nightly/*.png` - Full page screenshots of each tested page/tab
 - Organized by test name and report ID
 - Useful for visual regression detection
 
 ### Videos
+
 - `test-results-nightly/*.webm` - Recorded videos of failed test runs
 - Only captured when tests fail
 - Helpful for debugging issues
 
 ### Reports
+
 - `playwright-report-nightly/index.html` - Interactive HTML report
 - `test-results/nightly-results.json` - Machine-readable results
 - `test-results/nightly-junit.xml` - JUnit format for CI/CD
 
 ### Traces
+
 - Detailed execution traces for failed tests
 - Can be opened in Playwright's trace viewer
 - Contains network requests, DOM snapshots, console logs
@@ -203,27 +228,32 @@ After running tests, you'll find:
 ### Common Issues
 
 **1. "Dev server not running" error**
+
 ```bash
 # Start the dev server first
 npm start
 ```
 
 **2. Tests timeout waiting for data**
+
 - Check your internet connection
 - Verify the test report IDs are still valid
 - Some reports may have been deleted or made private
 
 **3. Authentication required errors**
+
 - Some features require ESO Logs authentication
 - Tests should gracefully handle this and show login prompts
 - Update test expectations if auth requirements change
 
 **4. Network request failures**
+
 - Corporate firewalls may block `esologs.com`
 - Use VPN if necessary
 - Check if ESO Logs is experiencing downtime
 
 **5. Visual differences in screenshots**
+
 - Expected for visual regression testing
 - Compare with previous runs to identify actual issues
 - Screenshots may vary by browser and screen resolution
@@ -231,16 +261,19 @@ npm start
 ### Debugging Tests
 
 **Run in headed mode to see browser:**
+
 ```bash
 npm run test:nightly:headed
 ```
 
 **Run specific test with full output:**
+
 ```bash
 npx playwright test tests/nightly-regression.spec.ts --config=playwright.nightly.config.ts --headed --project=chromium-desktop --reporter=line
 ```
 
 **Use Playwright's debug mode:**
+
 ```bash
 npx playwright test tests/nightly-regression.spec.ts --config=playwright.nightly.config.ts --debug
 ```
@@ -248,6 +281,7 @@ npx playwright test tests/nightly-regression.spec.ts --config=playwright.nightly
 ## Maintenance
 
 ### Updating Test Data
+
 If report IDs become invalid:
 
 1. Find new valid report IDs from esologs.com
@@ -255,6 +289,7 @@ If report IDs become invalid:
 3. Verify the new reports have the expected content (fights, players, data)
 
 ### Adding New Tests
+
 Follow the established patterns:
 
 1. Use the helper functions in `tests/utils/nightly-regression-helpers.ts`
@@ -263,7 +298,9 @@ Follow the established patterns:
 4. Test across multiple report IDs when possible
 
 ### Scheduled Runs
+
 Consider setting up these tests to run:
+
 - **Nightly** - Full test suite across all browsers
 - **Weekly** - Extended test with additional report IDs
 - **Before releases** - Smoke test on critical paths
@@ -276,22 +313,22 @@ Example GitHub Actions configuration:
 name: Nightly Regression Tests
 on:
   schedule:
-    - cron: '0 2 * * *'  # 2 AM daily
+    - cron: '0 2 * * *' # 2 AM daily
   workflow_dispatch:
 
 jobs:
   nightly-tests:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '18'
       - run: npm ci
       - run: npm run build
       - run: npm start &
       - run: npm run test:nightly:all
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always()
         with:
           name: nightly-test-results
@@ -303,12 +340,14 @@ jobs:
 ## Performance Expectations
 
 ### Typical Run Times
+
 - **Single browser (Chromium):** 15-30 minutes
 - **All browsers:** 45-90 minutes
 - **Mobile tests:** 20-40 minutes
 - **Interactive features only:** 10-20 minutes
 
 ### Resource Usage
+
 - **Memory:** 2-4 GB RAM recommended
 - **Storage:** 500MB-1GB for test artifacts
 - **Network:** 100-500 MB data transfer

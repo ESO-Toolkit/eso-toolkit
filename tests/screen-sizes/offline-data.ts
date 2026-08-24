@@ -1,6 +1,6 @@
 /**
  * Offline data utilities for screen size tests
- * 
+ *
  * These utilities allow tests to use pre-downloaded data instead of making
  * live API calls, making tests faster, more reliable, and independent of
  * external services.
@@ -12,8 +12,8 @@ import path from 'path';
 import { Page } from '@playwright/test';
 
 // Test configuration - matches the test data
-const TEST_REPORT_CODE = 'nbKdDtT4NcZyVrvX';
-const TEST_FIGHT_ID = '117';
+const TEST_REPORT_CODE = process.env.SCREEN_SIZE_REPORT_CODE ?? 'F4f2bMwWtgVKxjB9';
+const TEST_FIGHT_ID = process.env.SCREEN_SIZE_FIGHT_ID ?? '5';
 const DATA_DIR = path.join(process.cwd(), 'data-downloads');
 const TEST_DATA_DIR = path.join(DATA_DIR, TEST_REPORT_CODE, `fight-${TEST_FIGHT_ID}`);
 
@@ -31,12 +31,12 @@ const DATA_FILE_MAPPING: OfflineDataFile[] = [
     description: 'Basic report information',
   },
   {
-    filename: 'encounter-info.json', 
+    filename: 'encounter-info.json',
     operationName: 'getReportMasterData',
     description: 'Report master data with fights and actors',
   },
   {
-    filename: '../player-data.json', 
+    filename: '../player-data.json',
     operationName: 'getPlayersForReport',
     description: 'Player information with details and stats',
   },
@@ -47,7 +47,7 @@ const DATA_FILE_MAPPING: OfflineDataFile[] = [
   },
   {
     filename: 'events/damage-events.json',
-    operationName: 'getDamageEvents', 
+    operationName: 'getDamageEvents',
     description: 'Damage events for DPS analysis',
   },
   {
@@ -100,13 +100,13 @@ export function isOfflineDataAvailable(): boolean {
     // Check if core data files exist in their actual structure
     const coreFiles = [
       'fight-info.json',
-      'encounter-info.json', 
+      'encounter-info.json',
       '../player-data.json',
       'events/damage-events.json',
       'events/buff-events.json',
       'events/all-events.json',
     ];
-    
+
     for (const filename of coreFiles) {
       const filePath = path.join(TEST_DATA_DIR, filename);
       if (!fs.existsSync(filePath)) {
@@ -138,7 +138,7 @@ export function loadOfflineData(operationName: string, _variables?: any): any {
     };
   }
 
-  const mapping = DATA_FILE_MAPPING.find(m => m.operationName === operationName);
+  const mapping = DATA_FILE_MAPPING.find((m) => m.operationName === operationName);
   if (!mapping) {
     console.warn(`⚠️ No offline data mapping found for operation: ${operationName}`);
     return null;
@@ -156,7 +156,10 @@ export function loadOfflineData(operationName: string, _variables?: any): any {
     console.log(`📂 Loaded offline data for ${operationName} from ${mapping.filename}`);
     return data;
   } catch (error) {
-    console.warn(`⚠️ Failed to load offline data for ${operationName}:`, error instanceof Error ? error.message : String(error));
+    console.warn(
+      `⚠️ Failed to load offline data for ${operationName}:`,
+      error instanceof Error ? error.message : String(error),
+    );
     return null;
   }
 }
@@ -196,10 +199,10 @@ export async function enableOfflineMode(page: Page): Promise<void> {
 
       // Try to load offline data
       const offlineData = loadOfflineData(operationName, graphqlRequest.variables);
-      
+
       if (offlineData) {
         console.log(`🔌 Offline response for ${operationName}`);
-        
+
         await route.fulfill({
           status: 200,
           headers: { 'content-type': 'application/json' },
@@ -211,9 +214,11 @@ export async function enableOfflineMode(page: Page): Promise<void> {
       // If no offline data available, log warning but continue to API
       console.warn(`⚠️ No offline data for ${operationName}, falling back to API`);
       return route.continue();
-
     } catch (error) {
-      console.warn(`⚠️ Error in offline mode for ${url}:`, error instanceof Error ? error.message : String(error));
+      console.warn(
+        `⚠️ Error in offline mode for ${url}:`,
+        error instanceof Error ? error.message : String(error),
+      );
       return route.continue();
     }
   });
@@ -239,7 +244,7 @@ export function getOfflineDataInfo(): { available: boolean; path: string; files:
   if (available) {
     try {
       const allFiles = fs.readdirSync(TEST_DATA_DIR);
-      files.push(...allFiles.filter(f => f.endsWith('.json')));
+      files.push(...allFiles.filter((f) => f.endsWith('.json')));
     } catch {
       // Ignore error
     }

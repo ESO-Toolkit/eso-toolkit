@@ -36,7 +36,7 @@ export const TextEditorSkeleton: React.FC<TextEditorSkeletonProps> = ({
           padding: { xs: '16px', sm: '24px' },
           borderRadius: { xs: '0', sm: '14px' },
           border: { xs: 'none', sm: '1px solid var(--border)' },
-          fontFamily: 'Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
+          fontFamily: 'Inter Variable, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
           color: 'var(--text)',
           boxShadow:
             theme.palette.mode === 'dark'

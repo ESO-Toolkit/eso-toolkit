@@ -1,6 +1,6 @@
 # Playwright End-to-End Tests
 
-This directory contains Playwright end-to-end tests for the ESO Log Aggregator application.
+This directory contains Playwright end-to-end tests for the ESO Toolkit application.
 
 ## 🧪 Testing Tools
 

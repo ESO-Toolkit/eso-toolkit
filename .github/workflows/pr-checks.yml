@@ -26,7 +26,7 @@ jobs:
         # Skip label check in merge_group (labels already verified on PR) — job must still run
         # so the required status check reports back to GitHub instead of timing out.
         if: github.event_name != 'merge_group'
-        uses: actions/github-script@v9
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
         with:
           script: |
             const labels = context.payload.pull_request.labels.map(label => label.name.toLowerCase());
@@ -50,7 +50,7 @@ jobs:
     # Only run on code changes, not label changes (always run for merge_group)
     if: github.event_name == 'merge_group' || github.event.action == 'opened' || github.event.action == 'synchronize' || github.event.action == 'reopened'
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: ./.github/actions/setup-node-with-cache
       - name: Build
         run: npm run build
@@ -60,7 +60,7 @@ jobs:
     # Only run on code changes, not label changes (always run for merge_group)
     if: github.event_name == 'merge_group' || github.event.action == 'opened' || github.event.action == 'synchronize' || github.event.action == 'reopened'
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: ./.github/actions/setup-node-with-cache
       - name: Lint
         run: npm run lint
@@ -70,7 +70,7 @@ jobs:
     # Only run on code changes, not label changes (always run for merge_group)
     if: github.event_name == 'merge_group' || github.event.action == 'opened' || github.event.action == 'synchronize' || github.event.action == 'reopened'
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: ./.github/actions/setup-node-with-cache
       - name: Check formatting
         run: npm run format:check
@@ -79,8 +79,8 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name == 'merge_group' || github.event.action == 'opened' || github.event.action == 'synchronize' || github.event.action == 'reopened'
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-python@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
         with:
           python-version: '3.12'
       - name: Install skills-ref
@@ -93,7 +93,7 @@ jobs:
     # Only run on code changes, not label changes (always run for merge_group)
     if: github.event_name == 'merge_group' || github.event.action == 'opened' || github.event.action == 'synchronize' || github.event.action == 'reopened'
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: ./.github/actions/setup-node-with-cache
       - name: Block external network access
         run: |
@@ -138,7 +138,7 @@ jobs:
     # Only run on code changes, not label changes (always run for merge_group)
     if: github.event_name == 'merge_group' || github.event.action == 'opened' || github.event.action == 'synchronize' || github.event.action == 'reopened'
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: ./.github/actions/setup-node-with-cache
       - name: Typecheck
         run: npm run typecheck
@@ -154,7 +154,7 @@ jobs:
     # Only run on code changes, not label changes (always run for merge_group)
     if: github.event_name == 'merge_group' || github.event.action == 'opened' || github.event.action == 'synchronize' || github.event.action == 'reopened'
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: ./.github/actions/setup-node-with-cache
       - name: Build Storybook
         run: npm run build-storybook
@@ -166,7 +166,7 @@ jobs:
     # Only run on code changes, not label changes (always run for merge_group)
     if: github.event_name == 'merge_group' || github.event.action == 'opened' || github.event.action == 'synchronize' || github.event.action == 'reopened'
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: ./.github/actions/setup-node-with-cache
 
       - name: Get Playwright version
@@ -182,7 +182,7 @@ jobs:
           echo "Playwright version: ${PLAYWRIGHT_VERSION}"
 
       - name: Cache Playwright browsers
-        uses: actions/cache@v6
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         id: playwright-cache
         with:
           path: |
@@ -302,7 +302,7 @@ jobs:
           # Playwright memory optimization
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
       - name: Upload Playwright Report
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         if: always()
         with:
           name: playwright-smoke-report

@@ -1,5 +1,5 @@
 name: Bug Report
-description: Report a bug or unexpected behaviour in ESO Log Aggregator
+description: Report a bug or unexpected behaviour in ESO Toolkit
 title: "[Bug]: "
 labels: ["bug"]
 body:
@@ -51,7 +51,7 @@ body:
     attributes:
       label: Report URL (if applicable)
       description: Link to the ESO Logs report where the issue occurs.
-      placeholder: https://esotk.com/#/report/...
+      placeholder: https://www.esologs.com/reports/...
 
   - type: dropdown
     id: browser

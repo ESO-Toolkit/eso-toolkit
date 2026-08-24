@@ -18,12 +18,7 @@ import type { Build, BuildSetup } from '../types/build.types';
 
 /** The copy-able logical sections of a setup. */
 export type SetupSection =
-  | 'gear'
-  | 'skills'
-  | 'champion'
-  | 'consumables'
-  | 'passives'
-  | 'character';
+  'gear' | 'skills' | 'champion' | 'consumables' | 'passives' | 'character';
 
 export interface SetupSectionMeta {
   id: SetupSection;

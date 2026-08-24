@@ -354,7 +354,7 @@ const TankCard: React.FC<TankCardProps> = ({ tank, slotNum, label, color, isDark
           </Typography>
           <Typography
             sx={{
-              fontFamily: '"Space Grotesk", sans-serif',
+              fontFamily: '"Space Grotesk Variable", sans-serif',
               fontWeight: 700,
               fontSize: '0.95rem',
               letterSpacing: '-0.01em',
@@ -632,7 +632,7 @@ const HealerCard: React.FC<HealerCardProps> = ({ healer, slotNum, label, color, 
           </Typography>
           <Typography
             sx={{
-              fontFamily: '"Space Grotesk", sans-serif',
+              fontFamily: '"Space Grotesk Variable", sans-serif',
               fontWeight: 700,
               fontSize: '0.95rem',
               letterSpacing: '-0.01em',
@@ -980,7 +980,7 @@ const DPSRow: React.FC<DPSRowProps> = ({ slot, color, isDarkMode }) => {
           {/* Player name */}
           <Typography
             sx={{
-              fontFamily: '"Space Grotesk", sans-serif',
+              fontFamily: '"Space Grotesk Variable", sans-serif',
               fontSize: '0.88rem',
               fontWeight: slot.playerName ? 600 : 400,
               letterSpacing: '-0.01em',
@@ -1243,7 +1243,7 @@ const PerFightTrialGroup: React.FC<PerFightTrialGroupProps> = ({
         />
         <Typography
           sx={{
-            fontFamily: '"Space Grotesk", sans-serif',
+            fontFamily: '"Space Grotesk Variable", sans-serif',
             fontWeight: 700,
             fontSize: '0.92rem',
             letterSpacing: '-0.01em',
@@ -2076,7 +2076,7 @@ export const RosterViewPage: React.FC = () => {
           <Typography
             component="h1"
             sx={{
-              fontFamily: '"Space Grotesk", sans-serif',
+              fontFamily: '"Space Grotesk Variable", sans-serif',
               fontWeight: 700,
               fontSize: { xs: '1.35rem', sm: '1.6rem' },
               letterSpacing: '-0.02em',

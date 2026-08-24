@@ -482,6 +482,81 @@ function mergeConsumablesIntoItemMap(itemMap: Record<number, ItemInfo>): { added
   return { addedCount, sample };
 }
 
+interface MergeStats {
+  added: number;
+  preserved: number;
+  preservedOnlyInExisting: number;
+  setNamesUpdated: number;
+}
+
+function isItemInfo(value: unknown): value is ItemInfo {
+  if (!value || typeof value !== 'object') {
+    return false;
+  }
+
+  const info = value as Partial<ItemInfo>;
+  return typeof info.name === 'string' && typeof info.setName === 'string' && typeof info.type === 'string';
+}
+
+function loadExistingItemMap(filePath: string): Record<number, ItemInfo> {
+  if (!fs.existsSync(filePath)) {
+    return {};
+  }
+
+  const parsed: unknown = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+    throw new Error(`Existing item map must be a JSON object: ${filePath}`);
+  }
+
+  const invalidEntries = Object.entries(parsed).filter(([, value]) => !isItemInfo(value));
+  if (invalidEntries.length > 0) {
+    throw new Error(`Existing item map contains ${invalidEntries.length} invalid entries: ${filePath}`);
+  }
+
+  return parsed as Record<number, ItemInfo>;
+}
+
+/**
+ * Merge a freshly generated upstream map without allowing its inferred slot
+ * data to overwrite curated facts already present in itemIdMap.json.
+ *
+ * Existing entries are authoritative for name, slot, equipType, and type.
+ * A setName is filled only when an old entry is missing it; this is the one
+ * safe correction that cannot discard curated metadata. Entries no longer
+ * present upstream remain in the output so a refresh cannot silently remove
+ * IDs that are still referenced by saved builds.
+ */
+function mergeWithExistingItemMap(
+  generatedMap: Record<number, ItemInfo>,
+  existingMap: Record<number, ItemInfo>,
+): { itemMap: Record<number, ItemInfo>; stats: MergeStats } {
+  const itemMap: Record<number, ItemInfo> = { ...existingMap };
+  const stats: MergeStats = {
+    added: 0,
+    preserved: 0,
+    preservedOnlyInExisting: 0,
+    setNamesUpdated: 0,
+  };
+
+  for (const [id, generatedInfo] of Object.entries(generatedMap)) {
+    const existingInfo = existingMap[Number(id)];
+    if (!existingInfo) {
+      itemMap[Number(id)] = generatedInfo;
+      stats.added++;
+      continue;
+    }
+
+    if (!existingInfo.setName && generatedInfo.setName) {
+      itemMap[Number(id)] = { ...existingInfo, setName: generatedInfo.setName };
+      stats.setNamesUpdated++;
+    }
+    stats.preserved++;
+  }
+
+  stats.preservedOnlyInExisting = Object.keys(existingMap).filter(id => !generatedMap[Number(id)]).length;
+  return { itemMap, stats };
+}
+
 // ============================================================
 // VALIDATION
 // ============================================================
@@ -537,10 +612,9 @@ function validateCoverage(itemMap: Record<number, ItemInfo>): void {
  * it matches the committed formatting.
  */
 function generateItemIdMapJson(itemMap: Record<number, ItemInfo>): string {
-  const sorted: Record<number, ItemInfo> = {};
-  Object.entries(itemMap)
-    .sort((a, b) => parseInt(a[0]) - parseInt(b[0])) // Sort by item ID
-    .forEach(([id, info]) => {
+  const entries = Object.entries(itemMap)
+    .sort((a, b) => parseInt(a[0]) - parseInt(b[0]))
+    .map(([id, info]) => {
       const entry: ItemInfo = {
         name: info.name,
         setName: info.setName,
@@ -552,9 +626,28 @@ function generateItemIdMapJson(itemMap: Record<number, ItemInfo>): string {
       if (info.equipType !== undefined) {
         entry.equipType = info.equipType;
       }
-      sorted[parseInt(id, 10)] = entry;
+
+      const key = JSON.stringify(id);
+      const compactEntry = `{ ${Object.entries(entry)
+        .map(([field, value]) => `${JSON.stringify(field)}: ${JSON.stringify(value)}`)
+        .join(', ')} }`;
+      const compact = `  ${key}: ${compactEntry},`;
+      if (compact.length <= 100) {
+        return compact;
+      }
+
+      const formatted = JSON.stringify(entry, null, 2).split('\n');
+      return [
+        `  ${key}: ${formatted[0]}`,
+        ...formatted.slice(1, -1).map(line => `  ${line}`),
+        '  },',
+      ].join('\n');
     });
-  return JSON.stringify(sorted, null, 2) + '\n';
+
+  if (entries.length > 0) {
+    entries[entries.length - 1] = entries[entries.length - 1].replace(/,$/, '');
+  }
+  return `{\n${entries.join('\n')}\n}\n`;
 }
 
 
@@ -567,10 +660,14 @@ async function main() {
   console.log('======================\n');
 
   // File paths
-  const dataDir = path.join(__dirname, '..', 'tmp', 'libsets-data');
+  const dataDir = process.env.LIBSETS_DATA_DIR
+    ? path.resolve(process.env.LIBSETS_DATA_DIR)
+    : path.join(__dirname, '..', 'tmp', 'libsets-data');
   const itemIdsFile = path.join(dataDir, 'LibSets_Data_SetItemIds.lua');
   const setNamesFile = path.join(dataDir, 'LibSets_Data_SetNames.lua');
-  const outputFile = path.join(__dirname, '..', 'src', 'features', 'loadout-manager', 'data', 'itemIdMap.json');
+  const outputFile = process.env.ITEM_ID_MAP_OUTPUT
+    ? path.resolve(process.env.ITEM_ID_MAP_OUTPUT)
+    : path.join(__dirname, '..', 'src', 'features', 'loadout-manager', 'data', 'itemIdMap.json');
 
   // Ensure data directory exists
   if (!fs.existsSync(dataDir)) {
@@ -591,7 +688,7 @@ async function main() {
   }
 
   // Check for Sets.lua file
-  const setsFile = path.join(__dirname, '..', 'tmp', 'libsets-data', 'LibSets_Data_Sets.lua');
+  const setsFile = path.join(dataDir, 'LibSets_Data_Sets.lua');
   const hasSetsFile = fs.existsSync(setsFile);
   
   if (!hasSetsFile) {
@@ -642,7 +739,20 @@ async function main() {
 
   // Generate item map with metadata
   console.log('\n🗺️  Generating itemIdMap...');
-  const itemMap = generateItemIdMap(setData, metadataMap, slotOverrides);
+  const generatedItemMap = generateItemIdMap(setData, metadataMap, slotOverrides);
+  const mergeExisting = process.env.LIBSETS_MERGE_EXISTING === '1';
+  let itemMap = generatedItemMap;
+  if (mergeExisting) {
+    const existingMap = loadExistingItemMap(outputFile);
+    const mergeResult = mergeWithExistingItemMap(generatedItemMap, existingMap);
+    itemMap = mergeResult.itemMap;
+    console.log(`   ✅ Merge mode: preserved ${mergeResult.stats.preserved.toLocaleString()} existing IDs`);
+    console.log(`   ✅ Merge mode: added ${mergeResult.stats.added.toLocaleString()} upstream-only IDs`);
+    console.log(
+      `   ✅ Merge mode: retained ${mergeResult.stats.preservedOnlyInExisting.toLocaleString()} IDs absent from upstream`,
+    );
+    console.log(`   ✅ Merge mode: filled ${mergeResult.stats.setNamesUpdated.toLocaleString()} missing setName fields`);
+  }
   console.log(`   ✅ Generated ${Object.keys(itemMap).length.toLocaleString()} item mappings`);
 
   console.log('\n🥘 Merging consumable catalog...');

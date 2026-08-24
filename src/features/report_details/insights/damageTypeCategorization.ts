@@ -64,14 +64,7 @@ export interface DamageCategoryTotals {
 
 /** Keys of the categorized damage buckets (excludes the `totalDamage` scalar). */
 export type DamageCategoryKey =
-  | 'magic'
-  | 'martial'
-  | 'direct'
-  | 'poison'
-  | 'dot'
-  | 'aoe'
-  | 'statusEffects'
-  | 'fire';
+  'magic' | 'martial' | 'direct' | 'poison' | 'dot' | 'aoe' | 'statusEffects' | 'fire';
 
 export type CategorizedDamage = Record<DamageCategoryKey, DamageCategoryTotals> & {
   /**

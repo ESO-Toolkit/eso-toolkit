@@ -118,7 +118,7 @@ const BulkGearToolbarComponent: React.FC<BulkGearToolbarProps> = ({
             fontWeight: 700,
             letterSpacing: 0.6,
             textTransform: 'uppercase',
-            fontFamily: 'Space Grotesk, Inter, system-ui',
+            fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
             color: 'var(--be-accent, #38bdf8)',
             flex: 1,
           }}
@@ -240,7 +240,11 @@ const BulkGearToolbarComponent: React.FC<BulkGearToolbarProps> = ({
               onApply({ weight: w.id });
               setWeightAnchor(null);
             }}
-            sx={{ fontFamily: 'Space Grotesk, Inter, system-ui', fontSize: 13, fontWeight: 600 }}
+            sx={{
+              fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
+              fontSize: 13,
+              fontWeight: 600,
+            }}
           >
             <Box
               component="span"
@@ -282,7 +286,7 @@ const SelectChip: React.FC<{
       borderRadius: 1.5,
       fontSize: 11,
       fontWeight: 600,
-      fontFamily: 'Space Grotesk, Inter, system-ui',
+      fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
       color: isDark ? 'rgba(255,255,255,0.75)' : 'rgba(0,0,0,0.70)',
       border: `1px solid ${isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)'}`,
       background: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
@@ -323,7 +327,7 @@ const ApplyButton = React.forwardRef<
       borderRadius: 1.5,
       fontSize: 11.5,
       fontWeight: 700,
-      fontFamily: 'Space Grotesk, Inter, system-ui',
+      fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
       color: disabled ? (isDark ? 'rgba(255,255,255,0.30)' : 'rgba(0,0,0,0.30)') : color,
       border: `1px solid ${disabled ? (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)') : `${color}40`}`,
       background: disabled ? 'transparent' : isDark ? `${color}14` : `${color}0C`,

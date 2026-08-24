@@ -149,7 +149,7 @@ const SetupTabContent = React.memo<SetupTabContentProps>(function SetupTabConten
             '& .MuiOutlinedInput-root': {
               fontSize: 13,
               '@media (max-width: 600px)': { fontSize: 16 },
-              fontFamily: 'Space Grotesk, Inter, system-ui',
+              fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
               fontWeight: 600,
               borderRadius: '99px',
               height: 34,
@@ -251,7 +251,7 @@ const SetupTabContent = React.memo<SetupTabContentProps>(function SetupTabConten
                 color: 'inherit',
                 fontWeight: 'inherit',
                 fontSize: 13,
-                fontFamily: 'Space Grotesk, Inter, system-ui',
+                fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                 letterSpacing: active ? 0.3 : 0,
                 userSelect: 'none',
               }}
@@ -452,7 +452,7 @@ const DragPreview: React.FC<{ setup: BuildSetup; isDark: boolean }> = ({ setup, 
       variant="caption"
       sx={{
         fontSize: 13,
-        fontFamily: 'Space Grotesk, Inter, system-ui',
+        fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
         fontWeight: 700,
         letterSpacing: 0.3,
         color: 'inherit',
@@ -714,7 +714,11 @@ export const SetupTabBar: React.FC = () => {
         >
           <MenuItem
             onClick={handleAddBlank}
-            sx={{ fontFamily: 'Space Grotesk, Inter, system-ui', fontSize: 13, py: 0.85 }}
+            sx={{
+              fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
+              fontSize: 13,
+              py: 0.85,
+            }}
           >
             <ListItemIcon sx={{ minWidth: 32, color: 'var(--be-accent, #38bdf8)' }}>
               <AddIcon sx={{ fontSize: 18 }} />
@@ -730,7 +734,11 @@ export const SetupTabBar: React.FC = () => {
           </MenuItem>
           <MenuItem
             onClick={handleDuplicateActive}
-            sx={{ fontFamily: 'Space Grotesk, Inter, system-ui', fontSize: 13, py: 0.85 }}
+            sx={{
+              fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
+              fontSize: 13,
+              py: 0.85,
+            }}
           >
             <ListItemIcon sx={{ minWidth: 32, color: 'var(--be-accent, #38bdf8)' }}>
               <DuplicateIcon sx={{ fontSize: 16 }} />
@@ -775,7 +783,7 @@ export const SetupTabBar: React.FC = () => {
       >
         <DialogTitle
           sx={{
-            fontFamily: 'Space Grotesk, Inter, system-ui',
+            fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
             fontWeight: 700,
             fontSize: 15,
             pb: 0.5,
@@ -788,7 +796,7 @@ export const SetupTabBar: React.FC = () => {
             variant="body2"
             sx={{
               color: 'text.secondary',
-              fontFamily: 'Space Grotesk, Inter, system-ui',
+              fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
               fontSize: 13,
             }}
           >
@@ -806,7 +814,7 @@ export const SetupTabBar: React.FC = () => {
             sx={{
               borderRadius: '99px',
               textTransform: 'none',
-              fontFamily: 'Space Grotesk, Inter, system-ui',
+              fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
               fontWeight: 600,
               fontSize: 12,
             }}
@@ -821,7 +829,7 @@ export const SetupTabBar: React.FC = () => {
             sx={{
               borderRadius: '99px',
               textTransform: 'none',
-              fontFamily: 'Space Grotesk, Inter, system-ui',
+              fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
               fontWeight: 600,
               fontSize: 12,
             }}

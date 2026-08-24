@@ -55,50 +55,10 @@ import {
   clearConsent,
   deleteAllUserData,
   exportUserData,
+  getApplicationStorageEntries,
   getConsentPreferences,
   saveConsentPreferences,
 } from '../utils/consentManager';
-
-/** Human-readable labels and descriptions for each known localStorage key */
-const STORAGE_KEY_META: Record<string, { label: string; description: string; category: string }> = {
-  'persist:root': {
-    label: 'App State (Redux)',
-    description: 'UI preferences, saved builds, dashboard layout, loadout data',
-    category: 'Essential',
-  },
-  access_token: {
-    label: 'Access Token',
-    description: 'ESO Logs OAuth access token (used for API authentication)',
-    category: 'Essential',
-  },
-  refresh_token: {
-    label: 'Refresh Token',
-    description: 'ESO Logs OAuth refresh token (used to renew sessions)',
-    category: 'Essential',
-  },
-  eso_code_verifier: {
-    label: 'PKCE Code Verifier',
-    description: 'Temporary value used during the OAuth login flow',
-    category: 'Essential',
-  },
-  eso_intended_destination: {
-    label: 'Post-Login Redirect',
-    description: 'Remembers the page to return to after logging in',
-    category: 'Essential',
-  },
-  'eso-log-aggregator-cookie-consent': {
-    label: 'Consent Preferences',
-    description: 'Your privacy choices (analytics, error tracking, version)',
-    category: 'Essential',
-  },
-  'eso-logger-level': {
-    label: 'Logger Level',
-    description: 'Debug verbosity setting for the in-app logger',
-    category: 'Essential',
-  },
-};
-
-const ALL_STORAGE_KEYS = Object.keys(STORAGE_KEY_META);
 
 function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -106,32 +66,11 @@ function formatBytes(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
 }
 
-function getStorageEntries(): Array<{
-  key: string;
-  label: string;
-  description: string;
-  category: string;
-  present: boolean;
-  size: number;
-}> {
-  return ALL_STORAGE_KEYS.map((key) => {
-    const meta = STORAGE_KEY_META[key];
-    let present = false;
-    let size = 0;
-    try {
-      const value = localStorage.getItem(key);
-      present = value !== null;
-      size = value ? new Blob([value]).size : 0;
-    } catch {
-      // localStorage may be unavailable
-    }
-    return { key, ...meta, present, size };
-  });
-}
-
 export const PrivacySettingsPage: React.FC = () => {
   const theme = useTheme();
-  const accentColor = theme.palette.mode === 'dark' ? '#38bdf8' : '#2563eb';
+  // Pick a link color with sufficient contrast against each theme's surface;
+  // the always-visible underline distinguishes it from adjacent body text.
+  const accentColor = theme.palette.mode === 'dark' ? '#7dd3fc' : '#075985';
 
   const [analyticsEnabled, setAnalyticsEnabled] = React.useState(false);
   const [errorTrackingEnabled, setErrorTrackingEnabled] = React.useState(false);
@@ -140,7 +79,7 @@ export const PrivacySettingsPage: React.FC = () => {
   const [saveSuccess, setSaveSuccess] = React.useState(false);
 
   // Refresh storage entries when the page is rendered or data is deleted
-  const [storageEntries, setStorageEntries] = React.useState(getStorageEntries);
+  const [storageEntries, setStorageEntries] = React.useState(getApplicationStorageEntries);
 
   React.useEffect(() => {
     const prefs = getConsentPreferences();
@@ -155,7 +94,7 @@ export const PrivacySettingsPage: React.FC = () => {
     });
     window.dispatchEvent(new Event('consent-changed'));
     setSaveSuccess(true);
-    setStorageEntries(getStorageEntries());
+    setStorageEntries(getApplicationStorageEntries());
     setTimeout(() => setSaveSuccess(false), 3000);
   };
 
@@ -179,7 +118,7 @@ export const PrivacySettingsPage: React.FC = () => {
     setShowDeleteDialog(false);
     setAnalyticsEnabled(false);
     setErrorTrackingEnabled(false);
-    setStorageEntries(getStorageEntries());
+    setStorageEntries(getApplicationStorageEntries());
     window.dispatchEvent(new Event('consent-changed'));
   };
 
@@ -223,12 +162,13 @@ export const PrivacySettingsPage: React.FC = () => {
         <Box>
           <Typography
             variant="h3"
+            component="h1"
             sx={{
               fontWeight: 800,
               display: 'flex',
               alignItems: 'center',
               gap: 1.5,
-              fontFamily: 'Space Grotesk,Inter,system-ui',
+              fontFamily: 'Space Grotesk Variable,Inter Variable,system-ui',
             }}
           >
             <LockIcon sx={{ fontSize: 40 }} color="primary" />
@@ -238,13 +178,15 @@ export const PrivacySettingsPage: React.FC = () => {
             Control your consent preferences and manage data stored by this app.
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-            All data is stored locally in your browser — nothing is sent to our servers without your
-            consent. Read the{' '}
+            Preferences and authentication tokens are stored in your browser. Core requests to ESO
+            Logs or ESO Toolkit occur when you use authentication or server-backed features; content
+            you publish may be stored and shown publicly. Analytics and error tracking are optional
+            and remain off unless you enable them. Read the{' '}
             <Link
               component={RouterLink}
               to="/privacy"
-              underline="hover"
-              sx={{ color: accentColor }}
+              underline="always"
+              sx={{ color: accentColor, textUnderlineOffset: '0.15em' }}
             >
               full Privacy Policy
             </Link>{' '}
@@ -262,7 +204,7 @@ export const PrivacySettingsPage: React.FC = () => {
               display: 'flex',
               alignItems: 'center',
               gap: 1,
-              fontFamily: 'Space Grotesk,Inter,system-ui',
+              fontFamily: 'Space Grotesk Variable,Inter Variable,system-ui',
             }}
           >
             <ShieldIcon color="primary" /> Consent Status
@@ -364,7 +306,7 @@ export const PrivacySettingsPage: React.FC = () => {
               display: 'flex',
               alignItems: 'center',
               gap: 1,
-              fontFamily: 'Space Grotesk,Inter,system-ui',
+              fontFamily: 'Space Grotesk Variable,Inter Variable,system-ui',
             }}
           >
             <ShieldIcon color="primary" /> Cookie &amp; Tracking Preferences
@@ -395,7 +337,8 @@ export const PrivacySettingsPage: React.FC = () => {
                   Analytics (Google Analytics 4)
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
-                  Anonymised page views and feature usage events. No personal data.
+                  Pseudonymized page views, feature usage, build metadata, and optional numeric user
+                  ID as described in the privacy policy.
                 </Typography>
               </Box>
               <FormControlLabel
@@ -469,15 +412,14 @@ export const PrivacySettingsPage: React.FC = () => {
               display: 'flex',
               alignItems: 'center',
               gap: 1,
-              fontFamily: 'Space Grotesk,Inter,system-ui',
+              fontFamily: 'Space Grotesk Variable,Inter Variable,system-ui',
             }}
           >
             <StorageIcon color="primary" /> Data Stored Locally
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-            Everything this app stores in your browser&apos;s{' '}
-            <code style={{ fontFamily: 'monospace' }}>localStorage</code>. No data is stored on
-            external servers.
+            Application-owned data in this browser&apos;s local and session storage. Authentication
+            credentials are session-scoped and are always redacted from exports.
           </Typography>
           {presentEntries.length > 0 && (
             <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 2 }}>
@@ -504,6 +446,9 @@ export const PrivacySettingsPage: React.FC = () => {
                     <TableCell>
                       <Typography variant="body2" sx={{ fontWeight: 600 }}>
                         {entry.label}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        {entry.area}
                       </Typography>
                       <Typography
                         variant="caption"
@@ -579,7 +524,7 @@ export const PrivacySettingsPage: React.FC = () => {
             sx={{
               fontWeight: 700,
               mb: 2,
-              fontFamily: 'Space Grotesk,Inter,system-ui',
+              fontFamily: 'Space Grotesk Variable,Inter Variable,system-ui',
             }}
           >
             Data Export &amp; Deletion

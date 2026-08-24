@@ -287818,5 +287818,1567 @@
     "setName": "Full Belly Barricade",
     "type": "Gear"
   },
-  "223687": { "name": "Xanmeer Genesis Gear", "setName": "Xanmeer Genesis", "type": "Gear" }
+  "223687": { "name": "Xanmeer Genesis Gear", "setName": "Xanmeer Genesis", "type": "Gear" },
+  "224106": {
+    "name": "Shattered Paths Signet Gear",
+    "setName": "Shattered Paths Signet",
+    "type": "Gear"
+  },
+  "224112": {
+    "name": "Glittering Goad Shoulders",
+    "setName": "Glittering Goad",
+    "type": "Gear",
+    "slot": "shoulders",
+    "equipType": 3
+  },
+  "224113": {
+    "name": "Glittering Goad Shoulders",
+    "setName": "Glittering Goad",
+    "type": "Gear",
+    "slot": "shoulders",
+    "equipType": 3
+  },
+  "224114": {
+    "name": "Glittering Goad Shoulders",
+    "setName": "Glittering Goad",
+    "type": "Gear",
+    "slot": "shoulders",
+    "equipType": 3
+  },
+  "224115": {
+    "name": "Glittering Goad Shoulders",
+    "setName": "Glittering Goad",
+    "type": "Gear",
+    "slot": "shoulders",
+    "equipType": 3
+  },
+  "224116": {
+    "name": "Glittering Goad Shoulders",
+    "setName": "Glittering Goad",
+    "type": "Gear",
+    "slot": "shoulders",
+    "equipType": 3
+  },
+  "224117": {
+    "name": "Glittering Goad Shoulders",
+    "setName": "Glittering Goad",
+    "type": "Gear",
+    "slot": "shoulders",
+    "equipType": 3
+  },
+  "224118": {
+    "name": "Glittering Goad Shoulders",
+    "setName": "Glittering Goad",
+    "type": "Gear",
+    "slot": "shoulders",
+    "equipType": 3
+  },
+  "224119": {
+    "name": "Glittering Goad Shoulders",
+    "setName": "Glittering Goad",
+    "type": "Gear",
+    "slot": "shoulders",
+    "equipType": 3
+  },
+  "224120": {
+    "name": "Glittering Goad Shoulders",
+    "setName": "Glittering Goad",
+    "type": "Gear",
+    "slot": "shoulders",
+    "equipType": 3
+  },
+  "224121": {
+    "name": "Glittering Goad Shoulders",
+    "setName": "Glittering Goad",
+    "type": "Gear",
+    "slot": "shoulders",
+    "equipType": 3
+  },
+  "224122": {
+    "name": "Glittering Goad Shoulders",
+    "setName": "Glittering Goad",
+    "type": "Gear",
+    "slot": "shoulders",
+    "equipType": 3
+  },
+  "224123": {
+    "name": "Glittering Goad Shoulders",
+    "setName": "Glittering Goad",
+    "type": "Gear",
+    "slot": "shoulders",
+    "equipType": 3
+  },
+  "224124": {
+    "name": "Glittering Goad Shoulders",
+    "setName": "Glittering Goad",
+    "type": "Gear",
+    "slot": "shoulders",
+    "equipType": 3
+  },
+  "224125": {
+    "name": "Glittering Goad Shoulders",
+    "setName": "Glittering Goad",
+    "type": "Gear",
+    "slot": "shoulders",
+    "equipType": 3
+  },
+  "224126": {
+    "name": "Glittering Goad Shoulders",
+    "setName": "Glittering Goad",
+    "type": "Gear",
+    "slot": "shoulders",
+    "equipType": 3
+  },
+  "224127": {
+    "name": "Glittering Goad Shoulders",
+    "setName": "Glittering Goad",
+    "type": "Gear",
+    "slot": "shoulders",
+    "equipType": 3
+  },
+  "224128": {
+    "name": "Glittering Goad Head",
+    "setName": "Glittering Goad",
+    "type": "Gear",
+    "slot": "head",
+    "equipType": 0
+  },
+  "224129": {
+    "name": "Glittering Goad Head",
+    "setName": "Glittering Goad",
+    "type": "Gear",
+    "slot": "head",
+    "equipType": 0
+  },
+  "224130": {
+    "name": "Glittering Goad Head",
+    "setName": "Glittering Goad",
+    "type": "Gear",
+    "slot": "head",
+    "equipType": 0
+  },
+  "224131": {
+    "name": "Glittering Goad Head",
+    "setName": "Glittering Goad",
+    "type": "Gear",
+    "slot": "head",
+    "equipType": 0
+  },
+  "224132": {
+    "name": "Glittering Goad Head",
+    "setName": "Glittering Goad",
+    "type": "Gear",
+    "slot": "head",
+    "equipType": 0
+  },
+  "224133": {
+    "name": "Glittering Goad Head",
+    "setName": "Glittering Goad",
+    "type": "Gear",
+    "slot": "head",
+    "equipType": 0
+  },
+  "224134": {
+    "name": "Glittering Goad Head",
+    "setName": "Glittering Goad",
+    "type": "Gear",
+    "slot": "head",
+    "equipType": 0
+  },
+  "224135": {
+    "name": "Glittering Goad Head",
+    "setName": "Glittering Goad",
+    "type": "Gear",
+    "slot": "head",
+    "equipType": 0
+  },
+  "224136": {
+    "name": "Glittering Goad Head",
+    "setName": "Glittering Goad",
+    "type": "Gear",
+    "slot": "head",
+    "equipType": 0
+  },
+  "224137": {
+    "name": "Glittering Goad Head",
+    "setName": "Glittering Goad",
+    "type": "Gear",
+    "slot": "head",
+    "equipType": 0
+  },
+  "224138": {
+    "name": "Glittering Goad Head",
+    "setName": "Glittering Goad",
+    "type": "Gear",
+    "slot": "head",
+    "equipType": 0
+  },
+  "224139": {
+    "name": "Glittering Goad Head",
+    "setName": "Glittering Goad",
+    "type": "Gear",
+    "slot": "head",
+    "equipType": 0
+  },
+  "224140": {
+    "name": "Glittering Goad Head",
+    "setName": "Glittering Goad",
+    "type": "Gear",
+    "slot": "head",
+    "equipType": 0
+  },
+  "224141": {
+    "name": "Glittering Goad Head",
+    "setName": "Glittering Goad",
+    "type": "Gear",
+    "slot": "head",
+    "equipType": 0
+  },
+  "224142": {
+    "name": "Glittering Goad Head",
+    "setName": "Glittering Goad",
+    "type": "Gear",
+    "slot": "head",
+    "equipType": 0
+  },
+  "224143": {
+    "name": "Glittering Goad Head",
+    "setName": "Glittering Goad",
+    "type": "Gear",
+    "slot": "head",
+    "equipType": 0
+  },
+  "224144": {
+    "name": "Glittering Goad Head",
+    "setName": "Glittering Goad",
+    "type": "Gear",
+    "slot": "head",
+    "equipType": 0
+  },
+  "224145": {
+    "name": "Glittering Goad Head",
+    "setName": "Glittering Goad",
+    "type": "Gear",
+    "slot": "head",
+    "equipType": 0
+  },
+  "224146": {
+    "name": "Glittering Goad Head",
+    "setName": "Glittering Goad",
+    "type": "Gear",
+    "slot": "head",
+    "equipType": 0
+  },
+  "224147": {
+    "name": "Glittering Goad Head",
+    "setName": "Glittering Goad",
+    "type": "Gear",
+    "slot": "head",
+    "equipType": 0
+  },
+  "224148": {
+    "name": "Glittering Goad Head",
+    "setName": "Glittering Goad",
+    "type": "Gear",
+    "slot": "head",
+    "equipType": 0
+  },
+  "224149": {
+    "name": "Glittering Goad Head",
+    "setName": "Glittering Goad",
+    "type": "Gear",
+    "slot": "head",
+    "equipType": 0
+  },
+  "224150": {
+    "name": "Glittering Goad Head",
+    "setName": "Glittering Goad",
+    "type": "Gear",
+    "slot": "head",
+    "equipType": 0
+  },
+  "224151": {
+    "name": "Glittering Goad Head",
+    "setName": "Glittering Goad",
+    "type": "Gear",
+    "slot": "head",
+    "equipType": 0
+  },
+  "224152": {
+    "name": "Glittering Goad Shoulders",
+    "setName": "Glittering Goad",
+    "type": "Gear",
+    "slot": "shoulders",
+    "equipType": 3
+  },
+  "224153": {
+    "name": "Glittering Goad Shoulders",
+    "setName": "Glittering Goad",
+    "type": "Gear",
+    "slot": "shoulders",
+    "equipType": 3
+  },
+  "224154": {
+    "name": "Glittering Goad Shoulders",
+    "setName": "Glittering Goad",
+    "type": "Gear",
+    "slot": "shoulders",
+    "equipType": 3
+  },
+  "224155": {
+    "name": "Glittering Goad Shoulders",
+    "setName": "Glittering Goad",
+    "type": "Gear",
+    "slot": "shoulders",
+    "equipType": 3
+  },
+  "224156": {
+    "name": "Glittering Goad Shoulders",
+    "setName": "Glittering Goad",
+    "type": "Gear",
+    "slot": "shoulders",
+    "equipType": 3
+  },
+  "224157": {
+    "name": "Glittering Goad Shoulders",
+    "setName": "Glittering Goad",
+    "type": "Gear",
+    "slot": "shoulders",
+    "equipType": 3
+  },
+  "224158": {
+    "name": "Glittering Goad Shoulders",
+    "setName": "Glittering Goad",
+    "type": "Gear",
+    "slot": "shoulders",
+    "equipType": 3
+  },
+  "224159": {
+    "name": "Glittering Goad Shoulders",
+    "setName": "Glittering Goad",
+    "type": "Gear",
+    "slot": "shoulders",
+    "equipType": 3
+  },
+  "224167": {
+    "name": "Thousand Eyes Head",
+    "setName": "Thousand Eyes",
+    "type": "Gear",
+    "slot": "head",
+    "equipType": 0
+  },
+  "224168": {
+    "name": "Thousand Eyes Shoulders",
+    "setName": "Thousand Eyes",
+    "type": "Gear",
+    "slot": "shoulders",
+    "equipType": 3
+  },
+  "224169": {
+    "name": "Thousand Eyes Shoulders",
+    "setName": "Thousand Eyes",
+    "type": "Gear",
+    "slot": "shoulders",
+    "equipType": 3
+  },
+  "224170": {
+    "name": "Thousand Eyes Shoulders",
+    "setName": "Thousand Eyes",
+    "type": "Gear",
+    "slot": "shoulders",
+    "equipType": 3
+  },
+  "224171": {
+    "name": "Thousand Eyes Shoulders",
+    "setName": "Thousand Eyes",
+    "type": "Gear",
+    "slot": "shoulders",
+    "equipType": 3
+  },
+  "224172": {
+    "name": "Thousand Eyes Shoulders",
+    "setName": "Thousand Eyes",
+    "type": "Gear",
+    "slot": "shoulders",
+    "equipType": 3
+  },
+  "224173": {
+    "name": "Thousand Eyes Shoulders",
+    "setName": "Thousand Eyes",
+    "type": "Gear",
+    "slot": "shoulders",
+    "equipType": 3
+  },
+  "224174": {
+    "name": "Thousand Eyes Shoulders",
+    "setName": "Thousand Eyes",
+    "type": "Gear",
+    "slot": "shoulders",
+    "equipType": 3
+  },
+  "224175": {
+    "name": "Thousand Eyes Shoulders",
+    "setName": "Thousand Eyes",
+    "type": "Gear",
+    "slot": "shoulders",
+    "equipType": 3
+  },
+  "224176": {
+    "name": "Thousand Eyes Shoulders",
+    "setName": "Thousand Eyes",
+    "type": "Gear",
+    "slot": "shoulders",
+    "equipType": 3
+  },
+  "224177": {
+    "name": "Thousand Eyes Shoulders",
+    "setName": "Thousand Eyes",
+    "type": "Gear",
+    "slot": "shoulders",
+    "equipType": 3
+  },
+  "224178": {
+    "name": "Thousand Eyes Shoulders",
+    "setName": "Thousand Eyes",
+    "type": "Gear",
+    "slot": "shoulders",
+    "equipType": 3
+  },
+  "224179": {
+    "name": "Thousand Eyes Shoulders",
+    "setName": "Thousand Eyes",
+    "type": "Gear",
+    "slot": "shoulders",
+    "equipType": 3
+  },
+  "224180": {
+    "name": "Thousand Eyes Shoulders",
+    "setName": "Thousand Eyes",
+    "type": "Gear",
+    "slot": "shoulders",
+    "equipType": 3
+  },
+  "224181": {
+    "name": "Thousand Eyes Shoulders",
+    "setName": "Thousand Eyes",
+    "type": "Gear",
+    "slot": "shoulders",
+    "equipType": 3
+  },
+  "224182": {
+    "name": "Thousand Eyes Shoulders",
+    "setName": "Thousand Eyes",
+    "type": "Gear",
+    "slot": "shoulders",
+    "equipType": 3
+  },
+  "224183": {
+    "name": "Thousand Eyes Shoulders",
+    "setName": "Thousand Eyes",
+    "type": "Gear",
+    "slot": "shoulders",
+    "equipType": 3
+  },
+  "224184": {
+    "name": "Thousand Eyes Shoulders",
+    "setName": "Thousand Eyes",
+    "type": "Gear",
+    "slot": "shoulders",
+    "equipType": 3
+  },
+  "224185": {
+    "name": "Thousand Eyes Shoulders",
+    "setName": "Thousand Eyes",
+    "type": "Gear",
+    "slot": "shoulders",
+    "equipType": 3
+  },
+  "224186": {
+    "name": "Thousand Eyes Shoulders",
+    "setName": "Thousand Eyes",
+    "type": "Gear",
+    "slot": "shoulders",
+    "equipType": 3
+  },
+  "224187": {
+    "name": "Thousand Eyes Shoulders",
+    "setName": "Thousand Eyes",
+    "type": "Gear",
+    "slot": "shoulders",
+    "equipType": 3
+  },
+  "224188": {
+    "name": "Thousand Eyes Shoulders",
+    "setName": "Thousand Eyes",
+    "type": "Gear",
+    "slot": "shoulders",
+    "equipType": 3
+  },
+  "224189": {
+    "name": "Thousand Eyes Shoulders",
+    "setName": "Thousand Eyes",
+    "type": "Gear",
+    "slot": "shoulders",
+    "equipType": 3
+  },
+  "224190": {
+    "name": "Thousand Eyes Shoulders",
+    "setName": "Thousand Eyes",
+    "type": "Gear",
+    "slot": "shoulders",
+    "equipType": 3
+  },
+  "224191": {
+    "name": "Thousand Eyes Shoulders",
+    "setName": "Thousand Eyes",
+    "type": "Gear",
+    "slot": "shoulders",
+    "equipType": 3
+  },
+  "224192": {
+    "name": "Thousand Eyes Head",
+    "setName": "Thousand Eyes",
+    "type": "Gear",
+    "slot": "head",
+    "equipType": 0
+  },
+  "224193": {
+    "name": "Thousand Eyes Head",
+    "setName": "Thousand Eyes",
+    "type": "Gear",
+    "slot": "head",
+    "equipType": 0
+  },
+  "224194": {
+    "name": "Thousand Eyes Head",
+    "setName": "Thousand Eyes",
+    "type": "Gear",
+    "slot": "head",
+    "equipType": 0
+  },
+  "224195": {
+    "name": "Thousand Eyes Head",
+    "setName": "Thousand Eyes",
+    "type": "Gear",
+    "slot": "head",
+    "equipType": 0
+  },
+  "224196": {
+    "name": "Thousand Eyes Head",
+    "setName": "Thousand Eyes",
+    "type": "Gear",
+    "slot": "head",
+    "equipType": 0
+  },
+  "224197": {
+    "name": "Thousand Eyes Head",
+    "setName": "Thousand Eyes",
+    "type": "Gear",
+    "slot": "head",
+    "equipType": 0
+  },
+  "224198": {
+    "name": "Thousand Eyes Head",
+    "setName": "Thousand Eyes",
+    "type": "Gear",
+    "slot": "head",
+    "equipType": 0
+  },
+  "224199": {
+    "name": "Thousand Eyes Head",
+    "setName": "Thousand Eyes",
+    "type": "Gear",
+    "slot": "head",
+    "equipType": 0
+  },
+  "224200": {
+    "name": "Thousand Eyes Head",
+    "setName": "Thousand Eyes",
+    "type": "Gear",
+    "slot": "head",
+    "equipType": 0
+  },
+  "224201": {
+    "name": "Thousand Eyes Head",
+    "setName": "Thousand Eyes",
+    "type": "Gear",
+    "slot": "head",
+    "equipType": 0
+  },
+  "224202": {
+    "name": "Thousand Eyes Head",
+    "setName": "Thousand Eyes",
+    "type": "Gear",
+    "slot": "head",
+    "equipType": 0
+  },
+  "224203": {
+    "name": "Thousand Eyes Head",
+    "setName": "Thousand Eyes",
+    "type": "Gear",
+    "slot": "head",
+    "equipType": 0
+  },
+  "224204": {
+    "name": "Thousand Eyes Head",
+    "setName": "Thousand Eyes",
+    "type": "Gear",
+    "slot": "head",
+    "equipType": 0
+  },
+  "224205": {
+    "name": "Thousand Eyes Head",
+    "setName": "Thousand Eyes",
+    "type": "Gear",
+    "slot": "head",
+    "equipType": 0
+  },
+  "224206": {
+    "name": "Thousand Eyes Head",
+    "setName": "Thousand Eyes",
+    "type": "Gear",
+    "slot": "head",
+    "equipType": 0
+  },
+  "224207": {
+    "name": "Thousand Eyes Head",
+    "setName": "Thousand Eyes",
+    "type": "Gear",
+    "slot": "head",
+    "equipType": 0
+  },
+  "224208": {
+    "name": "Thousand Eyes Head",
+    "setName": "Thousand Eyes",
+    "type": "Gear",
+    "slot": "head",
+    "equipType": 0
+  },
+  "224209": {
+    "name": "Thousand Eyes Head",
+    "setName": "Thousand Eyes",
+    "type": "Gear",
+    "slot": "head",
+    "equipType": 0
+  },
+  "224210": {
+    "name": "Thousand Eyes Head",
+    "setName": "Thousand Eyes",
+    "type": "Gear",
+    "slot": "head",
+    "equipType": 0
+  },
+  "224211": {
+    "name": "Thousand Eyes Head",
+    "setName": "Thousand Eyes",
+    "type": "Gear",
+    "slot": "head",
+    "equipType": 0
+  },
+  "224212": {
+    "name": "Thousand Eyes Head",
+    "setName": "Thousand Eyes",
+    "type": "Gear",
+    "slot": "head",
+    "equipType": 0
+  },
+  "224213": {
+    "name": "Thousand Eyes Head",
+    "setName": "Thousand Eyes",
+    "type": "Gear",
+    "slot": "head",
+    "equipType": 0
+  },
+  "224214": {
+    "name": "Thousand Eyes Head",
+    "setName": "Thousand Eyes",
+    "type": "Gear",
+    "slot": "head",
+    "equipType": 0
+  },
+  "224222": {
+    "name": "The Ruckus Head",
+    "setName": "The Ruckus",
+    "type": "Gear",
+    "slot": "head",
+    "equipType": 0
+  },
+  "224223": {
+    "name": "The Ruckus Head",
+    "setName": "The Ruckus",
+    "type": "Gear",
+    "slot": "head",
+    "equipType": 0
+  },
+  "224224": {
+    "name": "The Ruckus Head",
+    "setName": "The Ruckus",
+    "type": "Gear",
+    "slot": "head",
+    "equipType": 0
+  },
+  "224225": {
+    "name": "The Ruckus Head",
+    "setName": "The Ruckus",
+    "type": "Gear",
+    "slot": "head",
+    "equipType": 0
+  },
+  "224226": {
+    "name": "The Ruckus Head",
+    "setName": "The Ruckus",
+    "type": "Gear",
+    "slot": "head",
+    "equipType": 0
+  },
+  "224227": {
+    "name": "The Ruckus Head",
+    "setName": "The Ruckus",
+    "type": "Gear",
+    "slot": "head",
+    "equipType": 0
+  },
+  "224228": {
+    "name": "The Ruckus Head",
+    "setName": "The Ruckus",
+    "type": "Gear",
+    "slot": "head",
+    "equipType": 0
+  },
+  "224229": {
+    "name": "The Ruckus Head",
+    "setName": "The Ruckus",
+    "type": "Gear",
+    "slot": "head",
+    "equipType": 0
+  },
+  "224230": {
+    "name": "The Ruckus Head",
+    "setName": "The Ruckus",
+    "type": "Gear",
+    "slot": "head",
+    "equipType": 0
+  },
+  "224231": {
+    "name": "The Ruckus Head",
+    "setName": "The Ruckus",
+    "type": "Gear",
+    "slot": "head",
+    "equipType": 0
+  },
+  "224232": {
+    "name": "The Ruckus Shoulders",
+    "setName": "The Ruckus",
+    "type": "Gear",
+    "slot": "shoulders",
+    "equipType": 3
+  },
+  "224233": {
+    "name": "The Ruckus Shoulders",
+    "setName": "The Ruckus",
+    "type": "Gear",
+    "slot": "shoulders",
+    "equipType": 3
+  },
+  "224234": {
+    "name": "The Ruckus Shoulders",
+    "setName": "The Ruckus",
+    "type": "Gear",
+    "slot": "shoulders",
+    "equipType": 3
+  },
+  "224235": {
+    "name": "The Ruckus Shoulders",
+    "setName": "The Ruckus",
+    "type": "Gear",
+    "slot": "shoulders",
+    "equipType": 3
+  },
+  "224236": {
+    "name": "The Ruckus Shoulders",
+    "setName": "The Ruckus",
+    "type": "Gear",
+    "slot": "shoulders",
+    "equipType": 3
+  },
+  "224237": {
+    "name": "The Ruckus Shoulders",
+    "setName": "The Ruckus",
+    "type": "Gear",
+    "slot": "shoulders",
+    "equipType": 3
+  },
+  "224238": {
+    "name": "The Ruckus Shoulders",
+    "setName": "The Ruckus",
+    "type": "Gear",
+    "slot": "shoulders",
+    "equipType": 3
+  },
+  "224239": {
+    "name": "The Ruckus Shoulders",
+    "setName": "The Ruckus",
+    "type": "Gear",
+    "slot": "shoulders",
+    "equipType": 3
+  },
+  "224240": {
+    "name": "The Ruckus Shoulders",
+    "setName": "The Ruckus",
+    "type": "Gear",
+    "slot": "shoulders",
+    "equipType": 3
+  },
+  "224241": {
+    "name": "The Ruckus Shoulders",
+    "setName": "The Ruckus",
+    "type": "Gear",
+    "slot": "shoulders",
+    "equipType": 3
+  },
+  "224242": {
+    "name": "The Ruckus Shoulders",
+    "setName": "The Ruckus",
+    "type": "Gear",
+    "slot": "shoulders",
+    "equipType": 3
+  },
+  "224243": {
+    "name": "The Ruckus Shoulders",
+    "setName": "The Ruckus",
+    "type": "Gear",
+    "slot": "shoulders",
+    "equipType": 3
+  },
+  "224244": {
+    "name": "The Ruckus Shoulders",
+    "setName": "The Ruckus",
+    "type": "Gear",
+    "slot": "shoulders",
+    "equipType": 3
+  },
+  "224245": {
+    "name": "The Ruckus Shoulders",
+    "setName": "The Ruckus",
+    "type": "Gear",
+    "slot": "shoulders",
+    "equipType": 3
+  },
+  "224246": {
+    "name": "The Ruckus Shoulders",
+    "setName": "The Ruckus",
+    "type": "Gear",
+    "slot": "shoulders",
+    "equipType": 3
+  },
+  "224247": {
+    "name": "The Ruckus Shoulders",
+    "setName": "The Ruckus",
+    "type": "Gear",
+    "slot": "shoulders",
+    "equipType": 3
+  },
+  "224248": {
+    "name": "The Ruckus Shoulders",
+    "setName": "The Ruckus",
+    "type": "Gear",
+    "slot": "shoulders",
+    "equipType": 3
+  },
+  "224249": {
+    "name": "The Ruckus Shoulders",
+    "setName": "The Ruckus",
+    "type": "Gear",
+    "slot": "shoulders",
+    "equipType": 3
+  },
+  "224250": {
+    "name": "The Ruckus Shoulders",
+    "setName": "The Ruckus",
+    "type": "Gear",
+    "slot": "shoulders",
+    "equipType": 3
+  },
+  "224251": {
+    "name": "The Ruckus Shoulders",
+    "setName": "The Ruckus",
+    "type": "Gear",
+    "slot": "shoulders",
+    "equipType": 3
+  },
+  "224252": {
+    "name": "The Ruckus Shoulders",
+    "setName": "The Ruckus",
+    "type": "Gear",
+    "slot": "shoulders",
+    "equipType": 3
+  },
+  "224253": {
+    "name": "The Ruckus Shoulders",
+    "setName": "The Ruckus",
+    "type": "Gear",
+    "slot": "shoulders",
+    "equipType": 3
+  },
+  "224254": {
+    "name": "The Ruckus Shoulders",
+    "setName": "The Ruckus",
+    "type": "Gear",
+    "slot": "shoulders",
+    "equipType": 3
+  },
+  "224255": {
+    "name": "The Ruckus Shoulders",
+    "setName": "The Ruckus",
+    "type": "Gear",
+    "slot": "shoulders",
+    "equipType": 3
+  },
+  "224256": {
+    "name": "The Ruckus Head",
+    "setName": "The Ruckus",
+    "type": "Gear",
+    "slot": "head",
+    "equipType": 0
+  },
+  "224257": {
+    "name": "The Ruckus Head",
+    "setName": "The Ruckus",
+    "type": "Gear",
+    "slot": "head",
+    "equipType": 0
+  },
+  "224258": {
+    "name": "The Ruckus Head",
+    "setName": "The Ruckus",
+    "type": "Gear",
+    "slot": "head",
+    "equipType": 0
+  },
+  "224259": {
+    "name": "The Ruckus Head",
+    "setName": "The Ruckus",
+    "type": "Gear",
+    "slot": "head",
+    "equipType": 0
+  },
+  "224260": {
+    "name": "The Ruckus Head",
+    "setName": "The Ruckus",
+    "type": "Gear",
+    "slot": "head",
+    "equipType": 0
+  },
+  "224261": {
+    "name": "The Ruckus Head",
+    "setName": "The Ruckus",
+    "type": "Gear",
+    "slot": "head",
+    "equipType": 0
+  },
+  "224262": {
+    "name": "The Ruckus Head",
+    "setName": "The Ruckus",
+    "type": "Gear",
+    "slot": "head",
+    "equipType": 0
+  },
+  "224263": {
+    "name": "The Ruckus Head",
+    "setName": "The Ruckus",
+    "type": "Gear",
+    "slot": "head",
+    "equipType": 0
+  },
+  "224264": {
+    "name": "The Ruckus Head",
+    "setName": "The Ruckus",
+    "type": "Gear",
+    "slot": "head",
+    "equipType": 0
+  },
+  "224265": {
+    "name": "The Ruckus Head",
+    "setName": "The Ruckus",
+    "type": "Gear",
+    "slot": "head",
+    "equipType": 0
+  },
+  "224266": {
+    "name": "The Ruckus Head",
+    "setName": "The Ruckus",
+    "type": "Gear",
+    "slot": "head",
+    "equipType": 0
+  },
+  "224267": {
+    "name": "The Ruckus Head",
+    "setName": "The Ruckus",
+    "type": "Gear",
+    "slot": "head",
+    "equipType": 0
+  },
+  "224268": {
+    "name": "The Ruckus Head",
+    "setName": "The Ruckus",
+    "type": "Gear",
+    "slot": "head",
+    "equipType": 0
+  },
+  "224269": {
+    "name": "The Ruckus Head",
+    "setName": "The Ruckus",
+    "type": "Gear",
+    "slot": "head",
+    "equipType": 0
+  },
+  "224365": { "name": "Prowler's Talisman Gear", "setName": "Prowler's Talisman", "type": "Gear" },
+  "224370": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224371": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224372": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224373": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224374": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224375": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224376": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224377": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224378": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224379": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224380": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224381": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224382": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224383": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224384": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224385": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224386": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224387": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224388": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224389": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224390": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224391": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224392": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224393": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224394": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224395": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224396": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224397": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224398": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224399": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224400": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224401": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224402": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224403": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224404": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224405": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224406": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224407": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224408": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224409": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224410": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224411": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224412": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224413": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224414": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224415": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224416": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224417": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224418": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224419": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224420": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224421": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224422": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224423": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224424": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224425": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224426": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224427": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224428": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224429": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224430": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224431": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224432": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224433": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224434": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224435": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224436": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224437": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224438": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224439": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224440": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224441": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224442": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224443": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224444": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224445": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224446": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224447": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224448": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224449": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224450": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224451": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224452": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224453": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224454": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224455": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224456": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224457": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224458": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224459": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224460": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224461": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224462": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224463": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224464": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224465": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224466": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224467": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224468": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224469": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224470": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224471": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224472": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224473": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224474": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224475": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224476": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224477": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224478": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224479": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224480": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224481": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224482": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224483": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224484": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224485": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224486": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224487": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224488": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224489": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224490": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224491": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224492": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224493": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224494": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224495": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224496": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224497": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224498": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224499": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224500": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224501": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224502": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224503": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224504": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224505": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224506": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224507": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224508": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224509": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224510": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224511": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224512": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224513": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224514": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224515": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224516": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224517": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224518": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224519": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224520": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224521": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224522": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224523": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224524": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224525": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224526": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224527": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224528": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224529": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224530": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224531": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224532": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224533": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224534": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224535": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224536": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224537": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224538": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224539": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224540": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224541": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224542": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224543": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224544": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224545": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224546": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224547": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224548": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224549": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224550": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224551": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224552": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224553": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224554": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224555": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224556": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224557": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224558": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224559": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224560": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224561": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224562": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224563": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224564": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224565": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224566": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224567": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224568": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224569": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224570": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224571": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224572": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224573": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224574": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224575": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224576": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224577": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224578": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224579": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224580": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224581": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224582": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224583": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224584": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224585": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224586": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224587": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224588": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224589": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224590": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224591": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224592": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224593": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224594": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224595": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224596": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224597": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224598": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224599": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224600": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224601": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224602": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224603": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224604": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224605": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224606": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224607": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224608": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224609": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224610": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224611": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224612": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224613": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224614": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224615": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224616": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224617": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224618": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224619": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224620": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224621": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224622": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224623": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224624": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224625": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224626": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224627": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224628": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224629": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224630": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224631": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224632": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224633": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224634": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224635": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224636": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224637": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224638": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224639": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224640": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224641": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224642": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224643": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224644": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224645": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224646": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224647": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224648": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224649": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224650": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224651": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224652": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224653": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224654": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "224655": { "name": "Gorethief Gear", "setName": "Gorethief", "type": "Gear" },
+  "225222": {
+    "name": "Coldharbour's Favorite Gear",
+    "setName": "Coldharbour's Favorite",
+    "type": "Gear"
+  },
+  "225223": {
+    "name": "Coldharbour's Favorite Gear",
+    "setName": "Coldharbour's Favorite",
+    "type": "Gear"
+  },
+  "225224": {
+    "name": "Coldharbour's Favorite Gear",
+    "setName": "Coldharbour's Favorite",
+    "type": "Gear"
+  },
+  "225225": {
+    "name": "Coldharbour's Favorite Gear",
+    "setName": "Coldharbour's Favorite",
+    "type": "Gear"
+  },
+  "225226": {
+    "name": "Coldharbour's Favorite Gear",
+    "setName": "Coldharbour's Favorite",
+    "type": "Gear"
+  },
+  "225230": {
+    "name": "Coldharbour's Favorite Gear",
+    "setName": "Coldharbour's Favorite",
+    "type": "Gear"
+  },
+  "225231": {
+    "name": "Coldharbour's Favorite Gear",
+    "setName": "Coldharbour's Favorite",
+    "type": "Gear"
+  },
+  "225232": {
+    "name": "Coldharbour's Favorite Gear",
+    "setName": "Coldharbour's Favorite",
+    "type": "Gear"
+  },
+  "225233": {
+    "name": "Coldharbour's Favorite Gear",
+    "setName": "Coldharbour's Favorite",
+    "type": "Gear"
+  },
+  "225234": {
+    "name": "Coldharbour's Favorite Gear",
+    "setName": "Coldharbour's Favorite",
+    "type": "Gear"
+  },
+  "225235": {
+    "name": "Coldharbour's Favorite Gear",
+    "setName": "Coldharbour's Favorite",
+    "type": "Gear"
+  },
+  "225236": {
+    "name": "Coldharbour's Favorite Gear",
+    "setName": "Coldharbour's Favorite",
+    "type": "Gear"
+  },
+  "225237": {
+    "name": "Coldharbour's Favorite Gear",
+    "setName": "Coldharbour's Favorite",
+    "type": "Gear"
+  },
+  "225238": {
+    "name": "Coldharbour's Favorite Gear",
+    "setName": "Coldharbour's Favorite",
+    "type": "Gear"
+  },
+  "225239": {
+    "name": "Coldharbour's Favorite Gear",
+    "setName": "Coldharbour's Favorite",
+    "type": "Gear"
+  },
+  "225240": {
+    "name": "Coldharbour's Favorite Gear",
+    "setName": "Coldharbour's Favorite",
+    "type": "Gear"
+  },
+  "225241": {
+    "name": "Coldharbour's Favorite Gear",
+    "setName": "Coldharbour's Favorite",
+    "type": "Gear"
+  },
+  "225242": {
+    "name": "Coldharbour's Favorite Gear",
+    "setName": "Coldharbour's Favorite",
+    "type": "Gear"
+  },
+  "225243": {
+    "name": "Coldharbour's Favorite Gear",
+    "setName": "Coldharbour's Favorite",
+    "type": "Gear"
+  },
+  "225281": { "name": "Hunt Leader Gear", "setName": "Hunt Leader", "type": "Gear" },
+  "225282": { "name": "Hunt Leader Gear", "setName": "Hunt Leader", "type": "Gear" },
+  "225283": { "name": "Hunt Leader Gear", "setName": "Hunt Leader", "type": "Gear" },
+  "225284": { "name": "Hunt Leader Gear", "setName": "Hunt Leader", "type": "Gear" },
+  "225285": { "name": "Hunt Leader Gear", "setName": "Hunt Leader", "type": "Gear" },
+  "225286": { "name": "Hunt Leader Gear", "setName": "Hunt Leader", "type": "Gear" },
+  "225287": { "name": "Hunt Leader Gear", "setName": "Hunt Leader", "type": "Gear" },
+  "225288": { "name": "Hunt Leader Gear", "setName": "Hunt Leader", "type": "Gear" },
+  "225289": { "name": "Hunt Leader Gear", "setName": "Hunt Leader", "type": "Gear" },
+  "225290": { "name": "Hunt Leader Gear", "setName": "Hunt Leader", "type": "Gear" },
+  "225291": { "name": "Hunt Leader Gear", "setName": "Hunt Leader", "type": "Gear" },
+  "225292": { "name": "Hunt Leader Gear", "setName": "Hunt Leader", "type": "Gear" },
+  "225293": { "name": "Hunt Leader Gear", "setName": "Hunt Leader", "type": "Gear" },
+  "225294": { "name": "Hunt Leader Gear", "setName": "Hunt Leader", "type": "Gear" },
+  "225295": { "name": "Hunt Leader Gear", "setName": "Hunt Leader", "type": "Gear" },
+  "225296": { "name": "Hunt Leader Gear", "setName": "Hunt Leader", "type": "Gear" },
+  "225297": { "name": "Hunt Leader Gear", "setName": "Hunt Leader", "type": "Gear" },
+  "225298": { "name": "Hunt Leader Gear", "setName": "Hunt Leader", "type": "Gear" },
+  "225299": { "name": "Hunt Leader Gear", "setName": "Hunt Leader", "type": "Gear" },
+  "225300": { "name": "Hunt Leader Gear", "setName": "Hunt Leader", "type": "Gear" },
+  "225301": { "name": "Hunt Leader Gear", "setName": "Hunt Leader", "type": "Gear" },
+  "225302": { "name": "Hunt Leader Gear", "setName": "Hunt Leader", "type": "Gear" },
+  "225303": { "name": "Hunt Leader Gear", "setName": "Hunt Leader", "type": "Gear" },
+  "225304": { "name": "Hunt Leader Gear", "setName": "Hunt Leader", "type": "Gear" },
+  "225305": { "name": "Hunt Leader Gear", "setName": "Hunt Leader", "type": "Gear" },
+  "225306": { "name": "Hunt Leader Gear", "setName": "Hunt Leader", "type": "Gear" },
+  "225307": { "name": "Hunt Leader Gear", "setName": "Hunt Leader", "type": "Gear" },
+  "225308": {
+    "name": "Robes of Destruction Mastery Gear",
+    "setName": "Robes of Destruction Mastery",
+    "type": "Gear"
+  },
+  "225309": {
+    "name": "Robes of Destruction Mastery Gear",
+    "setName": "Robes of Destruction Mastery",
+    "type": "Gear"
+  },
+  "225310": {
+    "name": "Robes of Destruction Mastery Gear",
+    "setName": "Robes of Destruction Mastery",
+    "type": "Gear"
+  },
+  "225311": {
+    "name": "Robes of Destruction Mastery Gear",
+    "setName": "Robes of Destruction Mastery",
+    "type": "Gear"
+  },
+  "225312": {
+    "name": "Robes of Destruction Mastery Gear",
+    "setName": "Robes of Destruction Mastery",
+    "type": "Gear"
+  },
+  "225313": {
+    "name": "Robes of Destruction Mastery Gear",
+    "setName": "Robes of Destruction Mastery",
+    "type": "Gear"
+  },
+  "225314": {
+    "name": "Robes of Destruction Mastery Gear",
+    "setName": "Robes of Destruction Mastery",
+    "type": "Gear"
+  },
+  "225315": {
+    "name": "Robes of Destruction Mastery Gear",
+    "setName": "Robes of Destruction Mastery",
+    "type": "Gear"
+  },
+  "225316": {
+    "name": "Robes of Destruction Mastery Gear",
+    "setName": "Robes of Destruction Mastery",
+    "type": "Gear"
+  },
+  "225317": {
+    "name": "Robes of Destruction Mastery Gear",
+    "setName": "Robes of Destruction Mastery",
+    "type": "Gear"
+  },
+  "225318": {
+    "name": "Robes of Destruction Mastery Gear",
+    "setName": "Robes of Destruction Mastery",
+    "type": "Gear"
+  },
+  "225319": {
+    "name": "Robes of Destruction Mastery Gear",
+    "setName": "Robes of Destruction Mastery",
+    "type": "Gear"
+  },
+  "225320": {
+    "name": "Robes of Destruction Mastery Gear",
+    "setName": "Robes of Destruction Mastery",
+    "type": "Gear"
+  },
+  "225321": {
+    "name": "Robes of Destruction Mastery Gear",
+    "setName": "Robes of Destruction Mastery",
+    "type": "Gear"
+  },
+  "225322": {
+    "name": "Robes of Destruction Mastery Gear",
+    "setName": "Robes of Destruction Mastery",
+    "type": "Gear"
+  },
+  "225323": {
+    "name": "Robes of Destruction Mastery Gear",
+    "setName": "Robes of Destruction Mastery",
+    "type": "Gear"
+  },
+  "225324": {
+    "name": "Robes of Destruction Mastery Gear",
+    "setName": "Robes of Destruction Mastery",
+    "type": "Gear"
+  },
+  "225325": {
+    "name": "Robes of Destruction Mastery Gear",
+    "setName": "Robes of Destruction Mastery",
+    "type": "Gear"
+  },
+  "225326": {
+    "name": "Robes of Destruction Mastery Gear",
+    "setName": "Robes of Destruction Mastery",
+    "type": "Gear"
+  },
+  "225327": {
+    "name": "Robes of Destruction Mastery Gear",
+    "setName": "Robes of Destruction Mastery",
+    "type": "Gear"
+  },
+  "225328": {
+    "name": "Robes of Destruction Mastery Gear",
+    "setName": "Robes of Destruction Mastery",
+    "type": "Gear"
+  },
+  "225329": {
+    "name": "Robes of Destruction Mastery Gear",
+    "setName": "Robes of Destruction Mastery",
+    "type": "Gear"
+  },
+  "225330": {
+    "name": "Robes of Destruction Mastery Gear",
+    "setName": "Robes of Destruction Mastery",
+    "type": "Gear"
+  },
+  "225331": {
+    "name": "Robes of Destruction Mastery Gear",
+    "setName": "Robes of Destruction Mastery",
+    "type": "Gear"
+  },
+  "225332": {
+    "name": "Robes of Destruction Mastery Gear",
+    "setName": "Robes of Destruction Mastery",
+    "type": "Gear"
+  },
+  "225333": {
+    "name": "Robes of Destruction Mastery Gear",
+    "setName": "Robes of Destruction Mastery",
+    "type": "Gear"
+  },
+  "225334": {
+    "name": "Robes of Destruction Mastery Gear",
+    "setName": "Robes of Destruction Mastery",
+    "type": "Gear"
+  },
+  "225335": {
+    "name": "Robes of Destruction Mastery Gear",
+    "setName": "Robes of Destruction Mastery",
+    "type": "Gear"
+  }
 }

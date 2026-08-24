@@ -11,7 +11,7 @@ import { ScribingDetectionService } from './features/scribing/application/servic
 
 // Mock data for Shattering Knife (ability ID 217340)
 const mockFightData = {
-  fightId: 'm2Y9FqdpMjcaZh4R-11',
+  fightId: 'sample-report-fixture-11',
   players: [
     {
       id: 1,
@@ -39,7 +39,7 @@ describe('Player 1 Shattering Knife Detection - New Architecture', () => {
     console.log('\n🔍 VALIDATING SHATTERING KNIFE DETECTION - NEW ARCHITECTURE');
     console.log('============================================================');
 
-    const fightId = 'm2Y9FqdpMjcaZh4R-11';
+    const fightId = 'sample-report-fixture-11';
     const player1Id = 1;
     const shatteringKnifeAbilityId = 217340;
 

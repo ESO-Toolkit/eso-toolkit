@@ -22,6 +22,8 @@ import {
   OAUTH_STATE_KEY,
   buildAuthUrl,
   parseAppAuthPort,
+  getStoredAccessToken,
+  setStoredToken,
 } from './auth';
 
 jest.mocked(getBaseUrl).mockReturnValue('https://esotk.com/');
@@ -77,6 +79,30 @@ describe('OAuth Basic Functions', () => {
     });
   });
 
+  describe('OAuth token storage', () => {
+    it('migrates a legacy persistent token into sessionStorage and removes the old copy', () => {
+      mockSessionStorage.getItem.mockReturnValue(null);
+      mockLocalStorage.getItem.mockReturnValue('legacy-access-token');
+
+      expect(getStoredAccessToken()).toBe('legacy-access-token');
+      expect(mockSessionStorage.setItem).toHaveBeenCalledWith(
+        LOCAL_STORAGE_ACCESS_TOKEN_KEY,
+        'legacy-access-token',
+      );
+      expect(mockLocalStorage.removeItem).toHaveBeenCalledWith(LOCAL_STORAGE_ACCESS_TOKEN_KEY);
+    });
+
+    it('writes new tokens to sessionStorage and removes any legacy copy', () => {
+      setStoredToken(LOCAL_STORAGE_ACCESS_TOKEN_KEY, 'session-access-token');
+
+      expect(mockSessionStorage.setItem).toHaveBeenCalledWith(
+        LOCAL_STORAGE_ACCESS_TOKEN_KEY,
+        'session-access-token',
+      );
+      expect(mockLocalStorage.removeItem).toHaveBeenCalledWith(LOCAL_STORAGE_ACCESS_TOKEN_KEY);
+    });
+  });
+
   describe('Intended Destination Management', () => {
     it('should store destination and mark it as protected', () => {
       setIntendedDestination('/report/123/fight/1');
@@ -89,6 +115,20 @@ describe('OAuth Basic Functions', () => {
 
     it('should return "/" when no destination is stored', () => {
       mockLocalStorage.getItem.mockReturnValue(null);
+      expect(getIntendedDestination()).toBe('/');
+    });
+
+    it('should reject external and backslash-normalized destinations', () => {
+      mockLocalStorage.getItem.mockImplementation((key: string) => {
+        if (key === INTENDED_DESTINATION_KEY) return '//evil.example/path';
+        return null;
+      });
+      expect(getIntendedDestination()).toBe('/');
+
+      mockLocalStorage.getItem.mockImplementation((key: string) => {
+        if (key === INTENDED_DESTINATION_KEY) return '/\\evil.example/path';
+        return null;
+      });
       expect(getIntendedDestination()).toBe('/');
     });
 
@@ -367,11 +407,11 @@ describe('refreshAccessToken', () => {
     const result = await refreshAccessToken();
 
     expect(result).toBe('new-access-token');
-    expect(mockLocalStorage.setItem).toHaveBeenCalledWith(
+    expect(mockSessionStorage.setItem).toHaveBeenCalledWith(
       LOCAL_STORAGE_ACCESS_TOKEN_KEY,
       'new-access-token',
     );
-    expect(mockLocalStorage.setItem).toHaveBeenCalledWith(
+    expect(mockSessionStorage.setItem).toHaveBeenCalledWith(
       LOCAL_STORAGE_REFRESH_TOKEN_KEY,
       'new-refresh-token',
     );
@@ -387,8 +427,8 @@ describe('refreshAccessToken', () => {
     const result = await refreshAccessToken();
 
     expect(result).toBeNull();
-    expect(mockLocalStorage.removeItem).toHaveBeenCalledWith(LOCAL_STORAGE_ACCESS_TOKEN_KEY);
-    expect(mockLocalStorage.removeItem).toHaveBeenCalledWith(LOCAL_STORAGE_REFRESH_TOKEN_KEY);
+    expect(mockSessionStorage.removeItem).toHaveBeenCalledWith(LOCAL_STORAGE_ACCESS_TOKEN_KEY);
+    expect(mockSessionStorage.removeItem).toHaveBeenCalledWith(LOCAL_STORAGE_REFRESH_TOKEN_KEY);
   });
 
   it('should deduplicate concurrent calls — only one HTTP request for multiple simultaneous callers', async () => {

@@ -48,7 +48,7 @@ const sectionLabelSx = {
   fontSize: 11,
   letterSpacing: 0.8,
   textTransform: 'uppercase' as const,
-  fontFamily: 'Space Grotesk, Inter, system-ui',
+  fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
 };
 
 /** Groups CLASS_SKILL_LINES by ownerClass, preserving the ESO_CLASSES order.
@@ -157,7 +157,7 @@ const SlotPicker: React.FC<SlotPickerProps> = ({ slot, value, disabledIds, onCha
           sx={{
             fontSize: 10,
             fontWeight: 700,
-            fontFamily: 'Space Grotesk, Inter, system-ui',
+            fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
             color: isDark ? 'rgba(255,255,255,0.30)' : 'rgba(0,0,0,0.28)',
             minWidth: 16,
             flexShrink: 0,
@@ -185,7 +185,7 @@ const SlotPicker: React.FC<SlotPickerProps> = ({ slot, value, disabledIds, onCha
                 sx={{
                   fontSize: 12,
                   fontWeight: 600,
-                  fontFamily: 'Space Grotesk, Inter, system-ui',
+                  fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                   color: ownerColor,
                   lineHeight: 1.2,
                   whiteSpace: 'nowrap',
@@ -199,7 +199,7 @@ const SlotPicker: React.FC<SlotPickerProps> = ({ slot, value, disabledIds, onCha
                 sx={{
                   fontSize: 10,
                   fontWeight: 400,
-                  fontFamily: 'Space Grotesk, Inter, system-ui',
+                  fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                   color: isDark ? 'rgba(255,255,255,0.38)' : 'rgba(0,0,0,0.38)',
                   lineHeight: 1.2,
                   mt: 0.25,
@@ -238,7 +238,7 @@ const SlotPicker: React.FC<SlotPickerProps> = ({ slot, value, disabledIds, onCha
                 flex: 1,
                 fontSize: 12,
                 fontWeight: 400,
-                fontFamily: 'Space Grotesk, Inter, system-ui',
+                fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                 color: isDark ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.25)',
                 fontStyle: 'italic',
               }}
@@ -294,7 +294,7 @@ const SlotPicker: React.FC<SlotPickerProps> = ({ slot, value, disabledIds, onCha
               sx={{
                 fontSize: 9,
                 fontWeight: 700,
-                fontFamily: 'Space Grotesk, Inter, system-ui',
+                fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                 letterSpacing: 1,
                 textTransform: 'uppercase',
                 color: clsColor,
@@ -329,7 +329,7 @@ const SlotPicker: React.FC<SlotPickerProps> = ({ slot, value, disabledIds, onCha
                   onClick={() => handleSelect(line.id)}
                   sx={{
                     fontSize: 12,
-                    fontFamily: 'Space Grotesk, Inter, system-ui',
+                    fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                     fontWeight: isSelected ? 600 : 400,
                     px: 1.5,
                     py: 0.6,
@@ -415,7 +415,7 @@ const StatusBadge: React.FC<StatusBadgeProps> = ({ classSkillLines }) => {
             height: 20,
             fontSize: 10,
             fontWeight: 700,
-            fontFamily: 'Space Grotesk, Inter, system-ui',
+            fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
             letterSpacing: 0.5,
             background: alpha(primaryColor, isDark ? 0.14 : 0.08),
             border: `1px solid ${alpha(primaryColor, 0.3)}`,
@@ -433,7 +433,7 @@ const StatusBadge: React.FC<StatusBadgeProps> = ({ classSkillLines }) => {
             height: 20,
             fontSize: 10,
             fontWeight: 700,
-            fontFamily: 'Space Grotesk, Inter, system-ui',
+            fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
             letterSpacing: 0.5,
             background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)',
             border: `1px solid ${isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.10)'}`,
@@ -507,7 +507,7 @@ const SubclassingSectionComponent: React.FC = () => {
           sx={{
             display: 'block',
             fontSize: 11,
-            fontFamily: 'Space Grotesk, Inter, system-ui',
+            fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
             color: isDark ? 'rgba(255,255,255,0.40)' : 'rgba(0,0,0,0.40)',
             mb: 1.5,
             lineHeight: 1.5,

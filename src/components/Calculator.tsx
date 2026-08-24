@@ -807,6 +807,7 @@ const QuantityInput: React.FC<{
           max: hasQuantity ? maxValue : 0,
           step: hasQuantity ? item.step || 1 : 1,
           readOnly: !hasQuantity,
+          'aria-label': `${item.name} quantity`,
           style: {
             fontSize: isMobile ? '18px' : '14px',
             fontWeight: isMobile ? 500 : 400,
@@ -3129,6 +3130,11 @@ const CalculatorComponent: React.FC = () => {
           <ListItemIcon sx={{ minWidth: 'auto', mr: liteMode ? 0.125 : isMobile ? 0 : 0.75 }}>
             <Checkbox
               checked={item.enabled}
+              slotProps={{
+                input: {
+                  'aria-label': `${item.enabled ? 'Disable' : 'Enable'} ${item.name}`,
+                },
+              }}
               disabled={item.locked || isLightArmorPassive || isHeavyArmorPassive}
               size={isMobile ? 'medium' : 'small'}
               disableRipple
@@ -3560,7 +3566,7 @@ const CalculatorComponent: React.FC = () => {
                     fontWeight: 700,
                     fontSize: '2rem',
                     color: theme.palette.mode === 'dark' ? '#f8fafc' : '#0f172a',
-                    fontFamily: 'Inter, sans-serif',
+                    fontFamily: 'Inter Variable, sans-serif',
                     lineHeight: 1.1,
                   }}
                 >
@@ -3715,7 +3721,7 @@ const CalculatorComponent: React.FC = () => {
                   fontWeight: 700,
                   fontSize: '2rem',
                   color: theme.palette.mode === 'dark' ? '#f8fafc' : '#0f172a',
-                  fontFamily: 'Inter, sans-serif',
+                  fontFamily: 'Inter Variable, sans-serif',
                   lineHeight: 1.1,
                 }}
               >
@@ -3864,7 +3870,7 @@ const CalculatorComponent: React.FC = () => {
                   fontWeight: 700,
                   fontSize: { xs: '1.95rem', sm: '2.25rem' },
                   color: theme.palette.mode === 'dark' ? '#f8fafc' : '#0f172a',
-                  fontFamily: 'Inter, sans-serif',
+                  fontFamily: 'Inter Variable, sans-serif',
                   lineHeight: 1.15,
                 }}
               >
@@ -4004,6 +4010,23 @@ const CalculatorComponent: React.FC = () => {
 
   return (
     <>
+      <Box
+        role="status"
+        aria-live="polite"
+        sx={{
+          position: 'absolute',
+          width: 1,
+          height: 1,
+          p: 0,
+          m: -1,
+          overflow: 'hidden',
+          clip: 'rect(0 0 0 0)',
+          whiteSpace: 'nowrap',
+          border: 0,
+        }}
+      >
+        Calculator ready
+      </Box>
       <CalculatorContainer liteMode={liteMode}>
         <Container
           maxWidth={liteMode ? false : 'lg'}

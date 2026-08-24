@@ -102,7 +102,7 @@ the ticket branch natively.
     > Use `worktree_push({ skipLint: true })` as a last resort — but first manually run
     > `npm run validate` and check for conflict markers.
 
-12. **Create PR** — use the [create-pr skill](.agents/skills/create-pr/SKILL.md), or directly:
+12. **Create PR** — use the [create-pr skill](../create-pr/SKILL.md), or directly:
     ```
     mcp__eso-logs-github__github_create_pr(
       title: "feat(ESO-####): short description",
@@ -113,7 +113,7 @@ the ticket branch natively.
     ```
     **Always write the body to a temp file first** — never inline multiline markdown in PowerShell
     (backticks are stripped). PR title **must contain** `ESO-####` for Jira sync.
-    See [create-pr skill](.agents/skills/create-pr/SKILL.md) for the body template and screenshot
+    See [create-pr skill](../create-pr/SKILL.md) for the body template and screenshot
     process for UI changes.
 
 13. **Jira → In Review** — `transitionJiraIssue(issueKey: "ESO-####", transition: "In Review")`.
@@ -236,7 +236,7 @@ git checkout ESO-XXX/your-description
 
 > Note: the recovery branch `ESO-XXX/description` is created outside of Claude Code's native
 > worktree mechanism, so PR detection will not work automatically. Push normally and create the
-> PR manually via `gh pr create` or the [create-pr skill](.agents/skills/create-pr/SKILL.md).
+> PR manually via `gh pr create` or the [create-pr skill](../create-pr/SKILL.md).
 
 ---
 

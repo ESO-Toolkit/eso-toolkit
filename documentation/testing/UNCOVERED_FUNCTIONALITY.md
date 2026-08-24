@@ -9,35 +9,36 @@
 
 Based on `src/App.tsx`, here are **all 23 routes** in the application:
 
-| # | Route | Component | Auth Required | E2E Coverage |
-|---|-------|-----------|---------------|--------------|
-| 1 | `/` | LandingPage | ❌ | ✅ `home.spec.ts` |
-| 2 | `/login` | Login | ❌ | ⚠️ `auth.spec.ts` (mocked only) |
-| 3 | `/oauth-redirect` | OAuthRedirect | ❌ | ⚠️ `auth.spec.ts` (mocked only) |
-| 4 | `/banned` | Banned | ❌ | ❌ **NO COVERAGE** |
-| 5 | `/report/:reportId` | ReportFights | ✅ | ⚠️ Partial (nightly only) |
-| 6 | `/report/:reportId/fight/:fightId` | ReportFightDetails | ✅ | ✅ Nightly tests |
-| 7 | `/report/:reportId/fight/:fightId/:tabId` | ReportFightDetails | ✅ | ✅ Nightly tests (13 tabs) |
-| 8 | `/report/:reportId/fight/:fightId/replay` | FightReplay | ✅ | ❌ **NO COVERAGE** |
-| 9 | `/report/:reportId/live` | LiveLog | ✅ | ❌ **NO COVERAGE** |
-| 10 | `/calculator` | Calculator | ❌ | ⚠️ Skeleton detection only |
-| 11 | `/text-editor` | TextEditor | ❌ | ❌ **NO COVERAGE** |
-| 12 | `/logs` | Logs | ❌ | ❌ **NO COVERAGE** |
-| 13 | `/leaderboards` | LeaderboardLogsPage | ❌ | ❌ **NO COVERAGE** |
-| 14 | `/sample-report` | SampleReportPage | ❌ | ❌ **NO COVERAGE** |
-| 15 | `/latest-reports` | LatestReports | ✅ | ⚠️ Nightly auth tests |
-| 16 | `/whoami` | WhoAmIPage | ✅ | ❌ **NO COVERAGE** |
-| 17 | `/my-reports` | UserReports | ✅ | ⚠️ Nightly auth tests |
-| 18 | `/scribing-simulator` | ScribingSimulatorPage | ❌ | ❌ **NO COVERAGE** |
-| 19 | `/parse-analysis/:reportId?/:fightId?` | ParseAnalysisPage | ✅ | ❌ **NO COVERAGE** |
-| 20 | `/docs/calculations` | CalculationKnowledgeBasePage | ❌ | ❌ **NO COVERAGE** |
-| 21 | `*` (404) | NotFound | ❌ | ✅ `404-page.spec.ts` |
+| #   | Route                                     | Component                    | Auth Required | E2E Coverage                    |
+| --- | ----------------------------------------- | ---------------------------- | ------------- | ------------------------------- |
+| 1   | `/`                                       | LandingPage                  | ❌            | ✅ `home.spec.ts`               |
+| 2   | `/login`                                  | Login                        | ❌            | ⚠️ `auth.spec.ts` (mocked only) |
+| 3   | `/oauth-redirect`                         | OAuthRedirect                | ❌            | ⚠️ `auth.spec.ts` (mocked only) |
+| 4   | `/banned`                                 | Banned                       | ❌            | ❌ **NO COVERAGE**              |
+| 5   | `/report/:reportId`                       | ReportFights                 | ✅            | ⚠️ Partial (nightly only)       |
+| 6   | `/report/:reportId/fight/:fightId`        | ReportFightDetails           | ✅            | ✅ Nightly tests                |
+| 7   | `/report/:reportId/fight/:fightId/:tabId` | ReportFightDetails           | ✅            | ✅ Nightly tests (13 tabs)      |
+| 8   | `/report/:reportId/fight/:fightId/replay` | FightReplay                  | ✅            | ❌ **NO COVERAGE**              |
+| 9   | `/report/:reportId/live`                  | LiveLog                      | ✅            | ❌ **NO COVERAGE**              |
+| 10  | `/calculator`                             | Calculator                   | ❌            | ⚠️ Skeleton detection only      |
+| 11  | `/text-editor`                            | TextEditor                   | ❌            | ❌ **NO COVERAGE**              |
+| 12  | `/logs`                                   | Logs                         | ❌            | ❌ **NO COVERAGE**              |
+| 13  | `/leaderboards`                           | LeaderboardLogsPage          | ❌            | ❌ **NO COVERAGE**              |
+| 14  | `/sample-report`                          | SampleReportPage             | ❌            | ❌ **NO COVERAGE**              |
+| 15  | `/latest-reports`                         | LatestReports                | ✅            | ⚠️ Nightly auth tests           |
+| 16  | `/whoami`                                 | WhoAmIPage                   | ✅            | ❌ **NO COVERAGE**              |
+| 17  | `/my-reports`                             | UserReports                  | ✅            | ⚠️ Nightly auth tests           |
+| 18  | `/scribing-simulator`                     | ScribingSimulatorPage        | ❌            | ❌ **NO COVERAGE**              |
+| 19  | `/parse-analysis/:reportId?/:fightId?`    | ParseAnalysisPage            | ✅            | ❌ **NO COVERAGE**              |
+| 20  | `/docs/calculations`                      | CalculationKnowledgeBasePage | ❌            | ❌ **NO COVERAGE**              |
+| 21  | `*` (404)                                 | NotFound                     | ❌            | ✅ `404-page.spec.ts`           |
 
 ---
 
 ## ❌ Major Gaps - No E2E Coverage
 
 ### 1. **3D Replay System** 🎮 HIGH PRIORITY
+
 - **Route**: `/report/:reportId/fight/:fightId/replay`
 - **Component**: `FightReplay`
 - **Features**:
@@ -51,6 +52,7 @@ Based on `src/App.tsx`, here are **all 23 routes** in the application:
 - **Notes**: Heavily unit tested (integration tests exist) but no e2e validation
 
 ### 2. **Live Logging** 📡 HIGH PRIORITY
+
 - **Route**: `/report/:reportId/live`
 - **Component**: `LiveLog`
 - **Features**:
@@ -62,6 +64,7 @@ Based on `src/App.tsx`, here are **all 23 routes** in the application:
 - **Notes**: Could fail silently in production
 
 ### 3. **Text Editor** 📝 MEDIUM PRIORITY
+
 - **Route**: `/text-editor`
 - **Component**: `TextEditor`
 - **Features**:
@@ -73,6 +76,7 @@ Based on `src/App.tsx`, here are **all 23 routes** in the application:
 - **Smoke Tests**: Has skeleton detection only
 
 ### 4. **Parse Analysis Page** 📊 HIGH PRIORITY
+
 - **Route**: `/parse-analysis/:reportId?/:fightId?`
 - **Component**: `ParseAnalysisPage`
 - **Features**:
@@ -86,6 +90,7 @@ Based on `src/App.tsx`, here are **all 23 routes** in the application:
 - **Notes**: Mentioned in semantic search results but untested
 
 ### 5. **Scribing Simulator** ⚗️ MEDIUM PRIORITY
+
 - **Route**: `/scribing-simulator`
 - **Component**: `ScribingSimulatorPage`
 - **Features**:
@@ -97,6 +102,7 @@ Based on `src/App.tsx`, here are **all 23 routes** in the application:
 - **Notes**: Detection tested but not full functionality
 
 ### 6. **Calculator** 🧮 MEDIUM PRIORITY
+
 - **Route**: `/calculator`
 - **Component**: `Calculator`
 - **Features**:
@@ -108,6 +114,7 @@ Based on `src/App.tsx`, here are **all 23 routes** in the application:
 - **Smoke Tests**: `skeleton-detection.smoke.spec.ts` checks loading only
 
 ### 7. **Logs Browser** 📋 LOW PRIORITY
+
 - **Route**: `/logs`
 - **Component**: `Logs`
 - **Features**:
@@ -117,6 +124,7 @@ Based on `src/App.tsx`, here are **all 23 routes** in the application:
 - **Test Files**: None
 
 ### 8. **Leaderboards** 🏆 LOW PRIORITY
+
 - **Route**: `/leaderboards`
 - **Component**: `LeaderboardLogsPage`
 - **Features**:
@@ -127,6 +135,7 @@ Based on `src/App.tsx`, here are **all 23 routes** in the application:
 - **Test Files**: None
 
 ### 9. **Sample Report** 📄 LOW PRIORITY
+
 - **Route**: `/sample-report`
 - **Component**: `SampleReportPage`
 - **Features**:
@@ -136,6 +145,7 @@ Based on `src/App.tsx`, here are **all 23 routes** in the application:
 - **Test Files**: None
 
 ### 10. **WhoAmI Page** 👤 LOW PRIORITY
+
 - **Route**: `/whoami`
 - **Component**: `WhoAmIPage`
 - **Features**:
@@ -145,6 +155,7 @@ Based on `src/App.tsx`, here are **all 23 routes** in the application:
 - **Test Files**: None
 
 ### 11. **Calculation Docs** 📚 LOW PRIORITY
+
 - **Route**: `/docs/calculations`
 - **Component**: `CalculationKnowledgeBasePage`
 - **Features**:
@@ -155,6 +166,7 @@ Based on `src/App.tsx`, here are **all 23 routes** in the application:
 - **Test Files**: None
 
 ### 12. **Banned Page** 🚫 LOW PRIORITY
+
 - **Route**: `/banned`
 - **Component**: `Banned`
 - **Features**:
@@ -170,6 +182,7 @@ Based on `src/App.tsx`, here are **all 23 routes** in the application:
 ## ⚠️ Partial Coverage - Needs Enhancement
 
 ### 1. **Report Fights List** 📑
+
 - **Route**: `/report/:reportId`
 - **Component**: `ReportFights`
 - **Current Coverage**: Nightly tests only (real data)
@@ -177,16 +190,18 @@ Based on `src/App.tsx`, here are **all 23 routes** in the application:
 - **Test Files**: `report.spec.ts` exists but doesn't test this route specifically
 
 ### 2. **Latest Reports** 📰
+
 - **Route**: `/latest-reports`
 - **Component**: `LatestReports`
 - **Current Coverage**: Nightly auth tests (partial)
-- **Missing**: 
+- **Missing**:
   - Pagination testing
   - Search functionality
   - Filtering
   - Loading states
 
 ### 3. **My Reports (User Reports)** 👥
+
 - **Route**: `/my-reports`
 - **Component**: `UserReports`
 - **Current Coverage**: Nightly auth tests (partial)
@@ -197,6 +212,7 @@ Based on `src/App.tsx`, here are **all 23 routes** in the application:
   - Filtering
 
 ### 4. **Login/OAuth** 🔐
+
 - **Routes**: `/login`, `/oauth-redirect`
 - **Current Coverage**: `auth.spec.ts` with mocked OAuth
 - **Missing**:
@@ -210,6 +226,7 @@ Based on `src/App.tsx`, here are **all 23 routes** in the application:
 ## 📊 Coverage Summary by Priority
 
 ### HIGH PRIORITY (5 gaps)
+
 1. ❌ 3D Replay System (`/report/:reportId/fight/:fightId/replay`)
 2. ❌ Live Logging (`/report/:reportId/live`)
 3. ❌ Parse Analysis (`/parse-analysis/:reportId?/:fightId?`)
@@ -217,12 +234,14 @@ Based on `src/App.tsx`, here are **all 23 routes** in the application:
 5. ⚠️ Login/OAuth - Needs error state testing
 
 ### MEDIUM PRIORITY (4 gaps)
+
 6. ❌ Text Editor (`/text-editor`)
 7. ❌ Scribing Simulator (`/scribing-simulator`)
 8. ❌ Calculator (`/calculator`)
 9. ❌ Leaderboards (`/leaderboards`)
 
 ### LOW PRIORITY (6 gaps)
+
 10. ❌ Logs Browser (`/logs`)
 11. ❌ Sample Report (`/sample-report`)
 12. ❌ WhoAmI Page (`/whoami`)
@@ -238,6 +257,7 @@ Based on `src/App.tsx`, here are **all 23 routes** in the application:
 ### High Priority
 
 #### 1. `tests/replay.spec.ts` (3D Replay System)
+
 ```typescript
 describe('3D Fight Replay', () => {
   test('should load replay page and render 3D scene');
@@ -250,6 +270,7 @@ describe('3D Fight Replay', () => {
 ```
 
 #### 2. `tests/live-logging.spec.ts` (Live Logging)
+
 ```typescript
 describe('Live Logging', () => {
   test('should connect to live log stream');
@@ -260,6 +281,7 @@ describe('Live Logging', () => {
 ```
 
 #### 3. `tests/parse-analysis.spec.ts` (Parse Analysis)
+
 ```typescript
 describe('Parse Analysis', () => {
   test('should load parse analysis page');
@@ -274,6 +296,7 @@ describe('Parse Analysis', () => {
 ### Medium Priority
 
 #### 4. `tests/text-editor.spec.ts` (Text Editor)
+
 ```typescript
 describe('Text Editor', () => {
   test('should load text editor page');
@@ -284,6 +307,7 @@ describe('Text Editor', () => {
 ```
 
 #### 5. `tests/scribing-simulator.spec.ts` (Scribing Simulator)
+
 ```typescript
 describe('Scribing Simulator', () => {
   test('should load scribing simulator');
@@ -294,6 +318,7 @@ describe('Scribing Simulator', () => {
 ```
 
 #### 6. `tests/calculator.spec.ts` (Calculator)
+
 ```typescript
 describe('Calculator', () => {
   test('should load calculator page');
@@ -306,28 +331,29 @@ describe('Calculator', () => {
 ### Low Priority
 
 #### 7. `tests/utility-pages.spec.ts` (All utility pages)
+
 ```typescript
 describe('Utility Pages', () => {
   describe('Logs Browser', () => {
     test('should display logs list');
   });
-  
+
   describe('Leaderboards', () => {
     test('should display leaderboard rankings');
   });
-  
+
   describe('Sample Report', () => {
     test('should load sample report');
   });
-  
+
   describe('WhoAmI', () => {
     test('should display user info when authenticated');
   });
-  
+
   describe('Calculation Docs', () => {
     test('should display documentation');
   });
-  
+
   describe('Banned Page', () => {
     test('should display ban message');
   });
@@ -367,20 +393,24 @@ These features are complex and mission-critical but untested:
 ## 📋 Proposed Test Coverage Plan
 
 ### Phase 1: Quick Wins (1-2 hours)
+
 - Add `tests/utility-pages.spec.ts` for 5 simple pages
 - Verify pages load without errors
 
 ### Phase 2: Critical Features (1 week)
+
 - `tests/replay.spec.ts` - Basic replay functionality
 - `tests/live-logging.spec.ts` - Connection and updates
 - `tests/parse-analysis.spec.ts` - Core analysis features
 
 ### Phase 3: Important Tools (1 week)
+
 - `tests/text-editor.spec.ts` - M0RMarkers and notes
 - `tests/scribing-simulator.spec.ts` - Scribing UI
 - `tests/calculator.spec.ts` - Calculations
 
 ### Phase 4: Enhancement (Ongoing)
+
 - Expand coverage on partial tests
 - Add edge cases
 - Performance testing
@@ -390,12 +420,14 @@ These features are complex and mission-critical but untested:
 ## 💡 Recommendations
 
 ### Immediate Actions
+
 1. ✅ **Add utility pages test** - Quick win, covers 5 gaps
 2. ✅ **Create replay smoke test** - Verify 3D scene loads
 3. ✅ **Create live logging test** - Verify connection works
 4. ✅ **Enhance report tests** - Add mocked versions
 
 ### Strategic
+
 5. **Document coverage goals** - Set target % for each feature
 6. **Add CI checks** - Fail if critical routes aren't tested
 7. **Create test templates** - Speed up future test creation
@@ -406,12 +438,14 @@ These features are complex and mission-critical but untested:
 ## 📊 Current vs Target Coverage
 
 ### Current State
+
 - **Routes covered**: 8/21 (38%)
 - **Fully tested**: 3/21 (14%)
 - **Partially tested**: 5/21 (24%)
 - **No coverage**: 13/21 (62%)
 
 ### Target State (Recommended)
+
 - **Routes covered**: 21/21 (100%)
 - **Fully tested**: 15/21 (71%)
 - **Partially tested**: 6/21 (29%)
@@ -422,16 +456,19 @@ These features are complex and mission-critical but untested:
 ## 🚀 Action Items
 
 ### This Week
+
 - [ ] Create `tests/utility-pages.spec.ts` (covers 5 routes)
 - [ ] Create `tests/replay-smoke.spec.ts` (basic 3D replay)
 - [ ] Create `tests/live-logging-smoke.spec.ts` (basic connection)
 
 ### This Sprint
+
 - [ ] Create comprehensive `tests/replay.spec.ts`
 - [ ] Create comprehensive `tests/parse-analysis.spec.ts`
 - [ ] Enhance `tests/report.spec.ts` with mocked data
 
 ### Next Sprint
+
 - [ ] Create `tests/text-editor.spec.ts`
 - [ ] Create `tests/scribing-simulator.spec.ts`
 - [ ] Create `tests/calculator.spec.ts`
@@ -441,7 +478,7 @@ These features are complex and mission-critical but untested:
 
 ## 📚 Related Documentation
 
-- [E2E Test Coverage Analysis](./E2E_TEST_COVERAGE_ANALYSIS.md)
+- [E2E Test Suite Reference](./E2E_TEST_SUITE_REFERENCE.md)
 - [E2E Test Suite Reference](./E2E_TEST_SUITE_REFERENCE.md)
 - [tests/README.md](../../tests/README.md)
 

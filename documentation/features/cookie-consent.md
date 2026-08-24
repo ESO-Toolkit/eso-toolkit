@@ -1,14 +1,17 @@
 # Cookie Consent Implementation (ESO-567)
 
 ## Overview
+
 Implemented a GDPR-compliant cookie consent banner that informs users about data collection and storage practices, and obtains explicit consent before enabling analytics.
 
 ## Implementation Date
+
 January 22, 2026
 
 ## Components Added
 
 ### CookieConsent Component
+
 - **Location**: `src/components/CookieConsent/CookieConsent.tsx`
 - **Features**:
   - Bottom-anchored banner with Material-UI styling
@@ -18,6 +21,7 @@ January 22, 2026
   - Automatic re-display when consent terms are updated (via version increment)
 
 ### Key Functions
+
 - `hasAcceptedCookies()`: Check if user has consented to cookies
 - `getConsentState()`: Retrieve current consent state
 - `clearConsent()`: Reset consent (for testing/development)
@@ -25,23 +29,28 @@ January 22, 2026
 ## Privacy Compliance
 
 ### What We Track
-The application uses browser storage for:
-1. **User Preferences**: Theme settings, layout preferences, application state
-2. **Authentication**: ESO Logs OAuth tokens (localStorage)
-3. **Analytics**: Google Analytics 4 (only if consented)
-4. **Error Tracking**: Rollbar monitoring (only if consented)
+
+The application stores some data in the browser and may process other data through required
+service requests:
+
+1. **User Preferences**: Theme settings, layout preferences, application state, and the consent choice are stored in the browser
+2. **Authentication**: ESO Logs OAuth tokens are stored in the browser, while authentication and other required API requests leave the browser
+3. **Server-backed features**: Builds, rosters, profiles, comments, votes, or other content you choose to publish may be stored by ESO Toolkit and shown publicly
+4. **Analytics and Error Tracking**: Google Analytics 4 and Rollbar are optional and run only after you explicitly enable them
 
 ### Privacy Principles
-- ✅ **No server-side storage** of personal data
-- ✅ **All data stays in browser** localStorage
-- ✅ **Explicit consent required** for analytics
-- ✅ **No personal data collection** (names, emails, etc.)
-- ✅ **User control** via browser localStorage clearing
+
+- ✅ **Consent choice and app preferences** remain under your browser's control
+- ✅ **Explicit consent required** for analytics and error tracking
+- ✅ **Required API processing is disclosed** for authentication and server-backed features
+- ✅ **User control** via browser storage controls and the privacy settings page
 
 ## Technical Implementation
 
 ### Analytics Integration
+
 Modified `src/utils/analytics.ts` to respect consent:
+
 - `initializeAnalytics()`: Only initializes if user has consented
 - All tracking functions check consent before sending data:
   - `trackPageView()`
@@ -51,26 +60,30 @@ Modified `src/utils/analytics.ts` to respect consent:
   - `setUserProperties()`
 
 ### App Integration
+
 - Added to `src/App.tsx` as a persistent component
 - Listens for localStorage changes to reinitialize analytics when consent is given
 - Banner appears on first visit or when consent version is outdated
 
 ## Consent Versioning
+
 - Current version: `1`
 - Increment `COOKIE_CONSENT_VERSION` when terms change to re-request consent
 - Version stored with consent state to track updates
 
 ## Testing
+
 - Unit tests: `src/components/CookieConsent/__tests__/CookieConsent.test.tsx`
 - Tests cover:
   - Banner display logic
   - Accept/Decline functionality
   - Details dialog interaction
   - Utility functions (hasAcceptedCookies, getConsentState, clearConsent)
-  
+
 **Note**: Some integration tests fail due to Jest localStorage mocking issues, but the component works correctly in the actual application.
 
 ## User Experience
+
 1. **First Visit**: Banner appears at bottom of screen
 2. **User Choice**:
    - **Accept**: Enables analytics, stores consent, hides banner
@@ -80,6 +93,7 @@ Modified `src/utils/analytics.ts` to respect consent:
 4. **Consent Update**: Banner re-appears if version changes
 
 ## Files Changed/Added
+
 - ✅ `src/components/CookieConsent/CookieConsent.tsx` (new)
 - ✅ `src/components/CookieConsent/index.ts` (new)
 - ✅ `src/components/CookieConsent/__tests__/CookieConsent.test.tsx` (new)
@@ -87,6 +101,7 @@ Modified `src/utils/analytics.ts` to respect consent:
 - ✅ `src/App.tsx` (modified)
 
 ## Compliance Status
+
 - ✅ GDPR compliant
 - ✅ Cookie/storage notification provided
 - ✅ Explicit opt-in required for analytics
@@ -94,6 +109,7 @@ Modified `src/utils/analytics.ts` to respect consent:
 - ✅ User can decline without losing functionality
 
 ## Future Enhancements
+
 - Add a settings page to change consent preferences after initial decision
 - Implement more granular consent options (e.g., separate analytics vs error tracking)
 - Add visual indicator in footer showing current consent status

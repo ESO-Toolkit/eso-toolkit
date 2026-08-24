@@ -3,6 +3,7 @@
 ## Issue Summary
 
 **Problem**: Affix script detection was working for some abilities but not others.
+
 - ✅ **Working**: Shattering Knife → Assassin's Misery
 - ❌ **Not Working**: Magical Trample → Heroism
 
@@ -13,7 +14,8 @@ The affix script detection system relies on mapping buff/debuff IDs to affix scr
 ```typescript
 const AFFIX_SCRIPT_ID_TO_NAME = new Map<number, string>();
 Object.values(scribingData.affixScripts).forEach((script: any) => {
-  if (script.abilityIds) {  // ← Only processes scripts WITH abilityIds
+  if (script.abilityIds) {
+    // ← Only processes scripts WITH abilityIds
     script.abilityIds.forEach((id: number) => {
       AFFIX_SCRIPT_ID_TO_NAME.set(id, script.name);
     });
@@ -24,6 +26,7 @@ Object.values(scribingData.affixScripts).forEach((script: any) => {
 ### The Problem
 
 Out of 26 affix scripts in the database, only 2 had `abilityIds` defined:
+
 - ✅ Vulnerability: [106754]
 - ✅ Maim: [61723]
 - ❌ **Heroism: MISSING** ← This was the problem!
@@ -40,6 +43,7 @@ Assassin's Misery is a **signature script**, not an affix script. Signature scri
 Added `abilityIds` to the most commonly used affix scripts in `data/scribing-complete.json`:
 
 ### 1. Heroism (The Main Fix)
+
 ```json
 "heroism": {
   "id": "heroism",
@@ -66,6 +70,7 @@ Also added `abilityIds` for these frequently used affix scripts:
 ## Verification
 
 After the fix:
+
 - ✅ 7 affix scripts now have `abilityIds` (was 2)
 - ✅ Heroism buffs (61708, 61709) now map to "Heroism"
 - ✅ Detection should work for Magical Trample → Heroism
@@ -75,7 +80,7 @@ After the fix:
 To verify the fix works:
 
 1. **Restart the dev server**: `npm run dev`
-2. **Navigate to the test fight**: http://localhost:3000/#/report/m2Y9FqdpMjcaZh4R/fight/11/players
+2. **Navigate to the configured test fight**: `/report/<report-code>/fight/<fight-id>/players`
 3. **View Player 1's Magical Trample tooltip**
 4. **Expected result**: Should show "🎭 Heroism" as a detected affix script
 
@@ -86,6 +91,7 @@ To verify the fix works:
 ## Future Improvements
 
 The remaining 19 affix scripts still don't have `abilityIds` defined:
+
 - Off Balance
 - Interrupt
 - Resolve
@@ -113,6 +119,7 @@ These should be added as needed when detection issues are reported for specific 
 ### Buff ID Research
 
 Buff IDs were found by searching `data/abilities.json` for standard buff names:
+
 - Minor Heroism → Multiple IDs, most common: 61708
 - Major Heroism → Multiple IDs, most common: 61709
 

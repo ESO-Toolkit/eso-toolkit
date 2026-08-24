@@ -32,11 +32,7 @@ export interface AffixScriptDetection {
   timestamp: number;
   sourcePlayer: number;
   detectionMethod:
-    | 'direct-ability'
-    | 'buff-pattern'
-    | 'debuff-pattern'
-    | 'combat-effect'
-    | 'duration-analysis';
+    'direct-ability' | 'buff-pattern' | 'debuff-pattern' | 'combat-effect' | 'duration-analysis';
   triggeringEvent: ParsedLogEvent;
   supportingEvents: ParsedLogEvent[];
   grimoireDetection?: GrimoireDetection;

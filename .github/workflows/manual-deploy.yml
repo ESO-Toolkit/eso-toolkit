@@ -22,10 +22,18 @@ jobs:
       url: ${{ steps.build-and-deploy.outputs.deployment-url }}
     runs-on: ubuntu-latest
     steps:
+      - name: Require protected main ref
+        run: |
+          if [ "$GITHUB_REF" != "refs/heads/main" ]; then
+            echo "::error::Manual production deploys must be dispatched from protected main."
+            exit 1
+          fi
+
       - name: Checkout Repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0
+          ref: ${{ github.sha }}
       
       - name: Setup Node.js and Install Dependencies
         uses: ./.github/actions/setup-node-with-cache
@@ -40,5 +48,6 @@ jobs:
         uses: ./.github/actions/build-and-deploy
         with:
           enable_sourcemaps: 'false'
+          release_version: ${{ github.sha }}
           vite_ga_measurement_id: ${{ secrets.VITE_GA_MEASUREMENT_ID }}
           vite_discord_client_id: ${{ vars.VITE_DISCORD_CLIENT_ID }}

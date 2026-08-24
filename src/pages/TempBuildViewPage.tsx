@@ -72,7 +72,7 @@ export const TempBuildViewPage: React.FC = () => {
         <Typography
           variant="body2"
           color="text.secondary"
-          sx={{ mb: 3, fontFamily: 'Space Grotesk, Inter, system-ui' }}
+          sx={{ mb: 3, fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui' }}
         >
           Temporary build links expire after 5 days. Create a new build to get a fresh link.
         </Typography>

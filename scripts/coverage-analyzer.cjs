@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 /**
  * Coverage Analysis Utility
- * 
+ *
  * This script provides enhanced coverage analysis and reporting capabilities
- * for the ESO Log Aggregator project.
+ * for the ESO Toolkit project.
  */
 
 const fs = require('fs');
@@ -21,12 +21,7 @@ class CoverageAnalyzer {
    * Run coverage analysis with specified options
    */
   async runCoverage(options = {}) {
-    const {
-      watch = false,
-      threshold = false,
-      verbose = false,
-      output = 'text'
-    } = options;
+    const { watch = false, threshold = false, verbose = false, output = 'text' } = options;
 
     console.log('🧪 Running Jest Coverage Analysis...\n');
 
@@ -34,12 +29,14 @@ class CoverageAnalyzer {
       'npm run test:coverage',
       watch && '--watch',
       threshold && '--passWithNoTests',
-      verbose && '--verbose'
-    ].filter(Boolean).join(' ');
+      verbose && '--verbose',
+    ]
+      .filter(Boolean)
+      .join(' ');
 
     try {
       execSync(command, { stdio: 'inherit' });
-      
+
       if (fs.existsSync(this.summaryPath)) {
         this.generateEnhancedReport();
       }
@@ -59,16 +56,16 @@ class CoverageAnalyzer {
     }
 
     const summaryData = JSON.parse(fs.readFileSync(this.summaryPath, 'utf8'));
-    const detailData = fs.existsSync(this.reportPath) 
+    const detailData = fs.existsSync(this.reportPath)
       ? JSON.parse(fs.readFileSync(this.reportPath, 'utf8'))
       : null;
 
     console.log('\n📊 Enhanced Coverage Report\n');
-    console.log('=' .repeat(60));
-    
+    console.log('='.repeat(60));
+
     this.printOverallSummary(summaryData.total);
     this.printCategoryBreakdown(summaryData);
-    
+
     if (detailData) {
       this.printLowCoverageFiles(detailData);
       this.printHighCoverageFiles(detailData);
@@ -82,10 +79,18 @@ class CoverageAnalyzer {
    */
   printOverallSummary(total) {
     console.log('📈 Overall Coverage:');
-    console.log(`   Lines:      ${this.formatPercentage(total.lines.pct)}     (${total.lines.covered}/${total.lines.total})`);
-    console.log(`   Functions:  ${this.formatPercentage(total.functions.pct)}  (${total.functions.covered}/${total.functions.total})`);
-    console.log(`   Branches:   ${this.formatPercentage(total.branches.pct)}   (${total.branches.covered}/${total.branches.total})`);
-    console.log(`   Statements: ${this.formatPercentage(total.statements.pct)} (${total.statements.covered}/${total.statements.total})\n`);
+    console.log(
+      `   Lines:      ${this.formatPercentage(total.lines.pct)}     (${total.lines.covered}/${total.lines.total})`,
+    );
+    console.log(
+      `   Functions:  ${this.formatPercentage(total.functions.pct)}  (${total.functions.covered}/${total.functions.total})`,
+    );
+    console.log(
+      `   Branches:   ${this.formatPercentage(total.branches.pct)}   (${total.branches.covered}/${total.branches.total})`,
+    );
+    console.log(
+      `   Statements: ${this.formatPercentage(total.statements.pct)} (${total.statements.covered}/${total.statements.total})\n`,
+    );
   }
 
   /**
@@ -93,11 +98,11 @@ class CoverageAnalyzer {
    */
   printCategoryBreakdown(summaryData) {
     console.log('📂 Coverage by Directory:');
-    
+
     const categories = this.categorizePaths(Object.keys(summaryData));
-    
-    categories.forEach(category => {
-      const files = category.files.map(f => summaryData[f]).filter(Boolean);
+
+    categories.forEach((category) => {
+      const files = category.files.map((f) => summaryData[f]).filter(Boolean);
       if (files.length === 0) return;
 
       const avgCoverage = this.calculateAverageCoverage(files);
@@ -111,7 +116,7 @@ class CoverageAnalyzer {
    */
   printLowCoverageFiles(detailData, threshold = 60) {
     console.log('🚨 Files Needing Attention (< 60% coverage):');
-    
+
     const lowCoverageFiles = Object.entries(detailData)
       .filter(([, data]) => data.lines && data.lines.pct < threshold)
       .sort(([, a], [, b]) => a.lines.pct - b.lines.pct)
@@ -133,7 +138,7 @@ class CoverageAnalyzer {
    */
   printHighCoverageFiles(detailData, threshold = 90) {
     console.log('✨ Files with Excellent Coverage (> 90%):');
-    
+
     const highCoverageFiles = Object.entries(detailData)
       .filter(([, data]) => data.lines && data.lines.pct > threshold)
       .sort(([, a], [, b]) => b.lines.pct - a.lines.pct)
@@ -155,18 +160,18 @@ class CoverageAnalyzer {
    */
   printRecommendations(summaryData) {
     console.log('💡 Recommendations:');
-    
+
     const total = summaryData.total;
     const recommendations = [];
 
     if (total.lines.pct < 80) {
       recommendations.push('Focus on increasing line coverage to reach 80% threshold');
     }
-    
+
     if (total.functions.pct < 75) {
       recommendations.push('Add tests for uncovered functions');
     }
-    
+
     if (total.branches.pct < 70) {
       recommendations.push('Improve branch coverage by testing edge cases and error conditions');
     }
@@ -179,9 +184,9 @@ class CoverageAnalyzer {
     recommendations.forEach((rec, index) => {
       console.log(`   ${index + 1}. ${rec}`);
     });
-    
+
     console.log('\n📖 View detailed report: npm run coverage:open');
-    console.log('=' .repeat(60));
+    console.log('='.repeat(60));
   }
 
   /**
@@ -194,17 +199,18 @@ class CoverageAnalyzer {
       { name: 'Utils', pattern: /\/utils\//, files: [] },
       { name: 'Hooks', pattern: /\/hooks\//, files: [] },
       { name: 'Store', pattern: /\/store\//, files: [] },
-      { name: 'Other', pattern: /./, files: [] }
+      { name: 'Other', pattern: /./, files: [] },
     ];
 
-    paths.forEach(filePath => {
+    paths.forEach((filePath) => {
       if (filePath === 'total') return;
-      
-      const category = categories.find(cat => cat.pattern.test(filePath)) || categories[categories.length - 1];
+
+      const category =
+        categories.find((cat) => cat.pattern.test(filePath)) || categories[categories.length - 1];
       category.files.push(filePath);
     });
 
-    return categories.filter(cat => cat.files.length > 0);
+    return categories.filter((cat) => cat.files.length > 0);
   }
 
   /**
@@ -212,8 +218,8 @@ class CoverageAnalyzer {
    */
   calculateAverageCoverage(files) {
     const totals = { lines: { covered: 0, total: 0 } };
-    
-    files.forEach(file => {
+
+    files.forEach((file) => {
       if (file.lines) {
         totals.lines.covered += file.lines.covered;
         totals.lines.total += file.lines.total;
@@ -222,8 +228,8 @@ class CoverageAnalyzer {
 
     return {
       lines: {
-        pct: totals.lines.total > 0 ? (totals.lines.covered / totals.lines.total) * 100 : 0
-      }
+        pct: totals.lines.total > 0 ? (totals.lines.covered / totals.lines.total) * 100 : 0,
+      },
     };
   }
 
@@ -232,7 +238,7 @@ class CoverageAnalyzer {
    */
   formatPercentage(pct) {
     const percentage = pct.toFixed(1).padStart(5) + '%';
-    
+
     if (pct >= 90) return `\x1b[32m${percentage}\x1b[0m`; // Green
     if (pct >= 70) return `\x1b[33m${percentage}\x1b[0m`; // Yellow
     return `\x1b[31m${percentage}\x1b[0m`; // Red
@@ -242,13 +248,13 @@ class CoverageAnalyzer {
 // CLI Interface
 if (require.main === module) {
   const analyzer = new CoverageAnalyzer();
-  
+
   const args = process.argv.slice(2);
   const options = {
     watch: args.includes('--watch'),
     threshold: args.includes('--threshold'),
     verbose: args.includes('--verbose'),
-    output: args.find(arg => arg.startsWith('--output='))?.split('=')[1] || 'text'
+    output: args.find((arg) => arg.startsWith('--output='))?.split('=')[1] || 'text',
   };
 
   if (args.includes('--help')) {

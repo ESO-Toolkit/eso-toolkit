@@ -335,7 +335,7 @@ const PassiveLineSection: React.FC<PassiveLineSectionProps> = ({
           sx={{
             fontSize: 12,
             fontWeight: 600,
-            fontFamily: 'Space Grotesk, Inter, system-ui',
+            fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
             color: isDark ? 'rgba(255,255,255,0.80)' : 'rgba(0,0,0,0.75)',
           }}
         >
@@ -351,7 +351,7 @@ const PassiveLineSection: React.FC<PassiveLineSectionProps> = ({
               sx={{
                 fontSize: 9,
                 fontWeight: 700,
-                fontFamily: 'Space Grotesk, Inter, system-ui',
+                fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                 letterSpacing: 0.4,
                 color: 'rgba(56,189,248,0.85)',
                 border: '1px solid rgba(56,189,248,0.30)',
@@ -372,7 +372,7 @@ const PassiveLineSection: React.FC<PassiveLineSectionProps> = ({
             sx={{
               fontSize: 10,
               color: isDark ? 'rgba(255,255,255,0.30)' : 'rgba(0,0,0,0.30)',
-              fontFamily: 'Space Grotesk',
+              fontFamily: 'Space Grotesk Variable',
             }}
           >
             {passives.length}
@@ -462,7 +462,7 @@ const PassiveLineSection: React.FC<PassiveLineSectionProps> = ({
                       sx={{
                         fontSize: 12,
                         fontWeight: 600,
-                        fontFamily: 'Space Grotesk, Inter, system-ui',
+                        fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                         lineHeight: 1.3,
                         whiteSpace: 'nowrap',
                         overflow: 'hidden',
@@ -529,7 +529,7 @@ const PassiveLineSection: React.FC<PassiveLineSectionProps> = ({
                         fontSize: 8.5,
                         fontWeight: 700,
                         letterSpacing: 0.5,
-                        fontFamily: 'Space Grotesk, Inter, system-ui',
+                        fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                       }}
                     >
                       SELECTED
@@ -712,7 +712,7 @@ const PassivePickerDialog: React.FC<PassivePickerDialogProps> = ({
                         sx={{
                           fontSize: 12.5,
                           fontWeight: 600,
-                          fontFamily: 'Space Grotesk, Inter, system-ui',
+                          fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                           lineHeight: 1.3,
                           whiteSpace: 'nowrap',
                           overflow: 'hidden',
@@ -728,7 +728,7 @@ const PassivePickerDialog: React.FC<PassivePickerDialogProps> = ({
                           fontSize: 8.5,
                           fontWeight: 700,
                           letterSpacing: 0.6,
-                          fontFamily: 'Space Grotesk, Inter, system-ui',
+                          fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                           color: muted,
                           border: `1px solid ${alpha(isDark ? '#fff' : '#000', 0.18)}`,
                           borderRadius: '4px',
@@ -747,7 +747,7 @@ const PassivePickerDialog: React.FC<PassivePickerDialogProps> = ({
                             fontSize: 8.5,
                             fontWeight: 700,
                             letterSpacing: 0.4,
-                            fontFamily: 'Space Grotesk, Inter, system-ui',
+                            fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                             color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.30)',
                             lineHeight: 1.4,
                           }}
@@ -804,7 +804,7 @@ const PassivePickerDialog: React.FC<PassivePickerDialogProps> = ({
                           fontSize: 8.5,
                           fontWeight: 700,
                           letterSpacing: 0.5,
-                          fontFamily: 'Space Grotesk, Inter, system-ui',
+                          fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                         }}
                       >
                         SELECTED
@@ -830,7 +830,7 @@ const PassivePickerDialog: React.FC<PassivePickerDialogProps> = ({
                   borderRadius: 1.5,
                   fontSize: 11,
                   fontWeight: activeTab === idx ? 700 : 500,
-                  fontFamily: 'Space Grotesk, Inter, system-ui',
+                  fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                   letterSpacing: 0.3,
                   flexShrink: 0,
                   color:
@@ -884,7 +884,7 @@ const PassivePickerDialog: React.FC<PassivePickerDialogProps> = ({
                   <Typography
                     sx={{
                       fontSize: 12,
-                      fontFamily: 'Space Grotesk, Inter, system-ui',
+                      fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                       textAlign: 'center',
                       maxWidth: 220,
                       lineHeight: 1.5,
@@ -916,7 +916,7 @@ const PassivePickerDialog: React.FC<PassivePickerDialogProps> = ({
                       sx={{
                         fontSize: 9,
                         fontWeight: 700,
-                        fontFamily: 'Space Grotesk, Inter, system-ui',
+                        fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                         letterSpacing: 1,
                         textTransform: 'uppercase',
                         color: clsColor,
@@ -1022,7 +1022,7 @@ export const PassivesPicker: React.FC<PassivesPickerProps> = ({
               fontSize: 11,
               letterSpacing: 0.8,
               textTransform: 'uppercase',
-              fontFamily: 'Space Grotesk, Inter, system-ui',
+              fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
               color: isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.50)',
             }}
           >
@@ -1053,7 +1053,10 @@ export const PassivesPicker: React.FC<PassivesPickerProps> = ({
           >
             <Typography
               variant="caption"
-              sx={{ fontFamily: 'Space Grotesk, Inter, system-ui', fontStyle: 'italic' }}
+              sx={{
+                fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
+                fontStyle: 'italic',
+              }}
             >
               Click + to browse and add passives
             </Typography>

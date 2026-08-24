@@ -101,7 +101,7 @@ export const TraitEnchantPicker: React.FC<TraitEnchantPickerProps> = ({
             fontWeight: 700,
             letterSpacing: 1.2,
             textTransform: 'uppercase',
-            fontFamily: 'Space Grotesk, Inter, system-ui',
+            fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
             color: accentColor,
           }}
         >
@@ -117,7 +117,7 @@ export const TraitEnchantPicker: React.FC<TraitEnchantPickerProps> = ({
               borderRadius: 1,
               fontSize: 9,
               fontWeight: 600,
-              fontFamily: 'Space Grotesk',
+              fontFamily: 'Space Grotesk Variable',
               color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)',
               '&:hover': {
                 background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
@@ -181,7 +181,7 @@ export const TraitEnchantPicker: React.FC<TraitEnchantPickerProps> = ({
                 sx={{
                   fontSize: 12,
                   fontWeight: isSelected ? 700 : 500,
-                  fontFamily: 'Space Grotesk, Inter, system-ui',
+                  fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                   color: isSelected
                     ? accentColor
                     : isDark

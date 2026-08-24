@@ -259,7 +259,7 @@ const SectionLabel: React.FC<{
           letterSpacing: '0.12em',
           textTransform: 'uppercase',
           color: isDark ? 'rgba(255,255,255,0.40)' : 'rgba(0,0,0,0.40)',
-          fontFamily: 'Space Grotesk, Inter, system-ui',
+          fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
         }}
       >
         {label}
@@ -304,7 +304,7 @@ const EmptyState: React.FC<{ message?: string }> = ({ message = 'Not configured'
           fontWeight: 500,
           fontStyle: 'italic',
           color: isDark ? 'rgba(255,255,255,0.22)' : 'rgba(0,0,0,0.22)',
-          fontFamily: 'Space Grotesk, Inter, system-ui',
+          fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
           letterSpacing: '0.02em',
         }}
       >
@@ -373,7 +373,7 @@ const CollapsibleSection: React.FC<{
             letterSpacing: '0.12em',
             textTransform: 'uppercase',
             color: isDark ? 'rgba(255,255,255,0.40)' : 'rgba(0,0,0,0.40)',
-            fontFamily: 'Space Grotesk, Inter, system-ui',
+            fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
           }}
         >
           {label}
@@ -556,7 +556,7 @@ const SkillSlot: React.FC<{
                 sx={{
                   fontSize: isUltimate ? 16 : 13,
                   fontWeight: 800,
-                  fontFamily: 'Space Grotesk, Inter, system-ui',
+                  fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                   letterSpacing: 0.4,
                   color: isDark ? 'rgba(255,255,255,0.16)' : 'rgba(0,0,0,0.13)',
                   lineHeight: 1,
@@ -576,7 +576,7 @@ const SkillSlot: React.FC<{
           sx={{
             fontSize: '0.65rem',
             fontWeight: 600,
-            fontFamily: 'Space Grotesk, Inter, system-ui',
+            fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
             color: isDark ? 'rgba(255,255,255,0.50)' : 'rgba(0,0,0,0.45)',
             lineHeight: 1.15,
             textAlign: 'center',
@@ -741,7 +741,7 @@ const GearSlotDisplay: React.FC<{
           whiteSpace: 'nowrap',
           overflow: 'hidden',
           textOverflow: 'ellipsis',
-          fontFamily: 'Space Grotesk, Inter, system-ui',
+          fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
         }}
       >
         {slotName}
@@ -1437,7 +1437,7 @@ const SetupDisplay: React.FC<{ setup: BuildSetup; build: Build; races?: string[]
                             letterSpacing: 1.2,
                             textTransform: 'uppercase',
                             fontSize: '0.65rem',
-                            fontFamily: 'Space Grotesk, Inter, system-ui',
+                            fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                             background: isDark
                               ? 'linear-gradient(135deg, #f1f5f9 0%, #94a3b8 100%)'
                               : 'linear-gradient(135deg, #0f172a 0%, #475569 100%)',
@@ -1463,7 +1463,7 @@ const SetupDisplay: React.FC<{ setup: BuildSetup; build: Build; races?: string[]
                             sx={{
                               fontSize: '0.62rem',
                               fontWeight: 600,
-                              fontFamily: 'Space Grotesk',
+                              fontFamily: 'Space Grotesk Variable',
                             }}
                           >
                             {bar.filter(({ id }) => id).length} / 6
@@ -1613,7 +1613,7 @@ const SetupDisplay: React.FC<{ setup: BuildSetup; build: Build; races?: string[]
                     fontWeight: 700,
                     letterSpacing: 0.8,
                     textTransform: 'uppercase',
-                    fontFamily: 'Space Grotesk, Inter, system-ui',
+                    fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                     color: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.45)',
                     mb: 0.5,
                   }}
@@ -2423,7 +2423,7 @@ export const BuildViewPage: React.FC = () => {
                         sx={{
                           fontSize: '0.72rem',
                           fontWeight: 800,
-                          fontFamily: 'Space Grotesk, Inter, system-ui',
+                          fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                           color: classTheme.accent,
                           letterSpacing: '0.05em',
                           textTransform: 'uppercase',
@@ -2464,7 +2464,7 @@ export const BuildViewPage: React.FC = () => {
                   <Typography
                     component="h1"
                     sx={{
-                      fontFamily: '"Space Grotesk", sans-serif',
+                      fontFamily: '"Space Grotesk Variable", sans-serif',
                       fontWeight: 700,
                       fontSize: { xs: '1.5rem', sm: '1.8rem' },
                       letterSpacing: '-0.02em',
@@ -2541,7 +2541,8 @@ export const BuildViewPage: React.FC = () => {
                         gap: 0.75,
                         borderRadius: '11px',
                         textTransform: 'none',
-                        fontFamily: '"Space Grotesk", Inter, system-ui, sans-serif',
+                        fontFamily:
+                          '"Space Grotesk Variable", Inter Variable, system-ui, sans-serif',
                         fontSize: { xs: '0.85rem', sm: '0.78rem' },
                         fontWeight: 600,
                         letterSpacing: '-0.005em',
@@ -2655,7 +2656,8 @@ export const BuildViewPage: React.FC = () => {
                         gap: 0.75,
                         borderRadius: '11px',
                         textTransform: 'none',
-                        fontFamily: '"Space Grotesk", Inter, system-ui, sans-serif',
+                        fontFamily:
+                          '"Space Grotesk Variable", Inter Variable, system-ui, sans-serif',
                         fontSize: { xs: '0.85rem', sm: '0.78rem' },
                         fontWeight: 600,
                         letterSpacing: '-0.005em',
@@ -2786,7 +2788,8 @@ export const BuildViewPage: React.FC = () => {
                         gap: 0.75,
                         borderRadius: '11px',
                         textTransform: 'none',
-                        fontFamily: '"Space Grotesk", Inter, system-ui, sans-serif',
+                        fontFamily:
+                          '"Space Grotesk Variable", Inter Variable, system-ui, sans-serif',
                         fontSize: { xs: '0.9rem', sm: '0.82rem' },
                         fontWeight: 700,
                         letterSpacing: '-0.008em',
@@ -3019,7 +3022,7 @@ export const BuildViewPage: React.FC = () => {
                               sx={{
                                 fontSize: '0.88rem',
                                 fontWeight: 700,
-                                fontFamily: 'Space Grotesk, Inter, system-ui',
+                                fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                                 color: isDark ? 'rgba(255,255,255,0.92)' : 'rgba(0,0,0,0.82)',
                                 letterSpacing: '-0.01em',
                                 lineHeight: 1.2,

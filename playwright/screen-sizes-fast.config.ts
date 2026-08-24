@@ -7,8 +7,9 @@ import { BASE_URL, ciBlockExternalHeaders, devWebServer, getOptionalAuthState } 
 process.env.PLAYWRIGHT_FAST_MODE = 'true';
 
 /**
- * Optimized configuration for critical screen size testing in CI
- * Reduces test count by focusing on most important viewport sizes
+ * Maintained configuration for public screen-size validation in CI.
+ * Keeps the checked-in visual baseline project names stable while covering
+ * representative mobile, tablet, desktop, and edge-case viewports.
  * @see https://playwright.dev/docs/test-configuration.
  */
 export default defineConfig({
@@ -81,7 +82,7 @@ export default defineConfig({
     ...ciBlockExternalHeaders,
   },
 
-  /* Critical screen sizes - expanded to 14 comprehensive breakpoints for 99% coverage */
+  /* Maintained 14-profile viewport matrix used by checked-in baselines */
   projects: [
     // Critical Mobile (4 sizes for comprehensive mobile coverage)
     {

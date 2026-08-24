@@ -263,7 +263,7 @@ export const DPSSlotCard = React.memo<DPSSlotCardProps>(
               <AutoAwesomeIcon sx={{ fontSize: '0.85rem', color: dpsRoleColors.dps }} />
               <Typography
                 sx={{
-                  fontFamily: '"Space Grotesk", sans-serif',
+                  fontFamily: '"Space Grotesk Variable", sans-serif',
                   fontWeight: 700,
                   fontSize: '0.65rem',
                   textTransform: 'uppercase',
@@ -593,7 +593,7 @@ export const DPSSlotCard = React.memo<DPSSlotCardProps>(
                     sx={{
                       fontSize: 11,
                       fontWeight: 600,
-                      fontFamily: 'Space Grotesk, Inter, system-ui',
+                      fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                       letterSpacing: 0.5,
                       color: dpsIsDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.4)',
                     }}

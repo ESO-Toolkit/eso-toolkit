@@ -48,8 +48,28 @@ jobs:
   migrate:
     runs-on: ubuntu-latest
     steps:
+      - name: Require protected main ref
+        run: |
+          if [ "$GITHUB_REF" != "refs/heads/main" ]; then
+            echo "::error::Production migrations must be dispatched from protected main."
+            exit 1
+          fi
+
       - name: Checkout Repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ github.sha }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: ${{ inputs.worker }}/package-lock.json
+
+      - name: Install locked worker dependencies
+        working-directory: ${{ inputs.worker }}
+        run: npm ci --ignore-scripts --no-audit --no-fund
 
       # This job has production database write access, so inputs are validated
       # before anything is handed to wrangler.
@@ -109,6 +129,7 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           workingDirectory: ${{ inputs.worker }}
+          wranglerVersion: '4.125.0'
           # Quoted so the arguments survive intact. Both values are constrained
           # above — `database` is a choice, `migration` passed the charset check.
           command: d1 execute "${{ inputs.database }}" --remote --yes --file="${{ inputs.migration }}"

@@ -109,11 +109,9 @@ export function usePlayerTravelDistanceTask(
     selectWorkerTaskLoading('calculatePlayerTravelDistances'),
   ) as boolean;
   const taskError = useSelector(selectWorkerTaskError('calculatePlayerTravelDistances')) as
-    | string
-    | null;
+    string | null;
   const taskProgress = useSelector(selectWorkerTaskProgress('calculatePlayerTravelDistances')) as
-    | number
-    | null;
+    number | null;
 
   const isPlayerTravelDistancesLoading = isTaskLoading || isAnyDependencyLoading;
 

@@ -52,8 +52,8 @@ export async function preloadAllReportData(
 
   // Default options
   const {
-    reportCode = 'nbKdDtT4NcZyVrvX',
-    fightId = '117', 
+    reportCode = process.env.SCREEN_SIZE_REPORT_CODE ?? 'F4f2bMwWtgVKxjB9',
+    fightId = process.env.SCREEN_SIZE_FIGHT_ID ?? '5',
     tabs = ['overview', 'players', 'damage', 'healing', 'insights'],
     timeout = 90000,
     verifyLoaded = true,

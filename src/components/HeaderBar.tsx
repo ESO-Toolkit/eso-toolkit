@@ -30,13 +30,8 @@ import { alpha, styled } from '@mui/material/styles';
 import React from 'react';
 import { useLocation } from 'react-router-dom';
 
-import esoLogo from '../assets/ESOHelpers-logo-icon.svg';
-import {
-  LOCAL_STORAGE_ACCESS_TOKEN_KEY,
-  LOCAL_STORAGE_REFRESH_TOKEN_KEY,
-  setFallbackDestination,
-  startPKCEAuth,
-} from '../features/auth/auth';
+import esoLogo from '../assets/eso-toolkit-logo-icon.svg';
+import { clearStoredTokens, setFallbackDestination, startPKCEAuth } from '../features/auth/auth';
 import { useAuth } from '../features/auth/AuthContext';
 import { useCurrentUserAvatar } from '../hooks/useCurrentUserAvatar';
 import { usePersistentDarkMode } from '../hooks/usePersistentDarkMode';
@@ -214,7 +209,7 @@ const MobileSectionLabel = styled(Typography)(({ theme }) => {
     textTransform: 'uppercase',
     color: isDark ? 'rgba(148, 163, 184, 0.6)' : 'rgba(100, 116, 139, 0.6)',
     padding: '16px 20px 6px',
-    fontFamily: 'Space Grotesk, Inter, system-ui',
+    fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
     position: 'relative',
     zIndex: 1,
   };
@@ -393,7 +388,7 @@ const dropdownHeaderSx = (theme: Theme): SxProps<Theme> => {
     zIndex: 1,
     // Section label gradient
     '& .dropdown-header-label': {
-      fontFamily: 'Space Grotesk, Inter, system-ui',
+      fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
       fontWeight: 700,
       fontSize: '0.7rem',
       letterSpacing: '0.08em',
@@ -658,8 +653,7 @@ export const HeaderBar: React.FC = () => {
   const handleLogout = React.useCallback((): void => {
     // Drop both tokens — leaving the long-lived refresh_token behind lets a
     // 401-triggered refresh silently re-mint a session after logout.
-    localStorage.removeItem(LOCAL_STORAGE_ACCESS_TOKEN_KEY);
-    localStorage.removeItem(LOCAL_STORAGE_REFRESH_TOKEN_KEY);
+    clearStoredTokens();
     clearUserContext();
     // Purge account-bound persisted state (loadouts/builds) so it can't outlive
     // the session on a shared machine.
@@ -898,7 +892,7 @@ export const HeaderBar: React.FC = () => {
                     gap: 1,
                     fontWeight: 800,
                     letterSpacing: '-.02em',
-                    fontFamily: 'Space Grotesk,Inter,system-ui',
+                    fontFamily: 'Space Grotesk Variable,Inter Variable,system-ui',
                     textTransform:
                       location.pathname === '/' || location.pathname === '' ? 'uppercase' : 'none',
                     background:
@@ -1025,7 +1019,7 @@ export const HeaderBar: React.FC = () => {
                       justifyContent: 'center',
                       fontSize: '0.75rem',
                       fontWeight: 800,
-                      fontFamily: 'Space Grotesk, Inter, system-ui',
+                      fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                       color: '#fff',
                       textShadow: '0 1px 2px rgba(0,0,0,0.2)',
                       position: 'relative',
@@ -1071,7 +1065,7 @@ export const HeaderBar: React.FC = () => {
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
                       whiteSpace: 'nowrap',
-                      fontFamily: 'Space Grotesk, Inter, system-ui',
+                      fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                       color: isDark ? '#e2e8f0' : '#1e293b',
                     }}
                   >
@@ -1096,7 +1090,7 @@ export const HeaderBar: React.FC = () => {
                     textTransform: 'none',
                     fontWeight: 700,
                     fontSize: '0.85rem',
-                    fontFamily: 'Space Grotesk, Inter, system-ui',
+                    fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                     px: 2.5,
                     py: 0.75,
                     borderRadius: '10px',
@@ -1359,7 +1353,7 @@ export const HeaderBar: React.FC = () => {
               justifyContent: 'center',
               fontSize: '0.95rem',
               fontWeight: 800,
-              fontFamily: 'Space Grotesk, Inter, system-ui',
+              fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
               color: '#fff',
               textShadow: '0 1px 2px rgba(0,0,0,0.2)',
               flexShrink: 0,
@@ -1400,7 +1394,7 @@ export const HeaderBar: React.FC = () => {
               sx={{
                 fontWeight: 700,
                 fontSize: '0.9rem',
-                fontFamily: 'Space Grotesk, Inter, system-ui',
+                fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                 lineHeight: 1.3,
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
@@ -1415,7 +1409,7 @@ export const HeaderBar: React.FC = () => {
                 opacity: 0.4,
                 lineHeight: 1.3,
                 mt: 0.25,
-                fontFamily: 'Space Grotesk, Inter, system-ui',
+                fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                 letterSpacing: '0.01em',
               }}
             >
@@ -1482,7 +1476,7 @@ export const HeaderBar: React.FC = () => {
                 fontSize: '0.76rem',
                 fontWeight: 500,
                 color: isDark ? 'rgba(148,163,184,0.5)' : 'rgba(100,116,139,0.5)',
-                fontFamily: 'Space Grotesk, Inter, system-ui',
+                fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                 lineHeight: 1,
                 transition: 'color 0.2s ease',
               }}
@@ -1612,7 +1606,7 @@ export const HeaderBar: React.FC = () => {
                 justifyContent: 'center',
                 fontSize: '0.85rem',
                 fontWeight: 800,
-                fontFamily: 'Space Grotesk, Inter, system-ui',
+                fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                 color: '#fff',
                 textShadow: '0 1px 2px rgba(0,0,0,0.2)',
                 flexShrink: 0,
@@ -1653,7 +1647,7 @@ export const HeaderBar: React.FC = () => {
                 sx={{
                   fontWeight: 700,
                   fontSize: '0.9rem',
-                  fontFamily: 'Space Grotesk, Inter, system-ui',
+                  fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                   lineHeight: 1.3,
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
@@ -1668,7 +1662,7 @@ export const HeaderBar: React.FC = () => {
                   opacity: 0.45,
                   lineHeight: 1.3,
                   mt: 0.15,
-                  fontFamily: 'Space Grotesk, Inter, system-ui',
+                  fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                 }}
               >
                 View profile

@@ -417,8 +417,7 @@ function expandGear(c?: CompactGear): TankGearSet {
     set2: toValidSetId(c?.s2),
     monsterSet: toValidSetId(c?.ms),
     additionalSets: c?.a?.map(toValidSetId).filter((id) => id !== undefined) as
-      | KnownSetIDs[]
-      | undefined,
+      KnownSetIDs[] | undefined,
     notes: c?.no,
   };
 }
@@ -614,8 +613,7 @@ function expandHealer(c?: CompactHealer, slotNumber = 1): HealerSetup {
     monsterSet: toValidSetId(c?.ms),
     arenaWeapon: c?.aw,
     additionalSets: c?.a?.map(toValidSetId).filter((id) => id !== undefined) as
-      | KnownSetIDs[]
-      | undefined,
+      KnownSetIDs[] | undefined,
     skillLines: expandSkills(c?.sl),
     healerBuff:
       c?.hb != null

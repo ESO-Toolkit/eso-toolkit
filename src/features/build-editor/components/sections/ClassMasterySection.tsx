@@ -123,7 +123,7 @@ const PassiveRow: React.FC<PassiveRowProps> = ({
               sx={{
                 fontSize: 12.5,
                 fontWeight: 600,
-                fontFamily: 'Space Grotesk, Inter, system-ui',
+                fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                 lineHeight: 1.3,
               }}
             >
@@ -190,7 +190,7 @@ const ClassMasterySectionComponent: React.FC = () => {
           sx={{
             display: 'block',
             fontSize: 11,
-            fontFamily: 'Space Grotesk, Inter, system-ui',
+            fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
             color: subtleText,
             lineHeight: 1.5,
           }}
@@ -211,7 +211,7 @@ const ClassMasterySectionComponent: React.FC = () => {
               height: 20,
               fontSize: 10,
               fontWeight: 700,
-              fontFamily: 'Space Grotesk, Inter, system-ui',
+              fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
               letterSpacing: 0.5,
               background: alpha(accent, isDark ? 0.14 : 0.08),
               border: `1px solid ${alpha(accent, 0.3)}`,
@@ -232,7 +232,7 @@ const ClassMasterySectionComponent: React.FC = () => {
               height: 20,
               fontSize: 10,
               fontWeight: 700,
-              fontFamily: 'Space Grotesk, Inter, system-ui',
+              fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
               letterSpacing: 0.5,
               background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)',
               border: `1px solid ${isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.10)'}`,

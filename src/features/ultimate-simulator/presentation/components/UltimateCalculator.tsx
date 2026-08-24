@@ -327,7 +327,7 @@ const StatBlock: React.FC<{
       <Typography
         className="u-tabular"
         sx={{
-          fontFamily: 'Space Grotesk, Inter, system-ui',
+          fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
           fontWeight: 700,
           fontSize: { xs: '1.45rem', sm: '1.7rem' },
           lineHeight: 1.05,
@@ -952,7 +952,7 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
                 <Typography
                   className="u-tabular"
                   sx={{
-                    fontFamily: 'Space Grotesk, Inter, system-ui',
+                    fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                     fontWeight: 700,
                     fontSize: { xs: '2.6rem', sm: '3.1rem' },
                     lineHeight: 1,
@@ -2542,7 +2542,7 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
                   component="span"
                   className="u-tabular"
                   sx={{
-                    fontFamily: 'Space Grotesk, Inter, system-ui',
+                    fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                     fontWeight: 700,
                     fontSize: '1.3rem',
                     letterSpacing: '-0.02em',

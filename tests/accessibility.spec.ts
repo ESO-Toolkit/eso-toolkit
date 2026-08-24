@@ -10,6 +10,15 @@ const PUBLIC_ROUTES = [
   { path: '/calculator#scribing', title: 'Scribing (Calculator tab)' },
   { path: '/docs/calculations', title: 'Calculation Knowledge Base' },
   { path: '/login', title: 'Log In' },
+  { path: '/sample-report', title: 'Sample Report' },
+  { path: '/latest-reports', title: 'Latest Reports' },
+  { path: '/build-hub', title: 'Build Hub' },
+  { path: '/roster-hub', title: 'Roster Hub' },
+  { path: '/pack-hub', title: 'Pack Hub' },
+  { path: '/about', title: 'About' },
+  { path: '/privacy', title: 'Privacy Policy' },
+  { path: '/privacy-settings', title: 'Privacy Settings' },
+  { path: '/terms', title: 'Terms of Use' },
 ];
 
 const WAIT_FOR_RENDER = 2000;
@@ -95,6 +104,18 @@ test.describe('Accessibility', () => {
 
       const focusedId = await page.evaluate(() => document.activeElement?.id);
       expect(focusedId).toBe('main-content');
+    });
+
+    test('landing page exposes one working skip link', async ({ page }) => {
+      await page.goto('/');
+      await waitForPageReady(page);
+
+      const skipLink = page.locator('a[href="#main-content"]');
+      await expect(skipLink).toHaveCount(1);
+      await skipLink.focus();
+      await skipLink.press('Enter');
+
+      await expect(page.locator('#main-content')).toBeFocused();
     });
   });
 
@@ -300,7 +321,9 @@ test.describe('Accessibility', () => {
 
       const hasAlertRole = await page.evaluate(() => {
         const errorContainers = document.querySelectorAll('[role="alert"]');
-        const errorBoundaries = document.querySelectorAll('[class*="error"], [data-testid*="error"]');
+        const errorBoundaries = document.querySelectorAll(
+          '[class*="error"], [data-testid*="error"]',
+        );
         return { alertCount: errorContainers.length, boundaryCount: errorBoundaries.length };
       });
 
@@ -312,19 +335,33 @@ test.describe('Accessibility', () => {
   });
 
   test.describe('Form accessibility', () => {
+    test('landing report analyzer submits with Enter and reports invalid URLs inline', async ({
+      page,
+    }) => {
+      await page.goto('/');
+      await waitForPageReady(page);
+
+      const analyzer = page.locator('form[aria-label="Analyze an ESO Logs report"]');
+      await expect(analyzer).toHaveCount(1);
+      const input = analyzer.getByLabel('ESOLogs.com Log URL');
+      await input.fill('not-a-report-url');
+      await input.press('Enter');
+
+      await expect(input).toHaveAttribute('aria-invalid', 'true');
+      await expect(page.getByText(/enter a valid ESOLogs report URL/i)).toBeVisible();
+    });
+
     test('calculator inputs have accessible labels', async ({ page }) => {
       await page.goto('/calculator');
       await waitForPageReady(page);
 
       const unlabeledInputs = await page.evaluate(() => {
-        const inputs = document.querySelectorAll(
-          'input:not([type="hidden"]), select, textarea',
-        );
+        const inputs = document.querySelectorAll('input:not([type="hidden"]), select, textarea');
         return Array.from(inputs).filter((input) => {
           const hasLabel =
             input.getAttribute('aria-label') ||
             input.getAttribute('aria-labelledby') ||
-            input.id && document.querySelector(`label[for="${input.id}"]`) ||
+            (input.id && document.querySelector(`label[for="${input.id}"]`)) ||
             input.closest('label');
           return !hasLabel;
         }).length;
@@ -362,9 +399,7 @@ test.describe('Accessibility', () => {
       await page.goto('/nonexistent-route');
       await waitForPageReady(page);
 
-      const results = await new AxeBuilder({ page })
-        .withTags(['wcag2a', 'wcag2aa'])
-        .analyze();
+      const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
 
       expect(results.violations).toEqual([]);
 

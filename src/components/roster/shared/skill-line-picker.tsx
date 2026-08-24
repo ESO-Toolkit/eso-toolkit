@@ -140,7 +140,7 @@ const SlotPicker: React.FC<SlotPickerProps> = ({ slot, value, disabledLabels, on
           sx={{
             fontSize: 10,
             fontWeight: 700,
-            fontFamily: 'Space Grotesk, Inter, system-ui',
+            fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
             color: isDark ? 'rgba(255,255,255,0.30)' : 'rgba(0,0,0,0.28)',
             minWidth: 16,
             flexShrink: 0,
@@ -168,7 +168,7 @@ const SlotPicker: React.FC<SlotPickerProps> = ({ slot, value, disabledLabels, on
                 sx={{
                   fontSize: 12,
                   fontWeight: 600,
-                  fontFamily: 'Space Grotesk, Inter, system-ui',
+                  fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                   color: ownerColor,
                   lineHeight: 1.2,
                   whiteSpace: 'nowrap',
@@ -182,7 +182,7 @@ const SlotPicker: React.FC<SlotPickerProps> = ({ slot, value, disabledLabels, on
                 sx={{
                   fontSize: 10,
                   fontWeight: 400,
-                  fontFamily: 'Space Grotesk, Inter, system-ui',
+                  fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                   color: isDark ? 'rgba(255,255,255,0.38)' : 'rgba(0,0,0,0.38)',
                   lineHeight: 1.2,
                   mt: 0.25,
@@ -218,7 +218,7 @@ const SlotPicker: React.FC<SlotPickerProps> = ({ slot, value, disabledLabels, on
                 flex: 1,
                 fontSize: 12,
                 fontWeight: 400,
-                fontFamily: 'Space Grotesk, Inter, system-ui',
+                fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                 color: isDark ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.25)',
                 fontStyle: 'italic',
               }}
@@ -276,7 +276,7 @@ const SlotPicker: React.FC<SlotPickerProps> = ({ slot, value, disabledLabels, on
               sx={{
                 fontSize: 9,
                 fontWeight: 700,
-                fontFamily: 'Space Grotesk, Inter, system-ui',
+                fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                 letterSpacing: 1,
                 textTransform: 'uppercase',
                 color: clsColor,
@@ -311,7 +311,7 @@ const SlotPicker: React.FC<SlotPickerProps> = ({ slot, value, disabledLabels, on
                   onClick={() => handleSelect(line.label)}
                   sx={{
                     fontSize: 12,
-                    fontFamily: 'Space Grotesk, Inter, system-ui',
+                    fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                     fontWeight: isSelected ? 600 : 400,
                     px: 1.5,
                     py: 0.6,
@@ -388,7 +388,7 @@ export const SkillLinePickerGroup: React.FC<SkillLinePickerGroupProps> = ({
             fontWeight: 700,
             letterSpacing: 0.8,
             textTransform: 'uppercase',
-            fontFamily: 'Space Grotesk, Inter, system-ui',
+            fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
             color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.45)',
           }}
         >

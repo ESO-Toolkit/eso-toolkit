@@ -3,7 +3,7 @@ import KeyboardArrowUpRoundedIcon from '@mui/icons-material/KeyboardArrowUpRound
 import { Box, IconButton, Paper, Typography } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import { visuallyHidden } from '@mui/utils';
-import React, { useCallback, useRef, useState, useEffect } from 'react';
+import React, { Suspense, useCallback, useRef, useState, useEffect } from 'react';
 import { useSearchParams, useParams } from 'react-router-dom';
 
 import { useAnimationTimeRef } from '@/hooks/useAnimationTimeRef';
@@ -35,14 +35,19 @@ import { lockDocumentSelection } from '../utils/documentSelectionLock';
 import { QUALITY_LEVEL } from '../utils/qualityGovernor';
 import { clampReplayTime } from '../utils/replayTime';
 
-import { Arena3D } from './Arena3D';
-import { ADD_MARKER_AT_CENTER_EVENT } from './Arena3DScene';
+import { ADD_MARKER_AT_CENTER_EVENT } from './arenaEvents';
 import { MobileReplayDock } from './mobile/MobileReplayDock';
 import { PlaybackControls, PLAYBACK_SPEEDS, type TransportTrial } from './PlaybackControls';
 import { ProgressHairline } from './ProgressHairline';
 import { ReplayTransitionOverlay } from './ReplayTransitionOverlay';
 import type { TrialTimelineSeekTarget } from './TrialTimeline';
 import { UpNextCard, type UpNextState } from './UpNextCard';
+
+// Keep React Three Fiber, Drei, Three.js, and the actor/map renderers out of the
+// replay shell so controls and the mobile preview can paint while the scene loads.
+const Arena3D = React.lazy(() =>
+  import('./Arena3D').then((module) => ({ default: module.Arena3D })),
+);
 
 // Frame-step increment for the ,/. keys. The raw position sample interval (~4.7ms at 240Hz) is
 // imperceptible as a step, so we nudge by a usable 100ms — one React-state sync tick — which lets
@@ -1376,64 +1381,81 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
       })}
     >
       <Paper elevation={2} sx={{ overflow: 'hidden' }}>
-        <Arena3D
-          timeRef={animationTimeRef.timeRef}
-          isFullscreen={isImmersive}
-          onToggleFullscreen={toggleFullscreen}
-          isMobile={isMobile}
-          showActorNames={showActorNames}
-          mapTimeline={mapTimeline}
-          scrubbingMode={scrubbingMode}
-          followingActorIdRef={followingActorIdRef}
-          followingActorId={followingActorId}
-          onCameraUnlock={handleCameraUnlock}
-          onActorClick={handleActorClick}
-          markersState={markersState}
-          onAddMarker={onAddMarker}
-          onRemoveMarker={onRemoveMarker}
-          markersEditMode={markersEditMode}
-          onToggleMarkersEditMode={onToggleMarkersEditMode}
-          onMarkerMove={onMarkerMove}
-          drawTool={drawTool}
-          drawStyle={drawStyle}
-          onShapeDrawn={onShapeDrawn}
-          onSelectDrawTool={onSelectDrawTool}
-          onEditMarker={onEditMarker}
-          canUndoMarkers={canUndoMarkers}
-          onUndoMarkers={onUndoMarkers}
-          canRedoMarkers={canRedoMarkers}
-          onRedoMarkers={onRedoMarkers}
-          fight={selectedFight}
-          selectedPlayerIds={selectedPlayerIds}
-          onPlayerSelectionChange={setSelectedPlayerIds}
-          showPlayerPathsHUD={showPlayerPathsHUD}
-          showPlayerTrails={showPlayerTrails}
-          onTogglePlayerPathsHUD={togglePlayerPathsHUD}
-          onToggleTrails={toggleTrails}
-          // Controlled display settings (owned here so the mobile Settings sheet shares the state).
-          namesEnabled={namesEnabled}
-          onToggleNames={toggleNames}
-          qualityPreset={qualityPreset}
-          onQualityPresetChange={handleQualityPresetChange}
-          autoQualityLevel={autoQualityLevel}
-          onQualityLevelChange={handleQualityLevelChange}
-          isPlayingRef={isPlayingRef}
-          statsPanelEnabled={statsPanelEnabled}
-          onToggleStats={toggleStats}
-          // On mobile immersive the dedicated shell owns the close + all controls, so suppress
-          // Arena3D's in-canvas mobile control cluster (its close + tools button).
-          hideMobileControls={mobileImmersive}
-          // Reserve space at the bottom so overlays (the player sheet, boss health) clear whatever
-          // docks there: the mobile dock (~3 rows ≈ 132px), else the desktop transport band
-          // (+ the trial mini-map strip, which adds ~24px to the deck for multi-fight runs).
-          reservedInset={
-            (mobileImmersive && !barVisible) || (isImmersive && !barVisible)
-              ? HAIRLINE_H + 4
-              : mobileImmersive
-                ? 132
-                : TRANSPORT_RESERVED + (!isMobile && hasTrialRun ? 24 : 0)
+        <Suspense
+          fallback={
+            <Box
+              sx={{
+                minHeight: 'min(78vh, 640px)',
+                display: 'grid',
+                placeItems: 'center',
+                color: 'text.secondary',
+              }}
+              role="status"
+              aria-label="Loading 3D fight replay"
+            >
+              Loading 3D replay…
+            </Box>
           }
-        />
+        >
+          <Arena3D
+            timeRef={animationTimeRef.timeRef}
+            isFullscreen={isImmersive}
+            onToggleFullscreen={toggleFullscreen}
+            isMobile={isMobile}
+            showActorNames={showActorNames}
+            mapTimeline={mapTimeline}
+            scrubbingMode={scrubbingMode}
+            followingActorIdRef={followingActorIdRef}
+            followingActorId={followingActorId}
+            onCameraUnlock={handleCameraUnlock}
+            onActorClick={handleActorClick}
+            markersState={markersState}
+            onAddMarker={onAddMarker}
+            onRemoveMarker={onRemoveMarker}
+            markersEditMode={markersEditMode}
+            onToggleMarkersEditMode={onToggleMarkersEditMode}
+            onMarkerMove={onMarkerMove}
+            drawTool={drawTool}
+            drawStyle={drawStyle}
+            onShapeDrawn={onShapeDrawn}
+            onSelectDrawTool={onSelectDrawTool}
+            onEditMarker={onEditMarker}
+            canUndoMarkers={canUndoMarkers}
+            onUndoMarkers={onUndoMarkers}
+            canRedoMarkers={canRedoMarkers}
+            onRedoMarkers={onRedoMarkers}
+            fight={selectedFight}
+            selectedPlayerIds={selectedPlayerIds}
+            onPlayerSelectionChange={setSelectedPlayerIds}
+            showPlayerPathsHUD={showPlayerPathsHUD}
+            showPlayerTrails={showPlayerTrails}
+            onTogglePlayerPathsHUD={togglePlayerPathsHUD}
+            onToggleTrails={toggleTrails}
+            // Controlled display settings (owned here so the mobile Settings sheet shares the state).
+            namesEnabled={namesEnabled}
+            onToggleNames={toggleNames}
+            qualityPreset={qualityPreset}
+            onQualityPresetChange={handleQualityPresetChange}
+            autoQualityLevel={autoQualityLevel}
+            onQualityLevelChange={handleQualityLevelChange}
+            isPlayingRef={isPlayingRef}
+            statsPanelEnabled={statsPanelEnabled}
+            onToggleStats={toggleStats}
+            // On mobile immersive the dedicated shell owns the close + all controls, so suppress
+            // Arena3D's in-canvas mobile control cluster (its close + tools button).
+            hideMobileControls={mobileImmersive}
+            // Reserve space at the bottom so overlays (the player sheet, boss health) clear whatever
+            // docks there: the mobile dock (~3 rows ≈ 132px), else the desktop transport band
+            // (+ the trial mini-map strip, which adds ~24px to the deck for multi-fight runs).
+            reservedInset={
+              (mobileImmersive && !barVisible) || (isImmersive && !barVisible)
+                ? HAIRLINE_H + 4
+                : mobileImmersive
+                  ? 132
+                  : TRANSPORT_RESERVED + (!isMobile && hasTrialRun ? 24 : 0)
+            }
+          />
+        </Suspense>
       </Paper>
 
       {/* Continuous-play transition — covers the brief reload + collapsed travel gap while the next

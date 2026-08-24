@@ -7,13 +7,7 @@ export type SetupProgressSection =
   | { type: 'gear'; count: number };
 
 export type SetupTagColor =
-  | 'default'
-  | 'primary'
-  | 'secondary'
-  | 'error'
-  | 'info'
-  | 'success'
-  | 'warning';
+  'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning';
 
 export interface SetupTag {
   label: string;

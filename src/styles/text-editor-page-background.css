@@ -197,7 +197,7 @@ body.text-editor-page:not(.dark-mode) footer .MuiContainer-root > .MuiBox-root:n
   color: #1e293b !important; /* Dark text for light mode readability */
 }
 
-/* Fix gradient text in the overview panel (ESO Helper Tools title) - LIGHT MODE only */
+/* Fix gradient text in the overview panel (ESO Toolkit title) - LIGHT MODE only */
 body.text-editor-page:not(.dark-mode)
   footer
   .MuiContainer-root
@@ -249,7 +249,7 @@ body.text-editor-page footer .MuiBox-root .MuiBox-root::after {
 }
 
 /* Remove logo filters to let it show naturally */
-body.text-editor-page footer img[src*='ESOHelpers-logo-icon'] {
+body.text-editor-page footer img[src*='eso-toolkit-logo-icon'] {
   filter: none !important;
   box-shadow: none !important;
 }

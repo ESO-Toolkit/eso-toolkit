@@ -133,7 +133,7 @@ documentation/
 
 | Type | Pattern | Example |
 |------|---------|---------|
-| Feature | `README.md` | `features/scribing/README.md` |
+| Feature | `README.md` | `features/scribing/SCRIBING.md` |
 | Implementation | `ESO-###_IMPLEMENTATION_SUMMARY.md` | `ESO-394_IMPLEMENTATION_SUMMARY.md` |
 | Fix | `COMPONENT_ISSUE_FIX.md` | `ARENA3D_BLACK_SCREEN_FIX.md` |
 | AI Guide | `AI_FEATURE_INSTRUCTIONS.md` | `AI_SCRIBING_DETECTION_INSTRUCTIONS.md` |
@@ -225,12 +225,12 @@ commands:
 
 ✅ **Use relative links**:
 ```markdown
-[Feature Doc](../features/scribing/README.md)
+[Feature Doc](../features/scribing/SCRIBING.md)
 ```
 
 ❌ **Avoid absolute URLs to same repo**:
 ```markdown
-[Feature Doc](https://github.com/user/repo/blob/main/documentation/features/scribing/README.md)
+[Feature Doc](https://github.com/user/repo/blob/main/documentation/features/scribing/SCRIBING.md)
 ```
 
 ### Code Blocks

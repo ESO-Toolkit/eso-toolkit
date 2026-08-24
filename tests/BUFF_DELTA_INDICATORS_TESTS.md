@@ -78,6 +78,7 @@ Comprehensive test coverage for the buff/debuff delta indicator feature that dis
    - Uptime percentage rendering
 
 **Run Command**:
+
 ```bash
 npm test -- BuffUptimeProgressBar.test.tsx
 ```
@@ -92,7 +93,7 @@ npm test -- BuffUptimeProgressBar.test.tsx
 
 1. **Neutral indicator for delta = 0%**
    - Navigates to fight 19 insights (Lord Falgravn)
-   - Selects player 5 (Cu Chulaínn)
+   - Selects the configured sample player (`E2E_PLAYER_NAME`, default `SamplePlayer5`)
    - Verifies Stagger Stack 1 shows "≈ 0%"
 
 2. **Neutral indicator for small positive deltas (< 2%)**
@@ -121,17 +122,20 @@ npm test -- BuffUptimeProgressBar.test.tsx
    - Verifies indicators update correctly
 
 **Run Command**:
+
 ```bash
 npm run test:full -- buff-delta-indicators.spec.ts
 ```
 
 ## Test Data
 
-**Test Report**: `k9rM7hRLgWVt6vNa` (Kyne's Aegis - Lord Falgravn)  
-**Test Fight**: Fight 19  
-**Test Player**: Player 5 (Cu Chulaínn)
+**Test report/fight**: The E2E suite uses the bundled public sample by default;
+set `E2E_REPORT_CODE` and `E2E_FIGHT_ID` for an authenticated live-data run.
+The assertions target seeded test data for the configured report rather than a
+specific player's account or character name.
 
 **Known Data Points**:
+
 - Stagger Stack 1: 56% (delta = 0%)
 - Stagger Stack 2: 42% (delta = -15%)
 - Stagger Stack 3: 29% (delta = -27%)
@@ -148,6 +152,7 @@ These tests prevent regression of the following bug:
 **Fix**: Removed the minimum threshold condition so ALL deltas display indicators, fulfilling the requirement to show when values are "very close to the group average".
 
 **Code Change**:
+
 ```typescript
 // BEFORE (BUG):
 {delta !== null && Math.abs(delta) >= 0.5 && (

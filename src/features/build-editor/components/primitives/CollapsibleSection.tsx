@@ -61,7 +61,7 @@ export const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({
             sx={{
               fontSize: 12,
               fontWeight: 600,
-              fontFamily: 'Space Grotesk, Inter, system-ui',
+              fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
               color: labelColor ?? (isDark ? 'rgba(255,255,255,0.80)' : 'rgba(0,0,0,0.75)'),
             }}
           >
@@ -74,7 +74,7 @@ export const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({
               sx={{
                 fontSize: 10,
                 color: isDark ? 'rgba(255,255,255,0.30)' : 'rgba(0,0,0,0.30)',
-                fontFamily: 'Space Grotesk',
+                fontFamily: 'Space Grotesk Variable',
                 fontVariantNumeric: 'tabular-nums',
               }}
             >

@@ -18,11 +18,7 @@ import { onError, ErrorLink } from '@apollo/client/link/error';
 import { RetryLink } from '@apollo/client/link/retry';
 import { getOperationAST } from 'graphql';
 
-import {
-  LOCAL_STORAGE_ACCESS_TOKEN_KEY,
-  LOCAL_STORAGE_REFRESH_TOKEN_KEY,
-  refreshAccessToken,
-} from './features/auth/auth';
+import { clearStoredTokens, refreshAccessToken } from './features/auth/auth';
 import { Logger, LogLevel } from './utils/logger';
 
 type ErrorWithGraphQLErrors = {
@@ -154,8 +150,7 @@ export class EsoLogsClient {
         // tripping a shared guard that wipes everyone's tokens (H2).
         if (operation.getContext().retriedAfterRefresh) {
           logger.error('Auth error persisted after token refresh — clearing tokens');
-          localStorage.removeItem(LOCAL_STORAGE_ACCESS_TOKEN_KEY);
-          localStorage.removeItem(LOCAL_STORAGE_REFRESH_TOKEN_KEY);
+          clearStoredTokens();
           return;
         }
 
@@ -194,8 +189,7 @@ export class EsoLogsClient {
               } else {
                 // Refresh failed, clear tokens and notify user
                 logger.error('Token refresh failed - user needs to re-authenticate');
-                localStorage.removeItem(LOCAL_STORAGE_ACCESS_TOKEN_KEY);
-                localStorage.removeItem(LOCAL_STORAGE_REFRESH_TOKEN_KEY);
+                clearStoredTokens();
                 observer.error(new Error('Authentication failed. Please log in again.'));
               }
             })

@@ -1170,7 +1170,7 @@ export const RosterBuilderPage: React.FC = () => {
               <Typography
                 component="h1"
                 sx={{
-                  fontFamily: '"Space Grotesk", sans-serif',
+                  fontFamily: '"Space Grotesk Variable", sans-serif',
                   fontWeight: 700,
                   fontSize: '1.05rem',
                   letterSpacing: '-0.02em',
@@ -2028,7 +2028,7 @@ export const RosterBuilderPage: React.FC = () => {
               <Typography
                 component="h2"
                 sx={{
-                  fontFamily: '"Space Grotesk", sans-serif',
+                  fontFamily: '"Space Grotesk Variable", sans-serif',
                   fontWeight: 700,
                   fontSize: '1.05rem',
                   letterSpacing: '-0.02em',
@@ -2270,7 +2270,7 @@ export const RosterBuilderPage: React.FC = () => {
               <Typography
                 component="h2"
                 sx={{
-                  fontFamily: '"Space Grotesk", sans-serif',
+                  fontFamily: '"Space Grotesk Variable", sans-serif',
                   fontWeight: 700,
                   fontSize: '1.05rem',
                   letterSpacing: '-0.02em',
@@ -2329,7 +2329,7 @@ export const RosterBuilderPage: React.FC = () => {
       >
         <DialogTitle
           sx={{
-            fontFamily: '"Space Grotesk", sans-serif',
+            fontFamily: '"Space Grotesk Variable", sans-serif',
             fontWeight: 700,
             background: isDarkMode
               ? 'linear-gradient(135deg, #f1f5f9 0%, #94a3b8 100%)'
@@ -2424,7 +2424,7 @@ export const RosterBuilderPage: React.FC = () => {
       >
         <DialogTitle
           sx={{
-            fontFamily: '"Space Grotesk", sans-serif',
+            fontFamily: '"Space Grotesk Variable", sans-serif',
             fontWeight: 700,
             background: isDarkMode
               ? 'linear-gradient(135deg, #f1f5f9 0%, #94a3b8 100%)'
@@ -2532,7 +2532,7 @@ export const RosterBuilderPage: React.FC = () => {
       >
         <DialogTitle
           sx={{
-            fontFamily: '"Space Grotesk", sans-serif',
+            fontFamily: '"Space Grotesk Variable", sans-serif',
             fontWeight: 700,
             background: isDarkMode
               ? 'linear-gradient(135deg, #f1f5f9 0%, #94a3b8 100%)'

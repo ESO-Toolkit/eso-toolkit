@@ -123,6 +123,7 @@ export const PackFilterBar: React.FC<PackFilterBarProps> = React.memo(
           {/* Type dropdown */}
           <Select
             size="small"
+            inputProps={{ 'aria-label': 'Filter packs by type' }}
             value={filters.packType}
             onChange={handleTypeChange}
             displayEmpty

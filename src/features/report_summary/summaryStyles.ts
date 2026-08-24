@@ -11,7 +11,7 @@ import type { SystemStyleObject } from '@mui/system';
  * colour flows through its header badge, table, tiles and rank badges.
  */
 
-const MONO_FONT = '"Space Grotesk", Inter, system-ui, sans-serif';
+const MONO_FONT = '"Space Grotesk Variable", Inter Variable, system-ui, sans-serif';
 
 /** Table styling: gradient small-caps header, subtle zebra rows, accent hover + left rail. */
 export function accentTableSx(dark: boolean, accentRgb: string): SystemStyleObject<Theme> {

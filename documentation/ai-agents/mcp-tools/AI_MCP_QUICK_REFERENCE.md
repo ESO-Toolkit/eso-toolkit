@@ -8,12 +8,14 @@
 ## 🔑 Quick Application Authentication
 
 ### Use Existing Auth State (Fastest)
+
 ```typescript
 // Load existing Playwright test auth
 await page.context().storageState({ path: 'tests/auth-state.json' });
 ```
 
 ### Generate Fresh OAuth Token
+
 ```typescript
 // Step 1: Get token from ESO Logs
 const response = await fetch('https://www.esologs.com/oauth/token', {
@@ -43,9 +45,11 @@ await page.reload();
 ## 🧪 Available MCP Tools
 
 ### Microsoft Playwright Browser Tools
-**Purpose**: Browser automation for the ESO Log Aggregator app
+
+**Purpose**: Browser automation for the ESO Toolkit app
 
 **Common Tools**:
+
 - `mcp_microsoft_pla_browser_navigate` - Navigate to URL
 - `mcp_microsoft_pla_browser_snapshot` - Capture accessibility snapshot
 - `mcp_microsoft_pla_browser_click` - Click elements
@@ -56,6 +60,7 @@ await page.reload();
 **Documentation**: [AI_MCP_PLAYWRIGHT_AUTH_SETUP.md](./AI_MCP_PLAYWRIGHT_AUTH_SETUP.md)
 
 ### Other MCP Servers
+
 - **GitKraken** - Git operations, PRs, issues
 - **Rollbar** - Error tracking, issue search (via `.agents/skills/rollbar/SKILL.md`)
 - **Atlassian** - Jira work items, Confluence docs
@@ -66,12 +71,14 @@ await page.reload();
 ## 🔧 Environment Setup
 
 ### Required .env Variables
+
 ```properties
 OAUTH_CLIENT_ID=your_client_id_here
 OAUTH_CLIENT_SECRET=your_client_secret_here
 ```
 
 ### Load .env in Scripts
+
 ```typescript
 import * as dotenv from 'dotenv';
 dotenv.config();
@@ -84,23 +91,23 @@ const clientSecret = process.env.OAUTH_CLIENT_SECRET;
 
 ## 📦 localStorage Keys
 
-| Key | Purpose | Required |
-|-----|---------|----------|
-| `access_token` | JWT from ESO Logs OAuth | ✅ Yes |
-| `authenticated` | Auth status flag | Recommended |
+| Key                         | Purpose                 | Required    |
+| --------------------------- | ----------------------- | ----------- |
+| `access_token`              | JWT from ESO Logs OAuth | ✅ Yes      |
+| `authenticated`             | Auth status flag        | Recommended |
 | `access_token_refreshed_at` | Token refresh timestamp | Recommended |
-| `access_token_expires_at` | Token expiration | Optional |
-| `refresh_token` | OAuth refresh token | Optional |
+| `access_token_expires_at`   | Token expiration        | Optional    |
+| `refresh_token`             | OAuth refresh token     | Optional    |
 
 ---
 
 ## 🐛 Quick Troubleshooting
 
-| Error | Quick Fix |
-|-------|-----------|
-| "App not authenticated" | Set `localStorage.setItem('access_token', token)` and reload |
-| "OAUTH_CLIENT_ID missing" | Check `.env` file exists and is loaded with `dotenv.config()` |
-| "Token expired" | Generate fresh token from `/oauth/token` endpoint |
+| Error                         | Quick Fix                                                             |
+| ----------------------------- | --------------------------------------------------------------------- |
+| "App not authenticated"       | Set `localStorage.setItem('access_token', token)` and reload          |
+| "OAUTH_CLIENT_ID missing"     | Check `.env` file exists and is loaded with `dotenv.config()`         |
+| "Token expired"               | Generate fresh token from `/oauth/token` endpoint                     |
 | "localStorage not accessible" | Wait for page load: `await page.waitForLoadState('domcontentloaded')` |
 
 ---
@@ -146,6 +153,7 @@ await page.reload();
 ## 📝 Best Practices
 
 ### ✅ Do:
+
 - Use `tests/auth-state.json` if available
 - Generate fresh tokens when needed
 - Reload page after setting localStorage
@@ -153,6 +161,7 @@ await page.reload();
 - Document auth steps
 
 ### ❌ Don't:
+
 - Commit `.env` to version control
 - Skip page reload after auth
 - Assume auth worked without verification

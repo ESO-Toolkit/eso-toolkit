@@ -54,7 +54,7 @@ const StepHeader: React.FC<{ n: number; title: string; hint?: string }> = ({ n, 
           placeItems: 'center',
           fontSize: '0.8rem',
           fontWeight: 800,
-          fontFamily: 'Space Grotesk, Inter, system-ui',
+          fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
           color: theme.palette.primary.main,
           border: '1px solid',
           borderColor: alpha(theme.palette.primary.main, 0.4),
@@ -66,7 +66,11 @@ const StepHeader: React.FC<{ n: number; title: string; hint?: string }> = ({ n, 
       <Box>
         <Typography
           variant="subtitle1"
-          sx={{ fontWeight: 700, lineHeight: 1.1, fontFamily: 'Space Grotesk, Inter, system-ui' }}
+          sx={{
+            fontWeight: 700,
+            lineHeight: 1.1,
+            fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
+          }}
         >
           {title}
         </Typography>
@@ -281,7 +285,10 @@ export const ScribingSimulator: React.FC<ScribingSimulatorProps> = ({
             >
               <Typography
                 variant="subtitle1"
-                sx={{ fontWeight: 700, fontFamily: 'Space Grotesk, Inter, system-ui' }}
+                sx={{
+                  fontWeight: 700,
+                  fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
+                }}
               >
                 Your scribed skill
               </Typography>

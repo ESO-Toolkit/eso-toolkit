@@ -44,18 +44,17 @@ describe('ScriptSlotPicker', () => {
   it('the acquisition info control is tap-friendly but does not select the option', () => {
     const onSelect = jest.fn();
     renderPicker(makeScripts(3), onSelect);
-    const infoButton = document.querySelector('[role="option"] .MuiIconButton-root');
-    expect(infoButton).not.toBeNull();
-    // Kept out of the keyboard tab order / a11y tree (acquisition is in the
+    const infoAffordance = screen.getAllByTestId('script-acquisition-info')[0];
+    // Kept non-interactive and out of the a11y tree (acquisition is in the
     // option's aria-label); the option itself carries the unlock text.
-    expect(infoButton?.getAttribute('tabindex')).toBe('-1');
-    expect(infoButton?.getAttribute('aria-hidden')).toBe('true');
+    expect(infoAffordance.tagName).toBe('SPAN');
+    expect(infoAffordance).toHaveAttribute('aria-hidden', 'true');
     expect(screen.getAllByRole('option')[0]).toHaveAttribute(
       'aria-label',
       expect.stringContaining('Unlock 0'),
     );
     // Tapping the info control must not select the script.
-    fireEvent.click(infoButton as Element);
+    fireEvent.click(infoAffordance);
     expect(onSelect).not.toHaveBeenCalled();
   });
 

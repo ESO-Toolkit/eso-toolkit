@@ -65,8 +65,7 @@ export function useTouchOfZenStacksTask(): {
     selectWorkerTaskLoading('calculateTouchOfZenStacks'),
   ) as boolean;
   const touchOfZenStacksError = useSelector(selectWorkerTaskError('calculateTouchOfZenStacks')) as
-    | string
-    | null;
+    string | null;
   const touchOfZenStacksProgress = useSelector(
     selectWorkerTaskProgress('calculateTouchOfZenStacks'),
   ) as number | null;

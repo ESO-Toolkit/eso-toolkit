@@ -31,6 +31,15 @@ export const ScrollRestoration: React.FC = () => {
 
     const prevPathname = prevPathnameRef.current;
     prevPathnameRef.current = location.pathname;
+    // A full document navigation remounts this component, so retain only the
+    // previous route marker needed to distinguish the first page load from a
+    // subsequent navigation in the same tab. This keeps initial focus with the
+    // browser while still announcing the destination after returning to the app.
+    const previousDocumentPath = window.sessionStorage.getItem('eso-toolkit:last-route');
+    window.sessionStorage.setItem('eso-toolkit:last-route', location.pathname);
+    const shouldFocusMainContent =
+      prevPathname !== null ||
+      (previousDocumentPath !== null && previousDocumentPath !== location.pathname);
 
     // Same-report replay → replay navigation: keep scroll + focus where they are.
     const prevReplay = prevPathname?.match(REPLAY_ROUTE);
@@ -42,6 +51,7 @@ export const ScrollRestoration: React.FC = () => {
     const scrollToTop = (): void => window.scrollTo(0, 0);
 
     const focusMainContent = (): void => {
+      if (!shouldFocusMainContent) return;
       const mainContent = document.getElementById('main-content');
       if (mainContent) {
         mainContent.focus({ preventScroll: true });

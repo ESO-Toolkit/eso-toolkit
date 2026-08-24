@@ -27,7 +27,7 @@ import {
   LinearProgress,
   Tooltip,
 } from '@mui/material';
-import { Html } from '@react-three/drei';
+import { Html } from '@react-three/drei/web/Html.js';
 import React, { useState } from 'react';
 
 import { MemoryData } from './MemoryTracker';

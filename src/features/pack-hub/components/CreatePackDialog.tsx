@@ -1202,7 +1202,7 @@ export const CreatePackDialog: React.FC<CreatePackDialogProps> = ({
             <Typography
               variant="h6"
               sx={{
-                fontFamily: 'Space Grotesk, Inter, system-ui',
+                fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                 fontWeight: 600,
                 fontSize: '1.05rem',
                 background: accentGradient,

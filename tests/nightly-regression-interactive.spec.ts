@@ -3,11 +3,8 @@ import * as path from 'path';
 
 import { test, expect } from '@playwright/test';
 
-import { SELECTORS, TEST_TIMEOUTS, TEST_DATA } from './selectors';
-import {
-  resolveWorkingReportId,
-  safePickDropdownOption,
-} from './utils/nightly-regression-helpers';
+import { SELECTORS, TEST_TIMEOUTS, TEST_DATA, installPageErrorCapture } from './selectors';
+import { resolveWorkingReportId, safePickDropdownOption } from './utils/nightly-regression-helpers';
 
 /**
  * Nightly Regression Tests - Interactive Features
@@ -29,11 +26,12 @@ async function withBrowserStability<T>(operation: () => Promise<T>, context: str
     return await operation();
   } catch (error) {
     const message = error instanceof Error ? error.message : '';
-    if (message && (
-      message.includes('Target page, context or browser has been closed') ||
-      message.includes('Browser has been closed') ||
-      message.includes('Page has been closed')
-    )) {
+    if (
+      message &&
+      (message.includes('Target page, context or browser has been closed') ||
+        message.includes('Browser has been closed') ||
+        message.includes('Page has been closed'))
+    ) {
       console.log(`⚠️ Browser stability issue during ${context}, skipping this test scenario`);
       test.skip(true, `Browser was closed during ${context}`);
       return null as T;
@@ -48,39 +46,43 @@ async function withBrowserStability<T>(operation: () => Promise<T>, context: str
 function hasRealAuthentication(): boolean {
   const authStatePath = path.resolve('tests', 'auth-state.json');
   const authMetadataPath = path.resolve('tests', 'auth-metadata.json');
-  
+
   try {
     // Check if both auth files exist and contain valid data
     if (!fs.existsSync(authStatePath)) {
       console.log('🔍 Auth state file not found:', authStatePath);
       return false;
     }
-    
+
     if (!fs.existsSync(authMetadataPath)) {
       console.log('🔍 Auth metadata file not found:', authMetadataPath);
       return false;
     }
-    
+
     const authState = JSON.parse(fs.readFileSync(authStatePath, 'utf8'));
     const authMetadata = JSON.parse(fs.readFileSync(authMetadataPath, 'utf8'));
-    
+
     // Check if we have a valid token
-    const hasStateToken = authState?.origins?.length > 0 && 
-                          authState.origins[0]?.localStorage?.some((item: any) => 
-                            item.name === 'access_token' && item.value);
-    
+    const hasStateToken =
+      authState?.origins?.length > 0 &&
+      authState.origins[0]?.localStorage?.some(
+        (item: any) => item.name === 'access_token' && item.value,
+      );
+
     const hasMetadataToken = authMetadata?.accessToken;
     const isNotExpired = authMetadata?.expiresAt > Date.now();
-    
+
     console.log('🔍 Auth check results:', {
       hasStateFile: true,
       hasMetadataFile: true,
       hasStateToken,
       hasMetadataToken: !!hasMetadataToken,
       isNotExpired,
-      expiresAt: authMetadata?.expiresAt ? new Date(authMetadata.expiresAt).toISOString() : 'unknown',
+      expiresAt: authMetadata?.expiresAt
+        ? new Date(authMetadata.expiresAt).toISOString()
+        : 'unknown',
     });
-    
+
     return hasStateToken && hasMetadataToken && isNotExpired;
   } catch (error) {
     console.log('🔍 Auth check error:', error instanceof Error ? error.message : error);
@@ -191,9 +193,9 @@ test.describe('Nightly Regression - Interactive Features', () => {
       }
     });
 
+    await installPageErrorCapture(page);
     await page.addInitScript(() => {
-      (window as any).testErrors = [];
-      (window as any).failedRequests = [];
+      (window as unknown as Window & { failedRequests: unknown[] }).failedRequests = [];
     });
   });
 
@@ -203,7 +205,7 @@ test.describe('Nightly Regression - Interactive Features', () => {
 
       // Check if real authentication is available from global setup
       const hasAuth = hasRealAuthentication();
-      
+
       if (!hasAuth) {
         console.log('ℹ️ No real authentication available - skipping fight replay test');
         console.log('💡 To enable this test, set authentication environment variables:');
@@ -213,7 +215,7 @@ test.describe('Nightly Regression - Interactive Features', () => {
         test.skip(true, 'Fight replay test requires authentication which is not available');
         return;
       }
-      
+
       console.log('✅ Real authentication detected - running fight replay test with prod data');
 
       // Navigate to report to get fights (authentication will be loaded from global state)
@@ -235,95 +237,25 @@ test.describe('Nightly Regression - Interactive Features', () => {
         await page.waitForTimeout(5000); // Increased timeout
       }
 
-      // More comprehensive content detection with multiple fallbacks
-      let contentFound = false;
-      
-      // Method 1: Try standard fight list/loading indicators
+      // Require report-specific content. Generic app-shell selectors make a 404 or a
+      // permanently loading page look healthy and turn this regression test into a no-op.
+      const reportContent = page.locator(SELECTORS.REPORT_CONTENT).first();
       try {
-        await expect(page.locator(SELECTORS.FIGHT_LIST_OR_LOADING).first()).toBeVisible({
-          timeout: TEST_TIMEOUTS.dataLoad,
+        await expect(reportContent).toBeVisible({ timeout: TEST_TIMEOUTS.dataLoad });
+      } catch (error) {
+        console.log('🔍 Report content failed to render:', {
+          currentUrl: page.url(),
+          pageTitle: await page.title(),
+          bodyTextPreview: (await page.textContent('body'))?.substring(0, 200),
         });
-        contentFound = true;
-        console.log('✅ Standard content indicators found');
-      } catch {
-        console.log('⚠️ Standard fight list/loading indicators not found, trying alternate detection...');
-      }
-      
-      // Method 2: Check for any report content (broader search)
-      if (!contentFound) {
-        try {
-          const reportContent = page.locator(SELECTORS.REPORT_CONTENT);
-          await expect(reportContent.first()).toBeVisible({ timeout: 15000 }); // Longer timeout
-          contentFound = true;
-          console.log('✅ Found report content via broader search');
-        } catch {
-          console.log('⚠️ Broad report content search also failed');
-        }
-      }
-      
-      // Method 3: Check for any visible content with text (most permissive)
-      if (!contentFound) {
-        try {
-          await page.waitForFunction(() => {
-            const body = document.body;
-            return body && body.innerText && body.innerText.length > 100;
-          }, { timeout: 10000 });
-          
-          const textContent = await page.textContent('body');
-          if (textContent && textContent.length > 1000) {
-            contentFound = true;
-            console.log(`✅ Found meaningful page content (${textContent.length} characters)`);
-          }
-        } catch {
-          console.log('⚠️ Even basic content detection failed');
-        }
-      }
-      
-      // Method 4: Final fallback - check page URL and basic structure
-      if (!contentFound) {
-        const currentUrl = page.url();
-        if (currentUrl.includes('/report/') && !currentUrl.includes('error') && !currentUrl.includes('404')) {
-          // Page loaded correctly, might just be slow
-          console.log('⚠️ Content detection failed but URL looks correct, waiting more...');
-          await page.waitForTimeout(10000);
-          
-          // Try once more with very permissive detection
-          const hasAnyContent = await page.locator('div, main, section, article').count();
-          if (hasAnyContent > 5) {
-            contentFound = true;
-            console.log('✅ Found basic page structure, assuming content is loading');
-          }
-        }
-      }
-      
-      if (!contentFound) {
-        console.log('❌ All content detection methods failed - this may indicate a production issue');
-        
-        // Enhanced debugging
-        const currentUrl = page.url();
-        const pageTitle = await page.title();
-        const bodyText = await page.textContent('body');
-        
-        console.log('🔍 Debug info:', {
-          currentUrl,
-          pageTitle,
-          bodyTextLength: bodyText?.length || 0,
-          bodyTextPreview: bodyText?.substring(0, 200),
-        });
-        
-        // Take screenshot for debugging but with error handling
-        try {
-          await page.screenshot({ 
-            path: 'test-results/fight-replay-no-content-debug.png', 
+        await page
+          .screenshot({
+            path: 'test-results/fight-replay-no-content-debug.png',
             fullPage: true,
-            timeout: TEST_TIMEOUTS.screenshot, 
-          });
-        } catch (screenshotError) {
-          console.log('⚠️ Could not capture debug screenshot:', screenshotError);
-        }
-        
-        test.skip(true, 'Report content could not be detected - may be a production loading issue');
-        return;
+            timeout: TEST_TIMEOUTS.screenshot,
+          })
+          .catch(() => undefined);
+        throw error;
       }
 
       // (No accordion expansion step: `[data-testid*="trial-accordion"]` matches nothing —
@@ -379,9 +311,11 @@ test.describe('Nightly Regression - Interactive Features', () => {
       }
 
       let fightId: string;
-      
+
       if (!hasFights) {
-        console.log(`ℹ️  No fights found in UI for report ${reportId} - using known fight ID from test data`);
+        console.log(
+          `ℹ️  No fights found in UI for report ${reportId} - using known fight ID from test data`,
+        );
         // Use known fight ID from test data instead of skipping
         fightId = '5'; // We know qdxpGgyQ92A31LBr has fight-5 from test data
       } else {
@@ -400,7 +334,11 @@ test.describe('Nightly Regression - Interactive Features', () => {
         }
 
         if (!fightId) {
-          console.log('⚠️  Could not extract fight ID from href:', href, '- falling back to known fight ID');
+          console.log(
+            '⚠️  Could not extract fight ID from href:',
+            href,
+            '- falling back to known fight ID',
+          );
           fightId = '5'; // Fallback to known fight ID
         }
       }
@@ -525,6 +463,14 @@ test.describe('Nightly Regression - Interactive Features', () => {
 
       await page.waitForTimeout(5000);
 
+      await expect(
+        page
+          .locator(
+            '[data-testid="fight-details-loaded"], [data-testid="fight-tab-content-container"]',
+          )
+          .first(),
+      ).toBeVisible({ timeout: TEST_TIMEOUTS.dataLoad });
+
       // LiveLog is a passive polling wrapper around ReportFightDetails — it has
       // no Start/Stop/Connect controls. Earlier heuristics here matched
       // unrelated UI (e.g. the "Enlivening Overflow" CP name, footer "Connect
@@ -578,6 +524,11 @@ test.describe('Nightly Regression - Interactive Features', () => {
         .first()
         .isVisible({ timeout: 5000 })
         .catch(() => false);
+
+      expect(
+        hasHeatmap || hasHeatmapSVG,
+        'Location heatmap should render a visualization',
+      ).toBeTruthy();
 
       // Take screenshot with error handling
       try {
@@ -652,6 +603,7 @@ test.describe('Nightly Regression - Interactive Features', () => {
       const _rotationElements = page.locator(
         '.rotation, .timeline, .ability-sequence, .analysis, canvas, .chart',
       );
+      await expect(_rotationElements.first()).toBeVisible({ timeout: TEST_TIMEOUTS.dataLoad });
 
       // Take screenshot with error handling
       try {
@@ -702,9 +654,7 @@ test.describe('Nightly Regression - Interactive Features', () => {
                 timeout: TEST_TIMEOUTS.screenshot,
               })
               .catch((error) => {
-                console.log(
-                  `ℹ️ Post-selection screenshot failed: ${(error as Error).message}`,
-                );
+                console.log(`ℹ️ Post-selection screenshot failed: ${(error as Error).message}`);
               });
           }
         }
@@ -735,6 +685,7 @@ test.describe('Nightly Regression - Interactive Features', () => {
       const _talentsElements = page.locator(
         '.talents, .skill-tree, .abilities-grid, .talent-grid, .MuiGrid-container',
       );
+      await expect(_talentsElements.first()).toBeVisible({ timeout: TEST_TIMEOUTS.dataLoad });
 
       // Take screenshot with error handling
       try {
@@ -784,39 +735,41 @@ test.describe('Nightly Regression - Interactive Features', () => {
       try {
         await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.networkIdle });
       } catch {
-        console.log('⚠️ NetworkIdle timeout for heatmap visualization, checking for content instead...');
+        console.log(
+          '⚠️ NetworkIdle timeout for heatmap visualization, checking for content instead...',
+        );
         await page.waitForTimeout(3000);
       }
 
-      // Test data grid filtering if available
-      const dataGrid = page.locator('.MuiDataGrid-root');
-      if (await dataGrid.isVisible({ timeout: 5000 })) {
-        // Test column sorting
-        const columnHeaders = page.locator('.MuiDataGrid-columnHeader');
-        if ((await columnHeaders.count()) > 0) {
-          await columnHeaders.first().click();
-          await page.waitForTimeout(2000);
+      const dataGrid = page.getByTestId('data-grid');
+      await expect(dataGrid).toBeVisible({ timeout: TEST_TIMEOUTS.dataLoad });
 
-          await page.screenshot({
-            path: `test-results/nightly-regression-data-sorting-${reportId}.png`,
-            fullPage: true,
-            timeout: TEST_TIMEOUTS.screenshot,
-          });
-        }
+      const columnHeaders = dataGrid.getByRole('columnheader');
+      expect(
+        await columnHeaders.count(),
+        'damage grid should expose sortable columns',
+      ).toBeGreaterThan(0);
+      await columnHeaders.first().click();
 
-        // Test filtering if filter button exists
-        const filterButton = page.locator('button[aria-label*="filter"], .MuiDataGrid-filterIcon');
-        if (await filterButton.first().isVisible({ timeout: 3000 })) {
-          await filterButton.first().click();
-          await page.waitForTimeout(2000);
+      await page.screenshot({
+        path: `test-results/nightly-regression-data-sorting-${reportId}.png`,
+        fullPage: true,
+        timeout: TEST_TIMEOUTS.screenshot,
+      });
 
-          await page.screenshot({
-            path: `test-results/nightly-regression-data-filtering-${reportId}.png`,
-            fullPage: true,
-            timeout: TEST_TIMEOUTS.screenshot,
-          });
-        }
-      }
+      const filterInputs = dataGrid.locator('input[placeholder^="Filter "]');
+      expect(
+        await filterInputs.count(),
+        'damage grid should expose column filters',
+      ).toBeGreaterThan(0);
+      await filterInputs.first().fill('1');
+      await expect(filterInputs.first()).toHaveValue('1');
+
+      await page.screenshot({
+        path: `test-results/nightly-regression-data-filtering-${reportId}.png`,
+        fullPage: true,
+        timeout: TEST_TIMEOUTS.screenshot,
+      });
     });
 
     test('should test search functionality across tabs', async ({ page }) => {
@@ -860,6 +813,8 @@ test.describe('Nightly Regression - Interactive Features', () => {
           fullPage: true,
           timeout: TEST_TIMEOUTS.screenshot,
         });
+      } else {
+        test.skip(true, 'Raw-events view does not expose search or filter controls');
       }
     });
   });
@@ -920,34 +875,31 @@ test.describe('Nightly Regression - Interactive Features', () => {
       // Wait longer for large datasets
       await page.waitForTimeout(10000);
 
-      // Test scrolling in data grid to ensure virtualization works
-      const dataGrid = page.locator('.MuiDataGrid-root');
-      if (await dataGrid.isVisible({ timeout: 5000 })) {
-        // Scroll down in the grid
-        await dataGrid.hover();
-        await page.keyboard.press('PageDown');
-        await page.waitForTimeout(1000);
+      const dataGrid = page.getByTestId('data-grid');
+      await expect(dataGrid).toBeVisible({ timeout: TEST_TIMEOUTS.dataLoad });
+      const rows = dataGrid.locator('tbody tr');
+      expect(await rows.count(), 'raw-events grid should contain rows').toBeGreaterThan(0);
 
-        await page.keyboard.press('PageDown');
-        await page.waitForTimeout(1000);
+      const scrollContainer = dataGrid.locator('.MuiTableContainer-root');
+      await scrollContainer.evaluate((element) => {
+        element.scrollTop = Math.min(element.scrollHeight, element.clientHeight * 2);
+      });
 
-        await page.screenshot({
-          path: `test-results/nightly-regression-large-dataset-scrolled-${reportId}.png`,
-          fullPage: true,
-          timeout: TEST_TIMEOUTS.screenshot,
-        });
+      await page.screenshot({
+        path: `test-results/nightly-regression-large-dataset-scrolled-${reportId}.png`,
+        fullPage: true,
+        timeout: TEST_TIMEOUTS.screenshot,
+      });
 
-        // Test going to the end
-        await page.keyboard.press('Control+End');
-        await page.waitForTimeout(2000);
+      await scrollContainer.evaluate((element) => {
+        element.scrollTop = element.scrollHeight;
+      });
 
-        await page.screenshot({
-          path: `test-results/nightly-regression-large-dataset-end-${reportId}.png`,
-          fullPage: true,
-          timeout: TEST_TIMEOUTS.screenshot,
-        });
-      }
+      await page.screenshot({
+        path: `test-results/nightly-regression-large-dataset-end-${reportId}.png`,
+        fullPage: true,
+        timeout: TEST_TIMEOUTS.screenshot,
+      });
     });
   });
 });
-

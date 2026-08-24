@@ -132,7 +132,7 @@ export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({
   const handleResurrectClick = (playerId: string): void => {
     if (reportId && fightId) {
       const url = `https://www.esologs.com/reports/${reportId}?fight=${fightId}&type=casts&ability=${KnownAbilities.RESURRECT}&source=${playerId}`;
-      window.open(url, '_blank');
+      window.open(url, '_blank', 'noopener,noreferrer');
     }
   };
 
@@ -552,7 +552,7 @@ export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({
                     sx={{
                       fontWeight: 500,
                       fontSize: '0.875rem',
-                      fontFamily: '"Space Grotesk", "Inter", system-ui',
+                      fontFamily: '"Space Grotesk Variable", "Inter Variable", system-ui',
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
                       whiteSpace: 'nowrap',
@@ -788,7 +788,7 @@ export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({
                       sx={{
                         fontWeight: 500,
                         fontSize: '0.9rem',
-                        fontFamily: '"Space Grotesk", "Inter", system-ui',
+                        fontFamily: '"Space Grotesk Variable", "Inter Variable", system-ui',
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
                         whiteSpace: 'nowrap',

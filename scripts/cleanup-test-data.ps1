@@ -27,8 +27,8 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-Write-Host "ESO Log Aggregator - Test Data Cleanup" -ForegroundColor Cyan
-Write-Host "=======================================" -ForegroundColor Cyan
+Write-Host "ESO Toolkit - Test Data Cleanup" -ForegroundColor Cyan
+Write-Host "===============================" -ForegroundColor Cyan
 Write-Host ""
 
 # Calculate cutoff date
