@@ -77,6 +77,7 @@ import { ScribedSkillData } from '../../scribing/types';
 import { ClassMasteryCluster } from './ClassMasteryCluster';
 import { CompanionBuildPanel } from './CompanionBuildPanel';
 import { MetricsScrollRow } from './MetricsScrollRow';
+import { PlayerDisplayName } from './PlayerDisplayName';
 import type { StatChipId } from './statChipConfig';
 import { formatStatValue, STAT_CHIP_IDS, STAT_CHIP_META } from './statChipConfig';
 import { StatChipIcon } from './StatChipIcon';
@@ -739,14 +740,6 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
     ]);
 
     const resolvedPlayerName = resolveActorName(player);
-    const normalizedDisplayName = resolvedPlayerName.trim();
-    const trimmedCharacterName = player.name?.trim() ?? '';
-    const shouldShowCharacterName =
-      trimmedCharacterName.length > 0 &&
-      normalizedDisplayName.localeCompare(trimmedCharacterName, undefined, {
-        sensitivity: 'base',
-      }) !== 0;
-
     // --- Data-driven stat chip entries ---
     // Build ordered array of chips, filtered by visibility prefs and role.
     const statChipEntries = React.useMemo(() => {
@@ -1283,41 +1276,10 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                     }}
                   >
                     {/* Player Name with Character Name Hover */}
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        flex: '1 1 auto',
-                        minWidth: 0,
-                      }}
-                    >
-                      <OneLineAutoFit minScale={0.8}>
-                        <Tooltip
-                          title={shouldShowCharacterName ? trimmedCharacterName : ''}
-                          placement="top"
-                          arrow
-                          slotProps={{
-                            popper: {
-                              style: { zIndex: 9999 },
-                            },
-                          }}
-                        >
-                          <Typography
-                            variant="subtitle1"
-                            sx={{
-                              fontFamily: 'space grotesk',
-                              fontSize: '1.15rem',
-                              fontWeight: 100,
-                              lineHeight: 1.2,
-                              whiteSpace: 'nowrap',
-                              cursor: 'help', // Add cursor to indicate hoverable
-                            }}
-                          >
-                            {normalizedDisplayName || resolvedPlayerName}
-                          </Typography>
-                        </Tooltip>
-                      </OneLineAutoFit>
-                    </Box>
+                    <PlayerDisplayName
+                      displayName={resolvedPlayerName}
+                      characterName={player.name}
+                    />
 
                     {/* Gear Weights */}
                     <Box

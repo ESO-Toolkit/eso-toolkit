@@ -256,8 +256,8 @@ jobs:
   # one push eliminates the race condition that occurred when coverage and
   # storybook workflows each pushed concurrently.
   #
-  # concurrency cancel-in-progress: true means a new main push supersedes an
-  # in-flight deploy rather than queuing behind it.
+  # Only real publishers share the reports-repository lock. Pull-request and
+  # merge-queue status jobs use a per-run key so they cannot cancel a main deploy.
   deploy:
     needs: [coverage, build-storybook]
     # Must always evaluate to true so the required status check reports back to
@@ -276,8 +276,8 @@ jobs:
       )
     runs-on: ubuntu-latest
     concurrency:
-      group: deploy-reports-gh-pages
-      cancel-in-progress: true
+      group: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && 'deploy-reports-gh-pages' || format('deploy-reports-status-{0}', github.run_id) }}
+      cancel-in-progress: false
     steps:
       - name: Skip deploy (non-deployment context)
         # The job must still run so the required status check reports back to GitHub

@@ -525,6 +525,9 @@ jobs:
     needs: [nightly-tests]
     if: always() && needs.nightly-tests.result != 'cancelled'
     timeout-minutes: 10
+    concurrency:
+      group: deploy-reports-gh-pages
+      cancel-in-progress: false
     permissions:
       contents: read
     outputs:
