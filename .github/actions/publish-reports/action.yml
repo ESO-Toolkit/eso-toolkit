@@ -59,8 +59,23 @@ runs:
           echo "::error::Publish directory must stay within the workflow workspace."
           exit 1
         fi
+        if [[ "$source_dir" == "$workspace_dir" ]]; then
+          echo "::error::Publish directory must be a dedicated artifact directory, not the workspace root."
+          exit 1
+        fi
+        source_relative="${source_dir#"$workspace_dir"/}"
+        case "/$source_relative/" in
+          */.git/*)
+            echo "::error::Publish directory cannot target Git metadata."
+            exit 1
+            ;;
+        esac
         if [[ ! -d "$source_dir" ]]; then
           echo "::error::Publish directory does not exist: $source_dir"
+          exit 1
+        fi
+        if IFS= read -r -d '' git_metadata_path < <(find "$source_dir" -name .git -print0 -quit); then
+          echo "::error::Publish directory cannot contain Git metadata: $git_metadata_path"
           exit 1
         fi
 
@@ -80,6 +95,18 @@ runs:
         if [[ "$destination_path" == "$clone_dir" ]]; then
           destination_dir=""
         fi
+        case "/$destination_dir/" in
+          */.git/*)
+            echo "::error::Destination directory cannot target Git metadata."
+            exit 1
+            ;;
+        esac
+        case "$destination_dir" in
+          nightly-tests | screen-size-tests)
+            echo "::error::Publishers cannot replace a retained report root: $destination_dir"
+            exit 1
+            ;;
+        esac
 
         auth_header="$(printf 'x-access-token:%s' "$REPORTS_TOKEN" | base64 | tr -d '\n')"
         remote_url="https://github.com/${EXTERNAL_REPOSITORY}.git"
@@ -112,8 +139,8 @@ runs:
           while IFS= read -r -d '' artifact_path; do
             entry="${artifact_path##*/}"
             case "$entry" in
-              nightly-tests | screen-size-tests)
-                echo "::error::Root publisher cannot modify retained report directory: $entry"
+              .git | nightly-tests | screen-size-tests)
+                echo "::error::Root publisher cannot modify protected entry: $entry"
                 exit 1
                 ;;
             esac
