@@ -1,4 +1,4 @@
-import { CompareArrows, ExpandMore, InfoOutlined } from '@mui/icons-material';
+import { InfoOutlined } from '@mui/icons-material';
 import {
   Alert,
   Box,
@@ -6,17 +6,18 @@ import {
   Collapse,
   IconButton,
   LinearProgress,
+  Paper,
   Skeleton,
   Typography,
 } from '@mui/material';
 import { alpha } from '@mui/material/styles';
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 
 import type { BuildCluster, ClusterBuildsResult } from '../types/clustering.types';
 import type { DpsParse } from '../types/dpsParses.types';
 
-import { ArchetypeCard } from './ArchetypeCard';
-import { DpsDistributionRail } from './DpsDistributionRail';
+import { ArchetypeRow } from './ArchetypeRow';
+import { BuildInspector } from './BuildInspector';
 
 export interface BuildLeaderboardViewProps {
   parses: readonly DpsParse[];
@@ -37,29 +38,27 @@ export interface BuildLeaderboardViewProps {
 
 function clusterQuality(silhouette: number): { label: string; tooltip: string } {
   if (silhouette >= 0.5) {
-    return {
-      label: 'Strong',
-      tooltip: 'These builds separate cleanly—the archetypes are well defined.',
-    };
+    return { label: 'Strong', tooltip: 'These build patterns separate cleanly.' };
   }
   if (silhouette >= 0.25) {
     return {
       label: 'Moderate',
-      tooltip: 'The groupings are useful, but some builds sit between archetypes.',
+      tooltip: 'The patterns are useful, though some builds overlap.',
     };
   }
-  return {
-    label: 'Weak',
-    tooltip: 'Top players are running many similar variations, so the groups overlap.',
-  };
+  return { label: 'Limited', tooltip: 'Top players are using many similar variations.' };
 }
 
-const SkeletonLedger: React.FC = () => (
+function displayLabel(cluster: BuildCluster, contextClass?: string): string {
+  if (!contextClass) return cluster.label;
+  const escapedClass = cluster.esoClass.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return cluster.label.replace(new RegExp(`\\s+${escapedClass}$`, 'i'), '').trim();
+}
+
+const SkeletonWorkspace: React.FC = () => (
   <Box aria-label="Loading build archetypes">
-    <Skeleton variant="rectangular" height={232} sx={{ mb: 2.5 }} />
-    {[0, 1, 2, 3].map((row) => (
-      <Skeleton key={row} variant="text" height={58} sx={{ borderRadius: 0 }} />
-    ))}
+    <Skeleton variant="text" width={280} height={28} sx={{ mb: 1 }} />
+    <Skeleton variant="rectangular" height={430} sx={{ borderRadius: 3.5 }} />
   </Box>
 );
 
@@ -79,15 +78,18 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
   pendingAction,
   emptyMessage = 'No top parses recorded here yet.',
 }) => {
-  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(
+    result?.recommendedClusterId ?? result?.clusters[0]?.id ?? null,
+  );
+  const [evidenceOpen, setEvidenceOpen] = useState(false);
   const [methodologyOpen, setMethodologyOpen] = useState(false);
-  const [comparisonOpen, setComparisonOpen] = useState(false);
   const [lastResult, setLastResult] = useState(result);
+  const inspectorRef = useRef<HTMLDivElement | null>(null);
 
   if (lastResult !== result) {
     setLastResult(result);
-    setExpandedId(null);
-    setComparisonOpen(false);
+    setSelectedId(result?.recommendedClusterId ?? result?.clusters[0]?.id ?? null);
+    setEvidenceOpen(false);
   }
 
   if (error) {
@@ -107,15 +109,15 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
     );
   }
 
-  if (loading) return <SkeletonLedger />;
+  if (loading) return <SkeletonWorkspace />;
 
   if (parses.length === 0) return <Alert severity="info">{emptyMessage}</Alert>;
 
   if (tooFewParses) {
     return (
       <Alert severity="info" data-testid="too-few-parses">
-        Only {parses.length} parses recorded here—not enough to identify build archetypes yet. Check
-        back once more logs are ingested.
+        Only {parses.length} parses are recorded here—not enough to identify reliable build patterns
+        yet.
       </Alert>
     );
   }
@@ -126,10 +128,13 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
         <Box sx={{ mb: 2 }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 1, mb: 0.75 }}>
             <Typography aria-live="polite" sx={{ color: 'text.secondary', fontSize: '0.78rem' }}>
-              Grouping {parses.length} parses into build archetypes…
+              Grouping {parses.length} parses into build patterns…
             </Typography>
             {clusterProgress > 0 && (
-              <Typography className="u-tabular" sx={{ color: 'text.disabled', fontSize: '0.7rem' }}>
+              <Typography
+                className="u-tabular"
+                sx={{ color: 'text.secondary', fontSize: '0.72rem' }}
+              >
                 {Math.round(clusterProgress)}%
               </Typography>
             )}
@@ -140,48 +145,51 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
             sx={{ height: 3 }}
           />
         </Box>
-        <SkeletonLedger />
+        <SkeletonWorkspace />
       </Box>
     );
   }
 
   const quality = clusterQuality(result.silhouette);
-  const sourceUrlFor = (cluster: BuildCluster): string | undefined =>
-    parses.find((parse) => parse.parse_id === cluster.medoidParseId)?.source_url;
   const recommended = result.clusters.find((cluster) => cluster.id === result.recommendedClusterId);
   const ordered = recommended
     ? [recommended, ...result.clusters.filter((cluster) => cluster.id !== recommended.id)]
     : result.clusters;
-  const handleComparisonSelect = (clusterId: string): void => {
-    setExpandedId(clusterId);
+  const selected =
+    result.clusters.find((cluster) => cluster.id === selectedId) ??
+    recommended ??
+    result.clusters[0];
+  const sourceUrlFor = (cluster: BuildCluster): string | undefined =>
+    parses.find((parse) => parse.parse_id === cluster.medoidParseId)?.source_url;
 
-    const target = document.getElementById(`build-archetype-${clusterId}`);
-    if (!target?.scrollIntoView) return;
-    const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
-    target.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'nearest' });
+  const handleSelect = (clusterId: string): void => {
+    setSelectedId(clusterId);
+    setEvidenceOpen(false);
+
+    const mobile = window.matchMedia?.('(max-width: 899px)').matches ?? false;
+    if (!mobile) return;
+    window.requestAnimationFrame?.(() => {
+      const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+      inspectorRef.current?.scrollIntoView({
+        behavior: reduceMotion ? 'auto' : 'smooth',
+        block: 'start',
+      });
+    });
   };
 
   return (
     <Box>
-      <Box
-        component="section"
-        aria-label="Leaderboard data notes"
-        sx={(theme) => ({
-          mb: 2,
-          borderTop: `1px solid ${alpha(theme.palette.divider, 0.58)}`,
-          borderBottom: `1px solid ${alpha(theme.palette.divider, 0.58)}`,
-        })}
-      >
-        <Box sx={{ display: 'flex', minHeight: 34, alignItems: 'center', gap: 0.5 }}>
-          <Typography
-            sx={{ flex: 1, color: 'text.secondary', fontSize: '0.76rem', lineHeight: 1.45 }}
-          >
-            Based on{' '}
-            <Box component="span" className="u-tabular">
+      <Box sx={{ mb: 1.5 }}>
+        <Box sx={{ display: 'flex', minHeight: 32, alignItems: 'center', gap: 0.5 }}>
+          <Typography sx={{ flex: 1, color: 'text.secondary', fontSize: '0.76rem' }}>
+            <Box
+              component="span"
+              className="u-tabular"
+              sx={{ color: 'text.primary', fontWeight: 650 }}
+            >
               {result.totalParses}
             </Box>{' '}
-            top-ranked parses. The build is a starting point—your damage will vary with rotation,
-            buffs, and group.
+            top-ranked parses · {result.k} build patterns
           </Typography>
           <IconButton
             size="small"
@@ -189,7 +197,7 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
             aria-expanded={methodologyOpen}
             onClick={() => setMethodologyOpen((open) => !open)}
           >
-            <InfoOutlined sx={{ fontSize: 16 }} />
+            <InfoOutlined sx={{ fontSize: 17 }} />
           </IconButton>
         </Box>
         <Collapse in={methodologyOpen} timeout="auto" unmountOnExit>
@@ -198,124 +206,126 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
               display: 'grid',
               gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, 1fr)' },
               gap: { xs: 0.75, sm: 2 },
-              pb: 1.25,
-              borderTop: `1px solid ${alpha(theme.palette.divider, 0.42)}`,
+              mt: 0.5,
               pt: 1,
+              borderTop: `1px solid ${alpha(theme.palette.divider, 0.62)}`,
             })}
           >
-            <Typography sx={{ color: 'text.secondary', fontSize: '0.7rem', lineHeight: 1.45 }}>
+            <Typography sx={{ color: 'text.secondary', fontSize: '0.72rem', lineHeight: 1.5 }}>
               <Box component="span" sx={{ color: 'text.primary', fontWeight: 650 }}>
-                What was analyzed.
+                Scope.
               </Box>{' '}
-              {result.uniqueSignatures} distinct builds were grouped into {result.k} archetypes.
+              {result.uniqueSignatures} distinct builds were grouped into {result.k} patterns.
             </Typography>
-            <Typography sx={{ color: 'text.secondary', fontSize: '0.7rem', lineHeight: 1.45 }}>
+            <Typography sx={{ color: 'text.secondary', fontSize: '0.72rem', lineHeight: 1.5 }}>
               <Box component="span" sx={{ color: 'text.primary', fontWeight: 650 }}>
-                Grouping quality: {quality.label}.
+                Confidence: {quality.label}.
               </Box>{' '}
               {quality.tooltip}
             </Typography>
-            <Typography sx={{ color: 'text.secondary', fontSize: '0.7rem', lineHeight: 1.45 }}>
+            <Typography sx={{ color: 'text.secondary', fontSize: '0.72rem', lineHeight: 1.5 }}>
               <Box component="span" sx={{ color: 'text.primary', fontWeight: 650 }}>
-                Core and common.
+                Starting point.
               </Box>{' '}
-              Core pieces appear in at least 80%; common options appear in 35–79%. Every action
-              opens a real observed parse.
+              Results vary with rotation, buffs, and group composition.
             </Typography>
           </Box>
         </Collapse>
       </Box>
 
-      <Box
+      <Paper
         component="section"
-        aria-label="Build performance comparison"
+        aria-label="Build pattern workspace"
+        elevation={0}
         sx={(theme) => ({
-          mb: 2,
-          borderBottom: `1px solid ${alpha(theme.palette.divider, 0.58)}`,
+          overflow: 'hidden',
+          borderRadius: 3.5,
+          background:
+            theme.palette.mode === 'dark'
+              ? 'linear-gradient(180deg, rgba(15,23,42,0.94) 0%, rgba(8,13,26,0.96) 100%)'
+              : theme.palette.background.paper,
+          backdropFilter: 'blur(14px)',
+          WebkitBackdropFilter: 'blur(14px)',
+          boxShadow:
+            theme.palette.mode === 'dark'
+              ? '0 18px 45px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.04)'
+              : '0 10px 30px rgba(15,23,42,0.08), inset 0 1px 0 rgba(255,255,255,0.8)',
         })}
       >
-        <Button
-          variant="text"
-          startIcon={<CompareArrows />}
-          endIcon={
-            <ExpandMore
-              sx={{
-                transition: 'transform 160ms ease',
-                transform: comparisonOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-              }}
-            />
-          }
-          aria-expanded={comparisonOpen}
-          onClick={() => setComparisonOpen((open) => !open)}
-          sx={{ px: 0, py: 0.75, fontSize: '0.76rem' }}
-        >
-          {comparisonOpen ? 'Hide performance comparison' : `Compare all ${result.k} builds`}
-        </Button>
-        <Collapse in={comparisonOpen} timeout="auto" unmountOnExit>
-          <DpsDistributionRail
-            clusters={result.clusters}
-            recommendedClusterId={result.recommendedClusterId}
-            selectedClusterId={expandedId ?? result.recommendedClusterId}
-            onSelect={handleComparisonSelect}
-          />
-        </Collapse>
-      </Box>
-
-      <Box
-        sx={(theme) => ({
-          display: 'flex',
-          minHeight: 32,
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          borderBottom: `1px solid ${alpha(theme.palette.divider, 0.86)}`,
-        })}
-      >
-        <Typography
-          id="archetypes-heading"
+        <Box
           sx={{
-            fontSize: '0.66rem',
-            fontWeight: 750,
-            letterSpacing: '0.08em',
-            textTransform: 'uppercase',
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', md: 'minmax(330px, 0.78fr) minmax(0, 1.45fr)' },
           }}
         >
-          Archetypes
-        </Typography>
-        <Typography sx={{ color: 'text.disabled', fontSize: '0.68rem' }}>
-          recommended first · alternatives by usage
-        </Typography>
-      </Box>
-
-      <Box
-        component="ol"
-        aria-labelledby="archetypes-heading"
-        sx={{ m: 0, p: 0, listStyle: 'none' }}
-      >
-        {ordered.map((cluster) => {
-          const featured = cluster.id === result.recommendedClusterId;
-          return (
-            <Box component="li" key={cluster.id}>
-              <ArchetypeCard
-                cluster={cluster}
-                totalParses={result.totalParses}
-                featured={featured}
-                expanded={expandedId === cluster.id}
-                onToggleExpand={() =>
-                  setExpandedId((current) => (current === cluster.id ? null : cluster.id))
-                }
-                esoClass={esoClass ?? cluster.esoClass}
-                variations={cluster.variations}
-                sourceUrl={sourceUrlFor(cluster)}
-                pendingKind={pendingAction?.clusterId === cluster.id ? pendingAction.kind : null}
-                actionsDisabled={Boolean(pendingAction)}
-                onOpenInEditor={onOpenInEditor}
-                onSaveBuild={onSaveBuild}
-                onViewSourceLog={onViewSourceLog}
-              />
+          <Box
+            component="section"
+            aria-labelledby="build-patterns-heading"
+            sx={(theme) => ({
+              minWidth: 0,
+              order: { xs: 2, md: 1 },
+              borderTop: { xs: `1px solid ${alpha(theme.palette.divider, 0.78)}`, md: 'none' },
+              borderRight: { xs: 'none', md: `1px solid ${alpha(theme.palette.divider, 0.78)}` },
+            })}
+          >
+            <Box
+              sx={{
+                display: 'grid',
+                minHeight: 48,
+                gridTemplateColumns: 'minmax(0, 1fr) 64px 52px 18px',
+                alignItems: 'center',
+                columnGap: 1,
+                px: { xs: 1.5, sm: 2 },
+              }}
+            >
+              <Typography id="build-patterns-heading" sx={{ fontSize: '0.76rem', fontWeight: 700 }}>
+                Build patterns
+              </Typography>
+              <Typography sx={{ textAlign: 'right', color: 'text.secondary', fontSize: '0.7rem' }}>
+                Typical
+              </Typography>
+              <Typography sx={{ textAlign: 'right', color: 'text.secondary', fontSize: '0.7rem' }}>
+                Parses
+              </Typography>
             </Box>
-          );
-        })}
-      </Box>
+            <Box component="ol" sx={{ m: 0, p: 0, listStyle: 'none' }}>
+              {ordered.map((cluster) => (
+                <ArchetypeRow
+                  key={cluster.id}
+                  cluster={cluster}
+                  label={displayLabel(cluster, cluster.esoClass)}
+                  selected={cluster.id === selected.id}
+                  recommended={cluster.id === result.recommendedClusterId}
+                  showClassIcon={!esoClass}
+                  onSelect={() => handleSelect(cluster.id)}
+                />
+              ))}
+            </Box>
+          </Box>
+
+          <Box
+            ref={inspectorRef}
+            sx={{ minWidth: 0, order: { xs: 1, md: 2 }, scrollMarginTop: 72 }}
+          >
+            <BuildInspector
+              key={selected.id}
+              cluster={selected}
+              label={displayLabel(selected, esoClass)}
+              totalParses={result.totalParses}
+              recommended={selected.id === result.recommendedClusterId}
+              evidenceOpen={evidenceOpen}
+              onToggleEvidence={() => setEvidenceOpen((open) => !open)}
+              variations={selected.variations}
+              sourceUrl={sourceUrlFor(selected)}
+              pendingKind={pendingAction?.clusterId === selected.id ? pendingAction.kind : null}
+              actionsDisabled={Boolean(pendingAction)}
+              onOpenInEditor={onOpenInEditor}
+              onSaveBuild={onSaveBuild}
+              onViewSourceLog={onViewSourceLog}
+            />
+          </Box>
+        </Box>
+      </Paper>
     </Box>
   );
 };

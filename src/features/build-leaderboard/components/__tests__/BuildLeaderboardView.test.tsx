@@ -1,5 +1,5 @@
 import { ThemeProvider, createTheme } from '@mui/material';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
@@ -33,7 +33,7 @@ function renderView(props: Partial<React.ComponentProps<typeof BuildLeaderboardV
   );
 }
 
-/** Real clustering, not a stub — deterministic, so the UI sees production shapes. */
+/** Real, deterministic clustering so the UI receives production-shaped data. */
 function clusteredFixture(): { parses: DpsParse[]; result: ClusterBuildsResult } {
   resetFixtureIds();
   const parses = makeThreeArchetypeFixture();
@@ -43,20 +43,24 @@ function clusteredFixture(): { parses: DpsParse[]; result: ClusterBuildsResult }
   return { parses, result };
 }
 
+function recommendedCluster(result: ClusterBuildsResult) {
+  return (
+    result.clusters.find((cluster) => cluster.id === result.recommendedClusterId) ??
+    result.clusters[0]
+  );
+}
+
 describe('BuildLeaderboardView states', () => {
   it('shows an error with a working retry', async () => {
     const onRetry = jest.fn();
     renderView({ error: 'Boom', onRetry });
-
     expect(screen.getByText('Boom')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: /retry/i }));
     expect(onRetry).toHaveBeenCalledTimes(1);
   });
 
-  // Empty is a normal state, not a failure — it must not read as an error.
   it('treats no data as informational, not an error', () => {
     renderView({ parses: [], emptyMessage: 'Nothing here yet.' });
-
     const alert = screen.getByRole('alert');
     expect(alert).toHaveTextContent('Nothing here yet.');
     expect(alert.className).toMatch(/MuiAlert-colorInfo/);
@@ -66,119 +70,95 @@ describe('BuildLeaderboardView states', () => {
   it('refuses to cluster too few parses', () => {
     const { parses } = clusteredFixture();
     renderView({ parses: parses.slice(0, 6), tooFewParses: true });
-
     expect(screen.getByTestId('too-few-parses')).toHaveTextContent(/not enough/i);
-    expect(screen.queryByTestId('archetype-card')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('start-here-card')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('build-inspector')).not.toBeInTheDocument();
   });
 
   it('announces clustering progress politely', () => {
     const { parses } = clusteredFixture();
     renderView({ parses, clustering: true, clusterProgress: 40 });
-
     const status = screen.getByText(/grouping 45 parses/i);
     expect(status).toHaveAttribute('aria-live', 'polite');
   });
 });
 
-describe('BuildLeaderboardView happy path', () => {
-  it('renders one recommendation plus the remaining archetypes', () => {
+describe('BuildLeaderboardView workspace', () => {
+  it('renders one stable recommendation and every alternative as a fixed row', () => {
     const { parses, result } = clusteredFixture();
     renderView({ parses, result });
-
     expect(screen.getByTestId('start-here-card')).toBeInTheDocument();
-    expect(screen.getAllByTestId('archetype-card')).toHaveLength(result.k - 1);
+    expect(screen.getByTestId('recommended-row')).toBeInTheDocument();
+    expect(screen.getAllByTestId('archetype-row')).toHaveLength(result.k - 1);
+    expect(screen.getByTestId('build-inspector')).toBeInTheDocument();
   });
 
-  it('keeps the expert comparison optional, then compares every archetype on one scale', async () => {
+  it('compares every archetype in the same scan-friendly columns', () => {
     const { parses, result } = clusteredFixture();
     renderView({ parses, result });
-
+    expect(screen.getByText('Build patterns')).toBeInTheDocument();
+    expect(screen.getByText('Typical')).toBeInTheDocument();
+    expect(screen.getByText('Parses')).toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: /typical damage/i })).toHaveLength(result.k);
     expect(screen.queryByText('Compare typical damage')).not.toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: /compare all/i }));
-
-    expect(screen.getByText('Compare typical damage')).toBeInTheDocument();
-    const comparisonRows = result.clusters.map((cluster) =>
-      screen.getByRole('button', {
-        name: (accessibleName) =>
-          accessibleName.startsWith(`${cluster.label}: median`) &&
-          accessibleName.includes('DPS') &&
-          accessibleName.includes('of parses'),
-      }),
-    );
-    expect(comparisonRows).toHaveLength(result.k);
   });
 
-  it('leads with the median, not the record', () => {
+  it('leads with typical damage and sample size rather than a record', () => {
     const { parses, result } = clusteredFixture();
     renderView({ parses, result });
-
     const featured = screen.getByTestId('start-here-card');
-    expect(within(featured).getByText(/median dps/i)).toBeInTheDocument();
-    expect(within(featured).getByText(/half of these parses land above/i)).toBeInTheDocument();
+    expect(featured).toHaveTextContent('Typical damage');
+    expect(featured).toHaveTextContent('Seen in top parses');
+    expect(featured).toHaveTextContent(/sample large enough to trust/i);
   });
 
-  /**
-   * The core of the feature: a beginner must be able to tell mandatory pieces from
-   * optional ones at a glance.
-   */
-  it('distinguishes core from flex gear', () => {
+  it('distinguishes core from flexible build anchors', () => {
     const { parses, result } = clusteredFixture();
     renderView({ parses, result });
-
     const featured = screen.getByTestId('start-here-card');
-    // Traits are not clickable, so they carry no button role — assert on the
-    // data-* markers the component sets for exactly this purpose.
     const core = featured.querySelectorAll('[data-trait-kind="core"]');
     const flex = featured.querySelectorAll('[data-trait-kind="flex"]');
-
     expect(core.length).toBeGreaterThan(0);
-    core.forEach((chip) => expect(chip).toHaveAttribute('data-core', 'true'));
-    // Flex chips must NOT be marked core — that distinction is the whole point.
-    flex.forEach((chip) => expect(chip).not.toHaveAttribute('data-core'));
+    core.forEach((trait) => expect(trait).toHaveAttribute('data-core', 'true'));
+    flex.forEach((trait) => expect(trait).not.toHaveAttribute('data-core'));
   });
 
-  it('shows the build composition before an alternative is expanded', () => {
+  it('updates the stable inspector when an alternative is selected', async () => {
     const { parses, result } = clusteredFixture();
     renderView({ parses, result });
-
-    const [alternative] = screen.getAllByTestId('archetype-card');
-    expect(within(alternative).getByText(/build composition/i)).toBeInTheDocument();
-    expect(alternative.querySelectorAll('[data-trait-kind="core"]').length).toBeGreaterThan(0);
-    expect(within(alternative).queryByText(/build consistency/i)).not.toBeInTheDocument();
+    const alternativeRow = screen.getAllByTestId('archetype-row')[0];
+    const alternative = result.clusters.find(
+      (cluster) => cluster.id !== result.recommendedClusterId,
+    );
+    await userEvent.click(alternativeRow);
+    expect(alternativeRow).toHaveAttribute('aria-current', 'true');
+    expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent(alternative?.label ?? '');
+    expect(screen.queryByTestId('start-here-card')).not.toBeInTheDocument();
+    expect(screen.getAllByTestId('archetype-row')).toHaveLength(result.k - 1);
   });
 
-  it('keeps grouping diagnostics out of the default view and explains them on request', async () => {
+  it('keeps methodology out of the default view and explains confidence on request', async () => {
     const { parses, result } = clusteredFixture();
     renderView({ parses, result });
-
-    expect(screen.queryByText(/grouping quality/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/confidence:/i)).not.toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: /how this leaderboard works/i }));
-    expect(screen.getByText(/grouping quality/i)).toBeInTheDocument();
-    // The raw float must never reach the user.
+    expect(screen.getByText(/confidence:/i)).toBeInTheDocument();
     expect(screen.queryByText(String(result.silhouette))).not.toBeInTheDocument();
   });
 
-  it('hands the medoid to the editor callback', async () => {
+  it('hands the representative observed build to the editor callback', async () => {
     const onOpenInEditor = jest.fn();
     const { parses, result } = clusteredFixture();
     renderView({ parses, result, onOpenInEditor });
-
-    const featured = screen.getByTestId('start-here-card');
-    await userEvent.click(within(featured).getByRole('button', { name: /open in build editor/i }));
-
-    expect(onOpenInEditor).toHaveBeenCalledTimes(1);
+    await userEvent.click(screen.getByRole('button', { name: /open in build editor/i }));
     const cluster = onOpenInEditor.mock.calls[0][0];
-    // The medoid is a real observed parse, so the editor opens a build someone played.
     expect(cluster.memberParseIds).toContain(cluster.medoidParseId);
   });
 
-  it('labels and disables per action while one is in flight', () => {
+  it('labels and disables every action while one is in flight', () => {
     const { parses, result } = clusteredFixture();
     const id = result.recommendedClusterId as string;
     const onOpenInEditor = jest.fn();
     const onSaveBuild = jest.fn();
-
     const { unmount } = renderView({
       parses,
       result,
@@ -186,14 +166,10 @@ describe('BuildLeaderboardView happy path', () => {
       onOpenInEditor,
       onSaveBuild,
     });
-
-    let featured = screen.getByTestId('start-here-card');
-    expect(within(featured).getByRole('button', { name: /opening/i })).toBeDisabled();
-    // Secondary actions share one overflow and must also be locked out.
-    expect(within(featured).getByRole('button', { name: /more actions/i })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /opening/i })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /more build actions/i })).toBeDisabled();
     unmount();
 
-    // A save in flight labels Save, not the primary button.
     renderView({
       parses,
       result,
@@ -201,55 +177,42 @@ describe('BuildLeaderboardView happy path', () => {
       onOpenInEditor,
       onSaveBuild,
     });
-    featured = screen.getByTestId('start-here-card');
-    expect(within(featured).getByRole('button', { name: /saving/i })).toBeDisabled();
-    expect(within(featured).queryByRole('button', { name: /opening/i })).not.toBeInTheDocument();
-    expect(within(featured).getByRole('button', { name: /open in build editor/i })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /saving build/i })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /open in build editor/i })).toBeDisabled();
   });
 
   it('keeps secondary build actions in one overflow menu', async () => {
     const onSaveBuild = jest.fn();
     const { parses, result } = clusteredFixture();
     renderView({ parses, result, onSaveBuild });
-
-    const featured = screen.getByTestId('start-here-card');
-    await userEvent.click(within(featured).getByRole('button', { name: /more actions/i }));
+    await userEvent.click(screen.getByRole('button', { name: /more build actions/i }));
     await userEvent.click(screen.getByRole('menuitem', { name: /save to my builds/i }));
-
-    expect(onSaveBuild).toHaveBeenCalledTimes(1);
     expect(onSaveBuild).toHaveBeenCalledWith(
       expect.objectContaining({ id: result.recommendedClusterId }),
     );
   });
 
-  /**
-   * Cluster ids are positional ('c0', 'c1', …) and are reused by every run, so a
-   * held-over id survives a change of encounter or class and silently expands an
-   * unrelated archetype.
-   */
-  it('collapses the expanded card when the clustered result changes', async () => {
+  it('reveals evidence only in the selected build inspector', async () => {
+    const { parses, result } = clusteredFixture();
+    renderView({ parses, result });
+    expect(screen.queryByText(/^gear & special$/i)).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: /show build evidence/i }));
+    expect(screen.getByText(/^gear & special$/i)).toBeInTheDocument();
+    expect(screen.getByText(/^skill bars$/i)).toBeInTheDocument();
+  });
+
+  it('resets selection and evidence when the clustered result changes', async () => {
     const { parses, result } = clusteredFixture();
     const { rerender } = renderView({ parses, result });
+    await userEvent.click(screen.getAllByTestId('archetype-row')[0]);
+    await userEvent.click(screen.getByRole('button', { name: /show build evidence/i }));
+    expect(screen.getByText(/^gear & special$/i)).toBeInTheDocument();
 
-    // Count the mounted detail panels so the assertion works regardless of ordering.
-    const detailCount = (): number => screen.queryAllByText(/^gear & special$/i).length;
-    const collapsed = detailCount();
-
-    const [card] = screen.getAllByTestId('archetype-card');
-    await userEvent.click(within(card).getByRole('button', { name: /full breakdown/i }));
-    expect(detailCount()).toBe(collapsed + 1);
-
-    // Simulate switching to another encounter: a different parse set, a fresh
-    // result object — but ids starting from 'c0' all over again.
     resetFixtureIds();
     const nextParses = makeThreeArchetypeFixture().slice(0, 35);
     const nextResult = clusterBuilds({
       vectors: extractFeatureVectors(nextParses, EMPTY_CANONICAL_MAPS),
     });
-    // The premise of the bug: the two runs share ids while describing different builds.
-    const nextIds = new Set(nextResult.clusters.map((c) => c.id));
-    expect(result.clusters.some((c) => nextIds.has(c.id))).toBe(true);
-
     rerender(
       <ThemeProvider theme={theme}>
         <BuildLeaderboardView
@@ -263,18 +226,12 @@ describe('BuildLeaderboardView happy path', () => {
         />
       </ThemeProvider>,
     );
-
-    expect(screen.getAllByTestId('archetype-card').length).toBeGreaterThan(0);
-    // Collapse unmounts on the exit transition, so the detail leaves the DOM a tick later.
-    await waitFor(() => expect(detailCount()).toBe(collapsed));
+    expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent(
+      recommendedCluster(nextResult).label,
+    );
+    await waitFor(() => expect(screen.queryByText(/^gear & special$/i)).not.toBeInTheDocument());
   });
 
-  /**
-   * The reset runs during render, which is React's documented form for adjusting
-   * state on a prop change. StrictMode double-invokes render, so if that were
-   * unsafe here it would show up as a warning or a wrong result — this pins that
-   * it does neither, and is the evidence for keeping it out of an effect.
-   */
   it('resets safely under StrictMode double-rendering', async () => {
     const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
     try {
@@ -297,38 +254,21 @@ describe('BuildLeaderboardView happy path', () => {
           </ThemeProvider>
         </React.StrictMode>
       );
-
       const { rerender } = render(view(parses, result));
-      const detailCount = (): number => screen.queryAllByText(/^gear & special$/i).length;
-      const collapsed = detailCount();
-
-      const [card] = screen.getAllByTestId('archetype-card');
-      await userEvent.click(within(card).getByRole('button', { name: /full breakdown/i }));
-      expect(detailCount()).toBe(collapsed + 1);
+      await userEvent.click(screen.getAllByTestId('archetype-row')[0]);
 
       resetFixtureIds();
       const nextParses = makeThreeArchetypeFixture().slice(0, 35);
-      rerender(
-        view(
-          nextParses,
-          clusterBuilds({ vectors: extractFeatureVectors(nextParses, EMPTY_CANONICAL_MAPS) }),
-        ),
+      const nextResult = clusterBuilds({
+        vectors: extractFeatureVectors(nextParses, EMPTY_CANONICAL_MAPS),
+      });
+      rerender(view(nextParses, nextResult));
+      expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent(
+        recommendedCluster(nextResult).label,
       );
-
-      await waitFor(() => expect(detailCount()).toBe(collapsed));
       expect(consoleError).not.toHaveBeenCalled();
     } finally {
       consoleError.mockRestore();
     }
-  });
-
-  it('expands a sibling card to reveal its detail', async () => {
-    const { parses, result } = clusteredFixture();
-    renderView({ parses, result });
-
-    const [card] = screen.getAllByTestId('archetype-card');
-    await userEvent.click(within(card).getByRole('button', { name: /full breakdown/i }));
-
-    expect(within(card).getByText(/^gear & special$/i)).toBeInTheDocument();
   });
 });

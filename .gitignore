@@ -194,6 +194,7 @@ discord-notify-worker/node_modules/
 # Third-party AI/editor tool scratch directories
 /.continue/
 /.windsurf/
+/.playwright-cli/
 
 # Agent scratch directory — keep markdown notes trackable, but ignore
 # large binary artefacts (Chrome perf traces can be >300 MB) and tool

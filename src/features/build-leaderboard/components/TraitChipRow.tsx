@@ -138,7 +138,7 @@ export const TraitChipRow: React.FC<TraitChipRowProps> = ({
           }}
         >
           {isCombinedGroup && (
-            <Box component="span" sx={{ color: 'text.disabled', fontSize: '0.66rem' }}>
+            <Box component="span" sx={{ color: 'text.secondary', fontSize: '0.7rem' }}>
               {GROUP_LABELS[trait.group] ?? trait.group}
             </Box>
           )}
@@ -183,7 +183,7 @@ export const TraitChipRow: React.FC<TraitChipRowProps> = ({
           }}
         >
           {isCombinedGroup && (
-            <Typography sx={{ color: 'text.disabled', fontSize: '0.66rem' }}>
+            <Typography sx={{ color: 'text.secondary', fontSize: '0.7rem' }}>
               {GROUP_LABELS[trait.group] ?? trait.group}
             </Typography>
           )}
@@ -242,7 +242,7 @@ export const TraitChipRow: React.FC<TraitChipRowProps> = ({
           rowGap: 0.35,
         }}
       >
-        <Typography sx={{ flex: '0 0 auto', color: 'text.disabled', fontSize: '0.7rem' }}>
+        <Typography sx={{ flex: '0 0 auto', color: 'text.secondary', fontSize: '0.7rem' }}>
           {title}
         </Typography>
         <Box
@@ -270,7 +270,7 @@ export const TraitChipRow: React.FC<TraitChipRowProps> = ({
         {hiddenPrimaryCount > 0 && (
           <Typography
             component="span"
-            sx={{ color: 'text.disabled', fontSize: '0.7rem', whiteSpace: 'nowrap' }}
+            sx={{ color: 'text.secondary', fontSize: '0.7rem', whiteSpace: 'nowrap' }}
           >
             +{hiddenPrimaryCount} more in the full breakdown
           </Typography>
@@ -290,8 +290,8 @@ export const TraitChipRow: React.FC<TraitChipRowProps> = ({
             mb: 0.25,
             pt: kind === 'core' ? 0 : 0.75,
             borderTop: kind === 'core' ? 0 : `1px solid ${alpha(theme.palette.divider, 0.38)}`,
-            color: 'text.disabled',
-            fontSize: '0.66rem',
+            color: 'text.secondary',
+            fontSize: '0.7rem',
           })}
         >
           {SEGMENT_LABELS[kind]}
@@ -322,7 +322,7 @@ export const TraitChipRow: React.FC<TraitChipRowProps> = ({
         {showVariations && renderSegment('rare', rareOfGroup)}
 
         {hiddenPrimaryCount > 0 && (
-          <Typography sx={{ mt: 0.5, color: 'text.disabled', fontSize: '0.68rem' }}>
+          <Typography sx={{ mt: 0.5, color: 'text.secondary', fontSize: '0.7rem' }}>
             +{hiddenPrimaryCount} more in the full breakdown
           </Typography>
         )}

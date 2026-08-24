@@ -1,3 +1,4 @@
+import { useTheme } from '@mui/material/styles';
 import React from 'react';
 
 // Import legacy dk icon - this appears to be using a different path
@@ -33,6 +34,7 @@ export interface ClassIconProps {
 }
 
 export const ClassIcon: React.FC<ClassIconProps> = ({ className, size = 12, alt, style = {} }) => {
+  const theme = useTheme();
   const iconSrc = getClassIconSrc(className);
 
   if (!iconSrc) {
@@ -48,6 +50,7 @@ export const ClassIcon: React.FC<ClassIconProps> = ({ className, size = 12, alt,
       style={{
         opacity: 0.8,
         flexShrink: 0,
+        filter: theme.palette.mode === 'light' ? 'brightness(0) saturate(100%)' : undefined,
         ...style,
       }}
     />

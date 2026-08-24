@@ -181,7 +181,7 @@ export const BuildLeaderboardPage: React.FC = () => {
             sx={{
               fontFamily: 'Space Grotesk, Inter, system-ui',
               fontSize: '1.125rem',
-              fontWeight: 720,
+              fontWeight: 700,
               letterSpacing: '-0.025em',
             }}
           >
@@ -215,7 +215,7 @@ export const BuildLeaderboardPage: React.FC = () => {
 
           <Typography
             className="u-tabular"
-            sx={{ justifySelf: 'end', color: 'text.disabled', fontSize: '0.68rem' }}
+            sx={{ justifySelf: 'end', color: 'text.secondary', fontSize: '0.7rem' }}
           >
             {tab === 'encounter' && selectedEncounter?.updated_at
               ? `Updated ${selectedEncounter.updated_at.slice(0, 10)}`
@@ -350,7 +350,7 @@ export const BuildLeaderboardPage: React.FC = () => {
           borderTop: `1px solid ${alpha(theme.palette.divider, 0.48)}`,
         })}
       >
-        <Typography sx={{ color: 'text.disabled', fontSize: '0.68rem' }}>
+        <Typography sx={{ color: 'text.secondary', fontSize: '0.7rem' }}>
           Parse data from ESO Logs. Every archetype links to the representative parse it came from.
         </Typography>
       </Box>
