@@ -1,18 +1,8 @@
-/**
- * Core/Flex trait chips.
- *
- * This is the actual payoff of the feature. A newcomer's real question is not
- * "what is the top parse" but "which of these twelve things do I HAVE to have?" —
- * and a trait's share across an archetype answers that from data instead of
- * opinion. Core (≥80%) is effectively mandatory; Flex (35–80%) has real
- * alternatives, listed in the tooltip. Anything rarer is hidden behind a
- * disclosure so the card never becomes a wall.
- */
-
-import { Box, Button, Chip, Tooltip, Typography } from '@mui/material';
+import { Box, Button, Tooltip, Typography } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import React, { useMemo, useState } from 'react';
 
+import { useRoleColors } from '../../../hooks/useRoleColors';
 import type { ClusterTrait, FeatureGroupKey } from '../types/clustering.types';
 
 export interface TraitChipRowProps {
@@ -26,6 +16,8 @@ export interface TraitChipRowProps {
   maxVisible?: number;
   /** Hide the less-common disclosure in compact previews. */
   showVariationsControl?: boolean;
+  /** Ledger is the expanded frequency table; inline is the collapsed signature. */
+  variant?: 'ledger' | 'inline';
 }
 
 const percent = (share: number): string => `${Math.round(share * 100)}%`;
@@ -47,11 +39,6 @@ const GROUP_LABELS: Partial<Record<FeatureGroupKey, string>> = {
   backBar: 'Back',
 };
 
-/**
- * Groups where a single build holds SEVERAL of these at once — two five-piece
- * sets, six abilities per bar. Their siblings are things worn alongside, not
- * instead of, so the tooltip must not read as a choice between them.
- */
 const MULTI_VALUED_GROUPS = new Set<FeatureGroupKey>([
   'fivePieceSets',
   'frontBar',
@@ -59,15 +46,6 @@ const MULTI_VALUED_GROUPS = new Set<FeatureGroupKey>([
   'cpSlottables',
 ]);
 
-/**
- * What share of the archetype carries this trait, and what else appears in the
- * same slot.
- *
- * The phrasing branches on the group because the two cases mean different
- * things: a monster set is genuinely an either/or, while a build wears both of
- * its five-piece sets simultaneously. Saying "24% run Aegis Caller" next to a
- * five-piece set implied a swap that does not exist.
- */
 function shareText(
   trait: ClusterTrait,
   siblings: readonly ClusterTrait[],
@@ -75,11 +53,13 @@ function shareText(
 ): string {
   const others = siblings.filter((candidate) => candidate.id !== trait.id).slice(0, 3);
   const multi = MULTI_VALUED_GROUPS.has(group);
-
   const lead = `${percent(trait.share)} of this build ${multi ? 'includes' : 'runs'} ${trait.label}.`;
+
   if (others.length === 0) return lead;
 
-  const rest = others.map((c) => `${c.label} ${percent(c.share)}`).join(', ');
+  const rest = others
+    .map((candidate) => `${candidate.label} ${percent(candidate.share)}`)
+    .join(', ');
   return `${lead} ${multi ? 'Also seen here' : 'Alternatives'}: ${rest}.`;
 }
 
@@ -91,14 +71,16 @@ export const TraitChipRow: React.FC<TraitChipRowProps> = ({
   variations = [],
   maxVisible,
   showVariationsControl = true,
+  variant = 'ledger',
 }) => {
   const [showVariations, setShowVariations] = useState(false);
+  const { getPlayerColor } = useRoleColors();
+  const dpsColor = getPlayerColor('dps');
   const groups = useMemo<readonly FeatureGroupKey[]>(
     () => (Array.isArray(group) ? group : [group]),
     [group],
   );
   const isCombinedGroup = groups.length > 1;
-
   const coreOfGroup = useMemo(
     () => core.filter((trait) => groups.includes(trait.group)),
     [core, groups],
@@ -111,7 +93,6 @@ export const TraitChipRow: React.FC<TraitChipRowProps> = ({
     () => variations.filter((trait) => groups.includes(trait.group)),
     [variations, groups],
   );
-
   const siblings = useMemo(
     () => [...coreOfGroup, ...flexOfGroup, ...rareOfGroup],
     [coreOfGroup, flexOfGroup, rareOfGroup],
@@ -129,7 +110,7 @@ export const TraitChipRow: React.FC<TraitChipRowProps> = ({
   const hiddenPrimaryCount =
     coreOfGroup.length + flexOfGroup.length - visibleCore.length - visibleFlex.length;
 
-  const renderChip = (trait: ClusterTrait, kind: TraitKind): React.ReactNode => {
+  const renderInlineTrait = (trait: ClusterTrait, kind: TraitKind): React.ReactNode => {
     const traitSiblings = siblings.filter((candidate) => candidate.group === trait.group);
 
     return (
@@ -140,84 +121,150 @@ export const TraitChipRow: React.FC<TraitChipRowProps> = ({
         enterTouchDelay={0}
         leaveTouchDelay={3000}
       >
-        <Chip
-          label={
-            <Box
-              component="span"
-              sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.75, minWidth: 0 }}
-            >
-              {isCombinedGroup && (
-                <Box
-                  component="span"
-                  sx={{
-                    color: 'text.disabled',
-                    fontSize: '0.57rem',
-                    fontWeight: 750,
-                    letterSpacing: '0.05em',
-                    textTransform: 'uppercase',
-                  }}
-                >
-                  {GROUP_LABELS[trait.group] ?? trait.group}
-                </Box>
-              )}
-              <Box
-                component="span"
-                sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
-              >
-                {trait.label}
-              </Box>
-              <Box
-                component="span"
-                className="u-tabular"
-                sx={{
-                  color: 'text.secondary',
-                  fontSize: '0.69rem',
-                  fontVariantNumeric: 'tabular-nums',
-                }}
-              >
-                {percent(trait.share)}
-              </Box>
-            </Box>
-          }
-          size="small"
-          // data-* attributes are what the component tests assert on, so the
-          // Core/Flex distinction stays covered even if the styling changes.
+        <Box
+          component="span"
           data-core={kind === 'core' ? 'true' : undefined}
           data-trait-kind={kind}
           data-testid={`trait-${trait.group}-${trait.id}`}
-          sx={(theme) => ({
-            position: 'relative',
-            overflow: 'hidden',
-            maxWidth: { xs: '100%', sm: 280 },
-            height: 28,
-            borderRadius: 1.5,
-            fontWeight: 600,
-            color: kind === 'rare' ? theme.palette.text.secondary : theme.palette.text.primary,
-            borderColor: alpha(
-              kind === 'rare' ? theme.palette.text.secondary : theme.palette.primary.main,
-              kind === 'core' ? 0.28 : kind === 'flex' ? 0.18 : 0.12,
-            ),
-            backgroundColor:
-              theme.palette.mode === 'dark'
-                ? alpha(theme.palette.background.paper, 0.62)
-                : alpha(theme.palette.common.white, 0.78),
-            '& .MuiChip-label': { minWidth: 0, px: 1 },
-            '&::after': {
-              content: '""',
-              position: 'absolute',
-              left: 0,
-              bottom: 0,
-              width: `${Math.max(trait.share * 100, 2)}%`,
-              height: 2,
-              borderRadius: 999,
-              backgroundColor: theme.palette.primary.main,
-              opacity: kind === 'core' ? 0.85 : kind === 'flex' ? 0.52 : 0.28,
-            },
-          })}
-        />
+          sx={{
+            display: 'inline-flex',
+            minWidth: 0,
+            alignItems: 'baseline',
+            gap: 0.5,
+            color: kind === 'core' ? 'text.primary' : 'text.secondary',
+            fontSize: '0.76rem',
+            fontWeight: kind === 'core' ? 650 : 450,
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {isCombinedGroup && (
+            <Box component="span" sx={{ color: 'text.disabled', fontSize: '0.66rem' }}>
+              {GROUP_LABELS[trait.group] ?? trait.group}
+            </Box>
+          )}
+          <Box component="span" sx={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            {trait.label}
+          </Box>
+        </Box>
       </Tooltip>
     );
   };
+
+  const renderLedgerTrait = (trait: ClusterTrait, kind: TraitKind): React.ReactNode => {
+    const traitSiblings = siblings.filter((candidate) => candidate.group === trait.group);
+
+    return (
+      <Tooltip
+        key={`${trait.group}-${trait.id}`}
+        title={shareText(trait, traitSiblings, trait.group)}
+        arrow
+        enterTouchDelay={0}
+        leaveTouchDelay={3000}
+      >
+        <Box
+          data-core={kind === 'core' ? 'true' : undefined}
+          data-trait-kind={kind}
+          data-testid={`trait-${trait.group}-${trait.id}`}
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: isCombinedGroup
+              ? {
+                  xs: '42px minmax(96px, 1fr) 72px 34px',
+                  sm: '54px minmax(120px, 1fr) minmax(90px, 0.8fr) 38px',
+                }
+              : {
+                  xs: 'minmax(96px, 1fr) 72px 34px',
+                  sm: 'minmax(120px, 1fr) minmax(90px, 0.8fr) 38px',
+                },
+            alignItems: 'center',
+            columnGap: 1,
+            minHeight: 25,
+            color: kind === 'rare' ? 'text.secondary' : 'text.primary',
+          }}
+        >
+          {isCombinedGroup && (
+            <Typography sx={{ color: 'text.disabled', fontSize: '0.66rem' }}>
+              {GROUP_LABELS[trait.group] ?? trait.group}
+            </Typography>
+          )}
+          <Typography noWrap sx={{ fontSize: '0.78rem', fontWeight: kind === 'core' ? 650 : 450 }}>
+            {trait.label}
+          </Typography>
+          <Box
+            aria-hidden="true"
+            sx={(theme) => ({
+              height: 4,
+              overflow: 'hidden',
+              backgroundColor: alpha(theme.palette.text.primary, 0.1),
+            })}
+          >
+            <Box
+              sx={{
+                width: `${Math.max(trait.share * 100, 2)}%`,
+                height: '100%',
+                transformOrigin: 'left',
+                backgroundColor: dpsColor,
+                opacity: kind === 'core' ? 0.92 : kind === 'flex' ? 0.62 : 0.34,
+                animation: 'trait-frequency-in 240ms ease-out both',
+                '@keyframes trait-frequency-in': {
+                  from: { transform: 'scaleX(0)' },
+                  to: { transform: 'scaleX(1)' },
+                },
+                '@media (prefers-reduced-motion: reduce)': { animation: 'none' },
+              }}
+            />
+          </Box>
+          <Typography
+            className="u-tabular"
+            sx={{ textAlign: 'right', color: 'text.secondary', fontSize: '0.72rem' }}
+          >
+            {percent(trait.share)}
+          </Typography>
+        </Box>
+      </Tooltip>
+    );
+  };
+
+  if (variant === 'inline') {
+    const visible = [
+      ...visibleCore.map((trait) => ({ trait, kind: 'core' as const })),
+      ...visibleFlex.map((trait) => ({ trait, kind: 'flex' as const })),
+    ];
+
+    return (
+      <Box sx={{ display: 'flex', minWidth: 0, alignItems: 'baseline', gap: 0.75 }}>
+        <Typography sx={{ flex: '0 0 auto', color: 'text.disabled', fontSize: '0.7rem' }}>
+          {title}
+        </Typography>
+        <Box
+          sx={{
+            display: 'flex',
+            minWidth: 0,
+            overflow: 'hidden',
+            alignItems: 'baseline',
+            gap: 0.65,
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {visible.map(({ trait, kind }, index) => (
+            <React.Fragment key={`${trait.group}-${trait.id}`}>
+              {index > 0 && (
+                <Box component="span" sx={{ color: 'text.disabled', fontSize: '0.72rem' }}>
+                  ·
+                </Box>
+              )}
+              {renderInlineTrait(trait, kind)}
+            </React.Fragment>
+          ))}
+          {hiddenPrimaryCount > 0 && (
+            <Typography component="span" sx={{ color: 'text.disabled', fontSize: '0.7rem' }}>
+              +{hiddenPrimaryCount} more in the full breakdown
+            </Typography>
+          )}
+        </Box>
+      </Box>
+    );
+  }
 
   const renderSegment = (kind: TraitKind, traits: readonly ClusterTrait[]): React.ReactNode => {
     if (traits.length === 0) return null;
@@ -225,22 +272,18 @@ export const TraitChipRow: React.FC<TraitChipRowProps> = ({
     return (
       <Box sx={{ minWidth: 0 }}>
         <Typography
-          variant="caption"
-          sx={{
-            display: 'block',
-            mb: 0.55,
+          sx={(theme) => ({
+            mt: kind === 'core' ? 0 : 0.75,
+            mb: 0.25,
+            pt: kind === 'core' ? 0 : 0.75,
+            borderTop: kind === 'core' ? 0 : `1px solid ${alpha(theme.palette.divider, 0.38)}`,
             color: 'text.disabled',
-            fontSize: '0.6rem',
-            fontWeight: 700,
-            letterSpacing: '0.07em',
-            textTransform: 'uppercase',
-          }}
+            fontSize: '0.66rem',
+          })}
         >
           {SEGMENT_LABELS[kind]}
         </Typography>
-        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.65, alignItems: 'center' }}>
-          {traits.map((trait) => renderChip(trait, kind))}
-        </Box>
+        {traits.map((trait) => renderLedgerTrait(trait, kind))}
       </Box>
     );
   };
@@ -249,34 +292,24 @@ export const TraitChipRow: React.FC<TraitChipRowProps> = ({
     <Box
       sx={(theme) => ({
         display: 'grid',
-        gridTemplateColumns: { xs: '1fr', md: '92px minmax(0, 1fr)' },
-        gap: { xs: 0.75, md: 1.25 },
+        gridTemplateColumns: { xs: '1fr', sm: '92px minmax(0, 1fr)' },
+        gap: { xs: 0.5, sm: 1.5 },
         py: 1,
-        borderTop: `1px solid ${alpha(theme.palette.divider, 0.48)}`,
+        borderTop: `1px solid ${alpha(theme.palette.divider, 0.5)}`,
       })}
     >
       <Typography
-        variant="caption"
-        sx={{
-          display: 'block',
-          pt: { md: 1.8 },
-          color: 'text.secondary',
-          fontSize: '0.68rem',
-          fontWeight: 700,
-          letterSpacing: '0.07em',
-          textTransform: 'uppercase',
-        }}
+        sx={{ pt: { sm: 0.2 }, color: 'text.secondary', fontSize: '0.72rem', fontWeight: 650 }}
       >
         {title}
       </Typography>
-
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.8, minWidth: 0 }}>
+      <Box sx={{ minWidth: 0 }}>
         {renderSegment('core', visibleCore)}
         {renderSegment('flex', visibleFlex)}
         {showVariations && renderSegment('rare', rareOfGroup)}
 
         {hiddenPrimaryCount > 0 && (
-          <Typography variant="caption" sx={{ color: 'text.disabled', fontSize: '0.64rem' }}>
+          <Typography sx={{ mt: 0.5, color: 'text.disabled', fontSize: '0.68rem' }}>
             +{hiddenPrimaryCount} more in the full breakdown
           </Typography>
         )}
@@ -288,11 +321,12 @@ export const TraitChipRow: React.FC<TraitChipRowProps> = ({
             onClick={() => setShowVariations((value) => !value)}
             sx={{
               alignSelf: 'flex-start',
-              textTransform: 'none',
-              fontSize: '0.68rem',
               minWidth: 0,
-              px: 0.5,
+              mt: 0.5,
+              px: 0,
               py: 0.25,
+              fontSize: '0.7rem',
+              textTransform: 'none',
             }}
           >
             {showVariations
