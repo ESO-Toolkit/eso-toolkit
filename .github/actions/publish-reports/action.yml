@@ -1,0 +1,151 @@
+name: Publish reports with retry
+description: Publish report artifacts to an external GitHub Pages branch without losing concurrent runs
+
+inputs:
+  token:
+    description: GitHub token with write access to the external reports repository
+    required: true
+  external-repository:
+    description: Owner and repository name for the reports site
+    required: true
+  publish-dir:
+    description: Directory containing the report artifacts to publish
+    required: true
+  destination-dir:
+    description: Destination directory within the reports branch; use . for the branch root
+    required: false
+    default: .
+  target-branch:
+    description: Branch that backs the reports site
+    required: false
+    default: gh-pages
+  commit-message:
+    description: Commit message for the reports publication
+    required: true
+  max-attempts:
+    description: Maximum number of conflict-aware push attempts
+    required: false
+    default: '6'
+
+runs:
+  using: composite
+  steps:
+    - name: Publish artifacts
+      shell: bash
+      env:
+        REPORTS_TOKEN: ${{ inputs.token }}
+        EXTERNAL_REPOSITORY: ${{ inputs['external-repository'] }}
+        PUBLISH_DIR: ${{ inputs['publish-dir'] }}
+        DESTINATION_DIR: ${{ inputs['destination-dir'] }}
+        TARGET_BRANCH: ${{ inputs['target-branch'] }}
+        COMMIT_MESSAGE: ${{ inputs['commit-message'] }}
+        MAX_ATTEMPTS: ${{ inputs['max-attempts'] }}
+      run: |
+        set -euo pipefail
+
+        if [[ -z "$REPORTS_TOKEN" ]]; then
+          echo "::error::A reports-repository token is required."
+          exit 1
+        fi
+
+        if ! [[ "$MAX_ATTEMPTS" =~ ^[1-9][0-9]*$ ]]; then
+          echo "::error::max-attempts must be a positive integer."
+          exit 1
+        fi
+
+        workspace_dir="$(realpath "$GITHUB_WORKSPACE")"
+        source_dir="$(realpath -m "$GITHUB_WORKSPACE/${PUBLISH_DIR#./}")"
+        if [[ "$source_dir" != "$workspace_dir" && "$source_dir" != "$workspace_dir"/* ]]; then
+          echo "::error::Publish directory must stay within the workflow workspace."
+          exit 1
+        fi
+        if [[ ! -d "$source_dir" ]]; then
+          echo "::error::Publish directory does not exist: $source_dir"
+          exit 1
+        fi
+
+        destination_dir="${DESTINATION_DIR#./}"
+        if [[ "$DESTINATION_DIR" == "." ]]; then
+          destination_dir=""
+        fi
+        if [[ "$destination_dir" == /* || "$destination_dir" == ".." || "$destination_dir" == ../* || "$destination_dir" == */../* || "$destination_dir" == */.. ]]; then
+          echo "::error::Destination directory must stay within the reports branch."
+          exit 1
+        fi
+
+        clone_dir="$(mktemp -d)"
+        trap 'rm -rf "$clone_dir"' EXIT
+
+        auth_header="$(printf 'x-access-token:%s' "$REPORTS_TOKEN" | base64 | tr -d '\n')"
+        remote_url="https://github.com/${EXTERNAL_REPOSITORY}.git"
+
+        git -c http.extraHeader="AUTHORIZATION: basic $auth_header" \
+          clone --depth 1 --branch "$TARGET_BRANCH" "$remote_url" "$clone_dir"
+
+        git -C "$clone_dir" config user.name "github-actions[bot]"
+        git -C "$clone_dir" config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+        sync_artifacts() {
+          local target_dir="$clone_dir"
+          if [[ -n "$destination_dir" ]]; then
+            target_dir="$clone_dir/$destination_dir"
+            mkdir -p "$target_dir"
+            rsync -a --delete "$source_dir/" "$target_dir/"
+          else
+            # Root publishes coexist with the retained nightly and screen-size reports.
+            rsync -a "$source_dir/" "$target_dir/"
+          fi
+        }
+
+        stage_artifacts() {
+          if [[ -n "$destination_dir" ]]; then
+            git -C "$clone_dir" add -A -- "$destination_dir"
+          else
+            git -C "$clone_dir" add -A -- .
+          fi
+        }
+
+        commit_artifacts() {
+          stage_artifacts
+          if git -C "$clone_dir" diff --cached --quiet; then
+            return 1
+          fi
+          git -C "$clone_dir" commit -m "$COMMIT_MESSAGE"
+        }
+
+        sync_artifacts
+        if ! commit_artifacts; then
+          echo "Reports are already up to date."
+          exit 0
+        fi
+
+        for ((attempt = 1; attempt <= MAX_ATTEMPTS; attempt++)); do
+          if git -C "$clone_dir" -c http.extraHeader="AUTHORIZATION: basic $auth_header" \
+            push origin "HEAD:$TARGET_BRANCH"; then
+            echo "Published reports on attempt $attempt."
+            exit 0
+          fi
+
+          if (( attempt == MAX_ATTEMPTS )); then
+            echo "::error::Failed to publish reports after $MAX_ATTEMPTS attempts."
+            exit 1
+          fi
+
+          echo "Reports branch advanced; rebasing before retry $((attempt + 1))."
+          sleep $((attempt * 2))
+          git -C "$clone_dir" -c http.extraHeader="AUTHORIZATION: basic $auth_header" \
+            fetch origin \
+            "+refs/heads/$TARGET_BRANCH:refs/remotes/origin/$TARGET_BRANCH"
+
+          if git -C "$clone_dir" rebase "origin/$TARGET_BRANCH"; then
+            continue
+          fi
+
+          git -C "$clone_dir" rebase --abort
+          git -C "$clone_dir" reset --hard "origin/$TARGET_BRANCH"
+          sync_artifacts
+          if ! commit_artifacts; then
+            echo "A concurrent publisher already uploaded these reports."
+            exit 0
+          fi
+        done

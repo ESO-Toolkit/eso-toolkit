@@ -525,9 +525,6 @@ jobs:
     needs: [nightly-tests]
     if: always() && needs.nightly-tests.result != 'cancelled'
     timeout-minutes: 10
-    concurrency:
-      group: deploy-reports-gh-pages
-      cancel-in-progress: false
     permissions:
       contents: read
     outputs:
@@ -575,13 +572,13 @@ jobs:
           repositories: eso-log-aggregator-reports
 
       - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@84c30a85c19949d7eee79c4ff27748b70285e453 # v4.1.0
+        uses: ./.github/actions/publish-reports
         with:
-          personal_token: ${{ steps.generate-deploy-token.outputs.token }}
-          external_repository: ESO-Toolkit/eso-log-aggregator-reports
-          publish_dir: ./playwright-report
-          destination_dir: nightly-tests/${{ github.run_number }}
-          keep_files: true
+          token: ${{ steps.generate-deploy-token.outputs.token }}
+          external-repository: ESO-Toolkit/eso-log-aggregator-reports
+          publish-dir: ./playwright-report
+          destination-dir: nightly-tests/${{ github.run_number }}
+          commit-message: "Deploy nightly report from run ${{ github.run_number }}"
 
       - name: Set Report URL
         id: url
