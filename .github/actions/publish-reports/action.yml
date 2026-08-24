@@ -123,6 +123,12 @@ runs:
           echo "::error::Reports repository does not support a blobless partial clone."
           exit 1
         fi
+        filter_probe_oid="$(git -C "$clone_dir" ls-tree -r HEAD | awk '$2 == "blob" { print $3; exit }')"
+        if [[ -n "$filter_probe_oid" ]] &&
+          GIT_NO_LAZY_FETCH=1 git -C "$clone_dir" cat-file -e "$filter_probe_oid" 2>/dev/null; then
+          echo "::error::Reports repository ignored the blobless partial-clone filter."
+          exit 1
+        fi
 
         git -C "$clone_dir" config user.name "github-actions[bot]"
         git -C "$clone_dir" config user.email "41898282+github-actions[bot]@users.noreply.github.com"
