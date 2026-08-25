@@ -63,6 +63,8 @@ const showcaseGlobalStyles = (
   />
 );
 
+import { usePageTitle } from '@/hooks/useDocumentTitle';
+
 import { useEsoLogsClientContext } from '../EsoLogsClientContext';
 import { useAuth } from '../features/auth/AuthContext';
 import { usePerfTier } from '../hooks/usePerfTier';
@@ -2226,9 +2228,7 @@ export const LandingPage: React.FC = () => {
   const toolsSectionRef = useRef<HTMLDivElement>(null);
   const navigate = useViewTransitionNavigate();
 
-  useEffect(() => {
-    document.title = 'ESO Toolkit';
-  }, []);
+  usePageTitle('/');
 
   // Defer complex animations until after initial render — and keep them OFF
   // entirely on the low perf tier / under OS reduced motion (this also gates
@@ -2643,7 +2643,7 @@ export const LandingPage: React.FC = () => {
                 }}
               >
                 A fast, open-source addon manager for ESO. Built with Rust and Tauri for native
-                performance — just 15 MB, no Java runtime required.
+                performance. Just 15 MB, no Java runtime required.
               </Typography>
 
               <KalpaFeatureList>
