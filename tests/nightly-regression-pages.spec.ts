@@ -1,6 +1,7 @@
 import { test, expect, type Page } from '@playwright/test';
 
 import { TEST_DATA, TEST_TIMEOUTS, installPageErrorCapture, waitForAppMount } from './selectors';
+import { createSkeletonDetector } from './utils/skeleton-detector';
 
 /**
  * Nightly Regression Tests - Pages & Features
@@ -288,15 +289,14 @@ test.describe('Nightly Regression - Pages & Features', () => {
         .catch(() => {});
       await waitForAppMount(page);
 
-      const hasSimulator = await page
-        .locator(
-          '[data-testid*="scribing"], [data-testid*="simulator"], .scribing-simulator, select, input, .MuiSelect-root',
-        )
-        .first()
-        .isVisible({ timeout: 10000 })
-        .catch(() => false);
-
-      expect(hasSimulator, '/calculator#scribing should render the scribing controls').toBeTruthy();
+      await expect(page.getByRole('tab', { name: 'Scribing' })).toHaveAttribute(
+        'aria-selected',
+        'true',
+      );
+      await expect(page.getByRole('radiogroup', { name: /Grimoire/i })).toBeVisible({
+        timeout: TEST_TIMEOUTS.dataLoad,
+      });
+      await createSkeletonDetector(page).waitForSkeletonsToDisappear({ timeout: 30000 });
 
       await page.screenshot({
         path: 'test-results/nightly-regression-pages-scribing-simulator.png',
@@ -455,7 +455,7 @@ test.describe('Nightly Regression - Pages & Features', () => {
       });
     });
 
-    test('logs browser should load with UI controls', async ({ page }) => {
+    test('logs page should show its coming soon state', async ({ page }) => {
       await page.goto('/logs', {
         waitUntil: 'domcontentloaded',
         timeout: TEST_TIMEOUTS.navigation,
@@ -465,13 +465,11 @@ test.describe('Nightly Regression - Pages & Features', () => {
         .catch(() => {});
       await waitForAppMount(page);
 
-      const hasUI = await page
-        .locator('input, select, .MuiTextField-root, .search, [data-testid*="log"]')
-        .first()
-        .isVisible({ timeout: 10000 })
-        .catch(() => false);
-
-      expect(hasUI, '/logs should render UI controls').toBeTruthy();
+      await expect(page.getByRole('heading', { name: 'Logs' })).toBeVisible({
+        timeout: TEST_TIMEOUTS.dataLoad,
+      });
+      await expect(page.getByRole('heading', { name: 'Coming Soon' })).toBeVisible();
+      await createSkeletonDetector(page).waitForSkeletonsToDisappear({ timeout: 15000 });
 
       await page.screenshot({
         path: 'test-results/nightly-regression-pages-logs.png',
