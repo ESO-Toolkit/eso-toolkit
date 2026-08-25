@@ -62,6 +62,12 @@ make refresh                         # Pull latest main + npm ci (run from main 
 - **ALWAYS continue through to PR creation after implementation** (see below)
 - Recovery if on main: `@workspace Recover from main commits`
 
+> **Repository-owner override**: When the repository owner explicitly instructs an agent to
+> proceed without Jira for a task, Jira ticket creation/linking, `ESO-XXX` branch naming, and Jira
+> status transitions are waived. Do not block the requested commit, PR, or merge on Jira. All
+> validation, self-review, feature-branch, PR, CI, and merge-safety requirements still apply. This
+> exception must be explicitly requested; never infer it.
+
 ---
 
 ## CRITICAL: Post-Implementation Workflow (MANDATORY)
@@ -71,7 +77,8 @@ make refresh                         # Pull latest main + npm ci (run from main 
 1. **Validate** — `npm run validate` AND `npm run test:ci` must both pass
 2. **Commit & Push** — stage all changes, commit with a descriptive message, push to origin
 3. **Create PR** — use the [create-pr skill](.agents/skills/create-pr/SKILL.md) to open a PR automatically
-4. **Update Jira** — transition the ticket to "In Review"
+4. **Update Jira** — transition the ticket to "In Review" unless the repository owner explicitly
+   waived Jira for the task
 
 This is **not optional**. The workflow skill (Steps 5-8) defines the full procedure. Do not stop after writing code — the task is not complete until the PR is open and the ticket is moved to "In Review".
 
@@ -130,7 +137,7 @@ Path aliases (`@/` → `src/`, `@components/`, `@features/`, etc.) are defined i
 | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
 | **Scribing**     | ESO's skill customization system — signature scripts appear in ALL event types (cast, damage, healing, buff, debuff, **resource**) |
 | **Fight replay** | 3D visualization of combat encounters at 60fps with 50+ actors                                                                     |
-| **Report ID**    | Unique identifier for combat logs (for example, `<report-code>`)                                                                     |
+| **Report ID**    | Unique identifier for combat logs (for example, `<report-code>`)                                                                   |
 | **Loadout**      | Character equipment and skill configuration                                                                                        |
 | **Ability**      | Individual skills/powers from ESO game data                                                                                        |
 
