@@ -42,6 +42,16 @@ import {
 import { formatDuration } from '../../utils/fightDuration';
 import { formatReportDateTime } from '../reports/reportFormatting';
 
+import { LEGACY_PARTITION_ENCOUNTER_IDS, UNRANKED_ENCOUNTER_IDS } from './encounterIdSets';
+import {
+  buildCandidateVariables,
+  LEADERBOARD_PAGE_SIZE,
+  metricLabelFor,
+  resolveWinningVariables,
+  winningVariablesKey,
+  type WinningVariablesMap,
+} from './fightRankingVariables';
+
 type EncounterOption = {
   id: number;
   name: string;
@@ -83,16 +93,7 @@ type FightRankingsParsed = {
 
 const TRIAL_TEAM_SIZE = 12;
 const DEFAULT_METRIC = FightRankingMetricType.Score;
-const METRIC_LABEL = DEFAULT_METRIC.charAt(0).toUpperCase() + DEFAULT_METRIC.slice(1);
-
-const LEGACY_PARTITION_ENCOUNTER_IDS = new Set<number>([
-  1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33,
-]);
-
-const UNRANKED_ENCOUNTER_IDS = new Set<number>([
-  1, 2, 3, 5, 6, 9, 10, 11, 13, 14, 16, 17, 18, 19, 21, 22, 24, 25, 26, 43, 44, 46, 47, 49, 50, 52,
-  53, 55, 56, 58, 59, 61, 62, 1000, 1001,
-]);
+const DEFAULT_METRIC_LABEL = metricLabelFor(DEFAULT_METRIC);
 
 const createEmptyRankings = (page = 1): FightRankingsParsed => ({
   rankings: [],
@@ -122,7 +123,14 @@ export const LeaderboardLogsPage: React.FC = () => {
     React.useState<FightRankingsParsed>(createEmptyRankings());
   const [rankingsLoading, setRankingsLoading] = React.useState<boolean>(false);
   const [rankingsError, setRankingsError] = React.useState<string | null>(null);
+  // Actual metric the displayed results were fetched with — may differ from
+  // DEFAULT_METRIC when the score query fell back to `metric: default`.
+  const [metricLabel, setMetricLabel] = React.useState<string>(DEFAULT_METRIC_LABEL);
   const partitionPreferenceRef = React.useRef<Map<string, number>>(new Map());
+  // Winning variables (size/metric/partition) per (encounterId, difficultyId).
+  // Pagination and refresh reuse these verbatim so page N comes from the same
+  // ranking table that page 1 succeeded with.
+  const winningVariablesRef = React.useRef<WinningVariablesMap>(new Map());
   // Monotonic id so a slower, superseded fetch can't overwrite a newer one.
   const fetchGenerationRef = React.useRef(0);
   const clientUnavailable = !client;
@@ -205,75 +213,21 @@ export const LeaderboardLogsPage: React.FC = () => {
         size,
       };
 
-      const preferenceKey = `${encounterId}:${difficultyId ?? 'default'}`;
-      const preferredPartition = partitionPreferenceRef.current.get(preferenceKey);
-      const prefersLegacyPartition = LEGACY_PARTITION_ENCOUNTER_IDS.has(encounterId);
-
-      const buildVariableCandidates = (): GetEncounterFightRankingsQueryVariables[] => {
-        const sizeAdjusted: GetEncounterFightRankingsQueryVariables[] = [baseVariables];
-
-        if (typeof baseVariables.size === 'number') {
-          sizeAdjusted.push({ ...baseVariables, size: undefined });
-        }
-
-        if (DEFAULT_METRIC === FightRankingMetricType.Score) {
-          sizeAdjusted.push({
-            ...baseVariables,
-            size: undefined,
-            metric: FightRankingMetricType.Default,
-          });
-        }
-
-        const candidateKeys = new Set<string>();
-        const candidates: GetEncounterFightRankingsQueryVariables[] = [];
-        const addCandidate = (candidate: GetEncounterFightRankingsQueryVariables): void => {
-          const signature = JSON.stringify({
-            encounterId: candidate.encounterId,
-            difficulty: candidate.difficulty ?? null,
-            page: candidate.page ?? 1,
-            metric: candidate.metric,
-            size: candidate.size ?? null,
-            partition: candidate.partition ?? null,
-          });
-          if (!candidateKeys.has(signature)) {
-            candidateKeys.add(signature);
-            candidates.push(candidate);
-          }
-        };
-
-        const partitionOrder: Array<number | undefined> = [];
-        const addPartitionOrder = (value: number | undefined): void => {
-          if (!partitionOrder.includes(value)) {
-            partitionOrder.push(value);
-          }
-        };
-
-        if (prefersLegacyPartition) {
-          if (preferredPartition === 0) {
-            addPartitionOrder(0);
-          }
-          addPartitionOrder(0);
-          addPartitionOrder(undefined);
-        } else {
-          if (preferredPartition === 0) {
-            addPartitionOrder(preferredPartition);
-          }
-          addPartitionOrder(undefined);
-          addPartitionOrder(0);
-        }
-
-        sizeAdjusted.forEach((candidate) => {
-          partitionOrder.forEach((partitionValue) => {
-            if (typeof partitionValue === 'number') {
-              addCandidate({ ...candidate, partition: partitionValue });
-            } else {
-              addCandidate(candidate);
-            }
-          });
+      const preferenceKey = winningVariablesKey(encounterId, difficultyId);
+      // Reuse the exact variables a previous fetch won with (page 1 included
+      // fallbacks like metric/size/partition changes) so pagination stays on
+      // the same ranking table. Only enumerate candidates when nothing has
+      // won yet for this (encounterId, difficultyId).
+      const enumerateCandidates = (): GetEncounterFightRankingsQueryVariables[] =>
+        buildCandidateVariables(baseVariables, {
+          preferredPartition: partitionPreferenceRef.current.get(preferenceKey),
+          prefersLegacyPartition: LEGACY_PARTITION_ENCOUNTER_IDS.has(encounterId),
         });
-
-        return candidates;
-      };
+      const storedWinning = resolveWinningVariables(
+        winningVariablesRef.current,
+        preferenceKey,
+        page,
+      );
 
       const attemptFetch = async (
         variables: GetEncounterFightRankingsQueryVariables,
@@ -284,45 +238,68 @@ export const LeaderboardLogsPage: React.FC = () => {
           fetchPolicy: 'network-only',
           errorPolicy: 'all',
         });
-        return parseFightRankings(data, variables.page ?? 1);
+        return parseFightRankings(data, variables.page ?? 1, LEADERBOARD_PAGE_SIZE);
       };
 
-      const candidates = buildVariableCandidates();
-      let lastError: unknown;
-      let success = false;
-      // Track whether any candidate resolved without throwing, so we can tell
-      // "every candidate errored" apart from "the leaderboard is simply empty".
-      let anyResolved = false;
+      const runCandidatePass = async (
+        candidates: GetEncounterFightRankingsQueryVariables[],
+      ): Promise<{ success: boolean; anyResolved: boolean; lastError: unknown }> => {
+        let lastError: unknown;
+        let success = false;
+        // Track whether any candidate resolved without throwing, so we can tell
+        // "every candidate errored" apart from "the leaderboard is simply empty".
+        let anyResolved = false;
 
-      for (const variables of candidates) {
-        try {
-          const parsed = await attemptFetch(variables);
-          anyResolved = true;
+        for (const variables of candidates) {
+          try {
+            const parsed = await attemptFetch(variables);
+            anyResolved = true;
 
-          // A newer fetch superseded this one — drop the stale result.
-          if (generation !== fetchGenerationRef.current) return;
+            // A newer fetch superseded this one — drop the stale result.
+            if (generation !== fetchGenerationRef.current)
+              return { success, anyResolved, lastError };
 
-          if (parsed.rankings.length === 0 && !parsed.hasMorePages) {
-            logger.warn('Leaderboard query returned no data; trying next fallback', { variables });
-            continue;
+            if (parsed.rankings.length === 0 && !parsed.hasMorePages) {
+              logger.warn('Leaderboard query returned no data; trying next fallback', {
+                variables,
+              });
+              continue;
+            }
+
+            setRankingsState(parsed);
+            winningVariablesRef.current.set(preferenceKey, { ...variables });
+            if (variables.partition === 0) {
+              partitionPreferenceRef.current.set(preferenceKey, variables.partition);
+            } else {
+              partitionPreferenceRef.current.delete(preferenceKey);
+            }
+            setMetricLabel(metricLabelFor(variables.metric));
+            success = true;
+            break;
+          } catch (error) {
+            lastError = error;
+            logger.warn('Leaderboard query failed, trying next fallback', { error });
           }
-
-          setRankingsState(parsed);
-          if (variables.partition === 0) {
-            partitionPreferenceRef.current.set(preferenceKey, variables.partition);
-          } else {
-            partitionPreferenceRef.current.delete(preferenceKey);
-          }
-          success = true;
-          break;
-        } catch (error) {
-          lastError = error;
-          logger.warn('Leaderboard query failed, trying next fallback', { error });
         }
-      }
 
+        return { success, anyResolved, lastError };
+      };
+
+      // Pass 1: reuse the remembered winner verbatim when we have one.
+      let outcome = await runCandidatePass(storedWinning ? [storedWinning] : enumerateCandidates());
       if (generation !== fetchGenerationRef.current) return;
 
+      // A remembered winner that now throws or resolves empty is stale
+      // (transient upstream failure or a re-partition). Drop it and fall back
+      // to full candidate enumeration once instead of locking the session
+      // into a broken variable set.
+      if (!outcome.success && storedWinning) {
+        winningVariablesRef.current.delete(preferenceKey);
+        outcome = await runCandidatePass(enumerateCandidates());
+      }
+      if (generation !== fetchGenerationRef.current) return;
+
+      const { success, anyResolved, lastError } = outcome;
       if (!success) {
         const fallbackPage = page ?? 1;
         // Only surface an error if every candidate actually threw. If at least
@@ -685,7 +662,7 @@ export const LeaderboardLogsPage: React.FC = () => {
                 {currentEncounter ? currentEncounter.name : 'Select a boss to view rankings'}
               </Typography>
               <Chip
-                label={`Metric: ${METRIC_LABEL}`}
+                label={`Metric: ${metricLabel}`}
                 size="small"
                 variant="outlined"
                 color="primary"
@@ -743,7 +720,7 @@ export const LeaderboardLogsPage: React.FC = () => {
                   <TableHead>
                     <TableRow>
                       <TableCell>Rank</TableCell>
-                      <TableCell>Score</TableCell>
+                      <TableCell>{metricLabel}</TableCell>
                       <TableCell>Team</TableCell>
                       <TableCell>Duration</TableCell>
                       <TableCell>Report</TableCell>
@@ -842,6 +819,8 @@ export const LeaderboardLogsPage: React.FC = () => {
   );
 };
 
+export { LEGACY_PARTITION_ENCOUNTER_IDS, UNRANKED_ENCOUNTER_IDS };
+
 export function parseTrialZones(response: GetTrialZonesQuery): TrialZone[] {
   const zones = response.worldData?.zones ?? [];
 
@@ -901,6 +880,7 @@ export function parseTrialZones(response: GetTrialZonesQuery): TrialZone[] {
 export function parseFightRankings(
   response: GetEncounterFightRankingsQuery,
   requestedPage: number,
+  pageSize: number = LEADERBOARD_PAGE_SIZE,
 ): FightRankingsParsed {
   const raw = response.worldData?.encounter?.fightRankings;
   if (!raw || typeof raw !== 'object') {
@@ -909,6 +889,7 @@ export function parseFightRankings(
 
   const rawObject = raw as Record<string, unknown>;
   const page = safeNumber(rawObject.page) ?? requestedPage;
+  const rankOffset = (page - 1) * pageSize;
   const hasMorePagesValue =
     typeof rawObject.hasMorePages !== 'undefined'
       ? rawObject.hasMorePages
@@ -922,7 +903,7 @@ export function parseFightRankings(
       ? rawObject.data
       : [];
   const rankings = rankingsRaw
-    .map((entry, index) => parseRankingEntry(entry, index))
+    .map((entry, index) => parseRankingEntry(entry, index, rankOffset))
     .filter((entry): entry is LeaderboardRow => entry !== null);
 
   return {
@@ -933,13 +914,17 @@ export function parseFightRankings(
   };
 }
 
-export function parseRankingEntry(entry: unknown, indexHint: number): LeaderboardRow | null {
+export function parseRankingEntry(
+  entry: unknown,
+  indexHint: number,
+  rankOffset = 0,
+): LeaderboardRow | null {
   if (!entry || typeof entry !== 'object') {
     return null;
   }
 
   const record = entry as Record<string, unknown>;
-  const rank = safeNumber(record.rank) ?? indexHint + 1;
+  const rank = safeNumber(record.rank) ?? indexHint + 1 + rankOffset;
 
   const score = safeNumber(record.total) ?? safeNumber(record.score) ?? safeNumber(record.best);
   const percentile = safeNumber(record.percent) ?? safeNumber(record.historicalPercent);

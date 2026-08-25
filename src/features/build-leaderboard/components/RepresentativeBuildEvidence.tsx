@@ -16,14 +16,19 @@ import type {
   DpsParseTalent,
 } from '../types/dpsParses.types';
 
-const ASSET_ICON_ROOT = 'https://assets.rpglogs.com/img/eso/abilities/';
+export const ASSET_ICON_ROOT = 'https://assets.rpglogs.com/img/eso/abilities/';
 
 const compactDps = (value: number): string =>
   value >= 1000 ? `${(value / 1000).toFixed(1).replace(/\.0$/, '')}k` : String(Math.round(value));
 
-function assetIconUrl(icon?: string): string | undefined {
+/**
+ * Icons are always served from the asset host. The icon string comes from
+ * combatant data (user-influenced), so letting an `http…` value through would
+ * allow arbitrary remote image loads; unknown names simply 404 into the
+ * placeholder tile instead.
+ */
+export function assetIconUrl(icon?: string): string | undefined {
   if (!icon) return undefined;
-  if (icon.startsWith('http')) return icon;
   return `${ASSET_ICON_ROOT}${encodeURIComponent(icon)}.png`;
 }
 

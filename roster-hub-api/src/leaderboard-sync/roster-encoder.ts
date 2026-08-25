@@ -222,6 +222,12 @@ export function buildRosterDescription(ranking: RankingEntry, trialName: string)
   // Store RAW — becomes the roster `description` column (escaped on output).
   const teamName = cleanText(ranking.guild?.name ?? 'Unknown');
   const server = ranking.server?.region?.toUpperCase() ?? '';
-  const score = ranking.score ? ` • Score: ${ranking.score.toLocaleString()}` : '';
+  // `score` is typed number but arrives via an unchecked upstream cast; coerce
+  // before formatting so a string or junk value can never reach toLocaleString.
+  const rawScore = Number(ranking.score);
+  const score =
+    ranking.score !== null && ranking.score !== undefined && !Number.isNaN(rawScore)
+      ? ` • Score: ${rawScore.toLocaleString()}`
+      : '';
   return `Auto-imported #1 ${trialName} roster from ${teamName}${server ? ` (${server})` : ''}${score}`;
 }

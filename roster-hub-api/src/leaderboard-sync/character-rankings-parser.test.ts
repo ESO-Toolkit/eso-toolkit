@@ -1,9 +1,31 @@
 import fixture from './__fixtures__/character-rankings-page.json';
 import {
+  MIN_PARSE_AMOUNT,
+  MIN_PARSE_DURATION_MS,
+  MIN_REAL_GEAR_PIECES,
   hasRealCombatantInfo,
   isDpsSpec,
   parseCharacterRankingsPage,
 } from './character-rankings-parser';
+
+/**
+ * A minimal but GATE-PASSING ranking entry: enough real gear to satisfy
+ * hasRealCombatantInfo, a positive amount, and a full-length fight duration.
+ */
+function validEntry(overrides: Record<string, unknown> = {}): Record<string, unknown> {
+  return {
+    name: 'Someone',
+    class: 'Sorcerer',
+    spec: 'StaminaDPS',
+    amount: 50_000,
+    duration: 600_000,
+    report: { code: 'abc123', fightID: 7 },
+    gear: Array.from({ length: 14 }, (_, i) => ({ id: 100 + i, setID: '900' })),
+    talents: Array.from({ length: 12 }, (_, i) => ({ id: 1000 + i })),
+    sets: [{ id: 900, name: 'Some Set' }],
+    ...overrides,
+  };
+}
 
 /**
  * The fixture is a redacted real response captured by
@@ -73,22 +95,14 @@ describe('parseCharacterRankingsPage', () => {
   });
 
   it('drops the "Unknown Set" placeholder name so our own table can win', () => {
-    const withPlaceholder = {
-      rankings: [
-        {
-          amount: 1,
-          report: { code: 'abc', fightID: 1 },
-          gear: [{ id: 5, setID: '848' }],
-          talents: [{ id: 7 }],
-          sets: [
-            { id: 848, name: 'Unknown Set' },
-            { id: 777, name: 'Corpseburster' },
-          ],
-        },
+    const withPlaceholder = validEntry({
+      sets: [
+        { id: 848, name: 'Unknown Set' },
+        { id: 777, name: 'Corpseburster' },
       ],
-    };
+    });
 
-    const [entry] = parseCharacterRankingsPage(withPlaceholder).rankings;
+    const [entry] = parseCharacterRankingsPage({ rankings: [withPlaceholder] }).rankings;
     expect(entry.sets).toEqual([
       { setId: 848, name: undefined },
       { setId: 777, name: 'Corpseburster' },
@@ -110,16 +124,19 @@ describe('parseCharacterRankingsPage', () => {
   it('reads combat info nested under combatantInfo', () => {
     const nested = {
       rankings: [
-        {
-          amount: 100,
-          report: { code: 'xyz', fightID: 2 },
-          combatantInfo: { gear: [{ id: 9, setID: '1' }], talents: [{ id: 3 }] },
-        },
+        validEntry({
+          gear: undefined,
+          talents: undefined,
+          combatantInfo: {
+            gear: Array.from({ length: 14 }, (_, i) => ({ id: 200 + i, setID: '1' })),
+            talents: [{ id: 3 }],
+          },
+        }),
       ],
     };
 
     const [entry] = parseCharacterRankingsPage(nested).rankings;
-    expect(entry.gear).toHaveLength(1);
+    expect(entry.gear.length).toBeGreaterThanOrEqual(MIN_REAL_GEAR_PIECES);
     expect(entry.talents).toHaveLength(1);
   });
 
@@ -145,6 +162,51 @@ describe('parseCharacterRankingsPage', () => {
     expect(page.dropped.malformed).toBe(2);
   });
 
+  // ─── Ingest sanity gates ───────────────────────────────────────────────────
+
+  it('rejects zero/negative-DPS entries as trivial', () => {
+    const page = parseCharacterRankingsPage({
+      rankings: [
+        validEntry({ amount: 0 }),
+        validEntry({ amount: -1200 }),
+      ],
+    });
+
+    expect(page.rankings).toHaveLength(0);
+    expect(page.dropped.trivial).toBe(2);
+    expect(MIN_PARSE_AMOUNT).toBe(1);
+  });
+
+  it('rejects sub-30-second trash fights as trivial', () => {
+    const page = parseCharacterRankingsPage({
+      rankings: [
+        validEntry({ duration: MIN_PARSE_DURATION_MS - 1000 }),
+        // A missing duration stays tolerated — defensive parsing beats strictness.
+        validEntry({ duration: undefined }),
+      ],
+    });
+
+    expect(page.rankings).toHaveLength(1);
+    expect(page.dropped.trivial).toBe(1);
+    expect(MIN_PARSE_DURATION_MS).toBe(30_000);
+  });
+
+  it('keeps drop-reason accounting separate across reasons', () => {
+    const page = parseCharacterRankingsPage({
+      rankings: [
+        { name: 'no-report' }, // malformed
+        validEntry({ amount: 0 }), // trivial
+        validEntry({ gear: Array.from({ length: 3 }, (_, i) => ({ id: 1 + i })) }), // stubbed
+        validEntry(), // kept
+      ],
+    });
+
+    expect(page.rankings).toHaveLength(1);
+    expect(page.dropped.malformed).toBe(1);
+    expect(page.dropped.trivial).toBe(1);
+    expect(page.dropped.stubbed).toBe(1);
+  });
+
   // A malformed response from one encounter must never abort a whole cron run.
   it.each([
     ['null', null],
@@ -166,6 +228,19 @@ describe('hasRealCombatantInfo', () => {
   it('rejects entries with combat info hidden', () => {
     const stubbed = { gear: [], talents: [], sets: [] } as never;
     expect(hasRealCombatantInfo(stubbed)).toBe(false);
+  });
+
+  it('requires at least MIN_REAL_GEAR_PIECES real pieces, not just one', () => {
+    // Built directly (not via the page parser) so the gate itself is isolated.
+    const asParsed = (gearCount: number) => ({
+      gear: Array.from({ length: gearCount }, (_, i) => ({ slot: i, itemId: 1 + i })),
+      talents: [{ slot: 0, abilityId: 1 }],
+      sets: [],
+    });
+
+    expect(hasRealCombatantInfo(asParsed(MIN_REAL_GEAR_PIECES - 1) as never)).toBe(false);
+    expect(hasRealCombatantInfo(asParsed(1) as never)).toBe(false);
+    expect(hasRealCombatantInfo(asParsed(MIN_REAL_GEAR_PIECES) as never)).toBe(true);
   });
 
   it('accepts entries carrying both gear and talents', () => {

@@ -206,6 +206,7 @@
     "test:coverage:report": "npm run test:coverage && npm run coverage:open",
     "test:coverage:watch": "cross-env COVERAGE=true jest --coverage --watchAll",
     "test:scribing": "jest --config=jest/scribing.config.cjs",
+    "test:roster-hub": "jest --config=jest/roster-hub.config.cjs --watchAll=false",
     "test:last-commit": "jest --lastCommit",
     "test:a11y": "playwright test --config=playwright/a11y.config.ts",
     "test:nightly:all": "playwright test --config=playwright/nightly.config.ts",

@@ -16,6 +16,7 @@
     "db:seed:remote": "wrangler d1 execute roster-hub-db --remote --file=src/db/seed.sql",
     "db:seed:update": "wrangler d1 execute roster-hub-db --file=src/db/seed-update.sql",
     "db:seed:update:remote": "wrangler d1 execute roster-hub-db --remote --file=src/db/seed-update.sql",
+    "test": "cd .. && npm run test:roster-hub",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

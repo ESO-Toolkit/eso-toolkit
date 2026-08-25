@@ -110,6 +110,43 @@ describe('BuildLeaderboardView states', () => {
     const status = screen.getByText(/grouping 45 parses/i);
     expect(status).toHaveAttribute('aria-live', 'polite');
   });
+
+  /**
+   * When every parse has a null build, clustering legitimately yields zero
+   * clusters. The selection logic dereferences `clusters[0]`, so without this
+   * guard the page throws instead of explaining itself.
+   */
+  it('shows an informational alert instead of crashing when clusters are empty', () => {
+    const { parses } = clusteredFixture();
+    renderView({
+      parses,
+      result: {
+        clusters: [],
+        k: 0,
+        silhouette: 0,
+        silhouetteByK: [],
+        recommendedClusterId: null,
+        totalParses: parses.length,
+        uniqueSignatures: 0,
+        droppedParses: parses.length,
+      },
+    });
+    expect(screen.getByTestId('no-build-data')).toHaveTextContent(
+      /no build data available for this selection/i,
+    );
+    expect(screen.queryByTestId('build-inspector')).not.toBeInTheDocument();
+  });
+
+  it('shows how stale the representative parse is on each archetype row', () => {
+    const { parses, result } = clusteredFixture();
+    renderView({ parses, result });
+
+    // Fixture parses carry log_start_ms from Nov 2023; whatever "now" is, the
+    // row must expose the medoid's date and its age in days.
+    screen.getAllByTestId('archetype-freshness').forEach((line) => {
+      expect(line).toHaveTextContent(/parses from [A-Z][a-z]{2} \d{1,2} · \d+d old/);
+    });
+  });
 });
 
 describe('BuildLeaderboardView workspace', () => {

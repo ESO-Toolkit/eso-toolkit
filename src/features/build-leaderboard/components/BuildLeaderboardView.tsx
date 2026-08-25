@@ -29,6 +29,8 @@ export interface BuildLeaderboardViewProps {
   error: string | null;
   tooFewParses: boolean;
   esoClass?: string;
+  /** Encounter context the parses were scoped to, shown with the card list. */
+  scopeLabel?: string;
   onRetry?: () => void;
   onOpenInEditor?: (cluster: BuildCluster) => void;
   onSaveBuild?: (cluster: BuildCluster) => void;
@@ -73,6 +75,7 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
   error,
   tooFewParses,
   esoClass,
+  scopeLabel,
   onRetry,
   onOpenInEditor,
   onSaveBuild,
@@ -150,6 +153,16 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
         </Box>
         <SkeletonWorkspace />
       </Box>
+    );
+  }
+
+  // All parses carrying null builds cluster into nothing. Dereferencing
+  // `clusters[0]` below would throw, so guard before any selection logic runs.
+  if (result.clusters.length === 0) {
+    return (
+      <Alert severity="info" data-testid="no-build-data">
+        No build data available for this selection
+      </Alert>
     );
   }
 
@@ -303,17 +316,24 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
                 px: { xs: 1.5, sm: 2 },
               }}
             >
-              <Typography
-                id="build-patterns-heading"
-                sx={{
-                  fontFamily: 'Space Grotesk, Inter, system-ui',
-                  fontSize: '0.79rem',
-                  fontWeight: 700,
-                  letterSpacing: '-0.01em',
-                }}
-              >
-                Build patterns
-              </Typography>
+              <Box sx={{ minWidth: 0 }}>
+                <Typography
+                  id="build-patterns-heading"
+                  sx={{
+                    fontFamily: 'Space Grotesk, Inter, system-ui',
+                    fontSize: '0.79rem',
+                    fontWeight: 700,
+                    letterSpacing: '-0.01em',
+                  }}
+                >
+                  Build patterns
+                </Typography>
+                {scopeLabel && (
+                  <Typography noWrap sx={{ color: 'text.secondary', fontSize: '0.65rem' }}>
+                    {scopeLabel}
+                  </Typography>
+                )}
+              </Box>
               <Typography
                 sx={{
                   display: { xs: 'none', sm: 'block' },
@@ -350,6 +370,7 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
                   selected={cluster.id === selected.id}
                   recommended={cluster.id === result.recommendedClusterId}
                   showClassIcon={!esoClass}
+                  medoidParse={representativeParseFor(cluster)}
                   onSelect={() => handleSelect(cluster.id)}
                 />
               ))}
