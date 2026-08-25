@@ -41,6 +41,8 @@ import {
 } from '@mui/material';
 import React from 'react';
 
+import { usePageTitle } from '@/hooks/useDocumentTitle';
+
 import {
   getConsentPreferences,
   saveConsentPreferences,
@@ -57,9 +59,7 @@ export const PrivacyPolicyPage: React.FC = () => {
   const [deleteComplete, setDeleteComplete] = React.useState(false);
   const [saveSuccess, setSaveSuccess] = React.useState(false);
 
-  React.useEffect(() => {
-    document.title = 'Privacy Policy | ESO Toolkit';
-  }, []);
+  usePageTitle('/privacy');
 
   React.useEffect(() => {
     const prefs = getConsentPreferences();

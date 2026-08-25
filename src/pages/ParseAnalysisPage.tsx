@@ -55,6 +55,8 @@ import {
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { usePageTitle } from '@/hooks/useDocumentTitle';
+
 import { AbilityIcon } from '../components/AbilityIcon';
 import { WorkInProgressDisclaimer } from '../components/WorkInProgressDisclaimer';
 import { useAbilityIdMapper } from '../contexts/AbilityIdMapperContext';
@@ -277,9 +279,7 @@ const ParseAnalysisPageContent: React.FC = () => {
   const roleColors = useRoleColors();
   const theme = useTheme();
 
-  React.useEffect(() => {
-    document.title = 'Parse Analysis | ESO Toolkit';
-  }, []);
+  usePageTitle('/parse-analysis');
 
   /**
    * Get theme-aware semantic color for text display.

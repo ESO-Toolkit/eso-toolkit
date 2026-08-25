@@ -1,0 +1,182 @@
+{
+  "*": {
+    "title": "Page Not Found | ESO Toolkit",
+    "prerender": false
+  },
+  "/": {
+    "title": "ESO Toolkit",
+    "prerender": false
+  },
+  "/about": {
+    "title": "About | ESO Toolkit",
+    "description": "Learn about ESO Toolkit, an independent suite of combat-log and raid tools.",
+    "prerender": true
+  },
+  "/b/:slug": {
+    "title": "Shared Build | ESO Toolkit",
+    "prerender": false
+  },
+  "/banned": {
+    "title": "Access Denied | ESO Toolkit",
+    "prerender": false
+  },
+  "/build-editor": {
+    "title": "Build Editor | ESO Toolkit",
+    "description": "Create and share Elder Scrolls Online character builds.",
+    "prerender": true
+  },
+  "/build-hub": {
+    "title": "Build Hub | ESO Toolkit",
+    "description": "Browse community-created Elder Scrolls Online character builds.",
+    "prerender": true
+  },
+  "/build-leaderboard": {
+    "title": "Build Leaderboard | ESO Toolkit",
+    "description": "Explore top-performing Elder Scrolls Online builds and parses.",
+    "prerender": true
+  },
+  "/bv": {
+    "title": "Build View | ESO Toolkit",
+    "prerender": false
+  },
+  "/calculator": {
+    "title": "ESO Calculators | ESO Toolkit",
+    "description": "Plan combat stats, ultimate generation, and scribed skills for ESO.",
+    "prerender": true
+  },
+  "/discord-server-config": {
+    "title": "Discord Server Config | ESO Toolkit",
+    "prerender": false
+  },
+  "/discord-setup": {
+    "title": "Discord Setup | ESO Toolkit",
+    "prerender": false
+  },
+  "/docs/calculations": {
+    "title": "Calculation Guide | ESO Toolkit",
+    "description": "Review the formulas and assumptions used by ESO Toolkit calculators.",
+    "prerender": true
+  },
+  "/docs/discord-roster-bot": {
+    "title": "Discord Roster Bot Guide | ESO Toolkit",
+    "description": "Set up and use the ESO Toolkit Discord roster bot.",
+    "prerender": true
+  },
+  "/docs/loadout/food-selector": {
+    "title": "Food Selector Guide | ESO Toolkit",
+    "description": "Learn how ESO Toolkit selects food and drink for character loadouts.",
+    "prerender": true
+  },
+  "/gear-sets": {
+    "title": "ESO Gear Sets | ESO Toolkit",
+    "description": "Search Elder Scrolls Online gear sets and bonuses.",
+    "prerender": true
+  },
+  "/kalpa": {
+    "title": "Kalpa: Open-Source ESO Addon Manager | ESO Toolkit",
+    "description": "Kalpa is a fast, free, open-source addon manager for The Elder Scrolls Online. One-click installs, automatic dependencies, addon profiles, and one-click Minion import. Just 15 MB, no Java.",
+    "prerender": true
+  },
+  "/latest-reports": {
+    "title": "Latest Reports | ESO Toolkit",
+    "description": "Browse recently analyzed Elder Scrolls Online combat-log reports.",
+    "prerender": true
+  },
+  "/leaderboards": {
+    "title": "ESO Leaderboards | ESO Toolkit",
+    "description": "Explore Elder Scrolls Online combat-log leaderboards and recent parses.",
+    "prerender": true
+  },
+  "/loadout-manager": {
+    "title": "Loadout Manager | ESO Toolkit",
+    "description": "Plan Elder Scrolls Online gear, skills, champion points, and consumables.",
+    "prerender": true
+  },
+  "/login": {
+    "title": "Log In | ESO Toolkit",
+    "prerender": false
+  },
+  "/logs": {
+    "title": "Log Analyzer | ESO Toolkit",
+    "prerender": false
+  },
+  "/my-builds": {
+    "title": "My Builds | ESO Toolkit",
+    "prerender": false
+  },
+  "/my-reports": {
+    "title": "My Reports | ESO Toolkit",
+    "prerender": false
+  },
+  "/my-rosters": {
+    "title": "My Rosters | ESO Toolkit",
+    "prerender": false
+  },
+  "/pack-hub": {
+    "title": "ESO Addon Packs | Pack Hub | ESO Toolkit",
+    "description": "Browse and share curated Elder Scrolls Online addon packs for Kalpa, the open-source ESO addon manager.",
+    "prerender": true
+  },
+  "/parse-analysis": {
+    "title": "Parse Analysis | ESO Toolkit",
+    "description": "Analyze an Elder Scrolls Online combat-log parse in detail.",
+    "prerender": true
+  },
+  "/privacy": {
+    "title": "Privacy Policy | ESO Toolkit",
+    "description": "Read how ESO Toolkit handles authentication, analytics, and shared content.",
+    "prerender": true
+  },
+  "/privacy-settings": {
+    "title": "Privacy Settings | ESO Toolkit",
+    "description": "Review and update optional analytics preferences for ESO Toolkit.",
+    "prerender": true
+  },
+  "/report/:reportId/fight/:fightId/replay": {
+    "title": "Fight Replay | ESO Toolkit",
+    "prerender": false
+  },
+  "/roster-builder": {
+    "title": "Roster Builder | ESO Toolkit",
+    "description": "Plan and share Elder Scrolls Online trial rosters.",
+    "prerender": true
+  },
+  "/roster-hub": {
+    "title": "Roster Hub | ESO Toolkit",
+    "description": "Browse community Elder Scrolls Online trial rosters.",
+    "prerender": true
+  },
+  "/rv": {
+    "title": "Roster View | ESO Toolkit",
+    "prerender": false
+  },
+  "/sample-report": {
+    "title": "Sample Combat Report | ESO Toolkit",
+    "description": "Explore an Elder Scrolls Online combat report with ESO Toolkit.",
+    "prerender": true
+  },
+  "/terms": {
+    "title": "Terms of Use | ESO Toolkit",
+    "description": "Read the terms that govern use of the hosted ESO Toolkit service.",
+    "prerender": true
+  },
+  "/text-editor": {
+    "title": "ESO Text Editor | ESO Toolkit",
+    "description": "Format styled text for Elder Scrolls Online guild and community posts.",
+    "prerender": true
+  },
+  "/ultimate-simulator": {
+    "title": "Ultimate Simulator | ESO Toolkit",
+    "description": "Model Elder Scrolls Online ultimate generation for players and groups.",
+    "prerender": true
+  },
+  "/whats-new": {
+    "title": "What's New | ESO Toolkit",
+    "description": "Review recent ESO Toolkit features, fixes, and game-data updates.",
+    "prerender": true
+  },
+  "/whoami": {
+    "title": "Who Am I | ESO Toolkit",
+    "prerender": false
+  }
+}

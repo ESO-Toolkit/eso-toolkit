@@ -3,6 +3,7 @@ import React from 'react';
 import '@testing-library/jest-dom';
 import { MemoryRouter } from 'react-router-dom';
 
+import { ROUTE_META } from '../../constants/routeMeta';
 import { KalpaPage, KALPA_PAGE_TITLE } from '../KalpaPage';
 
 const renderPage = (): ReturnType<typeof render> =>
@@ -16,8 +17,13 @@ describe('KalpaPage', () => {
   it('sets the document title matching the prerendered static route title', () => {
     renderPage();
 
-    expect(document.title).toBe('Kalpa — Open-Source ESO Addon Manager | ESO Toolkit');
+    expect(document.title).toBe('Kalpa: Open-Source ESO Addon Manager | ESO Toolkit');
     expect(document.title).toBe(KALPA_PAGE_TITLE);
+    // The prerender script (scripts/generate-static-routes.cjs) stamps this very
+    // entry into build/kalpa/index.html, so matching it here proves the
+    // hydrated title cannot overwrite the prerendered one with a worse string.
+    expect(KALPA_PAGE_TITLE).toBe(ROUTE_META['/kalpa'].title);
+    expect(ROUTE_META['/kalpa'].prerender).toBe(true);
   });
 
   it('renders exactly one h1 with the product name and tagline', () => {

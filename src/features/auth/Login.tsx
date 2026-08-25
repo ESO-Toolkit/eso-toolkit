@@ -15,6 +15,8 @@ import {
 } from '@mui/material';
 import React from 'react';
 
+import { usePageTitle } from '@/hooks/useDocumentTitle';
+
 import { startPKCEAuth } from './auth';
 import { useAuth } from './AuthContext';
 
@@ -23,9 +25,7 @@ export const Login: React.FC = () => {
   const { isBanned, banReason, userError } = useAuth();
   const banMessage = banReason || userError;
 
-  React.useEffect(() => {
-    document.title = 'Log In | ESO Toolkit';
-  }, []);
+  usePageTitle('/login');
 
   const handleLogin = (): boolean => {
     startPKCEAuth();

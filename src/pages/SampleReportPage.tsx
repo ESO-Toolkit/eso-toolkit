@@ -2,6 +2,8 @@ import { Box, Typography, useTheme } from '@mui/material';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { usePageTitle } from '@/hooks/useDocumentTitle';
+
 import { ReportFightsSkeleton } from '../components/ReportFightsSkeleton';
 import { SAMPLE_REPORT_LIST } from '../utils/sampleReports';
 
@@ -10,9 +12,7 @@ export const SampleReportPage: React.FC = () => {
   const theme = useTheme();
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
 
-  React.useEffect(() => {
-    document.title = 'Sample Report | ESO Toolkit';
-  }, []);
+  usePageTitle('/sample-report');
 
   React.useEffect(() => {
     if (SAMPLE_REPORT_LIST.length === 0) {

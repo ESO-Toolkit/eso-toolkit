@@ -2,6 +2,8 @@ import { Box, Chip, Container, Divider, Paper, Stack, Typography } from '@mui/ma
 import type { Theme } from '@mui/material/styles';
 import React from 'react';
 
+import { usePageTitle } from '@/hooks/useDocumentTitle';
+
 import { getBuildInfoAsync, getDisplayVersion, isDevelopmentBuild } from '../utils/cacheBusting';
 
 const InfoRow: React.FC<{ label: string; value?: string }> = ({ label, value }) => (
@@ -45,9 +47,7 @@ export const AboutPage: React.FC = () => {
     | undefined
   >(undefined);
 
-  React.useEffect(() => {
-    document.title = 'About | ESO Toolkit';
-  }, []);
+  usePageTitle('/about');
 
   React.useEffect(() => {
     let isMounted = true;

@@ -31,6 +31,8 @@ import {
 } from '@mui/material';
 import React from 'react';
 
+import { usePageTitle } from '@/hooks/useDocumentTitle';
+
 import { DECISIVE_PROC_CHANCE, DecisiveQuality } from '../../shared/constants';
 import { useUltimateSimulator } from '../useUltimateSimulator';
 
@@ -53,9 +55,7 @@ export const UltimateSimulator: React.FC<UltimateSimulatorProps> = ({ className 
   const sim = useUltimateSimulator();
   const { state, sources, result } = sim;
 
-  React.useEffect(() => {
-    document.title = 'Arcanist Ultimate Simulator | ESO Toolkit';
-  }, []);
+  usePageTitle('/ultimate-simulator');
 
   return (
     <Container maxWidth="lg" className={className}>

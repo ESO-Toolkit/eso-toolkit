@@ -46,6 +46,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 
 import { WorkInProgressDisclaimer } from '@/components/WorkInProgressDisclaimer';
+import { usePageTitle } from '@/hooks/useDocumentTitle';
 import { useDropdownMenuProps } from '@/hooks/useDropdownMenuDirection';
 import type { RootState } from '@/store/storeWithHistory';
 
@@ -112,9 +113,7 @@ export const LoadoutManager: React.FC = () => {
   const theme = useTheme();
   const isMdDown = useMediaQuery(theme.breakpoints.down('md'));
 
-  React.useEffect(() => {
-    document.title = 'Loadout Manager | ESO Toolkit';
-  }, []);
+  usePageTitle('/loadout-manager');
 
   // Glass design tokens
   const isDarkMode = theme.palette.mode === 'dark';

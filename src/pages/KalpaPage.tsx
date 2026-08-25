@@ -1,8 +1,9 @@
 /**
  * KalpaPage — prerendered marketing landing page for Kalpa, the open-source
- * ESO addon manager. SEO wiring lives in three places that must stay in sync:
- * this file's document.title, scripts/generate-static-routes.cjs (the
- * prerendered title/description), and public/sitemap.xml.
+ * ESO addon manager. The SEO title/description and the sitemap entry all come
+ * from the shared route-metadata map (src/constants/route-meta.json), which
+ * scripts/generate-static-routes.cjs reads too, so the prerendered <title> and
+ * the hydrated one cannot drift.
  */
 
 import {
@@ -27,7 +28,11 @@ import type { Theme } from '@mui/material/styles';
 import React from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 
-export const KALPA_PAGE_TITLE = 'Kalpa — Open-Source ESO Addon Manager | ESO Toolkit';
+import { ROUTE_META } from '@/constants/routeMeta';
+import { usePageTitle } from '@/hooks/useDocumentTitle';
+
+/** Re-exported for tests; the single definition lives in the shared route map. */
+export const KALPA_PAGE_TITLE = ROUTE_META['/kalpa'].title;
 
 const KALPA_REPO_URL = 'https://github.com/ESO-Toolkit/kalpa';
 const KALPA_RELEASES_URL = 'https://github.com/ESO-Toolkit/kalpa/releases/latest';
@@ -562,7 +567,7 @@ const FEATURES: { title: string; description: string; linkTo?: string; linkLabel
   },
   {
     title: 'Dependency resolution',
-    description: 'Required libraries — including transitive ones — are resolved automatically.',
+    description: 'Required libraries, including transitive ones, are resolved automatically.',
   },
   {
     title: 'Addon profiles',
@@ -585,7 +590,7 @@ const FEATURES: { title: string; description: string; linkTo?: string; linkLabel
   {
     title: 'Protected edits',
     description:
-      'Local file changes survive updates — conflicts get a per-file diff, and you choose.',
+      'Local file changes survive updates. Conflicts get a per-file diff, and you choose.',
   },
   {
     title: 'Multi-instance support',
@@ -610,7 +615,7 @@ const FAQS: { question: string; answer: string; linkTo?: string; linkLabel?: str
   {
     question: 'Is Kalpa free?',
     answer:
-      'Yes. Kalpa is free and open source — the full source code is public on GitHub, and there are no ads, subscriptions, or feature paywalls.',
+      'Yes. Kalpa is free and open source. The full source code is public on GitHub, and there are no ads, subscriptions, or feature paywalls.',
   },
   {
     question: 'Is Kalpa safe?',
@@ -630,7 +635,7 @@ const FAQS: { question: string; answer: string; linkTo?: string; linkLabel?: str
   {
     question: 'What are addon profiles?',
     answer:
-      'An addon profile is a saved snapshot of which addons are enabled. You can keep different loadouts per character or role — a healing setup and a DPS setup, for example — and Kalpa previews exactly which addons will be enabled or disabled before you switch.',
+      'An addon profile is a saved snapshot of which addons are enabled. You can keep different loadouts per character or role, such as a healing setup and a DPS setup, and Kalpa previews exactly which addons will be enabled or disabled before you switch.',
   },
   {
     question: 'What is Pack Hub?',
@@ -642,7 +647,7 @@ const FAQS: { question: string; answer: string; linkTo?: string; linkLabel?: str
   {
     question: 'Does Kalpa run on Mac or Linux?',
     answer:
-      'Kalpa is stable and fully supported on Windows 10 and 11. Beta builds for macOS (10.15+, Intel and Apple Silicon) and Linux (AppImage, .deb, and .rpm) are available from the same GitHub releases page — they are newer and less tested than the Windows version.',
+      'Kalpa is stable and fully supported on Windows 10 and 11. Beta builds for macOS (10.15+, Intel and Apple Silicon) and Linux (AppImage, .deb, and .rpm) are available from the same GitHub releases page, though they are newer and less tested than the Windows version.',
   },
 ];
 
@@ -694,9 +699,7 @@ const faqPageLd = {
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export const KalpaPage: React.FC = () => {
-  React.useEffect(() => {
-    document.title = KALPA_PAGE_TITLE;
-  }, []);
+  usePageTitle('/kalpa');
 
   return (
     <Box>
@@ -764,7 +767,7 @@ export const KalpaPage: React.FC = () => {
                 }}
               >
                 Kalpa is a fast, open-source ESO addon manager with one-click installs and automatic
-                dependency resolution — a lightweight alternative to Minion built with Rust and
+                dependency resolution. A lightweight alternative to Minion built with Rust and
                 Tauri. Just 15 MB, with no Java runtime required.
               </Typography>
 
@@ -856,7 +859,7 @@ export const KalpaPage: React.FC = () => {
                     mr: '36px',
                   })}
                 >
-                  Kalpa — Addon Manager
+                  Kalpa Addon Manager
                 </Typography>
               </WindowTitleBar>
 
@@ -1061,8 +1064,7 @@ export const KalpaPage: React.FC = () => {
         <Typography
           sx={{ color: 'text.secondary', fontWeight: 300, maxWidth: '560px', lineHeight: 1.7 }}
         >
-          The full addon-management workflow — install, update, back up, and share — in one native
-          app.
+          Install, update, back up, and share your addons, all in one native app.
         </Typography>
         <FeatureGrid>
           {FEATURES.map((feature, index) => (
@@ -1097,7 +1099,7 @@ export const KalpaPage: React.FC = () => {
         <Typography
           sx={{ color: 'text.secondary', fontWeight: 300, maxWidth: '560px', lineHeight: 1.7 }}
         >
-          Kalpa is a drop-in replacement — here is how the two compare.
+          Kalpa is a drop-in replacement. Here is how the two compare.
         </Typography>
         <ComparisonCard>
           <ComparisonTable>
@@ -1128,7 +1130,7 @@ export const KalpaPage: React.FC = () => {
                   <td>
                     {row.minion === 'no' ? (
                       <span className="cell-value cell-no">
-                        <span aria-hidden="true">—</span>
+                        <span aria-hidden="true">·</span>
                         No
                       </span>
                     ) : (

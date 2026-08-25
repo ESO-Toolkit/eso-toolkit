@@ -16,6 +16,7 @@ import {
 import React from 'react';
 
 import { useAuth } from '@/features/auth/AuthContext';
+import { usePageTitle } from '@/hooks/useDocumentTitle';
 import { trackEvent, trackPageView } from '@/utils/analytics';
 import { addBreadcrumb } from '@/utils/errorTracking';
 
@@ -29,8 +30,9 @@ export const WhoAmIPage: React.FC = () => {
     currentUser ? new Date() : null,
   );
 
+  usePageTitle('/whoami');
+
   React.useEffect(() => {
-    document.title = 'Who Am I | ESO Toolkit';
     trackPageView('/whoami', 'Who Am I');
     addBreadcrumb('WhoAmI page viewed', 'navigation', {
       url: window.location.href,

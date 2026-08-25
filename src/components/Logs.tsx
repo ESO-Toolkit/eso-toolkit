@@ -3,6 +3,8 @@ import { Box, Typography, Container, Paper, Alert } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import React from 'react';
 
+import { usePageTitle } from '@/hooks/useDocumentTitle';
+
 const LogsContainer = styled(Box)(({ theme }) => ({
   minHeight: '100vh',
   backgroundColor: theme.palette.background.default,
@@ -26,9 +28,7 @@ const LogsCard = styled(Paper)(({ theme }) => ({
 }));
 
 export const Logs: React.FC = () => {
-  React.useEffect(() => {
-    document.title = 'Log Analyzer | ESO Toolkit';
-  }, []);
+  usePageTitle('/logs');
 
   return (
     <LogsContainer>

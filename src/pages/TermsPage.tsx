@@ -1,15 +1,15 @@
 import { Box, Container, Divider, Link, Stack, Typography } from '@mui/material';
 import React from 'react';
 
+import { usePageTitle } from '@/hooks/useDocumentTitle';
+
 /**
  * Public terms for the hosted ESO Toolkit service. These terms intentionally
  * describe the current product without expanding the software license; the
  * repository LICENSE remains authoritative for source-code use.
  */
 export const TermsPage: React.FC = () => {
-  React.useEffect(() => {
-    document.title = 'Terms of Use | ESO Toolkit';
-  }, []);
+  usePageTitle('/terms');
 
   return (
     <Container maxWidth="md" sx={{ py: { xs: 6, md: 8 } }}>

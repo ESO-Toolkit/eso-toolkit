@@ -13,10 +13,14 @@ import { useTheme } from '@mui/material/styles';
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
+import { usePageTitle } from '@/hooks/useDocumentTitle';
+
 import { tempBuildApi } from '../features/build-editor/api/temp-build-api';
 import { GlassPanel } from '../features/build-editor/components/primitives/GlassPanel';
 
 export const TempBuildViewPage: React.FC = () => {
+  usePageTitle('/b/:slug');
+
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const theme = useTheme();

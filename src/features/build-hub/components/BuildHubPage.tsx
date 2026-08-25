@@ -14,6 +14,8 @@ import { useSnackbar } from 'notistack';
 import React from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 
+import { usePageTitle } from '@/hooks/useDocumentTitle';
+
 import { ErrorBoundary } from '../../../components/ErrorBoundary';
 import { useAuth } from '../../auth/AuthContext';
 import { ConfirmDialog } from '../../roster-hub/components/ConfirmDialog';
@@ -37,9 +39,7 @@ export const BuildHubPage: React.FC = () => {
   const { filteredBuilds, loading, error, filters, hasMore, setFilter, loadMore, refresh, vote } =
     useBuildHub(token);
 
-  React.useEffect(() => {
-    document.title = 'Build Hub | ESO Toolkit';
-  }, []);
+  usePageTitle('/build-hub');
 
   const [deleteTarget, setDeleteTarget] = React.useState<string | null>(null);
   const [deleteLoading, setDeleteLoading] = React.useState(false);

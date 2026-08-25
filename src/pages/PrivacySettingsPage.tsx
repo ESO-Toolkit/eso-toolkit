@@ -51,6 +51,8 @@ import {
 import React from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 
+import { usePageTitle } from '@/hooks/useDocumentTitle';
+
 import {
   clearConsent,
   deleteAllUserData,
@@ -67,6 +69,8 @@ function formatBytes(bytes: number): string {
 }
 
 export const PrivacySettingsPage: React.FC = () => {
+  usePageTitle('/privacy-settings');
+
   const theme = useTheme();
   // Pick a link color with sufficient contrast against each theme's surface;
   // the always-visible underline distinguishes it from adjacent body text.

@@ -29,6 +29,8 @@ import {
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
+import { usePageTitle } from '@/hooks/useDocumentTitle';
+
 import { PanelErrorBoundary } from '../../components/PanelErrorBoundary';
 
 import { dpsParsesApi } from './api/dpsParsesApi';
@@ -96,9 +98,7 @@ export const BuildLeaderboardPage: React.FC = () => {
   const [encountersLoading, setEncountersLoading] = useState(true);
   const [encountersToken, setEncountersToken] = useState(0);
 
-  useEffect(() => {
-    document.title = 'Build Leaderboard | ESO Toolkit';
-  }, []);
+  usePageTitle('/build-leaderboard');
 
   useEffect(() => {
     let cancelled = false;

@@ -43,6 +43,8 @@ import { useTheme } from '@mui/material/styles';
 import React, { useState, useCallback, useEffect, useMemo, useRef, useTransition } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
+import { usePageTitle } from '@/hooks/useDocumentTitle';
+
 import discordIcon from '../assets/discord-icon.svg';
 import { PerFightBuilds } from '../components/PerFightBuilds';
 import { RoleCompositionPicker } from '../components/RoleCompositionPicker';
@@ -306,9 +308,7 @@ export const RosterBuilderPage: React.FC = () => {
   // roleColors moved to RosterCardSections
   const navigate = useNavigate();
 
-  React.useEffect(() => {
-    document.title = 'Roster Builder | ESO Toolkit';
-  }, []);
+  usePageTitle('/roster-builder');
 
   // Use the precomputed glass style constant — stable reference prevents MUI
   // from regenerating emotion CSS classes on every render.

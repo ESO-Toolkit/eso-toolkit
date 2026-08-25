@@ -29,6 +29,8 @@ import {
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { usePageTitle } from '@/hooks/useDocumentTitle';
+
 import { useLogger } from '../../contexts/LoggerContext';
 import { useEsoLogsClientContext } from '../../EsoLogsClientContext';
 import {
@@ -106,9 +108,7 @@ export const LeaderboardLogsPage: React.FC = () => {
   const logger = useLogger('LeaderboardLogsPage');
   const { client } = useEsoLogsClientContext();
 
-  React.useEffect(() => {
-    document.title = 'Leaderboards | ESO Toolkit';
-  }, []);
+  usePageTitle('/leaderboards');
 
   const [zones, setZones] = React.useState<TrialZone[]>([]);
   const [zonesLoading, setZonesLoading] = React.useState<boolean>(true);

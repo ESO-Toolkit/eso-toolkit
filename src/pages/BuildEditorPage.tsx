@@ -21,6 +21,7 @@ import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
+import { usePageTitle } from '@/hooks/useDocumentTitle';
 import type { RootState } from '@/store/storeWithHistory';
 import { decodeBuildFromURL } from '@/utils/buildEncoding';
 import { BuildEditorShell } from '@features/build-editor/components/BuildEditorShell';
@@ -40,9 +41,7 @@ const BuildEditorPageInner: React.FC = () => {
   const isDirty = useSelector((s: RootState) => s.buildEditor.isDirty);
   const loadedRef = React.useRef(false);
 
-  useEffect(() => {
-    document.title = 'Build Editor | ESO Toolkit';
-  }, []);
+  usePageTitle('/build-editor');
 
   // Load build from router state (preferred) or ?b= URL param (legacy) on mount.
   useEffect(() => {

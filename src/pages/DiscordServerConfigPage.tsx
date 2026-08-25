@@ -47,6 +47,8 @@ import {
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
+import { usePageTitle } from '@/hooks/useDocumentTitle';
+
 import discordIcon from '../assets/discord-icon.svg';
 import {
   getBotInviteUrl,
@@ -313,6 +315,8 @@ const ConfigSection: React.FC<ConfigSectionProps> = ({
 // ── Component ──────────────────────────────────────────────────────────────
 
 export const DiscordServerConfigPage: React.FC = () => {
+  usePageTitle('/discord-server-config');
+
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const navigate = useNavigate();
