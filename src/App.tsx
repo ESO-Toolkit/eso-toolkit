@@ -162,6 +162,10 @@ const AboutPage = React.lazy(() =>
   import('./pages/AboutPage').then((module) => ({ default: module.AboutPage })),
 );
 
+const KalpaPage = React.lazy(() =>
+  import('./pages/KalpaPage').then((module) => ({ default: module.KalpaPage })),
+);
+
 const DiscordServerConfigPage = React.lazy(() =>
   import('./pages/DiscordServerConfigPage').then((module) => ({
     default: module.DiscordServerConfigPage,
@@ -891,6 +895,17 @@ const AppRoutes: React.FC = () => {
                 <ErrorBoundary>
                   <Suspense fallback={<LoadingFallback />}>
                     <AboutPage />
+                  </Suspense>
+                </ErrorBoundary>
+              }
+            />
+            {/* Kalpa marketing landing page — public, prerendered */}
+            <Route
+              path="/kalpa"
+              element={
+                <ErrorBoundary>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <KalpaPage />
                   </Suspense>
                 </ErrorBoundary>
               }

@@ -2,8 +2,10 @@ import { Close as CloseIcon } from '@mui/icons-material';
 import { Box, IconButton, Typography, useMediaQuery } from '@mui/material';
 import { styled, useTheme } from '@mui/material/styles';
 import { useState } from 'react';
+import { Link as RouterLink } from 'react-router-dom';
 
-const KALPA_URL = 'https://github.com/ESO-Toolkit/kalpa';
+// /kalpa is the canonical on-site home for Kalpa — outbound GitHub links
+// live there, not in this banner.
 
 const Banner = styled(Box)(({ theme }) => ({
   width: '100%',
@@ -77,7 +79,7 @@ const NewBadge = styled(Box)(({ theme }) => ({
   },
 }));
 
-const BannerLink = styled('a')(({ theme }) => ({
+const BannerLink = styled(RouterLink)(({ theme }) => ({
   color: theme.palette.mode === 'dark' ? '#c4b5fd' : '#7c3aed',
   fontWeight: 600,
   fontSize: '0.85rem',
@@ -92,7 +94,7 @@ const BannerLink = styled('a')(({ theme }) => ({
   },
 }));
 
-const MobilePromoLink = styled('a')(({ theme }) => ({
+const MobilePromoLink = styled(RouterLink)(({ theme }) => ({
   display: 'flex',
   alignItems: 'center',
   gap: '0.5rem',
@@ -127,7 +129,7 @@ export const KalpaBanner: React.FC = () => {
   return (
     <Banner>
       {isMobile ? (
-        <MobilePromoLink href={KALPA_URL} target="_blank" rel="noopener noreferrer">
+        <MobilePromoLink to="/kalpa">
           <NewBadge>New</NewBadge>
           <Typography
             component="span"
@@ -170,9 +172,7 @@ export const KalpaBanner: React.FC = () => {
               Currently in beta.
             </Box>
           </Typography>
-          <BannerLink href={KALPA_URL} target="_blank" rel="noopener noreferrer">
-            Learn more →
-          </BannerLink>
+          <BannerLink to="/kalpa">Learn more →</BannerLink>
         </>
       )}
       <IconButton

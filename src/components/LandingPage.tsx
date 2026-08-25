@@ -9,6 +9,7 @@ import {
 } from '@mui/material';
 import { styled, Theme } from '@mui/material/styles';
 import React, { useState, JSX, useEffect, useRef } from 'react';
+import { Link as RouterLink } from 'react-router-dom';
 
 // ─── 2026 CSS: @property animated gradients + scroll-driven animations ──────
 const showcaseGlobalStyles = (
@@ -2681,9 +2682,8 @@ export const LandingPage: React.FC = () => {
               <Box sx={{ mt: 3, display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
                 <Button
                   variant="contained"
-                  href="https://github.com/ESO-Toolkit/kalpa"
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  component={RouterLink}
+                  to="/kalpa"
                   sx={{
                     background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
                     color: '#fff',
