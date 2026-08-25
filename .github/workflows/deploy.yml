@@ -50,6 +50,54 @@ jobs:
           # bundle reports as its release version.
           rollbar_server_token: ${{ secrets.ROLLBAR_SERVER_TOKEN }}
 
+      - name: Ping IndexNow with deployed URLs
+        # Notify Bing (whose index also feeds DuckDuckGo, Ecosia, and several
+        # AI search products) that the site's URLs have changed.
+        #
+        # urlList is read from build/sitemap.xml — the exact artifact the
+        # build-and-deploy action just uploaded to Pages — rather than fetching
+        # https://esotk.com/sitemap.xml, which can serve a stale cached copy
+        # immediately after a deploy and would add a network dependency. The
+        # sitemap is build-generated, so reading the build output cannot drift.
+        #
+        # Production-only (main push; the implicit success() in `if` also gates
+        # this on a successful deploy) and best-effort: a search-engine ping
+        # must never break a deploy, so every failure path is swallowed.
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        continue-on-error: true
+        shell: bash
+        env:
+          # Public IndexNow verification key, served from /<key>.txt (public/).
+          # IndexNow keys are public by design — this is not a secret.
+          INDEXNOW_KEY: e95121a458dc464baa2a081d3220c741
+        run: |
+          set -euo pipefail
+          HOST="esotk.com"
+          SITEMAP="build/sitemap.xml"
+          if [[ ! -f "$SITEMAP" ]]; then
+            echo "::warning::$SITEMAP not found — skipping IndexNow ping."
+            exit 0
+          fi
+          URL_LIST="$(sed -n 's:.*<loc>\(.*\)</loc>.*:\1:p' "$SITEMAP" | jq -R . | jq -cs .)"
+          URL_COUNT="$(echo "$URL_LIST" | jq 'length')"
+          if [[ "$URL_COUNT" == "0" ]]; then
+            echo "::warning::No <loc> URLs found in $SITEMAP — skipping IndexNow ping."
+            exit 0
+          fi
+          PAYLOAD="$(jq -n \
+            --arg host "$HOST" \
+            --arg key "$INDEXNOW_KEY" \
+            --arg keyLocation "https://${HOST}/${INDEXNOW_KEY}.txt" \
+            --argjson urlList "$URL_LIST" \
+            '{host: $host, key: $key, keyLocation: $keyLocation, urlList: $urlList}')"
+          echo "Submitting ${URL_COUNT} URLs to IndexNow for host ${HOST}"
+          STATUS="$(curl -sS -m 30 -o /tmp/indexnow-response.txt -w '%{http_code}' \
+            -X POST 'https://api.indexnow.org/indexnow' \
+            -H 'Content-Type: application/json; charset=utf-8' \
+            -d "$PAYLOAD" || true)"
+          echo "IndexNow HTTP status: ${STATUS:-request-failed}"
+          sed 's/^/IndexNow response: /' /tmp/indexnow-response.txt 2>/dev/null || true
+
   # Post deploy status to Discord. Runs after `deploy` regardless of outcome.
   discord-notify:
     name: "Deploy Notification"

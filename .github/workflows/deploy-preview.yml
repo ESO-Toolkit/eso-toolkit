@@ -33,6 +33,30 @@ jobs:
           # Use the same R2-backed hi-res map tiles as production.
           VITE_HIRES_MAP_BASE: 'https://pub-87ec3d93bfd4456faec17c57e05093d9.r2.dev'
 
+      - name: Inject noindex into preview HTML
+        # Preview builds are full copies of the site (including unreleased
+        # features) served from a crawlable host:
+        # eso-toolkit.github.io/dev-previews/pr-<N>/. GitHub Pages cannot send
+        # X-Robots-Tag headers, and a robots.txt disallow would only stop
+        # crawling — already-linked URLs can still be indexed without it. So
+        # stamp <meta name="robots" content="noindex, nofollow"> into every
+        # HTML file of the preview artifact: the app shell (index.html), the
+        # SPA 404 fallback, and every generated static-route shell, so deep
+        # links are covered too. This workflow only ever builds PREVIEW
+        # artifacts (VITE_BASE_URL is /dev-previews/...), so the production
+        # build is never touched.
+        shell: bash
+        run: |
+          set -euo pipefail
+          find build -type f -name '*.html' -print0 | while IFS= read -r -d '' file; do
+            if grep -qi '<meta name="robots"' "$file"; then
+              continue
+            fi
+            sed -i -E '0,/<head[^>]*>/s/<head[^>]*>/&\n    <meta name="robots" content="noindex, nofollow" \/>/' "$file"
+          done
+          COUNT="$(grep -rli '<meta name="robots" content="noindex, nofollow"' --include='*.html' build 2>/dev/null | wc -l || true)"
+          echo "noindex meta present in ${COUNT} preview HTML files"
+
       - name: Upload preview build
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
@@ -87,6 +111,17 @@ jobs:
           rm -rf "${PREVIEW_DIR}"
           cp -r "${GITHUB_WORKSPACE}/build" "${PREVIEW_DIR}"
           cp "${GITHUB_WORKSPACE}/scripts/dev-previews-404.html" 404.html
+          # The dev-previews repo root is crawlable too: the index.html preview
+          # directory listing and the 404.html deep-link redirect shell are
+          # served from eso-toolkit.github.io/dev-previews/. Stamp noindex into
+          # them (idempotent — safe to re-stamp on every preview deploy). The
+          # PR build HTML was already tagged in the deploy-preview job.
+          for file in index.html 404.html; do
+            if [[ -f "$file" ]] && ! grep -qi '<meta name="robots"' "$file"; then
+              sed -i -E '0,/<head[^>]*>/s/<head[^>]*>/&\n    <meta name="robots" content="noindex, nofollow" \/>/' "$file"
+              echo "Injected noindex into ${file}"
+            fi
+          done
           UPDATED_AT=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
           EXISTING=$(test -f previews.json && cat previews.json || echo '[]')
           UPDATED=$(echo "${EXISTING}" | jq --arg pr "${PR_NUMBER}" --arg title "${PR_TITLE}" --arg branch "${PR_BRANCH}" --arg updatedAt "${UPDATED_AT}" '[.[] | select(.pr != ($pr | tonumber))] + [{"pr": ($pr | tonumber), "title": $title, "branch": $branch, "updatedAt": $updatedAt}]')
