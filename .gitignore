@@ -111,6 +111,10 @@ eso-log-aggregator/
 public/version.json
 public/manifest.json
 
+# detect-gpu benchmark DB, copied from node_modules by
+# scripts/copy-detect-gpu-benchmarks.cjs so it is served same-origin (CSP)
+public/detect-gpu-benchmarks/
+
 # MSW service worker (should only exist in .storybook/public/)
 public/mockServiceWorker.js
 
