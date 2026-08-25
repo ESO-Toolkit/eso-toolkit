@@ -104,7 +104,7 @@ export const UnauthenticatedLandingSection: React.FC = () => {
             value={logUrl}
             onChange={handleLogUrlChange}
             error={Boolean(logUrlError)}
-            helperText={logUrlError || 'Paste a public ESO Logs report link to get started.'}
+            helperText={logUrlError || undefined}
             sx={{
               flex: 1,
               '& .MuiOutlinedInput-root': {
@@ -167,7 +167,9 @@ export const UnauthenticatedLandingSection: React.FC = () => {
               },
               htmlInput: {
                 'aria-invalid': Boolean(logUrlError),
-                'aria-describedby': 'unauthenticated-log-url-helper-text',
+                ...(logUrlError
+                  ? { 'aria-describedby': 'unauthenticated-log-url-helper-text' }
+                  : {}),
               },
             }}
           />
