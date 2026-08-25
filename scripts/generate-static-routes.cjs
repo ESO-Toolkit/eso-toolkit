@@ -13,6 +13,7 @@ const path = require('node:path');
 const buildDirectory = path.join(__dirname, '..', 'build');
 const appShell = path.join(buildDirectory, 'index.html');
 const cspHashMarker = '__CSP_INLINE_SCRIPT_HASHES__';
+const SITE_ORIGIN = 'https://esotk.com';
 const staticRoutes = [
   {
     path: 'about',
@@ -60,6 +61,12 @@ const staticRoutes = [
     description: 'Search Elder Scrolls Online gear sets and bonuses.',
   },
   {
+    path: 'kalpa',
+    title: 'Kalpa — Open-Source ESO Addon Manager | ESO Toolkit',
+    description:
+      'Kalpa is a fast, free, open-source addon manager for The Elder Scrolls Online. One-click installs, automatic dependencies, addon profiles, and one-click Minion import — just 15 MB, no Java.',
+  },
+  {
     path: 'latest-reports',
     title: 'Latest Reports | ESO Toolkit',
     description: 'Browse recently analyzed Elder Scrolls Online combat-log reports.',
@@ -76,8 +83,9 @@ const staticRoutes = [
   },
   {
     path: 'pack-hub',
-    title: 'Pack Hub | ESO Toolkit',
-    description: 'Browse and share curated Elder Scrolls Online build packs.',
+    title: 'ESO Addon Packs | Pack Hub | ESO Toolkit',
+    description:
+      'Browse and share curated Elder Scrolls Online addon packs for Kalpa, the open-source ESO addon manager.',
   },
   {
     path: 'parse-analysis',
@@ -162,7 +170,7 @@ if (fs.existsSync(headersPath)) {
 }
 
 for (const route of staticRoutes) {
-  const routeUrl = `https://esotk.com/${route.path}`;
+  const routeUrl = `${SITE_ORIGIN}/${route.path}/`;
   const routeShell = contents
     .replace(/<title>[^<]*<\/title>/, `<title>${route.title}</title>`)
     .replace(
@@ -199,6 +207,24 @@ for (const route of staticRoutes) {
   fs.writeFileSync(path.join(routeDirectory, 'index.html'), routeShell);
 }
 
+// DEFECT 2: the sitemap used to be hand-maintained and had already drifted from
+// this route list. Generate it from the same array so the two can never diverge.
+// URLs use the trailing-slash form because the slash-less form 301-redirects.
+const lastmod = new Date().toISOString().slice(0, 10);
+const sitemapUrls = [
+  `${SITE_ORIGIN}/`,
+  ...staticRoutes.map((route) => `${SITE_ORIGIN}/${route.path}/`),
+].sort();
+const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${sitemapUrls
+  .map((loc) => `  <url><loc>${loc}</loc><lastmod>${lastmod}</lastmod></url>`)
+  .join('\n')}
+</urlset>
+`;
+fs.writeFileSync(path.join(buildDirectory, 'sitemap.xml'), sitemap);
+
 console.log(
   `Generated static route shells: ${staticRoutes.map((route) => `/${route.path}`).join(', ')}`,
 );
+console.log(`Generated sitemap.xml with ${sitemapUrls.length} URLs (lastmod ${lastmod})`);
