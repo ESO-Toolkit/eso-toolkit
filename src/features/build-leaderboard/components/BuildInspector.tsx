@@ -2,6 +2,7 @@ import {
   ArrowOutwardRounded,
   CloseRounded,
   FactCheckOutlined,
+  HelpOutlineRounded,
   InsertChartOutlined,
   LaunchOutlined,
   MoreHoriz,
@@ -294,22 +295,31 @@ export const BuildInspector: React.FC<BuildInspectorProps> = ({
               </Box>
             </Typography>
             {pooled ? (
-              <Tooltip
-                arrow
-                title={`We compare each parse with the highest DPS logged on the same boss and difficulty. This build usually reaches ${Math.round(
-                  cluster.dps.median * 100,
-                )}% of that top score. Half of its parses fall between ${Math.round(
-                  cluster.dps.q1 * 100,
-                )}% and ${Math.round(cluster.dps.q3 * 100)}%.`}
-              >
+              <Box sx={{ mt: -0.15, display: 'flex', alignItems: 'center', gap: 0.25 }}>
                 <Typography
                   className="u-tabular"
-                  sx={{ mt: -0.15, color: 'text.secondary', fontSize: '0.67rem', fontWeight: 500 }}
+                  sx={{ color: 'text.secondary', fontSize: '0.67rem', fontWeight: 500 }}
                 >
-                  Usually {Math.round(cluster.dps.median * 100)}% of this boss&apos;s top DPS (most
-                  runs: {Math.round(cluster.dps.q1 * 100)}–{Math.round(cluster.dps.q3 * 100)}%)
+                  Usually {Math.round(cluster.dps.median * 100)}% of each boss&apos;s top DPS (half
+                  of runs: {Math.round(cluster.dps.q1 * 100)}–{Math.round(cluster.dps.q3 * 100)}%)
                 </Typography>
-              </Tooltip>
+                <Tooltip
+                  arrow
+                  title={`We compare each parse with the highest DPS logged on the same boss and difficulty. This build usually reaches ${Math.round(
+                    cluster.dps.median * 100,
+                  )}% of that top score. Half of its parses fall between ${Math.round(
+                    cluster.dps.q1 * 100,
+                  )}% and ${Math.round(cluster.dps.q3 * 100)}%.`}
+                >
+                  <IconButton
+                    aria-label="Explain pooled DPS comparison"
+                    size="small"
+                    sx={{ flex: '0 0 auto', p: 0.15, color: 'text.secondary' }}
+                  >
+                    <HelpOutlineRounded sx={{ fontSize: '0.82rem' }} />
+                  </IconButton>
+                </Tooltip>
+              </Box>
             ) : (
               <Typography
                 className="u-tabular"

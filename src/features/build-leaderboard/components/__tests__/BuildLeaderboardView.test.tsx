@@ -199,8 +199,11 @@ describe('BuildLeaderboardView workspace', () => {
 
     renderView({ parses, result: pooledResult, pooled: true });
 
-    const summary = screen.getByText("Usually 58% of this boss's top DPS (most runs: 48–64%)");
-    await userEvent.hover(summary);
+    expect(
+      screen.getByText("Usually 58% of each boss's top DPS (half of runs: 48–64%)"),
+    ).toBeInTheDocument();
+    const explanation = screen.getByRole('button', { name: /explain pooled DPS comparison/i });
+    explanation.focus();
     expect(
       await screen.findByText(
         /we compare each parse with the highest DPS logged on the same boss and difficulty/i,
