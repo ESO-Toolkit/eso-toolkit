@@ -73,7 +73,6 @@ describe('traitShares skillLines visibility', () => {
     // Indices 15/16 are Necromancer's Grave Lord / Bone Tyrant.
     const a = vector({ parseId: 'a', skillLines: [15, 16] });
     const b = vector({ parseId: 'b', skillLines: [15, 17] });
-
     const traits = traitShares([a, b], [1, 1]);
     const byKey = new Map(traits.map((t) => [`${t.group}|${t.id}`, t]));
 
@@ -100,6 +99,19 @@ describe('traitShares skillLines visibility', () => {
 
     // The undeclared vector has no opinion, so the one carrier is at 100%.
     expect(line?.share).toBeCloseTo(1, 6);
+  });
+
+  // Codex P2 review pin: the generic `add` sentinel treats id 0 as empty, but
+  // skillLines ids INDEX CLASS_SKILL_LINES — index 0 is Ardent Flame, a real
+  // trait. Dragonknight clusters must be able to surface it.
+  it('treats skill line index zero (Ardent Flame) as a valid trait', () => {
+    const dk = vector({ parseId: 'a', esoClass: 'Dragonknight', skillLines: [0, 1] });
+    const traits = traitShares([dk], [1]);
+    const flame = traits.find((t) => t.group === 'skillLines' && t.id === 0);
+
+    expect(flame).toBeDefined();
+    expect(flame?.share).toBeCloseTo(1, 6);
+    expect(flame?.label).toBe('Ardent Flame');
   });
 
   it('leaves non-skillLines labels blank for main-thread hydration', () => {

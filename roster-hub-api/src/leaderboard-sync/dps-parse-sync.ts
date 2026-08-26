@@ -296,8 +296,7 @@ export async function selectTargets(
   return [...allTargets]
     .sort(
       (a, b) =>
-        demotedLast(a) - demotedLast(b) ||
-        (rank.get(keyOf(a)) ?? -1) - (rank.get(keyOf(b)) ?? -1),
+        demotedLast(a) - demotedLast(b) || (rank.get(keyOf(a)) ?? -1) - (rank.get(keyOf(b)) ?? -1),
     )
     .slice(0, limit);
 }
@@ -356,8 +355,11 @@ async function syncOneEncounter(
 
     if (rows.length > 0) {
       await upsertDpsParses(env.DB, rows);
-      await pruneDpsParses(env.DB, target.encounterId, target.difficulty, KEEP_TOP_PER_ENCOUNTER);
     }
+    // Prune after EVERY successful fetch, empty results included: an encounter
+    // whose rankings have dried up must still age its stored rows out, or the
+    // scoped stale DELETE never reaches it and its old board lives forever.
+    await pruneDpsParses(env.DB, target.encounterId, target.difficulty, KEEP_TOP_PER_ENCOUNTER);
 
     warnings.forEach((message) => {
       console.warn(`[dps-sync] ${target.encounterName}: ${message}`);

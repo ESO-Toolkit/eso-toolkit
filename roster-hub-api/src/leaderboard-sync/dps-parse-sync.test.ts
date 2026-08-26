@@ -195,4 +195,23 @@ describe('syncDpsParses', () => {
     expect(upsertDpsParses as jest.Mock).not.toHaveBeenCalled();
     expect(pruneDpsParses as jest.Mock).not.toHaveBeenCalled();
   });
+
+  // THE regression pin for the Codex P1 review finding: pruning used to run
+  // only when rows were ingested, so an encounter whose rankings dried up was
+  // never subjected to the scoped stale DELETE and its stored rows lived on
+  // indefinitely. Empty syncs must prune too.
+  it('prunes even when a successful sync returns no rows', async () => {
+    mockedFetchRankings.mockResolvedValue({
+      page: 1,
+      hasMorePages: false,
+      count: 0,
+      rankings: [],
+    });
+
+    const results = await syncDpsParses(env, { encounterId: 60 });
+    expect(results[0].status).toBe('empty');
+
+    expect(upsertDpsParses as jest.Mock).not.toHaveBeenCalled();
+    expect(pruneDpsParses as jest.Mock).toHaveBeenCalledWith(env.DB, 60, 122, 200);
+  });
 });

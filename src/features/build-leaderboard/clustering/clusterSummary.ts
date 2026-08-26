@@ -79,8 +79,10 @@ export function traitShares(
   // chips for a layout we explicitly do not know.
   const groupMass = new Map<FeatureGroupKey, number>();
 
+  // Zero is a valid sentinel for most id spaces, but skillLines ids INDEX
+  // CLASS_SKILL_LINES — index 0 (Ardent Flame) is a real trait and must count.
   const add = (group: FeatureGroupKey, id: number | string | null, mass: number): void => {
-    if (id === null || id === '' || id === 0) return;
+    if (id === null || id === '' || (id === 0 && group !== 'skillLines')) return;
     const key = `${group}|${id}`;
     const existing = counts.get(key);
     if (existing) existing.mass += mass;

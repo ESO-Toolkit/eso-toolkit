@@ -380,9 +380,7 @@ export async function purgeBlockedDpsParses(
     const chunk = allKeys.slice(i, i + PURGE_CHUNK_SIZE);
     const placeholders = chunk.map(() => '?').join(', ');
     statements.push(
-      db
-        .prepare(`DELETE FROM dps_parses WHERE character_key IN (${placeholders})`)
-        .bind(...chunk),
+      db.prepare(`DELETE FROM dps_parses WHERE character_key IN (${placeholders})`).bind(...chunk),
     );
   }
   await db.batch(statements);
@@ -482,7 +480,9 @@ export async function recordSyncResult(
       `INSERT INTO dps_parse_sync_state (
          encounter_id, difficulty, encounter_name, zone_id,
          last_page, last_synced_at, last_status, last_error, rows_ingested, empty_streak
-       ) VALUES (?, ?, ?, ?, ?, datetime('now'), ?, ?, ?, ?)
+       ) VALUES (?, ?, ?, ?, ?,
+         CASE WHEN ? = 'error' THEN NULL ELSE datetime('now') END,
+         ?, ?, ?, ?)
        ON CONFLICT (encounter_id, difficulty) DO UPDATE SET
          encounter_name = excluded.encounter_name,
          zone_id        = excluded.zone_id,
@@ -501,6 +501,7 @@ export async function recordSyncResult(
       state.encounterName,
       state.zoneId,
       state.lastPage,
+      state.status,
       state.status,
       state.error,
       state.rowsIngested,

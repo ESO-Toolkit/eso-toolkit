@@ -210,7 +210,9 @@ describe('listDpsParses', () => {
 // ─── Upsert / prune integrity ────────────────────────────────────────────────
 
 /** Minimal valid insert row; only the columns the upsert guard reads matter. */
-function insertRow(overrides: Record<string, unknown> = {}): Parameters<typeof upsertDpsParses>[1][number] {
+function insertRow(
+  overrides: Record<string, unknown> = {},
+): Parameters<typeof upsertDpsParses>[1][number] {
   return {
     encounter_id: 60,
     difficulty: 122,
@@ -369,5 +371,16 @@ describe('recordSyncResult', () => {
       // The CASE's ELSE branch is the normal fresh-stamp path.
       expect(calls[0].sql).toContain('ELSE excluded.last_synced_at END');
     }
+  });
+
+  // Codex P2 review pin: the plain INSERT arm used to stamp datetime('now')
+  // unconditionally, so a FIRST-EVER failed sync looked freshly synced and
+  // dropped out of the stalest-first rotation. The insert must leave
+  // last_synced_at NULL when the status is 'error'.
+  it('leaves last_synced_at NULL on a first-ever errored insert', async () => {
+    const { db, calls } = createFakeD1();
+    await recordSyncResult(db, { ...baseState, status: 'error' });
+
+    expect(calls[0].sql).toMatch(/CASE WHEN \? = 'error' THEN NULL ELSE datetime\('now'\) END/);
   });
 });
