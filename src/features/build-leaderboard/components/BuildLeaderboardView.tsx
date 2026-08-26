@@ -11,7 +11,7 @@ import {
   Typography,
 } from '@mui/material';
 import { alpha } from '@mui/material/styles';
-import React, { useRef, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 
 import { getLeaderboardClassTheme } from '../theme/leaderboardTheme';
 import type { BuildCluster, ClusterBuildsResult } from '../types/clustering.types';
@@ -37,11 +37,11 @@ export interface BuildLeaderboardViewProps {
    */
   scopeDescription?: string;
   /**
-   * How to render DPS numbers. 'pct' (pooled class view) shows each
-   * archetype's median as a percentage of the bosses' ceilings, since raw
-   * amounts from different bosses are not comparable.
+   * Pooled class view: cluster.dps holds fractions of each boss's ceiling, so
+   * cards headline the cluster's best RAW parse ("112k @ DSR") and percentages
+   * move to secondary text.
    */
-  dpsMode?: 'absolute' | 'pct';
+  pooled?: boolean;
   onRetry?: () => void;
   onOpenInEditor?: (cluster: BuildCluster) => void;
   onSaveBuild?: (cluster: BuildCluster) => void;
@@ -88,7 +88,7 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
   esoClass,
   scopeLabel,
   scopeDescription,
-  dpsMode = 'absolute',
+  pooled = false,
   onRetry,
   onOpenInEditor,
   onSaveBuild,
@@ -111,6 +111,25 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
     setEvidenceOpen(false);
   }
 
+  // Pooled view: the best RAW parse in each cluster heads its card ("112k @
+  // DSR"). Raw amounts come from `parses`, never the normalized cluster input.
+  // Lives above every early return (error/loading/too-few) — hook order must
+  // stay stable across renders.
+  const bestParseByCluster = useMemo(() => {
+    const map = new Map<string, DpsParse>();
+    if (!pooled) return map;
+    const byId = new Map(parses.map((parse) => [parse.parse_id, parse]));
+    result?.clusters.forEach((cluster) => {
+      let best: DpsParse | undefined;
+      for (const id of cluster.memberParseIds) {
+        const parse = byId.get(id);
+        if (parse && (!best || parse.amount > best.amount)) best = parse;
+      }
+      if (best) map.set(cluster.id, best);
+    });
+    return map;
+  }, [pooled, parses, result]);
+
   if (error) {
     return (
       <Alert
@@ -127,7 +146,6 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
       </Alert>
     );
   }
-
   if (loading) return <SkeletonWorkspace />;
 
   if (parses.length === 0) return <Alert severity="info">{emptyMessage}</Alert>;
@@ -377,7 +395,7 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
                   textTransform: 'uppercase',
                 }}
               >
-                Typical
+                {pooled ? 'Best' : 'Typical'}
               </Typography>
             </Box>
             <Box component="ol" sx={{ m: 0, p: 0, listStyle: 'none' }}>
@@ -390,7 +408,7 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
                   recommended={cluster.id === result.recommendedClusterId}
                   showClassIcon={!esoClass}
                   medoidParse={representativeParseFor(cluster)}
-                  dpsMode={dpsMode}
+                  bestParse={bestParseByCluster.get(cluster.id)}
                   onSelect={() => handleSelect(cluster.id)}
                 />
               ))}
@@ -422,7 +440,7 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
               variations={selected.variations}
               sourceUrl={representativeParseFor(selected)?.source_url}
               representativeDps={representativeParseFor(selected)?.amount}
-              dpsMode={dpsMode}
+              pooled={pooled}
               pendingKind={pendingAction?.clusterId === selected.id ? pendingAction.kind : null}
               actionsDisabled={Boolean(pendingAction)}
               onOpenInEditor={onOpenInEditor}
