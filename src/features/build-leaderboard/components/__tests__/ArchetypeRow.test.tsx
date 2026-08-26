@@ -153,7 +153,7 @@ describe('ArchetypeRow pooled headline', () => {
     });
     expect(screen.getByText('112k')).toBeInTheDocument();
     expect(screen.getByText('@DSR')).toBeInTheDocument();
-    expect(screen.getByText(/typically 91%/)).toBeInTheDocument();
+    expect(screen.getByText(/usually 91% of top/)).toBeInTheDocument();
     expect(screen.queryByText(/^91%$/)).not.toBeInTheDocument();
   });
 

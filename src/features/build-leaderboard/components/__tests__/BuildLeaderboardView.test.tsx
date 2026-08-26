@@ -180,6 +180,34 @@ describe('BuildLeaderboardView states', () => {
 });
 
 describe('BuildLeaderboardView workspace', () => {
+  it('explains pooled performance in player-friendly language', async () => {
+    const { parses, result } = clusteredFixture();
+    const pooledResult = {
+      ...result,
+      clusters: result.clusters.map((cluster) => ({
+        ...cluster,
+        dps: {
+          ...cluster.dps,
+          min: 0.4,
+          q1: 0.48,
+          median: 0.58,
+          q3: 0.64,
+          max: 0.72,
+        },
+      })),
+    };
+
+    renderView({ parses, result: pooledResult, pooled: true });
+
+    const summary = screen.getByText("Usually 58% of this boss's top DPS (most runs: 48–64%)");
+    await userEvent.hover(summary);
+    expect(
+      await screen.findByText(
+        /we compare each parse with the highest DPS logged on the same boss and difficulty/i,
+      ),
+    ).toBeInTheDocument();
+  });
+
   it('renders one stable recommendation and every alternative as a fixed row', () => {
     const { parses, result } = clusteredFixture();
     renderView({ parses, result });

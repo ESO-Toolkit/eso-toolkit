@@ -220,7 +220,7 @@ export const ArchetypeRow: React.FC<ArchetypeRowProps> = ({
               }}
             >
               {bestParse
-                ? `${headlineDps}${anchor ? ` @ ${anchor}` : ''} · ${cluster.size} parses · typically ${typicalPct}`
+                ? `${headlineDps}${anchor ? ` @ ${anchor}` : ''} · ${cluster.size} parses · usually ${typicalPct} of top`
                 : `${cluster.size} parses · ${headlineDps} typical`}
             </Typography>
             {freshness && (

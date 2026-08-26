@@ -293,16 +293,31 @@ export const BuildInspector: React.FC<BuildInspectorProps> = ({
                 DPS
               </Box>
             </Typography>
-            <Typography
-              className="u-tabular"
-              sx={{ mt: -0.15, color: 'text.secondary', fontSize: '0.67rem', fontWeight: 500 }}
-            >
-              {pooled
-                ? `Typically ${Math.round(cluster.dps.median * 100)}% of ceiling · middle half ${Math.round(
-                    cluster.dps.q1 * 100,
-                  )}–${Math.round(cluster.dps.q3 * 100)}%`
-                : `Middle half ${compactDps(cluster.dps.q1)}–${compactDps(cluster.dps.q3)}`}
-            </Typography>
+            {pooled ? (
+              <Tooltip
+                arrow
+                title={`We compare each parse with the highest DPS logged on the same boss and difficulty. This build usually reaches ${Math.round(
+                  cluster.dps.median * 100,
+                )}% of that top score. Half of its parses fall between ${Math.round(
+                  cluster.dps.q1 * 100,
+                )}% and ${Math.round(cluster.dps.q3 * 100)}%.`}
+              >
+                <Typography
+                  className="u-tabular"
+                  sx={{ mt: -0.15, color: 'text.secondary', fontSize: '0.67rem', fontWeight: 500 }}
+                >
+                  Usually {Math.round(cluster.dps.median * 100)}% of this boss&apos;s top DPS (most
+                  runs: {Math.round(cluster.dps.q1 * 100)}–{Math.round(cluster.dps.q3 * 100)}%)
+                </Typography>
+              </Tooltip>
+            ) : (
+              <Typography
+                className="u-tabular"
+                sx={{ mt: -0.15, color: 'text.secondary', fontSize: '0.67rem', fontWeight: 500 }}
+              >
+                Middle half {compactDps(cluster.dps.q1)}–{compactDps(cluster.dps.q3)}
+              </Typography>
+            )}
           </Box>
           <Box
             sx={(theme) => ({
