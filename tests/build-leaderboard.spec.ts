@@ -366,7 +366,11 @@ test.describe('Build Leaderboard Page', () => {
       expect(new URL(page.url()).searchParams.get('boss')).toBe(ENCOUNTER_KEY);
 
       // The encounter picker reflects the preserved boss key (renders "Trial · Boss")
-      await expect(page.getByText(/Rockgrove · Bahsei/)).toBeVisible();
+      // The Select carries aria-label="Encounter"; its rendered VALUE is
+      // "Trial · Boss". Assert on the combobox to stay strict-mode safe.
+      await expect(page.getByRole('combobox', { name: 'Encounter' })).toHaveText(
+        /Rockgrove · Bahsei/,
+      );
     });
 
     test('deep link opens directly on the class tab', async ({ page }) => {
@@ -410,7 +414,9 @@ test.describe('Build Leaderboard Page', () => {
       // Open the evidence dialog — triggers GET /dps-leaderboard/parses/:medoid/build
       await inspector.getByRole('button', { name: 'Show build evidence' }).click();
 
-      const dialog = page.locator('[role="dialog"]');
+      // The evidence dialog specifically — the cookie-consent banner and the
+      // mobile nav drawer also register role="dialog", so match by name.
+      const dialog = page.getByRole('dialog', { name: 'Build evidence' });
       await expect(dialog).toBeVisible();
       await expect(dialog.getByRole('heading', { name: 'Build evidence' })).toBeVisible();
 
@@ -421,9 +427,10 @@ test.describe('Build Leaderboard Page', () => {
       await expect(dialog.getByText(/Top parse by E2E Medoid Player/)).toBeVisible();
       await expect(dialog.getByText('What this archetype has in common')).toBeVisible();
 
-      // Frequency sections present
+      // Frequency sections present ('Front bar' also appears as a trait-group
+      // label inside SkillBar, so pin to the first — the section heading).
       await expect(dialog.getByText('Gear sets')).toBeVisible();
-      await expect(dialog.getByText('Front bar')).toBeVisible();
+      await expect(dialog.getByText('Front bar').first()).toBeVisible();
 
       await dialog.getByRole('button', { name: 'Close build evidence' }).click();
       await expect(dialog).not.toBeVisible();
