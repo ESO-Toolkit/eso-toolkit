@@ -106,6 +106,34 @@ describe('sets.extra promotion', () => {
     // A promoted five-piece changes the build; collapsing must not merge them.
     expect(collapseDuplicateSignatures([...without, ...withPromoted]).points).toHaveLength(2);
   });
+
+  /**
+   * Legacy rows written before the ingest folded perfected ids carry a mixed
+   * perfected/base set as separate counts (e.g. 3x772 + 2x767). Neither alone
+   * clears five pieces; the folded total does. Counts must be aliased BEFORE
+   * the threshold check or the whole gear axis vanishes for those rows.
+   */
+  it('promotes a mixed perfected/base set once counts are folded through the alias map', () => {
+    const PERFECTED_SLIVERS = 772;
+    const SLIVERS = 767;
+    const maps = { sets: { [PERFECTED_SLIVERS]: SLIVERS }, abilities: {} };
+
+    // The mixed set arrives via extra/setCounts (not slotted), split across
+    // both ids, neither reaching five pieces alone.
+    const parse = parseWithExtra(
+      [SLIVERS],
+      [
+        [SETS.corpseburster, 5],
+        [SETS.azureblight, 5],
+        [PERFECTED_SLIVERS, 3],
+        [SLIVERS, 2],
+      ],
+    );
+
+    const vector = toFeatureVector(parse, maps);
+    expect(vector?.fivePieceSets).toContain(SLIVERS);
+    expect(vector?.fivePieceSets.filter((id) => id === SLIVERS)).toHaveLength(1);
+  });
 });
 
 describe('collapseDuplicateSignatures per-member amounts', () => {

@@ -315,6 +315,9 @@ export const LeaderboardLogsPage: React.FC = () => {
           setRankingsError(message);
         }
         setRankingsState(createEmptyRankings(fallbackPage));
+        // Nothing won, so no metric claim is honest anymore — reset instead of
+        // leaving the previous encounter's label on a now-empty table.
+        setMetricLabel(DEFAULT_METRIC_LABEL);
       }
 
       setRankingsLoading(false);

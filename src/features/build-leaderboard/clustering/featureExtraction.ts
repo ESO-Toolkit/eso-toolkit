@@ -74,17 +74,27 @@ export function toFeatureVector(parse: DpsParse, maps: CanonicalMaps): ParseFeat
   // A >=5-piece set stranded in `extra` is a real five-piece bonus and belongs
   // with the slotted ones — otherwise a whole gear axis silently vanishes from
   // the distance function for exactly the builds our tables predate.
-  const counts = new Map<number, number>(build.setCounts);
-  const slotted = new Set(build.sets.fivePiece);
-  const promoted = (build.sets.extra ?? []).filter(
-    (id) => !slotted.has(id) && (counts.get(id) ?? 0) >= FIVE_PIECE_THRESHOLD,
-  );
+  //
+  // Counts are folded through the alias map BEFORE the threshold check: legacy
+  // rows written before the ingest folded perfected ids carry e.g. 3x772 +
+  // 2x767 as separate keys, and neither alone clears five pieces even though
+  // the player wears one set.
+  const counts = new Map<number, number>();
+  for (const [id, count] of build.setCounts) {
+    const canonical = canonicalSet(id, maps);
+    counts.set(canonical, (counts.get(canonical) ?? 0) + count);
+  }
+  const slottedCanonical = new Set([...build.sets.fivePiece].map((id) => canonicalSet(id, maps)));
+  const promoted = [...counts.entries()]
+    .filter(([id, count]) => !slottedCanonical.has(id) && count >= FIVE_PIECE_THRESHOLD)
+    .map(([id]) => id);
 
   // ascending dedupes, so a promoted id that canonicalizes onto an
   // already-slotted base set collapses rather than counting twice.
-  const fivePiece = ascending(
-    [...build.sets.fivePiece, ...promoted].map((id) => canonicalSet(id, maps)),
-  );
+  const fivePiece = ascending([
+    ...build.sets.fivePiece.map((id) => canonicalSet(id, maps)),
+    ...promoted,
+  ]);
   const front = build.bars.front.map((id) => canonicalAbility(id, maps));
   const back = build.bars.back.map((id) => canonicalAbility(id, maps));
 
