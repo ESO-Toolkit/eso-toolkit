@@ -132,10 +132,9 @@ describe('BuildLeaderboardPage', () => {
   });
 
   /**
-   * The class tab is scoped to an encounter (boss DPS ceilings differ by tens
-   * of thousands, so cross-encounter rows confound every archetype with the
-   * boss it was logged on), which makes it depend on the encounters feed — a
-   * failure there must surface with a working Retry instead of hanging.
+   * The class tab POOLS across bosses (per-encounter capped) — but it still
+   * depends on the encounters feed for DPS-ceiling normalization, so a failure
+   * there must surface with a working Retry instead of hanging.
    */
   it('surfaces an encounters-feed failure on the class tab, and Retry refetches it', async () => {
     const spy = jest
@@ -151,21 +150,42 @@ describe('BuildLeaderboardPage', () => {
     await userEvent.click(screen.getByRole('button', { name: /retry/i }));
 
     await waitFor(() => expect(spy.mock.calls.length).toBeGreaterThan(callsBefore));
-    // Once encounters resolve, the class query proceeds — scoped to a boss.
+    // Once encounters resolve, the pooled class query proceeds.
     await waitFor(() =>
       expect(dpsParsesApi.listParses).toHaveBeenCalledWith(
-        expect.objectContaining({ esoClass: 'Warden', encounterId: 60, difficulty: 122 }),
+        expect.objectContaining({ esoClass: 'Warden', perEncounterCap: 25, limit: 1000 }),
         expect.anything(),
       ),
     );
   });
 
   /**
-   * Regression guard for the encounter confounding: the class tab must never
-   * query by class alone.
+   * Pooled class view: query by class alone with a per-boss cap so high-
+   * ceiling boards don't crowd out the pool. Minority classes get real
+   * archetype samples instead of 'too few parses' on most bosses.
    */
-  it('scopes the class-tab query to the selected encounter', async () => {
+  it('pools the class-tab query across bosses with a per-encounter cap', async () => {
     renderPage('/build-leaderboard?tab=class&class=Necromancer');
+
+    await waitFor(() =>
+      expect(dpsParsesApi.listParses).toHaveBeenCalledWith(
+        expect.objectContaining({
+          esoClass: 'Necromancer',
+          perEncounterCap: 25,
+          limit: 1000,
+        }),
+        expect.anything(),
+      ),
+    );
+    expect(dpsParsesApi.listParses).not.toHaveBeenCalledWith(
+      expect.objectContaining({ esoClass: 'Necromancer', encounterId: expect.anything() }),
+      expect.anything(),
+    );
+  });
+
+  /** An explicit ?boss= still narrows the class tab to one board (#1451 behavior). */
+  it('narrows the class tab to one boss when the URL carries an explicit boss param', async () => {
+    renderPage('/build-leaderboard?tab=class&class=Necromancer&boss=60:122');
 
     await waitFor(() =>
       expect(dpsParsesApi.listParses).toHaveBeenCalledWith(

@@ -31,6 +31,17 @@ export interface BuildLeaderboardViewProps {
   esoClass?: string;
   /** Encounter context the parses were scoped to, shown with the card list. */
   scopeLabel?: string;
+  /**
+   * Human phrase for WHERE the parses come from, used by the too-few-parses
+   * message ('on DSR · Tideborn Taleria', 'across 14 trial bosses').
+   */
+  scopeDescription?: string;
+  /**
+   * How to render DPS numbers. 'pct' (pooled class view) shows each
+   * archetype's median as a percentage of the bosses' ceilings, since raw
+   * amounts from different bosses are not comparable.
+   */
+  dpsMode?: 'absolute' | 'pct';
   onRetry?: () => void;
   onOpenInEditor?: (cluster: BuildCluster) => void;
   onSaveBuild?: (cluster: BuildCluster) => void;
@@ -76,6 +87,8 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
   tooFewParses,
   esoClass,
   scopeLabel,
+  scopeDescription,
+  dpsMode = 'absolute',
   onRetry,
   onOpenInEditor,
   onSaveBuild,
@@ -120,18 +133,16 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
   if (parses.length === 0) return <Alert severity="info">{emptyMessage}</Alert>;
 
   if (tooFewParses) {
-    // Say WHERE the thinness is: on the class view the boss usually has plenty
-    // of parses — the slice for THIS class is what's small. Without the
-    // totals, "Only 2 parses are recorded here" reads like the boss is empty.
-    const scope =
-      esoClass && scopeLabel
-        ? `${esoClass} parses on ${scopeLabel.replace(/ parses$/, '')}`
-        : 'this selection';
+    // Say WHERE the thinness is: on the pooled class view the boss count
+    // matters; on a single boss the class slice does. Without the scope,
+    // "Only 2 parses are recorded here" reads like the boss is empty.
+    const scope = scopeDescription ?? 'in this selection';
     return (
       <Alert severity="info" data-testid="too-few-parses">
-        Only {parses.length} {scope} — not enough to identify reliable build patterns yet (at least
-        10 needed). Patterns appear as more top players post logs; try another boss or the Encounter
-        tab in the meantime.
+        Only {parses.length} {esoClass ? `${esoClass} parses ` : 'parses '}
+        {scope} — not enough to identify reliable build patterns yet (at least 10 needed). Patterns
+        appear as more top players post logs; try another class or the Encounter tab in the
+        meantime.
       </Alert>
     );
   }
@@ -379,6 +390,7 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
                   recommended={cluster.id === result.recommendedClusterId}
                   showClassIcon={!esoClass}
                   medoidParse={representativeParseFor(cluster)}
+                  dpsMode={dpsMode}
                   onSelect={() => handleSelect(cluster.id)}
                 />
               ))}
@@ -410,6 +422,7 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
               variations={selected.variations}
               sourceUrl={representativeParseFor(selected)?.source_url}
               representativeDps={representativeParseFor(selected)?.amount}
+              dpsMode={dpsMode}
               pendingKind={pendingAction?.clusterId === selected.id ? pendingAction.kind : null}
               actionsDisabled={Boolean(pendingAction)}
               onOpenInEditor={onOpenInEditor}

@@ -71,7 +71,13 @@ export interface BuildInspectorProps {
   variations?: readonly ClusterTrait[];
   sourceUrl?: string;
   representativeDps?: number;
+  /** 'pct' (pooled class view): amounts are fractions of each boss's ceiling. */
+  dpsMode?: 'absolute' | 'pct';
 }
+
+/** Median/range display: absolute k, or percent-of-boss-ceiling when pooled. */
+const formatDps = (value: number, mode: 'absolute' | 'pct'): string =>
+  mode === 'pct' ? `${Math.round(value * 100)}%` : compactDps(value);
 
 export const BuildInspector: React.FC<BuildInspectorProps> = ({
   cluster,
@@ -88,6 +94,7 @@ export const BuildInspector: React.FC<BuildInspectorProps> = ({
   variations = [],
   sourceUrl,
   representativeDps,
+  dpsMode = 'absolute',
 }) => {
   const theme = useTheme();
   const compactEvidence = useMediaQuery(theme.breakpoints.down('sm'));
@@ -272,7 +279,7 @@ export const BuildInspector: React.FC<BuildInspectorProps> = ({
                 letterSpacing: '-0.035em',
               }}
             >
-              {compactDps(cluster.dps.median)}
+              {formatDps(cluster.dps.median, dpsMode)}
               <Box
                 component="span"
                 sx={{
@@ -283,14 +290,14 @@ export const BuildInspector: React.FC<BuildInspectorProps> = ({
                   letterSpacing: '0.05em',
                 }}
               >
-                DPS
+                {dpsMode === 'pct' ? 'OF CEILING' : 'DPS'}
               </Box>
             </Typography>
             <Typography
               className="u-tabular"
               sx={{ mt: -0.15, color: 'text.secondary', fontSize: '0.67rem', fontWeight: 500 }}
             >
-              Middle half {compactDps(cluster.dps.q1)}–{compactDps(cluster.dps.q3)}
+              Middle half {formatDps(cluster.dps.q1, dpsMode)}–{formatDps(cluster.dps.q3, dpsMode)}
             </Typography>
           </Box>
           <Box
@@ -535,8 +542,8 @@ export const BuildInspector: React.FC<BuildInspectorProps> = ({
               sx={{ mt: 0.2, color: 'text.secondary', fontSize: '0.76rem' }}
             >
               {compactEvidence
-                ? `${compactDps(cluster.dps.median)} DPS · ${cluster.size} parses`
-                : `${label} · ${compactDps(cluster.dps.median)} DPS · ${cluster.size} of ${totalParses} top parses`}
+                ? `${formatDps(cluster.dps.median, dpsMode)}${dpsMode === 'pct' ? ' of ceiling' : ' DPS'} · ${cluster.size} parses`
+                : `${label} · ${formatDps(cluster.dps.median, dpsMode)}${dpsMode === 'pct' ? ' of ceiling' : ' DPS'} · ${cluster.size} of ${totalParses} top parses`}
             </Typography>
           </Box>
           <IconButton

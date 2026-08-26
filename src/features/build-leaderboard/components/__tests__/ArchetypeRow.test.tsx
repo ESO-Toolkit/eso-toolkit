@@ -62,17 +62,23 @@ function makeParse(overrides: Partial<DpsParse> = {}): DpsParse {
   };
 }
 
-function renderRow(medoidParse?: DpsParse): void {
+function renderRow(
+  medoidParse?: DpsParse,
+  dpsMode?: 'absolute' | 'pct',
+  clusterOverride?: Partial<typeof CLUSTER>,
+): void {
+  const cluster = { ...CLUSTER, ...clusterOverride };
   render(
     <ThemeProvider theme={theme}>
       <ol>
         <ArchetypeRow
-          cluster={CLUSTER}
+          cluster={cluster}
           label={CLUSTER.label}
           selected={false}
           recommended={false}
           showClassIcon
           medoidParse={medoidParse}
+          dpsMode={dpsMode}
           onSelect={() => {}}
         />
       </ol>
@@ -131,5 +137,26 @@ describe('ArchetypeRow freshness line', () => {
   it('omits the line entirely when there is no timestamp to show', () => {
     renderRow(makeParse());
     expect(screen.queryByTestId('archetype-freshness')).not.toBeInTheDocument();
+  });
+});
+
+describe('ArchetypeRow DPS display mode', () => {
+  /**
+   * Pooled class view: amounts are fractions of each boss's ceiling, so the
+   * median must render as a percentage — a raw "0.9k" would be nonsense.
+   */
+  it('renders the median as percent-of-ceiling in pct mode', () => {
+    renderRow(undefined, 'pct', {
+      dps: { ...CLUSTER.dps, median: 0.91 },
+      size: 90,
+    });
+    expect(screen.getByText('91%')).toBeInTheDocument();
+    expect(screen.getByText(/90 parses · 91% typical/)).toBeInTheDocument();
+    expect(screen.queryByText(/^100k$/)).not.toBeInTheDocument();
+  });
+
+  it('keeps absolute k DPS by default', () => {
+    renderRow();
+    expect(screen.getByText('100k')).toBeInTheDocument();
   });
 });

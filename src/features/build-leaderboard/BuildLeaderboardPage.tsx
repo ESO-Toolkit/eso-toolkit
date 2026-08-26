@@ -45,6 +45,8 @@ function isEsoClass(value: string | null): value is EsoClass {
 }
 
 const CLASS_LABELS: Record<string, string> = { DragonKnight: 'Dragonknight' };
+/** Picker sentinel for the pooled (all-bosses) class view. */
+const ALL_BOSSES = '__all__';
 
 function encounterKey(encounter: Pick<DpsEncounterSummary, 'encounter_id' | 'difficulty'>): string {
   return `${encounter.encounter_id}:${encounter.difficulty}`;
@@ -126,20 +128,64 @@ export const BuildLeaderboardPage: React.FC = () => {
   }, [encounters, encounterParam]);
 
   const parseQuery = useMemo(() => {
+    // Class tab POOLS across bosses by default: pattern identity (gear, bars,
+    // skill lines) does not require same-boss parses, and per-boss slices
+    // starve minority classes (a 54%-Necromancer board left Dragonknights 2
+    // parses on a boss with 201). DPS is normalized to each boss's ceiling
+    // before display instead. An explicit ?boss= still narrows to one board.
+    if (tab === 'class') {
+      const bossFilter =
+        selectedEncounter && encounterParam
+          ? {
+              encounterId: selectedEncounter.encounter_id,
+              difficulty: selectedEncounter.difficulty,
+            }
+          : {};
+      if (!selectedClass) return null;
+      return { esoClass: selectedClass, perEncounterCap: 25, ...bossFilter };
+    }
     if (!selectedEncounter) return null;
-    // The class tab shares the encounter scope: boss DPS ceilings differ by tens
-    // of thousands, so a cross-encounter top-200 would confound every class
-    // archetype with whichever 1-2 bosses its players happened to log.
-    const encounterScope = {
+    return {
       encounterId: selectedEncounter.encounter_id,
       difficulty: selectedEncounter.difficulty,
     };
-    if (tab === 'class') return { esoClass: selectedClass, ...encounterScope };
-    return encounterScope;
-  }, [tab, selectedClass, selectedEncounter]);
+  }, [tab, selectedClass, selectedEncounter, encounterParam]);
 
   const resolveBaseAbilityId = useBaseAbilityResolver();
-  const { parses, loading, error, reload } = useDpsParses(parseQuery);
+  // Pooled class view: normalize each parse's DPS to its own boss's ceiling so
+  // cross-boss medians mean something ("91% of what the best parse on that
+  // boss achieved"). Encounter-tab amounts stay absolute.
+  const isPooledClass = tab === 'class' && !encounterParam;
+  const { parses, loading, error, reload } = useDpsParses(
+    parseQuery,
+    // Pooled views must fit EVERY board's capped rows (boards x 25) — a
+    // smaller limit ordered by raw amount would drop whole low-ceiling boards
+    // before normalization. The cap bounds this to realistic hundreds.
+    isPooledClass ? 1000 : undefined,
+  );
+
+  const topAmountByKey = useMemo(() => {
+    const map = new Map<string, number>();
+    encounters.forEach((encounter) => {
+      map.set(`${encounter.encounter_id}:${encounter.difficulty}`, encounter.top_amount);
+    });
+    return map;
+  }, [encounters]);
+  const clusterParses = useMemo(() => {
+    if (!isPooledClass) return parses;
+    return parses.map((parse) => {
+      const top = topAmountByKey.get(`${parse.encounter_id}:${parse.difficulty}`);
+      return top && top > 0 && parse.amount > 0 ? { ...parse, amount: parse.amount / top } : parse;
+    });
+  }, [isPooledClass, parses, topAmountByKey]);
+  // Wait for boss ceilings before clustering a pooled view, or every parse
+  // would carry its raw amount and re-cluster once ceilings arrive.
+  const poolingReady = !isPooledClass || topAmountByKey.size > 0;
+  const bossCount = useMemo(
+    () => new Set(parses.map((parse) => `${parse.encounter_id}:${parse.difficulty}`)).size,
+    [parses],
+  );
+
   const {
     result,
     loading: clustering,
@@ -147,7 +193,7 @@ export const BuildLeaderboardPage: React.FC = () => {
     error: clusterError,
     tooFewParses,
     recluster,
-  } = useBuildClusters(parses, resolveBaseAbilityId);
+  } = useBuildClusters(poolingReady ? clusterParses : [], resolveBaseAbilityId);
 
   const setParam = useCallback(
     (updates: Record<string, string | null>) => {
@@ -331,8 +377,17 @@ export const BuildLeaderboardPage: React.FC = () => {
               <Select
                 labelId="dps-encounter-label"
                 aria-label="Encounter"
-                value={selectedEncounter ? encounterKey(selectedEncounter) : ''}
-                onChange={(event) => setParam({ boss: String(event.target.value) })}
+                value={
+                  tab === 'class' && !encounterParam
+                    ? ALL_BOSSES
+                    : selectedEncounter
+                      ? encounterKey(selectedEncounter)
+                      : ''
+                }
+                onChange={(event) => {
+                  const next = String(event.target.value);
+                  setParam({ boss: next === ALL_BOSSES ? null : next });
+                }}
                 IconComponent={KeyboardArrowDownRounded}
                 MenuProps={{
                   slotProps: {
@@ -372,9 +427,11 @@ export const BuildLeaderboardPage: React.FC = () => {
                         fontWeight: 600,
                       }}
                     >
-                      {selectedEncounter
-                        ? `${selectedEncounter.trial_id ? `${selectedEncounter.trial_id} · ` : ''}${selectedEncounter.encounter_name}`
-                        : 'Choose an encounter'}
+                      {tab === 'class' && !encounterParam
+                        ? 'All trial bosses'
+                        : selectedEncounter
+                          ? `${selectedEncounter.trial_id ? `${selectedEncounter.trial_id} · ` : ''}${selectedEncounter.encounter_name}`
+                          : 'Choose an encounter'}
                     </Typography>
                   </Box>
                 )}
@@ -415,6 +472,18 @@ export const BuildLeaderboardPage: React.FC = () => {
                   '& .MuiSelect-icon': { right: 14, color: 'text.secondary', fontSize: 21 },
                 })}
               >
+                {tab === 'class' && (
+                  <MenuItem
+                    value={ALL_BOSSES}
+                    sx={(theme) => ({
+                      minHeight: 40,
+                      fontWeight: 600,
+                      color: theme.palette.primary.main,
+                    })}
+                  >
+                    All trial bosses
+                  </MenuItem>
+                )}
                 {encounters.map((encounter) => (
                   <MenuItem
                     key={encounterKey(encounter)}
@@ -626,8 +695,20 @@ export const BuildLeaderboardPage: React.FC = () => {
               tooFewParses={tooFewParses}
               esoClass={CLASS_LABELS[selectedClass] ?? selectedClass}
               scopeLabel={
-                selectedEncounter ? `${encounterLabel(selectedEncounter)} parses` : undefined
+                isPooledClass
+                  ? undefined
+                  : selectedEncounter
+                    ? `${encounterLabel(selectedEncounter)} parses`
+                    : undefined
               }
+              scopeDescription={
+                isPooledClass
+                  ? `across ${bossCount} trial ${bossCount === 1 ? 'boss' : 'bosses'}`
+                  : selectedEncounter
+                    ? `on ${encounterLabel(selectedEncounter)}`
+                    : undefined
+              }
+              dpsMode={isPooledClass ? 'pct' : 'absolute'}
               onRetry={handleRetry}
               onOpenInEditor={openInEditor}
               onSaveBuild={saveToMyBuilds}

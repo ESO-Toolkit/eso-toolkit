@@ -43,8 +43,9 @@ import type { Env } from '../types';
 const MAX_SUBREQUESTS_PER_RUN = 120;
 /** Encounters per run. Two crons/day covers the full ~35-boss rotation daily. */
 const MAX_ENCOUNTERS_PER_RUN = 20;
-/** 100 parses/page; two pages comfortably fills the top-200 retention window. */
-const PAGES_PER_ENCOUNTER = 2;
+/** 100 parses/page; four pages fill the 400-row retention window so minority
+ * classes actually get ingested instead of being capped by fetch depth. */
+const PAGES_PER_ENCOUNTER = 4;
 // Global cap per (encounter, difficulty). Sized so a meta dominated by one or
 // two classes still leaves meaningful samples of the others once the board is
 // sliced per class — the frontend's class view needs >=10 parses to cluster,
