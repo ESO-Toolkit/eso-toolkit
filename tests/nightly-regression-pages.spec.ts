@@ -444,7 +444,7 @@ test.describe('Nightly Regression - Pages & Features', () => {
   });
 
   // ---------------------------------------------------------------------------
-  // ESO-749: Utility pages — Gear Sets, Logs Browser, Parse Analysis
+  // ESO-749: Utility pages — Gear Sets, Legacy Logs Redirect, Parse Analysis
   // ---------------------------------------------------------------------------
   test.describe('Utility Pages', () => {
     test('gear sets page should load with content', async ({ page }) => {
@@ -455,24 +455,28 @@ test.describe('Nightly Regression - Pages & Features', () => {
       });
     });
 
-    test('logs page should show its coming soon state', async ({ page }) => {
+    test('legacy logs route should lead to the report analyzer', async ({ page }) => {
       await page.goto('/logs', {
         waitUntil: 'domcontentloaded',
         timeout: TEST_TIMEOUTS.navigation,
       });
-      await page
-        .waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad })
-        .catch(() => {});
       await waitForAppMount(page);
 
-      await expect(page.getByRole('heading', { name: 'Logs' })).toBeVisible({
+      await expect(page).toHaveURL(/\/(?:my-reports|login)(?:[?#]|$)/, {
         timeout: TEST_TIMEOUTS.dataLoad,
       });
-      await expect(page.getByRole('heading', { name: 'Coming Soon' })).toBeVisible();
+
+      const reportAnalyzer = page.getByRole('heading', { name: 'My Reports' });
+      const analyzerLogin = page.getByText('Connect with ESO Logs to analyze your combat data');
+      await expect(reportAnalyzer.or(analyzerLogin)).toBeVisible({
+        timeout: TEST_TIMEOUTS.dataLoad,
+      });
+
       await createSkeletonDetector(page).waitForSkeletonsToDisappear({ timeout: 15000 });
+      await page.waitForTimeout(1000);
 
       await page.screenshot({
-        path: 'test-results/nightly-regression-pages-logs.png',
+        path: 'test-results/nightly-regression-pages-logs-redirect.png',
         timeout: TEST_TIMEOUTS.screenshot,
       });
     });
