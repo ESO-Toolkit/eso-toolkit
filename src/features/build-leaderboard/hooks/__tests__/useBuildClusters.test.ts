@@ -97,6 +97,53 @@ describe('useBuildClusters', () => {
   });
 
   /**
+   * Regression (live-data report): a Dragonknight wearing ONLY the perfected
+   * variant of a set clustered under the canonical BASE id, while every
+   * parse's setCounts held only the perfected id — so label hydration missed
+   * and the chip rendered a raw "Set 767". The lookup must be keyed by the
+   * canonical id too.
+   */
+  it('labels perfected-canonicalized set traits with the base set name', async () => {
+    // 772 = Perfected Slivers of the Null Arca; 767 = its base id. Both are in
+    // SET_DISPLAY_NAMES under the same normalized name, so buildSetAliasMap
+    // folds 772 -> 767.
+    const PERFECTED_SLIVERS = 772;
+    const parses = Array.from({ length: 12 }, (_, i) =>
+      makeParse(
+        { ...NECRO_ARCHETYPE, fivePiece: [PERFECTED_SLIVERS, NECRO_ARCHETYPE.fivePiece[1]] },
+        i,
+      ),
+    );
+
+    mockedRun.mockResolvedValue({
+      ...EMPTY_RESULT,
+      k: 1,
+      clusters: [
+        {
+          id: 'c0',
+          label: 'x',
+          esoClass: NECRO_ARCHETYPE.esoClass,
+          size: 12,
+          share: 1,
+          memberParseIds: ['p1'],
+          medoidParseId: 'p1',
+          dps: { min: 0, q1: 0, median: 0, q3: 0, p90: 0, max: 0, mean: 0, count: 12 },
+          core: [{ group: 'fivePieceSets', id: 767, label: '', share: 1 }],
+          flex: [],
+          variations: [],
+          cohesion: 0,
+        },
+      ],
+    });
+
+    const { result } = renderHook(() => useBuildClusters(parses));
+    await waitFor(() => expect(result.current.result).not.toBeNull());
+
+    const trait = result.current.result!.clusters[0].core[0];
+    expect(trait.label).toBe('Slivers of the Null Arca');
+  });
+
+  /**
    * The worker now resolves skillLines ids against CLASS_SKILL_LINES itself.
    * Hydration must prefer that non-empty label over the (empty) parse-derived
    * lookup, otherwise worker-resolved names are clobbered with raw numbers.
