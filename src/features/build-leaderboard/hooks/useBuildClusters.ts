@@ -66,15 +66,15 @@ function buildLabelLookup(
       // only perfected pieces yields counts under e.g. 772 while their
       // cluster chip asks for 767 and falls back to a raw "Set <id>".
       const canonicalId = setAliases[rawSetId] ?? rawSetId;
-      // Prefer the canonical (base) id's name — a cluster chip canonicalized
-      // to the base set should read "Slivers of the Null Arca", not
-      // "Perfected Slivers…". The raw id's own name covers sets missing from
-      // our static table.
+      // Prefer the canonical (base) id's static name — a chip canonicalized to
+      // the base set should read "Slivers of the Null Arca", not "Perfected
+      // Slivers…". Placeholder-valued entries ("Unknown") lose to the parse's
+      // own name, which knows sets our table predates.
+      const staticName = setDisplayName(canonicalId);
       const name =
-        setDisplayName(canonicalId) ||
-        build.setNames?.[rawSetId] ||
-        build.setNames?.[canonicalId] ||
-        '';
+        staticName && !staticName.trim().toLowerCase().startsWith('unknown')
+          ? staticName
+          : build.setNames?.[rawSetId] || build.setNames?.[canonicalId] || staticName || '';
       labels.set(`fivePieceSets|${canonicalId}`, name);
       labels.set(`monsterSet|${canonicalId}`, name);
       labels.set(`mythic|${canonicalId}`, name);

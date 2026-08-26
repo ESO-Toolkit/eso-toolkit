@@ -20,9 +20,21 @@ import type { CanonicalMaps } from './featureExtraction';
 /** Normalized set name used to group and display-match perfected variants. */
 export function canonicalSetName(name: string): string {
   return name
+    .trim()
     .replace(/^perfected\s+/i, '')
     .trim()
     .toLowerCase();
+}
+
+/**
+ * Placeholder names must never drive aliasing: the table carries three
+ * distinct "Unknown" ids (846/2268/2342) for sets our data predates, and
+ * folding them into one id would merge genuinely different builds and mask
+ * each row's real parse-provided name. Mirrors the same exclusion in
+ * `findSetIdByName`.
+ */
+function isPlaceholderName(name: string): boolean {
+  return name.trim().toLowerCase() === 'unknown';
 }
 
 /**
@@ -41,7 +53,7 @@ export function buildSetAliasMap(): Record<number, number> {
 
   for (const [rawId, name] of Object.entries(SET_DISPLAY_NAMES)) {
     const id = Number(rawId);
-    if (!Number.isFinite(id) || typeof name !== 'string') continue;
+    if (!Number.isFinite(id) || typeof name !== 'string' || isPlaceholderName(name)) continue;
 
     const key = canonicalSetName(name);
     const ids = byName.get(key);
