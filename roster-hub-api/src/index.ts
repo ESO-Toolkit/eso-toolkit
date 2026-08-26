@@ -2308,6 +2308,7 @@ app.get('/dps-leaderboard/parses', async (c) => {
     hardModeLevel: num(c.req.query('hard_mode_level')),
     esoClass,
     signatureHash: c.req.query('signature'),
+    perEncounterCap: num(c.req.query('per_encounter_cap')),
     limit: num(c.req.query('limit')),
     offset: num(c.req.query('offset')),
     sort: sortParam === 'recent' ? 'recent' : 'amount',

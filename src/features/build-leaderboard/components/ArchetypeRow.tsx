@@ -51,8 +51,17 @@ export interface ArchetypeRowProps {
   showClassIcon: boolean;
   /** The cluster's representative parse, for the freshness line. */
   medoidParse?: DpsParse;
+  /**
+   * 'pct' (pooled class view): amounts are normalized to each boss's ceiling,
+   * so the median renders as a percentage of ceiling instead of fake k DPS.
+   */
+  dpsMode?: 'absolute' | 'pct';
   onSelect: () => void;
 }
+
+/** Median DPS display: absolute k, or percent-of-boss-ceiling when pooled. */
+const formatTypical = (median: number, mode: 'absolute' | 'pct'): string =>
+  mode === 'pct' ? `${Math.round(median * 100)}%` : compactDps(median);
 
 export const ArchetypeRow: React.FC<ArchetypeRowProps> = ({
   cluster,
@@ -61,8 +70,10 @@ export const ArchetypeRow: React.FC<ArchetypeRowProps> = ({
   recommended,
   showClassIcon,
   medoidParse,
+  dpsMode = 'absolute',
   onSelect,
 }) => {
+  const typical = formatTypical(cluster.dps.median, dpsMode);
   const classTheme = getLeaderboardClassTheme(cluster.esoClass);
   const classLabel = cluster.esoClass === 'DragonKnight' ? 'Dragonknight' : cluster.esoClass;
   const escapedClass = cluster.esoClass.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -76,7 +87,7 @@ export const ArchetypeRow: React.FC<ArchetypeRowProps> = ({
       <ButtonBase
         data-testid={recommended ? 'recommended-row' : 'archetype-row'}
         aria-current={selected ? 'true' : undefined}
-        aria-label={`${label}, typical damage ${compactDps(cluster.dps.median)}, ${cluster.size} top parses${recommended ? ', recommended' : ''}`}
+        aria-label={`${label}, typical damage ${typical}, ${cluster.size} top parses${recommended ? ', recommended' : ''}`}
         onClick={onSelect}
         sx={(theme) => ({
           position: 'relative',
@@ -203,7 +214,7 @@ export const ArchetypeRow: React.FC<ArchetypeRowProps> = ({
                 fontSize: '0.69rem',
               }}
             >
-              {cluster.size} parses · {compactDps(cluster.dps.median)} typical
+              {cluster.size} parses · {typical} typical
             </Typography>
             {freshness && (
               <Typography
@@ -239,7 +250,7 @@ export const ArchetypeRow: React.FC<ArchetypeRowProps> = ({
             fontWeight: 700,
           }}
         >
-          {compactDps(cluster.dps.median)}
+          {typical}
         </Typography>
         <ChevronRight
           aria-hidden="true"

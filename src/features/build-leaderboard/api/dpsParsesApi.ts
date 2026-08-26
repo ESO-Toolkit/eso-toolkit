@@ -247,6 +247,11 @@ export interface ListParsesOptions {
   limit?: number;
   offset?: number;
   sort?: 'amount' | 'recent';
+  /**
+   * Pooled class view: cap each boss's contribution at its N best rows so
+   * high-ceiling boards don't crowd out the pool. Server-side clamped [1,100].
+   */
+  perEncounterCap?: number;
 }
 
 export const dpsParsesApi = {
@@ -271,6 +276,9 @@ export const dpsParsesApi = {
     if (opts.difficulty !== undefined) params.set('difficulty', String(opts.difficulty));
     if (opts.esoClass) params.set('class', opts.esoClass);
     if (opts.signatureHash) params.set('signature', opts.signatureHash);
+    if (opts.perEncounterCap !== undefined) {
+      params.set('per_encounter_cap', String(opts.perEncounterCap));
+    }
     if (opts.limit !== undefined) params.set('limit', String(opts.limit));
     if (opts.offset !== undefined) params.set('offset', String(opts.offset));
     if (opts.sort) params.set('sort', opts.sort);

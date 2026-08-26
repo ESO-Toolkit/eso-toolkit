@@ -114,11 +114,24 @@ describe('BuildLeaderboardView states', () => {
       parses: parses.slice(0, 2),
       tooFewParses: true,
       esoClass: 'Dragonknight',
-      scopeLabel: 'DSR · Tideborn Taleria parses',
+      scopeDescription: 'on DSR · Tideborn Taleria',
     });
     const alert = screen.getByTestId('too-few-parses');
     expect(alert).toHaveTextContent(/only 2 dragonknight parses on DSR · Tideborn Taleria/i);
-    expect(alert).toHaveTextContent(/try another boss or the encounter tab/i);
+    expect(alert).toHaveTextContent(/try another class or the encounter tab/i);
+  });
+
+  it('describes pooled scope across bosses', () => {
+    const { parses } = clusteredFixture();
+    renderView({
+      parses: parses.slice(0, 4),
+      tooFewParses: true,
+      esoClass: 'Dragonknight',
+      scopeDescription: 'across 14 trial bosses',
+    });
+    expect(screen.getByTestId('too-few-parses')).toHaveTextContent(
+      /4 dragonknight parses across 14 trial bosses/i,
+    );
   });
 
   it('announces clustering progress politely', () => {
