@@ -83,6 +83,12 @@ export interface BuildSignatureV1 {
   skillLines?: { l1?: number; l2?: number; l3?: number };
   /** Support ultimate display name, when one was slotted. */
   ultimate?: string;
+  /**
+   * Werewolf builds produce no skillLines signal (the world skill line has no
+   * CLASS_SKILL_LINES index), so the flag rides alongside it. Omitted entirely
+   * for non-werewolf builds so existing signature hashes are unchanged.
+   */
+  werewolf?: boolean;
   esoClass?: string;
   spec?: string;
   /**
@@ -313,6 +319,9 @@ export function extractBuildSignature(
         }
       : undefined,
     ultimate: talentInfo.ul,
+    // JSON.stringify drops undefined keys, so non-werewolf signatures keep their
+    // exact previous bytes — and their hashes.
+    werewolf: talentInfo.werewolf === true ? true : undefined,
     esoClass: entry.esoClass,
     spec: entry.spec,
     missing: [...ALWAYS_MISSING],

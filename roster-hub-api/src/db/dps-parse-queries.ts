@@ -92,6 +92,12 @@ function toPublic(row: DpsParseRow): DpsParsePublic {
 export interface ListDpsParsesOptions {
   encounterId?: number;
   difficulty?: number;
+  /**
+   * Exact-match filter on the stored hard-mode tier (0 = normal, 1 = vet HM,
+   * 2 = vet C+HM where the encounter supports it). Parameterized like every
+   * other condition; rows with a NULL tier simply never match an exact filter.
+   */
+  hardModeLevel?: number;
   esoClass?: string;
   signatureHash?: string;
   limit?: number;
@@ -128,6 +134,10 @@ export async function listDpsParses(
   if (opts.esoClass) {
     conditions.push('eso_class = ?');
     bindings.push(opts.esoClass);
+  }
+  if (opts.hardModeLevel !== undefined) {
+    conditions.push('hard_mode_level = ?');
+    bindings.push(opts.hardModeLevel);
   }
   if (opts.signatureHash) {
     conditions.push('signature_hash = ?');
@@ -259,13 +269,19 @@ ON CONFLICT (encounter_id, difficulty, character_key) DO UPDATE SET
   combatant_json = excluded.combatant_json,
   signature_version = excluded.signature_version,
   updated_at = datetime('now')
--- Rewrite when the parse improved, when a newer patch supersedes it, OR when the
--- signature format has moved on. Without that last clause a signature change
--- (a new field, a fixed categorisation) never reaches rows already stored: the
--- re-ingest sees identical data, the amount is not greater, and nothing updates.
+-- Rewrite when the parse improved OR EQUALLED (identical re-sync), when a newer
+-- patch supersedes it, OR when the signature format has moved on.
+--
+-- The >= comparison on amount matters for row LIFECYCLE, not just correctness:
+-- with a strict > an identical re-ingest skipped DO UPDATE entirely, so
+-- updated_at froze at the first-seen timestamp and the stale-row DELETE in
+-- pruneDpsParses then purged rows that were still ranked and still being
+-- re-synced every rotation. Using >= lets the no-op rewrite through; the data
+-- written is identical, but updated_at refreshes and the row proves it is
+-- still alive.
 WHERE excluded.signature_version > dps_parses.signature_version
    OR excluded.partition > dps_parses.partition
-   OR (excluded.partition = dps_parses.partition AND excluded.amount > dps_parses.amount)`;
+   OR (excluded.partition = dps_parses.partition AND excluded.amount >= dps_parses.amount)`;
 
 export type DpsParseInsert = Omit<DpsParseRow, 'ingested_at' | 'updated_at' | 'evidence_enriched'>;
 
@@ -273,7 +289,10 @@ export type DpsParseInsert = Omit<DpsParseRow, 'ingested_at' | 'updated_at' | 'e
  * Insert-or-improve a batch of parses.
  *
  * The ON CONFLICT guard resolves all three collisions with one statement:
- *  - a re-run over identical data writes nothing (idempotent),
+ *  - a re-run over identical data rewrites the same values (idempotent content),
+ *    which refreshes `updated_at` so the stale-row prune does not eat rows that
+ *    are still ranked and still syncing — while `ingested_at`, absent from the
+ *    DO UPDATE column list, keeps its first-seen timestamp,
  *  - a character re-parsing keeps whichever attempt scored higher,
  *  - a newer partition always wins, even at LOWER dps, so the table tracks the
  *    current patch's meta instead of pinning a record from a prior balance state.
@@ -338,10 +357,51 @@ export async function getBlockedCharacterKeys(db: D1Database): Promise<Set<strin
 }
 
 /**
+ * Remove parses for blocked characters that were stored before they asked.
+ *
+ * The blocklist is enforced pre-insert, but rows ingested earlier persisted
+ * forever — a takedown only took effect on the next full table rebuild. Called
+ * once per sync pass with the same key set the pre-insert check uses.
+ *
+ * Chunked like upsertDpsParses: D1 caps bound parameters per statement, and a
+ * blocklist longer than one IN (...) list must not silently truncate.
+ */
+const PURGE_CHUNK_SIZE = 90;
+
+export async function purgeBlockedDpsParses(
+  db: D1Database,
+  keys: ReadonlySet<string>,
+): Promise<void> {
+  if (keys.size === 0) return;
+
+  const allKeys = [...keys];
+  const statements = [];
+  for (let i = 0; i < allKeys.length; i += PURGE_CHUNK_SIZE) {
+    const chunk = allKeys.slice(i, i + PURGE_CHUNK_SIZE);
+    const placeholders = chunk.map(() => '?').join(', ');
+    statements.push(
+      db.prepare(`DELETE FROM dps_parses WHERE character_key IN (${placeholders})`).bind(...chunk),
+    );
+  }
+  await db.batch(statements);
+}
+
+/**
  * Trim an encounter back to its top N and drop long-stale rows.
  *
  * Written without window functions: the cut-off is read as a single value via
  * LIMIT/OFFSET, which SQLite handles with the existing index.
+ *
+ * Both DELETEs are scoped to the same (encounter, difficulty) as the top-N cut.
+ * The stale-row sweep was originally GLOBAL — one encounter's prune pass deleted
+ * aged rows from every OTHER encounter too. That is wrong twice over: a run
+ * touching one boss should not mutate another's leaderboard, and since the
+ * upsert now refreshes `updated_at` on identical re-ingest, only genuinely
+ * abandoned encounters should age out at all. NOTE: because pruning only runs
+ * for the encounter just synced, an encounter skipped by the scheduler keeps
+ * its rows until its next successful sync rather than aging out in the interim.
+ * `ingested_at` is untouched by both statements: first-seen semantics survive
+ * every rewrite and prune.
  */
 export async function pruneDpsParses(
   db: D1Database,
@@ -362,8 +422,12 @@ export async function pruneDpsParses(
       )
       .bind(encounterId, difficulty, keepTop),
     db
-      .prepare(`DELETE FROM dps_parses WHERE updated_at < datetime('now', ?)`)
-      .bind(`-${staleDays} days`),
+      .prepare(
+        `DELETE FROM dps_parses
+          WHERE encounter_id = ?1 AND difficulty = ?2
+            AND updated_at < datetime('now', ?3)`,
+      )
+      .bind(encounterId, difficulty, `-${staleDays} days`),
   ]);
 }
 
@@ -385,6 +449,17 @@ export async function listStaleSyncTargets(
   return rows.results;
 }
 
+/**
+ * Record the outcome of one encounter's sync pass in the cron cursor.
+ *
+ * On status 'error' the DO UPDATE deliberately PRESERVES the prior
+ * `last_synced_at` instead of stamping now: a failed fetch must not make an
+ * encounter look freshly synced, or it drops out of the stalest-first ordering
+ * for a full rotation and its outage is invisible until the next sweep happens
+ * to reach it. The empty streak itself is supplied by the caller (which also
+ * leaves it untouched on error), so a transient failure neither resets nor
+ * inflates it.
+ */
 export async function recordSyncResult(
   db: D1Database,
   state: {
@@ -405,12 +480,16 @@ export async function recordSyncResult(
       `INSERT INTO dps_parse_sync_state (
          encounter_id, difficulty, encounter_name, zone_id,
          last_page, last_synced_at, last_status, last_error, rows_ingested, empty_streak
-       ) VALUES (?, ?, ?, ?, ?, datetime('now'), ?, ?, ?, ?)
+       ) VALUES (?, ?, ?, ?, ?,
+         CASE WHEN ? = 'error' THEN NULL ELSE datetime('now') END,
+         ?, ?, ?, ?)
        ON CONFLICT (encounter_id, difficulty) DO UPDATE SET
          encounter_name = excluded.encounter_name,
          zone_id        = excluded.zone_id,
          last_page      = excluded.last_page,
-         last_synced_at = excluded.last_synced_at,
+         last_synced_at = CASE WHEN excluded.last_status = 'error'
+                           THEN dps_parse_sync_state.last_synced_at
+                           ELSE excluded.last_synced_at END,
          last_status    = excluded.last_status,
          last_error     = excluded.last_error,
          rows_ingested  = excluded.rows_ingested,
@@ -422,6 +501,7 @@ export async function recordSyncResult(
       state.encounterName,
       state.zoneId,
       state.lastPage,
+      state.status,
       state.status,
       state.error,
       state.rowsIngested,

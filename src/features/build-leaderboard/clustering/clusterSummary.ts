@@ -6,6 +6,9 @@
  * need?" — and trait shares answer that from data rather than opinion.
  */
 
+// Pure data (a const string table), safe to pull into the clustering worker —
+// unlike the skill/set registries, which stay main-thread-only.
+import { CLASS_SKILL_LINES } from '../../../types/classSkillLines';
 import type {
   ClusterTrait,
   DpsSummary,
@@ -76,8 +79,10 @@ export function traitShares(
   // chips for a layout we explicitly do not know.
   const groupMass = new Map<FeatureGroupKey, number>();
 
+  // Zero is a valid sentinel for most id spaces, but skillLines ids INDEX
+  // CLASS_SKILL_LINES — index 0 (Ardent Flame) is a real trait and must count.
   const add = (group: FeatureGroupKey, id: number | string | null, mass: number): void => {
-    if (id === null || id === '' || id === 0) return;
+    if (id === null || id === '' || (id === 0 && group !== 'skillLines')) return;
     const key = `${group}|${id}`;
     const existing = counts.get(key);
     if (existing) existing.mass += mass;
@@ -94,6 +99,7 @@ export function traitShares(
       apply();
     };
 
+    forGroup('skillLines', () => vector.skillLines.forEach((id) => add('skillLines', id, mass)));
     forGroup('fivePieceSets', () =>
       vector.fivePieceSets.forEach((id) => add('fivePieceSets', id, mass)),
     );
@@ -107,11 +113,18 @@ export function traitShares(
     forGroup('race', () => add('race', vector.race, mass));
   });
 
+  // skillLines ids index CLASS_SKILL_LINES, a static table we can afford to
+  // resolve here. Without this the trait would be an invisible clustering axis:
+  // weighted 2.0 in the distance function yet never surfaced as a chip, because
+  // the main-thread label lookup only knows set/ability names.
+  const labelFor = (group: FeatureGroupKey, id: number | string): string =>
+    group === 'skillLines' && typeof id === 'number' ? (CLASS_SKILL_LINES[id] ?? '') : '';
+
   return [...counts.values()]
     .map(({ group, id, mass }) => ({
       group,
       id,
-      label: '',
+      label: labelFor(group, id),
       share: mass / (groupMass.get(group) || totalMass),
     }))
     .sort((a, b) => b.share - a.share || String(a.id).localeCompare(String(b.id)));

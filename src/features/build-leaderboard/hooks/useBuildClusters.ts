@@ -8,6 +8,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { CLASS_SKILL_LINES } from '../../../types/roster';
 import { buildCanonicalMaps, setDisplayName } from '../clustering/canonicalization';
 import { MIN_PARSES_TO_CLUSTER } from '../clustering/clusterBuilds';
 import { extractFeatureVectors } from '../clustering/featureExtraction';
@@ -81,6 +82,10 @@ function fallbackLabel(group: ClusterTrait['group'], id: number | string): strin
   if (typeof id !== 'number') return String(id);
 
   switch (group) {
+    case 'skillLines':
+      // Indices into CLASS_SKILL_LINES — the same table the worker resolves
+      // against; this covers a worker that left the label blank anyway.
+      return (typeof id === 'number' && CLASS_SKILL_LINES[id]) || `Skill line ${id}`;
     case 'frontBar':
     case 'backBar':
       return `Ability ${id}`;
@@ -103,7 +108,13 @@ function hydrateLabels(cluster: BuildCluster, labels: Map<string, string>): Buil
   const hydrate = (traits: BuildCluster['core']): BuildCluster['core'] =>
     traits.map((trait) => ({
       ...trait,
-      label: labels.get(`${trait.group}|${trait.id}`) ?? fallbackLabel(trait.group, trait.id),
+      // The worker already resolves some groups itself (skillLines against
+      // CLASS_SKILL_LINES). Prefer its non-empty label over clobbering it with
+      // a raw numeric fallback; our lookup only fills in what it could not.
+      label:
+        trait.label ||
+        labels.get(`${trait.group}|${trait.id}`) ||
+        fallbackLabel(trait.group, trait.id),
     }));
 
   const core = hydrate(cluster.core);

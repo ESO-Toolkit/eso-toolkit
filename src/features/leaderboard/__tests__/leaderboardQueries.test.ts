@@ -8,6 +8,14 @@ import {
   GetTrialZonesQuery,
 } from '../../../graphql/gql/graphql';
 import { GraphqlTestHarness } from '../../../graphql/testing/graphqlTestHarness';
+import {
+  buildCandidateVariables,
+  LEADERBOARD_PAGE_SIZE,
+  metricLabelFor,
+  resolveWinningVariables,
+  winningVariablesKey,
+  type WinningVariablesMap,
+} from '../fightRankingVariables';
 import { parseFightRankings, parseTrialZones } from '../LeaderboardLogsPage';
 type HarnessWithStub = {
   harness: GraphqlTestHarness;
@@ -243,7 +251,9 @@ describe('leaderboard GraphQL queries', () => {
           reportStart: 4000,
         },
         {
-          rank: 4,
+          // Rank omitted by the API — fallback numbering is offset by
+          // (page - 1) * pageSize so it stays monotonic across pages.
+          rank: 204,
           score: 175000,
           percentile: undefined,
           teamName: 'Missing Rank',
@@ -260,5 +270,164 @@ describe('leaderboard GraphQL queries', () => {
       hasMorePages: true,
       total: 45,
     });
+  });
+});
+
+describe('fight ranking variable plans', () => {
+  const baseVariables: GetEncounterFightRankingsQueryVariables = {
+    encounterId: 300,
+    difficulty: 2,
+    page: 1,
+    metric: FightRankingMetricType.Score,
+    size: 12,
+  };
+
+  it('appends partition -1 (all partitions) as the final fallback candidate', () => {
+    const candidates = buildCandidateVariables(baseVariables, {
+      prefersLegacyPartition: false,
+    });
+
+    expect(candidates.length).toBeGreaterThan(1);
+    expect(candidates[candidates.length - 1].partition).toBe(-1);
+    // The ordinary space is still explored before the last resort.
+    expect(candidates[0].partition).toBeUndefined();
+    expect(candidates.some((candidate) => candidate.partition === 0)).toBe(true);
+  });
+
+  it('tries legacy partition 0 first for legacy encounters', () => {
+    const candidates = buildCandidateVariables(baseVariables, {
+      preferredPartition: undefined,
+      prefersLegacyPartition: true,
+    });
+
+    expect(candidates[0].partition).toBe(0);
+    expect(candidates[candidates.length - 1].partition).toBe(-1);
+  });
+
+  it('honours a stored partition preference without duplicating candidates', () => {
+    const candidates = buildCandidateVariables(baseVariables, {
+      preferredPartition: 0,
+      prefersLegacyPartition: false,
+    });
+
+    const signatures = candidates.map((candidate) => JSON.stringify(candidate));
+    expect(new Set(signatures).size).toBe(signatures.length);
+    expect(candidates[0].partition).toBe(0);
+  });
+});
+
+describe('winning variable persistence', () => {
+  it('returns null when no winning variables exist yet', () => {
+    const store: WinningVariablesMap = new Map();
+
+    expect(resolveWinningVariables(store, winningVariablesKey(300, 2), 2)).toBeNull();
+  });
+
+  it('reuses the exact winning size/metric/partition for subsequent pages', () => {
+    const store: WinningVariablesMap = new Map();
+    const key = winningVariablesKey(300, 2);
+    // Page 1 only succeeded after falling back to metric=default, dropping
+    // size and landing on partition=0.
+    store.set(key, {
+      encounterId: 300,
+      difficulty: 2,
+      page: 1,
+      metric: FightRankingMetricType.Default,
+      size: undefined,
+      partition: 0,
+    });
+
+    expect(resolveWinningVariables(store, key, 2)).toEqual({
+      encounterId: 300,
+      difficulty: 2,
+      page: 2,
+      metric: FightRankingMetricType.Default,
+      size: undefined,
+      partition: 0,
+    });
+    expect(resolveWinningVariables(store, key, 3)).toEqual(
+      expect.objectContaining({ page: 3, partition: 0 }),
+    );
+  });
+
+  it('keys winning variables per encounter and difficulty', () => {
+    const store: WinningVariablesMap = new Map();
+    store.set(winningVariablesKey(300, 2), {
+      encounterId: 300,
+      difficulty: 2,
+      page: 1,
+      metric: FightRankingMetricType.Default,
+      partition: -1,
+    });
+
+    expect(resolveWinningVariables(store, winningVariablesKey(301, 2), 2)).toBeNull();
+    expect(resolveWinningVariables(store, winningVariablesKey(300, null), 2)).toBeNull();
+  });
+});
+
+describe('metric label honesty', () => {
+  it('labels the default metric when the score query fell back to it', () => {
+    expect(metricLabelFor(FightRankingMetricType.Default)).toBe('Default');
+  });
+
+  it('labels score for the primary metric and as the fallback default', () => {
+    expect(metricLabelFor(FightRankingMetricType.Score)).toBe('Score');
+    expect(metricLabelFor(undefined)).toBe('Score');
+    expect(metricLabelFor(null)).toBe('Score');
+  });
+});
+
+describe('rank offset across pages', () => {
+  const buildResponse = (page: number): GetEncounterFightRankingsQuery => ({
+    worldData: {
+      encounter: {
+        __typename: 'Encounter',
+        id: 300,
+        name: 'Test Boss',
+        zone: { __typename: 'Zone', id: 20, name: 'Test Zone' },
+        fightRankings: {
+          page,
+          has_more_pages: 0,
+          data: [{ name: 'No Rank A' }, { name: 'No Rank B' }],
+        },
+      },
+    },
+  });
+
+  it('offsets fallback ranks by (page - 1) * pageSize so they stay monotonic', () => {
+    const parsedPageOne = parseFightRankings(buildResponse(1), 1);
+    expect(parsedPageOne.rankings.map((row) => row.rank)).toEqual([1, 2]);
+
+    const parsedPageTwo = parseFightRankings(buildResponse(2), 2);
+    expect(parsedPageTwo.rankings.map((row) => row.rank)).toEqual([
+      LEADERBOARD_PAGE_SIZE + 1,
+      LEADERBOARD_PAGE_SIZE + 2,
+    ]);
+  });
+
+  it('supports an explicit smaller page size', () => {
+    const parsed = parseFightRankings(buildResponse(3), 3, 10);
+    expect(parsed.rankings.map((row) => row.rank)).toEqual([21, 22]);
+  });
+
+  it('never overrides ranks the API actually returned', () => {
+    const response: GetEncounterFightRankingsQuery = {
+      worldData: {
+        encounter: {
+          __typename: 'Encounter',
+          id: 300,
+          name: 'Test Boss',
+          zone: { __typename: 'Zone', id: 20, name: 'Test Zone' },
+          fightRankings: {
+            page: 5,
+            has_more_pages: 0,
+            data: [{ rank: 401, name: 'Real Rank' }, { name: 'Fallback Rank' }],
+          },
+        },
+      },
+    };
+
+    const parsed = parseFightRankings(response, 5);
+    expect(parsed.rankings.map((row) => row.rank)).toEqual([401, 402]);
   });
 });

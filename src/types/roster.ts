@@ -50,43 +50,11 @@ export enum HealerChampionPoint {
 
 /**
  * ESO Class skill lines - organized by class with all 3 skill lines
+ *
+ * The table itself lives in ./classSkillLines (a leaf module so worker
+ * bundles can import it without this file's heavier dependency graph).
  */
-export const CLASS_SKILL_LINES = [
-  // Dragonknight
-  'Ardent Flame',
-  'Draconic Power',
-  'Earthen Heart',
-
-  // Sorcerer
-  'Dark Magic',
-  'Daedric Summoning',
-  'Storm Calling',
-
-  // Nightblade
-  'Assassination',
-  'Shadow',
-  'Siphoning',
-
-  // Templar
-  'Aedric Spear',
-  "Dawn's Wrath",
-  'Restoring Light',
-
-  // Warden
-  'Animal Companions',
-  'Green Balance',
-  "Winter's Embrace",
-
-  // Necromancer
-  'Grave Lord',
-  'Bone Tyrant',
-  'Living Death',
-
-  // Arcanist
-  'Herald of the Tome',
-  'Apocryphal Soldier',
-  'Curative Runeforms',
-] as const;
+export { CLASS_SKILL_LINES } from './classSkillLines';
 
 /**
  * Skill line configuration for a player

@@ -46,9 +46,13 @@ const compactDps = (value: number): string =>
 const SPECIAL_GEAR_GROUPS = ['monsterSet', 'mythic', 'arena'] as const;
 const ASSET_ICON_ROOT = 'https://assets.rpglogs.com/img/eso/abilities/';
 
-const gearIconUrl = (icon?: string): string | undefined => {
+/**
+ * Exported for tests. Like `assetIconUrl` in RepresentativeBuildEvidence, the
+ * passthrough of `http…` values is deliberately absent: the icon name comes
+ * from combatant data, and only the asset host may serve images.
+ */
+export const gearIconUrl = (icon?: string): string | undefined => {
   if (!icon) return undefined;
-  if (icon.startsWith('http')) return icon;
   return `${ASSET_ICON_ROOT}${encodeURIComponent(icon)}.png`;
 };
 

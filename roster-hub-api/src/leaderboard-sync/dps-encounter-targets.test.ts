@@ -3,6 +3,7 @@ import {
   TRIAL_TEAM_SIZE,
   UNRANKED_ENCOUNTER_IDS,
   buildDpsEncounterTargets,
+  latestPartitionId,
   pickDifficulty,
 } from './dps-encounter-targets';
 import type { ZoneData } from './esologs-client';
@@ -115,5 +116,26 @@ describe('buildDpsEncounterTargets', () => {
   it('tolerates missing or malformed zone data', () => {
     expect(() => buildDpsEncounterTargets([])).not.toThrow();
     expect(buildDpsEncounterTargets([zone({ encounters: undefined as never })])).toHaveLength(0);
+  });
+
+  // The partition id is threaded into every stored row, so it must be the LATEST
+  // one (partitions arrive oldest-first) — not the first, and not a sentinel.
+  it('attaches the zone latest partition id', () => {
+    const [target] = buildDpsEncounterTargets([
+      zone({ partitions: [{ id: 12, name: 'U35' }, { id: 29, name: 'U40' }] }),
+    ]);
+    expect(target.partitionId).toBe(29);
+  });
+
+  it('falls back to null when the zone exposes no partitions', () => {
+    const [none] = buildDpsEncounterTargets([zone({ partitions: undefined })]);
+    expect(none.partitionId).toBeNull();
+
+    const [empty] = buildDpsEncounterTargets([zone({ partitions: [] })]);
+    expect(empty.partitionId).toBeNull();
+  });
+
+  it('latestPartitionId tolerates malformed entries', () => {
+    expect(latestPartitionId(zone({ partitions: [{ id: null } as never] }))).toBeNull();
   });
 });

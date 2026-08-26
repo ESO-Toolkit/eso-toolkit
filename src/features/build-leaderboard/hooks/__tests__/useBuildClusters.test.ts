@@ -96,6 +96,47 @@ describe('useBuildClusters', () => {
     expect(byGroup.food).toBe('Food 987657');
   });
 
+  /**
+   * The worker now resolves skillLines ids against CLASS_SKILL_LINES itself.
+   * Hydration must prefer that non-empty label over the (empty) parse-derived
+   * lookup, otherwise worker-resolved names are clobbered with raw numbers.
+   */
+  it('keeps worker-resolved skillLines labels and falls back to CLASS_SKILL_LINES', async () => {
+    mockedRun.mockResolvedValue({
+      ...EMPTY_RESULT,
+      k: 1,
+      clusters: [
+        {
+          id: 'c0',
+          label: 'x',
+          esoClass: 'Sorcerer',
+          size: 1,
+          share: 1,
+          memberParseIds: ['p1'],
+          medoidParseId: 'p1',
+          dps: { min: 0, q1: 0, median: 0, q3: 0, p90: 0, max: 0, mean: 0, count: 1 },
+          core: [
+            // Resolved by the worker — must survive untouched.
+            { group: 'skillLines', id: 5, label: 'Storm Calling', share: 1 },
+            // Left blank by the worker — resolved here via CLASS_SKILL_LINES[4].
+            { group: 'skillLines', id: 4, label: '', share: 1 },
+            // Out of range for the table entirely.
+            { group: 'skillLines', id: 987654, label: '', share: 1 },
+          ],
+          flex: [],
+          variations: [],
+          cohesion: 0,
+        },
+      ],
+    });
+
+    const { result } = renderHook(() => useBuildClusters(makeThreeArchetypeFixture()));
+    await waitFor(() => expect(result.current.result).not.toBeNull());
+
+    const labels = result.current.result!.clusters[0].core.map((t) => t.label);
+    expect(labels).toEqual(['Storm Calling', 'Daedric Summoning', 'Skill line 987654']);
+  });
+
   it('clusters a full set of parses', async () => {
     mockedRun.mockResolvedValue({ ...EMPTY_RESULT, k: 3 });
     const { result } = renderHook(() => useBuildClusters(makeThreeArchetypeFixture()));

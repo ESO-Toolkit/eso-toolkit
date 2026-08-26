@@ -1,4 +1,5 @@
 import { createRng } from '../../../ultimate-simulator/core/rng';
+import type { ParseFeatureVector } from '../../types/clustering.types';
 import type { DpsParse } from '../../types/dpsParses.types';
 import {
   ARCANIST_ARCHETYPE,
@@ -9,11 +10,73 @@ import {
   makeThreeArchetypeFixture,
   resetFixtureIds,
 } from '../__fixtures__/dpsParses.fixture';
+import { DEFAULT_FEATURE_WEIGHTS, buildDistance, buildDistanceMatrix } from '../buildDistance';
 import { clusterBuilds } from '../clusterBuilds';
-import { EMPTY_CANONICAL_MAPS, extractFeatureVectors } from '../featureExtraction';
+import {
+  EMPTY_CANONICAL_MAPS,
+  collapseDuplicateSignatures,
+  extractFeatureVectors,
+} from '../featureExtraction';
+import { weightedSilhouette } from '../silhouette';
 
-function clusterOf(parses: DpsParse[]) {
-  return clusterBuilds({ vectors: extractFeatureVectors(parses, EMPTY_CANONICAL_MAPS) });
+function clusterOf(parses: DpsParse[], options?: Parameters<typeof clusterBuilds>[0]['options']) {
+  return clusterBuilds({ vectors: extractFeatureVectors(parses, EMPTY_CANONICAL_MAPS), options });
+}
+
+/**
+ * Silhouette of the partition we actually got back, recomputed from first
+ * principles over the collapsed points. Used to pin the honesty invariant:
+ * result.silhouette must describe the FINAL labels, not the pre-merge cut.
+ */
+function silhouetteOfReturnedPartition(
+  result: ReturnType<typeof clusterOf>,
+  parses: DpsParse[],
+): number {
+  const vectors = extractFeatureVectors(parses, EMPTY_CANONICAL_MAPS);
+  const collapsed = collapseDuplicateSignatures(vectors);
+  const pointIndexByParseId = new Map<string, number>();
+  collapsed.members.forEach((ids, index) =>
+    ids.forEach((id) => pointIndexByParseId.set(id, index)),
+  );
+
+  const labelByPoint = new Map<number, number>();
+  result.clusters.forEach((cluster, label) => {
+    cluster.memberParseIds.forEach((id) => {
+      const point = pointIndexByParseId.get(id);
+      if (point !== undefined) labelByPoint.set(point, label);
+    });
+  });
+
+  const n = collapsed.points.length;
+  const condensed = buildDistanceMatrix(collapsed.points, DEFAULT_FEATURE_WEIGHTS);
+  const labels = collapsed.points.map((_, index) => labelByPoint.get(index) ?? 0);
+  return weightedSilhouette(condensed, n, labels, collapsed.multiplicity);
+}
+
+/** Minimal hand-built feature vector; only the varied groups affect distance. */
+let syntheticId = 0;
+function syntheticVector(overrides: Partial<ParseFeatureVector> = {}): ParseFeatureVector {
+  syntheticId += 1;
+  return {
+    parseId: `synthetic-${syntheticId}`,
+    amount: 100_000,
+    esoClass: 'Necromancer',
+    skillLines: [15, 16],
+    fivePieceSets: [127, 456],
+    frontBar: [10, 11],
+    backBar: [20, 21],
+    frontBarBase: [10, 11],
+    backBarBase: [20, 21],
+    monsterSet: null,
+    mythic: null,
+    arena: null,
+    cpSlottables: [],
+    mundus: null,
+    food: null,
+    race: null,
+    missing: [],
+    ...overrides,
+  };
 }
 
 /** Cluster membership as a canonical set-of-sets, for order-independent comparison. */
@@ -333,5 +396,258 @@ describe('recommendedClusterId', () => {
     // recommendation is passing it over on popularity, not on dps.
     const outlierCluster = result.clusters.find((c) => c.memberParseIds.includes(outlierId));
     expect(outlierCluster?.dps.median).toBeGreaterThan(recommended?.dps.median ?? 0);
+  });
+});
+
+describe('per-member cluster dps', () => {
+  /**
+   * Regression: duplicate collapsing kept only the max-dps representative and
+   * then fabricated N copies of that one value, inflating min/median/p90 for
+   * exactly the most popular builds. The old uniform-amount fixtures could not
+   * detect it — here the duplicates deliberately VARY in dps.
+   */
+  it('expands real per-parse amounts for identical builds with varying dps', () => {
+    resetFixtureIds();
+    const amounts = [100_000, 200_000, 300_000, 400_000];
+    const identical = amounts.map(
+      (amount) => makeParse(NECRO_ARCHETYPE, 1, { amount }), // same index => byte-identical builds
+    );
+
+    const result = clusterOf(identical);
+
+    expect(result.uniqueSignatures).toBe(1);
+    const dps = result.clusters[0].dps;
+    expect(dps.count).toBe(4);
+    expect(dps.min).toBe(100_000);
+    expect(dps.max).toBe(400_000);
+    expect(dps.median).toBe(250_000);
+    expect(dps.mean).toBe(250_000);
+    // Linear-interpolated p90 over [100k, 200k, 300k, 400k]: rank 2.7.
+    expect(dps.p90).toBeCloseTo(370_000, 6);
+    // The pre-fix behaviour reported the max everywhere — pin that it is gone.
+    expect(dps.median).toBeLessThan(dps.max);
+    expect(dps.p90).toBeLessThan(dps.max);
+  });
+
+  it('keeps the single-cluster path on real amounts too', () => {
+    resetFixtureIds();
+    const identical = [50_000, 150_000].map((amount) => makeParse(NECRO_ARCHETYPE, 1, { amount }));
+
+    const result = clusterOf(identical);
+    expect(result.k).toBe(1);
+    expect(result.clusters[0].dps.median).toBe(100_000);
+    expect(result.clusters[0].dps.min).toBe(50_000);
+  });
+});
+
+describe('silhouette honesty', () => {
+  /**
+   * Regression: result.silhouette was captured from the best RAW dendrogram cut,
+   * before mergeUndersizedClusters rewrote the labels — reporting separation for
+   * a partition that was never returned. Here an undersized near-neighbour gets
+   * merged away, collapsing the output to a single cluster whose silhouette must
+   * be the neutral 0, whatever the raw cuts scored.
+   */
+  it('reports the silhouette of the FINAL merged labels', () => {
+    resetFixtureIds();
+    // One byte-identical archetype (indices ≡1 mod 3 dodge the fixture jitter)
+    // plus a single parse differing only in monster set (lowest-weight gear
+    // axis): mass 1/31 < 5%, distance ~0.04 << 0.5, so the undersized cluster
+    // is absorbed and k collapses to 1.
+    const parses = [
+      ...Array.from({ length: 30 }, (_, i) => makeParse(NECRO_ARCHETYPE, 3 * i + 1)),
+      makeParse({ ...NECRO_ARCHETYPE, monster: SETS.zaan }, 1, { parse_id: 'absorbed' }),
+    ];
+
+    const result = clusterOf(parses);
+
+    expect(result.k).toBe(1);
+    expect(result.silhouette).toBeCloseTo(0, 6);
+    // And it matches a first-principles recompute of the returned partition…
+    expect(result.silhouette).toBeCloseTo(silhouetteOfReturnedPartition(result, parses), 6);
+    // …while silhouetteByK still reports the honest RAW cut scores.
+    expect(result.silhouetteByK.length).toBeGreaterThan(0);
+  });
+
+  /**
+   * Stronger form: here merging changes the partition AND the score. A singleton
+   * monster-set swap is absorbed into the standard archetype while the fixture
+   * jitter keeps a second cluster alive, so the returned labels differ from every
+   * raw dendrogram cut — and the reported silhouette must reflect that.
+   */
+  it('differs from every raw cut once merges rewrite the labels', () => {
+    resetFixtureIds();
+    const parses = [
+      ...Array.from({ length: 30 }, (_, i) => makeParse(NECRO_ARCHETYPE, i + 1)),
+      makeParse({ ...NECRO_ARCHETYPE, monster: SETS.zaan }, 1, { parse_id: 'absorbed' }),
+    ];
+
+    const result = clusterOf(parses);
+
+    // The absorption happened: the singleton joined an archetype instead of
+    // standing alone.
+    const absorbedCluster = result.clusters.find((c) => c.memberParseIds.includes('absorbed'));
+    expect(absorbedCluster?.memberParseIds.length).toBeGreaterThan(1);
+
+    // The reported value describes the FINAL labels…
+    expect(result.silhouette).toBeCloseTo(silhouetteOfReturnedPartition(result, parses), 6);
+    // …and no raw cut coincidentally produced that same number.
+    expect(
+      result.silhouetteByK.some((entry) => Math.abs(entry.score - result.silhouette) < 1e-6),
+    ).toBe(false);
+  });
+
+  it('matches a recompute of the returned partition on multi-cluster data', () => {
+    const parses = makeThreeArchetypeFixture();
+    const result = clusterOf(parses);
+    expect(result.silhouette).toBeCloseTo(silhouetteOfReturnedPartition(result, parses), 5);
+  });
+});
+
+describe('cohesion weighting', () => {
+  /**
+   * Regression: cohesion averaged unique-signature pairs unweighted while every
+   * other summary (medoid, silhouette, dps) is mass-weighted. A pair of rare
+   * signatures counted as much as a pair carrying 10 parses each side.
+   */
+  it('weights pair distances by multiplicity product', () => {
+    syntheticId = 0;
+    // A ×9 (the common signature), B a hair off it (monster set only),
+    // C further off it (monster + mythic + arena + food).
+    const common = Array.from({ length: 9 }, () => syntheticVector({ monsterSet: SETS.slimecraw }));
+    const near = syntheticVector({ monsterSet: SETS.zaan });
+    const far = syntheticVector({
+      monsterSet: SETS.zaan,
+      mythic: SETS.velothi,
+      arena: SETS.merciless,
+      food: 1,
+      mundus: 1,
+    });
+
+    const result = clusterBuilds({
+      vectors: [...common, near, far],
+      options: { minClusterShare: 0.15 },
+    });
+
+    // C (mass 1/11) is undersized and merges into the {A,B} cluster → one archetype.
+    expect(result.k).toBe(1);
+    const cluster = result.clusters[0];
+    expect(cluster.size).toBe(11);
+
+    // Expected: sum(m_a * m_b * d(a,b)) / sum(m_a * m_b) over all pairs.
+    const points = collapseDuplicateSignatures([...common, near, far]).points;
+    let weightedSum = 0;
+    let weightSum = 0;
+    const mults = [9, 1, 1];
+    for (let a = 0; a < points.length; a++) {
+      for (let b = a + 1; b < points.length; b++) {
+        const w = mults[a] * mults[b];
+        weightedSum += w * buildDistance(points[a], points[b], DEFAULT_FEATURE_WEIGHTS);
+        weightSum += w;
+      }
+    }
+    const expectedWeighted = weightedSum / weightSum;
+
+    expect(cluster.cohesion).toBeCloseTo(expectedWeighted, 6);
+    // Guard: the unweighted average must differ, or this test proves nothing.
+    const unweighted =
+      [
+        buildDistance(points[0], points[1], DEFAULT_FEATURE_WEIGHTS),
+        buildDistance(points[0], points[2], DEFAULT_FEATURE_WEIGHTS),
+        buildDistance(points[1], points[2], DEFAULT_FEATURE_WEIGHTS),
+      ].reduce((x, y) => x + y, 0) / 3;
+    expect(expectedWeighted).not.toBeCloseTo(unweighted, 3);
+  });
+});
+
+describe('overflow distance cap', () => {
+  /**
+   * Regression: overflow signatures cut by maxUniqueSignatures were attached to
+   * their nearest medoid REGARDLESS of distance, bypassing MAX_MERGE_DISTANCE.
+   */
+  function overflowScenario(outlierOverrides: Partial<ParseFeatureVector>) {
+    syntheticId = 0;
+    const common = Array.from({ length: 5 }, (_, i) =>
+      syntheticVector({ parseId: `common-${i}`, monsterSet: SETS.slimecraw, amount: 500_000 - i }),
+    );
+    const keptSecond = syntheticVector({
+      parseId: 'kept-second',
+      monsterSet: SETS.zaan,
+      amount: 5_000,
+    });
+    const outlier = syntheticVector({
+      parseId: 'overflow-outlier',
+      amount: 100,
+      esoClass: 'Sorcerer',
+      skillLines: [4, 5],
+      fivePieceSets: [693, 127],
+      frontBar: [23200, 24785],
+      backBar: [217699, 222678],
+      frontBarBase: [23200, 24785],
+      backBarBase: [217699, 222678],
+      mythic: SETS.oakensoul,
+      arena: SETS.merciless,
+      ...outlierOverrides,
+    });
+
+    return { vectors: [...common, keptSecond, outlier] };
+  }
+
+  it('drops a distant overflow signature instead of attaching it', () => {
+    const input = overflowScenario({});
+    const result = clusterBuilds({ ...input, options: { maxUniqueSignatures: 2 } });
+
+    // The outlier is unrelated to everything: beyond the ceiling it stays out.
+    const assigned = result.clusters.flatMap((c) => c.memberParseIds);
+    expect(assigned).not.toContain('overflow-outlier');
+    expect(assigned).toHaveLength(6);
+    expect(result.droppedParses).toBe(1);
+    expect(result.totalParses).toBe(7);
+    // Consistent accounting: assigned + dropped === total.
+    expect(assigned.length + result.droppedParses).toBe(result.totalParses);
+  });
+
+  it('still attaches an overflow signature within the merge ceiling', () => {
+    // Identical to the common signature apart from the monster set (~0.04).
+    const input = overflowScenario({
+      esoClass: 'Necromancer',
+      skillLines: [15, 16],
+      fivePieceSets: [127, 456],
+      frontBar: [10, 11],
+      backBar: [20, 21],
+      frontBarBase: [10, 11],
+      backBarBase: [20, 21],
+      mythic: null,
+      arena: null,
+      monsterSet: SETS.azureblight,
+    });
+    const result = clusterBuilds({ ...input, options: { maxUniqueSignatures: 2 } });
+
+    const assigned = result.clusters.flatMap((c) => c.memberParseIds);
+    expect(assigned).toContain('overflow-outlier');
+    expect(result.droppedParses).toBe(0);
+  });
+
+  it('applies the same ceiling when the pipeline yields a single cluster', () => {
+    resetFixtureIds();
+    // 40 identical builds collapse to one point; a wild outlier is the only
+    // overflow signature. It must be dropped, not folded into the lone cluster.
+    const identical = Array.from({ length: 40 }, (_, i) =>
+      makeParse(NECRO_ARCHETYPE, i, { amount: 300_000 - i * 100 }),
+    );
+    const outlierVectors = extractFeatureVectors(
+      [makeParse(SORC_ARCHETYPE, 0, { amount: 900_000, parse_id: 'wild-outlier' })],
+      EMPTY_CANONICAL_MAPS,
+    );
+
+    const result = clusterBuilds({
+      vectors: [...extractFeatureVectors(identical, EMPTY_CANONICAL_MAPS), ...outlierVectors],
+      options: { maxUniqueSignatures: 1 },
+    });
+
+    expect(result.k).toBe(1);
+    expect(result.clusters[0].memberParseIds).not.toContain('wild-outlier');
+    expect(result.clusters[0].size).toBe(40);
+    expect(result.droppedParses).toBe(1);
   });
 });

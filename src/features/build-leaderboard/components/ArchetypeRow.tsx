@@ -6,9 +6,42 @@ import React from 'react';
 import { ClassIcon } from '../../../components/ClassIcon';
 import { DPS_DATA_COLOR, getLeaderboardClassTheme } from '../theme/leaderboardTheme';
 import type { BuildCluster } from '../types/clustering.types';
+import type { DpsParse } from '../types/dpsParses.types';
 
 const compactDps = (value: number): string =>
   value >= 1000 ? `${(value / 1000).toFixed(1).replace(/\.0$/, '')}k` : String(Math.round(value));
+
+const DAY_MS = 86_400_000;
+
+/** "Jul 12" style date, pinned to UTC so a log_date string round-trips unchanged. */
+function formatLogDate(ms: number): string {
+  return new Intl.DateTimeFormat('en-US', {
+    month: 'short',
+    day: 'numeric',
+    timeZone: 'UTC',
+  }).format(new Date(ms));
+}
+
+/**
+ * Human-readable age of the archetype's representative parse.
+ *
+ * Meta shifts with balance patches — an archetype led by parses two months old
+ * reads very differently from one set last week. Null when the parse carries no
+ * timestamp at all, so the row simply omits the line rather than guessing.
+ */
+export function parseFreshness(parse?: DpsParse): string | null {
+  if (!parse) return null;
+
+  const ms =
+    parse.log_start_ms ??
+    (parse.log_date ? Date.parse(`${parse.log_date.slice(0, 10)}T00:00:00Z`) : Number.NaN);
+  if (!Number.isFinite(ms)) return null;
+
+  const days = Math.floor((Date.now() - ms) / DAY_MS);
+  const dateLabel = formatLogDate(ms);
+  if (days <= 0) return `parses from ${dateLabel}`;
+  return `parses from ${dateLabel} · ${days}d old`;
+}
 
 export interface ArchetypeRowProps {
   cluster: BuildCluster;
@@ -16,6 +49,8 @@ export interface ArchetypeRowProps {
   selected: boolean;
   recommended: boolean;
   showClassIcon: boolean;
+  /** The cluster's representative parse, for the freshness line. */
+  medoidParse?: DpsParse;
   onSelect: () => void;
 }
 
@@ -25,6 +60,7 @@ export const ArchetypeRow: React.FC<ArchetypeRowProps> = ({
   selected,
   recommended,
   showClassIcon,
+  medoidParse,
   onSelect,
 }) => {
   const classTheme = getLeaderboardClassTheme(cluster.esoClass);
@@ -33,6 +69,7 @@ export const ArchetypeRow: React.FC<ArchetypeRowProps> = ({
   const buildLabel = showClassIcon
     ? label.replace(new RegExp(`\\s+${escapedClass}$`, 'i'), '').trim()
     : label;
+  const freshness = parseFreshness(medoidParse);
 
   return (
     <Box component="li" sx={{ listStyle: 'none' }}>
@@ -168,6 +205,15 @@ export const ArchetypeRow: React.FC<ArchetypeRowProps> = ({
             >
               {cluster.size} parses · {compactDps(cluster.dps.median)} typical
             </Typography>
+            {freshness && (
+              <Typography
+                className="u-tabular"
+                data-testid="archetype-freshness"
+                sx={{ mt: 0.15, color: 'text.secondary', fontSize: '0.62rem', fontWeight: 500 }}
+              >
+                {freshness}
+              </Typography>
+            )}
           </Box>
         </Box>
 

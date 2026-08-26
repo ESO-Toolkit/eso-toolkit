@@ -19,6 +19,7 @@ import { PanelErrorBoundary } from '../../components/PanelErrorBoundary';
 import { dpsParsesApi } from './api/dpsParsesApi';
 import { BuildLeaderboardView } from './components/BuildLeaderboardView';
 import { useArchetypeBuildActions } from './hooks/useArchetypeBuildActions';
+import { useBaseAbilityResolver } from './hooks/useBaseAbilityResolver';
 import { useBuildClusters } from './hooks/useBuildClusters';
 import { useDpsParses } from './hooks/useDpsParses';
 import { getLeaderboardClassTheme } from './theme/leaderboardTheme';
@@ -47,6 +48,10 @@ const CLASS_LABELS: Record<string, string> = { DragonKnight: 'Dragonknight' };
 
 function encounterKey(encounter: Pick<DpsEncounterSummary, 'encounter_id' | 'difficulty'>): string {
   return `${encounter.encounter_id}:${encounter.difficulty}`;
+}
+
+function encounterLabel(encounter: DpsEncounterSummary): string {
+  return `${encounter.trial_id ? `${encounter.trial_id} · ` : ''}${encounter.encounter_name}`;
 }
 
 function formatUpdatedAt(value: string): string {
@@ -117,14 +122,19 @@ export const BuildLeaderboardPage: React.FC = () => {
   }, [encounters, encounterParam]);
 
   const parseQuery = useMemo(() => {
-    if (tab === 'class') return { esoClass: selectedClass };
     if (!selectedEncounter) return null;
-    return {
+    // The class tab shares the encounter scope: boss DPS ceilings differ by tens
+    // of thousands, so a cross-encounter top-200 would confound every class
+    // archetype with whichever 1-2 bosses its players happened to log.
+    const encounterScope = {
       encounterId: selectedEncounter.encounter_id,
       difficulty: selectedEncounter.difficulty,
     };
+    if (tab === 'class') return { esoClass: selectedClass, ...encounterScope };
+    return encounterScope;
   }, [tab, selectedClass, selectedEncounter]);
 
+  const resolveBaseAbilityId = useBaseAbilityResolver();
   const { parses, loading, error, reload } = useDpsParses(parseQuery);
   const {
     result,
@@ -133,7 +143,7 @@ export const BuildLeaderboardPage: React.FC = () => {
     error: clusterError,
     tooFewParses,
     recluster,
-  } = useBuildClusters(parses);
+  } = useBuildClusters(parses, resolveBaseAbilityId);
 
   const setParam = useCallback(
     (updates: Record<string, string | null>) => {
@@ -156,11 +166,10 @@ export const BuildLeaderboardPage: React.FC = () => {
     [navigate, parses],
   );
 
-  const encounterTabError = tab === 'encounter' ? encountersError : null;
-  const combinedError = encounterTabError ?? error ?? clusterError;
+  const combinedError = encountersError ?? error ?? clusterError;
 
   const handleRetry = useCallback(() => {
-    if (encounterTabError) {
+    if (encountersError) {
       setEncountersToken((token) => token + 1);
       return;
     }
@@ -169,7 +178,7 @@ export const BuildLeaderboardPage: React.FC = () => {
       return;
     }
     if (clusterError) recluster();
-  }, [encounterTabError, error, clusterError, reload, recluster]);
+  }, [encountersError, error, clusterError, reload, recluster]);
 
   return (
     <Container
@@ -290,7 +299,17 @@ export const BuildLeaderboardPage: React.FC = () => {
             pt: 1.25,
           }}
         >
-          {tab === 'encounter' ? (
+          {/* The encounter picker renders on BOTH tabs: class comparisons are
+              only apples-to-apples within one boss, so the class tab requires
+              the same scoped selection (defaulted via selectedEncounter). */}
+          <Box
+            sx={{
+              width: '100%',
+              display: 'grid',
+              gap: { xs: 1, md: 1.25 },
+              alignContent: 'start',
+            }}
+          >
             <Box sx={{ width: '100%' }}>
               <Typography
                 id="dps-encounter-label"
@@ -438,63 +457,64 @@ export const BuildLeaderboardPage: React.FC = () => {
                 ))}
               </Select>
             </Box>
-          ) : (
-            <Box sx={{ width: '100%', overflowX: 'auto', pb: 0.25 }}>
-              <Box
-                role="radiogroup"
-                aria-label="ESO class"
-                sx={(theme) => ({
-                  display: 'inline-flex',
-                  minWidth: 'max-content',
-                  gap: 0.4,
-                  p: 0.4,
-                  border: `1px solid ${alpha(theme.palette.divider, 0.62)}`,
-                  borderRadius: 2,
-                  backgroundColor: alpha(theme.palette.background.paper, 0.42),
-                })}
-              >
-                {ESO_CLASSES.map((esoClass) => {
-                  const label = CLASS_LABELS[esoClass] ?? esoClass;
-                  const active = selectedClass === esoClass;
-                  const classTheme = getLeaderboardClassTheme(esoClass);
-                  return (
-                    <ButtonBase
-                      key={esoClass}
-                      role="radio"
-                      aria-checked={active}
-                      aria-label={label}
-                      onClick={() => setParam({ class: esoClass })}
-                      sx={(theme) => ({
-                        display: 'flex',
-                        gap: 0.7,
-                        px: 1.1,
-                        minHeight: 36,
-                        borderRadius: 1.5,
-                        color: active ? 'text.primary' : 'text.secondary',
-                        fontSize: '0.74rem',
-                        fontWeight: active ? 700 : 600,
-                        backgroundColor: active ? alpha(classTheme.accent, 0.12) : 'transparent',
-                        boxShadow: active
-                          ? `inset 0 0 0 1px ${alpha(classTheme.accent, 0.34)}, 0 5px 18px ${alpha(classTheme.accent, 0.1)}`
-                          : 'none',
-                        '&:hover': {
-                          color: 'text.primary',
-                          backgroundColor: alpha(classTheme.accent, active ? 0.16 : 0.055),
-                        },
-                        '&:focus-visible': {
-                          outline: `2px solid ${theme.palette.primary.main}`,
-                          outlineOffset: 1,
-                        },
-                      })}
-                    >
-                      <ClassIcon className={label} size={15} alt="" />
-                      {label}
-                    </ButtonBase>
-                  );
-                })}
+            {tab === 'class' && (
+              <Box sx={{ width: '100%', overflowX: 'auto', pb: 0.25 }}>
+                <Box
+                  role="radiogroup"
+                  aria-label="ESO class"
+                  sx={(theme) => ({
+                    display: 'inline-flex',
+                    minWidth: 'max-content',
+                    gap: 0.4,
+                    p: 0.4,
+                    border: `1px solid ${alpha(theme.palette.divider, 0.62)}`,
+                    borderRadius: 2,
+                    backgroundColor: alpha(theme.palette.background.paper, 0.42),
+                  })}
+                >
+                  {ESO_CLASSES.map((esoClass) => {
+                    const label = CLASS_LABELS[esoClass] ?? esoClass;
+                    const active = selectedClass === esoClass;
+                    const classTheme = getLeaderboardClassTheme(esoClass);
+                    return (
+                      <ButtonBase
+                        key={esoClass}
+                        role="radio"
+                        aria-checked={active}
+                        aria-label={label}
+                        onClick={() => setParam({ class: esoClass })}
+                        sx={(theme) => ({
+                          display: 'flex',
+                          gap: 0.7,
+                          px: 1.1,
+                          minHeight: 36,
+                          borderRadius: 1.5,
+                          color: active ? 'text.primary' : 'text.secondary',
+                          fontSize: '0.74rem',
+                          fontWeight: active ? 700 : 600,
+                          backgroundColor: active ? alpha(classTheme.accent, 0.12) : 'transparent',
+                          boxShadow: active
+                            ? `inset 0 0 0 1px ${alpha(classTheme.accent, 0.34)}, 0 5px 18px ${alpha(classTheme.accent, 0.1)}`
+                            : 'none',
+                          '&:hover': {
+                            color: 'text.primary',
+                            backgroundColor: alpha(classTheme.accent, active ? 0.16 : 0.055),
+                          },
+                          '&:focus-visible': {
+                            outline: `2px solid ${theme.palette.primary.main}`,
+                            outlineOffset: 1,
+                          },
+                        })}
+                      >
+                        <ClassIcon className={label} size={15} alt="" />
+                        {label}
+                      </ButtonBase>
+                    );
+                  })}
+                </Box>
               </Box>
-            </Box>
-          )}
+            )}
+          </Box>
           {result && (
             <Box
               sx={{
@@ -518,7 +538,7 @@ export const BuildLeaderboardPage: React.FC = () => {
                   {result.k}
                 </Box>{' '}
                 patterns
-                {tab === 'encounter' && selectedEncounter?.updated_at
+                {selectedEncounter?.updated_at
                   ? ` · updated ${formatUpdatedAt(selectedEncounter.updated_at)}`
                   : ' · ESO Logs data'}
               </Typography>
@@ -595,12 +615,15 @@ export const BuildLeaderboardPage: React.FC = () => {
             <BuildLeaderboardView
               parses={parses}
               result={result}
-              loading={loading}
+              loading={loading || encountersLoading}
               clustering={clustering}
               clusterProgress={progress}
               error={combinedError}
               tooFewParses={tooFewParses}
               esoClass={CLASS_LABELS[selectedClass] ?? selectedClass}
+              scopeLabel={
+                selectedEncounter ? `${encounterLabel(selectedEncounter)} parses` : undefined
+              }
               onRetry={handleRetry}
               onOpenInEditor={openInEditor}
               onSaveBuild={saveToMyBuilds}

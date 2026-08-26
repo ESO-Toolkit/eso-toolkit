@@ -74,6 +74,47 @@ const SUPPORT_ULTIMATE_MAP = new Map<number, string>([
   [23495, 'Greater Storm Atronach'],
 ]);
 
+/**
+ * Core Werewolf ability IDs, sourced from src/data/skill-lines/world/werewolf.ts
+ * (the repo's source of truth for the world skill line). Covers both the base
+ * abilities and every morph, so any slotted Werewolf signal is detected.
+ *
+ * WHY THESE DO NOT APPEAR IN ABILITY_TO_LINE: CLASS_SKILL_LINES
+ * (src/types/roster.ts) enumerates exactly the 21 CLASS skill lines (indices
+ * 0-20 above) and has no Werewolf/world entry. Encoding a synthetic index like
+ * 21 would flow into CompactSkills.sl and be decoded client-side against a table
+ * with no 22nd element — at best `undefined`, at worst a misattributed skill
+ * line. Until that schema grows a world-skill-line segment, Werewolf detection
+ * is exposed separately via isWerewolfBuild()/TalentDetectionResult.werewolf.
+ */
+export const WEREWOLF_ABILITY_IDS: ReadonlySet<number> = new Set<number>([
+  32455, // Werewolf Transformation (ultimate, base)
+  39075, // Pack Leader (morph)
+  39076, // Werewolf Berserker (morph)
+  32632, // Pounce
+  39104, // Feral Pounce (morph)
+  39105, // Brutal Pounce (morph)
+  58310, // Hircine's Bounty
+  58317, // Hircine's Rage (morph)
+  58325, // Hircine's Fortitude (morph)
+  32633, // Roar
+  39113, // Ferocious Roar (morph)
+  39114, // Deafening Roar (morph)
+  58405, // Gnash (U50 rename of Piercing Howl)
+  58798, // Bloody Gnash (morph)
+  58742, // Rip and Tear (morph)
+  58850, // Rending Claws (U50 rename of Infectious Claws)
+  58864, // Claw Fury (morph)
+  58879, // Bloodclaws (morph)
+]);
+
+/** True when any slotted talent belongs to the Werewolf skill line. */
+export function isWerewolfBuild(talents: TalentItem[]): boolean {
+  return (talents ?? []).some(
+    (talent) => typeof talent?.guid === 'number' && WEREWOLF_ABILITY_IDS.has(talent.guid),
+  );
+}
+
 export interface CompactSkills {
   l1?: number | string;
   l2?: number | string;
@@ -83,6 +124,12 @@ export interface CompactSkills {
 export interface TalentDetectionResult {
   sl?: CompactSkills;
   ul?: string;
+  /**
+   * Werewolf builds carry no class skill-line signal at all (the Werewolf line is
+   * a world skill line, absent from CLASS_SKILL_LINES), so they are flagged here
+   * instead of encoded as a bogus index.
+   */
+  werewolf?: boolean;
 }
 
 /**
@@ -95,6 +142,7 @@ export function detectTalentInfo(talents: TalentItem[]): TalentDetectionResult {
 
   const lineCounts = new Map<number, number>();
   let ultimateName: string | undefined;
+  let werewolf = false;
 
   for (const talent of talents) {
     const guid = talent.guid;
@@ -104,6 +152,10 @@ export function detectTalentInfo(talents: TalentItem[]): TalentDetectionResult {
     const supportUlt = SUPPORT_ULTIMATE_MAP.get(guid);
     if (supportUlt && !ultimateName) {
       ultimateName = supportUlt;
+    }
+
+    if (WEREWOLF_ABILITY_IDS.has(guid)) {
+      werewolf = true;
     }
 
     const lineIdx = ABILITY_TO_LINE.get(guid);
@@ -127,6 +179,10 @@ export function detectTalentInfo(talents: TalentItem[]): TalentDetectionResult {
 
   if (ultimateName) {
     result.ul = ultimateName;
+  }
+
+  if (werewolf) {
+    result.werewolf = true;
   }
 
   return result;
