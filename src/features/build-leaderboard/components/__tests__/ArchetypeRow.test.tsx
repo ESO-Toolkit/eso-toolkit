@@ -64,7 +64,7 @@ function makeParse(overrides: Partial<DpsParse> = {}): DpsParse {
 
 function renderRow(
   medoidParse?: DpsParse,
-  dpsMode?: 'absolute' | 'pct',
+  bestParse?: DpsParse,
   clusterOverride?: Partial<typeof CLUSTER>,
 ): void {
   const cluster = { ...CLUSTER, ...clusterOverride };
@@ -78,7 +78,7 @@ function renderRow(
           recommended={false}
           showClassIcon
           medoidParse={medoidParse}
-          dpsMode={dpsMode}
+          bestParse={bestParse}
           onSelect={() => {}}
         />
       </ol>
@@ -140,22 +140,24 @@ describe('ArchetypeRow freshness line', () => {
   });
 });
 
-describe('ArchetypeRow DPS display mode', () => {
+describe('ArchetypeRow pooled headline', () => {
   /**
-   * Pooled class view: amounts are fractions of each boss's ceiling, so the
-   * median must render as a percentage — a raw "0.9k" would be nonsense.
+   * Pooled class view: cluster.dps holds ceiling fractions, so the HEADLINE is
+   * the cluster's best raw parse anchored to its trial ("112k @ DSR") — the
+   * number players actually use. Percent-of-ceiling demotes to secondary text.
    */
-  it('renders the median as percent-of-ceiling in pct mode', () => {
-    renderRow(undefined, 'pct', {
+  it('headlines the best raw parse with its trial anchor', () => {
+    renderRow(undefined, makeParse({ amount: 112_000, trial_id: 'DSR' }), {
       dps: { ...CLUSTER.dps, median: 0.91 },
-      size: 90,
+      size: 41,
     });
-    expect(screen.getByText('91%')).toBeInTheDocument();
-    expect(screen.getByText(/90 parses · 91% typical/)).toBeInTheDocument();
-    expect(screen.queryByText(/^100k$/)).not.toBeInTheDocument();
+    expect(screen.getByText('112k')).toBeInTheDocument();
+    expect(screen.getByText('@DSR')).toBeInTheDocument();
+    expect(screen.getByText(/typically 91%/)).toBeInTheDocument();
+    expect(screen.queryByText(/^91%$/)).not.toBeInTheDocument();
   });
 
-  it('keeps absolute k DPS by default', () => {
+  it('falls back to absolute median DPS when no best parse exists', () => {
     renderRow();
     expect(screen.getByText('100k')).toBeInTheDocument();
   });

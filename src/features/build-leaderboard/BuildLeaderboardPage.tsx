@@ -708,7 +708,7 @@ export const BuildLeaderboardPage: React.FC = () => {
                     ? `on ${encounterLabel(selectedEncounter)}`
                     : undefined
               }
-              dpsMode={isPooledClass ? 'pct' : 'absolute'}
+              pooled={isPooledClass}
               onRetry={handleRetry}
               onOpenInEditor={openInEditor}
               onSaveBuild={saveToMyBuilds}

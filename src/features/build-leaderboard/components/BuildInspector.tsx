@@ -71,13 +71,13 @@ export interface BuildInspectorProps {
   variations?: readonly ClusterTrait[];
   sourceUrl?: string;
   representativeDps?: number;
-  /** 'pct' (pooled class view): amounts are fractions of each boss's ceiling. */
-  dpsMode?: 'absolute' | 'pct';
+  /**
+   * Pooled class view: amounts in cluster.dps are fractions of each boss's
+   * ceiling, so the headline shows the medoid's RAW parse DPS instead and
+   * percentages move to secondary text.
+   */
+  pooled?: boolean;
 }
-
-/** Median/range display: absolute k, or percent-of-boss-ceiling when pooled. */
-const formatDps = (value: number, mode: 'absolute' | 'pct'): string =>
-  mode === 'pct' ? `${Math.round(value * 100)}%` : compactDps(value);
 
 export const BuildInspector: React.FC<BuildInspectorProps> = ({
   cluster,
@@ -94,7 +94,7 @@ export const BuildInspector: React.FC<BuildInspectorProps> = ({
   variations = [],
   sourceUrl,
   representativeDps,
-  dpsMode = 'absolute',
+  pooled = false,
 }) => {
   const theme = useTheme();
   const compactEvidence = useMediaQuery(theme.breakpoints.down('sm'));
@@ -267,7 +267,7 @@ export const BuildInspector: React.FC<BuildInspectorProps> = ({
                 textTransform: 'uppercase',
               }}
             >
-              Typical damage
+              {pooled ? 'Representative parse' : 'Typical damage'}
             </Typography>
             <Typography
               className="u-tabular"
@@ -279,7 +279,7 @@ export const BuildInspector: React.FC<BuildInspectorProps> = ({
                 letterSpacing: '-0.035em',
               }}
             >
-              {formatDps(cluster.dps.median, dpsMode)}
+              {compactDps(pooled ? (representativeDps ?? cluster.dps.median) : cluster.dps.median)}
               <Box
                 component="span"
                 sx={{
@@ -290,14 +290,18 @@ export const BuildInspector: React.FC<BuildInspectorProps> = ({
                   letterSpacing: '0.05em',
                 }}
               >
-                {dpsMode === 'pct' ? 'OF CEILING' : 'DPS'}
+                DPS
               </Box>
             </Typography>
             <Typography
               className="u-tabular"
               sx={{ mt: -0.15, color: 'text.secondary', fontSize: '0.67rem', fontWeight: 500 }}
             >
-              Middle half {formatDps(cluster.dps.q1, dpsMode)}–{formatDps(cluster.dps.q3, dpsMode)}
+              {pooled
+                ? `Typically ${Math.round(cluster.dps.median * 100)}% of ceiling · middle half ${Math.round(
+                    cluster.dps.q1 * 100,
+                  )}–${Math.round(cluster.dps.q3 * 100)}%`
+                : `Middle half ${compactDps(cluster.dps.q1)}–${compactDps(cluster.dps.q3)}`}
             </Typography>
           </Box>
           <Box
@@ -542,8 +546,8 @@ export const BuildInspector: React.FC<BuildInspectorProps> = ({
               sx={{ mt: 0.2, color: 'text.secondary', fontSize: '0.76rem' }}
             >
               {compactEvidence
-                ? `${formatDps(cluster.dps.median, dpsMode)}${dpsMode === 'pct' ? ' of ceiling' : ' DPS'} · ${cluster.size} parses`
-                : `${label} · ${formatDps(cluster.dps.median, dpsMode)}${dpsMode === 'pct' ? ' of ceiling' : ' DPS'} · ${cluster.size} of ${totalParses} top parses`}
+                ? `${compactDps(pooled ? (representativeDps ?? cluster.dps.median) : cluster.dps.median)} DPS · ${cluster.size} parses`
+                : `${label} · ${compactDps(pooled ? (representativeDps ?? cluster.dps.median) : cluster.dps.median)} DPS · ${cluster.size} of ${totalParses} top parses`}
             </Typography>
           </Box>
           <IconButton

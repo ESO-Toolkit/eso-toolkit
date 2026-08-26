@@ -52,16 +52,13 @@ export interface ArchetypeRowProps {
   /** The cluster's representative parse, for the freshness line. */
   medoidParse?: DpsParse;
   /**
-   * 'pct' (pooled class view): amounts are normalized to each boss's ceiling,
-   * so the median renders as a percentage of ceiling instead of fake k DPS.
+   * Pooled class view only: the cluster's best RAW parse. Its absolute DPS
+   * becomes the headline ("112k") anchored to its trial; cluster.dps holds
+   * fractions of ceiling and demotes to a secondary "typically N%" line.
    */
-  dpsMode?: 'absolute' | 'pct';
+  bestParse?: DpsParse;
   onSelect: () => void;
 }
-
-/** Median DPS display: absolute k, or percent-of-boss-ceiling when pooled. */
-const formatTypical = (median: number, mode: 'absolute' | 'pct'): string =>
-  mode === 'pct' ? `${Math.round(median * 100)}%` : compactDps(median);
 
 export const ArchetypeRow: React.FC<ArchetypeRowProps> = ({
   cluster,
@@ -70,10 +67,9 @@ export const ArchetypeRow: React.FC<ArchetypeRowProps> = ({
   recommended,
   showClassIcon,
   medoidParse,
-  dpsMode = 'absolute',
+  bestParse,
   onSelect,
 }) => {
-  const typical = formatTypical(cluster.dps.median, dpsMode);
   const classTheme = getLeaderboardClassTheme(cluster.esoClass);
   const classLabel = cluster.esoClass === 'DragonKnight' ? 'Dragonknight' : cluster.esoClass;
   const escapedClass = cluster.esoClass.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -81,13 +77,22 @@ export const ArchetypeRow: React.FC<ArchetypeRowProps> = ({
     ? label.replace(new RegExp(`\\s+${escapedClass}$`, 'i'), '').trim()
     : label;
   const freshness = parseFreshness(medoidParse);
+  // Pooled view: headline is the cluster's best RAW parse, anchored to its
+  // trial; cluster.dps holds ceiling fractions and demotes to secondary text.
+  const anchor = bestParse?.trial_id || bestParse?.encounter_name || '';
+  const headlineDps = compactDps(bestParse ? bestParse.amount : cluster.dps.median);
+  const typicalPct = `${Math.round(cluster.dps.median * 100)}%`;
 
   return (
     <Box component="li" sx={{ listStyle: 'none' }}>
       <ButtonBase
         data-testid={recommended ? 'recommended-row' : 'archetype-row'}
         aria-current={selected ? 'true' : undefined}
-        aria-label={`${label}, typical damage ${typical}, ${cluster.size} top parses${recommended ? ', recommended' : ''}`}
+        aria-label={
+          bestParse
+            ? `${label}, best ${headlineDps} DPS on ${anchor}, typically ${typicalPct} of ceiling, ${cluster.size} top parses${recommended ? ', recommended' : ''}`
+            : `${label}, typical damage ${headlineDps}, ${cluster.size} top parses${recommended ? ', recommended' : ''}`
+        }
         onClick={onSelect}
         sx={(theme) => ({
           position: 'relative',
@@ -214,7 +219,9 @@ export const ArchetypeRow: React.FC<ArchetypeRowProps> = ({
                 fontSize: '0.69rem',
               }}
             >
-              {cluster.size} parses · {typical} typical
+              {bestParse
+                ? `${headlineDps}${anchor ? ` @ ${anchor}` : ''} · ${cluster.size} parses · typically ${typicalPct}`
+                : `${cluster.size} parses · ${headlineDps} typical`}
             </Typography>
             {freshness && (
               <Typography
@@ -240,18 +247,32 @@ export const ArchetypeRow: React.FC<ArchetypeRowProps> = ({
         >
           {cluster.size}
         </Typography>
-        <Typography
-          className="u-tabular"
+        <Box
           sx={{
             display: { xs: 'none', sm: 'block' },
             textAlign: 'right',
-            color: DPS_DATA_COLOR,
-            fontSize: '0.9rem',
-            fontWeight: 700,
           }}
         >
-          {typical}
-        </Typography>
+          <Typography
+            className="u-tabular"
+            sx={{
+              textAlign: 'right',
+              color: DPS_DATA_COLOR,
+              fontSize: '0.9rem',
+              fontWeight: 700,
+            }}
+          >
+            {headlineDps}
+          </Typography>
+          {bestParse && anchor && (
+            <Typography
+              className="u-tabular"
+              sx={{ textAlign: 'right', color: 'text.secondary', fontSize: '0.62rem' }}
+            >
+              @{anchor}
+            </Typography>
+          )}
+        </Box>
         <ChevronRight
           aria-hidden="true"
           className="archetype-row-chevron"
