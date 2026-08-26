@@ -43,7 +43,10 @@ export interface UseBuildClustersResult {
 }
 
 /** Ability and set names pulled from the parses themselves, for trait labels. */
-function buildLabelLookup(parses: readonly DpsParse[]): Map<string, string> {
+function buildLabelLookup(
+  parses: readonly DpsParse[],
+  setAliases: Record<number, number> = {},
+): Map<string, string> {
   const labels = new Map<string, string>();
 
   for (const parse of parses) {
@@ -57,14 +60,31 @@ function buildLabelLookup(parses: readonly DpsParse[]): Map<string, string> {
       labels.set(`backBar|${abilityId}`, name);
     }
 
-    for (const [setId] of build.setCounts) {
-      // Our own table wins when it knows the set; the API's name is the fallback
-      // for anything newer than our data, which top-parse gear routinely is.
-      const name = setDisplayName(setId, build.setNames?.[setId]);
-      labels.set(`fivePieceSets|${setId}`, name);
-      labels.set(`monsterSet|${setId}`, name);
-      labels.set(`mythic|${setId}`, name);
-      labels.set(`arena|${setId}`, name);
+    for (const [rawSetId] of build.setCounts) {
+      // Cluster traits are keyed by CANONICAL set id (perfected folded into
+      // base), so register the alias target too — otherwise a player wearing
+      // only perfected pieces yields counts under e.g. 772 while their
+      // cluster chip asks for 767 and falls back to a raw "Set <id>".
+      const canonicalId = setAliases[rawSetId] ?? rawSetId;
+      // Prefer the canonical (base) id's name — a cluster chip canonicalized
+      // to the base set should read "Slivers of the Null Arca", not
+      // "Perfected Slivers…". The raw id's own name covers sets missing from
+      // our static table.
+      const name =
+        setDisplayName(canonicalId) ||
+        build.setNames?.[rawSetId] ||
+        build.setNames?.[canonicalId] ||
+        '';
+      labels.set(`fivePieceSets|${canonicalId}`, name);
+      labels.set(`monsterSet|${canonicalId}`, name);
+      labels.set(`mythic|${canonicalId}`, name);
+      labels.set(`arena|${canonicalId}`, name);
+      if (canonicalId !== rawSetId) {
+        labels.set(`fivePieceSets|${rawSetId}`, name);
+        labels.set(`monsterSet|${rawSetId}`, name);
+        labels.set(`mythic|${rawSetId}`, name);
+        labels.set(`arena|${rawSetId}`, name);
+      }
     }
   }
 
@@ -239,7 +259,7 @@ export function useBuildClusters(
 
     const maps = buildCanonicalMaps(parses, resolveBaseAbilityId);
     const vectors = extractFeatureVectors(parses, maps);
-    const labels = buildLabelLookup(parses);
+    const labels = buildLabelLookup(parses, maps.sets);
 
     runBuildClustering({ vectors }, (pct) => {
       if (!cancelled) setProgress(pct);

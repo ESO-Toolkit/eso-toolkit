@@ -106,13 +106,16 @@ export function buildCanonicalMaps(
 }
 
 /**
- * Display name for a set id.
+ * Display name for a set id, or '' when unknown.
  *
  * Prefers our own table but NEVER calls `getSetDisplayName`, which reports unknown
  * ids to Rollbar — ingested top parses routinely contain sets newer than our data,
- * and that would be a steady stream of false error reports.
+ * and that would be a steady stream of false error reports. Returning '' (rather
+ * than a "Set <id>" string) lets callers decide their own fallback — the trait
+ * hydration layer falls back to the parse-provided name before resorting to a
+ * raw id.
  */
 export function setDisplayName(setId: number, fallbackName?: string): string {
   const known = (SET_DISPLAY_NAMES as Record<number, string | undefined>)[setId];
-  return known ?? fallbackName ?? `Set ${setId}`;
+  return known ?? fallbackName ?? '';
 }
