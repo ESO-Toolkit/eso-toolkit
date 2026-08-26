@@ -120,10 +120,18 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
   if (parses.length === 0) return <Alert severity="info">{emptyMessage}</Alert>;
 
   if (tooFewParses) {
+    // Say WHERE the thinness is: on the class view the boss usually has plenty
+    // of parses — the slice for THIS class is what's small. Without the
+    // totals, "Only 2 parses are recorded here" reads like the boss is empty.
+    const scope =
+      esoClass && scopeLabel
+        ? `${esoClass} parses on ${scopeLabel.replace(/ parses$/, '')}`
+        : 'this selection';
     return (
       <Alert severity="info" data-testid="too-few-parses">
-        Only {parses.length} parses are recorded here—not enough to identify reliable build patterns
-        yet.
+        Only {parses.length} {scope} — not enough to identify reliable build patterns yet (at least
+        10 needed). Patterns appear as more top players post logs; try another boss or the Encounter
+        tab in the meantime.
       </Alert>
     );
   }

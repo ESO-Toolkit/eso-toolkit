@@ -45,7 +45,13 @@ const MAX_SUBREQUESTS_PER_RUN = 120;
 const MAX_ENCOUNTERS_PER_RUN = 20;
 /** 100 parses/page; two pages comfortably fills the top-200 retention window. */
 const PAGES_PER_ENCOUNTER = 2;
-const KEEP_TOP_PER_ENCOUNTER = 200;
+// Global cap per (encounter, difficulty). Sized so a meta dominated by one or
+// two classes still leaves meaningful samples of the others once the board is
+// sliced per class — the frontend's class view needs >=10 parses to cluster,
+// and a 200-cap on a 54%-one-class board left minority classes with 2-5.
+const KEEP_TOP_PER_ENCOUNTER = 400;
+/** Best N rows of each class survive the global cap, so every class view has data. */
+const KEEP_PER_CLASS = 25;
 /** Polite spacing between upstream calls. */
 const REQUEST_DELAY_MS = 150;
 /** Abort before spending the last of the hourly point budget. */
@@ -359,7 +365,14 @@ async function syncOneEncounter(
     // Prune after EVERY successful fetch, empty results included: an encounter
     // whose rankings have dried up must still age its stored rows out, or the
     // scoped stale DELETE never reaches it and its old board lives forever.
-    await pruneDpsParses(env.DB, target.encounterId, target.difficulty, KEEP_TOP_PER_ENCOUNTER);
+    await pruneDpsParses(
+      env.DB,
+      target.encounterId,
+      target.difficulty,
+      KEEP_TOP_PER_ENCOUNTER,
+      60,
+      KEEP_PER_CLASS,
+    );
 
     warnings.forEach((message) => {
       console.warn(`[dps-sync] ${target.encounterName}: ${message}`);

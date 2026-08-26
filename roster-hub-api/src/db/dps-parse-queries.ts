@@ -389,8 +389,12 @@ export async function purgeBlockedDpsParses(
 /**
  * Trim an encounter back to its top N and drop long-stale rows.
  *
- * Written without window functions: the cut-off is read as a single value via
- * LIMIT/OFFSET, which SQLite handles with the existing index.
+ * Beyond the global top-N cut, the best `keepPerClass` rows of EACH class are
+ * protected: a meta where one class dominates the board by raw DPS would
+ * otherwise squeeze minority classes below the frontend's minimum viable
+ * sample (10 parses), leaving those players an empty class view on a boss that
+ * actually has hundreds of parses. Uses a window function for the per-class
+ * rank; D1's SQLite supports them.
  *
  * Both DELETEs are scoped to the same (encounter, difficulty) as the top-N cut.
  * The stale-row sweep was originally GLOBAL — one encounter's prune pass deleted
@@ -409,6 +413,7 @@ export async function pruneDpsParses(
   difficulty: number,
   keepTop: number,
   staleDays = 60,
+  keepPerClass = 25,
 ): Promise<void> {
   await db.batch([
     db
@@ -418,9 +423,19 @@ export async function pruneDpsParses(
             AND amount < COALESCE(
               (SELECT amount FROM dps_parses
                 WHERE encounter_id = ?1 AND difficulty = ?2
-                ORDER BY amount DESC LIMIT 1 OFFSET ?3), -1)`,
+                ORDER BY amount DESC LIMIT 1 OFFSET ?3), -1)
+            AND character_key NOT IN (
+              SELECT character_key FROM (
+                SELECT character_key, ROW_NUMBER() OVER (
+                  PARTITION BY eso_class ORDER BY amount DESC
+                ) AS class_rank
+                FROM dps_parses
+                WHERE encounter_id = ?1 AND difficulty = ?2
+              )
+              WHERE class_rank <= ?4
+            )`,
       )
-      .bind(encounterId, difficulty, keepTop),
+      .bind(encounterId, difficulty, keepTop, keepPerClass),
     db
       .prepare(
         `DELETE FROM dps_parses
