@@ -309,6 +309,24 @@ describe('pruneDpsParses', () => {
       .filter((c) => c.sql.includes('DELETE FROM dps_parses'))
       .forEach((c) => expect(c.sql).not.toContain('ingested_at'));
   });
+
+  /**
+   * Regression (live data): Tideborn Taleria's board was 54% Necromancer, so
+   * the global top-N cut left Dragonknights with 2 parses — below the
+   * frontend's minimum viable sample of 10, rendering the class view useless
+   * on a boss with hundreds of parses. The best rows of EACH class must be
+   * protected from the global cut.
+   */
+  it('protects the best rows per class from the global top-N cut', async () => {
+    const { db, calls } = createFakeD1();
+    await pruneDpsParses(db, 54, 122, 400, 60, 25);
+
+    const [topN] = calls.filter((c) => c.sql.includes('DELETE FROM dps_parses'));
+    expect(topN.sql).toContain('ROW_NUMBER() OVER');
+    expect(topN.sql).toContain('PARTITION BY eso_class ORDER BY amount DESC');
+    // Bindings: encounter, difficulty, keepTop, keepPerClass.
+    expect(topN.bindings).toEqual([54, 122, 400, 25]);
+  });
 });
 
 describe('purgeBlockedDpsParses', () => {

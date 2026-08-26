@@ -212,6 +212,6 @@ describe('syncDpsParses', () => {
     expect(results[0].status).toBe('empty');
 
     expect(upsertDpsParses as jest.Mock).not.toHaveBeenCalled();
-    expect(pruneDpsParses as jest.Mock).toHaveBeenCalledWith(env.DB, 60, 122, 200);
+    expect(pruneDpsParses as jest.Mock).toHaveBeenCalledWith(env.DB, 60, 122, 400, 60, 25);
   });
 });

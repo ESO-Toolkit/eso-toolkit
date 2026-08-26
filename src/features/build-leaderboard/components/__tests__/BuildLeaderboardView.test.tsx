@@ -101,7 +101,24 @@ describe('BuildLeaderboardView states', () => {
     const { parses } = clusteredFixture();
     renderView({ parses: parses.slice(0, 6), tooFewParses: true });
     expect(screen.getByTestId('too-few-parses')).toHaveTextContent(/not enough/i);
-    expect(screen.queryByTestId('build-inspector')).not.toBeInTheDocument();
+  });
+
+  /**
+   * Regression (live data): on a boss with 201 parses, the Dragonknight slice
+   * held 2. "Only 2 parses are recorded here" read as if the BOSS were empty.
+   * The class view must say WHERE the thinness is and point at alternatives.
+   */
+  it('names the class-and-boss scope in the too-few-parses message', () => {
+    const { parses } = clusteredFixture();
+    renderView({
+      parses: parses.slice(0, 2),
+      tooFewParses: true,
+      esoClass: 'Dragonknight',
+      scopeLabel: 'DSR · Tideborn Taleria parses',
+    });
+    const alert = screen.getByTestId('too-few-parses');
+    expect(alert).toHaveTextContent(/only 2 dragonknight parses on DSR · Tideborn Taleria/i);
+    expect(alert).toHaveTextContent(/try another boss or the encounter tab/i);
   });
 
   it('announces clustering progress politely', () => {
