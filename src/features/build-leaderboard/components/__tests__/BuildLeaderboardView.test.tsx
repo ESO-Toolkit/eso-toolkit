@@ -180,6 +180,31 @@ describe('BuildLeaderboardView states', () => {
 });
 
 describe('BuildLeaderboardView workspace', () => {
+  it('shows top-25 boss coverage instead of normalized percentages', async () => {
+    const { parses, result } = clusteredFixture();
+    const selected = recommendedCluster(result);
+    const selectedIds = new Set(selected.memberParseIds);
+    let selectedIndex = 0;
+    const pooledParses = parses.map((parse) => ({
+      ...parse,
+      encounter_id: selectedIds.has(parse.parse_id) ? 100 + (selectedIndex++ % 3) : 200,
+    }));
+
+    renderView({ parses: pooledParses, result, pooled: true });
+
+    expect(screen.getByText('Bosses')).toBeInTheDocument();
+    expect(screen.getByText('3 of 4')).toBeInTheDocument();
+    expect(screen.getByText(`${selected.size} sampled top parses`)).toBeInTheDocument();
+    expect(screen.queryByText(/% of each boss's top DPS/i)).not.toBeInTheDocument();
+    const explanation = screen.getByRole('button', { name: /explain top-25 boss coverage/i });
+    explanation.focus();
+    expect(
+      await screen.findByText(
+        /this build had a retained top-25 class parse on 3 of the 4 bosses with data/i,
+      ),
+    ).toBeInTheDocument();
+  });
+
   it('renders one stable recommendation and every alternative as a fixed row', () => {
     const { parses, result } = clusteredFixture();
     renderView({ parses, result });

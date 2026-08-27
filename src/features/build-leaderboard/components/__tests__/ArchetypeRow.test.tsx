@@ -79,6 +79,8 @@ function renderRow(
           showClassIcon
           medoidParse={medoidParse}
           bestParse={bestParse}
+          coveredBosses={bestParse ? 9 : undefined}
+          availableBosses={bestParse ? 14 : undefined}
           onSelect={() => {}}
         />
       </ol>
@@ -153,8 +155,8 @@ describe('ArchetypeRow pooled headline', () => {
     });
     expect(screen.getByText('112k')).toBeInTheDocument();
     expect(screen.getByText('@DSR')).toBeInTheDocument();
-    expect(screen.getByText(/typically 91%/)).toBeInTheDocument();
-    expect(screen.queryByText(/^91%$/)).not.toBeInTheDocument();
+    expect(screen.getByText(/9\/14 bosses/)).toBeInTheDocument();
+    expect(screen.queryByText(/91%/)).not.toBeInTheDocument();
   });
 
   it('falls back to absolute median DPS when no best parse exists', () => {

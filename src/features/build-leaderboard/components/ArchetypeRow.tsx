@@ -53,10 +53,13 @@ export interface ArchetypeRowProps {
   medoidParse?: DpsParse;
   /**
    * Pooled class view only: the cluster's best RAW parse. Its absolute DPS
-   * becomes the headline ("112k") anchored to its trial; cluster.dps holds
-   * fractions of ceiling and demotes to a secondary "typically N%" line.
+   * becomes the headline ("112k") anchored to its trial.
    */
   bestParse?: DpsParse;
+  /** Bosses where this pattern has a retained top-25 class parse. */
+  coveredBosses?: number;
+  /** Bosses with any retained parse data for the selected class. */
+  availableBosses?: number;
   onSelect: () => void;
 }
 
@@ -68,6 +71,8 @@ export const ArchetypeRow: React.FC<ArchetypeRowProps> = ({
   showClassIcon,
   medoidParse,
   bestParse,
+  coveredBosses,
+  availableBosses,
   onSelect,
 }) => {
   const classTheme = getLeaderboardClassTheme(cluster.esoClass);
@@ -77,11 +82,13 @@ export const ArchetypeRow: React.FC<ArchetypeRowProps> = ({
     ? label.replace(new RegExp(`\\s+${escapedClass}$`, 'i'), '').trim()
     : label;
   const freshness = parseFreshness(medoidParse);
-  // Pooled view: headline is the cluster's best RAW parse, anchored to its
-  // trial; cluster.dps holds ceiling fractions and demotes to secondary text.
+  // Pooled view: headline is the cluster's best RAW parse, anchored to its trial.
   const anchor = bestParse?.trial_id || bestParse?.encounter_name || '';
   const headlineDps = compactDps(bestParse ? bestParse.amount : cluster.dps.median);
-  const typicalPct = `${Math.round(cluster.dps.median * 100)}%`;
+  const coverageLabel =
+    bestParse && coveredBosses !== undefined && availableBosses !== undefined
+      ? `${coveredBosses}/${availableBosses} bosses`
+      : null;
 
   return (
     <Box component="li" sx={{ listStyle: 'none' }}>
@@ -90,7 +97,7 @@ export const ArchetypeRow: React.FC<ArchetypeRowProps> = ({
         aria-current={selected ? 'true' : undefined}
         aria-label={
           bestParse
-            ? `${label}, best ${headlineDps} DPS on ${anchor}, typically ${typicalPct} of ceiling, ${cluster.size} top parses${recommended ? ', recommended' : ''}`
+            ? `${label}, best ${headlineDps} DPS on ${anchor}, ${coverageLabel ? `top-25 on ${coveredBosses} of ${availableBosses} bosses, ` : ''}${cluster.size} sampled top parses${recommended ? ', recommended' : ''}`
             : `${label}, typical damage ${headlineDps}, ${cluster.size} top parses${recommended ? ', recommended' : ''}`
         }
         onClick={onSelect}
@@ -220,7 +227,7 @@ export const ArchetypeRow: React.FC<ArchetypeRowProps> = ({
               }}
             >
               {bestParse
-                ? `${headlineDps}${anchor ? ` @ ${anchor}` : ''} · ${cluster.size} parses · typically ${typicalPct}`
+                ? `${headlineDps}${anchor ? ` @ ${anchor}` : ''}${coverageLabel ? ` · ${coverageLabel}` : ` · ${cluster.size} parses`}`
                 : `${cluster.size} parses · ${headlineDps} typical`}
             </Typography>
             {freshness && (
@@ -245,7 +252,7 @@ export const ArchetypeRow: React.FC<ArchetypeRowProps> = ({
             fontWeight: 650,
           }}
         >
-          {cluster.size}
+          {coverageLabel ? `${coveredBosses}/${availableBosses}` : cluster.size}
         </Typography>
         <Box
           sx={{

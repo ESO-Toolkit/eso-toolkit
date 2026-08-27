@@ -2,6 +2,7 @@ import {
   ArrowOutwardRounded,
   CloseRounded,
   FactCheckOutlined,
+  HelpOutlineRounded,
   InsertChartOutlined,
   LaunchOutlined,
   MoreHoriz,
@@ -72,11 +73,12 @@ export interface BuildInspectorProps {
   sourceUrl?: string;
   representativeDps?: number;
   /**
-   * Pooled class view: amounts in cluster.dps are fractions of each boss's
-   * ceiling, so the headline shows the medoid's RAW parse DPS instead and
-   * percentages move to secondary text.
+   * Pooled class view: amounts in cluster.dps are internal comparison values,
+   * so the headline shows the medoid's RAW parse DPS instead.
    */
   pooled?: boolean;
+  coveredBosses?: number;
+  availableBosses?: number;
 }
 
 export const BuildInspector: React.FC<BuildInspectorProps> = ({
@@ -95,11 +97,14 @@ export const BuildInspector: React.FC<BuildInspectorProps> = ({
   sourceUrl,
   representativeDps,
   pooled = false,
+  coveredBosses,
+  availableBosses,
 }) => {
   const theme = useTheme();
   const compactEvidence = useMediaQuery(theme.breakpoints.down('sm'));
   const classTheme = getLeaderboardClassTheme(cluster.esoClass);
   const representativeBuild = useRepresentativeBuild(cluster.medoidParseId, evidenceOpen);
+  const showBossCoverage = pooled && coveredBosses !== undefined && availableBosses !== undefined;
   const representativeTraitIcons = React.useMemo(() => {
     const build = representativeBuild.build;
     if (!build) return new Map<string, string>();
@@ -239,9 +244,13 @@ export const BuildInspector: React.FC<BuildInspectorProps> = ({
                 lineHeight: 1.5,
               }}
             >
-              {recommended
-                ? 'Best balance of typical damage and a sample large enough to trust.'
-                : 'A viable pattern found in top-ranked parses for this selection.'}
+              {pooled
+                ? recommended
+                  ? 'A common pattern in this sampled top-log pool.'
+                  : 'A recurring pattern in this sampled top-log pool.'
+                : recommended
+                  ? 'Best balance of typical damage and a sample large enough to trust.'
+                  : 'A viable pattern found in top-ranked parses for this selection.'}
             </Typography>
           </Box>
         </Box>
@@ -293,16 +302,14 @@ export const BuildInspector: React.FC<BuildInspectorProps> = ({
                 DPS
               </Box>
             </Typography>
-            <Typography
-              className="u-tabular"
-              sx={{ mt: -0.15, color: 'text.secondary', fontSize: '0.67rem', fontWeight: 500 }}
-            >
-              {pooled
-                ? `Typically ${Math.round(cluster.dps.median * 100)}% of ceiling · middle half ${Math.round(
-                    cluster.dps.q1 * 100,
-                  )}–${Math.round(cluster.dps.q3 * 100)}%`
-                : `Middle half ${compactDps(cluster.dps.q1)}–${compactDps(cluster.dps.q3)}`}
-            </Typography>
+            {!pooled && (
+              <Typography
+                className="u-tabular"
+                sx={{ mt: -0.15, color: 'text.secondary', fontSize: '0.67rem', fontWeight: 500 }}
+              >
+                Middle half {compactDps(cluster.dps.q1)}–{compactDps(cluster.dps.q3)}
+              </Typography>
+            )}
           </Box>
           <Box
             sx={(theme) => ({
@@ -320,7 +327,7 @@ export const BuildInspector: React.FC<BuildInspectorProps> = ({
                 textTransform: 'uppercase',
               }}
             >
-              Seen in top parses
+              {showBossCoverage ? 'Top-25 boss coverage' : 'Seen in top parses'}
             </Typography>
             <Typography
               className="u-tabular"
@@ -331,11 +338,35 @@ export const BuildInspector: React.FC<BuildInspectorProps> = ({
                 letterSpacing: '-0.035em',
               }}
             >
-              {cluster.size}
-              <Box component="span" sx={{ ml: 0.5, color: 'text.secondary', fontSize: '0.72rem' }}>
-                of {totalParses}
-              </Box>
+              {showBossCoverage ? `${coveredBosses} of ${availableBosses}` : cluster.size}
+              {!showBossCoverage && (
+                <Box
+                  component="span"
+                  sx={{ ml: 0.5, color: 'text.secondary', fontSize: '0.72rem' }}
+                >
+                  of {totalParses}
+                </Box>
+              )}
             </Typography>
+            {showBossCoverage && (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25 }}>
+                <Typography sx={{ color: 'text.secondary', fontSize: '0.67rem', fontWeight: 500 }}>
+                  {cluster.size} sampled top parses
+                </Typography>
+                <Tooltip
+                  arrow
+                  title={`This build had a retained top-25 class parse on ${coveredBosses} of the ${availableBosses} bosses with data. This shows where the build appeared, not expected DPS.`}
+                >
+                  <IconButton
+                    aria-label="Explain top-25 boss coverage"
+                    size="small"
+                    sx={{ flex: '0 0 auto', p: 0.15, color: 'text.secondary' }}
+                  >
+                    <HelpOutlineRounded sx={{ fontSize: '0.82rem' }} />
+                  </IconButton>
+                </Tooltip>
+              </Box>
+            )}
           </Box>
         </Box>
 

@@ -37,9 +37,8 @@ export interface BuildLeaderboardViewProps {
    */
   scopeDescription?: string;
   /**
-   * Pooled class view: cluster.dps holds fractions of each boss's ceiling, so
-   * cards headline the cluster's best RAW parse ("112k @ DSR") and percentages
-   * move to secondary text.
+   * Pooled class view: cluster.dps holds internal cross-boss comparison values,
+   * while cards show raw DPS and top-25 boss coverage.
    */
   pooled?: boolean;
   onRetry?: () => void;
@@ -128,6 +127,24 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
       if (best) map.set(cluster.id, best);
     });
     return map;
+  }, [pooled, parses, result]);
+
+  const bossCoverage = useMemo(() => {
+    const byCluster = new Map<string, number>();
+    if (!pooled) return { available: 0, byCluster };
+
+    const byId = new Map(parses.map((parse) => [parse.parse_id, parse]));
+    const available = new Set(parses.map((parse) => parse.encounter_id)).size;
+    result?.clusters.forEach((cluster) => {
+      const bosses = new Set<number>();
+      cluster.memberParseIds.forEach((id) => {
+        const parse = byId.get(id);
+        if (parse) bosses.add(parse.encounter_id);
+      });
+      byCluster.set(cluster.id, bosses.size);
+    });
+
+    return { available, byCluster };
   }, [pooled, parses, result]);
 
   if (error) {
@@ -382,7 +399,7 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
                   textTransform: 'uppercase',
                 }}
               >
-                Parses
+                {pooled ? 'Bosses' : 'Parses'}
               </Typography>
               <Typography
                 sx={{
@@ -395,7 +412,7 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
                   textTransform: 'uppercase',
                 }}
               >
-                {pooled ? 'Best' : 'Typical'}
+                {pooled ? 'Best log' : 'Typical'}
               </Typography>
             </Box>
             <Box component="ol" sx={{ m: 0, p: 0, listStyle: 'none' }}>
@@ -409,6 +426,8 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
                   showClassIcon={!esoClass}
                   medoidParse={representativeParseFor(cluster)}
                   bestParse={bestParseByCluster.get(cluster.id)}
+                  coveredBosses={bossCoverage.byCluster.get(cluster.id)}
+                  availableBosses={pooled ? bossCoverage.available : undefined}
                   onSelect={() => handleSelect(cluster.id)}
                 />
               ))}
@@ -441,6 +460,8 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
               sourceUrl={representativeParseFor(selected)?.source_url}
               representativeDps={representativeParseFor(selected)?.amount}
               pooled={pooled}
+              coveredBosses={bossCoverage.byCluster.get(selected.id)}
+              availableBosses={pooled ? bossCoverage.available : undefined}
               pendingKind={pendingAction?.clusterId === selected.id ? pendingAction.kind : null}
               actionsDisabled={Boolean(pendingAction)}
               onOpenInEditor={onOpenInEditor}
