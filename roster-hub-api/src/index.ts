@@ -2308,6 +2308,7 @@ app.get('/dps-leaderboard/parses', async (c) => {
     hardModeLevel: num(c.req.query('hard_mode_level')),
     esoClass,
     signatureHash: c.req.query('signature'),
+    perEncounterCap: num(c.req.query('per_encounter_cap')),
     limit: num(c.req.query('limit')),
     offset: num(c.req.query('offset')),
     sort: sortParam === 'recent' ? 'recent' : 'amount',
@@ -2395,7 +2396,10 @@ app.post('/admin/sync-leaderboard', async (c) => {
 /**
  * Manual DPS-parse ingest. Query params let a one-off backfill target a single
  * encounter, or force a full pass outside the nightly budget:
- *   ?encounterId=60&difficulty=122&pages=3&force=1
+ *   ?encounterId=60&difficulty=122&pages=2&force=1
+ *
+ * `pages` is per CLASS board (seven are fetched per encounter), so it is clamped
+ * far lower than the request count it implies.
  */
 app.post('/admin/sync-dps-parses', async (c) => {
   if (
@@ -2414,10 +2418,12 @@ app.post('/admin/sync-dps-parses', async (c) => {
     return Number.isFinite(parsed) ? parsed : undefined;
   };
 
-  // Clamp pages to a sane manual budget (max 10); an unbounded value
-  // would let one call burn the subrequest budget for the whole run.
+  // Pages PER CLASS BOARD, and the ingest fetches seven boards per encounter —
+  // so each page costs 7 subrequests, not 1. Clamped to 3 (21 fetches) to stay
+  // inside the run's budget: above that the per-encounter budget check skips the
+  // target outright and the backfill silently does nothing.
   const rawPages = num(c.req.query('pages'));
-  const pages = rawPages === undefined ? undefined : Math.max(1, Math.min(10, Math.floor(rawPages)));
+  const pages = rawPages === undefined ? undefined : Math.max(1, Math.min(3, Math.floor(rawPages)));
 
   try {
     const results = await syncDpsParses(c.env, {
@@ -2475,7 +2481,13 @@ export default {
     // The DpsSyncResult.detail strings are written for operators — log a summary
     // plus every non-ok target so they are actually consumed somewhere.
     try {
-      const results = await syncDpsParses(env);
+      // The morning firing has already spent part of this invocation's
+      // subrequest allowance on syncLeaderboardRosters, and the Workers free
+      // plan caps an invocation at 50. Hand the DPS pass a smaller slice then,
+      // rather than letting it run the full budget and have the tail of the
+      // rotation fail on "Too many subrequests". The other three firings do
+      // nothing else and get the full slice.
+      const results = await syncDpsParses(env, isDailyRun ? { maxEncounters: 3 } : {});
       const rowsIngested = results
         .filter((r) => r.status === 'ok')
         .reduce((sum, r) => sum + r.rows, 0);

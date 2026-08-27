@@ -103,6 +103,13 @@ export interface ListDpsParsesOptions {
   limit?: number;
   offset?: number;
   sort?: 'amount' | 'recent';
+  /**
+   * Pooled class-view mode: cap each (encounter, difficulty) board's
+   * contribution to the result at N best rows so high-ceiling bosses don't
+   * crowd out the pool. Requires a class filter to be meaningful; clamped to
+   * [1, 100]. Also raises this query's max limit (the cap bounds the set).
+   */
+  perEncounterCap?: number;
 }
 
 /**
@@ -116,7 +123,12 @@ export async function listDpsParses(
   db: D1Database,
   opts: ListDpsParsesOptions,
 ): Promise<{ parses: DpsParsePublic[]; total: number; limit: number; offset: number }> {
-  const limit = Math.min(Math.max(1, opts.limit ?? DEFAULT_PARSE_LIMIT), MAX_PARSE_LIMIT);
+  // Class-only (pooled cross-boss) views may page deeper: the per-boss cap
+  // bounds the result set regardless (boards x cap; realistically <= ~500
+  // rows for one class). A tighter limit would let ORDER BY amount truncate
+  // whole lower-ceiling boards before the client normalizes anything.
+  const maxLimit = opts.perEncounterCap !== undefined ? 1000 : MAX_PARSE_LIMIT;
+  const limit = Math.min(Math.max(1, opts.limit ?? DEFAULT_PARSE_LIMIT), maxLimit);
   const offset = Math.min(Math.max(0, opts.offset ?? 0), MAX_PARSE_OFFSET);
 
   const conditions: string[] = [];
@@ -147,13 +159,45 @@ export async function listDpsParses(
   const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
   const orderBy = opts.sort === 'recent' ? 'updated_at DESC, amount DESC' : 'amount DESC';
 
+  // Pooled class view: without a per-boss cap, `ORDER BY amount DESC LIMIT n`
+  // truncates to the highest-ceiling bosses' rows — a worse confound than the
+  // one the per-boss scoping fixed. Cap each boss's contribution instead so
+  // every board feeds the pool. The window function mirrors pruneDpsParses.
+  let sql: string;
+  if (opts.perEncounterCap !== undefined) {
+    const cap = Math.min(Math.max(1, opts.perEncounterCap), 100);
+    sql = `
+      WITH ranked AS (
+        SELECT *, ROW_NUMBER() OVER (
+          PARTITION BY encounter_id, difficulty ORDER BY amount DESC
+        ) AS rn
+        FROM dps_parses ${where}
+      )
+      SELECT * FROM ranked WHERE rn <= ${cap} ORDER BY ${orderBy} LIMIT ? OFFSET ?`;
+  } else {
+    sql = `SELECT * FROM dps_parses ${where} ORDER BY ${orderBy} LIMIT ? OFFSET ?`;
+  }
+
   const [rows, countRow] = await Promise.all([
     db
-      .prepare(`SELECT * FROM dps_parses ${where} ORDER BY ${orderBy} LIMIT ? OFFSET ?`)
+      .prepare(`${sql}`)
       .bind(...bindings, limit, offset)
       .all<DpsParseRow>(),
     db
-      .prepare(`SELECT COUNT(*) AS total FROM dps_parses ${where}`)
+      .prepare(
+        opts.perEncounterCap !== undefined
+          ? `WITH ranked AS (
+              SELECT ROW_NUMBER() OVER (
+                PARTITION BY encounter_id, difficulty ORDER BY amount DESC
+              ) AS rn
+              FROM dps_parses ${where}
+            )
+            SELECT COUNT(*) AS total FROM ranked WHERE rn <= ${Math.min(
+              Math.max(1, opts.perEncounterCap),
+              100,
+            )}`
+          : `SELECT COUNT(*) AS total FROM dps_parses ${where}`,
+      )
       .bind(...bindings)
       .first<{ total: number }>(),
   ]);
@@ -389,8 +433,12 @@ export async function purgeBlockedDpsParses(
 /**
  * Trim an encounter back to its top N and drop long-stale rows.
  *
- * Written without window functions: the cut-off is read as a single value via
- * LIMIT/OFFSET, which SQLite handles with the existing index.
+ * Beyond the global top-N cut, the best `keepPerClass` rows of EACH class are
+ * protected: a meta where one class dominates the board by raw DPS would
+ * otherwise squeeze minority classes below the frontend's minimum viable
+ * sample (10 parses), leaving those players an empty class view on a boss that
+ * actually has hundreds of parses. Uses a window function for the per-class
+ * rank; D1's SQLite supports them.
  *
  * Both DELETEs are scoped to the same (encounter, difficulty) as the top-N cut.
  * The stale-row sweep was originally GLOBAL — one encounter's prune pass deleted
@@ -409,6 +457,7 @@ export async function pruneDpsParses(
   difficulty: number,
   keepTop: number,
   staleDays = 60,
+  keepPerClass = 25,
 ): Promise<void> {
   await db.batch([
     db
@@ -418,9 +467,19 @@ export async function pruneDpsParses(
             AND amount < COALESCE(
               (SELECT amount FROM dps_parses
                 WHERE encounter_id = ?1 AND difficulty = ?2
-                ORDER BY amount DESC LIMIT 1 OFFSET ?3), -1)`,
+                ORDER BY amount DESC LIMIT 1 OFFSET ?3), -1)
+            AND character_key NOT IN (
+              SELECT character_key FROM (
+                SELECT character_key, ROW_NUMBER() OVER (
+                  PARTITION BY eso_class ORDER BY amount DESC
+                ) AS class_rank
+                FROM dps_parses
+                WHERE encounter_id = ?1 AND difficulty = ?2
+              )
+              WHERE class_rank <= ?4
+            )`,
       )
-      .bind(encounterId, difficulty, keepTop),
+      .bind(encounterId, difficulty, keepTop, keepPerClass),
     db
       .prepare(
         `DELETE FROM dps_parses

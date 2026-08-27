@@ -212,6 +212,99 @@ describe('syncDpsParses', () => {
     expect(results[0].status).toBe('empty');
 
     expect(upsertDpsParses as jest.Mock).not.toHaveBeenCalled();
-    expect(pruneDpsParses as jest.Mock).toHaveBeenCalledWith(env.DB, 60, 122, 200);
+    expect(pruneDpsParses as jest.Mock).toHaveBeenCalledWith(env.DB, 60, 122, 400, 60, 40);
+  });
+
+  /**
+   * THE regression pin for per-class starvation. A global top-N is winner-take-all:
+   * on a Necromancer/Arcanist meta the live board held 201 rows with Dragonknight
+   * on 5 and Sorcerer on 4, both below the frontend's clustering minimum. The
+   * ingest must ask for one board PER CLASS so every class gets a real top-N.
+   */
+  it('fetches one ranking board per class', async () => {
+    await syncDpsParses(env, { encounterId: 60 });
+
+    const requested = mockedFetchRankings.mock.calls.map(([, params]) => params.className);
+    expect(requested).toEqual([
+      'Arcanist',
+      'DragonKnight',
+      'Necromancer',
+      'Nightblade',
+      'Sorcerer',
+      'Templar',
+      'Warden',
+    ]);
+  });
+
+  /**
+   * `className` is an unvalidated String upstream, so a rejected value returns the
+   * UNFILTERED global board rather than an error. Without this guard we would
+   * store seven copies of the same top parses and the starvation would survive
+   * the fix while looking like it had been applied.
+   */
+  it('drops entries that do not belong to the class board they came from', async () => {
+    mockedFetchRankings.mockResolvedValue(rankingsPage()); // always Sorcerer
+
+    const results = await syncDpsParses(env, { encounterId: 60 });
+
+    const [, rows] = (upsertDpsParses as jest.Mock).mock.calls[0];
+    expect(rows).toHaveLength(1);
+    expect(rows[0].eso_class).toBe('Sorcerer');
+    expect(results[0].detail).toMatch(/failed the class filter/);
+  });
+
+  /**
+   * Splitting one fetch into seven multiplied the chance a target hits a
+   * transient upstream error. Losing the whole boss because one class board
+   * blipped would be a regression — the six that succeeded must still land.
+   */
+  it('keeps the boards that succeeded when one class board fails', async () => {
+    mockedFetchRankings.mockImplementation((_token: string, params: { className: string }) => {
+      if (params.className === 'Necromancer') return Promise.reject(new Error('upstream 503'));
+      const page = rankingsPage();
+      (page.rankings as Array<Record<string, unknown>>)[0].class = params.className;
+      (page.rankings as Array<Record<string, unknown>>)[0].name = `Player ${params.className}`;
+      return Promise.resolve(page);
+    });
+
+    const results = await syncDpsParses(env, { encounterId: 60 });
+
+    expect(results[0].status).toBe('ok');
+    expect(results[0].detail).toMatch(/1\/7 class boards failed/);
+    const [, rows] = (upsertDpsParses as jest.Mock).mock.calls[0];
+    expect(rows).toHaveLength(6);
+    expect(rows.map((row: { eso_class: string }) => row.eso_class)).not.toContain('Necromancer');
+  });
+
+  /** A total wipeout is an outage, not a boss without rankings — and must retry. */
+  it('records an error, with the cause, when every class board fails', async () => {
+    mockedFetchRankings.mockRejectedValue(new Error('upstream 500'));
+
+    const results = await syncDpsParses(env, { encounterId: 60 });
+
+    expect(results[0].status).toBe('error');
+    expect(results[0].detail).toContain('upstream 500');
+    expect(upsertDpsParses as jest.Mock).not.toHaveBeenCalled();
+  });
+
+  /**
+   * The table's PK is (encounter_id, difficulty, character_key). Two statements
+   * writing the same PK inside one db.batch() resolve last-writer-wins, so the
+   * same character surfacing on two boards must collapse before the upsert.
+   */
+  it('collapses one character appearing on two class boards into a single row', async () => {
+    mockedFetchRankings.mockImplementation((_token: string, params: { className: string }) => {
+      const page = rankingsPage();
+      // Same name+region => same character_key, but labelled as whichever board
+      // asked, so both survive the class-match guard.
+      (page.rankings as Array<Record<string, unknown>>)[0].class = params.className;
+      return Promise.resolve(page);
+    });
+
+    await syncDpsParses(env, { encounterId: 60 });
+
+    const [, rows] = (upsertDpsParses as jest.Mock).mock.calls[0];
+    expect(rows).toHaveLength(1);
+    expect(new Set(rows.map((row: { character_key: string }) => row.character_key)).size).toBe(1);
   });
 });
