@@ -1,6 +1,6 @@
 # ESO Toolkit
 
-**[ESO Toolkit](https://esotk.com)** is a free, open-source suite of combat-log analytics and planning tools for The Elder Scrolls Online: parse analysis, DPS/HPS leaderboards, a 3D fight replay viewer, build and loadout editors, and roster planning tools, all running in your browser at [esotk.com](https://esotk.com). We also maintain **[Kalpa](https://github.com/ESO-Toolkit/kalpa)**, our open-source ESO addon manager. Visit its landing page at [esotk.com/kalpa](https://esotk.com/kalpa).
+**[ESO Toolkit](https://esotk.com)** is a free, source-available suite of combat-log analytics and planning tools for The Elder Scrolls Online: parse analysis, DPS/HPS leaderboards, a 3D fight replay viewer, build and loadout editors, and roster planning tools, all running in your browser at [esotk.com](https://esotk.com). We also maintain **[Kalpa](https://github.com/ESO-Toolkit/kalpa)**, our source-available ESO addon manager. Visit its landing page at [esotk.com/kalpa](https://esotk.com/kalpa).
 
 <!-- Status Badges -->
 

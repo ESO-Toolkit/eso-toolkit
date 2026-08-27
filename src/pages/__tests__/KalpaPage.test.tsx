@@ -17,7 +17,7 @@ describe('KalpaPage', () => {
   it('sets the document title matching the prerendered static route title', () => {
     renderPage();
 
-    expect(document.title).toBe('Kalpa: Open-Source ESO Addon Manager | ESO Toolkit');
+    expect(document.title).toBe('Kalpa: Free ESO Addon Manager | ESO Toolkit');
     expect(document.title).toBe(KALPA_PAGE_TITLE);
     // The prerender script (scripts/generate-static-routes.cjs) stamps this very
     // entry into build/kalpa/index.html, so matching it here proves the

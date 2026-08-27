@@ -2642,7 +2642,7 @@ export const LandingPage: React.FC = () => {
                   maxWidth: '460px',
                 }}
               >
-                A fast, open-source addon manager for ESO. Built with Rust and Tauri for native
+                A fast, free addon manager for ESO. Built with Rust and Tauri for native
                 performance. Just 15 MB, no Java runtime required.
               </Typography>
 

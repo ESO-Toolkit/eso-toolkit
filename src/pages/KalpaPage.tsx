@@ -1,5 +1,5 @@
 /**
- * KalpaPage — prerendered marketing landing page for Kalpa, the open-source
+ * KalpaPage — prerendered marketing landing page for Kalpa, the source-available
  * ESO addon manager. The SEO title/description and the sitemap entry all come
  * from the shared route-metadata map (src/constants/route-meta.json), which
  * scripts/generate-static-routes.cjs reads too, so the prerendered <title> and
@@ -615,7 +615,7 @@ const FAQS: { question: string; answer: string; linkTo?: string; linkLabel?: str
   {
     question: 'Is Kalpa free?',
     answer:
-      'Yes. Kalpa is free and open source. The full source code is public on GitHub, and there are no ads, subscriptions, or feature paywalls.',
+      'Yes. Kalpa is free to download and use. The full source code is public and auditable on GitHub under a source-available licence, and there are no ads, subscriptions, or feature paywalls.',
   },
   {
     question: 'Is Kalpa safe?',
@@ -711,7 +711,7 @@ export const KalpaPage: React.FC = () => {
           <HeroContent>
             <Box sx={{ position: 'relative', zIndex: 1 }}>
               <Chip
-                label="Open Source · Free Forever"
+                label="Free Forever · Source Available"
                 size="small"
                 sx={(theme: Theme) => ({
                   mb: 2,
@@ -766,7 +766,7 @@ export const KalpaPage: React.FC = () => {
                   mx: { xs: 'auto', md: 0 },
                 }}
               >
-                Kalpa is a fast, open-source ESO addon manager with one-click installs and automatic
+                Kalpa is a fast, free ESO addon manager with one-click installs and automatic
                 dependency resolution. A lightweight alternative to Minion built with Rust and
                 Tauri. Just 15 MB, with no Java runtime required.
               </Typography>
@@ -814,7 +814,7 @@ export const KalpaPage: React.FC = () => {
                   justifyContent: { xs: 'center', md: 'flex-start' },
                 }}
               >
-                {['15 MB', 'No Java', 'Open source', 'Minion import'].map((chip) => (
+                {['15 MB', 'No Java', 'Source available', 'Minion import'].map((chip) => (
                   <Chip
                     key={chip}
                     component="li"
