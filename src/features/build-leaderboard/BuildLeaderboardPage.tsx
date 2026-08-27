@@ -13,9 +13,9 @@ import { alpha } from '@mui/material/styles';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
-import { ClassIcon } from '../../components/ClassIcon';
 import { usePageTitle } from '@/hooks/useDocumentTitle';
 
+import { ClassIcon } from '../../components/ClassIcon';
 import { PanelErrorBoundary } from '../../components/PanelErrorBoundary';
 
 import { dpsParsesApi } from './api/dpsParsesApi';
