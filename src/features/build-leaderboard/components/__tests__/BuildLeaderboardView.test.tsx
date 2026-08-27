@@ -180,33 +180,27 @@ describe('BuildLeaderboardView states', () => {
 });
 
 describe('BuildLeaderboardView workspace', () => {
-  it('explains pooled performance in player-friendly language', async () => {
+  it('shows top-25 boss coverage instead of normalized percentages', async () => {
     const { parses, result } = clusteredFixture();
-    const pooledResult = {
-      ...result,
-      clusters: result.clusters.map((cluster) => ({
-        ...cluster,
-        dps: {
-          ...cluster.dps,
-          min: 0.4,
-          q1: 0.48,
-          median: 0.58,
-          q3: 0.64,
-          max: 0.72,
-        },
-      })),
-    };
+    const selected = recommendedCluster(result);
+    const selectedIds = new Set(selected.memberParseIds);
+    let selectedIndex = 0;
+    const pooledParses = parses.map((parse) => ({
+      ...parse,
+      encounter_id: selectedIds.has(parse.parse_id) ? 100 + (selectedIndex++ % 3) : 200,
+    }));
 
-    renderView({ parses, result: pooledResult, pooled: true });
+    renderView({ parses: pooledParses, result, pooled: true });
 
-    expect(
-      screen.getByText("Usually 58% of each boss's top DPS (half of runs: 48–64%)"),
-    ).toBeInTheDocument();
-    const explanation = screen.getByRole('button', { name: /explain pooled DPS comparison/i });
+    expect(screen.getByText('Bosses')).toBeInTheDocument();
+    expect(screen.getByText('3 of 4')).toBeInTheDocument();
+    expect(screen.getByText(`${selected.size} sampled top parses`)).toBeInTheDocument();
+    expect(screen.queryByText(/% of each boss's top DPS/i)).not.toBeInTheDocument();
+    const explanation = screen.getByRole('button', { name: /explain top-25 boss coverage/i });
     explanation.focus();
     expect(
       await screen.findByText(
-        /we compare each parse with the highest DPS logged on the same boss and difficulty/i,
+        /this build had a retained top-25 class parse on 3 of the 4 bosses with data/i,
       ),
     ).toBeInTheDocument();
   });
