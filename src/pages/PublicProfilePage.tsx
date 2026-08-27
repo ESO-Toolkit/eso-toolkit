@@ -996,7 +996,7 @@ export const PublicProfilePage: React.FC = () => {
 
   useEffect(() => {
     if (profile) {
-      document.title = `${profile.username} — ESO Toolkit`;
+      document.title = `${profile.username} | ESO Toolkit`;
     }
     return () => {
       document.title = 'ESO Toolkit';

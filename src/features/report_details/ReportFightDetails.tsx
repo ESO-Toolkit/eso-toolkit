@@ -37,9 +37,9 @@ export const ReportFightDetails: React.FC = () => {
 
   React.useEffect(() => {
     if (reportData?.title) {
-      document.title = `${reportData.title} - ${APPLICATION_NAME}`;
+      document.title = `${reportData.title} | ${APPLICATION_NAME}`;
     } else {
-      document.title = `Untitled Report - ${APPLICATION_NAME}`;
+      document.title = `Untitled Report | ${APPLICATION_NAME}`;
     }
   }, [reportData?.title]);
 
