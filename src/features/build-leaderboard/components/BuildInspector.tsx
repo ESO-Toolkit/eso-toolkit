@@ -267,17 +267,35 @@ export const BuildInspector: React.FC<BuildInspectorProps> = ({
           })}
         >
           <Box sx={{ pl: { xs: 0.75, sm: 1 }, pr: 1.25, py: 1.55 }}>
-            <Typography
-              sx={{
-                color: 'text.secondary',
-                fontSize: '0.62rem',
-                fontWeight: 700,
-                letterSpacing: '0.065em',
-                textTransform: 'uppercase',
-              }}
-            >
-              {pooled ? 'Representative parse' : 'Typical damage'}
-            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25 }}>
+              <Typography
+                sx={{
+                  color: 'text.secondary',
+                  fontSize: '0.62rem',
+                  fontWeight: 700,
+                  letterSpacing: '0.065em',
+                  textTransform: 'uppercase',
+                }}
+              >
+                {pooled ? 'Representative parse' : 'Typical damage'}
+              </Typography>
+              {!pooled && (
+                <Tooltip
+                  arrow
+                  enterTouchDelay={0}
+                  leaveTouchDelay={5000}
+                  title="Typical damage is the median DPS among this build's sampled top parses."
+                >
+                  <IconButton
+                    aria-label="Explain typical DPS"
+                    size="small"
+                    sx={{ width: 32, height: 32, flex: '0 0 auto', color: 'text.secondary' }}
+                  >
+                    <HelpOutlineRounded sx={{ fontSize: '0.88rem' }} />
+                  </IconButton>
+                </Tooltip>
+              )}
+            </Box>
             <Typography
               className="u-tabular"
               sx={{
@@ -302,14 +320,6 @@ export const BuildInspector: React.FC<BuildInspectorProps> = ({
                 DPS
               </Box>
             </Typography>
-            {!pooled && (
-              <Typography
-                className="u-tabular"
-                sx={{ mt: -0.15, color: 'text.secondary', fontSize: '0.67rem', fontWeight: 500 }}
-              >
-                Middle half {compactDps(cluster.dps.q1)}–{compactDps(cluster.dps.q3)}
-              </Typography>
-            )}
           </Box>
           <Box
             sx={(theme) => ({
@@ -355,14 +365,16 @@ export const BuildInspector: React.FC<BuildInspectorProps> = ({
                 </Typography>
                 <Tooltip
                   arrow
+                  enterTouchDelay={0}
+                  leaveTouchDelay={5000}
                   title={`This build had a retained top-25 class parse on ${coveredBosses} of the ${availableBosses} bosses with data. This shows where the build appeared, not expected DPS.`}
                 >
                   <IconButton
                     aria-label="Explain top-25 boss coverage"
                     size="small"
-                    sx={{ flex: '0 0 auto', p: 0.15, color: 'text.secondary' }}
+                    sx={{ width: 32, height: 32, flex: '0 0 auto', color: 'text.secondary' }}
                   >
-                    <HelpOutlineRounded sx={{ fontSize: '0.82rem' }} />
+                    <HelpOutlineRounded sx={{ fontSize: '0.88rem' }} />
                   </IconButton>
                 </Tooltip>
               </Box>

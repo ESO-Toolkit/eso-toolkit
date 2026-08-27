@@ -45,8 +45,6 @@ function isEsoClass(value: string | null): value is EsoClass {
 }
 
 const CLASS_LABELS: Record<string, string> = { DragonKnight: 'Dragonknight' };
-/** Picker sentinel for the pooled (all-bosses) class view. */
-const ALL_BOSSES = '__all__';
 
 function encounterKey(encounter: Pick<DpsEncounterSummary, 'encounter_id' | 'difficulty'>): string {
   return `${encounter.encounter_id}:${encounter.difficulty}`;
@@ -86,7 +84,7 @@ export const BuildLeaderboardPage: React.FC = () => {
   const selectedClass = isEsoClass(searchParams.get('class'))
     ? (searchParams.get('class') as EsoClass)
     : ESO_CLASSES[0];
-  const encounterParam = searchParams.get('boss');
+  const encounterParam = tab === 'encounter' ? searchParams.get('boss') : null;
 
   const [encounters, setEncounters] = useState<DpsEncounterSummary[]>([]);
   const [encountersError, setEncountersError] = useState<string | null>(null);
@@ -128,34 +126,24 @@ export const BuildLeaderboardPage: React.FC = () => {
   }, [encounters, encounterParam]);
 
   const parseQuery = useMemo(() => {
-    // Class tab POOLS across bosses by default: pattern identity (gear, bars,
-    // skill lines) does not require same-boss parses, and per-boss slices
-    // starve minority classes (a 54%-Necromancer board left Dragonknights 2
-    // parses on a boss with 201). DPS is normalized to each boss's ceiling
-    // before display instead. An explicit ?boss= still narrows to one board.
+    // Class patterns pool across bosses because per-boss slices routinely
+    // starve minority classes. DPS is normalized per boss for clustering.
     if (tab === 'class') {
-      const bossFilter =
-        selectedEncounter && encounterParam
-          ? {
-              encounterId: selectedEncounter.encounter_id,
-              difficulty: selectedEncounter.difficulty,
-            }
-          : {};
       if (!selectedClass) return null;
-      return { esoClass: selectedClass, perEncounterCap: 25, ...bossFilter };
+      return { esoClass: selectedClass, perEncounterCap: 25 };
     }
     if (!selectedEncounter) return null;
     return {
       encounterId: selectedEncounter.encounter_id,
       difficulty: selectedEncounter.difficulty,
     };
-  }, [tab, selectedClass, selectedEncounter, encounterParam]);
+  }, [tab, selectedClass, selectedEncounter]);
 
   const resolveBaseAbilityId = useBaseAbilityResolver();
   // Pooled class view: normalize each parse's DPS to its own boss's ceiling so
   // cross-boss medians mean something ("91% of what the best parse on that
   // boss achieved"). Encounter-tab amounts stay absolute.
-  const isPooledClass = tab === 'class' && !encounterParam;
+  const isPooledClass = tab === 'class';
   const { parses, loading, error, reload } = useDpsParses(
     parseQuery,
     // Pooled views must fit EVERY board's capped rows (boards x 25) — a
@@ -298,7 +286,9 @@ export const BuildLeaderboardPage: React.FC = () => {
                   key={value}
                   role="tab"
                   aria-selected={active}
-                  onClick={() => setParam({ tab: value })}
+                  onClick={() =>
+                    setParam(value === 'class' ? { tab: value, boss: null } : { tab: value })
+                  }
                   sx={(theme) => ({
                     minHeight: 36,
                     flex: { xs: 1, md: '0 0 auto' },
@@ -349,9 +339,6 @@ export const BuildLeaderboardPage: React.FC = () => {
             pt: 1.25,
           }}
         >
-          {/* The encounter picker renders on BOTH tabs: class comparisons are
-              only apples-to-apples within one boss, so the class tab requires
-              the same scoped selection (defaulted via selectedEncounter). */}
           <Box
             sx={{
               width: '100%',
@@ -361,174 +348,174 @@ export const BuildLeaderboardPage: React.FC = () => {
             }}
           >
             <Box sx={{ width: '100%' }}>
-              <Typography
-                id="dps-encounter-label"
-                sx={{
-                  position: 'absolute',
-                  width: '1px',
-                  height: '1px',
-                  overflow: 'hidden',
-                  clip: 'rect(0 0 0 0)',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                Encounter
-              </Typography>
-              <Select
-                labelId="dps-encounter-label"
-                aria-label="Encounter"
-                value={
-                  tab === 'class' && !encounterParam
-                    ? ALL_BOSSES
-                    : selectedEncounter
-                      ? encounterKey(selectedEncounter)
-                      : ''
-                }
-                onChange={(event) => {
-                  const next = String(event.target.value);
-                  setParam({ boss: next === ALL_BOSSES ? null : next });
-                }}
-                IconComponent={KeyboardArrowDownRounded}
-                MenuProps={{
-                  slotProps: {
-                    paper: {
-                      sx: (theme) => ({
-                        mt: 0.75,
-                        maxHeight: 404,
-                        border: `1px solid ${alpha(theme.palette.divider, 0.78)}`,
-                        borderRadius: 2,
-                        backgroundColor: alpha(
-                          theme.palette.background.paper,
-                          theme.palette.mode === 'dark' ? 0.96 : 0.98,
-                        ),
-                        backgroundImage: 'none',
-                        boxShadow: `0 24px 60px ${alpha(theme.palette.common.black, theme.palette.mode === 'dark' ? 0.42 : 0.16)}`,
-                        backdropFilter: 'blur(20px) saturate(125%)',
-                      }),
-                    },
-                    list: { sx: { py: 0.75 } },
-                  },
-                }}
-                renderValue={() => (
-                  <Box
+              {tab === 'class' ? (
+                <Box
+                  aria-label="Class scope: all trial bosses"
+                  sx={(theme) => ({
+                    display: 'flex',
+                    minHeight: 52,
+                    alignItems: 'center',
+                    px: 1.65,
+                    border: `1px solid ${alpha(theme.palette.divider, 0.76)}`,
+                    borderRadius: 2.25,
+                    backgroundColor: alpha(
+                      theme.palette.background.paper,
+                      theme.palette.mode === 'dark' ? 0.62 : 0.88,
+                    ),
+                    boxShadow: `inset 0 1px 0 ${alpha(theme.palette.common.white, theme.palette.mode === 'dark' ? 0.04 : 0.78)}`,
+                  })}
+                >
+                  <Typography
                     sx={{
-                      display: 'flex',
-                      minWidth: 0,
-                      alignItems: 'center',
-                      gap: 1,
+                      fontFamily: 'Space Grotesk, Inter, system-ui',
+                      fontSize: { xs: '0.94rem', sm: '1.04rem' },
+                      fontWeight: 600,
                     }}
                   >
-                    <Typography
-                      noWrap
-                      sx={{
-                        minWidth: 0,
-                        fontFamily: 'Space Grotesk, Inter, system-ui',
-                        fontSize: { xs: '0.94rem', sm: '1.04rem' },
-                        fontWeight: 600,
-                      }}
-                    >
-                      {tab === 'class' && !encounterParam
-                        ? 'All trial bosses'
-                        : selectedEncounter
-                          ? `${selectedEncounter.trial_id ? `${selectedEncounter.trial_id} · ` : ''}${selectedEncounter.encounter_name}`
-                          : 'Choose an encounter'}
-                    </Typography>
-                  </Box>
-                )}
-                sx={(theme) => ({
-                  width: '100%',
-                  minHeight: 52,
-                  borderRadius: 2.25,
-                  backgroundColor: alpha(
-                    theme.palette.background.paper,
-                    theme.palette.mode === 'dark' ? 0.62 : 0.88,
-                  ),
-                  boxShadow: `inset 0 1px 0 ${alpha(theme.palette.common.white, theme.palette.mode === 'dark' ? 0.04 : 0.78)}`,
-                  '& .MuiSelect-select': {
-                    display: 'block',
-                    py: 1.35,
-                    pl: 1.65,
-                    pr: 5.5,
-                    backgroundColor: 'transparent !important',
-                  },
-                  '& .MuiOutlinedInput-notchedOutline': {
-                    borderColor: alpha(theme.palette.divider, 0.76),
-                  },
-                  '&:hover': {
-                    transform: 'none',
-                    backgroundColor: alpha(theme.palette.background.paper, 0.88),
-                  },
-                  '&:hover .MuiOutlinedInput-notchedOutline': {
-                    borderColor: alpha(theme.palette.primary.main, 0.42),
-                  },
-                  '&.Mui-focused': {
-                    backgroundColor: alpha(theme.palette.background.paper, 0.96),
-                    boxShadow: `0 0 0 3px ${alpha(theme.palette.primary.main, 0.1)}, inset 0 1px 0 ${alpha(theme.palette.common.white, 0.05)}`,
-                  },
-                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                    borderWidth: 1,
-                    borderColor: alpha(theme.palette.primary.main, 0.72),
-                  },
-                  '& .MuiSelect-icon': { right: 14, color: 'text.secondary', fontSize: 21 },
-                })}
-              >
-                {tab === 'class' && (
-                  <MenuItem
-                    value={ALL_BOSSES}
-                    sx={(theme) => ({
-                      minHeight: 40,
-                      fontWeight: 600,
-                      color: theme.palette.primary.main,
-                    })}
-                  >
                     All trial bosses
-                  </MenuItem>
-                )}
-                {encounters.map((encounter) => (
-                  <MenuItem
-                    key={encounterKey(encounter)}
-                    value={encounterKey(encounter)}
-                    sx={(theme) => ({
-                      minHeight: 40,
-                      mx: 0.75,
-                      px: 1.25,
-                      borderRadius: 1.1,
-                      transition: 'background-color 140ms ease, box-shadow 140ms ease',
-                      '&.Mui-selected': {
-                        backgroundColor: alpha(theme.palette.primary.main, 0.13),
-                        boxShadow: `inset 2px 0 0 ${theme.palette.primary.main}`,
+                  </Typography>
+                </Box>
+              ) : (
+                <>
+                  <Typography
+                    id="dps-encounter-label"
+                    sx={{
+                      position: 'absolute',
+                      width: '1px',
+                      height: '1px',
+                      overflow: 'hidden',
+                      clip: 'rect(0 0 0 0)',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    Encounter
+                  </Typography>
+                  <Select
+                    labelId="dps-encounter-label"
+                    aria-label="Encounter"
+                    value={selectedEncounter ? encounterKey(selectedEncounter) : ''}
+                    onChange={(event) => setParam({ boss: String(event.target.value) })}
+                    IconComponent={KeyboardArrowDownRounded}
+                    MenuProps={{
+                      slotProps: {
+                        paper: {
+                          sx: (theme) => ({
+                            mt: 0.75,
+                            maxHeight: 404,
+                            border: `1px solid ${alpha(theme.palette.divider, 0.78)}`,
+                            borderRadius: 2,
+                            backgroundColor: alpha(
+                              theme.palette.background.paper,
+                              theme.palette.mode === 'dark' ? 0.96 : 0.98,
+                            ),
+                            backgroundImage: 'none',
+                            boxShadow: `0 24px 60px ${alpha(theme.palette.common.black, theme.palette.mode === 'dark' ? 0.42 : 0.16)}`,
+                            backdropFilter: 'blur(20px) saturate(125%)',
+                          }),
+                        },
+                        list: { sx: { py: 0.75 } },
                       },
-                      '&.Mui-selected:hover': {
-                        backgroundColor: alpha(theme.palette.primary.main, 0.18),
+                    }}
+                    renderValue={() => (
+                      <Box sx={{ display: 'flex', minWidth: 0, alignItems: 'center', gap: 1 }}>
+                        <Typography
+                          noWrap
+                          sx={{
+                            minWidth: 0,
+                            fontFamily: 'Space Grotesk, Inter, system-ui',
+                            fontSize: { xs: '0.94rem', sm: '1.04rem' },
+                            fontWeight: 600,
+                          }}
+                        >
+                          {selectedEncounter
+                            ? `${selectedEncounter.trial_id ? `${selectedEncounter.trial_id} · ` : ''}${selectedEncounter.encounter_name}`
+                            : 'Choose an encounter'}
+                        </Typography>
+                      </Box>
+                    )}
+                    sx={(theme) => ({
+                      width: '100%',
+                      minHeight: 52,
+                      borderRadius: 2.25,
+                      backgroundColor: alpha(
+                        theme.palette.background.paper,
+                        theme.palette.mode === 'dark' ? 0.62 : 0.88,
+                      ),
+                      boxShadow: `inset 0 1px 0 ${alpha(theme.palette.common.white, theme.palette.mode === 'dark' ? 0.04 : 0.78)}`,
+                      '& .MuiSelect-select': {
+                        display: 'block',
+                        py: 1.35,
+                        pl: 1.65,
+                        pr: 5.5,
+                        backgroundColor: 'transparent !important',
+                      },
+                      '& .MuiOutlinedInput-notchedOutline': {
+                        borderColor: alpha(theme.palette.divider, 0.76),
                       },
                       '&:hover': {
-                        backgroundColor: alpha(theme.palette.text.primary, 0.055),
+                        transform: 'none',
+                        backgroundColor: alpha(theme.palette.background.paper, 0.88),
                       },
+                      '&:hover .MuiOutlinedInput-notchedOutline': {
+                        borderColor: alpha(theme.palette.primary.main, 0.42),
+                      },
+                      '&.Mui-focused': {
+                        backgroundColor: alpha(theme.palette.background.paper, 0.96),
+                        boxShadow: `0 0 0 3px ${alpha(theme.palette.primary.main, 0.1)}, inset 0 1px 0 ${alpha(theme.palette.common.white, 0.05)}`,
+                      },
+                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                        borderWidth: 1,
+                        borderColor: alpha(theme.palette.primary.main, 0.72),
+                      },
+                      '& .MuiSelect-icon': { right: 14, color: 'text.secondary', fontSize: 21 },
                     })}
                   >
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        width: '100%',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        gap: 2,
-                      }}
-                    >
-                      <Typography sx={{ fontSize: '0.84rem', fontWeight: 600 }}>
-                        {encounter.trial_id ? `${encounter.trial_id} · ` : ''}
-                        {encounter.encounter_name}
-                      </Typography>
-                      <Typography
-                        className="u-tabular"
-                        sx={{ color: 'text.secondary', fontSize: '0.72rem' }}
+                    {encounters.map((encounter) => (
+                      <MenuItem
+                        key={encounterKey(encounter)}
+                        value={encounterKey(encounter)}
+                        sx={(theme) => ({
+                          minHeight: 40,
+                          mx: 0.75,
+                          px: 1.25,
+                          borderRadius: 1.1,
+                          transition: 'background-color 140ms ease, box-shadow 140ms ease',
+                          '&.Mui-selected': {
+                            backgroundColor: alpha(theme.palette.primary.main, 0.13),
+                            boxShadow: `inset 2px 0 0 ${theme.palette.primary.main}`,
+                          },
+                          '&.Mui-selected:hover': {
+                            backgroundColor: alpha(theme.palette.primary.main, 0.18),
+                          },
+                          '&:hover': {
+                            backgroundColor: alpha(theme.palette.text.primary, 0.055),
+                          },
+                        })}
                       >
-                        {encounter.parse_count} parses
-                      </Typography>
-                    </Box>
-                  </MenuItem>
-                ))}
-              </Select>
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            width: '100%',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            gap: 2,
+                          }}
+                        >
+                          <Typography sx={{ fontSize: '0.84rem', fontWeight: 600 }}>
+                            {encounterLabel(encounter)}
+                          </Typography>
+                          <Typography
+                            className="u-tabular"
+                            sx={{ color: 'text.secondary', fontSize: '0.72rem' }}
+                          >
+                            {encounter.parse_count} parses
+                          </Typography>
+                        </Box>
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </>
+              )}
             </Box>
             {tab === 'class' && (
               <Box sx={{ width: '100%', overflowX: 'auto', pb: 0.25 }}>

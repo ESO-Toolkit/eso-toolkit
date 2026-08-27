@@ -1,5 +1,5 @@
 import { ThemeProvider, createTheme } from '@mui/material';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
@@ -197,11 +197,47 @@ describe('BuildLeaderboardView workspace', () => {
     expect(screen.getByText(`${selected.size} sampled top parses`)).toBeInTheDocument();
     expect(screen.queryByText(/% of each boss's top DPS/i)).not.toBeInTheDocument();
     const explanation = screen.getByRole('button', { name: /explain top-25 boss coverage/i });
-    explanation.focus();
+    fireEvent.touchStart(explanation);
     expect(
       await screen.findByText(
         /this build had a retained top-25 class parse on 3 of the 4 bosses with data/i,
+        {},
+        { timeout: 250 },
       ),
+    ).toBeInTheDocument();
+  });
+
+  it('replaces the middle-half range with mobile-safe typical-DPS help', async () => {
+    const { parses, result } = clusteredFixture();
+    renderView({ parses, result });
+
+    expect(screen.queryByText(/middle half/i)).not.toBeInTheDocument();
+    const explanation = screen.getByRole('button', { name: /explain typical DPS/i });
+    fireEvent.touchStart(explanation);
+    expect(
+      await screen.findByText(
+        /median DPS among this build's sampled top parses/i,
+        {},
+        { timeout: 250 },
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it('keeps metric help available to keyboard and pointer users', async () => {
+    const { parses, result } = clusteredFixture();
+    const { unmount } = renderView({ parses, result });
+
+    act(() => screen.getByRole('button', { name: /explain typical DPS/i }).focus());
+    expect(
+      await screen.findByText(/median DPS among this build's sampled top parses/i),
+    ).toBeInTheDocument();
+
+    unmount();
+    renderView({ parses, result });
+
+    await userEvent.hover(screen.getByRole('button', { name: /explain typical DPS/i }));
+    expect(
+      await screen.findByText(/median DPS among this build's sampled top parses/i),
     ).toBeInTheDocument();
   });
 

@@ -4,7 +4,7 @@ import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { Provider } from 'react-redux';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, useLocation } from 'react-router-dom';
 
 import savedBuildsReducer from '../../../store/saved_builds/savedBuildsSlice';
 import { dpsParsesApi } from '../api/dpsParsesApi';
@@ -34,6 +34,11 @@ const actualClustering = jest.requireActual<typeof import('../clustering/runBuil
 );
 
 const theme = createTheme();
+
+const LocationProbe: React.FC = () => {
+  const location = useLocation();
+  return <output data-testid="location-search">{location.search}</output>;
+};
 
 /**
  * The same boss at two difficulties. `listDpsEncounters` groups by
@@ -73,6 +78,7 @@ function renderPage(initialEntry = '/build-leaderboard') {
       <MemoryRouter initialEntries={[initialEntry]}>
         <ThemeProvider theme={theme}>
           <BuildLeaderboardPage />
+          <LocationProbe />
         </ThemeProvider>
       </MemoryRouter>
     </Provider>,
@@ -183,36 +189,41 @@ describe('BuildLeaderboardPage', () => {
     );
   });
 
-  /** An explicit ?boss= still narrows the class tab to one board (#1451 behavior). */
-  it('narrows the class tab to one boss when the URL carries an explicit boss param', async () => {
+  it('always pools the class tab when an old URL carries a boss param', async () => {
     renderPage('/build-leaderboard?tab=class&class=Necromancer&boss=60:122');
 
     await waitFor(() =>
       expect(dpsParsesApi.listParses).toHaveBeenCalledWith(
         expect.objectContaining({
           esoClass: 'Necromancer',
-          encounterId: 60,
-          difficulty: 122,
+          perEncounterCap: 25,
+          limit: 1000,
         }),
         expect.anything(),
       ),
     );
+    expect(dpsParsesApi.listParses).not.toHaveBeenCalledWith(
+      expect.objectContaining({ esoClass: 'Necromancer', encounterId: expect.anything() }),
+      expect.anything(),
+    );
+    expect(screen.queryByLabelText(/^encounter$/i)).not.toBeInTheDocument();
+    expect(screen.getByText('All trial bosses')).toBeInTheDocument();
   });
 
-  it('keeps the encounter picker available on the class tab and re-queries on change', async () => {
-    renderPage('/build-leaderboard?tab=class&class=Warden');
+  it('drops the encounter scope when switching to the class tab', async () => {
+    renderPage('/build-leaderboard?boss=60:122');
     await waitFor(() => expect(dpsParsesApi.listParses).toHaveBeenCalled());
 
-    await userEvent.click(screen.getByLabelText(/^encounter$/i));
-    const listbox = within(screen.getByRole('listbox'));
-    await userEvent.click(listbox.getByText(/40 parses/i));
+    await userEvent.click(screen.getByRole('tab', { name: /by class/i }));
 
     await waitFor(() =>
-      expect(dpsParsesApi.listParses).toHaveBeenCalledWith(
-        expect.objectContaining({ esoClass: 'Warden', encounterId: 60, difficulty: 121 }),
+      expect(dpsParsesApi.listParses).toHaveBeenLastCalledWith(
+        expect.objectContaining({ esoClass: 'Arcanist', perEncounterCap: 25, limit: 1000 }),
         expect.anything(),
       ),
     );
+    expect(screen.queryByLabelText(/^encounter$/i)).not.toBeInTheDocument();
+    expect(screen.getByTestId('location-search')).not.toHaveTextContent('boss=');
   });
 
   it('shows the encounters failure on the encounter tab, and Retry refetches it', async () => {
