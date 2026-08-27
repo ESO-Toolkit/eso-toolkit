@@ -12,6 +12,7 @@ import { CLASS_SKILL_LINES } from '../../../types/roster';
 import { buildCanonicalMaps, setDisplayName } from '../clustering/canonicalization';
 import { MIN_PARSES_TO_CLUSTER } from '../clustering/clusterBuilds';
 import { extractFeatureVectors } from '../clustering/featureExtraction';
+import { buildIndividualClusters } from '../clustering/individualBuilds';
 import { runBuildClustering } from '../clustering/runBuildClustering';
 import type { BuildCluster, ClusterBuildsResult, ClusterTrait } from '../types/clustering.types';
 import type { DpsParse } from '../types/dpsParses.types';
@@ -27,7 +28,13 @@ export interface UseBuildClustersResult {
   loading: boolean;
   progress: number;
   error: string | null;
-  /** True when there is too little data for clustering to mean anything. */
+  /**
+   * True when there is too little data for clustering to mean anything.
+   *
+   * NOT an empty state: `result` still holds one entry per distinct build (see
+   * buildIndividualClusters). The flag exists so the UI can say the patterns
+   * are ungrouped rather than implying five cards are five archetypes.
+   */
   tooFewParses: boolean;
   /**
    * Re-run clustering over the parses already loaded.
@@ -241,8 +248,26 @@ export function useBuildClusters(
       setLoading(false);
     };
 
-    if (parses.length === 0 || tooFewParses) {
+    if (parses.length === 0) {
       settleWithoutRunning(null, 0);
+      return undefined;
+    }
+
+    // Too thin to cluster, but never a dead end: list each distinct build on its
+    // own. Cheap enough to do inline — this branch is capped at
+    // MIN_PARSES_TO_CLUSTER parses, so there is no worker round-trip and no
+    // reason to cache.
+    if (tooFewParses) {
+      const thinMaps = buildCanonicalMaps(parses, resolveBaseAbilityId);
+      const thinLabels = buildLabelLookup(parses, thinMaps.sets);
+      const individual = buildIndividualClusters(extractFeatureVectors(parses, thinMaps));
+      settleWithoutRunning(
+        {
+          ...individual,
+          clusters: individual.clusters.map((cluster) => hydrateLabels(cluster, thinLabels)),
+        },
+        100,
+      );
       return undefined;
     }
 

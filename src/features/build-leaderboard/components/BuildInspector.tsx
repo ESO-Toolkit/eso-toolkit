@@ -32,6 +32,7 @@ import { DPS_DATA_COLOR, getLeaderboardClassTheme } from '../theme/leaderboardTh
 import type { BuildCluster, ClusterTrait } from '../types/clustering.types';
 
 import { BuildSignatureStrip } from './BuildSignatureStrip';
+import { StatHint } from './StatHint';
 import { TraitChipRow } from './TraitChipRow';
 
 const RepresentativeBuildEvidence = React.lazy(() =>
@@ -71,6 +72,18 @@ export interface BuildInspectorProps {
   variations?: readonly ClusterTrait[];
   sourceUrl?: string;
   representativeDps?: number;
+  /**
+   * Pooled class view: amounts in cluster.dps are fractions of each boss's
+   * ceiling, so the headline shows the medoid's RAW parse DPS instead and
+   * percentages move to secondary text.
+   */
+  pooled?: boolean;
+  /**
+   * Thin-data view: this card is ONE recorded build, not an archetype distilled
+   * from many. Copy that promises typicality ("Typical damage", "a viable
+   * pattern") would overclaim, so it is swapped for single-parse wording.
+   */
+  ungrouped?: boolean;
 }
 
 export const BuildInspector: React.FC<BuildInspectorProps> = ({
@@ -88,6 +101,8 @@ export const BuildInspector: React.FC<BuildInspectorProps> = ({
   variations = [],
   sourceUrl,
   representativeDps,
+  pooled = false,
+  ungrouped = false,
 }) => {
   const theme = useTheme();
   const compactEvidence = useMediaQuery(theme.breakpoints.down('sm'));
@@ -202,7 +217,11 @@ export const BuildInspector: React.FC<BuildInspectorProps> = ({
                 },
               }}
             >
-              {recommended ? 'Recommended starting point' : 'Selected build'}
+              {recommended
+                ? 'Recommended starting point'
+                : ungrouped
+                  ? 'Recorded build'
+                  : 'Selected build'}
             </Typography>
             <Typography
               id={`build-inspector-${cluster.id}`}
@@ -234,7 +253,11 @@ export const BuildInspector: React.FC<BuildInspectorProps> = ({
             >
               {recommended
                 ? 'Best balance of typical damage and a sample large enough to trust.'
-                : 'A viable pattern found in top-ranked parses for this selection.'}
+                : ungrouped
+                  ? cluster.size > 1
+                    ? `Run by ${cluster.size} of the top-ranked parses recorded here.`
+                    : 'One top-ranked parse. Too few here to call it a pattern yet.'
+                  : 'A viable pattern found in top-ranked parses for this selection.'}
             </Typography>
           </Box>
         </Box>
@@ -260,7 +283,7 @@ export const BuildInspector: React.FC<BuildInspectorProps> = ({
                 textTransform: 'uppercase',
               }}
             >
-              Typical damage
+              {pooled ? 'Representative parse' : ungrouped ? 'Parse damage' : 'Typical damage'}
             </Typography>
             <Typography
               className="u-tabular"
@@ -272,7 +295,7 @@ export const BuildInspector: React.FC<BuildInspectorProps> = ({
                 letterSpacing: '-0.035em',
               }}
             >
-              {compactDps(cluster.dps.median)}
+              {compactDps(pooled ? (representativeDps ?? cluster.dps.median) : cluster.dps.median)}
               <Box
                 component="span"
                 sx={{
@@ -286,12 +309,36 @@ export const BuildInspector: React.FC<BuildInspectorProps> = ({
                 DPS
               </Box>
             </Typography>
-            <Typography
-              className="u-tabular"
-              sx={{ mt: -0.15, color: 'text.secondary', fontSize: '0.67rem', fontWeight: 500 }}
-            >
-              Middle half {compactDps(cluster.dps.q1)}–{compactDps(cluster.dps.q3)}
-            </Typography>
+            {/* A spread needs at least two parses to describe. With one, q1,
+                median and q3 are the same number and the line would state a
+                range that does not exist. */}
+            {pooled ? (
+              <StatHint
+                data-testid="dps-spread-hint"
+                text={`Usually ${Math.round(cluster.dps.median * 100)}% of this boss's best (${Math.round(
+                  cluster.dps.q1 * 100,
+                )}–${Math.round(cluster.dps.q3 * 100)}%)`}
+                explanation={`Parses from different bosses aren't comparable, so each one is scored against the best parse recorded on its own boss. This build lands at ${Math.round(
+                  cluster.dps.median * 100,
+                )}% of that best on a typical run, and between ${Math.round(
+                  cluster.dps.q1 * 100,
+                )}% and ${Math.round(cluster.dps.q3 * 100)}% on half of its ${cluster.dps.count} parses.`}
+              />
+            ) : cluster.dps.count > 1 ? (
+              <StatHint
+                data-testid="dps-spread-hint"
+                text={`Half land ${compactDps(cluster.dps.q1)}–${compactDps(cluster.dps.q3)}`}
+                explanation={`The big number is the middle parse: half of this build's ${cluster.dps.count} parses did better, half did worse. Half of them landed between ${compactDps(
+                  cluster.dps.q1,
+                )} and ${compactDps(cluster.dps.q3)} DPS — a quarter went below that range and a quarter above.`}
+              />
+            ) : (
+              <StatHint
+                data-testid="dps-spread-hint"
+                text="From a single parse"
+                explanation="Only one parse recorded this build, so there is no range to show yet. Treat the number as one player's result, not as what to expect."
+              />
+            )}
           </Box>
           <Box
             sx={(theme) => ({
@@ -325,6 +372,13 @@ export const BuildInspector: React.FC<BuildInspectorProps> = ({
                 of {totalParses}
               </Box>
             </Typography>
+            <StatHint
+              data-testid="share-hint"
+              text={`${Math.round(cluster.share * 100)}% of this selection`}
+              explanation={`${cluster.size} of the ${totalParses} top-ranked parses in this selection ${
+                cluster.size === 1 ? 'runs' : 'run'
+              } this build. These are the highest-ranked logs we sample per boss, so it is a share of top parses — not of all players.`}
+            />
           </Box>
         </Box>
 
@@ -535,8 +589,8 @@ export const BuildInspector: React.FC<BuildInspectorProps> = ({
               sx={{ mt: 0.2, color: 'text.secondary', fontSize: '0.76rem' }}
             >
               {compactEvidence
-                ? `${compactDps(cluster.dps.median)} DPS · ${cluster.size} parses`
-                : `${label} · ${compactDps(cluster.dps.median)} DPS · ${cluster.size} of ${totalParses} top parses`}
+                ? `${compactDps(pooled ? (representativeDps ?? cluster.dps.median) : cluster.dps.median)} DPS · ${cluster.size} parses`
+                : `${label} · ${compactDps(pooled ? (representativeDps ?? cluster.dps.median) : cluster.dps.median)} DPS · ${cluster.size} of ${totalParses} top parses`}
             </Typography>
           </Box>
           <IconButton

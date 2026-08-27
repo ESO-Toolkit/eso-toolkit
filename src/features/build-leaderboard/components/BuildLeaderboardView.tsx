@@ -11,7 +11,7 @@ import {
   Typography,
 } from '@mui/material';
 import { alpha } from '@mui/material/styles';
-import React, { useRef, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 
 import { getLeaderboardClassTheme } from '../theme/leaderboardTheme';
 import type { BuildCluster, ClusterBuildsResult } from '../types/clustering.types';
@@ -31,6 +31,25 @@ export interface BuildLeaderboardViewProps {
   esoClass?: string;
   /** Encounter context the parses were scoped to, shown with the card list. */
   scopeLabel?: string;
+  /**
+   * Human phrase for WHERE the parses come from, used by the too-few-parses
+   * message ('on DSR · Tideborn Taleria', 'across 14 trial bosses').
+   */
+  scopeDescription?: string;
+  /**
+   * Pooled class view: cluster.dps holds fractions of each boss's ceiling, so
+   * cards headline the cluster's best RAW parse ("112k @ DSR") and percentages
+   * move to secondary text.
+   */
+  pooled?: boolean;
+  /**
+   * Widens a thin selection (a class slice of one boss) to every boss. Rendered
+   * as the action on the ungrouped banner, so a starved board offers a way out
+   * instead of telling the reader to go find one.
+   */
+  onBroadenScope?: () => void;
+  /** Call to action for `onBroadenScope`, e.g. 'Show all trial bosses'. */
+  broadenScopeLabel?: string;
   onRetry?: () => void;
   onOpenInEditor?: (cluster: BuildCluster) => void;
   onSaveBuild?: (cluster: BuildCluster) => void;
@@ -76,6 +95,10 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
   tooFewParses,
   esoClass,
   scopeLabel,
+  scopeDescription,
+  pooled = false,
+  onBroadenScope,
+  broadenScopeLabel = 'Show all trial bosses',
   onRetry,
   onOpenInEditor,
   onSaveBuild,
@@ -98,6 +121,25 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
     setEvidenceOpen(false);
   }
 
+  // Pooled view: the best RAW parse in each cluster heads its card ("112k @
+  // DSR"). Raw amounts come from `parses`, never the normalized cluster input.
+  // Lives above every early return (error/loading/too-few) — hook order must
+  // stay stable across renders.
+  const bestParseByCluster = useMemo(() => {
+    const map = new Map<string, DpsParse>();
+    if (!pooled) return map;
+    const byId = new Map(parses.map((parse) => [parse.parse_id, parse]));
+    result?.clusters.forEach((cluster) => {
+      let best: DpsParse | undefined;
+      for (const id of cluster.memberParseIds) {
+        const parse = byId.get(id);
+        if (parse && (!best || parse.amount > best.amount)) best = parse;
+      }
+      if (best) map.set(cluster.id, best);
+    });
+    return map;
+  }, [pooled, parses, result]);
+
   if (error) {
     return (
       <Alert
@@ -114,19 +156,9 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
       </Alert>
     );
   }
-
   if (loading) return <SkeletonWorkspace />;
 
   if (parses.length === 0) return <Alert severity="info">{emptyMessage}</Alert>;
-
-  if (tooFewParses) {
-    return (
-      <Alert severity="info" data-testid="too-few-parses">
-        Only {parses.length} parses are recorded here—not enough to identify reliable build patterns
-        yet.
-      </Alert>
-    );
-  }
 
   if (clustering || !result) {
     return (
@@ -196,6 +228,31 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
 
   return (
     <Box>
+      {/* Thin data is a caveat, never a dead end. The builds recorded here are
+          still shown — grouping them into archetypes is what we withhold, and
+          the banner says so and offers a wider scope where one exists. */}
+      {tooFewParses && (
+        <Alert
+          severity="info"
+          data-testid="too-few-parses"
+          action={
+            onBroadenScope && (
+              <Button color="inherit" size="small" onClick={onBroadenScope}>
+                {broadenScopeLabel}
+              </Button>
+            )
+          }
+          sx={{ mb: 1.5, alignItems: 'center' }}
+        >
+          {/* Say WHERE the thinness is: on the pooled class view the boss count
+              matters; on a single boss the class slice does. Without the scope,
+              "Only 2 parses are recorded" reads like the boss is empty. */}
+          {`Only ${parses.length} ${esoClass ? `${esoClass} ` : ''}${
+            parses.length === 1 ? 'parse' : 'parses'
+          } ${scopeDescription ?? 'in this selection'} — too few to group into reliable build patterns (10+ needed), so each build is listed on its own below.`}
+        </Alert>
+      )}
+
       {!hideSummary && (
         <Box sx={{ mb: 1.5 }}>
           <Box sx={{ display: 'flex', minHeight: 32, alignItems: 'center', gap: 0.5 }}>
@@ -326,7 +383,7 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
                     letterSpacing: '-0.01em',
                   }}
                 >
-                  Build patterns
+                  {tooFewParses ? 'Recorded builds' : 'Build patterns'}
                 </Typography>
                 {scopeLabel && (
                   <Typography noWrap sx={{ color: 'text.secondary', fontSize: '0.65rem' }}>
@@ -358,7 +415,7 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
                   textTransform: 'uppercase',
                 }}
               >
-                Typical
+                {pooled ? 'Best' : tooFewParses ? 'DPS' : 'Typical'}
               </Typography>
             </Box>
             <Box component="ol" sx={{ m: 0, p: 0, listStyle: 'none' }}>
@@ -371,6 +428,7 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
                   recommended={cluster.id === result.recommendedClusterId}
                   showClassIcon={!esoClass}
                   medoidParse={representativeParseFor(cluster)}
+                  bestParse={bestParseByCluster.get(cluster.id)}
                   onSelect={() => handleSelect(cluster.id)}
                 />
               ))}
@@ -402,6 +460,8 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
               variations={selected.variations}
               sourceUrl={representativeParseFor(selected)?.source_url}
               representativeDps={representativeParseFor(selected)?.amount}
+              pooled={pooled}
+              ungrouped={tooFewParses}
               pendingKind={pendingAction?.clusterId === selected.id ? pendingAction.kind : null}
               actionsDisabled={Boolean(pendingAction)}
               onOpenInEditor={onOpenInEditor}

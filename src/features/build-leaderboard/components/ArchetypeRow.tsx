@@ -51,6 +51,12 @@ export interface ArchetypeRowProps {
   showClassIcon: boolean;
   /** The cluster's representative parse, for the freshness line. */
   medoidParse?: DpsParse;
+  /**
+   * Pooled class view only: the cluster's best RAW parse. Its absolute DPS
+   * becomes the headline ("112k") anchored to its trial; cluster.dps holds
+   * fractions of ceiling and demotes to a secondary "typically N%" line.
+   */
+  bestParse?: DpsParse;
   onSelect: () => void;
 }
 
@@ -61,6 +67,7 @@ export const ArchetypeRow: React.FC<ArchetypeRowProps> = ({
   recommended,
   showClassIcon,
   medoidParse,
+  bestParse,
   onSelect,
 }) => {
   const classTheme = getLeaderboardClassTheme(cluster.esoClass);
@@ -70,13 +77,25 @@ export const ArchetypeRow: React.FC<ArchetypeRowProps> = ({
     ? label.replace(new RegExp(`\\s+${escapedClass}$`, 'i'), '').trim()
     : label;
   const freshness = parseFreshness(medoidParse);
+  // Pooled view: headline is the cluster's best RAW parse, anchored to its
+  // trial; cluster.dps holds ceiling fractions and demotes to secondary text.
+  const anchor = bestParse?.trial_id || bestParse?.encounter_name || '';
+  const headlineDps = compactDps(bestParse ? bestParse.amount : cluster.dps.median);
+  const typicalPct = `${Math.round(cluster.dps.median * 100)}%`;
+  // Thin selections list builds one at a time, so size 1 is routine here and
+  // "1 parses" would be on screen constantly.
+  const parseCount = `${cluster.size} ${cluster.size === 1 ? 'parse' : 'parses'}`;
 
   return (
     <Box component="li" sx={{ listStyle: 'none' }}>
       <ButtonBase
         data-testid={recommended ? 'recommended-row' : 'archetype-row'}
         aria-current={selected ? 'true' : undefined}
-        aria-label={`${label}, typical damage ${compactDps(cluster.dps.median)}, ${cluster.size} top parses${recommended ? ', recommended' : ''}`}
+        aria-label={
+          bestParse
+            ? `${label}, best ${headlineDps} DPS on ${anchor}, typically ${typicalPct} of ceiling, ${parseCount}${recommended ? ', recommended' : ''}`
+            : `${label}, typical damage ${headlineDps}, ${parseCount}${recommended ? ', recommended' : ''}`
+        }
         onClick={onSelect}
         sx={(theme) => ({
           position: 'relative',
@@ -203,7 +222,9 @@ export const ArchetypeRow: React.FC<ArchetypeRowProps> = ({
                 fontSize: '0.69rem',
               }}
             >
-              {cluster.size} parses · {compactDps(cluster.dps.median)} typical
+              {bestParse
+                ? `${headlineDps}${anchor ? ` @ ${anchor}` : ''} · ${parseCount} · usually ${typicalPct} of top`
+                : `${parseCount} · ${headlineDps}${cluster.size === 1 ? '' : ' typical'}`}
             </Typography>
             {freshness && (
               <Typography
@@ -229,18 +250,32 @@ export const ArchetypeRow: React.FC<ArchetypeRowProps> = ({
         >
           {cluster.size}
         </Typography>
-        <Typography
-          className="u-tabular"
+        <Box
           sx={{
             display: { xs: 'none', sm: 'block' },
             textAlign: 'right',
-            color: DPS_DATA_COLOR,
-            fontSize: '0.9rem',
-            fontWeight: 700,
           }}
         >
-          {compactDps(cluster.dps.median)}
-        </Typography>
+          <Typography
+            className="u-tabular"
+            sx={{
+              textAlign: 'right',
+              color: DPS_DATA_COLOR,
+              fontSize: '0.9rem',
+              fontWeight: 700,
+            }}
+          >
+            {headlineDps}
+          </Typography>
+          {bestParse && anchor && (
+            <Typography
+              className="u-tabular"
+              sx={{ textAlign: 'right', color: 'text.secondary', fontSize: '0.62rem' }}
+            >
+              @{anchor}
+            </Typography>
+          )}
+        </Box>
         <ChevronRight
           aria-hidden="true"
           className="archetype-row-chevron"
