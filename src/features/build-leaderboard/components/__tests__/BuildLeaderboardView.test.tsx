@@ -192,6 +192,28 @@ describe('BuildLeaderboardView states', () => {
     expect(screen.getByTestId('too-few-parses')).toHaveTextContent('Only 1 parse in');
   });
 
+  /**
+   * "Middle half" was jargon with no way to ask what it meant on a phone.
+   *
+   * Asserts aria-expanded, NOT text presence: MUI's Tooltip animates out, so the
+   * popper lingers after closing and a findByText assertion passes against a
+   * tooltip on its way OUT — which is how a tap-opens-then-closes bug survived
+   * this test once already.
+   */
+  it('spells out the dps spread and explains it on tap', async () => {
+    const { parses, result } = clusteredFixture();
+    renderView({ parses, result });
+
+    const spread = screen.getByTestId('dps-spread-hint');
+    expect(spread).toHaveTextContent(/^Half land \d/);
+
+    await userEvent.click(spread);
+    expect(spread).toHaveAttribute('aria-expanded', 'true');
+    expect(
+      await screen.findByText(/half of this build's \d+ parses did better, half did worse/i),
+    ).toBeInTheDocument();
+  });
+
   it('announces clustering progress politely', () => {
     const { parses } = clusteredFixture();
     renderView({ parses, clustering: true, clusterProgress: 40 });
@@ -238,58 +260,33 @@ describe('BuildLeaderboardView states', () => {
 });
 
 describe('BuildLeaderboardView workspace', () => {
-  /**
-   * Touch devices never get a hover, so the explanation behind every quartile
-   * line must open on TAP. A plain MUI Tooltip silently strands mobile readers
-   * with numbers they cannot decode.
-   */
-  it('explains pooled performance on tap, not just on hover', async () => {
+  it('shows top-25 boss coverage instead of normalized percentages', async () => {
     const { parses, result } = clusteredFixture();
-    const pooledResult = {
-      ...result,
-      clusters: result.clusters.map((cluster) => ({
-        ...cluster,
-        dps: {
-          min: 0.4,
-          q1: 0.48,
-          median: 0.58,
-          q3: 0.64,
-          p90: 0.7,
-          max: 0.72,
-          mean: 0.57,
-          count: 12,
-        },
-      })),
-    };
+    const selected = recommendedCluster(result);
+    const selectedIds = new Set(selected.memberParseIds);
+    let selectedIndex = 0;
+    const pooledParses = parses.map((parse) => ({
+      ...parse,
+      encounter_id: selectedIds.has(parse.parse_id) ? 100 + (selectedIndex++ % 3) : 200,
+    }));
 
-    renderView({ parses, result: pooledResult, pooled: true });
+    renderView({ parses: pooledParses, result, pooled: true });
 
-    const summary = screen.getByTestId('dps-spread-hint');
-    expect(summary).toHaveTextContent("Usually 58% of this boss's best (48–64%)");
-
-    await userEvent.click(summary);
-    // aria-expanded, not mere text presence: MUI's Tooltip animates out, so the
-    // popper lingers in the DOM after closing and a findByText assertion passes
-    // against a tooltip on its way OUT — which is how a tap-opens-then-closes
-    // bug survived this test once already.
-    expect(summary).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByText('Bosses')).toBeInTheDocument();
+    expect(screen.getByText('3 of 4')).toBeInTheDocument();
+    expect(screen.getByText(`${selected.size} sampled top parses`)).toBeInTheDocument();
+    expect(screen.queryByText(/% of each boss's top DPS/i)).not.toBeInTheDocument();
+    // Opened by TAP, not focus. This explanation used to be a hover-only Tooltip
+    // on an icon button, unreachable on a phone; StatHint opens it on click and
+    // deliberately does not open on focus, because focus arrives before click on
+    // every tap and the two would cancel out.
+    const explanation = screen.getByRole('button', { name: /explain top-25 boss coverage/i });
+    await userEvent.click(explanation);
+    expect(explanation).toHaveAttribute('aria-expanded', 'true');
     expect(
-      await screen.findByText(/scored against the best parse recorded on its own boss/i),
-    ).toBeInTheDocument();
-  });
-
-  /** "Middle half" was jargon with no way to ask what it meant on a phone. */
-  it('spells out the dps spread and explains it on tap', async () => {
-    const { parses, result } = clusteredFixture();
-    renderView({ parses, result });
-
-    const spread = screen.getByTestId('dps-spread-hint');
-    expect(spread).toHaveTextContent(/^Half land \d/);
-
-    await userEvent.click(spread);
-    expect(spread).toHaveAttribute('aria-expanded', 'true');
-    expect(
-      await screen.findByText(/half of this build's \d+ parses did better, half did worse/i),
+      await screen.findByText(
+        /this build had a retained top-25 class parse on 3 of the 4 bosses with data/i,
+      ),
     ).toBeInTheDocument();
   });
 

@@ -8,6 +8,12 @@ export interface StatHintProps {
   text: string;
   /** Plain-language explanation of what the number actually means. */
   explanation: string;
+  /**
+   * Overrides the accessible name. Defaults to "<text>. <explanation>", which
+   * conveys the whole thing without the reader having to open anything; set it
+   * where a shorter, action-shaped name reads better.
+   */
+  ariaLabel?: string;
   'data-testid'?: string;
 }
 
@@ -32,7 +38,12 @@ export interface StatHintProps {
  * Hover is likewise attached only under `(hover: hover)`: touch browsers
  * synthesise `mouseenter` before `click`, which would re-create the same race.
  */
-export const StatHint: React.FC<StatHintProps> = ({ text, explanation, 'data-testid': testId }) => {
+export const StatHint: React.FC<StatHintProps> = ({
+  text,
+  explanation,
+  ariaLabel,
+  'data-testid': testId,
+}) => {
   const canHover = useMediaQuery('(hover: hover)', { noSsr: true });
   const [open, setOpen] = React.useState(false);
 
@@ -60,7 +71,7 @@ export const StatHint: React.FC<StatHintProps> = ({ text, explanation, 'data-tes
       >
         <ButtonBase
           data-testid={testId}
-          aria-label={`${text}. ${explanation}`}
+          aria-label={ariaLabel ?? `${text}. ${explanation}`}
           aria-expanded={open}
           // Where hovering already opened it, a click must not toggle it shut —
           // the pointer is still inside, so it would stay shut until the user

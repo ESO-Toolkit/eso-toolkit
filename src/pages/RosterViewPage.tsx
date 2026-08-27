@@ -42,6 +42,8 @@ import { useTheme } from '@mui/material/styles';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
+import { usePageTitle } from '@/hooks/useDocumentTitle';
+
 import { GearSetTooltip } from '../components/GearSetTooltip';
 import { BuildDetailPanel } from '../components/roster/build-detail-panel';
 import { getDiscordBotApiUrl } from '../features/auth/discord-auth';
@@ -1694,6 +1696,8 @@ const PerFightSection: React.FC<PerFightSectionProps> = ({
 // ============================================================
 
 export const RosterViewPage: React.FC = () => {
+  usePageTitle('/rv');
+
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === 'dark';
   const roleColors = isDarkMode ? DARK_ROLE_COLORS : LIGHT_ROLE_COLORS_SOLID;

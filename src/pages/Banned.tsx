@@ -4,6 +4,8 @@ import type { Theme } from '@mui/material/styles';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { usePageTitle } from '@/hooks/useDocumentTitle';
+
 import { clearStoredTokens } from '../features/auth/auth';
 import { useAuth } from '../features/auth/AuthContext';
 import { persistor } from '../store/storeWithHistory';
@@ -16,9 +18,7 @@ export const Banned: React.FC = () => {
   const { banReason, setAccessToken } = useAuth();
   const navigate = useNavigate();
 
-  React.useEffect(() => {
-    document.title = 'Access Denied | ESO Toolkit';
-  }, []);
+  usePageTitle('/banned');
 
   const handleLogout = (): void => {
     // Drop both tokens — leaving the long-lived refresh_token behind lets a

@@ -51,6 +51,14 @@ jest.mock('./features/auth/AuthContext', () => ({
   useAuth: () => ({ isBanned: false }),
 }));
 
+jest.mock('./features/auth/AuthenticatedRoute', () => ({
+  AuthenticatedRoute: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+}));
+
+jest.mock('./features/user_reports/UserReports', () => ({
+  UserReports: () => <div>My Reports Route</div>,
+}));
+
 jest.mock('./hooks/useWorkerManagerLogger', () => ({
   useWorkerManagerLogger: () => {},
 }));
@@ -137,5 +145,14 @@ describe('App', () => {
     render(<App />);
 
     expect(await screen.findByText('About Route')).toBeInTheDocument();
+  });
+
+  it('redirects the legacy logs route to the log analyzer', async () => {
+    window.history.pushState({}, 'Logs', '/logs');
+
+    render(<App />);
+
+    expect(await screen.findByText('My Reports Route')).toBeInTheDocument();
+    expect(window.location.pathname).toBe('/my-reports');
   });
 });

@@ -27,6 +27,8 @@ import { useTheme } from '@mui/material/styles';
 import React, { useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 
+import { usePageTitle } from '@/hooks/useDocumentTitle';
+
 import { useAuth } from '../features/auth/AuthContext';
 import { PublishBuildDialog } from '../features/build-hub/components/PublishBuildDialog';
 import { useViewTransitionNavigate } from '../hooks/useViewTransitionNavigate';
@@ -207,6 +209,8 @@ const BuildCardItem: React.FC<BuildCardProps> = ({
 };
 
 export const MyBuildsPage: React.FC = () => {
+  usePageTitle('/my-builds');
+
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === 'dark';
   const navigate = useViewTransitionNavigate();

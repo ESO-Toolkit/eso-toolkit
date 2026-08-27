@@ -177,7 +177,7 @@ export const KalpaAuthSuccess = (): React.JSX.Element => {
   const gradientId = useId();
 
   useEffect(() => {
-    document.title = 'Signed in — ESO Toolkit';
+    document.title = 'Signed in | ESO Toolkit';
   }, []);
 
   return (

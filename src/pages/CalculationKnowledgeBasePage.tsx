@@ -5,6 +5,8 @@ import ReactMarkdown from 'react-markdown';
 import type { Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
+import { usePageTitle } from '@/hooks/useDocumentTitle';
+
 import knowledgeBaseContent from '../../documentation/features/calculations/CALCULATION_KNOWLEDGE_BASE.md?raw';
 
 const knowledgeBaseBody = knowledgeBaseContent.replace(/^# .*?(?:\r?\n)+/, '');
@@ -120,9 +122,7 @@ const markdownComponents: Components = {
 export const CalculationKnowledgeBasePage: React.FC = () => {
   const theme = useTheme();
 
-  React.useEffect(() => {
-    document.title = 'Calculation Knowledge Base | ESO Toolkit';
-  }, []);
+  usePageTitle('/docs/calculations');
 
   return (
     <Container maxWidth="lg" sx={{ py: { xs: 4, md: 6 } }}>

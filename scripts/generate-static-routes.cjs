@@ -13,123 +13,56 @@ const path = require('node:path');
 const buildDirectory = path.join(__dirname, '..', 'build');
 const appShell = path.join(buildDirectory, 'index.html');
 const cspHashMarker = '__CSP_INLINE_SCRIPT_HASHES__';
-const staticRoutes = [
-  {
-    path: 'about',
-    title: 'About | ESO Toolkit',
-    description: 'Learn about ESO Toolkit, an independent suite of combat-log and raid tools.',
-  },
-  {
-    path: 'build-editor',
-    title: 'Build Editor | ESO Toolkit',
-    description: 'Create and share Elder Scrolls Online character builds.',
-  },
-  {
-    path: 'build-hub',
-    title: 'Build Hub | ESO Toolkit',
-    description: 'Browse community-created Elder Scrolls Online character builds.',
-  },
-  {
-    path: 'build-leaderboard',
-    title: 'Build Leaderboard | ESO Toolkit',
-    description: 'Explore top-performing Elder Scrolls Online builds and parses.',
-  },
-  {
-    path: 'calculator',
-    title: 'ESO Calculators | ESO Toolkit',
-    description: 'Plan combat stats, ultimate generation, and scribed skills for ESO.',
-  },
-  {
-    path: 'docs/calculations',
-    title: 'Calculation Guide | ESO Toolkit',
-    description: 'Review the formulas and assumptions used by ESO Toolkit calculators.',
-  },
-  {
-    path: 'docs/discord-roster-bot',
-    title: 'Discord Roster Bot Guide | ESO Toolkit',
-    description: 'Set up and use the ESO Toolkit Discord roster bot.',
-  },
-  {
-    path: 'docs/loadout/food-selector',
-    title: 'Food Selector Guide | ESO Toolkit',
-    description: 'Learn how ESO Toolkit selects food and drink for character loadouts.',
-  },
-  {
-    path: 'gear-sets',
-    title: 'ESO Gear Sets | ESO Toolkit',
-    description: 'Search Elder Scrolls Online gear sets and bonuses.',
-  },
-  {
-    path: 'latest-reports',
-    title: 'Latest Reports | ESO Toolkit',
-    description: 'Browse recently analyzed Elder Scrolls Online combat-log reports.',
-  },
-  {
-    path: 'leaderboards',
-    title: 'ESO Leaderboards | ESO Toolkit',
-    description: 'Explore Elder Scrolls Online combat-log leaderboards and recent parses.',
-  },
-  {
-    path: 'loadout-manager',
-    title: 'Loadout Manager | ESO Toolkit',
-    description: 'Plan Elder Scrolls Online gear, skills, champion points, and consumables.',
-  },
-  {
-    path: 'pack-hub',
-    title: 'Pack Hub | ESO Toolkit',
-    description: 'Browse and share curated Elder Scrolls Online build packs.',
-  },
-  {
-    path: 'parse-analysis',
-    title: 'Parse Analysis | ESO Toolkit',
-    description: 'Analyze an Elder Scrolls Online combat-log parse in detail.',
-  },
-  {
-    path: 'privacy',
-    title: 'Privacy Policy | ESO Toolkit',
-    description: 'Read how ESO Toolkit handles authentication, analytics, and shared content.',
-  },
-  {
-    path: 'privacy-settings',
-    title: 'Privacy Settings | ESO Toolkit',
-    description: 'Review and update optional analytics preferences for ESO Toolkit.',
-  },
-  {
-    path: 'sample-report',
-    title: 'Sample Combat Report | ESO Toolkit',
-    description: 'Explore an Elder Scrolls Online combat report with ESO Toolkit.',
-  },
-  {
-    path: 'roster-builder',
-    title: 'Roster Builder | ESO Toolkit',
-    description: 'Plan and share Elder Scrolls Online trial rosters.',
-  },
-  {
-    path: 'roster-hub',
-    title: 'Roster Hub | ESO Toolkit',
-    description: 'Browse community Elder Scrolls Online trial rosters.',
-  },
-  {
-    path: 'text-editor',
-    title: 'ESO Text Editor | ESO Toolkit',
-    description: 'Format styled text for Elder Scrolls Online guild and community posts.',
-  },
-  {
-    path: 'terms',
-    title: 'Terms of Use | ESO Toolkit',
-    description: 'Read the terms that govern use of the hosted ESO Toolkit service.',
-  },
-  {
-    path: 'ultimate-simulator',
-    title: 'Ultimate Simulator | ESO Toolkit',
-    description: 'Model Elder Scrolls Online ultimate generation for players and groups.',
-  },
-  {
-    path: 'whats-new',
-    title: "What's New | ESO Toolkit",
-    description: 'Review recent ESO Toolkit features, fixes, and game-data updates.',
-  },
-];
+const SITE_ORIGIN = 'https://esotk.com';
+// DEFECT 3: the prerendered titles here and the `document.title` assignments in
+// the React pages used to be two independent hardcoded lists, and they had
+// drifted (/calculator, /gear-sets, /leaderboards, /pack-hub, /sample-report,
+// /text-editor, /ultimate-simulator, /docs/calculations). Google renders JS, so
+// the weaker hydrated title won. Both sides now read the same JSON: this script
+// requires it directly (plain node, no bundler), while the app imports it
+// through src/constants/routeMeta.ts.
+const routeMeta = require('../src/constants/route-meta.json');
+
+// The /build-leaderboard sub-routes (7 pooled class boards + 14 per-encounter
+// boards) come from their own JSON because each entry also carries the encounter
+// id / class filter the page needs at runtime. Requiring it here keeps the
+// prerendered shells, the sitemap and the app reading the same titles.
+//
+// The 98 class-narrowed-to-one-boss permutations are deliberately NOT here: they
+// are near-duplicates of the pooled class board and canonicalize to it, so
+// prerendering them would only spend crawl budget on thin pages.
+const leaderboardRoutes = require('../src/constants/leaderboard-routes.json');
+
+const leaderboardRouteMeta = Object.fromEntries([
+  ...leaderboardRoutes.classes.map((entry) => [
+    `/build-leaderboard/class/${entry.slug}`,
+    { title: entry.title, description: entry.description, prerender: true },
+  ]),
+  ...leaderboardRoutes.bosses.map((entry) => [
+    `/build-leaderboard/boss/${entry.slug}`,
+    { title: entry.title, description: entry.description, prerender: true },
+  ]),
+]);
+
+const staticRoutes = Object.entries({ ...routeMeta, ...leaderboardRouteMeta })
+  .filter(([, meta]) => meta.prerender)
+  .map(([routePath, meta]) => {
+    if (!routePath.startsWith('/') || routePath.length < 2) {
+      throw new Error(`Prerendered route must be a non-root absolute path: ${routePath}`);
+    }
+    if (routePath.includes(':') || routePath.includes('*')) {
+      throw new Error(`Parameterized routes cannot be prerendered: ${routePath}`);
+    }
+    if (!meta.description) {
+      throw new Error(`Prerendered route is missing a description: ${routePath}`);
+    }
+    return { path: routePath.slice(1), title: meta.title, description: meta.description };
+  });
+
+if (staticRoutes.length === 0) {
+  console.error('No prerenderable routes found in route-meta.json or leaderboard-routes.json');
+  process.exit(1);
+}
 
 if (!fs.existsSync(appShell)) {
   console.error(`Build app shell not found: ${appShell}`);
@@ -142,8 +75,7 @@ const contents = fs.readFileSync(appShell, 'utf8');
 // makes the same build artifact safe to move to a header-capable static host.
 const inlineScriptHashes = Array.from(
   contents.matchAll(/<script\b(?![^>]*\bsrc\s*=)[^>]*>([\s\S]*?)<\/script>/gi),
-  ([, script]) =>
-    `'sha256-${crypto.createHash('sha256').update(script, 'utf8').digest('base64')}'`,
+  ([, script]) => `'sha256-${crypto.createHash('sha256').update(script, 'utf8').digest('base64')}'`,
 ).join(' ');
 
 if (!inlineScriptHashes) {
@@ -153,7 +85,9 @@ if (!inlineScriptHashes) {
 
 const headersPath = path.join(buildDirectory, '_headers');
 if (fs.existsSync(headersPath)) {
-  const headers = fs.readFileSync(headersPath, 'utf8').replaceAll(cspHashMarker, inlineScriptHashes);
+  const headers = fs
+    .readFileSync(headersPath, 'utf8')
+    .replaceAll(cspHashMarker, inlineScriptHashes);
   if (headers.includes(cspHashMarker)) {
     console.error(`Unresolved CSP hash marker remains in ${headersPath}`);
     process.exit(1);
@@ -161,25 +95,46 @@ if (fs.existsSync(headersPath)) {
   fs.writeFileSync(headersPath, headers);
 }
 
+/**
+ * Titles and descriptions are interpolated into element text AND into quoted
+ * attribute values, so they have to be escaped. An unescaped `"` would
+ * terminate a `content="..."` attribute, and an unescaped `&` or `<` in a
+ * <title> would parse back to something other than the raw JSON string — which
+ * is exactly the prerender/hydration title mismatch this pipeline exists to
+ * prevent, since the app sets document.title from the unescaped JSON.
+ *
+ * Every current entry contains only apostrophes (Sanity's Edge, Kyne's Aegis,
+ * Z'Maja), which are safe either way, so this is a guard against future copy
+ * rather than a fix for a live break.
+ */
+const escapeHtml = (value) =>
+  String(value)
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;');
+
 for (const route of staticRoutes) {
-  const routeUrl = `https://esotk.com/${route.path}`;
+  const routeUrl = `${SITE_ORIGIN}/${route.path}/`;
+  const title = escapeHtml(route.title);
+  const description = escapeHtml(route.description);
   const routeShell = contents
-    .replace(/<title>[^<]*<\/title>/, `<title>${route.title}</title>`)
+    .replace(/<title>[^<]*<\/title>/, `<title>${title}</title>`)
     .replace(
       /<link rel="canonical" href="[^"]*" \/>/,
       `<link rel="canonical" href="${routeUrl}" />`,
     )
     .replace(
       /<meta\s+name="description"\s+content="[^"]*"\s*\/>/,
-      `<meta name="description" content="${route.description}" />`,
+      `<meta name="description" content="${description}" />`,
     )
     .replace(
       /<meta property="og:title" content="[^"]*" \/>/,
-      `<meta property="og:title" content="${route.title}" />`,
+      `<meta property="og:title" content="${title}" />`,
     )
     .replace(
       /<meta\s+property="og:description"\s+content="[^"]*"\s*\/>/,
-      `<meta property="og:description" content="${route.description}" />`,
+      `<meta property="og:description" content="${description}" />`,
     )
     .replace(
       /<meta property="og:url" content="[^"]*" \/>/,
@@ -187,11 +142,11 @@ for (const route of staticRoutes) {
     )
     .replace(
       /<meta name="twitter:title" content="[^"]*" \/>/,
-      `<meta name="twitter:title" content="${route.title}" />`,
+      `<meta name="twitter:title" content="${title}" />`,
     )
     .replace(
       /<meta\s+name="twitter:description"\s+content="[^"]*"\s*\/>/,
-      `<meta name="twitter:description" content="${route.description}" />`,
+      `<meta name="twitter:description" content="${description}" />`,
     );
 
   const routeDirectory = path.join(buildDirectory, route.path);
@@ -199,6 +154,24 @@ for (const route of staticRoutes) {
   fs.writeFileSync(path.join(routeDirectory, 'index.html'), routeShell);
 }
 
+// DEFECT 2: the sitemap used to be hand-maintained and had already drifted from
+// this route list. Generate it from the same array so the two can never diverge.
+// URLs use the trailing-slash form because the slash-less form 301-redirects.
+const lastmod = new Date().toISOString().slice(0, 10);
+const sitemapUrls = [
+  `${SITE_ORIGIN}/`,
+  ...staticRoutes.map((route) => `${SITE_ORIGIN}/${route.path}/`),
+].sort();
+const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${sitemapUrls
+  .map((loc) => `  <url><loc>${loc}</loc><lastmod>${lastmod}</lastmod></url>`)
+  .join('\n')}
+</urlset>
+`;
+fs.writeFileSync(path.join(buildDirectory, 'sitemap.xml'), sitemap);
+
 console.log(
   `Generated static route shells: ${staticRoutes.map((route) => `/${route.path}`).join(', ')}`,
 );
+console.log(`Generated sitemap.xml with ${sitemapUrls.length} URLs (lastmod ${lastmod})`);

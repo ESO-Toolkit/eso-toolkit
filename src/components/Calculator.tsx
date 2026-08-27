@@ -49,6 +49,7 @@ import { motion } from 'framer-motion';
 import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 
 import { useLogger } from '@/contexts/LoggerContext';
+import { usePageTitle } from '@/hooks/useDocumentTitle';
 
 import {
   MAX_ARMOR_VALUE,
@@ -1529,9 +1530,7 @@ const CalculatorComponent: React.FC = () => {
   const isExtraSmall = useMediaQuery('(max-width:380px)');
   const [selectedTab, setSelectedTab] = useState(0);
 
-  useEffect(() => {
-    document.title = 'Calculator | ESO Toolkit';
-  }, []);
+  usePageTitle('/calculator');
 
   // Helper function to generate unique IDs for items
   const generateItemId = useCallback((category: string, name: string, index: number): string => {

@@ -1,7 +1,6 @@
 import { isFullDailyRun } from './cron-schedule';
 
-const at = (hourUtc: number, minute = 0): number =>
-  Date.UTC(2026, 7, 27, hourUtc, minute, 0, 0);
+const at = (hourUtc: number, minute = 0): number => Date.UTC(2026, 7, 27, hourUtc, minute, 0, 0);
 
 describe('isFullDailyRun', () => {
   it('claims the 04:00 firing', () => {

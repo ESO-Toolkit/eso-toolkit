@@ -2,7 +2,7 @@ import { Box, CircularProgress, Container, Typography } from '@mui/material';
 import { SnackbarProvider } from 'notistack';
 import React, { Suspense, useEffect, useState } from 'react';
 import { Provider as ReduxProvider } from 'react-redux';
-import { Routes, Route, BrowserRouter } from 'react-router-dom';
+import { Routes, Route, BrowserRouter, Navigate } from 'react-router-dom';
 import { PersistGate } from 'redux-persist/integration/react';
 
 import { ScribingSimulatorSkeleton } from '@features/scribing/presentation/components/ScribingSimulatorSkeleton';
@@ -92,9 +92,6 @@ const Calculator = React.lazy(() =>
 const TextEditor = React.lazy(() =>
   import('./components/TextEditor').then((module) => ({ default: module.TextEditor })),
 );
-const Logs = React.lazy(() =>
-  import('./components/Logs').then((module) => ({ default: module.Logs })),
-);
 const LeaderboardLogsPage = React.lazy(() =>
   import('./features/leaderboard/LeaderboardLogsPage').then((module) => ({
     default: module.LeaderboardLogsPage,
@@ -160,6 +157,10 @@ const RosterViewPage = React.lazy(() =>
 );
 const AboutPage = React.lazy(() =>
   import('./pages/AboutPage').then((module) => ({ default: module.AboutPage })),
+);
+
+const KalpaPage = React.lazy(() =>
+  import('./pages/KalpaPage').then((module) => ({ default: module.KalpaPage })),
 );
 
 const DiscordServerConfigPage = React.lazy(() =>
@@ -493,6 +494,17 @@ const AppRoutes: React.FC = () => {
     }
   }, [baseUrl]);
 
+  // One element instance shared by all four leaderboard paths. They resolve to
+  // the same component, and React keeps it mounted across them, so switching
+  // class or boss is a param change rather than a remount + refetch.
+  const buildLeaderboardElement = (
+    <ErrorBoundary>
+      <Suspense fallback={<LoadingFallback />}>
+        <BuildLeaderboardPage />
+      </Suspense>
+    </ErrorBoundary>
+  );
+
   return (
     <BrowserRouter basename={basename}>
       <HashRouteRedirect />
@@ -647,16 +659,8 @@ const AppRoutes: React.FC = () => {
                 </ErrorBoundary>
               }
             />
-            <Route
-              path="/logs"
-              element={
-                <ErrorBoundary>
-                  <Suspense fallback={<LoadingFallback />}>
-                    <Logs />
-                  </Suspense>
-                </ErrorBoundary>
-              }
-            />
+            {/* Keep legacy links working now that the log analyzer lives on My Reports. */}
+            <Route path="/logs" element={<Navigate to="/my-reports" replace />} />
             <Route
               path="/leaderboards"
               element={
@@ -667,15 +671,18 @@ const AppRoutes: React.FC = () => {
                 </ErrorBoundary>
               }
             />
+            {/* Every leaderboard view used to be a query param behind a MUI
+                Select, so crawlers could reach exactly one of 21 boards. The
+                slugged paths below are the crawlable form; the page still
+                honours the legacy ?tab=/?class=/?boss= links and redirects them
+                here. `/class/:classSlug/:bossSlug` is linkable but canonicalizes
+                to the pooled class board rather than being indexed itself. */}
+            <Route path="/build-leaderboard" element={buildLeaderboardElement} />
+            <Route path="/build-leaderboard/boss/:bossSlug" element={buildLeaderboardElement} />
+            <Route path="/build-leaderboard/class/:classSlug" element={buildLeaderboardElement} />
             <Route
-              path="/build-leaderboard"
-              element={
-                <ErrorBoundary>
-                  <Suspense fallback={<LoadingFallback />}>
-                    <BuildLeaderboardPage />
-                  </Suspense>
-                </ErrorBoundary>
-              }
+              path="/build-leaderboard/class/:classSlug/:bossSlug"
+              element={buildLeaderboardElement}
             />
             <Route
               path="/sample-report"
@@ -891,6 +898,17 @@ const AppRoutes: React.FC = () => {
                 <ErrorBoundary>
                   <Suspense fallback={<LoadingFallback />}>
                     <AboutPage />
+                  </Suspense>
+                </ErrorBoundary>
+              }
+            />
+            {/* Kalpa marketing landing page — public, prerendered */}
+            <Route
+              path="/kalpa"
+              element={
+                <ErrorBoundary>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <KalpaPage />
                   </Suspense>
                 </ErrorBoundary>
               }

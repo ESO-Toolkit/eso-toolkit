@@ -13,8 +13,11 @@ import {
 import { styled } from '@mui/material/styles';
 import DOMPurify from 'dompurify';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import '../styles/texteditor-theme-bridge.css';
 import { HexColorPicker } from 'react-colorful';
+
+import { usePageTitle } from '@/hooks/useDocumentTitle';
+
+import '../styles/texteditor-theme-bridge.css';
 
 // Styled Components
 const TextEditorContainer = styled(Box)(({ theme }) => ({
@@ -503,9 +506,7 @@ export const TextEditor: React.FC = () => {
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
 
-  useEffect(() => {
-    document.title = 'Text Editor | ESO Toolkit';
-  }, []);
+  usePageTitle('/text-editor');
 
   const editorRef = useRef<HTMLDivElement>(null);
   const savedRangeRef = useRef<Range | null>(null);

@@ -28,6 +28,8 @@ import { useSnackbar } from 'notistack';
 import React, { useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 
+import { usePageTitle } from '@/hooks/useDocumentTitle';
+
 import { useAuth } from '../features/auth/AuthContext';
 import { PublishRosterDialog } from '../features/roster-hub/components/PublishRosterDialog';
 import { useViewTransitionNavigate } from '../hooks/useViewTransitionNavigate';
@@ -197,6 +199,8 @@ const RosterCard: React.FC<RosterCardProps> = ({
 };
 
 export const MyRostersPage: React.FC = () => {
+  usePageTitle('/my-rosters');
+
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === 'dark';
   const navigate = useViewTransitionNavigate();

@@ -14,6 +14,11 @@ jest.mock(
   { virtual: true },
 );
 
+// envUtils wraps `import.meta.env` (unparseable by Jest); the manual mock in
+// src/utils/__mocks__/envUtils.ts returns undefined for BASE_URL, so the
+// benchmarks URL resolves to the root-deploy '/detect-gpu-benchmarks'.
+jest.mock('./envUtils');
+
 type NavSignals = {
   deviceMemory?: number;
   hardwareConcurrency?: number;
@@ -119,6 +124,30 @@ describe('heuristicPerfTier', () => {
 });
 
 describe('detectPerfTier', () => {
+  // Regression guard: detect-gpu defaults benchmarksURL to unpkg.com, which the
+  // app-shell CSP (connect-src 'self' …) blocks. When that fetch is blocked the
+  // library resolves type:'BENCHMARK_FETCH_FAILED', so 'high' becomes unreachable.
+  // The URL must stay same-origin (served from public/detect-gpu-benchmarks/).
+  it('asks detect-gpu for the benchmark DB on our own origin, not unpkg.com', async () => {
+    getGPUTierMock.mockResolvedValueOnce({ tier: 3, isMobile: false, type: 'BENCHMARK' });
+    await detectPerfTier();
+    expect(getGPUTierMock).toHaveBeenCalledWith(
+      expect.objectContaining({ benchmarksURL: '/detect-gpu-benchmarks' }),
+    );
+  });
+
+  // detect-gpu resolves (does not throw) when the benchmark fetch fails, with a
+  // hard-coded tier of 1. Trusting it would pin every visitor to 'low'.
+  it("defers to the heuristic when the benchmark fetch fails ('BENCHMARK_FETCH_FAILED')", async () => {
+    getGPUTierMock.mockResolvedValueOnce({
+      tier: 1,
+      isMobile: false,
+      type: 'BENCHMARK_FETCH_FAILED',
+    });
+    setNavigatorSignals({ deviceMemory: 8, hardwareConcurrency: 8 });
+    await expect(detectPerfTier()).resolves.toBe('medium');
+  });
+
   it("returns 'high' when getGPUTier reports tier 3, even with unreported deviceMemory", async () => {
     getGPUTierMock.mockResolvedValueOnce({ tier: 3, isMobile: false, type: 'BENCHMARK' });
     setNavigatorSignals({ deviceMemory: undefined, hardwareConcurrency: 16 });

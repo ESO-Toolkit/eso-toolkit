@@ -10,6 +10,7 @@ import { useNavigate } from 'react-router-dom';
 
 import type { FightFragment } from '@/graphql/gql/graphql';
 import { useCurrentFight, useReportFightParams, useTrialChapters } from '@/hooks';
+import { usePageTitle } from '@/hooks/useDocumentTitle';
 import { useAppDispatch } from '@/store/useAppDispatch';
 import { actorPositionsActions } from '@/store/worker_results/taskSlices';
 
@@ -101,9 +102,7 @@ export const FightReplay: React.FC = () => {
   const { lookup, isActorPositionsLoading, actorPositionsError } = useActorPositionsTask();
   const { fight, isFightLoading } = useCurrentFight();
 
-  React.useEffect(() => {
-    document.title = 'Fight Replay | ESO Toolkit';
-  }, []);
+  usePageTitle('/report/:reportId/fight/:fightId/replay');
 
   const [markersModalOpen, setMarkersModalOpen] = useState(false);
   const [copySnackbar, setCopySnackbar] = useState<{
