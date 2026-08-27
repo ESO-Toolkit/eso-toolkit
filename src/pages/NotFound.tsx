@@ -3,6 +3,8 @@ import { Box, Button, Container, Link, Typography } from '@mui/material';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { usePageTitle } from '@/hooks/useDocumentTitle';
+
 /**
  * 404 Not Found page component
  * Displayed when users navigate to an invalid route
@@ -10,9 +12,7 @@ import { useNavigate } from 'react-router-dom';
 export const NotFound: React.FC = () => {
   const navigate = useNavigate();
 
-  React.useEffect(() => {
-    document.title = 'Page Not Found | ESO Toolkit';
-  }, []);
+  usePageTitle('*');
 
   const handleGoHome = (): void => {
     navigate('/');

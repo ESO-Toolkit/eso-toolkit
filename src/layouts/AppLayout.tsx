@@ -14,6 +14,7 @@ const ROUTE_NAMES: Record<string, string> = {
   '/roster-hub': 'Roster Hub',
   '/build-hub': 'Build Hub',
   '/pack-hub': 'Pack Hub',
+  '/kalpa': 'Kalpa',
   '/my-reports': 'My Reports',
   '/latest-reports': 'Latest Reports',
   '/leaderboards': 'Leaderboards',

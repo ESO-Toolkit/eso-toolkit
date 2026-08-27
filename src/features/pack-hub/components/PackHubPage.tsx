@@ -13,6 +13,8 @@ import {
 import { useSnackbar } from 'notistack';
 import React from 'react';
 
+import { usePageTitle } from '@/hooks/useDocumentTitle';
+
 import { ErrorBoundary } from '../../../components/ErrorBoundary';
 import { useAuth } from '../../auth/AuthContext';
 import { ConfirmDialog } from '../../roster-hub/components/ConfirmDialog';
@@ -47,9 +49,7 @@ export const PackHubPage: React.FC = () => {
     vote,
   } = usePackHub(token);
 
-  React.useEffect(() => {
-    document.title = 'Pack Hub | ESO Toolkit';
-  }, []);
+  usePageTitle('/pack-hub');
 
   const [deleteTarget, setDeleteTarget] = React.useState<string | null>(null);
   const [deleteLoading, setDeleteLoading] = React.useState(false);

@@ -5,6 +5,8 @@ import ReactMarkdown from 'react-markdown';
 import type { Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
+import { usePageTitle } from '@/hooks/useDocumentTitle';
+
 import knowledgeBaseContent from '../../documentation/features/loadout-manager/FOOD_SELECTOR_KNOWLEDGE_BASE.md?raw';
 
 const markdownStyles = {
@@ -103,6 +105,8 @@ const markdownComponents: Components = {
 };
 
 export const FoodSelectorKnowledgeBasePage: React.FC = () => {
+  usePageTitle('/docs/loadout/food-selector');
+
   const theme = useTheme();
 
   return (

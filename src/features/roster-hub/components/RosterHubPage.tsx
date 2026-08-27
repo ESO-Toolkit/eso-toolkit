@@ -14,6 +14,8 @@ import { useSnackbar } from 'notistack';
 import React from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 
+import { usePageTitle } from '@/hooks/useDocumentTitle';
+
 import { ErrorBoundary } from '../../../components/ErrorBoundary';
 import { useAuth } from '../../auth/AuthContext';
 import { rosterHubApi } from '../api/roster-hub-api';
@@ -38,9 +40,7 @@ export const RosterHubPage: React.FC = () => {
   const { filteredRosters, loading, error, filters, hasMore, setFilter, loadMore, refresh, vote } =
     useRosterHub(token);
 
-  React.useEffect(() => {
-    document.title = 'Roster Hub | ESO Toolkit';
-  }, []);
+  usePageTitle('/roster-hub');
 
   const [deleteTarget, setDeleteTarget] = React.useState<string | null>(null);
   const [deleteLoading, setDeleteLoading] = React.useState(false);

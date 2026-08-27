@@ -36,6 +36,8 @@ import React, { useCallback, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
+import { usePageTitle } from '@/hooks/useDocumentTitle';
+
 import { useLogger } from '../../contexts/LoggerContext';
 import { useEsoLogsClientInstance } from '../../EsoLogsClientContext';
 import { useAppDispatch } from '../../store/useAppDispatch';
@@ -198,9 +200,7 @@ export const UserReports: React.FC = () => {
   const client = useEsoLogsClientInstance();
   const { isDesktop, cardSx, cardContentSx, headerStackSx, actionGroupSx } = useReportPageLayout();
 
-  useEffect(() => {
-    document.title = 'My Reports | ESO Toolkit';
-  }, []);
+  usePageTitle('/my-reports');
 
   // Redux selectors
   const rawPaginatedReports = useSelector(selectPaginatedReports);

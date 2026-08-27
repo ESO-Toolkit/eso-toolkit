@@ -43,6 +43,8 @@ import {
 import React from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 
+import { usePageTitle } from '@/hooks/useDocumentTitle';
+
 import discordIcon from '../assets/discord-icon.svg';
 import { getBotInviteUrl } from '../features/auth/discord-auth';
 
@@ -272,9 +274,7 @@ export const RosterBotDocsPage: React.FC = () => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
-  React.useEffect(() => {
-    document.title = 'Discord Roster Bot Guide | ESO Toolkit';
-  }, []);
+  usePageTitle('/docs/discord-roster-bot');
 
   const cardSx = {
     borderRadius: '16px',

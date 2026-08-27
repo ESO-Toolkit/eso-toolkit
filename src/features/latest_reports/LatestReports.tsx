@@ -12,6 +12,8 @@ import type { Theme } from '@mui/material/styles';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { usePageTitle } from '@/hooks/useDocumentTitle';
+
 import { useReportPageLayout } from '../reports/useReportPageLayout';
 
 import { ActiveFilterBar } from './components/ActiveFilterBar';
@@ -51,9 +53,7 @@ export const LatestReports: React.FC = () => {
   const navigate = useNavigate();
   const { isDesktop, cardSx, cardContentSx } = useReportPageLayout();
 
-  useEffect(() => {
-    document.title = 'Latest Reports | ESO Toolkit';
-  }, []);
+  usePageTitle('/latest-reports');
 
   const { filters, setFilters, clearServerFilters } = useLatestReportsUrlState();
   const { viewMode, density, setViewMode, setDensity } = useReportViewPrefs();

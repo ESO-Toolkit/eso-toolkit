@@ -15,10 +15,14 @@ import { Box, Button, Container, Stack, Typography, useTheme } from '@mui/materi
 import React from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
+import { usePageTitle } from '@/hooks/useDocumentTitle';
+
 import discordIcon from '../assets/discord-icon.svg';
 import { DiscordAdminGuideContent } from '../features/roster-hub/components/DiscordAdminGuideContent';
 
 export const DiscordSetupPage: React.FC = () => {
+  usePageTitle('/discord-setup');
+
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const navigate = useNavigate();

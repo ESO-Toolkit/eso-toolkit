@@ -9,6 +9,7 @@ import {
 } from '@mui/material';
 import { styled, Theme } from '@mui/material/styles';
 import React, { useState, JSX, useEffect, useRef } from 'react';
+import { Link as RouterLink } from 'react-router-dom';
 
 // ─── 2026 CSS: @property animated gradients + scroll-driven animations ──────
 const showcaseGlobalStyles = (
@@ -61,6 +62,8 @@ const showcaseGlobalStyles = (
   `}
   />
 );
+
+import { usePageTitle } from '@/hooks/useDocumentTitle';
 
 import { useEsoLogsClientContext } from '../EsoLogsClientContext';
 import { useAuth } from '../features/auth/AuthContext';
@@ -2225,9 +2228,7 @@ export const LandingPage: React.FC = () => {
   const toolsSectionRef = useRef<HTMLDivElement>(null);
   const navigate = useViewTransitionNavigate();
 
-  useEffect(() => {
-    document.title = 'ESO Toolkit';
-  }, []);
+  usePageTitle('/');
 
   // Defer complex animations until after initial render — and keep them OFF
   // entirely on the low perf tier / under OS reduced motion (this also gates
@@ -2642,7 +2643,7 @@ export const LandingPage: React.FC = () => {
                 }}
               >
                 A fast, open-source addon manager for ESO. Built with Rust and Tauri for native
-                performance — just 15 MB, no Java runtime required.
+                performance. Just 15 MB, no Java runtime required.
               </Typography>
 
               <KalpaFeatureList>
@@ -2681,9 +2682,8 @@ export const LandingPage: React.FC = () => {
               <Box sx={{ mt: 3, display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
                 <Button
                   variant="contained"
-                  href="https://github.com/ESO-Toolkit/kalpa"
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  component={RouterLink}
+                  to="/kalpa"
                   sx={{
                     background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
                     color: '#fff',

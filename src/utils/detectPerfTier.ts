@@ -2,6 +2,22 @@ import { getGPUTier } from '@pmndrs/detect-gpu';
 
 import type { PerfTier } from '../store/ui/uiSlice';
 
+import { getEnvVar } from './envUtils';
+
+// detect-gpu ships its benchmark DB inside the package but fetches it at RUNTIME,
+// defaulting to `https://unpkg.com/@pmndrs/detect-gpu@<version>/dist/benchmarks`.
+// Our app-shell CSP allows `connect-src 'self' …` and does NOT list unpkg.com, so
+// every one of those fetches was blocked in production — detect-gpu swallowed the
+// error and resolved `{ tier: 1, type: 'BENCHMARK_FETCH_FAILED' }`, which the
+// `type !== 'BENCHMARK'` branch below turns into the heuristic tier. The heuristic
+// caps at 'medium', so the 'high' tier was UNREACHABLE for every visitor.
+//
+// scripts/copy-detect-gpu-benchmarks.cjs copies the JSON out of node_modules into
+// public/detect-gpu-benchmarks/ on `prebuild` and `dev`, so pointing at our own
+// origin satisfies `connect-src 'self'` with no CSP change. BASE_URL keeps this
+// correct under a non-root deploy (dev-preview subpaths); it always ends in '/'.
+const benchmarksURL = `${getEnvVar('BASE_URL') ?? '/'}detect-gpu-benchmarks`;
+
 // OS-level motion preference. Exposed as its own signal — motion handling
 // belongs in MotionConfig (see PerfTierProvider), NOT in the perf tier.
 // A user who opted into reduced motion on a powerful desktop should keep
@@ -36,7 +52,7 @@ export const detectPerfTier = async (): Promise<PerfTier> => {
   const heuristic = heuristicPerfTier();
 
   try {
-    const gpuTier = await getGPUTier();
+    const gpuTier = await getGPUTier({ benchmarksURL });
     // detect-gpu RESOLVES (it does not throw) even when it can't actually
     // benchmark the GPU — the `type` field says how trustworthy `tier` is:
     //   BENCHMARK         — matched the GPU in the benchmark DB. Trust `tier`.
@@ -44,6 +60,9 @@ export const detectPerfTier = async (): Promise<PerfTier> => {
     //                       guess that defaults to 1. Trusting it misclassifies
     //                       capable desktops as 'low' — the reason auto felt
     //                       inaccurate — so defer to the heuristic instead.
+    //   BENCHMARK_FETCH_FAILED — the benchmark JSON couldn't be loaded at all
+    //                       (network/CSP). `tier` is a hard-coded 1, so it is
+    //                       meaningless; defer to the heuristic.
     //   WEBGL_UNSUPPORTED — nothing was measured (no WebGL context). Same as a
     //                       thrown benchmark: defer to the heuristic.
     //   BLOCKLISTED       — driver on the known-bad list; pin to 'low'.
@@ -69,8 +88,9 @@ export const detectPerfTier = async (): Promise<PerfTier> => {
     // because deviceMemory/hardwareConcurrency are unreported.
     return heuristic === 'low' ? 'low' : fromGpu;
   } catch {
-    // Benchmark unavailable — WebGL context creation failed, blocklist,
-    // or network error fetching the benchmark JSON. Fall back to the
+    // Benchmark unavailable — WebGL context creation failed, or the
+    // benchmark DB was out of date (detect-gpu throws only for those; a
+    // failed fetch resolves as BENCHMARK_FETCH_FAILED). Fall back to the
     // heuristic, which caps at 'medium'. Never return 'high' from here:
     // if we can't prove the GPU is capable, we shouldn't assume it.
     return heuristic;

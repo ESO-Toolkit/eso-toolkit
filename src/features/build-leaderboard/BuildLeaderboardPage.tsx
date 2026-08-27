@@ -13,6 +13,8 @@ import { alpha } from '@mui/material/styles';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
+import { usePageTitle } from '@/hooks/useDocumentTitle';
+
 import { ClassIcon } from '../../components/ClassIcon';
 import { PanelErrorBoundary } from '../../components/PanelErrorBoundary';
 
@@ -94,9 +96,7 @@ export const BuildLeaderboardPage: React.FC = () => {
   const [encountersToken, setEncountersToken] = useState(0);
   const [methodologyOpen, setMethodologyOpen] = useState(false);
 
-  useEffect(() => {
-    document.title = 'Build Leaderboard | ESO Toolkit';
-  }, []);
+  usePageTitle('/build-leaderboard');
 
   useEffect(() => {
     let cancelled = false;

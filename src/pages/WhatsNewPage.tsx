@@ -16,6 +16,7 @@ import {
 import type { Theme } from '@mui/material/styles';
 import React from 'react';
 
+import { usePageTitle } from '@/hooks/useDocumentTitle';
 import { useWhatsNew } from '@/hooks/useWhatsNew';
 import type { WhatsNewEntry } from '@/types/whatsNew';
 
@@ -174,9 +175,7 @@ const LoadingSkeleton: React.FC = () => (
 export const WhatsNewPage: React.FC = () => {
   const { data, loading, error, markSeen } = useWhatsNew();
 
-  React.useEffect(() => {
-    document.title = "What's New | ESO Toolkit";
-  }, []);
+  usePageTitle('/whats-new');
 
   // Mark as seen when the page is opened
   React.useEffect(() => {

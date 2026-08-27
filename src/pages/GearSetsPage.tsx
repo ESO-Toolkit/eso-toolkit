@@ -26,6 +26,8 @@ import { alpha } from '@mui/material/styles';
 import type { Theme } from '@mui/material/styles';
 import React, { useMemo, useState } from 'react';
 
+import { usePageTitle } from '@/hooks/useDocumentTitle';
+
 import * as arenaSets from '../data/Gear Sets/arena';
 import * as heavySets from '../data/Gear Sets/heavy';
 import * as lightSets from '../data/Gear Sets/light';
@@ -189,9 +191,7 @@ export const GearSetsPage: React.FC = () => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(25);
 
-  React.useEffect(() => {
-    document.title = 'Gear Sets | ESO Toolkit';
-  }, []);
+  usePageTitle('/gear-sets');
 
   const allTypes = useMemo(() => [...new Set(ALL_GEAR_SETS.map((s) => s.setType))].sort(), []);
 

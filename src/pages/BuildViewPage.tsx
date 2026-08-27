@@ -38,6 +38,8 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 
+import { usePageTitle } from '@/hooks/useDocumentTitle';
+
 import { GearSetTooltip } from '../components/GearSetTooltip';
 import { LazySkillTooltip as SkillTooltipCard } from '../components/LazySkillTooltip';
 import { ESO_CONSUMABLE_LOOKUP } from '../data/esoConsumables';
@@ -1994,6 +1996,8 @@ const CPTreeDetail: React.FC<{
 // ─── Main page ────────────────────────────────────────────────────────────────
 
 export const BuildViewPage: React.FC = () => {
+  usePageTitle('/bv');
+
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const prefersReduced = useReducedMotion();

@@ -8,7 +8,8 @@
  *   PORT=3002 node scripts/dev-https.cjs  # HTTPS on port 3003, HTTP proxy on 3002
  *
  * What this does:
- *   1. Generates the version.json file (same as `npm run dev`).
+ *   1. Generates the version.json file and copies the detect-gpu benchmark DB
+ *      into public/ (same as `npm run dev`).
  *   2. Spawns Vite with VITE_HTTPS=true so vite.config.mjs enables mkcert + the
  *      HTTP→HTTPS reverse-proxy that also serves the CA-cert install page.
  *
@@ -36,14 +37,24 @@ try {
   process.exit(1);
 }
 
+// ── 1b. Copy the detect-gpu benchmark DB into public/ (same step as `npm run dev`)
+// so GPU tier detection loads it same-origin instead of tripping the CSP. ───────
+try {
+  execFileSync(process.execPath, [path.join(__dirname, 'copy-detect-gpu-benchmarks.cjs')], {
+    cwd: root,
+    stdio: 'inherit',
+  });
+} catch (err) {
+  console.error('Failed to copy detect-gpu benchmarks:', err.message);
+  process.exit(1);
+}
+
 // ── 2. Resolve the HTTP proxy port from the environment ───────────────────────
 const rawPort = process.env.PORT || '3000';
 const parsedPort = Number.parseInt(rawPort, 10);
 const port = Number.isNaN(parsedPort) ? 3000 : parsedPort;
 
-console.info(
-  `\n  Starting HTTPS dev server — HTTP proxy :${port} → HTTPS :${port + 1}\n`,
-);
+console.info(`\n  Starting HTTPS dev server — HTTP proxy :${port} → HTTPS :${port + 1}\n`);
 
 // ── 3. Spawn Vite with VITE_HTTPS=true ────────────────────────────────────────
 const env = {
