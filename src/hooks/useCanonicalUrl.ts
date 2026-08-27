@@ -47,11 +47,19 @@ const setOgUrl = (content: string): (() => void) => {
 /**
  * Points `<link rel="canonical">` (and `og:url`) at the given app-absolute path.
  *
- * Needed because only the 24 prerendered routes get a correct canonical stamped
+ * Needed because only the prerendered routes get a correct canonical stamped
  * into their shell. Everything else is served through the GitHub Pages 404
  * fallback, which hands back `index.html` with `<link rel="canonical"
- * href="https://esotk.com/" />` still on it. Before this hook, every runtime-only
- * route claimed the homepage as its canonical.
+ * href="https://esotk.com/" />` still on it, so every runtime-only route
+ * claimed the homepage as its canonical.
+ *
+ * Scope, so this is not oversold: unprerendered paths answer with HTTP 404 on
+ * GitHub Pages (verified in production), so they are not indexed and their
+ * canonical is never evaluated. On today's hosting this hook earns its keep by
+ * keeping the hydrated canonical in step with the prerendered one as you move
+ * between boards client-side, and by consolidating the parameterized routes
+ * that can never be prerendered. It becomes load-bearing once something serves
+ * 200 for these paths.
  *
  * Pass the path a page WANTS to be indexed as, which is not always its own URL:
  * `/build-leaderboard/class/arcanist/ansuul-the-tormentor` passes the pooled

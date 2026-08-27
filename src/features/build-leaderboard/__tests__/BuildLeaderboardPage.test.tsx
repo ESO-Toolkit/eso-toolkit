@@ -515,3 +515,102 @@ describe('BuildLeaderboardPage crawlable routes', () => {
     expect(payload.itemListElement[0].description).toMatch(/Median parse [\d,]+ DPS/);
   });
 });
+
+/**
+ * Regressions found by adversarial review of the crawlable-routes change.
+ * Two independent reviewers flagged the first one, and it fires on every load
+ * of a class-by-boss URL, not only in the drift case.
+ */
+describe('BuildLeaderboardPage review regressions', () => {
+  const XALVAKKA: DpsEncounterSummary = {
+    encounter_id: 51,
+    difficulty: 122,
+    encounter_name: 'Xalvakka',
+    zone_id: 15,
+    trial_id: 'RG',
+    parse_count: 201,
+    top_amount: 180_000,
+    class_count: 7,
+    updated_at: '2026-08-27 04:01:06',
+  };
+
+  /**
+   * The page names one boss in its title, h1 and JSON-LD. Widening the query to
+   * every boss while keeping that framing publishes cross-boss data under a
+   * single boss's name, and because `encounterParam` is still truthy the
+   * amounts are not even normalized first.
+   */
+  it('never widens a class-by-boss query to every boss', async () => {
+    // Feed does not carry Xalvakka: the drift case the slug table makes possible.
+    jest.spyOn(dpsParsesApi, 'listEncounters').mockResolvedValue({ encounters: [] });
+    renderPage('/build-leaderboard/class/arcanist/xalvakka');
+
+    await waitFor(() => expect(dpsParsesApi.listEncounters).toHaveBeenCalled());
+    // Either a boss-scoped query or none at all, never a pooled one.
+    (dpsParsesApi.listParses as jest.Mock).mock.calls.forEach(([opts]) => {
+      expect(opts.encounterId).toBe(51);
+    });
+  });
+
+  it('does not fire a pooled query before the encounters feed arrives', async () => {
+    let release: ((v: { encounters: DpsEncounterSummary[] }) => void) | undefined;
+    jest.spyOn(dpsParsesApi, 'listEncounters').mockReturnValue(
+      new Promise((resolve) => {
+        release = resolve;
+      }),
+    );
+
+    renderPage('/build-leaderboard/class/arcanist/xalvakka');
+
+    // In flight: the boss is unresolved, so nothing may be requested yet.
+    expect(dpsParsesApi.listParses).not.toHaveBeenCalled();
+
+    await act(async () => {
+      release?.({ encounters: [XALVAKKA] });
+    });
+
+    await waitFor(() =>
+      expect(dpsParsesApi.listParses).toHaveBeenCalledWith(
+        expect.objectContaining({ esoClass: 'Arcanist', encounterId: 51, difficulty: 122 }),
+        expect.anything(),
+      ),
+    );
+  });
+
+  /**
+   * Renaming one boss slug should not cost all seven of its class-narrowed
+   * inbound links their class board.
+   */
+  it('keeps the valid half of a partially unknown slug pair', async () => {
+    renderPage('/build-leaderboard/class/arcanist/renamed-boss');
+    await waitFor(() => expect(currentUrl()).toBe('/build-leaderboard/class/arcanist'));
+  });
+
+  it('keeps the valid boss when only the class slug is unknown', async () => {
+    renderPage('/build-leaderboard/class/spellsword/xalvakka');
+    await waitFor(() => expect(currentUrl()).toBe('/build-leaderboard/boss/xalvakka'));
+  });
+
+  it('preserves unrelated query params through an unknown-slug redirect', async () => {
+    renderPage('/build-leaderboard/class/arcanist/renamed-boss?embed=1');
+    await waitFor(() => expect(currentUrl()).toBe('/build-leaderboard/class/arcanist?embed=1'));
+  });
+
+  /**
+   * The encounter picker still mints this shape for a boss with no slug, and it
+   * is deliberately not redirected. It must not fall back to the generic board's
+   * title and canonical while showing one class's data.
+   */
+  it('gives the legacy unslugged-boss shape that class-specific metadata', async () => {
+    renderPage('/build-leaderboard?tab=class&class=Necromancer&boss=60:122');
+
+    await waitFor(() => expect(dpsParsesApi.listParses).toHaveBeenCalled());
+    expect(document.title).toBe('Best Necromancer Builds in ESO | ESO Toolkit');
+    expect(document.head.querySelector('link[rel="canonical"]')?.getAttribute('href')).toBe(
+      'https://esotk.com/build-leaderboard/class/necromancer/',
+    );
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
+      'Best Necromancer builds in ESO',
+    );
+  });
+});

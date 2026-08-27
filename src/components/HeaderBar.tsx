@@ -1685,11 +1685,7 @@ export const HeaderBar: React.FC = () => {
           {navItems.map((item, i) => (
             <MobileSheetItem
               key={item.text}
-              // Prefix match, so a sub-route keeps its section highlighted:
-              // /build-leaderboard/class/arcanist is still Build Leaderboard.
-              active={
-                location.pathname === item.path || location.pathname.startsWith(`${item.path}/`)
-              }
+              active={location.pathname === item.path}
               onClick={() => {
                 navigate(item.path, { vtType: getLateralTransitionType(item.path) });
                 setMobileOpen(false);

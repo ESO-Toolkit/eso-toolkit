@@ -128,10 +128,22 @@ export const BuildLeaderboardPage: React.FC = () => {
     : legacyBossKey;
 
   const redirectTo = useMemo(() => {
-    // A slug nobody recognises is not a board. Send it to the index rather than
-    // rendering an arbitrary fallback board under a URL that promises another.
-    if ((classSlug !== undefined && !classRoute) || (bossSlug !== undefined && !bossRoute)) {
-      return LEADERBOARD_BASE_PATH;
+    // A slug nobody recognises is not a board, so never render an arbitrary
+    // fallback under a URL that promises another. But keep whichever half of
+    // the URL is still valid: renaming one boss slug should not cost all seven
+    // of its class-narrowed inbound links their class board and dump them on
+    // the index. Unrelated params (utm_*, embed) survive too, matching what
+    // the legacy redirect below already does.
+    const classSlugUnknown = classSlug !== undefined && !classRoute;
+    const bossSlugUnknown = bossSlug !== undefined && !bossRoute;
+    if (classSlugUnknown || bossSlugUnknown) {
+      const target = classRoute
+        ? classLeaderboardPath(classRoute.slug)
+        : bossRoute
+          ? bossLeaderboardPath(bossRoute.slug)
+          : LEADERBOARD_BASE_PATH;
+      const query = searchParams.toString();
+      return query ? `${target}?${query}` : target;
     }
     if (onSluggedPath) return null;
     if (!LEGACY_PARAMS.some((param) => searchParams.has(param))) return null;
@@ -176,15 +188,20 @@ export const BuildLeaderboardPage: React.FC = () => {
   // The 98 class-by-boss permutations are near-duplicates of the pooled class
   // board, so they point their canonical at it and stay out of the sitemap.
   // Everything else is its own canonical and is prerendered.
-  const canonicalPath = classRoute
-    ? classLeaderboardPath(classRoute.slug)
+  //
+  // Keyed on `activeClassRoute`, not `classRoute`, so the legacy shape we
+  // deliberately do NOT redirect (`?tab=class&class=X&boss=<unslugged>`, which
+  // the encounter picker still mints for a boss with no slug) gets that class's
+  // title and canonical rather than the generic board's.
+  const canonicalPath = activeClassRoute
+    ? classLeaderboardPath(activeClassRoute.slug)
     : bossRoute
       ? bossLeaderboardPath(bossRoute.slug)
       : LEADERBOARD_BASE_PATH;
 
   const documentTitle =
-    classRoute && bossRoute
-      ? `Best ${classRoute.label} Builds on ${bossRoute.name} | ESO Toolkit`
+    activeClassRoute && bossRoute
+      ? `Best ${activeClassRoute.label} Builds on ${bossRoute.name} | ESO Toolkit`
       : (getRouteMeta(canonicalPath)?.title ?? 'Build Leaderboard | ESO Toolkit');
 
   // Must match the prerendered <title> byte for byte on the 21 slugged routes,
@@ -194,19 +211,19 @@ export const BuildLeaderboardPage: React.FC = () => {
   useCanonicalUrl(canonicalPath);
 
   const headingText =
-    classRoute && bossRoute
-      ? `Best ${classRoute.label} builds on ${bossRoute.name}`
-      : classRoute
-        ? `Best ${classRoute.label} builds in ESO`
+    activeClassRoute && bossRoute
+      ? `Best ${activeClassRoute.label} builds on ${bossRoute.name}`
+      : activeClassRoute
+        ? `Best ${activeClassRoute.label} builds in ESO`
         : bossRoute
           ? `${bossRoute.name} DPS parses`
           : 'Build Leaderboard';
 
   const headingSubtitle =
-    classRoute && bossRoute
-      ? `Top ${classRoute.label} parses recorded on ${bossRoute.name} in ${bossRoute.zone}.`
-      : classRoute
-        ? `Top ${classRoute.label} parses from across every recorded trial boss, grouped into build archetypes.`
+    activeClassRoute && bossRoute
+      ? `Top ${activeClassRoute.label} parses recorded on ${bossRoute.name} in ${bossRoute.zone}.`
+      : activeClassRoute
+        ? `Top ${activeClassRoute.label} parses from across every recorded trial boss, grouped into build archetypes.`
         : bossRoute
           ? `The highest recorded parses on ${bossRoute.name} in ${bossRoute.zone}, grouped into build archetypes.`
           : null;
@@ -254,6 +271,16 @@ export const BuildLeaderboardPage: React.FC = () => {
     // parses on a boss with 201). DPS is normalized to each boss's ceiling
     // before display instead. An explicit boss still narrows to one board.
     if (tab === 'class') {
+      if (!activeClassRoute) return null;
+      // A boss the URL names but that we cannot resolve to a real encounter
+      // must NOT fall through to the pooled query. The title, h1 and JSON-LD
+      // all still name that boss, so widening the query would publish
+      // every-boss data under it — and because `encounterParam` is truthy,
+      // `isPooledClass` stays false, so those amounts would not even be
+      // normalized. This fires on the first render of every /class/x/boss URL
+      // (the encounters feed has not arrived yet) as well as in the drift case
+      // where the ingest stops serving a slugged boss.
+      if (encounterParam && !selectedEncounter) return null;
       const bossFilter =
         selectedEncounter && encounterParam
           ? {
@@ -261,7 +288,6 @@ export const BuildLeaderboardPage: React.FC = () => {
               difficulty: selectedEncounter.difficulty,
             }
           : {};
-      if (!activeClassRoute) return null;
       return { esoClass: activeClassRoute.esoClass, perEncounterCap: 25, ...bossFilter };
     }
     if (!selectedEncounter) return null;
@@ -920,7 +946,12 @@ export const BuildLeaderboardPage: React.FC = () => {
         )}
       </Box>
 
-      <LeaderboardBrowseNav activeClassSlug={classRoute?.slug} activeBossSlug={bossRoute?.slug} />
+      {/* activeClassRoute, not classRoute, so the browse nav and the class
+          picker agree about which class is current on the legacy shape. */}
+      <LeaderboardBrowseNav
+        activeClassSlug={activeClassRoute?.slug}
+        activeBossSlug={bossRoute?.slug}
+      />
 
       <Box
         component="footer"

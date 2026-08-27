@@ -60,7 +60,7 @@ const staticRoutes = Object.entries({ ...routeMeta, ...leaderboardRouteMeta })
   });
 
 if (staticRoutes.length === 0) {
-  console.error('No prerenderable routes found in src/constants/route-meta.json');
+  console.error('No prerenderable routes found in route-meta.json or leaderboard-routes.json');
   process.exit(1);
 }
 
@@ -95,25 +95,46 @@ if (fs.existsSync(headersPath)) {
   fs.writeFileSync(headersPath, headers);
 }
 
+/**
+ * Titles and descriptions are interpolated into element text AND into quoted
+ * attribute values, so they have to be escaped. An unescaped `"` would
+ * terminate a `content="..."` attribute, and an unescaped `&` or `<` in a
+ * <title> would parse back to something other than the raw JSON string — which
+ * is exactly the prerender/hydration title mismatch this pipeline exists to
+ * prevent, since the app sets document.title from the unescaped JSON.
+ *
+ * Every current entry contains only apostrophes (Sanity's Edge, Kyne's Aegis,
+ * Z'Maja), which are safe either way, so this is a guard against future copy
+ * rather than a fix for a live break.
+ */
+const escapeHtml = (value) =>
+  String(value)
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;');
+
 for (const route of staticRoutes) {
   const routeUrl = `${SITE_ORIGIN}/${route.path}/`;
+  const title = escapeHtml(route.title);
+  const description = escapeHtml(route.description);
   const routeShell = contents
-    .replace(/<title>[^<]*<\/title>/, `<title>${route.title}</title>`)
+    .replace(/<title>[^<]*<\/title>/, `<title>${title}</title>`)
     .replace(
       /<link rel="canonical" href="[^"]*" \/>/,
       `<link rel="canonical" href="${routeUrl}" />`,
     )
     .replace(
       /<meta\s+name="description"\s+content="[^"]*"\s*\/>/,
-      `<meta name="description" content="${route.description}" />`,
+      `<meta name="description" content="${description}" />`,
     )
     .replace(
       /<meta property="og:title" content="[^"]*" \/>/,
-      `<meta property="og:title" content="${route.title}" />`,
+      `<meta property="og:title" content="${title}" />`,
     )
     .replace(
       /<meta\s+property="og:description"\s+content="[^"]*"\s*\/>/,
-      `<meta property="og:description" content="${route.description}" />`,
+      `<meta property="og:description" content="${description}" />`,
     )
     .replace(
       /<meta property="og:url" content="[^"]*" \/>/,
@@ -121,11 +142,11 @@ for (const route of staticRoutes) {
     )
     .replace(
       /<meta name="twitter:title" content="[^"]*" \/>/,
-      `<meta name="twitter:title" content="${route.title}" />`,
+      `<meta name="twitter:title" content="${title}" />`,
     )
     .replace(
       /<meta\s+name="twitter:description"\s+content="[^"]*"\s*\/>/,
-      `<meta name="twitter:description" content="${route.description}" />`,
+      `<meta name="twitter:description" content="${description}" />`,
     );
 
   const routeDirectory = path.join(buildDirectory, route.path);
