@@ -23,7 +23,28 @@ const SITE_ORIGIN = 'https://esotk.com';
 // through src/constants/routeMeta.ts.
 const routeMeta = require('../src/constants/route-meta.json');
 
-const staticRoutes = Object.entries(routeMeta)
+// The /build-leaderboard sub-routes (7 pooled class boards + 14 per-encounter
+// boards) come from their own JSON because each entry also carries the encounter
+// id / class filter the page needs at runtime. Requiring it here keeps the
+// prerendered shells, the sitemap and the app reading the same titles.
+//
+// The 98 class-narrowed-to-one-boss permutations are deliberately NOT here: they
+// are near-duplicates of the pooled class board and canonicalize to it, so
+// prerendering them would only spend crawl budget on thin pages.
+const leaderboardRoutes = require('../src/constants/leaderboard-routes.json');
+
+const leaderboardRouteMeta = Object.fromEntries([
+  ...leaderboardRoutes.classes.map((entry) => [
+    `/build-leaderboard/class/${entry.slug}`,
+    { title: entry.title, description: entry.description, prerender: true },
+  ]),
+  ...leaderboardRoutes.bosses.map((entry) => [
+    `/build-leaderboard/boss/${entry.slug}`,
+    { title: entry.title, description: entry.description, prerender: true },
+  ]),
+]);
+
+const staticRoutes = Object.entries({ ...routeMeta, ...leaderboardRouteMeta })
   .filter(([, meta]) => meta.prerender)
   .map(([routePath, meta]) => {
     if (!routePath.startsWith('/') || routePath.length < 2) {
@@ -54,8 +75,7 @@ const contents = fs.readFileSync(appShell, 'utf8');
 // makes the same build artifact safe to move to a header-capable static host.
 const inlineScriptHashes = Array.from(
   contents.matchAll(/<script\b(?![^>]*\bsrc\s*=)[^>]*>([\s\S]*?)<\/script>/gi),
-  ([, script]) =>
-    `'sha256-${crypto.createHash('sha256').update(script, 'utf8').digest('base64')}'`,
+  ([, script]) => `'sha256-${crypto.createHash('sha256').update(script, 'utf8').digest('base64')}'`,
 ).join(' ');
 
 if (!inlineScriptHashes) {
@@ -65,7 +85,9 @@ if (!inlineScriptHashes) {
 
 const headersPath = path.join(buildDirectory, '_headers');
 if (fs.existsSync(headersPath)) {
-  const headers = fs.readFileSync(headersPath, 'utf8').replaceAll(cspHashMarker, inlineScriptHashes);
+  const headers = fs
+    .readFileSync(headersPath, 'utf8')
+    .replaceAll(cspHashMarker, inlineScriptHashes);
   if (headers.includes(cspHashMarker)) {
     console.error(`Unresolved CSP hash marker remains in ${headersPath}`);
     process.exit(1);

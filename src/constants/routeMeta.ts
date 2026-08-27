@@ -13,6 +13,7 @@
  * the weaker runtime title. Keep new titles in the JSON, never in components.
  */
 
+import { LEADERBOARD_ROUTE_META } from './leaderboardRoutes';
 import routeMetaJson from './route-meta.json';
 
 export interface RouteMeta {
@@ -33,9 +34,33 @@ export type RouteMetaPath = keyof typeof routeMetaJson;
 
 export const ROUTE_META: Readonly<Record<RouteMetaPath, RouteMeta>> = routeMetaJson;
 
+/**
+ * The build-leaderboard sub-routes live in their own JSON because each entry
+ * also carries the encounter id / class filter the page needs, not just SEO
+ * copy. They are folded in here so `getRouteMeta` stays the one lookup callers
+ * need, and so `scripts/generate-static-routes.cjs` prerendering them requires
+ * no second code path.
+ *
+ * They are NOT added to `RouteMetaPath`: those paths are built from slugs at
+ * runtime, so no caller can name one as a literal anyway.
+ */
+const LEADERBOARD_META: Readonly<Record<string, RouteMeta>> = Object.freeze(
+  Object.fromEntries(
+    Object.entries(LEADERBOARD_ROUTE_META).map(([path, meta]) => [
+      path,
+      { ...meta, prerender: true },
+    ]),
+  ),
+);
+
+/** Every prerenderable path, including the generated leaderboard sub-routes. */
+export const ALL_ROUTE_META: Readonly<Record<string, RouteMeta>> = Object.freeze({
+  ...(ROUTE_META as Readonly<Record<string, RouteMeta>>),
+  ...LEADERBOARD_META,
+});
+
 /** Loose lookup for callers that only have a runtime string path. */
-export const getRouteMeta = (path: string): RouteMeta | undefined =>
-  (ROUTE_META as Readonly<Record<string, RouteMeta>>)[path];
+export const getRouteMeta = (path: string): RouteMeta | undefined => ALL_ROUTE_META[path];
 
 /** Loose title lookup for callers that only have a runtime string path. */
 export const getRouteTitle = (path: string): string | undefined => getRouteMeta(path)?.title;

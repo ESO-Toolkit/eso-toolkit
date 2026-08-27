@@ -1,0 +1,182 @@
+{
+  "$comment": "Single source of truth for the crawlable /build-leaderboard sub-routes. Read by src/constants/routeMeta.ts (app) and scripts/generate-static-routes.cjs (prerender + sitemap) so slugs, titles and descriptions cannot drift. Slugs are PERMANENT PUBLIC URLS: renaming one breaks inbound links and loses ranking. Add entries, never rewrite them. See src/constants/leaderboardRoutes.ts for the accessors and for what happens when the ingest returns an encounter that has no entry here.",
+  "classes": [
+    {
+      "slug": "arcanist",
+      "esoClass": "Arcanist",
+      "label": "Arcanist",
+      "title": "Best Arcanist Builds in ESO | ESO Toolkit",
+      "description": "Top Arcanist DPS builds from Elder Scrolls Online trial logs, grouped into archetypes with full gear, skill bars, and median parse DPS."
+    },
+    {
+      "slug": "dragonknight",
+      "esoClass": "DragonKnight",
+      "label": "Dragonknight",
+      "title": "Best Dragonknight Builds in ESO | ESO Toolkit",
+      "description": "Top Dragonknight DPS builds from Elder Scrolls Online trial logs, grouped into archetypes with full gear, skill bars, and median parse DPS."
+    },
+    {
+      "slug": "necromancer",
+      "esoClass": "Necromancer",
+      "label": "Necromancer",
+      "title": "Best Necromancer Builds in ESO | ESO Toolkit",
+      "description": "Top Necromancer DPS builds from Elder Scrolls Online trial logs, grouped into archetypes with full gear, skill bars, and median parse DPS."
+    },
+    {
+      "slug": "nightblade",
+      "esoClass": "Nightblade",
+      "label": "Nightblade",
+      "title": "Best Nightblade Builds in ESO | ESO Toolkit",
+      "description": "Top Nightblade DPS builds from Elder Scrolls Online trial logs, grouped into archetypes with full gear, skill bars, and median parse DPS."
+    },
+    {
+      "slug": "sorcerer",
+      "esoClass": "Sorcerer",
+      "label": "Sorcerer",
+      "title": "Best Sorcerer Builds in ESO | ESO Toolkit",
+      "description": "Top Sorcerer DPS builds from Elder Scrolls Online trial logs, grouped into archetypes with full gear, skill bars, and median parse DPS."
+    },
+    {
+      "slug": "templar",
+      "esoClass": "Templar",
+      "label": "Templar",
+      "title": "Best Templar Builds in ESO | ESO Toolkit",
+      "description": "Top Templar DPS builds from Elder Scrolls Online trial logs, grouped into archetypes with full gear, skill bars, and median parse DPS."
+    },
+    {
+      "slug": "warden",
+      "esoClass": "Warden",
+      "label": "Warden",
+      "title": "Best Warden Builds in ESO | ESO Toolkit",
+      "description": "Top Warden DPS builds from Elder Scrolls Online trial logs, grouped into archetypes with full gear, skill bars, and median parse DPS."
+    }
+  ],
+  "bosses": [
+    {
+      "slug": "opulent-trio",
+      "encounterId": 64,
+      "difficulty": 120,
+      "name": "Opulent Trio",
+      "zone": "Opulent Ordeal",
+      "title": "Opulent Trio DPS Parses and Builds | ESO Toolkit",
+      "description": "The highest Opulent Trio DPS parses in Opulent Ordeal, grouped into build archetypes with full gear and skill bars from ESO Logs data."
+    },
+    {
+      "slug": "overfiend-kazpian",
+      "encounterId": 63,
+      "difficulty": 122,
+      "name": "Overfiend Kazpian",
+      "zone": "Ossein Cage",
+      "title": "Overfiend Kazpian DPS Parses and Builds | ESO Toolkit",
+      "description": "The highest Overfiend Kazpian DPS parses in Ossein Cage, grouped into build archetypes with full gear and skill bars from ESO Logs data."
+    },
+    {
+      "slug": "ansuul-the-tormentor",
+      "encounterId": 57,
+      "difficulty": 122,
+      "name": "Ansuul the Tormentor",
+      "zone": "Sanity's Edge",
+      "title": "Ansuul the Tormentor DPS Parses and Builds | ESO Toolkit",
+      "description": "The highest Ansuul the Tormentor DPS parses in Sanity's Edge, grouped into build archetypes with full gear and skill bars from ESO Logs data."
+    },
+    {
+      "slug": "tideborn-taleria",
+      "encounterId": 54,
+      "difficulty": 122,
+      "name": "Tideborn Taleria",
+      "zone": "Dreadsail Reef",
+      "title": "Tideborn Taleria DPS Parses and Builds | ESO Toolkit",
+      "description": "The highest Tideborn Taleria DPS parses in Dreadsail Reef, grouped into build archetypes with full gear and skill bars from ESO Logs data."
+    },
+    {
+      "slug": "xalvakka",
+      "encounterId": 51,
+      "difficulty": 122,
+      "name": "Xalvakka",
+      "zone": "Rockgrove",
+      "title": "Xalvakka DPS Parses and Builds | ESO Toolkit",
+      "description": "The highest Xalvakka DPS parses in Rockgrove, grouped into build archetypes with full gear and skill bars from ESO Logs data."
+    },
+    {
+      "slug": "lord-falgravn",
+      "encounterId": 48,
+      "difficulty": 122,
+      "name": "Lord Falgravn",
+      "zone": "Kyne's Aegis",
+      "title": "Lord Falgravn DPS Parses and Builds | ESO Toolkit",
+      "description": "The highest Lord Falgravn DPS parses in Kyne's Aegis, grouped into build archetypes with full gear and skill bars from ESO Logs data."
+    },
+    {
+      "slug": "nahviintaas",
+      "encounterId": 45,
+      "difficulty": 122,
+      "name": "Nahviintaas",
+      "zone": "Sunspire",
+      "title": "Nahviintaas DPS Parses and Builds | ESO Toolkit",
+      "description": "The highest Nahviintaas DPS parses in Sunspire, grouped into build archetypes with full gear and skill bars from ESO Logs data."
+    },
+    {
+      "slug": "zmaja",
+      "encounterId": 27,
+      "difficulty": 125,
+      "name": "Z'Maja",
+      "zone": "Cloudrest",
+      "title": "Z'Maja DPS Parses and Builds | ESO Toolkit",
+      "description": "The highest Z'Maja DPS parses in Cloudrest, grouped into build archetypes with full gear and skill bars from ESO Logs data."
+    },
+    {
+      "slug": "saint-olms-the-just",
+      "encounterId": 23,
+      "difficulty": 124,
+      "name": "Saint Olms the Just",
+      "zone": "Asylum Sanctorium",
+      "title": "Saint Olms the Just DPS Parses and Builds | ESO Toolkit",
+      "description": "The highest Saint Olms the Just DPS parses in Asylum Sanctorium, grouped into build archetypes with full gear and skill bars from ESO Logs data."
+    },
+    {
+      "slug": "assembly-general",
+      "encounterId": 20,
+      "difficulty": 122,
+      "name": "Assembly General",
+      "zone": "The Halls of Fabrication",
+      "title": "Assembly General DPS Parses and Builds | ESO Toolkit",
+      "description": "The highest Assembly General DPS parses in The Halls of Fabrication, grouped into build archetypes with full gear and skill bars from ESO Logs data."
+    },
+    {
+      "slug": "rakkhat",
+      "encounterId": 15,
+      "difficulty": 122,
+      "name": "Rakkhat",
+      "zone": "Maw of Lorkhaj",
+      "title": "Rakkhat DPS Parses and Builds | ESO Toolkit",
+      "description": "The highest Rakkhat DPS parses in Maw of Lorkhaj, grouped into build archetypes with full gear and skill bars from ESO Logs data."
+    },
+    {
+      "slug": "the-serpent",
+      "encounterId": 12,
+      "difficulty": 122,
+      "name": "The Serpent",
+      "zone": "Sanctum Ophidia",
+      "title": "The Serpent DPS Parses and Builds | ESO Toolkit",
+      "description": "The highest The Serpent DPS parses in Sanctum Ophidia, grouped into build archetypes with full gear and skill bars from ESO Logs data."
+    },
+    {
+      "slug": "the-warrior",
+      "encounterId": 8,
+      "difficulty": 122,
+      "name": "The Warrior",
+      "zone": "Hel Ra Citadel",
+      "title": "The Warrior DPS Parses and Builds | ESO Toolkit",
+      "description": "The highest The Warrior DPS parses in Hel Ra Citadel, grouped into build archetypes with full gear and skill bars from ESO Logs data."
+    },
+    {
+      "slug": "the-mage",
+      "encounterId": 4,
+      "difficulty": 122,
+      "name": "The Mage",
+      "zone": "Aetherian Archive",
+      "title": "The Mage DPS Parses and Builds | ESO Toolkit",
+      "description": "The highest The Mage DPS parses in Aetherian Archive, grouped into build archetypes with full gear and skill bars from ESO Logs data."
+    }
+  ]
+}

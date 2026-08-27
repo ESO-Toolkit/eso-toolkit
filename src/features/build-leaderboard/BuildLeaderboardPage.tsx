@@ -11,15 +11,36 @@ import {
 } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import {
+  Link as RouterLink,
+  Navigate,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from 'react-router-dom';
 
-import { usePageTitle } from '@/hooks/useDocumentTitle';
+import {
+  bossLeaderboardPath,
+  classLeaderboardPath,
+  encounterKeyOf,
+  getBossRouteByEncounter,
+  getBossRouteBySlug,
+  getClassRouteByEsoClass,
+  getClassRouteBySlug,
+  LEADERBOARD_BASE_PATH,
+  LEADERBOARD_BOSS_ROUTES,
+  LEADERBOARD_CLASS_ROUTES,
+} from '@/constants/leaderboardRoutes';
+import { getRouteMeta } from '@/constants/routeMeta';
+import { useCanonicalUrl } from '@/hooks/useCanonicalUrl';
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 
 import { ClassIcon } from '../../components/ClassIcon';
 import { PanelErrorBoundary } from '../../components/PanelErrorBoundary';
 
 import { dpsParsesApi } from './api/dpsParsesApi';
 import { BuildLeaderboardView } from './components/BuildLeaderboardView';
+import { LeaderboardBrowseNav } from './components/LeaderboardBrowseNav';
 import { useArchetypeBuildActions } from './hooks/useArchetypeBuildActions';
 import { useBaseAbilityResolver } from './hooks/useBaseAbilityResolver';
 import { useBuildClusters } from './hooks/useBuildClusters';
@@ -30,28 +51,14 @@ import type { DpsEncounterSummary } from './types/dpsParses.types';
 
 type TabKey = 'encounter' | 'class';
 
-const ESO_CLASSES = [
-  'Arcanist',
-  'DragonKnight',
-  'Necromancer',
-  'Nightblade',
-  'Sorcerer',
-  'Templar',
-  'Warden',
-] as const;
-
-type EsoClass = (typeof ESO_CLASSES)[number];
-
-function isEsoClass(value: string | null): value is EsoClass {
-  return value !== null && (ESO_CLASSES as readonly string[]).includes(value);
-}
-
-const CLASS_LABELS: Record<string, string> = { DragonKnight: 'Dragonknight' };
 /** Picker sentinel for the pooled (all-bosses) class view. */
 const ALL_BOSSES = '__all__';
 
+/** Legacy query params, superseded by path segments. Stripped on redirect. */
+const LEGACY_PARAMS = ['tab', 'class', 'boss'] as const;
+
 function encounterKey(encounter: Pick<DpsEncounterSummary, 'encounter_id' | 'difficulty'>): string {
-  return `${encounter.encounter_id}:${encounter.difficulty}`;
+  return encounterKeyOf(encounter.encounter_id, encounter.difficulty);
 }
 
 function encounterLabel(encounter: DpsEncounterSummary): string {
@@ -79,16 +86,85 @@ function clusterQuality(silhouette: number): { label: string; tooltip: string } 
   return { label: 'Limited', tooltip: 'Top players are using many similar variations.' };
 }
 
+/**
+ * `</script>` inside a cluster label would close the JSON-LD block early and
+ * turn the remainder of the payload into markup. Labels are built from set and
+ * ability names the ESO Logs API returns, so they are not ours to trust.
+ */
+function serializeJsonLd(value: unknown): string {
+  return JSON.stringify(value).replace(/</g, '\\u003c');
+}
+
 export const BuildLeaderboardPage: React.FC = () => {
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
+  const { classSlug, bossSlug } = useParams<{ classSlug?: string; bossSlug?: string }>();
   const navigate = useNavigate();
   const { pendingAction, openInEditor, saveToMyBuilds } = useArchetypeBuildActions();
 
-  const tab: TabKey = searchParams.get('tab') === 'class' ? 'class' : 'encounter';
-  const selectedClass = isEsoClass(searchParams.get('class'))
-    ? (searchParams.get('class') as EsoClass)
-    : ESO_CLASSES[0];
-  const encounterParam = searchParams.get('boss');
+  // ─── Route resolution ──────────────────────────────────────────────────────
+  // Four shapes reach this component:
+  //   /build-leaderboard                            encounter tab, first board
+  //   /build-leaderboard/boss/:bossSlug             encounter tab, one board
+  //   /build-leaderboard/class/:classSlug           class tab, pooled
+  //   /build-leaderboard/class/:classSlug/:bossSlug class tab, one board
+  // Plus the legacy ?tab=/?class=/?boss= form, which still works and redirects
+  // to its path equivalent.
+  const onSluggedPath = classSlug !== undefined || bossSlug !== undefined;
+  const classRoute = getClassRouteBySlug(classSlug);
+  const bossRoute = getBossRouteBySlug(bossSlug);
+
+  const legacyBossKey = onSluggedPath ? null : searchParams.get('boss');
+  const legacyClassRoute = useMemo(() => {
+    if (onSluggedPath || searchParams.get('tab') !== 'class') return undefined;
+    return (
+      getClassRouteByEsoClass(searchParams.get('class') ?? undefined) ?? LEADERBOARD_CLASS_ROUTES[0]
+    );
+  }, [onSluggedPath, searchParams]);
+
+  const activeClassRoute = classRoute ?? legacyClassRoute;
+  const tab: TabKey = activeClassRoute ? 'class' : 'encounter';
+  const encounterParam = bossRoute
+    ? encounterKeyOf(bossRoute.encounterId, bossRoute.difficulty)
+    : legacyBossKey;
+
+  const redirectTo = useMemo(() => {
+    // A slug nobody recognises is not a board. Send it to the index rather than
+    // rendering an arbitrary fallback board under a URL that promises another.
+    if ((classSlug !== undefined && !classRoute) || (bossSlug !== undefined && !bossRoute)) {
+      return LEADERBOARD_BASE_PATH;
+    }
+    if (onSluggedPath) return null;
+    if (!LEGACY_PARAMS.some((param) => searchParams.has(param))) return null;
+
+    const legacyBoss = legacyBossKey
+      ? LEADERBOARD_BOSS_ROUTES.find(
+          (entry) => encounterKeyOf(entry.encounterId, entry.difficulty) === legacyBossKey,
+        )
+      : undefined;
+    // An encounter the slug table has no entry for cannot be expressed as a
+    // path. Keep honouring the query param instead of dropping the selection.
+    if (legacyBossKey && !legacyBoss) return null;
+
+    const rest = new URLSearchParams(searchParams);
+    LEGACY_PARAMS.forEach((param) => rest.delete(param));
+    const query = rest.toString();
+
+    const target = legacyClassRoute
+      ? classLeaderboardPath(legacyClassRoute.slug, legacyBoss?.slug)
+      : legacyBoss
+        ? bossLeaderboardPath(legacyBoss.slug)
+        : LEADERBOARD_BASE_PATH;
+    return query ? `${target}?${query}` : target;
+  }, [
+    classSlug,
+    classRoute,
+    bossSlug,
+    bossRoute,
+    onSluggedPath,
+    searchParams,
+    legacyBossKey,
+    legacyClassRoute,
+  ]);
 
   const [encounters, setEncounters] = useState<DpsEncounterSummary[]>([]);
   const [encountersError, setEncountersError] = useState<string | null>(null);
@@ -96,7 +172,44 @@ export const BuildLeaderboardPage: React.FC = () => {
   const [encountersToken, setEncountersToken] = useState(0);
   const [methodologyOpen, setMethodologyOpen] = useState(false);
 
-  usePageTitle('/build-leaderboard');
+  // ─── Page metadata ─────────────────────────────────────────────────────────
+  // The 98 class-by-boss permutations are near-duplicates of the pooled class
+  // board, so they point their canonical at it and stay out of the sitemap.
+  // Everything else is its own canonical and is prerendered.
+  const canonicalPath = classRoute
+    ? classLeaderboardPath(classRoute.slug)
+    : bossRoute
+      ? bossLeaderboardPath(bossRoute.slug)
+      : LEADERBOARD_BASE_PATH;
+
+  const documentTitle =
+    classRoute && bossRoute
+      ? `Best ${classRoute.label} Builds on ${bossRoute.name} | ESO Toolkit`
+      : (getRouteMeta(canonicalPath)?.title ?? 'Build Leaderboard | ESO Toolkit');
+
+  // Must match the prerendered <title> byte for byte on the 21 slugged routes,
+  // which is why it is read from the same metadata the prerender stamps rather
+  // than composed here.
+  useDocumentTitle(documentTitle);
+  useCanonicalUrl(canonicalPath);
+
+  const headingText =
+    classRoute && bossRoute
+      ? `Best ${classRoute.label} builds on ${bossRoute.name}`
+      : classRoute
+        ? `Best ${classRoute.label} builds in ESO`
+        : bossRoute
+          ? `${bossRoute.name} DPS parses`
+          : 'Build Leaderboard';
+
+  const headingSubtitle =
+    classRoute && bossRoute
+      ? `Top ${classRoute.label} parses recorded on ${bossRoute.name} in ${bossRoute.zone}.`
+      : classRoute
+        ? `Top ${classRoute.label} parses from across every recorded trial boss, grouped into build archetypes.`
+        : bossRoute
+          ? `The highest recorded parses on ${bossRoute.name} in ${bossRoute.zone}, grouped into build archetypes.`
+          : null;
 
   useEffect(() => {
     let cancelled = false;
@@ -124,15 +237,22 @@ export const BuildLeaderboardPage: React.FC = () => {
   const selectedEncounter = useMemo(() => {
     if (encounters.length === 0) return null;
     const fromUrl = encounters.find((encounter) => encounterKey(encounter) === encounterParam);
-    return fromUrl ?? encounters[0];
-  }, [encounters, encounterParam]);
+    if (fromUrl) return fromUrl;
+    // A slugged boss the ingest no longer serves must NOT fall back to another
+    // board: the title, the h1 and the canonical all name that boss, so the
+    // fallback would publish some other boss's parses under its URL.
+    if (bossRoute) return null;
+    return encounters[0];
+  }, [encounters, encounterParam, bossRoute]);
 
   const parseQuery = useMemo(() => {
+    // Nothing is worth fetching for a URL we are about to leave.
+    if (redirectTo) return null;
     // Class tab POOLS across bosses by default: pattern identity (gear, bars,
     // skill lines) does not require same-boss parses, and per-boss slices
     // starve minority classes (a 54%-Necromancer board left Dragonknights 2
     // parses on a boss with 201). DPS is normalized to each boss's ceiling
-    // before display instead. An explicit ?boss= still narrows to one board.
+    // before display instead. An explicit boss still narrows to one board.
     if (tab === 'class') {
       const bossFilter =
         selectedEncounter && encounterParam
@@ -141,15 +261,15 @@ export const BuildLeaderboardPage: React.FC = () => {
               difficulty: selectedEncounter.difficulty,
             }
           : {};
-      if (!selectedClass) return null;
-      return { esoClass: selectedClass, perEncounterCap: 25, ...bossFilter };
+      if (!activeClassRoute) return null;
+      return { esoClass: activeClassRoute.esoClass, perEncounterCap: 25, ...bossFilter };
     }
     if (!selectedEncounter) return null;
     return {
       encounterId: selectedEncounter.encounter_id,
       difficulty: selectedEncounter.difficulty,
     };
-  }, [tab, selectedClass, selectedEncounter, encounterParam]);
+  }, [redirectTo, tab, activeClassRoute, selectedEncounter, encounterParam]);
 
   const resolveBaseAbilityId = useBaseAbilityResolver();
   // Pooled class view: normalize each parse's DPS to its own boss's ceiling so
@@ -167,14 +287,14 @@ export const BuildLeaderboardPage: React.FC = () => {
   const topAmountByKey = useMemo(() => {
     const map = new Map<string, number>();
     encounters.forEach((encounter) => {
-      map.set(`${encounter.encounter_id}:${encounter.difficulty}`, encounter.top_amount);
+      map.set(encounterKey(encounter), encounter.top_amount);
     });
     return map;
   }, [encounters]);
   const clusterParses = useMemo(() => {
     if (!isPooledClass) return parses;
     return parses.map((parse) => {
-      const top = topAmountByKey.get(`${parse.encounter_id}:${parse.difficulty}`);
+      const top = topAmountByKey.get(encounterKeyOf(parse.encounter_id, parse.difficulty));
       return top && top > 0 && parse.amount > 0 ? { ...parse, amount: parse.amount / top } : parse;
     });
   }, [isPooledClass, parses, topAmountByKey]);
@@ -182,7 +302,7 @@ export const BuildLeaderboardPage: React.FC = () => {
   // would carry its raw amount and re-cluster once ceilings arrive.
   const poolingReady = !isPooledClass || topAmountByKey.size > 0;
   const bossCount = useMemo(
-    () => new Set(parses.map((parse) => `${parse.encounter_id}:${parse.difficulty}`)).size,
+    () => new Set(parses.map((parse) => encounterKeyOf(parse.encounter_id, parse.difficulty))).size,
     [parses],
   );
 
@@ -195,16 +315,84 @@ export const BuildLeaderboardPage: React.FC = () => {
     recluster,
   } = useBuildClusters(poolingReady ? clusterParses : [], resolveBaseAbilityId);
 
-  const setParam = useCallback(
-    (updates: Record<string, string | null>) => {
-      const next = new URLSearchParams(searchParams);
-      Object.entries(updates).forEach(([key, value]) => {
-        if (value === null) next.delete(key);
-        else next.set(key, value);
-      });
-      setSearchParams(next, { replace: true });
+  // ─── Structured data ───────────────────────────────────────────────────────
+  const archetypeListLd = useMemo(() => {
+    if (!result || result.clusters.length === 0) return null;
+
+    const rawAmountById = new Map(parses.map((parse) => [parse.parse_id, parse.amount]));
+    const bestRawAmount = (cluster: BuildCluster): number =>
+      cluster.memberParseIds.reduce((max, id) => Math.max(max, rawAmountById.get(id) ?? 0), 0);
+
+    // On a pooled view `cluster.dps` is NORMALIZED to each boss's ceiling, so
+    // quoting its median as DPS would publish "1 DPS". Use the best raw member
+    // parse there, which is exactly what the cards show.
+    const amountOf = (cluster: BuildCluster): number =>
+      isPooledClass ? bestRawAmount(cluster) : cluster.dps.median;
+
+    const items = [...result.clusters]
+      .sort((a, b) => amountOf(b) - amountOf(a))
+      .map((cluster, index) => ({
+        '@type': 'ListItem',
+        position: index + 1,
+        name: cluster.label,
+        description: `Run by ${Math.round(cluster.share * 100)}% of recorded parses. ${
+          isPooledClass ? 'Best' : 'Median'
+        } parse ${Math.round(amountOf(cluster)).toLocaleString('en-US')} DPS across ${
+          cluster.size
+        } ${cluster.size === 1 ? 'build' : 'builds'}.`,
+      }))
+      .filter((item) => item.position <= 25);
+
+    return {
+      '@context': 'https://schema.org',
+      '@type': 'ItemList',
+      name: headingText,
+      itemListOrder: 'https://schema.org/ItemListOrderDescending',
+      numberOfItems: items.length,
+      itemListElement: items,
+    };
+  }, [result, parses, isPooledClass, headingText]);
+
+  // ─── Navigation targets ────────────────────────────────────────────────────
+  // Pickers are anchors, not buttons: before this, the entire leaderboard was
+  // reachable only by operating a Select or a ToggleButton, so a crawler could
+  // discover exactly one of 21 boards.
+  const encounterTabPath = bossRoute ? bossLeaderboardPath(bossRoute.slug) : LEADERBOARD_BASE_PATH;
+  const classTabPath = classLeaderboardPath(
+    (activeClassRoute ?? LEADERBOARD_CLASS_ROUTES[0]).slug,
+    bossRoute?.slug,
+  );
+
+  const handleEncounterChange = useCallback(
+    (value: string) => {
+      if (value === ALL_BOSSES) {
+        navigate(
+          activeClassRoute ? classLeaderboardPath(activeClassRoute.slug) : LEADERBOARD_BASE_PATH,
+        );
+        return;
+      }
+      const [encounterId, difficulty] = value.split(':').map(Number);
+      const entry = getBossRouteByEncounter(encounterId, difficulty);
+      if (entry) {
+        navigate(
+          activeClassRoute
+            ? classLeaderboardPath(activeClassRoute.slug, entry.slug)
+            : bossLeaderboardPath(entry.slug),
+        );
+        return;
+      }
+      // An encounter the ingest has started serving but the slug table does not
+      // cover yet. Fall back to the legacy query form so the board stays
+      // reachable; it just is not crawlable until a slug is added.
+      const params = new URLSearchParams();
+      if (activeClassRoute) {
+        params.set('tab', 'class');
+        params.set('class', activeClassRoute.esoClass);
+      }
+      params.set('boss', value);
+      navigate(`${LEADERBOARD_BASE_PATH}?${params.toString()}`);
     },
-    [searchParams, setSearchParams],
+    [navigate, activeClassRoute],
   );
 
   const handleViewSourceLog = useCallback(
@@ -230,11 +418,17 @@ export const BuildLeaderboardPage: React.FC = () => {
     if (clusterError) recluster();
   }, [encountersError, error, clusterError, reload, recluster]);
 
+  // Placed below every hook so hook order stays identical across renders.
+  if (redirectTo) return <Navigate to={redirectTo} replace />;
+
   return (
     <Container
       maxWidth={false}
       sx={{ maxWidth: 1280, px: { xs: 1.5, sm: 2.5 }, py: { xs: 1.5, sm: 2.5 } }}
     >
+      {archetypeListLd && (
+        <script type="application/ld+json">{serializeJsonLd(archetypeListLd)}</script>
+      )}
       <Box
         component="header"
         aria-label="Build leaderboard controls"
@@ -265,12 +459,19 @@ export const BuildLeaderboardPage: React.FC = () => {
                 lineHeight: 1.1,
               }}
             >
-              Build Leaderboard
+              {headingText}
             </Typography>
+            {headingSubtitle && (
+              <Typography
+                sx={{ mt: 0.4, color: 'text.secondary', fontSize: '0.76rem', lineHeight: 1.4 }}
+              >
+                {headingSubtitle}
+              </Typography>
+            )}
           </Box>
 
           <Box
-            role="tablist"
+            component="nav"
             aria-label="Build leaderboard view"
             sx={(theme) => ({
               display: 'inline-flex',
@@ -288,17 +489,17 @@ export const BuildLeaderboardPage: React.FC = () => {
           >
             {(
               [
-                ['encounter', 'By encounter'],
-                ['class', 'By class'],
+                ['encounter', 'By encounter', encounterTabPath],
+                ['class', 'By class', classTabPath],
               ] as const
-            ).map(([value, label]) => {
+            ).map(([value, label, to]) => {
               const active = tab === value;
               return (
                 <ButtonBase
                   key={value}
-                  role="tab"
-                  aria-selected={active}
-                  onClick={() => setParam({ tab: value })}
+                  component={RouterLink}
+                  to={to}
+                  aria-current={active ? 'page' : undefined}
                   sx={(theme) => ({
                     minHeight: 36,
                     flex: { xs: 1, md: '0 0 auto' },
@@ -308,6 +509,7 @@ export const BuildLeaderboardPage: React.FC = () => {
                     color: active ? 'text.primary' : 'text.secondary',
                     fontSize: '0.75rem',
                     fontWeight: active ? 700 : 600,
+                    textDecoration: 'none',
                     backgroundColor: active
                       ? alpha(
                           theme.palette.primary.main,
@@ -349,9 +551,8 @@ export const BuildLeaderboardPage: React.FC = () => {
             pt: 1.25,
           }}
         >
-          {/* The encounter picker renders on BOTH tabs: class comparisons are
-              only apples-to-apples within one boss, so the class tab requires
-              the same scoped selection (defaulted via selectedEncounter). */}
+          {/* The encounter picker renders on BOTH tabs: the class tab defaults
+              to a pooled board and this is how it narrows to a single boss. */}
           <Box
             sx={{
               width: '100%',
@@ -384,10 +585,7 @@ export const BuildLeaderboardPage: React.FC = () => {
                       ? encounterKey(selectedEncounter)
                       : ''
                 }
-                onChange={(event) => {
-                  const next = String(event.target.value);
-                  setParam({ boss: next === ALL_BOSSES ? null : next });
-                }}
+                onChange={(event) => handleEncounterChange(String(event.target.value))}
                 IconComponent={KeyboardArrowDownRounded}
                 MenuProps={{
                   slotProps: {
@@ -430,7 +628,7 @@ export const BuildLeaderboardPage: React.FC = () => {
                       {tab === 'class' && !encounterParam
                         ? 'All trial bosses'
                         : selectedEncounter
-                          ? `${selectedEncounter.trial_id ? `${selectedEncounter.trial_id} · ` : ''}${selectedEncounter.encounter_name}`
+                          ? encounterLabel(selectedEncounter)
                           : 'Choose an encounter'}
                     </Typography>
                   </Box>
@@ -533,7 +731,7 @@ export const BuildLeaderboardPage: React.FC = () => {
             {tab === 'class' && (
               <Box sx={{ width: '100%', overflowX: 'auto', pb: 0.25 }}>
                 <Box
-                  role="radiogroup"
+                  component="nav"
                   aria-label="ESO class"
                   sx={(theme) => ({
                     display: 'inline-flex',
@@ -545,17 +743,16 @@ export const BuildLeaderboardPage: React.FC = () => {
                     backgroundColor: alpha(theme.palette.background.paper, 0.42),
                   })}
                 >
-                  {ESO_CLASSES.map((esoClass) => {
-                    const label = CLASS_LABELS[esoClass] ?? esoClass;
-                    const active = selectedClass === esoClass;
-                    const classTheme = getLeaderboardClassTheme(esoClass);
+                  {LEADERBOARD_CLASS_ROUTES.map((entry) => {
+                    const active = activeClassRoute?.slug === entry.slug;
+                    const classTheme = getLeaderboardClassTheme(entry.esoClass);
                     return (
                       <ButtonBase
-                        key={esoClass}
-                        role="radio"
-                        aria-checked={active}
-                        aria-label={label}
-                        onClick={() => setParam({ class: esoClass })}
+                        key={entry.slug}
+                        component={RouterLink}
+                        to={classLeaderboardPath(entry.slug, bossRoute?.slug)}
+                        aria-current={active ? 'page' : undefined}
+                        aria-label={entry.label}
                         sx={(theme) => ({
                           display: 'flex',
                           gap: 0.7,
@@ -565,6 +762,7 @@ export const BuildLeaderboardPage: React.FC = () => {
                           color: active ? 'text.primary' : 'text.secondary',
                           fontSize: '0.74rem',
                           fontWeight: active ? 700 : 600,
+                          textDecoration: 'none',
                           backgroundColor: active ? alpha(classTheme.accent, 0.12) : 'transparent',
                           boxShadow: active
                             ? `inset 0 0 0 1px ${alpha(classTheme.accent, 0.34)}, 0 5px 18px ${alpha(classTheme.accent, 0.1)}`
@@ -579,8 +777,8 @@ export const BuildLeaderboardPage: React.FC = () => {
                           },
                         })}
                       >
-                        <ClassIcon className={label} size={15} alt="" />
-                        {label}
+                        <ClassIcon className={entry.label} size={15} alt="" />
+                        {entry.label}
                       </ButtonBase>
                     );
                   })}
@@ -693,7 +891,7 @@ export const BuildLeaderboardPage: React.FC = () => {
               clusterProgress={progress}
               error={combinedError}
               tooFewParses={tooFewParses}
-              esoClass={CLASS_LABELS[selectedClass] ?? selectedClass}
+              esoClass={activeClassRoute?.label}
               scopeLabel={
                 isPooledClass
                   ? undefined
@@ -714,12 +912,14 @@ export const BuildLeaderboardPage: React.FC = () => {
               onSaveBuild={saveToMyBuilds}
               onViewSourceLog={handleViewSourceLog}
               pendingAction={pendingAction}
-              emptyMessage={`No ${CLASS_LABELS[selectedClass] ?? selectedClass} parses recorded yet.`}
+              emptyMessage={`No ${activeClassRoute?.label ?? ''} parses recorded yet.`}
               hideSummary
             />
           </PanelErrorBoundary>
         )}
       </Box>
+
+      <LeaderboardBrowseNav activeClassSlug={classRoute?.slug} activeBossSlug={bossRoute?.slug} />
 
       <Box
         component="footer"

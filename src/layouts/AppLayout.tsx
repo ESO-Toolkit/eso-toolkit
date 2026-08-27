@@ -35,7 +35,16 @@ export const AppLayout: React.FC = () => {
   const [routeAnnouncement, setRouteAnnouncement] = React.useState('');
 
   React.useEffect(() => {
-    const name = ROUTE_NAMES[location.pathname] || 'Page';
+    // Longest-prefix fallback so nested routes are still announced by name.
+    // /build-leaderboard/class/arcanist has no exact entry and used to be
+    // announced as the anonymous "Page".
+    const exact = ROUTE_NAMES[location.pathname];
+    const prefix = exact
+      ? undefined
+      : Object.keys(ROUTE_NAMES)
+          .filter((route) => route !== '/' && location.pathname.startsWith(`${route}/`))
+          .sort((a, b) => b.length - a.length)[0];
+    const name = exact ?? (prefix ? ROUTE_NAMES[prefix] : undefined) ?? 'Page';
     setRouteAnnouncement(`Navigated to ${name}`);
   }, [location.pathname]);
 
