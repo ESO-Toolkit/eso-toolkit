@@ -494,6 +494,17 @@ const AppRoutes: React.FC = () => {
     }
   }, [baseUrl]);
 
+  // One element instance shared by all four leaderboard paths. They resolve to
+  // the same component, and React keeps it mounted across them, so switching
+  // class or boss is a param change rather than a remount + refetch.
+  const buildLeaderboardElement = (
+    <ErrorBoundary>
+      <Suspense fallback={<LoadingFallback />}>
+        <BuildLeaderboardPage />
+      </Suspense>
+    </ErrorBoundary>
+  );
+
   return (
     <BrowserRouter basename={basename}>
       <HashRouteRedirect />
@@ -660,15 +671,18 @@ const AppRoutes: React.FC = () => {
                 </ErrorBoundary>
               }
             />
+            {/* Every leaderboard view used to be a query param behind a MUI
+                Select, so crawlers could reach exactly one of 21 boards. The
+                slugged paths below are the crawlable form; the page still
+                honours the legacy ?tab=/?class=/?boss= links and redirects them
+                here. `/class/:classSlug/:bossSlug` is linkable but canonicalizes
+                to the pooled class board rather than being indexed itself. */}
+            <Route path="/build-leaderboard" element={buildLeaderboardElement} />
+            <Route path="/build-leaderboard/boss/:bossSlug" element={buildLeaderboardElement} />
+            <Route path="/build-leaderboard/class/:classSlug" element={buildLeaderboardElement} />
             <Route
-              path="/build-leaderboard"
-              element={
-                <ErrorBoundary>
-                  <Suspense fallback={<LoadingFallback />}>
-                    <BuildLeaderboardPage />
-                  </Suspense>
-                </ErrorBoundary>
-              }
+              path="/build-leaderboard/class/:classSlug/:bossSlug"
+              element={buildLeaderboardElement}
             />
             <Route
               path="/sample-report"
