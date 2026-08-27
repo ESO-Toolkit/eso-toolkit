@@ -30,6 +30,7 @@ import {
   getSyncState,
   listStaleSyncTargets,
   pruneDpsParses,
+  purgeBlockedDpsParses,
   recordSyncResult,
   upsertDpsParses,
   type DpsParseInsert,
@@ -42,9 +43,16 @@ import type { Env } from '../types';
 const MAX_SUBREQUESTS_PER_RUN = 120;
 /** Encounters per run. Two crons/day covers the full ~35-boss rotation daily. */
 const MAX_ENCOUNTERS_PER_RUN = 20;
-/** 100 parses/page; two pages comfortably fills the top-200 retention window. */
-const PAGES_PER_ENCOUNTER = 2;
-const KEEP_TOP_PER_ENCOUNTER = 200;
+/** 100 parses/page; four pages fill the 400-row retention window so minority
+ * classes actually get ingested instead of being capped by fetch depth. */
+const PAGES_PER_ENCOUNTER = 4;
+// Global cap per (encounter, difficulty). Sized so a meta dominated by one or
+// two classes still leaves meaningful samples of the others once the board is
+// sliced per class — the frontend's class view needs >=10 parses to cluster,
+// and a 200-cap on a 54%-one-class board left minority classes with 2-5.
+const KEEP_TOP_PER_ENCOUNTER = 400;
+/** Best N rows of each class survive the global cap, so every class view has data. */
+const KEEP_PER_CLASS = 25;
 /** Polite spacing between upstream calls. */
 const REQUEST_DELAY_MS = 150;
 /** Abort before spending the last of the hourly point budget. */
@@ -98,8 +106,11 @@ async function toInsertRow(
     trial_id: target.trialId,
     encounter_name: target.encounterName,
     hard_mode_level: entry.hardModeLevel ?? null,
-    // -1 = "latest", which is what an omitted partition requests.
-    partition: -1,
+    // The zone's latest partition from the zone probe (buildDpsEncounterTargets),
+    // or the -1 "API default" sentinel for zones that expose no partitions.
+    // Storing the REAL id matters: the upsert's `excluded.partition >` guard uses
+    // it to supersede rows, and -1-vs--1 could never distinguish patch generations.
+    partition: target.partitionId ?? -1,
 
     character_key: key,
     character_name: entry.characterName ?? null,
@@ -216,6 +227,16 @@ export async function syncDpsParses(
     return [{ encounter: '(preflight failed)', encounterId: 0, status: 'error', rows: 0, detail }];
   }
 
+  // The blocklist is enforced pre-insert, but rows stored before a character
+  // opted out persisted forever. Sweep them once per run, up front, so the
+  // takedown takes effect on the very next pass.
+  try {
+    await purgeBlockedDpsParses(env.DB, blocked);
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error);
+    console.error('[dps-sync] blocklist purge failed:', detail);
+  }
+
   for (const target of targets) {
     if (subrequests + pages > MAX_SUBREQUESTS_PER_RUN) {
       results.push({
@@ -244,10 +265,13 @@ export async function syncDpsParses(
  *
  * The cursor table only knows about targets that have been attempted, so anything
  * absent from it is treated as never-synced and prioritised. Targets that have
- * come back empty repeatedly are dropped to the back rather than removed — a boss
- * can gain rankings when a new patch lands.
+ * come back empty repeatedly are DEMOTED to the back of the queue rather than
+ * removed — a boss can gain rankings when a new patch lands, so it must stay in
+ * rotation (just last), which is what the EMPTY_STREAK_LIMIT threshold promises.
+ *
+ * Exported for tests: the ordering contract is the whole point.
  */
-async function selectTargets(
+export async function selectTargets(
   env: Env,
   allTargets: DpsEncounterTarget[],
   opts: SyncDpsParsesOptions,
@@ -272,10 +296,15 @@ async function selectTargets(
   });
 
   const keyOf = (t: DpsEncounterTarget): string => `${t.encounterId}:${t.difficulty}`;
+  // Demoted targets sort AFTER everything else but are never filtered out; the
+  // slice below then takes the freshest `limit` from the reordered list.
+  const demotedLast = (t: DpsEncounterTarget): number => (skip.has(keyOf(t)) ? 1 : 0);
 
   return [...allTargets]
-    .filter((t) => !skip.has(keyOf(t)))
-    .sort((a, b) => (rank.get(keyOf(a)) ?? -1) - (rank.get(keyOf(b)) ?? -1))
+    .sort(
+      (a, b) =>
+        demotedLast(a) - demotedLast(b) || (rank.get(keyOf(a)) ?? -1) - (rank.get(keyOf(b)) ?? -1),
+    )
     .slice(0, limit);
 }
 
@@ -301,6 +330,10 @@ async function syncOneEncounter(
       const raw = await fetchCharacterRankings(token, {
         encounterId: target.encounterId,
         difficulty: target.difficulty >= 0 ? target.difficulty : undefined,
+        // Pin the zone's latest partition so the fetched leaderboard, the rows we
+        // store, and the upsert's supersede guard all agree on patch generation.
+        // Omitted (undefined) only when the zone exposes no partitions at all.
+        partition: target.partitionId ?? undefined,
         page,
         // Never rely on the API default: it was observed returning entries with
         // combat info stripped where `dps` returned it in full.
@@ -329,8 +362,18 @@ async function syncOneEncounter(
 
     if (rows.length > 0) {
       await upsertDpsParses(env.DB, rows);
-      await pruneDpsParses(env.DB, target.encounterId, target.difficulty, KEEP_TOP_PER_ENCOUNTER);
     }
+    // Prune after EVERY successful fetch, empty results included: an encounter
+    // whose rankings have dried up must still age its stored rows out, or the
+    // scoped stale DELETE never reaches it and its old board lives forever.
+    await pruneDpsParses(
+      env.DB,
+      target.encounterId,
+      target.difficulty,
+      KEEP_TOP_PER_ENCOUNTER,
+      60,
+      KEEP_PER_CLASS,
+    );
 
     warnings.forEach((message) => {
       console.warn(`[dps-sync] ${target.encounterName}: ${message}`);
@@ -361,6 +404,22 @@ async function syncOneEncounter(
     console.error(`[dps-sync] ${target.encounterName} failed:`, detail);
 
     // Record and continue: one bad encounter must not abort the whole run.
+    // The streak is carried through UNCHANGED — an error says nothing about
+    // whether the encounter yields parses, and resetting it to 0 would let a
+    // flaky endpoint mask a genuinely dead one. recordSyncResult likewise
+    // preserves the prior last_synced_at for 'error', so the encounter stays at
+    // the front of the stalest-first queue and is retried on the next run.
+    // Both reads/writes are guarded: if D1 itself is what failed, bookkeeping
+    // must not throw out of this catch.
+    let priorStreak = 0;
+    try {
+      priorStreak = await currentEmptyStreak(env, target);
+    } catch (streakError) {
+      console.error(
+        `[dps-sync] ${target.encounterName} streak read failed:`,
+        streakError instanceof Error ? streakError.message : String(streakError),
+      );
+    }
     await recordSyncResult(env.DB, {
       encounterId: target.encounterId,
       difficulty: target.difficulty,
@@ -370,7 +429,7 @@ async function syncOneEncounter(
       status: 'error',
       error: detail.slice(0, 500),
       rowsIngested: 0,
-      emptyStreak: 0,
+      emptyStreak: priorStreak,
     }).catch(() => undefined);
 
     return {

@@ -2,7 +2,7 @@ import { Box, CircularProgress, Container, Typography } from '@mui/material';
 import { SnackbarProvider } from 'notistack';
 import React, { Suspense, useEffect, useState } from 'react';
 import { Provider as ReduxProvider } from 'react-redux';
-import { Routes, Route, BrowserRouter } from 'react-router-dom';
+import { Routes, Route, BrowserRouter, Navigate } from 'react-router-dom';
 import { PersistGate } from 'redux-persist/integration/react';
 
 import { ScribingSimulatorSkeleton } from '@features/scribing/presentation/components/ScribingSimulatorSkeleton';
@@ -91,9 +91,6 @@ const Calculator = React.lazy(() =>
 );
 const TextEditor = React.lazy(() =>
   import('./components/TextEditor').then((module) => ({ default: module.TextEditor })),
-);
-const Logs = React.lazy(() =>
-  import('./components/Logs').then((module) => ({ default: module.Logs })),
 );
 const LeaderboardLogsPage = React.lazy(() =>
   import('./features/leaderboard/LeaderboardLogsPage').then((module) => ({
@@ -651,16 +648,8 @@ const AppRoutes: React.FC = () => {
                 </ErrorBoundary>
               }
             />
-            <Route
-              path="/logs"
-              element={
-                <ErrorBoundary>
-                  <Suspense fallback={<LoadingFallback />}>
-                    <Logs />
-                  </Suspense>
-                </ErrorBoundary>
-              }
-            />
+            {/* Keep legacy links working now that the log analyzer lives on My Reports. */}
+            <Route path="/logs" element={<Navigate to="/my-reports" replace />} />
             <Route
               path="/leaderboards"
               element={

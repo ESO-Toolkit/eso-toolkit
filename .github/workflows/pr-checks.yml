@@ -122,6 +122,9 @@ jobs:
           ESOLOGS_API_URL: 'http://localhost:3000/mock-api'
           ERROR_TRACKING_TOKEN: ''
 
+      - name: Roster Hub API Tests
+        run: npm run test:roster-hub
+
       - name: Scribing E2E Tests
         run: npm run test:scribing
         env:

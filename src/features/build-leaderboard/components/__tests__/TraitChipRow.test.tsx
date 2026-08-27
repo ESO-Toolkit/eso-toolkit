@@ -12,10 +12,15 @@ function trait(group: FeatureGroupKey, id: number, label: string, share: number)
   return { group, id, label, share };
 }
 
-function renderRow(group: FeatureGroupKey, core: ClusterTrait[], flex: ClusterTrait[] = []) {
+function renderRow(
+  group: FeatureGroupKey,
+  core: ClusterTrait[],
+  flex: ClusterTrait[] = [],
+  variations: ClusterTrait[] = [],
+) {
   return render(
     <ThemeProvider theme={theme}>
-      <TraitChipRow title="Row" group={group} core={core} flex={flex} />
+      <TraitChipRow title="Row" group={group} core={core} flex={flex} variations={variations} />
     </ThemeProvider>,
   );
 }
@@ -77,5 +82,46 @@ describe('TraitChipRow tooltip wording', () => {
   it('renders nothing when the group has no traits', () => {
     const { container } = renderRow('food', []);
     expect(container).toBeEmptyDOMElement();
+  });
+
+  it('labels frequency groups and reveals less-common picks without hover', async () => {
+    renderRow(
+      'monsterSet',
+      [trait('monsterSet', 350, 'Zaan', 0.86)],
+      [trait('monsterSet', 270, 'Slimecraw', 0.55)],
+      [trait('monsterSet', 999, 'Kjalnar', 0.2)],
+    );
+
+    expect(screen.getByText(/^core$/i)).toBeInTheDocument();
+    expect(screen.getByText(/common options/i)).toBeInTheDocument();
+    expect(screen.queryByText('Kjalnar')).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: /show 1 less-common pick/i }));
+
+    expect(screen.getByText(/less common/i)).toBeInTheDocument();
+    expect(screen.getByText('Kjalnar')).toBeInTheDocument();
+  });
+
+  it('bounds a combined signature while keeping group context visible', () => {
+    const { container } = render(
+      <ThemeProvider theme={theme}>
+        <TraitChipRow
+          title="Gear signature"
+          group={['fivePieceSets', 'monsterSet'] as const}
+          core={[
+            trait('fivePieceSets', 1, 'Deadly Strike', 1),
+            trait('monsterSet', 350, 'Zaan', 0.9),
+          ]}
+          flex={[trait('fivePieceSets', 2, 'Coral Riptide', 0.6)]}
+          maxVisible={2}
+          showVariationsControl={false}
+        />
+      </ThemeProvider>,
+    );
+
+    expect(container.querySelectorAll('[data-trait-kind]')).toHaveLength(2);
+    expect(screen.getByText('Set')).toBeInTheDocument();
+    expect(screen.getByText('Monster')).toBeInTheDocument();
+    expect(screen.getByText('+1 more in the full breakdown')).toBeInTheDocument();
   });
 });

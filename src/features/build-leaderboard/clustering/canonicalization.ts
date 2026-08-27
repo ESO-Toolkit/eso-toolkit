@@ -17,12 +17,24 @@ import type { DpsParse } from '../types/dpsParses.types';
 
 import type { CanonicalMaps } from './featureExtraction';
 
-/** Normalized set name used to group perfected and non-perfected variants. */
-function normalizeSetName(name: string): string {
+/** Normalized set name used to group and display-match perfected variants. */
+export function canonicalSetName(name: string): string {
   return name
+    .trim()
     .replace(/^perfected\s+/i, '')
     .trim()
     .toLowerCase();
+}
+
+/**
+ * Placeholder names must never drive aliasing: the table carries three
+ * distinct "Unknown" ids (846/2268/2342) for sets our data predates, and
+ * folding them into one id would merge genuinely different builds and mask
+ * each row's real parse-provided name. Mirrors the same exclusion in
+ * `findSetIdByName`.
+ */
+function isPlaceholderName(name: string): boolean {
+  return name.trim().toLowerCase() === 'unknown';
 }
 
 /**
@@ -41,9 +53,9 @@ export function buildSetAliasMap(): Record<number, number> {
 
   for (const [rawId, name] of Object.entries(SET_DISPLAY_NAMES)) {
     const id = Number(rawId);
-    if (!Number.isFinite(id) || typeof name !== 'string') continue;
+    if (!Number.isFinite(id) || typeof name !== 'string' || isPlaceholderName(name)) continue;
 
-    const key = normalizeSetName(name);
+    const key = canonicalSetName(name);
     const ids = byName.get(key);
     if (ids) ids.push(id);
     else byName.set(key, [id]);
@@ -106,13 +118,16 @@ export function buildCanonicalMaps(
 }
 
 /**
- * Display name for a set id.
+ * Display name for a set id, or '' when unknown.
  *
  * Prefers our own table but NEVER calls `getSetDisplayName`, which reports unknown
  * ids to Rollbar — ingested top parses routinely contain sets newer than our data,
- * and that would be a steady stream of false error reports.
+ * and that would be a steady stream of false error reports. Returning '' (rather
+ * than a "Set <id>" string) lets callers decide their own fallback — the trait
+ * hydration layer falls back to the parse-provided name before resorting to a
+ * raw id.
  */
 export function setDisplayName(setId: number, fallbackName?: string): string {
   const known = (SET_DISPLAY_NAMES as Record<number, string | undefined>)[setId];
-  return known ?? fallbackName ?? `Set ${setId}`;
+  return known ?? fallbackName ?? '';
 }

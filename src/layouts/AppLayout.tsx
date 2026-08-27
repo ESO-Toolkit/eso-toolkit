@@ -46,7 +46,8 @@ export const AppLayout: React.FC = () => {
   // The 3D fight replay is an immersive viewport — let it use the full-width
   // container instead of the default reading-width column.
   const isFightReplay = location.pathname.endsWith('/replay');
-  const isWideRoute = isBuildEditor || isFightReplay;
+  const isBuildLeaderboard = location.pathname.startsWith('/build-leaderboard');
+  const isWideRoute = isBuildEditor || isFightReplay || isBuildLeaderboard;
 
   // Embed mode: strip chrome (header/footer) for iframe previews
   const isEmbed = searchParams.get('embed') === '1';

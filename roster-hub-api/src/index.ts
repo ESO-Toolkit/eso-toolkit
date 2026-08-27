@@ -2305,8 +2305,10 @@ app.get('/dps-leaderboard/parses', async (c) => {
   const result = await listDpsParses(c.env.DB, {
     encounterId,
     difficulty: num(c.req.query('difficulty')),
+    hardModeLevel: num(c.req.query('hard_mode_level')),
     esoClass,
     signatureHash: c.req.query('signature'),
+    perEncounterCap: num(c.req.query('per_encounter_cap')),
     limit: num(c.req.query('limit')),
     offset: num(c.req.query('offset')),
     sort: sortParam === 'recent' ? 'recent' : 'amount',
@@ -2351,14 +2353,44 @@ async function isAuthorizedInternalRequest(
   ).timingSafeEqual(hashA, hashB);
 }
 
+/**
+ * Best-effort accounting of rejected /admin/* requests, mirroring the
+ * failed-validation buckets in auth.ts: isolate-scoped (Worker isolates are
+ * short-lived, so this is a tripwire rather than durable rate limiting), but it
+ * makes brute-force key guessing visible in the logs per source IP.
+ */
+const MAX_TRACKED_ADMIN_IPS = 10_000;
+const adminAuthFailures = new Map<string, number>();
+
+function recordFailedAdminAuth(ip: string | undefined, route: string): void {
+  console.warn(`[admin-auth] rejected ${route} request from ${ip ?? 'unknown-ip'}`);
+  if (!ip) return;
+  const count = (adminAuthFailures.get(ip) ?? 0) + 1;
+  adminAuthFailures.set(ip, count);
+  // Insertion-ordered eviction, same as the auth.ts buckets.
+  if (adminAuthFailures.size > MAX_TRACKED_ADMIN_IPS) {
+    const oldest = adminAuthFailures.keys().next().value;
+    if (oldest !== undefined) adminAuthFailures.delete(oldest);
+  }
+}
+
 app.post('/admin/sync-leaderboard', async (c) => {
   if (
     !(await isAuthorizedInternalRequest(c.req.header('X-Internal-Key'), c.env.INTERNAL_API_KEY))
   ) {
+    recordFailedAdminAuth(
+      clientIpFromHeaders((name) => c.req.header(name)),
+      '/admin/sync-leaderboard',
+    );
     return c.json({ error: 'Unauthorized' }, 401);
   }
-  const results = await syncLeaderboardRosters(c.env);
-  return c.json({ results });
+  try {
+    const results = await syncLeaderboardRosters(c.env);
+    return c.json({ results });
+  } catch (err) {
+    console.error('[admin] sync-leaderboard failed:', err);
+    return c.json({ error: 'Leaderboard sync failed' }, 500);
+  }
 });
 
 /**
@@ -2370,6 +2402,10 @@ app.post('/admin/sync-dps-parses', async (c) => {
   if (
     !(await isAuthorizedInternalRequest(c.req.header('X-Internal-Key'), c.env.INTERNAL_API_KEY))
   ) {
+    recordFailedAdminAuth(
+      clientIpFromHeaders((name) => c.req.header(name)),
+      '/admin/sync-dps-parses',
+    );
     return c.json({ error: 'Unauthorized' }, 401);
   }
 
@@ -2379,15 +2415,24 @@ app.post('/admin/sync-dps-parses', async (c) => {
     return Number.isFinite(parsed) ? parsed : undefined;
   };
 
-  const results = await syncDpsParses(c.env, {
-    encounterId: num(c.req.query('encounterId')),
-    difficulty: num(c.req.query('difficulty')),
-    pages: num(c.req.query('pages')),
-    maxEncounters: num(c.req.query('maxEncounters')),
-    force: c.req.query('force') === '1',
-  });
+  // Clamp pages to a sane manual budget (max 10); an unbounded value
+  // would let one call burn the subrequest budget for the whole run.
+  const rawPages = num(c.req.query('pages'));
+  const pages = rawPages === undefined ? undefined : Math.max(1, Math.min(10, Math.floor(rawPages)));
 
-  return c.json({ results });
+  try {
+    const results = await syncDpsParses(c.env, {
+      encounterId: num(c.req.query('encounterId')),
+      difficulty: num(c.req.query('difficulty')),
+      pages,
+      maxEncounters: num(c.req.query('maxEncounters')),
+      force: c.req.query('force') === '1',
+    });
+    return c.json({ results });
+  } catch (err) {
+    console.error('[admin] sync-dps-parses failed:', err);
+    return c.json({ error: 'DPS parse sync failed' }, 500);
+  }
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -2428,8 +2473,26 @@ export default {
     }
 
     // Runs on both triggers: two passes a day cover the full boss rotation.
+    // The DpsSyncResult.detail strings are written for operators — log a summary
+    // plus every non-ok target so they are actually consumed somewhere.
     try {
-      await syncDpsParses(env);
+      const results = await syncDpsParses(env);
+      const rowsIngested = results
+        .filter((r) => r.status === 'ok')
+        .reduce((sum, r) => sum + r.rows, 0);
+      const errorCount = results.filter((r) => r.status === 'error').length;
+      console.log(
+        `[cron] dps parse sync: ${results.length} targets, ${rowsIngested} rows ingested, ` +
+          `${errorCount} errors`,
+      );
+      for (const result of results) {
+        if (result.status !== 'ok') {
+          console.log(
+            `[cron]   ${result.status}: ${result.encounter} (#${result.encounterId}): ` +
+              `${result.detail ?? `${result.rows} rows`}`,
+          );
+        }
+      }
     } catch (error) {
       console.error('[cron] dps parse sync failed:', error);
     }

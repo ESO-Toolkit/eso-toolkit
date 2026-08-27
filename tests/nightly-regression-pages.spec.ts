@@ -1,6 +1,7 @@
 import { test, expect, type Page } from '@playwright/test';
 
 import { TEST_DATA, TEST_TIMEOUTS, installPageErrorCapture, waitForAppMount } from './selectors';
+import { createSkeletonDetector } from './utils/skeleton-detector';
 
 /**
  * Nightly Regression Tests - Pages & Features
@@ -288,15 +289,14 @@ test.describe('Nightly Regression - Pages & Features', () => {
         .catch(() => {});
       await waitForAppMount(page);
 
-      const hasSimulator = await page
-        .locator(
-          '[data-testid*="scribing"], [data-testid*="simulator"], .scribing-simulator, select, input, .MuiSelect-root',
-        )
-        .first()
-        .isVisible({ timeout: 10000 })
-        .catch(() => false);
-
-      expect(hasSimulator, '/calculator#scribing should render the scribing controls').toBeTruthy();
+      await expect(page.getByRole('tab', { name: 'Scribing' })).toHaveAttribute(
+        'aria-selected',
+        'true',
+      );
+      await expect(page.getByRole('radiogroup', { name: /Grimoire/i })).toBeVisible({
+        timeout: TEST_TIMEOUTS.dataLoad,
+      });
+      await createSkeletonDetector(page).waitForSkeletonsToDisappear({ timeout: 30000 });
 
       await page.screenshot({
         path: 'test-results/nightly-regression-pages-scribing-simulator.png',
@@ -444,7 +444,7 @@ test.describe('Nightly Regression - Pages & Features', () => {
   });
 
   // ---------------------------------------------------------------------------
-  // ESO-749: Utility pages — Gear Sets, Logs Browser, Parse Analysis
+  // ESO-749: Utility pages — Gear Sets, Legacy Logs Redirect, Parse Analysis
   // ---------------------------------------------------------------------------
   test.describe('Utility Pages', () => {
     test('gear sets page should load with content', async ({ page }) => {
@@ -455,26 +455,28 @@ test.describe('Nightly Regression - Pages & Features', () => {
       });
     });
 
-    test('logs browser should load with UI controls', async ({ page }) => {
+    test('legacy logs route should lead to the report analyzer', async ({ page }) => {
       await page.goto('/logs', {
         waitUntil: 'domcontentloaded',
         timeout: TEST_TIMEOUTS.navigation,
       });
-      await page
-        .waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad })
-        .catch(() => {});
       await waitForAppMount(page);
 
-      const hasUI = await page
-        .locator('input, select, .MuiTextField-root, .search, [data-testid*="log"]')
-        .first()
-        .isVisible({ timeout: 10000 })
-        .catch(() => false);
+      await expect(page).toHaveURL(/\/(?:my-reports|login)(?:[?#]|$)/, {
+        timeout: TEST_TIMEOUTS.dataLoad,
+      });
 
-      expect(hasUI, '/logs should render UI controls').toBeTruthy();
+      const reportAnalyzer = page.getByRole('heading', { name: 'My Reports' });
+      const analyzerLogin = page.getByText('Connect with ESO Logs to analyze your combat data');
+      await expect(reportAnalyzer.or(analyzerLogin)).toBeVisible({
+        timeout: TEST_TIMEOUTS.dataLoad,
+      });
+
+      await createSkeletonDetector(page).waitForSkeletonsToDisappear({ timeout: 15000 });
+      await page.waitForTimeout(1000);
 
       await page.screenshot({
-        path: 'test-results/nightly-regression-pages-logs.png',
+        path: 'test-results/nightly-regression-pages-logs-redirect.png',
         timeout: TEST_TIMEOUTS.screenshot,
       });
     });

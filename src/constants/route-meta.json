@@ -96,10 +96,6 @@
     "title": "Log In | ESO Toolkit",
     "prerender": false
   },
-  "/logs": {
-    "title": "Log Analyzer | ESO Toolkit",
-    "prerender": false
-  },
   "/my-builds": {
     "title": "My Builds | ESO Toolkit",
     "prerender": false

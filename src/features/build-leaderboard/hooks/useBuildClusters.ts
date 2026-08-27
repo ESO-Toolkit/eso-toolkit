@@ -8,6 +8,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { CLASS_SKILL_LINES } from '../../../types/roster';
 import { buildCanonicalMaps, setDisplayName } from '../clustering/canonicalization';
 import { MIN_PARSES_TO_CLUSTER } from '../clustering/clusterBuilds';
 import { extractFeatureVectors } from '../clustering/featureExtraction';
@@ -42,7 +43,10 @@ export interface UseBuildClustersResult {
 }
 
 /** Ability and set names pulled from the parses themselves, for trait labels. */
-function buildLabelLookup(parses: readonly DpsParse[]): Map<string, string> {
+function buildLabelLookup(
+  parses: readonly DpsParse[],
+  setAliases: Record<number, number> = {},
+): Map<string, string> {
   const labels = new Map<string, string>();
 
   for (const parse of parses) {
@@ -56,14 +60,31 @@ function buildLabelLookup(parses: readonly DpsParse[]): Map<string, string> {
       labels.set(`backBar|${abilityId}`, name);
     }
 
-    for (const [setId] of build.setCounts) {
-      // Our own table wins when it knows the set; the API's name is the fallback
-      // for anything newer than our data, which top-parse gear routinely is.
-      const name = setDisplayName(setId, build.setNames?.[setId]);
-      labels.set(`fivePieceSets|${setId}`, name);
-      labels.set(`monsterSet|${setId}`, name);
-      labels.set(`mythic|${setId}`, name);
-      labels.set(`arena|${setId}`, name);
+    for (const [rawSetId] of build.setCounts) {
+      // Cluster traits are keyed by CANONICAL set id (perfected folded into
+      // base), so register the alias target too — otherwise a player wearing
+      // only perfected pieces yields counts under e.g. 772 while their
+      // cluster chip asks for 767 and falls back to a raw "Set <id>".
+      const canonicalId = setAliases[rawSetId] ?? rawSetId;
+      // Prefer the canonical (base) id's static name — a chip canonicalized to
+      // the base set should read "Slivers of the Null Arca", not "Perfected
+      // Slivers…". Placeholder-valued entries ("Unknown") lose to the parse's
+      // own name, which knows sets our table predates.
+      const staticName = setDisplayName(canonicalId);
+      const name =
+        staticName && !staticName.trim().toLowerCase().startsWith('unknown')
+          ? staticName
+          : build.setNames?.[rawSetId] || build.setNames?.[canonicalId] || staticName || '';
+      labels.set(`fivePieceSets|${canonicalId}`, name);
+      labels.set(`monsterSet|${canonicalId}`, name);
+      labels.set(`mythic|${canonicalId}`, name);
+      labels.set(`arena|${canonicalId}`, name);
+      if (canonicalId !== rawSetId) {
+        labels.set(`fivePieceSets|${rawSetId}`, name);
+        labels.set(`monsterSet|${rawSetId}`, name);
+        labels.set(`mythic|${rawSetId}`, name);
+        labels.set(`arena|${rawSetId}`, name);
+      }
     }
   }
 
@@ -81,6 +102,10 @@ function fallbackLabel(group: ClusterTrait['group'], id: number | string): strin
   if (typeof id !== 'number') return String(id);
 
   switch (group) {
+    case 'skillLines':
+      // Indices into CLASS_SKILL_LINES — the same table the worker resolves
+      // against; this covers a worker that left the label blank anyway.
+      return (typeof id === 'number' && CLASS_SKILL_LINES[id]) || `Skill line ${id}`;
     case 'frontBar':
     case 'backBar':
       return `Ability ${id}`;
@@ -103,7 +128,13 @@ function hydrateLabels(cluster: BuildCluster, labels: Map<string, string>): Buil
   const hydrate = (traits: BuildCluster['core']): BuildCluster['core'] =>
     traits.map((trait) => ({
       ...trait,
-      label: labels.get(`${trait.group}|${trait.id}`) ?? fallbackLabel(trait.group, trait.id),
+      // The worker already resolves some groups itself (skillLines against
+      // CLASS_SKILL_LINES). Prefer its non-empty label over clobbering it with
+      // a raw numeric fallback; our lookup only fills in what it could not.
+      label:
+        trait.label ||
+        labels.get(`${trait.group}|${trait.id}`) ||
+        fallbackLabel(trait.group, trait.id),
     }));
 
   const core = hydrate(cluster.core);
@@ -228,7 +259,7 @@ export function useBuildClusters(
 
     const maps = buildCanonicalMaps(parses, resolveBaseAbilityId);
     const vectors = extractFeatureVectors(parses, maps);
-    const labels = buildLabelLookup(parses);
+    const labels = buildLabelLookup(parses, maps.sets);
 
     runBuildClustering({ vectors }, (pct) => {
       if (!cancelled) setProgress(pct);

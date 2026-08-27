@@ -100,7 +100,7 @@ describe('BuildLeaderboardPage', () => {
     renderPage();
 
     await waitFor(() => expect(dpsParsesApi.listEncounters).toHaveBeenCalled());
-    await userEvent.click(screen.getByLabelText(/trial & boss/i));
+    await userEvent.click(screen.getByLabelText(/^encounter$/i));
 
     const options = await screen.findAllByRole('option');
     expect(options).toHaveLength(2);
@@ -118,10 +118,10 @@ describe('BuildLeaderboardPage', () => {
     renderPage();
     await waitFor(() => expect(dpsParsesApi.listEncounters).toHaveBeenCalled());
 
-    await userEvent.click(screen.getByLabelText(/trial & boss/i));
+    await userEvent.click(screen.getByLabelText(/^encounter$/i));
     const listbox = within(screen.getByRole('listbox'));
     // The lower-difficulty row, which shares encounter_id 60 with the default.
-    await userEvent.click(listbox.getByText(/\(40\)/));
+    await userEvent.click(listbox.getByText(/40 parses/i));
 
     await waitFor(() =>
       expect(dpsParsesApi.listParses).toHaveBeenCalledWith(
@@ -132,16 +132,87 @@ describe('BuildLeaderboardPage', () => {
   });
 
   /**
-   * The class tab never consults the encounters feed, so a failure there must not
-   * block it behind an error state.
+   * The class tab POOLS across bosses (per-encounter capped) — but it still
+   * depends on the encounters feed for DPS-ceiling normalization, so a failure
+   * there must surface with a working Retry instead of hanging.
    */
-  it('does not block the class tab when the encounters feed fails', async () => {
-    jest.spyOn(dpsParsesApi, 'listEncounters').mockRejectedValue(new Error('encounters exploded'));
+  it('surfaces an encounters-feed failure on the class tab, and Retry refetches it', async () => {
+    const spy = jest
+      .spyOn(dpsParsesApi, 'listEncounters')
+      .mockRejectedValueOnce(new Error('encounters exploded'))
+      .mockResolvedValue({ encounters: ENCOUNTERS });
 
     renderPage('/build-leaderboard?tab=class&class=Warden');
 
+    await screen.findByText(/encounters exploded/);
+    const callsBefore = spy.mock.calls.length;
+
+    await userEvent.click(screen.getByRole('button', { name: /retry/i }));
+
+    await waitFor(() => expect(spy.mock.calls.length).toBeGreaterThan(callsBefore));
+    // Once encounters resolve, the pooled class query proceeds.
+    await waitFor(() =>
+      expect(dpsParsesApi.listParses).toHaveBeenCalledWith(
+        expect.objectContaining({ esoClass: 'Warden', perEncounterCap: 25, limit: 1000 }),
+        expect.anything(),
+      ),
+    );
+  });
+
+  /**
+   * Pooled class view: query by class alone with a per-boss cap so high-
+   * ceiling boards don't crowd out the pool. Minority classes get real
+   * archetype samples instead of 'too few parses' on most bosses.
+   */
+  it('pools the class-tab query across bosses with a per-encounter cap', async () => {
+    renderPage('/build-leaderboard?tab=class&class=Necromancer');
+
+    await waitFor(() =>
+      expect(dpsParsesApi.listParses).toHaveBeenCalledWith(
+        expect.objectContaining({
+          esoClass: 'Necromancer',
+          perEncounterCap: 25,
+          limit: 1000,
+        }),
+        expect.anything(),
+      ),
+    );
+    expect(dpsParsesApi.listParses).not.toHaveBeenCalledWith(
+      expect.objectContaining({ esoClass: 'Necromancer', encounterId: expect.anything() }),
+      expect.anything(),
+    );
+  });
+
+  /** An explicit ?boss= still narrows the class tab to one board (#1451 behavior). */
+  it('narrows the class tab to one boss when the URL carries an explicit boss param', async () => {
+    renderPage('/build-leaderboard?tab=class&class=Necromancer&boss=60:122');
+
+    await waitFor(() =>
+      expect(dpsParsesApi.listParses).toHaveBeenCalledWith(
+        expect.objectContaining({
+          esoClass: 'Necromancer',
+          encounterId: 60,
+          difficulty: 122,
+        }),
+        expect.anything(),
+      ),
+    );
+  });
+
+  it('keeps the encounter picker available on the class tab and re-queries on change', async () => {
+    renderPage('/build-leaderboard?tab=class&class=Warden');
     await waitFor(() => expect(dpsParsesApi.listParses).toHaveBeenCalled());
-    expect(screen.queryByText(/encounters exploded/)).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByLabelText(/^encounter$/i));
+    const listbox = within(screen.getByRole('listbox'));
+    await userEvent.click(listbox.getByText(/40 parses/i));
+
+    await waitFor(() =>
+      expect(dpsParsesApi.listParses).toHaveBeenCalledWith(
+        expect.objectContaining({ esoClass: 'Warden', encounterId: 60, difficulty: 121 }),
+        expect.anything(),
+      ),
+    );
   });
 
   it('shows the encounters failure on the encounter tab, and Retry refetches it', async () => {
@@ -203,11 +274,15 @@ describe('BuildLeaderboardPage', () => {
   });
 
   it('switches to the class tab and queries by class', async () => {
-    renderPage('/build-leaderboard?tab=class&class=Warden');
+    renderPage();
+
+    const classTab = screen.getByRole('tab', { name: /by class/i });
+    await userEvent.click(classTab);
+    expect(classTab).toHaveAttribute('aria-selected', 'true');
 
     await waitFor(() =>
       expect(dpsParsesApi.listParses).toHaveBeenCalledWith(
-        expect.objectContaining({ esoClass: 'Warden' }),
+        expect.objectContaining({ esoClass: 'Arcanist' }),
         expect.anything(),
       ),
     );

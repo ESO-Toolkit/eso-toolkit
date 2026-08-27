@@ -38,6 +38,34 @@ export const EXPECTED_TALENT_COUNT = 12;
 /** Index of the ultimate within each bar (last slot). */
 export const ULTIMATE_BAR_INDEX = 5;
 
+// ─── Ingest sanity gates ─────────────────────────────────────────────────────
+// A leaderboard entry can be technically parseable and still useless. These
+// thresholds reject "real-looking but meaningless" rows before they reach the
+// table, and their drops are counted in `dropped.trivial` so sync logs show WHY
+// a page shrank.
+
+/**
+ * Zero or negative DPS is never a real ranked parse — it is an API artifact
+ * (wipe attempts and abandoned pulls have leaked through with amount = 0).
+ */
+export const MIN_PARSE_AMOUNT = 1;
+
+/**
+ * Sub-30-second fights are trash-fight inflation, not trial parses: a 12-player
+ * trial boss cannot die meaningfully faster than that, but leaderboard pages
+ * occasionally carry short pulls that out-score real kills on paper.
+ */
+export const MIN_PARSE_DURATION_MS = 30_000;
+
+/**
+ * Minimum REAL (id > 0) gear pieces for an entry to carry a usable build. ESO has
+ * 14 gear slots, and even mythic/arena-heavy builds keep most of them populated;
+ * anything below ~half is either combat-info stripping the API failed to flag or
+ * a partially-padded array. The old `length > 0` check let single-piece entries
+ * through as "builds".
+ */
+export const MIN_REAL_GEAR_PIECES = 7;
+
 // ─── Safe coercion ───────────────────────────────────────────────────────────
 // Duplicated rather than imported: this Worker is a separate package and cannot
 // reach into src/. Same precedent as gear-categorizer.ts's copied set-ID tables.
@@ -124,7 +152,7 @@ export interface ParsedCharacterRankingsPage {
   hasMorePages: boolean;
   count?: number;
   /** Entries discarded for being unusable, by reason. Surfaced in sync logs. */
-  dropped: { stubbed: number; malformed: number };
+  dropped: { stubbed: number; malformed: number; trivial: number };
 }
 
 // ─── Entry parsing ───────────────────────────────────────────────────────────
@@ -196,39 +224,64 @@ function parseSets(raw: unknown[]): ParsedSetRef[] {
   return sets;
 }
 
-function parseEntry(raw: unknown, index: number): ParsedCharacterRanking | null {
-  if (!isRecord(raw)) return null;
+/**
+ * Why an entry was rejected:
+ *  - 'malformed' — structurally unusable (no amount, no report code),
+ *  - 'trivial'   — parseable but not a meaningful trial parse (zero/negative
+ *                  DPS, or a sub-MIN_PARSE_DURATION_MS trash fight).
+ */
+type EntryRejection = 'malformed' | 'trivial';
+
+type ParseEntryResult =
+  | { ok: true; ranking: ParsedCharacterRanking }
+  | { ok: false; reason: EntryRejection };
+
+function parseEntry(raw: unknown, index: number): ParseEntryResult {
+  if (!isRecord(raw)) return { ok: false, reason: 'malformed' };
 
   const amount = safeNumber(raw.amount);
   const report = isRecord(raw.report) ? raw.report : undefined;
   const reportCode = safeString(report?.code);
   // Without a metric or a source log the row is useless — it can neither be
   // ranked nor attributed back to esologs.com.
-  if (amount === undefined || !reportCode) return null;
+  if (amount === undefined || !reportCode) return { ok: false, reason: 'malformed' };
+
+  // Zero/negative DPS is an API artifact, not a parse.
+  if (amount < MIN_PARSE_AMOUNT) return { ok: false, reason: 'trivial' };
+
+  const durationMs = safeNumber(raw.duration);
+  // Only reject when the API TELLS us it was a trash-length fight; a missing
+  // duration stays tolerated (defensive parsing beats strictness here).
+  if (durationMs !== undefined && durationMs < MIN_PARSE_DURATION_MS) {
+    return { ok: false, reason: 'trivial' };
+  }
 
   const server = isRecord(raw.server) ? raw.server : undefined;
   const guild = isRecord(raw.guild) ? raw.guild : undefined;
 
   return {
-    // The API returns rankings pre-sorted by amount and omits an explicit rank.
-    rank: safeNumber(raw.rank) ?? index + 1,
-    characterName: safeString(raw.name),
-    esoClass: safeString(raw.class),
-    spec: safeString(raw.spec),
-    amount,
-    durationMs: safeNumber(raw.duration),
-    startTimeMs: safeNumber(raw.startTime),
-    hardModeLevel: safeNumber(raw.hardModeLevel),
-    bracketData: safeNumber(raw.bracketData),
-    reportCode,
-    fightId: safeNumber(report?.fightID),
-    reportStartMs: safeNumber(report?.startTime),
-    serverName: safeString(server?.name),
-    serverRegion: safeString(server?.region),
-    guildName: safeString(guild?.name),
-    gear: parseGear(readCombatantArray(raw, 'gear')),
-    talents: parseTalents(readCombatantArray(raw, 'talents')),
-    sets: parseSets(safeArray(raw.sets)),
+    ok: true,
+    ranking: {
+      // The API returns rankings pre-sorted by amount and omits an explicit rank.
+      rank: safeNumber(raw.rank) ?? index + 1,
+      characterName: safeString(raw.name),
+      esoClass: safeString(raw.class),
+      spec: safeString(raw.spec),
+      amount,
+      durationMs,
+      startTimeMs: safeNumber(raw.startTime),
+      hardModeLevel: safeNumber(raw.hardModeLevel),
+      bracketData: safeNumber(raw.bracketData),
+      reportCode,
+      fightId: safeNumber(report?.fightID),
+      reportStartMs: safeNumber(report?.startTime),
+      serverName: safeString(server?.name),
+      serverRegion: safeString(server?.region),
+      guildName: safeString(guild?.name),
+      gear: parseGear(readCombatantArray(raw, 'gear')),
+      talents: parseTalents(readCombatantArray(raw, 'talents')),
+      sets: parseSets(safeArray(raw.sets)),
+    },
   };
 }
 
@@ -238,9 +291,12 @@ function parseEntry(raw: unknown, index: number): ParsedCharacterRanking | null 
  * True when the entry carries a usable build. Roughly 19% of ranked entries come
  * back with combat info stripped; they rank fine but say nothing about builds, so
  * the ingest drops them rather than storing an empty signature.
+ *
+ * "Usable" means at least MIN_REAL_GEAR_PIECES real pieces — a lone id>0 item in
+ * an otherwise padded array is stripping, not a build.
  */
 export function hasRealCombatantInfo(entry: ParsedCharacterRanking): boolean {
-  return entry.gear.length > 0 && entry.talents.length > 0;
+  return entry.gear.length >= MIN_REAL_GEAR_PIECES && entry.talents.length > 0;
 }
 
 /**
@@ -288,7 +344,7 @@ export function parseCharacterRankingsPage(
     rankings: [],
     page: pageHint,
     hasMorePages: false,
-    dropped: { stubbed: 0, malformed: 0 },
+    dropped: { stubbed: 0, malformed: 0, trivial: 0 },
   };
 
   let value: unknown = raw;
@@ -307,18 +363,20 @@ export function parseCharacterRankingsPage(
   const rankings: ParsedCharacterRanking[] = [];
   let stubbed = 0;
   let malformed = 0;
+  let trivial = 0;
 
   rawRankings.forEach((item, index) => {
-    const parsed = parseEntry(item, index);
-    if (!parsed) {
-      malformed++;
+    const result = parseEntry(item, index);
+    if (!result.ok) {
+      if (result.reason === 'trivial') trivial++;
+      else malformed++;
       return;
     }
-    if (!hasRealCombatantInfo(parsed)) {
+    if (!hasRealCombatantInfo(result.ranking)) {
       stubbed++;
       return;
     }
-    rankings.push(parsed);
+    rankings.push(result.ranking);
   });
 
   return {
@@ -327,6 +385,6 @@ export function parseCharacterRankingsPage(
     // Tolerate a snake_case variant even though the API returns camelCase.
     hasMorePages: Boolean(envelope.hasMorePages ?? envelope.has_more_pages ?? false),
     count: safeNumber(envelope.count),
-    dropped: { stubbed, malformed },
+    dropped: { stubbed, malformed, trivial },
   };
 }

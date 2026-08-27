@@ -3,7 +3,11 @@ import {
   MAX_PARSE_OFFSET,
   listDpsParses,
   parseParseId,
+  pruneDpsParses,
+  purgeBlockedDpsParses,
+  recordSyncResult,
   toParseId,
+  upsertDpsParses,
 } from './dps-parse-queries';
 
 /**
@@ -25,17 +29,22 @@ function createFakeD1(rows: unknown[] = [], total = 0): { db: D1Database; calls:
     prepare(sql: string) {
       const call: Captured = { sql, bindings: [] };
       calls.push(call);
+      // Carried on the statement so batch() can attribute its members back to
+      // their prepare() calls in issue order.
       const statement = {
         bind(...bindings: unknown[]) {
           call.bindings = bindings;
           return statement;
         },
+        __call: call,
         all: async () => ({ results: rows }),
         first: async () => ({ total }),
         run: async () => ({}),
       };
       return statement;
     },
+    // Statements are captured at prepare() time in issue order, so a batch's
+    // members are already in `calls` — batch itself needs no extra bookkeeping.
     batch: async () => [],
   } as unknown as D1Database;
 
@@ -195,5 +204,201 @@ describe('listDpsParses', () => {
     const { parses } = await listDpsParses(db, { encounterId: 60 });
     expect(parses).toHaveLength(1);
     expect(parses[0].build).toBeNull();
+  });
+});
+
+// ─── Upsert / prune integrity ────────────────────────────────────────────────
+
+/** Minimal valid insert row; only the columns the upsert guard reads matter. */
+function insertRow(
+  overrides: Record<string, unknown> = {},
+): Parameters<typeof upsertDpsParses>[1][number] {
+  return {
+    encounter_id: 60,
+    difficulty: 122,
+    zone_id: 38,
+    trial_id: 'LC',
+    encounter_name: 'Xoryn',
+    hard_mode_level: null,
+    partition: 29,
+    character_key: 'abc123def4567890',
+    character_name: 'Someone',
+    eso_class: 'Sorcerer',
+    spec_name: 'StaminaDPS',
+    race: null,
+    server_region: 'na',
+    server_name: null,
+    guild_name: null,
+    report_code: 'RepOrt123',
+    fight_id: 7,
+    rank: 1,
+    amount: 50_000,
+    duration_ms: 600_000,
+    log_start_ms: null,
+    log_date: null,
+    bracket_data: null,
+    set1_id: null,
+    set2_id: null,
+    monster_id: null,
+    mythic_id: null,
+    arena_set_id: null,
+    mundus_id: null,
+    food_ability_id: null,
+    signature_hash: 'deadbeefdeadbeef',
+    build_json: '{}',
+    combatant_json: '{}',
+    signature_version: 2,
+    ...overrides,
+  } as Parameters<typeof upsertDpsParses>[1][number];
+}
+
+describe('upsertDpsParses', () => {
+  // THE critical regression pin: with a strict `excluded.amount >` guard an
+  // identical re-sync skipped DO UPDATE entirely, `updated_at` froze at the
+  // first-seen timestamp, and the stale DELETE purged still-ranked rows after
+  // 60 days. The guard must let equal amounts through so the rewrite refreshes
+  // updated_at (ingested_at is not in the DO UPDATE column list, so first-seen
+  // semantics are preserved).
+  it('re-syncs identical data so a row survives the 60-day prune', async () => {
+    const { db, calls } = createFakeD1();
+    await upsertDpsParses(db, [insertRow()]);
+
+    const upsert = calls[0];
+    expect(upsert.sql).toContain('ON CONFLICT');
+    // `>=`, not `>`: equal amounts must reach the DO UPDATE branch.
+    expect(upsert.sql).toContain('excluded.amount >= dps_parses.amount');
+    // The DO UPDATE itself stamps updated_at unconditionally...
+    expect(upsert.sql).toContain("updated_at = datetime('now')");
+    // ...and never touches ingested_at.
+    expect(upsert.sql).not.toContain('ingested_at =');
+
+    // End-to-end shape of the pin: re-ingesting the SAME row twice issues two
+    // identical statements, both of which satisfy the WHERE guard — so after
+    // "60 days" of identical nightly re-syncs, no prune can eat the row.
+    const first = await upsertDpsParses(db, [insertRow()]);
+    expect(first).toBe(1);
+    expect(calls.filter((c) => c.sql.includes('ON CONFLICT'))).toHaveLength(2);
+  });
+});
+
+describe('pruneDpsParses', () => {
+  it('scopes the stale DELETE to the same encounter and difficulty as the top-N prune', async () => {
+    const { db, calls } = createFakeD1();
+    await pruneDpsParses(db, 60, 122, 200);
+
+    // batch members are appended after prepare-time capture, in issue order.
+    const deletes = calls.filter((c) => c.sql.includes('DELETE FROM dps_parses'));
+    expect(deletes).toHaveLength(2);
+
+    const [topN, stale] = deletes;
+    expect(topN.bindings.slice(0, 2)).toEqual([60, 122]);
+
+    // The stale sweep was originally GLOBAL (`WHERE updated_at < ...` only),
+    // letting one encounter's prune pass delete aged rows from every other
+    // encounter's leaderboard. It must be scoped identically to the top-N cut.
+    expect(stale.sql).toContain('encounter_id = ?1');
+    expect(stale.sql).toContain('difficulty = ?2');
+    expect(stale.sql).toContain("updated_at < datetime('now', ?3)");
+    expect(stale.bindings).toEqual([60, 122, '-60 days']);
+  });
+
+  it('keeps ingested_at untouched by both DELETE statements', async () => {
+    const { db, calls } = createFakeD1();
+    await pruneDpsParses(db, 60, 122, 200);
+    calls
+      .filter((c) => c.sql.includes('DELETE FROM dps_parses'))
+      .forEach((c) => expect(c.sql).not.toContain('ingested_at'));
+  });
+
+  /**
+   * Regression (live data): Tideborn Taleria's board was 54% Necromancer, so
+   * the global top-N cut left Dragonknights with 2 parses — below the
+   * frontend's minimum viable sample of 10, rendering the class view useless
+   * on a boss with hundreds of parses. The best rows of EACH class must be
+   * protected from the global cut.
+   */
+  it('protects the best rows per class from the global top-N cut', async () => {
+    const { db, calls } = createFakeD1();
+    await pruneDpsParses(db, 54, 122, 400, 60, 25);
+
+    const [topN] = calls.filter((c) => c.sql.includes('DELETE FROM dps_parses'));
+    expect(topN.sql).toContain('ROW_NUMBER() OVER');
+    expect(topN.sql).toContain('PARTITION BY eso_class ORDER BY amount DESC');
+    // Bindings: encounter, difficulty, keepTop, keepPerClass.
+    expect(topN.bindings).toEqual([54, 122, 400, 25]);
+  });
+});
+
+describe('purgeBlockedDpsParses', () => {
+  it('is a no-op for an empty blocklist', async () => {
+    const { db, calls } = createFakeD1();
+    await purgeBlockedDpsParses(db, new Set());
+    expect(calls).toHaveLength(0);
+  });
+
+  it('deletes every blocked key via IN (...) lists', async () => {
+    const { db, calls } = createFakeD1();
+    const keys = new Set(['aaa', 'bbb', 'ccc']);
+    await purgeBlockedDpsParses(db, keys);
+
+    expect(calls).toHaveLength(1);
+    expect(calls[0].sql).toContain('DELETE FROM dps_parses WHERE character_key IN (?, ?, ?)');
+    expect(calls[0].bindings).toEqual(['aaa', 'bbb', 'ccc']);
+  });
+
+  it('chunks large blocklists across D1 parameter limits', async () => {
+    const { db, calls } = createFakeD1();
+    const keys = new Set(Array.from({ length: 95 }, (_, i) => `key${i}`));
+    await purgeBlockedDpsParses(db, keys);
+
+    expect(calls.length).toBeGreaterThan(1);
+    expect(calls[0].sql.match(/\?/g)?.length).toBeLessThanOrEqual(90);
+    // No key lost between chunks.
+    const bound = calls.flatMap((c) => c.bindings);
+    expect(new Set(bound)).toEqual(keys);
+  });
+});
+
+describe('recordSyncResult', () => {
+  const baseState = {
+    encounterId: 60,
+    difficulty: 122,
+    encounterName: 'Xoryn',
+    zoneId: 38,
+    lastPage: 1,
+    error: '',
+    rowsIngested: 100,
+    emptyStreak: 0,
+  };
+
+  // An errored encounter must NOT look freshly synced, or it drops out of the
+  // stalest-first queue for a full rotation and its outage goes unseen.
+  it('preserves last_synced_at when status is error', async () => {
+    const { db, calls } = createFakeD1();
+    await recordSyncResult(db, { ...baseState, status: 'error' });
+
+    expect(calls[0].sql).toMatch(
+      /CASE WHEN excluded\.last_status = 'error'\s+THEN dps_parse_sync_state\.last_synced_at/,
+    );
+  });
+
+  it('stamps last_synced_at normally for ok/empty runs', async () => {
+    for (const status of ['ok', 'empty']) {
+      const { db, calls } = createFakeD1();
+      await recordSyncResult(db, { ...baseState, status });
+      // The CASE's ELSE branch is the normal fresh-stamp path.
+      expect(calls[0].sql).toContain('ELSE excluded.last_synced_at END');
+    }
+  });
+
+  // Codex P2 review pin: the plain INSERT arm used to stamp datetime('now')
+  // unconditionally, so a FIRST-EVER failed sync looked freshly synced and
+  // dropped out of the stalest-first rotation. The insert must leave
+  // last_synced_at NULL when the status is 'error'.
+  it('leaves last_synced_at NULL on a first-ever errored insert', async () => {
+    const { db, calls } = createFakeD1();
+    await recordSyncResult(db, { ...baseState, status: 'error' });
+
+    expect(calls[0].sql).toMatch(/CASE WHEN \? = 'error' THEN NULL ELSE datetime\('now'\) END/);
   });
 });

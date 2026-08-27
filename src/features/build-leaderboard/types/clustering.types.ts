@@ -70,6 +70,15 @@ export interface CollapsedPoints {
   multiplicity: number[];
   /** Parse ids behind each point, parallel to `points`. */
   members: string[][];
+  /**
+   * Ranking amounts of every member parse, parallel to `points`.
+   *
+   * The representative point keeps only the max-dps member's vector, so cluster
+   * dps summaries must expand from THESE real values — replicating the
+   * representative's amount across the multiplicity fabricates N copies of one
+   * parse and inflates medians/p90 for popular builds.
+   */
+  amounts: number[][];
 }
 
 export interface DendrogramMerge {

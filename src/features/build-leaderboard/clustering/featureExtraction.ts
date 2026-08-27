@@ -30,6 +30,9 @@ const canonicalAbility = (id: number, maps: CanonicalMaps): number => maps.abili
 
 const ascending = (values: number[]): number[] => [...new Set(values)].sort((a, b) => a - b);
 
+/** Piece count at which a set contributes its 5-piece bonus. */
+export const FIVE_PIECE_THRESHOLD = 5;
+
 /**
  * Which groups this parse cannot speak to.
  *
@@ -67,7 +70,31 @@ export function toFeatureVector(parse: DpsParse, maps: CanonicalMaps): ParseFeat
   const build = parse.build;
   if (!build) return null;
 
-  const fivePiece = ascending(build.sets.fivePiece.map((id) => canonicalSet(id, maps)));
+  // Sets the ingest could not slot still carry their piece count in setCounts.
+  // A >=5-piece set stranded in `extra` is a real five-piece bonus and belongs
+  // with the slotted ones — otherwise a whole gear axis silently vanishes from
+  // the distance function for exactly the builds our tables predate.
+  //
+  // Counts are folded through the alias map BEFORE the threshold check: legacy
+  // rows written before the ingest folded perfected ids carry e.g. 3x772 +
+  // 2x767 as separate keys, and neither alone clears five pieces even though
+  // the player wears one set.
+  const counts = new Map<number, number>();
+  for (const [id, count] of build.setCounts) {
+    const canonical = canonicalSet(id, maps);
+    counts.set(canonical, (counts.get(canonical) ?? 0) + count);
+  }
+  const slottedCanonical = new Set([...build.sets.fivePiece].map((id) => canonicalSet(id, maps)));
+  const promoted = [...counts.entries()]
+    .filter(([id, count]) => !slottedCanonical.has(id) && count >= FIVE_PIECE_THRESHOLD)
+    .map(([id]) => id);
+
+  // ascending dedupes, so a promoted id that canonicalizes onto an
+  // already-slotted base set collapses rather than counting twice.
+  const fivePiece = ascending([
+    ...build.sets.fivePiece.map((id) => canonicalSet(id, maps)),
+    ...promoted,
+  ]);
   const front = build.bars.front.map((id) => canonicalAbility(id, maps));
   const back = build.bars.back.map((id) => canonicalAbility(id, maps));
 
@@ -142,28 +169,38 @@ export function signatureKey(vector: ParseFeatureVector): string {
 export function collapseDuplicateSignatures(
   vectors: readonly ParseFeatureVector[],
 ): CollapsedPoints {
-  const byKey = new Map<string, { vector: ParseFeatureVector; members: string[] }>();
+  const byKey = new Map<
+    string,
+    {
+      vector: ParseFeatureVector;
+      members: string[];
+      amounts: number[];
+    }
+  >();
 
   for (const vector of vectors) {
     const key = signatureKey(vector);
     const existing = byKey.get(key);
     if (!existing) {
-      byKey.set(key, { vector, members: [vector.parseId] });
+      byKey.set(key, { vector, members: [vector.parseId], amounts: [vector.amount] });
       continue;
     }
     existing.members.push(vector.parseId);
+    existing.amounts.push(vector.amount);
     if (vector.amount > existing.vector.amount) existing.vector = vector;
   }
 
   const points: ParseFeatureVector[] = [];
   const multiplicity: number[] = [];
   const members: string[][] = [];
+  const amounts: number[][] = [];
 
   for (const entry of byKey.values()) {
     points.push(entry.vector);
     multiplicity.push(entry.members.length);
     members.push(entry.members);
+    amounts.push(entry.amounts);
   }
 
-  return { points, multiplicity, members };
+  return { points, multiplicity, members, amounts };
 }

@@ -18,6 +18,19 @@ export const TRIAL_TEAM_SIZE = 12;
 export const DEFAULT_DIFFICULTY = -1;
 
 /**
+ * The zone's LATEST partition id — the same "last element wins" read
+ * scripts/probe-character-rankings.ts uses, where partitions arrive oldest-first.
+ *
+ * Null when the zone exposes none; callers then omit the parameter upstream and
+ * store the -1 sentinel, matching the column's NOT NULL DEFAULT -1.
+ */
+export function latestPartitionId(zone: ZoneData): number | null {
+  const partitions = zone.partitions ?? [];
+  const last = partitions[partitions.length - 1];
+  return typeof last?.id === 'number' ? last.id : null;
+}
+
+/**
  * Encounters that exist in the zone list but carry no rankings — trash gauntlets,
  * mini-bosses, and the sub-bosses of multi-boss fights.
  *
@@ -73,6 +86,12 @@ export interface DpsEncounterTarget {
   trialId: string;
   difficulty: number;
   difficultyName: string;
+  /**
+   * Latest partition id for the zone, or null when it exposes none. Threaded
+   * through to fetchCharacterRankings (pinning the query) and into every stored
+   * row, so `partition` is a real patch generation rather than the -1 sentinel.
+   */
+  partitionId: number | null;
 }
 
 /**
@@ -122,6 +141,7 @@ export function buildDpsEncounterTargets(zones: ZoneData[]): DpsEncounterTarget[
         trialId: trial?.trialId ?? '',
         difficulty: difficulty?.id ?? DEFAULT_DIFFICULTY,
         difficultyName: difficulty?.name ?? '',
+        partitionId: latestPartitionId(zone),
       });
     }
   }
