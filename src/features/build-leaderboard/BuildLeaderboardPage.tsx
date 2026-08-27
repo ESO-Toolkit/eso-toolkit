@@ -56,9 +56,13 @@ function encounterLabel(encounter: DpsEncounterSummary): string {
 
 function formatUpdatedAt(value: string): string {
   const date = new Date(`${value.slice(0, 10)}T00:00:00Z`);
+  // Pin to UTC to match the parsed midnight-UTC instant — without this,
+  // viewers west of UTC render the previous local day.
   return Number.isNaN(date.getTime())
     ? value.slice(0, 10)
-    : new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(date);
+    : new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' }).format(
+        date,
+      );
 }
 
 function clusterQuality(silhouette: number): { label: string; tooltip: string } {
