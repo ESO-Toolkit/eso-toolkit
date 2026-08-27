@@ -808,7 +808,7 @@ export const BuildLeaderboardPage: React.FC = () => {
                 <Box component="span" sx={{ color: 'text.primary', fontWeight: 700 }}>
                   {result.k}
                 </Box>{' '}
-                patterns
+                {result.k === 1 ? 'pattern' : 'patterns'}
                 {selectedEncounter?.updated_at
                   ? ` · updated ${formatUpdatedAt(selectedEncounter.updated_at)}`
                   : ' · ESO Logs data'}
@@ -842,7 +842,8 @@ export const BuildLeaderboardPage: React.FC = () => {
                 <Box component="span" sx={{ color: 'text.primary', fontWeight: 650 }}>
                   Scope.
                 </Box>{' '}
-                {result.uniqueSignatures} distinct builds were grouped into {result.k} patterns.
+                {result.uniqueSignatures} distinct builds were grouped into {result.k}{' '}
+                {result.k === 1 ? 'pattern' : 'patterns'}.
               </Typography>
               <Typography sx={{ color: 'text.secondary', fontSize: '0.72rem', lineHeight: 1.5 }}>
                 <Box component="span" sx={{ color: 'text.primary', fontWeight: 650 }}>
