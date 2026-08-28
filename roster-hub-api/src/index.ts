@@ -2396,7 +2396,10 @@ app.post('/admin/sync-leaderboard', async (c) => {
 /**
  * Manual DPS-parse ingest. Query params let a one-off backfill target a single
  * encounter, or force a full pass outside the nightly budget:
- *   ?encounterId=60&difficulty=122&pages=3&force=1
+ *   ?encounterId=60&difficulty=122&pages=2&force=1
+ *
+ * `pages` is per CLASS board (seven are fetched per encounter), so it is clamped
+ * far lower than the request count it implies.
  */
 app.post('/admin/sync-dps-parses', async (c) => {
   if (
@@ -2415,10 +2418,12 @@ app.post('/admin/sync-dps-parses', async (c) => {
     return Number.isFinite(parsed) ? parsed : undefined;
   };
 
-  // Clamp pages to a sane manual budget (max 10); an unbounded value
-  // would let one call burn the subrequest budget for the whole run.
+  // Pages PER CLASS BOARD, and the ingest fetches seven boards per encounter —
+  // so each page costs 7 subrequests, not 1. Clamped to 3 (21 fetches) to stay
+  // inside the run's budget: above that the per-encounter budget check skips the
+  // target outright and the backfill silently does nothing.
   const rawPages = num(c.req.query('pages'));
-  const pages = rawPages === undefined ? undefined : Math.max(1, Math.min(10, Math.floor(rawPages)));
+  const pages = rawPages === undefined ? undefined : Math.max(1, Math.min(3, Math.floor(rawPages)));
 
   try {
     const results = await syncDpsParses(c.env, {
@@ -2443,14 +2448,14 @@ export default {
   fetch: app.fetch,
 
   /**
-   * ONE trigger firing twice a day (see wrangler.toml, `0 4,16 * * *`):
+   * ONE trigger firing four times a day (see wrangler.toml, `0 4,10,16,22 * * *`):
    *   04:00 UTC — temp-build cleanup + roster sync + DPS parse ingest
-   *   16:00 UTC — DPS parse ingest only
+   *   10:00, 16:00, 22:00 UTC — DPS parse ingest only
    *
    * It is a single combined expression because the account is at the free-plan
-   * cap of five cron triggers; two separate crons fail to register and the
-   * second pass then never runs. `event.cron` is identical for both firings, so
-   * the pass is derived from the fire time — see cron-schedule.ts.
+   * cap of five cron triggers; separate crons fail to register and those passes
+   * then never run. `event.cron` is identical for every firing, so the pass is
+   * derived from the fire time — see cron-schedule.ts.
    *
    * Each job is isolated in its own try/catch. Previously a throw in
    * `cleanupExpiredTempBuilds` would silently skip the roster sync for that day.
@@ -2476,7 +2481,13 @@ export default {
     // The DpsSyncResult.detail strings are written for operators — log a summary
     // plus every non-ok target so they are actually consumed somewhere.
     try {
-      const results = await syncDpsParses(env);
+      // The morning firing has already spent part of this invocation's
+      // subrequest allowance on syncLeaderboardRosters, and the Workers free
+      // plan caps an invocation at 50. Hand the DPS pass a smaller slice then,
+      // rather than letting it run the full budget and have the tail of the
+      // rotation fail on "Too many subrequests". The other three firings do
+      // nothing else and get the full slice.
+      const results = await syncDpsParses(env, isDailyRun ? { maxEncounters: 3 } : {});
       const rowsIngested = results
         .filter((r) => r.status === 'ok')
         .reduce((sum, r) => sum + r.rows, 0);

@@ -194,14 +194,31 @@ describe('useBuildClusters', () => {
     expect(result.current.error).toBeNull();
   });
 
-  it('refuses to cluster below the minimum and never starts a run', async () => {
+  /**
+   * Below the minimum we still refuse to CLUSTER — but the parses that exist
+   * must survive to the UI as individual builds. Returning null here was what
+   * dead-ended a starved class-and-boss slice on an alert showing nothing.
+   */
+  it('lists builds individually below the minimum instead of clustering', async () => {
     mockedRun.mockResolvedValue(EMPTY_RESULT);
-    const { result } = renderHook(() => useBuildClusters(makeThreeArchetypeFixture().slice(0, 5)));
+    const parses = makeThreeArchetypeFixture().slice(0, 5);
+    const { result } = renderHook(() => useBuildClusters(parses));
 
     await waitFor(() => expect(result.current.tooFewParses).toBe(true));
     expect(mockedRun).not.toHaveBeenCalled();
-    expect(result.current.result).toBeNull();
     expect(result.current.loading).toBe(false);
+
+    const clustered = result.current.result;
+    expect(clustered).not.toBeNull();
+    expect(clustered!.totalParses).toBe(5);
+    // Every parse is accounted for, and identical signatures share one entry.
+    expect(clustered!.clusters.flatMap((cluster) => cluster.memberParseIds).sort()).toEqual(
+      parses.map((parse) => parse.parse_id).sort(),
+    );
+    // Nothing is recommended from five parses — the UI keys its badge off this.
+    expect(clustered!.recommendedClusterId).toBeNull();
+    // Labels are hydrated on this path too, or chips render raw numeric ids.
+    expect(clustered!.clusters[0].label).not.toMatch(/^Set \d+/);
   });
 
   it('surfaces a clustering failure', async () => {

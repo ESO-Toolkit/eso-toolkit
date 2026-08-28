@@ -4,6 +4,13 @@
  * Pulls `characterRankings` per boss, extracts each parser's build, and upserts
  * into `dps_parses`.
  *
+ * Fetches are scoped PER CLASS, not per page of a global board. A global top-N
+ * is a winner-take-all list: on a Necromancer/Arcanist meta it left Dragonknight
+ * with 5 rows and Sorcerer with 4 out of 201 — below the frontend's clustering
+ * minimum, so those class views could never show a pattern no matter how many
+ * pages we pulled. One board per class costs the same order of requests and
+ * guarantees every class its own real top-N.
+ *
  * Budget note: ESO Logs is NOT the binding constraint. Measured cost is ~1.1
  * points per page against a 9000/hour limit, so a full run spends well under 1%.
  * The real limits are Cloudflare's per-invocation subrequest cap and CPU time —
@@ -39,20 +46,53 @@ import type { Env } from '../types';
 
 // ─── Budget ──────────────────────────────────────────────────────────────────
 
-/** Ceiling on outbound fetches. Cloudflare allows far more; this is the guard rail. */
-const MAX_SUBREQUESTS_PER_RUN = 120;
-/** Encounters per run. Two crons/day covers the full ~35-boss rotation daily. */
-const MAX_ENCOUNTERS_PER_RUN = 20;
-/** 100 parses/page; four pages fill the 400-row retention window so minority
- * classes actually get ingested instead of being capped by fetch depth. */
-const PAGES_PER_ENCOUNTER = 4;
+/**
+ * Ceiling on outbound fetches per invocation.
+ *
+ * The account is on the Workers FREE plan (see wrangler.toml — it is why this
+ * worker gets one cron slot), which caps a single invocation at 50 subrequests.
+ * The previous 120 was written against paid-plan limits and could never fire,
+ * so it guarded nothing. 45 leaves headroom for the morning pass, where the
+ * roster sync shares this invocation's budget.
+ */
+const MAX_SUBREQUESTS_PER_RUN = 45;
+/**
+ * Classes fetched per boss, one ranking board each.
+ *
+ * These strings are ESO Logs' own `class` values — confirmed against the
+ * `eso_class` column already populated from live ingest, not guessed.
+ */
+const CLASS_NAMES = [
+  'Arcanist',
+  'DragonKnight',
+  'Necromancer',
+  'Nightblade',
+  'Sorcerer',
+  'Templar',
+  'Warden',
+] as const;
+/** Fetches one encounter costs at the default one page per class. */
+const REQUESTS_PER_ENCOUNTER = CLASS_NAMES.length;
+/**
+ * Encounters per run, sized to fit MAX_SUBREQUESTS_PER_RUN after the three
+ * fixed preflight fetches (token, rate limit, zones). The cron fires four times
+ * a day, so the full ~35-target rotation still completes in ~1.5 days — better
+ * coverage than the two-pass schedule it replaces, despite the smaller slice.
+ */
+const MAX_ENCOUNTERS_PER_RUN = Math.floor((MAX_SUBREQUESTS_PER_RUN - 3) / REQUESTS_PER_ENCOUNTER);
 // Global cap per (encounter, difficulty). Sized so a meta dominated by one or
 // two classes still leaves meaningful samples of the others once the board is
 // sliced per class — the frontend's class view needs >=10 parses to cluster,
 // and a 200-cap on a 54%-one-class board left minority classes with 2-5.
 const KEEP_TOP_PER_ENCOUNTER = 400;
-/** Best N rows of each class survive the global cap, so every class view has data. */
-const KEEP_PER_CLASS = 25;
+/**
+ * Best N rows of each class survive the global cap, so every class view has data.
+ *
+ * Comfortably above the frontend's MIN_PARSES_TO_CLUSTER of 10, because the
+ * stubbed-combat-info and non-DPS-spec filters thin every class board before it
+ * reaches D1. 7 x 40 = 280 < KEEP_TOP_PER_ENCOUNTER, so the two caps never fight.
+ */
+const KEEP_PER_CLASS = 40;
 /** Polite spacing between upstream calls. */
 const REQUEST_DELAY_MS = 150;
 /** Abort before spending the last of the hourly point budget. */
@@ -209,7 +249,11 @@ export async function syncDpsParses(
     return [{ encounter: '(no targets)', encounterId: 0, status: 'error', rows: 0 }];
   }
 
-  const pages = Math.max(1, opts.pages ?? PAGES_PER_ENCOUNTER);
+  // Pages PER CLASS BOARD. One is the right default: a class board's first page
+  // already exceeds KEEP_PER_CLASS after filtering, so a second page would be
+  // fetched only to be pruned. The knob survives for manual backfill of a single
+  // boss through /admin/sync-dps-parses.
+  const pages = Math.max(1, opts.pages ?? 1);
 
   // Pre-flight database reads, guarded because they sit OUTSIDE the per-encounter
   // try/catch below. A schema-level problem here throws past every encounter at
@@ -238,7 +282,7 @@ export async function syncDpsParses(
   }
 
   for (const target of targets) {
-    if (subrequests + pages > MAX_SUBREQUESTS_PER_RUN) {
+    if (subrequests + pages * REQUESTS_PER_ENCOUNTER > MAX_SUBREQUESTS_PER_RUN) {
       results.push({
         encounter: target.encounterName,
         encounterId: target.encounterId,
@@ -321,45 +365,97 @@ async function syncOneEncounter(
     warnings.add(message);
   };
 
-  const rows: DpsParseInsert[] = [];
+  // Keyed by character_key: one character can only hold one row per board (that
+  // is the table's PK), and two statements writing the same PK inside a single
+  // db.batch() resolve last-writer-wins. The class boards are disjoint in
+  // principle, but a mislabelled or reclassified entry must not be able to turn
+  // that into a nondeterministic write.
+  const rowsByCharacter = new Map<string, DpsParseInsert>();
   let lastPage = 0;
   let stubbed = 0;
+  let misfiltered = 0;
+
+  // Per-CLASS failures are isolated below. Splitting one fetch into seven
+  // multiplied the chance that a target hits a transient upstream error, and
+  // letting any single board abort the encounter would throw away the six that
+  // succeeded and record the whole boss as failed. Only a total wipeout is an
+  // error; anything less is a partial success worth keeping.
+  let boardsFailed = 0;
+  let boardsAttempted = 0;
+  let firstBoardError = '';
 
   try {
-    for (let page = 1; page <= pages; page++) {
-      const raw = await fetchCharacterRankings(token, {
-        encounterId: target.encounterId,
-        difficulty: target.difficulty >= 0 ? target.difficulty : undefined,
-        // Pin the zone's latest partition so the fetched leaderboard, the rows we
-        // store, and the upsert's supersede guard all agree on patch generation.
-        // Omitted (undefined) only when the zone exposes no partitions at all.
-        partition: target.partitionId ?? undefined,
-        page,
-        // Never rely on the API default: it was observed returning entries with
-        // combat info stripped where `dps` returned it in full.
-        metric: 'dps',
-      });
-      onSubrequest();
-      lastPage = page;
+    for (const [classIndex, className] of CLASS_NAMES.entries()) {
+      boardsAttempted++;
+      try {
+        for (let page = 1; page <= pages; page++) {
+          const raw = await fetchCharacterRankings(token, {
+            encounterId: target.encounterId,
+            difficulty: target.difficulty >= 0 ? target.difficulty : undefined,
+            // Pin the zone's latest partition so the fetched leaderboard, the rows we
+            // store, and the upsert's supersede guard all agree on patch generation.
+            // Omitted (undefined) only when the zone exposes no partitions at all.
+            partition: target.partitionId ?? undefined,
+            page,
+            // Never rely on the API default: it was observed returning entries with
+            // combat info stripped where `dps` returned it in full.
+            metric: 'dps',
+            className,
+          });
+          onSubrequest();
+          lastPage = page;
 
-      const parsed = parseCharacterRankingsPage(raw, page);
-      stubbed += parsed.dropped.stubbed;
+          const parsed = parseCharacterRankingsPage(raw, page);
+          stubbed += parsed.dropped.stubbed;
 
-      for (const entry of parsed.rankings) {
-        if (!hasRealCombatantInfo(entry)) continue;
-        // A DPS leaderboard should not be polluted by tank and healer parses.
-        if (!isDpsSpec(entry.spec)) continue;
+          for (const entry of parsed.rankings) {
+            if (!hasRealCombatantInfo(entry)) continue;
+            // A DPS leaderboard should not be polluted by tank and healer parses.
+            // A class-scoped board still contains that class's tanks and healers.
+            if (!isDpsSpec(entry.spec)) continue;
+            // `className` is an unvalidated String in the upstream schema, so a
+            // rejected value comes back as the UNFILTERED global board rather than
+            // an error — which would silently store seven copies of the same top
+            // parses and leave the starvation exactly as it was. Drop the
+            // mismatches and surface the count.
+            if (entry.esoClass && entry.esoClass !== className) {
+              misfiltered++;
+              continue;
+            }
 
-        const row = await toInsertRow(entry, target, onWarn);
-        if (!row) continue;
-        if (blocked.has(row.character_key)) continue;
-        rows.push(row);
+            const row = await toInsertRow(entry, target, onWarn);
+            if (!row) continue;
+            if (blocked.has(row.character_key)) continue;
+            rowsByCharacter.set(row.character_key, row);
+          }
+
+          if (!parsed.hasMorePages) break;
+          if (page < pages) await sleep(REQUEST_DELAY_MS);
+        }
+      } catch (boardError) {
+        boardsFailed++;
+        const reason = boardError instanceof Error ? boardError.message : String(boardError);
+        if (!firstBoardError) firstBoardError = reason;
+        onWarn(`${className} board failed: ${reason}`);
       }
 
-      if (!parsed.hasMorePages) break;
-      if (page < pages) await sleep(REQUEST_DELAY_MS);
+      // Between class boards only. The run loop already spaces encounters, so
+      // sleeping after the last board would just add dead time to every target.
+      if (classIndex < CLASS_NAMES.length - 1) await sleep(REQUEST_DELAY_MS);
     }
 
+    // Every board failed: this is an upstream outage, not a boss with no
+    // rankings. Throwing routes it to the error path, which preserves
+    // last_synced_at and the empty streak so the target is retried promptly
+    // instead of being recorded as legitimately empty.
+    if (boardsAttempted > 0 && boardsFailed === boardsAttempted) {
+      // Carry the underlying reason, not just the count — otherwise the real
+      // upstream failure is replaced by a summary and the recorded error says
+      // nothing an operator can act on.
+      throw new Error(`all ${boardsFailed} class boards failed: ${firstBoardError}`);
+    }
+
+    const rows = [...rowsByCharacter.values()];
     if (rows.length > 0) {
       await upsertDpsParses(env.DB, rows);
     }
@@ -378,6 +474,14 @@ async function syncOneEncounter(
     warnings.forEach((message) => {
       console.warn(`[dps-sync] ${target.encounterName}: ${message}`);
     });
+    // Loud on purpose: a class filter the API ignored is invisible in the data
+    // (the board just looks meta-skewed again) but obvious in this number.
+    if (misfiltered > 0) {
+      console.warn(
+        `[dps-sync] ${target.encounterName}: ${misfiltered} entries did not match their ` +
+          `requested class — the className filter may be being ignored upstream`,
+      );
+    }
 
     const previousStreak = rows.length === 0 ? await currentEmptyStreak(env, target) : 0;
     await recordSyncResult(env.DB, {
@@ -397,7 +501,14 @@ async function syncOneEncounter(
       encounterId: target.encounterId,
       status: rows.length > 0 ? 'ok' : 'empty',
       rows: rows.length,
-      detail: stubbed > 0 ? `${stubbed} entries had combat info hidden` : undefined,
+      detail:
+        [
+          stubbed > 0 ? `${stubbed} entries had combat info hidden` : '',
+          misfiltered > 0 ? `${misfiltered} entries failed the class filter` : '',
+          boardsFailed > 0 ? `${boardsFailed}/${boardsAttempted} class boards failed` : '',
+        ]
+          .filter(Boolean)
+          .join('; ') || undefined,
     };
   } catch (error) {
     const detail = error instanceof Error ? error.message : String(error);

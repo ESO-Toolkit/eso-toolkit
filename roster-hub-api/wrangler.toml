@@ -24,16 +24,19 @@ binding = "AI"
 #   ESOLOGS_CLIENT_SECRET    — ESO Logs OAuth client secret (leaderboard sync + GQL proxy)
 
 # 04:00 UTC — temp-build cleanup + #1 roster sync + DPS parse ingest
-# 16:00 UTC — DPS parse ingest only
-# Two DPS passes a day cover the full ~35-boss rotation (20 encounters per run).
-# The handler branches on `event.cron`; see the `scheduled` export in src/index.ts.
+# 10:00, 16:00, 22:00 UTC — DPS parse ingest only
+# Four DPS passes a day cover the full ~35-boss rotation in ~1.5 days. The slice
+# per run is small (6 encounters) because the ingest now pulls one ranking board
+# PER CLASS — ~7 subrequests per boss against the free plan's 50-per-invocation
+# cap. The handler branches on the fire time; see src/cron-schedule.ts.
 [triggers]
-# ONE trigger, two fire times. The account is on the Workers Free plan, capped
+# ONE trigger, four fire times. The account is on the Workers Free plan, capped
 # at 5 cron triggers across ALL workers, and 4 are used by other projects — so a
 # second entry here fails to register (code 10072) and that pass silently never
-# runs. A list expression costs one slot and fires at both hours; the handler
-# tells the passes apart by fire time (src/cron-schedule.ts).
-crons = ["0 4,16 * * *"]
+# runs. A list expression costs one slot and fires at every listed hour; the
+# handler tells the passes apart by fire time (src/cron-schedule.ts). Adding
+# hours to the list is free — it is the same single trigger.
+crons = ["0 4,10,16,22 * * *"]
 
 # Persistent logs. Every cron job runs inside its own try/catch that only
 # `console.error`s, so without this a failing scheduled pass is INVISIBLE — which

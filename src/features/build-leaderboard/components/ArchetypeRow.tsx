@@ -85,6 +85,9 @@ export const ArchetypeRow: React.FC<ArchetypeRowProps> = ({
   // Pooled view: headline is the cluster's best RAW parse, anchored to its trial.
   const anchor = bestParse?.trial_id || bestParse?.encounter_name || '';
   const headlineDps = compactDps(bestParse ? bestParse.amount : cluster.dps.median);
+  // Thin selections list builds one at a time, so size 1 is routine here and
+  // "1 parses" would otherwise be on screen constantly.
+  const parseCount = `${cluster.size} ${cluster.size === 1 ? 'parse' : 'parses'}`;
   const coverageLabel =
     bestParse && coveredBosses !== undefined && availableBosses !== undefined
       ? `${coveredBosses}/${availableBosses} bosses`
@@ -97,8 +100,8 @@ export const ArchetypeRow: React.FC<ArchetypeRowProps> = ({
         aria-current={selected ? 'true' : undefined}
         aria-label={
           bestParse
-            ? `${label}, best ${headlineDps} DPS on ${anchor}, ${coverageLabel ? `top-25 on ${coveredBosses} of ${availableBosses} bosses, ` : ''}${cluster.size} sampled top parses${recommended ? ', recommended' : ''}`
-            : `${label}, typical damage ${headlineDps}, ${cluster.size} top parses${recommended ? ', recommended' : ''}`
+            ? `${label}, best ${headlineDps} DPS on ${anchor}, ${coverageLabel ? `top-25 on ${coveredBosses} of ${availableBosses} bosses, ` : ''}${parseCount} sampled${recommended ? ', recommended' : ''}`
+            : `${label}, typical damage ${headlineDps}, ${parseCount}${recommended ? ', recommended' : ''}`
         }
         onClick={onSelect}
         sx={(theme) => ({
@@ -227,8 +230,8 @@ export const ArchetypeRow: React.FC<ArchetypeRowProps> = ({
               }}
             >
               {bestParse
-                ? `${headlineDps}${anchor ? ` @ ${anchor}` : ''}${coverageLabel ? ` · ${coverageLabel}` : ` · ${cluster.size} parses`}`
-                : `${cluster.size} parses · ${headlineDps} typical`}
+                ? `${headlineDps}${anchor ? ` @ ${anchor}` : ''}${coverageLabel ? ` · ${coverageLabel}` : ` · ${parseCount}`}`
+                : `${parseCount} · ${headlineDps}${cluster.size === 1 ? '' : ' typical'}`}
             </Typography>
             {freshness && (
               <Typography

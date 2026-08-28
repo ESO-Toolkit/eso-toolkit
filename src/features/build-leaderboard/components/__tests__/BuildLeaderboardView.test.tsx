@@ -10,6 +10,7 @@ import {
 } from '../../clustering/__fixtures__/dpsParses.fixture';
 import { clusterBuilds } from '../../clustering/clusterBuilds';
 import { EMPTY_CANONICAL_MAPS, extractFeatureVectors } from '../../clustering/featureExtraction';
+import { buildIndividualClusters } from '../../clustering/individualBuilds';
 import { clearRepresentativeBuildCache } from '../../hooks/useRepresentativeBuild';
 import type { ClusterBuildsResult } from '../../types/clustering.types';
 import type { DpsParse, DpsParseBuildResponse } from '../../types/dpsParses.types';
@@ -73,6 +74,18 @@ function clusteredFixture(): { parses: DpsParse[]; result: ClusterBuildsResult }
   return { parses, result };
 }
 
+/**
+ * The thin-data path: too few parses to cluster, so the hook lists each
+ * distinct build on its own. Built through the real function so these tests see
+ * the same shape production renders.
+ */
+function individualFixture(count: number): { parses: DpsParse[]; result: ClusterBuildsResult } {
+  resetFixtureIds();
+  const parses = makeThreeArchetypeFixture().slice(0, count);
+  const result = buildIndividualClusters(extractFeatureVectors(parses, EMPTY_CANONICAL_MAPS));
+  return { parses, result };
+}
+
 function recommendedCluster(result: ClusterBuildsResult) {
   return (
     result.clusters.find((cluster) => cluster.id === result.recommendedClusterId) ??
@@ -97,34 +110,47 @@ describe('BuildLeaderboardView states', () => {
     expect(alert.className).not.toMatch(/colorError/);
   });
 
-  it('refuses to cluster too few parses', () => {
-    const { parses } = clusteredFixture();
-    renderView({ parses: parses.slice(0, 6), tooFewParses: true });
-    expect(screen.getByTestId('too-few-parses')).toHaveTextContent(/not enough/i);
+  /**
+   * Regression: thin data used to dead-end on an alert that showed nothing and
+   * told the reader to go somewhere else. The builds that ARE recorded must
+   * still render — only the GROUPING of them into archetypes is withheld.
+   */
+  it('still shows the recorded builds when there are too few to cluster', () => {
+    const { parses, result } = individualFixture(6);
+    renderView({ parses, result, tooFewParses: true });
+
+    expect(screen.getByTestId('too-few-parses')).toHaveTextContent(
+      /too few to group into reliable build patterns/i,
+    );
+    expect(screen.getByTestId('build-inspector')).toBeInTheDocument();
+    expect(screen.getAllByTestId('archetype-row').length).toBeGreaterThan(0);
+    expect(screen.getByText('Recorded builds')).toBeInTheDocument();
   });
 
   /**
    * Regression (live data): on a boss with 201 parses, the Dragonknight slice
    * held 2. "Only 2 parses are recorded here" read as if the BOSS were empty.
-   * The class view must say WHERE the thinness is and point at alternatives.
+   * The class view must say WHERE the thinness is.
    */
   it('names the class-and-boss scope in the too-few-parses message', () => {
-    const { parses } = clusteredFixture();
+    const { parses, result } = individualFixture(2);
     renderView({
-      parses: parses.slice(0, 2),
+      parses,
+      result,
       tooFewParses: true,
       esoClass: 'Dragonknight',
       scopeDescription: 'on DSR · Tideborn Taleria',
     });
     const alert = screen.getByTestId('too-few-parses');
     expect(alert).toHaveTextContent(/only 2 dragonknight parses on DSR · Tideborn Taleria/i);
-    expect(alert).toHaveTextContent(/try another class or the encounter tab/i);
+    expect(alert).toHaveTextContent(/each build is listed on its own/i);
   });
 
   it('describes pooled scope across bosses', () => {
-    const { parses } = clusteredFixture();
+    const { parses, result } = individualFixture(4);
     renderView({
-      parses: parses.slice(0, 4),
+      parses,
+      result,
       tooFewParses: true,
       esoClass: 'Dragonknight',
       scopeDescription: 'across 14 trial bosses',
@@ -132,6 +158,60 @@ describe('BuildLeaderboardView states', () => {
     expect(screen.getByTestId('too-few-parses')).toHaveTextContent(
       /4 dragonknight parses across 14 trial bosses/i,
     );
+  });
+
+  /** A starved class-and-boss slice must offer the wider scope, not just name it. */
+  it('offers a one-click widening out of a thin slice', async () => {
+    const onBroadenScope = jest.fn();
+    const { parses, result } = individualFixture(3);
+    renderView({
+      parses,
+      result,
+      tooFewParses: true,
+      esoClass: 'Dragonknight',
+      scopeDescription: 'on SE · Ansuul the Tormentor',
+      onBroadenScope,
+      broadenScopeLabel: 'All trial bosses',
+    });
+
+    await userEvent.click(screen.getByRole('button', { name: 'All trial bosses' }));
+    expect(onBroadenScope).toHaveBeenCalledTimes(1);
+  });
+
+  /**
+   * q1, median and q3 are the same number for one parse. Printing them as a
+   * range would state a spread the data does not contain.
+   */
+  it('never fabricates a range for a build with a single parse', () => {
+    const { parses, result } = individualFixture(1);
+    renderView({ parses, result, tooFewParses: true });
+
+    expect(screen.getByTestId('dps-spread-hint')).toHaveTextContent('From a single parse');
+    expect(screen.getByText(/one top-ranked parse/i)).toBeInTheDocument();
+    // "1 parses" would otherwise be on screen for every thin selection.
+    expect(screen.getByTestId('too-few-parses')).toHaveTextContent('Only 1 parse in');
+  });
+
+  /**
+   * "Middle half" was jargon with no way to ask what it meant on a phone.
+   *
+   * Asserts aria-expanded, NOT text presence: MUI's Tooltip animates out, so the
+   * popper lingers after closing and a findByText assertion passes against a
+   * tooltip on its way OUT — which is how a tap-opens-then-closes bug survived
+   * this test once already.
+   */
+  it('spells out the dps spread and explains it on tap', async () => {
+    const { parses, result } = clusteredFixture();
+    renderView({ parses, result });
+
+    const spread = screen.getByTestId('dps-spread-hint');
+    expect(spread).toHaveTextContent(/^Half land \d/);
+
+    await userEvent.click(spread);
+    expect(spread).toHaveAttribute('aria-expanded', 'true');
+    expect(
+      await screen.findByText(/half of this build's \d+ parses did better, half did worse/i),
+    ).toBeInTheDocument();
   });
 
   it('announces clustering progress politely', () => {
@@ -196,8 +276,13 @@ describe('BuildLeaderboardView workspace', () => {
     expect(screen.getByText('3 of 4')).toBeInTheDocument();
     expect(screen.getByText(`${selected.size} sampled top parses`)).toBeInTheDocument();
     expect(screen.queryByText(/% of each boss's top DPS/i)).not.toBeInTheDocument();
+    // Opened by TAP, not focus. This explanation used to be a hover-only Tooltip
+    // on an icon button, unreachable on a phone; StatHint opens it on click and
+    // deliberately does not open on focus, because focus arrives before click on
+    // every tap and the two would cancel out.
     const explanation = screen.getByRole('button', { name: /explain top-25 boss coverage/i });
-    explanation.focus();
+    await userEvent.click(explanation);
+    expect(explanation).toHaveAttribute('aria-expanded', 'true');
     expect(
       await screen.findByText(
         /this build had a retained top-25 class parse on 3 of the 4 bosses with data/i,

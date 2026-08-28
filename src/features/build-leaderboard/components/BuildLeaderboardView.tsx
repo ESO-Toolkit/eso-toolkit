@@ -41,6 +41,14 @@ export interface BuildLeaderboardViewProps {
    * while cards show raw DPS and top-25 boss coverage.
    */
   pooled?: boolean;
+  /**
+   * Widens a thin selection (a class slice of one boss) to every boss. Rendered
+   * as the action on the ungrouped banner, so a starved board offers a way out
+   * instead of telling the reader to go find one.
+   */
+  onBroadenScope?: () => void;
+  /** Call to action for `onBroadenScope`, e.g. 'Show all trial bosses'. */
+  broadenScopeLabel?: string;
   onRetry?: () => void;
   onOpenInEditor?: (cluster: BuildCluster) => void;
   onSaveBuild?: (cluster: BuildCluster) => void;
@@ -88,6 +96,8 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
   scopeLabel,
   scopeDescription,
   pooled = false,
+  onBroadenScope,
+  broadenScopeLabel = 'Show all trial bosses',
   onRetry,
   onOpenInEditor,
   onSaveBuild,
@@ -167,21 +177,6 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
 
   if (parses.length === 0) return <Alert severity="info">{emptyMessage}</Alert>;
 
-  if (tooFewParses) {
-    // Say WHERE the thinness is: on the pooled class view the boss count
-    // matters; on a single boss the class slice does. Without the scope,
-    // "Only 2 parses are recorded here" reads like the boss is empty.
-    const scope = scopeDescription ?? 'in this selection';
-    return (
-      <Alert severity="info" data-testid="too-few-parses">
-        Only {parses.length} {esoClass ? `${esoClass} parses ` : 'parses '}
-        {scope} — not enough to identify reliable build patterns yet (at least 10 needed). Patterns
-        appear as more top players post logs; try another class or the Encounter tab in the
-        meantime.
-      </Alert>
-    );
-  }
-
   if (clustering || !result) {
     return (
       <Box>
@@ -250,6 +245,31 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
 
   return (
     <Box>
+      {/* Thin data is a caveat, never a dead end. The builds recorded here are
+          still shown — grouping them into archetypes is what we withhold, and
+          the banner says so and offers a wider scope where one exists. */}
+      {tooFewParses && (
+        <Alert
+          severity="info"
+          data-testid="too-few-parses"
+          action={
+            onBroadenScope && (
+              <Button color="inherit" size="small" onClick={onBroadenScope}>
+                {broadenScopeLabel}
+              </Button>
+            )
+          }
+          sx={{ mb: 1.5, alignItems: 'center' }}
+        >
+          {/* Say WHERE the thinness is: on the pooled class view the boss count
+              matters; on a single boss the class slice does. Without the scope,
+              "Only 2 parses are recorded" reads like the boss is empty. */}
+          {`Only ${parses.length} ${esoClass ? `${esoClass} ` : ''}${
+            parses.length === 1 ? 'parse' : 'parses'
+          } ${scopeDescription ?? 'in this selection'} — too few to group into reliable build patterns (10+ needed), so each build is listed on its own below.`}
+        </Alert>
+      )}
+
       {!hideSummary && (
         <Box sx={{ mb: 1.5 }}>
           <Box sx={{ display: 'flex', minHeight: 32, alignItems: 'center', gap: 0.5 }}>
@@ -380,7 +400,7 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
                     letterSpacing: '-0.01em',
                   }}
                 >
-                  Build patterns
+                  {tooFewParses ? 'Recorded builds' : 'Build patterns'}
                 </Typography>
                 {scopeLabel && (
                   <Typography noWrap sx={{ color: 'text.secondary', fontSize: '0.65rem' }}>
@@ -460,6 +480,7 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
               sourceUrl={representativeParseFor(selected)?.source_url}
               representativeDps={representativeParseFor(selected)?.amount}
               pooled={pooled}
+              ungrouped={tooFewParses}
               coveredBosses={bossCoverage.byCluster.get(selected.id)}
               availableBosses={pooled ? bossCoverage.available : undefined}
               pendingKind={pendingAction?.clusterId === selected.id ? pendingAction.kind : null}

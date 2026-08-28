@@ -834,7 +834,16 @@ export const BuildLeaderboardPage: React.FC = () => {
                 <Box component="span" sx={{ color: 'text.primary', fontWeight: 700 }}>
                   {result.k}
                 </Box>{' '}
-                {result.k === 1 ? 'pattern' : 'patterns'}
+                {/* Thin data is listed build-by-build, not grouped — calling
+                    those entries "patterns" would claim an analysis we
+                    explicitly declined to run. */}
+                {tooFewParses
+                  ? result.k === 1
+                    ? 'build'
+                    : 'builds'
+                  : result.k === 1
+                    ? 'pattern'
+                    : 'patterns'}
                 {selectedEncounter?.updated_at
                   ? ` · updated ${formatUpdatedAt(selectedEncounter.updated_at)}`
                   : ' · ESO Logs data'}
@@ -868,14 +877,24 @@ export const BuildLeaderboardPage: React.FC = () => {
                 <Box component="span" sx={{ color: 'text.primary', fontWeight: 650 }}>
                   Scope.
                 </Box>{' '}
-                {result.uniqueSignatures} distinct builds were grouped into {result.k}{' '}
-                {result.k === 1 ? 'pattern' : 'patterns'}.
+                {tooFewParses
+                  ? `${result.uniqueSignatures} distinct builds, each listed on its own.`
+                  : `${result.uniqueSignatures} distinct builds were grouped into ${result.k} ${
+                      result.k === 1 ? 'pattern' : 'patterns'
+                    }.`}
               </Typography>
               <Typography sx={{ color: 'text.secondary', fontSize: '0.72rem', lineHeight: 1.5 }}>
                 <Box component="span" sx={{ color: 'text.primary', fontWeight: 650 }}>
-                  Confidence: {clusterQuality(result.silhouette).label}.
+                  {/* A silhouette score describes a clustering. On the thin-data
+                      path there isn't one, so quoting "Limited" would report the
+                      quality of an analysis we never ran. */}
+                  {tooFewParses
+                    ? 'Confidence: Too early.'
+                    : `Confidence: ${clusterQuality(result.silhouette).label}.`}
                 </Box>{' '}
-                {clusterQuality(result.silhouette).tooltip}
+                {tooFewParses
+                  ? 'Not enough parses here to tell a real pattern from one player’s preference.'
+                  : clusterQuality(result.silhouette).tooltip}
               </Typography>
               <Typography sx={{ color: 'text.secondary', fontSize: '0.72rem', lineHeight: 1.5 }}>
                 <Box component="span" sx={{ color: 'text.primary', fontWeight: 650 }}>
@@ -934,6 +953,12 @@ export const BuildLeaderboardPage: React.FC = () => {
                     : undefined
               }
               pooled={isPooledClass}
+              // A class slice of one boss is where thinness actually bites (5
+              // Dragonknights on a board of 200). Pooling every boss is the one
+              // click that fixes it, so offer it inline rather than making the
+              // reader work out that the picker has an "All trial bosses" row.
+              onBroadenScope={isPooledClass ? undefined : () => handleEncounterChange(ALL_BOSSES)}
+              broadenScopeLabel="All trial bosses"
               onRetry={handleRetry}
               onOpenInEditor={openInEditor}
               onSaveBuild={saveToMyBuilds}
