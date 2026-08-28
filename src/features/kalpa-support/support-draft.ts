@@ -329,7 +329,8 @@ function decodeBase64Url(value: string): string {
 }
 
 export function captureKalpaSupportDraft(): void {
-  if (window.location.pathname.replace(/\/$/, '') !== '/kalpa/support') return;
+  const normalizedPath = window.location.pathname.replace(/\/+$/, '');
+  if (!normalizedPath.endsWith('/kalpa/support')) return;
   const fragment = window.location.hash.slice(1);
   if (!fragment.startsWith('kalpa=')) return;
   window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}`);

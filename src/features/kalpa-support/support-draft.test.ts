@@ -101,6 +101,18 @@ describe('Kalpa support draft contract', () => {
     expect(sessionStorage.getItem(SUPPORT_IDEMPOTENCY_KEY)).toMatch(/^[\w-]{32,128}$/);
   });
 
+  it('captures a valid fragment when hosted below a preview base path', () => {
+    const encoded = encodeFragment(supportDraftFixture());
+    window.history.replaceState(null, '', `/dev-previews/pr-1469/kalpa/support/#kalpa=${encoded}`);
+
+    captureKalpaSupportDraft();
+
+    expect(window.location.pathname).toBe('/dev-previews/pr-1469/kalpa/support/');
+    expect(window.location.hash).toBe('');
+    expect(getStoredSupportDraft()).toMatchObject({ issueId: 'install-update' });
+    expect(sessionStorage.getItem(SUPPORT_IDEMPOTENCY_KEY)).toMatch(/^[\w-]{32,128}$/);
+  });
+
   it('preserves one idempotency key for all retries of the same draft', () => {
     sessionStorage.setItem(SUPPORT_DRAFT_KEY, JSON.stringify(supportDraftFixture()));
     expect(getSupportIdempotencyKey()).toBe(getSupportIdempotencyKey());
