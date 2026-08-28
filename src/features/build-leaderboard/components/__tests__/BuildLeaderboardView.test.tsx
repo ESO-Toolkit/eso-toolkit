@@ -5,6 +5,9 @@ import React from 'react';
 
 import { dpsParsesApi } from '../../api/dpsParsesApi';
 import {
+  NECRO_ARCHETYPE,
+  SORC_ARCHETYPE,
+  makeParse,
   makeThreeArchetypeFixture,
   resetFixtureIds,
 } from '../../clustering/__fixtures__/dpsParses.fixture';
@@ -83,6 +86,23 @@ function individualFixture(count: number): { parses: DpsParse[]; result: Cluster
   resetFixtureIds();
   const parses = makeThreeArchetypeFixture().slice(0, count);
   const result = buildIndividualClusters(extractFeatureVectors(parses, EMPTY_CANONICAL_MAPS));
+  return { parses, result };
+}
+
+/**
+ * A board that has genuinely converged: one archetype with a long tail of a
+ * couple of off-meta parses. Clustered for real, so the shares the view reads
+ * are the ones production would compute rather than hand-written numbers.
+ */
+function solvedFixture(): { parses: DpsParse[]; result: ClusterBuildsResult } {
+  resetFixtureIds();
+  const parses = [
+    ...Array.from({ length: 200 }, (_, i) => makeParse(NECRO_ARCHETYPE, i)),
+    ...Array.from({ length: 3 }, (_, i) => makeParse(SORC_ARCHETYPE, i)),
+  ];
+  const result = clusterBuilds({
+    vectors: extractFeatureVectors(parses, EMPTY_CANONICAL_MAPS),
+  });
   return { parses, result };
 }
 
@@ -500,5 +520,48 @@ describe('BuildLeaderboardView workspace', () => {
     } finally {
       consoleError.mockRestore();
     }
+  });
+});
+
+describe('BuildLeaderboardView solved meta', () => {
+  it('states the finding instead of claiming archetypes it cannot support', () => {
+    const { parses, result } = solvedFixture();
+    renderView({ parses, result, esoClass: 'Necromancer', scopeDescription: 'across all bosses' });
+
+    const panel = screen.getByTestId('solved-meta');
+    expect(panel).toHaveTextContent('One build. Nearly everyone runs it.');
+    expect(panel).toHaveTextContent(/9\d% of the \d+ top parses across all bosses/);
+    // Framed as a property of the data, never as a shortfall of the tool.
+    expect(panel).not.toHaveTextContent(/only one|could not|unable|too few/i);
+  });
+
+  it('relabels the card list and the summary count', () => {
+    const { parses, result } = solvedFixture();
+    renderView({ parses, result });
+
+    expect(screen.getByText('Consensus build')).toBeInTheDocument();
+    expect(screen.queryByText('Build patterns')).not.toBeInTheDocument();
+    expect(screen.getByText(/one build, 9\d% of parses/)).toBeInTheDocument();
+  });
+
+  it('replaces the separation-based confidence wording', async () => {
+    const { parses, result } = solvedFixture();
+    renderView({ parses, result });
+
+    await userEvent.click(screen.getByRole('button', { name: /how this leaderboard works/i }));
+
+    // "Limited ... many similar variations" describes a failure to separate
+    // archetypes, which misreads the finding that there is only one.
+    expect(screen.getByText(/Converged/)).toBeInTheDocument();
+    expect(screen.queryByText(/many similar variations/i)).not.toBeInTheDocument();
+  });
+
+  it('leaves a healthy multi-archetype board completely alone', () => {
+    const { parses, result } = clusteredFixture();
+    renderView({ parses, result });
+
+    expect(screen.queryByTestId('solved-meta')).not.toBeInTheDocument();
+    expect(screen.getByText('Build patterns')).toBeInTheDocument();
+    expect(screen.getByText(new RegExp(`${result.k} build patterns`))).toBeInTheDocument();
   });
 });

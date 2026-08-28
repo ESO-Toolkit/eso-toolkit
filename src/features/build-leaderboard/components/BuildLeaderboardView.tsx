@@ -13,6 +13,7 @@ import {
 import { alpha } from '@mui/material/styles';
 import React, { useMemo, useRef, useState } from 'react';
 
+import { detectSolvedMeta } from '../clustering/solvedMeta';
 import { getLeaderboardClassTheme } from '../theme/leaderboardTheme';
 import type { BuildCluster, ClusterBuildsResult } from '../types/clustering.types';
 import type { DpsParse } from '../types/dpsParses.types';
@@ -216,6 +217,10 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
   }
 
   const quality = clusterQuality(result.silhouette);
+  // Null on a healthy board, which is the common case; every use below is
+  // guarded so the normal archetype presentation is untouched.
+  const solved = detectSolvedMeta(result);
+  const solvedTheme = getLeaderboardClassTheme(solved?.dominant.esoClass ?? '');
   const recommended = result.clusters.find((cluster) => cluster.id === result.recommendedClusterId);
   const ordered = recommended
     ? [recommended, ...result.clusters.filter((cluster) => cluster.id !== recommended.id)]
@@ -270,6 +275,49 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
         </Alert>
       )}
 
+      {/* Stated as a measured result, in the page's own visual language, and
+          never as a caveat. "Only one archetype was found" would read as a
+          shortfall of the tool; the truth is a fact about the class, and for a
+          player it is more actionable than three invented archetypes. */}
+      {solved && !tooFewParses && (
+        <Paper
+          elevation={0}
+          data-testid="solved-meta"
+          sx={(theme) => ({
+            mb: 1.5,
+            px: { xs: 1.5, sm: 2 },
+            py: 1.25,
+            border: `1px solid ${alpha(solvedTheme.accent, 0.42)}`,
+            borderRadius: 1.5,
+            background: `linear-gradient(135deg, ${alpha(solvedTheme.accent, 0.13)}, ${alpha(theme.palette.background.paper, 0.35)})`,
+          })}
+        >
+          <Typography
+            sx={{
+              fontFamily: 'Space Grotesk, Inter, system-ui',
+              fontSize: '0.85rem',
+              fontWeight: 700,
+              letterSpacing: '-0.01em',
+            }}
+          >
+            One build. Nearly everyone runs it.
+          </Typography>
+          <Typography
+            sx={{ mt: 0.4, color: 'text.secondary', fontSize: '0.74rem', lineHeight: 1.5 }}
+          >
+            {`${solved.sharePercent}% of the ${result.totalParses} top parses ${
+              scopeDescription ?? 'in this selection'
+            } converge on a single build. Where other boards split into competing archetypes, this one has settled on one answer.`}
+            {solved.outlierParses > 0 &&
+              ` The other ${solved.outlierParses} ${
+                solved.outlierParses === 1 ? 'parse runs' : 'parses run'
+              } something meaningfully different and ${
+                solved.outlierParses === 1 ? 'is' : 'are'
+              } listed below.`}
+          </Typography>
+        </Paper>
+      )}
+
       {!hideSummary && (
         <Box sx={{ mb: 1.5 }}>
           <Box sx={{ display: 'flex', minHeight: 32, alignItems: 'center', gap: 0.5 }}>
@@ -281,7 +329,10 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
               >
                 {result.totalParses}
               </Box>{' '}
-              top-ranked parses · {result.k} build patterns
+              top-ranked parses ·{' '}
+              {solved
+                ? `one build, ${solved.sharePercent}% of parses`
+                : `${result.k} build patterns`}
             </Typography>
             <IconButton
               size="small"
@@ -307,13 +358,21 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
                 <Box component="span" sx={{ color: 'text.primary', fontWeight: 650 }}>
                   Scope.
                 </Box>{' '}
-                {result.uniqueSignatures} distinct builds were grouped into {result.k} patterns.
+                {solved
+                  ? `${result.uniqueSignatures} distinct builds were recorded, and ${solved.sharePercent}% of parses run the same one.`
+                  : `${result.uniqueSignatures} distinct builds were grouped into ${result.k} patterns.`}
               </Typography>
               <Typography sx={{ color: 'text.secondary', fontSize: '0.72rem', lineHeight: 1.5 }}>
                 <Box component="span" sx={{ color: 'text.primary', fontWeight: 650 }}>
-                  Confidence: {quality.label}.
+                  Confidence: {solved ? 'Converged' : quality.label}.
                 </Box>{' '}
-                {quality.tooltip}
+                {/* The silhouette buckets describe SEPARATION, so on a solved
+                    board they report "Limited ... many similar variations",
+                    which reads as a failure to distinguish archetypes rather
+                    than as the finding that there is only one. */}
+                {solved
+                  ? 'Nearly every top parse runs the same build, so this board reports the consensus instead of splitting it into archetypes.'
+                  : quality.tooltip}
               </Typography>
               <Typography sx={{ color: 'text.secondary', fontSize: '0.72rem', lineHeight: 1.5 }}>
                 <Box component="span" sx={{ color: 'text.primary', fontWeight: 650 }}>
@@ -400,7 +459,7 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
                     letterSpacing: '-0.01em',
                   }}
                 >
-                  {tooFewParses ? 'Recorded builds' : 'Build patterns'}
+                  {tooFewParses ? 'Recorded builds' : solved ? 'Consensus build' : 'Build patterns'}
                 </Typography>
                 {scopeLabel && (
                   <Typography noWrap sx={{ color: 'text.secondary', fontSize: '0.65rem' }}>

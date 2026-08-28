@@ -32,6 +32,25 @@ import {
 import { collapseDuplicateSignatures } from './featureExtraction';
 import { weightedSilhouette } from './silhouette';
 
+/**
+ * `minK`/`maxK` bound which k may be SELECTED, not which are scored. The scan
+ * below deliberately runs k=2..8 and reports every score in `silhouetteByK`,
+ * so the UI can be honest about separation across the whole range even where
+ * the product would not choose that k. The window is clipped at BOTH ends
+ * (k=2 and k=7..8 are scored but unselectable), which is what makes it a
+ * deliberate window rather than an oversight at the bottom.
+ *
+ * Why a floor of 3 rather than 2: silhouette structurally favours small k, so
+ * an unclamped scan would return k=2 on most boards and flatten real variety
+ * into "these two". A board whose data genuinely has ONE mode is not fixed by
+ * lowering this floor either, since that only swaps three invented archetypes
+ * for two. That case is handled downstream by `detectSolvedMeta`, which
+ * changes the presentation rather than the clustering.
+ *
+ * The `inWindow.length > 0` fallback below matters for tiny inputs: when
+ * n < minK the window is empty and the full scan is used, so k=2 stays
+ * reachable there.
+ */
 export const DEFAULT_CLUSTER_OPTIONS: Required<ClusterOptions> = {
   weights: DEFAULT_FEATURE_WEIGHTS,
   minK: 3,
