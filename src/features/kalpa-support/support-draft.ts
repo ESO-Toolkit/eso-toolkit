@@ -238,8 +238,8 @@ function attentionLine(item: SupportAttentionItem): string {
   if (item.outdatedDependencies)
     details.push(`${item.outdatedDependencies} outdated dependency warning(s)`);
   if (item.modifiedFiles) details.push(`${item.modifiedFiles} locally modified file(s)`);
-  return `- ${item.name} (${item.folder}): ${details.join('; ') || 'needs attention'}`.slice(
-    0,
+  return truncate(
+    `- ${item.name} (${item.folder}): ${details.join('; ') || 'needs attention'}`,
     180,
   );
 }

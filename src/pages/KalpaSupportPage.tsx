@@ -52,7 +52,7 @@ function messageFor(error: unknown): string {
     case 'RATE_LIMITED':
       return 'Too many support requests were made recently. Wait a few minutes, then retry with this same report.';
     case 'TICKET_RECOVERING':
-      return 'This request is still being created. Wait a moment, then check again.';
+      return 'This request may still be creating. Check again shortly. If this message persists, return to Kalpa and prepare a new support report.';
     case 'IDEMPOTENCY_CONFLICT':
       return 'This saved request no longer matches your Discord session. Return to Kalpa and prepare a new support report.';
     case 'INVALID_REQUEST':

@@ -11,7 +11,8 @@ export function supportFixture() {
   return {
     version: 1,
     issueId: 'install-update',
-    description: 'Update failed for @everyone at C:\\Users\\Private Name\\Documents; bearer super-secret',
+    description:
+      'Update failed for @everyone at C:\\Users\\Private Name\\Documents; bearer super-secret',
     appVersion: '0.18.0',
     platform: 'windows',
     generatedAt: '2026-08-28T12:00:00.000Z',
@@ -73,30 +74,63 @@ describe('Kalpa support contract', () => {
     expect(report).toContain('## Privacy note');
   });
 
-  it('rejects extra client identity fields, raw data, invalid counts, and oversized arrays', () => {
-    expect(() => parseSupportPayload({ ...supportFixture(), discordUserId: '123' })).toThrow(SupportValidationError);
-    expect(() => parseSupportPayload({ ...supportFixture(), savedVariables: 'raw contents' })).toThrow(SupportValidationError);
-    expect(() => parseSupportPayload({
-      ...supportFixture(),
-      diagnostics: { ...supportFixture().diagnostics, addons: -1 },
-    })).toThrow(SupportValidationError);
-    expect(() => parseSupportPayload({
-      ...supportFixture(),
+  it('uses the canonical ellipsis when an attention row is truncated', () => {
+    const input = supportFixture();
+    const parsed = parseSupportPayload({
+      ...input,
       diagnostics: {
-        ...supportFixture().diagnostics,
-        attention: Array.from({ length: 13 }, () => supportFixture().diagnostics.attention[0]),
+        ...input.diagnostics,
+        attention: [
+          {
+            ...input.diagnostics.attention[0],
+            name: 'n'.repeat(100),
+            folder: 'f'.repeat(100),
+          },
+        ],
       },
-    })).toThrow(SupportValidationError);
+    });
+    const row = renderSupportReport(parsed)
+      .split('\n')
+      .find((line) => line.startsWith('- n'));
+
+    expect(row).toHaveLength(180);
+    expect(row).toMatch(/\.\.\.$/);
+  });
+
+  it('rejects extra client identity fields, raw data, invalid counts, and oversized arrays', () => {
+    expect(() => parseSupportPayload({ ...supportFixture(), discordUserId: '123' })).toThrow(
+      SupportValidationError,
+    );
+    expect(() =>
+      parseSupportPayload({ ...supportFixture(), savedVariables: 'raw contents' }),
+    ).toThrow(SupportValidationError);
+    expect(() =>
+      parseSupportPayload({
+        ...supportFixture(),
+        diagnostics: { ...supportFixture().diagnostics, addons: -1 },
+      }),
+    ).toThrow(SupportValidationError);
+    expect(() =>
+      parseSupportPayload({
+        ...supportFixture(),
+        diagnostics: {
+          ...supportFixture().diagnostics,
+          attention: Array.from({ length: 13 }, () => supportFixture().diagnostics.attention[0]),
+        },
+      }),
+    ).toThrow(SupportValidationError);
   });
 
   it('neutralizes role, user, channel, everyone, and here mentions', () => {
-    const value = neutralizeMentions('@here <@123456789012345678> <@&123456789012345678> <#123456789012345678>');
+    const value = neutralizeMentions(
+      '@here <@123456789012345678> <@&123456789012345678> <#123456789012345678>',
+    );
     expect(value).not.toMatch(/@here|<@|<#/);
   });
 
   it('rejects unknown platform values', () => {
-    expect(() => parseSupportPayload({ ...supportFixture(), platform: 'browser supplied' })).toThrow(
-      SupportValidationError,
-    );
+    expect(() =>
+      parseSupportPayload({ ...supportFixture(), platform: 'browser supplied' }),
+    ).toThrow(SupportValidationError);
   });
 });

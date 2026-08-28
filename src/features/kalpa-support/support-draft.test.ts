@@ -66,6 +66,29 @@ describe('Kalpa support draft contract', () => {
     ).toThrow('attention list');
   });
 
+  it('uses the canonical ellipsis when an attention row is truncated', () => {
+    const fixture = supportDraftFixture();
+    const parsed = parseSupportPayload({
+      ...fixture,
+      diagnostics: {
+        ...fixture.diagnostics,
+        attention: [
+          {
+            ...fixture.diagnostics.attention[0],
+            name: 'n'.repeat(100),
+            folder: 'f'.repeat(100),
+          },
+        ],
+      },
+    });
+    const row = renderSupportReport(parsed)
+      .split('\n')
+      .find((line) => line.startsWith('- n'));
+
+    expect(row).toHaveLength(180);
+    expect(row?.endsWith('...')).toBe(true);
+  });
+
   it('captures a valid fragment before clearing it from the URL', () => {
     const encoded = encodeFragment(supportDraftFixture());
     expect(encoded.length).toBeLessThan(SUPPORT_FRAGMENT_MAX_LENGTH);
