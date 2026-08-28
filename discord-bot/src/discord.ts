@@ -21,9 +21,11 @@ export class DiscordApiError extends Error {
   constructor(
     public readonly status: number,
     method: string,
-    path: string,
+    _path: string,
   ) {
-    super(`Discord API error ${status} on ${method} ${path}`);
+    // Discord routes can contain user, guild, channel, and message IDs. Keep
+    // them out of error strings because callers may log an uncaught error.
+    super(`Discord API error ${status} on ${method}`);
     this.name = 'DiscordApiError';
   }
 }
@@ -51,7 +53,7 @@ async function discordFetch<T>(
       const retryAfterRaw = parseFloat(res.headers.get('Retry-After') ?? '1');
       const retryAfter = Number.isFinite(retryAfterRaw) ? retryAfterRaw : 1;
       const waitMs = Math.min(retryAfter * 1000, 5000); // cap at 5s
-      console.warn(`[discord] rate limited on ${method} ${path}, retry after ${retryAfter}s`);
+      console.warn(`[discord] rate limited on ${method}, retry after ${retryAfter}s`);
       if (attempt < maxRetries) {
         await new Promise((r) => setTimeout(r, waitMs));
         continue;
@@ -60,7 +62,7 @@ async function discordFetch<T>(
 
     // Retry on 5xx server errors
     if (res.status >= 500 && attempt < maxRetries) {
-      console.warn(`[discord] server error ${res.status} on ${method} ${path}, retrying...`);
+      console.warn(`[discord] server error ${res.status} on ${method}, retrying...`);
       await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)));
       continue;
     }
@@ -76,7 +78,7 @@ async function discordFetch<T>(
     return res.json() as Promise<T>;
   }
 
-  throw new Error(`Discord API failed after ${maxRetries + 1} attempts on ${method} ${path}`);
+  throw new Error(`Discord API failed after ${maxRetries + 1} attempts on ${method}`);
 }
 
 // ── Channels ────────────────────────────────────────────────────────────────
@@ -213,11 +215,7 @@ export function editMessage(
   );
 }
 
-export function getMessages(
-  env: Env,
-  channelId: string,
-  limit = 100,
-): Promise<DiscordMessage[]> {
+export function getMessages(env: Env, channelId: string, limit = 100): Promise<DiscordMessage[]> {
   return discordFetch<DiscordMessage[]>(
     env,
     'GET',
@@ -225,11 +223,7 @@ export function getMessages(
   );
 }
 
-export function deleteMessage(
-  env: Env,
-  channelId: string,
-  messageId: string,
-): Promise<void> {
+export function deleteMessage(env: Env, channelId: string, messageId: string): Promise<void> {
   return discordFetch<void>(env, 'DELETE', `/channels/${channelId}/messages/${messageId}`);
 }
 
