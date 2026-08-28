@@ -10,7 +10,7 @@
 import { ThemeProvider, createTheme } from '@mui/material';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
+import React, { act } from 'react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import '@testing-library/jest-dom';
 
@@ -130,6 +130,40 @@ describe('PublicProfilePage indexability', () => {
     expect(screen.queryByText('Player not found')).not.toBeInTheDocument();
     expect(document.title).toBe('Profile unavailable | ESO Toolkit');
     expect(robotsContent()).toBe('noindex, nofollow');
+  });
+
+  it('percent-encodes the username in the canonical', async () => {
+    // Author names in this system are not guaranteed plain ASCII (see #1314,
+    // where they were HTML-escaped on store). An unencoded space or non-ASCII
+    // character produces an href crawlers discard.
+    jest
+      .spyOn(rosterHubApi, 'getUserProfile')
+      .mockResolvedValue({ profile: { ...PROFILE, username: 'Bob the Bosmer' } });
+
+    renderAt('Bob%20the%20Bosmer');
+
+    await waitFor(() => expect(document.title).toBe('Bob the Bosmer | ESO Toolkit'));
+    expect(canonicalHref()).toBe('https://esotk.com/u/Bob%20the%20Bosmer/');
+  });
+
+  it('leaves the loading state indexable', async () => {
+    // `!profile` is true for the whole fetch window. Noindexing it would let a
+    // crawler that renders during a slow lookup drop a real profile.
+    let resolve: (value: { profile: UserProfile }) => void = () => undefined;
+    jest.spyOn(rosterHubApi, 'getUserProfile').mockReturnValue(
+      new Promise((r) => {
+        resolve = r;
+      }),
+    );
+
+    renderAt('bob');
+
+    expect(document.head.querySelector('meta[name="robots"]')).toBeNull();
+    await act(async () => {
+      resolve({ profile: PROFILE });
+    });
+    await waitFor(() => expect(document.title).toBe('Bob | ESO Toolkit'));
+    expect(document.head.querySelector('meta[name="robots"]')).toBeNull();
   });
 
   it('recovers when the retry succeeds', async () => {

@@ -1029,11 +1029,17 @@ export const PublicProfilePage: React.FC = () => {
   // typed in the URL, so /u/Bob and /u/bob consolidate onto one page. Null while
   // there is nothing to index, which leaves the shell's canonical alone rather
   // than pointing it at a URL that renders a soft 404.
-  useCanonicalUrl(profile ? `/u/${profile.username}` : null);
+  useCanonicalUrl(profile ? `/u/${encodeURIComponent(profile.username)}` : null);
 
   // Both failure states render body copy at a URL a real profile would use, so
   // they are excluded on state. No path pattern can express this.
-  useNoindex(!profile);
+  //
+  // Deliberately NOT `!profile`, which would also cover the fetch window. Once
+  // something serves 200 for these paths, a crawler that renders during a slow
+  // lookup would snapshot a noindex and drop a real profile from the index.
+  // A still-loading page has no content to index either way, so leaving it
+  // neutral costs nothing and removes that failure mode.
+  useNoindex(notFound || loadError !== null);
 
   // Owner fallback: the public profile API 404s for a logged-in user who has no
   // public builds/rosters and no profile row yet. Rather than tell owners their
