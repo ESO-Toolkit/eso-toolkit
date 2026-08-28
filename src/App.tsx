@@ -37,6 +37,7 @@ import { AuthenticatedRoute } from './features/auth/AuthenticatedRoute';
 import { BanRedirect } from './features/auth/BanRedirect';
 import { DiscordAuthProvider } from './features/auth/DiscordAuthContext';
 import { Login } from './features/auth/Login';
+import { captureKalpaSupportDraft } from './features/kalpa-support/support-draft';
 import { ReportFightDetails } from './features/report_details/ReportFightDetails';
 import { UserReports } from './features/user_reports/UserReports';
 import { useWorkerManagerLogger } from './hooks/useWorkerManagerLogger';
@@ -53,6 +54,10 @@ import {
   importBuildHubPage,
   importPackHubPage,
 } from './utils/hubRoutePreload';
+
+// Capture and clear the fragment before analytics or error tracking can observe
+// the support handoff. The validated draft remains session-scoped.
+captureKalpaSupportDraft();
 // Initialize error tracking before the app starts (async — loads the
 // Rollbar chunk off the entry path; consumers null-guard the instance)
 void initializeErrorTracking();
@@ -162,6 +167,10 @@ const AboutPage = React.lazy(() =>
 
 const KalpaPage = React.lazy(() =>
   import('./pages/KalpaPage').then((module) => ({ default: module.KalpaPage })),
+);
+
+const KalpaSupportPage = React.lazy(() =>
+  import('./pages/KalpaSupportPage').then((module) => ({ default: module.KalpaSupportPage })),
 );
 
 const DiscordServerConfigPage = React.lazy(() =>
@@ -911,6 +920,16 @@ const AppRoutes: React.FC = () => {
                 <ErrorBoundary>
                   <Suspense fallback={<LoadingFallback />}>
                     <KalpaPage />
+                  </Suspense>
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="/kalpa/support"
+              element={
+                <ErrorBoundary>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <KalpaSupportPage />
                   </Suspense>
                 </ErrorBoundary>
               }

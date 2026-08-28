@@ -56,7 +56,12 @@ const staticRoutes = Object.entries({ ...routeMeta, ...leaderboardRouteMeta })
     if (!meta.description) {
       throw new Error(`Prerendered route is missing a description: ${routePath}`);
     }
-    return { path: routePath.slice(1), title: meta.title, description: meta.description };
+    return {
+      path: routePath.slice(1),
+      title: meta.title,
+      description: meta.description,
+      noindex: meta.noindex === true,
+    };
   });
 
 if (staticRoutes.length === 0) {
@@ -118,7 +123,7 @@ for (const route of staticRoutes) {
   const routeUrl = `${SITE_ORIGIN}/${route.path}/`;
   const title = escapeHtml(route.title);
   const description = escapeHtml(route.description);
-  const routeShell = contents
+  let routeShell = contents
     .replace(/<title>[^<]*<\/title>/, `<title>${title}</title>`)
     .replace(
       /<link rel="canonical" href="[^"]*" \/>/,
@@ -149,6 +154,10 @@ for (const route of staticRoutes) {
       `<meta name="twitter:description" content="${description}" />`,
     );
 
+  if (route.noindex) {
+    routeShell = routeShell.replace('</head>', '  <meta name="robots" content="noindex,nofollow" />\n</head>');
+  }
+
   const routeDirectory = path.join(buildDirectory, route.path);
   fs.mkdirSync(routeDirectory, { recursive: true });
   fs.writeFileSync(path.join(routeDirectory, 'index.html'), routeShell);
@@ -160,7 +169,7 @@ for (const route of staticRoutes) {
 const lastmod = new Date().toISOString().slice(0, 10);
 const sitemapUrls = [
   `${SITE_ORIGIN}/`,
-  ...staticRoutes.map((route) => `${SITE_ORIGIN}/${route.path}/`),
+  ...staticRoutes.filter((route) => !route.noindex).map((route) => `${SITE_ORIGIN}/${route.path}/`),
 ].sort();
 const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">

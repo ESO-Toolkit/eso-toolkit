@@ -32,7 +32,6 @@ export interface DiscordTokenResponse {
   access_token: string;
   token_type: string;
   expires_in: number;
-  refresh_token: string;
   scope: string;
 }
 
@@ -105,8 +104,7 @@ export async function exchangeDiscordCode(code: string): Promise<DiscordTokenRes
   });
 
   if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`Token exchange failed: ${text}`);
+    throw new Error('Discord sign-in could not be completed. Please try again.');
   }
 
   return res.json() as Promise<DiscordTokenResponse>;
@@ -122,6 +120,12 @@ export function getDiscordReturnPath(): string {
     return path;
   }
   return '/';
+}
+
+/** Read the OAuth destination without consuming it, for cancellation recovery. */
+export function peekDiscordReturnPath(): string {
+  const path = sessionStorage.getItem(DISCORD_SS_RETURN_PATH_KEY);
+  return path && path.startsWith('/') && !path.startsWith('//') ? path : '/';
 }
 
 // ── Discord API calls ───────────────────────────────────────────────────────

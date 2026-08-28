@@ -27,6 +27,8 @@ export interface RouteMeta {
    * routes are runtime-only.
    */
   readonly prerender: boolean;
+  /** Emit a real static shell but keep the transactional route out of search. */
+  readonly noindex?: boolean;
 }
 
 /** Every route path known to the metadata map, as a literal union. */

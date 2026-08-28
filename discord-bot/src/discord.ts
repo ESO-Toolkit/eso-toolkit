@@ -17,13 +17,25 @@ const API_BASE = 'https://discord.com/api/v10';
 
 const MAX_RETRIES = 2;
 
+export class DiscordApiError extends Error {
+  constructor(
+    public readonly status: number,
+    method: string,
+    path: string,
+  ) {
+    super(`Discord API error ${status} on ${method} ${path}`);
+    this.name = 'DiscordApiError';
+  }
+}
+
 async function discordFetch<T>(
   env: Env,
   method: string,
   path: string,
   body?: unknown,
+  maxRetries = MAX_RETRIES,
 ): Promise<T> {
-  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
     const res = await fetch(`${API_BASE}${path}`, {
       method,
       headers: {
@@ -40,22 +52,22 @@ async function discordFetch<T>(
       const retryAfter = Number.isFinite(retryAfterRaw) ? retryAfterRaw : 1;
       const waitMs = Math.min(retryAfter * 1000, 5000); // cap at 5s
       console.warn(`[discord] rate limited on ${method} ${path}, retry after ${retryAfter}s`);
-      if (attempt < MAX_RETRIES) {
+      if (attempt < maxRetries) {
         await new Promise((r) => setTimeout(r, waitMs));
         continue;
       }
     }
 
     // Retry on 5xx server errors
-    if (res.status >= 500 && attempt < MAX_RETRIES) {
+    if (res.status >= 500 && attempt < maxRetries) {
       console.warn(`[discord] server error ${res.status} on ${method} ${path}, retrying...`);
       await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)));
       continue;
     }
 
     if (!res.ok) {
-      const text = await res.text();
-      throw new Error(`Discord API error ${res.status} on ${method} ${path}: ${text}`);
+      await res.text();
+      throw new DiscordApiError(res.status, method, path);
     }
 
     // 204 No Content
@@ -64,7 +76,7 @@ async function discordFetch<T>(
     return res.json() as Promise<T>;
   }
 
-  throw new Error(`Discord API failed after ${MAX_RETRIES + 1} attempts on ${method} ${path}`);
+  throw new Error(`Discord API failed after ${maxRetries + 1} attempts on ${method} ${path}`);
 }
 
 // ── Channels ────────────────────────────────────────────────────────────────
@@ -88,8 +100,15 @@ export function createChannel(
   env: Env,
   guildId: string,
   options: CreateChannelOptions,
+  retry = true,
 ): Promise<DiscordChannel> {
-  return discordFetch<DiscordChannel>(env, 'POST', `/guilds/${guildId}/channels`, options);
+  return discordFetch<DiscordChannel>(
+    env,
+    'POST',
+    `/guilds/${guildId}/channels`,
+    options,
+    retry ? MAX_RETRIES : 0,
+  );
 }
 
 export function deleteChannel(env: Env, channelId: string): Promise<DiscordChannel> {
@@ -162,6 +181,9 @@ export interface SendMessageOptions {
   embeds?: DiscordEmbed[];
   components?: DiscordComponent[];
   allowed_mentions?: { parse?: string[]; users?: string[]; roles?: string[] };
+  nonce?: string;
+  enforce_nonce?: boolean;
+  flags?: number;
 }
 
 const SAFE_MENTIONS: SendMessageOptions['allowed_mentions'] = { parse: [] };

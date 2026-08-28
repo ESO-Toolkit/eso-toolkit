@@ -103,7 +103,10 @@ const redactTelemetryUrls = (value: unknown, seen = new WeakSet<object>()): void
   }
 
   Object.entries(value as Record<string, unknown>).forEach(([key, entry]) => {
-    if (typeof entry === 'string' && /(?:url|uri|href|location|filename|source)$/i.test(key)) {
+    if (
+      typeof entry === 'string' &&
+      (/(?:url|uri|href|location|filename|source)$/i.test(key) || /^(?:from|to)$/i.test(key))
+    ) {
       (value as Record<string, unknown>)[key] = sanitizeTelemetryUrl(entry);
     } else {
       redactTelemetryUrls(entry, seen);

@@ -55,6 +55,9 @@ export interface Env {
   ZAI_API_KEY: string;
   TICKETS: KVNamespace;
   ROSTERS: KVNamespace;
+  SUPPORT_COORDINATOR: DurableObjectNamespace;
+  SUPPORT_SESSION_SECRET: string;
+  SUPPORT_AUDIT_SECRET: string;
   // Config constants (set in wrangler.toml vars)
   GUILD_ID: string;
   TICKET_CATEGORY_ID: string;
@@ -166,6 +169,7 @@ export interface DiscordChannel {
   id: string;
   name: string;
   type: number;
+  topic?: string | null;
   guild_id?: string;
   parent_id?: string;
   position?: number;
@@ -212,6 +216,7 @@ export interface TicketState {
   staffNotes?: string; // Internal notes visible only to staff
   embedMessageId?: string;
   createdAt: string; // ISO timestamp
+  source?: 'discord-modal' | 'kalpa';
 }
 
 // AI response shape

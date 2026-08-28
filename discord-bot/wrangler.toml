@@ -20,3 +20,11 @@ id = "df6065234e9e404fb7b0e57071751907"
 [[kv_namespaces]]
 binding = "ROSTERS"
 id = "2d4b62745f2c4aaeb6b1975dafc8816f"
+
+[[durable_objects.bindings]]
+name = "SUPPORT_COORDINATOR"
+class_name = "SupportCoordinator"
+
+[[migrations]]
+tag = "v1-support-coordinator"
+new_sqlite_classes = ["SupportCoordinator"]

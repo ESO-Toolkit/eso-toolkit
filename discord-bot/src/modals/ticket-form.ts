@@ -7,21 +7,13 @@
  */
 
 import { classifyTicket } from '../ai.js';
-import {
-  allow,
-  createChannel,
-  editFollowup,
-  editMessage,
-  getGuildRoles,
-  Permission,
-  sendMessage,
-} from '../discord.js';
+import { editFollowup, editMessage } from '../discord.js';
 import { createGitHubIssue } from '../github.js';
-import { nextTicketId, putTicket, updateTicket } from '../kv.js';
+import { updateTicket } from '../kv.js';
+import { createPrivateTicket } from '../tickets/service.js';
 import {
   ButtonId,
   ButtonStyle,
-  ChannelType,
   Colors,
   ComponentType,
   InteractionResponseType,
@@ -256,49 +248,20 @@ async function processTicketCreation(
   description: string,
 ): Promise<void> {
   try {
-    // 1. Assign ticket ID
-    const ticketId = await nextTicketId(env);
-
-    // 2. Determine permission overwrites
-    const overwrites = await buildPermissionOverwrites(env, user.id);
-
-    // 3. Create the private channel
-    const channelName = `ticket-${ticketId}`;
-    const channel = await createChannel(env, env.GUILD_ID, {
-      name: channelName,
-      type: ChannelType.GUILD_TEXT,
-      parent_id: env.TICKET_CATEGORY_ID,
-      topic: `Support ticket #${ticketId} — ${title}`,
-      permission_overwrites: overwrites,
-    });
-
-    // 4. Save initial ticket state
-    const now = new Date().toISOString();
-    const ticket: TicketState = {
-      id: ticketId,
-      channelId: channel.id,
-      userId: user.id,
-      username: user.username,
+    const { ticket, messageId } = await createPrivateTicket(env, {
+      user,
       category,
       title,
       description,
-      status: 'open',
-      createdAt: now,
-    };
-    await putTicket(env, ticket);
-
-    // 5. Post initial embed (before AI/GitHub so user sees channel fast)
-    const embed = buildTicketEmbed(ticket);
-    const actionRows = buildTicketActionRows(ticket);
-    const embedMsg = await sendMessage(env, channel.id, {
-      content: `<@${user.id}> Your ticket has been created. Staff will be with you shortly.`,
-      embeds: [embed],
-      components: actionRows,
+      source: 'discord-modal',
+      initialMessage: (createdTicket) => ({
+        content: `<@${user.id}> Your ticket has been created. Staff will be with you shortly.`,
+        embeds: [buildTicketEmbed(createdTicket)],
+        components: buildTicketActionRows(createdTicket),
+        allowed_mentions: { parse: [], users: [user.id] },
+      }),
     });
-
-    // Save embed message ID for later edits
-    ticket.embedMessageId = embedMsg.id;
-    await putTicket(env, ticket);
+    const ticketId = ticket.id;
 
     // 6. Run AI classification + GitHub issue in parallel
     const [aiResult, githubIssue] = await Promise.allSettled([
@@ -325,11 +288,11 @@ async function processTicketCreation(
       ...(github?.number !== undefined && { githubIssueNumber: github.number }),
       ...(github?.html_url !== undefined && { githubIssueUrl: github.html_url }),
     };
-    const updatedTicket = await updateTicket(env, channel.id, aiPatch);
+    const updatedTicket = await updateTicket(env, ticket.channelId, aiPatch);
 
     // 8. Edit the embed with enriched data
     if (updatedTicket) {
-      await editMessage(env, channel.id, embedMsg.id, {
+      await editMessage(env, ticket.channelId, messageId, {
         content: `<@${user.id}> Your ticket has been created. Staff will be with you shortly.`,
         embeds: [buildTicketEmbed(updatedTicket)],
         components: buildTicketActionRows(updatedTicket),
@@ -338,7 +301,7 @@ async function processTicketCreation(
 
     // 9. Update the ephemeral deferred reply
     await editFollowup(env, interaction.token, '@original', {
-      content: `✅ Your ticket **#${ticketId}** has been created: <#${channel.id}>`,
+      content: `✅ Your ticket **#${ticketId}** has been created: <#${ticket.channelId}>`,
     });
   } catch (err) {
     console.error('[ticket-form] processTicketCreation error:', err);
@@ -354,49 +317,6 @@ async function processTicketCreation(
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
-
-/**
- * Builds channel permission overwrites:
- * - Deny @everyone
- * - Allow ticket creator
- * - Allow any role with MANAGE_CHANNELS permission (staff)
- */
-async function buildPermissionOverwrites(
-  env: Env,
-  userId: string,
-): Promise<{ id: string; type: 0 | 1; allow?: string; deny?: string }[]> {
-  const memberPerms = allow(
-    Permission.VIEW_CHANNEL,
-    Permission.SEND_MESSAGES,
-    Permission.READ_MESSAGE_HISTORY,
-    Permission.EMBED_LINKS,
-    Permission.ATTACH_FILES,
-    Permission.ADD_REACTIONS,
-    Permission.USE_EXTERNAL_EMOJIS,
-  );
-
-  const overwrites: { id: string; type: 0 | 1; allow?: string; deny?: string }[] = [
-    // Deny @everyone (role id = guild id)
-    { id: env.GUILD_ID, type: 0, deny: allow(Permission.VIEW_CHANNEL) },
-    // Allow ticket creator
-    { id: userId, type: 1, allow: memberPerms },
-  ];
-
-  // Allow roles that have MANAGE_CHANNELS (staff/mods)
-  try {
-    const roles = await getGuildRoles(env, env.GUILD_ID);
-    for (const role of roles) {
-      const perms = BigInt(role.permissions);
-      if ((perms & Permission.MANAGE_CHANNELS) === Permission.MANAGE_CHANNELS) {
-        overwrites.push({ id: role.id, type: 0, allow: memberPerms });
-      }
-    }
-  } catch (err) {
-    console.error('[ticket-form] failed to fetch guild roles:', err);
-  }
-
-  return overwrites;
-}
 
 function capitalise(s: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1);

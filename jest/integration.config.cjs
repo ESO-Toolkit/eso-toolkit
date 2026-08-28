@@ -10,8 +10,8 @@ module.exports = {
   
   displayName: 'integration',
   testMatch: [
-    '<rootDir>/src/**/__tests__/integration/**/*.test.{js,jsx,ts,tsx}',
-    '<rootDir>/src/**/*.integration.test.{js,jsx,ts,tsx}',
+    '**/__tests__/integration/**/*.test.{js,jsx,ts,tsx}',
+    '**/*.integration.test.{js,jsx,ts,tsx}',
   ],
   // Integration tests may need longer timeout for complex scenarios
   testTimeout: 10000,
