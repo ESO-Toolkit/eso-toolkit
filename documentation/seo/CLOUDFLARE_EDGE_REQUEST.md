@@ -2,7 +2,7 @@
 
 **Audience:** whoever administers the `esotk.com` domain / Cloudflare account.
 **Requested by:** ESO Toolkit maintainers.
-**Status:** not yet actioned. Requires DNS/Cloudflare access that the requester does not have.
+**Status:** not yet actioned. Requires registrar/DNS access that the requester does not have.
 
 ## Summary of the ask
 
@@ -49,10 +49,52 @@ Permissions-Policy. Its own header comment states the problem:
 Today the site ships only a browser-side `<meta http-equiv="Content-Security-Policy">` fallback.
 `frame-ancestors`, HSTS, and Permissions-Policy cannot be expressed that way and are simply absent.
 
+## Current DNS state, verified 2026-08-28
+
+This matters because the ask below was originally written as "orange-cloud the DNS record",
+which assumes the zone already lives on Cloudflare. It does not.
+
+    $ nslookup esotk.com
+    185.199.108.153, 185.199.109.153, 185.199.110.153, 185.199.111.153   (GitHub Pages)
+
+    $ curl -sI https://esotk.com/
+    Server: GitHub.com          <- no cf-ray header, so nothing is proxying
+
+    $ nslookup -type=NS esotk.com
+    ns-345.awsdns-43.com, ns-936.awsdns-53.net,
+    ns-1105.awsdns-10.org, ns-1833.awsdns-37.co.uk      <- AWS Route 53
+
+So `esotk.com` is served straight off GitHub Pages with DNS authoritative on Route 53, and there
+is no Cloudflare zone for it to orange-cloud. The Cloudflare account that already runs
+`roster-hub-api` and `eso-toolkit-discord-bot` does not currently hold this domain.
+
+`/u/somebody` still returns 404 today, confirming the problem is live.
+
+### Three ways to get an edge layer, and which to pick
+
+**A. Move the zone to Cloudflare (recommended).** Repoint the nameservers at the registrar from
+Route 53 to the Cloudflare pair issued when the zone is added. Works on the free plan. Best fit
+here because the Worker would sit on the same account as `roster-hub-api`, so it can call the API
+through a service binding rather than a public round trip. Cost: one nameserver change, plus
+recreating any non-Pages Route 53 records (mail, verification TXT) in Cloudflare first. Do that
+before flipping, and the switch is uneventful.
+
+**B. Cloudflare partial (CNAME) setup.** Keeps DNS on Route 53 and proxies only specific
+hostnames. Rejected: partial zones require the Business plan, currently 200 USD/month, for a
+feature the free plan gives outright under option A.
+
+**C. Stay on AWS: CloudFront plus CloudFront Functions in front of GitHub Pages.** Achieves all
+three goals without touching the nameservers, since Route 53 can alias straight to a CloudFront
+distribution. Reasonable if moving DNS is undesirable. The tradeoff is that the edge code then
+lives on a different provider from the API it has to call, so the metadata fetch becomes a public
+internet request instead of a binding, and the project ends up maintaining edge logic in two
+clouds.
+
 ## What we are asking for, in order of value
 
-1. **Proxy `esotk.com` through Cloudflare** with GitHub Pages as origin (orange-cloud the DNS
-   record, or move to Cloudflare Pages pointed at the same build output).
+1. **Put `esotk.com` behind an edge layer** with GitHub Pages as origin. Per the section above
+   this means moving the zone to Cloudflare (option A) rather than flipping a proxy toggle, since
+   the domain is on Route 53 today.
 2. **Allow us to deploy a Worker** on the `esotk.com/*` route. We will write and maintain it. It will:
    - intercept `/report/*`, `/u/*`, `/b/*`, `/bv`, `/rv`, return the app shell with HTTP **200**
      instead of 404, and inject per-URL `<title>` and Open Graph tags (report title, boss, player
@@ -74,7 +116,9 @@ Today the site ships only a browser-side `<meta http-equiv="Content-Security-Pol
 
 - The Worker is additive and path-scoped. If it errors it can `fetch(request)` straight through to
   origin, so worst case is current behaviour.
-- Rollback is removing the Worker route or grey-clouding the DNS record.
+- Rollback is removing the Worker route, or repointing the nameservers back to Route 53. Keep the
+  existing Route 53 hosted zone in place until the change has been stable for a while, so the
+  revert is a nameserver change rather than a rebuild.
 - No data is stored at the edge. The Worker reads public report metadata only.
 
 ## Contact
