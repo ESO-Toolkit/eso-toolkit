@@ -3,6 +3,7 @@ import { test, expect } from '@playwright/test';
 import { createAuthTestUtils } from './auth-utils';
 import { TEST_DATA, TEST_TIMEOUTS, installPageErrorCapture, waitForAppMount } from './selectors';
 import { createEsoPage } from './utils/EsoLogAggregatorPage';
+import { createSkeletonDetector } from './utils/skeleton-detector';
 
 /**
  * Nightly Regression Tests - Authentication and User Reports
@@ -238,54 +239,23 @@ test.describe('Nightly Regression - Authentication and Reports', () => {
         timeout: TEST_TIMEOUTS.navigation,
       });
 
-      await page
-        .waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad })
-        .catch(() => {});
-
       // Wait for app to render
       await waitForAppMount(page);
 
-      // Calculator should be accessible without login - check for various indicators
-      const hasNumberInput = await page
-        .locator('input[type=number]')
-        .first()
-        .isVisible()
-        .catch(() => false);
-      const hasTextInput = await page
-        .locator('input[type=text]')
-        .first()
-        .isVisible()
-        .catch(() => false);
-      const hasCalculatorClass = await page
-        .locator('.calculator')
-        .isVisible()
-        .catch(() => false);
-      const hasCalculationClass = await page
-        .locator('.calculation')
-        .isVisible()
-        .catch(() => false);
-      const hasCalculatorText = await page
-        .getByText(/calculator/i)
-        .first()
-        .isVisible()
-        .catch(() => false);
-      const hasCalculatorContent =
-        hasNumberInput ||
-        hasTextInput ||
-        hasCalculatorClass ||
-        hasCalculationClass ||
-        (hasCalculatorText && (hasNumberInput || hasTextInput));
+      // Assert stable, user-facing landmarks instead of implementation-specific
+      // input types. MUI number fields can be exposed differently by each browser.
+      await expect(page).toHaveURL(/\/calculator\/?(?:[?#]|$)/);
+      await expect(
+        page.getByRole('heading', { level: 1, name: 'ESO Toolkit Calculator' }),
+      ).toBeVisible({ timeout: TEST_TIMEOUTS.dataLoad });
+      await expect(page.getByRole('tablist', { name: 'Calculator type' })).toBeVisible();
+      await expect(page.getByRole('status')).toHaveText('Calculator ready');
 
-      if (!hasCalculatorContent) {
-        console.log('🔍 Calculator page URL:', page.url());
-        console.log('🔍 Calculator page title:', await page.title());
-        console.log(
-          '🔍 Calculator body content preview:',
-          (await page.locator('body').textContent())?.slice(0, 200),
-        );
-      }
-
-      expect(hasCalculatorContent).toBeTruthy();
+      await createSkeletonDetector(page).waitForSkeletonsToDisappear({
+        timeout: TEST_TIMEOUTS.dataLoad,
+        stabilityTimeout: 1000,
+      });
+      await page.waitForTimeout(1000);
 
       await page.screenshot({
         path: 'test-results/nightly-regression-calculator.png',
@@ -294,7 +264,7 @@ test.describe('Nightly Regression - Authentication and Reports', () => {
       });
 
       // Test basic calculator interaction if inputs are available
-      const numberInputs = page.locator('input[type="number"]');
+      const numberInputs = page.getByRole('spinbutton');
       const inputCount = await numberInputs.count();
 
       if (inputCount > 0) {
