@@ -1,10 +1,11 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { shouldNoindexPath } from '@/constants/noindexRoutes';
+import { useNoindex } from '@/hooks/useNoindex';
 
 /**
- * Keeps `<meta name="robots">` in step with the current route.
+ * Keeps `<meta name="robots">` in step with the current ROUTE.
  *
  * Rendered once inside the router, above `<Routes>`, so it covers the handful
  * of routes that sit outside `<AppLayout>` (`/oauth-redirect`, `/app-auth`,
@@ -12,37 +13,16 @@ import { shouldNoindexPath } from '@/constants/noindexRoutes';
  * in one place also means adding a private route later is a one-line change to
  * `NOINDEX_ROUTE_PATTERNS` rather than a hook someone forgets to call.
  *
- * Only ever ADDS `noindex`; it never writes an affirmative "index" value. That
- * matters because preview and report deploys sed a
- * `<meta name="robots" content="noindex, nofollow">` into every shell
- * (`.github/workflows/deploy-preview.yml`), and a component that "corrected"
- * the tag on indexable routes would quietly un-hide every preview build.
+ * Pages whose indexability depends on STATE rather than path call `useNoindex`
+ * directly instead. The two compose: `useNoindex` restores the previous value
+ * on cleanup, so a page-level noindex layered over a route-level one unwinds
+ * correctly.
  *
  * Renders nothing.
  */
 export const RobotsMeta: React.FC = () => {
   const { pathname } = useLocation();
-  const noindex = shouldNoindexPath(pathname);
-
-  useEffect(() => {
-    if (!noindex) return undefined;
-
-    const existing = document.head.querySelector<HTMLMetaElement>('meta[name="robots"]');
-    if (existing) {
-      const previous = existing.getAttribute('content');
-      existing.setAttribute('content', 'noindex, nofollow');
-      return () => {
-        if (previous === null) existing.removeAttribute('content');
-        else existing.setAttribute('content', previous);
-      };
-    }
-
-    const meta = document.createElement('meta');
-    meta.name = 'robots';
-    meta.content = 'noindex, nofollow';
-    document.head.appendChild(meta);
-    return () => meta.remove();
-  }, [noindex]);
+  useNoindex(shouldNoindexPath(pathname));
 
   return null;
 };

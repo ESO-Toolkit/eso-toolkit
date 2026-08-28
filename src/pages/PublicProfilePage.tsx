@@ -5,6 +5,7 @@ import {
   Construction as ConstructionIcon,
   Delete as DeleteIcon,
   Edit as EditIcon,
+  Error as ErrorIcon,
   Groups as GroupsIcon,
   OpenInNew as OpenInNewIcon,
   Person as PersonIcon,
@@ -54,6 +55,8 @@ import type {
   ProfileRosterSummary,
   UserProfile,
 } from '../features/roster-hub/types/roster-hub.types';
+import { useCanonicalUrl } from '../hooks/useCanonicalUrl';
+import { useNoindex } from '../hooks/useNoindex';
 import { useViewTransitionNavigate } from '../hooks/useViewTransitionNavigate';
 
 const CLASS_LABELS: Record<string, string> = {
@@ -950,6 +953,12 @@ export const PublicProfilePage: React.FC = () => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  // A failed lookup is not the same as an absent player. Kept apart so the
+  // page can stop telling someone on a flaky connection that a real profile
+  // does not exist, and so a transient error is never treated as evidence
+  // about whether this URL is worth indexing.
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [retryNonce, setRetryNonce] = useState(0);
   const [bioDialogOpen, setBioDialogOpen] = useState(false);
   const [bioSaving, setBioSaving] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{
@@ -972,6 +981,7 @@ export const PublicProfilePage: React.FC = () => {
 
     setLoading(true);
     setNotFound(false);
+    setLoadError(null);
     setProfile(null);
 
     const controller = new AbortController();
@@ -985,6 +995,11 @@ export const PublicProfilePage: React.FC = () => {
         if (controller.signal.aborted) return;
         if (err.message.includes('404') || err.message.toLowerCase().includes('not found')) {
           setNotFound(true);
+        } else {
+          // Timeout, network failure, CORS. Previously these fell through with
+          // notFound still false and profile still null, and the `|| !profile`
+          // guard on the 404 branch rendered "Player not found" anyway.
+          setLoadError(err.message);
         }
       })
       .finally(() => {
@@ -992,16 +1007,33 @@ export const PublicProfilePage: React.FC = () => {
       });
 
     return () => controller.abort();
-  }, [username]);
+  }, [username, retryNonce]);
 
   useEffect(() => {
     if (profile) {
       document.title = `${profile.username} | ESO Toolkit`;
+    } else if (notFound) {
+      // Was left at the shell's generic "ESO Toolkit", which is also what a
+      // still-loading page shows, so nothing in the document distinguished a
+      // missing player from a working one.
+      document.title = 'Player not found | ESO Toolkit';
+    } else if (loadError) {
+      document.title = 'Profile unavailable | ESO Toolkit';
     }
     return () => {
       document.title = 'ESO Toolkit';
     };
-  }, [profile]);
+  }, [profile, notFound, loadError]);
+
+  // Self-canonical, using the casing the API returned rather than whatever was
+  // typed in the URL, so /u/Bob and /u/bob consolidate onto one page. Null while
+  // there is nothing to index, which leaves the shell's canonical alone rather
+  // than pointing it at a URL that renders a soft 404.
+  useCanonicalUrl(profile ? `/u/${profile.username}` : null);
+
+  // Both failure states render body copy at a URL a real profile would use, so
+  // they are excluded on state. No path pattern can express this.
+  useNoindex(!profile);
 
   // Owner fallback: the public profile API 404s for a logged-in user who has no
   // public builds/rosters and no profile row yet. Rather than tell owners their
@@ -1182,6 +1214,66 @@ export const PublicProfilePage: React.FC = () => {
             </Grid>
           ))}
         </Grid>
+      </Container>
+    );
+  }
+
+  // ── Lookup failed ──────────────────────────────────────────────────────────
+
+  // Ordered before the 404 branch: that branch's `|| !profile` guard is a
+  // catch-all and would otherwise swallow this, reporting a network blip as a
+  // definitive statement that the player does not exist.
+  if (loadError) {
+    return (
+      <Container maxWidth="sm" sx={{ py: { xs: 8, sm: 12 }, textAlign: 'center' }}>
+        <Box
+          sx={{
+            width: 88,
+            height: 88,
+            borderRadius: '50%',
+            background: isDarkMode ? alpha('#334155', 0.2) : alpha('#cbd5e1', 0.25),
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            mx: 'auto',
+            mb: 3,
+          }}
+        >
+          <ErrorIcon sx={{ fontSize: 44, color: theme.palette.text.disabled }} />
+        </Box>
+        <Typography
+          variant="h5"
+          sx={{
+            fontWeight: 700,
+            color: theme.palette.text.primary,
+            mb: 1,
+            fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
+          }}
+        >
+          Could not load this profile
+        </Typography>
+        <Typography variant="body2" sx={{ color: theme.palette.text.secondary, mb: 4 }}>
+          Something went wrong reaching the server, so we cannot say whether{' '}
+          <strong>{username}</strong> has a profile. Try again in a moment.
+        </Typography>
+        <Stack direction="row" spacing={1.5} sx={{ justifyContent: 'center' }}>
+          <Button
+            size="small"
+            variant="outlined"
+            onClick={() => setRetryNonce((nonce) => nonce + 1)}
+            sx={{ textTransform: 'none', fontWeight: 600, borderRadius: '10px' }}
+          >
+            Try again
+          </Button>
+          <Button
+            size="small"
+            startIcon={<ArrowBackIcon />}
+            onClick={() => navigate(-1)}
+            sx={{ textTransform: 'none', fontWeight: 600, borderRadius: '10px' }}
+          >
+            Go back
+          </Button>
+        </Stack>
       </Container>
     );
   }
