@@ -456,6 +456,23 @@ async function syncOneEncounter(
     }
 
     const rows = [...rowsByCharacter.values()];
+
+    // A PARTIAL failure that yielded nothing is inconclusive, not empty. The
+    // check above only catches a total wipeout, so previously "one board 503s
+    // and the rest legitimately have no parses" was recorded as an authoritative
+    // empty: it pruned the rows we still held and advanced empty_streak toward
+    // demotion on the strength of a board we never actually read. The classes
+    // most likely to be the ONLY ones with parses on a boss are exactly the
+    // off-meta ones the per-class fetch was added to rescue, so this is the case
+    // that matters. The error path preserves last_synced_at and the streak, so
+    // the target is retried promptly instead.
+    if (boardsFailed > 0 && rows.length === 0) {
+      throw new Error(
+        `${boardsFailed} of ${boardsAttempted} class boards failed and the rest returned ` +
+          `no rows: ${firstBoardError}`,
+      );
+    }
+
     if (rows.length > 0) {
       await upsertDpsParses(env.DB, rows);
     }

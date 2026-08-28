@@ -48,6 +48,7 @@ import { useDpsParses } from './hooks/useDpsParses';
 import { getLeaderboardClassTheme } from './theme/leaderboardTheme';
 import type { BuildCluster } from './types/clustering.types';
 import type { DpsEncounterSummary } from './types/dpsParses.types';
+import { buildCeilingMap, normalizePooledParses } from './utils/pooledCeilings';
 
 type TabKey = 'encounter' | 'class';
 
@@ -310,23 +311,20 @@ export const BuildLeaderboardPage: React.FC = () => {
     isPooledClass ? 1000 : undefined,
   );
 
-  const topAmountByKey = useMemo(() => {
-    const map = new Map<string, number>();
-    encounters.forEach((encounter) => {
-      map.set(encounterKey(encounter), encounter.top_amount);
-    });
-    return map;
-  }, [encounters]);
-  const clusterParses = useMemo(() => {
-    if (!isPooledClass) return parses;
-    return parses.map((parse) => {
-      const top = topAmountByKey.get(encounterKeyOf(parse.encounter_id, parse.difficulty));
-      return top && top > 0 && parse.amount > 0 ? { ...parse, amount: parse.amount / top } : parse;
-    });
-  }, [isPooledClass, parses, topAmountByKey]);
-  // Wait for boss ceilings before clustering a pooled view, or every parse
-  // would carry its raw amount and re-cluster once ceilings arrive.
-  const poolingReady = !isPooledClass || topAmountByKey.size > 0;
+  // Falls back to the best amount observed in the parses for any board the
+  // summary feed has not caught up on. The two responses are cached
+  // independently (15 min against 10), so a board really can show up in the
+  // parses before its summary row exists — and previously those rows kept RAW
+  // amounts while every other row was normalized to 0-1.
+  const ceilingByKey = useMemo(() => buildCeilingMap(encounters, parses), [encounters, parses]);
+  const clusterParses = useMemo(
+    () => (isPooledClass ? normalizePooledParses(parses, ceilingByKey) : parses),
+    [isPooledClass, parses, ceilingByKey],
+  );
+  // Wait for the summary feed before clustering a pooled view. The fallback
+  // above keeps the maths correct without it, but clustering against observed
+  // ceilings and then re-clustering when the real ones land is wasted work.
+  const poolingReady = !isPooledClass || encounters.length > 0;
   const bossCount = useMemo(
     () => new Set(parses.map((parse) => encounterKeyOf(parse.encounter_id, parse.difficulty))).size,
     [parses],
