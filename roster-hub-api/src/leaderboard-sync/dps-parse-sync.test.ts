@@ -276,6 +276,29 @@ describe('syncDpsParses', () => {
     expect(rows.map((row: { eso_class: string }) => row.eso_class)).not.toContain('Necromancer');
   });
 
+  /**
+   * The total-wipeout guard only fires when EVERY board fails. A partial
+   * failure whose survivors happened to return nothing was recorded as an
+   * authoritative empty: it pruned the stored rows and advanced empty_streak
+   * toward demotion on the strength of a board that was never read. The classes
+   * most likely to be the only ones with parses on a boss are exactly the
+   * off-meta ones the per-class fetch exists to rescue.
+   */
+  it('treats a partial failure that yielded no rows as inconclusive, not empty', async () => {
+    mockedFetchRankings.mockImplementation((_token: string, params: { className: string }) => {
+      if (params.className === 'Necromancer') return Promise.reject(new Error('upstream 503'));
+      return Promise.resolve({ page: 1, hasMorePages: false, count: 0, rankings: [] });
+    });
+
+    const results = await syncDpsParses(env, { encounterId: 60 });
+
+    expect(results[0].status).toBe('error');
+    expect(results[0].detail).toContain('upstream 503');
+    // Must NOT age out the rows we still hold on the strength of an unread board.
+    expect(pruneDpsParses as jest.Mock).not.toHaveBeenCalled();
+    expect(upsertDpsParses as jest.Mock).not.toHaveBeenCalled();
+  });
+
   /** A total wipeout is an outage, not a boss without rankings — and must retry. */
   it('records an error, with the cause, when every class board fails', async () => {
     mockedFetchRankings.mockRejectedValue(new Error('upstream 500'));
