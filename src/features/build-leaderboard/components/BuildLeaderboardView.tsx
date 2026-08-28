@@ -305,7 +305,7 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
           <Typography
             sx={{ mt: 0.4, color: 'text.secondary', fontSize: '0.74rem', lineHeight: 1.5 }}
           >
-            {`${solved.sharePercent}% of the ${result.totalParses} top parses ${
+            {`${solved.sharePercent}% of the ${solved.clusteredParses} top parses ${
               scopeDescription ?? 'in this selection'
             } converge on a single build. Where other boards split into competing archetypes, this one has settled on one answer.`}
             {solved.outlierParses > 0 &&

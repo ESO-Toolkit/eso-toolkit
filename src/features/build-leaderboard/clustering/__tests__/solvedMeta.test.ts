@@ -29,8 +29,14 @@ function cluster(id: string, size: number, total: number): BuildCluster {
   };
 }
 
-/** Builds a result whose clusters have the given sizes, in the given order. */
-function resultOf(sizes: number[]): ClusterBuildsResult {
+/**
+ * Builds a result whose clusters have the given sizes, in the given order.
+ *
+ * `dropped` models parses the overflow distance cap discarded. They count
+ * toward `totalParses` but are in NO cluster, so `share` (computed by
+ * clusterBuilds against clustered mass) and `totalParses` legitimately diverge.
+ */
+function resultOf(sizes: number[], dropped = 0): ClusterBuildsResult {
   const total = sizes.reduce((sum, size) => sum + size, 0);
   return {
     clusters: sizes.map((size, i) => cluster(`c${i}`, size, total)),
@@ -38,9 +44,9 @@ function resultOf(sizes: number[]): ClusterBuildsResult {
     silhouette: 0.437,
     silhouetteByK: [],
     recommendedClusterId: 'c0',
-    totalParses: total,
+    totalParses: total + dropped,
     uniqueSignatures: sizes.length,
-    droppedParses: 0,
+    droppedParses: dropped,
   };
 }
 
@@ -53,6 +59,29 @@ describe('detectSolvedMeta', () => {
     expect(solved?.sharePercent).toBe(98);
     expect(solved?.outlierParses).toBe(6);
     expect(solved?.outliers.map((c) => c.id)).toEqual(['c1', 'c2']);
+    expect(solved?.clusteredParses).toBe(400);
+  });
+
+  it('reports the denominator its own percentage is taken over', () => {
+    // 60 of 60 clustered, but 75 parses went in: 15 were dropped by the
+    // overflow distance cap. Quoting totalParses here would claim "100% of the
+    // 75 top parses converge" while a fifth of them are in no cluster at all.
+    const solved = detectSolvedMeta(resultOf([60], 15));
+
+    expect(solved?.sharePercent).toBe(100);
+    expect(solved?.clusteredParses).toBe(60);
+    expect(resultOf([60], 15).totalParses).toBe(75);
+    // The parts must reconcile with the whole that is displayed beside them.
+    expect((solved?.dominant.size ?? 0) + (solved?.outlierParses ?? 0)).toBe(
+      solved?.clusteredParses,
+    );
+  });
+
+  it('applies the parse floor to clustered mass, not the pre-drop total', () => {
+    // 55 in, 10 dropped, 45 unanimous. totalParses clears 50 but the dominance
+    // is measured over only 45, so the claim is not backed by enough parses.
+    expect(resultOf([45], 10).totalParses).toBeGreaterThanOrEqual(SOLVED_META_MIN_PARSES);
+    expect(detectSolvedMeta(resultOf([45], 10))).toBeNull();
   });
 
   it('finds the dominant cluster wherever it sits in the array', () => {

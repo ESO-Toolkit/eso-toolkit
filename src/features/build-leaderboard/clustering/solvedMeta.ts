@@ -48,6 +48,12 @@ export const SOLVED_META_MIN_SHARE = 0.9;
  * Distinct from `MIN_PARSES_TO_CLUSTER` (10), which decides whether to cluster
  * at all. Clearing that bar makes archetypes meaningful; this much higher bar
  * is what it takes to make a claim ABOUT the whole class.
+ *
+ * Applied to CLUSTERED parses, not `result.totalParses`. Those differ whenever
+ * the overflow distance cap drops a signature, and `share` is computed against
+ * clustered mass (`clusterBuilds.ts`), so checking the floor against
+ * `totalParses` would let the gate fire on a dominance measured over fewer
+ * parses than the floor requires: 55 total, 10 dropped, 45 unanimous.
  */
 export const SOLVED_META_MIN_PARSES = 50;
 
@@ -56,6 +62,17 @@ export interface SolvedMeta {
   readonly dominant: BuildCluster;
   /** Dominant share as a whole percentage, e.g. 98 — ready for display. */
   readonly sharePercent: number;
+  /**
+   * Parses actually placed in a cluster, which is the denominator `sharePercent`
+   * is a percentage OF.
+   *
+   * Display copy must quote this and not `result.totalParses`. The two differ
+   * by `droppedParses`, and pairing a share computed over clustered mass with
+   * the larger total produces a claim that does not reconcile: 60 parses, 12
+   * dropped, 48 unanimous would read "100% of the 60 top parses converge" while
+   * a fifth of them are in no cluster at all.
+   */
+  readonly clusteredParses: number;
   /** Clusters outside the dominant one. May be empty. */
   readonly outliers: readonly BuildCluster[];
   /** Combined membership of `outliers`. */
@@ -70,8 +87,10 @@ export interface SolvedMeta {
  * report a share the reader can never verify against the cards on screen.
  */
 export function detectSolvedMeta(result: ClusterBuildsResult | null): SolvedMeta | null {
-  if (!result || result.totalParses < SOLVED_META_MIN_PARSES) return null;
-  if (result.clusters.length === 0) return null;
+  if (!result || result.clusters.length === 0) return null;
+
+  const clusteredParses = result.clusters.reduce((sum, cluster) => sum + cluster.size, 0);
+  if (clusteredParses < SOLVED_META_MIN_PARSES) return null;
 
   const dominant = result.clusters.reduce((acc, cluster) =>
     cluster.size > acc.size ? cluster : acc,
@@ -81,6 +100,7 @@ export function detectSolvedMeta(result: ClusterBuildsResult | null): SolvedMeta
   const outliers = result.clusters.filter((cluster) => cluster.id !== dominant.id);
   return {
     dominant,
+    clusteredParses,
     // Floor, not round. Rounding 89.6% up to "90% of parses" next to a card
     // list that does not add up is the kind of small dishonesty this page
     // cannot afford.
