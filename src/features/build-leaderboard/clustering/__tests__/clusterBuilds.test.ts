@@ -651,3 +651,58 @@ describe('overflow distance cap', () => {
     expect(result.droppedParses).toBe(1);
   });
 });
+
+/**
+ * The k window was entirely unpinned: changing minK, or rewriting the filter to
+ * bound the scan loop instead of filtering after it, left the whole suite green.
+ * These lock the two halves of the design so the wide-scan/narrow-select split
+ * is a decision the tests defend rather than an accident.
+ */
+describe('k selection window', () => {
+  function twoArchetypeParses() {
+    return [
+      ...Array.from({ length: 20 }, (_, i) => makeParse(NECRO_ARCHETYPE, i)),
+      ...Array.from({ length: 20 }, (_, i) => makeParse(SORC_ARCHETYPE, i)),
+    ];
+  }
+
+  it('scores k below the selection window and reports it', () => {
+    const result = clusterOf(twoArchetypeParses());
+    const scored = result.silhouetteByK.map((entry) => entry.k);
+
+    // The scan runs k=2..min(8, uniqueSignatures) regardless of [minK, maxK],
+    // so it reaches below the window. Those scores are a product output the UI
+    // reads, not dead work.
+    expect(scored).toContain(2);
+    expect(scored).toEqual(
+      Array.from({ length: Math.min(8, result.uniqueSignatures) - 1 }, (_, i) => i + 2),
+    );
+  });
+
+  it('does not select k=2 by default even when k=2 scores best', () => {
+    const result = clusterOf(twoArchetypeParses());
+    const best = result.silhouetteByK.reduce((acc, e) => (e.score > acc.score ? e : acc));
+
+    expect(best.k).toBe(2);
+    expect(result.k).toBeGreaterThanOrEqual(3);
+    expect(result.k).toBeLessThanOrEqual(6);
+  });
+
+  it('selects k=2 when the caller widens the window to allow it', () => {
+    // Proves the exclusion above comes from the WINDOW and not from the scan
+    // range, which is the distinction the docblock on DEFAULT_CLUSTER_OPTIONS
+    // rests on.
+    const result = clusterOf(twoArchetypeParses(), { minK: 2 });
+
+    expect(result.k).toBe(2);
+  });
+
+  it('falls back to the full scan when the input is smaller than minK', () => {
+    // Two unique signatures, so [minK, maxK] selects nothing. Without the
+    // `inWindow.length > 0` fallback this would throw on an empty reduce.
+    const result = clusterOf([makeParse(NECRO_ARCHETYPE, 0), makeParse(SORC_ARCHETYPE, 0)]);
+
+    expect(result.k).toBe(2);
+    expect(result.clusters).toHaveLength(2);
+  });
+});
