@@ -172,6 +172,10 @@
     "description": "Review recent ESO Toolkit features, fixes, and game-data updates.",
     "prerender": true
   },
+  "/u/:username": {
+    "title": "Player Profile | ESO Toolkit",
+    "prerender": false
+  },
   "/whoami": {
     "title": "Who Am I | ESO Toolkit",
     "prerender": false
