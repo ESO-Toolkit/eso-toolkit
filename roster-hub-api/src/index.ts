@@ -2448,14 +2448,14 @@ export default {
   fetch: app.fetch,
 
   /**
-   * ONE trigger firing twice a day (see wrangler.toml, `0 4,16 * * *`):
+   * ONE trigger firing four times a day (see wrangler.toml, `0 4,10,16,22 * * *`):
    *   04:00 UTC — temp-build cleanup + roster sync + DPS parse ingest
-   *   16:00 UTC — DPS parse ingest only
+   *   10:00, 16:00, 22:00 UTC — DPS parse ingest only
    *
    * It is a single combined expression because the account is at the free-plan
-   * cap of five cron triggers; two separate crons fail to register and the
-   * second pass then never runs. `event.cron` is identical for both firings, so
-   * the pass is derived from the fire time — see cron-schedule.ts.
+   * cap of five cron triggers; separate crons fail to register and those passes
+   * then never run. `event.cron` is identical for every firing, so the pass is
+   * derived from the fire time — see cron-schedule.ts.
    *
    * Each job is isolated in its own try/catch. Previously a throw in
    * `cleanupExpiredTempBuilds` would silently skip the roster sync for that day.
