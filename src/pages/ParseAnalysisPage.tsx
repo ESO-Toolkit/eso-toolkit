@@ -55,6 +55,7 @@ import {
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { useCanonicalUrl } from '@/hooks/useCanonicalUrl';
 import { usePageTitle } from '@/hooks/useDocumentTitle';
 
 import { AbilityIcon } from '../components/AbilityIcon';
@@ -280,6 +281,11 @@ const ParseAnalysisPageContent: React.FC = () => {
   const theme = useTheme();
 
   usePageTitle('/parse-analysis');
+  // The route is /parse-analysis/:reportId?/:fightId?, so the same page also
+  // answers on two parameterized forms over unbounded ids. Only the bare path
+  // is prerendered and in the sitemap; point the others at it rather than let
+  // each report/fight pair present itself as a separate page.
+  useCanonicalUrl('/parse-analysis');
 
   /**
    * Get theme-aware semantic color for text display.

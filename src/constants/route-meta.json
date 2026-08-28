@@ -50,7 +50,8 @@
   },
   "/discord-setup": {
     "title": "Discord Setup | ESO Toolkit",
-    "prerender": false
+    "description": "Install the ESO Toolkit Discord roster bot on your server in a few steps.",
+    "prerender": true
   },
   "/docs/calculations": {
     "title": "Calculation Guide | ESO Toolkit",

@@ -19,6 +19,7 @@ import { LandingPage } from './components/LandingPage';
 import { PerfLowNotice } from './components/PerfLowNotice';
 import { PerfTierProvider } from './components/PerfTierProvider';
 import { ReportFightsSkeleton } from './components/ReportFightsSkeleton';
+import { RobotsMeta } from './components/RobotsMeta';
 import { RosterBuilderSkeleton } from './components/RosterBuilderSkeleton';
 import { RosterHubSkeleton } from './components/RosterHubSkeleton';
 import { ScribingRedirect } from './components/ScribingRedirect';
@@ -508,6 +509,7 @@ const AppRoutes: React.FC = () => {
   return (
     <BrowserRouter basename={basename}>
       <HashRouteRedirect />
+      <RobotsMeta />
       <AnalyticsListener />
       <ScrollRestoration />
       <BanRedirect />
