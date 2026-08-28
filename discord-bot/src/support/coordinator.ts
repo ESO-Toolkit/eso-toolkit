@@ -19,6 +19,7 @@ interface BeginInput {
 
 const TICKET_RETENTION_MS = 7 * 24 * 60 * 60 * 1000;
 const CLEANUP_INTERVAL_MS = 24 * 60 * 60 * 1000;
+const PENDING_LEASE_MS = 5 * 60 * 1000;
 
 export class SupportCoordinator implements DurableObject {
   constructor(private readonly state: DurableObjectState) {}
@@ -78,6 +79,26 @@ export class SupportCoordinator implements DurableObject {
 
   private async begin(input: BeginInput): Promise<Response> {
     const result = await this.state.storage.transaction(async (txn) => {
+      const key = `ticket:${input.operationId}`;
+      const existing = await txn.get<TicketRecord>(key);
+      let recovery: TicketRecord | undefined;
+      if (existing) {
+        if (existing.userHash !== input.userHash) return { kind: 'conflict' };
+        if (existing.status === 'complete') return { kind: 'duplicate', record: existing };
+        if (existing.status === 'pending' && input.now - existing.updatedAt < PENDING_LEASE_MS) {
+          return { kind: 'duplicate', record: existing };
+        }
+        recovery = {
+          status: existing.channelId ? 'channel' : 'pending',
+          userHash: existing.userHash,
+          requestId: input.requestId,
+          createdAt: existing.createdAt,
+          updatedAt: input.now,
+          ...(existing.channelId && { channelId: existing.channelId }),
+          ...(existing.ticketId && { ticketId: existing.ticketId }),
+        };
+      }
+
       const userWindow = Math.floor(input.now / 3_600_000);
       const attemptUserKey = `attempt-user:${input.userHash}:${userWindow}`;
       const attemptIpKey = `attempt-ip:${input.ipHash}:${userWindow}`;
@@ -87,16 +108,9 @@ export class SupportCoordinator implements DurableObject {
       await txn.put(attemptUserKey, attemptUserCount + 1);
       await txn.put(attemptIpKey, attemptIpCount + 1);
 
-      const key = `ticket:${input.operationId}`;
-      const existing = await txn.get<TicketRecord>(key);
-      if (existing) {
-        if (existing.userHash !== input.userHash) return { kind: 'conflict' };
-        if (existing.status === 'failed' && !existing.channelId) {
-          const retried = { ...existing, status: 'pending' as const, updatedAt: input.now };
-          await txn.put(key, retried);
-          return { kind: 'start', recovery: true, record: retried };
-        }
-        return { kind: 'duplicate', record: existing };
+      if (recovery) {
+        await txn.put(key, recovery);
+        return { kind: 'start', recovery: true, record: recovery };
       }
       const userKey = `user:${input.userHash}:${userWindow}`;
       const ipKey = `ticket-ip:${input.ipHash}:${userWindow}`;
@@ -125,10 +139,17 @@ export class SupportCoordinator implements DurableObject {
   ): Promise<Response> {
     const operationId = String(body.operationId ?? '');
     const userHash = String(body.userHash ?? '');
+    const requestId = String(body.requestId ?? '');
     const result = await this.state.storage.transaction(async (txn) => {
       const key = `ticket:${operationId}`;
       const existing = await txn.get<TicketRecord>(key);
-      if (!existing || existing.userHash !== userHash) return false;
+      if (
+        !existing ||
+        existing.userHash !== userHash ||
+        !requestId ||
+        existing.requestId !== requestId
+      )
+        return false;
       const next: TicketRecord = {
         ...existing,
         status,

@@ -5,12 +5,13 @@ import {
   neutralizeMentions,
   parseSupportPayload,
   renderSupportReport,
+  SUPPORT_DRAFT_ERROR_KEY,
   SUPPORT_DRAFT_KEY,
   SUPPORT_FRAGMENT_MAX_LENGTH,
   SUPPORT_IDEMPOTENCY_KEY,
   SUPPORT_REPORT_MAX_LENGTH,
 } from './support-draft';
-import { supportDraftFixture } from './support-fixtures';
+import { SUPPORT_REPORT_GOLDEN, supportDraftFixture } from './support-fixtures';
 
 function encodeFragment(payload: unknown): string {
   const bytes = new TextEncoder().encode(JSON.stringify(payload));
@@ -28,17 +29,24 @@ describe('Kalpa support draft contract', () => {
   it('redacts paths, secrets, account IDs, and neutralizes mentions', () => {
     const parsed = parseSupportPayload({
       ...supportDraftFixture(),
-      description: 'token=abc @here 123456789012345678 C:\\Users\\Alice\\SavedVariables',
+      description: 'token=abc @here 123456789012345678 C:\\Users\\Alice Player\\SavedVariables',
     });
     const report = renderSupportReport(parsed);
 
     expect(report).not.toContain('Alice');
+    expect(report).not.toContain('Player');
     expect(report).not.toContain('abc');
     expect(report).not.toContain('123456789012345678');
     expect(report).not.toMatch(/@here|<@/);
     expect(report).toContain('[local path]');
     expect(report).toContain('[redacted]');
     expect(report.length).toBeLessThanOrEqual(SUPPORT_REPORT_MAX_LENGTH);
+  });
+
+  it('renders the shared client/server contract fixture exactly', () => {
+    expect(renderSupportReport(parseSupportPayload(supportDraftFixture()))).toBe(
+      SUPPORT_REPORT_GOLDEN,
+    );
   });
 
   it('rejects client-supplied identity and unknown fields', () => {
@@ -66,7 +74,7 @@ describe('Kalpa support draft contract', () => {
     ).toThrow('attention list');
   });
 
-  it('uses the canonical ellipsis when an attention row is truncated', () => {
+  it('renders every accepted attention row without hidden truncation', () => {
     const fixture = supportDraftFixture();
     const parsed = parseSupportPayload({
       ...fixture,
@@ -85,8 +93,10 @@ describe('Kalpa support draft contract', () => {
       .split('\n')
       .find((line) => line.startsWith('- n'));
 
-    expect(row).toHaveLength(180);
-    expect(row?.endsWith('...')).toBe(true);
+    expect(row).toBe(
+      `- ${'n'.repeat(80)} (${'f'.repeat(80)}): Kalpa sees 1.0.0 -> 1.1.0; 1 outdated dependency warning(s)`,
+    );
+    expect(row).not.toContain('...');
   });
 
   it('captures a valid fragment before clearing it from the URL', () => {
@@ -111,6 +121,18 @@ describe('Kalpa support draft contract', () => {
     expect(window.location.hash).toBe('');
     expect(getStoredSupportDraft()).toMatchObject({ issueId: 'install-update' });
     expect(sessionStorage.getItem(SUPPORT_IDEMPOTENCY_KEY)).toMatch(/^[\w-]{32,128}$/);
+  });
+
+  it('stores a generic error for malformed fragments without reflecting decoded input', () => {
+    const hostile = encodeFragment('{"secret":"do-not-reflect"');
+    window.history.replaceState(null, '', `/kalpa/support#kalpa=${hostile}`);
+
+    captureKalpaSupportDraft();
+
+    expect(sessionStorage.getItem(SUPPORT_DRAFT_ERROR_KEY)).toBe(
+      'The support handoff is invalid. Return to Kalpa and prepare it again.',
+    );
+    expect(sessionStorage.getItem(SUPPORT_DRAFT_ERROR_KEY)).not.toContain('do-not-reflect');
   });
 
   it('preserves one idempotency key for all retries of the same draft', () => {

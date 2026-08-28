@@ -88,12 +88,6 @@ export function neutralizeMentions(value: string): string {
     .replace(/<(?=(@[!&]?\d+|#\d+|t:\d+(?::[tTdDfFR])?|\/[^:>]{1,32}:\d+)>)/g, '<\u200b');
 }
 
-function truncate(value: string, maxLength: number): string {
-  if (value.length <= maxLength) return value;
-  if (maxLength <= 3) return value.slice(0, maxLength);
-  return `${value.slice(0, maxLength - 3)}...`;
-}
-
 function object(value: unknown): Record<string, unknown> {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
     throw new SupportDraftError('The support report is not valid.');
@@ -113,10 +107,10 @@ function clean(value: unknown, max: number, multiline = false): string {
   }
   const redacted = neutralizeMentions(value)
     .replace(
-      /(?:[A-Za-z]:[\\/]+Users|[\\/]+(?:Users|home))[\\/]+[^\s\\/]+(?:[\\/]+[^\s,;]+)*/gi,
+      /(?:[A-Za-z]:[\\/]+Users|[\\/]+(?:Users|home))[\\/]+[^\r\n,;]+?(?=\s+(?:and|at|from|with|then)\b|[,;\r\n]|$)/gi,
       '[local path]',
     )
-    .replace(/\\\\[^\s\\/]+[\\/]+[^\s\\/]+(?:[\\/]+[^\s,;]+)*/g, '[local path]')
+    .replace(/\\\\[^\r\n,;]+?(?=\s+(?:and|at|from|with|then)\b|[,;\r\n]|$)/g, '[local path]')
     .replace(
       /\b(authorization|bearer|access[_ -]?token|refresh[_ -]?token|api[_ -]?key|client[_ -]?secret)\b(?:\s*[:=]\s*|\s+)[^\s,;]{6,}|\b(token)\b(?:\s*[:=]\s*[^\s,;]+|\s+[A-Za-z0-9._~+/=-]{16,})/gi,
       '$1$2 [redacted]',
@@ -238,10 +232,7 @@ function attentionLine(item: SupportAttentionItem): string {
   if (item.outdatedDependencies)
     details.push(`${item.outdatedDependencies} outdated dependency warning(s)`);
   if (item.modifiedFiles) details.push(`${item.modifiedFiles} locally modified file(s)`);
-  return truncate(
-    `- ${item.name} (${item.folder}): ${details.join('; ') || 'needs attention'}`,
-    180,
-  );
+  return `- ${item.name} (${item.folder}): ${details.join('; ') || 'needs attention'}`;
 }
 
 export function renderSupportReport(payload: SupportTicketPayload): string {
@@ -279,38 +270,16 @@ export function renderSupportReport(payload: SupportTicketPayload): string {
     '## Privacy note',
     'This report does not include SavedVariables, account IDs, access tokens, or file contents.',
   ];
-  const items = d.attention.map(attentionLine);
-  const noneOrOmitted = items.length
-    ? `- ${items.length} item(s) omitted to keep the report within Discord's limit`
-    : '- None detected automatically';
-  const assemble = (description: string, attention: string[]): string =>
-    neutralizeMentions(
-      [...heading, description, ...diagnostics, ...attention, ...suffix].join('\n'),
-    );
-
-  const desiredDescription = payload.description || 'No description provided.';
-  const fixed = assemble('', [noneOrOmitted]);
-  if (fixed.length > SUPPORT_REPORT_MAX_LENGTH) {
-    throw new SupportDraftError('The support report is too long.');
-  }
-  const description = truncate(desiredDescription, SUPPORT_REPORT_MAX_LENGTH - fixed.length);
-  const included: string[] = [];
-  for (const item of items) {
-    const remaining = items.length - included.length - 1;
-    const attention = [
-      ...included,
-      item,
-      ...(remaining ? [`- ...and ${remaining} more item(s)`] : []),
-    ];
-    const candidate = assemble(description, attention);
-    if (candidate.length > SUPPORT_REPORT_MAX_LENGTH) break;
-    included.push(item);
-  }
-  const omitted = items.length - included.length;
-  const attention = included.length
-    ? [...included, ...(omitted ? [`- ...and ${omitted} more item(s)`] : [])]
-    : [noneOrOmitted];
-  const report = assemble(description, attention);
+  const attention = d.attention.map(attentionLine);
+  const report = neutralizeMentions(
+    [
+      ...heading,
+      payload.description || 'No description provided.',
+      ...diagnostics,
+      ...(attention.length ? attention : ['- None detected automatically']),
+      ...suffix,
+    ].join('\n'),
+  );
   if (report.length > SUPPORT_REPORT_MAX_LENGTH) {
     throw new SupportDraftError('The support report is too long.');
   }
@@ -343,12 +312,12 @@ export function captureKalpaSupportDraft(): void {
     renderSupportReport(parsed);
     sessionStorage.setItem(SUPPORT_DRAFT_KEY, JSON.stringify(parsed));
     sessionStorage.setItem(SUPPORT_IDEMPOTENCY_KEY, globalThis.crypto.randomUUID());
-  } catch (error) {
+  } catch {
     sessionStorage.removeItem(SUPPORT_DRAFT_KEY);
     sessionStorage.removeItem(SUPPORT_IDEMPOTENCY_KEY);
     sessionStorage.setItem(
       SUPPORT_DRAFT_ERROR_KEY,
-      error instanceof Error ? error.message : 'The support handoff is invalid.',
+      'The support handoff is invalid. Return to Kalpa and prepare it again.',
     );
   }
 }
@@ -377,6 +346,13 @@ export function clearStoredSupportDraft(): void {
   sessionStorage.removeItem(SUPPORT_DRAFT_ERROR_KEY);
   sessionStorage.removeItem(SUPPORT_IDEMPOTENCY_KEY);
   sessionStorage.removeItem(SUPPORT_RESULT_KEY);
+}
+
+/** Remove the reviewed request after Discord confirms creation, retaining only the ticket link. */
+export function clearPendingSupportDraft(): void {
+  sessionStorage.removeItem(SUPPORT_DRAFT_KEY);
+  sessionStorage.removeItem(SUPPORT_DRAFT_ERROR_KEY);
+  sessionStorage.removeItem(SUPPORT_IDEMPOTENCY_KEY);
 }
 
 export function getSupportIssueLabel(issueId: SupportIssueId): string {

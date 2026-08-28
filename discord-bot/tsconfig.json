@@ -12,6 +12,7 @@
     "noFallthroughCasesInSwitch": true,
     "exactOptionalPropertyTypes": true,
     "allowImportingTsExtensions": false,
+    "resolveJsonModule": true,
     "skipLibCheck": true,
     "outDir": "./dist",
     "rootDir": "./src",

@@ -88,6 +88,9 @@ describe('KalpaSupportPage', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Create private ticket' }));
     expect(await screen.findByRole('button', { name: /Creating private ticket/ })).toBeDisabled();
+    expect(screen.getByRole('status')).toHaveTextContent(
+      'Creating your private Discord support ticket.',
+    );
     expect(screen.queryByText('Private ticket created')).not.toBeInTheDocument();
     finish?.({
       status: 'created',
@@ -106,9 +109,17 @@ describe('KalpaSupportPage', () => {
       '123e4567-e89b-42d3-a456-426614174000',
       expect.objectContaining({ issueId: 'install-update' }),
     );
+    expect(sessionStorage.getItem(SUPPORT_DRAFT_KEY)).toBeNull();
+    expect(sessionStorage.getItem(SUPPORT_IDEMPOTENCY_KEY)).toBeNull();
+    expect(sessionStorage.getItem(SUPPORT_RESULT_KEY)).not.toBeNull();
+    expect(
+      screen.queryByLabelText('Exact support report that will be shared'),
+    ).not.toBeInTheDocument();
   });
 
-  it('preserves a confirmed ticket across a page refresh', () => {
+  it('preserves a confirmed ticket across a page refresh without retaining the report', () => {
+    sessionStorage.removeItem(SUPPORT_DRAFT_KEY);
+    sessionStorage.removeItem(SUPPORT_IDEMPOTENCY_KEY);
     sessionStorage.setItem(
       SUPPORT_RESULT_KEY,
       JSON.stringify({
@@ -122,6 +133,35 @@ describe('KalpaSupportPage', () => {
 
     expect(screen.getByText('Private ticket created')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Create private ticket' })).not.toBeInTheDocument();
+    expect(screen.queryByText('Manual fallback')).not.toBeInTheDocument();
+  });
+
+  it('keeps confirmed success authoritative when an in-flight clipboard copy later fails', async () => {
+    let rejectCopy: ((reason?: unknown) => void) | undefined;
+    (navigator.clipboard.writeText as jest.Mock).mockReturnValue(
+      new Promise<void>((_resolve, reject) => {
+        rejectCopy = reject;
+      }),
+    );
+    render(<KalpaSupportPage />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Copy report' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Create private ticket' }));
+
+    expect(await screen.findByText('Private ticket created')).toBeInTheDocument();
+    rejectCopy?.(new Error('blocked'));
+
+    await waitFor(() =>
+      expect(
+        screen
+          .getAllByRole('alert')
+          .some((alert) => alert.textContent?.includes('Clipboard access was blocked')),
+      ).toBe(true),
+    );
+    expect(screen.getByText('Private ticket created')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Open private ticket' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Create private ticket' })).not.toBeInTheDocument();
+    expect(mockCreateKalpaTicket).toHaveBeenCalledTimes(1);
   });
 
   it('keeps the report and manual fallback after a Discord failure', async () => {
@@ -131,7 +171,13 @@ describe('KalpaSupportPage', () => {
     render(<KalpaSupportPage />);
     fireEvent.click(screen.getByRole('button', { name: 'Create private ticket' }));
 
-    expect(await screen.findByText('Discord is unavailable.')).toBeInTheDocument();
+    await waitFor(() =>
+      expect(
+        screen
+          .getAllByRole('alert')
+          .some((alert) => alert.textContent?.includes('Discord is unavailable.')),
+      ).toBe(true),
+    );
     expect(screen.getByRole('button', { name: 'Copy report' })).toBeEnabled();
     expect(sessionStorage.getItem(SUPPORT_DRAFT_KEY)).not.toBeNull();
   });
@@ -143,7 +189,13 @@ describe('KalpaSupportPage', () => {
     render(<KalpaSupportPage />);
     fireEvent.click(screen.getByRole('button', { name: 'Create private ticket' }));
 
-    expect(await screen.findByText(/Discord sign-in expired/)).toBeInTheDocument();
+    await waitFor(() =>
+      expect(
+        screen
+          .getAllByRole('alert')
+          .some((alert) => alert.textContent?.includes('Discord sign-in expired')),
+      ).toBe(true),
+    );
     expect(clearDiscordAuth).toHaveBeenCalled();
     expect(sessionStorage.getItem(SUPPORT_DRAFT_KEY)).not.toBeNull();
   });
@@ -163,7 +215,11 @@ describe('KalpaSupportPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Copy report' }));
 
     await waitFor(() =>
-      expect(screen.getByText(/Clipboard access was blocked/)).toBeInTheDocument(),
+      expect(
+        screen
+          .getAllByRole('alert')
+          .some((alert) => alert.textContent?.includes('Clipboard access was blocked')),
+      ).toBe(true),
     );
     expect(screen.queryByText('Private ticket created')).not.toBeInTheDocument();
     expect(screen.getByLabelText('Exact support report that will be shared')).toBeInTheDocument();

@@ -15,6 +15,7 @@ import { auditHash, mintSupportSession, verifySupportSession } from './token.js'
 const DISCORD_API = 'https://discord.com/api/v10';
 const BODY_LIMIT = 8_192;
 const IDEMPOTENCY_KEY = /^[A-Za-z0-9_-]{32,128}$/;
+const DISCORD_SNOWFLAKE = /^\d{17,20}$/;
 
 type ErrorCode =
   | 'AUTH_REQUIRED'
@@ -104,6 +105,7 @@ async function failStartedCoordination(
     await updateCoordination(env, '/fail', {
       operationId,
       userHash,
+      requestId,
       errorCode,
       now: Date.now(),
     });
@@ -170,10 +172,13 @@ export async function handleSupportSession(request: Request, env: Env): Promise<
     };
     const me = oauthIdentity.user;
     if (
+      !DISCORD_SNOWFLAKE.test(env.DISCORD_APPLICATION_ID) ||
       oauthIdentity.application?.id !== env.DISCORD_APPLICATION_ID ||
       !Array.isArray(oauthIdentity.scopes) ||
       !oauthIdentity.scopes.includes('identify') ||
+      !oauthIdentity.scopes.includes('guilds') ||
       !me?.id ||
+      !DISCORD_SNOWFLAKE.test(me.id) ||
       !me.username
     )
       return failure(requestId, 'AUTH_EXPIRED', 'Discord returned an invalid identity.', 401);
@@ -417,7 +422,7 @@ export async function handleSupportTicket(request: Request, env: Env): Promise<R
   }
 
   try {
-    if (coordinated.kind === 'duplicate' && record?.channelId && record.ticketId) {
+    if (record?.channelId && record.ticketId) {
       const ticket = await finishExistingChannel(
         env,
         payload,
@@ -426,7 +431,12 @@ export async function handleSupportTicket(request: Request, env: Env): Promise<R
         record.ticketId,
         operationId,
       );
-      await updateCoordination(env, '/complete', { operationId, userHash, now: Date.now() });
+      await updateCoordination(env, '/complete', {
+        operationId,
+        userHash,
+        requestId,
+        now: Date.now(),
+      });
       await logAudit(env, 'support_ticket_recovered', requestId, claims.sub);
       return response({
         status: 'created',
@@ -461,6 +471,7 @@ export async function handleSupportTicket(request: Request, env: Env): Promise<R
       await updateCoordination(env, '/channel', {
         operationId,
         userHash,
+        requestId,
         channelId: matchingChannel.id,
         ticketId,
         now: Date.now(),
@@ -476,6 +487,7 @@ export async function handleSupportTicket(request: Request, env: Env): Promise<R
       await updateCoordination(env, '/complete', {
         operationId,
         userHash,
+        requestId,
         now: Date.now(),
       });
       await logAudit(env, 'support_ticket_reconciled', requestId, claims.sub);
@@ -507,13 +519,19 @@ export async function handleSupportTicket(request: Request, env: Env): Promise<R
         await updateCoordination(env, '/channel', {
           operationId,
           userHash,
+          requestId,
           channelId,
           ticketId,
           now: Date.now(),
         });
       },
     });
-    await updateCoordination(env, '/complete', { operationId, userHash, now: Date.now() });
+    await updateCoordination(env, '/complete', {
+      operationId,
+      userHash,
+      requestId,
+      now: Date.now(),
+    });
     await logAudit(env, 'support_ticket_created', requestId, claims.sub);
     return response(
       {
@@ -531,6 +549,7 @@ export async function handleSupportTicket(request: Request, env: Env): Promise<R
       await updateCoordination(env, '/fail', {
         operationId,
         userHash,
+        requestId,
         errorCode: 'DISCORD_UNAVAILABLE',
         now: Date.now(),
       });

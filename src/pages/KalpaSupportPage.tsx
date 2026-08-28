@@ -27,6 +27,7 @@ import {
   SupportApiError,
 } from '@/features/kalpa-support/support-api';
 import {
+  clearPendingSupportDraft,
   getStoredSupportDraft,
   getSupportIdempotencyKey,
   getSupportIssueLabel,
@@ -52,7 +53,7 @@ function messageFor(error: unknown): string {
     case 'RATE_LIMITED':
       return 'Too many support requests were made recently. Wait a few minutes, then retry with this same report.';
     case 'TICKET_RECOVERING':
-      return 'This request may still be creating. Check again shortly. If this message persists, return to Kalpa and prepare a new support report.';
+      return 'This request may still be creating. Wait a moment, then retry this same report so Kalpa can recover the original ticket.';
     case 'IDEMPOTENCY_CONFLICT':
       return 'This saved request no longer matches your Discord session. Return to Kalpa and prepare a new support report.';
     case 'INVALID_REQUEST':
@@ -76,13 +77,14 @@ function storedTicket(): CreatedTicket | null {
 
 export const KalpaSupportPage: React.FC = () => {
   usePageTitle('/kalpa/support');
-  const draft = React.useMemo(() => getStoredSupportDraft(), []);
+  const [draft, setDraft] = React.useState(() => getStoredSupportDraft());
   const report = React.useMemo(() => (draft ? renderSupportReport(draft) : ''), [draft]);
   const handoffError = sessionStorage.getItem(SUPPORT_DRAFT_ERROR_KEY);
   const { discordToken, isDiscordAuthed, startDiscordLogin, clearDiscordAuth } = useDiscordAuth();
   const initialTicket = React.useMemo(storedTicket, []);
   const [phase, setPhase] = React.useState<Phase>(initialTicket ? 'success' : 'ready');
   const [error, setError] = React.useState<string | null>(null);
+  const [copyError, setCopyError] = React.useState<string | null>(null);
   const [ticket, setTicket] = React.useState<CreatedTicket | null>(initialTicket);
   const [copied, setCopied] = React.useState(false);
   const [isOnline, setIsOnline] = React.useState(() => navigator.onLine);
@@ -104,33 +106,38 @@ export const KalpaSupportPage: React.FC = () => {
 
   const copyReport = React.useCallback(async () => {
     if (!report) return;
+    setCopied(false);
+    setCopyError(null);
     try {
       await navigator.clipboard.writeText(report);
       setCopied(true);
     } catch {
-      setError('Clipboard access was blocked. Select the report text below and copy it manually.');
-      setPhase('error');
+      setCopyError(
+        'Clipboard access was blocked. Select the report text below and copy it manually.',
+      );
     }
   }, [report]);
 
   const createTicket = React.useCallback(async () => {
-    if (!draft || !discordToken || phase === 'creating') return;
+    if (!draft || !discordToken || phase === 'creating' || ticket) return;
     setPhase('creating');
     setError(null);
     try {
       const session = await createSupportSession(discordToken);
       const created = await createKalpaTicket(session.token, getSupportIdempotencyKey(), draft);
       sessionStorage.setItem(SUPPORT_RESULT_KEY, JSON.stringify(created));
+      clearPendingSupportDraft();
       setTicket(created);
+      setDraft(null);
       setPhase('success');
     } catch (caught) {
       if (caught instanceof SupportApiError && caught.code === 'AUTH_EXPIRED') clearDiscordAuth();
       setError(messageFor(caught));
       setPhase('error');
     }
-  }, [clearDiscordAuth, discordToken, draft, phase]);
+  }, [clearDiscordAuth, discordToken, draft, phase, ticket]);
 
-  if (!draft) {
+  if (!draft && !ticket) {
     return (
       <Box sx={{ py: { xs: 3, sm: 6 }, px: { xs: 2, sm: 0 } }}>
         <Alert severity="warning" variant="outlined">
@@ -146,9 +153,36 @@ export const KalpaSupportPage: React.FC = () => {
   }
 
   const busy = phase === 'creating';
+  const liveMessage = copyError
+    ? copyError
+    : phase === 'creating'
+      ? 'Creating your private Discord support ticket.'
+      : phase === 'success' && ticket
+        ? `Private ticket ${ticket.ticketId} created.`
+        : phase === 'error'
+          ? (error ?? '')
+          : (copyError ?? '');
 
   return (
     <Box sx={{ py: { xs: 2, sm: 4 }, px: { xs: 2, sm: 0 } }}>
+      <Box
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+        sx={{
+          position: 'absolute',
+          width: 1,
+          height: 1,
+          p: 0,
+          m: -1,
+          overflow: 'hidden',
+          clip: 'rect(0 0 0 0)',
+          whiteSpace: 'nowrap',
+          border: 0,
+        }}
+      >
+        {liveMessage}
+      </Box>
       <Stack spacing={{ xs: 2.5, sm: 3.5 }}>
         <Box>
           <Stack direction="row" spacing={1.5} sx={{ mb: 1, alignItems: 'center' }}>
@@ -172,7 +206,6 @@ export const KalpaSupportPage: React.FC = () => {
             tabIndex={-1}
             severity="success"
             icon={<CheckCircleIcon fontSize="inherit" />}
-            aria-live="polite"
             sx={{ alignItems: 'flex-start' }}
           >
             <Typography variant="h6" component="h2">
@@ -195,73 +228,77 @@ export const KalpaSupportPage: React.FC = () => {
         ) : null}
 
         {phase === 'error' && error ? (
-          <Alert ref={statusRef} tabIndex={-1} severity="error" aria-live="assertive">
+          <Alert ref={statusRef} tabIndex={-1} severity="error">
             {error}
           </Alert>
         ) : null}
 
-        <Paper
-          variant="outlined"
-          sx={{ p: { xs: 2, sm: 3 }, bgcolor: 'background.paper', borderColor: 'divider' }}
-        >
-          <Stack
-            direction={{ xs: 'column', sm: 'row' }}
-            spacing={1}
-            sx={{
-              justifyContent: 'space-between',
-              alignItems: { xs: 'flex-start', sm: 'center' },
-            }}
+        {copyError ? <Alert severity="warning">{copyError}</Alert> : null}
+
+        {draft ? (
+          <Paper
+            variant="outlined"
+            sx={{ p: { xs: 2, sm: 3 }, bgcolor: 'background.paper', borderColor: 'divider' }}
           >
-            <Box>
-              <Typography variant="overline" color="text.secondary">
-                Report prepared by Kalpa
-              </Typography>
-              <Typography variant="h6" component="h2">
-                {getSupportIssueLabel(draft.issueId)}
-              </Typography>
-            </Box>
             <Stack
-              direction="row"
-              spacing={0.75}
-              sx={{ alignItems: 'center', color: 'success.main' }}
+              direction={{ xs: 'column', sm: 'row' }}
+              spacing={1}
+              sx={{
+                justifyContent: 'space-between',
+                alignItems: { xs: 'flex-start', sm: 'center' },
+              }}
             >
-              <LockIcon fontSize="small" aria-hidden="true" />
-              <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                Only you and staff can see it
-              </Typography>
+              <Box>
+                <Typography variant="overline" color="text.secondary">
+                  Report prepared by Kalpa
+                </Typography>
+                <Typography variant="h6" component="h2">
+                  {getSupportIssueLabel(draft.issueId)}
+                </Typography>
+              </Box>
+              <Stack
+                direction="row"
+                spacing={0.75}
+                sx={{ alignItems: 'center', color: 'success.main' }}
+              >
+                <LockIcon fontSize="small" aria-hidden="true" />
+                <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                  Will be visible only to you and staff
+                </Typography>
+              </Stack>
             </Stack>
-          </Stack>
 
-          <Box
-            component="pre"
-            aria-label="Exact support report that will be shared"
-            tabIndex={0}
-            sx={{
-              mt: 2,
-              mb: 0,
-              p: { xs: 1.5, sm: 2 },
-              maxHeight: { xs: 300, sm: 420 },
-              overflow: 'auto',
-              whiteSpace: 'pre-wrap',
-              overflowWrap: 'anywhere',
-              bgcolor: 'action.hover',
-              border: 1,
-              borderColor: 'divider',
-              borderRadius: 1,
-              color: 'text.primary',
-              fontFamily: 'monospace',
-              fontSize: '0.8125rem',
-              lineHeight: 1.55,
-            }}
-          >
-            {report}
-          </Box>
+            <Box
+              component="pre"
+              aria-label="Exact support report that will be shared"
+              tabIndex={0}
+              sx={{
+                mt: 2,
+                mb: 0,
+                p: { xs: 1.5, sm: 2 },
+                maxHeight: { xs: 300, sm: 420 },
+                overflow: 'auto',
+                whiteSpace: 'pre-wrap',
+                overflowWrap: 'anywhere',
+                bgcolor: 'action.hover',
+                border: 1,
+                borderColor: 'divider',
+                borderRadius: 1,
+                color: 'text.primary',
+                fontFamily: 'monospace',
+                fontSize: '0.8125rem',
+                lineHeight: 1.55,
+              }}
+            >
+              {report}
+            </Box>
 
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
-            No SavedVariables, file contents, account IDs, access tokens, or full local paths are
-            included. Discord identity is checked by the server and never taken from this report.
-          </Typography>
-        </Paper>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
+              No SavedVariables, file contents, account IDs, access tokens, or full local paths are
+              included. Discord identity is checked by the server and never taken from this report.
+            </Typography>
+          </Paper>
+        ) : null}
 
         {phase !== 'success' ? (
           <Box>
@@ -302,39 +339,41 @@ export const KalpaSupportPage: React.FC = () => {
           </Box>
         ) : null}
 
-        <Divider />
+        {draft ? <Divider /> : null}
 
-        <Box>
-          <Typography variant="h6" component="h2">
-            Manual fallback
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, mb: 2 }}>
-            If sign-in or Discord is unavailable, copy the same reviewed report and paste it at the
-            ticket desk. Preparing or copying a report does not mean a ticket was created.
-          </Typography>
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
-            <Button variant="outlined" onClick={() => void copyReport()} startIcon={<CopyIcon />}>
-              {copied ? 'Report copied' : 'Copy report'}
-            </Button>
-            <Button
-              component="a"
-              href={SUPPORT_DESK_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              variant="text"
-              endIcon={<LaunchIcon />}
-            >
-              Open Discord ticket desk
-            </Button>
-          </Stack>
-          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 2 }}>
-            Need the server first?{' '}
-            <Link href="https://discord.gg/mMjwcQYFdc" target="_blank" rel="noopener noreferrer">
-              Join ESO Toolkit on Discord
-            </Link>
-            .
-          </Typography>
-        </Box>
+        {draft ? (
+          <Box>
+            <Typography variant="h6" component="h2">
+              Manual fallback
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, mb: 2 }}>
+              If sign-in or Discord is unavailable, copy the same reviewed report and paste it at
+              the ticket desk. Preparing or copying a report does not mean a ticket was created.
+            </Typography>
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
+              <Button variant="outlined" onClick={() => void copyReport()} startIcon={<CopyIcon />}>
+                {copied ? 'Report copied' : 'Copy report'}
+              </Button>
+              <Button
+                component="a"
+                href={SUPPORT_DESK_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                variant="text"
+                endIcon={<LaunchIcon />}
+              >
+                Open Discord ticket desk
+              </Button>
+            </Stack>
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 2 }}>
+              Need the server first?{' '}
+              <Link href="https://discord.gg/mMjwcQYFdc" target="_blank" rel="noopener noreferrer">
+                Join ESO Toolkit on Discord
+              </Link>
+              .
+            </Typography>
+          </Box>
+        ) : null}
       </Stack>
     </Box>
   );

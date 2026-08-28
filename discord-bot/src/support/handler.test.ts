@@ -71,18 +71,16 @@ describe('Kalpa support HTTP handlers', () => {
   it('mints a support session only from a Discord bearer identity with verified guild membership', async () => {
     vi.stubGlobal(
       'fetch',
-      vi
-        .fn()
-        .mockResolvedValue(
-          new Response(
-            JSON.stringify({
-              application: { id: env.DISCORD_APPLICATION_ID },
-              scopes: ['identify', 'guilds'],
-              user: { id: USER_ID, username: 'Tester' },
-            }),
-            { status: 200 },
-          ),
+      vi.fn().mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            application: { id: env.DISCORD_APPLICATION_ID },
+            scopes: ['identify', 'guilds'],
+            user: { id: USER_ID, username: 'Tester' },
+          }),
+          { status: 200 },
         ),
+      ),
     );
     const response = await handleSupportSession(
       new Request('https://worker.test/session', {
@@ -123,21 +121,70 @@ describe('Kalpa support HTTP handlers', () => {
     expect(discord.getGuildMember).not.toHaveBeenCalled();
   });
 
+  it('fails closed when the configured Discord application ID is missing', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            scopes: ['identify', 'guilds'],
+            user: { id: USER_ID, username: 'Tester' },
+          }),
+          { status: 200 },
+        ),
+      ),
+    );
+    const response = await handleSupportSession(
+      new Request('https://worker.test/session', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer oauth-token' },
+      }),
+      { ...env, DISCORD_APPLICATION_ID: undefined } as unknown as Env,
+    );
+    expect(response.status).toBe(401);
+    expect(await response.json()).toMatchObject({ error: { code: 'AUTH_EXPIRED' } });
+    expect(discord.getGuildMember).not.toHaveBeenCalled();
+  });
+
+  it('requires the complete identify and guilds OAuth scope contract', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            application: { id: env.DISCORD_APPLICATION_ID },
+            scopes: ['identify'],
+            user: { id: USER_ID, username: 'Tester' },
+          }),
+          { status: 200 },
+        ),
+      ),
+    );
+    const response = await handleSupportSession(
+      new Request('https://worker.test/session', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer oauth-token' },
+      }),
+      env,
+    );
+    expect(response.status).toBe(401);
+    expect(await response.json()).toMatchObject({ error: { code: 'AUTH_EXPIRED' } });
+    expect(discord.getGuildMember).not.toHaveBeenCalled();
+  });
+
   it('rejects a Discord user who is not a current guild member', async () => {
     vi.stubGlobal(
       'fetch',
-      vi
-        .fn()
-        .mockResolvedValue(
-          new Response(
-            JSON.stringify({
-              application: { id: env.DISCORD_APPLICATION_ID },
-              scopes: ['identify', 'guilds'],
-              user: { id: USER_ID, username: 'Tester' },
-            }),
-            { status: 200 },
-          ),
+      vi.fn().mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            application: { id: env.DISCORD_APPLICATION_ID },
+            scopes: ['identify', 'guilds'],
+            user: { id: USER_ID, username: 'Tester' },
+          }),
+          { status: 200 },
         ),
+      ),
     );
     discord.getGuildMember.mockRejectedValue(new DiscordApiError(404, 'GET', '/member'));
     const response = await handleSupportSession(
@@ -245,6 +292,37 @@ describe('Kalpa support HTTP handlers', () => {
       duplicate: true,
       ticketId: '0042',
     });
+    expect(tickets.createPrivateTicket).not.toHaveBeenCalled();
+  });
+
+  it('finishes a leased recovery from the recorded channel without creating a duplicate', async () => {
+    coordinator.coordinate.mockImplementation(async (_namespace: unknown, path: string) =>
+      path === '/begin'
+        ? {
+            kind: 'start',
+            recovery: true,
+            record: {
+              status: 'channel',
+              channelId: '666666666666666666',
+              ticketId: '0042',
+            },
+          }
+        : { updated: true },
+    );
+    discord.sendMessage.mockResolvedValue({ id: '777777777777777777' });
+
+    const response = await handleSupportTicket(ticketRequest(await validToken()), env);
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({
+      status: 'created',
+      duplicate: true,
+      ticketId: '0042',
+      channelId: '666666666666666666',
+    });
+    expect(kv.putTicket).toHaveBeenCalled();
+    expect(discord.sendMessage).toHaveBeenCalledTimes(1);
+    expect(discord.getGuildChannels).not.toHaveBeenCalled();
     expect(tickets.createPrivateTicket).not.toHaveBeenCalled();
   });
 

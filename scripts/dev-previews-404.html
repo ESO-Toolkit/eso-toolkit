@@ -38,6 +38,8 @@
         // index.html's history.replaceState restores the correct absolute path.
         // e.g. /dev-previews/pr-860/roster-builder?r=…
         var full = l.pathname + l.search + l.hash;
+        var normalizedPath = l.pathname.replace(/\/+$/, '');
+        var isPrivateSupportHandoff = normalizedPath.endsWith('/kalpa/support');
 
         // Method 1: sessionStorage (no visible flash)
         try {
@@ -49,7 +51,11 @@
         }
 
         // Method 2: ?redirect= query param fallback
-        l.replace(l.origin + base + '?redirect=' + encodeURIComponent(full));
+        // Never put a reviewed Kalpa support report into a query string. When
+        // storage is unavailable, restore the page without the private fragment
+        // so the app can offer its safe no-report/manual fallback.
+        var fallback = isPrivateSupportHandoff ? l.pathname + l.search : full;
+        l.replace(l.origin + base + '?redirect=' + encodeURIComponent(fallback));
       })();
     </script>
   </head>

@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
+import sharedFixture from '../../../src/features/kalpa-support/support-contract-fixture.json';
 import {
   neutralizeMentions,
   parseSupportPayload,
   renderSupportReport,
-  SUPPORT_REPORT_MAX_LENGTH,
   SupportValidationError,
 } from './contract';
 
@@ -44,6 +44,12 @@ export function supportFixture() {
 }
 
 describe('Kalpa support contract', () => {
+  it('renders the shared client/server contract fixture exactly', () => {
+    expect(renderSupportReport(parseSupportPayload(sharedFixture.payload))).toBe(
+      sharedFixture.report,
+    );
+  });
+
   it('redacts sensitive identifiers and paths and neutralizes Discord mentions', () => {
     const report = renderSupportReport(parseSupportPayload(supportFixture()));
     expect(report).toContain('[local path]');
@@ -51,11 +57,12 @@ describe('Kalpa support contract', () => {
     expect(report).toContain('[account-id]');
     expect(report).toContain('@\u200beveryone');
     expect(report).not.toContain('Private Name');
+    expect(report).not.toContain('Name');
     expect(report).not.toContain('super-secret');
     expect(report).not.toContain('123456789012345678');
   });
 
-  it('caps the rendered report while retaining diagnostics and the privacy statement', () => {
+  it('rejects a client-crafted report that exceeds Discord limits', () => {
     const input = supportFixture();
     const parsed = parseSupportPayload({
       ...input,
@@ -68,13 +75,10 @@ describe('Kalpa support contract', () => {
         })),
       },
     });
-    const report = renderSupportReport(parsed);
-    expect(report.length).toBeLessThanOrEqual(SUPPORT_REPORT_MAX_LENGTH);
-    expect(report).toContain('## Automatic diagnostics');
-    expect(report).toContain('## Privacy note');
+    expect(() => renderSupportReport(parsed)).toThrow('exceeds Discord limits');
   });
 
-  it('uses the canonical ellipsis when an attention row is truncated', () => {
+  it('renders every accepted attention row without hidden truncation', () => {
     const input = supportFixture();
     const parsed = parseSupportPayload({
       ...input,
@@ -93,8 +97,10 @@ describe('Kalpa support contract', () => {
       .split('\n')
       .find((line) => line.startsWith('- n'));
 
-    expect(row).toHaveLength(180);
-    expect(row).toMatch(/\.\.\.$/);
+    expect(row).toBe(
+      `- ${'n'.repeat(80)} (${'f'.repeat(80)}): Kalpa sees 1.0 -> 1.1; 1 missing dependency warning(s)`,
+    );
+    expect(row).not.toContain('...');
   });
 
   it('rejects extra client identity fields, raw data, invalid counts, and oversized arrays', () => {

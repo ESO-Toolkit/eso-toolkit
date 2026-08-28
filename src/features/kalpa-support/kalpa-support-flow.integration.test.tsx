@@ -112,7 +112,7 @@ describe('Kalpa authenticated support handoff', () => {
 
       fireEvent.click(screen.getByRole('button', { name: 'Create private ticket' }));
 
-      expect(await screen.findByText(expectedMessage)).toBeInTheDocument();
+      expect(await screen.findByRole('alert')).toHaveTextContent(expectedMessage);
       expect(screen.getByRole('button', { name: 'Copy report' })).toBeEnabled();
       expect(screen.queryByText('Private ticket created')).not.toBeInTheDocument();
       expect(sessionStorage.getItem(SUPPORT_DRAFT_KEY)).not.toBeNull();
@@ -132,7 +132,7 @@ describe('Kalpa authenticated support handoff', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Create private ticket' }));
 
-    expect(await screen.findByText(/Discord sign-in expired/)).toBeInTheDocument();
+    expect(await screen.findByRole('alert')).toHaveTextContent(/Discord sign-in expired/);
     expect(clearDiscordAuth).toHaveBeenCalledTimes(1);
     expect(sessionStorage.getItem(SUPPORT_DRAFT_KEY)).not.toBeNull();
   });

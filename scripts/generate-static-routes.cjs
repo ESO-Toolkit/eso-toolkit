@@ -22,6 +22,7 @@ const SITE_ORIGIN = 'https://esotk.com';
 // requires it directly (plain node, no bundler), while the app imports it
 // through src/constants/routeMeta.ts.
 const routeMeta = require('../src/constants/route-meta.json');
+const PRIVATE_FRAGMENT_ROUTES = ['/kalpa/support'];
 
 // The /build-leaderboard sub-routes (7 pooled class boards + 14 per-encounter
 // boards) come from their own JSON because each entry also carries the encounter
@@ -67,6 +68,16 @@ const staticRoutes = Object.entries({ ...routeMeta, ...leaderboardRouteMeta })
 if (staticRoutes.length === 0) {
   console.error('No prerenderable routes found in route-meta.json or leaderboard-routes.json');
   process.exit(1);
+}
+
+for (const requiredRoute of PRIVATE_FRAGMENT_ROUTES) {
+  const route = routeMeta[requiredRoute];
+  if (!route?.prerender) {
+    console.error(
+      `Private fragment route must be prerendered so its payload never reaches the 404 redirect: ${requiredRoute}`,
+    );
+    process.exit(1);
+  }
 }
 
 if (!fs.existsSync(appShell)) {
@@ -155,7 +166,10 @@ for (const route of staticRoutes) {
     );
 
   if (route.noindex) {
-    routeShell = routeShell.replace('</head>', '  <meta name="robots" content="noindex,nofollow" />\n</head>');
+    routeShell = routeShell.replace(
+      '</head>',
+      '  <meta name="robots" content="noindex,nofollow" />\n</head>',
+    );
   }
 
   const routeDirectory = path.join(buildDirectory, route.path);

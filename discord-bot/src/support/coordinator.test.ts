@@ -84,7 +84,7 @@ describe('SupportCoordinator atomic rate limiting and idempotency', () => {
       record: { status: 'complete', channelId: 'channel-a', ticketId: '0042' },
     });
     expect(storage.values.get('user:user-a:0')).toBe(1);
-    expect(storage.values.get('attempt-user:user-a:0')).toBe(2);
+    expect(storage.values.get('attempt-user:user-a:0')).toBe(1);
   });
 
   it('rejects reuse of a scoped operation identifier by another authenticated user', async () => {
@@ -158,28 +158,36 @@ describe('SupportCoordinator atomic rate limiting and idempotency', () => {
     };
     await call(coordinator, '/begin', input);
     await call(coordinator, '/fail', { ...input, errorCode: 'DISCORD_UNAVAILABLE' });
-    expect(await call(coordinator, '/begin', { ...input, now: 1_001_000 })).toMatchObject({
+    const retry = { ...input, requestId: 'request-b', now: 1_001_000 };
+    expect(await call(coordinator, '/begin', retry)).toMatchObject({
       kind: 'start',
       recovery: true,
     });
     await call(coordinator, '/channel', {
-      ...input,
+      ...retry,
       now: 1_002_000,
       channelId: 'channel-a',
       ticketId: '0042',
     });
     await call(coordinator, '/fail', {
-      ...input,
+      ...retry,
       now: 1_003_000,
       errorCode: 'DISCORD_UNAVAILABLE',
     });
-    expect(await call(coordinator, '/begin', { ...input, now: 1_004_000 })).toMatchObject({
-      kind: 'duplicate',
-      record: { status: 'channel', channelId: 'channel-a' },
+    expect(
+      await call(coordinator, '/begin', {
+        ...input,
+        requestId: 'request-c',
+        now: 1_004_000,
+      }),
+    ).toMatchObject({
+      kind: 'start',
+      recovery: true,
+      record: { status: 'channel', channelId: 'channel-a', requestId: 'request-c' },
     });
   });
 
-  it('never re-leases a pending operation, even after a long delay', async () => {
+  it('keeps a fresh pending lease but safely re-leases it after five minutes', async () => {
     const input = {
       operationId: 'pending-operation-a',
       userHash: 'user-a',
@@ -188,13 +196,31 @@ describe('SupportCoordinator atomic rate limiting and idempotency', () => {
       now: 1_000_000,
     };
     expect((await call(coordinator, '/begin', input)).kind).toBe('start');
-    expect(await call(coordinator, '/begin', { ...input, now: 2_000_000 })).toMatchObject({
+    expect(await call(coordinator, '/begin', { ...input, now: 1_299_999 })).toMatchObject({
       kind: 'duplicate',
       record: { status: 'pending' },
     });
+    const recovered = await call(coordinator, '/begin', {
+      ...input,
+      requestId: 'request-b',
+      now: 1_300_000,
+    });
+    expect(recovered).toMatchObject({
+      kind: 'start',
+      recovery: true,
+      record: { status: 'pending', requestId: 'request-b' },
+    });
+    expect(
+      await call(coordinator, '/channel', {
+        ...input,
+        channelId: 'old-channel',
+        ticketId: '0041',
+        now: 1_300_001,
+      }),
+    ).toEqual({ updated: false });
   });
 
-  it('rate limits repeated duplicate attempts before they can consume Discord API calls', async () => {
+  it('does not consume attempt capacity for duplicate status polls', async () => {
     const input = {
       operationId: 'duplicate-operation-a',
       userHash: 'user-a',
@@ -203,12 +229,14 @@ describe('SupportCoordinator atomic rate limiting and idempotency', () => {
       now: 1_000_000,
     };
     expect((await call(coordinator, '/begin', input)).kind).toBe('start');
-    for (let index = 1; index < 20; index++) {
+    for (let index = 1; index < 100; index++) {
       expect(
         (await call(coordinator, '/begin', { ...input, requestId: `request-${index}` })).kind,
       ).toBe('duplicate');
     }
-    expect((await call(coordinator, '/begin', input)).kind).toBe('rate_limited');
+    expect((await call(coordinator, '/begin', input)).kind).toBe('duplicate');
+    expect(storage.values.get('attempt-user:user-a:0')).toBe(1);
+    expect(storage.values.get('attempt-ip:ip-a:0')).toBe(1);
   });
 
   it('limits unauthenticated session minting attempts by source IP', async () => {

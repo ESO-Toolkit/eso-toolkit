@@ -298,6 +298,9 @@ describe('consentManager', () => {
       localStorage.setItem('replay.mapMarkers.v1', 'markers');
       localStorage.setItem('latestReports.density', 'compact');
       sessionStorage.setItem('kalpa.buildEvidence.private-report', 'evidence');
+      sessionStorage.setItem('kalpa_support_draft_v1', 'support-report');
+      sessionStorage.setItem('kalpa_support_idempotency_v1', 'request-key');
+      sessionStorage.setItem('kalpa_support_result_v1', 'ticket-result');
 
       deleteAllUserData();
 
@@ -305,6 +308,9 @@ describe('consentManager', () => {
       expect(localStorage.getItem('replay.mapMarkers.v1')).toBeNull();
       expect(localStorage.getItem('latestReports.density')).toBeNull();
       expect(sessionStorage.getItem('kalpa.buildEvidence.private-report')).toBeNull();
+      expect(sessionStorage.getItem('kalpa_support_draft_v1')).toBeNull();
+      expect(sessionStorage.getItem('kalpa_support_idempotency_v1')).toBeNull();
+      expect(sessionStorage.getItem('kalpa_support_result_v1')).toBeNull();
     });
   });
 });
