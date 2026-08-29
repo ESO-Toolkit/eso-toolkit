@@ -178,7 +178,7 @@ describe('SupportCoordinator atomic rate limiting and idempotency', () => {
       await call(coordinator, '/begin', {
         ...input,
         requestId: 'request-c',
-        now: 1_004_000,
+        now: 1_303_000,
       }),
     ).toMatchObject({
       kind: 'start',
@@ -218,6 +218,38 @@ describe('SupportCoordinator atomic rate limiting and idempotency', () => {
         now: 1_300_001,
       }),
     ).toEqual({ updated: false });
+  });
+
+  it('keeps the active request lease after a channel is recorded', async () => {
+    const input = {
+      operationId: 'channel-operation-a',
+      userHash: 'user-a',
+      ipHash: 'ip-a',
+      requestId: 'request-a',
+      now: 1_000_000,
+    };
+    expect((await call(coordinator, '/begin', input)).kind).toBe('start');
+    expect(
+      await call(coordinator, '/channel', {
+        ...input,
+        channelId: 'channel-a',
+        ticketId: '0042',
+      }),
+    ).toEqual({ updated: true });
+
+    expect(
+      await call(coordinator, '/begin', {
+        ...input,
+        requestId: 'request-b',
+        now: 1_001_000,
+      }),
+    ).toMatchObject({
+      kind: 'duplicate',
+      record: { status: 'channel', requestId: 'request-a', channelId: 'channel-a' },
+    });
+    expect(await call(coordinator, '/complete', { ...input, now: 1_001_001 })).toEqual({
+      updated: true,
+    });
   });
 
   it('does not consume attempt capacity for duplicate status polls', async () => {

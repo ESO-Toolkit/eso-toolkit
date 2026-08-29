@@ -62,6 +62,18 @@ describe('Kalpa support contract', () => {
     expect(report).not.toContain('123456789012345678');
   });
 
+  it('redacts non-home absolute paths and strips non-printing control characters', () => {
+    const parsed = parseSupportPayload({
+      ...supportFixture(),
+      description: 'D:\\Games\\ESO\\AddOns and /var/lib/private\u0007',
+    });
+
+    expect(parsed.description.match(/\[local path\]/g)).toHaveLength(2);
+    expect(parsed.description).not.toContain('Games');
+    expect(parsed.description).not.toContain('/var/');
+    expect(parsed.description).not.toContain('\u0007');
+  });
+
   it('rejects a client-crafted report that exceeds Discord limits', () => {
     const input = supportFixture();
     const parsed = parseSupportPayload({

@@ -85,7 +85,10 @@ export class SupportCoordinator implements DurableObject {
       if (existing) {
         if (existing.userHash !== input.userHash) return { kind: 'conflict' };
         if (existing.status === 'complete') return { kind: 'duplicate', record: existing };
-        if (existing.status === 'pending' && input.now - existing.updatedAt < PENDING_LEASE_MS) {
+        if (
+          (existing.status === 'pending' || existing.status === 'channel') &&
+          input.now - existing.updatedAt < PENDING_LEASE_MS
+        ) {
           return { kind: 'duplicate', record: existing };
         }
         recovery = {

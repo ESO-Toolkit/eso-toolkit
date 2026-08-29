@@ -101,21 +101,32 @@ function allowedKeys(value: Record<string, unknown>, keys: readonly string[]): v
   }
 }
 
+function stripNonPrintingControlCharacters(value: string): string {
+  return Array.from(value, (character) => {
+    const codePoint = character.codePointAt(0) ?? 0;
+    const isAllowedWhitespace = codePoint === 9 || codePoint === 10 || codePoint === 13;
+    const isControlCharacter = codePoint < 32 || (codePoint >= 127 && codePoint <= 159);
+    return isControlCharacter && !isAllowedWhitespace ? '' : character;
+  }).join('');
+}
+
 function clean(value: unknown, max: number, multiline = false): string {
   if (typeof value !== 'string' || value.length > max * 4) {
     throw new SupportDraftError('A support report field is invalid.');
   }
-  const redacted = neutralizeMentions(value)
-    .replace(
-      /(?:[A-Za-z]:[\\/]+Users|[\\/]+(?:Users|home))[\\/]+[^\r\n,;]+?(?=\s+(?:and|at|from|with|then)\b|[,;\r\n]|$)/gi,
-      '[local path]',
-    )
-    .replace(/\\\\[^\r\n,;]+?(?=\s+(?:and|at|from|with|then)\b|[,;\r\n]|$)/g, '[local path]')
-    .replace(
-      /\b(authorization|bearer|access[_ -]?token|refresh[_ -]?token|api[_ -]?key|client[_ -]?secret)\b(?:\s*[:=]\s*|\s+)[^\s,;]{6,}|\b(token)\b(?:\s*[:=]\s*[^\s,;]+|\s+[A-Za-z0-9._~+/=-]{16,})/gi,
-      '$1$2 [redacted]',
-    )
-    .replace(/\b\d{17,20}\b/g, '[account-id]');
+  const redacted = stripNonPrintingControlCharacters(
+    neutralizeMentions(value)
+      .replace(
+        /(?:[A-Za-z]:[\\/]+|[\\/]+(?:Users|home|mnt|opt|var|tmp|etc|srv|Volumes)[\\/]+)[^\r\n,;]+?(?=\s+(?:and|at|from|with|then)\b|[,;\r\n]|$)/gi,
+        '[local path]',
+      )
+      .replace(/\\\\[^\r\n,;]+?(?=\s+(?:and|at|from|with|then)\b|[,;\r\n]|$)/g, '[local path]')
+      .replace(
+        /\b(authorization|bearer|access[_ -]?token|refresh[_ -]?token|api[_ -]?key|client[_ -]?secret)\b(?:\s*[:=]\s*|\s+)[^\s,;]{6,}|\b(token)\b(?:\s*[:=]\s*[^\s,;]+|\s+[A-Za-z0-9._~+/=-]{16,})/gi,
+        '$1$2 [redacted]',
+      )
+      .replace(/\b\d{17,20}\b/g, '[account-id]'),
+  );
   const normalized = multiline
     ? redacted.replace(/\r\n?/g, '\n').trim()
     : redacted.replace(/\s*[\r\n]+\s*/g, ' ').trim();

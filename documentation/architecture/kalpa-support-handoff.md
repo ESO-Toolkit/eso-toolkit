@@ -107,7 +107,7 @@ Errors are structured as `{ "requestId": "...", "error": { "code": "...", "messa
 
 - Category is an enum; version, description, report, idempotency key, and total body each have independent byte/character caps.
 - Control characters are removed and Discord mentions are neutralized, including `@everyone`, `@here`, user/role/channel mention syntax, and timestamp/command syntax where relevant.
-- Server-side defense-in-depth rejects or redacts Windows, UNC, macOS, and Linux home paths; token/authorization/cookie patterns; ESO account identifiers; and SavedVariables or raw-file markers. The request cannot contain attachments or raw files.
+- Server-side defense-in-depth redacts Windows drive and UNC paths, common macOS and Linux absolute paths, token/authorization/cookie patterns, and ESO account identifiers; it also removes non-printing control characters. The allow-listed schema cannot contain attachments, SavedVariables, or raw-file fields, and Kalpa never collects their contents.
 - Audit events contain an event name, request ID, optional result code, and—after authentication—a keyed pseudonymous subject hash. Rate state uses keyed network/subject hashes. Neither contains report/description text, access tokens, Discord names, raw IDs, or channel topics.
 - The Discord report message explicitly suppresses all automatic mention parsing.
 
@@ -118,6 +118,10 @@ Errors are structured as `{ "requestId": "...", "error": { "code": "...", "messa
 - Transient Discord failures produce a retryable error and retain the report. Authentication/membership errors are non-retryable until the user signs in or joins the guild.
 - A confirmed channel plus a failed initial message is reported as `discord_unavailable` only after recovery state is retained; a retry finds and repairs the same channel rather than creating another. Success is authoritative only after channel creation, ticket KV persistence, initial report delivery, and coordinator completion.
 - Kalpa retains its local exact-report review, Copy report, and Open ticket desk actions. The hosted page also offers copy/manual desk fallback for offline, OAuth cancellation, membership, Worker, or Discord failures. Neither surface says “ticket created” until the Worker returns a durable created/replayed result.
+
+## Existing Discord modal behavior
+
+The shared ticket service deliberately applies two safety changes to tickets opened from Discord as well as Kalpa: staff-role discovery now fails closed instead of creating a channel that staff may be unable to access, and channel creation is not transport-retried because Discord channel creation has no idempotency key. The existing modal's opening message now explicitly allows only its owner mention, so the ticket owner is notified without permitting role, channel, `@here`, or `@everyone` mentions. These are intentional behavior changes in the existing interaction path and should be called out in release notes.
 
 ## Deployment order
 

@@ -43,6 +43,18 @@ describe('Kalpa support draft contract', () => {
     expect(report.length).toBeLessThanOrEqual(SUPPORT_REPORT_MAX_LENGTH);
   });
 
+  it('redacts non-home absolute paths and strips non-printing control characters', () => {
+    const parsed = parseSupportPayload({
+      ...supportDraftFixture(),
+      description: 'D:\\Games\\ESO\\AddOns and /mnt/c/private\u0007',
+    });
+
+    expect(parsed.description.match(/\[local path\]/g)).toHaveLength(2);
+    expect(parsed.description).not.toContain('Games');
+    expect(parsed.description).not.toContain('/mnt/');
+    expect(parsed.description).not.toContain('\u0007');
+  });
+
   it('renders the shared client/server contract fixture exactly', () => {
     expect(renderSupportReport(parseSupportPayload(supportDraftFixture()))).toBe(
       SUPPORT_REPORT_GOLDEN,
