@@ -163,10 +163,10 @@ export const KalpaSupportPage: React.FC = () => {
   // Success is announced by the focus move onto its heading and failure by its
   // own role="alert", so neither belongs here as well — a state that appears in
   // both places is read out twice. Only states with no other announcement do.
-  const liveMessage = copied
-    ? 'The support report was copied to your clipboard. No ticket has been created yet.'
-    : busy
-      ? 'Creating your private Discord support ticket.'
+  const liveMessage = busy
+    ? 'Creating your private Discord support ticket.'
+    : copied && !ticket
+      ? 'The support report was copied to your clipboard. No ticket has been created yet.'
       : '';
 
   return (
