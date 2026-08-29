@@ -88,10 +88,13 @@ export const KalpaSupportPage: React.FC = () => {
   const [ticket, setTicket] = React.useState<CreatedTicket | null>(initialTicket);
   const [copied, setCopied] = React.useState(false);
   const [isOnline, setIsOnline] = React.useState(() => navigator.onLine);
-  const statusRef = React.useRef<HTMLDivElement>(null);
+  const successHeadingRef = React.useRef<HTMLHeadingElement>(null);
 
+  // Success removes the Create button, so focus has to land somewhere
+  // deliberate. Focusing the result heading both restores focus and announces
+  // the outcome once — which is why the success panel is not also a live region.
   React.useEffect(() => {
-    if (phase === 'success' || phase === 'error') statusRef.current?.focus();
+    if (phase === 'success') successHeadingRef.current?.focus();
   }, [phase]);
 
   React.useEffect(() => {
@@ -153,15 +156,18 @@ export const KalpaSupportPage: React.FC = () => {
   }
 
   const busy = phase === 'creating';
-  const liveMessage = copyError
-    ? copyError
-    : phase === 'creating'
+  // A confirmed ticket is the terminal state. Even if a draft somehow survives
+  // beside it, the reviewed-report and manual-fallback blocks stay hidden — the
+  // page must never show "no ticket created yet" next to "ticket created".
+  const showDraft = draft !== null && ticket === null;
+  // Success is announced by the focus move onto its heading and failure by its
+  // own role="alert", so neither belongs here as well — a state that appears in
+  // both places is read out twice. Only states with no other announcement do.
+  const liveMessage = copied
+    ? 'The support report was copied to your clipboard. No ticket has been created yet.'
+    : busy
       ? 'Creating your private Discord support ticket.'
-      : phase === 'success' && ticket
-        ? `Private ticket ${ticket.ticketId} created.`
-        : phase === 'error'
-          ? (error ?? '')
-          : (copyError ?? '');
+      : '';
 
   return (
     <Box sx={{ py: { xs: 2, sm: 4 }, px: { xs: 2, sm: 0 } }}>
@@ -202,13 +208,12 @@ export const KalpaSupportPage: React.FC = () => {
 
         {phase === 'success' && ticket ? (
           <Alert
-            ref={statusRef}
-            tabIndex={-1}
+            role="presentation"
             severity="success"
             icon={<CheckCircleIcon fontSize="inherit" />}
             sx={{ alignItems: 'flex-start' }}
           >
-            <Typography variant="h6" component="h2">
+            <Typography variant="h6" component="h2" ref={successHeadingRef} tabIndex={-1}>
               Private ticket created
             </Typography>
             <Typography variant="body2" sx={{ mt: 0.5, mb: 2 }}>
@@ -221,6 +226,7 @@ export const KalpaSupportPage: React.FC = () => {
               rel="noopener noreferrer"
               variant="contained"
               endIcon={<LaunchIcon />}
+              sx={{ minHeight: 44 }}
             >
               Open private ticket
             </Button>
@@ -228,14 +234,23 @@ export const KalpaSupportPage: React.FC = () => {
         ) : null}
 
         {phase === 'error' && error ? (
-          <Alert ref={statusRef} tabIndex={-1} severity="error">
-            {error}
+          <Alert role="alert" severity="error">
+            <Typography variant="h6" component="h2" sx={{ fontSize: '1rem' }}>
+              The ticket was not created
+            </Typography>
+            <Typography variant="body2" sx={{ mt: 0.5 }}>
+              {error} Your reviewed report is preserved below.
+            </Typography>
           </Alert>
         ) : null}
 
-        {copyError ? <Alert severity="warning">{copyError}</Alert> : null}
+        {copyError ? (
+          <Alert severity="warning" role="alert">
+            {copyError}
+          </Alert>
+        ) : null}
 
-        {draft ? (
+        {showDraft ? (
           <Paper
             variant="outlined"
             sx={{ p: { xs: 2, sm: 3 }, bgcolor: 'background.paper', borderColor: 'divider' }}
@@ -248,9 +263,9 @@ export const KalpaSupportPage: React.FC = () => {
                 alignItems: { xs: 'flex-start', sm: 'center' },
               }}
             >
-              <Box>
+              <Box sx={{ minWidth: 0 }}>
                 <Typography variant="overline" color="text.secondary">
-                  Report prepared by Kalpa
+                  Report prepared by Kalpa — no ticket created yet
                 </Typography>
                 <Typography variant="h6" component="h2">
                   {getSupportIssueLabel(draft.issueId)}
@@ -316,8 +331,16 @@ export const KalpaSupportPage: React.FC = () => {
                 size="large"
                 onClick={() => void createTicket()}
                 disabled={busy || !isOnline}
-                startIcon={busy ? <CircularProgress size={18} color="inherit" /> : <LockIcon />}
-                sx={{ width: { xs: '100%', sm: 'auto' } }}
+                aria-busy={busy}
+                aria-describedby={!isOnline ? 'kalpa-support-offline' : undefined}
+                startIcon={
+                  busy ? (
+                    <CircularProgress size={18} color="inherit" aria-hidden="true" />
+                  ) : (
+                    <LockIcon />
+                  )
+                }
+                sx={{ width: { xs: '100%', sm: 'auto' }, minHeight: 44 }}
               >
                 {busy ? 'Creating private ticket…' : 'Create private ticket'}
               </Button>
@@ -326,22 +349,23 @@ export const KalpaSupportPage: React.FC = () => {
                 variant="contained"
                 size="large"
                 onClick={() => startDiscordLogin('/kalpa/support')}
-                sx={{ width: { xs: '100%', sm: 'auto' } }}
+                sx={{ width: { xs: '100%', sm: 'auto' }, minHeight: 44 }}
               >
                 Continue with Discord
               </Button>
             )}
             {!isOnline ? (
-              <Alert severity="info" sx={{ mt: 2 }}>
-                You appear to be offline. The report is preserved below for manual submission.
+              <Alert severity="info" role="presentation" id="kalpa-support-offline" sx={{ mt: 2 }}>
+                You appear to be offline, so the ticket cannot be created yet. Reconnect and try
+                again, or copy the preserved report below and submit it manually.
               </Alert>
             ) : null}
           </Box>
         ) : null}
 
-        {draft ? <Divider /> : null}
+        {showDraft ? <Divider /> : null}
 
-        {draft ? (
+        {showDraft ? (
           <Box>
             <Typography variant="h6" component="h2">
               Manual fallback
@@ -351,7 +375,12 @@ export const KalpaSupportPage: React.FC = () => {
               the ticket desk. Preparing or copying a report does not mean a ticket was created.
             </Typography>
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
-              <Button variant="outlined" onClick={() => void copyReport()} startIcon={<CopyIcon />}>
+              <Button
+                variant="outlined"
+                onClick={() => void copyReport()}
+                startIcon={<CopyIcon />}
+                sx={{ minHeight: 44 }}
+              >
                 {copied ? 'Report copied' : 'Copy report'}
               </Button>
               <Button
@@ -361,6 +390,7 @@ export const KalpaSupportPage: React.FC = () => {
                 rel="noopener noreferrer"
                 variant="text"
                 endIcon={<LaunchIcon />}
+                sx={{ minHeight: 44 }}
               >
                 Open Discord ticket desk
               </Button>

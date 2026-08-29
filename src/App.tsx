@@ -37,7 +37,10 @@ import { AuthenticatedRoute } from './features/auth/AuthenticatedRoute';
 import { BanRedirect } from './features/auth/BanRedirect';
 import { DiscordAuthProvider } from './features/auth/DiscordAuthContext';
 import { Login } from './features/auth/Login';
-import { captureKalpaSupportDraft } from './features/kalpa-support/support-draft';
+import {
+  captureKalpaSupportDraft,
+  watchKalpaSupportHandoff,
+} from './features/kalpa-support/support-draft';
 import { ReportFightDetails } from './features/report_details/ReportFightDetails';
 import { UserReports } from './features/user_reports/UserReports';
 import { useWorkerManagerLogger } from './hooks/useWorkerManagerLogger';
@@ -58,6 +61,7 @@ import {
 // Capture and clear the fragment before analytics or error tracking can observe
 // the support handoff. The validated draft remains session-scoped.
 captureKalpaSupportDraft();
+watchKalpaSupportHandoff();
 // Initialize error tracking before the app starts (async — loads the
 // Rollbar chunk off the entry path; consumers null-guard the instance)
 void initializeErrorTracking();

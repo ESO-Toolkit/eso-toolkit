@@ -77,6 +77,23 @@ describe('KalpaSupportPage', () => {
     expect(sessionStorage.getItem(SUPPORT_DRAFT_KEY)).not.toBeNull();
   });
 
+  it('never shows a prepared report beside a confirmed ticket', () => {
+    sessionStorage.setItem(
+      SUPPORT_RESULT_KEY,
+      JSON.stringify({
+        status: 'created',
+        ticketId: '0042',
+        channelId: '123456789012345678',
+        channelUrl: 'https://discord.com/channels/1375703719995244686/123456789012345678',
+      }),
+    );
+    render(<KalpaSupportPage />);
+
+    expect(screen.getByText('Private ticket created')).toBeInTheDocument();
+    expect(screen.queryByText(/no ticket created yet/i)).not.toBeInTheDocument();
+    expect(screen.queryByText('Manual fallback')).not.toBeInTheDocument();
+  });
+
   it('shows loading and announces authoritative success only after both API calls', async () => {
     let finish: ((value: Awaited<ReturnType<typeof createKalpaTicket>>) => void) | undefined;
     mockCreateKalpaTicket.mockReturnValue(
