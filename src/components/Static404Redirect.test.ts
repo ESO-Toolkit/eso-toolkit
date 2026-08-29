@@ -7,6 +7,19 @@ interface RedirectRun {
   storedPath: string | null;
 }
 
+function extractInlineScript(source: string): string | undefined {
+  const openingTag = '<script>';
+  const closingTag = '</script>';
+  const scriptStart = source.indexOf(openingTag);
+  if (scriptStart < 0) return undefined;
+
+  const contentStart = scriptStart + openingTag.length;
+  const scriptEnd = source.indexOf(closingTag, contentStart);
+  if (scriptEnd < 0) return undefined;
+
+  return source.slice(contentStart, scriptEnd);
+}
+
 function executeRedirectScript(
   source: string,
   href: string,
@@ -56,7 +69,7 @@ describe('static-host redirect privacy', () => {
     path.join(process.cwd(), 'scripts', 'dev-previews-404.html'),
     'utf8',
   );
-  const previewRedirect = previewShell.match(/<script>([\s\S]*?)<\/script>/)?.[1];
+  const previewRedirect = extractInlineScript(previewShell);
 
   it('keeps a production support report in session storage and out of the redirect query', () => {
     const run = executeRedirectScript(
