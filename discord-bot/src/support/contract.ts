@@ -44,6 +44,65 @@ const ISSUES: Record<IssueId, { label: string; note: string; category: TicketCat
   },
 };
 
+/**
+ * Allow-listed environment details, mirrored from Kalpa's `support-report.ts`.
+ *
+ * `osVersion` is the OS product/build, `arch` a fixed-allow-list CPU
+ * architecture, `tauri` the bundled runtime version, and `webview` the web view
+ * engine plus MAJOR version only. Each is bounded and re-validated here rather
+ * than trusted from the client; anything outside its shape becomes `unknown`,
+ * so an edition string, machine name, or path cannot survive validation.
+ *
+ * Never accepted, by schema: hostname, user or home-directory name, hardware or
+ * device IDs, serial numbers, MAC or IP addresses, Discord or account IDs,
+ * locale, environment variables, tokens, credentials, cookies, SavedVariables,
+ * combat-log content, raw files, and full local paths.
+ */
+export interface SupportEnvironment {
+  osVersion: string;
+  arch: string;
+  tauri: string;
+  webview: string;
+}
+
+const SUPPORT_UNKNOWN = 'unknown';
+
+const SUPPORT_ARCHITECTURES = [
+  'x86',
+  'x86_64',
+  'arm',
+  'aarch64',
+  'loongarch64',
+  'mips',
+  'mips64',
+  'powerpc',
+  'powerpc64',
+  'riscv64',
+  's390x',
+  'sparc',
+  'sparc64',
+];
+
+export function normalizeOsVersion(value: unknown): string {
+  const text = typeof value === 'string' ? value.trim() : '';
+  return /^\d{1,6}(\.\d{1,6}){0,3}$/.test(text) ? text : SUPPORT_UNKNOWN;
+}
+
+export function normalizeArchitecture(value: unknown): string {
+  const text = typeof value === 'string' ? value.trim().toLowerCase() : '';
+  return SUPPORT_ARCHITECTURES.includes(text) ? text : SUPPORT_UNKNOWN;
+}
+
+export function normalizeRuntimeVersion(value: unknown): string {
+  const text = typeof value === 'string' ? value.trim() : '';
+  return /^\d{1,4}(\.\d{1,4}){0,3}(-[0-9A-Za-z.]{1,16})?$/.test(text) ? text : SUPPORT_UNKNOWN;
+}
+
+export function normalizeWebviewLabel(value: unknown): string {
+  const text = typeof value === 'string' ? value.trim() : '';
+  return /^(?:Chromium|WebKit) \d{1,4}$/.test(text) ? text : SUPPORT_UNKNOWN;
+}
+
 export interface SupportAttentionItem {
   name: string;
   folder: string;
@@ -55,11 +114,14 @@ export interface SupportAttentionItem {
 }
 
 export interface SupportTicketPayload {
-  version: 1;
+  /** 1 is accepted only so a legacy report still renders; Kalpa emits 2. */
+  version: 1 | 2;
   issueId: IssueId;
   description: string;
   appVersion: string;
   platform: 'windows' | 'macos' | 'linux';
+  /** Present from version 2 onward. A version-1 report omits the key entirely. */
+  environment?: SupportEnvironment;
   generatedAt: string;
   connection: 'online' | 'offline';
   updateState: 'checking' | 'complete';
@@ -146,6 +208,17 @@ function nullableText(value: unknown, max: number): string | null {
   return value === null ? null : clean(value, max);
 }
 
+function parseEnvironment(value: unknown): SupportEnvironment {
+  const input = object(value);
+  allowedKeys(input, ['osVersion', 'arch', 'tauri', 'webview']);
+  return {
+    osVersion: normalizeOsVersion(input.osVersion),
+    arch: normalizeArchitecture(input.arch),
+    tauri: normalizeRuntimeVersion(input.tauri),
+    webview: normalizeWebviewLabel(input.webview),
+  };
+}
+
 export function parseSupportPayload(value: unknown): SupportTicketPayload {
   const input = object(value);
   allowedKeys(input, [
@@ -154,15 +227,23 @@ export function parseSupportPayload(value: unknown): SupportTicketPayload {
     'description',
     'appVersion',
     'platform',
+    'environment',
     'generatedAt',
     'connection',
     'updateState',
     'instanceLabel',
     'diagnostics',
   ]);
-  if (input.version !== 1 || !ISSUE_IDS.includes(input.issueId as IssueId)) {
+  const version = input.version === 1 || input.version === 2 ? input.version : null;
+  if (version === null || !ISSUE_IDS.includes(input.issueId as IssueId)) {
     throw new SupportValidationError('The report version or issue is unsupported');
   }
+  // Version 1 predates the environment block; accepting it there would render a
+  // section the user never reviewed in Kalpa.
+  if ((version === 2) !== (input.environment !== undefined)) {
+    throw new SupportValidationError('The report environment is invalid');
+  }
+  const environment = version === 2 ? parseEnvironment(input.environment) : undefined;
   if (!['online', 'offline'].includes(String(input.connection))) {
     throw new SupportValidationError('The connection state is invalid');
   }
@@ -213,11 +294,12 @@ export function parseSupportPayload(value: unknown): SupportTicketPayload {
     };
   });
   return {
-    version: 1,
+    version,
     issueId: input.issueId as IssueId,
     description: clean(input.description, 500, true),
     appVersion: clean(input.appVersion, 40),
     platform: input.platform as 'windows' | 'macos' | 'linux',
+    ...(environment ? { environment } : {}),
     generatedAt,
     connection: input.connection as 'online' | 'offline',
     updateState: input.updateState as 'checking' | 'complete',
@@ -258,12 +340,20 @@ export function renderSupportReport(payload: SupportTicketPayload): string {
     '',
     '**What happened**',
   ];
+  const environment = payload.environment
+    ? [
+        `- OS build: ${payload.environment.osVersion}`,
+        `- CPU architecture: ${payload.environment.arch}`,
+        `- App runtime: Tauri ${payload.environment.tauri}, web view ${payload.environment.webview}`,
+      ]
+    : [];
   const diagnostics = [
     '',
     '## Automatic diagnostics',
     `- Generated: ${payload.generatedAt}`,
     `- Kalpa version: ${payload.appVersion}`,
     `- Platform: ${payload.platform}`,
+    ...environment,
     `- Connection: ${payload.connection}`,
     `- ESO instance: ${payload.instanceLabel}`,
     '- AddOns folder: hidden (local account names and full paths are never shared)',

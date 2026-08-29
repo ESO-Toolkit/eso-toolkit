@@ -9,12 +9,18 @@ import {
 
 export function supportFixture() {
   return {
-    version: 1,
+    version: 2,
     issueId: 'install-update',
     description:
       'Update failed for @everyone at C:\\Users\\Private Name\\Documents; bearer super-secret',
     appVersion: '0.18.0',
     platform: 'windows',
+    environment: {
+      osVersion: '10.0.26200',
+      arch: 'x86_64',
+      tauri: '2.9.1',
+      webview: 'Chromium 138',
+    },
     generatedAt: '2026-08-28T12:00:00.000Z',
     connection: 'online',
     updateState: 'complete',
@@ -44,10 +50,72 @@ export function supportFixture() {
 }
 
 describe('Kalpa support contract', () => {
-  it('renders the shared client/server contract fixture exactly', () => {
-    expect(renderSupportReport(parseSupportPayload(sharedFixture.payload))).toBe(
-      sharedFixture.report,
+  it.each(sharedFixture.cases.map((entry) => [entry.name, entry] as const))(
+    'renders the shared client/server contract fixture exactly: %s',
+    (_name, entry) => {
+      expect(renderSupportReport(parseSupportPayload(entry.payload))).toBe(entry.report);
+    },
+  );
+
+  it('normalizes every environment field and falls back to unknown', () => {
+    const parsed = parseSupportPayload({
+      ...supportFixture(),
+      environment: {
+        osVersion: 'Windows 11 Home (DESKTOP-ABC123)',
+        arch: 'AArch64',
+        tauri: '2.9.1-beta.2',
+        webview: 'Chromium 138.0.3296.62',
+      },
+    });
+
+    expect(parsed.environment).toEqual({
+      osVersion: 'unknown',
+      arch: 'aarch64',
+      tauri: '2.9.1-beta.2',
+      webview: 'unknown',
+    });
+    const report = renderSupportReport(parsed);
+    expect(report).not.toContain('DESKTOP-ABC123');
+    expect(report).toContain('- OS build: unknown');
+    expect(report).toContain('- CPU architecture: aarch64');
+  });
+
+  it('rejects environment fields outside the allow-list and version mismatches', () => {
+    expect(() =>
+      parseSupportPayload({
+        ...supportFixture(),
+        environment: { ...supportFixture().environment, hostname: 'DESKTOP-ABC123' },
+      }),
+    ).toThrow(SupportValidationError);
+    expect(() =>
+      parseSupportPayload({
+        ...supportFixture(),
+        environment: { ...supportFixture().environment, username: 'brayden' },
+      }),
+    ).toThrow(SupportValidationError);
+    const { environment: _dropped, ...withoutEnvironment } = supportFixture();
+    expect(() => parseSupportPayload(withoutEnvironment)).toThrow(SupportValidationError);
+    expect(() =>
+      parseSupportPayload({ ...supportFixture(), version: 1 }),
+    ).toThrow(SupportValidationError);
+    expect(() => parseSupportPayload({ ...supportFixture(), version: 3 })).toThrow(
+      SupportValidationError,
     );
+  });
+
+  it('keeps forbidden identity and device fields out of every rendered report', () => {
+    const report = renderSupportReport(parseSupportPayload(supportFixture()));
+    for (const forbidden of [
+      'hostname',
+      'username',
+      'macAddress',
+      'deviceId',
+      'serialNumber',
+      'locale',
+      'ipAddress',
+    ]) {
+      expect(report).not.toContain(forbidden);
+    }
   });
 
   it('redacts sensitive identifiers and paths and neutralizes Discord mentions', () => {

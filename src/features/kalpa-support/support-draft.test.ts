@@ -1,6 +1,7 @@
 import {
   captureKalpaSupportDraft,
   getStoredSupportDraft,
+  watchKalpaSupportHandoff,
   getSupportIdempotencyKey,
   neutralizeMentions,
   parseSupportPayload,
@@ -11,7 +12,7 @@ import {
   SUPPORT_IDEMPOTENCY_KEY,
   SUPPORT_REPORT_MAX_LENGTH,
 } from './support-draft';
-import { SUPPORT_REPORT_GOLDEN, supportDraftFixture } from './support-fixtures';
+import { supportContractCases, supportDraftFixture } from './support-fixtures';
 
 function encodeFragment(payload: unknown): string {
   const bytes = new TextEncoder().encode(JSON.stringify(payload));
@@ -55,10 +56,57 @@ describe('Kalpa support draft contract', () => {
     expect(parsed.description).not.toContain('\u0007');
   });
 
-  it('renders the shared client/server contract fixture exactly', () => {
-    expect(renderSupportReport(parseSupportPayload(supportDraftFixture()))).toBe(
-      SUPPORT_REPORT_GOLDEN,
+  it.each(supportContractCases().map((entry) => [entry.name, entry] as const))(
+    'renders the shared client/server contract fixture exactly: %s',
+    (_name, entry) => {
+      expect(renderSupportReport(parseSupportPayload(entry.payload))).toBe(entry.report);
+    },
+  );
+
+  it('normalizes environment values and falls back to unknown rather than guessing', () => {
+    const parsed = parseSupportPayload({
+      ...supportDraftFixture(),
+      environment: {
+        osVersion: 'Windows 11 Home (DESKTOP-ABC123)',
+        arch: 'X86_64',
+        tauri: 'nightly',
+        webview: 'Chromium 138',
+      },
+    });
+
+    expect(parsed.environment).toEqual({
+      osVersion: 'unknown',
+      arch: 'x86_64',
+      tauri: 'unknown',
+      webview: 'Chromium 138',
+    });
+    expect(renderSupportReport(parsed)).not.toContain('DESKTOP-ABC123');
+  });
+
+  it('rejects environment fields that could identify a machine or its owner', () => {
+    for (const forbidden of [
+      { hostname: 'DESKTOP-ABC123' },
+      { username: 'brayden' },
+      { macAddress: '00:11:22:33:44:55' },
+      { locale: 'en-GB' },
+      { env: 'PATH=/usr/bin' },
+    ]) {
+      expect(() =>
+        parseSupportPayload({
+          ...supportDraftFixture(),
+          environment: { ...supportDraftFixture().environment, ...forbidden },
+        }),
+      ).toThrow('unsupported field');
+    }
+  });
+
+  it('requires the environment block for version 2 and rejects it for version 1', () => {
+    const { environment: _dropped, ...withoutEnvironment } = supportDraftFixture();
+    expect(() => parseSupportPayload(withoutEnvironment)).toThrow('environment');
+    expect(() => parseSupportPayload({ ...supportDraftFixture(), version: 1 })).toThrow(
+      'environment',
     );
+    expect(() => parseSupportPayload({ ...supportDraftFixture(), version: 3 })).toThrow('version');
   });
 
   it('rejects client-supplied identity and unknown fields', () => {
@@ -121,6 +169,27 @@ describe('Kalpa support draft contract', () => {
     expect(window.location.hash).toBe('');
     expect(getStoredSupportDraft()).toMatchObject({ issueId: 'install-update' });
     expect(sessionStorage.getItem(SUPPORT_IDEMPOTENCY_KEY)).toMatch(/^[\w-]{32,128}$/);
+  });
+
+  it('captures a second handoff that arrives as a same-document hash change', () => {
+    // jsdom cannot navigate, so the reload the listener requests surfaces as a
+    // "Not implemented" virtual-console error rather than a real page load. The
+    // assertion that matters is that the new report was captured at all.
+    const reloadNotice = jest.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      watchKalpaSupportHandoff();
+      window.history.replaceState(
+        null,
+        '',
+        `/kalpa/support#kalpa=${encodeFragment(supportDraftFixture())}`,
+      );
+      window.dispatchEvent(new HashChangeEvent('hashchange'));
+
+      expect(getStoredSupportDraft()).toMatchObject({ issueId: 'install-update' });
+      expect(window.location.hash).toBe('');
+    } finally {
+      reloadNotice.mockRestore();
+    }
   });
 
   it('captures a valid fragment when hosted below a preview base path', () => {

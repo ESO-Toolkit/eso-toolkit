@@ -40,11 +40,17 @@ Request body (maximum 8 KiB before parsing):
 ```json
 {
   "payload": {
-    "version": 1,
+    "version": 2,
     "issueId": "addon-status|install-update|addon-folder|backups-data|log-upload|other",
     "description": "optional user description, maximum 500 characters",
     "appVersion": "bounded display version",
     "platform": "windows|macos|linux",
+    "environment": {
+      "osVersion": "digits-and-dots OS product/build, or \"unknown\"",
+      "arch": "allow-listed CPU architecture, or \"unknown\"",
+      "tauri": "bounded Tauri runtime version, or \"unknown\"",
+      "webview": "\"Chromium <major>\" | \"WebKit <major>\" | \"unknown\""
+    },
     "generatedAt": "bounded ISO-8601 timestamp",
     "connection": "online|offline",
     "updateState": "checking|complete",
@@ -73,6 +79,23 @@ Request body (maximum 8 KiB before parsing):
   }
 }
 ```
+
+### Report version 2: allow-listed environment
+
+Version 2 adds one nested `environment` object. Every field earns its place in triage and none of them singles a person out:
+
+| Field | Why support needs it | Bound |
+| --- | --- | --- |
+| `osVersion` | Windows feature builds change Controlled Folder Access, SmartScreen, and WebView2 behaviour; macOS and Linux releases change permission prompts. Most "the install silently failed" reports are resolved by the build number alone. | Digits and dots, at most four components. Anything else — an edition string, a machine name, a path — becomes `unknown`. |
+| `arch` | Separates the x86_64 and aarch64 builds, and on macOS separates a native Apple-silicon run from a Rosetta one. | Fixed allow-list of the architectures Tauri's os plugin reports. |
+| `tauri` | Pins which bundled windowing, opener, and updater behaviour is in play for a given report. | Bounded semver shape with an optional pre-release tag. |
+| `webview` | WebView2 and WebKit majors drive the CSS, clipboard, and dialog differences behind most "it looks wrong" reports. | Engine name plus **major only**, so the value is shared by millions of installs rather than identifying one. |
+
+Collection failures produce `unknown` rather than a guess. The client normalizes before display, and the Worker and hosted page normalize again independently — a client cannot smuggle an unbounded value through by claiming it is an OS version.
+
+Deliberately never collected, and rejected by the allow-listed schema on both servers: hostname or computer name, user or home-directory name, hardware or device IDs, serial numbers, MAC or IP addresses, Discord or account IDs in the report, locale, environment-variable dumps, tokens, credentials, cookies, SavedVariables, combat-log contents, raw files, and full local paths.
+
+Version 1 (no `environment` key) is still parsed and rendered so a report prepared by an older client is not lost, but the environment section is omitted for it: rendering a section the user never reviewed in Kalpa would break the exact-review guarantee. The two versions are mutually exclusive — a version-1 payload carrying an `environment` key, or a version-2 payload missing one, is rejected. Both repositories share the same fixture file, which carries one case per version.
 
 Kalpa, the hosted page, and the Worker use the same versioned canonical rendering rules and cross-repository fixtures. The canonical report is capped at Discord-safe message limits (1,950 characters) after every section, including attention rows. The fragment carries only the structured payload, uses the bare `https://esotk.com/kalpa/support#kalpa=` origin, and is rejected above 8 KiB; it does not carry a separately trusted free-form report.
 
