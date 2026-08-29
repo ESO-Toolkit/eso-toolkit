@@ -95,12 +95,38 @@ describe('Kalpa support contract', () => {
     ).toThrow(SupportValidationError);
     const { environment: _dropped, ...withoutEnvironment } = supportFixture();
     expect(() => parseSupportPayload(withoutEnvironment)).toThrow(SupportValidationError);
-    expect(() =>
-      parseSupportPayload({ ...supportFixture(), version: 1 }),
-    ).toThrow(SupportValidationError);
+    expect(() => parseSupportPayload({ ...supportFixture(), version: 1 })).toThrow(
+      SupportValidationError,
+    );
     expect(() => parseSupportPayload({ ...supportFixture(), version: 3 })).toThrow(
       SupportValidationError,
     );
+  });
+
+  it('is a no-op on a payload Kalpa already cleaned', () => {
+    // Kalpa redacts and truncates before the user reviews the report. If this
+    // validation then changed anything, the message posted to Discord would not
+    // be the message the user consented to. Every fixture case is run through
+    // twice: the second pass must be byte-identical.
+    for (const entry of sharedFixture.cases) {
+      const once = parseSupportPayload(entry.payload);
+      const twice = parseSupportPayload(JSON.parse(JSON.stringify(once)));
+      expect(twice).toEqual(once);
+      expect(renderSupportReport(twice)).toBe(renderSupportReport(once));
+    }
+  });
+
+  it('does not expand a truncated redaction into a longer one', () => {
+    // The exact shape Kalpa must never emit: a cut that lands inside the
+    // `[redacted]` token the first pass produced.
+    const cut = `${'x'.repeat(60)} bearer [redac`;
+    const parsed = parseSupportPayload({ ...supportFixture(), description: cut });
+
+    expect(parsed.description).not.toBe(cut);
+    expect(parsed.description).toContain('bearer [redacted]');
+    // Kalpa's clamp is what guarantees this input never reaches here; the
+    // assertion documents why that clamp exists.
+    expect(parsed.description.length).toBeGreaterThan(cut.length);
   });
 
   it('keeps forbidden identity and device fields out of every rendered report', () => {

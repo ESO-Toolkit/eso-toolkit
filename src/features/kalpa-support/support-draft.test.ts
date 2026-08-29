@@ -11,6 +11,7 @@ import {
   SUPPORT_FRAGMENT_MAX_LENGTH,
   SUPPORT_IDEMPOTENCY_KEY,
   SUPPORT_REPORT_MAX_LENGTH,
+  SUPPORT_RESULT_KEY,
 } from './support-draft';
 import { supportContractCases, supportDraftFixture } from './support-fixtures';
 
@@ -190,6 +191,49 @@ describe('Kalpa support draft contract', () => {
     } finally {
       reloadNotice.mockRestore();
     }
+  });
+
+  it('keeps the idempotency key and the confirmed ticket when the same report is reopened', () => {
+    const encoded = encodeFragment(supportDraftFixture());
+    window.history.replaceState(null, '', `/kalpa/support#kalpa=${encoded}`);
+    captureKalpaSupportDraft();
+    const firstKey = sessionStorage.getItem(SUPPORT_IDEMPOTENCY_KEY);
+    sessionStorage.setItem(SUPPORT_RESULT_KEY, JSON.stringify({ status: 'created' }));
+
+    window.history.replaceState(null, '', `/kalpa/support#kalpa=${encoded}`);
+    const changed = captureKalpaSupportDraft();
+
+    // A second key here would let a retry create a second Discord channel for
+    // the same user intent.
+    expect(changed).toBe(false);
+    expect(sessionStorage.getItem(SUPPORT_IDEMPOTENCY_KEY)).toBe(firstKey);
+    expect(sessionStorage.getItem(SUPPORT_RESULT_KEY)).not.toBeNull();
+  });
+
+  it('mints a new key only for a genuinely different report', () => {
+    window.history.replaceState(
+      null,
+      '',
+      `/kalpa/support#kalpa=${encodeFragment(supportDraftFixture())}`,
+    );
+    captureKalpaSupportDraft();
+    const firstKey = sessionStorage.getItem(SUPPORT_IDEMPOTENCY_KEY);
+
+    const second = { ...supportDraftFixture(), description: 'A different problem entirely.' };
+    window.history.replaceState(null, '', `/kalpa/support#kalpa=${encodeFragment(second)}`);
+
+    expect(captureKalpaSupportDraft()).toBe(true);
+    expect(sessionStorage.getItem(SUPPORT_IDEMPOTENCY_KEY)).not.toBe(firstKey);
+  });
+
+  it('keeps a confirmed ticket when a malformed second handoff arrives', () => {
+    sessionStorage.setItem(SUPPORT_RESULT_KEY, JSON.stringify({ status: 'created' }));
+    window.history.replaceState(null, '', '/kalpa/support#kalpa=not-valid-base64url-payload');
+
+    captureKalpaSupportDraft();
+
+    expect(sessionStorage.getItem(SUPPORT_RESULT_KEY)).not.toBeNull();
+    expect(sessionStorage.getItem(SUPPORT_DRAFT_ERROR_KEY)).toContain('invalid');
   });
 
   it('captures a valid fragment when hosted below a preview base path', () => {

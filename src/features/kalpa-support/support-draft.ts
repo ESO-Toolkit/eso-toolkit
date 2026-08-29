@@ -398,28 +398,40 @@ function decodeBase64Url(value: string): string {
   return new TextDecoder('utf-8', { fatal: true }).decode(bytes);
 }
 
-export function captureKalpaSupportDraft(): void {
+/** Returns true when a capture stored a report that differs from the previous one. */
+export function captureKalpaSupportDraft(): boolean {
   const normalizedPath = window.location.pathname.replace(/\/+$/, '');
-  if (!normalizedPath.endsWith('/kalpa/support')) return;
+  if (!normalizedPath.endsWith('/kalpa/support')) return false;
   const fragment = window.location.hash.slice(1);
-  if (!fragment.startsWith('kalpa=')) return;
+  if (!fragment.startsWith('kalpa=')) return false;
   window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}`);
+  const previousDraft = sessionStorage.getItem(SUPPORT_DRAFT_KEY);
   sessionStorage.removeItem(SUPPORT_DRAFT_ERROR_KEY);
-  sessionStorage.removeItem(SUPPORT_RESULT_KEY);
   try {
     if (fragment.length > SUPPORT_FRAGMENT_MAX_LENGTH)
       throw new SupportDraftError('The support handoff is too large.');
     const parsed = parseSupportPayload(JSON.parse(decodeBase64Url(fragment.slice(6))) as unknown);
     renderSupportReport(parsed);
-    sessionStorage.setItem(SUPPORT_DRAFT_KEY, JSON.stringify(parsed));
+    const serialized = JSON.stringify(parsed);
+    // Re-opening the handoff for a report already on this page is not a new
+    // request. Minting a fresh idempotency key for it would let a retry create a
+    // SECOND Discord channel for one user intent, so the existing key is kept
+    // and the confirmed result is left alone.
+    if (serialized === previousDraft) return false;
+    sessionStorage.removeItem(SUPPORT_RESULT_KEY);
+    sessionStorage.setItem(SUPPORT_DRAFT_KEY, serialized);
     sessionStorage.setItem(SUPPORT_IDEMPOTENCY_KEY, globalThis.crypto.randomUUID());
+    return true;
   } catch {
+    // A malformed second handoff must not silently discard a ticket that was
+    // already confirmed, so the result is only cleared once a new draft parses.
     sessionStorage.removeItem(SUPPORT_DRAFT_KEY);
     sessionStorage.removeItem(SUPPORT_IDEMPOTENCY_KEY);
     sessionStorage.setItem(
       SUPPORT_DRAFT_ERROR_KEY,
       'The support handoff is invalid. Return to Kalpa and prepare it again.',
     );
+    return true;
   }
 }
 
@@ -435,8 +447,9 @@ export function captureKalpaSupportDraft(): void {
 export function watchKalpaSupportHandoff(): void {
   window.addEventListener('hashchange', () => {
     if (!window.location.hash.startsWith('#kalpa=')) return;
-    captureKalpaSupportDraft();
-    window.location.reload();
+    // Only reload for a report this page is not already showing. Reloading for
+    // the same one would abort a ticket creation that is already in flight.
+    if (captureKalpaSupportDraft()) window.location.reload();
   });
 }
 
