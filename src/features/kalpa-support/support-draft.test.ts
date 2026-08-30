@@ -22,6 +22,24 @@ function encodeFragment(payload: unknown): string {
   return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
+/**
+ * True when the string contains no unpaired surrogate. `String#isWellFormed`
+ * would say the same thing, but it is ES2024 and this package targets ES2022.
+ */
+function isWellFormed(value: string): boolean {
+  for (let i = 0; i < value.length; i += 1) {
+    const unit = value.charCodeAt(i);
+    if (unit >= 0xd800 && unit <= 0xdbff) {
+      const next = value.charCodeAt(i + 1);
+      if (!(next >= 0xdc00 && next <= 0xdfff)) return false;
+      i += 1;
+    } else if (unit >= 0xdc00 && unit <= 0xdfff) {
+      return false;
+    }
+  }
+  return true;
+}
+
 describe('Kalpa support draft contract', () => {
   beforeEach(() => {
     sessionStorage.clear();
@@ -55,6 +73,41 @@ describe('Kalpa support draft contract', () => {
     expect(parsed.description).not.toContain('Games');
     expect(parsed.description).not.toContain('/mnt/');
     expect(parsed.description).not.toContain('\u0007');
+  });
+
+  it('redacts removable-media mounts and drive-less Windows paths', () => {
+    // udisks mounts secondary Steam libraries under /media or
+    // /run/media/<username>; those carry the account name exactly as /home
+    // does, and so does a Windows path that has lost its drive letter.
+    const parsed = parseSupportPayload({
+      ...supportDraftFixture(),
+      description:
+        '/run/media/bob/SteamLibrary/ESO failed; /media/bob/ext broke; Users\\Brayden\\Documents\\AddOns is wrong',
+    });
+
+    expect(parsed.description).not.toContain('bob');
+    expect(parsed.description).not.toContain('Brayden');
+    expect(parsed.description.match(/\[local path\]/g)).toHaveLength(3);
+  });
+
+  it('leaves ordinary prose that merely starts with a path keyword alone', () => {
+    const parsed = parseSupportPayload({
+      ...supportDraftFixture(),
+      description: 'Users of this addon report a crash',
+    });
+    expect(parsed.description).toBe('Users of this addon report a crash');
+  });
+
+  it('never renders a lone surrogate, however the client got one there', () => {
+    // A cut inside a surrogate pair leaves a string that is not well-formed.
+    // Discord rejects the message, and since the channel already exists every
+    // retry fails identically.
+    const parsed = parseSupportPayload({
+      ...supportDraftFixture(),
+      description: `lead ${String.fromCharCode(0xd83d)} trail`,
+    });
+    expect(isWellFormed(parsed.description)).toBe(true);
+    expect(isWellFormed(renderSupportReport(parsed))).toBe(true);
   });
 
   it.each(supportContractCases().map((entry) => [entry.name, entry] as const))(

@@ -4,7 +4,7 @@ Status: implemented on feature branches (2026-08-28)
 
 ## Decision
 
-Kalpa prepares the privacy-safe report and opens a hosted ESO Toolkit support page. The report travels in the URL fragment, which the page immediately moves into tab-scoped `sessionStorage` and removes from browser history. The desktop app never receives a Discord token and never supplies a Discord user ID.
+Kalpa prepares the privacy-safe report and opens a hosted ESO Toolkit support page. The report travels in the URL fragment, which the page immediately moves into tab-scoped `sessionStorage` and clears from the address bar with `history.replaceState`. A fragment is never sent over the network — not in the request line, not in a referrer — which is the property this design relies on. It is _not_ a claim that the URL never reaches the browser's history database: Chromium and Firefox record the committed URL before any script runs (the same reason OAuth `?code=` URLs show up in history), and on Windows the URL is passed to the browser as a command-line argument when no instance is already running. The desktop app never receives a Discord token and never supplies a Discord user ID.
 
 The hosted page displays the exact report again and requires an explicit Create ticket action. The route is statically prerendered and marked `noindex`; this is a security requirement because the site's GitHub Pages 404 redirect otherwise converts fragments into query parameters. If needed, the page uses the existing Discord OAuth authorization-code flow (`identify guilds`) and returns to the support page.
 
@@ -115,6 +115,29 @@ Success (`201`, or `200` for a replayed completed request):
 ```
 
 Errors are structured as `{ "requestId": "...", "error": { "code": "...", "message": "safe user-facing text", "retryable": true|false } }`. Codes are `AUTH_REQUIRED`, `AUTH_EXPIRED`, `NOT_A_MEMBER`, `RATE_LIMITED`, `INVALID_REQUEST`, `IDEMPOTENCY_CONFLICT`, `DISCORD_UNAVAILABLE`, `TICKET_RECOVERING`, and `INTERNAL_ERROR`. No diagnostic content appears in logs or error responses.
+
+## Operational invariants
+
+Two constraints that are not visible in the code and will not fail loudly.
+
+**The site must never be rolled back below the commit that adds the hosted route while a
+released Kalpa carries the handoff.** On a site without `/kalpa/support` prerendered,
+GitHub Pages serves the 404 shell, and any shell older than this change copies the whole
+fragment — the reviewed report — into `?redirect=`, which puts it in the request line, in
+Pages and CDN access logs, and in the history entry for a URL the user never chose. The
+current `public/404-redirect.js` and `scripts/dev-previews-404.html` fail closed for this
+route, but they only protect a browser that has already loaded them. Nothing on Kalpa's
+side can detect an old site today; if that becomes a live risk, the fix is a preflight
+`HEAD https://esotk.com/kalpa/support` in Kalpa that falls back to copy-and-open.
+
+**The Worker cannot be rolled back by redeploying an older commit.**
+`new_sqlite_classes = ["SupportCoordinator"]` has been applied, so an older bundle that no
+longer exports the class fails at upload unless a `deleted_classes` migration is added.
+Use `wrangler rollback <version-id>` instead. Before relying on that, confirm the old
+`DISCORD_CLIENT_SECRET` secret is still set: this branch renamed it to
+`DISCORD_OAUTH_CLIENT_SECRET`, and a rollback to code that reads the old name would break
+Discord sign-in for the whole website — roster publishing included — not just Kalpa
+support.
 
 ## Trust boundaries and controls
 
