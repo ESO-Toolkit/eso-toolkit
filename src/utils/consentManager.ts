@@ -233,6 +233,30 @@ export const APP_STORAGE_KEY_DEFINITIONS: readonly ApplicationStorageKeyDefiniti
     areas: ['sessionStorage'],
   },
   {
+    key: 'kalpa_support_draft_v1',
+    label: 'Kalpa support draft',
+    description: 'Reviewed support report awaiting private ticket creation',
+    areas: ['sessionStorage'],
+  },
+  {
+    key: 'kalpa_support_draft_error_v1',
+    label: 'Kalpa support handoff error',
+    description: 'Temporary error shown when a support handoff cannot be restored',
+    areas: ['sessionStorage'],
+  },
+  {
+    key: 'kalpa_support_idempotency_v1',
+    label: 'Kalpa support request key',
+    description: 'Temporary duplicate-submission protection for a support request',
+    areas: ['sessionStorage'],
+  },
+  {
+    key: 'kalpa_support_result_v1',
+    label: 'Kalpa support ticket result',
+    description: 'Confirmed private ticket link retained for the current browser session',
+    areas: ['sessionStorage'],
+  },
+  {
     key: 'eso_intended_destination',
     label: 'Post-login destination',
     description: 'Page restored after ESO Logs sign-in',
@@ -394,6 +418,11 @@ const SESSION_STORAGE_KEYS: ReadonlySet<string> = new Set([
   'discord_token_expires_at',
   'discord_oauth_state',
   'discord_oauth_return_path',
+  'redirectPath',
+  'kalpa_support_draft_v1',
+  'kalpa_support_draft_error_v1',
+  'kalpa_support_idempotency_v1',
+  'kalpa_support_result_v1',
 ]);
 
 const getStorage = (area: BrowserStorageArea): Storage =>

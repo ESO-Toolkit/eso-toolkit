@@ -5,7 +5,7 @@
 
 import { editMessage, Permission } from '../discord.js';
 import { getTicket, updateTicket } from '../kv.js';
-import { buildTicketEmbed, buildTicketActionRows } from '../modals/ticket-form.js';
+import { buildTicketMessageUpdate } from '../modals/ticket-form.js';
 import { InteractionResponseType } from '../types.js';
 import type { DiscordInteraction, Env, InteractionResponse } from '../types.js';
 import { ephemeral } from '../utils.js';
@@ -62,11 +62,12 @@ export async function handleUnclaimButton(
     ctx.waitUntil(
       (async () => {
         try {
-          const rows = buildTicketActionRows(updated);
-          await editMessage(env, channelId, ticket.embedMessageId!, {
-            embeds: [buildTicketEmbed(updated)],
-            components: rows,
-          });
+          await editMessage(
+            env,
+            channelId,
+            ticket.embedMessageId!,
+            buildTicketMessageUpdate(updated),
+          );
         } catch (err) {
           console.error('[unclaim] failed to edit embed:', err);
         }

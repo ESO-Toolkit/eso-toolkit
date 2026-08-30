@@ -25,6 +25,8 @@ import { KV_PREFIX } from './roster/kv.js';
 import { InteractionType, MessageFlags } from './types.js';
 import type { DiscordInteraction, Env } from './types.js';
 import { verifyDiscordSignature } from './verify.js';
+import { handleSupportSession, handleSupportTicket } from './support/handler.js';
+export { SupportCoordinator } from './support/coordinator.js';
 
 // Production-only CORS origins
 const PROD_CORS_ORIGINS = new Set([
@@ -92,6 +94,36 @@ function isAllowedRedirectUri(uri: string, env: Env): boolean {
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
+
+    if (url.pathname.startsWith('/discord/support/kalpa/')) {
+      if (!getCorsOrigin(request, env)) {
+        return jsonResponse(
+          {
+            error: {
+              code: 'ORIGIN_NOT_ALLOWED',
+              message: 'Origin is not allowed.',
+              retryable: false,
+            },
+          },
+          403,
+        );
+      }
+      if (request.method === 'OPTIONS') return handleCorsPreflight(request, env);
+      if (url.pathname === '/discord/support/kalpa/session') {
+        return withCors(request, env, await handleSupportSession(request, env));
+      }
+      if (url.pathname === '/discord/support/kalpa/tickets') {
+        return withCors(request, env, await handleSupportTicket(request, env));
+      }
+      return withCors(
+        request,
+        env,
+        jsonResponse(
+          { error: { code: 'NOT_FOUND', message: 'Not found.', retryable: false } },
+          404,
+        ),
+      );
+    }
 
     // ── CORS preflight ───────────────────────────────────────────────────
     if (request.method === 'OPTIONS') {
@@ -281,9 +313,13 @@ async function handleOAuthTokenExchange(request: Request, env: Env): Promise<Res
   }
 
   try {
+    if (!env.DISCORD_OAUTH_CLIENT_ID || !env.DISCORD_OAUTH_CLIENT_SECRET) {
+      return jsonResponse({ error: 'OAuth client is not configured' }, 500);
+    }
+
     const params = new URLSearchParams({
-      client_id: env.DISCORD_APPLICATION_ID,
-      client_secret: env.DISCORD_CLIENT_SECRET,
+      client_id: env.DISCORD_OAUTH_CLIENT_ID,
+      client_secret: env.DISCORD_OAUTH_CLIENT_SECRET,
       grant_type: 'authorization_code',
       code: body.code,
       redirect_uri: body.redirect_uri,
@@ -657,8 +693,9 @@ function handleCorsPreflight(request: Request, env: Env): Response {
     headers: {
       'Access-Control-Allow-Origin': origin,
       'Access-Control-Allow-Methods': 'GET, POST, PUT, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization, Idempotency-Key',
       'Access-Control-Max-Age': '86400',
+      Vary: 'Origin',
     },
   });
 }
@@ -670,6 +707,7 @@ function withCors(request: Request, env: Env, response: Response): Response {
   headers.set('Access-Control-Allow-Origin', origin);
   headers.set('X-Content-Type-Options', 'nosniff');
   headers.set('X-Frame-Options', 'DENY');
+  headers.set('Vary', 'Origin');
   return new Response(response.body, {
     status: response.status,
     statusText: response.statusText,

@@ -49,12 +49,23 @@ export const ChannelType = {
 export interface Env {
   DISCORD_PUBLIC_KEY: string;
   DISCORD_BOT_TOKEN: string;
+  /** The BOT application, used to build interaction webhook callback URLs. */
   DISCORD_APPLICATION_ID: string;
-  DISCORD_CLIENT_SECRET: string;
+  /**
+   * The OAuth client the website signs users in with. This is a DIFFERENT
+   * application from the bot: the authorization code and the bearer token are
+   * both minted by it, so the token exchange and the audience check must use
+   * these, never the bot's application id.
+   */
+  DISCORD_OAUTH_CLIENT_ID: string;
+  DISCORD_OAUTH_CLIENT_SECRET: string;
   GITHUB_TOKEN: string;
   ZAI_API_KEY: string;
   TICKETS: KVNamespace;
   ROSTERS: KVNamespace;
+  SUPPORT_COORDINATOR: DurableObjectNamespace;
+  SUPPORT_SESSION_SECRET: string;
+  SUPPORT_AUDIT_SECRET: string;
   // Config constants (set in wrangler.toml vars)
   GUILD_ID: string;
   TICKET_CATEGORY_ID: string;
@@ -166,6 +177,7 @@ export interface DiscordChannel {
   id: string;
   name: string;
   type: number;
+  topic?: string | null;
   guild_id?: string;
   parent_id?: string;
   position?: number;
@@ -212,6 +224,7 @@ export interface TicketState {
   staffNotes?: string; // Internal notes visible only to staff
   embedMessageId?: string;
   createdAt: string; // ISO timestamp
+  source?: 'discord-modal' | 'kalpa';
 }
 
 // AI response shape

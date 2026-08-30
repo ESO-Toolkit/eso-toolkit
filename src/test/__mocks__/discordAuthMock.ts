@@ -6,6 +6,10 @@
 export const DISCORD_TOKEN_KEY = 'discord_access_token';
 export const DISCORD_EXPIRY_KEY = 'discord_token_expires_at';
 
+export function getDiscordBotApiUrl(): string {
+  return 'https://discord-bot.test';
+}
+
 export function startDiscordAuth(_returnPath?: string): void {
   // no-op in tests
 }
@@ -18,13 +22,16 @@ export async function exchangeDiscordCode(_code: string): Promise<{
   access_token: string;
   token_type: string;
   expires_in: number;
-  refresh_token: string;
   scope: string;
 }> {
   throw new Error('Not implemented in test mock');
 }
 
 export function getDiscordReturnPath(): string {
+  return '/';
+}
+
+export function peekDiscordReturnPath(): string {
   return '/';
 }
 

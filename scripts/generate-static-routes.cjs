@@ -22,6 +22,7 @@ const SITE_ORIGIN = 'https://esotk.com';
 // requires it directly (plain node, no bundler), while the app imports it
 // through src/constants/routeMeta.ts.
 const routeMeta = require('../src/constants/route-meta.json');
+const PRIVATE_FRAGMENT_ROUTES = ['/kalpa/support'];
 
 // The /build-leaderboard sub-routes (7 pooled class boards + 14 per-encounter
 // boards) come from their own JSON because each entry also carries the encounter
@@ -56,12 +57,27 @@ const staticRoutes = Object.entries({ ...routeMeta, ...leaderboardRouteMeta })
     if (!meta.description) {
       throw new Error(`Prerendered route is missing a description: ${routePath}`);
     }
-    return { path: routePath.slice(1), title: meta.title, description: meta.description };
+    return {
+      path: routePath.slice(1),
+      title: meta.title,
+      description: meta.description,
+      noindex: meta.noindex === true,
+    };
   });
 
 if (staticRoutes.length === 0) {
   console.error('No prerenderable routes found in route-meta.json or leaderboard-routes.json');
   process.exit(1);
+}
+
+for (const requiredRoute of PRIVATE_FRAGMENT_ROUTES) {
+  const route = routeMeta[requiredRoute];
+  if (!route?.prerender) {
+    console.error(
+      `Private fragment route must be prerendered so its payload never reaches the 404 redirect: ${requiredRoute}`,
+    );
+    process.exit(1);
+  }
 }
 
 if (!fs.existsSync(appShell)) {
@@ -118,7 +134,7 @@ for (const route of staticRoutes) {
   const routeUrl = `${SITE_ORIGIN}/${route.path}/`;
   const title = escapeHtml(route.title);
   const description = escapeHtml(route.description);
-  const routeShell = contents
+  let routeShell = contents
     .replace(/<title>[^<]*<\/title>/, `<title>${title}</title>`)
     .replace(
       /<link rel="canonical" href="[^"]*" \/>/,
@@ -149,6 +165,13 @@ for (const route of staticRoutes) {
       `<meta name="twitter:description" content="${description}" />`,
     );
 
+  if (route.noindex) {
+    routeShell = routeShell.replace(
+      '</head>',
+      '  <meta name="robots" content="noindex,nofollow" />\n</head>',
+    );
+  }
+
   const routeDirectory = path.join(buildDirectory, route.path);
   fs.mkdirSync(routeDirectory, { recursive: true });
   fs.writeFileSync(path.join(routeDirectory, 'index.html'), routeShell);
@@ -160,7 +183,7 @@ for (const route of staticRoutes) {
 const lastmod = new Date().toISOString().slice(0, 10);
 const sitemapUrls = [
   `${SITE_ORIGIN}/`,
-  ...staticRoutes.map((route) => `${SITE_ORIGIN}/${route.path}/`),
+  ...staticRoutes.filter((route) => !route.noindex).map((route) => `${SITE_ORIGIN}/${route.path}/`),
 ].sort();
 const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">

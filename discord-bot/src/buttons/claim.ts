@@ -5,7 +5,7 @@
 
 import { editMessage, isStaff } from '../discord.js';
 import { getTicket, updateTicket } from '../kv.js';
-import { buildTicketEmbed, buildTicketActionRows } from '../modals/ticket-form.js';
+import { buildTicketMessageUpdate } from '../modals/ticket-form.js';
 import { InteractionResponseType } from '../types.js';
 import type { DiscordInteraction, Env, InteractionResponse } from '../types.js';
 import { ephemeral } from '../utils.js';
@@ -63,10 +63,12 @@ export async function handleClaimButton(
     ctx.waitUntil(
       (async () => {
         try {
-          await editMessage(env, channelId, ticket.embedMessageId!, {
-            embeds: [buildTicketEmbed(updated)],
-            components: buildTicketActionRows(updated),
-          });
+          await editMessage(
+            env,
+            channelId,
+            ticket.embedMessageId!,
+            buildTicketMessageUpdate(updated),
+          );
         } catch (err) {
           console.error('[claim] failed to edit embed:', err);
         }

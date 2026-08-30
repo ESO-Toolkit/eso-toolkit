@@ -5,7 +5,7 @@
 
 import { editMessage, isStaff } from '../discord.js';
 import { getTicket, updateTicket } from '../kv.js';
-import { buildTicketEmbed, buildTicketActionRows } from '../modals/ticket-form.js';
+import { buildTicketMessageUpdate } from '../modals/ticket-form.js';
 import {
   ComponentType,
   InteractionResponseType,
@@ -107,11 +107,12 @@ export async function handleStaffNoteModal(
     ctx.waitUntil(
       (async () => {
         try {
-          const rows = buildTicketActionRows(updated);
-          await editMessage(env, channelId, ticket.embedMessageId!, {
-            embeds: [buildTicketEmbed(updated)],
-            components: rows,
-          });
+          await editMessage(
+            env,
+            channelId,
+            ticket.embedMessageId!,
+            buildTicketMessageUpdate(updated),
+          );
         } catch (err) {
           console.error('[staff-note] failed to edit embed:', err);
         }

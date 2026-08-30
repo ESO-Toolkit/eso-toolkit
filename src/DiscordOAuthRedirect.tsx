@@ -14,6 +14,7 @@ import discordIcon from './assets/discord-icon.svg';
 import {
   exchangeDiscordCode,
   getDiscordReturnPath,
+  peekDiscordReturnPath,
   startDiscordAuth,
   validateOAuthState,
 } from './features/auth/discord-auth';
@@ -28,6 +29,7 @@ export const DiscordOAuthRedirect: React.FC = () => {
   const { setDiscordToken } = useDiscordAuth();
   const [error, setError] = React.useState<string | null>(null);
   const [status, setStatus] = React.useState('Connecting to Discord...');
+  const returnPath = peekDiscordReturnPath();
 
   React.useEffect(() => {
     let cancelled = false;
@@ -35,13 +37,18 @@ export const DiscordOAuthRedirect: React.FC = () => {
     const code = params.get('code');
     const oauthError = params.get('error');
     const state = params.get('state');
+    const stateValid = validateOAuthState(state);
 
     if (oauthError) {
-      setError('Discord authorization was denied or failed. Please try again.');
+      setError(
+        stateValid
+          ? 'Discord authorization was denied or failed. Please try again.'
+          : 'Your Discord session expired. Please try connecting again.',
+      );
       return;
     }
 
-    if (!validateOAuthState(state)) {
+    if (!stateValid) {
       setError('Your Discord session expired. Please try connecting again.');
       return;
     }
@@ -58,8 +65,7 @@ export const DiscordOAuthRedirect: React.FC = () => {
         if (cancelled) return;
         setDiscordToken(tokenData.access_token, tokenData.expires_in);
         setStatus('Success! Redirecting...');
-        const returnPath = getDiscordReturnPath();
-        navigate(returnPath, { replace: true });
+        navigate(getDiscordReturnPath(), { replace: true });
       })
       .catch((err) => {
         if (cancelled) return;
@@ -128,7 +134,7 @@ export const DiscordOAuthRedirect: React.FC = () => {
               <Box sx={{ display: 'flex', gap: 1.5, justifyContent: 'center', flexWrap: 'wrap' }}>
                 <Button
                   variant="contained"
-                  onClick={() => startDiscordAuth()}
+                  onClick={() => startDiscordAuth(returnPath)}
                   sx={{
                     background: 'linear-gradient(135deg, #5865F2 0%, #4752C4 100%)',
                     '&:hover': {
@@ -141,7 +147,7 @@ export const DiscordOAuthRedirect: React.FC = () => {
                 </Button>
                 <Button
                   variant="outlined"
-                  onClick={() => navigate('/', { replace: true })}
+                  onClick={() => navigate(returnPath, { replace: true })}
                   sx={{
                     borderColor: 'rgba(255,255,255,0.2)',
                     color: 'rgba(255,255,255,0.7)',
@@ -151,7 +157,7 @@ export const DiscordOAuthRedirect: React.FC = () => {
                     },
                   }}
                 >
-                  Go Home
+                  {returnPath === '/kalpa/support' ? 'Back to report' : 'Go Home'}
                 </Button>
               </Box>
             </>
