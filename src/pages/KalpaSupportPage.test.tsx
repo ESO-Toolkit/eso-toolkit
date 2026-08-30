@@ -226,6 +226,49 @@ describe('KalpaSupportPage', () => {
     expect(screen.getByRole('button', { name: 'Copy report' })).toBeEnabled();
   });
 
+  it('refuses to offer creation when the report does not match what Kalpa showed', () => {
+    // Stands in for the real failure this catches: this page's copy of the
+    // redaction and rendering rules having drifted from Kalpa's, so the preview
+    // is not the text the user reviewed and consented to.
+    sessionStorage.setItem(
+      SUPPORT_DRAFT_KEY,
+      JSON.stringify({ ...supportDraftFixture(), reportSha256: 'a'.repeat(64) }),
+    );
+    render(<KalpaSupportPage />);
+
+    expect(screen.getByText(/could not confirm the report Kalpa showed you/i)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Create private ticket' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Continue with Discord' })).not.toBeInTheDocument();
+    // The report stays visible and the ticket desk stays reachable, so the user
+    // can still get help — but nothing on this page offers to hand the text it
+    // rebuilt to Discord or to the clipboard, by either route.
+    expect(
+      screen.getByLabelText(
+        'Support report rebuilt by this page, which does not match the report Kalpa showed',
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByLabelText('Exact support report that will be shared'),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Copy report' })).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Open Discord ticket desk/ })).toBeInTheDocument();
+    expect(screen.getByText(/this page does not offer to copy it/)).toBeInTheDocument();
+  });
+
+  it('will not put the mismatched reconstruction on the clipboard', async () => {
+    // The button is hidden while drifted; this covers the handler being reached
+    // any other way. Copying would move the unreviewed report into a manual
+    // ticket, which is the same defect the API path refuses.
+    sessionStorage.setItem(
+      SUPPORT_DRAFT_KEY,
+      JSON.stringify({ ...supportDraftFixture(), reportSha256: 'a'.repeat(64) }),
+    );
+    render(<KalpaSupportPage />);
+    fireEvent.click(screen.getByRole('link', { name: /Open Discord ticket desk/ }));
+
+    await waitFor(() => expect(navigator.clipboard.writeText).not.toHaveBeenCalled());
+  });
+
   it('explains clipboard denial without claiming success', async () => {
     (navigator.clipboard.writeText as jest.Mock).mockRejectedValue(new Error('blocked'));
     render(<KalpaSupportPage />);

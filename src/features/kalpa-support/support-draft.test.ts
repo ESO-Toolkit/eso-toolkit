@@ -6,12 +6,14 @@ import {
   neutralizeMentions,
   parseSupportPayload,
   renderSupportReport,
+  sha256Hex,
   SUPPORT_DRAFT_ERROR_KEY,
   SUPPORT_DRAFT_KEY,
   SUPPORT_FRAGMENT_MAX_LENGTH,
   SUPPORT_IDEMPOTENCY_KEY,
   SUPPORT_REPORT_MAX_LENGTH,
   SUPPORT_RESULT_KEY,
+  verifySupportReport,
 } from './support-draft';
 import { supportContractCases, supportDraftFixture } from './support-fixtures';
 
@@ -154,13 +156,71 @@ describe('Kalpa support draft contract', () => {
     }
   });
 
-  it('requires the environment block for version 2 and rejects it for version 1', () => {
+  it('requires the environment block from version 2 onward and rejects it for version 1', () => {
     const { environment: _dropped, ...withoutEnvironment } = supportDraftFixture();
     expect(() => parseSupportPayload(withoutEnvironment)).toThrow('environment');
     expect(() => parseSupportPayload({ ...supportDraftFixture(), version: 1 })).toThrow(
       'environment',
     );
-    expect(() => parseSupportPayload({ ...supportDraftFixture(), version: 3 })).toThrow('version');
+    expect(() => parseSupportPayload({ ...supportDraftFixture(), version: 4 })).toThrow('version');
+  });
+
+  it('holds version 3 and the report hash to each other', () => {
+    const { reportSha256: hash, ...withoutHash } = supportDraftFixture();
+    // Version 3 without the hash: a Kalpa that quietly stopped sending it must
+    // be rejected here, not silently downgraded to an unverified report.
+    expect(() => parseSupportPayload(withoutHash)).toThrow('hash');
+    // The hash without version 3: the key set is exact per version, so a
+    // version-2 payload cannot smuggle a field no version-2 reader checks.
+    expect(() => parseSupportPayload({ ...withoutHash, version: 2, reportSha256: hash })).toThrow(
+      'hash',
+    );
+    for (const malformed of ['', hash!.toUpperCase(), hash!.slice(0, 63), `${hash!}0`]) {
+      expect(() =>
+        parseSupportPayload({ ...supportDraftFixture(), reportSha256: malformed }),
+      ).toThrow('hash');
+    }
+    // A version-2 report predates the hash and stays accepted, so a Kalpa build
+    // already in the wild keeps working against this page.
+    expect(parseSupportPayload({ ...withoutHash, version: 2 }).reportSha256).toBeUndefined();
+  });
+
+  it('computes real SHA-256 over the report text', () => {
+    // Fixed vectors: the Worker uses the platform digest and this page hand
+    // writes one, so only a known answer keeps them the same function.
+    expect(sha256Hex('')).toBe('e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855');
+    expect(sha256Hex('abc')).toBe(
+      'ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad',
+    );
+    expect(sha256Hex('a'.repeat(56))).toBe(
+      'b35439a4ac6f0948b6d6f9e3c6af0f5f590ce20f1bde7090ef7970686ec6738a',
+    );
+    expect(sha256Hex('\u{1F600}')).toBe(
+      'f0443a342c5ef54783a111b51ba56c938e474c32324d90c3a60c9c8e3a37e2d9',
+    );
+  });
+
+  it('verifies every fixture case against this page own rendering rules', () => {
+    // The cross-repository invariant. Kalpa and the Worker each hold their own
+    // hand-copied copy of these rules; if this page drifts from either, exactly
+    // this assertion fails, in this repository.
+    for (const entry of supportContractCases()) {
+      const parsed = parseSupportPayload(entry.payload);
+      expect(renderSupportReport(parsed)).toBe(entry.report);
+      expect(verifySupportReport(parsed)).toBe(
+        parsed.reportSha256 === undefined ? 'unverifiable' : 'match',
+      );
+    }
+  });
+
+  it('reports a mismatch when the hash does not cover what this page renders', () => {
+    // Stands in for the real failure: this page's redaction or rendering rules
+    // having drifted from Kalpa's, so the preview is not what the user reviewed.
+    const drifted = parseSupportPayload({
+      ...supportDraftFixture(),
+      reportSha256: 'a'.repeat(64),
+    });
+    expect(verifySupportReport(drifted)).toBe('mismatch');
   });
 
   it('rejects client-supplied identity and unknown fields', () => {

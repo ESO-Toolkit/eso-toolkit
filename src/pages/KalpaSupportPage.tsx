@@ -34,6 +34,7 @@ import {
   renderSupportReport,
   SUPPORT_DRAFT_ERROR_KEY,
   SUPPORT_RESULT_KEY,
+  verifySupportReport,
 } from '@/features/kalpa-support/support-draft';
 import { usePageTitle } from '@/hooks/useDocumentTitle';
 
@@ -58,6 +59,8 @@ function messageFor(error: unknown): string {
       return 'This saved request no longer matches your Discord session. Return to Kalpa and prepare a new support report.';
     case 'INVALID_REQUEST':
       return 'Kalpa prepared a report the support service cannot accept. Copy it below and use the manual option.';
+    case 'REPORT_MISMATCH':
+      return 'The support service rebuilt this report and got different text, so it created nothing. Copy the report from Kalpa itself and use the manual option.';
     default:
       return (
         error.message ||
@@ -79,6 +82,16 @@ export const KalpaSupportPage: React.FC = () => {
   usePageTitle('/kalpa/support');
   const [draft, setDraft] = React.useState(() => getStoredSupportDraft());
   const report = React.useMemo(() => (draft ? renderSupportReport(draft) : ''), [draft]);
+  // This page renders the report from its own copy of Kalpa's redaction and
+  // rendering rules, so it can drift from Kalpa's independently of the Worker's.
+  // A version-3 report carries the hash of the text Kalpa actually showed, which
+  // is the only thing that can notice — and it notices here, while the user is
+  // still looking at the report, rather than after a ticket exists. Reports from
+  // a Kalpa that predates the hash verify as `unverifiable` and are unaffected.
+  const drifted = React.useMemo(
+    () => (draft ? verifySupportReport(draft) === 'mismatch' : false),
+    [draft],
+  );
   const handoffError = sessionStorage.getItem(SUPPORT_DRAFT_ERROR_KEY);
   const { discordToken, isDiscordAuthed, startDiscordLogin, clearDiscordAuth } = useDiscordAuth();
   const initialTicket = React.useMemo(storedTicket, []);
@@ -113,6 +126,10 @@ export const KalpaSupportPage: React.FC = () => {
 
   const copyReport = React.useCallback(async () => {
     if (!report) return;
+    // Same reason Create is withheld: on a mismatch this page cannot vouch for
+    // the text it rebuilt, and handing it to the clipboard would just move the
+    // unreviewed report into a manual ticket instead of an API-created one.
+    if (drifted) return;
     setCopied(false);
     setCopyError(null);
     try {
@@ -123,10 +140,14 @@ export const KalpaSupportPage: React.FC = () => {
         'Clipboard access was blocked. Select the report text below and copy it manually.',
       );
     }
-  }, [report]);
+  }, [drifted, report]);
 
   const createTicket = React.useCallback(async () => {
     if (!draft || !discordToken || phase === 'creating' || ticket || creatingRef.current) return;
+    // The button is not rendered while drifted; this closes the path where it is
+    // reached some other way, because consent to an unverified report is the one
+    // thing this page must never collect.
+    if (drifted) return;
     creatingRef.current = true;
     setPhase('creating');
     setError(null);
@@ -145,7 +166,7 @@ export const KalpaSupportPage: React.FC = () => {
     } finally {
       creatingRef.current = false;
     }
-  }, [clearDiscordAuth, discordToken, draft, phase, ticket]);
+  }, [clearDiscordAuth, discordToken, draft, drifted, phase, ticket]);
 
   if (!draft && !ticket) {
     return (
@@ -257,6 +278,21 @@ export const KalpaSupportPage: React.FC = () => {
           </Alert>
         ) : null}
 
+        {showDraft && drifted ? (
+          <Alert role="alert" severity="warning">
+            <Typography variant="h6" component="h2" sx={{ fontSize: '1rem' }}>
+              This page could not confirm the report Kalpa showed you
+            </Typography>
+            <Typography variant="body2" sx={{ mt: 0.5 }}>
+              The report below was rebuilt here from what Kalpa sent, and it does not match the copy
+              Kalpa displayed. Creating a ticket would be asking you to agree to text you have not
+              reviewed, so that option is turned off and nothing has been sent. Copy the report from
+              Kalpa itself and use the ticket desk below — and please mention that this page
+              reported a mismatch.
+            </Typography>
+          </Alert>
+        ) : null}
+
         {showDraft ? (
           <Paper
             variant="outlined"
@@ -272,7 +308,9 @@ export const KalpaSupportPage: React.FC = () => {
             >
               <Box sx={{ minWidth: 0 }}>
                 <Typography variant="overline" color="text.secondary">
-                  Report prepared by Kalpa — no ticket created yet
+                  {drifted
+                    ? 'Rebuilt by this page — does not match Kalpa'
+                    : 'Report prepared by Kalpa — no ticket created yet'}
                 </Typography>
                 <Typography variant="h6" component="h2">
                   {getSupportIssueLabel(draft.issueId)}
@@ -292,7 +330,11 @@ export const KalpaSupportPage: React.FC = () => {
 
             <Box
               component="pre"
-              aria-label="Exact support report that will be shared"
+              aria-label={
+                drifted
+                  ? 'Support report rebuilt by this page, which does not match the report Kalpa showed'
+                  : 'Exact support report that will be shared'
+              }
               tabIndex={0}
               sx={{
                 mt: 2,
@@ -322,7 +364,7 @@ export const KalpaSupportPage: React.FC = () => {
           </Paper>
         ) : null}
 
-        {phase !== 'success' ? (
+        {phase !== 'success' && !drifted ? (
           <Box>
             <Typography variant="h6" component="h2" gutterBottom>
               {isDiscordAuthed ? 'Ready to create your ticket' : 'Connect Discord to continue'}
@@ -378,18 +420,21 @@ export const KalpaSupportPage: React.FC = () => {
               Manual fallback
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, mb: 2 }}>
-              If sign-in or Discord is unavailable, copy the same reviewed report and paste it at
-              the ticket desk. Preparing or copying a report does not mean a ticket was created.
+              {drifted
+                ? 'Copy the report from Kalpa itself — use its own Copy report button — and paste that at the ticket desk. The text above was rebuilt here and is not the report you reviewed, so this page does not offer to copy it.'
+                : 'If sign-in or Discord is unavailable, copy the same reviewed report and paste it at the ticket desk. Preparing or copying a report does not mean a ticket was created.'}
             </Typography>
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
-              <Button
-                variant="outlined"
-                onClick={() => void copyReport()}
-                startIcon={<CopyIcon />}
-                sx={{ minHeight: 44 }}
-              >
-                {copied ? 'Report copied' : 'Copy report'}
-              </Button>
+              {drifted ? null : (
+                <Button
+                  variant="outlined"
+                  onClick={() => void copyReport()}
+                  startIcon={<CopyIcon />}
+                  sx={{ minHeight: 44 }}
+                >
+                  {copied ? 'Report copied' : 'Copy report'}
+                </Button>
+              )}
               <Button
                 component="a"
                 href={SUPPORT_DESK_URL}

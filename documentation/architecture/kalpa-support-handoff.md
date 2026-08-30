@@ -40,7 +40,7 @@ Request body (maximum 8 KiB before parsing):
 ```json
 {
   "payload": {
-    "version": 2,
+    "version": 3,
     "issueId": "addon-status|install-update|addon-folder|backups-data|log-upload|other",
     "description": "optional user description, maximum 500 characters",
     "appVersion": "bounded display version",
@@ -51,6 +51,7 @@ Request body (maximum 8 KiB before parsing):
       "tauri": "bounded Tauri runtime version, or \"unknown\"",
       "webview": "\"Chromium <major>\" | \"WebKit <major>\" | \"unknown\""
     },
+    "reportSha256": "lowercase hex SHA-256 of the rendered report text",
     "generatedAt": "bounded ISO-8601 timestamp",
     "connection": "online|offline",
     "updateState": "checking|complete",
@@ -97,6 +98,28 @@ Deliberately never collected, and rejected by the allow-listed schema on both se
 
 Version 1 (no `environment` key) is still parsed and rendered so a report prepared by an older client is not lost, but the environment section is omitted for it: rendering a section the user never reviewed in Kalpa would break the exact-review guarantee. The two versions are mutually exclusive — a version-1 payload carrying an `environment` key, or a version-2 payload missing one, is rejected. Both repositories share the same fixture file, which carries one case per version.
 
+### Report version 3: the report-fidelity hash
+
+Version 3 adds one field, `reportSha256`: the lowercase hex SHA-256 of the **rendered report text** Kalpa produced and the user reviewed. The Worker re-renders from the parsed payload and compares before it does anything else; a mismatch is refused with `REPORT_MISMATCH` and nothing is created.
+
+The text is hashed, not the payload JSON, because the invariant is about what the user read. Two payloads that render identically are interchangeable; two identical payloads that render differently are exactly the failure being hunted.
+
+**What it is for.** Three separate hand-copied copies of the redaction and rendering rules exist — Kalpa's `src/lib/support-report.ts`, this site's `src/features/kalpa-support/support-draft.ts`, and the Worker's `discord-bot/src/support/contract.ts` — and nothing verified at ticket time that they still agreed. Two real defects on 2026-08-30 were exactly this: `/media` and `/run/media` paths went unredacted, and truncation could split a surrogate pair. The shared fixture caught neither, because a fixture only ever tests the inputs someone thought of. The hash tests the input the user actually has.
+
+**What it is not.** It is not an integrity or authenticity control. The hash travels in the same URL fragment as the payload it describes, so anyone able to alter one recomputes the other for free. It detects drift between our own three implementations and nothing else. No server-side validation may be relaxed on the strength of it: the payload is still fully re-validated and re-rendered, exactly as before this existed.
+
+**The hosted page verifies too.** It renders the report from its own copy of the rules, so it is the only place that can catch *site-side* drift — and it catches it while the user is still looking at the report rather than after a channel exists. On a mismatch it hides the Create button and the Discord sign-in, keeps the report and the copy/manual-desk fallback, and says plainly that it could not confirm the report Kalpa showed. Offering one-click creation would be asking for consent to text the page cannot prove the user has seen; the manual route costs the user nothing and loses no information.
+
+### Version table
+
+| Version | `environment` | `reportSha256` | Emitted by                     | Still accepted |
+| ------- | ------------- | -------------- | ------------------------------ | -------------- |
+| 1       | absent        | absent         | pre-environment Kalpa builds   | yes            |
+| 2       | required      | absent         | Kalpa up to the beta.20 branch | yes            |
+| 3       | required      | required       | current Kalpa                  | yes            |
+
+The versions are mutually exclusive, and each version's key set is exact — `allowedKeys` rejects anything else. `reportSha256` is version-gated rather than an optional field on version 2 on purpose: if it were optional, a Kalpa that silently stopped sending it would quietly downgrade to an unverified report instead of being rejected. Making the version mean "carries a hash" turns a missing hash into a hard failure, which is the whole point of adding it.
+
 Kalpa, the hosted page, and the Worker use the same versioned canonical rendering rules and cross-repository fixtures. The canonical report is capped at Discord-safe message limits (1,950 characters) after every section, including attention rows. The fragment carries only the structured payload, uses the bare `https://esotk.com/kalpa/support#kalpa=` origin, and is rejected above 8 KiB; it does not carry a separately trusted free-form report.
 
 The service accepts no user ID, guild ID, channel ID, permission overwrite, or staff role input.
@@ -114,7 +137,7 @@ Success (`201`, or `200` for a replayed completed request):
 }
 ```
 
-Errors are structured as `{ "requestId": "...", "error": { "code": "...", "message": "safe user-facing text", "retryable": true|false } }`. Codes are `AUTH_REQUIRED`, `AUTH_EXPIRED`, `NOT_A_MEMBER`, `RATE_LIMITED`, `INVALID_REQUEST`, `IDEMPOTENCY_CONFLICT`, `DISCORD_UNAVAILABLE`, `TICKET_RECOVERING`, and `INTERNAL_ERROR`. No diagnostic content appears in logs or error responses.
+Errors are structured as `{ "requestId": "...", "error": { "code": "...", "message": "safe user-facing text", "retryable": true|false } }`. Codes are `AUTH_REQUIRED`, `AUTH_EXPIRED`, `NOT_A_MEMBER`, `RATE_LIMITED`, `INVALID_REQUEST`, `IDEMPOTENCY_CONFLICT`, `REPORT_MISMATCH`, `DISCORD_UNAVAILABLE`, `TICKET_RECOVERING`, and `INTERNAL_ERROR`. `REPORT_MISMATCH` (400, not retryable) means the report re-rendered from the payload did not hash to `reportSha256`; it is raised before the coordinator's `/begin`, so no channel, ticket, or idempotency state exists when it is returned, and it is audited as `support_ticket_denied` so drift is visible in ops rather than only to the one user who hit it. No diagnostic content appears in logs or error responses.
 
 ## Operational invariants
 
@@ -152,6 +175,7 @@ support.
 ## Validation and privacy invariants
 
 - Category is an enum; version, description, report, idempotency key, and total body each have independent byte/character caps.
+- A version-3 report is re-rendered server-side and refused unless it hashes to the `reportSha256` the client sent. This is a drift check between our own implementations, not an integrity control, and nothing else is relaxed because of it.
 - Control characters are removed and Discord mentions are neutralized, including `@everyone`, `@here`, user/role/channel mention syntax, and timestamp/command syntax where relevant.
 - Server-side defense-in-depth redacts Windows drive and UNC paths, common macOS and Linux absolute paths, token/authorization/cookie patterns, and ESO account identifiers; it also removes non-printing control characters. The allow-listed schema cannot contain attachments, SavedVariables, or raw-file fields, and Kalpa never collects their contents.
 - Audit events contain an event name, request ID, optional result code, and—after authentication—a keyed pseudonymous subject hash. Rate state uses keyed network/subject hashes. Neither contains report/description text, access tokens, Discord names, raw IDs, or channel topics.
@@ -238,6 +262,28 @@ a deferred interaction that silently never resolves.
 
 Until steps 3 and 5 are live, Kalpa continues to expose its current copy-and-open manual
 workflow.
+
+### Report-version changes deploy Worker, then site, then Kalpa
+
+A report version is introduced on both readers before any writer emits it. That order is
+not a preference; it is the only one in which no permutation strands a user, because both
+readers reject an unknown version outright:
+
+| Kalpa emits | Site       | Worker     | Outcome                                                                       |
+| ----------- | ---------- | ---------- | ----------------------------------------------------------------------------- |
+| v2          | old or new | old or new | Accepted, unverified. Existing installs keep working; this is why v2 stays.   |
+| v3          | new        | new        | Accepted and verified. The intended state.                                     |
+| v3          | new        | **old**    | The site renders and offers Create; the Worker rejects the unknown version at the API call, after sign-in. Deploy the Worker first. |
+| v3          | **old**    | new        | The site rejects the fragment and shows "handoff is invalid" — the user never reaches Create. Deploy the site before Kalpa. |
+| v3          | **old**    | **old**    | Same as above, one step earlier.                                               |
+
+So: Worker, then site, then Kalpa. The reverse — releasing Kalpa first — is the only
+ordering that produces a dead end after the user has already consented and switched to
+their browser, which is precisely the outcome the rest of this design exists to avoid.
+
+Rolling back is the same rule in reverse: roll Kalpa back before the site, and the site
+before the Worker. A Worker rolled back below version 3 while a v3 Kalpa is released
+rejects every ticket.
 
 ## Testing the flow before release
 
