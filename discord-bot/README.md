@@ -149,17 +149,17 @@ deploy:
 VITE_DISCORD_CLIENT_ID=<the site's client id> npm run check:oauth-client-id
 ```
 
-If the value was previously stored as a secret, delete it **before** deploying:
+If the value already exists as a secret, no manual step is needed and you should **not**
+delete it first. `wrangler deploy` warns and replaces it:
 
-```bash
-npx wrangler secret delete DISCORD_OAUTH_CLIENT_ID
+```
+Environment variable `DISCORD_OAUTH_CLIENT_ID` conflicts with an existing remote secret.
+This deployment will replace the remote secret with your environment variable.
 ```
 
-`wrangler deploy` uploads secrets with `keep_bindings` and `[vars]` as `plain_text`, so a
-secret and a var sharing a name is at best ambiguous and may be rejected outright. Do not
-depend on which one wins — remove the secret first. Deleting it takes the value away from
-the *running* Worker, so Discord sign-in returns "OAuth client is not configured" until
-the new deploy lands; the window is about one deploy. The full ordered runbook is in
+The var wins, atomically, so there is no window where the value is missing. Deleting the
+secret beforehand would take it away from the *running* Worker and break Discord sign-in
+until the deploy landed, for nothing. The full ordered runbook is in
 [kalpa-support-handoff.md](../documentation/architecture/kalpa-support-handoff.md).
 
 ### 5. Deploy the Worker

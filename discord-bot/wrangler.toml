@@ -16,6 +16,10 @@ account_id = "75620f084ea25ade5ee57a71a830bba2"
 # it lives here rather than as a secret, which lets CI check it against the
 # site's VITE_DISCORD_CLIENT_ID. It MUST equal that variable.
 # See scripts/check-oauth-client-id.mjs.
+#
+# This entry replaces the same-name secret on deploy: wrangler warns and the var
+# wins, so no `secret delete` is needed and there is no window where the value is
+# missing. Verified with a non-live `wrangler versions upload` on 2026-08-30.
 DISCORD_OAUTH_CLIENT_ID = "1405421934111490160"
 GUILD_ID = "1375703719995244686"
 TICKET_CATEGORY_ID = "1480815568666886144"

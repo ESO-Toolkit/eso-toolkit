@@ -203,32 +203,40 @@ OAuth value is missing, rather than sending empty credentials to Discord.
 
 ## Deployment order
 
-The Worker step is a strict sequence, because two of the bindings are being renamed
-out from under a running Worker. Do it in this order:
+The Worker step is a strict sequence, because a binding is being renamed out from under
+a running Worker. Do it in this order:
 
 1. `wrangler secret put DISCORD_BOT_APPLICATION_ID` — the bot's application id under its
-   new name. No effect on the running Worker, which still reads the old name.
+   new name. No effect on the running Worker, which still reads the old name. This must
+   happen **before** the deploy: the new code reads only the new name, and without it
+   `sendFollowup`/`editFollowup` throw.
 2. Configure the Worker-only `SUPPORT_SESSION_SECRET` and `SUPPORT_AUDIT_SECRET`, plus
    `DISCORD_OAUTH_CLIENT_SECRET` for the website OAuth client.
-3. `wrangler secret delete DISCORD_OAUTH_CLIENT_ID`. **This starts a short outage**: the
-   running Worker loses the value and `/discord/oauth/token` returns
-   "OAuth client is not configured" until step 4 lands. It is unavoidable when a secret
-   and a `[vars]` entry share a name — `wrangler deploy` uploads secrets with
-   `keep_bindings` and vars as `plain_text`, so a same-name pair is at best ambiguous and
-   may be rejected outright. Rather than depend on which one wins, do not create the
-   situation. Expect a window of roughly one deploy.
-4. Deploy the Worker, with the Durable Object binding/migration and the authenticated
-   endpoints. `DISCORD_OAUTH_CLIENT_ID` now comes from `[vars]` and sign-in recovers.
-5. `wrangler secret delete DISCORD_APPLICATION_ID` — cleanup of the old name, which
+3. Deploy the Worker, with the Durable Object binding/migration and the authenticated
+   endpoints.
+4. `wrangler secret delete DISCORD_APPLICATION_ID` — cleanup of the old name, which
    nothing reads any more.
-6. Deploy the prerendered ESO Toolkit hosted support route and telemetry redaction.
-7. Release Kalpa with the new handoff URL.
+5. Deploy the prerendered ESO Toolkit hosted support route and telemetry redaction.
+6. Release Kalpa with the new handoff URL.
+
+`DISCORD_OAUTH_CLIENT_ID` needs no manual step even though it already exists as a secret.
+Verified against the account with `wrangler versions upload` (a non-live version) on
+2026-08-30: wrangler warns
+
+> Environment variable `DISCORD_OAUTH_CLIENT_ID` conflicts with an existing remote secret.
+> This deployment will replace the remote secret with your environment variable.
+
+and the uploaded version reports `env.DISCORD_OAUTH_CLIENT_ID ("1405421934111490160")` as
+an Environment Variable. So the deploy neither fails nor lets the secret shadow the var —
+the var wins, in one atomic step, with no window in which the value is missing. Do **not**
+delete the secret first: that would take the value away from the running Worker and break
+Discord sign-in until the deploy landed, for no benefit.
 
 If step 1 is skipped, `sendFollowup`/`editFollowup` throw a named error rather than
-calling `/webhooks/undefined/…`; every caller only logs, so the symptom would otherwise
-be a deferred interaction that silently never resolves.
+calling `/webhooks/undefined/…`; every caller only logs, so the symptom would otherwise be
+a deferred interaction that silently never resolves.
 
-Until steps 4 and 6 are live, Kalpa continues to expose its current copy-and-open manual
+Until steps 3 and 5 are live, Kalpa continues to expose its current copy-and-open manual
 workflow.
 
 ## Testing the flow before release
