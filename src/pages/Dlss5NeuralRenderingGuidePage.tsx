@@ -230,7 +230,7 @@ const NR_SETTINGS: ReadonlyArray<RowSpec> = [
   {
     label: 'Enable Upscaling (WIP)',
     value:
-      'Work-in-progress. ESO renders at native resolution through this stack, so NR normally runs on the "native path". If upscaling cannot engage the add-on says so explicitly and carries on — that message is informational, not an error.',
+      'Work-in-progress, and on a default ESO setup it does nothing. The feeder requests DLAA, which already renders at output resolution, so the add-on logs "NR upscaling is not applicable ... NR continues on the native path" and carries on. That message is informational, not an error. Actual upscaling requires selecting a DLSS Balanced/Performance preset in the NVIDIA App and restarting.',
   },
   {
     label: 'NR Preset',

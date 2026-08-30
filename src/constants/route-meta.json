@@ -63,6 +63,11 @@
     "description": "Set up and use the ESO Toolkit Discord roster bot.",
     "prerender": true
   },
+  "/docs/dlss5-neural-rendering": {
+    "title": "DLSS 5 Neural Rendering in ESO | ESO Toolkit",
+    "description": "Community guide to the unofficial DLSS 5 Feeder + RenoDX Neural Rendering setup for The Elder Scrolls Online.",
+    "prerender": true
+  },
   "/docs/loadout/food-selector": {
     "title": "Food Selector Guide | ESO Toolkit",
     "description": "Learn how ESO Toolkit selects food and drink for character loadouts.",
