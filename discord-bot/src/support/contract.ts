@@ -152,12 +152,29 @@ export function neutralizeMentions(value: string): string {
     .replace(/<(?=(@[!&]?\d+|#\d+|t:\d+(?::[tTdDfFR])?|\/[^:>]{1,32}:\d+)>)/g, '<\u200b');
 }
 
+/**
+ * Cut to a UTF-16 length without splitting a surrogate pair. A plain slice
+ * would leave a lone high surrogate, which is not well-formed and which
+ * Discord rejects when the report is serialized as JSON.
+ */
+function sliceCodeUnits(value: string, units: number): string {
+  if (units <= 0) return '';
+  const lastUnit = value.charCodeAt(units - 1);
+  const splitsPair = lastUnit >= 0xd800 && lastUnit <= 0xdbff;
+  return value.slice(0, splitsPair ? units - 1 : units);
+}
+
 function stripNonPrintingControlCharacters(value: string): string {
   return Array.from(value, (character) => {
     const codePoint = character.codePointAt(0) ?? 0;
     const isAllowedWhitespace = codePoint === 9 || codePoint === 10 || codePoint === 13;
     const isControlCharacter = codePoint < 32 || (codePoint >= 127 && codePoint <= 159);
-    return isControlCharacter && !isAllowedWhitespace ? '' : character;
+    // Array.from iterates code points, so a well-formed pair arrives as one
+    // character whose code point is astral. A code point still inside the
+    // surrogate range is therefore unpaired, and would make the string
+    // un-serializable as JSON — which Discord rejects.
+    const isLoneSurrogate = codePoint >= 0xd800 && codePoint <= 0xdfff;
+    return (isControlCharacter && !isAllowedWhitespace) || isLoneSurrogate ? '' : character;
   }).join('');
 }
 
@@ -168,7 +185,7 @@ function clean(value: unknown, max: number, multiline = false): string {
   const redacted = stripNonPrintingControlCharacters(
     neutralizeMentions(value)
       .replace(
-        /(?:[A-Za-z]:[\\/]+|[\\/]+(?:Users|home|mnt|opt|var|tmp|etc|srv|Volumes)[\\/]+)[^\r\n,;]+?(?=\s+(?:and|at|from|with|then)\b|[,;\r\n]|$)/gi,
+        /(?:[A-Za-z]:[\\/]+|[\\/]+(?:Users|home|media|mnt|opt|run|srv|tmp|var|etc|Volumes)[\\/]+|\bUsers[\\/]+)[^\r\n,;]+?(?=\s+(?:and|at|from|with|then)\b|[,;\r\n]|$)/gi,
         '[local path]',
       )
       .replace(/\\\\[^\r\n,;]+?(?=\s+(?:and|at|from|with|then)\b|[,;\r\n]|$)/g, '[local path]')
@@ -181,7 +198,7 @@ function clean(value: unknown, max: number, multiline = false): string {
   const normalized = multiline
     ? redacted.replace(/\r\n?/g, '\n').trim()
     : redacted.replace(/\s*[\r\n]+\s*/g, ' ').trim();
-  return normalized.slice(0, max);
+  return sliceCodeUnits(normalized, max);
 }
 
 function count(value: unknown): number {
