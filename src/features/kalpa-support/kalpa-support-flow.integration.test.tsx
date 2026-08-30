@@ -112,9 +112,11 @@ describe('Kalpa authenticated support handoff', () => {
     render(<KalpaSupportPage />);
 
     const create = screen.getByRole('button', { name: 'Create private ticket' });
-    fireEvent.click(create);
-    fireEvent.click(create);
-    fireEvent.click(create);
+    // Dispatched without letting React re-render between them, which is the only
+    // way `phase` alone would not have blocked the second and third.
+    create.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    create.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    create.dispatchEvent(new MouseEvent('click', { bubbles: true }));
 
     // The in-flight guard has to hold before the session call even resolves,
     // otherwise three sessions race three ticket creations.

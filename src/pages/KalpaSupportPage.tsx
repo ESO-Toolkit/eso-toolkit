@@ -89,6 +89,10 @@ export const KalpaSupportPage: React.FC = () => {
   const [copied, setCopied] = React.useState(false);
   const [isOnline, setIsOnline] = React.useState(() => navigator.onLine);
   const successHeadingRef = React.useRef<HTMLHeadingElement>(null);
+  // `phase` only blocks a second run once React has re-rendered. That is enough
+  // for real input — every click and keypress is its own task — but a ref closes
+  // the window synchronously, so no dispatch pattern can start two creations.
+  const creatingRef = React.useRef(false);
 
   // Success removes the Create button, so focus has to land somewhere
   // deliberate. Focusing the result heading both restores focus and announces
@@ -122,7 +126,8 @@ export const KalpaSupportPage: React.FC = () => {
   }, [report]);
 
   const createTicket = React.useCallback(async () => {
-    if (!draft || !discordToken || phase === 'creating' || ticket) return;
+    if (!draft || !discordToken || phase === 'creating' || ticket || creatingRef.current) return;
+    creatingRef.current = true;
     setPhase('creating');
     setError(null);
     try {
@@ -137,6 +142,8 @@ export const KalpaSupportPage: React.FC = () => {
       if (caught instanceof SupportApiError && caught.code === 'AUTH_EXPIRED') clearDiscordAuth();
       setError(messageFor(caught));
       setPhase('error');
+    } finally {
+      creatingRef.current = false;
     }
   }, [clearDiscordAuth, discordToken, draft, phase, ticket]);
 
