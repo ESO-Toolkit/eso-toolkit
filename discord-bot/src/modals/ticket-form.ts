@@ -7,7 +7,7 @@
  */
 
 import { classifyTicket } from '../ai.js';
-import { editFollowup, editMessage } from '../discord.js';
+import { editFollowup, editMessage, type SendMessageOptions } from '../discord.js';
 import { createGitHubIssue } from '../github.js';
 import { updateTicket } from '../kv.js';
 import { createPrivateTicket } from '../tickets/service.js';
@@ -176,6 +176,20 @@ export function buildTicketActionRows(ticket: TicketState): DiscordComponent[] {
   };
 
   return [primaryRow, templateRow];
+}
+
+/**
+ * The edit applied to a ticket's control message whenever its state changes.
+ *
+ * For a Kalpa ticket the control message *is* the report the user reviewed in
+ * the desktop app, carried as message content. Attaching the summary embed
+ * there would put a rendering the user never reviewed next to the one they did,
+ * so those tickets update only their buttons.
+ */
+export function buildTicketMessageUpdate(ticket: TicketState): SendMessageOptions {
+  const components = buildTicketActionRows(ticket);
+  if (ticket.source === 'kalpa') return { components };
+  return { embeds: [buildTicketEmbed(ticket)], components };
 }
 
 // Legacy export for backwards compatibility

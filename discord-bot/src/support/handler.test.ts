@@ -20,6 +20,7 @@ vi.mock('./coordinator.js', () => coordinator);
 vi.mock('../kv.js', () => kv);
 
 import { DiscordApiError } from '../discord';
+import { parseSupportPayload, renderSupportReport } from './contract';
 import { handleSupportSession, handleSupportTicket } from './handler';
 import { mintSupportSession } from './token';
 
@@ -274,6 +275,39 @@ describe('Kalpa support HTTP handlers', () => {
       expect.anything(),
       expect.objectContaining({ idempotencyKey: '123e4567-e89b-42d3-a456-426614174000' }),
     );
+  });
+
+  it('gives staff the same controls on the report message without altering the report', async () => {
+    const ticket: TicketState = {
+      id: '0006-mtf4xj8k-u1ep8z',
+      channelId: '666666666666666666',
+      userId: USER_ID,
+      username: 'Tester',
+      category: 'Bug',
+      title: 'Kalpa: Install failed',
+      description: 'It failed',
+      status: 'open',
+      source: 'kalpa',
+      createdAt: new Date().toISOString(),
+      embedMessageId: '777777777777777777',
+    };
+    tickets.createPrivateTicket.mockResolvedValue({ ticket, messageId: ticket.embedMessageId });
+    await handleSupportTicket(ticketRequest(await validToken()), env);
+
+    const { initialMessage } = tickets.createPrivateTicket.mock.calls[0][1];
+    const message = initialMessage(ticket);
+
+    // The report is the message content, so the controls have to ride on the
+    // same message. Without them a Kalpa ticket has no Close button at all.
+    const ids = message.components
+      .flatMap((row: { components?: { custom_id: string }[] }) => row.components ?? [])
+      .map((component: { custom_id: string }) => component.custom_id);
+    expect(ids).toContain('ticket_close');
+    expect(ids).toContain('ticket_claim');
+
+    expect(message.content).toBe(renderSupportReport(parseSupportPayload(supportFixture())));
+    expect(message.allowed_mentions).toEqual({ parse: [] });
+    expect(message.embeds).toBeUndefined();
   });
 
   it('returns the completed ticket for a duplicate submission without creating another channel', async () => {

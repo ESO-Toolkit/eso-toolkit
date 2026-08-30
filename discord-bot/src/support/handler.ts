@@ -1,5 +1,6 @@
 import { DiscordApiError, getGuildChannels, getGuildMember, sendMessage } from '../discord.js';
 import { getTicket, putTicket } from '../kv.js';
+import { buildTicketActionRows } from '../modals/ticket-form.js';
 import { createPrivateTicket } from '../tickets/service.js';
 import type { Env, TicketState } from '../types.js';
 import {
@@ -259,6 +260,7 @@ async function finishExistingChannel(
   await putTicket(env, ticket);
   const message = await sendMessage(env, channelId, {
     content: renderSupportReport(payload),
+    components: buildTicketActionRows(ticket),
     allowed_mentions: { parse: [] },
     nonce,
     enforce_nonce: true,
@@ -510,8 +512,9 @@ export async function handleSupportTicket(request: Request, env: Env): Promise<R
       source: 'kalpa',
       topicMarker: marker,
       messageNonce: operationId,
-      initialMessage: () => ({
+      initialMessage: (ticket) => ({
         content: renderSupportReport(payload),
+        components: buildTicketActionRows(ticket),
         allowed_mentions: { parse: [] },
         flags: 1 << 2,
       }),
