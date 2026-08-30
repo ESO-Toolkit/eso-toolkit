@@ -8,6 +8,7 @@ import {
   useDropdownMenuController,
 } from './hooks/useDropdownMenuDirection';
 import { usePersistentDarkMode } from './hooks/usePersistentDarkMode';
+import { accordionDefaultProps, accordionSpacingStyleOverrides } from './theme/accordion';
 import {
   DROPDOWN_MENU_GAP,
   DROPDOWN_MENU_MAX_HEIGHT_SX,
@@ -501,6 +502,7 @@ export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             },
           },
           MuiAccordion: {
+            defaultProps: accordionDefaultProps,
             styleOverrides: {
               root: {
                 background:
@@ -513,12 +515,7 @@ export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
                 '&:before': {
                   display: 'none', // Remove the default MUI accordion divider
                 },
-                '&:not(:last-child)': {
-                  borderBottom: 0,
-                },
-                '&.Mui-expanded': {
-                  margin: 0, // Prevent margin changes when expanded
-                },
+                ...accordionSpacingStyleOverrides,
               },
             },
           },
