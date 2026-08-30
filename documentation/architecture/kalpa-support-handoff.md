@@ -142,6 +142,22 @@ Errors are structured as `{ "requestId": "...", "error": { "code": "...", "messa
 - A confirmed channel plus a failed initial message is reported as `discord_unavailable` only after recovery state is retained; a retry finds and repairs the same channel rather than creating another. Success is authoritative only after channel creation, ticket KV persistence, initial report delivery, and coordinator completion.
 - Kalpa retains its local exact-report review, Copy report, and Open ticket desk actions. The hosted page also offers copy/manual desk fallback for offline, OAuth cancellation, membership, Worker, or Discord failures. Neither surface says “ticket created” until the Worker returns a durable created/replayed result.
 
+## Staff controls on a Kalpa ticket
+
+A Kalpa ticket's first message carries the exact report as message _content_, so the
+standard ticket controls are attached to that message as components rather than posted
+on a summary embed. Staff get the same Claim / Close / Add User / Remove User / Note row
+and response templates as a ticket opened from the Discord modal, and the `/ticket close`
+command works in the channel either way.
+
+The one divergence is deliberate: `buildTicketMessageUpdate` omits the summary embed for
+`source: 'kalpa'`. Claiming or unclaiming a modal ticket re-renders its embed, but doing
+that here would attach a rendering the user never reviewed to the message holding the one
+they did. Those tickets update only their buttons.
+
+Transcripts skip bot messages, so closing a Kalpa ticket does not copy the report into
+`#ticket-logs`.
+
 ## Existing Discord modal behavior
 
 The shared ticket service deliberately applies two safety changes to tickets opened from Discord as well as Kalpa: staff-role discovery now fails closed instead of creating a channel that staff may be unable to access, and channel creation is not transport-retried because Discord channel creation has no idempotency key. The existing modal's opening message now explicitly allows only its owner mention, so the ticket owner is notified without permitting role, channel, `@here`, or `@everyone` mentions. These are intentional behavior changes in the existing interaction path and should be called out in release notes.
@@ -177,12 +193,27 @@ Until steps 1 and 2 are live, Kalpa continues to expose its current copy-and-ope
 
 ## Testing the flow before release
 
-The hosted route can be exercised against a PR preview, with one caveat: the Worker
-accepts `https://eso-toolkit.github.io/dev-previews/pr-<n>/discord-oauth-redirect` as a
-redirect URI, but Discord only accepts redirect URIs registered on the application
-itself. Unless that per-PR URI is registered, preview sign-in fails at Discord with
-"Invalid OAuth2 redirect_uri" before the Worker is ever reached. Either register it or
-complete sign-in on a registered origin.
+The hosted route can be exercised against a PR preview for everything except the
+Discord sign-in leg. Sign-in cannot work on a preview origin, and this is not a
+configuration oversight: Discord matches registered redirect URIs exactly and supports
+no wildcard, so `https://eso-toolkit.github.io/dev-previews/pr-<n>/discord-oauth-redirect`
+would need a fresh registration per pull request. Preview sign-in therefore fails at
+Discord with "Invalid OAuth2 redirect_uri" before the Worker is ever reached.
+
+The Worker previously allowed that per-PR pattern in `isAllowedRedirectUri`. It has been
+removed. Accepting a redirect URI Discord can never issue a code against bought nothing
+and only widened the set of URIs the Worker would exchange against, and it read as
+though preview sign-in were supported. The allowlist is now exact.
+
+Test the preview for draft capture, report rendering, consent, every error state, and
+the manual fallback; complete the sign-in and ticket-creation legs on a registered
+origin. If preview sign-in is ever needed, the supported shape is a _single_ registered
+bounce URI shared by every preview — the pattern `src/features/auth/auth.ts` already
+uses for ESO Logs, where `getRedirectUri()` collapses `/dev-previews/pr-<n>/` to
+`/dev-previews/oauth-redirect` and the return path travels in web storage. That would
+mean registering one URI, teaching `discord-auth.ts` the same collapse, and serving a
+bounce page at a path with no `pr-` segment (`scripts/dev-previews-404.html` returns
+early on those today).
 
 Ticket IDs are `<counter>-<base36 timestamp>-<base36 random>` (for example
 `0006-mtf4xj8k-u1ep8z`), not bare digits. Client-side validation must match what
