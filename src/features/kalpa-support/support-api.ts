@@ -63,13 +63,21 @@ export interface CreatedTicket {
   ticketId: string;
 }
 
+/**
+ * Ticket IDs are `<counter>-<base36 timestamp>-<base36 random>`, produced by
+ * `nextTicketId` in the bot's KV module. This was previously a digits-only
+ * pattern, which rejected every real ticket the service has ever issued and
+ * reported a successfully created ticket as a failure.
+ */
+const TICKET_ID = /^\d{4,}-[0-9a-z]{1,16}-[0-9a-z]{1,16}$/;
+
 export function parseCreatedTicket(value: unknown): CreatedTicket | null {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
   const result = value as Record<string, unknown>;
   if (
     result.status !== 'created' ||
     typeof result.ticketId !== 'string' ||
-    !/^\d{1,20}$/.test(result.ticketId) ||
+    !TICKET_ID.test(result.ticketId) ||
     typeof result.channelId !== 'string' ||
     !/^\d{17,20}$/.test(result.channelId) ||
     result.channelUrl !== `https://discord.com/channels/${SUPPORT_GUILD_ID}/${result.channelId}`

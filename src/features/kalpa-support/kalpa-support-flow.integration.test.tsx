@@ -57,7 +57,7 @@ describe('Kalpa authenticated support handoff', () => {
         jsonResponse(
           {
             status: 'created',
-            ticketId: '0042',
+            ticketId: '0042-mtf4xj8k-u1ep8z',
             channelId: '123456789012345678',
             channelUrl: 'https://discord.com/channels/1375703719995244686/123456789012345678',
           },
@@ -102,7 +102,7 @@ describe('Kalpa authenticated support handoff', () => {
         jsonResponse(
           {
             status: 'created',
-            ticketId: '0042',
+            ticketId: '0042-mtf4xj8k-u1ep8z',
             channelId: '123456789012345678',
             channelUrl: 'https://discord.com/channels/1375703719995244686/123456789012345678',
           },
@@ -146,7 +146,7 @@ describe('Kalpa authenticated support handoff', () => {
       .mockResolvedValueOnce(
         jsonResponse({
           status: 'created',
-          ticketId: '0042',
+          ticketId: '0042-mtf4xj8k-u1ep8z',
           channelId: '123456789012345678',
           channelUrl: 'https://discord.com/channels/1375703719995244686/123456789012345678',
         }),

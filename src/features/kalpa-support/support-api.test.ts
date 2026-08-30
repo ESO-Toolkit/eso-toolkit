@@ -1,4 +1,9 @@
-import { createKalpaTicket, createSupportSession, SupportApiError } from './support-api';
+import {
+  createKalpaTicket,
+  createSupportSession,
+  parseCreatedTicket,
+  SupportApiError,
+} from './support-api';
 import { supportDraftFixture } from './support-fixtures';
 
 describe('Kalpa support API client', () => {
@@ -39,7 +44,7 @@ describe('Kalpa support API client', () => {
       jsonResponse(
         {
           status: 'created',
-          ticketId: '0042',
+          ticketId: '0042-mtf4xj8k-u1ep8z',
           channelId: '123456789012345678',
           channelUrl: 'https://discord.com/channels/1375703719995244686/123456789012345678',
         },
@@ -60,11 +65,41 @@ describe('Kalpa support API client', () => {
     expect(JSON.parse(init.body as string)).toEqual({ payload: supportDraftFixture() });
   });
 
+  it.each([
+    // Exactly what `nextTicketId` in the bot's KV module produces:
+    // <counter padded to 4>-<base36 Date.now()>-<base36 uint32>.
+    '0006-mtf4xj8k-u1ep8z',
+    '0001-m0000000-0',
+    '12345-mzzzzzzz-zzzzzzz',
+  ])('accepts the ticket id format the ticket service actually issues: %s', (ticketId) => {
+    expect(
+      parseCreatedTicket({
+        status: 'created',
+        ticketId,
+        channelId: '123456789012345678',
+        channelUrl: 'https://discord.com/channels/1375703719995244686/123456789012345678',
+      }),
+    ).not.toBeNull();
+  });
+
+  it('still rejects a ticket id that is not in the service format', () => {
+    for (const ticketId of ['0042', '', 'not-a-ticket', '../../etc', '0042-MTF4XJ8K-u1ep8z']) {
+      expect(
+        parseCreatedTicket({
+          status: 'created',
+          ticketId,
+          channelId: '123456789012345678',
+          channelUrl: 'https://discord.com/channels/1375703719995244686/123456789012345678',
+        }),
+      ).toBeNull();
+    }
+  });
+
   it('rejects a ticket confirmation that points outside the configured Discord guild', async () => {
     fetchMock.mockResolvedValue(
       jsonResponse({
         status: 'created',
-        ticketId: '0042',
+        ticketId: '0042-mtf4xj8k-u1ep8z',
         channelId: '123456789012345678',
         channelUrl: 'https://example.test/not-a-ticket',
       }),
