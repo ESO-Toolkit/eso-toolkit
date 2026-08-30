@@ -244,7 +244,7 @@ export function sendFollowup(
   return discordFetch<DiscordMessage>(
     env,
     'POST',
-    `/webhooks/${env.DISCORD_APPLICATION_ID}/${interactionToken}`,
+    `/webhooks/${env.DISCORD_BOT_APPLICATION_ID}/${interactionToken}`,
     options,
   );
 }
@@ -258,7 +258,7 @@ export function editFollowup(
   return discordFetch<DiscordMessage>(
     env,
     'PATCH',
-    `/webhooks/${env.DISCORD_APPLICATION_ID}/${interactionToken}/messages/${messageId}`,
+    `/webhooks/${env.DISCORD_BOT_APPLICATION_ID}/${interactionToken}/messages/${messageId}`,
     options,
   );
 }

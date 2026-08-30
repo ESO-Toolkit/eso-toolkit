@@ -5,6 +5,18 @@ compatibility_flags = ["nodejs_compat"]
 account_id = "75620f084ea25ade5ee57a71a830bba2"
 
 [vars]
+# The OAuth client the WEBSITE signs users in with ("ESOTK.COM"). This is a
+# different Discord application from the bot, whose id is the
+# DISCORD_BOT_APPLICATION_ID secret. Discord mints the authorization code and
+# the bearer token against this client, so the token exchange and the support
+# session's audience check must use it; pointing either at the bot makes Discord
+# reject the exchange with a 401 that reads as an expired login.
+#
+# A client id is public — it appears in every authorize URL the site builds — so
+# it lives here rather than as a secret, which lets CI check it against the
+# site's VITE_DISCORD_CLIENT_ID. It MUST equal that variable.
+# See scripts/check-oauth-client-id.mjs.
+DISCORD_OAUTH_CLIENT_ID = "1405421934111490160"
 GUILD_ID = "1375703719995244686"
 TICKET_CATEGORY_ID = "1480815568666886144"
 TICKET_LOGS_CHANNEL_ID = "1480845163277586534"

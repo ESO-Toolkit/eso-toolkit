@@ -42,7 +42,7 @@ User clicks panel button
 
 1. Go to [https://discord.com/developers/applications](https://discord.com/developers/applications)
 2. Click **New Application** → give it a name (e.g. "ESO Toolkit Bot")
-3. Go to **General Information** — copy the **Application ID** (`DISCORD_APPLICATION_ID`)
+3. Go to **General Information** — copy the **Application ID** (`DISCORD_BOT_APPLICATION_ID`)
 4. Go to **Bot** → click **Add Bot** → copy the **Token** (`DISCORD_BOT_TOKEN`)
 5. On the **Bot** page, enable:
    - **Server Members Intent**
@@ -93,8 +93,17 @@ npx wrangler secret put DISCORD_PUBLIC_KEY
 npx wrangler secret put DISCORD_BOT_TOKEN
 # Paste your Discord bot token when prompted
 
-npx wrangler secret put DISCORD_APPLICATION_ID
-# Paste your Discord application ID when prompted
+npx wrangler secret put DISCORD_BOT_APPLICATION_ID
+# Paste the BOT application's ID when prompted — not the website OAuth client
+
+npx wrangler secret put DISCORD_OAUTH_CLIENT_SECRET
+# Paste the WEBSITE OAuth client's secret when prompted
+
+npx wrangler secret put SUPPORT_SESSION_SECRET
+# Paste an independent random value of at least 32 characters
+
+npx wrangler secret put SUPPORT_AUDIT_SECRET
+# Paste a second, different random value of at least 32 characters
 
 npx wrangler secret put GITHUB_TOKEN
 # Paste your GitHub personal access token (needs `repo` scope)
@@ -103,16 +112,44 @@ npx wrangler secret put ZAI_API_KEY
 # Paste your Z.AI API key when prompted
 ```
 
+> **Two Discord applications.** `DISCORD_BOT_APPLICATION_ID` and `DISCORD_BOT_TOKEN`
+> belong to the bot (`EsoTK Ticket Bot`), which handles interaction callbacks, member
+> lookups and channel creation. `DISCORD_OAUTH_CLIENT_ID` and
+> `DISCORD_OAUTH_CLIENT_SECRET` belong to the website OAuth client (`ESOTK.COM`), which
+> the browser authorizes against. Discord issues the authorization code and the bearer
+> token against the website client, so the token exchange and the Kalpa support
+> session's audience check must use it. Setting either to the bot makes Discord reject
+> the exchange with a `401` that reads as an expired login rather than a
+> misconfiguration — this broke Discord sign-in in production once already. See
+> [kalpa-support-handoff.md](../documentation/architecture/kalpa-support-handoff.md).
+
 Non-sensitive config is already hardcoded in `wrangler.toml` under `[vars]`:
 
 ```toml
 [vars]
+DISCORD_OAUTH_CLIENT_ID = "1405421934111490160"
 GUILD_ID = "1375703719995244686"
-TICKET_CATEGORY_ID = "1480845135733588083"
+TICKET_CATEGORY_ID = "1480815568666886144"
 TICKET_LOGS_CHANNEL_ID = "1480845163277586534"
 PANEL_CHANNEL_ID = "1480845158584025148"
 GITHUB_OWNER = "ESO-Toolkit"
 GITHUB_REPO = "eso-toolkit"
+```
+
+A Discord client id is public — it appears in every authorize URL the site builds — so
+`DISCORD_OAUTH_CLIENT_ID` is a checked-in var rather than a secret. That lets CI compare
+it against the site's `VITE_DISCORD_CLIENT_ID` on every pull request and again before any
+deploy:
+
+```bash
+VITE_DISCORD_CLIENT_ID=<the site's client id> npm run check:oauth-client-id
+```
+
+If the value was previously stored as a secret, delete it before deploying, or the secret
+shadows the var and CI is checking something the Worker does not run:
+
+```bash
+npx wrangler secret delete DISCORD_OAUTH_CLIENT_ID
 ```
 
 ### 5. Deploy the Worker
@@ -181,7 +218,7 @@ This calls `scripts/register-commands.js` which registers `/ticket` (with subcom
 
 ```bash
 DISCORD_BOT_TOKEN=your_bot_token \
-DISCORD_APPLICATION_ID=your_app_id \
+DISCORD_BOT_APPLICATION_ID=your_app_id \
 DISCORD_GUILD_ID=1375703719995244686 \
 npm run register
 ```
@@ -190,7 +227,7 @@ Or export them first:
 
 ```bash
 export DISCORD_BOT_TOKEN="your_token"
-export DISCORD_APPLICATION_ID="your_app_id"
+export DISCORD_BOT_APPLICATION_ID="your_app_id"
 npm run register
 ```
 

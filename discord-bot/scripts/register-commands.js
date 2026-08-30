@@ -7,7 +7,7 @@
  *
  * Required environment variables:
  *   DISCORD_BOT_TOKEN      — Bot token from Discord Developer Portal
- *   DISCORD_APPLICATION_ID — Application (Client) ID
+ *   DISCORD_BOT_APPLICATION_ID — Application (Client) ID
  *   DISCORD_GUILD_ID       — (optional) Register as guild command for instant propagation
  *                            Omit to register globally (takes up to 1 hour to propagate)
  */
@@ -15,11 +15,11 @@
 'use strict';
 
 const BOT_TOKEN = process.env.DISCORD_BOT_TOKEN;
-const APPLICATION_ID = process.env.DISCORD_APPLICATION_ID;
+const APPLICATION_ID = process.env.DISCORD_BOT_APPLICATION_ID;
 const GUILD_ID = process.env.DISCORD_GUILD_ID || null;
 
 if (!BOT_TOKEN || !APPLICATION_ID) {
-  console.error('ERROR: DISCORD_BOT_TOKEN and DISCORD_APPLICATION_ID must be set.');
+  console.error('ERROR: DISCORD_BOT_TOKEN and DISCORD_BOT_APPLICATION_ID must be set.');
   process.exit(1);
 }
 

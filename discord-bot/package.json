@@ -13,6 +13,7 @@
     "register": "node scripts/register-commands.js",
     "panel": "node scripts/setup-panel.js",
     "typecheck": "tsc --noEmit",
+    "check:oauth-client-id": "node scripts/check-oauth-client-id.mjs",
     "test": "vitest run",
     "test:watch": "vitest"
   },
