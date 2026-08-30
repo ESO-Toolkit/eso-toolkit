@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { DiscordApiError, getGuildMember } from './discord';
+import { DiscordApiError, editFollowup, getGuildMember, sendFollowup } from './discord';
 import type { Env } from './types';
 
 const env = { DISCORD_BOT_TOKEN: 'test-token' } as Env;
@@ -33,5 +33,19 @@ describe('Discord REST diagnostics', () => {
     expect(logged).not.toContain(guildId);
     expect(logged).not.toContain(userId);
     expect(logged).toContain('[discord] rate limited on GET');
+  });
+});
+
+describe('interaction followups', () => {
+  it('names the missing binding instead of calling /webhooks/undefined', async () => {
+    // Callers only log followup failures, so an unset binding would otherwise
+    // reach Discord as a 404 and read as an outage rather than a config error.
+    const noAppId = { DISCORD_BOT_TOKEN: 'token' } as unknown as Env;
+    await expect(sendFollowup(noAppId, 'interaction-token', { content: 'hi' })).rejects.toThrow(
+      'DISCORD_BOT_APPLICATION_ID is not configured',
+    );
+    await expect(
+      editFollowup(noAppId, 'interaction-token', '1', { content: 'hi' }),
+    ).rejects.toThrow('DISCORD_BOT_APPLICATION_ID is not configured');
   });
 });
