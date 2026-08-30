@@ -248,6 +248,16 @@ function botApplicationId(env: Env): string {
       'DISCORD_BOT_APPLICATION_ID is not configured; interaction followups cannot be sent',
     );
   }
+  // The two applications are easy to swap by hand, and a swap is invisible:
+  // both values are well-formed snowflakes, and the CI check compares only the
+  // OAuth client against the site, because it cannot read a secret. Followups
+  // addressed to the website's application would 404 into a caller that only
+  // logs. Refuse the one comparison the Worker *can* make.
+  if (env.DISCORD_BOT_APPLICATION_ID === env.DISCORD_OAUTH_CLIENT_ID) {
+    throw new Error(
+      'DISCORD_BOT_APPLICATION_ID is set to the website OAuth client, not the bot application',
+    );
+  }
   return env.DISCORD_BOT_APPLICATION_ID;
 }
 

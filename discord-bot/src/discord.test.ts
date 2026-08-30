@@ -48,4 +48,18 @@ describe('interaction followups', () => {
       editFollowup(noAppId, 'interaction-token', '1', { content: 'hi' }),
     ).rejects.toThrow('DISCORD_BOT_APPLICATION_ID is not configured');
   });
+
+  it('refuses the website OAuth client in place of the bot application', () => {
+    // Both are well-formed snowflakes and the CI check cannot read a secret,
+    // so this swap is otherwise invisible until followups start 404ing into a
+    // caller that only logs.
+    const swapped = {
+      DISCORD_BOT_TOKEN: 'token',
+      DISCORD_BOT_APPLICATION_ID: '1405421934111490160',
+      DISCORD_OAUTH_CLIENT_ID: '1405421934111490160',
+    } as unknown as Env;
+    return expect(sendFollowup(swapped, 'interaction-token', { content: 'hi' })).rejects.toThrow(
+      'set to the website OAuth client',
+    );
+  });
 });
