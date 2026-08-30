@@ -84,12 +84,12 @@ Request body (maximum 8 KiB before parsing):
 
 Version 2 adds one nested `environment` object. Every field earns its place in triage and none of them singles a person out:
 
-| Field | Why support needs it | Bound |
-| --- | --- | --- |
+| Field       | Why support needs it                                                                                                                                                                                                                | Bound                                                                                                                    |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
 | `osVersion` | Windows feature builds change Controlled Folder Access, SmartScreen, and WebView2 behaviour; macOS and Linux releases change permission prompts. Most "the install silently failed" reports are resolved by the build number alone. | Digits and dots, at most four components. Anything else — an edition string, a machine name, a path — becomes `unknown`. |
-| `arch` | Separates the x86_64 and aarch64 builds, and on macOS separates a native Apple-silicon run from a Rosetta one. | Fixed allow-list of the architectures Tauri's os plugin reports. |
-| `tauri` | Pins which bundled windowing, opener, and updater behaviour is in play for a given report. | Bounded semver shape with an optional pre-release tag. |
-| `webview` | WebView2 and WebKit majors drive the CSS, clipboard, and dialog differences behind most "it looks wrong" reports. | Engine name plus **major only**, so the value is shared by millions of installs rather than identifying one. |
+| `arch`      | Separates the x86_64 and aarch64 builds, and on macOS separates a native Apple-silicon run from a Rosetta one.                                                                                                                      | Fixed allow-list of the architectures Tauri's os plugin reports.                                                         |
+| `tauri`     | Pins which bundled windowing, opener, and updater behaviour is in play for a given report.                                                                                                                                          | Bounded semver shape with an optional pre-release tag.                                                                   |
+| `webview`   | WebView2 and WebKit majors drive the CSS, clipboard, and dialog differences behind most "it looks wrong" reports.                                                                                                                   | Engine name plus **major only**, so the value is shared by millions of installs rather than identifying one.             |
 
 Collection failures produce `unknown` rather than a guess. The client normalizes before display, and the Worker and hosted page normalize again independently — a client cannot smuggle an unbounded value through by claiming it is an OS version.
 
@@ -146,10 +146,45 @@ Errors are structured as `{ "requestId": "...", "error": { "code": "...", "messa
 
 The shared ticket service deliberately applies two safety changes to tickets opened from Discord as well as Kalpa: staff-role discovery now fails closed instead of creating a channel that staff may be unable to access, and channel creation is not transport-retried because Discord channel creation has no idempotency key. The existing modal's opening message now explicitly allows only its owner mention, so the ticket owner is notified without permitting role, channel, `@here`, or `@everyone` mentions. These are intentional behavior changes in the existing interaction path and should be called out in release notes.
 
+## Two Discord applications
+
+This Worker talks to Discord as two different applications, and conflating them
+breaks sign-in in a way that is easy to misdiagnose:
+
+| Secret                                                    | Application                                                                              | Used for                                                                  |
+| --------------------------------------------------------- | ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| `DISCORD_APPLICATION_ID` + `DISCORD_BOT_TOKEN`            | the **bot** (`EsoTK Ticket Bot`)                                                         | interaction webhook callbacks, guild member lookups, channel creation     |
+| `DISCORD_OAUTH_CLIENT_ID` + `DISCORD_OAUTH_CLIENT_SECRET` | the **website OAuth client** (`ESOTK.COM`, matching the site's `VITE_DISCORD_CLIENT_ID`) | the authorization-code exchange, and the support session's audience check |
+
+The OAuth pair must match the application the browser authorized against, because
+Discord issues the code and the bearer token against that client. Pointing them at
+the bot instead makes Discord reject the exchange with `401` — which reads as an
+expired or invalid login rather than a misconfiguration — and makes the support
+session reject every token, since `oauthIdentity.application.id` can then never equal
+the configured value. The exchange fails closed with an explicit error when either
+OAuth value is missing, rather than sending empty credentials to Discord.
+
 ## Deployment order
 
-1. Configure the Worker-only `SUPPORT_SESSION_SECRET` and `SUPPORT_AUDIT_SECRET`, then deploy the Worker with the Durable Object binding/migration and authenticated endpoints.
+1. Configure the Worker-only `SUPPORT_SESSION_SECRET` and `SUPPORT_AUDIT_SECRET`, plus
+   `DISCORD_OAUTH_CLIENT_ID` and `DISCORD_OAUTH_CLIENT_SECRET` for the website OAuth
+   client, then deploy the Worker with the Durable Object binding/migration and
+   authenticated endpoints.
 2. Deploy the prerendered ESO Toolkit hosted support route and telemetry redaction.
 3. Release Kalpa with the new handoff URL.
 
 Until steps 1 and 2 are live, Kalpa continues to expose its current copy-and-open manual workflow.
+
+## Testing the flow before release
+
+The hosted route can be exercised against a PR preview, with one caveat: the Worker
+accepts `https://eso-toolkit.github.io/dev-previews/pr-<n>/discord-oauth-redirect` as a
+redirect URI, but Discord only accepts redirect URIs registered on the application
+itself. Unless that per-PR URI is registered, preview sign-in fails at Discord with
+"Invalid OAuth2 redirect_uri" before the Worker is ever reached. Either register it or
+complete sign-in on a registered origin.
+
+Ticket IDs are `<counter>-<base36 timestamp>-<base36 random>` (for example
+`0006-mtf4xj8k-u1ep8z`), not bare digits. Client-side validation must match what
+`nextTicketId` emits; a stricter pattern rejects real, successfully created tickets and
+reports them to the user as failures.
