@@ -189,6 +189,11 @@ const DiscordSetupPage = React.lazy(() =>
   })),
 );
 
+const Dlss5NeuralRenderingGuidePage = React.lazy(() =>
+  import('./pages/Dlss5NeuralRenderingGuidePage').then((module) => ({
+    default: module.Dlss5NeuralRenderingGuidePage,
+  })),
+);
 const RosterBotDocsPage = React.lazy(() =>
   import('./pages/RosterBotDocsPage').then((module) => ({
     default: module.RosterBotDocsPage,
@@ -800,6 +805,16 @@ const AppRoutes: React.FC = () => {
                 <ErrorBoundary>
                   <Suspense fallback={<LoadingFallback />}>
                     <CalculationKnowledgeBasePage />
+                  </Suspense>
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="/docs/dlss5-neural-rendering"
+              element={
+                <ErrorBoundary>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <Dlss5NeuralRenderingGuidePage />
                   </Suspense>
                 </ErrorBoundary>
               }
