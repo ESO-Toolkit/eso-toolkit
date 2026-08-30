@@ -358,6 +358,18 @@ describe('Kalpa support HTTP handlers', () => {
     expect(discord.sendMessage).toHaveBeenCalledTimes(1);
     expect(discord.getGuildChannels).not.toHaveBeenCalled();
     expect(tickets.createPrivateTicket).not.toHaveBeenCalled();
+
+    // A ticket recovered after a crash must be as usable as one created
+    // cleanly: same report, same staff controls, same idempotent nonce.
+    const [, , sent] = discord.sendMessage.mock.calls[0];
+    expect(sent.content).toBe(renderSupportReport(parseSupportPayload(supportFixture())));
+    expect(sent.allowed_mentions).toEqual({ parse: [] });
+    expect(sent.enforce_nonce).toBe(true);
+    const recoveredIds = sent.components
+      .flatMap((row: { components?: { custom_id: string }[] }) => row.components ?? [])
+      .map((component: { custom_id: string }) => component.custom_id);
+    expect(recoveredIds).toContain('ticket_close');
+    expect(recoveredIds).toContain('ticket_claim');
   });
 
   it('reports Discord failure without claiming success and records a retryable failed attempt', async () => {

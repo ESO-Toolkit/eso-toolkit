@@ -2,8 +2,10 @@
  * Handles modal submission from the ticket creation form.
  * Orchestrates: channel creation → AI classification → GitHub issue → embed post.
  *
- * Exported helpers (buildTicketEmbed, buildTicketActionRow) are shared by
- * the claim/close handlers to keep the embed layout consistent.
+ * buildTicketMessageUpdate is the only way another module should edit a
+ * ticket's control message; buildTicketEmbed is deliberately module-private so
+ * that a future handler cannot attach the summary embed to a Kalpa report
+ * message without going through the check that forbids it.
  */
 
 import { classifyTicket } from '../ai.js';
@@ -46,7 +48,7 @@ const CATEGORY_EMOJI: Record<string, string> = {
   Feedback: '💬',
 };
 
-export function buildTicketEmbed(ticket: TicketState): DiscordEmbed {
+function buildTicketEmbed(ticket: TicketState): DiscordEmbed {
   const color =
     ticket.status === 'closed'
       ? Colors.TICKET_CLOSED

@@ -80,16 +80,15 @@ async function checkKvRateLimit(
   return true;
 }
 
-// Per-PR dev-preview redirect URIs are deliberately NOT accepted. Discord has no
-// wildcard in its registered redirect URIs, so a per-PR URI can never be
-// authorized on the application: the browser is rejected with "Invalid OAuth2
-// redirect_uri" long before the Worker is reached. Accepting a pattern here that
-// Discord can never issue a code for only widened the set this Worker will
-// exchange against, so the allowlist is exact. Discord sign-in is verified on a
-// registered origin. See documentation/architecture/kalpa-support-handoff.md.
 function isAllowedRedirectUri(uri: string, env: Env): boolean {
   const uris = env.ENVIRONMENT === 'development' ? ALL_REDIRECT_URIS : PROD_REDIRECT_URIS;
-  return uris.has(uri);
+  if (uris.has(uri)) return true;
+  // Allow dev-preview redirect URIs (dynamic PR number in path)
+  if (
+    uri.match(/^https:\/\/eso-toolkit\.github\.io\/dev-previews\/pr-\d+\/discord-oauth-redirect$/)
+  )
+    return true;
+  return false;
 }
 
 export default {
