@@ -26,7 +26,7 @@ import { mintSupportSession } from './token';
 const USER_ID = '222222222222222222';
 const SECRET = 'a-secure-test-secret-that-is-longer-than-32-characters';
 const env = {
-  DISCORD_APPLICATION_ID: '444444444444444444',
+  DISCORD_OAUTH_CLIENT_ID: '444444444444444444',
   GUILD_ID: '111111111111111111',
   TICKET_CATEGORY_ID: '333333333333333333',
   SUPPORT_SESSION_SECRET: SECRET,
@@ -74,7 +74,7 @@ describe('Kalpa support HTTP handlers', () => {
       vi.fn().mockResolvedValue(
         new Response(
           JSON.stringify({
-            application: { id: env.DISCORD_APPLICATION_ID },
+            application: { id: env.DISCORD_OAUTH_CLIENT_ID },
             scopes: ['identify', 'guilds'],
             user: { id: USER_ID, username: 'Tester' },
           }),
@@ -139,7 +139,7 @@ describe('Kalpa support HTTP handlers', () => {
         method: 'POST',
         headers: { Authorization: 'Bearer oauth-token' },
       }),
-      { ...env, DISCORD_APPLICATION_ID: undefined } as unknown as Env,
+      { ...env, DISCORD_OAUTH_CLIENT_ID: undefined } as unknown as Env,
     );
     expect(response.status).toBe(401);
     expect(await response.json()).toMatchObject({ error: { code: 'AUTH_EXPIRED' } });
@@ -152,7 +152,7 @@ describe('Kalpa support HTTP handlers', () => {
       vi.fn().mockResolvedValue(
         new Response(
           JSON.stringify({
-            application: { id: env.DISCORD_APPLICATION_ID },
+            application: { id: env.DISCORD_OAUTH_CLIENT_ID },
             scopes: ['identify'],
             user: { id: USER_ID, username: 'Tester' },
           }),
@@ -178,7 +178,7 @@ describe('Kalpa support HTTP handlers', () => {
       vi.fn().mockResolvedValue(
         new Response(
           JSON.stringify({
-            application: { id: env.DISCORD_APPLICATION_ID },
+            application: { id: env.DISCORD_OAUTH_CLIENT_ID },
             scopes: ['identify', 'guilds'],
             user: { id: USER_ID, username: 'Tester' },
           }),

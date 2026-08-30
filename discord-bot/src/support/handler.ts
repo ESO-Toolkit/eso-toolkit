@@ -172,8 +172,8 @@ export async function handleSupportSession(request: Request, env: Env): Promise<
     };
     const me = oauthIdentity.user;
     if (
-      !DISCORD_SNOWFLAKE.test(env.DISCORD_APPLICATION_ID) ||
-      oauthIdentity.application?.id !== env.DISCORD_APPLICATION_ID ||
+      !DISCORD_SNOWFLAKE.test(env.DISCORD_OAUTH_CLIENT_ID) ||
+      oauthIdentity.application?.id !== env.DISCORD_OAUTH_CLIENT_ID ||
       !Array.isArray(oauthIdentity.scopes) ||
       !oauthIdentity.scopes.includes('identify') ||
       !oauthIdentity.scopes.includes('guilds') ||
