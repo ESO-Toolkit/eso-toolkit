@@ -43,6 +43,13 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      # See deploy.yml: a Worker/site mismatch on the Discord OAuth client id
+      # breaks sign-in with a 401 that reads as an expired login.
+      - name: Check the Discord OAuth client matches the Worker
+        run: node discord-bot/scripts/check-oauth-client-id.mjs
+        env:
+          VITE_DISCORD_CLIENT_ID: ${{ vars.VITE_DISCORD_CLIENT_ID }}
+
       - name: Build and Deploy
         id: build-and-deploy
         uses: ./.github/actions/build-and-deploy

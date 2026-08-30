@@ -174,10 +174,24 @@ The shared ticket service deliberately applies two safety changes to tickets ope
 This Worker talks to Discord as two different applications, and conflating them
 breaks sign-in in a way that is easy to misdiagnose:
 
-| Secret                                                    | Application                                                                              | Used for                                                                  |
+| Binding                                                   | Application                                                                              | Used for                                                                  |
 | --------------------------------------------------------- | ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
-| `DISCORD_APPLICATION_ID` + `DISCORD_BOT_TOKEN`            | the **bot** (`EsoTK Ticket Bot`)                                                         | interaction webhook callbacks, guild member lookups, channel creation     |
+| `DISCORD_BOT_APPLICATION_ID` + `DISCORD_BOT_TOKEN`        | the **bot** (`EsoTK Ticket Bot`)                                                         | interaction webhook callbacks, guild member lookups, channel creation     |
 | `DISCORD_OAUTH_CLIENT_ID` + `DISCORD_OAUTH_CLIENT_SECRET` | the **website OAuth client** (`ESOTK.COM`, matching the site's `VITE_DISCORD_CLIENT_ID`) | the authorization-code exchange, and the support session's audience check |
+
+The bot's id is named `DISCORD_BOT_APPLICATION_ID`, not `DISCORD_APPLICATION_ID`: a
+Worker with two Discord applications has no unqualified "the application", and the
+unqualified name is what invited the conflation in the first place.
+
+`DISCORD_OAUTH_CLIENT_ID` is a checked-in `[vars]` entry rather than a secret. A client
+id is public — it is in every authorize URL the site builds — and keeping it in source
+lets `discord-bot/scripts/check-oauth-client-id.mjs` assert it equals the site's
+`VITE_DISCORD_CLIENT_ID` on every pull request that touches the Worker, and again as a
+gate before any dispatch of the deploy workflow. Nothing else catches this: both values
+are well-formed snowflakes whichever application they name, so a mismatch is invisible
+until a real sign-in returns a `401`. If the value was ever stored as a secret, delete it
+(`wrangler secret delete DISCORD_OAUTH_CLIENT_ID`) — otherwise the secret shadows the var
+and CI is checking a value the Worker does not run.
 
 The OAuth pair must match the application the browser authorized against, because
 Discord issues the code and the bearer token against that client. Pointing them at
@@ -189,14 +203,41 @@ OAuth value is missing, rather than sending empty credentials to Discord.
 
 ## Deployment order
 
-1. Configure the Worker-only `SUPPORT_SESSION_SECRET` and `SUPPORT_AUDIT_SECRET`, plus
-   `DISCORD_OAUTH_CLIENT_ID` and `DISCORD_OAUTH_CLIENT_SECRET` for the website OAuth
-   client, then deploy the Worker with the Durable Object binding/migration and
-   authenticated endpoints.
-2. Deploy the prerendered ESO Toolkit hosted support route and telemetry redaction.
-3. Release Kalpa with the new handoff URL.
+The Worker step is a strict sequence, because a binding is being renamed out from under
+a running Worker. Do it in this order:
 
-Until steps 1 and 2 are live, Kalpa continues to expose its current copy-and-open manual workflow.
+1. `wrangler secret put DISCORD_BOT_APPLICATION_ID` — the bot's application id under its
+   new name. No effect on the running Worker, which still reads the old name. This must
+   happen **before** the deploy: the new code reads only the new name, and without it
+   `sendFollowup`/`editFollowup` throw.
+2. Configure the Worker-only `SUPPORT_SESSION_SECRET` and `SUPPORT_AUDIT_SECRET`, plus
+   `DISCORD_OAUTH_CLIENT_SECRET` for the website OAuth client.
+3. Deploy the Worker, with the Durable Object binding/migration and the authenticated
+   endpoints.
+4. `wrangler secret delete DISCORD_APPLICATION_ID` — cleanup of the old name, which
+   nothing reads any more.
+5. Deploy the prerendered ESO Toolkit hosted support route and telemetry redaction.
+6. Release Kalpa with the new handoff URL.
+
+`DISCORD_OAUTH_CLIENT_ID` needs no manual step even though it already exists as a secret.
+Verified against the account with `wrangler versions upload` (a non-live version) on
+2026-08-30: wrangler warns
+
+> Environment variable `DISCORD_OAUTH_CLIENT_ID` conflicts with an existing remote secret.
+> This deployment will replace the remote secret with your environment variable.
+
+and the uploaded version reports `env.DISCORD_OAUTH_CLIENT_ID ("1405421934111490160")` as
+an Environment Variable. So the deploy neither fails nor lets the secret shadow the var —
+the var wins, in one atomic step, with no window in which the value is missing. Do **not**
+delete the secret first: that would take the value away from the running Worker and break
+Discord sign-in until the deploy landed, for no benefit.
+
+If step 1 is skipped, `sendFollowup`/`editFollowup` throw a named error rather than
+calling `/webhooks/undefined/…`; every caller only logs, so the symptom would otherwise be
+a deferred interaction that silently never resolves.
+
+Until steps 3 and 5 are live, Kalpa continues to expose its current copy-and-open manual
+workflow.
 
 ## Testing the flow before release
 

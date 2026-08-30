@@ -236,7 +236,32 @@ export interface FollowupOptions {
   flags?: number;
 }
 
-export function sendFollowup(
+/**
+ * Every followup path is wrapped in a try/catch that only logs, so an unset
+ * binding would otherwise send `/webhooks/undefined/...`, take a 404, and
+ * surface as a deferred reply that never resolves — invisible to operators and
+ * indistinguishable from a Discord outage to the user. Name the cause instead.
+ */
+function botApplicationId(env: Env): string {
+  if (!env.DISCORD_BOT_APPLICATION_ID) {
+    throw new Error(
+      'DISCORD_BOT_APPLICATION_ID is not configured; interaction followups cannot be sent',
+    );
+  }
+  // The two applications are easy to swap by hand, and a swap is invisible:
+  // both values are well-formed snowflakes, and the CI check compares only the
+  // OAuth client against the site, because it cannot read a secret. Followups
+  // addressed to the website's application would 404 into a caller that only
+  // logs. Refuse the one comparison the Worker *can* make.
+  if (env.DISCORD_BOT_APPLICATION_ID === env.DISCORD_OAUTH_CLIENT_ID) {
+    throw new Error(
+      'DISCORD_BOT_APPLICATION_ID is set to the website OAuth client, not the bot application',
+    );
+  }
+  return env.DISCORD_BOT_APPLICATION_ID;
+}
+
+export async function sendFollowup(
   env: Env,
   interactionToken: string,
   options: FollowupOptions,
@@ -244,12 +269,12 @@ export function sendFollowup(
   return discordFetch<DiscordMessage>(
     env,
     'POST',
-    `/webhooks/${env.DISCORD_APPLICATION_ID}/${interactionToken}`,
+    `/webhooks/${botApplicationId(env)}/${interactionToken}`,
     options,
   );
 }
 
-export function editFollowup(
+export async function editFollowup(
   env: Env,
   interactionToken: string,
   messageId: string,
@@ -258,7 +283,7 @@ export function editFollowup(
   return discordFetch<DiscordMessage>(
     env,
     'PATCH',
-    `/webhooks/${env.DISCORD_APPLICATION_ID}/${interactionToken}/messages/${messageId}`,
+    `/webhooks/${botApplicationId(env)}/${interactionToken}/messages/${messageId}`,
     options,
   );
 }
