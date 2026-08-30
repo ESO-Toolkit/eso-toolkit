@@ -41,6 +41,16 @@ jobs:
         working-directory: ${{ inputs.worker }}
         run: npm ci --ignore-scripts --no-audit --no-fund
 
+      # The bot signs website users in as a different Discord application from
+      # the one it acts as. A mismatch here is invisible until a real sign-in
+      # fails with a 401, so it blocks the deploy rather than reaching users.
+      - name: Check the Discord OAuth client matches the site
+        if: inputs.worker == 'discord-bot'
+        working-directory: discord-bot
+        run: npm run check:oauth-client-id
+        env:
+          VITE_DISCORD_CLIENT_ID: ${{ vars.VITE_DISCORD_CLIENT_ID }}
+
       - name: Deploy Worker
         uses: cloudflare/wrangler-action@ebbaa1584979971c8614a24965b4405ff95890e0 # v4.0.0
         with:

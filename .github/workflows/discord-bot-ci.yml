@@ -37,6 +37,10 @@ jobs:
           cache-dependency-path: discord-bot/package-lock.json
       - name: Install dependencies
         run: npm ci --no-audit --no-fund
+      - name: Check the Discord OAuth client matches the site
+        run: npm run check:oauth-client-id
+        env:
+          VITE_DISCORD_CLIENT_ID: ${{ vars.VITE_DISCORD_CLIENT_ID }}
       - name: Typecheck
         run: npm run typecheck
       - name: Test

@@ -50,7 +50,7 @@ export interface Env {
   DISCORD_PUBLIC_KEY: string;
   DISCORD_BOT_TOKEN: string;
   /** The BOT application, used to build interaction webhook callback URLs. */
-  DISCORD_APPLICATION_ID: string;
+  DISCORD_BOT_APPLICATION_ID: string;
   /**
    * The OAuth client the website signs users in with. This is a DIFFERENT
    * application from the bot: the authorization code and the bearer token are
