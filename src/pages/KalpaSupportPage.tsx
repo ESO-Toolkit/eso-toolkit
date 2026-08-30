@@ -34,6 +34,7 @@ import {
   renderSupportReport,
   SUPPORT_DRAFT_ERROR_KEY,
   SUPPORT_RESULT_KEY,
+  verifySupportReport,
 } from '@/features/kalpa-support/support-draft';
 import { usePageTitle } from '@/hooks/useDocumentTitle';
 
@@ -58,6 +59,8 @@ function messageFor(error: unknown): string {
       return 'This saved request no longer matches your Discord session. Return to Kalpa and prepare a new support report.';
     case 'INVALID_REQUEST':
       return 'Kalpa prepared a report the support service cannot accept. Copy it below and use the manual option.';
+    case 'REPORT_MISMATCH':
+      return 'The support service rebuilt this report and got different text, so it created nothing. Copy the report from Kalpa itself and use the manual option.';
     default:
       return (
         error.message ||
@@ -79,6 +82,16 @@ export const KalpaSupportPage: React.FC = () => {
   usePageTitle('/kalpa/support');
   const [draft, setDraft] = React.useState(() => getStoredSupportDraft());
   const report = React.useMemo(() => (draft ? renderSupportReport(draft) : ''), [draft]);
+  // This page renders the report from its own copy of Kalpa's redaction and
+  // rendering rules, so it can drift from Kalpa's independently of the Worker's.
+  // A version-3 report carries the hash of the text Kalpa actually showed, which
+  // is the only thing that can notice — and it notices here, while the user is
+  // still looking at the report, rather than after a ticket exists. Reports from
+  // a Kalpa that predates the hash verify as `unverifiable` and are unaffected.
+  const drifted = React.useMemo(
+    () => (draft ? verifySupportReport(draft) === 'mismatch' : false),
+    [draft],
+  );
   const handoffError = sessionStorage.getItem(SUPPORT_DRAFT_ERROR_KEY);
   const { discordToken, isDiscordAuthed, startDiscordLogin, clearDiscordAuth } = useDiscordAuth();
   const initialTicket = React.useMemo(storedTicket, []);
@@ -127,6 +140,10 @@ export const KalpaSupportPage: React.FC = () => {
 
   const createTicket = React.useCallback(async () => {
     if (!draft || !discordToken || phase === 'creating' || ticket || creatingRef.current) return;
+    // The button is not rendered while drifted; this closes the path where it is
+    // reached some other way, because consent to an unverified report is the one
+    // thing this page must never collect.
+    if (drifted) return;
     creatingRef.current = true;
     setPhase('creating');
     setError(null);
@@ -145,7 +162,7 @@ export const KalpaSupportPage: React.FC = () => {
     } finally {
       creatingRef.current = false;
     }
-  }, [clearDiscordAuth, discordToken, draft, phase, ticket]);
+  }, [clearDiscordAuth, discordToken, draft, drifted, phase, ticket]);
 
   if (!draft && !ticket) {
     return (
@@ -257,6 +274,21 @@ export const KalpaSupportPage: React.FC = () => {
           </Alert>
         ) : null}
 
+        {showDraft && drifted ? (
+          <Alert role="alert" severity="warning">
+            <Typography variant="h6" component="h2" sx={{ fontSize: '1rem' }}>
+              This page could not confirm the report Kalpa showed you
+            </Typography>
+            <Typography variant="body2" sx={{ mt: 0.5 }}>
+              The report below was rebuilt here from what Kalpa sent, and it does not match the copy
+              Kalpa displayed. Creating a ticket would be asking you to agree to text you have not
+              reviewed, so that option is turned off and nothing has been sent. Copy the report from
+              Kalpa itself and use the ticket desk below — and please mention that this page
+              reported a mismatch.
+            </Typography>
+          </Alert>
+        ) : null}
+
         {showDraft ? (
           <Paper
             variant="outlined"
@@ -322,7 +354,7 @@ export const KalpaSupportPage: React.FC = () => {
           </Paper>
         ) : null}
 
-        {phase !== 'success' ? (
+        {phase !== 'success' && !drifted ? (
           <Box>
             <Typography variant="h6" component="h2" gutterBottom>
               {isDiscordAuthed ? 'Ready to create your ticket' : 'Connect Discord to continue'}

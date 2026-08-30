@@ -77,6 +77,49 @@
         }
       },
       "report": "# Kalpa support request\n\n**Issue:** Install or update failed\n\n**What happened**\nThe update failed for @\u200beveryone in [local path]\n\n## Automatic diagnostics\n- Generated: 2026-08-28T12:00:00.000Z\n- Kalpa version: 2.0.0\n- Platform: windows\n- OS build: 10.0.26200\n- CPU architecture: x86_64\n- App runtime: Tauri 2.9.1, web view Chromium 138\n- Connection: online\n- ESO instance: Live\n- AddOns folder: hidden (local account names and full paths are never shared)\n- Scan summary: 8 addon(s), 3 libraries, 1 disabled\n- Dependency warnings: 1 addon(s)\n- Locally modified: 0 addon(s)\n- Update check: 8 checked, 1 update(s) reported\n- Last app message: Authorization [redacted] from [local path]\n\n## What Kalpa collected for this issue\nKalpa included the addon versions and local file state it currently sees. Please describe the failed step above.\n\n## Addons needing attention\n- <\u200b@[account-id]> (ExampleAddon): Kalpa sees 1.0.0 -> 1.1.0; 1 outdated dependency warning(s)\n\n## Privacy note\nThis report does not include SavedVariables, account IDs, access tokens, or file contents."
+    },
+    {
+      "name": "version 3 report carrying the rendered-report hash",
+      "payload": {
+        "version": 3,
+        "issueId": "install-update",
+        "description": "The update failed for @\u200beveryone in [local path]",
+        "appVersion": "2.0.0",
+        "platform": "windows",
+        "environment": {
+          "osVersion": "10.0.26200",
+          "arch": "x86_64",
+          "tauri": "2.9.1",
+          "webview": "Chromium 138"
+        },
+        "reportSha256": "5b232d5ce84e86726aa6770849712ca28e74b4cfbac8d6ce5599955f782f5c3b",
+        "generatedAt": "2026-08-28T12:00:00.000Z",
+        "connection": "online",
+        "updateState": "complete",
+        "instanceLabel": "Live",
+        "diagnostics": {
+          "addons": 8,
+          "libraries": 3,
+          "disabled": 1,
+          "checked": 8,
+          "updates": 1,
+          "dependencyWarnings": 1,
+          "modified": 0,
+          "lastError": "Authorization [redacted] from [local path]",
+          "attention": [
+            {
+              "name": "<\u200b@[account-id]>",
+              "folder": "ExampleAddon",
+              "currentVersion": "1.0.0",
+              "availableVersion": "1.1.0",
+              "missingDependencies": 0,
+              "outdatedDependencies": 1,
+              "modifiedFiles": 0
+            }
+          ]
+        }
+      },
+      "report": "# Kalpa support request\n\n**Issue:** Install or update failed\n\n**What happened**\nThe update failed for @\u200beveryone in [local path]\n\n## Automatic diagnostics\n- Generated: 2026-08-28T12:00:00.000Z\n- Kalpa version: 2.0.0\n- Platform: windows\n- OS build: 10.0.26200\n- CPU architecture: x86_64\n- App runtime: Tauri 2.9.1, web view Chromium 138\n- Connection: online\n- ESO instance: Live\n- AddOns folder: hidden (local account names and full paths are never shared)\n- Scan summary: 8 addon(s), 3 libraries, 1 disabled\n- Dependency warnings: 1 addon(s)\n- Locally modified: 0 addon(s)\n- Update check: 8 checked, 1 update(s) reported\n- Last app message: Authorization [redacted] from [local path]\n\n## What Kalpa collected for this issue\nKalpa included the addon versions and local file state it currently sees. Please describe the failed step above.\n\n## Addons needing attention\n- <\u200b@[account-id]> (ExampleAddon): Kalpa sees 1.0.0 -> 1.1.0; 1 outdated dependency warning(s)\n\n## Privacy note\nThis report does not include SavedVariables, account IDs, access tokens, or file contents."
     }
   ]
 }

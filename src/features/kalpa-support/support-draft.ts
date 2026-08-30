@@ -112,14 +112,20 @@ export interface SupportAttentionItem {
 }
 
 export interface SupportTicketPayload {
-  /** 1 is accepted only so a legacy report still renders; Kalpa emits 2. */
-  version: 1 | 2;
+  /** 1 and 2 are accepted only so an older report still renders; Kalpa emits 3. */
+  version: 1 | 2 | 3;
   issueId: SupportIssueId;
   description: string;
   appVersion: string;
   platform: 'windows' | 'macos' | 'linux';
   /** Present from version 2 onward. A version-1 report omits the key entirely. */
   environment?: SupportEnvironment;
+  /**
+   * Lowercase hex SHA-256 of the report text Kalpa rendered and the user
+   * reviewed. Present only on version 3. See `verifySupportReport` for what it
+   * is and is not.
+   */
+  reportSha256?: string;
   generatedAt: string;
   connection: 'online' | 'offline';
   updateState: 'checking' | 'complete';
@@ -135,6 +141,104 @@ export interface SupportTicketPayload {
     lastError: string | null;
     attention: SupportAttentionItem[];
   };
+}
+
+/** Lowercase hex SHA-256, the shape Kalpa emits. */
+const REPORT_SHA256 = /^[0-9a-f]{64}$/;
+
+const SHA256_K = new Uint32Array([
+  0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
+  0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
+  0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
+  0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,
+  0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
+  0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
+  0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
+  0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2,
+]);
+
+function rotr(value: number, bits: number): number {
+  return (value >>> bits) | (value << (32 - bits));
+}
+
+/**
+ * SHA-256 of `text` as lowercase hex, over its UTF-8 bytes.
+ *
+ * Written out rather than delegated to `crypto.subtle` because that API is
+ * async, and both places this is needed — Kalpa's report preview and this
+ * page's — derive the report synchronously while rendering. Making them async
+ * would add a third "still checking" state to the Create button for no gain.
+ *
+ * The Worker uses the platform digest, and the shared fixture pins one value
+ * for one report text, so this routine disagreeing with real SHA-256 fails the
+ * contract test rather than shipping.
+ */
+export function sha256Hex(text: string): string {
+  const bytes = new TextEncoder().encode(text);
+  const padded = new Uint8Array((((bytes.length + 8) >> 6) + 1) << 6);
+  padded.set(bytes);
+  padded[bytes.length] = 0x80;
+  const view = new DataView(padded.buffer);
+  const bitLength = bytes.length * 8;
+  view.setUint32(padded.length - 8, Math.floor(bitLength / 2 ** 32));
+  view.setUint32(padded.length - 4, bitLength >>> 0);
+
+  let h0 = 0x6a09e667;
+  let h1 = 0xbb67ae85;
+  let h2 = 0x3c6ef372;
+  let h3 = 0xa54ff53a;
+  let h4 = 0x510e527f;
+  let h5 = 0x9b05688c;
+  let h6 = 0x1f83d9ab;
+  let h7 = 0x5be0cd19;
+  const schedule = new Uint32Array(64);
+  for (let block = 0; block < padded.length; block += 64) {
+    for (let i = 0; i < 16; i += 1) schedule[i] = view.getUint32(block + i * 4);
+    for (let i = 16; i < 64; i += 1) {
+      const previous = schedule[i - 15];
+      const recent = schedule[i - 2];
+      const s0 = rotr(previous, 7) ^ rotr(previous, 18) ^ (previous >>> 3);
+      const s1 = rotr(recent, 17) ^ rotr(recent, 19) ^ (recent >>> 10);
+      schedule[i] = schedule[i - 16] + s0 + schedule[i - 7] + s1;
+    }
+    let a = h0;
+    let b = h1;
+    let c = h2;
+    let d = h3;
+    let e = h4;
+    let f = h5;
+    let g = h6;
+    let h = h7;
+    for (let i = 0; i < 64; i += 1) {
+      const t1 =
+        (h +
+          (rotr(e, 6) ^ rotr(e, 11) ^ rotr(e, 25)) +
+          ((e & f) ^ (~e & g)) +
+          SHA256_K[i] +
+          schedule[i]) >>>
+        0;
+      const t2 = ((rotr(a, 2) ^ rotr(a, 13) ^ rotr(a, 22)) + ((a & b) ^ (a & c) ^ (b & c))) >>> 0;
+      h = g;
+      g = f;
+      f = e;
+      e = (d + t1) >>> 0;
+      d = c;
+      c = b;
+      b = a;
+      a = (t1 + t2) >>> 0;
+    }
+    h0 = (h0 + a) >>> 0;
+    h1 = (h1 + b) >>> 0;
+    h2 = (h2 + c) >>> 0;
+    h3 = (h3 + d) >>> 0;
+    h4 = (h4 + e) >>> 0;
+    h5 = (h5 + f) >>> 0;
+    h6 = (h6 + g) >>> 0;
+    h7 = (h7 + h) >>> 0;
+  }
+  return [h0, h1, h2, h3, h4, h5, h6, h7]
+    .map((word) => word.toString(16).padStart(8, '0'))
+    .join('');
 }
 
 export class SupportDraftError extends Error {
@@ -243,22 +347,33 @@ export function parseSupportPayload(value: unknown): SupportTicketPayload {
     'appVersion',
     'platform',
     'environment',
+    'reportSha256',
     'generatedAt',
     'connection',
     'updateState',
     'instanceLabel',
     'diagnostics',
   ]);
-  const version = input.version === 1 || input.version === 2 ? input.version : null;
+  const version =
+    input.version === 1 || input.version === 2 || input.version === 3 ? input.version : null;
   if (version === null || !ISSUE_IDS.includes(input.issueId as SupportIssueId)) {
     throw new SupportDraftError('This support report version is not supported.');
   }
   // Version 1 predates the environment block; accepting it there would render a
   // section the user never reviewed in Kalpa.
-  if ((version === 2) !== (input.environment !== undefined)) {
+  if (version >= 2 !== (input.environment !== undefined)) {
     throw new SupportDraftError('The support report environment is invalid.');
   }
-  const environment = version === 2 ? parseEnvironment(input.environment) : undefined;
+  // Version 3 is exactly "carries a report hash". Keeping the key version-gated
+  // rather than optional means a client that silently stopped sending the hash
+  // is rejected instead of quietly downgrading to an unverified report.
+  if ((version === 3) !== (input.reportSha256 !== undefined)) {
+    throw new SupportDraftError('The support report hash is invalid.');
+  }
+  if (version === 3 && !REPORT_SHA256.test(String(input.reportSha256))) {
+    throw new SupportDraftError('The support report hash is invalid.');
+  }
+  const environment = version >= 2 ? parseEnvironment(input.environment) : undefined;
   if (!['online', 'offline'].includes(String(input.connection))) {
     throw new SupportDraftError('The connection state is invalid.');
   }
@@ -315,6 +430,7 @@ export function parseSupportPayload(value: unknown): SupportTicketPayload {
     appVersion: clean(input.appVersion, 40),
     platform: input.platform as 'windows' | 'macos' | 'linux',
     ...(environment ? { environment } : {}),
+    ...(version === 3 ? { reportSha256: String(input.reportSha256) } : {}),
     generatedAt,
     connection: input.connection as 'online' | 'offline',
     updateState: input.updateState as 'checking' | 'complete',
@@ -402,6 +518,34 @@ export function renderSupportReport(payload: SupportTicketPayload): string {
     throw new SupportDraftError('The support report is too long.');
   }
   return report;
+}
+
+/**
+ * Whether the report this page renders is the report Kalpa showed the user.
+ *
+ * This page keeps its own hand-copied redaction and rendering rules, so it can
+ * drift from Kalpa's independently of the Worker's. Comparing the rendered text
+ * against the hash Kalpa sent is the only thing that notices, and it notices
+ * while the user is still looking at the report rather than after a ticket
+ * exists.
+ *
+ * `unverifiable` covers a version-1 or version-2 report, which predates the
+ * hash: there is nothing to check, and refusing those would break a client that
+ * is still in the wild.
+ *
+ * Not an integrity control — the hash rides in the same URL fragment as the
+ * payload, so anyone who can change one can change the other. It detects drift
+ * between our own implementations, nothing more.
+ */
+export function verifySupportReport(
+  payload: SupportTicketPayload,
+): 'match' | 'mismatch' | 'unverifiable' {
+  if (payload.reportSha256 === undefined) return 'unverifiable';
+  try {
+    return sha256Hex(renderSupportReport(payload)) === payload.reportSha256 ? 'match' : 'mismatch';
+  } catch {
+    return 'mismatch';
+  }
 }
 
 function decodeBase64Url(value: string): string {

@@ -114,14 +114,20 @@ export interface SupportAttentionItem {
 }
 
 export interface SupportTicketPayload {
-  /** 1 is accepted only so a legacy report still renders; Kalpa emits 2. */
-  version: 1 | 2;
+  /** 1 and 2 are accepted only so an older report still renders; Kalpa emits 3. */
+  version: 1 | 2 | 3;
   issueId: IssueId;
   description: string;
   appVersion: string;
   platform: 'windows' | 'macos' | 'linux';
   /** Present from version 2 onward. A version-1 report omits the key entirely. */
   environment?: SupportEnvironment;
+  /**
+   * Lowercase hex SHA-256 of the report text Kalpa rendered and the user
+   * reviewed. Present only on version 3. See `reportSha256` in `handler.ts`
+   * for what it is and is not.
+   */
+  reportSha256?: string;
   generatedAt: string;
   connection: 'online' | 'offline';
   updateState: 'checking' | 'complete';
@@ -137,6 +143,22 @@ export interface SupportTicketPayload {
     lastError: string | null;
     attention: SupportAttentionItem[];
   };
+}
+
+/** Lowercase hex SHA-256, the shape Kalpa and the hosted page both emit. */
+export const REPORT_SHA256 = /^[0-9a-f]{64}$/;
+
+/**
+ * SHA-256 of `text` as lowercase hex, over its UTF-8 bytes.
+ *
+ * The Worker uses the platform digest rather than the small hand-written one
+ * the two clients need for their synchronous render paths, which makes this the
+ * oracle: the shared fixture pins one digest, so a client whose hand-written
+ * routine ever disagreed with real SHA-256 fails its own contract test here.
+ */
+export async function sha256Hex(text: string): Promise<string> {
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('');
 }
 
 export class SupportValidationError extends Error {
@@ -245,22 +267,33 @@ export function parseSupportPayload(value: unknown): SupportTicketPayload {
     'appVersion',
     'platform',
     'environment',
+    'reportSha256',
     'generatedAt',
     'connection',
     'updateState',
     'instanceLabel',
     'diagnostics',
   ]);
-  const version = input.version === 1 || input.version === 2 ? input.version : null;
+  const version =
+    input.version === 1 || input.version === 2 || input.version === 3 ? input.version : null;
   if (version === null || !ISSUE_IDS.includes(input.issueId as IssueId)) {
     throw new SupportValidationError('The report version or issue is unsupported');
   }
   // Version 1 predates the environment block; accepting it there would render a
   // section the user never reviewed in Kalpa.
-  if ((version === 2) !== (input.environment !== undefined)) {
+  if (version >= 2 !== (input.environment !== undefined)) {
     throw new SupportValidationError('The report environment is invalid');
   }
-  const environment = version === 2 ? parseEnvironment(input.environment) : undefined;
+  // Version 3 is exactly "carries a report hash". Keeping the key version-gated
+  // rather than optional means a client that silently stopped sending the hash
+  // is rejected instead of quietly downgrading to an unverified report.
+  if ((version === 3) !== (input.reportSha256 !== undefined)) {
+    throw new SupportValidationError('The report hash is invalid');
+  }
+  if (version === 3 && !REPORT_SHA256.test(String(input.reportSha256))) {
+    throw new SupportValidationError('The report hash is invalid');
+  }
+  const environment = version >= 2 ? parseEnvironment(input.environment) : undefined;
   if (!['online', 'offline'].includes(String(input.connection))) {
     throw new SupportValidationError('The connection state is invalid');
   }
@@ -317,6 +350,7 @@ export function parseSupportPayload(value: unknown): SupportTicketPayload {
     appVersion: clean(input.appVersion, 40),
     platform: input.platform as 'windows' | 'macos' | 'linux',
     ...(environment ? { environment } : {}),
+    ...(version === 3 ? { reportSha256: String(input.reportSha256) } : {}),
     generatedAt,
     connection: input.connection as 'online' | 'offline',
     updateState: input.updateState as 'checking' | 'complete',

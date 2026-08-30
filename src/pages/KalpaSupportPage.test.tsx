@@ -226,6 +226,26 @@ describe('KalpaSupportPage', () => {
     expect(screen.getByRole('button', { name: 'Copy report' })).toBeEnabled();
   });
 
+  it('refuses to offer creation when the report does not match what Kalpa showed', () => {
+    // Stands in for the real failure this catches: this page's copy of the
+    // redaction and rendering rules having drifted from Kalpa's, so the preview
+    // is not the text the user reviewed and consented to.
+    sessionStorage.setItem(
+      SUPPORT_DRAFT_KEY,
+      JSON.stringify({ ...supportDraftFixture(), reportSha256: 'a'.repeat(64) }),
+    );
+    render(<KalpaSupportPage />);
+
+    expect(screen.getByText(/could not confirm the report Kalpa showed you/i)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Create private ticket' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Continue with Discord' })).not.toBeInTheDocument();
+    // The report and the manual route stay available: the user still has to be
+    // able to get help, they just cannot one-click consent to unverified text.
+    expect(screen.getByLabelText('Exact support report that will be shared')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Copy report' })).toBeEnabled();
+    expect(screen.getByRole('link', { name: /Open Discord ticket desk/ })).toBeInTheDocument();
+  });
+
   it('explains clipboard denial without claiming success', async () => {
     (navigator.clipboard.writeText as jest.Mock).mockRejectedValue(new Error('blocked'));
     render(<KalpaSupportPage />);

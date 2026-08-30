@@ -20,7 +20,7 @@ vi.mock('./coordinator.js', () => coordinator);
 vi.mock('../kv.js', () => kv);
 
 import { DiscordApiError } from '../discord';
-import { parseSupportPayload, renderSupportReport } from './contract';
+import { parseSupportPayload, renderSupportReport, sha256Hex } from './contract';
 import { handleSupportSession, handleSupportTicket } from './handler';
 import { mintSupportSession } from './token';
 
@@ -68,7 +68,61 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+/** The fixture as a version-3 report, sealed with the hash of its own render. */
+async function sealedFixture(overrides: Record<string, unknown> = {}) {
+  const base = { ...supportFixture(), ...overrides, version: 3 as const };
+  const rendered = renderSupportReport(
+    parseSupportPayload({ ...base, reportSha256: '0'.repeat(64) }),
+  );
+  return { ...base, reportSha256: await sha256Hex(rendered) };
+}
+
 describe('Kalpa support HTTP handlers', () => {
+  it('creates a ticket from a version-3 report whose hash matches its render', async () => {
+    tickets.createPrivateTicket.mockResolvedValue({
+      ticket: { id: '0006-mtf4xj8k-u1ep8z', channelId: '555555555555555555' },
+    });
+    const payload = await sealedFixture();
+    const response = await handleSupportTicket(ticketRequest(await validToken(), { payload }), env);
+
+    expect(response.status).toBe(201);
+    expect(tickets.createPrivateTicket).toHaveBeenCalledTimes(1);
+    const posted = tickets.createPrivateTicket.mock.calls[0][1].initialMessage({
+      id: '0006-mtf4xj8k-u1ep8z',
+      channelId: '555555555555555555',
+    });
+    // The posted text is the text the hash covers, not a second render of it.
+    expect(await sha256Hex(posted.content)).toBe(payload.reportSha256);
+  });
+
+  it('refuses a version-3 report whose hash does not match, before any side effect', async () => {
+    // Stands in for the real failure this exists to catch: Kalpa's rules and
+    // this Worker's copy of them having drifted apart.
+    const payload = { ...(await sealedFixture()), reportSha256: 'b'.repeat(64) };
+    const response = await handleSupportTicket(ticketRequest(await validToken(), { payload }), env);
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toMatchObject({ error: { code: 'REPORT_MISMATCH' } });
+    // Nothing past the parse may have run: `/begin` is where idempotency state
+    // and Discord side effects start.
+    expect(coordinator.coordinate).not.toHaveBeenCalled();
+    expect(discord.getGuildMember).not.toHaveBeenCalled();
+    expect(tickets.createPrivateTicket).not.toHaveBeenCalled();
+    expect(discord.sendMessage).not.toHaveBeenCalled();
+  });
+
+  it('still accepts a version-2 report from a Kalpa build that predates the hash', async () => {
+    tickets.createPrivateTicket.mockResolvedValue({
+      ticket: { id: '0007-mtf4xj8k-u1ep8z', channelId: '555555555555555555' },
+    });
+    const response = await handleSupportTicket(
+      ticketRequest(await validToken(), { payload: supportFixture() }),
+      env,
+    );
+
+    expect(response.status).toBe(201);
+  });
+
   it('mints a support session only from a Discord bearer identity with verified guild membership', async () => {
     vi.stubGlobal(
       'fetch',

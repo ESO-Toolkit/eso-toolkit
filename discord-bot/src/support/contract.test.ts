@@ -4,6 +4,7 @@ import {
   neutralizeMentions,
   parseSupportPayload,
   renderSupportReport,
+  sha256Hex,
   SupportValidationError,
 } from './contract';
 
@@ -116,9 +117,60 @@ describe('Kalpa support contract', () => {
     expect(() => parseSupportPayload({ ...supportFixture(), version: 1 })).toThrow(
       SupportValidationError,
     );
+    expect(() => parseSupportPayload({ ...supportFixture(), version: 4 })).toThrow(
+      SupportValidationError,
+    );
+  });
+
+  it('holds version 3 and the report hash to each other', () => {
+    const hash = 'a'.repeat(64);
+    // Version 3 without the hash: a client that quietly stopped sending it must
+    // be rejected, not silently downgraded to an unverified report.
     expect(() => parseSupportPayload({ ...supportFixture(), version: 3 })).toThrow(
       SupportValidationError,
     );
+    // The hash without version 3: `allowedKeys` would otherwise let a version-2
+    // payload smuggle a field no version-2 reader knows to check.
+    expect(() => parseSupportPayload({ ...supportFixture(), reportSha256: hash })).toThrow(
+      SupportValidationError,
+    );
+    for (const malformed of [
+      '',
+      hash.toUpperCase(),
+      hash.slice(0, 63),
+      `${hash}0`,
+      'z'.repeat(64),
+    ]) {
+      expect(() =>
+        parseSupportPayload({ ...supportFixture(), version: 3, reportSha256: malformed }),
+      ).toThrow(SupportValidationError);
+    }
+    const parsed = parseSupportPayload({ ...supportFixture(), version: 3, reportSha256: hash });
+    expect(parsed.reportSha256).toBe(hash);
+    // A version-2 report predates the hash entirely and stays accepted, so a
+    // Kalpa build already in the wild keeps working against this Worker.
+    expect(parseSupportPayload(supportFixture()).reportSha256).toBeUndefined();
+  });
+
+  it('computes the same SHA-256 the clients do', async () => {
+    // Known answer first: the clients hand-write this digest because their
+    // render paths are synchronous, and only a fixed vector proves the platform
+    // digest used here is the same function.
+    expect(await sha256Hex('abc')).toBe(
+      'ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad',
+    );
+    expect(await sha256Hex('')).toBe(
+      'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
+    );
+
+    // Then the contract: every fixture case that carries a hash must agree with
+    // this Worker's render of it. If any of the three implementations' rules
+    // drift, exactly this assertion fails.
+    for (const entry of sharedFixture.cases) {
+      const parsed = parseSupportPayload(entry.payload);
+      if (parsed.reportSha256 === undefined) continue;
+      expect(await sha256Hex(renderSupportReport(parsed))).toBe(parsed.reportSha256);
+    }
   });
 
   it('is a no-op on a payload Kalpa already cleaned', () => {

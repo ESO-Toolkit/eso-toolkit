@@ -6,6 +6,7 @@ import type { Env, TicketState } from '../types.js';
 import {
   parseSupportPayload,
   renderSupportReport,
+  sha256Hex,
   SupportValidationError,
   supportTicketMetadata,
   type SupportTicketPayload,
@@ -25,6 +26,7 @@ type ErrorCode =
   | 'RATE_LIMITED'
   | 'INVALID_REQUEST'
   | 'IDEMPOTENCY_CONFLICT'
+  | 'REPORT_MISMATCH'
   | 'DISCORD_UNAVAILABLE'
   | 'TICKET_RECOVERING'
   | 'INTERNAL_ERROR';
@@ -234,6 +236,7 @@ export async function handleSupportSession(request: Request, env: Env): Promise<
 async function finishExistingChannel(
   env: Env,
   payload: SupportTicketPayload,
+  report: string,
   user: { id: string; username: string },
   channelId: string,
   ticketId: string,
@@ -259,7 +262,7 @@ async function finishExistingChannel(
   };
   await putTicket(env, ticket);
   const message = await sendMessage(env, channelId, {
-    content: renderSupportReport(payload),
+    content: report,
     components: buildTicketActionRows(ticket),
     allowed_mentions: { parse: [] },
     nonce,
@@ -296,6 +299,7 @@ export async function handleSupportTicket(request: Request, env: Env): Promise<R
     );
 
   let payload: SupportTicketPayload;
+  let report: string;
   try {
     const body = await requestBody(request);
     if (!body || typeof body !== 'object' || Array.isArray(body)) {
@@ -306,11 +310,33 @@ export async function handleSupportTicket(request: Request, env: Env): Promise<R
       throw new SupportValidationError('The request body contains unsupported fields');
     }
     payload = parseSupportPayload((body as { payload?: unknown }).payload);
-    renderSupportReport(payload);
+    report = renderSupportReport(payload);
   } catch (error) {
     const message =
       error instanceof SupportValidationError ? error.message : 'The report is invalid';
     return failure(requestId, 'INVALID_REQUEST', message, 400);
+  }
+
+  // Report fidelity. Kalpa sends the SHA-256 of the report text it rendered and
+  // the user reviewed; this re-renders from the validated payload and compares.
+  // A mismatch means Kalpa's redaction/rendering rules and this Worker's copy of
+  // them have drifted, so the message about to be posted is not the message the
+  // user consented to — refuse before `/begin`, which is where side effects and
+  // idempotency state start.
+  //
+  // This is NOT an integrity control. The hash travels in the same URL fragment
+  // as the payload, so a hostile client simply recomputes it; it can only ever
+  // detect drift between our own three implementations. Nothing else here may be
+  // relaxed on the strength of it — the payload is still fully re-validated and
+  // re-rendered server-side, exactly as it was before this check existed.
+  if (payload.reportSha256 !== undefined && payload.reportSha256 !== (await sha256Hex(report))) {
+    await logAudit(env, 'support_ticket_denied', requestId, claims.sub, 'REPORT_MISMATCH');
+    return failure(
+      requestId,
+      'REPORT_MISMATCH',
+      'This report does not match what Kalpa showed you, so nothing was created. Copy it and use the manual ticket desk.',
+      400,
+    );
   }
 
   let userHash: string;
@@ -428,6 +454,7 @@ export async function handleSupportTicket(request: Request, env: Env): Promise<R
       const ticket = await finishExistingChannel(
         env,
         payload,
+        report,
         { id: claims.sub, username: claims.username },
         record.channelId,
         record.ticketId,
@@ -481,6 +508,7 @@ export async function handleSupportTicket(request: Request, env: Env): Promise<R
       const ticket = await finishExistingChannel(
         env,
         payload,
+        report,
         { id: claims.sub, username: claims.username },
         matchingChannel.id,
         ticketId,
@@ -513,7 +541,7 @@ export async function handleSupportTicket(request: Request, env: Env): Promise<R
       topicMarker: marker,
       messageNonce: operationId,
       initialMessage: (ticket) => ({
-        content: renderSupportReport(payload),
+        content: report,
         components: buildTicketActionRows(ticket),
         allowed_mentions: { parse: [] },
         flags: 1 << 2,
