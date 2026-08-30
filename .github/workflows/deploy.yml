@@ -38,6 +38,15 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ZAI_API_KEY: ${{ secrets.ZAI_API_KEY }}
 
+      # The site authorizes Discord sign-in against VITE_DISCORD_CLIENT_ID, and
+      # the Worker exchanges the code as DISCORD_OAUTH_CLIENT_ID. If they name
+      # different applications Discord returns 401 and sign-in is broken — which
+      # is how it broke once already. Check before the build bakes the id in.
+      - name: Check the Discord OAuth client matches the Worker
+        run: node discord-bot/scripts/check-oauth-client-id.mjs
+        env:
+          VITE_DISCORD_CLIENT_ID: ${{ vars.VITE_DISCORD_CLIENT_ID }}
+
       - name: Build and Deploy
         id: build-and-deploy
         uses: ./.github/actions/build-and-deploy

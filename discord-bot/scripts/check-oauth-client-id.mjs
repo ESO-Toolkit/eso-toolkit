@@ -16,7 +16,7 @@
  * differs, the exchange cannot succeed and the support session's audience check
  * can never match. Nothing in the type system or the test suite catches that —
  * both values are well-formed snowflakes either way — so it is checked here,
- * before a deploy can ship the mismatch.
+ * before either side can ship the mismatch.
  *
  * Usage: VITE_DISCORD_CLIENT_ID=<id> node scripts/check-oauth-client-id.mjs
  */
@@ -29,22 +29,51 @@ const WRANGLER_TOML = join(dirname(dirname(fileURLToPath(import.meta.url))), 'wr
 const SNOWFLAKE = /^\d{17,20}$/;
 
 function fail(message) {
-  console.error(`::error file=discord-bot/wrangler.toml::${message}`);
+  // Workflow commands are line-oriented, and this message can quote a value
+  // that came from the environment. Collapse newlines so a crafted variable
+  // cannot emit a second ::command:: line of its own.
+  const oneLine = message.replace(/\s*[\r\n]+\s*/g, ' ');
+  console.error(`::error file=discord-bot/wrangler.toml::${oneLine}`);
   process.exit(1);
 }
 
-const toml = readFileSync(WRANGLER_TOML, 'utf8');
-const match = toml.match(/^\s*DISCORD_OAUTH_CLIENT_ID\s*=\s*"([^"]*)"\s*$/m);
-
-if (!match) {
-  fail(
-    'DISCORD_OAUTH_CLIENT_ID is not declared in [vars] in discord-bot/wrangler.toml. ' +
-      'It is a public client id and must stay checked in so it can be verified against the site.',
-  );
+/**
+ * Read a key from the top-level `[vars]` table only.
+ *
+ * The scoping matters: an unscoped search is satisfied by a value under
+ * `[env.staging.vars]`, or any other table that happens to carry the same key,
+ * which is not what the deployed Worker reads. Comments and blank lines are
+ * skipped, and a trailing `#` comment on the value line is tolerated.
+ */
+function readTopLevelVar(toml, key) {
+  let inVars = false;
+  for (const rawLine of toml.split(/\r?\n/)) {
+    const line = rawLine.trim();
+    if (line === '' || line.startsWith('#')) continue;
+    if (line.startsWith('[')) {
+      inVars = line === '[vars]';
+      continue;
+    }
+    if (!inVars) continue;
+    const eq = line.indexOf('=');
+    if (eq === -1) continue;
+    if (line.slice(0, eq).trim() !== key) continue;
+    const value = line.slice(eq + 1).match(/^\s*"([^"]*)"/);
+    if (value) return value[1];
+  }
+  return null;
 }
 
-const workerClientId = match[1];
-const siteClientId = process.env.VITE_DISCORD_CLIENT_ID ?? '';
+const workerClientId = readTopLevelVar(readFileSync(WRANGLER_TOML, 'utf8'), 'DISCORD_OAUTH_CLIENT_ID');
+const siteClientId = (process.env.VITE_DISCORD_CLIENT_ID ?? '').trim();
+
+if (workerClientId === null) {
+  fail(
+    'DISCORD_OAUTH_CLIENT_ID is not declared in the top-level [vars] table of ' +
+      'discord-bot/wrangler.toml. It is a public client id and must stay checked in so it can ' +
+      'be verified against the site.',
+  );
+}
 
 if (!SNOWFLAKE.test(workerClientId)) {
   fail(`DISCORD_OAUTH_CLIENT_ID is not a Discord snowflake: "${workerClientId}".`);
@@ -55,6 +84,10 @@ if (!siteClientId) {
     'VITE_DISCORD_CLIENT_ID is not set, so the Worker OAuth client cannot be checked against ' +
       'the site. Set it as a repository variable and pass it to this step.',
   );
+}
+
+if (!SNOWFLAKE.test(siteClientId)) {
+  fail(`VITE_DISCORD_CLIENT_ID is not a Discord snowflake: "${siteClientId}".`);
 }
 
 if (workerClientId !== siteClientId) {

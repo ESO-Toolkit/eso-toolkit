@@ -42,7 +42,11 @@ User clicks panel button
 
 1. Go to [https://discord.com/developers/applications](https://discord.com/developers/applications)
 2. Click **New Application** → give it a name (e.g. "ESO Toolkit Bot")
-3. Go to **General Information** — copy the **Application ID** (`DISCORD_BOT_APPLICATION_ID`)
+3. Go to **General Information** — copy the **Application ID** (`DISCORD_BOT_APPLICATION_ID`).
+   This is the **bot** application. The website's OAuth client is a separate application
+   (`ESOTK.COM`); its **Client ID** is the `DISCORD_OAUTH_CLIENT_ID` var and its
+   **Client Secret** — from that application's OAuth2 page, not this one — is the
+   `DISCORD_OAUTH_CLIENT_SECRET` secret.
 4. Go to **Bot** → click **Add Bot** → copy the **Token** (`DISCORD_BOT_TOKEN`)
 5. On the **Bot** page, enable:
    - **Server Members Intent**
@@ -145,12 +149,18 @@ deploy:
 VITE_DISCORD_CLIENT_ID=<the site's client id> npm run check:oauth-client-id
 ```
 
-If the value was previously stored as a secret, delete it before deploying, or the secret
-shadows the var and CI is checking something the Worker does not run:
+If the value was previously stored as a secret, delete it **before** deploying:
 
 ```bash
 npx wrangler secret delete DISCORD_OAUTH_CLIENT_ID
 ```
+
+`wrangler deploy` uploads secrets with `keep_bindings` and `[vars]` as `plain_text`, so a
+secret and a var sharing a name is at best ambiguous and may be rejected outright. Do not
+depend on which one wins — remove the secret first. Deleting it takes the value away from
+the *running* Worker, so Discord sign-in returns "OAuth client is not configured" until
+the new deploy lands; the window is about one deploy. The full ordered runbook is in
+[kalpa-support-handoff.md](../documentation/architecture/kalpa-support-handoff.md).
 
 ### 5. Deploy the Worker
 
