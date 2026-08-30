@@ -126,6 +126,10 @@ export const KalpaSupportPage: React.FC = () => {
 
   const copyReport = React.useCallback(async () => {
     if (!report) return;
+    // Same reason Create is withheld: on a mismatch this page cannot vouch for
+    // the text it rebuilt, and handing it to the clipboard would just move the
+    // unreviewed report into a manual ticket instead of an API-created one.
+    if (drifted) return;
     setCopied(false);
     setCopyError(null);
     try {
@@ -136,7 +140,7 @@ export const KalpaSupportPage: React.FC = () => {
         'Clipboard access was blocked. Select the report text below and copy it manually.',
       );
     }
-  }, [report]);
+  }, [drifted, report]);
 
   const createTicket = React.useCallback(async () => {
     if (!draft || !discordToken || phase === 'creating' || ticket || creatingRef.current) return;
@@ -304,7 +308,9 @@ export const KalpaSupportPage: React.FC = () => {
             >
               <Box sx={{ minWidth: 0 }}>
                 <Typography variant="overline" color="text.secondary">
-                  Report prepared by Kalpa — no ticket created yet
+                  {drifted
+                    ? 'Rebuilt by this page — does not match Kalpa'
+                    : 'Report prepared by Kalpa — no ticket created yet'}
                 </Typography>
                 <Typography variant="h6" component="h2">
                   {getSupportIssueLabel(draft.issueId)}
@@ -324,7 +330,11 @@ export const KalpaSupportPage: React.FC = () => {
 
             <Box
               component="pre"
-              aria-label="Exact support report that will be shared"
+              aria-label={
+                drifted
+                  ? 'Support report rebuilt by this page, which does not match the report Kalpa showed'
+                  : 'Exact support report that will be shared'
+              }
               tabIndex={0}
               sx={{
                 mt: 2,
@@ -410,18 +420,21 @@ export const KalpaSupportPage: React.FC = () => {
               Manual fallback
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, mb: 2 }}>
-              If sign-in or Discord is unavailable, copy the same reviewed report and paste it at
-              the ticket desk. Preparing or copying a report does not mean a ticket was created.
+              {drifted
+                ? 'Copy the report from Kalpa itself — use its own Copy report button — and paste that at the ticket desk. The text above was rebuilt here and is not the report you reviewed, so this page does not offer to copy it.'
+                : 'If sign-in or Discord is unavailable, copy the same reviewed report and paste it at the ticket desk. Preparing or copying a report does not mean a ticket was created.'}
             </Typography>
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
-              <Button
-                variant="outlined"
-                onClick={() => void copyReport()}
-                startIcon={<CopyIcon />}
-                sx={{ minHeight: 44 }}
-              >
-                {copied ? 'Report copied' : 'Copy report'}
-              </Button>
+              {drifted ? null : (
+                <Button
+                  variant="outlined"
+                  onClick={() => void copyReport()}
+                  startIcon={<CopyIcon />}
+                  sx={{ minHeight: 44 }}
+                >
+                  {copied ? 'Report copied' : 'Copy report'}
+                </Button>
+              )}
               <Button
                 component="a"
                 href={SUPPORT_DESK_URL}
