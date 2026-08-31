@@ -17,7 +17,9 @@ describe('Dlss5NeuralRenderingGuidePage', () => {
     renderPage();
 
     expect(
-      screen.getByRole('heading', { level: 1, name: /DLSS 5 Neural Rendering in ESO/i }),
+      // \s, not a literal space: the heading uses a non-breaking space before
+      // "ESO" so a phone never orphans it onto its own line.
+      screen.getByRole('heading', { level: 1, name: /DLSS 5 Neural Rendering in\sESO/i }),
     ).toBeInTheDocument();
   });
 

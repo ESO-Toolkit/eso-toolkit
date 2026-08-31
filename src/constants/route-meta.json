@@ -66,6 +66,8 @@
   "/docs/dlss5-neural-rendering": {
     "title": "DLSS 5 Neural Rendering in ESO: Setup & Fixes | ESO Toolkit",
     "description": "Install the unofficial DLSS 5 Feeder + RenoDX Neural Rendering mod in The Elder Scrolls Online with ReShade, then fix every error by its exact log line.",
+    "image": "/dlss5-social-preview.png",
+    "imageAlt": "DLSS 5 Neural Rendering in ESO: Setup and Fixes. A dark card showing three real log lines from the guide, two failures and one success.",
     "prerender": true
   },
   "/docs/loadout/food-selector": {

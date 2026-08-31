@@ -62,6 +62,8 @@ const staticRoutes = Object.entries({ ...routeMeta, ...leaderboardRouteMeta })
       title: meta.title,
       description: meta.description,
       noindex: meta.noindex === true,
+      image: meta.image,
+      imageAlt: meta.imageAlt,
     };
   });
 
@@ -164,6 +166,31 @@ for (const route of staticRoutes) {
       /<meta\s+name="twitter:description"\s+content="[^"]*"\s*\/>/,
       `<meta name="twitter:description" content="${description}" />`,
     );
+
+  // A route may ship its own social card. Without this every page shared to
+  // Discord showed the generic combat-analytics image, with an alt string that
+  // described something else entirely.
+  if (route.image) {
+    const imageUrl = `${SITE_ORIGIN}${route.image}`;
+    const imageAlt = escapeHtml(route.imageAlt ?? route.title);
+    routeShell = routeShell
+      .replace(
+        /<meta property="og:image" content="[^"]*" \/>/,
+        `<meta property="og:image" content="${imageUrl}" />`,
+      )
+      .replace(
+        /<meta property="og:image:alt" content="[^"]*" \/>/,
+        `<meta property="og:image:alt" content="${imageAlt}" />`,
+      )
+      .replace(
+        /<meta name="twitter:image" content="[^"]*" \/>/,
+        `<meta name="twitter:image" content="${imageUrl}" />`,
+      )
+      .replace(
+        /<meta name="twitter:image:alt" content="[^"]*" \/>/,
+        `<meta name="twitter:image:alt" content="${imageAlt}" />`,
+      );
+  }
 
   if (route.noindex) {
     routeShell = routeShell.replace(

@@ -46,6 +46,8 @@ import { Link as RouterLink } from 'react-router-dom';
 
 import { usePageTitle } from '@/hooks/useDocumentTitle';
 
+import discordIcon from '../assets/discord-icon.svg';
+
 /**
  * Colour system: cyan does structure, green means "it works", amber means
  * "careful". Three competing brand hues became two semantic ones, so the page
@@ -255,6 +257,17 @@ const CopyButton: React.FC<{ value: string; label?: string }> = ({ value, label 
 };
 
 // ── Content data ────────────────────────────────────────────────────────────
+
+/**
+ * Grouped in pairs rather than a flat list. A wrapping flex row cannot know
+ * where it will break, so any separator eventually lands at the start or end of
+ * a line and reads as a stray indent. Two fixed rows on mobile, one on desktop,
+ * means a dot is only ever between two terms on the same line.
+ */
+const COLOPHON: ReadonlyArray<ReadonlyArray<{ text: string; caution?: boolean }>> = [
+  [{ text: 'Community guide' }, { text: 'Unofficial & unsupported', caution: true }],
+  [{ text: 'NVIDIA RTX only' }, { text: `Updated ${LAST_UPDATED}` }],
+];
 
 interface RowSpec {
   label: string;
@@ -561,7 +574,7 @@ export const Dlss5NeuralRenderingGuidePage: React.FC = () => {
       fontVariantNumeric: 'normal',
       background: isDark ? 'rgba(148,163,184,0.12)' : 'rgba(15,23,42,0.06)',
       borderRadius: '4px',
-      px: 0.5,
+      px: '0.25em',
       py: 0.1,
     },
   } as const;
@@ -588,10 +601,11 @@ export const Dlss5NeuralRenderingGuidePage: React.FC = () => {
             fontSize: { xs: '1.75rem', md: '2.5rem' },
             lineHeight: 1.08,
             letterSpacing: '-0.015em',
+            textWrap: 'balance',
             mb: 1,
           }}
         >
-          DLSS 5 Neural Rendering in ESO
+          DLSS 5 Neural Rendering in&nbsp;ESO
         </Typography>
         {/* component="p": MUI maps the subtitle1 variant to <h6>, which would
             put a stray heading between the h1 and the first section h2. */}
@@ -603,6 +617,7 @@ export const Dlss5NeuralRenderingGuidePage: React.FC = () => {
             fontSize: { xs: '1.05rem', md: '1.15rem' },
             lineHeight: 1.55,
             fontWeight: W.body,
+            textWrap: 'pretty',
             mb: 1.75,
             maxWidth: '58ch',
           }}
@@ -616,35 +631,43 @@ export const Dlss5NeuralRenderingGuidePage: React.FC = () => {
           component="p"
           sx={{
             display: 'flex',
-            flexWrap: 'wrap',
-            alignItems: 'baseline',
-            columnGap: 1.25,
-            rowGap: 0.25,
+            flexDirection: { xs: 'column', sm: 'row' },
+            alignItems: { xs: 'flex-start', sm: 'baseline' },
+            rowGap: 0.4,
             m: 0,
             fontFamily: MONO,
-            fontSize: '0.7rem',
+            fontSize: { xs: '0.66rem', sm: '0.7rem' },
             fontWeight: 400,
             letterSpacing: '0.1em',
             textTransform: 'uppercase',
             color: 'text.secondary',
-            '& [data-sep]': { color: 'text.disabled', letterSpacing: 0 },
           }}
         >
-          <span>Community guide</span>
-          <span data-sep aria-hidden="true">
-            ·
-          </span>
-          <Box component="span" sx={{ color: isDark ? CAUTION_TEXT_DARK : CAUTION_TEXT_LIGHT }}>
-            Unofficial &amp; unsupported
-          </Box>
-          <span data-sep aria-hidden="true">
-            ·
-          </span>
-          <span>NVIDIA RTX only</span>
-          <span data-sep aria-hidden="true">
-            ·
-          </span>
-          <span>Updated {LAST_UPDATED}</span>
+          {COLOPHON.map((group, gi) => (
+            <React.Fragment key={gi}>
+              {gi > 0 && <ColophonDot hideOnMobile />}
+              <Box component="span" sx={{ display: 'flex', alignItems: 'baseline' }}>
+                {group.map((item, ii) => (
+                  <React.Fragment key={item.text}>
+                    {ii > 0 && <ColophonDot />}
+                    <Box
+                      component="span"
+                      sx={{
+                        whiteSpace: 'nowrap',
+                        color: item.caution
+                          ? isDark
+                            ? CAUTION_TEXT_DARK
+                            : CAUTION_TEXT_LIGHT
+                          : 'inherit',
+                      }}
+                    >
+                      {item.text}
+                    </Box>
+                  </React.Fragment>
+                ))}
+              </Box>
+            </React.Fragment>
+          ))}
         </Typography>
       </Box>
 
@@ -723,6 +746,11 @@ export const Dlss5NeuralRenderingGuidePage: React.FC = () => {
                 component="a"
                 href={`#${s.id}`}
                 sx={{
+                  // Inline anchors here were 17px tall, well under the 24px
+                  // WCAG 2.5.8 target minimum. Prose links get the inline
+                  // exception; a navigation list does not.
+                  display: 'inline-block',
+                  py: 0.6,
                   color: 'text.primary',
                   textDecoration: 'underline',
                   textDecorationColor: isDark ? 'rgba(56,189,248,0.5)' : 'rgba(3,105,161,0.45)',
@@ -1420,6 +1448,20 @@ after NR:   feed CPU 11.82 ms/frame |  63.9 fps | feed is 75% of the frame`}
             href="https://discord.gg/mMjwcQYFdc"
             target="_blank"
             rel="noopener noreferrer"
+            startIcon={
+              <img
+                src={discordIcon}
+                alt=""
+                style={{
+                  width: 18,
+                  height: 18,
+                  // The contained primary flips ink between modes: near-black on
+                  // cyan in dark, white on navy in light. A fixed filter would
+                  // leave the mark invisible in one of them.
+                  filter: isDark ? 'brightness(0)' : 'brightness(0) invert(1)',
+                }}
+              />
+            }
             endIcon={<ArrowForward />}
             sx={{ borderRadius: '8px', fontWeight: W.semi, textTransform: 'none', px: 3 }}
           >
@@ -1652,6 +1694,22 @@ const PipelineDiagram: React.FC = () => {
   );
 };
 
+/** Colophon separator. Decorative, so it is hidden from assistive tech. */
+const ColophonDot: React.FC<{ hideOnMobile?: boolean }> = ({ hideOnMobile }) => (
+  <Box
+    component="span"
+    aria-hidden="true"
+    sx={{
+      color: 'text.disabled',
+      letterSpacing: 0,
+      mx: 0.9,
+      display: hideOnMobile ? { xs: 'none', sm: 'inline' } : 'inline',
+    }}
+  >
+    ·
+  </Box>
+);
+
 /** Italic aside under a step. Genuinely secondary, unlike the body copy. */
 const Note: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <Typography
@@ -1719,7 +1777,7 @@ const Callout: React.FC<{
           fontSize: '0.85em',
           background: isDark ? 'rgba(148,163,184,0.12)' : 'rgba(15,23,42,0.06)',
           borderRadius: '4px',
-          px: 0.5,
+          px: '0.25em',
           py: 0.1,
         },
         ...sx,

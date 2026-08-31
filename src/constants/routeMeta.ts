@@ -27,6 +27,13 @@ export interface RouteMeta {
    * routes are runtime-only.
    */
   readonly prerender: boolean;
+  /**
+   * Absolute site path to a 1200x630 social card for this route, e.g.
+   * `/dlss5-social-preview.png`. Omit to inherit the site-wide image.
+   */
+  readonly image?: string;
+  /** Alt text for `image`. Falls back to the route title. */
+  readonly imageAlt?: string;
   /** Emit a real static shell but keep the transactional route out of search. */
   readonly noindex?: boolean;
 }
