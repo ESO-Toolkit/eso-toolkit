@@ -84,18 +84,108 @@ const PIPELINE = [
   { stage: 'Neural Rendering', by: 'renodx-dlss5' },
 ] as const;
 
+const PAGE_URL = 'https://esotk.com/docs/dlss5-neural-rendering/';
+const LAST_UPDATED = 'August 2026';
+
+/**
+ * Mirrors BuildLeaderboardPage: `<` inside the payload would close the script
+ * block early. This page's content genuinely contains one (the effect-order
+ * diagram uses `<-`), so the plain JSON.stringify used elsewhere is not enough.
+ */
+const serializeJsonLd = (value: unknown): string => JSON.stringify(value).replace(/</g, '\u003c');
+
+/**
+ * Google retired HowTo rich results in 2023 and restricted FAQ ones, so this
+ * wins no rich snippet. It is here for entity clarity: "DLSS 5 Neural
+ * Rendering" is an ambiguous term, and the publisher/date signals matter for a
+ * page giving instructions that modify a game install.
+ */
+const TECH_ARTICLE_LD = {
+  '@context': 'https://schema.org',
+  '@type': 'TechArticle',
+  '@id': `${PAGE_URL}#article`,
+  headline: 'DLSS 5 Neural Rendering in ESO: Setup & Fixes',
+  description:
+    'Community guide to running the unofficial DLSS 5 Feeder + RenoDX Neural Rendering stack in The Elder Scrolls Online via ReShade, with troubleshooting keyed to exact log lines.',
+  url: PAGE_URL,
+  mainEntityOfPage: PAGE_URL,
+  inLanguage: 'en',
+  proficiencyLevel: 'Expert',
+  dateModified: '2026-08-31',
+  about: { '@type': 'VideoGame', name: 'The Elder Scrolls Online' },
+  publisher: { '@type': 'Organization', name: 'ESO Toolkit', url: 'https://esotk.com' },
+} as const;
+
+/**
+ * Step text deliberately says only "matching your GPU generation" for the NR
+ * runtime. The guide does not distribute that binary and its sourcing should
+ * not be amplified into metadata.
+ */
+const HOW_TO_LD = {
+  '@context': 'https://schema.org',
+  '@type': 'HowTo',
+  '@id': `${PAGE_URL}#setup`,
+  name: 'Set up DLSS 5 Neural Rendering in The Elder Scrolls Online',
+  description:
+    'Install ReShade with add-on support, add the DLSS 5 Feeder and RenoDX add-ons, and enable Neural Rendering in ESO, a DirectX 11 game with no native DLSS.',
+  tool: [
+    'ReShade 6.x with full add-on support',
+    'nvngx_dlss.dll (310.x)',
+    'nvngx_dlssnr.dll (matching GPU generation)',
+    'dlss5-feed.addon64 and renodx-dlss5.addon64',
+    'DLSS5_Feed.fx and MartysMods LaunchPad shaders',
+  ].map((name) => ({ '@type': 'HowToTool', name })),
+  step: [
+    ['Find your ESO client folder', 'Every file goes in the folder containing eso64.exe.'],
+    [
+      'Install ReShade with add-on support',
+      'Install ReShade 6.x for eso64.exe (DirectX 10/11/12) using the build with full add-on support, landing as dxgi.dll next to eso64.exe.',
+    ],
+    [
+      'Add the shaders',
+      'Copy DLSS5_Feed.fx and MartysMods_LAUNCHPAD.fx into reshade-shaders\\Shaders, the MartysMods include folder beside them, and iMMERSE_bluenoise_opt.png into reshade-shaders\\Textures.',
+    ],
+    [
+      'Add the two add-ons',
+      'Drop dlss5-feed.addon64 and renodx-dlss5.addon64 into the client folder; ReShade auto-discovers them.',
+    ],
+    [
+      'Add the NGX runtimes',
+      'Place a 310.x nvngx_dlss.dll and an nvngx_dlssnr.dll matching your GPU generation in the client folder.',
+    ],
+    [
+      'Replace the ESO-bundled d3dcompiler_47.dll',
+      'Close ESO, rename the client-folder d3dcompiler_47.dll to .bak, then copy the system copy in. Without this, Neural Rendering silently never starts.',
+    ],
+    [
+      'Turn off in-game anti-aliasing',
+      'In ESO video settings, disable MSAA/SSAA and set resolution scale to 100%.',
+    ],
+    [
+      'Enable the effects in the right order',
+      'In the ReShade overlay, enable MartysMods_Launchpad first, then DLSS5_Feed directly below it.',
+    ],
+  ].map(([name, text], i) => ({
+    '@type': 'HowToStep',
+    position: i + 1,
+    name,
+    text,
+    url: `${PAGE_URL}#setup`,
+  })),
+} as const;
+
 // ── Section registry: single source of truth for headings, ids and the TOC ──
 
 const SECTIONS = [
   { id: 'how-it-works', title: 'How this works' },
-  { id: 'requirements', title: 'What you need' },
+  { id: 'requirements', title: 'Requirements' },
   { id: 'setup', title: 'Setup' },
   { id: 'overlay', title: 'Using the ReShade overlay' },
   { id: 'nr-panel', title: 'The Neural Rendering add-on panel' },
   { id: 'depth-buffer', title: 'Checking the depth buffer' },
-  { id: 'verify', title: 'Proving it works' },
+  { id: 'verify', title: "Verify it's working" },
   { id: 'config', title: 'Config file reference' },
-  { id: 'troubleshooting', title: 'When it does not work' },
+  { id: 'troubleshooting', title: 'Troubleshooting: fixes by log line' },
   { id: 'performance', title: 'What it costs' },
 ] as const;
 
@@ -139,8 +229,8 @@ const CopyButton: React.FC<{ value: string; label?: string }> = ({ value, label 
           role="status"
           sx={{
             position: 'absolute',
-            width: 1,
-            height: 1,
+            width: '1px',
+            height: '1px',
             overflow: 'hidden',
             clip: 'rect(0 0 0 0)',
             whiteSpace: 'nowrap',
@@ -322,6 +412,8 @@ const STATUSES: ReadonlyArray<StatusSpec> = [
 
 interface FailureSpec {
   symptom: string;
+  /** Pre-expanded: the ESO-specific trap most readers arrive for. */
+  defaultOpen?: boolean;
   log: string;
   cause: string;
   fix: string;
@@ -344,6 +436,7 @@ const FAILURES: ReadonlyArray<FailureSpec> = [
   },
   {
     symptom: 'Everything loads but nothing looks different',
+    defaultOpen: true,
     log: "DLSS5 Generic proxy encode compilation failed with HRESULT 0x8876086c: error X3506: unrecognized compiler target 'cs_5_1'",
     cause:
       'The ESO-specific trap. ESO ships its own d3dcompiler_47.dll from the Windows 8.1 SDK (version 6.3.9600, dated 2013). Because it sits next to the exe it wins the DLL search order over the modern system copy. RenoDX compiles its proxy-encode shader at cs_5_1, and Shader Model 5.1 did not exist in 2013, so the compile fails and feature 18 is never created. DLSS itself keeps working, which is why this looks like "nothing happened" rather than an error.',
@@ -387,9 +480,10 @@ export const Dlss5NeuralRenderingGuidePage: React.FC = () => {
   React.useEffect(() => {
     const id = window.location.hash.slice(1);
     if (!id) return;
-    requestAnimationFrame(() => {
+    const raf = requestAnimationFrame(() => {
       document.getElementById(id)?.scrollIntoView({ block: 'start' });
     });
+    return () => cancelAnimationFrame(raf);
   }, []);
 
   /** Green that is safe as text in the current mode. */
@@ -456,6 +550,9 @@ export const Dlss5NeuralRenderingGuidePage: React.FC = () => {
             </Typography>
           </Box>
         </Stack>
+        <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1.5, fontSize: '0.8rem' }}>
+          Community guide · Last updated {LAST_UPDATED}
+        </Typography>
         <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 1 }}>
           {[
             { label: 'Community guide', warn: false },
@@ -583,7 +680,12 @@ export const Dlss5NeuralRenderingGuidePage: React.FC = () => {
 
           <PipelineDiagram />
 
-          <Stack component="ol" spacing={1.5} sx={{ listStyle: 'none', p: 0, m: 0, mt: 3 }}>
+          <Stack
+            component="ol"
+            role="list"
+            spacing={1.5}
+            sx={{ listStyle: 'none', p: 0, m: 0, mt: 3 }}
+          >
             <ChainRow
               n="1"
               title="LaunchPad estimates motion"
@@ -619,7 +721,7 @@ export const Dlss5NeuralRenderingGuidePage: React.FC = () => {
       </Section>
 
       {/* ── Requirements ─────────────────────────────────────────────── */}
-      <Section id="requirements" icon={<Info />} title="What you need">
+      <Section id="requirements" icon={<Info />} title="Requirements">
         <Box sx={cardSx}>
           <SettingsTable rows={REQUIREMENTS} labelWidth={160} />
           <Alert severity="info" icon={<Info />} sx={{ mt: 2.5, borderRadius: '12px' }}>
@@ -644,7 +746,7 @@ export const Dlss5NeuralRenderingGuidePage: React.FC = () => {
       {/* ── Steps ────────────────────────────────────────────────────── */}
       <Section id="setup" icon={<Science />} title="Setup">
         <Box sx={{ ...cardSx, p: { xs: 2.5, md: 3.5 } }}>
-          <Stack component="ol" sx={{ listStyle: 'none', p: 0, m: 0 }}>
+          <Stack component="ol" role="list" sx={{ listStyle: 'none', p: 0, m: 0 }}>
             <StepRow n={1} last={false} title="Find your ESO client folder">
               <Typography variant="body2" sx={proseSx}>
                 Every file in this guide goes in the folder that contains <code>eso64.exe</code>. On
@@ -717,7 +819,7 @@ export const Dlss5NeuralRenderingGuidePage: React.FC = () => {
               <Note>
                 Version matters enormously. See{' '}
                 <Box component="a" href="#requirements" sx={{ color: nvText, fontWeight: 700 }}>
-                  what you need
+                  Requirements
                 </Box>
                 . This is where almost every failed setup goes wrong.
               </Note>
@@ -746,6 +848,12 @@ export const Dlss5NeuralRenderingGuidePage: React.FC = () => {
               <CodeBlock copyable wrap copyLabel="Copy d3dcompiler command" sx={{ mt: 1.25 }}>
                 {'copy "C:\\Windows\\System32\\d3dcompiler_47.dll" .'}
               </CodeBlock>
+              <Note>
+                To undo: delete the copied <code>d3dcompiler_47.dll</code> and rename{' '}
+                <code>d3dcompiler_47.dll.bak</code> back. Verifying game files also restores
+                ESO&apos;s own copy, which silently disables Neural Rendering until you redo this
+                step.
+              </Note>
             </StepRow>
 
             <StepRow n={7} last={false} title="Turn off in-game anti-aliasing">
@@ -951,7 +1059,7 @@ export const Dlss5NeuralRenderingGuidePage: React.FC = () => {
       </Section>
 
       {/* ── Verification ─────────────────────────────────────────────── */}
-      <Section id="verify" icon={<CheckCircle />} title="Proving it works">
+      <Section id="verify" icon={<CheckCircle />} title="Verify it's working">
         <Box sx={cardSx}>
           <Typography variant="body2" sx={{ ...proseSx, mb: 2 }}>
             The effect is subtle and easy to imagine seeing. Trust the logs. Both live in the client
@@ -1007,7 +1115,7 @@ EnableHooks=2      ; 2 = NGX hooks only. CORRECT for ESO.
 NRPreset=0
 NRStyle=2
 NRSkinStructure=1.01
-NREnableUpscaling=1`}
+NREnableUpscaling=0  ; WIP; a no-op on ESO, see the settings table above`}
           </CodeBlock>
           <Typography variant="body2" sx={{ ...proseSx, mb: 2.5 }}>
             The add-on suggests <code>EnableHooks=1</code> when it cannot find guide dimensions.
@@ -1043,7 +1151,7 @@ flags=-1           ; -1 = auto`}
       </Section>
 
       {/* ── Troubleshooting ──────────────────────────────────────────── */}
-      <Section id="troubleshooting" icon={<Warning />} title="When it does not work">
+      <Section id="troubleshooting" icon={<Warning />} title="Troubleshooting: fixes by log line">
         <Typography variant="body2" sx={{ ...proseSx, mb: 2 }}>
           Work top to bottom. Each failure masks the ones after it.
         </Typography>
@@ -1053,7 +1161,7 @@ flags=-1           ; -1 = auto`}
               key={f.symptom}
               disableGutters
               elevation={0}
-              defaultExpanded={i === 2}
+              defaultExpanded={f.defaultOpen ?? false}
               sx={{
                 ...cardSx,
                 p: 0,
@@ -1175,6 +1283,10 @@ after NR:   feed CPU 11.82 ms/frame |  63.9 fps | feed is 75% of the frame`}
           </Button>
         </Stack>
       </Box>
+
+      {/* Structured data. Data blocks, not executed scripts. */}
+      <script type="application/ld+json">{serializeJsonLd(TECH_ARTICLE_LD)}</script>
+      <script type="application/ld+json">{serializeJsonLd(HOW_TO_LD)}</script>
     </Container>
   );
 };

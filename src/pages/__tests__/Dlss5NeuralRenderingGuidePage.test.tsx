@@ -72,15 +72,32 @@ describe('Dlss5NeuralRenderingGuidePage', () => {
     renderPage();
     // Sourced via usePageTitle -> ROUTE_META, so it matches the prerendered
     // shell byte for byte. A mismatch here means someone hardcoded it again.
-    expect(document.title).toBe('DLSS 5 Neural Rendering in ESO | ESO Toolkit');
+    expect(document.title).toBe('DLSS 5 Neural Rendering in ESO: Setup & Fixes | ESO Toolkit');
+  });
+
+  it('emits valid JSON-LD that does not break out of the script block', () => {
+    const { container } = renderPage();
+
+    const blocks = Array.from(container.querySelectorAll('script[type="application/ld+json"]'));
+    expect(blocks).toHaveLength(2);
+
+    const types = blocks.map((b) => {
+      const raw = b.textContent ?? '';
+      // An unescaped '<' would terminate the script element early in a real browser.
+      expect(raw).not.toContain('<');
+      return JSON.parse(raw)['@type'];
+    });
+    expect(types).toEqual(['TechArticle', 'HowTo']);
   });
 
   it('every table-of-contents link resolves to a real section anchor', () => {
     const { container } = renderPage();
 
-    const tocLinks = Array.from(
-      container.querySelectorAll<HTMLAnchorElement>('nav[aria-label="On this page"] a'),
-    );
+    // Every in-page anchor, not just the table of contents: several body links
+    // (#requirements, #overlay, #troubleshooting) are string literals rather than
+    // entries in the SECTIONS registry, so a section-id rename would dangle them
+    // while a TOC-only assertion stayed green.
+    const tocLinks = Array.from(container.querySelectorAll<HTMLAnchorElement>('a[href^="#"]'));
     expect(tocLinks.length).toBeGreaterThan(0);
 
     tocLinks.forEach((link) => {

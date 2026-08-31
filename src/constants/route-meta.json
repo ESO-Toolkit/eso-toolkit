@@ -64,8 +64,8 @@
     "prerender": true
   },
   "/docs/dlss5-neural-rendering": {
-    "title": "DLSS 5 Neural Rendering in ESO | ESO Toolkit",
-    "description": "Community guide to the unofficial DLSS 5 Feeder + RenoDX Neural Rendering setup for The Elder Scrolls Online.",
+    "title": "DLSS 5 Neural Rendering in ESO: Setup & Fixes | ESO Toolkit",
+    "description": "Install the unofficial DLSS 5 Feeder + RenoDX Neural Rendering mod in The Elder Scrolls Online with ReShade, then fix every error by its exact log line.",
     "prerender": true
   },
   "/docs/loadout/food-selector": {
