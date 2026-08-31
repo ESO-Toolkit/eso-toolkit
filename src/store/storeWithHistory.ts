@@ -36,6 +36,8 @@ import parseAnalysisReducer from './parse_analysis/parseAnalysisSlice';
 import playerDataReducer from './player_data/playerDataSlice';
 import reportReducer from './report/reportSlice';
 import { savedBuildsReducer } from './saved_builds';
+import type { SavedBuildsState } from './saved_builds/savedBuildsSlice';
+import { hasCompletedSavedBuildMigration } from './saved_builds/savedBuildStorage';
 import { savedRostersReducer } from './saved_rosters';
 import uiReducer, { UIState } from './ui/uiSlice';
 import userReportsReducer from './user_reports';
@@ -140,6 +142,21 @@ export const uiTransform = createTransform<UIState, Partial<UIState>>(
   { whitelist: ['ui'] },
 );
 
+/**
+ * Keep the old redux-persist copy as a crash/error fallback until IndexedDB
+ * migration commits. Afterwards persist only an empty shell so screenshot data
+ * is never duplicated into localStorage.
+ */
+export const savedBuildsTransform = createTransform<SavedBuildsState, SavedBuildsState>(
+  (inboundState) => ({
+    builds: hasCompletedSavedBuildMigration() ? [] : inboundState.builds,
+    // Hydration is a per-session lifecycle flag, never durable state.
+    hydrated: false,
+  }),
+  (outboundState) => ({ ...outboundState, hydrated: false }),
+  { whitelist: ['savedBuilds'] },
+);
+
 // Define RootState type from the root reducer (before persist config).
 // Injected slices are folded in structurally — see InjectedState above.
 export type RootState = ReturnType<typeof staticRootReducer> & InjectedState;
@@ -148,8 +165,10 @@ export type RootState = ReturnType<typeof staticRootReducer> & InjectedState;
 const persistConfig = {
   key: 'root',
   storage,
-  transforms: [uiTransform], // Apply transform to exclude report-specific UI state
-  whitelist: ['ui', 'loadout', 'dashboard', 'savedRosters', 'savedBuilds'], // Persist essential data, loadout, saved rosters, and saved builds
+  transforms: [uiTransform, savedBuildsTransform],
+  // Saved builds remain here only as a migration/failure fallback. The
+  // transform empties this slice after SavedBuildsGate commits to IndexedDB.
+  whitelist: ['ui', 'loadout', 'dashboard', 'savedBuilds', 'savedRosters'],
 };
 
 const injectedReducers: Partial<Record<keyof InjectedState, Reducer>> = {};
@@ -209,7 +228,7 @@ const createStoreWithClient = (esoLogsClient: EsoLogsClient): AppStore => {
           // playerData is a keyed cache (playerData.entries[key].playersById);
           // the old 'playerData.playersById' path matched nothing, so the dev
           // serializability check still deep-traversed every cached fight.
-          ignoredPaths: ['events', 'playerData.entries', 'workerResults'],
+          ignoredPaths: ['events', 'playerData.entries', 'savedBuilds', 'workerResults'],
           // Increase warning threshold for better performance
           warnAfter: 128,
         },

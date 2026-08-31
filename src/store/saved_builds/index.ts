@@ -1,6 +1,13 @@
-export { saveBuild, updateSavedBuild, deleteSavedBuild } from './savedBuildsSlice';
+export {
+  saveBuild,
+  updateSavedBuild,
+  upsertSavedBuild,
+  deleteSavedBuild,
+  clearSavedBuilds,
+  hydrateSavedBuilds,
+} from './savedBuildsSlice';
 export { default as savedBuildsReducer } from './savedBuildsSlice';
-export type { SavedBuild } from './savedBuildsSlice';
+export type { SavedBuild, UpsertSavedBuildPayload } from './savedBuildsSlice';
 
 import type { RootState } from '../storeWithHistory';
 

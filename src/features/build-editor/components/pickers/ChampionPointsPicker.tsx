@@ -8,7 +8,7 @@
 
 import { Box, ButtonBase, Divider, Stack, Tooltip, Typography } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-import React, { useState } from 'react';
+import React, { useId, useRef, useState } from 'react';
 
 import { CHAMPION_POINT_ABILITIES, ChampionPointTree } from '@/types/champion-points';
 
@@ -337,8 +337,10 @@ const PassiveRow: React.FC<PassiveRowProps> = ({
               disabled={points === 0}
               aria-label={`Decrease ${passive.name}`}
               sx={{
-                width: 28,
-                height: 28,
+                width: { xs: 40, md: 28 },
+                minWidth: { xs: 40, md: 28 },
+                height: { xs: 40, md: 28 },
+                flexShrink: 0,
                 borderRadius: '6px',
                 background: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
                 border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'}`,
@@ -419,8 +421,10 @@ const PassiveRow: React.FC<PassiveRowProps> = ({
               disabled={points === passive.maxPoints}
               aria-label={`Increase ${passive.name}`}
               sx={{
-                width: 20,
-                height: 20,
+                width: { xs: 40, md: 28 },
+                minWidth: { xs: 40, md: 28 },
+                height: { xs: 40, md: 28 },
+                flexShrink: 0,
                 borderRadius: '6px',
                 background: isDark ? `rgba(${treeColorRgb}, 0.14)` : `rgba(${treeColorRgb}, 0.10)`,
                 border: `1px solid rgba(${treeColorRgb}, 0.30)`,
@@ -611,11 +615,49 @@ export interface ChampionPointsPickerProps {
 
 export const ChampionPointsPicker: React.FC<ChampionPointsPickerProps> = ({ cp, onChange }) => {
   const [activeTree, setActiveTree] = useState<keyof BuildChampionPoints>('warfare');
+  const tabGroupId = useId();
+  const tabRefs = useRef<Partial<Record<keyof BuildChampionPoints, HTMLDivElement | null>>>({});
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
   const currentTree = TREES.find((t) => t.key === activeTree)!;
   const activeIndex = TREES.findIndex((t) => t.key === activeTree);
+  const tabPanelId = `${tabGroupId}-panel`;
+  const getTabId = (treeKey: keyof BuildChampionPoints): string => `${tabGroupId}-${treeKey}-tab`;
+
+  const handleTreeKeyDown = (
+    event: React.KeyboardEvent<HTMLDivElement>,
+    treeIndex: number,
+  ): void => {
+    let destinationIndex: number | undefined;
+
+    switch (event.key) {
+      case 'ArrowLeft':
+        destinationIndex = (treeIndex - 1 + TREES.length) % TREES.length;
+        break;
+      case 'ArrowRight':
+        destinationIndex = (treeIndex + 1) % TREES.length;
+        break;
+      case 'Home':
+        destinationIndex = 0;
+        break;
+      case 'End':
+        destinationIndex = TREES.length - 1;
+        break;
+      case 'Enter':
+      case ' ':
+        event.preventDefault();
+        setActiveTree(TREES[treeIndex].key);
+        return;
+      default:
+        return;
+    }
+
+    event.preventDefault();
+    const destinationTree = TREES[destinationIndex];
+    setActiveTree(destinationTree.key);
+    tabRefs.current[destinationTree.key]?.focus();
+  };
 
   const handleSlotChange = (
     treeKey: keyof BuildChampionPoints,
@@ -652,6 +694,7 @@ export const ChampionPointsPicker: React.FC<ChampionPointsPickerProps> = ({ cp, 
       <Box
         role="tablist"
         aria-label="Champion point trees"
+        aria-orientation="horizontal"
         sx={{
           display: 'flex',
           position: 'relative',
@@ -682,21 +725,23 @@ export const ChampionPointsPicker: React.FC<ChampionPointsPickerProps> = ({ cp, 
           }}
         />
 
-        {TREES.map((t) => {
+        {TREES.map((t, treeIndex) => {
           const isActive = activeTree === t.key;
           return (
             <Box
               key={t.key}
+              id={getTabId(t.key)}
+              ref={(node: HTMLDivElement | null) => {
+                tabRefs.current[t.key] = node;
+              }}
               role="tab"
               aria-selected={isActive}
+              aria-controls={tabPanelId}
               tabIndex={isActive ? 0 : -1}
               onClick={() => setActiveTree(t.key)}
-              onKeyDown={(e: React.KeyboardEvent) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  setActiveTree(t.key);
-                }
-              }}
+              onKeyDown={(event: React.KeyboardEvent<HTMLDivElement>) =>
+                handleTreeKeyDown(event, treeIndex)
+              }
               sx={{
                 flex: 1,
                 py: 0.75,
@@ -754,12 +799,14 @@ export const ChampionPointsPicker: React.FC<ChampionPointsPickerProps> = ({ cp, 
       </Box>
 
       {/* ── Active tree content ── */}
-      <TreePanel
-        tree={currentTree}
-        cp={cp}
-        onSlotChange={handleSlotChange}
-        onPassiveChange={handlePassiveChange}
-      />
+      <Box role="tabpanel" id={tabPanelId} aria-labelledby={getTabId(activeTree)}>
+        <TreePanel
+          tree={currentTree}
+          cp={cp}
+          onSlotChange={handleSlotChange}
+          onPassiveChange={handlePassiveChange}
+        />
+      </Box>
     </Stack>
   );
 };

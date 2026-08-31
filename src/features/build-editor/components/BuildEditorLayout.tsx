@@ -32,15 +32,14 @@ import {
 } from '@mui/icons-material';
 import { Box, useMediaQuery } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
+import { visuallyHidden } from '@mui/utils';
 import React, { useCallback, useEffect } from 'react';
-import { useDispatch, useSelector, useStore } from 'react-redux';
+import { useSelector } from 'react-redux';
 
-import { saveBuild } from '@/store/saved_builds';
-import type { RootState } from '@/store/storeWithHistory';
-
+import { useSaveBuild } from '../hooks/useSaveBuild';
+import { useSaveShortcut } from '../hooks/useSaveShortcut';
 import { useSectionProgress } from '../hooks/useSectionProgress';
-import { selectIsDirty } from '../store/buildEditorSelectors';
-import { BUILD_EDITOR_STORAGE_KEY, markSaved } from '../store/buildEditorSlice';
+import { selectActiveSetup, selectIsDirty } from '../store/buildEditorSelectors';
 
 import { BuildCompletionHeader } from './BuildCompletionHeader';
 import { BuildNavRail } from './BuildNavRail';
@@ -59,23 +58,18 @@ import { SettingsSection } from './sections/SettingsSection';
 import { SkillsSection } from './sections/SkillsSection';
 import { StatsSection } from './sections/StatsSection';
 import { SubclassingSection } from './sections/SubclassingSection';
-import { SetupTabBar } from './SetupTabBar';
+import { BUILD_EDITOR_SETUP_PANEL_ID, getBuildSetupTabId, SetupTabBar } from './SetupTabBar';
 
 export const BuildEditorLayout: React.FC = () => {
   const theme = useTheme();
-  const dispatch = useDispatch();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const progress = useSectionProgress();
   const isDirty = useSelector(selectIsDirty);
-  // On mobile, sections start expanded (defaultExpanded) and SectionCard's
-  // <Collapse> mounts their content immediately, so LazySection would be
-  // redundant — pass eager=true there. On desktop, the first two rows (Identity,
-  // Character, Subclassing) sit above the fold and should render immediately
-  // without IntersectionObserver wait.
-  const lazyDesktop = !isMobile;
-  // Lazy read via the store — subscribing to `build` here would force the
-  // whole layout (and every SectionCard child) to re-render on every edit.
-  const store = useStore<RootState>();
+  const activeSetup = useSelector(selectActiveSetup);
+  // The first two rows sit above the fold and render immediately. Every later
+  // section is lazy on desktop and mobile; placeholders retain stable ids so
+  // rail navigation can scroll to a section before its heavy subtree mounts.
+  const saveCurrentBuild = useSaveBuild();
 
   // Warn user before leaving with unsaved changes
   const handleBeforeUnload = useCallback(
@@ -91,33 +85,14 @@ export const BuildEditorLayout: React.FC = () => {
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [handleBeforeUnload]);
 
-  // Ctrl+S / Cmd+S keyboard shortcut to save.
-  // Reads state lazily via the store so this effect registers the listener
-  // exactly once — it never re-runs on build edits.
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent): void => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-        e.preventDefault();
-        const { build, activeSetupIndex } = store.getState().buildEditor;
-        if (!build.name.trim()) return;
-        try {
-          localStorage.setItem(
-            BUILD_EDITOR_STORAGE_KEY,
-            JSON.stringify({ build, activeSetupIndex }),
-          );
-        } catch {
-          // Silently fail — localStorage might be full
-        }
-        dispatch(saveBuild(build));
-        dispatch(markSaved());
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [dispatch, store]);
+  useSaveShortcut(saveCurrentBuild);
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: 600 }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}>
+      <Box component="h1" sx={visuallyHidden}>
+        Build editor
+      </Box>
+
       {/* Header: build name + progress + save/share.
           Sticky on mobile so Save/Publish stay within thumb reach from any
           scroll position (H5). On desktop the inner bento grid is the scroll
@@ -146,6 +121,7 @@ export const BuildEditorLayout: React.FC = () => {
 
         {/* Bento grid content */}
         <Box
+          data-build-editor-scroll-region
           sx={{
             flex: 1,
             minWidth: 0,
@@ -165,6 +141,10 @@ export const BuildEditorLayout: React.FC = () => {
           {isMobile && <SetupTabBar />}
 
           <Box
+            id={BUILD_EDITOR_SETUP_PANEL_ID}
+            role="tabpanel"
+            aria-labelledby={activeSetup ? getBuildSetupTabId(activeSetup.id) : undefined}
+            aria-label={activeSetup ? undefined : 'Build setup'}
             sx={{
               display: 'grid',
               gap: { xs: 2, md: 2.5, lg: 3 },
@@ -227,7 +207,7 @@ export const BuildEditorLayout: React.FC = () => {
 
             {/* Row 3–4: Equipment spans 2 rows; Skills + Consumables stack on right */}
             <LazySection
-              eager={!lazyDesktop}
+              sectionId="equipment"
               placeholderMinHeight={560}
               gridRow={isMobile ? undefined : 'span 2'}
             >
@@ -245,7 +225,7 @@ export const BuildEditorLayout: React.FC = () => {
               </SectionCard>
             </LazySection>
 
-            <LazySection eager={!lazyDesktop} placeholderMinHeight={360}>
+            <LazySection sectionId="skills" placeholderMinHeight={360}>
               <SectionCard
                 id="skills"
                 title="Skills"
@@ -259,7 +239,7 @@ export const BuildEditorLayout: React.FC = () => {
               </SectionCard>
             </LazySection>
 
-            <LazySection eager={!lazyDesktop} placeholderMinHeight={280}>
+            <LazySection sectionId="consumables" placeholderMinHeight={280}>
               <SectionCard
                 id="consumables"
                 title="Consumables"
@@ -274,7 +254,7 @@ export const BuildEditorLayout: React.FC = () => {
 
             {/* Champion Points — full width */}
             <LazySection
-              eager={!lazyDesktop}
+              sectionId="champion"
               placeholderMinHeight={520}
               gridColumn={isMobile ? undefined : 'span 2'}
             >
@@ -293,7 +273,7 @@ export const BuildEditorLayout: React.FC = () => {
             </LazySection>
 
             {/* Passives — half width */}
-            <LazySection eager={!lazyDesktop} placeholderMinHeight={320}>
+            <LazySection sectionId="passives" placeholderMinHeight={320}>
               <SectionCard
                 id="passives"
                 title="Passives"
@@ -308,7 +288,7 @@ export const BuildEditorLayout: React.FC = () => {
 
             {/* Stats — full width */}
             <LazySection
-              eager={!lazyDesktop}
+              sectionId="stats"
               placeholderMinHeight={520}
               gridColumn={isMobile ? undefined : 'span 2'}
             >
@@ -327,7 +307,7 @@ export const BuildEditorLayout: React.FC = () => {
 
             {/* Guide & Media — full width */}
             <LazySection
-              eager={!lazyDesktop}
+              sectionId="guide"
               placeholderMinHeight={360}
               gridColumn={isMobile ? undefined : 'span 2'}
             >
@@ -345,7 +325,7 @@ export const BuildEditorLayout: React.FC = () => {
 
             {/* Settings — full width footer */}
             <LazySection
-              eager={!lazyDesktop}
+              sectionId="settings"
               placeholderMinHeight={200}
               gridColumn={isMobile ? undefined : 'span 2'}
             >

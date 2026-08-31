@@ -15,13 +15,14 @@
  * - A `placeholderMinHeight` preserves approximate bento layout so the grid
  *   doesn't collapse before lazy sections mount. Callers tune it per section
  *   (tall ones like Equipment/Champion/Stats get larger placeholders).
- * - `eager` short-circuits the IO path; used for above-the-fold sections and
- *   for the mobile breakpoint (where `SectionCard` already unmounts collapsed
- *   content via `<Collapse unmountOnExit>`, making lazy mounting redundant).
+ * - `eager` short-circuits the IO path and is reserved for above-the-fold
+ *   sections that should be interactive on first paint.
  */
 
 import { Box } from '@mui/material';
 import React, { useEffect, useRef, useState } from 'react';
+
+export const BUILD_EDITOR_REVEAL_SECTION_EVENT = 'build-editor:reveal-section';
 
 interface LazySectionProps {
   children: React.ReactNode;
@@ -31,6 +32,8 @@ interface LazySectionProps {
   rootMargin?: string;
   /** Skip lazy mount and render children immediately. */
   eager?: boolean;
+  /** Section key used to make the placeholder a valid navigation target. */
+  sectionId?: string;
   /**
    * Grid placement for the placeholder. Must match whatever grid span the wrapped
    * SectionCard applies to itself (e.g. `gridColumn="span 2"` for full-width rows,
@@ -46,11 +49,26 @@ export const LazySection: React.FC<LazySectionProps> = ({
   placeholderMinHeight = 280,
   rootMargin = '1200px 0px',
   eager = false,
+  sectionId,
   gridColumn,
   gridRow,
 }) => {
   const placeholderRef = useRef<HTMLDivElement | null>(null);
   const [visible, setVisible] = useState(eager);
+
+  useEffect(() => {
+    if (visible || !sectionId) return;
+
+    const revealRequestedSection = (event: Event): void => {
+      if ((event as CustomEvent<string>).detail === sectionId) {
+        setVisible(true);
+      }
+    };
+
+    window.addEventListener(BUILD_EDITOR_REVEAL_SECTION_EVENT, revealRequestedSection);
+    return () =>
+      window.removeEventListener(BUILD_EDITOR_REVEAL_SECTION_EVENT, revealRequestedSection);
+  }, [sectionId, visible]);
 
   useEffect(() => {
     if (visible) return;
@@ -63,6 +81,7 @@ export const LazySection: React.FC<LazySectionProps> = ({
       return;
     }
 
+    const scrollRoot = el.closest<HTMLElement>('[data-build-editor-scroll-region]');
     const io = new IntersectionObserver(
       (entries) => {
         if (entries.some((e) => e.isIntersecting)) {
@@ -70,7 +89,7 @@ export const LazySection: React.FC<LazySectionProps> = ({
           io.disconnect();
         }
       },
-      { rootMargin },
+      { root: scrollRoot, rootMargin },
     );
     io.observe(el);
     return () => io.disconnect();
@@ -80,6 +99,7 @@ export const LazySection: React.FC<LazySectionProps> = ({
 
   return (
     <Box
+      id={sectionId ? `section-${sectionId}` : undefined}
       ref={placeholderRef}
       aria-hidden="true"
       sx={{

@@ -190,7 +190,7 @@ const BuildCard: React.FC<BuildCardProps> = ({ build, isDarkMode, onDelete }) =>
       )}
       <CardActionArea
         onClick={() =>
-          navigate(`/build-editor?id=${build.id}`, {
+          navigate(`/bv?id=${build.id}`, {
             vtType: 'forward',
             morph: { ref: cardRef, name: 'build-hero' },
           })
@@ -1759,7 +1759,15 @@ export const PublicProfilePage: React.FC = () => {
             icon={<ConstructionIcon sx={{ fontSize: 40 }} />}
             message="No public builds yet."
             actionLabel={isOwner ? 'Create a build' : undefined}
-            onAction={isOwner ? () => navigate('/build-editor', { vtType: 'forward' }) : undefined}
+            onAction={
+              isOwner
+                ? () =>
+                    navigate('/build-editor', {
+                      state: { newBuild: true },
+                      vtType: 'forward',
+                    })
+                : undefined
+            }
           />
         )}
       </Box>

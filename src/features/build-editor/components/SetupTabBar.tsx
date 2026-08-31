@@ -6,7 +6,7 @@
  * UX features:
  * - Drag-and-drop reordering via @dnd-kit (with DragOverlay for smooth preview)
  * - Delete confirmation dialog prevents accidental data loss
- * - Double-click tab label to rename inline
+ * - Explicit rename action plus F2/double-click shortcuts
  * - Keyboard-accessible sorting via sortableKeyboardCoordinates
  *
  * Performance:
@@ -39,6 +39,7 @@ import {
   Close as CloseIcon,
   ContentCopy as DuplicateIcon,
   DragIndicator as DragIndicatorIcon,
+  EditOutlined as EditIcon,
 } from '@mui/icons-material';
 import {
   Box,
@@ -74,6 +75,11 @@ import {
 } from '../store/buildEditorSlice';
 import type { BuildSetup } from '../types/build.types';
 
+export const BUILD_EDITOR_SETUP_PANEL_ID = 'build-editor-setup-panel';
+
+export const getBuildSetupTabId = (setupId: string): string =>
+  `build-editor-setup-tab-${encodeURIComponent(setupId)}`;
+
 // ─── Accessibility ───────────────────────────────────────────────────────────
 
 const screenReaderInstructions = {
@@ -102,10 +108,11 @@ interface SetupTabContentProps {
   dragListeners: SyntheticListenerMap | undefined;
   onSelect: (index: number) => void;
   onStartRename: (index: number) => void;
-  onCommitRename: () => void;
-  onCancelRename: () => void;
+  onCommitRename: (restoreFocus?: boolean) => void;
+  onCancelRename: (restoreFocus?: boolean) => void;
   onRenameChange: (value: string) => void;
   onDeleteRequest: (index: number) => void;
+  onNavigate: (index: number, key: 'ArrowLeft' | 'ArrowRight' | 'Home' | 'End') => void;
 }
 
 const SetupTabContent = React.memo<SetupTabContentProps>(function SetupTabContent({
@@ -127,10 +134,12 @@ const SetupTabContent = React.memo<SetupTabContentProps>(function SetupTabConten
   onCancelRename,
   onRenameChange,
   onDeleteRequest,
+  onNavigate,
 }) {
   return (
     <>
-      {isRenaming ? (
+      {/* Keep the tab mounted so the tabpanel's ARIA references remain valid while editing. */}
+      {isRenaming && (
         // ── Inline rename input ────────────────────────────────────
         <TextField
           inputRef={renameInputRef}
@@ -138,14 +147,19 @@ const SetupTabContent = React.memo<SetupTabContentProps>(function SetupTabConten
           size="small"
           autoFocus
           onChange={(e) => onRenameChange(e.target.value)}
-          onBlur={onCommitRename}
+          onBlur={() => onCommitRename(false)}
           onKeyDown={(e) => {
-            if (e.key === 'Enter') onCommitRename();
-            if (e.key === 'Escape') onCancelRename();
+            if (e.key === 'Enter') onCommitRename(true);
+            if (e.key === 'Escape') onCancelRename(true);
           }}
           slotProps={{ htmlInput: { maxLength: 32, 'aria-label': 'Rename setup' } }}
           sx={{
+            position: 'absolute',
+            top: '50%',
+            left: 0,
+            zIndex: 1,
             width: 120,
+            transform: 'translateY(-50%)',
             '& .MuiOutlinedInput-root': {
               fontSize: 13,
               '@media (max-width: 600px)': { fontSize: 16 },
@@ -163,102 +177,153 @@ const SetupTabContent = React.memo<SetupTabContentProps>(function SetupTabConten
             },
           }}
         />
-      ) : (
-        // ── Regular tab button with drag handle ──────────────────────
-        <Tooltip title="Double-click to rename · Drag to reorder" enterDelay={800}>
-          <ButtonBase
-            {...dragAttributes}
-            {...dragListeners}
-            role="tab"
-            aria-selected={active}
-            aria-label={`Setup: ${setup.name}`}
-            onClick={() => onSelect(index)}
-            onDoubleClick={() => onStartRename(index)}
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 0.75,
-              px: 2,
-              py: 0.85,
-              borderRadius: '99px',
-              cursor: isDragging ? 'grabbing' : 'grab',
+      )}
+      {/* Regular tab button with drag handle */}
+      <Tooltip title="Select setup · Drag to reorder" enterDelay={800}>
+        <ButtonBase
+          {...dragAttributes}
+          {...dragListeners}
+          role="tab"
+          id={getBuildSetupTabId(setup.id)}
+          aria-selected={active}
+          aria-controls={BUILD_EDITOR_SETUP_PANEL_ID}
+          aria-label={`Setup: ${setup.name}`}
+          data-setup-tab-index={index}
+          tabIndex={isRenaming ? -1 : active ? 0 : -1}
+          onClick={() => onSelect(index)}
+          onDoubleClick={() => onStartRename(index)}
+          onKeyDown={(event) => {
+            if (!isDragging && event.key === 'F2') {
+              event.preventDefault();
+              onStartRename(index);
+              return;
+            }
+
+            if (
+              !isDragging &&
+              (event.key === 'ArrowLeft' ||
+                event.key === 'ArrowRight' ||
+                event.key === 'Home' ||
+                event.key === 'End')
+            ) {
+              event.preventDefault();
+              onNavigate(index, event.key);
+              return;
+            }
+
+            dragListeners?.onKeyDown?.(event);
+          }}
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 0.75,
+            px: 2,
+            py: 0.85,
+            borderRadius: '99px',
+            cursor: isDragging ? 'grabbing' : 'grab',
+            background: active
+              ? isDark
+                ? 'linear-gradient(135deg, rgba(var(--be-accent-rgb, 56, 189, 248), 0.16) 0%, rgba(var(--be-accent-rgb, 56, 189, 248), 0.06) 100%)'
+                : 'linear-gradient(135deg, rgba(var(--be-accent-rgb, 56, 189, 248), 0.10) 0%, rgba(var(--be-accent-rgb, 56, 189, 248), 0.04) 100%)'
+              : 'transparent',
+            border: active
+              ? '1px solid rgba(var(--be-accent-rgb, 56, 189, 248), 0.25)'
+              : '1px solid transparent',
+            boxShadow: active
+              ? isDark
+                ? '0 0 12px rgba(var(--be-accent-rgb, 56, 189, 248), 0.12), inset 0 1px 0 rgba(var(--be-accent-rgb, 56, 189, 248), 0.08)'
+                : '0 2px 8px rgba(0,0,0,0.06)'
+              : 'none',
+            color: active ? 'var(--be-accent, #38bdf8)' : 'text.secondary',
+            transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+            opacity: isRenaming ? 0 : 1,
+            pointerEvents: isRenaming ? 'none' : 'auto',
+            fontWeight: active ? 700 : 500,
+            fontSize: 13,
+            backdropFilter: active ? 'blur(8px)' : 'none',
+            WebkitBackdropFilter: active ? 'blur(8px)' : 'none',
+            '&:hover': {
               background: active
-                ? isDark
-                  ? 'linear-gradient(135deg, rgba(var(--be-accent-rgb, 56, 189, 248), 0.16) 0%, rgba(var(--be-accent-rgb, 56, 189, 248), 0.06) 100%)'
-                  : 'linear-gradient(135deg, rgba(var(--be-accent-rgb, 56, 189, 248), 0.10) 0%, rgba(var(--be-accent-rgb, 56, 189, 248), 0.04) 100%)'
-                : 'transparent',
+                ? undefined
+                : isDark
+                  ? 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.06)'
+                  : 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.04)',
               border: active
-                ? '1px solid rgba(var(--be-accent-rgb, 56, 189, 248), 0.25)'
-                : '1px solid transparent',
-              boxShadow: active
-                ? isDark
-                  ? '0 0 12px rgba(var(--be-accent-rgb, 56, 189, 248), 0.12), inset 0 1px 0 rgba(var(--be-accent-rgb, 56, 189, 248), 0.08)'
-                  : '0 2px 8px rgba(0,0,0,0.06)'
-                : 'none',
-              color: active ? 'var(--be-accent, #38bdf8)' : 'text.secondary',
-              transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-              fontWeight: active ? 700 : 500,
+                ? undefined
+                : '1px solid rgba(var(--be-accent-rgb, 56, 189, 248), 0.12)',
+            },
+          }}
+        >
+          {/* Drag handle indicator */}
+          {setupCount > 1 && (
+            <DragIndicatorIcon
+              className="drag-handle"
+              sx={{
+                fontSize: 14,
+                opacity: 0,
+                transition: 'opacity 0.15s',
+                color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.25)',
+                ml: -0.5,
+                mr: -0.25,
+              }}
+            />
+          )}
+          {/* Active dot with glow */}
+          <Box
+            sx={{
+              width: 6,
+              height: 6,
+              borderRadius: '50%',
+              background: active
+                ? 'var(--be-accent, #38bdf8)'
+                : isDark
+                  ? 'rgba(255,255,255,0.18)'
+                  : 'rgba(0,0,0,0.14)',
+              boxShadow: active ? '0 0 6px rgba(var(--be-accent-rgb, 56, 189, 248), 0.6)' : 'none',
+              transition: 'all 0.2s',
+              flexShrink: 0,
+            }}
+          />
+          <Typography
+            variant="caption"
+            sx={{
+              color: 'inherit',
+              fontWeight: 'inherit',
               fontSize: 13,
-              backdropFilter: active ? 'blur(8px)' : 'none',
-              WebkitBackdropFilter: active ? 'blur(8px)' : 'none',
+              fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
+              letterSpacing: active ? 0.3 : 0,
+              userSelect: 'none',
+            }}
+          >
+            {setup.name}
+          </Typography>
+        </ButtonBase>
+      </Tooltip>
+
+      {active && !isRenaming && (
+        <Tooltip title="Rename this setup">
+          <IconButton
+            size="small"
+            onClick={() => onStartRename(index)}
+            aria-label={`Rename ${setup.name}`}
+            sx={{
+              width: 32,
+              height: 32,
+              ml: 0.5,
+              background: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
+              border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'}`,
+              color: 'text.secondary',
+              transition: 'all 0.15s',
               '&:hover': {
-                background: active
-                  ? undefined
-                  : isDark
-                    ? 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.06)'
-                    : 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.04)',
-                border: active
-                  ? undefined
-                  : '1px solid rgba(var(--be-accent-rgb, 56, 189, 248), 0.12)',
+                color: 'var(--be-accent, #38bdf8)',
+                background: isDark
+                  ? 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.12)'
+                  : 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.07)',
               },
             }}
           >
-            {/* Drag handle indicator */}
-            {setupCount > 1 && (
-              <DragIndicatorIcon
-                className="drag-handle"
-                sx={{
-                  fontSize: 14,
-                  opacity: 0,
-                  transition: 'opacity 0.15s',
-                  color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.25)',
-                  ml: -0.5,
-                  mr: -0.25,
-                }}
-              />
-            )}
-            {/* Active dot with glow */}
-            <Box
-              sx={{
-                width: 6,
-                height: 6,
-                borderRadius: '50%',
-                background: active
-                  ? 'var(--be-accent, #38bdf8)'
-                  : isDark
-                    ? 'rgba(255,255,255,0.18)'
-                    : 'rgba(0,0,0,0.14)',
-                boxShadow: active
-                  ? '0 0 6px rgba(var(--be-accent-rgb, 56, 189, 248), 0.6)'
-                  : 'none',
-                transition: 'all 0.2s',
-                flexShrink: 0,
-              }}
-            />
-            <Typography
-              variant="caption"
-              sx={{
-                color: 'inherit',
-                fontWeight: 'inherit',
-                fontSize: 13,
-                fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
-                letterSpacing: active ? 0.3 : 0,
-                userSelect: 'none',
-              }}
-            >
-              {setup.name}
-            </Typography>
-          </ButtonBase>
+            <EditIcon sx={{ fontSize: 14 }} />
+          </IconButton>
         </Tooltip>
       )}
 
@@ -270,8 +335,8 @@ const SetupTabContent = React.memo<SetupTabContentProps>(function SetupTabConten
             onClick={() => onDeleteRequest(index)}
             aria-label={`Delete ${setup.name}`}
             sx={{
-              width: 20,
-              height: 20,
+              width: 32,
+              height: 32,
               ml: 0.5,
               background: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
               border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'}`,
@@ -282,10 +347,9 @@ const SetupTabContent = React.memo<SetupTabContentProps>(function SetupTabConten
                 background: isDark ? 'rgba(239, 68, 68, 0.15)' : 'rgba(239, 68, 68, 0.08)',
                 borderColor: isDark ? 'rgba(239, 68, 68, 0.4)' : 'rgba(239, 68, 68, 0.3)',
               },
-              p: 0,
             }}
           >
-            <CloseIcon sx={{ fontSize: 11 }} />
+            <CloseIcon sx={{ fontSize: 14 }} />
           </IconButton>
         </Tooltip>
       )}
@@ -329,10 +393,11 @@ interface SortableSetupTabProps {
   prefersReduced: boolean | null;
   onSelect: (index: number) => void;
   onStartRename: (index: number) => void;
-  onCommitRename: () => void;
-  onCancelRename: () => void;
+  onCommitRename: (restoreFocus?: boolean) => void;
+  onCancelRename: (restoreFocus?: boolean) => void;
   onRenameChange: (value: string) => void;
   onDeleteRequest: (index: number) => void;
+  onNavigate: (index: number, key: 'ArrowLeft' | 'ArrowRight' | 'Home' | 'End') => void;
 }
 
 const SortableSetupTab: React.FC<SortableSetupTabProps> = ({
@@ -351,6 +416,7 @@ const SortableSetupTab: React.FC<SortableSetupTabProps> = ({
   onCancelRename,
   onRenameChange,
   onDeleteRequest,
+  onNavigate,
 }) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: setup.id,
@@ -397,6 +463,7 @@ const SortableSetupTab: React.FC<SortableSetupTabProps> = ({
         onCancelRename={onCancelRename}
         onRenameChange={onRenameChange}
         onDeleteRequest={onDeleteRequest}
+        onNavigate={onNavigate}
       />
     </Box>
   );
@@ -520,13 +587,27 @@ export const SetupTabBar: React.FC = () => {
 
   // ── Delete confirmation state ────────────────────────────────────────────
   const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
+  const pendingSetupFocusRef = useRef<number | null>(null);
+
+  const focusSetupTab = useCallback((index: number): void => {
+    requestAnimationFrame(() => {
+      document.querySelector<HTMLElement>(`[data-setup-tab-index="${index}"]`)?.focus();
+    });
+  }, []);
 
   const handleDeleteConfirm = useCallback((): void => {
     if (deleteTarget !== null) {
+      pendingSetupFocusRef.current = Math.min(deleteTarget, build.setups.length - 2);
       dispatch(deleteSetup(deleteTarget));
       setDeleteTarget(null);
     }
-  }, [deleteTarget, dispatch]);
+  }, [build.setups.length, deleteTarget, dispatch]);
+
+  const handleDeleteDialogExited = useCallback((): void => {
+    if (pendingSetupFocusRef.current === null) return;
+    focusSetupTab(pendingSetupFocusRef.current);
+    pendingSetupFocusRef.current = null;
+  }, [focusSetupTab]);
 
   // ── Inline rename state ──────────────────────────────────────────────────
   const [renamingIndex, setRenamingIndex] = useState<number | null>(null);
@@ -542,22 +623,47 @@ export const SetupTabBar: React.FC = () => {
     [build.setups],
   );
 
-  const commitRename = useCallback((): void => {
-    if (renamingIndex !== null) {
-      const trimmed = renameValue.trim();
-      if (trimmed) {
-        dispatch(renameSetup({ index: renamingIndex, name: trimmed }));
+  const commitRename = useCallback(
+    (restoreFocus = false): void => {
+      if (renamingIndex !== null) {
+        const index = renamingIndex;
+        const trimmed = renameValue.trim();
+        if (trimmed) {
+          dispatch(renameSetup({ index, name: trimmed }));
+        }
+        setRenamingIndex(null);
+        if (restoreFocus) focusSetupTab(index);
       }
-      setRenamingIndex(null);
-    }
-  }, [renamingIndex, renameValue, dispatch]);
+    },
+    [dispatch, focusSetupTab, renameValue, renamingIndex],
+  );
 
-  const cancelRename = useCallback((): void => {
-    setRenamingIndex(null);
-  }, []);
+  const cancelRename = useCallback(
+    (restoreFocus = false): void => {
+      if (renamingIndex !== null) {
+        setRenamingIndex(null);
+        if (restoreFocus) focusSetupTab(renamingIndex);
+      }
+    },
+    [focusSetupTab, renamingIndex],
+  );
 
   // Stable callback refs for SortableSetupTab props
   const handleSelect = useCallback((idx: number) => dispatch(setActiveSetupIndex(idx)), [dispatch]);
+
+  const handleNavigate = useCallback(
+    (index: number, key: 'ArrowLeft' | 'ArrowRight' | 'Home' | 'End'): void => {
+      let nextIndex = index;
+      if (key === 'Home') nextIndex = 0;
+      if (key === 'End') nextIndex = build.setups.length - 1;
+      if (key === 'ArrowLeft') nextIndex = (index - 1 + build.setups.length) % build.setups.length;
+      if (key === 'ArrowRight') nextIndex = (index + 1) % build.setups.length;
+
+      dispatch(setActiveSetupIndex(nextIndex));
+      focusSetupTab(nextIndex);
+    },
+    [build.setups.length, dispatch, focusSetupTab],
+  );
 
   // ── Add-setup menu (Blank vs Duplicate current) ──────────────────────────
   const [addMenuAnchor, setAddMenuAnchor] = useState<HTMLElement | null>(null);
@@ -638,6 +744,7 @@ export const SetupTabBar: React.FC = () => {
                   onCancelRename={cancelRename}
                   onRenameChange={setRenameValue}
                   onDeleteRequest={setDeleteTarget}
+                  onNavigate={handleNavigate}
                 />
               ))}
             </SortableContext>
@@ -779,6 +886,7 @@ export const SetupTabBar: React.FC = () => {
               borderRadius: 3,
             },
           },
+          transition: { onExited: handleDeleteDialogExited },
         }}
       >
         <DialogTitle

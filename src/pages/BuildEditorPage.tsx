@@ -1,115 +1,231 @@
 /**
  * Build Editor Page
- * Simplified wrapper — delegates to BuildEditorShell which provides
- * class theming, scoped background, and the bento grid layout.
- * AppLayout provides the xl Container and reduced padding for this route.
  *
- * Supports loading a build to edit from two sources:
- *  - `location.state.buildData` — the preferred in-app handoff. Same-app
- *    navigations (My Builds, Build View, Roster slot) pass the encoded build
- *    through router state so a build blob — which may be a *private* build —
- *    never lands in the address bar / browser history / Referer header.
- *  - `?b=<encoded>` URL param — the legacy / external path (e.g. a build opened
- *    in a fresh tab, or an older link). Still honored, then stripped on load.
- *
- * The non-sensitive save-target (`?id=`) and roster round-trip params
- * (`from`/`slot`/`rid`) always stay in the URL — they carry no build content.
+ * In-app edit navigation carries a complete Build through router state. Public
+ * links still use the compact `?b=` transport and are scrubbed immediately.
+ * A saved-build `?id=` is also sufficient to restore an edit after refresh.
  */
 
+import { Box, CircularProgress, Typography } from '@mui/material';
 import { useSnackbar } from 'notistack';
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
+import { BuildEditorShell } from '@/features/build-editor/components/BuildEditorShell';
+import {
+  loadBuild,
+  loadDraftBuild,
+  resetBuild,
+} from '@/features/build-editor/store/buildEditorSlice';
+import type { Build } from '@/features/build-editor/types/build.types';
+import { isBuild } from '@/features/build-editor/utils/buildDocument';
 import { usePageTitle } from '@/hooks/useDocumentTitle';
 import type { RootState } from '@/store/storeWithHistory';
 import { decodeBuildFromURL } from '@/utils/buildEncoding';
-import { BuildEditorShell } from '@features/build-editor/components/BuildEditorShell';
-import { loadBuild } from '@features/build-editor/store/buildEditorSlice';
 
 interface BuildEditorNavState {
-  /** Encoded build blob handed off via router state (kept out of the URL). */
+  /** Complete in-app edit document. Never encoded through the public-link codec. */
+  build?: Build;
+  /** Legacy compact router-state handoff retained for old navigation entries. */
   buildData?: string;
+  /** Explicitly discard the crash-recovery draft and start from defaults. */
+  newBuild?: boolean;
+  /** First-save marker used to avoid reloading the snapshot the editor just saved. */
+  savedByEditor?: string;
 }
 
 const BuildEditorPageInner: React.FC = () => {
   const dispatch = useDispatch();
   const { enqueueSnackbar } = useSnackbar();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const location = useLocation();
   const navigate = useNavigate();
-  const isDirty = useSelector((s: RootState) => s.buildEditor.isDirty);
-  const loadedRef = React.useRef(false);
+  const loadedSourceRef = React.useRef<string | undefined>(undefined);
+  const hydrationGenerationRef = React.useRef(0);
+  const isMountedRef = React.useRef(false);
+  const routeState = location.state as BuildEditorNavState | null;
+  const queryEncoded = searchParams.get('b') || '';
+  const stateEncoded = routeState?.buildData || '';
+  const encodedBuild = queryEncoded || stateEncoded;
+  const savedBuildId = searchParams.get('id');
+  const savedBuild = useSelector((state: RootState) =>
+    savedBuildId
+      ? state.savedBuilds.builds.find((candidate) => candidate.id === savedBuildId)?.build
+      : undefined,
+  );
+  const [isHydrating, setIsHydrating] = React.useState(
+    Boolean(encodedBuild || routeState?.build || savedBuildId || routeState?.newBuild),
+  );
 
   usePageTitle('/build-editor');
 
-  // Load build from router state (preferred) or ?b= URL param (legacy) on mount.
   useEffect(() => {
-    if (loadedRef.current) return;
-    // `?b=` may be an empty string (`?b=`), which decodes to nothing — treat it
-    // as absent so we fall through to the state handoff.
-    const encoded = searchParams.get('b') || '';
-    const stateBuild = (location.state as BuildEditorNavState | null)?.buildData ?? '';
-    const source = encoded || stateBuild;
-    if (!source) return;
-    loadedRef.current = true;
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
-    // Scrub the build payload from the URL/history IMMEDIATELY — before the async
-    // decode — so a build blob (which may be a *private* build) never lingers in
-    // the address bar or in window.history.state, regardless of whether decoding
-    // succeeds (a failed/version-skewed payload must not survive in history). This
-    // also stops a refresh or Back from reloading the original over the user's
-    // in-progress edits (the editor's own state is persisted separately). The
-    // non-sensitive save-target (?id=) and roster params (from/slot/rid) stay put.
-    if (encoded) {
-      const newParams = new URLSearchParams(searchParams);
-      newParams.delete('b');
-      setSearchParams(newParams, { replace: true });
-    } else {
-      // Clear the router state (persisted in window.history across refreshes)
-      // while keeping the current path + remaining query params.
+  useEffect(() => {
+    const directBuild = routeState?.build;
+    const sourceKey = queryEncoded
+      ? `query:${location.key}:${queryEncoded}`
+      : savedBuildId
+        ? `saved:${savedBuildId}`
+        : directBuild !== undefined
+          ? `direct:${location.key}`
+          : stateEncoded
+            ? `state:${location.key}:${stateEncoded}`
+            : routeState?.newBuild
+              ? `new:${location.key}`
+              : 'resume';
+
+    if (loadedSourceRef.current === sourceKey) return;
+    loadedSourceRef.current = sourceKey;
+    const generation = ++hydrationGenerationRef.current;
+    const isCurrent = (): boolean =>
+      isMountedRef.current && hydrationGenerationRef.current === generation;
+
+    const scrubNavigationPayload = (removeSaveTarget = false): void => {
+      const nextParams = new URLSearchParams(searchParams);
+      nextParams.delete('b');
+      if (removeSaveTarget) nextParams.delete('id');
+      const nextSearch = nextParams.toString();
       navigate(
-        { pathname: location.pathname, search: location.search },
+        { pathname: location.pathname, search: nextSearch ? `?${nextSearch}` : '' },
         { replace: true, state: null },
       );
-    }
-
-    void decodeBuildFromURL(source).then((decoded) => {
-      if (decoded) {
-        dispatch(loadBuild(decoded));
-        return;
-      }
-      // Fail closed: the build never loaded. Drop the ?id= save target (and any
-      // leftover ?b=) so a later Save can't overwrite that saved build with the
-      // stale/default editor state that's still on screen. Roster round-trip
-      // params are left as-is — they carry no overwrite risk.
-      if (searchParams.get('id') || searchParams.get('b')) {
-        const failParams = new URLSearchParams(searchParams);
-        failParams.delete('b');
-        failParams.delete('id');
-        setSearchParams(failParams, { replace: true });
-      }
-      enqueueSnackbar('Could not load shared build — the link may be invalid.', {
+    };
+    const failClosed = (): void => {
+      if (!isCurrent()) return;
+      const nextParams = new URLSearchParams(searchParams);
+      nextParams.delete('b');
+      nextParams.delete('id');
+      const nextSearch = nextParams.toString();
+      navigate(
+        { pathname: location.pathname, search: nextSearch ? `?${nextSearch}` : '' },
+        { replace: true, state: null },
+      );
+      enqueueSnackbar('Could not load that build. The document may be invalid or out of date.', {
         variant: 'warning',
       });
-    });
-  }, [searchParams, setSearchParams, location, navigate, dispatch, enqueueSnackbar]);
-
-  // Warn before unloading if there are unsaved changes
-  useEffect(() => {
-    const handleBeforeUnload = (e: BeforeUnloadEvent): void => {
-      if (isDirty) {
-        e.preventDefault();
-        e.returnValue = '';
-      }
     };
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [isDirty]);
+
+    // A public ?b= document is authoritative over stale history state. It is a
+    // new, unsaved draft and must never inherit an unrelated ?id= overwrite target.
+    if (queryEncoded) {
+      setIsHydrating(true);
+      void decodeBuildFromURL(queryEncoded)
+        .then((decoded) => {
+          if (!isCurrent()) return;
+          if (decoded && isBuild(decoded)) {
+            dispatch(loadDraftBuild(decoded));
+            scrubNavigationPayload(true);
+          } else {
+            failClosed();
+          }
+        })
+        .catch(failClosed)
+        .finally(() => {
+          if (isCurrent()) setIsHydrating(false);
+        });
+      return;
+    }
+
+    // A durable saved-build id is authoritative over router state. This avoids
+    // an old Back/Forward history entry overwriting the current saved document.
+    if (savedBuildId) {
+      setIsHydrating(true);
+      const isCompletedFirstSave = routeState?.savedByEditor === savedBuildId;
+      if (routeState) scrubNavigationPayload();
+      if (isCompletedFirstSave) {
+        // The current editor snapshot is already the exact value committed by
+        // useSaveBuild. Preserve active setup, section, and any newer edits.
+      } else if (savedBuild && isBuild(savedBuild)) {
+        dispatch(loadBuild(savedBuild));
+      } else {
+        failClosed();
+      }
+      setIsHydrating(false);
+      return;
+    }
+
+    if (directBuild !== undefined) {
+      setIsHydrating(true);
+      scrubNavigationPayload();
+      if (isBuild(directBuild)) {
+        dispatch(loadDraftBuild(directBuild));
+      } else {
+        failClosed();
+      }
+      setIsHydrating(false);
+      return;
+    }
+
+    if (stateEncoded) {
+      setIsHydrating(true);
+      void decodeBuildFromURL(stateEncoded)
+        .then((decoded) => {
+          if (!isCurrent()) return;
+          if (decoded && isBuild(decoded)) {
+            dispatch(loadDraftBuild(decoded));
+            scrubNavigationPayload();
+          } else {
+            failClosed();
+          }
+        })
+        .catch(failClosed)
+        .finally(() => {
+          if (isCurrent()) setIsHydrating(false);
+        });
+      return;
+    }
+
+    if (routeState?.newBuild) {
+      setIsHydrating(true);
+      dispatch(resetBuild());
+      scrubNavigationPayload(true);
+      setIsHydrating(false);
+      return;
+    }
+
+    // A bare route resumes the in-memory/IndexedDB crash-recovery document.
+    setIsHydrating(false);
+  }, [
+    dispatch,
+    enqueueSnackbar,
+    location.key,
+    location.pathname,
+    navigate,
+    queryEncoded,
+    routeState,
+    routeState?.build,
+    routeState?.buildData,
+    routeState?.newBuild,
+    routeState?.savedByEditor,
+    savedBuild,
+    savedBuildId,
+    searchParams,
+    stateEncoded,
+  ]);
+
+  if (isHydrating) {
+    return (
+      <Box
+        role="status"
+        aria-live="polite"
+        sx={{ minHeight: 480, display: 'grid', placeItems: 'center' }}
+      >
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          <CircularProgress size={22} />
+          <Typography color="text.secondary">Opening build…</Typography>
+        </Box>
+      </Box>
+    );
+  }
 
   return <BuildEditorShell />;
 };
 
-export const BuildEditorPage: React.FC = () => {
-  return <BuildEditorPageInner />;
-};
+export const BuildEditorPage: React.FC = () => <BuildEditorPageInner />;

@@ -7,6 +7,7 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { v4 as uuidv4 } from 'uuid';
 
 import { getClassMasteryLine } from '@/data/skill-lines/class/classMastery';
+import { LEGACY_BUILD_EDITOR_STORAGE_KEY } from '@/store/saved_builds/savedBuildStorage';
 
 import type {
   ArmorWeight,
@@ -34,8 +35,10 @@ import type {
   SetupTab,
   SkilledAbility,
 } from '../types/build.types';
+import { migrateLegacyStoredBuild } from '../utils/buildDocument';
 import { CLASS_MASTERY_MAX_PICKS } from '../utils/classMasteryEligibility';
 import { migrateLeakedClassMasteryPicks } from '../utils/classMasteryTransfer';
+import { MAX_SCREENSHOTS_PER_SETUP } from '../utils/screenshotValidation';
 import {
   clearedSetupSection,
   cloneSetup,
@@ -50,8 +53,8 @@ const APPAREL_SLOT_SET = new Set<number>(
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
-/** Maximum screenshots per setup — guards against localStorage bloat from base64 data-URLs */
-export const MAX_SCREENSHOTS = 8;
+/** Maximum screenshots per setup. Kept as the public reducer API name. */
+export const MAX_SCREENSHOTS = MAX_SCREENSHOTS_PER_SETUP;
 
 // ─── Factories ───────────────────────────────────────────────────────────────
 
@@ -99,31 +102,21 @@ const makeBuild = (): Build => ({
 
 // ─── Persistence helpers ──────────────────────────────────────────────────────
 
-export const BUILD_EDITOR_STORAGE_KEY = 'eso-build-editor-v1';
+export const BUILD_EDITOR_STORAGE_KEY = LEGACY_BUILD_EDITOR_STORAGE_KEY;
 
 /** Attempt to restore a previously saved build from localStorage. */
 function loadFromStorage(): Pick<BuildEditorState, 'build' | 'activeSetupIndex'> | null {
   try {
     const raw = localStorage.getItem(BUILD_EDITOR_STORAGE_KEY);
     if (!raw) return null;
-    const parsed = JSON.parse(raw) as { build?: Build; activeSetupIndex?: number };
-    // Minimal schema guard — ensure we have at least one setup
-    if (!parsed.build?.setups?.length) return null;
-    // Migration: builds saved before subclassing was added won't have classSkillLines
-    if (!parsed.build.classSkillLines) {
-      parsed.build.classSkillLines = getDefaultLinesForClass(
-        parsed.build.esoClass ?? 'dragonknight',
-      );
-    }
-    // Migration: builds saved before U50 won't have classMasteryPassives
-    if (!Array.isArray(parsed.build.classMasteryPassives)) {
-      parsed.build.classMasteryPassives = [];
-    }
+    const parsed = JSON.parse(raw) as { build?: unknown; activeSetupIndex?: number };
+    const build = migrateLegacyStoredBuild(parsed.build);
+    if (!build) return null;
     // Migration: reclaim Class Mastery picks that pre-split builds left inside
     // setup.passives so they're visible again (and out of the regular passives).
-    migrateLeakedClassMasteryPicks(parsed.build);
+    migrateLeakedClassMasteryPicks(build);
     // Migration: builds saved before stats feature won't have statOverrides
-    for (const setup of parsed.build.setups) {
+    for (const setup of build.setups) {
       if (!setup.statOverrides) {
         setup.statOverrides = {
           ...DEFAULT_STAT_OVERRIDES,
@@ -132,8 +125,11 @@ function loadFromStorage(): Pick<BuildEditorState, 'build' | 'activeSetupIndex'>
       }
     }
     return {
-      build: parsed.build,
-      activeSetupIndex: parsed.activeSetupIndex ?? 0,
+      build,
+      activeSetupIndex: Math.min(
+        Math.max(parsed.activeSetupIndex ?? 0, 0),
+        build.setups.length - 1,
+      ),
     };
   } catch {
     return null;
@@ -143,6 +139,30 @@ function loadFromStorage(): Pick<BuildEditorState, 'build' | 'activeSetupIndex'>
 // ─── Initial state ────────────────────────────────────────────────────────────
 
 const savedState = loadFromStorage();
+
+/**
+ * Copy the fields touched by editor-entry migrations before mutating them.
+ * Saved builds come from an Immer-backed Redux slice and may be frozen in
+ * development, so opening one from My Builds must not mutate its source.
+ */
+const prepareBuildForEditor = (build: Build): Build => {
+  const editorBuild: Build = {
+    ...build,
+    classSkillLines: Array.isArray(build.classSkillLines)
+      ? [...build.classSkillLines]
+      : getDefaultLinesForClass(build.esoClass),
+    classMasteryPassives: Array.isArray(build.classMasteryPassives)
+      ? [...build.classMasteryPassives]
+      : [],
+    setups: build.setups.map((setup) => ({
+      ...setup,
+      passives: Array.isArray(setup.passives) ? [...setup.passives] : [],
+    })),
+  };
+
+  migrateLeakedClassMasteryPicks(editorBuild);
+  return editorBuild;
+};
 
 const initialState: BuildEditorState = {
   build: savedState?.build ?? makeBuild(),
@@ -216,30 +236,36 @@ export const buildEditorSlice = createSlice({
     },
     setAddonImportString(state, action: PayloadAction<string>) {
       state.build.addonImportString = action.payload;
+      state.build.updatedAt = new Date().toISOString();
       state.isDirty = true;
     },
 
     // ── Guide ─────────────────────────────────────────────────────────────────
     setGuideContent(state, action: PayloadAction<string>) {
       state.build.guide.content = action.payload;
+      state.build.updatedAt = new Date().toISOString();
       state.isDirty = true;
     },
     setGuideYoutubeUrl(state, action: PayloadAction<string>) {
       state.build.guide.youtubeUrl = action.payload;
+      state.build.updatedAt = new Date().toISOString();
       state.isDirty = true;
     },
     setGuideBannerUrl(state, action: PayloadAction<string>) {
       state.build.guide.bannerImageUrl = action.payload;
+      state.build.updatedAt = new Date().toISOString();
       state.isDirty = true;
     },
 
     // ── Settings ──────────────────────────────────────────────────────────────
     setVisibility(state, action: PayloadAction<Build['settings']['visibility']>) {
       state.build.settings.visibility = action.payload;
+      state.build.updatedAt = new Date().toISOString();
       state.isDirty = true;
     },
     setDlc(state, action: PayloadAction<string>) {
       state.build.settings.dlc = action.payload;
+      state.build.updatedAt = new Date().toISOString();
       state.isDirty = true;
     },
 
@@ -250,22 +276,26 @@ export const buildEditorSlice = createSlice({
       state.build.setups.push(newSetup);
       state.build.settings.setupOrder = state.build.setups.map((_, i) => i);
       state.activeSetupIndex = state.build.setups.length - 1;
+      state.build.updatedAt = new Date().toISOString();
       state.isDirty = true;
     },
     renameSetup(state, action: PayloadAction<{ index: number; name: string }>) {
       const setup = state.build.setups[action.payload.index];
       if (setup) {
         setup.name = action.payload.name;
+        state.build.updatedAt = new Date().toISOString();
         state.isDirty = true;
       }
     },
     deleteSetup(state, action: PayloadAction<number>) {
       if (state.build.setups.length <= 1) return;
+      if (action.payload < 0 || action.payload >= state.build.setups.length) return;
       state.build.setups.splice(action.payload, 1);
       state.build.settings.setupOrder = state.build.setups.map((_, i) => i);
       if (state.activeSetupIndex >= state.build.setups.length) {
         state.activeSetupIndex = state.build.setups.length - 1;
       }
+      state.build.updatedAt = new Date().toISOString();
       state.isDirty = true;
     },
     reorderSetups(state, action: PayloadAction<{ fromIndex: number; toIndex: number }>) {
@@ -801,16 +831,21 @@ export const buildEditorSlice = createSlice({
     },
 
     // ── Lifecycle ─────────────────────────────────────────────────────────────
-    /** Load an entire build object (e.g. from a decoded URL share). */
+    /** Load a build that is already durable in the user's saved-build library. */
     loadBuild(state, action: PayloadAction<Build>) {
-      state.build = action.payload;
-      // Reclaim any Class Mastery picks a pre-split source left in setup.passives
-      // so every editor entry point (URL decode, CSPS import, roster) is WYSIWYG.
-      migrateLeakedClassMasteryPicks(state.build);
+      state.build = prepareBuildForEditor(action.payload);
       state.activeSetupIndex = 0;
       state.activeSidebarTab = 'general';
       state.activeSetupTab = 'info';
       state.isDirty = false;
+    },
+    /** Load a transient import/share as an unsaved draft that must be persisted explicitly. */
+    loadDraftBuild(state, action: PayloadAction<Build>) {
+      state.build = prepareBuildForEditor(action.payload);
+      state.activeSetupIndex = 0;
+      state.activeSidebarTab = 'general';
+      state.activeSetupTab = 'info';
+      state.isDirty = true;
     },
     resetBuild(state) {
       state.build = makeBuild();
@@ -875,6 +910,7 @@ export const {
   addScreenshot,
   removeScreenshot,
   loadBuild,
+  loadDraftBuild,
   resetBuild,
   markSaved,
 } = buildEditorSlice.actions;

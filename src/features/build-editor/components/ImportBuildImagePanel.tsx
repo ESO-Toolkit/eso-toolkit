@@ -12,7 +12,7 @@ import {
   Close as CloseIcon,
   ImageOutlined as ImageIcon,
 } from '@mui/icons-material';
-import { Alert, Box, Button, LinearProgress, Stack, Typography } from '@mui/material';
+import { Alert, Box, Button, IconButton, LinearProgress, Stack, Typography } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
@@ -44,6 +44,20 @@ export const ImportBuildImagePanel: React.FC<ImportBuildImagePanelProps> = ({ on
   const [error, setError] = useState<string | null>(null);
   const [ocrText, setOcrText] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const ocrAbortRef = useRef<AbortController | null>(null);
+
+  const abortActiveOcr = useCallback((): void => {
+    ocrAbortRef.current?.abort();
+    ocrAbortRef.current = null;
+  }, []);
+
+  const cancelOcrForSourceChange = useCallback((): void => {
+    abortActiveOcr();
+    setRunning(false);
+    setProgress(null);
+  }, [abortActiveOcr]);
+
+  useEffect(() => abortActiveOcr, [abortActiveOcr]);
 
   // Object-URL previews, revoked on change/unmount to avoid leaks.
   useEffect(() => {
@@ -52,12 +66,16 @@ export const ImportBuildImagePanel: React.FC<ImportBuildImagePanelProps> = ({ on
     return () => urls.forEach((u) => URL.revokeObjectURL(u));
   }, [files]);
 
-  const addFiles = useCallback((incoming: File[]): void => {
-    const imgs = incoming.filter(isImage);
-    if (imgs.length === 0) return;
-    setError(null);
-    setFiles((prev) => [...prev, ...imgs].slice(0, 8)); // cap to keep OCR bounded
-  }, []);
+  const addFiles = useCallback(
+    (incoming: File[]): void => {
+      const imgs = incoming.filter(isImage);
+      if (imgs.length === 0) return;
+      cancelOcrForSourceChange();
+      setError(null);
+      setFiles((prev) => [...prev, ...imgs].slice(0, 8)); // cap to keep OCR bounded
+    },
+    [cancelOcrForSourceChange],
+  );
 
   // Paste-an-image support while this panel is mounted.
   useEffect(() => {
@@ -83,28 +101,55 @@ export const ImportBuildImagePanel: React.FC<ImportBuildImagePanelProps> = ({ on
     [addFiles],
   );
 
-  const removeFile = useCallback((idx: number): void => {
-    setFiles((prev) => prev.filter((_, i) => i !== idx));
-  }, []);
+  const removeFile = useCallback(
+    (idx: number): void => {
+      cancelOcrForSourceChange();
+      setError(null);
+      setFiles((prev) => prev.filter((_, i) => i !== idx));
+    },
+    [cancelOcrForSourceChange],
+  );
 
   const handleExtract = useCallback(async (): Promise<void> => {
     if (files.length === 0) return;
+    abortActiveOcr();
+    const controller = new AbortController();
+    ocrAbortRef.current = controller;
     setRunning(true);
     setError(null);
     setProgress(null);
     try {
-      const text = await ocrImages(files, setProgress);
+      const text = await ocrImages(
+        files,
+        (nextProgress) => {
+          if (ocrAbortRef.current === controller && !controller.signal.aborted) {
+            setProgress(nextProgress);
+          }
+        },
+        controller.signal,
+      );
+      if (ocrAbortRef.current !== controller || controller.signal.aborted) return;
       if (!text.trim()) {
         setError('No readable text found in the image(s). Try a clearer or larger screenshot.');
         return;
       }
       setOcrText(text);
     } catch (err) {
+      if (
+        ocrAbortRef.current !== controller ||
+        controller.signal.aborted ||
+        (err instanceof DOMException && err.name === 'AbortError')
+      ) {
+        return;
+      }
       setError(err instanceof Error ? err.message : 'OCR failed. Please try again.');
     } finally {
-      setRunning(false);
+      if (ocrAbortRef.current === controller) {
+        ocrAbortRef.current = null;
+        setRunning(false);
+      }
     }
-  }, [files]);
+  }, [abortActiveOcr, files]);
 
   // Once we have text, reuse the full text-review → Apply pipeline.
   if (ocrText !== null) {
@@ -203,34 +248,35 @@ export const ImportBuildImagePanel: React.FC<ImportBuildImagePanelProps> = ({ on
                 }}
               />
               {!running && (
-                <Box
-                  role="button"
-                  tabIndex={0}
+                <IconButton
                   aria-label={`Remove screenshot ${i + 1}`}
                   onClick={() => removeFile(i)}
-                  onKeyDown={(e: React.KeyboardEvent) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      removeFile(i);
-                    }
-                  }}
                   sx={{
                     position: 'absolute',
-                    top: -6,
-                    right: -6,
-                    width: 18,
-                    height: 18,
+                    top: -13,
+                    right: -13,
+                    width: 44,
+                    height: 44,
+                    p: 0,
                     borderRadius: '50%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    cursor: 'pointer',
-                    background: isDark ? 'rgba(15,23,42,0.95)' : 'rgba(255,255,255,0.95)',
-                    border: `1px solid ${isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.2)'}`,
+                    color: 'text.primary',
+                    '&:focus-visible': {
+                      outline: `2px solid ${isDark ? '#67e8f9' : '#0891b2'}`,
+                      outlineOffset: 1,
+                    },
                   }}
                 >
-                  <CloseIcon sx={{ fontSize: 12 }} />
-                </Box>
+                  <CloseIcon
+                    sx={{
+                      width: 20,
+                      height: 20,
+                      p: '3px',
+                      borderRadius: '50%',
+                      background: isDark ? 'rgba(15,23,42,0.95)' : 'rgba(255,255,255,0.95)',
+                      border: `1px solid ${isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.2)'}`,
+                    }}
+                  />
+                </IconButton>
               )}
             </Box>
           ))}

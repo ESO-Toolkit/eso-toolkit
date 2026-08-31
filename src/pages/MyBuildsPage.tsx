@@ -24,6 +24,7 @@ import {
   Typography,
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
+import { useSnackbar } from 'notistack';
 import React, { useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 
@@ -34,6 +35,11 @@ import { PublishBuildDialog } from '../features/build-hub/components/PublishBuil
 import { useViewTransitionNavigate } from '../hooks/useViewTransitionNavigate';
 import type { SavedBuild } from '../store/saved_builds';
 import { deleteSavedBuild, selectSavedBuilds } from '../store/saved_builds';
+import {
+  acquireBuildStorageSessionGeneration,
+  assertBuildStorageSessionCurrent,
+  deleteSavedBuildRecord,
+} from '../store/saved_builds/savedBuildStorage';
 import { useAppDispatch } from '../store/useAppDispatch';
 import { encodeBuildToURL } from '../utils/buildEncoding';
 
@@ -67,10 +73,17 @@ interface DeleteDialogProps {
   buildName: string;
   onConfirm: () => void;
   onCancel: () => void;
+  isDeleting: boolean;
 }
 
-const DeleteDialog: React.FC<DeleteDialogProps> = ({ open, buildName, onConfirm, onCancel }) => (
-  <Dialog open={open} onClose={onCancel} maxWidth="xs" fullWidth>
+const DeleteDialog: React.FC<DeleteDialogProps> = ({
+  open,
+  buildName,
+  onConfirm,
+  onCancel,
+  isDeleting,
+}) => (
+  <Dialog open={open} onClose={isDeleting ? undefined : onCancel} maxWidth="xs" fullWidth>
     <DialogTitle sx={{ fontWeight: 700 }}>Delete Build?</DialogTitle>
     <DialogContent>
       <DialogContentText sx={{ color: 'text.secondary' }}>
@@ -78,11 +91,11 @@ const DeleteDialog: React.FC<DeleteDialogProps> = ({ open, buildName, onConfirm,
       </DialogContentText>
     </DialogContent>
     <DialogActions>
-      <Button onClick={onCancel} variant="text">
+      <Button onClick={onCancel} variant="text" disabled={isDeleting}>
         Cancel
       </Button>
-      <Button onClick={onConfirm} color="error" variant="contained">
-        Delete
+      <Button onClick={onConfirm} color="error" variant="contained" disabled={isDeleting}>
+        {isDeleting ? 'Deleting\u2026' : 'Delete'}
       </Button>
     </DialogActions>
   </Dialog>
@@ -215,28 +228,23 @@ export const MyBuildsPage: React.FC = () => {
   const isDarkMode = theme.palette.mode === 'dark';
   const navigate = useViewTransitionNavigate();
   const dispatch = useAppDispatch();
+  const { enqueueSnackbar } = useSnackbar();
   const savedBuilds = useSelector(selectSavedBuilds);
   const { accessToken } = useAuth();
   const [pendingDelete, setPendingDelete] = useState<SavedBuild | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [publishTarget, setPublishTarget] = useState<{
     data: string;
     saved: SavedBuild;
   } | null>(null);
   const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map());
 
-  const handleEdit = async (saved: SavedBuild): Promise<void> => {
-    const encoded = await encodeBuildToURL(saved.build);
-    if (!encoded) {
-      // Fail closed: never open the editor pointed at this saved build (?id=)
-      // with no payload — saving there would overwrite it with blank state.
-      return;
-    }
-    // Hand the encoded build to the editor via router state, NOT a ?b= URL
-    // param — a build may be Private, and the full blob must not land in the
-    // address bar/history/Referer. Only the non-sensitive save-target (?id=)
-    // stays in the URL.
+  const handleEdit = (saved: SavedBuild): void => {
+    // In-app editing carries the complete document through router state. The
+    // compact public-link codec intentionally omits editor-only fields and must
+    // never sit between a saved build and its next edit.
     navigate(`/build-editor?id=${saved.id}`, {
-      state: { buildData: encoded },
+      state: { build: saved.build },
       vtType: 'forward',
       morph: { ref: { current: cardRefs.current.get(saved.id) ?? null }, name: 'build-hero' },
     });
@@ -269,10 +277,22 @@ export const MyBuildsPage: React.FC = () => {
     setPublishTarget({ data, saved });
   };
 
-  const handleDeleteConfirm = (): void => {
-    if (pendingDelete) {
-      dispatch(deleteSavedBuild(pendingDelete.id));
-      setPendingDelete(null);
+  const handleDeleteConfirm = async (): Promise<void> => {
+    if (pendingDelete && !isDeleting) {
+      setIsDeleting(true);
+      try {
+        const sessionGeneration = await acquireBuildStorageSessionGeneration();
+        await deleteSavedBuildRecord(pendingDelete.id, sessionGeneration);
+        assertBuildStorageSessionCurrent(sessionGeneration);
+        dispatch(deleteSavedBuild(pendingDelete.id));
+        setPendingDelete(null);
+      } catch {
+        enqueueSnackbar('Build could not be deleted. Check browser storage and try again.', {
+          variant: 'error',
+        });
+      } finally {
+        setIsDeleting(false);
+      }
     }
   };
 
@@ -303,7 +323,9 @@ export const MyBuildsPage: React.FC = () => {
         <Button
           variant="contained"
           startIcon={<AddIcon />}
-          onClick={() => navigate('/build-editor', { vtType: 'forward' })}
+          onClick={() =>
+            navigate('/build-editor', { state: { newBuild: true }, vtType: 'forward' })
+          }
           sx={{ textTransform: 'none', fontWeight: 600, borderRadius: 2 }}
         >
           New Build
@@ -326,7 +348,9 @@ export const MyBuildsPage: React.FC = () => {
           <Button
             variant="outlined"
             startIcon={<AddIcon />}
-            onClick={() => navigate('/build-editor', { vtType: 'forward' })}
+            onClick={() =>
+              navigate('/build-editor', { state: { newBuild: true }, vtType: 'forward' })
+            }
             sx={{ textTransform: 'none' }}
           >
             Create your first build
@@ -355,8 +379,9 @@ export const MyBuildsPage: React.FC = () => {
       <DeleteDialog
         open={pendingDelete !== null}
         buildName={pendingDelete?.build.name ?? ''}
-        onConfirm={handleDeleteConfirm}
+        onConfirm={() => void handleDeleteConfirm()}
         onCancel={() => setPendingDelete(null)}
+        isDeleting={isDeleting}
       />
 
       {publishTarget && (
