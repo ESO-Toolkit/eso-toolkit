@@ -33,13 +33,13 @@ import {
 import { Box, useMediaQuery } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import { visuallyHidden } from '@mui/utils';
-import React, { useCallback, useEffect } from 'react';
+import React from 'react';
 import { useSelector } from 'react-redux';
 
 import { useSaveBuild } from '../hooks/useSaveBuild';
 import { useSaveShortcut } from '../hooks/useSaveShortcut';
 import { useSectionProgress } from '../hooks/useSectionProgress';
-import { selectActiveSetup, selectIsDirty } from '../store/buildEditorSelectors';
+import { selectActiveSetup } from '../store/buildEditorSelectors';
 
 import { BuildCompletionHeader } from './BuildCompletionHeader';
 import { BuildNavRail } from './BuildNavRail';
@@ -64,26 +64,11 @@ export const BuildEditorLayout: React.FC = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const progress = useSectionProgress();
-  const isDirty = useSelector(selectIsDirty);
   const activeSetup = useSelector(selectActiveSetup);
   // The first two rows sit above the fold and render immediately. Every later
   // section is lazy on desktop and mobile; placeholders retain stable ids so
   // rail navigation can scroll to a section before its heavy subtree mounts.
   const saveCurrentBuild = useSaveBuild();
-
-  // Warn user before leaving with unsaved changes
-  const handleBeforeUnload = useCallback(
-    (e: BeforeUnloadEvent) => {
-      if (!isDirty) return;
-      e.preventDefault();
-    },
-    [isDirty],
-  );
-
-  useEffect(() => {
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [handleBeforeUnload]);
 
   useSaveShortcut(saveCurrentBuild);
 

@@ -16,6 +16,15 @@ jest.mock('./savedBuildStorage', () => ({
 
 import { BuildStorageSessionSync } from './BuildStorageSessionSync';
 
+const fireStorageEvent = (key: string | null, newValue: string | null): void => {
+  const event = new Event('storage') as StorageEvent;
+  Object.defineProperties(event, {
+    key: { value: key },
+    newValue: { value: newValue },
+  });
+  fireEvent(window, event);
+};
+
 describe('BuildStorageSessionSync', () => {
   beforeEach(() => {
     mockAdoptSession.mockReset();
@@ -26,13 +35,7 @@ describe('BuildStorageSessionSync', () => {
   it('clears account-bound state before adopting another tab session', () => {
     render(<BuildStorageSessionSync />);
 
-    fireEvent(
-      window,
-      new StorageEvent('storage', {
-        key: 'eso-build-storage-session-v1',
-        newValue: 'session-2',
-      }),
-    );
+    fireStorageEvent('eso-build-storage-session-v1', 'session-2');
 
     expect(mockDispatch.mock.calls.map(([action]) => action.type)).toEqual([
       'savedBuilds/clearSavedBuilds',
@@ -47,21 +50,9 @@ describe('BuildStorageSessionSync', () => {
   it('ignores unrelated, removed, and already-adopted session values', () => {
     render(<BuildStorageSessionSync />);
 
-    fireEvent(window, new StorageEvent('storage', { key: 'unrelated', newValue: 'session-2' }));
-    fireEvent(
-      window,
-      new StorageEvent('storage', {
-        key: 'eso-build-storage-session-v1',
-        newValue: null,
-      }),
-    );
-    fireEvent(
-      window,
-      new StorageEvent('storage', {
-        key: 'eso-build-storage-session-v1',
-        newValue: 'session-1',
-      }),
-    );
+    fireStorageEvent('unrelated', 'session-2');
+    fireStorageEvent('eso-build-storage-session-v1', null);
+    fireStorageEvent('eso-build-storage-session-v1', 'session-1');
 
     expect(mockDispatch).not.toHaveBeenCalled();
     expect(mockAdoptSession).not.toHaveBeenCalled();
@@ -71,13 +62,7 @@ describe('BuildStorageSessionSync', () => {
     const { unmount } = render(<BuildStorageSessionSync />);
     unmount();
 
-    fireEvent(
-      window,
-      new StorageEvent('storage', {
-        key: 'eso-build-storage-session-v1',
-        newValue: 'session-2',
-      }),
-    );
+    fireStorageEvent('eso-build-storage-session-v1', 'session-2');
 
     expect(mockDispatch).not.toHaveBeenCalled();
     expect(mockAdoptSession).not.toHaveBeenCalled();

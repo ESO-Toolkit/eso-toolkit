@@ -32,7 +32,7 @@ jest.mock('notistack', () => ({
   useSnackbar: () => ({ enqueueSnackbar: mockEnqueue }),
 }));
 
-// Capture dispatched actions; isDirty selector returns false (no unload guard).
+// Capture dispatched actions and evaluate selectors against a minimal test store.
 const mockDispatch = jest.fn();
 const mockUseSelector = jest.fn();
 jest.mock('react-redux', () => ({
@@ -54,6 +54,13 @@ const mockDecode = decodeBuildFromURL as jest.MockedFunction<typeof decodeBuildF
 const mockLoadBuild = loadBuild as unknown as jest.Mock;
 const mockLoadDraftBuild = loadDraftBuild as unknown as jest.Mock;
 const mockResetBuild = resetBuild as unknown as jest.Mock;
+
+interface TestState {
+  buildEditor: { isDirty: boolean };
+  savedBuilds: { builds: unknown[] };
+}
+
+let mockState: TestState;
 
 const decodedBuild: Build = {
   id: 'b1',
@@ -132,6 +139,9 @@ const NavigationProbe: React.FC = () => {
       >
         Change route context
       </button>
+      <button type="button" onClick={() => navigate('/build-editor')}>
+        Resume editor
+      </button>
     </>
   );
 };
@@ -174,9 +184,9 @@ describe('BuildEditorPage build loading', () => {
       payload: build,
     }));
     mockResetBuild.mockImplementation(() => ({ type: 'buildEditor/resetBuild' }));
-    mockUseSelector.mockImplementation(
-      (selector: (state: { savedBuilds: { builds: unknown[] } }) => unknown) =>
-        selector({ savedBuilds: { builds: [] } }),
+    mockState = { buildEditor: { isDirty: false }, savedBuilds: { builds: [] } };
+    mockUseSelector.mockImplementation((selector: (state: TestState) => unknown) =>
+      selector(mockState),
     );
   });
 
@@ -232,9 +242,77 @@ describe('BuildEditorPage build loading', () => {
 
     expect(screen.getByRole('status')).toHaveTextContent('Opening build');
     expect(screen.queryByTestId('editor-shell')).not.toBeInTheDocument();
+    await waitFor(() => expect(screen.getByTestId('state').textContent).toBe('null'));
 
     resolveDecode?.(decodedBuild);
     await waitFor(() => expect(screen.getByTestId('editor-shell')).toBeInTheDocument());
+  });
+
+  it('scrubs a query payload and save target before asynchronous decoding completes', async () => {
+    let resolveDecode: ((build: typeof decodedBuild) => void) | undefined;
+    mockDecode.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveDecode = resolve;
+        }) as ReturnType<typeof decodeBuildFromURL>,
+    );
+
+    renderAt({
+      pathname: '/build-editor',
+      search: '?b=slow-blob&id=saved-2&slot=dps3&rid=r1&from=roster',
+      state: null,
+    });
+
+    await waitFor(() => expect(mockDecode).toHaveBeenCalledWith('slow-blob'));
+    await waitFor(() => {
+      const params = new URLSearchParams(screen.getByTestId('search').textContent ?? '');
+      expect(params.has('b')).toBe(false);
+      expect(params.has('id')).toBe(false);
+      expect(params.get('slot')).toBe('dps3');
+      expect(params.get('rid')).toBe('r1');
+      expect(params.get('from')).toBe('roster');
+    });
+    expect(screen.getByRole('status')).toHaveTextContent('Opening build');
+    expect(mockDispatch).not.toHaveBeenCalled();
+
+    resolveDecode?.(decodedBuild);
+    await waitFor(() => expect(screen.getByTestId('editor-shell')).toBeInTheDocument());
+    expect(mockDispatch).toHaveBeenCalledTimes(1);
+  });
+
+  it('protects a dirty draft during route hydration and removes the unload guard on unmount', async () => {
+    mockState.buildEditor.isDirty = true;
+    mockDecode.mockImplementation(
+      () => new Promise(() => undefined) as ReturnType<typeof decodeBuildFromURL>,
+    );
+
+    const { unmount } = renderAt({
+      pathname: '/build-editor',
+      search: '?b=slow-blob',
+      state: null,
+    });
+    expect(screen.getByRole('status')).toHaveTextContent('Opening build');
+
+    const guardedEvent = new Event('beforeunload', { cancelable: true }) as BeforeUnloadEvent;
+    expect(window.dispatchEvent(guardedEvent)).toBe(false);
+    expect(guardedEvent.defaultPrevented).toBe(true);
+
+    unmount();
+    const unguardedEvent = new Event('beforeunload', { cancelable: true });
+    expect(window.dispatchEvent(unguardedEvent)).toBe(true);
+    expect(unguardedEvent.defaultPrevented).toBe(false);
+  });
+
+  it('does not block unloading a clean draft', () => {
+    const addEventListener = jest.spyOn(window, 'addEventListener');
+    const { unmount } = renderAt({ pathname: '/build-editor', state: null });
+    const event = new Event('beforeunload', { cancelable: true });
+
+    expect(addEventListener).not.toHaveBeenCalledWith('beforeunload', expect.any(Function));
+    expect(window.dispatchEvent(event)).toBe(true);
+    expect(event.defaultPrevented).toBe(false);
+    unmount();
+    addEventListener.mockRestore();
   });
 
   it('ignores an asynchronous decode that completes after the editor unmounts', async () => {
@@ -286,7 +364,7 @@ describe('BuildEditorPage build loading', () => {
       await Promise.resolve();
     });
     expect(mockDispatch).not.toHaveBeenCalled();
-    expect(screen.getByTestId('search')).toHaveTextContent('?b=same-blob&slot=second&from=roster');
+    expect(screen.getByTestId('search')).toHaveTextContent('?slot=second&from=roster');
 
     await act(async () => {
       resolvers[1]?.(decodedBuild);
@@ -302,6 +380,31 @@ describe('BuildEditorPage build loading', () => {
       expect(screen.getByTestId('search')).toHaveTextContent('?slot=second&from=roster'),
     );
     expect(mockDispatch).toHaveBeenCalledTimes(1);
+  });
+
+  it('invalidates an in-flight decode when navigating to the bare resume route', async () => {
+    let resolveDecode: ((build: typeof decodedBuild) => void) | undefined;
+    mockDecode.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveDecode = resolve;
+        }) as ReturnType<typeof decodeBuildFromURL>,
+    );
+
+    renderAt({ pathname: '/build-editor', search: '?b=slow-blob', state: null });
+    await waitFor(() => expect(mockDecode).toHaveBeenCalledWith('slow-blob'));
+    await waitFor(() => expect(screen.getByTestId('search')).toHaveTextContent(''));
+
+    fireEvent.click(screen.getByRole('button', { name: 'Resume editor' }));
+    await waitFor(() => expect(screen.getByTestId('editor-shell')).toBeInTheDocument());
+
+    await act(async () => {
+      resolveDecode?.(decodedBuild);
+      await Promise.resolve();
+    });
+
+    expect(mockDispatch).not.toHaveBeenCalled();
+    expect(mockEnqueue).not.toHaveBeenCalled();
   });
 
   it('keeps roster round-trip params in the URL when loading from state', async () => {
@@ -368,16 +471,9 @@ describe('BuildEditorPage build loading', () => {
   });
 
   it('does not rehydrate and reset editor context when the first save adds its id', async () => {
-    mockUseSelector.mockImplementation(
-      (selector: (state: { savedBuilds: { builds: unknown[] } }) => unknown) =>
-        selector({
-          savedBuilds: {
-            builds: [
-              { id: 'first-save', savedAt: '2026-08-30T00:00:00.000Z', build: decodedBuild },
-            ],
-          },
-        }),
-    );
+    mockState.savedBuilds.builds = [
+      { id: 'first-save', savedAt: '2026-08-30T00:00:00.000Z', build: decodedBuild },
+    ];
     renderAt({ pathname: '/build-editor', state: null });
     await waitFor(() => expect(screen.getByTestId('editor-shell')).toBeInTheDocument());
 
@@ -389,14 +485,9 @@ describe('BuildEditorPage build loading', () => {
   });
 
   it('hydrates a saved build by id before mounting the editor', async () => {
-    mockUseSelector.mockImplementation(
-      (selector: (state: { savedBuilds: { builds: unknown[] } }) => unknown) =>
-        selector({
-          savedBuilds: {
-            builds: [{ id: 'saved-3', savedAt: '2026-08-30T00:00:00.000Z', build: decodedBuild }],
-          },
-        }),
-    );
+    mockState.savedBuilds.builds = [
+      { id: 'saved-3', savedAt: '2026-08-30T00:00:00.000Z', build: decodedBuild },
+    ];
 
     renderAt({ pathname: '/build-editor', search: '?id=saved-3', state: null });
 
@@ -411,14 +502,9 @@ describe('BuildEditorPage build loading', () => {
   });
 
   it('prefers a durable saved id over stale router state and clears that state', async () => {
-    mockUseSelector.mockImplementation(
-      (selector: (state: { savedBuilds: { builds: unknown[] } }) => unknown) =>
-        selector({
-          savedBuilds: {
-            builds: [{ id: 'saved-3', savedAt: '2026-08-30T00:00:00.000Z', build: decodedBuild }],
-          },
-        }),
-    );
+    mockState.savedBuilds.builds = [
+      { id: 'saved-3', savedAt: '2026-08-30T00:00:00.000Z', build: decodedBuild },
+    ];
 
     renderAt({
       pathname: '/build-editor',

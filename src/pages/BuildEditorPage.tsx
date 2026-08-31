@@ -10,9 +10,10 @@ import { Box, CircularProgress, Typography } from '@mui/material';
 import { useSnackbar } from 'notistack';
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate, useNavigationType, useSearchParams } from 'react-router-dom';
 
 import { BuildEditorShell } from '@/features/build-editor/components/BuildEditorShell';
+import { selectIsDirty } from '@/features/build-editor/store/buildEditorSelectors';
 import {
   loadBuild,
   loadDraftBuild,
@@ -41,7 +42,9 @@ const BuildEditorPageInner: React.FC = () => {
   const [searchParams] = useSearchParams();
   const location = useLocation();
   const navigate = useNavigate();
+  const navigationType = useNavigationType();
   const loadedSourceRef = React.useRef<string | undefined>(undefined);
+  const scrubbedSourceRef = React.useRef<string | undefined>(undefined);
   const hydrationGenerationRef = React.useRef(0);
   const isMountedRef = React.useRef(false);
   const routeState = location.state as BuildEditorNavState | null;
@@ -54,6 +57,7 @@ const BuildEditorPageInner: React.FC = () => {
       ? state.savedBuilds.builds.find((candidate) => candidate.id === savedBuildId)?.build
       : undefined,
   );
+  const isDirty = useSelector(selectIsDirty);
   const [isHydrating, setIsHydrating] = React.useState(
     Boolean(encodedBuild || routeState?.build || savedBuildId || routeState?.newBuild),
   );
@@ -66,6 +70,18 @@ const BuildEditorPageInner: React.FC = () => {
       isMountedRef.current = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (!isDirty) return;
+
+    const handleBeforeUnload = (event: BeforeUnloadEvent): void => {
+      event.preventDefault();
+      event.returnValue = '';
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [isDirty]);
 
   useEffect(() => {
     const directBuild = routeState?.build;
@@ -81,6 +97,13 @@ const BuildEditorPageInner: React.FC = () => {
               ? `new:${location.key}`
               : 'resume';
 
+    // Replacing the current history entry after scrubbing changes the route
+    // source. Suppress only that REPLACE follow-up: a PUSH/POP to the same bare
+    // route is a genuine navigation and must invalidate pending hydration.
+    if (scrubbedSourceRef.current === sourceKey) {
+      scrubbedSourceRef.current = undefined;
+      if (navigationType === 'REPLACE') return;
+    }
     if (loadedSourceRef.current === sourceKey) return;
     loadedSourceRef.current = sourceKey;
     const generation = ++hydrationGenerationRef.current;
@@ -91,22 +114,17 @@ const BuildEditorPageInner: React.FC = () => {
       const nextParams = new URLSearchParams(searchParams);
       nextParams.delete('b');
       if (removeSaveTarget) nextParams.delete('id');
+      const remainingSaveTarget = nextParams.get('id');
+      scrubbedSourceRef.current = remainingSaveTarget ? `saved:${remainingSaveTarget}` : 'resume';
       const nextSearch = nextParams.toString();
       navigate(
         { pathname: location.pathname, search: nextSearch ? `?${nextSearch}` : '' },
         { replace: true, state: null },
       );
     };
-    const failClosed = (): void => {
+    const failClosed = (navigationAlreadyScrubbed = false): void => {
       if (!isCurrent()) return;
-      const nextParams = new URLSearchParams(searchParams);
-      nextParams.delete('b');
-      nextParams.delete('id');
-      const nextSearch = nextParams.toString();
-      navigate(
-        { pathname: location.pathname, search: nextSearch ? `?${nextSearch}` : '' },
-        { replace: true, state: null },
-      );
+      if (!navigationAlreadyScrubbed) scrubNavigationPayload(true);
       enqueueSnackbar('Could not load that build. The document may be invalid or out of date.', {
         variant: 'warning',
       });
@@ -116,17 +134,20 @@ const BuildEditorPageInner: React.FC = () => {
     // new, unsaved draft and must never inherit an unrelated ?id= overwrite target.
     if (queryEncoded) {
       setIsHydrating(true);
+      // Remove the private payload from the address bar and history entry
+      // before any asynchronous decoding work begins.
+      scrubNavigationPayload(true);
+      const failQueryDecode = (): void => failClosed(true);
       void decodeBuildFromURL(queryEncoded)
         .then((decoded) => {
           if (!isCurrent()) return;
           if (decoded && isBuild(decoded)) {
             dispatch(loadDraftBuild(decoded));
-            scrubNavigationPayload(true);
           } else {
-            failClosed();
+            failQueryDecode();
           }
         })
-        .catch(failClosed)
+        .catch(failQueryDecode)
         .finally(() => {
           if (isCurrent()) setIsHydrating(false);
         });
@@ -157,7 +178,7 @@ const BuildEditorPageInner: React.FC = () => {
       if (isBuild(directBuild)) {
         dispatch(loadDraftBuild(directBuild));
       } else {
-        failClosed();
+        failClosed(true);
       }
       setIsHydrating(false);
       return;
@@ -165,17 +186,19 @@ const BuildEditorPageInner: React.FC = () => {
 
     if (stateEncoded) {
       setIsHydrating(true);
+      // Router state is private history data too; clear it before decoding.
+      scrubNavigationPayload();
+      const failStateDecode = (): void => failClosed(true);
       void decodeBuildFromURL(stateEncoded)
         .then((decoded) => {
           if (!isCurrent()) return;
           if (decoded && isBuild(decoded)) {
             dispatch(loadDraftBuild(decoded));
-            scrubNavigationPayload();
           } else {
-            failClosed();
+            failStateDecode();
           }
         })
-        .catch(failClosed)
+        .catch(failStateDecode)
         .finally(() => {
           if (isCurrent()) setIsHydrating(false);
         });
@@ -198,6 +221,7 @@ const BuildEditorPageInner: React.FC = () => {
     location.key,
     location.pathname,
     navigate,
+    navigationType,
     queryEncoded,
     routeState,
     routeState?.build,
