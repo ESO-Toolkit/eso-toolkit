@@ -2,7 +2,7 @@
  * Utilities for analyzing player gear and armor
  */
 
-import { ArmorType, GearSlot, GearType, PlayerGear } from '../types/playerDetails';
+import { ArmorType, GearSlot, PlayerGear } from '../types/playerDetails';
 
 /**
  * Item IDs for mythic armor pieces that ESOLogs misreports as Light.
@@ -48,8 +48,12 @@ const ARMOR_TYPE_CORRECTIONS: Record<MythicArmorId, ArmorType> = {
 /**
  * Returns the correct armor type for a gear item, applying any known corrections
  * for items where ESOLogs source data has an incorrect armor weight.
+ *
+ * Returns a raw type code, not `GearType`: `item.type` passes through unchanged
+ * for non-mythics, and logs report codes this app does not model (including 0
+ * for "not reported"). Compare the result against `ArmorType` members.
  */
-export function resolveArmorType(item: PlayerGear): GearType {
+export function resolveArmorType(item: PlayerGear): number {
   return ARMOR_TYPE_CORRECTIONS[item.id as MythicArmorId] ?? item.type;
 }
 

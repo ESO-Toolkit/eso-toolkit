@@ -3,7 +3,7 @@
  */
 
 import { CombatantInfoEvent, DamageEvent, HealEvent } from '@/types/combatlogEvents';
-import { ArmorType, GearSlot, GearTrait, WeaponType } from '@/types/playerDetails';
+import { ArmorType, GearSlot, WeaponType } from '@/types/playerDetails';
 
 import { extractSignals, FightContext, RoleDetectionEvents } from '../extractSignals';
 
@@ -125,13 +125,12 @@ function makeCombatantInfo(
       quality: 5,
       icon: '',
       championPoints: 160,
-      // GearTrait only models the traits the app reasons about; the log payload
-      // reports 0 for "no trait".
-      trait: 0 as GearTrait,
+      // Raw log codes: the payload reports 0 for "no trait".
+      trait: 0,
       enchantType: 0,
       enchantQuality: 0,
       setID: 0,
-      type: 1 as ArmorType,
+      type: ArmorType.LIGHT,
       ...g,
     })),
     auras: [],

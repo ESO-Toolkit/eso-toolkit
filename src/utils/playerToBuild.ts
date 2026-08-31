@@ -39,7 +39,6 @@ import {
   BLUE_CHAMPION_POINTS,
   GREEN_CHAMPION_POINTS,
 } from '../types/abilities';
-import { WeaponType } from '../types/playerDetails';
 import type { PlayerGear, PlayerTalent } from '../types/playerDetails';
 
 import { isWeaponSlot } from './armorUtils';
@@ -424,8 +423,7 @@ function buildGearDescription(gear: PlayerGear[]): string {
     // A two-handed weapon occupies one slot but grants two set pieces (matches
     // P2-M3 in logToRoster and setPieceCounting.buildSetPieceCounts). Gate on a
     // weapon slot: JEWELRY (type 4) collides with TWO_HANDED_SWORD (4).
-    const pieceCount =
-      isWeaponSlot(item.slot) && isAnyTwoHandedWeapon(item.type as WeaponType) ? 2 : 1;
+    const pieceCount = isWeaponSlot(item.slot) && isAnyTwoHandedWeapon(item.type) ? 2 : 1;
     setCounts.set(name, (setCounts.get(name) ?? 0) + pieceCount);
   }
 
