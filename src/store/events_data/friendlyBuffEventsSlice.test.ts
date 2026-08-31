@@ -191,5 +191,59 @@ describe('friendlyBuffEventsSlice', () => {
 
     expect(client.query).toHaveBeenCalledTimes(1);
     expect(getEntry(store)?.status).toBe('succeeded');
+    expect(getEntry(store)?.events).toEqual([]);
+    expect(getEntry(store)?.cacheMetadata).toEqual({
+      lastFetchedTimestamp: expect.any(Number),
+      restrictToFightWindow: true,
+      intervalCount: 1,
+    });
+  });
+
+  it('preserves the last successful cache mode when a different-mode request fails', async () => {
+    const store = createStore();
+    const client = {
+      query: jest.fn().mockResolvedValue(emptyResponse),
+    } as unknown as EsoLogsClient;
+    const shortFight = { ...fight, endTime: 1000 };
+
+    await store.dispatch(
+      fetchFriendlyBuffEvents({
+        reportCode: 'ABC123',
+        fight: shortFight,
+        client,
+        restrictToFightWindow: true,
+      }) as never,
+    );
+    const successfulTimestamp = getEntry(store)?.cacheMetadata.lastFetchedTimestamp;
+
+    (client.query as jest.Mock).mockRejectedValue(new Error('upstream unavailable'));
+    await store.dispatch(
+      fetchFriendlyBuffEvents({
+        reportCode: 'ABC123',
+        fight: shortFight,
+        client,
+        restrictToFightWindow: false,
+      }) as never,
+    );
+
+    expect(getEntry(store)?.status).toBe('failed');
+    expect(getEntry(store)?.error).toContain('upstream unavailable');
+    expect(getEntry(store)?.events).toEqual([]);
+    expect(getEntry(store)?.cacheMetadata).toEqual({
+      lastFetchedTimestamp: successfulTimestamp,
+      restrictToFightWindow: true,
+      intervalCount: 1,
+    });
+
+    const callsAfterFailure = (client.query as jest.Mock).mock.calls.length;
+    await store.dispatch(
+      fetchFriendlyBuffEvents({
+        reportCode: 'ABC123',
+        fight: shortFight,
+        client,
+        restrictToFightWindow: true,
+      }) as never,
+    );
+    expect(client.query).toHaveBeenCalledTimes(callsAfterFailure);
   });
 });

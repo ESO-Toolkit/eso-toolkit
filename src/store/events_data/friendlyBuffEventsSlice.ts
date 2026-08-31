@@ -36,7 +36,6 @@ interface IntervalFetchResult {
   startTime: number;
   endTime: number;
   events: BuffEvent[];
-  error?: string;
 }
 
 interface PaginationBudget {
@@ -54,7 +53,6 @@ export interface FriendlyBuffEventsEntry {
     lastFetchedTimestamp: number | null;
     restrictToFightWindow: boolean | null;
     intervalCount: number;
-    failedIntervals: number;
   };
   currentRequest: FriendlyBuffEventsRequest;
 }
@@ -76,7 +74,6 @@ const createEmptyEntry = (): FriendlyBuffEventsEntry => ({
     lastFetchedTimestamp: null,
     restrictToFightWindow: null,
     intervalCount: 0,
-    failedIntervals: 0,
   },
   currentRequest: null,
 });
@@ -309,7 +306,6 @@ export const fetchFriendlyBuffEvents = createAsyncThunk<
       fightId: fight.id,
       totalEvents: allEvents.length,
       successfulIntervals: intervalResults.length,
-      failedIntervals: 0,
     });
 
     return { events: allEvents, intervalResults };
@@ -324,7 +320,7 @@ export const fetchFriendlyBuffEvents = createAsyncThunk<
       const restrictMatches = cachedRestrict === restrictToFightWindow;
 
       const lastFetchedTimestamp = entry?.cacheMetadata.lastFetchedTimestamp;
-      const isCached = entry?.status === 'succeeded';
+      const isCached = typeof entry?.cacheMetadata.lastFetchedTimestamp === 'number';
       const isFresh =
         typeof lastFetchedTimestamp === 'number' &&
         Date.now() - lastFetchedTimestamp < DATA_FETCH_CACHE_TIMEOUT;
@@ -410,7 +406,6 @@ const friendlyBuffEventsSlice = createSlice({
           action.meta.requestId,
           action.meta.arg.restrictToFightWindow ?? true,
         );
-        entry.cacheMetadata.restrictToFightWindow = action.meta.arg.restrictToFightWindow ?? true;
         touchAccessOrder(state, key);
       })
       .addCase(fetchFriendlyBuffEvents.fulfilled, (state, action) => {
@@ -439,9 +434,6 @@ const friendlyBuffEventsSlice = createSlice({
         entry.cacheMetadata.lastFetchedTimestamp = Date.now();
         entry.cacheMetadata.restrictToFightWindow = action.meta.arg.restrictToFightWindow ?? true;
         entry.cacheMetadata.intervalCount = action.payload.intervalResults.length;
-        entry.cacheMetadata.failedIntervals = action.payload.intervalResults.filter(
-          (r) => r.error,
-        ).length;
         entry.currentRequest = null;
         touchAccessOrder(state, key);
         trimCache(state, EVENT_CACHE_MAX_ENTRIES);

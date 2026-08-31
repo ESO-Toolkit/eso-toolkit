@@ -192,7 +192,7 @@ export const fetchDamageEvents = createAsyncThunk<
       const restrictMatches = cachedRestrict === restrictToFightWindow;
 
       const lastFetchedTimestamp = entry?.cacheMetadata.lastFetchedTimestamp;
-      const isCached = Boolean(entry?.events.length);
+      const isCached = typeof entry?.cacheMetadata.lastFetchedTimestamp === 'number';
       const isFresh =
         typeof lastFetchedTimestamp === 'number' &&
         Date.now() - lastFetchedTimestamp < DATA_FETCH_CACHE_TIMEOUT;
@@ -275,7 +275,6 @@ const damageEventsSlice = createSlice({
           action.meta.requestId,
           action.meta.arg.restrictToFightWindow ?? true,
         );
-        entry.cacheMetadata.restrictToFightWindow = action.meta.arg.restrictToFightWindow ?? true;
         touchAccessOrder(state, key);
       })
       .addCase(fetchDamageEvents.fulfilled, (state, action) => {

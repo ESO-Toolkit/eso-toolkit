@@ -701,6 +701,14 @@ const ParseAnalysisPageContent: React.FC = () => {
         dpsResult: null,
         rotationResult: null,
         activeTimeResult: null,
+        buildIssues: null,
+        parseChecklist: null,
+        barSwapResult: null,
+        ultimateResult: null,
+        dotUptimeResult: null,
+        mundusResult: null,
+        resourceSustainResult: null,
+        penCritCapResult: null,
       }));
 
       // Set pending analysis - this will trigger the useEffect to run analysis once events load
@@ -843,6 +851,7 @@ const ParseAnalysisPageContent: React.FC = () => {
       playerId,
       fightStartTime,
       fightEndTime,
+      abilityMapper,
     );
     const activeTimeResult = calculateActivePercentage(
       castEvents,
@@ -1048,6 +1057,7 @@ const ParseAnalysisPageContent: React.FC = () => {
         mundusResult: null,
         resourceSustainResult: null,
         penCritCapResult: null,
+        buildIssues: null,
       }));
 
       try {
@@ -1127,6 +1137,7 @@ const ParseAnalysisPageContent: React.FC = () => {
       mundusResult: null,
       resourceSustainResult: null,
       penCritCapResult: null,
+      buildIssues: null,
     }));
 
     try {

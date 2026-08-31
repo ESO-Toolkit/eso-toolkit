@@ -59,7 +59,6 @@
     "src/features/fight_replay/components/MapMarkers.integration.test.tsx",
     "src/features/loadout-manager/utils/__tests__/wizardWardrobeImport.integration.test.ts",
     "src/features/loadout-manager/utils/__tests__/wizardsWardrobeSavedVariables.test.ts",
-    "src/features/parse_analysis/utils/parseAnalysisUtils.test.ts",
     "src/features/report_details/deaths/DeathEventPanel.test.tsx",
     "src/features/report_details/insights/StatusEffectUptimesPanel.integration.test.ts",
     "src/features/report_details/synergy/synergyUtils.test.ts",

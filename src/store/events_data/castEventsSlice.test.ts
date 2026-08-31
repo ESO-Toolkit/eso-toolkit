@@ -129,7 +129,7 @@ describe('castEventsSlice', () => {
           requestId: 'test-request-1',
           restrictToFightWindow: true,
         });
-        expect(entry?.cacheMetadata.restrictToFightWindow).toBe(true);
+        expect(entry?.cacheMetadata.restrictToFightWindow).toBeNull();
         expect(state.events.casts.accessOrder).toEqual([key]);
       });
     });
@@ -350,6 +350,17 @@ describe('castEventsSlice', () => {
     });
 
     describe('cache condition behavior', () => {
+      const emptyResponse = {
+        reportData: {
+          report: {
+            events: {
+              data: [],
+              nextPageTimestamp: null,
+            },
+          },
+        },
+      };
+
       it('should not fetch if data is cached and fresh', async () => {
         const reportCode = 'ABC123';
         const requestId = 'test-request-cache';
@@ -383,6 +394,81 @@ describe('castEventsSlice', () => {
 
         // Should not call the client because data is cached and fresh
         expect(mockClient.query).not.toHaveBeenCalled();
+      });
+
+      it('caches a successful empty response', async () => {
+        mockClient.query.mockResolvedValue(emptyResponse);
+
+        await store.dispatch(
+          fetchCastEvents({ reportCode: 'ABC123', fight: mockFight, client: mockClient }) as any,
+        );
+        await store.dispatch(
+          fetchCastEvents({ reportCode: 'ABC123', fight: mockFight, client: mockClient }) as any,
+        );
+
+        const state = store.getState() as { events: { casts: CastEventsState } };
+        const { key } = resolveCacheKey({ reportCode: 'ABC123', fightId: Number(mockFight.id) });
+        const entry = state.events.casts.entries[key];
+
+        expect(mockClient.query).toHaveBeenCalledTimes(2);
+        expect(entry?.status).toBe('succeeded');
+        expect(entry?.events).toEqual([]);
+        expect(entry?.cacheMetadata).toEqual({
+          lastFetchedTimestamp: expect.any(Number),
+          restrictToFightWindow: true,
+        });
+      });
+
+      it('preserves the last successful cache mode when a different-mode request fails', async () => {
+        mockClient.query.mockResolvedValue(emptyResponse);
+        await store.dispatch(
+          fetchCastEvents({
+            reportCode: 'ABC123',
+            fight: mockFight,
+            client: mockClient,
+            restrictToFightWindow: true,
+          }) as any,
+        );
+
+        const successfulEntry = (store.getState() as { events: { casts: CastEventsState } }).events
+          .casts.entries[
+          resolveCacheKey({ reportCode: 'ABC123', fightId: Number(mockFight.id) }).key
+        ];
+        const successfulTimestamp = successfulEntry?.cacheMetadata.lastFetchedTimestamp;
+
+        mockClient.query.mockRejectedValue(new Error('upstream unavailable'));
+        await store.dispatch(
+          fetchCastEvents({
+            reportCode: 'ABC123',
+            fight: mockFight,
+            client: mockClient,
+            restrictToFightWindow: false,
+          }) as any,
+        );
+
+        const failedEntry = (store.getState() as { events: { casts: CastEventsState } }).events
+          .casts.entries[
+          resolveCacheKey({ reportCode: 'ABC123', fightId: Number(mockFight.id) }).key
+        ];
+        expect(failedEntry?.status).toBe('failed');
+        expect(failedEntry?.error).toContain('upstream unavailable');
+        expect(failedEntry?.events).toEqual([]);
+        expect(failedEntry?.cacheMetadata).toEqual({
+          lastFetchedTimestamp: successfulTimestamp,
+          restrictToFightWindow: true,
+        });
+
+        const callsAfterFailure = mockClient.query.mock.calls.length;
+        await store.dispatch(
+          fetchCastEvents({
+            reportCode: 'ABC123',
+            fight: mockFight,
+            client: mockClient,
+            restrictToFightWindow: true,
+          }) as any,
+        );
+
+        expect(mockClient.query).toHaveBeenCalledTimes(callsAfterFailure);
       });
 
       it('should fetch if data is cached but stale', async () => {

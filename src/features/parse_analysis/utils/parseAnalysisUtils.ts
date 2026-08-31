@@ -226,6 +226,7 @@ interface CastFilterOptions {
   excludeHeavyAttacks: boolean;
   excludeSynergies: boolean;
   excludeWeaponSwap: boolean;
+  preferBeginCast?: boolean;
 }
 
 function filterPlayerCasts(
@@ -234,7 +235,13 @@ function filterPlayerCasts(
   abilityMapper: AbilityNameMapper | undefined,
   options: CastFilterOptions,
 ): CastEvent[] {
-  const { excludeLightAttacks, excludeHeavyAttacks, excludeSynergies, excludeWeaponSwap } = options;
+  const {
+    excludeLightAttacks,
+    excludeHeavyAttacks,
+    excludeSynergies,
+    excludeWeaponSwap,
+    preferBeginCast = false,
+  } = options;
 
   const uniqueEvents = new Map<string, UnifiedCastEvent>();
   let fallbackCounter = 0;
@@ -265,11 +272,16 @@ function filterPlayerCasts(
     }
 
     if (existing.type === 'begincast' && event.type === 'cast') {
-      uniqueEvents.set(baseKey, event);
+      if (!preferBeginCast) {
+        uniqueEvents.set(baseKey, event);
+      }
       continue;
     }
 
     if (existing.type === 'cast' && event.type === 'begincast') {
+      if (preferBeginCast) {
+        uniqueEvents.set(baseKey, event);
+      }
       continue;
     }
 
@@ -863,7 +875,7 @@ export function analyzeRotation(
     if (isLightAttackAbility(event.abilityGameID, abilityMapper)) return false;
     if (isHeavyAttackAbility(event.abilityGameID, abilityMapper)) return false;
     if (event.abilityGameID === KnownAbilities.SWAP_WEAPONS) return false;
-    if (isSynergyAbility(event.abilityGameID)) return false;
+    if (isSynergyAbility(event.abilityGameID, abilityMapper)) return false;
 
     return true;
   });
@@ -1261,19 +1273,18 @@ export function analyzeWeaving(
   playerId: number,
   _fightStartTime: number,
   _fightEndTime: number,
+  abilityMapper?: AbilityNameMapper,
 ): WeaveAnalysisResult {
-  // Sort events by timestamp
-  // Include BOTH 'cast' and 'begincast' events - light attacks may appear in either
-  // Exclude synergies and weapon swaps from the cast list
-  const playerCasts = castEvents
-    .filter(
-      (event) =>
-        event.sourceID === playerId &&
-        (event.type === 'cast' || event.type === 'begincast') &&
-        event.abilityGameID !== KnownAbilities.SWAP_WEAPONS &&
-        !SYNERGY_ABILITY_IDS.has(event.abilityGameID),
-    )
-    .sort((a, b) => a.timestamp - b.timestamp);
+  // Correlate paired begin/completion events by castTrackID. Weaving uses the
+  // begin timestamp because it represents the player's input timing; all other
+  // cast analyses continue to prefer the completed cast.
+  const playerCasts = filterPlayerCasts(castEvents, playerId, abilityMapper, {
+    excludeLightAttacks: false,
+    excludeHeavyAttacks: false,
+    excludeSynergies: true,
+    excludeWeaponSwap: true,
+    preferBeginCast: true,
+  });
 
   // Debug: Log event types distribution
   const castTypeCount = castEvents.filter((e) => e.type === 'cast').length;
@@ -1290,19 +1301,19 @@ export function analyzeWeaving(
 
   // Separate light attacks, heavy attacks, and regular skills from cast events
   const lightAttackCasts = playerCasts.filter((event) =>
-    LIGHT_ATTACK_ABILITY_IDS.has(event.abilityGameID),
+    isLightAttackAbility(event.abilityGameID, abilityMapper),
   );
 
   const heavyAttackCasts = playerCasts.filter((event) =>
-    HEAVY_ATTACK_ABILITY_IDS.has(event.abilityGameID),
+    isHeavyAttackAbility(event.abilityGameID, abilityMapper),
   );
 
   const skillCasts = playerCasts.filter(
     (event) =>
-      !LIGHT_ATTACK_ABILITY_IDS.has(event.abilityGameID) &&
-      !HEAVY_ATTACK_ABILITY_IDS.has(event.abilityGameID) &&
+      !isLightAttackAbility(event.abilityGameID, abilityMapper) &&
+      !isHeavyAttackAbility(event.abilityGameID, abilityMapper) &&
       event.abilityGameID !== KnownAbilities.SWAP_WEAPONS &&
-      !SYNERGY_ABILITY_IDS.has(event.abilityGameID),
+      !isSynergyAbility(event.abilityGameID, abilityMapper),
   );
 
   logger.debug('Weave analysis debug metrics', {
@@ -1339,10 +1350,10 @@ export function analyzeWeaving(
 
     // Only skill casts contribute to the weave analysis (mirror the skillCasts filter).
     const isSkillCast =
-      !LIGHT_ATTACK_ABILITY_IDS.has(castEvent.abilityGameID) &&
-      !HEAVY_ATTACK_ABILITY_IDS.has(castEvent.abilityGameID) &&
+      !isLightAttackAbility(castEvent.abilityGameID, abilityMapper) &&
+      !isHeavyAttackAbility(castEvent.abilityGameID, abilityMapper) &&
       castEvent.abilityGameID !== KnownAbilities.SWAP_WEAPONS &&
-      !SYNERGY_ABILITY_IDS.has(castEvent.abilityGameID);
+      !isSynergyAbility(castEvent.abilityGameID, abilityMapper);
     if (!isSkillCast) {
       return;
     }
@@ -1351,7 +1362,7 @@ export function analyzeWeaving(
     // AND within the weave window. A stale light attack separated by a long idle gap
     // does not count and must not pollute the weave-timing average.
     const isProperWeave = precedingCast
-      ? LIGHT_ATTACK_ABILITY_IDS.has(precedingCast.abilityGameID) &&
+      ? isLightAttackAbility(precedingCast.abilityGameID, abilityMapper) &&
         castEvent.timestamp - precedingCast.timestamp <= WEAVE_WINDOW_MS
       : false;
 
@@ -1365,9 +1376,9 @@ export function analyzeWeaving(
     // Determine preceding cast type
     let precedingCastType: 'light' | 'heavy' | 'skill' | 'none' = 'none';
     if (precedingCast) {
-      if (LIGHT_ATTACK_ABILITY_IDS.has(precedingCast.abilityGameID)) {
+      if (isLightAttackAbility(precedingCast.abilityGameID, abilityMapper)) {
         precedingCastType = 'light';
-      } else if (HEAVY_ATTACK_ABILITY_IDS.has(precedingCast.abilityGameID)) {
+      } else if (isHeavyAttackAbility(precedingCast.abilityGameID, abilityMapper)) {
         precedingCastType = 'heavy';
       } else {
         precedingCastType = 'skill';

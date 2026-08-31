@@ -16,6 +16,7 @@ import { ParseAnalysisPage } from './ParseAnalysisPage';
 // Mock GraphQL client
 const mockQuery = jest.fn();
 const mockUseDamageEvents = jest.fn();
+const mockDetectBuildIssues = jest.fn();
 const mockClient = {
   query: mockQuery,
 };
@@ -104,6 +105,11 @@ jest.mock('../hooks/useReportData', () => ({
   }),
 }));
 
+jest.mock('../utils/detectBuildIssues', () => ({
+  ...jest.requireActual('../utils/detectBuildIssues'),
+  detectBuildIssues: (...args: unknown[]) => mockDetectBuildIssues(...args),
+}));
+
 const mockTrialDummyFight: FightFragment = {
   __typename: 'ReportFight',
   id: 1,
@@ -162,6 +168,7 @@ describe('ParseAnalysisPage', () => {
       damageEventsError: null,
       selectedFight: null,
     });
+    mockDetectBuildIssues.mockReturnValue([]);
   });
 
   // Create a mock Redux store for testing
@@ -439,5 +446,58 @@ describe('ParseAnalysisPage', () => {
     expect(
       screen.queryByRole('status', { name: 'Analyzing combat events' }),
     ).not.toBeInTheDocument();
+  });
+
+  it('clears prior analysis results before a selected fight analysis fails', async () => {
+    const reportResponse = {
+      reportData: { report: { fights: [mockTrialDummyFight, mockHarrowingTrialFight] } },
+    };
+    const playerResponse = {
+      reportData: {
+        report: {
+          playerDetails: {
+            data: {
+              playerDetails: {
+                dps: [{ id: 1, name: 'Test Player' }],
+                healers: [],
+                tanks: [],
+              },
+            },
+          },
+        },
+      },
+    };
+    mockQuery
+      .mockResolvedValueOnce(reportResponse)
+      .mockResolvedValueOnce(playerResponse)
+      .mockResolvedValueOnce(reportResponse)
+      .mockResolvedValueOnce(playerResponse);
+    mockDetectBuildIssues.mockReturnValue([
+      { message: 'Stale build issue', gearName: 'Old Item', gearQuality: 1 },
+    ]);
+
+    renderWithProviders(<ParseAnalysisPage />);
+
+    fireEvent.change(screen.getByPlaceholderText(/https:\/\/www\.esologs\.com/), {
+      target: { value: 'https://esologs.com/reports/TestReport#fight=1' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /analyze/i }));
+    expect(await screen.findByText('Stale build issue')).toBeInTheDocument();
+    expect(screen.getByText('Checklist')).toBeInTheDocument();
+
+    mockUseDamageEvents.mockReturnValue({
+      damageEvents: [],
+      isDamageEventsLoading: false,
+      damageEventsStatus: 'failed',
+      damageEventsError: 'Damage event API failed',
+      selectedFight: null,
+    });
+    fireEvent.click(screen.getByRole('button', { name: '#3 — Target Harrowing Reaper, Raid' }));
+
+    expect(
+      await screen.findByText('Unable to load complete damage events. Damage event API failed'),
+    ).toBeInTheDocument();
+    expect(screen.queryByText('Stale build issue')).not.toBeInTheDocument();
+    expect(screen.queryByText('Checklist')).not.toBeInTheDocument();
   });
 });

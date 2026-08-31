@@ -25,6 +25,7 @@ import {
   calculateActivePercentage,
   calculateDPS,
   analyzeDotUptime,
+  analyzeRotation,
   analyzeWeaving,
   detectTrialDummyBuffs,
   LIGHT_ATTACK_ABILITY_IDS,
@@ -850,6 +851,44 @@ describe('parseAnalysisUtils', () => {
     });
   });
 
+  describe('analyzeRotation', () => {
+    it('excludes synergies discovered only through the ability mapper', () => {
+      const mapperOnlySynergyId = 987654;
+      const regularSkillId = 12345;
+      const abilityMapper = {
+        getAbilityById: (abilityId: number) => ({
+          name: abilityId === mapperOnlySynergyId ? 'Pure Agony Synergy' : 'Regular Skill',
+        }),
+      };
+      const castEvents: CastEvent[] = [
+        {
+          timestamp: FIGHT_START + 1000,
+          type: 'cast',
+          sourceID: PLAYER_ID,
+          sourceIsFriendly: true,
+          targetID: 2,
+          targetIsFriendly: false,
+          abilityGameID: mapperOnlySynergyId,
+          fight: 1,
+        },
+        {
+          timestamp: FIGHT_START + 1500,
+          type: 'cast',
+          sourceID: PLAYER_ID,
+          sourceIsFriendly: true,
+          targetID: 2,
+          targetIsFriendly: false,
+          abilityGameID: regularSkillId,
+          fight: 1,
+        },
+      ];
+
+      const result = analyzeRotation(castEvents, PLAYER_ID, FIGHT_START, FIGHT_END, abilityMapper);
+
+      expect(result.allCasts.map((cast) => cast.abilityId)).toEqual([regularSkillId]);
+    });
+  });
+
   describe('analyzeWeaving', () => {
     const LIGHT_ATTACK_ID = Array.from(LIGHT_ATTACK_ABILITY_IDS)[0]; // Use first light attack ID from the set
 
@@ -1004,6 +1043,72 @@ describe('parseAnalysisUtils', () => {
       expect(result.missedWeaves).toBe(0);
     });
 
+    it('deduplicates paired begin and completed casts while preserving input timing', () => {
+      const resources = {
+        hitPoints: 30000,
+        maxHitPoints: 30000,
+        magicka: 10000,
+        maxMagicka: 10000,
+        stamina: 15000,
+        maxStamina: 15000,
+        ultimate: 100,
+        maxUltimate: 500,
+        werewolf: 0,
+        maxWerewolf: 0,
+        absorb: 0,
+        championPoints: 3600,
+        x: 0,
+        y: 0,
+        facing: 0,
+      };
+      const skillAbilityId = 12345;
+      const castEvents: UnifiedCastEvent[] = [
+        {
+          timestamp: FIGHT_START + 1000,
+          type: 'cast',
+          sourceID: PLAYER_ID,
+          sourceIsFriendly: true,
+          targetID: 2,
+          targetIsFriendly: false,
+          abilityGameID: LIGHT_ATTACK_ID,
+          fight: 1,
+          castTrackID: 41,
+        },
+        {
+          timestamp: FIGHT_START + 1300,
+          type: 'begincast',
+          sourceID: PLAYER_ID,
+          sourceIsFriendly: true,
+          targetID: 2,
+          targetIsFriendly: false,
+          abilityGameID: skillAbilityId,
+          fight: 1,
+          castTrackID: 42,
+          sourceResources: resources,
+          targetResources: resources,
+        },
+        {
+          timestamp: FIGHT_START + 2500,
+          type: 'cast',
+          sourceID: PLAYER_ID,
+          sourceIsFriendly: true,
+          targetID: 2,
+          targetIsFriendly: false,
+          abilityGameID: skillAbilityId,
+          fight: 1,
+          castTrackID: 42,
+        },
+      ];
+
+      const result = analyzeWeaving(castEvents, [], PLAYER_ID, FIGHT_START, FIGHT_END);
+
+      expect(result.totalSkills).toBe(1);
+      expect(result.properWeaves).toBe(1);
+      expect(result.weaveAccuracy).toBe(100);
+      expect(result.averageWeaveTiming).toBe(300);
+      expect(result.castDetails?.[0].timestamp).toBe(FIGHT_START + 1300);
+    });
+
     it('skips weapon swaps and synergies when resolving the preceding cast', () => {
       const SYNERGY_ID = Array.from(SYNERGY_ABILITY_IDS)[0];
       const castEvents: CastEvent[] = [
@@ -1061,9 +1166,9 @@ describe('parseAnalysisUtils', () => {
       // Preceding cast resolves to the light attack 100ms earlier, skipping swap + synergy.
       expect(result.averageWeaveTiming).toBe(100);
       expect(result.castDetails).toHaveLength(1);
-      expect(result.castDetails[0].precedingCastAbilityId).toBe(LIGHT_ATTACK_ID);
-      expect(result.castDetails[0].precedingCastType).toBe('light');
-      expect(result.castDetails[0].timeSincePrecedingCast).toBe(100);
+      expect(result.castDetails?.[0].precedingCastAbilityId).toBe(LIGHT_ATTACK_ID);
+      expect(result.castDetails?.[0].precedingCastType).toBe('light');
+      expect(result.castDetails?.[0].timeSincePrecedingCast).toBe(100);
     });
 
     it('does not count a stale light attack separated by a long idle gap as a weave', () => {
@@ -1100,7 +1205,7 @@ describe('parseAnalysisUtils', () => {
       expect(result.missedWeaves).toBe(1);
       // The 30s gap must not pollute the timing average.
       expect(result.averageWeaveTiming).toBe(0);
-      expect(result.castDetails[0].isProperWeave).toBe(false);
+      expect(result.castDetails?.[0].isProperWeave).toBe(false);
     });
   });
 

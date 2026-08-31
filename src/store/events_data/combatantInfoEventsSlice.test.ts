@@ -84,6 +84,71 @@ describe('combatantInfoEventsSlice pagination hardening', () => {
     expect(client.query).toHaveBeenCalledTimes(1);
   });
 
+  it('caches a successful empty response', async () => {
+    client.query.mockResolvedValue(page([], null));
+
+    await store.dispatch(
+      fetchCombatantInfoEvents({ reportCode: 'ABC123', fight, client }) as never,
+    );
+    await store.dispatch(
+      fetchCombatantInfoEvents({ reportCode: 'ABC123', fight, client }) as never,
+    );
+
+    expect(client.query).toHaveBeenCalledTimes(2);
+    expect(entry()?.status).toBe('succeeded');
+    expect(entry()?.events).toEqual([]);
+    expect(entry()?.cacheMetadata).toEqual({
+      lastFetchedTimestamp: expect.any(Number),
+      eventCount: 0,
+      restrictToFightWindow: true,
+    });
+  });
+
+  it('preserves the last successful cache mode when a different-mode request fails', async () => {
+    client.query
+      .mockResolvedValueOnce(page([combatantInfoEvent(1000)], null))
+      .mockResolvedValueOnce(page([], null));
+    await store.dispatch(
+      fetchCombatantInfoEvents({
+        reportCode: 'ABC123',
+        fight,
+        client,
+        restrictToFightWindow: true,
+      }) as never,
+    );
+    const successfulTimestamp = entry()?.cacheMetadata.lastFetchedTimestamp;
+
+    client.query.mockRejectedValueOnce(new Error('upstream unavailable'));
+    await store.dispatch(
+      fetchCombatantInfoEvents({
+        reportCode: 'ABC123',
+        fight,
+        client,
+        restrictToFightWindow: false,
+      }) as never,
+    );
+
+    expect(entry()?.status).toBe('failed');
+    expect(entry()?.error).toContain('upstream unavailable');
+    expect(entry()?.events).toEqual([combatantInfoEvent(1000)]);
+    expect(entry()?.cacheMetadata).toEqual({
+      lastFetchedTimestamp: successfulTimestamp,
+      eventCount: 1,
+      restrictToFightWindow: true,
+    });
+
+    const callsAfterFailure = client.query.mock.calls.length;
+    await store.dispatch(
+      fetchCombatantInfoEvents({
+        reportCode: 'ABC123',
+        fight,
+        client,
+        restrictToFightWindow: true,
+      }) as never,
+    );
+    expect(client.query).toHaveBeenCalledTimes(callsAfterFailure);
+  });
+
   it('forwards thunk cancellation to the in-flight request', async () => {
     let requestSignal: AbortSignal | undefined;
     client.query.mockImplementation(
