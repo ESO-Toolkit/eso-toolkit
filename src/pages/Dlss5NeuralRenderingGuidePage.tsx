@@ -28,30 +28,13 @@
  * modified-after-signing NVIDIA binary and is not ours to redistribute.
  */
 
-import {
-  ArrowForward,
-  Check as CheckIcon,
-  CheckCircle,
-  ContentCopy,
-  ExpandMore,
-  Info,
-  Layers,
-  Memory,
-  Science,
-  Settings as SettingsIcon,
-  Speed,
-  Tune,
-  Warning,
-} from '@mui/icons-material';
+import { ArrowForward, Check as CheckIcon, ContentCopy, ExpandMore } from '@mui/icons-material';
 import {
   Accordion,
   AccordionDetails,
   AccordionSummary,
-  Alert,
-  AlertTitle,
   Box,
   Button,
-  Chip,
   Container,
   Stack,
   Tooltip,
@@ -63,14 +46,41 @@ import { Link as RouterLink } from 'react-router-dom';
 
 import { usePageTitle } from '@/hooks/useDocumentTitle';
 
-/** Brand accent. Safe as dark-mode text, and as borders/gradients in both modes. */
-const NV_GREEN = '#76B900';
-/** Gradient stop only — 3.7:1 as light-mode text, which fails WCAG AA. */
-const NV_GREEN_DARK = '#5A8F00';
-/** Light-mode green *text*: 6.5:1 on white, 5.9:1 on the tinted surfaces here. */
-const NV_GREEN_TEXT_LIGHT = '#446B00';
+/**
+ * Colour system: cyan does structure, green means "it works", amber means
+ * "careful". Three competing brand hues became two semantic ones, so the page
+ * belongs to ESO Toolkit first. That also settles a real clash - the theme's
+ * focus rings, scrollbars and header are cyan and land on this page regardless.
+ */
+/** Structural accent, matching the site. 8.7:1 on the app background. */
+const ACCENT_DARK = '#38bdf8';
+/** Light-mode structural accent. 5.9:1 on white; the theme's light accent is an ink, not a hue. */
+const ACCENT_TEXT_LIGHT = '#0369a1';
+/** Ink on cyan fills. 7.8:1 on #38bdf8. */
+const ON_ACCENT_INK = '#062033';
+/** Semantic success. NVIDIA green survives here and only here, which is the one
+ *  place the brand nod earns itself: it is the state the whole guide chases. */
+const GOOD_TEXT_DARK = '#76B900';
+/** 6.3:1 on white. Plain #76B900 is 2.4:1 in light mode and fails AA. */
+const GOOD_TEXT_LIGHT = '#446B00';
+/** Documentation amber for caution. 8.1:1 dark. */
+const CAUTION_TEXT_DARK = '#d4a24e';
+/** 7.3:1 on white. */
+const CAUTION_TEXT_LIGHT = '#7a4d00';
 
-const MONO = "Consolas, Monaco, 'Fira Code', monospace";
+/**
+ * Cascadia Mono ships with Windows 11 and sits better beside Inter; Consolas is
+ * the identical-metrics fallback. Both are static at 400/700 only, so mono never
+ * asks for 600, which the browser would otherwise synthesise.
+ */
+const MONO = "'Cascadia Mono', Consolas, 'SF Mono', Monaco, 'Fira Code', ui-monospace, monospace";
+
+/**
+ * Variable-weight stops. Hierarchy comes from the distance between stops rather
+ * than maximum boldness. Space Grotesk Variable is wght 300-700, so nothing may
+ * exceed 700 - the previous 800-weight h1 was being faux-bolded by the browser.
+ */
+const W = { bodyDark: 410, body: 430, label: 560, semi: 580, heading: 640 } as const;
 
 /**
  * The four stages every part of this page is organised around: the setup order,
@@ -487,125 +497,147 @@ export const Dlss5NeuralRenderingGuidePage: React.FC = () => {
   }, []);
 
   /** Green that is safe as text in the current mode. */
-  const nvText = isDark ? NV_GREEN : NV_GREEN_TEXT_LIGHT;
+  const accentText = isDark ? ACCENT_DARK : ACCENT_TEXT_LIGHT;
+  const goodText = isDark ? GOOD_TEXT_DARK : GOOD_TEXT_LIGHT;
+  const accentRule = isDark ? 'rgba(56,189,248,0.55)' : 'rgba(3,105,161,0.55)';
 
   const cardSx = {
-    borderRadius: '16px',
+    borderRadius: '12px',
     p: { xs: 2.5, md: 3 },
     border: isDark ? '1px solid rgba(255,255,255,0.07)' : '1px solid rgba(15,23,42,0.10)',
     background: isDark ? 'rgba(255,255,255,0.025)' : 'rgba(255,255,255,0.88)',
     boxShadow: isDark ? 'none' : '0 1px 3px rgba(15,23,42,0.05)',
-    backdropFilter: 'blur(8px)',
   } as const;
 
-  /** Body copy. `text.secondary` is reserved for genuine asides and table values. */
-  const proseSx = { color: 'text.primary', fontSize: '0.9rem', lineHeight: 1.75 } as const;
+  /**
+   * Body copy. `text.secondary` is reserved for genuine asides and table values.
+   * Dark mode runs one weight stop lighter because light-on-dark text blooms.
+   * The `& code` rule matters: bare <code> in prose was falling back to the user
+   * agent's default monospace instead of this page's stack.
+   */
+  const proseSx = {
+    color: 'text.primary',
+    fontSize: '1rem',
+    lineHeight: 1.7,
+    maxWidth: '68ch',
+    fontWeight: isDark ? W.bodyDark : W.body,
+    fontVariantNumeric: 'slashed-zero',
+    '& strong': { fontWeight: 620 },
+    '& code': {
+      fontFamily: MONO,
+      fontSize: '0.85em',
+      fontVariantNumeric: 'normal',
+      background: isDark ? 'rgba(148,163,184,0.12)' : 'rgba(15,23,42,0.06)',
+      borderRadius: '4px',
+      px: 0.5,
+      py: 0.1,
+    },
+  } as const;
 
   return (
     <Container maxWidth="md" sx={{ py: { xs: 4, md: 6 } }}>
-      {/* ── Hero ─────────────────────────────────────────────────────── */}
+      {/* ── Masthead ─────────────────────────────────────────────────
+          A reference document opens with type and a rule, not a gradient
+          panel with an app icon. The 2px green rule is the code block's left
+          bar rotated: the accent stays scarce and structural. */}
       <Box
+        component="header"
         sx={{
-          position: 'relative',
-          overflow: 'hidden',
-          borderRadius: '20px',
-          px: { xs: 3, md: 5 },
-          py: { xs: 4, md: 5 },
-          mb: 3,
-          background: isDark
-            ? 'linear-gradient(135deg, rgba(118,185,0,0.20) 0%, rgba(0,200,255,0.06) 100%)'
-            : 'linear-gradient(135deg, rgba(118,185,0,0.12) 0%, rgba(0,200,255,0.05) 100%)',
-          border: isDark ? '1px solid rgba(118,185,0,0.28)' : '1px solid rgba(118,185,0,0.18)',
+          mb: 4,
+          pb: 3,
+          borderBottom: `2px solid ${accentRule}`,
         }}
       >
-        <Stack direction="row" spacing={2} sx={{ alignItems: 'center', mb: 2 }}>
-          <Box
-            aria-hidden="true"
-            sx={{
-              width: 56,
-              height: 56,
-              borderRadius: '16px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0,
-              background: `linear-gradient(135deg, ${NV_GREEN} 0%, ${NV_GREEN_DARK} 100%)`,
-              boxShadow: '0 8px 24px rgba(118,185,0,0.35)',
-            }}
-          >
-            <Memory sx={{ fontSize: 30, color: '#fff' }} />
-          </Box>
-          <Box>
-            <Typography
-              variant="h3"
-              component="h1"
-              sx={{ fontWeight: 800, fontSize: { xs: '1.7rem', md: '2.4rem' }, lineHeight: 1.1 }}
-            >
-              DLSS 5 Neural Rendering in ESO
-            </Typography>
-            {/* component="p": MUI maps the subtitle1 variant to <h6>, which would
-                put a stray heading between the h1 and the first section h2. */}
-            <Typography component="p" variant="subtitle1" sx={{ color: 'text.secondary', mt: 0.5 }}>
-              Every setting explained, plus the two ESO-specific traps that stop it working.
-            </Typography>
-          </Box>
-        </Stack>
-        <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1.5, fontSize: '0.8rem' }}>
-          Community guide · Last updated {LAST_UPDATED}
+        <Typography
+          variant="h3"
+          component="h1"
+          sx={{
+            fontWeight: W.heading,
+            fontSize: { xs: '1.75rem', md: '2.5rem' },
+            lineHeight: 1.08,
+            letterSpacing: '-0.015em',
+            mb: 1,
+          }}
+        >
+          DLSS 5 Neural Rendering in ESO
         </Typography>
-        <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 1 }}>
-          {[
-            { label: 'Community guide', warn: false },
-            { label: 'Unofficial / unsupported', warn: true },
-            { label: 'NVIDIA RTX only', warn: false },
-          ].map((c) => (
-            <Chip
-              key={c.label}
-              size="small"
-              label={c.label}
-              variant="outlined"
-              sx={{
-                fontWeight: 600,
-                color: c.warn ? 'warning.main' : 'text.primary',
-                borderColor: c.warn
-                  ? 'warning.main'
-                  : isDark
-                    ? 'rgba(118,185,0,0.45)'
-                    : 'rgba(68,107,0,0.45)',
-                background: isDark ? 'rgba(2,6,23,0.30)' : 'rgba(255,255,255,0.55)',
-              }}
-            />
-          ))}
-        </Stack>
+        {/* component="p": MUI maps the subtitle1 variant to <h6>, which would
+            put a stray heading between the h1 and the first section h2. */}
+        <Typography
+          component="p"
+          variant="subtitle1"
+          sx={{
+            color: 'text.secondary',
+            fontSize: { xs: '1.05rem', md: '1.15rem' },
+            lineHeight: 1.55,
+            fontWeight: W.body,
+            mb: 1.75,
+            maxWidth: '58ch',
+          }}
+        >
+          Every setting explained, plus the two ESO-specific traps that stop it working.
+        </Typography>
+        {/* Colophon rather than chips: three outlined pills read as app UI, and
+            a screen reader hits three stops instead of one sentence. The caution
+            term is the only coloured token, so it flags without shouting. */}
+        <Typography
+          component="p"
+          sx={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            alignItems: 'baseline',
+            columnGap: 1.25,
+            rowGap: 0.25,
+            m: 0,
+            fontFamily: MONO,
+            fontSize: '0.7rem',
+            fontWeight: 400,
+            letterSpacing: '0.1em',
+            textTransform: 'uppercase',
+            color: 'text.secondary',
+            '& [data-sep]': { color: 'text.disabled', letterSpacing: 0 },
+          }}
+        >
+          <span>Community guide</span>
+          <span data-sep aria-hidden="true">
+            ·
+          </span>
+          <Box component="span" sx={{ color: isDark ? CAUTION_TEXT_DARK : CAUTION_TEXT_LIGHT }}>
+            Unofficial &amp; unsupported
+          </Box>
+          <span data-sep aria-hidden="true">
+            ·
+          </span>
+          <span>NVIDIA RTX only</span>
+          <span data-sep aria-hidden="true">
+            ·
+          </span>
+          <span>Updated {LAST_UPDATED}</span>
+        </Typography>
       </Box>
 
       {/* ── Fast path for readers arriving mid-failure ───────────────── */}
-      <Alert
-        severity="info"
-        sx={{ mb: 3, borderRadius: '16px' }}
-        action={
-          <Button
-            size="small"
+      <Callout tone="info" label="Already set up but not working?" sx={{ mb: 3 }}>
+        <Typography variant="body2" sx={{ lineHeight: 1.7 }}>
+          Every fix below is keyed to the log line it produces.{' '}
+          <Box
+            component="a"
             href="#troubleshooting"
-            sx={{ fontWeight: 700, textTransform: 'none', color: 'inherit', whiteSpace: 'nowrap' }}
+            sx={{
+              color: accentText,
+              fontWeight: W.semi,
+              textDecoration: 'underline',
+              textDecorationColor: isDark ? 'rgba(56,189,248,0.4)' : 'rgba(3,105,161,0.4)',
+            }}
           >
-            Jump to fixes
-          </Button>
-        }
-      >
-        <Typography variant="body2" sx={{ lineHeight: 1.6 }}>
-          <strong>Already set up but not working?</strong> Every fix below is keyed to the log line
-          it produces.
+            Jump to the fixes
+          </Box>
+          .
         </Typography>
-      </Alert>
+      </Callout>
 
       {/* ── Risk callout ─────────────────────────────────────────────── */}
-      <Alert
-        severity="warning"
-        icon={<Warning />}
-        sx={{ mb: 4, borderRadius: '16px', alignItems: 'flex-start' }}
-      >
-        <AlertTitle sx={{ fontWeight: 800 }}>Read this before you start</AlertTitle>
+      <Callout tone="caution" label="Read this before you start" sx={{ mb: 4 }}>
         <Typography variant="body2" sx={{ mb: 1.25, lineHeight: 1.7 }}>
           This is an <strong>unofficial, unsupported</strong> modification. Neither ZeniMax nor
           NVIDIA endorses it, and ESO Toolkit is not affiliated with either.
@@ -632,11 +664,14 @@ export const Dlss5NeuralRenderingGuidePage: React.FC = () => {
             crash the client. If you are risk-averse about your account, skip it.
           </Typography>
         </Box>
-      </Alert>
+      </Callout>
 
       {/* ── Table of contents ────────────────────────────────────────── */}
       <Box component="nav" aria-label="On this page" sx={{ ...cardSx, mb: { xs: 6, md: 8 } }}>
-        <Typography component="h2" sx={{ fontWeight: 700, fontSize: '0.95rem', mb: 1 }}>
+        <Typography
+          component="h2"
+          sx={{ fontWeight: W.heading, fontSize: '1.125rem', lineHeight: 1.4, mb: 1 }}
+        >
           On this page
         </Typography>
         <Box
@@ -658,8 +693,8 @@ export const Dlss5NeuralRenderingGuidePage: React.FC = () => {
                 sx={{
                   color: 'text.primary',
                   textDecoration: 'underline',
-                  textDecorationColor: 'rgba(118,185,0,0.5)',
-                  '&:hover': { textDecorationColor: NV_GREEN },
+                  textDecorationColor: isDark ? 'rgba(56,189,248,0.5)' : 'rgba(3,105,161,0.45)',
+                  '&:hover': { textDecorationColor: accentText },
                 }}
               >
                 {s.title}
@@ -670,7 +705,7 @@ export const Dlss5NeuralRenderingGuidePage: React.FC = () => {
       </Box>
 
       {/* ── How it works ─────────────────────────────────────────────── */}
-      <Section id="how-it-works" icon={<Layers />} title="How this works">
+      <Section id="how-it-works" index={1} title="How this works">
         <Box sx={cardSx}>
           <Typography variant="body2" sx={{ ...proseSx, mb: 2.5 }}>
             ESO is DirectX 11 with <strong>no native DLSS</strong>, so there is no toggle to turn
@@ -707,24 +742,33 @@ export const Dlss5NeuralRenderingGuidePage: React.FC = () => {
               body="renodx-dlss5.addon64 detours the NGX calls, and once a DLSS feature evaluates successfully it creates feature 18 (Neural Rendering) on top of it."
             />
           </Stack>
-          <Alert severity="info" icon={<Info />} sx={{ mt: 2.5, borderRadius: '12px' }}>
+          <Callout tone="info" label="Fix order" sx={{ mt: 2.5 }}>
             <Typography variant="body2" sx={{ lineHeight: 1.7 }}>
               <strong>Each stage needs the one before it.</strong> Neural Rendering attaches to a
               working DLSS feature, and that feature needs valid depth and motion.{' '}
-              <Box component="a" href="#troubleshooting" sx={{ color: nvText, fontWeight: 700 }}>
+              <Box
+                component="a"
+                href="#troubleshooting"
+                sx={{
+                  color: accentText,
+                  fontWeight: W.semi,
+                  textDecoration: 'underline',
+                  textDecorationColor: isDark ? 'rgba(56,189,248,0.4)' : 'rgba(3,105,161,0.4)',
+                }}
+              >
                 the troubleshooting section
               </Box>{' '}
               is ordered by stage. Fix the earliest failure, not the symptom you noticed.
             </Typography>
-          </Alert>
+          </Callout>
         </Box>
       </Section>
 
       {/* ── Requirements ─────────────────────────────────────────────── */}
-      <Section id="requirements" icon={<Info />} title="Requirements">
+      <Section id="requirements" index={2} title="Requirements">
         <Box sx={cardSx}>
           <SettingsTable rows={REQUIREMENTS} labelWidth={160} />
-          <Alert severity="info" icon={<Info />} sx={{ mt: 2.5, borderRadius: '12px' }}>
+          <Callout tone="info" label="Where to get it" sx={{ mt: 2.5 }}>
             <Typography variant="body2" sx={{ lineHeight: 1.7 }}>
               Need a current <code>nvngx_dlss.dll</code>? TechPowerUp mirrors official NVIDIA DLSS
               DLLs at{' '}
@@ -733,18 +777,18 @@ export const Dlss5NeuralRenderingGuidePage: React.FC = () => {
                 href="https://www.techpowerup.com/download/nvidia-dlss-dll/"
                 target="_blank"
                 rel="noopener noreferrer"
-                sx={{ color: nvText, fontWeight: 600, textDecoration: 'underline' }}
+                sx={{ color: accentText, fontWeight: W.semi, textDecoration: 'underline' }}
               >
                 techpowerup.com/download/nvidia-dlss-dll
               </Box>
               . Grab a 310.x release. These are unmodified, NVIDIA-signed files.
             </Typography>
-          </Alert>
+          </Callout>
         </Box>
       </Section>
 
       {/* ── Steps ────────────────────────────────────────────────────── */}
-      <Section id="setup" icon={<Science />} title="Setup">
+      <Section id="setup" index={3} title="Setup">
         <Box sx={{ ...cardSx, p: { xs: 2.5, md: 3.5 } }}>
           <Stack component="ol" role="list" sx={{ listStyle: 'none', p: 0, m: 0 }}>
             <StepRow n={1} last={false} title="Find your ESO client folder">
@@ -818,7 +862,16 @@ export const Dlss5NeuralRenderingGuidePage: React.FC = () => {
               </Typography>
               <Note>
                 Version matters enormously. See{' '}
-                <Box component="a" href="#requirements" sx={{ color: nvText, fontWeight: 700 }}>
+                <Box
+                  component="a"
+                  href="#requirements"
+                  sx={{
+                    color: accentText,
+                    fontWeight: W.semi,
+                    textDecoration: 'underline',
+                    textDecorationColor: isDark ? 'rgba(56,189,248,0.4)' : 'rgba(3,105,161,0.4)',
+                  }}
+                >
                   Requirements
                 </Box>
                 . This is where almost every failed setup goes wrong.
@@ -868,7 +921,16 @@ export const Dlss5NeuralRenderingGuidePage: React.FC = () => {
               <Typography variant="body2" sx={proseSx}>
                 Launch ESO, press <strong>Home</strong>, and enable MartysMods_Launchpad first, then
                 DLSS5_Feed directly below it. See{' '}
-                <Box component="a" href="#overlay" sx={{ color: nvText, fontWeight: 700 }}>
+                <Box
+                  component="a"
+                  href="#overlay"
+                  sx={{
+                    color: accentText,
+                    fontWeight: W.semi,
+                    textDecoration: 'underline',
+                    textDecorationColor: isDark ? 'rgba(56,189,248,0.4)' : 'rgba(3,105,161,0.4)',
+                  }}
+                >
                   the overlay walkthrough
                 </Box>{' '}
                 . Order is not cosmetic.
@@ -879,7 +941,7 @@ export const Dlss5NeuralRenderingGuidePage: React.FC = () => {
       </Section>
 
       {/* ── Overlay walkthrough ──────────────────────────────────────── */}
-      <Section id="overlay" icon={<SettingsIcon />} title="Using the ReShade overlay">
+      <Section id="overlay" index={4} title="Using the ReShade overlay">
         <Stack spacing={2}>
           <Box sx={cardSx}>
             <Typography variant="body2" sx={{ ...proseSx, mb: 2 }}>
@@ -890,7 +952,10 @@ export const Dlss5NeuralRenderingGuidePage: React.FC = () => {
           </Box>
 
           <Box sx={cardSx}>
-            <Typography component="h3" sx={{ fontWeight: 700, fontSize: '1rem', mb: 1 }}>
+            <Typography
+              component="h3"
+              sx={{ fontWeight: W.heading, fontSize: '1.125rem', lineHeight: 1.4, mb: 1 }}
+            >
               Effect order (this matters)
             </Typography>
             <Typography variant="body2" sx={{ ...proseSx, mb: 1.5 }}>
@@ -909,7 +974,10 @@ export const Dlss5NeuralRenderingGuidePage: React.FC = () => {
           </Box>
 
           <Box sx={cardSx}>
-            <Typography component="h3" sx={{ fontWeight: 700, fontSize: '1rem', mb: 1 }}>
+            <Typography
+              component="h3"
+              sx={{ fontWeight: W.heading, fontSize: '1.125rem', lineHeight: 1.4, mb: 1 }}
+            >
               DLSS5_Feed effect settings
             </Typography>
             <Typography variant="body2" sx={{ ...proseSx, mb: 1.5 }}>
@@ -919,7 +987,10 @@ export const Dlss5NeuralRenderingGuidePage: React.FC = () => {
           </Box>
 
           <Box sx={cardSx}>
-            <Typography component="h3" sx={{ fontWeight: 700, fontSize: '1rem', mb: 1 }}>
+            <Typography
+              component="h3"
+              sx={{ fontWeight: W.heading, fontSize: '1.125rem', lineHeight: 1.4, mb: 1 }}
+            >
               If LaunchPad is not installed
             </Typography>
             <Typography variant="body2" sx={proseSx}>
@@ -934,7 +1005,7 @@ export const Dlss5NeuralRenderingGuidePage: React.FC = () => {
       </Section>
 
       {/* ── NR add-on panel ──────────────────────────────────────────── */}
-      <Section id="nr-panel" icon={<Tune />} title="The Neural Rendering add-on panel">
+      <Section id="nr-panel" index={5} title="The Neural Rendering add-on panel">
         <Stack spacing={2}>
           <Typography variant="body2" sx={proseSx}>
             Overlay → <strong>Add-ons</strong> → <strong>DLSS 5 Neural Rendering</strong>. Read the
@@ -943,7 +1014,10 @@ export const Dlss5NeuralRenderingGuidePage: React.FC = () => {
           </Typography>
 
           <Box sx={cardSx}>
-            <Typography component="h3" sx={{ fontWeight: 700, fontSize: '1rem', mb: 1.5 }}>
+            <Typography
+              component="h3"
+              sx={{ fontWeight: W.heading, fontSize: '1.125rem', lineHeight: 1.4, mb: 1.5 }}
+            >
               What the status line means
             </Typography>
             <Stack spacing={1.75}>
@@ -951,36 +1025,46 @@ export const Dlss5NeuralRenderingGuidePage: React.FC = () => {
                 <Box
                   key={s.status}
                   sx={{
-                    borderLeft: `3px solid ${s.good ? nvText : theme.palette.warning.main}`,
+                    borderLeft: `3px solid ${s.good ? goodText : isDark ? CAUTION_TEXT_DARK : CAUTION_TEXT_LIGHT}`,
                     pl: 1.75,
                   }}
                 >
-                  <Chip
-                    size="small"
-                    icon={
-                      s.good ? (
-                        <CheckCircle sx={{ fontSize: 14 }} />
-                      ) : (
-                        <Warning sx={{ fontSize: 14 }} />
-                      )
-                    }
-                    label={s.good ? 'Goal state' : 'Needs action'}
-                    color={s.good ? 'success' : 'warning'}
-                    variant="outlined"
-                    sx={{ fontWeight: 700, height: 22, mb: 0.75 }}
-                  />
+                  <Typography
+                    component="span"
+                    sx={{
+                      display: 'block',
+                      fontFamily: MONO,
+                      fontWeight: 700,
+                      fontSize: '0.66rem',
+                      letterSpacing: '0.09em',
+                      textTransform: 'uppercase',
+                      mb: 0.5,
+                      color: s.good ? goodText : isDark ? CAUTION_TEXT_DARK : CAUTION_TEXT_LIGHT,
+                    }}
+                  >
+                    {s.good ? 'Goal state' : 'Needs action'}
+                  </Typography>
                   <Typography
                     sx={{
                       fontFamily: MONO,
                       fontSize: '0.82rem',
-                      fontWeight: 600,
+                      fontWeight: 400,
+                      letterSpacing: '0.01em',
                       mb: 0.4,
-                      color: s.good ? nvText : 'text.primary',
+                      color: s.good ? goodText : 'text.primary',
                     }}
                   >
                     {s.status}
                   </Typography>
-                  <Typography variant="body2" sx={{ color: 'text.secondary', lineHeight: 1.65 }}>
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      color: 'text.secondary',
+                      fontSize: '0.9375rem',
+                      lineHeight: 1.65,
+                      maxWidth: '68ch',
+                    }}
+                  >
                     {s.meaning}
                   </Typography>
                 </Box>
@@ -989,25 +1073,28 @@ export const Dlss5NeuralRenderingGuidePage: React.FC = () => {
           </Box>
 
           <Box sx={cardSx}>
-            <Typography component="h3" sx={{ fontWeight: 700, fontSize: '1rem', mb: 1.5 }}>
+            <Typography
+              component="h3"
+              sx={{ fontWeight: W.heading, fontSize: '1.125rem', lineHeight: 1.4, mb: 1.5 }}
+            >
               Every control
             </Typography>
             <SettingsTable rows={NR_SETTINGS} labelWidth={230} />
           </Box>
 
-          <Alert severity="info" icon={<Info />} sx={{ borderRadius: '16px' }}>
+          <Callout tone="info" label="Seeing the effect">
             <Typography variant="body2" sx={{ lineHeight: 1.7 }}>
               <strong>To see it at all:</strong> stand still, look closely at a character&apos;s
               face, and tap <strong>F6</strong>. Faces, hair and fabric change most; terrain and sky
               barely move. If nothing changes, check the status line above rather than squinting
               harder.
             </Typography>
-          </Alert>
+          </Callout>
         </Stack>
       </Section>
 
       {/* ── Depth buffer ─────────────────────────────────────────────── */}
-      <Section id="depth-buffer" icon={<Layers />} title="Checking the depth buffer">
+      <Section id="depth-buffer" index={6} title="Checking the depth buffer">
         <Box sx={cardSx}>
           <Typography variant="body2" sx={{ ...proseSx, mb: 2 }}>
             The feeder needs <strong>scene depth</strong>. ESO presents several depth buffers and
@@ -1015,7 +1102,10 @@ export const Dlss5NeuralRenderingGuidePage: React.FC = () => {
             output looks wrong rather than missing.
           </Typography>
 
-          <Typography component="h3" sx={{ fontWeight: 700, fontSize: '1rem', mb: 1 }}>
+          <Typography
+            component="h3"
+            sx={{ fontWeight: W.heading, fontSize: '1.125rem', lineHeight: 1.4, mb: 1 }}
+          >
             The quick visual check
           </Typography>
           <Typography variant="body2" sx={{ ...proseSx, mb: 2 }}>
@@ -1025,7 +1115,10 @@ export const Dlss5NeuralRenderingGuidePage: React.FC = () => {
             white, blank black, or shows only your interface, the wrong buffer is selected.
           </Typography>
 
-          <Typography component="h3" sx={{ fontWeight: 700, fontSize: '1rem', mb: 1 }}>
+          <Typography
+            component="h3"
+            sx={{ fontWeight: W.heading, fontSize: '1.125rem', lineHeight: 1.4, mb: 1 }}
+          >
             Fixing it
           </Typography>
           <Typography variant="body2" sx={{ ...proseSx, mb: 1.5 }}>
@@ -1048,25 +1141,28 @@ export const Dlss5NeuralRenderingGuidePage: React.FC = () => {
             panel. Once it looks right, turn DisplayDepth back off; leaving it on overwrites your
             screen.
           </Typography>
-          <Alert severity="success" icon={<CheckCircle />} sx={{ mt: 2, borderRadius: '12px' }}>
+          <Callout tone="good" label="What success looks like" sx={{ mt: 2 }}>
             <Typography variant="body2" sx={{ lineHeight: 1.7 }}>
               A correct setup logs <code>Depth 2560x1440 R32_FLOAT</code> (at your resolution) in{' '}
               <code>dlss5-feed.log</code>. If the resolution there does not match your monitor, the
               wrong buffer is selected.
             </Typography>
-          </Alert>
+          </Callout>
         </Box>
       </Section>
 
       {/* ── Verification ─────────────────────────────────────────────── */}
-      <Section id="verify" icon={<CheckCircle />} title="Verify it's working">
+      <Section id="verify" index={7} title="Verify it's working">
         <Box sx={cardSx}>
           <Typography variant="body2" sx={{ ...proseSx, mb: 2 }}>
             The effect is subtle and easy to imagine seeing. Trust the logs. Both live in the client
             folder: play for 30 seconds, then read them.
           </Typography>
 
-          <Typography component="h3" sx={{ fontWeight: 700, fontSize: '1rem', mb: 1 }}>
+          <Typography
+            component="h3"
+            sx={{ fontWeight: W.heading, fontSize: '1.125rem', lineHeight: 1.4, mb: 1 }}
+          >
             dlss5-feed.log — DLSS itself is alive
           </Typography>
           <CodeBlock copyable copyLabel="Copy expected feeder lines" sx={{ mb: 2.5 }}>
@@ -1075,7 +1171,10 @@ feature ready: 2560x1440 DLAA, flags=66 (SDR MVLowRes AutoExposure)
 frame 1 delivered (2560x1440, reset=1)`}
           </CodeBlock>
 
-          <Typography component="h3" sx={{ fontWeight: 700, fontSize: '1rem', mb: 1 }}>
+          <Typography
+            component="h3"
+            sx={{ fontWeight: W.heading, fontSize: '1.125rem', lineHeight: 1.4, mb: 1 }}
+          >
             ReShade.log — Neural Rendering is actually evaluating
           </Typography>
           <CodeBlock copyable copyLabel="Copy expected NR lines" sx={{ mb: 2.5 }}>
@@ -1085,26 +1184,29 @@ feature 18 created via the signed snippet after DLSS/DLAA
 inline feature 18 evaluation succeeded (count=60, ...)`}
           </CodeBlock>
 
-          <Alert severity="success" icon={<CheckCircle />} sx={{ borderRadius: '12px' }}>
+          <Callout tone="good" label="What success looks like">
             <Typography variant="body2" sx={{ lineHeight: 1.7 }}>
               <strong>feature 18</strong> is the one that matters. <code>feature=1</code> is
               ordinary DLSS/DLAA. If that is all you ever see, Neural Rendering is not running. The{' '}
               <code>count=</code> value must climb across frames; a count stuck at 1 means it
               evaluated once and stopped.
             </Typography>
-          </Alert>
+          </Callout>
         </Box>
       </Section>
 
       {/* ── Config reference ─────────────────────────────────────────── */}
-      <Section id="config" icon={<SettingsIcon />} title="Config file reference">
+      <Section id="config" index={8} title="Config file reference">
         <Box sx={cardSx}>
           <Typography variant="body2" sx={{ ...proseSx, mb: 2 }}>
             The overlay writes these for you. They are here so you can diff a working setup against
             a broken one.
           </Typography>
 
-          <Typography component="h3" sx={{ fontWeight: 700, fontSize: '1rem', mb: 1 }}>
+          <Typography
+            component="h3"
+            sx={{ fontWeight: W.heading, fontSize: '1.125rem', lineHeight: 1.4, mb: 1 }}
+          >
             ReShade.ini — the add-on section
           </Typography>
           <CodeBlock copyable copyLabel="Copy ReShade.ini section" sx={{ mb: 1.5 }}>
@@ -1123,7 +1225,10 @@ NREnableUpscaling=0  ; WIP; a no-op on ESO, see the settings table above`}
             at 2; if NGX-only genuinely yields nothing, 1 is a last resort that can crash at boot.
           </Typography>
 
-          <Typography component="h3" sx={{ fontWeight: 700, fontSize: '1rem', mb: 1 }}>
+          <Typography
+            component="h3"
+            sx={{ fontWeight: W.heading, fontSize: '1.125rem', lineHeight: 1.4, mb: 1 }}
+          >
             dlss5-feed.cfg — the feeder
           </Typography>
           <CodeBlock copyable copyLabel="Copy dlss5-feed.cfg" sx={{ mb: 1.5 }}>
@@ -1151,11 +1256,11 @@ flags=-1           ; -1 = auto`}
       </Section>
 
       {/* ── Troubleshooting ──────────────────────────────────────────── */}
-      <Section id="troubleshooting" icon={<Warning />} title="Troubleshooting: fixes by log line">
+      <Section id="troubleshooting" index={9} title="Troubleshooting: fixes by log line">
         <Typography variant="body2" sx={{ ...proseSx, mb: 2 }}>
           Work top to bottom. Each failure masks the ones after it.
         </Typography>
-        <Stack spacing={1.5}>
+        <Box sx={{ ...cardSx, p: 0, overflow: 'hidden' }}>
           {FAILURES.map((f, i) => (
             <Accordion
               key={f.symptom}
@@ -1163,20 +1268,19 @@ flags=-1           ; -1 = auto`}
               elevation={0}
               defaultExpanded={f.defaultOpen ?? false}
               sx={{
-                ...cardSx,
-                p: 0,
-                borderRadius: '12px !important',
+                background: 'transparent',
                 '&:before': { display: 'none' },
-                overflow: 'hidden',
+                borderBottom: i < FAILURES.length - 1 ? '1px solid' : 'none',
+                borderColor: 'divider',
               }}
             >
               <AccordionSummary
-                expandIcon={<ExpandMore />}
+                expandIcon={<ExpandMore sx={{ fontSize: 18, color: 'text.disabled' }} />}
                 id={`fail-${i}-header`}
                 aria-controls={`fail-${i}-content`}
-                sx={{ px: 2 }}
+                sx={{ px: 2, minHeight: 52, '&.Mui-expanded': { minHeight: 52 } }}
               >
-                <Typography component="h3" sx={{ fontWeight: 700, fontSize: '0.92rem', m: 0 }}>
+                <Typography component="h3" sx={{ fontWeight: 620, fontSize: '0.92rem', m: 0 }}>
                   {f.symptom}
                 </Typography>
               </AccordionSummary>
@@ -1196,11 +1300,11 @@ flags=-1           ; -1 = auto`}
               </AccordionDetails>
             </Accordion>
           ))}
-        </Stack>
+        </Box>
       </Section>
 
       {/* ── Performance ──────────────────────────────────────────────── */}
-      <Section id="performance" icon={<Speed />} title="What it costs">
+      <Section id="performance" index={10} title="What it costs">
         <Box sx={cardSx}>
           <Typography variant="body2" sx={{ ...proseSx, mb: 2 }}>
             Neural Rendering is not free. Measured at 1440p on an RTX 4070 Ti Super, from the
@@ -1220,16 +1324,8 @@ after NR:   feed CPU 11.82 ms/frame |  63.9 fps | feed is 75% of the frame`}
       </Section>
 
       {/* ── Footer CTA ───────────────────────────────────────────────── */}
-      <Box
-        sx={{
-          ...cardSx,
-          textAlign: 'center',
-          background: isDark
-            ? 'linear-gradient(135deg, rgba(118,185,0,0.16) 0%, rgba(0,200,255,0.05) 100%)'
-            : 'linear-gradient(135deg, rgba(118,185,0,0.10) 0%, rgba(0,200,255,0.04) 100%)',
-        }}
-      >
-        <Typography sx={{ fontWeight: 700, fontSize: '1.1rem', mb: 0.5 }}>
+      <Box sx={{ ...cardSx, textAlign: 'center' }}>
+        <Typography sx={{ fontWeight: W.heading, fontSize: '1.1rem', lineHeight: 1.4, mb: 0.5 }}>
           Stuck on a step?
         </Typography>
         <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
@@ -1247,21 +1343,7 @@ after NR:   feed CPU 11.82 ms/frame |  63.9 fps | feed is 75% of the frame`}
             target="_blank"
             rel="noopener noreferrer"
             endIcon={<ArrowForward />}
-            sx={{
-              borderRadius: '10px',
-              fontWeight: 700,
-              textTransform: 'none',
-              px: 3,
-              color: '#fff',
-              textShadow: '0 1px 2px rgba(0,0,0,0.35)',
-              background: `linear-gradient(135deg, ${NV_GREEN} 0%, ${NV_GREEN_DARK} 100%)`,
-              boxShadow: '0 4px 16px rgba(118,185,0,0.35)',
-              '&:hover': {
-                color: '#fff',
-                background: `linear-gradient(135deg, ${NV_GREEN_DARK} 0%, ${NV_GREEN_TEXT_LIGHT} 100%)`,
-                boxShadow: '0 6px 22px rgba(118,185,0,0.5)',
-              },
-            }}
+            sx={{ borderRadius: '8px', fontWeight: W.semi, textTransform: 'none', px: 3 }}
           >
             Ask on Discord
           </Button>
@@ -1269,15 +1351,7 @@ after NR:   feed CPU 11.82 ms/frame |  63.9 fps | feed is 75% of the frame`}
             variant="outlined"
             component={RouterLink}
             to="/"
-            sx={{
-              borderRadius: '10px',
-              fontWeight: 600,
-              textTransform: 'none',
-              px: 3,
-              borderColor: 'rgba(118,185,0,0.4)',
-              color: isDark ? '#d7f0a8' : NV_GREEN_TEXT_LIGHT,
-              '&:hover': { borderColor: NV_GREEN, background: 'rgba(118,185,0,0.06)' },
-            }}
+            sx={{ borderRadius: '8px', fontWeight: W.semi, textTransform: 'none', px: 3 }}
           >
             Explore ESO Toolkit
           </Button>
@@ -1300,45 +1374,45 @@ after NR:   feed CPU 11.82 ms/frame |  63.9 fps | feed is 75% of the frame`}
  */
 const Section: React.FC<{
   id: string;
-  icon: React.ReactNode;
+  index: number;
   title: string;
   children: React.ReactNode;
-}> = ({ id, icon, title, children }) => (
+}> = ({ id, index, title, children }) => (
   <Box component="section" sx={{ mb: { xs: 6, md: 8 } }}>
     <Stack
       direction="row"
       spacing={1.5}
       sx={{
-        alignItems: 'center',
+        alignItems: 'baseline',
         mb: 3,
-        pb: 1.5,
+        pb: 1.25,
         borderBottom: '1px solid',
         borderColor: 'divider',
       }}
     >
-      <Box
+      <Typography
         aria-hidden="true"
         sx={{
-          width: 34,
-          height: 34,
-          borderRadius: '10px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          flexShrink: 0,
-          color: 'text.secondary',
-          background: (t) =>
-            t.palette.mode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(15,23,42,0.05)',
-          '& svg': { fontSize: 20 },
+          fontFamily: MONO,
+          fontWeight: 700,
+          fontSize: '0.78rem',
+          color: 'text.disabled',
+          letterSpacing: '0.05em',
         }}
       >
-        {icon}
-      </Box>
+        {String(index).padStart(2, '0')}
+      </Typography>
       <Typography
         variant="h5"
         component="h2"
         id={id}
-        sx={{ fontWeight: 700, letterSpacing: '-0.01em', scrollMarginTop: { xs: 72, md: 88 } }}
+        sx={{
+          fontWeight: 600,
+          fontSize: { xs: '1.35rem', md: '1.5rem' },
+          lineHeight: 1.25,
+          letterSpacing: '-0.01em',
+          scrollMarginTop: { xs: 72, md: 88 },
+        }}
       >
         {title}
       </Typography>
@@ -1370,10 +1444,11 @@ const StepRow: React.FC<{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          fontWeight: 800,
+          fontWeight: W.heading,
           fontSize: '0.85rem',
-          color: '#fff',
-          background: `linear-gradient(135deg, ${NV_GREEN} 0%, ${NV_GREEN_DARK} 100%)`,
+          color: ON_ACCENT_INK,
+          background: ACCENT_DARK,
+          fontVariantNumeric: 'tabular-nums',
         }}
       >
         {n}
@@ -1386,13 +1461,17 @@ const StepRow: React.FC<{
             flex: 1,
             my: 0.75,
             borderRadius: 1,
-            background: 'rgba(118,185,0,0.28)',
+            background: (t) =>
+              t.palette.mode === 'dark' ? 'rgba(56,189,248,0.28)' : 'rgba(3,105,161,0.25)',
           }}
         />
       )}
     </Stack>
     <Box sx={{ minWidth: 0, flex: 1, pb: last ? 0 : 3.5 }}>
-      <Typography component="h3" sx={{ fontWeight: 700, fontSize: '1rem', mb: 0.5, mt: '3px' }}>
+      <Typography
+        component="h3"
+        sx={{ fontWeight: W.heading, fontSize: '1.125rem', lineHeight: 1.4, mb: 0.5, mt: '3px' }}
+      >
         {title}
       </Typography>
       {children}
@@ -1409,7 +1488,7 @@ const StepRow: React.FC<{
 const PipelineDiagram: React.FC = () => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
-  const accent = isDark ? NV_GREEN : NV_GREEN_TEXT_LIGHT;
+  const accent = isDark ? GOOD_TEXT_DARK : GOOD_TEXT_LIGHT;
 
   return (
     <Box
@@ -1499,11 +1578,80 @@ const PipelineDiagram: React.FC = () => {
 const Note: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <Typography
     variant="body2"
-    sx={{ mt: 1, fontStyle: 'italic', color: 'text.secondary', lineHeight: 1.6 }}
+    sx={{
+      mt: 1,
+      fontStyle: 'italic',
+      color: 'text.secondary',
+      fontSize: '0.9375rem',
+      lineHeight: 1.6,
+      maxWidth: '68ch',
+    }}
   >
     {children}
   </Typography>
 );
+
+/**
+ * Quiet document callout replacing MUI Alert. Attention is signalled by a
+ * coloured edge and a small-caps label rather than a tinted fill and a filled
+ * icon, matching the code blocks' anatomy.
+ *
+ * role="note", not Alert's role="alert": these are static prose, and a live
+ * region announced on render is simply wrong for them.
+ */
+const Callout: React.FC<{
+  tone: 'info' | 'caution' | 'good';
+  label: string;
+  children: React.ReactNode;
+  sx?: object;
+}> = ({ tone, label, children, sx }) => {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+  const bar =
+    tone === 'good'
+      ? isDark
+        ? 'rgba(118,185,0,0.55)'
+        : GOOD_TEXT_LIGHT
+      : tone === 'caution'
+        ? isDark
+          ? CAUTION_TEXT_DARK
+          : CAUTION_TEXT_LIGHT
+        : isDark
+          ? 'rgba(148,163,184,0.5)'
+          : 'rgba(15,23,42,0.35)';
+  return (
+    <Box
+      role="note"
+      sx={{
+        border: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(15,23,42,0.10)',
+        borderLeft: `3px solid ${bar}`,
+        borderRadius: '10px',
+        px: 2,
+        py: 1.5,
+        // Callout prose is not secondary text: the risk warning lives here.
+        '& p, & li': {
+          fontSize: '1rem',
+          lineHeight: 1.7,
+          maxWidth: '68ch',
+          fontWeight: isDark ? W.bodyDark : W.body,
+        },
+        '& strong': { fontWeight: 620 },
+        '& code': {
+          fontFamily: MONO,
+          fontSize: '0.85em',
+          background: isDark ? 'rgba(148,163,184,0.12)' : 'rgba(15,23,42,0.06)',
+          borderRadius: '4px',
+          px: 0.5,
+          py: 0.1,
+        },
+        ...sx,
+      }}
+    >
+      <MicroLabel>{label}</MicroLabel>
+      {children}
+    </Box>
+  );
+};
 
 /** Uppercase overline for the repeated log/why/fix labels inside accordions. */
 const MicroLabel: React.FC<{ children: React.ReactNode }> = ({ children }) => (
@@ -1511,10 +1659,11 @@ const MicroLabel: React.FC<{ children: React.ReactNode }> = ({ children }) => (
     variant="caption"
     sx={{
       display: 'block',
-      fontWeight: 700,
-      fontSize: '0.68rem',
-      letterSpacing: '0.08em',
+      fontWeight: W.label,
+      fontSize: '0.7rem',
+      letterSpacing: '0.1em',
       textTransform: 'uppercase',
+      fontVariantNumeric: 'tabular-nums slashed-zero',
       color: 'text.secondary',
       mb: 0.5,
     }}
@@ -1555,12 +1704,12 @@ const CodeBlock: React.FC<{
         sx={{
           m: 0,
           fontFamily: MONO,
-          fontSize: '0.82rem',
+          fontSize: '0.875rem',
           lineHeight: 1.7,
           color: isDark ? '#cbd5e1' : '#334155',
           background: isDark ? 'rgba(2,6,23,0.55)' : 'rgba(15,23,42,0.045)',
           border: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(15,23,42,0.10)',
-          borderLeft: `3px solid ${isDark ? 'rgba(118,185,0,0.55)' : NV_GREEN_TEXT_LIGHT}`,
+          borderLeft: `3px solid ${isDark ? 'rgba(56,189,248,0.55)' : 'rgba(3,105,161,0.55)'}`,
           borderRadius: '10px',
           px: 1.5,
           py: 1.25,
@@ -1629,7 +1778,7 @@ const SettingsTable: React.FC<{
           sx={{
             fontFamily: MONO,
             fontWeight: 700,
-            fontSize: '0.8rem',
+            fontSize: '0.85rem',
             lineHeight: 1.6,
             color: 'text.primary',
             overflowWrap: 'anywhere',
@@ -1637,7 +1786,10 @@ const SettingsTable: React.FC<{
         >
           {row.label}
         </Typography>
-        <Typography variant="body2" sx={{ color: 'text.secondary', lineHeight: 1.65 }}>
+        <Typography
+          variant="body2"
+          sx={{ color: 'text.secondary', fontSize: '0.9375rem', lineHeight: 1.65 }}
+        >
           {row.value}
         </Typography>
       </Box>
@@ -1650,8 +1802,9 @@ const ChainRow: React.FC<{ n: string; title: string; body: string }> = ({ n, tit
     <Typography
       aria-hidden="true"
       sx={{
-        fontWeight: 800,
+        fontWeight: W.heading,
         fontSize: '0.8rem',
+        fontVariantNumeric: 'tabular-nums',
         color: 'text.secondary',
         minWidth: 18,
         flexShrink: 0,
@@ -1662,7 +1815,10 @@ const ChainRow: React.FC<{ n: string; title: string; body: string }> = ({ n, tit
     </Typography>
     <Box sx={{ minWidth: 0 }}>
       <Typography sx={{ fontWeight: 700, fontSize: '0.9rem' }}>{title}</Typography>
-      <Typography variant="body2" sx={{ color: 'text.secondary', lineHeight: 1.65 }}>
+      <Typography
+        variant="body2"
+        sx={{ color: 'text.secondary', fontSize: '0.9375rem', lineHeight: 1.65, maxWidth: '68ch' }}
+      >
         {body}
       </Typography>
     </Box>
