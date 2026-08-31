@@ -561,7 +561,7 @@ export const Dlss5NeuralRenderingGuidePage: React.FC = () => {
       fontVariantNumeric: 'normal',
       background: isDark ? 'rgba(148,163,184,0.12)' : 'rgba(15,23,42,0.06)',
       borderRadius: '4px',
-      px: 0.5,
+      px: '0.25em',
       py: 0.1,
     },
   } as const;
@@ -588,10 +588,11 @@ export const Dlss5NeuralRenderingGuidePage: React.FC = () => {
             fontSize: { xs: '1.75rem', md: '2.5rem' },
             lineHeight: 1.08,
             letterSpacing: '-0.015em',
+            textWrap: 'balance',
             mb: 1,
           }}
         >
-          DLSS 5 Neural Rendering in ESO
+          DLSS 5 Neural Rendering in&nbsp;ESO
         </Typography>
         {/* component="p": MUI maps the subtitle1 variant to <h6>, which would
             put a stray heading between the h1 and the first section h2. */}
@@ -603,6 +604,7 @@ export const Dlss5NeuralRenderingGuidePage: React.FC = () => {
             fontSize: { xs: '1.05rem', md: '1.15rem' },
             lineHeight: 1.55,
             fontWeight: W.body,
+            textWrap: 'pretty',
             mb: 1.75,
             maxWidth: '58ch',
           }}
@@ -618,8 +620,7 @@ export const Dlss5NeuralRenderingGuidePage: React.FC = () => {
             display: 'flex',
             flexWrap: 'wrap',
             alignItems: 'baseline',
-            columnGap: 1.25,
-            rowGap: 0.25,
+            rowGap: 0.35,
             m: 0,
             fontFamily: MONO,
             fontSize: '0.7rem',
@@ -627,24 +628,38 @@ export const Dlss5NeuralRenderingGuidePage: React.FC = () => {
             letterSpacing: '0.1em',
             textTransform: 'uppercase',
             color: 'text.secondary',
-            '& [data-sep]': { color: 'text.disabled', letterSpacing: 0 },
           }}
         >
-          <span>Community guide</span>
-          <span data-sep aria-hidden="true">
-            ·
-          </span>
-          <Box component="span" sx={{ color: isDark ? CAUTION_TEXT_DARK : CAUTION_TEXT_LIGHT }}>
-            Unofficial &amp; unsupported
-          </Box>
-          <span data-sep aria-hidden="true">
-            ·
-          </span>
-          <span>NVIDIA RTX only</span>
-          <span data-sep aria-hidden="true">
-            ·
-          </span>
-          <span>Updated {LAST_UPDATED}</span>
+          {[
+            { text: 'Community guide' },
+            { text: 'Unofficial & unsupported', caution: true },
+            { text: 'NVIDIA RTX only' },
+            { text: `Updated ${LAST_UPDATED}` },
+          ].map((item, i) => (
+            <Box component="span" key={item.text} sx={{ whiteSpace: 'nowrap' }}>
+              {i > 0 && (
+                <Box
+                  component="span"
+                  aria-hidden="true"
+                  sx={{ color: 'text.disabled', letterSpacing: 0, mx: 0.9 }}
+                >
+                  ·
+                </Box>
+              )}
+              <Box
+                component="span"
+                sx={{
+                  color: item.caution
+                    ? isDark
+                      ? CAUTION_TEXT_DARK
+                      : CAUTION_TEXT_LIGHT
+                    : 'inherit',
+                }}
+              >
+                {item.text}
+              </Box>
+            </Box>
+          ))}
         </Typography>
       </Box>
 
@@ -723,6 +738,11 @@ export const Dlss5NeuralRenderingGuidePage: React.FC = () => {
                 component="a"
                 href={`#${s.id}`}
                 sx={{
+                  // Inline anchors here were 17px tall, well under the 24px
+                  // WCAG 2.5.8 target minimum. Prose links get the inline
+                  // exception; a navigation list does not.
+                  display: 'inline-block',
+                  py: 0.6,
                   color: 'text.primary',
                   textDecoration: 'underline',
                   textDecorationColor: isDark ? 'rgba(56,189,248,0.5)' : 'rgba(3,105,161,0.45)',
@@ -1719,7 +1739,7 @@ const Callout: React.FC<{
           fontSize: '0.85em',
           background: isDark ? 'rgba(148,163,184,0.12)' : 'rgba(15,23,42,0.06)',
           borderRadius: '4px',
-          px: 0.5,
+          px: '0.25em',
           py: 0.1,
         },
         ...sx,
