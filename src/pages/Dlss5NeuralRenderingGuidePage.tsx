@@ -1160,7 +1160,7 @@ after NR:   feed CPU 11.82 ms/frame |  63.9 fps | feed is 75% of the frame`}
           <Button
             variant="outlined"
             component={RouterLink}
-            to="/about"
+            to="/"
             sx={{
               borderRadius: '10px',
               fontWeight: 600,
@@ -1171,7 +1171,7 @@ after NR:   feed CPU 11.82 ms/frame |  63.9 fps | feed is 75% of the frame`}
               '&:hover': { borderColor: NV_GREEN, background: 'rgba(118,185,0,0.06)' },
             }}
           >
-            About ESO Toolkit
+            Explore ESO Toolkit
           </Button>
         </Stack>
       </Box>
