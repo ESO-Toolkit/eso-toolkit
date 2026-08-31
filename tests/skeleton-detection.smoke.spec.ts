@@ -83,11 +83,16 @@ test.describe('Skeleton Detection Smoke Tests', () => {
     
     if (hasCalculatorSkeleton) {
       console.log('Waiting for calculator skeleton to disappear...');
-      await skeletonDetector.waitForSkeletonTypeToDisappear(
-        SKELETON_SELECTORS.CALCULATOR,
-        { timeout: 30000 },
-      );
     }
+
+    // page.goto() can resolve just before the lazy route starts rendering. Waiting for
+    // calculator content avoids a check-then-act race where the skeleton is initially
+    // absent, appears a moment later, and is mistaken for a persistent loading state.
+    await expect(page.locator('[data-calculator-card="true"]')).toBeVisible({ timeout: 30000 });
+    await skeletonDetector.waitForSkeletonTypeToDisappear(
+      SKELETON_SELECTORS.CALCULATOR,
+      { timeout: 30000 },
+    );
     
     // Verify calculator skeleton is gone
     const stillHasCalculatorSkeleton = await skeletonDetector.hasSkeletonType(
