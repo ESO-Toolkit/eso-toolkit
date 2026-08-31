@@ -46,6 +46,8 @@ import { Link as RouterLink } from 'react-router-dom';
 
 import { usePageTitle } from '@/hooks/useDocumentTitle';
 
+import discordIcon from '../assets/discord-icon.svg';
+
 /**
  * Colour system: cyan does structure, green means "it works", amber means
  * "careful". Three competing brand hues became two semantic ones, so the page
@@ -1446,6 +1448,20 @@ after NR:   feed CPU 11.82 ms/frame |  63.9 fps | feed is 75% of the frame`}
             href="https://discord.gg/mMjwcQYFdc"
             target="_blank"
             rel="noopener noreferrer"
+            startIcon={
+              <img
+                src={discordIcon}
+                alt=""
+                style={{
+                  width: 18,
+                  height: 18,
+                  // The contained primary flips ink between modes: near-black on
+                  // cyan in dark, white on navy in light. A fixed filter would
+                  // leave the mark invisible in one of them.
+                  filter: isDark ? 'brightness(0)' : 'brightness(0) invert(1)',
+                }}
+              />
+            }
             endIcon={<ArrowForward />}
             sx={{ borderRadius: '8px', fontWeight: W.semi, textTransform: 'none', px: 3 }}
           >
