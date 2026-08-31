@@ -30,6 +30,7 @@ import { CORE_SHARE_THRESHOLD, FLEX_SHARE_THRESHOLD } from '../clustering/cluste
 import { useRepresentativeBuild } from '../hooks/useRepresentativeBuild';
 import { getDpsDataTextColor, getLeaderboardClassTheme } from '../theme/leaderboardTheme';
 import type { BuildCluster, ClusterTrait } from '../types/clustering.types';
+import type { DpsParse } from '../types/dpsParses.types';
 import { gearIconUrl } from '../utils/buildIconUrls';
 import { formatCompactDps } from '../utils/displayFormatting';
 
@@ -59,12 +60,16 @@ export interface BuildInspectorProps {
   pendingKind?: 'open' | 'save' | null;
   actionsDisabled?: boolean;
   variations?: readonly ClusterTrait[];
+  /** URL for the parse represented by the headline and source actions. */
   sourceUrl?: string;
+  /** URL for the medoid parse whose loadout is shown in build evidence. */
+  representativeSourceUrl?: string;
   representativeDps?: number;
   /**
-   * Pooled class view: amounts in cluster.dps are internal comparison values,
-   * so the headline shows the medoid's RAW parse DPS instead.
+   * Pooled leaderboard view: use the same highest raw member parse as the
+   * selected row. The cluster's dps summary is normalized for pooled data.
    */
+  bestParse?: DpsParse;
   pooled?: boolean;
   /**
    * Thin-data view: this card is ONE recorded build, not an archetype distilled
@@ -90,7 +95,9 @@ export const BuildInspector: React.FC<BuildInspectorProps> = ({
   actionsDisabled = false,
   variations = [],
   sourceUrl,
+  representativeSourceUrl,
   representativeDps,
+  bestParse,
   pooled = false,
   coveredBosses,
   ungrouped = false,
@@ -105,11 +112,15 @@ export const BuildInspector: React.FC<BuildInspectorProps> = ({
   // of this path: there is no clustering evidence to support either claim.
   const showBossCoverage =
     pooled && !ungrouped && coveredBosses !== undefined && availableBosses !== undefined;
-  const headlineDps = ungrouped
-    ? cluster.dps.median
-    : pooled
-      ? (representativeDps ?? cluster.dps.median)
-      : cluster.dps.median;
+  const headlineDps = pooled ? bestParse?.amount : cluster.dps.median;
+  const headlineAnchor = pooled ? bestParse?.trial_id || bestParse?.encounter_name || '' : '';
+  const headlineDpsLabel =
+    headlineDps === undefined
+      ? 'DPS unavailable'
+      : `${formatCompactDps(headlineDps)} DPS${headlineAnchor ? ` @ ${headlineAnchor}` : ''}`;
+  const sampledParseNoun = cluster.size === 1 ? 'parse' : 'parses';
+  const totalSampledParseNoun = totalParses === 1 ? 'parse' : 'parses';
+  const sampledParseLabel = `${cluster.size} sampled top-ranked ${sampledParseNoun}`;
   const representativeTraitIcons = React.useMemo(() => {
     const build = representativeBuild.build;
     if (!build) return new Map<string, string>();
@@ -154,14 +165,23 @@ export const BuildInspector: React.FC<BuildInspectorProps> = ({
   );
   const closeMenu = (): void => setMenuAnchor(null);
 
-  React.useEffect(() => setMenuAnchor(null), [cluster.id]);
+  const selectionKey = [
+    cluster.id,
+    label,
+    pooled ? 'pooled' : 'single',
+    ungrouped ? 'ungrouped' : 'grouped',
+    bestParse?.parse_id ?? '',
+    sourceUrl ?? '',
+    representativeSourceUrl ?? '',
+  ].join('|');
+
+  React.useEffect(() => setMenuAnchor(null), [selectionKey]);
 
   return (
     <Box
       component="article"
       data-testid="build-inspector"
       data-class-accent={classTheme.accent}
-      aria-labelledby={`build-inspector-${cluster.id}`}
       sx={{
         display: 'flex',
         width: '100%',
@@ -233,7 +253,7 @@ export const BuildInspector: React.FC<BuildInspectorProps> = ({
               component="h2"
               sx={(headingTheme) => ({
                 maxWidth: 720,
-                fontFamily: 'Space Grotesk, Inter, system-ui',
+                fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                 fontSize: { xs: '1.3rem', sm: '1.68rem' },
                 fontWeight: 700,
                 letterSpacing: '-0.025em',
@@ -247,7 +267,7 @@ export const BuildInspector: React.FC<BuildInspectorProps> = ({
               {label}
             </Typography>
             <Typography
-              component="h3"
+              component="p"
               sx={{
                 mt: 0.7,
                 maxWidth: 620,
@@ -292,10 +312,11 @@ export const BuildInspector: React.FC<BuildInspectorProps> = ({
                 textTransform: 'uppercase',
               }}
             >
-              {ungrouped ? 'Parse damage' : pooled ? 'Representative parse' : 'Typical damage'}
+              {ungrouped ? 'Parse damage' : pooled ? 'Sampled high' : 'Typical damage'}
             </Typography>
             <Typography
               className="u-tabular"
+              data-testid="build-inspector-headline-dps"
               sx={(theme) => ({
                 mt: 0.05,
                 color: getDpsDataTextColor(theme.palette.mode),
@@ -304,19 +325,40 @@ export const BuildInspector: React.FC<BuildInspectorProps> = ({
                 letterSpacing: '-0.035em',
               })}
             >
-              {formatCompactDps(headlineDps)}
-              <Box
-                component="span"
-                sx={{
-                  ml: 0.55,
-                  color: 'text.secondary',
-                  fontSize: '0.68rem',
-                  fontWeight: 700,
-                  letterSpacing: '0.05em',
-                }}
-              >
-                DPS
-              </Box>
+              {headlineDps === undefined ? (
+                headlineDpsLabel
+              ) : (
+                <>
+                  {formatCompactDps(headlineDps)}
+                  <Box
+                    component="span"
+                    sx={{
+                      ml: 0.55,
+                      color: 'text.secondary',
+                      fontSize: '0.68rem',
+                      fontWeight: 700,
+                      letterSpacing: '0.05em',
+                    }}
+                  >
+                    DPS
+                  </Box>
+                  {headlineAnchor && (
+                    <Box
+                      component="span"
+                      sx={{
+                        ml: 0.7,
+                        color: 'text.secondary',
+                        fontSize: { xs: '0.7rem', sm: '0.78rem' },
+                        fontWeight: 600,
+                        letterSpacing: '0.01em',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      @ {headlineAnchor}
+                    </Box>
+                  )}
+                </>
+              )}
             </Typography>
             {/* A spread needs at least two parses to describe. With one, q1,
                 median and q3 are the same number and the line would state a
@@ -391,15 +433,15 @@ export const BuildInspector: React.FC<BuildInspectorProps> = ({
             ) : showBossCoverage ? (
               <StatHint
                 data-testid="boss-coverage-hint"
-                ariaLabel="Explain sampled board coverage"
-                text={`${cluster.size} sampled top-ranked parses`}
+                ariaLabel={`${sampledParseLabel}. Explain sampled board coverage`}
+                text={sampledParseLabel}
                 explanation={`This build had a retained sampled class parse on ${coveredBosses} of the ${availableBosses} encounter-and-difficulty boards with data. This shows where the build appeared, not expected DPS.`}
               />
             ) : (
               <StatHint
                 data-testid="share-hint"
                 text={`${Math.round(cluster.share * 100)}% of this selection`}
-                explanation={`${cluster.size} of the ${totalParses} sampled top-ranked parses in this selection share this observed pattern. The feed samples high-ranked logs per encounter-and-difficulty board, so this is a share of the sample — not of all players.`}
+                explanation={`${cluster.size} of the ${totalParses} sampled top-ranked ${totalSampledParseNoun} in this selection share this observed pattern. The feed samples high-ranked logs per encounter-and-difficulty board, so this is a share of the sample — not of all players.`}
               />
             )}
           </Box>
@@ -448,11 +490,7 @@ export const BuildInspector: React.FC<BuildInspectorProps> = ({
           {onOpenInEditor && (
             <ButtonBase
               disabled={actionsDisabled}
-              aria-label={
-                pendingKind === 'open'
-                  ? 'Saving build copy and opening editor'
-                  : 'Save a copy and open in Build Editor'
-              }
+              aria-label={pendingKind === 'open' ? 'Saving & opening…' : 'Save copy & open editor'}
               onClick={() => onOpenInEditor(cluster)}
               sx={(theme) => ({
                 display: 'inline-flex',
@@ -484,10 +522,10 @@ export const BuildInspector: React.FC<BuildInspectorProps> = ({
             </ButtonBase>
           )}
           <ButtonBase
-            aria-label="Show build evidence"
+            aria-label="View evidence"
             aria-haspopup="dialog"
             aria-expanded={evidenceOpen}
-            aria-controls={evidenceDialogId}
+            aria-controls={evidenceOpen ? evidenceDialogId : undefined}
             onClick={onToggleEvidence}
             sx={(theme) => ({
               display: 'inline-flex',
@@ -606,7 +644,7 @@ export const BuildInspector: React.FC<BuildInspectorProps> = ({
               id={`build-evidence-${cluster.id}`}
               component="h2"
               sx={{
-                fontFamily: 'Space Grotesk, Inter, system-ui',
+                fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                 fontSize: { xs: '1.08rem', sm: '1.28rem' },
                 fontWeight: 700,
                 letterSpacing: '-0.02em',
@@ -620,10 +658,10 @@ export const BuildInspector: React.FC<BuildInspectorProps> = ({
               sx={{ mt: 0.2, color: 'text.secondary', fontSize: '0.76rem' }}
             >
               {compactEvidence
-                ? `${formatCompactDps(headlineDps)} DPS · ${cluster.size} ${cluster.size === 1 ? 'parse' : 'parses'}`
+                ? `${headlineDpsLabel} · ${cluster.size} ${cluster.size === 1 ? 'parse' : 'parses'}`
                 : ungrouped
-                  ? `${label} · ${formatCompactDps(headlineDps)} DPS · ${cluster.size} observed ${cluster.size === 1 ? 'parse' : 'parses'}; frequency not estimated`
-                  : `${label} · ${formatCompactDps(headlineDps)} DPS · ${cluster.size} of ${totalParses} sampled top-ranked parses`}
+                  ? `${label} · ${headlineDpsLabel} · ${cluster.size} observed ${cluster.size === 1 ? 'parse' : 'parses'}; frequency not estimated`
+                  : `${label} · ${headlineDpsLabel} · ${cluster.size} of ${totalParses} sampled top-ranked ${totalSampledParseNoun}`}
             </Typography>
           </Box>
           <IconButton
@@ -646,6 +684,7 @@ export const BuildInspector: React.FC<BuildInspectorProps> = ({
         <DialogContent sx={{ px: { xs: 1, sm: 3 }, py: { xs: 2, sm: 2.5 } }}>
           {representativeBuild.loading && (
             <Box
+              role="status"
               aria-label="Loading representative build"
               sx={(dialogTheme) => ({
                 display: 'grid',
@@ -671,6 +710,8 @@ export const BuildInspector: React.FC<BuildInspectorProps> = ({
           {representativeBuild.error && (
             <Box
               role="status"
+              aria-live="polite"
+              aria-atomic="true"
               sx={(dialogTheme) => ({
                 mb: 2.75,
                 px: 1.5,
@@ -698,7 +739,7 @@ export const BuildInspector: React.FC<BuildInspectorProps> = ({
                 build={representativeBuild.build}
                 esoClass={cluster.esoClass}
                 representativeDps={representativeDps}
-                sourceUrl={sourceUrl}
+                sourceUrl={representativeSourceUrl}
               />
             </React.Suspense>
           )}
@@ -724,7 +765,7 @@ export const BuildInspector: React.FC<BuildInspectorProps> = ({
               <Box sx={{ mb: 1.4 }}>
                 <Typography
                   sx={{
-                    fontFamily: 'Space Grotesk, Inter, system-ui',
+                    fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                     fontSize: { xs: '1rem', sm: '1.15rem' },
                     fontWeight: 700,
                     letterSpacing: '-0.02em',
@@ -857,13 +898,19 @@ export const BuildInspector: React.FC<BuildInspectorProps> = ({
             }}
           >
             <InsertChartOutlined fontSize="small" sx={{ mr: 1.25 }} />
-            Open representative parse
+            {pooled ? 'Open highest sampled parse' : 'Open representative parse'}
           </MenuItem>
         )}
         {sourceUrl && (
-          <MenuItem component="a" href={sourceUrl} target="_blank" rel="noopener noreferrer">
+          <MenuItem
+            component="a"
+            href={sourceUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={closeMenu}
+          >
             <LaunchOutlined fontSize="small" sx={{ mr: 1.25 }} />
-            View on ESO Logs (new tab)
+            {pooled ? 'View highest sampled log (new tab)' : 'View representative log (new tab)'}
           </MenuItem>
         )}
       </Menu>

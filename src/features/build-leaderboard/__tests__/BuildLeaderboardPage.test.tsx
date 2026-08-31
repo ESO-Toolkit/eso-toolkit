@@ -93,6 +93,7 @@ function renderPage(initialEntry = '/build-leaderboard') {
               path="/build-leaderboard/class/:classSlug/:bossSlug"
               element={<BuildLeaderboardPage />}
             />
+            <Route path="/report/:reportCode/fight/:fightId" element={<div>Report</div>} />
           </Routes>
         </ThemeProvider>
       </MemoryRouter>
@@ -112,6 +113,69 @@ beforeEach(() => {
     .spyOn(dpsParsesApi, 'listParses')
     .mockResolvedValue({ parses: [], total: 0, limit: 100, offset: 0 });
 });
+
+function makeSolvedBoardFixture() {
+  resetFixtureIds();
+  const sourceParses = makeThreeArchetypeFixture();
+  const parses = Array.from({ length: 60 }, (_, index) => {
+    const source = sourceParses[index % sourceParses.length];
+    return {
+      ...source,
+      parse_id: `solved-parse-${index}`,
+      report_code: `solved-report-${index}`,
+      signature_hash: 'solved-signature',
+      rank: index + 1,
+    };
+  });
+
+  const makeCluster = (id: string, members: typeof parses, share: number): BuildCluster => ({
+    id,
+    label: 'Solved Arcanist pattern',
+    esoClass: members[0].eso_class,
+    size: members.length,
+    share,
+    memberParseIds: members.map((parse) => parse.parse_id),
+    medoidParseId: members[0].parse_id,
+    dps: {
+      min: 0.8,
+      q1: 0.85,
+      median: 0.91,
+      q3: 0.95,
+      p90: 0.98,
+      max: 1,
+      mean: 0.9,
+      count: members.length,
+    },
+    core: [],
+    flex: [],
+    variations: [],
+    cohesion: 0,
+  });
+
+  const dominant = makeCluster('solved-dominant', parses.slice(0, 54), 0.9);
+  const outlier = makeCluster('solved-outlier', parses.slice(54), 0.1);
+  const result: ClusterBuildsResult = {
+    clusters: [dominant, outlier],
+    k: 2,
+    silhouette: 0.42,
+    silhouetteByK: [],
+    recommendedClusterId: dominant.id,
+    totalParses: parses.length,
+    uniqueSignatures: 2,
+    droppedParses: 0,
+  };
+
+  return { parses, result };
+}
+
+function renderSolvedBoard() {
+  const { parses, result } = makeSolvedBoardFixture();
+  (runBuildClustering as jest.MockedFunction<typeof runBuildClustering>).mockResolvedValue(result);
+  jest
+    .spyOn(dpsParsesApi, 'listParses')
+    .mockResolvedValue({ parses, total: parses.length, limit: 100, offset: 0 });
+  renderPage('/build-leaderboard?boss=60:122');
+}
 
 describe('BuildLeaderboardPage', () => {
   it('aborts the encounter request when the page unmounts', async () => {
@@ -170,6 +234,20 @@ describe('BuildLeaderboardPage', () => {
         expect.anything(),
       ),
     );
+  });
+
+  it('uses singular parse wording for a one-parse encounter option', async () => {
+    jest.spyOn(dpsParsesApi, 'listEncounters').mockResolvedValue({
+      encounters: [{ ...ENCOUNTERS[0], parse_count: 1 }],
+    });
+
+    renderPage();
+    await waitFor(() => expect(dpsParsesApi.listEncounters).toHaveBeenCalled());
+
+    await userEvent.click(screen.getByLabelText(/^encounter$/i));
+    const listbox = within(screen.getByRole('listbox'));
+    expect(listbox.getByText('1 parse')).toBeInTheDocument();
+    expect(listbox.queryByText('1 parses')).not.toBeInTheDocument();
   });
 
   /**
@@ -437,7 +515,8 @@ describe('BuildLeaderboardPage crawlable routes', () => {
     renderPage('/build-leaderboard/class/warden');
 
     await waitFor(() => expect(screen.getByTestId('start-here-card')).toBeInTheDocument());
-    const metadata = screen.getByText(/updated Aug 27/i);
+    const metadata = screen.getByTestId('build-leaderboard-summary-text');
+    expect(metadata).toHaveTextContent(/updated Aug 27/i);
     expect(metadata).toHaveTextContent(/top-ranked parses/i);
     expect(metadata).not.toHaveTextContent(/sampled top-ranked parses/i);
   });
@@ -850,6 +929,105 @@ describe('BuildLeaderboardPage crawlable routes', () => {
     expect(document.getElementById(methodologyId ?? '')).toHaveTextContent(
       /not all ESO players or logs/i,
     );
+  });
+
+  it('uses solved-meta language in the live compact summary', async () => {
+    renderSolvedBoard();
+
+    const summary = await screen.findByTestId('build-leaderboard-summary-text');
+    expect(summary).toHaveTextContent(/One observed pattern, 90% of clustered sample/i);
+    expect(summary).not.toHaveTextContent(/2 patterns?/i);
+    expect(screen.getByTestId('build-leaderboard-updated')).toHaveTextContent(/updated Aug 4/i);
+  });
+
+  it('opens the highest sampled pooled parse instead of the representative parse', async () => {
+    const { parses, result } = makeSolvedBoardFixture();
+    const selectedCluster = result.clusters[0];
+    const bestParseId = selectedCluster.memberParseIds[1];
+    const pooledParses = parses.map((parse) => {
+      if (parse.parse_id === selectedCluster.medoidParseId) {
+        return { ...parse, amount: 100, report_code: '' };
+      }
+      if (parse.parse_id === bestParseId) {
+        return { ...parse, amount: 999_999, report_code: 'highest-sampled', fight_id: 777 };
+      }
+      return { ...parse, amount: 10_000 };
+    });
+
+    (runBuildClustering as jest.MockedFunction<typeof runBuildClustering>).mockResolvedValue(
+      result,
+    );
+    jest.spyOn(dpsParsesApi, 'listParses').mockResolvedValue({
+      parses: pooledParses,
+      total: pooledParses.length,
+      limit: 100,
+      offset: 0,
+    });
+
+    renderPage('/build-leaderboard/class/arcanist');
+
+    await screen.findByTestId('start-here-card');
+    await userEvent.click(screen.getByRole('button', { name: /more build actions/i }));
+    await userEvent.click(screen.getByRole('menuitem', { name: /open highest sampled parse/i }));
+
+    expect(currentUrl()).toBe('/report/highest-sampled/fight/777');
+  });
+
+  it('uses singular top-ranked parse wording when one parse is returned', async () => {
+    const { parses, result } = makeSolvedBoardFixture();
+    const [parse] = parses;
+    const singleCluster: BuildCluster = {
+      ...result.clusters[0],
+      size: 1,
+      share: 1,
+      memberParseIds: [parse.parse_id],
+      medoidParseId: parse.parse_id,
+      dps: { ...result.clusters[0].dps, count: 1 },
+    };
+    const singleResult: ClusterBuildsResult = {
+      ...result,
+      clusters: [singleCluster],
+      k: 1,
+      recommendedClusterId: singleCluster.id,
+      totalParses: 1,
+      uniqueSignatures: 1,
+    };
+
+    (runBuildClustering as jest.MockedFunction<typeof runBuildClustering>).mockResolvedValue(
+      singleResult,
+    );
+    jest
+      .spyOn(dpsParsesApi, 'listParses')
+      .mockResolvedValue({ parses: [parse], total: 1, limit: 100, offset: 0 });
+
+    renderPage('/build-leaderboard?boss=60:122');
+
+    const summary = await screen.findByTestId('build-leaderboard-summary-text');
+    expect(summary).toHaveTextContent(/1 top-ranked parse ·/i);
+    expect(summary).not.toHaveTextContent(/1 top-ranked parses/i);
+  });
+
+  it('uses solved-meta language in the live methodology', async () => {
+    renderSolvedBoard();
+
+    const summary = await screen.findByTestId('build-leaderboard-summary-text');
+    expect(summary).toBeInTheDocument();
+
+    const methodologyToggle = screen.getByRole('button', {
+      name: /how this leaderboard works/i,
+    });
+    const methodologyId = methodologyToggle.getAttribute('aria-controls');
+    expect(methodologyId).toBeTruthy();
+    await userEvent.click(methodologyToggle);
+
+    const methodology = document.getElementById(methodologyId ?? '');
+    expect(methodology).toHaveTextContent(/Finding: Solved board\./i);
+    expect(methodology).toHaveTextContent(/90% of clustered rows sharing one pattern/i);
+    expect(methodology).toHaveTextContent(
+      /Most sampled top-ranked parses share one observed build pattern/i,
+    );
+    expect(methodology).not.toHaveTextContent(/Confidence:/i);
+    expect(methodology).not.toHaveTextContent(/grouped into 2 patterns/i);
   });
 });
 

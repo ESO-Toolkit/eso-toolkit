@@ -51,6 +51,14 @@ describe('StatHint', () => {
     expect(renderHint()).toHaveAttribute('aria-expanded', 'false');
   });
 
+  it('keeps the compact hint control at least 24 by 24 pixels', () => {
+    const hint = renderHint();
+    const styles = window.getComputedStyle(hint);
+
+    expect(styles.minWidth).toBe('24px');
+    expect(styles.minHeight).toBe('24px');
+  });
+
   /**
    * The regression pin. A real tap delivers focus BEFORE click (touchend ->
    * mousedown -> focus -> mouseup -> click). Opening on plain focus let the

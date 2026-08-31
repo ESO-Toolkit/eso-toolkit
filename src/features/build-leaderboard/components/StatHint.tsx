@@ -112,8 +112,10 @@ export const StatHint: React.FC<StatHintProps> = ({
             alignItems: 'center',
             gap: 0.4,
             mt: -0.15,
-            // Touch target reaches the 24px minimum without pushing the
-            // surrounding numbers apart.
+            // Keep the full interactive target at or above the WCAG 2.5.8
+            // 24px minimum while preserving the compact inline presentation.
+            minWidth: 24,
+            minHeight: 24,
             py: 0.35,
             borderRadius: 0.75,
             color: 'text.secondary',

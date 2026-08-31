@@ -13,7 +13,7 @@ import {
   useTheme,
 } from '@mui/material';
 import { alpha } from '@mui/material/styles';
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import { encounterKeyOf } from '@/constants/leaderboardRoutes';
 
@@ -60,7 +60,7 @@ export interface BuildLeaderboardViewProps {
   onRetry?: () => void;
   onOpenInEditor?: (cluster: BuildCluster) => void;
   onSaveBuild?: (cluster: BuildCluster) => void;
-  onViewSourceLog?: (cluster: BuildCluster) => void;
+  onViewSourceLog?: (cluster: BuildCluster, sourceParseId: string) => void;
   pendingAction?: { clusterId: string; kind: 'open' | 'save' } | null;
   emptyMessage?: string;
   hideSummary?: boolean;
@@ -111,6 +111,9 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
   const [selectionAnnouncement, setSelectionAnnouncement] = useState('');
   const [lastResult, setLastResult] = useState(result);
   const inspectorRef = useRef<HTMLDivElement | null>(null);
+  const buildPatternsHeadingRef = useRef<HTMLHeadingElement | null>(null);
+  const pendingFocusRestoreRef = useRef(false);
+  const [progressAnnouncement, setProgressAnnouncement] = useState('');
 
   if (lastResult !== result) {
     setLastResult(result);
@@ -123,48 +126,85 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
   // DSR"). Raw amounts come from `parses`, never the normalized cluster input.
   // Lives above every early return (error/loading/too-few) — hook order must
   // stay stable across renders.
+  const parsesById = useMemo(
+    () => new Map(parses.map((parse) => [parse.parse_id, parse])),
+    [parses],
+  );
+
   const bestParseByCluster = useMemo(() => {
     const map = new Map<string, DpsParse>();
     if (!pooled) return map;
-    const byId = new Map(parses.map((parse) => [parse.parse_id, parse]));
     result?.clusters.forEach((cluster) => {
       let best: DpsParse | undefined;
       for (const id of cluster.memberParseIds) {
-        const parse = byId.get(id);
+        const parse = parsesById.get(id);
         if (parse && (!best || parse.amount > best.amount)) best = parse;
       }
       if (best) map.set(cluster.id, best);
     });
     return map;
-  }, [pooled, parses, result]);
+  }, [parsesById, pooled, result]);
 
   const bossCoverage = useMemo(() => {
     const byCluster = new Map<string, number>();
     if (!pooled) return { available: 0, byCluster };
 
-    const byId = new Map(parses.map((parse) => [parse.parse_id, parse]));
     const available = new Set(
       parses.map((parse) => encounterKeyOf(parse.encounter_id, parse.difficulty)),
     ).size;
     result?.clusters.forEach((cluster) => {
       const boards = new Set<string>();
       cluster.memberParseIds.forEach((id) => {
-        const parse = byId.get(id);
+        const parse = parsesById.get(id);
         if (parse) boards.add(encounterKeyOf(parse.encounter_id, parse.difficulty));
       });
       byCluster.set(cluster.id, boards.size);
     });
 
     return { available, byCluster };
-  }, [pooled, parses, result]);
+  }, [parses, parsesById, pooled, result]);
+
+  const progressMessage =
+    clustering || !result ? `Grouping ${parses.length} parses into build patterns…` : '';
+
+  useEffect(() => {
+    setProgressAnnouncement('');
+    if (!progressMessage) return;
+    const timer = window.setTimeout(() => setProgressAnnouncement(progressMessage), 0);
+    return () => window.clearTimeout(timer);
+  }, [progressMessage]);
+
+  useEffect(() => {
+    if (
+      !pendingFocusRestoreRef.current ||
+      error ||
+      loading ||
+      parses.length === 0 ||
+      clustering ||
+      !result ||
+      result.clusters.length === 0
+    )
+      return;
+    const heading = buildPatternsHeadingRef.current;
+    if (!heading) return;
+    pendingFocusRestoreRef.current = false;
+    heading.focus({ preventScroll: true });
+    heading.scrollIntoView?.({ block: 'start', behavior: 'auto' });
+  }, [clustering, error, loading, parses.length, result, tooFewParses]);
+
+  const queueFocusRestore = (action?: () => void): void => {
+    pendingFocusRestoreRef.current = true;
+    action?.();
+  };
 
   if (error) {
+    pendingFocusRestoreRef.current = false;
     return (
       <Alert
         severity="error"
         action={
           onRetry && (
-            <Button color="inherit" size="small" onClick={onRetry}>
+            <Button color="inherit" size="small" onClick={() => queueFocusRestore(onRetry)}>
               Retry
             </Button>
           )
@@ -183,8 +223,8 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
       <Box>
         <Box sx={{ mb: 2 }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 1, mb: 0.75 }}>
-            <Typography aria-live="polite" sx={{ color: 'text.secondary', fontSize: '0.78rem' }}>
-              Grouping {parses.length} parses into build patterns…
+            <Typography sx={{ color: 'text.secondary', fontSize: '0.78rem' }}>
+              {progressMessage}
             </Typography>
             {clusterProgress > 0 && (
               <Typography
@@ -204,6 +244,22 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
             value={clusterProgress}
             sx={{ height: 3 }}
           />
+          <Box
+            role="status"
+            aria-live="polite"
+            aria-atomic="true"
+            data-testid="build-grouping-announcement"
+            sx={{
+              position: 'absolute',
+              width: '1px',
+              height: '1px',
+              overflow: 'hidden',
+              clip: 'rect(0 0 0 0)',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {progressAnnouncement}
+          </Box>
         </Box>
         <SkeletonWorkspace />
       </Box>
@@ -233,8 +289,9 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
     result.clusters[0];
   const selectedClassTheme = getLeaderboardClassTheme(selected.esoClass);
   const representativeParseFor = (cluster: BuildCluster): DpsParse | undefined =>
-    parses.find((parse) => parse.parse_id === cluster.medoidParseId);
+    parsesById.get(cluster.medoidParseId);
   const selectedRepresentative = representativeParseFor(selected);
+  const selectedSourceParse = pooled ? bestParseByCluster.get(selected.id) : selectedRepresentative;
 
   const handleSelect = (clusterId: string): void => {
     setSelectedId(clusterId);
@@ -242,7 +299,9 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
     const selectedCluster = result.clusters.find((cluster) => cluster.id === clusterId);
     if (selectedCluster) {
       setSelectionAnnouncement(
-        `Selected ${displayLabel(selectedCluster, esoClass)} build pattern. Inspector updated.`,
+        isMobile
+          ? ''
+          : `Selected ${displayLabel(selectedCluster, esoClass)} build pattern. Inspector updated.`,
       );
     }
 
@@ -268,8 +327,11 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
         data-testid="build-selection-announcement"
         sx={{
           position: 'absolute',
-          width: 1,
-          height: 1,
+          // MUI treats numeric sizing values in the 0–1 range as percentages.
+          // Use explicit pixels so this live region stays truly visually hidden
+          // instead of becoming a 100%-wide off-screen overflow source.
+          width: '1px',
+          height: '1px',
           p: 0,
           m: -1,
           overflow: 'hidden',
@@ -289,7 +351,11 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
           data-testid="too-few-parses"
           action={
             onBroadenScope && (
-              <Button color="inherit" size="small" onClick={onBroadenScope}>
+              <Button
+                color="inherit"
+                size="small"
+                onClick={() => queueFocusRestore(onBroadenScope)}
+              >
                 {broadenScopeLabel}
               </Button>
             )
@@ -324,7 +390,7 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
         >
           <Typography
             sx={{
-              fontFamily: 'Space Grotesk, Inter, system-ui',
+              fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
               fontSize: '0.85rem',
               fontWeight: 700,
               letterSpacing: '-0.01em',
@@ -491,11 +557,15 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
               <Box sx={{ minWidth: 0 }}>
                 <Typography
                   id="build-patterns-heading"
+                  ref={buildPatternsHeadingRef}
+                  component="h2"
+                  tabIndex={-1}
                   sx={{
-                    fontFamily: 'Space Grotesk, Inter, system-ui',
+                    fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                     fontSize: '0.79rem',
                     fontWeight: 700,
                     letterSpacing: '-0.01em',
+                    scrollMarginTop: 72,
                   }}
                 >
                   {tooFewParses
@@ -537,7 +607,7 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
                 {pooled ? 'Sampled high' : 'Typical'}
               </Typography>
             </Box>
-            <Box component="ol" sx={{ m: 0, p: 0, listStyle: 'none' }}>
+            <Box component="ol" role="list" sx={{ m: 0, p: 0, listStyle: 'none' }}>
               {ordered.map((cluster) => (
                 <ArchetypeRow
                   key={cluster.id}
@@ -550,6 +620,8 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
                   bestParse={bestParseByCluster.get(cluster.id)}
                   coveredBosses={bossCoverage.byCluster.get(cluster.id)}
                   availableBosses={pooled ? bossCoverage.available : undefined}
+                  pooled={pooled}
+                  ungrouped={tooFewParses}
                   onSelect={() => handleSelect(cluster.id)}
                 />
               ))}
@@ -587,8 +659,10 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
               evidenceOpen={evidenceOpen}
               onToggleEvidence={() => setEvidenceOpen((open) => !open)}
               variations={selected.variations}
-              sourceUrl={selectedRepresentative?.source_url}
+              sourceUrl={selectedSourceParse?.source_url}
+              representativeSourceUrl={selectedRepresentative?.source_url}
               representativeDps={selectedRepresentative?.amount}
+              bestParse={bestParseByCluster.get(selected.id)}
               pooled={pooled}
               ungrouped={tooFewParses}
               coveredBosses={bossCoverage.byCluster.get(selected.id)}
@@ -597,7 +671,11 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
               actionsDisabled={Boolean(pendingAction)}
               onOpenInEditor={onOpenInEditor}
               onSaveBuild={onSaveBuild}
-              onViewSourceLog={selectedRepresentative?.report_code ? onViewSourceLog : undefined}
+              onViewSourceLog={
+                selectedSourceParse?.report_code && onViewSourceLog
+                  ? (cluster) => onViewSourceLog(cluster, selectedSourceParse.parse_id)
+                  : undefined
+              }
             />
           </Box>
         </Box>

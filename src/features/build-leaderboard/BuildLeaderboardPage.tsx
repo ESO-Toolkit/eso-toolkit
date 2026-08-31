@@ -10,7 +10,7 @@ import {
   Typography,
 } from '@mui/material';
 import { alpha } from '@mui/material/styles';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Link as RouterLink,
   Navigate,
@@ -40,6 +40,7 @@ import { PanelErrorBoundary } from '../../components/PanelErrorBoundary';
 import { getDifficultyLabel } from '../../utils/trialClassification';
 
 import { dpsParsesApi } from './api/dpsParsesApi';
+import { detectSolvedMeta } from './clustering/solvedMeta';
 import { BuildLeaderboardView } from './components/BuildLeaderboardView';
 import { LeaderboardBrowseNav } from './components/LeaderboardBrowseNav';
 import { useArchetypeBuildActions } from './hooks/useArchetypeBuildActions';
@@ -57,6 +58,9 @@ type TabKey = 'encounter' | 'class';
 
 /** Picker sentinel for the pooled (all-bosses) class view. */
 const ALL_BOSSES = '__all__';
+
+/** Width reserved for the class-strip edge fades. Keep this in sync with scroll padding. */
+const CLASS_SCROLL_FADE_WIDTH = 18;
 
 /** Legacy query params, superseded by path segments. Stripped on redirect. */
 const LEGACY_PARAMS = ['tab', 'class', 'boss'] as const;
@@ -160,6 +164,106 @@ export const BuildLeaderboardPage: React.FC = () => {
 
   const activeClassRoute = classRoute ?? legacyClassRoute;
   const tab: TabKey = activeClassRoute ? 'class' : 'encounter';
+  const classScrollerRef = useRef<HTMLDivElement>(null);
+  const classNavRef = useRef<HTMLElement | null>(null);
+  const revealFrameRef = useRef<number | null>(null);
+  const [classScrollState, setClassScrollState] = useState({
+    canScrollLeft: false,
+    canScrollRight: false,
+  });
+
+  const revealActiveClassChip = useCallback(() => {
+    if (tab !== 'class' || typeof window === 'undefined') return;
+    if (typeof window.requestAnimationFrame !== 'function') return;
+    if (revealFrameRef.current !== null) return;
+
+    revealFrameRef.current = window.requestAnimationFrame(() => {
+      revealFrameRef.current = null;
+      const scroller = classScrollerRef.current;
+      const activeClassChip = scroller?.querySelector<HTMLElement>('[aria-current="page"]');
+      if (!scroller || typeof activeClassChip?.scrollIntoView !== 'function') return;
+
+      const scrollerRect = scroller.getBoundingClientRect();
+      const activeClassChipRect = activeClassChip.getBoundingClientRect();
+      const safeLeft = scrollerRect.left + CLASS_SCROLL_FADE_WIDTH;
+      const safeRight = scrollerRect.right - CLASS_SCROLL_FADE_WIDTH;
+      const chipIsOutsideSafeViewport =
+        activeClassChipRect.left < safeLeft || activeClassChipRect.right > safeRight;
+      if (!chipIsOutsideSafeViewport) return;
+
+      const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      activeClassChip.scrollIntoView({
+        behavior: prefersReducedMotion ? 'auto' : 'smooth',
+        block: 'nearest',
+        inline: 'nearest',
+      });
+    });
+  }, [tab]);
+
+  useEffect(() => {
+    revealActiveClassChip();
+  }, [activeClassRoute?.slug, revealActiveClassChip]);
+
+  const updateClassScrollState = useCallback(() => {
+    const scroller = classScrollerRef.current;
+    if (!scroller || tab !== 'class') {
+      setClassScrollState((previous) =>
+        previous.canScrollLeft || previous.canScrollRight
+          ? { canScrollLeft: false, canScrollRight: false }
+          : previous,
+      );
+      return;
+    }
+
+    const maxScrollLeft = Math.max(0, scroller.scrollWidth - scroller.clientWidth);
+    const nextState = {
+      canScrollLeft: scroller.scrollLeft > 1,
+      canScrollRight: scroller.scrollLeft < maxScrollLeft - 1,
+    };
+
+    setClassScrollState((previous) =>
+      previous.canScrollLeft === nextState.canScrollLeft &&
+      previous.canScrollRight === nextState.canScrollRight
+        ? previous
+        : nextState,
+    );
+  }, [tab]);
+
+  const revealActiveClassChipOnResize = useCallback(() => {
+    revealActiveClassChip();
+    updateClassScrollState();
+  }, [revealActiveClassChip, updateClassScrollState]);
+
+  useEffect(() => {
+    if (tab !== 'class') {
+      updateClassScrollState();
+      return;
+    }
+
+    const scroller = classScrollerRef.current;
+    const classNav = classNavRef.current;
+    if (!scroller) return;
+
+    revealActiveClassChipOnResize();
+    scroller.addEventListener('scroll', updateClassScrollState, { passive: true });
+    window.addEventListener('resize', revealActiveClassChipOnResize);
+    const resizeObserver =
+      typeof ResizeObserver === 'undefined'
+        ? null
+        : new ResizeObserver(revealActiveClassChipOnResize);
+    resizeObserver?.observe(scroller);
+    if (classNav) resizeObserver?.observe(classNav);
+
+    return () => {
+      scroller.removeEventListener('scroll', updateClassScrollState);
+      window.removeEventListener('resize', revealActiveClassChipOnResize);
+      resizeObserver?.disconnect();
+      if (revealFrameRef.current !== null) {
+        window.cancelAnimationFrame(revealFrameRef.current);
+        revealFrameRef.current = null;
+      }
+    };
+  }, [activeClassRoute?.slug, revealActiveClassChipOnResize, tab, updateClassScrollState]);
   const encounterParam = bossRoute
     ? encounterKeyOf(bossRoute.encounterId, bossRoute.difficulty)
     : legacyBossKey;
@@ -393,6 +497,7 @@ export const BuildLeaderboardPage: React.FC = () => {
     tooFewParses,
     recluster,
   } = useBuildClusters(poolingReady ? clusterParses : [], resolveBaseAbilityId);
+  const solvedMeta = tooFewParses ? null : detectSolvedMeta(result);
 
   // ─── Structured data ───────────────────────────────────────────────────────
   const archetypeListLd = useMemo(() => {
@@ -476,8 +581,8 @@ export const BuildLeaderboardPage: React.FC = () => {
   );
 
   const handleViewSourceLog = useCallback(
-    (cluster: BuildCluster) => {
-      const parse = parses.find((candidate) => candidate.parse_id === cluster.medoidParseId);
+    (_cluster: BuildCluster, sourceParseId: string) => {
+      const parse = parses.find((candidate) => candidate.parse_id === sourceParseId);
       if (!parse?.report_code) return;
       navigate(`/report/${parse.report_code}/fight/${parse.fight_id}`);
     },
@@ -532,7 +637,7 @@ export const BuildLeaderboardPage: React.FC = () => {
             <Typography
               component="h1"
               sx={{
-                fontFamily: 'Space Grotesk, Inter, system-ui',
+                fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                 fontSize: { xs: '1.28rem', sm: '1.42rem' },
                 fontWeight: 700,
                 letterSpacing: '-0.035em',
@@ -555,6 +660,7 @@ export const BuildLeaderboardPage: React.FC = () => {
             aria-label="Build leaderboard view"
             sx={(theme) => ({
               display: 'inline-flex',
+              flexWrap: 'nowrap',
               gap: 0.4,
               p: 0.4,
               gridColumn: { xs: 1, sm: 2 },
@@ -585,6 +691,7 @@ export const BuildLeaderboardPage: React.FC = () => {
                     flex: { xs: 1, md: '0 0 auto' },
                     minWidth: { md: 112 },
                     px: 1.6,
+                    whiteSpace: 'nowrap',
                     borderRadius: 1.5,
                     color: active ? 'text.primary' : 'text.secondary',
                     fontSize: '0.75rem',
@@ -624,7 +731,7 @@ export const BuildLeaderboardPage: React.FC = () => {
           aria-label="Build leaderboard filters"
           sx={{
             display: 'grid',
-            gridTemplateColumns: { xs: '1fr', md: 'minmax(0, 780px) minmax(260px, 1fr)' },
+            gridTemplateColumns: { xs: 'minmax(0, 1fr)', md: 'minmax(320px, 1fr) auto' },
             minHeight: 64,
             alignItems: 'end',
             gap: { xs: 1, md: 2 },
@@ -634,14 +741,18 @@ export const BuildLeaderboardPage: React.FC = () => {
           {/* The encounter picker renders on BOTH tabs: the class tab defaults
               to a pooled board and this is how it narrows to a single boss. */}
           <Box
+            data-testid="build-leaderboard-primary-controls"
             sx={{
               width: '100%',
+              minWidth: 0,
               display: 'grid',
+              gridColumn: 1,
+              gridRow: 1,
               gap: { xs: 1, md: 1.25 },
               alignContent: 'start',
             }}
           >
-            <Box sx={{ width: '100%' }}>
+            <Box sx={{ width: '100%', minWidth: 0 }}>
               <Typography
                 id="dps-encounter-label"
                 sx={{
@@ -700,7 +811,7 @@ export const BuildLeaderboardPage: React.FC = () => {
                       noWrap
                       sx={{
                         minWidth: 0,
-                        fontFamily: 'Space Grotesk, Inter, system-ui',
+                        fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                         fontSize: { xs: '0.94rem', sm: '1.04rem' },
                         fontWeight: 600,
                       }}
@@ -715,6 +826,7 @@ export const BuildLeaderboardPage: React.FC = () => {
                 )}
                 sx={(theme) => ({
                   width: '100%',
+                  minWidth: 0,
                   minHeight: 52,
                   borderRadius: 2.25,
                   backgroundColor: alpha(
@@ -800,17 +912,70 @@ export const BuildLeaderboardPage: React.FC = () => {
                         className="u-tabular"
                         sx={{ color: 'text.secondary', fontSize: '0.72rem' }}
                       >
-                        {encounter.parse_count} parses
+                        {encounter.parse_count} {encounter.parse_count === 1 ? 'parse' : 'parses'}
                       </Typography>
                     </Box>
                   </MenuItem>
                 ))}
               </Select>
             </Box>
-            {tab === 'class' && (
-              <Box sx={{ width: '100%', overflowX: 'auto', pb: 0.25 }}>
+          </Box>
+          {tab === 'class' && (
+            <Box
+              sx={(theme) => ({
+                position: 'relative',
+                width: '100%',
+                minWidth: 0,
+                gridColumn: '1 / -1',
+                gridRow: 2,
+                '&::before, &::after': {
+                  content: '""',
+                  position: 'absolute',
+                  top: 0,
+                  right: 0,
+                  bottom: 0,
+                  width: `${CLASS_SCROLL_FADE_WIDTH}px`,
+                  pointerEvents: 'none',
+                  zIndex: 1,
+                  display: 'none',
+                },
+                '&::before': {
+                  left: 0,
+                  right: 'auto',
+                  background: `linear-gradient(90deg, ${theme.palette.background.default}, transparent)`,
+                  display: classScrollState.canScrollLeft ? 'block' : 'none',
+                },
+                '&::after': {
+                  background: `linear-gradient(90deg, transparent, ${theme.palette.background.default})`,
+                  display: classScrollState.canScrollRight ? 'block' : 'none',
+                },
+              })}
+            >
+              <Box
+                ref={classScrollerRef}
+                data-testid="build-leaderboard-class-scroller"
+                data-can-scroll-left={classScrollState.canScrollLeft ? 'true' : undefined}
+                data-can-scroll-right={classScrollState.canScrollRight ? 'true' : undefined}
+                sx={(theme) => ({
+                  width: '100%',
+                  minWidth: 0,
+                  overflowX: 'auto',
+                  overflowY: 'hidden',
+                  pb: 0.25,
+                  scrollPaddingInline: `${CLASS_SCROLL_FADE_WIDTH}px`,
+                  scrollbarWidth: 'thin',
+                  scrollbarColor: `${alpha(theme.palette.primary.main, 0.38)} transparent`,
+                  '&::-webkit-scrollbar': { height: 6 },
+                  '&::-webkit-scrollbar-track': { backgroundColor: 'transparent' },
+                  '&::-webkit-scrollbar-thumb': {
+                    backgroundColor: alpha(theme.palette.primary.main, 0.3),
+                    borderRadius: 3,
+                  },
+                })}
+              >
                 <Box
                   component="nav"
+                  ref={classNavRef}
                   aria-label="ESO class"
                   sx={(theme) => ({
                     display: 'inline-flex',
@@ -863,55 +1028,101 @@ export const BuildLeaderboardPage: React.FC = () => {
                   })}
                 </Box>
               </Box>
-            )}
-          </Box>
-          {result && (
-            <Box
-              sx={{
-                display: 'flex',
-                minWidth: 0,
-                minHeight: 44,
-                alignItems: 'center',
-                justifyContent: { xs: 'flex-start', md: 'flex-end' },
-                gap: 0.35,
-              }}
-            >
-              <Typography
-                className="u-tabular"
-                sx={{ color: 'text.secondary', fontSize: '0.72rem', whiteSpace: 'nowrap' }}
-              >
-                <Box component="span" sx={{ color: 'text.primary', fontWeight: 700 }}>
-                  {result.totalParses}
-                </Box>{' '}
-                top-ranked parses ·{' '}
-                <Box component="span" sx={{ color: 'text.primary', fontWeight: 700 }}>
-                  {result.k}
-                </Box>{' '}
-                {/* Thin data is listed build-by-build, not grouped — calling
-                    those entries "patterns" would claim an analysis we
-                    explicitly declined to run. */}
-                {tooFewParses
-                  ? result.k === 1
-                    ? 'build'
-                    : 'builds'
-                  : result.k === 1
-                    ? 'pattern'
-                    : 'patterns'}
-                {displayedUpdatedAt
-                  ? ` · updated ${formatUpdatedAt(displayedUpdatedAt)}`
-                  : ' · ESO Logs data'}
-              </Typography>
-              <IconButton
-                size="small"
-                aria-label="How this leaderboard works"
-                aria-controls="build-leaderboard-methodology"
-                aria-expanded={methodologyOpen}
-                onClick={() => setMethodologyOpen((open) => !open)}
-              >
-                <InfoOutlined sx={{ fontSize: 17 }} />
-              </IconButton>
             </Box>
           )}
+          <Box
+            data-testid="build-leaderboard-summary"
+            aria-hidden={result ? undefined : true}
+            sx={{
+              display: 'flex',
+              width: { xs: '100%', md: 'auto' },
+              maxWidth: { xs: '100%', md: 460 },
+              minWidth: 0,
+              overflow: { xs: 'visible', lg: 'hidden' },
+              gridColumn: { xs: 1, md: 2 },
+              gridRow: { xs: tab === 'class' ? 3 : 2, md: 1 },
+              minHeight: 44,
+              alignItems: 'center',
+              justifyContent: { xs: 'flex-start', md: 'flex-end' },
+              gap: 0.35,
+              visibility: result ? 'visible' : 'hidden',
+            }}
+          >
+            {result && (
+              <>
+                <Typography
+                  data-testid="build-leaderboard-summary-text"
+                  className="u-tabular"
+                  sx={{
+                    minWidth: 0,
+                    flex: '0 1 auto',
+                    maxWidth: '100%',
+                    color: 'text.secondary',
+                    fontSize: '0.72rem',
+                    lineHeight: 1.35,
+                    overflow: { xs: 'visible', lg: 'hidden' },
+                    textOverflow: { xs: 'clip', lg: 'ellipsis' },
+                    // Let the metadata stack at phone and tablet widths so
+                    // freshness remains readable; preserve the compact row
+                    // once the header has a dedicated desktop track.
+                    whiteSpace: { xs: 'normal', lg: 'nowrap' },
+                    display: 'block',
+                  }}
+                >
+                  <Box component="span" sx={{ color: 'text.primary', fontWeight: 700 }}>
+                    {result.totalParses}
+                  </Box>{' '}
+                  {result.totalParses === 1 ? 'top-ranked parse' : 'top-ranked parses'} ·{' '}
+                  {solvedMeta ? (
+                    <>
+                      <Box component="span" sx={{ color: 'text.primary', fontWeight: 700 }}>
+                        One observed pattern
+                      </Box>
+                      {`, ${solvedMeta.sharePercent}% of clustered sample`}
+                    </>
+                  ) : (
+                    <>
+                      <Box component="span" sx={{ color: 'text.primary', fontWeight: 700 }}>
+                        {result.k}
+                      </Box>{' '}
+                      {/* Thin data is listed build-by-build, not grouped — calling
+                        those entries "patterns" would claim an analysis we
+                        explicitly declined to run. */}
+                      {tooFewParses
+                        ? result.k === 1
+                          ? 'build'
+                          : 'builds'
+                        : result.k === 1
+                          ? 'pattern'
+                          : 'patterns'}
+                    </>
+                  )}
+                  {displayedUpdatedAt ? (
+                    <Box
+                      component="span"
+                      data-testid="build-leaderboard-updated"
+                      sx={{ display: 'inline-block', whiteSpace: 'nowrap' }}
+                    >
+                      {' · updated '}
+                      {formatUpdatedAt(displayedUpdatedAt)}
+                    </Box>
+                  ) : (
+                    ' · ESO Logs data'
+                  )}
+                </Typography>
+                <IconButton
+                  size="small"
+                  aria-label="How this leaderboard works"
+                  aria-controls="build-leaderboard-methodology"
+                  aria-expanded={methodologyOpen}
+                  onClick={() => setMethodologyOpen((open) => !open)}
+                  sx={{ minWidth: 44, minHeight: 44, flexShrink: 0, p: 0.5 }}
+                >
+                  <InfoOutlined sx={{ fontSize: 17 }} />
+                </IconButton>
+              </>
+            )}
+          </Box>
         </Box>
         {result && (
           <Box id="build-leaderboard-methodology">
@@ -933,24 +1144,30 @@ export const BuildLeaderboardPage: React.FC = () => {
                   {`The rankings feed returned ${parses.length} sampled ${
                     parses.length === 1 ? 'parse' : 'parses'
                   } for this selection. Percentages describe this returned sample, not all ESO players or logs. `}
-                  {tooFewParses
-                    ? `${result.uniqueSignatures} distinct builds, each listed on its own.`
-                    : `${result.uniqueSignatures} distinct builds were grouped into ${result.k} ${
-                        result.k === 1 ? 'pattern' : 'patterns'
-                      }.`}
+                  {solvedMeta
+                    ? `${result.uniqueSignatures} distinct builds were observed in the returned sample, with ${solvedMeta.sharePercent}% of clustered rows sharing one pattern.`
+                    : tooFewParses
+                      ? `${result.uniqueSignatures} distinct builds, each listed on its own.`
+                      : `${result.uniqueSignatures} distinct builds were grouped into ${result.k} ${
+                          result.k === 1 ? 'pattern' : 'patterns'
+                        }.`}
                 </Typography>
                 <Typography sx={{ color: 'text.secondary', fontSize: '0.72rem', lineHeight: 1.5 }}>
                   <Box component="span" sx={{ color: 'text.primary', fontWeight: 650 }}>
                     {/* A silhouette score describes a clustering. On the thin-data
                       path there isn't one, so quoting "Limited" would report the
                       quality of an analysis we never ran. */}
-                    {tooFewParses
-                      ? 'Confidence: Too early.'
-                      : `Confidence: ${getClusterQuality(result.silhouette).label}.`}
+                    {solvedMeta
+                      ? 'Finding: Solved board.'
+                      : tooFewParses
+                        ? 'Confidence: Too early.'
+                        : `Confidence: ${getClusterQuality(result.silhouette).label}.`}
                   </Box>{' '}
-                  {tooFewParses
-                    ? 'Not enough parses here to tell a real pattern from one player’s preference.'
-                    : getClusterQuality(result.silhouette).tooltip}
+                  {solvedMeta
+                    ? 'Most sampled top-ranked parses share one observed build pattern, so this view reports that dominant pattern without splitting similar variations into separate archetypes.'
+                    : tooFewParses
+                      ? 'Not enough parses here to tell a real pattern from one player’s preference.'
+                      : getClusterQuality(result.silhouette).tooltip}
                 </Typography>
                 <Typography sx={{ color: 'text.secondary', fontSize: '0.72rem', lineHeight: 1.5 }}>
                   <Box component="span" sx={{ color: 'text.primary', fontWeight: 650 }}>

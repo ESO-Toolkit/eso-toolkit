@@ -122,6 +122,111 @@ describe('BuildLeaderboardView states', () => {
     expect(onRetry).toHaveBeenCalledTimes(1);
   });
 
+  it('returns focus to build patterns after retry replaces an error state', async () => {
+    const originalScrollIntoView = Object.getOwnPropertyDescriptor(
+      HTMLElement.prototype,
+      'scrollIntoView',
+    );
+    const scrollIntoView = jest.fn();
+    Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', {
+      configurable: true,
+      value: scrollIntoView,
+    });
+
+    try {
+      const { parses, result } = clusteredFixture();
+      const onRetry = jest.fn();
+      const rendered = renderView({ error: 'Boom', onRetry });
+      await userEvent.click(screen.getByRole('button', { name: /retry/i }));
+
+      rendered.rerender(
+        <ThemeProvider theme={theme}>
+          <BuildLeaderboardView
+            parses={parses}
+            result={result}
+            loading={false}
+            clustering={false}
+            clusterProgress={0}
+            error={null}
+            tooFewParses={false}
+          />
+        </ThemeProvider>,
+      );
+
+      await waitFor(() =>
+        expect(screen.getByRole('heading', { level: 2, name: 'Build patterns' })).toHaveFocus(),
+      );
+      expect(scrollIntoView).toHaveBeenCalledWith({ block: 'start', behavior: 'auto' });
+    } finally {
+      if (originalScrollIntoView) {
+        Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', originalScrollIntoView);
+      } else {
+        Reflect.deleteProperty(HTMLElement.prototype, 'scrollIntoView');
+      }
+    }
+  });
+
+  it('does not restore stale focus after a queued retry enters another error state', async () => {
+    const originalScrollIntoView = Object.getOwnPropertyDescriptor(
+      HTMLElement.prototype,
+      'scrollIntoView',
+    );
+    const scrollIntoView = jest.fn();
+    Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', {
+      configurable: true,
+      value: scrollIntoView,
+    });
+
+    try {
+      const { parses, result } = clusteredFixture();
+      const onRetry = jest.fn();
+      const rendered = renderView({ error: 'Boom', onRetry });
+      await userEvent.click(screen.getByRole('button', { name: /retry/i }));
+
+      rendered.rerender(
+        <ThemeProvider theme={theme}>
+          <BuildLeaderboardView
+            parses={parses}
+            result={result}
+            loading={false}
+            clustering={false}
+            clusterProgress={0}
+            error="Still unavailable"
+            tooFewParses={false}
+            onRetry={onRetry}
+          />
+        </ThemeProvider>,
+      );
+      rendered.rerender(
+        <ThemeProvider theme={theme}>
+          <BuildLeaderboardView
+            parses={parses}
+            result={result}
+            loading={false}
+            clustering={false}
+            clusterProgress={0}
+            error={null}
+            tooFewParses={false}
+          />
+        </ThemeProvider>,
+      );
+
+      const heading = await screen.findByRole('heading', {
+        level: 2,
+        name: 'Build patterns',
+      });
+      await waitFor(() => expect(heading).toBeInTheDocument());
+      expect(heading).not.toHaveFocus();
+      expect(scrollIntoView).not.toHaveBeenCalled();
+    } finally {
+      if (originalScrollIntoView) {
+        Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', originalScrollIntoView);
+      } else {
+        Reflect.deleteProperty(HTMLElement.prototype, 'scrollIntoView');
+      }
+    }
+  });
+
   it('treats no data as informational, not an error', () => {
     renderView({ parses: [], emptyMessage: 'Nothing here yet.' });
     const alert = screen.getByRole('alert');
@@ -219,7 +324,8 @@ describe('BuildLeaderboardView states', () => {
     ];
     expect(rows).toHaveLength(resultWithoutMembers.k);
     rows.forEach((row) => {
-      expect(row).toHaveAccessibleName(expect.stringContaining('typical damage'));
+      expect(row).toHaveAccessibleName(expect.stringContaining('DPS unavailable'));
+      expect(row).not.toHaveAccessibleName(expect.stringContaining('typical damage'));
       expect(row).toHaveAccessibleName(expect.not.stringContaining('sampled top-25'));
     });
     expect(screen.queryByText(/\d+\/\d+ boards/i)).not.toBeInTheDocument();
@@ -281,11 +387,16 @@ describe('BuildLeaderboardView states', () => {
     ).toBeInTheDocument();
   });
 
-  it('announces clustering progress politely', () => {
+  it('announces clustering progress politely', async () => {
     const { parses } = clusteredFixture();
     renderView({ parses, clustering: true, clusterProgress: 40 });
     const status = screen.getByText(/grouping 45 parses/i);
-    expect(status).toHaveAttribute('aria-live', 'polite');
+    expect(status).not.toHaveAttribute('aria-live');
+    const announcement = screen.getByTestId('build-grouping-announcement');
+    expect(announcement).toHaveAttribute('role', 'status');
+    expect(announcement).toHaveAttribute('aria-live', 'polite');
+    expect(announcement).toBeEmptyDOMElement();
+    await waitFor(() => expect(announcement).toHaveTextContent(/grouping 45 parses/i));
     expect(screen.getByRole('progressbar', { name: /build grouping progress/i })).toHaveAttribute(
       'aria-valuetext',
       '40% complete',
@@ -429,6 +540,7 @@ describe('BuildLeaderboardView workspace', () => {
       await userEvent.click(screen.getAllByTestId('archetype-row')[0]);
 
       expect(matchMedia).not.toHaveBeenCalledWith('(max-width: 899px)');
+      expect(screen.getByTestId('build-selection-announcement')).toBeEmptyDOMElement();
       expect(screen.getByTestId('build-inspector-focus-target')).toHaveFocus();
       expect(scrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth', block: 'start' });
     } finally {
@@ -607,8 +719,18 @@ describe('BuildLeaderboardView workspace', () => {
     const core = featured.querySelectorAll('[data-trait-kind="core"]');
     const flex = featured.querySelectorAll('[data-trait-kind="flex"]');
     expect(core.length).toBeGreaterThan(0);
-    core.forEach((trait) => expect(trait).toHaveAttribute('data-core', 'true'));
-    flex.forEach((trait) => expect(trait).not.toHaveAttribute('data-core'));
+    core.forEach((trait) => {
+      expect(trait).toHaveAttribute('data-core', 'true');
+      expect(trait).toHaveAttribute('data-trait-kind-label', 'Core');
+      expect(trait).toHaveTextContent('Core:');
+      expect(trait.querySelector('[aria-hidden="true"]')).toHaveTextContent('●');
+    });
+    flex.forEach((trait) => {
+      expect(trait).not.toHaveAttribute('data-core');
+      expect(trait).toHaveAttribute('data-trait-kind-label', 'Common');
+      expect(trait).toHaveTextContent('Common:');
+      expect(trait.querySelector('[aria-hidden="true"]')).toHaveTextContent('◇');
+    });
   });
 
   it('updates the stable inspector when an alternative is selected', async () => {
@@ -620,7 +742,9 @@ describe('BuildLeaderboardView workspace', () => {
     );
     await userEvent.click(alternativeRow);
     expect(alternativeRow).toHaveAttribute('aria-pressed', 'true');
-    expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent(alternative?.label ?? '');
+    expect(
+      within(screen.getByTestId('build-inspector')).getByRole('heading', { level: 2 }),
+    ).toHaveTextContent(alternative?.label ?? '');
     expect(screen.getByTestId('build-selection-announcement')).toHaveTextContent(
       `Selected ${alternative?.label ?? ''} build pattern. Inspector updated.`,
     );
@@ -664,7 +788,7 @@ describe('BuildLeaderboardView workspace', () => {
     const { parses, result } = clusteredFixture();
     renderView({ parses, result, onOpenInEditor });
     const editorButton = screen.getByRole('button', {
-      name: 'Save a copy and open in Build Editor',
+      name: 'Save copy & open editor',
     });
     expect(editorButton).toHaveTextContent('Save copy & open editor');
     await userEvent.click(editorButton);
@@ -684,9 +808,7 @@ describe('BuildLeaderboardView workspace', () => {
       onOpenInEditor,
       onSaveBuild,
     });
-    expect(
-      screen.getByRole('button', { name: /saving build copy and opening editor/i }),
-    ).toBeDisabled();
+    expect(screen.getByRole('button', { name: /saving & opening/i })).toBeDisabled();
     expect(screen.getByRole('button', { name: /more build actions/i })).toBeDisabled();
     unmount();
 
@@ -698,7 +820,7 @@ describe('BuildLeaderboardView workspace', () => {
       onSaveBuild,
     });
     expect(screen.getByRole('button', { name: /saving build/i })).toBeDisabled();
-    expect(screen.getByRole('button', { name: /open in build editor/i })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /save copy & open editor/i })).toBeDisabled();
   });
 
   it('keeps secondary build actions in one overflow menu', async () => {
@@ -710,6 +832,54 @@ describe('BuildLeaderboardView workspace', () => {
     expect(onSaveBuild).toHaveBeenCalledWith(
       expect.objectContaining({ id: result.recommendedClusterId }),
     );
+  });
+
+  it('uses the best pooled parse for source links while loading the medoid build', async () => {
+    const onViewSourceLog = jest.fn();
+    const { parses, result } = clusteredFixture();
+    const selectedCluster = recommendedCluster(result);
+    const bestParseId = selectedCluster.memberParseIds.find(
+      (parseId) => parseId !== selectedCluster.medoidParseId,
+    );
+    expect(bestParseId).toBeDefined();
+
+    const medoidSourceUrl = 'https://www.esologs.com/reports/medoid#fight=1';
+    const bestSourceUrl = 'https://www.esologs.com/reports/best#fight=1';
+    const pooledParses = parses.map((parse) => {
+      if (parse.parse_id === selectedCluster.medoidParseId) {
+        return { ...parse, amount: 100, report_code: '', source_url: medoidSourceUrl };
+      }
+      if (parse.parse_id === bestParseId) {
+        return { ...parse, amount: 999_999, report_code: 'best', source_url: bestSourceUrl };
+      }
+      return parse;
+    });
+
+    renderView({ parses: pooledParses, result, pooled: true, onViewSourceLog });
+    const evidenceTrigger = screen.getByRole('button', { name: /view evidence/i });
+    await userEvent.click(evidenceTrigger);
+    const evidenceDialog = await screen.findByRole('dialog', { name: /build evidence/i });
+    const sourceLink = await within(evidenceDialog).findByRole('link', {
+      name: /view log \(opens new tab\)/i,
+    });
+    expect(sourceLink).toHaveAttribute('href', medoidSourceUrl);
+    expect(dpsParsesApi.getBuild).toHaveBeenCalledWith(
+      selectedCluster.medoidParseId,
+      expect.anything(),
+    );
+
+    await userEvent.click(
+      within(evidenceDialog).getByRole('button', { name: /close build evidence/i }),
+    );
+    await waitFor(() =>
+      expect(screen.queryByRole('dialog', { name: /build evidence/i })).not.toBeInTheDocument(),
+    );
+    await userEvent.click(screen.getByRole('button', { name: /more build actions/i }));
+    expect(
+      screen.getByRole('menuitem', { name: /view highest sampled log \(new tab\)/i }),
+    ).toHaveAttribute('href', bestSourceUrl);
+    await userEvent.click(screen.getByRole('menuitem', { name: /open highest sampled parse/i }));
+    expect(onViewSourceLog).toHaveBeenCalledWith(selectedCluster, bestParseId);
   });
 
   it('hides the internal parse action when the representative has no valid report code', async () => {
@@ -733,12 +903,12 @@ describe('BuildLeaderboardView workspace', () => {
     const { parses, result } = clusteredFixture();
     renderView({ parses, result });
     expect(screen.queryByText(/^gear & special$/i)).not.toBeInTheDocument();
-    const evidenceTrigger = screen.getByRole('button', { name: /show build evidence/i });
-    const evidenceDialogId = evidenceTrigger.getAttribute('aria-controls');
-    expect(evidenceDialogId).toBeTruthy();
+    const evidenceTrigger = screen.getByRole('button', { name: /view evidence/i });
+    expect(evidenceTrigger).not.toHaveAttribute('aria-controls');
     await userEvent.click(evidenceTrigger);
     const evidenceDialog = screen.getByRole('dialog', { name: /build evidence/i });
-    expect(evidenceDialog).toHaveAttribute('id', evidenceDialogId);
+    expect(evidenceTrigger).toHaveAttribute('aria-controls', evidenceDialog.id);
+    expect(evidenceDialog.id).toMatch(/^build-evidence-dialog-/);
     expect(within(evidenceDialog).getByText(/^gear sets$/i)).toBeInTheDocument();
     expect(within(evidenceDialog).getAllByText(/^front bar$/i).length).toBeGreaterThan(0);
     expect(
@@ -763,7 +933,7 @@ describe('BuildLeaderboardView workspace', () => {
       expect(screen.queryByRole('dialog', { name: /build evidence/i })).not.toBeInTheDocument(),
     );
 
-    await userEvent.click(screen.getByRole('button', { name: /show build evidence/i }));
+    await userEvent.click(screen.getByRole('button', { name: /view evidence/i }));
     expect(await screen.findByText(/observed representative loadout/i)).toBeInTheDocument();
     expect(dpsParsesApi.getBuild).toHaveBeenCalledTimes(1);
   }, 20_000);
@@ -772,7 +942,7 @@ describe('BuildLeaderboardView workspace', () => {
     const { parses, result } = clusteredFixture();
     const { rerender } = renderView({ parses, result });
     await userEvent.click(screen.getAllByTestId('archetype-row')[0]);
-    await userEvent.click(screen.getByRole('button', { name: /show build evidence/i }));
+    await userEvent.click(screen.getByRole('button', { name: /view evidence/i }));
     expect(screen.getByText(/^gear sets$/i)).toBeInTheDocument();
 
     resetFixtureIds();
@@ -832,9 +1002,9 @@ describe('BuildLeaderboardView workspace', () => {
         vectors: extractFeatureVectors(nextParses, EMPTY_CANONICAL_MAPS),
       });
       rerender(view(nextParses, nextResult));
-      expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent(
-        recommendedCluster(nextResult).label,
-      );
+      expect(
+        within(screen.getByTestId('build-inspector')).getByRole('heading', { level: 2 }),
+      ).toHaveTextContent(recommendedCluster(nextResult).label);
       expect(consoleError).not.toHaveBeenCalled();
     } finally {
       consoleError.mockRestore();

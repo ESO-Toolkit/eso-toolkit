@@ -67,6 +67,8 @@ function renderRow(
   bestParse?: DpsParse,
   clusterOverride?: Partial<typeof CLUSTER>,
   selected = false,
+  pooled = false,
+  ungrouped = false,
 ): void {
   const cluster = { ...CLUSTER, ...clusterOverride };
   render(
@@ -82,6 +84,8 @@ function renderRow(
           bestParse={bestParse}
           coveredBosses={bestParse ? 9 : undefined}
           availableBosses={bestParse ? 14 : undefined}
+          pooled={pooled}
+          ungrouped={ungrouped}
           onSelect={() => {}}
         />
       </ol>
@@ -201,5 +205,48 @@ describe('ArchetypeRow pooled headline', () => {
   it('falls back to absolute median DPS when no best parse exists', () => {
     renderRow();
     expect(screen.getByText('100k')).toBeInTheDocument();
+  });
+
+  it('does not present normalized pooled values as DPS when raw evidence is missing', () => {
+    renderRow(
+      undefined,
+      undefined,
+      { dps: { ...CLUSTER.dps, median: 0.91 }, size: 41 },
+      false,
+      true,
+    );
+
+    const row = screen.getByRole('button', { name: /Deadly Strike/ });
+    expect(row).toHaveTextContent('41 parses');
+    expect(row).toHaveTextContent('—');
+    expect(row).not.toHaveTextContent(/91%|DPS unavailable/);
+    expect(row).toHaveAccessibleName(/DPS unavailable.*41 parses/);
+    expect(row).not.toHaveAccessibleName(/typical damage/);
+  });
+
+  it('suppresses board coverage for thin pooled observations', () => {
+    renderRow(
+      undefined,
+      makeParse({ amount: 112_000, trial_id: 'DSR' }),
+      { dps: { ...CLUSTER.dps, median: 0.91 }, size: 1 },
+      false,
+      true,
+      true,
+    );
+
+    const row = screen.getByRole('button', { name: /Deadly Strike/ });
+    expect(row).toHaveTextContent('112k');
+    expect(row).toHaveTextContent('1 parse');
+    expect(row).not.toHaveTextContent(/9\/14 boards/);
+    expect(row).not.toHaveAccessibleName(/sampled top-ranked on/);
+  });
+
+  it('does not leave empty anchor grammar in pooled accessible names', () => {
+    renderRow(undefined, makeParse({ amount: 112_000 }), undefined, false, true);
+
+    const row = screen.getByRole('button', { name: /Deadly Strike/ });
+    expect(row).toHaveAccessibleName(/sampled high 112k DPS/);
+    expect(row).not.toHaveAccessibleName(/on\s*,/);
+    expect(row).not.toHaveTextContent(/@/);
   });
 });
