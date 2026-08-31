@@ -68,8 +68,41 @@ describe('Dlss5NeuralRenderingGuidePage', () => {
     expect(screen.getByText(/Copy depth buffer before clear operations/i)).toBeInTheDocument();
   });
 
-  it('sets the document title', () => {
+  it('sets the document title from route metadata', () => {
     renderPage();
+    // Sourced via usePageTitle -> ROUTE_META, so it matches the prerendered
+    // shell byte for byte. A mismatch here means someone hardcoded it again.
     expect(document.title).toBe('DLSS 5 Neural Rendering in ESO | ESO Toolkit');
+  });
+
+  it('every table-of-contents link resolves to a real section anchor', () => {
+    const { container } = renderPage();
+
+    const tocLinks = Array.from(
+      container.querySelectorAll<HTMLAnchorElement>('nav[aria-label="On this page"] a'),
+    );
+    expect(tocLinks.length).toBeGreaterThan(0);
+
+    tocLinks.forEach((link) => {
+      const id = link.getAttribute('href')?.replace('#', '') ?? '';
+      expect(id).not.toBe('');
+      // A dangling anchor silently scrolls nowhere, which is worse than no TOC.
+      expect(container.querySelector(`#${id}`)).not.toBeNull();
+    });
+  });
+
+  it('has a valid heading outline with no skipped levels', () => {
+    const { container } = renderPage();
+
+    const levels = Array.from(container.querySelectorAll('h1,h2,h3,h4,h5,h6')).map((h) =>
+      Number(h.tagName[1]),
+    );
+
+    expect(levels[0]).toBe(1);
+    expect(levels.filter((l) => l === 1)).toHaveLength(1);
+    levels.slice(1).forEach((level, i) => {
+      // Descending any amount is fine; ascending may only ever step by one.
+      expect(level - levels[i]).toBeLessThanOrEqual(1);
+    });
   });
 });

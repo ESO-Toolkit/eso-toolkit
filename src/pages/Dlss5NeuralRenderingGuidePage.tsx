@@ -12,6 +12,14 @@
  * paths, log signatures and ini keys can offer copy-to-clipboard, and so the risk
  * callout can be visually prominent rather than a paragraph a reader skims past.
  *
+ * Layout notes, because a long technical doc has different needs to a marketing
+ * page: the container is `md` rather than `lg` (at lg this page ran ~170 chars
+ * per line, since unlike RosterBotDocsPage it has no multi-column grids to break
+ * the width up), body copy is `text.primary` with `text.secondary` reserved for
+ * genuine asides, and code blocks are neutral slate rather than green-on-green —
+ * the accent stays on the hero, step badges and CTAs so the page reads as part of
+ * this site rather than as an NVIDIA page.
+ *
  * Setting names, ini keys and overlay status strings are transcribed from the
  * shipped binaries (renodx-dlss5.addon64, dlss5-feed.addon64, DLSS5_Feed.fx)
  * rather than paraphrased, so they match what a reader sees on screen.
@@ -53,11 +61,40 @@ import {
 import React from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 
+import { usePageTitle } from '@/hooks/useDocumentTitle';
+
+/** Brand accent. Safe as dark-mode text, and as borders/gradients in both modes. */
 const NV_GREEN = '#76B900';
+/** Gradient stop only — 3.7:1 as light-mode text, which fails WCAG AA. */
 const NV_GREEN_DARK = '#5A8F00';
+/** Light-mode green *text*: 6.5:1 on white, 5.9:1 on the tinted surfaces here. */
+const NV_GREEN_TEXT_LIGHT = '#446B00';
+
+const MONO = "Consolas, Monaco, 'Fira Code', monospace";
+
+// ── Section registry: single source of truth for headings, ids and the TOC ──
+
+const SECTIONS = [
+  { id: 'how-it-works', title: 'How this works' },
+  { id: 'requirements', title: 'What you need' },
+  { id: 'setup', title: 'Setup' },
+  { id: 'overlay', title: 'Using the ReShade overlay' },
+  { id: 'nr-panel', title: 'The Neural Rendering add-on panel' },
+  { id: 'depth-buffer', title: 'Checking the depth buffer' },
+  { id: 'verify', title: 'Proving it works' },
+  { id: 'config', title: 'Config file reference' },
+  { id: 'troubleshooting', title: 'When it does not work' },
+  { id: 'performance', title: 'What it costs' },
+] as const;
 
 // ── Reusable copy-to-clipboard ──────────────────────────────────────────────
 
+/**
+ * `aria-label` is a short fixed string rather than the payload: several call
+ * sites copy multi-line ini blocks, and naming a button after ten lines of
+ * config makes it unusable in a screen reader's control list. The copied state
+ * is announced through a visually hidden live region instead.
+ */
 const CopyButton: React.FC<{ value: string; label?: string }> = ({ value, label }) => {
   const [copied, setCopied] = React.useState(false);
   const copy = React.useCallback(async () => {
@@ -75,83 +112,36 @@ const CopyButton: React.FC<{ value: string; label?: string }> = ({ value, label 
       <Button
         size="small"
         onClick={() => void copy()}
-        aria-label={copied ? 'Copied' : `Copy ${value}`}
+        aria-label={label ?? 'Copy to clipboard'}
         sx={{
           minWidth: 0,
           px: 0.75,
           py: 0.25,
-          color: copied ? NV_GREEN : 'text.secondary',
-          '&:hover': { color: NV_GREEN, background: 'transparent' },
+          color: copied ? 'success.main' : 'text.secondary',
+          '&:hover': { color: 'success.main', background: 'transparent' },
         }}
       >
         {copied ? <CheckIcon sx={{ fontSize: 16 }} /> : <ContentCopy sx={{ fontSize: 16 }} />}
+        <Box
+          component="span"
+          role="status"
+          sx={{
+            position: 'absolute',
+            width: 1,
+            height: 1,
+            overflow: 'hidden',
+            clip: 'rect(0 0 0 0)',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {copied ? 'Copied to clipboard' : ''}
+        </Box>
       </Button>
     </Tooltip>
   );
 };
 
 // ── Content data ────────────────────────────────────────────────────────────
-
-interface StepSpec {
-  n: number;
-  title: string;
-  body: string;
-  code?: string;
-  note?: string;
-}
-
-const CLIENT_PATH = 'steamapps\\common\\Zenimax Online\\The Elder Scrolls Online\\game\\client';
-
-const STEPS: ReadonlyArray<StepSpec> = [
-  {
-    n: 1,
-    title: 'Find your ESO client folder',
-    body: 'Every file in this guide goes in the folder that contains eso64.exe. On a default Steam install that is:',
-    code: CLIENT_PATH,
-    note: 'Keep this folder open — every remaining step drops a file here.',
-  },
-  {
-    n: 2,
-    title: 'Install ReShade with add-on support',
-    body: 'Install ReShade for eso64.exe, choosing DirectX 10/11/12 and the build WITH full add-on support. The plain build cannot load .addon64 files at all, so nothing in this guide will work on it. ReShade must land as dxgi.dll next to eso64.exe.',
-    note: 'Already have ReShade? Check that dxgi.dll exists in the client folder and that it is version 6.x.',
-  },
-  {
-    n: 3,
-    title: 'Add the shaders',
-    body: 'Place DLSS5_Feed.fx and MartysMods_LAUNCHPAD.fx into reshade-shaders\\Shaders, the MartysMods\\ include folder alongside them, and iMMERSE_bluenoise_opt.png into reshade-shaders\\Textures.',
-    note: 'LaunchPad supplies the optical-flow motion vectors. Without it the feeder has nothing to hand NGX and sits idle.',
-  },
-  {
-    n: 4,
-    title: 'Add the two add-ons',
-    body: 'Drop dlss5-feed.addon64 and renodx-dlss5.addon64 into the client folder. ReShade auto-discovers .addon64 files next to the game exe, so there is no path to configure.',
-    note: 'ReShade.log will confirm both loaded — look for two "Registered add-on" lines at startup.',
-  },
-  {
-    n: 5,
-    title: 'Add the NGX runtimes',
-    body: 'You need two NVIDIA DLLs in the client folder: nvngx_dlss.dll (the DLSS super-resolution runtime) and nvngx_dlssnr.dll (the Neural Rendering runtime).',
-    note: 'Version matters enormously — see the requirements above. This is where almost every failed setup goes wrong.',
-  },
-  {
-    n: 6,
-    title: 'Replace ESO d3dcompiler_47.dll',
-    body: 'Close the game. Rename the client folder d3dcompiler_47.dll to d3dcompiler_47.dll.bak, then copy the system one over. Without this, Neural Rendering silently never starts (see troubleshooting).',
-    code: 'copy C:\\Windows\\System32\\d3dcompiler_47.dll',
-    note: 'The file is locked while ESO runs, so the copy will fail if the game is open.',
-  },
-  {
-    n: 7,
-    title: 'Turn off in-game anti-aliasing',
-    body: 'In ESO video settings, disable MSAA/SSAA and set resolution scale to 100%. The feeder hands NGX a full-resolution depth buffer, and any multisampling breaks that contract.',
-  },
-  {
-    n: 8,
-    title: 'Enable the effects in the right order',
-    body: 'Launch ESO, press Home, and enable MartysMods_Launchpad FIRST, then DLSS5_Feed directly below it. See the overlay walkthrough below — order is not cosmetic.',
-  },
-];
 
 interface RowSpec {
   label: string;
@@ -247,10 +237,7 @@ const NR_SETTINGS: ReadonlyArray<RowSpec> = [
     value:
       'How strongly the neural result is blended over the original frame. Lower it first if the effect looks overcooked.',
   },
-  {
-    label: 'Local Tone Strength',
-    value: 'Local contrast/tone shaping applied by the neural pass.',
-  },
+  { label: 'Local Tone Strength', value: 'Local contrast/tone shaping applied by the neural pass.' },
   {
     label: 'Local Structure Strength',
     value: 'How much fine structural detail the pass reconstructs across the frame generally.',
@@ -266,7 +253,8 @@ const NR_SETTINGS: ReadonlyArray<RowSpec> = [
   },
   {
     label: 'Control-compatible color transfer',
-    value: 'Alternative colour transfer path. Leave at the default unless you have a specific reason.',
+    value:
+      'Alternative colour transfer path. Leave at the default unless you have a specific reason.',
   },
   {
     label: 'HDR Transfer Strength / Scene Paper-White Scale',
@@ -344,7 +332,7 @@ const FAILURES: ReadonlyArray<FailureSpec> = [
     log: "DLSS5 Generic proxy encode compilation failed with HRESULT 0x8876086c: error X3506: unrecognized compiler target 'cs_5_1'",
     cause:
       'The ESO-specific trap. ESO ships its own d3dcompiler_47.dll from the Windows 8.1 SDK (version 6.3.9600, dated 2013). Because it sits next to the exe it wins the DLL search order over the modern system copy. RenoDX compiles its proxy-encode shader at cs_5_1 — Shader Model 5.1 did not exist in 2013 — so the compile fails and feature 18 is never created. DLSS itself keeps working, which is why this looks like "nothing happened" rather than an error.',
-    fix: 'Do step 6. Back up the client folder d3dcompiler_47.dll, then copy C:\\Windows\\System32\\d3dcompiler_47.dll over it. Close the game first or the file will be locked.',
+    fix: 'Do step 6. Back up the client folder d3dcompiler_47.dll, then copy the system one over it. Close the game first or the file will be locked.',
   },
   {
     symptom: 'The effect list says DLSS5_Feed.fx is not loaded',
@@ -375,34 +363,37 @@ export const Dlss5NeuralRenderingGuidePage: React.FC = () => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
+  // Title comes from route-meta.json so the hydrated <title> matches the shell
+  // stamped by scripts/generate-static-routes.cjs. Never hardcode it here.
+  usePageTitle('/docs/dlss5-neural-rendering');
+
+  // React Router does not scroll to #hash targets on its own, so a shared
+  // "read the troubleshooting bit" link would otherwise land at the top.
   React.useEffect(() => {
-    document.title = 'DLSS 5 Neural Rendering in ESO | ESO Toolkit';
+    const id = window.location.hash.slice(1);
+    if (!id) return;
+    requestAnimationFrame(() => {
+      document.getElementById(id)?.scrollIntoView({ block: 'start' });
+    });
   }, []);
+
+  /** Green that is safe as text in the current mode. */
+  const nvText = isDark ? NV_GREEN : NV_GREEN_TEXT_LIGHT;
 
   const cardSx = {
     borderRadius: '16px',
     p: { xs: 2.5, md: 3 },
-    border: isDark ? '1px solid rgba(255,255,255,0.07)' : '1px solid rgba(0,0,0,0.07)',
-    background: isDark ? 'rgba(255,255,255,0.025)' : 'rgba(255,255,255,0.6)',
+    border: isDark ? '1px solid rgba(255,255,255,0.07)' : '1px solid rgba(15,23,42,0.10)',
+    background: isDark ? 'rgba(255,255,255,0.025)' : 'rgba(255,255,255,0.88)',
+    boxShadow: isDark ? 'none' : '0 1px 3px rgba(15,23,42,0.05)',
     backdropFilter: 'blur(8px)',
   } as const;
 
-  const codeBlockSx = {
-    fontFamily: "Consolas, Monaco, 'Fira Code', monospace",
-    fontSize: '0.82rem',
-    lineHeight: 1.7,
-    color: isDark ? '#d7f0a8' : NV_GREEN_DARK,
-    background: isDark ? 'rgba(118,185,0,0.10)' : 'rgba(118,185,0,0.08)',
-    border: isDark ? '1px solid rgba(118,185,0,0.22)' : '1px solid rgba(118,185,0,0.20)',
-    borderRadius: '10px',
-    px: 1.5,
-    py: 1.25,
-    whiteSpace: 'pre-wrap',
-    overflowWrap: 'anywhere',
-  } as const;
+  /** Body copy. `text.secondary` is reserved for genuine asides and table values. */
+  const proseSx = { color: 'text.primary', fontSize: '0.9rem', lineHeight: 1.75 } as const;
 
   return (
-    <Container maxWidth="lg" sx={{ py: { xs: 4, md: 6 } }}>
+    <Container maxWidth="md" sx={{ py: { xs: 4, md: 6 } }}>
       {/* ── Hero ─────────────────────────────────────────────────────── */}
       <Box
         sx={{
@@ -411,7 +402,7 @@ export const Dlss5NeuralRenderingGuidePage: React.FC = () => {
           borderRadius: '20px',
           px: { xs: 3, md: 5 },
           py: { xs: 4, md: 5 },
-          mb: 4,
+          mb: 3,
           background: isDark
             ? 'linear-gradient(135deg, rgba(118,185,0,0.20) 0%, rgba(0,200,255,0.06) 100%)'
             : 'linear-gradient(135deg, rgba(118,185,0,0.12) 0%, rgba(0,200,255,0.05) 100%)',
@@ -420,6 +411,7 @@ export const Dlss5NeuralRenderingGuidePage: React.FC = () => {
       >
         <Stack direction="row" spacing={2} sx={{ alignItems: 'center', mb: 2 }}>
           <Box
+            aria-hidden="true"
             sx={{
               width: 56,
               height: 56,
@@ -442,18 +434,59 @@ export const Dlss5NeuralRenderingGuidePage: React.FC = () => {
             >
               DLSS 5 Neural Rendering in ESO
             </Typography>
-            <Typography variant="subtitle1" sx={{ color: 'text.secondary', mt: 0.5 }}>
+            {/* component="p": MUI maps the subtitle1 variant to <h6>, which would
+                put a stray heading between the h1 and the first section h2. */}
+            <Typography component="p" variant="subtitle1" sx={{ color: 'text.secondary', mt: 0.5 }}>
               Getting the unofficial DLSS 5 Feeder + RenoDX stack actually evaluating frames — every
               setting, and the ESO-specific traps that stop it.
             </Typography>
           </Box>
         </Stack>
         <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 1 }}>
-          <Chip size="small" label="Community guide" sx={{ fontWeight: 600 }} />
-          <Chip size="small" label="Unofficial / unsupported" sx={{ fontWeight: 600 }} />
-          <Chip size="small" label="NVIDIA RTX only" sx={{ fontWeight: 600 }} />
+          {[
+            { label: 'Community guide', warn: false },
+            { label: 'Unofficial / unsupported', warn: true },
+            { label: 'NVIDIA RTX only', warn: false },
+          ].map((c) => (
+            <Chip
+              key={c.label}
+              size="small"
+              label={c.label}
+              variant="outlined"
+              sx={{
+                fontWeight: 600,
+                color: c.warn ? 'warning.main' : 'text.primary',
+                borderColor: c.warn
+                  ? 'warning.main'
+                  : isDark
+                    ? 'rgba(118,185,0,0.45)'
+                    : 'rgba(68,107,0,0.45)',
+                background: isDark ? 'rgba(2,6,23,0.30)' : 'rgba(255,255,255,0.55)',
+              }}
+            />
+          ))}
         </Stack>
       </Box>
+
+      {/* ── Fast path for readers arriving mid-failure ───────────────── */}
+      <Alert
+        severity="info"
+        sx={{ mb: 3, borderRadius: '16px' }}
+        action={
+          <Button
+            size="small"
+            href="#troubleshooting"
+            sx={{ fontWeight: 700, textTransform: 'none', color: 'inherit', whiteSpace: 'nowrap' }}
+          >
+            Jump to fixes
+          </Button>
+        }
+      >
+        <Typography variant="body2" sx={{ lineHeight: 1.6 }}>
+          <strong>Already set up but it is not working?</strong> Every troubleshooting entry is keyed
+          to the exact log line it produces.
+        </Typography>
+      </Alert>
 
       {/* ── Risk callout ─────────────────────────────────────────────── */}
       <Alert
@@ -490,327 +523,467 @@ export const Dlss5NeuralRenderingGuidePage: React.FC = () => {
         </Box>
       </Alert>
 
-      {/* ── How it works ─────────────────────────────────────────────── */}
-      <SectionHeading icon={<Layers sx={{ color: NV_GREEN }} />} title="How this works" />
-      <Box sx={{ ...cardSx, mb: 5 }}>
-        <Typography variant="body2" sx={{ color: 'text.secondary', lineHeight: 1.8, mb: 2 }}>
-          ESO is a DirectX 11 game with <strong>no native DLSS support</strong>, so there is no
-          DLSS toggle to turn on. This stack fakes one. Understanding the chain makes every error
-          message below obvious:
+      {/* ── Table of contents ────────────────────────────────────────── */}
+      <Box component="nav" aria-label="On this page" sx={{ ...cardSx, mb: { xs: 6, md: 8 } }}>
+        <Typography component="h2" sx={{ fontWeight: 700, fontSize: '0.95rem', mb: 1 }}>
+          On this page
         </Typography>
-        <Stack spacing={1.5}>
-          <ChainRow
-            n="1"
-            title="LaunchPad estimates motion"
-            body="ESO does not output motion vectors, so iMMERSE LaunchPad derives them from the image with optical flow."
-          />
-          <ChainRow
-            n="2"
-            title="DLSS5_Feed packages the contract"
-            body="It converts LaunchPad's output plus ReShade's depth buffer into the exact two textures DLSS expects: DLSS5_MV (RG16F, pixel motion) and DLSS5_Depth (R32F, raw hardware depth)."
-          />
-          <ChainRow
-            n="3"
-            title="The feeder add-on runs DLSS"
-            body="dlss5-feed.addon64 opens a side D3D12 device, shares ESO's DX11 textures onto it, and asks NGX to create a DLAA feature."
-          />
-          <ChainRow
-            n="4"
-            title="RenoDX intercepts and adds Neural Rendering"
-            body="renodx-dlss5.addon64 detours the NGX calls, and once a DLSS feature evaluates successfully it creates feature 18 (Neural Rendering) on top of it."
-          />
-        </Stack>
-        <Alert severity="info" icon={<Info />} sx={{ mt: 2.5, borderRadius: '12px' }}>
-          <Typography variant="body2" sx={{ lineHeight: 1.7 }}>
-            <strong>Every link depends on the one before it.</strong> Neural Rendering can only
-            attach to a working DLSS feature, which can only exist if the feeder built one, which
-            needs valid depth and motion. That is why the troubleshooting section is ordered — fix
-            the earliest failing stage, not the one whose symptom you noticed.
-          </Typography>
-        </Alert>
-      </Box>
-
-      {/* ── Requirements ─────────────────────────────────────────────── */}
-      <SectionHeading icon={<Info sx={{ color: NV_GREEN }} />} title="What you need" />
-      <Box sx={{ ...cardSx, mb: 5 }}>
-        <SettingsTable rows={REQUIREMENTS} labelWidth={170} />
-        <Alert severity="info" icon={<Info />} sx={{ mt: 2.5, borderRadius: '12px' }}>
-          <Typography variant="body2" sx={{ lineHeight: 1.7 }}>
-            Need a current <code>nvngx_dlss.dll</code>? TechPowerUp mirrors official NVIDIA DLSS
-            DLLs at{' '}
-            <Box
-              component="a"
-              href="https://www.techpowerup.com/download/nvidia-dlss-dll/"
-              target="_blank"
-              rel="noopener noreferrer"
-              sx={{ color: NV_GREEN, fontWeight: 600 }}
-            >
-              techpowerup.com/download/nvidia-dlss-dll
-            </Box>
-            . Grab a 310.x release — these are unmodified, NVIDIA-signed files.
-          </Typography>
-        </Alert>
-      </Box>
-
-      {/* ── Steps ────────────────────────────────────────────────────── */}
-      <SectionHeading icon={<Science sx={{ color: NV_GREEN }} />} title="Setup" />
-      <Stack spacing={2} sx={{ mb: 5 }}>
-        {STEPS.map((step) => (
-          <Box key={step.n} sx={cardSx}>
-            <Stack direction="row" spacing={2} sx={{ alignItems: 'flex-start' }}>
+        <Box
+          component="ol"
+          sx={{
+            m: 0,
+            pl: 2.5,
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
+            columnGap: 4,
+            rowGap: 0.5,
+          }}
+        >
+          {SECTIONS.map((s) => (
+            <Box component="li" key={s.id} sx={{ fontSize: '0.9rem', lineHeight: 1.7 }}>
               <Box
+                component="a"
+                href={`#${s.id}`}
                 sx={{
-                  width: 30,
-                  height: 30,
-                  borderRadius: '9px',
-                  flexShrink: 0,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontWeight: 800,
-                  fontSize: '0.85rem',
-                  color: '#fff',
-                  background: `linear-gradient(135deg, ${NV_GREEN} 0%, ${NV_GREEN_DARK} 100%)`,
+                  color: 'text.primary',
+                  textDecoration: 'underline',
+                  textDecorationColor: 'rgba(118,185,0,0.5)',
+                  '&:hover': { textDecorationColor: NV_GREEN },
                 }}
               >
-                {step.n}
+                {s.title}
               </Box>
-              <Box sx={{ minWidth: 0, flex: 1 }}>
-                <Typography sx={{ fontWeight: 700, fontSize: '1rem', mb: 0.5 }}>
-                  {step.title}
-                </Typography>
-                <Typography variant="body2" sx={{ color: 'text.secondary', lineHeight: 1.7 }}>
-                  {step.body}
-                </Typography>
-                {step.code ? (
-                  <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center', mt: 1.25 }}>
-                    <Box sx={{ ...codeBlockSx, flex: 1 }}>{step.code}</Box>
-                    <CopyButton value={step.code} label="Copy" />
-                  </Stack>
-                ) : null}
-                {step.note ? (
-                  <Typography
-                    variant="body2"
-                    sx={{ mt: 1.25, fontStyle: 'italic', color: 'text.secondary', opacity: 0.85 }}
-                  >
-                    {step.note}
-                  </Typography>
-                ) : null}
-              </Box>
-            </Stack>
-          </Box>
-        ))}
-      </Stack>
-
-      {/* ── Overlay walkthrough ──────────────────────────────────────── */}
-      <SectionHeading
-        icon={<SettingsIcon sx={{ color: NV_GREEN }} />}
-        title="Using the ReShade overlay"
-      />
-      <Box sx={{ ...cardSx, mb: 2 }}>
-        <Typography variant="body2" sx={{ color: 'text.secondary', lineHeight: 1.8, mb: 2 }}>
-          Press <strong>Home</strong> in-game to open ReShade. (First launch shows a tutorial —
-          click through it.) You will use three tabs:
-        </Typography>
-        <SettingsTable rows={OVERLAY_TABS} labelWidth={130} />
-      </Box>
-
-      <Box sx={{ ...cardSx, mb: 2 }}>
-        <Typography sx={{ fontWeight: 700, fontSize: '1rem', mb: 1 }}>
-          Effect order (this matters)
-        </Typography>
-        <Typography variant="body2" sx={{ color: 'text.secondary', lineHeight: 1.8, mb: 1.5 }}>
-          In the Home tab, tick these two <strong>in this order</strong>. Drag entries to reorder if
-          they land wrong:
-        </Typography>
-        <Box sx={{ ...codeBlockSx, mb: 1.5 }}>
-          {`[x] MartysMods_Launchpad     <- motion vector provider, must be ABOVE
-[x] DLSS5_Feed               <- consumes them, must be BELOW`}
-        </Box>
-        <Typography variant="body2" sx={{ color: 'text.secondary', lineHeight: 1.8 }}>
-          The add-on runs DLSS and Neural Rendering immediately after the DLSS5_Feed technique, so
-          any effect you place <em>below</em> DLSS5_Feed is applied on top of the neural output.
-          Anything above it feeds into the neural pass instead.
-        </Typography>
-      </Box>
-
-      <Box sx={{ ...cardSx, mb: 2 }}>
-        <Typography sx={{ fontWeight: 700, fontSize: '1rem', mb: 1 }}>
-          DLSS5_Feed effect settings
-        </Typography>
-        <Typography variant="body2" sx={{ color: 'text.secondary', lineHeight: 1.8, mb: 1.5 }}>
-          Select DLSS5_Feed in the effect list and its options appear underneath:
-        </Typography>
-        <SettingsTable rows={FEED_SETTINGS} labelWidth={230} />
-      </Box>
-
-      <Box sx={{ ...cardSx, mb: 5 }}>
-        <Typography sx={{ fontWeight: 700, fontSize: '1rem', mb: 1 }}>
-          If LaunchPad is not installed
-        </Typography>
-        <Typography variant="body2" sx={{ color: 'text.secondary', lineHeight: 1.8 }}>
-          Whether LaunchPad is present is a compile-time question, not a runtime one. If you are
-          using a different motion-vector provider, set{' '}
-          <code>DLSS5_MV_SOURCE = 1</code> under <strong>Edit → Preprocessor definitions</strong> in
-          the overlay. With LaunchPad installed (the default, <code>0</code>), both providers stay
-          selectable from the dropdown with no recompile.
-        </Typography>
-      </Box>
-
-      {/* ── NR add-on panel ──────────────────────────────────────────── */}
-      <SectionHeading
-        icon={<Tune sx={{ color: NV_GREEN }} />}
-        title="The Neural Rendering add-on panel"
-      />
-      <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2, lineHeight: 1.8 }}>
-        Overlay → <strong>Add-ons</strong> → <strong>DLSS 5 Neural Rendering</strong>. The status
-        line at the top is the single most useful diagnostic in the whole stack — read it before
-        touching any slider.
-      </Typography>
-
-      <Box sx={{ ...cardSx, mb: 2 }}>
-        <Typography sx={{ fontWeight: 700, fontSize: '1rem', mb: 1.5 }}>
-          What the status line means
-        </Typography>
-        <Stack spacing={1.5}>
-          {STATUSES.map((s) => (
-            <Box
-              key={s.status}
-              sx={{
-                borderLeft: `3px solid ${s.good ? NV_GREEN : theme.palette.warning.main}`,
-                pl: 1.75,
-              }}
-            >
-              <Typography
-                sx={{
-                  fontFamily: "Consolas, Monaco, 'Fira Code', monospace",
-                  fontSize: '0.8rem',
-                  fontWeight: 600,
-                  mb: 0.4,
-                  color: s.good ? NV_GREEN : 'text.primary',
-                }}
-              >
-                {s.status}
-              </Typography>
-              <Typography variant="body2" sx={{ color: 'text.secondary', lineHeight: 1.65 }}>
-                {s.meaning}
-              </Typography>
             </Box>
           ))}
+        </Box>
+      </Box>
+
+      {/* ── How it works ─────────────────────────────────────────────── */}
+      <Section id="how-it-works" icon={<Layers />} title="How this works">
+        <Box sx={cardSx}>
+          <Typography variant="body2" sx={{ ...proseSx, mb: 2 }}>
+            ESO is a DirectX 11 game with <strong>no native DLSS support</strong>, so there is no
+            DLSS toggle to turn on. This stack fakes one. Understanding the chain makes every error
+            message below obvious:
+          </Typography>
+          <Stack component="ol" spacing={1.5} sx={{ listStyle: 'none', p: 0, m: 0 }}>
+            <ChainRow
+              n="1"
+              title="LaunchPad estimates motion"
+              body="ESO does not output motion vectors, so iMMERSE LaunchPad derives them from the image with optical flow."
+            />
+            <ChainRow
+              n="2"
+              title="DLSS5_Feed packages the contract"
+              body="It converts LaunchPad's output plus ReShade's depth buffer into the exact two textures DLSS expects: DLSS5_MV (RG16F, pixel motion) and DLSS5_Depth (R32F, raw hardware depth)."
+            />
+            <ChainRow
+              n="3"
+              title="The feeder add-on runs DLSS"
+              body="dlss5-feed.addon64 opens a side D3D12 device, shares ESO's DX11 textures onto it, and asks NGX to create a DLAA feature."
+            />
+            <ChainRow
+              n="4"
+              title="RenoDX intercepts and adds Neural Rendering"
+              body="renodx-dlss5.addon64 detours the NGX calls, and once a DLSS feature evaluates successfully it creates feature 18 (Neural Rendering) on top of it."
+            />
+          </Stack>
+          <Alert severity="info" icon={<Info />} sx={{ mt: 2.5, borderRadius: '12px' }}>
+            <Typography variant="body2" sx={{ lineHeight: 1.7 }}>
+              <strong>Every link depends on the one before it.</strong> Neural Rendering can only
+              attach to a working DLSS feature, which can only exist if the feeder built one, which
+              needs valid depth and motion. That is why{' '}
+              <Box component="a" href="#troubleshooting" sx={{ color: nvText, fontWeight: 700 }}>
+                the troubleshooting section
+              </Box>{' '}
+              is ordered — fix the earliest failing stage, not the one whose symptom you noticed.
+            </Typography>
+          </Alert>
+        </Box>
+      </Section>
+
+      {/* ── Requirements ─────────────────────────────────────────────── */}
+      <Section id="requirements" icon={<Info />} title="What you need">
+        <Box sx={cardSx}>
+          <SettingsTable rows={REQUIREMENTS} labelWidth={160} />
+          <Alert severity="info" icon={<Info />} sx={{ mt: 2.5, borderRadius: '12px' }}>
+            <Typography variant="body2" sx={{ lineHeight: 1.7 }}>
+              Need a current <code>nvngx_dlss.dll</code>? TechPowerUp mirrors official NVIDIA DLSS
+              DLLs at{' '}
+              <Box
+                component="a"
+                href="https://www.techpowerup.com/download/nvidia-dlss-dll/"
+                target="_blank"
+                rel="noopener noreferrer"
+                sx={{ color: nvText, fontWeight: 600, textDecoration: 'underline' }}
+              >
+                techpowerup.com/download/nvidia-dlss-dll
+              </Box>
+              . Grab a 310.x release — these are unmodified, NVIDIA-signed files.
+            </Typography>
+          </Alert>
+        </Box>
+      </Section>
+
+      {/* ── Steps ────────────────────────────────────────────────────── */}
+      <Section id="setup" icon={<Science />} title="Setup">
+        <Box sx={{ ...cardSx, p: { xs: 2.5, md: 3.5 } }}>
+          <Stack component="ol" sx={{ listStyle: 'none', p: 0, m: 0 }}>
+            <StepRow n={1} last={false} title="Find your ESO client folder">
+              <Typography variant="body2" sx={proseSx}>
+                Every file in this guide goes in the folder that contains <code>eso64.exe</code>. On
+                a default Steam install that is:
+              </Typography>
+              <CodeBlock copyable wrap copyLabel="Copy client folder path" sx={{ mt: 1.25 }}>
+                {'steamapps\\common\\Zenimax Online\\The Elder Scrolls Online\\game\\client'}
+              </CodeBlock>
+              <Note>Keep this folder open — every remaining step drops a file here.</Note>
+            </StepRow>
+
+            <StepRow n={2} last={false} title="Install ReShade with add-on support">
+              <Typography variant="body2" sx={proseSx}>
+                Install ReShade for <code>eso64.exe</code>, choosing DirectX 10/11/12 and the build{' '}
+                <strong>with full add-on support</strong>. The plain build cannot load{' '}
+                <code>.addon64</code> files at all, so nothing in this guide will work on it. ReShade
+                must land as <code>dxgi.dll</code> next to <code>eso64.exe</code>.
+              </Typography>
+              <Note>
+                Already have ReShade? Check that <code>dxgi.dll</code> exists in the client folder
+                and that it is version 6.x.
+              </Note>
+            </StepRow>
+
+            <StepRow n={3} last={false} title="Add the shaders">
+              <Typography variant="body2" sx={proseSx}>
+                Four files, two destinations:
+              </Typography>
+              <Box
+                component="ul"
+                sx={{ pl: 2.5, mt: 0.75, mb: 0, '& li': { mb: 0.4, lineHeight: 1.7 } }}
+              >
+                <Typography component="li" variant="body2" sx={proseSx}>
+                  <code>DLSS5_Feed.fx</code> → <code>reshade-shaders\Shaders</code>
+                </Typography>
+                <Typography component="li" variant="body2" sx={proseSx}>
+                  <code>MartysMods_LAUNCHPAD.fx</code> → <code>reshade-shaders\Shaders</code>
+                </Typography>
+                <Typography component="li" variant="body2" sx={proseSx}>
+                  the <code>MartysMods\</code> include folder → alongside those two .fx files
+                </Typography>
+                <Typography component="li" variant="body2" sx={proseSx}>
+                  <code>iMMERSE_bluenoise_opt.png</code> → <code>reshade-shaders\Textures</code>
+                </Typography>
+              </Box>
+              <Note>
+                LaunchPad supplies the optical-flow motion vectors. Without it the feeder has nothing
+                to hand NGX and sits idle.
+              </Note>
+            </StepRow>
+
+            <StepRow n={4} last={false} title="Add the two add-ons">
+              <Typography variant="body2" sx={proseSx}>
+                Drop <code>dlss5-feed.addon64</code> and <code>renodx-dlss5.addon64</code> into the
+                client folder. ReShade auto-discovers <code>.addon64</code> files next to the game
+                exe, so there is no path to configure.
+              </Typography>
+              <Note>
+                ReShade.log will confirm both loaded — look for two &ldquo;Registered add-on&rdquo;
+                lines at startup.
+              </Note>
+            </StepRow>
+
+            <StepRow n={5} last={false} title="Add the NGX runtimes">
+              <Typography variant="body2" sx={proseSx}>
+                You need two NVIDIA DLLs in the client folder: <code>nvngx_dlss.dll</code> (the DLSS
+                super-resolution runtime) and <code>nvngx_dlssnr.dll</code> (the Neural Rendering
+                runtime).
+              </Typography>
+              <Note>
+                Version matters enormously — see{' '}
+                <Box component="a" href="#requirements" sx={{ color: nvText, fontWeight: 700 }}>
+                  what you need
+                </Box>
+                . This is where almost every failed setup goes wrong.
+              </Note>
+            </StepRow>
+
+            <StepRow n={6} last={false} title="Replace ESO d3dcompiler_47.dll">
+              <Typography variant="body2" sx={proseSx}>
+                Without this, Neural Rendering silently never starts. Three actions:
+              </Typography>
+              <Box
+                component="ol"
+                sx={{ pl: 2.5, mt: 0.75, mb: 0, '& li': { mb: 0.4, lineHeight: 1.7 } }}
+              >
+                <Typography component="li" variant="body2" sx={proseSx}>
+                  Close ESO completely — the DLL is locked while the game runs.
+                </Typography>
+                <Typography component="li" variant="body2" sx={proseSx}>
+                  Rename the client folder <code>d3dcompiler_47.dll</code> to{' '}
+                  <code>d3dcompiler_47.dll.bak</code>.
+                </Typography>
+                <Typography component="li" variant="body2" sx={proseSx}>
+                  Copy the system one in. Run this <strong>from inside the client folder</strong> —
+                  the trailing <code>.</code> is the destination:
+                </Typography>
+              </Box>
+              <CodeBlock copyable wrap copyLabel="Copy d3dcompiler command" sx={{ mt: 1.25 }}>
+                {'copy "C:\\Windows\\System32\\d3dcompiler_47.dll" .'}
+              </CodeBlock>
+            </StepRow>
+
+            <StepRow n={7} last={false} title="Turn off in-game anti-aliasing">
+              <Typography variant="body2" sx={proseSx}>
+                In ESO video settings, disable MSAA/SSAA and set resolution scale to 100%. The feeder
+                hands NGX a full-resolution depth buffer, and any multisampling breaks that contract.
+              </Typography>
+            </StepRow>
+
+            <StepRow n={8} last title="Enable the effects in the right order">
+              <Typography variant="body2" sx={proseSx}>
+                Launch ESO, press <strong>Home</strong>, and enable MartysMods_Launchpad first, then
+                DLSS5_Feed directly below it. See{' '}
+                <Box component="a" href="#overlay" sx={{ color: nvText, fontWeight: 700 }}>
+                  the overlay walkthrough
+                </Box>{' '}
+                — order is not cosmetic.
+              </Typography>
+            </StepRow>
+          </Stack>
+        </Box>
+      </Section>
+
+      {/* ── Overlay walkthrough ──────────────────────────────────────── */}
+      <Section id="overlay" icon={<SettingsIcon />} title="Using the ReShade overlay">
+        <Stack spacing={2}>
+          <Box sx={cardSx}>
+            <Typography variant="body2" sx={{ ...proseSx, mb: 2 }}>
+              Press <strong>Home</strong> in-game to open ReShade. (First launch shows a tutorial —
+              click through it.) You will use three tabs:
+            </Typography>
+            <SettingsTable rows={OVERLAY_TABS} labelWidth={120} />
+          </Box>
+
+          <Box sx={cardSx}>
+            <Typography component="h3" sx={{ fontWeight: 700, fontSize: '1rem', mb: 1 }}>
+              Effect order (this matters)
+            </Typography>
+            <Typography variant="body2" sx={{ ...proseSx, mb: 1.5 }}>
+              In the Home tab, tick these two <strong>in this order</strong>. Drag entries to reorder
+              if they land wrong:
+            </Typography>
+            <CodeBlock sx={{ mb: 1.5 }}>
+              {`[x] MartysMods_Launchpad     <- motion vector provider, must be ABOVE
+[x] DLSS5_Feed               <- consumes them, must be BELOW`}
+            </CodeBlock>
+            <Typography variant="body2" sx={proseSx}>
+              The add-on runs DLSS and Neural Rendering immediately after the DLSS5_Feed technique,
+              so any effect you place <em>below</em> DLSS5_Feed is applied on top of the neural
+              output. Anything above it feeds into the neural pass instead.
+            </Typography>
+          </Box>
+
+          <Box sx={cardSx}>
+            <Typography component="h3" sx={{ fontWeight: 700, fontSize: '1rem', mb: 1 }}>
+              DLSS5_Feed effect settings
+            </Typography>
+            <Typography variant="body2" sx={{ ...proseSx, mb: 1.5 }}>
+              Select DLSS5_Feed in the effect list and its options appear underneath:
+            </Typography>
+            <SettingsTable rows={FEED_SETTINGS} labelWidth={210} />
+          </Box>
+
+          <Box sx={cardSx}>
+            <Typography component="h3" sx={{ fontWeight: 700, fontSize: '1rem', mb: 1 }}>
+              If LaunchPad is not installed
+            </Typography>
+            <Typography variant="body2" sx={proseSx}>
+              Whether LaunchPad is present is a compile-time question, not a runtime one. If you are
+              using a different motion-vector provider, set <code>DLSS5_MV_SOURCE = 1</code> under{' '}
+              <strong>Edit → Preprocessor definitions</strong> in the overlay. With LaunchPad
+              installed (the default, <code>0</code>), both providers stay selectable from the
+              dropdown with no recompile.
+            </Typography>
+          </Box>
         </Stack>
-      </Box>
+      </Section>
 
-      <Box sx={{ ...cardSx, mb: 2 }}>
-        <Typography sx={{ fontWeight: 700, fontSize: '1rem', mb: 1.5 }}>Every control</Typography>
-        <SettingsTable rows={NR_SETTINGS} labelWidth={260} />
-      </Box>
+      {/* ── NR add-on panel ──────────────────────────────────────────── */}
+      <Section id="nr-panel" icon={<Tune />} title="The Neural Rendering add-on panel">
+        <Stack spacing={2}>
+          <Typography variant="body2" sx={proseSx}>
+            Overlay → <strong>Add-ons</strong> → <strong>DLSS 5 Neural Rendering</strong>. The status
+            line at the top is the single most useful diagnostic in the whole stack — read it before
+            touching any slider.
+          </Typography>
 
-      <Alert severity="info" icon={<Info />} sx={{ mb: 5, borderRadius: '16px' }}>
-        <Typography variant="body2" sx={{ lineHeight: 1.7 }}>
-          <strong>Best way to actually see the effect:</strong> stand still, look at a character
-          face at close range, and tap <strong>F6</strong> repeatedly. Faces, hair and fabric change
-          most; terrain and sky barely move. If nothing changes at all, believe the logs over your
-          eyes — check the status line above.
-        </Typography>
-      </Alert>
+          <Box sx={cardSx}>
+            <Typography component="h3" sx={{ fontWeight: 700, fontSize: '1rem', mb: 1.5 }}>
+              What the status line means
+            </Typography>
+            <Stack spacing={1.75}>
+              {STATUSES.map((s) => (
+                <Box
+                  key={s.status}
+                  sx={{
+                    borderLeft: `3px solid ${s.good ? nvText : theme.palette.warning.main}`,
+                    pl: 1.75,
+                  }}
+                >
+                  <Chip
+                    size="small"
+                    icon={
+                      s.good ? (
+                        <CheckCircle sx={{ fontSize: 14 }} />
+                      ) : (
+                        <Warning sx={{ fontSize: 14 }} />
+                      )
+                    }
+                    label={s.good ? 'Goal state' : 'Needs action'}
+                    color={s.good ? 'success' : 'warning'}
+                    variant="outlined"
+                    sx={{ fontWeight: 700, height: 22, mb: 0.75 }}
+                  />
+                  <Typography
+                    sx={{
+                      fontFamily: MONO,
+                      fontSize: '0.82rem',
+                      fontWeight: 600,
+                      mb: 0.4,
+                      color: s.good ? nvText : 'text.primary',
+                    }}
+                  >
+                    {s.status}
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: 'text.secondary', lineHeight: 1.65 }}>
+                    {s.meaning}
+                  </Typography>
+                </Box>
+              ))}
+            </Stack>
+          </Box>
+
+          <Box sx={cardSx}>
+            <Typography component="h3" sx={{ fontWeight: 700, fontSize: '1rem', mb: 1.5 }}>
+              Every control
+            </Typography>
+            <SettingsTable rows={NR_SETTINGS} labelWidth={230} />
+          </Box>
+
+          <Alert severity="info" icon={<Info />} sx={{ borderRadius: '16px' }}>
+            <Typography variant="body2" sx={{ lineHeight: 1.7 }}>
+              <strong>Best way to actually see the effect:</strong> stand still, look at a character
+              face at close range, and tap <strong>F6</strong> repeatedly. Faces, hair and fabric
+              change most; terrain and sky barely move. If nothing changes at all, believe the logs
+              over your eyes — check the status line above.
+            </Typography>
+          </Alert>
+        </Stack>
+      </Section>
 
       {/* ── Depth buffer ─────────────────────────────────────────────── */}
-      <SectionHeading icon={<Layers sx={{ color: NV_GREEN }} />} title="Checking the depth buffer" />
-      <Box sx={{ ...cardSx, mb: 5 }}>
-        <Typography variant="body2" sx={{ color: 'text.secondary', lineHeight: 1.8, mb: 2 }}>
-          The feeder needs <strong>scene depth</strong>. ESO can present several depth buffers and
-          ReShade&apos;s auto-selection sometimes picks a UI or shadow buffer instead — in which
-          case DLSS runs on garbage and the output looks wrong rather than absent.
-        </Typography>
-        <Typography sx={{ fontWeight: 700, fontSize: '0.95rem', mb: 1 }}>
-          The quick visual check
-        </Typography>
-        <Typography variant="body2" sx={{ color: 'text.secondary', lineHeight: 1.8, mb: 2 }}>
-          Enable <code>DisplayDepth</code> in the effect list (it ships with every ReShade install).
-          You should see the world in greyscale — near objects one shade, distant terrain another —
-          with the UI flat and not part of the gradient. If the screen is blank white, blank black,
-          or shows only your interface, the wrong buffer is selected.
-        </Typography>
-        <Typography sx={{ fontWeight: 700, fontSize: '0.95rem', mb: 1 }}>Fixing it</Typography>
-        <Typography variant="body2" sx={{ color: 'text.secondary', lineHeight: 1.8, mb: 1.5 }}>
-          Overlay → <strong>Add-ons</strong> → <strong>Generic Depth</strong>. You get a list of
-          candidate buffers; the auto-selected one is highlighted. Pick manually using two rules:
-        </Typography>
-        <Box component="ul" sx={{ pl: 2.5, m: 0, mb: 2, '& li': { mb: 0.6 } }}>
-          <Typography component="li" variant="body2" sx={{ color: 'text.secondary', lineHeight: 1.7 }}>
-            Choose the buffer whose <strong>resolution matches your game resolution</strong> most
-            closely.
+      <Section id="depth-buffer" icon={<Layers />} title="Checking the depth buffer">
+        <Box sx={cardSx}>
+          <Typography variant="body2" sx={{ ...proseSx, mb: 2 }}>
+            The feeder needs <strong>scene depth</strong>. ESO can present several depth buffers and
+            ReShade&apos;s auto-selection sometimes picks a UI or shadow buffer instead — in which
+            case DLSS runs on garbage and the output looks wrong rather than absent.
           </Typography>
-          <Typography component="li" variant="body2" sx={{ color: 'text.secondary', lineHeight: 1.7 }}>
-            Among those, choose the one with the <strong>highest draw call and vertex counts</strong>.
+
+          <Typography component="h3" sx={{ fontWeight: 700, fontSize: '1rem', mb: 1 }}>
+            The quick visual check
           </Typography>
+          <Typography variant="body2" sx={{ ...proseSx, mb: 2 }}>
+            Enable <code>DisplayDepth</code> in the effect list (it ships with every ReShade
+            install). You should see the world in greyscale — near objects one shade, distant terrain
+            another — with the UI flat and not part of the gradient. If the screen is blank white,
+            blank black, or shows only your interface, the wrong buffer is selected.
+          </Typography>
+
+          <Typography component="h3" sx={{ fontWeight: 700, fontSize: '1rem', mb: 1 }}>
+            Fixing it
+          </Typography>
+          <Typography variant="body2" sx={{ ...proseSx, mb: 1.5 }}>
+            Overlay → <strong>Add-ons</strong> → <strong>Generic Depth</strong>. You get a list of
+            candidate buffers; the auto-selected one is highlighted. Pick manually using two rules:
+          </Typography>
+          <Box component="ul" sx={{ pl: 2.5, m: 0, mb: 2, '& li': { mb: 0.6 } }}>
+            <Typography component="li" variant="body2" sx={proseSx}>
+              Choose the buffer whose <strong>resolution matches your game resolution</strong> most
+              closely.
+            </Typography>
+            <Typography component="li" variant="body2" sx={proseSx}>
+              Among those, choose the one with the{' '}
+              <strong>highest draw call and vertex counts</strong>.
+            </Typography>
+          </Box>
+          <Typography variant="body2" sx={proseSx}>
+            If depth flickers or disappears during combat, tick{' '}
+            <strong>&ldquo;Copy depth buffer before clear operations&rdquo;</strong> in that same
+            panel. Once it looks right, turn DisplayDepth back off — leaving it on overwrites your
+            screen.
+          </Typography>
+          <Alert severity="success" icon={<CheckCircle />} sx={{ mt: 2, borderRadius: '12px' }}>
+            <Typography variant="body2" sx={{ lineHeight: 1.7 }}>
+              A correct setup logs <code>Depth 2560x1440 R32_FLOAT</code> (at your resolution) in{' '}
+              <code>dlss5-feed.log</code>. If the resolution there does not match your monitor, the
+              wrong buffer is selected.
+            </Typography>
+          </Alert>
         </Box>
-        <Typography variant="body2" sx={{ color: 'text.secondary', lineHeight: 1.8 }}>
-          If depth flickers or disappears during combat, tick{' '}
-          <strong>&ldquo;Copy depth buffer before clear operations&rdquo;</strong> in that same
-          panel. Once it looks right, turn DisplayDepth back off — leaving it on overwrites your
-          screen.
-        </Typography>
-        <Alert severity="success" icon={<CheckCircle />} sx={{ mt: 2, borderRadius: '12px' }}>
-          <Typography variant="body2" sx={{ lineHeight: 1.7 }}>
-            A correct setup logs{' '}
-            <code>Depth 2560x1440 R32_FLOAT</code> (at your resolution) in{' '}
-            <code>dlss5-feed.log</code>. If the resolution there does not match your monitor, the
-            wrong buffer is selected.
-          </Typography>
-        </Alert>
-      </Box>
+      </Section>
 
       {/* ── Verification ─────────────────────────────────────────────── */}
-      <SectionHeading icon={<CheckCircle sx={{ color: NV_GREEN }} />} title="Proving it works" />
-      <Box sx={{ ...cardSx, mb: 5 }}>
-        <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2, lineHeight: 1.7 }}>
-          Do not trust your eyes — the effect is subtle and easy to imagine. Both log files live in
-          the client folder. Play for about 30 seconds, then check them.
-        </Typography>
+      <Section id="verify" icon={<CheckCircle />} title="Proving it works">
+        <Box sx={cardSx}>
+          <Typography variant="body2" sx={{ ...proseSx, mb: 2 }}>
+            Do not trust your eyes — the effect is subtle and easy to imagine. Both log files live in
+            the client folder. Play for about 30 seconds, then check them.
+          </Typography>
 
-        <Typography sx={{ fontWeight: 700, fontSize: '0.95rem', mb: 1 }}>
-          dlss5-feed.log — DLSS itself is alive
-        </Typography>
-        <Box sx={{ ...codeBlockSx, mb: 2.5 }}>
-          {`NGX capabilities: SuperSampling.Available=1 NeedsUpdatedDriver=0 MinDriver=470.0
+          <Typography component="h3" sx={{ fontWeight: 700, fontSize: '1rem', mb: 1 }}>
+            dlss5-feed.log — DLSS itself is alive
+          </Typography>
+          <CodeBlock copyable copyLabel="Copy expected feeder lines" sx={{ mb: 2.5 }}>
+            {`NGX capabilities: SuperSampling.Available=1 NeedsUpdatedDriver=0 MinDriver=470.0
 feature ready: 2560x1440 DLAA, flags=66 (SDR MVLowRes AutoExposure)
 frame 1 delivered (2560x1440, reset=1)`}
-        </Box>
+          </CodeBlock>
 
-        <Typography sx={{ fontWeight: 700, fontSize: '0.95rem', mb: 1 }}>
-          ReShade.log — Neural Rendering is actually evaluating
-        </Typography>
-        <Box sx={{ ...codeBlockSx, mb: 2.5 }}>
-          {`signed DLSSNR 310.8.0 D3D12 runtime initialized
+          <Typography component="h3" sx={{ fontWeight: 700, fontSize: '1rem', mb: 1 }}>
+            ReShade.log — Neural Rendering is actually evaluating
+          </Typography>
+          <CodeBlock copyable copyLabel="Copy expected NR lines" sx={{ mb: 2.5 }}>
+            {`signed DLSSNR 310.8.0 D3D12 runtime initialized
 NGX feature create intercepted: feature=18 (DLSSNR/reserved-18), slot=0
 feature 18 created via the signed snippet after DLSS/DLAA
 inline feature 18 evaluation succeeded (count=60, ...)`}
-        </Box>
+          </CodeBlock>
 
-        <Alert severity="success" icon={<CheckCircle />} sx={{ borderRadius: '12px' }}>
-          <Typography variant="body2" sx={{ lineHeight: 1.7 }}>
-            <strong>feature 18</strong> is the one that matters. <code>feature=1</code> is ordinary
-            DLSS/DLAA — if that is all you ever see, Neural Rendering is not running. The{' '}
-            <code>count=</code> value must climb across frames; a count stuck at 1 means it
-            evaluated once and stopped.
-          </Typography>
-        </Alert>
-      </Box>
+          <Alert severity="success" icon={<CheckCircle />} sx={{ borderRadius: '12px' }}>
+            <Typography variant="body2" sx={{ lineHeight: 1.7 }}>
+              <strong>feature 18</strong> is the one that matters. <code>feature=1</code> is ordinary
+              DLSS/DLAA — if that is all you ever see, Neural Rendering is not running. The{' '}
+              <code>count=</code> value must climb across frames; a count stuck at 1 means it
+              evaluated once and stopped.
+            </Typography>
+          </Alert>
+        </Box>
+      </Section>
 
       {/* ── Config reference ─────────────────────────────────────────── */}
-      <SectionHeading icon={<SettingsIcon sx={{ color: NV_GREEN }} />} title="Config file reference" />
-      <Box sx={{ ...cardSx, mb: 5 }}>
-        <Typography variant="body2" sx={{ color: 'text.secondary', lineHeight: 1.8, mb: 2 }}>
-          You should not normally need these — the overlay writes them for you. They are here for
-          when you want to compare a working setup against a broken one.
-        </Typography>
+      <Section id="config" icon={<SettingsIcon />} title="Config file reference">
+        <Box sx={cardSx}>
+          <Typography variant="body2" sx={{ ...proseSx, mb: 2 }}>
+            You should not normally need these — the overlay writes them for you. They are here for
+            when you want to compare a working setup against a broken one.
+          </Typography>
 
-        <Typography sx={{ fontWeight: 700, fontSize: '0.95rem', mb: 1 }}>
-          ReShade.ini — the add-on section
-        </Typography>
-        <Box sx={{ ...codeBlockSx, mb: 1.5 }}>
-          {`[RenoDX.DLSS5]
+          <Typography component="h3" sx={{ fontWeight: 700, fontSize: '1rem', mb: 1 }}>
+            ReShade.ini — the add-on section
+          </Typography>
+          <CodeBlock copyable copyLabel="Copy ReShade.ini section" sx={{ mb: 1.5 }}>
+            {`[RenoDX.DLSS5]
 EnableHooks=2      ; 2 = NGX hooks only. CORRECT for ESO.
                    ; 1 = also patch Streamline (ESO does not use it)
                    ; 0 = safe mode, all hooks off, no NR
@@ -818,18 +991,18 @@ NRPreset=0
 NRStyle=2
 NRSkinStructure=1.01
 NREnableUpscaling=1`}
-        </Box>
-        <Typography variant="body2" sx={{ color: 'text.secondary', lineHeight: 1.8, mb: 2.5 }}>
-          The add-on suggests <code>EnableHooks=1</code> when it cannot find guide dimensions — that
-          advice is for NVIDIA Streamline titles. <strong>ESO is not one.</strong> Leave it at 2; if
-          NGX-only genuinely yields nothing, 1 is a last resort that can crash at boot.
-        </Typography>
+          </CodeBlock>
+          <Typography variant="body2" sx={{ ...proseSx, mb: 2.5 }}>
+            The add-on suggests <code>EnableHooks=1</code> when it cannot find guide dimensions —
+            that advice is for NVIDIA Streamline titles. <strong>ESO is not one.</strong> Leave it at
+            2; if NGX-only genuinely yields nothing, 1 is a last resort that can crash at boot.
+          </Typography>
 
-        <Typography sx={{ fontWeight: 700, fontSize: '0.95rem', mb: 1 }}>
-          dlss5-feed.cfg — the feeder
-        </Typography>
-        <Box sx={{ ...codeBlockSx, mb: 1.5 }}>
-          {`enabled=1          ; master switch
+          <Typography component="h3" sx={{ fontWeight: 700, fontSize: '1rem', mb: 1 }}>
+            dlss5-feed.cfg — the feeder
+          </Typography>
+          <CodeBlock copyable copyLabel="Copy dlss5-feed.cfg" sx={{ mb: 1.5 }}>
+            {`enabled=1          ; master switch
 mode=2             ; feature mode
 create_delay=60    ; frames to wait before building the DLSS feature
 warmup_rebuild=180 ; one-off rebuild after warm-up
@@ -839,89 +1012,89 @@ mv_scale_y=1.000
 hdr=-1             ; -1 = auto-detect
 depth_inverted=-1  ; -1 = auto-detect
 flags=-1           ; -1 = auto`}
+          </CodeBlock>
+          <Typography variant="body2" sx={proseSx}>
+            The <code>-1</code> values mean auto-detect and are almost always right — the feeder logs
+            what it resolved them to.{' '}
+            <strong>
+              Do not hand-tune these unless a log line proves the auto-detection is wrong.
+            </strong>{' '}
+            Lowering <code>create_delay</code> in particular tends to cause failures, because the
+            add-on re-arms its hooks asynchronously and the delay exists to wait for that.
+          </Typography>
         </Box>
-        <Typography variant="body2" sx={{ color: 'text.secondary', lineHeight: 1.8 }}>
-          The <code>-1</code> values mean auto-detect and are almost always right — the feeder logs
-          what it resolved them to. <strong>Do not hand-tune these unless a log line proves the
-          auto-detection is wrong.</strong> Lowering <code>create_delay</code> in particular tends to
-          cause failures, because the add-on re-arms its hooks asynchronously and the delay exists
-          to wait for that.
-        </Typography>
-      </Box>
+      </Section>
 
       {/* ── Troubleshooting ──────────────────────────────────────────── */}
-      <SectionHeading icon={<Warning sx={{ color: NV_GREEN }} />} title="When it does not work" />
-      <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2, lineHeight: 1.7 }}>
-        Work these in order. Each failure hides the next one, so a green result at one stage is what
-        unlocks diagnosing the stage after it.
-      </Typography>
-      <Stack spacing={1.5} sx={{ mb: 5 }}>
-        {FAILURES.map((f, i) => (
-          <Accordion
-            key={f.symptom}
-            disableGutters
-            elevation={0}
-            defaultExpanded={i === 2}
-            sx={{
-              borderRadius: '12px !important',
-              border: isDark ? '1px solid rgba(255,255,255,0.07)' : '1px solid rgba(0,0,0,0.07)',
-              background: isDark ? 'rgba(255,255,255,0.025)' : 'rgba(255,255,255,0.6)',
-              '&:before': { display: 'none' },
-              overflow: 'hidden',
-            }}
-          >
-            <AccordionSummary expandIcon={<ExpandMore />} sx={{ px: 2 }}>
-              <Typography sx={{ fontWeight: 700, fontSize: '0.92rem' }}>{f.symptom}</Typography>
-            </AccordionSummary>
-            <AccordionDetails sx={{ px: 2, pt: 0, pb: 2 }}>
-              <Typography
-                variant="caption"
-                sx={{ fontWeight: 700, color: 'text.secondary', display: 'block', mb: 0.75 }}
+      <Section id="troubleshooting" icon={<Warning />} title="When it does not work">
+        <Typography variant="body2" sx={{ ...proseSx, mb: 2 }}>
+          Work these in order. Each failure hides the next one, so a green result at one stage is
+          what unlocks diagnosing the stage after it.
+        </Typography>
+        <Stack spacing={1.5}>
+          {FAILURES.map((f, i) => (
+            <Accordion
+              key={f.symptom}
+              disableGutters
+              elevation={0}
+              defaultExpanded={i === 2}
+              sx={{
+                ...cardSx,
+                p: 0,
+                borderRadius: '12px !important',
+                '&:before': { display: 'none' },
+                overflow: 'hidden',
+              }}
+            >
+              <AccordionSummary
+                expandIcon={<ExpandMore />}
+                id={`fail-${i}-header`}
+                aria-controls={`fail-${i}-content`}
+                sx={{ px: 2 }}
               >
-                What the log says
-              </Typography>
-              <Box sx={{ ...codeBlockSx, mb: 1.75 }}>{f.log}</Box>
-              <Typography
-                variant="caption"
-                sx={{ fontWeight: 700, color: 'text.secondary', display: 'block', mb: 0.5 }}
-              >
-                Why
-              </Typography>
-              <Typography variant="body2" sx={{ color: 'text.secondary', lineHeight: 1.7, mb: 1.5 }}>
-                {f.cause}
-              </Typography>
-              <Typography
-                variant="caption"
-                sx={{ fontWeight: 700, color: 'text.secondary', display: 'block', mb: 0.5 }}
-              >
-                Fix
-              </Typography>
-              <Typography variant="body2" sx={{ lineHeight: 1.7 }}>
-                {f.fix}
-              </Typography>
-            </AccordionDetails>
-          </Accordion>
-        ))}
-      </Stack>
+                <Typography component="h3" sx={{ fontWeight: 700, fontSize: '0.92rem', m: 0 }}>
+                  {f.symptom}
+                </Typography>
+              </AccordionSummary>
+              <AccordionDetails id={`fail-${i}-content`} sx={{ px: 2, pt: 0, pb: 2 }}>
+                <MicroLabel>What the log says</MicroLabel>
+                <CodeBlock copyable copyLabel="Copy log line" sx={{ mb: 1.75 }}>
+                  {f.log}
+                </CodeBlock>
+                <MicroLabel>Why</MicroLabel>
+                <Typography variant="body2" sx={{ ...proseSx, mb: 1.75 }}>
+                  {f.cause}
+                </Typography>
+                <MicroLabel>Fix</MicroLabel>
+                <Typography variant="body2" sx={proseSx}>
+                  {f.fix}
+                </Typography>
+              </AccordionDetails>
+            </Accordion>
+          ))}
+        </Stack>
+      </Section>
 
       {/* ── Performance ──────────────────────────────────────────────── */}
-      <SectionHeading icon={<Speed sx={{ color: NV_GREEN }} />} title="What it costs" />
-      <Box sx={{ ...cardSx, mb: 5 }}>
-        <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2, lineHeight: 1.7 }}>
-          Neural Rendering is not free. Measured at 1440p on an RTX 4070 Ti Super, from the
-          feeder&apos;s own frame accounting:
-        </Typography>
-        <Box sx={{ ...codeBlockSx, mb: 2 }}>
-          {`before NR:  feed CPU  0.55 ms/frame | 143.9 fps | feed is  8% of the frame
+      <Section id="performance" icon={<Speed />} title="What it costs">
+        <Box sx={cardSx}>
+          <Typography variant="body2" sx={{ ...proseSx, mb: 2 }}>
+            Neural Rendering is not free. Measured at 1440p on an RTX 4070 Ti Super, from the
+            feeder&apos;s own frame accounting:
+          </Typography>
+          <CodeBlock sx={{ mb: 2 }}>
+            {`before NR:  feed CPU  0.55 ms/frame | 143.9 fps | feed is  8% of the frame
 after NR:   feed CPU 11.82 ms/frame |  63.9 fps | feed is 75% of the frame`}
+          </CodeBlock>
+          <Typography variant="body2" sx={proseSx}>
+            That is roughly half the framerate. Some of it is inherent — NR runs inference every
+            frame — but try a lighter <strong>NR Preset</strong> and a lower{' '}
+            <strong>NR Intensity</strong> before deciding the trade is not worth it. Results vary
+            considerably by GPU. The feeder prints its own cost every 600 frames, so you can measure
+            rather than guess.
+          </Typography>
         </Box>
-        <Typography variant="body2" sx={{ color: 'text.secondary', lineHeight: 1.7 }}>
-          That is roughly half the framerate. Some of it is inherent — NR runs inference every frame
-          — but try a lighter <strong>NR Preset</strong> and a lower <strong>NR Intensity</strong>{' '}
-          before deciding the trade is not worth it. Results vary considerably by GPU. The feeder
-          prints its own cost every 600 frames, so you can measure rather than guess.
-        </Typography>
-      </Box>
+      </Section>
 
       {/* ── Footer CTA ───────────────────────────────────────────────── */}
       <Box
@@ -962,7 +1135,7 @@ after NR:   feed CPU 11.82 ms/frame |  63.9 fps | feed is 75% of the frame`}
               boxShadow: '0 4px 16px rgba(118,185,0,0.35)',
               '&:hover': {
                 color: '#fff',
-                background: `linear-gradient(135deg, ${NV_GREEN_DARK} 0%, #446B00 100%)`,
+                background: `linear-gradient(135deg, ${NV_GREEN_DARK} 0%, ${NV_GREEN_TEXT_LIGHT} 100%)`,
                 boxShadow: '0 6px 22px rgba(118,185,0,0.5)',
               },
             }}
@@ -979,7 +1152,7 @@ after NR:   feed CPU 11.82 ms/frame |  63.9 fps | feed is 75% of the frame`}
               textTransform: 'none',
               px: 3,
               borderColor: 'rgba(118,185,0,0.4)',
-              color: isDark ? '#d7f0a8' : NV_GREEN_DARK,
+              color: isDark ? '#d7f0a8' : NV_GREEN_TEXT_LIGHT,
               '&:hover': { borderColor: NV_GREEN, background: 'rgba(118,185,0,0.06)' },
             }}
           >
@@ -993,46 +1166,241 @@ after NR:   feed CPU 11.82 ms/frame |  63.9 fps | feed is 75% of the frame`}
 
 // ── Small presentational helpers ────────────────────────────────────────────
 
-const SectionHeading: React.FC<{ icon: React.ReactNode; title: string }> = ({ icon, title }) => (
-  <Stack direction="row" spacing={1.25} sx={{ alignItems: 'center', mb: 2 }}>
-    {icon}
-    <Typography variant="h5" component="h2" sx={{ fontWeight: 700 }}>
-      {title}
-    </Typography>
-  </Stack>
+/**
+ * Owns the page's vertical rhythm (section 48/64px, heading 24px) so sections
+ * stop carrying ad-hoc `mb` values, and gives each heading a stable anchor id.
+ * `scrollMarginTop` keeps the sticky app bar from covering a hash target.
+ */
+const Section: React.FC<{
+  id: string;
+  icon: React.ReactNode;
+  title: string;
+  children: React.ReactNode;
+}> = ({ id, icon, title, children }) => (
+  <Box component="section" sx={{ mb: { xs: 6, md: 8 } }}>
+    <Stack
+      direction="row"
+      spacing={1.5}
+      sx={{
+        alignItems: 'center',
+        mb: 3,
+        pb: 1.5,
+        borderBottom: '1px solid',
+        borderColor: 'divider',
+      }}
+    >
+      <Box
+        aria-hidden="true"
+        sx={{
+          width: 34,
+          height: 34,
+          borderRadius: '10px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexShrink: 0,
+          color: 'text.secondary',
+          background: (t) =>
+            t.palette.mode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(15,23,42,0.05)',
+          '& svg': { fontSize: 20 },
+        }}
+      >
+        {icon}
+      </Box>
+      <Typography
+        variant="h5"
+        component="h2"
+        id={id}
+        sx={{ fontWeight: 700, letterSpacing: '-0.01em', scrollMarginTop: { xs: 72, md: 88 } }}
+      >
+        {title}
+      </Typography>
+    </Stack>
+    {children}
+  </Box>
 );
 
 /**
- * Two-column definition table. The label column is a FIXED grid track rather than
- * a flex item with minWidth, so every description in a table starts at the same
- * x-position no matter how long the longest label is — a flex minWidth lets long
- * labels push their own row's value column right and the left edge goes ragged.
+ * One connected timeline instead of eight identical cards: the content is
+ * inherently sequential, and a stack of same-sized glass rectangles made the
+ * page centre featureless. Rendered as a real `ol`/`li` so assistive tech
+ * announces position rather than relying on the painted badge.
+ */
+const StepRow: React.FC<{
+  n: number;
+  title: string;
+  last: boolean;
+  children: React.ReactNode;
+}> = ({ n, title, last, children }) => (
+  <Stack component="li" direction="row" spacing={2} sx={{ alignItems: 'stretch' }}>
+    <Stack sx={{ alignItems: 'center', flexShrink: 0 }}>
+      <Box
+        aria-hidden="true"
+        sx={{
+          width: 30,
+          height: 30,
+          borderRadius: '9px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontWeight: 800,
+          fontSize: '0.85rem',
+          color: '#fff',
+          background: `linear-gradient(135deg, ${NV_GREEN} 0%, ${NV_GREEN_DARK} 100%)`,
+        }}
+      >
+        {n}
+      </Box>
+      {!last && (
+        <Box
+          aria-hidden="true"
+          sx={{
+            width: '2px',
+            flex: 1,
+            my: 0.75,
+            borderRadius: 1,
+            background: 'rgba(118,185,0,0.28)',
+          }}
+        />
+      )}
+    </Stack>
+    <Box sx={{ minWidth: 0, flex: 1, pb: last ? 0 : 3.5 }}>
+      <Typography component="h3" sx={{ fontWeight: 700, fontSize: '1rem', mb: 0.5, mt: '3px' }}>
+        {title}
+      </Typography>
+      {children}
+    </Box>
+  </Stack>
+);
+
+/** Italic aside under a step. Genuinely secondary, unlike the body copy. */
+const Note: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <Typography
+    variant="body2"
+    sx={{ mt: 1, fontStyle: 'italic', color: 'text.secondary', lineHeight: 1.6 }}
+  >
+    {children}
+  </Typography>
+);
+
+/** Uppercase overline for the repeated log/why/fix labels inside accordions. */
+const MicroLabel: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <Typography
+    variant="caption"
+    sx={{
+      display: 'block',
+      fontWeight: 700,
+      fontSize: '0.68rem',
+      letterSpacing: '0.08em',
+      textTransform: 'uppercase',
+      color: 'text.secondary',
+      mb: 0.5,
+    }}
+  >
+    {children}
+  </Typography>
+);
+
+/**
+ * Real `pre`/`code` rather than a styled div, so screen readers get code
+ * semantics and selection behaves.
+ *
+ * Log and ini blocks default to `white-space: pre` with horizontal scroll:
+ * readers visually diff these against their own files, and wrapping split
+ * tokens like `SuperSampling.Available=1` and `0xBAD00010` mid-value on narrow
+ * screens, which defeats the purpose. `wrap` is for single-line paths where
+ * breaking is harmless. `tabIndex` keeps the scroll region keyboard reachable.
+ *
+ * Neutral slate rather than the brand green: green-on-green measured 3.7:1 in
+ * light mode (an AA failure on the densest text of the page), and tinting every
+ * block made the page read NVIDIA-lime instead of ESO Toolkit. The accent
+ * survives as the left signal bar.
+ */
+const CodeBlock: React.FC<{
+  children: string;
+  copyable?: boolean;
+  copyLabel?: string;
+  wrap?: boolean;
+  sx?: object;
+}> = ({ children, copyable, copyLabel, wrap = false, sx }) => {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+  return (
+    <Box sx={{ position: 'relative', ...sx }}>
+      <Box
+        component="pre"
+        tabIndex={0}
+        sx={{
+          m: 0,
+          fontFamily: MONO,
+          fontSize: '0.82rem',
+          lineHeight: 1.7,
+          color: isDark ? '#cbd5e1' : '#334155',
+          background: isDark ? 'rgba(2,6,23,0.55)' : 'rgba(15,23,42,0.045)',
+          border: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(15,23,42,0.10)',
+          borderLeft: `3px solid ${isDark ? 'rgba(118,185,0,0.55)' : NV_GREEN_TEXT_LIGHT}`,
+          borderRadius: '10px',
+          px: 1.5,
+          py: 1.25,
+          pr: copyable ? 5 : 1.5,
+          ...(wrap
+            ? { whiteSpace: 'pre-wrap', overflowWrap: 'break-word' }
+            : { whiteSpace: 'pre', overflowX: 'auto' }),
+        }}
+      >
+        <code>{children}</code>
+      </Box>
+      {copyable ? (
+        <Box sx={{ position: 'absolute', top: 6, right: 6 }}>
+          <CopyButton value={children} label={copyLabel ?? 'Copy'} />
+        </Box>
+      ) : null}
+    </Box>
+  );
+};
+
+/**
+ * Two-column definition table. The label column is a FIXED grid track rather
+ * than a flex item with minWidth, so every description starts at the same
+ * x-position no matter how long the longest label is. Labels are set in the
+ * mono voice because they are literal on-screen control names, and rows are
+ * zebra-striped so horizontal tracking survives multi-line values.
  */
 const SettingsTable: React.FC<{
   rows: ReadonlyArray<{ label: string; value: string }>;
   labelWidth?: number;
 }> = ({ rows, labelWidth = 220 }) => (
-  <Box>
+  <Box sx={{ mx: { xs: -1, md: -1.5 } }}>
     {rows.map((row, i) => (
       <Box
         key={row.label}
         sx={{
           display: 'grid',
-          gridTemplateColumns: {
-            xs: '1fr',
-            sm: `minmax(0, ${labelWidth}px) minmax(0, 1fr)`,
-          },
+          gridTemplateColumns: { xs: '1fr', sm: `minmax(0, ${labelWidth}px) minmax(0, 1fr)` },
           columnGap: 3,
           rowGap: 0.25,
           alignItems: 'baseline',
-          py: 1.5,
-          ...(i > 0 && {
-            borderTop: '1px solid',
-            borderColor: 'divider',
-          }),
+          px: { xs: 1, md: 1.5 },
+          py: 1.25,
+          borderRadius: '8px',
+          background: (t) =>
+            i % 2 === 1
+              ? t.palette.mode === 'dark'
+                ? 'rgba(255,255,255,0.025)'
+                : 'rgba(15,23,42,0.035)'
+              : 'transparent',
         }}
       >
-        <Typography sx={{ fontWeight: 700, fontSize: '0.875rem', lineHeight: 1.6 }}>
+        <Typography
+          sx={{
+            fontFamily: MONO,
+            fontWeight: 700,
+            fontSize: '0.8rem',
+            lineHeight: 1.6,
+            color: 'text.primary',
+            overflowWrap: 'anywhere',
+          }}
+        >
           {row.label}
         </Typography>
         <Typography variant="body2" sx={{ color: 'text.secondary', lineHeight: 1.65 }}>
@@ -1044,12 +1412,13 @@ const SettingsTable: React.FC<{
 );
 
 const ChainRow: React.FC<{ n: string; title: string; body: string }> = ({ n, title, body }) => (
-  <Stack direction="row" spacing={1.75} sx={{ alignItems: 'flex-start' }}>
+  <Stack component="li" direction="row" spacing={1.75} sx={{ alignItems: 'flex-start' }}>
     <Typography
+      aria-hidden="true"
       sx={{
         fontWeight: 800,
         fontSize: '0.8rem',
-        color: NV_GREEN,
+        color: 'text.secondary',
         minWidth: 18,
         flexShrink: 0,
         mt: 0.25,
