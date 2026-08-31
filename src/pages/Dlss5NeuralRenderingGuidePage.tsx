@@ -256,6 +256,17 @@ const CopyButton: React.FC<{ value: string; label?: string }> = ({ value, label 
 
 // ── Content data ────────────────────────────────────────────────────────────
 
+/**
+ * Grouped in pairs rather than a flat list. A wrapping flex row cannot know
+ * where it will break, so any separator eventually lands at the start or end of
+ * a line and reads as a stray indent. Two fixed rows on mobile, one on desktop,
+ * means a dot is only ever between two terms on the same line.
+ */
+const COLOPHON: ReadonlyArray<ReadonlyArray<{ text: string; caution?: boolean }>> = [
+  [{ text: 'Community guide' }, { text: 'Unofficial & unsupported', caution: true }],
+  [{ text: 'NVIDIA RTX only' }, { text: `Updated ${LAST_UPDATED}` }],
+];
+
 interface RowSpec {
   label: string;
   value: string;
@@ -618,47 +629,42 @@ export const Dlss5NeuralRenderingGuidePage: React.FC = () => {
           component="p"
           sx={{
             display: 'flex',
-            flexWrap: 'wrap',
-            alignItems: 'baseline',
-            rowGap: 0.35,
+            flexDirection: { xs: 'column', sm: 'row' },
+            alignItems: { xs: 'flex-start', sm: 'baseline' },
+            rowGap: 0.4,
             m: 0,
             fontFamily: MONO,
-            fontSize: '0.7rem',
+            fontSize: { xs: '0.66rem', sm: '0.7rem' },
             fontWeight: 400,
             letterSpacing: '0.1em',
             textTransform: 'uppercase',
             color: 'text.secondary',
           }}
         >
-          {[
-            { text: 'Community guide' },
-            { text: 'Unofficial & unsupported', caution: true },
-            { text: 'NVIDIA RTX only' },
-            { text: `Updated ${LAST_UPDATED}` },
-          ].map((item, i) => (
-            <Box component="span" key={item.text} sx={{ whiteSpace: 'nowrap' }}>
-              {i > 0 && (
-                <Box
-                  component="span"
-                  aria-hidden="true"
-                  sx={{ color: 'text.disabled', letterSpacing: 0, mx: 0.9 }}
-                >
-                  ·
-                </Box>
-              )}
-              <Box
-                component="span"
-                sx={{
-                  color: item.caution
-                    ? isDark
-                      ? CAUTION_TEXT_DARK
-                      : CAUTION_TEXT_LIGHT
-                    : 'inherit',
-                }}
-              >
-                {item.text}
+          {COLOPHON.map((group, gi) => (
+            <React.Fragment key={gi}>
+              {gi > 0 && <ColophonDot hideOnMobile />}
+              <Box component="span" sx={{ display: 'flex', alignItems: 'baseline' }}>
+                {group.map((item, ii) => (
+                  <React.Fragment key={item.text}>
+                    {ii > 0 && <ColophonDot />}
+                    <Box
+                      component="span"
+                      sx={{
+                        whiteSpace: 'nowrap',
+                        color: item.caution
+                          ? isDark
+                            ? CAUTION_TEXT_DARK
+                            : CAUTION_TEXT_LIGHT
+                          : 'inherit',
+                      }}
+                    >
+                      {item.text}
+                    </Box>
+                  </React.Fragment>
+                ))}
               </Box>
-            </Box>
+            </React.Fragment>
           ))}
         </Typography>
       </Box>
@@ -1671,6 +1677,22 @@ const PipelineDiagram: React.FC = () => {
     </Box>
   );
 };
+
+/** Colophon separator. Decorative, so it is hidden from assistive tech. */
+const ColophonDot: React.FC<{ hideOnMobile?: boolean }> = ({ hideOnMobile }) => (
+  <Box
+    component="span"
+    aria-hidden="true"
+    sx={{
+      color: 'text.disabled',
+      letterSpacing: 0,
+      mx: 0.9,
+      display: hideOnMobile ? { xs: 'none', sm: 'inline' } : 'inline',
+    }}
+  >
+    ·
+  </Box>
+);
 
 /** Italic aside under a step. Genuinely secondary, unlike the body copy. */
 const Note: React.FC<{ children: React.ReactNode }> = ({ children }) => (
