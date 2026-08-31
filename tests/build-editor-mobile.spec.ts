@@ -169,6 +169,113 @@ test.describe('H2 – 320px reflow: header and import sources stay in the viewpo
   });
 });
 
+test.describe('H2a – Skills bars stay contained at narrow widths', () => {
+  for (const width of [320, 335, 375]) {
+    test(`${width}px keeps every skill slot visible in bar order`, async ({ page }, testInfo) => {
+      await page.setViewportSize({ width, height: 844 });
+      await gotoEditor(page);
+
+      const skillsNav = getSectionNav(page).getByRole('button', {
+        name: /^Skills(?: \(complete\))?$/i,
+      });
+      await activateSectionNav(skillsNav);
+
+      const section = page.locator('#section-skills');
+      await expect(section).toBeVisible();
+
+      const skeletonDetector = createSkeletonDetector(page);
+      await skeletonDetector.waitForSkeletonsToDisappear({ timeout: 15000 });
+
+      // Exercise both filled-tile variants at the screenshot width. Their labels
+      // contain the selected skill name, and their visible captions have
+      // different min-content behavior from empty slots.
+      if (width === 335) {
+        const frontBar = section.getByRole('group', { name: 'Front Bar skill slots' });
+
+        await frontBar.getByRole('button', { name: /^Skill slot 1\b/ }).click();
+        await page.getByPlaceholder('Search skills...').fill('Searing Strike');
+        await page
+          .getByRole('button', { name: /^Searing Strike \(base ability\)$/ })
+          .click();
+
+        await frontBar.getByRole('button', { name: /^Ultimate slot\b/ }).click();
+        await page.getByPlaceholder('Search skills...').fill('Dragonknight Standard');
+        await page
+          .getByRole('button', { name: /^Dragonknight Standard \(base ability\)$/ })
+          .click();
+      }
+
+      const expectedOrder = [
+        'Skill slot 1',
+        'Skill slot 2',
+        'Skill slot 3',
+        'Skill slot 4',
+        'Skill slot 5',
+        'Ultimate slot',
+      ];
+
+      for (const barName of ['Front Bar', 'Back Bar']) {
+        const bar = section.getByRole('group', { name: `${barName} skill slots` });
+        await expect(bar).toBeVisible();
+
+        const layout = await bar.evaluate((root) => {
+          const rootRect = root.getBoundingClientRect();
+          const buttons = Array.from(
+            root.querySelectorAll<HTMLElement>(
+              '[role="button"][aria-label^="Skill slot "], ' +
+                '[role="button"][aria-label^="Ultimate"]',
+            ),
+          );
+
+          return {
+            order: buttons.map((button) => {
+              const label = button.getAttribute('aria-label') ?? '';
+              const regularSlot = /^Skill slot ([1-5])\b/.exec(label);
+              return regularSlot ? `Skill slot ${regularSlot[1]}` : 'Ultimate slot';
+            }),
+            bounds: buttons.map((button) => {
+              const rect = button.getBoundingClientRect();
+              return { left: rect.left, right: rect.right, width: rect.width, height: rect.height };
+            }),
+            root: { left: rootRect.left, right: rootRect.right },
+            overflows: root.scrollWidth > root.clientWidth + 1,
+          };
+        });
+
+        expect(layout.order).toEqual(expectedOrder);
+        expect(layout.overflows).toBe(false);
+        for (const [index, bounds] of layout.bounds.entries()) {
+          expect(bounds.left, `${barName} slot ${index + 1} left edge`).toBeGreaterThanOrEqual(
+            layout.root.left - 1,
+          );
+          expect(bounds.right, `${barName} slot ${index + 1} right edge`).toBeLessThanOrEqual(
+            layout.root.right + 1,
+          );
+          expect(bounds.width, `${barName} slot ${index + 1} width`).toBeGreaterThanOrEqual(24);
+          expect(bounds.height, `${barName} slot ${index + 1} height`).toBeGreaterThanOrEqual(24);
+        }
+      }
+
+      const pageLayout = await page
+        .locator('[data-build-editor-scroll-region]')
+        .evaluate((root) => ({
+          editorOverflows: root.scrollWidth > root.clientWidth + 1,
+          documentOverflows:
+            document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
+        }));
+      expect(pageLayout.editorOverflows).toBe(false);
+      expect(pageLayout.documentOverflows).toBe(false);
+
+      if (width === 335 && testInfo.project.name === 'mobile-chrome') {
+        await page.waitForTimeout(1000);
+        await expect(section).toHaveScreenshot('build-editor-skills-335.png', {
+          animations: 'disabled',
+        });
+      }
+    });
+  }
+});
+
 // ── H3: Nav tap expands and scrolls to section ──────────────────────────────
 
 test.describe('H3 – Nav tap: section expands and content is visible', () => {
