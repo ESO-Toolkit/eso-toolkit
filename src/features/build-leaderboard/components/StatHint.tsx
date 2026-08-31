@@ -46,6 +46,8 @@ export const StatHint: React.FC<StatHintProps> = ({
 }) => {
   const canHover = useMediaQuery('(hover: hover)', { noSsr: true });
   const [open, setOpen] = React.useState(false);
+  const keyboardActivationRef = React.useRef(false);
+  const pointerTypeRef = React.useRef<string | null>(null);
 
   const hoverProps = canHover
     ? { onMouseEnter: () => setOpen(true), onMouseLeave: () => setOpen(false) }
@@ -73,14 +75,36 @@ export const StatHint: React.FC<StatHintProps> = ({
           data-testid={testId}
           aria-label={ariaLabel ?? `${text}. ${explanation}`}
           aria-expanded={open}
+          onPointerDown={(event) => {
+            pointerTypeRef.current = event.pointerType;
+          }}
           // Where hovering already opened it, a click must not toggle it shut —
           // the pointer is still inside, so it would stay shut until the user
           // left and came back.
-          onClick={() => setOpen((wasOpen) => canHover || !wasOpen)}
-          onKeyDown={(event) => {
-            if (event.key === 'Escape') setOpen(false);
+          onClick={() => {
+            const activatedByKeyboard = keyboardActivationRef.current;
+            const pointerType = pointerTypeRef.current;
+            keyboardActivationRef.current = false;
+            pointerTypeRef.current = null;
+            setOpen((wasOpen) =>
+              activatedByKeyboard || (pointerType !== null && pointerType !== 'mouse')
+                ? !wasOpen
+                : canHover || !wasOpen,
+            );
           }}
-          onBlur={() => setOpen(false)}
+          onKeyDown={(event) => {
+            if (event.key === 'Escape') {
+              keyboardActivationRef.current = false;
+              setOpen(false);
+              return;
+            }
+            keyboardActivationRef.current = event.key === 'Enter' || event.key === ' ';
+          }}
+          onBlur={() => {
+            keyboardActivationRef.current = false;
+            pointerTypeRef.current = null;
+            setOpen(false);
+          }}
           {...hoverProps}
           className="u-tabular"
           sx={(theme) => ({

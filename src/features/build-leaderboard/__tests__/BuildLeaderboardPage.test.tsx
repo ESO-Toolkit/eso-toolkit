@@ -14,6 +14,7 @@ import {
   resetFixtureIds,
 } from '../clustering/__fixtures__/dpsParses.fixture';
 import { runBuildClustering } from '../clustering/runBuildClustering';
+import type { BuildCluster, ClusterBuildsResult } from '../types/clustering.types';
 import type { DpsEncounterSummary } from '../types/dpsParses.types';
 
 jest.mock('notistack', () => ({ useSnackbar: () => ({ enqueueSnackbar: jest.fn() }) }));
@@ -143,6 +144,10 @@ describe('BuildLeaderboardPage', () => {
     // Distinct values, despite sharing an encounter_id.
     const values = options.map((o) => o.getAttribute('data-value'));
     expect(new Set(values).size).toBe(2);
+
+    const listbox = within(screen.getByRole('listbox'));
+    expect(listbox.getByText('LC · Xoryn · Veteran HM')).toBeInTheDocument();
+    expect(listbox.getByText('LC · Xoryn · Veteran')).toBeInTheDocument();
   });
 
   /**
@@ -217,6 +222,20 @@ describe('BuildLeaderboardPage', () => {
       expect.objectContaining({ esoClass: 'Necromancer', encounterId: expect.anything() }),
       expect.anything(),
     );
+  });
+
+  it('groups pooled parses after a settled-empty encounters summary', async () => {
+    resetFixtureIds();
+    const parses = makeThreeArchetypeFixture();
+    jest.spyOn(dpsParsesApi, 'listEncounters').mockResolvedValue({ encounters: [] });
+    jest
+      .spyOn(dpsParsesApi, 'listParses')
+      .mockResolvedValue({ parses, total: parses.length, limit: 1000, offset: 0 });
+
+    renderPage('/build-leaderboard/class/arcanist');
+
+    await waitFor(() => expect(screen.getByTestId('start-here-card')).toBeInTheDocument());
+    expect(screen.queryByText(/grouping .* parses into build patterns/i)).not.toBeInTheDocument();
   });
 
   /** An explicit ?boss= still narrows the class tab to one board (#1451 behavior). */
@@ -396,6 +415,146 @@ describe('BuildLeaderboardPage crawlable routes', () => {
     );
   });
 
+  it('uses the most recent valid update for a pooled class board', async () => {
+    resetFixtureIds();
+    const parses = makeThreeArchetypeFixture().map((parse) => ({
+      ...parse,
+      encounter_id: ENCOUNTERS[1].encounter_id,
+      difficulty: ENCOUNTERS[1].difficulty,
+      eso_class: 'Warden',
+    }));
+    jest.spyOn(dpsParsesApi, 'listEncounters').mockResolvedValue({
+      encounters: [
+        { ...ENCOUNTERS[0], updated_at: '2026-08-04 04:00:00' },
+        { ...ENCOUNTERS[1], updated_at: '2026-08-27 04:01:06' },
+        { ...ENCOUNTERS[0], difficulty: 120, updated_at: 'not-a-date' },
+      ],
+    });
+    jest
+      .spyOn(dpsParsesApi, 'listParses')
+      .mockResolvedValue({ parses, total: parses.length, limit: 1000, offset: 0 });
+
+    renderPage('/build-leaderboard/class/warden');
+
+    await waitFor(() => expect(screen.getByTestId('start-here-card')).toBeInTheDocument());
+    const metadata = screen.getByText(/updated Aug 27/i);
+    expect(metadata).toHaveTextContent(/top-ranked parses/i);
+    expect(metadata).not.toHaveTextContent(/sampled top-ranked parses/i);
+  });
+
+  it('ignores pooled boards that contributed no parses to the selected class', async () => {
+    resetFixtureIds();
+    const parses = makeThreeArchetypeFixture().map((parse) => ({
+      ...parse,
+      encounter_id: ENCOUNTERS[0].encounter_id,
+      difficulty: ENCOUNTERS[0].difficulty,
+      eso_class: 'Warden',
+    }));
+    jest.spyOn(dpsParsesApi, 'listEncounters').mockResolvedValue({
+      encounters: [
+        { ...ENCOUNTERS[0], updated_at: '2026-08-04 04:00:00' },
+        // This board is newer, but has no returned Warden parses.
+        { ...ENCOUNTERS[1], updated_at: '2026-08-27 04:01:06' },
+      ],
+    });
+    jest
+      .spyOn(dpsParsesApi, 'listParses')
+      .mockResolvedValue({ parses, total: parses.length, limit: 1000, offset: 0 });
+
+    renderPage('/build-leaderboard/class/warden');
+
+    await waitFor(() => expect(screen.getByTestId('start-here-card')).toBeInTheDocument());
+    expect(screen.getByText(/updated Aug 4/i)).toBeInTheDocument();
+    expect(screen.queryByText(/updated Aug 27/i)).not.toBeInTheDocument();
+  });
+
+  it('omits malformed update metadata on a selected encounter board', async () => {
+    resetFixtureIds();
+    const parses = makeThreeArchetypeFixture();
+    jest.spyOn(dpsParsesApi, 'listEncounters').mockResolvedValue({
+      encounters: [
+        { ...ENCOUNTERS[0], updated_at: '2026-08-29T22:00:00Z-not-a-date' },
+        ENCOUNTERS[1],
+      ],
+    });
+    jest
+      .spyOn(dpsParsesApi, 'listParses')
+      .mockResolvedValue({ parses, total: parses.length, limit: 100, offset: 0 });
+
+    renderPage('/build-leaderboard?boss=60:122');
+
+    await waitFor(() => expect(screen.getByTestId('start-here-card')).toBeInTheDocument());
+    expect(screen.queryByText(/updated 2026-08-29T22:00:00Z-not-a-date/i)).not.toBeInTheDocument();
+  });
+
+  it('accepts an explicit UTC timestamp on a selected encounter board', async () => {
+    resetFixtureIds();
+    const parses = makeThreeArchetypeFixture();
+    jest.spyOn(dpsParsesApi, 'listEncounters').mockResolvedValue({
+      encounters: [{ ...ENCOUNTERS[0], updated_at: '2026-08-29T22:00:00Z' }],
+    });
+    jest
+      .spyOn(dpsParsesApi, 'listParses')
+      .mockResolvedValue({ parses, total: parses.length, limit: 100, offset: 0 });
+
+    renderPage('/build-leaderboard?boss=60:122');
+
+    await waitFor(() => expect(screen.getByTestId('start-here-card')).toBeInTheDocument());
+    expect(screen.getByText(/updated Aug 29/i)).toBeInTheDocument();
+  });
+
+  it('formats offset timestamps by their UTC calendar day', async () => {
+    resetFixtureIds();
+    const parses = makeThreeArchetypeFixture();
+    jest.spyOn(dpsParsesApi, 'listEncounters').mockResolvedValue({
+      encounters: [{ ...ENCOUNTERS[0], updated_at: '2026-08-30 00:15:00+02:00' }],
+    });
+    jest
+      .spyOn(dpsParsesApi, 'listParses')
+      .mockResolvedValue({ parses, total: parses.length, limit: 100, offset: 0 });
+
+    renderPage('/build-leaderboard?boss=60:122');
+
+    await waitFor(() => expect(screen.getByTestId('start-here-card')).toBeInTheDocument());
+    // 00:15 on Aug 30 at UTC+02:00 is Aug 29 in UTC.
+    expect(screen.getByText(/updated Aug 29/i)).toBeInTheDocument();
+    expect(screen.queryByText(/updated Aug 30/i)).not.toBeInTheDocument();
+  });
+
+  it('orders timezone-less and offset timestamps by their actual UTC instant', async () => {
+    resetFixtureIds();
+    const parses = makeThreeArchetypeFixture().map((parse) => ({
+      ...parse,
+      encounter_id: ENCOUNTERS[0].encounter_id,
+      difficulty: ENCOUNTERS[0].difficulty,
+      eso_class: 'Warden',
+    }));
+    jest.spyOn(dpsParsesApi, 'listEncounters').mockResolvedValue({
+      encounters: [
+        { ...ENCOUNTERS[0], updated_at: '2026-08-29 23:30:00' },
+        { ...ENCOUNTERS[1], updated_at: '2026-08-30 00:15:00+02:00' },
+        { ...ENCOUNTERS[0], difficulty: 120, updated_at: '2026-08-29T22:00:00Z' },
+        { ...ENCOUNTERS[1], difficulty: 120, updated_at: 'not-a-date' },
+      ],
+    });
+    jest
+      .spyOn(dpsParsesApi, 'listParses')
+      .mockResolvedValue({ parses, total: parses.length, limit: 1000, offset: 0 });
+
+    const originalTimezone = process.env.TZ;
+    process.env.TZ = 'America/Los_Angeles';
+    try {
+      renderPage('/build-leaderboard/class/warden');
+
+      await waitFor(() => expect(screen.getByTestId('start-here-card')).toBeInTheDocument());
+      // 23:30 UTC on Aug 29 is newer than 00:15 +02:00 (22:15 UTC on Aug 29).
+      expect(screen.getByText(/updated Aug 29/i)).toBeInTheDocument();
+    } finally {
+      if (originalTimezone === undefined) delete process.env.TZ;
+      else process.env.TZ = originalTimezone;
+    }
+  });
+
   it('queries the encounter a boss slug names', async () => {
     jest.spyOn(dpsParsesApi, 'listEncounters').mockResolvedValue({ encounters: [XALVAKKA] });
     renderPage('/build-leaderboard/boss/xalvakka');
@@ -500,6 +659,10 @@ describe('BuildLeaderboardPage crawlable routes', () => {
     expect(hrefs).toHaveLength(21);
     expect(hrefs).toContain('/build-leaderboard/class/arcanist');
     expect(hrefs).toContain('/build-leaderboard/boss/ansuul-the-tormentor');
+    expect(nav.getByRole('link', { name: "Ansuul the Tormentor (Sanity's Edge)" })).toHaveAttribute(
+      'href',
+      '/build-leaderboard/boss/ansuul-the-tormentor',
+    );
     // Namespaced, so a class slug and a boss slug can never collide.
     expect(hrefs.every((href) => href?.startsWith('/build-leaderboard/'))).toBe(true);
   });
@@ -519,14 +682,140 @@ describe('BuildLeaderboardPage crawlable routes', () => {
 
     const payload = JSON.parse(script?.textContent ?? '{}') as {
       '@type': string;
+      itemListOrder: string;
       itemListElement: Array<{ position: number; name: string; description: string }>;
     };
     expect(payload['@type']).toBe('ItemList');
+    expect(payload.itemListOrder).toBe('https://schema.org/ItemListOrderUnordered');
     expect(payload.itemListElement.length).toBeGreaterThan(0);
     expect(payload.itemListElement[0].position).toBe(1);
     // Normalized pooled amounts would render here as "1 DPS"; an encounter
     // board must quote real absolute numbers.
     expect(payload.itemListElement[0].description).toMatch(/Median sampled parse [\d,]+ DPS/);
+  });
+
+  it('publishes the highest raw sampled DPS for pooled class structured data', async () => {
+    resetFixtureIds();
+    const parses = makeThreeArchetypeFixture().map((parse, index) => ({
+      ...parse,
+      amount: index === 0 ? 250_000 : 100_000,
+    }));
+    const cluster: BuildCluster = {
+      id: 'pooled-cluster',
+      label: 'Pooled Arcanist pattern',
+      esoClass: parses[0].eso_class,
+      size: parses.length,
+      share: 1,
+      memberParseIds: parses.map((parse) => parse.parse_id),
+      medoidParseId: parses[0].parse_id,
+      dps: {
+        min: 0.8,
+        q1: 0.85,
+        median: 0.91,
+        q3: 0.95,
+        p90: 0.98,
+        max: 1,
+        mean: 0.9,
+        count: parses.length,
+      },
+      core: [],
+      flex: [],
+      variations: [],
+      cohesion: 0,
+    };
+    const result: ClusterBuildsResult = {
+      clusters: [cluster],
+      k: 1,
+      silhouette: 1,
+      silhouetteByK: [],
+      recommendedClusterId: cluster.id,
+      totalParses: parses.length,
+      uniqueSignatures: 1,
+      droppedParses: 0,
+    };
+    (runBuildClustering as jest.MockedFunction<typeof runBuildClustering>).mockResolvedValue(
+      result,
+    );
+    jest
+      .spyOn(dpsParsesApi, 'listParses')
+      .mockResolvedValue({ parses, total: parses.length, limit: 100, offset: 0 });
+
+    const { container } = renderPage('/build-leaderboard/class/arcanist');
+    await waitFor(() => expect(screen.getByTestId('start-here-card')).toBeInTheDocument());
+
+    const script = container.querySelector('script[type="application/ld+json"]');
+    const payload = JSON.parse(script?.textContent ?? '{}') as {
+      itemListElement: Array<{ description: string }>;
+    };
+    expect(payload.itemListElement[0].description).toMatch(/Highest sampled parse 250,000 DPS/);
+  });
+
+  it('keeps JSON-LD in the visible order with contiguous top-25 positions', async () => {
+    resetFixtureIds();
+    const parses = makeThreeArchetypeFixture().slice(0, 26);
+    const clusters: BuildCluster[] = parses.map((parse, index) => ({
+      id: `cluster-${index}`,
+      label: `Pattern ${index + 1}`,
+      esoClass: parse.eso_class,
+      size: 1,
+      share: 1 / parses.length,
+      memberParseIds: [parse.parse_id],
+      medoidParseId: parse.parse_id,
+      dps: {
+        min: parse.amount,
+        q1: parse.amount,
+        median: parse.amount,
+        q3: parse.amount,
+        p90: parse.amount,
+        max: parse.amount,
+        mean: parse.amount,
+        count: 1,
+      },
+      core: [],
+      flex: [],
+      variations: [],
+      cohesion: 0,
+    }));
+    const result: ClusterBuildsResult = {
+      clusters,
+      k: clusters.length,
+      silhouette: 1,
+      silhouetteByK: [],
+      recommendedClusterId: 'cluster-17',
+      totalParses: parses.length,
+      uniqueSignatures: parses.length,
+      droppedParses: 0,
+    };
+    (runBuildClustering as jest.MockedFunction<typeof runBuildClustering>).mockResolvedValue(
+      result,
+    );
+    jest
+      .spyOn(dpsParsesApi, 'listParses')
+      .mockResolvedValue({ parses, total: parses.length, limit: 100, offset: 0 });
+
+    const { container } = renderPage();
+    await waitFor(() =>
+      expect(screen.getAllByTestId(/^(recommended-row|archetype-row)$/)).toHaveLength(26),
+    );
+
+    const script = container.querySelector('script[type="application/ld+json"]');
+    expect(script).not.toBeNull();
+    const payload = JSON.parse(script?.textContent ?? '{}') as {
+      itemListElement: Array<{ position: number; name: string }>;
+      numberOfItems: number;
+    };
+    const rows = screen.getAllByTestId(/^(recommended-row|archetype-row)$/);
+    const visibleNames = rows.map((row) => row.getAttribute('aria-label')?.split(',')[0]);
+    const publishedNames = payload.itemListElement.map((item) => item.name);
+
+    expect(rows[0]).toHaveAttribute('data-testid', 'recommended-row');
+    expect(visibleNames.slice(0, 25)).toEqual(publishedNames);
+    expect(publishedNames).toHaveLength(25);
+    expect(payload.numberOfItems).toBe(25);
+    expect(payload.itemListElement.map((item) => item.position)).toEqual(
+      Array.from({ length: 25 }, (_, index) => index + 1),
+    );
+    expect(visibleNames[25]).toBe('Pattern 26');
   });
 
   it('discloses the returned sample size and avoids population-level claims', async () => {
@@ -539,12 +828,26 @@ describe('BuildLeaderboardPage crawlable routes', () => {
     renderPage('/build-leaderboard/class/necromancer');
     await waitFor(() => expect(screen.getByTestId('start-here-card')).toBeInTheDocument());
 
-    await userEvent.click(screen.getByRole('button', { name: /how this leaderboard works/i }));
+    const methodologyToggle = screen.getByRole('button', {
+      name: /how this leaderboard works/i,
+    });
+    const methodologyId = methodologyToggle.getAttribute('aria-controls');
+    expect(methodologyId).toBeTruthy();
+    expect(methodologyToggle).toHaveAttribute('aria-expanded', 'false');
+    expect(document.getElementById(methodologyId ?? '')).toBeInTheDocument();
 
-    expect(
-      screen.getByText(/rankings feed returns up to 25 rows per encounter/i),
-    ).toHaveTextContent(new RegExp(`this board received ${parses.length} sampled parses`, 'i'));
-    expect(screen.getByText(/percentages describe this returned sample/i)).toHaveTextContent(
+    await userEvent.click(methodologyToggle);
+
+    expect(methodologyToggle).toHaveAttribute('aria-expanded', 'true');
+    expect(document.getElementById(methodologyId ?? '')).toBeInTheDocument();
+
+    expect(document.getElementById(methodologyId ?? '')).toHaveTextContent(
+      /The rankings feed returned 45 sampled parses for this selection/i,
+    );
+    expect(document.getElementById(methodologyId ?? '')).toHaveTextContent(
+      /percentages describe this returned sample/i,
+    );
+    expect(document.getElementById(methodologyId ?? '')).toHaveTextContent(
       /not all ESO players or logs/i,
     );
   });

@@ -118,6 +118,7 @@ export const LeaderboardBrowseNav: React.FC<LeaderboardBrowseNavProps> = ({
               component={RouterLink}
               to={bossLeaderboardPath(entry.slug)}
               aria-current={active ? 'page' : undefined}
+              aria-label={`${entry.name} (${entry.zone})`}
               // The zone disambiguates bosses whose names give no clue which
               // trial they belong to (The Mage, The Warrior, The Serpent).
               title={`${entry.name} (${entry.zone})`}

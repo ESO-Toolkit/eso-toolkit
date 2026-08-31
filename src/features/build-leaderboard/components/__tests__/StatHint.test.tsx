@@ -5,6 +5,23 @@ import React from 'react';
 import { StatHint } from '../StatHint';
 
 const theme = createTheme();
+const originalMatchMedia = window.matchMedia;
+
+function mockHoverSupport(): void {
+  Object.defineProperty(window, 'matchMedia', {
+    configurable: true,
+    value: jest.fn().mockImplementation((query: string) => ({
+      matches: query === '(hover: hover)',
+      media: query,
+      onchange: null,
+      addListener: jest.fn(),
+      removeListener: jest.fn(),
+      addEventListener: jest.fn(),
+      removeEventListener: jest.fn(),
+      dispatchEvent: jest.fn(),
+    })),
+  });
+}
 
 /**
  * These assert `aria-expanded`, NOT that the explanation text is in the DOM.
@@ -23,6 +40,13 @@ function renderHint() {
 }
 
 describe('StatHint', () => {
+  afterEach(() => {
+    Object.defineProperty(window, 'matchMedia', {
+      configurable: true,
+      value: originalMatchMedia,
+    });
+  });
+
   it('starts closed', () => {
     expect(renderHint()).toHaveAttribute('aria-expanded', 'false');
   });
@@ -52,6 +76,47 @@ describe('StatHint', () => {
     fireEvent.click(hint);
     fireEvent.click(hint);
 
+    expect(hint).toHaveAttribute('aria-expanded', 'false');
+  });
+
+  it.each(['Enter', ' '])('keyboard %s toggles on hover-capable desktops', (key) => {
+    mockHoverSupport();
+    const hint = renderHint();
+
+    fireEvent.keyDown(hint, { key });
+    fireEvent.click(hint);
+    expect(hint).toHaveAttribute('aria-expanded', 'true');
+
+    fireEvent.keyDown(hint, { key });
+    fireEvent.click(hint);
+    expect(hint).toHaveAttribute('aria-expanded', 'false');
+  });
+
+  it('does not let a blurred activation marker affect a later pointer click', () => {
+    mockHoverSupport();
+    const hint = renderHint();
+
+    fireEvent.keyDown(hint, { key: 'Enter' });
+    fireEvent.blur(hint);
+    fireEvent.mouseEnter(hint);
+    fireEvent.click(hint);
+
+    expect(hint).toHaveAttribute('aria-expanded', 'true');
+  });
+
+  it('toggles touch taps on hybrid devices that also advertise hover support', () => {
+    mockHoverSupport();
+    const hint = renderHint();
+
+    fireEvent.pointerDown(hint, { pointerType: 'touch' });
+    fireEvent.focusIn(hint);
+    fireEvent.pointerUp(hint, { pointerType: 'touch' });
+    fireEvent.click(hint);
+    expect(hint).toHaveAttribute('aria-expanded', 'true');
+
+    fireEvent.pointerDown(hint, { pointerType: 'touch' });
+    fireEvent.pointerUp(hint, { pointerType: 'touch' });
+    fireEvent.click(hint);
     expect(hint).toHaveAttribute('aria-expanded', 'false');
   });
 

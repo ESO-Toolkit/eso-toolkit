@@ -12,7 +12,7 @@
  */
 
 import { useSnackbar } from 'notistack';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 
@@ -93,11 +93,28 @@ export function useArchetypeBuildActions(): UseArchetypeBuildActionsResult {
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
   const [pendingAction, setPendingAction] = useState<PendingArchetypeAction | null>(null);
+  const mountedRef = useRef(true);
+  const activeControllerRef = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    // StrictMode replays effects during development. Re-arm the lifecycle guard
+    // on setup so the replayed hook remains usable after its first cleanup.
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      activeControllerRef.current?.abort();
+      activeControllerRef.current = null;
+    };
+  }, []);
 
   const buildFor = useCallback(
-    // Resolves or throws — never null, so callers need no dead null branch.
-    async (cluster: BuildCluster): Promise<{ build: Build; savedId: string }> => {
-      const response = await dpsParsesApi.getBuild(cluster.medoidParseId);
+    // Resolves with a saved build, returns null after cancellation, or throws.
+    async (
+      cluster: BuildCluster,
+      signal: AbortSignal,
+    ): Promise<{ build: Build; savedId: string } | null> => {
+      const response = await dpsParsesApi.getBuild(cluster.medoidParseId, signal);
+      if (!mountedRef.current || signal.aborted) return null;
       const build = playerToBuild(toBuildExtractionData(response));
       build.name = cluster.label;
       build.shortDescription = `Observed sampled archetype — ${cluster.size} sampled top-ranked ${
@@ -108,6 +125,7 @@ export function useArchetypeBuildActions(): UseArchetypeBuildActionsResult {
       // read the id off it, then dispatch. Reading it off the dispatch RESULT
       // would need a cast, since middleware is free to change that return type.
       const action = saveBuild(build);
+      if (!mountedRef.current || signal.aborted) return null;
       dispatch(action);
       return { build, savedId: action.payload.id };
     },
@@ -118,17 +136,25 @@ export function useArchetypeBuildActions(): UseArchetypeBuildActionsResult {
     async (cluster: BuildCluster) => {
       // Ignore a repeat click while anything is already running, rather than
       // firing a second fetch-and-save for the same build.
-      if (pendingAction) return;
+      if (pendingAction || activeControllerRef.current || !mountedRef.current) return;
+      const controller = new AbortController();
+      activeControllerRef.current = controller;
       setPendingAction({ clusterId: cluster.id, kind: 'open' });
       try {
-        const { savedId } = await buildFor(cluster);
+        const result = await buildFor(cluster, controller.signal);
+        if (!result || !mountedRef.current || controller.signal.aborted) return;
+        const { savedId } = result;
         navigate(`/build-editor?id=${savedId}`);
       } catch (err) {
+        if (!mountedRef.current || controller.signal.aborted) return;
         enqueueSnackbar(err instanceof Error ? err.message : 'Could not load that build', {
           variant: 'error',
         });
       } finally {
-        setPendingAction(null);
+        if (activeControllerRef.current === controller) {
+          activeControllerRef.current = null;
+          if (mountedRef.current) setPendingAction(null);
+        }
       }
     },
     [buildFor, navigate, enqueueSnackbar, pendingAction],
@@ -136,17 +162,24 @@ export function useArchetypeBuildActions(): UseArchetypeBuildActionsResult {
 
   const saveToMyBuilds = useCallback(
     async (cluster: BuildCluster) => {
-      if (pendingAction) return;
+      if (pendingAction || activeControllerRef.current || !mountedRef.current) return;
+      const controller = new AbortController();
+      activeControllerRef.current = controller;
       setPendingAction({ clusterId: cluster.id, kind: 'save' });
       try {
-        await buildFor(cluster);
+        const result = await buildFor(cluster, controller.signal);
+        if (!result || !mountedRef.current || controller.signal.aborted) return;
         enqueueSnackbar(`Saved “${cluster.label}” to My Builds`, { variant: 'success' });
       } catch (err) {
+        if (!mountedRef.current || controller.signal.aborted) return;
         enqueueSnackbar(err instanceof Error ? err.message : 'Could not save that build', {
           variant: 'error',
         });
       } finally {
-        setPendingAction(null);
+        if (activeControllerRef.current === controller) {
+          activeControllerRef.current = null;
+          if (mountedRef.current) setPendingAction(null);
+        }
       }
     },
     [buildFor, enqueueSnackbar, pendingAction],

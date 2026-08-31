@@ -89,13 +89,16 @@ const CLUSTER = {
   cohesion: 0.1,
 } as unknown as BuildCluster;
 
-function makeWrapper() {
+function makeWrapper(strictMode = false) {
   const store = configureStore({ reducer: { savedBuilds: savedBuildsReducer } });
-  const wrapper = ({ children }: { children: React.ReactNode }) => (
-    <Provider store={store}>
-      <MemoryRouter>{children}</MemoryRouter>
-    </Provider>
-  );
+  const wrapper = ({ children }: { children: React.ReactNode }) => {
+    const content = (
+      <Provider store={store}>
+        <MemoryRouter>{children}</MemoryRouter>
+      </Provider>
+    );
+    return strictMode ? <React.StrictMode>{content}</React.StrictMode> : content;
+  };
   return { store, wrapper };
 }
 
@@ -247,5 +250,59 @@ describe('useArchetypeBuildActions', () => {
       release?.(BUILD_RESPONSE);
     });
     expect(store.getState().savedBuilds.builds).toHaveLength(1);
+  });
+
+  it('passes an abort signal to the build request', async () => {
+    const spy = jest.spyOn(dpsParsesApi, 'getBuild');
+    const { wrapper } = makeWrapper();
+    const { result } = renderHook(() => useArchetypeBuildActions(), { wrapper });
+
+    await act(async () => {
+      await result.current.openInEditor(CLUSTER);
+    });
+
+    expect(spy).toHaveBeenCalledWith(CLUSTER.medoidParseId, expect.any(AbortSignal));
+  });
+
+  it('remains usable after StrictMode replays its lifecycle effect', async () => {
+    const { store, wrapper } = makeWrapper(true);
+    const { result } = renderHook(() => useArchetypeBuildActions(), { wrapper });
+
+    await act(async () => {
+      await result.current.openInEditor(CLUSTER);
+    });
+
+    expect(store.getState().savedBuilds.builds).toHaveLength(1);
+    expect(mockNavigate).toHaveBeenCalledWith(expect.stringMatching(/^\/build-editor\?id=/));
+  });
+
+  it('aborts an in-flight request and performs no side effects after unmount', async () => {
+    let requestSignal: AbortSignal | undefined;
+    let release: ((response: DpsParseBuildResponse) => void) | undefined;
+    jest.spyOn(dpsParsesApi, 'getBuild').mockImplementation((_parseId, signal) => {
+      requestSignal = signal;
+      return new Promise((resolve) => {
+        release = resolve;
+      });
+    });
+
+    const { store, wrapper } = makeWrapper();
+    const { result, unmount } = renderHook(() => useArchetypeBuildActions(), { wrapper });
+
+    act(() => {
+      void result.current.openInEditor(CLUSTER);
+    });
+    await waitFor(() => expect(result.current.pendingAction).not.toBeNull());
+
+    act(() => {
+      unmount();
+      release?.(BUILD_RESPONSE);
+    });
+    await Promise.resolve();
+
+    expect(requestSignal?.aborted).toBe(true);
+    expect(store.getState().savedBuilds.builds).toHaveLength(0);
+    expect(mockNavigate).not.toHaveBeenCalled();
+    expect(mockEnqueue).not.toHaveBeenCalled();
   });
 });

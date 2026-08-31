@@ -66,6 +66,7 @@ function renderRow(
   medoidParse?: DpsParse,
   bestParse?: DpsParse,
   clusterOverride?: Partial<typeof CLUSTER>,
+  selected = false,
 ): void {
   const cluster = { ...CLUSTER, ...clusterOverride };
   render(
@@ -74,7 +75,7 @@ function renderRow(
         <ArchetypeRow
           cluster={cluster}
           label={CLUSTER.label}
-          selected={false}
+          selected={selected}
           recommended={false}
           showClassIcon
           medoidParse={medoidParse}
@@ -87,6 +88,16 @@ function renderRow(
     </ThemeProvider>,
   );
 }
+
+describe('ArchetypeRow selection semantics', () => {
+  it('exposes selection as pressed state on the row button', () => {
+    renderRow(undefined, undefined, undefined, true);
+
+    const row = screen.getByRole('button', { name: /Deadly Strike/ });
+    expect(row).toHaveAttribute('aria-pressed', 'true');
+    expect(row).not.toHaveAttribute('aria-current');
+  });
+});
 
 describe('parseFreshness', () => {
   const NOW = Date.parse('2026-08-25T12:00:00Z');
@@ -109,17 +120,17 @@ describe('parseFreshness', () => {
 
   it('describes a parse from log_start_ms with its age in days', () => {
     const parse = makeParse({ log_start_ms: Date.parse('2026-07-12T00:00:00Z') });
-    expect(parseFreshness(parse)).toBe('parses from Jul 12 · 44d old');
+    expect(parseFreshness(parse)).toBe('representative parse from Jul 12 · 44d old');
   });
 
   it('falls back to log_date when log_start_ms is missing', () => {
     const parse = makeParse({ log_date: '2026-07-12' });
-    expect(parseFreshness(parse)).toBe('parses from Jul 12 · 44d old');
+    expect(parseFreshness(parse)).toBe('representative parse from Jul 12 · 44d old');
   });
 
   it('omits the age suffix for same-day parses', () => {
     const parse = makeParse({ log_start_ms: NOW - 3_600_000 });
-    expect(parseFreshness(parse)).toMatch(/^parses from Aug 25$/);
+    expect(parseFreshness(parse)).toMatch(/^representative parse from Aug 25$/);
   });
 });
 
@@ -132,8 +143,25 @@ describe('ArchetypeRow freshness line', () => {
     jest.spyOn(Date, 'now').mockReturnValue(Date.parse('2026-08-25T12:00:00Z'));
     renderRow(makeParse({ log_date: '2026-07-12' }));
     expect(screen.getByTestId('archetype-freshness')).toHaveTextContent(
-      'parses from Jul 12 · 44d old',
+      'representative parse from Jul 12 · 44d old',
     );
+  });
+
+  it('includes freshness in the row accessible name', () => {
+    jest.spyOn(Date, 'now').mockReturnValue(Date.parse('2026-08-25T12:00:00Z'));
+    renderRow(makeParse({ log_date: '2026-07-12' }));
+
+    expect(screen.getByRole('button', { name: /44d old/ })).toBeInTheDocument();
+  });
+
+  it('includes freshness in the pooled best-parse row accessible name', () => {
+    jest.spyOn(Date, 'now').mockReturnValue(Date.parse('2026-08-25T12:00:00Z'));
+    renderRow(
+      makeParse({ log_date: '2026-07-12' }),
+      makeParse({ amount: 112_000, trial_id: 'DSR' }),
+    );
+
+    expect(screen.getByRole('button', { name: /44d old/ })).toBeInTheDocument();
   });
 
   it('omits the line entirely when there is no timestamp to show', () => {
@@ -155,8 +183,19 @@ describe('ArchetypeRow pooled headline', () => {
     });
     expect(screen.getByText('112k')).toBeInTheDocument();
     expect(screen.getByText('@DSR')).toBeInTheDocument();
-    expect(screen.getByText(/9\/14 bosses/)).toBeInTheDocument();
+    expect(screen.getByText(/9\/14 boards/)).toBeInTheDocument();
     expect(screen.queryByText(/91%/)).not.toBeInTheDocument();
+  });
+
+  it('describes pooled board coverage without implying a fixed top-25 cap', () => {
+    renderRow(undefined, makeParse({ amount: 112_000, trial_id: 'DSR' }), {
+      dps: { ...CLUSTER.dps, median: 0.91 },
+      size: 41,
+    });
+
+    const row = screen.getByRole('button', { name: /Deadly Strike/ });
+    expect(row).toHaveAccessibleName(/sampled top-ranked on 9 of 14 boards/);
+    expect(row).not.toHaveAccessibleName(/sampled top-25/);
   });
 
   it('falls back to absolute median DPS when no best parse exists', () => {

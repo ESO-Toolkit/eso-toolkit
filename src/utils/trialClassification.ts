@@ -208,7 +208,13 @@ export function getTrialNameFromBoss(
  */
 export function getDifficultyLabel(difficulty: number | null, trialName: string): string | null {
   // Difficulty codes: Normal ≤ 120, Veteran 121, Veteran HM 122 (+1/+2/+3 = 123/124/125).
-  if (!difficulty || difficulty < 121) {
+  // Negative values are the API's unknown sentinel and must not be presented
+  // as Normal in user-facing encounter labels.
+  if (difficulty === null || difficulty < 0) {
+    return null;
+  }
+
+  if (difficulty <= 120) {
     return 'Normal';
   }
 

@@ -4,24 +4,96 @@ import { dpsParsesApi } from '../api/dpsParsesApi';
 import type { DpsParseBuildResponse } from '../types/dpsParses.types';
 
 const buildCache = new Map<string, DpsParseBuildResponse>();
-const pendingBuilds = new Map<string, Promise<DpsParseBuildResponse>>();
+const pendingBuilds = new Map<string, PendingBuild>();
 
-function loadBuild(parseId: string): Promise<DpsParseBuildResponse> {
-  const cached = buildCache.get(parseId);
-  if (cached) return Promise.resolve(cached);
+/**
+ * The inspector can visit many representative parses in one session. Keep
+ * this cache deliberately small and evict the least-recently-used entry so a
+ * long browsing session cannot retain every build payload indefinitely.
+ */
+export const REPRESENTATIVE_BUILD_CACHE_LIMIT = 50;
 
-  const pending = pendingBuilds.get(parseId);
-  if (pending) return pending;
+interface PendingBuild {
+  controller: AbortController;
+  promise: Promise<DpsParseBuildResponse>;
+  consumers: number;
+  settled: boolean;
+  cancelled: boolean;
+}
 
-  const request = dpsParsesApi
-    .getBuild(parseId)
-    .then((build) => {
-      buildCache.set(parseId, build);
-      return build;
-    })
-    .finally(() => pendingBuilds.delete(parseId));
-  pendingBuilds.set(parseId, request);
-  return request;
+interface AcquiredBuild {
+  promise: Promise<DpsParseBuildResponse>;
+  release: () => void;
+}
+
+function readCachedBuild(parseId: string): DpsParseBuildResponse | undefined {
+  return buildCache.get(parseId);
+}
+
+function touchCachedBuild(parseId: string): DpsParseBuildResponse | undefined {
+  const cached = readCachedBuild(parseId);
+  if (cached) {
+    // Map insertion order gives us a deterministic LRU eviction policy.
+    buildCache.delete(parseId);
+    buildCache.set(parseId, cached);
+  }
+  return cached;
+}
+
+function cacheBuild(parseId: string, build: DpsParseBuildResponse): void {
+  buildCache.delete(parseId);
+  buildCache.set(parseId, build);
+  while (buildCache.size > REPRESENTATIVE_BUILD_CACHE_LIMIT) {
+    const oldestParseId = buildCache.keys().next().value as string | undefined;
+    if (oldestParseId === undefined) break;
+    buildCache.delete(oldestParseId);
+  }
+}
+
+function loadBuild(parseId: string): AcquiredBuild {
+  const cached = touchCachedBuild(parseId);
+  if (cached) return { promise: Promise.resolve(cached), release: () => undefined };
+
+  let pending = pendingBuilds.get(parseId);
+  if (!pending) {
+    const controller = new AbortController();
+    let entry: PendingBuild;
+    const promise = dpsParsesApi
+      .getBuild(parseId, controller.signal)
+      .then((build) => {
+        if (!entry.cancelled) cacheBuild(parseId, build);
+        return build;
+      })
+      .finally(() => {
+        entry.settled = true;
+        if (pendingBuilds.get(parseId) === entry) pendingBuilds.delete(parseId);
+      });
+    entry = {
+      controller,
+      promise,
+      consumers: 0,
+      settled: false,
+      cancelled: false,
+    };
+    pending = entry;
+    pendingBuilds.set(parseId, entry);
+  }
+
+  pending.consumers += 1;
+  let released = false;
+  return {
+    promise: pending.promise,
+    release: () => {
+      if (released) return;
+      released = true;
+      pending!.consumers -= 1;
+      if (pending!.consumers === 0 && !pending!.settled && pendingBuilds.get(parseId) === pending) {
+        pending!.cancelled = true;
+        if (pendingBuilds.get(parseId) === pending) pendingBuilds.delete(parseId);
+        pending!.controller.abort();
+      }
+    },
+  };
 }
 
 export interface RepresentativeBuildState {
@@ -40,7 +112,7 @@ export function useRepresentativeBuild(
 ): RepresentativeBuildState {
   const [state, setState] = useState<KeyedRepresentativeBuildState>({
     parseId,
-    build: buildCache.get(parseId) ?? null,
+    build: readCachedBuild(parseId) ?? null,
     loading: false,
     error: null,
   });
@@ -48,7 +120,7 @@ export function useRepresentativeBuild(
   useEffect(() => {
     if (!enabled) return undefined;
 
-    const cached = buildCache.get(parseId);
+    const cached = touchCachedBuild(parseId);
     if (cached) {
       setState({ parseId, build: cached, loading: false, error: null });
       return undefined;
@@ -56,7 +128,8 @@ export function useRepresentativeBuild(
 
     let active = true;
     setState({ parseId, build: null, loading: true, error: null });
-    void loadBuild(parseId)
+    const acquired = loadBuild(parseId);
+    void acquired.promise
       .then((build) => {
         if (active) setState({ parseId, build, loading: false, error: null });
       })
@@ -72,11 +145,12 @@ export function useRepresentativeBuild(
 
     return () => {
       active = false;
+      acquired.release();
     };
   }, [enabled, parseId]);
 
   if (state.parseId !== parseId) {
-    return { build: buildCache.get(parseId) ?? null, loading: false, error: null };
+    return { build: readCachedBuild(parseId) ?? null, loading: false, error: null };
   }
 
   return state;
@@ -84,5 +158,9 @@ export function useRepresentativeBuild(
 
 export function clearRepresentativeBuildCache(): void {
   buildCache.clear();
+  pendingBuilds.forEach((pending) => {
+    pending.cancelled = true;
+    pending.controller.abort();
+  });
   pendingBuilds.clear();
 }

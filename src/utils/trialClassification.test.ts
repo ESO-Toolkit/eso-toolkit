@@ -55,6 +55,12 @@ describe('getDifficultyLabel', () => {
     expect(getDifficultyLabel(123, 'Cloudrest')).toBe('Veteran +1');
     expect(getDifficultyLabel(125, 'Asylum Sanctorium')).toBe('Veteran +3');
   });
+
+  it('leaves unknown difficulty values unlabeled', () => {
+    expect(getDifficultyLabel(null, 'Rockgrove')).toBeNull();
+    expect(getDifficultyLabel(-1, 'Rockgrove')).toBeNull();
+    expect(getDifficultyLabel(-999, 'Rockgrove')).toBeNull();
+  });
 });
 
 describe('isFalsePositiveWipe', () => {

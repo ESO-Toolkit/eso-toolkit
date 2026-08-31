@@ -38,6 +38,16 @@ describe('runBuildClustering', () => {
     expect(manager.executeTask).not.toHaveBeenCalled();
   });
 
+  it('keeps Jest deterministic when NODE_ENV is overridden to development', async () => {
+    process.env.NODE_ENV = 'development';
+    manager.executeTask = jest.fn();
+
+    const result = await runBuildClustering(EMPTY_INPUT);
+
+    expect(result.totalParses).toBe(0);
+    expect(manager.executeTask).not.toHaveBeenCalled();
+  });
+
   it('rejects actionably when a production browser has no Worker', async () => {
     process.env.NODE_ENV = 'production';
     setWorker(undefined);

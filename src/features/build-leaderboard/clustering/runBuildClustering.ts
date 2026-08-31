@@ -25,7 +25,14 @@ export async function runBuildClustering(
   // Jest's worker module is intentionally a lightweight mock. Keep synchronous
   // execution explicit and test-only; browser clustering must never fall back to
   // this cubic algorithm on the main thread.
-  if (process.env.NODE_ENV === 'test') {
+  // Jest exposes JEST_WORKER_ID even when callers intentionally override
+  // NODE_ENV (for example, to reproduce a development-only browser failure).
+  // Keep this escape hatch scoped to non-production Jest runs; real browser
+  // builds and production-path tests still always use the dedicated worker.
+  if (
+    process.env.NODE_ENV !== 'production' &&
+    (process.env.NODE_ENV === 'test' || process.env.JEST_WORKER_ID !== undefined)
+  ) {
     return clusterBuilds(input, onProgress);
   }
 

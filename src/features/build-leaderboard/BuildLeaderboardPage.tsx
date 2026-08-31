@@ -37,6 +37,7 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 
 import { ClassIcon } from '../../components/ClassIcon';
 import { PanelErrorBoundary } from '../../components/PanelErrorBoundary';
+import { getDifficultyLabel } from '../../utils/trialClassification';
 
 import { dpsParsesApi } from './api/dpsParsesApi';
 import { BuildLeaderboardView } from './components/BuildLeaderboardView';
@@ -48,6 +49,8 @@ import { useDpsParses } from './hooks/useDpsParses';
 import { getLeaderboardClassTheme } from './theme/leaderboardTheme';
 import type { BuildCluster } from './types/clustering.types';
 import type { DpsEncounterSummary } from './types/dpsParses.types';
+import { orderBuildClusters } from './utils/clusterOrdering';
+import { getClusterQuality } from './utils/clusterQuality';
 import { buildCeilingMap, normalizePooledParses } from './utils/pooledCeilings';
 
 type TabKey = 'encounter' | 'class';
@@ -63,28 +66,61 @@ function encounterKey(encounter: Pick<DpsEncounterSummary, 'encounter_id' | 'dif
 }
 
 function encounterLabel(encounter: DpsEncounterSummary): string {
-  return `${encounter.trial_id ? `${encounter.trial_id} · ` : ''}${encounter.encounter_name}`;
+  const trialName = `${encounter.trial_id} ${encounter.encounter_name}`;
+  const difficultyLabel = getDifficultyLabel(encounter.difficulty, trialName);
+  return `${encounter.trial_id ? `${encounter.trial_id} · ` : ''}${encounter.encounter_name}${
+    difficultyLabel ? ` · ${difficultyLabel}` : ''
+  }`;
 }
 
 function formatUpdatedAt(value: string): string {
-  const date = new Date(`${value.slice(0, 10)}T00:00:00Z`);
+  const timestamp = updatedAtTimestamp(value);
+  const date = timestamp === null ? null : new Date(timestamp);
   // Pin to UTC to match the parsed midnight-UTC instant — without this,
   // viewers west of UTC render the previous local day.
-  return Number.isNaN(date.getTime())
+  return date === null || Number.isNaN(date.getTime())
     ? value.slice(0, 10)
     : new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' }).format(
         date,
       );
 }
 
-function clusterQuality(silhouette: number): { label: string; tooltip: string } {
-  if (silhouette >= 0.5) {
-    return { label: 'Strong', tooltip: 'These build patterns separate cleanly.' };
+function updatedAtTimestamp(value: string): number | null {
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+
+  // The API commonly returns `YYYY-MM-DD HH:mm:ss`; make that explicit UTC
+  // before parsing so freshness ordering is stable across viewer time zones.
+  const normalized = /^\d{4}-\d{2}-\d{2} /.test(trimmed)
+    ? `${trimmed.replace(' ', 'T')}${/[zZ]$|[+-]\d{2}:?\d{2}$/.test(trimmed) ? '' : 'Z'}`
+    : trimmed;
+  const timestamp = Date.parse(normalized);
+  return Number.isNaN(timestamp) ? null : timestamp;
+}
+
+function validUpdatedAt(value: string | null | undefined): string | null {
+  return value && updatedAtTimestamp(value) !== null ? value : null;
+}
+
+function latestValidUpdatedAt(
+  encounters: readonly DpsEncounterSummary[],
+  parseEncounterKeys?: ReadonlySet<string>,
+): string | null {
+  let latest: { value: string; timestamp: number } | null = null;
+  for (const encounter of encounters) {
+    if (parseEncounterKeys && !parseEncounterKeys.has(encounterKey(encounter))) continue;
+    if (!encounter.updated_at) continue;
+    const timestamp = updatedAtTimestamp(encounter.updated_at);
+    if (timestamp === null) continue;
+    if (
+      !latest ||
+      timestamp > latest.timestamp ||
+      (timestamp === latest.timestamp && encounter.updated_at.localeCompare(latest.value) > 0)
+    ) {
+      latest = { value: encounter.updated_at, timestamp };
+    }
   }
-  if (silhouette >= 0.25) {
-    return { label: 'Moderate', tooltip: 'The patterns are useful, though some builds overlap.' };
-  }
-  return { label: 'Limited', tooltip: 'Top players are using many similar variations.' };
+  return latest?.value ?? null;
 }
 
 /**
@@ -224,7 +260,7 @@ export const BuildLeaderboardPage: React.FC = () => {
     activeClassRoute && bossRoute
       ? `Build patterns observed in sampled top-ranked ${activeClassRoute.label} parses on ${bossRoute.name} in ${bossRoute.zone}.`
       : activeClassRoute
-        ? `Build patterns observed in sampled top-ranked ${activeClassRoute.label} parses across recorded trial bosses.`
+        ? `Build patterns observed in sampled top-ranked ${activeClassRoute.label} parses across recorded trial boards.`
         : bossRoute
           ? `Build patterns observed in sampled top-ranked parses on ${bossRoute.name} in ${bossRoute.zone}.`
           : null;
@@ -326,11 +362,28 @@ export const BuildLeaderboardPage: React.FC = () => {
   // Wait for the summary feed before clustering a pooled view. The fallback
   // above keeps the maths correct without it, but clustering against observed
   // ceilings and then re-clustering when the real ones land is wasted work.
-  const poolingReady = !isPooledClass || encounters.length > 0;
+  // An empty summary is a settled response, not an endlessly loading one.
+  // The parses feed can legitimately arrive before its independently cached
+  // summary, so once that request settles (including with no rows), cluster
+  // the available parses using their observed per-board ceilings.
+  const poolingReady = !isPooledClass || !encountersLoading;
   const bossCount = useMemo(
     () => new Set(parses.map((parse) => encounterKeyOf(parse.encounter_id, parse.difficulty))).size,
     [parses],
   );
+  const pooledUpdatedAt = useMemo(
+    () =>
+      isPooledClass
+        ? latestValidUpdatedAt(
+            encounters,
+            new Set(parses.map((parse) => encounterKeyOf(parse.encounter_id, parse.difficulty))),
+          )
+        : null,
+    [encounters, isPooledClass, parses],
+  );
+  const displayedUpdatedAt = isPooledClass
+    ? pooledUpdatedAt
+    : validUpdatedAt(selectedEncounter?.updated_at);
 
   const {
     result,
@@ -355,8 +408,7 @@ export const BuildLeaderboardPage: React.FC = () => {
     const amountOf = (cluster: BuildCluster): number =>
       isPooledClass ? bestRawAmount(cluster) : cluster.dps.median;
 
-    const items = [...result.clusters]
-      .sort((a, b) => amountOf(b) - amountOf(a))
+    const items = orderBuildClusters(result.clusters, result.recommendedClusterId)
       .map((cluster, index) => ({
         '@type': 'ListItem',
         position: index + 1,
@@ -373,7 +425,9 @@ export const BuildLeaderboardPage: React.FC = () => {
       '@context': 'https://schema.org',
       '@type': 'ItemList',
       name: headingText,
-      itemListOrder: 'https://schema.org/ItemListOrderDescending',
+      // The recommendation is intentionally first; alternatives retain the
+      // clustering order and are not a descending-DPS ranking.
+      itemListOrder: 'https://schema.org/ItemListOrderUnordered',
       numberOfItems: items.length,
       itemListElement: items,
     };
@@ -424,7 +478,7 @@ export const BuildLeaderboardPage: React.FC = () => {
   const handleViewSourceLog = useCallback(
     (cluster: BuildCluster) => {
       const parse = parses.find((candidate) => candidate.parse_id === cluster.medoidParseId);
-      if (!parse) return;
+      if (!parse?.report_code) return;
       navigate(`/report/${parse.report_code}/fight/${parse.fight_id}`);
     },
     [navigate, parses],
@@ -652,7 +706,7 @@ export const BuildLeaderboardPage: React.FC = () => {
                       }}
                     >
                       {tab === 'class' && !encounterParam
-                        ? 'All trial bosses'
+                        ? 'All trial boards'
                         : selectedEncounter
                           ? encounterLabel(selectedEncounter)
                           : 'Choose an encounter'}
@@ -705,7 +759,7 @@ export const BuildLeaderboardPage: React.FC = () => {
                       color: theme.palette.primary.main,
                     })}
                   >
-                    All trial bosses
+                    All trial boards
                   </MenuItem>
                 )}
                 {encounters.map((encounter) => (
@@ -740,8 +794,7 @@ export const BuildLeaderboardPage: React.FC = () => {
                       }}
                     >
                       <Typography sx={{ fontSize: '0.84rem', fontWeight: 600 }}>
-                        {encounter.trial_id ? `${encounter.trial_id} · ` : ''}
-                        {encounter.encounter_name}
+                        {encounterLabel(encounter)}
                       </Typography>
                       <Typography
                         className="u-tabular"
@@ -830,7 +883,7 @@ export const BuildLeaderboardPage: React.FC = () => {
                 <Box component="span" sx={{ color: 'text.primary', fontWeight: 700 }}>
                   {result.totalParses}
                 </Box>{' '}
-                sampled top-ranked parses ·{' '}
+                top-ranked parses ·{' '}
                 <Box component="span" sx={{ color: 'text.primary', fontWeight: 700 }}>
                   {result.k}
                 </Box>{' '}
@@ -844,8 +897,8 @@ export const BuildLeaderboardPage: React.FC = () => {
                   : result.k === 1
                     ? 'pattern'
                     : 'patterns'}
-                {selectedEncounter?.updated_at
-                  ? ` · updated ${formatUpdatedAt(selectedEncounter.updated_at)}`
+                {displayedUpdatedAt
+                  ? ` · updated ${formatUpdatedAt(displayedUpdatedAt)}`
                   : ' · ESO Logs data'}
               </Typography>
               <IconButton
@@ -861,54 +914,53 @@ export const BuildLeaderboardPage: React.FC = () => {
           )}
         </Box>
         {result && (
-          <Collapse in={methodologyOpen} timeout="auto" unmountOnExit>
-            <Box
-              id="build-leaderboard-methodology"
-              sx={(theme) => ({
-                display: 'grid',
-                gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, 1fr)' },
-                gap: { xs: 0.75, sm: 2 },
-                mt: 1,
-                pt: 1,
-                borderTop: `1px solid ${alpha(theme.palette.divider, 0.62)}`,
-              })}
-            >
-              <Typography sx={{ color: 'text.secondary', fontSize: '0.72rem', lineHeight: 1.5 }}>
-                <Box component="span" sx={{ color: 'text.primary', fontWeight: 650 }}>
-                  Scope.
-                </Box>{' '}
-                {`The rankings feed returns up to 25 rows ${
-                  isPooledClass ? 'per encounter' : 'for this encounter'
-                }; this board received ${parses.length} sampled ${
-                  parses.length === 1 ? 'parse' : 'parses'
-                }. Percentages describe this returned sample, not all ESO players or logs. `}
-                {tooFewParses
-                  ? `${result.uniqueSignatures} distinct builds, each listed on its own.`
-                  : `${result.uniqueSignatures} distinct builds were grouped into ${result.k} ${
-                      result.k === 1 ? 'pattern' : 'patterns'
-                    }.`}
-              </Typography>
-              <Typography sx={{ color: 'text.secondary', fontSize: '0.72rem', lineHeight: 1.5 }}>
-                <Box component="span" sx={{ color: 'text.primary', fontWeight: 650 }}>
-                  {/* A silhouette score describes a clustering. On the thin-data
+          <Box id="build-leaderboard-methodology">
+            <Collapse in={methodologyOpen} timeout="auto" unmountOnExit>
+              <Box
+                sx={(theme) => ({
+                  display: 'grid',
+                  gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, 1fr)' },
+                  gap: { xs: 0.75, sm: 2 },
+                  mt: 1,
+                  pt: 1,
+                  borderTop: `1px solid ${alpha(theme.palette.divider, 0.62)}`,
+                })}
+              >
+                <Typography sx={{ color: 'text.secondary', fontSize: '0.72rem', lineHeight: 1.5 }}>
+                  <Box component="span" sx={{ color: 'text.primary', fontWeight: 650 }}>
+                    Scope.
+                  </Box>{' '}
+                  {`The rankings feed returned ${parses.length} sampled ${
+                    parses.length === 1 ? 'parse' : 'parses'
+                  } for this selection. Percentages describe this returned sample, not all ESO players or logs. `}
+                  {tooFewParses
+                    ? `${result.uniqueSignatures} distinct builds, each listed on its own.`
+                    : `${result.uniqueSignatures} distinct builds were grouped into ${result.k} ${
+                        result.k === 1 ? 'pattern' : 'patterns'
+                      }.`}
+                </Typography>
+                <Typography sx={{ color: 'text.secondary', fontSize: '0.72rem', lineHeight: 1.5 }}>
+                  <Box component="span" sx={{ color: 'text.primary', fontWeight: 650 }}>
+                    {/* A silhouette score describes a clustering. On the thin-data
                       path there isn't one, so quoting "Limited" would report the
                       quality of an analysis we never ran. */}
+                    {tooFewParses
+                      ? 'Confidence: Too early.'
+                      : `Confidence: ${getClusterQuality(result.silhouette).label}.`}
+                  </Box>{' '}
                   {tooFewParses
-                    ? 'Confidence: Too early.'
-                    : `Confidence: ${clusterQuality(result.silhouette).label}.`}
-                </Box>{' '}
-                {tooFewParses
-                  ? 'Not enough parses here to tell a real pattern from one player’s preference.'
-                  : clusterQuality(result.silhouette).tooltip}
-              </Typography>
-              <Typography sx={{ color: 'text.secondary', fontSize: '0.72rem', lineHeight: 1.5 }}>
-                <Box component="span" sx={{ color: 'text.primary', fontWeight: 650 }}>
-                  Starting point.
-                </Box>{' '}
-                Results vary with rotation, buffs, and group composition.
-              </Typography>
-            </Box>
-          </Collapse>
+                    ? 'Not enough parses here to tell a real pattern from one player’s preference.'
+                    : getClusterQuality(result.silhouette).tooltip}
+                </Typography>
+                <Typography sx={{ color: 'text.secondary', fontSize: '0.72rem', lineHeight: 1.5 }}>
+                  <Box component="span" sx={{ color: 'text.primary', fontWeight: 650 }}>
+                    Starting point.
+                  </Box>{' '}
+                  Results vary with rotation, buffs, and group composition.
+                </Typography>
+              </Box>
+            </Collapse>
+          </Box>
         )}
       </Box>
 
@@ -952,7 +1004,7 @@ export const BuildLeaderboardPage: React.FC = () => {
               }
               scopeDescription={
                 isPooledClass
-                  ? `across ${bossCount} trial ${bossCount === 1 ? 'boss' : 'bosses'}`
+                  ? `across ${bossCount} trial ${bossCount === 1 ? 'board' : 'boards'}`
                   : selectedEncounter
                     ? `on ${encounterLabel(selectedEncounter)}`
                     : undefined
@@ -961,9 +1013,9 @@ export const BuildLeaderboardPage: React.FC = () => {
               // A class slice of one boss is where thinness actually bites (5
               // Dragonknights on a board of 200). Pooling every boss is the one
               // click that fixes it, so offer it inline rather than making the
-              // reader work out that the picker has an "All trial bosses" row.
+              // reader work out that the picker has an "All trial boards" row.
               onBroadenScope={isPooledClass ? undefined : () => handleEncounterChange(ALL_BOSSES)}
-              broadenScopeLabel="All trial bosses"
+              broadenScopeLabel="All trial boards"
               onRetry={handleRetry}
               onOpenInEditor={openInEditor}
               onSaveBuild={saveToMyBuilds}

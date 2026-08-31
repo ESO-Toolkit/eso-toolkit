@@ -39,7 +39,7 @@ export const BuildSignatureStrip: React.FC<BuildSignatureStripProps> = ({ cluste
   const classTheme = getLeaderboardClassTheme(cluster.esoClass);
 
   return (
-    <Box aria-label="Defining setup">
+    <Box role="group" aria-label="Defining setup">
       {SIGNATURE_GROUPS.map((signatureGroup, index) => {
         const traits = traitsFor(cluster, signatureGroup.groups);
         const visible = traits.slice(0, signatureGroup.limit);

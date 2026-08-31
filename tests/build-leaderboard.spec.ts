@@ -290,7 +290,7 @@ test.describe('Build Leaderboard Page', () => {
       expect(await rows.count()).toBeGreaterThanOrEqual(2);
 
       // Strict: the summary strip reflects the mocked parse mass
-      await expect(page.getByText(/14\s*sampled top-ranked parses/i)).toBeVisible();
+      await expect(page.getByText(/14\s*top-ranked parses/i)).toBeVisible();
       await expect(page.getByText(/\d+\s*patterns/i)).toBeVisible();
     });
 
@@ -393,7 +393,7 @@ test.describe('Build Leaderboard Page', () => {
       ).toBeVisible();
       // The class-only route deliberately represents the all-boss aggregate.
       await expect(page.getByRole('combobox', { name: 'Encounter' })).toHaveText(
-        'All trial bosses',
+        'All trial boards',
       );
     });
   });
@@ -413,7 +413,7 @@ test.describe('Build Leaderboard Page', () => {
 
       // Click the second row — the inspector must switch to that archetype
       await rows.nth(1).click();
-      await expect(rows.nth(1)).toHaveAttribute('aria-current', 'true');
+      await expect(rows.nth(1)).toHaveAttribute('aria-pressed', 'true');
       await expect(inspectorHeading).not.toHaveText(headingBefore);
       const openEditorButton = inspector.getByRole('button', {
         name: 'Save a copy and open in Build Editor',
@@ -446,7 +446,7 @@ test.describe('Build Leaderboard Page', () => {
       await expect(dialog.getByText('Gear sets', { exact: true })).toBeVisible();
       await expect(dialog.getByText('Front bar', { exact: true }).first()).toBeVisible();
 
-      const evidenceTarget = dialog.getByRole('button', { name: 'E2E Frags', exact: true });
+      const evidenceTarget = dialog.getByRole('img', { name: 'E2E Frags', exact: true });
       await expect(evidenceTarget).toBeVisible();
       const evidenceTargetBox = await evidenceTarget.boundingBox();
       expect(evidenceTargetBox).not.toBeNull();
@@ -481,7 +481,7 @@ test.describe('Build Leaderboard Page', () => {
         '[data-testid="archetype-row"], [data-testid="recommended-row"]',
       );
       await rows.nth(1).click();
-      await expect(rows.nth(1)).toHaveAttribute('aria-current', 'true');
+      await expect(rows.nth(1)).toHaveAttribute('aria-pressed', 'true');
       const inspectorFocusTarget = page.getByTestId('build-inspector-focus-target');
       await expect(inspectorFocusTarget).toBeFocused();
       const inspectorHeadingId = await inspector.locator('h2').first().getAttribute('id');

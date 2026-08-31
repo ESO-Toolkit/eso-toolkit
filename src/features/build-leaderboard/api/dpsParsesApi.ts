@@ -103,6 +103,40 @@ function str(value: unknown): string {
 }
 
 /**
+ * ESO Logs report codes are opaque alphanumeric tokens. Keep the original
+ * value for valid codes, but never allow path separators, whitespace, or URL
+ * syntax to reach links and routing built from this field.
+ */
+function reportCode(value: unknown): string {
+  return typeof value === 'string' && /^[A-Za-z0-9]+$/.test(value) ? value : '';
+}
+
+/**
+ * Source links come from the API and are rendered as anchors. Pin them to the
+ * canonical ESO Logs HTTPS origin so an API response cannot turn the link into
+ * a javascript/data URL or an attacker-controlled lookalike host.
+ */
+function sourceUrl(value: unknown): string {
+  if (typeof value !== 'string' || !value) return '';
+
+  try {
+    const url = new URL(value);
+    if (
+      url.protocol !== 'https:' ||
+      url.hostname !== 'www.esologs.com' ||
+      url.port !== '' ||
+      url.username !== '' ||
+      url.password !== ''
+    ) {
+      return '';
+    }
+    return value;
+  } catch {
+    return '';
+  }
+}
+
+/**
  * Validate the parts of the build that downstream code dereferences without
  * guarding — `toFeatureVector` reads `build.sets.fivePiece` and
  * `build.bars.front/back` directly, so a malformed object would throw during
@@ -174,7 +208,7 @@ export function normalizeParse(raw: unknown): DpsParse | null {
     server_name: typeof raw.server_name === 'string' ? raw.server_name : null,
     guild_name: typeof raw.guild_name === 'string' ? raw.guild_name : null,
 
-    report_code: str(raw.report_code),
+    report_code: reportCode(raw.report_code),
     fight_id: num(raw.fight_id) ?? 0,
     rank: num(raw.rank),
     amount,
@@ -193,7 +227,7 @@ export function normalizeParse(raw: unknown): DpsParse | null {
     signature_hash: str(raw.signature_hash),
 
     build: normalizeBuild(raw.build),
-    source_url: str(raw.source_url),
+    source_url: sourceUrl(raw.source_url),
   };
 }
 
@@ -250,8 +284,8 @@ export interface ListParsesOptions {
   offset?: number;
   sort?: 'amount' | 'recent';
   /**
-   * Pooled class view: cap each boss's contribution at its N best rows so
-   * high-ceiling boards don't crowd out the pool. Server-side clamped [1,100].
+   * Optional server-side contribution cap, forwarded as provided. The API
+   * owns the cap's scope and clamping semantics.
    */
   perEncounterCap?: number;
 }
