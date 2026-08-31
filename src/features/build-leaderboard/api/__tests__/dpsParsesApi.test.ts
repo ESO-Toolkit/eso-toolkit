@@ -308,6 +308,38 @@ describe('dpsParsesApi.listParses', () => {
     return mock;
   }
 
+  function responseWithPendingBody(status = 200): {
+    fetchMock: jest.Mock;
+    bodyStarted: jest.Mock;
+  } {
+    const abortError = (): Error => {
+      const err = new Error('aborted while reading body');
+      err.name = 'AbortError';
+      return err;
+    };
+    const bodyStarted = jest.fn();
+    const fetchMock = jest.fn(async (_url: string, init?: RequestInit) => {
+      const readBody = (): Promise<never> => {
+        bodyStarted();
+        return new Promise((_resolve, reject) => {
+          if (init?.signal?.aborted) {
+            reject(abortError());
+            return;
+          }
+          init?.signal?.addEventListener('abort', () => reject(abortError()), { once: true });
+        });
+      };
+      return {
+        ok: status >= 200 && status < 300,
+        status,
+        json: readBody,
+        text: readBody,
+      };
+    });
+    global.fetch = fetchMock as unknown as typeof fetch;
+    return { fetchMock, bodyStarted };
+  }
+
   it('reports a genuine timeout as a readable message', async () => {
     jest.useFakeTimers();
     pendingFetchRespectingSignal();
@@ -318,6 +350,38 @@ describe('dpsParsesApi.listParses', () => {
 
     await assertion;
     jest.useRealTimers();
+  });
+
+  it('keeps the timeout active while consuming a successful JSON body', async () => {
+    jest.useFakeTimers();
+    try {
+      const { bodyStarted } = responseWithPendingBody();
+      const promise = dpsParsesApi.listParses({ encounterId: 4 });
+      const assertion = expect(promise).rejects.toThrow(/timed out/i);
+
+      await Promise.resolve();
+      await Promise.resolve();
+      expect(bodyStarted).toHaveBeenCalledTimes(1);
+      jest.advanceTimersByTime(20_000);
+
+      await assertion;
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('keeps caller cancellation active while consuming an error body', async () => {
+    const { bodyStarted } = responseWithPendingBody(503);
+    const controller = new AbortController();
+    const promise = dpsParsesApi.listParses({ encounterId: 4 }, controller.signal);
+
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(bodyStarted).toHaveBeenCalledTimes(1);
+    controller.abort();
+
+    await expect(promise).rejects.toMatchObject({ name: 'AbortError' });
+    await expect(promise).rejects.not.toThrow(/timed out/i);
   });
 
   /**

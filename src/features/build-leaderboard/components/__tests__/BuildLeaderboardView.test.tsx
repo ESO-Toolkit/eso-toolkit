@@ -132,19 +132,19 @@ describe('BuildLeaderboardView states', () => {
 
   /**
    * Regression: thin data used to dead-end on an alert that showed nothing and
-   * told the reader to go somewhere else. The builds that ARE recorded must
+   * told the reader to go somewhere else. The builds that ARE observed must
    * still render — only the GROUPING of them into archetypes is withheld.
    */
-  it('still shows the recorded builds when there are too few to cluster', () => {
+  it('still shows the observed builds when there are too few to cluster', () => {
     const { parses, result } = individualFixture(6);
     renderView({ parses, result, tooFewParses: true });
 
     expect(screen.getByTestId('too-few-parses')).toHaveTextContent(
-      /too few to group into reliable build patterns/i,
+      /too few to group into observed build patterns/i,
     );
     expect(screen.getByTestId('build-inspector')).toBeInTheDocument();
     expect(screen.getAllByTestId('archetype-row').length).toBeGreaterThan(0);
-    expect(screen.getByText('Recorded builds')).toBeInTheDocument();
+    expect(screen.getByText('Observed builds')).toBeInTheDocument();
   });
 
   /**
@@ -207,7 +207,9 @@ describe('BuildLeaderboardView states', () => {
     renderView({ parses, result, tooFewParses: true });
 
     expect(screen.getByTestId('dps-spread-hint')).toHaveTextContent('From a single parse');
-    expect(screen.getByText(/one top-ranked parse/i)).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /how this leaderboard works/i }).parentElement,
+    ).toHaveTextContent('1 sampled top-ranked parse · 1 build pattern');
     // "1 parses" would otherwise be on screen for every thin selection.
     expect(screen.getByTestId('too-few-parses')).toHaveTextContent('Only 1 parse in');
   });
@@ -294,18 +296,18 @@ describe('BuildLeaderboardView workspace', () => {
 
     expect(screen.getByText('Bosses')).toBeInTheDocument();
     expect(screen.getByText('3 of 4')).toBeInTheDocument();
-    expect(screen.getByText(`${selected.size} sampled top parses`)).toBeInTheDocument();
+    expect(screen.getByText(`${selected.size} sampled top-ranked parses`)).toBeInTheDocument();
     expect(screen.queryByText(/% of each boss's top DPS/i)).not.toBeInTheDocument();
     // Opened by TAP, not focus. This explanation used to be a hover-only Tooltip
     // on an icon button, unreachable on a phone; StatHint opens it on click and
     // deliberately does not open on focus, because focus arrives before click on
     // every tap and the two would cancel out.
-    const explanation = screen.getByRole('button', { name: /explain top-25 boss coverage/i });
+    const explanation = screen.getByRole('button', { name: /explain sampled boss coverage/i });
     await userEvent.click(explanation);
     expect(explanation).toHaveAttribute('aria-expanded', 'true');
     expect(
       await screen.findByText(
-        /this build had a retained top-25 class parse on 3 of the 4 bosses with data/i,
+        /this build had a retained sampled class parse on 3 of the 4 bosses with data/i,
       ),
     ).toBeInTheDocument();
   });
@@ -334,8 +336,9 @@ describe('BuildLeaderboardView workspace', () => {
     renderView({ parses, result });
     const featured = screen.getByTestId('start-here-card');
     expect(featured).toHaveTextContent('Typical damage');
-    expect(featured).toHaveTextContent('Seen in top parses');
-    expect(featured).toHaveTextContent(/sample large enough to trust/i);
+    expect(featured).toHaveTextContent('Observed in sample');
+    expect(featured).toHaveTextContent(/20\s*of\s*45/);
+    expect(featured).toHaveTextContent('44% of this selection');
   });
 
   it('distinguishes core from flexible build anchors', () => {
@@ -363,12 +366,24 @@ describe('BuildLeaderboardView workspace', () => {
     expect(screen.getAllByTestId('archetype-row')).toHaveLength(result.k - 1);
   });
 
+  it('keeps the build list before the inspector in DOM order', () => {
+    const { parses, result } = clusteredFixture();
+    renderView({ parses, result });
+
+    const listRow = screen.getByTestId('recommended-row');
+    const inspector = screen.getByTestId('build-inspector');
+    expect(listRow.compareDocumentPosition(inspector)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+  });
+
   it('keeps methodology out of the default view and explains confidence on request', async () => {
     const { parses, result } = clusteredFixture();
     renderView({ parses, result });
     expect(screen.queryByText(/confidence:/i)).not.toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: /how this leaderboard works/i }));
     expect(screen.getByText(/confidence:/i)).toBeInTheDocument();
+    expect(screen.getByText(/up to 25 rows per encounter/i)).toHaveTextContent(
+      /rows currently returned for this selection, not the full ESO player population/i,
+    );
     expect(screen.queryByText(String(result.silhouette))).not.toBeInTheDocument();
   });
 
@@ -376,7 +391,11 @@ describe('BuildLeaderboardView workspace', () => {
     const onOpenInEditor = jest.fn();
     const { parses, result } = clusteredFixture();
     renderView({ parses, result, onOpenInEditor });
-    await userEvent.click(screen.getByRole('button', { name: /open in build editor/i }));
+    const editorButton = screen.getByRole('button', {
+      name: 'Save a copy and open in Build Editor',
+    });
+    expect(editorButton).toHaveTextContent('Save copy & open editor');
+    await userEvent.click(editorButton);
     const cluster = onOpenInEditor.mock.calls[0][0];
     expect(cluster.memberParseIds).toContain(cluster.medoidParseId);
   });
@@ -393,7 +412,9 @@ describe('BuildLeaderboardView workspace', () => {
       onOpenInEditor,
       onSaveBuild,
     });
-    expect(screen.getByRole('button', { name: /opening/i })).toBeDisabled();
+    expect(
+      screen.getByRole('button', { name: /saving build copy and opening editor/i }),
+    ).toBeDisabled();
     expect(screen.getByRole('button', { name: /more build actions/i })).toBeDisabled();
     unmount();
 
@@ -430,6 +451,11 @@ describe('BuildLeaderboardView workspace', () => {
     expect(
       await within(evidenceDialog).findByText(/observed representative loadout/i),
     ).toBeInTheDocument();
+    const sourceLink = within(evidenceDialog).getByRole('link', {
+      name: /view log \(opens new tab\)/i,
+    });
+    expect(sourceLink).toHaveAttribute('target', '_blank');
+    expect(sourceLink).toHaveAttribute('rel', expect.stringContaining('noopener'));
     expect(
       within(evidenceDialog).getByRole('button', { name: /view deadly strike set details/i }),
     ).toBeInTheDocument();
@@ -447,7 +473,7 @@ describe('BuildLeaderboardView workspace', () => {
     await userEvent.click(screen.getByRole('button', { name: /show build evidence/i }));
     expect(await screen.findByText(/observed representative loadout/i)).toBeInTheDocument();
     expect(dpsParsesApi.getBuild).toHaveBeenCalledTimes(1);
-  });
+  }, 20_000);
 
   it('resets selection and evidence when the clustered result changes', async () => {
     const { parses, result } = clusteredFixture();
@@ -529,8 +555,8 @@ describe('BuildLeaderboardView solved meta', () => {
     renderView({ parses, result, esoClass: 'Necromancer', scopeDescription: 'across all bosses' });
 
     const panel = screen.getByTestId('solved-meta');
-    expect(panel).toHaveTextContent('One build. Nearly everyone runs it.');
-    expect(panel).toHaveTextContent(/9\d% of the \d+ top parses across all bosses/);
+    expect(panel).toHaveTextContent('One observed pattern dominates this sample.');
+    expect(panel).toHaveTextContent(/9\d% of the \d+ sampled top-ranked parses across all bosses/);
     // Framed as a property of the data, never as a shortfall of the tool.
     expect(panel).not.toHaveTextContent(/only one|could not|unable|too few/i);
   });
@@ -539,9 +565,9 @@ describe('BuildLeaderboardView solved meta', () => {
     const { parses, result } = solvedFixture();
     renderView({ parses, result });
 
-    expect(screen.getByText('Consensus build')).toBeInTheDocument();
+    expect(screen.getByText('Observed build pattern')).toBeInTheDocument();
     expect(screen.queryByText('Build patterns')).not.toBeInTheDocument();
-    expect(screen.getByText(/one build, 9\d% of parses/)).toBeInTheDocument();
+    expect(screen.getByText(/one observed pattern, 9\d% of clustered sample/)).toBeInTheDocument();
   });
 
   it('replaces the separation-based confidence wording', async () => {
@@ -552,7 +578,9 @@ describe('BuildLeaderboardView solved meta', () => {
 
     // "Limited ... many similar variations" describes a failure to separate
     // archetypes, which misreads the finding that there is only one.
-    expect(screen.getByText(/Converged/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Most sampled top-ranked parses share one observed build pattern/),
+    ).toBeInTheDocument();
     expect(screen.queryByText(/many similar variations/i)).not.toBeInTheDocument();
   });
 

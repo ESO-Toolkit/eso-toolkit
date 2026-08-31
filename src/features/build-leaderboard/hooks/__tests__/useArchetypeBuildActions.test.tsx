@@ -8,7 +8,7 @@ import savedBuildsReducer from '../../../../store/saved_builds/savedBuildsSlice'
 import { dpsParsesApi } from '../../api/dpsParsesApi';
 import type { BuildCluster } from '../../types/clustering.types';
 import type { DpsParseBuildResponse } from '../../types/dpsParses.types';
-import { useArchetypeBuildActions } from '../useArchetypeBuildActions';
+import { toBuildExtractionData, useArchetypeBuildActions } from '../useArchetypeBuildActions';
 
 const mockNavigate = jest.fn();
 const mockEnqueue = jest.fn();
@@ -132,12 +132,24 @@ describe('useArchetypeBuildActions', () => {
 
     const { build } = store.getState().savedBuilds.builds[0];
     expect(build.name).toBe(CLUSTER.label);
+    expect(build.shortDescription).toBe(
+      'Observed sampled archetype — 20 sampled top-ranked parses share this pattern.',
+    );
     expect(build.setups.length).toBeGreaterThan(0);
 
     // Gear and skills actually made it across the conversion.
     const setup = build.setups[0];
     expect(Object.keys(setup.gear).length).toBeGreaterThan(0);
     expect(Object.keys(setup.skills).length).toBeGreaterThan(0);
+  });
+
+  it('does not invent item quality when the ranking payload omits it', () => {
+    const extracted = toBuildExtractionData(BUILD_RESPONSE);
+
+    expect(extracted.gear).not.toHaveLength(0);
+    extracted.gear.forEach((piece) => {
+      expect(piece).not.toHaveProperty('quality');
+    });
   });
 
   it('saves without navigating for Save to My Builds', async () => {
@@ -182,7 +194,7 @@ describe('useArchetypeBuildActions', () => {
 
   /**
    * A single boolean could not tell the two apart, so saving rendered the primary
-   * button as "Opening…".
+   * button as the editor-opening action.
    */
   it('reports which action is in flight, not merely that one is', async () => {
     let release: ((v: typeof BUILD_RESPONSE) => void) | undefined;

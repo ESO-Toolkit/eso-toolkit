@@ -179,6 +179,7 @@ export function useBuildClusters(
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [stateKey, setStateKey] = useState<string | null>(null);
   const [reclusterToken, setReclusterToken] = useState(0);
 
   const tooFewParses = parses.length > 0 && parses.length < MIN_PARSES_TO_CLUSTER;
@@ -208,10 +209,13 @@ export function useBuildClusters(
   // drop the whole cache when the resolver identity changes — otherwise the
   // cache-hit path would return clusters computed under the previous mapping.
   const lastResolver = useRef(resolveBaseAbilityId);
+  const resolverVersion = useRef(0);
   if (lastResolver.current !== resolveBaseAbilityId) {
     lastResolver.current = resolveBaseAbilityId;
+    resolverVersion.current += 1;
     cache.current.clear();
   }
+  const requestKey = `${resolverVersion.current}:${cacheKey}`;
 
   /** Read through, refreshing recency so the cap evicts the least-recently used. */
   const readCache = (key: string): ClusterBuildsResult | undefined => {
@@ -242,6 +246,7 @@ export function useBuildClusters(
     // return that forgets leaves the UI stuck on "Grouping N parses…" forever.
     // Routing both early returns through this helper makes that hard to miss.
     const settleWithoutRunning = (next: ClusterBuildsResult | null, pct: number): void => {
+      setStateKey(requestKey);
       setResult(next);
       setError(null);
       setProgress(pct);
@@ -271,13 +276,15 @@ export function useBuildClusters(
       return undefined;
     }
 
-    const cached = readCache(cacheKey);
+    const cached = readCache(requestKey);
     if (cached) {
       settleWithoutRunning(cached, 100);
       return undefined;
     }
 
     let cancelled = false;
+    setStateKey(requestKey);
+    setResult(null);
     setLoading(true);
     setProgress(0);
     setError(null);
@@ -295,7 +302,7 @@ export function useBuildClusters(
           ...clustered,
           clusters: clustered.clusters.map((cluster) => hydrateLabels(cluster, labels)),
         };
-        writeCache(cacheKey, hydrated);
+        writeCache(requestKey, hydrated);
         setResult(hydrated);
       })
       .catch((err: unknown) => {
@@ -313,9 +320,25 @@ export function useBuildClusters(
     // `parses` is covered by cacheKey; depending on the array itself would rerun
     // on every render.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cacheKey, tooFewParses, resolveBaseAbilityId, reclusterToken]);
+  }, [requestKey, tooFewParses, resolveBaseAbilityId, reclusterToken]);
 
-  const recluster = useCallback(() => setReclusterToken((token) => token + 1), []);
+  const recluster = useCallback(() => {
+    cache.current.delete(requestKey);
+    setReclusterToken((token) => token + 1);
+  }, [requestKey]);
 
-  return { result, loading, progress, error, tooFewParses, recluster };
+  // Effects run after commit. When the route/query changes, the state above can
+  // therefore still belong to the previous parse set for one render. Never let
+  // that old result escape under a new heading, canonical URL, or JSON-LD block.
+  const stateMatchesRequest = stateKey === requestKey;
+  const hasInput = parses.length > 0;
+
+  return {
+    result: stateMatchesRequest ? result : null,
+    loading: stateMatchesRequest ? loading : hasInput,
+    progress: stateMatchesRequest ? progress : 0,
+    error: stateMatchesRequest ? error : null,
+    tooFewParses,
+    recluster,
+  };
 }

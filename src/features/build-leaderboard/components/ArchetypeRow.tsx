@@ -4,7 +4,7 @@ import { alpha } from '@mui/material/styles';
 import React from 'react';
 
 import { ClassIcon } from '../../../components/ClassIcon';
-import { DPS_DATA_COLOR, getLeaderboardClassTheme } from '../theme/leaderboardTheme';
+import { getDpsDataTextColor, getLeaderboardClassTheme } from '../theme/leaderboardTheme';
 import type { BuildCluster } from '../types/clustering.types';
 import type { DpsParse } from '../types/dpsParses.types';
 
@@ -100,7 +100,7 @@ export const ArchetypeRow: React.FC<ArchetypeRowProps> = ({
         aria-current={selected ? 'true' : undefined}
         aria-label={
           bestParse
-            ? `${label}, best ${headlineDps} DPS on ${anchor}, ${coverageLabel ? `top-25 on ${coveredBosses} of ${availableBosses} bosses, ` : ''}${parseCount} sampled${recommended ? ', recommended' : ''}`
+            ? `${label}, sampled high ${headlineDps} DPS on ${anchor}, ${coverageLabel ? `sampled top-25 on ${coveredBosses} of ${availableBosses} bosses, ` : ''}${parseCount}${recommended ? ', recommended' : ''}`
             : `${label}, typical damage ${headlineDps}, ${parseCount}${recommended ? ', recommended' : ''}`
         }
         onClick={onSelect}
@@ -265,12 +265,12 @@ export const ArchetypeRow: React.FC<ArchetypeRowProps> = ({
         >
           <Typography
             className="u-tabular"
-            sx={{
+            sx={(theme) => ({
               textAlign: 'right',
-              color: DPS_DATA_COLOR,
+              color: getDpsDataTextColor(theme.palette.mode),
               fontSize: '0.9rem',
               fontWeight: 700,
-            }}
+            })}
           >
             {headlineDps}
           </Typography>

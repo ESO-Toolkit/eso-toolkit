@@ -202,7 +202,7 @@ export const BuildLeaderboardPage: React.FC = () => {
 
   const documentTitle =
     activeClassRoute && bossRoute
-      ? `Best ${activeClassRoute.label} Builds on ${bossRoute.name} | ESO Toolkit`
+      ? `Observed ${activeClassRoute.label} Builds on ${bossRoute.name} | ESO Toolkit`
       : (getRouteMeta(canonicalPath)?.title ?? 'Build Leaderboard | ESO Toolkit');
 
   // Must match the prerendered <title> byte for byte on the 21 slugged routes,
@@ -213,33 +213,34 @@ export const BuildLeaderboardPage: React.FC = () => {
 
   const headingText =
     activeClassRoute && bossRoute
-      ? `Best ${activeClassRoute.label} builds on ${bossRoute.name}`
+      ? `Observed ${activeClassRoute.label} builds on ${bossRoute.name}`
       : activeClassRoute
-        ? `Best ${activeClassRoute.label} builds in ESO`
+        ? `Observed ${activeClassRoute.label} builds in ESO`
         : bossRoute
-          ? `${bossRoute.name} DPS parses`
+          ? `Observed ${bossRoute.name} DPS builds`
           : 'Build Leaderboard';
 
   const headingSubtitle =
     activeClassRoute && bossRoute
-      ? `Top ${activeClassRoute.label} parses recorded on ${bossRoute.name} in ${bossRoute.zone}.`
+      ? `Build patterns observed in sampled top-ranked ${activeClassRoute.label} parses on ${bossRoute.name} in ${bossRoute.zone}.`
       : activeClassRoute
-        ? `Top ${activeClassRoute.label} parses from across every recorded trial boss, grouped into build archetypes.`
+        ? `Build patterns observed in sampled top-ranked ${activeClassRoute.label} parses across recorded trial bosses.`
         : bossRoute
-          ? `The highest recorded parses on ${bossRoute.name} in ${bossRoute.zone}, grouped into build archetypes.`
+          ? `Build patterns observed in sampled top-ranked parses on ${bossRoute.name} in ${bossRoute.zone}.`
           : null;
 
   useEffect(() => {
     let cancelled = false;
+    const controller = new AbortController();
     setEncountersError(null);
     setEncountersLoading(true);
     dpsParsesApi
-      .listEncounters()
+      .listEncounters(controller.signal)
       .then((response) => {
         if (!cancelled) setEncounters(response.encounters);
       })
       .catch((err: unknown) => {
-        if (!cancelled) {
+        if (!cancelled && !controller.signal.aborted) {
           setEncountersError(err instanceof Error ? err.message : 'Failed to load encounters');
         }
       })
@@ -249,6 +250,7 @@ export const BuildLeaderboardPage: React.FC = () => {
 
     return () => {
       cancelled = true;
+      controller.abort();
     };
   }, [encountersToken]);
 
@@ -359,11 +361,11 @@ export const BuildLeaderboardPage: React.FC = () => {
         '@type': 'ListItem',
         position: index + 1,
         name: cluster.label,
-        description: `Run by ${Math.round(cluster.share * 100)}% of recorded parses. ${
-          isPooledClass ? 'Best' : 'Median'
-        } parse ${Math.round(amountOf(cluster)).toLocaleString('en-US')} DPS across ${
-          cluster.size
-        } ${cluster.size === 1 ? 'build' : 'builds'}.`,
+        description: `Observed in ${cluster.size} sampled top-ranked ${
+          cluster.size === 1 ? 'parse' : 'parses'
+        } (${Math.round(cluster.share * 100)}% of the clustered sample). ${
+          isPooledClass ? 'Highest sampled' : 'Median sampled'
+        } parse ${Math.round(amountOf(cluster)).toLocaleString('en-US')} DPS.`,
       }))
       .filter((item) => item.position <= 25);
 
@@ -828,7 +830,7 @@ export const BuildLeaderboardPage: React.FC = () => {
                 <Box component="span" sx={{ color: 'text.primary', fontWeight: 700 }}>
                   {result.totalParses}
                 </Box>{' '}
-                top parses ·{' '}
+                sampled top-ranked parses ·{' '}
                 <Box component="span" sx={{ color: 'text.primary', fontWeight: 700 }}>
                   {result.k}
                 </Box>{' '}
@@ -875,6 +877,11 @@ export const BuildLeaderboardPage: React.FC = () => {
                 <Box component="span" sx={{ color: 'text.primary', fontWeight: 650 }}>
                   Scope.
                 </Box>{' '}
+                {`The rankings feed returns up to 25 rows ${
+                  isPooledClass ? 'per encounter' : 'for this encounter'
+                }; this board received ${parses.length} sampled ${
+                  parses.length === 1 ? 'parse' : 'parses'
+                }. Percentages describe this returned sample, not all ESO players or logs. `}
                 {tooFewParses
                   ? `${result.uniqueSignatures} distinct builds, each listed on its own.`
                   : `${result.uniqueSignatures} distinct builds were grouped into ${result.k} ${
@@ -921,7 +928,7 @@ export const BuildLeaderboardPage: React.FC = () => {
               onSaveBuild={saveToMyBuilds}
               onViewSourceLog={handleViewSourceLog}
               pendingAction={pendingAction}
-              emptyMessage="No top parses recorded for this boss yet. Try another encounter."
+              emptyMessage="No sampled top-ranked parses are available for this boss yet. Try another encounter."
               hideSummary
             />
           </PanelErrorBoundary>

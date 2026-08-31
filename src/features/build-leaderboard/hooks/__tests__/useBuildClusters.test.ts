@@ -414,6 +414,35 @@ describe('useBuildClusters', () => {
     });
     expect(result.current.loading).toBe(false);
   });
+
+  it('hides clusters synchronously when the parse content changes', async () => {
+    const parses = makeThreeArchetypeFixture();
+    mockedRun.mockResolvedValueOnce({ ...EMPTY_RESULT, k: 3 });
+
+    const { result, rerender } = renderHook(
+      ({ input }: { input: DpsParse[] }) => useBuildClusters(input),
+      { initialProps: { input: parses } },
+    );
+    await waitFor(() => expect(result.current.result?.k).toBe(3));
+
+    const pending = deferRun();
+    const changed = parses.map((parse, index) =>
+      index === 0 ? { ...parse, amount: parse.amount + 1, signature_hash: 'next-dataset' } : parse,
+    );
+    rerender({ input: changed });
+
+    // Effects have not completed yet, but the old clusters must already be
+    // inaccessible under the new route/query metadata.
+    expect(result.current.result).toBeNull();
+    expect(result.current.loading).toBe(true);
+    expect(result.current.error).toBeNull();
+
+    await act(async () => {
+      pending.resolve({ ...EMPTY_RESULT, k: 4 });
+    });
+    await waitFor(() => expect(result.current.result?.k).toBe(4));
+  });
+
   /**
    * Reloading the parses is not a retry for a clustering failure. The effect is
    * keyed on `cacheKey`, derived from the parse contents, so a refetch that
@@ -445,5 +474,22 @@ describe('useBuildClusters', () => {
 
     await waitFor(() => expect(result.current.result?.k).toBe(4));
     expect(result.current.error).toBeNull();
+  });
+
+  it('bypasses a successful cached result when reclustering on demand', async () => {
+    const parses = makeThreeArchetypeFixture();
+    mockedRun
+      .mockResolvedValueOnce({ ...EMPTY_RESULT, k: 3 })
+      .mockResolvedValueOnce({ ...EMPTY_RESULT, k: 4 });
+
+    const { result } = renderHook(() => useBuildClusters(parses));
+    await waitFor(() => expect(result.current.result?.k).toBe(3));
+
+    await act(async () => {
+      result.current.recluster();
+    });
+
+    await waitFor(() => expect(result.current.result?.k).toBe(4));
+    expect(mockedRun).toHaveBeenCalledTimes(2);
   });
 });

@@ -104,7 +104,7 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
   onSaveBuild,
   onViewSourceLog,
   pendingAction,
-  emptyMessage = 'No top parses recorded here yet.',
+  emptyMessage = 'No sampled top-ranked parses are available here yet.',
   hideSummary = false,
 }) => {
   const [selectedId, setSelectedId] = useState<string | null>(
@@ -241,7 +241,9 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
     if (!mobile) return;
     window.requestAnimationFrame?.(() => {
       const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
-      inspectorRef.current?.scrollIntoView({
+      const inspector = inspectorRef.current;
+      inspector?.focus({ preventScroll: true });
+      inspector?.scrollIntoView({
         behavior: reduceMotion ? 'auto' : 'smooth',
         block: 'start',
       });
@@ -271,7 +273,7 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
               "Only 2 parses are recorded" reads like the boss is empty. */}
           {`Only ${parses.length} ${esoClass ? `${esoClass} ` : ''}${
             parses.length === 1 ? 'parse' : 'parses'
-          } ${scopeDescription ?? 'in this selection'} — too few to group into reliable build patterns (10+ needed), so each build is listed on its own below.`}
+          } ${scopeDescription ?? 'in this selection'} — too few to group into observed build patterns (10+ needed), so each build is listed on its own below.`}
         </Alert>
       )}
 
@@ -300,18 +302,18 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
               letterSpacing: '-0.01em',
             }}
           >
-            One build. Nearly everyone runs it.
+            One observed pattern dominates this sample.
           </Typography>
           <Typography
             sx={{ mt: 0.4, color: 'text.secondary', fontSize: '0.74rem', lineHeight: 1.5 }}
           >
-            {`${solved.sharePercent}% of the ${solved.clusteredParses} top parses ${
+            {`${solved.sharePercent}% of the ${solved.clusteredParses} sampled top-ranked parses ${
               scopeDescription ?? 'in this selection'
-            } converge on a single build. Where other boards split into competing archetypes, this one has settled on one answer.`}
+            } share one observed build pattern.`}
             {solved.outlierParses > 0 &&
               ` The other ${solved.outlierParses} ${
-                solved.outlierParses === 1 ? 'parse runs' : 'parses run'
-              } something meaningfully different and ${
+                solved.outlierParses === 1 ? 'sampled parse shows' : 'sampled parses show'
+              } a meaningfully different pattern and ${
                 solved.outlierParses === 1 ? 'is' : 'are'
               } listed below.`}
           </Typography>
@@ -329,10 +331,10 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
               >
                 {result.totalParses}
               </Box>{' '}
-              top-ranked parses ·{' '}
+              {` sampled top-ranked ${result.totalParses === 1 ? 'parse' : 'parses'} · `}
               {solved
-                ? `one build, ${solved.sharePercent}% of parses`
-                : `${result.k} build patterns`}
+                ? `one observed pattern, ${solved.sharePercent}% of clustered sample`
+                : `${result.k} build ${result.k === 1 ? 'pattern' : 'patterns'}`}
             </Typography>
             <IconButton
               size="small"
@@ -358,20 +360,22 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
                 <Box component="span" sx={{ color: 'text.primary', fontWeight: 650 }}>
                   Scope.
                 </Box>{' '}
+                The rankings feed returns up to 25 rows per encounter. This view clusters the rows
+                currently returned for this selection, not the full ESO player population.{' '}
                 {solved
-                  ? `${result.uniqueSignatures} distinct builds were recorded, and ${solved.sharePercent}% of parses run the same one.`
-                  : `${result.uniqueSignatures} distinct builds were grouped into ${result.k} patterns.`}
+                  ? `${result.uniqueSignatures} distinct builds were observed in the returned sample, and ${solved.sharePercent}% of clustered rows share the same pattern.`
+                  : `${result.uniqueSignatures} distinct builds observed in the returned sample were grouped into ${result.k} patterns.`}
               </Typography>
               <Typography sx={{ color: 'text.secondary', fontSize: '0.72rem', lineHeight: 1.5 }}>
                 <Box component="span" sx={{ color: 'text.primary', fontWeight: 650 }}>
-                  Confidence: {solved ? 'Converged' : quality.label}.
+                  Confidence: {solved ? 'Dominant sample' : quality.label}.
                 </Box>{' '}
                 {/* The silhouette buckets describe SEPARATION, so on a solved
                     board they report "Limited ... many similar variations",
                     which reads as a failure to distinguish archetypes rather
                     than as the finding that there is only one. */}
                 {solved
-                  ? 'Nearly every top parse runs the same build, so this board reports the consensus instead of splitting it into archetypes.'
+                  ? 'Most sampled top-ranked parses share one observed build pattern, so this board reports that dominant pattern without splitting similar variations into separate archetypes.'
                   : quality.tooltip}
               </Typography>
               <Typography sx={{ color: 'text.secondary', fontSize: '0.72rem', lineHeight: 1.5 }}>
@@ -427,8 +431,11 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
             aria-labelledby="build-patterns-heading"
             sx={(theme) => ({
               minWidth: 0,
-              order: { xs: 2, md: 1 },
-              borderTop: { xs: `1px solid ${alpha(theme.palette.divider, 0.78)}`, md: 'none' },
+              order: { xs: 1, md: 1 },
+              borderBottom: {
+                xs: `1px solid ${alpha(theme.palette.divider, 0.78)}`,
+                md: 'none',
+              },
               borderRight: { xs: 'none', md: `1px solid ${alpha(theme.palette.divider, 0.62)}` },
               backgroundColor: alpha(
                 theme.palette.background.default,
@@ -459,7 +466,11 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
                     letterSpacing: '-0.01em',
                   }}
                 >
-                  {tooFewParses ? 'Recorded builds' : solved ? 'Consensus build' : 'Build patterns'}
+                  {tooFewParses
+                    ? 'Observed builds'
+                    : solved
+                      ? 'Observed build pattern'
+                      : 'Build patterns'}
                 </Typography>
                 {scopeLabel && (
                   <Typography noWrap sx={{ color: 'text.secondary', fontSize: '0.65rem' }}>
@@ -491,7 +502,7 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
                   textTransform: 'uppercase',
                 }}
               >
-                {pooled ? 'Best log' : 'Typical'}
+                {pooled ? 'Sampled high' : 'Typical'}
               </Typography>
             </Box>
             <Box component="ol" sx={{ m: 0, p: 0, listStyle: 'none' }}>
@@ -515,15 +526,23 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
 
           <Box
             ref={inspectorRef}
+            role="region"
+            tabIndex={-1}
+            aria-labelledby={`build-inspector-${selected.id}`}
+            data-testid="build-inspector-focus-target"
             sx={(theme) => ({
               display: 'flex',
               minWidth: 0,
-              order: { xs: 1, md: 2 },
+              order: { xs: 2, md: 2 },
               scrollMarginTop: 72,
               background:
                 theme.palette.mode === 'dark'
                   ? `radial-gradient(circle at 92% 2%, ${alpha(selectedClassTheme.accent, 0.13)}, transparent 34%), linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.62)}, ${alpha(theme.palette.background.default, 0.2)})`
                   : `radial-gradient(circle at 92% 2%, ${alpha(selectedClassTheme.accent, 0.09)}, transparent 36%), linear-gradient(135deg, ${alpha(theme.palette.common.white, 0.54)}, transparent)`,
+              '&:focus-visible': {
+                outline: `2px solid ${theme.palette.primary.main}`,
+                outlineOffset: -2,
+              },
             })}
             data-class-accent={selectedClassTheme.accent}
           >

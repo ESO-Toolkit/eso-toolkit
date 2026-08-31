@@ -83,8 +83,8 @@ const SkillTile: React.FC<{
         aria-label={`${name}${ultimate ? ', ultimate' : ''}`}
         sx={(theme) => ({
           position: 'relative',
-          width: { xs: ultimate ? 44 : 38, sm: ultimate ? 48 : 44 },
-          height: { xs: ultimate ? 44 : 38, sm: ultimate ? 48 : 44 },
+          width: { xs: 44, sm: ultimate ? 48 : 44 },
+          height: { xs: 44, sm: ultimate ? 48 : 44 },
           overflow: 'hidden',
           flex: '0 0 auto',
           border: `${ultimate ? 2 : 1}px solid ${alpha(ultimate ? '#ffb300' : accent, 0.52)}`,
@@ -136,17 +136,22 @@ const SkillBar: React.FC<{
     >
       {label}
     </Typography>
-    <Box sx={{ display: 'flex', minHeight: 48, alignItems: 'center', gap: 0.65 }}>
+    <Box
+      sx={{
+        display: 'grid',
+        minHeight: 48,
+        gridTemplateColumns: { xs: 'repeat(6, 44px)', sm: 'repeat(5, 44px) 48px' },
+        alignItems: 'center',
+        justifyContent: 'space-between',
+      }}
+    >
       {talents.map((talent, index) => (
-        <React.Fragment key={`${talent.slot}-${talent.abilityId}`}>
-          {index === 5 && (
-            <Box
-              aria-hidden="true"
-              sx={{ width: '1px', height: 30, mx: 0.15, backgroundColor: alpha('#ffb300', 0.28) }}
-            />
-          )}
-          <SkillTile talent={talent} ultimate={index === 5} accent={accent} />
-        </React.Fragment>
+        <SkillTile
+          key={`${talent.slot}-${talent.abilityId}`}
+          talent={talent}
+          ultimate={index === 5}
+          accent={accent}
+        />
       ))}
     </Box>
   </Box>
@@ -217,7 +222,7 @@ export const RepresentativeBuildEvidence: React.FC<RepresentativeBuildEvidencePr
           </Typography>
           <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 0.45 }}>
             <Typography sx={{ color: 'text.secondary', fontSize: '0.68rem' }}>
-              Top parse by {build.playerName || 'anonymous player'}
+              Representative sampled parse by {build.playerName || 'anonymous player'}
               {representativeDps ? ` · ${compactDps(representativeDps)} DPS` : ''}
             </Typography>
             {sourceUrl && (
@@ -225,10 +230,10 @@ export const RepresentativeBuildEvidence: React.FC<RepresentativeBuildEvidencePr
                 component="a"
                 href={sourceUrl}
                 target="_blank"
-                rel="noreferrer"
+                rel="noopener noreferrer"
                 sx={{ color: classTheme.accent, fontSize: '0.68rem', fontWeight: 650 }}
               >
-                View log ↗
+                View log (opens new tab) ↗
               </Typography>
             )}
           </Box>
@@ -240,7 +245,7 @@ export const RepresentativeBuildEvidence: React.FC<RepresentativeBuildEvidencePr
           display: 'grid',
           gridTemplateColumns: { xs: '1fr', md: 'minmax(280px, 1fr) auto' },
           gap: { xs: 2, md: 2.5 },
-          p: { xs: 1.35, sm: 1.75 },
+          p: { xs: 1, sm: 1.75 },
         }}
       >
         <Box sx={{ minWidth: 0 }}>

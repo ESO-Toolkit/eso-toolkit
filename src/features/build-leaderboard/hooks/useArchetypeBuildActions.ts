@@ -1,5 +1,5 @@
 /**
- * "Open in Build Editor" / "Save to My Builds" for an archetype.
+ * "Save copy & open editor" / "Save to My Builds" for an archetype.
  *
  * Both go through the same path — convert the cluster's medoid parse into a
  * `Build`, save it, then optionally navigate. The editor loads builds by
@@ -17,34 +17,28 @@ import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 
 import { saveBuild } from '../../../store/saved_builds/savedBuildsSlice';
-import type { GearTrait, GearType, PlayerGear, PlayerTalent } from '../../../types/playerDetails';
-import { ItemQuality } from '../../../utils/gearUtilities';
-import { playerToBuild } from '../../../utils/playerToBuild';
+import type { GearTrait, GearType, PlayerTalent } from '../../../types/playerDetails';
+import { playerToBuild, type PlayerBuildExtractionGear } from '../../../utils/playerToBuild';
 import type { Build } from '../../build-editor/types/build.types';
 import { dpsParsesApi } from '../api/dpsParsesApi';
 import type { BuildCluster } from '../types/clustering.types';
 import type { DpsParseBuildResponse } from '../types/dpsParses.types';
 
 /**
- * `characterRankings` reports enchant quality but not item quality; every top
- * parse is gold in practice, and this only affects display.
- */
-const ASSUMED_ITEM_QUALITY = ItemQuality.LEGENDARY;
-
-/**
  * Map the stored combatant payload onto the shape `playerToBuild` consumes.
  *
- * Two fields are absent upstream and defaulted here:
+ * Two fields are absent upstream:
  *  - `type` (GearType): not returned. convertGear is called with
  *    `resolveWeaponType`, so it infers weapon types from the item itself.
  *  - `quality`: the API's `quality` field is a bar designation
  *    ("primary"/"backup"), NOT an item tier — deliberately not forwarded.
  */
-function toExtractionData(response: DpsParseBuildResponse): Parameters<typeof playerToBuild>[0] {
-  const gear: PlayerGear[] = response.combatant.gear.map((piece) => ({
+export function toBuildExtractionData(
+  response: DpsParseBuildResponse,
+): Parameters<typeof playerToBuild>[0] {
+  const gear: PlayerBuildExtractionGear[] = response.combatant.gear.map((piece) => ({
     id: piece.itemId,
     slot: piece.slot,
-    quality: ASSUMED_ITEM_QUALITY,
     icon: piece.icon ?? '',
     name: piece.name,
     championPoints: piece.cp ?? 160,
@@ -86,7 +80,7 @@ export interface UseArchetypeBuildActionsResult {
    * The action currently in flight, if any.
    *
    * Carries the kind as well as the id: a single boolean made "Save to My
-   * Builds" render the primary button as "Opening…", and left Save clickable
+   * Builds" render the primary button as the opening action, and left Save clickable
    * during its own request so a double click saved the build twice.
    */
   pendingAction: PendingArchetypeAction | null;
@@ -104,9 +98,11 @@ export function useArchetypeBuildActions(): UseArchetypeBuildActionsResult {
     // Resolves or throws — never null, so callers need no dead null branch.
     async (cluster: BuildCluster): Promise<{ build: Build; savedId: string }> => {
       const response = await dpsParsesApi.getBuild(cluster.medoidParseId);
-      const build = playerToBuild(toExtractionData(response));
+      const build = playerToBuild(toBuildExtractionData(response));
       build.name = cluster.label;
-      build.shortDescription = `Top-parse archetype — ${cluster.size} of the fastest logs run this.`;
+      build.shortDescription = `Observed sampled archetype — ${cluster.size} sampled top-ranked ${
+        cluster.size === 1 ? 'parse shares' : 'parses share'
+      } this pattern.`;
 
       // saveBuild generates the id in its `prepare`, so build the action first and
       // read the id off it, then dispatch. Reading it off the dispatch RESULT

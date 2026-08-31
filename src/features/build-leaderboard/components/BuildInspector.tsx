@@ -28,7 +28,7 @@ import { abilityIconUrl } from '../../../utils/abilityIconCorrections';
 import { canonicalSetName } from '../clustering/canonicalization';
 import { CORE_SHARE_THRESHOLD, FLEX_SHARE_THRESHOLD } from '../clustering/clusterSummary';
 import { useRepresentativeBuild } from '../hooks/useRepresentativeBuild';
-import { DPS_DATA_COLOR, getLeaderboardClassTheme } from '../theme/leaderboardTheme';
+import { getDpsDataTextColor, getLeaderboardClassTheme } from '../theme/leaderboardTheme';
 import type { BuildCluster, ClusterTrait } from '../types/clustering.types';
 
 import { BuildSignatureStrip } from './BuildSignatureStrip';
@@ -224,7 +224,7 @@ export const BuildInspector: React.FC<BuildInspectorProps> = ({
               {recommended
                 ? 'Recommended starting point'
                 : ungrouped
-                  ? 'Recorded build'
+                  ? 'Observed build'
                   : 'Selected build'}
             </Typography>
             <Typography
@@ -257,15 +257,15 @@ export const BuildInspector: React.FC<BuildInspectorProps> = ({
             >
               {pooled
                 ? recommended
-                  ? 'A common pattern in this sampled top-log pool.'
-                  : 'A recurring pattern in this sampled top-log pool.'
+                  ? 'A common pattern in this sampled top-ranked parse pool.'
+                  : 'A recurring pattern in this sampled top-ranked parse pool.'
                 : recommended
-                  ? 'Best balance of typical damage and a sample large enough to trust.'
+                  ? 'Selected for its balance of typical damage and representation in this sample.'
                   : ungrouped
                     ? cluster.size > 1
-                      ? `Run by ${cluster.size} of the top-ranked parses recorded here.`
-                      : 'One top-ranked parse. Too few here to call it a pattern yet.'
-                    : 'A viable pattern found in top-ranked parses for this selection.'}
+                      ? `Observed in ${cluster.size} sampled top-ranked parses here.`
+                      : 'Observed in one sampled top-ranked parse. Too few here to call it a pattern yet.'
+                    : 'A recurring pattern observed in sampled top-ranked parses for this selection.'}
             </Typography>
           </Box>
         </Box>
@@ -295,13 +295,13 @@ export const BuildInspector: React.FC<BuildInspectorProps> = ({
             </Typography>
             <Typography
               className="u-tabular"
-              sx={{
+              sx={(theme) => ({
                 mt: 0.05,
-                color: DPS_DATA_COLOR,
+                color: getDpsDataTextColor(theme.palette.mode),
                 fontSize: { xs: '1.8rem', sm: '2.45rem' },
                 fontWeight: 700,
                 letterSpacing: '-0.035em',
-              }}
+              })}
             >
               {compactDps(pooled ? (representativeDps ?? cluster.dps.median) : cluster.dps.median)}
               <Box
@@ -353,7 +353,7 @@ export const BuildInspector: React.FC<BuildInspectorProps> = ({
                 textTransform: 'uppercase',
               }}
             >
-              {showBossCoverage ? 'Top-25 boss coverage' : 'Seen in top parses'}
+              {showBossCoverage ? 'Sampled boss coverage' : 'Observed in sample'}
             </Typography>
             <Typography
               className="u-tabular"
@@ -380,17 +380,15 @@ export const BuildInspector: React.FC<BuildInspectorProps> = ({
             {showBossCoverage ? (
               <StatHint
                 data-testid="boss-coverage-hint"
-                ariaLabel="Explain top-25 boss coverage"
-                text={`${cluster.size} sampled top parses`}
-                explanation={`This build had a retained top-25 class parse on ${coveredBosses} of the ${availableBosses} bosses with data. This shows where the build appeared, not expected DPS.`}
+                ariaLabel="Explain sampled boss coverage"
+                text={`${cluster.size} sampled top-ranked parses`}
+                explanation={`This build had a retained sampled class parse on ${coveredBosses} of the ${availableBosses} bosses with data. This shows where the build appeared, not expected DPS.`}
               />
             ) : (
               <StatHint
                 data-testid="share-hint"
                 text={`${Math.round(cluster.share * 100)}% of this selection`}
-                explanation={`${cluster.size} of the ${totalParses} top-ranked parses in this selection ${
-                  cluster.size === 1 ? 'runs' : 'run'
-                } this build. These are the highest-ranked logs we sample per boss, so it is a share of top parses — not of all players.`}
+                explanation={`${cluster.size} of the ${totalParses} sampled top-ranked parses in this selection share this observed pattern. The feed samples high-ranked logs per boss, so this is a share of the sample — not of all players.`}
               />
             )}
           </Box>
@@ -423,7 +421,7 @@ export const BuildInspector: React.FC<BuildInspectorProps> = ({
             borderTop: `1px solid ${alpha(theme.palette.divider, 0.52)}`,
             '@media (max-width: 350px)': {
               display: 'grid',
-              gridTemplateColumns: 'minmax(0, 1fr) 40px',
+              gridTemplateColumns: 'minmax(0, 1fr) 44px',
               '& > button:first-of-type': {
                 gridColumn: '1 / -1',
                 width: '100%',
@@ -439,11 +437,15 @@ export const BuildInspector: React.FC<BuildInspectorProps> = ({
           {onOpenInEditor && (
             <ButtonBase
               disabled={actionsDisabled}
-              aria-label={pendingKind === 'open' ? 'Opening build editor' : 'Open in Build Editor'}
+              aria-label={
+                pendingKind === 'open'
+                  ? 'Saving build copy and opening editor'
+                  : 'Save a copy and open in Build Editor'
+              }
               onClick={() => onOpenInEditor(cluster)}
               sx={(theme) => ({
                 display: 'inline-flex',
-                minHeight: 40,
+                minHeight: 44,
                 alignItems: 'center',
                 gap: 0.75,
                 px: 1.45,
@@ -466,7 +468,7 @@ export const BuildInspector: React.FC<BuildInspectorProps> = ({
                 '@media (prefers-reduced-motion: reduce)': { transition: 'none' },
               })}
             >
-              {pendingKind === 'open' ? 'Opening…' : 'Open in editor'}
+              {pendingKind === 'open' ? 'Saving & opening…' : 'Save copy & open editor'}
               <ArrowOutwardRounded sx={{ fontSize: 17 }} />
             </ButtonBase>
           )}
@@ -477,7 +479,7 @@ export const BuildInspector: React.FC<BuildInspectorProps> = ({
             onClick={onToggleEvidence}
             sx={(theme) => ({
               display: 'inline-flex',
-              minHeight: 40,
+              minHeight: 44,
               alignItems: 'center',
               gap: 0.55,
               px: 1.15,
@@ -513,8 +515,8 @@ export const BuildInspector: React.FC<BuildInspectorProps> = ({
                   aria-expanded={Boolean(menuAnchor)}
                   onClick={(event) => setMenuAnchor(event.currentTarget)}
                   sx={(theme) => ({
-                    width: 40,
-                    height: 40,
+                    width: 44,
+                    height: 44,
                     borderRadius: 1.5,
                     color: 'text.secondary',
                     '&:hover': {
@@ -604,7 +606,7 @@ export const BuildInspector: React.FC<BuildInspectorProps> = ({
             >
               {compactEvidence
                 ? `${compactDps(pooled ? (representativeDps ?? cluster.dps.median) : cluster.dps.median)} DPS · ${cluster.size} parses`
-                : `${label} · ${compactDps(pooled ? (representativeDps ?? cluster.dps.median) : cluster.dps.median)} DPS · ${cluster.size} of ${totalParses} top parses`}
+                : `${label} · ${compactDps(pooled ? (representativeDps ?? cluster.dps.median) : cluster.dps.median)} DPS · ${cluster.size} of ${totalParses} sampled top-ranked parses`}
             </Typography>
           </Box>
           <IconButton
@@ -624,7 +626,7 @@ export const BuildInspector: React.FC<BuildInspectorProps> = ({
           </IconButton>
         </Box>
 
-        <DialogContent sx={{ px: { xs: 2, sm: 3 }, py: { xs: 2, sm: 2.5 } }}>
+        <DialogContent sx={{ px: { xs: 1, sm: 3 }, py: { xs: 2, sm: 2.5 } }}>
           {representativeBuild.loading && (
             <Box
               aria-label="Loading representative build"
@@ -783,7 +785,7 @@ export const BuildInspector: React.FC<BuildInspectorProps> = ({
                   ? '0 18px 42px rgba(0,0,0,0.42)'
                   : '0 16px 36px rgba(15,23,42,0.14)',
               '& .MuiMenuItem-root': {
-                minHeight: 40,
+                minHeight: 44,
                 borderRadius: 1.25,
                 fontSize: '0.78rem',
               },
@@ -812,13 +814,13 @@ export const BuildInspector: React.FC<BuildInspectorProps> = ({
             }}
           >
             <InsertChartOutlined fontSize="small" sx={{ mr: 1.25 }} />
-            Open representative parse
+            Open representative parse (new tab)
           </MenuItem>
         )}
         {sourceUrl && (
           <MenuItem component="a" href={sourceUrl} target="_blank" rel="noopener noreferrer">
             <LaunchOutlined fontSize="small" sx={{ mr: 1.25 }} />
-            View on ESO Logs
+            View on ESO Logs (new tab)
           </MenuItem>
         )}
       </Menu>

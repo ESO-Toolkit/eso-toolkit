@@ -113,6 +113,20 @@ beforeEach(() => {
 });
 
 describe('BuildLeaderboardPage', () => {
+  it('aborts the encounter request when the page unmounts', async () => {
+    let requestSignal: AbortSignal | undefined;
+    jest.spyOn(dpsParsesApi, 'listEncounters').mockImplementation((signal) => {
+      requestSignal = signal;
+      return new Promise(() => undefined);
+    });
+
+    const { unmount } = renderPage();
+    await waitFor(() => expect(requestSignal).toBeDefined());
+
+    unmount();
+    expect(requestSignal?.aborted).toBe(true);
+  });
+
   it('sets the document title', async () => {
     renderPage();
     await waitFor(() => expect(document.title).toMatch(/build leaderboard/i));
@@ -258,7 +272,7 @@ describe('BuildLeaderboardPage', () => {
   /**
    * Until the picker feed resolves there is no encounter to query, so
    * useDpsParses sits idle and the view would read that as "empty" — flashing
-   * "No top parses recorded…" before any data could possibly have arrived.
+   * "No sampled top-ranked parses are available…" before any data could possibly have arrived.
    */
   it('does not flash the empty state while the encounters feed is loading', async () => {
     let release: ((v: { encounters: typeof ENCOUNTERS }) => void) | undefined;
@@ -271,7 +285,9 @@ describe('BuildLeaderboardPage', () => {
     renderPage();
 
     // In flight: no misleading empty-state copy.
-    expect(screen.queryByText(/no top parses recorded/i)).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/no sampled top-ranked parses are available/i),
+    ).not.toBeInTheDocument();
 
     await act(async () => {
       release?.({ encounters: ENCOUNTERS });
@@ -374,9 +390,9 @@ describe('BuildLeaderboardPage crawlable routes', () => {
     );
     // The title must match the prerendered shell byte for byte, or Google
     // indexes the weaker hydrated one.
-    expect(document.title).toBe('Best Warden Builds in ESO | ESO Toolkit');
+    expect(document.title).toBe('Observed Warden Builds in ESO | ESO Toolkit');
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
-      'Best Warden builds in ESO',
+      'Observed Warden builds in ESO',
     );
   });
 
@@ -390,7 +406,7 @@ describe('BuildLeaderboardPage crawlable routes', () => {
         expect.anything(),
       ),
     );
-    expect(document.title).toBe('Xalvakka DPS Parses and Builds | ESO Toolkit');
+    expect(document.title).toBe('Observed Xalvakka DPS Builds | ESO Toolkit');
   });
 
   /**
@@ -402,9 +418,7 @@ describe('BuildLeaderboardPage crawlable routes', () => {
     renderPage('/build-leaderboard/boss/xalvakka');
 
     await waitFor(() => expect(dpsParsesApi.listEncounters).toHaveBeenCalled());
-    await waitFor(() =>
-      expect(document.title).toBe('Xalvakka DPS Parses and Builds | ESO Toolkit'),
-    );
+    await waitFor(() => expect(document.title).toBe('Observed Xalvakka DPS Builds | ESO Toolkit'));
     expect(dpsParsesApi.listParses).not.toHaveBeenCalled();
   });
 
@@ -458,7 +472,7 @@ describe('BuildLeaderboardPage crawlable routes', () => {
         'https://esotk.com/build-leaderboard/class/arcanist/',
       ),
     );
-    expect(document.title).toBe('Best Arcanist Builds on Xalvakka | ESO Toolkit');
+    expect(document.title).toBe('Observed Arcanist Builds on Xalvakka | ESO Toolkit');
   });
 
   it('sets a self-referencing canonical on a board that is in the sitemap', async () => {
@@ -512,7 +526,27 @@ describe('BuildLeaderboardPage crawlable routes', () => {
     expect(payload.itemListElement[0].position).toBe(1);
     // Normalized pooled amounts would render here as "1 DPS"; an encounter
     // board must quote real absolute numbers.
-    expect(payload.itemListElement[0].description).toMatch(/Median parse [\d,]+ DPS/);
+    expect(payload.itemListElement[0].description).toMatch(/Median sampled parse [\d,]+ DPS/);
+  });
+
+  it('discloses the returned sample size and avoids population-level claims', async () => {
+    resetFixtureIds();
+    const parses = makeThreeArchetypeFixture();
+    jest
+      .spyOn(dpsParsesApi, 'listParses')
+      .mockResolvedValue({ parses, total: parses.length, limit: 100, offset: 0 });
+
+    renderPage('/build-leaderboard/class/necromancer');
+    await waitFor(() => expect(screen.getByTestId('start-here-card')).toBeInTheDocument());
+
+    await userEvent.click(screen.getByRole('button', { name: /how this leaderboard works/i }));
+
+    expect(
+      screen.getByText(/rankings feed returns up to 25 rows per encounter/i),
+    ).toHaveTextContent(new RegExp(`this board received ${parses.length} sampled parses`, 'i'));
+    expect(screen.getByText(/percentages describe this returned sample/i)).toHaveTextContent(
+      /not all ESO players or logs/i,
+    );
   });
 });
 
@@ -605,12 +639,12 @@ describe('BuildLeaderboardPage review regressions', () => {
     renderPage('/build-leaderboard?tab=class&class=Necromancer&boss=60:122');
 
     await waitFor(() => expect(dpsParsesApi.listParses).toHaveBeenCalled());
-    expect(document.title).toBe('Best Necromancer Builds in ESO | ESO Toolkit');
+    expect(document.title).toBe('Observed Necromancer Builds in ESO | ESO Toolkit');
     expect(document.head.querySelector('link[rel="canonical"]')?.getAttribute('href')).toBe(
       'https://esotk.com/build-leaderboard/class/necromancer/',
     );
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
-      'Best Necromancer builds in ESO',
+      'Observed Necromancer builds in ESO',
     );
   });
 });
