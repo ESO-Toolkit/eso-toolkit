@@ -6,6 +6,7 @@
  */
 
 import {
+  DiscordApiError,
   createChannel,
   deleteChannel,
   deleteMessage,
@@ -31,6 +32,7 @@ import {
   getGuildConfig,
   getDefaultGuildConfig,
   acquirePublishLock,
+  renewPublishLock,
   releasePublishLock,
   KV_PREFIX,
 } from './kv.js';
@@ -198,6 +200,75 @@ export interface PublishResult {
   error?: string | undefined;
 }
 
+const LOCK_LOST_ERROR = 'The publish lease expired. Please retry.';
+const LOCK_HEARTBEAT_MS = 60_000;
+
+interface LeaseHeartbeat {
+  assertHeld(): Promise<boolean>;
+  stop(): Promise<void>;
+}
+
+function startLeaseHeartbeat(
+  env: Env,
+  guildId: string,
+  operationKey: string,
+  token: string,
+): LeaseHeartbeat {
+  let lost = false;
+  let renewal: Promise<void> | undefined;
+  const renew = (): Promise<void> => {
+    if (renewal) return renewal;
+    renewal = renewLock(env, guildId, operationKey, token)
+      .then((held) => {
+        if (!held) lost = true;
+      })
+      .finally(() => {
+        renewal = undefined;
+      });
+    return renewal;
+  };
+  const timer = setInterval(() => void renew(), LOCK_HEARTBEAT_MS);
+  return {
+    async assertHeld() {
+      await renewal;
+      if (lost) return false;
+      await renew();
+      return !lost;
+    },
+    async stop() {
+      clearInterval(timer);
+      await renewal;
+    },
+  };
+}
+
+async function renewLock(
+  env: Env,
+  guildId: string,
+  operationKey: string,
+  token: string,
+): Promise<boolean> {
+  try {
+    return await renewPublishLock(env, guildId, operationKey, token);
+  } catch (error) {
+    console.error('[publish] failed to renew coordinator lease:', error);
+    return false;
+  }
+}
+
+async function releaseLock(
+  env: Env,
+  guildId: string,
+  operationKey: string,
+  token: string,
+): Promise<void> {
+  try {
+    await releasePublishLock(env, guildId, operationKey, token);
+  } catch (error) {
+    console.error('[publish] failed to release coordinator lease:', error);
+  }
+}
+
 // ── Core Publish ────────────────────────────────────────────────────────────
 
 export async function publishRoster(env: Env, req: PublishRequest): Promise<PublishResult> {
@@ -207,14 +278,20 @@ export async function publishRoster(env: Env, req: PublishRequest): Promise<Publ
     return { ok: false, error: 'A publish is already in progress for this roster. Please wait.' };
   }
 
+  const lease = startLeaseHeartbeat(env, req.guildId, req.rosterId, token);
   try {
-    return await doPublishRoster(env, req);
+    return await doPublishRoster(env, req, lease);
   } finally {
-    await releasePublishLock(env, req.guildId, req.rosterId, token);
+    await lease.stop();
+    await releaseLock(env, req.guildId, req.rosterId, token);
   }
 }
 
-async function doPublishRoster(env: Env, req: PublishRequest): Promise<PublishResult> {
+async function doPublishRoster(
+  env: Env,
+  req: PublishRequest,
+  lease: LeaseHeartbeat,
+): Promise<PublishResult> {
   // 1. Fetch roster snapshot
   const result = await fetchRosterSnapshot(env, req.rosterId);
   if (result.status === 'not_found') {
@@ -234,49 +311,59 @@ async function doPublishRoster(env: Env, req: PublishRequest): Promise<PublishRe
     return { ok: false, error: 'Failed to decode roster data.' };
   }
 
-  // 3. Resolve channel name
+  // 3. Resolve the existing mapping before rendering so republishes retain
+  // their original event time when a request omits it.
+  let existing = await getMappingByRosterId(env, req.guildId, req.rosterId);
+  const eventTime = req.eventTime ?? existing?.eventTime;
   const config = (await getGuildConfig(env, req.guildId)) ?? getDefaultGuildConfig(req.guildId);
   const channelName = resolveChannelName(
     config.namePattern,
-    buildNameContext(snapshot, decoded, req.eventTime, config.timezone),
+    buildNameContext(snapshot, decoded, eventTime, config.timezone),
     req.channelNameOverride,
   );
 
-  // 4. Check for existing mapping
-  const existing = await getMappingByRosterId(env, req.guildId, req.rosterId);
   const categoryId =
     req.categoryId ?? config.defaultCategoryId ?? (await detectOpenRunsCategory(env, req.guildId));
 
-  let channelId: string;
-  let messageId: string;
+  if (!(await lease.assertHeld())) {
+    return { ok: false, error: LOCK_LOST_ERROR };
+  }
+
+  if (existing?.cleanupPendingMessageIds?.length) {
+    const cleanup = await finishPendingMessageCleanup(env, existing);
+    if (!cleanup.ok) {
+      return { ok: false, error: cleanup.error };
+    }
+    existing = cleanup.mapping;
+  }
+
+  let mutation: InternalRefreshResult;
 
   if (existing) {
     // Update existing channel + message
-    const refreshed = await refreshExistingMapping(
+    mutation = await refreshExistingMapping(
       env,
       existing,
       snapshot,
       decoded,
       channelName,
       categoryId,
-      req.eventTime,
+      eventTime,
       true,
       config.defaultChannelId,
     );
-    if (!refreshed.ok) return refreshed;
-    channelId = refreshed.channelId!;
-    messageId = refreshed.messageId!;
+    if (!mutation.ok) return mutation;
   } else {
     // Post into the configured default channel, or create a new channel.
     const target = resolvePublishTarget(config);
-    const created =
+    mutation =
       target.mode === 'existing'
         ? await postRosterToDefaultChannel(
             env,
             target.channelId,
             snapshot,
             decoded,
-            req.eventTime,
+            eventTime,
             config.rolePingIds,
           )
         : await createNewRosterChannel(
@@ -286,12 +373,18 @@ async function doPublishRoster(env: Env, req: PublishRequest): Promise<PublishRe
             categoryId,
             snapshot,
             decoded,
-            req.eventTime,
+            eventTime,
             config.rolePingIds,
           );
-    if (!created.ok) return created;
-    channelId = created.channelId!;
-    messageId = created.messageId!;
+    if (!mutation.ok) return mutation;
+  }
+
+  const channelId = mutation.channelId!;
+  const messageId = mutation.messageId!;
+
+  if (!(await lease.assertHeld())) {
+    await cleanupUncommittedDiscordMutation(env, mutation);
+    return { ok: false, error: LOCK_LOST_ERROR };
   }
 
   // 5. Persist mapping
@@ -301,13 +394,32 @@ async function doPublishRoster(env: Env, req: PublishRequest): Promise<PublishRe
     guildId: req.guildId,
     channelId,
     messageId,
+    cleanupPendingMessageIds: mutation.cleanupPendingMessageIds,
     categoryId,
     channelNameOverride: req.channelNameOverride,
+    eventTime,
     ownerUserId: req.ownerUserId ?? '',
     createdAt: existing?.createdAt ?? now,
     updatedAt: now,
   };
-  await upsertMapping(env, mapping);
+  try {
+    await upsertMapping(env, mapping);
+  } catch (error) {
+    console.error('[publish] failed to persist roster mapping:', error);
+    await cleanupUncommittedDiscordMutation(env, mutation);
+    return { ok: false, error: 'Failed to save the published roster. Please retry.' };
+  }
+
+  // The mapping is committed, so leave its cleanup journal intact if this
+  // worker no longer owns the lease. The next owner can resume safely.
+  if (!(await lease.assertHeld())) {
+    return { ok: false, error: LOCK_LOST_ERROR };
+  }
+
+  const cleanup = await finishPendingMessageCleanup(env, mapping);
+  if (!cleanup.ok) {
+    return { ok: false, error: cleanup.error };
+  }
 
   return { ok: true, channelId, channelName, messageId };
 }
@@ -318,6 +430,7 @@ export interface RefreshResult {
   ok: boolean;
   error?: string | undefined;
   refreshedCount?: number | undefined;
+  failedCount?: number | undefined;
 }
 
 export interface RefreshOptions {
@@ -327,6 +440,18 @@ export interface RefreshOptions {
    * automatic re-sync never resurrects a channel staff deliberately deleted.
    */
   allowRecreate?: boolean;
+}
+
+export function summarizeRefreshResults(
+  refreshedCount: number,
+  failures: readonly string[],
+): RefreshResult {
+  return {
+    ok: failures.length === 0,
+    error: failures.length > 0 ? failures.join('; ') : undefined,
+    refreshedCount,
+    failedCount: failures.length,
+  };
 }
 
 /**
@@ -396,70 +521,123 @@ export async function refreshRoster(
   }
 
   let refreshedCount = 0;
-  let lastError: string | undefined;
+  const failures: string[] = [];
 
-  for (const mapping of mappings) {
-    const config =
-      (await getGuildConfig(env, mapping.guildId)) ?? getDefaultGuildConfig(mapping.guildId);
-    const channelName = resolveChannelName(
-      config.namePattern,
-      buildNameContext(snapshot, decoded, undefined, config.timezone),
-      mapping.channelNameOverride,
-    );
+  for (const candidate of mappings) {
+    const token = await acquirePublishLock(env, candidate.guildId, rosterId);
+    if (!token) {
+      failures.push(
+        `${candidate.guildId}: a publish or refresh is already in progress for this roster`,
+      );
+      continue;
+    }
 
-    const result = await refreshExistingMapping(
-      env,
-      mapping,
-      snapshot,
-      decoded,
-      channelName,
-      mapping.categoryId,
-      undefined,
-      allowRecreate,
-      config.defaultChannelId,
-    );
+    const lease = startLeaseHeartbeat(env, candidate.guildId, rosterId, token);
+    try {
+      // Re-read under the lock so a publish that completed while this refresh
+      // was queued cannot be overwritten with stale mapping data.
+      let mapping = await getMappingByRosterId(env, candidate.guildId, rosterId);
+      if (!mapping) continue;
 
-    if (result.ok) {
+      if (!(await lease.assertHeld())) {
+        failures.push(`${candidate.guildId}: ${LOCK_LOST_ERROR}`);
+        continue;
+      }
+
+      if (mapping.cleanupPendingMessageIds?.length) {
+        const cleanup = await finishPendingMessageCleanup(env, mapping);
+        if (!cleanup.ok) {
+          failures.push(`${candidate.guildId}: ${cleanup.error}`);
+          continue;
+        }
+        mapping = cleanup.mapping;
+      }
+
+      const config =
+        (await getGuildConfig(env, mapping.guildId)) ?? getDefaultGuildConfig(mapping.guildId);
+      const channelName = resolveChannelName(
+        config.namePattern,
+        buildNameContext(snapshot, decoded, mapping.eventTime, config.timezone),
+        mapping.channelNameOverride,
+      );
+
+      const result = await refreshExistingMapping(
+        env,
+        mapping,
+        snapshot,
+        decoded,
+        channelName,
+        mapping.categoryId,
+        mapping.eventTime,
+        allowRecreate,
+        config.defaultChannelId,
+      );
+
+      if (!result.ok) {
+        failures.push(`${candidate.guildId}: ${result.error ?? 'refresh failed'}`);
+        continue;
+      }
+
+      if (!(await lease.assertHeld())) {
+        await cleanupUncommittedDiscordMutation(env, result);
+        failures.push(`${candidate.guildId}: ${LOCK_LOST_ERROR}`);
+        continue;
+      }
+
       const updated: RosterMapping = {
         ...mapping,
         messageId: result.messageId ?? mapping.messageId,
         channelId: result.channelId ?? mapping.channelId,
+        cleanupPendingMessageIds: result.cleanupPendingMessageIds,
         updatedAt: new Date().toISOString(),
       };
-      // Direct-publish rosters live only in KV; re-apply the TTL on every
-      // refresh so the mapping, data, and meta keep a sliding 90-day window
-      // and expire together instead of the mapping outliving the data.
       const isDirect = rosterId.startsWith('direct-');
-      await upsertMapping(env, updated, isDirect ? DIRECT_TTL : undefined);
-      if (isDirect) {
-        await Promise.all([
-          env.ROSTERS.put(`${KV_PREFIX.ROSTER_DATA}:${rosterId}`, snapshot.roster_data, {
-            expirationTtl: DIRECT_TTL,
-          }),
-          env.ROSTERS.put(
-            `${KV_PREFIX.ROSTER_META}:${rosterId}`,
-            JSON.stringify({
-              title: snapshot.title,
-              description: snapshot.description,
-              trial_id: snapshot.trial_id,
-              author_name: snapshot.author_name,
-              tags: snapshot.tags,
-            } satisfies DirectRosterMeta),
-            { expirationTtl: DIRECT_TTL },
-          ),
-        ]);
+      try {
+        // For direct rosters the mapping is the commit marker: publish the data
+        // and metadata first, then make the Discord artifact discoverable.
+        if (isDirect) {
+          await persistDirectRosterData(env, snapshot);
+          if (!(await lease.assertHeld())) {
+            await cleanupUncommittedDiscordMutation(env, result);
+            failures.push(`${candidate.guildId}: ${LOCK_LOST_ERROR}`);
+            continue;
+          }
+        }
+        await upsertMapping(env, updated, isDirect ? DIRECT_TTL : undefined);
+      } catch (error) {
+        console.error('[refresh] failed to persist refreshed roster:', error);
+        await cleanupUncommittedDiscordMutation(env, result);
+        failures.push(`${candidate.guildId}: failed to save the refreshed roster`);
+        continue;
+      }
+
+      // Once the mapping is committed, only its current lease owner may
+      // advance the cleanup journal. A later refresh will resume it otherwise.
+      if (!(await lease.assertHeld())) {
+        failures.push(`${candidate.guildId}: ${LOCK_LOST_ERROR}`);
+        continue;
+      }
+
+      const cleanup = await finishPendingMessageCleanup(
+        env,
+        updated,
+        isDirect ? DIRECT_TTL : undefined,
+      );
+      if (!cleanup.ok) {
+        failures.push(`${candidate.guildId}: ${cleanup.error}`);
+        continue;
       }
       refreshedCount++;
-    } else {
-      lastError = result.error;
+    } catch (error) {
+      console.error('[refresh] unexpected guild refresh failure:', error);
+      failures.push(`${candidate.guildId}: unexpected refresh failure`);
+    } finally {
+      await lease.stop();
+      await releaseLock(env, candidate.guildId, rosterId, token);
     }
   }
 
-  return {
-    ok: refreshedCount > 0 || lastError === undefined,
-    error: lastError,
-    refreshedCount,
-  };
+  return summarizeRefreshResults(refreshedCount, failures);
 }
 
 // ── Direct Publish (from raw roster data, no Hub ID needed) ─────────────────
@@ -509,18 +687,20 @@ export async function publishDirect(env: Env, req: DirectPublishRequest): Promis
   // double-click sends two identical requests that would each mint a different
   // synthetic ID, so locking on the ID would never collide and both would
   // create a channel. Hashing the payload makes duplicate submissions contend
-  // on a best-effort basis (KV has no compare-and-swap, so a true simultaneous
-  // race can still admit two — this only narrows the double-submit window).
+  // on the same atomic coordinator lease while genuinely different payloads
+  // receive independent operation keys.
   const lockKey = await contentLockKey(req);
   const token = await acquirePublishLock(env, req.guildId, lockKey);
   if (!token) {
     return { ok: false, error: 'A publish is already in progress for this roster. Please wait.' };
   }
 
+  const lease = startLeaseHeartbeat(env, req.guildId, lockKey, token);
   try {
-    return await doPublishDirect(env, req, syntheticId);
+    return await doPublishDirect(env, req, syntheticId, lease);
   } finally {
-    await releasePublishLock(env, req.guildId, lockKey, token);
+    await lease.stop();
+    await releaseLock(env, req.guildId, lockKey, token);
   }
 }
 
@@ -557,6 +737,7 @@ async function doPublishDirect(
   env: Env,
   req: DirectPublishRequest,
   syntheticId: string,
+  lease: LeaseHeartbeat,
 ): Promise<PublishResult> {
   const snapshot: RosterSnapshot = {
     id: syntheticId,
@@ -588,6 +769,10 @@ async function doPublishDirect(
   const categoryId =
     req.categoryId ?? config.defaultCategoryId ?? (await detectOpenRunsCategory(env, req.guildId));
 
+  if (!(await lease.assertHeld())) {
+    return { ok: false, error: LOCK_LOST_ERROR };
+  }
+
   const target = resolvePublishTarget(config);
   const result =
     target.mode === 'existing'
@@ -612,6 +797,11 @@ async function doPublishDirect(
 
   if (!result.ok) return result;
 
+  if (!(await lease.assertHeld())) {
+    await cleanupUncommittedDiscordMutation(env, result);
+    return { ok: false, error: LOCK_LOST_ERROR };
+  }
+
   // Persist mapping with same TTL as roster data so they expire together
   const now = new Date().toISOString();
   const mapping: RosterMapping = {
@@ -621,32 +811,29 @@ async function doPublishDirect(
     messageId: result.messageId!,
     categoryId,
     channelNameOverride: req.channelNameOverride,
+    eventTime: req.eventTime,
     ownerUserId: req.ownerUserId ?? '',
     createdAt: now,
     updatedAt: now,
   };
-  await upsertMapping(env, mapping, DIRECT_TTL);
-
-  // Persist roster data so the "View on ESO Toolkit" link can resolve direct-* IDs
-  await env.ROSTERS.put(`${KV_PREFIX.ROSTER_DATA}:${syntheticId}`, req.roster_data, {
-    expirationTtl: DIRECT_TTL,
-  });
+  try {
+    // The mapping is the commit marker. Store render data first, then expose
+    // the mapping only after all prerequisite writes have landed.
+    await persistDirectRosterData(env, snapshot);
+    if (!(await lease.assertHeld())) {
+      await cleanupUncommittedDiscordMutation(env, result);
+      return { ok: false, error: LOCK_LOST_ERROR };
+    }
+    await upsertMapping(env, mapping, DIRECT_TTL);
+  } catch (error) {
+    console.error('[publish-direct] failed to persist published roster:', error);
+    await cleanupUncommittedDiscordMutation(env, result);
+    return { ok: false, error: 'Failed to save the published roster. Please retry.' };
+  }
 
   // Persist snapshot metadata so a later refresh rebuilds the embed faithfully.
   // Direct rosters have no hub record, so without this a refresh would degrade
   // the title/description/tags to placeholders. Same TTL — expire together.
-  await env.ROSTERS.put(
-    `${KV_PREFIX.ROSTER_META}:${syntheticId}`,
-    JSON.stringify({
-      title: snapshot.title,
-      description: snapshot.description,
-      trial_id: snapshot.trial_id,
-      author_name: snapshot.author_name,
-      tags: snapshot.tags,
-    } satisfies DirectRosterMeta),
-    { expirationTtl: DIRECT_TTL },
-  );
-
   return { ok: true, channelId: result.channelId, channelName, messageId: result.messageId };
 }
 
@@ -657,6 +844,25 @@ interface DirectRosterMeta {
   trial_id?: string;
   author_name?: string;
   tags?: string[];
+}
+
+async function persistDirectRosterData(env: Env, snapshot: RosterSnapshot): Promise<void> {
+  await Promise.all([
+    env.ROSTERS.put(`${KV_PREFIX.ROSTER_DATA}:${snapshot.id}`, snapshot.roster_data, {
+      expirationTtl: DIRECT_TTL,
+    }),
+    env.ROSTERS.put(
+      `${KV_PREFIX.ROSTER_META}:${snapshot.id}`,
+      JSON.stringify({
+        title: snapshot.title,
+        description: snapshot.description,
+        trial_id: snapshot.trial_id,
+        author_name: snapshot.author_name,
+        tags: snapshot.tags,
+      } satisfies DirectRosterMeta),
+      { expirationTtl: DIRECT_TTL },
+    ),
+  ]);
 }
 
 /** Load persisted metadata for a direct-publish roster, or null if absent/corrupt. */
@@ -673,11 +879,99 @@ async function readDirectRosterMeta(env: Env, rosterId: string): Promise<DirectR
 
 // ── Refresh a single channel for an existing mapping ────────────────────────
 
-interface InternalRefreshResult {
+export interface InternalRefreshResult {
   ok: boolean;
   channelId?: string;
   messageId?: string;
   error?: string;
+  createdChannel?: boolean;
+  postedMessageIds?: string[];
+  cleanupPendingMessageIds?: string[];
+}
+
+interface PendingCleanupResult {
+  ok: boolean;
+  mapping: RosterMapping;
+  error?: string;
+}
+
+/**
+ * Delete superseded messages recorded in the mapping. The journal is only
+ * cleared after every deletion succeeds (or Discord confirms it is absent),
+ * which makes cleanup retryable across worker restarts and transient errors.
+ */
+export async function finishPendingMessageCleanup(
+  env: Env,
+  mapping: RosterMapping,
+  expirationTtl?: number,
+): Promise<PendingCleanupResult> {
+  const pending = mapping.cleanupPendingMessageIds ?? [];
+  if (pending.length === 0) return { ok: true, mapping };
+
+  const remaining: string[] = [];
+  for (const messageId of pending) {
+    try {
+      await deleteMessage(env, mapping.channelId, messageId);
+    } catch (error) {
+      if (!isMissingDiscordResource(error)) {
+        console.error('[publish] failed to remove superseded roster message:', error);
+        remaining.push(messageId);
+      }
+    }
+  }
+
+  const updated: RosterMapping = {
+    ...mapping,
+    cleanupPendingMessageIds: remaining.length > 0 ? remaining : undefined,
+    updatedAt: new Date().toISOString(),
+  };
+  try {
+    await upsertMapping(env, updated, expirationTtl);
+  } catch (error) {
+    console.error('[publish] failed to persist message-cleanup progress:', error);
+    return {
+      ok: false,
+      mapping,
+      error: 'The roster was published, but cleanup progress could not be saved. Please retry.',
+    };
+  }
+
+  if (remaining.length > 0) {
+    return {
+      ok: false,
+      mapping: updated,
+      error: 'The roster was published, but old messages could not be removed. Please retry.',
+    };
+  }
+  return { ok: true, mapping: updated };
+}
+
+/** Roll back Discord artifacts that were created but never committed to KV. */
+export async function cleanupUncommittedDiscordMutation(
+  env: Env,
+  result: InternalRefreshResult,
+): Promise<void> {
+  if (!result.ok || !result.channelId) return;
+
+  try {
+    if (result.createdChannel) {
+      await deleteChannel(env, result.channelId);
+      return;
+    }
+    for (const messageId of result.postedMessageIds ?? []) {
+      try {
+        await deleteMessage(env, result.channelId, messageId);
+      } catch (error) {
+        if (!isMissingDiscordResource(error)) {
+          console.error('[publish] failed to compensate uncommitted message:', error);
+        }
+      }
+    }
+  } catch (error) {
+    if (!isMissingDiscordResource(error)) {
+      console.error('[publish] failed to compensate uncommitted channel:', error);
+    }
+  }
 }
 
 async function refreshExistingMapping(
@@ -696,8 +990,10 @@ async function refreshExistingMapping(
   const components = buildRosterActionRows(snapshot.id);
   const oldMessageIds = mapping.messageId.split(',');
 
-  // If chunk count matches, try editing in-place
-  if (chunks.length === oldMessageIds.length) {
+  // A single message can be replaced atomically enough for users. Multi-part
+  // rosters are posted in full before the old set is removed, avoiding a
+  // partially updated roster when one edit in the sequence fails.
+  if (chunks.length === 1 && oldMessageIds.length === 1) {
     try {
       for (let i = 0; i < chunks.length; i++) {
         const isLast = i === chunks.length - 1;
@@ -708,7 +1004,11 @@ async function refreshExistingMapping(
       }
       return { ok: true, channelId: mapping.channelId, messageId: mapping.messageId };
     } catch (err) {
-      console.warn('[refresh] edit failed, will re-post:', err);
+      if (!isMissingDiscordResource(err)) {
+        console.warn('[refresh] edit failed without a recoverable missing-resource error:', err);
+        return { ok: false, error: 'Failed to edit the existing roster message.' };
+      }
+      console.warn('[refresh] roster message or channel is missing, will re-post:', err);
     }
   }
 
@@ -718,16 +1018,19 @@ async function refreshExistingMapping(
   // self-cleans its own partial posts on failure, so nothing is leaked.
   try {
     const messageIds = await sendRosterMessages(env, mapping.channelId, chunks, components);
-    for (const id of oldMessageIds) {
-      try {
-        await deleteMessage(env, mapping.channelId, id);
-      } catch {
-        // Old message may already be deleted — ignore.
-      }
-    }
-    return { ok: true, channelId: mapping.channelId, messageId: messageIds };
+    return {
+      ok: true,
+      channelId: mapping.channelId,
+      messageId: messageIds,
+      postedMessageIds: messageIds.split(','),
+      cleanupPendingMessageIds: oldMessageIds,
+    };
   } catch (err) {
-    console.warn('[refresh] re-post to existing channel failed:', err);
+    if (!isMissingDiscordChannel(err)) {
+      console.warn('[refresh] re-post failed without a recoverable missing-channel error:', err);
+      return { ok: false, error: 'Failed to post the refreshed roster message.' };
+    }
+    console.warn('[refresh] existing channel is missing:', err);
   }
 
   // Posting to the existing channel failed. If the roster was consolidated into
@@ -768,6 +1071,19 @@ async function refreshExistingMapping(
 
 // ── Send roster as raw text messages ────────────────────────────────────────
 
+/** Only explicit Discord missing-resource errors are safe to recover from. */
+function isMissingDiscordResource(error: unknown): boolean {
+  return (
+    error instanceof DiscordApiError &&
+    error.status === 404 &&
+    (error.code === 10003 || error.code === 10008)
+  );
+}
+
+function isMissingDiscordChannel(error: unknown): boolean {
+  return error instanceof DiscordApiError && error.status === 404 && error.code === 10003;
+}
+
 /**
  * Send roster text as one or more messages. Action rows go on the last message.
  * Returns comma-separated message IDs for storage in the mapping.
@@ -795,8 +1111,10 @@ async function sendRosterMessages(
     for (const id of ids) {
       try {
         await deleteMessage(env, channelId, id);
-      } catch {
-        // ignore
+      } catch (cleanupError) {
+        if (!isMissingDiscordResource(cleanupError)) {
+          console.error('[publish] failed to clean up partial roster post:', cleanupError);
+        }
       }
     }
     throw err;
@@ -861,7 +1179,7 @@ async function postRosterToDefaultChannel(
       eventTime,
       rolePingIds,
     );
-    return { ok: true, channelId, messageId };
+    return { ok: true, channelId, messageId, postedMessageIds: messageId.split(',') };
   } catch (err) {
     console.error('[publish] post to default channel failed:', err);
     return {
@@ -913,7 +1231,13 @@ async function createNewRosterChannel(
       eventTime,
       rolePingIds,
     );
-    return { ok: true, channelId: channel.id, messageId: messageIds };
+    return {
+      ok: true,
+      channelId: channel.id,
+      messageId: messageIds,
+      createdChannel: true,
+      postedMessageIds: messageIds.split(','),
+    };
   } catch (err) {
     console.error('[publish] send message failed, cleaning up orphaned channel:', err);
     try {

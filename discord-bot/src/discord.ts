@@ -16,17 +16,31 @@ import type {
 const API_BASE = 'https://discord.com/api/v10';
 
 const MAX_RETRIES = 2;
+const REQUEST_TIMEOUT_MS = 20_000;
 
 export class DiscordApiError extends Error {
   constructor(
     public readonly status: number,
     method: string,
     _path: string,
+    public readonly code?: number,
   ) {
     // Discord routes can contain user, guild, channel, and message IDs. Keep
     // them out of error strings because callers may log an uncaught error.
-    super(`Discord API error ${status} on ${method}`);
+    super(`Discord API error ${status} on ${method}${code === undefined ? '' : ` (code ${code})`}`);
     this.name = 'DiscordApiError';
+  }
+}
+
+function readDiscordErrorCode(body: string): number | undefined {
+  if (!body) return undefined;
+  try {
+    const parsed = JSON.parse(body) as { code?: unknown };
+    return typeof parsed.code === 'number' && Number.isInteger(parsed.code)
+      ? parsed.code
+      : undefined;
+  } catch {
+    return undefined;
   }
 }
 
@@ -46,6 +60,7 @@ async function discordFetch<T>(
         'User-Agent': 'ESO-Toolkit-DiscordBot/1.0',
       },
       body: body !== undefined ? JSON.stringify(body) : null,
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
     });
 
     // Handle rate limits (429) — wait and retry
@@ -68,8 +83,10 @@ async function discordFetch<T>(
     }
 
     if (!res.ok) {
-      await res.text();
-      throw new DiscordApiError(res.status, method, path);
+      // Keep only Discord's numeric diagnostic code. The raw body can echo
+      // user-supplied content, so it must not flow into logs or error strings.
+      const errorBody = await res.text().catch(() => '');
+      throw new DiscordApiError(res.status, method, path, readDiscordErrorCode(errorBody));
     }
 
     // 204 No Content

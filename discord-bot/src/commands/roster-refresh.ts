@@ -107,7 +107,9 @@ export async function handleRosterRefresh(
           flags: MessageFlags.EPHEMERAL,
         });
       }
-    })(),
+    })().catch((error: unknown) => {
+      console.error('[roster-refresh] background task failed:', error);
+    }),
   );
 
   return {

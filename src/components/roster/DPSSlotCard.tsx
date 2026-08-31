@@ -29,6 +29,7 @@ import { DPSSlot, JailDDType, RosterDetailLevel } from '../../types/roster';
 import { DARK_ROLE_COLORS, LIGHT_ROLE_COLORS_SOLID } from '../../utils/roleColors';
 import { dpsSlotToBuild } from '../../utils/rosterSlotToBuild';
 import { getSetDisplayName, findSetIdByName } from '../../utils/setNameUtils';
+import { makeSlotKey } from '../../utils/slotKey';
 
 import {
   GLASS_SX_DARK,
@@ -293,7 +294,7 @@ export const DPSSlotCard = React.memo<DPSSlotCardProps>(
               buildFactory={() => dpsSlotToBuild(slot)}
               color={dpsRoleColors.dps}
               label={`DPS ${slot.slotNumber}`}
-              slotKey={`dps${slot.slotNumber}`}
+              slotKey={makeSlotKey('dps', slot.slotNumber - 1)}
               rosterId={savedRosterId}
               buildRef={slot.buildRef}
             />

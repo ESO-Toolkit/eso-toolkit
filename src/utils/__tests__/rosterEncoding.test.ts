@@ -347,6 +347,9 @@ describe('compactifyRoster / expandCompactRoster – Full mode inline data', () 
     expect(slot.skills).toBeUndefined();
     expect(slot.cpPoints).toBeUndefined();
     expect(slot.passives).toBeUndefined();
+    expect(slot.quickslots).toBeUndefined();
+    expect(slot.skilledAbilities).toBeUndefined();
+    expect(slot.scribedAbilityIds).toBeUndefined();
     expect(expanded.rosterDetailLevel).toBeUndefined();
   });
 });

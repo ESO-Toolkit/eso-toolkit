@@ -128,7 +128,7 @@ describe('dpsSlotToBuild', () => {
   });
 
   describe('inline data mapping', () => {
-    it('transfers skills, cpPoints, food, and passives to the first setup', () => {
+    it('transfers every supported inline field to the first setup', () => {
       const skills: SkillsConfig = { 0: { 0: 10, 1: 20 }, 1: { 0: 30 } };
       const cpPoints: BuildChampionPoints = {
         ...makeEmptyCP(),
@@ -140,12 +140,18 @@ describe('dpsSlotToBuild', () => {
         cpPoints,
         food: { id: 33, name: 'Dubious Camoran Throne' },
         passives: [101, 202],
+        quickslots: [{ type: 1, id: 303 }],
+        skilledAbilities: [{ abilityId: 404, morph: 2 }],
+        scribedAbilityIds: [505],
       };
       const setup = dpsSlotToBuild(slot).setups[0];
       expect(setup.skills).toBe(skills);
       expect(setup.cp).toBe(cpPoints);
       expect(setup.consumables.food).toEqual({ id: 33, name: 'Dubious Camoran Throne' });
       expect(setup.passives).toEqual([101, 202]);
+      expect(setup.quickslots).toEqual([{ type: 1, id: 303 }]);
+      expect(setup.skilledAbilities).toEqual([{ abilityId: 404, morph: 2 }]);
+      expect(setup.scribedAbilityIds).toEqual([505]);
     });
 
     it('produces empty defaults when inline data is absent', () => {
@@ -153,6 +159,9 @@ describe('dpsSlotToBuild', () => {
       expect(setup.skills).toEqual({ 0: {}, 1: {} });
       expect(setup.cp).toEqual(makeEmptyCP());
       expect(setup.passives).toEqual([]);
+      expect(setup.quickslots).toBeUndefined();
+      expect(setup.skilledAbilities).toBeUndefined();
+      expect(setup.scribedAbilityIds).toBeUndefined();
     });
   });
 

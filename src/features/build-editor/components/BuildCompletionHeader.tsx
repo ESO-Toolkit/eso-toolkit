@@ -54,7 +54,9 @@ import { saveBuild, updateSavedBuild } from '@/store/saved_builds';
 import { attachBuildToSlot, selectSavedRosters } from '@/store/saved_rosters';
 import type { RootState } from '@/store/storeWithHistory';
 import { encodeBuildToURL } from '@/utils/buildEncoding';
+import { getBaseUrl } from '@/utils/envUtils';
 import { snapshotBuildToSlot } from '@/utils/rosterBuildBridge';
+import { getSlotFromRoster, parseSlotKey, type SlotKey } from '@/utils/slotKey';
 
 import { preloadItemData } from '../../loadout-manager/data/itemIdMap';
 import { ESO_CLASSES } from '../data/esoStaticData';
@@ -93,6 +95,16 @@ const dialogPaperSx = (isDark: boolean): Record<string, unknown> => ({
   borderRadius: 3,
 });
 
+const SLOT_KEY_PATTERN = /^(tank|healer|dps):(0|[1-9]\d*)$/;
+
+const validateSlotKey = (value: string): SlotKey | null => {
+  const match = SLOT_KEY_PATTERN.exec(value);
+  if (!match) return null;
+
+  const index = Number(match[2]);
+  return Number.isSafeInteger(index) ? (value as SlotKey) : null;
+};
+
 export const BuildCompletionHeader: React.FC = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -124,6 +136,11 @@ export const BuildCompletionHeader: React.FC = () => {
     return { slotKey, rosterId };
   }, [searchParams]);
 
+  const validatedSlotKey = React.useMemo(
+    () => (rosterContext ? validateSlotKey(rosterContext.slotKey) : null),
+    [rosterContext],
+  );
+
   // Look up the roster name for the context banner
   const rosterName = useSelector((s: RootState) => {
     if (!rosterContext?.rosterId) return null;
@@ -139,15 +156,22 @@ export const BuildCompletionHeader: React.FC = () => {
       : false,
   );
 
-  // Human-readable slot label (e.g. "dps3" → "DPS 3", "tank1" → "Tank 1")
+  const rosterSlotStillExists = useSelector((s: RootState) => {
+    if (!rosterContext?.rosterId || !validatedSlotKey) return false;
+    const savedRoster = selectSavedRosters(s).find((r) => r.id === rosterContext.rosterId);
+    return savedRoster
+      ? getSlotFromRoster(savedRoster.roster, validatedSlotKey) !== undefined
+      : false;
+  });
+
+  // Human-readable slot label (e.g. "dps:2" → "DPS 3", "tank:0" → "Tank 1")
   const slotLabel = React.useMemo(() => {
     if (!rosterContext) return '';
-    const key = rosterContext.slotKey;
-    if (key.startsWith('dps')) return `DPS ${key.slice(3)}`;
-    if (key.startsWith('tank')) return `Tank ${key.slice(4)}`;
-    if (key.startsWith('healer')) return `Healer ${key.slice(6)}`;
-    return key;
-  }, [rosterContext]);
+    if (!validatedSlotKey) return rosterContext.slotKey;
+    const { role, index } = parseSlotKey(validatedSlotKey);
+    const roleLabel = role === 'dps' ? 'DPS' : role === 'tank' ? 'Tank' : 'Healer';
+    return `${roleLabel} ${index + 1}`;
+  }, [rosterContext, validatedSlotKey]);
 
   const savedBuildExists = useSelector((s: RootState) =>
     savedBuildId ? s.savedBuilds.builds.some((b) => b.id === savedBuildId) : false,
@@ -233,7 +257,7 @@ export const BuildCompletionHeader: React.FC = () => {
         enqueueSnackbar('Could not encode build for sharing.', { variant: 'error' });
         return;
       }
-      const url = `${window.location.origin}${import.meta.env.BASE_URL}bv?b=${encoded}`;
+      const url = `${getBaseUrl()}bv?b=${encoded}`;
       navigator.clipboard
         .writeText(url)
         .then(() => enqueueSnackbar('Share link copied to clipboard!', { variant: 'info' }))
@@ -257,7 +281,7 @@ export const BuildCompletionHeader: React.FC = () => {
         enqueueSnackbar('Could not encode build.', { variant: 'error' });
         return;
       }
-      window.open(`${import.meta.env.BASE_URL}bv?b=${encoded}`, '_blank', 'noopener,noreferrer');
+      window.open(`${getBaseUrl()}bv?b=${encoded}`, '_blank', 'noopener,noreferrer');
     });
   };
 
@@ -271,10 +295,16 @@ export const BuildCompletionHeader: React.FC = () => {
       );
       return;
     }
+    if (!validatedSlotKey || !rosterSlotStillExists) {
+      enqueueSnackbar('Roster slot is no longer available — changes could not be applied.', {
+        variant: 'error',
+      });
+      return;
+    }
     dispatch(
       attachBuildToSlot({
         rosterId: rosterContext.rosterId,
-        slotKey: rosterContext.slotKey,
+        slotKey: validatedSlotKey,
         buildRef: {
           buildId: build.id,
           setupIndex: activeSetupIndex,
@@ -329,7 +359,7 @@ export const BuildCompletionHeader: React.FC = () => {
         .create(encoded)
         .then((result) => {
           setIsCreatingLink(false);
-          const url = `${window.location.origin}${import.meta.env.BASE_URL}b/${result.id}`;
+          const url = `${getBaseUrl()}b/${result.id}`;
           setTempLink(url);
           setTempLinkExpiry(result.expires_at);
           setTempLinkDialogOpen(true);

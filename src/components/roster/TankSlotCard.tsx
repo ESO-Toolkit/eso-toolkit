@@ -20,6 +20,7 @@ import { TankSetup, RosterDetailLevel, validateCompatibility } from '../../types
 import { DARK_ROLE_COLORS, LIGHT_ROLE_COLORS_SOLID } from '../../utils/roleColors';
 import { tankSlotToBuild } from '../../utils/rosterSlotToBuild';
 import { getSetDisplayName, findSetIdByName } from '../../utils/setNameUtils';
+import { makeSlotKey } from '../../utils/slotKey';
 
 import {
   GLASS_SX_DARK,
@@ -132,7 +133,7 @@ export const TankCard = React.memo<TankCardProps>(
               buildFactory={() => tankSlotToBuild(tank, tankNum)}
               color={tankRoleColors.tank}
               label={`Tank ${tankNum}`}
-              slotKey={`tank${tankNum}`}
+              slotKey={makeSlotKey('tank', tankNum - 1)}
               rosterId={savedRosterId}
               buildRef={tank.buildRef}
             />

@@ -62,7 +62,7 @@ const makeBuild = (overrides: Partial<Build> = {}): Build => ({
 // ============================================================
 
 describe('snapshotBuildToSlot', () => {
-  it('extracts skills, cpPoints, food, and passives from the specified setup', () => {
+  it('extracts every supported inline field from the specified setup', () => {
     const skills: SkillsConfig = { 0: { 0: 10 }, 1: { 0: 20 } };
     const cpPoints = makeEmptyCP();
     cpPoints.warfare.slots[0] = 42;
@@ -73,6 +73,9 @@ describe('snapshotBuildToSlot', () => {
           cp: cpPoints,
           consumables: { potions: [], food: { id: 5, name: 'Jewels of Misrule' } },
           passives: [100, 200],
+          quickslots: [{ type: 5, id: 300 }],
+          skilledAbilities: [{ abilityId: 400, morph: 2 }],
+          scribedAbilityIds: [500],
         }),
       ],
     });
@@ -82,6 +85,9 @@ describe('snapshotBuildToSlot', () => {
     expect(result.cpPoints).toBe(cpPoints);
     expect(result.food).toEqual({ id: 5, name: 'Jewels of Misrule' });
     expect(result.passives).toEqual([100, 200]);
+    expect(result.quickslots).toEqual([{ type: 5, id: 300 }]);
+    expect(result.skilledAbilities).toEqual([{ abilityId: 400, morph: 2 }]);
+    expect(result.scribedAbilityIds).toEqual([500]);
   });
 
   it('returns {} for an out-of-range setupIndex', () => {
@@ -89,14 +95,19 @@ describe('snapshotBuildToSlot', () => {
     expect(snapshotBuildToSlot(build, 5)).toEqual({});
   });
 
-  it('omits passives when the array is empty', () => {
+  it('preserves empty arrays as explicit clearing values', () => {
     const build = makeBuild({ setups: [makeSetup({ passives: [] })] });
-    expect(snapshotBuildToSlot(build, 0).passives).toBeUndefined();
+    expect(snapshotBuildToSlot(build, 0)).toMatchObject({
+      passives: [],
+      quickslots: [],
+      skilledAbilities: [],
+      scribedAbilityIds: [],
+    });
   });
 
-  it('omits food when id and name are both absent', () => {
+  it('preserves empty food as an explicit clearing value', () => {
     const build = makeBuild({ setups: [makeSetup({ consumables: { potions: [], food: {} } })] });
-    expect(snapshotBuildToSlot(build, 0).food).toBeUndefined();
+    expect(snapshotBuildToSlot(build, 0).food).toEqual({});
   });
 
   it('includes food when only id is present', () => {
@@ -183,6 +194,32 @@ describe('createBuildFromSlot', () => {
         id: 12,
         name: 'Solitude Salmon Millet',
       });
+    });
+
+    it('transfers quickslots, skilled abilities, and scribed ability IDs', () => {
+      const slot = {
+        ...defaultTankSetup(),
+        quickslots: [{ type: 5, id: 12 }],
+        skilledAbilities: [{ abilityId: 34, morph: 1 }],
+        scribedAbilityIds: [56],
+      };
+      const setup = createBuildFromSlot(slot).setups[0];
+      expect(setup.quickslots).toEqual([{ type: 5, id: 12 }]);
+      expect(setup.skilledAbilities).toEqual([{ abilityId: 34, morph: 1 }]);
+      expect(setup.scribedAbilityIds).toEqual([56]);
+    });
+
+    it('preserves explicit empty arrays', () => {
+      const slot = {
+        ...defaultTankSetup(),
+        quickslots: [],
+        skilledAbilities: [],
+        scribedAbilityIds: [],
+      };
+      const setup = createBuildFromSlot(slot).setups[0];
+      expect(setup.quickslots).toEqual([]);
+      expect(setup.skilledAbilities).toEqual([]);
+      expect(setup.scribedAbilityIds).toEqual([]);
     });
 
     it('falls back to empty skills when slot has none', () => {

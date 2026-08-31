@@ -9,7 +9,12 @@
  * than naïve base64 encoding.
  */
 
-import type { BuildChampionPoints, ChampionTree } from '../features/build-editor/types/build.types';
+import type {
+  BuildChampionPoints,
+  ChampionTree,
+  QuickslotEntry,
+  SkilledAbility,
+} from '../features/build-editor/types/build.types';
 import type { SkillsConfig } from '../features/loadout-manager/types/loadout.types';
 import { KnownSetIDs } from '../types/abilities';
 import {
@@ -126,6 +131,9 @@ export interface CompactTank {
   sk?: CompactSkillBars; // full skill bars (Full mode)
   cp2?: CompactCPFull; // champion points (Full mode)
   pa?: number[]; // passive ability IDs (Full mode)
+  qs?: Array<[number, number]>; // quickslot [type, id] pairs (Full mode)
+  sa?: Array<[number, number]>; // skilled ability [abilityId, morph] pairs (Full mode)
+  sc?: number[]; // scribed ability IDs (Full mode)
 }
 
 export interface CompactHealer {
@@ -153,6 +161,9 @@ export interface CompactHealer {
   sk?: CompactSkillBars; // full skill bars (Full mode)
   cp2?: CompactCPFull; // champion points (Full mode)
   pa?: number[]; // passive ability IDs (Full mode)
+  qs?: Array<[number, number]>; // quickslot [type, id] pairs (Full mode)
+  sa?: Array<[number, number]>; // skilled ability [abilityId, morph] pairs (Full mode)
+  sc?: number[]; // scribed ability IDs (Full mode)
 }
 
 export interface CompactDPS {
@@ -183,6 +194,9 @@ export interface CompactDPS {
   sk?: CompactSkillBars; // full skill bars (Full mode)
   cp2?: CompactCPFull; // champion points (Full mode)
   pa?: number[]; // passive ability IDs (Full mode)
+  qs?: Array<[number, number]>; // quickslot [type, id] pairs (Full mode)
+  sa?: Array<[number, number]>; // skilled ability [abilityId, morph] pairs (Full mode)
+  sc?: number[]; // scribed ability IDs (Full mode)
 }
 
 /** Compact representation of a PlayerOverride (per-fight set/ultimate/notes changes) */
@@ -360,7 +374,7 @@ function expandBuildRef(c: CompactBuildRef): BuildReference {
 }
 
 function compactFood(food?: { id?: number; name?: string }): CompactFood | undefined {
-  if (!food || (food.id == null && !food.name)) return undefined;
+  if (!food) return undefined;
   const c: CompactFood = {};
   if (food.id != null) c.i = food.id;
   if (food.name) c.n = food.name;
@@ -375,7 +389,10 @@ function decodeSpecificSkills(ss?: (number | string)[]): number[] {
 
 function expandFood(c?: CompactFood): { id?: number; name?: string } | undefined {
   if (!c) return undefined;
-  return { id: c.i, name: c.n };
+  const food: { id?: number; name?: string } = {};
+  if (c.i != null) food.id = c.i;
+  if (c.n !== undefined) food.name = c.n;
+  return food;
 }
 
 function compactSkills(sl: SkillLineConfig): CompactSkills | undefined {
@@ -445,7 +462,6 @@ function compactSkillBars(skills?: SkillsConfig): CompactSkillBars | undefined {
   if (!skills) return undefined;
   const f = Object.keys(skills[0]).length > 0 ? (skills[0] as Record<number, number>) : undefined;
   const b = Object.keys(skills[1]).length > 0 ? (skills[1] as Record<number, number>) : undefined;
-  if (!f && !b) return undefined;
   const c: CompactSkillBars = {};
   if (f) c.f = f;
   if (b) c.b = b;
@@ -488,12 +504,29 @@ function compactCPFull(cp?: BuildChampionPoints): CompactCPFull | undefined {
   const w = compactCPTree(cp.warfare);
   const fi = compactCPTree(cp.fitness);
   const c = compactCPTree(cp.craft);
-  if (!w && !fi && !c) return undefined;
   const out: CompactCPFull = {};
   if (w) out.w = w;
   if (fi) out.fi = fi;
   if (c) out.c = c;
   return out;
+}
+
+function compactQuickslots(quickslots?: QuickslotEntry[]): Array<[number, number]> | undefined {
+  return quickslots?.map(({ type, id }) => [type, id]);
+}
+
+function expandQuickslots(compact?: Array<[number, number]>): QuickslotEntry[] | undefined {
+  return compact?.map(([type, id]) => ({ type, id }));
+}
+
+function compactSkilledAbilities(
+  skilledAbilities?: SkilledAbility[],
+): Array<[number, number]> | undefined {
+  return skilledAbilities?.map(({ abilityId, morph }) => [abilityId, morph]);
+}
+
+function expandSkilledAbilities(compact?: Array<[number, number]>): SkilledAbility[] | undefined {
+  return compact?.map(([abilityId, morph]) => ({ abilityId, morph }));
 }
 
 function expandCPFull(c?: CompactCPFull): BuildChampionPoints | undefined {
@@ -531,7 +564,12 @@ function compactTank(t: TankSetup): CompactTank {
   if (sk) c.sk = sk;
   const cp2 = compactCPFull(t.cpPoints);
   if (cp2) c.cp2 = cp2;
-  if (t.passives?.length) c.pa = t.passives;
+  if (t.passives !== undefined) c.pa = t.passives;
+  const qs = compactQuickslots(t.quickslots);
+  if (qs) c.qs = qs;
+  const sa = compactSkilledAbilities(t.skilledAbilities);
+  if (sa) c.sa = sa;
+  if (t.scribedAbilityIds !== undefined) c.sc = t.scribedAbilityIds;
   return c;
 }
 
@@ -556,6 +594,9 @@ function expandTank(c?: CompactTank, slotNumber = 1): TankSetup {
     skills: expandSkillBars(c?.sk),
     cpPoints: expandCPFull(c?.cp2),
     passives: c?.pa,
+    quickslots: expandQuickslots(c?.qs),
+    skilledAbilities: expandSkilledAbilities(c?.sa),
+    scribedAbilityIds: c?.sc,
   };
 }
 
@@ -595,7 +636,12 @@ function compactHealer(h: HealerSetup): CompactHealer {
   if (sk) c.sk = sk;
   const cp2 = compactCPFull(h.cpPoints);
   if (cp2) c.cp2 = cp2;
-  if (h.passives?.length) c.pa = h.passives;
+  if (h.passives !== undefined) c.pa = h.passives;
+  const qs = compactQuickslots(h.quickslots);
+  if (qs) c.qs = qs;
+  const sa = compactSkilledAbilities(h.skilledAbilities);
+  if (sa) c.sa = sa;
+  if (h.scribedAbilityIds !== undefined) c.sc = h.scribedAbilityIds;
   return c;
 }
 
@@ -636,6 +682,9 @@ function expandHealer(c?: CompactHealer, slotNumber = 1): HealerSetup {
     skills: expandSkillBars(c?.sk),
     cpPoints: expandCPFull(c?.cp2),
     passives: c?.pa,
+    quickslots: expandQuickslots(c?.qs),
+    skilledAbilities: expandSkilledAbilities(c?.sa),
+    scribedAbilityIds: c?.sc,
   };
 }
 
@@ -673,7 +722,12 @@ function compactDPS(d: DPSSlot): CompactDPS {
   if (sk) c.sk = sk;
   const cp2 = compactCPFull(d.cpPoints);
   if (cp2) c.cp2 = cp2;
-  if (d.passives?.length) c.pa = d.passives;
+  if (d.passives !== undefined) c.pa = d.passives;
+  const qs = compactQuickslots(d.quickslots);
+  if (qs) c.qs = qs;
+  const sa = compactSkilledAbilities(d.skilledAbilities);
+  if (sa) c.sa = sa;
+  if (d.scribedAbilityIds !== undefined) c.sc = d.scribedAbilityIds;
   return c;
 }
 
@@ -724,6 +778,9 @@ function expandDPS(c: CompactDPS): DPSSlot {
     skills: expandSkillBars(c.sk),
     cpPoints: expandCPFull(c.cp2),
     passives: c.pa,
+    quickslots: expandQuickslots(c.qs),
+    skilledAbilities: expandSkilledAbilities(c.sa),
+    scribedAbilityIds: c.sc,
   };
 }
 
@@ -922,7 +979,10 @@ export function compactifyRoster(roster: RaidRoster): CompactRosterV3 {
       slot.food ||
       slot.skills ||
       slot.cpPoints ||
-      slot.passives?.length,
+      slot.passives !== undefined ||
+      slot.quickslots !== undefined ||
+      slot.skilledAbilities !== undefined ||
+      slot.scribedAbilityIds !== undefined,
   );
   if (filledSlots.length) c.dp = filledSlots.map(compactDPS);
   if (roster.availableGroups?.length) c.ag = roster.availableGroups;

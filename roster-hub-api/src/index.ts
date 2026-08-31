@@ -264,13 +264,16 @@ interface CacheTier {
   browserTtl?: number;
 }
 
-function getCacheTier(path: string): CacheTier | null {
-  // Build/profile responses include mutable build visibility. Without targeted
-  // cache invalidation, edge caching can serve stale public data after a build
-  // is made private, so those routes intentionally fall through to no-store.
-  if (/^\/(rosters|packs)$/.test(path)) return { edgeTtl: 30, swr: 300 };
-  if (/^\/(rosters|packs)\/[^/]+$/.test(path)) return { edgeTtl: 10, swr: 60 };
-  if (/^\/rosters\/[^/]+\/comments$/.test(path)) return { edgeTtl: 15, swr: 60 };
+export function getCacheTier(path: string): CacheTier | null {
+  // Roster list filters and Origin-varying responses create an unbounded set of
+  // cache keys. The Workers Cache API can only delete exact keys, so no mutation
+  // can comprehensively purge those variants. Keep roster reads uncached until
+  // they have a shared, atomic cache-version store. Mutation handlers still
+  // delete the known legacy keys below so a rollback cannot revive stale data.
+  // Build/profile responses have the same correctness constraint and also fall
+  // through to no-store.
+  if (path === '/packs') return { edgeTtl: 30, swr: 300 };
+  if (/^\/packs\/[^/]+$/.test(path)) return { edgeTtl: 10, swr: 60 };
   if (/^\/reports\/[A-Za-z0-9]+\/build-evidence$/.test(path)) {
     return { edgeTtl: 60, swr: 300 };
   }
@@ -288,6 +291,49 @@ function getCacheTier(path: string): CacheTier | null {
     return { edgeTtl: 3600, swr: 86400, browserTtl: 3600 };
   }
   return null;
+}
+
+type RosterCacheScope = 'collection' | 'roster' | 'comments';
+
+function restCacheKey(path: string, origin: string): Request {
+  // Preserve the historical key format so deploy-time cleanup reaches entries
+  // written by the previous middleware implementation.
+  return new Request(`https://cache.internal/rest${path}&_origin=${encodeURIComponent(origin)}`);
+}
+
+/**
+ * Delete the bounded roster cache keys affected by a successful mutation.
+ *
+ * Roster reads now bypass edge caching because filtered collection URLs and
+ * arbitrary CORS origins cannot all be enumerated. These deletes are retained
+ * to evict legacy exact keys and to make the mutation/cache relationship
+ * explicit if bounded roster caching is introduced again.
+ */
+export async function invalidateRosterReadCache(
+  cache: Cache,
+  origin: string | undefined,
+  rosterId: string | undefined,
+  scopes: readonly RosterCacheScope[],
+): Promise<void> {
+  const paths = new Set<string>();
+  if (scopes.includes('collection')) paths.add('/rosters');
+  if (rosterId && scopes.includes('roster')) paths.add(`/rosters/${rosterId}`);
+  if (rosterId && scopes.includes('comments')) paths.add(`/rosters/${rosterId}/comments`);
+
+  // A browser mutation normally carries the same Origin as its reads. Also
+  // remove the no-Origin variant used by server-side clients.
+  const origins = new Set([origin ?? '_none', '_none']);
+  try {
+    await Promise.all(
+      Array.from(paths).flatMap((path) =>
+        Array.from(origins).map((cacheOrigin) => cache.delete(restCacheKey(path, cacheOrigin))),
+      ),
+    );
+  } catch (error) {
+    // Cache eviction is best effort: the database mutation has already
+    // succeeded, and roster GETs bypass the cache so correctness is preserved.
+    console.error('[roster-cache] failed to invalidate:', error);
+  }
 }
 
 app.use('*', async (c, next) => {
@@ -492,6 +538,8 @@ app.post('/rosters', async (c) => {
     recommendedAddons: recommendedAddonsJson,
   });
 
+  await invalidateRosterReadCache(caches.default, c.req.header('Origin'), id, ['collection']);
+
   const roster = await getRosterById(c.env.DB, id, user.id);
   return c.json({ roster }, 201);
 });
@@ -587,6 +635,10 @@ app.put('/rosters/:id', async (c) => {
 
   if (!updated) return c.json({ error: 'Not found or forbidden' }, 404);
   await recordRateLimitEvent(c.env.DB, user.id, 'roster_update');
+  await invalidateRosterReadCache(caches.default, c.req.header('Origin'), c.req.param('id'), [
+    'collection',
+    'roster',
+  ]);
   const roster = await getRosterById(c.env.DB, c.req.param('id'), user.id);
 
   // Notify Discord bot to refresh any linked channels (fire-and-forget)
@@ -607,6 +659,11 @@ app.delete('/rosters/:id', async (c) => {
 
   const deleted = await deleteRoster(c.env.DB, c.req.param('id'), user.id);
   if (!deleted) return c.json({ error: 'Not found or forbidden' }, 404);
+  await invalidateRosterReadCache(caches.default, c.req.header('Origin'), c.req.param('id'), [
+    'collection',
+    'roster',
+    'comments',
+  ]);
   return c.json({ ok: true });
 });
 
@@ -634,6 +691,10 @@ app.post('/rosters/:id/vote', async (c) => {
 
   await recordRateLimitEvent(c.env.DB, user.id, 'roster_vote');
   const result = await toggleVote(c.env.DB, rosterId, user.id);
+  await invalidateRosterReadCache(caches.default, c.req.header('Origin'), rosterId, [
+    'collection',
+    'roster',
+  ]);
   return c.json(result);
 });
 
@@ -715,6 +776,8 @@ app.post('/rosters/:id/comments', async (c) => {
     body: body.body.trim(),
   });
 
+  await invalidateRosterReadCache(caches.default, c.req.header('Origin'), rosterId, ['comments']);
+
   return c.json({ comment }, 201);
 });
 
@@ -730,6 +793,9 @@ app.delete('/rosters/:rosterId/comments/:commentId', async (c) => {
 
   const deleted = await deleteComment(c.env.DB, c.req.param('commentId'), user.id);
   if (!deleted) return c.json({ error: 'Not found or forbidden' }, 404);
+  await invalidateRosterReadCache(caches.default, c.req.header('Origin'), c.req.param('rosterId'), [
+    'comments',
+  ]);
   return c.json({ ok: true });
 });
 
@@ -2248,26 +2314,41 @@ app.get('/search-addons', async (c) => {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /**
- * Fire-and-forget notification to the discord-bot Worker to refresh
- * any Discord channels linked to the given roster. Non-blocking and
- * failure-safe: if the bot is unavailable the roster save still succeeds.
+ * Notify the discord-bot Worker to refresh channels linked to a roster.
+ *
+ * The boolean result makes failures observable to tests and future callers.
+ * The update handler queues this with waitUntil, so a bot outage never rolls
+ * back an otherwise successful roster save.
  */
-async function notifyDiscordSync(env: Env, rosterId: string): Promise<void> {
-  if (!env.DISCORD_BOT_URL) return;
+export async function notifyDiscordSync(env: Env, rosterId: string): Promise<boolean> {
+  const missingConfig = [
+    !env.DISCORD_BOT_URL && 'DISCORD_BOT_URL',
+    !env.DISCORD_WEBHOOK_SECRET && 'DISCORD_WEBHOOK_SECRET',
+  ].filter(Boolean);
+  if (missingConfig.length > 0) {
+    console.error(`[discord-sync] disabled: missing ${missingConfig.join(', ')}`);
+    return false;
+  }
+
   try {
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
-    if (env.DISCORD_WEBHOOK_SECRET) {
-      headers['Authorization'] = `Bearer ${env.DISCORD_WEBHOOK_SECRET}`;
-    }
-    await fetch(`${env.DISCORD_BOT_URL}/discord/roster/refresh`, {
+    const response = await fetch(`${env.DISCORD_BOT_URL}/discord/roster/refresh`, {
       method: 'POST',
-      headers,
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${env.DISCORD_WEBHOOK_SECRET}`,
+      },
       body: JSON.stringify({ rosterId }),
     });
-  } catch (err) {
-    console.error('[discord-sync] failed to notify:', err);
+    if (!response.ok) {
+      console.error(
+        `[discord-sync] refresh rejected for roster ${rosterId}: ${response.status} ${response.statusText}`,
+      );
+      return false;
+    }
+    return true;
+  } catch (error) {
+    console.error(`[discord-sync] failed to notify for roster ${rosterId}:`, error);
+    return false;
   }
 }
 

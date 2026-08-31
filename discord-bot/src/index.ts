@@ -27,6 +27,7 @@ import type { DiscordInteraction, Env } from './types.js';
 import { verifyDiscordSignature } from './verify.js';
 import { handleSupportSession, handleSupportTicket } from './support/handler.js';
 export { SupportCoordinator } from './support/coordinator.js';
+export { RosterCoordinator } from './roster/coordinator.js';
 
 // Production-only CORS origins
 const PROD_CORS_ORIGINS = new Set([
@@ -501,10 +502,21 @@ async function handleRefresh(
   // deleted on purpose; user-initiated HTTP refreshes may recreate.
   const result = await refreshRoster(env, rosterId, scopeGuildId, { allowRecreate: !isWebhook });
   if (!result.ok) {
-    return jsonResponse({ error: result.error }, 400);
+    return jsonResponse(
+      {
+        error: result.error,
+        refreshedCount: result.refreshedCount,
+        failedCount: result.failedCount,
+      },
+      503,
+    );
   }
 
-  return jsonResponse({ ok: true, refreshedCount: result.refreshedCount });
+  return jsonResponse({
+    ok: true,
+    refreshedCount: result.refreshedCount,
+    failedCount: result.failedCount,
+  });
 }
 
 async function handlePublishDirect(

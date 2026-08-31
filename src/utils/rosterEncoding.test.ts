@@ -781,6 +781,34 @@ describe('compactifyRoster / expandCompactRoster', () => {
       });
     });
 
+    describe('build snapshot arrays round-trip', () => {
+      it('round-trips quickslots, skilled abilities, and scribed IDs for every role', () => {
+        const roster = createDefaultRoster();
+        const inlineBuildData = {
+          quickslots: [
+            { type: 1, id: 70001 },
+            { type: 5, id: 70002 },
+          ],
+          skilledAbilities: [
+            { abilityId: 80001, morph: 1 },
+            { abilityId: 80002, morph: 2 },
+          ],
+          scribedAbilityIds: [90001, 90002],
+        };
+        roster.tanks[0] = { ...defaultTankSetup(1), ...inlineBuildData };
+        roster.healers[0] = { ...defaultHealerSetup(1), ...inlineBuildData };
+        roster.dpsSlots[0] = { slotNumber: 1, ...inlineBuildData };
+
+        const expanded = expandCompactRoster(compactifyRoster(roster));
+
+        for (const slot of [expanded.tanks[0], expanded.healers[0], expanded.dpsSlots[0]]) {
+          expect(slot.quickslots).toEqual(inlineBuildData.quickslots);
+          expect(slot.skilledAbilities).toEqual(inlineBuildData.skilledAbilities);
+          expect(slot.scribedAbilityIds).toEqual(inlineBuildData.scribedAbilityIds);
+        }
+      });
+    });
+
     describe('roleNotes round-trip', () => {
       it('round-trips roleNotes on a tank slot', () => {
         const roster = createDefaultRoster();

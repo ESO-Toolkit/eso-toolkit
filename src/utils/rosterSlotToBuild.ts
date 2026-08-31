@@ -19,6 +19,8 @@ import type {
   CombatRole,
   ClassSkillLineId,
   ESOClass,
+  QuickslotEntry,
+  SkilledAbility,
 } from '../features/build-editor/types/build.types';
 import type { SkillsConfig } from '../features/loadout-manager/types/loadout.types';
 import { KnownSetIDs } from '../types/abilities';
@@ -131,6 +133,9 @@ function makeSetupFromSlot(opts: {
   cpPoints?: BuildChampionPoints;
   food?: { id?: number; name?: string };
   passives?: number[];
+  quickslots?: QuickslotEntry[];
+  skilledAbilities?: SkilledAbility[];
+  scribedAbilityIds?: number[];
 }): BuildSetup {
   return {
     id: uuidv4(),
@@ -147,6 +152,9 @@ function makeSetupFromSlot(opts: {
     },
     passives: opts.passives ?? [],
     screenshots: [],
+    quickslots: opts.quickslots,
+    skilledAbilities: opts.skilledAbilities,
+    scribedAbilityIds: opts.scribedAbilityIds,
   };
 }
 
@@ -185,6 +193,9 @@ export function dpsSlotToBuild(slot: DPSSlot): Build {
         cpPoints: slot.cpPoints,
         food: slot.food,
         passives: slot.passives,
+        quickslots: slot.quickslots,
+        skilledAbilities: slot.skilledAbilities,
+        scribedAbilityIds: slot.scribedAbilityIds,
       }),
     ],
     guide: { content: '', youtubeUrl: '', bannerImageUrl: '' },
@@ -231,6 +242,9 @@ export function tankSlotToBuild(tank: TankSetup, tankNum: number): Build {
         cpPoints: tank.cpPoints,
         food: tank.food,
         passives: tank.passives,
+        quickslots: tank.quickslots,
+        skilledAbilities: tank.skilledAbilities,
+        scribedAbilityIds: tank.scribedAbilityIds,
       }),
     ],
     guide: { content: '', youtubeUrl: '', bannerImageUrl: '' },
@@ -277,6 +291,9 @@ export function healerSlotToBuild(healer: HealerSetup, healerNum: number): Build
         cpPoints: healer.cpPoints,
         food: healer.food,
         passives: healer.passives,
+        quickslots: healer.quickslots,
+        skilledAbilities: healer.skilledAbilities,
+        scribedAbilityIds: healer.scribedAbilityIds,
       }),
     ],
     guide: { content: '', youtubeUrl: '', bannerImageUrl: '' },

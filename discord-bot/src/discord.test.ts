@@ -34,6 +34,26 @@ describe('Discord REST diagnostics', () => {
     expect(logged).not.toContain(userId);
     expect(logged).toContain('[discord] rate limited on GET');
   });
+
+  it('exposes Discord numeric error codes without exposing the response body', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({ code: 10008, message: 'Unknown Message secret text' }), {
+          status: 404,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      ),
+    );
+
+    const error = await getGuildMember(env, '111111111111111111', '222222222222222222').catch(
+      (caught: unknown) => caught,
+    );
+
+    expect(error).toBeInstanceOf(DiscordApiError);
+    expect(error).toMatchObject({ status: 404, code: 10008 });
+    expect(String(error)).not.toContain('secret text');
+  });
 });
 
 describe('interaction followups', () => {

@@ -85,7 +85,7 @@ import {
 import { generateDiscordFormat } from '../utils/rosterDiscordFormat';
 // roleColors used by RosterCardSections
 import { encodeRosterToURL, decodeRosterFromURL } from '../utils/rosterEncoding';
-import { resizeRoster } from '../utils/rosterResize';
+import { resizeRoster, wouldLoseData } from '../utils/rosterResize';
 import { copyToClipboard } from '../utils/safeClipboard';
 import { getSetDisplayName, findSetIdByName } from '../utils/setNameUtils';
 import type { SlotKey } from '../utils/slotKey';
@@ -332,6 +332,8 @@ export const RosterBuilderPage: React.FC = () => {
   const [importUrl, setImportUrl] = useState('');
   const [importLoading, setImportLoading] = useState(false);
   const [importMenuAnchor, setImportMenuAnchor] = useState<null | HTMLElement>(null);
+  const [pendingComposition, setPendingComposition] = useState<RoleComposition | null>(null);
+  const [compositionPickerKey, setCompositionPickerKey] = useState(0);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const savedRosterIdRef = useRef<string | null>(null);
@@ -469,13 +471,40 @@ export const RosterBuilderPage: React.FC = () => {
   // startTransition defers the heavy roster resize so React doesn't block
   // the main thread — the picker paints first, cards update later.
   const [, startTransition] = useTransition();
-  const handleCompositionChange = useCallback(
+  const applyCompositionChange = useCallback(
     (newComp: RoleComposition) => {
       startTransition(() => {
         setRoster((prev) => resizeRoster(prev, newComp));
       });
     },
     [startTransition],
+  );
+  const handleCompositionChange = useCallback(
+    (newComp: RoleComposition) => {
+      const dataLoss = wouldLoseData(roster, newComp);
+      if (dataLoss.tanks || dataLoss.healers || dataLoss.dps) {
+        setPendingComposition(newComp);
+        return;
+      }
+      applyCompositionChange(newComp);
+    },
+    [applyCompositionChange, roster],
+  );
+  const handleCancelCompositionChange = useCallback(() => {
+    setPendingComposition(null);
+    // The picker updates optimistically, so remount it to restore the committed counts.
+    setCompositionPickerKey((key) => key + 1);
+  }, []);
+  const handleConfirmCompositionChange = useCallback(() => {
+    if (!pendingComposition) return;
+    const newComposition = pendingComposition;
+    setPendingComposition(null);
+    applyCompositionChange(newComposition);
+  }, [applyCompositionChange, pendingComposition]);
+
+  const pendingDataLoss = useMemo(
+    () => (pendingComposition ? wouldLoseData(roster, pendingComposition) : null),
+    [pendingComposition, roster],
   );
 
   // Drag and drop sensors
@@ -587,7 +616,7 @@ export const RosterBuilderPage: React.FC = () => {
         .then((encoded) => {
           if (cancelled || !encoded) return;
           const url = new URL(window.location.href);
-          url.search = `?r=${encoded}`;
+          url.searchParams.set('r', encoded);
           url.hash = '';
           window.history.replaceState(null, '', url.toString());
         })
@@ -643,6 +672,13 @@ export const RosterBuilderPage: React.FC = () => {
       });
     }
   }, [dispatch, roster]);
+
+  const clearSavedRosterIdentity = useCallback((): void => {
+    savedRosterIdRef.current = null;
+    const url = new URL(window.location.href);
+    url.searchParams.delete('id');
+    window.history.replaceState(null, '', url.toString());
+  }, []);
 
   // Update roster name
   const handleRosterNameChange = (name: string): void => {
@@ -787,45 +823,53 @@ export const RosterBuilderPage: React.FC = () => {
   }, [roster]);
 
   // Import roster from JSON
-  const handleImportJSON = useCallback((event: React.ChangeEvent<HTMLInputElement>): void => {
-    const file = event.target.files?.[0];
-    if (!file) return;
+  const handleImportJSON = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>): void => {
+      const file = event.target.files?.[0];
+      if (!file) return;
 
-    // Reject oversized files before reading — a roster JSON is well under 2MB.
-    const MAX_IMPORT_BYTES = 2 * 1024 * 1024;
-    if (file.size > MAX_IMPORT_BYTES) {
-      setSnackbar({
-        open: true,
-        message: 'File is too large to import (max 2MB).',
-        severity: 'error',
-      });
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = (e): void => {
-      try {
-        // Parse JSON as unknown (not using type assertion)
-        const parsedData: unknown = JSON.parse(e.target?.result as string);
-
-        // Validate and normalize the data with proper type checking
-        const validatedRoster = validateImportedRoster(parsedData);
-
-        setRoster(validatedRoster);
-        if (validatedRoster.rosterDetailLevel) {
-          setMode(validatedRoster.rosterDetailLevel);
-        }
-        setSnackbar({ open: true, message: 'Roster imported successfully!', severity: 'success' });
-      } catch (error) {
+      // Reject oversized files before reading — a roster JSON is well under 2MB.
+      const MAX_IMPORT_BYTES = 2 * 1024 * 1024;
+      if (file.size > MAX_IMPORT_BYTES) {
         setSnackbar({
           open: true,
-          message: `Failed to import roster: ${error instanceof Error ? error.message : 'Invalid JSON file'}`,
+          message: 'File is too large to import (max 2MB).',
           severity: 'error',
         });
+        return;
       }
-    };
-    reader.readAsText(file);
-  }, []);
+
+      const reader = new FileReader();
+      reader.onload = (e): void => {
+        try {
+          // Parse JSON as unknown (not using type assertion)
+          const parsedData: unknown = JSON.parse(e.target?.result as string);
+
+          // Validate and normalize the data with proper type checking
+          const validatedRoster = validateImportedRoster(parsedData);
+
+          clearSavedRosterIdentity();
+          setRoster(validatedRoster);
+          if (validatedRoster.rosterDetailLevel) {
+            setMode(validatedRoster.rosterDetailLevel);
+          }
+          setSnackbar({
+            open: true,
+            message: 'Roster imported successfully!',
+            severity: 'success',
+          });
+        } catch (error) {
+          setSnackbar({
+            open: true,
+            message: `Failed to import roster: ${error instanceof Error ? error.message : 'Invalid JSON file'}`,
+            severity: 'error',
+          });
+        }
+      };
+      reader.readAsText(file);
+    },
+    [clearSavedRosterIdentity],
+  );
 
   // Import roster from ESO Logs URL
   const handleImportFromUrl = useCallback(async (): Promise<void> => {
@@ -953,6 +997,7 @@ export const RosterBuilderPage: React.FC = () => {
       const result = convertLogPlayersToRoster(details, combatantInfoEvents, roster);
 
       // Update roster with parsed data and auto-switch to full mode
+      clearSavedRosterIdentity();
       setRoster((prev) => ({
         ...prev,
         tanks: prev.tanks.map((t, i) =>
@@ -989,7 +1034,7 @@ export const RosterBuilderPage: React.FC = () => {
     } finally {
       setImportLoading(false);
     }
-  }, [importUrl, client, roster]);
+  }, [importUrl, client, roster, clearSavedRosterIdentity]);
 
   // Quick fill player names from text
   const handleQuickFill = useCallback((): void => {
@@ -2057,6 +2102,7 @@ export const RosterBuilderPage: React.FC = () => {
           >
             {/* Role Composition Picker */}
             <RoleCompositionPicker
+              key={compositionPickerKey}
               composition={roster.composition}
               onChange={handleCompositionChange}
               variant="embedded"
@@ -2304,6 +2350,58 @@ export const RosterBuilderPage: React.FC = () => {
           />
         </Box>
       </Paper>
+
+      <Dialog
+        open={pendingComposition !== null}
+        onClose={handleCancelCompositionChange}
+        maxWidth="xs"
+        fullWidth
+        aria-labelledby="confirm-roster-shrink-title"
+        slotProps={{
+          paper: {
+            sx: {
+              borderRadius: '14px',
+              backgroundColor: isDarkMode ? 'rgba(20,20,30,0.97)' : 'rgba(255,255,255,0.98)',
+              backdropFilter: 'blur(16px)',
+              border: isDarkMode
+                ? '1px solid rgba(255,255,255,0.08)'
+                : '1px solid rgba(0,0,0,0.08)',
+              boxShadow: isDarkMode
+                ? '0 16px 48px rgba(0,0,0,0.5)'
+                : '0 16px 48px rgba(0,0,0,0.12)',
+            },
+          },
+        }}
+      >
+        <DialogTitle
+          id="confirm-roster-shrink-title"
+          sx={{
+            fontFamily: '"Space Grotesk Variable", sans-serif',
+            fontWeight: 700,
+          }}
+        >
+          Remove populated roster slots?
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary">
+            This composition removes saved assignments from{' '}
+            {[
+              pendingDataLoss?.tanks ? 'tanks' : null,
+              pendingDataLoss?.healers ? 'healers' : null,
+              pendingDataLoss?.dps ? 'DPS' : null,
+            ]
+              .filter(Boolean)
+              .join(', ')}
+            . This cannot be undone.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCancelCompositionChange}>Cancel</Button>
+          <Button onClick={handleConfirmCompositionChange} color="error" variant="contained">
+            Remove slots
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Quick Fill Dialog */}
       <Dialog

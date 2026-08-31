@@ -122,7 +122,9 @@ export async function handleRosterRefreshButton(
           flags: MessageFlags.EPHEMERAL,
         });
       }
-    })(),
+    })().catch((error: unknown) => {
+      console.error('[roster-refresh-button] background task failed:', error);
+    }),
   );
 
   return {
