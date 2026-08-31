@@ -197,6 +197,7 @@ const SECTIONS = [
   { id: 'config', title: 'Config file reference' },
   { id: 'troubleshooting', title: 'Troubleshooting: fixes by log line' },
   { id: 'performance', title: 'What it costs' },
+  { id: 'credits', title: 'Credits and downloads' },
 ] as const;
 
 // ── Reusable copy-to-clipboard ──────────────────────────────────────────────
@@ -385,6 +386,37 @@ const NR_SETTINGS: ReadonlyArray<RowSpec> = [
     label: 'Reset NR feature and clear failure latch',
     value:
       'If NR hits an error it latches off for that feature rather than retrying every frame. This button clears the latch without restarting the game. Use it after fixing something.',
+  },
+];
+
+const CREDITS: ReadonlyArray<RowSpec> = [
+  {
+    label: 'ReShade',
+    value: 'By crosire. The injector and add-on framework everything here runs on. reshade.me',
+  },
+  {
+    label: 'iMMERSE LaunchPad',
+    value:
+      'By Marty McFly (Pascal Gilcher). Supplies the optical-flow motion vectors, without which the feeder has nothing to hand NGX. github.com/martymcmodding/iMMERSE',
+  },
+  {
+    label: 'RenoDX',
+    value:
+      'By clshortfuse. The Neural Rendering add-on is built on it. github.com/clshortfuse/renodx',
+  },
+  {
+    label: 'ReshadeMotionEstimation',
+    value:
+      'By Jakob Wapenhensch (CC BY-NC 4.0). The alternative motion-vector provider, for setups without LaunchPad. github.com/JakobPCoder/ReshadeMotionEstimation',
+  },
+  {
+    label: 'DLSS 5 Feeder',
+    value:
+      'Author unattributed in the shipped build. If you know who wrote it, tell us and we will credit them properly.',
+  },
+  {
+    label: 'DLSS and NGX',
+    value: 'NVIDIA. This guide is not affiliated with or endorsed by NVIDIA.',
   },
 ];
 
@@ -782,6 +814,23 @@ export const Dlss5NeuralRenderingGuidePage: React.FC = () => {
                 techpowerup.com/download/nvidia-dlss-dll
               </Box>
               . Grab a 310.x release. These are unmodified, NVIDIA-signed files.
+            </Typography>
+          </Callout>
+          <Callout tone="caution" label="The add-ons and the NR runtime" sx={{ mt: 2 }}>
+            <Typography variant="body2">
+              We do not host or link <code>dlss5-feed.addon64</code>,{' '}
+              <code>renodx-dlss5.addon64</code>, or the patched <code>nvngx_dlssnr.dll</code>. If
+              you cannot find them, ask in{' '}
+              <Box
+                component="a"
+                href="https://discord.gg/mMjwcQYFdc"
+                target="_blank"
+                rel="noopener noreferrer"
+                sx={{ color: accentText, fontWeight: W.semi, textDecoration: 'underline' }}
+              >
+                our Discord
+              </Box>{' '}
+              and someone will point you in the right direction.
             </Typography>
           </Callout>
         </Box>
@@ -1320,6 +1369,35 @@ after NR:   feed CPU 11.82 ms/frame |  63.9 fps | feed is 75% of the frame`}
             <strong>NR Intensity</strong> before writing it off. The feeder prints its own cost
             every 600 frames, so measure on your own card.
           </Typography>
+        </Box>
+      </Section>
+
+      {/* ── Credits ──────────────────────────────────────────────────
+          None of this stack is ours. Naming the authors is basic courtesy and
+          also gives readers a legitimate trail without us mirroring binaries. */}
+      <Section id="credits" index={11} title="Credits and downloads">
+        <Box sx={cardSx}>
+          <Typography variant="body2" sx={{ ...proseSx, mb: 2 }}>
+            This guide documents other people&apos;s work. Everything below is theirs, not ours.
+          </Typography>
+          <SettingsTable rows={CREDITS} labelWidth={200} />
+          <Callout tone="info" label="Downloads" sx={{ mt: 2.5 }}>
+            <Typography variant="body2">
+              The only file this page links directly is the stock, NVIDIA-signed{' '}
+              <code>nvngx_dlss.dll</code>. For the two add-ons and the patched Neural Rendering
+              runtime, ask in{' '}
+              <Box
+                component="a"
+                href="https://discord.gg/mMjwcQYFdc"
+                target="_blank"
+                rel="noopener noreferrer"
+                sx={{ color: accentText, fontWeight: W.semi, textDecoration: 'underline' }}
+              >
+                our Discord
+              </Box>
+              .
+            </Typography>
+          </Callout>
         </Box>
       </Section>
 
