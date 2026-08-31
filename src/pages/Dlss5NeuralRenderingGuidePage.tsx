@@ -72,6 +72,18 @@ const NV_GREEN_TEXT_LIGHT = '#446B00';
 
 const MONO = "Consolas, Monaco, 'Fira Code', monospace";
 
+/**
+ * The four stages every part of this page is organised around: the setup order,
+ * the troubleshooting order, and which log file to read all follow it. Rendered
+ * as a diagram so the reader can see where their failure sits.
+ */
+const PIPELINE = [
+  { stage: 'Motion', by: 'LAUNCHPAD.fx' },
+  { stage: 'Contract', by: 'DLSS5_Feed.fx' },
+  { stage: 'DLSS', by: 'dlss5-feed' },
+  { stage: 'Neural Rendering', by: 'renodx-dlss5' },
+] as const;
+
 // ── Section registry: single source of truth for headings, ids and the TOC ──
 
 const SECTIONS = [
@@ -152,12 +164,12 @@ const REQUIREMENTS: ReadonlyArray<RowSpec> = [
   {
     label: 'GPU',
     value:
-      'NVIDIA RTX. The nvngx_dlssnr.dll must match your generation — a 50-series (Blackwell) NR runtime will not work on a 40-series (Ada) card, and vice versa.',
+      'NVIDIA RTX. The nvngx_dlssnr.dll must match your generation. A 50-series (Blackwell) NR runtime will not work on a 40-series (Ada) card, and vice versa.',
   },
   {
     label: 'nvngx_dlss.dll',
     value:
-      'A 310.x build. Older 2.x runtimes fail outright — this is the single most common cause of a dead setup.',
+      'A 310.x build. Older 2.x runtimes fail outright. This is the most common cause of a dead setup.',
   },
   {
     label: 'ReShade',
@@ -183,7 +195,7 @@ const OVERLAY_TABS: ReadonlyArray<RowSpec> = [
   {
     label: 'Add-ons',
     value:
-      'One collapsible panel per add-on. DLSS 5 Neural Rendering and Generic Depth both live here — this is the panel most people never find.',
+      'One collapsible panel per add-on. DLSS 5 Neural Rendering and Generic Depth both live here. Most people never find this panel.',
   },
   {
     label: 'Log',
@@ -207,7 +219,7 @@ const FEED_SETTINGS: ReadonlyArray<RowSpec> = [
   {
     label: 'Debug view',
     value:
-      'Drives the separate DLSS5_Feed_Debug technique — shows motion vectors (colour = direction, brightness = speed) or raw depth. Enable that technique only while checking, then turn it back off.',
+      'Drives the separate DLSS5_Feed_Debug technique. It shows motion vectors (colour = direction, brightness = speed) or raw depth. Enable that technique only while checking, then turn it back off.',
   },
 ];
 
@@ -225,7 +237,7 @@ const NR_SETTINGS: ReadonlyArray<RowSpec> = [
   {
     label: 'NR Preset',
     value:
-      'Preset #1 / #2 / #3 — the neural model variant. Start at the default and change one thing at a time; presets differ more on faces and hair than on terrain.',
+      'Preset #1, #2 or #3: the neural model variant. Start at the default and change one thing at a time; presets differ more on faces and hair than on terrain.',
   },
   {
     label: 'NR Style',
@@ -237,7 +249,10 @@ const NR_SETTINGS: ReadonlyArray<RowSpec> = [
     value:
       'How strongly the neural result is blended over the original frame. Lower it first if the effect looks overcooked.',
   },
-  { label: 'Local Tone Strength', value: 'Local contrast/tone shaping applied by the neural pass.' },
+  {
+    label: 'Local Tone Strength',
+    value: 'Local contrast/tone shaping applied by the neural pass.',
+  },
   {
     label: 'Local Structure Strength',
     value: 'How much fine structural detail the pass reconstructs across the frame generally.',
@@ -264,7 +279,7 @@ const NR_SETTINGS: ReadonlyArray<RowSpec> = [
   {
     label: 'NR Toggle Key / Screenshot Key',
     value:
-      'Rebindable. Defaults are F6 (toggle NR) and F5 (write a before/after screenshot pair). F5 needs an active NR evaluation — it disarms itself after ~10 seconds without one.',
+      'Rebindable. Defaults are F6 (toggle NR) and F5 (write a before/after screenshot pair). F5 needs an active NR evaluation and disarms itself after ~10 seconds without one.',
   },
   {
     label: 'Reset NR feature and clear failure latch',
@@ -294,13 +309,13 @@ const STATUSES: ReadonlyArray<StatusSpec> = [
   {
     status: 'NGX exports are detoured but the game has not created a DLSS/DLSSD feature.',
     meaning:
-      'The add-on is hooked correctly but nothing ever asked NGX for DLSS. On ESO this means the feeder failed — check dlss5-feed.log, not this panel.',
+      'The add-on is hooked correctly but nothing ever asked NGX for DLSS. On ESO this means the feeder failed. Check dlss5-feed.log, not this panel.',
     good: false,
   },
   {
     status: 'DLSS is evaluating but the NR feature did not bind to an output.',
     meaning:
-      'DLSS works, NR does not. Read the "Latest NR NGX result" value directly below it — a non-zero code means the NR runtime itself failed to initialise, and ReShade.log names the failing step.',
+      'DLSS works, NR does not. Read the "Latest NR NGX result" value directly below it. A non-zero code means the NR runtime itself failed to initialise, and ReShade.log names the failing step.',
     good: false,
   },
 ];
@@ -324,26 +339,26 @@ const FAILURES: ReadonlyArray<FailureSpec> = [
     symptom: 'Session never opens / DLSS reported unavailable',
     log: '[feed] NGX capabilities: SuperSampling.Available=0 NeedsUpdatedDriver=0 MinDriver=0.0\n[feed] DLSS super sampling is not available on this GPU/driver\nstopped: the D3D12/NGX session failed to start.',
     cause:
-      'There is no nvngx_dlss.dll in the client folder at all. The NVIDIA driver ships nvngx_dlssg.dll but NOT a standalone DLSS super-resolution runtime, so there is nothing to fall back to. Deleting the local copy does not help — it makes things worse.',
+      'There is no nvngx_dlss.dll in the client folder at all. The NVIDIA driver ships nvngx_dlssg.dll but NOT a standalone DLSS super-resolution runtime, so there is nothing to fall back to. Deleting the local copy does not help; it makes things worse.',
     fix: 'Put a 310.x nvngx_dlss.dll back in the client folder. A healthy run reports SuperSampling.Available=1 with a non-zero MinDriver.',
   },
   {
     symptom: 'Everything loads but nothing looks different',
     log: "DLSS5 Generic proxy encode compilation failed with HRESULT 0x8876086c: error X3506: unrecognized compiler target 'cs_5_1'",
     cause:
-      'The ESO-specific trap. ESO ships its own d3dcompiler_47.dll from the Windows 8.1 SDK (version 6.3.9600, dated 2013). Because it sits next to the exe it wins the DLL search order over the modern system copy. RenoDX compiles its proxy-encode shader at cs_5_1 — Shader Model 5.1 did not exist in 2013 — so the compile fails and feature 18 is never created. DLSS itself keeps working, which is why this looks like "nothing happened" rather than an error.',
+      'The ESO-specific trap. ESO ships its own d3dcompiler_47.dll from the Windows 8.1 SDK (version 6.3.9600, dated 2013). Because it sits next to the exe it wins the DLL search order over the modern system copy. RenoDX compiles its proxy-encode shader at cs_5_1, and Shader Model 5.1 did not exist in 2013, so the compile fails and feature 18 is never created. DLSS itself keeps working, which is why this looks like "nothing happened" rather than an error.',
     fix: 'Do step 6. Back up the client folder d3dcompiler_47.dll, then copy the system one over it. Close the game first or the file will be locked.',
   },
   {
     symptom: 'The effect list says DLSS5_Feed.fx is not loaded',
     log: 'DLSS5_Feed.fx is not loaded (technique/textures missing) -- install it into reshade-shaders\\Shaders and enable it below MartysMods_Launchpad.',
     cause:
-      'Seen once at every effect reload, this is harmless — the feeder checks before ReShade finishes compiling. It only matters if the very next line does not say "technique found".',
+      'Seen once at every effect reload, this is harmless: the feeder checks before ReShade finishes compiling. It only matters if the very next line does not say "technique found".',
     fix: 'If it never resolves: confirm both .fx files are in reshade-shaders\\Shaders, the MartysMods\\ folder sits beside them, and both techniques are ticked in the right order.',
   },
   {
     symptom: 'Image doubles, smears or ghosts while moving',
-    log: '(no log line — this is a visual fault)',
+    log: '(no log line; this is a visual fault)',
     cause:
       'The motion vectors point the wrong way. The feeder and LaunchPad agree on convention, but a mismatch shows up as smearing in one axis.',
     fix: 'In the DLSS5_Feed effect settings, flip a component of "Motion vector sign (x, y)" from 1.0 to -1.0. Change one axis at a time and watch which direction the smearing stops.',
@@ -352,7 +367,7 @@ const FAILURES: ReadonlyArray<FailureSpec> = [
     symptom: 'NR says STANDBY / FAILED after DLSS is confirmed working',
     log: 'NO NR FEATURE MATCHED (STANDBY/FAILED)',
     cause:
-      'Only now is nvngx_dlssnr.dll a legitimate suspect. Check "Latest NR NGX result" in the add-on overlay — a non-zero code means the NR runtime itself would not initialise on your card, usually a generation mismatch.',
+      'Only now is nvngx_dlssnr.dll a legitimate suspect. Check "Latest NR NGX result" in the add-on overlay. A non-zero code means the NR runtime itself would not initialise on your card, usually a generation mismatch.',
     fix: 'Confirm you have the build patched for your GPU generation. Do not start here: chase this only after you have seen "feature ready: ... DLAA" in dlss5-feed.log.',
   },
 ];
@@ -437,8 +452,7 @@ export const Dlss5NeuralRenderingGuidePage: React.FC = () => {
             {/* component="p": MUI maps the subtitle1 variant to <h6>, which would
                 put a stray heading between the h1 and the first section h2. */}
             <Typography component="p" variant="subtitle1" sx={{ color: 'text.secondary', mt: 0.5 }}>
-              Getting the unofficial DLSS 5 Feeder + RenoDX stack actually evaluating frames — every
-              setting, and the ESO-specific traps that stop it.
+              Every setting explained, plus the two ESO-specific traps that stop it working.
             </Typography>
           </Box>
         </Stack>
@@ -483,8 +497,8 @@ export const Dlss5NeuralRenderingGuidePage: React.FC = () => {
         }
       >
         <Typography variant="body2" sx={{ lineHeight: 1.6 }}>
-          <strong>Already set up but it is not working?</strong> Every troubleshooting entry is keyed
-          to the exact log line it produces.
+          <strong>Already set up but not working?</strong> Every fix below is keyed to the log line
+          it produces.
         </Typography>
       </Alert>
 
@@ -508,7 +522,7 @@ export const Dlss5NeuralRenderingGuidePage: React.FC = () => {
           <Typography component="li" variant="body2">
             <strong>ZeniMax has never issued an official position on ReShade.</strong> ESO has no
             kernel-level anti-cheat, ReShade neither modifies <code>eso64.exe</code> nor reads game
-            memory, and there are no known bans for it — but &ldquo;no known bans&rdquo; is not a
+            memory, and there are no known bans for it, but &ldquo;no known bans&rdquo; is not a
             guarantee, and this stack goes further than plain ReShade.
           </Typography>
           <Typography component="li" variant="body2">
@@ -561,12 +575,15 @@ export const Dlss5NeuralRenderingGuidePage: React.FC = () => {
       {/* ── How it works ─────────────────────────────────────────────── */}
       <Section id="how-it-works" icon={<Layers />} title="How this works">
         <Box sx={cardSx}>
-          <Typography variant="body2" sx={{ ...proseSx, mb: 2 }}>
-            ESO is a DirectX 11 game with <strong>no native DLSS support</strong>, so there is no
-            DLSS toggle to turn on. This stack fakes one. Understanding the chain makes every error
-            message below obvious:
+          <Typography variant="body2" sx={{ ...proseSx, mb: 2.5 }}>
+            ESO is DirectX 11 with <strong>no native DLSS</strong>, so there is no toggle to turn
+            on. This stack assembles one out of parts. Every error in this guide belongs to a stage
+            in that chain:
           </Typography>
-          <Stack component="ol" spacing={1.5} sx={{ listStyle: 'none', p: 0, m: 0 }}>
+
+          <PipelineDiagram />
+
+          <Stack component="ol" spacing={1.5} sx={{ listStyle: 'none', p: 0, m: 0, mt: 3 }}>
             <ChainRow
               n="1"
               title="LaunchPad estimates motion"
@@ -590,13 +607,12 @@ export const Dlss5NeuralRenderingGuidePage: React.FC = () => {
           </Stack>
           <Alert severity="info" icon={<Info />} sx={{ mt: 2.5, borderRadius: '12px' }}>
             <Typography variant="body2" sx={{ lineHeight: 1.7 }}>
-              <strong>Every link depends on the one before it.</strong> Neural Rendering can only
-              attach to a working DLSS feature, which can only exist if the feeder built one, which
-              needs valid depth and motion. That is why{' '}
+              <strong>Each stage needs the one before it.</strong> Neural Rendering attaches to a
+              working DLSS feature, and that feature needs valid depth and motion.{' '}
               <Box component="a" href="#troubleshooting" sx={{ color: nvText, fontWeight: 700 }}>
                 the troubleshooting section
               </Box>{' '}
-              is ordered — fix the earliest failing stage, not the one whose symptom you noticed.
+              is ordered by stage. Fix the earliest failure, not the symptom you noticed.
             </Typography>
           </Alert>
         </Box>
@@ -619,7 +635,7 @@ export const Dlss5NeuralRenderingGuidePage: React.FC = () => {
               >
                 techpowerup.com/download/nvidia-dlss-dll
               </Box>
-              . Grab a 310.x release — these are unmodified, NVIDIA-signed files.
+              . Grab a 310.x release. These are unmodified, NVIDIA-signed files.
             </Typography>
           </Alert>
         </Box>
@@ -637,15 +653,15 @@ export const Dlss5NeuralRenderingGuidePage: React.FC = () => {
               <CodeBlock copyable wrap copyLabel="Copy client folder path" sx={{ mt: 1.25 }}>
                 {'steamapps\\common\\Zenimax Online\\The Elder Scrolls Online\\game\\client'}
               </CodeBlock>
-              <Note>Keep this folder open — every remaining step drops a file here.</Note>
+              <Note>Keep this folder open; every remaining step drops a file here.</Note>
             </StepRow>
 
             <StepRow n={2} last={false} title="Install ReShade with add-on support">
               <Typography variant="body2" sx={proseSx}>
                 Install ReShade for <code>eso64.exe</code>, choosing DirectX 10/11/12 and the build{' '}
                 <strong>with full add-on support</strong>. The plain build cannot load{' '}
-                <code>.addon64</code> files at all, so nothing in this guide will work on it. ReShade
-                must land as <code>dxgi.dll</code> next to <code>eso64.exe</code>.
+                <code>.addon64</code> files at all, so nothing in this guide will work on it.
+                ReShade must land as <code>dxgi.dll</code> next to <code>eso64.exe</code>.
               </Typography>
               <Note>
                 Already have ReShade? Check that <code>dxgi.dll</code> exists in the client folder
@@ -675,8 +691,8 @@ export const Dlss5NeuralRenderingGuidePage: React.FC = () => {
                 </Typography>
               </Box>
               <Note>
-                LaunchPad supplies the optical-flow motion vectors. Without it the feeder has nothing
-                to hand NGX and sits idle.
+                LaunchPad supplies the optical-flow motion vectors. Without it the feeder has
+                nothing to hand NGX and sits idle.
               </Note>
             </StepRow>
 
@@ -687,7 +703,7 @@ export const Dlss5NeuralRenderingGuidePage: React.FC = () => {
                 exe, so there is no path to configure.
               </Typography>
               <Note>
-                ReShade.log will confirm both loaded — look for two &ldquo;Registered add-on&rdquo;
+                ReShade.log will confirm both loaded: look for two &ldquo;Registered add-on&rdquo;
                 lines at startup.
               </Note>
             </StepRow>
@@ -699,7 +715,7 @@ export const Dlss5NeuralRenderingGuidePage: React.FC = () => {
                 runtime).
               </Typography>
               <Note>
-                Version matters enormously — see{' '}
+                Version matters enormously. See{' '}
                 <Box component="a" href="#requirements" sx={{ color: nvText, fontWeight: 700 }}>
                   what you need
                 </Box>
@@ -716,15 +732,15 @@ export const Dlss5NeuralRenderingGuidePage: React.FC = () => {
                 sx={{ pl: 2.5, mt: 0.75, mb: 0, '& li': { mb: 0.4, lineHeight: 1.7 } }}
               >
                 <Typography component="li" variant="body2" sx={proseSx}>
-                  Close ESO completely — the DLL is locked while the game runs.
+                  Close ESO completely. The DLL is locked while the game runs.
                 </Typography>
                 <Typography component="li" variant="body2" sx={proseSx}>
                   Rename the client folder <code>d3dcompiler_47.dll</code> to{' '}
                   <code>d3dcompiler_47.dll.bak</code>.
                 </Typography>
                 <Typography component="li" variant="body2" sx={proseSx}>
-                  Copy the system one in. Run this <strong>from inside the client folder</strong> —
-                  the trailing <code>.</code> is the destination:
+                  Copy the system one in. Run this <strong>from inside the client folder</strong>.
+                  The trailing <code>.</code> is the destination:
                 </Typography>
               </Box>
               <CodeBlock copyable wrap copyLabel="Copy d3dcompiler command" sx={{ mt: 1.25 }}>
@@ -734,8 +750,9 @@ export const Dlss5NeuralRenderingGuidePage: React.FC = () => {
 
             <StepRow n={7} last={false} title="Turn off in-game anti-aliasing">
               <Typography variant="body2" sx={proseSx}>
-                In ESO video settings, disable MSAA/SSAA and set resolution scale to 100%. The feeder
-                hands NGX a full-resolution depth buffer, and any multisampling breaks that contract.
+                In ESO video settings, disable MSAA/SSAA and set resolution scale to 100%. The
+                feeder hands NGX a full-resolution depth buffer, and any multisampling breaks that
+                contract.
               </Typography>
             </StepRow>
 
@@ -746,7 +763,7 @@ export const Dlss5NeuralRenderingGuidePage: React.FC = () => {
                 <Box component="a" href="#overlay" sx={{ color: nvText, fontWeight: 700 }}>
                   the overlay walkthrough
                 </Box>{' '}
-                — order is not cosmetic.
+                . Order is not cosmetic.
               </Typography>
             </StepRow>
           </Stack>
@@ -758,7 +775,7 @@ export const Dlss5NeuralRenderingGuidePage: React.FC = () => {
         <Stack spacing={2}>
           <Box sx={cardSx}>
             <Typography variant="body2" sx={{ ...proseSx, mb: 2 }}>
-              Press <strong>Home</strong> in-game to open ReShade. (First launch shows a tutorial —
+              Press <strong>Home</strong> in-game to open ReShade. (First launch shows a tutorial;
               click through it.) You will use three tabs:
             </Typography>
             <SettingsTable rows={OVERLAY_TABS} labelWidth={120} />
@@ -769,8 +786,8 @@ export const Dlss5NeuralRenderingGuidePage: React.FC = () => {
               Effect order (this matters)
             </Typography>
             <Typography variant="body2" sx={{ ...proseSx, mb: 1.5 }}>
-              In the Home tab, tick these two <strong>in this order</strong>. Drag entries to reorder
-              if they land wrong:
+              In the Home tab, tick these two <strong>in this order</strong>. Drag entries to
+              reorder if they land wrong:
             </Typography>
             <CodeBlock sx={{ mb: 1.5 }}>
               {`[x] MartysMods_Launchpad     <- motion vector provider, must be ABOVE
@@ -812,9 +829,9 @@ export const Dlss5NeuralRenderingGuidePage: React.FC = () => {
       <Section id="nr-panel" icon={<Tune />} title="The Neural Rendering add-on panel">
         <Stack spacing={2}>
           <Typography variant="body2" sx={proseSx}>
-            Overlay → <strong>Add-ons</strong> → <strong>DLSS 5 Neural Rendering</strong>. The status
-            line at the top is the single most useful diagnostic in the whole stack — read it before
-            touching any slider.
+            Overlay → <strong>Add-ons</strong> → <strong>DLSS 5 Neural Rendering</strong>. Read the
+            status line at the top before touching any slider. It is the most useful diagnostic in
+            the stack.
           </Typography>
 
           <Box sx={cardSx}>
@@ -872,10 +889,10 @@ export const Dlss5NeuralRenderingGuidePage: React.FC = () => {
 
           <Alert severity="info" icon={<Info />} sx={{ borderRadius: '16px' }}>
             <Typography variant="body2" sx={{ lineHeight: 1.7 }}>
-              <strong>Best way to actually see the effect:</strong> stand still, look at a character
-              face at close range, and tap <strong>F6</strong> repeatedly. Faces, hair and fabric
-              change most; terrain and sky barely move. If nothing changes at all, believe the logs
-              over your eyes — check the status line above.
+              <strong>To see it at all:</strong> stand still, look closely at a character&apos;s
+              face, and tap <strong>F6</strong>. Faces, hair and fabric change most; terrain and sky
+              barely move. If nothing changes, check the status line above rather than squinting
+              harder.
             </Typography>
           </Alert>
         </Stack>
@@ -885,9 +902,9 @@ export const Dlss5NeuralRenderingGuidePage: React.FC = () => {
       <Section id="depth-buffer" icon={<Layers />} title="Checking the depth buffer">
         <Box sx={cardSx}>
           <Typography variant="body2" sx={{ ...proseSx, mb: 2 }}>
-            The feeder needs <strong>scene depth</strong>. ESO can present several depth buffers and
-            ReShade&apos;s auto-selection sometimes picks a UI or shadow buffer instead — in which
-            case DLSS runs on garbage and the output looks wrong rather than absent.
+            The feeder needs <strong>scene depth</strong>. ESO presents several depth buffers and
+            ReShade sometimes auto-selects a UI or shadow buffer. DLSS then runs on garbage, so the
+            output looks wrong rather than missing.
           </Typography>
 
           <Typography component="h3" sx={{ fontWeight: 700, fontSize: '1rem', mb: 1 }}>
@@ -895,9 +912,9 @@ export const Dlss5NeuralRenderingGuidePage: React.FC = () => {
           </Typography>
           <Typography variant="body2" sx={{ ...proseSx, mb: 2 }}>
             Enable <code>DisplayDepth</code> in the effect list (it ships with every ReShade
-            install). You should see the world in greyscale — near objects one shade, distant terrain
-            another — with the UI flat and not part of the gradient. If the screen is blank white,
-            blank black, or shows only your interface, the wrong buffer is selected.
+            install). You should see the world in greyscale, near objects one shade and distant
+            terrain another, with the UI flat and not part of the gradient. If the screen is blank
+            white, blank black, or shows only your interface, the wrong buffer is selected.
           </Typography>
 
           <Typography component="h3" sx={{ fontWeight: 700, fontSize: '1rem', mb: 1 }}>
@@ -920,7 +937,7 @@ export const Dlss5NeuralRenderingGuidePage: React.FC = () => {
           <Typography variant="body2" sx={proseSx}>
             If depth flickers or disappears during combat, tick{' '}
             <strong>&ldquo;Copy depth buffer before clear operations&rdquo;</strong> in that same
-            panel. Once it looks right, turn DisplayDepth back off — leaving it on overwrites your
+            panel. Once it looks right, turn DisplayDepth back off; leaving it on overwrites your
             screen.
           </Typography>
           <Alert severity="success" icon={<CheckCircle />} sx={{ mt: 2, borderRadius: '12px' }}>
@@ -937,8 +954,8 @@ export const Dlss5NeuralRenderingGuidePage: React.FC = () => {
       <Section id="verify" icon={<CheckCircle />} title="Proving it works">
         <Box sx={cardSx}>
           <Typography variant="body2" sx={{ ...proseSx, mb: 2 }}>
-            Do not trust your eyes — the effect is subtle and easy to imagine. Both log files live in
-            the client folder. Play for about 30 seconds, then check them.
+            The effect is subtle and easy to imagine seeing. Trust the logs. Both live in the client
+            folder: play for 30 seconds, then read them.
           </Typography>
 
           <Typography component="h3" sx={{ fontWeight: 700, fontSize: '1rem', mb: 1 }}>
@@ -962,8 +979,8 @@ inline feature 18 evaluation succeeded (count=60, ...)`}
 
           <Alert severity="success" icon={<CheckCircle />} sx={{ borderRadius: '12px' }}>
             <Typography variant="body2" sx={{ lineHeight: 1.7 }}>
-              <strong>feature 18</strong> is the one that matters. <code>feature=1</code> is ordinary
-              DLSS/DLAA — if that is all you ever see, Neural Rendering is not running. The{' '}
+              <strong>feature 18</strong> is the one that matters. <code>feature=1</code> is
+              ordinary DLSS/DLAA. If that is all you ever see, Neural Rendering is not running. The{' '}
               <code>count=</code> value must climb across frames; a count stuck at 1 means it
               evaluated once and stopped.
             </Typography>
@@ -975,8 +992,8 @@ inline feature 18 evaluation succeeded (count=60, ...)`}
       <Section id="config" icon={<SettingsIcon />} title="Config file reference">
         <Box sx={cardSx}>
           <Typography variant="body2" sx={{ ...proseSx, mb: 2 }}>
-            You should not normally need these — the overlay writes them for you. They are here for
-            when you want to compare a working setup against a broken one.
+            The overlay writes these for you. They are here so you can diff a working setup against
+            a broken one.
           </Typography>
 
           <Typography component="h3" sx={{ fontWeight: 700, fontSize: '1rem', mb: 1 }}>
@@ -993,9 +1010,9 @@ NRSkinStructure=1.01
 NREnableUpscaling=1`}
           </CodeBlock>
           <Typography variant="body2" sx={{ ...proseSx, mb: 2.5 }}>
-            The add-on suggests <code>EnableHooks=1</code> when it cannot find guide dimensions —
-            that advice is for NVIDIA Streamline titles. <strong>ESO is not one.</strong> Leave it at
-            2; if NGX-only genuinely yields nothing, 1 is a last resort that can crash at boot.
+            The add-on suggests <code>EnableHooks=1</code> when it cannot find guide dimensions.
+            That advice is for NVIDIA Streamline titles. <strong>ESO is not one.</strong> Leave it
+            at 2; if NGX-only genuinely yields nothing, 1 is a last resort that can crash at boot.
           </Typography>
 
           <Typography component="h3" sx={{ fontWeight: 700, fontSize: '1rem', mb: 1 }}>
@@ -1014,7 +1031,7 @@ depth_inverted=-1  ; -1 = auto-detect
 flags=-1           ; -1 = auto`}
           </CodeBlock>
           <Typography variant="body2" sx={proseSx}>
-            The <code>-1</code> values mean auto-detect and are almost always right — the feeder logs
+            The <code>-1</code> values mean auto-detect and are almost always right; the feeder logs
             what it resolved them to.{' '}
             <strong>
               Do not hand-tune these unless a log line proves the auto-detection is wrong.
@@ -1028,8 +1045,7 @@ flags=-1           ; -1 = auto`}
       {/* ── Troubleshooting ──────────────────────────────────────────── */}
       <Section id="troubleshooting" icon={<Warning />} title="When it does not work">
         <Typography variant="body2" sx={{ ...proseSx, mb: 2 }}>
-          Work these in order. Each failure hides the next one, so a green result at one stage is
-          what unlocks diagnosing the stage after it.
+          Work top to bottom. Each failure masks the ones after it.
         </Typography>
         <Stack spacing={1.5}>
           {FAILURES.map((f, i) => (
@@ -1087,11 +1103,10 @@ flags=-1           ; -1 = auto`}
 after NR:   feed CPU 11.82 ms/frame |  63.9 fps | feed is 75% of the frame`}
           </CodeBlock>
           <Typography variant="body2" sx={proseSx}>
-            That is roughly half the framerate. Some of it is inherent — NR runs inference every
-            frame — but try a lighter <strong>NR Preset</strong> and a lower{' '}
-            <strong>NR Intensity</strong> before deciding the trade is not worth it. Results vary
-            considerably by GPU. The feeder prints its own cost every 600 frames, so you can measure
-            rather than guess.
+            Roughly half the framerate. NR runs inference on every frame, so some of that is
+            unavoidable, but try a lighter <strong>NR Preset</strong> and lower{' '}
+            <strong>NR Intensity</strong> before writing it off. The feeder prints its own cost
+            every 600 frames, so measure on your own card.
           </Typography>
         </Box>
       </Section>
@@ -1110,7 +1125,7 @@ after NR:   feed CPU 11.82 ms/frame |  63.9 fps | feed is 75% of the frame`}
           Stuck on a step?
         </Typography>
         <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
-          Bring your <code>dlss5-feed.log</code> and <code>ReShade.log</code> — they name the exact
+          Bring your <code>dlss5-feed.log</code> and <code>ReShade.log</code>. They name the exact
           failing stage.
         </Typography>
         <Stack
@@ -1273,6 +1288,101 @@ const StepRow: React.FC<{
   </Stack>
 );
 
+/**
+ * The four pipeline stages as a diagram. Runs left-to-right on desktop and
+ * top-to-bottom under sm, where four horizontal boxes would each be too narrow
+ * to hold a filename. The final stage is accented because it is the one the
+ * reader is trying to reach, and the one that silently never happens.
+ */
+const PipelineDiagram: React.FC = () => {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+  const accent = isDark ? NV_GREEN : NV_GREEN_TEXT_LIGHT;
+
+  return (
+    <Box
+      aria-hidden="true"
+      sx={{
+        display: 'flex',
+        flexDirection: { xs: 'column', sm: 'row' },
+        alignItems: 'stretch',
+        gap: 0.75,
+      }}
+    >
+      {PIPELINE.map((p, i) => {
+        const isLast = i === PIPELINE.length - 1;
+        return (
+          <React.Fragment key={p.stage}>
+            <Box
+              sx={{
+                flex: 1,
+                minWidth: 0,
+                px: 1.25,
+                py: 1,
+                borderRadius: '10px',
+                textAlign: { xs: 'left', sm: 'center' },
+                border: '1px solid',
+                borderColor: isLast
+                  ? isDark
+                    ? 'rgba(118,185,0,0.45)'
+                    : 'rgba(68,107,0,0.40)'
+                  : isDark
+                    ? 'rgba(255,255,255,0.10)'
+                    : 'rgba(15,23,42,0.12)',
+                background: isLast
+                  ? isDark
+                    ? 'rgba(118,185,0,0.10)'
+                    : 'rgba(118,185,0,0.07)'
+                  : isDark
+                    ? 'rgba(255,255,255,0.03)'
+                    : 'rgba(15,23,42,0.03)',
+              }}
+            >
+              <Typography
+                sx={{
+                  fontWeight: 700,
+                  fontSize: '0.8rem',
+                  lineHeight: 1.4,
+                  color: isLast ? accent : 'text.primary',
+                }}
+              >
+                {p.stage}
+              </Typography>
+              <Typography
+                sx={{
+                  fontFamily: MONO,
+                  fontSize: '0.68rem',
+                  lineHeight: 1.5,
+                  color: 'text.secondary',
+                  overflowWrap: 'anywhere',
+                }}
+              >
+                {p.by}
+              </Typography>
+            </Box>
+            {!isLast && (
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'text.secondary',
+                  fontSize: '0.9rem',
+                  lineHeight: 1,
+                  transform: { xs: 'rotate(90deg)', sm: 'none' },
+                  py: { xs: 0.25, sm: 0 },
+                }}
+              >
+                ›
+              </Box>
+            )}
+          </React.Fragment>
+        );
+      })}
+    </Box>
+  );
+};
+
 /** Italic aside under a step. Genuinely secondary, unlike the body copy. */
 const Note: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <Typography
@@ -1351,7 +1461,19 @@ const CodeBlock: React.FC<{
         <code>{children}</code>
       </Box>
       {copyable ? (
-        <Box sx={{ position: 'absolute', top: 6, right: 6 }}>
+        // The button floats over a horizontally scrolling region, so the block's
+        // right padding scrolls away with the content and cannot reserve space.
+        // An opaque backdrop keeps long log lines legible as they pass underneath.
+        <Box
+          sx={{
+            position: 'absolute',
+            top: 4,
+            right: 4,
+            borderRadius: '8px',
+            backdropFilter: 'blur(2px)',
+            background: isDark ? 'rgba(2,6,23,0.85)' : 'rgba(241,243,246,0.92)',
+          }}
+        >
           <CopyButton value={children} label={copyLabel ?? 'Copy'} />
         </Box>
       ) : null}
