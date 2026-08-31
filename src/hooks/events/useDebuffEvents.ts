@@ -25,6 +25,8 @@ interface UseDebuffEventsOptions {
 export function useDebuffEvents(options?: UseDebuffEventsOptions): {
   debuffEvents: DebuffEvent[];
   isDebuffEventsLoading: boolean;
+  debuffEventsStatus: 'idle' | 'loading' | 'succeeded' | 'failed';
+  debuffEventsError: string | null;
   selectedFight: FightFragment | null;
 } {
   const client = useEsoLogsClientInstance();
@@ -38,6 +40,8 @@ export function useDebuffEvents(options?: UseDebuffEventsOptions): {
     selectDebuffEventsEntryForContext(state, context),
   );
   const isDebuffEventsLoading = debuffEntry?.status === 'loading';
+  const debuffEventsStatus = debuffEntry?.status ?? 'idle';
+  const debuffEventsError = debuffEntry?.error ?? null;
 
   const restrictToFightWindow = options?.restrictToFightWindow ?? true;
 
@@ -55,8 +59,14 @@ export function useDebuffEvents(options?: UseDebuffEventsOptions): {
   }, [dispatch, context.reportCode, context.fightId, selectedFight, client, restrictToFightWindow]);
 
   return React.useMemo(
-    () => ({ debuffEvents, isDebuffEventsLoading, selectedFight }),
-    [debuffEvents, isDebuffEventsLoading, selectedFight],
+    () => ({
+      debuffEvents,
+      isDebuffEventsLoading,
+      debuffEventsStatus,
+      debuffEventsError,
+      selectedFight,
+    }),
+    [debuffEvents, isDebuffEventsLoading, debuffEventsStatus, debuffEventsError, selectedFight],
   );
 }
 

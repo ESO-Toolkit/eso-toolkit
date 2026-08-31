@@ -19,7 +19,12 @@ import {
   trimCache,
 } from '../utils/keyedCacheState';
 
-import { EVENT_CACHE_MAX_ENTRIES, EVENT_PAGE_LIMIT } from './constants';
+import {
+  EVENT_CACHE_MAX_ENTRIES,
+  EVENT_MAX_EVENTS_PER_STREAM,
+  EVENT_MAX_PAGES_PER_STREAM,
+  EVENT_PAGE_LIMIT,
+} from './constants';
 import { createCurrentRequest, isStaleResponse } from './utils/requestTracking';
 
 const logger = new Logger({ level: LogLevel.INFO, contextPrefix: 'CombatantInfoEvents' });
@@ -86,43 +91,69 @@ export const fetchCombatantInfoEvents = createAsyncThunk<
   { state: LocalRootState; rejectValue: string }
 >(
   'combatantInfoEvents/fetchCombatantInfoEvents',
-  async ({ reportCode, fight, client, restrictToFightWindow = true }) => {
+  async ({ reportCode, fight, client, restrictToFightWindow = true }, { signal }) => {
     // Fetch both friendly and enemy combatant info events
     const hostilityTypes = [HostilityType.Friendlies, HostilityType.Enemies];
-    let allEvents: LogEvent[] = [];
+    const eventChunks: LogEvent[][] = [];
 
     const initialStartTime = restrictToFightWindow ? fight.startTime : undefined;
     const finalEndTime = restrictToFightWindow ? (fight.endTime ?? undefined) : undefined;
 
     for (const hostilityType of hostilityTypes) {
+      let totalEvents = 0;
+      let pageCount = 0;
       let nextPageTimestamp: number | null = null;
 
       do {
+        signal.throwIfAborted();
+        if (pageCount >= EVENT_MAX_PAGES_PER_STREAM) {
+          throw new Error(
+            `Combatant info event pagination exceeded ${EVENT_MAX_PAGES_PER_STREAM} pages`,
+          );
+        }
+
+        const requestedStartTime = nextPageTimestamp ?? initialStartTime;
         const response: GetCombatantInfoEventsQuery = await client.query({
           query: GetCombatantInfoEventsDocument,
           fetchPolicy: 'no-cache',
+          context: { fetchOptions: { signal } },
           variables: {
             code: reportCode,
             fightIds: [Number(fight.id)],
-            startTime: nextPageTimestamp ?? initialStartTime,
+            startTime: requestedStartTime,
             endTime: finalEndTime,
             hostilityType: hostilityType,
             limit: EVENT_PAGE_LIMIT,
           },
         });
+        pageCount += 1;
 
         const page = response.reportData?.report?.events;
-        if (page?.data) {
-          allEvents = allEvents.concat(page.data);
+        if (page?.data?.length) {
+          totalEvents += page.data.length;
+          if (totalEvents > EVENT_MAX_EVENTS_PER_STREAM) {
+            throw new Error(
+              `Combatant info event pagination exceeded ${EVENT_MAX_EVENTS_PER_STREAM} events`,
+            );
+          }
+          eventChunks.push(page.data);
         }
-        nextPageTimestamp = page?.nextPageTimestamp ?? null;
-      } while (nextPageTimestamp);
+        const followingTimestamp = page?.nextPageTimestamp ?? null;
+        if (
+          followingTimestamp != null &&
+          requestedStartTime != null &&
+          followingTimestamp <= requestedStartTime
+        ) {
+          throw new Error('Combatant info event pagination cursor did not advance');
+        }
+        nextPageTimestamp = followingTimestamp;
+      } while (nextPageTimestamp != null);
     }
 
     // Filter to only combatant info events
-    const combatantInfoEvents = allEvents.filter(
-      (event) => event.type === 'combatantinfo',
-    ) as CombatantInfoEvent[];
+    const combatantInfoEvents = eventChunks
+      .flat()
+      .filter((event) => event.type === 'combatantinfo') as CombatantInfoEvent[];
     return combatantInfoEvents;
   },
   {

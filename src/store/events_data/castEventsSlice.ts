@@ -8,7 +8,7 @@ import {
   GetCastEventsQuery,
   HostilityType,
 } from '../../graphql/gql/graphql';
-import { BeginCastEvent, CastEvent, UnifiedCastEvent } from '../../types/combatlogEvents';
+import { CastEvent, LogEvent, UnifiedCastEvent } from '../../types/combatlogEvents';
 import { Logger, LogLevel } from '../../utils/logger';
 import {
   KeyedCacheState,
@@ -19,7 +19,12 @@ import {
   trimCache,
 } from '../utils/keyedCacheState';
 
-import { EVENT_CACHE_MAX_ENTRIES, EVENT_PAGE_LIMIT } from './constants';
+import {
+  EVENT_CACHE_MAX_ENTRIES,
+  EVENT_MAX_EVENTS_PER_STREAM,
+  EVENT_MAX_PAGES_PER_STREAM,
+  EVENT_PAGE_LIMIT,
+} from './constants';
 import { createCurrentRequest, isStaleResponse } from './utils/requestTracking';
 
 const logger = new Logger({ level: LogLevel.INFO, contextPrefix: 'CastEvents' });
@@ -85,7 +90,10 @@ export const fetchCastEvents = createAsyncThunk<
   { state: LocalRootState; rejectValue: string }
 >(
   'castEvents/fetchCastEvents',
-  async ({ reportCode, fight, client, restrictToFightWindow = true }) => {
+  async (
+    { reportCode, fight, client, restrictToFightWindow = true },
+    { rejectWithValue, signal },
+  ) => {
     logger.info('Fetching cast events', {
       reportCode,
       fightId: fight.id,
@@ -94,49 +102,80 @@ export const fetchCastEvents = createAsyncThunk<
 
     // Fetch both friendly and enemy cast events
     const hostilityTypes = [HostilityType.Friendlies, HostilityType.Enemies];
-    let allEvents: (CastEvent | BeginCastEvent)[] = [];
+    const eventChunks: LogEvent[][] = [];
 
     const initialStartTime = restrictToFightWindow ? fight.startTime : undefined;
     const finalEndTime = restrictToFightWindow ? (fight.endTime ?? undefined) : undefined;
 
-    for (const hostilityType of hostilityTypes) {
-      let nextPageTimestamp: number | null = null;
-      let pageCount = 0;
+    try {
+      for (const hostilityType of hostilityTypes) {
+        let nextPageTimestamp: number | null = null;
+        let pageCount = 0;
+        let streamEventCount = 0;
 
-      do {
-        pageCount++;
-        const response: GetCastEventsQuery = await client.query({
-          query: GetCastEventsDocument,
-          fetchPolicy: 'no-cache',
-          variables: {
-            code: reportCode,
-            fightIds: [Number(fight.id)],
-            startTime: nextPageTimestamp ?? initialStartTime,
-            endTime: finalEndTime,
-            hostilityType: hostilityType,
-            limit: EVENT_PAGE_LIMIT,
-          },
-        });
+        do {
+          signal.throwIfAborted();
+          if (pageCount >= EVENT_MAX_PAGES_PER_STREAM) {
+            throw new Error(`Cast event pagination exceeded ${EVENT_MAX_PAGES_PER_STREAM} pages`);
+          }
 
-        const page = response.reportData?.report?.events;
-        if (page?.data) {
-          allEvents = allEvents.concat(page.data);
-          logger.info(`Fetched cast events page ${pageCount} for ${hostilityType}`, {
-            reportCode,
-            fightId: fight.id,
-            hostilityType,
-            pageCount,
-            eventsInPage: page.data.length,
-            totalEvents: allEvents.length,
+          const requestedStartTime = nextPageTimestamp ?? initialStartTime;
+          const response: GetCastEventsQuery = await client.query({
+            query: GetCastEventsDocument,
+            fetchPolicy: 'no-cache',
+            context: { fetchOptions: { signal } },
+            variables: {
+              code: reportCode,
+              fightIds: [Number(fight.id)],
+              startTime: requestedStartTime,
+              endTime: finalEndTime,
+              hostilityType: hostilityType,
+              limit: EVENT_PAGE_LIMIT,
+            },
           });
-        }
-        nextPageTimestamp = page?.nextPageTimestamp ?? null;
-      } while (nextPageTimestamp);
+          pageCount += 1;
+
+          const page = response.reportData?.report?.events;
+          if (page?.data?.length) {
+            streamEventCount += page.data.length;
+            if (streamEventCount > EVENT_MAX_EVENTS_PER_STREAM) {
+              throw new Error(
+                `Cast event pagination exceeded ${EVENT_MAX_EVENTS_PER_STREAM} events`,
+              );
+            }
+            eventChunks.push(page.data);
+            logger.info(`Fetched cast events page ${pageCount} for ${hostilityType}`, {
+              reportCode,
+              fightId: fight.id,
+              hostilityType,
+              pageCount,
+              eventsInPage: page.data.length,
+              streamEventCount,
+            });
+          }
+
+          const followingTimestamp = page?.nextPageTimestamp ?? null;
+          if (
+            followingTimestamp != null &&
+            requestedStartTime != null &&
+            followingTimestamp <= requestedStartTime
+          ) {
+            throw new Error('Cast event pagination cursor did not advance');
+          }
+          nextPageTimestamp = followingTimestamp;
+        } while (nextPageTimestamp != null);
+      }
+    } catch (error) {
+      return rejectWithValue(
+        error instanceof Error ? error.message : 'Failed to fetch cast events',
+      );
     }
+
+    const allEvents = eventChunks.flat();
 
     // Filter to only cast events
     const castEvents = allEvents.filter(
-      (event) => !event.fake && (event.type === 'begincast' || event.type === 'cast'),
+      (event) => (event.type === 'begincast' || event.type === 'cast') && !event.fake,
     ) as CastEvent[];
 
     logger.info('Cast events fetch completed', {
@@ -295,7 +334,7 @@ const castEventsSlice = createSlice({
           return;
         }
         entry.status = 'failed';
-        entry.error = action.error.message || 'Failed to fetch cast events';
+        entry.error = action.payload ?? action.error.message ?? 'Failed to fetch cast events';
         entry.currentRequest = null;
         touchAccessOrder(state, key);
       });

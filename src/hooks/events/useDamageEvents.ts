@@ -26,6 +26,8 @@ interface UseDamageEventsOptions {
 export function useDamageEvents(options?: UseDamageEventsOptions): {
   damageEvents: DamageEvent[];
   isDamageEventsLoading: boolean;
+  damageEventsStatus: 'idle' | 'loading' | 'succeeded' | 'failed';
+  damageEventsError: string | null;
   selectedFight: FightFragment | null;
 } {
   const { client, isReady } = useEsoLogsClientContext();
@@ -40,6 +42,8 @@ export function useDamageEvents(options?: UseDamageEventsOptions): {
     selectDamageEventsEntryForContext(state, context),
   );
   const isDamageEventsLoading = damageEntry?.status === 'loading';
+  const damageEventsStatus = damageEntry?.status ?? 'idle';
+  const damageEventsError = damageEntry?.error ?? null;
 
   const restrictToFightWindow = options?.restrictToFightWindow ?? true;
 
@@ -65,8 +69,14 @@ export function useDamageEvents(options?: UseDamageEventsOptions): {
   ]);
 
   return React.useMemo(
-    () => ({ damageEvents, isDamageEventsLoading, selectedFight }),
-    [damageEvents, isDamageEventsLoading, selectedFight],
+    () => ({
+      damageEvents,
+      isDamageEventsLoading,
+      damageEventsStatus,
+      damageEventsError,
+      selectedFight,
+    }),
+    [damageEvents, isDamageEventsLoading, damageEventsStatus, damageEventsError, selectedFight],
   );
 }
 

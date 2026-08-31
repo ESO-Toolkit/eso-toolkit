@@ -3,10 +3,11 @@ import { defineConfig, devices } from '@playwright/test';
 import { calculateOptimalWorkers } from '../tests/utils/worker-config';
 import { ciBlockExternalHeaders } from '../tests/utils/playwright-shared';
 
-const rawSmokePort = process.env.SMOKE_PORT || process.env.PORT || '3000';
+const externalSmokeBaseUrl = process.env.SMOKE_BASE_URL;
+const rawSmokePort = process.env.SMOKE_PORT || process.env.PORT || '3006';
 const parsedSmokePort = Number.parseInt(rawSmokePort, 10);
-const smokePort = Number.isNaN(parsedSmokePort) ? 3000 : parsedSmokePort;
-const smokeBaseUrl = process.env.SMOKE_BASE_URL || `http://localhost:${smokePort}`;
+const smokePort = Number.isNaN(parsedSmokePort) ? 3006 : parsedSmokePort;
+const smokeBaseUrl = externalSmokeBaseUrl || `http://localhost:${smokePort}`;
 
 /**
  * Playwright configuration for smoke tests - minimal, fast e2e tests for PR checks
@@ -19,10 +20,7 @@ export default defineConfig({
   testMatch: ['**/home.spec.ts', '**/*.smoke.spec.ts'],
 
   // Exclude scribing detection tests from PR smoke tests (run in nightly instead)
-  testIgnore: [
-    '**/shattering-knife-simple.smoke.spec.ts',
-    '**/scribing-regression.smoke.spec.ts',
-  ],
+  testIgnore: ['**/shattering-knife-simple.smoke.spec.ts', '**/scribing-regression.smoke.spec.ts'],
 
   /* Run tests in files in parallel */
   fullyParallel: false, // Keep sequential for faster CI
@@ -34,11 +32,13 @@ export default defineConfig({
   retries: 0,
 
   /* Conservative worker count for smoke tests - prioritize fast startup */
-  workers: process.env.CI ? calculateOptimalWorkers({ 
-    maxWorkers: 2, 
-    minWorkers: 1,
-    memoryPerWorker: 800, // Lower since smoke tests are lighter
-  }) : 1,
+  workers: process.env.CI
+    ? calculateOptimalWorkers({
+        maxWorkers: 2,
+        minWorkers: 1,
+        memoryPerWorker: 800, // Lower since smoke tests are lighter
+      })
+    : 1,
 
   /* Increased timeout for smoke tests to handle slower CI environments */
   timeout: 120000, // 2 minutes per test
@@ -89,23 +89,25 @@ export default defineConfig({
   ],
 
   /* Run your local dev server before starting the tests */
-  webServer: {
-    command: 'npm start',
-    url: smokeBaseUrl,
-    reuseExistingServer: !process.env.CI,
-    timeout: 300000, // 5 minutes timeout for server startup
-    stdout: 'pipe',
-    stderr: 'pipe',
-    env: {
-      // Optimize dev server for testing
-      NODE_ENV: 'development', // Use development instead of test
-      BROWSER: 'none',
-      // Disable source maps for faster builds
-      GENERATE_SOURCEMAP: 'false',
-      // Set the port for Vite
-  PORT: smokePort.toString(),
-    },
-    // Additional options for better server startup detection
-    cwd: process.cwd(),
-  },
+  webServer: externalSmokeBaseUrl
+    ? undefined
+    : {
+        command: 'npm start',
+        url: smokeBaseUrl,
+        reuseExistingServer: false,
+        timeout: 300000, // 5 minutes timeout for server startup
+        stdout: 'pipe',
+        stderr: 'pipe',
+        env: {
+          // Optimize dev server for testing
+          NODE_ENV: 'development', // Use development instead of test
+          BROWSER: 'none',
+          // Disable source maps for faster builds
+          GENERATE_SOURCEMAP: 'false',
+          // Set the port for Vite
+          PORT: smokePort.toString(),
+        },
+        // Additional options for better server startup detection
+        cwd: process.cwd(),
+      },
 });

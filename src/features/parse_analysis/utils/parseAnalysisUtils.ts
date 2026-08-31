@@ -302,6 +302,14 @@ const MAX_CHANNEL_DURATION_MS = 5000;
 // nor contribute its inflated timing to the weave-timing average.
 const WEAVE_WINDOW_MS = 1000;
 
+function isWithinFightWindow(
+  timestamp: number,
+  fightStartTime: number,
+  fightEndTime: number,
+): boolean {
+  return timestamp >= fightStartTime && timestamp <= fightEndTime;
+}
+
 /**
  * Detect food/drink buffs on a player
  * Checks both buff events and combatant info auras
@@ -481,12 +489,19 @@ export function calculateCPM(
   fightEndTime: number,
   abilityMapper?: AbilityNameMapper,
 ): number {
-  const playerCasts = filterPlayerCasts(castEvents, playerId, abilityMapper, {
-    excludeLightAttacks: false,
-    excludeHeavyAttacks: false,
-    excludeSynergies: true,
-    excludeWeaponSwap: true,
-  });
+  const playerCasts = filterPlayerCasts(
+    castEvents.filter((event) =>
+      isWithinFightWindow(event.timestamp, fightStartTime, fightEndTime),
+    ),
+    playerId,
+    abilityMapper,
+    {
+      excludeLightAttacks: false,
+      excludeHeavyAttacks: false,
+      excludeSynergies: true,
+      excludeWeaponSwap: true,
+    },
+  );
 
   // Debug: Show distinct abilities cast
   const abilityCounts = new Map<number, number>();
@@ -592,18 +607,29 @@ export function calculateActivePercentage(
     };
   }
 
-  const relevantCasts = filterPlayerCasts(castEvents, playerId, abilityMapper, {
-    excludeLightAttacks: true,
-    excludeHeavyAttacks: false,
-    excludeSynergies: true,
-    excludeWeaponSwap: true,
-  });
+  const relevantCasts = filterPlayerCasts(
+    castEvents.filter((event) =>
+      isWithinFightWindow(event.timestamp, fightStartTime, fightEndTime),
+    ),
+    playerId,
+    abilityMapper,
+    {
+      excludeLightAttacks: true,
+      excludeHeavyAttacks: false,
+      excludeSynergies: true,
+      excludeWeaponSwap: true,
+    },
+  );
 
   const baseActiveMs = relevantCasts.length * GLOBAL_COOLDOWN_MS;
 
   const damageEventsByTrack = new Map<number, DamageEvent[]>();
   for (const event of damageEvents) {
-    if (event.sourceID !== playerId || !event.sourceIsFriendly) {
+    if (
+      event.sourceID !== playerId ||
+      !event.sourceIsFriendly ||
+      !isWithinFightWindow(event.timestamp, fightStartTime, fightEndTime)
+    ) {
       continue;
     }
 
@@ -690,7 +716,9 @@ export function calculateDPS(
   const playerDamageEvents = damageEvents.filter(
     (event) =>
       event.sourceIsFriendly &&
+      event.targetIsFriendly === false &&
       event.sourceID != null &&
+      isWithinFightWindow(event.timestamp, fightStartTime, fightEndTime) &&
       (event.sourceID === playerId ||
         (petOwnerByActorId !== undefined && petOwnerByActorId[event.sourceID] === playerId)),
   );
@@ -1784,16 +1812,17 @@ export function analyzeDotUptime(
   fightStartTime: number,
   fightEndTime: number,
   abilityMapper?: AbilityNameMapper,
+  petOwnerByActorId?: Record<number, number>,
 ): DotUptimeResult {
   const DOT_GAP_THRESHOLD_MS = 3000; // If no tick for 3s, DoT is considered down
-  const fightDurationMs = fightEndTime - fightStartTime;
+  const fightDurationMs = Math.max(0, fightEndTime - fightStartTime);
 
   const playerDamage = damageEvents.filter(
     (event) =>
-      event.sourceID === playerId &&
       event.sourceIsFriendly &&
-      event.timestamp >= fightStartTime &&
-      event.timestamp <= fightEndTime,
+      event.targetIsFriendly === false &&
+      isWithinFightWindow(event.timestamp, fightStartTime, fightEndTime) &&
+      (event.sourceID === playerId || petOwnerByActorId?.[event.sourceID] === playerId),
   );
 
   // Split into DoT and direct damage
@@ -1817,26 +1846,29 @@ export function analyzeDotUptime(
   for (const [abilityId, ticks] of dotTicksByAbility.entries()) {
     ticks.sort((a, b) => a.timestamp - b.timestamp);
 
-    // Calculate active windows
+    // Calculate active windows, clipping each inferred grace period to the
+    // selected fight. Clamping only the aggregate would overcount separated
+    // windows that end near the fight boundary.
     let totalActiveMs = 0;
     let windowStart = ticks[0].timestamp;
     let lastTick = ticks[0].timestamp;
 
+    const closeWindow = (): void => {
+      const clippedStart = Math.max(fightStartTime, windowStart);
+      const clippedEnd = Math.min(fightEndTime, lastTick + DOT_GAP_THRESHOLD_MS);
+      totalActiveMs += Math.max(0, clippedEnd - clippedStart);
+    };
+
     for (let i = 1; i < ticks.length; i++) {
       const gap = ticks[i].timestamp - lastTick;
       if (gap > DOT_GAP_THRESHOLD_MS) {
-        // Window ended; add a grace period after the last tick
-        totalActiveMs += lastTick - windowStart + DOT_GAP_THRESHOLD_MS;
+        closeWindow();
         windowStart = ticks[i].timestamp;
       }
       lastTick = ticks[i].timestamp;
     }
 
-    // Close last window
-    totalActiveMs += lastTick - windowStart + DOT_GAP_THRESHOLD_MS;
-
-    // Clamp to fight duration
-    totalActiveMs = Math.min(totalActiveMs, fightDurationMs);
+    closeWindow();
 
     const uptimePercentage = fightDurationMs > 0 ? (totalActiveMs / fightDurationMs) * 100 : 0;
     const name = getAbilityNameFromMapper(abilityId, abilityMapper) || `Unknown (${abilityId})`;
@@ -1854,7 +1886,7 @@ export function analyzeDotUptime(
   dotAbilities.sort((a, b) => b.tickCount - a.tickCount);
 
   // Overall DoT uptime: merge all DoT windows
-  const allDotTicks = dotEvents.sort((a, b) => a.timestamp - b.timestamp);
+  const allDotTicks = [...dotEvents].sort((a, b) => a.timestamp - b.timestamp);
   let overallActiveMs = 0;
   if (allDotTicks.length > 0) {
     let windowStart = allDotTicks[0].timestamp;
@@ -1862,12 +1894,16 @@ export function analyzeDotUptime(
     for (let i = 1; i < allDotTicks.length; i++) {
       const gap = allDotTicks[i].timestamp - lastTick;
       if (gap > DOT_GAP_THRESHOLD_MS) {
-        overallActiveMs += lastTick - windowStart + DOT_GAP_THRESHOLD_MS;
+        const clippedStart = Math.max(fightStartTime, windowStart);
+        const clippedEnd = Math.min(fightEndTime, lastTick + DOT_GAP_THRESHOLD_MS);
+        overallActiveMs += Math.max(0, clippedEnd - clippedStart);
         windowStart = allDotTicks[i].timestamp;
       }
       lastTick = allDotTicks[i].timestamp;
     }
-    overallActiveMs += lastTick - windowStart + DOT_GAP_THRESHOLD_MS;
+    const clippedStart = Math.max(fightStartTime, windowStart);
+    const clippedEnd = Math.min(fightEndTime, lastTick + DOT_GAP_THRESHOLD_MS);
+    overallActiveMs += Math.max(0, clippedEnd - clippedStart);
     overallActiveMs = Math.min(overallActiveMs, fightDurationMs);
   }
 

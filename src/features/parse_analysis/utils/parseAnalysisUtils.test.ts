@@ -24,6 +24,7 @@ import {
   calculateCPM,
   calculateActivePercentage,
   calculateDPS,
+  analyzeDotUptime,
   analyzeWeaving,
   detectTrialDummyBuffs,
   LIGHT_ATTACK_ABILITY_IDS,
@@ -165,6 +166,32 @@ describe('parseAnalysisUtils', () => {
 
       // 2 casts in 60 seconds = 2 CPM
       expect(cpm).toBe(2);
+    });
+
+    it('ignores casts from other fights in the same report', () => {
+      const createCast = (timestamp: number, fight: number): CastEvent => ({
+        timestamp,
+        type: 'cast',
+        sourceID: PLAYER_ID,
+        sourceIsFriendly: true,
+        targetID: 2,
+        targetIsFriendly: false,
+        abilityGameID: 12345,
+        fight,
+      });
+
+      const cpm = calculateCPM(
+        [
+          createCast(FIGHT_START - 1000, 1),
+          createCast(FIGHT_START + 1000, 2),
+          createCast(FIGHT_END + 1000, 3),
+        ],
+        PLAYER_ID,
+        FIGHT_START,
+        FIGHT_END,
+      );
+
+      expect(cpm).toBe(1);
     });
 
     it('should return 0 CPM for zero duration', () => {
@@ -330,6 +357,43 @@ describe('parseAnalysisUtils', () => {
       expect(result.durationMs).toBe(60000);
     });
 
+    it('counts only hostile-target damage inside the selected fight window', () => {
+      const createDamage = (
+        timestamp: number,
+        amount: number,
+        targetIsFriendly: boolean,
+      ): DamageEvent => ({
+        timestamp,
+        type: 'damage',
+        sourceID: PLAYER_ID,
+        sourceIsFriendly: true,
+        targetID: 2,
+        targetIsFriendly,
+        abilityGameID: 12345,
+        fight: 1,
+        amount,
+        hitType: 1,
+        castTrackID: 1,
+        sourceResources: mockResources,
+        targetResources: mockResources,
+      });
+
+      const result = calculateDPS(
+        [
+          createDamage(FIGHT_START - 1, 1000, false),
+          createDamage(FIGHT_START + 1000, 2000, false),
+          createDamage(FIGHT_START + 2000, 4000, true),
+          createDamage(FIGHT_END + 1, 8000, false),
+        ],
+        PLAYER_ID,
+        FIGHT_START,
+        FIGHT_END,
+      );
+
+      expect(result.totalDamage).toBe(2000);
+      expect(result.dps).toBeCloseTo(2000 / 60, 5);
+    });
+
     describe('calculateActivePercentage', () => {
       const createCast = (
         timestamp: number,
@@ -425,6 +489,30 @@ describe('parseAnalysisUtils', () => {
 
         expect(result.activePercentage).toBeCloseTo(60, 5);
         expect(result.downtimeSeconds).toBeCloseTo(2, 5);
+      });
+
+      it('ignores casts and channel ticks outside the selected fight window', () => {
+        const inFightTrackId = 70;
+        const result = calculateActivePercentage(
+          [
+            createCast(FIGHT_START - 1000, 8001, 69),
+            createCast(FIGHT_START + 1000, 8001, inFightTrackId),
+            createCast(FIGHT_START + 6000, 8001, 71),
+          ],
+          [
+            createDamage(FIGHT_START + 1500, 8001, inFightTrackId),
+            createDamage(FIGHT_START + 2100, 8001, inFightTrackId),
+            createDamage(FIGHT_START + 7000, 8001, inFightTrackId),
+          ],
+          PLAYER_ID,
+          FIGHT_START,
+          FIGHT_START + 5000,
+        );
+
+        expect(result.totalCasts).toBe(1);
+        expect(result.baseActiveSeconds).toBe(1);
+        expect(result.channelExtraSeconds).toBeCloseTo(0.1, 5);
+        expect(result.activePercentage).toBeCloseTo(22, 5);
       });
 
       it('adds channel duration beyond the global cooldown', () => {
@@ -688,6 +776,77 @@ describe('parseAnalysisUtils', () => {
 
         expect(result.totalDamage).toBe(10000);
       });
+    });
+  });
+
+  describe('analyzeDotUptime', () => {
+    const resources = {
+      hitPoints: 30000,
+      maxHitPoints: 30000,
+      magicka: 10000,
+      maxMagicka: 10000,
+      stamina: 15000,
+      maxStamina: 15000,
+      ultimate: 100,
+      maxUltimate: 500,
+      werewolf: 0,
+      maxWerewolf: 0,
+      absorb: 0,
+      championPoints: 3600,
+      x: 0,
+      y: 0,
+      facing: 0,
+    };
+    const dot = (timestamp: number, sourceID = PLAYER_ID): DamageEvent => ({
+      timestamp,
+      type: 'damage',
+      sourceID,
+      sourceIsFriendly: true,
+      targetID: 2,
+      targetIsFriendly: false,
+      abilityGameID: 12345,
+      fight: 1,
+      amount: 100,
+      hitType: 1,
+      castTrackID: 1,
+      sourceResources: resources,
+      targetResources: resources,
+      tick: true,
+    });
+
+    it('clips inferred DoT uptime to the selected fight boundary', () => {
+      const result = analyzeDotUptime(
+        [dot(FIGHT_START + 59000)],
+        PLAYER_ID,
+        FIGHT_START,
+        FIGHT_END,
+      );
+
+      expect(result.dotAbilities[0].totalActiveMs).toBe(1000);
+      expect(result.dotAbilities[0].uptimePercentage).toBeCloseTo(100 / 60, 5);
+      expect(result.overallDotUptimePercentage).toBeCloseTo(100 / 60, 5);
+    });
+
+    it('attributes pet DoT ticks to their owner and excludes other sources', () => {
+      const petId = 50;
+      const result = analyzeDotUptime(
+        [dot(FIGHT_START + 1000, petId), dot(FIGHT_START + 2000, 999)],
+        PLAYER_ID,
+        FIGHT_START,
+        FIGHT_END,
+        undefined,
+        { [petId]: PLAYER_ID },
+      );
+
+      expect(result.totalDotDamage).toBe(100);
+      expect(result.dotAbilities[0].tickCount).toBe(1);
+    });
+
+    it('returns finite zero uptime for an invalid fight duration', () => {
+      const result = analyzeDotUptime([dot(FIGHT_START)], PLAYER_ID, FIGHT_END, FIGHT_START);
+
+      expect(result.dotAbilities).toEqual([]);
+      expect(result.overallDotUptimePercentage).toBe(0);
     });
   });
 

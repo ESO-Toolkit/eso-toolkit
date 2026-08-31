@@ -10,6 +10,7 @@
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import CloseIcon from '@mui/icons-material/Close';
 import ErrorIcon from '@mui/icons-material/Error';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import FastfoodIcon from '@mui/icons-material/Fastfood';
@@ -319,15 +320,23 @@ const ParseAnalysisPageContent: React.FC = () => {
   const { reportId: contextReportId, fightId: contextFightId } = useSelectedReportAndFight();
   const [logUrl, setLogUrl] = useState('');
   const abilityMapper = useAbilityIdMapper();
-  const { castEvents, isCastEventsLoading, isCastEventsLoaded } = useCastEvents({
-    restrictToFightWindow: false,
-  });
-  const { damageEvents, isDamageEventsLoading } = useDamageEvents({ restrictToFightWindow: false });
-  const { friendlyBuffEvents } = useFriendlyBuffEvents({ restrictToFightWindow: false });
-  const { combatantInfoEvents, isCombatantInfoEventsLoading } = useCombatantInfoEvents({
-    restrictToFightWindow: false,
-  });
-  const { debuffEvents, isDebuffEventsLoading } = useDebuffEvents({ restrictToFightWindow: false });
+  const { castEvents, isCastEventsLoading, castEventsStatus, castEventsError } = useCastEvents();
+  const { damageEvents, isDamageEventsLoading, damageEventsStatus, damageEventsError } =
+    useDamageEvents();
+  const {
+    friendlyBuffEvents,
+    isFriendlyBuffEventsLoading,
+    friendlyBuffEventsStatus,
+    friendlyBuffEventsError,
+  } = useFriendlyBuffEvents();
+  const {
+    combatantInfoEvents,
+    isCombatantInfoEventsLoading,
+    combatantInfoEventsStatus,
+    combatantInfoEventsError,
+  } = useCombatantInfoEvents();
+  const { debuffEvents, isDebuffEventsLoading, debuffEventsStatus, debuffEventsError } =
+    useDebuffEvents();
 
   const createInitialParseState = useCallback(
     (): ParseAnalysisState => ({
@@ -399,6 +408,10 @@ const ParseAnalysisPageContent: React.FC = () => {
   // Track the last report/fight combo we auto-loaded from URL parameters
   const lastAutoLoadedContextRef = React.useRef<string | null>(null);
 
+  // Invalidates asynchronous work from an older report/fight selection. Without
+  // this guard, a slow request can overwrite a newer analysis after navigation.
+  const analysisRunRef = React.useRef(0);
+
   // Modal state for weave details
   const [weaveDetailsOpen, setWeaveDetailsOpen] = useState(false);
 
@@ -433,8 +446,10 @@ const ParseAnalysisPageContent: React.FC = () => {
 
   // Track when we're waiting for events to load for analysis
   const [pendingAnalysis, setPendingAnalysis] = useState<{
+    runId: number;
     playerId: number;
     playerName: string;
+    fightName: string;
     fightStartTime: number;
     fightEndTime: number;
     dummyId: number; // Trial dummy ID for buff analysis
@@ -461,6 +476,9 @@ const ParseAnalysisPageContent: React.FC = () => {
   // Core analysis function - fetches fight/player data and triggers event loading
   const analyzeReport = useCallback(
     async (reportId: string, fightId: string | null): Promise<void> => {
+      const runId = ++analysisRunRef.current;
+      const isCurrentRun = (): boolean => analysisRunRef.current === runId;
+
       // Check if client is ready
       if (!client || !isReady || !isLoggedIn) {
         logger.warn(
@@ -468,19 +486,28 @@ const ParseAnalysisPageContent: React.FC = () => {
         );
         setState((prev) => ({
           ...prev,
+          loading: false,
           error: 'Please log in to analyze reports',
         }));
         return;
       }
 
       // Step 1: Fetch report data to get fights
-      const reportResponse = await client.query<GetReportByCodeQuery>({
-        query: GetReportByCodeDocument,
-        variables: {
-          code: reportId,
-        },
-        fetchPolicy: 'no-cache',
-      });
+      let reportResponse: GetReportByCodeQuery;
+      try {
+        reportResponse = await client.query<GetReportByCodeQuery>({
+          query: GetReportByCodeDocument,
+          variables: {
+            code: reportId,
+          },
+          fetchPolicy: 'no-cache',
+        });
+      } catch (error) {
+        if (!isCurrentRun()) return;
+        throw error;
+      }
+
+      if (!isCurrentRun()) return;
 
       const report = reportResponse.reportData?.report;
       if (!report || !report.fights || report.fights.length === 0) {
@@ -561,18 +588,27 @@ const ParseAnalysisPageContent: React.FC = () => {
       const targetPath = `/parse-analysis/${reportId}/${selectedFight.id}`;
       if (window.location.pathname !== targetPath) {
         logger.debug('Updating URL to fight-specific path', { targetPath });
+        lastAutoLoadedContextRef.current = `${reportId}:${selectedFight.id}`;
         navigate(targetPath, { replace: true });
       }
 
       // Step 2: Fetch player data to get the main player
-      const playersResponse = await client.query<GetPlayersForReportQuery>({
-        query: GetPlayersForReportDocument,
-        variables: {
-          code: reportId,
-          fightIDs: [selectedFight.id],
-        },
-        fetchPolicy: 'no-cache',
-      });
+      let playersResponse: GetPlayersForReportQuery;
+      try {
+        playersResponse = await client.query<GetPlayersForReportQuery>({
+          query: GetPlayersForReportDocument,
+          variables: {
+            code: reportId,
+            fightIDs: [selectedFight.id],
+          },
+          fetchPolicy: 'no-cache',
+        });
+      } catch (error) {
+        if (!isCurrentRun()) return;
+        throw error;
+      }
+
+      if (!isCurrentRun()) return;
 
       const rawPlayerDetails = playersResponse.reportData?.report?.playerDetails;
       const playerDetailsGroup = extractPlayerDetailsGroup(rawPlayerDetails);
@@ -669,8 +705,10 @@ const ParseAnalysisPageContent: React.FC = () => {
 
       // Set pending analysis - this will trigger the useEffect to run analysis once events load
       setPendingAnalysis({
+        runId,
         playerId: mainPlayerId,
         playerName: mainPlayerName,
+        fightName: selectedFight.name || `Fight ${selectedFight.id}`,
         fightStartTime,
         fightEndTime,
         dummyId,
@@ -684,10 +722,15 @@ const ParseAnalysisPageContent: React.FC = () => {
     logger.debug('Parse analysis effect status', {
       hasPendingAnalysis: !!pendingAnalysis,
       isCastEventsLoading,
-      isCastEventsLoaded,
+      castEventsStatus,
       isDamageEventsLoading,
+      damageEventsStatus,
+      isFriendlyBuffEventsLoading,
+      friendlyBuffEventsStatus,
       isCombatantInfoEventsLoading,
+      combatantInfoEventsStatus,
       isDebuffEventsLoading,
+      debuffEventsStatus,
       castEventsCount: castEvents.length,
       damageEventsCount: damageEvents.length,
       buffEventsCount: friendlyBuffEvents.length,
@@ -704,8 +747,10 @@ const ParseAnalysisPageContent: React.FC = () => {
     // gracefully to player-only DPS.)
     if (
       !pendingAnalysis ||
+      pendingAnalysis.runId !== analysisRunRef.current ||
       isCastEventsLoading ||
       isDamageEventsLoading ||
+      isFriendlyBuffEventsLoading ||
       isCombatantInfoEventsLoading ||
       isDebuffEventsLoading ||
       isMasterDataLoading
@@ -713,11 +758,39 @@ const ParseAnalysisPageContent: React.FC = () => {
       return;
     }
 
-    // IMPORTANT: We need cast events to be fully loaded before running analysis.
-    // castEvents may legitimately be empty (e.g. no cast data for a fight),
-    // so we check isCastEventsLoaded (succeeded/failed) rather than castEvents.length.
-    if (!isCastEventsLoaded) {
-      logger.debug('Cast events not yet available; delaying analysis until next update');
+    const requiredEventStreams = [
+      { name: 'cast events', status: castEventsStatus, error: castEventsError },
+      { name: 'damage events', status: damageEventsStatus, error: damageEventsError },
+      {
+        name: 'friendly buff events',
+        status: friendlyBuffEventsStatus,
+        error: friendlyBuffEventsError,
+      },
+      {
+        name: 'combatant information',
+        status: combatantInfoEventsStatus,
+        error: combatantInfoEventsError,
+      },
+      { name: 'debuff events', status: debuffEventsStatus, error: debuffEventsError },
+    ] as const;
+    const failedStream = requiredEventStreams.find((stream) => stream.status === 'failed');
+
+    if (failedStream) {
+      logger.error('Parse analysis stopped because required event data failed to load', undefined, {
+        stream: failedStream.name,
+        error: failedStream.error,
+      });
+      setState((prev) => ({
+        ...prev,
+        loading: false,
+        error: `Unable to load complete ${failedStream.name}. ${failedStream.error ?? 'Please retry the analysis.'}`,
+      }));
+      setPendingAnalysis(null);
+      return;
+    }
+
+    if (requiredEventStreams.some((stream) => stream.status !== 'succeeded')) {
+      logger.debug('Required event data is not complete; delaying analysis');
       return;
     }
 
@@ -729,7 +802,7 @@ const ParseAnalysisPageContent: React.FC = () => {
       debuffEvents: debuffEvents.length,
     });
 
-    const { playerId, fightStartTime, fightEndTime, dummyId } = pendingAnalysis;
+    const { playerId, fightName, fightStartTime, fightEndTime, dummyId } = pendingAnalysis;
 
     logger.debug('Pending analysis context', {
       playerId,
@@ -864,6 +937,7 @@ const ParseAnalysisPageContent: React.FC = () => {
       fightStartTime,
       fightEndTime,
       abilityMapper,
+      petOwnerByActorId,
     );
     const mundusResult = detectMundusStone(combatantInfoEvents, playerId);
     const resourceSustainResult = analyzeResourceSustain(
@@ -875,7 +949,7 @@ const ParseAnalysisPageContent: React.FC = () => {
     const penCritCapResult = estimatePenCritCap(combatantInfoEvents, playerId);
 
     const parseChecklist = buildParseChecklist({
-      fightName: state.fightName,
+      fightName,
       foodResult,
       activeTimeResult,
       cpm,
@@ -925,19 +999,29 @@ const ParseAnalysisPageContent: React.FC = () => {
     combatantInfoEvents,
     debuffEvents,
     isCastEventsLoading,
-    isCastEventsLoaded,
+    castEventsStatus,
+    castEventsError,
     isDamageEventsLoading,
+    damageEventsStatus,
+    damageEventsError,
+    isFriendlyBuffEventsLoading,
+    friendlyBuffEventsStatus,
+    friendlyBuffEventsError,
     isCombatantInfoEventsLoading,
+    combatantInfoEventsStatus,
+    combatantInfoEventsError,
     isDebuffEventsLoading,
+    debuffEventsStatus,
+    debuffEventsError,
     abilityMapper,
     reportMasterData.actorsById,
     isMasterDataLoading,
-    state.fightName,
   ]);
 
   // Handler for analyzing from URL parameters
   const handleAnalyzeFromParams = useCallback(
     async (reportId: string, fightId: string | null): Promise<void> => {
+      setPendingAnalysis(null);
       setState((prev) => ({
         ...prev,
         loading: true,
@@ -1015,6 +1099,8 @@ const ParseAnalysisPageContent: React.FC = () => {
       return;
     }
 
+    analysisRunRef.current += 1;
+    setPendingAnalysis(null);
     setState((prev) => ({
       ...prev,
       loading: true,
@@ -1052,14 +1138,10 @@ const ParseAnalysisPageContent: React.FC = () => {
       if (currentPath !== newPath) {
         logger.debug('Navigating to parse analysis path', { newPath });
         navigate(newPath, { replace: true });
-        // Wait for navigation to complete and context to update
-        await new Promise((resolve) => setTimeout(resolve, 100));
-      } else {
-        logger.debug('Already on desired parse analysis path', { currentPath });
+        return;
       }
 
-      // Then call analyzeReport which will set up pending analysis
-      // The useEffect will run analysis once events are loaded
+      logger.debug('Already on desired parse analysis path', { currentPath });
       await analyzeReport(reportInfo.reportId, reportInfo.fightId);
     } catch (error) {
       setState((prev) => ({
@@ -1098,6 +1180,7 @@ const ParseAnalysisPageContent: React.FC = () => {
       if (loadingRef.current || !state.reportCode || !client) return;
       const reportCode = state.reportCode;
       const currentFightCount = availableFights.length;
+      const pollGeneration = analysisRunRef.current;
       void (async () => {
         try {
           const response = await client.query<GetReportByCodeQuery>({
@@ -1105,6 +1188,7 @@ const ParseAnalysisPageContent: React.FC = () => {
             variables: { code: reportCode },
             fetchPolicy: 'no-cache',
           });
+          if (analysisRunRef.current !== pollGeneration) return;
           const fights = response.reportData?.report?.fights ?? [];
           const supported = fights.filter(
             (f): f is NonNullable<typeof f> =>
@@ -1151,6 +1235,7 @@ const ParseAnalysisPageContent: React.FC = () => {
   }, [analyzeReport]);
 
   const handleReset = useCallback((): void => {
+    analysisRunRef.current += 1;
     setState(createInitialParseState());
     setPendingAnalysis(null);
     setAvailableFights([]);
@@ -1932,6 +2017,11 @@ const ParseAnalysisPageContent: React.FC = () => {
       {/* URL input form */}
       {!state.reportCode && !state.loading && (
         <Card
+          component="form"
+          onSubmit={(event) => {
+            event.preventDefault();
+            void handleAnalyze();
+          }}
           sx={{
             mb: 4,
             ...glassCardSx,
@@ -1971,9 +2061,9 @@ const ParseAnalysisPageContent: React.FC = () => {
                 }}
               />
               <Button
+                type="submit"
                 variant="contained"
                 size="large"
-                onClick={handleAnalyze}
                 disabled={!logUrl || state.loading}
                 fullWidth
                 sx={{
@@ -2176,6 +2266,8 @@ const ParseAnalysisPageContent: React.FC = () => {
 
       {state.error && (
         <Box
+          role="alert"
+          aria-live="assertive"
           sx={{
             mb: 3,
             p: 2,
@@ -2253,21 +2345,28 @@ const ParseAnalysisPageContent: React.FC = () => {
               {availableFights
                 .filter((fight) => !excludedFightIds.has(fight.id))
                 .map((fight) => (
-                  <Chip
+                  <Box
                     key={fight.id}
-                    label={`#${fight.id} — ${fight.name}`}
-                    onClick={() => handleSelectFight(fight.id)}
-                    onDelete={() => excludeFight(fight.id)}
-                    deleteIcon={
-                      <IconButton size="small" sx={{ p: 0, ml: -0.25 }} aria-label="Exclude fight">
-                        <span style={{ fontSize: 16, lineHeight: 1 }}>&times;</span>
-                      </IconButton>
-                    }
-                    color={state.fightId === fight.id ? 'primary' : 'default'}
-                    variant={state.fightId === fight.id ? 'filled' : 'outlined'}
-                    size="small"
-                    disabled={state.loading}
-                  />
+                    sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.25 }}
+                  >
+                    <Chip
+                      label={`#${fight.id} — ${fight.name}`}
+                      onClick={() => handleSelectFight(fight.id)}
+                      color={state.fightId === fight.id ? 'primary' : 'default'}
+                      variant={state.fightId === fight.id ? 'filled' : 'outlined'}
+                      size="small"
+                      disabled={state.loading}
+                    />
+                    <IconButton
+                      size="small"
+                      onClick={() => excludeFight(fight.id)}
+                      aria-label={`Exclude fight #${fight.id}: ${fight.name}`}
+                      disabled={state.loading}
+                      sx={{ minWidth: 32, minHeight: 32 }}
+                    >
+                      <CloseIcon sx={{ fontSize: 18 }} />
+                    </IconButton>
+                  </Box>
                 ))}
               {excludedFightIds.size > 0 && (
                 <Chip
@@ -2285,7 +2384,13 @@ const ParseAnalysisPageContent: React.FC = () => {
       )}
 
       {state.loading && (
-        <Box sx={{ my: 4, display: 'flex', flexDirection: 'column', gap: 3 }}>
+        <Box
+          role="status"
+          aria-live="polite"
+          aria-label="Analyzing combat events"
+          aria-busy="true"
+          sx={{ my: 4, display: 'flex', flexDirection: 'column', gap: 3 }}
+        >
           {/* Fight info header skeleton */}
           <Card sx={{ p: 2.5 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>

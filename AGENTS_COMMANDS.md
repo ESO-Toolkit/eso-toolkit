@@ -29,7 +29,7 @@
 
 | Command                    | Description                           | Notes                 |
 | -------------------------- | ------------------------------------- | --------------------- |
-| `npm test`                 | Unit tests (changed files)            | Interactive mode      |
+| `npm test`                 | All unit tests                        | Non-interactive       |
 | `npm run test:all`         | All unit tests                        | Run everything        |
 | `npm run test:watch`       | Watch mode                            | Auto-rerun on changes |
 | `npm run test:changed`     | Only changed files                    | Git-based detection   |
