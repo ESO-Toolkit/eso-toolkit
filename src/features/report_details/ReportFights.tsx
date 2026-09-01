@@ -5,6 +5,7 @@ import { FightFragment } from '../../graphql/gql/graphql';
 import { useReportData } from '../../hooks';
 import { useSelectedReportAndFight } from '../../ReportFightContext';
 import { cleanArray } from '../../utils/cleanArray';
+import { preloadReportFightDetails } from '../../utils/reportRoutePreload';
 import { isRecentlyUploaded } from '../reports/reportFormatting';
 
 import { ReportFightsView } from './ReportFightsView';
@@ -20,6 +21,29 @@ export const ReportFights: React.FC = () => {
   // Get current selected report and fight from context
   const { reportId, fightId } = useSelectedReportAndFight();
   const { reportData, isReportLoading, reportError, refetchReport } = useReportData();
+
+  // Every fight in this list links to the (lazy, heavy) fight-details route, so
+  // warm its chunk during idle time: by the time the user picks an encounter the
+  // chunk is already resolved and the navigation paints without a round trip.
+  // Deferred to idle so it never competes with this page's own report fetch.
+  React.useEffect(() => {
+    const ric = (
+      window as unknown as {
+        requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
+        cancelIdleCallback?: (handle: number) => void;
+      }
+    ).requestIdleCallback;
+    if (typeof ric === 'function') {
+      const handle = ric(() => preloadReportFightDetails(), { timeout: 2500 });
+      return () => {
+        (
+          window as unknown as { cancelIdleCallback?: (handle: number) => void }
+        ).cancelIdleCallback?.(handle);
+      };
+    }
+    const timer = window.setTimeout(() => preloadReportFightDetails(), 200);
+    return () => window.clearTimeout(timer);
+  }, []);
 
   const memoizedFights = React.useMemo<FightFragment[]>((): FightFragment[] => {
     return cleanArray(reportData?.fights?.filter(Boolean));

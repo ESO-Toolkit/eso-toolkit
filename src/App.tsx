@@ -41,7 +41,6 @@ import {
   captureKalpaSupportDraft,
   watchKalpaSupportHandoff,
 } from './features/kalpa-support/support-draft';
-import { ReportFightDetails } from './features/report_details/ReportFightDetails';
 import { UserReports } from './features/user_reports/UserReports';
 import { useWorkerManagerLogger } from './hooks/useWorkerManagerLogger';
 import { AppLayout } from './layouts/AppLayout';
@@ -57,6 +56,18 @@ import {
   importBuildHubPage,
   importPackHubPage,
 } from './utils/hubRoutePreload';
+import { importReportFightDetails, preloadReportFightDetails } from './utils/reportRoutePreload';
+
+// A direct landing on a report URL needs the (large) fight-details chunk as soon
+// as possible, so start its fetch here at entry evaluation rather than waiting
+// for the router to mount and the lazy route to suspend. That puts the request
+// in flight alongside the rest of boot, which is what the old static import
+// bought us — minus the cost of shipping the chunk to every other route.
+// Matched loosely (substring, not a route match) so it also covers a deployment
+// under a base path such as /dev-previews/pr-123/report/....
+if (typeof window !== 'undefined' && window.location.pathname.includes('/report/')) {
+  preloadReportFightDetails();
+}
 
 // Capture and clear the fragment before analytics or error tracking can observe
 // the support handoff. The validated draft remains session-scoped.
@@ -79,7 +90,14 @@ if (process.env.NODE_ENV !== 'production') {
 const LiveLog = React.lazy(() =>
   import('./features/live_logging/LiveLog').then((module) => ({ default: module.LiveLog })),
 );
-// ReportFightDetails is imported directly above for LCP optimization
+// ReportFightDetails is lazy like every other route (it is the heaviest feature
+// in the app and must not sit in the entry graph). Its LCP is protected instead
+// by the module-scope `preloadReportFightDetails()` above and an idle warm from
+// the report list — both go through the same importer as this route, so the
+// preload and the route resolve the identical chunk.
+const ReportFightDetails = React.lazy(() =>
+  importReportFightDetails().then((module) => ({ default: module.ReportFightDetails })),
+);
 const ReportFights = React.lazy(() =>
   import('./features/report_details/ReportFights').then((module) => ({
     default: module.ReportFights,
