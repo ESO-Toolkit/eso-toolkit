@@ -17,6 +17,7 @@ import {
   getGuildConfig,
   upsertGuildConfig,
   getDefaultGuildConfig,
+  checkKvRateLimit,
   checkRosterRateLimit,
 } from './roster/kv.js';
 import type { GuildConfig } from './roster/types.js';
@@ -27,6 +28,7 @@ import type { DiscordInteraction, Env } from './types.js';
 import { verifyDiscordSignature } from './verify.js';
 import { handleSupportSession, handleSupportTicket } from './support/handler.js';
 export { SupportCoordinator } from './support/coordinator.js';
+export { RosterCoordinator } from './roster/coordinator.js';
 
 // Production-only CORS origins
 const PROD_CORS_ORIGINS = new Set([
@@ -64,20 +66,6 @@ const ALL_REDIRECT_URIS = new Set([...PROD_REDIRECT_URIS, ...DEV_REDIRECT_URIS])
 
 function getAllowedOrigins(env: Env): Set<string> {
   return env.ENVIRONMENT === 'development' ? ALL_CORS_ORIGINS : PROD_CORS_ORIGINS;
-}
-
-async function checkKvRateLimit(
-  kv: KVNamespace,
-  key: string,
-  maxPerWindow: number,
-  windowSeconds: number,
-): Promise<boolean> {
-  const rlKey = `rl:${key}`;
-  const raw = await kv.get(rlKey);
-  const count = raw ? parseInt(raw, 10) : 0;
-  if (count >= maxPerWindow) return false;
-  await kv.put(rlKey, String(count + 1), { expirationTtl: windowSeconds });
-  return true;
 }
 
 function isAllowedRedirectUri(uri: string, env: Env): boolean {
@@ -501,10 +489,21 @@ async function handleRefresh(
   // deleted on purpose; user-initiated HTTP refreshes may recreate.
   const result = await refreshRoster(env, rosterId, scopeGuildId, { allowRecreate: !isWebhook });
   if (!result.ok) {
-    return jsonResponse({ error: result.error }, 400);
+    return jsonResponse(
+      {
+        error: result.error,
+        refreshedCount: result.refreshedCount,
+        failedCount: result.failedCount,
+      },
+      503,
+    );
   }
 
-  return jsonResponse({ ok: true, refreshedCount: result.refreshedCount });
+  return jsonResponse({
+    ok: true,
+    refreshedCount: result.refreshedCount,
+    failedCount: result.failedCount,
+  });
 }
 
 async function handlePublishDirect(

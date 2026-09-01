@@ -49,7 +49,8 @@ export async function handleRosterLink(
     return {
       type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
       data: {
-        content: '❌ You do not have permission to link rosters. Ask a server admin to configure allowed roles with `/roster config set-role`.',
+        content:
+          '❌ You do not have permission to link rosters. Ask a server admin to configure allowed roles with `/roster config set-role`.',
         flags: MessageFlags.EPHEMERAL,
       },
     };
@@ -71,7 +72,8 @@ export async function handleRosterLink(
     return {
       type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
       data: {
-        content: '❌ Invalid roster URL or ID. Example: `https://esotk.com/roster-hub/ABC123` or `ABC123`',
+        content:
+          '❌ Invalid roster URL or ID. Example: `https://esotk.com/roster-hub/ABC123` or `ABC123`',
         flags: MessageFlags.EPHEMERAL,
       },
     };
@@ -110,7 +112,9 @@ export async function handleRosterLink(
           flags: MessageFlags.EPHEMERAL,
         });
       }
-    })(),
+    })().catch((error: unknown) => {
+      console.error('[roster-link] background task failed:', error);
+    }),
   );
 
   return {

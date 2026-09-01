@@ -64,6 +64,7 @@ export interface Env {
   TICKETS: KVNamespace;
   ROSTERS: KVNamespace;
   SUPPORT_COORDINATOR: DurableObjectNamespace;
+  ROSTER_COORDINATOR: DurableObjectNamespace;
   SUPPORT_SESSION_SECRET: string;
   SUPPORT_AUDIT_SECRET: string;
   // Config constants (set in wrangler.toml vars)

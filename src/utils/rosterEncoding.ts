@@ -9,7 +9,12 @@
  * than naïve base64 encoding.
  */
 
-import type { BuildChampionPoints, ChampionTree } from '../features/build-editor/types/build.types';
+import type {
+  BuildChampionPoints,
+  ChampionTree,
+  QuickslotEntry,
+  SkilledAbility,
+} from '../features/build-editor/types/build.types';
 import type { SkillsConfig } from '../features/loadout-manager/types/loadout.types';
 import { KnownSetIDs } from '../types/abilities';
 import {
@@ -126,6 +131,9 @@ export interface CompactTank {
   sk?: CompactSkillBars; // full skill bars (Full mode)
   cp2?: CompactCPFull; // champion points (Full mode)
   pa?: number[]; // passive ability IDs (Full mode)
+  qs?: Array<[number, number]>; // quickslot [type, id] pairs (Full mode)
+  sa?: Array<[number, number]>; // skilled ability [abilityId, morph] pairs (Full mode)
+  sc?: number[]; // scribed ability IDs (Full mode)
 }
 
 export interface CompactHealer {
@@ -153,6 +161,9 @@ export interface CompactHealer {
   sk?: CompactSkillBars; // full skill bars (Full mode)
   cp2?: CompactCPFull; // champion points (Full mode)
   pa?: number[]; // passive ability IDs (Full mode)
+  qs?: Array<[number, number]>; // quickslot [type, id] pairs (Full mode)
+  sa?: Array<[number, number]>; // skilled ability [abilityId, morph] pairs (Full mode)
+  sc?: number[]; // scribed ability IDs (Full mode)
 }
 
 export interface CompactDPS {
@@ -183,6 +194,9 @@ export interface CompactDPS {
   sk?: CompactSkillBars; // full skill bars (Full mode)
   cp2?: CompactCPFull; // champion points (Full mode)
   pa?: number[]; // passive ability IDs (Full mode)
+  qs?: Array<[number, number]>; // quickslot [type, id] pairs (Full mode)
+  sa?: Array<[number, number]>; // skilled ability [abilityId, morph] pairs (Full mode)
+  sc?: number[]; // scribed ability IDs (Full mode)
 }
 
 /** Compact representation of a PlayerOverride (per-fight set/ultimate/notes changes) */
@@ -280,13 +294,24 @@ export type CompactRoster = CompactRosterV2 | CompactRosterV3;
 // ============================================================
 
 const SKILL_LINE_TO_IDX = new Map(CLASS_SKILL_LINES.map((sl, i) => [sl, i] as const));
-const ULTIMATE_LIST = Object.values(SupportUltimate); // 4 preset ultimates
+export const ROSTER_ULTIMATE_VOCABULARY = Object.values(SupportUltimate); // 4 preset ultimates
+const ULTIMATE_LIST = ROSTER_ULTIMATE_VOCABULARY;
 const ULTIMATE_TO_IDX = new Map(ULTIMATE_LIST.map((u, i) => [u, i] as const));
-const HEALER_BUFF_LIST = Object.values(HealerBuff); // 2 values
+export const ROSTER_HEALER_BUFF_VOCABULARY = Object.values(HealerBuff); // 2 values
+const HEALER_BUFF_LIST = ROSTER_HEALER_BUFF_VOCABULARY;
 const HEALER_BUFF_TO_IDX = new Map(HEALER_BUFF_LIST.map((b, i) => [b, i] as const));
-const CHAMPION_POINT_LIST = Object.values(HealerChampionPoint); // 2 values
+export const ROSTER_CHAMPION_POINT_VOCABULARY = Object.values(HealerChampionPoint); // 2 values
+const CHAMPION_POINT_LIST = ROSTER_CHAMPION_POINT_VOCABULARY;
 const CHAMPION_POINT_TO_IDX = new Map(CHAMPION_POINT_LIST.map((cp, i) => [cp, i] as const));
-const JAIL_DD_TYPE_LIST: JailDDType[] = ['banner', 'zenkosh', 'wm', 'wm-mk', 'mk', 'custom'];
+export const ROSTER_JAIL_DD_TYPE_VOCABULARY: JailDDType[] = [
+  'banner',
+  'zenkosh',
+  'wm',
+  'wm-mk',
+  'mk',
+  'custom',
+];
+const JAIL_DD_TYPE_LIST = ROSTER_JAIL_DD_TYPE_VOCABULARY;
 const JAIL_DD_TYPE_TO_IDX = new Map(JAIL_DD_TYPE_LIST.map((t, i) => [t, i] as const));
 
 // ============================================================
@@ -314,8 +339,9 @@ function toValidSetId(value: unknown): KnownSetIDs | undefined {
 
 function encodeSkillLine(s?: string): number | string | undefined {
   if (!s) return undefined;
-  const idx = SKILL_LINE_TO_IDX.get(s as (typeof CLASS_SKILL_LINES)[number]);
-  return idx !== undefined ? idx : s;
+  const normalized = s === 'Apocryphal Soldier' ? 'Soldier of Apocrypha' : s;
+  const idx = SKILL_LINE_TO_IDX.get(normalized as (typeof CLASS_SKILL_LINES)[number]);
+  return idx !== undefined ? idx : normalized;
 }
 
 function decodeSkillLine(v?: number | string): string {
@@ -323,7 +349,7 @@ function decodeSkillLine(v?: number | string): string {
   if (typeof v === 'number') {
     return isValidEnumIndex(v, CLASS_SKILL_LINES.length) ? CLASS_SKILL_LINES[v] : '';
   }
-  return v;
+  return v === 'Apocryphal Soldier' ? 'Soldier of Apocrypha' : v;
 }
 
 function encodeUltimate(u?: string | null): number | string | undefined {
@@ -360,7 +386,7 @@ function expandBuildRef(c: CompactBuildRef): BuildReference {
 }
 
 function compactFood(food?: { id?: number; name?: string }): CompactFood | undefined {
-  if (!food || (food.id == null && !food.name)) return undefined;
+  if (!food) return undefined;
   const c: CompactFood = {};
   if (food.id != null) c.i = food.id;
   if (food.name) c.n = food.name;
@@ -375,7 +401,10 @@ function decodeSpecificSkills(ss?: (number | string)[]): number[] {
 
 function expandFood(c?: CompactFood): { id?: number; name?: string } | undefined {
   if (!c) return undefined;
-  return { id: c.i, name: c.n };
+  const food: { id?: number; name?: string } = {};
+  if (c.i != null) food.id = c.i;
+  if (c.n !== undefined) food.name = c.n;
+  return food;
 }
 
 function compactSkills(sl: SkillLineConfig): CompactSkills | undefined {
@@ -445,7 +474,6 @@ function compactSkillBars(skills?: SkillsConfig): CompactSkillBars | undefined {
   if (!skills) return undefined;
   const f = Object.keys(skills[0]).length > 0 ? (skills[0] as Record<number, number>) : undefined;
   const b = Object.keys(skills[1]).length > 0 ? (skills[1] as Record<number, number>) : undefined;
-  if (!f && !b) return undefined;
   const c: CompactSkillBars = {};
   if (f) c.f = f;
   if (b) c.b = b;
@@ -488,12 +516,29 @@ function compactCPFull(cp?: BuildChampionPoints): CompactCPFull | undefined {
   const w = compactCPTree(cp.warfare);
   const fi = compactCPTree(cp.fitness);
   const c = compactCPTree(cp.craft);
-  if (!w && !fi && !c) return undefined;
   const out: CompactCPFull = {};
   if (w) out.w = w;
   if (fi) out.fi = fi;
   if (c) out.c = c;
   return out;
+}
+
+function compactQuickslots(quickslots?: QuickslotEntry[]): Array<[number, number]> | undefined {
+  return quickslots?.map(({ type, id }) => [type, id]);
+}
+
+function expandQuickslots(compact?: Array<[number, number]>): QuickslotEntry[] | undefined {
+  return compact?.map(([type, id]) => ({ type, id }));
+}
+
+function compactSkilledAbilities(
+  skilledAbilities?: SkilledAbility[],
+): Array<[number, number]> | undefined {
+  return skilledAbilities?.map(({ abilityId, morph }) => [abilityId, morph]);
+}
+
+function expandSkilledAbilities(compact?: Array<[number, number]>): SkilledAbility[] | undefined {
+  return compact?.map(([abilityId, morph]) => ({ abilityId, morph }));
 }
 
 function expandCPFull(c?: CompactCPFull): BuildChampionPoints | undefined {
@@ -531,7 +576,12 @@ function compactTank(t: TankSetup): CompactTank {
   if (sk) c.sk = sk;
   const cp2 = compactCPFull(t.cpPoints);
   if (cp2) c.cp2 = cp2;
-  if (t.passives?.length) c.pa = t.passives;
+  if (t.passives !== undefined) c.pa = t.passives;
+  const qs = compactQuickslots(t.quickslots);
+  if (qs) c.qs = qs;
+  const sa = compactSkilledAbilities(t.skilledAbilities);
+  if (sa) c.sa = sa;
+  if (t.scribedAbilityIds !== undefined) c.sc = t.scribedAbilityIds;
   return c;
 }
 
@@ -556,6 +606,9 @@ function expandTank(c?: CompactTank, slotNumber = 1): TankSetup {
     skills: expandSkillBars(c?.sk),
     cpPoints: expandCPFull(c?.cp2),
     passives: c?.pa,
+    quickslots: expandQuickslots(c?.qs),
+    skilledAbilities: expandSkilledAbilities(c?.sa),
+    scribedAbilityIds: c?.sc,
   };
 }
 
@@ -595,7 +648,12 @@ function compactHealer(h: HealerSetup): CompactHealer {
   if (sk) c.sk = sk;
   const cp2 = compactCPFull(h.cpPoints);
   if (cp2) c.cp2 = cp2;
-  if (h.passives?.length) c.pa = h.passives;
+  if (h.passives !== undefined) c.pa = h.passives;
+  const qs = compactQuickslots(h.quickslots);
+  if (qs) c.qs = qs;
+  const sa = compactSkilledAbilities(h.skilledAbilities);
+  if (sa) c.sa = sa;
+  if (h.scribedAbilityIds !== undefined) c.sc = h.scribedAbilityIds;
   return c;
 }
 
@@ -636,6 +694,9 @@ function expandHealer(c?: CompactHealer, slotNumber = 1): HealerSetup {
     skills: expandSkillBars(c?.sk),
     cpPoints: expandCPFull(c?.cp2),
     passives: c?.pa,
+    quickslots: expandQuickslots(c?.qs),
+    skilledAbilities: expandSkilledAbilities(c?.sa),
+    scribedAbilityIds: c?.sc,
   };
 }
 
@@ -673,7 +734,12 @@ function compactDPS(d: DPSSlot): CompactDPS {
   if (sk) c.sk = sk;
   const cp2 = compactCPFull(d.cpPoints);
   if (cp2) c.cp2 = cp2;
-  if (d.passives?.length) c.pa = d.passives;
+  if (d.passives !== undefined) c.pa = d.passives;
+  const qs = compactQuickslots(d.quickslots);
+  if (qs) c.qs = qs;
+  const sa = compactSkilledAbilities(d.skilledAbilities);
+  if (sa) c.sa = sa;
+  if (d.scribedAbilityIds !== undefined) c.sc = d.scribedAbilityIds;
   return c;
 }
 
@@ -724,6 +790,9 @@ function expandDPS(c: CompactDPS): DPSSlot {
     skills: expandSkillBars(c.sk),
     cpPoints: expandCPFull(c.cp2),
     passives: c.pa,
+    quickslots: expandQuickslots(c.qs),
+    skilledAbilities: expandSkilledAbilities(c.sa),
+    scribedAbilityIds: c.sc,
   };
 }
 
@@ -922,7 +991,10 @@ export function compactifyRoster(roster: RaidRoster): CompactRosterV3 {
       slot.food ||
       slot.skills ||
       slot.cpPoints ||
-      slot.passives?.length,
+      slot.passives !== undefined ||
+      slot.quickslots !== undefined ||
+      slot.skilledAbilities !== undefined ||
+      slot.scribedAbilityIds !== undefined,
   );
   if (filledSlots.length) c.dp = filledSlots.map(compactDPS);
   if (roster.availableGroups?.length) c.ag = roster.availableGroups;
@@ -945,16 +1017,14 @@ const DL_LEVELS: RosterDetailLevel[] = ['simple', 'full'];
  * Expand a v3 compact roster into a full RaidRoster.
  */
 /** Hard caps to prevent DoS via crafted payloads allocating massive arrays. */
-const MAX_TANKS = 4;
-const MAX_HEALERS = 4;
-const MAX_DPS = 24;
+export const ROSTER_COMPOSITION_LIMITS = { tanks: 4, healers: 4, dps: 24 } as const;
 
 function expandCompactRosterV3(c: CompactRosterV3): RaidRoster {
   const comp: RoleComposition = c.co
     ? {
-        tanks: Math.min(Math.max(0, c.co[0] ?? 0), MAX_TANKS),
-        healers: Math.min(Math.max(0, c.co[1] ?? 0), MAX_HEALERS),
-        dps: Math.min(Math.max(0, c.co[2] ?? 0), MAX_DPS),
+        tanks: Math.min(Math.max(0, c.co[0] ?? 0), ROSTER_COMPOSITION_LIMITS.tanks),
+        healers: Math.min(Math.max(0, c.co[1] ?? 0), ROSTER_COMPOSITION_LIMITS.healers),
+        dps: Math.min(Math.max(0, c.co[2] ?? 0), ROSTER_COMPOSITION_LIMITS.dps),
       }
     : { ...DEFAULT_COMPOSITION };
 

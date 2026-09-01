@@ -40,13 +40,13 @@ describe('SlotActionPill roster → editor navigation', () => {
     mockEncode.mockResolvedValue('ENCODED_BLOB');
   });
 
-  it('keeps roster round-trip params in the URL but sends the build via router state (no ?b= blob)', async () => {
+  it('keeps canonical roster round-trip params in the URL but sends the build via router state', async () => {
     render(
       <SlotActionPill
         buildFactory={buildFactory}
         color="#38bdf8"
         label="DPS 3"
-        slotKey="dps3"
+        slotKey="dps:2"
         rosterId="r1"
       />,
     );
@@ -55,7 +55,7 @@ describe('SlotActionPill roster → editor navigation', () => {
 
     await waitFor(() => expect(mockNavigate).toHaveBeenCalled());
     const [to, options] = mockNavigate.mock.calls[0] as [string, Record<string, unknown>];
-    expect(to).toBe('/build-editor?slot=dps3&rid=r1&from=roster');
+    expect(to).toBe('/build-editor?slot=dps%3A2&rid=r1&from=roster');
     expect(to).not.toContain('b=');
     expect(options.state).toEqual({ buildData: 'ENCODED_BLOB' });
   });
@@ -79,7 +79,7 @@ describe('SlotActionPill roster → editor navigation', () => {
         buildFactory={buildFactory}
         color="#38bdf8"
         label="Tank 1"
-        slotKey="tank1"
+        slotKey="tank:0"
         rosterId="r1"
       />,
     );

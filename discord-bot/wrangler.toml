@@ -41,6 +41,14 @@ id = "2d4b62745f2c4aaeb6b1975dafc8816f"
 name = "SUPPORT_COORDINATOR"
 class_name = "SupportCoordinator"
 
+[[durable_objects.bindings]]
+name = "ROSTER_COORDINATOR"
+class_name = "RosterCoordinator"
+
 [[migrations]]
 tag = "v1-support-coordinator"
 new_sqlite_classes = ["SupportCoordinator"]
+
+[[migrations]]
+tag = "v2-roster-coordinator"
+new_sqlite_classes = ["RosterCoordinator"]

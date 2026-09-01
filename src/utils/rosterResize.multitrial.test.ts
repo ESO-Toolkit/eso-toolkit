@@ -7,7 +7,7 @@ import { createDefaultRoster } from '../types/roster';
 import type { RaidRoster } from '../types/roster';
 import type { TrialBuildOverrides } from '../types/trial-encounters';
 
-import { resizeRoster } from './rosterResize';
+import { resizeRoster, wouldLoseData } from './rosterResize';
 
 function trialWithDpsSlots(trialId: string): TrialBuildOverrides {
   return {
@@ -58,5 +58,68 @@ describe('resizeRoster — multi-trial override pruning', () => {
       'rockgrove',
       'sunspire',
     ]);
+  });
+});
+
+describe('wouldLoseData', () => {
+  const shrinkLastDps = { tanks: 3, healers: 2, dps: 7 };
+
+  it('does not report empty default slots as meaningful data', () => {
+    const roster = createDefaultRoster();
+
+    expect(wouldLoseData(roster, shrinkLastDps)).toEqual({
+      tanks: false,
+      healers: false,
+      dps: false,
+    });
+  });
+
+  it('detects meaningful fields beyond player name and primary sets', () => {
+    const roster = createDefaultRoster();
+    roster.dpsSlots[7] = {
+      ...roster.dpsSlots[7],
+      notes: 'Keep a ranged interrupt available',
+    };
+
+    expect(wouldLoseData(roster, shrinkLastDps).dps).toBe(true);
+  });
+
+  it('detects meaningful per-fight overrides on an otherwise empty removed slot', () => {
+    const roster = createDefaultRoster();
+    roster.trialOverrides = {
+      rockgrove: {
+        trialId: 'rockgrove',
+        useSameBuildForAll: false,
+        encounterBuilds: {
+          boss_1: {
+            slots: {
+              'dps:7': { set1: 42 },
+            },
+          },
+        },
+      },
+    };
+
+    expect(wouldLoseData(roster, shrinkLastDps).dps).toBe(true);
+  });
+
+  it('detects an orphaned override that resize would prune', () => {
+    const roster = createDefaultRoster();
+    roster.dpsSlots = roster.dpsSlots.slice(0, 7);
+    roster.trialOverrides = {
+      rockgrove: {
+        trialId: 'rockgrove',
+        useSameBuildForAll: false,
+        encounterBuilds: {
+          boss_1: {
+            slots: {
+              'dps:7': { set1: 42 },
+            },
+          },
+        },
+      },
+    };
+
+    expect(wouldLoseData(roster, shrinkLastDps).dps).toBe(true);
   });
 });

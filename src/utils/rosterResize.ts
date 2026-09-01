@@ -121,14 +121,40 @@ export function wouldLoseData(
   roster: RaidRoster,
   newComp: RoleComposition,
 ): { tanks: boolean; healers: boolean; dps: boolean } {
-  const checkTanks = roster.tanks
-    .slice(newComp.tanks)
-    .some((t) => t.playerName || t.gearSets.set1 || t.gearSets.set2 || t.buildRef);
-  const checkHealers = roster.healers
-    .slice(newComp.healers)
-    .some((h) => h.playerName || h.set1 || h.set2 || h.buildRef);
-  const checkDPS = roster.dpsSlots
-    .slice(newComp.dps)
-    .some((d) => d.playerName || d.set1 || d.set2 || d.buildRef);
-  return { tanks: checkTanks, healers: checkHealers, dps: checkDPS };
+  const hasMeaningfulValue = (value: unknown): boolean => {
+    if (value == null) return false;
+    if (typeof value === 'string') return value.trim().length > 0;
+    if (typeof value === 'boolean') return value;
+    if (typeof value === 'number') return Number.isFinite(value);
+    if (Array.isArray(value)) return value.some(hasMeaningfulValue);
+    if (typeof value === 'object') {
+      return Object.entries(value).some(
+        ([key, nestedValue]) => key !== 'slotNumber' && hasMeaningfulValue(nestedValue),
+      );
+    }
+    return false;
+  };
+
+  const result = {
+    tanks: roster.tanks.slice(newComp.tanks).some(hasMeaningfulValue),
+    healers: roster.healers.slice(newComp.healers).some(hasMeaningfulValue),
+    dps: roster.dpsSlots.slice(newComp.dps).some(hasMeaningfulValue),
+  };
+
+  for (const trial of Object.values(roster.trialOverrides ?? {})) {
+    for (const encounter of Object.values(trial.encounterBuilds)) {
+      for (const [slotKey, override] of Object.entries(encounter.slots)) {
+        if (!hasMeaningfulValue(override)) continue;
+        const match = /^(tank|healer|dps):(\d+)$/.exec(slotKey);
+        if (!match) continue;
+        const [, role, rawIndex] = match;
+        const index = Number(rawIndex);
+        if (role === 'tank' && index >= newComp.tanks) result.tanks = true;
+        if (role === 'healer' && index >= newComp.healers) result.healers = true;
+        if (role === 'dps' && index >= newComp.dps) result.dps = true;
+      }
+    }
+  }
+
+  return result;
 }

@@ -1,7 +1,7 @@
 /**
  * Roster ↔ Build Editor bridge utilities.
  *
- * snapshotBuildToSlot: extracts skills/cp/passives/food from a BuildSetup so the
+ * snapshotBuildToSlot: extracts the supported BuildSetup snapshot fields so the
  *   roster slot can store them inline (self-contained for URL sharing).
  *
  * createBuildFromSlot: creates a new Build pre-filled from a roster slot's inline
@@ -47,11 +47,11 @@ export function snapshotBuildToSlot(build: Build, setupIndex: number): SlotInlin
   return {
     skills: setup.skills,
     cpPoints: setup.cp,
-    passives: setup.passives.length > 0 ? setup.passives : undefined,
-    food: food.id != null || food.name ? food : undefined,
-    quickslots: setup.quickslots?.length ? setup.quickslots : undefined,
-    skilledAbilities: setup.skilledAbilities?.length ? setup.skilledAbilities : undefined,
-    scribedAbilityIds: setup.scribedAbilityIds?.length ? setup.scribedAbilityIds : undefined,
+    passives: setup.passives,
+    food,
+    quickslots: setup.quickslots ?? [],
+    skilledAbilities: setup.skilledAbilities ?? [],
+    scribedAbilityIds: setup.scribedAbilityIds ?? [],
   };
 }
 
@@ -102,15 +102,9 @@ export function createBuildFromSlot(
         consumables: { potions: [], food: slot.food ?? {} },
         passives: slot.passives ?? [],
         screenshots: [],
-        ...('quickslots' in slot && (slot as SlotInlineData).quickslots?.length
-          ? { quickslots: (slot as SlotInlineData).quickslots }
-          : {}),
-        ...('skilledAbilities' in slot && (slot as SlotInlineData).skilledAbilities?.length
-          ? { skilledAbilities: (slot as SlotInlineData).skilledAbilities }
-          : {}),
-        ...('scribedAbilityIds' in slot && (slot as SlotInlineData).scribedAbilityIds?.length
-          ? { scribedAbilityIds: (slot as SlotInlineData).scribedAbilityIds }
-          : {}),
+        quickslots: slot.quickslots,
+        skilledAbilities: slot.skilledAbilities,
+        scribedAbilityIds: slot.scribedAbilityIds,
       },
     ],
     guide: { content: '', youtubeUrl: '', bannerImageUrl: '' },

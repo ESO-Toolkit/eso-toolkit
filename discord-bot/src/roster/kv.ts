@@ -13,6 +13,7 @@
  */
 
 import type { Env } from '../types.js';
+import { coordinateRosterLock } from './coordinator.js';
 import type { GuildConfig, RosterMapping } from './types.js';
 
 // ── KV Key Prefixes ────────────────────────────────────────────────────────
@@ -122,28 +123,45 @@ async function listMappingsByPrefix(
 // ── Publish Lock (short-lived, prevents concurrent channel creation) ────────
 
 const LOCK_PREFIX = 'publish-lock';
-const LOCK_TTL_SECONDS = 30;
+
+function publishLockKey(guildId: string, rosterId: string): string {
+  return `${LOCK_PREFIX}:${guildId}:${rosterId}`;
+}
 
 /**
- * Attempt to acquire a short-lived lock for a roster+guild pair.
+ * Atomically acquire a renewable lock for a roster+guild pair.
  * Returns a fencing token (string) if the lock was acquired, or null if it is
- * already held. The lock expires after 30 seconds to prevent deadlocks.
- *
- * Best-effort only: KV has no compare-and-swap, so under a true simultaneous
- * race both callers can observe an empty key and proceed. This narrows the
- * common double-submit window but cannot guarantee single-flight.
+ * already held. The Durable Object serializes contenders, while the lease
+ * prevents a crashed request from deadlocking future publishes.
  */
 export async function acquirePublishLock(
   env: Env,
   guildId: string,
   rosterId: string,
 ): Promise<string | null> {
-  const key = `${LOCK_PREFIX}:${guildId}:${rosterId}`;
-  const existing = await env.ROSTERS.get(key);
-  if (existing) return null;
   const token = crypto.randomUUID();
-  await env.ROSTERS.put(key, token, { expirationTtl: LOCK_TTL_SECONDS });
-  return token;
+  const result = await coordinateRosterLock(
+    env.ROSTER_COORDINATOR,
+    publishLockKey(guildId, rosterId),
+    '/acquire',
+    token,
+  );
+  return result.acquired === true ? token : null;
+}
+
+export async function renewPublishLock(
+  env: Env,
+  guildId: string,
+  rosterId: string,
+  token: string,
+): Promise<boolean> {
+  const result = await coordinateRosterLock(
+    env.ROSTER_COORDINATOR,
+    publishLockKey(guildId, rosterId),
+    '/renew',
+    token,
+  );
+  return result.renewed === true;
 }
 
 /**
@@ -157,32 +175,44 @@ export async function releasePublishLock(
   rosterId: string,
   token: string,
 ): Promise<void> {
-  const key = `${LOCK_PREFIX}:${guildId}:${rosterId}`;
-  const current = await env.ROSTERS.get(key);
-  if (current === token) await env.ROSTERS.delete(key);
+  await coordinateRosterLock(
+    env.ROSTER_COORDINATOR,
+    publishLockKey(guildId, rosterId),
+    '/release',
+    token,
+  );
 }
 
 // ── Rate limiting ────────────────────────────────────────────────────────────
 
 /**
- * Best-effort fixed-window rate limit backed by KV. Returns true if the action
- * is allowed, false once the caller has hit `max` actions within
- * `windowSeconds`. Not strictly atomic (KV read-then-write), which is fine for
- * throttling abuse — it can admit a few extra under a burst but caps runaway
- * channel/ping creation.
+ * Best-effort inactivity-window rate limit backed by KV. Each allowed action
+ * refreshes the counter TTL. Not strictly atomic (KV read-then-write), which is
+ * fine for throttling abuse — it can admit a few extra under a burst but caps
+ * runaway requests.
  */
+export async function checkKvRateLimit(
+  kv: KVNamespace,
+  key: string,
+  max: number,
+  windowSeconds: number,
+): Promise<boolean> {
+  const rlKey = `rl:${key}`;
+  const raw = await kv.get(rlKey);
+  const parsed = raw === null || !/^(0|[1-9]\d*)$/.test(raw) ? 0 : Number(raw);
+  const count = Number.isSafeInteger(parsed) && parsed >= 0 ? parsed : 0;
+  if (count >= max) return false;
+  await kv.put(rlKey, String(count + 1), { expirationTtl: windowSeconds });
+  return true;
+}
+
 export async function checkRosterRateLimit(
   env: Env,
   key: string,
   max: number,
   windowSeconds: number,
 ): Promise<boolean> {
-  const rlKey = `rl:${key}`;
-  const raw = await env.ROSTERS.get(rlKey);
-  const count = raw ? parseInt(raw, 10) : 0;
-  if (count >= max) return false;
-  await env.ROSTERS.put(rlKey, String(count + 1), { expirationTtl: windowSeconds });
-  return true;
+  return checkKvRateLimit(env.ROSTERS, key, max, windowSeconds);
 }
 
 // ── Guild Config CRUD ───────────────────────────────────────────────────────

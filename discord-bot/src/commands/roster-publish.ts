@@ -33,7 +33,8 @@ export async function handleRosterPublish(
     return {
       type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
       data: {
-        content: '❌ You do not have permission to publish rosters. Ask a server admin to configure allowed roles with `/roster config set-role`.',
+        content:
+          '❌ You do not have permission to publish rosters. Ask a server admin to configure allowed roles with `/roster config set-role`.',
         flags: MessageFlags.EPHEMERAL,
       },
     };
@@ -88,7 +89,9 @@ export async function handleRosterPublish(
           flags: MessageFlags.EPHEMERAL,
         });
       }
-    })(),
+    })().catch((error: unknown) => {
+      console.error('[roster-publish] background task failed:', error);
+    }),
   );
 
   return {

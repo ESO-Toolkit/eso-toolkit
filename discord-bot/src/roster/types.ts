@@ -14,8 +14,12 @@ export interface RosterMapping {
   guildId: string;
   channelId: string;
   messageId: string;
+  /** Old messages retained after a replacement until Discord confirms deletion. */
+  cleanupPendingMessageIds?: string[] | undefined;
   categoryId?: string | undefined;
   channelNameOverride?: string | undefined;
+  /** Original ISO event time used for channel naming and roster timestamps. */
+  eventTime?: string | undefined;
   ownerUserId: string;
   createdAt: string;
   updatedAt: string;
@@ -50,6 +54,7 @@ export type Difficulty = 'veteran' | 'normal';
 
 export interface ChannelNameContext {
   dayShort?: string;
+  dayFull?: string;
   time?: string;
   trial?: string;
   /** @deprecated Alias for `trial`. Kept for legacy stored patterns using {tag}. */

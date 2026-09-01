@@ -38,6 +38,6 @@ export const CLASS_SKILL_LINES = [
 
   // Arcanist
   'Herald of the Tome',
-  'Apocryphal Soldier',
+  'Soldier of Apocrypha',
   'Curative Runeforms',
 ] as const;

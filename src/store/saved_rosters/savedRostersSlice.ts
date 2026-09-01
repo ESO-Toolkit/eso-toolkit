@@ -69,6 +69,13 @@ const savedRostersSlice = createSlice({
           if (inlineData.cpPoints !== undefined) slot.cpPoints = inlineData.cpPoints;
           if (inlineData.food !== undefined) slot.food = inlineData.food;
           if (inlineData.passives !== undefined) slot.passives = inlineData.passives;
+          if (inlineData.quickslots !== undefined) slot.quickslots = inlineData.quickslots;
+          if (inlineData.skilledAbilities !== undefined) {
+            slot.skilledAbilities = inlineData.skilledAbilities;
+          }
+          if (inlineData.scribedAbilityIds !== undefined) {
+            slot.scribedAbilityIds = inlineData.scribedAbilityIds;
+          }
         }
       };
 

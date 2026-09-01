@@ -3,7 +3,11 @@
  * Defines the structure for raid roster management including roles, gear sets, and assignments
  */
 
-import type { BuildChampionPoints } from '../features/build-editor/types/build.types';
+import type {
+  BuildChampionPoints,
+  QuickslotEntry,
+  SkilledAbility,
+} from '../features/build-editor/types/build.types';
 import type { GearConfig, SkillsConfig } from '../features/loadout-manager/types/loadout.types';
 
 import { KnownSetIDs } from './abilities';
@@ -155,6 +159,9 @@ export interface DPSSlot {
   cpPoints?: BuildChampionPoints;
   /** Passive ability IDs — populated in Full detail mode */
   passives?: number[];
+  quickslots?: QuickslotEntry[];
+  skilledAbilities?: SkilledAbility[];
+  scribedAbilityIds?: number[];
   /** Per-slot equipment — populated in Full detail mode */
   gear?: GearConfig;
 }
@@ -194,6 +201,9 @@ export interface HealerSetup {
   cpPoints?: BuildChampionPoints;
   /** Passive ability IDs — populated in Full detail mode */
   passives?: number[];
+  quickslots?: QuickslotEntry[];
+  skilledAbilities?: SkilledAbility[];
+  scribedAbilityIds?: number[];
   /** Per-slot equipment — populated in Full detail mode */
   gear?: GearConfig;
 }
@@ -228,6 +238,9 @@ export interface TankSetup {
   cpPoints?: BuildChampionPoints;
   /** Passive ability IDs — populated in Full detail mode */
   passives?: number[];
+  quickslots?: QuickslotEntry[];
+  skilledAbilities?: SkilledAbility[];
+  scribedAbilityIds?: number[];
   /** Per-slot equipment — populated in Full detail mode */
   gear?: GearConfig;
 }

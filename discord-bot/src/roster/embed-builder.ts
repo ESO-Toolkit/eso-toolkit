@@ -15,16 +15,29 @@ const ESO_TOOLKIT_BASE = 'https://esotk.com';
 /** Discord message character limit. */
 const MAX_MESSAGE_LENGTH = 2000;
 
+const ZERO_WIDTH_SPACE = '\u200B';
+
 const SEPARATOR = '▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬';
 
 // ── Helpers (mirror generateDiscordFormat) ──────────────────────────────────
 
-/** Wrap a value in brackets as a header token — returns empty string if falsy. */
-const bracket = (val: string | null | undefined): string => (val ? ` [${val}]` : '');
+/** Neutralize user-controlled Discord mentions, links, and Markdown tokens. */
+export const escapeDiscord = (value?: string | null): string => {
+  if (!value) return '';
+  return value
+    .replace(/\\/g, '\\\\')
+    .replace(/([*_~`|>#[\]()])/g, '\\$1')
+    .replace(/@/g, `@${ZERO_WIDTH_SPACE}`)
+    .replace(/</g, `<${ZERO_WIDTH_SPACE}`)
+    .replace(/(^|\n)([-+]) /g, '$1\\$2 ')
+    .replace(/(^|\n)(\d+)\. /g, '$1$2\\. ');
+};
+
+const bracket = (val: string | null | undefined): string => (val ? ` [${escapeDiscord(val)}]` : '');
 
 /** Wrap an array of values as bracket tokens. Tolerates non-array input. */
 const bracketed = (vals: string[]): string =>
-  Array.isArray(vals) ? vals.map((v) => ` [${v}]`).join('') : '';
+  Array.isArray(vals) ? vals.map((v) => ` [${escapeDiscord(v)}]`).join('') : '';
 
 /** Derive group arrow from group name: "left" → ⬅️, "right" → ➡️ */
 function groupArrow(slot: DecodedRosterSlot): string {
@@ -44,7 +57,7 @@ function positionEmoji(playerNumber?: string): string {
   if (lower === 'left') return '👈';
   if (lower === 'right') return '👉';
   if (lower === 'center') return '👇';
-  return playerNumber;
+  return escapeDiscord(playerNumber);
 }
 
 /** Format positionTag + playerNumber as bracket tokens. */
@@ -52,9 +65,10 @@ function formatPosition(positionTag?: string, playerNumber?: string): string {
   if (!positionTag && !playerNumber) return '';
   const emoji = positionEmoji(playerNumber);
   const isEmoji = emoji === '👈' || emoji === '👉' || emoji === '👇';
-  if (positionTag && emoji && isEmoji) return ` [${positionTag}] [${emoji}]`;
-  if (positionTag && emoji) return ` [${positionTag} ${emoji}]`;
-  if (positionTag) return ` [${positionTag}]`;
+  const safePositionTag = escapeDiscord(positionTag);
+  if (positionTag && emoji && isEmoji) return ` [${safePositionTag}] [${emoji}]`;
+  if (positionTag && emoji) return ` [${safePositionTag} ${emoji}]`;
+  if (positionTag) return ` [${safePositionTag}]`;
   if (emoji) return ` [${emoji}]`;
   return '';
 }
@@ -69,7 +83,7 @@ function formatGearLine(sets?: string[], arenaWeapon?: string): string {
   const entries = [...(sets ?? [])];
   if (arenaWeapon) entries.push(arenaWeapon);
   if (!entries.length) return '';
-  return `GEAR: ${entries.map((s) => `\`${s}\``).join(' ')}`;
+  return `GEAR: ${entries.map((s) => `\`${escapeDiscord(s)}\``).join(' ')}`;
 }
 
 /** Format skill lines as a LINES: `Line1` `Line2` line. */
@@ -78,7 +92,7 @@ function formatSkillLinesLine(sl?: DecodedRosterSlot['skillLines']): string {
   if (sl.isFlex) return 'LINES: `Flexible`';
   const parts = [sl.line1, sl.line2, sl.line3].filter(Boolean);
   if (!parts.length) return '';
-  return `LINES: ${parts.map((l) => `\`${l}\``).join(' ')}`;
+  return `LINES: ${parts.map((l) => `\`${escapeDiscord(l)}\``).join(' ')}`;
 }
 
 // ── Text Builder ────────────────────────────────────────────────────────────
@@ -90,7 +104,7 @@ export function buildRosterText(
 ): string {
   const lines: string[] = [];
 
-  lines.push(`**${snapshot.title}**`);
+  lines.push(`**${escapeDiscord(snapshot.title)}**`);
   lines.push('');
 
   // Event time — Discord timestamp renders localized for every viewer
@@ -106,12 +120,12 @@ export function buildRosterText(
   decoded.tanks.forEach((tank, idx) => {
     const num = idx + 1;
     const arrow = groupArrow(tank) || (num === 1 ? '⬅️' : '➡️');
-    const label = tank.roleLabel || (num === 1 ? 'MT' : 'OT');
+    const label = escapeDiscord(tank.roleLabel || (num === 1 ? 'MT' : 'OT'));
     const ult = bracket(tank.ultimate);
     const pos = formatPosition(tank.positionTag, tank.playerNumber);
     const roleNote = bracket(tank.roleNotes);
     const labelsPart = tank.labels?.length ? bracketed(tank.labels) : '';
-    const player = tank.playerName ? ` @${tank.playerName}` : '';
+    const player = tank.playerName ? ` @${ZERO_WIDTH_SPACE}${escapeDiscord(tank.playerName)}` : '';
 
     lines.push(`${arrow}🛡️ **${label}**:${ult}${pos}${roleNote}${labelsPart}${player}`);
 
@@ -121,7 +135,7 @@ export function buildRosterText(
     const sl = formatSkillLinesLine(tank.skillLines);
     if (sl) lines.push(sl);
 
-    if (tank.notes) lines.push(`*${tank.notes}*`);
+    if (tank.notes) lines.push(`*${escapeDiscord(tank.notes)}*`);
 
     lines.push('');
   });
@@ -132,14 +146,14 @@ export function buildRosterText(
   // Healers — arrow from group name, defaults H1=⬅️ H2=➡️
   decoded.healers.forEach((h, index) => {
     const arrow = groupArrow(h) || (index === 0 ? '⬅️' : '➡️');
-    const label = h.roleLabel || `H${index + 1}`;
+    const label = escapeDiscord(h.roleLabel || `H${index + 1}`);
     const pos = formatPosition(h.positionTag, h.playerNumber);
     const roleNote = bracket(h.roleNotes);
     const ult = bracket(h.ultimate);
     const buff = bracket(h.healerBuff);
     const cp = bracket(h.championPoint);
     const labelsPart = h.labels?.length ? bracketed(h.labels) : '';
-    const player = h.playerName ? ` @${h.playerName}` : '';
+    const player = h.playerName ? ` @${ZERO_WIDTH_SPACE}${escapeDiscord(h.playerName)}` : '';
 
     lines.push(`${arrow}💖 **${label}**:${pos}${roleNote}${ult}${buff}${cp}${labelsPart}${player}`);
 
@@ -149,7 +163,7 @@ export function buildRosterText(
     const sl = formatSkillLinesLine(h.skillLines);
     if (sl) lines.push(sl);
 
-    if (h.notes) lines.push(`*${h.notes}*`);
+    if (h.notes) lines.push(`*${escapeDiscord(h.notes)}*`);
 
     lines.push('');
   });
@@ -164,12 +178,14 @@ export function buildRosterText(
     const arrow = groupArrow(dd);
     const slotNum = dd.slotNumber ?? 0;
     const jailType = dd.jailDDType
-      ? ` [${dd.jailDDType === 'Custom' && dd.customDescription ? dd.customDescription : dd.jailDDType}]`
+      ? ` [${escapeDiscord(
+          dd.jailDDType === 'Custom' && dd.customDescription ? dd.customDescription : dd.jailDDType,
+        )}]`
       : '';
     const pos = formatPosition(dd.positionTag, dd.playerNumber);
     const roleNote = bracket(dd.roleNotes);
     const labelsPart = dd.labels?.length ? bracketed(dd.labels) : '';
-    const player = dd.playerName ? ` @${dd.playerName}` : '';
+    const player = dd.playerName ? ` @${ZERO_WIDTH_SPACE}${escapeDiscord(dd.playerName)}` : '';
 
     lines.push(`${arrow}⚔️ **#${slotNum}${jailType}**:${pos}${roleNote}${labelsPart}${player}`);
 
@@ -179,8 +195,8 @@ export function buildRosterText(
     const sl = formatSkillLinesLine(dd.skillLines);
     if (sl) lines.push(sl);
 
-    if (dd.ultimate) lines.push(`[${dd.ultimate}]`);
-    if (dd.notes) lines.push(`*${dd.notes}*`);
+    if (dd.ultimate) lines.push(`[${escapeDiscord(dd.ultimate)}]`);
+    if (dd.notes) lines.push(`*${escapeDiscord(dd.notes)}*`);
 
     lines.push('');
   });
@@ -188,7 +204,7 @@ export function buildRosterText(
   // General Notes
   if (decoded.notes) {
     lines.push('**General Notes:**');
-    lines.push(decoded.notes);
+    lines.push(escapeDiscord(decoded.notes));
     lines.push('');
   }
 
@@ -236,8 +252,38 @@ export function splitMessages(text: string): string[] {
     // notes). Preserve the entire value by hard-wrapping that line after
     // flushing any accumulated line-boundary chunk.
     pushCurrent();
-    for (let start = 0; start < line.length; start += MAX_MESSAGE_LENGTH) {
-      chunks.push(line.slice(start, start + MAX_MESSAGE_LENGTH));
+    let start = 0;
+    while (start < line.length) {
+      let end = Math.min(start + MAX_MESSAGE_LENGTH, line.length);
+
+      if (end < line.length) {
+        // Keep UTF-16 surrogate pairs together so emoji are not corrupted.
+        const beforeBoundary = line.charCodeAt(end - 1);
+        const afterBoundary = line.charCodeAt(end);
+        if (
+          beforeBoundary >= 0xd800 &&
+          beforeBoundary <= 0xdbff &&
+          afterBoundary >= 0xdc00 &&
+          afterBoundary <= 0xdfff
+        ) {
+          end -= 1;
+        }
+
+        // An odd trailing backslash escapes the next Markdown token. Move it
+        // with that token instead of exposing the token at the next message.
+        let trailingBackslashes = 0;
+        for (let index = end - 1; index >= start && line[index] === '\\'; index -= 1) {
+          trailingBackslashes += 1;
+        }
+        if (trailingBackslashes % 2 === 1) {
+          end -= 1;
+        }
+      }
+
+      // Defensive fallback for an extremely small/hostile boundary.
+      if (end <= start) end = Math.min(start + MAX_MESSAGE_LENGTH, line.length);
+      chunks.push(line.slice(start, end));
+      start = end;
     }
   }
 
