@@ -1,3 +1,8 @@
+// Module scope, not script scope: this file mirrors hubRoutePreload.test.ts down
+// to its `loadFresh`/`flush` helper names, and two globally-scoped test files
+// declaring the same consts collide under `tsc -p tsconfig.test.json`.
+export {};
+
 // `preloadReportFightDetails` keeps module-level state tracking whether the
 // importer is loading/loaded, so each test loads a fresh copy of the module
 // (resetMocks in jest.config.cjs only resets mock state, not module singletons).
