@@ -5,6 +5,7 @@
 
 import { Refresh as RefreshIcon, Close as CloseIcon } from '@mui/icons-material';
 import { Snackbar, Alert, Button, Box, Typography, IconButton } from '@mui/material';
+import { alpha, useTheme } from '@mui/material/styles';
 import React from 'react';
 
 import { useCacheInvalidation, useVersionInfo } from '../../hooks/useCacheInvalidation';
@@ -32,6 +33,8 @@ export const UpdateNotification: React.FC<UpdateNotificationProps> = ({
   customActions,
   position = { vertical: 'bottom', horizontal: 'right' },
 }) => {
+  const theme = useTheme();
+  const isDarkMode = theme.palette.mode === 'dark';
   const [state, actions] = useCacheInvalidation();
 
   const handleUpdate = (): void => {
@@ -70,7 +73,7 @@ export const UpdateNotification: React.FC<UpdateNotificationProps> = ({
     >
       <Alert
         severity="info"
-        variant="filled"
+        variant={isDarkMode ? 'filled' : 'outlined'}
         action={
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             {customActions}
@@ -92,13 +95,55 @@ export const UpdateNotification: React.FC<UpdateNotificationProps> = ({
             </IconButton>
           </Box>
         }
+        sx={{
+          ...(isDarkMode
+            ? {}
+            : {
+                backgroundColor: theme.palette.background.paper,
+                borderColor: theme.palette.divider,
+                color: theme.palette.text.primary,
+                '& .MuiAlert-icon': {
+                  color: theme.palette.primary.main,
+                },
+                '& .MuiAlert-action': {
+                  color: theme.palette.text.primary,
+                },
+                '& .MuiButton-root': {
+                  color: theme.palette.primary.main,
+                  '&:hover': {
+                    backgroundColor: alpha(theme.palette.primary.main, 0.08),
+                  },
+                },
+                '& .MuiIconButton-root': {
+                  color: theme.palette.text.secondary,
+                  '&:hover': {
+                    backgroundColor: alpha(theme.palette.text.primary, 0.08),
+                  },
+                },
+              }),
+        }}
       >
         <Box>
-          <Typography variant="body2" component="div" sx={{ fontWeight: 600 }}>
+          <Typography
+            variant="body2"
+            component="div"
+            sx={{
+              fontWeight: 600,
+              color: isDarkMode ? 'inherit' : theme.palette.text.primary,
+            }}
+          >
             New version available!
           </Typography>
           {showVersionInfo && state.versionLoaded && state.currentVersion && (
-            <Typography variant="caption" component="div" sx={{ opacity: 0.9, mt: 0.5 }}>
+            <Typography
+              variant="caption"
+              component="div"
+              sx={{
+                color: isDarkMode ? 'inherit' : theme.palette.text.secondary,
+                opacity: isDarkMode ? 0.9 : 1,
+                mt: 0.5,
+              }}
+            >
               Current: {formatVersion(state.currentVersion)}
               <br />
               Latest: {formatVersion(state.serverVersion)}
