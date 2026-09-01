@@ -1,10 +1,6 @@
-/**
- * UpdateNotification Component
- * Shows notifications when a new version is available
- */
-
 import { Refresh as RefreshIcon, Close as CloseIcon } from '@mui/icons-material';
 import { Snackbar, Alert, Button, Box, Typography, IconButton } from '@mui/material';
+import { alpha, useTheme } from '@mui/material/styles';
 import React from 'react';
 
 import { useCacheInvalidation, useVersionInfo } from '../../hooks/useCacheInvalidation';
@@ -32,6 +28,8 @@ export const UpdateNotification: React.FC<UpdateNotificationProps> = ({
   customActions,
   position = { vertical: 'bottom', horizontal: 'right' },
 }) => {
+  const theme = useTheme();
+  const isDarkMode = theme.palette.mode === 'dark';
   const [state, actions] = useCacheInvalidation();
 
   const handleUpdate = (): void => {
@@ -70,12 +68,12 @@ export const UpdateNotification: React.FC<UpdateNotificationProps> = ({
     >
       <Alert
         severity="info"
-        variant="filled"
+        variant={isDarkMode ? 'filled' : 'outlined'}
         action={
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             {customActions}
             <Button
-              color="inherit"
+              color={isDarkMode ? 'inherit' : 'primary'}
               size="small"
               startIcon={<RefreshIcon />}
               onClick={handleUpdate}
@@ -83,6 +81,7 @@ export const UpdateNotification: React.FC<UpdateNotificationProps> = ({
                 minWidth: 'auto',
                 fontSize: '0.875rem',
                 fontWeight: 600,
+                ...(isDarkMode ? {} : { color: theme.palette.primary.main }),
               }}
             >
               Update
@@ -92,13 +91,58 @@ export const UpdateNotification: React.FC<UpdateNotificationProps> = ({
             </IconButton>
           </Box>
         }
+        sx={{
+          ...(isDarkMode
+            ? {}
+            : {
+                backgroundColor: theme.palette.background.paper,
+                // The light-mode divider is intentionally subtle across the app.
+                // Use the secondary text color here so the alert boundary remains
+                // distinguishable against its white surface.
+                borderColor: theme.palette.text.secondary,
+                color: theme.palette.text.primary,
+                '& .MuiAlert-icon': {
+                  color: theme.palette.primary.main,
+                },
+                '& .MuiAlert-action': {
+                  color: theme.palette.text.primary,
+                },
+                '& .MuiButton-root': {
+                  color: theme.palette.primary.main,
+                  '&:hover': {
+                    backgroundColor: alpha(theme.palette.primary.main, 0.08),
+                  },
+                },
+                '& .MuiIconButton-root': {
+                  color: theme.palette.text.secondary,
+                  '&:hover': {
+                    backgroundColor: alpha(theme.palette.text.primary, 0.08),
+                  },
+                },
+              }),
+        }}
       >
         <Box>
-          <Typography variant="body2" component="div" sx={{ fontWeight: 600 }}>
+          <Typography
+            variant="body2"
+            component="div"
+            sx={{
+              fontWeight: 600,
+              color: isDarkMode ? 'inherit' : theme.palette.text.primary,
+            }}
+          >
             New version available!
           </Typography>
           {showVersionInfo && state.versionLoaded && state.currentVersion && (
-            <Typography variant="caption" component="div" sx={{ opacity: 0.9, mt: 0.5 }}>
+            <Typography
+              variant="caption"
+              component="div"
+              sx={{
+                color: isDarkMode ? 'inherit' : theme.palette.text.secondary,
+                opacity: isDarkMode ? 0.9 : 1,
+                mt: 0.5,
+              }}
+            >
               Current: {formatVersion(state.currentVersion)}
               <br />
               Latest: {formatVersion(state.serverVersion)}
