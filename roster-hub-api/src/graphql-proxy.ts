@@ -71,9 +71,32 @@ const CACHEABLE_OPERATIONS = new Set([
   'getReportByCode',
   'getReportMasterData',
   'getProfileUploadedReports',
+  // The Latest Reports list. Every visit to /latest-reports issued this
+  // uncached, so each one paid a ~500 ms upstream round trip on the shared
+  // credentials budget for a page that is identical for every visitor on the
+  // default filters. Short TTL only — see OPERATION_CACHE_TTL_SECONDS.
+  'getLatestReports',
 ]);
 
 const CACHE_TTL_SECONDS = 600; // 10 minutes
+
+/**
+ * Per-operation overrides of CACHE_TTL_SECONDS.
+ *
+ * `getLatestReports` is a "what was uploaded just now" feed, so it gets a
+ * one-minute TTL: long enough to collapse the traffic of a busy minute onto a
+ * single upstream call, short enough that a freshly uploaded log shows up about
+ * as fast as it did uncached. It also bounds the empty-log staleness the list
+ * already handles — a still-parsing log is hidden by the client and self-heals
+ * on the next fetch, which is now at most a minute away.
+ */
+const OPERATION_CACHE_TTL_SECONDS: Record<string, number> = {
+  getLatestReports: 60,
+};
+
+function cacheTtlFor(operation: string): number {
+  return OPERATION_CACHE_TTL_SECONDS[operation] ?? CACHE_TTL_SECONDS;
+}
 
 const MAX_BODY_BYTES = 100_000; // 100 KB
 
@@ -113,6 +136,24 @@ async function buildCacheKey(url: string, bodyStr: string): Promise<string> {
  * Returns false on any parse failure (treat as not-cacheable) so we never cache a
  * response we could not verify.
  */
+/**
+ * True when a `getLatestReports` response actually carries a page of reports.
+ *
+ * A degraded response (upstream error, rate limit) still comes back 200 with a
+ * null `reports`, and caching that would hand every visitor an empty list for
+ * the whole TTL. Same reasoning as reportResponseHasFights below.
+ */
+function latestReportsResponseHasData(responseBody: string): boolean {
+  try {
+    const parsed = JSON.parse(responseBody) as {
+      data?: { reportData?: { reports?: { data?: unknown } | null } | null };
+    };
+    return Array.isArray(parsed?.data?.reportData?.reports?.data);
+  } catch {
+    return false;
+  }
+}
+
 function reportResponseHasFights(responseBody: string): boolean {
   try {
     const parsed = JSON.parse(responseBody) as {
@@ -452,7 +493,7 @@ export async function handleGraphqlProxy(c: Context<{ Bindings: Env }>): Promise
       status: upstream.status,
       headers: {
         'Content-Type': 'application/json',
-        'Cache-Control': isCacheable ? `public, max-age=${CACHE_TTL_SECONDS}` : 'no-store',
+        'Cache-Control': isCacheable ? `public, max-age=${cacheTtlFor(operationHint)}` : 'no-store',
       },
     });
 
@@ -464,6 +505,9 @@ export async function handleGraphqlProxy(c: Context<{ Bindings: Env }>): Promise
     let storeInCache = isCacheable && upstream.status === 200 && Boolean(cacheKey);
     if (storeInCache && operationHint === 'getReportByCode') {
       storeInCache = reportResponseHasFights(responseBody);
+    }
+    if (storeInCache && operationHint === 'getLatestReports') {
+      storeInCache = latestReportsResponseHasData(responseBody);
     }
     if (storeInCache && cacheKey) {
       c.executionCtx.waitUntil(cache.put(cacheKey, response.clone()));

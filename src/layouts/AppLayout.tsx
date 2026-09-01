@@ -29,11 +29,20 @@ import { Footer } from '../components/Footer';
 import { HeaderBar } from '../components/HeaderBar';
 import { ReduxThemeProvider } from '../ReduxThemeProvider';
 import { ReportFightProvider } from '../ReportFightContext';
+import { scheduleItemDataWarmupForPath } from '../utils/itemDataWarmup';
 
 export const AppLayout: React.FC = () => {
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const [routeAnnouncement, setRouteAnnouncement] = React.useState('');
+
+  // The entry module only warms the gear item data when the LANDED-ON route can
+  // use it, so a visitor who starts on a list page (e.g. /latest-reports) and
+  // then navigates into a gear page needs the warm-up kicked here. Idempotent
+  // and self-gating — see utils/itemDataWarmup.
+  React.useEffect(() => {
+    scheduleItemDataWarmupForPath(location.pathname);
+  }, [location.pathname]);
 
   React.useEffect(() => {
     // Longest-prefix fallback so nested routes are still announced by name.

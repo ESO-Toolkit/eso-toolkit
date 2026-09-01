@@ -1,6 +1,8 @@
 // Environment utilities for accessing Vite build-time variables
 // This file can be easily mocked in tests
 
+import { stripBasePath } from './routePathname';
+
 /**
  * Get the base URL from Vite configuration
  * If BASE_URL is already a full URL (includes origin), return it as-is
@@ -60,6 +62,15 @@ export const isProduction = (): boolean => {
 export const getEnvVar = (key: string): string | undefined => {
   return import.meta.env[key];
 };
+
+/**
+ * The app-relative route for the current browser location, with the deploy's
+ * base path removed. See utils/routePathname for why this matters and for the
+ * (testable) pure implementation.
+ */
+export const getRoutePathname = (
+  pathname: string = typeof window === 'undefined' ? '/' : window.location.pathname,
+): string => stripBasePath(pathname, import.meta.env.BASE_URL || '/');
 
 /**
  * Base URL of the roster-hub-api Worker (reports, roster hub, pack hub, build hub,
