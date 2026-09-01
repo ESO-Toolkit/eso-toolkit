@@ -8,9 +8,19 @@ import '@fontsource-variable/space-grotesk';
 import App from './App';
 import './index.css';
 import './styles/view-transitions.css';
+import { prefetchLatestReportsForUrl } from './features/latest_reports/latestReportsRequest';
 import store, { type RootState } from './store/storeWithHistory';
 import { setPerfTier } from './store/ui/uiSlice';
 import { heuristicPerfTier } from './utils/detectPerfTier';
+import { scheduleItemDataWarmupForPath } from './utils/itemDataWarmup';
+
+// Kick the Latest Reports list request before React mounts. The route is a
+// lazy chunk behind the whole provider tree, so left to itself the query only
+// went out once boot had finished — seconds of dead time on a slow device while
+// the network sat idle. Firing it here overlaps the request with the rest of
+// boot; useLatestReportsQuery adopts the in-flight promise on mount. No-op on
+// every other route. See features/latest_reports/latestReportsRequest.
+prefetchLatestReportsForUrl(window.location.pathname, window.location.search);
 
 // First-paint perf-tier priming. For a first-time visitor with no
 // persisted store, the default is 'medium' — which would leave a low-end
@@ -61,32 +71,10 @@ root.render(
   <App />,
 );
 
-// Warm the item data + icon caches off the critical path. A STATIC import of
-// itemIconResolver here would drag the loadout data module graph (+ ~2 MB set
-// collections) into the entry chunk, parsed before first paint on every
-// page — the dynamic import keeps that code in its own async chunk, and
-// idle scheduling keeps even the fetches (icon JSON chunk + the ~12 MB
-// itemIdMap JSON asset) out of the startup window. This is best-effort:
-// consumers that need the data (GearPicker, Extract Build, /bv) await
-// preloadIconData()/preloadItemData() themselves and retry on failure.
-const warmItemIconData = (): void => {
-  void import('./features/loadout-manager/utils/itemIconResolver')
-    .then((m) => m.preloadIconData())
-    .catch(() => {});
-  void import('./features/loadout-manager/data/itemIdMap')
-    .then((m) => m.preloadItemData())
-    .catch(() => {});
-};
-
-type NavigatorWithConnection = Navigator & {
-  connection?: { effectiveType?: string; saveData?: boolean };
-};
-const connection = (navigator as NavigatorWithConnection).connection;
-const shouldWarmLargeData =
-  !connection?.saveData && !['slow-2g', '2g'].includes(connection?.effectiveType ?? '');
-
-// Do not force a multi-megabyte background transfer in browsers without a true
-// idle callback. Feature consumers already await these datasets when needed.
-if (shouldWarmLargeData && typeof window.requestIdleCallback === 'function') {
-  window.requestIdleCallback(warmItemIconData, { timeout: 15000 });
-}
+// Warm the gear item + icon caches off the critical path, but only for a route
+// that can actually use them — the payload is ~1.3 MB compressed and ~18 MB of
+// JSON to parse, which is dead weight on a list page like /latest-reports.
+// AppLayout re-arms this on navigation into a gear route. See utils/
+// itemDataWarmup for the route gate, the connection-quality gate and the
+// dynamic-import rationale.
+scheduleItemDataWarmupForPath(window.location.pathname);

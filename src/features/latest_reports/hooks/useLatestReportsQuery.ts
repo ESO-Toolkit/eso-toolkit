@@ -4,7 +4,6 @@ import { useEsoLogsClientInstance } from '../../../EsoLogsClientContext';
 import {
   GetLatestReportsDocument,
   GetLatestReportsQuery,
-  GetLatestReportsQueryVariables,
   UserReportSummaryFragment,
 } from '../../../graphql/gql/graphql';
 import {
@@ -12,10 +11,15 @@ import {
   isReportEmpty,
   partitionReportsByData,
 } from '../../reports/reportFormatting';
+import {
+  buildLatestReportsVariables,
+  REPORTS_PER_PAGE,
+  takePrefetchedLatestReports,
+  type LatestReportsQueryInput,
+} from '../latestReportsRequest';
 
-import { rangeToEpochMs, type DateRangePreset } from './rangeToEpochMs';
-
-export const REPORTS_PER_PAGE = 25;
+export { REPORTS_PER_PAGE };
+export type { LatestReportsQueryInput };
 
 export interface LatestReportsPagination {
   currentPage: number;
@@ -44,14 +48,6 @@ export interface LatestReportsQueryState {
   pagination: LatestReportsPagination;
 }
 
-export interface LatestReportsQueryInput {
-  page: number;
-  zoneId: number | null;
-  range: DateRangePreset;
-  customFrom: string | null;
-  customTo: string | null;
-}
-
 const INITIAL_PAGINATION: LatestReportsPagination = {
   currentPage: 1,
   totalPages: 1,
@@ -70,17 +66,6 @@ const INITIAL_STATE: LatestReportsQueryState = {
   error: null,
   pagination: INITIAL_PAGINATION,
 };
-
-function buildVariables(input: LatestReportsQueryInput): GetLatestReportsQueryVariables {
-  const { start, end } = rangeToEpochMs(input.range, input.customFrom, input.customTo);
-  return {
-    limit: REPORTS_PER_PAGE,
-    page: input.page,
-    zoneID: input.zoneId ?? undefined,
-    startTime: start,
-    endTime: end,
-  };
-}
 
 /**
  * Owns the server-side fetch for Latest Reports. Re-runs whenever the server
@@ -165,8 +150,30 @@ export function useLatestReportsQuery(input: LatestReportsQueryInput): LatestRep
       const requestId = ++requestIdRef.current;
       setState((prev) => ({ ...prev, loading: true, error: null }));
 
-      const variables = buildVariables({ page, zoneId, range, customFrom, customTo });
+      const variables = buildLatestReportsVariables({ page, zoneId, range, customFrom, customTo });
       try {
+        // The entry module may already have this exact request in flight — see
+        // latestReportsRequest. Adopting it is what turns a cold visit's
+        // "boot for seconds, THEN ask the server" into the two happening at
+        // once. It is a network read like the one below, so there is nothing
+        // to revalidate afterwards; a rejected prefetch simply falls through
+        // to the normal cache-peek + network path. It does NOT write Apollo's
+        // cache the way client.query would, so the first revisit in the same
+        // session peeks a cold cache and paints from its own network read
+        // instead of instantly; that read re-warms the cache for the ones
+        // after it. Accepted: the cold first load this exists to fix is worth
+        // far more than one revisit's peek.
+        const prefetched = takePrefetchedLatestReports(variables);
+        if (prefetched) {
+          try {
+            const adopted = await prefetched;
+            if (requestId !== requestIdRef.current) return; // superseded by a newer load
+            if (applyReportData(adopted, false)) return;
+          } catch {
+            // Fall through and fetch normally.
+          }
+        }
+
         // cache-and-network, hand-composed: client.query() doesn't accept that
         // fetchPolicy, so on a normal load we first read the cache (cache-only
         // never touches the network) to paint an already-seen view instantly — no

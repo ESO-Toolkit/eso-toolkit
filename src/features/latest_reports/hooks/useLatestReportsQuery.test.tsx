@@ -1,6 +1,11 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
+import {
+  prefetchLatestReportsForUrl,
+  resetLatestReportsPrefetchForTests,
+} from '../latestReportsRequest';
+
 import { useLatestReportsQuery, type LatestReportsQueryInput } from './useLatestReportsQuery';
 
 // ─── Mocks ───────────────────────────────────────────────────────────────────
@@ -78,6 +83,7 @@ const fetchPolicies = () =>
 
 beforeEach(() => {
   mockClient.query.mockReset();
+  resetLatestReportsPrefetchForTests();
 });
 
 // ─── Tests ───────────────────────────────────────────────────────────────────
@@ -215,6 +221,56 @@ describe('useLatestReportsQuery', () => {
       await Promise.resolve();
       await Promise.resolve();
     });
+
+    expect(result.current.reports.map((r) => r.code)).toEqual(['PAGE2']);
+  });
+  // ─── Boot-time prefetch adoption ───────────────────────────────────────────
+  // The entry module fires this exact request before React mounts; the hook is
+  // supposed to consume it instead of asking the network a second time.
+
+  it('adopts a matching boot prefetch instead of re-fetching', async () => {
+    primeClient({ network: [pageResult([makeReport('NETWORK')])] });
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve({ data: pageResult([makeReport('PREFETCHED')]) }),
+    }) as unknown as typeof fetch;
+    prefetchLatestReportsForUrl('/latest-reports', '');
+
+    const { result } = renderHook(() => useLatestReportsQuery(baseInput));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    expect(result.current.reports.map((r) => r.code)).toEqual(['PREFETCHED']);
+    // The prefetch IS the network read, so no Apollo round-trip happens at all.
+    expect(mockClient.query).not.toHaveBeenCalled();
+  });
+
+  it('falls back to the normal cache+network path when the prefetch failed', async () => {
+    primeClient({ network: [pageResult([makeReport('NETWORK')])] });
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: false,
+      status: 500,
+    } as unknown as Response) as unknown as typeof fetch;
+    prefetchLatestReportsForUrl('/latest-reports', '');
+
+    const { result } = renderHook(() => useLatestReportsQuery(baseInput));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    expect(fetchPolicies()).toEqual(['cache-only', 'network-only']);
+    expect(result.current.reports.map((r) => r.code)).toEqual(['NETWORK']);
+  });
+
+  it('ignores a prefetch for different filters', async () => {
+    primeClient({ network: [pageResult([makeReport('PAGE2')])] });
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve({ data: pageResult([makeReport('PAGE1-PREFETCH')]) }),
+    }) as unknown as typeof fetch;
+    prefetchLatestReportsForUrl('/latest-reports', '');
+
+    const { result } = renderHook(() => useLatestReportsQuery({ ...baseInput, page: 2 }));
+    await waitFor(() => expect(result.current.loading).toBe(false));
 
     expect(result.current.reports.map((r) => r.code)).toEqual(['PAGE2']);
   });
