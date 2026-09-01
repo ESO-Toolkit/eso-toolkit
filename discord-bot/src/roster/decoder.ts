@@ -7,45 +7,19 @@
  */
 
 import { getSetName } from './set-names.js';
+import {
+  CHAMPION_POINT_LIST,
+  CLASS_SKILL_LINES,
+  COMPOSITION_LIMITS,
+  DEFAULT_COMPOSITION,
+  HEALER_BUFF_LIST,
+  JAIL_DD_TYPE_LIST,
+  ULTIMATE_LIST,
+} from './encoding-vocabulary.js';
 import type { DecodedRoster, DecodedRosterSlot, DecodedSkillLines } from './types.js';
 
 // ── Lookup tables (mirror the frontend's encoding tables) ───────────────────
 
-const CLASS_SKILL_LINES = [
-  'Ardent Flame',
-  'Draconic Power',
-  'Earthen Heart',
-  'Dark Magic',
-  'Daedric Summoning',
-  'Storm Calling',
-  'Assassination',
-  'Shadow',
-  'Siphoning',
-  'Aedric Spear',
-  "Dawn's Wrath",
-  'Restoring Light',
-  'Animal Companions',
-  'Green Balance',
-  "Winter's Embrace",
-  'Grave Lord',
-  'Bone Tyrant',
-  'Living Death',
-  'Herald of the Tome',
-  'Apocryphal Soldier',
-  'Curative Runeforms',
-] as const;
-
-const ULTIMATE_LIST = [
-  'Aggressive Warhorn',
-  'Glacial Colossus',
-  'Barrier',
-  'Greater Storm Atronach',
-] as const;
-
-const HEALER_BUFF_LIST = ['Enlivening Overflow', 'From the Brink'] as const;
-const CHAMPION_POINT_LIST = ['Enlivening Overflow', 'From the Brink'] as const;
-
-const JAIL_DD_TYPE_LIST = ['banner', 'zenkosh', 'wm', 'wm-mk', 'mk', 'custom'] as const;
 const JAIL_DD_LABELS: Record<string, string> = {
   banner: 'Banner',
   zenkosh: 'ZenKosh',
@@ -210,11 +184,6 @@ interface CompactRoster {
 
 // Composition defaults/clamps — mirror the frontend's rosterEncoding.ts so the
 // ping logic knows how many slots a roster *wants*, not just how many are filled.
-const DEFAULT_COMPOSITION = { tanks: 2, healers: 2, dps: 8 } as const;
-const MAX_TANKS = 4;
-const MAX_HEALERS = 4;
-const MAX_DPS = 24;
-
 const clampCount = (n: number, max: number): number => Math.min(Math.max(0, n), max);
 
 // ── Decode helpers ──────────────────────────────────────────────────────────
@@ -225,16 +194,25 @@ function decodeUltimate(ul?: number | string): string | undefined {
   return ULTIMATE_LIST[ul] ?? undefined;
 }
 
+const normalizeSkillLineName = (value: string): string =>
+  value === 'Apocryphal Soldier' ? 'Soldier of Apocrypha' : value;
+
 function decodeSkillLines(sl?: CompactSkills): DecodedSkillLines | undefined {
   if (!sl) return undefined;
   const result: DecodedSkillLines = {};
   if (sl.fl) result.isFlex = true;
-  if (sl.l1 !== undefined)
-    result.line1 = typeof sl.l1 === 'number' ? CLASS_SKILL_LINES[sl.l1] : sl.l1;
-  if (sl.l2 !== undefined)
-    result.line2 = typeof sl.l2 === 'number' ? CLASS_SKILL_LINES[sl.l2] : sl.l2;
-  if (sl.l3 !== undefined)
-    result.line3 = typeof sl.l3 === 'number' ? CLASS_SKILL_LINES[sl.l3] : sl.l3;
+  if (sl.l1 !== undefined) {
+    result.line1 =
+      typeof sl.l1 === 'number' ? CLASS_SKILL_LINES[sl.l1] : normalizeSkillLineName(sl.l1);
+  }
+  if (sl.l2 !== undefined) {
+    result.line2 =
+      typeof sl.l2 === 'number' ? CLASS_SKILL_LINES[sl.l2] : normalizeSkillLineName(sl.l2);
+  }
+  if (sl.l3 !== undefined) {
+    result.line3 =
+      typeof sl.l3 === 'number' ? CLASS_SKILL_LINES[sl.l3] : normalizeSkillLineName(sl.l3);
+  }
   return result.isFlex || result.line1 || result.line2 || result.line3 ? result : undefined;
 }
 
@@ -396,9 +374,9 @@ export async function decodeRosterData(rosterData: string): Promise<DecodedRoste
   const composition =
     compact.v === 3 && compact.co
       ? {
-          tanks: clampCount(compact.co[0] ?? 0, MAX_TANKS),
-          healers: clampCount(compact.co[1] ?? 0, MAX_HEALERS),
-          dps: clampCount(compact.co[2] ?? 0, MAX_DPS),
+          tanks: clampCount(compact.co[0] ?? 0, COMPOSITION_LIMITS.tanks),
+          healers: clampCount(compact.co[1] ?? 0, COMPOSITION_LIMITS.healers),
+          dps: clampCount(compact.co[2] ?? 0, COMPOSITION_LIMITS.dps),
         }
       : { ...DEFAULT_COMPOSITION };
 

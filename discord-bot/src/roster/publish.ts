@@ -47,6 +47,15 @@ import type {
 // ── Snapshot → Channel Name Context ────────────────────────────────────────
 
 const SHORT_DAYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'] as const;
+const FULL_DAYS = [
+  'sunday',
+  'monday',
+  'tuesday',
+  'wednesday',
+  'thursday',
+  'friday',
+  'saturday',
+] as const;
 
 const DEFAULT_TIMEZONE = 'America/New_York';
 
@@ -112,6 +121,7 @@ function buildNameContext(
         ({ dayOfWeek, hour } = getDatePartsInTz(date, DEFAULT_TIMEZONE));
       }
       ctx.dayShort = SHORT_DAYS[dayOfWeek];
+      ctx.dayFull = FULL_DAYS[dayOfWeek];
       ctx.time = formatTime12h(hour);
     }
   }
@@ -351,6 +361,7 @@ async function doPublishRoster(
       eventTime,
       true,
       config.defaultChannelId,
+      config.rolePingIds,
     );
     if (!mutation.ok) return mutation;
   } else {
@@ -465,19 +476,21 @@ export async function refreshRoster(
   opts: RefreshOptions = {},
 ): Promise<RefreshResult> {
   const allowRecreate = opts.allowRecreate ?? true;
-  // Fetch the latest snapshot — hub API for normal IDs, KV for direct-publish
-  const fetchResult = await fetchRosterSnapshot(env, rosterId);
-  let snapshot = fetchResult.status === 'ok' ? fetchResult.snapshot : null;
+  // Direct-publish rosters exist only in KV; avoid an unnecessary Hub request.
+  const isDirect = rosterId.startsWith('direct-');
+  let snapshot: RosterSnapshot | null = null;
+  let hubFetchFailed = false;
+  let cachedMappings: RosterMapping[] | undefined;
 
-  if (!snapshot && rosterId.startsWith('direct-')) {
+  if (isDirect) {
     // Direct-publish rosters live in KV, not the hub API
     const kvData = await env.ROSTERS.get(`${KV_PREFIX.ROSTER_DATA}:${rosterId}`);
     if (kvData) {
       // Reconstruct the snapshot. Prefer persisted metadata (title/desc/tags)
       // so a refresh keeps the original embed faithful; fall back to
       // placeholders for rosters published before metadata persistence existed.
-      const mappings = await findMappingsForRoster(env, rosterId);
-      const mapping = mappings[0] ?? null;
+      cachedMappings = await findMappingsForRoster(env, rosterId);
+      const mapping = cachedMappings[0] ?? null;
       const meta = await readDirectRosterMeta(env, rosterId);
       snapshot = {
         id: rosterId,
@@ -492,10 +505,14 @@ export async function refreshRoster(
         updated_at: new Date().toISOString(),
       };
     }
+  } else {
+    const fetchResult = await fetchRosterSnapshot(env, rosterId);
+    snapshot = fetchResult.status === 'ok' ? fetchResult.snapshot : null;
+    hubFetchFailed = fetchResult.status === 'error';
   }
 
   if (!snapshot) {
-    if (fetchResult.status === 'error') {
+    if (hubFetchFailed) {
       return { ok: false, error: 'Roster API unavailable. Please try again later.' };
     }
     return { ok: false, error: 'Roster not found.' };
@@ -512,7 +529,7 @@ export async function refreshRoster(
   // Find all guilds that have this roster mapped by scanning KV prefix.
   // For direct-publish rosters with a known guild, check that guild first.
   // For hub rosters, scan all roster-map entries matching this rosterId.
-  let mappings = await findMappingsForRoster(env, rosterId);
+  let mappings = cachedMappings ?? (await findMappingsForRoster(env, rosterId));
   if (scopeGuildId) {
     mappings = mappings.filter((m) => m.guildId === scopeGuildId);
   }
@@ -571,6 +588,7 @@ export async function refreshRoster(
         mapping.eventTime,
         allowRecreate,
         config.defaultChannelId,
+        config.rolePingIds,
       );
 
       if (!result.ok) {
@@ -591,7 +609,6 @@ export async function refreshRoster(
         cleanupPendingMessageIds: result.cleanupPendingMessageIds,
         updatedAt: new Date().toISOString(),
       };
-      const isDirect = rosterId.startsWith('direct-');
       try {
         // For direct rosters the mapping is the commit marker: publish the data
         // and metadata first, then make the Discord artifact discoverable.
@@ -831,9 +848,6 @@ async function doPublishDirect(
     return { ok: false, error: 'Failed to save the published roster. Please retry.' };
   }
 
-  // Persist snapshot metadata so a later refresh rebuilds the embed faithfully.
-  // Direct rosters have no hub record, so without this a refresh would degrade
-  // the title/description/tags to placeholders. Same TTL — expire together.
   return { ok: true, channelId: result.channelId, channelName, messageId: result.messageId };
 }
 
@@ -984,6 +998,7 @@ async function refreshExistingMapping(
   eventTime?: string,
   allowRecreate = true,
   defaultChannelId?: string,
+  rolePingIds?: GuildConfig['rolePingIds'],
 ): Promise<InternalRefreshResult> {
   const text = buildRosterText(snapshot, decoded, eventTime);
   const chunks = splitMessages(text);
@@ -1061,6 +1076,7 @@ async function refreshExistingMapping(
       snapshot,
       decoded,
       eventTime,
+      rolePingIds,
     );
     return result;
   } catch (err) {

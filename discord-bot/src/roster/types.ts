@@ -54,6 +54,7 @@ export type Difficulty = 'veteran' | 'normal';
 
 export interface ChannelNameContext {
   dayShort?: string;
+  dayFull?: string;
   time?: string;
   trial?: string;
   /** @deprecated Alias for `trial`. Kept for legacy stored patterns using {tag}. */

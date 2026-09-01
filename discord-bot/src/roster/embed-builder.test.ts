@@ -4,6 +4,7 @@ import {
   splitMessages,
   buildRosterActionRows,
   buildRolePingLine,
+  escapeDiscord,
 } from './embed-builder';
 import type { DecodedRoster, RosterSnapshot } from './types';
 
@@ -144,8 +145,75 @@ describe('buildRosterText', () => {
 
   it('includes player names with @', () => {
     const text = buildRosterText(mockSnapshot, mockDecoded);
-    expect(text).toContain('@TankPlayer1');
-    expect(text).toContain('@DPS1');
+    expect(text).toContain('@\u200BTankPlayer1');
+    expect(text).toContain('@\u200BDPS1');
+    expect(text).not.toContain('@TankPlayer1');
+  });
+});
+
+describe('escapeDiscord', () => {
+  it('neutralizes mentions and channel references', () => {
+    expect(escapeDiscord('@everyone @here <@123> <@&123> <#123>')).toBe(
+      '@\u200Beveryone @\u200Bhere <\u200B@\u200B123\\> <\u200B@\u200B&123\\> <\u200B\\#123\\>',
+    );
+  });
+
+  it('escapes masked links and markdown delimiters', () => {
+    expect(escapeDiscord('[click](https://evil.test) **bold** `code` ||secret||')).toBe(
+      '\\[click\\]\\(https://evil.test\\) \\*\\*bold\\*\\* \\`code\\` \\|\\|secret\\|\\|',
+    );
+  });
+
+  it('escapes list markers at the start of each line', () => {
+    expect(escapeDiscord('- item\n+ item\n1. item')).toBe('\\- item\n\\+ item\n1\\. item');
+  });
+
+  it('protects untrusted values through the complete roster rendering path', () => {
+    const payload = '[click](https://evil.test) @everyone <@&100000000000000001>';
+    const snapshot = { ...mockSnapshot, title: payload };
+    const roster: DecodedRoster = {
+      name: payload,
+      tanks: [
+        {
+          roleLabel: payload,
+          playerName: payload,
+          sets: [payload],
+          ultimate: payload,
+          positionTag: payload,
+          playerNumber: payload,
+          roleNotes: payload,
+          labels: [payload],
+          notes: payload,
+          skillLines: { line1: payload, line2: payload, line3: payload, isFlex: false },
+        },
+      ],
+      healers: [
+        {
+          roleLabel: payload,
+          healerBuff: payload,
+          championPoint: payload,
+          notes: payload,
+        },
+      ],
+      dps: [
+        {
+          slotNumber: 1,
+          jailDDType: 'Custom',
+          customDescription: payload,
+          arenaWeapon: payload,
+          ultimate: payload,
+          notes: payload,
+        },
+      ],
+      notes: payload,
+    };
+
+    const text = buildRosterText(snapshot, roster);
+    expect(text).not.toContain('[click](https://evil.test)');
+    expect(text).not.toMatch(/@(everyone|here)|<@!?&?\d+>|<#\d+>/);
+    expect(text).toContain('\\[click\\]\\(https://evil.test\\)');
+    expect(text).toContain('@\u200Beveryone');
+    expect(text).toContain('<\u200B@\u200B&100000000000000001\\>');
   });
 });
 
@@ -188,6 +256,26 @@ describe('splitMessages', () => {
     for (const chunk of chunks) {
       expect(chunk.length).toBeLessThanOrEqual(2000);
     }
+  });
+
+  it('keeps an escaped markdown token together across a hard-wrap boundary', () => {
+    const text = `${'A'.repeat(1999)}\\> not a quote`;
+    const chunks = splitMessages(text);
+
+    expect(chunks.join('')).toBe(text);
+    expect(chunks).toHaveLength(2);
+    expect(chunks[0]).toHaveLength(1999);
+    expect(chunks[1]).toBe('\\> not a quote');
+  });
+
+  it('keeps UTF-16 surrogate pairs together across a hard-wrap boundary', () => {
+    const text = `${'A'.repeat(1999)}😀rest`;
+    const chunks = splitMessages(text);
+
+    expect(chunks.join('')).toBe(text);
+    expect(chunks).toHaveLength(2);
+    expect(chunks[0]).toHaveLength(1999);
+    expect(chunks[1]).toBe('😀rest');
   });
 });
 

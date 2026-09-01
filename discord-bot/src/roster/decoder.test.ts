@@ -84,6 +84,50 @@ describe('decodeRosterData — gear sets', () => {
   });
 });
 
+describe('decodeRosterData — compact vocabulary', () => {
+  it('decodes numeric indexes consistently across every ordered vocabulary', async () => {
+    const data = await encodeRoster({
+      v: 3,
+      ts: [{ sl: { l1: 19, l2: 0, l3: 20 }, ul: 3 }],
+      hs: [{ sl: { l1: 1 }, hb: 1, cp: 0, ul: 2 }],
+      dp: [{ sn: 1, sl: { l1: 18 }, ul: 0, jt: 1 }],
+    });
+
+    const decoded = await decodeRosterData(data);
+
+    expect(decoded.tanks[0]).toMatchObject({
+      skillLines: {
+        line1: 'Soldier of Apocrypha',
+        line2: 'Ardent Flame',
+        line3: 'Curative Runeforms',
+      },
+      ultimate: 'Greater Storm Atronach',
+    });
+    expect(decoded.healers[0]).toMatchObject({
+      skillLines: { line1: 'Draconic Power' },
+      healerBuff: 'From the Brink',
+      championPoint: 'Enlivening Overflow',
+      ultimate: 'Barrier',
+    });
+    expect(decoded.dps[0]).toMatchObject({
+      skillLines: { line1: 'Herald of the Tome' },
+      jailDDType: 'ZenKosh',
+      ultimate: 'Aggressive Warhorn',
+    });
+  });
+
+  it('normalizes the legacy raw Arcanist skill-line label', async () => {
+    const data = await encodeRoster({
+      v: 3,
+      ts: [{ sl: { l1: 'Apocryphal Soldier' } }],
+    });
+
+    const decoded = await decodeRosterData(data);
+
+    expect(decoded.tanks[0]?.skillLines?.line1).toBe('Soldier of Apocrypha');
+  });
+});
+
 describe('decodeRosterData — malformed input is tolerated', () => {
   it('does not throw when array-typed fields arrive as non-arrays', async () => {
     // Crafted payload: labels/groups/additionalSets are strings, not arrays.

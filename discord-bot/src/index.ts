@@ -17,6 +17,7 @@ import {
   getGuildConfig,
   upsertGuildConfig,
   getDefaultGuildConfig,
+  checkKvRateLimit,
   checkRosterRateLimit,
 } from './roster/kv.js';
 import type { GuildConfig } from './roster/types.js';
@@ -65,20 +66,6 @@ const ALL_REDIRECT_URIS = new Set([...PROD_REDIRECT_URIS, ...DEV_REDIRECT_URIS])
 
 function getAllowedOrigins(env: Env): Set<string> {
   return env.ENVIRONMENT === 'development' ? ALL_CORS_ORIGINS : PROD_CORS_ORIGINS;
-}
-
-async function checkKvRateLimit(
-  kv: KVNamespace,
-  key: string,
-  maxPerWindow: number,
-  windowSeconds: number,
-): Promise<boolean> {
-  const rlKey = `rl:${key}`;
-  const raw = await kv.get(rlKey);
-  const count = raw ? parseInt(raw, 10) : 0;
-  if (count >= maxPerWindow) return false;
-  await kv.put(rlKey, String(count + 1), { expirationTtl: windowSeconds });
-  return true;
 }
 
 function isAllowedRedirectUri(uri: string, env: Env): boolean {

@@ -61,9 +61,34 @@ const DAY_SHORT: Record<string, string> = {
   sunday: 'sun',
 };
 
+const DAY_FULL: Record<string, string> = {
+  mon: 'monday',
+  monday: 'monday',
+  tue: 'tuesday',
+  tues: 'tuesday',
+  tuesday: 'tuesday',
+  wed: 'wednesday',
+  wednesday: 'wednesday',
+  thu: 'thursday',
+  thur: 'thursday',
+  thurs: 'thursday',
+  thursday: 'thursday',
+  fri: 'friday',
+  friday: 'friday',
+  sat: 'saturday',
+  saturday: 'saturday',
+  sun: 'sunday',
+  sunday: 'sunday',
+};
+
 /** Normalise any common day-of-week form to its 3-letter abbreviation. */
 export function normaliseDay(raw: string): string {
   return DAY_SHORT[raw.toLowerCase().trim()] ?? sanitise(raw);
+}
+
+/** Normalise any common day-of-week form to its full name. */
+export function normaliseFullDay(raw: string): string {
+  return DAY_FULL[raw.toLowerCase().trim()] ?? sanitise(raw);
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -130,7 +155,14 @@ export function buildChannelName(template: string, context: ChannelNameContext):
   let name =
     template
       .replace(/\{day-short\}/gi, context.dayShort ? normaliseDay(context.dayShort) : '')
-      .replace(/\{day-full\}/gi, context.dayShort ? sanitise(context.dayShort) : '')
+      .replace(
+        /\{day-full\}/gi,
+        context.dayFull
+          ? normaliseFullDay(context.dayFull)
+          : context.dayShort
+            ? normaliseFullDay(context.dayShort)
+            : '',
+      )
       .replace(/\{day\}/gi, context.dayShort ? normaliseDay(context.dayShort) : '')
       .replace(/\{time\}/gi, context.time ?? '')
       .replace(/\{trial\}/gi, trialToken)

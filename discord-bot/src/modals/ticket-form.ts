@@ -12,6 +12,7 @@ import { classifyTicket } from '../ai.js';
 import { editFollowup, editMessage, type SendMessageOptions } from '../discord.js';
 import { createGitHubIssue } from '../github.js';
 import { updateTicket } from '../kv.js';
+import { checkKvRateLimit } from '../roster/kv.js';
 import { createPrivateTicket } from '../tickets/service.js';
 import {
   ButtonId,
@@ -232,9 +233,8 @@ export async function handleTicketFormModal(
     };
   }
 
-  const rlKey = `rl:ticket:${user.id}`;
-  const rlCount = parseInt((await env.TICKETS.get(rlKey)) ?? '0', 10);
-  if (rlCount >= 3) {
+  const allowed = await checkKvRateLimit(env.TICKETS, `ticket:${user.id}`, 3, 300);
+  if (!allowed) {
     return {
       type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
       data: {
@@ -243,7 +243,6 @@ export async function handleTicketFormModal(
       },
     };
   }
-  await env.TICKETS.put(rlKey, String(rlCount + 1), { expirationTtl: 300 });
 
   ctx.waitUntil(processTicketCreation(env, interaction, user, category, title, description));
 

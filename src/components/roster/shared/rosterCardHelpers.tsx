@@ -74,6 +74,7 @@ const SKILL_LINE_ICONS: Record<string, string> = {
 
   // Arcanist
   'Herald of the Tome': 'ability_mage_065',
+  'Soldier of Apocrypha': 'ability_mage_065',
   'Apocryphal Soldier': 'ability_mage_065',
   'Curative Runeforms': 'ability_mage_065',
 };

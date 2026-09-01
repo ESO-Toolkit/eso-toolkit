@@ -186,25 +186,33 @@ export async function releasePublishLock(
 // ── Rate limiting ────────────────────────────────────────────────────────────
 
 /**
- * Best-effort fixed-window rate limit backed by KV. Returns true if the action
- * is allowed, false once the caller has hit `max` actions within
- * `windowSeconds`. Not strictly atomic (KV read-then-write), which is fine for
- * throttling abuse — it can admit a few extra under a burst but caps runaway
- * channel/ping creation.
+ * Best-effort inactivity-window rate limit backed by KV. Each allowed action
+ * refreshes the counter TTL. Not strictly atomic (KV read-then-write), which is
+ * fine for throttling abuse — it can admit a few extra under a burst but caps
+ * runaway requests.
  */
+export async function checkKvRateLimit(
+  kv: KVNamespace,
+  key: string,
+  max: number,
+  windowSeconds: number,
+): Promise<boolean> {
+  const rlKey = `rl:${key}`;
+  const raw = await kv.get(rlKey);
+  const parsed = raw === null || !/^(0|[1-9]\d*)$/.test(raw) ? 0 : Number(raw);
+  const count = Number.isSafeInteger(parsed) && parsed >= 0 ? parsed : 0;
+  if (count >= max) return false;
+  await kv.put(rlKey, String(count + 1), { expirationTtl: windowSeconds });
+  return true;
+}
+
 export async function checkRosterRateLimit(
   env: Env,
   key: string,
   max: number,
   windowSeconds: number,
 ): Promise<boolean> {
-  const rlKey = `rl:${key}`;
-  const raw = await env.ROSTERS.get(rlKey);
-  const parsed = raw === null || !/^(0|[1-9]\d*)$/.test(raw) ? 0 : Number(raw);
-  const count = Number.isSafeInteger(parsed) && parsed >= 0 ? parsed : 0;
-  if (count >= max) return false;
-  await env.ROSTERS.put(rlKey, String(count + 1), { expirationTtl: windowSeconds });
-  return true;
+  return checkKvRateLimit(env.ROSTERS, key, max, windowSeconds);
 }
 
 // ── Guild Config CRUD ───────────────────────────────────────────────────────

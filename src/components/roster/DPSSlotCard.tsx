@@ -91,7 +91,7 @@ const DPS_CHAMPION_POINT_OPTIONS = [
 
 const jailLabels: Record<string, string> = {
   banner: 'Banner',
-  zenkosh: 'Zenkosh',
+  zenkosh: 'ZenKosh',
   wm: 'WM',
   'wm-mk': 'WM/MK',
   mk: 'MK',
@@ -100,7 +100,7 @@ const jailLabels: Record<string, string> = {
 
 const jailTooltips: Record<string, string> = {
   banner: 'Carries Powerful Assault + Banner of the Orc King',
-  zenkosh: 'Carries Saxhleel Champion (Zenkosh)',
+  zenkosh: 'Carries Saxhleel Champion (ZenKosh)',
   wm: 'Carries War Machine',
   'wm-mk': 'Carries War Machine + Master Kilt',
   mk: 'Carries Master Kilt',
@@ -151,7 +151,7 @@ export const DPSSlotCard = React.memo<DPSSlotCardProps>(
         case 'banner':
           return 'Banner Jail DD';
         case 'zenkosh':
-          return 'Zenkosh Jail DD';
+          return 'ZenKosh Jail DD';
         case 'wm':
           return 'War Machine Jail DD';
         case 'wm-mk':

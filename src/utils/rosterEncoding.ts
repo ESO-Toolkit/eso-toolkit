@@ -294,13 +294,24 @@ export type CompactRoster = CompactRosterV2 | CompactRosterV3;
 // ============================================================
 
 const SKILL_LINE_TO_IDX = new Map(CLASS_SKILL_LINES.map((sl, i) => [sl, i] as const));
-const ULTIMATE_LIST = Object.values(SupportUltimate); // 4 preset ultimates
+export const ROSTER_ULTIMATE_VOCABULARY = Object.values(SupportUltimate); // 4 preset ultimates
+const ULTIMATE_LIST = ROSTER_ULTIMATE_VOCABULARY;
 const ULTIMATE_TO_IDX = new Map(ULTIMATE_LIST.map((u, i) => [u, i] as const));
-const HEALER_BUFF_LIST = Object.values(HealerBuff); // 2 values
+export const ROSTER_HEALER_BUFF_VOCABULARY = Object.values(HealerBuff); // 2 values
+const HEALER_BUFF_LIST = ROSTER_HEALER_BUFF_VOCABULARY;
 const HEALER_BUFF_TO_IDX = new Map(HEALER_BUFF_LIST.map((b, i) => [b, i] as const));
-const CHAMPION_POINT_LIST = Object.values(HealerChampionPoint); // 2 values
+export const ROSTER_CHAMPION_POINT_VOCABULARY = Object.values(HealerChampionPoint); // 2 values
+const CHAMPION_POINT_LIST = ROSTER_CHAMPION_POINT_VOCABULARY;
 const CHAMPION_POINT_TO_IDX = new Map(CHAMPION_POINT_LIST.map((cp, i) => [cp, i] as const));
-const JAIL_DD_TYPE_LIST: JailDDType[] = ['banner', 'zenkosh', 'wm', 'wm-mk', 'mk', 'custom'];
+export const ROSTER_JAIL_DD_TYPE_VOCABULARY: JailDDType[] = [
+  'banner',
+  'zenkosh',
+  'wm',
+  'wm-mk',
+  'mk',
+  'custom',
+];
+const JAIL_DD_TYPE_LIST = ROSTER_JAIL_DD_TYPE_VOCABULARY;
 const JAIL_DD_TYPE_TO_IDX = new Map(JAIL_DD_TYPE_LIST.map((t, i) => [t, i] as const));
 
 // ============================================================
@@ -328,8 +339,9 @@ function toValidSetId(value: unknown): KnownSetIDs | undefined {
 
 function encodeSkillLine(s?: string): number | string | undefined {
   if (!s) return undefined;
-  const idx = SKILL_LINE_TO_IDX.get(s as (typeof CLASS_SKILL_LINES)[number]);
-  return idx !== undefined ? idx : s;
+  const normalized = s === 'Apocryphal Soldier' ? 'Soldier of Apocrypha' : s;
+  const idx = SKILL_LINE_TO_IDX.get(normalized as (typeof CLASS_SKILL_LINES)[number]);
+  return idx !== undefined ? idx : normalized;
 }
 
 function decodeSkillLine(v?: number | string): string {
@@ -337,7 +349,7 @@ function decodeSkillLine(v?: number | string): string {
   if (typeof v === 'number') {
     return isValidEnumIndex(v, CLASS_SKILL_LINES.length) ? CLASS_SKILL_LINES[v] : '';
   }
-  return v;
+  return v === 'Apocryphal Soldier' ? 'Soldier of Apocrypha' : v;
 }
 
 function encodeUltimate(u?: string | null): number | string | undefined {
@@ -1005,16 +1017,14 @@ const DL_LEVELS: RosterDetailLevel[] = ['simple', 'full'];
  * Expand a v3 compact roster into a full RaidRoster.
  */
 /** Hard caps to prevent DoS via crafted payloads allocating massive arrays. */
-const MAX_TANKS = 4;
-const MAX_HEALERS = 4;
-const MAX_DPS = 24;
+export const ROSTER_COMPOSITION_LIMITS = { tanks: 4, healers: 4, dps: 24 } as const;
 
 function expandCompactRosterV3(c: CompactRosterV3): RaidRoster {
   const comp: RoleComposition = c.co
     ? {
-        tanks: Math.min(Math.max(0, c.co[0] ?? 0), MAX_TANKS),
-        healers: Math.min(Math.max(0, c.co[1] ?? 0), MAX_HEALERS),
-        dps: Math.min(Math.max(0, c.co[2] ?? 0), MAX_DPS),
+        tanks: Math.min(Math.max(0, c.co[0] ?? 0), ROSTER_COMPOSITION_LIMITS.tanks),
+        healers: Math.min(Math.max(0, c.co[1] ?? 0), ROSTER_COMPOSITION_LIMITS.healers),
+        dps: Math.min(Math.max(0, c.co[2] ?? 0), ROSTER_COMPOSITION_LIMITS.dps),
       }
     : { ...DEFAULT_COMPOSITION };
 

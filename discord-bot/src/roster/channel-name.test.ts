@@ -4,6 +4,7 @@ import {
   buildChannelName,
   buildTrialTag,
   normaliseDay,
+  normaliseFullDay,
   parseChannelName,
   resolveChannelName,
   TRIAL_ABBREVS,
@@ -147,11 +148,16 @@ describe('buildChannelName with difficulty', () => {
 
   it('supports {day-full} token', () => {
     const result = buildChannelName('{day-full}-{trial}', {
-      dayShort: 'sunday',
+      dayShort: 'sun',
+      dayFull: 'sunday',
       difficulty: 'veteran',
       trial: 'LC',
     });
     expect(result).toBe('sunday-vlc');
+  });
+
+  it('expands dayShort for legacy contexts without dayFull', () => {
+    expect(buildChannelName('{day-full}', { dayShort: 'thu' })).toBe('thursday');
   });
 
   it('covers all known trials in veteran mode', () => {
@@ -208,6 +214,14 @@ describe('normaliseDay', () => {
   it('handles alternate abbreviations', () => {
     expect(normaliseDay('tues')).toBe('tue');
     expect(normaliseDay('thurs')).toBe('thu');
+  });
+});
+
+describe('normaliseFullDay', () => {
+  it('normalises short and alternate forms to full names', () => {
+    expect(normaliseFullDay('sun')).toBe('sunday');
+    expect(normaliseFullDay('Tues')).toBe('tuesday');
+    expect(normaliseFullDay('THURS')).toBe('thursday');
   });
 });
 
