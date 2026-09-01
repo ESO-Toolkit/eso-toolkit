@@ -14,7 +14,7 @@ export interface DamageEvent {
   // per-event fields identify WHICH physical copy this event is about (absent/0 for single-instance).
   sourceInstance?: number;
   targetID: number;
-  targetIsFriendly: false;
+  targetIsFriendly: boolean;
   targetInstance?: number;
   abilityGameID: number;
   fight: number;

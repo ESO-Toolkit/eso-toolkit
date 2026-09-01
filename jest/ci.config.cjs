@@ -25,7 +25,6 @@ module.exports = {
   testTimeout: 30000,
 
   logHeapUsage: true,
-  detectOpenHandles: true,
   forceExit: true,
 
   verbose: false,

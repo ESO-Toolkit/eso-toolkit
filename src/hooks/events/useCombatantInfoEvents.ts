@@ -23,6 +23,8 @@ interface UseCombatantInfoEventsOptions {
 export function useCombatantInfoEvents(options?: UseCombatantInfoEventsOptions): {
   combatantInfoEvents: CombatantInfoEvent[];
   isCombatantInfoEventsLoading: boolean;
+  combatantInfoEventsStatus: 'idle' | 'loading' | 'succeeded' | 'failed';
+  combatantInfoEventsError: string | null;
   selectedFight: FightFragment | null;
 } {
   const dispatch = useAppDispatch();
@@ -37,6 +39,8 @@ export function useCombatantInfoEvents(options?: UseCombatantInfoEventsOptions):
     selectCombatantInfoEventsEntryForContext(state, context),
   );
   const isCombatantInfoEventsLoading = combatantInfoEntry?.status === 'loading';
+  const combatantInfoEventsStatus = combatantInfoEntry?.status ?? 'idle';
+  const combatantInfoEventsError = combatantInfoEntry?.error ?? null;
 
   const restrictToFightWindow = options?.restrictToFightWindow ?? true;
 
@@ -57,8 +61,16 @@ export function useCombatantInfoEvents(options?: UseCombatantInfoEventsOptions):
     () => ({
       combatantInfoEvents,
       isCombatantInfoEventsLoading,
+      combatantInfoEventsStatus,
+      combatantInfoEventsError,
       selectedFight,
     }),
-    [combatantInfoEvents, isCombatantInfoEventsLoading, selectedFight],
+    [
+      combatantInfoEvents,
+      isCombatantInfoEventsLoading,
+      combatantInfoEventsStatus,
+      combatantInfoEventsError,
+      selectedFight,
+    ],
   );
 }

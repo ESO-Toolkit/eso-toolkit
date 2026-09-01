@@ -226,6 +226,7 @@ interface CastFilterOptions {
   excludeHeavyAttacks: boolean;
   excludeSynergies: boolean;
   excludeWeaponSwap: boolean;
+  preferBeginCast?: boolean;
 }
 
 function filterPlayerCasts(
@@ -234,7 +235,13 @@ function filterPlayerCasts(
   abilityMapper: AbilityNameMapper | undefined,
   options: CastFilterOptions,
 ): CastEvent[] {
-  const { excludeLightAttacks, excludeHeavyAttacks, excludeSynergies, excludeWeaponSwap } = options;
+  const {
+    excludeLightAttacks,
+    excludeHeavyAttacks,
+    excludeSynergies,
+    excludeWeaponSwap,
+    preferBeginCast = false,
+  } = options;
 
   const uniqueEvents = new Map<string, UnifiedCastEvent>();
   let fallbackCounter = 0;
@@ -265,11 +272,16 @@ function filterPlayerCasts(
     }
 
     if (existing.type === 'begincast' && event.type === 'cast') {
-      uniqueEvents.set(baseKey, event);
+      if (!preferBeginCast) {
+        uniqueEvents.set(baseKey, event);
+      }
       continue;
     }
 
     if (existing.type === 'cast' && event.type === 'begincast') {
+      if (preferBeginCast) {
+        uniqueEvents.set(baseKey, event);
+      }
       continue;
     }
 
@@ -301,6 +313,14 @@ const MAX_CHANNEL_DURATION_MS = 5000;
 // skill are unrelated (idle time, a downtime gap), so it must not be scored as a weave
 // nor contribute its inflated timing to the weave-timing average.
 const WEAVE_WINDOW_MS = 1000;
+
+function isWithinFightWindow(
+  timestamp: number,
+  fightStartTime: number,
+  fightEndTime: number,
+): boolean {
+  return timestamp >= fightStartTime && timestamp <= fightEndTime;
+}
 
 /**
  * Detect food/drink buffs on a player
@@ -481,12 +501,19 @@ export function calculateCPM(
   fightEndTime: number,
   abilityMapper?: AbilityNameMapper,
 ): number {
-  const playerCasts = filterPlayerCasts(castEvents, playerId, abilityMapper, {
-    excludeLightAttacks: false,
-    excludeHeavyAttacks: false,
-    excludeSynergies: true,
-    excludeWeaponSwap: true,
-  });
+  const playerCasts = filterPlayerCasts(
+    castEvents.filter((event) =>
+      isWithinFightWindow(event.timestamp, fightStartTime, fightEndTime),
+    ),
+    playerId,
+    abilityMapper,
+    {
+      excludeLightAttacks: false,
+      excludeHeavyAttacks: false,
+      excludeSynergies: true,
+      excludeWeaponSwap: true,
+    },
+  );
 
   // Debug: Show distinct abilities cast
   const abilityCounts = new Map<number, number>();
@@ -592,18 +619,29 @@ export function calculateActivePercentage(
     };
   }
 
-  const relevantCasts = filterPlayerCasts(castEvents, playerId, abilityMapper, {
-    excludeLightAttacks: true,
-    excludeHeavyAttacks: false,
-    excludeSynergies: true,
-    excludeWeaponSwap: true,
-  });
+  const relevantCasts = filterPlayerCasts(
+    castEvents.filter((event) =>
+      isWithinFightWindow(event.timestamp, fightStartTime, fightEndTime),
+    ),
+    playerId,
+    abilityMapper,
+    {
+      excludeLightAttacks: true,
+      excludeHeavyAttacks: false,
+      excludeSynergies: true,
+      excludeWeaponSwap: true,
+    },
+  );
 
   const baseActiveMs = relevantCasts.length * GLOBAL_COOLDOWN_MS;
 
   const damageEventsByTrack = new Map<number, DamageEvent[]>();
   for (const event of damageEvents) {
-    if (event.sourceID !== playerId || !event.sourceIsFriendly) {
+    if (
+      event.sourceID !== playerId ||
+      !event.sourceIsFriendly ||
+      !isWithinFightWindow(event.timestamp, fightStartTime, fightEndTime)
+    ) {
       continue;
     }
 
@@ -690,7 +728,9 @@ export function calculateDPS(
   const playerDamageEvents = damageEvents.filter(
     (event) =>
       event.sourceIsFriendly &&
+      event.targetIsFriendly === false &&
       event.sourceID != null &&
+      isWithinFightWindow(event.timestamp, fightStartTime, fightEndTime) &&
       (event.sourceID === playerId ||
         (petOwnerByActorId !== undefined && petOwnerByActorId[event.sourceID] === playerId)),
   );
@@ -835,7 +875,7 @@ export function analyzeRotation(
     if (isLightAttackAbility(event.abilityGameID, abilityMapper)) return false;
     if (isHeavyAttackAbility(event.abilityGameID, abilityMapper)) return false;
     if (event.abilityGameID === KnownAbilities.SWAP_WEAPONS) return false;
-    if (isSynergyAbility(event.abilityGameID)) return false;
+    if (isSynergyAbility(event.abilityGameID, abilityMapper)) return false;
 
     return true;
   });
@@ -1233,19 +1273,18 @@ export function analyzeWeaving(
   playerId: number,
   _fightStartTime: number,
   _fightEndTime: number,
+  abilityMapper?: AbilityNameMapper,
 ): WeaveAnalysisResult {
-  // Sort events by timestamp
-  // Include BOTH 'cast' and 'begincast' events - light attacks may appear in either
-  // Exclude synergies and weapon swaps from the cast list
-  const playerCasts = castEvents
-    .filter(
-      (event) =>
-        event.sourceID === playerId &&
-        (event.type === 'cast' || event.type === 'begincast') &&
-        event.abilityGameID !== KnownAbilities.SWAP_WEAPONS &&
-        !SYNERGY_ABILITY_IDS.has(event.abilityGameID),
-    )
-    .sort((a, b) => a.timestamp - b.timestamp);
+  // Correlate paired begin/completion events by castTrackID. Weaving uses the
+  // begin timestamp because it represents the player's input timing; all other
+  // cast analyses continue to prefer the completed cast.
+  const playerCasts = filterPlayerCasts(castEvents, playerId, abilityMapper, {
+    excludeLightAttacks: false,
+    excludeHeavyAttacks: false,
+    excludeSynergies: true,
+    excludeWeaponSwap: true,
+    preferBeginCast: true,
+  });
 
   // Debug: Log event types distribution
   const castTypeCount = castEvents.filter((e) => e.type === 'cast').length;
@@ -1262,19 +1301,19 @@ export function analyzeWeaving(
 
   // Separate light attacks, heavy attacks, and regular skills from cast events
   const lightAttackCasts = playerCasts.filter((event) =>
-    LIGHT_ATTACK_ABILITY_IDS.has(event.abilityGameID),
+    isLightAttackAbility(event.abilityGameID, abilityMapper),
   );
 
   const heavyAttackCasts = playerCasts.filter((event) =>
-    HEAVY_ATTACK_ABILITY_IDS.has(event.abilityGameID),
+    isHeavyAttackAbility(event.abilityGameID, abilityMapper),
   );
 
   const skillCasts = playerCasts.filter(
     (event) =>
-      !LIGHT_ATTACK_ABILITY_IDS.has(event.abilityGameID) &&
-      !HEAVY_ATTACK_ABILITY_IDS.has(event.abilityGameID) &&
+      !isLightAttackAbility(event.abilityGameID, abilityMapper) &&
+      !isHeavyAttackAbility(event.abilityGameID, abilityMapper) &&
       event.abilityGameID !== KnownAbilities.SWAP_WEAPONS &&
-      !SYNERGY_ABILITY_IDS.has(event.abilityGameID),
+      !isSynergyAbility(event.abilityGameID, abilityMapper),
   );
 
   logger.debug('Weave analysis debug metrics', {
@@ -1311,10 +1350,10 @@ export function analyzeWeaving(
 
     // Only skill casts contribute to the weave analysis (mirror the skillCasts filter).
     const isSkillCast =
-      !LIGHT_ATTACK_ABILITY_IDS.has(castEvent.abilityGameID) &&
-      !HEAVY_ATTACK_ABILITY_IDS.has(castEvent.abilityGameID) &&
+      !isLightAttackAbility(castEvent.abilityGameID, abilityMapper) &&
+      !isHeavyAttackAbility(castEvent.abilityGameID, abilityMapper) &&
       castEvent.abilityGameID !== KnownAbilities.SWAP_WEAPONS &&
-      !SYNERGY_ABILITY_IDS.has(castEvent.abilityGameID);
+      !isSynergyAbility(castEvent.abilityGameID, abilityMapper);
     if (!isSkillCast) {
       return;
     }
@@ -1323,7 +1362,7 @@ export function analyzeWeaving(
     // AND within the weave window. A stale light attack separated by a long idle gap
     // does not count and must not pollute the weave-timing average.
     const isProperWeave = precedingCast
-      ? LIGHT_ATTACK_ABILITY_IDS.has(precedingCast.abilityGameID) &&
+      ? isLightAttackAbility(precedingCast.abilityGameID, abilityMapper) &&
         castEvent.timestamp - precedingCast.timestamp <= WEAVE_WINDOW_MS
       : false;
 
@@ -1337,9 +1376,9 @@ export function analyzeWeaving(
     // Determine preceding cast type
     let precedingCastType: 'light' | 'heavy' | 'skill' | 'none' = 'none';
     if (precedingCast) {
-      if (LIGHT_ATTACK_ABILITY_IDS.has(precedingCast.abilityGameID)) {
+      if (isLightAttackAbility(precedingCast.abilityGameID, abilityMapper)) {
         precedingCastType = 'light';
-      } else if (HEAVY_ATTACK_ABILITY_IDS.has(precedingCast.abilityGameID)) {
+      } else if (isHeavyAttackAbility(precedingCast.abilityGameID, abilityMapper)) {
         precedingCastType = 'heavy';
       } else {
         precedingCastType = 'skill';
@@ -1784,16 +1823,17 @@ export function analyzeDotUptime(
   fightStartTime: number,
   fightEndTime: number,
   abilityMapper?: AbilityNameMapper,
+  petOwnerByActorId?: Record<number, number>,
 ): DotUptimeResult {
   const DOT_GAP_THRESHOLD_MS = 3000; // If no tick for 3s, DoT is considered down
-  const fightDurationMs = fightEndTime - fightStartTime;
+  const fightDurationMs = Math.max(0, fightEndTime - fightStartTime);
 
   const playerDamage = damageEvents.filter(
     (event) =>
-      event.sourceID === playerId &&
       event.sourceIsFriendly &&
-      event.timestamp >= fightStartTime &&
-      event.timestamp <= fightEndTime,
+      event.targetIsFriendly === false &&
+      isWithinFightWindow(event.timestamp, fightStartTime, fightEndTime) &&
+      (event.sourceID === playerId || petOwnerByActorId?.[event.sourceID] === playerId),
   );
 
   // Split into DoT and direct damage
@@ -1817,26 +1857,29 @@ export function analyzeDotUptime(
   for (const [abilityId, ticks] of dotTicksByAbility.entries()) {
     ticks.sort((a, b) => a.timestamp - b.timestamp);
 
-    // Calculate active windows
+    // Calculate active windows, clipping each inferred grace period to the
+    // selected fight. Clamping only the aggregate would overcount separated
+    // windows that end near the fight boundary.
     let totalActiveMs = 0;
     let windowStart = ticks[0].timestamp;
     let lastTick = ticks[0].timestamp;
 
+    const closeWindow = (): void => {
+      const clippedStart = Math.max(fightStartTime, windowStart);
+      const clippedEnd = Math.min(fightEndTime, lastTick + DOT_GAP_THRESHOLD_MS);
+      totalActiveMs += Math.max(0, clippedEnd - clippedStart);
+    };
+
     for (let i = 1; i < ticks.length; i++) {
       const gap = ticks[i].timestamp - lastTick;
       if (gap > DOT_GAP_THRESHOLD_MS) {
-        // Window ended; add a grace period after the last tick
-        totalActiveMs += lastTick - windowStart + DOT_GAP_THRESHOLD_MS;
+        closeWindow();
         windowStart = ticks[i].timestamp;
       }
       lastTick = ticks[i].timestamp;
     }
 
-    // Close last window
-    totalActiveMs += lastTick - windowStart + DOT_GAP_THRESHOLD_MS;
-
-    // Clamp to fight duration
-    totalActiveMs = Math.min(totalActiveMs, fightDurationMs);
+    closeWindow();
 
     const uptimePercentage = fightDurationMs > 0 ? (totalActiveMs / fightDurationMs) * 100 : 0;
     const name = getAbilityNameFromMapper(abilityId, abilityMapper) || `Unknown (${abilityId})`;
@@ -1854,7 +1897,7 @@ export function analyzeDotUptime(
   dotAbilities.sort((a, b) => b.tickCount - a.tickCount);
 
   // Overall DoT uptime: merge all DoT windows
-  const allDotTicks = dotEvents.sort((a, b) => a.timestamp - b.timestamp);
+  const allDotTicks = [...dotEvents].sort((a, b) => a.timestamp - b.timestamp);
   let overallActiveMs = 0;
   if (allDotTicks.length > 0) {
     let windowStart = allDotTicks[0].timestamp;
@@ -1862,12 +1905,16 @@ export function analyzeDotUptime(
     for (let i = 1; i < allDotTicks.length; i++) {
       const gap = allDotTicks[i].timestamp - lastTick;
       if (gap > DOT_GAP_THRESHOLD_MS) {
-        overallActiveMs += lastTick - windowStart + DOT_GAP_THRESHOLD_MS;
+        const clippedStart = Math.max(fightStartTime, windowStart);
+        const clippedEnd = Math.min(fightEndTime, lastTick + DOT_GAP_THRESHOLD_MS);
+        overallActiveMs += Math.max(0, clippedEnd - clippedStart);
         windowStart = allDotTicks[i].timestamp;
       }
       lastTick = allDotTicks[i].timestamp;
     }
-    overallActiveMs += lastTick - windowStart + DOT_GAP_THRESHOLD_MS;
+    const clippedStart = Math.max(fightStartTime, windowStart);
+    const clippedEnd = Math.min(fightEndTime, lastTick + DOT_GAP_THRESHOLD_MS);
+    overallActiveMs += Math.max(0, clippedEnd - clippedStart);
     overallActiveMs = Math.min(overallActiveMs, fightDurationMs);
   }
 

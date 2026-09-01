@@ -24,6 +24,8 @@ import {
   calculateCPM,
   calculateActivePercentage,
   calculateDPS,
+  analyzeDotUptime,
+  analyzeRotation,
   analyzeWeaving,
   detectTrialDummyBuffs,
   LIGHT_ATTACK_ABILITY_IDS,
@@ -165,6 +167,32 @@ describe('parseAnalysisUtils', () => {
 
       // 2 casts in 60 seconds = 2 CPM
       expect(cpm).toBe(2);
+    });
+
+    it('ignores casts from other fights in the same report', () => {
+      const createCast = (timestamp: number, fight: number): CastEvent => ({
+        timestamp,
+        type: 'cast',
+        sourceID: PLAYER_ID,
+        sourceIsFriendly: true,
+        targetID: 2,
+        targetIsFriendly: false,
+        abilityGameID: 12345,
+        fight,
+      });
+
+      const cpm = calculateCPM(
+        [
+          createCast(FIGHT_START - 1000, 1),
+          createCast(FIGHT_START + 1000, 2),
+          createCast(FIGHT_END + 1000, 3),
+        ],
+        PLAYER_ID,
+        FIGHT_START,
+        FIGHT_END,
+      );
+
+      expect(cpm).toBe(1);
     });
 
     it('should return 0 CPM for zero duration', () => {
@@ -330,6 +358,43 @@ describe('parseAnalysisUtils', () => {
       expect(result.durationMs).toBe(60000);
     });
 
+    it('counts only hostile-target damage inside the selected fight window', () => {
+      const createDamage = (
+        timestamp: number,
+        amount: number,
+        targetIsFriendly: boolean,
+      ): DamageEvent => ({
+        timestamp,
+        type: 'damage',
+        sourceID: PLAYER_ID,
+        sourceIsFriendly: true,
+        targetID: 2,
+        targetIsFriendly,
+        abilityGameID: 12345,
+        fight: 1,
+        amount,
+        hitType: 1,
+        castTrackID: 1,
+        sourceResources: mockResources,
+        targetResources: mockResources,
+      });
+
+      const result = calculateDPS(
+        [
+          createDamage(FIGHT_START - 1, 1000, false),
+          createDamage(FIGHT_START + 1000, 2000, false),
+          createDamage(FIGHT_START + 2000, 4000, true),
+          createDamage(FIGHT_END + 1, 8000, false),
+        ],
+        PLAYER_ID,
+        FIGHT_START,
+        FIGHT_END,
+      );
+
+      expect(result.totalDamage).toBe(2000);
+      expect(result.dps).toBeCloseTo(2000 / 60, 5);
+    });
+
     describe('calculateActivePercentage', () => {
       const createCast = (
         timestamp: number,
@@ -425,6 +490,30 @@ describe('parseAnalysisUtils', () => {
 
         expect(result.activePercentage).toBeCloseTo(60, 5);
         expect(result.downtimeSeconds).toBeCloseTo(2, 5);
+      });
+
+      it('ignores casts and channel ticks outside the selected fight window', () => {
+        const inFightTrackId = 70;
+        const result = calculateActivePercentage(
+          [
+            createCast(FIGHT_START - 1000, 8001, 69),
+            createCast(FIGHT_START + 1000, 8001, inFightTrackId),
+            createCast(FIGHT_START + 6000, 8001, 71),
+          ],
+          [
+            createDamage(FIGHT_START + 1500, 8001, inFightTrackId),
+            createDamage(FIGHT_START + 2100, 8001, inFightTrackId),
+            createDamage(FIGHT_START + 7000, 8001, inFightTrackId),
+          ],
+          PLAYER_ID,
+          FIGHT_START,
+          FIGHT_START + 5000,
+        );
+
+        expect(result.totalCasts).toBe(1);
+        expect(result.baseActiveSeconds).toBe(1);
+        expect(result.channelExtraSeconds).toBeCloseTo(0.1, 5);
+        expect(result.activePercentage).toBeCloseTo(22, 5);
       });
 
       it('adds channel duration beyond the global cooldown', () => {
@@ -691,6 +780,115 @@ describe('parseAnalysisUtils', () => {
     });
   });
 
+  describe('analyzeDotUptime', () => {
+    const resources = {
+      hitPoints: 30000,
+      maxHitPoints: 30000,
+      magicka: 10000,
+      maxMagicka: 10000,
+      stamina: 15000,
+      maxStamina: 15000,
+      ultimate: 100,
+      maxUltimate: 500,
+      werewolf: 0,
+      maxWerewolf: 0,
+      absorb: 0,
+      championPoints: 3600,
+      x: 0,
+      y: 0,
+      facing: 0,
+    };
+    const dot = (timestamp: number, sourceID = PLAYER_ID): DamageEvent => ({
+      timestamp,
+      type: 'damage',
+      sourceID,
+      sourceIsFriendly: true,
+      targetID: 2,
+      targetIsFriendly: false,
+      abilityGameID: 12345,
+      fight: 1,
+      amount: 100,
+      hitType: 1,
+      castTrackID: 1,
+      sourceResources: resources,
+      targetResources: resources,
+      tick: true,
+    });
+
+    it('clips inferred DoT uptime to the selected fight boundary', () => {
+      const result = analyzeDotUptime(
+        [dot(FIGHT_START + 59000)],
+        PLAYER_ID,
+        FIGHT_START,
+        FIGHT_END,
+      );
+
+      expect(result.dotAbilities[0].totalActiveMs).toBe(1000);
+      expect(result.dotAbilities[0].uptimePercentage).toBeCloseTo(100 / 60, 5);
+      expect(result.overallDotUptimePercentage).toBeCloseTo(100 / 60, 5);
+    });
+
+    it('attributes pet DoT ticks to their owner and excludes other sources', () => {
+      const petId = 50;
+      const result = analyzeDotUptime(
+        [dot(FIGHT_START + 1000, petId), dot(FIGHT_START + 2000, 999)],
+        PLAYER_ID,
+        FIGHT_START,
+        FIGHT_END,
+        undefined,
+        { [petId]: PLAYER_ID },
+      );
+
+      expect(result.totalDotDamage).toBe(100);
+      expect(result.dotAbilities[0].tickCount).toBe(1);
+    });
+
+    it('returns finite zero uptime for an invalid fight duration', () => {
+      const result = analyzeDotUptime([dot(FIGHT_START)], PLAYER_ID, FIGHT_END, FIGHT_START);
+
+      expect(result.dotAbilities).toEqual([]);
+      expect(result.overallDotUptimePercentage).toBe(0);
+    });
+  });
+
+  describe('analyzeRotation', () => {
+    it('excludes synergies discovered only through the ability mapper', () => {
+      const mapperOnlySynergyId = 987654;
+      const regularSkillId = 12345;
+      const abilityMapper = {
+        getAbilityById: (abilityId: number) => ({
+          name: abilityId === mapperOnlySynergyId ? 'Pure Agony Synergy' : 'Regular Skill',
+        }),
+      };
+      const castEvents: CastEvent[] = [
+        {
+          timestamp: FIGHT_START + 1000,
+          type: 'cast',
+          sourceID: PLAYER_ID,
+          sourceIsFriendly: true,
+          targetID: 2,
+          targetIsFriendly: false,
+          abilityGameID: mapperOnlySynergyId,
+          fight: 1,
+        },
+        {
+          timestamp: FIGHT_START + 1500,
+          type: 'cast',
+          sourceID: PLAYER_ID,
+          sourceIsFriendly: true,
+          targetID: 2,
+          targetIsFriendly: false,
+          abilityGameID: regularSkillId,
+          fight: 1,
+        },
+      ];
+
+      const result = analyzeRotation(castEvents, PLAYER_ID, FIGHT_START, FIGHT_END, abilityMapper);
+
+      expect(result.allCasts.map((cast) => cast.abilityId)).toEqual([regularSkillId]);
+    });
+  });
+
   describe('analyzeWeaving', () => {
     const LIGHT_ATTACK_ID = Array.from(LIGHT_ATTACK_ABILITY_IDS)[0]; // Use first light attack ID from the set
 
@@ -845,6 +1043,72 @@ describe('parseAnalysisUtils', () => {
       expect(result.missedWeaves).toBe(0);
     });
 
+    it('deduplicates paired begin and completed casts while preserving input timing', () => {
+      const resources = {
+        hitPoints: 30000,
+        maxHitPoints: 30000,
+        magicka: 10000,
+        maxMagicka: 10000,
+        stamina: 15000,
+        maxStamina: 15000,
+        ultimate: 100,
+        maxUltimate: 500,
+        werewolf: 0,
+        maxWerewolf: 0,
+        absorb: 0,
+        championPoints: 3600,
+        x: 0,
+        y: 0,
+        facing: 0,
+      };
+      const skillAbilityId = 12345;
+      const castEvents: UnifiedCastEvent[] = [
+        {
+          timestamp: FIGHT_START + 1000,
+          type: 'cast',
+          sourceID: PLAYER_ID,
+          sourceIsFriendly: true,
+          targetID: 2,
+          targetIsFriendly: false,
+          abilityGameID: LIGHT_ATTACK_ID,
+          fight: 1,
+          castTrackID: 41,
+        },
+        {
+          timestamp: FIGHT_START + 1300,
+          type: 'begincast',
+          sourceID: PLAYER_ID,
+          sourceIsFriendly: true,
+          targetID: 2,
+          targetIsFriendly: false,
+          abilityGameID: skillAbilityId,
+          fight: 1,
+          castTrackID: 42,
+          sourceResources: resources,
+          targetResources: resources,
+        },
+        {
+          timestamp: FIGHT_START + 2500,
+          type: 'cast',
+          sourceID: PLAYER_ID,
+          sourceIsFriendly: true,
+          targetID: 2,
+          targetIsFriendly: false,
+          abilityGameID: skillAbilityId,
+          fight: 1,
+          castTrackID: 42,
+        },
+      ];
+
+      const result = analyzeWeaving(castEvents, [], PLAYER_ID, FIGHT_START, FIGHT_END);
+
+      expect(result.totalSkills).toBe(1);
+      expect(result.properWeaves).toBe(1);
+      expect(result.weaveAccuracy).toBe(100);
+      expect(result.averageWeaveTiming).toBe(300);
+      expect(result.castDetails?.[0].timestamp).toBe(FIGHT_START + 1300);
+    });
+
     it('skips weapon swaps and synergies when resolving the preceding cast', () => {
       const SYNERGY_ID = Array.from(SYNERGY_ABILITY_IDS)[0];
       const castEvents: CastEvent[] = [
@@ -902,9 +1166,9 @@ describe('parseAnalysisUtils', () => {
       // Preceding cast resolves to the light attack 100ms earlier, skipping swap + synergy.
       expect(result.averageWeaveTiming).toBe(100);
       expect(result.castDetails).toHaveLength(1);
-      expect(result.castDetails[0].precedingCastAbilityId).toBe(LIGHT_ATTACK_ID);
-      expect(result.castDetails[0].precedingCastType).toBe('light');
-      expect(result.castDetails[0].timeSincePrecedingCast).toBe(100);
+      expect(result.castDetails?.[0].precedingCastAbilityId).toBe(LIGHT_ATTACK_ID);
+      expect(result.castDetails?.[0].precedingCastType).toBe('light');
+      expect(result.castDetails?.[0].timeSincePrecedingCast).toBe(100);
     });
 
     it('does not count a stale light attack separated by a long idle gap as a weave', () => {
@@ -941,7 +1205,7 @@ describe('parseAnalysisUtils', () => {
       expect(result.missedWeaves).toBe(1);
       // The 30s gap must not pollute the timing average.
       expect(result.averageWeaveTiming).toBe(0);
-      expect(result.castDetails[0].isProperWeave).toBe(false);
+      expect(result.castDetails?.[0].isProperWeave).toBe(false);
     });
   });
 

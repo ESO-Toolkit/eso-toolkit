@@ -19,8 +19,17 @@ import {
   trimCache,
 } from '../utils/keyedCacheState';
 
-import { EVENT_CACHE_MAX_ENTRIES, EVENT_PAGE_LIMIT } from './constants';
-import { createCurrentRequest, isStaleResponse } from './utils/requestTracking';
+import {
+  EVENT_CACHE_MAX_ENTRIES,
+  EVENT_MAX_EVENTS_PER_STREAM,
+  EVENT_MAX_PAGES_PER_STREAM,
+  EVENT_PAGE_LIMIT,
+} from './constants';
+import {
+  createCurrentRequest,
+  hasFreshCacheForMode,
+  isStaleResponse,
+} from './utils/requestTracking';
 
 const logger = new Logger({ level: LogLevel.INFO, contextPrefix: 'DamageEvents' });
 
@@ -69,26 +78,25 @@ const initialState: DamageEventsState = {
   accessOrder: [],
 };
 
-export const fetchDamageEvents = createAsyncThunk(
+export const fetchDamageEvents = createAsyncThunk<
+  DamageEvent[],
+  {
+    reportCode: string;
+    fight: FightFragment;
+    client: EsoLogsClient;
+    /**
+     * Whether to restrict events to the fight time window.
+     * - true (default): Only fetch events within the fight's start/end time (typical use case)
+     * - false: Fetch all events for the entire report (used by ParseAnalysisPage for pre-fight buffs)
+     */
+    restrictToFightWindow?: boolean;
+  },
+  { state: LocalRootState; rejectValue: string }
+>(
   'damageEvents/fetchDamageEvents',
   async (
-    {
-      reportCode,
-      fight,
-      client,
-      restrictToFightWindow = true,
-    }: {
-      reportCode: string;
-      fight: FightFragment;
-      client: EsoLogsClient;
-      /**
-       * Whether to restrict events to the fight time window.
-       * - true (default): Only fetch events within the fight's start/end time (typical use case)
-       * - false: Fetch all events for the entire report (used by ParseAnalysisPage for pre-fight buffs)
-       */
-      restrictToFightWindow?: boolean;
-    },
-    { getState: _getState, rejectWithValue: _rejectWithValue },
+    { reportCode, fight, client, restrictToFightWindow = true },
+    { rejectWithValue, signal },
   ) => {
     logger.info('Fetching damage events', {
       reportCode,
@@ -98,45 +106,76 @@ export const fetchDamageEvents = createAsyncThunk(
 
     // Fetch both friendly and enemy damage events
     const hostilityTypes = [HostilityType.Friendlies, HostilityType.Enemies];
-    let allEvents: LogEvent[] = [];
+    const eventChunks: LogEvent[][] = [];
 
     const initialStartTime = restrictToFightWindow ? fight.startTime : undefined;
     const finalEndTime = restrictToFightWindow ? (fight.endTime ?? undefined) : undefined;
 
-    for (const hostilityType of hostilityTypes) {
-      let nextPageTimestamp: number | null = null;
-      let pageCount = 0;
+    try {
+      for (const hostilityType of hostilityTypes) {
+        let nextPageTimestamp: number | null = null;
+        let pageCount = 0;
+        let streamEventCount = 0;
 
-      do {
-        pageCount++;
-        const response: GetDamageEventsQuery = await client.query({
-          query: GetDamageEventsDocument,
-          fetchPolicy: 'no-cache',
-          variables: {
-            code: reportCode,
-            fightIds: [Number(fight.id)],
-            startTime: nextPageTimestamp ?? initialStartTime,
-            endTime: finalEndTime,
-            hostilityType: hostilityType,
-            limit: EVENT_PAGE_LIMIT,
-          },
-        });
+        do {
+          signal.throwIfAborted();
+          if (pageCount >= EVENT_MAX_PAGES_PER_STREAM) {
+            throw new Error(`Damage event pagination exceeded ${EVENT_MAX_PAGES_PER_STREAM} pages`);
+          }
 
-        const page = response.reportData?.report?.events;
-        if (page?.data) {
-          allEvents = allEvents.concat(page.data);
-          logger.info(`Fetched damage events page ${pageCount} for ${hostilityType}`, {
-            reportCode,
-            fightId: fight.id,
-            hostilityType,
-            pageCount,
-            eventsInPage: page.data.length,
-            totalEvents: allEvents.length,
+          const requestedStartTime = nextPageTimestamp ?? initialStartTime;
+          const response: GetDamageEventsQuery = await client.query({
+            query: GetDamageEventsDocument,
+            fetchPolicy: 'no-cache',
+            context: { fetchOptions: { signal } },
+            variables: {
+              code: reportCode,
+              fightIds: [Number(fight.id)],
+              startTime: requestedStartTime,
+              endTime: finalEndTime,
+              hostilityType: hostilityType,
+              limit: EVENT_PAGE_LIMIT,
+            },
           });
-        }
-        nextPageTimestamp = page?.nextPageTimestamp ?? null;
-      } while (nextPageTimestamp);
+          pageCount += 1;
+
+          const page = response.reportData?.report?.events;
+          if (page?.data?.length) {
+            streamEventCount += page.data.length;
+            if (streamEventCount > EVENT_MAX_EVENTS_PER_STREAM) {
+              throw new Error(
+                `Damage event pagination exceeded ${EVENT_MAX_EVENTS_PER_STREAM} events`,
+              );
+            }
+            eventChunks.push(page.data);
+            logger.info(`Fetched damage events page ${pageCount} for ${hostilityType}`, {
+              reportCode,
+              fightId: fight.id,
+              hostilityType,
+              pageCount,
+              eventsInPage: page.data.length,
+              streamEventCount,
+            });
+          }
+
+          const followingTimestamp = page?.nextPageTimestamp ?? null;
+          if (
+            followingTimestamp != null &&
+            requestedStartTime != null &&
+            followingTimestamp <= requestedStartTime
+          ) {
+            throw new Error('Damage event pagination cursor did not advance');
+          }
+          nextPageTimestamp = followingTimestamp;
+        } while (nextPageTimestamp != null);
+      }
+    } catch (error) {
+      return rejectWithValue(
+        error instanceof Error ? error.message : 'Failed to fetch damage events',
+      );
     }
+
+    const allEvents = eventChunks.flat();
 
     logger.info('Damage events fetch completed', {
       reportCode,
@@ -149,20 +188,14 @@ export const fetchDamageEvents = createAsyncThunk(
   },
   {
     condition: ({ reportCode, fight, restrictToFightWindow = true }, { getState }) => {
-      const state = (getState() as LocalRootState).events.damage;
+      const state = getState().events.damage;
       const { key } = resolveCacheKey({ reportCode, fightId: Number(fight.id) });
       const entry = state.entries[key];
 
-      const cachedRestrict = entry?.cacheMetadata.restrictToFightWindow ?? true;
-      const restrictMatches = cachedRestrict === restrictToFightWindow;
-
       const lastFetchedTimestamp = entry?.cacheMetadata.lastFetchedTimestamp;
-      const isCached = Boolean(entry?.events.length);
-      const isFresh =
-        typeof lastFetchedTimestamp === 'number' &&
-        Date.now() - lastFetchedTimestamp < DATA_FETCH_CACHE_TIMEOUT;
-
-      if (isCached && isFresh && restrictMatches) {
+      if (
+        hasFreshCacheForMode(entry?.cacheMetadata, restrictToFightWindow, DATA_FETCH_CACHE_TIMEOUT)
+      ) {
         logger.info('Using cached damage events', {
           reportCode,
           fightId: Number(fight.id),
@@ -189,6 +222,7 @@ export const fetchDamageEvents = createAsyncThunk(
 
       return true;
     },
+    dispatchConditionRejection: true,
   },
 );
 
@@ -240,7 +274,6 @@ const damageEventsSlice = createSlice({
           action.meta.requestId,
           action.meta.arg.restrictToFightWindow ?? true,
         );
-        entry.cacheMetadata.restrictToFightWindow = action.meta.arg.restrictToFightWindow ?? true;
         touchAccessOrder(state, key);
       })
       .addCase(fetchDamageEvents.fulfilled, (state, action) => {
@@ -278,6 +311,22 @@ const damageEventsSlice = createSlice({
           fightId: Number(action.meta.arg.fight.id),
         });
         const entry = ensureEntry(state, key);
+        if (action.meta.condition) {
+          const restrictToFightWindow = action.meta.arg.restrictToFightWindow ?? true;
+          if (
+            hasFreshCacheForMode(
+              entry.cacheMetadata,
+              restrictToFightWindow,
+              DATA_FETCH_CACHE_TIMEOUT,
+            )
+          ) {
+            entry.status = 'succeeded';
+            entry.error = null;
+            entry.currentRequest = null;
+            touchAccessOrder(state, key);
+          }
+          return;
+        }
         if (
           isStaleResponse(
             entry.currentRequest,
@@ -293,7 +342,7 @@ const damageEventsSlice = createSlice({
           return;
         }
         entry.status = 'failed';
-        entry.error = action.error.message || 'Failed to fetch damage events';
+        entry.error = action.payload ?? action.error.message ?? 'Failed to fetch damage events';
         entry.currentRequest = null;
         touchAccessOrder(state, key);
       });

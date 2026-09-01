@@ -19,8 +19,17 @@ import {
   trimCache,
 } from '../utils/keyedCacheState';
 
-import { EVENT_CACHE_MAX_ENTRIES, EVENT_PAGE_LIMIT } from './constants';
-import { createCurrentRequest, isStaleResponse } from './utils/requestTracking';
+import {
+  EVENT_CACHE_MAX_ENTRIES,
+  EVENT_MAX_EVENTS_PER_STREAM,
+  EVENT_MAX_PAGES_PER_STREAM,
+  EVENT_PAGE_LIMIT,
+} from './constants';
+import {
+  createCurrentRequest,
+  hasFreshCacheForMode,
+  isStaleResponse,
+} from './utils/requestTracking';
 
 const logger = new Logger({ level: LogLevel.INFO, contextPrefix: 'DebuffEvents' });
 
@@ -84,47 +93,73 @@ export const fetchDebuffEvents = createAsyncThunk<
   { state: LocalRootState; rejectValue: string }
 >(
   'debuffEvents/fetchDebuffEvents',
-  async ({ reportCode, fight, client, restrictToFightWindow = true }) => {
+  async ({ reportCode, fight, client, restrictToFightWindow = true }, { signal }) => {
     // Fetch both friendly and enemy debuff events
     const hostilityTypes = [HostilityType.Friendlies, HostilityType.Enemies];
-    let allEvents: LogEvent[] = [];
+    const eventChunks: LogEvent[][] = [];
 
     const initialStartTime = restrictToFightWindow ? fight.startTime : undefined;
     const finalEndTime = restrictToFightWindow ? (fight.endTime ?? undefined) : undefined;
 
     for (const hostilityType of hostilityTypes) {
+      let totalEvents = 0;
+      let pageCount = 0;
       let nextPageTimestamp: number | null = null;
 
       do {
+        signal.throwIfAborted();
+        if (pageCount >= EVENT_MAX_PAGES_PER_STREAM) {
+          throw new Error(`Debuff event pagination exceeded ${EVENT_MAX_PAGES_PER_STREAM} pages`);
+        }
+
+        const requestedStartTime = nextPageTimestamp ?? initialStartTime;
         const response: GetDebuffEventsQuery = await client.query({
           query: GetDebuffEventsDocument,
           fetchPolicy: 'no-cache',
+          context: { fetchOptions: { signal } },
           variables: {
             code: reportCode,
             fightIds: [Number(fight.id)],
-            startTime: nextPageTimestamp ?? initialStartTime,
+            startTime: requestedStartTime,
             endTime: finalEndTime,
             hostilityType: hostilityType,
             limit: EVENT_PAGE_LIMIT,
           },
         });
+        pageCount += 1;
 
         const page = response.reportData?.report?.events;
-        if (page?.data) {
-          allEvents = allEvents.concat(page.data);
+        if (page?.data?.length) {
+          totalEvents += page.data.length;
+          if (totalEvents > EVENT_MAX_EVENTS_PER_STREAM) {
+            throw new Error(
+              `Debuff event pagination exceeded ${EVENT_MAX_EVENTS_PER_STREAM} events`,
+            );
+          }
+          eventChunks.push(page.data);
         }
-        nextPageTimestamp = page?.nextPageTimestamp ?? null;
-      } while (nextPageTimestamp);
+        const followingTimestamp = page?.nextPageTimestamp ?? null;
+        if (
+          followingTimestamp != null &&
+          requestedStartTime != null &&
+          followingTimestamp <= requestedStartTime
+        ) {
+          throw new Error('Debuff event pagination cursor did not advance');
+        }
+        nextPageTimestamp = followingTimestamp;
+      } while (nextPageTimestamp != null);
     }
 
     // Filter to only debuff events
-    const debuffEvents = allEvents.filter(
-      (event) =>
-        event.type === 'removedebuff' ||
-        event.type === 'applydebuff' ||
-        event.type === 'applydebuffstack' ||
-        event.type === 'removedebuffstack',
-    ) as DebuffEvent[];
+    const debuffEvents = eventChunks
+      .flat()
+      .filter(
+        (event) =>
+          event.type === 'removedebuff' ||
+          event.type === 'applydebuff' ||
+          event.type === 'applydebuffstack' ||
+          event.type === 'removedebuffstack',
+      ) as DebuffEvent[];
     return debuffEvents;
   },
   {
@@ -133,16 +168,9 @@ export const fetchDebuffEvents = createAsyncThunk<
       const { key } = resolveCacheKey({ reportCode, fightId: Number(fight.id) });
       const entry = state.entries[key];
 
-      const cachedRestrict = entry?.cacheMetadata.restrictToFightWindow ?? true;
-      const restrictMatches = cachedRestrict === restrictToFightWindow;
-
-      const lastFetchedTimestamp = entry?.cacheMetadata.lastFetchedTimestamp;
-      const isCached = Boolean(entry?.events.length);
-      const isFresh =
-        typeof lastFetchedTimestamp === 'number' &&
-        Date.now() - lastFetchedTimestamp < DATA_FETCH_CACHE_TIMEOUT;
-
-      if (isCached && isFresh && restrictMatches) {
+      if (
+        hasFreshCacheForMode(entry?.cacheMetadata, restrictToFightWindow, DATA_FETCH_CACHE_TIMEOUT)
+      ) {
         return false; // Prevent thunk execution
       }
 
@@ -158,6 +186,7 @@ export const fetchDebuffEvents = createAsyncThunk<
 
       return true; // Allow thunk execution
     },
+    dispatchConditionRejection: true,
   },
 );
 
@@ -209,7 +238,6 @@ const debuffEventsSlice = createSlice({
           action.meta.requestId,
           action.meta.arg.restrictToFightWindow ?? true,
         );
-        entry.cacheMetadata.restrictToFightWindow = action.meta.arg.restrictToFightWindow ?? true;
         touchAccessOrder(state, key);
       })
       .addCase(fetchDebuffEvents.fulfilled, (state, action) => {
@@ -247,6 +275,22 @@ const debuffEventsSlice = createSlice({
           fightId: Number(action.meta.arg.fight.id),
         });
         const entry = ensureEntry(state, key);
+        if (action.meta.condition) {
+          const restrictToFightWindow = action.meta.arg.restrictToFightWindow ?? true;
+          if (
+            hasFreshCacheForMode(
+              entry.cacheMetadata,
+              restrictToFightWindow,
+              DATA_FETCH_CACHE_TIMEOUT,
+            )
+          ) {
+            entry.status = 'succeeded';
+            entry.error = null;
+            entry.currentRequest = null;
+            touchAccessOrder(state, key);
+          }
+          return;
+        }
         if (
           isStaleResponse(
             entry.currentRequest,

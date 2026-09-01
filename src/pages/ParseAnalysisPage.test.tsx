@@ -2,7 +2,7 @@ import { configureStore } from '@reduxjs/toolkit';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import React from 'react';
 import { Provider } from 'react-redux';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
 
 import '@testing-library/jest-dom';
 
@@ -15,6 +15,8 @@ import { ParseAnalysisPage } from './ParseAnalysisPage';
 
 // Mock GraphQL client
 const mockQuery = jest.fn();
+const mockUseDamageEvents = jest.fn();
+const mockDetectBuildIssues = jest.fn();
 const mockClient = {
   query: mockQuery,
 };
@@ -55,22 +57,22 @@ jest.mock('../hooks/events/useCastEvents', () => ({
     castEvents: [],
     isCastEventsLoading: false,
     isCastEventsLoaded: true,
+    castEventsStatus: 'succeeded',
+    castEventsError: null,
     selectedFight: null,
   }),
 }));
 
 jest.mock('../hooks/events/useDamageEvents', () => ({
-  useDamageEvents: () => ({
-    damageEvents: [],
-    isDamageEventsLoading: false,
-    selectedFight: null,
-  }),
+  useDamageEvents: () => mockUseDamageEvents(),
 }));
 
 jest.mock('../hooks/events/useFriendlyBuffEvents', () => ({
   useFriendlyBuffEvents: () => ({
     friendlyBuffEvents: [],
     isFriendlyBuffEventsLoading: false,
+    friendlyBuffEventsStatus: 'succeeded',
+    friendlyBuffEventsError: null,
     selectedFight: null,
   }),
 }));
@@ -79,6 +81,8 @@ jest.mock('../hooks/events/useCombatantInfoEvents', () => ({
   useCombatantInfoEvents: () => ({
     combatantInfoEvents: [],
     isCombatantInfoEventsLoading: false,
+    combatantInfoEventsStatus: 'succeeded',
+    combatantInfoEventsError: null,
     selectedFight: null,
   }),
 }));
@@ -87,6 +91,8 @@ jest.mock('../hooks/events/useDebuffEvents', () => ({
   useDebuffEvents: () => ({
     debuffEvents: [],
     isDebuffEventsLoading: false,
+    debuffEventsStatus: 'succeeded',
+    debuffEventsError: null,
     selectedFight: null,
   }),
 }));
@@ -97,6 +103,11 @@ jest.mock('../hooks/useReportData', () => ({
     reportData: null,
     isReportLoading: false,
   }),
+}));
+
+jest.mock('../utils/detectBuildIssues', () => ({
+  ...jest.requireActual('../utils/detectBuildIssues'),
+  detectBuildIssues: (...args: unknown[]) => mockDetectBuildIssues(...args),
 }));
 
 const mockTrialDummyFight: FightFragment = {
@@ -150,6 +161,14 @@ describe('ParseAnalysisPage', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockDispatch.mockClear();
+    mockUseDamageEvents.mockReturnValue({
+      damageEvents: [],
+      isDamageEventsLoading: false,
+      damageEventsStatus: 'succeeded',
+      damageEventsError: null,
+      selectedFight: null,
+    });
+    mockDetectBuildIssues.mockReturnValue([]);
   });
 
   // Create a mock Redux store for testing
@@ -173,7 +192,16 @@ describe('ParseAnalysisPage', () => {
       <Provider store={testStore}>
         <LoggerProvider>
           <MemoryRouter initialEntries={['/parse-analysis']}>
-            <ReportFightProvider>{component}</ReportFightProvider>
+            <Routes>
+              <Route
+                path="/parse-analysis"
+                element={<ReportFightProvider>{component}</ReportFightProvider>}
+              />
+              <Route
+                path="/parse-analysis/:reportId/:fightId"
+                element={<ReportFightProvider>{component}</ReportFightProvider>}
+              />
+            </Routes>
           </MemoryRouter>
         </LoggerProvider>
       </Provider>,
@@ -284,13 +312,14 @@ describe('ParseAnalysisPage', () => {
     const analyzeButton = screen.getByRole('button', { name: /analyze/i });
     fireEvent.click(analyzeButton);
 
-    // Wait for analysis to complete - should not show the trial dummy error
+    // Wait for the completed analysis output rather than merely asserting that
+    // the unsupported-target error has not appeared yet.
     await waitFor(
       () => {
+        expect(screen.getByText('Performance Metrics')).toBeInTheDocument();
+        expect(screen.getByText('Damage Per Second')).toBeInTheDocument();
         expect(
-          screen.queryByText(
-            /This parse analysis tool requires fights against a supported trial dummy/,
-          ),
+          screen.queryByRole('status', { name: 'Analyzing combat events' }),
         ).not.toBeInTheDocument();
       },
       { timeout: 3000 },
@@ -361,13 +390,114 @@ describe('ParseAnalysisPage', () => {
 
     await waitFor(
       () => {
+        expect(screen.getByText('Performance Metrics')).toBeInTheDocument();
+        expect(screen.getByText('Damage Per Second')).toBeInTheDocument();
         expect(
-          screen.queryByText(
-            /This parse analysis tool requires fights against a supported trial dummy/,
-          ),
+          screen.queryByRole('status', { name: 'Analyzing combat events' }),
         ).not.toBeInTheDocument();
       },
       { timeout: 3000 },
     );
+  });
+
+  it('fails closed when a required event stream fails to load', async () => {
+    mockUseDamageEvents.mockReturnValue({
+      damageEvents: [],
+      isDamageEventsLoading: false,
+      damageEventsStatus: 'failed',
+      damageEventsError: 'Damage event API failed',
+      selectedFight: null,
+    });
+    mockQuery
+      .mockResolvedValueOnce({
+        reportData: {
+          report: {
+            fights: [mockTrialDummyFight],
+          },
+        },
+      })
+      .mockResolvedValueOnce({
+        reportData: {
+          report: {
+            playerDetails: {
+              data: {
+                playerDetails: {
+                  dps: [{ id: 1, name: 'Test Player' }],
+                  healers: [],
+                  tanks: [],
+                },
+              },
+            },
+          },
+        },
+      });
+
+    renderWithProviders(<ParseAnalysisPage />);
+
+    fireEvent.change(screen.getByPlaceholderText(/https:\/\/www\.esologs\.com/), {
+      target: { value: 'https://esologs.com/reports/TestReport#fight=1' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /analyze/i }));
+
+    expect(
+      await screen.findByText('Unable to load complete damage events. Damage event API failed'),
+    ).toBeInTheDocument();
+    expect(screen.queryByText('Damage Per Second')).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('status', { name: 'Analyzing combat events' }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('clears prior analysis results before a selected fight analysis fails', async () => {
+    const reportResponse = {
+      reportData: { report: { fights: [mockTrialDummyFight, mockHarrowingTrialFight] } },
+    };
+    const playerResponse = {
+      reportData: {
+        report: {
+          playerDetails: {
+            data: {
+              playerDetails: {
+                dps: [{ id: 1, name: 'Test Player' }],
+                healers: [],
+                tanks: [],
+              },
+            },
+          },
+        },
+      },
+    };
+    mockQuery
+      .mockResolvedValueOnce(reportResponse)
+      .mockResolvedValueOnce(playerResponse)
+      .mockResolvedValueOnce(reportResponse)
+      .mockResolvedValueOnce(playerResponse);
+    mockDetectBuildIssues.mockReturnValue([
+      { message: 'Stale build issue', gearName: 'Old Item', gearQuality: 1 },
+    ]);
+
+    renderWithProviders(<ParseAnalysisPage />);
+
+    fireEvent.change(screen.getByPlaceholderText(/https:\/\/www\.esologs\.com/), {
+      target: { value: 'https://esologs.com/reports/TestReport#fight=1' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /analyze/i }));
+    expect(await screen.findByText('Stale build issue')).toBeInTheDocument();
+    expect(screen.getByText('Checklist')).toBeInTheDocument();
+
+    mockUseDamageEvents.mockReturnValue({
+      damageEvents: [],
+      isDamageEventsLoading: false,
+      damageEventsStatus: 'failed',
+      damageEventsError: 'Damage event API failed',
+      selectedFight: null,
+    });
+    fireEvent.click(screen.getByRole('button', { name: '#3 — Target Harrowing Reaper, Raid' }));
+
+    expect(
+      await screen.findByText('Unable to load complete damage events. Damage event API failed'),
+    ).toBeInTheDocument();
+    expect(screen.queryByText('Stale build issue')).not.toBeInTheDocument();
+    expect(screen.queryByText('Checklist')).not.toBeInTheDocument();
   });
 });

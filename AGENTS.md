@@ -13,8 +13,9 @@ This file provides guidance to AI coding agents (Claude Code, GitHub Copilot, et
 ```bash
 npm run dev                          # Start dev server (port 3000, main worktree)
 $env:PORT = "3002" ; npm run dev     # Start dev server for worktree (PowerShell)
-npm test                             # Unit tests (changed files, watch mode)
+npm test                             # Unit tests (all, non-interactive)
 npm run test:ci                      # Unit tests (all, non-interactive — use for CI/validation)
+npm run test:changed                 # Unit tests affected by uncommitted changes
 npm test -- --testPathPattern="WorkerPool"  # Run a single test file by name
 npm run validate                     # Pre-commit: typecheck + lint + format
 npm run typecheck                    # TypeScript compilation check

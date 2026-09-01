@@ -24,6 +24,8 @@ interface UseFriendlyBuffEventsOptions {
 export function useFriendlyBuffEvents(options?: UseFriendlyBuffEventsOptions): {
   friendlyBuffEvents: BuffEvent[];
   isFriendlyBuffEventsLoading: boolean;
+  friendlyBuffEventsStatus: 'idle' | 'loading' | 'succeeded' | 'failed';
+  friendlyBuffEventsError: string | null;
   selectedFight: FightFragment | null;
 } {
   const dispatch = useAppDispatch();
@@ -40,6 +42,8 @@ export function useFriendlyBuffEvents(options?: UseFriendlyBuffEventsOptions): {
     selectFriendlyBuffEventsEntryForContext(state, context),
   );
   const isFriendlyBuffEventsLoading = friendlyBuffEntry?.status === 'loading';
+  const friendlyBuffEventsStatus = friendlyBuffEntry?.status ?? 'idle';
+  const friendlyBuffEventsError = friendlyBuffEntry?.error ?? null;
 
   React.useEffect(() => {
     if (context.reportCode && selectedFight && client) {
@@ -64,7 +68,19 @@ export function useFriendlyBuffEvents(options?: UseFriendlyBuffEventsOptions): {
   ]);
 
   return React.useMemo(
-    () => ({ friendlyBuffEvents, isFriendlyBuffEventsLoading, selectedFight }),
-    [friendlyBuffEvents, isFriendlyBuffEventsLoading, selectedFight],
+    () => ({
+      friendlyBuffEvents,
+      isFriendlyBuffEventsLoading,
+      friendlyBuffEventsStatus,
+      friendlyBuffEventsError,
+      selectedFight,
+    }),
+    [
+      friendlyBuffEvents,
+      isFriendlyBuffEventsLoading,
+      friendlyBuffEventsStatus,
+      friendlyBuffEventsError,
+      selectedFight,
+    ],
   );
 }
