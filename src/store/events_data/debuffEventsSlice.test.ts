@@ -132,6 +132,14 @@ describe('debuffEventsSlice pagination hardening', () => {
       }) as never,
     );
     expect(client.query).toHaveBeenCalledTimes(callsAfterFailure);
+    expect(entry()?.status).toBe('succeeded');
+    expect(entry()?.error).toBeNull();
+    expect(entry()?.currentRequest).toBeNull();
+    expect(entry()?.events).toEqual([debuffEvent(1000)]);
+    expect(entry()?.cacheMetadata).toEqual({
+      lastFetchedTimestamp: successfulTimestamp,
+      restrictToFightWindow: true,
+    });
   });
 
   it('forwards thunk cancellation to the in-flight request', async () => {

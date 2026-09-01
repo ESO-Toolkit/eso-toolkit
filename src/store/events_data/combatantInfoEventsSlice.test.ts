@@ -147,6 +147,15 @@ describe('combatantInfoEventsSlice pagination hardening', () => {
       }) as never,
     );
     expect(client.query).toHaveBeenCalledTimes(callsAfterFailure);
+    expect(entry()?.status).toBe('succeeded');
+    expect(entry()?.error).toBeNull();
+    expect(entry()?.currentRequest).toBeNull();
+    expect(entry()?.events).toEqual([combatantInfoEvent(1000)]);
+    expect(entry()?.cacheMetadata).toEqual({
+      lastFetchedTimestamp: successfulTimestamp,
+      eventCount: 1,
+      restrictToFightWindow: true,
+    });
   });
 
   it('forwards thunk cancellation to the in-flight request', async () => {

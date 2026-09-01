@@ -10,6 +10,32 @@ export interface CurrentRequest {
   restrictToFightWindow: boolean;
 }
 
+interface ModeAwareCacheMetadata {
+  lastFetchedTimestamp: number | null;
+  restrictToFightWindow: boolean | null;
+}
+
+/**
+ * Check whether cache metadata represents a fresh result for the requested
+ * fight-window mode. Older persisted entries without an explicit mode were
+ * produced by the default, fight-window-restricted request.
+ */
+export function hasFreshCacheForMode(
+  cacheMetadata: ModeAwareCacheMetadata | undefined,
+  restrictToFightWindow: boolean,
+  cacheTimeout: number,
+  now = Date.now(),
+): boolean {
+  const lastFetchedTimestamp = cacheMetadata?.lastFetchedTimestamp;
+  const cachedRestrictToFightWindow = cacheMetadata?.restrictToFightWindow ?? true;
+
+  return (
+    typeof lastFetchedTimestamp === 'number' &&
+    now - lastFetchedTimestamp < cacheTimeout &&
+    cachedRestrictToFightWindow === restrictToFightWindow
+  );
+}
+
 /**
  * Check if a response is stale (from an outdated request)
  * Returns true if the response should be ignored

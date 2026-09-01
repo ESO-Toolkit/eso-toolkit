@@ -469,6 +469,120 @@ describe('castEventsSlice', () => {
         );
 
         expect(mockClient.query).toHaveBeenCalledTimes(callsAfterFailure);
+        const restoredEntry = (store.getState() as { events: { casts: CastEventsState } }).events
+          .casts.entries[
+          resolveCacheKey({ reportCode: 'ABC123', fightId: Number(mockFight.id) }).key
+        ];
+        expect(restoredEntry?.status).toBe('succeeded');
+        expect(restoredEntry?.error).toBeNull();
+        expect(restoredEntry?.currentRequest).toBeNull();
+        expect(restoredEntry?.events).toEqual([]);
+        expect(restoredEntry?.cacheMetadata).toEqual({
+          lastFetchedTimestamp: successfulTimestamp,
+          restrictToFightWindow: true,
+        });
+      });
+
+      it('restores cached mode immediately and ignores a late response from another mode', async () => {
+        mockClient.query.mockResolvedValue(emptyResponse);
+        await store.dispatch(
+          fetchCastEvents({
+            reportCode: 'ABC123',
+            fight: mockFight,
+            client: mockClient,
+            restrictToFightWindow: true,
+          }) as any,
+        );
+
+        let resolveOtherMode!: (value: typeof emptyResponse) => void;
+        const otherModeResponse = new Promise<typeof emptyResponse>((resolve) => {
+          resolveOtherMode = resolve;
+        });
+        mockClient.query.mockImplementation(() => otherModeResponse);
+
+        const otherModeRequest = store.dispatch(
+          fetchCastEvents({
+            reportCode: 'ABC123',
+            fight: mockFight,
+            client: mockClient,
+            restrictToFightWindow: false,
+          }) as any,
+        );
+
+        await store.dispatch(
+          fetchCastEvents({
+            reportCode: 'ABC123',
+            fight: mockFight,
+            client: mockClient,
+            restrictToFightWindow: true,
+          }) as any,
+        );
+
+        const cacheKey = resolveCacheKey({
+          reportCode: 'ABC123',
+          fightId: Number(mockFight.id),
+        }).key;
+        const restoredEntry = (store.getState() as { events: { casts: CastEventsState } }).events
+          .casts.entries[cacheKey];
+        expect(mockClient.query).toHaveBeenCalledTimes(3);
+        expect(restoredEntry?.status).toBe('succeeded');
+        expect(restoredEntry?.error).toBeNull();
+        expect(restoredEntry?.currentRequest).toBeNull();
+        expect(restoredEntry?.cacheMetadata.restrictToFightWindow).toBe(true);
+
+        resolveOtherMode(emptyResponse);
+        await otherModeRequest;
+
+        const finalEntry = (store.getState() as { events: { casts: CastEventsState } }).events.casts
+          .entries[cacheKey];
+        expect(finalEntry).toEqual(restoredEntry);
+      });
+
+      it('keeps the original request active when a duplicate same-mode request is rejected', async () => {
+        let resolveRequest!: (value: typeof emptyResponse) => void;
+        const response = new Promise<typeof emptyResponse>((resolve) => {
+          resolveRequest = resolve;
+        });
+        mockClient.query.mockImplementation(() => response);
+
+        const originalRequest = store.dispatch(
+          fetchCastEvents({
+            reportCode: 'ABC123',
+            fight: mockFight,
+            client: mockClient,
+            restrictToFightWindow: true,
+          }) as any,
+        );
+        const cacheKey = resolveCacheKey({
+          reportCode: 'ABC123',
+          fightId: Number(mockFight.id),
+        }).key;
+        const originalRequestId = (store.getState() as { events: { casts: CastEventsState } })
+          .events.casts.entries[cacheKey]?.currentRequest?.requestId;
+
+        await store.dispatch(
+          fetchCastEvents({
+            reportCode: 'ABC123',
+            fight: mockFight,
+            client: mockClient,
+            restrictToFightWindow: true,
+          }) as any,
+        );
+
+        const loadingEntry = (store.getState() as { events: { casts: CastEventsState } }).events
+          .casts.entries[cacheKey];
+        expect(mockClient.query).toHaveBeenCalledTimes(1);
+        expect(loadingEntry?.status).toBe('loading');
+        expect(loadingEntry?.currentRequest?.requestId).toBe(originalRequestId);
+
+        resolveRequest(emptyResponse);
+        await originalRequest;
+
+        const succeededEntry = (store.getState() as { events: { casts: CastEventsState } }).events
+          .casts.entries[cacheKey];
+        expect(mockClient.query).toHaveBeenCalledTimes(2);
+        expect(succeededEntry?.status).toBe('succeeded');
+        expect(succeededEntry?.currentRequest).toBeNull();
       });
 
       it('should fetch if data is cached but stale', async () => {

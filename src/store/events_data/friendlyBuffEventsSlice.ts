@@ -27,7 +27,11 @@ import {
   EVENT_PAGE_LIMIT,
   EVENT_QUERY_MAX_CONCURRENCY,
 } from './constants';
-import { createCurrentRequest, isStaleResponse } from './utils/requestTracking';
+import {
+  createCurrentRequest,
+  hasFreshCacheForMode,
+  isStaleResponse,
+} from './utils/requestTracking';
 
 const logger = new Logger({ level: LogLevel.INFO, contextPrefix: 'FriendlyBuffEvents' });
 
@@ -321,16 +325,10 @@ export const fetchFriendlyBuffEvents = createAsyncThunk<
       const { key } = resolveCacheKey({ reportCode, fightId: Number(fight.id) });
       const entry = state.entries[key];
 
-      const cachedRestrict = entry?.cacheMetadata.restrictToFightWindow ?? true;
-      const restrictMatches = cachedRestrict === restrictToFightWindow;
-
       const lastFetchedTimestamp = entry?.cacheMetadata.lastFetchedTimestamp;
-      const isCached = typeof entry?.cacheMetadata.lastFetchedTimestamp === 'number';
-      const isFresh =
-        typeof lastFetchedTimestamp === 'number' &&
-        Date.now() - lastFetchedTimestamp < DATA_FETCH_CACHE_TIMEOUT;
-
-      if (isCached && isFresh && restrictMatches) {
+      if (
+        hasFreshCacheForMode(entry?.cacheMetadata, restrictToFightWindow, DATA_FETCH_CACHE_TIMEOUT)
+      ) {
         logger.info('Using cached friendly buff events', {
           reportCode,
           fightId: Number(fight.id),
@@ -360,6 +358,7 @@ export const fetchFriendlyBuffEvents = createAsyncThunk<
 
       return true; // Allow thunk execution
     },
+    dispatchConditionRejection: true,
   },
 );
 
@@ -449,6 +448,22 @@ const friendlyBuffEventsSlice = createSlice({
           fightId: Number(action.meta.arg.fight.id),
         });
         const entry = ensureEntry(state, key);
+        if (action.meta.condition) {
+          const restrictToFightWindow = action.meta.arg.restrictToFightWindow ?? true;
+          if (
+            hasFreshCacheForMode(
+              entry.cacheMetadata,
+              restrictToFightWindow,
+              DATA_FETCH_CACHE_TIMEOUT,
+            )
+          ) {
+            entry.status = 'succeeded';
+            entry.error = null;
+            entry.currentRequest = null;
+            touchAccessOrder(state, key);
+          }
+          return;
+        }
         if (
           isStaleResponse(
             entry.currentRequest,

@@ -277,5 +277,14 @@ describe('friendlyBuffEventsSlice', () => {
       }) as never,
     );
     expect(client.query).toHaveBeenCalledTimes(callsAfterFailure);
+    expect(getEntry(store)?.status).toBe('succeeded');
+    expect(getEntry(store)?.error).toBeNull();
+    expect(getEntry(store)?.currentRequest).toBeNull();
+    expect(getEntry(store)?.events).toEqual([]);
+    expect(getEntry(store)?.cacheMetadata).toEqual({
+      lastFetchedTimestamp: successfulTimestamp,
+      restrictToFightWindow: true,
+      intervalCount: 1,
+    });
   });
 });
