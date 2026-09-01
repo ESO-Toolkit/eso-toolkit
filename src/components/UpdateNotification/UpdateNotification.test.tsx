@@ -1,4 +1,4 @@
-import { ThemeProvider, createTheme } from '@mui/material/styles';
+import { alpha, ThemeProvider, createTheme } from '@mui/material/styles';
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 
@@ -39,9 +39,18 @@ const lightTheme = createTheme({
   },
 });
 
+const darkTheme = createTheme({
+  palette: {
+    mode: 'dark',
+    primary: { main: '#38bdf8' },
+    background: { paper: '#0f172a' },
+    text: { primary: '#e5e7eb', secondary: '#94a3b8' },
+  },
+});
+
 const renderNotification = (mode: 'light' | 'dark') =>
   render(
-    <ThemeProvider theme={mode === 'light' ? lightTheme : createTheme({ palette: { mode } })}>
+    <ThemeProvider theme={mode === 'light' ? lightTheme : darkTheme}>
       <UpdateNotification />
     </ThemeProvider>,
   );
@@ -73,9 +82,24 @@ describe('UpdateNotification', () => {
     expect(dismissButton).toHaveAttribute('tabindex', '0');
   });
 
-  it('preserves the filled treatment in dark mode', () => {
+  it('uses a readable outlined surface in dark mode', () => {
     renderNotification('dark');
 
-    expect(screen.getByRole('alert')).toHaveClass('MuiAlert-filled');
+    const alert = screen.getByRole('alert');
+
+    expect(alert).toHaveClass('MuiAlert-outlined');
+    expect(alert).not.toHaveClass('MuiAlert-filled');
+    expect(alert).toHaveStyle({
+      backgroundColor: darkTheme.palette.background.paper,
+      borderColor: alpha(darkTheme.palette.primary.main, 0.6),
+      color: darkTheme.palette.text.primary,
+    });
+    expect(screen.getByText('New version available!')).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Update' })).toHaveStyle({
+      color: darkTheme.palette.primary.main,
+    });
+    expect(screen.getByRole('button', { name: 'dismiss' })).toHaveStyle({
+      color: darkTheme.palette.text.secondary,
+    });
   });
 });
