@@ -40,7 +40,7 @@ interface IntervalFetchResult {
 
 interface PaginationBudget {
   events: number;
-  pages: number;
+  continuationPages: number;
 }
 
 type FriendlyBuffEventsRequest = ReturnType<typeof createCurrentRequest> | null;
@@ -143,12 +143,14 @@ const fetchEventsForInterval = async (
 
   do {
     signal.throwIfAborted();
-    if (budget.pages >= EVENT_MAX_PAGES_PER_STREAM) {
-      throw new Error(
-        `Friendly buff event pagination exceeded ${EVENT_MAX_PAGES_PER_STREAM} pages`,
-      );
+    if (nextPageTimestamp != null) {
+      if (budget.continuationPages >= EVENT_MAX_PAGES_PER_STREAM) {
+        throw new Error(
+          `Friendly buff event pagination exceeded ${EVENT_MAX_PAGES_PER_STREAM} continuation pages`,
+        );
+      }
+      budget.continuationPages += 1;
     }
-    budget.pages += 1;
 
     const requestedStartTime = nextPageTimestamp ?? initialStartTime;
     const response: GetBuffEventsQuery = await client.query({
@@ -232,7 +234,10 @@ export const fetchFriendlyBuffEvents = createAsyncThunk<
     });
 
     const intervalResults = new Array<IntervalFetchResult>(intervals.length);
-    const paginationBudget: PaginationBudget = { events: 0, pages: 0 };
+    // Every interval requires one initial request. Only follow-up requests consume
+    // the pagination budget so valid long fights are governed by the separate
+    // interval cap instead of being rejected as excessive pagination.
+    const paginationBudget: PaginationBudget = { events: 0, continuationPages: 0 };
     let nextIntervalIndex = 0;
     let fatalError: unknown;
     const fetchNextInterval = async (): Promise<void> => {

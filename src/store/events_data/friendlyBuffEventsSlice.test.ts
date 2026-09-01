@@ -13,6 +13,7 @@ import friendlyBuffEventsReducer, {
 jest.mock('./constants', () => ({
   ...jest.requireActual('./constants'),
   EVENT_MAX_EVENTS_PER_STREAM: 2,
+  EVENT_MAX_PAGES_PER_STREAM: 2,
 }));
 
 describe('friendlyBuffEventsSlice', () => {
@@ -69,7 +70,7 @@ describe('friendlyBuffEventsSlice', () => {
     expect(client.query).not.toHaveBeenCalled();
   });
 
-  it('shares the page budget across all intervals', async () => {
+  it('does not count each interval request as a pagination page', async () => {
     const store = createStore();
     const client = {
       query: jest.fn().mockResolvedValue(emptyResponse),
@@ -84,9 +85,40 @@ describe('friendlyBuffEventsSlice', () => {
       }) as never,
     );
 
+    expect(getEntry(store)?.status).toBe('succeeded');
+    expect(client.query).toHaveBeenCalledTimes(101);
+  });
+
+  it('shares the continuation-page budget across all intervals', async () => {
+    const store = createStore();
+    const responseWithNextPage = (nextPageTimestamp: number) => ({
+      reportData: {
+        report: {
+          events: { data: [], nextPageTimestamp },
+        },
+      },
+    });
+    const client = {
+      query: jest.fn(({ variables }: { variables: { startTime?: number } }) => {
+        const requestedStartTime = variables.startTime ?? 0;
+        return Promise.resolve(responseWithNextPage(requestedStartTime + 0.25));
+      }),
+    } as unknown as EsoLogsClient;
+
+    await store.dispatch(
+      fetchFriendlyBuffEvents({
+        reportCode: 'ABC123',
+        fight: { ...fight, endTime: 2 },
+        client,
+        intervalSize: 1,
+      }) as never,
+    );
+
     expect(getEntry(store)?.status).toBe('failed');
-    expect(getEntry(store)?.error).toBe('Friendly buff event pagination exceeded 100 pages');
-    expect(client.query).toHaveBeenCalledTimes(100);
+    expect(getEntry(store)?.error).toBe(
+      'Friendly buff event pagination exceeded 2 continuation pages',
+    );
+    expect(client.query).toHaveBeenCalledTimes(4);
   });
 
   it('shares the event budget across all intervals', async () => {
