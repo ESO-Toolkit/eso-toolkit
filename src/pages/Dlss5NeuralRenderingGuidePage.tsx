@@ -199,6 +199,7 @@ const SECTIONS = [
   { id: 'config', title: 'Config file reference' },
   { id: 'troubleshooting', title: 'Troubleshooting: fixes by log line' },
   { id: 'performance', title: 'What it costs' },
+  { id: 'frame-generation', title: 'Getting the performance back' },
   { id: 'credits', title: 'Credits and downloads' },
 ] as const;
 
@@ -399,6 +400,24 @@ const NR_SETTINGS: ReadonlyArray<RowSpec> = [
     label: 'Reset NR feature and clear failure latch',
     value:
       'If NR hits an error it latches off for that feature rather than retrying every frame. This button clears the latch without restarting the game. Use it after fixing something.',
+  },
+];
+
+const FRAME_GEN: ReadonlyArray<RowSpec> = [
+  {
+    label: 'NVIDIA Smooth Motion',
+    value:
+      'Driver-level frame generation for games with no native support, which is exactly ESO. RTX 40 and 50 series only. Enable it per-game in the NVIDIA App under Graphics, Program Settings, then Driver Settings. Free, no extra process, and the first thing to try on a supported card.',
+  },
+  {
+    label: 'Lossless Scaling',
+    value:
+      'A paid Steam utility that generates frames for anything, including AMD and older NVIDIA cards. Offers higher multipliers than Smooth Motion. If its overlay fights ReShade, switch its capture API between DXGI and WGC.',
+  },
+  {
+    label: 'Do not run both',
+    value:
+      'Smooth Motion and Lossless Scaling at the same time is worse than either alone. Pick one.',
   },
 ];
 
@@ -1395,15 +1414,85 @@ after NR:   feed CPU 11.82 ms/frame |  63.9 fps | feed is 75% of the frame`}
             Roughly half the framerate. NR runs inference on every frame, so some of that is
             unavoidable, but try a lighter <strong>NR Preset</strong> and lower{' '}
             <strong>NR Intensity</strong> before writing it off. The feeder prints its own cost
-            every 600 frames, so measure on your own card.
+            every 600 frames, so measure on your own card. These are real frames, before any{' '}
+            <Box
+              component="a"
+              href="#frame-generation"
+              sx={{ color: accentText, fontWeight: W.semi, textDecoration: 'underline' }}
+            >
+              frame generation
+            </Box>
+            .
           </Typography>
         </Box>
+      </Section>
+
+      {/* ── Frame generation ───────────────────────────────────────── */}
+      <Section id="frame-generation" index={11} title="Getting the performance back">
+        <Stack spacing={2}>
+          <Typography variant="body2" sx={proseSx}>
+            Neural Rendering costs roughly half the framerate, and frame generation is the answer.
+            The two compose unusually well here, for a structural reason worth understanding.
+          </Typography>
+
+          <Callout tone="info" label="Why this pairs well">
+            <Typography variant="body2">
+              Neural Rendering runs inside ReShade, before the frame is presented. Frame generation
+              interpolates after. So NR only ever processes real frames, and the generated ones
+              inherit its output for free. Frame generation does not multiply the cost of NR.
+            </Typography>
+          </Callout>
+
+          <Box sx={cardSx}>
+            <Typography
+              component="h3"
+              sx={{ fontWeight: W.heading, fontSize: '1.125rem', lineHeight: 1.4, mb: 1.5 }}
+            >
+              Your options
+            </Typography>
+            <SettingsTable rows={FRAME_GEN} labelWidth={190} />
+          </Box>
+
+          <Callout tone="caution" label="Your FPS counter will not show the extra frames">
+            <Typography variant="body2">
+              ReShade&apos;s counter and the feeder&apos;s own log both count real frames, upstream
+              of anything the driver inserts. After enabling Smooth Motion the log keeps reporting
+              the same number while the game visibly runs smoother. Nothing is wrong. To measure the
+              real output you need something downstream of the driver, such as NVIDIA&apos;s overlay
+              or FrameView.
+            </Typography>
+          </Callout>
+
+          <Box sx={cardSx}>
+            <Typography
+              component="h3"
+              sx={{ fontWeight: W.heading, fontSize: '1.125rem', lineHeight: 1.4, mb: 1 }}
+            >
+              What it costs you back
+            </Typography>
+            <Box component="ul" sx={{ pl: 2.5, m: 0, '& li': { mb: 0.6 } }}>
+              <Typography component="li" variant="body2" sx={proseSx}>
+                <strong>Latency.</strong> Frame generation adds it. Irrelevant overland, a real
+                trade for trial weaving and PvP. Judge it on your own play, not on a screenshot.
+              </Typography>
+              <Typography component="li" variant="body2" sx={proseSx}>
+                <strong>UI artifacts.</strong> Driver-level generation has no UI masking, and
+                ESO&apos;s interface is dense and mostly static. Nameplates and floating combat text
+                are where smearing shows up first, so look there before deciding it is clean.
+              </Typography>
+              <Typography component="li" variant="body2" sx={proseSx}>
+                <strong>Headroom.</strong> Generation wants some. With G-Sync or FreeSync, cap the
+                framerate below your refresh rate rather than letting it run free.
+              </Typography>
+            </Box>
+          </Box>
+        </Stack>
       </Section>
 
       {/* ── Credits ──────────────────────────────────────────────────
           None of this stack is ours. Naming the authors is basic courtesy and
           also gives readers a legitimate trail without us mirroring binaries. */}
-      <Section id="credits" index={11} title="Credits and downloads">
+      <Section id="credits" index={12} title="Credits and downloads">
         <Box sx={cardSx}>
           <Typography variant="body2" sx={{ ...proseSx, mb: 2 }}>
             This guide documents other people&apos;s work. Everything below is theirs, not ours.
