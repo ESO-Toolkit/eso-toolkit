@@ -68,12 +68,12 @@ export const UpdateNotification: React.FC<UpdateNotificationProps> = ({
     >
       <Alert
         severity="info"
-        variant={isDarkMode ? 'filled' : 'outlined'}
+        variant="outlined"
         action={
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             {customActions}
             <Button
-              color={isDarkMode ? 'inherit' : 'primary'}
+              color="primary"
               size="small"
               startIcon={<RefreshIcon />}
               onClick={handleUpdate}
@@ -81,45 +81,54 @@ export const UpdateNotification: React.FC<UpdateNotificationProps> = ({
                 minWidth: 'auto',
                 fontSize: '0.875rem',
                 fontWeight: 600,
-                ...(isDarkMode ? {} : { color: theme.palette.primary.main }),
+                color: theme.palette.primary.main,
               }}
             >
               Update
             </Button>
-            <IconButton size="small" aria-label="dismiss" color="inherit" onClick={handleDismiss}>
+            <IconButton
+              size="small"
+              aria-label="dismiss"
+              color="inherit"
+              onClick={handleDismiss}
+              sx={{
+                color: theme.palette.text.secondary,
+                '&:hover': {
+                  backgroundColor: alpha(theme.palette.text.primary, 0.08),
+                },
+              }}
+            >
               <CloseIcon fontSize="small" />
             </IconButton>
           </Box>
         }
         sx={{
-          ...(isDarkMode
-            ? {}
-            : {
-                backgroundColor: theme.palette.background.paper,
-                // The light-mode divider is intentionally subtle across the app.
-                // Use the secondary text color here so the alert boundary remains
-                // distinguishable against its white surface.
-                borderColor: theme.palette.text.secondary,
-                color: theme.palette.text.primary,
-                '& .MuiAlert-icon': {
-                  color: theme.palette.primary.main,
-                },
-                '& .MuiAlert-action': {
-                  color: theme.palette.text.primary,
-                },
-                '& .MuiButton-root': {
-                  color: theme.palette.primary.main,
-                  '&:hover': {
-                    backgroundColor: alpha(theme.palette.primary.main, 0.08),
-                  },
-                },
-                '& .MuiIconButton-root': {
-                  color: theme.palette.text.secondary,
-                  '&:hover': {
-                    backgroundColor: alpha(theme.palette.text.primary, 0.08),
-                  },
-                },
-              }),
+          backgroundColor: theme.palette.background.paper,
+          // The light-mode divider is intentionally subtle across the app.
+          // Use the secondary text color there; the dark surface needs a brighter
+          // accent border so the notification remains distinguishable.
+          borderColor: isDarkMode
+            ? alpha(theme.palette.primary.main, 0.6)
+            : theme.palette.text.secondary,
+          color: theme.palette.text.primary,
+          '& .MuiAlert-icon': {
+            color: theme.palette.primary.main,
+          },
+          '& .MuiAlert-action': {
+            color: theme.palette.text.primary,
+          },
+          '& .MuiButton-root': {
+            color: theme.palette.primary.main,
+            '&:hover': {
+              backgroundColor: alpha(theme.palette.primary.main, 0.08),
+            },
+          },
+          '& .MuiIconButton-root': {
+            color: theme.palette.text.secondary,
+            '&:hover': {
+              backgroundColor: alpha(theme.palette.text.primary, 0.08),
+            },
+          },
         }}
       >
         <Box>
@@ -128,7 +137,7 @@ export const UpdateNotification: React.FC<UpdateNotificationProps> = ({
             component="div"
             sx={{
               fontWeight: 600,
-              color: isDarkMode ? 'inherit' : theme.palette.text.primary,
+              color: theme.palette.text.primary,
             }}
           >
             New version available!
@@ -138,8 +147,7 @@ export const UpdateNotification: React.FC<UpdateNotificationProps> = ({
               variant="caption"
               component="div"
               sx={{
-                color: isDarkMode ? 'inherit' : theme.palette.text.secondary,
-                opacity: isDarkMode ? 0.9 : 1,
+                color: theme.palette.text.secondary,
                 mt: 0.5,
               }}
             >
