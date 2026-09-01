@@ -52,3 +52,14 @@ export const getEnvVar = jest.fn((key: string): string | undefined => {
 export const getRosterHubBaseUrl = jest.fn((): string => {
   return 'https://roster-hub-api.eso-toolkit.workers.dev';
 });
+
+/**
+ * App-relative route for the current location.
+ * Mocked as a root deployment (no base path to strip), so it is just the
+ * current pathname. The stripping logic itself is tested directly against
+ * `stripBasePath` in utils/routePathname.test.ts.
+ */
+export const getRoutePathname = jest.fn((pathname?: string): string => {
+  const raw = pathname ?? (typeof window === 'undefined' ? '/' : window.location.pathname);
+  return raw.length > 1 ? raw.replace(/\/+$/, '') || '/' : raw;
+});

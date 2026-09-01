@@ -12,6 +12,7 @@ import { prefetchLatestReportsForUrl } from './features/latest_reports/latestRep
 import store, { type RootState } from './store/storeWithHistory';
 import { setPerfTier } from './store/ui/uiSlice';
 import { heuristicPerfTier } from './utils/detectPerfTier';
+import { getRoutePathname } from './utils/envUtils';
 import { scheduleItemDataWarmupForPath } from './utils/itemDataWarmup';
 
 // Kick the Latest Reports list request before React mounts. The route is a
@@ -20,7 +21,7 @@ import { scheduleItemDataWarmupForPath } from './utils/itemDataWarmup';
 // the network sat idle. Firing it here overlaps the request with the rest of
 // boot; useLatestReportsQuery adopts the in-flight promise on mount. No-op on
 // every other route. See features/latest_reports/latestReportsRequest.
-prefetchLatestReportsForUrl(window.location.pathname, window.location.search);
+prefetchLatestReportsForUrl(getRoutePathname(), window.location.search);
 
 // First-paint perf-tier priming. For a first-time visitor with no
 // persisted store, the default is 'medium' — which would leave a low-end
@@ -77,4 +78,4 @@ root.render(
 // AppLayout re-arms this on navigation into a gear route. See utils/
 // itemDataWarmup for the route gate, the connection-quality gate and the
 // dynamic-import rationale.
-scheduleItemDataWarmupForPath(window.location.pathname);
+scheduleItemDataWarmupForPath(getRoutePathname());

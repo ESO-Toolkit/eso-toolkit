@@ -49,7 +49,7 @@ import { NotFound } from './pages/NotFound';
 import { ReduxThemeProvider } from './ReduxThemeProvider';
 import store, { persistor } from './store/storeWithHistory';
 import { initializeAnalytics } from './utils/analytics';
-import { getBaseUrl } from './utils/envUtils';
+import { getBaseUrl, getRoutePathname } from './utils/envUtils';
 import { initializeErrorTracking, addBreadcrumb } from './utils/errorTracking';
 import {
   importRosterHubPage,
@@ -63,9 +63,9 @@ import { importReportFightDetails, preloadReportFightDetails } from './utils/rep
 // for the router to mount and the lazy route to suspend. That puts the request
 // in flight alongside the rest of boot, which is what the old static import
 // bought us — minus the cost of shipping the chunk to every other route.
-// Matched loosely (substring, not a route match) so it also covers a deployment
-// under a base path such as /dev-previews/pr-123/report/....
-if (typeof window !== 'undefined' && window.location.pathname.includes('/report/')) {
+// getRoutePathname strips the deploy's base path, so this is a real route match
+// and still fires under a preview deploy at /dev-previews/pr-123/report/....
+if (typeof window !== 'undefined' && getRoutePathname().startsWith('/report/')) {
   preloadReportFightDetails();
 }
 
