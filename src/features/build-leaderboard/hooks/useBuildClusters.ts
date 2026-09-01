@@ -23,6 +23,99 @@ import type { DpsParse } from '../types/dpsParses.types';
  */
 const MAX_CACHED_RESULTS = 12;
 
+/**
+ * Keep the cache key proportional to the digest size rather than to the
+ * number/length of parse rows. Two independent 64-bit lanes make accidental
+ * collisions vanishingly unlikely, while length-prefixing every field keeps
+ * the hashed input unambiguous (parse ids and signature hashes are server
+ * data, not constrained identifiers). The exact fields are retained as a
+ * separate witness on each entry, so even a deliberately forced collision
+ * cannot return a stale result.
+ */
+const HASH_MASK_64 = 0xffff_ffff_ffff_ffffn;
+const HASH_PRIME_A = 1_099_511_628_211n;
+const HASH_PRIME_B = 14_029_467_336_897_019_727n;
+const HASH_OFFSET_A = 14_695_981_039_346_656_037n;
+const HASH_OFFSET_B = 7_809_847_782_465_536_322n;
+
+function updateHash(hash: bigint, value: number, prime: bigint): bigint {
+  return ((hash ^ BigInt(value)) * prime) & HASH_MASK_64;
+}
+
+function updateLengthPrefixedString(
+  hashes: readonly [bigint, bigint],
+  value: string,
+): [bigint, bigint] {
+  let [first, second] = hashes;
+  const length = value.length;
+  // Encode the UTF-16 length in four bytes before the value. This makes field
+  // boundaries unambiguous without allocating a joined representation.
+  for (let shift = 0; shift < 32; shift += 8) {
+    const byte = (length >>> shift) & 0xff;
+    first = updateHash(first, byte, HASH_PRIME_A);
+    second = updateHash(second, byte, HASH_PRIME_B);
+  }
+  for (let index = 0; index < value.length; index += 1) {
+    const codeUnit = value.charCodeAt(index);
+    first = updateHash(first, codeUnit & 0xff, HASH_PRIME_A);
+    first = updateHash(first, codeUnit >>> 8, HASH_PRIME_A);
+    second = updateHash(second, codeUnit & 0xff, HASH_PRIME_B);
+    second = updateHash(second, codeUnit >>> 8, HASH_PRIME_B);
+  }
+  return [first, second];
+}
+
+/** Stable, compact fingerprint of every input used by clustering. */
+export function buildParseCacheFingerprint(parses: readonly DpsParse[]): string {
+  let hashes: [bigint, bigint] = [HASH_OFFSET_A, HASH_OFFSET_B];
+  hashes = updateLengthPrefixedString(hashes, String(parses.length));
+  for (const parse of parses) {
+    hashes = updateLengthPrefixedString(hashes, parse.parse_id);
+    hashes = updateLengthPrefixedString(hashes, parse.signature_hash);
+    hashes = updateLengthPrefixedString(hashes, String(parse.amount));
+  }
+  return `${hashes[0].toString(16).padStart(16, '0')}${hashes[1].toString(16).padStart(16, '0')}`;
+}
+
+/**
+ * The digest is only an index. Keep the exact fields it represents alongside
+ * each cached value so a digest collision is a cache miss, never stale data.
+ * This is an array of fields rather than the old joined key, avoiding one
+ * potentially very large allocation while retaining an exact comparison.
+ */
+type BuildCacheWitness = readonly (readonly [string, string, string])[];
+
+function buildParseCacheWitness(parses: readonly DpsParse[]): BuildCacheWitness {
+  return parses.map(
+    ({ parse_id, signature_hash, amount }) => [parse_id, signature_hash, String(amount)] as const,
+  );
+}
+
+function sameBuildCacheWitness(left: BuildCacheWitness, right: BuildCacheWitness): boolean {
+  if (left.length !== right.length) return false;
+
+  for (let index = 0; index < left.length; index += 1) {
+    const leftParse = left[index];
+    const rightParse = right[index];
+    if (
+      leftParse[0] !== rightParse[0] ||
+      leftParse[1] !== rightParse[1] ||
+      leftParse[2] !== rightParse[2]
+    ) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+export type BuildParseCacheFingerprint = (parses: readonly DpsParse[]) => string;
+
+interface BuildCacheEntry {
+  result: ClusterBuildsResult;
+  witness: BuildCacheWitness;
+}
+
 export interface UseBuildClustersResult {
   result: ClusterBuildsResult | null;
   loading: boolean;
@@ -174,11 +267,13 @@ function hydrateLabels(cluster: BuildCluster, labels: Map<string, string>): Buil
 export function useBuildClusters(
   parses: readonly DpsParse[],
   resolveBaseAbilityId?: (abilityId: number) => number | undefined,
+  fingerprint: BuildParseCacheFingerprint = buildParseCacheFingerprint,
 ): UseBuildClustersResult {
   const [result, setResult] = useState<ClusterBuildsResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [stateKey, setStateKey] = useState<string | null>(null);
   const [reclusterToken, setReclusterToken] = useState(0);
 
   const tooFewParses = parses.length > 0 && parses.length < MIN_PARSES_TO_CLUSTER;
@@ -195,12 +290,18 @@ export function useBuildClusters(
   // different build after the cron updates a character's best parse — an
   // id-only key would then serve clusters computed from data that no longer
   // exists. signature_hash covers build changes, amount covers a re-parse.
-  const cacheKey = useMemo(
-    () =>
-      parses.map((parse) => `${parse.parse_id}:${parse.signature_hash}:${parse.amount}`).join('|'),
-    [parses],
-  );
-  const cache = useRef(new Map<string, ClusterBuildsResult>());
+  const cacheKey = useMemo(() => fingerprint(parses), [fingerprint, parses]);
+  const freshCacheWitness = useMemo(() => buildParseCacheWitness(parses), [parses]);
+  // Preserve witness identity for a refetch with identical rows. This keeps
+  // the effect quiet for equivalent content, while a same-digest/different-
+  // witness collision gets a new dependency and therefore recomputes.
+  const previousWitness = useRef<BuildCacheWitness | undefined>(undefined);
+  const cacheWitness =
+    previousWitness.current && sameBuildCacheWitness(previousWitness.current, freshCacheWitness)
+      ? previousWitness.current
+      : freshCacheWitness;
+  previousWitness.current = cacheWitness;
+  const cache = useRef(new Map<string, BuildCacheEntry>());
 
   // The cache key describes the PARSES, but the clustering also depends on
   // resolveBaseAbilityId: it feeds buildCanonicalMaps, which changes the feature
@@ -208,23 +309,36 @@ export function useBuildClusters(
   // drop the whole cache when the resolver identity changes — otherwise the
   // cache-hit path would return clusters computed under the previous mapping.
   const lastResolver = useRef(resolveBaseAbilityId);
+  const resolverVersion = useRef(0);
   if (lastResolver.current !== resolveBaseAbilityId) {
     lastResolver.current = resolveBaseAbilityId;
+    resolverVersion.current += 1;
     cache.current.clear();
   }
+  const requestKey = `${resolverVersion.current}:${cacheKey}`;
 
   /** Read through, refreshing recency so the cap evicts the least-recently used. */
-  const readCache = (key: string): ClusterBuildsResult | undefined => {
+  const readCache = (key: string, witness: BuildCacheWitness): ClusterBuildsResult | undefined => {
     const hit = cache.current.get(key);
     if (!hit) return undefined;
+    if (!sameBuildCacheWitness(hit.witness, witness)) {
+      // The compact digest collided. Remove the stale entry before running so
+      // an in-flight render cannot observe it again under the same key.
+      cache.current.delete(key);
+      return undefined;
+    }
     cache.current.delete(key);
     cache.current.set(key, hit);
-    return hit;
+    return hit.result;
   };
 
-  const writeCache = (key: string, value: ClusterBuildsResult): void => {
+  const writeCache = (
+    key: string,
+    value: ClusterBuildsResult,
+    witness: BuildCacheWitness,
+  ): void => {
     cache.current.delete(key);
-    cache.current.set(key, value);
+    cache.current.set(key, { result: value, witness });
     // Map iterates in insertion order, so the first key is the oldest.
     while (cache.current.size > MAX_CACHED_RESULTS) {
       const oldest = cache.current.keys().next().value;
@@ -242,6 +356,7 @@ export function useBuildClusters(
     // return that forgets leaves the UI stuck on "Grouping N parses…" forever.
     // Routing both early returns through this helper makes that hard to miss.
     const settleWithoutRunning = (next: ClusterBuildsResult | null, pct: number): void => {
+      setStateKey(requestKey);
       setResult(next);
       setError(null);
       setProgress(pct);
@@ -271,13 +386,15 @@ export function useBuildClusters(
       return undefined;
     }
 
-    const cached = readCache(cacheKey);
+    const cached = readCache(requestKey, cacheWitness);
     if (cached) {
       settleWithoutRunning(cached, 100);
       return undefined;
     }
 
     let cancelled = false;
+    setStateKey(requestKey);
+    setResult(null);
     setLoading(true);
     setProgress(0);
     setError(null);
@@ -295,7 +412,7 @@ export function useBuildClusters(
           ...clustered,
           clusters: clustered.clusters.map((cluster) => hydrateLabels(cluster, labels)),
         };
-        writeCache(cacheKey, hydrated);
+        writeCache(requestKey, hydrated, cacheWitness);
         setResult(hydrated);
       })
       .catch((err: unknown) => {
@@ -310,12 +427,29 @@ export function useBuildClusters(
     return () => {
       cancelled = true;
     };
-    // `parses` is covered by cacheKey; depending on the array itself would rerun
-    // on every render.
+    // `parses` is covered by cacheKey and cacheWitness; depending on the array
+    // itself would rerun on every refetch, while the stable witness identity
+    // still reruns for a same-digest/different-content collision.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cacheKey, tooFewParses, resolveBaseAbilityId, reclusterToken]);
+  }, [requestKey, cacheWitness, tooFewParses, resolveBaseAbilityId, reclusterToken]);
 
-  const recluster = useCallback(() => setReclusterToken((token) => token + 1), []);
+  const recluster = useCallback(() => {
+    cache.current.delete(requestKey);
+    setReclusterToken((token) => token + 1);
+  }, [requestKey]);
 
-  return { result, loading, progress, error, tooFewParses, recluster };
+  // Effects run after commit. When the route/query changes, the state above can
+  // therefore still belong to the previous parse set for one render. Never let
+  // that old result escape under a new heading, canonical URL, or JSON-LD block.
+  const stateMatchesRequest = stateKey === requestKey;
+  const hasInput = parses.length > 0;
+
+  return {
+    result: stateMatchesRequest ? result : null,
+    loading: stateMatchesRequest ? loading : hasInput,
+    progress: stateMatchesRequest ? progress : 0,
+    error: stateMatchesRequest ? error : null,
+    tooFewParses,
+    recluster,
+  };
 }

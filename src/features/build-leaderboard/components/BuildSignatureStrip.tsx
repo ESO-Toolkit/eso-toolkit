@@ -1,5 +1,6 @@
 import { Box, Typography } from '@mui/material';
 import { alpha } from '@mui/material/styles';
+import { visuallyHidden } from '@mui/utils';
 import React from 'react';
 
 import { getLeaderboardClassTheme } from '../theme/leaderboardTheme';
@@ -39,7 +40,7 @@ export const BuildSignatureStrip: React.FC<BuildSignatureStripProps> = ({ cluste
   const classTheme = getLeaderboardClassTheme(cluster.esoClass);
 
   return (
-    <Box aria-label="Defining setup">
+    <Box role="group" aria-label="Defining setup">
       {SIGNATURE_GROUPS.map((signatureGroup, index) => {
         const traits = traitsFor(cluster, signatureGroup.groups);
         const visible = traits.slice(0, signatureGroup.limit);
@@ -108,15 +109,33 @@ export const BuildSignatureStrip: React.FC<BuildSignatureStripProps> = ({ cluste
                       component="span"
                       data-core={trait.core ? 'true' : undefined}
                       data-trait-kind={trait.core ? 'core' : 'flex'}
+                      data-trait-kind-label={trait.core ? 'Core' : 'Common'}
                       data-testid={`trait-${trait.group}-${trait.id}`}
                       title={trait.label}
                       sx={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 0.45,
                         color: trait.core ? 'text.primary' : 'text.secondary',
                         fontSize: '0.81rem',
                         fontWeight: trait.core ? 600 : 500,
                         lineHeight: 1.3,
                       }}
                     >
+                      <Box component="span" sx={visuallyHidden}>
+                        {trait.core ? 'Core: ' : 'Common: '}
+                      </Box>
+                      <Box
+                        component="span"
+                        aria-hidden="true"
+                        sx={{
+                          color: trait.core ? classTheme.accent : 'text.secondary',
+                          fontSize: '0.56rem',
+                          lineHeight: 1,
+                        }}
+                      >
+                        {trait.core ? '●' : '◇'}
+                      </Box>
                       {trait.label}
                     </Typography>
                   </React.Fragment>

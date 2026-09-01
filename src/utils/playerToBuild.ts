@@ -58,6 +58,14 @@ import {
 import type { PotionType } from './potionDetectionUtils';
 import { isAnyTwoHandedWeapon } from './weaponClassificationUtils';
 
+/**
+ * Gear accepted by build extraction. Some ranking payloads contain all fields
+ * needed by the editor but do not report an item-quality tier.
+ */
+export type PlayerBuildExtractionGear = Omit<PlayerGear, 'quality'> & {
+  quality?: PlayerGear['quality'];
+};
+
 // ─── Gear Slot Mapping ──────────────────────────────────────────────────────
 // CombatantInfo PlayerGear uses sequential slot indices (GearSlot enum),
 // while GearConfig uses ESO's native equipment slot numbering (EQUIP_SLOTS).
@@ -214,7 +222,7 @@ function resolveRole(playerRole?: string): CombatRole {
 // ─── Gear Conversion ────────────────────────────────────────────────────────
 
 export function convertGear(
-  gear: PlayerGear[],
+  gear: PlayerBuildExtractionGear[],
   // Weapon-type resolution reads the loadout-manager icon data, which is loaded
   // asynchronously and lives in a session-global cache — so it's only run when a
   // caller has awaited preloadIconData() and opts in. Off by default keeps other
@@ -415,7 +423,7 @@ function resolvePotions(potionType?: PotionType): BuildPotion[] {
 
 // ─── Gear Set Description ───────────────────────────────────────────────────
 
-function buildGearDescription(gear: PlayerGear[]): string {
+function buildGearDescription(gear: PlayerBuildExtractionGear[]): string {
   // Count set pieces to build a readable description
   const setCounts = new Map<string, number>();
   for (const item of gear) {
@@ -444,7 +452,7 @@ export interface PlayerBuildExtractionData {
   /** Player's detected role (from role detection or fallback) */
   role?: string;
   /** CombatantInfo gear array (14 slots) */
-  gear: PlayerGear[];
+  gear: PlayerBuildExtractionGear[];
   /** CombatantInfo talents array (skills + passives) */
   talents: PlayerTalent[];
   /** Detected mundus buffs from auras */

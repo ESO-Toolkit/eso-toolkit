@@ -4,12 +4,10 @@ import { alpha } from '@mui/material/styles';
 import React from 'react';
 
 import { ClassIcon } from '../../../components/ClassIcon';
-import { DPS_DATA_COLOR, getLeaderboardClassTheme } from '../theme/leaderboardTheme';
+import { getDpsDataTextColor, getLeaderboardClassTheme } from '../theme/leaderboardTheme';
 import type { BuildCluster } from '../types/clustering.types';
 import type { DpsParse } from '../types/dpsParses.types';
-
-const compactDps = (value: number): string =>
-  value >= 1000 ? `${(value / 1000).toFixed(1).replace(/\.0$/, '')}k` : String(Math.round(value));
+import { formatCompactDps, getLeaderboardClassDisplayName } from '../utils/displayFormatting';
 
 const DAY_MS = 86_400_000;
 
@@ -39,8 +37,8 @@ export function parseFreshness(parse?: DpsParse): string | null {
 
   const days = Math.floor((Date.now() - ms) / DAY_MS);
   const dateLabel = formatLogDate(ms);
-  if (days <= 0) return `parses from ${dateLabel}`;
-  return `parses from ${dateLabel} · ${days}d old`;
+  if (days <= 0) return `representative parse from ${dateLabel}`;
+  return `representative parse from ${dateLabel} · ${days}d old`;
 }
 
 export interface ArchetypeRowProps {
@@ -56,10 +54,14 @@ export interface ArchetypeRowProps {
    * becomes the headline ("112k") anchored to its trial.
    */
   bestParse?: DpsParse;
-  /** Bosses where this pattern has a retained top-25 class parse. */
+  /** Encounter-and-difficulty boards where this pattern has a retained top-25 class parse. */
   coveredBosses?: number;
-  /** Bosses with any retained parse data for the selected class. */
+  /** Encounter-and-difficulty boards with retained parse data for the selected class. */
   availableBosses?: number;
+  /** Pooled class view: cluster DPS values are normalized and are not raw DPS. */
+  pooled?: boolean;
+  /** Thin pooled selections are observations, not board-spanning archetypes. */
+  ungrouped?: boolean;
   onSelect: () => void;
 }
 
@@ -73,36 +75,58 @@ export const ArchetypeRow: React.FC<ArchetypeRowProps> = ({
   bestParse,
   coveredBosses,
   availableBosses,
+  pooled = false,
+  ungrouped = false,
   onSelect,
 }) => {
   const classTheme = getLeaderboardClassTheme(cluster.esoClass);
-  const classLabel = cluster.esoClass === 'DragonKnight' ? 'Dragonknight' : cluster.esoClass;
+  const classLabel = getLeaderboardClassDisplayName(cluster.esoClass);
   const escapedClass = cluster.esoClass.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const buildLabel = showClassIcon
     ? label.replace(new RegExp(`\\s+${escapedClass}$`, 'i'), '').trim()
     : label;
   const freshness = parseFreshness(medoidParse);
-  // Pooled view: headline is the cluster's best RAW parse, anchored to its trial.
+  // A best parse is the raw pooled evidence. Without one, pooled cluster.dps is
+  // a normalized cross-board comparison value and must never be presented as DPS.
+  const pooledRow = pooled || Boolean(bestParse);
   const anchor = bestParse?.trial_id || bestParse?.encounter_name || '';
-  const headlineDps = compactDps(bestParse ? bestParse.amount : cluster.dps.median);
+  const headlineDpsValue = pooledRow ? bestParse?.amount : cluster.dps.median;
+  const headlineDps =
+    headlineDpsValue === undefined ? 'DPS unavailable' : formatCompactDps(headlineDpsValue);
+  // Keep the defensive unavailable state legible inside the compact DPS
+  // column; the full explanation remains in the row's accessible name.
+  const visibleHeadlineDps = headlineDpsValue === undefined ? '—' : headlineDps;
   // Thin selections list builds one at a time, so size 1 is routine here and
   // "1 parses" would otherwise be on screen constantly.
   const parseCount = `${cluster.size} ${cluster.size === 1 ? 'parse' : 'parses'}`;
   const coverageLabel =
-    bestParse && coveredBosses !== undefined && availableBosses !== undefined
-      ? `${coveredBosses}/${availableBosses} bosses`
+    pooledRow &&
+    !ungrouped &&
+    bestParse &&
+    coveredBosses !== undefined &&
+    availableBosses !== undefined
+      ? `${coveredBosses}/${availableBosses} boards`
       : null;
+  const freshnessLabel = freshness ? `, ${freshness}` : '';
+  const pooledEvidenceDetails = [
+    coverageLabel ? `sampled top-ranked on ${coveredBosses} of ${availableBosses} boards` : null,
+    ungrouped ? `observed ${parseCount}` : parseCount,
+  ]
+    .filter(Boolean)
+    .join(', ');
+  const anchorLabel = anchor ? ` on ${anchor}` : '';
+  const ariaLabel = pooledRow
+    ? bestParse
+      ? `${label}, sampled high ${headlineDps} DPS${anchorLabel}${pooledEvidenceDetails ? `, ${pooledEvidenceDetails}` : ''}${freshnessLabel}${recommended ? ', recommended' : ''}`
+      : `${label}, DPS unavailable, no resolvable sampled parse, ${parseCount}${freshnessLabel}${recommended ? ', recommended' : ''}`
+    : `${label}, typical damage ${headlineDps}, ${parseCount}${freshnessLabel}${recommended ? ', recommended' : ''}`;
 
   return (
-    <Box component="li" sx={{ listStyle: 'none' }}>
+    <Box component="li" role="listitem" sx={{ listStyle: 'none' }}>
       <ButtonBase
         data-testid={recommended ? 'recommended-row' : 'archetype-row'}
-        aria-current={selected ? 'true' : undefined}
-        aria-label={
-          bestParse
-            ? `${label}, best ${headlineDps} DPS on ${anchor}, ${coverageLabel ? `top-25 on ${coveredBosses} of ${availableBosses} bosses, ` : ''}${parseCount} sampled${recommended ? ', recommended' : ''}`
-            : `${label}, typical damage ${headlineDps}, ${parseCount}${recommended ? ', recommended' : ''}`
-        }
+        aria-pressed={selected}
+        aria-label={ariaLabel}
         onClick={onSelect}
         sx={(theme) => ({
           position: 'relative',
@@ -177,7 +201,7 @@ export const ArchetypeRow: React.FC<ArchetypeRowProps> = ({
                 sx={{
                   overflow: 'hidden',
                   color: showClassIcon ? 'text.primary' : undefined,
-                  fontFamily: 'Space Grotesk, Inter, system-ui',
+                  fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                   fontSize: { xs: '0.84rem', sm: '0.89rem' },
                   fontWeight: selected ? 700 : 600,
                   lineHeight: 1.2,
@@ -229,9 +253,9 @@ export const ArchetypeRow: React.FC<ArchetypeRowProps> = ({
                 fontSize: '0.69rem',
               }}
             >
-              {bestParse
-                ? `${headlineDps}${anchor ? ` @ ${anchor}` : ''}${coverageLabel ? ` · ${coverageLabel}` : ` · ${parseCount}`}`
-                : `${parseCount} · ${headlineDps}${cluster.size === 1 ? '' : ' typical'}`}
+              {pooledRow
+                ? `${parseCount} · ${visibleHeadlineDps}${anchor ? ` @ ${anchor}` : ''}${coverageLabel ? ` · ${coverageLabel}` : ''}`
+                : `${parseCount} · ${visibleHeadlineDps}${cluster.size === 1 ? '' : ' typical'}`}
             </Typography>
             {freshness && (
               <Typography
@@ -265,14 +289,14 @@ export const ArchetypeRow: React.FC<ArchetypeRowProps> = ({
         >
           <Typography
             className="u-tabular"
-            sx={{
+            sx={(theme) => ({
               textAlign: 'right',
-              color: DPS_DATA_COLOR,
+              color: getDpsDataTextColor(theme.palette.mode),
               fontSize: '0.9rem',
               fontWeight: 700,
-            }}
+            })}
           >
-            {headlineDps}
+            {visibleHeadlineDps}
           </Typography>
           {bestParse && anchor && (
             <Typography

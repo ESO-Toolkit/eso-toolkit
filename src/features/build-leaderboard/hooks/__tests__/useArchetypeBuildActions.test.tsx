@@ -8,7 +8,7 @@ import savedBuildsReducer from '../../../../store/saved_builds/savedBuildsSlice'
 import { dpsParsesApi } from '../../api/dpsParsesApi';
 import type { BuildCluster } from '../../types/clustering.types';
 import type { DpsParseBuildResponse } from '../../types/dpsParses.types';
-import { useArchetypeBuildActions } from '../useArchetypeBuildActions';
+import { toBuildExtractionData, useArchetypeBuildActions } from '../useArchetypeBuildActions';
 
 const mockNavigate = jest.fn();
 const mockEnqueue = jest.fn();
@@ -89,13 +89,16 @@ const CLUSTER = {
   cohesion: 0.1,
 } as unknown as BuildCluster;
 
-function makeWrapper() {
+function makeWrapper(strictMode = false) {
   const store = configureStore({ reducer: { savedBuilds: savedBuildsReducer } });
-  const wrapper = ({ children }: { children: React.ReactNode }) => (
-    <Provider store={store}>
-      <MemoryRouter>{children}</MemoryRouter>
-    </Provider>
-  );
+  const wrapper = ({ children }: { children: React.ReactNode }) => {
+    const content = (
+      <Provider store={store}>
+        <MemoryRouter>{children}</MemoryRouter>
+      </Provider>
+    );
+    return strictMode ? <React.StrictMode>{content}</React.StrictMode> : content;
+  };
   return { store, wrapper };
 }
 
@@ -132,12 +135,24 @@ describe('useArchetypeBuildActions', () => {
 
     const { build } = store.getState().savedBuilds.builds[0];
     expect(build.name).toBe(CLUSTER.label);
+    expect(build.shortDescription).toBe(
+      'Observed sampled archetype — 20 sampled top-ranked parses share this pattern.',
+    );
     expect(build.setups.length).toBeGreaterThan(0);
 
     // Gear and skills actually made it across the conversion.
     const setup = build.setups[0];
     expect(Object.keys(setup.gear).length).toBeGreaterThan(0);
     expect(Object.keys(setup.skills).length).toBeGreaterThan(0);
+  });
+
+  it('does not invent item quality when the ranking payload omits it', () => {
+    const extracted = toBuildExtractionData(BUILD_RESPONSE);
+
+    expect(extracted.gear).not.toHaveLength(0);
+    extracted.gear.forEach((piece) => {
+      expect(piece).not.toHaveProperty('quality');
+    });
   });
 
   it('saves without navigating for Save to My Builds', async () => {
@@ -182,7 +197,7 @@ describe('useArchetypeBuildActions', () => {
 
   /**
    * A single boolean could not tell the two apart, so saving rendered the primary
-   * button as "Opening…".
+   * button as the editor-opening action.
    */
   it('reports which action is in flight, not merely that one is', async () => {
     let release: ((v: typeof BUILD_RESPONSE) => void) | undefined;
@@ -235,5 +250,59 @@ describe('useArchetypeBuildActions', () => {
       release?.(BUILD_RESPONSE);
     });
     expect(store.getState().savedBuilds.builds).toHaveLength(1);
+  });
+
+  it('passes an abort signal to the build request', async () => {
+    const spy = jest.spyOn(dpsParsesApi, 'getBuild');
+    const { wrapper } = makeWrapper();
+    const { result } = renderHook(() => useArchetypeBuildActions(), { wrapper });
+
+    await act(async () => {
+      await result.current.openInEditor(CLUSTER);
+    });
+
+    expect(spy).toHaveBeenCalledWith(CLUSTER.medoidParseId, expect.any(AbortSignal));
+  });
+
+  it('remains usable after StrictMode replays its lifecycle effect', async () => {
+    const { store, wrapper } = makeWrapper(true);
+    const { result } = renderHook(() => useArchetypeBuildActions(), { wrapper });
+
+    await act(async () => {
+      await result.current.openInEditor(CLUSTER);
+    });
+
+    expect(store.getState().savedBuilds.builds).toHaveLength(1);
+    expect(mockNavigate).toHaveBeenCalledWith(expect.stringMatching(/^\/build-editor\?id=/));
+  });
+
+  it('aborts an in-flight request and performs no side effects after unmount', async () => {
+    let requestSignal: AbortSignal | undefined;
+    let release: ((response: DpsParseBuildResponse) => void) | undefined;
+    jest.spyOn(dpsParsesApi, 'getBuild').mockImplementation((_parseId, signal) => {
+      requestSignal = signal;
+      return new Promise((resolve) => {
+        release = resolve;
+      });
+    });
+
+    const { store, wrapper } = makeWrapper();
+    const { result, unmount } = renderHook(() => useArchetypeBuildActions(), { wrapper });
+
+    act(() => {
+      void result.current.openInEditor(CLUSTER);
+    });
+    await waitFor(() => expect(result.current.pendingAction).not.toBeNull());
+
+    act(() => {
+      unmount();
+      release?.(BUILD_RESPONSE);
+    });
+    await Promise.resolve();
+
+    expect(requestSignal?.aborted).toBe(true);
+    expect(store.getState().savedBuilds.builds).toHaveLength(0);
+    expect(mockNavigate).not.toHaveBeenCalled();
+    expect(mockEnqueue).not.toHaveBeenCalled();
   });
 });

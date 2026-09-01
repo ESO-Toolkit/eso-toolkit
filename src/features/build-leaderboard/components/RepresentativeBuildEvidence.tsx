@@ -1,11 +1,11 @@
-import { Box, ButtonBase, Tooltip, Typography } from '@mui/material';
+import { Box, Tooltip, Typography } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import React from 'react';
 
 import { ClassIcon } from '../../../components/ClassIcon';
 import { GearSetTooltip } from '../../../components/GearSetTooltip';
 import { LazySkillTooltip } from '../../../components/LazySkillTooltip';
-import { abilityIconUrl } from '../../../utils/abilityIconCorrections';
+import { ABILITY_ICON_BASE_URL, abilityIconUrl } from '../../../utils/abilityIconCorrections';
 import { getGearSetTooltipPropsByName } from '../../../utils/gearSetTooltipMapper';
 import { RICH_TOOLTIP_SLOT_PROPS } from '../../../utils/richTooltipSlotProps';
 import { buildTooltipPropsFromAbilityId } from '../../../utils/skillTooltipMapper';
@@ -15,11 +15,13 @@ import type {
   DpsParseGearPiece,
   DpsParseTalent,
 } from '../types/dpsParses.types';
+import { assetIconUrl } from '../utils/buildIconUrls';
+import { formatCompactDps } from '../utils/displayFormatting';
 
-export const ASSET_ICON_ROOT = 'https://assets.rpglogs.com/img/eso/abilities/';
-
-const compactDps = (value: number): string =>
-  value >= 1000 ? `${(value / 1000).toFixed(1).replace(/\.0$/, '')}k` : String(Math.round(value));
+// Keep the previous exports available to callers while sourcing both values
+// from the shared leaderboard icon helpers.
+export const ASSET_ICON_ROOT = ABILITY_ICON_BASE_URL;
+export { assetIconUrl };
 
 /**
  * Icons are always served from the asset host. The icon string comes from
@@ -27,15 +29,16 @@ const compactDps = (value: number): string =>
  * allow arbitrary remote image loads; unknown names simply 404 into the
  * placeholder tile instead.
  */
-export function assetIconUrl(icon?: string): string | undefined {
-  if (!icon) return undefined;
-  return `${ASSET_ICON_ROOT}${encodeURIComponent(icon)}.png`;
-}
-
 interface SetSummary {
   setId: number;
   name: string;
   pieces: DpsParseGearPiece[];
+}
+
+function formatSetEvidenceLabel(name: string, pieceCount: number): string {
+  const setName = /\bset$/i.test(name.trim()) ? name.trim() : `${name.trim()} set`;
+  const pieceLabel = pieceCount === 1 ? 'piece' : 'pieces';
+  return `${setName}, ${pieceCount} ${pieceLabel}`;
 }
 
 function summarizeSets(build: DpsParseBuildResponse): SetSummary[] {
@@ -79,12 +82,17 @@ const SkillTile: React.FC<{
       leaveTouchDelay={3000}
       slotProps={richTooltip ? RICH_TOOLTIP_SLOT_PROPS : undefined}
     >
-      <ButtonBase
+      <Box
+        component="span"
+        role="img"
+        tabIndex={0}
         aria-label={`${name}${ultimate ? ', ultimate' : ''}`}
         sx={(theme) => ({
+          display: 'grid',
+          placeItems: 'center',
           position: 'relative',
-          width: { xs: ultimate ? 44 : 38, sm: ultimate ? 48 : 44 },
-          height: { xs: ultimate ? 44 : 38, sm: ultimate ? 48 : 44 },
+          width: { xs: 44, sm: ultimate ? 48 : 44 },
+          height: { xs: 44, sm: ultimate ? 48 : 44 },
           overflow: 'hidden',
           flex: '0 0 auto',
           border: `${ultimate ? 2 : 1}px solid ${alpha(ultimate ? '#ffb300' : accent, 0.52)}`,
@@ -113,7 +121,7 @@ const SkillTile: React.FC<{
             {ultimate ? 'ULT' : '?'}
           </Typography>
         )}
-      </ButtonBase>
+      </Box>
     </Tooltip>
   );
 };
@@ -136,17 +144,22 @@ const SkillBar: React.FC<{
     >
       {label}
     </Typography>
-    <Box sx={{ display: 'flex', minHeight: 48, alignItems: 'center', gap: 0.65 }}>
+    <Box
+      sx={{
+        display: 'grid',
+        minHeight: 48,
+        gridTemplateColumns: { xs: 'repeat(6, 44px)', sm: 'repeat(5, 44px) 48px' },
+        alignItems: 'center',
+        justifyContent: 'space-between',
+      }}
+    >
       {talents.map((talent, index) => (
-        <React.Fragment key={`${talent.slot}-${talent.abilityId}`}>
-          {index === 5 && (
-            <Box
-              aria-hidden="true"
-              sx={{ width: '1px', height: 30, mx: 0.15, backgroundColor: alpha('#ffb300', 0.28) }}
-            />
-          )}
-          <SkillTile talent={talent} ultimate={index === 5} accent={accent} />
-        </React.Fragment>
+        <SkillTile
+          key={`${talent.slot}-${talent.abilityId}`}
+          talent={talent}
+          ultimate={index === 5}
+          accent={accent}
+        />
       ))}
     </Box>
   </Box>
@@ -217,18 +230,18 @@ export const RepresentativeBuildEvidence: React.FC<RepresentativeBuildEvidencePr
           </Typography>
           <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 0.45 }}>
             <Typography sx={{ color: 'text.secondary', fontSize: '0.68rem' }}>
-              Top parse by {build.playerName || 'anonymous player'}
-              {representativeDps ? ` · ${compactDps(representativeDps)} DPS` : ''}
+              Representative sampled parse by {build.playerName || 'anonymous player'}
+              {representativeDps ? ` · ${formatCompactDps(representativeDps)} DPS` : ''}
             </Typography>
             {sourceUrl && (
               <Typography
                 component="a"
                 href={sourceUrl}
                 target="_blank"
-                rel="noreferrer"
+                rel="noopener noreferrer"
                 sx={{ color: classTheme.accent, fontSize: '0.68rem', fontWeight: 650 }}
               >
-                View log ↗
+                View log (opens new tab) ↗
               </Typography>
             )}
           </Box>
@@ -240,7 +253,7 @@ export const RepresentativeBuildEvidence: React.FC<RepresentativeBuildEvidencePr
           display: 'grid',
           gridTemplateColumns: { xs: '1fr', md: 'minmax(280px, 1fr) auto' },
           gap: { xs: 2, md: 2.5 },
-          p: { xs: 1.35, sm: 1.75 },
+          p: { xs: 1, sm: 1.75 },
         }}
       >
         <Box sx={{ minWidth: 0 }}>
@@ -262,8 +275,11 @@ export const RepresentativeBuildEvidence: React.FC<RepresentativeBuildEvidencePr
               const iconUrl = assetIconUrl(firstPiece?.icon);
               const tooltipProps = getGearSetTooltipPropsByName(set.name, set.pieces.length);
               const tile = (
-                <ButtonBase
-                  aria-label={`View ${set.name} set details`}
+                <Box
+                  component="div"
+                  role="group"
+                  tabIndex={0}
+                  aria-label={formatSetEvidenceLabel(set.name, set.pieces.length)}
                   sx={(theme) => ({
                     display: 'grid',
                     width: '100%',
@@ -315,7 +331,7 @@ export const RepresentativeBuildEvidence: React.FC<RepresentativeBuildEvidencePr
                   >
                     {set.pieces.length}×
                   </Typography>
-                </ButtonBase>
+                </Box>
               );
 
               return tooltipProps ? (

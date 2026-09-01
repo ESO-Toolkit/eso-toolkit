@@ -47,6 +47,62 @@ describe('normalizeParse', () => {
     expect(parse?.amount).toBe(300_000);
   });
 
+  it.each(['abc', 'RepOrt123', 'xb7TKHXR8DJByp4Q'])(
+    'preserves a valid report code (%s)',
+    (code) => {
+      expect(normalizeParse(validRow({ report_code: code }))?.report_code).toBe(code);
+    },
+  );
+
+  it.each([
+    'javascript:alert(1)',
+    'abc/def',
+    'abc?redirect=https://evil.example',
+    'abc%2Fdef',
+    'abc-def',
+    'abc.def',
+    'abc def',
+    'abc\n',
+    'abc\t',
+    'abc#fight=1',
+    '../abc',
+    42,
+    null,
+  ])('drops an invalid report code (%p)', (code) => {
+    expect(normalizeParse(validRow({ report_code: code }))?.report_code).toBe('');
+  });
+
+  it.each([
+    'https://www.esologs.com/reports/xb7TKHXR8DJByp4Q#fight=1',
+    // WHATWG URL parsing normalizes scheme/host casing while preserving the
+    // trusted value returned to the caller.
+    'HTTPS://WWW.ESOLOGS.COM/reports/xb7TKHXR8DJByp4Q?fight=1#details',
+    // The default HTTPS port is equivalent to the canonical origin and is
+    // normalized away by URL.port, unlike an arbitrary alternate port.
+    'https://www.esologs.com:443/reports/xb7TKHXR8DJByp4Q#fight=1',
+  ])('preserves a safe HTTPS ESO Logs source URL (%s)', (source) => {
+    expect(normalizeParse(validRow({ source_url: source }))?.source_url).toBe(source);
+  });
+
+  it.each([
+    'http://www.esologs.com/reports/abc',
+    'https://esologs.com/reports/abc',
+    'https://www.esologs.com.evil.example/reports/abc',
+    'https://www.esologs.com@evil.example/reports/abc',
+    'https://www.esologs.com%2eevil.example/reports/abc',
+    'https://evil.example/reports/abc',
+    '//www.esologs.com/reports/abc',
+    'javascript:window.location="https://evil.example"',
+    'data:text/html,<script>alert(1)</script>',
+    'https://user:password@www.esologs.com/reports/abc',
+    'https://www.esologs.com:8443/reports/abc',
+    'not a URL',
+    42,
+    null,
+  ])('drops an invalid source URL (%p)', (source) => {
+    expect(normalizeParse(validRow({ source_url: source }))?.source_url).toBe('');
+  });
+
   // A parse with no metric cannot be ranked; one with no id cannot be opened.
   it('drops rows with no amount or no parse_id', () => {
     expect(normalizeParse(validRow({ amount: undefined }))).toBeNull();
@@ -308,6 +364,38 @@ describe('dpsParsesApi.listParses', () => {
     return mock;
   }
 
+  function responseWithPendingBody(status = 200): {
+    fetchMock: jest.Mock;
+    bodyStarted: jest.Mock;
+  } {
+    const abortError = (): Error => {
+      const err = new Error('aborted while reading body');
+      err.name = 'AbortError';
+      return err;
+    };
+    const bodyStarted = jest.fn();
+    const fetchMock = jest.fn(async (_url: string, init?: RequestInit) => {
+      const readBody = (): Promise<never> => {
+        bodyStarted();
+        return new Promise((_resolve, reject) => {
+          if (init?.signal?.aborted) {
+            reject(abortError());
+            return;
+          }
+          init?.signal?.addEventListener('abort', () => reject(abortError()), { once: true });
+        });
+      };
+      return {
+        ok: status >= 200 && status < 300,
+        status,
+        json: readBody,
+        text: readBody,
+      };
+    });
+    global.fetch = fetchMock as unknown as typeof fetch;
+    return { fetchMock, bodyStarted };
+  }
+
   it('reports a genuine timeout as a readable message', async () => {
     jest.useFakeTimers();
     pendingFetchRespectingSignal();
@@ -318,6 +406,38 @@ describe('dpsParsesApi.listParses', () => {
 
     await assertion;
     jest.useRealTimers();
+  });
+
+  it('keeps the timeout active while consuming a successful JSON body', async () => {
+    jest.useFakeTimers();
+    try {
+      const { bodyStarted } = responseWithPendingBody();
+      const promise = dpsParsesApi.listParses({ encounterId: 4 });
+      const assertion = expect(promise).rejects.toThrow(/timed out/i);
+
+      await Promise.resolve();
+      await Promise.resolve();
+      expect(bodyStarted).toHaveBeenCalledTimes(1);
+      jest.advanceTimersByTime(20_000);
+
+      await assertion;
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('keeps caller cancellation active while consuming an error body', async () => {
+    const { bodyStarted } = responseWithPendingBody(503);
+    const controller = new AbortController();
+    const promise = dpsParsesApi.listParses({ encounterId: 4 }, controller.signal);
+
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(bodyStarted).toHaveBeenCalledTimes(1);
+    controller.abort();
+
+    await expect(promise).rejects.toMatchObject({ name: 'AbortError' });
+    await expect(promise).rejects.not.toThrow(/timed out/i);
   });
 
   /**

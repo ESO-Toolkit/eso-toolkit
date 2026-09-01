@@ -1,6 +1,165 @@
 import AxeBuilder from '@axe-core/playwright';
 import { test, expect } from '@playwright/test';
 
+import { createSkeletonDetector } from './utils/skeleton-detector';
+
+const BUILD_LEADERBOARD_AXE_TAGS = [
+  'wcag2a',
+  'wcag2aa',
+  'wcag21a',
+  'wcag21aa',
+  'wcag22aa',
+] as const;
+
+const BUILD_LEADERBOARD_ENCOUNTERS = {
+  encounters: [
+    {
+      encounter_id: 64,
+      difficulty: 120,
+      encounter_name: 'Opulent Trio',
+      zone_id: 1478,
+      trial_id: 'Opulent Ordeal',
+      parse_count: 12,
+      top_amount: 122_500,
+      class_count: 7,
+      updated_at: '2026-08-01T12:00:00Z',
+    },
+  ],
+};
+
+/**
+ * The existing leaderboard spec owns its large, behavior-focused fixture. This
+ * intentionally small fixture supplies only the stable API contract needed to
+ * render every leaderboard state for accessibility scans, avoiding a second
+ * copy of that fixture's hundreds of lines of parse data.
+ */
+async function mockBuildLeaderboardForAccessibility(
+  page: import('@playwright/test').Page,
+): Promise<void> {
+  await page.route('**/roster-hub-api/dps-leaderboard/**', async (route) => {
+    const url = new URL(route.request().url());
+    const path = url.pathname;
+
+    if (path.endsWith('/dps-leaderboard/encounters')) {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(BUILD_LEADERBOARD_ENCOUNTERS),
+      });
+      return;
+    }
+
+    if (path.endsWith('/dps-leaderboard/parses')) {
+      const esoClass = url.searchParams.get('class') === 'Nightblade' ? 'Nightblade' : 'Sorcerer';
+      const parses = Array.from({ length: 12 }, (_, index) => ({
+        parse_id: `a11y-parse-${index + 1}`,
+        encounter_id: 64,
+        difficulty: 120,
+        zone_id: 1478,
+        trial_id: 'Opulent Ordeal',
+        encounter_name: 'Opulent Trio',
+        hard_mode_level: 1,
+        partition: 1,
+        character_label: `A11y Player ${index + 1}`,
+        eso_class: esoClass,
+        spec_name: esoClass,
+        race: null,
+        server_region: 'NA',
+        server_name: null,
+        guild_name: 'A11y Guild',
+        report_code: 'A11YREPORT',
+        fight_id: 5,
+        rank: index + 1,
+        amount: 122_500 - index * 250,
+        duration_ms: 200_000,
+        log_start_ms: 1_754_061_200_000,
+        log_date: '2026-08-01',
+        bracket_data: null,
+        set1_id: 460,
+        set2_id: 75,
+        monster_id: null,
+        mythic_id: null,
+        arena_set_id: null,
+        mundus_id: null,
+        food_ability_id: null,
+        signature_hash: `a11y-${esoClass}`,
+        build: {
+          v: 1,
+          sets: { fivePiece: [460, 75], extra: [] },
+          setCounts: [
+            [460, 5],
+            [75, 5],
+          ],
+          setNames: { 460: 'A11y Set Alpha', 75: 'A11y Set Auxiliary' },
+          abilityNames: { 901: 'A11y Fragments', 902: 'A11y Bolt' },
+          bars: {
+            front: [901, 902, 901, 902, 901, 902],
+            back: [902, 901, 902, 901, 902, 901],
+            barOrderKnown: true,
+          },
+          missing: ['race', 'cp', 'mundus', 'food'],
+        },
+        source_url: 'https://www.esologs.com/reports/A11YREPORT',
+      }));
+
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ parses, total: parses.length, limit: parses.length, offset: 0 }),
+      });
+      return;
+    }
+
+    const buildMatch = path.match(/\/dps-leaderboard\/parses\/([^/]+)\/build$/);
+    if (buildMatch) {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          parseId: decodeURIComponent(buildMatch[1]),
+          playerName: 'A11y Representative',
+          combatant: {
+            gear: [],
+            talents: [],
+            sets: [],
+          },
+        }),
+      });
+      return;
+    }
+
+    await route.continue();
+  });
+}
+
+async function openBuildLeaderboardForAccessibility(
+  page: import('@playwright/test').Page,
+  path: string,
+): Promise<void> {
+  const skeletonDetector = createSkeletonDetector(page);
+  await page.goto(path);
+  await skeletonDetector.waitForSkeletonsToDisappear({ timeout: 30_000 }).catch(() => undefined);
+  await expect(
+    page.locator('[data-testid="archetype-row"], [data-testid="recommended-row"]').first(),
+  ).toBeVisible({ timeout: 30_000 });
+  await page.evaluate(async () => {
+    if (document.fonts?.ready) await document.fonts.ready;
+    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+  });
+}
+
+async function expectBuildLeaderboardAccessible(
+  page: import('@playwright/test').Page,
+  state: string,
+): Promise<void> {
+  const results = await new AxeBuilder({ page })
+    .withTags([...BUILD_LEADERBOARD_AXE_TAGS])
+    .exclude('.vite-error-overlay')
+    .analyze();
+
+  expect(results.violations, `${state} has WCAG violations`).toEqual([]);
+}
+
 const PUBLIC_ROUTES = [
   { path: '/', title: 'ESO Toolkit' },
   { path: '/calculator', title: 'Calculator' },
@@ -43,6 +202,36 @@ test.describe('Accessibility', () => {
         expect(results.violations).toEqual([]);
       });
     }
+  });
+
+  test.describe('Build Leaderboard route and evidence states', () => {
+    test.beforeEach(async ({ page }) => {
+      await mockBuildLeaderboardForAccessibility(page);
+    });
+
+    test('base encounter board has no WCAG violations', async ({ page }) => {
+      await openBuildLeaderboardForAccessibility(page, '/build-leaderboard');
+      await expectBuildLeaderboardAccessible(page, 'base encounter board');
+    });
+
+    test('class deep link has no WCAG violations', async ({ page }) => {
+      await openBuildLeaderboardForAccessibility(page, '/build-leaderboard/class/nightblade');
+      await expectBuildLeaderboardAccessible(page, 'class deep link');
+    });
+
+    test('boss deep link has no WCAG violations', async ({ page }) => {
+      await openBuildLeaderboardForAccessibility(page, '/build-leaderboard/boss/opulent-trio');
+      await expectBuildLeaderboardAccessible(page, 'boss deep link');
+    });
+
+    test('open build evidence dialog has no WCAG violations', async ({ page }) => {
+      await openBuildLeaderboardForAccessibility(page, '/build-leaderboard');
+      await page.getByRole('button', { name: 'View evidence', exact: true }).click();
+
+      const dialog = page.getByRole('dialog', { name: 'Build evidence' });
+      await expect(dialog).toBeVisible();
+      await expectBuildLeaderboardAccessible(page, 'open build evidence dialog');
+    });
   });
 
   test.describe('Landmark structure', () => {

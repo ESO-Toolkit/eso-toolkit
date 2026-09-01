@@ -26,18 +26,21 @@ async function request<T>(path: string, signal?: AbortSignal): Promise<T> {
   // but only one of them means "timed out". Reporting a cancelled request (unmount,
   // superseded query) as a timeout would show users an error for something that
   // worked exactly as intended.
-  let timedOut = false;
-  const timer = setTimeout(() => {
-    timedOut = true;
+  let abortReason: 'timeout' | 'external' | null = null;
+  const abort = (reason: 'timeout' | 'external'): void => {
+    abortReason ??= reason;
     controller.abort();
+  };
+  const timer = setTimeout(() => {
+    abort('timeout');
   }, REQUEST_TIMEOUT_MS);
 
-  const onExternalAbort = (): void => controller.abort();
+  const onExternalAbort = (): void => abort('external');
   if (signal?.aborted) {
     // Already aborted before we got here: the 'abort' event has been and gone, so
     // a listener would never fire and the fetch would run to the full timeout
     // before anyone noticed the caller had given up.
-    controller.abort();
+    abort('external');
   } else {
     signal?.addEventListener('abort', onExternalAbort, { once: true });
   }
@@ -47,41 +50,40 @@ async function request<T>(path: string, signal?: AbortSignal): Promise<T> {
     signal?.removeEventListener('abort', onExternalAbort);
   };
 
-  let res: Response;
   try {
     // Deliberately no Content-Type: these are GETs with no body, and that header
     // is not CORS-safelisted — setting it forces an OPTIONS preflight on every
     // cross-origin request, doubling the round trips for nothing. (It also has to
     // survive the Worker's origin allowlist, so it turns a benign request into one
     // that can fail outright.)
-    res = await fetch(`${BASE_URL}${path}`, { signal: controller.signal });
+    const res = await fetch(`${BASE_URL}${path}`, { signal: controller.signal });
+
+    if (!res.ok) {
+      const text = await res.text();
+      let message = `API error ${res.status}`;
+      try {
+        const json = JSON.parse(text) as { error?: string };
+        if (json.error) message = json.error;
+      } catch {
+        // ignore parse failure
+      }
+      const error = new Error(message);
+      (error as Error & { status: number }).status = res.status;
+      throw error;
+    }
+
+    return (await res.json()) as T;
   } catch (err) {
-    cleanup();
     if (err instanceof Error && err.name === 'AbortError') {
       // Re-throw the caller's cancellation as an AbortError so callers can keep
       // ignoring it, rather than dressing it up as a failure.
-      if (!timedOut) throw err;
+      if (abortReason !== 'timeout') throw err;
       throw new Error('Request timed out. Check your connection and try again.');
     }
     throw err;
+  } finally {
+    cleanup();
   }
-  cleanup();
-
-  if (!res.ok) {
-    const text = await res.text();
-    let message = `API error ${res.status}`;
-    try {
-      const json = JSON.parse(text) as { error?: string };
-      if (json.error) message = json.error;
-    } catch {
-      // ignore parse failure
-    }
-    const error = new Error(message);
-    (error as Error & { status: number }).status = res.status;
-    throw error;
-  }
-
-  return res.json() as Promise<T>;
 }
 
 // ─── Defensive normalization ─────────────────────────────────────────────────
@@ -98,6 +100,40 @@ function num(value: unknown): number | null {
 
 function str(value: unknown): string {
   return typeof value === 'string' ? value : '';
+}
+
+/**
+ * ESO Logs report codes are opaque alphanumeric tokens. Keep the original
+ * value for valid codes, but never allow path separators, whitespace, or URL
+ * syntax to reach links and routing built from this field.
+ */
+function reportCode(value: unknown): string {
+  return typeof value === 'string' && /^[A-Za-z0-9]+$/.test(value) ? value : '';
+}
+
+/**
+ * Source links come from the API and are rendered as anchors. Pin them to the
+ * canonical ESO Logs HTTPS origin so an API response cannot turn the link into
+ * a javascript/data URL or an attacker-controlled lookalike host.
+ */
+function sourceUrl(value: unknown): string {
+  if (typeof value !== 'string' || !value) return '';
+
+  try {
+    const url = new URL(value);
+    if (
+      url.protocol !== 'https:' ||
+      url.hostname !== 'www.esologs.com' ||
+      url.port !== '' ||
+      url.username !== '' ||
+      url.password !== ''
+    ) {
+      return '';
+    }
+    return value;
+  } catch {
+    return '';
+  }
 }
 
 /**
@@ -172,7 +208,7 @@ export function normalizeParse(raw: unknown): DpsParse | null {
     server_name: typeof raw.server_name === 'string' ? raw.server_name : null,
     guild_name: typeof raw.guild_name === 'string' ? raw.guild_name : null,
 
-    report_code: str(raw.report_code),
+    report_code: reportCode(raw.report_code),
     fight_id: num(raw.fight_id) ?? 0,
     rank: num(raw.rank),
     amount,
@@ -191,7 +227,7 @@ export function normalizeParse(raw: unknown): DpsParse | null {
     signature_hash: str(raw.signature_hash),
 
     build: normalizeBuild(raw.build),
-    source_url: str(raw.source_url),
+    source_url: sourceUrl(raw.source_url),
   };
 }
 
@@ -248,8 +284,8 @@ export interface ListParsesOptions {
   offset?: number;
   sort?: 'amount' | 'recent';
   /**
-   * Pooled class view: cap each boss's contribution at its N best rows so
-   * high-ceiling boards don't crowd out the pool. Server-side clamped [1,100].
+   * Optional server-side contribution cap, forwarded as provided. The API
+   * owns the cap's scope and clamping semantics.
    */
   perEncounterCap?: number;
 }

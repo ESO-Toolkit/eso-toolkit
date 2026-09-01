@@ -1,10 +1,19 @@
-import { renderHook, waitFor } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 
 import { dpsParsesApi } from '../../api/dpsParsesApi';
 import type { ListParsesOptions } from '../../api/dpsParsesApi';
+import type { DpsParse, ListDpsParsesResponse } from '../../types/dpsParses.types';
 import { useDpsParses } from '../useDpsParses';
 
 const EMPTY = { parses: [], total: 0, limit: 100, offset: 0 };
+
+function page(parseId: string, total = 1): ListDpsParsesResponse {
+  return {
+    ...EMPTY,
+    parses: [{ parse_id: parseId } as DpsParse],
+    total,
+  };
+}
 
 beforeEach(() => {
   jest.restoreAllMocks();
@@ -56,13 +65,61 @@ describe('useDpsParses', () => {
     // Query cleared while the request is still outstanding.
     rerender({ options: null });
 
-    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.loading).toBe(false);
     expect(result.current.parses).toEqual([]);
 
     // Late resolution must not revive the spinner or repopulate stale data.
     resolveRequest?.({ ...EMPTY, total: 99 });
     await waitFor(() => expect(result.current.total).toBe(0));
     expect(result.current.loading).toBe(false);
+  });
+
+  it('synchronously hides the previous query while the next query loads', async () => {
+    jest
+      .spyOn(dpsParsesApi, 'listParses')
+      .mockResolvedValueOnce(page('parse-a'))
+      .mockImplementation(() => new Promise(() => undefined));
+
+    const { result, rerender } = renderHook(
+      ({ encounterId }: { encounterId: number }) => useDpsParses({ encounterId }),
+      { initialProps: { encounterId: 4 } },
+    );
+
+    await waitFor(() => expect(result.current.parses[0]?.parse_id).toBe('parse-a'));
+
+    rerender({ encounterId: 7 });
+
+    expect(result.current.parses).toEqual([]);
+    expect(result.current.total).toBe(0);
+    expect(result.current.loading).toBe(true);
+  });
+
+  it('does not let a late request overwrite the current query', async () => {
+    let resolveA: ((response: ListDpsParsesResponse) => void) | undefined;
+    let resolveB: ((response: ListDpsParsesResponse) => void) | undefined;
+    const spy = jest.spyOn(dpsParsesApi, 'listParses').mockImplementation(
+      (options) =>
+        new Promise((resolve) => {
+          if (options.encounterId === 4) resolveA = resolve;
+          if (options.encounterId === 7) resolveB = resolve;
+        }),
+    );
+
+    const { result, rerender } = renderHook(
+      ({ encounterId }: { encounterId: number }) => useDpsParses({ encounterId }),
+      { initialProps: { encounterId: 4 } },
+    );
+    await waitFor(() => expect(spy).toHaveBeenCalledTimes(1));
+
+    rerender({ encounterId: 7 });
+    await waitFor(() => expect(spy).toHaveBeenCalledTimes(2));
+
+    act(() => resolveB?.(page('parse-b', 2)));
+    await waitFor(() => expect(result.current.parses[0]?.parse_id).toBe('parse-b'));
+
+    act(() => resolveA?.(page('parse-a', 99)));
+    expect(result.current.parses[0]?.parse_id).toBe('parse-b');
+    expect(result.current.total).toBe(2);
   });
 
   /**

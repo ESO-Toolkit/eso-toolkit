@@ -9,7 +9,7 @@ import {
 import { runBuildClustering } from '../../clustering/runBuildClustering';
 import type { ClusterBuildsResult } from '../../types/clustering.types';
 import type { DpsParse } from '../../types/dpsParses.types';
-import { useBuildClusters } from '../useBuildClusters';
+import { buildParseCacheFingerprint, useBuildClusters } from '../useBuildClusters';
 
 jest.mock('../../clustering/runBuildClustering');
 
@@ -357,6 +357,60 @@ describe('useBuildClusters', () => {
     await waitFor(() => expect(mockedRun.mock.calls.length).toBeGreaterThan(callsAfterFirst));
   });
 
+  it('keeps delimiter-ambiguous parse fields distinct in its compact fingerprint', async () => {
+    mockedRun.mockResolvedValue({ ...EMPTY_RESULT, k: 3 });
+    const parses = makeThreeArchetypeFixture();
+    const left = parses.map((parse, index) =>
+      index === 0 ? { ...parse, parse_id: 'a', signature_hash: 'b:c' } : parse,
+    );
+    const right = parses.map((parse, index) =>
+      index === 0 ? { ...parse, parse_id: 'a:b', signature_hash: 'c' } : parse,
+    );
+
+    // Both rows used to produce the same `parse_id:signature_hash:amount`
+    // segment. The length-prefixed fingerprint must distinguish them while
+    // staying fixed-size regardless of the source row count.
+    expect(buildParseCacheFingerprint(left)).not.toBe(buildParseCacheFingerprint(right));
+    expect(buildParseCacheFingerprint(left)).toHaveLength(32);
+
+    const { result, rerender } = renderHook(
+      ({ input }: { input: DpsParse[] }) => useBuildClusters(input),
+      { initialProps: { input: left } },
+    );
+    await waitFor(() => expect(result.current.result).not.toBeNull());
+    const callsAfterFirst = mockedRun.mock.calls.length;
+
+    rerender({ input: right });
+    await waitFor(() => expect(mockedRun.mock.calls.length).toBeGreaterThan(callsAfterFirst));
+  });
+
+  it('does not reuse a cached result when an injected fingerprint collides', async () => {
+    const parses = makeThreeArchetypeFixture();
+    const changed = parses.map((parse, index) =>
+      index === 0
+        ? { ...parse, amount: parse.amount + 1, signature_hash: 'collision-next' }
+        : parse,
+    );
+    const fingerprint = jest.fn(() => 'forced-collision');
+    mockedRun
+      .mockResolvedValueOnce({ ...EMPTY_RESULT, k: 3 })
+      .mockResolvedValueOnce({ ...EMPTY_RESULT, k: 4 });
+
+    const { result, rerender } = renderHook(
+      ({ input }: { input: DpsParse[] }) => useBuildClusters(input, undefined, fingerprint),
+      { initialProps: { input: parses } },
+    );
+    await waitFor(() => expect(result.current.result?.k).toBe(3));
+    const callsAfterFirst = mockedRun.mock.calls.length;
+
+    // The compact lookup key is intentionally identical. The exact witness
+    // must still make this a miss and prevent the stale k=3 result from leaking.
+    rerender({ input: changed });
+    await waitFor(() => expect(result.current.result?.k).toBe(4));
+    expect(mockedRun.mock.calls.length).toBeGreaterThan(callsAfterFirst);
+    expect(fingerprint).toHaveBeenCalledTimes(2);
+  });
+
   /**
    * resolveBaseAbilityId feeds buildCanonicalMaps, which changes the feature
    * vectors and therefore every distance. It cannot go in the cache key (it is a
@@ -414,6 +468,35 @@ describe('useBuildClusters', () => {
     });
     expect(result.current.loading).toBe(false);
   });
+
+  it('hides clusters synchronously when the parse content changes', async () => {
+    const parses = makeThreeArchetypeFixture();
+    mockedRun.mockResolvedValueOnce({ ...EMPTY_RESULT, k: 3 });
+
+    const { result, rerender } = renderHook(
+      ({ input }: { input: DpsParse[] }) => useBuildClusters(input),
+      { initialProps: { input: parses } },
+    );
+    await waitFor(() => expect(result.current.result?.k).toBe(3));
+
+    const pending = deferRun();
+    const changed = parses.map((parse, index) =>
+      index === 0 ? { ...parse, amount: parse.amount + 1, signature_hash: 'next-dataset' } : parse,
+    );
+    rerender({ input: changed });
+
+    // Effects have not completed yet, but the old clusters must already be
+    // inaccessible under the new route/query metadata.
+    expect(result.current.result).toBeNull();
+    expect(result.current.loading).toBe(true);
+    expect(result.current.error).toBeNull();
+
+    await act(async () => {
+      pending.resolve({ ...EMPTY_RESULT, k: 4 });
+    });
+    await waitFor(() => expect(result.current.result?.k).toBe(4));
+  });
+
   /**
    * Reloading the parses is not a retry for a clustering failure. The effect is
    * keyed on `cacheKey`, derived from the parse contents, so a refetch that
@@ -445,5 +528,22 @@ describe('useBuildClusters', () => {
 
     await waitFor(() => expect(result.current.result?.k).toBe(4));
     expect(result.current.error).toBeNull();
+  });
+
+  it('bypasses a successful cached result when reclustering on demand', async () => {
+    const parses = makeThreeArchetypeFixture();
+    mockedRun
+      .mockResolvedValueOnce({ ...EMPTY_RESULT, k: 3 })
+      .mockResolvedValueOnce({ ...EMPTY_RESULT, k: 4 });
+
+    const { result } = renderHook(() => useBuildClusters(parses));
+    await waitFor(() => expect(result.current.result?.k).toBe(3));
+
+    await act(async () => {
+      result.current.recluster();
+    });
+
+    await waitFor(() => expect(result.current.result?.k).toBe(4));
+    expect(mockedRun).toHaveBeenCalledTimes(2);
   });
 });

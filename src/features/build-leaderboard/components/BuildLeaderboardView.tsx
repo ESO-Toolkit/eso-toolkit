@@ -9,14 +9,21 @@ import {
   Paper,
   Skeleton,
   Typography,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import { alpha } from '@mui/material/styles';
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 
+import { encounterKeyOf } from '@/constants/leaderboardRoutes';
+
+import { MIN_PARSES_TO_CLUSTER } from '../clustering/clusterBuilds';
 import { detectSolvedMeta } from '../clustering/solvedMeta';
 import { getLeaderboardClassTheme } from '../theme/leaderboardTheme';
 import type { BuildCluster, ClusterBuildsResult } from '../types/clustering.types';
 import type { DpsParse } from '../types/dpsParses.types';
+import { orderBuildClusters } from '../utils/clusterOrdering';
+import { getClusterQuality } from '../utils/clusterQuality';
 
 import { ArchetypeRow } from './ArchetypeRow';
 import { BuildInspector } from './BuildInspector';
@@ -34,12 +41,12 @@ export interface BuildLeaderboardViewProps {
   scopeLabel?: string;
   /**
    * Human phrase for WHERE the parses come from, used by the too-few-parses
-   * message ('on DSR · Tideborn Taleria', 'across 14 trial bosses').
+   * message ('on DSR · Tideborn Taleria', 'across 14 trial boards').
    */
   scopeDescription?: string;
   /**
    * Pooled class view: cluster.dps holds internal cross-boss comparison values,
-   * while cards show raw DPS and top-25 boss coverage.
+   * while cards show raw DPS and top-25 board coverage.
    */
   pooled?: boolean;
   /**
@@ -48,28 +55,15 @@ export interface BuildLeaderboardViewProps {
    * instead of telling the reader to go find one.
    */
   onBroadenScope?: () => void;
-  /** Call to action for `onBroadenScope`, e.g. 'Show all trial bosses'. */
+  /** Call to action for `onBroadenScope`, e.g. 'Show all trial boards'. */
   broadenScopeLabel?: string;
   onRetry?: () => void;
   onOpenInEditor?: (cluster: BuildCluster) => void;
   onSaveBuild?: (cluster: BuildCluster) => void;
-  onViewSourceLog?: (cluster: BuildCluster) => void;
+  onViewSourceLog?: (cluster: BuildCluster, sourceParseId: string) => void;
   pendingAction?: { clusterId: string; kind: 'open' | 'save' } | null;
   emptyMessage?: string;
   hideSummary?: boolean;
-}
-
-function clusterQuality(silhouette: number): { label: string; tooltip: string } {
-  if (silhouette >= 0.5) {
-    return { label: 'Strong', tooltip: 'These build patterns separate cleanly.' };
-  }
-  if (silhouette >= 0.25) {
-    return {
-      label: 'Moderate',
-      tooltip: 'The patterns are useful, though some builds overlap.',
-    };
-  }
-  return { label: 'Limited', tooltip: 'Top players are using many similar variations.' };
 }
 
 function displayLabel(cluster: BuildCluster, contextClass?: string): string {
@@ -79,7 +73,7 @@ function displayLabel(cluster: BuildCluster, contextClass?: string): string {
 }
 
 const SkeletonWorkspace: React.FC = () => (
-  <Box aria-label="Loading build archetypes">
+  <Box role="status" aria-label="Loading build archetypes" aria-busy="true">
     <Skeleton variant="text" width={280} height={28} sx={{ mb: 1 }} />
     <Skeleton variant="rectangular" height={430} sx={{ borderRadius: 3.5 }} />
   </Box>
@@ -98,73 +92,119 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
   scopeDescription,
   pooled = false,
   onBroadenScope,
-  broadenScopeLabel = 'Show all trial bosses',
+  broadenScopeLabel = 'Show all trial boards',
   onRetry,
   onOpenInEditor,
   onSaveBuild,
   onViewSourceLog,
   pendingAction,
-  emptyMessage = 'No top parses recorded here yet.',
+  emptyMessage = 'No sampled top-ranked parses are available here yet.',
   hideSummary = false,
 }) => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [selectedId, setSelectedId] = useState<string | null>(
     result?.recommendedClusterId ?? result?.clusters[0]?.id ?? null,
   );
   const [evidenceOpen, setEvidenceOpen] = useState(false);
   const [methodologyOpen, setMethodologyOpen] = useState(false);
+  const [selectionAnnouncement, setSelectionAnnouncement] = useState('');
   const [lastResult, setLastResult] = useState(result);
   const inspectorRef = useRef<HTMLDivElement | null>(null);
+  const buildPatternsHeadingRef = useRef<HTMLHeadingElement | null>(null);
+  const pendingFocusRestoreRef = useRef(false);
+  const [progressAnnouncement, setProgressAnnouncement] = useState('');
 
   if (lastResult !== result) {
     setLastResult(result);
     setSelectedId(result?.recommendedClusterId ?? result?.clusters[0]?.id ?? null);
     setEvidenceOpen(false);
+    setSelectionAnnouncement('');
   }
 
   // Pooled view: the best RAW parse in each cluster heads its card ("112k @
   // DSR"). Raw amounts come from `parses`, never the normalized cluster input.
   // Lives above every early return (error/loading/too-few) — hook order must
   // stay stable across renders.
+  const parsesById = useMemo(
+    () => new Map(parses.map((parse) => [parse.parse_id, parse])),
+    [parses],
+  );
+
   const bestParseByCluster = useMemo(() => {
     const map = new Map<string, DpsParse>();
     if (!pooled) return map;
-    const byId = new Map(parses.map((parse) => [parse.parse_id, parse]));
     result?.clusters.forEach((cluster) => {
       let best: DpsParse | undefined;
       for (const id of cluster.memberParseIds) {
-        const parse = byId.get(id);
+        const parse = parsesById.get(id);
         if (parse && (!best || parse.amount > best.amount)) best = parse;
       }
       if (best) map.set(cluster.id, best);
     });
     return map;
-  }, [pooled, parses, result]);
+  }, [parsesById, pooled, result]);
 
   const bossCoverage = useMemo(() => {
     const byCluster = new Map<string, number>();
     if (!pooled) return { available: 0, byCluster };
 
-    const byId = new Map(parses.map((parse) => [parse.parse_id, parse]));
-    const available = new Set(parses.map((parse) => parse.encounter_id)).size;
+    const available = new Set(
+      parses.map((parse) => encounterKeyOf(parse.encounter_id, parse.difficulty)),
+    ).size;
     result?.clusters.forEach((cluster) => {
-      const bosses = new Set<number>();
+      const boards = new Set<string>();
       cluster.memberParseIds.forEach((id) => {
-        const parse = byId.get(id);
-        if (parse) bosses.add(parse.encounter_id);
+        const parse = parsesById.get(id);
+        if (parse) boards.add(encounterKeyOf(parse.encounter_id, parse.difficulty));
       });
-      byCluster.set(cluster.id, bosses.size);
+      byCluster.set(cluster.id, boards.size);
     });
 
     return { available, byCluster };
-  }, [pooled, parses, result]);
+  }, [parses, parsesById, pooled, result]);
+
+  const progressMessage =
+    clustering || !result ? `Grouping ${parses.length} parses into build patterns…` : '';
+
+  useEffect(() => {
+    setProgressAnnouncement('');
+    if (!progressMessage) return;
+    const timer = window.setTimeout(() => setProgressAnnouncement(progressMessage), 0);
+    return () => window.clearTimeout(timer);
+  }, [progressMessage]);
+
+  useEffect(() => {
+    if (
+      !pendingFocusRestoreRef.current ||
+      error ||
+      loading ||
+      parses.length === 0 ||
+      clustering ||
+      !result ||
+      result.clusters.length === 0
+    )
+      return;
+    const heading = buildPatternsHeadingRef.current;
+    if (!heading) return;
+    pendingFocusRestoreRef.current = false;
+    heading.focus({ preventScroll: true });
+    heading.scrollIntoView?.({ block: 'start', behavior: 'auto' });
+  }, [clustering, error, loading, parses.length, result, tooFewParses]);
+
+  const queueFocusRestore = (action?: () => void): void => {
+    pendingFocusRestoreRef.current = true;
+    action?.();
+  };
 
   if (error) {
+    pendingFocusRestoreRef.current = false;
     return (
       <Alert
         severity="error"
         action={
           onRetry && (
-            <Button color="inherit" size="small" onClick={onRetry}>
+            <Button color="inherit" size="small" onClick={() => queueFocusRestore(onRetry)}>
               Retry
             </Button>
           )
@@ -183,8 +223,8 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
       <Box>
         <Box sx={{ mb: 2 }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 1, mb: 0.75 }}>
-            <Typography aria-live="polite" sx={{ color: 'text.secondary', fontSize: '0.78rem' }}>
-              Grouping {parses.length} parses into build patterns…
+            <Typography sx={{ color: 'text.secondary', fontSize: '0.78rem' }}>
+              {progressMessage}
             </Typography>
             {clusterProgress > 0 && (
               <Typography
@@ -196,10 +236,30 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
             )}
           </Box>
           <LinearProgress
+            aria-label="Build grouping progress"
+            aria-valuetext={
+              clusterProgress > 0 ? `${Math.round(clusterProgress)}% complete` : 'Grouping builds'
+            }
             variant={clusterProgress > 0 ? 'determinate' : 'indeterminate'}
             value={clusterProgress}
             sx={{ height: 3 }}
           />
+          <Box
+            role="status"
+            aria-live="polite"
+            aria-atomic="true"
+            data-testid="build-grouping-announcement"
+            sx={{
+              position: 'absolute',
+              width: '1px',
+              height: '1px',
+              overflow: 'hidden',
+              clip: 'rect(0 0 0 0)',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {progressAnnouncement}
+          </Box>
         </Box>
         <SkeletonWorkspace />
       </Box>
@@ -216,32 +276,41 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
     );
   }
 
-  const quality = clusterQuality(result.silhouette);
+  const quality = getClusterQuality(result.silhouette);
   // Null on a healthy board, which is the common case; every use below is
   // guarded so the normal archetype presentation is untouched.
   const solved = detectSolvedMeta(result);
   const solvedTheme = getLeaderboardClassTheme(solved?.dominant.esoClass ?? '');
   const recommended = result.clusters.find((cluster) => cluster.id === result.recommendedClusterId);
-  const ordered = recommended
-    ? [recommended, ...result.clusters.filter((cluster) => cluster.id !== recommended.id)]
-    : result.clusters;
+  const ordered = orderBuildClusters(result.clusters, result.recommendedClusterId);
   const selected =
     result.clusters.find((cluster) => cluster.id === selectedId) ??
     recommended ??
     result.clusters[0];
   const selectedClassTheme = getLeaderboardClassTheme(selected.esoClass);
   const representativeParseFor = (cluster: BuildCluster): DpsParse | undefined =>
-    parses.find((parse) => parse.parse_id === cluster.medoidParseId);
+    parsesById.get(cluster.medoidParseId);
+  const selectedRepresentative = representativeParseFor(selected);
+  const selectedSourceParse = pooled ? bestParseByCluster.get(selected.id) : selectedRepresentative;
 
   const handleSelect = (clusterId: string): void => {
     setSelectedId(clusterId);
     setEvidenceOpen(false);
+    const selectedCluster = result.clusters.find((cluster) => cluster.id === clusterId);
+    if (selectedCluster) {
+      setSelectionAnnouncement(
+        isMobile
+          ? ''
+          : `Selected ${displayLabel(selectedCluster, esoClass)} build pattern. Inspector updated.`,
+      );
+    }
 
-    const mobile = window.matchMedia?.('(max-width: 899px)').matches ?? false;
-    if (!mobile) return;
+    if (!isMobile) return;
     window.requestAnimationFrame?.(() => {
       const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
-      inspectorRef.current?.scrollIntoView({
+      const inspector = inspectorRef.current;
+      inspector?.focus({ preventScroll: true });
+      inspector?.scrollIntoView({
         behavior: reduceMotion ? 'auto' : 'smooth',
         block: 'start',
       });
@@ -250,6 +319,29 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
 
   return (
     <Box>
+      <Box
+        component="p"
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+        data-testid="build-selection-announcement"
+        sx={{
+          position: 'absolute',
+          // MUI treats numeric sizing values in the 0–1 range as percentages.
+          // Use explicit pixels so this live region stays truly visually hidden
+          // instead of becoming a 100%-wide off-screen overflow source.
+          width: '1px',
+          height: '1px',
+          p: 0,
+          m: -1,
+          overflow: 'hidden',
+          clip: 'rect(0 0 0 0)',
+          whiteSpace: 'nowrap',
+          border: 0,
+        }}
+      >
+        {selectionAnnouncement}
+      </Box>
       {/* Thin data is a caveat, never a dead end. The builds recorded here are
           still shown — grouping them into archetypes is what we withhold, and
           the banner says so and offers a wider scope where one exists. */}
@@ -259,7 +351,11 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
           data-testid="too-few-parses"
           action={
             onBroadenScope && (
-              <Button color="inherit" size="small" onClick={onBroadenScope}>
+              <Button
+                color="inherit"
+                size="small"
+                onClick={() => queueFocusRestore(onBroadenScope)}
+              >
                 {broadenScopeLabel}
               </Button>
             )
@@ -271,7 +367,7 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
               "Only 2 parses are recorded" reads like the boss is empty. */}
           {`Only ${parses.length} ${esoClass ? `${esoClass} ` : ''}${
             parses.length === 1 ? 'parse' : 'parses'
-          } ${scopeDescription ?? 'in this selection'} — too few to group into reliable build patterns (10+ needed), so each build is listed on its own below.`}
+          } ${scopeDescription ?? 'in this selection'} — fewer than ${MIN_PARSES_TO_CLUSTER} for grouping; builds are listed individually below.`}
         </Alert>
       )}
 
@@ -294,24 +390,24 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
         >
           <Typography
             sx={{
-              fontFamily: 'Space Grotesk, Inter, system-ui',
+              fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
               fontSize: '0.85rem',
               fontWeight: 700,
               letterSpacing: '-0.01em',
             }}
           >
-            One build. Nearly everyone runs it.
+            One observed pattern dominates this sample.
           </Typography>
           <Typography
             sx={{ mt: 0.4, color: 'text.secondary', fontSize: '0.74rem', lineHeight: 1.5 }}
           >
-            {`${solved.sharePercent}% of the ${solved.clusteredParses} top parses ${
+            {`${solved.sharePercent}% of the ${solved.clusteredParses} sampled top-ranked parses ${
               scopeDescription ?? 'in this selection'
-            } converge on a single build. Where other boards split into competing archetypes, this one has settled on one answer.`}
+            } share one observed build pattern.`}
             {solved.outlierParses > 0 &&
               ` The other ${solved.outlierParses} ${
-                solved.outlierParses === 1 ? 'parse runs' : 'parses run'
-              } something meaningfully different and ${
+                solved.outlierParses === 1 ? 'sampled parse shows' : 'sampled parses show'
+              } a meaningfully different pattern and ${
                 solved.outlierParses === 1 ? 'is' : 'are'
               } listed below.`}
           </Typography>
@@ -329,59 +425,65 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
               >
                 {result.totalParses}
               </Box>{' '}
-              top-ranked parses ·{' '}
+              {` sampled top-ranked ${result.totalParses === 1 ? 'parse' : 'parses'} · `}
               {solved
-                ? `one build, ${solved.sharePercent}% of parses`
-                : `${result.k} build patterns`}
+                ? `one observed pattern, ${solved.sharePercent}% of clustered sample`
+                : `${result.k} build ${result.k === 1 ? 'pattern' : 'patterns'}`}
             </Typography>
             <IconButton
               size="small"
               aria-label="How this leaderboard works"
+              aria-controls="build-leaderboard-view-methodology"
               aria-expanded={methodologyOpen}
               onClick={() => setMethodologyOpen((open) => !open)}
             >
               <InfoOutlined sx={{ fontSize: 17 }} />
             </IconButton>
           </Box>
-          <Collapse in={methodologyOpen} timeout="auto" unmountOnExit>
-            <Box
-              sx={(theme) => ({
-                display: 'grid',
-                gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, 1fr)' },
-                gap: { xs: 0.75, sm: 2 },
-                mt: 0.5,
-                pt: 1,
-                borderTop: `1px solid ${alpha(theme.palette.divider, 0.62)}`,
-              })}
-            >
-              <Typography sx={{ color: 'text.secondary', fontSize: '0.72rem', lineHeight: 1.5 }}>
-                <Box component="span" sx={{ color: 'text.primary', fontWeight: 650 }}>
-                  Scope.
-                </Box>{' '}
-                {solved
-                  ? `${result.uniqueSignatures} distinct builds were recorded, and ${solved.sharePercent}% of parses run the same one.`
-                  : `${result.uniqueSignatures} distinct builds were grouped into ${result.k} patterns.`}
-              </Typography>
-              <Typography sx={{ color: 'text.secondary', fontSize: '0.72rem', lineHeight: 1.5 }}>
-                <Box component="span" sx={{ color: 'text.primary', fontWeight: 650 }}>
-                  Confidence: {solved ? 'Converged' : quality.label}.
-                </Box>{' '}
-                {/* The silhouette buckets describe SEPARATION, so on a solved
+          <Box id="build-leaderboard-view-methodology">
+            <Collapse in={methodologyOpen} timeout="auto" unmountOnExit>
+              <Box
+                sx={(theme) => ({
+                  display: 'grid',
+                  gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, 1fr)' },
+                  gap: { xs: 0.75, sm: 2 },
+                  mt: 0.5,
+                  pt: 1,
+                  borderTop: `1px solid ${alpha(theme.palette.divider, 0.62)}`,
+                })}
+              >
+                <Typography sx={{ color: 'text.secondary', fontSize: '0.72rem', lineHeight: 1.5 }}>
+                  <Box component="span" sx={{ color: 'text.primary', fontWeight: 650 }}>
+                    Scope.
+                  </Box>{' '}
+                  This view clusters the {parses.length} currently returned{' '}
+                  {parses.length === 1 ? 'parse' : 'parses'} for this selection, not the full ESO
+                  player population.{' '}
+                  {solved
+                    ? `${result.uniqueSignatures} distinct builds were observed in the returned sample, and ${solved.sharePercent}% of clustered rows share the same pattern.`
+                    : `${result.uniqueSignatures} distinct builds observed in the returned sample were grouped into ${result.k} patterns.`}
+                </Typography>
+                <Typography sx={{ color: 'text.secondary', fontSize: '0.72rem', lineHeight: 1.5 }}>
+                  <Box component="span" sx={{ color: 'text.primary', fontWeight: 650 }}>
+                    Confidence: {solved ? 'Dominant sample' : quality.label}.
+                  </Box>{' '}
+                  {/* The silhouette buckets describe SEPARATION, so on a solved
                     board they report "Limited ... many similar variations",
                     which reads as a failure to distinguish archetypes rather
                     than as the finding that there is only one. */}
-                {solved
-                  ? 'Nearly every top parse runs the same build, so this board reports the consensus instead of splitting it into archetypes.'
-                  : quality.tooltip}
-              </Typography>
-              <Typography sx={{ color: 'text.secondary', fontSize: '0.72rem', lineHeight: 1.5 }}>
-                <Box component="span" sx={{ color: 'text.primary', fontWeight: 650 }}>
-                  Starting point.
-                </Box>{' '}
-                Results vary with rotation, buffs, and group composition.
-              </Typography>
-            </Box>
-          </Collapse>
+                  {solved
+                    ? 'Most sampled top-ranked parses share one observed build pattern, so this view reports that dominant pattern without splitting similar variations into separate archetypes.'
+                    : quality.tooltip}
+                </Typography>
+                <Typography sx={{ color: 'text.secondary', fontSize: '0.72rem', lineHeight: 1.5 }}>
+                  <Box component="span" sx={{ color: 'text.primary', fontWeight: 650 }}>
+                    Starting point.
+                  </Box>{' '}
+                  Results vary with rotation, buffs, and group composition.
+                </Typography>
+              </Box>
+            </Collapse>
+          </Box>
         </Box>
       )}
 
@@ -427,8 +529,11 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
             aria-labelledby="build-patterns-heading"
             sx={(theme) => ({
               minWidth: 0,
-              order: { xs: 2, md: 1 },
-              borderTop: { xs: `1px solid ${alpha(theme.palette.divider, 0.78)}`, md: 'none' },
+              order: { xs: 1, md: 1 },
+              borderBottom: {
+                xs: `1px solid ${alpha(theme.palette.divider, 0.78)}`,
+                md: 'none',
+              },
               borderRight: { xs: 'none', md: `1px solid ${alpha(theme.palette.divider, 0.62)}` },
               backgroundColor: alpha(
                 theme.palette.background.default,
@@ -452,14 +557,22 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
               <Box sx={{ minWidth: 0 }}>
                 <Typography
                   id="build-patterns-heading"
+                  ref={buildPatternsHeadingRef}
+                  component="h2"
+                  tabIndex={-1}
                   sx={{
-                    fontFamily: 'Space Grotesk, Inter, system-ui',
+                    fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
                     fontSize: '0.79rem',
                     fontWeight: 700,
                     letterSpacing: '-0.01em',
+                    scrollMarginTop: 72,
                   }}
                 >
-                  {tooFewParses ? 'Recorded builds' : solved ? 'Consensus build' : 'Build patterns'}
+                  {tooFewParses
+                    ? 'Observed builds'
+                    : solved
+                      ? 'Observed build pattern'
+                      : 'Build patterns'}
                 </Typography>
                 {scopeLabel && (
                   <Typography noWrap sx={{ color: 'text.secondary', fontSize: '0.65rem' }}>
@@ -478,7 +591,7 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
                   textTransform: 'uppercase',
                 }}
               >
-                {pooled ? 'Bosses' : 'Parses'}
+                {pooled ? 'Boards' : 'Parses'}
               </Typography>
               <Typography
                 sx={{
@@ -491,10 +604,10 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
                   textTransform: 'uppercase',
                 }}
               >
-                {pooled ? 'Best log' : 'Typical'}
+                {pooled ? 'Sampled high' : 'Typical'}
               </Typography>
             </Box>
-            <Box component="ol" sx={{ m: 0, p: 0, listStyle: 'none' }}>
+            <Box component="ol" role="list" sx={{ m: 0, p: 0, listStyle: 'none' }}>
               {ordered.map((cluster) => (
                 <ArchetypeRow
                   key={cluster.id}
@@ -507,6 +620,8 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
                   bestParse={bestParseByCluster.get(cluster.id)}
                   coveredBosses={bossCoverage.byCluster.get(cluster.id)}
                   availableBosses={pooled ? bossCoverage.available : undefined}
+                  pooled={pooled}
+                  ungrouped={tooFewParses}
                   onSelect={() => handleSelect(cluster.id)}
                 />
               ))}
@@ -515,15 +630,23 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
 
           <Box
             ref={inspectorRef}
+            role="region"
+            tabIndex={-1}
+            aria-labelledby={`build-inspector-${selected.id}`}
+            data-testid="build-inspector-focus-target"
             sx={(theme) => ({
               display: 'flex',
               minWidth: 0,
-              order: { xs: 1, md: 2 },
+              order: { xs: 2, md: 2 },
               scrollMarginTop: 72,
               background:
                 theme.palette.mode === 'dark'
                   ? `radial-gradient(circle at 92% 2%, ${alpha(selectedClassTheme.accent, 0.13)}, transparent 34%), linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.62)}, ${alpha(theme.palette.background.default, 0.2)})`
                   : `radial-gradient(circle at 92% 2%, ${alpha(selectedClassTheme.accent, 0.09)}, transparent 36%), linear-gradient(135deg, ${alpha(theme.palette.common.white, 0.54)}, transparent)`,
+              '&:focus-visible': {
+                outline: `2px solid ${theme.palette.primary.main}`,
+                outlineOffset: -2,
+              },
             })}
             data-class-accent={selectedClassTheme.accent}
           >
@@ -536,8 +659,10 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
               evidenceOpen={evidenceOpen}
               onToggleEvidence={() => setEvidenceOpen((open) => !open)}
               variations={selected.variations}
-              sourceUrl={representativeParseFor(selected)?.source_url}
-              representativeDps={representativeParseFor(selected)?.amount}
+              sourceUrl={selectedSourceParse?.source_url}
+              representativeSourceUrl={selectedRepresentative?.source_url}
+              representativeDps={selectedRepresentative?.amount}
+              bestParse={bestParseByCluster.get(selected.id)}
               pooled={pooled}
               ungrouped={tooFewParses}
               coveredBosses={bossCoverage.byCluster.get(selected.id)}
@@ -546,7 +671,11 @@ export const BuildLeaderboardView: React.FC<BuildLeaderboardViewProps> = ({
               actionsDisabled={Boolean(pendingAction)}
               onOpenInEditor={onOpenInEditor}
               onSaveBuild={onSaveBuild}
-              onViewSourceLog={onViewSourceLog}
+              onViewSourceLog={
+                selectedSourceParse?.report_code && onViewSourceLog
+                  ? (cluster) => onViewSourceLog(cluster, selectedSourceParse.parse_id)
+                  : undefined
+              }
             />
           </Box>
         </Box>

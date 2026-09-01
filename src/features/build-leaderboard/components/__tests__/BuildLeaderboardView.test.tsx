@@ -122,6 +122,111 @@ describe('BuildLeaderboardView states', () => {
     expect(onRetry).toHaveBeenCalledTimes(1);
   });
 
+  it('returns focus to build patterns after retry replaces an error state', async () => {
+    const originalScrollIntoView = Object.getOwnPropertyDescriptor(
+      HTMLElement.prototype,
+      'scrollIntoView',
+    );
+    const scrollIntoView = jest.fn();
+    Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', {
+      configurable: true,
+      value: scrollIntoView,
+    });
+
+    try {
+      const { parses, result } = clusteredFixture();
+      const onRetry = jest.fn();
+      const rendered = renderView({ error: 'Boom', onRetry });
+      await userEvent.click(screen.getByRole('button', { name: /retry/i }));
+
+      rendered.rerender(
+        <ThemeProvider theme={theme}>
+          <BuildLeaderboardView
+            parses={parses}
+            result={result}
+            loading={false}
+            clustering={false}
+            clusterProgress={0}
+            error={null}
+            tooFewParses={false}
+          />
+        </ThemeProvider>,
+      );
+
+      await waitFor(() =>
+        expect(screen.getByRole('heading', { level: 2, name: 'Build patterns' })).toHaveFocus(),
+      );
+      expect(scrollIntoView).toHaveBeenCalledWith({ block: 'start', behavior: 'auto' });
+    } finally {
+      if (originalScrollIntoView) {
+        Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', originalScrollIntoView);
+      } else {
+        Reflect.deleteProperty(HTMLElement.prototype, 'scrollIntoView');
+      }
+    }
+  });
+
+  it('does not restore stale focus after a queued retry enters another error state', async () => {
+    const originalScrollIntoView = Object.getOwnPropertyDescriptor(
+      HTMLElement.prototype,
+      'scrollIntoView',
+    );
+    const scrollIntoView = jest.fn();
+    Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', {
+      configurable: true,
+      value: scrollIntoView,
+    });
+
+    try {
+      const { parses, result } = clusteredFixture();
+      const onRetry = jest.fn();
+      const rendered = renderView({ error: 'Boom', onRetry });
+      await userEvent.click(screen.getByRole('button', { name: /retry/i }));
+
+      rendered.rerender(
+        <ThemeProvider theme={theme}>
+          <BuildLeaderboardView
+            parses={parses}
+            result={result}
+            loading={false}
+            clustering={false}
+            clusterProgress={0}
+            error="Still unavailable"
+            tooFewParses={false}
+            onRetry={onRetry}
+          />
+        </ThemeProvider>,
+      );
+      rendered.rerender(
+        <ThemeProvider theme={theme}>
+          <BuildLeaderboardView
+            parses={parses}
+            result={result}
+            loading={false}
+            clustering={false}
+            clusterProgress={0}
+            error={null}
+            tooFewParses={false}
+          />
+        </ThemeProvider>,
+      );
+
+      const heading = await screen.findByRole('heading', {
+        level: 2,
+        name: 'Build patterns',
+      });
+      await waitFor(() => expect(heading).toBeInTheDocument());
+      expect(heading).not.toHaveFocus();
+      expect(scrollIntoView).not.toHaveBeenCalled();
+    } finally {
+      if (originalScrollIntoView) {
+        Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', originalScrollIntoView);
+      } else {
+        Reflect.deleteProperty(HTMLElement.prototype, 'scrollIntoView');
+      }
+    }
+  });
+
   it('treats no data as informational, not an error', () => {
     renderView({ parses: [], emptyMessage: 'Nothing here yet.' });
     const alert = screen.getByRole('alert');
@@ -130,21 +235,28 @@ describe('BuildLeaderboardView states', () => {
     expect(alert.className).not.toMatch(/colorError/);
   });
 
+  it('announces the loading workspace with a status role', () => {
+    renderView({ loading: true });
+
+    const loadingWorkspace = screen.getByRole('status', { name: 'Loading build archetypes' });
+    expect(loadingWorkspace).toHaveAttribute('aria-busy', 'true');
+  });
+
   /**
    * Regression: thin data used to dead-end on an alert that showed nothing and
-   * told the reader to go somewhere else. The builds that ARE recorded must
+   * told the reader to go somewhere else. The builds that ARE observed must
    * still render — only the GROUPING of them into archetypes is withheld.
    */
-  it('still shows the recorded builds when there are too few to cluster', () => {
+  it('still shows the observed builds when there are too few to cluster', () => {
     const { parses, result } = individualFixture(6);
     renderView({ parses, result, tooFewParses: true });
 
     expect(screen.getByTestId('too-few-parses')).toHaveTextContent(
-      /too few to group into reliable build patterns/i,
+      /fewer than 10 for grouping; builds are listed individually below/i,
     );
     expect(screen.getByTestId('build-inspector')).toBeInTheDocument();
     expect(screen.getAllByTestId('archetype-row').length).toBeGreaterThan(0);
-    expect(screen.getByText('Recorded builds')).toBeInTheDocument();
+    expect(screen.getByText('Observed builds')).toBeInTheDocument();
   });
 
   /**
@@ -163,21 +275,60 @@ describe('BuildLeaderboardView states', () => {
     });
     const alert = screen.getByTestId('too-few-parses');
     expect(alert).toHaveTextContent(/only 2 dragonknight parses on DSR · Tideborn Taleria/i);
-    expect(alert).toHaveTextContent(/each build is listed on its own/i);
+    expect(alert).toHaveTextContent(/builds are listed individually below/i);
   });
 
-  it('describes pooled scope across bosses', () => {
+  it('describes pooled scope across boards', () => {
     const { parses, result } = individualFixture(4);
     renderView({
       parses,
       result,
       tooFewParses: true,
       esoClass: 'Dragonknight',
-      scopeDescription: 'across 14 trial bosses',
+      scopeDescription: 'across 14 trial boards',
     });
     expect(screen.getByTestId('too-few-parses')).toHaveTextContent(
-      /4 dragonknight parses across 14 trial bosses/i,
+      /4 dragonknight parses across 14 trial boards/i,
     );
+  });
+
+  it('keeps pooled thin selections truthful when board members are unavailable', () => {
+    const { parses, result } = individualFixture(4);
+    const resultWithoutMembers: ClusterBuildsResult = {
+      ...result,
+      clusters: result.clusters.map((cluster, index) => ({
+        ...cluster,
+        memberParseIds: [`unavailable-${index}`],
+        medoidParseId: `unavailable-${index}`,
+      })),
+    };
+
+    renderView({
+      parses,
+      result: resultWithoutMembers,
+      pooled: true,
+      tooFewParses: true,
+      esoClass: 'Dragonknight',
+      scopeDescription: 'across 14 trial boards',
+    });
+
+    expect(screen.getByTestId('too-few-parses')).toHaveTextContent(
+      /builds are listed individually below/i,
+    );
+    expect(screen.getByText('Observed builds')).toBeInTheDocument();
+    expect(screen.getByTestId('build-inspector')).toBeInTheDocument();
+
+    const rows = [
+      ...screen.queryAllByTestId('recommended-row'),
+      ...screen.getAllByTestId('archetype-row'),
+    ];
+    expect(rows).toHaveLength(resultWithoutMembers.k);
+    rows.forEach((row) => {
+      expect(row).toHaveAccessibleName(expect.stringContaining('DPS unavailable'));
+      expect(row).not.toHaveAccessibleName(expect.stringContaining('typical damage'));
+      expect(row).toHaveAccessibleName(expect.not.stringContaining('sampled top-25'));
+    });
+    expect(screen.queryByText(/\d+\/\d+ boards/i)).not.toBeInTheDocument();
   });
 
   /** A starved class-and-boss slice must offer the wider scope, not just name it. */
@@ -207,7 +358,9 @@ describe('BuildLeaderboardView states', () => {
     renderView({ parses, result, tooFewParses: true });
 
     expect(screen.getByTestId('dps-spread-hint')).toHaveTextContent('From a single parse');
-    expect(screen.getByText(/one top-ranked parse/i)).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /how this leaderboard works/i }).parentElement,
+    ).toHaveTextContent('1 sampled top-ranked parse · 1 build pattern');
     // "1 parses" would otherwise be on screen for every thin selection.
     expect(screen.getByTestId('too-few-parses')).toHaveTextContent('Only 1 parse in');
   });
@@ -234,11 +387,20 @@ describe('BuildLeaderboardView states', () => {
     ).toBeInTheDocument();
   });
 
-  it('announces clustering progress politely', () => {
+  it('announces clustering progress politely', async () => {
     const { parses } = clusteredFixture();
     renderView({ parses, clustering: true, clusterProgress: 40 });
     const status = screen.getByText(/grouping 45 parses/i);
-    expect(status).toHaveAttribute('aria-live', 'polite');
+    expect(status).not.toHaveAttribute('aria-live');
+    const announcement = screen.getByTestId('build-grouping-announcement');
+    expect(announcement).toHaveAttribute('role', 'status');
+    expect(announcement).toHaveAttribute('aria-live', 'polite');
+    expect(announcement).toBeEmptyDOMElement();
+    await waitFor(() => expect(announcement).toHaveTextContent(/grouping 45 parses/i));
+    expect(screen.getByRole('progressbar', { name: /build grouping progress/i })).toHaveAttribute(
+      'aria-valuetext',
+      '40% complete',
+    );
   });
 
   /**
@@ -274,13 +436,13 @@ describe('BuildLeaderboardView states', () => {
     // Fixture parses carry log_start_ms from Nov 2023; whatever "now" is, the
     // row must expose the medoid's date and its age in days.
     screen.getAllByTestId('archetype-freshness').forEach((line) => {
-      expect(line).toHaveTextContent(/parses from [A-Z][a-z]{2} \d{1,2} · \d+d old/);
+      expect(line).toHaveTextContent(/representative parse from [A-Z][a-z]{2} \d{1,2} · \d+d old/);
     });
   });
 });
 
 describe('BuildLeaderboardView workspace', () => {
-  it('shows top-25 boss coverage instead of normalized percentages', async () => {
+  it('shows top-25 board coverage instead of normalized percentages', async () => {
     const { parses, result } = clusteredFixture();
     const selected = recommendedCluster(result);
     const selectedIds = new Set(selected.memberParseIds);
@@ -292,22 +454,38 @@ describe('BuildLeaderboardView workspace', () => {
 
     renderView({ parses: pooledParses, result, pooled: true });
 
-    expect(screen.getByText('Bosses')).toBeInTheDocument();
+    expect(screen.getByText('Boards')).toBeInTheDocument();
     expect(screen.getByText('3 of 4')).toBeInTheDocument();
-    expect(screen.getByText(`${selected.size} sampled top parses`)).toBeInTheDocument();
+    expect(screen.getByText(`${selected.size} sampled top-ranked parses`)).toBeInTheDocument();
     expect(screen.queryByText(/% of each boss's top DPS/i)).not.toBeInTheDocument();
     // Opened by TAP, not focus. This explanation used to be a hover-only Tooltip
     // on an icon button, unreachable on a phone; StatHint opens it on click and
     // deliberately does not open on focus, because focus arrives before click on
     // every tap and the two would cancel out.
-    const explanation = screen.getByRole('button', { name: /explain top-25 boss coverage/i });
+    const explanation = screen.getByRole('button', { name: /explain sampled board coverage/i });
     await userEvent.click(explanation);
     expect(explanation).toHaveAttribute('aria-expanded', 'true');
     expect(
-      await screen.findByText(
-        /this build had a retained top-25 class parse on 3 of the 4 bosses with data/i,
+      screen.getByText(
+        /this build had a retained sampled class parse on 3 of the 4 encounter-and-difficulty boards with data/i,
       ),
     ).toBeInTheDocument();
+  });
+
+  it('counts each difficulty as a separate pooled board', () => {
+    const { parses, result } = clusteredFixture();
+    const selected = recommendedCluster(result);
+    const selectedIds = new Set(selected.memberParseIds);
+    let selectedIndex = 0;
+    const pooledParses = parses.map((parse) => ({
+      ...parse,
+      encounter_id: selectedIds.has(parse.parse_id) ? 100 : 200,
+      difficulty: selectedIds.has(parse.parse_id) ? (selectedIndex++ === 1 ? 122 : 121) : 121,
+    }));
+
+    renderView({ parses: pooledParses, result, pooled: true });
+
+    expect(screen.getAllByText('2 of 3').length).toBeGreaterThan(0);
   });
 
   it('renders one stable recommendation and every alternative as a fixed row', () => {
@@ -317,6 +495,200 @@ describe('BuildLeaderboardView workspace', () => {
     expect(screen.getByTestId('recommended-row')).toBeInTheDocument();
     expect(screen.getAllByTestId('archetype-row')).toHaveLength(result.k - 1);
     expect(screen.getByTestId('build-inspector')).toBeInTheDocument();
+  });
+
+  it('uses the theme md breakpoint for mobile inspector scrolling', async () => {
+    const originalMatchMedia = Object.getOwnPropertyDescriptor(window, 'matchMedia');
+    const originalRequestAnimationFrame = Object.getOwnPropertyDescriptor(
+      window,
+      'requestAnimationFrame',
+    );
+    const originalScrollIntoView = Object.getOwnPropertyDescriptor(
+      HTMLElement.prototype,
+      'scrollIntoView',
+    );
+    const matchMedia = jest.fn().mockImplementation((query: string) => ({
+      matches: query === '(max-width:899.95px)',
+      media: query,
+      onchange: null,
+      addListener: jest.fn(),
+      removeListener: jest.fn(),
+      addEventListener: jest.fn(),
+      removeEventListener: jest.fn(),
+      dispatchEvent: jest.fn(),
+    }));
+    const scrollIntoView = jest.fn();
+
+    Object.defineProperty(window, 'matchMedia', { configurable: true, value: matchMedia });
+    Object.defineProperty(window, 'requestAnimationFrame', {
+      configurable: true,
+      value: (callback: FrameRequestCallback) => {
+        callback(0);
+        return 0;
+      },
+    });
+    Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', {
+      configurable: true,
+      value: scrollIntoView,
+    });
+
+    try {
+      const { parses, result } = clusteredFixture();
+      renderView({ parses, result });
+      await waitFor(() => expect(matchMedia).toHaveBeenCalledWith('(max-width:899.95px)'));
+
+      await userEvent.click(screen.getAllByTestId('archetype-row')[0]);
+
+      expect(matchMedia).not.toHaveBeenCalledWith('(max-width: 899px)');
+      expect(screen.getByTestId('build-selection-announcement')).toBeEmptyDOMElement();
+      expect(screen.getByTestId('build-inspector-focus-target')).toHaveFocus();
+      expect(scrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth', block: 'start' });
+    } finally {
+      if (originalMatchMedia) {
+        Object.defineProperty(window, 'matchMedia', originalMatchMedia);
+      } else {
+        Reflect.deleteProperty(window, 'matchMedia');
+      }
+      if (originalRequestAnimationFrame) {
+        Object.defineProperty(window, 'requestAnimationFrame', originalRequestAnimationFrame);
+      } else {
+        Reflect.deleteProperty(window, 'requestAnimationFrame');
+      }
+      if (originalScrollIntoView) {
+        Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', originalScrollIntoView);
+      } else {
+        Reflect.deleteProperty(HTMLElement.prototype, 'scrollIntoView');
+      }
+    }
+  });
+
+  it('uses an immediate mobile scroll when reduced motion is requested', async () => {
+    const originalMatchMedia = Object.getOwnPropertyDescriptor(window, 'matchMedia');
+    const originalRequestAnimationFrame = Object.getOwnPropertyDescriptor(
+      window,
+      'requestAnimationFrame',
+    );
+    const originalScrollIntoView = Object.getOwnPropertyDescriptor(
+      HTMLElement.prototype,
+      'scrollIntoView',
+    );
+    const matchMedia = jest.fn().mockImplementation((query: string) => ({
+      matches: query === '(max-width:899.95px)' || query === '(prefers-reduced-motion: reduce)',
+      media: query,
+      onchange: null,
+      addListener: jest.fn(),
+      removeListener: jest.fn(),
+      addEventListener: jest.fn(),
+      removeEventListener: jest.fn(),
+      dispatchEvent: jest.fn(),
+    }));
+    const scrollIntoView = jest.fn();
+    const requestAnimationFrame = jest.fn((callback: FrameRequestCallback) => {
+      callback(0);
+      return 0;
+    });
+
+    Object.defineProperty(window, 'matchMedia', { configurable: true, value: matchMedia });
+    Object.defineProperty(window, 'requestAnimationFrame', {
+      configurable: true,
+      value: requestAnimationFrame,
+    });
+    Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', {
+      configurable: true,
+      value: scrollIntoView,
+    });
+
+    try {
+      const { parses, result } = clusteredFixture();
+      renderView({ parses, result });
+      await waitFor(() => expect(matchMedia).toHaveBeenCalledWith('(max-width:899.95px)'));
+
+      await userEvent.click(screen.getAllByTestId('archetype-row')[0]);
+
+      expect(requestAnimationFrame).toHaveBeenCalledTimes(1);
+      expect(screen.getByTestId('build-inspector-focus-target')).toHaveFocus();
+      expect(scrollIntoView).toHaveBeenCalledWith({ behavior: 'auto', block: 'start' });
+    } finally {
+      if (originalMatchMedia) {
+        Object.defineProperty(window, 'matchMedia', originalMatchMedia);
+      } else {
+        Reflect.deleteProperty(window, 'matchMedia');
+      }
+      if (originalRequestAnimationFrame) {
+        Object.defineProperty(window, 'requestAnimationFrame', originalRequestAnimationFrame);
+      } else {
+        Reflect.deleteProperty(window, 'requestAnimationFrame');
+      }
+      if (originalScrollIntoView) {
+        Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', originalScrollIntoView);
+      } else {
+        Reflect.deleteProperty(HTMLElement.prototype, 'scrollIntoView');
+      }
+    }
+  });
+
+  it('does not move focus or scroll the inspector on desktop', async () => {
+    const originalMatchMedia = Object.getOwnPropertyDescriptor(window, 'matchMedia');
+    const originalRequestAnimationFrame = Object.getOwnPropertyDescriptor(
+      window,
+      'requestAnimationFrame',
+    );
+    const originalScrollIntoView = Object.getOwnPropertyDescriptor(
+      HTMLElement.prototype,
+      'scrollIntoView',
+    );
+    const matchMedia = jest.fn().mockImplementation((query: string) => ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addListener: jest.fn(),
+      removeListener: jest.fn(),
+      addEventListener: jest.fn(),
+      removeEventListener: jest.fn(),
+      dispatchEvent: jest.fn(),
+    }));
+    const requestAnimationFrame = jest.fn();
+    const scrollIntoView = jest.fn();
+
+    Object.defineProperty(window, 'matchMedia', { configurable: true, value: matchMedia });
+    Object.defineProperty(window, 'requestAnimationFrame', {
+      configurable: true,
+      value: requestAnimationFrame,
+    });
+    Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', {
+      configurable: true,
+      value: scrollIntoView,
+    });
+
+    try {
+      const { parses, result } = clusteredFixture();
+      renderView({ parses, result });
+      await waitFor(() => expect(matchMedia).toHaveBeenCalledWith('(max-width:899.95px)'));
+
+      const alternativeRow = screen.getAllByTestId('archetype-row')[0];
+      await userEvent.click(alternativeRow);
+
+      expect(alternativeRow).toHaveFocus();
+      expect(requestAnimationFrame).not.toHaveBeenCalled();
+      expect(scrollIntoView).not.toHaveBeenCalled();
+      expect(screen.getByTestId('build-inspector-focus-target')).not.toHaveFocus();
+    } finally {
+      if (originalMatchMedia) {
+        Object.defineProperty(window, 'matchMedia', originalMatchMedia);
+      } else {
+        Reflect.deleteProperty(window, 'matchMedia');
+      }
+      if (originalRequestAnimationFrame) {
+        Object.defineProperty(window, 'requestAnimationFrame', originalRequestAnimationFrame);
+      } else {
+        Reflect.deleteProperty(window, 'requestAnimationFrame');
+      }
+      if (originalScrollIntoView) {
+        Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', originalScrollIntoView);
+      } else {
+        Reflect.deleteProperty(HTMLElement.prototype, 'scrollIntoView');
+      }
+    }
   });
 
   it('compares every archetype in the same scan-friendly columns', () => {
@@ -334,19 +706,31 @@ describe('BuildLeaderboardView workspace', () => {
     renderView({ parses, result });
     const featured = screen.getByTestId('start-here-card');
     expect(featured).toHaveTextContent('Typical damage');
-    expect(featured).toHaveTextContent('Seen in top parses');
-    expect(featured).toHaveTextContent(/sample large enough to trust/i);
+    expect(featured).toHaveTextContent('Observed in sample');
+    expect(featured).toHaveTextContent(/20\s*of\s*45/);
+    expect(featured).toHaveTextContent('44% of this selection');
   });
 
   it('distinguishes core from flexible build anchors', () => {
     const { parses, result } = clusteredFixture();
     renderView({ parses, result });
+    expect(screen.getByRole('group', { name: 'Defining setup' })).toBeInTheDocument();
     const featured = screen.getByTestId('start-here-card');
     const core = featured.querySelectorAll('[data-trait-kind="core"]');
     const flex = featured.querySelectorAll('[data-trait-kind="flex"]');
     expect(core.length).toBeGreaterThan(0);
-    core.forEach((trait) => expect(trait).toHaveAttribute('data-core', 'true'));
-    flex.forEach((trait) => expect(trait).not.toHaveAttribute('data-core'));
+    core.forEach((trait) => {
+      expect(trait).toHaveAttribute('data-core', 'true');
+      expect(trait).toHaveAttribute('data-trait-kind-label', 'Core');
+      expect(trait).toHaveTextContent('Core:');
+      expect(trait.querySelector('[aria-hidden="true"]')).toHaveTextContent('●');
+    });
+    flex.forEach((trait) => {
+      expect(trait).not.toHaveAttribute('data-core');
+      expect(trait).toHaveAttribute('data-trait-kind-label', 'Common');
+      expect(trait).toHaveTextContent('Common:');
+      expect(trait.querySelector('[aria-hidden="true"]')).toHaveTextContent('◇');
+    });
   });
 
   it('updates the stable inspector when an alternative is selected', async () => {
@@ -357,18 +741,45 @@ describe('BuildLeaderboardView workspace', () => {
       (cluster) => cluster.id !== result.recommendedClusterId,
     );
     await userEvent.click(alternativeRow);
-    expect(alternativeRow).toHaveAttribute('aria-current', 'true');
-    expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent(alternative?.label ?? '');
+    expect(alternativeRow).toHaveAttribute('aria-pressed', 'true');
+    expect(
+      within(screen.getByTestId('build-inspector')).getByRole('heading', { level: 2 }),
+    ).toHaveTextContent(alternative?.label ?? '');
+    expect(screen.getByTestId('build-selection-announcement')).toHaveTextContent(
+      `Selected ${alternative?.label ?? ''} build pattern. Inspector updated.`,
+    );
     expect(screen.queryByTestId('start-here-card')).not.toBeInTheDocument();
     expect(screen.getAllByTestId('archetype-row')).toHaveLength(result.k - 1);
+  });
+
+  it('keeps the build list before the inspector in DOM order', () => {
+    const { parses, result } = clusteredFixture();
+    renderView({ parses, result });
+
+    const listRow = screen.getByTestId('recommended-row');
+    const inspector = screen.getByTestId('build-inspector');
+    expect(listRow.compareDocumentPosition(inspector)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
   });
 
   it('keeps methodology out of the default view and explains confidence on request', async () => {
     const { parses, result } = clusteredFixture();
     renderView({ parses, result });
     expect(screen.queryByText(/confidence:/i)).not.toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: /how this leaderboard works/i }));
+    const methodologyToggle = screen.getByRole('button', {
+      name: /how this leaderboard works/i,
+    });
+    const methodologyId = methodologyToggle.getAttribute('aria-controls');
+    expect(methodologyId).toBe('build-leaderboard-view-methodology');
+    expect(document.getElementById(methodologyId ?? '')).toBeInTheDocument();
+    expect(methodologyToggle).toHaveAttribute('aria-expanded', 'false');
+
+    await userEvent.click(methodologyToggle);
+
+    expect(methodologyToggle).toHaveAttribute('aria-expanded', 'true');
     expect(screen.getByText(/confidence:/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/this view clusters the 45 currently returned parses for this selection/i),
+    ).toHaveTextContent(/not the full ESO player population/i);
     expect(screen.queryByText(String(result.silhouette))).not.toBeInTheDocument();
   });
 
@@ -376,7 +787,11 @@ describe('BuildLeaderboardView workspace', () => {
     const onOpenInEditor = jest.fn();
     const { parses, result } = clusteredFixture();
     renderView({ parses, result, onOpenInEditor });
-    await userEvent.click(screen.getByRole('button', { name: /open in build editor/i }));
+    const editorButton = screen.getByRole('button', {
+      name: 'Save copy & open editor',
+    });
+    expect(editorButton).toHaveTextContent('Save copy & open editor');
+    await userEvent.click(editorButton);
     const cluster = onOpenInEditor.mock.calls[0][0];
     expect(cluster.memberParseIds).toContain(cluster.medoidParseId);
   });
@@ -393,7 +808,7 @@ describe('BuildLeaderboardView workspace', () => {
       onOpenInEditor,
       onSaveBuild,
     });
-    expect(screen.getByRole('button', { name: /opening/i })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /saving & opening/i })).toBeDisabled();
     expect(screen.getByRole('button', { name: /more build actions/i })).toBeDisabled();
     unmount();
 
@@ -405,7 +820,7 @@ describe('BuildLeaderboardView workspace', () => {
       onSaveBuild,
     });
     expect(screen.getByRole('button', { name: /saving build/i })).toBeDisabled();
-    expect(screen.getByRole('button', { name: /open in build editor/i })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /save copy & open editor/i })).toBeDisabled();
   });
 
   it('keeps secondary build actions in one overflow menu', async () => {
@@ -419,22 +834,96 @@ describe('BuildLeaderboardView workspace', () => {
     );
   });
 
+  it('uses the best pooled parse for source links while loading the medoid build', async () => {
+    const onViewSourceLog = jest.fn();
+    const { parses, result } = clusteredFixture();
+    const selectedCluster = recommendedCluster(result);
+    const bestParseId = selectedCluster.memberParseIds.find(
+      (parseId) => parseId !== selectedCluster.medoidParseId,
+    );
+    expect(bestParseId).toBeDefined();
+
+    const medoidSourceUrl = 'https://www.esologs.com/reports/medoid#fight=1';
+    const bestSourceUrl = 'https://www.esologs.com/reports/best#fight=1';
+    const pooledParses = parses.map((parse) => {
+      if (parse.parse_id === selectedCluster.medoidParseId) {
+        return { ...parse, amount: 100, report_code: '', source_url: medoidSourceUrl };
+      }
+      if (parse.parse_id === bestParseId) {
+        return { ...parse, amount: 999_999, report_code: 'best', source_url: bestSourceUrl };
+      }
+      return parse;
+    });
+
+    renderView({ parses: pooledParses, result, pooled: true, onViewSourceLog });
+    const evidenceTrigger = screen.getByRole('button', { name: /view evidence/i });
+    await userEvent.click(evidenceTrigger);
+    const evidenceDialog = await screen.findByRole('dialog', { name: /build evidence/i });
+    const sourceLink = await within(evidenceDialog).findByRole('link', {
+      name: /view log \(opens new tab\)/i,
+    });
+    expect(sourceLink).toHaveAttribute('href', medoidSourceUrl);
+    expect(dpsParsesApi.getBuild).toHaveBeenCalledWith(
+      selectedCluster.medoidParseId,
+      expect.anything(),
+    );
+
+    await userEvent.click(
+      within(evidenceDialog).getByRole('button', { name: /close build evidence/i }),
+    );
+    await waitFor(() =>
+      expect(screen.queryByRole('dialog', { name: /build evidence/i })).not.toBeInTheDocument(),
+    );
+    await userEvent.click(screen.getByRole('button', { name: /more build actions/i }));
+    expect(
+      screen.getByRole('menuitem', { name: /view highest sampled log \(new tab\)/i }),
+    ).toHaveAttribute('href', bestSourceUrl);
+    await userEvent.click(screen.getByRole('menuitem', { name: /open highest sampled parse/i }));
+    expect(onViewSourceLog).toHaveBeenCalledWith(selectedCluster, bestParseId);
+  });
+
+  it('hides the internal parse action when the representative has no valid report code', async () => {
+    const onViewSourceLog = jest.fn();
+    const { parses, result } = clusteredFixture();
+    const medoidParseId = recommendedCluster(result).medoidParseId;
+    const parsesWithoutReportCode = parses.map((parse) =>
+      parse.parse_id === medoidParseId ? { ...parse, report_code: '' } : parse,
+    );
+
+    renderView({ parses: parsesWithoutReportCode, result, onViewSourceLog });
+    await userEvent.click(screen.getByRole('button', { name: /more build actions/i }));
+
+    expect(
+      screen.queryByRole('menuitem', { name: /open representative parse/i }),
+    ).not.toBeInTheDocument();
+    expect(onViewSourceLog).not.toHaveBeenCalled();
+  });
+
   it('reveals evidence only in the selected build inspector', async () => {
     const { parses, result } = clusteredFixture();
     renderView({ parses, result });
     expect(screen.queryByText(/^gear & special$/i)).not.toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: /show build evidence/i }));
+    const evidenceTrigger = screen.getByRole('button', { name: /view evidence/i });
+    expect(evidenceTrigger).not.toHaveAttribute('aria-controls');
+    await userEvent.click(evidenceTrigger);
     const evidenceDialog = screen.getByRole('dialog', { name: /build evidence/i });
+    expect(evidenceTrigger).toHaveAttribute('aria-controls', evidenceDialog.id);
+    expect(evidenceDialog.id).toMatch(/^build-evidence-dialog-/);
     expect(within(evidenceDialog).getByText(/^gear sets$/i)).toBeInTheDocument();
-    expect(within(evidenceDialog).getByText(/^front bar$/i)).toBeInTheDocument();
+    expect(within(evidenceDialog).getAllByText(/^front bar$/i).length).toBeGreaterThan(0);
     expect(
       await within(evidenceDialog).findByText(/observed representative loadout/i),
     ).toBeInTheDocument();
+    const sourceLink = within(evidenceDialog).getByRole('link', {
+      name: /view log \(opens new tab\)/i,
+    });
+    expect(sourceLink).toHaveAttribute('target', '_blank');
+    expect(sourceLink).toHaveAttribute('rel', expect.stringContaining('noopener'));
     expect(
-      within(evidenceDialog).getByRole('button', { name: /view deadly strike set details/i }),
+      within(evidenceDialog).getByRole('group', { name: /deadly strike set, 1 piece/i }),
     ).toBeInTheDocument();
     expect(
-      within(evidenceDialog).getByRole('button', { name: /observed ability 1$/i }),
+      within(evidenceDialog).getByRole('img', { name: /observed ability 1$/i }),
     ).toBeInTheDocument();
 
     await userEvent.click(
@@ -444,16 +933,16 @@ describe('BuildLeaderboardView workspace', () => {
       expect(screen.queryByRole('dialog', { name: /build evidence/i })).not.toBeInTheDocument(),
     );
 
-    await userEvent.click(screen.getByRole('button', { name: /show build evidence/i }));
+    await userEvent.click(screen.getByRole('button', { name: /view evidence/i }));
     expect(await screen.findByText(/observed representative loadout/i)).toBeInTheDocument();
     expect(dpsParsesApi.getBuild).toHaveBeenCalledTimes(1);
-  });
+  }, 20_000);
 
   it('resets selection and evidence when the clustered result changes', async () => {
     const { parses, result } = clusteredFixture();
     const { rerender } = renderView({ parses, result });
     await userEvent.click(screen.getAllByTestId('archetype-row')[0]);
-    await userEvent.click(screen.getByRole('button', { name: /show build evidence/i }));
+    await userEvent.click(screen.getByRole('button', { name: /view evidence/i }));
     expect(screen.getByText(/^gear sets$/i)).toBeInTheDocument();
 
     resetFixtureIds();
@@ -513,9 +1002,9 @@ describe('BuildLeaderboardView workspace', () => {
         vectors: extractFeatureVectors(nextParses, EMPTY_CANONICAL_MAPS),
       });
       rerender(view(nextParses, nextResult));
-      expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent(
-        recommendedCluster(nextResult).label,
-      );
+      expect(
+        within(screen.getByTestId('build-inspector')).getByRole('heading', { level: 2 }),
+      ).toHaveTextContent(recommendedCluster(nextResult).label);
       expect(consoleError).not.toHaveBeenCalled();
     } finally {
       consoleError.mockRestore();
@@ -529,8 +1018,8 @@ describe('BuildLeaderboardView solved meta', () => {
     renderView({ parses, result, esoClass: 'Necromancer', scopeDescription: 'across all bosses' });
 
     const panel = screen.getByTestId('solved-meta');
-    expect(panel).toHaveTextContent('One build. Nearly everyone runs it.');
-    expect(panel).toHaveTextContent(/9\d% of the \d+ top parses across all bosses/);
+    expect(panel).toHaveTextContent('One observed pattern dominates this sample.');
+    expect(panel).toHaveTextContent(/9\d% of the \d+ sampled top-ranked parses across all bosses/);
     // Framed as a property of the data, never as a shortfall of the tool.
     expect(panel).not.toHaveTextContent(/only one|could not|unable|too few/i);
   });
@@ -539,9 +1028,9 @@ describe('BuildLeaderboardView solved meta', () => {
     const { parses, result } = solvedFixture();
     renderView({ parses, result });
 
-    expect(screen.getByText('Consensus build')).toBeInTheDocument();
+    expect(screen.getByText('Observed build pattern')).toBeInTheDocument();
     expect(screen.queryByText('Build patterns')).not.toBeInTheDocument();
-    expect(screen.getByText(/one build, 9\d% of parses/)).toBeInTheDocument();
+    expect(screen.getByText(/one observed pattern, 9\d% of clustered sample/)).toBeInTheDocument();
   });
 
   it('replaces the separation-based confidence wording', async () => {
@@ -552,7 +1041,9 @@ describe('BuildLeaderboardView solved meta', () => {
 
     // "Limited ... many similar variations" describes a failure to separate
     // archetypes, which misreads the finding that there is only one.
-    expect(screen.getByText(/Converged/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Most sampled top-ranked parses share one observed build pattern/),
+    ).toBeInTheDocument();
     expect(screen.queryByText(/many similar variations/i)).not.toBeInTheDocument();
   });
 
