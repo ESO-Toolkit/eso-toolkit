@@ -1,8 +1,3 @@
-/**
- * UpdateNotification Component
- * Shows notifications when a new version is available
- */
-
 import { Refresh as RefreshIcon, Close as CloseIcon } from '@mui/icons-material';
 import { Snackbar, Alert, Button, Box, Typography, IconButton } from '@mui/material';
 import { alpha, useTheme } from '@mui/material/styles';
@@ -78,7 +73,7 @@ export const UpdateNotification: React.FC<UpdateNotificationProps> = ({
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             {customActions}
             <Button
-              color="inherit"
+              color={isDarkMode ? 'inherit' : 'primary'}
               size="small"
               startIcon={<RefreshIcon />}
               onClick={handleUpdate}
@@ -86,6 +81,7 @@ export const UpdateNotification: React.FC<UpdateNotificationProps> = ({
                 minWidth: 'auto',
                 fontSize: '0.875rem',
                 fontWeight: 600,
+                ...(isDarkMode ? {} : { color: theme.palette.primary.main }),
               }}
             >
               Update
@@ -100,7 +96,10 @@ export const UpdateNotification: React.FC<UpdateNotificationProps> = ({
             ? {}
             : {
                 backgroundColor: theme.palette.background.paper,
-                borderColor: theme.palette.divider,
+                // The light-mode divider is intentionally subtle across the app.
+                // Use the secondary text color here so the alert boundary remains
+                // distinguishable against its white surface.
+                borderColor: theme.palette.text.secondary,
                 color: theme.palette.text.primary,
                 '& .MuiAlert-icon': {
                   color: theme.palette.primary.main,

@@ -30,9 +30,18 @@ const mockActions: ReturnType<typeof useCacheInvalidation>[1] = {
   dismissUpdate: jest.fn(),
 };
 
+const lightTheme = createTheme({
+  palette: {
+    mode: 'light',
+    primary: { main: '#0f172a' },
+    background: { paper: '#ffffff' },
+    text: { primary: '#1e293b', secondary: '#64748b' },
+  },
+});
+
 const renderNotification = (mode: 'light' | 'dark') =>
   render(
-    <ThemeProvider theme={createTheme({ palette: { mode } })}>
+    <ThemeProvider theme={mode === 'light' ? lightTheme : createTheme({ palette: { mode } })}>
       <UpdateNotification />
     </ThemeProvider>,
   );
@@ -50,8 +59,18 @@ describe('UpdateNotification', () => {
 
     expect(alert).toHaveClass('MuiAlert-outlined');
     expect(alert).not.toHaveClass('MuiAlert-filled');
+    expect(alert).toHaveStyle({
+      backgroundColor: lightTheme.palette.background.paper,
+      borderColor: lightTheme.palette.text.secondary,
+      color: lightTheme.palette.text.primary,
+    });
     expect(screen.getByText('New version available!')).toBeVisible();
-    expect(screen.getByRole('button', { name: 'Update' })).toBeVisible();
+    const updateButton = screen.getByRole('button', { name: 'Update' });
+    const dismissButton = screen.getByRole('button', { name: 'dismiss' });
+    expect(updateButton).toBeVisible();
+    expect(updateButton).toHaveStyle({ color: lightTheme.palette.primary.main });
+    expect(updateButton).toHaveAttribute('tabindex', '0');
+    expect(dismissButton).toHaveAttribute('tabindex', '0');
   });
 
   it('preserves the filled treatment in dark mode', () => {
