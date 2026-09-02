@@ -94,7 +94,8 @@
   "/latest-reports": {
     "title": "Latest Reports | ESO Toolkit",
     "description": "Browse recently analyzed Elder Scrolls Online combat-log reports.",
-    "prerender": true
+    "prerender": true,
+    "shell": "latest-reports"
   },
   "/leaderboards": {
     "title": "ESO Leaderboards | ESO Toolkit",

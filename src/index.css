@@ -209,3 +209,516 @@ html[data-perf='low'][data-color-scheme='dark'] .glass-dialog .MuiDialog-paper {
   background: #0f172a !important;
   background-image: none !important;
 }
+
+/* ---------------------------------------------------------------------------
+   Prerendered app-shell skeleton.
+
+   `scripts/generate-static-routes.cjs` injects the markup in
+   `src/constants/app-shell-skeleton.json` into `<div id="root">` for routes
+   that declare a `shell` in route-meta.json, so the first paint is a plausible
+   page instead of a blank body. The same JSON is rendered by
+   `src/components/AppShellSkeleton.tsx` as the PersistGate / route Suspense
+   fallback, so React's first commit reproduces the same picture and the user
+   sees one swap (skeleton -> content) rather than skeleton -> spinner ->
+   content.
+
+   Constraints this CSS exists to satisfy:
+   - It must live here, not in an MUI `sx`. Vite extracts this file into a
+     render-blocking <link> that every prerendered shell already carries; every
+     MUI style is injected by emotion at runtime and is therefore unavailable at
+     FCP.
+   - No url()/asset references: preview builds are served from
+     /dev-previews/pr-N/ and the prerender script does not rewrite the base.
+   - Colours and geometry are literals measured off production
+     (https://esotk.com/latest-reports at 1280x800 and 390x844) because no theme
+     and no emotion styles exist yet at this point. Dark is the default to match
+     <meta name="theme-color">; the light override follows the same system
+     preference usePersistentDarkMode falls back to.
+   - The hero carries real text and an inline <svg>, not just bars: Chrome does
+     not treat background-coloured boxes as contentful, so a bars-only skeleton
+     paints without ever firing FCP.
+   --------------------------------------------------------------------------- */
+.ashell {
+  /* Backdrop mirrors the fixed gradient layer AppLayout paints behind the app,
+     so the swap no longer flips from flat navy to the nebula. All literals, no
+     url(): the real layer is pure CSS gradients too. */
+  --ashell-bg: #0b1220;
+  --ashell-backdrop:
+    radial-gradient(at 20% 30%, rgba(100, 50, 255, 0.15) 0%, rgba(0, 0, 0, 0) 50%),
+    radial-gradient(at 80% 70%, rgba(0, 217, 255, 0.12) 0%, rgba(0, 0, 0, 0) 50%),
+    radial-gradient(rgba(50, 0, 100, 0.1) 0%, rgba(0, 0, 0, 0) 60%),
+    linear-gradient(135deg, #050810 0%, #0a0f1e 50%, #050810 100%);
+  --ashell-panel: transparent;
+  --ashell-panel-bg: linear-gradient(
+    135deg,
+    rgba(56, 189, 248, 0.12) 0%,
+    rgba(0, 225, 255, 0.12) 100%
+  );
+  --ashell-hero-bg: linear-gradient(
+    135deg,
+    rgba(110, 170, 240, 0.1) 0%,
+    rgba(152, 131, 227, 0.07) 50%,
+    rgba(11, 18, 32, 0.4) 100%
+  );
+  --ashell-toolbar-bg: rgba(11, 16, 26, 0.88);
+  --ashell-border: #1f2937;
+  --ashell-hairline: rgba(255, 255, 255, 0.07);
+  --ashell-bar: #1e293b;
+  --ashell-text: #e5e7eb;
+  --ashell-dim: #94a3b8;
+  min-height: 100vh;
+  background-color: var(--ashell-bg);
+  background-image: var(--ashell-backdrop);
+  overflow: hidden;
+}
+
+/* Route-level Suspense fallback: already inside AppLayout, so it must not
+   repaint the page background or claim a full viewport of its own. */
+.ashell--inline {
+  min-height: 0;
+  background-color: transparent;
+  background-image: none;
+}
+
+@media (prefers-color-scheme: light) {
+  .ashell {
+    --ashell-bg: #f8fafc;
+    --ashell-backdrop: none;
+    --ashell-panel: #ffffff;
+    --ashell-panel-bg: none;
+    --ashell-hero-bg: none;
+    --ashell-toolbar-bg: #ffffff;
+    --ashell-border: #bcd9ff;
+    --ashell-hairline: rgba(15, 23, 42, 0.08);
+    --ashell-bar: #e2e8f0;
+    --ashell-text: #0f172a;
+    --ashell-dim: #475569;
+  }
+}
+
+.ashell-bar {
+  background: var(--ashell-bar);
+  border-radius: 4px;
+  animation: ashell-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes ashell-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ashell-bar {
+    animation: none;
+  }
+}
+
+/* Same opt-out MUI's Skeleton gets above: a frozen placeholder reads as a hang,
+   so keep pulsing on low tier, just slower. */
+html[data-perf='low'] .ashell-bar {
+  --perf-anim-duration: 2s;
+  --perf-anim-iteration: infinite;
+}
+
+.ashell-grow {
+  flex: 1 1 auto;
+}
+
+/* Header strip - mirrors HeaderBar's static AppBar: lg Container, 64px Toolbar. */
+.ashell-header {
+  border-bottom: 1px solid var(--ashell-border);
+}
+
+.ashell-header-inner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-sizing: border-box;
+  max-width: 1200px;
+  min-height: 64px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.ashell-logo {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: var(--ashell-bar);
+}
+
+.ashell-brand {
+  width: 118px;
+  height: 18px;
+}
+
+.ashell-nav {
+  width: 76px;
+  height: 20px;
+}
+
+.ashell-avatar {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--ashell-bar);
+}
+
+/* Content column - AppLayout's md Container (pt 8 on sm+) with Latest Reports'
+   own py 4 Container nested inside it. */
+.ashell-page {
+  box-sizing: border-box;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 96px 40px 32px;
+}
+
+/* The inline variant renders as AppLayout's <Outlet/>, so the 64px `pt: 8` the
+   standalone 96px accounted for is already supplied by the layout Box above it;
+   applying it again pushed the whole skeleton 64px below where the real page
+   lands. Inline only owns Latest Reports' own `py: 4` (32px).
+   Scoped to sm+ because AppLayout's `pt` is 0 on xs, where the xs padding below
+   is already correct for both phases. */
+@media (min-width: 600px) {
+  .ashell--inline .ashell-page {
+    padding-top: 32px;
+  }
+}
+
+.ashell-card {
+  box-sizing: border-box;
+  padding: 32px;
+  border: 1px solid var(--ashell-border);
+  border-radius: 20px;
+  background-color: var(--ashell-panel);
+  background-image: var(--ashell-panel-bg);
+  /* The real card is ~2700px tall, so only the first third of its 135deg
+     gradient is ever on screen. The skeleton card is a third of that height, so
+     without pinning the gradient box the same ramp finishes inside the viewport
+     and the placeholder reads far more teal than the page it stands in for. */
+  background-repeat: no-repeat;
+  background-size: 100% 2700px;
+}
+
+/* Hero tile. The eyebrow/heading/subtitle are REAL TEXT, not bars: Chrome's
+   First Contentful Paint ignores background-coloured boxes, so a skeleton built
+   only from divs paints (First Paint) without ever becoming "contentful" and
+   FCP stalls until React's first text. Text plus the inline <svg> mark make the
+   first paint contentful, and because the strings and metrics match what
+   LatestReportsPage actually renders, the swap is near-invisible. Metrics
+   measured on production: 24/31.2px 800-weight -0.48px heading, 9.28/11.14px
+   700-weight uppercase eyebrow, 14/20.02px subtitle. */
+.ashell-hero {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-sizing: border-box;
+  margin-bottom: 20px;
+  padding: 16px 20px;
+  border: 1px solid var(--ashell-hairline);
+  border-radius: 20px;
+  background-image: var(--ashell-hero-bg);
+}
+
+.ashell-hero-icon {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: var(--ashell-bar);
+  color: var(--ashell-dim);
+}
+
+.ashell-hero-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.ashell-eyebrow {
+  font-size: 9.3px;
+  font-weight: 700;
+  line-height: 11px;
+  color: var(--ashell-dim);
+  letter-spacing: 1.11px;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+
+.ashell-heading {
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 31px;
+  color: var(--ashell-text);
+  letter-spacing: -0.48px;
+}
+
+.ashell-sub {
+  margin-top: 2px;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--ashell-dim);
+}
+
+/* Toolbar - two rows on production (search + zone/date selects, then the
+   right-aligned view toggle), not one. */
+.ashell-toolbar {
+  box-sizing: border-box;
+  margin-bottom: 16px;
+  padding: 16px;
+  border: 1px solid var(--ashell-hairline);
+  border-radius: 30px;
+  background-color: var(--ashell-toolbar-bg);
+}
+
+.ashell-toolbar-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ashell-toolbar-row + .ashell-toolbar-row {
+  margin-top: 20px;
+}
+
+.ashell-toolbar-row--end {
+  justify-content: flex-end;
+  min-height: 36px;
+}
+
+.ashell-search {
+  flex: 0 1 337px;
+  height: 40px;
+  border-radius: 10px;
+}
+
+.ashell-select {
+  flex: none;
+  width: 170px;
+  height: 40px;
+  border-radius: 10px;
+}
+
+.ashell-viewtoggle {
+  width: 190px;
+  height: 34px;
+  border-radius: 999px;
+}
+
+/* The "Page 1 / N empty logs hidden" + "25 per page" strip between toolbar and
+   list, which the first skeleton omitted entirely. */
+.ashell-pagestrip {
+  display: flex;
+  align-items: center;
+  min-height: 24px;
+  margin-bottom: 16px;
+}
+
+.ashell-pagestrip-label {
+  width: 171px;
+  height: 20px;
+}
+
+.ashell-pagestrip-chip {
+  flex: none;
+  width: 90px;
+  height: 24px;
+  border-radius: 999px;
+}
+
+/* List. Desktop is a 4-column table (Title / Zone / Duration / Visibility); the
+   35/35/15/15 split reproduces production's 264/264/113/113px cells. */
+.ashell-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.ashell-list-head,
+.ashell-row {
+  display: grid;
+  box-sizing: border-box;
+  grid-template-columns: 35fr 35fr 15fr 15fr;
+  border-bottom: 1px solid var(--ashell-hairline);
+}
+
+.ashell-list-head {
+  align-items: center;
+  height: 57px;
+}
+
+.ashell-row {
+  height: 96px;
+  padding-top: 16px;
+}
+
+.ashell-cell {
+  box-sizing: border-box;
+  min-width: 0;
+  padding-left: 16px;
+}
+
+.ashell-cell--title {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.ashell-head-label {
+  width: 56px;
+  height: 12px;
+}
+
+.ashell-row-title {
+  width: 130px;
+  height: 14px;
+}
+
+.ashell-row-sub {
+  width: 150px;
+  height: 12px;
+}
+
+.ashell-row-sub--short {
+  width: 118px;
+}
+
+.ashell-row-zone {
+  width: 170px;
+  height: 14px;
+}
+
+.ashell-row-dur {
+  width: 44px;
+  height: 14px;
+}
+
+.ashell-row-tag {
+  width: 53px;
+  height: 24px;
+  border-radius: 999px;
+}
+
+/* Below md the table becomes a stack of 162px card tiles with a 16px gap and
+   the Duration column disappears. */
+@media (max-width: 899px) {
+  .ashell-nav {
+    display: none;
+  }
+
+  .ashell-header-inner {
+    padding: 0 16px;
+  }
+
+  .ashell-list {
+    gap: 16px;
+  }
+
+  .ashell-list-head {
+    display: none;
+  }
+
+  .ashell-row {
+    grid-template-columns: 1fr auto;
+    align-content: space-between;
+    gap: 12px;
+    height: 162px;
+    padding: 16px 16px 16px 22px;
+    border: 1px solid var(--ashell-hairline);
+    border-radius: 30px;
+  }
+
+  .ashell-cell {
+    padding-left: 0;
+  }
+
+  .ashell-cell--dur {
+    display: none;
+  }
+
+  .ashell-cell--zone {
+    grid-column: 1 / -1;
+  }
+
+  .ashell-cell--vis {
+    justify-self: end;
+  }
+
+  .ashell-row-zone {
+    width: 139px;
+    height: 18px;
+  }
+
+  .ashell-row-tag {
+    width: 67px;
+    height: 19px;
+  }
+}
+
+@media (max-width: 599px) {
+  .ashell-page {
+    padding: 16px;
+  }
+
+  .ashell-card {
+    padding: 16px 16px 24px;
+  }
+
+  /* The subtitle is hidden on xs, which is why the hero is 73px tall there. */
+  .ashell-sub {
+    display: none;
+  }
+
+  .ashell-heading {
+    font-size: 21.6px;
+    line-height: 28px;
+    letter-spacing: -0.43px;
+  }
+
+  .ashell-toolbar {
+    padding: 12px;
+  }
+
+  .ashell-toolbar-row + .ashell-toolbar-row {
+    margin-top: 10px;
+  }
+
+  .ashell-toolbar-row--end {
+    min-height: 44px;
+  }
+
+  .ashell-search {
+    flex: 1 1 auto;
+  }
+
+  .ashell-select {
+    display: none;
+  }
+
+  .ashell-viewtoggle {
+    width: 100%;
+    height: 44px;
+  }
+
+  .ashell-pagestrip {
+    display: block;
+    min-height: 53px;
+  }
+
+  .ashell-pagestrip-label {
+    height: 21px;
+  }
+
+  .ashell-pagestrip-chip {
+    margin-top: 8px;
+  }
+}
