@@ -2,11 +2,19 @@
  * Community setup guide for running the unofficial DLSS 5 Feeder + RenoDX
  * Neural Rendering stack in The Elder Scrolls Online (route: /docs/dlss5-neural-rendering).
  *
- * ESO is a DX11 title with no native DLSS support, so this stack works by having
- * ReShade synthesise the DLSS contract (colour + depth + motion vectors) and hand
- * it to NGX on a side D3D12 device. Two ESO-specific gotchas break it, and both
- * are app-local DLLs shadowing newer system copies — the troubleshooting section
- * is written around the exact log lines each failure produces.
+ * ESO does ship DLSS and DLAA natively — it was the first game ever to support
+ * DLAA, back in 2021 — but the runtime it bundles is nvngx_dlss.dll 2.2.16, a
+ * build last current in early 2023 and never updated since. That vintage predates
+ * everything Neural Rendering needs, so the stack replaces it with a 310.x runtime
+ * and has ReShade synthesise the DLSS contract (colour + depth + motion vectors)
+ * for NGX on a side D3D12 device. Two ESO-specific gotchas break it, and both are
+ * app-local DLLs shadowing newer copies — the troubleshooting section is written
+ * around the exact log lines each failure produces.
+ *
+ * Do not reintroduce "ESO has no DLSS" framing: it is factually wrong (the options
+ * are in the in-game Anti-Aliasing dropdown, but only on RTX cards, which is why
+ * they get missed) and it contradicts the troubleshooting section, which correctly
+ * blames a 2.2.16 leftover for 0xBAD00010.
  *
  * Hand-built rather than markdown-rendered (cf. RosterBotDocsPage) so the file
  * paths, log signatures and ini keys can offer copy-to-clipboard, and so the risk
@@ -139,7 +147,7 @@ const HOW_TO_LD = {
   '@id': `${PAGE_URL}#setup`,
   name: 'Set up DLSS 5 Neural Rendering in The Elder Scrolls Online',
   description:
-    'Install ReShade with add-on support, add the DLSS 5 Feeder and RenoDX add-ons, and enable Neural Rendering in ESO, a DirectX 11 game with no native DLSS.',
+    "Install ReShade with add-on support, add the DLSS 5 Feeder and RenoDX add-ons, and enable Neural Rendering in ESO by replacing the game's bundled 2.2.16 DLSS runtime with a 310.x build.",
   tool: [
     'ReShade 6.x with full add-on support',
     'nvngx_dlss.dll (310.x)',
@@ -171,7 +179,7 @@ const HOW_TO_LD = {
     ],
     [
       'Turn off in-game anti-aliasing',
-      'In ESO video settings, disable MSAA/SSAA and set resolution scale to 100%.',
+      "In ESO video settings, disable MSAA/SSAA and set resolution scale to 100%. On RTX cards also set Anti-Aliasing away from DLSS and DLAA: ESO's own DLSS renders below output resolution and breaks ReShade's depth buffer, and DLAA adds a second temporal pass.",
     ],
     [
       'Enable the effects in the right order',
@@ -284,7 +292,7 @@ const REQUIREMENTS: ReadonlyArray<RowSpec> = [
   {
     label: 'nvngx_dlss.dll',
     value:
-      'A 310.x build. Older 2.x runtimes fail outright. This is the most common cause of a dead setup.',
+      'A 310.x build, replacing the 2.2.16 copy ESO ships. Older 2.x runtimes fail outright, so check the version rather than assuming a missing file. This is the most common cause of a dead setup.',
   },
   {
     label: 'ReShade',
@@ -407,7 +415,7 @@ const FRAME_GEN: ReadonlyArray<RowSpec> = [
   {
     label: 'NVIDIA Smooth Motion',
     value:
-      'Driver-level frame generation for games with no native support, which is exactly ESO. RTX 40 and 50 series only. Enable it per-game in the NVIDIA App under Graphics, Program Settings, then Driver Settings. Free, no extra process, and the first thing to try on a supported card.',
+      'Driver-level frame generation for games with no native frame generation, which is exactly ESO — its 2021 DLSS integration is super-resolution and DLAA only. RTX 40 and 50 series only. Enable it per-game in the NVIDIA App under Graphics, Program Settings, then Driver Settings. Free, no extra process, and the first thing to try on a supported card.',
   },
   {
     label: 'Lossless Scaling',
@@ -495,18 +503,11 @@ interface FailureSpec {
 
 const FAILURES: ReadonlyArray<FailureSpec> = [
   {
-    symptom: 'CreateFeature fails immediately',
-    log: '[feed] CreateFeature failed 0xBAD00010 (UnsupportedParameter)\n[feed] failure: resource build\nstopped: repeated failures.',
+    symptom: 'CreateFeature fails immediately, or the session never opens',
+    log: '[feed] CreateFeature failed 0xBAD00010 (UnsupportedParameter)\n[feed] failure: resource build\nstopped: repeated failures.\n\n[feed] NGX capabilities: SuperSampling.Available=0 NeedsUpdatedDriver=0 MinDriver=0.0\n[feed] DLSS super sampling is not available on this GPU/driver\nstopped: the D3D12/NGX session failed to start.',
     cause:
-      'Your nvngx_dlss.dll is too old. Anything from the DLSS 2.x era predates DLAA and the DLSS.Hint.Render.Preset.* parameters the feeder sets, so NGX rejects the whole parameter block. A 2.2.16 leftover does exactly this.',
-    fix: 'Replace nvngx_dlss.dll with a 310.x build. Check the version in File Explorer: right-click the DLL, then Properties, then Details.',
-  },
-  {
-    symptom: 'Session never opens / DLSS reported unavailable',
-    log: '[feed] NGX capabilities: SuperSampling.Available=0 NeedsUpdatedDriver=0 MinDriver=0.0\n[feed] DLSS super sampling is not available on this GPU/driver\nstopped: the D3D12/NGX session failed to start.',
-    cause:
-      'There is no nvngx_dlss.dll in the client folder at all. The NVIDIA driver ships nvngx_dlssg.dll but NOT a standalone DLSS super-resolution runtime, so there is nothing to fall back to. Deleting the local copy does not help; it makes things worse.',
-    fix: 'Put a 310.x nvngx_dlss.dll back in the client folder. A healthy run reports SuperSampling.Available=1 with a non-zero MinDriver.',
+      'Both of these are one problem: the wrong version of nvngx_dlss.dll. ESO ships its own copy, so the file is almost certainly there — it is just 2.2.16, frozen since early 2023. That predates DLAA and the DLSS.Hint.Render.Preset.* parameters the feeder sets, so NGX rejects the parameter block outright (0xBAD00010) or reports no super-resolution capability at all. Deleting the local copy is not the fix either: the NVIDIA driver ships nvngx_dlssg.dll but NOT a standalone super-resolution runtime, so removing it leaves nothing to load.',
+    fix: 'Check the version, do not check whether the file exists. Right-click nvngx_dlss.dll in the client folder, then Properties, then Details. If it reads 2.2.16 — or anything below 310 — replace it with a 310.x build. A healthy run reports SuperSampling.Available=1 with a non-zero MinDriver.',
   },
   {
     symptom: 'Everything loads but nothing looks different',
@@ -787,9 +788,19 @@ export const Dlss5NeuralRenderingGuidePage: React.FC = () => {
       <Section id="how-it-works" index={1} title="How this works">
         <Box sx={cardSx}>
           <Typography variant="body2" sx={{ ...proseSx, mb: 2.5 }}>
-            ESO is DirectX 11 with <strong>no native DLSS</strong>, so there is no toggle to turn
-            on. This stack assembles one out of parts. Every error in this guide belongs to a stage
-            in that chain:
+            ESO <strong>does</strong> have DLSS. It shipped DLSS and DLAA in 2021 and was the first
+            game ever to support DLAA; both sit in the in-game Anti-Aliasing dropdown, though only
+            on RTX cards, which is why most people never see them. The problem is the runtime behind
+            them: ESO bundles <code>nvngx_dlss.dll</code> <strong>2.2.16</strong>, a build that was
+            current in early 2023 and has not been updated since. It predates DLAA presets, the
+            transformer model and every parameter Neural Rendering depends on, so ESO&apos;s own
+            toggle can never reach it.
+          </Typography>
+          <Typography variant="body2" sx={{ ...proseSx, mb: 2.5 }}>
+            So this is a <strong>replacement</strong> job, not a from-scratch one: swap the stale
+            2.2.16 runtime for a 310.x build, then have ReShade synthesise the depth and motion
+            vectors DX11 ESO never hands out. Every error in this guide belongs to a stage in that
+            chain:
           </Typography>
 
           <PipelineDiagram />
@@ -954,7 +965,9 @@ export const Dlss5NeuralRenderingGuidePage: React.FC = () => {
               <Typography variant="body2" sx={proseSx}>
                 You need two NVIDIA DLLs in the client folder: <code>nvngx_dlss.dll</code> (the DLSS
                 super-resolution runtime) and <code>nvngx_dlssnr.dll</code> (the Neural Rendering
-                runtime).
+                runtime). ESO already ships an <code>nvngx_dlss.dll</code>, so this is a{' '}
+                <strong>replacement</strong>, not a fresh install — back up the 2.2.16 copy and
+                overwrite it with the 310.x build.
               </Typography>
               <Note>
                 Version matters enormously. See{' '}
@@ -1011,6 +1024,37 @@ export const Dlss5NeuralRenderingGuidePage: React.FC = () => {
                 feeder hands NGX a full-resolution depth buffer, and any multisampling breaks that
                 contract.
               </Typography>
+              <Typography variant="body2" sx={{ ...proseSx, mt: 1.25 }}>
+                On an RTX card that same Anti-Aliasing dropdown also offers{' '}
+                <strong>DLSS and DLAA</strong>. Set it to <strong>None</strong> (or TAA if the image
+                falls apart without any AA) and leave both off. They are not a shortcut and they do
+                not stack with this setup:
+              </Typography>
+              <Box
+                component="ul"
+                sx={{ pl: 2.5, mt: 0.75, mb: 0, '& li': { mb: 0.4, lineHeight: 1.7 } }}
+              >
+                <Typography component="li" variant="body2" sx={proseSx}>
+                  <strong>ESO&apos;s DLSS breaks the depth buffer.</strong> It renders below your
+                  output resolution, so the depth buffer no longer matches the backbuffer. ReShade
+                  then latches the wrong buffer or a garbled one, and the feeder&apos;s depth
+                  contract — the thing step 7 exists to protect — is gone. This is the same failure
+                  as leaving MSAA on, arriving by a different route.
+                </Typography>
+                <Typography component="li" variant="body2" sx={proseSx}>
+                  <strong>DLAA is subtler but still wrong.</strong> It renders at native resolution,
+                  so depth survives, but it resolves a jittered temporal pass before ReShade ever
+                  sees the frame. LaunchPad then estimates motion vectors from an
+                  already-temporally-filtered image and the feeder runs a second temporal pass over
+                  it. Expect extra softness and ghosting rather than an outright failure, so this
+                  one hides — if your image smears and step 7 looks done, check this dropdown.
+                </Typography>
+              </Box>
+              <Note>
+                Either way you are not losing anything: ESO&apos;s dropdown drives the same stale
+                2.2.16 runtime, which is exactly what this guide replaces. The 310.x DLL you
+                installed in step 5 is the one doing the work now.
+              </Note>
             </StepRow>
 
             <StepRow n={8} last title="Enable the effects in the right order">

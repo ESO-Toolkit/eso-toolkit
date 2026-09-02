@@ -45,6 +45,43 @@ describe('Dlss5NeuralRenderingGuidePage', () => {
     });
   });
 
+  it('does not claim ESO lacks native DLSS', () => {
+    const { container } = renderPage();
+
+    // ESO shipped DLSS *and* DLAA natively in 2021 and was the first game ever
+    // to support DLAA; both are in the in-game Anti-Aliasing dropdown, visible
+    // only on RTX cards. The guide previously opened by claiming ESO had no
+    // DLSS at all, which also contradicted its own troubleshooting section.
+    const text = container.textContent ?? '';
+    expect(text).not.toMatch(/no native DLSS/i);
+    expect(text).toMatch(/first game ever to support DLAA/i);
+  });
+
+  it('frames the premise as replacing a stale 2.2.16 runtime', () => {
+    renderPage();
+
+    expect(screen.getByText(/ESO bundles/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/2\.2\.16/).length).toBeGreaterThan(0);
+  });
+
+  it('tells readers to check the DLSS runtime version, not whether it exists', () => {
+    const { container } = renderPage();
+
+    // ESO ships an nvngx_dlss.dll, so "there is no nvngx_dlss.dll at all" was
+    // wrong for most readers. The merged entry must ask for a version check.
+    const text = container.textContent ?? '';
+    expect(text).toMatch(/Check the version, do not check whether the file exists/i);
+    expect(text).not.toMatch(/There is no nvngx_dlss\.dll in the client folder at all/i);
+  });
+
+  it('warns that ESO own DLSS/DLAA must not be left on alongside the feeder', () => {
+    const { container } = renderPage();
+
+    const text = container.textContent ?? '';
+    expect(text).toMatch(/ESO's DLSS breaks the depth buffer/i);
+    expect(text).toMatch(/DLAA is subtler but still wrong/i);
+  });
+
   it('documents the ESO-specific cs_5_1 blocker', () => {
     renderPage();
 
