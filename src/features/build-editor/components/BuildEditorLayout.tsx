@@ -4,13 +4,14 @@
  * Scrollable bento grid of build-editor sections. The nav rail on the left
  * provides click-to-jump navigation; the setup tab bar sits at the bottom.
  *
- * Desktop (≥960px): CSS Grid bento layout with nav rail on left. Below-the-fold
+ * Wide desktop (≥1200px): CSS Grid bento layout with nav rail on left. Below-the-fold
  * sections are wrapped in `LazySection` — they render as cheap placeholder
  * boxes until scrolled within ~1 viewport, then mount their real subtree and
  * stay mounted for the rest of the session. This keeps the initial React render
  * bounded to ~3 sections instead of all 11.
  *
- * Mobile (<960px): Single column, bottom nav bar. Sections start expanded so
+ * Compact layouts (<1200px): Single-column cards so dense editors retain useful
+ * target sizes. Mobile (<900px) also switches to the bottom nav bar. Sections start expanded so
  * the user lands on actionable content rather than a wall of collapsed headers;
  * each section can still be collapsed manually via its header. (SectionCard's
  * <Collapse> mounts the content immediately when expanded.)
@@ -63,6 +64,7 @@ import { BUILD_EDITOR_SETUP_PANEL_ID, getBuildSetupTabId, SetupTabBar } from './
 export const BuildEditorLayout: React.FC = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const isSingleColumn = useMediaQuery(theme.breakpoints.down('lg'));
   const progress = useSectionProgress();
   const activeSetup = useSelector(selectActiveSetup);
   // The first two rows sit above the fold and render immediately. Every later
@@ -133,9 +135,11 @@ export const BuildEditorLayout: React.FC = () => {
             sx={{
               display: 'grid',
               gap: { xs: 2, md: 2.5, lg: 3 },
-              // Desktop: 2-column bento grid with dense packing
-              gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)',
-              gridAutoFlow: isMobile ? undefined : 'dense',
+              // Keep cards full-width through tablet and small-laptop layouts.
+              // At 900px the nav rail and content gutters otherwise leave the
+              // Skills hotbar with undersized targets despite ample viewport width.
+              gridTemplateColumns: isSingleColumn ? '1fr' : 'repeat(2, 1fr)',
+              gridAutoFlow: isSingleColumn ? undefined : 'dense',
             }}
           >
             {/* Row 1: Identity (primary) + Character — above the fold, render eagerly */}
@@ -194,7 +198,7 @@ export const BuildEditorLayout: React.FC = () => {
             <LazySection
               sectionId="equipment"
               placeholderMinHeight={560}
-              gridRow={isMobile ? undefined : 'span 2'}
+              gridRow={isSingleColumn ? undefined : 'span 2'}
             >
               <SectionCard
                 id="equipment"
@@ -202,7 +206,7 @@ export const BuildEditorLayout: React.FC = () => {
                 icon={<EquipmentIcon />}
                 complete={progress.equipment}
                 variant="primary"
-                gridRow={isMobile ? undefined : 'span 2'}
+                gridRow={isSingleColumn ? undefined : 'span 2'}
                 defaultExpanded
                 headerAction={<SectionHeaderActions section="gear" />}
               >
@@ -241,7 +245,7 @@ export const BuildEditorLayout: React.FC = () => {
             <LazySection
               sectionId="champion"
               placeholderMinHeight={520}
-              gridColumn={isMobile ? undefined : 'span 2'}
+              gridColumn={isSingleColumn ? undefined : 'span 2'}
             >
               <SectionCard
                 id="champion"
@@ -249,7 +253,7 @@ export const BuildEditorLayout: React.FC = () => {
                 icon={<ChampionIcon />}
                 complete={progress.champion}
                 variant="primary"
-                gridColumn={isMobile ? undefined : 'span 2'}
+                gridColumn={isSingleColumn ? undefined : 'span 2'}
                 defaultExpanded
                 headerAction={<SectionHeaderActions section="champion" />}
               >
@@ -275,7 +279,7 @@ export const BuildEditorLayout: React.FC = () => {
             <LazySection
               sectionId="stats"
               placeholderMinHeight={520}
-              gridColumn={isMobile ? undefined : 'span 2'}
+              gridColumn={isSingleColumn ? undefined : 'span 2'}
             >
               <SectionCard
                 id="stats"
@@ -283,7 +287,7 @@ export const BuildEditorLayout: React.FC = () => {
                 icon={<StatsIcon />}
                 complete={progress.stats}
                 variant="primary"
-                gridColumn={isMobile ? undefined : 'span 2'}
+                gridColumn={isSingleColumn ? undefined : 'span 2'}
                 defaultExpanded
               >
                 <StatsSection />
@@ -294,14 +298,14 @@ export const BuildEditorLayout: React.FC = () => {
             <LazySection
               sectionId="guide"
               placeholderMinHeight={360}
-              gridColumn={isMobile ? undefined : 'span 2'}
+              gridColumn={isSingleColumn ? undefined : 'span 2'}
             >
               <SectionCard
                 id="guide"
                 title="Guide & Media"
                 icon={<GuideIcon />}
                 complete={progress.guide}
-                gridColumn={isMobile ? undefined : 'span 2'}
+                gridColumn={isSingleColumn ? undefined : 'span 2'}
                 defaultExpanded
               >
                 <GuideSection />
@@ -312,7 +316,7 @@ export const BuildEditorLayout: React.FC = () => {
             <LazySection
               sectionId="settings"
               placeholderMinHeight={200}
-              gridColumn={isMobile ? undefined : 'span 2'}
+              gridColumn={isSingleColumn ? undefined : 'span 2'}
             >
               <SectionCard
                 id="settings"
@@ -320,7 +324,7 @@ export const BuildEditorLayout: React.FC = () => {
                 icon={<SettingsIcon />}
                 complete={progress.settings}
                 variant="subtle"
-                gridColumn={isMobile ? undefined : 'span 2'}
+                gridColumn={isSingleColumn ? undefined : 'span 2'}
                 defaultExpanded
               >
                 <SettingsSection />

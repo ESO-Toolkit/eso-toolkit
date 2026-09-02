@@ -170,7 +170,9 @@ test.describe('H2 – 320px reflow: header and import sources stay in the viewpo
 });
 
 test.describe('H2a – Skills bars stay contained at narrow widths', () => {
-  for (const width of [320, 335, 375]) {
+  // 900px is intentionally included: it is the narrowest rail-based layout,
+  // where editor-card width—not viewport width—governs the hotbar geometry.
+  for (const width of [320, 335, 375, 390, 900]) {
     test(`${width}px keeps every skill slot visible in bar order`, async ({ page }, testInfo) => {
       await page.setViewportSize({ width, height: 844 });
       await gotoEditor(page);
@@ -194,9 +196,7 @@ test.describe('H2a – Skills bars stay contained at narrow widths', () => {
 
         await frontBar.getByRole('button', { name: /^Skill slot 1\b/ }).click();
         await page.getByPlaceholder('Search skills...').fill('Searing Strike');
-        await page
-          .getByRole('button', { name: /^Searing Strike \(base ability\)$/ })
-          .click();
+        await page.getByRole('button', { name: /^Searing Strike \(base ability\)$/ }).click();
 
         await frontBar.getByRole('button', { name: /^Ultimate slot\b/ }).click();
         await page.getByPlaceholder('Search skills...').fill('Dragonknight Standard');
@@ -220,6 +220,7 @@ test.describe('H2a – Skills bars stay contained at narrow widths', () => {
 
         const layout = await bar.evaluate((root) => {
           const rootRect = root.getBoundingClientRect();
+          const sectionRect = root.closest('#section-skills')?.getBoundingClientRect();
           const buttons = Array.from(
             root.querySelectorAll<HTMLElement>(
               '[role="button"][aria-label^="Skill slot "], ' +
@@ -238,11 +239,17 @@ test.describe('H2a – Skills bars stay contained at narrow widths', () => {
               return { left: rect.left, right: rect.right, width: rect.width, height: rect.height };
             }),
             root: { left: rootRect.left, right: rootRect.right },
+            section: sectionRect ? { left: sectionRect.left, right: sectionRect.right } : undefined,
             overflows: root.scrollWidth > root.clientWidth + 1,
           };
         });
 
         expect(layout.order).toEqual(expectedOrder);
+        expect(layout.section).toBeDefined();
+        expect(layout.root.left).toBeGreaterThanOrEqual((layout.section?.left ?? 0) - 1);
+        expect(layout.root.right).toBeLessThanOrEqual(
+          (layout.section?.right ?? Number.POSITIVE_INFINITY) + 1,
+        );
         expect(layout.overflows).toBe(false);
         for (const [index, bounds] of layout.bounds.entries()) {
           expect(bounds.left, `${barName} slot ${index + 1} left edge`).toBeGreaterThanOrEqual(
