@@ -15,7 +15,7 @@ import { print } from 'graphql';
 
 import { hashGraphqlDocument } from '../../roster-hub-api/src/graphql-document-hash';
 
-import { GetReportByCodeDocument } from './gql/graphql';
+import { GetLatestReportsDocument, GetReportByCodeDocument } from './gql/graphql';
 
 /**
  * The bindings the proxy actually reads. Declared locally rather than imported
@@ -34,15 +34,46 @@ if (!globalThis.crypto?.subtle) {
   Object.defineProperty(globalThis, 'crypto', { value: webcrypto, configurable: true });
 }
 
+/**
+ * Minimal case-insensitive Headers stand-in.
+ *
+ * Needed because the stale-while-revalidate read path decides freshness from
+ * the `X-Proxy-Cached-At` header the proxy stamps at store time, so a cached
+ * response stub has to be able to carry (and echo) headers.
+ */
+class TestHeaders {
+  private readonly entries = new Map<string, string>();
+  constructor(init?: Record<string, string> | TestHeaders) {
+    if (init instanceof TestHeaders) {
+      init.entries.forEach((value, name) => this.entries.set(name, value));
+    } else if (init) {
+      for (const [name, value] of Object.entries(init)) {
+        this.entries.set(name.toLowerCase(), value);
+      }
+    }
+  }
+  get(name: string): string | null {
+    return this.entries.get(name.toLowerCase()) ?? null;
+  }
+}
+
 // jsdom also has no fetch Request/Response. The handler only needs status,
-// text() and clone(), so stand them up rather than pulling in a polyfill.
+// headers, body, text() and clone(), so stand them up rather than pulling in a
+// polyfill.
 class TestResponse {
   readonly status: number;
+  readonly headers: TestHeaders;
   constructor(
     private readonly bodyText: string,
-    init?: { status?: number },
+    init?: { status?: number; headers?: Record<string, string> | TestHeaders },
   ) {
     this.status = init?.status ?? 200;
+    this.headers =
+      init?.headers instanceof TestHeaders ? init.headers : new TestHeaders(init?.headers);
+  }
+  /** The proxy re-wraps a cache hit as `new Response(cached.body, cached)`. */
+  get body(): string {
+    return this.bodyText;
   }
   get ok(): boolean {
     return this.status >= 200 && this.status < 300;
@@ -104,6 +135,7 @@ interface FakeContextOptions {
 function createContext({ operation, body, ip, env }: FakeContextOptions): {
   context: unknown;
   json: jest.Mock;
+  waitUntil: jest.Mock;
 } {
   const bodyStr = JSON.stringify(body);
   const json = jest.fn(
@@ -111,13 +143,15 @@ function createContext({ operation, body, ip, env }: FakeContextOptions): {
       new Response(JSON.stringify(payload), { status: status ?? 200 }),
   );
 
+  const waitUntil = jest.fn();
+
   const context = {
     env: {
       ESOLOGS_CLIENT_ID: 'id',
       ESOLOGS_CLIENT_SECRET: 'secret',
       ...env,
     } as ProxyEnv,
-    executionCtx: { waitUntil: jest.fn() },
+    executionCtx: { waitUntil },
     req: {
       url: `https://api.test/graphql?query=${encodeURIComponent(operation)}`,
       header: (name: string) => (name === 'CF-Connecting-IP' ? ip : undefined),
@@ -127,7 +161,7 @@ function createContext({ operation, body, ip, env }: FakeContextOptions): {
     json,
   };
 
-  return { context, json };
+  return { context, json, waitUntil };
 }
 
 /** Upstream + edge-cache stubs so an ACCEPTED request has somewhere to go. */
@@ -506,7 +540,16 @@ describe('GraphQL proxy persisted-query pinning', () => {
     Object.defineProperty(globalThis, 'caches', {
       value: {
         default: {
-          match: async () => new Response(JSON.stringify({ data: {} }), { status: 200 }),
+          // Stamped as of NOW so the entry is FRESH. Under
+          // stale-while-revalidate an unstamped entry is treated as stale and
+          // refreshed in the background, which does reach upstream by design;
+          // the invariant this test exists for is that a hit the proxy serves
+          // without going upstream costs no rate-limit budget.
+          match: async () =>
+            new Response(JSON.stringify({ data: {} }), {
+              status: 200,
+              headers: { 'X-Proxy-Cached-At': String(Date.now()) },
+            }),
           put: async () => undefined,
         },
       },
@@ -538,5 +581,199 @@ describe('GraphQL proxy persisted-query pinning', () => {
 
     expect(response.status).toBe(400);
     expect(fetchMock.mock.calls.some((call) => String(call[0]).includes('esologs'))).toBe(false);
+  });
+});
+
+/**
+ * Stale-while-revalidate on the edge cache.
+ *
+ * Measured on production: a warm `getLatestReports` hit is ~70-130 ms while a
+ * cold miss is ~770 ms at p50, with reproducible excursion windows where every
+ * miss costs 4.9-6.9 s. With a bare 60 s TTL whichever visitor lands on the
+ * expiry pays that. Once an entry exists nobody should wait on upstream again —
+ * the stale copy goes out immediately and the refresh runs behind the response.
+ */
+describe('GraphQL proxy stale-while-revalidate', () => {
+  const LATEST_REPORTS_QUERY = print(GetLatestReportsDocument);
+
+  /** `getLatestReports` tier: 60 s fresh, then 600 s of stale-while-revalidate. */
+  const TTL_MS = 60_000;
+
+  const cachedPage = (marker: string): string =>
+    JSON.stringify({ data: { reportData: { reports: { data: [{ code: marker }] } } } });
+  /** What a degraded upstream returns: 200, but `reports` is null. */
+  const DEGRADED_PAGE = JSON.stringify({ data: { reportData: { reports: null } } });
+
+  function stubLatestReportsUpstream(upstreamBody: string): jest.Mock {
+    const fetchMock = jest.fn(async (input: unknown) => {
+      if (String(input).includes('graphql-manifest.json')) {
+        return new Response('not found', { status: 404 });
+      }
+      if (String(input).includes('oauth/token')) {
+        return new Response(JSON.stringify({ access_token: 'token', expires_in: 3600 }), {
+          status: 200,
+        });
+      }
+      return new Response(upstreamBody, { status: 200 });
+    });
+    Object.defineProperty(globalThis, 'fetch', { value: fetchMock, configurable: true });
+    return fetchMock;
+  }
+
+  /** `cachedAt: null` installs an entry with NO X-Proxy-Cached-At header. */
+  function installCache(entry: { body: string; cachedAt: number | null }): { put: jest.Mock } {
+    const put = jest.fn(async () => undefined);
+    const match = jest.fn(
+      async () =>
+        new Response(entry.body, {
+          status: 200,
+          headers: entry.cachedAt === null ? {} : { 'X-Proxy-Cached-At': String(entry.cachedAt) },
+        }),
+    );
+    Object.defineProperty(globalThis, 'caches', {
+      value: { default: { match, put } },
+      configurable: true,
+    });
+    return { put };
+  }
+
+  function latestReportsContext(ip: string): ReturnType<typeof createContext> {
+    return createContext({
+      operation: 'getLatestReports',
+      body: {
+        operationName: 'getLatestReports',
+        query: LATEST_REPORTS_QUERY,
+        variables: { limit: 20 },
+      },
+      ip,
+    });
+  }
+
+  const upstreamCalls = (fetchMock: jest.Mock): unknown[][] =>
+    fetchMock.mock.calls.filter((call) => String(call[0]).includes('esologs.com/api'));
+
+  /** Drain every promise handed to waitUntil, including nested cache writes. */
+  async function drain(waitUntil: jest.Mock): Promise<void> {
+    for (let i = 0; i < waitUntil.mock.calls.length; i += 1) {
+      await waitUntil.mock.calls[i][0];
+    }
+  }
+
+  it('serves a FRESH cached entry without any upstream fetch or revalidation', async () => {
+    const fetchMock = stubLatestReportsUpstream(cachedPage('upstream'));
+    installCache({ body: cachedPage('cached'), cachedAt: Date.now() });
+    const { context, waitUntil } = latestReportsContext('10.1.0.1');
+
+    const response = await loadProxy()(context);
+
+    expect(response.status).toBe(200);
+    expect(await response.text()).toBe(cachedPage('cached'));
+    expect(upstreamCalls(fetchMock)).toHaveLength(0);
+    expect(waitUntil).not.toHaveBeenCalled();
+  });
+
+  it('serves a STALE cached entry immediately and revalidates in the background', async () => {
+    const fetchMock = stubLatestReportsUpstream(cachedPage('upstream'));
+    installCache({ body: cachedPage('cached'), cachedAt: Date.now() - TTL_MS - 5_000 });
+    const { context, waitUntil } = latestReportsContext('10.1.0.2');
+
+    const response = await loadProxy()(context);
+
+    // The client gets the STALE body, not the upstream one — no upstream wait.
+    expect(response.status).toBe(200);
+    expect(await response.text()).toBe(cachedPage('cached'));
+
+    expect(waitUntil).toHaveBeenCalled();
+    await drain(waitUntil);
+    expect(upstreamCalls(fetchMock)).toHaveLength(1);
+  });
+
+  it('writes the background revalidation result to the cache when it passes the guard', async () => {
+    const fetchMock = stubLatestReportsUpstream(cachedPage('upstream'));
+    const { put } = installCache({
+      body: cachedPage('cached'),
+      cachedAt: Date.now() - TTL_MS - 5_000,
+    });
+    const { context, waitUntil } = latestReportsContext('10.1.0.3');
+
+    await loadProxy()(context);
+    await drain(waitUntil);
+
+    expect(upstreamCalls(fetchMock)).toHaveLength(1);
+    expect(put).toHaveBeenCalledTimes(1);
+    expect(await (put.mock.calls[0][1] as Response).text()).toBe(cachedPage('upstream'));
+  });
+
+  it('does not overwrite the stale entry when the refresh fails the getLatestReports guard', async () => {
+    // A degraded upstream answers 200 with a null `reports`. Caching that would
+    // hand every visitor an empty Latest Reports list; the stale page is better.
+    const fetchMock = stubLatestReportsUpstream(DEGRADED_PAGE);
+    const { put } = installCache({
+      body: cachedPage('cached'),
+      cachedAt: Date.now() - TTL_MS - 5_000,
+    });
+    const { context, waitUntil } = latestReportsContext('10.1.0.4');
+
+    const response = await loadProxy()(context);
+    expect(await response.text()).toBe(cachedPage('cached'));
+
+    await drain(waitUntil);
+    expect(upstreamCalls(fetchMock)).toHaveLength(1);
+    expect(put).not.toHaveBeenCalled();
+  });
+
+  it('treats an entry with no X-Proxy-Cached-At stamp as stale, not fresh', async () => {
+    // Fail safe: an unstamped entry (written by an older Worker build) is still
+    // served instantly, but it is refreshed behind the request rather than
+    // being trusted as fresh forever.
+    const fetchMock = stubLatestReportsUpstream(cachedPage('upstream'));
+    const { put } = installCache({ body: cachedPage('cached'), cachedAt: null });
+    const { context, waitUntil } = latestReportsContext('10.1.0.5');
+
+    const response = await loadProxy()(context);
+    expect(await response.text()).toBe(cachedPage('cached'));
+
+    await drain(waitUntil);
+    expect(upstreamCalls(fetchMock)).toHaveLength(1);
+    expect(put).toHaveBeenCalledTimes(1);
+  });
+
+  it('collapses two simultaneous stale hits onto a single upstream refresh', async () => {
+    // The upstream call is held open until BOTH requests have been answered
+    // from the stale entry, which is what makes them concurrent — the real
+    // refresh takes seconds, so the second hit must join the singleflight
+    // rather than start a second call on the shared credentials budget.
+    let releaseUpstream!: () => void;
+    const upstreamHeld = new Promise<void>((resolve) => {
+      releaseUpstream = resolve;
+    });
+    const fetchMock = jest.fn(async (input: unknown) => {
+      if (String(input).includes('graphql-manifest.json')) {
+        return new Response('not found', { status: 404 });
+      }
+      if (String(input).includes('oauth/token')) {
+        return new Response(JSON.stringify({ access_token: 'token', expires_in: 3600 }), {
+          status: 200,
+        });
+      }
+      await upstreamHeld;
+      return new Response(cachedPage('upstream'), { status: 200 });
+    });
+    Object.defineProperty(globalThis, 'fetch', { value: fetchMock, configurable: true });
+    installCache({ body: cachedPage('cached'), cachedAt: Date.now() - TTL_MS - 5_000 });
+
+    const proxy = loadProxy();
+    const first = latestReportsContext('10.1.0.6');
+    const second = latestReportsContext('10.1.0.7');
+
+    const responses = await Promise.all([proxy(first.context), proxy(second.context)]);
+    for (const response of responses) {
+      expect(await response.text()).toBe(cachedPage('cached'));
+    }
+
+    releaseUpstream();
+    await drain(first.waitUntil);
+    await drain(second.waitUntil);
+    expect(upstreamCalls(fetchMock)).toHaveLength(1);
   });
 });

@@ -56,7 +56,7 @@ async function getCachedClientToken(env: Env): Promise<string> {
 
 // Event data queries are immutable once a report is uploaded; safe to cache.
 // Profile log lists are mutable (a user can upload new logs) but tolerate the
-// short CACHE_TTL_SECONDS staleness in exchange for far less upstream pressure
+// short cache staleness in exchange for far less upstream pressure
 // on popular profiles.
 const CACHEABLE_OPERATIONS = new Set([
   'getBuffEvents',
@@ -74,28 +74,90 @@ const CACHEABLE_OPERATIONS = new Set([
   // The Latest Reports list. Every visit to /latest-reports issued this
   // uncached, so each one paid a ~500 ms upstream round trip on the shared
   // credentials budget for a page that is identical for every visitor on the
-  // default filters. Short TTL only — see OPERATION_CACHE_TTL_SECONDS.
+  // default filters. Short TTL only — see OPERATION_CACHE_TIERS.
   'getLatestReports',
 ]);
 
 const CACHE_TTL_SECONDS = 600; // 10 minutes
+const CACHE_SWR_SECONDS = 600; // 10 minutes of stale-while-revalidate
 
 /**
- * Per-operation overrides of CACHE_TTL_SECONDS.
+ * Per-operation cache freshness, mirroring the REST side's `CacheTier` in
+ * index.ts.
  *
- * `getLatestReports` is a "what was uploaded just now" feed, so it gets a
- * one-minute TTL: long enough to collapse the traffic of a busy minute onto a
- * single upstream call, short enough that a freshly uploaded log shows up about
- * as fast as it did uncached. It also bounds the empty-log staleness the list
- * already handles — a still-parsing log is hidden by the client and self-heals
- * on the next fetch, which is now at most a minute away.
+ * `ttl` is how long an entry is served as FRESH. `swr` is how much longer it
+ * may still be served — instantly — while a refresh runs in the background.
+ * The two together are what the stored `max-age` is set to, so an entry
+ * survives into its stale window instead of being evicted at `ttl`.
+ *
+ * Why SWR at all, measured on production `getLatestReports`: a warm edge hit is
+ * ~70-130 ms, while a cold miss is ~770 ms at p50 (min 681, p90 941) in steady
+ * state — and there are real, reproducible excursion windows where every miss
+ * costs 4.9-6.9 s for half a minute at a time. With a bare 60 s TTL, whichever
+ * visitor lands on the expiry pays that. SWR takes the typical ~770 ms off the
+ * critical path, and more valuably makes the multi-second excursion tail
+ * invisible: the stale entry goes out instantly no matter how slow upstream is
+ * being at that moment.
  */
-const OPERATION_CACHE_TTL_SECONDS: Record<string, number> = {
-  getLatestReports: 60,
+interface OperationCacheTier {
+  /** Seconds an entry counts as fresh. */
+  ttl: number;
+  /** Extra seconds an entry may be served stale while it refreshes behind. */
+  swr: number;
+}
+
+const OPERATION_CACHE_TIERS: Record<string, OperationCacheTier> = {
+  // `getLatestReports` is a "what was uploaded just now" feed, so it stays
+  // fresh for only a minute: long enough to collapse the traffic of a busy
+  // minute onto a single upstream call, short enough that a freshly uploaded
+  // log shows up about as fast as it did uncached. The 10-minute stale window
+  // is generous on purpose — the page is identical for every visitor and a
+  // list that is a few minutes behind is still useful, whereas an 8 s blank
+  // page is not. It also bounds the empty-log staleness the list already
+  // handles: a still-parsing log is hidden by the client and self-heals on the
+  // next background refresh, which is at most a minute away.
+  getLatestReports: { ttl: 60, swr: 600 },
 };
 
-function cacheTtlFor(operation: string): number {
-  return OPERATION_CACHE_TTL_SECONDS[operation] ?? CACHE_TTL_SECONDS;
+/**
+ * The default tier: 10 minutes fresh, 10 more stale. The generic cacheable
+ * operations are per-report event slices that are effectively immutable once a
+ * log has finished processing, so serving one up to 20 minutes old costs
+ * nothing in correctness.
+ */
+const DEFAULT_CACHE_TIER: OperationCacheTier = {
+  ttl: CACHE_TTL_SECONDS,
+  swr: CACHE_SWR_SECONDS,
+};
+
+function cacheTierFor(operation: string): OperationCacheTier {
+  return OPERATION_CACHE_TIERS[operation] ?? DEFAULT_CACHE_TIER;
+}
+
+/**
+ * Stamped on every cacheable response at store time, and the ONLY staleness
+ * signal the read path consults.
+ *
+ * The Cache API does synthesize `Date`/`Age`, but relying on that would couple
+ * correctness to runtime-specific header synthesis that the tests cannot
+ * reproduce. An explicit millisecond stamp we wrote ourselves is unambiguous.
+ * It is left on the client-facing response too — it is harmless, and it makes
+ * "was this a cache hit, and how old" answerable from a browser devtools panel.
+ */
+const CACHE_TIMESTAMP_HEADER = 'X-Proxy-Cached-At';
+
+/**
+ * Age of a cached entry in seconds, or `null` when it carries no usable stamp.
+ *
+ * A missing or unparseable stamp is deliberately NOT treated as fresh: the
+ * caller maps `null` onto the stale path, so such an entry is still served
+ * instantly but is refreshed behind the request. Fail safe, never fail fresh.
+ */
+function cachedAgeSeconds(cached: Response): number | null {
+  const raw = cached.headers?.get?.(CACHE_TIMESTAMP_HEADER);
+  const stampedAt = raw === null || raw === undefined ? Number.NaN : Number(raw);
+  if (!Number.isFinite(stampedAt)) return null;
+  return (Date.now() - stampedAt) / 1000;
 }
 
 const MAX_BODY_BYTES = 100_000; // 100 KB
@@ -385,6 +447,9 @@ async function documentMatchesPin(env: Env, operation: string, queryDoc: string)
 
 // ─── Proxy handler ────────────────────────────────────────────────────────────
 
+/** Explicit "swallow it" handler, so background failures are never unhandled. */
+function noop(): void {}
+
 export async function handleGraphqlProxy(c: Context<{ Bindings: Env }>): Promise<Response> {
   const clientIp = c.req.header('CF-Connecting-IP') ?? c.req.header('x-forwarded-for') ?? 'unknown';
 
@@ -435,24 +500,30 @@ export async function handleGraphqlProxy(c: Context<{ Bindings: Env }>): Promise
   }
 
   const isCacheable = Boolean(operationHint && CACHEABLE_OPERATIONS.has(operationHint));
+  const tier = cacheTierFor(operationHint);
 
-  // Check edge cache first — cache hits avoid upstream entirely
   const cache = caches.default;
-  let cacheKey: Request | undefined;
-  if (isCacheable) {
-    const key = await buildCacheKey(c.req.url, bodyStr);
-    cacheKey = new Request(`https://cache.internal/${key}`, { method: 'GET' });
-    const cached = await cache.match(cacheKey);
-    if (cached) return cached;
-  }
-
-  // Singleflight: if an identical cacheable request is already in-flight,
-  // piggyback on it instead of issuing a duplicate upstream fetch.
+  // One SHA-256 of the body, used for BOTH the cache key and the singleflight
+  // key (they are the same string by design). This used to be digested twice.
   const flightKey = isCacheable ? await buildCacheKey(c.req.url, bodyStr) : null;
-  if (flightKey) {
-    const pending = inflight.get(flightKey);
-    if (pending) return (await pending).clone();
-  }
+  const cacheKey = flightKey
+    ? new Request(`https://cache.internal/${flightKey}`, { method: 'GET' })
+    : undefined;
+
+  /**
+   * Hand work to the runtime to finish after the response is sent.
+   *
+   * Guarded: Hono THROWS when a handler runs without an ExecutionContext, and
+   * neither a cache write nor a background refresh may be the reason a request
+   * fails. The fallback still attaches handlers so nothing rejects unhandled.
+   */
+  const scheduleBackgroundWork = (work: Promise<unknown>): void => {
+    try {
+      c.executionCtx?.waitUntil?.(work);
+    } catch {
+      void work.then(noop, noop);
+    }
+  };
 
   const doFetch = async (): Promise<Response> => {
     // Charged here, not at the top of the handler: only a call that actually
@@ -489,13 +560,21 @@ export async function handleGraphqlProxy(c: Context<{ Bindings: Env }>): Promise
     }
 
     const responseBody = await upstream.text();
-    const response = new Response(responseBody, {
-      status: upstream.status,
-      headers: {
-        'Content-Type': 'application/json',
-        'Cache-Control': isCacheable ? `public, max-age=${cacheTtlFor(operationHint)}` : 'no-store',
-      },
-    });
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      // max-age is ttl + swr so the entry SURVIVES into its stale window
+      // instead of being evicted the moment it stops being fresh; the
+      // X-Proxy-Cached-At check below is what separates fresh from stale.
+      // INTERNAL ONLY: the global middleware in index.ts rewrites the
+      // browser-facing Cache-Control to no-store (POST /graphql gets no cache
+      // tier), so this header exists purely to drive Cache API freshness on the
+      // clone taken before that middleware runs.
+      'Cache-Control': isCacheable
+        ? `public, max-age=${tier.ttl + tier.swr}, stale-while-revalidate=${tier.swr}`
+        : 'no-store',
+    };
+    if (isCacheable) headers[CACHE_TIMESTAMP_HEADER] = String(Date.now());
+    const response = new Response(responseBody, { status: upstream.status, headers });
 
     // Store successful cacheable responses — but never cache a report detail that
     // came back with no fights. A still-processing log reports an empty `fights`
@@ -509,23 +588,82 @@ export async function handleGraphqlProxy(c: Context<{ Bindings: Env }>): Promise
     if (storeInCache && operationHint === 'getLatestReports') {
       storeInCache = latestReportsResponseHasData(responseBody);
     }
+    // A response that fails a guard (or is not a 200) is simply not stored.
+    // Under stale-while-revalidate that no longer means "next request
+    // refetches" — it means the EXISTING stale entry keeps being served until
+    // it ages out. That is deliberate: a degraded upstream should not be able
+    // to replace a good cached answer with an empty one. The `max-age` of
+    // ttl + swr is what bounds it, so a permanently-broken upstream stops
+    // being papered over once the entry expires out of the Cache API entirely.
+    //
+    // Note `latestReportsResponseHasData` also refuses a genuinely EMPTY page,
+    // so a zero-row Latest Reports answer is never stored and therefore misses
+    // every time. That predates this change and is unaffected by it: with no
+    // entry there is nothing to serve stale, so those requests keep taking the
+    // normal singleflight-and-fetch path.
     if (storeInCache && cacheKey) {
-      c.executionCtx.waitUntil(cache.put(cacheKey, response.clone()));
+      scheduleBackgroundWork(cache.put(cacheKey, response.clone()));
     }
 
     return response;
   };
 
-  if (flightKey) {
+  /**
+   * Run `doFetch` under the singleflight map, or join the call already running.
+   *
+   * The map entry is removed when the fetch SETTLES rather than when the
+   * originating request returns: a background revalidation outlives its
+   * request, so tying removal to the caller would either leave a settled entry
+   * pinned in the map or delete an entry a later caller is still joining.
+   */
+  const startUpstreamFlight = (): Promise<Response> => {
+    if (!flightKey) return doFetch();
+    const pending = inflight.get(flightKey);
+    if (pending) return pending;
+
+    const key = flightKey;
     const promise = doFetch();
-    inflight.set(flightKey, promise);
-    try {
-      const response = await promise;
-      return response.clone();
-    } finally {
-      inflight.delete(flightKey);
+    inflight.set(key, promise);
+    void promise.then(
+      () => {
+        if (inflight.get(key) === promise) inflight.delete(key);
+      },
+      () => {
+        if (inflight.get(key) === promise) inflight.delete(key);
+      },
+    );
+    return promise;
+  };
+
+  /**
+   * Refresh a stale entry behind the request that was just served from it.
+   *
+   * Everything here is swallowed. The client already has a body, so a 429 from
+   * the per-IP bucket (charged inside doFetch, because this DOES reach
+   * upstream), a network error, or a guard rejection must never surface — and
+   * must never delete or replace the stale entry that is still serving.
+   */
+  const revalidateStaleEntry = (): void => {
+    if (!flightKey) return;
+    // Concurrent stale hits in this isolate collapse onto the one refresh.
+    if (inflight.has(flightKey)) return;
+    scheduleBackgroundWork(startUpstreamFlight().then(noop, noop));
+  };
+
+  if (cacheKey) {
+    const cached = await cache.match(cacheKey);
+    if (cached) {
+      // A `null` age (missing or unparseable stamp) counts as STALE, never as
+      // fresh: the entry still goes out instantly, it just refreshes behind.
+      const age = cachedAgeSeconds(cached);
+      if (age === null || age > tier.ttl) revalidateStaleEntry();
+      // Return a copy so the cache-derived body is never consumed or mutated,
+      // matching the REST middleware in index.ts.
+      return new Response(cached.body, cached);
     }
   }
 
-  return doFetch();
+  const response = await startUpstreamFlight();
+  // Cloned because a singleflight joiner shares one Response instance.
+  return flightKey ? response.clone() : response;
 }
