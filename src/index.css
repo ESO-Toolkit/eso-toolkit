@@ -380,6 +380,18 @@ html[data-perf='low'] .ashell-bar {
   padding: 96px 40px 32px;
 }
 
+/* The inline variant renders as AppLayout's <Outlet/>, so the 64px `pt: 8` the
+   standalone 96px accounted for is already supplied by the layout Box above it;
+   applying it again pushed the whole skeleton 64px below where the real page
+   lands. Inline only owns Latest Reports' own `py: 4` (32px).
+   Scoped to sm+ because AppLayout's `pt` is 0 on xs, where the xs padding below
+   is already correct for both phases. */
+@media (min-width: 600px) {
+  .ashell--inline .ashell-page {
+    padding-top: 32px;
+  }
+}
+
 .ashell-card {
   box-sizing: border-box;
   padding: 32px;
