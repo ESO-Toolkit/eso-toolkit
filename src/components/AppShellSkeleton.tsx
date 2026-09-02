@@ -22,6 +22,16 @@ import appShellSkeletons from '../constants/app-shell-skeleton.json';
  * (preview builds are served from a non-root base the prerender script does not
  * rewrite).
  *
+ * The markup carries the page's real heading text and an inline <svg> because
+ * Chrome's First Contentful Paint does not count background-coloured boxes: a
+ * skeleton of empty <div>s paints but never fires FCP, so the metric waits for
+ * React's first text regardless of how early the shell appears.
+ *
+ * That text stays behind `aria-hidden` and is deliberately NOT a heading
+ * element. It is a placeholder for content arriving moments later, so
+ * announcing it would mean a screen reader reads "Latest Reports" from a node
+ * React immediately destroys and re-creates; the live page owns the real <h1>.
+ *
  * Styling lives in `src/index.css` — see the `.ashell` block there.
  */
 
