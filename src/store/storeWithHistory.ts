@@ -4,6 +4,7 @@ import {
   ThunkAction,
   Action,
   ThunkDispatch,
+  type Reducer,
 } from '@reduxjs/toolkit';
 import {
   persistStore,
@@ -20,7 +21,11 @@ import storage from 'redux-persist/lib/storage';
 
 import type { EsoLogsClient } from '@/esologsClient';
 
-import buildEditorReducer from '../features/build-editor/store/buildEditorSlice';
+// Type-only import — erased at build time, so the build-editor slice's data
+// graph (class-mastery tables, gear oracle, ESO static data) stays out of the
+// entry bundle. The reducer itself arrives at runtime via injectReducer(),
+// called from the /build-editor route's React.lazy factory in App.tsx.
+import type { BuildEditorState } from '../features/build-editor/store/buildEditorSlice';
 import loadoutReducer from '../features/loadout-manager/store/loadoutSlice';
 
 import { companionReducer } from './companion';
@@ -36,9 +41,14 @@ import uiReducer, { UIState } from './ui/uiSlice';
 import userReportsReducer from './user_reports';
 import { workerResultsReducer } from './worker_results';
 
-// Root reducer - adding essential slices
-const rootReducer = combineReducers({
-  buildEditor: buildEditorReducer,
+/**
+ * Reducers present in the store from the very first dispatch.
+ *
+ * Every key the persist whitelist covers MUST live here. A lazily injected
+ * slice is absent while REHYDRATE runs, so redux-persist would drop its
+ * restored value on the floor.
+ */
+const staticReducers = {
   companion: companionReducer,
   dashboard: dashboardReducer,
   events: eventsReducer,
@@ -52,7 +62,24 @@ const rootReducer = combineReducers({
   ui: uiReducer,
   userReports: userReportsReducer,
   workerResults: workerResultsReducer,
-});
+};
+
+/**
+ * Slices added to the store at runtime by `injectReducer()`.
+ *
+ * NOTE — these keys are declared NON-OPTIONAL on RootState even though they are
+ * genuinely absent until their route injects them. The type deliberately lies
+ * about runtime, in exchange for a contained diff: the ~89 files that consume
+ * RootState keep compiling unchanged. The cost is that TypeScript will NOT flag
+ * a read of a not-yet-injected slice, so any imperative
+ * `store.getState().buildEditor` from OUTSIDE the /build-editor route tree has
+ * to guard for undefined itself.
+ */
+interface InjectedState {
+  buildEditor: BuildEditorState;
+}
+
+const staticRootReducer = combineReducers(staticReducers);
 
 // Transform to exclude report/fight-specific UI state from persistence
 // Only persist user preferences, not report-specific selections
@@ -113,8 +140,9 @@ export const uiTransform = createTransform<UIState, Partial<UIState>>(
   { whitelist: ['ui'] },
 );
 
-// Define RootState type from the root reducer (before persist config)
-export type RootState = ReturnType<typeof rootReducer>;
+// Define RootState type from the root reducer (before persist config).
+// Injected slices are folded in structurally — see InjectedState above.
+export type RootState = ReturnType<typeof staticRootReducer> & InjectedState;
 
 // Persist config
 const persistConfig = {
@@ -124,7 +152,29 @@ const persistConfig = {
   whitelist: ['ui', 'loadout', 'dashboard', 'savedRosters', 'savedBuilds'], // Persist essential data, loadout, saved rosters, and saved builds
 };
 
-const persistedReducer = persistReducer<RootState>(persistConfig, rootReducer);
+const injectedReducers: Partial<Record<keyof InjectedState, Reducer>> = {};
+
+// The reducer the store actually runs. `injectReducer()` swaps this in place.
+let combinedReducer = staticRootReducer as unknown as Reducer<RootState>;
+
+/**
+ * A stable indirection between persistReducer and combineReducers.
+ *
+ * persistReducer keeps `_persistoid` and `_paused` in a CLOSURE that is only
+ * armed by the one-time PERSIST action dispatched at boot by persistStore().
+ * Re-wrapping the root reducer in a FRESH persistReducer on each injection
+ * therefore yields an instance with `_persistoid === null` and `_paused === true`,
+ * which silently stops every subsequent write to storage. In-memory state and
+ * `_persist.rehydrated` still look completely correct, so the breakage is
+ * invisible to any test that only inspects the store.
+ *
+ * Holding ONE persistReducer instance over this indirection means an injection
+ * swaps only the inner combineReducers, and persistence keeps working.
+ * Regression-tested in storeWithHistory.injectReducer.test.ts.
+ */
+const dynamicRootReducer: Reducer<RootState> = (state, action) => combinedReducer(state, action);
+
+const persistedReducer = persistReducer<RootState>(persistConfig, dynamicRootReducer);
 
 // Define thunk extra argument interface
 export interface ThunkExtraArgument {
@@ -183,6 +233,39 @@ export const initializeStoreWithClient = (esoLogsClient: EsoLogsClient): AppStor
 
 // Export store getter to always return current store instance
 export const getStore = (): AppStore => store;
+
+/**
+ * Add a reducer to the root store at runtime.
+ *
+ * Idempotent: re-injecting the same key with the same reducer is a no-op, so
+ * concurrent lazy route factories (or a route the user visits twice) cannot
+ * churn the store. Safe to call before React mounts.
+ *
+ * Injected reducers are held in a module-level registry that
+ * `createStoreWithClient` reads through `combinedReducer`, so a store rebuilt
+ * later by `initializeStoreWithClient()` still carries everything injected so
+ * far rather than silently losing it.
+ */
+export const injectReducer = <K extends keyof InjectedState>(
+  key: K,
+  reducer: Reducer<InjectedState[K]>,
+): void => {
+  if (injectedReducers[key] === (reducer as Reducer)) return;
+  injectedReducers[key] = reducer as Reducer;
+  combinedReducer = combineReducers({
+    ...staticReducers,
+    ...injectedReducers,
+  }) as unknown as Reducer<RootState>;
+  // Deliberately the SAME persistReducer instance (see dynamicRootReducer).
+  // This dispatches redux's REPLACE action, which materialises the newly
+  // injected slice's initial state.
+  //
+  // The cast is only needed because `AppStore` is `ReturnType<typeof
+  // configureStore>`, i.e. a store whose state is `unknown`; `replaceReducer`
+  // therefore asks for `Reducer<unknown>`. This is the exact reducer the store
+  // was built with.
+  store.replaceReducer(persistedReducer as unknown as Reducer<unknown>);
+};
 
 export const persistor = persistStore(store);
 

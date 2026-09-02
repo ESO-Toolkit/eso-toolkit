@@ -47,7 +47,7 @@ import { AppLayout } from './layouts/AppLayout';
 import { Banned } from './pages/Banned';
 import { NotFound } from './pages/NotFound';
 import { ReduxThemeProvider } from './ReduxThemeProvider';
-import store, { persistor } from './store/storeWithHistory';
+import store, { injectReducer, persistor } from './store/storeWithHistory';
 import { initializeAnalytics } from './utils/analytics';
 import { getBaseUrl, getRoutePathname } from './utils/envUtils';
 import { initializeErrorTracking, addBreadcrumb } from './utils/errorTracking';
@@ -246,8 +246,19 @@ const RosterHubPage = React.lazy(() =>
   })),
 );
 
+// The `buildEditor` slice is injected here rather than living in the static
+// root reducer, which keeps its data graph (class-mastery tables, gear oracle,
+// ESO static data) out of the entry bundle. Suspense already covers this
+// promise, so the reducer is guaranteed to be in the store before
+// BuildEditorPage — and the imperative `store.getState().buildEditor` reads
+// inside its subtree — ever render.
 const BuildEditorPage = React.lazy(() =>
-  import('./pages/BuildEditorPage').then((module) => ({ default: module.BuildEditorPage })),
+  Promise.all([
+    import('./pages/BuildEditorPage'),
+    import('./features/build-editor/store/buildEditorSlice').then((module) =>
+      injectReducer('buildEditor', module.default),
+    ),
+  ]).then(([module]) => ({ default: module.BuildEditorPage })),
 );
 
 const BuildViewPage = React.lazy(() =>
