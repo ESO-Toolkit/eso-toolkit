@@ -209,3 +209,270 @@ html[data-perf='low'][data-color-scheme='dark'] .glass-dialog .MuiDialog-paper {
   background: #0f172a !important;
   background-image: none !important;
 }
+
+/* ---------------------------------------------------------------------------
+   Prerendered app-shell skeleton.
+
+   `scripts/generate-static-routes.cjs` injects the markup in
+   `src/constants/app-shell-skeleton.json` into `<div id="root">` for routes
+   that declare a `shell` in route-meta.json, so the first paint is a plausible
+   page instead of a blank body. The same JSON is rendered by
+   `src/components/AppShellSkeleton.tsx` as the PersistGate / route Suspense
+   fallback, so React's first commit reproduces the same picture and the user
+   sees one swap (skeleton -> content) rather than skeleton -> spinner ->
+   content.
+
+   Constraints this CSS exists to satisfy:
+   - It must live here, not in an MUI `sx`. Vite extracts this file into a
+     render-blocking <link> that every prerendered shell already carries; every
+     MUI style is injected by emotion at runtime and is therefore unavailable at
+     FCP.
+   - No url()/asset references: preview builds are served from
+     /dev-previews/pr-N/ and the prerender script does not rewrite the base.
+   - Colours are literals mirroring the dark tokens in ReduxThemeProvider
+     (bg #0b1220, panel #0f172a, border #1f2937) because no theme exists yet.
+     Dark is the default to match <meta name="theme-color">; the light override
+     follows the same system preference usePersistentDarkMode falls back to.
+   --------------------------------------------------------------------------- */
+.ashell {
+  --ashell-bg: #0b1220;
+  --ashell-panel: #0f172a;
+  --ashell-border: #1f2937;
+  --ashell-bar: #1e293b;
+  min-height: 100vh;
+  background: var(--ashell-bg);
+  overflow: hidden;
+}
+
+/* Route-level Suspense fallback: already inside AppLayout, so it must not
+   repaint the page background or claim a full viewport of its own. */
+.ashell--inline {
+  min-height: 0;
+  background: none;
+}
+
+@media (prefers-color-scheme: light) {
+  .ashell {
+    --ashell-bg: #f8fafc;
+    --ashell-panel: #ffffff;
+    --ashell-border: #bcd9ff;
+    --ashell-bar: #e2e8f0;
+  }
+}
+
+.ashell-bar {
+  background: var(--ashell-bar);
+  border-radius: 4px;
+  animation: ashell-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes ashell-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ashell-bar {
+    animation: none;
+  }
+}
+
+/* Same opt-out MUI's Skeleton gets above: a frozen placeholder reads as a hang,
+   so keep pulsing on low tier, just slower. */
+html[data-perf='low'] .ashell-bar {
+  --perf-anim-duration: 2s;
+  --perf-anim-iteration: infinite;
+}
+
+.ashell-grow {
+  flex: 1 1 auto;
+}
+
+/* Header strip — mirrors HeaderBar's static AppBar: lg Container, 64px Toolbar. */
+.ashell-header {
+  border-bottom: 1px solid var(--ashell-border);
+}
+
+.ashell-header-inner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-sizing: border-box;
+  max-width: 1200px;
+  min-height: 64px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.ashell-logo {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: var(--ashell-bar);
+}
+
+.ashell-brand {
+  width: 118px;
+  height: 18px;
+}
+
+.ashell-nav {
+  width: 76px;
+  height: 20px;
+}
+
+.ashell-avatar {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--ashell-bar);
+}
+
+/* Content column — AppLayout's md Container (pt 8 on sm+) with Latest Reports'
+   own py 4 Container nested inside it. */
+.ashell-page {
+  box-sizing: border-box;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 96px 40px 32px;
+}
+
+.ashell-card {
+  box-sizing: border-box;
+  padding: 24px;
+  border: 1px solid var(--ashell-border);
+  border-radius: 12px;
+  background: var(--ashell-panel);
+}
+
+.ashell-tile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  padding: 16px 20px;
+  border: 1px solid var(--ashell-border);
+  border-radius: 8px;
+}
+
+.ashell-tile-icon {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 11px;
+  background: var(--ashell-bar);
+}
+
+.ashell-tile-text {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ashell-eyebrow {
+  width: 88px;
+  height: 10px;
+}
+
+.ashell-heading {
+  width: 190px;
+  height: 22px;
+}
+
+.ashell-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 12px 16px;
+  border: 1px solid var(--ashell-border);
+  border-radius: 8px;
+}
+
+.ashell-search {
+  flex: 0 1 260px;
+  height: 32px;
+  border-radius: 999px;
+}
+
+.ashell-chip {
+  flex: none;
+  width: 92px;
+  height: 28px;
+  border-radius: 999px;
+}
+
+.ashell-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.ashell-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--ashell-border);
+}
+
+.ashell-row:last-child {
+  border-bottom: none;
+}
+
+.ashell-row-title {
+  flex: 0 1 34%;
+  height: 16px;
+}
+
+.ashell-row-meta {
+  flex: none;
+  width: 110px;
+  height: 16px;
+}
+
+.ashell-row-date {
+  flex: none;
+  width: 62px;
+  height: 16px;
+}
+
+.ashell-row-tag {
+  flex: none;
+  width: 60px;
+  height: 22px;
+  border-radius: 6px;
+}
+
+@media (max-width: 899px) {
+  .ashell-nav {
+    display: none;
+  }
+
+  .ashell-header-inner {
+    padding: 0 16px;
+  }
+}
+
+@media (max-width: 599px) {
+  .ashell-page {
+    padding: 16px;
+  }
+
+  .ashell-card {
+    padding: 16px;
+    border-radius: 8px;
+  }
+
+  .ashell-chip,
+  .ashell-row-meta,
+  .ashell-row-date {
+    display: none;
+  }
+}

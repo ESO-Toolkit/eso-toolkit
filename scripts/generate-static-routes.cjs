@@ -24,6 +24,26 @@ const SITE_ORIGIN = 'https://esotk.com';
 const routeMeta = require('../src/constants/route-meta.json');
 const PRIVATE_FRAGMENT_ROUTES = ['/kalpa/support'];
 
+// App-shell skeletons. Every prerendered shell used to ship a byte-identical
+// EMPTY `<div id="root">`, so first paint was whatever JS boot produced —
+// nothing. A route that names a `shell` in route-meta.json gets that skeleton
+// baked into #root here.
+//
+// The markup is JSON (not JSX, not a template in this file) because it has two
+// consumers with nothing in common: this script, which is plain CommonJS node
+// with no bundler, and src/components/AppShellSkeleton.tsx, which re-renders the
+// SAME string as React's first commit so the skeleton -> content transition is a
+// single swap. Sharing the literal is what keeps them from drifting.
+//
+// Two hard rules for anything added to that JSON:
+//   - NO <script>. The meta CSP's inline-script hashes are stamped by the Vite
+//     plugin BEFORE this script runs and are not recomputed here, so an injected
+//     inline script would simply be blocked.
+//   - NO url()/src/href references. Preview builds are served from
+//     /dev-previews/pr-<N>/ and this script knows nothing about the base path,
+//     so any asset URL would 404. Pure CSS shapes sidestep that entirely.
+const shellSkeletons = require('../src/constants/app-shell-skeleton.json');
+
 // The /build-leaderboard sub-routes (7 pooled class boards + 14 per-encounter
 // boards) come from their own JSON because each entry also carries the encounter
 // id / class filter the page needs at runtime. Requiring it here keeps the
@@ -57,6 +77,12 @@ const staticRoutes = Object.entries({ ...routeMeta, ...leaderboardRouteMeta })
     if (!meta.description) {
       throw new Error(`Prerendered route is missing a description: ${routePath}`);
     }
+    if (meta.shell !== undefined && !shellSkeletons[meta.shell]) {
+      throw new Error(
+        `Unknown app-shell skeleton "${meta.shell}" for ${routePath}. ` +
+          `Known: ${Object.keys(shellSkeletons).join(', ') || '(none)'}`,
+      );
+    }
     return {
       path: routePath.slice(1),
       title: meta.title,
@@ -64,6 +90,7 @@ const staticRoutes = Object.entries({ ...routeMeta, ...leaderboardRouteMeta })
       noindex: meta.noindex === true,
       image: meta.image,
       imageAlt: meta.imageAlt,
+      shell: meta.shell,
     };
   });
 
@@ -78,6 +105,15 @@ for (const requiredRoute of PRIVATE_FRAGMENT_ROUTES) {
     console.error(
       `Private fragment route must be prerendered so its payload never reaches the 404 redirect: ${requiredRoute}`,
     );
+    process.exit(1);
+  }
+}
+
+// A `shell` on a runtime-only route would be dead config: no static file is
+// emitted for it, so the skeleton would never paint.
+for (const [routePath, meta] of Object.entries(routeMeta)) {
+  if (meta.shell && !meta.prerender) {
+    console.error(`Route declares an app-shell skeleton but is not prerendered: ${routePath}`);
     process.exit(1);
   }
 }
@@ -197,6 +233,36 @@ for (const route of staticRoutes) {
       '</head>',
       '  <meta name="robots" content="noindex,nofollow" />\n</head>',
     );
+  }
+
+  if (route.shell) {
+    const skeleton = shellSkeletons[route.shell];
+    // `aria-hidden` because this is decorative scaffolding, not content: the
+    // real page announces itself once React commits. Class names and structure
+    // must match AppShellSkeleton.tsx — they do, because both read this JSON.
+    const markup = `<div class="ashell" aria-hidden="true">${skeleton.header}${skeleton.content}</div>`;
+    if (/<script/i.test(markup)) {
+      console.error(
+        `App-shell skeleton "${route.shell}" contains a <script>, which the meta CSP would block ` +
+          '(its inline-script hashes are stamped before this script runs).',
+      );
+      process.exit(1);
+    }
+    const withSkeleton = routeShell.replace(
+      '<div id="root"></div>',
+      `<div id="root">${markup}</div>`,
+    );
+    // The root placeholder is the one thing this injection depends on, and it
+    // comes out of Vite's HTML transform — a minifier change could reshape it
+    // and turn this into a silent no-op. Fail loudly instead.
+    if (withSkeleton === routeShell) {
+      console.error(
+        `Could not inject the "${route.shell}" app-shell skeleton into /${route.path}: ` +
+          'build/index.html no longer contains the exact string <div id="root"></div>.',
+      );
+      process.exit(1);
+    }
+    routeShell = withSkeleton;
   }
 
   const routeDirectory = path.join(buildDirectory, route.path);

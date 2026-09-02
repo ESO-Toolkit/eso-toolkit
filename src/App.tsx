@@ -8,6 +8,7 @@ import { PersistGate } from 'redux-persist/integration/react';
 import { ScribingSimulatorSkeleton } from '@features/scribing/presentation/components/ScribingSimulatorSkeleton';
 
 import { AnalyticsListener } from './components/AnalyticsListener';
+import { AppShellSkeleton, getAppShellVariant } from './components/AppShellSkeleton';
 import { BuildEditorSkeleton } from './components/BuildEditorSkeleton';
 import { CalculatorTabsSkeleton } from './components/CalculatorTabsSkeleton';
 import { CookieConsent } from './components/CookieConsent';
@@ -340,6 +341,24 @@ const ReportFightsLoadingFallback: React.FC = () => (
   </DelayedFallback>
 );
 
+// Boot fallback for redux-persist rehydration. This is the FIRST thing React
+// commits, and `createRoot` (not `hydrateRoot`) wipes whatever the prerendered
+// shell painted — so on a route that ships a baked skeleton, rendering the
+// spinner here would produce skeleton -> spinner -> content. Re-rendering the
+// same skeleton makes that first commit invisible. `getRoutePathname` is used
+// rather than the router because PersistGate sits above BrowserRouter, and it
+// strips the deploy base so /dev-previews/pr-N/latest-reports still matches.
+const BootFallback: React.FC = () => {
+  const variant = getAppShellVariant(getRoutePathname());
+  return variant ? <AppShellSkeleton variant={variant} withHeader /> : <LoadingFallback />;
+};
+
+// Latest Reports specific loading fallback. Deliberately NOT wrapped in
+// DelayedFallback: the skeleton is already on screen from the prerendered
+// shell, so delaying would blank it back out. LatestReports renders its own
+// MUI ReportsSkeleton once its data request is in flight.
+const LatestReportsLoadingFallback: React.FC = () => <AppShellSkeleton variant="latest-reports" />;
+
 // Calculator specific loading fallback. The page defaults to the Stats tab, but a
 // `#ultimate` deep-link opens straight onto the Ultimate tab — match the skeleton
 // to the tab the page is about to render so the layout doesn't swap on mount.
@@ -482,7 +501,7 @@ const App: React.FC = () => {
   return (
     <LoggerProvider config={loggerConfig}>
       <ReduxProvider store={store}>
-        <PersistGate loading={<LoadingFallback />} persistor={persistor}>
+        <PersistGate loading={<BootFallback />} persistor={persistor}>
           <PerfTierProvider>
             <ReduxThemeProvider>
               <EsoLogsClientProvider>
@@ -747,7 +766,7 @@ const AppRoutes: React.FC = () => {
               path="/latest-reports"
               element={
                 <ErrorBoundary>
-                  <Suspense fallback={<LoadingFallback />}>
+                  <Suspense fallback={<LatestReportsLoadingFallback />}>
                     <LatestReports />
                   </Suspense>
                 </ErrorBoundary>

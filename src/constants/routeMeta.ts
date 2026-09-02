@@ -36,6 +36,15 @@ export interface RouteMeta {
   readonly imageAlt?: string;
   /** Emit a real static shell but keep the transactional route out of search. */
   readonly noindex?: boolean;
+  /**
+   * Key into `app-shell-skeleton.json`. When set, the prerender script bakes
+   * that skeleton into `<div id="root">` so the shell paints a plausible page at
+   * FCP instead of a blank body. Typed as a plain string because TypeScript
+   * widens JSON string literals; `generate-static-routes.cjs` fails the build on
+   * an unknown key, and `AppShellSkeleton.test.tsx` asserts the runtime map
+   * agrees with this JSON.
+   */
+  readonly shell?: string;
 }
 
 /** Every route path known to the metadata map, as a literal union. */
