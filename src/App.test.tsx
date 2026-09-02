@@ -11,6 +11,8 @@ jest.mock('./store/storeWithHistory', () => {
   return {
     __esModule: true,
     default: store,
+    // App.tsx calls this from the /build-editor lazy factory.
+    injectReducer: jest.fn(),
     persistor: {
       subscribe: jest.fn((cb) => {
         cb();
