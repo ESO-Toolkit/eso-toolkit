@@ -57,6 +57,16 @@ export const DrawingHud: React.FC<DrawingHudProps> = ({
     <Box
       role="toolbar"
       aria-label="Drawing controls"
+      // DELIBERATELY NOT `overlayPillSurface`: that token is a fixed dark-navy badge by design
+      // (see its doc — "regardless of light/dark mode, a badge over the 3D scene, not a page
+      // surface"), which is right for a passive read-only chip but wrong here. This toolbar hosts
+      // real interactive IconButtons (Undo/Redo/Cancel/Done) that get their icon color from MUI's
+      // mode-dependent `action.active` default rather than an explicit override, so forcing them
+      // onto a permanently-dark fill would sink their contrast to near-invisible in light mode
+      // (dark-on-dark icons). This sx already reads `theme.palette.mode` itself — unlike the
+      // fixed-black dialects the audit flagged — so it already avoids the "stays black in light
+      // mode" bug the shared tokens exist to fix; it just does so with its own bespoke pill
+      // instead of the badge token, on purpose.
       sx={(theme) => ({
         display: 'flex',
         alignItems: 'center',

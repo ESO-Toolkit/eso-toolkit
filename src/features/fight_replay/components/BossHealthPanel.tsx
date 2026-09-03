@@ -25,6 +25,7 @@ import {
   TimestampPositionLookup,
   getActorPositionsByIdAtClosestTimestamp,
 } from '../../../workers/calculations/CalculateActorPositions';
+import { REPLAY_Z, overlayPanelSurface } from '../constants/replayDesign';
 
 interface BossHealthPanelProps {
   lookup: TimestampPositionLookup | null;
@@ -247,7 +248,8 @@ export const BossHealthPanel: React.FC<BossHealthPanelProps> = ({
           ? { maxHeight: 'calc(100vh - 64px - 96px - 44px)', overflow: 'hidden' }
           : null),
         pointerEvents: 'none',
-        zIndex: 3,
+        // Persistent corner HUD — see REPLAY_Z's module doc for the full rung ordering.
+        zIndex: REPLAY_Z.panel,
       }}
     >
       <Stack spacing={isMobile ? 0.75 : 1}>
@@ -259,26 +261,21 @@ export const BossHealthPanel: React.FC<BossHealthPanelProps> = ({
               px: 1.5,
               // Tighter vertical padding on mobile so a multi-boss stack fits the short viewport.
               py: isMobile ? 0.5 : 1,
-              backgroundColor: isMobile ? 'rgba(12, 18, 32, 0.94)' : 'rgba(15, 23, 42, 0.82)',
-              // Mobile drops the backdrop blur (the dark drop-shadow halo that read as "darkness
-              // around the frame", and a costly full-screen blur) BUT keeps the element on its own
-              // GPU compositing layer via `translateZ(0)`. That layer is the important part: this
-              // pill's fill mutates `width`/`backgroundColor` every frame (rAF loop below), and
-              // without a layer those per-frame paints recomposite the translucent pill against the
-              // live WebGL canvas underneath — which is what tanked the iOS frame rate. Desktop gets
-              // the same layer for free from its backdrop-filter, which is why it stayed smooth.
-              ...(isMobile
-                ? {
-                    border: `1px solid ${theme.palette.primary.main}33`,
-                    transform: 'translateZ(0)',
-                    willChange: 'transform',
-                  }
-                : {
-                    backdropFilter: 'blur(10px)',
-                    WebkitBackdropFilter: 'blur(10px)',
-                    border: `1px solid ${theme.palette.primary.main}29`,
-                    boxShadow: '0 8px 26px rgba(0,0,0,0.5)',
-                  }),
+              // Shared glass-panel token. `solid: isMobile` mirrors the old ternary's intent
+              // exactly: mobile drops the backdrop blur (the dark drop-shadow halo that read as
+              // "darkness around the frame", and a costly full-screen blur) but keeps the element
+              // on its own GPU compositing layer via `translateZ(0)` (baked into the `solid`
+              // variant) — this pill's fill mutates `width`/`backgroundColor` every frame (rAF
+              // loop below), and without a layer those per-frame paints recomposite the
+              // translucent pill against the live WebGL canvas underneath, which is what tanked
+              // the iOS frame rate. Desktop gets the same layer for free from its backdrop-filter,
+              // which is why it stayed smooth. Also fixes the light-mode bug: the old fixed
+              // `rgba(15,23,42,…)` / `rgba(12,18,32,…)` navy literals never read the theme, so
+              // this pill stayed dark even in light mode.
+              ...overlayPanelSurface(theme, { solid: isMobile }),
+              // willChange is a mobile-only perf hint (the frequently-mutated transform), not part
+              // of the shared token — kept as an explicit addition rather than folded in.
+              ...(isMobile ? { willChange: 'transform' } : null),
             }}
           >
             <Typography
