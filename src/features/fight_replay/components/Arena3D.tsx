@@ -15,6 +15,7 @@ import { Logger, LogLevel } from '../../../utils/logger';
 import { MapTimeline } from '../../../utils/mapTimelineUtils';
 import { getActorPositionAtClosestTimestamp } from '../../../workers/calculations/CalculateActorPositions';
 import { ARENA_HEIGHT, TRANSPORT_MOTION } from '../constants/replayDesign';
+import { useReplayShortcuts, type ReplayShortcutBinding } from '../hooks/useReplayShortcuts';
 import { MapMarkersState, ReplayMarker, ShapeKind, ShapeStyle } from '../types/mapMarkers';
 import { computeRobustActorFraming } from '../utils/cameraFraming';
 import { portalToFullscreen } from '../utils/fullscreenPortal';
@@ -38,6 +39,7 @@ import { MobileReplayControls } from './MobileReplayControls';
 import { PerformanceMonitorExternal } from './PerformanceMonitor/PerformanceMonitorExternal';
 import { PlayerListPanel } from './PlayerListPanel';
 import { ReplayErrorBoundary } from './ReplayErrorBoundary';
+import { ReplayGestureHint } from './ReplayGestureHint';
 import { ReplayZoomHint } from './ReplayZoomHint';
 
 // Create logger instance for Arena3D
@@ -62,6 +64,15 @@ const EMPTY_SELECTION: Set<number> = new Set();
 // 48 clears the hint's pill height (~32px) plus a small gap in both the default docked state and the
 // smallest reservedInset (fullscreen, bar hidden), where the chip's base position sits well below it.
 const AUTO_QUALITY_CHIP_LANE_GAP = 48;
+
+// Extra clearance (px) ReplayGestureHint adds ABOVE the auto-quality chip's own lane (i.e. above
+// `reservedInset + 12 + AUTO_QUALITY_CHIP_LANE_GAP`, the chip's own bottom). Stacking on top of
+// that lane — rather than picking an independent fixed number — means the gesture hint is
+// guaranteed clear of the chip AND (transitively, since the chip's own gap already clears it)
+// ReplayZoomHint's fixed bottom:96, in every reservedInset state (docked, collapsed-bar
+// fullscreen, mobile immersive with/without the transport visible). 44 mirrors
+// AUTO_QUALITY_CHIP_LANE_GAP's own reasoning: a ~30px pill plus a small gap.
+const GESTURE_HINT_LANE_GAP = 44;
 
 /**
  * Compute the default (fallback) camera position used whenever actor positions
@@ -496,36 +507,30 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
   // Keyboard shortcuts this component still owns: N (name tags) and J (locked-player stats, gated
   // on actually following someone). H (keyboard help) moved to FightReplay3D alongside the state
   // and trigger button lifted there — see the doc on the `showKeyboardHelp`/`onCloseKeyboardHelp`
-  // props above.
-  useEffect(() => {
-    // Guard against SSR or environments without window
-    if (typeof window === 'undefined') return;
-
-    const handleKeyPress = (event: KeyboardEvent): void => {
-      // Don't interfere with text input
-      if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) {
-        return;
-      }
-
+  // props above. Registered through the shared `useReplayShortcuts` hook (see its module doc for
+  // why N/J stay in THIS component rather than merging into FightReplay3D's listener: they need
+  // the toggle callbacks Arena3D already receives as controlled props).
+  const shortcutBindings = useMemo<ReplayShortcutBinding[]>(
+    () => [
       // N toggles the floating name cards on/off (declutter the crowd).
-      if (event.key.toLowerCase() === 'n') {
-        toggleNames();
-        event.preventDefault();
-      }
-
+      { keys: ['n'], onMatch: () => toggleNames() },
       // J toggles the locked-player stats panel on/off. Gated on actually following someone (read
       // via the always-current ref) so the key mirrors the on-screen button, which only appears
-      // while following — no flipping a hidden pref with zero feedback.
-      if (event.key.toLowerCase() === 'j' && followingActorIdRef.current != null) {
-        toggleStats();
-        event.preventDefault();
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyPress);
-    return () => window.removeEventListener('keydown', handleKeyPress);
+      // while following. Returning `false` when not following matches the pre-refactor behavior
+      // exactly: no toggle AND no preventDefault (the key press is left alone, not just silently
+      // swallowed).
+      {
+        keys: ['j'],
+        onMatch: () => {
+          if (followingActorIdRef.current == null) return false;
+          toggleStats();
+        },
+      },
+    ],
     // followingActorIdRef is a stable ref; the toggles are stable when controlled by the parent.
-  }, [followingActorIdRef, toggleNames, toggleStats]);
+    [followingActorIdRef, toggleNames, toggleStats],
+  );
+  useReplayShortcuts(shortcutBindings);
 
   // Calculate arena dimensions based on fight bounding box
   const arenaDimensions = useMemo(() => {
@@ -1325,6 +1330,21 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
             Hold map: add · drag marker: move · hold marker: edit
           </Typography>
         </Box>
+      )}
+
+      {/* Touch-gesture legend — the desktop KeyboardHelpPanel has no mobile equivalent, so a touch
+          user is never told drag/pinch/tap exist. One-time + auto-dismissing (see its module doc).
+          Suppressed during marker edit mode: that mode already shows its own gesture hint above,
+          and the two would otherwise stack in the same bottom-center lane. Stacks its OWN lane
+          directly above the auto-quality chip's (see GESTURE_HINT_LANE_GAP) so it can never
+          collide with that chip or (transitively) ReplayZoomHint regardless of reservedInset. */}
+      {mobileImmersive && (
+        <ReplayGestureHint
+          active={mobileImmersive && !markersEditMode}
+          bottomOffset={
+            (reservedInset ?? 80) + 12 + AUTO_QUALITY_CHIP_LANE_GAP + GESTURE_HINT_LANE_GAP
+          }
+        />
       )}
 
       {/* Auto-quality chip — shown only when the governor has silently reduced effects to hold

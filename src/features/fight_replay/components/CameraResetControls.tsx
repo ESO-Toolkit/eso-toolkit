@@ -1,9 +1,10 @@
 import { useThree } from '@react-three/fiber';
-import { useEffect } from 'react';
+import { useMemo } from 'react';
 import { type Controls, Vector3, Box3 } from 'three';
 
 import { getActorPositionAtClosestTimestamp } from '../../../workers/calculations/CalculateActorPositions';
 import type { TimestampPositionLookup } from '../../../workers/calculations/CalculateActorPositions';
+import { useReplayShortcuts, type ReplayShortcutBinding } from '../hooks/useReplayShortcuts';
 import { MIN_FRAME_DIAGONAL_UNITS } from '../utils/mapScaling';
 
 // OrbitControls exposes `target` (Vector3) + `update()` + the EventDispatcher API that three's
@@ -41,6 +42,12 @@ interface CameraResetControlsProps {
  * is outside the follow refill and the time-advance refill. OrbitControls `update()` does not
  * reliably emit 'change', so we dispatch it explicitly — RenderLoop listens for 'change' and
  * refills the render budget, so the reset actually paints while paused (mirrors CanvasWheelZoom).
+ *
+ * Registers R/G through the shared `useReplayShortcuts` hook (the same guard + dispatch contract
+ * Arena3D's N/J and FightReplay3D's transport keys use) rather than its own hand-rolled listener
+ * — see that hook's module doc for why R/G still live in their OWN call to it instead of being
+ * merged into FightReplay3D's: they need the three.js camera/controls handle from `useThree()`,
+ * which only exists inside <Canvas>.
  */
 export const CameraResetControls: React.FC<CameraResetControlsProps> = ({
   initialCameraPosition,
@@ -52,9 +59,10 @@ export const CameraResetControls: React.FC<CameraResetControlsProps> = ({
 }) => {
   const { camera, controls } = useThree();
 
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-
+  // Rebuilt only when a real dependency changes (see useReplayShortcuts' stability note) — same
+  // dependency list the old effect used, just expressed as a memoized bindings array instead of
+  // an effect body.
+  const bindings = useMemo<ReplayShortcutBinding[]>(() => {
     const applyAndRepaint = (orbit: OrbitLike, target: Vector3, position: Vector3): void => {
       camera.position.copy(position);
       if (orbit.target) {
@@ -111,16 +119,14 @@ export const CameraResetControls: React.FC<CameraResetControlsProps> = ({
       applyAndRepaint(orbit, center, position);
     };
 
-    const handleKeyDown = (event: KeyboardEvent): void => {
-      // Don't interfere with text input.
-      if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) {
-        return;
-      }
-      const key = event.key.toLowerCase();
-      if (key !== 'r' && key !== 'g') {
-        return;
-      }
-      if (!controls) return;
+    // Text-entry guard, defaultPrevented yield, and modifier-chord exclusion all now live in
+    // useReplayShortcuts — this closure only has to decide WHAT r/g do, not whether they should
+    // run at all.
+    const handleReset = (key: 'r' | 'g'): void | false => {
+      // No controls yet (mount race / unmounted canvas): do nothing, and — matching the old
+      // effect's behavior — return false so the shared hook does NOT preventDefault() a press
+      // that had no effect.
+      if (!controls) return false;
       const orbit = controls as OrbitLike;
 
       // Resetting the camera while locked makes no sense — the follow loop would re-grab it next
@@ -135,11 +141,12 @@ export const CameraResetControls: React.FC<CameraResetControlsProps> = ({
       } else {
         frameAll(orbit);
       }
-      event.preventDefault();
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    return [
+      { keys: ['r'], onMatch: () => handleReset('r') },
+      { keys: ['g'], onMatch: () => handleReset('g') },
+    ];
   }, [
     camera,
     controls,
@@ -150,6 +157,8 @@ export const CameraResetControls: React.FC<CameraResetControlsProps> = ({
     lookup,
     timeRef,
   ]);
+
+  useReplayShortcuts(bindings);
 
   return null;
 };

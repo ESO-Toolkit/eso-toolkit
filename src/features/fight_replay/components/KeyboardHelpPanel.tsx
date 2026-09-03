@@ -21,6 +21,7 @@ import { Box, Collapse, IconButton, Typography, useTheme } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 
 import { ARENA_HEIGHT, REPLAY_Z, overlayPanelSurface } from '../constants/replayDesign';
+import { REPLAY_SHORTCUTS, type ReplayShortcutGroup } from '../constants/replayShortcuts';
 
 /**
  * Shared size for every uppercase, letter-spaced label in this panel (the "Keyboard" header pill
@@ -39,41 +40,28 @@ interface KeyboardHelpPanelProps {
   onClose: () => void;
 }
 
-/** Shortcut table, grouped by the surface each group drives. */
-const SECTIONS: ReadonlyArray<{ title: string; rows: ReadonlyArray<readonly [string, string]> }> = [
-  {
-    title: 'Camera',
-    rows: [
-      ['WASD', 'Move camera'],
-      ['Shift', 'Sprint'],
-      ['Drag', 'Rotate · Ctrl+scroll: Zoom'],
-      ['R', 'Reset view · G: Frame all'],
-    ],
-  },
-  {
-    title: 'Playback',
-    rows: [
-      ['Space', 'Play / pause'],
-      ['← →', 'Seek ±1s · Shift: ±10s'],
-      ['+ −', 'Speed up / down'],
-      [', .', 'Frame step'],
-      ['< >', 'Prev / next event'],
-      ['I O', 'Set loop in / out · U: Clear'],
-      ['[ ]', 'Prev / next boss'],
-    ],
-  },
-  {
-    title: 'View',
-    rows: [
-      ['P', 'Player list'],
-      ['T', 'Player trails'],
-      ['N', 'Name cards'],
-      ['J', 'Player stats (when locked)'],
-      ['F', 'Fullscreen'],
-      ['C', 'Collapse controls'],
-    ],
-  },
-];
+// Display order for the three sections. The registry's rows are already grouped/ordered to match
+// (see replayShortcuts.ts's module doc), so this is only the section ORDER, not the row content.
+const GROUP_ORDER: readonly ReplayShortcutGroup[] = ['Camera', 'Playback', 'View'];
+
+/**
+ * Shortcut table, grouped by the surface each group drives — derived from the shared
+ * `REPLAY_SHORTCUTS` registry (constants/replayShortcuts.ts) instead of a private copy. That
+ * registry is now the ONLY place the key → description text is written down; this panel, the
+ * physical `useReplayShortcuts` listeners, and this derivation all read from it, so a shortcut
+ * can't drift out of sync with what's documented here the way the old three-listener/one-table
+ * split allowed. The row content below is byte-identical to the table this replaced — see
+ * `KeyboardHelpPanel.test.tsx`'s consistency assertion.
+ */
+const SECTIONS: ReadonlyArray<{
+  title: ReplayShortcutGroup;
+  rows: ReadonlyArray<readonly [string, string]>;
+}> = GROUP_ORDER.map((title) => ({
+  title,
+  rows: REPLAY_SHORTCUTS.filter((s) => s.group === title).map(
+    (s) => [s.keys, s.description] as const,
+  ),
+}));
 
 export const KeyboardHelpPanel: React.FC<KeyboardHelpPanelProps> = ({ open, onClose }) => {
   const theme = useTheme();

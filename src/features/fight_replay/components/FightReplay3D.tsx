@@ -3,7 +3,7 @@ import KeyboardArrowUpRoundedIcon from '@mui/icons-material/KeyboardArrowUpRound
 import { Box, IconButton, Paper, Typography } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import { visuallyHidden } from '@mui/utils';
-import React, { Suspense, useCallback, useRef, useState, useEffect } from 'react';
+import React, { Suspense, useCallback, useMemo, useRef, useState, useEffect } from 'react';
 import { useSearchParams, useParams } from 'react-router-dom';
 
 import { useAnimationTimeRef } from '@/hooks/useAnimationTimeRef';
@@ -24,6 +24,7 @@ import {
 } from '../constants/replayDesign';
 import { useDelayedFlag } from '../hooks/useDelayedFlag';
 import { useIsMobileReplay } from '../hooks/useIsMobileReplay';
+import { useReplayShortcuts, type ReplayShortcutBinding } from '../hooks/useReplayShortcuts';
 import { chapterDisplayName } from '../trial_chapters/chapterDisplay';
 import {
   nextEntryAfter,
@@ -61,16 +62,6 @@ const FRAME_STEP_MS = 100;
 // button, the panel, and the H key all share one source of truth instead of Arena3D privately
 // tracking state a sibling component needs to trigger.
 const KEYBOARD_HELP_SEEN_KEY = 'replay.keyboardHelpSeen.v1';
-
-/** True when a keyboard event came from a text-entry surface that should keep replay shortcuts. */
-function isTextEntryTarget(target: EventTarget | null): boolean {
-  if (!(target instanceof HTMLElement)) {
-    return false;
-  }
-  return (
-    target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable === true
-  );
-}
 
 /** Parse the share/deep-link actor id query parameter into the replay's nullable selection type. */
 function parseActorIdParam(actorParam: string | null): number | null {
@@ -1103,130 +1094,75 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
   // the three.js camera handle; N/J are still bound inside Arena3D's own keydown listener (it
   // already holds the toggle callbacks as controlled props) even though their on-screen buttons
   // now live in the transport's settings popover. H lives here, alongside its trigger button in
-  // the transport's right cluster. This handler owns everything that mutates
-  // FightReplay3D's playback state.
-  useEffect(() => {
-    const handleKeyPress = (event: KeyboardEvent): void => {
-      // A focused widget (chapter stop roving focus, the trial rail's slider keys) that consumed
-      // this key already called preventDefault() — yield, so one press can't both move widget
-      // focus AND scrub playback.
-      if (event.defaultPrevented) {
-        return;
-      }
-      // Don't interfere with text input.
-      if (isTextEntryTarget(event.target)) {
-        return;
-      }
-
-      // Never shadow OS/browser chords (Ctrl/⌘ + key — e.g. Ctrl+= / Ctrl+- page zoom, Ctrl+F
-      // find). Our single-key shortcuts must not fire on a modified press, and we must not
-      // preventDefault() those combos. (Shift+arrows for ±10s is intentional and handled below.)
-      if (event.ctrlKey || event.metaKey || event.altKey) {
-        return;
-      }
-
-      // Raw key (preserves symbols/arrows/case); the toggle switch below lowercases letters.
-      const { key } = event;
-
-      // Symbol + arrow shortcuts that .toLowerCase() can't normalize.
-      switch (key) {
-        case ' ': // Space — play/pause. But never hijack Space from a focused button: Space is the
-          // native activation key for buttons, so toggling + preventDefault() here would break
-          // keyboard activation of Import/Load markers, Share, collapse, fullscreen, etc. Let the
-          // button handle its own Space; the canvas/transport background still toggles playback.
-          if (event.target instanceof HTMLButtonElement) {
-            return;
-          }
+  // the transport's right cluster. This binding set owns everything that mutates FightReplay3D's
+  // playback state, registered through the shared `useReplayShortcuts` hook — see its module doc
+  // for why the guard (text-entry / defaultPrevented / OS-chord exclusion) now lives there instead
+  // of being hand-rolled per listener.
+  const shortcutBindings = useMemo<ReplayShortcutBinding[]>(
+    () => [
+      {
+        // Play/pause. Never hijack Space from a focused button: Space is the native activation
+        // key for buttons, so toggling + preventDefault() here would break keyboard activation of
+        // Import/Load markers, Share, collapse, fullscreen, etc. Returning `false` leaves the
+        // button to handle its own Space untouched; the canvas/transport background still toggles
+        // playback for every other target.
+        keys: [' '],
+        onMatch: (event) => {
+          if (event.target instanceof HTMLButtonElement) return false;
           handlePlayPause();
-          event.preventDefault();
-          return;
-        case 'ArrowLeft':
-          seekBy(event.shiftKey ? -10000 : -1000);
-          event.preventDefault();
-          return;
-        case 'ArrowRight':
-          seekBy(event.shiftKey ? 10000 : 1000);
-          event.preventDefault();
-          return;
-        case '+':
-        case '=': // unshifted '+' on most layouts
-          stepSpeed(1);
-          event.preventDefault();
-          return;
-        case '-':
-          stepSpeed(-1);
-          event.preventDefault();
-          return;
-        case '<': // Shift+, → jump to previous key event
-          jumpToEvent(-1);
-          event.preventDefault();
-          return;
-        case '>': // Shift+. → jump to next key event
-          jumpToEvent(1);
-          event.preventDefault();
-          return;
-        case ',': // frame-step backward (one small visible step)
-          frameStep(-1);
-          event.preventDefault();
-          return;
-        case '.': // frame-step forward
-          frameStep(1);
-          event.preventDefault();
-          return;
-      }
-
-      switch (key.toLowerCase()) {
-        case 'p': // Toggle player paths HUD
-          setShowPlayerPathsHUD((prev) => !prev);
-          event.preventDefault();
-          break;
-        case 't': // Toggle player trails
-          setShowPlayerTrails((prev) => !prev);
-          event.preventDefault();
-          break;
-        case 'f': // Toggle fullscreen of the replay block
-          toggleFullscreen();
-          event.preventDefault();
-          break;
-        case 'i': // Set A–B loop IN point at the current time
-          setLoopInPoint();
-          event.preventDefault();
-          break;
-        case 'o': // Set A–B loop OUT point at the current time
-          setLoopOutPoint();
-          event.preventDefault();
-          break;
-        case 'u': // Clear the A–B loop (the keyboard escape from a looping range)
-          clearLoop();
-          event.preventDefault();
-          break;
-        case 'c': // Collapse / restore the transport bar (cinema mode)
-          toggleBar();
-          event.preventDefault();
-          break;
-        case 'h': // Toggle the keyboard-help panel — moved here from Arena3D alongside its
-          // trigger button (now in the transport's right cluster) so both share one state.
-          toggleKeyboardHelp();
-          event.preventDefault();
-          break;
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyPress);
-    return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [
-    toggleFullscreen,
-    handlePlayPause,
-    seekBy,
-    stepSpeed,
-    frameStep,
-    jumpToEvent,
-    setLoopInPoint,
-    setLoopOutPoint,
-    clearLoop,
-    toggleBar,
-    toggleKeyboardHelp,
-  ]);
+        },
+      },
+      {
+        keys: ['ArrowLeft'],
+        onMatch: (event) => seekBy(event.shiftKey ? -10000 : -1000),
+      },
+      {
+        keys: ['ArrowRight'],
+        onMatch: (event) => seekBy(event.shiftKey ? 10000 : 1000),
+      },
+      // '=' is the unshifted '+' on most layouts — both drive speed up.
+      { keys: ['+', '='], onMatch: () => stepSpeed(1) },
+      { keys: ['-'], onMatch: () => stepSpeed(-1) },
+      // Shift+, → jump to previous key event.
+      { keys: ['<'], onMatch: () => jumpToEvent(-1) },
+      // Shift+. → jump to next key event.
+      { keys: ['>'], onMatch: () => jumpToEvent(1) },
+      // Frame-step backward/forward (one small visible step).
+      { keys: [','], onMatch: () => frameStep(-1) },
+      { keys: ['.'], onMatch: () => frameStep(1) },
+      // Toggle player paths HUD.
+      { keys: ['p'], onMatch: () => setShowPlayerPathsHUD((prev) => !prev) },
+      // Toggle player trails.
+      { keys: ['t'], onMatch: () => setShowPlayerTrails((prev) => !prev) },
+      // Toggle fullscreen of the replay block.
+      { keys: ['f'], onMatch: () => toggleFullscreen() },
+      // Set A–B loop IN point at the current time.
+      { keys: ['i'], onMatch: () => setLoopInPoint() },
+      // Set A–B loop OUT point at the current time.
+      { keys: ['o'], onMatch: () => setLoopOutPoint() },
+      // Clear the A–B loop (the keyboard escape from a looping range).
+      { keys: ['u'], onMatch: () => clearLoop() },
+      // Collapse / restore the transport bar (cinema mode).
+      { keys: ['c'], onMatch: () => toggleBar() },
+      // Toggle the keyboard-help panel — moved here from Arena3D alongside its trigger button
+      // (now in the transport's right cluster) so both share one state.
+      { keys: ['h'], onMatch: () => toggleKeyboardHelp() },
+    ],
+    [
+      handlePlayPause,
+      seekBy,
+      stepSpeed,
+      jumpToEvent,
+      frameStep,
+      toggleFullscreen,
+      setLoopInPoint,
+      setLoopOutPoint,
+      clearLoop,
+      toggleBar,
+      toggleKeyboardHelp,
+    ],
+  );
+  useReplayShortcuts(shortcutBindings);
 
   // The next timeline entry after the loaded fight (continuous-play flow target). Falls back to
   // the first entry starting after the current fight when the fight itself isn't on the timeline
