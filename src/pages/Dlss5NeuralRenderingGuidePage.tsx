@@ -1607,27 +1607,49 @@ flags=-1           ; -1 = auto`}
       <Section id="performance" index={10} title="What it costs">
         <Box sx={cardSx}>
           <Typography variant="body2" sx={{ ...proseSx, mb: 2 }}>
-            Neural Rendering is not free. Measured at 1440p on an RTX 4070 Ti Super, from the
-            feeder&apos;s own frame accounting:
+            Neural Rendering is not free. Measured at 1440p on an RTX 4070 Ti Super across an hour
+            of ordinary play, from the feeder&apos;s own frame accounting. That is 380 samples, not
+            a hand-picked moment:
           </Typography>
           <CodeBlock sx={{ mb: 2 }}>
-            {`before NR:  feed CPU  0.55 ms/frame | 143.9 fps | feed is  8% of the frame
-after NR:   feed CPU 11.82 ms/frame |  63.9 fps | feed is 75% of the frame`}
+            {`with NR, 380 samples over ~1 hour
+  median      67.9 fps      feed cost   78% of the frame
+  mean        66.0 fps      feed CPU    11-13 ms/frame
+  p25 - p75   62.7 - 71.0 fps
+
+without NR (short sample, not an equivalent hour)
+  143.9 fps                 feed cost    8% of the frame`}
           </CodeBlock>
-          <Typography variant="body2" sx={proseSx}>
-            Roughly half the framerate. NR runs inference on every frame, so some of that is
+          <Typography variant="body2" sx={{ ...proseSx, mb: 2 }}>
+            Roughly half the framerate, and the cost is steady rather than spiky: feed CPU held at
+            11-13 ms for the whole session. NR runs inference on every frame, so some of that is
             unavoidable, but try a lighter <strong>NR Preset</strong> and lower{' '}
             <strong>NR Intensity</strong> before writing it off. The feeder prints its own cost
-            every 600 frames, so measure on your own card. These are real frames, before any{' '}
-            <Box
-              component="a"
-              href="#frame-generation"
-              sx={{ color: accentText, fontWeight: W.semi, textDecoration: 'underline' }}
-            >
-              frame generation
-            </Box>
-            .
+            every 600 frames, so measure on your own card rather than trusting these.
           </Typography>
+          <Callout tone="caution" label="What these numbers are not">
+            <Typography variant="body2">
+              Every figure here is a <strong>real</strong> frame, counted inside ReShade before the
+              frame is presented. They tell you nothing about{' '}
+              <Box
+                component="a"
+                href="#frame-generation"
+                sx={{ color: accentText, fontWeight: W.semi, textDecoration: 'underline' }}
+              >
+                frame generation
+              </Box>
+              , which inserts its frames downstream where the feeder cannot see them. This session
+              in fact ran with NVIDIA Smooth Motion enabled and the log looks identical either way,
+              which is the whole point.
+            </Typography>
+            <Typography variant="body2" sx={{ mt: 1 }}>
+              Two honest caveats. Frame generation costs a little GPU time, so these real-frame
+              figures are if anything slightly pessimistic. And the without-NR line is a short
+              sample rather than a matching hour, so treat it as indicative rather than
+              like-for-like. The feed cost is the sturdiest number here: it is the feeder timing its
+              own work, and nothing downstream affects it.
+            </Typography>
+          </Callout>
         </Box>
       </Section>
 
