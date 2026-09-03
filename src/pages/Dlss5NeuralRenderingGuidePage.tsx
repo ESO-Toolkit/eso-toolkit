@@ -4,8 +4,10 @@
  *
  * ESO does ship DLSS and DLAA natively — it was the first game ever to support
  * DLAA, back in 2021 — but the runtime it bundles is nvngx_dlss.dll 2.2.16, a
- * build last current in early 2023 and never updated since. That vintage predates
- * everything Neural Rendering needs, so the stack replaces it with a 310.x runtime
+ * late-2021 build, the one ESO launched DLSS/DLAA with, superseded within weeks
+ * and never updated since. It predates the DLAA quality-mode value, the render
+ * presets and everything Neural Rendering needs, so the stack replaces it with a
+ * 310.x runtime
  * and has ReShade synthesise the DLSS contract (colour + depth + motion vectors)
  * for NGX on a side D3D12 device. Two ESO-specific gotchas break it, and both are
  * app-local DLLs shadowing newer copies — the troubleshooting section is written
@@ -190,11 +192,11 @@ const HOW_TO_LD = {
     ],
     [
       'Turn off in-game anti-aliasing',
-      "In ESO video settings, disable MSAA/SSAA and set resolution scale to 100%. On RTX cards also set Anti-Aliasing away from DLSS and DLAA: ESO's own DLSS renders below output resolution and breaks ReShade's depth buffer, and DLAA adds a second temporal pass.",
+      "In ESO video settings set Sub-Sampling Quality to High so the game renders at full resolution. On RTX cards also set Anti-Aliasing away from DLSS and DLAA: ESO's own DLSS renders below output resolution and breaks ReShade's depth buffer, and DLAA adds a second temporal pass.",
     ],
     [
       'Enable the effects in the right order',
-      'In the ReShade overlay, enable your motion-vector provider technique first, then DLSS5_Feed directly below it. Only one provider may be enabled.',
+      'In the ReShade overlay, enable your motion-vector provider technique first, then DLSS5_Feed directly below it. Only one provider may be enabled. LumeniteFX installs eight techniques; only LUMENITE: Kernel 2.0 is the one you want here, and the rest can stay off — nothing else in the pack is needed and none of it is required by Kernel.',
     ],
   ].map(([name, text], i) => ({
     '@type': 'HowToStep',
@@ -557,7 +559,7 @@ const FAILURES: ReadonlyArray<FailureSpec> = [
     symptom: 'CreateFeature fails immediately, or the session never opens',
     log: '[feed] CreateFeature failed 0xBAD00010 (UnsupportedParameter)\n[feed] failure: resource build\nstopped: repeated failures.\n\n[feed] NGX capabilities: SuperSampling.Available=0 NeedsUpdatedDriver=0 MinDriver=0.0\n[feed] DLSS super sampling is not available on this GPU/driver\nstopped: the D3D12/NGX session failed to start.',
     cause:
-      'Both of these are one problem: the wrong version of nvngx_dlss.dll. ESO ships its own copy, so the file is almost certainly there — it is just 2.2.16, frozen since early 2023. That predates DLAA and the DLSS.Hint.Render.Preset.* parameters the feeder sets, so NGX rejects the parameter block outright (0xBAD00010) or reports no super-resolution capability at all. Deleting the local copy is not the fix either: the NVIDIA driver ships nvngx_dlssg.dll but NOT a standalone super-resolution runtime, so removing it leaves nothing to load.',
+      'Both of these are one problem: the wrong version of nvngx_dlss.dll. ESO ships its own copy, so the file is almost certainly there — it is just 2.2.16, the build ESO launched DLSS and DLAA with in 2021 and has never updated. That predates the DLAA quality-mode value and the DLSS.Hint.Render.Preset.* parameters the feeder sets, so NGX rejects the parameter block outright (0xBAD00010) or reports no super-resolution capability at all. Deleting the local copy is not the fix either: the NVIDIA driver ships nvngx_dlssg.dll but NOT a standalone super-resolution runtime, so removing it leaves nothing to load.',
     fix: 'Check the version, do not check whether the file exists. Right-click nvngx_dlss.dll in the client folder, then Properties, then Details. If it reads 2.2.16 — or anything below 310 — replace it with a 310.x build. A healthy run reports SuperSampling.Available=1 with a non-zero MinDriver.',
   },
   {
@@ -576,11 +578,11 @@ const FAILURES: ReadonlyArray<FailureSpec> = [
     fix: "If it never resolves: confirm DLSS5_Feed.fx and your provider's .fx are in reshade-shaders\\Shaders, that provider's include folder sits beside them, and both techniques are ticked in the right order.",
   },
   {
-    symptom: 'No error anywhere, but the image is soft and history smears one frame behind',
-    log: '(no log line on 0.4.x; current builds warn in the overlay Motion vectors section and in dlss5-feed.log)',
+    symptom: 'Sharp when you stand still, smeary when you move',
+    log: 'MV probe ... 0% non-zero   (current builds; older ones print nothing)',
     cause:
       "The ordering rule. If the provider technique sits below DLSS5_Feed, or is not ticked at all, the feed still runs and nothing errors — it just reads last frame's vectors, or none. On current builds there is a second version of this: the shader is compiled for one DLSS5_MV_PROVIDER value while a different provider's technique is the one enabled. Upstream calls it the classic silent failure.",
-    fix: "Open the Home tab and check that exactly one provider technique is ticked and sits ABOVE DLSS5_Feed. Then check the definition matches it: select DLSS5_Feed.fx and read DLSS5_MV_PROVIDER against the provider table. Current builds print the pairing in dlss5-feed.log and turn the overlay's Motion vectors section red when the two disagree.",
+    fix: 'Do not guess: open the add-on overlay and read its Motion vectors section, which names which of four things is wrong — the provider is not installed, it is installed but not ticked, it failed to compile, or a different provider is ticked than the one DLSS5_MV_PROVIDER selects. Fix whichever it names. A healthy line reads DLSS5_MV_PROVIDER=3 (LumeniteFX Kernel) -> Lumenite_Kernel (enabled).',
   },
   {
     symptom: 'Image doubles, smears or ghosts while moving',
@@ -850,15 +852,16 @@ export const Dlss5NeuralRenderingGuidePage: React.FC = () => {
             game ever to support DLAA; both sit in the in-game Anti-Aliasing dropdown, though only
             on RTX cards, which is why most people never see them. The problem is the runtime behind
             them: ESO bundles <code>nvngx_dlss.dll</code> <strong>2.2.16</strong>, a build that was
-            current in early 2023 and has not been updated since. It predates DLAA presets, the
+            current in late 2021, the build ESO launched DLSS and DLAA with, and has not been
+            updated since. It predates the DLAA quality-mode value, the render presets, the
             transformer model and every parameter Neural Rendering depends on, so ESO&apos;s own
             toggle can never reach it.
           </Typography>
           <Typography variant="body2" sx={{ ...proseSx, mb: 2.5 }}>
             So this is a <strong>replacement</strong> job, not a from-scratch one: swap the stale
-            2.2.16 runtime for a 310.x build, then have ReShade synthesise the depth and motion
-            vectors DX11 ESO never hands out. Every error in this guide belongs to a stage in that
-            chain:
+            2.2.16 runtime for a 310.x build, then have ReShade capture the game&apos;s depth buffer
+            and re-derive the motion vectors ESO never exposes to it. Every error in this guide
+            belongs to a stage in that chain:
           </Typography>
 
           <PipelineDiagram />
@@ -872,7 +875,7 @@ export const Dlss5NeuralRenderingGuidePage: React.FC = () => {
             <ChainRow
               n="1"
               title="A provider shader estimates motion"
-              body="ESO does not output motion vectors, so one ReShade shader of your choice derives them from the image with optical flow. LumeniteFX Kernel is the current recommendation; iMMERSE LaunchPad and VORT also work."
+              body="ESO's motion vectors stay inside its own DLSS path and never reach ReShade, so one ReShade shader of your choice re-derives them from the image with optical flow. LumeniteFX Kernel is the current recommendation; iMMERSE LaunchPad and VORT also work."
             />
             <ChainRow
               n="2"
@@ -1107,9 +1110,10 @@ export const Dlss5NeuralRenderingGuidePage: React.FC = () => {
 
             <StepRow n={7} last={false} title="Turn off in-game anti-aliasing">
               <Typography variant="body2" sx={proseSx}>
-                In ESO video settings, disable MSAA/SSAA and set resolution scale to 100%. The
-                feeder hands NGX a full-resolution depth buffer, and any multisampling breaks that
-                contract.
+                In ESO video settings set <strong>Sub-Sampling Quality</strong> to High. ESO has no
+                MSAA or SSAA option and no resolution-scale slider; Sub-Sampling Quality is the
+                render-resolution control, and the feeder needs the game rendering at full
+                resolution.
               </Typography>
               <Typography variant="body2" sx={{ ...proseSx, mt: 1.25 }}>
                 On an RTX card that same Anti-Aliasing dropdown also offers{' '}
