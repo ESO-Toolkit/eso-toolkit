@@ -88,6 +88,44 @@ describe('Dlss5NeuralRenderingGuidePage', () => {
     expect(screen.getByText(/unrecognized compiler target 'cs_5_1'/i)).toBeInTheDocument();
   });
 
+  it('presents the motion-vector provider as a choice, not as LaunchPad only', () => {
+    const { container } = renderPage();
+
+    // Upstream lists five providers behind one preprocessor definition and
+    // recommends LumeniteFX Kernel. The guide previously described iMMERSE
+    // LaunchPad as though it were required, which it never was.
+    const text = container.textContent ?? '';
+    expect(text).toMatch(/LumeniteFX Kernel/);
+    expect(text).toMatch(/LaunchPad\s+is\s+a\s+provider,\s+not\s+the\s+provider/i);
+    expect(
+      screen.getByRole('heading', { name: /Choosing a motion-vector provider/i }),
+    ).toBeInTheDocument();
+  });
+
+  it('documents both generations of the provider setting, labelled by version', () => {
+    const { container } = renderPage();
+
+    // DLSS5_MV_SOURCE + MV_PROVIDER (0.4.x, two values) and DLSS5_MV_PROVIDER
+    // (current, 0-4) are the same setting one generation apart. A reader on
+    // either build must be able to tell which one applies to them, so neither
+    // name may be dropped in favour of the other.
+    const text = container.textContent ?? '';
+    expect(text).toMatch(/DLSS5_MV_PROVIDER/);
+    expect(text).toMatch(/DLSS5_MV_SOURCE/);
+    expect(text).toMatch(/0\.4\.x/);
+    // Default and recommendation are different values; conflating them sends
+    // readers away with provider 0 believing they took the recommended path.
+    expect(text).toMatch(/built-in\s+default\s+is\s+0;\s+upstream's\s+recommendation\s+is\s+3/i);
+  });
+
+  it('keeps the ordering rule prominent, since it fails silently', () => {
+    const { container } = renderPage();
+
+    const text = container.textContent ?? '';
+    expect(text).toMatch(/must be ABOVE/);
+    expect(text).toMatch(/Get\s+the\s+order\s+wrong\s+and\s+nothing\s+errors/i);
+  });
+
   it('covers the overlay and the Neural Rendering add-on panel', () => {
     renderPage();
 
