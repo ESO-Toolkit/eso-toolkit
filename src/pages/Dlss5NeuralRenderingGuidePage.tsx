@@ -41,7 +41,8 @@
  * picks it changed generation. Do not reintroduce "install LaunchPad" as the
  * only path: upstream (DLSS5-Feeder README) lists five providers behind one
  * preprocessor definition, DLSS5_MV_PROVIDER (0-4, default 0, recommended 3 =
- * LumeniteFX Kernel), while 0.4.x shaders use the older two-level scheme of
+ * LumeniteFX Kernel), while 0.4.x shaders — a pre-release build, not a tagged
+ * upstream version — use the older two-level scheme of
  * DLSS5_MV_SOURCE (preprocessor) plus a runtime MV_PROVIDER combo with only
  * two entries. Both are documented here because readers arrive on either; the
  * version test is which name their own DLSS5_Feed.fx references. What did not
@@ -162,17 +163,17 @@ const HOW_TO_LD = {
   description:
     "Install ReShade with add-on support, add the DLSS 5 Feeder and RenoDX add-ons, and enable Neural Rendering in ESO by replacing the game's bundled 2.2.16 DLSS runtime with a 310.x build.",
   tool: [
-    'ReShade 6.x with full add-on support',
+    'ReShade 6.8+ with full add-on support',
     'nvngx_dlss.dll (310.x)',
     'nvngx_dlssnr.dll (matching GPU generation)',
-    'dlss5-feed.addon64 and renodx-dlss5.addon64',
+    'dlss5-feed.addon64, plus one neural consumer: renodx-dlss5.addon64 (what this guide documents) or Deep Fried Chicken (the current upstream pick). Never both.',
     'DLSS5_Feed.fx and a motion-vector provider shader (LumeniteFX Kernel or iMMERSE LaunchPad)',
   ].map((name) => ({ '@type': 'HowToTool', name })),
   step: [
     ['Find your ESO client folder', 'Every file goes in the folder containing eso64.exe.'],
     [
       'Install ReShade with add-on support',
-      'Install ReShade 6.x for eso64.exe (DirectX 10/11/12) using the build with full add-on support, landing as dxgi.dll next to eso64.exe.',
+      'Install ReShade 6.8 or newer for eso64.exe (DirectX 10/11/12) using the build with full add-on support, landing as dxgi.dll next to eso64.exe.',
     ],
     [
       'Add the shaders',
@@ -180,7 +181,7 @@ const HOW_TO_LD = {
     ],
     [
       'Add the two add-ons',
-      'Drop dlss5-feed.addon64 and renodx-dlss5.addon64 into the client folder; ReShade auto-discovers them.',
+      'Drop dlss5-feed.addon64 and one neural consumer into the client folder; ReShade auto-discovers them. This guide is written around renodx-dlss5.addon64. From feeder 0.11 upstream recommends Deep Fried Chicken instead (three files: deep-fried-chicken.addon64, deep-fried-chicken-nvngx.dll, deep-fried-chicken.cfg), which needs the same two NGX runtimes and the same motion vectors. Install exactly one: if Deep Fried Chicken finds RenoDX loaded beside it, it does nothing at all for the whole session, silently.',
     ],
     [
       'Add the NGX runtimes',
@@ -310,7 +311,7 @@ const REQUIREMENTS: ReadonlyArray<RowSpec> = [
   {
     label: 'ReShade',
     value:
-      '6.x, installed for eso64.exe as dxgi.dll, WITH full add-on support. That is a different download from the plain build, and it is the unsigned one — the plain build will not load .addon64 files at all, so none of this works on it. Some anti-cheat setups treat the add-on build differently for exactly that reason; ESO has no kernel-level anti-cheat, but if you also play something that does, know which build you have installed.',
+      '6.8 or newer, installed for eso64.exe as dxgi.dll, WITH full add-on support. That is a different download from the plain build, and it is the unsigned one — the plain build will not load .addon64 files at all, so none of this works on it. Some anti-cheat setups treat the add-on build differently for exactly that reason; ESO has no kernel-level anti-cheat, but if you also play something that does, know which build you have installed.',
   },
   {
     label: 'Add-ons',
@@ -893,6 +894,15 @@ export const Dlss5NeuralRenderingGuidePage: React.FC = () => {
               body="renodx-dlss5.addon64 detours the NGX calls, and once a DLSS feature evaluates successfully it creates feature 18 (Neural Rendering) on top of it."
             />
           </Stack>
+          <Callout tone="caution" label="There may be a shorter route" sx={{ mt: 2.5 }}>
+            <Typography variant="body2">
+              Upstream now suggests that 64-bit DirectX 11 games like ESO can skip the feeder
+              entirely and use ShortFuse&apos;s <code>renodx-dlss</code> add-on on its own, one
+              add-on instead of two. We have not tested that in ESO. This page documents the
+              two-add-on setup because that is the one verified working here, start to finish.
+            </Typography>
+          </Callout>
+
           <Callout tone="info" label="Fix order" sx={{ mt: 2.5 }}>
             <Typography variant="body2" sx={{ lineHeight: 1.7 }}>
               <strong>Each stage needs the one before it.</strong> Neural Rendering attaches to a
@@ -986,10 +996,10 @@ export const Dlss5NeuralRenderingGuidePage: React.FC = () => {
               </Typography>
               <Note>
                 Already have ReShade? Check that <code>dxgi.dll</code> exists in the client folder
-                and that it is version 6.x. Note that the add-on build is the unsigned one — that is
-                inherent to what add-on support is, and it is why some anti-cheat setups treat it
-                differently from the plain build. ESO has no kernel-level anti-cheat, but if you
-                share a ReShade install with a game that does, install this one for ESO only.
+                and that it is version 6.8 or newer. Note that the add-on build is the unsigned one
+                — that is inherent to what add-on support is, and it is why some anti-cheat setups
+                treat it differently from the plain build. ESO has no kernel-level anti-cheat, but
+                if you share a ReShade install with a game that does, install this one for ESO only.
               </Note>
             </StepRow>
 
