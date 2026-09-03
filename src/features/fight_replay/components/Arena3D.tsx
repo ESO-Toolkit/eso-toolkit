@@ -39,6 +39,7 @@ import {
 } from '../utils/mapScaling';
 import { getVisiblePlayerIds } from '../utils/pathUtils';
 import { decidePreviewMode } from '../utils/previewMode';
+import type { NpcModelPreviewMode } from '../utils/replayActorModelRegistry';
 
 import type { GroundContextMenuPayload } from './Arena3DScene';
 import { ADD_MARKER_AT_CENTER_EVENT } from './arenaEvents';
@@ -106,6 +107,8 @@ interface Arena3DProps {
     shouldRenderEffects: boolean;
     frameSkipRate: number;
   };
+  /** Opt-in hostile-NPC model preview; default rendering remains unchanged. */
+  npcModelPreviewMode?: NpcModelPreviewMode;
   followingActorIdRef: React.RefObject<number | null>;
   /**
    * Currently-followed actor ID as React state (mirrors `followingActorIdRef.current`).
@@ -203,6 +206,7 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
   showActorNames = false,
   mapTimeline,
   scrubbingMode,
+  npcModelPreviewMode = 'off',
   followingActorIdRef,
   followingActorId,
   onCameraUnlock,
@@ -870,6 +874,7 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
               showActorNames={showActorNames && namesEnabled}
               mapTimeline={mapTimeline}
               scrubbingMode={scrubbingMode}
+              npcModelPreviewMode={npcModelPreviewMode}
               followingActorIdRef={followingActorIdRef}
               onActorClick={onActorClick}
               markersState={markersState}

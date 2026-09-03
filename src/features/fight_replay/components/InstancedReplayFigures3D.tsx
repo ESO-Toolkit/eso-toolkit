@@ -21,6 +21,11 @@ import {
   getReplayActorShellColor,
 } from '../utils/actorVisualState';
 import { enablePerInstanceOpacity } from '../utils/instanceOpacity';
+import {
+  type NpcModelPreviewMode,
+  REPLAY_ACTOR_MODEL_ASSETS,
+  resolveReplayActorModel,
+} from '../utils/replayActorModelRegistry';
 
 import { BatchedActorNames3D } from './BatchedActorNames3D';
 
@@ -65,6 +70,8 @@ interface InstancedReplayFigures3DProps {
    * instanced layers, no per-frame gait math, no 1.1 MB of model downloads).
    */
   detailedFigures?: boolean;
+  /** Opt-in licensed humanoid stand-in for hostile NPC pipeline/performance evaluation. */
+  npcModelPreviewMode?: NpcModelPreviewMode;
   /** Barebones flag: PBR (MeshStandard) body/pose/cap materials. False = Lambert (cheap shading). */
   richMaterials?: boolean;
   /** Barebones flag: decorative contact-shadow blob + facing wedge. False drops both layers. */
@@ -128,16 +135,17 @@ const HIT_PROXY_TIE_EPS = 1e-4;
 const THREAT_SCALE = 1.55;
 const PLAYER_SCALE = 0.82;
 
-// Players render as a humanoid figure (CoolStickman, CC0); non-players keep the capsule blob so
-// the SHAPE itself signals "this is a player". The humanoid is a 5-POSE WALK FLIPBOOK: one neutral
+// Players render as a humanoid figure (CoolStickman, CC0). Hostile NPCs can use that same licensed
+// stand-in in the explicit prototype mode; all other actors keep the capsule blob. The humanoid is
+// a 5-POSE WALK FLIPBOOK: one neutral
 // idle stand + four walk-cycle poses (contact L, passing, contact R, passing), each a
 // single-material static mesh baked from the same rig (.scratch/bake-stickman-walk.mjs). Each pose
 // is its own InstancedMesh layer (exactly like the glyph groups), all sized to the full
 // instanceCount with instanceId → actorId uniform across every layer. A player is shown in the ONE
 // pose layer matching its current walk-cycle phase (derived from accumulated travel distance) and
-// hidden (y=-10000) in the other four. Non-players keep the capsule body. Draw-call cost is +4
+// hidden (y=-10000) in the other four. Fallback actors keep the capsule body. Draw-call cost is +4
 // layers (O(1), NOT per-actor) over a single-pose humanoid; instancing is preserved.
-const HUMANOID_WALK_MODEL_URL = `${import.meta.env.BASE_URL}models/coolstickman-walk.glb`;
+const HUMANOID_WALK_MODEL_URL = `${import.meta.env.BASE_URL}${REPLAY_ACTOR_MODEL_ASSETS.coolStickman.path}`;
 // Pose layer order. Index 0 is the idle stand; 1..4 are the walk cycle in phase order. The GLB
 // stores them as named meshes; we load them into this fixed order so the renderer indexes poses by
 // walk-cycle phase. WALK_POSE_COUNT (4) is the cyclic stride length used for phase math.
@@ -412,6 +420,7 @@ interface FrameCache {
   playerVisibility: Map<number, boolean> | undefined;
   playerColorOverrides: Map<number, string> | undefined;
   actorIds: readonly number[];
+  npcModelPreviewMode: NpcModelPreviewMode;
   // Signature of the live boss-tune constants + performanceMode. The boss is static, so the user
   // tunes it while PAUSED; on an HMR const edit the component re-renders but frameCacheRef is
   // preserved (no remount) → without this the time/lookup compare would early-return and the edit
@@ -486,6 +495,7 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
   playerColorOverrides = EMPTY_COLOR_OVERRIDES,
   performanceMode = false,
   detailedFigures = true,
+  npcModelPreviewMode = 'off',
   richMaterials = true,
   figureAccents = true,
   capGateRef,
@@ -515,7 +525,7 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
   const skippedDeltaRef = useRef(0);
 
   // Async-loaded humanoid pose geometries (the 5-pose walk flipbook). Null until the GLB resolves;
-  // players fall back to the capsule body until then. The array holds one BufferGeometry per pose in
+  // eligible actors fall back to the capsule body until then. The array holds one BufferGeometry per pose in
   // POSE_NAMES order (idle, walk1..walk4). Setting state on load triggers a React commit, which
   // refills the on-demand render budget (Arena3DScene) so the swap actually paints while paused.
   const [poseGeometries, setPoseGeometries] = useState<THREE.BufferGeometry[] | null>(null);
@@ -548,7 +558,7 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
       },
       undefined,
       () => {
-        // On load failure the capsule fallback stays — players just don't get the humanoid shape.
+        // On load failure the capsule fallback stays — eligible actors just keep their simple shape.
       },
     );
     return () => {
@@ -1000,6 +1010,7 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
       prevFrame.playerVisibility === playerVisibility &&
       prevFrame.playerColorOverrides === playerColorOverrides &&
       prevFrame.actorIds === actorIds &&
+      prevFrame.npcModelPreviewMode === npcModelPreviewMode &&
       prevFrame.bossSignature === bossSignature
     ) {
       return;
@@ -1011,6 +1022,7 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
       playerVisibility,
       playerColorOverrides,
       actorIds,
+      npcModelPreviewMode,
       bossSignature,
     };
 
@@ -1069,11 +1081,12 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
       // re-composed hundreds of identical "hidden" matrices for nothing. null on first frame / after
       // a cache reset → the full hide runs then, so initial hidden state is always established.
       const prev = cacheRef.current[index];
-      // Players become the humanoid figure once the pose geometries have loaded; everyone else (and
-      // players pre-load) keeps the capsule blob. For a humanoid player, exactly one pose layer is
+      // Registry-selected actors become humanoid once the pose geometries have loaded; everyone else
+      // (and selected actors pre-load) keeps the capsule blob. For a humanoid, exactly one pose layer is
       // shown (the capsule body and the other four pose layers are hidden off-screen). For everyone
       // else, the capsule body shows and all five pose layers are hidden.
-      const useHumanoid = isPlayerActor(actor) && poseGeometries !== null;
+      const useHumanoid =
+        resolveReplayActorModel(actor, npcModelPreviewMode) !== null && poseGeometries !== null;
       // The boss becomes its real GLB model once that's loaded; its capsule body + cap are then
       // hidden (anchor ring / vision wedge / glyph / name stay). The model itself is the single
       // <primitive>, driven after this loop from the recorded boss actor. Only the FIRST matching
@@ -1192,7 +1205,7 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
       }
 
       // Cap rides atop the capsule head. The humanoid already has its own head, so the cap is
-      // redundant (and would float at the wrong height) — hide it for humanoid players. The boss
+      // redundant (and would float at the wrong height) — hide it for humanoid actors. The boss
       // model replaces the capsule entirely, so its cap is hidden too.
       if (useHumanoid || useBossModel) {
         hideInstance(capRef.current, index);
