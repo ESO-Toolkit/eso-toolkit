@@ -234,7 +234,12 @@ export const BossHealthPanel: React.FC<BossHealthPanelProps> = ({
         top: isMobile ? 64 : 16,
         right: isMobile ? 8 : 16,
         width: { xs: 220, sm: 280 },
-        maxWidth: isMobile ? 'calc(100% - 16px)' : 'calc(100% - 32px)',
+        // Desktop: on top of the 32px edge-clearance cap, never let this claim more than the arena's
+        // right HALF — PlayerListPanel sits top-left at left:16 width:232 (right edge ~248px), and
+        // below ~530px of arena width (ARENA_HEIGHT's 420px floor can get there) the two top corners'
+        // fixed-px panels would otherwise overlap under the "Following" chip. min() keeps whichever
+        // cap is tighter at a given width instead of only ever applying the wider one.
+        maxWidth: isMobile ? 'calc(100% - 16px)' : 'min(calc(100% - 32px), calc(50% - 24px))',
         // Mobile: a defensive height cap so a multi-boss stack (up to MAX_BOSSES=4) can't run down
         // into the control cluster / transport in the short landscape viewport. The per-pill
         // footprint reduction below is the primary fix; this is the hard safety bound.

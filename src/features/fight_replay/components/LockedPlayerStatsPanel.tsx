@@ -889,7 +889,12 @@ const LockedPlayerStatsPanelComponent: React.FC<LockedPlayerStatsPanelProps> = (
         minWidth: isMobile ? 0 : 220,
         // Mobile: a corner CARD, never a half-screen sheet. 78vw of 844 (landscape) clamps to 320px;
         // 78vw of 390 (portrait) ≈ 304px — both read as a card, not a panel that eats the short side.
-        maxWidth: isMobile ? 'min(78vw, 320px)' : 340,
+        // Desktop: on top of the 340px sizing cap, never let this claim more than the arena's left
+        // HALF. This panel is bottom-left (left:16); nothing sits bottom-right today, but the same
+        // half-arena defensive bound as BossHealthPanel (top-right) keeps it safe if a bottom-right
+        // overlay is ever added, and prevents it from ever reading as a half-screen sheet on a
+        // narrow arena. min() keeps whichever cap is tighter at a given width.
+        maxWidth: isMobile ? 'min(78vw, 320px)' : 'min(340px, calc(50% - 24px))',
         borderRadius: 2,
         // Mobile: solid fill instead of a backdrop blur, but KEEP a GPU layer (translateZ) — this
         // panel is up during the common "follow one player" flow and writes live stats to the DOM
@@ -1048,7 +1053,18 @@ const LockedPlayerStatsPanelComponent: React.FC<LockedPlayerStatsPanelProps> = (
 
         {tankCaveat && (
           <Typography
-            sx={{ mt: 0.75, fontSize: '0.58rem', color: 'text.disabled', lineHeight: 1.2 }}
+            sx={{
+              mt: 0.75,
+              fontSize: '0.58rem',
+              // NOT theme 'text.disabled': this theme only overrides text.primary/secondary, so
+              // disabled falls through to MUI's mode default (rgba(255,255,255,0.5) dark /
+              // rgba(0,0,0,0.38) light) — both under the 4.5:1 text bar once this panel's
+              // 0.82-0.96 alpha card sits over a bright parchment/desert map floor. text.primary at
+              // 0.7 keeps the caveat visibly the least-prominent line on the panel (below the
+              // fully-opaque hero stats and text.secondary labels) while staying legible.
+              color: alpha(theme.palette.text.primary, 0.7),
+              lineHeight: 1.2,
+            }}
           >
             {tankCaveat}
           </Typography>

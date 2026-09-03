@@ -85,12 +85,27 @@ export const ReplayQualityMenu: React.FC<ReplayQualityMenuProps> = ({
           aria-expanded={open ? 'true' : undefined}
           size="small"
           onClick={handleOpen}
-          sx={{
-            color: PRESET_COLOR[qualityPreset],
-            backgroundColor: 'rgba(0, 0, 0, 0.85)',
-            '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.95)' },
-            ...triggerSx,
-          }}
+          // Array form (not an object spread) — triggerSx is itself an SxProps<Theme>, which can be
+          // an array or a theme function, so spreading it into a plain object breaks under strict
+          // typing. MUI merges array entries in order; triggerSx (position/offset only) is listed
+          // last so the caller's placement still wins over nothing here, while our color/background/
+          // focus-ring styles apply first without being clobbered (no overlapping keys either way).
+          sx={[
+            (theme) => ({
+              color: PRESET_COLOR[qualityPreset],
+              backgroundColor: 'rgba(0, 0, 0, 0.85)',
+              '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.95)' },
+              // Visible keyboard-focus ring — this trigger had none, leaving a keyboard user with no
+              // indication of focus while tabbing the right-edge overlay stack. Matches the
+              // convention used across the replay feature (PlayerListPanel): 2px solid primary,
+              // positive offset.
+              '&:focus-visible': {
+                outline: `2px solid ${theme.palette.primary.main}`,
+                outlineOffset: 2,
+              },
+            }),
+            ...(Array.isArray(triggerSx) ? triggerSx : [triggerSx]),
+          ]}
         >
           <Bolt fontSize="small" />
         </IconButton>

@@ -11,6 +11,12 @@
  * (The in-scene player-list and boss-health HUDs are now DOM overlays that read the live
  * theme directly; they no longer need a frozen canvas palette here.)
  *
+ * Also home to the shared overlay tokens for the DOM chrome that floats OVER the 3D canvas
+ * itself — `REPLAY_Z` (the z-index ladder), `overlayPanelSurface` / `overlayPillSurface` (the
+ * two glass-chrome dialects), and `overlayIconButton` (the floating circular controls) — so that
+ * family of overlays converges on one system too, instead of each panel/button/chip independently
+ * reinventing its own alpha, blur, and z-index.
+ *
  * @module replayDesign
  */
 
@@ -193,6 +199,164 @@ export const markerDeckSurface = (theme: Theme): SystemStyleObject<Theme> => {
       background: `linear-gradient(90deg, transparent, ${secondary}, transparent)`,
       opacity: isDark ? 0.5 : 0.3,
       pointerEvents: 'none',
+    },
+  };
+};
+
+/**
+ * Z-index ladder for the DOM chrome that floats over the 3D canvas (player list, boss bars,
+ * drawing HUD, keyboard help, …). Replaces the ad-hoc numbers (3, 4, 5, 6, 12, …) that had
+ * drifted independently across each overlay component with no shared source of truth —
+ * that drift is exactly how KeyboardHelpPanel ended up rendering UNDER the boss bars it was
+ * meant to sit above (see its module doc). Each rung is named for what it means, not what it
+ * contains, so a new overlay can pick the right rung by intent instead of copying a neighbor's
+ * literal and hoping it's still correct.
+ *
+ * Rung order, low to high:
+ *  - `panel`  — the persistent corner HUDs (PlayerListPanel, BossHealthPanel,
+ *               LockedPlayerStatsPanel). These are always-on informational chrome; everything
+ *               transient (hints, toasts, the drawing HUD) must render above them.
+ *  - `hint`   — brief, self-dismissing toasts/chips layered over the panels (the auto-quality
+ *               chip, the "Following" camera-lock chip on mobile).
+ *  - `overlay`— short-lived full-viewport overlays (ReplayZoomHint, ReplayTransitionOverlay)
+ *               that briefly own the frame and must beat both panels and hints.
+ *  - `hud`    — actively-armed interactive chrome (DrawingHud while a draw tool is selected,
+ *               the mobile top bar / control dock) — the user is mid-action with it, so it
+ *               must never be occluded by passive panels or hints.
+ *  - `help`   — the keyboard-help panel. It sits above every other rung, including `hud`,
+ *               because it is opened ON DEMAND to explain the whole surface (including the
+ *               panels and the HUD) and must stay legible over all of it — most importantly
+ *               over the top-right boss bars, which is the exact regression its module doc
+ *               describes ("the old bare rgba(0,0,0,0.85) box had no zIndex").
+ *
+ * Deliberately BELOW MUI's own layers: modals/menus/sheets (MobileSheet, MarkerIconPicker) use
+ * `theme.zIndex.modal` (+n) rather than this ladder, since they must out-rank the whole in-canvas
+ * chrome regardless of which rung triggered them.
+ */
+export const REPLAY_Z = {
+  panel: 3,
+  hint: 4,
+  overlay: 5,
+  hud: 6,
+  help: 12,
+} as const;
+
+/**
+ * Build the shared "glass panel" surface `sx` for DOM chrome floating over the 3D canvas
+ * (PlayerListPanel, BossHealthPanel, KeyboardHelpPanel, LockedPlayerStatsPanel, …).
+ *
+ * These six overlays had each hand-rolled a near-identical dark glass panel with a slightly
+ * different literal — `rgba(15,23,42,0.92)`, `rgba(15,23,42,0.82)`, `rgba(9,14,28,0.94)`,
+ * `alpha(paper,0.82)`, `rgba(0,0,0,0.78)` — none of which read the live theme, so every one of
+ * them stayed a fixed dark-navy tint even in light mode. This derives the tint from
+ * `theme.palette.background.default` instead: dark mode lands within a few hex steps of the old
+ * literals (default is already a deep slate there), and light mode gets a real light-glass panel
+ * instead of a stray dark box floating over a bright page.
+ *
+ * Alpha/blur are tuned to the median of the six dialects rather than any single one: 0.88 opacity
+ * (between the 0.82 and 0.94 extremes) and a 10px blur (the majority value; only the small
+ * ReplayZoomHint toast used a lighter 6px, which is a toast-specific choice, not a panel one —
+ * ReplayZoomHint should move to `overlayPillSurface` in the later migration pass, not this one).
+ *
+ * @param options.solid - Drop the backdrop blur and raise the fill opacity instead (mobile: a
+ *   full-screen `backdrop-filter` is expensive and, per the PlayerListPanel/BossHealthPanel
+ *   comments, the per-frame rAF repaint of the health bars inside these panels was recompositing
+ *   against the live WebGL canvas every tick without a dedicated GPU layer. `solid` mirrors that
+ *   fix: a flat, more-opaque fill plus `translateZ(0)` gets the same isolated compositing layer
+ *   for a fraction of the cost, with no blur to recompute every frame.)
+ * @param options.accentBorder - Use the theme's primary accent (at low alpha) for the border
+ *   instead of the neutral divider-style border. Every one of the six existing dialects borders
+ *   in a primary tint (`${primary.main}29` / `alpha(primary, 0.28)` / …) rather than a plain
+ *   divider, so this defaults to `true`; pass `false` only for chrome that intentionally wants a
+ *   neutral edge.
+ */
+export const overlayPanelSurface = (
+  theme: Theme,
+  options: { solid?: boolean; accentBorder?: boolean } = {},
+): SystemStyleObject<Theme> => {
+  const { solid = false, accentBorder = true } = options;
+  const isDark = theme.palette.mode === 'dark';
+  const base = theme.palette.background.default;
+  return {
+    backgroundColor: alpha(base, solid ? 0.96 : 0.88),
+    border: '1px solid',
+    borderColor: accentBorder ? alpha(theme.palette.primary.main, 0.28) : theme.palette.divider,
+    boxShadow: isDark
+      ? '0 8px 26px rgba(0,0,0,0.5)'
+      : '0 8px 26px rgba(15,23,42,0.18), inset 0 1px 0 rgba(255,255,255,0.5)',
+    ...(solid
+      ? // No blur to recompute per frame; translateZ(0) still isolates this box onto its own
+        // GPU compositing layer so its rAF-driven repaints (health bars, stat readouts) don't
+        // force the browser to recomposite against the live WebGL canvas underneath.
+        { transform: 'translateZ(0)' }
+      : { backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)' }),
+  };
+};
+
+/**
+ * Build the shared rounded-pill surface `sx` for small, transient chrome floating over the arena
+ * (the auto-quality chip, the mobile "Following <actor>" camera-lock chip, the marker edit-mode
+ * hint pill). These already agree with each other almost exactly — `rgba(13,20,48,0.8–0.85)` +
+ * blur 8–10px + a `999px` radius — which is a genuinely different dialect from the panel family
+ * above: panels tint from `background.default` (slate in dark mode, light in light mode) and use
+ * a 2–3px corner radius for a "surface" read, while these pills lean into one fixed deep-navy
+ * brand tint at full pill radius for a "floating badge" read, regardless of light/dark mode (a
+ * badge over the 3D scene, not a page surface). So this is kept as its own helper rather than
+ * folded into `overlayPanelSurface` with a radius override.
+ *
+ * @param options.accent - Border/glow accent color. Defaults to the theme's primary (matches the
+ *   "Following" chip); pass an explicit color for a semantic variant (e.g. the auto-quality
+ *   chip's amber `rgba(252,211,77,0.4)` warning border).
+ */
+export const overlayPillSurface = (
+  theme: Theme,
+  options: { accent?: string } = {},
+): SystemStyleObject<Theme> => {
+  const accent = options.accent ?? theme.palette.primary.main;
+  return {
+    borderRadius: '999px',
+    color: '#e2e8f0',
+    backgroundColor: 'rgba(13, 20, 48, 0.82)',
+    backdropFilter: 'blur(10px)',
+    WebkitBackdropFilter: 'blur(10px)',
+    border: `1px solid ${alpha(accent, 0.4)}`,
+    boxShadow: `0 6px 22px rgba(0,0,0,0.5), 0 0 16px ${alpha(accent, 0.23)}`,
+  };
+};
+
+/**
+ * Build the floating circular icon-button style used by the bottom-right control stack in
+ * Arena3D (locked-stats toggle, fullscreen, name-tag toggle, keyboard-help re-open, …).
+ *
+ * Ports the existing look (`rgba(0,0,0,0.85)` fill, `0.95` on hover, white when active) as-is —
+ * that part isn't broken — and adds the two things every one of those five buttons currently
+ * lacks:
+ *
+ *  1. A visible `&:focus-visible` ring. None of the five have any focus style, so a keyboard user
+ *     tabbing through the stack gets no feedback at all over a dark 3D map — this adds a 2px
+ *     outline in the theme's primary accent with an offset so it doesn't get swallowed by the
+ *     button's own dark fill.
+ *  2. A raised inactive-icon contrast. The old inactive color, `rgba(255,255,255,0.55)`, sits
+ *     under a WCAG 3:1 non-text contrast floor once the surface behind the (translucent, non-blurred)
+ *     button is bright parchment-toned map art rather than the dark canvas backdrop the buttons
+ *     were designed against. Floored to `0.7` so the glyph stays legibly above 3:1 against light
+ *     art without changing its "dimmed/off" read against dark art.
+ *
+ * @param active - Whether the control this button represents is currently toggled on. Active
+ *   renders full-white (matches the existing convention); inactive renders the dimmed-but-legible
+ *   `0.7` alpha above. Omit for buttons with no on/off state (e.g. fullscreen, help) — they stay
+ *   full-white, matching their existing always-white treatment.
+ */
+export const overlayIconButton = (theme: Theme, active?: boolean): SystemStyleObject<Theme> => {
+  return {
+    color: active === false ? 'rgba(255, 255, 255, 0.7)' : 'white',
+    backgroundColor: 'rgba(0, 0, 0, 0.85)',
+    '&:hover': {
+      backgroundColor: 'rgba(0, 0, 0, 0.95)',
+    },
+    '&:focus-visible': {
+      outline: `2px solid ${theme.palette.primary.main}`,
+      outlineOffset: 2,
     },
   };
 };

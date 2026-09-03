@@ -60,6 +60,11 @@ const Arena3DScene = React.lazy(() =>
 // each render churning the panel.
 const EMPTY_SELECTION: Set<number> = new Set();
 
+// localStorage flag gating the keyboard-help panel's auto-open to a visitor's FIRST replay visit
+// (see the effect below). Versioned like ReplayZoomHint's STORAGE_KEY so a future copy/behavior
+// change can invalidate old flags by bumping the suffix.
+const KEYBOARD_HELP_SEEN_KEY = 'replay.keyboardHelpSeen.v1';
+
 /**
  * Compute the default (fallback) camera position used whenever actor positions
  * are unavailable. The camera is placed southwest of and above the target.
@@ -455,14 +460,38 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
     };
   }, [contextMenu]);
 
-  // Show keyboard help on initial mount for 5 seconds
+  // Auto-open the keyboard help panel on FIRST VISIT ONLY (500ms after mount, auto-hides at 8s) —
+  // gated on a localStorage flag, same read/try-catch/write shape as ReplayZoomHint's dismissal
+  // flag. Without this gate the panel popped open on every single mount, including a deep link to
+  // follow a specific player, which is actively unhelpful. Returning visitors still have the
+  // persistent "?" button (rendered below) and the H key — this only removes the unsolicited
+  // auto-open once the visitor has seen it. Guard localStorage access: Safari private mode throws
+  // on getItem/setItem, and a throw here must not break the replay — worst case the hint just
+  // reappears (or never persists) instead of crashing the component.
   useEffect(() => {
+    let alreadySeen = false;
+    try {
+      alreadySeen = window.localStorage.getItem(KEYBOARD_HELP_SEEN_KEY) === '1';
+    } catch {
+      // Storage disabled/blocked — fall through and treat as first visit.
+    }
+
+    if (alreadySeen) {
+      return;
+    }
+
     const timer = setTimeout(() => {
       setShowKeyboardHelp(true);
     }, 500);
 
     const hideTimer = setTimeout(() => {
       setShowKeyboardHelp(false);
+      try {
+        window.localStorage.setItem(KEYBOARD_HELP_SEEN_KEY, '1');
+      } catch {
+        // Private mode / storage disabled — the auto-open just won't persist; harmless, it will
+        // simply reappear next visit rather than staying suppressed.
+      }
     }, 8000);
 
     return () => {
@@ -762,8 +791,15 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
             }
           : null),
       }}
-      role="img"
-      aria-label="3D fight replay arena showing player positions over time"
+      // This container is a labelled REGION, not the graphic itself — it hosts the overlay
+      // controls (help/name-tags/quality/fullscreen/stats buttons, the Following chip, the
+      // player list, boss bars, help panel) as interactive siblings of the <Canvas>. Do NOT put
+      // role="img" here: ARIA img forces the entire subtree into the "presentational" bucket,
+      // which silently erases every descendant's aria-label/aria-pressed from the accessibility
+      // tree — screen-reader users could not discover a single control. That was the previous
+      // bug. The img role belongs on the <Canvas> below (the actual unlabelled graphic).
+      role="region"
+      aria-label="3D fight replay"
     >
       <ReplayErrorBoundary checkWebGL={true}>
         <Canvas
@@ -806,6 +842,14 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
             failIfMajorPerformanceCaveat: false,
           }}
           onContextMenu={handleCanvasContextMenu}
+          // The actual unlabelled graphic lives here, not on the outer region container (see the
+          // comment on that container above). R3F's <Canvas> forwards unrecognized DOM props
+          // (CanvasProps extends React.HTMLAttributes<HTMLDivElement>) onto the div it renders as
+          // its own wrapper — one level above the real <canvas> element — so role/aria-label land
+          // on that wrapper div, which is exactly what a screen reader needs: a single labelled
+          // graphic node, sibling to (not ancestor of) the overlay controls rendered below.
+          role="img"
+          aria-label="3D fight replay arena showing player positions over time"
           onCreated={(state) => {
             const { gl } = state;
             // Tone mapping: R3F defaults to ACESFilmic, which desaturates bright highlights — it
@@ -1128,16 +1172,27 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
             aria-pressed={statsPanelEnabled}
             size="small"
             onClick={toggleStats}
-            sx={{
+            sx={(theme) => ({
               position: 'absolute',
               bottom: 296,
               right: 16,
-              color: statsPanelEnabled ? 'white' : 'rgba(255, 255, 255, 0.55)',
+              // 0.7, not the old 0.55: an icon this faint over a translucent black panel sitting on
+              // the map's bright parchment areas falls under WCAG's 3:1 non-text-contrast floor.
+              // Kept below full white so the active/inactive states still read as visually distinct.
+              color: statsPanelEnabled ? 'white' : 'rgba(255, 255, 255, 0.7)',
               backgroundColor: 'rgba(0, 0, 0, 0.85)',
               '&:hover': {
                 backgroundColor: 'rgba(0, 0, 0, 0.95)',
               },
-            }}
+              // Keyboard-focus ring — this stack has none by default, so a keyboard user tabbing
+              // through the overlay over a dark/bright map has no idea where focus landed. Matches
+              // PlayerListPanel's convention (2px solid primary, positive offset so the ring sits
+              // clear of the button's own circular background rather than clipping into it).
+              '&:focus-visible': {
+                outline: `2px solid ${theme.palette.primary.main}`,
+                outlineOffset: 2,
+              },
+            })}
           >
             <Insights fontSize="small" />
           </IconButton>
@@ -1154,7 +1209,7 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
             aria-pressed={isFullscreen}
             size="small"
             onClick={onToggleFullscreen}
-            sx={{
+            sx={(theme) => ({
               position: 'absolute',
               bottom: 248,
               right: 16,
@@ -1163,7 +1218,11 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
               '&:hover': {
                 backgroundColor: 'rgba(0, 0, 0, 0.95)',
               },
-            }}
+              '&:focus-visible': {
+                outline: `2px solid ${theme.palette.primary.main}`,
+                outlineOffset: 2,
+              },
+            })}
           >
             {isFullscreen ? <FullscreenExit fontSize="small" /> : <Fullscreen fontSize="small" />}
           </IconButton>
@@ -1195,16 +1254,21 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
             aria-pressed={namesEnabled}
             size="small"
             onClick={toggleNames}
-            sx={{
+            sx={(theme) => ({
               position: 'absolute',
               bottom: 152,
               right: 16,
-              color: namesEnabled ? 'white' : 'rgba(255, 255, 255, 0.55)',
+              // See the stats-toggle button above for why 0.7 (was 0.55) — same contrast floor.
+              color: namesEnabled ? 'white' : 'rgba(255, 255, 255, 0.7)',
               backgroundColor: 'rgba(0, 0, 0, 0.85)',
               '&:hover': {
                 backgroundColor: 'rgba(0, 0, 0, 0.95)',
               },
-            }}
+              '&:focus-visible': {
+                outline: `2px solid ${theme.palette.primary.main}`,
+                outlineOffset: 2,
+              },
+            })}
           >
             {namesEnabled ? <Label fontSize="small" /> : <LabelOff fontSize="small" />}
           </IconButton>
@@ -1219,7 +1283,7 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
             aria-label="Show keyboard controls"
             size="small"
             onClick={() => setShowKeyboardHelp(true)}
-            sx={{
+            sx={(theme) => ({
               position: 'absolute',
               bottom: 104,
               right: 16,
@@ -1228,7 +1292,11 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
               '&:hover': {
                 backgroundColor: 'rgba(0, 0, 0, 0.95)',
               },
-            }}
+              '&:focus-visible': {
+                outline: `2px solid ${theme.palette.primary.main}`,
+                outlineOffset: 2,
+              },
+            })}
           >
             <HelpOutline fontSize="small" />
           </IconButton>
@@ -1307,6 +1375,12 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
                 fontSize: mobileImmersive ? '1.4rem' : '1.05rem',
                 ...(mobileImmersive ? { padding: '6px', marginRight: '4px' } : null),
                 '&:hover': { color: theme.palette.primary.main },
+              },
+              // MUI's Chip puts the delete affordance's tabIndex/keydown handling on the root
+              // element, so the ring belongs on the chip itself (not a nested part) to track focus.
+              '&:focus-visible': {
+                outline: `2px solid ${theme.palette.primary.main}`,
+                outlineOffset: 2,
               },
             })}
           />
