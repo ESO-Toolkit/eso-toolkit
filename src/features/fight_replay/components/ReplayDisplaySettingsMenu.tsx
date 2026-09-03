@@ -31,8 +31,7 @@ import { alpha } from '@mui/material/styles';
 import React from 'react';
 
 import type { ReplayQualityPreset } from '../../../hooks/useReplayPrefs';
-
-import { QUALITY_PRESET_OPTIONS } from './ReplayQualityMenu';
+import { QUALITY_PRESET_OPTIONS } from '../constants/qualityPresets';
 
 interface ReplayDisplaySettingsMenuProps {
   namesEnabled: boolean;

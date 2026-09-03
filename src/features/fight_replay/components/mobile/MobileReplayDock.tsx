@@ -33,6 +33,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import type { ReplayQualityPreset } from '../../../../hooks/useReplayPrefs';
 import { useTimelineMarkers } from '../../../../hooks/useTimelineMarkers';
+import { QUALITY_PRESET_OPTIONS } from '../../constants/qualityPresets';
 import type { TrialChapter } from '../../trial_chapters/types';
 import type { ShapeKind, ShapeStyle } from '../../types/mapMarkers';
 import { ChapterList } from '../ChapterList';
@@ -40,7 +41,6 @@ import type { TrialReplayNav } from '../FightReplay3D';
 import { LiveScrubRail } from '../LiveScrubRail';
 import { LiveTrialStrip } from '../LiveTrialStrip';
 import { PlaybackButtons } from '../PlaybackButtons';
-import { QUALITY_PRESET_OPTIONS } from '../ReplayQualityMenu';
 import { ShapeToolbar } from '../ShapeToolbar';
 import { ShareButton } from '../ShareButton';
 import { TimeReadout } from '../TimeReadout';
