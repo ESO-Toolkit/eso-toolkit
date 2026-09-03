@@ -34,6 +34,17 @@
  *
  * Deliberately does NOT link or host nvngx_dlssnr.dll: the patched build is a
  * modified-after-signing NVIDIA binary and is not ours to redistribute.
+ *
+ * The motion-vector provider is a CHOICE, not a fixture, and the setting that
+ * picks it changed generation. Do not reintroduce "install LaunchPad" as the
+ * only path: upstream (DLSS5-Feeder README) lists five providers behind one
+ * preprocessor definition, DLSS5_MV_PROVIDER (0-4, default 0, recommended 3 =
+ * LumeniteFX Kernel), while 0.4.x shaders use the older two-level scheme of
+ * DLSS5_MV_SOURCE (preprocessor) plus a runtime MV_PROVIDER combo with only
+ * two entries. Both are documented here because readers arrive on either; the
+ * version test is which name their own DLSS5_Feed.fx references. What did not
+ * change is the ordering rule, and that is the failure that never announces
+ * itself, so it stays prominent.
  */
 
 import { ArrowForward, Check as CheckIcon, ContentCopy, ExpandMore } from '@mui/icons-material';
@@ -98,14 +109,14 @@ const W = { bodyDark: 410, body: 430, label: 560, semi: 580, heading: 640 } as c
  * as a diagram so the reader can see where their failure sits.
  */
 const PIPELINE = [
-  { stage: 'Motion', by: 'LAUNCHPAD.fx' },
+  { stage: 'Motion', by: 'MV provider .fx' },
   { stage: 'Contract', by: 'DLSS5_Feed.fx' },
   { stage: 'DLSS', by: 'dlss5-feed' },
   { stage: 'Neural Rendering', by: 'renodx-dlss5' },
 ] as const;
 
 const PAGE_URL = 'https://esotk.com/docs/dlss5-neural-rendering/';
-const LAST_UPDATED = 'August 2026';
+const LAST_UPDATED = 'September 2026';
 
 /**
  * Mirrors BuildLeaderboardPage: `<` inside the payload would close the script
@@ -131,7 +142,7 @@ const TECH_ARTICLE_LD = {
   mainEntityOfPage: PAGE_URL,
   inLanguage: 'en',
   proficiencyLevel: 'Expert',
-  dateModified: '2026-08-31',
+  dateModified: '2026-09-02',
   about: { '@type': 'VideoGame', name: 'The Elder Scrolls Online' },
   publisher: { '@type': 'Organization', name: 'ESO Toolkit', url: 'https://esotk.com' },
 } as const;
@@ -153,7 +164,7 @@ const HOW_TO_LD = {
     'nvngx_dlss.dll (310.x)',
     'nvngx_dlssnr.dll (matching GPU generation)',
     'dlss5-feed.addon64 and renodx-dlss5.addon64',
-    'DLSS5_Feed.fx and MartysMods LaunchPad shaders',
+    'DLSS5_Feed.fx and a motion-vector provider shader (LumeniteFX Kernel or iMMERSE LaunchPad)',
   ].map((name) => ({ '@type': 'HowToTool', name })),
   step: [
     ['Find your ESO client folder', 'Every file goes in the folder containing eso64.exe.'],
@@ -163,7 +174,7 @@ const HOW_TO_LD = {
     ],
     [
       'Add the shaders',
-      'Copy DLSS5_Feed.fx and MartysMods_LAUNCHPAD.fx into reshade-shaders\\Shaders, the MartysMods include folder beside them, and iMMERSE_bluenoise_opt.png into reshade-shaders\\Textures.',
+      "Copy DLSS5_Feed.fx into reshade-shaders\\Shaders, then add one motion-vector provider from its own repository: LumeniteFX Kernel (the current upstream recommendation) or iMMERSE LaunchPad, with that provider's includes beside the .fx files and its textures in reshade-shaders\\Textures.",
     ],
     [
       'Add the two add-ons',
@@ -183,7 +194,7 @@ const HOW_TO_LD = {
     ],
     [
       'Enable the effects in the right order',
-      'In the ReShade overlay, enable MartysMods_Launchpad first, then DLSS5_Feed directly below it.',
+      'In the ReShade overlay, enable your motion-vector provider technique first, then DLSS5_Feed directly below it. Only one provider may be enabled.',
     ],
   ].map(([name, text], i) => ({
     '@type': 'HowToStep',
@@ -296,7 +307,8 @@ const REQUIREMENTS: ReadonlyArray<RowSpec> = [
   },
   {
     label: 'ReShade',
-    value: '6.x, installed for eso64.exe as dxgi.dll, WITH full add-on support.',
+    value:
+      '6.x, installed for eso64.exe as dxgi.dll, WITH full add-on support. That is a different download from the plain build, and it is the unsigned one — the plain build will not load .addon64 files at all, so none of this works on it. Some anti-cheat setups treat the add-on build differently for exactly that reason; ESO has no kernel-level anti-cheat, but if you also play something that does, know which build you have installed.',
   },
   {
     label: 'Add-ons',
@@ -305,7 +317,7 @@ const REQUIREMENTS: ReadonlyArray<RowSpec> = [
   {
     label: 'Shaders',
     value:
-      'DLSS5_Feed.fx, MartysMods_LAUNCHPAD.fx, the MartysMods includes, and iMMERSE_bluenoise_opt.png.',
+      'DLSS5_Feed.fx plus exactly one motion-vector provider and its includes/textures. LumeniteFX Kernel is the current upstream recommendation; iMMERSE LaunchPad (MartysMods_LAUNCHPAD.fx, the MartysMods includes and iMMERSE_bluenoise_opt.png) is a valid and widely-used alternative.',
   },
 ];
 
@@ -313,7 +325,7 @@ const OVERLAY_TABS: ReadonlyArray<RowSpec> = [
   {
     label: 'Home',
     value:
-      "The effect list. This is where you tick MartysMods_Launchpad and DLSS5_Feed, and where each effect's own settings appear when you select it.",
+      "The effect list. This is where you tick your motion-vector provider and DLSS5_Feed, and where each effect's own settings appear when you select it.",
   },
   {
     label: 'Add-ons',
@@ -331,7 +343,7 @@ const FEED_SETTINGS: ReadonlyArray<RowSpec> = [
   {
     label: 'Motion vector provider',
     value:
-      'Leave on iMMERSE LaunchPad. The alternative (texMotionVectors) is for setups without LaunchPad installed.',
+      'Only on 0.4.x, where MV_PROVIDER is a runtime dropdown with two entries — leave it matching the provider you actually enabled. Current builds have no dropdown here: the provider is fixed at compile time by DLSS5_MV_PROVIDER. See "Choosing a motion-vector provider" below.',
   },
   {
     label: 'Motion vector sign (x, y)',
@@ -343,6 +355,35 @@ const FEED_SETTINGS: ReadonlyArray<RowSpec> = [
     label: 'Debug view',
     value:
       'Drives the separate DLSS5_Feed_Debug technique. It shows motion vectors (colour = direction, brightness = speed) or raw depth. Enable that technique only while checking, then turn it back off.',
+  },
+];
+
+/**
+ * Transcribed from the DLSS5-Feeder README's provider table. The label is the
+ * `DLSS5_MV_PROVIDER` value because that is what the reader types; the value
+ * names the technique they must tick, because picking the definition and
+ * enabling a different technique is the documented silent failure.
+ */
+const MV_PROVIDERS: ReadonlyArray<RowSpec> = [
+  {
+    label: '0 — shared texMotionVectors',
+    value:
+      "The old convention: anything writing the shared texMotionVectors texture (qUINT, dh_uber_motion, ReshadeMotionEstimation). Enable that shader's own technique. This is the definition's default value, not the recommendation — and upstream reports DRME no longer compiles on ReShade 6.8.",
+  },
+  {
+    label: '1 — iMMERSE LaunchPad',
+    value:
+      "Technique: Launchpad. MartysMods. The feed also files LaunchPad's per-frame optical-flow request, so it works without iMMERSE RTGI running. Upstream notes warping around flames and transparents is worst on this one.",
+  },
+  { label: '2 — VORT', value: 'Technique: vort_Motion. MIT-licensed.' },
+  {
+    label: '3 — LumeniteFX Kernel',
+    value:
+      'Technique: "LUMENITE: Kernel 2.0". The recommended value. Eighth-resolution flow plus a confidence map that the feed actually consumes, and the configuration upstream tuned this beta on. Set the definition to 3 yourself; it is not the default.',
+  },
+  {
+    label: '4 — LumeniteFX QuantMotion',
+    value: 'Technique: "LUMENITE: QuantMotion". Same shape as Kernel with a different estimator.',
   },
 ];
 
@@ -435,9 +476,19 @@ const CREDITS: ReadonlyArray<RowSpec> = [
     value: 'By crosire. The injector and add-on framework everything here runs on. reshade.me',
   },
   {
+    label: 'LumeniteFX',
+    value:
+      'By Umar Afzaal. Kernel 2.0 is the motion-vector provider DLSS5-Feeder currently recommends (DLSS5_MV_PROVIDER = 3); QuantMotion is the same shape with a different estimator. github.com/umar-afzaal/LumeniteFX',
+  },
+  {
     label: 'iMMERSE LaunchPad',
     value:
-      'By Marty McFly (Pascal Gilcher). Supplies the optical-flow motion vectors, without which the feeder has nothing to hand NGX. github.com/martymcmodding/iMMERSE',
+      'By Marty McFly (Pascal Gilcher). The motion-vector provider this guide was originally written around, and still a supported choice (DLSS5_MV_PROVIDER = 1). github.com/martymcmodding/iMMERSE',
+  },
+  {
+    label: 'VORT',
+    value:
+      'MIT-licensed. The third provider option, DLSS5_MV_PROVIDER = 2, technique vort_Motion. Listed because upstream supports it; we have not tested it in ESO.',
   },
   {
     label: 'RenoDX',
@@ -447,12 +498,12 @@ const CREDITS: ReadonlyArray<RowSpec> = [
   {
     label: 'ReshadeMotionEstimation',
     value:
-      'By Jakob Wapenhensch (CC BY-NC 4.0). The alternative motion-vector provider, for setups without LaunchPad. github.com/JakobPCoder/ReshadeMotionEstimation',
+      'By Jakob Wapenhensch (CC BY-NC 4.0). One of the shaders that writes the shared texMotionVectors, so it falls under provider 0 — but upstream reports it does not compile on ReShade 6.8, and a technique that fails to compile still ticks on while writing nothing. Do not start here. github.com/JakobPCoder/ReshadeMotionEstimation',
   },
   {
     label: 'DLSS 5 Feeder',
     value:
-      'Author unattributed in the shipped build. If you know who wrote it, tell us and we will credit them properly.',
+      'The add-on and DLSS5_Feed.fx. Its README at github.com/jlrouzies-fr/DLSS5-Feeder is the source for the provider table on this page; the released binaries themselves carry no author string.',
   },
   {
     label: 'DLSS and NGX',
@@ -522,13 +573,20 @@ const FAILURES: ReadonlyArray<FailureSpec> = [
     log: 'DLSS5_Feed.fx is not loaded (technique/textures missing) -- install it into reshade-shaders\\Shaders and enable it below MartysMods_Launchpad.',
     cause:
       'Seen once at every effect reload, this is harmless: the feeder checks before ReShade finishes compiling. It only matters if the very next line does not say "technique found".',
-    fix: 'If it never resolves: confirm both .fx files are in reshade-shaders\\Shaders, the MartysMods\\ folder sits beside them, and both techniques are ticked in the right order.',
+    fix: "If it never resolves: confirm DLSS5_Feed.fx and your provider's .fx are in reshade-shaders\\Shaders, that provider's include folder sits beside them, and both techniques are ticked in the right order.",
+  },
+  {
+    symptom: 'No error anywhere, but the image is soft and history smears one frame behind',
+    log: '(no log line on 0.4.x; current builds warn in the overlay Motion vectors section and in dlss5-feed.log)',
+    cause:
+      "The ordering rule. If the provider technique sits below DLSS5_Feed, or is not ticked at all, the feed still runs and nothing errors — it just reads last frame's vectors, or none. On current builds there is a second version of this: the shader is compiled for one DLSS5_MV_PROVIDER value while a different provider's technique is the one enabled. Upstream calls it the classic silent failure.",
+    fix: "Open the Home tab and check that exactly one provider technique is ticked and sits ABOVE DLSS5_Feed. Then check the definition matches it: select DLSS5_Feed.fx and read DLSS5_MV_PROVIDER against the provider table. Current builds print the pairing in dlss5-feed.log and turn the overlay's Motion vectors section red when the two disagree.",
   },
   {
     symptom: 'Image doubles, smears or ghosts while moving',
     log: '(no log line; this is a visual fault)',
     cause:
-      'The motion vectors point the wrong way. The feeder and LaunchPad agree on convention, but a mismatch shows up as smearing in one axis.',
+      'The motion vectors point the wrong way. The feeder and its supported providers agree on convention, but a mismatch shows up as smearing in one axis.',
     fix: 'In the DLSS5_Feed effect settings, flip a component of "Motion vector sign (x, y)" from 1.0 to -1.0. Change one axis at a time and watch which direction the smearing stops.',
   },
   {
@@ -813,13 +871,13 @@ export const Dlss5NeuralRenderingGuidePage: React.FC = () => {
           >
             <ChainRow
               n="1"
-              title="LaunchPad estimates motion"
-              body="ESO does not output motion vectors, so iMMERSE LaunchPad derives them from the image with optical flow."
+              title="A provider shader estimates motion"
+              body="ESO does not output motion vectors, so one ReShade shader of your choice derives them from the image with optical flow. LumeniteFX Kernel is the current recommendation; iMMERSE LaunchPad and VORT also work."
             />
             <ChainRow
               n="2"
               title="DLSS5_Feed packages the contract"
-              body="It converts LaunchPad's output plus ReShade's depth buffer into the exact two textures DLSS expects: DLSS5_MV (RG16F, pixel motion) and DLSS5_Depth (R32F, raw hardware depth)."
+              body="It converts the provider's output plus ReShade's depth buffer into the exact two textures DLSS expects: DLSS5_MV (RG16F, pixel motion) and DLSS5_Depth (R32F, raw hardware depth)."
             />
             <ChainRow
               n="3"
@@ -875,6 +933,13 @@ export const Dlss5NeuralRenderingGuidePage: React.FC = () => {
             </Typography>
           </Callout>
           <Callout tone="caution" label="The add-ons and the NR runtime" sx={{ mt: 2 }}>
+            <Typography variant="body2" sx={{ mb: 1.25 }}>
+              <code>renodx-dlss5.addon64</code> is <strong>Discord-only</strong>: it lives in the
+              pinned messages of RenoDX&apos;s <code>#dlss5</code> channel, with no stable URL and
+              no version numbers, so nobody can script fetching it. Deep Fried Chicken, the
+              alternative neural consumer DLSS5-Feeder recommends, is distributed the same way.
+              Budget for reading a channel, not for a download page.
+            </Typography>
             <Typography variant="body2">
               We do not host or link <code>dlss5-feed.addon64</code>,{' '}
               <code>renodx-dlss5.addon64</code>, or the patched <code>nvngx_dlssnr.dll</code>. If
@@ -918,13 +983,17 @@ export const Dlss5NeuralRenderingGuidePage: React.FC = () => {
               </Typography>
               <Note>
                 Already have ReShade? Check that <code>dxgi.dll</code> exists in the client folder
-                and that it is version 6.x.
+                and that it is version 6.x. Note that the add-on build is the unsigned one — that is
+                inherent to what add-on support is, and it is why some anti-cheat setups treat it
+                differently from the plain build. ESO has no kernel-level anti-cheat, but if you
+                share a ReShade install with a game that does, install this one for ESO only.
               </Note>
             </StepRow>
 
             <StepRow n={3} last={false} title="Add the shaders">
               <Typography variant="body2" sx={proseSx}>
-                Four files, two destinations:
+                The feeder&apos;s own shader, plus <strong>one</strong> motion-vector provider of
+                your choosing:
               </Typography>
               <Box
                 component="ul"
@@ -934,18 +1003,36 @@ export const Dlss5NeuralRenderingGuidePage: React.FC = () => {
                   <code>DLSS5_Feed.fx</code> → <code>reshade-shaders\Shaders</code>
                 </Typography>
                 <Typography component="li" variant="body2" sx={proseSx}>
-                  <code>MartysMods_LAUNCHPAD.fx</code> → <code>reshade-shaders\Shaders</code>
+                  <strong>LumeniteFX</strong> (recommended upstream): its <code>Shaders\</code>{' '}
+                  contents — the <code>lumenite_*.fx</code> files and their <code>include\</code> —
+                  into <code>reshade-shaders\Shaders</code>, and{' '}
+                  <code>lumenite_bluenoise256.png</code> into <code>reshade-shaders\Textures</code>
                 </Typography>
                 <Typography component="li" variant="body2" sx={proseSx}>
-                  the <code>MartysMods\</code> include folder → alongside those two .fx files
-                </Typography>
-                <Typography component="li" variant="body2" sx={proseSx}>
-                  <code>iMMERSE_bluenoise_opt.png</code> → <code>reshade-shaders\Textures</code>
+                  <strong>or iMMERSE LaunchPad</strong>: <code>MartysMods_LAUNCHPAD.fx</code> and
+                  the <code>MartysMods\</code> include folder into{' '}
+                  <code>reshade-shaders\Shaders</code>, and <code>iMMERSE_bluenoise_opt.png</code>{' '}
+                  into <code>reshade-shaders\Textures</code>
                 </Typography>
               </Box>
               <Note>
-                LaunchPad supplies the optical-flow motion vectors. Without it the feeder has
-                nothing to hand NGX and sits idle.
+                Whichever you pick supplies the optical-flow motion vectors; without one the feeder
+                has nothing to hand NGX and sits idle. DLSS5-Feeder bundles none of them — each
+                provider comes from its own repository under its own licence. Install only one, and
+                see{' '}
+                <Box
+                  component="a"
+                  href="#overlay"
+                  sx={{
+                    color: accentText,
+                    fontWeight: W.semi,
+                    textDecoration: 'underline',
+                    textDecorationColor: isDark ? 'rgba(56,189,248,0.4)' : 'rgba(3,105,161,0.4)',
+                  }}
+                >
+                  choosing a provider
+                </Box>{' '}
+                before you decide.
               </Note>
             </StepRow>
 
@@ -1044,7 +1131,7 @@ export const Dlss5NeuralRenderingGuidePage: React.FC = () => {
                 <Typography component="li" variant="body2" sx={proseSx}>
                   <strong>DLAA is subtler but still wrong.</strong> It renders at native resolution,
                   so depth survives, but it resolves a jittered temporal pass before ReShade ever
-                  sees the frame. LaunchPad then estimates motion vectors from an
+                  sees the frame. Your provider then estimates motion vectors from an
                   already-temporally-filtered image and the feeder runs a second temporal pass over
                   it. Expect extra softness and ghosting rather than an outright failure, so this
                   one hides — if your image smears and step 7 looks done, check this dropdown.
@@ -1059,8 +1146,9 @@ export const Dlss5NeuralRenderingGuidePage: React.FC = () => {
 
             <StepRow n={8} last title="Enable the effects in the right order">
               <Typography variant="body2" sx={proseSx}>
-                Launch ESO, press <strong>Home</strong>, and enable MartysMods_Launchpad first, then
-                DLSS5_Feed directly below it. See{' '}
+                Launch ESO, press <strong>Home</strong>, and enable your motion-vector provider
+                technique first, then DLSS5_Feed directly below it. Exactly one provider may be
+                enabled. See{' '}
                 <Box
                   component="a"
                   href="#overlay"
@@ -1103,10 +1191,24 @@ export const Dlss5NeuralRenderingGuidePage: React.FC = () => {
               reorder if they land wrong:
             </Typography>
             <CodeBlock sx={{ mb: 1.5 }}>
-              {`[x] MartysMods_Launchpad     <- motion vector provider, must be ABOVE
+              {`[x] LUMENITE: Kernel 2.0     <- your ONE motion vector provider, must be ABOVE
 [x] DLSS5_Feed               <- consumes them, must be BELOW`}
             </CodeBlock>
-            <Typography variant="body2" sx={proseSx}>
+            <Typography variant="body2" sx={{ ...proseSx, mb: 1.5 }}>
+              Substitute whichever provider you installed — <code>Launchpad</code>,{' '}
+              <code>vort_Motion</code>, <code>LUMENITE: QuantMotion</code> or the technique of
+              whatever writes <code>texMotionVectors</code>. The ordering rule itself is the one
+              thing that has not changed across versions.
+            </Typography>
+            <Callout tone="caution" label="The failure that does not announce itself">
+              <Typography variant="body2" sx={{ lineHeight: 1.7 }}>
+                Get the order wrong and <strong>nothing errors</strong>. The feed runs, the log
+                looks healthy, and DLSS quietly reads last frame&apos;s vectors — you see a soft,
+                one-frame-behind image and no reason for it. Enabling two providers at once does the
+                same thing. Tick exactly one, and drag it above DLSS5_Feed.
+              </Typography>
+            </Callout>
+            <Typography variant="body2" sx={{ ...proseSx, mt: 1.5 }}>
               The add-on runs DLSS and Neural Rendering immediately after the DLSS5_Feed technique,
               so any effect you place <em>below</em> DLSS5_Feed is applied on top of the neural
               output. Anything above it feeds into the neural pass instead.
@@ -1131,15 +1233,69 @@ export const Dlss5NeuralRenderingGuidePage: React.FC = () => {
               component="h3"
               sx={{ fontWeight: W.heading, fontSize: '1.125rem', lineHeight: 1.4, mb: 1 }}
             >
-              If LaunchPad is not installed
+              Choosing a motion-vector provider
+            </Typography>
+            <Typography variant="body2" sx={{ ...proseSx, mb: 1.5 }}>
+              LaunchPad is <em>a</em> provider, not <em>the</em> provider — earlier versions of this
+              guide read as though it were required, and it never was. DLSS5-Feeder estimates no
+              motion itself; it reads whichever provider shader you installed, and{' '}
+              <strong>which one is a compile-time decision</strong>, made in{' '}
+              <strong>Edit → Preprocessor definitions</strong> on <code>DLSS5_Feed.fx</code>{' '}
+              followed by a reload of effects.
+            </Typography>
+            <Typography variant="body2" sx={{ ...proseSx, mb: 1.5 }}>
+              <strong>Which scheme you have depends on your version.</strong> Open your{' '}
+              <code>DLSS5_Feed.fx</code> in a text editor and search it: if it references{' '}
+              <code>DLSS5_MV_PROVIDER</code> you are on a current build, and if it references{' '}
+              <code>DLSS5_MV_SOURCE</code> you are on 0.4.x. They are two generations of the same
+              setting, not two settings.
+            </Typography>
+
+            <Typography
+              component="h4"
+              sx={{ fontWeight: W.heading, fontSize: '0.9375rem', mt: 2.5, mb: 1 }}
+            >
+              Current builds — <code>DLSS5_MV_PROVIDER</code>, five values
+            </Typography>
+            <SettingsTable rows={MV_PROVIDERS} labelWidth={230} />
+            <Note>
+              The definition&apos;s built-in default is <code>0</code>; upstream&apos;s
+              recommendation is <code>3</code>. Those are different things, and leaving it unset
+              does not give you the recommended setup.
+            </Note>
+
+            <Typography
+              component="h4"
+              sx={{ fontWeight: W.heading, fontSize: '0.9375rem', mt: 2.5, mb: 1 }}
+            >
+              0.4.x — <code>DLSS5_MV_SOURCE</code> plus a runtime dropdown
             </Typography>
             <Typography variant="body2" sx={proseSx}>
-              Whether LaunchPad is present is a compile-time question, not a runtime one. If you are
-              using a different motion-vector provider, set <code>DLSS5_MV_SOURCE = 1</code> under{' '}
-              <strong>Edit → Preprocessor definitions</strong> in the overlay. With LaunchPad
-              installed (the default, <code>0</code>), both providers stay selectable from the
-              dropdown with no recompile.
+              0.4.x splits the same decision in two. <code>DLSS5_MV_SOURCE</code> is the
+              preprocessor half and defaults to <code>0</code>, which compiles the LaunchPad path in
+              and leaves both options live at runtime. Set it to <code>1</code> only if LaunchPad is
+              genuinely not installed: at <code>1</code> the LaunchPad path is not compiled at all
+              (its headers cannot coexist with <code>ReShade.fxh</code>) and only the shared{' '}
+              <code>texMotionVectors</code> route works. The runtime half is the{' '}
+              <strong>Motion vector provider</strong> dropdown in the effect settings, which on this
+              version has exactly two entries — <code>0 = iMMERSE LaunchPad</code> and{' '}
+              <code>1 = texMotionVectors provider</code>.
             </Typography>
+            <Note>
+              Already running 0.4.x with LaunchPad above the feed and the dropdown on iMMERSE
+              LaunchPad? That is correct for your version — nothing here says otherwise. Moving to{' '}
+              <code>DLSS5_MV_PROVIDER</code> means updating the add-on and shader together, which is
+              an upgrade with its own risks, not a fix for something broken.
+            </Note>
+
+            <Callout tone="info" label="Nothing is bundled" sx={{ mt: 2 }}>
+              <Typography variant="body2" sx={{ lineHeight: 1.7 }}>
+                DLSS5-Feeder ships no provider files and <code>#include</code>s none of them: its
+                shader simply declares the provider&apos;s output texture identically, so ReShade
+                binds the same resource. Every provider is downloaded from its own repository under
+                its own licence.
+              </Typography>
+            </Callout>
           </Box>
         </Stack>
       </Section>
