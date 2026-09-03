@@ -67,6 +67,16 @@ const COLOR_PICKER_SWATCHES: string[] = [
   PLAYER_PATH_COLORS.amber,
 ];
 
+/**
+ * Idle time (ms) before the desktop panel auto-collapses to just its header row.
+ *
+ * The roster is the biggest piece of chrome over the arena, and most of the time it is opened to
+ * flip a couple of toggles and then left sitting on top of the fight. So it now folds itself away
+ * once the pointer has been off it for a beat: hovering it expands it again, and clicking the
+ * header pins it open (no more auto-collapse) for users who want it permanently on screen.
+ */
+const AUTO_COLLAPSE_MS = 6000;
+
 interface PlayerListPanelProps {
   /** Player actor IDs to list (derived from the position lookup). */
   playerIds: number[];
@@ -138,11 +148,32 @@ export const PlayerListPanel: React.FC<PlayerListPanelProps> = ({
   const effectiveReserved = isMobile ? reservedInset + MOBILE_CLUSTER_BAND : reservedInset;
   const theme = useTheme();
   const [collapsed, setCollapsed] = useState(false);
+  // Auto-collapse bookkeeping (desktop only — the mobile sheet is an explicit, dismissable surface).
+  // `pinned` latches on the first header click: an explicit expand/collapse is the user's decision
+  // and must stick.
+  const [pinned, setPinned] = useState(false);
+  const [hovered, setHovered] = useState(false);
 
   // The player whose color picker is open, plus its anchor element for the popover.
   const [colorPicker, setColorPicker] = useState<{ id: number; anchorEl: HTMLElement } | null>(
     null,
   );
+
+  // Fold the panel away after an idle beat. Suppressed while the pointer is over it, while the
+  // color picker popover is open (the pointer is outside the panel then, but the user is mid-task),
+  // and once the user has pinned it.
+  const autoCollapses = !isMobile && !pinned;
+  useEffect(() => {
+    if (!autoCollapses || collapsed || hovered || colorPicker) return;
+    const timer = window.setTimeout(() => setCollapsed(true), AUTO_COLLAPSE_MS);
+    return () => window.clearTimeout(timer);
+  }, [autoCollapses, collapsed, hovered, colorPicker]);
+
+  // Hovering an auto-collapsed panel brings the roster straight back — no click needed.
+  const handlePointerEnter = useCallback(() => {
+    setHovered(true);
+    if (autoCollapses) setCollapsed(false);
+  }, [autoCollapses]);
 
   // Resolve names + role colors once per player-set change (both are stable for the fight). The
   // role color is the figure's DEFAULT body color; an override (read live below) wins when set.
@@ -167,7 +198,9 @@ export const PlayerListPanel: React.FC<PlayerListPanelProps> = ({
 
   // Isolated rAF loop: live health straight to the DOM, no React re-render per frame.
   useEffect(() => {
-    if (!lookup) return;
+    // Collapsed = the rows are hidden, so the per-frame health writes would be pure waste over the
+    // live WebGL canvas. The loop restarts (and repaints every bar) on expand.
+    if (!lookup || collapsed) return;
     let raf = 0;
     const tick = (): void => {
       const currentTime = timeRef.current;
@@ -183,7 +216,7 @@ export const PlayerListPanel: React.FC<PlayerListPanelProps> = ({
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [lookup, timeRef, players, theme]);
+  }, [lookup, timeRef, players, theme, collapsed]);
 
   const setHealthRef = useMemo(() => {
     const cache = new Map<number, (el: HTMLDivElement | null) => void>();
@@ -211,8 +244,18 @@ export const PlayerListPanel: React.FC<PlayerListPanelProps> = ({
 
   if (players.length === 0) return null;
 
+  // Header affordance copy: advertise the auto-collapse (and that clicking opts out of it) until
+  // the user has pinned the panel, after which it is a plain expand/collapse toggle.
+  const headerHint = autoCollapses
+    ? 'Click to keep open (auto-collapses when idle)'
+    : collapsed
+      ? 'Expand player list'
+      : 'Collapse player list';
+
   return (
     <Box
+      onPointerEnter={isMobile ? undefined : handlePointerEnter}
+      onPointerLeave={isMobile ? undefined : () => setHovered(false)}
       sx={{
         position: 'absolute',
         // Mobile = a bottom sheet (full-width, docked just above the transport) so it stops fighting
@@ -294,8 +337,12 @@ export const PlayerListPanel: React.FC<PlayerListPanelProps> = ({
       ) : (
         <Box
           component="button"
-          onClick={() => setCollapsed((c) => !c)}
+          onClick={() => {
+            setPinned(true);
+            setCollapsed((c) => !c);
+          }}
           aria-expanded={!collapsed}
+          title={headerHint}
           sx={{
             display: 'flex',
             alignItems: 'center',

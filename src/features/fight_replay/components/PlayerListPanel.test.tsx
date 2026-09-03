@@ -9,7 +9,7 @@
  * @module PlayerListPanel.test
  */
 
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 import React from 'react';
 
 import {
@@ -132,5 +132,56 @@ describe('PlayerListPanel', () => {
     fireEvent.click(screen.getByLabelText('Change @Player1 figure color'));
     fireEvent.click(screen.getByText('Reset to role color'));
     expect(onPlayerColorChange).toHaveBeenCalledWith(1, null);
+  });
+
+  describe('idle auto-collapse (desktop declutter)', () => {
+    beforeEach(() => jest.useFakeTimers());
+    afterEach(() => jest.useRealTimers());
+
+    // The header doubles as the expand/collapse control, so it carries the expanded state.
+    it('folds itself down to the header after an idle beat', () => {
+      renderPanel();
+      expect(screen.getByRole('button', { expanded: true })).toBeInTheDocument();
+      act(() => {
+        jest.advanceTimersByTime(6000);
+      });
+      expect(screen.getByRole('button', { expanded: false })).toBeInTheDocument();
+    });
+
+    it('re-expands on hover and stays open while the pointer is over it', () => {
+      const { container } = renderPanel();
+      const panel = container.firstElementChild as HTMLElement;
+      act(() => {
+        jest.advanceTimersByTime(6000);
+      });
+      fireEvent.pointerEnter(panel);
+      expect(screen.getByRole('button', { expanded: true })).toBeInTheDocument();
+      act(() => {
+        jest.advanceTimersByTime(60000);
+      });
+      // Pointer is still over the panel — no auto-collapse.
+      expect(screen.getByRole('button', { expanded: true })).toBeInTheDocument();
+    });
+
+    it('stops auto-collapsing once the user clicks the header (pinned)', () => {
+      renderPanel();
+      // Explicit collapse then expand — the second click leaves it open for good.
+      fireEvent.click(screen.getByRole('button', { expanded: true }));
+      fireEvent.click(screen.getByRole('button', { expanded: false }));
+      act(() => {
+        jest.advanceTimersByTime(60000);
+      });
+      expect(screen.getByRole('button', { expanded: true })).toBeInTheDocument();
+    });
+
+    it('never auto-collapses the mobile sheet', () => {
+      renderPanel({ isMobile: true });
+      act(() => {
+        jest.advanceTimersByTime(60000);
+      });
+      // The mobile sheet has no collapse header at all — its rows stay rendered.
+      expect(screen.getByText('@Player1')).toBeInTheDocument();
+      expect(screen.queryByRole('button', { expanded: false })).not.toBeInTheDocument();
+    });
   });
 });

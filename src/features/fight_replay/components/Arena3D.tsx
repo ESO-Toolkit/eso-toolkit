@@ -5,17 +5,7 @@ import Insights from '@mui/icons-material/Insights';
 import Label from '@mui/icons-material/Label';
 import LabelOff from '@mui/icons-material/LabelOff';
 import OpenInFull from '@mui/icons-material/OpenInFull';
-import {
-  Box,
-  Button,
-  Chip,
-  IconButton,
-  Tooltip,
-  Typography,
-  Collapse,
-  Menu,
-  MenuItem,
-} from '@mui/material';
+import { Box, Button, Chip, IconButton, Tooltip, Typography, Menu, MenuItem } from '@mui/material';
 import { Canvas } from '@react-three/fiber';
 import React, { Suspense, useMemo, useState, useEffect, useCallback, useRef } from 'react';
 import * as THREE from 'three';
@@ -44,6 +34,7 @@ import type { GroundContextMenuPayload } from './Arena3DScene';
 import { ADD_MARKER_AT_CENTER_EVENT } from './arenaEvents';
 import { BossHealthPanel } from './BossHealthPanel';
 import { DrawingHud } from './DrawingHud';
+import { KeyboardHelpPanel } from './KeyboardHelpPanel';
 import { LockedPlayerStatsPanel } from './LockedPlayerStatsPanel';
 import { MarkerContextMenuPayload } from './Marker3D';
 import { MarkerIconPicker } from './MarkerIconPicker';
@@ -1121,84 +1112,11 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
       {process.env.NODE_ENV === 'development' && <PerformanceMonitorExternal />}
 
       {/* Keyboard Controls Help - Shows briefly on load. Desktop-only: it documents physical-key
-          shortcuts (WASD/H/etc.) that don't exist on touch, so it never renders on mobile. */}
-      <Collapse in={showKeyboardHelp && !isMobile}>
-        <Box
-          sx={{
-            position: 'absolute',
-            // Raised to clear the docked control-bar overlay at the bottom of the canvas.
-            bottom: 104,
-            right: 16,
-            backgroundColor: 'rgba(0, 0, 0, 0.85)',
-            borderRadius: 1,
-            padding: 2,
-            maxWidth: 280,
-          }}
-        >
-          <Typography variant="subtitle2" sx={{ color: 'white', mb: 0.5, fontWeight: 600 }}>
-            Camera
-          </Typography>
-          {[
-            ['WASD', 'Move camera'],
-            ['Shift', 'Sprint'],
-            ['Drag', 'Rotate · Ctrl+scroll: Zoom'],
-            ['R', 'Reset view · G: Frame all'],
-          ].map(([k, label]) => (
-            <Typography
-              key={k}
-              variant="caption"
-              sx={{ color: 'rgba(255, 255, 255, 0.8)', display: 'block', mb: 0.25 }}
-            >
-              <strong>{k}:</strong> {label}
-            </Typography>
-          ))}
-          <Typography variant="subtitle2" sx={{ color: 'white', mt: 1, mb: 0.5, fontWeight: 600 }}>
-            Playback
-          </Typography>
-          {[
-            ['Space', 'Play / pause'],
-            ['← →', 'Seek ±1s · Shift: ±10s'],
-            ['+ −', 'Speed up / down'],
-            [', .', 'Frame step'],
-            ['< >', 'Prev / next event'],
-            ['I O', 'Set loop in / out · U: Clear'],
-            ['[ ]', 'Prev / next boss'],
-          ].map(([k, label]) => (
-            <Typography
-              key={k}
-              variant="caption"
-              sx={{ color: 'rgba(255, 255, 255, 0.8)', display: 'block', mb: 0.25 }}
-            >
-              <strong>{k}:</strong> {label}
-            </Typography>
-          ))}
-          <Typography variant="subtitle2" sx={{ color: 'white', mt: 1, mb: 0.5, fontWeight: 600 }}>
-            View
-          </Typography>
-          {[
-            ['P', 'Player list'],
-            ['T', 'Player trails'],
-            ['N', 'Name cards'],
-            ['J', 'Player stats (when locked)'],
-            ['F', 'Fullscreen'],
-            ['C', 'Collapse controls'],
-          ].map(([k, label]) => (
-            <Typography
-              key={k}
-              variant="caption"
-              sx={{ color: 'rgba(255, 255, 255, 0.8)', display: 'block', mb: 0.25 }}
-            >
-              <strong>{k}:</strong> {label}
-            </Typography>
-          ))}
-          <Typography
-            variant="caption"
-            sx={{ color: 'rgba(255, 255, 255, 0.5)', display: 'block', mt: 1, fontSize: '0.7rem' }}
-          >
-            Press H to toggle this help
-          </Typography>
-        </Box>
-      </Collapse>
+          shortcuts (WASD/H/etc.) that don't exist on touch, so it never renders on mobile. Owns its
+          own layering (above the top-right boss bars) + height cap; see KeyboardHelpPanel. */}
+      {!isMobile && (
+        <KeyboardHelpPanel open={showKeyboardHelp} onClose={() => setShowKeyboardHelp(false)} />
+      )}
 
       {/* Locked-player stats toggle — only shown while following a player (the panel's condition),
           so it doesn't clutter the cluster otherwise. Mirrors the J key; on/off shown by color.
