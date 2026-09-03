@@ -109,6 +109,15 @@ interface PlayerListPanelProps {
   isMobile?: boolean;
   /** Dismiss the panel (mobile bottom sheet gets an explicit close button wired to this). */
   onClose?: () => void;
+  /**
+   * Shared pointer-idle "chrome visible" signal (owned by FightReplay3D's fullscreen cinema
+   * auto-hide — the same clock that fades the transport bar). When Arena3D forwards a real
+   * boolean (only while fullscreen), this panel's collapse is driven by that signal instead of its
+   * own independent timer, so it fades in lockstep with the bar rather than on its own clock.
+   * Left `undefined` (the default — and what every caller outside fullscreen, and every test,
+   * passes) the panel falls back to its original standalone idle timer below.
+   */
+  chromeVisible?: boolean;
 }
 
 interface PlayerRowInfo {
@@ -141,6 +150,7 @@ export const PlayerListPanel: React.FC<PlayerListPanelProps> = ({
   reservedInset = TRANSPORT_RESERVED,
   isMobile = false,
   onClose,
+  chromeVisible,
 }) => {
   // On mobile the touch control cluster docks above the transport, so the panel must stop higher.
   // Fold that extra band into the reserve used by the height caps below (desktop unchanged).
@@ -163,11 +173,28 @@ export const PlayerListPanel: React.FC<PlayerListPanelProps> = ({
   // color picker popover is open (the pointer is outside the panel then, but the user is mid-task),
   // and once the user has pinned it.
   const autoCollapses = !isMobile && !pinned;
+
+  // DRIVER 1 — shared chrome-visibility signal (fullscreen cinema mode). When Arena3D forwards a
+  // real `chromeVisible` boolean, mirror it directly instead of running an independent timer: this
+  // is what makes the panel fade in lockstep with the transport bar rather than on its own clock
+  // that could (and did) drift out of sync with the bar's own hide/reveal. Still respects hover
+  // (re-expand) and pin (never collapse) exactly as the standalone timer below does.
   useEffect(() => {
+    if (chromeVisible === undefined) return;
+    if (!autoCollapses || hovered || colorPicker) return;
+    setCollapsed(!chromeVisible);
+  }, [chromeVisible, autoCollapses, hovered, colorPicker]);
+
+  // DRIVER 2 — the panel's OWN idle timer, used whenever `chromeVisible` is undefined: outside
+  // fullscreen (there's no cinema auto-hide to piggyback on there) and in every standalone render,
+  // including this file's own tests, none of which pass `chromeVisible`. This is the original
+  // idle-declutter behavior from f84ba678, unchanged.
+  useEffect(() => {
+    if (chromeVisible !== undefined) return;
     if (!autoCollapses || collapsed || hovered || colorPicker) return;
     const timer = window.setTimeout(() => setCollapsed(true), AUTO_COLLAPSE_MS);
     return () => window.clearTimeout(timer);
-  }, [autoCollapses, collapsed, hovered, colorPicker]);
+  }, [chromeVisible, autoCollapses, collapsed, hovered, colorPicker]);
 
   // Hovering an auto-collapsed panel brings the roster straight back — no click needed.
   const handlePointerEnter = useCallback(() => {

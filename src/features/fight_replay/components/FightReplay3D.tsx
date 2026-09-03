@@ -54,6 +54,14 @@ const Arena3D = React.lazy(() =>
 // an analyst inch through a moment frame-by-frame. Distinct from the ±1s arrow seek (Item 5).
 const FRAME_STEP_MS = 100;
 
+// localStorage flag gating the keyboard-help panel's auto-open to a visitor's FIRST replay visit
+// (see the effect below). Versioned like ReplayZoomHint's STORAGE_KEY so a future copy/behavior
+// change can invalidate old flags by bumping the suffix. Owned here (not Arena3D) now that the
+// persistent "?" affordance lives in the transport's right cluster alongside fullscreen, so the
+// button, the panel, and the H key all share one source of truth instead of Arena3D privately
+// tracking state a sibling component needs to trigger.
+const KEYBOARD_HELP_SEEN_KEY = 'replay.keyboardHelpSeen.v1';
+
 /** True when a keyboard event came from a text-entry surface that should keep replay shortcuts. */
 function isTextEntryTarget(target: EventTarget | null): boolean {
   if (!(target instanceof HTMLElement)) {
@@ -254,6 +262,53 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
   const [statsPanelEnabled, setStatsPanelEnabled] = useState(initialPrefs.statsPanelEnabled);
   const toggleNames = useCallback(() => setNamesEnabled((v) => !v), []);
   const toggleStats = useCallback(() => setStatsPanelEnabled((v) => !v), []);
+
+  // Keyboard-help panel — lifted here from Arena3D for the same reason as the display settings
+  // above: the persistent "?" trigger now lives in PlaybackControls' transport cluster (a sibling
+  // of Arena3D, which still renders the panel itself), so both need one shared source of truth.
+  const [showKeyboardHelp, setShowKeyboardHelp] = useState(false);
+  const toggleKeyboardHelp = useCallback(() => setShowKeyboardHelp((v) => !v), []);
+  const closeKeyboardHelp = useCallback(() => setShowKeyboardHelp(false), []);
+
+  // Auto-open the keyboard help panel on FIRST VISIT ONLY (500ms after mount, auto-hides at 8s) —
+  // gated on a localStorage flag, same read/try-catch/write shape as ReplayZoomHint's dismissal
+  // flag. Without this gate the panel popped open on every single mount, including a deep link to
+  // follow a specific player, which is actively unhelpful. Returning visitors still have the
+  // persistent "?" button in the transport + the H key — this only removes the unsolicited
+  // auto-open once the visitor has seen it. Guard localStorage access: Safari private mode throws
+  // on getItem/setItem, and a throw here must not break the replay — worst case the hint just
+  // reappears (or never persists) instead of crashing the component.
+  useEffect(() => {
+    let alreadySeen = false;
+    try {
+      alreadySeen = window.localStorage.getItem(KEYBOARD_HELP_SEEN_KEY) === '1';
+    } catch {
+      // Storage disabled/blocked — fall through and treat as first visit.
+    }
+
+    if (alreadySeen) {
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setShowKeyboardHelp(true);
+    }, 500);
+
+    const hideTimer = setTimeout(() => {
+      setShowKeyboardHelp(false);
+      try {
+        window.localStorage.setItem(KEYBOARD_HELP_SEEN_KEY, '1');
+      } catch {
+        // Private mode / storage disabled — the auto-open just won't persist; harmless, it will
+        // simply reappear next visit rather than staying suppressed.
+      }
+    }, 8000);
+
+    return () => {
+      clearTimeout(timer);
+      clearTimeout(hideTimer);
+    };
+  }, []);
 
   // Quality preset — one value replaces the old performanceMode +
   // qualityAutoDisabled booleans: 'auto' (governor armed), 'high' (pinned
@@ -1045,7 +1100,10 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
 
   // Keyboard shortcuts: playback transport + player-path toggles. Camera keys (WASD, r reset,
   // g frame-all) live in-canvas (KeyboardCameraControls / CameraResetControls) because they need
-  // the three.js camera handle; H/N live in Arena3D. This handler owns everything that mutates
+  // the three.js camera handle; N/J are still bound inside Arena3D's own keydown listener (it
+  // already holds the toggle callbacks as controlled props) even though their on-screen buttons
+  // now live in the transport's settings popover. H lives here, alongside its trigger button in
+  // the transport's right cluster. This handler owns everything that mutates
   // FightReplay3D's playback state.
   useEffect(() => {
     const handleKeyPress = (event: KeyboardEvent): void => {
@@ -1146,6 +1204,11 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
           toggleBar();
           event.preventDefault();
           break;
+        case 'h': // Toggle the keyboard-help panel — moved here from Arena3D alongside its
+          // trigger button (now in the transport's right cluster) so both share one state.
+          toggleKeyboardHelp();
+          event.preventDefault();
+          break;
       }
     };
 
@@ -1162,6 +1225,7 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
     setLoopOutPoint,
     clearLoop,
     toggleBar,
+    toggleKeyboardHelp,
   ]);
 
   // The next timeline entry after the loaded fight (continuous-play flow target). Falls back to
@@ -1441,6 +1505,17 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
             isPlayingRef={isPlayingRef}
             statsPanelEnabled={statsPanelEnabled}
             onToggleStats={toggleStats}
+            // Keyboard-help panel — the trigger button lives in the transport's right cluster now
+            // (a sibling of Arena3D), so the open/close state is lifted here; Arena3D still renders
+            // the panel itself (and the H key, see the big keydown handler above).
+            showKeyboardHelp={showKeyboardHelp}
+            onCloseKeyboardHelp={closeKeyboardHelp}
+            // Single pointer-idle "chrome visible" signal (mirrors barVisible — the same clock that
+            // fades the transport in fullscreen cinema mode) so the Following chip and the player
+            // list fade in lockstep with the bar instead of running their own independent timers
+            // that could drift out of sync with it. Only meaningful in fullscreen: outside it
+            // barVisible never flips false, so this is always true in the windowed view.
+            chromeVisible={barVisible}
             // On mobile immersive the dedicated shell owns the close + all controls, so suppress
             // Arena3D's in-canvas mobile control cluster (its close + tools button).
             hideMobileControls={mobileImmersive}
@@ -1771,6 +1846,21 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
             overlay
             isMobile={isMobile}
             trial={transportTrial}
+            // Display settings — consolidated into the settings popover in the right cluster
+            // (name tags always, player stats only while following someone; mirrors the old
+            // floating-button visibility rule). Same state Arena3D consumes as controlled props,
+            // so the transport and the in-canvas/keyboard toggles never drift out of sync.
+            namesEnabled={namesEnabled}
+            onToggleNames={toggleNames}
+            qualityPreset={qualityPreset}
+            onQualityPresetChange={handleQualityPresetChange}
+            statsPanelEnabled={statsPanelEnabled}
+            onToggleStats={toggleStats}
+            following={followingActorId != null}
+            showKeyboardHelp={showKeyboardHelp}
+            onToggleKeyboardHelp={toggleKeyboardHelp}
+            onToggleFullscreen={toggleFullscreen}
+            portalContainer={portalContainer}
           />
         </Box>
       )}
