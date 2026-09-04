@@ -183,5 +183,27 @@ describe('PlayerListPanel', () => {
       expect(screen.getByText('@Player1')).toBeInTheDocument();
       expect(screen.queryByRole('button', { expanded: false })).not.toBeInTheDocument();
     });
+    it('mounts already collapsed when the roster was on by default, with no visible fold', () => {
+      renderPanel({ startCollapsed: true });
+      // Collapsed from the first frame — the bug was opening expanded and then folding away on the
+      // idle timer a few seconds later, which read as a glitch.
+      expect(screen.getByRole('button', { expanded: false })).toBeInTheDocument();
+      act(() => {
+        jest.advanceTimersByTime(60000);
+      });
+      expect(screen.getByRole('button', { expanded: false })).toBeInTheDocument();
+    });
+
+    it('hover still opens a panel that mounted collapsed', () => {
+      const { container } = renderPanel({ startCollapsed: true });
+      fireEvent.pointerEnter(container.firstElementChild as HTMLElement);
+      expect(screen.getByRole('button', { expanded: true })).toBeInTheDocument();
+    });
+
+    it('ignores startCollapsed on the mobile sheet, which has no way to re-open', () => {
+      renderPanel({ startCollapsed: true, isMobile: true });
+      expect(screen.getByText('@Player1')).toBeInTheDocument();
+      expect(screen.queryByRole('button', { expanded: false })).not.toBeInTheDocument();
+    });
   });
 });

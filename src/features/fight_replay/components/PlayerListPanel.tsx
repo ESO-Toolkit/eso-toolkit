@@ -110,6 +110,13 @@ interface PlayerListPanelProps {
   /** Dismiss the panel (mobile bottom sheet gets an explicit close button wired to this). */
   onClose?: () => void;
   /**
+   * Mount already collapsed (desktop only). Arena3D passes this whenever the roster is on screen
+   * because it was simply the default at mount rather than because the user asked for it: opening
+   * expanded and then folding away on the idle timer a few seconds later reads as a glitch, not as
+   * declutter. An explicit user toggle passes `false` so the panel opens ready to use.
+   */
+  startCollapsed?: boolean;
+  /**
    * Shared pointer-idle "chrome visible" signal (owned by FightReplay3D's fullscreen cinema
    * auto-hide — the same clock that fades the transport bar). When Arena3D forwards a real
    * boolean (only while fullscreen), this panel's collapse is driven by that signal instead of its
@@ -151,13 +158,17 @@ export const PlayerListPanel: React.FC<PlayerListPanelProps> = ({
   isMobile = false,
   onClose,
   chromeVisible,
+  startCollapsed = false,
 }) => {
   // On mobile the touch control cluster docks above the transport, so the panel must stop higher.
   // Fold that extra band into the reserve used by the height caps below (desktop unchanged).
   const MOBILE_CLUSTER_BAND = 72;
   const effectiveReserved = isMobile ? reservedInset + MOBILE_CLUSTER_BAND : reservedInset;
   const theme = useTheme();
-  const [collapsed, setCollapsed] = useState(false);
+  // `startCollapsed` is honored on desktop only: the mobile bottom sheet has no collapse control
+  // in its header, so mounting it collapsed would strand the user with an empty sheet they cannot
+  // open. (Mobile also defaults the HUD to closed, so it only ever appears by explicit request.)
+  const [collapsed, setCollapsed] = useState(startCollapsed && !isMobile);
   // Auto-collapse bookkeeping (desktop only — the mobile sheet is an explicit, dismissable surface).
   // `pinned` latches on the first header click: an explicit expand/collapse is the user's decision
   // and must stick.

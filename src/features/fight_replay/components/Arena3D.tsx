@@ -504,6 +504,23 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
     };
   }, [contextMenu]);
 
+  // Did the player-list HUD become visible because the USER asked for it, or was it simply on when
+  // the replay mounted (its stored pref / feature default, which is ON for desktop)? The two want
+  // opposite things from the roster panel: an explicit toggle means "show me the players now", so
+  // it should open expanded, while the passive default should open COLLAPSED — otherwise the panel
+  // covers the fight on load and then visibly folds itself away a few seconds later, which reads as
+  // a glitch rather than as declutter (the reported bug).
+  //
+  // Computed during render, not in an effect: the panel MOUNTS in the same render pass that flips
+  // this prop true and reads its initial collapse state exactly once, so an effect would update the
+  // ref a beat too late and every user-opened panel would still come up collapsed. The ref seeds
+  // from the mount-time value, so a HUD that is on at mount is correctly NOT "user opened".
+  const prevPlayerHudRef = useRef(showPlayerPathsHUD);
+  const playerHudOpenedByUser = showPlayerPathsHUD && !prevPlayerHudRef.current;
+  useEffect(() => {
+    prevPlayerHudRef.current = showPlayerPathsHUD;
+  }, [showPlayerPathsHUD]);
+
   // Keyboard shortcuts this component still owns: N (name tags) and J (locked-player stats, gated
   // on actually following someone). H (keyboard help) moved to FightReplay3D alongside the state
   // and trigger button lifted there — see the doc on the `showKeyboardHelp`/`onCloseKeyboardHelp`
@@ -1052,6 +1069,9 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
             reservedInset={reservedInset}
             isMobile={mobileImmersive}
             onClose={onTogglePlayerPathsHUD}
+            // Open collapsed unless the user just toggled the HUD on themselves — see the
+            // `playerHudOpenedByUser` derivation above.
+            startCollapsed={!playerHudOpenedByUser}
             // Only forward the shared idle signal while it's actually armed (fullscreen cinema
             // mode) — outside fullscreen leave it `undefined` so the panel keeps its own original
             // idle timer (the standalone declutter behavior it always had, unrelated to cinema
