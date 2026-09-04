@@ -9,7 +9,7 @@
  * @module BossHealthPanel.test
  */
 
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 
 import {
@@ -64,12 +64,15 @@ describe('BossHealthPanel', () => {
     const { container } = render(<BossHealthPanel lookup={lookup} timeRef={{ current: 0 }} />);
     await screen.findByText('Flame-Herald Bahsei');
 
+    // Imperative rAF writes (width + readout + 1Hz aria) land without a React re-render — poll
+    // for them instead of assuming a tick has fired (loaded CI runners starve rAF).
     const track = container.querySelector('[role="progressbar"]');
     expect(track).not.toBeNull();
     expect(track?.getAttribute('aria-label')).toContain('Flame-Herald Bahsei');
-    // Imperative rAF writes (width + readout + 1Hz aria) land without a React re-render.
-    const fill = track?.firstElementChild as HTMLElement | null;
-    expect(fill?.style.width).toBe('87.5%');
+    await waitFor(() => {
+      const fill = track?.firstElementChild as HTMLElement | null;
+      expect(fill?.style.width).toBe('87.5%');
+    });
     expect(track?.textContent).toContain('87.5%');
     expect(track?.getAttribute('aria-valuenow')).toBe('88');
   });
@@ -81,8 +84,10 @@ describe('BossHealthPanel', () => {
     await screen.findByText('Fallen Boss');
 
     const track = container.querySelector('[role="progressbar"]');
-    const fill = track?.firstElementChild as HTMLElement | null;
-    expect(fill?.style.width).toBe('0%');
+    await waitFor(() => {
+      const fill = track?.firstElementChild as HTMLElement | null;
+      expect(fill?.style.width).toBe('0%');
+    });
     expect(track?.textContent).toContain('DEAD');
   });
 
