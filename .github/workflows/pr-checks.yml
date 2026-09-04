@@ -64,6 +64,10 @@ jobs:
       - uses: ./.github/actions/setup-node-with-cache
       - name: Lint
         run: npm run lint
+      # three.js / R3F compile shaders from these deps at runtime — a vulnerable prod dep is
+      # RCE-adjacent for the replay, so audit prod deps on every PR (dev-only findings ignored).
+      - name: Audit production dependencies
+        run: npm audit --omit=dev --audit-level=high
 
   format:
     runs-on: ubuntu-latest

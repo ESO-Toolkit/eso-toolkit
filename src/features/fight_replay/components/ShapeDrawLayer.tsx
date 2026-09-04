@@ -17,6 +17,7 @@ import * as THREE from 'three';
 
 import { ShapeKind, ShapeStyle } from '../types/mapMarkers';
 import { rectRingWorld, sampleCircle } from '../utils/shapeGeometry';
+import { isTextEntryTarget } from '../utils/textEntryTarget';
 
 import { DrawnShape3D } from './DrawnShape3D';
 
@@ -117,12 +118,11 @@ export const ShapeDrawLayer: React.FC<ShapeDrawLayerProps> = ({
   // Enter finishes a multi-point shape; Escape cancels the whole gesture.
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent): void => {
-      const target = event.target;
-      const isTextEntry =
-        target instanceof HTMLInputElement ||
-        target instanceof HTMLTextAreaElement ||
-        (target instanceof HTMLElement && target.isContentEditable);
-      if (isTextEntry) return;
+      if (isTextEntryTarget(event.target)) return;
+      // A dialog is open (shape/marker edit, import modal): Enter belongs to its submit button
+      // and Escape to its close — never double-commit/cancel a shape behind it.
+      if ((event.target as HTMLElement | null)?.closest?.('[role="dialog"]')) return;
+      if (!toolRef.current) return;
 
       if (event.key === 'Enter') {
         event.preventDefault();

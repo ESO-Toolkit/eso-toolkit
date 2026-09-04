@@ -18,5 +18,12 @@
  * so every memoized overlay gets the SAME `container` function reference and never re-portals on a
  * playback tick.
  */
-export const portalToFullscreen = (): HTMLElement =>
-  (document.fullscreenElement as HTMLElement | null) ?? document.body;
+export const portalToFullscreen = (): HTMLElement => {
+  // webkitFullscreenElement covers old iPad Safari, which never sets the standard property.
+  const doc = document as Document & { webkitFullscreenElement?: Element | null };
+  return (
+    (document.fullscreenElement as HTMLElement | null) ??
+    (doc.webkitFullscreenElement as HTMLElement | null) ??
+    document.body
+  );
+};

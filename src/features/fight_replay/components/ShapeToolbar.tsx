@@ -89,7 +89,8 @@ interface ShapeToolbarProps {
   onStyleChange: (patch: Partial<ShapeStyle>) => void;
   /** Number of shapes currently drawn (for the count chip / clear affordance). */
   shapeCount: number;
-  onClearShapes: () => void;
+  /** Remove all drawn shapes. Omit to hide the affordance (a dead button is worse than none). */
+  onClearShapes?: () => void;
   /** Quick undo/redo (shared marker+shape history). Omit to hide the buttons. */
   canUndo?: boolean;
   onUndo?: () => void;
@@ -159,18 +160,24 @@ export const ShapeToolbar: React.FC<ShapeToolbarProps> = ({
           </Tooltip>
         )}
 
-        {shapeCount > 0 && (
+        {shapeCount > 0 && onClearShapes && (
           <Typography
             variant="caption"
             color="text.secondary"
             component="button"
             onClick={onClearShapes}
+            aria-label={`Clear ${shapeCount} drawn shape${shapeCount === 1 ? '' : 's'} (undoable)`}
             sx={{
               border: 'none',
               background: 'none',
               cursor: 'pointer',
               textDecoration: 'underline',
               p: 0,
+              '&:focus-visible': {
+                outline: '2px solid',
+                outlineColor: 'primary.main',
+                outlineOffset: 2,
+              },
             }}
           >
             Clear {shapeCount} shape{shapeCount === 1 ? '' : 's'}
@@ -192,8 +199,9 @@ export const ShapeToolbar: React.FC<ShapeToolbarProps> = ({
                 aria-pressed={selected}
                 onClick={() => onStyleChange({ colour: [...rgba] as RGBA })}
                 sx={{
-                  width: 20,
-                  height: 20,
+                  // 28px meets the WCAG 2.5.8 24px minimum with margin; the glyph stays small.
+                  width: 28,
+                  height: 28,
                   p: 0,
                   borderRadius: '50%',
                   background: toCss(rgba),
@@ -201,6 +209,11 @@ export const ShapeToolbar: React.FC<ShapeToolbarProps> = ({
                   border: selected ? '2px solid' : '1px solid rgba(0,0,0,0.4)',
                   borderColor: selected ? 'primary.main' : 'rgba(0,0,0,0.4)',
                   boxShadow: selected ? '0 0 0 2px rgba(255,255,255,0.5)' : 'none',
+                  '&:focus-visible': {
+                    outline: '2px solid',
+                    outlineColor: 'primary.main',
+                    outlineOffset: 2,
+                  },
                 }}
               />
             );

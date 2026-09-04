@@ -60,13 +60,16 @@ function patchMaterial(material: THREE.Material): void {
     return;
   }
   patchable.__instanceOpacityPatched = true;
+  // Program-cache key: three keys compiled programs on onBeforeCompile's source by DEFAULT, but
+  // an explicit key is load-bearing here — patched and UNPATCHED MeshBasicMaterials (rings vs
+  // blobs/proxies) otherwise share parameter sets and can collide in the cache, dropping the
+  // opacity chunk or reusing a stale program depending on creation order.
+  patchable.customProgramCacheKey = () => 'instance-opacity';
 
   const previousOnBeforeCompile = patchable.onBeforeCompile?.bind(patchable);
 
   patchable.onBeforeCompile = (shader) => {
-    previousOnBeforeCompile?.(shader);
-
-    // Vertex: declare the attribute, pass it to the fragment shader as a varying.
+    previousOnBeforeCompile?.(shader); // Vertex: declare the attribute, pass it to the fragment shader as a varying.
     shader.vertexShader =
       `attribute float ${ATTRIBUTE_NAME};\nvarying float vInstanceOpacity;\n${shader.vertexShader}`.replace(
         '#include <begin_vertex>',

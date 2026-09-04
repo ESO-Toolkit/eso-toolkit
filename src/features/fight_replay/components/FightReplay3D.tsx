@@ -55,12 +55,6 @@ const Arena3D = React.lazy(() =>
 // an analyst inch through a moment frame-by-frame. Distinct from the ±1s arrow seek (Item 5).
 const FRAME_STEP_MS = 100;
 
-// localStorage flag gating the keyboard-help panel's auto-open to a visitor's FIRST replay visit
-// (see the effect below). Versioned like ReplayZoomHint's STORAGE_KEY so a future copy/behavior
-// change can invalidate old flags by bumping the suffix. Owned here (not Arena3D) now that the
-// persistent "?" affordance lives in the transport's right cluster alongside fullscreen, so the
-// button, the panel, and the H key all share one source of truth instead of Arena3D privately
-// tracking state a sibling component needs to trigger.
 const KEYBOARD_HELP_SEEN_KEY = 'replay.keyboardHelpSeen.v1';
 
 /** Parse the share/deep-link actor id query parameter into the replay's nullable selection type. */
@@ -68,8 +62,17 @@ function parseActorIdParam(actorParam: string | null): number | null {
   if (actorParam === null) {
     return null;
   }
-  const parsedActorId = Number(actorParam);
-  return Number.isFinite(parsedActorId) ? parsedActorId : null;
+  const trimmed = actorParam.trim();
+  // Number('') === 0 and Number('  ') === 0 — a bare `?actorId=` must not follow-lock a
+  // phantom actor 0. IDs are positive integers.
+  if (trimmed === '') {
+    return null;
+  }
+  const parsedActorId = Number(trimmed);
+  if (!Number.isInteger(parsedActorId) || parsedActorId <= 0) {
+    return null;
+  }
+  return parsedActorId;
 }
 
 /**
@@ -432,12 +435,16 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
     setIsTrialDragging(dragging);
   }, []);
 
-  // High-performance time reference for 3D updates
+  // High-performance time reference for 3D updates. Destructured to STABLE members:
+  // useAnimationTimeRef returns a fresh object every render, so depending on the whole object
+  // (e.g. seekTo deps [animationTimeRef]) churned callback identities on every parent state sync
+  // and defeated the transport's React.memo at the 4Hz tick. timeRef/setTime are ref-stable.
   const animationTimeRef = useAnimationTimeRef({
     initialTime: currentTime,
     onTimeUpdate: setCurrentTime,
     updateInterval: 500, // Update React state every 500ms
   });
+  const { timeRef: animTimeRef, setTime: animSetTime } = animationTimeRef;
 
   // Latest continuous-nav props in a ref, so the playback-end / advance callbacks can read them
   // without re-creating (which would rebuild the animation loop). Updated every render.
@@ -480,7 +487,7 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
 
   // Playback animation for smooth time updates
   usePlaybackAnimation({
-    timeRef: animationTimeRef.timeRef,
+    timeRef: animTimeRef,
     isPlaying,
     playbackSpeed,
     duration: selectedFight.endTime - selectedFight.startTime,
@@ -499,9 +506,9 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
   const seekTo = useCallback(
     (time: number) => {
       setCurrentTime(time);
-      animationTimeRef.setTime(time);
+      animSetTime(time);
     },
-    [animationTimeRef],
+    [animSetTime],
   );
 
   // Playback control handlers. Pressing play while parked at the final frame restarts the
@@ -520,12 +527,12 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
       const ls = loopStartRef.current;
       const le = loopEndRef.current;
       const loopArmed = ls != null && le != null && Math.abs(le - ls) >= 100;
-      if (!loopArmed && animationTimeRef.timeRef.current >= dur - 250) {
+      if (!loopArmed && animTimeRef.current >= dur - 250) {
         seekTo(0);
       }
     }
     setIsPlaying(!wasPlaying);
-  }, [selectedFight.endTime, selectedFight.startTime, animationTimeRef.timeRef, seekTo]);
+  }, [selectedFight.endTime, selectedFight.startTime, animTimeRef, seekTo]);
 
   const handlePlayingChange = useCallback((playing: boolean) => {
     setIsPlaying(playing);
@@ -553,6 +560,10 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
   // Auto-advance and chapter jumps never set it, so they still start at the top.
   const pendingSeekRef = useRef<{ fightId: string; localMs: number } | null>(null);
   const prevFightIdRef = useRef(selectedFight.id);
+  // Tracks the last ?time= consumed so the same-fight seek effect below can tell a real
+  // navigation (back/forward, pasted link) from a re-render. Seeded from the mount URL (which
+  // already seeded initial state) and synced on every arrival.
+  const prevUrlTimeRef = useRef<string | null>(searchParams.get('time'));
   useEffect(() => {
     if (prevFightIdRef.current === selectedFight.id) return;
     prevFightIdRef.current = selectedFight.id;
@@ -574,7 +585,7 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
       }
     }
     setCurrentTime(seedMs);
-    animationTimeRef.setTime(seedMs);
+    animSetTime(seedMs);
     setLoopStart(null);
     setLoopEnd(null);
     setIsPlaying(false);
@@ -592,15 +603,31 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
       forceAutoplayRef.current || (trialNavRef.current?.continuousEnabled ?? false),
     );
     forceAutoplayRef.current = false;
+    prevUrlTimeRef.current = searchParams.get('time');
   }, [
     selectedFight.id,
     selectedFight.endTime,
     selectedFight.startTime,
-    animationTimeRef,
+    animSetTime,
     setFollowingActor,
     searchParams,
     selectedActorIdFromUrl,
   ]);
+
+  // Same-fight ?time= navigation (back/forward, pasted deep link while mounted): the reset
+  // effect above owns fight CHANGES, but a bare query change with the same fight id would
+  // otherwise be ignored and the URL would promise a moment the playhead never visits.
+  useEffect(() => {
+    const t = searchParams.get('time');
+    const prevT = prevUrlTimeRef.current;
+    prevUrlTimeRef.current = t;
+    if (t === prevT || t === null) return;
+    if (prevFightIdRef.current !== selectedFight.id) return; // arrival path owns it
+    const ms = Number(t);
+    if (!Number.isFinite(ms) || ms <= 0) return;
+    const dur = selectedFight.endTime - selectedFight.startTime;
+    seekTo(clampReplayTime(ms, dur));
+  }, [searchParams, selectedFight, seekTo]);
 
   // Resume playback once the freshly-loaded fight is ready (continuous auto-advance).
   const isFightDataLoading = trialNav?.isFightDataLoading ?? false;
@@ -630,7 +657,10 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
   // Navigate to a chapter (popover rows, boss-skip buttons, mobile chapter list) — always from
   // its start, and as a history PUSH: manual chapter jumps must let Back return to the previous
   // fight (matching the page rail and the [ ] keys), unlike auto-advance which replaces.
+  // Clears any pending cross-fight scrub offset: a manual jump promises the fight start, and an
+  // interleaved pending seek must not leak into it.
   const handleSelectChapter = useCallback((chapter: TrialChapter) => {
+    pendingSeekRef.current = null;
     trialNavRef.current?.onAdvanceToFight(chapter.fightId, { replace: false });
   }, []);
 
@@ -661,17 +691,12 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
   // 10Hz currentTime state — a currentTime dep gave these a fresh identity on every playback
   // tick, defeating PlaybackButtons' React.memo at exactly the cadence it exists to block.
   const handleSkipBackward10 = useCallback(() => {
-    seekTo(Math.max(0, animationTimeRef.timeRef.current - 10000));
-  }, [animationTimeRef.timeRef, seekTo]);
+    seekTo(Math.max(0, animTimeRef.current - 10000));
+  }, [animTimeRef, seekTo]);
 
   const handleSkipForward10 = useCallback(() => {
-    seekTo(
-      Math.min(
-        selectedFight.endTime - selectedFight.startTime,
-        animationTimeRef.timeRef.current + 10000,
-      ),
-    );
-  }, [selectedFight.endTime, selectedFight.startTime, animationTimeRef.timeRef, seekTo]);
+    seekTo(Math.min(selectedFight.endTime - selectedFight.startTime, animTimeRef.current + 10000));
+  }, [selectedFight.endTime, selectedFight.startTime, animTimeRef, seekTo]);
 
   // Fight duration in ms — the upper bound every keyboard seek clamps to.
   const duration = selectedFight.endTime - selectedFight.startTime;
@@ -682,10 +707,10 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
   // the window keydown listener downstream) at the 10Hz playback tick.
   const seekBy = useCallback(
     (deltaMs: number) => {
-      const base = animationTimeRef.timeRef.current;
+      const base = animTimeRef.current;
       seekTo(Math.max(0, Math.min(duration, base + deltaMs)));
     },
-    [animationTimeRef.timeRef, duration, seekTo],
+    [animTimeRef, duration, seekTo],
   );
 
   // +/- step through the same discrete speed ladder the on-screen SpeedSelector uses. Uses the
@@ -721,7 +746,7 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
   const jumpToEvent = useCallback(
     (direction: 1 | -1) => {
       if (markers.length === 0) return;
-      const now = animationTimeRef.timeRef.current;
+      const now = animTimeRef.current;
       const EPS = 1; // ms — step just past the current marker so repeats advance
       const sorted = markers.map((m) => m.timestamp).sort((a, b) => a - b);
       let targetTime: number | null = null;
@@ -739,19 +764,19 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
         seekTo(Math.max(0, Math.min(duration, targetTime)));
       }
     },
-    [markers, animationTimeRef.timeRef, duration, seekTo],
+    [markers, animTimeRef, duration, seekTo],
   );
 
   // A–B loop: set the in/out point to the LIVE playhead (ref, not the lagged currentTime state).
   const setLoopInPoint = useCallback(() => {
-    const t = animationTimeRef.timeRef.current;
+    const t = animTimeRef.current;
     setLoopStart(Math.max(0, Math.min(duration, t)));
-  }, [animationTimeRef.timeRef, duration]);
+  }, [animTimeRef, duration]);
 
   const setLoopOutPoint = useCallback(() => {
-    const t = animationTimeRef.timeRef.current;
+    const t = animTimeRef.current;
     setLoopEnd(Math.max(0, Math.min(duration, t)));
-  }, [animationTimeRef.timeRef, duration]);
+  }, [animTimeRef, duration]);
 
   const clearLoop = useCallback(() => {
     setLoopStart(null);
@@ -1079,15 +1104,17 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
     };
   }, [mobilePseudoFullscreen]);
 
-  // Document-WIDE selection lock while the overlay is open. iOS Safari's long-press selection
-  // hit-test is not confined to the touched element: with the overlay unselectable, WebKit
-  // selects the nearest selectable text — i.e. the PAGE BEHIND the overlay (field-reported on
-  // iPhone). Scoped CSS can't fix that, so every element goes unselectable for the overlay's
-  // lifetime (text inputs stay editable — see documentSelectionLock).
+  // Document-WIDE selection lock while the overlay is open AND while marker/shape authoring
+  // is armed. iOS Safari's long-press selection hit-test is not confined to the touched element:
+  // with the overlay unselectable, WebKit selects the nearest selectable text — i.e. the PAGE
+  // BEHIND the overlay (field-reported on iPhone). The same callout covers a desktop-touch
+  // long-press on a marker in edit mode, so authoring arms the lock on all platforms. Scoped CSS
+  // can't fix that, so every element goes unselectable for the lock's lifetime (text inputs stay
+  // editable — see documentSelectionLock).
   useEffect(() => {
-    if (!mobilePseudoFullscreen) return;
+    if (!mobilePseudoFullscreen && !markersEditMode && !drawTool) return;
     return lockDocumentSelection();
-  }, [mobilePseudoFullscreen]);
+  }, [mobilePseudoFullscreen, markersEditMode, drawTool]);
 
   // Keyboard shortcuts: playback transport + player-path toggles. Camera keys (WASD, r reset,
   // g frame-all) live in-canvas (KeyboardCameraControls / CameraResetControls) because they need
@@ -1101,14 +1128,22 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
   const shortcutBindings = useMemo<ReplayShortcutBinding[]>(
     () => [
       {
-        // Play/pause. Never hijack Space from a focused button: Space is the native activation
-        // key for buttons, so toggling + preventDefault() here would break keyboard activation of
-        // Import/Load markers, Share, collapse, fullscreen, etc. Returning `false` leaves the
-        // button to handle its own Space untouched; the canvas/transport background still toggles
-        // playback for every other target.
+        // Play/pause. Never hijack Space from a focused activatable element: Space is the
+        // native activation key for buttons AND for role=button / menuitem / switch / link /
+        // slider widgets (timeline markers, trial strip, speed menu items). Toggling here would
+        // break keyboard activation of Import/Load markers, Share, collapse, fullscreen, marker
+        // rail stops, etc. Returning `false` leaves the widget to handle its own Space
+        // untouched; the canvas/transport background still toggles playback for other targets.
         keys: [' '],
         onMatch: (event) => {
-          if (event.target instanceof HTMLButtonElement) return false;
+          if (
+            event.target instanceof HTMLElement &&
+            event.target.closest(
+              'button, [role="button"], [role="menuitem"], [role="switch"], [role="checkbox"], a, input, select, textarea, [role="slider"], [contenteditable]',
+            )
+          ) {
+            return false;
+          }
           handlePlayPause();
         },
       },
@@ -1398,7 +1433,7 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
           }
         >
           <Arena3D
-            timeRef={animationTimeRef.timeRef}
+            timeRef={animTimeRef}
             isFullscreen={isImmersive}
             onToggleFullscreen={toggleFullscreen}
             isMobile={isMobile}
@@ -1654,7 +1689,7 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
             }}
           >
             <KeyboardArrowUpRoundedIcon sx={{ fontSize: 20, color: 'rgba(255,255,255,0.82)' }} />
-            <ProgressHairline timeRef={animationTimeRef.timeRef} duration={duration} />
+            <ProgressHairline timeRef={animTimeRef} duration={duration} />
           </Box>
           <IconButton
             aria-label="Close replay"
@@ -1703,7 +1738,7 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
             onPlayingChange={handlePlayingChange}
             onScrubbingModeChange={handleScrubbingModeChange}
             onDraggingChange={handleDraggingChange}
-            timeRef={animationTimeRef.timeRef}
+            timeRef={animTimeRef}
             reportId={params.reportId}
             fightId={params.fightId}
             selectedActorIdRef={followingActorIdRef}
@@ -1724,6 +1759,11 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
             onToggleStats={toggleStats}
             following={followingActorId != null}
             onSheetOpenChange={setMobileSheetOpen}
+            loopStart={loopStart}
+            loopEnd={loopEnd}
+            onSetLoopIn={setLoopInPoint}
+            onSetLoopOut={setLoopOutPoint}
+            onClearLoop={clearLoop}
             markersEditMode={markersEditMode}
             onToggleMarkersEditMode={onToggleMarkersEditMode}
             onAddMarkerAtCenter={onAddMarker ? handleAddMarkerAtCenter : undefined}
@@ -1767,7 +1807,7 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
             onPlayingChange={handlePlayingChange}
             onScrubbingModeChange={handleScrubbingModeChange}
             onDraggingChange={handleDraggingChange}
-            timeRef={animationTimeRef.timeRef}
+            timeRef={animTimeRef}
             reportId={params.reportId}
             fightId={params.fightId}
             selectedActorIdRef={followingActorIdRef}
@@ -1775,6 +1815,8 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
             replayContext={replayContext}
             loopStart={loopStart}
             loopEnd={loopEnd}
+            onSetLoopIn={setLoopInPoint}
+            onSetLoopOut={setLoopOutPoint}
             onClearLoop={clearLoop}
             isFullscreen={isImmersive}
             barVisible={barVisible}

@@ -114,7 +114,37 @@ export function decideNextDpr(
 
 /** The blurriest DPR we allow, derived from the starting (full-quality) DPR. */
 export function computeMinDpr(maxDpr: number): number {
+  // At or below native pixels there is no supersampling headroom to trade: flooring a 1x panel
+  // at 0.75 rendered below native resolution for negligible fill savings. The floor is the
+  // ceiling itself (no scaling range); above 1x it may drop to ~60%, never below 0.75.
+  if (maxDpr <= 1) return maxDpr;
   return Math.max(0.75, Number((maxDpr * 0.6).toFixed(3)));
+}
+
+/**
+ * Fast lane for severe shortfalls: when the average exceeds TWICE the applicable decline bar,
+ * the controllers take a second step immediately instead of waiting out another full
+ * sample+cooldown cycle. Without it, FULL→NO_SHADOWS costs ~10-17s of sustained stutter on a
+ * struggling device; with it, relief lands in roughly half the time. Recovery still climbs back
+ * one rung at a time (no oscillation risk — the dead zone is unchanged).
+ */
+export const FAST_DECLINE_FACTOR = 2;
+
+export function isFastDecline(
+  avgFrameMs: number,
+  targetMs: number,
+  displayIntervalMs?: number,
+  fallbackDeclineMs = 1000 / 50,
+): boolean {
+  if (!Number.isFinite(avgFrameMs) || avgFrameMs <= 0) return false;
+  const displayKnown =
+    typeof displayIntervalMs === 'number' &&
+    Number.isFinite(displayIntervalMs) &&
+    displayIntervalMs > 0;
+  const bar = displayKnown
+    ? targetMs * FAST_DECLINE_FACTOR
+    : fallbackDeclineMs * FAST_DECLINE_FACTOR;
+  return avgFrameMs > bar;
 }
 
 /**

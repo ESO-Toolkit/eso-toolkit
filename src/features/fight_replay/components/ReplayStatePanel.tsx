@@ -49,7 +49,9 @@ export const ReplayStatePanel: React.FC<ReplayStatePanelProps> = ({
   return (
     <Paper
       elevation={2}
-      aria-live="polite"
+      // Single live region for the state, on the spinner container for loading (role=status is
+      // the implicit aria-live announcer) — no outer aria-live, so state changes announce once,
+      // not twice through nested regions.
       sx={{
         // Reserve the same generous height the arena uses so the page doesn't reflow when
         // the 3D scene takes over.
@@ -78,7 +80,9 @@ export const ReplayStatePanel: React.FC<ReplayStatePanelProps> = ({
         }}
       >
         {kind === 'loading' ? (
-          <CircularProgress size={32} thickness={4} aria-label="Loading" />
+          <Box role="status" aria-label="Loading replay">
+            <CircularProgress size={32} thickness={4} aria-hidden />
+          </Box>
         ) : (
           ICON_BY_KIND[kind]
         )}
@@ -86,7 +90,7 @@ export const ReplayStatePanel: React.FC<ReplayStatePanelProps> = ({
 
       <Typography
         variant="h6"
-        component="p"
+        component="h2"
         sx={{ fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui', fontWeight: 600 }}
       >
         {title}

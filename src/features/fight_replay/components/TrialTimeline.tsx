@@ -29,6 +29,7 @@ import { TRANSPORT_MOTION } from '../constants/replayDesign';
 import { chapterDisplayName } from '../trial_chapters/chapterDisplay';
 import type { TrialTimeline as TrialTimelineModel } from '../trial_chapters/trialTimeline';
 import { globalToLocal, localToGlobal } from '../trial_chapters/trialTimeline';
+import { formatDurationMs as formatTime } from '../utils/replayTime';
 
 export interface TrialTimelineSeekTarget {
   fightId: string;
@@ -59,14 +60,6 @@ interface TrialTimelineProps {
   onDraggingChange?: (dragging: boolean) => void;
   /** `deck` = slim desktop transport strip (default); `sheet` = tall mobile touch rail. */
   variant?: 'deck' | 'sheet';
-}
-
-/** m:ss for a duration in ms. */
-function formatTime(ms: number): string {
-  const totalSeconds = Math.max(0, Math.floor(ms / 1000));
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-  return `${minutes}:${seconds.toString().padStart(2, '0')}`;
 }
 
 /** Shared styling for the floating chapter/time bubble (drag + hover). */
@@ -315,7 +308,8 @@ const TrialTimelineComponent: React.FC<TrialTimelineProps> = ({
   // Keyboard: arrows nudge global time (Shift for a big step), PageUp/Down jump chapters,
   // Home/End the run's ends. Same-fight steps commit instantly; a step landing in a DIFFERENT
   // fight previews and commits after a quiet pause (mirrors pointer commit-on-release, so a
-  // held key can't thrash fight loads).
+  // held key can't thrash fight loads). Step sizes are trial-STRIP steps (5s / Shift 30s) —
+  // coarser than the per-fight rail's 1s/10s, because one keypress here can cross whole fights.
   const scheduleKeyboardCommit = useCallback(
     (fraction: number) => {
       const pos = globalToLocal(timeline, fraction * total);
@@ -383,8 +377,10 @@ const TrialTimelineComponent: React.FC<TrialTimelineProps> = ({
   const railHoverHeight = isSheet ? 24 : 18;
   const surfacePadY = isSheet ? '10px' : '6px';
   const ariaNow = Math.round(shownFraction * total);
+  // Times are VIRTUAL: out-of-combat gaps are collapsed, so "12:40 of 48:00" is run time, not
+  // wall time — say so once in the label instead of letting it read as a report timestamp.
   const ariaText = shownPos
-    ? `${chapterDisplayName(shownPos.chapter)}, ${formatTime(shownPos.localMs)} (${formatTime(ariaNow)} of ${formatTime(total)})`
+    ? `${chapterDisplayName(shownPos.chapter)}, ${formatTime(shownPos.localMs)} (${formatTime(ariaNow)} of ${formatTime(total)}, gaps collapsed)`
     : formatTime(ariaNow);
 
   const isDark = theme.palette.mode === 'dark';
@@ -422,7 +418,10 @@ const TrialTimelineComponent: React.FC<TrialTimelineProps> = ({
           display: 'flex',
           alignItems: 'center',
           cursor: 'pointer',
-          touchAction: 'none',
+          // Sheet variant lives inside a vertically-scrolling bottom sheet: trapping ALL touch
+          // here would make the page unscrollable starting on the strip. Deck keeps full lock
+          // (no page scroll to protect); sheet allows vertical pan, horizontal drags still seek.
+          touchAction: isSheet ? 'pan-y' : 'none',
           borderRadius: 1,
           '&:focus-visible': {
             outline: `2px solid ${theme.palette.primary.main}`,
@@ -449,6 +448,7 @@ const TrialTimelineComponent: React.FC<TrialTimelineProps> = ({
             borderRadius: 1,
             overflow: 'hidden',
             transition: `height ${TRANSPORT_MOTION.settle} ${TRANSPORT_MOTION.ease}`,
+            '@media (prefers-reduced-motion: reduce)': { transition: 'none' },
           }}
         >
           {timeline.entries.map((entry) => {
@@ -467,7 +467,9 @@ const TrialTimelineComponent: React.FC<TrialTimelineProps> = ({
                 sx={{
                   position: 'relative',
                   flex: `0 0 ${widthPct}%`,
-                  minWidth: 2,
+                  // No min-width floor: sub-pixel segments forced to 2px render wider than their
+                  // time fraction, so clicks on their visual body map into a NEIGHBOUR's time.
+                  minWidth: 0,
                   // alpha() (not hex-suffix concat — palette strings can be rgba()) keeps the
                   // tint valid for every palette value. Trash gets a deliberate neutral ≥3:1
                   // treatment, visually quieter than the boss outcome tints.
@@ -478,6 +480,7 @@ const TrialTimelineComponent: React.FC<TrialTimelineProps> = ({
                     ? `2px solid ${tint}`
                     : `2px solid ${alpha(theme.palette.text.secondary, 0.7)}`,
                   transition: 'background-color 0.2s',
+                  '@media (prefers-reduced-motion: reduce)': { transition: 'none' },
                 }}
               />
             );

@@ -83,9 +83,10 @@ const ChaptersPopoverButtonComponent: React.FC<ChaptersPopoverButtonProps> = ({
       <Tooltip title="Chapters — jump to any boss ( [ and ] skip )">
         <IconButton
           aria-label="Chapters"
-          // It opens a non-modal Popover (no role=dialog / focus trap), so announce it as a
-          // menu, not a dialog — "dialog" would mislead assistive tech into expecting modality.
-          aria-haspopup="menu"
+          // It opens a non-modal Popover whose body is plain buttons (not menuitems), so
+          // announce it as a dialog, not a menu — "menu" would promise arrow-key menu
+          // semantics the body doesn't implement. MUI restores focus to this trigger on close.
+          aria-haspopup="dialog"
           aria-expanded={open}
           size="small"
           onClick={(e) => setAnchor(e.currentTarget)}
@@ -162,7 +163,9 @@ const ChaptersPopoverButtonComponent: React.FC<ChaptersPopoverButtonProps> = ({
 
             <Divider />
 
-            <Box sx={{ overflowY: 'auto', px: 1, py: 1 }}>
+            {/* ChapterList owns its scroll container (container-relative scroll math); this
+                wrapper just pads. */}
+            <Box sx={{ overflowY: 'hidden', px: 1, py: 1, minHeight: 0 }}>
               <ChapterList
                 chapters={chapters}
                 currentFightId={currentFightId}

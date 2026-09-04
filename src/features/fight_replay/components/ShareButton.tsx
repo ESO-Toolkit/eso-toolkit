@@ -13,6 +13,7 @@ import React, { useCallback, useState } from 'react';
 import { getBaseUrl } from '@/utils/envUtils';
 
 import { TRANSPORT_MOTION, TRANSPORT_PILL_RADIUS } from '../constants/replayDesign';
+import { formatDurationMs as formatTime } from '../utils/replayTime';
 
 interface ShareButtonProps {
   /** Report ID for URL generation */
@@ -51,19 +52,11 @@ export const ShareButton: React.FC<ShareButtonProps> = ({
   timeRef,
 }) => {
   const [shareSnackbar, setShareSnackbar] = useState<{
-    severity: 'success' | 'error';
+    severity: 'success' | 'error' | 'info';
     message: string;
   } | null>(null);
 
-  // Format time for display
-  const formatTime = useCallback((timeMs: number) => {
-    const totalSeconds = Math.floor(timeMs / 1000);
-    const minutes = Math.floor(totalSeconds / 60);
-    const seconds = totalSeconds % 60;
-    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
-  }, []);
-
-  // Share URL handler
+  // Share URL handler (timecode via the shared utils/replayTime clock).
   const handleShareUrl = useCallback(async () => {
     if (!reportId || !fightId) return;
 
@@ -114,16 +107,28 @@ export const ShareButton: React.FC<ShareButtonProps> = ({
         textArea.select();
 
         try {
-          // Use deprecated execCommand as fallback for non-secure contexts
-          document.execCommand('copy');
-          setShareSnackbar({ severity: 'success', message: 'Shareable URL copied to clipboard!' });
+          // Use deprecated execCommand as fallback for non-secure contexts. Its boolean is
+          // meaningful: report success ONLY when it actually copied — otherwise say so (the
+          // old code announced success even on the manual-copy path with nothing copied).
+          const copied = document.execCommand('copy');
+          if (copied) {
+            setShareSnackbar({
+              severity: 'success',
+              message: 'Shareable URL copied to clipboard!',
+            });
+          } else {
+            setShareSnackbar({
+              severity: 'info',
+              message: 'Automatic copy failed — copy the page URL manually.',
+            });
+          }
         } catch {
-          // Last resort - show the textarea for manual copy
-          textArea.style.position = 'static';
-          textArea.style.left = 'auto';
-          textArea.style.top = 'auto';
-          textArea.select();
-          setShareSnackbar({ severity: 'success', message: 'Shareable URL copied to clipboard!' });
+          // Last resort - the clipboard is unavailable: point at the page URL instead of
+          // claiming a copy that never happened.
+          setShareSnackbar({
+            severity: 'info',
+            message: 'Automatic copy failed — copy the page URL manually.',
+          });
         }
 
         document.body.removeChild(textArea);
@@ -139,7 +144,7 @@ export const ShareButton: React.FC<ShareButtonProps> = ({
         message: 'Unable to share. Please copy the page URL manually.',
       });
     }
-  }, [reportId, fightId, currentTime, selectedActorIdRef, formatTime, timeRef]);
+  }, [reportId, fightId, currentTime, selectedActorIdRef, timeRef]);
 
   // Don't render if we don't have required props
   if (!reportId || !fightId) {

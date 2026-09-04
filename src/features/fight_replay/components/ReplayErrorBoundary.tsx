@@ -24,7 +24,7 @@ import {
   Divider,
   Chip,
 } from '@mui/material';
-import React, { Component, ReactNode } from 'react';
+import React, { Component, ReactNode, useEffect, useRef } from 'react';
 
 import { addBreadcrumb, reportError } from '../../../utils/errorTracking';
 import { Logger, LogLevel } from '../../../utils/logger';
@@ -304,8 +304,18 @@ const ErrorFallbackUI: React.FC<{
   onReload,
   onReportBug,
 }) => {
+  // Crash focus contract: move focus into the alert on mount so keyboard/SR users land on the
+  // failure (not stranded on the dead canvas), with Retry reachable by Tab order.
+  const alertRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    alertRef.current?.focus();
+  }, []);
+
   return (
     <Box
+      ref={alertRef}
+      role="alert"
+      tabIndex={-1}
       sx={{
         display: 'flex',
         flexDirection: 'column',

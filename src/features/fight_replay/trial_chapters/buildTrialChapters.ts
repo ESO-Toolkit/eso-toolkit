@@ -34,6 +34,12 @@ import type { TrialChapter, TrialChapterRun, TrialSegmentKind } from './types';
  */
 export const MIN_TRASH_SEGMENT_MS = 5000;
 
+/**
+ * Wall-clock gap that forces a new run even when the trial name is unchanged: a second raid
+ * night logged in the same report must not concatenate onto the previous night's run.
+ */
+export const RUN_SPLIT_GAP_MS = 30 * 60 * 1000;
+
 /** Result of locating a fight within the built runs. */
 export interface RunMatch {
   /** The run that owns the fight. */
@@ -115,6 +121,34 @@ export function buildTrialChapters(
   // Trash seen before the current run's first boss — folded in as the lead-in once
   // the boss (and thus the trial name) is known.
   let leadingTrash: FightFragment[] = [];
+  // Trash seen AFTER the current run's last boss, held back until the next boss reveals
+  // whether it belongs to this run (same trial, appended in order) or is the NEXT run's
+  // lead-in (trial changed). Attaching it eagerly mislabeled inter-trial travel pulls with
+  // the previous trial's name.
+  let pendingInterTrash: FightFragment[] = [];
+  // End time of the current run's last segment (for the wall-gap split below).
+  let runLastEnd = 0;
+
+  const flushPendingInterTrash = (run: TrialChapterRun): void => {
+    for (const trash of pendingInterTrash) {
+      pushSegment(run, trash, 'trash', run.trialName, 1);
+    }
+    pendingInterTrash = [];
+  };
+
+  const startRun = (trialName: string): TrialChapterRun => {
+    runNumber += 1;
+    runTrialName = trialName;
+    attemptsByBoss = new Map<string, number>();
+    const run: TrialChapterRun = {
+      id: `${trialName}-run-${runNumber}`,
+      trialName,
+      segments: [],
+      bossChapters: [],
+    };
+    runs.push(run);
+    return run;
+  };
 
   for (const fight of validFights) {
     const isBoss = fight.difficulty != null;
@@ -123,35 +157,49 @@ export function buildTrialChapters(
       const bossName = fight.name || 'Unknown Boss';
       const trialName = getTrialNameFromBoss(bossName, reportData);
 
-      // Start a new run when there is no run yet, or the trial actually changes.
-      if (currentRun === null || runTrialName !== trialName) {
-        runNumber += 1;
-        runTrialName = trialName;
-        attemptsByBoss = new Map<string, number>();
-        currentRun = {
-          id: `${trialName}-run-${runNumber}`,
-          trialName,
-          segments: [],
-          bossChapters: [],
-        };
-        runs.push(currentRun);
-        // The buffered trash was this boss's run-up — attach it as the lead-in.
+      // Start a new run when there is no run yet, the trial actually changes, or a
+      // wall-clock gap separates this boss from the previous segment (next raid night).
+      if (
+        currentRun === null ||
+        runTrialName !== trialName ||
+        fight.startTime - runLastEnd > RUN_SPLIT_GAP_MS
+      ) {
+        currentRun = startRun(trialName);
+        // Buffered trash was this boss's run-up — attach it as the lead-in, inter-trial
+        // travel first (it happened after the previous run), then any pre-log trash.
+        for (const trash of pendingInterTrash) {
+          pushSegment(currentRun, trash, 'trash', trialName, 1);
+        }
+        pendingInterTrash = [];
         for (const trash of leadingTrash) {
           pushSegment(currentRun, trash, 'trash', trialName, 1);
         }
         leadingTrash = [];
+      } else {
+        // Same run: the buffered inter-boss trash belongs here, in original order.
+        flushPendingInterTrash(currentRun);
       }
 
       const attempt = (attemptsByBoss.get(bossName) ?? 0) + 1;
       attemptsByBoss.set(bossName, attempt);
       pushSegment(currentRun, fight, 'boss', trialName, attempt);
+      runLastEnd = fight.endTime;
     } else if (currentRun === null) {
       // Trash before any boss — buffer it until the next boss reveals the trial.
       leadingTrash.push(fight);
     } else {
-      // Trash within / after a run — belongs to the currently-active run.
-      pushSegment(currentRun, fight, 'trash', currentRun.trialName, 1);
+      // Trash after the run's last boss — hold until the next boss (or the end of the log)
+      // reveals which run it leads into. Still counts as run activity for the gap split.
+      pendingInterTrash.push(fight);
+      runLastEnd = Math.max(runLastEnd, fight.endTime);
     }
+  }
+
+  // Trailing trash with no following boss: it trailed the last run, so it belongs to it.
+  // (Only when no run exists at all does it become a standalone trash run.)
+  if (pendingInterTrash.length > 0 && currentRun !== null) {
+    flushPendingInterTrash(currentRun);
+    runLastEnd = currentRun.segments[currentRun.segments.length - 1]?.endTime ?? runLastEnd;
   }
 
   // Trailing trash with no following boss (e.g. a trash-only log) — keep it
@@ -193,15 +241,24 @@ export function findRunForFight(
     }
   }
 
-  // The active fight isn't a known segment — locate it by time span.
+  // The active fight isn't a known segment — locate it by time span. Inter-run gaps can sit
+  // inside several runs' [first, last] windows; take the SMALLEST containing window (nearest run)
+  // instead of the first match.
   if (fightStartTime != null) {
+    let best: RunMatch | null = null;
+    let bestSpan = Infinity;
     for (const run of runs) {
       const first = run.segments[0];
       const last = run.segments[run.segments.length - 1];
       if (first && last && fightStartTime >= first.startTime && fightStartTime <= last.endTime) {
-        return { run, segmentIndex: -1, bossIndex: -1 };
+        const span = last.endTime - first.startTime;
+        if (span < bestSpan) {
+          bestSpan = span;
+          best = { run, segmentIndex: -1, bossIndex: -1 };
+        }
       }
     }
+    if (best) return best;
   }
 
   return null;

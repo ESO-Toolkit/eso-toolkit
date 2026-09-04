@@ -35,7 +35,10 @@ interface PlayerPathTrail3DProps {
   /** Trail fade time in milliseconds */
   fadeTime?: number;
 
-  /** Trail line width */
+  /**
+   * Trail line width. Advisory only: WebGL ignores LineBasicMaterial linewidth (always 1px on
+   * ANGLE/Metal) — kept so callers can express intent if this ever moves to fat lines (Line2).
+   */
   lineWidth?: number;
 
   /** Whether trails are visible */

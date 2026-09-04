@@ -8,10 +8,11 @@
  */
 
 import { Box, Slider, Typography } from '@mui/material';
-import React, { useCallback, useRef } from 'react';
+import React, { useRef } from 'react';
 
 import { TimelineAnnotation } from '../../../types/timelineAnnotations';
 import { TRANSPORT_MOTION } from '../constants/replayDesign';
+import { formatDurationMs as formatTime } from '../utils/replayTime';
 
 import { RailPlayhead } from './RailPlayhead';
 import { TimelineMarkers } from './TimelineMarkers';
@@ -220,13 +221,7 @@ export const TimelineSlider: React.FC<TimelineSliderProps> = ({
   // re-rendering this component or the memoized TimelineMarkers child.
   const railRef = useRef<HTMLDivElement>(null);
 
-  // Format time for display
-  const formatTime = useCallback((timeMs: number) => {
-    const totalSeconds = Math.floor(timeMs / 1000);
-    const minutes = Math.floor(totalSeconds / 60);
-    const seconds = totalSeconds % 60;
-    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
-  }, []);
+  // (formatTime is the shared utils/replayTime clock — no local duplicate.)
 
   // Normalize the A–B loop to [lo, hi] percentages of the rail for the region overlay. Both
   // points must be set for the shaded region; a single point still shows its flag.
@@ -277,6 +272,7 @@ export const TimelineSlider: React.FC<TimelineSliderProps> = ({
                     ? `0 0 22px ${theme.palette.primary.main}73`
                     : 'none',
                 transition: `color ${TRANSPORT_MOTION.tap} ${TRANSPORT_MOTION.ease}`,
+                '@media (prefers-reduced-motion: reduce)': { transition: 'none' },
               })}
             >
               {formatTime(displayTime)}
@@ -376,8 +372,15 @@ export const TimelineSlider: React.FC<TimelineSliderProps> = ({
               border: 'none',
               boxShadow: `0 0 0 ${isDragging ? 6 : 5}px ${theme.palette.primary.main}40, 0 2px 6px rgba(0,0,0,0.5)`,
               transition: `width ${TRANSPORT_MOTION.settle} ${TRANSPORT_MOTION.ease}, height ${TRANSPORT_MOTION.settle} ${TRANSPORT_MOTION.ease}, box-shadow ${TRANSPORT_MOTION.settle} ${TRANSPORT_MOTION.ease}`,
+              '@media (prefers-reduced-motion: reduce)': { transition: 'none' },
               '&:hover, &.Mui-focusVisible': {
                 boxShadow: `0 0 0 8px ${theme.palette.primary.main}40, 0 2px 6px rgba(0,0,0,0.5)`,
+              },
+              // Keyboard focus must ALWAYS show the thumb (WCAG 2.4.7): while the rAF overlay
+              // is live the thumb sits at opacity 0, so a Tab landing there would focus an
+              // invisible control. Force it back on focus.
+              '&.Mui-focusVisible': {
+                opacity: 1,
               },
               '&:focus-visible': {
                 outline: '2px solid',
@@ -398,6 +401,7 @@ export const TimelineSlider: React.FC<TimelineSliderProps> = ({
                 : `linear-gradient(90deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
               boxShadow: isScrubbingMode ? 'none' : `0 0 14px ${theme.palette.primary.main}99`,
               ...(isScrubbingMode && { backgroundColor: 'info.main' }),
+              '@media (prefers-reduced-motion: reduce)': { transition: 'none' },
             },
             '& .MuiSlider-rail': {
               height: isDragging ? 7 : 6,
@@ -412,6 +416,7 @@ export const TimelineSlider: React.FC<TimelineSliderProps> = ({
               boxShadow: theme.palette.mode === 'dark' ? 'inset 0 1px 2px rgba(0,0,0,0.6)' : 'none',
               borderRadius: 3,
               transition: `height ${TRANSPORT_MOTION.settle} ${TRANSPORT_MOTION.ease}`,
+              '@media (prefers-reduced-motion: reduce)': { transition: 'none' },
             },
             // The scrub-time bubble at the thumb — refined to match the surface bubble style.
             '& .MuiSlider-valueLabel': {

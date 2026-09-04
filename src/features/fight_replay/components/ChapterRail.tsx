@@ -104,6 +104,7 @@ const ChapterStop: React.FC<ChapterStopProps> = ({
             ? `0 0 12px ${theme.palette.primary.main}55`
             : 'none',
         transition: `border-color ${TRANSPORT_MOTION.settle} ${TRANSPORT_MOTION.ease}, background-color ${TRANSPORT_MOTION.settle} ${TRANSPORT_MOTION.ease}, box-shadow ${TRANSPORT_MOTION.settle} ${TRANSPORT_MOTION.ease}`,
+        '@media (prefers-reduced-motion: reduce)': { transition: 'none' },
         '&:hover': {
           borderColor: 'primary.main',
           backgroundColor: 'action.hover',
@@ -184,6 +185,12 @@ const ChapterRailComponent: React.FC<ChapterRailProps> = ({
     stopRefs.current[index] = el;
   }, []);
 
+  // Truncate the ref array when the stop list shrinks (trash filter) so stale entries beyond
+  // the new length can never be focused or scrolled to.
+  useEffect(() => {
+    stopRefs.current.length = stops.length;
+  }, [stops.length]);
+
   const activeIndex = useMemo(
     () => stops.findIndex((s) => s.fightId === currentFightId),
     [stops, currentFightId],
@@ -251,7 +258,8 @@ const ChapterRailComponent: React.FC<ChapterRailProps> = ({
               size="small"
               variant="outlined"
               color={killedBosses === bossChapters.length ? 'success' : 'default'}
-              label={`${killedBosses} / ${bossChapters.length} bosses`}
+              // Counts pulls (attempts), not unique bosses — a prog run shows "1 / 4 pulls".
+              label={`${killedBosses} / ${bossChapters.length} pulls`}
             />
           )}
         </Box>

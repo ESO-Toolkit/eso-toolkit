@@ -4,6 +4,7 @@ import { Vector3 } from 'three';
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
 
 import { RenderPriority } from '../constants/renderPriorities';
+import { isTextEntryTarget } from '../utils/textEntryTarget';
 
 /**
  * KeyboardCameraControls Component
@@ -61,8 +62,8 @@ export const KeyboardCameraControls: React.FC<KeyboardCameraControlsProps> = ({
     const handleKeyDown = (event: KeyboardEvent): void => {
       if (!enabled) return;
 
-      // Don't interfere with text input
-      if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) {
+      // Don't interfere with text input (shared guard: covers contentEditable + SELECT too).
+      if (isTextEntryTarget(event.target)) {
         return;
       }
 

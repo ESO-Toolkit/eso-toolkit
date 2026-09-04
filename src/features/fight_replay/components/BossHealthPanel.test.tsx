@@ -1,10 +1,10 @@
 /**
- * BossHealthPanel smoke tests
+ * BossHealthPanel tests
  *
  * The panel is a DOM overlay that renders a bar per boss with health, and renders nothing
- * when there are no bosses. The live per-frame health values are written imperatively by an
- * rAF loop (not asserted here — jsdom has no real rAF cadence); these tests cover the
- * render-on-boss-set behavior, which is what React owns.
+ * when there are no bosses. The boss SET is React-driven; the live per-frame widths/readouts
+ * are written imperatively by the rAF loop (jsdom runs rAF on timers, so width/text/aria writes
+ * are assertable after the names appear).
  *
  * @module BossHealthPanel.test
  */
@@ -57,6 +57,33 @@ describe('BossHealthPanel', () => {
     // The boss SET is discovered on the first rAF tick → React re-renders with the names.
     expect(await screen.findByText('Flame-Herald Bahsei')).toBeInTheDocument();
     expect(await screen.findByText('Add')).toBeInTheDocument();
+  });
+
+  it('writes live widths, readout text, and progressbar values imperatively', async () => {
+    const lookup = makeLookup([boss(1, 'Flame-Herald Bahsei', 87.5)]);
+    const { container } = render(<BossHealthPanel lookup={lookup} timeRef={{ current: 0 }} />);
+    await screen.findByText('Flame-Herald Bahsei');
+
+    const track = container.querySelector('[role="progressbar"]');
+    expect(track).not.toBeNull();
+    expect(track?.getAttribute('aria-label')).toContain('Flame-Herald Bahsei');
+    // Imperative rAF writes (width + readout + 1Hz aria) land without a React re-render.
+    const fill = track?.firstElementChild as HTMLElement | null;
+    expect(fill?.style.width).toBe('87.5%');
+    expect(track?.textContent).toContain('87.5%');
+    expect(track?.getAttribute('aria-valuenow')).toBe('88');
+  });
+
+  it('marks dead bosses at zero with a DEAD readout', async () => {
+    const dead = { ...boss(1, 'Fallen Boss', 12), isDead: true };
+    const lookup = makeLookup([dead]);
+    const { container } = render(<BossHealthPanel lookup={lookup} timeRef={{ current: 0 }} />);
+    await screen.findByText('Fallen Boss');
+
+    const track = container.querySelector('[role="progressbar"]');
+    const fill = track?.firstElementChild as HTMLElement | null;
+    expect(fill?.style.width).toBe('0%');
+    expect(track?.textContent).toContain('DEAD');
   });
 
   it('renders bars only for bosses in a mixed player/boss lookup', async () => {

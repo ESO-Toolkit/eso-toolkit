@@ -8,9 +8,11 @@
  */
 
 import { Box, Tooltip, useTheme } from '@mui/material';
-import React, { useCallback } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 
+import { usePrefersReducedMotion } from '../../../hooks/usePrefersReducedMotion';
 import { TimelineAnnotation } from '../../../types/timelineAnnotations';
+import { formatDurationMs as formatTime } from '../utils/replayTime';
 
 interface TimelineMarkersProps {
   /** Timeline markers to display */
@@ -39,6 +41,7 @@ const TimelineMarkersComponent: React.FC<TimelineMarkersProps> = ({
   onMarkerDelete: _onMarkerDelete,
 }) => {
   const theme = useTheme();
+  const prefersReducedMotion = usePrefersReducedMotion();
 
   // Calculate position percentage for a marker
   const getMarkerPosition = useCallback(
@@ -49,13 +52,7 @@ const TimelineMarkersComponent: React.FC<TimelineMarkersProps> = ({
     [duration],
   );
 
-  // Format time for tooltip
-  const formatTime = useCallback((timeMs: number) => {
-    const totalSeconds = Math.floor(timeMs / 1000);
-    const minutes = Math.floor(totalSeconds / 60);
-    const seconds = totalSeconds % 60;
-    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
-  }, []);
+  // (formatTime is the shared utils/replayTime clock — no local duplicate.)
 
   // Get color for marker
   const getMarkerColor = useCallback(
@@ -143,35 +140,32 @@ const TimelineMarkersComponent: React.FC<TimelineMarkersProps> = ({
   );
 
   // Get tooltip content for marker
-  const getTooltipContent = useCallback(
-    (marker: TimelineAnnotation): string => {
-      const timeStr = formatTime(marker.timestamp);
+  const getTooltipContent = useCallback((marker: TimelineAnnotation): string => {
+    const timeStr = formatTime(marker.timestamp);
 
-      switch (marker.type) {
-        case 'phase':
-          return `${marker.label} at ${timeStr}`;
-        case 'death':
-          return `${marker.label} at ${timeStr}\nKilled by: ${marker.killerName || 'Unknown'}`;
-        case 'custom':
-          return marker.description
-            ? `${marker.label} at ${timeStr}\n${marker.description}`
-            : `${marker.label} at ${timeStr}`;
-        case 'cluster': {
-          // Header line (e.g. "5 deaths at 2:14") + one line per grouped event so the
-          // tooltip still surfaces everything the collapsed markers would have shown.
-          const lines = marker.members.map((m) => `• ${m.label} (${formatTime(m.timestamp)})`);
-          // Cap the listed members so a huge wipe doesn't produce a screen-tall tooltip.
-          const MAX_LINES = 8;
-          const shown = lines.slice(0, MAX_LINES);
-          if (lines.length > MAX_LINES) {
-            shown.push(`…and ${lines.length - MAX_LINES} more`);
-          }
-          return `${marker.label} at ${timeStr}\n${shown.join('\n')}`;
+    switch (marker.type) {
+      case 'phase':
+        return `${marker.label} at ${timeStr}`;
+      case 'death':
+        return `${marker.label} at ${timeStr}\nKilled by: ${marker.killerName || 'Unknown'}`;
+      case 'custom':
+        return marker.description
+          ? `${marker.label} at ${timeStr}\n${marker.description}`
+          : `${marker.label} at ${timeStr}`;
+      case 'cluster': {
+        // Header line (e.g. "5 deaths at 2:14") + one line per grouped event so the
+        // tooltip still surfaces everything the collapsed markers would have shown.
+        const lines = marker.members.map((m) => `• ${m.label} (${formatTime(m.timestamp)})`);
+        // Cap the listed members so a huge wipe doesn't produce a screen-tall tooltip.
+        const MAX_LINES = 8;
+        const shown = lines.slice(0, MAX_LINES);
+        if (lines.length > MAX_LINES) {
+          shown.push(`…and ${lines.length - MAX_LINES} more`);
         }
+        return `${marker.label} at ${timeStr}\n${shown.join('\n')}`;
       }
-    },
-    [formatTime],
-  );
+    }
+  }, []);
 
   // Handle marker click
   const handleMarkerClick = useCallback(
@@ -181,6 +175,57 @@ const TimelineMarkersComponent: React.FC<TimelineMarkersProps> = ({
       }
     },
     [onMarkerClick],
+  );
+
+  // Roving tabindex: N markers must not cost N tab stops (WCAG 2.4.3). One tab stop for the
+  // rail; arrows move between markers (preventDefault so the global seek handler yields),
+  // Home/End jump to the ends, Enter/Space activates. Mirrors ChapterRail's pattern.
+  const [activeIndex, setActiveIndex] = useState(0);
+  const itemRefs = useRef<Array<HTMLDivElement | null>>([]);
+  if (itemRefs.current.length !== markers.length) {
+    itemRefs.current = new Array(markers.length).fill(null);
+  }
+
+  const focusMarker = useCallback(
+    (index: number) => {
+      const clamped = Math.max(0, Math.min(index, markers.length - 1));
+      setActiveIndex(clamped);
+      itemRefs.current[clamped]?.focus();
+    },
+    [markers.length],
+  );
+
+  const handleMarkerKeyDown = useCallback(
+    (event: React.KeyboardEvent, marker: TimelineAnnotation, index: number) => {
+      switch (event.key) {
+        case 'Enter':
+        case ' ':
+          event.preventDefault();
+          handleMarkerClick(marker);
+          break;
+        case 'ArrowRight':
+        case 'ArrowDown':
+          event.preventDefault();
+          focusMarker(index + 1);
+          break;
+        case 'ArrowLeft':
+        case 'ArrowUp':
+          event.preventDefault();
+          focusMarker(index - 1);
+          break;
+        case 'Home':
+          event.preventDefault();
+          focusMarker(0);
+          break;
+        case 'End':
+          event.preventDefault();
+          focusMarker(markers.length - 1);
+          break;
+        default:
+          break;
+      }
+    },
+    [focusMarker, handleMarkerClick, markers.length],
   );
 
   return (
@@ -193,10 +238,13 @@ const TimelineMarkersComponent: React.FC<TimelineMarkersProps> = ({
         // translateY(-50%); margins would shift that centering and re-introduce the offset.
       }}
     >
-      {markers.map((marker) => {
+      {markers.map((marker, index) => {
         const position = getMarkerPosition(marker.timestamp);
         const color = getMarkerColor(marker);
         const cap = getMarkerCap(marker, color);
+        // Clamp the roving tab stop when the list shrinks (filter change) so the rail never
+        // ends up with zero tabbable markers.
+        const tabbableIndex = Math.min(activeIndex, markers.length - 1);
 
         return (
           <Tooltip
@@ -210,26 +258,25 @@ const TimelineMarkersComponent: React.FC<TimelineMarkersProps> = ({
           >
             <Box
               role="button"
-              tabIndex={0}
-              onClick={() => handleMarkerClick(marker)}
-              onKeyDown={(e: React.KeyboardEvent) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  handleMarkerClick(marker);
-                }
+              tabIndex={index === tabbableIndex ? 0 : -1}
+              ref={(el: HTMLDivElement | null) => {
+                itemRefs.current[index] = el;
               }}
+              onClick={() => handleMarkerClick(marker)}
+              onKeyDown={(e: React.KeyboardEvent) => handleMarkerKeyDown(e, marker, index)}
               aria-label={getTooltipContent(marker)}
               sx={{
                 // A transparent, vertically-centered hit-area — NO long colored stem (the
                 // proto sits the caps directly on the rail). The cap (shape channel) is the
                 // only visible element; the box just gives it a comfortable click/focus
-                // target and a tooltip anchor.
+                // target and a tooltip anchor. 24×24 meets WCAG 2.5.8 (the visible cap stays
+                // 9-11px; only the hit-area is generous).
                 position: 'absolute',
                 left: `${position}%`,
                 top: '50%',
                 transform: 'translate(-50%, -50%)',
-                width: 14,
-                height: 22,
+                width: 24,
+                height: 24,
                 display: 'grid',
                 placeItems: 'center',
                 cursor: 'pointer',
@@ -241,11 +288,14 @@ const TimelineMarkersComponent: React.FC<TimelineMarkersProps> = ({
                 },
                 // Per-type cap (shape channel — see getMarkerCap), centered on the rail with a
                 // soft colored glow; the glow intensifies and the cap lifts slightly on hover.
+                // Hover motion is disabled under prefers-reduced-motion (WCAG 2.3.3).
                 '&::before': {
                   content: '""',
                   position: 'static',
                   filter: `drop-shadow(0 1px 1px rgba(0,0,0,0.5)) drop-shadow(0 0 3px ${color})`,
-                  transition: 'filter 0.15s ease, transform 0.15s ease',
+                  transition: prefersReducedMotion
+                    ? 'none'
+                    : 'filter 0.15s ease, transform 0.15s ease',
                   ...cap,
                   // Override the old translateX from getMarkerCap — the cap is now grid-centered.
                   transform: cap.transform?.includes('rotate') ? 'rotate(45deg)' : 'none',

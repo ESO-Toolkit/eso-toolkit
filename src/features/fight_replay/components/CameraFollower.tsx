@@ -58,7 +58,6 @@ export const CameraFollower: React.FC<CameraFollowerProps> = ({
 }) => {
   const { camera, controls } = useThree();
   const prefersReducedMotion = usePrefersReducedMotion();
-  const wasFollowingRef = useRef(false);
   // Smoothly follow during playback; snap instantly (factor 1) when the user has
   // requested reduced motion.
   const smoothingFactor = prefersReducedMotion ? 1 : 0.05;
@@ -73,7 +72,6 @@ export const CameraFollower: React.FC<CameraFollowerProps> = ({
   // the equal-delta translation is a rigid motion that commutes with update().
   useFrame(() => {
     const isFollowing = !!followingActorIdRef.current;
-    wasFollowingRef.current = isFollowing;
 
     if (!lookup || !isFollowing || !controls) {
       return;
@@ -105,6 +103,15 @@ export const CameraFollower: React.FC<CameraFollowerProps> = ({
     // The SAME delta the pivot moved by — applied verbatim to the camera. This is the
     // rigid-translation invariant: identical vector to both, so no self-drift under rotation.
     _delta.current.subVectors(controlsTarget, _prevTarget.current);
+
+    // Settle snap: once the per-frame delta is sub-visual, stop moving entirely (and restore the
+    // pivot exactly) instead of lerping asymptotically forever. A never-quite-settled camera kept
+    // the on-demand RenderLoop repainting continuously while paused+following; now it rests
+    // bit-identically and the loop goes idle until something actually changes.
+    if (_delta.current.lengthSq() < 1e-10) {
+      controlsTarget.copy(_prevTarget.current);
+      return;
+    }
     camera.position.add(_delta.current);
 
     // OrbitControls owns orientation. Do NOT call camera.lookAt() — it would override the

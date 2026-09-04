@@ -21,6 +21,7 @@ import {
 import React, { useEffect, useMemo, useState } from 'react';
 
 import { ReplayShape } from '../types/mapMarkers';
+import { portalToFullscreen } from '../utils/fullscreenPortal';
 import { ShapeEditPatch } from '../utils/mapMarkerConverters';
 
 type RGBA = [number, number, number, number];
@@ -118,7 +119,16 @@ export const ShapeEditDialog: React.FC<ShapeEditDialogProps> = ({
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth fullScreen={fullScreen}>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="xs"
+      fullWidth
+      fullScreen={fullScreen}
+      // Inside the fullscreen element so the dialog stays visible in native fullscreen
+      // (body portals render underneath the top layer). See fullscreenPortal.
+      container={portalToFullscreen()}
+    >
       <DialogTitle>Edit shape</DialogTitle>
       <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
         <TextField
@@ -128,6 +138,8 @@ export const ShapeEditDialog: React.FC<ShapeEditDialogProps> = ({
           size="small"
           fullWidth
           autoFocus
+          slotProps={{ htmlInput: { maxLength: 120 } }}
+          helperText={label.length > 0 ? `${label.length}/120` : undefined}
         />
 
         <Box>
@@ -146,8 +158,9 @@ export const ShapeEditDialog: React.FC<ShapeEditDialogProps> = ({
                   aria-pressed={selected}
                   onClick={() => setColour([...rgba] as RGBA)}
                   sx={{
-                    width: 24,
-                    height: 24,
+                    // 28px meets the WCAG 2.5.8 24px minimum with margin; the glyph stays small.
+                    width: 28,
+                    height: 28,
                     p: 0,
                     borderRadius: '50%',
                     background: toCss(rgba),
@@ -155,6 +168,11 @@ export const ShapeEditDialog: React.FC<ShapeEditDialogProps> = ({
                     border: selected ? '2px solid' : '1px solid rgba(0,0,0,0.4)',
                     borderColor: selected ? 'primary.main' : 'rgba(0,0,0,0.4)',
                     boxShadow: selected ? '0 0 0 2px rgba(255,255,255,0.5)' : 'none',
+                    '&:focus-visible': {
+                      outline: '2px solid',
+                      outlineColor: 'primary.main',
+                      outlineOffset: 2,
+                    },
                   }}
                 />
               );

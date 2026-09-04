@@ -1,6 +1,6 @@
 import { Text } from '@react-three/drei/core/Text.js';
 import { useFrame, useThree } from '@react-three/fiber';
-import { forwardRef, useImperativeHandle, useMemo, useRef } from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 
 import {
@@ -110,7 +110,23 @@ const SingleName = forwardRef<NameHandle, SingleNameProps>(({ actorId }, ref) =>
     [],
   );
 
+  // troika computes text bounds asynchronously after sync, so a freshly synced (or just-moved)
+  // tag can carry a stale/empty bounding sphere for a frame and pop out at frustum edges. The
+  // coordinator already gates visibility, so culling saves nothing — disable it on both the group
+  // and the text. (Set imperatively like the instanced layers: the JSX prop form trips the
+  // react/no-unknown-property rule for these elements.)
+  useEffect(() => {
+    if (groupRef.current) {
+      groupRef.current.frustumCulled = false;
+    }
+    if (textRef.current) {
+      textRef.current.frustumCulled = false;
+    }
+  }, []);
+
   return (
+    // frustumCulled off (see the effect above): troika bounds compute async while groups move
+    // per-frame, so pre-sync empty spheres get culled on fast orbits and names pop.
     <group ref={groupRef}>
       {/* Stable per-actor renderOrder + depthTest:false: the flicker fix from ActorNameBillboard.
           Overlapping cards would otherwise reorder as the orbit camera moves and pop between

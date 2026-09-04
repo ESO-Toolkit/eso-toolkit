@@ -136,6 +136,7 @@ interface PlayerRowInfo {
 
 interface RowHealthRefs {
   fill: HTMLDivElement | null;
+  track: HTMLDivElement | null;
 }
 
 function healthColor(theme: Theme, pct: number): string {
@@ -249,6 +250,14 @@ export const PlayerListPanel: React.FC<PlayerListPanelProps> = ({
         const pct = pos?.health ? Math.max(0, Math.min(100, pos.health.percentage)) : 0;
         refs.fill.style.width = `${pct}%`;
         refs.fill.style.backgroundColor = healthColor(theme, pct);
+        // Screen-reader value at integer granularity (writes only on change; no live region, so
+        // no announcement spam — just an honest value on demand).
+        if (refs.track) {
+          const rounded = String(Math.round(pct));
+          if (refs.track.getAttribute('aria-valuenow') !== rounded) {
+            refs.track.setAttribute('aria-valuenow', rounded);
+          }
+        }
       }
       raf = requestAnimationFrame(tick);
     };
@@ -262,7 +271,25 @@ export const PlayerListPanel: React.FC<PlayerListPanelProps> = ({
       let cb = cache.get(id);
       if (!cb) {
         cb = (el: HTMLDivElement | null): void => {
-          healthRefs.current.set(id, { fill: el });
+          const existing = healthRefs.current.get(id) ?? { fill: null, track: null };
+          existing.fill = el;
+          healthRefs.current.set(id, existing);
+        };
+        cache.set(id, cb);
+      }
+      return cb;
+    };
+  }, []);
+
+  const setTrackRef = useMemo(() => {
+    const cache = new Map<number, (el: HTMLDivElement | null) => void>();
+    return (id: number) => {
+      let cb = cache.get(id);
+      if (!cb) {
+        cb = (el: HTMLDivElement | null): void => {
+          const existing = healthRefs.current.get(id) ?? { fill: null, track: null };
+          existing.track = el;
+          healthRefs.current.set(id, existing);
         };
         cache.set(id, cb);
       }
@@ -484,6 +511,7 @@ export const PlayerListPanel: React.FC<PlayerListPanelProps> = ({
                       onClick={(e) => setColorPicker({ id: player.id, anchorEl: e.currentTarget })}
                       sx={{
                         flexShrink: 0,
+                        position: 'relative',
                         width: 13,
                         height: 13,
                         p: 0,
@@ -494,6 +522,13 @@ export const PlayerListPanel: React.FC<PlayerListPanelProps> = ({
                           ? `1.5px solid ${theme.palette.common.white}`
                           : '1px solid rgba(255,255,255,0.25)',
                         boxShadow: hasOverride ? `0 0 0 1px ${bodyColor}` : 'none',
+                        // Invisible 25px hit-area over the 13px glyph (WCAG 2.5.8) without
+                        // changing the swatch's look.
+                        '&::after': {
+                          content: '""',
+                          position: 'absolute',
+                          inset: -6,
+                        },
                         '&:hover': { transform: 'scale(1.15)' },
                         '&:focus-visible': {
                           outline: `2px solid ${theme.palette.primary.main}`,
@@ -519,6 +554,12 @@ export const PlayerListPanel: React.FC<PlayerListPanelProps> = ({
                     </Typography>
                     {/* Health track */}
                     <Box
+                      ref={setTrackRef(player.id)}
+                      role="progressbar"
+                      aria-label={`${player.name} health`}
+                      aria-valuemin={0}
+                      aria-valuemax={100}
+                      aria-valuenow={100}
                       sx={{
                         mt: 0.25,
                         height: 4,

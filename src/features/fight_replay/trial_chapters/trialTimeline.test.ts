@@ -115,6 +115,34 @@ describe('globalToLocal', () => {
     expect(globalToLocal(tl, 60000)).toMatchObject({ entryIndex: 1, localMs: 0 });
     expect(globalToLocal(tl, 80000)).toMatchObject({ entryIndex: 2, localMs: 0 });
   });
+
+  it('rejects non-finite input instead of teleporting to the last frame', () => {
+    expect(globalToLocal(tl, NaN)).toBeNull();
+    expect(globalToLocal(tl, Infinity)).toBeNull();
+  });
+
+  it('flows into a co-timed segment instead of dead-stopping', () => {
+    const timedTl = buildTrialTimeline(
+      [
+        seg({ fightId: 'a', name: 'Oaxiltso', startTime: 1000, durationMs: 60000 }),
+        seg({ fightId: 'b', name: 'Xalvakka', startTime: 100000, durationMs: 100000 }),
+      ],
+      true,
+    );
+    // Off-timeline fight at exactly the boss's start tick.
+    expect(nextEntryAfter(timedTl, 'zz', 100000)?.chapter.fightId).toBe('b');
+  });
+
+  it('drops zero-duration chapters that can never be landed in', () => {
+    const withZero: TrialChapter[] = [
+      seg({ fightId: 'a', name: 'Oaxiltso', startTime: 1000, durationMs: 60000 }),
+      seg({ fightId: 'b', name: 'Xalvakka', startTime: 100000, durationMs: 100000 }),
+      seg({ fightId: 'z', name: 'Blip', kind: 'trash', startTime: 200000, durationMs: 0 }),
+    ];
+    const dropped = buildTrialTimeline(withZero, true);
+    expect(dropped.entries.map((e) => e.chapter.fightId)).toEqual(['a', 'b']);
+    expect(dropped.totalDurationMs).toBe(160000);
+  });
 });
 
 describe('localToGlobal', () => {

@@ -18,6 +18,7 @@ import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import { Box, IconButton, Typography } from '@mui/material';
 import React, { useCallback, useEffect, useRef } from 'react';
 
+import { usePrefersReducedMotion } from '../../../../hooks/usePrefersReducedMotion';
 import { TRANSPORT_MOTION } from '../../constants/replayDesign';
 
 interface MobileSheetProps {
@@ -51,6 +52,15 @@ const MobileSheetComponent: React.FC<MobileSheetProps> = ({
   const sheetRef = useRef<HTMLDivElement>(null);
   const closeBtnRef = useRef<HTMLButtonElement>(null);
   const restoreFocusRef = useRef<HTMLElement | null>(null);
+  // Reduced motion: snap open/closed instead of sliding + fading (WCAG 2.3.3). Backdrop click,
+  // ESC, focus trap/restore, and drag-to-dismiss all keep working — only the animation goes.
+  const reduceMotion = usePrefersReducedMotion();
+  const fadeTransition = reduceMotion
+    ? 'none'
+    : `opacity ${TRANSPORT_MOTION.settle} ${TRANSPORT_MOTION.ease}`;
+  const slideTransition = reduceMotion
+    ? 'none'
+    : `transform ${TRANSPORT_MOTION.settle} ${TRANSPORT_MOTION.ease}`;
 
   // Close on Escape for keyboard/AT users (and external keyboards on tablets).
   useEffect(() => {
@@ -178,7 +188,7 @@ const MobileSheetComponent: React.FC<MobileSheetProps> = ({
           backgroundColor: 'rgba(0,0,0,0.35)',
           opacity: open ? 1 : 0,
           pointerEvents: open ? 'auto' : 'none',
-          transition: `opacity ${TRANSPORT_MOTION.settle} ${TRANSPORT_MOTION.ease}`,
+          transition: fadeTransition,
         }}
       />
 
@@ -209,7 +219,7 @@ const MobileSheetComponent: React.FC<MobileSheetProps> = ({
           boxShadow: '0 -8px 30px rgba(0,0,0,0.5)',
           paddingBottom: 'env(safe-area-inset-bottom)',
           transform: open ? 'translateY(0)' : 'translateY(100%)',
-          transition: `transform ${TRANSPORT_MOTION.settle} ${TRANSPORT_MOTION.ease}`,
+          transition: slideTransition,
           // Don't intercept taps while hidden (the arena/dock stay interactive).
           pointerEvents: open ? 'auto' : 'none',
         })}

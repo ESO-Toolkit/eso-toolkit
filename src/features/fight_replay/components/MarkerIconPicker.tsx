@@ -82,6 +82,7 @@ export const MarkerIconPicker: React.FC<MarkerIconPickerProps> = ({
         anchor="bottom"
         open={open}
         onClose={onClose}
+        aria-label="Add marker"
         // Portal into the fullscreen subtree on desktop, else body (mobile pseudo-fullscreen is a
         // CSS overlay, so this resolves to body and is unchanged there).
         container={portalToFullscreen}
@@ -132,6 +133,7 @@ export const MarkerIconPicker: React.FC<MarkerIconPickerProps> = ({
     <Popover
       open={open}
       onClose={onClose}
+      aria-label="Add marker"
       // Portal into the fullscreen subtree on desktop, else body — otherwise the picker is
       // invisible in native fullscreen (renders outside the top-layer element).
       container={portalToFullscreen}

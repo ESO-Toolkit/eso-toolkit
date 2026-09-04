@@ -1,11 +1,24 @@
 <!-- AI Context: Load only when refactoring component structure or understanding component relationships -->
+
 # Component Hierarchy
 
-**Last Updated**: October 14, 2025  
-**Status**: Living Document  
+**Last Updated**: September 4, 2026 (mermaid + entry corrected; deep sections below still describe the
+pre-instancing tree — see banner)
+**Status**: Living Document — PARTIALLY STALE
 **Related**: [System Architecture](./system-architecture.md) | [Data Flow](./data-flow.md) | [Worker Dependencies](./worker-dependencies.md)
 
+> **Staleness note (2026-09-04)**: the mermaid graph and the FightReplay entry below were regenerated
+> against the live tree. The per-component writeups further down still reference the retired
+> per-actor path (`AnimationFrameSceneActors`, `AnimationFrameActor3D`, `ActorNameBillboard`,
+> `BossHealthHUD`, `MorMarkers`) and old file sizes — the live renderer is `InstancedReplayFigures3D`
+>
+> - `BatchedActorNames3D` + `DynamicMapTexture`, boss health is the DOM `BossHealthPanel`, and
+>   current sizes are FightReplay ~1028 / FightReplay3D ~1779 / Arena3D ~1513 / Arena3DScene ~1350
+>   lines. Prefer the in-code headers + `fight-replay-perf-tiering.md` until those sections are
+>   regenerated. The deleted legacy files were removed from the tree in the same pass.
+
 **When to use this document**:
+
 - Refactoring component structure or prop passing
 - Understanding component dependencies and relationships
 - Adding new major features that need architectural context
@@ -23,45 +36,39 @@ This document visualizes the React component tree for the Fight Replay system, s
 
 ```mermaid
 graph TD
-    A[FightReplay.tsx] --> B[FightReplay3D.tsx]
-    B --> C[Arena3D.tsx]
-    B --> D[PlaybackControls.tsx]
-    
-    C --> E[Canvas - React Three Fiber]
-    E --> F[Scene Component]
-    
-    F --> G[RenderLoop]
-    F --> H[CameraFollower]
-    F --> I[Lighting]
-    F --> J[Grid]
+    A[FightReplay.tsx<br/>page shell: header, rail, markers, trial nav] --> B[FightReplay3D.tsx<br/>orchestrator: playback, transport, overlays]
+    B --> C[Arena3D.tsx<br/>lazy Arena3DScene + DOM overlays]
+    B --> D[PlaybackControls.tsx<br/>transport deck]
+    B --> MOB[MobileReplayDock.tsx<br/>touch transport]
+
+    C --> E[Canvas - React Three Fiber<br/>stable across fights]
+    E --> F[Arena3DScene<br/>RenderLoop 999, FrameCapGate -10]
+
+    F --> G[RenderLoop + FrameCapGate]
+    F --> H[CameraFollower + KeyboardCameraControls]
+    F --> I[ArenaLighting + Environment IBL]
+    F --> J[Grid + FloorVignette]
     F --> K[DynamicMapTexture]
-    F --> L[AnimationFrameSceneActors]
-    F --> M[BossHealthHUD]
-    F --> N[MorMarkers]
+    F --> L[InstancedReplayFigures3D<br/>one InstancedMesh per layer]
+    F --> M[BatchedActorNames3D<br/>troika coordinator]
     F --> O[OrbitControls]
-    
-    L --> P[AnimationFrameActor3D - Actor 1]
-    L --> Q[AnimationFrameActor3D - Actor 2]
-    L --> R[AnimationFrameActor3D - Actor N]
-    
-    P --> S1[Puck Mesh]
-    P --> S2[Vision Cone Mesh]
-    P --> S3[Taunt Ring Mesh]
-    P --> S4[Selected Ring Mesh]
-    P --> S5[ActorNameBillboard]
-    
-    D --> T[TimelineSlider]
-    D --> U[PlayPauseButton]
-    D --> V[SpeedControl]
+    F --> P[PlayerPathTrail3D]
+    F --> Q[MapMarkers + DrawnShapes]
+
+    C --> DOM[DOM overlays<br/>BossHealthPanel, PlayerListPanel, LockedPlayerStatsPanel]
+
+    D --> T[TimelineSlider + TimelineMarkers]
+    D --> U[PlaybackButtons]
+    D --> V[SpeedSelector]
     D --> W[ShareButton]
-    
+
     style A fill:#e3f2fd
     style B fill:#e3f2fd
     style C fill:#e1f5ff
     style E fill:#e8f5e9
     style F fill:#e8f5e9
     style L fill:#fff3e0
-    style P fill:#fff9c4
+    style M fill:#fff9c4
 ```
 
 ---
@@ -70,31 +77,23 @@ graph TD
 
 ### FightReplay.tsx
 
-**Purpose**: Entry point and layout container
+**Purpose**: Page shell — header, chapter rail, marker/shape deck, trial navigation, data lifecycle
 
 **Responsibilities**:
+
 - Route parameter parsing (`reportId`, `fightId`)
-- Overall page layout
-- Error boundary (recommended addition)
+- Marker/shape state (useMapMarkersManager) + trial chapter nav + prefetch
+- Fight-switch reset (`isSwitchingFight`), loading/error/empty states
+- Renders `FightReplay3D` (kept mounted across switches so fullscreen survives)
 
-**Props**: None (uses React Router params)
+**Props**: None (uses React Router params + hooks)
 
-**Children**: 
-- `FightReplay3D` - Main orchestrator
+**Children**:
 
-**File**: `src/features/fight_replay/FightReplay.tsx`
+- `ChapterRail` - trial navigation (multi-segment runs only)
+- `FightReplay3D` - orchestrator
 
-```typescript
-export const FightReplay: React.FC = () => {
-  const { reportId, fightId } = useParams();
-  
-  return (
-    <Box sx={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
-      <FightReplay3D reportId={reportId!} fightId={fightId!} />
-    </Box>
-  );
-};
-```
+**File**: `src/features/fight_replay/FightReplay.tsx` (~1028 lines)
 
 ---
 
@@ -103,6 +102,7 @@ export const FightReplay: React.FC = () => {
 **Purpose**: Data fetching and worker task orchestration
 
 **Responsibilities**:
+
 - GraphQL queries for fight and events
 - Worker task initialization
 - Redux state management
@@ -110,6 +110,7 @@ export const FightReplay: React.FC = () => {
 - Loading/error states
 
 **Props**:
+
 ```typescript
 interface FightReplay3DProps {
   reportId: string;
@@ -118,6 +119,7 @@ interface FightReplay3DProps {
 ```
 
 **Key State**:
+
 ```typescript
 // GraphQL data
 const fight = useFight(reportId, fightId);
@@ -137,6 +139,7 @@ const [followingActorId, setFollowingActorId] = useState<string | null>(null);
 ```
 
 **Children**:
+
 - `Arena3D` - 3D scene container
 - `PlaybackControls` - UI controls
 
@@ -149,6 +152,7 @@ const [followingActorId, setFollowingActorId] = useState<string | null>(null);
 **Purpose**: Timeline and playback UI controls
 
 **Responsibilities**:
+
 - Timeline scrubbing
 - Play/pause button
 - Playback speed selector
@@ -157,6 +161,7 @@ const [followingActorId, setFollowingActorId] = useState<string | null>(null);
 - Time display
 
 **Props**:
+
 ```typescript
 interface PlaybackControlsProps {
   duration: number;
@@ -169,11 +174,12 @@ interface PlaybackControlsProps {
   followingActorId: string | null;
   onActorFollow: (actorId: string | null) => void;
   actors: ActorInfo[];
-  timeRef: React.MutableRefObject<number>;  // ⭐ For optimized scrubbing
+  timeRef: React.MutableRefObject<number>; // ⭐ For optimized scrubbing
 }
 ```
 
 **Key Hooks**:
+
 ```typescript
 // Optimized timeline scrubbing
 useOptimizedTimelineScrubbing({
@@ -182,11 +188,12 @@ useOptimizedTimelineScrubbing({
   onTimeChange,
   isPlaying,
   onPlayingChange,
-  timeRef,  // Updates immediately during drag
+  timeRef, // Updates immediately during drag
 });
 ```
 
 **Children**:
+
 - `TimelineSlider` (MUI Slider)
 - `PlayPauseButton`
 - `SpeedControl` (Select dropdown)
@@ -204,6 +211,7 @@ useOptimizedTimelineScrubbing({
 **Purpose**: React Three Fiber Canvas wrapper and scene setup
 
 **Responsibilities**:
+
 - Canvas configuration
 - Camera setup
 - Scene scaling
@@ -211,6 +219,7 @@ useOptimizedTimelineScrubbing({
 - Props distribution to scene children
 
 **Props**:
+
 ```typescript
 interface Arena3DProps {
   fight: FightFragment;
@@ -218,8 +227,8 @@ interface Arena3DProps {
   mapTimeline: MapTimeline;
   buffLookup?: BuffLookupData;
   debuffLookup?: DebuffLookupData;
-  currentTime: number;  // React state (low-frequency)
-  timeRef: React.MutableRefObject<number>;  // Animation ref (high-frequency)
+  currentTime: number; // React state (low-frequency)
+  timeRef: React.MutableRefObject<number>; // Animation ref (high-frequency)
   followingActorId: string | null;
   onActorClick: (actorId: string) => void;
   morMarkersString?: string;
@@ -227,29 +236,31 @@ interface Arena3DProps {
 ```
 
 **Key Calculations**:
+
 ```typescript
 // Dynamic arena sizing based on fight bounding box
 const arenaDimensions = useMemo(() => {
   const { minX, maxX, minY, maxY } = fight.boundingBox;
   const rangeX = maxX - minX;
   const rangeZ = maxY - minY;
-  const size = Math.max(rangeX, rangeZ) * 1.2;  // 20% padding
-  
+  const size = Math.max(rangeX, rangeZ) * 1.2; // 20% padding
+
   // Calculate optimal camera distance for FOV
   const fov = 30;
-  const viewDistance = (size / 2) / Math.tan((fov * Math.PI) / 360);
-  
+  const viewDistance = size / 2 / Math.tan((fov * Math.PI) / 360);
+
   return {
     size,
     centerX: (minX + maxX) / 2,
     centerZ: (minY + maxY) / 2,
     cameraDistance: viewDistance,
-    scale: size / 100  // Normalize scale
+    scale: size / 100, // Normalize scale
   };
 }, [fight]);
 ```
 
 **Canvas Configuration**:
+
 ```typescript
 <Canvas
   camera={{
@@ -292,7 +303,7 @@ graph TD
     Scene --> G[AnimationFrameSceneActors - Priority 2]
     Scene --> H[BossHealthHUD - Priority 3]
     Scene --> I[MorMarkers - Static]
-    
+
     style Scene fill:#e8f5e9
     style A fill:#ffebee
     style B fill:#e3f2fd
@@ -310,6 +321,7 @@ graph TD
 **Priority**: 999 (RENDER - executes LAST)
 
 **Responsibilities**:
+
 - Force render on every frame
 - Ensure consistent frame timing
 
@@ -317,13 +329,14 @@ graph TD
 const RenderLoop = () => {
   useFrame(({ gl, scene, camera }) => {
     gl.render(scene, camera);
-  }, RenderPriority.RENDER);  // 999
-  
+  }, RenderPriority.RENDER); // 999
+
   return null;
 };
 ```
 
 **Why Manual Rendering?**:
+
 - Precise control over when frames render
 - Avoid unnecessary renders
 - Coordinate with other `useFrame` hooks
@@ -339,6 +352,7 @@ const RenderLoop = () => {
 **Priority**: 0 (FOLLOWER_CAMERA - executes FIRST)
 
 **Responsibilities**:
+
 - Track followed actor position
 - Smooth camera interpolation (lerp)
 - Maintain camera offset
@@ -353,34 +367,34 @@ export const CameraFollower = ({
 }) => {
   const { camera } = useThree();
   const targetPositionRef = useRef(new THREE.Vector3());
-  
+
   useFrame(() => {
     if (!followingActorIdRef.current) return;
-    
+
     // Get actor position at current time
     const actorPosition = getActorPositionAtClosestTimestamp(
       lookup,
       followingActorIdRef.current,
       timeRef.current
     );
-    
+
     if (actorPosition) {
       const [x, y, z] = actorPosition.position;
       const newTarget = new THREE.Vector3(x, y, z);
-      
+
       // Smooth lerp to target
       targetPositionRef.current.lerp(newTarget, smoothingFactor);
-      
+
       // Calculate desired camera position
       const offset = new THREE.Vector3(0, cameraHeight, cameraDistance);
       const desiredCameraPosition = targetPositionRef.current.clone().add(offset);
-      
+
       // Smooth camera movement
       camera.position.lerp(desiredCameraPosition, smoothingFactor);
       camera.lookAt(targetPositionRef.current);
     }
   }, RenderPriority.FOLLOWER_CAMERA);  // Priority 0 - executes FIRST
-  
+
   return null;
 };
 ```
@@ -394,6 +408,7 @@ export const CameraFollower = ({
 **Purpose**: Scene illumination
 
 **Components**:
+
 - `<ambientLight>` - Soft ambient lighting
 - `<directionalLight>` - Main light source with shadows
 - `<hemisphereLight>` - Sky/ground color
@@ -432,6 +447,7 @@ export const CameraFollower = ({
 **Priority**: 4 (EFFECTS)
 
 **Responsibilities**:
+
 - Load map textures from mapTimeline
 - Switch textures on phase changes
 - Cache loaded textures
@@ -449,14 +465,14 @@ export const DynamicMapTexture = ({
   const materialRef = useRef<THREE.MeshBasicMaterial>(null);
   const currentMapFileRef = useRef<string | null>(null);
   const textureCache = useRef(new Map<string, THREE.Texture>());
-  
+
   useFrame(() => {
     const currentTime = timeRef.current;
     const timestamp = fightTimeToTimestamp(fight, currentTime);
-    
+
     // Get map for current time
     const mapEntry = getMapAtTimestamp(mapTimeline, timestamp);
-    
+
     if (mapEntry?.mapFile && mapEntry.mapFile !== currentMapFileRef.current) {
       // Load texture (with caching)
       loadTexture(mapEntry.mapFile, textureCache.current).then(texture => {
@@ -465,11 +481,11 @@ export const DynamicMapTexture = ({
           materialRef.current.needsUpdate = true;
         }
       });
-      
+
       currentMapFileRef.current = mapEntry.mapFile;
     }
   }, RenderPriority.EFFECTS);  // Priority 4
-  
+
   return (
     <mesh position={[centerX, -0.1, centerZ]} rotation={[-Math.PI / 2, 0, 0]}>
       <planeGeometry args={[arenaSize, arenaSize]} />
@@ -490,6 +506,7 @@ export const DynamicMapTexture = ({
 **Priority**: 2 (ACTORS) - via individual AnimationFrameActor3D components
 
 **Responsibilities**:
+
 - Create shared geometries (once)
 - Map actors to AnimationFrameActor3D components
 - Pass shared geometries to all actors
@@ -504,7 +521,7 @@ export const AnimationFrameSceneActors = ({
 }) => {
   // ⭐ Create shared geometries ONCE for ALL actors
   const sharedGeometries = useSharedActor3DGeometries(scale);
-  
+
   // Get all unique actor IDs from lookup
   const actorIds = useMemo(() => {
     const ids = new Set<string>();
@@ -513,7 +530,7 @@ export const AnimationFrameSceneActors = ({
     });
     return Array.from(ids);
   }, [lookup]);
-  
+
   return (
     <>
       {actorIds.map(actorId => (
@@ -545,6 +562,7 @@ export const AnimationFrameSceneActors = ({
 **Priority**: 2 (ACTORS)
 
 **Responsibilities**:
+
 - Query position at current time
 - Update THREE.js objects directly (no React re-renders)
 - Handle visibility (dead actors, out of range)
@@ -552,13 +570,14 @@ export const AnimationFrameSceneActors = ({
 - Actor selection handling
 
 **Props**:
+
 ```typescript
 interface AnimationFrameActor3DProps {
   actorId: string;
   lookup: TimestampPositionLookup;
   timeRef: React.MutableRefObject<number>;
   scale: number;
-  sharedGeometries: SharedGeometries;  // ⭐ From parent
+  sharedGeometries: SharedGeometries; // ⭐ From parent
   selectedActorRef: React.MutableRefObject<string | null>;
   onActorClick: (actorId: string) => void;
   showName: boolean;
@@ -566,6 +585,7 @@ interface AnimationFrameActor3DProps {
 ```
 
 **Refs (for direct THREE.js manipulation)**:
+
 ```typescript
 const groupRef = useRef<THREE.Group>(null);
 const puckMaterialRef = useRef<THREE.MeshBasicMaterial>(null);
@@ -576,24 +596,21 @@ const isVisibleRef = useRef(false);
 ```
 
 **Core Update Loop**:
+
 ```typescript
 useFrame(() => {
   const currentTime = timeRef.current;
-  
+
   // O(1) or O(log n) position lookup
-  const actorData = getActorPositionAtClosestTimestamp(
-    lookup,
-    actorId,
-    currentTime
-  );
-  
+  const actorData = getActorPositionAtClosestTimestamp(lookup, actorId, currentTime);
+
   if (!actorData) {
     // Actor doesn't exist at this time
     isVisibleRef.current = false;
     if (groupRef.current) groupRef.current.visible = false;
     return;
   }
-  
+
   // Update position (direct THREE.js, NO React re-render)
   const [x, y, z] = actorData.position;
   if (groupRef.current) {
@@ -601,31 +618,31 @@ useFrame(() => {
     groupRef.current.rotation.y = actorData.rotation;
     groupRef.current.visible = true;
   }
-  
+
   // Update colors based on state
   const color = getActorColor(actorData);
   if (puckMaterialRef.current) {
     puckMaterialRef.current.color.set(color);
   }
-  
+
   // Show/hide taunt ring
   if (tauntRingMaterialRef.current) {
     tauntRingMaterialRef.current.visible = actorData.isTaunted;
   }
-  
+
   // Update selection ring
   const isSelected = selectedActorRef.current === actorId;
   if (selectedRingMaterialRef.current) {
     selectedRingMaterialRef.current.visible = isSelected;
   }
-  
+
   currentActorDataRef.current = actorData;
   isVisibleRef.current = true;
-  
-}, RenderPriority.ACTORS);  // Priority 2
+}, RenderPriority.ACTORS); // Priority 2
 ```
 
 **Visual Components**:
+
 ```typescript
 return (
   <group ref={groupRef} onClick={() => onActorClick(actorId)}>
@@ -633,22 +650,22 @@ return (
     <mesh geometry={sharedGeometries.puckGeometry}>
       <meshBasicMaterial ref={puckMaterialRef} />
     </mesh>
-    
+
     {/* Directional indicator (cone) */}
     <mesh geometry={sharedGeometries.visionConeGeometry}>
       <meshBasicMaterial ref={visionConeMaterialRef} />
     </mesh>
-    
+
     {/* Taunt ring (torus) */}
     <mesh geometry={sharedGeometries.tauntRingGeometry}>
       <meshBasicMaterial ref={tauntRingMaterialRef} visible={false} />
     </mesh>
-    
+
     {/* Selection ring */}
     <mesh geometry={sharedGeometries.selectedRingGeometry}>
       <meshBasicMaterial ref={selectedRingMaterialRef} visible={false} />
     </mesh>
-    
+
     {/* Actor name billboard */}
     {showName && (
       <ActorNameBillboard
@@ -669,6 +686,7 @@ return (
 **Purpose**: Create geometries once, share across all actors (95% memory reduction)
 
 **Geometries Created**:
+
 - `puckGeometry` - CylinderGeometry for actor body
 - `visionConeGeometry` - ConeGeometry for direction indicator
 - `tauntRingGeometry` - TorusGeometry for taunt visualization
@@ -679,26 +697,19 @@ export function useSharedActor3DGeometries(scale: number) {
   return useMemo(() => {
     const puckRadius = 1 * scale;
     const puckHeight = 2 * scale;
-    
+
     return {
-      puckGeometry: new THREE.CylinderGeometry(
-        puckRadius, puckRadius, puckHeight, 32
-      ),
-      visionConeGeometry: new THREE.ConeGeometry(
-        puckRadius * 0.8, puckHeight * 0.6, 16
-      ),
-      tauntRingGeometry: new THREE.TorusGeometry(
-        puckRadius * 1.5, puckRadius * 0.2, 16, 32
-      ),
-      selectedRingGeometry: new THREE.TorusGeometry(
-        puckRadius * 1.8, puckRadius * 0.15, 16, 32
-      )
+      puckGeometry: new THREE.CylinderGeometry(puckRadius, puckRadius, puckHeight, 32),
+      visionConeGeometry: new THREE.ConeGeometry(puckRadius * 0.8, puckHeight * 0.6, 16),
+      tauntRingGeometry: new THREE.TorusGeometry(puckRadius * 1.5, puckRadius * 0.2, 16, 32),
+      selectedRingGeometry: new THREE.TorusGeometry(puckRadius * 1.8, puckRadius * 0.15, 16, 32),
     };
   }, [scale]);
 }
 ```
 
 **Memory Impact**:
+
 - **Without sharing**: 50 actors × 4 geometries = 200 geometry instances
 - **With sharing**: 1 cache × 4 geometries = 4 geometry instances
 - **Savings**: ~95% reduction!
@@ -714,6 +725,7 @@ export function useSharedActor3DGeometries(scale: number) {
 **Priority**: 3 (HUD)
 
 **Responsibilities**:
+
 - Find all bosses at current time
 - Render health bars using canvas texture
 - Position in screen space (top-right)
@@ -723,38 +735,38 @@ export function useSharedActor3DGeometries(scale: number) {
 export const BossHealthHUD = ({ lookup, timeRef, fight }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const textureRef = useRef<THREE.CanvasTexture | null>(null);
-  
+
   useFrame(({ camera, size }) => {
     const currentTime = timeRef.current;
     const timestamp = fightTimeToTimestamp(fight, currentTime);
-    
+
     // Get all actors at this time
     const allActors = getAllActorPositionsAtTimestamp(lookup, timestamp);
-    
+
     // Filter to bosses that are alive
     const bosses = allActors.filter(
       actor => actor.type === 'boss' && !actor.isDead
     );
-    
+
     if (bosses.length > 0 && canvasRef.current) {
       const ctx = canvasRef.current.getContext('2d')!;
-      
+
       // Clear canvas
       ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
-      
+
       // Draw each boss health bar
       bosses.forEach((boss, index) => {
         const y = 50 + index * 80;
         drawHealthBar(ctx, boss, y);
       });
-      
+
       // Update texture
       if (textureRef.current) {
         textureRef.current.needsUpdate = true;
       }
     }
   }, RenderPriority.HUD);  // Priority 3
-  
+
   return (
     <sprite position={[screenRight, screenTop, 0]}>
       <spriteMaterial map={textureRef.current} transparent />
@@ -774,6 +786,7 @@ export const BossHealthHUD = ({ lookup, timeRef, fight }) => {
 **Priority**: None (static, no useFrame)
 
 **Responsibilities**:
+
 - Decode M0R Markers string
 - Transform coordinates based on zone
 - Render marker icons/shapes
@@ -784,11 +797,11 @@ export const MorMarkers = ({
   fight,
   scale
 }) => {
-  const markers = useMemo(() => 
+  const markers = useMemo(() =>
     decodeMorMarkersString(encodedString),
     [encodedString]
   );
-  
+
   return (
     <>
       {markers.map(marker => (
@@ -814,16 +827,17 @@ export const MorMarkers = ({
 // src/features/fight_replay/constants/renderPriorities.ts
 
 export enum RenderPriority {
-  FOLLOWER_CAMERA = 0,  // Camera updates FIRST
-  CAMERA = 1,           // OrbitControls
-  ACTORS = 2,           // Actor positions
-  HUD = 3,              // Boss health, overlays
-  EFFECTS = 4,          // Map textures, particles
-  RENDER = 999          // Manual render call LAST
+  FOLLOWER_CAMERA = 0, // Camera updates FIRST
+  CAMERA = 1, // OrbitControls
+  ACTORS = 2, // Actor positions
+  HUD = 3, // Boss health, overlays
+  EFFECTS = 4, // Map textures, particles
+  RENDER = 999, // Manual render call LAST
 }
 ```
 
 **Execution Order**:
+
 ```
 Frame Start
   ↓
@@ -843,6 +857,7 @@ Frame End
 ```
 
 **Why Priority Matters**:
+
 - Camera must update before rendering actors (correct viewpoint)
 - Actors must update before HUD (HUD uses actor data)
 - Manual render ensures everything is ready before display
@@ -852,12 +867,14 @@ Frame End
 ## Custom Hooks Used
 
 ### Animation & Time Management
+
 - `useAnimationTimeRef` - Dual time system (ref + state)
 - `usePlaybackAnimation` - requestAnimationFrame playback loop
 - `useScrubbingMode` - Optimize rendering during scrubbing
 - `useOptimizedTimelineScrubbing` - Debounced timeline updates
 
 ### Data Fetching
+
 - `useFight` - GraphQL fight query
 - `useCastEvents` - GraphQL cast events query
 - `useDamageEvents` - GraphQL damage events query
@@ -867,14 +884,17 @@ Frame End
 - `useBuffEvents` - GraphQL buff events query
 
 ### Worker Tasks
+
 - `useActorPositionsTask` - Calculate position interpolation
 - `useBuffLookupTask` - Build buff lookup table
 - `useDebuffLookupTask` - Build debuff lookup table
 
 ### Phase & Map
+
 - `usePhaseBasedMap` - Create map timeline from phases
 
 ### Shared Resources
+
 - `useSharedActor3DGeometries` - Create shared 3D geometries
 
 ---
@@ -884,7 +904,7 @@ Frame End
 ```mermaid
 graph TD
     A[reportId, fightId] --> B[FightReplay3D]
-    
+
     B --> C1[fight: FightFragment]
     B --> C2[events: CastEvent, DamageEvent, ...]
     B --> C3[lookup: TimestampPositionLookup]
@@ -892,23 +912,23 @@ graph TD
     B --> C5[currentTime: number]
     B --> C6[timeRef: MutableRefObject]
     B --> C7[isPlaying: boolean]
-    
+
     C1 --> D[Arena3D]
     C3 --> D
     C4 --> D
     C5 --> D
     C6 --> D
-    
+
     C5 --> E[PlaybackControls]
     C6 --> E
     C7 --> E
-    
+
     D --> F[AnimationFrameSceneActors]
     C3 --> F
     C6 --> F
-    
+
     F --> G[AnimationFrameActor3D × N]
-    
+
     style A fill:#ffebee
     style B fill:#e3f2fd
     style D fill:#e1f5ff
@@ -920,16 +940,16 @@ graph TD
 
 ## Component Complexity Analysis
 
-| Component | Lines of Code | Complexity | Refactoring Priority |
-|-----------|---------------|------------|---------------------|
-| FightReplay.tsx | ~50 | Low | None |
-| FightReplay3D.tsx | ~400 | High | Medium (extract hooks) |
-| Arena3D.tsx | ~633 | Very High | **High** (extract Scene) |
-| PlaybackControls.tsx | ~300 | Medium | Low (already well-structured) |
-| AnimationFrameActor3D.tsx | ~200 | Medium | Low |
-| CameraFollower.tsx | ~150 | Medium | None |
-| DynamicMapTexture.tsx | ~100 | Low | None |
-| BossHealthHUD.tsx | ~250 | Medium | Low |
+| Component                 | Lines of Code | Complexity | Refactoring Priority          |
+| ------------------------- | ------------- | ---------- | ----------------------------- |
+| FightReplay.tsx           | ~50           | Low        | None                          |
+| FightReplay3D.tsx         | ~400          | High       | Medium (extract hooks)        |
+| Arena3D.tsx               | ~633          | Very High  | **High** (extract Scene)      |
+| PlaybackControls.tsx      | ~300          | Medium     | Low (already well-structured) |
+| AnimationFrameActor3D.tsx | ~200          | Medium     | Low                           |
+| CameraFollower.tsx        | ~150          | Medium     | None                          |
+| DynamicMapTexture.tsx     | ~100          | Low        | None                          |
+| BossHealthHUD.tsx         | ~250          | Medium     | Low                           |
 
 **Recommendation**: Extract Scene component from Arena3D.tsx to reduce complexity (Story ESO-370)
 
@@ -938,16 +958,19 @@ graph TD
 ## Testing Strategy
 
 ### Unit Tests
+
 - ✅ Custom hooks (useAnimationTimeRef, etc.)
 - ✅ Utility functions (getActorPositionAtClosestTimestamp)
 - ⚠️ Component rendering (limited)
 
 ### Integration Tests (Recommended)
+
 - ❌ FightReplay3D data flow
 - ❌ Arena3D → AnimationFrameActor3D props
 - ❌ Timeline scrubbing end-to-end
 
 ### E2E Tests
+
 - ✅ Fight replay page loads
 - ✅ Playback controls work
 - ⚠️ 3D rendering validation

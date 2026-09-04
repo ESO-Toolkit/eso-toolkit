@@ -22,7 +22,9 @@ export interface LongPressOptions {
 }
 
 const DEFAULT_DELAY_MS = 500;
-const DEFAULT_SLOP_PX = 10;
+// 14px default slop: 10px proved tight for hand tremor on phones (the hold cancelled into a
+// drag mid-press). Callers with tighter needs (ground plane) pass slopPx explicitly.
+const DEFAULT_SLOP_PX = 14;
 
 export class LongPressTracker {
   private readonly onLongPress: (start: PointerSample) => void;

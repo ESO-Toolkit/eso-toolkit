@@ -152,10 +152,16 @@ export const CanvasWheelZoom: React.FC<CanvasWheelZoomProps> = ({ followingActor
       const { zoomRatio, panDelta } = decomposeTwoFinger(lastSample, sample);
       lastSample = sample;
 
+      // Deadband against sampling jitter: a slow two-finger pan flickers the finger distance by
+      // sub-px amounts, which without a gate dollies the camera ~2%/step (breathing zoom). Skip
+      // sub-1% zooms and sub-2px pans so a pure pan never zooms and vice versa.
+      const zoomActive = Math.abs(zoomRatio - 1) >= 0.01;
+      const panActive = Math.hypot(panDelta.x, panDelta.y) >= 2;
+
       // Zoom: scale the camera→target distance by the pinch ratio, clamped to the orbit bounds.
       dir.copy(camera.position).sub(orbit.target);
       const len = dir.length();
-      if (len > 0 && zoomRatio !== 1) {
+      if (len > 0 && zoomActive) {
         const next = Math.min(orbit.maxDistance, Math.max(orbit.minDistance, len * zoomRatio));
         dir.setLength(next);
         camera.position.copy(orbit.target).add(dir);
@@ -165,7 +171,7 @@ export const CanvasWheelZoom: React.FC<CanvasWheelZoomProps> = ({ followingActor
       // (the follow camera owns the target). This frees two fingers for the combined gesture without
       // colliding with OrbitControls' own pan on desktop.
       const following = followingActorIdRef?.current != null;
-      if (orbit.enablePan === false && !following) {
+      if (panActive && orbit.enablePan === false && !following) {
         panScreen(panDelta.x, panDelta.y);
       }
 

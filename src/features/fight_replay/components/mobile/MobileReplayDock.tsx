@@ -36,6 +36,7 @@ import { useTimelineMarkers } from '../../../../hooks/useTimelineMarkers';
 import { QUALITY_PRESET_OPTIONS } from '../../constants/qualityPresets';
 import type { TrialChapter } from '../../trial_chapters/types';
 import type { ShapeKind, ShapeStyle } from '../../types/mapMarkers';
+import { formatDurationMs as formatTime } from '../../utils/replayTime';
 import { ChapterList } from '../ChapterList';
 import type { TrialReplayNav } from '../FightReplay3D';
 import { LiveScrubRail } from '../LiveScrubRail';
@@ -50,12 +51,7 @@ import { MobileSheet } from './MobileSheet';
 
 const PLAYBACK_SPEEDS = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 2, 3, 4, 5];
 
-const formatTime = (ms: number): string => {
-  const total = Math.max(0, Math.floor(ms / 1000));
-  const m = Math.floor(total / 60);
-  const s = total % 60;
-  return `${m}:${s.toString().padStart(2, '0')}`;
-};
+// (Clock formatting is the shared utils/replayTime clock — no local duplicate.)
 
 interface MobileReplayDockProps {
   // Transport
@@ -91,6 +87,12 @@ interface MobileReplayDockProps {
   // Display settings (mirrors the desktop toggles)
   showTrails: boolean;
   onToggleTrails: () => void;
+  /** A–B loop bounds + setters — the touch equivalent of the I/O/U keys, in the settings sheet. */
+  loopStart?: number | null;
+  loopEnd?: number | null;
+  onSetLoopIn?: () => void;
+  onSetLoopOut?: () => void;
+  onClearLoop?: () => void;
   namesEnabled: boolean;
   onToggleNames: () => void;
   qualityPreset: ReplayQualityPreset;
@@ -168,6 +170,7 @@ const SettingRow: React.FC<{
           ? 'rgba(255,255,255,0.04)'
           : 'rgba(0,0,0,0.03)',
       transition: 'background-color 120ms ease, border-color 120ms ease',
+      '@media (prefers-reduced-motion: reduce)': { transition: 'none' },
       '&:focus-visible': { outline: '2px solid', outlineColor: 'primary.main', outlineOffset: 2 },
     })}
   >
@@ -240,6 +243,7 @@ const DockButton: React.FC<{
       borderRadius: 2,
       color: active ? 'primary.main' : 'text.secondary',
       transition: 'background-color 120ms ease, color 120ms ease',
+      '@media (prefers-reduced-motion: reduce)': { transition: 'none' },
       '&:focus-visible': { outline: '2px solid', outlineColor: 'primary.main' },
     })}
   >
@@ -281,6 +285,7 @@ const MarkerActionButton: React.FC<{
       color: disabled ? 'text.disabled' : 'text.primary',
       opacity: disabled ? 0.5 : 1,
       transition: 'background-color 120ms ease',
+      '@media (prefers-reduced-motion: reduce)': { transition: 'none' },
       '&:focus-visible': { outline: '2px solid', outlineColor: 'primary.main' },
     })}
   >
@@ -316,6 +321,11 @@ const MobileReplayDockComponent: React.FC<MobileReplayDockProps> = ({
   onTogglePlayers,
   showTrails,
   onToggleTrails,
+  loopStart = null,
+  loopEnd = null,
+  onSetLoopIn,
+  onSetLoopOut,
+  onClearLoop,
   namesEnabled,
   onToggleNames,
   qualityPreset,
@@ -409,7 +419,6 @@ const MobileReplayDockComponent: React.FC<MobileReplayDockProps> = ({
   }, [onOpenMarkersManager]);
 
   const noopStyleChange = useCallback(() => {}, []);
-  const noopClearShapes = useCallback(() => {}, []);
 
   const { markers } = useTimelineMarkers();
   // Keep only the structural beats on the thin mobile rail (deaths reachable via clusters/chapters).
@@ -745,7 +754,7 @@ const MobileReplayDockComponent: React.FC<MobileReplayDockProps> = ({
                     style={drawStyle}
                     onStyleChange={onDrawStyleChange ?? noopStyleChange}
                     shapeCount={shapeCount}
-                    onClearShapes={onClearShapes ?? noopClearShapes}
+                    onClearShapes={onClearShapes}
                   />
                 </Box>
               </>
@@ -807,6 +816,11 @@ const MobileReplayDockComponent: React.FC<MobileReplayDockProps> = ({
                       fontSize: '0.82rem',
                       fontVariantNumeric: 'tabular-nums',
                       transition: 'background-color 120ms ease, border-color 120ms ease',
+                      '&:focus-visible': {
+                        outline: '2px solid',
+                        outlineColor: 'primary.main',
+                        outlineOffset: 2,
+                      },
                     })}
                   >
                     {sp}×
@@ -814,6 +828,52 @@ const MobileReplayDockComponent: React.FC<MobileReplayDockProps> = ({
                 );
               })}
             </Box>
+
+            {(onSetLoopIn || onSetLoopOut) && (
+              <>
+                <Typography
+                  variant="overline"
+                  sx={{ color: 'text.secondary', fontWeight: 700, letterSpacing: '0.08em' }}
+                >
+                  Loop
+                </Typography>
+                <Box
+                  sx={{
+                    display: 'grid',
+                    gridTemplateColumns: '1fr 1fr',
+                    gap: 0.75,
+                    mt: 1,
+                    mb: 2.5,
+                  }}
+                  role="group"
+                  aria-label="Set loop points"
+                >
+                  {onSetLoopIn && (
+                    <MarkerActionButton
+                      icon={<span aria-hidden>A</span>}
+                      label={loopStart != null ? `Set A (${formatTime(loopStart)})` : 'Set A'}
+                      onClick={onSetLoopIn}
+                    />
+                  )}
+                  {onSetLoopOut && (
+                    <MarkerActionButton
+                      icon={<span aria-hidden>B</span>}
+                      label={loopEnd != null ? `Set B (${formatTime(loopEnd)})` : 'Set B'}
+                      onClick={onSetLoopOut}
+                    />
+                  )}
+                </Box>
+                {(loopStart != null || loopEnd != null) && onClearLoop && (
+                  <Box sx={{ mt: -1.5, mb: 2.5 }}>
+                    <MarkerActionButton
+                      icon={<span aria-hidden>×</span>}
+                      label="Clear loop"
+                      onClick={onClearLoop}
+                    />
+                  </Box>
+                )}
+              </>
+            )}
 
             <Typography
               variant="overline"
@@ -905,6 +965,11 @@ const MobileReplayDockComponent: React.FC<MobileReplayDockProps> = ({
                         fontWeight: active ? 700 : 600,
                         fontSize: '0.75rem',
                         transition: 'background-color 120ms ease, border-color 120ms ease',
+                        '&:focus-visible': {
+                          outline: '2px solid',
+                          outlineColor: 'primary.main',
+                          outlineOffset: 2,
+                        },
                       })}
                     >
                       {value === 'barebones' ? 'Bare' : value === 'performance' ? 'Perf' : label}
@@ -949,6 +1014,32 @@ const MobileReplayDockComponent: React.FC<MobileReplayDockProps> = ({
                 selectedActorIdRef={selectedActorIdRef}
                 timeRef={timeRef}
               />
+            </Box>
+
+            <Typography
+              variant="overline"
+              sx={{ color: 'text.secondary', fontWeight: 700, letterSpacing: '0.08em', mt: 2.5 }}
+            >
+              Gestures
+            </Typography>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75, mt: 1 }}>
+              {[
+                ['Drag', 'orbit the camera'],
+                ['Pinch', 'zoom in and out'],
+                ['Two-finger drag', 'pan across the map'],
+                ['Tap a figure', 'follow that actor'],
+                ['Long-press map', 'place a marker (edit mode)'],
+              ].map(([gesture, action]) => (
+                <Typography key={gesture} sx={{ fontSize: '0.82rem', lineHeight: 1.4 }}>
+                  <Box component="span" sx={{ fontWeight: 700 }}>
+                    {gesture}
+                  </Box>
+                  <Box component="span" sx={{ color: 'text.secondary' }}>
+                    {' — '}
+                    {action}
+                  </Box>
+                </Typography>
+              ))}
             </Box>
           </>
         )}

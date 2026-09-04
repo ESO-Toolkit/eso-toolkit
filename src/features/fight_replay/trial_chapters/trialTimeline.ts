@@ -53,12 +53,16 @@ export function buildTrialTimeline(segments: TrialChapter[], includeTrash: boole
   const filtered = includeTrash ? segments : segments.filter((s) => s.kind === 'boss');
 
   let acc = 0;
-  const entries: TrialTimelineEntry[] = filtered.map((chapter) => {
+  const entries: TrialTimelineEntry[] = [];
+  for (const chapter of filtered) {
+    // Zero-duration chapters can never be landed in (half-open [start, end) match) and would
+    // only distort seeking — drop them instead of mapping the run end onto them.
+    if (!(chapter.durationMs > 0)) continue;
     const globalStart = acc;
-    const globalEnd = acc + Math.max(0, chapter.durationMs);
+    const globalEnd = acc + chapter.durationMs;
     acc = globalEnd;
-    return { chapter, globalStart, globalEnd, startFraction: 0, endFraction: 0 };
-  });
+    entries.push({ chapter, globalStart, globalEnd, startFraction: 0, endFraction: 0 });
+  }
 
   const totalDurationMs = acc;
   for (const entry of entries) {
@@ -83,6 +87,9 @@ export function entryForFight(
 export function globalToLocal(timeline: TrialTimeline, globalMs: number): GlobalPosition | null {
   const { entries, totalDurationMs } = timeline;
   if (entries.length === 0) return null;
+  // Non-finite seeks (NaN from a broken scrub fraction) previously fell through to the last
+  // frame — a confusing teleport. Reject explicitly; callers treat null as "no-op".
+  if (!Number.isFinite(globalMs)) return null;
 
   const clamped = Math.max(0, Math.min(globalMs, totalDurationMs));
   for (let i = 0; i < entries.length; i++) {
@@ -112,7 +119,9 @@ export function nextEntryAfter(
 ): TrialTimelineEntry | null {
   const match = entryForFight(timeline, fightId);
   if (match) return timeline.entries[match.index + 1] ?? null;
-  return timeline.entries.find((e) => e.chapter.startTime > fightStartTime) ?? null;
+  // Inclusive (>=): an off-timeline fight co-timed with a segment (same start tick) must flow
+  // into it — strict > dead-stopped continuous play at trash boundaries.
+  return timeline.entries.find((e) => e.chapter.startTime >= fightStartTime) ?? null;
 }
 
 /**

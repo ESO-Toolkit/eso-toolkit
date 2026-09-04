@@ -50,6 +50,7 @@ interface BossSlot {
 interface BarRefs {
   fill: HTMLDivElement | null;
   readout: HTMLSpanElement | null;
+  track: HTMLDivElement | null;
 }
 
 function healthColor(theme: Theme, pct: number): string {
@@ -111,6 +112,8 @@ export const BossHealthPanel: React.FC<BossHealthPanelProps> = ({
     // Per-bar last-written values, so a moving playhead still only touches the DOM for bars whose
     // displayed value actually changed (e.g. a boss already at a steady % between samples).
     const lastWritten = new Map<number, { width: string; color: string; text: string }>();
+    // Last aria-valuenow write per boss (1Hz throttle — see the write path below).
+    const lastAriaWrite = new Map<number, number>();
     // Reused across ticks (length-reset per tick) so the boss scan allocates nothing per frame.
     const bossScratch: ActorPosition[] = [];
 
@@ -131,7 +134,8 @@ export const BossHealthPanel: React.FC<BossHealthPanelProps> = ({
       bossScratch.length = 0;
       const bossActors = bossScratch;
       for (const key in positionsById) {
-        const actor = positionsById[key as unknown as number];
+        const actor = positionsById[Number(key)];
+        if (!actor) continue;
         if (actor.type === 'boss' && actor.health) {
           bossActors.push(actor);
           if (bossActors.length >= MAX_BOSSES) break;
@@ -186,6 +190,18 @@ export const BossHealthPanel: React.FC<BossHealthPanelProps> = ({
             refs.fill.style.backgroundColor = color;
           }
           if (refs.readout) refs.readout.textContent = text;
+          // Screen-reader value: written on first sight, then throttled to 1Hz (the visual
+          // bar moves continuously, but an aria-valuenow write on every change would spam AT
+          // buffers on fast burns). Death always writes through immediately.
+          const nowMs = performance.now();
+          const lastAriaAt = lastAriaWrite.get(boss.id);
+          if (
+            refs.track &&
+            (lastAriaAt === undefined || nowMs - lastAriaAt >= 1000 || boss.isDead)
+          ) {
+            refs.track.setAttribute('aria-valuenow', String(Math.round(pct)));
+            lastAriaWrite.set(boss.id, nowMs);
+          }
           lastWritten.set(boss.id, { width, color, text });
         }
       }
@@ -204,16 +220,17 @@ export const BossHealthPanel: React.FC<BossHealthPanelProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lookup, timeRef, theme, isMobile]);
 
-  // Stable callback-ref factory per boss id.
+  // Stable callback-ref factory per boss id + slot kind.
   const setBarRef = useMemo(() => {
     const cache = new Map<number, (el: HTMLDivElement | null) => void>();
-    return (id: number, kind: 'fill' | 'readout') => {
-      const key = id * 2 + (kind === 'fill' ? 0 : 1);
+    return (id: number, kind: 'fill' | 'readout' | 'track') => {
+      const key = id * 3 + (kind === 'fill' ? 0 : kind === 'readout' ? 1 : 2);
       let cb = cache.get(key);
       if (!cb) {
         cb = (el: HTMLDivElement | null): void => {
-          const existing = barRefs.current.get(id) ?? { fill: null, readout: null };
+          const existing = barRefs.current.get(id) ?? { fill: null, readout: null, track: null };
           if (kind === 'fill') existing.fill = el;
+          else if (kind === 'track') existing.track = el;
           else existing.readout = el as unknown as HTMLSpanElement;
           barRefs.current.set(id, existing);
         };
@@ -242,10 +259,15 @@ export const BossHealthPanel: React.FC<BossHealthPanelProps> = ({
         // cap is tighter at a given width instead of only ever applying the wider one.
         maxWidth: isMobile ? 'calc(100% - 16px)' : 'min(calc(100% - 32px), calc(50% - 24px))',
         // Mobile: a defensive height cap so a multi-boss stack (up to MAX_BOSSES=4) can't run down
-        // into the control cluster / transport in the short landscape viewport. The per-pill
+        // into the control cluster / transport in the short landscape viewport. Scrollable (not
+        // hidden) so the 3rd/4th pills are reachable instead of silently clipped. The per-pill
         // footprint reduction below is the primary fix; this is the hard safety bound.
         ...(isMobile
-          ? { maxHeight: 'calc(100vh - 64px - 96px - 44px)', overflow: 'hidden' }
+          ? {
+              maxHeight: 'calc(100vh - 64px - 96px - 44px)',
+              overflowY: 'auto',
+              overscrollBehavior: 'contain',
+            }
           : null),
         pointerEvents: 'none',
         // Persistent corner HUD — see REPLAY_Z's module doc for the full rung ordering.
@@ -294,6 +316,12 @@ export const BossHealthPanel: React.FC<BossHealthPanelProps> = ({
 
             {/* Track — keep 16px on mobile (not 14) so the nowrap compact readout never vertically clips. */}
             <Box
+              ref={setBarRef(boss.id, 'track')}
+              role="progressbar"
+              aria-label={`${boss.name} health`}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuenow={100}
               sx={{
                 position: 'relative',
                 height: isMobile ? 16 : 18,
@@ -332,11 +360,10 @@ export const BossHealthPanel: React.FC<BossHealthPanelProps> = ({
                   fontSize: '0.7rem',
                   fontWeight: 700,
                   color: theme.palette.text.primary,
-                  // Mobile: a symmetric 0-blur halo (surrounds each glyph) so light text stays legible
-                  // over the bright green/orange fill, not just a bottom-only drop shadow.
-                  textShadow: isMobile
-                    ? '0 0 3px rgba(2,6,23,0.95), 0 1px 2px rgba(2,6,23,0.95)'
-                    : '0 1px 2px rgba(2,6,23,0.9)',
+                  // Symmetric halo on ALL viewports (not just mobile): white 0.7rem over bright
+                  // green/orange fills fails contrast without it. A 0-blur surround on every glyph
+                  // keeps the readout legible regardless of fill — cheap (one text-shadow).
+                  textShadow: '0 0 3px rgba(2,6,23,0.95), 0 1px 2px rgba(2,6,23,0.95)',
                 }}
               />
             </Box>

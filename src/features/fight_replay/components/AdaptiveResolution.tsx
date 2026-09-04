@@ -7,6 +7,7 @@ import {
   computeTargetMs,
   decideNextDpr,
   estimateDisplayIntervalMs,
+  isFastDecline,
 } from '../utils/adaptiveResolution';
 
 interface AdaptiveResolutionProps {
@@ -303,12 +304,21 @@ export const AdaptiveResolution: React.FC<AdaptiveResolutionProps> = ({
     // Target 120fps, floored at the display's own refresh interval (a 60Hz panel is vsync-capped at
     // ~16.7ms — chasing 120 there would downscale for nothing).
     const targetMs = computeTargetMs(displayInterval);
-    const next = decideNextDpr(avg, dprRef.current, {
+    const cfg = {
       minDpr,
       maxDpr,
       targetMs,
       displayIntervalMs: displayInterval,
-    });
+    };
+    let next = decideNextDpr(avg, dprRef.current, cfg);
+    // Fast lane: a severe shortfall (>2× the decline bar) takes a second step now instead of
+    // waiting out another ~90+120 frames. Same decision function, same floor clamp.
+    if (next != null && next < dprRef.current && isFastDecline(avg, targetMs, displayInterval)) {
+      const again = decideNextDpr(avg, next, cfg);
+      if (again != null && again < next) {
+        next = again;
+      }
+    }
     if (next == null || Math.abs(next - dprRef.current) <= DPR_EPSILON) return;
 
     const isDecline = next < dprRef.current;
