@@ -1516,6 +1516,13 @@ after NR:   feed CPU 11.82 ms/frame |  63.9 fps | feed is 75% of the frame`}
       {/* ── Overlay walkthrough ──────────────────────────────────────── */}
       <Section id="overlay" index={10} title="Using the ReShade overlay">
         <Stack spacing={2}>
+          <Callout tone="caution" label="This is the fallback path" sx={{ mb: 2 }}>
+            <Typography variant="body2">
+              Enabling effects and getting their order right only matters on the fallback path. The
+              direct path uses no ReShade effects at all, so an empty technique list is correct
+              there.
+            </Typography>
+          </Callout>
           <Box sx={cardSx}>
             <Typography variant="body2" sx={{ ...proseSx, mb: 2 }}>
               Press <strong>Home</strong> in-game to open ReShade. (First launch shows a tutorial;
@@ -1648,6 +1655,13 @@ after NR:   feed CPU 11.82 ms/frame |  63.9 fps | feed is 75% of the frame`}
       {/* ── NR add-on panel ──────────────────────────────────────────── */}
       <Section id="nr-panel" index={11} title="The Neural Rendering add-on panel">
         <Stack spacing={2}>
+          <Callout tone="caution" label="This is the fallback path" sx={{ mb: 2 }}>
+            <Typography variant="body2">
+              These controls belong to <code>renodx-dlss5.addon64</code>, the fallback path&apos;s
+              add-on. If you followed Setup you are running <code>renodx-dlss.addon64</code>, whose
+              panel is named <strong>RenoDX DLSS</strong> and is not documented here.
+            </Typography>
+          </Callout>
           <Typography variant="body2" sx={proseSx}>
             Overlay → <strong>Add-ons</strong> → <strong>DLSS 5 Neural Rendering</strong>. Read the
             status line at the top before touching any slider. It is the most useful diagnostic in
@@ -1795,6 +1809,12 @@ after NR:   feed CPU 11.82 ms/frame |  63.9 fps | feed is 75% of the frame`}
       {/* ── Config reference ─────────────────────────────────────────── */}
       <Section id="config" index={13} title="Config file reference">
         <Box sx={cardSx}>
+          <Callout tone="caution" label="This is the fallback path" sx={{ mb: 2 }}>
+            <Typography variant="body2">
+              These keys belong to the fallback path. The direct path needs only the single
+              <code>LoadFromDllMain</code> line covered in Setup.
+            </Typography>
+          </Callout>
           <Typography variant="body2" sx={{ ...proseSx, mb: 2 }}>
             The overlay writes these for you. They are here so you can diff a working setup against
             a broken one.
