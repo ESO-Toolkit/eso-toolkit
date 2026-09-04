@@ -37,6 +37,8 @@ export const selectChartIntensity = (state: RootState): RootState['ui']['chartIn
   state.ui.chartIntensity ?? 'subtle';
 export const selectPerfTierOverride = (state: RootState): RootState['ui']['perfTierOverride'] =>
   state.ui.perfTierOverride;
+export const selectPerfTierResolved = (state: RootState): boolean =>
+  state.ui.perfTierResolved ?? false;
 export const selectPerfLowNoticeSeen = (state: RootState): boolean =>
   state.ui.perfLowNoticeSeen ?? false;
 // Tier the app should actually apply — override wins when set to anything

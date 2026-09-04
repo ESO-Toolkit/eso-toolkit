@@ -89,17 +89,20 @@ class WorkerManager {
   }
 
   /**
-   * Execute a task with automatic pool creation and management
+   * Execute a task with automatic pool creation and management.
+   * `opts.signal` aborts a queued task immediately and tears down a running worker so a
+   * superseded compute (e.g. rapid fight switches) stops burning a pool slot.
    */
   async executeTask<T extends SharedComputationWorkerTaskType>(
     taskType: T,
     data: SharedWorkerInputType<T>,
     onProgress?: OnProgressCallback,
     poolName = 'default',
+    opts?: { poolConfig?: WorkerPoolConfig; priority?: number; signal?: AbortSignal },
   ): Promise<SharedWorkerResultType<T>> {
     // Create pool if it doesn't exist
     if (!this.pools.has(poolName)) {
-      this.createPool(poolName);
+      this.createPool(poolName, opts?.poolConfig);
     }
 
     const pool = this.pools.get(poolName);
@@ -107,7 +110,7 @@ class WorkerManager {
       throw new Error(`Worker pool '${poolName}' not found and no workerFactory provided`);
     }
 
-    return pool.execute(taskType, data, 0, onProgress);
+    return pool.execute(taskType, data, opts?.priority ?? 0, onProgress, opts?.signal);
   }
 
   /**

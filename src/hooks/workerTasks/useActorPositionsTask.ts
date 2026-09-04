@@ -17,6 +17,7 @@ import { useHealingEvents } from '../events/useHealingEvents';
 import { useResourceEvents } from '../events/useResourceEvents';
 import { useCurrentFight } from '../useCurrentFight';
 import { usePlayerData } from '../usePlayerData';
+import { useReportFightParams } from '../useReportFightParams';
 import { useReportMasterData } from '../useReportMasterData';
 
 import { useDebuffLookupTask } from './useDebuffLookupTask';
@@ -44,6 +45,9 @@ export function useActorPositionsTask(): UseActorPositionsTaskResult {
   const { deathEvents, isDeathEventsLoading } = useDeathEvents();
   const { resourceEvents, isResourceEventsLoading } = useResourceEvents();
   const { castEvents, isCastEventsLoading } = useCastEvents();
+  // Report code disambiguates cache identity: fight ids are report-local, so two reports with
+  // the same fight id must never share a result-cache key (see actorPositionsSlice).
+  const { reportId } = useReportFightParams();
 
   // Create events object
   const events = React.useMemo(() => {
@@ -87,13 +91,23 @@ export function useActorPositionsTask(): UseActorPositionsTaskResult {
           playersById,
           actorsById,
           debuffLookupData,
+          reportCode: reportId ?? undefined,
         }),
       );
       return () => {
         promise.abort();
       };
     }
-  }, [dispatch, fight, events, playersById, actorsById, debuffLookupData, isAnyDataLoading]);
+  }, [
+    dispatch,
+    fight,
+    events,
+    playersById,
+    actorsById,
+    debuffLookupData,
+    isAnyDataLoading,
+    reportId,
+  ]);
 
   const actorPositionsResult = useSelector(selectActorPositionsResult);
   const isActorPositionsTaskLoading = useSelector(

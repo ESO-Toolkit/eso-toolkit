@@ -134,4 +134,22 @@ describe('useTrialChapters', () => {
     const { result } = renderHook(() => useTrialChapters());
     expect(result.current.isLoading).toBe(true);
   });
+
+  it('resolves skips for trash co-timed with a boss (same start tick)', () => {
+    const fights = [
+      makeFight({ id: 1, name: 'Oaxiltso', startTime: 0, endTime: 60000 }),
+      trash({ id: 9, startTime: 100000, endTime: 120000 }),
+      makeFight({ id: 2, name: 'Xalvakka', startTime: 100000, endTime: 200000 }),
+    ];
+    mockReportData = reportWith(fights);
+    mockFightId = '9';
+    mockFight = fights[1];
+
+    const { result } = renderHook(() => useTrialChapters());
+
+    expect(result.current.isOnTrash).toBe(true);
+    // Next must include the co-timed boss; prev must be the boss before it.
+    expect(result.current.nextBoss?.name).toBe('Xalvakka');
+    expect(result.current.prevBoss?.name).toBe('Oaxiltso');
+  });
 });

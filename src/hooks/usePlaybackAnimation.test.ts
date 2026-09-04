@@ -110,8 +110,9 @@ describe('usePlaybackAnimation A-B loop', () => {
     );
 
     stepFrame(200);
-    // Advanced normally past the tiny "loop", not wrapped.
-    expect(timeRef.current).toBeGreaterThan(5050);
+    // Advanced normally past the tiny "loop", not wrapped (200ms frame is delta-clamped to
+    // 100ms, so 4950 → 5050 exactly; a wrap would have parked at 5000).
+    expect(timeRef.current).toBe(5050);
   });
 
   it('without loop points, ends at duration as before (no regression)', () => {
@@ -132,5 +133,68 @@ describe('usePlaybackAnimation A-B loop', () => {
     stepFrame(200);
     expect(timeRef.current).toBe(10000);
     expect(onEnd).toHaveBeenCalledTimes(1);
+  });
+
+  it('clamps a huge frame delta so a hitch cannot skip the fight', () => {
+    const timeRef = { current: 1000 };
+    const onEnd = jest.fn();
+
+    renderHook(() =>
+      usePlaybackAnimation({
+        timeRef,
+        isPlaying: true,
+        playbackSpeed: 5,
+        duration: 60000,
+        onEnd,
+      }),
+    );
+
+    // A 5s main-thread stall at 5x would jump 25s unclamped; the 100ms cap limits it to 0.5s.
+    stepFrame(5000);
+    expect(timeRef.current).toBe(1500);
+    expect(onEnd).not.toHaveBeenCalled();
+  });
+
+  it('pauses on hidden and resumes without a jump when visible again', () => {
+    const timeRef = { current: 1000 };
+    const onEnd = jest.fn();
+    let hidden = false;
+    Object.defineProperty(document, 'hidden', {
+      configurable: true,
+      get: () => hidden,
+    });
+
+    try {
+      renderHook(() =>
+        usePlaybackAnimation({
+          timeRef,
+          isPlaying: true,
+          playbackSpeed: 1,
+          duration: 60000,
+          onEnd,
+        }),
+      );
+
+      hidden = true;
+      document.dispatchEvent(new Event('visibilitychange'));
+      // The real browser drops the pending rAF on cancel; mirror that in the mock queue, then
+      // verify the resume path re-anchors the clock instead of jumping over the hidden interval.
+      rafCallbacks.length = 0;
+
+      // 30s pass while hidden; on return the clock re-anchors instead of jumping.
+      nowValue += 30000;
+      hidden = false;
+      document.dispatchEvent(new Event('visibilitychange'));
+      stepFrame(200);
+      // 200ms of wall time advances 200ms of fight (well under the 100ms… no: the 100ms frame
+      // clamp bounds each frame, so a 200ms frame advances exactly the clamped 100ms here).
+      expect(timeRef.current).toBe(1100);
+      expect(onEnd).not.toHaveBeenCalled();
+    } finally {
+      Object.defineProperty(document, 'hidden', {
+        configurable: true,
+        get: () => false,
+      });
+    }
   });
 });

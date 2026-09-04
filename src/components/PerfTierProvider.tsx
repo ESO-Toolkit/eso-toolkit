@@ -4,7 +4,7 @@ import { useSelector } from 'react-redux';
 
 import { usePerfTier } from '../hooks/usePerfTier';
 import { selectPerfTierOverride } from '../store/ui/uiSelectors';
-import { setPerfTier } from '../store/ui/uiSlice';
+import { setPerfTier, setPerfTierResolved } from '../store/ui/uiSlice';
 import { useAppDispatch } from '../store/useAppDispatch';
 import { detectPerfTier } from '../utils/detectPerfTier';
 
@@ -26,11 +26,17 @@ export const PerfTierProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   // entirely — the persisted detected tier is irrelevant until the user goes
   // back to 'auto', at which point this effect re-runs.
   useEffect(() => {
-    if (override !== 'auto') return;
+    if (override !== 'auto') {
+      // Manual tier: nothing to resolve — mark settled so heavy mounts don't wait on detection
+      // that will never run.
+      dispatch(setPerfTierResolved());
+      return;
+    }
     let cancelled = false;
     void detectPerfTier().then((detected) => {
       if (cancelled) return;
       dispatch(setPerfTier(detected));
+      dispatch(setPerfTierResolved());
     });
     return () => {
       cancelled = true;

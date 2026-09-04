@@ -1,5 +1,3 @@
-import { getGPUTier } from '@pmndrs/detect-gpu';
-
 import type { PerfTier } from '../store/ui/uiSlice';
 
 import { getEnvVar } from './envUtils';
@@ -52,6 +50,9 @@ export const detectPerfTier = async (): Promise<PerfTier> => {
   const heuristic = heuristicPerfTier();
 
   try {
+    // Lazy: @pmndrs/detect-gpu stays OUT of the entry chunk (it was ~15-30KB of parse cost on
+    // every route). Only this async path pays for it, after first paint.
+    const { getGPUTier } = await import('@pmndrs/detect-gpu');
     const gpuTier = await getGPUTier({ benchmarksURL });
     // detect-gpu RESOLVES (it does not throw) even when it can't actually
     // benchmark the GPU — the `type` field says how trustworthy `tier` is:

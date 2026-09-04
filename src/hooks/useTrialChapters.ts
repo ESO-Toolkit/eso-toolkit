@@ -60,20 +60,34 @@ export interface UseTrialChaptersResult {
   isLoading: boolean;
 }
 
-/** Find the first boss whose start time is strictly after `time`. */
-function firstBossAfter(bosses: TrialChapter[], time: number): TrialChapter | null {
+/**
+ * Find the first boss at or after `time`. Inclusive (>=): a trash segment co-timed with a boss
+ * (same start tick) must resolve TO that boss — strict > skipped it, leaving next/prev both
+ * blind to the co-timed encounter.
+ */
+function firstBossAtOrAfter(bosses: TrialChapter[], time: number): TrialChapter | null {
   for (const boss of bosses) {
-    if (boss.startTime > time) return boss;
+    if (boss.startTime >= time) return boss;
   }
   return null;
 }
 
-/** Find the last boss whose start time is strictly before `time`. */
+/**
+ * Find the last boss strictly before `time`, except a co-timed boss counts as "here": going
+ * backwards from trash co-timed with boss B must land on the boss BEFORE B, not B itself.
+ */
 function lastBossBefore(bosses: TrialChapter[], time: number): TrialChapter | null {
-  for (let i = bosses.length - 1; i >= 0; i--) {
-    if (bosses[i].startTime < time) return bosses[i];
+  let found: TrialChapter | null = null;
+  for (const boss of bosses) {
+    if (boss.startTime < time) {
+      found = boss;
+    } else if (boss.startTime === time) {
+      return found;
+    } else {
+      break;
+    }
   }
-  return null;
+  return found;
 }
 
 /**
@@ -117,7 +131,7 @@ export function useTrialChapters(): UseTrialChaptersResult {
     } else {
       // Anchor by the active fight's start time (or the run start when unknown).
       const anchor = currentSegment?.startTime ?? fightStartTime ?? segments[0]?.startTime ?? 0;
-      nextBoss = firstBossAfter(bossChapters, anchor);
+      nextBoss = firstBossAtOrAfter(bossChapters, anchor);
       prevBoss = lastBossBefore(bossChapters, anchor);
     }
 

@@ -6,6 +6,12 @@ import { OnProgressCallback } from '../Utils';
 export interface BuffCalculationTask {
   buffEvents: (BuffEvent | DebuffEvent)[];
   fightEndTime?: number;
+  /**
+   * Fight identity for cache keys. Buff events carry no fight id, so without these two fights
+   * with equal-length streams (or two empty streams) would collide. Optional for back-compat.
+   */
+  fightId?: string | number;
+  fightStartTime?: number;
 }
 
 export function calculateBuffLookup(

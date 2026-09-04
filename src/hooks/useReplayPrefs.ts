@@ -24,6 +24,10 @@ import { useCallback, useMemo } from 'react';
 const VERSION = 1;
 const STORAGE_KEY = `replay.prefs.v${VERSION}`;
 
+/** Bounds of the SpeedSelector ladder — stored speeds outside this range are corrupt. */
+export const MIN_REPLAY_SPEED = 0.25;
+export const MAX_REPLAY_SPEED = 5;
+
 /**
  * The user-facing replay quality preset — successor of the boolean
  * performanceMode. 'auto' = full quality with the automatic governor armed;
@@ -133,7 +137,9 @@ const sanitize = (raw: unknown): Partial<ReplayPrefs> => {
   const obj = raw as Record<string, unknown>;
   const out: Partial<ReplayPrefs> = {};
   if (isFiniteNumber(obj.playbackSpeed) && obj.playbackSpeed > 0) {
-    out.playbackSpeed = obj.playbackSpeed;
+    // Clamp to the SpeedSelector ladder range: a corrupt/foreign value (e.g. 1e9) would otherwise
+    // make the playback tick jump to the end of the fight on the first frame.
+    out.playbackSpeed = Math.min(MAX_REPLAY_SPEED, Math.max(MIN_REPLAY_SPEED, obj.playbackSpeed));
   }
   if (isBool(obj.showNames)) out.showNames = obj.showNames;
   if (isBool(obj.showPlayerPaths)) out.showPlayerPaths = obj.showPlayerPaths;

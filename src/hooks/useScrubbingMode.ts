@@ -1,4 +1,4 @@
-import { useRef, useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 
 interface UseScrubbingModeProps {
   isScrubbingMode: boolean;
@@ -21,15 +21,6 @@ export const useScrubbingMode = ({
   isScrubbingMode,
   isDragging,
 }: UseScrubbingModeProps): UseScrubbingModeResult => {
-  const frameCountRef = useRef(0);
-
-  useEffect(() => {
-    // Reset frame count when entering/exiting scrubbing mode
-    if (!isScrubbingMode) {
-      frameCountRef.current = 0;
-    }
-  }, [isScrubbingMode]);
-
   // Determine render quality based on scrubbing state
   const renderQuality: 'high' | 'medium' | 'low' = (() => {
     if (!isScrubbingMode) return 'high';
@@ -37,18 +28,13 @@ export const useScrubbingMode = ({
     return 'high'; // Changed from 'medium' to 'high' when not actively dragging
   })();
 
-  // Position updates during scrubbing
-  const shouldUpdatePositions = (() => {
-    if (!isScrubbingMode) return true;
-
-    // During active dragging, update less frequently
-    if (isDragging) {
-      frameCountRef.current++;
-      return frameCountRef.current % 3 === 0; // Every 3rd frame
-    }
-
-    return true;
-  })();
+  // Position updates during scrubbing. Purely prop-derived: the previous implementation mutated
+  // a render-phase counter (every-3rd-frame gate), which is impure (StrictMode double-render
+  // skew) and self-invalidated the memo below on every third render. NOTE: no live consumer
+  // reads this today — Arena3DScene forwards only shouldRenderEffects, and the frameSkipRate
+  // consumer (AnimationFrameContext) is unmounted — so scrubbing costs ≈ playback per distinct
+  // timestamp. The flag documents intent for the day a consumer honors it again.
+  const shouldUpdatePositions = !isScrubbingMode || !isDragging;
 
   // Visual effects during scrubbing
   const shouldRenderEffects = true; // Always render effects including billboards

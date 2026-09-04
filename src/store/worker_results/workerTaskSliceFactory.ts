@@ -6,11 +6,29 @@ import {
   SharedWorkerInputType,
   SharedWorkerResultType,
 } from '@/workers/SharedWorker';
+import type { WorkerPoolConfig } from '@/workers/types';
 
 import { RootState } from '../storeWithHistory';
 
 /** Maximum number of results to keep in the per-task LRU cache. */
-const MAX_RESULT_CACHE_SIZE = 3;
+const DEFAULT_MAX_RESULT_CACHE_SIZE = 3;
+
+export interface WorkerTaskSliceOptions {
+  /**
+   * Per-slice LRU bound (default 3). Memory-constrained devices pass 1 so consecutive fights
+   * can't accumulate multiple large result sets in the store.
+   */
+  maxCacheSize?: number;
+  /**
+   * Worker pool for this task (default 'default'). Latency-sensitive tasks (replay) use an
+   * isolated pool so a long compute can't queue behind — or block — unrelated analytics work.
+   */
+  poolName?: string;
+  /** Pool config applied when the named pool is first created (ignored if it exists). */
+  poolConfig?: WorkerPoolConfig;
+  /** Queue priority for this task (default 0, higher first). */
+  priority?: number;
+}
 
 export interface WorkerTaskState<T> {
   result: T | null;
@@ -30,10 +48,19 @@ export interface WorkerTaskState<T> {
   resultCache: Record<string, T>;
   /** Insertion order for LRU eviction (most-recent first). */
   cacheOrder: string[];
+  /** Creation timestamp per cache entry (parallel to resultCache/cacheOrder). */
+  resultCacheMeta: Record<string, number>;
 }
 
 export interface WorkerTaskProgressPayload {
   progress: number;
+  /**
+   * Owning thunk request ID. The thunk always sends it; plain action creators
+   * (tests, legacy callers) may omit it, in which case the update applies to
+   * whatever is currently loading. Lets a stale worker's progress reports land
+   * on a newer request instead of driving its progress bar.
+   */
+  requestId?: string;
 }
 
 export interface WorkerTaskCompletedPayload<T> {
@@ -57,6 +84,7 @@ const createInitialTaskState = <T>(): WorkerTaskState<T> => ({
   latestRequestId: null,
   resultCache: {},
   cacheOrder: [],
+  resultCacheMeta: {},
 });
 
 // Define the return type separately to avoid circular reference
@@ -90,9 +118,13 @@ type WorkerTaskSliceReturn<T extends ReduxBackedWorkerTaskType> = {
 export const createWorkerTaskSlice = <T extends ReduxBackedWorkerTaskType>(
   taskName: T,
   createInputHash: (input: SharedWorkerInputType<T>) => string,
+  options?: WorkerTaskSliceOptions,
 ): WorkerTaskSliceReturn<T> => {
   type ResultType = SharedWorkerResultType<T>;
   type InputType = SharedWorkerInputType<T>;
+  const maxCacheSize = options?.maxCacheSize ?? DEFAULT_MAX_RESULT_CACHE_SIZE;
+  const poolName = options?.poolName ?? 'default';
+  const taskPriority = options?.priority ?? 0;
 
   // Create the async thunk for executing the worker task
   const executeTask = createAsyncThunk<
@@ -104,7 +136,7 @@ export const createWorkerTaskSlice = <T extends ReduxBackedWorkerTaskType>(
     }
   >(
     `${taskName}/executeTask`,
-    async (input: InputType, { getState, dispatch, signal, rejectWithValue }) => {
+    async (input: InputType, { getState, dispatch, signal, rejectWithValue, requestId }) => {
       try {
         // Check result cache before spawning a worker
         const inputHash = createInputHash(input);
@@ -123,12 +155,22 @@ export const createWorkerTaskSlice = <T extends ReduxBackedWorkerTaskType>(
           return rejectWithValue('Task was aborted');
         }
 
-        const result = await workerManager.executeTask(taskName, input, (progress: number) => {
-          // Only dispatch progress updates if the task hasn't been aborted
-          if (!signal.aborted) {
-            dispatch({ type: `${taskName}/updateProgress`, payload: { progress } });
-          }
-        });
+        const result = await workerManager.executeTask(
+          taskName,
+          input,
+          (progress: number) => {
+            // Only dispatch progress updates if the task hasn't been aborted, and tag them with
+            // this thunk's request ID so a superseded worker can't drive a newer request's bar.
+            if (!signal.aborted) {
+              dispatch({
+                type: `${taskName}/updateProgress`,
+                payload: { progress, requestId },
+              });
+            }
+          },
+          poolName,
+          { poolConfig: options?.poolConfig, priority: taskPriority, signal },
+        );
 
         // If the task was aborted while the worker was running, discard result
         if (signal.aborted) {
@@ -191,8 +233,13 @@ export const createWorkerTaskSlice = <T extends ReduxBackedWorkerTaskType>(
       },
 
       updateProgress(state, action: PayloadAction<WorkerTaskProgressPayload>) {
+        // Scoped to the owning request when tagged; untagged updates (plain action creators,
+        // legacy callers) apply to whatever is loading, preserving previous behavior.
         if (state.isLoading) {
-          state.progress = action.payload.progress;
+          const owner = action.payload.requestId;
+          if (owner === undefined || owner === state.latestRequestId) {
+            state.progress = action.payload.progress;
+          }
         }
       },
 
@@ -216,16 +263,18 @@ export const createWorkerTaskSlice = <T extends ReduxBackedWorkerTaskType>(
 
       resetTask(state) {
         const lastUpdated = state.lastUpdated;
-        const cacheMetadata = state.cacheMetadata;
-        const latestRequestId = state.latestRequestId;
         const resultCache = state.resultCache;
         const cacheOrder = [...state.cacheOrder];
+        const resultCacheMeta = { ...state.resultCacheMeta };
         Object.assign(state, createInitialTaskState<ResultType>());
         state.lastUpdated = lastUpdated;
-        state.cacheMetadata = cacheMetadata;
-        state.latestRequestId = latestRequestId;
         state.resultCache = resultCache;
         state.cacheOrder = cacheOrder;
+        state.resultCacheMeta = resultCacheMeta;
+        // Deliberately NOT preserved: latestRequestId + lastInputHash. A reset is an
+        // invalidation barrier (fight switch) — any pre-reset in-flight fulfillment must NOT
+        // match the post-reset slot. RTK requestIds are unique, so nulling is sufficient: a
+        // stale result can never equal null, and the replacement's own pending sets the new id.
       },
     },
     extraReducers: (builder) => {
@@ -252,14 +301,16 @@ export const createWorkerTaskSlice = <T extends ReduxBackedWorkerTaskType>(
             // Store in LRU result cache
             const inputHash = createInputHash(action.meta.arg);
             state.resultCache[inputHash] = action.payload as (typeof state.resultCache)[string];
+            state.resultCacheMeta[inputHash] = Date.now();
 
             // Move to front of cache order
             state.cacheOrder = [inputHash, ...state.cacheOrder.filter((h) => h !== inputHash)];
 
             // Evict oldest entries if over limit
-            while (state.cacheOrder.length > MAX_RESULT_CACHE_SIZE) {
+            while (state.cacheOrder.length > maxCacheSize) {
               const evicted = state.cacheOrder.pop()!;
               delete state.resultCache[evicted];
+              delete state.resultCacheMeta[evicted];
             }
           }
           // If this is not the latest request, ignore the result to prevent stale data overwrites

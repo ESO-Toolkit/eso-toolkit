@@ -164,6 +164,27 @@ describe('WorkerManager', () => {
         { buffEvents: [] },
         0,
         undefined,
+        undefined,
+      );
+    });
+
+    it('should forward priority/signal/poolConfig opts to the pool', async () => {
+      const controller = new AbortController();
+      await workerManager.executeTask('calculateBuffLookup', { buffEvents: [] }, undefined, 'p', {
+        poolConfig: { maxWorkers: 1 },
+        priority: 10,
+        signal: controller.signal,
+      });
+
+      // Manager unpacks opts to the pool's positional args (priority, onProgress, signal); the
+      // pool itself is created with the given poolConfig.
+      expect(WorkerPool).toHaveBeenCalledWith(expect.objectContaining({ maxWorkers: 1 }));
+      expect(mockPool.execute).toHaveBeenCalledWith(
+        'calculateBuffLookup',
+        { buffEvents: [] },
+        10,
+        undefined,
+        controller.signal,
       );
     });
 

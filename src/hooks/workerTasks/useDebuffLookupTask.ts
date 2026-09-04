@@ -31,11 +31,16 @@ export function useDebuffLookupTask(options?: UseDebuffLookupTaskOptions): {
   const { debuffEvents, isDebuffEventsLoading } = useDebuffEvents({ context: options?.context });
 
   React.useEffect(() => {
-    if (selectedFight && debuffEvents.length > 0 && !isDebuffEventsLoading) {
+    // Dispatch even for an EMPTY stream: a zero-debuff fight needs its own explicit (empty)
+    // lookup, otherwise positions either never compute (fresh slot) or reuse the previous
+    // fight's stale debuffs. The empty compute is trivial and keyed to this fight.
+    if (selectedFight && !isDebuffEventsLoading) {
       const promise = dispatch(
         executeDebuffLookupTask({
           buffEvents: debuffEvents,
           fightEndTime: selectedFight.endTime,
+          fightId: selectedFight.id,
+          fightStartTime: selectedFight.startTime,
         }),
       );
       return () => {
