@@ -260,7 +260,19 @@ function markersFromElms(decoded: DecodedElmsMarkers): ReplayMarker[] {
   return decoded.markers.map((marker, index) => buildReplayMarker(marker, 'imported', index));
 }
 
-export function parseMarkersInput(encoded: string): MapMarkersState {
+/**
+ * Parsed markers plus import-loss metadata. The state itself carries no loss info (it must stay
+ * a clean domain object), so truncation / dropped-zone facts travel alongside for the importer
+ * to disclose. Extra fields are harmless if spread into state (never persisted).
+ */
+export interface ParsedMarkersInput extends MapMarkersState {
+  /** True when the decoder cut the input at its budget. */
+  truncated?: boolean;
+  /** Foreign zones dropped from a mixed-zone Elms string. */
+  droppedZones?: number[];
+}
+
+export function parseMarkersInput(encoded: string): ParsedMarkersInput {
   const trimmed = encoded.trim();
 
   if (!trimmed) {
@@ -273,6 +285,8 @@ export function parseMarkersInput(encoded: string): MapMarkersState {
       format: 'elms',
       zoneId: decoded.zone,
       markers: markersFromElms(decoded),
+      ...(decoded.truncated ? { truncated: true } : {}),
+      ...(decoded.droppedZones?.length ? { droppedZones: decoded.droppedZones } : {}),
     };
   }
 
@@ -289,6 +303,7 @@ export function parseMarkersInput(encoded: string): MapMarkersState {
     format: 'mor',
     zoneId: decodedMor.zone,
     markers: replayMarkers,
+    ...(decodedMor.truncated ? { truncated: true } : {}),
   };
 }
 
@@ -394,11 +409,13 @@ export function encodeMarkersToElms(state: MapMarkersState): string {
   });
 
   if (failedMarkers.length > 0) {
+    // Never embed user content in thrown errors: labels travel to snackbars AND error reporters,
+    // and gamer tags are low-sensitivity PII. Length is enough to identify the marker.
     const example = failedMarkers[0];
     const descriptionParts: string[] = [];
 
     if (example.text) {
-      descriptionParts.push(`text "${example.text}"`);
+      descriptionParts.push(`label (${example.text.length} chars)`);
     }
 
     if (example.bgTexture) {
@@ -420,6 +437,17 @@ export function encodeMarkersToElms(state: MapMarkersState): string {
 
 function formatHex(value: number): string {
   return Math.max(0, Math.round(value)).toString(16).toUpperCase();
+}
+
+/**
+ * Signed 32-bit hex for M0R minima, matching the addon's Lua `%x` (two's complement): HoF's
+ * minX -3414 encodes as "FFFFF2AA", which our decoder reads back signed. Values are clamped to
+ * int32 range first so corrupt input can't wrap silently. Offsets stay UNSIGNED (always >= the
+ * true minima by construction) — see the decoder's parseHexS32/parseHexU32 split.
+ */
+function formatHexS32(value: number): string {
+  const clamped = Math.max(-0x80000000, Math.min(0x7fffffff, Math.round(value)));
+  return (clamped >>> 0).toString(16).toUpperCase();
 }
 
 function formatDegrees(radians: number): string {
@@ -467,7 +495,11 @@ function formatTexture(texture: string | undefined): string | null {
     return null;
   }
 
-  return REVERSE_TEXTURE_LOOKUP[texture] ?? texture;
+  const resolved = REVERSE_TEXTURE_LOOKUP[texture] ?? texture;
+  // Raw texture paths flow into a `:`/`;`-delimited section: reject anything outside the dds
+  // path / `^N` ref charset so a hostile texture can't break section parsing (the marker then
+  // exports text-only instead of corrupting the whole string).
+  return /^[A-Za-z0-9_^./-]+$/.test(resolved) ? resolved : null;
 }
 
 function buildSectionFromGroups<T>(
@@ -584,7 +616,7 @@ export function encodeMarkersToMor(state: MapMarkersState): string {
   const sections = [
     state.zoneId.toString(),
     timestamp.toString(),
-    `${formatHex(minX)}:${formatHex(minY)}:${formatHex(minZ)}`,
+    `${formatHexS32(minX)}:${formatHexS32(minY)}:${formatHexS32(minZ)}`,
     buildSizeSection(markers),
     buildPitchSection(markers),
     buildYawSection(markers),
@@ -605,6 +637,9 @@ export function arenaPointToWorld(
   mapData: ZoneScaleData,
   arenaPoint: { x: number; z: number },
 ): { x: number; z: number } {
+  if (!Number.isFinite(arenaPoint.x) || !Number.isFinite(arenaPoint.z)) {
+    throw new TypeError('arenaPointToWorld requires finite arena coordinates');
+  }
   const clamp = (value: number): number => Math.min(100, Math.max(0, value));
 
   const normalizedX = (100 - clamp(arenaPoint.x)) / 100;
@@ -765,6 +800,9 @@ export function withNewMarker(
 }
 
 export function withoutMarker(state: MapMarkersState, markerId: string): MapMarkersState {
+  if (!state.markers.some((marker) => marker.id === markerId)) {
+    return state;
+  }
   return {
     ...state,
     markers: state.markers.filter((marker) => marker.id !== markerId),
@@ -875,6 +913,11 @@ export function withoutShape(state: MapMarkersState, shapeId: string): MapMarker
   };
 }
 
+/** Domain bounds for shape edits (mirrors the manager's canonical caps). */
+export const MAX_SHAPE_RADIUS_M = 100;
+export const MIN_SHAPE_RADIUS_M = 0.5;
+export const MAX_SHAPE_WIDTH_PX = 20;
+
 /** Move a shape to new WORLD-space vertices (drag-to-move / vertex edit commit). */
 export function withShapeVertices(
   state: MapMarkersState,
@@ -882,13 +925,29 @@ export function withShapeVertices(
   vertices: Array<[number, number]>,
 ): MapMarkersState {
   if (!state.shapes) return state;
+  const target = state.shapes.find((shape) => shape.id === shapeId);
+  if (!target) return state;
+  // Validate before committing: finite pairs only, kind minimums respected. A drag that somehow
+  // yields an empty/invalid set must not strand an invisible-but-persisted shape.
+  const clean = vertices.filter(
+    (v): v is [number, number] =>
+      Array.isArray(v) &&
+      v.length === 2 &&
+      typeof v[0] === 'number' &&
+      typeof v[1] === 'number' &&
+      Number.isFinite(v[0]) &&
+      Number.isFinite(v[1]),
+  );
+  const minVerts = target.kind === 'polygon' ? 3 : 2; // circle keeps its single centre (radius unchanged)
+  if (target.kind !== 'circle' && clean.length < minVerts) return state;
+  if (target.kind === 'circle' && clean.length < 1) return state;
   return {
     ...state,
     shapes: state.shapes.map((shape) =>
       shape.id === shapeId
         ? {
             ...shape,
-            vertices: vertices.map((vertex) => [vertex[0], vertex[1]] as [number, number]),
+            vertices: clean.map((vertex) => [vertex[0], vertex[1]] as [number, number]),
           }
         : shape,
     ),
@@ -920,12 +979,20 @@ export function withShapeEdit(
       };
 
       if (patch.style) {
+        const clampedColour = patch.style.colour
+          ? (patch.style.colour.map((c) =>
+              typeof c === 'number' && Number.isFinite(c) ? Math.min(1, Math.max(0, c)) : 0,
+            ) as [number, number, number, number])
+          : next.style.colour;
+        const clampedWidth =
+          typeof patch.style.width === 'number' && Number.isFinite(patch.style.width)
+            ? Math.min(MAX_SHAPE_WIDTH_PX, Math.max(0.5, patch.style.width))
+            : next.style.width;
         next.style = {
           ...next.style,
           ...patch.style,
-          colour: patch.style.colour
-            ? ([...patch.style.colour] as [number, number, number, number])
-            : next.style.colour,
+          colour: clampedColour,
+          width: clampedWidth,
         };
       }
 
@@ -938,7 +1005,7 @@ export function withShapeEdit(
       }
 
       if (patch.radius !== undefined && Number.isFinite(patch.radius) && patch.radius > 0) {
-        next.radius = patch.radius;
+        next.radius = Math.min(MAX_SHAPE_RADIUS_M, Math.max(MIN_SHAPE_RADIUS_M, patch.radius));
       }
 
       return next;
@@ -964,6 +1031,8 @@ export interface InGameMorResult {
   dotCount: number;
   /** Effective spacing between dots in metres (auto-coarsened to fit the cap). */
   spacingMeters: number;
+  /** True when shapes were dropped for lack of budget (see encodeInGameMor). */
+  dotsTruncated: boolean;
 }
 
 /**
@@ -973,6 +1042,11 @@ export interface InGameMorResult {
  * sampled into a row of ground-flat circle dots in the shape's colour (fills can't transfer; only
  * the boundary does). Dot spacing is coarsened automatically so real markers + dots stay under
  * `maxMarkers` (the addon's storage ceiling is ~19k chars / a few hundred markers).
+ *
+ * Budget rule: REAL markers are never dropped for dots. Dots fill the remaining budget in shape
+ * order; when the budget is exhausted, remaining shapes are omitted and `dotsTruncated` is set
+ * (the UI discloses it). When there is no budget at all but shapes were requested, this throws
+ * instead of emitting an over-cap string the addon would truncate unpredictably.
  */
 export function encodeInGameMor(
   state: MapMarkersState,
@@ -989,11 +1063,24 @@ export function encodeInGameMor(
   if (budget > 0 && totalLenMeters / spacing > budget) {
     spacing = totalLenMeters / budget;
   }
+  if (budget <= 0 && shapes.length > 0) {
+    throw new Error(
+      'Too many markers to bake shapes: the 500-marker limit is already reached. Remove markers or clear shapes first.',
+    );
+  }
   const spacingCm = spacing * 100;
 
   const dots: ReplayMarker[] = [];
-  shapes.forEach((shape, shapeIndex) => {
-    shapeSampleWorld(shape, spacingCm).forEach(([x, z], pointIndex) => {
+  let dotsTruncated = false;
+  for (let shapeIndex = 0; shapeIndex < shapes.length; shapeIndex++) {
+    const shape = shapes[shapeIndex];
+    const sampled = shapeSampleWorld(shape, spacingCm);
+    for (let pointIndex = 0; pointIndex < sampled.length; pointIndex++) {
+      if (dots.length >= budget) {
+        dotsTruncated = true;
+        break;
+      }
+      const [x, z] = sampled[pointIndex];
       dots.push({
         id: `bake-${shapeIndex}-${pointIndex}`,
         source: 'manual',
@@ -1006,8 +1093,9 @@ export function encodeInGameMor(
         text: '',
         orientation: [...GROUND_FLAT_ORIENTATION] as [number, number],
       });
-    });
-  });
+    }
+    if (dotsTruncated) break;
+  }
 
   const combined = [...realMarkers, ...dots];
   if (combined.length === 0) {
@@ -1015,5 +1103,11 @@ export function encodeInGameMor(
   }
 
   const code = encodeMarkersToMor({ ...state, markers: combined, shapes: undefined });
-  return { code, markerCount: combined.length, dotCount: dots.length, spacingMeters: spacing };
+  return {
+    code,
+    markerCount: combined.length,
+    dotCount: dots.length,
+    spacingMeters: spacing,
+    dotsTruncated,
+  };
 }

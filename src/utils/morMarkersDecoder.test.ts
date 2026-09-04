@@ -619,4 +619,57 @@ describe('morMarkersDecoder', () => {
       });
     });
   });
+
+  describe('strict decoding (signed minima, token validation, budgets)', () => {
+    it('decodes two\u2019s-complement minima for negative-bound zones (HoF)', () => {
+      // minX -3414 → two's complement FFFFF2AA (what Lua %x emits); offset d56 = 3414.
+      const input = '<975]1609459200]FFFFF2AA:0:FFFFCC1B]]]]ffffff:1]^1:1]d56:0:3357:>';
+      const result = decodeMorMarkersString(input);
+
+      expect(result?.zone).toBe(975);
+      expect(result?.markers).toHaveLength(1);
+      // -3414 + 3414 = 0; minZ -13285 + 0x3357 (13143) = -142.
+      expect(result?.markers[0]?.x).toBe(0);
+      expect(result?.markers[0]?.z).toBe(-142);
+      expect(result?.truncated).toBe(false);
+    });
+
+    it('keeps offsets unsigned like the addon (negative offsets stay huge, filtered downstream)', () => {
+      const input = '<1000]1609459200]3e8:0:0]]]]ffffff:1]^1:1]fffffff6:0:0:>';
+      const result = decodeMorMarkersString(input);
+
+      expect(result?.markers[0]?.x).toBe(0x3e8 + 0xfffffff6);
+    });
+
+    it('rejects malformed numbers instead of coercing them', () => {
+      // Trailing garbage, signs on hex offsets, bad zone/timestamp, bad colour/index tokens.
+      expect(
+        decodeMorMarkersString('<1000]1609459200]0:0:0]]]]ffffff:1]^1:1]12zz:0:0:>')?.markers,
+      ).toHaveLength(0);
+      expect(
+        decodeMorMarkersString('<1000]1609459200]0:0:0]]]]ffffff:1]^1:1]-5:0:0:>')?.markers,
+      ).toHaveLength(0);
+      expect(decodeMorMarkersString('<zone]1609459200]0:0:0]]]]]>')).toBeNull();
+      expect(
+        decodeMorMarkersString('<1000]1609459200]0:0:0]]]]zzzzzz:1]^1:1]0:0:0:>')?.markers[0]
+          ?.colour,
+      ).toEqual([1, 1, 1, 1]);
+      expect(
+        decodeMorMarkersString('<1000]1609459200]0:0:0]99999999999999999999:abc]]]]^1:1]0:0:0:>')
+          ?.markers[0]?.size,
+      ).toBe(1);
+    });
+
+    it('rejects oversized input before splitting', () => {
+      const big = `<1000]1]0:0:0]]]]]>${'0:0:0:,'.repeat(70000)}`;
+      expect(decodeMorMarkersString(big)).toBeNull();
+    });
+
+    it('truncates marker floods at 500 and flags it', () => {
+      const entries = Array.from({ length: 600 }, (_, i) => `${i.toString(16)}:0:0:`).join(',');
+      const result = decodeMorMarkersString(`<1000]1]0:0:0]]]]]]${entries}>`);
+      expect(result?.markers).toHaveLength(500);
+      expect(result?.truncated).toBe(true);
+    });
+  });
 });

@@ -262,4 +262,90 @@ describe('useMapMarkersManager', () => {
     expect(stored['636'].markers).toHaveLength(1);
     expect(stored['638'].markers).toHaveLength(1);
   });
+
+  it('refuses a foreign-zone markers string instead of silently importing nothing', () => {
+    const onError = jest.fn();
+    const { result } = renderHook(() => useMapMarkersManager({ fight: HEL_RA_FIGHT, onError }));
+
+    act(() => {
+      result.current.loadFromString('/639//80000,15000,70000,21/');
+    });
+
+    expect(onError).toHaveBeenCalledWith(expect.stringContaining('zone 639'));
+    expect(result.current.markersState).toBeNull();
+    expect(readStorage()['636']).toBeUndefined();
+  });
+
+  it('refuses a foreign-zone shapes code', () => {
+    const onError = jest.fn();
+    const { result } = renderHook(() => useMapMarkersManager({ fight: HEL_RA_FIGHT, onError }));
+
+    act(() => {
+      // Zone 639 shapes code (single 2-vertex polyline).
+      result.current.loadFromString('(1]639]0:0]P|||FF0000|0||0:0,1:1|)');
+    });
+
+    expect(onError).toHaveBeenCalledWith(expect.stringContaining('zone 639'));
+    expect(result.current.markersState).toBeNull();
+  });
+
+  it('truncates oversized imports to canonical caps with a notice', () => {
+    const onError = jest.fn();
+    const { result } = renderHook(() => useMapMarkersManager({ fight: HEL_RA_FIGHT, onError }));
+
+    const entries = Array.from({ length: 600 }, (_, i) => `${i.toString(16)}:0:0:`).join(',');
+    const sections = ['<636', '1', '0:0:0', '', '', '', '', '', entries];
+    act(() => {
+      result.current.loadFromString(`${sections.join(']')}>`);
+    });
+
+    expect(result.current.markersState?.markers).toHaveLength(500);
+    expect(onError).toHaveBeenCalledWith(expect.stringContaining('trimmed'));
+    expect(readStorage()['636'].markers).toHaveLength(500);
+  });
+
+  it('ignores prototype-pollution keys and key/zone mismatches in storage', () => {
+    // Built via JSON.parse so __proto__ is an OWN key (an object literal would set the prototype
+    // instead of creating the attack key).
+    const blob = JSON.parse(
+      JSON.stringify({
+        '636': { format: 'elms', zoneId: 999, markers: [savedMarker()], savedAt: 1 },
+      }),
+    );
+    Object.defineProperty(blob, '__proto__', {
+      value: { format: 'elms', zoneId: 636, markers: [savedMarker()], savedAt: 1 },
+      enumerable: true,
+      configurable: true,
+      writable: true,
+    });
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(blob));
+    expect(JSON.parse(window.localStorage.getItem(STORAGE_KEY) ?? '{}')).toHaveProperty(
+      '__proto__',
+    );
+
+    const { result } = renderHook(() => useMapMarkersManager({ fight: HEL_RA_FIGHT }));
+
+    // Neither the polluted key nor the mismatched slot restores.
+    expect(result.current.markersState).toBeNull();
+    expect(result.current.restoredCount).toBe(0);
+  });
+
+  it('clamps out-of-domain restored values instead of dropping the marker', () => {
+    seedStorage(
+      [
+        savedMarker({
+          size: 500,
+          colour: [9, -2, 0.5, 1],
+          text: 'x'.repeat(2000),
+        }),
+      ],
+      636,
+    );
+    const { result } = renderHook(() => useMapMarkersManager({ fight: HEL_RA_FIGHT }));
+
+    const marker = result.current.markersState?.markers[0];
+    expect(marker?.size).toBe(50);
+    expect(marker?.colour).toEqual([1, 0, 0.5, 1]);
+    expect(marker?.text?.length).toBe(500);
+  });
 });

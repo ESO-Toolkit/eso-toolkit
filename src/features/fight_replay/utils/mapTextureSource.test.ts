@@ -120,4 +120,11 @@ describe('getMapTextureFallbackUrl', () => {
     const plain = 'dungeons/osscage_section1map002';
     expect(getMapTextureFallbackUrl(plain)).toBe(getMapTextureUrl(plain));
   });
+
+  it('rejects traversal and URL-shaped map files instead of interpolating them', () => {
+    expect(() => getMapTextureUrl('../../etc/passwd')).toThrow(/Unsafe map file/);
+    expect(() => getMapTextureUrl('https://evil.example/x')).toThrow(/Unsafe map file/);
+    expect(() => getMapTextureUrl('a:b')).toThrow(/Unsafe map file/);
+    expect(() => getMapTextureFallbackUrl('..%2Fsecret')).toThrow(/Unsafe map file/);
+  });
 });

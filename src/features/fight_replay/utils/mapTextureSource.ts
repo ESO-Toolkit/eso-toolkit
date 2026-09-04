@@ -325,6 +325,17 @@ function hiresMapBase(): string | null {
 const RPGLOGS_MAP_BASE = 'https://assets.rpglogs.com/img/eso/maps';
 
 /**
+ * mapFile comes from server GraphQL (`fight.maps[].file`) — trusted in practice, but it is
+ * interpolated into a URL, so validate the charset anyway: path traversal (`..`) or a full URL
+ * here would turn the floor loader into an open fetch. Throws (callers fall back to the grid).
+ */
+function assertSafeMapFile(mapFile: string): void {
+  if (!/^[A-Za-z0-9_/-]+$/.test(mapFile) || mapFile.includes('..')) {
+    throw new Error(`Unsafe map file name: ${mapFile}`);
+  }
+}
+
+/**
  * Returns the texture URL for a given `mapFile`: a self-hosted hi-res tile when one is registered (and
  * not explicitly disabled via `VITE_SELF_HOSTED_MAPS=false`, the kill switch for instant rollback),
  * otherwise the RPGLogs CDN default. A registered tile resolves to the R2/CDN base when
@@ -334,6 +345,7 @@ const RPGLOGS_MAP_BASE = 'https://assets.rpglogs.com/img/eso/maps';
  * which can't parse `import.meta`.
  */
 export function getMapTextureUrl(mapFile: string): string {
+  assertSafeMapFile(mapFile);
   if (HIRES_MAP_FILES.has(mapFile) && getEnvVar('VITE_SELF_HOSTED_MAPS') !== 'false') {
     const cdn = hiresMapBase();
     if (cdn) return `${cdn}/${mapFile}.jpg`;
@@ -353,5 +365,6 @@ export function getMapTextureUrl(mapFile: string): string {
  * plane. Returns the same string `getMapTextureUrl` returns for an UNregistered map, by construction.
  */
 export function getMapTextureFallbackUrl(mapFile: string): string {
+  assertSafeMapFile(mapFile);
   return `${RPGLOGS_MAP_BASE}/${mapFile}.jpg`;
 }

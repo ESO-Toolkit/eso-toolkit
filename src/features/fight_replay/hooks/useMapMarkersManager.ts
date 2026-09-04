@@ -42,6 +42,22 @@ const VERSION = 1;
 const STORAGE_KEY = `replay.mapMarkers.v${VERSION}`;
 const HISTORY_LIMIT = 50;
 
+/**
+ * Canonical state budgets. Live state is capped BEFORE commit/persistence so an unbounded import
+ * can never inflate memory, history snapshots, localStorage, or render preprocessing — the
+ * render-layer caps (200 markers / 100 shapes) remain only as defense in depth.
+ */
+export const MAX_CANONICAL_MARKERS = 500;
+export const MAX_CANONICAL_SHAPES = 100;
+export const MAX_CANONICAL_VERTICES = 500;
+export const MAX_TEXT_CHARS = 500;
+const MAX_ID_CHARS = 200;
+/** World-coordinate plausibility (ESO maps fit comfortably inside ±10M cm). */
+const MAX_WORLD_COORD = 10_000_000;
+const MAX_MARKER_SIZE_M = 50;
+const MAX_SHAPE_WIDTH_PX = 20;
+const MAX_SHAPE_RADIUS_M = 100;
+
 interface PersistedZoneMarkers {
   format: MapMarkersState['format'];
   zoneId: number;
@@ -55,21 +71,35 @@ type PersistedMarkersByZone = Record<string, PersistedZoneMarkers>;
 
 const isFiniteNumber = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
 
+const clamp01 = (v: number): number => Math.min(1, Math.max(0, v));
+
 const isColour = (v: unknown): v is [number, number, number, number] =>
   Array.isArray(v) && v.length === 4 && v.every(isFiniteNumber);
 
 const isOrientation = (v: unknown): v is [number, number] =>
   Array.isArray(v) && v.length === 2 && v.every(isFiniteNumber);
 
+const isPlausibleCoord = (v: number): boolean => Math.abs(v) <= MAX_WORLD_COORD;
+
+const cleanText = (v: unknown): string | undefined =>
+  typeof v === 'string' ? v.slice(0, MAX_TEXT_CHARS) : undefined;
+
+const cleanId = (v: unknown): string | null =>
+  typeof v === 'string' && v.length > 0 ? v.slice(0, MAX_ID_CHARS) : null;
+
 function sanitizeMarker(raw: unknown): ReplayMarker | null {
   if (!raw || typeof raw !== 'object') return null;
   const obj = raw as Record<string, unknown>;
 
+  const id = cleanId(obj.id);
   if (
-    typeof obj.id !== 'string' ||
+    id === null ||
     !isFiniteNumber(obj.x) ||
     !isFiniteNumber(obj.y) ||
     !isFiniteNumber(obj.z) ||
+    !isPlausibleCoord(obj.x) ||
+    !isPlausibleCoord(obj.y) ||
+    !isPlausibleCoord(obj.z) ||
     !isFiniteNumber(obj.size) ||
     obj.size <= 0 ||
     !isColour(obj.colour)
@@ -78,15 +108,16 @@ function sanitizeMarker(raw: unknown): ReplayMarker | null {
   }
 
   return {
-    id: obj.id,
+    id,
     source: obj.source === 'imported' ? 'imported' : 'manual',
     x: obj.x,
     y: obj.y,
     z: obj.z,
-    size: obj.size,
-    colour: [...obj.colour] as [number, number, number, number],
-    bgTexture: typeof obj.bgTexture === 'string' ? obj.bgTexture : undefined,
-    text: typeof obj.text === 'string' ? obj.text : undefined,
+    size: Math.min(MAX_MARKER_SIZE_M, obj.size),
+    colour: obj.colour.map(clamp01) as [number, number, number, number],
+    bgTexture:
+      typeof obj.bgTexture === 'string' ? obj.bgTexture.slice(0, MAX_TEXT_CHARS) : undefined,
+    text: cleanText(obj.text),
     orientation: isOrientation(obj.orientation)
       ? ([...obj.orientation] as [number, number])
       : undefined,
@@ -112,17 +143,22 @@ function sanitizeShape(raw: unknown): ReplayShape | null {
   if (!raw || typeof raw !== 'object') return null;
   const obj = raw as Record<string, unknown>;
 
-  if (typeof obj.id !== 'string') return null;
+  const id = cleanId(obj.id);
+  if (id === null) return null;
   if (typeof obj.kind !== 'string' || !SHAPE_KINDS.includes(obj.kind as ReplayShape['kind'])) {
     return null;
   }
   const kind = obj.kind as ReplayShape['kind'];
 
   if (!Array.isArray(obj.vertices)) return null;
-  const vertices = obj.vertices.filter(isVertex).map((v) => [v[0], v[1]] as [number, number]);
+  const vertices = obj.vertices
+    .filter(isVertex)
+    .filter(([x, z]) => isPlausibleCoord(x) && isPlausibleCoord(z))
+    .slice(0, MAX_CANONICAL_VERTICES)
+    .map((v) => [v[0], v[1]] as [number, number]);
   if (vertices.length < MIN_SHAPE_VERTICES[kind]) return null;
 
-  if (!isFiniteNumber(obj.worldY)) return null;
+  if (!isFiniteNumber(obj.worldY) || !isPlausibleCoord(obj.worldY)) return null;
 
   const style = obj.style;
   if (!style || typeof style !== 'object') return null;
@@ -134,7 +170,7 @@ function sanitizeShape(raw: unknown): ReplayShape | null {
   let radius: number | undefined;
   if (kind === 'circle') {
     if (!isFiniteNumber(obj.radius) || obj.radius <= 0) return null;
-    radius = obj.radius;
+    radius = Math.min(MAX_SHAPE_RADIUS_M, obj.radius);
   }
 
   let time: [number, number] | undefined;
@@ -148,21 +184,27 @@ function sanitizeShape(raw: unknown): ReplayShape | null {
   }
 
   const shape: ReplayShape = {
-    id: obj.id,
+    id,
     source: obj.source === 'imported' ? 'imported' : 'manual',
     kind,
     vertices,
     worldY: obj.worldY,
     style: {
-      colour: [...styleObj.colour] as [number, number, number, number],
-      width: styleObj.width,
-      dashed: styleObj.dashed,
-      fill: styleObj.fill,
+      colour: (styleObj.colour as [number, number, number, number]).map(clamp01) as [
+        number,
+        number,
+        number,
+        number,
+      ],
+      width: Math.min(MAX_SHAPE_WIDTH_PX, styleObj.width as number),
+      dashed: styleObj.dashed as boolean,
+      fill: styleObj.fill as boolean,
     },
   };
   if (radius !== undefined) shape.radius = radius;
   if (time) shape.time = time;
-  if (typeof obj.label === 'string') shape.label = obj.label;
+  const label = cleanText(obj.label);
+  if (label !== undefined) shape.label = label;
 
   return shape;
 }
@@ -200,11 +242,17 @@ function readStored(): PersistedMarkersByZone {
     if (!raw) return {};
     const parsed: unknown = JSON.parse(raw);
     if (!parsed || typeof parsed !== 'object') return {};
+    if (Array.isArray(parsed)) return {};
 
-    const out: PersistedMarkersByZone = {};
+    // Null-prototype dictionary + canonical-key check: a crafted `{"__proto__": ...}` blob must
+    // neither pollute the prototype nor restore under a mismatched key.
+    const out: PersistedMarkersByZone = Object.create(null);
     for (const [zoneKey, entry] of Object.entries(parsed as Record<string, unknown>)) {
+      if (zoneKey === '__proto__' || zoneKey === 'constructor' || zoneKey === 'prototype') {
+        continue;
+      }
       const sanitized = sanitizeZoneEntry(entry);
-      if (sanitized) {
+      if (sanitized && Number(zoneKey) === sanitized.zoneId) {
         out[zoneKey] = sanitized;
       }
     }
@@ -214,11 +262,41 @@ function readStored(): PersistedMarkersByZone {
   }
 }
 
-/** Read-merge-write of one zone's slot, so other zones' saved sets are never clobbered. */
-function persistZone(zoneId: number, state: MapMarkersState | null): void {
+/** Oldest-first eviction for quota recovery: drops the stalest zone slot, returns it. */
+function evictOldestZone(stored: PersistedMarkersByZone): boolean {
+  let oldestKey: string | null = null;
+  let oldestSavedAt = Infinity;
+  for (const [key, entry] of Object.entries(stored)) {
+    const savedAt = entry?.savedAt ?? 0;
+    if (savedAt < oldestSavedAt) {
+      oldestSavedAt = savedAt;
+      oldestKey = key;
+    }
+  }
+  if (oldestKey === null) return false;
+  delete stored[oldestKey];
+  return true;
+}
+
+function isQuotaError(error: unknown): boolean {
+  return (
+    error instanceof DOMException &&
+    (error.name === 'QuotaExceededError' || error.name === 'NS_ERROR_DOM_QUOTA_REACHED')
+  );
+}
+
+/**
+ * Read-merge-write of one zone's slot, so other zones' saved sets are never clobbered.
+ * On quota exhaustion, evicts the stalest zone and retries once, then reports failure through
+ * onError (previously silent — the UI could claim success while nothing persisted).
+ */
+function persistZone(
+  zoneId: number,
+  state: MapMarkersState | null,
+  onError?: (message: string) => void,
+): void {
   if (typeof window === 'undefined') return;
-  try {
-    const stored = readStored();
+  const write = (stored: PersistedMarkersByZone): void => {
     const key = String(zoneId);
 
     const isEmpty = !state || (state.markers.length === 0 && (state.shapes?.length ?? 0) === 0);
@@ -236,8 +314,24 @@ function persistZone(zoneId: number, state: MapMarkersState | null): void {
     }
 
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(stored));
-  } catch {
-    // Storage disabled / quota exceeded — markers simply won't survive a reload.
+  };
+
+  try {
+    write(readStored());
+  } catch (error) {
+    if (!isQuotaError(error)) {
+      return; // Storage disabled etc. — degrade silently as before.
+    }
+    try {
+      const stored = readStored();
+      if (!evictOldestZone(stored)) {
+        onError?.('Storage is full — markers are kept for this session only.');
+        return;
+      }
+      write(stored);
+    } catch {
+      onError?.('Storage is full — markers are kept for this session only.');
+    }
   }
 }
 
@@ -277,6 +371,67 @@ function resolveActiveMapData(
   }
 
   return zoneMaps[0] ?? null;
+}
+
+/**
+ * Enforce canonical state budgets on a freshly computed state: truncate marker/shape/vertex
+ * counts and text lengths BEFORE the state reaches history, persistence, or render
+ * preprocessing. Returns whether anything was cut (the caller surfaces one notice).
+ */
+export function enforceCanonicalCaps(state: MapMarkersState | null): {
+  state: MapMarkersState | null;
+  truncated: boolean;
+} {
+  if (!state) return { state, truncated: false };
+  let truncated = false;
+
+  let markers = state.markers;
+  if (markers.length > MAX_CANONICAL_MARKERS) {
+    markers = markers.slice(0, MAX_CANONICAL_MARKERS);
+    truncated = true;
+  }
+  markers = markers.map((m) => {
+    const text =
+      typeof m.text === 'string' && m.text.length > MAX_TEXT_CHARS
+        ? m.text.slice(0, MAX_TEXT_CHARS)
+        : m.text;
+    const bgTexture =
+      typeof m.bgTexture === 'string' && m.bgTexture.length > MAX_TEXT_CHARS
+        ? m.bgTexture.slice(0, MAX_TEXT_CHARS)
+        : m.bgTexture;
+    if (text !== m.text || bgTexture !== m.bgTexture) {
+      truncated = true;
+      return { ...m, text, bgTexture };
+    }
+    return m;
+  });
+
+  let shapes = state.shapes;
+  if (shapes && shapes.length > MAX_CANONICAL_SHAPES) {
+    shapes = shapes.slice(0, MAX_CANONICAL_SHAPES);
+    truncated = true;
+  }
+  if (shapes) {
+    shapes = shapes.map((s) => {
+      let vertices = s.vertices;
+      if (vertices.length > MAX_CANONICAL_VERTICES) {
+        vertices = vertices.slice(0, MAX_CANONICAL_VERTICES);
+        truncated = true;
+      }
+      const label =
+        typeof s.label === 'string' && s.label.length > MAX_TEXT_CHARS
+          ? s.label.slice(0, MAX_TEXT_CHARS)
+          : s.label;
+      if (vertices !== s.vertices || label !== s.label) {
+        truncated = true;
+        return { ...s, vertices, label };
+      }
+      return s;
+    });
+  }
+
+  if (!truncated) return { state, truncated: false };
+  return { state: { ...state, markers, shapes }, truncated: true };
 }
 
 export interface UseMapMarkersManagerOptions {
@@ -323,6 +478,15 @@ export const useMapMarkersManager = ({
   const [markersState, setMarkersState] = useState<MapMarkersState | null>(null);
   const [restoredCount, setRestoredCount] = useState(0);
 
+  // Synchronous mirror of markersState. commit/undo/redo persist OUTSIDE setState updaters
+  // (React updaters must be pure — they can be replayed or discarded), so they need the current
+  // value without waiting for a re-render. Assigned synchronously on every mutation path and
+  // re-synced by effect for externally-driven sets (zone restore).
+  const stateRef = useRef<MapMarkersState | null>(null);
+  useEffect(() => {
+    stateRef.current = markersState;
+  }, [markersState]);
+
   const activeMapData = useMemo(
     () => resolveActiveMapData(fight, markersState),
     [fight, markersState],
@@ -351,37 +515,48 @@ export const useMapMarkersManager = ({
 
     const saved = readStored()[String(zoneId)];
     if (saved) {
-      setMarkersState({
+      const restored: MapMarkersState = {
         format: saved.format,
         zoneId: saved.zoneId,
         markers: saved.markers,
         shapes: saved.shapes ?? [],
-      });
+      };
+      stateRef.current = restored;
+      setMarkersState(restored);
       setRestoredCount(saved.markers.length + (saved.shapes?.length ?? 0));
     } else {
+      stateRef.current = null;
       setMarkersState(null);
       setRestoredCount(0);
     }
   }, [zoneId]);
 
   // Single mutation gateway: snapshots history, applies the update, persists the zone slot.
+  // Persistence runs OUTSIDE setState (updaters stay pure); stateRef mirrors synchronously so
+  // back-to-back commits chain correctly without waiting for a re-render.
   const commit = useCallback(
     (updater: (prev: MapMarkersState | null) => MapMarkersState | null) => {
-      setMarkersState((prev) => {
-        const next = updater(prev);
-        if (next === prev) {
-          return prev;
-        }
+      const prev = stateRef.current;
+      const rawNext = updater(prev);
+      if (rawNext === prev) {
+        return;
+      }
+      const { state: next, truncated } = enforceCanonicalCaps(rawNext);
+      if (truncated) {
+        onErrorRef.current?.(
+          `Import trimmed to ${MAX_CANONICAL_MARKERS} markers / ${MAX_CANONICAL_SHAPES} shapes.`,
+        );
+      }
 
-        pastRef.current = [...pastRef.current.slice(-(HISTORY_LIMIT - 1)), prev];
-        futureRef.current = [];
-        setHistoryVersion((v) => v + 1);
+      pastRef.current = [...pastRef.current.slice(-(HISTORY_LIMIT - 1)), prev];
+      futureRef.current = [];
+      stateRef.current = next;
+      setMarkersState(next);
+      setHistoryVersion((v) => v + 1);
 
-        if (zoneId !== null) {
-          persistZone(next?.zoneId ?? zoneId, next);
-        }
-        return next;
-      });
+      if (zoneId !== null) {
+        persistZone(next?.zoneId ?? zoneId, next, onErrorRef.current ?? undefined);
+      }
     },
     [zoneId],
   );
@@ -392,16 +567,23 @@ export const useMapMarkersManager = ({
       try {
         // Shapes share code: replace the shapes set, KEEP existing markers.
         if (isShapeShareFormat(trimmed)) {
+          const importedZone = decodeShapesZone(trimmed);
+          // Zone invariant enforced at the boundary: a foreign-zone code used to be silently
+          // re-anchored to the current zone, committed, persisted under the wrong key, and
+          // rendered as nothing (absolute world coords). Refuse loudly instead.
+          if (zoneId !== null && importedZone !== null && importedZone !== zoneId) {
+            onErrorRef.current?.(
+              `That shapes code is for zone ${importedZone} — this fight is zone ${zoneId}. Nothing was imported.`,
+            );
+            return;
+          }
           const datas = decodeShapes(trimmed);
           if (datas.length === 0) {
             onErrorRef.current?.('No shapes found in that code.');
             return;
           }
-          const importedZone = decodeShapesZone(trimmed);
           setRestoredCount(0);
           commit((prev) => {
-            // Anchor to the CURRENT fight zone so the set persists/restores under the right key
-            // (shape vertices are absolute world coords, so a foreign-zone code just renders nothing).
             const targetZone = zoneId ?? prev?.zoneId ?? importedZone ?? 0;
             const base: MapMarkersState = prev ?? {
               format: 'elms',
@@ -413,12 +595,32 @@ export const useMapMarkersManager = ({
           return;
         }
 
-        // Markers string (M0R / Elms): replace markers, KEEP existing shapes. Anchor the slot to
-        // the current fight zone so carried-over shapes persist/restore under the right key even
-        // when the pasted string was authored for a different zone.
+        // Markers string (M0R / Elms): replace markers, KEEP existing shapes.
         const parsed = parseMarkersInput(trimmed);
+        if (zoneId !== null && parsed.zoneId !== zoneId) {
+          onErrorRef.current?.(
+            `Those markers are for zone ${parsed.zoneId} — this fight is zone ${zoneId}. Nothing was imported.`,
+          );
+          return;
+        }
+        // Decoder budgets surface here (the state itself stays a clean domain object).
+        if (parsed.truncated) {
+          onErrorRef.current?.(
+            `Import trimmed to ${MAX_CANONICAL_MARKERS} markers — the rest were dropped.`,
+          );
+        }
+        if (parsed.droppedZones?.length) {
+          onErrorRef.current?.(
+            `Markers for other zones (${parsed.droppedZones.join(', ')}) were skipped — only zone ${parsed.zoneId} was imported.`,
+          );
+        }
+        const { truncated: _truncated, droppedZones: _dropped, ...cleanParsed } = parsed;
         setRestoredCount(0);
-        commit((prev) => ({ ...parsed, zoneId: zoneId ?? parsed.zoneId, shapes: prev?.shapes }));
+        commit((prev) => ({
+          ...cleanParsed,
+          zoneId: zoneId ?? cleanParsed.zoneId,
+          shapes: prev?.shapes,
+        }));
       } catch (error) {
         onErrorRef.current?.(
           error instanceof Error ? error.message : 'Unable to decode markers string.',
@@ -577,37 +779,37 @@ export const useMapMarkersManager = ({
   );
 
   const undo = useCallback(() => {
-    setMarkersState((current) => {
-      if (pastRef.current.length === 0) {
-        return current;
-      }
-      const previous = pastRef.current[pastRef.current.length - 1];
-      pastRef.current = pastRef.current.slice(0, -1);
-      futureRef.current = [...futureRef.current, current];
-      setHistoryVersion((v) => v + 1);
+    if (pastRef.current.length === 0) {
+      return;
+    }
+    const current = stateRef.current;
+    const previous = pastRef.current[pastRef.current.length - 1];
+    pastRef.current = pastRef.current.slice(0, -1);
+    futureRef.current = [...futureRef.current, current];
+    stateRef.current = previous;
+    setMarkersState(previous);
+    setHistoryVersion((v) => v + 1);
 
-      if (zoneId !== null) {
-        persistZone(previous?.zoneId ?? zoneId, previous);
-      }
-      return previous;
-    });
+    if (zoneId !== null) {
+      persistZone(previous?.zoneId ?? zoneId, previous, onErrorRef.current ?? undefined);
+    }
   }, [zoneId]);
 
   const redo = useCallback(() => {
-    setMarkersState((current) => {
-      if (futureRef.current.length === 0) {
-        return current;
-      }
-      const next = futureRef.current[futureRef.current.length - 1];
-      futureRef.current = futureRef.current.slice(0, -1);
-      pastRef.current = [...pastRef.current, current];
-      setHistoryVersion((v) => v + 1);
+    if (futureRef.current.length === 0) {
+      return;
+    }
+    const current = stateRef.current;
+    const next = futureRef.current[futureRef.current.length - 1];
+    futureRef.current = futureRef.current.slice(0, -1);
+    pastRef.current = [...pastRef.current, current];
+    stateRef.current = next;
+    setMarkersState(next);
+    setHistoryVersion((v) => v + 1);
 
-      if (zoneId !== null) {
-        persistZone(next?.zoneId ?? zoneId, next);
-      }
-      return next;
-    });
+    if (zoneId !== null) {
+      persistZone(next?.zoneId ?? zoneId, next, onErrorRef.current ?? undefined);
+    }
   }, [zoneId]);
 
   const canUndo = useMemo(() => {
