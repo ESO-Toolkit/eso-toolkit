@@ -214,14 +214,16 @@ const SECTIONS = [
   { id: 'how-it-works', title: 'How this works' },
   { id: 'requirements', title: 'Requirements' },
   { id: 'setup', title: 'Setup' },
-  { id: 'overlay', title: 'Using the ReShade overlay' },
-  { id: 'nr-panel', title: 'The Neural Rendering add-on panel' },
-  { id: 'depth-buffer', title: 'Checking the depth buffer' },
   { id: 'verify', title: "Verify it's working" },
-  { id: 'config', title: 'Config file reference' },
+  { id: 'log-noise', title: 'Warnings you can ignore' },
   { id: 'troubleshooting', title: 'Troubleshooting: fixes by log line' },
   { id: 'performance', title: 'What it costs' },
   { id: 'frame-generation', title: 'Getting the performance back' },
+  { id: 'feeder-setup', title: 'Fallback: the two-add-on feeder path' },
+  { id: 'overlay', title: 'Using the ReShade overlay' },
+  { id: 'nr-panel', title: 'The Neural Rendering add-on panel' },
+  { id: 'depth-buffer', title: 'Checking the depth buffer' },
+  { id: 'config', title: 'Config file reference' },
   { id: 'credits', title: 'Credits and downloads' },
 ] as const;
 
@@ -514,6 +516,38 @@ const CREDITS: ReadonlyArray<RowSpec> = [
   },
 ];
 
+/**
+ * Every one of these appears on a setup confirmed to be working. They are
+ * documented because the log is noisy and each one looks alarming enough to
+ * send someone down the wrong path for an hour.
+ */
+const LOG_NOISE_ROWS: ReadonlyArray<RowSpec> = [
+  {
+    label: 'Streamline interposer not found: sl.interposer.dll',
+    value:
+      'ESO ships no Streamline modules at all. Its 2021 DLSS integration predates Streamline entirely, so there is nothing to find.',
+  },
+  {
+    label: 'streamline hook owner is active, but one or more requested hook groups are incomplete',
+    value: 'Follows directly from the line above. Same cause, no action.',
+  },
+  {
+    label: 'NVNGX parameter module is not loaded yet / NVNGX DLSS is not loaded yet',
+    value:
+      'Expected at DllMain time. The add-on loads before the driver modules do, which is the whole point of loading it early.',
+  },
+  {
+    label: 'vtable::Hook(Failed to find NVSDK_NGX_D3D11_Init_with_ProjectID)',
+    value: 'Optional export, along with three siblings. Harmless.',
+  },
+  {
+    label:
+      'cannot preserve unsupported D3D11 motion format 34; native DLSS output remains authoritative',
+    value:
+      'Fires once, usually beside "D3D11 proxy evaluation failed". This is the D3D11 proxy path declining; Neural Rendering then initialises on the D3D12 backend and runs normally. It is not the cause of a non-working setup.',
+  },
+];
+
 interface StatusSpec {
   status: string;
   meaning: string;
@@ -556,6 +590,14 @@ interface FailureSpec {
 }
 
 const FAILURES: ReadonlyArray<FailureSpec> = [
+  {
+    symptom: 'The add-on is listed in ReShade but nothing happens',
+    defaultOpen: true,
+    log: 'WARN  renodx-dlss.addon64 is not listed in ADDON.LoadFromDllMain.\n      Early DLSS hooks are not guaranteed for this session.',
+    cause:
+      'The add-on loaded too late. ESO creates a D3D12 device first, so ReShade loads add-ons during D3D12CreateDevice and hooks d3d11.dll afterwards. By the time the add-on is running, the DLSS entry points it needs are already past. It reports no error because nothing failed; it simply never got the chance.',
+    fix: 'Close ESO. ReShade rewrites ReShade.ini when the game exits, so an edit made while it is running will be thrown away. Then add LoadFromDllMain=renodx-dlss.addon64 to the [ADDON] section. You will know it worked when the log says Loading externally registered add-on "RenoDX DLSS" instead of Loading add-on from a path, and the warning is gone.',
+  },
   {
     symptom: 'CreateFeature fails immediately, or the session never opens',
     log: '[feed] CreateFeature failed 0xBAD00010 (UnsupportedParameter)\n[feed] failure: resource build\nstopped: repeated failures.\n\n[feed] NGX capabilities: SuperSampling.Available=0 NeedsUpdatedDriver=0 MinDriver=0.0\n[feed] DLSS super sampling is not available on this GPU/driver\nstopped: the D3D12/NGX session failed to start.',
@@ -860,9 +902,8 @@ export const Dlss5NeuralRenderingGuidePage: React.FC = () => {
           </Typography>
           <Typography variant="body2" sx={{ ...proseSx, mb: 2.5 }}>
             So this is a <strong>replacement</strong> job, not a from-scratch one: swap the stale
-            2.2.16 runtime for a 310.x build, then have ReShade capture the game&apos;s depth buffer
-            and re-derive the motion vectors ESO never exposes to it. Every error in this guide
-            belongs to a stage in that chain:
+            2.2.16 runtime for a 310.x build and adding one add-on that hooks the DLSS calls ESO is
+            already making. Every error in this guide belongs to a stage in that chain:
           </Typography>
 
           <PipelineDiagram />
@@ -972,8 +1013,298 @@ export const Dlss5NeuralRenderingGuidePage: React.FC = () => {
         </Box>
       </Section>
 
-      {/* ── Steps ────────────────────────────────────────────────────── */}
+      {/* ── Setup: the direct path ───────────────────────────────────
+          One add-on that hooks ESO's own DLSS. Verified working here; see the
+          feeder path further down for the older two-add-on method. */}
       <Section id="setup" index={3} title="Setup">
+        <Box sx={{ ...cardSx, p: { xs: 2.5, md: 3.5 } }}>
+          <Stack component="ol" role="list" sx={{ listStyle: 'none', p: 0, m: 0 }}>
+            <StepRow n={1} last={false} title="Find your ESO client folder">
+              <Typography variant="body2" sx={proseSx}>
+                Every file here goes in the folder that contains <code>eso64.exe</code>. On a
+                default Steam install that is:
+              </Typography>
+              <CodeBlock copyable wrap copyLabel="Copy client folder path" sx={{ mt: 1.25 }}>
+                {'steamapps\\common\\Zenimax Online\\The Elder Scrolls Online\\game\\client'}
+              </CodeBlock>
+            </StepRow>
+
+            <StepRow n={2} last={false} title="Install ReShade with add-on support">
+              <Typography variant="body2" sx={proseSx}>
+                Install ReShade <strong>6.8 or newer</strong> for <code>eso64.exe</code>, choosing
+                DirectX 10/11/12 and the build <strong>with full add-on support</strong>. The plain
+                build cannot load <code>.addon64</code> files at all. It must land as{' '}
+                <code>dxgi.dll</code> next to <code>eso64.exe</code>.
+              </Typography>
+            </StepRow>
+
+            <StepRow n={3} last={false} title="Replace the two NGX runtimes">
+              <Typography variant="body2" sx={proseSx}>
+                Put a <strong>310.x</strong> <code>nvngx_dlss.dll</code> and an{' '}
+                <code>nvngx_dlssnr.dll</code> patched for your GPU generation next to{' '}
+                <code>eso64.exe</code>. ESO bundles its own <code>nvngx_dlss.dll</code>, so you are
+                replacing a file, not adding one; back the original up first.
+              </Typography>
+              <Note>
+                This is the step that matters most. ESO&apos;s bundled runtime is 2.2.16 from 2021
+                and predates everything Neural Rendering needs.
+              </Note>
+            </StepRow>
+
+            <StepRow n={4} last={false} title="Add the add-on">
+              <Typography variant="body2" sx={proseSx}>
+                Put <code>renodx-dlss.addon64</code> next to <code>eso64.exe</code>. That is the
+                only add-on you need on this path.
+              </Typography>
+            </StepRow>
+
+            <StepRow n={5} last={false} title="Make ReShade load it early">
+              <Typography variant="body2" sx={proseSx}>
+                <strong>Close ESO first.</strong> ReShade rewrites <code>ReShade.ini</code> when the
+                game exits and will discard your edit otherwise. Then add one line to the{' '}
+                <code>[ADDON]</code> section:
+              </Typography>
+              <CodeBlock copyable wrap copyLabel="Copy the LoadFromDllMain line" sx={{ mt: 1.25 }}>
+                {'LoadFromDllMain=renodx-dlss.addon64'}
+              </CodeBlock>
+              <Note>
+                Skip this and the add-on still loads, does nothing, and reports no error. ESO
+                creates a D3D12 device first, so without this line ReShade loads the add-on too late
+                for it to install its DLSS hooks.
+              </Note>
+            </StepRow>
+
+            <StepRow n={6} last={false} title="Turn ESO's own DLSS on">
+              <Typography variant="body2" sx={proseSx}>
+                In ESO video settings set <strong>Anti-Aliasing</strong> to <strong>DLSS</strong> or{' '}
+                <strong>DLAA</strong>. DLAA runs at native resolution; DLSS upscales. This add-on
+                works by hooking the game&apos;s own DLSS, so if ESO is not using DLSS there is
+                nothing for it to attach to.
+              </Typography>
+            </StepRow>
+
+            <StepRow n={7} last title="Load into the world and wait">
+              <Typography variant="body2" sx={proseSx}>
+                Neural Rendering starts when DLSS does, not at launch. On the setup this was
+                verified on it took roughly two minutes from starting the game. Standing at the
+                character select screen will not do it.
+              </Typography>
+            </StepRow>
+          </Stack>
+        </Box>
+      </Section>
+
+      {/* ── Verification ─────────────────────────────────────────────── */}
+      <Section id="verify" index={4} title="Verify it's working">
+        <Box sx={cardSx}>
+          <Typography variant="body2" sx={{ ...proseSx, mb: 2 }}>
+            The effect is subtle and easy to imagine seeing. Trust <code>ReShade.log</code> in the
+            client folder. Load into the world, play for a minute or two, then read it.
+          </Typography>
+
+          <Typography
+            component="h3"
+            sx={{ fontWeight: W.heading, fontSize: '1.125rem', lineHeight: 1.4, mb: 1 }}
+          >
+            First, that the add-on loaded early enough
+          </Typography>
+          <Typography variant="body2" sx={{ ...proseSx, mb: 1.25 }}>
+            You want the second line, not the first. If you see the first one, step 5 has not taken
+            effect and nothing else will work.
+          </Typography>
+          <CodeBlock sx={{ mb: 2.5 }}>
+            {`Loading add-on from '...\\renodx-dlss.addon64'      <- too late
+Loading externally registered add-on "RenoDX DLSS"   <- correct`}
+          </CodeBlock>
+
+          <Typography
+            component="h3"
+            sx={{ fontWeight: W.heading, fontSize: '1.125rem', lineHeight: 1.4, mb: 1 }}
+          >
+            Then, that Neural Rendering is running
+          </Typography>
+          <CodeBlock copyable copyLabel="Copy expected NR lines" sx={{ mb: 2.5 }}>
+            {`DLSS-NR direct: backend-owned NVIDIA NGX core initialization succeeded
+DLSS-NR direct: CreateFeature(Reserved18) succeeded: performance=6 preset=1
+DLSS-NR direct: EvaluateFeature succeeded: evaluation=1
+DLSS-NR direct: EvaluateFeature succeeded: evaluation=4754`}
+          </CodeBlock>
+
+          <Callout tone="good" label="What success looks like">
+            <Typography variant="body2" sx={{ lineHeight: 1.7 }}>
+              <strong>Reserved18</strong> is the neural feature, and the <code>evaluation=</code>{' '}
+              counter has to <strong>climb</strong>. One evaluation that never increases means it
+              started and stopped. A counter in the thousands after a few minutes of play is a
+              healthy run.
+            </Typography>
+          </Callout>
+
+          <Callout tone="info" label="Give it time" sx={{ mt: 2 }}>
+            <Typography variant="body2" sx={{ lineHeight: 1.7 }}>
+              Neural Rendering initialises when DLSS does, not when the game launches. On the setup
+              this was verified on, that was roughly two minutes in. Sitting at character select
+              will not trigger it, so load into the world before deciding it has failed.
+            </Typography>
+          </Callout>
+        </Box>
+      </Section>
+
+      {/* ── Harmless warnings ────────────────────────────────────────
+          Every line here appears on a confirmed-working setup. Without this
+          section readers chase warnings that were never the problem. */}
+      <Section id="log-noise" index={5} title="Warnings you can ignore">
+        <Stack spacing={2}>
+          <Typography variant="body2" sx={proseSx}>
+            All of these appear in <code>ReShade.log</code> on a setup that is working correctly.
+            None of them is the reason Neural Rendering is not running. They are listed because the
+            log is noisy and it is easy to spend an hour on the wrong line.
+          </Typography>
+          <Box sx={cardSx}>
+            <SettingsTable rows={LOG_NOISE_ROWS} labelWidth={250} />
+          </Box>
+        </Stack>
+      </Section>
+
+      {/* ── Troubleshooting ──────────────────────────────────────────── */}
+      <Section id="troubleshooting" index={6} title="Troubleshooting: fixes by log line">
+        <Typography variant="body2" sx={{ ...proseSx, mb: 2 }}>
+          Work top to bottom. Each failure masks the ones after it.
+        </Typography>
+        <Box sx={{ ...cardSx, p: 0, overflow: 'hidden' }}>
+          {FAILURES.map((f, i) => (
+            <Accordion
+              key={f.symptom}
+              disableGutters
+              elevation={0}
+              defaultExpanded={f.defaultOpen ?? false}
+              sx={{
+                background: 'transparent',
+                '&:before': { display: 'none' },
+                borderBottom: i < FAILURES.length - 1 ? '1px solid' : 'none',
+                borderColor: 'divider',
+              }}
+            >
+              <AccordionSummary
+                expandIcon={<ExpandMore sx={{ fontSize: 18, color: 'text.disabled' }} />}
+                id={`fail-${i}-header`}
+                aria-controls={`fail-${i}-content`}
+                sx={{ px: 2, minHeight: 52, '&.Mui-expanded': { minHeight: 52 } }}
+              >
+                <Typography component="h3" sx={{ fontWeight: 620, fontSize: '0.92rem', m: 0 }}>
+                  {f.symptom}
+                </Typography>
+              </AccordionSummary>
+              <AccordionDetails id={`fail-${i}-content`} sx={{ px: 2, pt: 0, pb: 2 }}>
+                <MicroLabel>What the log says</MicroLabel>
+                <CodeBlock copyable copyLabel="Copy log line" sx={{ mb: 1.75 }}>
+                  {f.log}
+                </CodeBlock>
+                <MicroLabel>Why</MicroLabel>
+                <Typography variant="body2" sx={{ ...proseSx, mb: 1.75 }}>
+                  {f.cause}
+                </Typography>
+                <MicroLabel>Fix</MicroLabel>
+                <Typography variant="body2" sx={proseSx}>
+                  {f.fix}
+                </Typography>
+              </AccordionDetails>
+            </Accordion>
+          ))}
+        </Box>
+      </Section>
+
+      {/* ── Performance ──────────────────────────────────────────────── */}
+      <Section id="performance" index={7} title="What it costs">
+        <Box sx={cardSx}>
+          <Typography variant="body2" sx={{ ...proseSx, mb: 2 }}>
+            Neural Rendering is not free. Measured at 1440p on an RTX 4070 Ti Super, from the
+            feeder&apos;s own frame accounting:
+          </Typography>
+          <CodeBlock sx={{ mb: 2 }}>
+            {`before NR:  feed CPU  0.55 ms/frame | 143.9 fps | feed is  8% of the frame
+after NR:   feed CPU 11.82 ms/frame |  63.9 fps | feed is 75% of the frame`}
+          </CodeBlock>
+          <Typography variant="body2" sx={proseSx}>
+            Roughly half the framerate. NR runs inference on every frame, so some of that is
+            unavoidable, but try a lighter <strong>NR Preset</strong> and lower{' '}
+            <strong>NR Intensity</strong> before writing it off. The feeder prints its own cost
+            every 600 frames, so measure on your own card. These are real frames, before any{' '}
+            <Box
+              component="a"
+              href="#frame-generation"
+              sx={{ color: accentText, fontWeight: W.semi, textDecoration: 'underline' }}
+            >
+              frame generation
+            </Box>
+            .
+          </Typography>
+        </Box>
+      </Section>
+
+      {/* ── Frame generation ───────────────────────────────────────── */}
+      <Section id="frame-generation" index={8} title="Getting the performance back">
+        <Stack spacing={2}>
+          <Typography variant="body2" sx={proseSx}>
+            Neural Rendering costs roughly half the framerate, and frame generation is the answer.
+            The two compose unusually well here, for a structural reason worth understanding.
+          </Typography>
+
+          <Callout tone="info" label="Why this pairs well">
+            <Typography variant="body2">
+              Neural Rendering runs inside ReShade, before the frame is presented. Frame generation
+              interpolates after. So NR only ever processes real frames, and the generated ones
+              inherit its output for free. Frame generation does not multiply the cost of NR.
+            </Typography>
+          </Callout>
+
+          <Box sx={cardSx}>
+            <Typography
+              component="h3"
+              sx={{ fontWeight: W.heading, fontSize: '1.125rem', lineHeight: 1.4, mb: 1.5 }}
+            >
+              Your options
+            </Typography>
+            <SettingsTable rows={FRAME_GEN} labelWidth={190} />
+          </Box>
+
+          <Callout tone="caution" label="Your FPS counter will not show the extra frames">
+            <Typography variant="body2">
+              ReShade&apos;s counter and the feeder&apos;s own log both count real frames, upstream
+              of anything the driver inserts. After enabling Smooth Motion the log keeps reporting
+              the same number while the game visibly runs smoother. Nothing is wrong. To measure the
+              real output you need something downstream of the driver, such as NVIDIA&apos;s overlay
+              or FrameView.
+            </Typography>
+          </Callout>
+
+          <Box sx={cardSx}>
+            <Typography
+              component="h3"
+              sx={{ fontWeight: W.heading, fontSize: '1.125rem', lineHeight: 1.4, mb: 1 }}
+            >
+              What it costs you back
+            </Typography>
+            <Box component="ul" sx={{ pl: 2.5, m: 0, '& li': { mb: 0.6 } }}>
+              <Typography component="li" variant="body2" sx={proseSx}>
+                <strong>Latency.</strong> Frame generation adds it. Irrelevant overland, a real
+                trade for trial weaving and PvP. Judge it on your own play, not on a screenshot.
+              </Typography>
+              <Typography component="li" variant="body2" sx={proseSx}>
+                <strong>UI artifacts.</strong> Driver-level generation has no UI masking, and
+                ESO&apos;s interface is dense and mostly static. Nameplates and floating combat text
+                are where smearing shows up first, so look there before deciding it is clean.
+              </Typography>
+              <Typography component="li" variant="body2" sx={proseSx}>
+                <strong>Headroom.</strong> Generation wants some. With G-Sync or FreeSync, cap the
+                framerate below your refresh rate rather than letting it run free.
+              </Typography>
+            </Box>
+          </Box>
+        </Stack>
+      </Section>
+
+      {/* ── Steps ────────────────────────────────────────────────────── */}
+      <Section id="feeder-setup" index={9} title="Fallback: the two-add-on feeder path">
         <Box sx={{ ...cardSx, p: { xs: 2.5, md: 3.5 } }}>
           <Stack component="ol" role="list" sx={{ listStyle: 'none', p: 0, m: 0 }}>
             <StepRow n={1} last={false} title="Find your ESO client folder">
@@ -1183,7 +1514,7 @@ export const Dlss5NeuralRenderingGuidePage: React.FC = () => {
       </Section>
 
       {/* ── Overlay walkthrough ──────────────────────────────────────── */}
-      <Section id="overlay" index={4} title="Using the ReShade overlay">
+      <Section id="overlay" index={10} title="Using the ReShade overlay">
         <Stack spacing={2}>
           <Box sx={cardSx}>
             <Typography variant="body2" sx={{ ...proseSx, mb: 2 }}>
@@ -1315,7 +1646,7 @@ export const Dlss5NeuralRenderingGuidePage: React.FC = () => {
       </Section>
 
       {/* ── NR add-on panel ──────────────────────────────────────────── */}
-      <Section id="nr-panel" index={5} title="The Neural Rendering add-on panel">
+      <Section id="nr-panel" index={11} title="The Neural Rendering add-on panel">
         <Stack spacing={2}>
           <Typography variant="body2" sx={proseSx}>
             Overlay → <strong>Add-ons</strong> → <strong>DLSS 5 Neural Rendering</strong>. Read the
@@ -1404,7 +1735,7 @@ export const Dlss5NeuralRenderingGuidePage: React.FC = () => {
       </Section>
 
       {/* ── Depth buffer ─────────────────────────────────────────────── */}
-      <Section id="depth-buffer" index={6} title="Checking the depth buffer">
+      <Section id="depth-buffer" index={12} title="Checking the depth buffer">
         <Box sx={cardSx}>
           <Typography variant="body2" sx={{ ...proseSx, mb: 2 }}>
             The feeder needs <strong>scene depth</strong>. ESO presents several depth buffers and
@@ -1461,52 +1792,8 @@ export const Dlss5NeuralRenderingGuidePage: React.FC = () => {
         </Box>
       </Section>
 
-      {/* ── Verification ─────────────────────────────────────────────── */}
-      <Section id="verify" index={7} title="Verify it's working">
-        <Box sx={cardSx}>
-          <Typography variant="body2" sx={{ ...proseSx, mb: 2 }}>
-            The effect is subtle and easy to imagine seeing. Trust the logs. Both live in the client
-            folder: play for 30 seconds, then read them.
-          </Typography>
-
-          <Typography
-            component="h3"
-            sx={{ fontWeight: W.heading, fontSize: '1.125rem', lineHeight: 1.4, mb: 1 }}
-          >
-            dlss5-feed.log — DLSS itself is alive
-          </Typography>
-          <CodeBlock copyable copyLabel="Copy expected feeder lines" sx={{ mb: 2.5 }}>
-            {`NGX capabilities: SuperSampling.Available=1 NeedsUpdatedDriver=0 MinDriver=470.0
-feature ready: 2560x1440 DLAA, flags=66 (SDR MVLowRes AutoExposure)
-frame 1 delivered (2560x1440, reset=1)`}
-          </CodeBlock>
-
-          <Typography
-            component="h3"
-            sx={{ fontWeight: W.heading, fontSize: '1.125rem', lineHeight: 1.4, mb: 1 }}
-          >
-            ReShade.log — Neural Rendering is actually evaluating
-          </Typography>
-          <CodeBlock copyable copyLabel="Copy expected NR lines" sx={{ mb: 2.5 }}>
-            {`signed DLSSNR 310.8.0 D3D12 runtime initialized
-NGX feature create intercepted: feature=18 (DLSSNR/reserved-18), slot=0
-feature 18 created via the signed snippet after DLSS/DLAA
-inline feature 18 evaluation succeeded (count=60, ...)`}
-          </CodeBlock>
-
-          <Callout tone="good" label="What success looks like">
-            <Typography variant="body2" sx={{ lineHeight: 1.7 }}>
-              <strong>feature 18</strong> is the one that matters. <code>feature=1</code> is
-              ordinary DLSS/DLAA. If that is all you ever see, Neural Rendering is not running. The{' '}
-              <code>count=</code> value must climb across frames; a count stuck at 1 means it
-              evaluated once and stopped.
-            </Typography>
-          </Callout>
-        </Box>
-      </Section>
-
       {/* ── Config reference ─────────────────────────────────────────── */}
-      <Section id="config" index={8} title="Config file reference">
+      <Section id="config" index={13} title="Config file reference">
         <Box sx={cardSx}>
           <Typography variant="body2" sx={{ ...proseSx, mb: 2 }}>
             The overlay writes these for you. They are here so you can diff a working setup against
@@ -1565,148 +1852,10 @@ flags=-1           ; -1 = auto`}
         </Box>
       </Section>
 
-      {/* ── Troubleshooting ──────────────────────────────────────────── */}
-      <Section id="troubleshooting" index={9} title="Troubleshooting: fixes by log line">
-        <Typography variant="body2" sx={{ ...proseSx, mb: 2 }}>
-          Work top to bottom. Each failure masks the ones after it.
-        </Typography>
-        <Box sx={{ ...cardSx, p: 0, overflow: 'hidden' }}>
-          {FAILURES.map((f, i) => (
-            <Accordion
-              key={f.symptom}
-              disableGutters
-              elevation={0}
-              defaultExpanded={f.defaultOpen ?? false}
-              sx={{
-                background: 'transparent',
-                '&:before': { display: 'none' },
-                borderBottom: i < FAILURES.length - 1 ? '1px solid' : 'none',
-                borderColor: 'divider',
-              }}
-            >
-              <AccordionSummary
-                expandIcon={<ExpandMore sx={{ fontSize: 18, color: 'text.disabled' }} />}
-                id={`fail-${i}-header`}
-                aria-controls={`fail-${i}-content`}
-                sx={{ px: 2, minHeight: 52, '&.Mui-expanded': { minHeight: 52 } }}
-              >
-                <Typography component="h3" sx={{ fontWeight: 620, fontSize: '0.92rem', m: 0 }}>
-                  {f.symptom}
-                </Typography>
-              </AccordionSummary>
-              <AccordionDetails id={`fail-${i}-content`} sx={{ px: 2, pt: 0, pb: 2 }}>
-                <MicroLabel>What the log says</MicroLabel>
-                <CodeBlock copyable copyLabel="Copy log line" sx={{ mb: 1.75 }}>
-                  {f.log}
-                </CodeBlock>
-                <MicroLabel>Why</MicroLabel>
-                <Typography variant="body2" sx={{ ...proseSx, mb: 1.75 }}>
-                  {f.cause}
-                </Typography>
-                <MicroLabel>Fix</MicroLabel>
-                <Typography variant="body2" sx={proseSx}>
-                  {f.fix}
-                </Typography>
-              </AccordionDetails>
-            </Accordion>
-          ))}
-        </Box>
-      </Section>
-
-      {/* ── Performance ──────────────────────────────────────────────── */}
-      <Section id="performance" index={10} title="What it costs">
-        <Box sx={cardSx}>
-          <Typography variant="body2" sx={{ ...proseSx, mb: 2 }}>
-            Neural Rendering is not free. Measured at 1440p on an RTX 4070 Ti Super, from the
-            feeder&apos;s own frame accounting:
-          </Typography>
-          <CodeBlock sx={{ mb: 2 }}>
-            {`before NR:  feed CPU  0.55 ms/frame | 143.9 fps | feed is  8% of the frame
-after NR:   feed CPU 11.82 ms/frame |  63.9 fps | feed is 75% of the frame`}
-          </CodeBlock>
-          <Typography variant="body2" sx={proseSx}>
-            Roughly half the framerate. NR runs inference on every frame, so some of that is
-            unavoidable, but try a lighter <strong>NR Preset</strong> and lower{' '}
-            <strong>NR Intensity</strong> before writing it off. The feeder prints its own cost
-            every 600 frames, so measure on your own card. These are real frames, before any{' '}
-            <Box
-              component="a"
-              href="#frame-generation"
-              sx={{ color: accentText, fontWeight: W.semi, textDecoration: 'underline' }}
-            >
-              frame generation
-            </Box>
-            .
-          </Typography>
-        </Box>
-      </Section>
-
-      {/* ── Frame generation ───────────────────────────────────────── */}
-      <Section id="frame-generation" index={11} title="Getting the performance back">
-        <Stack spacing={2}>
-          <Typography variant="body2" sx={proseSx}>
-            Neural Rendering costs roughly half the framerate, and frame generation is the answer.
-            The two compose unusually well here, for a structural reason worth understanding.
-          </Typography>
-
-          <Callout tone="info" label="Why this pairs well">
-            <Typography variant="body2">
-              Neural Rendering runs inside ReShade, before the frame is presented. Frame generation
-              interpolates after. So NR only ever processes real frames, and the generated ones
-              inherit its output for free. Frame generation does not multiply the cost of NR.
-            </Typography>
-          </Callout>
-
-          <Box sx={cardSx}>
-            <Typography
-              component="h3"
-              sx={{ fontWeight: W.heading, fontSize: '1.125rem', lineHeight: 1.4, mb: 1.5 }}
-            >
-              Your options
-            </Typography>
-            <SettingsTable rows={FRAME_GEN} labelWidth={190} />
-          </Box>
-
-          <Callout tone="caution" label="Your FPS counter will not show the extra frames">
-            <Typography variant="body2">
-              ReShade&apos;s counter and the feeder&apos;s own log both count real frames, upstream
-              of anything the driver inserts. After enabling Smooth Motion the log keeps reporting
-              the same number while the game visibly runs smoother. Nothing is wrong. To measure the
-              real output you need something downstream of the driver, such as NVIDIA&apos;s overlay
-              or FrameView.
-            </Typography>
-          </Callout>
-
-          <Box sx={cardSx}>
-            <Typography
-              component="h3"
-              sx={{ fontWeight: W.heading, fontSize: '1.125rem', lineHeight: 1.4, mb: 1 }}
-            >
-              What it costs you back
-            </Typography>
-            <Box component="ul" sx={{ pl: 2.5, m: 0, '& li': { mb: 0.6 } }}>
-              <Typography component="li" variant="body2" sx={proseSx}>
-                <strong>Latency.</strong> Frame generation adds it. Irrelevant overland, a real
-                trade for trial weaving and PvP. Judge it on your own play, not on a screenshot.
-              </Typography>
-              <Typography component="li" variant="body2" sx={proseSx}>
-                <strong>UI artifacts.</strong> Driver-level generation has no UI masking, and
-                ESO&apos;s interface is dense and mostly static. Nameplates and floating combat text
-                are where smearing shows up first, so look there before deciding it is clean.
-              </Typography>
-              <Typography component="li" variant="body2" sx={proseSx}>
-                <strong>Headroom.</strong> Generation wants some. With G-Sync or FreeSync, cap the
-                framerate below your refresh rate rather than letting it run free.
-              </Typography>
-            </Box>
-          </Box>
-        </Stack>
-      </Section>
-
       {/* ── Credits ──────────────────────────────────────────────────
           None of this stack is ours. Naming the authors is basic courtesy and
           also gives readers a legitimate trail without us mirroring binaries. */}
-      <Section id="credits" index={12} title="Credits and downloads">
+      <Section id="credits" index={14} title="Credits and downloads">
         <Box sx={cardSx}>
           <Typography variant="body2" sx={{ ...proseSx, mb: 2 }}>
             This guide documents other people&apos;s work. Everything below is theirs, not ours.
@@ -1731,7 +1880,6 @@ after NR:   feed CPU 11.82 ms/frame |  63.9 fps | feed is 75% of the frame`}
           </Callout>
         </Box>
       </Section>
-
       {/* ── Footer CTA ───────────────────────────────────────────────── */}
       <Box sx={{ ...cardSx, textAlign: 'center' }}>
         <Typography sx={{ fontWeight: W.heading, fontSize: '1.1rem', lineHeight: 1.4, mb: 0.5 }}>
