@@ -208,7 +208,11 @@ export const KeyboardHelpPanel: React.FC<KeyboardHelpPanelProps> = ({ open, onCl
                     sx={{
                       fontSize: '0.72rem',
                       lineHeight: 1.5,
-                      color: 'rgba(226, 232, 240, 0.82)',
+                      // Themed, NOT the old fixed pale slate: once this panel moved onto
+                      // overlayPanelSurface it became a near-white surface in light mode, and a
+                      // hardcoded `rgba(226,232,240,0.82)` left the descriptions almost invisible
+                      // against it. The header and key chips already derive from the palette.
+                      color: theme.palette.text.primary,
                     }}
                   >
                     {label}
@@ -221,8 +225,11 @@ export const KeyboardHelpPanel: React.FC<KeyboardHelpPanelProps> = ({ open, onCl
             sx={{
               display: 'block',
               mt: 1.25,
-              fontSize: '0.66rem',
-              color: 'rgba(226, 232, 240, 0.45)',
+              fontSize: LABEL_FONT_SIZE,
+              // Same reasoning as the row descriptions above — themed rather than a fixed pale
+              // slate that only worked on the old always-dark box. `text.secondary` keeps this
+              // footnote visibly quieter than the shortcut rows in both palette modes.
+              color: theme.palette.text.secondary,
             }}
           >
             Press H to toggle this help

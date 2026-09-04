@@ -61,7 +61,16 @@ export const ReplayGestureHint: React.FC<ReplayGestureHintProps> = ({ active, bo
   const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    if (!active || dismissedRef.current || typeof window === 'undefined') {
+    // Going inactive (marker-edit mode arming mid-hint) must HIDE a hint that is already on
+    // screen, not just cancel its dismissal timer. Returning early with `show` still true left the
+    // gesture legend up indefinitely next to the marker-edit legend — exactly the overlap `active`
+    // exists to prevent — until marker mode was exited and a fresh timer completed.
+    if (!active) {
+      setShow(false);
+      return;
+    }
+
+    if (dismissedRef.current || typeof window === 'undefined') {
       return;
     }
 
@@ -102,7 +111,10 @@ export const ReplayGestureHint: React.FC<ReplayGestureHintProps> = ({ active, bo
           // the arena" case overlayPillSurface exists for.
           ...overlayPillSurface(theme),
           pointerEvents: 'none',
-          whiteSpace: 'nowrap',
+          // No `nowrap`: at 320 CSS px — a supported phone width — the full sentence is wider than
+          // the max-width cap, and a non-wrapping pill just overflows and gets clipped by the
+          // replay's overflow-hidden container, so part of a one-time onboarding message would be
+          // unreadable on exactly the devices it is written for. Let it run to a second line.
           maxWidth: 'calc(100% - 32px)',
           textAlign: 'center',
           // Short-lived overlay — must beat the persistent panels, matching ReplayZoomHint's rung.

@@ -52,4 +52,17 @@ describe('ReplayGestureHint', () => {
     render(<ReplayGestureHint active bottomOffset={140} />);
     expect(screen.queryByText(/Drag: rotate/)).not.toBeInTheDocument();
   });
+  it('hides immediately when it goes inactive mid-hint', () => {
+    // Marker-edit mode arming during the visible window must take the legend away, not merely
+    // cancel its dismissal timer — otherwise it sits on screen next to the marker-edit legend.
+    const { rerender } = render(<ReplayGestureHint active bottomOffset={140} />);
+    expect(screen.getByText(/Drag: rotate/)).toBeInTheDocument();
+
+    rerender(<ReplayGestureHint active={false} bottomOffset={140} />);
+    act(() => {
+      jest.advanceTimersByTime(600);
+    });
+
+    expect(screen.queryByText(/Drag: rotate/)).not.toBeInTheDocument();
+  });
 });
