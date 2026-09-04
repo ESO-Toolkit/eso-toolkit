@@ -11,6 +11,9 @@
  * @module PlaybackControls
  */
 
+import FullscreenIcon from '@mui/icons-material/Fullscreen';
+import FullscreenExitIcon from '@mui/icons-material/FullscreenExit';
+import HelpOutlineIcon from '@mui/icons-material/HelpOutlineOutlined';
 import KeyboardArrowDown from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUp from '@mui/icons-material/KeyboardArrowUp';
 import KeyboardDoubleArrowLeftRounded from '@mui/icons-material/KeyboardDoubleArrowLeftRounded';
@@ -29,6 +32,7 @@ import {
 import React from 'react';
 
 import { usePrefersReducedMotion } from '../../../hooks/usePrefersReducedMotion';
+import type { ReplayQualityPreset } from '../../../hooks/useReplayPrefs';
 import { useTimelineMarkers } from '../../../hooks/useTimelineMarkers';
 import { TRANSPORT_SPACING, TRANSPORT_MOTION, transportSurface } from '../constants/replayDesign';
 import type { TrialTimeline as TrialTimelineModel } from '../trial_chapters/trialTimeline';
@@ -39,6 +43,7 @@ import { LiveScrubRail } from './LiveScrubRail';
 import { LiveTrialStrip } from './LiveTrialStrip';
 import { PlaybackButtons } from './PlaybackButtons';
 import { ProgressHairline } from './ProgressHairline';
+import { ReplayDisplaySettingsMenu } from './ReplayDisplaySettingsMenu';
 import { ShareButton } from './ShareButton';
 import { SpeedSelector } from './SpeedSelector';
 import { ContextBadge, LoopChip } from './TimelineSlider';
@@ -133,6 +138,36 @@ interface PlaybackControlsProps {
   isMobile?: boolean;
   /** The whole-trial layer (mini-map, autoplay, chapters) for multi-segment runs. */
   trial?: TransportTrial;
+
+  // --- Display settings + always-visible affordances -----------------------------------------
+  // Consolidated here from Arena3D's old bottom-right floating button stack (help, name tags,
+  // quality menu, fullscreen, locked-stats toggle): five identical dark circles hardcoding their
+  // own `bottom` offset, growing every time a control was added. Name tags / quality / stats now
+  // live behind one settings popover (ReplayDisplaySettingsMenu, a port of the mobile Settings
+  // sheet's "Display" grouping); fullscreen and help join them here as the two remaining
+  // always-visible affordances. All are optional so the component still renders with none of them
+  // (e.g. a future caller that doesn't need the desktop chrome) — FightReplay3D always supplies them.
+  /** Name-tag toggle (N key) — surfaced in the settings popover. */
+  namesEnabled?: boolean;
+  onToggleNames?: () => void;
+  /** Replay-quality preset (Auto/High/Performance/Barebones) — surfaced in the settings popover. */
+  qualityPreset?: ReplayQualityPreset;
+  onQualityPresetChange?: (preset: ReplayQualityPreset) => void;
+  /** Locked-player stats toggle (J key) — the settings popover only shows this row while `following`. */
+  statsPanelEnabled?: boolean;
+  onToggleStats?: () => void;
+  /** Whether the camera is currently locked onto an actor (gates the stats row, as Arena3D did). */
+  following?: boolean;
+  /** Keyboard-help panel open state (owned by FightReplay3D) — drives this button's visibility
+   *  (hidden while the panel itself is open, matching the old persistent-affordance behavior) and
+   *  its `aria-expanded`. */
+  showKeyboardHelp?: boolean;
+  onToggleKeyboardHelp?: () => void;
+  /** Fullscreen toggle for the whole replay block (F key) — rendered far-right, as in every video player. */
+  onToggleFullscreen?: () => void;
+  /** Portal target for the settings popover so it survives native fullscreen (mirrors the trial
+   *  chapters popover's `portalContainer`). */
+  portalContainer?: () => HTMLElement | null;
 }
 
 /**
@@ -186,6 +221,17 @@ const PlaybackControlsComponent: React.FC<PlaybackControlsProps> = ({
   onToggleCollapse,
   isMobile = false,
   trial,
+  namesEnabled,
+  onToggleNames,
+  qualityPreset,
+  onQualityPresetChange,
+  statsPanelEnabled,
+  onToggleStats,
+  following = false,
+  showKeyboardHelp = false,
+  onToggleKeyboardHelp,
+  onToggleFullscreen,
+  portalContainer,
 }) => {
   // Mobile "more" disclosure — Speed + Share live in a floating popover so opening them never
   // grows the transport (which would overlap the player panel / boss-health / control cluster).
@@ -551,6 +597,38 @@ const PlaybackControlsComponent: React.FC<PlaybackControlsProps> = ({
                 timeRef={timeRef}
               />
             )}
+            {/* Display settings — name tags / player stats / replay quality, consolidated behind
+                one gear (see the props doc above for why these moved out of Arena3D). Desktop-only:
+                the mobile Settings sheet already covers this same ground. */}
+            {!isMobile && namesEnabled != null && onToggleNames && onQualityPresetChange && (
+              <ReplayDisplaySettingsMenu
+                namesEnabled={namesEnabled}
+                onToggleNames={onToggleNames}
+                qualityPreset={qualityPreset ?? 'auto'}
+                onQualityPresetChange={onQualityPresetChange}
+                showStatsRow={following}
+                statsPanelEnabled={!!statsPanelEnabled}
+                onToggleStats={onToggleStats ?? (() => {})}
+                portalContainer={portalContainer}
+              />
+            )}
+
+            {/* Persistent help affordance — re-opens the keyboard-help panel once it auto-hides.
+                Hidden while the panel itself is open (its own close control takes over), mirroring
+                the old floating button. Desktop-only: no keyboard help on touch. */}
+            {!isMobile && onToggleKeyboardHelp && !showKeyboardHelp && (
+              <Tooltip title="Keyboard controls (H)">
+                <IconButton
+                  aria-label="Show keyboard controls"
+                  size="small"
+                  onClick={onToggleKeyboardHelp}
+                  sx={{ color: 'text.secondary', '&:hover': { color: 'text.primary' } }}
+                >
+                  <HelpOutlineIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            )}
+
             {onToggleCollapse && (
               <Tooltip title="Collapse controls (C)">
                 <IconButton
@@ -560,6 +638,27 @@ const PlaybackControlsComponent: React.FC<PlaybackControlsProps> = ({
                   sx={{ color: 'text.secondary', '&:hover': { color: 'text.primary' } }}
                 >
                   <KeyboardArrowDown fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            )}
+
+            {/* Fullscreen — far-right, as in every video player. The last remaining always-visible
+                affordance from the old floating stack; mirrors the F key. Desktop-only: mobile
+                expands via the preview's "Tap to explore" and exits via the mobile shell's Close. */}
+            {!isMobile && onToggleFullscreen && (
+              <Tooltip title={isFullscreen ? 'Exit fullscreen (F)' : 'Fullscreen (F)'}>
+                <IconButton
+                  aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+                  aria-pressed={isFullscreen}
+                  size="small"
+                  onClick={onToggleFullscreen}
+                  sx={{ color: 'text.secondary', '&:hover': { color: 'text.primary' } }}
+                >
+                  {isFullscreen ? (
+                    <FullscreenExitIcon fontSize="small" />
+                  ) : (
+                    <FullscreenIcon fontSize="small" />
+                  )}
                 </IconButton>
               </Tooltip>
             )}

@@ -17,8 +17,7 @@ import { alpha } from '@mui/material/styles';
 import React, { useState } from 'react';
 
 import type { ReplayQualityPreset } from '../../../hooks/useReplayPrefs';
-
-import { QUALITY_PRESET_LABEL } from './ReplayQualityMenu';
+import { QUALITY_PRESET_LABEL } from '../constants/qualityPresets';
 
 /**
  * Touch controls for the mobile pseudo-fullscreen replay overlay.

@@ -67,6 +67,16 @@ const COLOR_PICKER_SWATCHES: string[] = [
   PLAYER_PATH_COLORS.amber,
 ];
 
+/**
+ * Idle time (ms) before the desktop panel auto-collapses to just its header row.
+ *
+ * The roster is the biggest piece of chrome over the arena, and most of the time it is opened to
+ * flip a couple of toggles and then left sitting on top of the fight. So it now folds itself away
+ * once the pointer has been off it for a beat: hovering it expands it again, and clicking the
+ * header pins it open (no more auto-collapse) for users who want it permanently on screen.
+ */
+const AUTO_COLLAPSE_MS = 6000;
+
 interface PlayerListPanelProps {
   /** Player actor IDs to list (derived from the position lookup). */
   playerIds: number[];
@@ -99,6 +109,22 @@ interface PlayerListPanelProps {
   isMobile?: boolean;
   /** Dismiss the panel (mobile bottom sheet gets an explicit close button wired to this). */
   onClose?: () => void;
+  /**
+   * Mount already collapsed (desktop only). Arena3D passes this whenever the roster is on screen
+   * because it was simply the default at mount rather than because the user asked for it: opening
+   * expanded and then folding away on the idle timer a few seconds later reads as a glitch, not as
+   * declutter. An explicit user toggle passes `false` so the panel opens ready to use.
+   */
+  startCollapsed?: boolean;
+  /**
+   * Shared pointer-idle "chrome visible" signal (owned by FightReplay3D's fullscreen cinema
+   * auto-hide — the same clock that fades the transport bar). When Arena3D forwards a real
+   * boolean (only while fullscreen), this panel's collapse is driven by that signal instead of its
+   * own independent timer, so it fades in lockstep with the bar rather than on its own clock.
+   * Left `undefined` (the default — and what every caller outside fullscreen, and every test,
+   * passes) the panel falls back to its original standalone idle timer below.
+   */
+  chromeVisible?: boolean;
 }
 
 interface PlayerRowInfo {
@@ -131,18 +157,61 @@ export const PlayerListPanel: React.FC<PlayerListPanelProps> = ({
   reservedInset = TRANSPORT_RESERVED,
   isMobile = false,
   onClose,
+  chromeVisible,
+  startCollapsed = false,
 }) => {
   // On mobile the touch control cluster docks above the transport, so the panel must stop higher.
   // Fold that extra band into the reserve used by the height caps below (desktop unchanged).
   const MOBILE_CLUSTER_BAND = 72;
   const effectiveReserved = isMobile ? reservedInset + MOBILE_CLUSTER_BAND : reservedInset;
   const theme = useTheme();
-  const [collapsed, setCollapsed] = useState(false);
+  // `startCollapsed` is honored on desktop only: the mobile bottom sheet has no collapse control
+  // in its header, so mounting it collapsed would strand the user with an empty sheet they cannot
+  // open. (Mobile also defaults the HUD to closed, so it only ever appears by explicit request.)
+  const [collapsed, setCollapsed] = useState(startCollapsed && !isMobile);
+  // Auto-collapse bookkeeping (desktop only — the mobile sheet is an explicit, dismissable surface).
+  // `pinned` latches on the first header click: an explicit expand/collapse is the user's decision
+  // and must stick.
+  const [pinned, setPinned] = useState(false);
+  const [hovered, setHovered] = useState(false);
 
   // The player whose color picker is open, plus its anchor element for the popover.
   const [colorPicker, setColorPicker] = useState<{ id: number; anchorEl: HTMLElement } | null>(
     null,
   );
+
+  // Fold the panel away after an idle beat. Suppressed while the pointer is over it, while the
+  // color picker popover is open (the pointer is outside the panel then, but the user is mid-task),
+  // and once the user has pinned it.
+  const autoCollapses = !isMobile && !pinned;
+
+  // DRIVER 1 — shared chrome-visibility signal (fullscreen cinema mode). When Arena3D forwards a
+  // real `chromeVisible` boolean, mirror it directly instead of running an independent timer: this
+  // is what makes the panel fade in lockstep with the transport bar rather than on its own clock
+  // that could (and did) drift out of sync with the bar's own hide/reveal. Still respects hover
+  // (re-expand) and pin (never collapse) exactly as the standalone timer below does.
+  useEffect(() => {
+    if (chromeVisible === undefined) return;
+    if (!autoCollapses || hovered || colorPicker) return;
+    setCollapsed(!chromeVisible);
+  }, [chromeVisible, autoCollapses, hovered, colorPicker]);
+
+  // DRIVER 2 — the panel's OWN idle timer, used whenever `chromeVisible` is undefined: outside
+  // fullscreen (there's no cinema auto-hide to piggyback on there) and in every standalone render,
+  // including this file's own tests, none of which pass `chromeVisible`. This is the original
+  // idle-declutter behavior from f84ba678, unchanged.
+  useEffect(() => {
+    if (chromeVisible !== undefined) return;
+    if (!autoCollapses || collapsed || hovered || colorPicker) return;
+    const timer = window.setTimeout(() => setCollapsed(true), AUTO_COLLAPSE_MS);
+    return () => window.clearTimeout(timer);
+  }, [chromeVisible, autoCollapses, collapsed, hovered, colorPicker]);
+
+  // Hovering an auto-collapsed panel brings the roster straight back — no click needed.
+  const handlePointerEnter = useCallback(() => {
+    setHovered(true);
+    if (autoCollapses) setCollapsed(false);
+  }, [autoCollapses]);
 
   // Resolve names + role colors once per player-set change (both are stable for the fight). The
   // role color is the figure's DEFAULT body color; an override (read live below) wins when set.
@@ -167,7 +236,9 @@ export const PlayerListPanel: React.FC<PlayerListPanelProps> = ({
 
   // Isolated rAF loop: live health straight to the DOM, no React re-render per frame.
   useEffect(() => {
-    if (!lookup) return;
+    // Collapsed = the rows are hidden, so the per-frame health writes would be pure waste over the
+    // live WebGL canvas. The loop restarts (and repaints every bar) on expand.
+    if (!lookup || collapsed) return;
     let raf = 0;
     const tick = (): void => {
       const currentTime = timeRef.current;
@@ -183,7 +254,7 @@ export const PlayerListPanel: React.FC<PlayerListPanelProps> = ({
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [lookup, timeRef, players, theme]);
+  }, [lookup, timeRef, players, theme, collapsed]);
 
   const setHealthRef = useMemo(() => {
     const cache = new Map<number, (el: HTMLDivElement | null) => void>();
@@ -211,8 +282,18 @@ export const PlayerListPanel: React.FC<PlayerListPanelProps> = ({
 
   if (players.length === 0) return null;
 
+  // Header affordance copy: advertise the auto-collapse (and that clicking opts out of it) until
+  // the user has pinned the panel, after which it is a plain expand/collapse toggle.
+  const headerHint = autoCollapses
+    ? 'Click to keep open (auto-collapses when idle)'
+    : collapsed
+      ? 'Expand player list'
+      : 'Collapse player list';
+
   return (
     <Box
+      onPointerEnter={isMobile ? undefined : handlePointerEnter}
+      onPointerLeave={isMobile ? undefined : () => setHovered(false)}
       sx={{
         position: 'absolute',
         // Mobile = a bottom sheet (full-width, docked just above the transport) so it stops fighting
@@ -294,8 +375,12 @@ export const PlayerListPanel: React.FC<PlayerListPanelProps> = ({
       ) : (
         <Box
           component="button"
-          onClick={() => setCollapsed((c) => !c)}
+          onClick={() => {
+            setPinned(true);
+            setCollapsed((c) => !c);
+          }}
           aria-expanded={!collapsed}
+          title={headerHint}
           sx={{
             display: 'flex',
             alignItems: 'center',

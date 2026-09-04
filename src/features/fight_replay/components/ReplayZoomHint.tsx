@@ -1,5 +1,7 @@
-import { Box, Fade } from '@mui/material';
+import { Box, Fade, useTheme } from '@mui/material';
 import { useEffect, useRef, useState } from 'react';
+
+import { REPLAY_Z, overlayPillSurface } from '../constants/replayDesign';
 
 /**
  * One-time "Ctrl + scroll to zoom" hint for the replay canvas.
@@ -26,6 +28,7 @@ function alreadyDismissed(): boolean {
 }
 
 export const ReplayZoomHint: React.FC = () => {
+  const theme = useTheme();
   const [show, setShow] = useState(false);
   const dismissedRef = useRef(alreadyDismissed());
   const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -76,16 +79,21 @@ export const ReplayZoomHint: React.FC = () => {
           transform: 'translateX(-50%)',
           px: 1.75,
           py: 0.75,
-          borderRadius: 2,
           fontSize: 13,
           fontWeight: 500,
-          color: 'white',
-          backgroundColor: 'rgba(0, 0, 0, 0.78)',
-          border: '1px solid rgba(148, 210, 255, 0.25)',
-          backdropFilter: 'blur(6px)',
+          // Shared floating-badge token — this toast is exactly the "brief, self-dismissing chip
+          // over the arena" case overlayPillSurface exists for (see that helper's doc, which
+          // names this component directly as the deferred migration target). Replaces the old
+          // one-off `rgba(0,0,0,0.78)` fill / 6px blur / 2-corner radius with the same pill chrome
+          // as the other floating badges (auto-quality chip, "Following" chip): full 999px pill,
+          // 10px blur, and the fixed dark-navy tint that stays a badge in every palette mode
+          // rather than a page surface.
+          ...overlayPillSurface(theme),
           pointerEvents: 'none',
           whiteSpace: 'nowrap',
-          zIndex: 5,
+          // Short-lived full-viewport-adjacent overlay — must beat the persistent panels and any
+          // transient hint chips. See REPLAY_Z's module doc for the full rung ordering.
+          zIndex: REPLAY_Z.overlay,
         }}
       >
         Hold <strong>Ctrl</strong> (or <strong>⌘</strong>) + scroll to zoom

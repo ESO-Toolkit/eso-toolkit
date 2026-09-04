@@ -73,6 +73,7 @@ import {
 } from '../../../workers/calculations/CalculateActorPositions';
 import { IMPORTANT_BUFF_ABILITIES } from '../../report_details/insights/BuffUptimesPanel';
 import { IMPORTANT_DEBUFF_ABILITIES } from '../../report_details/insights/DebuffUptimesPanel';
+import { REPLAY_Z, overlayPanelSurface } from '../constants/replayDesign';
 import { getReplayActorResolvedAccentColor } from '../utils/actorVisualState';
 import {
   type AbilityBreakdownIndex,
@@ -90,6 +91,17 @@ import {
 import { getPlayerInfo } from '../utils/pathUtils';
 
 type Role = 'tank' | 'healer' | 'dps';
+
+/**
+ * Shared size for every uppercase, letter-spaced sub-label in this panel (BUFF UPTIME / TOP
+ * ABILITIES / DEBUFFS APPLIED, the "EST. RESIST. DR" caption, and the gear-menu's SHOW STATS
+ * title). These previously ranged from 0.58rem to 0.66rem within this single file for no
+ * functional reason — one scale reads as one deliberate hierarchy instead of several arbitrary
+ * ones. 0.66rem was picked to match the hero-stat slot labels (DPS/DAMAGE/CRIT, …), which were
+ * already the most-prominent label in the panel, and to match KeyboardHelpPanel's converged
+ * label size so the same visual role reads the same size across the replay's overlay chrome.
+ */
+const LABEL_FONT_SIZE = '0.66rem';
 
 // Mobile layout: the panel is bottom-LEFT and now only has to clear the docked TRANSPORT bar at the
 // bottom edge (the old 7-button toggle cluster that used to sit above the transport was moved into a
@@ -352,7 +364,7 @@ const TankDamageReduction: React.FC<{
       </Typography>
       <Typography
         sx={{
-          fontSize: '0.6rem',
+          fontSize: LABEL_FONT_SIZE,
           fontWeight: 600,
           letterSpacing: '0.04em',
           color: 'text.secondary',
@@ -450,7 +462,7 @@ const BuffUptimeList: React.FC<{
     <Box sx={{ mt: 1 }}>
       <Typography
         sx={{
-          fontSize: '0.58rem',
+          fontSize: LABEL_FONT_SIZE,
           fontWeight: 700,
           letterSpacing: '0.06em',
           color: 'text.secondary',
@@ -550,7 +562,7 @@ const AbilityBreakdownList: React.FC<{
     <Box sx={{ mt: 1 }}>
       <Typography
         sx={{
-          fontSize: '0.58rem',
+          fontSize: LABEL_FONT_SIZE,
           fontWeight: 700,
           letterSpacing: '0.06em',
           color: 'text.secondary',
@@ -669,7 +681,7 @@ const DebuffUptimeList: React.FC<{
     <Box sx={{ mt: 1 }}>
       <Typography
         sx={{
-          fontSize: '0.58rem',
+          fontSize: LABEL_FONT_SIZE,
           fontWeight: 700,
           letterSpacing: '0.06em',
           color: 'text.secondary',
@@ -883,24 +895,29 @@ const LockedPlayerStatsPanelComponent: React.FC<LockedPlayerStatsPanelProps> = (
         // DERIVED from the cluster geometry so the two can't drift into a collision.
         left: isMobile ? 8 : 16,
         bottom: isMobile ? MOBILE_PANEL_BOTTOM_PX : 112,
-        zIndex: 3,
+        // Persistent corner HUD — see REPLAY_Z's module doc for the full rung ordering.
+        zIndex: REPLAY_Z.panel,
         px: 1.75,
         py: 1.25,
         minWidth: isMobile ? 0 : 220,
         // Mobile: a corner CARD, never a half-screen sheet. 78vw of 844 (landscape) clamps to 320px;
         // 78vw of 390 (portrait) ≈ 304px — both read as a card, not a panel that eats the short side.
-        maxWidth: isMobile ? 'min(78vw, 320px)' : 340,
+        // Desktop: on top of the 340px sizing cap, never let this claim more than the arena's left
+        // HALF. This panel is bottom-left (left:16); nothing sits bottom-right today, but the same
+        // half-arena defensive bound as BossHealthPanel (top-right) keeps it safe if a bottom-right
+        // overlay is ever added, and prevents it from ever reading as a half-screen sheet on a
+        // narrow arena. min() keeps whichever cap is tighter at a given width.
+        maxWidth: isMobile ? 'min(78vw, 320px)' : 'min(340px, calc(50% - 24px))',
         borderRadius: 2,
         // Mobile: solid fill instead of a backdrop blur, but KEEP a GPU layer (translateZ) — this
         // panel is up during the common "follow one player" flow and writes live stats to the DOM
         // every frame; without a layer those paints recomposite against the live WebGL canvas (a
-        // major iOS cost). Desktop keeps the glass, which layers it for free.
-        backgroundColor: isMobile
-          ? alpha(theme.palette.background.paper, 0.96)
-          : alpha(theme.palette.background.paper, 0.82),
-        ...(isMobile
-          ? { transform: 'translateZ(0)' }
-          : { backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)' }),
+        // major iOS cost). Desktop keeps the glass, which layers it for free. Shared token
+        // (`solid: isMobile`) supplies that fill/blur/GPU-layer split; the border and glow below
+        // are overridden onto the ROLE accent (tank/healer/dps) rather than the token's default
+        // brand-primary tint, because this panel's whole identity is role-tinted (see the file's
+        // module doc) — its glass edge should glow in the role's color, not a fixed cyan.
+        ...overlayPanelSurface(theme, { solid: isMobile, accentBorder: false }),
         border: `1px solid ${alpha(accent, 0.45)}`,
         boxShadow: isMobile
           ? 'none'
@@ -1048,7 +1065,18 @@ const LockedPlayerStatsPanelComponent: React.FC<LockedPlayerStatsPanelProps> = (
 
         {tankCaveat && (
           <Typography
-            sx={{ mt: 0.75, fontSize: '0.58rem', color: 'text.disabled', lineHeight: 1.2 }}
+            sx={{
+              mt: 0.75,
+              fontSize: '0.58rem',
+              // NOT theme 'text.disabled': this theme only overrides text.primary/secondary, so
+              // disabled falls through to MUI's mode default (rgba(255,255,255,0.5) dark /
+              // rgba(0,0,0,0.38) light) — both under the 4.5:1 text bar once this panel's
+              // 0.82-0.96 alpha card sits over a bright parchment/desert map floor. text.primary at
+              // 0.7 keeps the caveat visibly the least-prominent line on the panel (below the
+              // fully-opaque hero stats and text.secondary labels) while staying legible.
+              color: alpha(theme.palette.text.primary, 0.7),
+              lineHeight: 1.2,
+            }}
           >
             {tankCaveat}
           </Typography>
@@ -1068,8 +1096,10 @@ const LockedPlayerStatsPanelComponent: React.FC<LockedPlayerStatsPanelProps> = (
                 pointerEvents: 'auto',
                 px: 1.5,
                 py: 1,
-                backgroundColor: alpha(theme.palette.background.paper, 0.95),
-                backdropFilter: 'blur(10px)',
+                // Same shared glass token as the panel it hangs off of, with the same role-accent
+                // border override (see the root panel's sx above) so the popover reads as part of
+                // the same surface family instead of its own one-off dialect.
+                ...overlayPanelSurface(theme, { accentBorder: false }),
                 border: `1px solid ${alpha(accent, 0.4)}`,
               },
             },
@@ -1077,7 +1107,7 @@ const LockedPlayerStatsPanelComponent: React.FC<LockedPlayerStatsPanelProps> = (
         >
           <Typography
             sx={{
-              fontSize: '0.6rem',
+              fontSize: LABEL_FONT_SIZE,
               fontWeight: 700,
               letterSpacing: '0.06em',
               color: 'text.secondary',

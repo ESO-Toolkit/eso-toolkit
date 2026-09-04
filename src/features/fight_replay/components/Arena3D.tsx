@@ -1,21 +1,7 @@
-import { Fullscreen, FullscreenExit, LockOpen, Videocam } from '@mui/icons-material';
+import { LockOpen, Videocam } from '@mui/icons-material';
 import Bolt from '@mui/icons-material/Bolt';
-import HelpOutline from '@mui/icons-material/HelpOutlineOutlined';
-import Insights from '@mui/icons-material/Insights';
-import Label from '@mui/icons-material/Label';
-import LabelOff from '@mui/icons-material/LabelOff';
 import OpenInFull from '@mui/icons-material/OpenInFull';
-import {
-  Box,
-  Button,
-  Chip,
-  IconButton,
-  Tooltip,
-  Typography,
-  Collapse,
-  Menu,
-  MenuItem,
-} from '@mui/material';
+import { Box, Button, Chip, Tooltip, Typography, Menu, MenuItem } from '@mui/material';
 import { Canvas } from '@react-three/fiber';
 import React, { Suspense, useMemo, useState, useEffect, useCallback, useRef } from 'react';
 import * as THREE from 'three';
@@ -28,7 +14,8 @@ import { useActorPositionsTask } from '../../../hooks/workerTasks/useActorPositi
 import { Logger, LogLevel } from '../../../utils/logger';
 import { MapTimeline } from '../../../utils/mapTimelineUtils';
 import { getActorPositionAtClosestTimestamp } from '../../../workers/calculations/CalculateActorPositions';
-import { ARENA_HEIGHT } from '../constants/replayDesign';
+import { ARENA_HEIGHT, TRANSPORT_MOTION } from '../constants/replayDesign';
+import { useReplayShortcuts, type ReplayShortcutBinding } from '../hooks/useReplayShortcuts';
 import { MapMarkersState, ReplayMarker, ShapeKind, ShapeStyle } from '../types/mapMarkers';
 import { computeRobustActorFraming } from '../utils/cameraFraming';
 import { portalToFullscreen } from '../utils/fullscreenPortal';
@@ -44,6 +31,7 @@ import type { GroundContextMenuPayload } from './Arena3DScene';
 import { ADD_MARKER_AT_CENTER_EVENT } from './arenaEvents';
 import { BossHealthPanel } from './BossHealthPanel';
 import { DrawingHud } from './DrawingHud';
+import { KeyboardHelpPanel } from './KeyboardHelpPanel';
 import { LockedPlayerStatsPanel } from './LockedPlayerStatsPanel';
 import { MarkerContextMenuPayload } from './Marker3D';
 import { MarkerIconPicker } from './MarkerIconPicker';
@@ -51,7 +39,7 @@ import { MobileReplayControls } from './MobileReplayControls';
 import { PerformanceMonitorExternal } from './PerformanceMonitor/PerformanceMonitorExternal';
 import { PlayerListPanel } from './PlayerListPanel';
 import { ReplayErrorBoundary } from './ReplayErrorBoundary';
-import { ReplayQualityMenu } from './ReplayQualityMenu';
+import { ReplayGestureHint } from './ReplayGestureHint';
 import { ReplayZoomHint } from './ReplayZoomHint';
 
 // Create logger instance for Arena3D
@@ -68,6 +56,23 @@ const Arena3DScene = React.lazy(() =>
 // Stable empty Set for the player-list overlay's selection fallback — avoids a fresh Set
 // each render churning the panel.
 const EMPTY_SELECTION: Set<number> = new Set();
+
+// Extra clearance (px) the auto-quality chip adds above its base bottom-center lane so it doesn't
+// collide with ReplayZoomHint, which shares the same bottom-center lane at a FIXED bottom:96
+// (unrelated to reservedInset). With the default reservedInset (80) the chip's base position landed
+// only 4px below the hint — close enough for the two ~30px pills to overlap when both are visible.
+// 48 clears the hint's pill height (~32px) plus a small gap in both the default docked state and the
+// smallest reservedInset (fullscreen, bar hidden), where the chip's base position sits well below it.
+const AUTO_QUALITY_CHIP_LANE_GAP = 48;
+
+// Extra clearance (px) ReplayGestureHint adds ABOVE the auto-quality chip's own lane (i.e. above
+// `reservedInset + 12 + AUTO_QUALITY_CHIP_LANE_GAP`, the chip's own bottom). Stacking on top of
+// that lane — rather than picking an independent fixed number — means the gesture hint is
+// guaranteed clear of the chip AND (transitively, since the chip's own gap already clears it)
+// ReplayZoomHint's fixed bottom:96, in every reservedInset state (docked, collapsed-bar
+// fullscreen, mobile immersive with/without the transport visible). 44 mirrors
+// AUTO_QUALITY_CHIP_LANE_GAP's own reasoning: a ~30px pill plus a small gap.
+const GESTURE_HINT_LANE_GAP = 44;
 
 /**
  * Compute the default (fallback) camera position used whenever actor positions
@@ -196,6 +201,22 @@ interface Arena3DProps {
    * dedicated mobile shell, which owns the close button and all controls itself.
    */
   hideMobileControls?: boolean;
+  /**
+   * Keyboard-help panel open state, lifted to FightReplay3D so the persistent "?" trigger — now
+   * in the transport's right cluster (PlaybackControls), a sibling of this component — can open
+   * the panel Arena3D still renders. Defensive default (false/no-op) for the uncontrolled case;
+   * FightReplay3D always supplies both.
+   */
+  showKeyboardHelp?: boolean;
+  onCloseKeyboardHelp?: () => void;
+  /**
+   * Single pointer-idle "chrome visible" signal owned by FightReplay3D's cinema auto-hide (mirrors
+   * `barVisible` — the same clock that fades the transport in fullscreen). Threaded to the
+   * "Following" chip and PlayerListPanel so they fade in lockstep with the transport instead of
+   * each running its own independent timer. Defaults to true (always visible) for the uncontrolled
+   * case; only meaningful while `isFullscreen` (outside fullscreen the signal never toggles).
+   */
+  chromeVisible?: boolean;
 }
 
 const Arena3DComponent: React.FC<Arena3DProps> = ({
@@ -243,6 +264,9 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
   onToggleStats,
   reservedInset,
   hideMobileControls = false,
+  showKeyboardHelp: showKeyboardHelpProp,
+  onCloseKeyboardHelp,
+  chromeVisible = true,
 }) => {
   const { lookup, isActorPositionsLoading } = useActorPositionsTask();
 
@@ -252,12 +276,28 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
   const mobilePreview = isMobile && !isFullscreen;
   const mobileImmersive = isMobile && isFullscreen;
 
+  // One idle-hide concept instead of four: `chromeVisible` only ever toggles false while
+  // FightReplay3D's cinema auto-hide is armed (i.e. `isFullscreen`) — outside fullscreen it stays
+  // true forever, so `chromeHidden` is always false there and nothing below changes behavior.
+  // Drives the Following chip's fade (below) and is forwarded to PlayerListPanel (see its render)
+  // so both fade in lockstep with the transport bar instead of each running an independent clock.
+  const chromeHidden = isFullscreen && !chromeVisible;
+
   // Inline-preview fidelity (static poster vs gentle idle), decided from GPU tier + reduced-motion.
   // Only meaningful while in mobilePreview; on desktop these hooks still run but the value is unused.
   const perfTier = usePerfTier();
   const prefersReducedMotion = usePrefersReducedMotion();
   const previewMode = decidePreviewMode(perfTier, prefersReducedMotion);
-  const [showKeyboardHelp, setShowKeyboardHelp] = useState(false);
+
+  // Keyboard-help panel — controlled by FightReplay3D (its trigger button now lives in the
+  // transport's right cluster, a sibling of this component). Defensive internal fallback for the
+  // uncontrolled case, matching the namesEnabled/statsPanelEnabled pattern below.
+  const [showKeyboardHelpLocal, setShowKeyboardHelpLocal] = useState(false);
+  const showKeyboardHelp = showKeyboardHelpProp ?? showKeyboardHelpLocal;
+  const closeKeyboardHelp = useMemo(
+    () => onCloseKeyboardHelp ?? (() => setShowKeyboardHelpLocal(false)),
+    [onCloseKeyboardHelp],
+  );
 
   // Persisted viewer prefs (localStorage). Arena3D owns the names + performance slices; the
   // speed/path slices live in FightReplay3D. Both use the same read-merge-write hook so neither
@@ -464,57 +504,50 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
     };
   }, [contextMenu]);
 
-  // Show keyboard help on initial mount for 5 seconds
+  // Did the player-list HUD become visible because the USER asked for it, or was it simply on when
+  // the replay mounted (its stored pref / feature default, which is ON for desktop)? The two want
+  // opposite things from the roster panel: an explicit toggle means "show me the players now", so
+  // it should open expanded, while the passive default should open COLLAPSED — otherwise the panel
+  // covers the fight on load and then visibly folds itself away a few seconds later, which reads as
+  // a glitch rather than as declutter (the reported bug).
+  //
+  // Computed during render, not in an effect: the panel MOUNTS in the same render pass that flips
+  // this prop true and reads its initial collapse state exactly once, so an effect would update the
+  // ref a beat too late and every user-opened panel would still come up collapsed. The ref seeds
+  // from the mount-time value, so a HUD that is on at mount is correctly NOT "user opened".
+  const prevPlayerHudRef = useRef(showPlayerPathsHUD);
+  const playerHudOpenedByUser = showPlayerPathsHUD && !prevPlayerHudRef.current;
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setShowKeyboardHelp(true);
-    }, 500);
+    prevPlayerHudRef.current = showPlayerPathsHUD;
+  }, [showPlayerPathsHUD]);
 
-    const hideTimer = setTimeout(() => {
-      setShowKeyboardHelp(false);
-    }, 8000);
-
-    return () => {
-      clearTimeout(timer);
-      clearTimeout(hideTimer);
-    };
-  }, []);
-
-  // Toggle help with 'H' key
-  useEffect(() => {
-    // Guard against SSR or environments without window
-    if (typeof window === 'undefined') return;
-
-    const handleKeyPress = (event: KeyboardEvent): void => {
-      // Don't interfere with text input
-      if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) {
-        return;
-      }
-
-      if (event.key.toLowerCase() === 'h') {
-        setShowKeyboardHelp((prev) => !prev);
-        event.preventDefault();
-      }
-
+  // Keyboard shortcuts this component still owns: N (name tags) and J (locked-player stats, gated
+  // on actually following someone). H (keyboard help) moved to FightReplay3D alongside the state
+  // and trigger button lifted there — see the doc on the `showKeyboardHelp`/`onCloseKeyboardHelp`
+  // props above. Registered through the shared `useReplayShortcuts` hook (see its module doc for
+  // why N/J stay in THIS component rather than merging into FightReplay3D's listener: they need
+  // the toggle callbacks Arena3D already receives as controlled props).
+  const shortcutBindings = useMemo<ReplayShortcutBinding[]>(
+    () => [
       // N toggles the floating name cards on/off (declutter the crowd).
-      if (event.key.toLowerCase() === 'n') {
-        toggleNames();
-        event.preventDefault();
-      }
-
+      { keys: ['n'], onMatch: () => toggleNames() },
       // J toggles the locked-player stats panel on/off. Gated on actually following someone (read
       // via the always-current ref) so the key mirrors the on-screen button, which only appears
-      // while following — no flipping a hidden pref with zero feedback.
-      if (event.key.toLowerCase() === 'j' && followingActorIdRef.current != null) {
-        toggleStats();
-        event.preventDefault();
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyPress);
-    return () => window.removeEventListener('keydown', handleKeyPress);
+      // while following. Returning `false` when not following matches the pre-refactor behavior
+      // exactly: no toggle AND no preventDefault (the key press is left alone, not just silently
+      // swallowed).
+      {
+        keys: ['j'],
+        onMatch: () => {
+          if (followingActorIdRef.current == null) return false;
+          toggleStats();
+        },
+      },
+    ],
     // followingActorIdRef is a stable ref; the toggles are stable when controlled by the parent.
-  }, [followingActorIdRef, toggleNames, toggleStats]);
+    [followingActorIdRef, toggleNames, toggleStats],
+  );
+  useReplayShortcuts(shortcutBindings);
 
   // Calculate arena dimensions based on fight bounding box
   const arenaDimensions = useMemo(() => {
@@ -771,8 +804,15 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
             }
           : null),
       }}
-      role="img"
-      aria-label="3D fight replay arena showing player positions over time"
+      // This container is a labelled REGION, not the graphic itself — it hosts the overlay
+      // controls (help/name-tags/quality/fullscreen/stats buttons, the Following chip, the
+      // player list, boss bars, help panel) as interactive siblings of the <Canvas>. Do NOT put
+      // role="img" here: ARIA img forces the entire subtree into the "presentational" bucket,
+      // which silently erases every descendant's aria-label/aria-pressed from the accessibility
+      // tree — screen-reader users could not discover a single control. That was the previous
+      // bug. The img role belongs on the <Canvas> below (the actual unlabelled graphic).
+      role="region"
+      aria-label="3D fight replay"
     >
       <ReplayErrorBoundary checkWebGL={true}>
         <Canvas
@@ -815,6 +855,14 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
             failIfMajorPerformanceCaveat: false,
           }}
           onContextMenu={handleCanvasContextMenu}
+          // The actual unlabelled graphic lives here, not on the outer region container (see the
+          // comment on that container above). R3F's <Canvas> forwards unrecognized DOM props
+          // (CanvasProps extends React.HTMLAttributes<HTMLDivElement>) onto the div it renders as
+          // its own wrapper — one level above the real <canvas> element — so role/aria-label land
+          // on that wrapper div, which is exactly what a screen reader needs: a single labelled
+          // graphic node, sibling to (not ancestor of) the overlay controls rendered below.
+          role="img"
+          aria-label="3D fight replay arena showing player positions over time"
           onCreated={(state) => {
             const { gl } = state;
             // Tone mapping: R3F defaults to ACESFilmic, which desaturates bright highlights — it
@@ -1021,6 +1069,15 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
             reservedInset={reservedInset}
             isMobile={mobileImmersive}
             onClose={onTogglePlayerPathsHUD}
+            // Open collapsed unless the user just toggled the HUD on themselves — see the
+            // `playerHudOpenedByUser` derivation above.
+            startCollapsed={!playerHudOpenedByUser}
+            // Only forward the shared idle signal while it's actually armed (fullscreen cinema
+            // mode) — outside fullscreen leave it `undefined` so the panel keeps its own original
+            // idle timer (the standalone declutter behavior it always had, unrelated to cinema
+            // auto-hide). This is also exactly the contract PlayerListPanel's tests exercise: they
+            // never pass `chromeVisible`, i.e. they test this same undefined branch.
+            chromeVisible={isFullscreen ? chromeVisible : undefined}
           />
         )}
 
@@ -1121,201 +1178,21 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
       {process.env.NODE_ENV === 'development' && <PerformanceMonitorExternal />}
 
       {/* Keyboard Controls Help - Shows briefly on load. Desktop-only: it documents physical-key
-          shortcuts (WASD/H/etc.) that don't exist on touch, so it never renders on mobile. */}
-      <Collapse in={showKeyboardHelp && !isMobile}>
-        <Box
-          sx={{
-            position: 'absolute',
-            // Raised to clear the docked control-bar overlay at the bottom of the canvas.
-            bottom: 104,
-            right: 16,
-            backgroundColor: 'rgba(0, 0, 0, 0.85)',
-            borderRadius: 1,
-            padding: 2,
-            maxWidth: 280,
-          }}
-        >
-          <Typography variant="subtitle2" sx={{ color: 'white', mb: 0.5, fontWeight: 600 }}>
-            Camera
-          </Typography>
-          {[
-            ['WASD', 'Move camera'],
-            ['Shift', 'Sprint'],
-            ['Drag', 'Rotate · Ctrl+scroll: Zoom'],
-            ['R', 'Reset view · G: Frame all'],
-          ].map(([k, label]) => (
-            <Typography
-              key={k}
-              variant="caption"
-              sx={{ color: 'rgba(255, 255, 255, 0.8)', display: 'block', mb: 0.25 }}
-            >
-              <strong>{k}:</strong> {label}
-            </Typography>
-          ))}
-          <Typography variant="subtitle2" sx={{ color: 'white', mt: 1, mb: 0.5, fontWeight: 600 }}>
-            Playback
-          </Typography>
-          {[
-            ['Space', 'Play / pause'],
-            ['← →', 'Seek ±1s · Shift: ±10s'],
-            ['+ −', 'Speed up / down'],
-            [', .', 'Frame step'],
-            ['< >', 'Prev / next event'],
-            ['I O', 'Set loop in / out · U: Clear'],
-            ['[ ]', 'Prev / next boss'],
-          ].map(([k, label]) => (
-            <Typography
-              key={k}
-              variant="caption"
-              sx={{ color: 'rgba(255, 255, 255, 0.8)', display: 'block', mb: 0.25 }}
-            >
-              <strong>{k}:</strong> {label}
-            </Typography>
-          ))}
-          <Typography variant="subtitle2" sx={{ color: 'white', mt: 1, mb: 0.5, fontWeight: 600 }}>
-            View
-          </Typography>
-          {[
-            ['P', 'Player list'],
-            ['T', 'Player trails'],
-            ['N', 'Name cards'],
-            ['J', 'Player stats (when locked)'],
-            ['F', 'Fullscreen'],
-            ['C', 'Collapse controls'],
-          ].map(([k, label]) => (
-            <Typography
-              key={k}
-              variant="caption"
-              sx={{ color: 'rgba(255, 255, 255, 0.8)', display: 'block', mb: 0.25 }}
-            >
-              <strong>{k}:</strong> {label}
-            </Typography>
-          ))}
-          <Typography
-            variant="caption"
-            sx={{ color: 'rgba(255, 255, 255, 0.5)', display: 'block', mt: 1, fontSize: '0.7rem' }}
-          >
-            Press H to toggle this help
-          </Typography>
-        </Box>
-      </Collapse>
+          shortcuts (WASD/H/etc.) that don't exist on touch, so it never renders on mobile. Owns its
+          own layering (above the top-right boss bars) + height cap; see KeyboardHelpPanel.
+          Open state + its trigger button are now owned by FightReplay3D (the trigger lives in the
+          transport's right cluster, PlaybackControls) — this just renders the panel itself. */}
+      {!isMobile && <KeyboardHelpPanel open={showKeyboardHelp} onClose={closeKeyboardHelp} />}
 
-      {/* Locked-player stats toggle — only shown while following a player (the panel's condition),
-          so it doesn't clutter the cluster otherwise. Mirrors the J key; on/off shown by color.
-          Desktop/immersive-only: on mobile the equivalent lives in the mobile control cluster. */}
-      {!isMobile && followingActorId != null && (
-        <Tooltip title={statsPanelEnabled ? 'Hide player stats (J)' : 'Show player stats (J)'}>
-          <IconButton
-            aria-label={statsPanelEnabled ? 'Hide locked-player stats' : 'Show locked-player stats'}
-            aria-pressed={statsPanelEnabled}
-            size="small"
-            onClick={toggleStats}
-            sx={{
-              position: 'absolute',
-              bottom: 296,
-              right: 16,
-              color: statsPanelEnabled ? 'white' : 'rgba(255, 255, 255, 0.55)',
-              backgroundColor: 'rgba(0, 0, 0, 0.85)',
-              '&:hover': {
-                backgroundColor: 'rgba(0, 0, 0, 0.95)',
-              },
-            }}
-          >
-            <Insights fontSize="small" />
-          </IconButton>
-        </Tooltip>
-      )}
-
-      {/* Fullscreen toggle — fullscreens the whole replay block (canvas + overlays + control bar).
-          Topmost in the bottom-right cluster; mirrors the F key. Desktop-only: mobile expands via the
-          preview's "Tap to explore" and exits via the mobile control cluster's Close. */}
-      {!isMobile && onToggleFullscreen && (
-        <Tooltip title={isFullscreen ? 'Exit fullscreen (F)' : 'Fullscreen (F)'}>
-          <IconButton
-            aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
-            aria-pressed={isFullscreen}
-            size="small"
-            onClick={onToggleFullscreen}
-            sx={{
-              position: 'absolute',
-              bottom: 248,
-              right: 16,
-              color: 'rgba(255, 255, 255, 0.7)',
-              backgroundColor: 'rgba(0, 0, 0, 0.85)',
-              '&:hover': {
-                backgroundColor: 'rgba(0, 0, 0, 0.95)',
-              },
-            }}
-          >
-            {isFullscreen ? <FullscreenExit fontSize="small" /> : <Fullscreen fontSize="small" />}
-          </IconButton>
-        </Tooltip>
-      )}
-
-      {/* Replay-quality selector — the old two-state Bolt toggle grown into a 4-preset menu
-          (Auto / High / Performance / Barebones). Same slot in the right-edge stack; the mobile
-          equivalent lives in the Settings sheet. */}
-      {!isMobile && (
-        <ReplayQualityMenu
-          qualityPreset={qualityPreset}
-          onQualityPresetChange={changeQualityPreset}
-          triggerSx={{
-            position: 'absolute',
-            // Raised to clear the docked control-bar overlay at the bottom of the canvas.
-            bottom: 200,
-            right: 16,
-          }}
-        />
-      )}
-
-      {/* Name-tag toggle - the on-screen affordance for the same state the N key flips, so the
-          declutter control is discoverable without knowing the shortcut. Desktop/immersive-only. */}
-      {!isMobile && (
-        <Tooltip title={namesEnabled ? 'Hide name tags (N)' : 'Show name tags (N)'}>
-          <IconButton
-            aria-label={namesEnabled ? 'Hide actor name tags' : 'Show actor name tags'}
-            aria-pressed={namesEnabled}
-            size="small"
-            onClick={toggleNames}
-            sx={{
-              position: 'absolute',
-              bottom: 152,
-              right: 16,
-              color: namesEnabled ? 'white' : 'rgba(255, 255, 255, 0.55)',
-              backgroundColor: 'rgba(0, 0, 0, 0.85)',
-              '&:hover': {
-                backgroundColor: 'rgba(0, 0, 0, 0.95)',
-              },
-            }}
-          >
-            {namesEnabled ? <Label fontSize="small" /> : <LabelOff fontSize="small" />}
-          </IconButton>
-        </Tooltip>
-      )}
-
-      {/* Persistent help affordance - re-opens the keyboard help panel once it auto-hides.
-          Desktop-only (no keyboard help on touch). */}
-      {!isMobile && !showKeyboardHelp && (
-        <Tooltip title="Keyboard controls (H)">
-          <IconButton
-            aria-label="Show keyboard controls"
-            size="small"
-            onClick={() => setShowKeyboardHelp(true)}
-            sx={{
-              position: 'absolute',
-              bottom: 104,
-              right: 16,
-              color: 'white',
-              backgroundColor: 'rgba(0, 0, 0, 0.85)',
-              '&:hover': {
-                backgroundColor: 'rgba(0, 0, 0, 0.95)',
-              },
-            }}
-          >
-            <HelpOutline fontSize="small" />
-          </IconButton>
-        </Tooltip>
-      )}
+      {/* The old bottom-right floating button stack (locked-stats toggle, fullscreen, replay-quality
+          menu, name-tag toggle, persistent help) is GONE from here — five identical dark circles
+          each hardcoding its own `bottom: N` offset, growing every time a control was added, and
+          orphaned mid-canvas whenever the transport auto-hid in fullscreen (it never tracked the
+          bar's own hide/reveal). All five now live in PlaybackControls' transport: name tags /
+          replay quality / locked-player stats behind one settings popover (a port of the mobile
+          Settings sheet's grouping), and fullscreen + help as the two remaining always-visible
+          affordances in the control row itself. That also means they now fade with the bar for
+          free in fullscreen cinema mode, instead of floating in empty space while it's hidden. */}
 
       {/* Camera Unlock Chip - Show when following an actor. Anchored top-center so it
           doesn't overlap the top-left PlayerListPanel DOM overlay. Styled to
@@ -1323,7 +1200,10 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
           videocam glyph, so it reads as part of the same designed surface over the 3D scene.
           Suppressed in the mobile inline preview, AND in the mobile immersive overlay — there the
           dedicated shell's top bar already shows a "Following ✕" chip, so this would duplicate it
-          (and add another backdrop-blur layer over the canvas). Desktop/immersive keeps it. */}
+          (and add another backdrop-blur layer over the canvas). Desktop/immersive keeps it, and
+          fades with the transport in fullscreen cinema mode (see `chromeHidden`) — it's a
+          navigation control, not the followed player's live data (LockedPlayerStatsPanel, which
+          stays on screen the whole time while following — see its render above). */}
       {!mobilePreview && !mobileImmersive && followingActorId && followingActorName && (
         <Tooltip title="Unlock camera from actor">
           <Chip
@@ -1369,7 +1249,13 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
               position: 'absolute',
               top: 16,
               left: '50%',
-              transform: 'translateX(-50%)',
+              // Cinema idle-fade — mirrors PlaybackControls' own hidden treatment (opacity + a
+              // small translate, skipped under prefers-reduced-motion — the theme already zeroes
+              // the transition duration globally there, so only the transform needs the guard).
+              transform: `translateX(-50%) ${chromeHidden && !prefersReducedMotion ? 'translateY(-8px)' : ''}`,
+              opacity: chromeHidden ? 0 : 1,
+              pointerEvents: chromeHidden ? 'none' : 'auto',
+              transition: `opacity ${TRANSPORT_MOTION.settle} ${TRANSPORT_MOTION.ease}, transform ${TRANSPORT_MOTION.settle} ${TRANSPORT_MOTION.ease}`,
               // Mobile: 44px tall (touch minimum) and capped wide enough to clear the top-right Close
               // button (~56px in from the right), with the name ellipsizing instead of overflowing.
               height: mobileImmersive ? 44 : 32,
@@ -1390,6 +1276,12 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
                 ...(mobileImmersive ? { padding: '6px', marginRight: '4px' } : null),
                 '&:hover': { color: theme.palette.primary.main },
               },
+              // MUI's Chip puts the delete affordance's tabIndex/keydown handling on the root
+              // element, so the ring belongs on the chip itself (not a nested part) to track focus.
+              '&:focus-visible': {
+                outline: `2px solid ${theme.palette.primary.main}`,
+                outlineOffset: 2,
+              },
             })}
           />
         </Tooltip>
@@ -1397,7 +1289,7 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
 
       {/* Mobile touch control cluster — only inside the immersive overlay, where there's room. Gives
           the keyboard-only controls (P/T/N/R/G/J + perf) a touch home and the only way out (Close),
-          since the desktop right-edge stack and the F-key are unavailable on a phone. */}
+          since the desktop transport controls and the F-key are unavailable on a phone. */}
       {mobileImmersive && !hideMobileControls && (
         <MobileReplayControls
           onClose={() => onToggleFullscreen?.()}
@@ -1460,12 +1352,31 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
         </Box>
       )}
 
+      {/* Touch-gesture legend — the desktop KeyboardHelpPanel has no mobile equivalent, so a touch
+          user is never told drag/pinch/tap exist. One-time + auto-dismissing (see its module doc).
+          Suppressed during marker edit mode: that mode already shows its own gesture hint above,
+          and the two would otherwise stack in the same bottom-center lane. Stacks its OWN lane
+          directly above the auto-quality chip's (see GESTURE_HINT_LANE_GAP) so it can never
+          collide with that chip or (transitively) ReplayZoomHint regardless of reservedInset. */}
+      {mobileImmersive && (
+        <ReplayGestureHint
+          active={mobileImmersive && !markersEditMode}
+          bottomOffset={
+            (reservedInset ?? 80) + 12 + AUTO_QUALITY_CHIP_LANE_GAP + GESTURE_HINT_LANE_GAP
+          }
+        />
+      )}
+
       {/* Auto-quality chip — shown only when the governor has silently reduced effects to hold
           framerate on a weak/throttled device (not when the user chose performance mode themselves,
           and not in the inline preview). A tap forces full quality back and stands the governor down.
           Anchored bottom-CENTER just above the transport: the bottom-left lane is owned by the
           locked-player stats panel (which grows upward) and the bottom-right by the control stack, so
-          center is the one bottom lane that never collides. */}
+          center is the one bottom lane that never collides — except with ReplayZoomHint, which ALSO
+          centers bottom (fixed at bottom:96, since it's not tied to reservedInset) and can appear at
+          the same time. AUTO_QUALITY_CHIP_LANE_GAP pushes this chip a second lane above that fixed
+          position (owned by the other half of this PR, so fixed from this side): with the default
+          reservedInset (80) the two chips would otherwise sit within 4px of each other. */}
       {!mobilePreview &&
         onQualityPresetChange &&
         qualityPreset === 'auto' &&
@@ -1481,7 +1392,7 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
                 position: 'absolute',
                 left: '50%',
                 transform: 'translateX(-50%)',
-                bottom: (reservedInset ?? 80) + 12,
+                bottom: (reservedInset ?? 80) + 12 + AUTO_QUALITY_CHIP_LANE_GAP,
                 zIndex: 4,
                 cursor: 'pointer',
                 color: '#e2e8f0',
