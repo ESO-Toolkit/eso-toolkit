@@ -60,7 +60,8 @@ describe('Dlss5NeuralRenderingGuidePage', () => {
   it('frames the premise as replacing a stale 2.2.16 runtime', () => {
     renderPage();
 
-    expect(screen.getByText(/ESO bundles/i)).toBeInTheDocument();
+    // Stated twice now: once as the premise, once in the step that replaces it.
+    expect(screen.getAllByText(/ESO bundles/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/2\.2\.16/).length).toBeGreaterThan(0);
   });
 
@@ -143,6 +144,30 @@ describe('Dlss5NeuralRenderingGuidePage', () => {
 
     expect(screen.getByRole('heading', { name: /Checking the depth buffer/i })).toBeInTheDocument();
     expect(screen.getByText(/Copy depth buffer before clear operations/i)).toBeInTheDocument();
+  });
+
+  it('leads with the direct path and keeps the feeder as a labelled fallback', () => {
+    const { container } = renderPage();
+
+    // Upstream routes 64-bit DX11 games away from the feeder, and the one-add-on
+    // path was verified working on ESO. Setup must therefore be the direct path;
+    // the two-add-on method stays on the page but below it, marked as a fallback.
+    const text = container.textContent ?? '';
+    const setupAt = text.indexOf('Setup');
+    const fallbackAt = text.indexOf('Fallback: the two-add-on feeder path');
+    expect(setupAt).toBeGreaterThan(-1);
+    expect(fallbackAt).toBeGreaterThan(setupAt);
+  });
+
+  it('documents LoadFromDllMain, which is the failure that produces no error', () => {
+    const { container } = renderPage();
+
+    // Without this line the add-on loads after ESO has created its D3D12 device,
+    // installs no DLSS hooks, and reports nothing wrong. It cost hours to find.
+    const text = container.textContent ?? '';
+    expect(text).toMatch(/LoadFromDllMain=renodx-dlss\.addon64/);
+    expect(text).toMatch(/ReShade rewrites ReShade\.ini/i);
+    expect(text).toMatch(/Loading externally registered add-on/);
   });
 
   it('sets the document title from route metadata', () => {
