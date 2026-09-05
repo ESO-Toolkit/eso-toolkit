@@ -1,0 +1,190 @@
+<!-- @dsCard group="Surfaces" -->
+<meta charset="utf-8">
+<title>Accent Card Glass (G1) — glassCardSurfaceSx × SUMMARY_ACCENTS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; box-sizing:border-box; }
+  body { font-family:Inter,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif; background:#0b1220; padding:20px; }
+  h1,h2,h3 { font-family:'Space Grotesk',Inter,system-ui,sans-serif; font-weight:600; }
+
+  [data-color-scheme="dark"] {
+    --bg:#0b1220; --panel:#0f172a; --panel-2:#0d1430; --text:#e5e7eb; --muted:#94a3b8;
+    --accent:#38bdf8; --accent-2:#00e1ff; --ok:#22c55e; --warn:#ff9800; --danger:#ef4444;
+    --border:#1f2937;
+  }
+  [data-color-scheme="light"] {
+    --bg:#f8fafc; --panel:#ffffff; --panel-2:#f8fafc; --text:#1e293b; --muted:#64748b;
+    --accent:#0f172a; --accent-2:#1e293b; --ok:#059669; --warn:#f97316; --danger:#dc2626;
+    --border:#bcd9ff;
+  }
+  /* NOTE: light --accent is deliberately dark slate #0f172a, NOT a light blue.
+     Cyan #38bdf8 accents remain hard-coded in many dark-leaning recipes even in light mode. */
+
+  .ds-card { max-width:1100px; margin:0 auto; color:#e5e7eb; }
+  .ds-title { font-size:1.4rem; color:#e5e7eb; margin-bottom:4px; }
+  .ds-sub { font-size:.8rem; color:#94a3b8; margin-bottom:16px; }
+  .ds-modes { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  @media (max-width:760px){ .ds-modes { grid-template-columns:1fr; } }
+  .ds-mode { border-radius:16px; padding:18px; background:var(--bg); color:var(--text); border:1px solid var(--border); position:relative; overflow:hidden; }
+  .ds-mode > h2 { font-size:.72rem; text-transform:uppercase; letter-spacing:.12em; color:var(--muted); margin-bottom:14px; position:relative; z-index:1; }
+  .ds-src { font-size:.68rem; color:var(--muted); font-family:'JetBrains Mono',Consolas,monospace; margin-top:6px; }
+
+  .ds-backdrop { position:absolute; inset:0; pointer-events:none; }
+  [data-color-scheme="dark"] .ds-backdrop {
+    background:
+      radial-gradient(ellipse 60% 40% at 20% 25%, rgba(56,189,248,.28), transparent 65%),
+      radial-gradient(ellipse 50% 45% at 80% 30%, rgba(129,140,248,.24), transparent 65%),
+      radial-gradient(ellipse 55% 50% at 55% 80%, rgba(192,132,252,.18), transparent 65%),
+      #0b1220;
+  }
+  [data-color-scheme="light"] .ds-backdrop {
+    background:
+      radial-gradient(ellipse 60% 40% at 20% 25%, rgba(125,211,252,.5), transparent 65%),
+      radial-gradient(ellipse 50% 45% at 80% 30%, rgba(196,181,253,.42), transparent 65%),
+      radial-gradient(ellipse 55% 50% at 55% 80%, rgba(167,243,208,.38), transparent 65%),
+      #f8fafc;
+  }
+  .demo-z { position:relative; z-index:1; display:flex; flex-direction:column; gap:14px; }
+
+  /* ── G1 glassCardSurfaceSx — src/theme/glassCardSurface.ts:29-70 ────────
+     Per-accent RGB triplet A (SUMMARY_ACCENTS): info 56,189,248 / damage
+     251,191,36 / death 248,113,113. borderRadius: 2.5 (MUI spacing ×10 = 25px).
+     Values transcribed exactly; hover states duplicated under .is-hover. */
+  .g1 {
+    position:relative; overflow:hidden; border-radius:25px;
+    backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
+    transition:box-shadow 0.28s ease, border-color 0.28s ease;
+    padding:16px; min-height:88px;
+  }
+  .g1 .h { font-family:'Space Grotesk',Inter,sans-serif; font-weight:600; font-size:.9rem; }
+  .g1 .b { font-size:.72rem; color:var(--muted); margin-top:4px; }
+  /* Color-coded top accent bar */
+  .g1::before {
+    content:""; position:absolute; top:0; left:0; right:0; height:3px;
+    pointer-events:none; z-index:1;
+  }
+  [data-color-scheme="dark"] .g1 {
+    box-shadow:0 10px 40px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  }
+  [data-color-scheme="light"] .g1 {
+    box-shadow:0 6px 28px rgba(15, 23, 42, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  }
+  /* info — 56, 189, 248 */
+  [data-color-scheme="dark"] .g1-info {
+    border:1px solid rgba(56, 189, 248, 0.20);
+    background:linear-gradient(180deg, rgba(56, 189, 248, 0.1) 0%, rgba(56, 189, 248, 0) 150px),
+               linear-gradient(160deg, rgba(20, 32, 54, 0.82) 0%, rgba(7, 12, 26, 0.8) 100%);
+  }
+  [data-color-scheme="dark"] .g1-info::before { background:linear-gradient(90deg, transparent 0%, rgba(56, 189, 248, 0.95) 50%, transparent 100%); }
+  [data-color-scheme="dark"] .g1-info:hover, [data-color-scheme="dark"] .g1-info.is-hover {
+    border-color:rgba(56, 189, 248, 0.42);
+    box-shadow:0 14px 48px rgba(0, 0, 0, 0.5), 0 0 28px rgba(56, 189, 248, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  }
+  [data-color-scheme="light"] .g1-info {
+    border:1px solid rgba(56, 189, 248, 0.18);
+    background:linear-gradient(180deg, rgba(56, 189, 248, 0.08) 0%, rgba(56, 189, 248, 0) 150px),
+               linear-gradient(160deg, rgba(255, 255, 255, 0.9) 0%, rgba(244, 248, 255, 0.85) 100%);
+  }
+  [data-color-scheme="light"] .g1-info::before { background:linear-gradient(90deg, transparent 0%, rgba(56, 189, 248, 0.85) 50%, transparent 100%); }
+  [data-color-scheme="light"] .g1-info:hover, [data-color-scheme="light"] .g1-info.is-hover {
+    border-color:rgba(56, 189, 248, 0.34);
+    box-shadow:0 10px 36px rgba(15, 23, 42, 0.16), 0 0 24px rgba(56, 189, 248, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  }
+  /* damage — 251, 191, 36 */
+  [data-color-scheme="dark"] .g1-damage {
+    border:1px solid rgba(251, 191, 36, 0.20);
+    background:linear-gradient(180deg, rgba(251, 191, 36, 0.1) 0%, rgba(251, 191, 36, 0) 150px),
+               linear-gradient(160deg, rgba(20, 32, 54, 0.82) 0%, rgba(7, 12, 26, 0.8) 100%);
+  }
+  [data-color-scheme="dark"] .g1-damage::before { background:linear-gradient(90deg, transparent 0%, rgba(251, 191, 36, 0.95) 50%, transparent 100%); }
+  [data-color-scheme="dark"] .g1-damage:hover, [data-color-scheme="dark"] .g1-damage.is-hover {
+    border-color:rgba(251, 191, 36, 0.42);
+    box-shadow:0 14px 48px rgba(0, 0, 0, 0.5), 0 0 28px rgba(251, 191, 36, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  }
+  [data-color-scheme="light"] .g1-damage {
+    border:1px solid rgba(251, 191, 36, 0.18);
+    background:linear-gradient(180deg, rgba(251, 191, 36, 0.08) 0%, rgba(251, 191, 36, 0) 150px),
+               linear-gradient(160deg, rgba(255, 255, 255, 0.9) 0%, rgba(244, 248, 255, 0.85) 100%);
+  }
+  [data-color-scheme="light"] .g1-damage::before { background:linear-gradient(90deg, transparent 0%, rgba(251, 191, 36, 0.85) 50%, transparent 100%); }
+  [data-color-scheme="light"] .g1-damage:hover, [data-color-scheme="light"] .g1-damage.is-hover {
+    border-color:rgba(251, 191, 36, 0.34);
+    box-shadow:0 10px 36px rgba(15, 23, 42, 0.16), 0 0 24px rgba(251, 191, 36, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  }
+  /* death — 248, 113, 113 */
+  [data-color-scheme="dark"] .g1-death {
+    border:1px solid rgba(248, 113, 113, 0.20);
+    background:linear-gradient(180deg, rgba(248, 113, 113, 0.1) 0%, rgba(248, 113, 113, 0) 150px),
+               linear-gradient(160deg, rgba(20, 32, 54, 0.82) 0%, rgba(7, 12, 26, 0.8) 100%);
+  }
+  [data-color-scheme="dark"] .g1-death::before { background:linear-gradient(90deg, transparent 0%, rgba(248, 113, 113, 0.95) 50%, transparent 100%); }
+  [data-color-scheme="dark"] .g1-death:hover, [data-color-scheme="dark"] .g1-death.is-hover {
+    border-color:rgba(248, 113, 113, 0.42);
+    box-shadow:0 14px 48px rgba(0, 0, 0, 0.5), 0 0 28px rgba(248, 113, 113, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  }
+  [data-color-scheme="light"] .g1-death {
+    border:1px solid rgba(248, 113, 113, 0.18);
+    background:linear-gradient(180deg, rgba(248, 113, 113, 0.08) 0%, rgba(248, 113, 113, 0) 150px),
+               linear-gradient(160deg, rgba(255, 255, 255, 0.9) 0%, rgba(244, 248, 255, 0.85) 100%);
+  }
+  [data-color-scheme="light"] .g1-death::before { background:linear-gradient(90deg, transparent 0%, rgba(248, 113, 113, 0.85) 50%, transparent 100%); }
+  [data-color-scheme="light"] .g1-death:hover, [data-color-scheme="light"] .g1-death.is-hover {
+    border-color:rgba(248, 113, 113, 0.34);
+    box-shadow:0 10px 36px rgba(15, 23, 42, 0.16), 0 0 24px rgba(248, 113, 113, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  }
+
+  .callout { margin-top:14px; padding:10px 12px; border-radius:10px; border:1px solid #1f2937; background:#0f172a; font-size:.7rem; line-height:1.5; color:#e5e7eb; }
+  .callout code { font-family:'JetBrains Mono',Consolas,monospace; font-size:.66rem; }
+</style>
+<div class="ds-card">
+  <h1 class="ds-title">Accent Card Glass (G1) — glassCardSurfaceSx</h1>
+  <p class="ds-sub">Premium glass for the report-summary section cards: dual stacked gradients (accent bloom over translucent base), blur(16px), a 3px full-bleed fading top strip, inset top highlight, and a hover accent glow. Source: src/theme/glassCardSurface.ts:29-70; accents src/theme/glassCardSurface.ts:5-12.</p>
+  <div class="ds-modes">
+    <section class="ds-mode" data-color-scheme="dark">
+      <div class="ds-backdrop"></div>
+      <h2>Dark</h2>
+      <div class="demo-z">
+        <div class="g1 g1-info">
+          <div class="h">Report Overview</div>
+          <div class="b">SUMMARY_ACCENTS.info — '56, 189, 248' (brand cyan)</div>
+          <div class="ds-src">glassCardSurfaceSx(true, '56, 189, 248') — glassCardSurface.ts:29</div>
+        </div>
+        <div class="g1 g1-damage is-hover">
+          <div class="h">Damage Breakdown — hover state (.is-hover)</div>
+          <div class="b">SUMMARY_ACCENTS.damage — '251, 191, 36' (amber). Hover: border 0.42, glow 0 0 28px rgba(A, 0.14)</div>
+          <div class="ds-src">hover — glassCardSurface.ts:63-68</div>
+        </div>
+        <div class="g1 g1-death">
+          <div class="h">Death Analysis</div>
+          <div class="b">SUMMARY_ACCENTS.death — '248, 113, 113' (coral)</div>
+          <div class="ds-src">glassCardSurfaceSx(true, '248, 113, 113')</div>
+        </div>
+      </div>
+    </section>
+    <section class="ds-mode" data-color-scheme="light">
+      <div class="ds-backdrop"></div>
+      <h2>Light</h2>
+      <div class="demo-z">
+        <div class="g1 g1-info">
+          <div class="h">Report Overview</div>
+          <div class="b">Bloom drops to 0.08; base is 160° white 0.9 → 0.85 gradient; strip alpha 0.85</div>
+          <div class="ds-src">glassCardSurfaceSx(false, '56, 189, 248')</div>
+        </div>
+        <div class="g1 g1-damage is-hover">
+          <div class="h">Damage Breakdown — hover state (.is-hover)</div>
+          <div class="b">Hover: border 0.34, glow 0 0 24px rgba(A, 0.12), inset white 0.9 kept</div>
+          <div class="ds-src">hover — glassCardSurface.ts:63-68</div>
+        </div>
+        <div class="g1 g1-death">
+          <div class="h">Death Analysis</div>
+          <div class="b">Coral accent over the white glass base</div>
+          <div class="ds-src">glassCardSurfaceSx(false, '248, 113, 113')</div>
+        </div>
+      </div>
+    </section>
+  </div>
+  <div class="callout">
+    <strong>Anatomy:</strong> layer 1 <code>linear-gradient(180deg, rgba(A, 0.1) 0%, rgba(A, 0) 150px)</code> (accent bloom, dark; 0.08 light) over layer 2 <code>linear-gradient(160deg, rgba(20,32,54,0.82), rgba(7,12,26,0.8))</code> (dark base). <code>::before</code> strip: 3px, <code>linear-gradient(90deg, transparent, rgba(A, 0.95|0.85) 50%, transparent)</code>. Radius <code>borderRadius: 2.5</code> = 25px (theme shape base 10). Pair with <code>elevation={0}</code> — the recipe supplies its own shadow.
+  </div>
+</div>

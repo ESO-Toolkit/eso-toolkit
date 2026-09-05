@@ -1,0 +1,183 @@
+<!-- @dsCard group="Boundaries" -->
+<meta charset="utf-8">
+<title>Gradient Borders — mask-XOR idiom &amp; borderImage rainbow</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; box-sizing:border-box; }
+  body { font-family:Inter,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif; background:#0b1220; padding:20px; }
+  h1,h2,h3 { font-family:'Space Grotesk',Inter,system-ui,sans-serif; font-weight:600; }
+
+  [data-color-scheme="dark"] {
+    --bg:#0b1220; --panel:#0f172a; --panel-2:#0d1430; --text:#e5e7eb; --muted:#94a3b8;
+    --accent:#38bdf8; --accent-2:#00e1ff; --ok:#22c55e; --warn:#ff9800; --danger:#ef4444;
+    --border:#1f2937;
+  }
+  [data-color-scheme="light"] {
+    --bg:#f8fafc; --panel:#ffffff; --panel-2:#f8fafc; --text:#1e293b; --muted:#64748b;
+    --accent:#0f172a; --accent-2:#1e293b; --ok:#059669; --warn:#f97316; --danger:#dc2626;
+    --border:#bcd9ff;
+  }
+
+  .ds-card { max-width:1100px; margin:0 auto; color:#e5e7eb; }
+  .ds-title { font-size:1.4rem; color:#e5e7eb; margin-bottom:4px; }
+  .ds-sub { font-size:.8rem; color:#94a3b8; margin-bottom:16px; }
+  .ds-modes { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  @media (max-width:760px){ .ds-modes { grid-template-columns:1fr; } }
+  .ds-mode { border-radius:16px; padding:18px; background:var(--bg); color:var(--text); border:1px solid var(--border); position:relative; overflow:hidden; }
+  .ds-mode > h2 { font-size:.72rem; text-transform:uppercase; letter-spacing:.12em; color:var(--muted); margin-bottom:14px; position:relative; z-index:1; }
+  .ds-src { font-size:.68rem; color:var(--muted); font-family:'JetBrains Mono',Consolas,monospace; margin-top:6px; }
+
+  .ds-z { position:relative; z-index:1; }
+  .demo-block { margin-bottom:18px; }
+  .demo-label { font-size:.7rem; font-weight:600; color:var(--text); margin-bottom:6px; }
+
+  /* keyframes for the legendary chip glow — playerCardStyleUtils.ts:17-28 */
+  @keyframes legendaryGlow {
+    0%, 100% { box-shadow: 0 8px 32px 0 rgba(255, 0, 150, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.3); }
+    50%      { box-shadow: 0 8px 32px 0 rgba(0, 150, 255, 0.3),  inset 0 1px 0 rgba(255, 255, 255, 0.3); }
+  }
+
+  /* ── B4: mask-XOR gradient ring, selected tile — IconPickerGrid.tsx:147-153, 212-228 ── */
+  .tile-row { display:flex; gap:12px; }
+  .tile { position:relative; width:104px; }
+  .tile-btn { width:104px; height:84px; border-radius:14px; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; gap:6px; }
+  [data-color-scheme="dark"] .tile-btn { background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); }
+  [data-color-scheme="light"] .tile-btn { background:rgba(15,23,42,0.03); border:1px solid rgba(15,23,42,0.10); }
+  [data-color-scheme="dark"] .tile.selected .tile-btn { background:rgba(var(--be-accent-rgb, 56, 189, 248), 0.14); border-color:transparent;
+    box-shadow:0 0 16px rgba(var(--be-accent-rgb, 56, 189, 248), 0.3), 0 4px 12px rgba(var(--be-accent-rgb, 56, 189, 248), 0.15); }
+  [data-color-scheme="light"] .tile.selected .tile-btn { background:rgba(var(--be-accent-rgb, 56, 189, 248), 0.08); border-color:transparent;
+    box-shadow:0 0 16px rgba(var(--be-accent-rgb, 56, 189, 248), 0.3), 0 4px 12px rgba(var(--be-accent-rgb, 56, 189, 248), 0.15); }
+  .tile-glyph { width:28px; height:28px; border-radius:8px; background:linear-gradient(135deg, #38bdf8, #818cf8); }
+  .tile-label { font-size:11px; line-height:1.2; font-weight:500; color:var(--muted);
+    font-family:'Space Grotesk',Inter,system-ui; text-align:center; transition:color 0.15s; }
+  .tile.selected .tile-label { font-weight:700; color:var(--be-accent, #38bdf8); }
+  /* The mask-XOR ring overlay itself — transcribed exactly */
+  .tile-ring { position:absolute; inset:0; border-radius:14px; padding:1.5px;
+    background:linear-gradient(135deg, rgba(var(--be-accent-rgb, 56, 189, 248), 0.7) 0%, rgba(var(--be-accent-rgb, 56, 189, 248), 0.15) 50%, rgba(var(--be-accent-rgb, 56, 189, 248), 0.4) 100%);
+    -webkit-mask:linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite:xor;
+    mask:linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask-composite:exclude;
+    pointer-events:none; }
+
+  /* ── B4 static variant — src/components/BuildEditorSkeleton.tsx:67-83 (primary card ring, 1px) ── */
+  .skel-card { position:relative; border-radius:12px; padding:14px 16px; overflow:hidden; }
+  [data-color-scheme="dark"] .skel-card { background:rgba(15, 23, 42, 0.84);
+    box-shadow:0 8px 32px rgba(0, 0, 0, 0.32), 0 1px 0 rgba(255, 255, 255, 0.05) inset; }
+  [data-color-scheme="light"] .skel-card { background:rgba(255, 255, 255, 0.84);
+    box-shadow:0 4px 24px rgba(15, 23, 42, 0.10), 0 1px 0 rgba(255, 255, 255, 0.80) inset; }
+  .skel-card::before { content:""; position:absolute; inset:0; border-radius:inherit; padding:1px;
+    background:linear-gradient(135deg, rgba(56, 189, 248, 0.25) 0%, rgba(56, 189, 248, 0.05) 50%, rgba(56, 189, 248, 0.12) 100%);
+    -webkit-mask:linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite:xor;
+    mask:linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask-composite:exclude;
+    pointer-events:none; }
+  .skel-line { height:10px; border-radius:5px; margin:6px 0; }
+  [data-color-scheme="dark"] .skel-line { background:rgba(255,255,255,0.06); }
+  [data-color-scheme="light"] .skel-line { background:rgba(15,23,42,0.06); }
+
+  /* ── B6: borderImage rainbow legendary chip — playerCardStyleUtils.ts:156-164 ── */
+  .legendary-chip { display:inline-block; padding:6px 16px; border-radius:28px; font-size:.78rem; font-weight:500;
+    background:linear-gradient(135deg, rgba(255,0,150,0.2) 0%, rgba(255,150,0,0.2) 20%, rgba(255,255,0,0.2) 40%, rgba(0,255,0,0.2) 60%, rgba(0,150,255,0.2) 80%, rgba(150,0,255,0.2) 100%);
+    border-image:linear-gradient(135deg, #ff0096, #ff9600, #ffff00, #00ff00, #0096ff, #9600ff) 1;
+    border:1px solid transparent;
+    color:#ffffff;
+    animation:legendaryGlow 3s ease-in-out infinite; }
+
+  .code-box { font-family:'JetBrains Mono',Consolas,monospace; font-size:.66rem; line-height:1.55;
+    color:#a5d8ff; background:#0a1020; border:1px solid #1f2937; border-radius:10px;
+    padding:12px 14px; overflow-x:auto; white-space:pre; margin-top:6px; }
+  .caveat { font-size:.74rem; color:#94a3b8; line-height:1.5; margin-top:14px;
+    border:1px solid #1f2937; border-left:3px solid #ff9800; border-radius:10px;
+    padding:10px 14px; background:#0f172a; }
+  .caveat b { color:#e5e7eb; }
+</style>
+<div class="ds-card">
+  <h1 class="ds-title">Gradient Borders — mask-XOR idiom (B4) &amp; borderImage rainbow (B6)</h1>
+  <p class="ds-sub">The repo's standard gradient ring: double background + mask XOR. Sources: IconPickerGrid.tsx:147-153, 212-228 · BuildEditorSkeleton.tsx:67-83 · playerCardStyleUtils.ts:17-28, 156-164 · GlassPanel.tsx:6-9</p>
+  <div class="ds-modes">
+    <section class="ds-mode" data-color-scheme="dark">
+      <h2>Dark</h2>
+      <div class="ds-z">
+        <div class="demo-block">
+          <div class="demo-label">B4 — selected tile: 1.5px gradient ring + paired glow</div>
+          <div class="tile-row">
+            <div class="tile selected">
+              <div class="tile-btn"><div class="tile-glyph"></div><div class="tile-label">Mundus</div></div>
+              <div class="tile-ring"></div>
+            </div>
+            <div class="tile">
+              <div class="tile-btn"><div class="tile-glyph" style="opacity:.5"></div><div class="tile-label">Race</div></div>
+            </div>
+          </div>
+          <div class="ds-src">IconPickerGrid.tsx:212-228 (ring) + :147-153 (gradient stops, glowShadow)</div>
+        </div>
+        <div class="demo-block">
+          <div class="demo-label">B4 — static 1px variant (skeleton primary card)</div>
+          <div class="skel-card"><div class="skel-line" style="width:40%"></div><div class="skel-line" style="width:85%"></div><div class="skel-line" style="width:70%"></div></div>
+          <div class="ds-src">src/components/BuildEditorSkeleton.tsx:67-83</div>
+        </div>
+        <div class="demo-block">
+          <div class="demo-label">B6 — borderImage rainbow + legendaryGlow cross-fade</div>
+          <div class="legendary-chip">Perfected Ansuul's Torment ×5</div>
+          <div class="ds-src">playerCardStyleUtils.ts:156-164 + legendaryGlow keyframes :17-28</div>
+        </div>
+      </div>
+    </section>
+    <section class="ds-mode" data-color-scheme="light">
+      <h2>Light</h2>
+      <div class="ds-z">
+        <div class="demo-block">
+          <div class="demo-label">B4 — selected tile: 1.5px gradient ring + paired glow</div>
+          <div class="tile-row">
+            <div class="tile selected">
+              <div class="tile-btn"><div class="tile-glyph"></div><div class="tile-label">Mundus</div></div>
+              <div class="tile-ring"></div>
+            </div>
+            <div class="tile">
+              <div class="tile-btn"><div class="tile-glyph" style="opacity:.5"></div><div class="tile-label">Race</div></div>
+            </div>
+          </div>
+          <div class="ds-src">IconPickerGrid.tsx:212-228 — selected fill drops to alpha 0.08 in light (:145)</div>
+        </div>
+        <div class="demo-block">
+          <div class="demo-label">B4 — static 1px variant (skeleton primary card)</div>
+          <div class="skel-card"><div class="skel-line" style="width:40%"></div><div class="skel-line" style="width:85%"></div><div class="skel-line" style="width:70%"></div></div>
+          <div class="ds-src">BuildEditorSkeleton.tsx:67-83 (ring gradient is mode-independent)</div>
+        </div>
+        <div class="demo-block">
+          <div class="demo-label">B6 — borderImage rainbow + legendaryGlow cross-fade</div>
+          <div class="legendary-chip">Perfected Ansuul's Torment ×5</div>
+          <div class="ds-src">playerCardStyleUtils.ts:156-164 — dark-variant recipe; unchanged by mode</div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="demo-label" style="color:#e5e7eb; margin-top:16px;">The exact mask-XOR snippet (transcribe as-is)</div>
+  <div class="code-box">/* IconPickerGrid.tsx:212-228 — overlay Box on the selected tile */
+position: 'absolute',
+inset: 0,
+borderRadius: '14px',
+padding: '1.5px',
+background: 'linear-gradient(135deg, rgba(var(--be-accent-rgb, 56, 189, 248), 0.7) 0%, rgba(var(--be-accent-rgb, 56, 189, 248), 0.15) 50%, rgba(var(--be-accent-rgb, 56, 189, 248), 0.4) 100%)',
+WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+WebkitMaskComposite: 'xor',
+mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+maskComposite: 'exclude',
+pointerEvents: 'none',
+
+/* paired glow on the tile itself — IconPickerGrid.tsx:151-153 */
+boxShadow: '0 0 16px rgba(var(--be-accent-rgb, 56, 189, 248), 0.3), 0 4px 12px rgba(var(--be-accent-rgb, 56, 189, 248), 0.15)'</div>
+
+  <div class="caveat">
+    <b>borderImage caveat — documented in GlassPanel.tsx:6-9:</b> "Previously used a gradient borderImage; removed because
+    the accent color bleed read as a debug outline." The implementation note (GlassPanel.tsx:45-48): the gradient
+    <code>borderImage</code> shorthand left <code>border-color</code> falling back to <code>currentColor</code> in some composite
+    paths, producing a visible "debug" outline around every primary panel. Prefer the mask-XOR ring (B4) for gradient borders;
+    <code>borderImage</code> survives only in the legendary rainbow chip (and ignores border-radius by nature).
+  </div>
+</div>
