@@ -49,18 +49,19 @@ const PlaybackButtonsComponent: React.FC<PlaybackButtonsProps> = ({
   onSkipForward10,
   compact = false,
 }) => {
-  // Compact overlay shrinks the play orb (58→38) and its ring/icon so the bar reads as a thin
-  // YouTube-style transport instead of a tall deck dominated by the orb.
-  const orbSize = compact ? 38 : 58;
-  // Gate non-essential motion per replayDesign's motion contract (the play-orb hover lift/scale
-  // and the ghost-button hover tints). The global !important rule is a fallback.
+  // Hit-target size for play/pause. Compact (the overlay transport) stays at 44 — the minimum
+  // comfortable tap target — so the row keeps a thin, uniform height; the glyph inside is what
+  // makes it read as primary.
+  const orbSize = compact ? 44 : 56;
+  // Gate non-essential motion per replayDesign's motion contract (the press scale and the hover
+  // tints). The global !important rule is a fallback.
   const prefersReducedMotion = usePrefersReducedMotion();
   const ghostTransition = prefersReducedMotion
     ? 'none'
     : `background-color ${TRANSPORT_MOTION.tap} ${TRANSPORT_MOTION.ease}, color ${TRANSPORT_MOTION.tap} ${TRANSPORT_MOTION.ease}`;
   const orbTransition = prefersReducedMotion
     ? 'none'
-    : `transform ${TRANSPORT_MOTION.tap} ${TRANSPORT_MOTION.ease}, box-shadow ${TRANSPORT_MOTION.settle} ${TRANSPORT_MOTION.ease}, filter ${TRANSPORT_MOTION.tap} ${TRANSPORT_MOTION.ease}`;
+    : `transform ${TRANSPORT_MOTION.tap} ${TRANSPORT_MOTION.ease}, background-color ${TRANSPORT_MOTION.tap} ${TRANSPORT_MOTION.ease}`;
   // Ghost skip buttons — flat by default, a soft accent tint on hover. Quiet next to the
   // play orb so the focal hierarchy reads instantly: one bright control, four supporting.
   const ghostSx = {
@@ -120,48 +121,28 @@ const PlaybackButtonsComponent: React.FC<PlaybackButtonsProps> = ({
         </IconButton>
       </Tooltip>
 
-      {/* Play/pause is the primary action — a filled accent orb (matching the app's
-          contained-primary gradient) makes it the unmistakable focal point versus the
-          flat ghost skip buttons, with a soft accent halo on hover. */}
+      {/* Play/pause is the primary action, and it earns that rank through GLYPH SIZE and position
+          — not decoration. It used to be a gradient-filled orb carrying a cyan bloom, a 1px accent
+          rim and a detached orbiting ring; three stacked glow layers on a control that sits over a
+          moving 3D scene, which made the busiest pixel in the bar the one that never changes.
+          Every shipping video player (YouTube, Netflix, Vimeo, Frame.io) draws play as a plain
+          glyph, larger than its neighbours, and that is what reads as deliberate here too. */}
       <IconButton
         onClick={onPlayPause}
         size="large"
         aria-label={isPlaying ? 'Pause' : 'Play'}
-        sx={(theme) => ({
-          position: 'relative',
-          mx: 0.5,
+        sx={{
+          mx: 0.25,
           width: orbSize,
           height: orbSize,
-          color: theme.palette.mode === 'dark' ? theme.palette.background.default : '#fff',
-          background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-          // Inner rim highlight + a bright radial accent glow — the luminous orb from the
-          // bold proto. The glow is a wide soft cyan bloom so the orb reads as lit, not flat.
-          boxShadow:
-            theme.palette.mode === 'dark'
-              ? `inset 0 0 0 1px rgba(255,255,255,0.3), 0 0 0 1px ${theme.palette.primary.main}40, 0 0 28px ${theme.palette.primary.main}99, 0 8px 26px ${theme.palette.primary.main}80`
-              : `inset 0 0 0 1px rgba(255,255,255,0.4), 0 0 22px ${theme.palette.primary.main}66, 0 8px 24px ${theme.palette.primary.main}59`,
+          color: 'text.primary',
+          borderRadius: '50%',
           transition: orbTransition,
-          // Detached orbiting ring just outside the orb (the proto's bright halo gap).
-          '&::after': {
-            content: '""',
-            position: 'absolute',
-            inset: -6,
-            borderRadius: '50%',
-            border: `1.5px solid ${theme.palette.primary.main}80`,
-            boxShadow: `0 0 14px ${theme.palette.primary.main}59`,
-            pointerEvents: 'none',
-          },
-          '&:hover': {
-            background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-            filter: 'brightness(1.07)',
-            boxShadow:
-              theme.palette.mode === 'dark'
-                ? `inset 0 0 0 1px rgba(255,255,255,0.3), 0 10px 32px ${theme.palette.primary.main}99`
-                : `inset 0 0 0 1px rgba(255,255,255,0.5), 0 10px 30px ${theme.palette.primary.main}73`,
-          },
-          '&:active': prefersReducedMotion ? undefined : { transform: 'scale(0.96)' },
-          '& .MuiSvgIcon-root': { fontSize: compact ? '1.3rem' : '1.9rem' },
-        })}
+          '&:hover': { backgroundColor: 'action.hover' },
+          '&:active': prefersReducedMotion ? undefined : { transform: 'scale(0.94)' },
+          // ~1.5× the ghost skip glyphs — the whole focal hierarchy, in one number.
+          '& .MuiSvgIcon-root': { fontSize: compact ? '1.75rem' : '2.1rem' },
+        }}
       >
         {isPlaying ? <Pause /> : <PlayArrow />}
       </IconButton>

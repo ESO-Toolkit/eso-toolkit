@@ -4,32 +4,31 @@
  * Main playback controls container for fight replay — one unified "control deck"
  * on a single glass surface. For a multi-fight trial run the deck stacks, top to
  * bottom: the trial mini-map strip (whole-run scrubber), the per-fight scrub
- * rail, and the control row (timecode · outcome · speed | transport + boss skip
- * | autoplay · chapters · share · collapse). For a single isolated fight the
- * trial pieces simply don't render and the deck is byte-identical to before.
+ * rail, and the control row. For a single isolated fight the trial pieces simply
+ * don't render.
+ *
+ * The control row is left-aligned like a video player's:
+ *
+ *   [⏮ boss] ⏮ ⏪ ▶ ⏩ ⏭ [boss ⏭]  0:42 / 3:15  Kill  ·····  1× ↻ ▤ ⤴ ⚙ ⌄ ⛶
+ *
+ * Everything after the elastic gap is an icon button. Anything that is a set-once
+ * preference rather than a per-moment playback action lives behind the gear
+ * ({@link ReplayDisplaySettingsMenu}) — autoplay, name tags, player stats, replay
+ * quality, keyboard shortcuts — and the A–B loop's three former slots are one
+ * trigger ({@link TransportLoopMenu}). See the row's own comment for the layout
+ * history this replaced.
  *
  * @module PlaybackControls
  */
 
 import FullscreenIcon from '@mui/icons-material/Fullscreen';
 import FullscreenExitIcon from '@mui/icons-material/FullscreenExit';
-import HelpOutlineIcon from '@mui/icons-material/HelpOutlineOutlined';
 import KeyboardArrowDown from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUp from '@mui/icons-material/KeyboardArrowUp';
 import KeyboardDoubleArrowLeftRounded from '@mui/icons-material/KeyboardDoubleArrowLeftRounded';
 import KeyboardDoubleArrowRightRounded from '@mui/icons-material/KeyboardDoubleArrowRightRounded';
 import MoreHorizRoundedIcon from '@mui/icons-material/MoreHorizRounded';
-import {
-  Box,
-  Button,
-  Divider,
-  FormControlLabel,
-  IconButton,
-  Popover,
-  Switch,
-  Tooltip,
-  Typography,
-} from '@mui/material';
+import { Box, Divider, IconButton, Popover, Tooltip, Typography } from '@mui/material';
 import React from 'react';
 
 import { usePrefersReducedMotion } from '../../../hooks/usePrefersReducedMotion';
@@ -48,8 +47,9 @@ import { ProgressHairline } from './ProgressHairline';
 import { ReplayDisplaySettingsMenu } from './ReplayDisplaySettingsMenu';
 import { ShareButton } from './ShareButton';
 import { SpeedSelector } from './SpeedSelector';
-import { ContextBadge, LoopChip } from './TimelineSlider';
+import { ContextBadge } from './TimelineSlider';
 import { TimeReadout } from './TimeReadout';
+import { TransportLoopMenu } from './TransportLoopMenu';
 import { type TrialTimelineSeekTarget } from './TrialTimeline';
 
 /**
@@ -121,14 +121,14 @@ interface PlaybackControlsProps {
    * bottom-edge actors.
    */
   overlay?: boolean;
-  /** A–B loop in-point (ms into the fight), or null when unset. Drives the rail region + chip. */
+  /** A–B loop in-point (ms into the fight), or null when unset. Drives the rail region. */
   loopStart?: number | null;
   /** A–B loop out-point (ms), or null when unset. */
   loopEnd?: number | null;
   /** Set the in/out point to the live playhead (touch/mouse equivalent of the I/O keys). */
   onSetLoopIn?: () => void;
   onSetLoopOut?: () => void;
-  /** Clear both loop points (the loop chip's delete action). */
+  /** Clear both loop points (the loop menu's Clear action; mirrors the U key). */
   onClearLoop?: () => void;
   /** True when the replay block is fullscreen — enables the cinema auto-hide + progress hairline. */
   isFullscreen?: boolean;
@@ -149,8 +149,9 @@ interface PlaybackControlsProps {
   // quality menu, fullscreen, locked-stats toggle): five identical dark circles hardcoding their
   // own `bottom` offset, growing every time a control was added. Name tags / quality / stats now
   // live behind one settings popover (ReplayDisplaySettingsMenu, a port of the mobile Settings
-  // sheet's "Display" grouping); fullscreen and help join them here as the two remaining
-  // always-visible affordances. All are optional so the component still renders with none of them
+  // sheet's "Display" grouping), which has since also absorbed autoplay and the keyboard-help
+  // trigger. Fullscreen is the one remaining always-visible affordance from that old stack.
+  // All are optional so the component still renders with none of them
   // (e.g. a future caller that doesn't need the desktop chrome) — FightReplay3D always supplies them.
   /** Name-tag toggle (N key) — surfaced in the settings popover. */
   namesEnabled?: boolean;
@@ -163,9 +164,9 @@ interface PlaybackControlsProps {
   onToggleStats?: () => void;
   /** Whether the camera is currently locked onto an actor (gates the stats row, as Arena3D did). */
   following?: boolean;
-  /** Keyboard-help panel open state (owned by FightReplay3D) — drives this button's visibility
-   *  (hidden while the panel itself is open, matching the old persistent-affordance behavior) and
-   *  its `aria-expanded`. */
+  /** Keyboard-help panel open state (owned by FightReplay3D) — drives the settings popover's
+   *  "Keyboard shortcuts" row visibility (hidden while the panel itself is open, matching the old
+   *  persistent-affordance behavior). */
   showKeyboardHelp?: boolean;
   onToggleKeyboardHelp?: () => void;
   /** Fullscreen toggle for the whole replay block (F key) — rendered far-right, as in every video player. */
@@ -187,7 +188,7 @@ export const PLAYBACK_SPEEDS = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 2, 3, 4, 5];
  * Orchestrates the deck's three rows:
  * - Trial mini-map strip (multi-fight runs only)
  * - Timeline slider with scrubbing support
- * - Control row: timecode/outcome/speed · transport + boss skip · trial toggles/share
+ * - Control row: transport + boss skip + timecode/outcome · gap · options cluster
  */
 const PlaybackControlsComponent: React.FC<PlaybackControlsProps> = ({
   duration,
@@ -377,11 +378,21 @@ const PlaybackControlsComponent: React.FC<PlaybackControlsProps> = ({
           density="compact"
         />
 
-        {/* Row 2: a short control row — timecode + outcome + speed (left) · transport + boss skip
-            (center) · trial toggles + share + collapse (right). Small controls so the whole bar
-            stays thin. On very narrow phones the left group (timecode + speed) was wide enough to
-            push the centered transport cluster into the speed pill, so tighten the inner gaps and
-            shrink the "/ total" readout there to give the centered orb room. */}
+        {/* Row 2: the control row. Left-aligned, in the grammar every shipping video player uses —
+            transport first, then the timecode it drives; a single elastic gap; then the options
+            cluster hard against the right edge.
+
+            This replaced a three-column layout (timecode+speed | centred transport | everything
+            else) whose outer columns were `flex: 1 1 0`, so the centred cluster's position was a
+            function of how wide the left text happened to be. That needed a 430px media query to
+            stop the timecode shoving the play button into the speed pill, and it still drifted
+            sideways whenever the outcome badge or loop chip appeared mid-fight. One elastic
+            spacer instead of two competing ones makes the whole row positionally stable.
+
+            The options cluster is now uniformly icon buttons. It previously mixed four control
+            grammars in one strip — a pill chip, two outlined text buttons ("A"/"B"), a labelled
+            Switch, and icon buttons — up to ten slots on a trial run. Autoplay and help moved into
+            the settings popover, and the loop's three slots collapsed into TransportLoopMenu. */}
         <Box
           sx={{
             display: 'flex',
@@ -389,64 +400,13 @@ const PlaybackControlsComponent: React.FC<PlaybackControlsProps> = ({
             gap: TRANSPORT_SPACING.sectionGapCompact,
             minHeight: 44,
             '@media (max-width: 430px)': {
-              '& .transport-side': { gap: 0.5 },
               '& .transport-total-time': { display: 'none' },
               '& .transport-outcome': { display: 'none' },
             },
           }}
         >
-          {/* Left: timecode + outcome + speed */}
-          <Box
-            className="transport-side"
-            sx={{ flex: '1 1 0', display: 'flex', alignItems: 'center', gap: 1.25, minWidth: 0 }}
-          >
-            <Box
-              component="span"
-              sx={{
-                display: 'inline-flex',
-                alignItems: 'baseline',
-                gap: 0.5,
-                flexShrink: 0,
-                fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
-                fontVariantNumeric: 'tabular-nums',
-                color: 'text.primary',
-              }}
-            >
-              {/* Live timecode — rAF-driven from timeRef, so it stays smooth without re-rendering
-                  the transport every tick. */}
-              <TimeReadout
-                timeRef={timeRef}
-                format={formatTime}
-                sx={{ fontSize: '1rem', fontWeight: 600 }}
-              />
-              <Box
-                component="span"
-                className="transport-total-time"
-                sx={{ fontSize: '0.72rem', color: 'text.secondary', fontWeight: 500 }}
-              >
-                / {formatTime(duration)}
-              </Box>
-            </Box>
-            {/* Outcome badge — the kill/wipe semantics every other chapter surface uses. */}
-            {replayContext?.isKill != null && (
-              <Box component="span" className="transport-outcome" sx={{ display: 'inline-flex' }}>
-                <ContextBadge tone={replayContext.isKill ? 'success' : 'warning'}>
-                  {replayContext.isKill ? 'Kill' : 'Wipe'}
-                </ContextBadge>
-              </Box>
-            )}
-            {/* Speed lives inline on desktop; on mobile it moves into the "more" row below. */}
-            {!isMobile && (
-              <SpeedSelector
-                playbackSpeed={playbackSpeed}
-                onSpeedChange={onSpeedChange}
-                speeds={PLAYBACK_SPEEDS}
-              />
-            )}
-          </Box>
-
-          {/* Center: transport cluster (compact orb) flanked by boss-skip for trial runs. */}
-          <Box sx={{ flex: '0 0 auto', display: 'flex', alignItems: 'center', gap: 0.25 }}>
+          {/* Left: transport cluster (boss skip flanking the play controls) then the timecode. */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25, minWidth: 0 }}>
             {showTrial && trial && (
               <Tooltip
                 title={
@@ -473,6 +433,7 @@ const PlaybackControlsComponent: React.FC<PlaybackControlsProps> = ({
                 </Box>
               </Tooltip>
             )}
+
             <PlaybackButtons
               isPlaying={isPlaying}
               onPlayPause={onPlayPause}
@@ -482,6 +443,7 @@ const PlaybackControlsComponent: React.FC<PlaybackControlsProps> = ({
               onSkipForward10={onSkipForward10}
               compact
             />
+
             {showTrial && trial && (
               <Tooltip
                 title={trial.nextBoss ? `Next boss: ${trial.nextBoss.name} ( ] )` : 'Next boss'}
@@ -504,89 +466,86 @@ const PlaybackControlsComponent: React.FC<PlaybackControlsProps> = ({
                 </Box>
               </Tooltip>
             )}
+
+            {/* Timecode sits immediately after the transport it describes. */}
+            <Box
+              component="span"
+              sx={{
+                display: 'inline-flex',
+                alignItems: 'baseline',
+                gap: 0.5,
+                flexShrink: 0,
+                ml: 1,
+                fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
+                fontVariantNumeric: 'tabular-nums',
+                color: 'text.primary',
+              }}
+            >
+              {/* Live timecode — rAF-driven from timeRef, so it stays smooth without re-rendering
+                  the transport every tick. */}
+              <TimeReadout
+                timeRef={timeRef}
+                format={formatTime}
+                sx={{ fontSize: '0.9rem', fontWeight: 600 }}
+              />
+              <Box
+                component="span"
+                className="transport-total-time"
+                sx={{ fontSize: '0.9rem', color: 'text.secondary', fontWeight: 500 }}
+              >
+                / {formatTime(duration)}
+              </Box>
+            </Box>
+
+            {/* Outcome badge — the kill/wipe semantics every other chapter surface uses. */}
+            {replayContext?.isKill != null && (
+              <Box
+                component="span"
+                className="transport-outcome"
+                sx={{ display: 'inline-flex', ml: 1 }}
+              >
+                <ContextBadge tone={replayContext.isKill ? 'success' : 'warning'}>
+                  {replayContext.isKill ? 'Kill' : 'Wipe'}
+                </ContextBadge>
+              </Box>
+            )}
           </Box>
 
-          {/* Right: trial toggles + loop + share + collapse chevron */}
+          {/* One elastic gap — the only flexible element in the row, so nothing else can be
+              pushed around by a neighbour's text width. */}
+          <Box sx={{ flex: '1 1 0', minWidth: 8 }} />
+
+          {/* Right: the options cluster — speed, loop, chapters, share, settings, fullscreen. */}
           <Box
-            className="transport-side"
             sx={{
-              flex: '1 1 0',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'flex-end',
-              gap: 0.5,
-              minWidth: 0,
+              gap: 0.25,
+              flexShrink: 0,
             }}
           >
-            {/* A–B loop chip — the only clear-loop affordance (i/o set, U or × clears). */}
-            {(loopStart != null || loopEnd != null) && (
-              <LoopChip
-                loopStart={loopStart}
-                loopEnd={loopEnd}
-                onClearLoop={onClearLoop}
-                formatTime={formatTime}
+            {/* Speed lives inline on desktop; on mobile it moves into the "more" popover. */}
+            {!isMobile && (
+              <SpeedSelector
+                playbackSpeed={playbackSpeed}
+                onSpeedChange={onSpeedChange}
+                speeds={PLAYBACK_SPEEDS}
               />
             )}
 
-            {/* Loop in/out setters — the touch/mouse equivalent of the I/O keys (which have no
-                touch path). Rendered only when the host threads the handlers. */}
-            {(onSetLoopIn || onSetLoopOut) && (
-              <Box
-                sx={{ display: 'inline-flex', gap: 0.25 }}
-                role="group"
-                aria-label="Set loop points"
-              >
-                {onSetLoopIn && (
-                  <Tooltip title="Set loop start at the playhead (I)">
-                    <Button
-                      size="small"
-                      variant="outlined"
-                      onClick={onSetLoopIn}
-                      aria-label="Set loop start at the playhead"
-                      sx={{ minWidth: 32, px: 0.5, fontWeight: 700 }}
-                    >
-                      A
-                    </Button>
-                  </Tooltip>
-                )}
-                {onSetLoopOut && (
-                  <Tooltip title="Set loop end at the playhead (O)">
-                    <Button
-                      size="small"
-                      variant="outlined"
-                      onClick={onSetLoopOut}
-                      aria-label="Set loop end at the playhead"
-                      sx={{ minWidth: 32, px: 0.5, fontWeight: 700 }}
-                    >
-                      B
-                    </Button>
-                  </Tooltip>
-                )}
-              </Box>
-            )}
-
-            {/* Autoplay — continue into the next fight when this one ends (YouTube semantics:
-                a mode, not a play action). Named + switch-shaped so it can't read as a second
-                play button. */}
-            {showTrial && trial && (
-              <Tooltip title="Autoplay — automatically continue into the next fight">
-                <FormControlLabel
-                  sx={{ m: 0, display: { xs: 'none', sm: 'inline-flex' } }}
-                  control={
-                    <Switch
-                      size="small"
-                      checked={trial.autoplayEnabled}
-                      onChange={trial.onToggleAutoplay}
-                      slotProps={{ input: { 'aria-label': 'Autoplay the whole trial' } }}
-                    />
-                  }
-                  label={
-                    <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600 }}>
-                      Autoplay
-                    </Typography>
-                  }
-                />
-              </Tooltip>
+            {/* A–B loop — one trigger for set-A / set-B / clear (was a chip plus two outlined
+                text buttons). Tints when a loop is active; the rail paints the region itself. */}
+            {(onSetLoopIn || onSetLoopOut || onClearLoop) && (
+              <TransportLoopMenu
+                loopStart={loopStart}
+                loopEnd={loopEnd}
+                onSetLoopIn={onSetLoopIn}
+                onSetLoopOut={onSetLoopOut}
+                onClearLoop={onClearLoop}
+                formatTime={formatTime}
+                portalContainer={portalContainer}
+              />
             )}
 
             {/* Chapters — the fullscreen-reachable boss list. Gated to fullscreen ONLY: in
@@ -611,7 +570,7 @@ const PlaybackControlsComponent: React.FC<PlaybackControlsProps> = ({
               />
             )}
 
-            {/* Desktop keeps Share inline; mobile folds Speed + Share into a "more" row. */}
+            {/* Desktop keeps Share inline; mobile folds Speed + Share into a "more" popover. */}
             {isMobile ? (
               <Tooltip title="Speed & share">
                 <IconButton
@@ -633,15 +592,21 @@ const PlaybackControlsComponent: React.FC<PlaybackControlsProps> = ({
                 fightId={fightId}
                 selectedActorIdRef={selectedActorIdRef}
                 timeRef={timeRef}
+                iconOnly
               />
             )}
-            {/* Display settings — name tags / player stats / replay quality, consolidated behind
-                one gear (see the props doc above for why these moved out of Arena3D). Desktop-only:
-                the mobile Settings sheet already covers this same ground. */}
+
+            {/* Settings — autoplay, name tags, player stats, replay quality, keyboard shortcuts.
+                Desktop-only: the mobile Settings sheet already covers this ground. Autoplay is
+                passed only for trial runs, which is what makes its section appear. */}
             {!isMobile && namesEnabled != null && onToggleNames && onQualityPresetChange && (
               <ReplayDisplaySettingsMenu
                 namesEnabled={namesEnabled}
                 onToggleNames={onToggleNames}
+                autoplayEnabled={trial ? trial.autoplayEnabled : undefined}
+                onToggleAutoplay={trial ? trial.onToggleAutoplay : undefined}
+                onToggleKeyboardHelp={onToggleKeyboardHelp}
+                showKeyboardHelp={showKeyboardHelp}
                 qualityPreset={qualityPreset ?? 'auto'}
                 onQualityPresetChange={onQualityPresetChange}
                 showStatsRow={following}
@@ -651,23 +616,10 @@ const PlaybackControlsComponent: React.FC<PlaybackControlsProps> = ({
               />
             )}
 
-            {/* Persistent help affordance — re-opens the keyboard-help panel once it auto-hides.
-                Hidden while the panel itself is open (its own close control takes over), mirroring
-                the old floating button. Desktop-only: no keyboard help on touch. */}
-            {!isMobile && onToggleKeyboardHelp && !showKeyboardHelp && (
-              <Tooltip title="Keyboard controls (H)">
-                <IconButton
-                  aria-label="Show keyboard controls"
-                  size="small"
-                  onClick={onToggleKeyboardHelp}
-                  sx={{ color: 'text.secondary', '&:hover': { color: 'text.primary' } }}
-                >
-                  <HelpOutlineIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
-            )}
-
-            {onToggleCollapse && (
+            {/* Collapse — fullscreen only. `hidden` (the state this produces) is itself gated on
+                isFullscreen, so in a windowed replay this button used to render and then do
+                nothing visible when clicked. */}
+            {isFullscreen && onToggleCollapse && (
               <Tooltip title="Collapse controls (C)">
                 <IconButton
                   aria-label="Collapse controls"
@@ -680,9 +632,8 @@ const PlaybackControlsComponent: React.FC<PlaybackControlsProps> = ({
               </Tooltip>
             )}
 
-            {/* Fullscreen — far-right, as in every video player. The last remaining always-visible
-                affordance from the old floating stack; mirrors the F key. Desktop-only: mobile
-                expands via the preview's "Tap to explore" and exits via the mobile shell's Close. */}
+            {/* Fullscreen — far-right, as in every video player. Desktop-only: mobile expands via
+                the preview's "Tap to explore" and exits via the mobile shell's Close. */}
             {!isMobile && onToggleFullscreen && (
               <Tooltip title={isFullscreen ? 'Exit fullscreen (F)' : 'Fullscreen (F)'}>
                 <IconButton
