@@ -39,8 +39,8 @@ not a claim that Elder Scrolls Online intellectual property is freely licensed.
   per island, down from v1's 491), island borders dilated so mipmapping cannot bleed background into
   the silhouette.
 - Prepared asset: `yandir-the-butcher-overview-v2.glb`; one mesh, one material, one draw call,
-  45,000 triangles, 28,854 vertices, 1024x1024 JPEG q92 base-color texture (no chroma subsampling),
-  1,981,816 bytes. Stored as JPEG because the same texture as PNG is 2,710,356 bytes, over the
+  45,000 triangles, 28,854 vertices, 1024x1024 JPEG q92 base-color texture (4:4:4, no chroma
+  subsampling), 1,649,848 bytes. Stored as JPEG because the same texture as PNG is 2,710,356 bytes, over the
   2.5 MB runtime gate.
 - Prepared bounds: 0.9414 x 1.9927 x 0.3990 model units (X x Y x Z), minimum Y exactly 0.0, centered
   on X and Z. Vertex attributes are POSITION, NORMAL, and TEXCOORD_0 only: no skin, animation, morph
@@ -50,12 +50,38 @@ not a claim that Elder Scrolls Online intellectual property is freely licensed.
   the registered closeups land. An earlier note said 5x; that compared against the full atlas
   including padding. No projection method can contain more real detail than the plates carry, but
   there is more headroom here than the 5x figure implied.
-- Known limitation: the left and right profiles streak horizontally. About 34% of texels face neither
-  reference camera squarely and receive silhouette-edge pixels stretched sideways. This is
+- Known limitation: the left and right profiles remain the weakest views. About 34% of texels face
+  neither reference camera squarely; since the v3 pass they are filled from a chart-local neighbour
+  average rather than stretched silhouette pixels, so they read as smooth rather than streaked. This is
   irreducible with two genuine views; only a real profile capture would fix it, and fabricating one
   was judged worse than an honest limitation. The profiles are still substantially better than v1's.
 - Intended presentation: 32-64 px-tall replay actor; broad color/silhouette identity LOD rather than
   a close-up replica.
+- Grazing-texel fill (v3 texture pass, 2026-09-05): about 34% of covered texels face neither
+  reference camera within cos 0.35 and were previously left as silhouette-edge pixels stretched
+  sideways — visible streaking on shoulder tops and pauldrons, which is exactly where the elevated
+  replay camera looks. Those texels (189,379, 32.8% of covered) are now filled from a
+  **chart-local** neighbour average: the kd-tree is restricted to texels sharing the same UV chart so
+  colour cannot cross a chart boundary, the blend is ramped by `(threshold - observed)/threshold` so
+  there is no hard edge at the cutoff, and islands with fewer than 8 well-observed texels are left
+  alone rather than filled from a bad neighbour set. Filled regions read smoother than before; that
+  is honest, since no plate observed them.
+- Sampler (v3): plates are now read at **native resolution** (731x731) with no upsampling anywhere —
+  both earlier Lanczos pre-upsample stages are removed. Sampling is alpha-weighted bilinear (4 taps
+  weighted by bilinear coefficient and plate alpha, renormalised, nearest-opaque only as a fallback)
+  with 2x2 supersampling via a 2048 attribute raster averaged to 1024. The previous nearest-neighbour
+  sampling on pre-upscaled plates produced staircase-replicated detail that measured as sharpness but
+  mipped to mush. Accepted closeups are sampled as separate native-resolution references with their
+  own transform rather than pasted into an upscaled canvas.
+- Tone (v3): measured like-for-like against **well-observed** texels only, the atlas was ~3% darker
+  than the source subject, not the ~22% an earlier whole-atlas comparison suggested — comparing the
+  full atlas to the source subject is biased low because unobserved creases and undersides are
+  legitimately dark. Applied contrast 1.08 pivoted on the observed mean (pivoting on 0.5 darkened it
+  instead), a capped exposure lift, and saturation 1.10. Observed mean now matches source.
+- Masked unsharp (v3): Gaussian sigma 0.7 px, amount 0.45, threshold 4/255, in sRGB, using a
+  mask-weighted blur (`gaussian(img*m)/gaussian(m)`) so chart borders cannot pull in dilation colour,
+  masked to `coverage & alignment > 0.5` (22.5% of covered texels). Then 24 px dilation, then
+  encode. Order matters: sharpening before the sampler fix would amplify the staircase.
 - Encoding correction (2026-09-05): the first build was written at JPEG **q75**, not the q92 its
   notes claimed (PIL default quantization table; 31.60 dB against the lossless atlas). Re-encoded
   from the lossless PNG master at true q92 with chroma subsampling disabled, giving **38.34 dB**.

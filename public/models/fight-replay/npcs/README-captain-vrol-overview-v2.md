@@ -45,7 +45,7 @@ not a claim that Elder Scrolls Online intellectual property is freely licensed.
   material to `CaptainVrolBakedVertexColor`. The binary chunk was copied byte-for-byte, so no
   geometry, UV, or texture data was re-encoded by that rename.
 - Prepared asset: `captain-vrol-overview-v2.glb`; one mesh, one material, one draw call, 44,999
-  triangles, 28,732 vertices, 1024x1024 JPEG q92 base-color texture (no chroma subsampling), 2,033,380 bytes. Stored as JPEG
+  triangles, 28,732 vertices, 1024x1024 JPEG q92 base-color texture (4:4:4, no chroma subsampling), 1,696,360 bytes. Stored as JPEG
   because the same texture as PNG is 2,764,516 bytes, over the 2.5 MB runtime gate; a 512px PNG
   would fit but would discard the closeup detail this pass gained, for the same byte cost.
 - Prepared bounds: 0.8591 x 1.9938 x 0.4039 model units (X x Y x Z), minimum Y exactly 0.0, centered
@@ -60,16 +60,43 @@ not a claim that Elder Scrolls Online intellectual property is freely licensed.
   (46% of the atlas is chart padding) that is roughly **3x** oversampled, and near 1:1 in the torso
   where the registered closeups land. An earlier note said 5x; that compared against the full atlas
   including padding. It still cannot contain more real detail than the plates carry.
-- Known limitation: the left and right profiles show horizontal streaking. About 34% of texels face
-  neither reference camera squarely and receive silhouette-edge pixels stretched sideways. A
-  confidence-thresholded 3D inpaint was tried and rejected — it made the atlas blotchier without
-  improving the render. This is irreducible with two views; only a genuine profile plate would fix
-  it, and fabricating one was judged worse than an honest limitation.
+- Known limitation: the left and right profiles remain the weakest views. About 34% of texels face
+  neither reference camera squarely. Since the v3 pass these are filled from a chart-local neighbour
+  average rather than stretched silhouette pixels, so they read as smooth rather than streaked — but
+  smooth is the honest ceiling here, because no plate observed them. An earlier confidence-thresholded
+  3D inpaint was tried and rejected; it made the atlas blotchier without improving the render. Only a
+  genuine profile plate would add real detail, and fabricating one was judged worse than the
+  limitation.
 - Superseded: `captain-vrol-overview-v1.glb` (45,000 tris, 512px, 1,575,876 bytes) was withdrawn.
   Its atlas was fragmented and its surface detail smeared, failing the acceptance gate.
 - Intended presentation: 32-64 px-tall replay actor; broad color/silhouette identity LOD rather than
   a close-up replica. The horned helm, pale ice hair, dark red-brown leather, blue-grey scaled
   plates, and fur-trimmed boots all remain legible at that size.
+- Grazing-texel fill (v3 texture pass, 2026-09-05): about 34% of covered texels face neither
+  reference camera within cos 0.35 and were previously left as silhouette-edge pixels stretched
+  sideways — visible streaking on shoulder tops and pauldrons, which is exactly where the elevated
+  replay camera looks. Those texels (186,317, 32.7% of covered) are now filled from a
+  **chart-local** neighbour average: the kd-tree is restricted to texels sharing the same UV chart so
+  colour cannot cross a chart boundary, the blend is ramped by `(threshold - observed)/threshold` so
+  there is no hard edge at the cutoff, and islands with fewer than 8 well-observed texels are left
+  alone rather than filled from a bad neighbour set. Filled regions read smoother than before; that
+  is honest, since no plate observed them.
+- Sampler (v3): plates are now read at **native resolution** (768x768) with no upsampling anywhere —
+  both earlier Lanczos pre-upsample stages are removed. Sampling is alpha-weighted bilinear (4 taps
+  weighted by bilinear coefficient and plate alpha, renormalised, nearest-opaque only as a fallback)
+  with 2x2 supersampling via a 2048 attribute raster averaged to 1024. The previous nearest-neighbour
+  sampling on pre-upscaled plates produced staircase-replicated detail that measured as sharpness but
+  mipped to mush. Accepted closeups are sampled as separate native-resolution references with their
+  own transform rather than pasted into an upscaled canvas.
+- Tone (v3): measured like-for-like against **well-observed** texels only, the atlas was ~3% darker
+  than the source subject, not the ~22% an earlier whole-atlas comparison suggested — comparing the
+  full atlas to the source subject is biased low because unobserved creases and undersides are
+  legitimately dark. Applied contrast 1.08 pivoted on the observed mean (pivoting on 0.5 darkened it
+  instead), a capped exposure lift, and saturation 1.10. Observed mean now matches source.
+- Masked unsharp (v3): Gaussian sigma 0.7 px, amount 0.45, threshold 4/255, in sRGB, using a
+  mask-weighted blur (`gaussian(img*m)/gaussian(m)`) so chart borders cannot pull in dilation colour,
+  masked to `coverage & alignment > 0.5` (26.8% of covered texels). Then 24 px dilation, then
+  encode. Order matters: sharpening before the sampler fix would amplify the staircase.
 - Encoding correction (2026-09-05): the first build of this asset was written at JPEG **q75**, not
   the q92 its notes claimed — the luminance quantization table was PIL's q75 default and PSNR against
   the lossless atlas was 30.84 dB. It was re-encoded from the lossless PNG master at true q92 with
