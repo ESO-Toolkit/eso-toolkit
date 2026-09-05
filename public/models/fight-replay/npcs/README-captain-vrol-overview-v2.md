@@ -26,10 +26,11 @@ not a claim that Elder Scrolls Online intellectual property is freely licensed.
 - Closeup plates: `view-07` (front torso) and `view-08` (back torso) were registered onto the
   full-body framing by matching per-row silhouette width profiles (scale 0.470 / 0.530, width error
   5.70% / 4.65%, confirmed visually) and used to sharpen the torso region. They carry about 2.1x the
-  linear resolution of the full-body plates. `view-04` (helm) was REJECTED: its silhouette runs off
-  the frame edges, profile matching falsely locked onto the torso, and masked normalized
-  cross-correlation peaked at only 0.492 pinned to the search boundary. The head therefore comes
-  from the full-body plate alone. No detail was fabricated.
+  linear resolution of the full-body plates. `view-04` (helm) was initially rejected here — its
+  silhouette runs off the frame edges, whole-body profile matching falsely locked onto the torso, and
+  masked normalized cross-correlation peaked at only 0.492 pinned to the search boundary. It was
+  later accepted under **head-band-only** registration; see the v4 head-plate entry below. No detail
+  was fabricated.
 - Replay-distance polish: bpy 5.0.0 using `tools/fight-replay-models/polish-yandir-overview.py`
   with `--target-triangles 95000 --keep-first-mesh`. The script is identity-named but parameterized;
   no Yandir-specific color grading, shoulder broadening, or helmet curls were enabled.
@@ -45,7 +46,7 @@ not a claim that Elder Scrolls Online intellectual property is freely licensed.
   material to `CaptainVrolBakedVertexColor`. The binary chunk was copied byte-for-byte, so no
   geometry, UV, or texture data was re-encoded by that rename.
 - Prepared asset: `captain-vrol-overview-v2.glb`; one mesh, one material, one draw call, 44,999
-  triangles, 28,732 vertices, 1024x1024 JPEG q92 base-color texture (4:4:4, no chroma subsampling), 1,696,360 bytes. Stored as JPEG
+  triangles, 28,732 vertices, 1024x1024 JPEG q92 base-color texture (4:4:4, no chroma subsampling), 1,699,852 bytes. Stored as JPEG
   because the same texture as PNG is 2,764,516 bytes, over the 2.5 MB runtime gate; a 512px PNG
   would fit but would discard the closeup detail this pass gained, for the same byte cost.
 - Prepared bounds: 0.8591 x 1.9938 x 0.4039 model units (X x Y x Z), minimum Y exactly 0.0, centered
@@ -97,6 +98,21 @@ not a claim that Elder Scrolls Online intellectual property is freely licensed.
   mask-weighted blur (`gaussian(img*m)/gaussian(m)`) so chart borders cannot pull in dilation colour,
   masked to `coverage & alignment > 0.5` (26.8% of covered texels). Then 24 px dilation, then
   encode. Order matters: sharpening before the sampler fix would amplify the staircase.
+- Head plates (v4 texture pass, 2026-09-05): the head was previously the least-sampled region on the
+  model — it took its colour from the full-body plate, where it occupies only ~60 px, so the helm read
+  as an undifferentiated smear. `view-04` (helm closeup, head-band registration error 2.86%, scale 0.210) is now registered and projected onto head texels.
+  Registration matches the **head band only** (top of silhouette down to the detected shoulder row,
+  keyed to a fraction of the widest upper-body row so a narrow helm spike or a wide horn span cannot
+  seed it wrongly). Whole-body silhouette matching had failed here precisely because the torso
+  dominates the correlation — that is what previously mis-locked the helm plate onto the chest. Each
+  accepted registration was confirmed by a 50% overlay before use. Projection is gated to texels above
+  the shoulder line (v > 0.812), feathered 0.05 in v so the neck has no seam; body texels are untouched.
+  Head plates contribute 16.5% of texels.
+- Rejected head plates: `view-05` (50.25% error) and `view-06` (72.86%) were rejected as misregistered. Vrol has **no usable back-of-head plate**, so the rear of his helm keeps full-body-plate colour. Registration that cannot be verified is
+  rejected rather than forced — a wrong plate on the face is worse than a soft one.
+- Head geometry is **unchanged and was not regenerated.** A clay render confirmed both horns, the conical dome, the brow/visor ridge and the ice-beard shard fringe are genuinely reconstructed; the ice-crystal crown and the fine gold fang teeth are not modelled. The projected
+  detail is therefore the correct colour pattern on a slightly smooth surface: at extreme close-up the
+  crown and tusk detail reads flat, while at replay distance the identity is unmistakable.
 - Encoding correction (2026-09-05): the first build of this asset was written at JPEG **q75**, not
   the q92 its notes claimed — the luminance quantization table was PIL's q75 default and PSNR against
   the lossless atlas was 30.84 dB. It was re-encoded from the lossless PNG master at true q92 with

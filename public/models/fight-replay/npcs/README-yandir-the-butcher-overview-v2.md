@@ -17,8 +17,9 @@ not a claim that Elder Scrolls Online intellectual property is freely licensed.
 - Closeup plates: `view-07` (front torso) and `view-08` (back torso) were registered onto the
   full-body framing by matching per-row silhouette width profiles (width error 4.99% and 4.77%,
   composites confirmed visually) and used to sharpen the torso region. Helm closeups were not
-  attempted, because the equivalent plate failed correlation verification during the Captain Vrol
-  build and unverifiable registration maps the wrong body part onto the mesh.
+  attempted in this pass, because the equivalent plate had failed correlation verification during the
+  Captain Vrol build. They were added later under head-band-only registration; see the v4 head-plate
+  entry below.
 - **Synthesized side views are NOT used.** v1's colour drew on a fabricated left profile
   (`generated-left-profile-v1.png`). That is invented detail, so v2 uses the two genuine plates only.
 - Color source: the two reference plates projected **directly into the UV atlas at texel
@@ -40,7 +41,7 @@ not a claim that Elder Scrolls Online intellectual property is freely licensed.
   the silhouette.
 - Prepared asset: `yandir-the-butcher-overview-v2.glb`; one mesh, one material, one draw call,
   45,000 triangles, 28,854 vertices, 1024x1024 JPEG q92 base-color texture (4:4:4, no chroma
-  subsampling), 1,649,848 bytes. Stored as JPEG because the same texture as PNG is 2,710,356 bytes, over the
+  subsampling), 1,652,260 bytes. Stored as JPEG because the same texture as PNG is 2,710,356 bytes, over the
   2.5 MB runtime gate.
 - Prepared bounds: 0.9414 x 1.9927 x 0.3990 model units (X x Y x Z), minimum Y exactly 0.0, centered
   on X and Z. Vertex attributes are POSITION, NORMAL, and TEXCOORD_0 only: no skin, animation, morph
@@ -82,6 +83,21 @@ not a claim that Elder Scrolls Online intellectual property is freely licensed.
   mask-weighted blur (`gaussian(img*m)/gaussian(m)`) so chart borders cannot pull in dilation colour,
   masked to `coverage & alignment > 0.5` (22.5% of covered texels). Then 24 px dilation, then
   encode. Order matters: sharpening before the sampler fix would amplify the staircase.
+- Head plates (v4 texture pass, 2026-09-05): the head was previously the least-sampled region on the
+  model — it took its colour from the full-body plate, where it occupies only ~60 px, so the helm read
+  as an undifferentiated smear. `view-04` (front helm, head-band error 3.53%, scale 0.208) and `view-06` (back of head, 5.16%, scale 0.246) are now registered and projected onto head texels.
+  Registration matches the **head band only** (top of silhouette down to the detected shoulder row,
+  keyed to a fraction of the widest upper-body row so a narrow helm spike or a wide horn span cannot
+  seed it wrongly). Whole-body silhouette matching had failed here precisely because the torso
+  dominates the correlation — that is what previously mis-locked the helm plate onto the chest. Each
+  accepted registration was confirmed by a 50% overlay before use. Projection is gated to texels above
+  the shoulder line (v > 0.856 front, v > 0.855 back), feathered 0.05 in v so the neck has no seam; body texels are untouched.
+  Head plates contribute 17.3% and 16.0% of texels.
+- Rejected head plates: `view-05` registered acceptably (6.60%) but was redundant with view-04 and skipped. Note that view-04 scored a _lower_ numeric error against the **back** plate (2.58%) than the front (3.53%); it was assigned to the front regardless, because it is a face — content overrides a marginally better score, and following the number would have mapped the beard onto the back of his head. Registration that cannot be verified is
+  rejected rather than forced — a wrong plate on the face is worse than a soft one.
+- Head geometry is **unchanged and was not regenerated.** A clay render shows a smooth hood/onion form with a sculpted brow, nose, cheeks and beard mass; the tusked cheek guards and helm scales are not modelled. The projected
+  detail is therefore the correct colour pattern on a slightly smooth surface: at extreme close-up the
+  crown and tusk detail reads flat, while at replay distance the identity is unmistakable.
 - Encoding correction (2026-09-05): the first build was written at JPEG **q75**, not the q92 its
   notes claimed (PIL default quantization table; 31.60 dB against the lossless atlas). Re-encoded
   from the lossless PNG master at true q92 with chroma subsampling disabled, giving **38.34 dB**.

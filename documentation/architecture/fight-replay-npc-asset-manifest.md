@@ -22,8 +22,8 @@ Do not reuse any reconstructed asset outside this project without a separate rig
 | Asset                                | Actor              | Renderer                  |   Tris |  Verts | Materials | Texture     | GLB bytes | Reference                                                                   |
 | ------------------------------------ | ------------------ | ------------------------- | -----: | -----: | --------: | ----------- | --------: | --------------------------------------------------------------------------- |
 | `coolstickman-walk.glb`              | all players        | `instanced-pose-flipbook` |      — |      — |         1 | —           |         — | CC0, Polygonal Mind                                                         |
-| `yandir-the-butcher-overview-v2.glb` | Yandir the Butcher | `static-boss`             | 45,000 | 28,854 |         1 | 1024px JPEG | 1,649,848 | [post 82](https://esomodelviewer.com/characters/post/82-yandir-the-butcher) |
-| `captain-vrol-overview-v2.glb`       | Captain Vrol       | `static-boss`             | 44,999 | 28,732 |         1 | 1024px JPEG | 1,696,360 | [post 83](https://esomodelviewer.com/characters/post/83-captain-vrol)       |
+| `yandir-the-butcher-overview-v2.glb` | Yandir the Butcher | `static-boss`             | 45,000 | 28,854 |         1 | 1024px JPEG | 1,652,260 | [post 82](https://esomodelviewer.com/characters/post/82-yandir-the-butcher) |
+| `captain-vrol-overview-v2.glb`       | Captain Vrol       | `static-boss`             | 44,999 | 28,732 |         1 | 1024px JPEG | 1,699,852 | [post 83](https://esomodelviewer.com/characters/post/83-captain-vrol)       |
 
 ### Runtime budgets
 
@@ -40,6 +40,12 @@ Do not reuse any reconstructed asset outside this project without a separate rig
   meshopt — the browser runtime registers no `DRACOLoader`.
 - Colour must be projected into the UV atlas at texel resolution. Baking from vertex colours caps
   detail at the vertex count and produces a visibly smeared surface.
+- Register closeup reference plates and project them onto the region they cover. The head especially:
+  in a full-body plate the head is only ~60 px, so without a helm closeup the face reads as a smear,
+  and the face is the identity anchor. Match closeups on the **region band** (head rows only for a
+  helm plate), not the whole silhouette — whole-body matching is dominated by the torso and will
+  mis-lock a helm plate onto the chest. Confirm every registration with a 50% overlay before use, and
+  reject rather than force any that cannot be verified.
 - glTF `+Y` up, facing `+Z`. The renderer re-grounds from the mesh bounding box every frame, so a
   non-grounded export is tolerated, but exporting feet at `y=0` is still preferred.
 
