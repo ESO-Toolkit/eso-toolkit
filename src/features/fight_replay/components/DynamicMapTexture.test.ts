@@ -2,8 +2,13 @@ import * as THREE from 'three';
 
 import {
   applyFloorTexture,
+  cacheMapTexture,
+  clearMapTextureCache,
   generateFallbackTexture,
   generateMaplessFloorTexture,
+  getCachedMapTexture,
+  releaseMapTexture,
+  retainMapTexture,
 } from './DynamicMapTexture';
 
 /**
@@ -159,5 +164,118 @@ describe('applyFloorTexture', () => {
     expect(() => applyFloorTexture(material, texture)).not.toThrow();
     expect(material.map).toBe(texture);
     expect(material.needsUpdate).toBe(true);
+  });
+});
+
+/**
+ * cacheMapTexture / getCachedMapTexture back the module-level texture cache that
+ * DynamicMapTexture's loadTexture() reads/writes through. It is bounded at
+ * MAX_CACHED_MAP_TEXTURES (8, not exported — inferred here by filling the cache to capacity)
+ * and MUST behave as a true LRU: the eviction victim is whichever entry was least recently
+ * used, not merely least recently inserted. It must also never dispose a texture that a
+ * mounted DynamicMapTexture instance still has bound (tracked via retainMapTexture /
+ * releaseMapTexture) — disposing a live, GPU-bound texture causes three.js to silently
+ * re-upload it on the next render (wasted work) and orphans the GPU resource the cache can no
+ * longer reach.
+ */
+describe('cacheMapTexture / getCachedMapTexture (LRU + live-reference eviction)', () => {
+  afterEach(() => {
+    clearMapTextureCache();
+  });
+
+  // Fills the cache to exactly its capacity (8) with fresh spy-instrumented textures keyed
+  // 'map-0'..'map-7', in insertion order. Capacity itself isn't exported, but the reviewer-
+  // verified defect report pins it at 8, and filling to exactly that many never triggers an
+  // eviction on its own — the next `cacheMapTexture` call is what pushes it over and forces
+  // exactly one eviction, which is what each test below inspects.
+  const CAPACITY = 8;
+  function fillCache(): {
+    keys: string[];
+    textures: THREE.Texture[];
+    disposeSpies: jest.SpyInstance[];
+  } {
+    const keys: string[] = [];
+    const textures: THREE.Texture[] = [];
+    const disposeSpies: jest.SpyInstance[] = [];
+    for (let i = 0; i < CAPACITY; i++) {
+      const key = `map-${i}`;
+      const texture = new THREE.Texture();
+      const spy = jest.spyOn(texture, 'dispose');
+      cacheMapTexture(key, texture);
+      keys.push(key);
+      textures.push(texture);
+      disposeSpies.push(spy);
+    }
+    return { keys, textures, disposeSpies };
+  }
+
+  it('evicts the least-recently-USED entry, not merely the least-recently-inserted one', () => {
+    const { keys, disposeSpies } = fillCache();
+    const [oldestKey, secondOldestKey] = keys;
+
+    // Read the oldest entry — a true LRU must treat this as a "use" and protect it from
+    // being the next eviction victim. Under a FIFO masquerading as LRU (Map iteration order,
+    // never refreshed on read) this call is a no-op for ordering purposes and the test below
+    // fails: the oldest key is disposed anyway.
+    const refreshed = getCachedMapTexture(oldestKey);
+    expect(refreshed).toBeDefined();
+
+    // Pushing a 9th distinct entry forces exactly one eviction.
+    const ninthTexture = new THREE.Texture();
+    cacheMapTexture('map-8', ninthTexture);
+
+    // The just-read entry must survive...
+    expect(getCachedMapTexture(oldestKey)).toBeDefined();
+    expect(disposeSpies[0]).not.toHaveBeenCalled();
+
+    // ...and the NEXT-oldest (never read) must be the one evicted and disposed instead.
+    expect(getCachedMapTexture(secondOldestKey)).toBeUndefined();
+    expect(disposeSpies[1]).toHaveBeenCalledTimes(1);
+
+    ninthTexture.dispose();
+  });
+
+  it('evicts a still-retained (live) texture from the cache WITHOUT disposing it', () => {
+    const { keys, disposeSpies } = fillCache();
+    const [oldestKey] = keys;
+
+    // Simulate a mounted DynamicMapTexture instance whose floor material still has this
+    // texture bound as `material.map`.
+    retainMapTexture(oldestKey);
+
+    // Force eviction of the (untouched, still-oldest) entry.
+    const ninthTexture = new THREE.Texture();
+    cacheMapTexture('map-8', ninthTexture);
+
+    // It must be gone from the cache (the cache drops its own bookkeeping/ownership)...
+    expect(getCachedMapTexture(oldestKey)).toBeUndefined();
+    // ...but MUST NOT have been disposed, because it is still live/bound elsewhere. Disposing
+    // it here would leave a mounted floor's material.map pointing at a disposed GPU texture.
+    expect(disposeSpies[0]).not.toHaveBeenCalled();
+
+    releaseMapTexture(oldestKey);
+    ninthTexture.dispose();
+  });
+
+  it('disposes an evicted-while-live texture once its last holder releases it', () => {
+    const { keys, disposeSpies } = fillCache();
+    const [oldestKey] = keys;
+
+    retainMapTexture(oldestKey);
+
+    const ninthTexture = new THREE.Texture();
+    cacheMapTexture('map-8', ninthTexture);
+
+    // Evicted but still bound, so not yet disposed (previous test covers this).
+    expect(disposeSpies[0]).not.toHaveBeenCalled();
+
+    // Eviction already dropped the cache's only handle to this texture, so release is the
+    // sole remaining hook able to free it. If release doesn't dispose here, nothing ever
+    // will and the GPU texture leaks for the lifetime of the page — skipping the dispose
+    // of a live texture must defer disposal, not abandon it.
+    releaseMapTexture(oldestKey);
+    expect(disposeSpies[0]).toHaveBeenCalledTimes(1);
+
+    ninthTexture.dispose();
   });
 });

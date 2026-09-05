@@ -348,4 +348,22 @@ describe('useMapMarkersManager', () => {
     expect(marker?.colour).toEqual([1, 0, 0.5, 1]);
     expect(marker?.text?.length).toBe(500);
   });
+
+  it('caps an oversized stored blob on restore instead of loading it intact', () => {
+    const onError = jest.fn();
+    const oversized = Array.from({ length: 600 }, (_, i) =>
+      savedMarker({ id: `saved-${i}`, x: 80000 + i, z: 70000 + i }),
+    );
+    seedStorage(oversized);
+
+    const { result } = renderHook(() => useMapMarkersManager({ fight: HEL_RA_FIGHT, onError }));
+
+    // Restored state is already capped — not the raw 600 from the legacy blob.
+    expect(result.current.markersState?.markers).toHaveLength(500);
+    expect(result.current.restoredCount).toBe(500);
+    expect(onError).toHaveBeenCalledWith(expect.stringContaining('trimmed'));
+
+    // The capped set is written back so the oversized blob doesn't re-trim every session.
+    expect(readStorage()['636'].markers).toHaveLength(500);
+  });
 });
