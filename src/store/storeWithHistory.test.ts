@@ -218,7 +218,8 @@ describe('storeWithHistory - Redux Persist Transform', () => {
 // the REAL transform so a persisted field missing from either of its two
 // spots (inbound allowlist / rehydrate defaults) fails here, not in the field.
 describe('storeWithHistory - real uiTransform', () => {
-  const { uiTransform: realTransform } = jest.requireActual('./storeWithHistory');
+  const { uiTransform: realTransform, savedBuildsTransform: realSavedBuildsTransform } =
+    jest.requireActual('./storeWithHistory');
 
   it('round-trips perfLowNoticeSeen through persist and rehydrate', () => {
     const state = {
@@ -242,5 +243,22 @@ describe('storeWithHistory - real uiTransform', () => {
     const rehydrated = realTransform.out(persisted, 'ui', { ui: persisted });
     expect(rehydrated.perfLowNoticeSeen).toBe(true);
     expect(rehydrated.perfTier).toBe('low');
+  });
+
+  it('retains the localStorage build fallback until IndexedDB migration completes', () => {
+    const savedBuilds = { builds: [{ id: 'legacy-build' }], hydrated: true };
+    localStorage.removeItem('eso-saved-builds-idb-v1');
+
+    expect(realSavedBuildsTransform.in(savedBuilds, 'savedBuilds', { savedBuilds })).toEqual({
+      builds: savedBuilds.builds,
+      hydrated: false,
+    });
+
+    localStorage.setItem('eso-saved-builds-idb-v1', 'complete');
+    expect(realSavedBuildsTransform.in(savedBuilds, 'savedBuilds', { savedBuilds })).toEqual({
+      builds: [],
+      hydrated: false,
+    });
+    localStorage.removeItem('eso-saved-builds-idb-v1');
   });
 });

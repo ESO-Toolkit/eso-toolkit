@@ -29,6 +29,7 @@ jest.mock('./store/storeWithHistory', () => {
 
 jest.mock('react-redux', () => ({
   Provider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  useDispatch: () => jest.fn(),
 }));
 
 jest.mock('./ReduxThemeProvider', () => ({
@@ -37,6 +38,10 @@ jest.mock('./ReduxThemeProvider', () => ({
 
 jest.mock('redux-persist/integration/react', () => ({
   PersistGate: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+}));
+
+jest.mock('./store/saved_builds/SavedBuildsGate', () => ({
+  SavedBuildsGate: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 
 jest.mock('./contexts/LoggerContext', () => ({

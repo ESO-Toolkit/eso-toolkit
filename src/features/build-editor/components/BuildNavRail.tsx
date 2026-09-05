@@ -38,10 +38,12 @@ import {
   useMediaQuery,
 } from '@mui/material';
 import { alpha, useTheme } from '@mui/material/styles';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 
 import type { SectionProgressMap } from '../hooks/useSectionProgress';
 import { BE_TOKENS, type SectionId } from '../theme/buildEditorTokens';
+
+import { BUILD_EDITOR_REVEAL_SECTION_EVENT } from './primitives/LazySection';
 
 /* ── Section groups — mirror the bento grid spatial layout ────────────── */
 
@@ -120,23 +122,76 @@ const BuildNavRailComponent: React.FC<BuildNavRailProps> = ({ progress }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const prefersReducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
   const [moreOpen, setMoreOpen] = useState(false);
+  const pendingSectionRef = useRef<SectionId | null>(null);
 
-  const scrollToSection = useCallback((sectionId: SectionId) => {
-    navigator.vibrate?.(10);
-    const el = document.getElementById(`section-${sectionId}`);
-    if (!el) return;
-    // H3: expand the section first if it's collapsed, then scroll to it.
-    const collapsedHeader = el.querySelector('[aria-expanded="false"]') as HTMLElement | null;
-    if (collapsedHeader) {
-      collapsedHeader.click();
-      requestAnimationFrame(() => {
-        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      });
-    } else {
-      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
+  const scrollToSection = useCallback(
+    (sectionId: SectionId) => {
+      navigator.vibrate?.(10);
+
+      const revealTarget = (section: HTMLElement): void => {
+        section.scrollIntoView({
+          behavior: prefersReducedMotion ? 'auto' : 'smooth',
+          block: 'start',
+        });
+        section.querySelector<HTMLElement>('[data-build-section-focus-target]')?.focus({
+          preventScroll: true,
+        });
+      };
+
+      // Explicit navigation must not depend on IntersectionObserver timing. A lazy
+      // placeholder is replaced when its editor mounts, so reacquire the element
+      // before scrolling instead of retaining the now-detached placeholder node.
+      window.dispatchEvent(
+        new CustomEvent(BUILD_EDITOR_REVEAL_SECTION_EVENT, { detail: sectionId }),
+      );
+
+      let attemptsRemaining = 30;
+      const revealAndScroll = (): void => {
+        const el = document.getElementById(`section-${sectionId}`);
+        if (!el) return;
+
+        if (el.getAttribute('aria-hidden') === 'true' && attemptsRemaining > 0) {
+          attemptsRemaining -= 1;
+          requestAnimationFrame(revealAndScroll);
+          return;
+        }
+
+        // Expand collapsed mobile sections before moving focus into the target.
+        const collapsedHeader = el.querySelector<HTMLElement>(
+          ':scope > [data-build-section-header] > [data-build-section-toggle][aria-expanded="false"]',
+        );
+        if (collapsedHeader) {
+          collapsedHeader.click();
+          requestAnimationFrame(() => {
+            const expandedSection = document.getElementById(`section-${sectionId}`);
+            if (expandedSection) revealTarget(expandedSection);
+          });
+          return;
+        }
+
+        revealTarget(el);
+      };
+
+      requestAnimationFrame(revealAndScroll);
+    },
+    [prefersReducedMotion],
+  );
+
+  const handleMoreSectionSelect = useCallback((sectionId: SectionId) => {
+    // MUI restores focus when the bottom sheet finishes closing. Waiting for
+    // that transition prevents focus restoration from undoing the section
+    // scroll on touch devices.
+    pendingSectionRef.current = sectionId;
+    setMoreOpen(false);
   }, []);
+
+  const handleMoreSheetExited = useCallback(() => {
+    const sectionId = pendingSectionRef.current;
+    pendingSectionRef.current = null;
+    if (sectionId) scrollToSection(sectionId);
+  }, [scrollToSection]);
 
   const railBg = isDark ? alpha('#08121a', 0.92) : alpha('#f5f8fc', 0.96);
   const borderColor = isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.07)';
@@ -241,6 +296,9 @@ const BuildNavRailComponent: React.FC<BuildNavRailProps> = ({ progress }) => {
           {/* More button — opens bottom sheet with remaining sections */}
           <ButtonBase
             aria-label="More sections"
+            aria-controls={moreOpen ? 'build-editor-section-menu' : undefined}
+            aria-expanded={moreOpen}
+            aria-haspopup="dialog"
             onClick={() => setMoreOpen(true)}
             sx={{
               ...navBtnSx,
@@ -269,6 +327,10 @@ const BuildNavRailComponent: React.FC<BuildNavRailProps> = ({ progress }) => {
           onClose={() => setMoreOpen(false)}
           slotProps={{
             paper: {
+              id: 'build-editor-section-menu',
+              role: 'dialog',
+              'aria-modal': true,
+              'aria-labelledby': 'build-editor-section-menu-title',
               sx: {
                 borderRadius: '20px 20px 0 0',
                 background: isDark
@@ -280,6 +342,9 @@ const BuildNavRailComponent: React.FC<BuildNavRailProps> = ({ progress }) => {
                 borderBottom: 'none',
                 maxHeight: '80vh',
               },
+            },
+            transition: {
+              onExited: handleMoreSheetExited,
             },
           }}
         >
@@ -294,6 +359,7 @@ const BuildNavRailComponent: React.FC<BuildNavRailProps> = ({ progress }) => {
             }}
           >
             <Typography
+              id="build-editor-section-menu-title"
               sx={{
                 fontWeight: 700,
                 fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
@@ -318,10 +384,8 @@ const BuildNavRailComponent: React.FC<BuildNavRailProps> = ({ progress }) => {
               return (
                 <ListItemButton
                   key={item.id}
-                  onClick={() => {
-                    scrollToSection(item.id);
-                    setMoreOpen(false);
-                  }}
+                  aria-label={item.label}
+                  onClick={() => handleMoreSectionSelect(item.id)}
                   sx={{
                     borderRadius: 1.5,
                     mb: 0.25,
@@ -350,10 +414,12 @@ const BuildNavRailComponent: React.FC<BuildNavRailProps> = ({ progress }) => {
                   />
                   {done ? (
                     <CheckIcon
+                      titleAccess={`${item.label} section complete`}
                       sx={{ fontSize: 15, color: 'var(--be-accent, #22c55e)', opacity: 0.85 }}
                     />
                   ) : (
                     <EmptyIcon
+                      titleAccess={`${item.label} section incomplete`}
                       sx={{
                         fontSize: 15,
                         color: isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.12)',

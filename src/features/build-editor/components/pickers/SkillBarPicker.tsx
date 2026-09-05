@@ -58,6 +58,7 @@ const MAX_RESULTS = 100;
 
 const TILE_SIZE = 58;
 const ULT_SIZE = 66;
+const SKILL_BAR_MAX_WIDTH = TILE_SIZE * 5 + ULT_SIZE + 1.5 + 10 * 6;
 
 const SLOT_LABELS: Record<number, string> = {
   3: '1',
@@ -843,9 +844,10 @@ const SkillSlotTile: React.FC<SkillSlotTileProps> = ({
         flexDirection: 'column',
         alignItems: 'center',
         gap: 0.5,
-        flex: isUlt ? undefined : 1,
-        maxWidth: isUlt ? ULT_SIZE : TILE_SIZE + 16,
-        minWidth: isUlt ? ULT_SIZE : TILE_SIZE,
+        width: '100%',
+        maxWidth: size,
+        minWidth: 0,
+        justifySelf: 'center',
       }}
     >
       {/* Slot position label above the tile \u2014 always visible for orientation */}
@@ -895,8 +897,11 @@ const SkillSlotTile: React.FC<SkillSlotTileProps> = ({
           }}
           sx={{
             position: 'relative',
-            width: size,
-            height: size,
+            width: '100%',
+            height: 'auto',
+            maxWidth: size,
+            aspectRatio: '1 / 1',
+            minWidth: 0,
             borderRadius: isUlt ? '14px' : '12px',
             cursor: 'pointer',
             overflow: 'hidden',
@@ -911,13 +916,15 @@ const SkillSlotTile: React.FC<SkillSlotTileProps> = ({
                 ? accentA(0.08)
                 : accentA(0.04)
               : isDark
-                ? 'rgba(255,255,255,0.02)'
-                : 'rgba(0,0,0,0.012)',
+                ? `linear-gradient(145deg, rgba(255,255,255,0.035), ${accentA(0.025)})`
+                : `linear-gradient(145deg, rgba(255,255,255,0.55), ${accentA(0.025)})`,
             boxShadow: skill
               ? isDark
                 ? `0 0 14px ${accentA(0.12)}, inset 0 1px 0 rgba(255,255,255,0.04)`
                 : 'inset 0 1px 0 rgba(255,255,255,0.5)'
-              : 'none',
+              : isDark
+                ? 'inset 0 1px 0 rgba(255,255,255,0.025), inset 0 -10px 20px rgba(0,0,0,0.08)'
+                : 'inset 0 1px 0 rgba(255,255,255,0.7)',
             transition: 'all 180ms ease',
             '&:focus-visible': {
               outline: '2px solid var(--be-accent, #38bdf8)',
@@ -967,8 +974,9 @@ const SkillSlotTile: React.FC<SkillSlotTileProps> = ({
                         ? 'rgba(255,255,255,0.55)'
                         : 'rgba(0,0,0,0.45)'
                       : isDark
-                        ? 'rgba(255,255,255,0.16)'
-                        : 'rgba(0,0,0,0.13)',
+                        ? 'rgba(255,255,255,0.24)'
+                        : 'rgba(0,0,0,0.20)',
+                  textShadow: isDark ? `0 0 14px ${accentA(0.22)}` : 'none',
                   lineHeight: 1,
                   userSelect: 'none',
                 }}
@@ -1033,7 +1041,8 @@ const SkillSlotTile: React.FC<SkillSlotTileProps> = ({
             WebkitLineClamp: 2,
             WebkitBoxOrient: 'vertical',
             wordBreak: 'break-word',
-            maxWidth: size + 8,
+            width: '100%',
+            maxWidth: size,
             userSelect: 'none',
           }}
         >
@@ -1058,7 +1067,7 @@ const SkillBarRow: React.FC<SkillBarProps> = ({ label, bar, onOpenPicker, onRemo
   const filled = countFilled(bar);
 
   return (
-    <Box>
+    <Box sx={{ minWidth: 0, width: '100%' }}>
       <Stack
         direction="row"
         sx={{ justifyContent: 'space-between', alignItems: 'center', mb: 1.5, px: 0.5 }}
@@ -1105,49 +1114,64 @@ const SkillBarRow: React.FC<SkillBarProps> = ({ label, bar, onOpenPicker, onRemo
       </Stack>
 
       <Box
+        role="group"
+        aria-label={`${label} skill slots`}
         sx={{
-          display: 'flex',
-          alignItems: 'flex-start',
-          justifyContent: 'center',
-          gap: { xs: 0.75, sm: 1.25 },
           py: 1.5,
-          px: 1.5,
+          px: { xs: 0.75, sm: 1.5 },
+          minWidth: 0,
+          width: '100%',
           borderRadius: 3,
-          background: isDark ? 'rgba(255,255,255,0.015)' : 'rgba(0,0,0,0.012)',
+          background: isDark
+            ? 'linear-gradient(180deg, rgba(var(--be-accent-rgb, 56,189,248),0.035) 0%, rgba(255,255,255,0.012) 55%, rgba(0,0,0,0.06) 100%)'
+            : 'linear-gradient(180deg, rgba(var(--be-accent-rgb, 56,189,248),0.025) 0%, rgba(255,255,255,0.35) 100%)',
           border: `1px solid ${isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)'}`,
-          flexWrap: { xs: 'wrap', sm: 'nowrap' },
-          rowGap: 1,
+          boxShadow: isDark
+            ? 'inset 0 1px 0 rgba(255,255,255,0.025), inset 0 -20px 40px rgba(0,0,0,0.06)'
+            : 'inset 0 1px 0 rgba(255,255,255,0.65)',
         }}
       >
-        {SKILL_SLOTS.map((slot) => (
-          <SkillSlotTile
-            key={slot}
-            slotIndex={slot}
-            abilityId={bar[slot]}
-            onOpenPicker={() => onOpenPicker(slot)}
-            onRemove={() => onRemove(slot)}
-          />
-        ))}
-
         <Box
           sx={{
-            width: 1.5,
-            height: ULT_SIZE * 0.7,
-            borderRadius: 1,
-            flexShrink: 0,
-            alignSelf: 'center',
-            background: isDark
-              ? 'linear-gradient(180deg, transparent 0%, rgba(255,179,0, 0.40) 50%, transparent 100%)'
-              : 'linear-gradient(180deg, transparent 0%, rgba(255,179,0, 0.25) 50%, transparent 100%)',
+            display: 'grid',
+            gridTemplateColumns: 'repeat(5, minmax(0, 1fr)) 1.5px minmax(0, 1.14fr)',
+            alignItems: 'flex-start',
+            gap: { xs: 0.5, sm: 1.25 },
+            width: '100%',
+            maxWidth: SKILL_BAR_MAX_WIDTH,
+            minWidth: 0,
+            mx: 'auto',
           }}
-        />
+        >
+          {SKILL_SLOTS.map((slot) => (
+            <SkillSlotTile
+              key={slot}
+              slotIndex={slot}
+              abilityId={bar[slot]}
+              onOpenPicker={() => onOpenPicker(slot)}
+              onRemove={() => onRemove(slot)}
+            />
+          ))}
 
-        <SkillSlotTile
-          slotIndex={ULTIMATE_SLOT}
-          abilityId={bar[ULTIMATE_SLOT]}
-          onOpenPicker={() => onOpenPicker(ULTIMATE_SLOT)}
-          onRemove={() => onRemove(ULTIMATE_SLOT)}
-        />
+          <Box
+            sx={{
+              width: 1.5,
+              height: ULT_SIZE * 0.7,
+              borderRadius: 1,
+              alignSelf: 'center',
+              background: isDark
+                ? 'linear-gradient(180deg, transparent 0%, rgba(255,179,0, 0.40) 50%, transparent 100%)'
+                : 'linear-gradient(180deg, transparent 0%, rgba(255,179,0, 0.25) 50%, transparent 100%)',
+            }}
+          />
+
+          <SkillSlotTile
+            slotIndex={ULTIMATE_SLOT}
+            abilityId={bar[ULTIMATE_SLOT]}
+            onOpenPicker={() => onOpenPicker(ULTIMATE_SLOT)}
+            onRemove={() => onRemove(ULTIMATE_SLOT)}
+          />
+        </Box>
       </Box>
     </Box>
   );
@@ -1232,7 +1256,7 @@ export const SkillBarPicker: React.FC<SkillBarPickerProps> = ({
 
   return (
     <>
-      <Stack spacing={2.5} sx={{ height: '100%' }}>
+      <Stack spacing={2.5} sx={{ height: '100%', minWidth: 0, width: '100%' }}>
         <SkillBarRow
           label="Front Bar"
           bar={skills[0] ?? {}}
@@ -1240,10 +1264,15 @@ export const SkillBarPicker: React.FC<SkillBarPickerProps> = ({
           onRemove={(slotIndex) => handleRemove(0, slotIndex)}
         />
 
-        <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', py: 0.75 }}>
+        <Stack
+          direction="row"
+          spacing={{ xs: 0.75, sm: 1.5 }}
+          sx={{ alignItems: 'center', py: 0.75, minWidth: 0, width: '100%' }}
+        >
           <Box
             sx={{
               flex: 1,
+              minWidth: 0,
               height: 1,
               background: isDark
                 ? 'linear-gradient(90deg, transparent 0%, rgba(var(--be-accent-rgb, 56,189,248), 0.25) 100%)'
@@ -1299,6 +1328,7 @@ export const SkillBarPicker: React.FC<SkillBarPickerProps> = ({
           <Box
             sx={{
               flex: 1,
+              minWidth: 0,
               height: 1,
               background: isDark
                 ? 'linear-gradient(90deg, rgba(var(--be-accent-rgb, 56,189,248), 0.25) 0%, transparent 100%)'

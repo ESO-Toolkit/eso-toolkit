@@ -2,7 +2,7 @@ import { Box, CircularProgress, Container, Typography } from '@mui/material';
 import { SnackbarProvider } from 'notistack';
 import React, { Suspense, useEffect, useState } from 'react';
 import { Provider as ReduxProvider } from 'react-redux';
-import { Routes, Route, BrowserRouter, Navigate } from 'react-router-dom';
+import { Routes, Route, BrowserRouter, Navigate, Outlet } from 'react-router-dom';
 import { PersistGate } from 'redux-persist/integration/react';
 
 import { ScribingSimulatorSkeleton } from '@features/scribing/presentation/components/ScribingSimulatorSkeleton';
@@ -48,6 +48,8 @@ import { AppLayout } from './layouts/AppLayout';
 import { Banned } from './pages/Banned';
 import { NotFound } from './pages/NotFound';
 import { ReduxThemeProvider } from './ReduxThemeProvider';
+import { BuildStorageSessionSync } from './store/saved_builds/BuildStorageSessionSync';
+import { SavedBuildsGate } from './store/saved_builds/SavedBuildsGate';
 import store, { injectReducer, persistor } from './store/storeWithHistory';
 import { initializeAnalytics } from './utils/analytics';
 import { getBaseUrl, getRoutePathname } from './utils/envUtils';
@@ -408,6 +410,13 @@ const BuildEditorLoadingFallback: React.FC = () => (
   </DelayedFallback>
 );
 
+/** Keep build-library hydration mounted while navigating among related tools. */
+const SavedBuildsRouteOutlet: React.FC = () => (
+  <SavedBuildsGate fallback={<LoadingFallback />}>
+    <Outlet />
+  </SavedBuildsGate>
+);
+
 const MainApp: React.FC = () => {
   return (
     <ReduxThemeProvider>
@@ -501,6 +510,7 @@ const App: React.FC = () => {
   return (
     <LoggerProvider config={loggerConfig}>
       <ReduxProvider store={store}>
+        <BuildStorageSessionSync />
         <PersistGate loading={<BootFallback />} persistor={persistor}>
           <PerfTierProvider>
             <ReduxThemeProvider>
@@ -827,16 +837,39 @@ const AppRoutes: React.FC = () => {
                 </ErrorBoundary>
               }
             />
-            <Route
-              path="/build-editor"
-              element={
-                <ErrorBoundary>
-                  <Suspense fallback={<BuildEditorLoadingFallback />}>
-                    <BuildEditorPage />
-                  </Suspense>
-                </ErrorBoundary>
-              }
-            />
+            <Route element={<SavedBuildsRouteOutlet />}>
+              <Route
+                path="/build-editor"
+                element={
+                  <ErrorBoundary>
+                    <Suspense fallback={<BuildEditorLoadingFallback />}>
+                      <BuildEditorPage />
+                    </Suspense>
+                  </ErrorBoundary>
+                }
+              />
+              {/* Read-only build share view — accessible via direct link only */}
+              <Route
+                path="/bv"
+                element={
+                  <ErrorBoundary>
+                    <Suspense fallback={<LoadingFallback />}>
+                      <BuildViewPage />
+                    </Suspense>
+                  </ErrorBoundary>
+                }
+              />
+              <Route
+                path="/my-builds"
+                element={
+                  <ErrorBoundary>
+                    <Suspense fallback={<LoadingFallback />}>
+                      <MyBuildsPage />
+                    </Suspense>
+                  </ErrorBoundary>
+                }
+              />
+            </Route>
             <Route
               path="/docs/loadout/food-selector"
               element={
@@ -918,17 +951,6 @@ const AppRoutes: React.FC = () => {
                 </ErrorBoundary>
               }
             />
-            {/* Read-only build share view — accessible via direct link only */}
-            <Route
-              path="/bv"
-              element={
-                <ErrorBoundary>
-                  <Suspense fallback={<LoadingFallback />}>
-                    <BuildViewPage />
-                  </Suspense>
-                </ErrorBoundary>
-              }
-            />
             {/* Temporary build short link — resolves slug and redirects to /bv */}
             <Route
               path="/b/:slug"
@@ -936,16 +958,6 @@ const AppRoutes: React.FC = () => {
                 <ErrorBoundary>
                   <Suspense fallback={<LoadingFallback />}>
                     <TempBuildViewPage />
-                  </Suspense>
-                </ErrorBoundary>
-              }
-            />
-            <Route
-              path="/my-builds"
-              element={
-                <ErrorBoundary>
-                  <Suspense fallback={<LoadingFallback />}>
-                    <MyBuildsPage />
                   </Suspense>
                 </ErrorBoundary>
               }

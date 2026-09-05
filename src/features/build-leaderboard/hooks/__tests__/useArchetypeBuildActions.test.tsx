@@ -12,6 +12,15 @@ import { toBuildExtractionData, useArchetypeBuildActions } from '../useArchetype
 
 const mockNavigate = jest.fn();
 const mockEnqueue = jest.fn();
+const mockAssertSessionCurrent = jest.fn();
+const mockAcquireSession = jest.fn();
+const mockPutSavedBuildRecord = jest.fn();
+
+jest.mock('../../../../store/saved_builds/savedBuildStorage', () => ({
+  acquireBuildStorageSessionGeneration: (...args: unknown[]) => mockAcquireSession(...args),
+  assertBuildStorageSessionCurrent: (...args: unknown[]) => mockAssertSessionCurrent(...args),
+  putSavedBuildRecord: (...args: unknown[]) => mockPutSavedBuildRecord(...args),
+}));
 
 jest.mock('react-router-dom', () => ({
   ...jest.requireActual('react-router-dom'),
@@ -105,6 +114,9 @@ function makeWrapper(strictMode = false) {
 beforeEach(() => {
   jest.clearAllMocks();
   jest.spyOn(dpsParsesApi, 'getBuild').mockResolvedValue(BUILD_RESPONSE);
+  mockAcquireSession.mockResolvedValue('session-1');
+  mockAssertSessionCurrent.mockImplementation(() => undefined);
+  mockPutSavedBuildRecord.mockResolvedValue(undefined);
 });
 
 describe('useArchetypeBuildActions', () => {
@@ -122,9 +134,25 @@ describe('useArchetypeBuildActions', () => {
 
     const saved = store.getState().savedBuilds.builds;
     expect(saved).toHaveLength(1);
+    expect(mockPutSavedBuildRecord).toHaveBeenCalledWith(expect.any(Object), 'session-1');
     expect(mockNavigate).toHaveBeenCalledWith(`/build-editor?id=${saved[0].id}`);
   });
 
+  it('does not persist live state or navigate after the storage session rotates', async () => {
+    mockAssertSessionCurrent.mockImplementationOnce(() => {
+      throw new Error('storage session changed');
+    });
+    const { store, wrapper } = makeWrapper();
+    const { result } = renderHook(() => useArchetypeBuildActions(), { wrapper });
+
+    await act(async () => {
+      await result.current.openInEditor(CLUSTER);
+    });
+
+    expect(mockPutSavedBuildRecord).toHaveBeenCalledWith(expect.any(Object), 'session-1');
+    expect(store.getState().savedBuilds.builds).toHaveLength(0);
+    expect(mockNavigate).not.toHaveBeenCalled();
+  });
   it('produces a real build from the parse, not an empty shell', async () => {
     const { store, wrapper } = makeWrapper();
     const { result } = renderHook(() => useArchetypeBuildActions(), { wrapper });

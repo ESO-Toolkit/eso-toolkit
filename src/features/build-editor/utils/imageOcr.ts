@@ -79,6 +79,38 @@ declare global {
 
 let loadPromise: Promise<TesseractNamespace> | null = null;
 
+function createAbortError(): DOMException {
+  return new DOMException('OCR was cancelled.', 'AbortError');
+}
+
+function throwIfAborted(signal?: AbortSignal): void {
+  if (signal?.aborted) throw createAbortError();
+}
+
+/** Race an async OCR step against cancellation without leaving listeners behind. */
+function abortable<T>(promise: Promise<T>, signal?: AbortSignal): Promise<T> {
+  if (!signal) return promise;
+  if (signal.aborted) return Promise.reject(createAbortError());
+
+  return new Promise<T>((resolve, reject) => {
+    const abort = (): void => {
+      reject(createAbortError());
+    };
+
+    signal.addEventListener('abort', abort, { once: true });
+    void promise.then(
+      (value) => {
+        signal.removeEventListener('abort', abort);
+        resolve(value);
+      },
+      (error: unknown) => {
+        signal.removeEventListener('abort', abort);
+        reject(error);
+      },
+    );
+  });
+}
+
 /** Inject the tesseract UMD bundle once and resolve the global namespace. */
 function loadTesseract(): Promise<TesseractNamespace> {
   if (typeof window !== 'undefined' && window.Tesseract) {
@@ -163,9 +195,11 @@ async function preprocess(blob: Blob): Promise<OcrInput> {
 export async function ocrImages(
   images: Blob[],
   onProgress?: (p: OcrProgress) => void,
+  signal?: AbortSignal,
 ): Promise<string> {
   if (images.length === 0) return '';
-  const Tesseract = await loadTesseract();
+  throwIfAborted(signal);
+  const Tesseract = await abortable(loadTesseract(), signal);
 
   const total = images.length;
   const parts: string[] = [];
@@ -174,27 +208,55 @@ export async function ocrImages(
   let current = 1;
   // One worker reused across images keeps the (large) language data load to once.
   // Pinned worker/core/lang paths keep the whole OCR chain on immutable versions.
-  const worker = await Tesseract.createWorker('eng', 1, {
+  const workerPromise = Tesseract.createWorker('eng', 1, {
     workerPath: TESSERACT_WORKER_PATH,
     corePath: TESSERACT_CORE_PATH,
     langPath: TESSERACT_LANG_PATH,
     logger: (m) => {
-      onProgress?.({ status: m.status, progress: m.progress, index: current, total });
+      if (!signal?.aborted) {
+        onProgress?.({ status: m.status, progress: m.progress, index: current, total });
+      }
     },
   });
+
+  let worker: TesseractWorker;
+  try {
+    worker = await abortable(workerPromise, signal);
+  } catch (error) {
+    if (signal?.aborted) {
+      // Worker construction cannot itself be interrupted. Terminate it as soon
+      // as it materializes so an aborted setup cannot leak a Web Worker.
+      void workerPromise.then((pendingWorker) => pendingWorker.terminate()).catch(() => undefined);
+    }
+    throw error;
+  }
+
+  let termination: Promise<unknown> | null = null;
+  const terminateWorker = (): Promise<unknown> => {
+    termination ??= worker.terminate();
+    return termination;
+  };
+  const abortWorker = (): void => {
+    void terminateWorker().catch(() => undefined);
+  };
+  signal?.addEventListener('abort', abortWorker, { once: true });
 
   try {
     // PSM 6 = "uniform block of text" — better for the tabular build panels
     // than the default auto mode.
-    await worker.setParameters({ tessedit_pageseg_mode: '6' });
+    throwIfAborted(signal);
+    await abortable(worker.setParameters({ tessedit_pageseg_mode: '6' }), signal);
     for (let i = 0; i < images.length; i++) {
+      throwIfAborted(signal);
       current = i + 1;
-      const input = await preprocess(images[i]);
-      const { data } = await worker.recognize(input);
+      const input = await abortable(preprocess(images[i]), signal);
+      throwIfAborted(signal);
+      const { data } = await abortable(worker.recognize(input), signal);
       parts.push(data.text.trim());
     }
   } finally {
-    await worker.terminate();
+    signal?.removeEventListener('abort', abortWorker);
+    await terminateWorker().catch(() => undefined);
   }
 
   return parts.filter(Boolean).join('\n\n');

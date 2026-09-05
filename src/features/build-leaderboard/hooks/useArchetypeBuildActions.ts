@@ -17,6 +17,11 @@ import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 
 import { saveBuild } from '../../../store/saved_builds/savedBuildsSlice';
+import {
+  acquireBuildStorageSessionGeneration,
+  assertBuildStorageSessionCurrent,
+  putSavedBuildRecord,
+} from '../../../store/saved_builds/savedBuildStorage';
 import type { GearTrait, GearType, PlayerTalent } from '../../../types/playerDetails';
 import { playerToBuild, type PlayerBuildExtractionGear } from '../../../utils/playerToBuild';
 import type { Build } from '../../build-editor/types/build.types';
@@ -112,6 +117,7 @@ export function useArchetypeBuildActions(): UseArchetypeBuildActionsResult {
     async (
       cluster: BuildCluster,
       signal: AbortSignal,
+      sessionGeneration: string,
     ): Promise<{ build: Build; savedId: string } | null> => {
       const response = await dpsParsesApi.getBuild(cluster.medoidParseId, signal);
       if (!mountedRef.current || signal.aborted) return null;
@@ -126,6 +132,9 @@ export function useArchetypeBuildActions(): UseArchetypeBuildActionsResult {
       // would need a cast, since middleware is free to change that return type.
       const action = saveBuild(build);
       if (!mountedRef.current || signal.aborted) return null;
+      await putSavedBuildRecord(action.payload, sessionGeneration);
+      if (!mountedRef.current || signal.aborted) return null;
+      assertBuildStorageSessionCurrent(sessionGeneration);
       dispatch(action);
       return { build, savedId: action.payload.id };
     },
@@ -141,8 +150,11 @@ export function useArchetypeBuildActions(): UseArchetypeBuildActionsResult {
       activeControllerRef.current = controller;
       setPendingAction({ clusterId: cluster.id, kind: 'open' });
       try {
-        const result = await buildFor(cluster, controller.signal);
+        const sessionGeneration = await acquireBuildStorageSessionGeneration();
+        if (!mountedRef.current || controller.signal.aborted) return;
+        const result = await buildFor(cluster, controller.signal, sessionGeneration);
         if (!result || !mountedRef.current || controller.signal.aborted) return;
+        assertBuildStorageSessionCurrent(sessionGeneration);
         const { savedId } = result;
         navigate(`/build-editor?id=${savedId}`);
       } catch (err) {
@@ -167,8 +179,11 @@ export function useArchetypeBuildActions(): UseArchetypeBuildActionsResult {
       activeControllerRef.current = controller;
       setPendingAction({ clusterId: cluster.id, kind: 'save' });
       try {
-        const result = await buildFor(cluster, controller.signal);
+        const sessionGeneration = await acquireBuildStorageSessionGeneration();
+        if (!mountedRef.current || controller.signal.aborted) return;
+        const result = await buildFor(cluster, controller.signal, sessionGeneration);
         if (!result || !mountedRef.current || controller.signal.aborted) return;
+        assertBuildStorageSessionCurrent(sessionGeneration);
         enqueueSnackbar(`Saved “${cluster.label}” to My Builds`, { variant: 'success' });
       } catch (err) {
         if (!mountedRef.current || controller.signal.aborted) return;

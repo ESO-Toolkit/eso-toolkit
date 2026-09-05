@@ -32,9 +32,12 @@ import {
   setGuideContent,
   setGuideYoutubeUrl,
 } from '../../store/buildEditorSlice';
+import {
+  isSupportedScreenshotMimeType,
+  MAX_SCREENSHOT_BYTES,
+  SCREENSHOT_FILE_ACCEPT,
+} from '../../utils/screenshotValidation';
 import { glassInputSx } from '../primitives/glassInputSx';
-
-const MAX_SCREENSHOT_SIZE = 5 * 1024 * 1024; // 5 MB
 
 /** Only allow HTTPS image URLs to prevent mixed-content and protocol-based attacks */
 /** Returns the sanitized https URL string, or null if invalid/unsafe. */
@@ -67,6 +70,10 @@ const GuideSectionComponent: React.FC = () => {
   const setup = useSelector(selectActiveSetup);
   const guide = useSelector(selectBuildGuide);
   const inputRef = useRef<HTMLInputElement>(null);
+  const bannerUrlErrorId = React.useId();
+  const hasBannerUrlError = Boolean(
+    guide.bannerImageUrl && !sanitizeImageUrl(guide.bannerImageUrl),
+  );
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     const files = e.target.files;
@@ -81,7 +88,13 @@ const GuideSectionComponent: React.FC = () => {
     Array.from(files)
       .slice(0, remaining)
       .forEach((file) => {
-        if (file.size > MAX_SCREENSHOT_SIZE) {
+        if (!isSupportedScreenshotMimeType(file.type)) {
+          enqueueSnackbar(`"${file.name}" is not a supported raster image.`, {
+            variant: 'warning',
+          });
+          return;
+        }
+        if (file.size > MAX_SCREENSHOT_BYTES) {
           enqueueSnackbar(`"${file.name}" exceeds 5 MB — please resize before uploading.`, {
             variant: 'warning',
           });
@@ -173,22 +186,23 @@ const GuideSectionComponent: React.FC = () => {
             placeholder="https://... (banner image)"
             value={guide.bannerImageUrl}
             onChange={(e) => dispatch(setGuideBannerUrl(e.target.value))}
-            slotProps={{ htmlInput: { 'aria-label': 'Banner image URL' } }}
+            error={hasBannerUrlError}
+            helperText={hasBannerUrlError ? 'Invalid URL — must start with https://' : undefined}
+            slotProps={{
+              htmlInput: {
+                'aria-label': 'Banner image URL',
+                'aria-describedby': hasBannerUrlError ? bannerUrlErrorId : undefined,
+                'aria-errormessage': hasBannerUrlError ? bannerUrlErrorId : undefined,
+                'aria-invalid': hasBannerUrlError || undefined,
+              },
+              formHelperText: {
+                id: bannerUrlErrorId,
+                role: 'status',
+                'aria-live': 'polite',
+              },
+            }}
             sx={glassInputSx(isDark, isMobile)}
           />
-          {guide.bannerImageUrl && !sanitizeImageUrl(guide.bannerImageUrl) && (
-            <Typography
-              variant="caption"
-              sx={{
-                color: 'error.main',
-                mt: 0.5,
-                display: 'block',
-                fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
-              }}
-            >
-              Invalid URL — must start with https://
-            </Typography>
-          )}
         </Box>
       </Box>
 
@@ -210,6 +224,8 @@ const GuideSectionComponent: React.FC = () => {
               <img
                 src={safeBannerUrl}
                 alt="Banner preview"
+                loading="lazy"
+                decoding="async"
                 style={{ width: '100%', maxHeight: 160, objectFit: 'cover', display: 'block' }}
               />
             </Box>
@@ -328,12 +344,14 @@ const GuideSectionComponent: React.FC = () => {
                             ? '0 8px 24px rgba(0,0,0,0.4), 0 0 12px rgba(var(--be-accent-rgb, 56, 189, 248), 0.10)'
                             : '0 8px 20px rgba(0,0,0,0.12)',
                         },
-                        '&:hover .remove-btn': { opacity: 1 },
+                        '&:hover .remove-btn, &:focus-within .remove-btn': { opacity: 1 },
                       }}
                     >
                       <img
                         src={src}
                         alt={`Screenshot ${i + 1}`}
+                        loading="lazy"
+                        decoding="async"
                         style={{
                           width: '100%',
                           aspectRatio: '16/9',
@@ -341,26 +359,37 @@ const GuideSectionComponent: React.FC = () => {
                           display: 'block',
                         }}
                       />
-                      <Tooltip title="Remove">
+                      <Tooltip title="Remove screenshot">
                         <IconButton
                           className="remove-btn"
                           size="small"
-                          aria-label="Remove screenshot"
+                          aria-label={`Remove screenshot ${i + 1}`}
                           onClick={() => dispatch(removeScreenshot(i))}
                           sx={{
                             position: 'absolute',
-                            top: 6,
-                            right: 6,
-                            width: 26,
-                            height: 26,
-                            opacity: 0,
+                            top: { xs: 4, sm: 6 },
+                            right: { xs: 4, sm: 6 },
+                            width: { xs: 44, sm: 26 },
+                            height: { xs: 44, sm: 26 },
+                            opacity: { xs: 1, sm: 0 },
+                            padding: 0,
                             transition: 'opacity 0.15s',
                             background: 'rgba(0,0,0,0.72)',
                             border: '1px solid rgba(255,255,255,0.12)',
                             color: '#fff',
+                            '&:focus-visible': {
+                              opacity: 1,
+                              outline: '2px solid var(--be-accent, #38bdf8)',
+                              outlineOffset: -2,
+                            },
                             '&:hover': {
                               background: alpha('#ef4444', 0.85),
                               borderColor: alpha('#ef4444', 0.5),
+                            },
+                            '@media (hover: none), (pointer: coarse)': {
+                              width: 44,
+                              height: 44,
+                              opacity: 1,
                             },
                           }}
                         >
@@ -403,7 +432,7 @@ const GuideSectionComponent: React.FC = () => {
       <input
         ref={inputRef}
         type="file"
-        accept="image/*"
+        accept={SCREENSHOT_FILE_ACCEPT}
         multiple
         style={{ display: 'none' }}
         onChange={handleFileChange}

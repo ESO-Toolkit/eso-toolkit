@@ -17,12 +17,21 @@ jest.mock('../../../utils/buildEncoding', () => ({
 }));
 
 const mockEnqueue = jest.fn();
+const mockDispatch = jest.fn();
+const mockAssertSessionCurrent = jest.fn();
+const mockAcquireSession = jest.fn();
+const mockPutSavedBuildRecord = jest.fn();
+jest.mock('../../../store/saved_builds/savedBuildStorage', () => ({
+  acquireBuildStorageSessionGeneration: (...args: unknown[]) => mockAcquireSession(...args),
+  assertBuildStorageSessionCurrent: (...args: unknown[]) => mockAssertSessionCurrent(...args),
+  putSavedBuildRecord: (...args: unknown[]) => mockPutSavedBuildRecord(...args),
+}));
 jest.mock('notistack', () => ({
   useSnackbar: () => ({ enqueueSnackbar: mockEnqueue }),
 }));
 
 jest.mock('react-redux', () => ({
-  useDispatch: () => jest.fn(),
+  useDispatch: () => mockDispatch,
 }));
 
 import { SlotActionPill } from './slot-action-pill';
@@ -38,6 +47,9 @@ describe('SlotActionPill roster → editor navigation', () => {
   beforeEach(() => {
     // resetMocks (jest.config) wipes implementations each test — re-establish.
     mockEncode.mockResolvedValue('ENCODED_BLOB');
+    mockAcquireSession.mockResolvedValue('session-1');
+    mockAssertSessionCurrent.mockImplementation(() => undefined);
+    mockPutSavedBuildRecord.mockResolvedValue(undefined);
   });
 
   it('keeps canonical roster round-trip params in the URL but sends the build via router state', async () => {
@@ -92,5 +104,15 @@ describe('SlotActionPill roster → editor navigation', () => {
       'Could not encode build — please try again.',
       expect.objectContaining({ variant: 'error' }),
     );
+  });
+
+  it('commits a roster build to the captured storage session before dispatching it', async () => {
+    render(<SlotActionPill buildFactory={buildFactory} color="#38bdf8" label="DPS 1" />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Save DPS 1 to My Builds' }));
+
+    await waitFor(() => expect(mockDispatch).toHaveBeenCalled());
+    expect(mockPutSavedBuildRecord).toHaveBeenCalledWith(expect.any(Object), 'session-1');
+    expect(mockAssertSessionCurrent).toHaveBeenCalledWith('session-1');
   });
 });
