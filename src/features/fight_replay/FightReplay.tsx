@@ -13,7 +13,6 @@ import { useCurrentFight, useReportFightParams, useTrialChapters } from '@/hooks
 import { usePageTitle } from '@/hooks/useDocumentTitle';
 import { useAppDispatch } from '@/store/useAppDispatch';
 import { actorPositionsActions } from '@/store/worker_results/taskSlices';
-import { workerManager } from '@/workers';
 
 import { useFriendlyBuffEvents } from '../../hooks/events/useFriendlyBuffEvents';
 import { useHostileBuffEvents } from '../../hooks/events/useHostileBuffEvents';
@@ -34,6 +33,7 @@ import { ShapeToolbar } from './components/ShapeToolbar';
 import { markerDeckSurface } from './constants/replayDesign';
 import { useIsMobileReplay } from './hooks/useIsMobileReplay';
 import { useMapMarkersManager } from './hooks/useMapMarkersManager';
+import { useReplayTeardown } from './hooks/useReplayTeardown';
 import { chapterDisplayName } from './trial_chapters/chapterDisplay';
 import { buildTrialTimeline } from './trial_chapters/trialTimeline';
 import type { TrialChapter } from './trial_chapters/types';
@@ -441,35 +441,9 @@ export const FightReplay: React.FC = () => {
     return () => clearTimeout(timer);
   }, [isSwitchingFight, fightId]);
 
-  // Route-leave teardown: on mobile the current (large) result is dropped — desktop keeps the
-  // LRU so a revisit stays instant. The replay worker pool is destroyed on all devices so its
-  // threads don't idle for 5 minutes after leaving. Guarded: harmless under StrictMode
-  // double-mount (pools recreate on demand) or a torn-down store.
-  //
-  // `isMobileReplay` is read through a ref and deliberately NOT a dependency: it is a live
-  // media-query result that flips MID-SESSION (a phone rotating into landscape — see
-  // useIsMobileReplay), and any dep change runs this cleanup while the user is still in the
-  // replay. That destroyed the in-flight position compute ("Couldn't load the replay") and, on
-  // a mobile->desktop flip, cleared the result with nothing left to re-dispatch it — stranding
-  // the arena on "Loading 3D Arena..." until a fight change or reload.
-  const isMobileReplayRef = useRef(isMobileReplay);
-  isMobileReplayRef.current = isMobileReplay;
-  useEffect(() => {
-    return () => {
-      try {
-        if (isMobileReplayRef.current) {
-          dispatch(actorPositionsActions.clearResult());
-        }
-      } catch {
-        // Store already torn down.
-      }
-      try {
-        workerManager.destroyPool('replay');
-      } catch {
-        // Pools already gone.
-      }
-    };
-  }, [dispatch]);
+  // Route-leave teardown. Lives in a hook so the "must not fire on a mid-session breakpoint
+  // flip" invariant is unit-testable — see useReplayTeardown.
+  useReplayTeardown(dispatch, isMobileReplay);
 
   // Keyboard skip to the previous / next boss ( [ and ] ). Distinct from FightReplay3D's
   // in-fight transport keys, so the two handlers never collide. Guards mirror the
