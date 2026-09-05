@@ -1,8 +1,9 @@
 # CoolStickman — asset attribution
 
-`coolstickman-walk.glb` is the shipped static GLB flipbook of the **CoolStickman** avatar, used as
-the player figure marker in the 3D fight replay. It contains one idle pose and four walk-cycle
-poses (`idle`, `walk1`, `walk2`, `walk3`, and `walk4`) as named meshes.
+`coolstickman-walk.glb` is the shipped static GLB flipbook of the **CoolStickman** avatar. It is used
+as the player figure marker in the 3D fight replay and as the explicitly opt-in stand-in for testing
+the hostile-NPC model pipeline. It contains one idle pose and four walk-cycle poses (`idle`,
+`walk1`, `walk2`, `walk3`, and `walk4`) as named meshes.
 
 - **Source avatar:** CoolStickman, project "100Avatars R2"
 - **Author:** Polygonal Mind
@@ -24,5 +25,5 @@ The original is a skinned VRM. The repository's offline bake produces static Buf
 5. Recenter on X/Z with feet at y=0.
 
 Result: `coolstickman-walk.glb` — five named meshes, one material per pose, feet-anchored and facing
-the replay's forward axis. It is instanced as the player body layers in
+the replay's forward axis. It is instanced as the registry-selected humanoid body layers in
 `src/features/fight_replay/components/InstancedReplayFigures3D.tsx`.

@@ -34,6 +34,10 @@ import type { TrialChapter } from '../trial_chapters/types';
 import { MapMarkersState, ShapeKind, ShapeStyle } from '../types/mapMarkers';
 import { lockDocumentSelection } from '../utils/documentSelectionLock';
 import { QUALITY_LEVEL } from '../utils/qualityGovernor';
+import {
+  NPC_MODEL_PREVIEW_PARAM,
+  parseNpcModelPreviewMode,
+} from '../utils/replayActorModelRegistry';
 import { clampReplayTime } from '../utils/replayTime';
 
 import { ADD_MARKER_AT_CENTER_EVENT } from './arenaEvents';
@@ -194,6 +198,7 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
   const params = useParams();
   const actorParam = searchParams.get('actorId');
   const selectedActorIdFromUrl = React.useMemo(() => parseActorIdParam(actorParam), [actorParam]);
+  const npcModelPreviewMode = parseNpcModelPreviewMode(searchParams.get(NPC_MODEL_PREVIEW_PARAM));
 
   // Actor selection and camera following state.
   // null = no actor selected/following, number = following that actor ID.
@@ -1440,6 +1445,7 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
             showActorNames={showActorNames}
             mapTimeline={mapTimeline}
             scrubbingMode={scrubbingMode}
+            npcModelPreviewMode={npcModelPreviewMode}
             followingActorIdRef={followingActorIdRef}
             followingActorId={followingActorId}
             onCameraUnlock={handleCameraUnlock}

@@ -27,6 +27,7 @@ import { DEFAULT_ACTOR_SCALE, computeActorScaleFromFightArea } from '../utils/ma
 import { extractPlayerPaths, DEFAULT_PATH_SAMPLING } from '../utils/pathUtils';
 import { getPlayerPathColor } from '../utils/playerColors';
 import { manualLevelForPreset, qualityFlagsForLevel } from '../utils/qualityGovernor';
+import type { NpcModelPreviewMode } from '../utils/replayActorModelRegistry';
 import { resolveTouchPolicy } from '../utils/touchPolicy';
 
 import { AdaptiveResolution } from './AdaptiveResolution';
@@ -88,6 +89,7 @@ interface AnimationFrameSceneActorsProps {
   performanceMode?: boolean;
   /** Barebones flags (see QualityFlags): GLB figures, PBR materials, decorative accents, name budget. */
   detailedFigures?: boolean;
+  npcModelPreviewMode?: NpcModelPreviewMode;
   richMaterials?: boolean;
   figureAccents?: boolean;
   nameTagBudget?: number | null;
@@ -176,6 +178,7 @@ const AnimationFrameSceneActors: React.FC<AnimationFrameSceneActorsProps> = ({
   playerColorOverrides,
   performanceMode,
   detailedFigures,
+  npcModelPreviewMode,
   richMaterials,
   figureAccents,
   nameTagBudget,
@@ -198,6 +201,7 @@ const AnimationFrameSceneActors: React.FC<AnimationFrameSceneActorsProps> = ({
       playerColorOverrides={playerColorOverrides}
       performanceMode={performanceMode}
       detailedFigures={detailedFigures}
+      npcModelPreviewMode={npcModelPreviewMode}
       richMaterials={richMaterials}
       figureAccents={figureAccents}
       nameTagBudget={nameTagBudget}
@@ -690,6 +694,8 @@ export interface Arena3DSceneProps {
    * so the DOM player panel and the in-canvas figures share one source of truth.
    */
   playerColorOverrides?: Map<number, string>;
+  /** Opt-in hostile-NPC model preview; production/default remains the capsule fallback. */
+  npcModelPreviewMode?: NpcModelPreviewMode;
   /**
    * Replay quality preset: 'auto' arms the governor at full quality; 'high'
    * pins full quality; 'performance' pins the no-shadows tier; 'barebones'
@@ -758,6 +764,7 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
   showPlayerTrails = false,
   playerVisibility = EMPTY_VISIBILITY,
   playerColorOverrides = EMPTY_COLOR_OVERRIDES,
+  npcModelPreviewMode = 'off',
   qualityPreset = 'auto',
   autoQualityLevel = 0,
   onQualityLevelChange,
@@ -1258,6 +1265,7 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
         playerColorOverrides={playerColorOverrides}
         performanceMode={!qualityFlags.shadows}
         detailedFigures={qualityFlags.detailedFigures}
+        npcModelPreviewMode={npcModelPreviewMode}
         richMaterials={qualityFlags.richMaterials}
         figureAccents={qualityFlags.figureAccents}
         nameTagBudget={qualityFlags.nameTagBudget}
