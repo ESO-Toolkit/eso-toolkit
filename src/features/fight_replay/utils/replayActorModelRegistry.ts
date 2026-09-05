@@ -83,8 +83,8 @@ export const STATIC_REPLAY_ACTOR_MODEL_ASSETS: readonly StaticReplayActorModelAs
     },
   },
   {
-    id: 'captain-vrol-overview-v1',
-    path: 'models/fight-replay/npcs/captain-vrol-overview-v1.glb',
+    id: 'captain-vrol-overview-v2',
+    path: 'models/fight-replay/npcs/captain-vrol-overview-v2.glb',
     renderer: 'static-boss',
     actorTypes: HOSTILE_ACTOR_TYPES,
     aliases: ['captain vrol'],
@@ -93,12 +93,12 @@ export const STATIC_REPLAY_ACTOR_MODEL_ASSETS: readonly StaticReplayActorModelAs
       scale: 1.25,
       yOffset: 0,
       yawOffset: 0,
-      modelHeight: 1.9944,
+      modelHeight: 1.9938,
     },
     provenance: {
       designation: 'project-authorized-fan-prototype',
       sourceUrl: 'https://esomodelviewer.com/characters/post/83-captain-vrol',
-      attributionFile: 'public/models/fight-replay/npcs/README-captain-vrol-overview-v1.md',
+      attributionFile: 'public/models/fight-replay/npcs/README-captain-vrol-overview-v2.md',
     },
   },
 ];

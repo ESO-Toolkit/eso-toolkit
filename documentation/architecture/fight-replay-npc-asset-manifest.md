@@ -19,11 +19,11 @@ Do not reuse any reconstructed asset outside this project without a separate rig
 
 ## Shipped assets
 
-| Asset | Actor | Renderer | Tris | Verts | Materials | Texture | GLB bytes | Reference |
-| --- | --- | --- | ---: | ---: | ---: | --- | ---: | --- |
-| `coolstickman-walk.glb` | all players | `instanced-pose-flipbook` | — | — | 1 | — | — | CC0, Polygonal Mind |
-| `yandir-the-butcher-overview-v1.glb` | Yandir the Butcher | `static-boss` | 45,000 | 29,397 | 1 | 512px PNG | 1,848,216 | [post 82](https://esomodelviewer.com/characters/post/82-yandir-the-butcher) |
-| `captain-vrol-overview-v1.glb` | Captain Vrol | `static-boss` | 45,000 | 29,253 | 1 | 512px PNG | 1,575,876 | [post 83](https://esomodelviewer.com/characters/post/83-captain-vrol) |
+| Asset                                | Actor              | Renderer                  |   Tris |  Verts | Materials | Texture     | GLB bytes | Reference                                                                   |
+| ------------------------------------ | ------------------ | ------------------------- | -----: | -----: | --------: | ----------- | --------: | --------------------------------------------------------------------------- |
+| `coolstickman-walk.glb`              | all players        | `instanced-pose-flipbook` |      — |      — |         1 | —           |         — | CC0, Polygonal Mind                                                         |
+| `yandir-the-butcher-overview-v1.glb` | Yandir the Butcher | `static-boss`             | 45,000 | 29,397 |         1 | 512px PNG   | 1,848,216 | [post 82](https://esomodelviewer.com/characters/post/82-yandir-the-butcher) |
+| `captain-vrol-overview-v2.glb`       | Captain Vrol       | `static-boss`             | 44,999 | 28,732 |         1 | 1024px JPEG | 1,746,004 | [post 83](https://esomodelviewer.com/characters/post/83-captain-vrol)       |
 
 ### Runtime budgets
 
@@ -31,8 +31,12 @@ Do not reuse any reconstructed asset outside this project without a separate rig
 - Standard bosses: 20,000–50,000 triangles.
 - Hero-boss exception (one at a time, documented): up to 100,000 triangles.
 - One mesh, one material, one draw call per asset. No skins, animations, or morph targets.
-- Texture 512px by default; 1024px only for a boss shown materially larger. No Draco or meshopt —
-  the browser runtime registers no `DRACOLoader`.
+- Texture 512px by default; 1024px where the reference plates support it (a boss with registered
+  closeup captures). Store as JPEG when the equivalent PNG would exceed the size gate — a 1024px
+  JPEG carries more real detail than a 512px PNG at comparable bytes. No Draco or meshopt — the
+  browser runtime registers no `DRACOLoader`.
+- Colour must be projected into the UV atlas at texel resolution. Baking from vertex colours caps
+  detail at the vertex count and produces a visibly smeared surface.
 - glTF `+Y` up, facing `+Z`. The renderer re-grounds from the mesh bounding box every frame, so a
   non-grounded export is tolerated, but exporting feet at `y=0` is still preferred.
 
@@ -40,17 +44,17 @@ Do not reuse any reconstructed asset outside this project without a separate rig
 
 Names below are verified against `src/types/trial-encounters.ts` (the curated encounter table).
 
-| Encounter | Name | Status |
-| --- | --- | --- |
-| `boss_1` | Yandir the Butcher | **Shipped** |
-| `boss_2` | Captain Vrol | **Shipped** |
-| `boss_3` | Lord Falgravn | **Blocked** — no adequate reference imagery exists (see below) |
-| `trash_half_giant_bulwark` | Half-Giant Bulwark | Deferred — ordinary humanoid, no bespoke model needed |
-| `trash_half_giant_raider` | Half-Giant Raider | Deferred — ordinary humanoid, no bespoke model needed |
-| `trash_vampire_infuser` | Vampire Infuser | Deferred — ordinary humanoid, no bespoke model needed |
-| `trash_crimson_knight` | Crimson Knight | Blocked on renderer — Bloodknight family recolor |
-| `trash_bitter_knight` | Bitter Knight | Blocked on renderer + unverified tint |
-| `trash_blood_knight` | Blood Knight | Blocked on renderer — references secured |
+| Encounter                  | Name               | Status                                                         |
+| -------------------------- | ------------------ | -------------------------------------------------------------- |
+| `boss_1`                   | Yandir the Butcher | **Shipped**                                                    |
+| `boss_2`                   | Captain Vrol       | **Shipped**                                                    |
+| `boss_3`                   | Lord Falgravn      | **Blocked** — no adequate reference imagery exists (see below) |
+| `trash_half_giant_bulwark` | Half-Giant Bulwark | Deferred — ordinary humanoid, no bespoke model needed          |
+| `trash_half_giant_raider`  | Half-Giant Raider  | Deferred — ordinary humanoid, no bespoke model needed          |
+| `trash_vampire_infuser`    | Vampire Infuser    | Deferred — ordinary humanoid, no bespoke model needed          |
+| `trash_crimson_knight`     | Crimson Knight     | Blocked on renderer — Bloodknight family recolor               |
+| `trash_bitter_knight`      | Bitter Knight      | Blocked on renderer + unverified tint                          |
+| `trash_blood_knight`       | Blood Knight       | Blocked on renderer — references secured                       |
 
 ### Lord Falgravn blocker
 

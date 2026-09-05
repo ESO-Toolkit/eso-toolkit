@@ -93,10 +93,10 @@ describe('resolveReplayActorModel', () => {
 
   it('resolves each shipped Kyne’s Aegis boss to its own asset', () => {
     expect(resolveReplayActorModel(actor('boss', 'Captain Vrol'), 'prototype')?.id).toBe(
-      'captain-vrol-overview-v1',
+      'captain-vrol-overview-v2',
     );
     expect(resolveReplayActorModel(actor('enemy', 'captain vrol #3'), 'prototype')?.id).toBe(
-      'captain-vrol-overview-v1',
+      'captain-vrol-overview-v2',
     );
   });
 

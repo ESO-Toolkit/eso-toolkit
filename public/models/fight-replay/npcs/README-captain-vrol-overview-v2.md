@@ -1,4 +1,4 @@
-# Captain Vrol overview replay prototype
+# Captain Vrol overview replay prototype (v2)
 
 This GLB is a project-authorized, fan-project prototype reconstructed from screenshots rather than
 extracted from the ESO client. It is enabled only by the fight replay's `?npcModels=prototype`
@@ -18,42 +18,58 @@ not a claim that Elder Scrolls Online intellectual property is freely licensed.
   inference steps, octree resolution 380, seed 12,345, via
   `tools/fight-replay-models/generate-hunyuan-multiview.py` with `--front`/`--back` only. Draft:
   343,194 faces in 70.9 s on an RTX 4070 Ti Super.
-- Color source: the two reference views projected into vertex colors. Sampling reuses
-  `tools/fight-replay-models/project-reference-vertex-colors.py` (per-slice silhouette
-  normalization, nearest-opaque-pixel snapping, sRGB to linear conversion) through a two-view
-  driver, `project-two-view-vertex-colors.py`, kept in the out-of-repo scratch workspace. Vertices
-  are blended by normal alignment with the +Z and -Z view directions at blend power 3.0.
+- Color source: the two reference views projected DIRECTLY INTO THE UV ATLAS at texel resolution.
+  Each texel is unprojected to its surface point and normal, projected into the front and back
+  reference cameras, and blended by how squarely the surface faces each camera, with occlusion
+  rejection. This replaces the earlier vertex-colour path, which capped colour detail at the vertex
+  count (29k samples) rather than the texel count (564k samples).
+- Closeup plates: `view-07` (front torso) and `view-08` (back torso) were registered onto the
+  full-body framing by matching per-row silhouette width profiles (scale 0.470 / 0.530, width error
+  5.70% / 4.65%, confirmed visually) and used to sharpen the torso region. They carry about 2.1x the
+  linear resolution of the full-body plates. `view-04` (helm) was REJECTED: its silhouette runs off
+  the frame edges, profile matching falsely locked onto the torso, and masked normalized
+  cross-correlation peaked at only 0.492 pinned to the search boundary. The head therefore comes
+  from the full-body plate alone. No detail was fabricated.
 - Replay-distance polish: bpy 5.0.0 using `tools/fight-replay-models/polish-yandir-overview.py`
   with `--target-triangles 95000 --keep-first-mesh`. The script is identity-named but parameterized;
   no Yandir-specific color grading, shoulder broadening, or helmet curls were enabled.
-- Runtime optimization: vertex colors baked to an embedded 512 px texture and geometry reduced with
-  `tools/fight-replay-models/bake-vertex-colors-to-texture.py --target-triangles 45000
-  --texture-size 512`.
+- Runtime optimization: decimated with Blender's collapse modifier rather than trimesh's quadric
+  simplification, then UV-unwrapped with xatlas (382 charts; a sweep of 8 chart configurations could
+  not get below ~323 because the marching-cubes surface has deep concavities between tassets, under
+  pauldrons, and between fingers). Island borders are dilated so mipmapping cannot bleed background
+  into the silhouette.
 - Final gate: `tools/fight-replay-models/prepare-static-boss.py -- ... --max-triangles 50000
-  --texture-size 512`, which joined, applied transforms, centered horizontally, grounded the feet,
+--texture-size 512`, which joined, applied transforms, centered horizontally, grounded the feet,
   and exported a plain GLB. The script hardcodes Yandir's object name, so the exported GLB's JSON
   chunk was then rewritten in place to rename the node/mesh to `captain-vrol-overview-v1` and the
   material to `CaptainVrolBakedVertexColor`. The binary chunk was copied byte-for-byte, so no
   geometry, UV, or texture data was re-encoded by that rename.
-- Prepared asset: `captain-vrol-overview-v1.glb`; one mesh, one material, one draw call, 45,000
-  triangles, 29,253 UV-split vertices, 512x512 RGB base-color texture, 1,575,876 bytes, SHA-256
-  `0C0E1F4BCDC1C72542B411DFFE4FAF14ADBF10C762528E85DD10BA01D9D1440E`
-- Prepared bounds: 0.8587 x 1.9944 x 0.4041 model units (X x Y x Z), minimum Y exactly 0.0, centered
+- Prepared asset: `captain-vrol-overview-v2.glb`; one mesh, one material, one draw call, 44,999
+  triangles, 28,732 vertices, 1024x1024 JPEG q92 base-color texture, 1,746,004 bytes. Stored as JPEG
+  because the same texture as PNG is 2,764,516 bytes, over the 2.5 MB runtime gate; a 512px PNG
+  would fit but would discard the closeup detail this pass gained, for the same byte cost.
+- Prepared bounds: 0.8591 x 1.9938 x 0.4039 model units (X x Y x Z), minimum Y exactly 0.0, centered
   on X and Z. Vertex attributes are POSITION, NORMAL, and TEXCOORD_0 only: no skin, animation,
   morph target, or glTF extension, so the browser runtime needs no DRACOLoader or meshopt decoder.
 - Proportion check: the reference page lists the source model as 1.03 x 2.42 x 0.49 m. The prepared
   asset's width-to-height ratio is 0.431 against the reference's 0.426, and its depth-to-height
   ratio is 0.203 against the reference's 0.202. The thin profile is faithful to the source A-pose
   rather than an artifact of the missing side plates.
-- LOD decision: 45,000 triangles at 512 px, matching the accepted Yandir budget. The two-view color
-  projection was verified against the source plates numerically as well as visually: the baked
-  atlas averages sRGB 92.5 across sampled UVs versus 89.5 and 87.1 for the front and back plates, so
-  the reference's dark leather and blue-grey scale survive the projection and bake without value
-  drift.
+- Source ceiling: in the native 1366x768 plates the character is 717 px tall by 289 px wide, about
+  100k opaque pixels per view and ~200k across both. A 1024px atlas is 1,048,576 texels, so it is
+  roughly 5x oversampled relative to the information actually available. 1024 is still worthwhile
+  (chart gutters, no resampling loss) but it cannot contain more real detail than the plates carry.
+- Known limitation: the left and right profiles show horizontal streaking. About 34% of texels face
+  neither reference camera squarely and receive silhouette-edge pixels stretched sideways. A
+  confidence-thresholded 3D inpaint was tried and rejected — it made the atlas blotchier without
+  improving the render. This is irreducible with two views; only a genuine profile plate would fix
+  it, and fabricating one was judged worse than an honest limitation.
+- Superseded: `captain-vrol-overview-v1.glb` (45,000 tris, 512px, 1,575,876 bytes) was withdrawn.
+  Its atlas was fragmented and its surface detail smeared, failing the acceptance gate.
 - Intended presentation: 32-64 px-tall replay actor; broad color/silhouette identity LOD rather than
   a close-up replica. The horned helm, pale ice hair, dark red-brown leather, blue-grey scaled
   plates, and fur-trimmed boots all remain legible at that size.
-- Prepared: 2026-09-04
+- Prepared: 2026-09-05 (v2 texture rebuild; v1 was 2026-09-04)
 
 The Elder Scrolls Online name, character design, and related rights remain with their respective
 owners, including ZeniMax Media/Bethesda Softworks. Do not reuse this asset outside this project's
