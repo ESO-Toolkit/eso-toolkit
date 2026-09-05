@@ -34,6 +34,10 @@ System design and patterns — [architecture/](./architecture/)
 | [Components](./architecture/COMPONENTS.md)                     | Reusable UI component API reference |
 | [Nested Error Usage](./architecture/NESTED_ERROR_USAGE.md)     | Error handling patterns             |
 | [Optimization Guide](./architecture/OPTIMIZATION_GUIDE.md)     | Fetch optimization strategies       |
+| [Replay Actor Model Pipeline](./architecture/fight-replay-actor-model-pipeline.md) | Reconstructed NPC model workflow |
+| [Replay NPC Asset Manifest](./architecture/fight-replay-npc-asset-manifest.md) | Shipped NPC assets, budgets, coverage |
+| [Replay NPC GPU Queue Log](./architecture/fight-replay-npc-gpu-queue-log.md) | Sequential GPU job record + lessons |
+| [Replay Yandir Asset](./architecture/fight-replay-yandir-asset.md) | First reconstructed boss handoff |
 
 ### Features
 
