@@ -40,16 +40,16 @@ describe('normalizeActorName', () => {
 describe('findStaticActorModel', () => {
   it('matches a known boss by exact normalized name', () => {
     expect(findStaticActorModel(actor('boss', 'Yandir the Butcher'))?.id).toBe(
-      'yandir-the-butcher-overview-v1',
+      'yandir-the-butcher-overview-v2',
     );
   });
 
   it('matches the same boss when ESO Logs reports it as a plain enemy or adds an instance suffix', () => {
     expect(findStaticActorModel(actor('enemy', 'yandir the butcher'))?.id).toBe(
-      'yandir-the-butcher-overview-v1',
+      'yandir-the-butcher-overview-v2',
     );
     expect(findStaticActorModel(actor('boss', 'Yandir the Butcher #2'))?.id).toBe(
-      'yandir-the-butcher-overview-v1',
+      'yandir-the-butcher-overview-v2',
     );
   });
 
@@ -87,7 +87,7 @@ describe('resolveReplayActorModel', () => {
 
   it('resolves a shipped boss only in prototype mode', () => {
     expect(resolveReplayActorModel(actor('boss', 'Yandir the Butcher'), 'prototype')?.id).toBe(
-      'yandir-the-butcher-overview-v1',
+      'yandir-the-butcher-overview-v2',
     );
   });
 

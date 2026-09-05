@@ -64,8 +64,8 @@ const HOSTILE_ACTOR_TYPES = ['boss', 'enemy'] as const;
  */
 export const STATIC_REPLAY_ACTOR_MODEL_ASSETS: readonly StaticReplayActorModelAsset[] = [
   {
-    id: 'yandir-the-butcher-overview-v1',
-    path: 'models/fight-replay/npcs/yandir-the-butcher-overview-v1.glb',
+    id: 'yandir-the-butcher-overview-v2',
+    path: 'models/fight-replay/npcs/yandir-the-butcher-overview-v2.glb',
     renderer: 'static-boss',
     actorTypes: HOSTILE_ACTOR_TYPES,
     aliases: ['yandir the butcher'],
@@ -74,12 +74,12 @@ export const STATIC_REPLAY_ACTOR_MODEL_ASSETS: readonly StaticReplayActorModelAs
       scale: 1.25,
       yOffset: 0,
       yawOffset: 0,
-      modelHeight: 1.993,
+      modelHeight: 1.9927,
     },
     provenance: {
       designation: 'project-authorized-fan-prototype',
       sourceUrl: 'https://esomodelviewer.com/characters/post/82-yandir-the-butcher',
-      attributionFile: 'public/models/fight-replay/npcs/README-yandir-the-butcher-overview-v1.md',
+      attributionFile: 'public/models/fight-replay/npcs/README-yandir-the-butcher-overview-v2.md',
     },
   },
   {

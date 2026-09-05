@@ -19,10 +19,10 @@ existing actor renderer.
 
 ## Runtime contract
 
-- One mesh, one textured PBR material, one embedded 512 px texture, and no armature, animation, or
-  morph targets. The reviewed closed mesh uses front-side rendering; two-sided rendering remains
-  the fallback for reconstructions with thin armor shells.
-- The accepted overview LOD has 45,000 triangles, 29,397 UV-split vertices, and is 1.85 MB. It
+- One mesh, one textured PBR material, one embedded 1024 px JPEG texture, and no armature,
+  animation, or morph targets. The reviewed closed mesh uses front-side rendering; two-sided
+  rendering remains the fallback for reconstructions with thin armor shells.
+- The accepted overview LOD (v2) has 45,000 triangles, 28,854 UV-split vertices, and is 1.64 MB. It
   remains one primitive and one draw call. The tighter crowd budgets still apply to lesser enemies.
 - glTF `+Y` up, facing `+Z`, feet at `y=0`, horizontally centered, transforms applied.
 - Registry matching is actor-type constrained, case-insensitive, whitespace-normalized, and exact.
@@ -31,8 +31,8 @@ existing actor renderer.
   deterministic on slow or virtualized browsers.
 - Embedded GLB textures are decoded through temporary `blob:` URLs by Three.js, so `blob:` must remain
   allowed by both `img-src` and `connect-src` in the app-shell and deployment CSPs.
-- No animation mixer or per-actor scene clone is introduced. The renderer adds deterministic
-  whole-model idle, movement-weight, and death motion directly from replay time.
+- No animation mixer or per-actor scene clone is introduced. The static renderer applies only the
+  existing death treatment; no idle or movement motion ships with this milestone.
 
 ## Acceptance checklist
 
@@ -43,39 +43,35 @@ the prototype query flag.
 
 The initial live verification target is public report `L7T1zdcCfWNRbQwm`, fight 6 (Yandir the
 Butcher / Sea Adder). Geometry, grounding, and combat-log placement were verified there with
-`?npcModels=prototype`. The current overview LOD was then checked in the standalone WebGL viewer:
-45,000 triangles, 29,397 UV-split vertices, one mesh/material/draw call, a 512 px embedded texture,
-and 1,848,216 bytes. The
-virtualized preview is not suitable for a final FPS comparison. Recheck scale, facing, selection,
-and death treatment in the full replay when its report-data backend is healthy.
+`?npcModels=prototype`. The shipped v2 asset was then checked in the in-repo `/replay-models` viewer:
+45,000 triangles, 28,854 UV-split vertices, one mesh/material/draw call, a 1024 px embedded JPEG, and
+1,715,468 bytes. The virtualized preview is not suitable for a final FPS comparison. Recheck scale,
+facing, selection, and death treatment in the full replay when its report-data backend is healthy.
 
-Visual acceptance is at the intended 32-64 px replay height, not close-up orbit-camera fidelity.
-Preserve the large identity cues and the source-projected vertex colors. A 10,000-triangle test
-removed too many color samples and visibly flattened the armor. The two separately generated helmet
-curl meshes were rejected and removed; do not recreate them unless a replay-scale defect justifies it.
+Visual acceptance is at the intended 32-64 px replay height, not close-up orbit-camera fidelity, but
+**judge the texture by opening the flat atlas, not only by rendered angles** — a fragmented or smeared
+atlas can still render acceptably from whichever angles you happen to check. The two separately
+generated helmet curl meshes were rejected and removed; do not recreate them unless a replay-scale
+defect justifies it.
 
-The promoted performance asset bakes the accepted vertex colors to an embedded 512 px texture
-and uses 45,000 triangles, 29,397 UV-split vertices, one mesh/material/draw call, and 1,848,216
-bytes. Front, back, and side orbit checks found no visible seams and no meaningful loss at the
-intended scale. A 1024 px candidate was 2,512,776 bytes and a 2048 px candidate was 4,257,684 bytes
-without a useful replay-scale improvement, so 512 px is the default for promotion after owner visual
-approval. This optimization preserves the existing reconstruction; it does not make the helmet or
-silhouette more source-accurate.
+### Superseded guidance (kept so it is not repeated)
 
-Rebuild that performance candidate with:
+v1 baked **vertex colours** to a 512 px texture and shipped at 29,397 vertices / 1,848,216 bytes. That
+was a mistake: vertex colours cap surface detail at the vertex count, roughly 19x below what the atlas
+holds, and the result was a featureless, plastic-looking surface. v1 also concluded that a 1024 px
+candidate gave "no useful replay-scale improvement" and that a 10,000-triangle test "removed too many
+colour samples" — **both conclusions were artefacts of the vertex-colour carrier, not of resolution or
+triangle count.** Once colour is projected per texel, 1024 px is clearly better and fits the size gate
+as JPEG. Do not use those earlier findings to argue against a higher-resolution atlas.
 
-```powershell
-python tools/fight-replay-models/bake-vertex-colors-to-texture.py `
-  yandir-the-butcher-static-v1.glb yandir-the-butcher-static-v2.glb `
-  --target-triangles 45000 --texture-size 512
-```
-
-Rebuild the bounded overview asset from the preserved dense vertex-colored source with:
+Rebuild the current asset by projecting the reference plates directly into the UV atlas (see the
+adjacent provenance file for the exact stages), not with the vertex-colour bake. The dense
+vertex-coloured source is still the geometry origin:
 
 ```powershell
 B:/CodexScratch/eso-fight-replay-3d/.venv/Scripts/python.exe `
   tools/fight-replay-models/polish-yandir-overview.py -- `
-  source-vertex-colors.glb yandir-the-butcher-overview-v1.glb `
+  source-vertex-colors.glb yandir-the-butcher-overview-v2.glb `
   --target-triangles 90891 --keep-first-mesh
 ```
 

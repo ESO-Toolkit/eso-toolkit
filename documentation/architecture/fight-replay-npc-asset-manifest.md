@@ -22,7 +22,7 @@ Do not reuse any reconstructed asset outside this project without a separate rig
 | Asset                                | Actor              | Renderer                  |   Tris |  Verts | Materials | Texture     | GLB bytes | Reference                                                                   |
 | ------------------------------------ | ------------------ | ------------------------- | -----: | -----: | --------: | ----------- | --------: | --------------------------------------------------------------------------- |
 | `coolstickman-walk.glb`              | all players        | `instanced-pose-flipbook` |      — |      — |         1 | —           |         — | CC0, Polygonal Mind                                                         |
-| `yandir-the-butcher-overview-v1.glb` | Yandir the Butcher | `static-boss`             | 45,000 | 29,397 |         1 | 512px PNG   | 1,848,216 | [post 82](https://esomodelviewer.com/characters/post/82-yandir-the-butcher) |
+| `yandir-the-butcher-overview-v2.glb` | Yandir the Butcher | `static-boss`             | 45,000 | 28,854 |         1 | 1024px JPEG | 1,715,468 | [post 82](https://esomodelviewer.com/characters/post/82-yandir-the-butcher) |
 | `captain-vrol-overview-v2.glb`       | Captain Vrol       | `static-boss`             | 44,999 | 28,732 |         1 | 1024px JPEG | 1,746,004 | [post 83](https://esomodelviewer.com/characters/post/83-captain-vrol)       |
 
 ### Runtime budgets

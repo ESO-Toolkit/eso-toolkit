@@ -145,26 +145,44 @@ open the flat atlas; renders can hide a broken texture.**
 
 ### What actually fixed it
 
-Three changes together, in rough order of impact:
+**The cause was the colour carrier, and only the colour carrier.**
 
-1. **Direct texel projection instead of vertex-colour baking.** Colour had been carried as vertex
-   colours and only baked to a texture at the end, capping detail at ~29k vertex samples instead of
-   ~564k texel samples — a 19x difference. Each texel is now unprojected to its surface point and
-   normal, projected into the front and back reference cameras, and blended by facing angle with
-   occlusion rejection.
-2. **Registered closeup plates.** `view-07`/`view-08` (front/back torso, ~2.1x the linear resolution
-   of the full-body plates) were registered by matching per-row silhouette width profiles and used to
-   sharpen the torso. `view-04` (helm) was correctly **rejected** — its silhouette runs off the frame
-   edge, profile matching falsely locked onto the torso, and masked NCC peaked at 0.492 pinned to the
-   search boundary. Unverifiable registration must be rejected rather than forced.
-3. **Blender collapse decimation instead of trimesh quadric simplification**, then a fresh xatlas
-   unwrap with dilated island borders.
+Colour had been carried as vertex colours and only baked to a texture at the end, capping detail at
+~29k vertex samples against the ~571k texel samples a 1024px atlas holds — a 19x difference.
+`transfer_colors`' KD-tree inverse-distance blend compounded it by smoothing across the surface and
+pulling colour through thin limbs. The atlas was mush because the colour data was mush.
 
-A note on evidence: shell counts measured on an exported GLB are **confounded**, because glTF splits
-vertices at every UV seam, so an unwrapped export reports roughly one shell per UV island regardless
-of mesh health (the accepted v2 also reports 382). Do not use exported-GLB shell count alone as proof
-of shredded geometry — measure it on the pre-unwrap mesh. The improvement here is established by
-direct visual A/B of the flat atlas and torso renders, which is unambiguous.
+The fix is texel-space projection: each texel is unprojected to its surface point and normal,
+projected into the front and back reference cameras, and blended by facing angle with occlusion
+rejection.
+
+A secondary real gain came from **registered closeup plates**: `view-07`/`view-08` (front/back torso,
+~2.1x the linear resolution of the full-body plates) registered by silhouette-profile matching.
+`view-04` (helm) was correctly **rejected** — its silhouette runs off the frame edge, profile matching
+falsely locked onto the torso, and masked NCC peaked at 0.492 pinned to the search boundary.
+Registration that cannot be verified must be rejected, not forced.
+
+### A false lead, recorded so it is not repeated
+
+An initial diagnosis blamed `trimesh.simplify_quadric_decimation` for shredding the mesh into
+hundreds of disconnected shells. **That was wrong.** The measurement was confounded:
+`trimesh.merge_vertices()` on a mesh carrying UVs welds only vertices matching in _both_ position and
+UV, so every UV chart boundary reads as a mesh boundary. Welding on POSITION alone shows the shipped
+geometry was always sound:
+
+| Asset             | as-stored shells / boundary | POSITION-welded shells / boundary |
+| ----------------- | --------------------------- | --------------------------------- |
+| Yandir shipped v1 | 491 / 13,020                | **4 / 0**                         |
+| Yandir rebuilt v2 | 350 / 12,056                | **2 / 0**                         |
+| Vrol rebuilt v2   | 382 / 11,757                | **3 / 3**                         |
+
+Testing the decimator directly confirms it: 3 shells in, 4–5 shells out, **0 boundary edges**. It does
+not damage topology. Swapping to Blender's collapse modifier was therefore **neutral**, and the island
+reduction (491 → 350) came from xatlas option tuning, which is worth little on its own.
+
+**Never compare shell counts between a UV-mapped mesh and a UV-less one, and never read shell count
+off an exported GLB** — glTF splits vertices at every UV seam, so an unwrapped export reports roughly
+one shell per chart regardless of mesh health.
 
 ### Candidate rejected: Hunyuan3D Paint
 
@@ -193,3 +211,45 @@ render. Irreducible with two views.
 **Source ceiling:** the character occupies 717 x 289 px in the 1366x768 plates, ~200k opaque pixels
 across both views, against 1,048,576 texels in a 1024px atlas — roughly 5x oversampled. No projection
 method can exceed what the plates carry.
+
+---
+
+## Job 3 — Yandir the Butcher, texture rebuild (v2)
+
+**Status: complete — accepted, supersedes v1. No GPU compute required.**
+
+Yandir shipped with the same vertex-colour defect as Vrol v1: a featureless, plastic-looking surface
+with no readable detail. That is a concrete, documented defect, which is the only condition under
+which the standing instruction permits replacing existing Yandir work.
+
+**Geometry was not touched.** The rebuild starts from the reviewed 90,891-triangle
+`yandir-overview-polish-v17-body-only.glb` named in the existing provenance — no regeneration, no
+re-sculpt, no restyle. Final dimensions `0.9414 x 1.9927 x 0.3990` match the shipped
+`0.941 x 0.399 x 1.993`. Because the geometry was reused, this job needed **no GPU compute at all**;
+it was entirely CPU/`bpy` work, and VRAM stayed at desktop-only levels throughout.
+
+| Metric                                    | v1 shipped | v2 rebuilt                      |
+| ----------------------------------------- | ---------- | ------------------------------- |
+| Triangles                                 | 45,000     | 45,000                          |
+| Vertices                                  | 29,397     | 28,854                          |
+| Texture                                   | 512px PNG  | **1024px JPEG q92**             |
+| Bytes                                     | 1,848,216  | **1,715,468**                   |
+| UV islands                                | 491        | **350** (mean 128.6 faces each) |
+| Shells / boundary edges (POSITION-welded) | 4 / 0      | **2 / 0**                       |
+
+Source subject resolution: 690 px tall by 300 px wide in the 1366x768 plates, ~200k opaque pixels
+across both views — the same ~5x oversampling ceiling at 1024² that Vrol has. Atlas coverage 571,441
+of 1,048,576 texels (54.5%); front visibility 46.5%, back 44.8%, neither 11.8%.
+
+Closeup plates `view-07`/`view-08` registered at 4.99% and 4.77% width error and were used. Helm
+closeups were not attempted, following Vrol's failed NCC verification.
+
+**The synthesized left profile was deliberately not used.** v1's colour drew on the fabricated
+`generated-left-profile-v1.png`; the gate forbids invented detail, so v2 uses the two genuine plates
+only. The stated consequence is that the side views streak, as Vrol's do — though they still beat
+v1's noticeably.
+
+Reviewed the flat atlas, all five angles, and a v1-vs-v2 A/B. The improvement is larger than Vrol's:
+v1 is a smooth blob with no readable feature; v2 resolves the rivetted chest plate, scalloped fur
+trim, quilted sleeves, chainmail bracers, belt buckle, fur tassels and pouches — same identity
+throughout (teal cloth, pale fur, brown leather, red beard). Accepted.
