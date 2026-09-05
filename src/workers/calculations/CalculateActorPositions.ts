@@ -179,11 +179,21 @@ const ESTIMATED_BYTES_PER_CELL = 200; // Rough estimate (matches the legacy memo
 const DESKTOP_CELL_BUDGET = (500 * 1024 * 1024) / ESTIMATED_BYTES_PER_CELL;
 const MOBILE_CELL_BUDGET = (120 * 1024 * 1024) / ESTIMATED_BYTES_PER_CELL; // mobile tabs die ~1GB shared
 
-/** Coarse pointers (phones/tablets) get the mobile memory budget. Worker-safe (window-guarded). */
-export const isCoarsePointerDevice = (): boolean =>
-  typeof window !== 'undefined' &&
-  typeof window.matchMedia === 'function' &&
-  window.matchMedia('(pointer:coarse)').matches;
+/**
+ * Worker-safe "is this a memory-constrained device" probe.
+ *
+ * The budget is applied inside the worker, where `window`/`matchMedia` do not exist — so a
+ * `(pointer:coarse)` media query (what this used to be) silently reports desktop for EVERY
+ * device and the mobile budget never takes effect. `WorkerNavigator` does expose `deviceMemory`
+ * and `userAgent`, so prefer the reported RAM and fall back to a UA check on engines that omit
+ * it (notably iOS Safari). Keep this free of `window` so it stays honest in worker scope.
+ */
+export const isMemoryConstrainedDevice = (): boolean => {
+  if (typeof navigator === 'undefined') return false;
+  const { deviceMemory } = navigator as Navigator & { deviceMemory?: number };
+  if (typeof deviceMemory === 'number' && deviceMemory > 0) return deviceMemory <= 4;
+  return /Android|iPhone|iPad|iPod|IEMobile|Opera Mini/i.test(navigator.userAgent ?? '');
+};
 
 export interface SampleIntervalOptions {
   durationMs: number;
@@ -785,7 +795,7 @@ export function calculateActorPositions(
   const { intervalMs: adjustedInterval, downsampled } = resolveSampleInterval({
     durationMs: fightDuration,
     actorCount: actorPositionHistory.size,
-    budgetCells: isCoarsePointerDevice() ? MOBILE_CELL_BUDGET : DESKTOP_CELL_BUDGET,
+    budgetCells: isMemoryConstrainedDevice() ? MOBILE_CELL_BUDGET : DESKTOP_CELL_BUDGET,
   });
   if (downsampled) {
     logger.warn('Downsampling replay timestamps to fit the memory budget', {

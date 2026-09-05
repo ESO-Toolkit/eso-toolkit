@@ -445,10 +445,19 @@ export const FightReplay: React.FC = () => {
   // LRU so a revisit stays instant. The replay worker pool is destroyed on all devices so its
   // threads don't idle for 5 minutes after leaving. Guarded: harmless under StrictMode
   // double-mount (pools recreate on demand) or a torn-down store.
+  //
+  // `isMobileReplay` is read through a ref and deliberately NOT a dependency: it is a live
+  // media-query result that flips MID-SESSION (a phone rotating into landscape — see
+  // useIsMobileReplay), and any dep change runs this cleanup while the user is still in the
+  // replay. That destroyed the in-flight position compute ("Couldn't load the replay") and, on
+  // a mobile->desktop flip, cleared the result with nothing left to re-dispatch it — stranding
+  // the arena on "Loading 3D Arena..." until a fight change or reload.
+  const isMobileReplayRef = useRef(isMobileReplay);
+  isMobileReplayRef.current = isMobileReplay;
   useEffect(() => {
     return () => {
       try {
-        if (isMobileReplay) {
+        if (isMobileReplayRef.current) {
           dispatch(actorPositionsActions.clearResult());
         }
       } catch {
@@ -460,7 +469,7 @@ export const FightReplay: React.FC = () => {
         // Pools already gone.
       }
     };
-  }, [dispatch, isMobileReplay]);
+  }, [dispatch]);
 
   // Keyboard skip to the previous / next boss ( [ and ] ). Distinct from FightReplay3D's
   // in-fight transport keys, so the two handlers never collide. Guards mirror the

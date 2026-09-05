@@ -401,11 +401,14 @@ export class WorkerPool {
     const attemptsUsed = task.attempts ?? 0;
     if (!task.cancelled && !task.timedOut && attemptsUsed < maxAttempts) {
       // Retire the worker that produced the error (it may be poisoned) and requeue.
+      // A retry is NOT a settle path: the task keeps its id and stays live, so only the run
+      // timeout is cleared. Using cleanupTask here would detach the abort listener and leave
+      // the requeued task un-cancellable — a superseded compute would then hold a pool slot
+      // to completion instead of freeing it on abort.
       this.teardownWorkerForTask(taskId);
-      this.cleanupTask(task);
+      this.clearTaskTimeout(task);
       this.pendingTasks.delete(taskId);
       task.attempts = attemptsUsed + 1;
-      task.timeoutId = undefined;
       this.taskQueue.unshift(task);
       this.updateStats();
 
@@ -461,11 +464,15 @@ export class WorkerPool {
   /**
    * Clean up task resources (timeout timer, abort listener)
    */
-  private cleanupTask(task: WorkerTask<unknown, unknown>): void {
+  private clearTaskTimeout(task: WorkerTask<unknown, unknown>): void {
     if (task.timeoutId !== undefined) {
       clearTimeout(task.timeoutId);
       task.timeoutId = undefined;
     }
+  }
+
+  private cleanupTask(task: WorkerTask<unknown, unknown>): void {
+    this.clearTaskTimeout(task);
     if (task.abortSignal && task.abortListener) {
       task.abortSignal.removeEventListener('abort', task.abortListener);
       task.abortSignal = undefined;

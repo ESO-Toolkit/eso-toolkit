@@ -32,8 +32,8 @@ export const useScrubbingMode = ({
   // a render-phase counter (every-3rd-frame gate), which is impure (StrictMode double-render
   // skew) and self-invalidated the memo below on every third render. NOTE: no live consumer
   // reads this today — Arena3DScene forwards only shouldRenderEffects, and the frameSkipRate
-  // consumer (AnimationFrameContext) is unmounted — so scrubbing costs ≈ playback per distinct
-  // timestamp. The flag documents intent for the day a consumer honors it again.
+  // consumer was removed with the instanced-actor migration — so scrubbing costs ≈ playback
+  // per distinct timestamp. The flag documents intent for the day a consumer honors it again.
   const shouldUpdatePositions = !isScrubbingMode || !isDragging;
 
   // Visual effects during scrubbing

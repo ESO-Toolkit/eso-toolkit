@@ -455,6 +455,30 @@ describe('WorkerPool', () => {
       pool.destroy();
     });
 
+    it('a retried task still honors its abort signal', async () => {
+      // Regression: the retry path used to run the full settle-cleanup, which detached the
+      // abort listener. The requeued task then ignored abort() and held a pool slot until it
+      // finished — a superseded position compute could occupy a replay worker for ~90s.
+      const pool = new WorkerPool({ maxWorkers: 1, retryAttempts: 1, taskTimeout: 60000 });
+      mockWorker.calculateBuffLookup
+        .mockRejectedValueOnce(new Error('flaky'))
+        .mockImplementationOnce(() => new Promise<never>(() => {})); // retry hangs
+
+      const controller = new AbortController();
+      const task = pool.execute('calculateBuffLookup', {}, 0, undefined, controller.signal);
+      const assertion = expect(task).rejects.toThrow(/cancelled/i);
+
+      // Let the first attempt fail and the retry get picked up.
+      await Promise.resolve();
+      await Promise.resolve();
+      expect(mockWorker.calculateBuffLookup).toHaveBeenCalledTimes(2);
+
+      controller.abort();
+      await assertion;
+
+      pool.destroy();
+    });
+
     it('never retries timeouts or cancellations', async () => {
       mockWorker.calculateBuffLookup.mockImplementation(() => new Promise<never>(() => {}));
       const pool = new WorkerPool({ maxWorkers: 1, taskTimeout: 50, retryAttempts: 3 });

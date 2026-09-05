@@ -19,6 +19,7 @@ import {
   getActorPositionAtClosestTimestamp,
   getAllActorPositionsAtTimestamp,
   resolveSampleInterval,
+  isMemoryConstrainedDevice,
 } from './CalculateActorPositions';
 
 describe('calculateActorPositions', () => {
@@ -90,6 +91,43 @@ describe('calculateActorPositions', () => {
       expect(result.actorIds).toEqual([]);
       expect(result.fightDuration).toBe(1000);
       expect(result.fightStartTime).toBe(1000);
+    });
+  });
+
+  describe('isMemoryConstrainedDevice', () => {
+    // The budget is chosen INSIDE the worker, where `window`/`matchMedia` do not exist. A
+    // pointer-media probe therefore reports desktop on every device and the mobile budget
+    // never applies — this must stay driven by WorkerNavigator-visible signals only.
+    const withNavigator = (patch: Record<string, unknown>, run: () => void): void => {
+      const original = Object.getOwnPropertyDescriptor(globalThis, 'navigator');
+      Object.defineProperty(globalThis, 'navigator', {
+        value: { userAgent: '', ...patch },
+        configurable: true,
+        writable: true,
+      });
+      try {
+        run();
+      } finally {
+        if (original) Object.defineProperty(globalThis, 'navigator', original);
+      }
+    };
+
+    it('treats low reported deviceMemory as constrained', () => {
+      withNavigator({ deviceMemory: 4 }, () => expect(isMemoryConstrainedDevice()).toBe(true));
+      withNavigator({ deviceMemory: 8 }, () => expect(isMemoryConstrainedDevice()).toBe(false));
+    });
+
+    it('falls back to the user agent when deviceMemory is absent (iOS Safari)', () => {
+      withNavigator({ userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)' }, () =>
+        expect(isMemoryConstrainedDevice()).toBe(true),
+      );
+      withNavigator({ userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)' }, () =>
+        expect(isMemoryConstrainedDevice()).toBe(false),
+      );
+    });
+
+    it('does not depend on matchMedia, which worker scope lacks', () => {
+      withNavigator({ deviceMemory: 2 }, () => expect(isMemoryConstrainedDevice()).toBe(true));
     });
   });
 
