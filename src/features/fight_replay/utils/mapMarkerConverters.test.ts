@@ -510,7 +510,7 @@ describe('encodeInGameMor (bake shapes to a real in-game M0R string)', () => {
       shapes: [shape({})], // 400m perimeter
     };
     const { markerCount, spacingMeters } = encodeInGameMor(state, 0.5, 50); // would be ~800 dots at 0.5m
-    expect(markerCount).toBeLessThanOrEqual(55);
+    expect(markerCount).toBeLessThanOrEqual(50);
     expect(spacingMeters).toBeGreaterThan(0.5); // spacing was widened to fit
   });
 
@@ -527,5 +527,79 @@ describe('encodeInGameMor (bake shapes to a real in-game M0R string)', () => {
     expect(() =>
       encodeInGameMor({ format: 'mor', zoneId: 636, markers: [], shapes: [] }),
     ).toThrow();
+  });
+
+  it('throws instead of emitting an over-cap string when real markers fill the budget', () => {
+    const markers = Array.from({ length: 500 }, (_, i) => manualMarker(1, { x: i, y: 0, z: i }));
+    const state: MapMarkersState = { format: 'mor', zoneId: 636, markers, shapes: [shape({})] };
+    expect(() => encodeInGameMor(state)).toThrow(/Too many markers/);
+  });
+
+  it('never drops real markers for dots and flags truncation', () => {
+    const markers = Array.from({ length: 495 }, (_, i) => manualMarker(1, { x: i, y: 0, z: i }));
+    const state: MapMarkersState = { format: 'mor', zoneId: 636, markers, shapes: [shape({})] };
+    const { markerCount, dotsTruncated } = encodeInGameMor(state, 0.5, 500);
+    expect(markerCount).toBeLessThanOrEqual(500);
+    expect(dotsTruncated).toBe(true);
+    // Real markers survive verbatim at the head of the export.
+    const decoded = decodeMorMarkersString(encodeInGameMor(state, 0.5, 500).code);
+    expect(decoded!.markers.length).toBe(markerCount);
+  });
+});
+
+describe('encodeMarkersToMor signed minima', () => {
+  it('round-trips negative-bound zones (HoF) through two’s-complement minima', () => {
+    const neg = {
+      ...manualMarker(1, { x: -3414, y: 0, z: -13285 }),
+      id: 'neg',
+      source: 'manual' as const,
+    };
+    const state: MapMarkersState = { format: 'mor', zoneId: 975, markers: [neg] };
+    const code = encodeMarkersToMor(state);
+    // Lua-%x-compatible two's complement minima, not clamped zeros.
+    expect(code).toContain('FFFFF2AA');
+    const decoded = decodeMorMarkersString(code);
+    expect(decoded?.markers).toHaveLength(1);
+    expect(decoded?.markers[0]?.x).toBe(-3414);
+    expect(decoded?.markers[0]?.z).toBe(-13285);
+  });
+
+  it('drops hostile texture refs instead of corrupting section parsing', () => {
+    const evil = { ...manualMarker(1), id: 'evil', bgTexture: 'a:b;.dds' };
+    const state: MapMarkersState = { format: 'mor', zoneId: 636, markers: [evil] };
+    const code = encodeMarkersToMor(state);
+    expect(code).not.toContain('a:b;.dds');
+    // Still a decodable string with the marker present (text-only).
+    expect(decodeMorMarkersString(code)?.markers).toHaveLength(1);
+  });
+});
+
+describe('encodeMarkersToElms errors', () => {
+  it('reports label length, never label text (gamer tags stay out of logs)', () => {
+    // Class-icon key (>= 100) + custom texture + unique label: no Elms representation.
+    const secret = {
+      ...manualMarker(1),
+      id: 'secret',
+      elmsIconKey: 101,
+      bgTexture: 'custom/x.dds',
+      text: 'SecretLabel',
+    };
+    const state: MapMarkersState = { format: 'mor', zoneId: 636, markers: [secret] };
+    let message = '';
+    try {
+      encodeMarkersToElms(state);
+    } catch (error) {
+      message = error instanceof Error ? error.message : String(error);
+    }
+    expect(message).toContain('Unable to convert 1 marker');
+    expect(message).toContain('label (11 chars)');
+    expect(message).not.toContain('SecretLabel');
+  });
+});
+
+describe('arenaPointToWorld validation', () => {
+  it('rejects non-finite input instead of clamping silently', () => {
+    const mapData = { minX: 0, maxX: 100, minZ: 0, maxZ: 100 } as never;
+    expect(() => arenaPointToWorld(mapData, { x: NaN, z: 0 })).toThrow(TypeError);
   });
 });

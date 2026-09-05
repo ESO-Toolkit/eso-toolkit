@@ -11,6 +11,8 @@
  * @module features/fight_replay/trial_chapters/chapterDisplay
  */
 
+import { formatDurationMs } from '../utils/replayTime';
+
 import type { TrialChapter } from './types';
 
 /**
@@ -36,9 +38,4 @@ export function chapterStatusLabel(
 }
 
 /** m:ss for a duration in ms — the one timecode format every chapter surface uses. */
-export function formatChapterDuration(ms: number): string {
-  const totalSeconds = Math.max(0, Math.floor(ms / 1000));
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-  return `${minutes}:${seconds.toString().padStart(2, '0')}`;
-}
+export const formatChapterDuration = formatDurationMs;

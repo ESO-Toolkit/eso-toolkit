@@ -75,7 +75,7 @@ describe('ChapterRail', () => {
     expect(screen.getByText('Xalvakka')).toBeInTheDocument();
     expect(screen.getByText('Kill')).toBeInTheDocument();
     expect(screen.getByText('35% left')).toBeInTheDocument();
-    expect(screen.getByText('1 / 2 bosses')).toBeInTheDocument();
+    expect(screen.getByText('1 / 2 pulls')).toBeInTheDocument();
   });
 
   it('marks the active stop with aria-current', () => {

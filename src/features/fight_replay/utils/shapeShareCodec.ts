@@ -31,6 +31,15 @@ import { ReplayShape, ShapeData, ShapeKind } from '../types/mapMarkers';
 
 const VERSION = '1';
 
+/**
+ * Decode budgets (user paste must not freeze the tab or materialize unbounded state).
+ * Mirrored with the marker import caps; this codec is esotk-native so the constants live here.
+ */
+export const MAX_SHAPE_INPUT_BYTES = 262144;
+export const MAX_SHAPE_BLOCKS = 200;
+export const MAX_SHAPE_VERTICES = 500;
+export const MAX_SHAPE_LABEL_CHARS = 500;
+
 /** kind <-> single-char tag */
 const KIND_TO_TAG: Record<ShapeKind, string> = {
   polyline: 'P',
@@ -65,6 +74,7 @@ function toHex(value: number): string {
 }
 
 function fromHex(value: string): number {
+  if (!/^[0-9a-fA-F]+$/.test(value)) return NaN;
   return parseInt(value, 16);
 }
 
@@ -80,6 +90,7 @@ function toSignedHex(value: number): string {
 }
 
 function fromSignedHex(value: string): number {
+  if (!/^-?[0-9a-fA-F]+$/.test(value)) return NaN;
   return value.startsWith('-') ? -parseInt(value.slice(1), 16) : parseInt(value, 16);
 }
 
@@ -203,6 +214,9 @@ function decodeBlock(block: string, baseX: number, baseZ: number): ShapeData | n
   const vertices: Array<[number, number]> = [];
   for (const pair of vertsStr.split(',')) {
     if (!pair) continue;
+    // Pathological vertex counts are rejected before allocation (decodeBlock callers cap blocks;
+    // the per-shape cap lives here so a single 10k-vertex polygon can't materialize).
+    if (vertices.length >= MAX_SHAPE_VERTICES) return null;
     const [xHex, zHex] = pair.split(':');
     const x = fromHex(xHex) + baseX;
     const z = fromHex(zHex) + baseZ;
@@ -241,7 +255,8 @@ function decodeBlock(block: string, baseX: number, baseZ: number): ShapeData | n
   };
   if (radius !== undefined) shape.radius = radius;
   if (time) shape.time = time;
-  if (labelStr) shape.label = unescapeLabel(labelStr);
+  // Labels are display-only: truncate pathological lengths instead of rejecting the shape.
+  if (labelStr) shape.label = unescapeLabel(labelStr).slice(0, MAX_SHAPE_LABEL_CHARS);
 
   return shape;
 }
@@ -249,23 +264,35 @@ function decodeBlock(block: string, baseX: number, baseZ: number): ShapeData | n
 /** The zone a shapes code belongs to, or null if unparseable (used to gate import by fight zone). */
 export function decodeShapesZone(code: string): number | null {
   if (!isShapeShareFormat(code)) return null;
+  if (code.length > MAX_SHAPE_INPUT_BYTES) return null;
   const sections = code.trim().slice(1, -1).split(']');
   if (sections.length < 4) return null;
+  if (sections[0] !== VERSION) return null;
+  // Strict positive integer: a missing/malformed zone must not pass as "any zone".
+  if (!/^\d+$/.test(sections[1])) return null;
   const zone = parseInt(sections[1], 10);
-  return Number.isFinite(zone) ? zone : null;
+  return Number.isSafeInteger(zone) && zone > 0 ? zone : null;
 }
 
 /**
  * Decode a shapes share code into ShapeData[]. NEVER throws: returns [] for a malformed wrapper,
- * and silently drops any individual block that fails to parse.
+ * an unsupported version, or a missing/invalid zone, and silently drops any individual block
+ * that fails to parse.
  */
 export function decodeShapes(code: string): ShapeData[] {
   if (!isShapeShareFormat(code)) return [];
+  if (code.length > MAX_SHAPE_INPUT_BYTES) return [];
 
   const sections = code.trim().slice(1, -1).split(']');
   if (sections.length < 4) return [];
 
-  // sections[0] = version (reserved for future grammar changes), [1] = zone, [2] = min, rest = blocks
+  // sections[0] = version (ENFORCED: unknown future grammars must not decode as v1 geometry),
+  // [1] = zone (strict positive int), [2] = min, rest = blocks.
+  if (sections[0] !== VERSION) return [];
+  if (!/^\d+$/.test(sections[1])) return [];
+  const zone = parseInt(sections[1], 10);
+  if (!Number.isSafeInteger(zone) || zone <= 0) return [];
+
   const minParts = sections[2].split(':');
   if (minParts.length !== 2) return [];
   const baseX = fromSignedHex(minParts[0]);
@@ -276,6 +303,8 @@ export function decodeShapes(code: string): ShapeData[] {
   const out: ShapeData[] = [];
   for (const block of blocksStr.split(';')) {
     if (!block.trim()) continue;
+    // Block budget: keep the first N valid shapes rather than materializing a hostile paste.
+    if (out.length >= MAX_SHAPE_BLOCKS) break;
     const shape = decodeBlock(block, baseX, baseZ);
     if (shape) out.push(shape);
   }

@@ -38,6 +38,26 @@ describe('useReplayNavigation', () => {
     expect(mockNavigate).toHaveBeenCalledWith('/report/rep123/fight/7/replay', { replace: true });
   });
 
+  it('canonicalizes an explicit zero time instead of dropping it', () => {
+    const { result } = renderHook(() => useReplayNavigation());
+    result.current.goToFight('7', { time: 0 });
+    expect(mockNavigate).toHaveBeenCalledWith('/report/rep123/fight/7/replay?time=0', {
+      replace: false,
+    });
+  });
+
+  it('drops non-finite or negative times', () => {
+    const { result } = renderHook(() => useReplayNavigation());
+    result.current.goToFight('7', { time: NaN });
+    result.current.goToFight('8', { time: -500 });
+    expect(mockNavigate).toHaveBeenNthCalledWith(1, '/report/rep123/fight/7/replay', {
+      replace: false,
+    });
+    expect(mockNavigate).toHaveBeenNthCalledWith(2, '/report/rep123/fight/8/replay', {
+      replace: false,
+    });
+  });
+
   it('is a no-op without a report id', () => {
     mockReportId = undefined;
     const { result } = renderHook(() => useReplayNavigation());

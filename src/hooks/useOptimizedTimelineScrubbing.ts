@@ -82,6 +82,10 @@ export const useOptimizedTimelineScrubbing = ({
   const handleSliderChange = useCallback(
     (event: Event, value: number | number[]) => {
       const newTime = Array.isArray(value) ? value[0] : value;
+      // Synchronous temp-time write: the thumb must track the finger with zero lag (a deferred
+      // write leaves the thumb visibly behind and breaks scrub-while-playing feel). This render
+      // is cheap (slider subtree only); the EXPENSIVE downstream (onTimeChange → parent state →
+      // scene recompute) stays debounced below, and the 3D scene reads timeRef synchronously.
       setTempTime(newTime);
 
       // Immediately update timeRef for smooth 3D updates during scrubbing

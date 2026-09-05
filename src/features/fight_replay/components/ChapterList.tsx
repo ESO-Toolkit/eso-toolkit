@@ -112,19 +112,35 @@ const ChapterListComponent: React.FC<ChapterListProps> = ({
   onSelect,
 }) => {
   const activeRef = useRef<HTMLButtonElement | null>(null);
+  const listRef = useRef<HTMLDivElement>(null);
 
-  // Bring the active row into view when the list opens (reduced-motion aware).
+  // Bring the active row into view when the list opens AND when the current fight changes
+  // underneath it (continuous auto-advance with the popover open). Scrolls ONLY this list's
+  // container via scrollTop math — scrollIntoView scrolls every ancestor including the page
+  // behind the popover (the exact bug ChapterRail fixed with container scrollTo).
   useEffect(() => {
     const el = activeRef.current;
-    if (!el || typeof el.scrollIntoView !== 'function') return;
+    const list = listRef.current;
+    if (!el || !list) return;
     const reduce =
       typeof window !== 'undefined' &&
       window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-    el.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'nearest' });
-  }, []);
+    const top = el.offsetTop - list.clientHeight / 2 + el.offsetHeight / 2;
+    list.scrollTo({ top: Math.max(0, top), behavior: reduce ? 'auto' : 'smooth' });
+  }, [currentFightId]);
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+    <Box
+      ref={listRef}
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 0.5,
+        overflowY: 'auto',
+        // Own scroll cap: the popover paper bounds the total height; this list scrolls within it.
+        maxHeight: 'min(40vh, 320px)',
+      }}
+    >
       {chapters.map((chapter) => {
         const active = chapter.fightId === currentFightId;
         const isBoss = chapter.kind === 'boss';
@@ -156,6 +172,7 @@ const ChapterListComponent: React.FC<ChapterListProps> = ({
                 ? alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.14 : 0.1)
                 : 'transparent',
               transition: 'background-color 120ms ease, border-color 120ms ease',
+              '@media (prefers-reduced-motion: reduce)': { transition: 'none' },
               '&:hover': { backgroundColor: 'action.hover' },
               '&:focus-visible': {
                 outline: `2px solid ${theme.palette.primary.main}`,

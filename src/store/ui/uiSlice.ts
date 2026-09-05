@@ -15,6 +15,13 @@ export interface UIState {
   myReportsPage: number; // Persisted page number for my-reports
   perfTier: PerfTier;
   perfTierOverride: PerfTierOverride;
+  /**
+   * True once the async GPU detection has resolved (or was skipped for a manual override).
+   * Lets heavy mounts (bloom composer, IBL environment) wait for the real tier instead of
+   * mounting full-quality on the 'medium' placeholder and shedding seconds later. Optional
+   * (defaults false) so existing state literals and tests keep compiling.
+   */
+  perfTierResolved?: boolean;
   /** One-time "performance mode is on" notice shown to auto-detected-low users. */
   perfLowNoticeSeen: boolean;
   chartIntensity: ChartIntensity;
@@ -34,6 +41,7 @@ const initialState: UIState = {
   // empty persisted store.
   perfTier: 'medium',
   perfTierOverride: 'auto',
+  perfTierResolved: false,
   perfLowNoticeSeen: false,
   chartIntensity: 'subtle',
 };
@@ -83,6 +91,9 @@ const uiSlice = createSlice({
     setPerfTier: (state, action: PayloadAction<PerfTier>) => {
       state.perfTier = action.payload;
     },
+    setPerfTierResolved: (state) => {
+      state.perfTierResolved = true;
+    },
     setPerfTierOverride: (state, action: PayloadAction<PerfTierOverride>) => {
       state.perfTierOverride = action.payload;
     },
@@ -109,6 +120,7 @@ export const {
   setMyReportsPage,
   setPerfTier,
   setPerfTierOverride,
+  setPerfTierResolved,
   setPerfLowNoticeSeen,
   setChartIntensity,
 } = uiSlice.actions;

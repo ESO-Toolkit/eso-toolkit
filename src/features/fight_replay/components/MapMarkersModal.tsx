@@ -27,6 +27,7 @@ import { FightFragment } from '../../../graphql/gql/graphql';
 import { useMarkerStats } from '../../../hooks/useMarkerStats';
 import { isElmsMarkersFormat } from '../../../utils/elmsMarkersDecoder';
 import { MapMarkersState } from '../types/mapMarkers';
+import { portalToFullscreen } from '../utils/fullscreenPortal';
 import { decodeShapes, decodeShapesZone, isShapeShareFormat } from '../utils/shapeShareCodec';
 
 import { MarkerSpritePreview } from './MarkerSpritePreview';
@@ -175,6 +176,14 @@ export const MapMarkersModal: React.FC<MapMarkersModalProps> = ({
 
   const hasCommittedMarkers = Boolean(markersState && markersState.markers.length > 0);
   const hasCommittedShapes = Boolean(markersState?.shapes && markersState.shapes.length > 0);
+  // Class-icon markers (elmsIconKey >= 100) are esotk-native with no Elms representation — the
+  // export throws for them, so disable the button with an inline reason instead of failing on click.
+  const elmsBlockedCount = useMemo(
+    () =>
+      markersState?.markers.filter((m) => typeof m.elmsIconKey === 'number' && m.elmsIconKey >= 100)
+        .length ?? 0,
+    [markersState],
+  );
 
   return (
     <Dialog
@@ -186,6 +195,9 @@ export const MapMarkersModal: React.FC<MapMarkersModalProps> = ({
       aria-labelledby="map-markers-dialog-title"
       onKeyDown={handleKeyDown}
       onClick={(e: React.MouseEvent) => e.stopPropagation()}
+      // Inside the fullscreen element so the dialog stays visible in native fullscreen
+      // (body portals render underneath the top layer). See fullscreenPortal.
+      container={portalToFullscreen()}
       slotProps={{
         paper: {
           component: 'div', // Ensure Dialog doesn't create a form
@@ -430,6 +442,12 @@ export const MapMarkersModal: React.FC<MapMarkersModalProps> = ({
             variant="outlined"
             type="button"
             startIcon={<ContentCopyIcon />}
+            disabled={elmsBlockedCount > 0}
+            title={
+              elmsBlockedCount > 0
+                ? `${elmsBlockedCount} marker${elmsBlockedCount === 1 ? '' : 's'} use class icons, which Elms can't represent — use M0R instead`
+                : undefined
+            }
           >
             Copy Elms
           </Button>
@@ -441,6 +459,7 @@ export const MapMarkersModal: React.FC<MapMarkersModalProps> = ({
             variant="outlined"
             type="button"
             startIcon={<ContentCopyIcon />}
+            title="Markers plus shape outlines as ground dots (fills, labels, dash, width and time do not transfer)"
           >
             Copy for in-game (M0R)
           </Button>

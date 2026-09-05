@@ -19,24 +19,56 @@
 import { DecodedMorMarkers, MorMarker, TEXTURE_LOOKUP } from '../types/mapMarkers';
 
 /**
- * Convert hex color string (e.g., "ff0000") to RGBA array with alpha 1
+ * Decode budgets. Pastes are user input: unbounded splits (`]`/`,`/`;`) on a multi-megabyte
+ * string would freeze the tab. Real marker sets are hundreds of entries at most.
+ * (Mirrored in the feature's marker caps — this layer can't import from features.)
  */
-function hexToRGBA(hex: string): [number, number, number, number] {
-  // Handle with or without alpha channel
-  if (hex.length === 8) {
-    // RRGGBBAA format
-    const r = parseInt(hex.substring(0, 2), 16) / 255;
-    const g = parseInt(hex.substring(2, 4), 16) / 255;
-    const b = parseInt(hex.substring(4, 6), 16) / 255;
-    const a = parseInt(hex.substring(6, 8), 16) / 255;
-    return [r, g, b, a];
-  } else {
-    // RRGGBB format (assume full opacity)
-    const r = parseInt(hex.substring(0, 2), 16) / 255;
-    const g = parseInt(hex.substring(2, 4), 16) / 255;
-    const b = parseInt(hex.substring(4, 6), 16) / 255;
-    return [r, g, b, 1];
-  }
+export const MAX_MOR_INPUT_BYTES = 262144;
+export const MAX_MOR_MARKERS = 500;
+const MAX_INDEXED_GROUPS = 2000;
+
+/** Strict unsigned 32-bit hex (1-8 digits). parseInt accepts trailing garbage ("12zz" → 18). */
+const HEX_U32 = /^[0-9a-fA-F]{1,8}$/;
+/** Strict decimal int/float token (bounded digits — 20-digit "numbers" are corrupt input). */
+const DECIMAL = /^-?\d{1,12}(\.\d{1,12})?$/;
+/** Section index list token. */
+const INDEX = /^\d{1,7}$/;
+/** Indexed-section value charset for texture refs/paths (covers `^N` refs + `a/b.dds` paths). */
+const TEXTURE_VALUE = /^[A-Za-z0-9_^./-]+$/;
+/** Strict 6/8-digit hex colour. */
+const HEX_COLOUR = /^[0-9a-fA-F]{6}([0-9a-fA-F]{2})?$/;
+/** Strict positive decimal int (zone, timestamp). */
+const POSITIVE_INT = /^\d{1,10}$/;
+
+/** Parse unsigned hex, or NaN when the token is not clean hex. */
+function parseHexU32(token: string): number {
+  if (!HEX_U32.test(token)) return NaN;
+  return parseInt(token, 16);
+}
+
+/**
+ * Parse SIGNED 32-bit hex (two's complement). The real addon's `%x` emits two's complement for
+ * negative minima (e.g. Halls of Fabrication minX -3414 → "FFFFF2AA") and its `tonumber(x,16)`
+ * reads them back unsigned — which is why the addon itself misplaces HoF markers. We do better:
+ * values >= 2^31 wrap negative, so negative-bound zones decode to their true coordinates.
+ */
+function parseHexS32(token: string): number {
+  const unsigned = parseHexU32(token);
+  if (Number.isNaN(unsigned)) return NaN;
+  return unsigned >= 0x80000000 ? unsigned - 0x100000000 : unsigned;
+}
+
+/**
+ * Convert hex color string (e.g., "ff0000") to RGBA array with alpha 1.
+ * Returns null for malformed input (the caller drops the group).
+ */
+function hexToRGBA(hex: string): [number, number, number, number] | null {
+  if (!HEX_COLOUR.test(hex)) return null;
+  const r = parseInt(hex.substring(0, 2), 16) / 255;
+  const g = parseInt(hex.substring(2, 4), 16) / 255;
+  const b = parseInt(hex.substring(4, 6), 16) / 255;
+  const a = hex.length === 8 ? parseInt(hex.substring(6, 8), 16) / 255 : 1;
+  return [r, g, b, a];
 }
 
 /**
@@ -73,11 +105,14 @@ function unescapeText(text: string): string {
 
 /**
  * Parse a section like "value:index1,index2;value2:index3,index4"
- * Returns a Map of index -> value
+ * Returns a Map of index -> value. Groups with malformed values or indexes are skipped
+ * (a corrupt group must not poison the whole section); at most MAX_INDEXED_GROUPS groups
+ * are read so a pathological section can't balloon the map.
  */
 function parseIndexedSection<T>(
   section: string,
-  valueParser: (value: string) => T,
+  valueParser: (value: string) => T | null,
+  isValidValue?: (raw: string) => boolean,
 ): Map<number, T> {
   const result = new Map<number, T>();
 
@@ -86,25 +121,39 @@ function parseIndexedSection<T>(
   }
 
   const groups = section.split(';');
+  let processed = 0;
   for (const group of groups) {
     if (!group.trim()) continue;
+    if (processed >= MAX_INDEXED_GROUPS) break;
+    processed++;
 
     const parts = group.split(':');
     if (parts.length < 2) continue;
 
-    const value = valueParser(parts[0]);
+    const rawValue = parts[0];
+    if (isValidValue && !isValidValue(rawValue)) continue;
+    const value = valueParser(rawValue);
+    if (value === null || value === undefined) continue;
     const indicesStr = parts.slice(1).join(':'); // In case there are colons in the indices
     const indices = indicesStr.split(',').filter((s) => s.trim() !== '');
 
     for (const indexStr of indices) {
+      if (!INDEX.test(indexStr.trim())) continue;
       const index = parseInt(indexStr, 10);
-      if (!isNaN(index)) {
+      if (Number.isSafeInteger(index)) {
         result.set(index, value);
       }
     }
   }
 
   return result;
+}
+
+/** Strict decimal parser for sizes/pitches/yaws: finite numbers only, NaN/Infinity rejected. */
+function parseDecimal(raw: string): number | null {
+  if (!DECIMAL.test(raw.trim())) return null;
+  const value = parseFloat(raw);
+  return Number.isFinite(value) ? value : null;
 }
 
 /**
@@ -116,6 +165,11 @@ function parseIndexedSection<T>(
 export function decodeMorMarkersString(encodedString: string): DecodedMorMarkers | null {
   // Validate format: should start with < and end with >
   if (!encodedString || !encodedString.startsWith('<') || !encodedString.endsWith('>')) {
+    return null;
+  }
+
+  // User paste: refuse absurd input before the unbounded splits below.
+  if (encodedString.length > MAX_MOR_INPUT_BYTES) {
     return null;
   }
 
@@ -144,58 +198,78 @@ export function decodeMorMarkersString(encodedString: string): DecodedMorMarkers
   // Everything from index 8 onwards is positions (may contain ] in escaped text)
   const positionsStr = sections.slice(8).join(']');
 
-  // Parse zone and timestamp
+  // Parse zone and timestamp (strict positive ints; parseInt tolerates trailing garbage)
+  if (!POSITIVE_INT.test(zoneStr) || !POSITIVE_INT.test(timestampStr)) {
+    return null;
+  }
   const zone = parseInt(zoneStr, 10);
   const timestamp = parseInt(timestampStr, 10);
 
-  if (isNaN(zone) || isNaN(timestamp)) {
-    return null;
-  }
-
-  // Parse minimum coordinates (hex format)
+  // Parse minimum coordinates (hex format, SIGNED 32-bit — see parseHexS32)
   const minParts = minsStr.split(':');
   if (minParts.length !== 3) {
     return null;
   }
 
-  const minX = parseInt(minParts[0], 16);
-  const minY = parseInt(minParts[1], 16);
-  const minZ = parseInt(minParts[2], 16);
+  const minX = parseHexS32(minParts[0]);
+  const minY = parseHexS32(minParts[1]);
+  const minZ = parseHexS32(minParts[2]);
 
-  if (isNaN(minX) || isNaN(minY) || isNaN(minZ)) {
+  if (!Number.isFinite(minX) || !Number.isFinite(minY) || !Number.isFinite(minZ)) {
     return null;
   }
 
-  // Parse indexed sections
-  const sizes = parseIndexedSection(sizesStr, (s) => parseFloat(s));
-  const pitches = parseIndexedSection(pitchesStr, (s) => degreesToRadians(parseFloat(s)));
-  const yaws = parseIndexedSection(yawsStr, (s) => degreesToRadians(parseFloat(s)));
-  const colours = parseIndexedSection(coloursStr, (s) => hexToRGBA(s));
-  const textureLookup = parseIndexedSection(texturesStr, (s) => {
-    // Check if it's a texture lookup reference (starts with ^)
-    if (s.startsWith('^')) {
-      const lookupKey = s.substring(1);
-      return TEXTURE_LOOKUP[lookupKey] || s;
-    }
-    return s;
+  // Parse indexed sections (malformed groups are skipped by the parsers above)
+  const sizes = parseIndexedSection(sizesStr, (s) => {
+    const v = parseDecimal(s);
+    return v !== null && v >= 0 ? v : null;
   });
+  const pitches = parseIndexedSection(pitchesStr, (s) => {
+    const v = parseDecimal(s);
+    return v === null ? null : degreesToRadians(v);
+  });
+  const yaws = parseIndexedSection(yawsStr, (s) => {
+    const v = parseDecimal(s);
+    return v === null ? null : degreesToRadians(v);
+  });
+  const colours = parseIndexedSection(coloursStr, (s) => hexToRGBA(s));
+  const textureLookup = parseIndexedSection(
+    texturesStr,
+    (s) => {
+      // Check if it's a texture lookup reference (starts with ^)
+      if (s.startsWith('^')) {
+        const lookupKey = s.substring(1);
+        return TEXTURE_LOOKUP[lookupKey] || s;
+      }
+      return s;
+    },
+    (raw) => TEXTURE_VALUE.test(raw),
+  );
 
-  // Parse positions
+  // Parse positions (offsets are UNSIGNED hex, matching the addon: they are always >= the true
+  // minima by construction). Capped: a pathological paste must not materialize 100k markers.
   const markers: MorMarker[] = [];
   const positionEntries = positionsStr.split(',').filter((s) => s.trim() !== '');
+  let truncated = false;
 
   for (let i = 0; i < positionEntries.length; i++) {
+    if (markers.length >= MAX_MOR_MARKERS) {
+      truncated = true;
+      break;
+    }
     const entry = positionEntries[i];
     const parts = entry.split(':');
 
     if (parts.length < 3) continue;
 
-    // Parse hex coordinates
-    const xOffset = parseInt(parts[0], 16);
-    const yOffset = parseInt(parts[1], 16);
-    const zOffset = parseInt(parts[2], 16);
+    // Parse hex coordinates (strict: no trailing garbage, no signs)
+    const xOffset = parseHexU32(parts[0]);
+    const yOffset = parseHexU32(parts[1]);
+    const zOffset = parseHexU32(parts[2]);
 
-    if (isNaN(xOffset) || isNaN(yOffset) || isNaN(zOffset)) continue;
+    if (!Number.isFinite(xOffset) || !Number.isFinite(yOffset) || !Number.isFinite(zOffset)) {
+      continue;
+    }
 
     // Calculate absolute position
     const x = xOffset + minX;
@@ -234,5 +308,6 @@ export function decodeMorMarkersString(encodedString: string): DecodedMorMarkers
     zone,
     timestamp,
     markers,
+    truncated,
   };
 }

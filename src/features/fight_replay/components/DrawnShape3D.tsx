@@ -15,14 +15,15 @@ import { useFrame } from '@react-three/fiber';
 import React, { useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 
+import { RenderPriority } from '../constants/renderPriorities';
 import { createShapeLabelTexture } from '../utils/shapeLabelTexture';
 
-// THREE.Shape is omitted from @types/three 0.184 typings though the runtime class exists.
+// tsc still resolves THREE.Shape / THREE.ShapeGeometry to divergent identities under this
+// tsconfig (verified 2026-09, three 0.185.4 + @types/three 0.185.4) — the cast is load-bearing,
+// not stale. Re-verify when upgrading either package or moduleResolution.
+type CompatibleShape = THREE.Shape;
 /* eslint-disable @typescript-eslint/no-explicit-any */
-const ThreeShape = (THREE as any).Shape as new () => {
-  moveTo(x: number, y: number): void;
-  lineTo(x: number, y: number): void;
-};
+const toGeometryShape = (shape: CompatibleShape): any => shape;
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
 type ArenaPoint = [number, number];
@@ -60,6 +61,31 @@ function inWindow(time: [number, number] | undefined, t: number): boolean {
   if (!time) return true;
   return t >= time[0] && t <= time[1];
 }
+
+/** Per-shape visibility subscriber, mounted only while the shape carries a time window. */
+const TimedReveal = ({
+  groupRef,
+  timeRef,
+  time,
+  markDirty,
+}: {
+  groupRef: React.RefObject<THREE.Group | null>;
+  timeRef?: React.RefObject<number> | { current: number };
+  time: [number, number];
+  markDirty?: () => void;
+}): null => {
+  useFrame(() => {
+    if (!groupRef.current) {
+      return;
+    }
+    const visible = inWindow(time, timeRef ? timeRef.current : 0);
+    if (groupRef.current.visible !== visible) {
+      groupRef.current.visible = visible;
+      markDirty?.();
+    }
+  }, RenderPriority.EFFECTS);
+  return null;
+};
 
 export const DrawnShape3D: React.FC<DrawnShape3DProps> = ({
   points,
@@ -101,13 +127,12 @@ export const DrawnShape3D: React.FC<DrawnShape3DProps> = ({
     if (!fill || !closed || points.length < 3) {
       return null;
     }
-    const shape = new ThreeShape();
+    const shape = new THREE.Shape();
     shape.moveTo(points[0][0], points[0][1]);
     for (let i = 1; i < points.length; i++) {
       shape.lineTo(points[i][0], points[i][1]);
     }
-    /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-    return new THREE.ShapeGeometry(shape as any);
+    return new THREE.ShapeGeometry(toGeometryShape(shape));
   }, [fill, closed, points]);
 
   useEffect(() => {
@@ -127,17 +152,12 @@ export const DrawnShape3D: React.FC<DrawnShape3DProps> = ({
   }, [labelTexture]);
 
   // Timed reveal: gate visibility on the live playback clock without re-rendering React.
+  // The subscriber only exists while a time window is set — untimed shapes are always visible,
+  // so mounting a per-shape useFrame for them would wake JS every rAF for zero work.
   const initialVisible = inWindow(time, timeRef ? timeRef.current : 0);
-  useFrame(() => {
-    if (!time || !groupRef.current) {
-      return;
-    }
-    const visible = inWindow(time, timeRef ? timeRef.current : 0);
-    if (groupRef.current.visible !== visible) {
-      groupRef.current.visible = visible;
-      markDirty?.();
-    }
-  });
+  const timedReveal = time ? (
+    <TimedReveal groupRef={groupRef} timeRef={timeRef} time={time} markDirty={markDirty} />
+  ) : null;
 
   if (linePoints.length < 2) {
     return null;
@@ -145,6 +165,7 @@ export const DrawnShape3D: React.FC<DrawnShape3DProps> = ({
 
   return (
     <group ref={groupRef} visible={initialVisible}>
+      {timedReveal}
       {fillGeometry && (
         <mesh geometry={fillGeometry} rotation={[Math.PI / 2, 0, 0]} position={[0, fillY, 0]}>
           <meshBasicMaterial

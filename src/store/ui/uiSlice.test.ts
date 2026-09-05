@@ -6,6 +6,7 @@ import uiReducer, {
   toggleDarkMode,
   syncWithSystemTheme,
   setPerfLowNoticeSeen,
+  setPerfTierResolved,
   setSelectedPlayerId,
   setSelectedTabId,
   setSelectedTargetIds,
@@ -40,6 +41,7 @@ describe('uiSlice', () => {
         myReportsPage: 1,
         perfTier: 'medium',
         perfTierOverride: 'auto',
+        perfTierResolved: false,
         perfLowNoticeSeen: false,
       });
     });
@@ -253,6 +255,19 @@ describe('uiSlice', () => {
     });
   });
 
+  describe('setPerfTierResolved', () => {
+    it('should mark detection as resolved', () => {
+      store.dispatch(setPerfTierResolved());
+      const state = store.getState() as { ui: UIState };
+      expect(state.ui.perfTierResolved).toBe(true);
+    });
+
+    it('should default to unresolved', () => {
+      const state = store.getState() as { ui: UIState };
+      expect(state.ui.perfTierResolved).toBe(false);
+    });
+  });
+
   describe('setSidebarOpen', () => {
     it('should set sidebar open to true', () => {
       store.dispatch(setSidebarOpen(true));
@@ -316,6 +331,7 @@ describe('uiSlice', () => {
         myReportsPage: 1,
         perfTier: 'medium',
         perfTierOverride: 'auto',
+        perfTierResolved: false,
         perfLowNoticeSeen: false,
       });
     });

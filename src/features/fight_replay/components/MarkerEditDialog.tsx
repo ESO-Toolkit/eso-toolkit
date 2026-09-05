@@ -180,7 +180,12 @@ export const MarkerEditDialog: React.FC<MarkerEditDialogProps> = ({
           onChange={(e) => setText(e.target.value)}
           size="small"
           fullWidth
-          helperText="Shown on the marker. Custom labels export via the M0R format only."
+          slotProps={{ htmlInput: { maxLength: 120 } }}
+          helperText={
+            text.length > 0
+              ? `${text.length}/120. Shown on the marker. Custom labels export via the M0R format only.`
+              : 'Shown on the marker. Custom labels export via the M0R format only.'
+          }
         />
 
         {/* Colour */}

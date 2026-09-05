@@ -3,6 +3,7 @@ import {
   computeTargetMs,
   decideNextDpr,
   estimateDisplayIntervalMs,
+  isFastDecline,
 } from './adaptiveResolution';
 
 describe('estimateDisplayIntervalMs', () => {
@@ -53,8 +54,12 @@ describe('computeMinDpr', () => {
   });
 
   it('never drops below 0.75 even for a low starting DPR', () => {
-    expect(computeMinDpr(1)).toBe(0.75);
-    expect(computeMinDpr(0.8)).toBe(0.75);
+    expect(computeMinDpr(1.25)).toBeCloseTo(0.75, 5);
+  });
+
+  it('holds native resolution on 1x panels (no headroom to trade)', () => {
+    expect(computeMinDpr(1)).toBe(1);
+    expect(computeMinDpr(0.8)).toBe(0.8);
   });
 });
 
@@ -137,6 +142,22 @@ describe('decideNextDpr', () => {
       // ~30fps (33ms) > 16.7 * 1.4 = 23.3 -> decline.
       const next = decideNextDpr(33, 2.0, hz60);
       expect(next).toBeCloseTo(1.85, 5);
+    });
+  });
+
+  describe('isFastDecline', () => {
+    it('fires past twice the applicable decline bar', () => {
+      // Known 60Hz: bar is 16.7*2 ≈ 33.3.
+      expect(isFastDecline(40, 1000 / 60, 1000 / 60)).toBe(true);
+      expect(isFastDecline(30, 1000 / 60, 1000 / 60)).toBe(false);
+      // Unknown refresh: bar is 20*2 = 40.
+      expect(isFastDecline(50, 1000 / 120)).toBe(true);
+      expect(isFastDecline(30, 1000 / 120)).toBe(false);
+    });
+
+    it('rejects non-finite input', () => {
+      expect(isFastDecline(NaN, 16.7, 16.7)).toBe(false);
+      expect(isFastDecline(-5, 16.7, 16.7)).toBe(false);
     });
   });
 });

@@ -1,6 +1,11 @@
 # Uncovered E2E Test Functionality Analysis
 
-**Date**: October 31, 2025  
+**Date**: October 31, 2025
+**Update (2026-09-04)**: The 3D Replay row below is STALE — `tests/replay.spec.ts` (871 lines,
+defensive load/error/auth/WebGL-mock coverage) and `tests/replay-smoke.spec.ts` (3 route-survival
+checks) have existed since Nov 2025. What is still missing for replay: visual/canvas assertions,
+playback-progress assertions, and deterministic fixture-backed interaction tests. See the revised
+section 1.
 **Analysis**: Identifying application features without E2E test coverage
 
 ---
@@ -9,35 +14,35 @@
 
 Based on `src/App.tsx`, here are **all 23 routes** in the application:
 
-| #   | Route                                     | Component                    | Auth Required | E2E Coverage                    |
-| --- | ----------------------------------------- | ---------------------------- | ------------- | ------------------------------- |
-| 1   | `/`                                       | LandingPage                  | ❌            | ✅ `home.spec.ts`               |
-| 2   | `/login`                                  | Login                        | ❌            | ⚠️ `auth.spec.ts` (mocked only) |
-| 3   | `/oauth-redirect`                         | OAuthRedirect                | ❌            | ⚠️ `auth.spec.ts` (mocked only) |
-| 4   | `/banned`                                 | Banned                       | ❌            | ❌ **NO COVERAGE**              |
-| 5   | `/report/:reportId`                       | ReportFights                 | ✅            | ⚠️ Partial (nightly only)       |
-| 6   | `/report/:reportId/fight/:fightId`        | ReportFightDetails           | ✅            | ✅ Nightly tests                |
-| 7   | `/report/:reportId/fight/:fightId/:tabId` | ReportFightDetails           | ✅            | ✅ Nightly tests (13 tabs)      |
-| 8   | `/report/:reportId/fight/:fightId/replay` | FightReplay                  | ✅            | ❌ **NO COVERAGE**              |
-| 9   | `/report/:reportId/live`                  | LiveLog                      | ✅            | ❌ **NO COVERAGE**              |
-| 10  | `/calculator`                             | Calculator                   | ❌            | ⚠️ Skeleton detection only      |
-| 11  | `/text-editor`                            | TextEditor                   | ❌            | ❌ **NO COVERAGE**              |
-| 12  | `/logs`                                   | Logs                         | ❌            | ❌ **NO COVERAGE**              |
-| 13  | `/leaderboards`                           | LeaderboardLogsPage          | ❌            | ❌ **NO COVERAGE**              |
-| 14  | `/sample-report`                          | SampleReportPage             | ❌            | ❌ **NO COVERAGE**              |
-| 15  | `/latest-reports`                         | LatestReports                | ✅            | ⚠️ Nightly auth tests           |
-| 16  | `/whoami`                                 | WhoAmIPage                   | ✅            | ❌ **NO COVERAGE**              |
-| 17  | `/my-reports`                             | UserReports                  | ✅            | ⚠️ Nightly auth tests           |
-| 18  | `/scribing-simulator`                     | ScribingSimulatorPage        | ❌            | ❌ **NO COVERAGE**              |
-| 19  | `/parse-analysis/:reportId?/:fightId?`    | ParseAnalysisPage            | ✅            | ❌ **NO COVERAGE**              |
-| 20  | `/docs/calculations`                      | CalculationKnowledgeBasePage | ❌            | ❌ **NO COVERAGE**              |
-| 21  | `*` (404)                                 | NotFound                     | ❌            | ✅ `404-page.spec.ts`           |
+| #   | Route                                     | Component                    | Auth Required | E2E Coverage                                                                        |
+| --- | ----------------------------------------- | ---------------------------- | ------------- | ----------------------------------------------------------------------------------- |
+| 1   | `/`                                       | LandingPage                  | ❌            | ✅ `home.spec.ts`                                                                   |
+| 2   | `/login`                                  | Login                        | ❌            | ⚠️ `auth.spec.ts` (mocked only)                                                     |
+| 3   | `/oauth-redirect`                         | OAuthRedirect                | ❌            | ⚠️ `auth.spec.ts` (mocked only)                                                     |
+| 4   | `/banned`                                 | Banned                       | ❌            | ❌ **NO COVERAGE**                                                                  |
+| 5   | `/report/:reportId`                       | ReportFights                 | ✅            | ⚠️ Partial (nightly only)                                                           |
+| 6   | `/report/:reportId/fight/:fightId`        | ReportFightDetails           | ✅            | ✅ Nightly tests                                                                    |
+| 7   | `/report/:reportId/fight/:fightId/:tabId` | ReportFightDetails           | ✅            | ✅ Nightly tests (13 tabs)                                                          |
+| 8   | `/report/:reportId/fight/:fightId/replay` | FightReplay                  | ✅            | ⚠️ Defensive E2E only (`replay.spec.ts` + smoke; no visual/canvas/playback asserts) |
+| 9   | `/report/:reportId/live`                  | LiveLog                      | ✅            | ❌ **NO COVERAGE**                                                                  |
+| 10  | `/calculator`                             | Calculator                   | ❌            | ⚠️ Skeleton detection only                                                          |
+| 11  | `/text-editor`                            | TextEditor                   | ❌            | ❌ **NO COVERAGE**                                                                  |
+| 12  | `/logs`                                   | Logs                         | ❌            | ❌ **NO COVERAGE**                                                                  |
+| 13  | `/leaderboards`                           | LeaderboardLogsPage          | ❌            | ❌ **NO COVERAGE**                                                                  |
+| 14  | `/sample-report`                          | SampleReportPage             | ❌            | ❌ **NO COVERAGE**                                                                  |
+| 15  | `/latest-reports`                         | LatestReports                | ✅            | ⚠️ Nightly auth tests                                                               |
+| 16  | `/whoami`                                 | WhoAmIPage                   | ✅            | ❌ **NO COVERAGE**                                                                  |
+| 17  | `/my-reports`                             | UserReports                  | ✅            | ⚠️ Nightly auth tests                                                               |
+| 18  | `/scribing-simulator`                     | ScribingSimulatorPage        | ❌            | ❌ **NO COVERAGE**                                                                  |
+| 19  | `/parse-analysis/:reportId?/:fightId?`    | ParseAnalysisPage            | ✅            | ❌ **NO COVERAGE**                                                                  |
+| 20  | `/docs/calculations`                      | CalculationKnowledgeBasePage | ❌            | ❌ **NO COVERAGE**                                                                  |
+| 21  | `*` (404)                                 | NotFound                     | ❌            | ✅ `404-page.spec.ts`                                                               |
 
 ---
 
 ## ❌ Major Gaps - No E2E Coverage
 
-### 1. **3D Replay System** 🎮 HIGH PRIORITY
+### 1. **3D Replay System** 🎮 HIGH PRIORITY (PARTIALLY COVERED since Nov 2025)
 
 - **Route**: `/report/:reportId/fight/:fightId/replay`
 - **Component**: `FightReplay`
@@ -48,8 +53,11 @@ Based on `src/App.tsx`, here are **all 23 routes** in the application:
   - Player position tracking
   - Animation playback
 - **Risk**: HIGH - Complex feature with many moving parts
-- **Test Files**: None
-- **Notes**: Heavily unit tested (integration tests exist) but no e2e validation
+- **Test Files**: `tests/replay.spec.ts` (defensive: load/error/auth/WebGL mocks, no canvas asserts),
+  `tests/replay-smoke.spec.ts` (3 route-survival checks)
+- **Still missing**: visual/screenshot assertions, playback-progress assertions, deterministic
+  fixture-backed transport/timeline interaction tests
+- **Notes**: Heavily unit tested (integration tests exist) but no e2e validation of actual replay behavior
 
 ### 2. **Live Logging** 📡 HIGH PRIORITY
 

@@ -64,6 +64,12 @@ jobs:
       - uses: ./.github/actions/setup-node-with-cache
       - name: Lint
         run: npm run lint
+      # three.js / R3F compile shaders from these deps at runtime — a vulnerable prod dep is
+      # RCE-adjacent for the replay. Advisory (not gating): the registry is unreachable from some
+      # CI networks, and a network timeout must not fail an otherwise-green PR.
+      - name: Audit production dependencies
+        continue-on-error: true
+        run: npm audit --omit=dev --audit-level=high
 
   format:
     runs-on: ubuntu-latest

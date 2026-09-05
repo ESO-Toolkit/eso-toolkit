@@ -21,6 +21,7 @@ import KeyboardDoubleArrowRightRounded from '@mui/icons-material/KeyboardDoubleA
 import MoreHorizRoundedIcon from '@mui/icons-material/MoreHorizRounded';
 import {
   Box,
+  Button,
   Divider,
   FormControlLabel,
   IconButton,
@@ -37,6 +38,7 @@ import { useTimelineMarkers } from '../../../hooks/useTimelineMarkers';
 import { TRANSPORT_SPACING, TRANSPORT_MOTION, transportSurface } from '../constants/replayDesign';
 import type { TrialTimeline as TrialTimelineModel } from '../trial_chapters/trialTimeline';
 import type { TrialChapter } from '../trial_chapters/types';
+import { formatDurationMs as formatTime } from '../utils/replayTime';
 
 import { ChaptersPopoverButton } from './ChaptersPopoverButton';
 import { LiveScrubRail } from './LiveScrubRail';
@@ -123,6 +125,9 @@ interface PlaybackControlsProps {
   loopStart?: number | null;
   /** A–B loop out-point (ms), or null when unset. */
   loopEnd?: number | null;
+  /** Set the in/out point to the live playhead (touch/mouse equivalent of the I/O keys). */
+  onSetLoopIn?: () => void;
+  onSetLoopOut?: () => void;
   /** Clear both loop points (the loop chip's delete action). */
   onClearLoop?: () => void;
   /** True when the replay block is fullscreen — enables the cinema auto-hide + progress hairline. */
@@ -176,14 +181,6 @@ interface PlaybackControlsProps {
  */
 export const PLAYBACK_SPEEDS = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 2, 3, 4, 5];
 
-/** m:ss for the compact timecode read-out. */
-const formatTime = (timeMs: number): string => {
-  const totalSeconds = Math.floor(timeMs / 1000);
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-  return `${minutes}:${seconds.toString().padStart(2, '0')}`;
-};
-
 /**
  * PlaybackControls Component
  *
@@ -215,6 +212,8 @@ const PlaybackControlsComponent: React.FC<PlaybackControlsProps> = ({
   overlay = false,
   loopStart = null,
   loopEnd = null,
+  onSetLoopIn,
+  onSetLoopOut,
   onClearLoop,
   isFullscreen = false,
   barVisible = true,
@@ -459,6 +458,7 @@ const PlaybackControlsComponent: React.FC<PlaybackControlsProps> = ({
                     aria-label={
                       trial.prevBoss ? `Previous boss: ${trial.prevBoss.name}` : 'Previous boss'
                     }
+                    aria-keyshortcuts="["
                     size="small"
                     disabled={!trial.prevBoss}
                     onClick={() => trial.prevBoss && trial.onSelectChapter(trial.prevBoss)}
@@ -489,6 +489,7 @@ const PlaybackControlsComponent: React.FC<PlaybackControlsProps> = ({
                 <Box component="span" sx={{ display: 'inline-flex' }}>
                   <IconButton
                     aria-label={trial.nextBoss ? `Next boss: ${trial.nextBoss.name}` : 'Next boss'}
+                    aria-keyshortcuts="]"
                     size="small"
                     disabled={!trial.nextBoss}
                     onClick={() => trial.nextBoss && trial.onSelectChapter(trial.nextBoss)}
@@ -525,6 +526,43 @@ const PlaybackControlsComponent: React.FC<PlaybackControlsProps> = ({
                 onClearLoop={onClearLoop}
                 formatTime={formatTime}
               />
+            )}
+
+            {/* Loop in/out setters — the touch/mouse equivalent of the I/O keys (which have no
+                touch path). Rendered only when the host threads the handlers. */}
+            {(onSetLoopIn || onSetLoopOut) && (
+              <Box
+                sx={{ display: 'inline-flex', gap: 0.25 }}
+                role="group"
+                aria-label="Set loop points"
+              >
+                {onSetLoopIn && (
+                  <Tooltip title="Set loop start at the playhead (I)">
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      onClick={onSetLoopIn}
+                      aria-label="Set loop start at the playhead"
+                      sx={{ minWidth: 32, px: 0.5, fontWeight: 700 }}
+                    >
+                      A
+                    </Button>
+                  </Tooltip>
+                )}
+                {onSetLoopOut && (
+                  <Tooltip title="Set loop end at the playhead (O)">
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      onClick={onSetLoopOut}
+                      aria-label="Set loop end at the playhead"
+                      sx={{ minWidth: 32, px: 0.5, fontWeight: 700 }}
+                    >
+                      B
+                    </Button>
+                  </Tooltip>
+                )}
+              </Box>
             )}
 
             {/* Autoplay — continue into the next fight when this one ends (YouTube semantics:

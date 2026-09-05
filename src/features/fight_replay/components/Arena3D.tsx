@@ -28,6 +28,7 @@ import { getVisiblePlayerIds } from '../utils/pathUtils';
 import { decidePreviewMode } from '../utils/previewMode';
 
 import type { GroundContextMenuPayload } from './Arena3DScene';
+import { ArenaCastTable } from './ArenaCastTable';
 import { ADD_MARKER_AT_CENTER_EVENT } from './arenaEvents';
 import { BossHealthPanel } from './BossHealthPanel';
 import { DrawingHud } from './DrawingHud';
@@ -402,6 +403,17 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
   // Tap detection for the mobile preview teaser (tap expands; a drag scrolls the page).
   const previewTapRef = useRef<{ x: number; y: number } | null>(null);
   const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
+
+  // GPU-context lifecycle. `contextLost` renders an overlay (instead of a dead black canvas);
+  // `contextGen` remounts the SCENE ONLY (never the Canvas) on restore, rebuilding GPU resources
+  // cleanly without paying for context re-creation + full shader recompile.
+  const [contextLost, setContextLost] = useState(false);
+  const [contextGen, setContextGen] = useState(0);
+  const handleContextLost = useCallback(() => setContextLost(true), []);
+  const handleContextRestored = useCallback(() => {
+    setContextGen((g) => g + 1);
+    setContextLost(false);
+  }, []);
 
   const markerLookup = useMemo(() => {
     if (!markersState) {
@@ -812,11 +824,16 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
       // tree — screen-reader users could not discover a single control. That was the previous
       // bug. The img role belongs on the <Canvas> below (the actual unlabelled graphic).
       role="region"
-      aria-label="3D fight replay"
+      aria-label="3D fight replay arena showing player positions over time"
     >
+      {/* Screen-reader cast list: the canvas exposes nothing to AT (see ArenaCastTable). */}
+      <ArenaCastTable lookup={lookup} onFollow={onActorClick} />
       <ReplayErrorBoundary checkWebGL={true}>
         <Canvas
-          key={`canvas-${fight.id}`} // Stable key prevents unnecessary recreation
+          // No key: the Canvas (GL context, shader programs, shadow state) persists across
+          // fights; only the scene contents remount per fight (key on Arena3DScene). Keying the
+          // Canvas destroyed the context on every fight switch (recompile + re-upload hitch and
+          // pressure on the browser's context-loss limits during continuous play).
           // Render resolution scaled by perf tier. R3F's default is already min(devicePixelRatio, 2),
           // so [1, 2] just makes that explicit for medium/high (HiDPI gets a crisp 2×). Low tier is
           // capped at 1.5× rather than pinned to 1: detectPerfTier classifies most mid-range PHONES
@@ -845,6 +862,9 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
             // are the webglcontextlost/restored listeners below).
             preserveDrawingBuffer: false,
             powerPreference: 'high-performance',
+            // No stencil ops exist anywhere in the scene — skip the stencil buffer (≈8MB at
+            // fullscreen DPR2 plus per-frame bandwidth) instead of taking three's default true.
+            stencil: false,
             // MSAA is a CONTEXT-CREATION option (not runtime-togglable), so it
             // reads the PERSISTED preset once at mount: a returning barebones
             // user gets no MSAA resolve cost. Deliberate asymmetry — switching
@@ -896,10 +916,12 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
             canvas.addEventListener('webglcontextlost', (event) => {
               event.preventDefault();
               logger.warn('WebGL context lost, preventing default to allow restoration');
+              handleContextLost();
             });
 
             canvas.addEventListener('webglcontextrestored', () => {
               logger.info('WebGL context restored successfully');
+              handleContextRestored();
             });
           }}
           // 'percentage' = PCFShadowMap; the bare `shadows` default (PCFSoftShadowMap)
@@ -913,6 +935,8 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
         >
           <Suspense fallback={null}>
             <Arena3DScene
+              key={`scene-${fight.id}-${contextGen}`}
+              following={followingActorId != null}
               timeRef={timeRef}
               lookup={lookup}
               showActorNames={showActorNames && namesEnabled}
@@ -947,6 +971,32 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
             />
           </Suspense>
         </Canvas>
+
+        {/* GPU context-loss overlay: without this a reset GPU leaves a dead black canvas with no
+            feedback and no recovery until reload. Auto-restore remounts the scene; Retry covers a
+            stalled restore. */}
+        {contextLost && (
+          <div
+            role="status"
+            style={{
+              position: 'absolute',
+              inset: 0,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 12,
+              backgroundColor: 'rgba(10, 10, 12, 0.85)',
+              color: 'white',
+              zIndex: 5,
+            }}
+          >
+            <div>GPU context lost — restoring the 3D scene…</div>
+            <button type="button" onClick={handleContextRestored}>
+              Retry now
+            </button>
+          </div>
+        )}
 
         {/* Mobile inline PREVIEW scrim — the report page shows a dimmed, non-interactive teaser of the
             3D scene with one clear way in. The scrim is a thin gradient (scene still reads through),

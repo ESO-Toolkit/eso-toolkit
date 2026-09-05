@@ -136,6 +136,56 @@ describe('buildTrialChapters', () => {
     expect(runs[0].bossChapters).toHaveLength(0);
     expect(runs[0].segments.map((s) => s.kind)).toEqual(['trash', 'trash']);
   });
+
+  it('attributes inter-trial trash to the FOLLOWING run as its lead-in', () => {
+    const fights = [
+      makeFight({ id: 1, name: 'Oaxiltso', startTime: 0, endTime: 60000 }),
+      trash({ id: 2, startTime: 70000, endTime: 120000 }),
+      makeFight({ id: 3, name: 'Lord Falgravn', startTime: 130000, endTime: 250000 }),
+    ];
+    const runs = buildTrialChapters(fights, null);
+    expect(runs.map((r) => r.trialName)).toEqual(['Rockgrove', "Kyne's Aegis"]);
+    // The travel trash is the new run's lead-in, not the old run's tail.
+    expect(runs[0].segments.map((s) => s.fightId)).toEqual(['1']);
+    expect(runs[1].segments.map((s) => s.fightId)).toEqual(['2', '3']);
+    expect(runs[1].segments[0]).toMatchObject({ kind: 'trash' });
+  });
+
+  it('keeps inter-boss trash in the same run, in order', () => {
+    const fights = [
+      makeFight({ id: 1, name: 'Oaxiltso', startTime: 0, endTime: 60000 }),
+      trash({ id: 2, startTime: 70000, endTime: 90000 }),
+      makeFight({ id: 3, name: 'Xalvakka', startTime: 100000, endTime: 250000 }),
+    ];
+    const [run] = buildTrialChapters(fights, rockgrove);
+    expect(run.segments.map((s) => s.fightId)).toEqual(['1', '2', '3']);
+    expect(run.segments.map((s) => s.kind)).toEqual(['boss', 'trash', 'boss']);
+  });
+
+  it('splits same-trial bosses separated by a wall-clock gap into separate runs', () => {
+    const fights = [
+      makeFight({ id: 1, name: 'Oaxiltso', startTime: 0, endTime: 60000 }),
+      makeFight({
+        id: 2,
+        name: 'Xalvakka',
+        startTime: 60 * 60 * 1000,
+        endTime: 60 * 60 * 1000 + 120000,
+      }),
+    ];
+    const runs = buildTrialChapters(fights, rockgrove);
+    expect(runs).toHaveLength(2);
+    expect(runs.map((r) => r.trialName)).toEqual(['Rockgrove', 'Rockgrove']);
+    expect(runs[0].id).not.toBe(runs[1].id);
+  });
+
+  it('appends trailing trash to the run it trailed', () => {
+    const fights = [
+      makeFight({ id: 1, name: 'Oaxiltso', startTime: 0, endTime: 60000 }),
+      trash({ id: 2, startTime: 70000, endTime: 90000 }),
+    ];
+    const [run] = buildTrialChapters(fights, rockgrove);
+    expect(run.segments.map((s) => s.fightId)).toEqual(['1', '2']);
+  });
 });
 
 describe('findRunForFight', () => {

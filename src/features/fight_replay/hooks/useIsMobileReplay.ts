@@ -19,6 +19,11 @@ import { useMediaQuery, useTheme } from '@mui/material';
  *     either orientation, so gating on `max-height` (the short side in landscape) keeps a phone
  *     classified as mobile through rotation. A large touch tablet (short side > 600px) stays desktop.
  *
+ * NOTE (coarse tablets): an iPad in a windowed browser stays `false` here BY DESIGN — flipping it
+ * to the full mobile layout would be a bigger break than the dense chrome. Touch-sized targets on
+ * those viewports are handled per-surface instead (SpeedSelector collapses on
+ * `(pointer: coarse) and (max-width: 1024px)`; swatches/hit-areas meet the 24px floor).
+ *
  * MUI's `useMediaQuery` handles SSR (false until mounted) and live viewport/orientation changes.
  */
 export function useIsMobileReplay(): boolean {

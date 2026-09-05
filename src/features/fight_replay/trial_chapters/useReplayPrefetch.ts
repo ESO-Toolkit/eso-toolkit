@@ -43,22 +43,27 @@ function usePrefetchFight(reportCode: string | null, fightId: string): void {
 }
 
 /**
- * Prefetch the next and previous boss encounters' events.
+ * Prefetch the next and previous timeline entries' events.
  *
- * @param nextBoss - The next boss chapter, or null.
- * @param prevBoss - The previous boss chapter, or null.
+ * Pass the TRASH-AWARE neighbours (next/prev entries on the filtered timeline), not just
+ * bosses: with includeTrash on, the next segment is often trash, and auto-advancing into a
+ * cold trash segment would stall on the network. Callers fall back to bosses when there is no
+ * timeline (single-fight view).
+ *
+ * @param nextEntry - The next chapter to warm, or null.
+ * @param prevEntry - The previous chapter to warm, or null.
  * @param enabled - Only prefetch once the current fight is interactive.
  */
 export function useReplayPrefetch(
-  nextBoss: TrialChapter | null,
-  prevBoss: TrialChapter | null,
+  nextEntry: TrialChapter | null,
+  prevEntry: TrialChapter | null,
   enabled: boolean,
 ): void {
   const { reportId } = useReportFightParams();
   const reportCode = reportId ?? null;
 
   // Hook call order is stable (next then prev); the sentinel keeps them no-op when
-  // there's no adjacent boss or prefetch is disabled, satisfying the rules of hooks.
-  usePrefetchFight(reportCode, enabled && nextBoss ? nextBoss.fightId : NO_FIGHT);
-  usePrefetchFight(reportCode, enabled && prevBoss ? prevBoss.fightId : NO_FIGHT);
+  // there's no adjacent entry or prefetch is disabled, satisfying the rules of hooks.
+  usePrefetchFight(reportCode, enabled && nextEntry ? nextEntry.fightId : NO_FIGHT);
+  usePrefetchFight(reportCode, enabled && prevEntry ? prevEntry.fightId : NO_FIGHT);
 }

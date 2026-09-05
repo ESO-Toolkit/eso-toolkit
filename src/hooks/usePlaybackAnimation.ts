@@ -30,6 +30,12 @@ interface UsePlaybackAnimationProps {
 // instant (a mis-set), and looping would thrash; we treat it as "no loop".
 const MIN_LOOP_SPAN_MS = 100;
 
+// Upper bound for a single frame's wall-clock delta. rAF stops while the tab is hidden (or the
+// main thread hitches), so without a clamp the first frame after resume would apply seconds of
+// playback at once — jumping to the end of the fight and firing onEnd for content the user never
+// watched. 100ms still covers legitimate hitches at 5x (0.5s of fight per frame).
+const MAX_FRAME_DELTA_MS = 100;
+
 /**
  * Hook to manage smooth playback animation using requestAnimationFrame
  * Updates the timeRef at high frequency and syncs to React state periodically
@@ -55,7 +61,8 @@ export const usePlaybackAnimation = ({
     }
 
     const now = performance.now();
-    const deltaTime = now - lastTimeRef.current;
+    // Clamped: a hidden tab or a long hitch must not convert into a playhead jump (see above).
+    const deltaTime = Math.min(now - lastTimeRef.current, MAX_FRAME_DELTA_MS);
     lastTimeRef.current = now;
 
     // A–B loop is active only when BOTH points are set and span the sane minimum. Normalize so
@@ -118,8 +125,25 @@ export const usePlaybackAnimation = ({
     stateSyncIntervalMs,
   ]);
 
-  // Start/stop animation based on playing state
+  // Start/stop animation based on playing state. Also pauses the loop while the document is
+  // hidden: rAF already stops firing there, and without an explicit pause the (clamped) delta on
+  // resume would still creep the playhead forward for content that played while invisible.
   useEffect(() => {
+    const onVisibilityChange = (): void => {
+      if (typeof document === 'undefined') return;
+      if (document.hidden) {
+        if (animationIdRef.current) {
+          cancelAnimationFrame(animationIdRef.current);
+          animationIdRef.current = null;
+        }
+      } else if (isPlaying && animationIdRef.current === null) {
+        // Re-anchor the clock so the hidden interval never becomes playback.
+        lastTimeRef.current = performance.now();
+        lastUpdateRef.current = performance.now();
+        animationLoop();
+      }
+    };
+
     if (isPlaying) {
       lastTimeRef.current = performance.now();
       lastUpdateRef.current = performance.now();
@@ -129,7 +153,14 @@ export const usePlaybackAnimation = ({
       animationIdRef.current = null;
     }
 
+    if (typeof document !== 'undefined') {
+      document.addEventListener('visibilitychange', onVisibilityChange);
+    }
+
     return () => {
+      if (typeof document !== 'undefined') {
+        document.removeEventListener('visibilitychange', onVisibilityChange);
+      }
       if (animationIdRef.current) {
         cancelAnimationFrame(animationIdRef.current);
         animationIdRef.current = null;

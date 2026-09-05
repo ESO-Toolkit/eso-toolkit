@@ -2,8 +2,15 @@
 
 # Replay System Architecture Evaluation
 
-**Date**: October 14, 2025  
-**Evaluator**: GitHub Copilot  
+**Date**: October 14, 2025
+**Status (2026-09-04)**: HISTORICAL — the worker/state-model analysis below (dual ref/state playhead,
+`TimestampPositionLookup`, render priorities) is still valid; the component examples predate the
+instancing migration (`AnimationFrameActor3D`, `BossHealthHUD`, `MorMarkers`, "633-line Arena3D"
+are gone — live: `InstancedReplayFigures3D` + `BatchedActorNames3D` + DOM `BossHealthPanel`,
+FightReplay ~1028 / FightReplay3D ~1779 / Arena3D ~1513 lines). Benchmark figures lack reproducible
+provenance. See `documentation/architecture/fight-replay-perf-tiering.md` for current render
+behavior and the in-code headers as the component source of truth.
+**Evaluator**: GitHub Copilot
 **System**: ESO Toolkit - Fight Replay System
 
 **When to use this document**:

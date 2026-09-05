@@ -122,6 +122,12 @@ export interface ActorPositionsCalculationTask {
   playersById?: Record<string | number, PlayerDetailsWithRole>;
   actorsById?: Record<string | number, ReportActorFragment>;
   debuffLookupData?: BuffLookupData;
+  /**
+   * Report code for cache identity. Fight ids are report-local, so two reports with the same
+   * fight id + similar events must not share a cache key. Optional (older callers omit it);
+   * the content digest still separates differing inputs.
+   */
+  reportCode?: string;
 }
 
 /**
@@ -168,7 +174,60 @@ const INTERPOLATION_TOLERANCE_MS = 1;
 const MIN_VISIBILITY_MS = 1000;
 const BOSS_DEATH_VISIBILITY_WINDOW_MS = 2000;
 const SAMPLE_INTERVAL_MS = 4.7; // 240Hz sampling rate (better performance vs quality balance)
-const MAX_TIMESTAMPS = 72000; // Cap at 5 minutes worth of 240Hz data to prevent excessive computation
+const MAX_TIMESTAMPS = 72000; // ≈5.6 minutes of 240Hz data; longer fights downsample, never truncate
+const ESTIMATED_BYTES_PER_CELL = 200; // Rough estimate (matches the legacy memory heuristic)
+const DESKTOP_CELL_BUDGET = (500 * 1024 * 1024) / ESTIMATED_BYTES_PER_CELL;
+const MOBILE_CELL_BUDGET = (120 * 1024 * 1024) / ESTIMATED_BYTES_PER_CELL; // mobile tabs die ~1GB shared
+
+/**
+ * Worker-safe "is this a memory-constrained device" probe.
+ *
+ * The budget is applied inside the worker, where `window`/`matchMedia` do not exist — so a
+ * `(pointer:coarse)` media query (what this used to be) silently reports desktop for EVERY
+ * device and the mobile budget never takes effect. `WorkerNavigator` does expose `deviceMemory`
+ * and `userAgent`, so prefer the reported RAM and fall back to a UA check on engines that omit
+ * it (notably iOS Safari). Keep this free of `window` so it stays honest in worker scope.
+ */
+export const isMemoryConstrainedDevice = (): boolean => {
+  if (typeof navigator === 'undefined') return false;
+  const { deviceMemory } = navigator as Navigator & { deviceMemory?: number };
+  if (typeof deviceMemory === 'number' && deviceMemory > 0) return deviceMemory <= 4;
+  return /Android|iPhone|iPad|iPod|IEMobile|Opera Mini/i.test(navigator.userAgent ?? '');
+};
+
+export interface SampleIntervalOptions {
+  durationMs: number;
+  actorCount: number;
+  baseIntervalMs?: number;
+  maxTimestamps?: number;
+  budgetCells?: number;
+}
+
+/**
+ * Resolve the sampling interval, ENFORCING the memory budget by downsampling (doubling the
+ * interval) instead of truncating the fight. Pure and unit-tested. The legacy code only warned
+ * past 500MB and built the full grid anyway — the source of mobile tab reloads on long fights.
+ */
+export const resolveSampleInterval = ({
+  durationMs,
+  actorCount,
+  baseIntervalMs = SAMPLE_INTERVAL_MS,
+  maxTimestamps = MAX_TIMESTAMPS,
+  budgetCells = DESKTOP_CELL_BUDGET,
+}: SampleIntervalOptions): { intervalMs: number; downsampled: boolean } => {
+  let intervalMs =
+    durationMs > 0 ? Math.max(baseIntervalMs, durationMs / maxTimestamps) : baseIntervalMs;
+  let downsampled = intervalMs > baseIntervalMs;
+  if (durationMs > 0 && actorCount > 0) {
+    for (let i = 0; i < 12; i++) {
+      const cells = (Math.floor(durationMs / intervalMs) + 2) * actorCount;
+      if (cells <= budgetCells) break;
+      intervalMs *= 2;
+      downsampled = true;
+    }
+  }
+  return { intervalMs, downsampled };
+};
 
 // Facing values in event resources are stored in CENTI-radians: a full turn is 2π·ROTATION_SCALE,
 // matching coordinateUtils' ROTATION_SCALE divisor in convertRotation (`facing / 100`). The facing
@@ -235,11 +294,8 @@ interface EventWithInstances {
 const ACTOR_BATCH_SIZE = 50; // Process actors in batches to manage memory
 const PROGRESS_REPORT_INTERVAL = 25; // Report progress every N actors
 
-// Memory management: limit timestamp processing for very large datasets
-function shouldLimitTimestamps(timestampCount: number, actorCount: number): boolean {
-  const estimatedMemoryMB = (timestampCount * actorCount * 200) / (1024 * 1024); // Rough estimate
-  return estimatedMemoryMB > 500; // Limit if estimated memory usage > 500MB
-}
+// NOTE: the legacy warn-only `shouldLimitTimestamps` heuristic (500MB, no enforcement) was
+// removed; resolveSampleInterval above enforces the budget by downsampling instead.
 
 function checkTauntStatus(
   type: string,
@@ -491,7 +547,6 @@ export function calculateActorPositions(
   onProgress?: OnProgressCallback,
 ): TimestampPositionLookup {
   const { fight, events, playersById, actorsById, debuffLookupData } = data;
-  const sampleInterval = SAMPLE_INTERVAL_MS;
 
   onProgress?.(0);
 
@@ -718,20 +773,65 @@ export function calculateActorPositions(
     );
   });
 
-  // Generate sample timestamps at regular intervals
-  const timestamps: number[] = [];
-  const adjustedInterval = Math.max(sampleInterval, fightDuration / MAX_TIMESTAMPS);
-  const hasRegularIntervals = adjustedInterval === sampleInterval; // True if we didn't need to adjust
+  // No position history anywhere (e.g. a fight with no positional resources): return the
+  // empty lookup WITHOUT allocating the timestamp grid. An empty grid costs tens of thousands
+  // of objects and buys nothing — there is no actor to place on any frame.
+  if (actorPositionHistory.size === 0) {
+    return {
+      positionsByTimestamp: {},
+      sortedTimestamps: [],
+      actorIds: [],
+      fightDuration,
+      fightStartTime,
+      sampleInterval: SAMPLE_INTERVAL_MS,
+      hasRegularIntervals: true,
+    };
+  }
 
+  // Generate sample timestamps at regular intervals. The interval enforces the memory budget by
+  // downsampling (never truncating the fight), and the grid is hard-capped at MAX_TIMESTAMPS.
+  // The additive loop is kept deliberately: `i * interval` multiplication produces
+  // last-bit-different floats than repeated addition, which would change lookup-key strings.
+  const { intervalMs: adjustedInterval, downsampled } = resolveSampleInterval({
+    durationMs: fightDuration,
+    actorCount: actorPositionHistory.size,
+    budgetCells: isMemoryConstrainedDevice() ? MOBILE_CELL_BUDGET : DESKTOP_CELL_BUDGET,
+  });
+  if (downsampled) {
+    logger.warn('Downsampling replay timestamps to fit the memory budget', {
+      fightDuration,
+      actors: actorPositionHistory.size,
+      intervalMs: adjustedInterval,
+    });
+  }
+  const hasRegularIntervals = adjustedInterval === SAMPLE_INTERVAL_MS; // True if we didn't need to adjust
+
+  const timestamps: number[] = [];
   for (let time = 0; time <= fightDuration; time += adjustedInterval) {
     timestamps.push(time);
+    // Hard cap: the resolver guarantees count <= MAX, so at most the end-time slot is at stake.
+    if (timestamps.length >= MAX_TIMESTAMPS) break;
   }
-  // Ensure we include the end time
+  // Ensure we include the end time: append as before while under the cap (bit-identical to
+  // the legacy grid); overwrite the final cell only if the cap is already reached.
   if (timestamps[timestamps.length - 1] !== fightDuration) {
-    timestamps.push(fightDuration);
+    if (timestamps.length < MAX_TIMESTAMPS) {
+      timestamps.push(fightDuration);
+    } else {
+      timestamps[timestamps.length - 1] = fightDuration;
+    }
   }
 
-  onProgress?.(0.6);
+  // Progress reports are throttled to 5% steps: unthrottled per-25-actor dispatches spam Redux
+  // (each dispatch re-renders progress subscribers) on large fights.
+  let lastReportedProgress = 0;
+  const reportProgress = (p: number): void => {
+    if (p >= 1 || p - lastReportedProgress >= 0.05) {
+      lastReportedProgress = p;
+      onProgress?.(p);
+    }
+  };
+  reportProgress(0.6);
 
   // Helper function for position interpolation
   const interpolate = (
@@ -824,16 +924,6 @@ export function calculateActorPositions(
   let processedActors = 0;
   const totalActors = allActorIds.length;
 
-  // Check if we should limit processing for memory efficiency
-  const memoryLimited = shouldLimitTimestamps(timestamps.length, totalActors);
-  if (memoryLimited) {
-    logger.warn('Large dataset detected', {
-      timestamps: timestamps.length,
-      totalActors,
-      recommendation: 'Consider reducing sample rate for better performance',
-    });
-  }
-
   // Process actors in batches for better memory management
   const actorBatches = [];
   for (let i = 0; i < allActorIds.length; i += ACTOR_BATCH_SIZE) {
@@ -901,6 +991,12 @@ export function calculateActorPositions(
       // the end of the (growing) history each frame.
       let lastDeathTimestampUsed: number | undefined;
       let lastPosBeforeDeathIndex = -1;
+      // Monotonic death-event cursor: relativeTime ascends, so each death/resurrection event is
+      // visited exactly once per actor instead of rescanning from the start on every timestamp
+      // (O(deaths) per frame → O(1) amortized). `lastDeathTs` tracks the most recent death at or
+      // below the cursor, mirroring the old reverse-scan semantics exactly.
+      let deathCursor = -1;
+      let lastDeathTs: number | undefined;
 
       // Process each timestamp and directly populate the lookup structure
       for (const relativeTime of timestamps) {
@@ -914,16 +1010,16 @@ export function calculateActorPositions(
         // Determine if actor is dead at this timestamp using the pre-sorted death/resurrection
         // events (ascending by timestamp; hoisted above so the sort is not repeated per timestamp).
         const sortedEvents = sortedDeathEvents;
-        let isDead = false;
-
-        // Walk through events to find current status
-        for (const event of sortedEvents) {
-          if (currentTimestamp >= event.timestamp) {
-            isDead = event.type === 'death';
-          } else {
-            break; // Stop at first future event
+        while (
+          deathCursor + 1 < sortedEvents.length &&
+          sortedEvents[deathCursor + 1].timestamp <= currentTimestamp
+        ) {
+          deathCursor++;
+          if (sortedEvents[deathCursor].type === 'death') {
+            lastDeathTs = sortedEvents[deathCursor].timestamp;
           }
         }
+        const isDead = deathCursor >= 0 && sortedEvents[deathCursor].type === 'death';
 
         const lastEventTimestamp = actorLastEventTime.get(renderId);
 
@@ -935,16 +1031,9 @@ export function calculateActorPositions(
           }
 
           // For players and bosses, continue giving positions at their last known location.
-          // Find the most recent death event at or before the current timestamp via an
-          // allocation-free reverse walk (was sortedEvents.slice().reverse().find(...) per frame).
-          let currentDeathTimestamp: number | undefined;
-          for (let i = sortedEvents.length - 1; i >= 0; i--) {
-            const e = sortedEvents[i];
-            if (e.type === 'death' && currentTimestamp >= e.timestamp) {
-              currentDeathTimestamp = e.timestamp;
-              break;
-            }
-          }
+          // The most recent death at or before now comes from the monotonic cursor above (was an
+          // allocation-free reverse walk per frame).
+          const currentDeathTimestamp = lastDeathTs;
 
           if (type === 'boss' && currentDeathTimestamp) {
             const timeSinceDeath = currentTimestamp - currentDeathTimestamp;
@@ -1168,16 +1257,16 @@ export function calculateActorPositions(
 
       processedActors++;
       if (processedActors % PROGRESS_REPORT_INTERVAL === 0) {
-        onProgress?.(0.6 + (processedActors / totalActors) * 0.4);
+        reportProgress(0.6 + (processedActors / totalActors) * 0.4);
       }
     }
 
     // Report progress after each batch
     const batchProgress = ((batchIndex + 1) / actorBatches.length) * 0.4;
-    onProgress?.(0.6 + batchProgress);
+    reportProgress(0.6 + batchProgress);
   }
 
-  onProgress?.(1);
+  reportProgress(1);
 
   return {
     positionsByTimestamp,

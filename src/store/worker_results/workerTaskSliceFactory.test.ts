@@ -101,6 +101,7 @@ describe('workerTaskSliceFactory', () => {
         latestRequestId: null,
         resultCache: {},
         cacheOrder: [],
+        resultCacheMeta: {},
       });
     });
 
@@ -162,6 +163,20 @@ describe('workerTaskSliceFactory', () => {
       it('should not update progress when not loading', () => {
         const progressPayload: WorkerTaskProgressPayload = { progress: 50 };
         store.dispatch(workerSlice.actions.updateProgress(progressPayload));
+
+        const state = store.getState() as {
+          workerResults: {
+            [mockTaskName]: WorkerTaskState<SharedWorkerResultType<typeof mockTaskName>>;
+          };
+        };
+
+        expect(state.workerResults[mockTaskName].progress).toBeNull();
+      });
+
+      it('should ignore progress tagged with a stale request id', () => {
+        store.dispatch(workerSlice.actions.startTask());
+
+        store.dispatch(workerSlice.actions.updateProgress({ progress: 75, requestId: 'stale-id' }));
 
         const state = store.getState() as {
           workerResults: {
@@ -252,12 +267,13 @@ describe('workerTaskSliceFactory', () => {
           latestRequestId: null,
           resultCache: {},
           cacheOrder: [],
+          resultCacheMeta: {},
         });
       });
     });
 
     describe('resetTask', () => {
-      it('should reset loading state but preserve cache metadata and lastUpdated', async () => {
+      it('should reset loading state, preserve result cache, and invalidate in-flight identity', async () => {
         // First execute a task to set up some state with metadata
         mockWorkerManager.executeTask.mockResolvedValueOnce(mockResult);
         await store.dispatch(workerSlice.executeTask(mockInput));
@@ -276,6 +292,9 @@ describe('workerTaskSliceFactory', () => {
         expect(originalLastUpdated).not.toBeNull();
         expect(originalInputHash).not.toBeNull();
         expect(originalRequestId).not.toBeNull();
+        expect(
+          state.workerResults[mockTaskName].resultCache[originalInputHash as string],
+        ).toBeDefined();
 
         // Reset the task
         store.dispatch(workerSlice.actions.resetTask());
@@ -292,12 +311,47 @@ describe('workerTaskSliceFactory', () => {
         expect(newState.workerResults[mockTaskName].progress).toBeNull();
         expect(newState.workerResults[mockTaskName].error).toBeNull();
 
-        // Should preserve metadata
+        // Should preserve the result cache (fast revisit) and lastUpdated...
         expect(newState.workerResults[mockTaskName].lastUpdated).toBe(originalLastUpdated);
-        expect(newState.workerResults[mockTaskName].cacheMetadata.lastInputHash).toBe(
-          originalInputHash,
+        expect(
+          newState.workerResults[mockTaskName].resultCache[originalInputHash as string],
+        ).toBeDefined();
+        expect(
+          newState.workerResults[mockTaskName].resultCacheMeta[originalInputHash as string],
+        ).toEqual(expect.any(Number));
+
+        // ...but MUST invalidate the in-flight identity so a pre-reset worker result can never
+        // commit into the post-reset slot (fight-switch stale-frame race).
+        expect(newState.workerResults[mockTaskName].cacheMetadata.lastInputHash).toBeNull();
+        expect(newState.workerResults[mockTaskName].latestRequestId).toBeNull();
+      });
+
+      it('should ignore a pre-reset fulfillment that arrives after the reset', async () => {
+        let resolveWorker!: (value: unknown) => void;
+        mockWorkerManager.executeTask.mockImplementationOnce(
+          () =>
+            new Promise((resolve) => {
+              resolveWorker = resolve as (value: unknown) => void;
+            }),
         );
-        expect(newState.workerResults[mockTaskName].latestRequestId).toBe(originalRequestId);
+        const pending = store.dispatch(workerSlice.executeTask(mockInput));
+
+        // Fight switch while the worker is still running.
+        store.dispatch(workerSlice.actions.resetTask());
+
+        // The stale worker finally resolves — it must not populate the reset slot.
+        resolveWorker(mockResult);
+        await pending.catch(() => {});
+
+        const state = store.getState() as {
+          workerResults: {
+            [mockTaskName]: WorkerTaskState<SharedWorkerResultType<typeof mockTaskName>>;
+          };
+        };
+        // The thunk short-circuit serves the (preserved) cache on re-dispatch instead; here no
+        // re-dispatch happened, so the slot must still be empty — never the stale payload via
+        // the old request id.
+        expect(state.workerResults[mockTaskName].latestRequestId).toBeNull();
       });
     });
   });
@@ -364,6 +418,8 @@ describe('workerTaskSliceFactory', () => {
           mockTaskName,
           mockInput,
           expect.any(Function),
+          'default',
+          { poolConfig: undefined, priority: 0, signal: expect.any(AbortSignal) },
         );
       });
     });
@@ -487,6 +543,8 @@ describe('workerTaskSliceFactory', () => {
           mockTaskName,
           differentInput,
           expect.any(Function),
+          'default',
+          { poolConfig: undefined, priority: 0, signal: expect.any(AbortSignal) },
         );
 
         resolveA(mockResult);

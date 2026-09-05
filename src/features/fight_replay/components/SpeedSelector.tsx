@@ -25,6 +25,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 
 import { usePrefersReducedMotion } from '../../../hooks/usePrefersReducedMotion';
 import { TRANSPORT_MOTION, TRANSPORT_PILL_RADIUS } from '../constants/replayDesign';
+import { portalToFullscreen } from '../utils/fullscreenPortal';
 
 interface SpeedSelectorProps {
   /** Current playback speed multiplier */
@@ -57,7 +58,11 @@ export const SpeedSelector: React.FC<SpeedSelectorProps> = ({
   const theme = useTheme();
   // On narrow screens the segmented chips don't fit alongside the transport cluster, so the
   // whole control collapses to just the overflow trigger (which always shows current speed).
-  const compact = useMediaQuery(theme.breakpoints.down('sm'));
+  // Coarse-pointer tablets (iPad windowed) get the compact treatment too: they report desktop
+  // widths but touch-sized fingers, so the dense chip row is a miss-target farm there.
+  const narrow = useMediaQuery(theme.breakpoints.down('sm'));
+  const coarseTablet = useMediaQuery('(pointer: coarse) and (max-width: 1024px)');
+  const compact = narrow || coarseTablet;
   // Gate the chip hover/select transitions per replayDesign's motion contract (the global
   // !important rule is a fallback; component-level gating is the documented primary).
   const prefersReducedMotion = usePrefersReducedMotion();
@@ -204,6 +209,9 @@ export const SpeedSelector: React.FC<SpeedSelectorProps> = ({
         onClose={() => setMenuAnchor(null)}
         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
         transformOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        // Inside the fullscreen element so the menu stays visible in native fullscreen
+        // (body portals render underneath the top layer). See fullscreenPortal.
+        container={portalToFullscreen()}
       >
         {speeds.map((speed) => (
           <MenuItem

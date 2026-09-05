@@ -33,13 +33,36 @@ interface DynamicMapTextureProps {
   enhanced?: boolean;
 }
 
-// Map texture cache to avoid reloading the same textures
+// Map texture cache to avoid reloading the same textures. Bounded (LRU, 8 entries): a trial
+// run touches a handful of distinct maps, so 8 covers revisits while preventing unbounded GPU
+// growth across long chapter-hopping sessions. Eviction disposes the texture — a still-mounted
+// floor bound to it re-fetches on its next phase change (rare; distinct-map count is tiny).
+const MAX_CACHED_MAP_TEXTURES = 8;
 const textureCache = new Map<string, THREE.Texture>();
+
+function cacheMapTexture(mapFile: string, texture: THREE.Texture): void {
+  textureCache.set(mapFile, texture);
+  while (textureCache.size > MAX_CACHED_MAP_TEXTURES) {
+    const oldest = textureCache.keys().next();
+    if (oldest.done) break;
+    const evicted = textureCache.get(oldest.value);
+    textureCache.delete(oldest.value);
+    // Don't dispose a texture that is still the live floor map elsewhere — tenants re-fetch on
+    // next rebind. In practice the evicted entry is a fight left several hops ago.
+    evicted?.dispose();
+  }
+}
+
+// In-flight loads, shared across instances: the mount effect AND the useFrame updater can both
+// request the same mapFile in one tick (or two arenas during a transition). Without dedupe each
+// fires its own CDN fetch + GPU upload, and the loser applies a superseded texture.
+const inflightLoads = new Map<string, Promise<THREE.Texture>>();
 
 // Cleanup function for texture cache
 export const clearMapTextureCache = (): void => {
   textureCache.forEach((texture) => texture.dispose());
   textureCache.clear();
+  inflightLoads.clear();
 };
 
 /**
@@ -160,6 +183,9 @@ export function applyFloorTexture(
   if (!material) {
     return;
   }
+  if (material.map === texture) {
+    return; // Already bound: rebinding + needsUpdate would force a needless program re-evaluation.
+  }
   material.map = texture;
   material.needsUpdate = true;
   onTextureChange?.();
@@ -248,6 +274,10 @@ export const DynamicMapTexture: React.FC<DynamicMapTextureProps> = ({
   // Load texture with caching
   const loadTexture = useMemo(() => {
     const loader = new THREE.TextureLoader();
+    // Textures are data images, never read back (no readPixels/toDataURL anywhere in the
+    // feature) — but pin anonymous CORS explicitly so a hostile/compromised mapFile host
+    // fails closed instead of tainting anything downstream.
+    loader.setCrossOrigin('anonymous');
 
     // Texture sampling/colour config applied IDENTICALLY to whichever source loads. flipY=false and
     // sRGB are NOT cosmetic: flipY=false is half of the actor/marker coordinate-alignment contract (a
@@ -280,14 +310,33 @@ export const DynamicMapTexture: React.FC<DynamicMapTextureProps> = ({
       });
 
     return (mapFile: string): Promise<THREE.Texture> => {
-      // Check cache first
+      // Check cache first. A tier change rebuilds this memo (maxAnisotropy dep), so refresh the
+      // cached texture's sampling instead of serving a stale tier's anisotropy forever.
       const cached = textureCache.get(mapFile);
       if (cached) {
+        if (cached.anisotropy !== maxAnisotropy) {
+          cached.anisotropy = maxAnisotropy;
+          cached.needsUpdate = true;
+        }
         return Promise.resolve(cached);
       }
 
-      const primaryUrl = getMapTextureUrl(mapFile);
-      const fallbackUrl = getMapTextureFallbackUrl(mapFile);
+      // Join an in-flight load for the same file instead of double-fetching.
+      const inflight = inflightLoads.get(mapFile);
+      if (inflight) {
+        return inflight;
+      }
+
+      // URL resolution validates the mapFile and can throw: convert to a rejection so callers'
+      // .catch (grid fallback) handles it instead of throwing synchronously out of useFrame.
+      let primaryUrl: string;
+      let fallbackUrl: string;
+      try {
+        primaryUrl = getMapTextureUrl(mapFile);
+        fallbackUrl = getMapTextureFallbackUrl(mapFile);
+      } catch (error) {
+        return Promise.reject(error);
+      }
 
       // Hi-res tiles only EXIST once deployed (gitignored → absent from a build with no
       // VITE_HIRES_MAP_BASE: dev-previews, or prod before R2 is provisioned). When the primary url is a
@@ -304,16 +353,23 @@ export const DynamicMapTexture: React.FC<DynamicMapTextureProps> = ({
               return loadFrom(fallbackUrl);
             });
 
-      return load
+      const shared = load
         .then((texture) => {
           configureTexture(texture);
-          textureCache.set(mapFile, texture);
+          cacheMapTexture(mapFile, texture);
           return texture;
         })
         .catch((error) => {
           logger.warn(`Failed to load map texture: ${mapFile}`, error);
           throw error;
+        })
+        .finally(() => {
+          if (inflightLoads.get(mapFile) === shared) {
+            inflightLoads.delete(mapFile);
+          }
         });
+      inflightLoads.set(mapFile, shared);
+      return shared;
     };
   }, [logger, maxAnisotropy]);
 
@@ -360,10 +416,15 @@ export const DynamicMapTexture: React.FC<DynamicMapTextureProps> = ({
 
       loadTexture(firstMapFile)
         .then((texture) => {
-          if (materialRef.current) {
-            currentMapFileRef.current = firstMapFile;
+          // Stale guard (mirrors the useFrame path): a scrub during the fetch may have moved
+          // the floor on already — never paint an arrival this load no longer owns. The shared
+          // cached texture is left alone (not disposed) for its rightful owner.
+          if (currentMapFileRef.current === null || currentMapFileRef.current === firstMapFile) {
+            if (materialRef.current) {
+              currentMapFileRef.current = firstMapFile;
+            }
+            applyFloorTexture(materialRef.current, texture, onTextureChange);
           }
-          applyFloorTexture(materialRef.current, texture, onTextureChange);
         })
         .catch((_error) => {
           // Initial CDN load failed — show the procedural grid floor instead of a blank

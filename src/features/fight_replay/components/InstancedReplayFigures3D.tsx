@@ -25,6 +25,13 @@ import { enablePerInstanceOpacity } from '../utils/instanceOpacity';
 import { BatchedActorNames3D } from './BatchedActorNames3D';
 
 /**
+ * Shared GLB loader: GLTFLoader holds no per-load mutable state that breaks concurrent loads,
+ * so one module instance serves both the pose flipbook and the boss model (previously two
+ * `new GLTFLoader()` per mount, duplicating parser setup).
+ */
+const sharedGltfLoader = new GLTFLoader();
+
+/**
  * Instanced renderer for the standing-figure actor marker (body capsule + role-glyph cap + ground
  * anchor ring + facing wedge + state rings + name card).
  *
@@ -467,7 +474,13 @@ function flagMatrixNeedsUpdate(mesh: THREE.InstancedMesh | null | undefined): vo
   if (mesh) mesh.instanceMatrix.needsUpdate = true;
 }
 function flagColorNeedsUpdate(mesh: THREE.InstancedMesh | null | undefined): void {
-  if (mesh?.instanceColor) mesh.instanceColor.needsUpdate = true;
+  if (mesh?.instanceColor) {
+    // instanceColor is created lazily by the first setColorAt — which happens in the recompose
+    // loop, not in setup — so dynamic usage is (re)asserted here, on the only path that can
+    // observe a freshly created attribute. Idempotent; runs only when colors changed.
+    mesh.instanceColor.setUsage(THREE.DynamicDrawUsage);
+    mesh.instanceColor.needsUpdate = true;
+  }
 }
 function flagOpacityNeedsUpdate(mesh: THREE.InstancedMesh | null | undefined): void {
   const attr = mesh?.geometry.getAttribute('instanceOpacity') as
@@ -526,8 +539,7 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
       return;
     }
     let cancelled = false;
-    const loader = new GLTFLoader();
-    loader.load(
+    sharedGltfLoader.load(
       HUMANOID_WALK_MODEL_URL,
       (gltf) => {
         if (cancelled) return;
@@ -572,8 +584,7 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
       return;
     }
     let cancelled = false;
-    const loader = new GLTFLoader();
-    loader.load(
+    sharedGltfLoader.load(
       bossModelUrl,
       (gltf) => {
         let bossMesh: THREE.Mesh | null = null;
@@ -881,7 +892,9 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
       mesh.frustumCulled = false;
       mesh.renderOrder = renderOrder;
       mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
-      if (mesh.instanceColor) mesh.instanceColor.setUsage(THREE.DynamicDrawUsage);
+      // NOTE: instanceColor usage is NOT set here — three creates instanceColor lazily on the
+      // first setColorAt (recompose loop), so this guard never fires at setup time. Dynamic usage
+      // is asserted in flagColorNeedsUpdate instead, on the path that observes a live attribute.
       if (withOpacity) {
         return enablePerInstanceOpacity(
           mesh.geometry,
@@ -909,6 +922,11 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
     setup(selectionRingRef.current, 14, false);
     setup(tauntRingRef.current, 15, false);
     glyphRefs.current.forEach((mesh, symbol) => {
+      // All 8 glyph meshes share ONE geometry (and thus one opacity array) by design: every mesh
+      // holds ALL actors at the same indices (non-members hide via matrix), and the written value
+      // depends only on dead-state, never on symbol — so the shared array is always correct and
+      // per-symbol divergence is impossible by construction. enablePerInstanceOpacity reuses the
+      // existing attribute on repeat calls (see instanceOpacity.ts).
       const arr = setup(mesh, 16, true);
       if (arr) o.glyph.set(symbol, arr);
     });
@@ -1589,7 +1607,7 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
       <instancedMesh
         ref={bodyRef}
         args={[geometries.body, materials.body, instanceCount]}
-        castShadow
+        castShadow={!performanceMode}
       />
       {poseGeometries?.map((geo, p) => (
         <instancedMesh

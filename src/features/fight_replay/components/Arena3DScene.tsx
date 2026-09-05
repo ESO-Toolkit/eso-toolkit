@@ -3,14 +3,14 @@ import { Grid } from '@react-three/drei/core/Grid.js';
 import { Lightformer } from '@react-three/drei/core/Lightformer.js';
 import { OrbitControls } from '@react-three/drei/core/OrbitControls.js';
 import { useFrame, useThree } from '@react-three/fiber';
-import React, { Suspense, useMemo, useCallback, useRef, useEffect } from 'react';
+import React, { useMemo, useCallback, useRef, useEffect, useState } from 'react';
 import * as THREE from 'three';
 import type { DirectionalLight, Object3D } from 'three';
 
 import { FightFragment } from '@/graphql/gql/graphql';
 import type { ReplayQualityPreset } from '@/hooks/useReplayPrefs';
 
-import { usePerfTier } from '../../../hooks/usePerfTier';
+import { usePerfTier, usePerfTierResolved } from '../../../hooks/usePerfTier';
 import { Logger, LogLevel } from '../../../utils/logger';
 import { MapTimeline } from '../../../utils/mapTimelineUtils';
 import { TimestampPositionLookup } from '../../../workers/calculations/CalculateActorPositions';
@@ -209,9 +209,10 @@ const AnimationFrameSceneActors: React.FC<AnimationFrameSceneActorsProps> = ({
 
 /**
  * Number of extra frames to keep rendering after the last detected change. Async work
- * (CDN map textures resolving, material.needsUpdate flushing, OrbitControls damping) can
- * land a frame or two after the triggering event, so we render a short tail rather than
- * exactly one frame, to avoid a stale paint.
+ * (CDN map textures resolving, material.needsUpdate flushing) can land a frame or two after
+ * the triggering event, so we render a short tail rather than exactly one frame, to avoid a
+ * stale paint. (Damping is pinned OFF on OrbitControls below, so no damping tail exists —
+ * the tail covers only async texture/flag flushes.)
  */
 const RENDER_TAIL_FRAMES = 4;
 
@@ -240,9 +241,10 @@ interface FrameCapGateProps {
  *      RENDER_TAIL drain + pause-restore repaints are never deferred;
  *   2. a playhead jump > SEEK_JUMP_MS — timeline clicks, chapter jumps, A-B
  *      loop wrap paint immediately mid-playback;
- *   3. camera interaction — OrbitControls fires 'change' for drag, damping,
- *      wheel and pinch (CanvasWheelZoom dispatches it synthetically), so
- *      orbiting during capped playback paints at panel rate while it lasts.
+ *   3. camera interaction — OrbitControls fires 'change' for drag, wheel and pinch
+ *      (CanvasWheelZoom dispatches it synthetically), so
+ *      orbiting during capped playback paints at panel rate while it lasts. (Damping is pinned
+ *      off, so there is no damping tail — the bypass ends with the gesture.)
  */
 const FrameCapGate: React.FC<FrameCapGateProps> = ({
   frameCapFps,
@@ -368,6 +370,12 @@ const RenderLoop: React.FC<RenderLoopProps> = ({
   const { gl, scene, camera, controls } = useThree();
 
   const lastRenderedTimeRef = useRef<number | null>(null);
+  // Follow-motion paint tracking: refilling the budget on EVERY frame while following (the old
+  // behavior) rendered continuously even when paused, settled, and static. The lerp only needs
+  // paint while the camera is actually moving, which we detect by comparing positions frame to
+  // frame (the follower snaps sub-visual jitter, so a settled camera is bit-identical).
+  const lastFollowIdRef = useRef<number | null>(null);
+  const lastCamPosRef = useRef<[number, number, number] | null>(null);
 
   // Take manual control of the shadow map: three regenerates it on EVERY render by default, but the
   // directional sun's shadow only changes when a caster moves (see shadowDirtyRef). We flag it dirty
@@ -413,17 +421,38 @@ const RenderLoop: React.FC<RenderLoopProps> = ({
       shadowDirtyRef.current = true;
     }
 
-    // Keep rendering whenever an actor is followed/selected. Load-bearing for TWO reasons,
-    // do not remove as "redundant":
+    // Keep rendering while the follow camera is SETTLING. Load-bearing for TWO reasons, do
+    // not remove as "redundant" (but note the gating: a settled follow on a paused scene must
+    // NOT paint forever — see below):
     //  1. the follow camera lerps toward its target every frame while active;
     //  2. the same ref drives InstancedReplayFigures3D selection, so an actor's
     //     selection ring update (driven off this ref, not off timeRef) only paints while
     //     paused because this refill keeps the budget topped up.
     //     Deselecting routes through React state (FightReplay3D.setFollowingActor → commit),
     //     which the commit-refill effect covers.
-    if (followingActorIdRef.current !== null) {
+    // Gating: repaint only while the camera actually moves (position delta since last frame) or
+    // the follow TARGET changed (which kicks off a new lerp). A settled follow on a static
+    // scene paints nothing — previously this refilled unconditionally, rendering continuously
+    // while paused. Target changes and deselects always get one repaint for the ring update.
+    const followId = followingActorIdRef.current;
+    const camPos = camera.position;
+    const lastCamPos = lastCamPosRef.current;
+    const camMoved =
+      lastCamPos === null ||
+      Math.abs(camPos.x - lastCamPos[0]) +
+        Math.abs(camPos.y - lastCamPos[1]) +
+        Math.abs(camPos.z - lastCamPos[2]) >
+        1e-6;
+    if (followId !== null) {
+      if (followId !== lastFollowIdRef.current || camMoved) {
+        renderBudgetRef.current = RENDER_TAIL_FRAMES;
+      }
+      lastFollowIdRef.current = followId;
+    } else if (lastFollowIdRef.current !== null) {
+      lastFollowIdRef.current = null;
       renderBudgetRef.current = RENDER_TAIL_FRAMES;
     }
+    lastCamPosRef.current = [camPos.x, camPos.y, camPos.z];
 
     // Frame cap: a capped-out frame defers the paint WITHOUT consuming budget or
     // clearing shadowDirtyRef — both are only mutated inside the paint branch
@@ -455,7 +484,7 @@ const RenderLoop: React.FC<RenderLoopProps> = ({
         gl.render(scene, camera);
       }
     }
-  }, 999); // Very low priority to render after all updates
+  }, RenderPriority.RENDER); // Very low priority to render after all updates
 
   return null;
 };
@@ -686,6 +715,12 @@ export interface Arena3DSceneProps {
    * (CanvasWheelZoom), leaving one-finger rotate clean. Desktop passes false (pan stays on).
    */
   mobileImmersive?: boolean;
+  /**
+   * Whether an actor is currently followed (mirrors followingActorIdRef as state). Threaded
+   * explicitly because reading the ref during render doesn't subscribe — the old
+   * `enabled={!followingActorIdRef.current}` only refreshed via incidental parent re-renders.
+   */
+  following?: boolean;
 }
 
 /** Stable always-false fallback for the (defensive) case where no isPlayingRef is supplied. */
@@ -728,6 +763,7 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
   onQualityLevelChange,
   isPlayingRef = NEVER_PLAYING_REF,
   mobileImmersive = false,
+  following = false,
 }) => {
   // Touch-gesture policy for OrbitControls. `mobileImmersive` already folds in (mobile && immersive),
   // so the second arg is true; the helper returns enablePan=false there to free two fingers for
@@ -770,6 +806,20 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
   // Without this the composer target is single-sampled and bloom-on tiers would render aliased edges.
   const perfTier = usePerfTier();
   const bloomSamples = perfTier === 'high' ? 4 : perfTier === 'medium' ? 2 : 0;
+  // Heavy first-paint effects (bloom's 11-target HDR chain, the IBL env cube) wait for the REAL
+  // tier: mounting them on the 'medium' placeholder starts weak phones at full quality, then the
+  // governor sheds them seconds later after the worst possible first impression (full-cost jank
+  // + memory spike). Detection usually resolves while positions compute (loading overlay covers
+  // the wait); the 3s fallback bounds a hung detector. Returning visitors skip the wait via the
+  // persisted tier + resolved flag.
+  const tierResolved = usePerfTierResolved();
+  const [tierWaitElapsed, setTierWaitElapsed] = useState(false);
+  useEffect(() => {
+    if (tierResolved) return;
+    const timer = setTimeout(() => setTierWaitElapsed(true), 3000);
+    return () => clearTimeout(timer);
+  }, [tierResolved]);
+  const heavyEffectsReady = tierResolved || tierWaitElapsed;
   // Render-resolution cap by tier — must mirror the Canvas `dpr` ceiling in Arena3D
   // (`perfTier === 'low' ? [1, 1.5] : [1, 2]`). Threaded to AdaptiveResolution as its full-quality
   // ceiling so the scaler tracks tier changes instead of a value captured at mount.
@@ -1039,8 +1089,13 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
         />
       )}
       {/* Bloom post-processing (dropped at quality tier 1+ / performance mode). Publishes its render
-          handle to composerRef; RenderLoop routes the gated render through it so celestials glow. */}
-      {qualityFlags.bloom && <BloomComposer composerRef={composerRef} samples={bloomSamples} />}
+          handle to composerRef; RenderLoop routes the gated render through it so celestials glow.
+          Mounts only once the real perf tier is known (heavyEffectsReady): the 11-target HDR chain
+          is the single most expensive mount-time allocation, and mounting it on the placeholder
+          tier starts weak phones at full quality. */}
+      {qualityFlags.bloom && heavyEffectsReady && (
+        <BloomComposer composerRef={composerRef} samples={bloomSamples} />
+      )}
       {/* Frame-cap verdict — runs before every other useFrame; inert when uncapped */}
       <FrameCapGate
         frameCapFps={qualityFlags.frameCapFps}
@@ -1109,7 +1164,7 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
         />
       )}
       {/* Keyboard camera controls (WASD) - disabled when following an actor */}
-      <KeyboardCameraControls enabled={!followingActorIdRef.current} />
+      <KeyboardCameraControls enabled={!following} />
       {/* Lighting + the directional shadow caster, sized to the arena. Extracted so the shadow
           frustum and light target track the real arena center/size — the old fixed light at
           [10,10,5] aimed at the origin (0,0,0) with the default ±5 ortho frustum, which entirely
@@ -1127,8 +1182,9 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
           reflections and lift them off the floor. PROCEDURAL (Lightformer children) — NOT an
           `Environment preset`, which would fetch an HDR from a CDN. The env cube renders ONCE at
           mount (no per-frame cost, so it respects the on-demand RenderLoop), and `background={false}`
-          keeps it off the visible backdrop — it only lights the figures. Dropped in performance mode. */}
-      {qualityFlags.environment && (
+          keeps it off the visible backdrop — it only lights the figures. Dropped in performance mode.
+          Like bloom, mounts once the real tier is known (heavyEffectsReady). */}
+      {qualityFlags.environment && heavyEffectsReady && (
         <Environment resolution={64} frames={1} background={false}>
           <Lightformer intensity={1.6} position={[0, 6, 4]} scale={[12, 12, 1]} color="#fbf3e0" />
           <Lightformer intensity={0.7} position={[-6, 3, -4]} scale={[8, 8, 1]} color="#9fc2ff" />
@@ -1146,29 +1202,18 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
         performanceMode={!qualityFlags.cosmic}
         variant={cosmicVariant}
       />
-      {/* Map Texture - Arena floor background with dynamic phase-based switching */}
-      <Suspense
-        fallback={
-          <mesh
-            rotation={[-Math.PI / 2, 0, 0]}
-            position={[arenaDimensions.centerX, -0.02, arenaDimensions.centerZ]}
-            receiveShadow
-          >
-            <planeGeometry args={[arenaDimensions.size, arenaDimensions.size]} />
-            {/* Opaque to match the live floor (no dark-bg bleed-through while the CDN map loads). */}
-            <meshPhongMaterial color="#2a2a2a" />
-          </mesh>
-        }
-      >
-        <DynamicMapTexture
-          mapTimeline={mapTimeline || EMPTY_MAP_TIMELINE}
-          timeRef={timeRef}
-          size={arenaDimensions.size}
-          position={[arenaDimensions.centerX, -0.02, arenaDimensions.centerZ]}
-          onTextureChange={markSceneDirty}
-          enhanced={qualityFlags.floorEnhancements}
-        />
-      </Suspense>
+      {/* Map Texture - Arena floor background with dynamic phase-based switching. No Suspense
+          boundary: DynamicMapTexture loads via callback TextureLoader (not useLoader), so it never
+          suspends — the previous boundary's fallback was dead code implying a loading contract
+          that doesn't exist. Async paints flow through markSceneDirty instead. */}
+      <DynamicMapTexture
+        mapTimeline={mapTimeline || EMPTY_MAP_TIMELINE}
+        timeRef={timeRef}
+        size={arenaDimensions.size}
+        position={[arenaDimensions.centerX, -0.02, arenaDimensions.centerZ]}
+        onTextureChange={markSceneDirty}
+        enhanced={qualityFlags.floorEnhancements}
+      />
       {/* Arena Grid — dialed back so the now-vivid map leads and the grid stays a quiet coordinate
           aid rather than a second visual system competing with the photographic floor (the audit
           flagged the old near-full-strength grid as fighting the map). Dimmer colors + thinner lines
@@ -1243,14 +1288,16 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
           markDirty={markSceneDirty}
         />
       )}
-      {/* Player Path Trails - Animated trails for selected players */}
-      {showPlayerTrails && (
+      {/* Player Path Trails - Animated trails for selected players. Gated on the frame cap:
+          trails run their own per-trail useFrame outside the cap verdict, so mounting them under
+          a 30fps cap would paint full-rate lines over a capped scene (and burn the CPU the cap
+          was saving). Capped sessions keep everything else; trails return with the cap. */}
+      {showPlayerTrails && qualityFlags.frameCapFps == null && (
         <PlayerPathTrail3D
           paths={playerPaths}
           timeRef={timeRef}
           lookup={lookup}
           fadeTime={15000} // 15 second fade
-          lineWidth={3}
           visible={showPlayerTrails}
         />
       )}
@@ -1337,6 +1384,10 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
         // Suppress camera rotation while a draw tool is armed so a placement click never spins the
         // view. Declarative (not an imperative one-shot) so drei re-applies it on every re-render.
         enableRotate={touchPolicy.enableRotate && !drawTool}
+        // Damping explicitly OFF (three's default): a damped tail would keep emitting 'change'
+        // events after release, defeating the on-demand render gate with settle frames. Stops are
+        // exact; the RENDER_TAIL_FRAMES budget covers async flushes instead.
+        enableDamping={false}
         minDistance={cameraSettings.minDistance}
         maxDistance={cameraSettings.maxDistance}
         maxPolarAngle={Math.PI / 2 - 0.1} // Prevent camera from going below ground (slightly above horizon)

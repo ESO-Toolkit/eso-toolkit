@@ -21,6 +21,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 
 import { usePrefersReducedMotion } from '../../../hooks/usePrefersReducedMotion';
 import { TimelineAnnotation } from '../../../types/timelineAnnotations';
+import { formatDurationMs as formatTime } from '../utils/replayTime';
 
 interface TimelineScrubPreviewProps {
   /** The rail element to track the cursor over (the relatively-positioned Slider wrapper). */
@@ -37,13 +38,6 @@ interface HoverState {
   /** Hovered time in ms. */
   timeMs: number;
 }
-
-const formatTime = (timeMs: number): string => {
-  const totalSeconds = Math.floor(timeMs / 1000);
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-  return `${minutes}:${seconds.toString().padStart(2, '0')}`;
-};
 
 const TimelineScrubPreviewComponent: React.FC<TimelineScrubPreviewProps> = ({
   railRef,

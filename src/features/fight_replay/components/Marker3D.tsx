@@ -35,7 +35,17 @@ export const MARKER_YAW_SCREEN_OFFSET = Math.PI;
  * or floor. Trilinear mipmapping + anisotropy keeps the text sharp at distance and at grazing
  * camera angles.
  */
-function createTextTexture(text: string, fontSize: number): THREE.CanvasTexture {
+export const MAX_MARKER_TEXT_CHARS = 120;
+
+function createTextTexture(
+  text: string,
+  fontSize: number,
+  maxAnisotropy = 16,
+): THREE.CanvasTexture {
+  // Truncate pathological labels: a 10k-char string rasterizes into an illegible blob on a
+  // fixed 512×256 canvas while paying the full upload.
+  const clipped =
+    text.length > MAX_MARKER_TEXT_CHARS ? text.slice(0, MAX_MARKER_TEXT_CHARS - 1) + '…' : text;
   const canvas = document.createElement('canvas');
   const context = canvas.getContext('2d')!;
 
@@ -55,19 +65,19 @@ function createTextTexture(text: string, fontSize: number): THREE.CanvasTexture 
   // Two-pass dark outline: a wide soft halo then a tight crisp edge, for contrast on any background.
   context.strokeStyle = 'rgba(0, 0, 0, 0.92)';
   context.lineWidth = fontSize * 0.34;
-  context.strokeText(text, cx, cy);
+  context.strokeText(clipped, cx, cy);
   context.lineWidth = fontSize * 0.18;
-  context.strokeText(text, cx, cy);
+  context.strokeText(clipped, cx, cy);
 
   // White fill on top.
   context.fillStyle = '#ffffff';
-  context.fillText(text, cx, cy);
+  context.fillText(clipped, cx, cy);
 
   const texture = new THREE.CanvasTexture(canvas);
   texture.minFilter = THREE.LinearMipmapLinearFilter; // trilinear: crisp when minified at distance
   texture.magFilter = THREE.LinearFilter;
   texture.generateMipmaps = true;
-  texture.anisotropy = 16; // crisp text at grazing angles
+  texture.anisotropy = Math.min(maxAnisotropy, 8); // tiny sprite: tier-capped, never the floor's 16x
   texture.needsUpdate = true;
   return texture;
 }

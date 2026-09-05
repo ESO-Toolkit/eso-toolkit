@@ -34,7 +34,9 @@ export class WorkerPool {
       maxWorkers: 4,
       idleTimeout: 300000, // 5 minutes
       taskTimeout: 30000, // 30 seconds
-      retryAttempts: 2,
+      // Retries are opt-in per pool: re-running a deterministically failing compute just burns
+      // another slot, so only pools with flaky-worker risk (replay) enable a fresh-worker retry.
+      retryAttempts: 0,
       enableLogging: process.env.NODE_ENV === 'development',
       ...config,
     };
@@ -59,13 +61,16 @@ export class WorkerPool {
   }
 
   /**
-   * Execute a task on an available worker
+   * Execute a task on an available worker. `signal` aborts a still-queued task immediately and
+   * tears down the worker running it, so superseded work (rapid fight switches) stops burning
+   * pool slots instead of running to completion for a discarded result.
    */
   async execute<T = unknown, R = unknown>(
     taskType: SharedComputationWorkerTaskType,
     data: T,
     priority = 0,
     onProgress?: OnProgressCallback,
+    signal?: AbortSignal,
   ): Promise<R> {
     return new Promise<R>((resolve, reject) => {
       const taskId = this.generateTaskId();
@@ -78,7 +83,24 @@ export class WorkerPool {
         reject,
         createdAt: Date.now(),
         onProgress,
+        attempts: 0,
       };
+
+      if (signal?.aborted) {
+        reject(new Error('Task cancelled before it started'));
+        return;
+      }
+
+      if (signal) {
+        const onAbort = (): void => {
+          this.cancelTask(taskId, new Error('Task cancelled'));
+        };
+        signal.addEventListener('abort', onAbort, { once: true });
+        // cleanupTask detaches this on every settle path, so a late abort can never touch a
+        // recycled task id.
+        task.abortSignal = signal;
+        task.abortListener = onAbort;
+      }
 
       this.stats.totalTasks++;
       this.taskQueue.push(task);
@@ -93,6 +115,53 @@ export class WorkerPool {
       // queue-wait time against the run budget.
       this.processNextTask();
     });
+  }
+
+  /**
+   * Cancel a task by id. A queued task is dropped; a running task's worker is torn down and
+   * replaced (same recovery path as timeouts) so the slot is freed immediately. Never retried.
+   * Returns true when a task was actually cancelled.
+   */
+  cancelTask(taskId: string, reason = new Error('Task cancelled')): boolean {
+    const queuedIndex = this.taskQueue.findIndex((t) => t.id === taskId);
+    if (queuedIndex >= 0) {
+      const [task] = this.taskQueue.splice(queuedIndex, 1);
+      task.cancelled = true;
+      this.cleanupTask(task);
+      this.updateStats();
+      task.reject(reason);
+      return true;
+    }
+
+    const running = this.pendingTasks.get(taskId);
+    if (running) {
+      running.cancelled = true;
+      this.teardownWorkerForTask(taskId);
+      this.cleanupTask(running);
+      this.pendingTasks.delete(taskId);
+      this.updateStats();
+      running.reject(reason);
+      // A pool slot just freed up — let any queued work proceed.
+      this.processNextTask();
+      return true;
+    }
+
+    return false;
+  }
+
+  /**
+   * Tear down the worker running the given task (if any) and forget it, so a hung, timed-out,
+   * or cancelled compute can never strand its pool slot. Callers re-run the queue afterwards.
+   */
+  private teardownWorkerForTask(taskId: string): void {
+    for (const [workerId, workerInfo] of this.workers.entries()) {
+      if (workerInfo.currentTaskId === taskId) {
+        releaseAndTerminate(workerInfo.worker);
+        this.workers.delete(workerId);
+        this.stats.activeWorkers = this.workers.size;
+        break;
+      }
+    }
   }
 
   /**
@@ -319,11 +388,40 @@ export class WorkerPool {
   }
 
   /**
-   * Handle task errors
+   * Handle task errors. A failed task is retried on a FRESH worker up to `retryAttempts`
+   * (transient worker-state failures do happen); timeouts and cancellations are never retried —
+   * re-running a compute that already exhausted its budget (or was explicitly superseded)
+   * would just burn another slot.
    */
   private handleTaskError(taskId: string, error: Error): void {
     const task = this.pendingTasks.get(taskId);
     if (!task) return;
+
+    const maxAttempts = this.config.retryAttempts ?? 0;
+    const attemptsUsed = task.attempts ?? 0;
+    if (!task.cancelled && !task.timedOut && attemptsUsed < maxAttempts) {
+      // Retire the worker that produced the error (it may be poisoned) and requeue.
+      // A retry is NOT a settle path: the task keeps its id and stays live, so only the run
+      // timeout is cleared. Using cleanupTask here would detach the abort listener and leave
+      // the requeued task un-cancellable — a superseded compute would then hold a pool slot
+      // to completion instead of freeing it on abort.
+      this.teardownWorkerForTask(taskId);
+      this.clearTaskTimeout(task);
+      this.pendingTasks.delete(taskId);
+      task.attempts = attemptsUsed + 1;
+      this.taskQueue.unshift(task);
+      this.updateStats();
+
+      if (this.config.enableLogging && this.logger) {
+        this.logger.info(`Retrying task ${task.type} (attempt ${task.attempts + 1})`, {
+          taskId,
+          taskType: task.type,
+        });
+      }
+
+      this.processNextTask();
+      return;
+    }
 
     this.cleanupTask(task);
 
@@ -349,14 +447,10 @@ export class WorkerPool {
    * worker.
    */
   private handleTaskTimeout(taskId: string, taskType: string): void {
-    for (const [workerId, workerInfo] of this.workers.entries()) {
-      if (workerInfo.currentTaskId === taskId) {
-        releaseAndTerminate(workerInfo.worker);
-        this.workers.delete(workerId);
-        this.stats.activeWorkers = this.workers.size;
-        break;
-      }
-    }
+    const task = this.pendingTasks.get(taskId);
+    // Never retried: a compute that already exhausted its full budget gets no second budget.
+    if (task) task.timedOut = true;
+    this.teardownWorkerForTask(taskId);
 
     this.handleTaskError(
       taskId,
@@ -368,12 +462,21 @@ export class WorkerPool {
   }
 
   /**
-   * Clean up task resources (timeout timer)
+   * Clean up task resources (timeout timer, abort listener)
    */
-  private cleanupTask(task: WorkerTask<unknown, unknown>): void {
+  private clearTaskTimeout(task: WorkerTask<unknown, unknown>): void {
     if (task.timeoutId !== undefined) {
       clearTimeout(task.timeoutId);
       task.timeoutId = undefined;
+    }
+  }
+
+  private cleanupTask(task: WorkerTask<unknown, unknown>): void {
+    this.clearTaskTimeout(task);
+    if (task.abortSignal && task.abortListener) {
+      task.abortSignal.removeEventListener('abort', task.abortListener);
+      task.abortSignal = undefined;
+      task.abortListener = undefined;
     }
   }
 

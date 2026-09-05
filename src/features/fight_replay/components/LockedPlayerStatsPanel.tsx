@@ -231,14 +231,21 @@ const PlayerStatsContent: React.FC<{
 
   useEffect(() => {
     let raf = 0;
+    // Skip passes where the playhead hasn't moved: every value below derives solely from it, so
+    // a paused panel would otherwise rewrite identical textContent 60×/s. NaN-seeded so the first
+    // pass always writes (fresh mount / new index).
+    let lastMs = NaN;
     const tick = (): void => {
       const playheadMs = timeRef.current ?? 0;
-      const cutoff = fightStartTime + playheadMs;
-      const elapsedSeconds = playheadMs / 1000;
-      const stats = queryLiveLockedStats(index, cutoff, elapsedSeconds);
-      for (let i = 0; i < slots.length; i++) {
-        const node = valueRefs.current[i];
-        if (node) node.textContent = slots[i].fmt(slots[i].pick(stats));
+      if (playheadMs !== lastMs) {
+        lastMs = playheadMs;
+        const cutoff = fightStartTime + playheadMs;
+        const elapsedSeconds = playheadMs / 1000;
+        const stats = queryLiveLockedStats(index, cutoff, elapsedSeconds);
+        for (let i = 0; i < slots.length; i++) {
+          const node = valueRefs.current[i];
+          if (node) node.textContent = slots[i].fmt(slots[i].pick(stats));
+        }
       }
       raf = requestAnimationFrame(tick);
     };
@@ -318,18 +325,23 @@ const TankDamageReduction: React.FC<{
   useEffect(() => {
     if (!ready || !buffLookupData || !debuffLookupData || staticResistance == null) return;
     let raf = 0;
+    // Same playhead gate as the scalar path: the modeled value derives solely from the playhead.
+    let lastMs = NaN;
     const tick = (): void => {
       const playheadMs = timeRef.current ?? 0;
-      const timestamp = fightStartTime + playheadMs;
-      const dynamic = calculateDynamicDamageReductionAtTimestamp(
-        buffLookupData,
-        debuffLookupData,
-        timestamp,
-        playerId,
-      );
-      const dr = resistanceToDamageReduction(staticResistance + dynamic);
-      const node = valueRef.current;
-      if (node) node.textContent = `${dr.toFixed(1)}%`;
+      if (playheadMs !== lastMs) {
+        lastMs = playheadMs;
+        const timestamp = fightStartTime + playheadMs;
+        const dynamic = calculateDynamicDamageReductionAtTimestamp(
+          buffLookupData,
+          debuffLookupData,
+          timestamp,
+          playerId,
+        );
+        const dr = resistanceToDamageReduction(staticResistance + dynamic);
+        const node = valueRef.current;
+        if (node) node.textContent = `${dr.toFixed(1)}%`;
+      }
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);

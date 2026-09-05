@@ -19,6 +19,9 @@ module.exports = {
     // its real implementation. This exception MUST precede the broad worker rules below.
     '^.*/workers/calculations/CalculateActorPositions$':
       '<rootDir>/src/workers/calculations/CalculateActorPositions.ts',
+    // Pure worker helpers (no import.meta.url / worker side effects) consumed directly by app
+    // + test code must resolve to their real implementations, like the exception above.
+    '^.*/workers/cacheKey$': '<rootDir>/src/workers/cacheKey.ts',
     '^.*/workers$': '<rootDir>/src/test/__mocks__/workersMock.ts',
     '^.*/workers/(.*)$': '<rootDir>/src/test/__mocks__/workerFactoriesMock.ts',
     // Discord auth uses import.meta.env which Jest/ts-jest cannot parse

@@ -190,7 +190,17 @@ export interface DecodedElmsMarkers {
   zone: number;
   /** Array of decoded markers */
   markers: MorMarker[];
+  /** Zones present in the input beyond the first (their markers were dropped). */
+  droppedZones?: number[];
+  /** True when the input exceeded the decode budget and trailing markers were dropped. */
+  truncated?: boolean;
 }
+
+/**
+ * Decode budgets (mirrors the M0R decoder: user paste must not freeze the tab).
+ */
+export const MAX_ELMS_INPUT_BYTES = 262144;
+export const MAX_ELMS_MARKERS = 500;
 
 /**
  * Detects if a string is in Elms Markers format
@@ -198,9 +208,9 @@ export interface DecodedElmsMarkers {
  * @returns True if string appears to be Elms format
  */
 export function isElmsMarkersFormat(input: string): boolean {
-  // Elms format: /zone//x,y,z,iconKey/
+  // Elms format: /zone//x,y,z,iconKey/ (coordinates may be negative on negative-bound maps)
   // Should have multiple occurrences of /number//number,number,number,number/
-  const elmsPattern = /\/\d+\/\/\d+,\d+,\d+,\d+\//;
+  const elmsPattern = /\/\d+\/\/-?\d+,-?\d+,-?\d+,\d+\//;
   return elmsPattern.test(input);
 }
 
@@ -214,16 +224,25 @@ export function decodeElmsMarkersString(elmsString: string): DecodedElmsMarkers 
   if (!elmsString || elmsString.trim() === '') {
     throw new Error('Empty Elms markers string');
   }
+  if (elmsString.length > MAX_ELMS_INPUT_BYTES) {
+    throw new Error('Elms markers string exceeds the 256KB import limit');
+  }
 
   const markers: MorMarker[] = [];
   let detectedZone: number | null = null;
+  const droppedZones = new Set<number>();
+  let truncated = false;
 
   // Parse format: /zone//x,y,z,iconKey/
   // Using regex to extract all markers
-  const markerPattern = /\/(\d+)\/\/(\d+),(\d+),(\d+),(\d+)\//g;
+  const markerPattern = /\/(\d+)\/\/(-?\d+),(-?\d+),(-?\d+),(\d+)\//g;
   let match: RegExpExecArray | null;
 
   while ((match = markerPattern.exec(elmsString)) !== null) {
+    if (markers.length >= MAX_ELMS_MARKERS) {
+      truncated = true;
+      break;
+    }
     const [, zoneStr, xStr, yStr, zStr, iconKeyStr] = match;
 
     const zone = parseInt(zoneStr, 10);
@@ -237,8 +256,10 @@ export function decodeElmsMarkersString(elmsString: string): DecodedElmsMarkers 
       detectedZone = zone;
     }
 
-    // Only include markers from the detected zone
+    // Only include markers from the detected zone (first zone wins; the rest are reported
+    // via droppedZones so the UI can disclose the loss instead of silently dropping them).
     if (zone !== detectedZone) {
+      droppedZones.add(zone);
       continue;
     }
 
@@ -279,6 +300,8 @@ export function decodeElmsMarkersString(elmsString: string): DecodedElmsMarkers 
   return {
     zone: detectedZone,
     markers,
+    ...(droppedZones.size > 0 ? { droppedZones: [...droppedZones].sort((a, b) => a - b) } : {}),
+    ...(truncated ? { truncated: true } : {}),
   };
 }
 

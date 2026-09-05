@@ -2,7 +2,11 @@ import { useFrame } from '@react-three/fiber';
 import React, { useEffect, useRef } from 'react';
 
 import { RenderPriority } from '../constants/renderPriorities';
-import { computeTargetMs, estimateDisplayIntervalMs } from '../utils/adaptiveResolution';
+import {
+  computeTargetMs,
+  estimateDisplayIntervalMs,
+  isFastDecline,
+} from '../utils/adaptiveResolution';
 import { decideNextQualityLevel, QUALITY_LEVEL } from '../utils/qualityGovernor';
 
 // The auto-governor escalates only as far as dropping shadows. FRAME_CAP and BAREBONES are now
@@ -206,8 +210,23 @@ export const QualityGovernor: React.FC<QualityGovernorProps> = ({
     });
     if (next == null || next === levelRef.current) return;
 
-    onLevelChange(next);
-    levelRef.current = next; // optimistic — avoids re-firing the same step before the prop round-trips
+    // Fast lane (mirrors AdaptiveResolution): a severe shortfall drops a second tier now.
+    // Recovery still climbs one rung at a time.
+    let final = next;
+    if (final > levelRef.current && isFastDecline(avg, targetMs, displayInterval)) {
+      const again = decideNextQualityLevel(avg, final, {
+        maxLevel: AUTO_MAX_LEVEL,
+        targetMs,
+        displayIntervalMs: displayInterval,
+        dprExhausted,
+      });
+      if (again != null && again > final) {
+        final = again;
+      }
+    }
+
+    onLevelChange(final);
+    levelRef.current = final; // optimistic — avoids re-firing the same step before the prop round-trips
     samples.length = 0;
     cooldownRef.current = COOLDOWN_FRAMES;
   }, RenderPriority.EFFECTS);

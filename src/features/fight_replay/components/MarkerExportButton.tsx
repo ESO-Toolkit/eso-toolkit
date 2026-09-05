@@ -31,9 +31,10 @@ import {
   Popper,
   Typography,
 } from '@mui/material';
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import type { MarkerFormat } from '../types/mapMarkers';
+import { portalToFullscreen } from '../utils/fullscreenPortal';
 
 interface FormatMeta {
   format: MarkerFormat;
@@ -60,6 +61,7 @@ export const MarkerExportButton: React.FC<MarkerExportButtonProps> = ({ onExport
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState<MarkerFormat>('elms');
   const anchorRef = useRef<HTMLDivElement>(null);
+  const caretRef = useRef<HTMLButtonElement>(null);
 
   const selectedMeta = useMemo(
     () => FORMATS.find((f) => f.format === selected) ?? FORMATS[0],
@@ -89,6 +91,28 @@ export const MarkerExportButton: React.FC<MarkerExportButtonProps> = ({ onExport
     [onExport],
   );
 
+  const closeAndRefocus = useCallback(() => {
+    setOpen(false);
+    // Return focus to the caret that opened the menu (only if focus is still inside it —
+    // don't yank focus from wherever the user moved it, e.g. the copy result snackbar).
+    if (anchorRef.current?.contains(document.activeElement)) {
+      caretRef.current?.focus();
+    }
+  }, []);
+
+  // ESC closes + refocuses. ClickAway alone strands keyboard users (no way back to the caret).
+  useEffect(() => {
+    if (!open) return;
+    const onKeyDown = (event: KeyboardEvent): void => {
+      if (event.key === 'Escape') {
+        event.stopPropagation();
+        closeAndRefocus();
+      }
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [open, closeAndRefocus]);
+
   return (
     <>
       <ButtonGroup variant="outlined" color="secondary" ref={anchorRef} sx={sx}>
@@ -102,6 +126,7 @@ export const MarkerExportButton: React.FC<MarkerExportButtonProps> = ({ onExport
           aria-label="Choose marker export format"
           onClick={handleToggleMenu}
           type="button"
+          ref={caretRef}
           sx={{ px: 0.5, minWidth: '36px !important' }}
         >
           <ArrowDropDownIcon />
@@ -115,7 +140,10 @@ export const MarkerExportButton: React.FC<MarkerExportButtonProps> = ({ onExport
         transition
         // Portalled (NOT disablePortal): the marker deck clips to `overflow: hidden` to keep its
         // gradient inside the rounded corners, which would otherwise crop this menu. Rendering in
-        // a portal lets the chooser float free of that surface.
+        // a portal lets the chooser float free of that surface. Container targets the fullscreen
+        // element so the chooser stays visible in native fullscreen (body portals render
+        // underneath the top layer).
+        container={portalToFullscreen()}
         modifiers={[{ name: 'offset', options: { offset: [0, 6] } }]}
         sx={{ zIndex: (theme) => theme.zIndex.modal }}
       >

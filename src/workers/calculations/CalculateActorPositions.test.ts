@@ -18,6 +18,8 @@ import {
   TimestampPositionLookup,
   getActorPositionAtClosestTimestamp,
   getAllActorPositionsAtTimestamp,
+  resolveSampleInterval,
+  isMemoryConstrainedDevice,
 } from './CalculateActorPositions';
 
 describe('calculateActorPositions', () => {
@@ -74,7 +76,7 @@ describe('calculateActorPositions', () => {
       expect(result.fightStartTime).toBe(1000);
     });
 
-    it('should create timestamp structure even with no position data', () => {
+    it('should return an empty lookup without allocating a grid when no position data exists', () => {
       const fight = createEnhancedMockFight({ startTime: 1000, endTime: 2000 });
       const task: ActorPositionsCalculationTask = {
         fight,
@@ -83,9 +85,89 @@ describe('calculateActorPositions', () => {
 
       const result = calculateActorPositions(task);
 
-      expect(result.sortedTimestamps.length).toBeGreaterThan(0);
-      expect(result.sampleInterval).toBeGreaterThan(0);
-      expect(result.hasRegularIntervals).toBe(true);
+      // No positional resources anywhere → no actor can be placed on any frame, so no grid.
+      expect(result.sortedTimestamps).toEqual([]);
+      expect(result.positionsByTimestamp).toEqual({});
+      expect(result.actorIds).toEqual([]);
+      expect(result.fightDuration).toBe(1000);
+      expect(result.fightStartTime).toBe(1000);
+    });
+  });
+
+  describe('isMemoryConstrainedDevice', () => {
+    // The budget is chosen INSIDE the worker, where `window`/`matchMedia` do not exist. A
+    // pointer-media probe therefore reports desktop on every device and the mobile budget
+    // never applies — this must stay driven by WorkerNavigator-visible signals only.
+    const withNavigator = (patch: Record<string, unknown>, run: () => void): void => {
+      const original = Object.getOwnPropertyDescriptor(globalThis, 'navigator');
+      Object.defineProperty(globalThis, 'navigator', {
+        value: { userAgent: '', ...patch },
+        configurable: true,
+        writable: true,
+      });
+      try {
+        run();
+      } finally {
+        if (original) Object.defineProperty(globalThis, 'navigator', original);
+      }
+    };
+
+    it('treats low reported deviceMemory as constrained', () => {
+      withNavigator({ deviceMemory: 4 }, () => expect(isMemoryConstrainedDevice()).toBe(true));
+      withNavigator({ deviceMemory: 8 }, () => expect(isMemoryConstrainedDevice()).toBe(false));
+    });
+
+    it('falls back to the user agent when deviceMemory is absent (iOS Safari)', () => {
+      withNavigator({ userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)' }, () =>
+        expect(isMemoryConstrainedDevice()).toBe(true),
+      );
+      withNavigator({ userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)' }, () =>
+        expect(isMemoryConstrainedDevice()).toBe(false),
+      );
+    });
+
+    it('does not depend on matchMedia, which worker scope lacks', () => {
+      withNavigator({ deviceMemory: 2 }, () => expect(isMemoryConstrainedDevice()).toBe(true));
+    });
+  });
+
+  describe('sample-interval budget', () => {
+    it('keeps full rate for small fights', () => {
+      expect(
+        resolveSampleInterval({ durationMs: 60000, actorCount: 20, budgetCells: 10_000_000 }),
+      ).toEqual({ intervalMs: 4.7, downsampled: false });
+    });
+
+    it('downsamples (never truncates) when the cell budget is exceeded', () => {
+      const { intervalMs, downsampled } = resolveSampleInterval({
+        durationMs: 60000,
+        actorCount: 20,
+        budgetCells: 1000,
+      });
+      expect(downsampled).toBe(true);
+      expect((Math.floor(60000 / intervalMs) + 2) * 20).toBeLessThanOrEqual(1000);
+    });
+
+    it('is safe for degenerate inputs', () => {
+      expect(resolveSampleInterval({ durationMs: 0, actorCount: 20 }).downsampled).toBe(false);
+      expect(resolveSampleInterval({ durationMs: 60000, actorCount: 0 }).downsampled).toBe(false);
+    });
+
+    it('hard-caps the grid at 72000 frames and still lands exactly on the end', () => {
+      const fight = createEnhancedMockFight({ startTime: 0, endTime: 600000 });
+      const events = createMockEvents();
+      events.damage = [
+        createMockPositionalDamageEvent(
+          1000,
+          101,
+          202,
+          createEnhancedMockResources(5235, 5410, 100),
+          createEnhancedMockResources(5235, 5410, 100),
+        ),
+      ];
+      const result = calculateActorPositions({ fight, events });
+      expect(result.sortedTimestamps.length).toBeLessThanOrEqual(72000);
+      expect(result.sortedTimestamps[result.sortedTimestamps.length - 1]).toBe(600000);
     });
   });
 

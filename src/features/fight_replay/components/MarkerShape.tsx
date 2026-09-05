@@ -9,15 +9,12 @@
 import React, { useEffect, useMemo } from 'react';
 import * as THREE from 'three';
 
-// THREE.Shape is missing from @types/three 0.183.x (packaging bug — the class exists at runtime).
-// This local interface provides the minimum surface needed by the shape factory functions below.
-/* eslint-disable no-redeclare, @typescript-eslint/no-explicit-any */
-interface ThreeShape {
-  moveTo(x: number, y: number): void;
-  lineTo(x: number, y: number): void;
-}
-const ThreeShape = (THREE as any).Shape as new () => ThreeShape;
-/* eslint-enable no-redeclare, @typescript-eslint/no-explicit-any */
+/** tsc resolves THREE.Shape / THREE.ShapeGeometry to divergent identities under this
+ * tsconfig (verified 2026-09, three 0.185.4 + @types/three 0.185.4) — one narrow adapter instead
+ * of a cast at every call site. Re-verify when upgrading either package or moduleResolution. */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+const toGeometryShape = (shape: THREE.Shape): any => shape;
+/* eslint-enable @typescript-eslint/no-explicit-any */
 
 interface MarkerShapeProps {
   /** Texture path from M0RMarkers (e.g., "M0RMarkers/textures/circle.dds") */
@@ -53,8 +50,8 @@ function getShapeFromTexture(texturePath: string): string {
 /**
  * Creates a regular polygon shape with `sides` vertices, first vertex pointing up (+Y).
  */
-function createPolygonShape(radius: number, sides: number): ThreeShape {
-  const shape = new ThreeShape();
+function createPolygonShape(radius: number, sides: number): THREE.Shape {
+  const shape = new THREE.Shape();
   const angleStep = (Math.PI * 2) / sides;
 
   shape.moveTo(0, radius);
@@ -68,8 +65,8 @@ function createPolygonShape(radius: number, sides: number): ThreeShape {
 /**
  * Creates a diamond (45-degree rotated square) shape
  */
-function createDiamondShape(radius: number): ThreeShape {
-  const shape = new ThreeShape();
+function createDiamondShape(radius: number): THREE.Shape {
+  const shape = new THREE.Shape();
   shape.moveTo(0, radius);
   shape.lineTo(radius, 0);
   shape.lineTo(0, -radius);
@@ -81,8 +78,8 @@ function createDiamondShape(radius: number): ThreeShape {
 /**
  * Creates a square shape
  */
-function createSquareShape(radius: number): ThreeShape {
-  const shape = new ThreeShape();
+function createSquareShape(radius: number): THREE.Shape {
+  const shape = new THREE.Shape();
   const halfSize = radius * 0.85; // Slightly smaller to match visual size
 
   shape.moveTo(-halfSize, halfSize);
@@ -96,8 +93,8 @@ function createSquareShape(radius: number): ThreeShape {
 /**
  * Creates a chevron (arrow/V shape) pointing up (+Y)
  */
-function createChevronShape(radius: number): ThreeShape {
-  const shape = new ThreeShape();
+function createChevronShape(radius: number): THREE.Shape {
+  const shape = new THREE.Shape();
 
   // Outer V shape
   shape.moveTo(0, radius); // Top point
@@ -115,8 +112,8 @@ function createChevronShape(radius: number): ThreeShape {
  * Creates a directional arrow pointing up (+Y): a triangular head over a rectangular shaft.
  * Proportioned so the head stays readable even when the marker is rendered small.
  */
-function createArrowShape(radius: number): ThreeShape {
-  const shape = new ThreeShape();
+function createArrowShape(radius: number): THREE.Shape {
+  const shape = new THREE.Shape();
 
   const headHalfWidth = radius * 0.62;
   const headBaseY = radius * 0.12; // where the triangular head meets the shaft
@@ -136,7 +133,7 @@ function createArrowShape(radius: number): ThreeShape {
   return shape;
 }
 
-type ShapeFactory = (radius: number) => ThreeShape;
+type ShapeFactory = (radius: number) => THREE.Shape;
 
 /**
  * Resolves the geometry factory for a given marker shape type. Non-circular shapes return a
@@ -162,11 +159,9 @@ function getShapeFactory(shapeType: string): ShapeFactory | null {
 }
 
 function buildGeometry(factory: ShapeFactory | null, radius: number): THREE.BufferGeometry {
-  /* eslint-disable @typescript-eslint/no-explicit-any */
   if (factory) {
-    return new THREE.ShapeGeometry(factory(radius) as any);
+    return new THREE.ShapeGeometry(toGeometryShape(factory(radius)));
   }
-  /* eslint-enable @typescript-eslint/no-explicit-any */
   return new THREE.CircleGeometry(radius, 48);
 }
 

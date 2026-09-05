@@ -39,6 +39,8 @@ export interface DecodedMorMarkers {
   timestamp: number;
   /** Array of decoded markers */
   markers: MorMarker[];
+  /** True when the input exceeded the decode budget and trailing entries were dropped. */
+  truncated?: boolean;
 }
 
 /**

@@ -200,4 +200,25 @@ describe('useReplayPrefs', () => {
       expect(raw.performanceMode).toBe(false);
     });
   });
+
+  describe('playbackSpeed bounds', () => {
+    it('clamps an absurd stored speed into the ladder range', () => {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ playbackSpeed: 1e9 }));
+      const { result } = renderHook(() => useReplayPrefs());
+      expect(result.current.storedPrefs.playbackSpeed).toBe(5);
+      expect(result.current.initialPrefs.playbackSpeed).toBe(5);
+    });
+
+    it('clamps a tiny positive stored speed up to the minimum', () => {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ playbackSpeed: 0.01 }));
+      const { result } = renderHook(() => useReplayPrefs());
+      expect(result.current.storedPrefs.playbackSpeed).toBe(0.25);
+    });
+
+    it('keeps a valid ladder speed untouched', () => {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ playbackSpeed: 1.5 }));
+      const { result } = renderHook(() => useReplayPrefs());
+      expect(result.current.storedPrefs.playbackSpeed).toBe(1.5);
+    });
+  });
 });

@@ -25,6 +25,25 @@ describe('LongPressTracker', () => {
     expect(onLongPress).toHaveBeenCalledWith(sample());
   });
 
+  it('defaults to a tremor-tolerant 14px slop', () => {
+    const onLongPress = jest.fn();
+    const tracker = new LongPressTracker(onLongPress, { delayMs: 500 });
+
+    tracker.begin(sample());
+    // hypot(12, 8) ≈ 14.4px > 14px slop → cancels.
+    tracker.move(sample({ clientX: 112, clientY: 108 }));
+    jest.advanceTimersByTime(1000);
+    expect(onLongPress).not.toHaveBeenCalled();
+
+    // ...while a straight 12px drift survives.
+    const onLongPress2 = jest.fn();
+    const tracker2 = new LongPressTracker(onLongPress2, { delayMs: 500 });
+    tracker2.begin(sample());
+    tracker2.move(sample({ clientX: 112 }));
+    jest.advanceTimersByTime(1000);
+    expect(onLongPress2).toHaveBeenCalled();
+  });
+
   it('cancels when the pointer travels beyond the slop (drag/rotate)', () => {
     const onLongPress = jest.fn();
     const tracker = new LongPressTracker(onLongPress, { delayMs: 500, slopPx: 10 });

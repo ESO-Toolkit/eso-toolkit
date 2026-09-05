@@ -922,11 +922,22 @@ const SERPENT: ConstellationSpec = {
   opacity: 0.85,
 };
 
-export const ArenaEnvironmentShell: React.FC<ArenaEnvironmentShellProps> = ({
+/**
+ * Barebones gate: performance mode renders NO environment at all, so none of the expensive
+ * resources below (sky-dome shader + geometry, 9k-star fields, nebula bake) may be created.
+ * The gate lives HERE — before any hook — because useSkyDome allocates GPU resources during
+ * render; gating after the hooks (the old `if (performanceMode) return null` mid-component)
+ * still paid the full allocation for hidden output.
+ */
+export const ArenaEnvironmentShell: React.FC<ArenaEnvironmentShellProps> = (props) => {
+  if (props.performanceMode) return null;
+  return <EnvironmentContent {...props} />;
+};
+
+const EnvironmentContent: React.FC<ArenaEnvironmentShellProps> = ({
   size,
   centerX,
   centerZ,
-  performanceMode = false,
   variant = 'tamriel',
 }) => {
   const spec = VARIANTS[variant];
@@ -940,10 +951,6 @@ export const ArenaEnvironmentShell: React.FC<ArenaEnvironmentShellProps> = ({
       material.dispose();
     };
   }, [sky]);
-
-  if (performanceMode) {
-    return null;
-  }
 
   const center: [number, number, number] = [centerX, 0, centerZ];
   // Celestials ride the dome at ~0.92× the dome radius so they sit just inside the starfield shell.
@@ -961,7 +968,7 @@ export const ArenaEnvironmentShell: React.FC<ArenaEnvironmentShellProps> = ({
         <Stars
           radius={radius * 0.8}
           depth={size * 1.2}
-          count={performanceMode ? 1500 : spec.starCount}
+          count={spec.starCount}
           factor={size * 0.16}
           saturation={0}
           fade
@@ -970,7 +977,7 @@ export const ArenaEnvironmentShell: React.FC<ArenaEnvironmentShellProps> = ({
         <Stars
           radius={radius * 0.78}
           depth={size}
-          count={performanceMode ? 200 : Math.round(spec.starCount * 0.08)}
+          count={Math.round(spec.starCount * 0.08)}
           factor={size * 0.4}
           saturation={0}
           fade

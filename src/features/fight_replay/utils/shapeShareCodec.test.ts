@@ -171,6 +171,47 @@ describe('shapeShareCodec', () => {
       expect(decodeShapesZone('nope')).toBeNull();
     });
 
+    it('rejects unknown versions instead of decoding them as v1 geometry', () => {
+      const v1 = encodeShapes([shape({})], ZONE);
+      expect(decodeShapes(v1)).toHaveLength(1);
+      expect(decodeShapes(v1.replace('(1]', '(2]'))).toEqual([]);
+    });
+
+    it('rejects missing/invalid zones (no silent current-zone pass-through)', () => {
+      expect(decodeShapes('(1]x]0:0]P|||FF0000|0||0:0,1:1|)')).toEqual([]);
+      expect(decodeShapes('(1]0]0:0]P|||FF0000|0||0:0,1:1|)')).toEqual([]);
+      expect(decodeShapes('(1]-5]0:0]P|||FF0000|0||0:0,1:1|)')).toEqual([]);
+      expect(decodeShapesZone('(1]x]0:0]P|||FF0000|0||0:0,1:1|)')).toBeNull();
+      expect(decodeShapesZone('(9]1263]0:0]P|||FF0000|0||0:0,1:1|)')).toBeNull();
+    });
+
+    it('caps blocks and vertices on hostile input', () => {
+      const verts = Array.from(
+        { length: 600 },
+        (_, i) => `${i.toString(16)}:${i.toString(16)}`,
+      ).join(',');
+      const many = `(1]${ZONE}]0:0]P|||FF0000|0||${verts}|)`;
+      // Single block with 600 vertices exceeds the per-shape cap → dropped, not materialized.
+      expect(decodeShapes(many)).toEqual([]);
+
+      const block = 'P|||FF0000|0||0:0,1:1|';
+      const flood = `(1]${ZONE}]0:0]${Array.from({ length: 250 }, () => block).join(';')})`;
+      const decoded = decodeShapes(flood);
+      expect(decoded.length).toBeLessThanOrEqual(200);
+    });
+
+    it('truncates pathological labels instead of rejecting the shape', () => {
+      const code = encodeShapes([shape({ label: 'x'.repeat(2000) })], ZONE);
+      const [got] = decodeShapes(code);
+      expect(got.label?.length).toBeLessThanOrEqual(500);
+    });
+
+    it('rejects oversized input before splitting', () => {
+      expect(decodeShapes(`(1]${ZONE}]0:0]${'P|||FF0000|0||0:0,1:1|;'.repeat(30000)})`)).toEqual(
+        [],
+      );
+    });
+
     it('drops only the malformed block and keeps the valid ones', () => {
       const good = encodeShapes(
         [

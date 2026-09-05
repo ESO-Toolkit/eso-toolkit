@@ -385,6 +385,109 @@ describe('WorkerPool', () => {
 
       pool.destroy();
     });
+
+    it('cancelTask returns false for unknown or settled task ids', async () => {
+      const pool = new WorkerPool({ maxWorkers: 1 });
+
+      expect(pool.cancelTask('no-such-task')).toBe(false);
+
+      await pool.execute('calculateBuffLookup', {});
+      // Settled tasks are forgotten: nothing to cancel.
+      expect(pool.cancelTask('no-such-task')).toBe(false);
+
+      pool.destroy();
+    });
+
+    it('abort signal cancels a queued task before it starts', async () => {
+      mockWorker.calculateBuffLookup.mockImplementationOnce(() => new Promise<never>(() => {}));
+      const pool = new WorkerPool({ maxWorkers: 1 });
+
+      const running = pool.execute('calculateBuffLookup', {}); // occupies the only worker
+      running.catch(() => {}); // settles on destroy() below
+      const controller = new AbortController();
+      const queued = pool.execute('calculateDebuffLookup', {}, 0, undefined, controller.signal);
+      const queuedAssertion = expect(queued).rejects.toThrow(/cancelled/i);
+
+      controller.abort();
+      await queuedAssertion;
+      // The running task is untouched by the queued task's abort.
+      expect(mockWorker.calculateDebuffLookup).not.toHaveBeenCalled();
+
+      pool.destroy();
+    });
+
+    it('abort signal tears down a running worker and frees the slot', async () => {
+      mockWorker.calculateBuffLookup
+        .mockImplementationOnce(() => new Promise<never>(() => {}))
+        .mockResolvedValueOnce({ ok: true } as never);
+      const pool = new WorkerPool({ maxWorkers: 1, taskTimeout: 60000 });
+      const controller = new AbortController();
+
+      const running = pool.execute('calculateBuffLookup', {}, 0, undefined, controller.signal);
+      const runningAssertion = expect(running).rejects.toThrow(/cancelled/i);
+      controller.abort();
+      await runningAssertion;
+
+      // Slot recovered: the next task runs on a fresh worker.
+      await expect(pool.execute('calculateBuffLookup', {})).resolves.toEqual({ ok: true });
+      pool.destroy();
+    });
+
+    it('does not retry failures by default', async () => {
+      const pool = new WorkerPool();
+      mockWorker.calculateBuffLookup.mockRejectedValue(new Error('boom'));
+
+      await expect(pool.execute('calculateBuffLookup', {})).rejects.toThrow('boom');
+      expect(mockWorker.calculateBuffLookup).toHaveBeenCalledTimes(1);
+      expect(pool.getStats().failedTasks).toBe(1);
+      pool.destroy();
+    });
+
+    it('retries failures on a fresh worker when retryAttempts is set', async () => {
+      const pool = new WorkerPool({ maxWorkers: 1, retryAttempts: 1 });
+      mockWorker.calculateBuffLookup
+        .mockRejectedValueOnce(new Error('flaky'))
+        .mockResolvedValueOnce({ ok: true } as never);
+
+      await expect(pool.execute('calculateBuffLookup', {})).resolves.toEqual({ ok: true });
+      expect(mockWorker.calculateBuffLookup).toHaveBeenCalledTimes(2);
+      expect(pool.getStats().failedTasks).toBe(0);
+      pool.destroy();
+    });
+
+    it('a retried task still honors its abort signal', async () => {
+      // Regression: the retry path used to run the full settle-cleanup, which detached the
+      // abort listener. The requeued task then ignored abort() and held a pool slot until it
+      // finished — a superseded position compute could occupy a replay worker for ~90s.
+      const pool = new WorkerPool({ maxWorkers: 1, retryAttempts: 1, taskTimeout: 60000 });
+      mockWorker.calculateBuffLookup
+        .mockRejectedValueOnce(new Error('flaky'))
+        .mockImplementationOnce(() => new Promise<never>(() => {})); // retry hangs
+
+      const controller = new AbortController();
+      const task = pool.execute('calculateBuffLookup', {}, 0, undefined, controller.signal);
+      const assertion = expect(task).rejects.toThrow(/cancelled/i);
+
+      // Let the first attempt fail and the retry get picked up.
+      await Promise.resolve();
+      await Promise.resolve();
+      expect(mockWorker.calculateBuffLookup).toHaveBeenCalledTimes(2);
+
+      controller.abort();
+      await assertion;
+
+      pool.destroy();
+    });
+
+    it('never retries timeouts or cancellations', async () => {
+      mockWorker.calculateBuffLookup.mockImplementation(() => new Promise<never>(() => {}));
+      const pool = new WorkerPool({ maxWorkers: 1, taskTimeout: 50, retryAttempts: 3 });
+
+      await expect(pool.execute('calculateBuffLookup', {})).rejects.toThrow(/timeout/i);
+      // One attempt only — no retry storm on an exhausted budget.
+      expect(mockWorker.calculateBuffLookup).toHaveBeenCalledTimes(1);
+      pool.destroy();
+    });
   });
 
   describe('Logging', () => {

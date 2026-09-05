@@ -33,6 +33,7 @@ import { ShapeToolbar } from './components/ShapeToolbar';
 import { markerDeckSurface } from './constants/replayDesign';
 import { useIsMobileReplay } from './hooks/useIsMobileReplay';
 import { useMapMarkersManager } from './hooks/useMapMarkersManager';
+import { useReplayTeardown } from './hooks/useReplayTeardown';
 import { chapterDisplayName } from './trial_chapters/chapterDisplay';
 import { buildTrialTimeline } from './trial_chapters/trialTimeline';
 import type { TrialChapter } from './trial_chapters/types';
@@ -44,15 +45,10 @@ import {
   encodeInGameMor,
   encodeMarkersToElms,
 } from './utils/mapMarkerConverters';
+import { formatDurationMs } from './utils/replayTime';
 import { worldDistanceMeters } from './utils/shapeGeometry';
 import { encodeShapes } from './utils/shapeShareCodec';
-
-function formatDuration(milliseconds: number): string {
-  const totalSeconds = Math.floor(milliseconds / 1000);
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-  return `${minutes}:${seconds.toString().padStart(2, '0')}`;
-}
+import { isTextEntryTarget } from './utils/textEntryTarget';
 
 /** Copy text to the clipboard, falling back to a hidden textarea + execCommand on older/insecure
  * contexts. Returns whether the copy succeeded. */
@@ -84,16 +80,6 @@ async function copyTextToClipboard(text: string): Promise<boolean> {
   } catch {
     return false;
   }
-}
-
-/** True when the keydown target is a text-entry element (don't steal undo/redo from inputs). */
-function isTextEntryTarget(target: EventTarget | null): boolean {
-  if (!(target instanceof HTMLElement)) {
-    return false;
-  }
-  return (
-    target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable === true
-  );
 }
 
 export const FightReplay: React.FC = () => {
@@ -317,14 +303,19 @@ export const FightReplay: React.FC = () => {
         return;
       }
       try {
-        const { code, markerCount, dotCount, spacingMeters } = encodeInGameMor(markersState);
+        const { code, markerCount, dotCount, spacingMeters, dotsTruncated } =
+          encodeInGameMor(markersState);
         const ok = await copyTextToClipboard(code);
         if (!ok) {
           setCopySnackbar({ type: 'error', message: 'Unable to copy the M0R string right now.' });
           return;
         }
+        // Only outline dots transfer (no fills/labels/dash/width/time) — disclosed every export
+        // so nobody discovers it in-game; truncation disclosed when the cap bit.
         const shapeNote =
-          dotCount > 0 ? ` (${dotCount} shape dots at ~${spacingMeters.toFixed(1)}m spacing)` : '';
+          dotCount > 0
+            ? ` (${dotCount} shape dots at ~${spacingMeters.toFixed(1)}m spacing — outlines only, no fills/labels${dotsTruncated ? '; some shapes omitted at the 500-marker cap' : ''})`
+            : '';
         setCopySnackbar({
           type: 'success',
           message: `M0R import copied — ${markerCount} markers${shapeNote}. Paste it into M0RMarkers in-game.`,
@@ -362,9 +353,10 @@ export const FightReplay: React.FC = () => {
     }
   }, [navigate, reportId, fightId]);
 
-  // Get buff events for phase detection using the proper hooks that fetch data
-  const { friendlyBuffEvents, isFriendlyBuffEventsLoading } = useFriendlyBuffEvents();
-  const { hostileBuffEvents, isHostileBuffEventsLoading } = useHostileBuffEvents();
+  // Get buff events for phase detection using the proper hooks that fetch data.
+  // Their loading states deliberately do NOT gate the arena (see isInitialLoading).
+  const { friendlyBuffEvents } = useFriendlyBuffEvents();
+  const { hostileBuffEvents } = useHostileBuffEvents();
 
   // Trial chapter navigation — lets the viewer skip between bosses (and trash) without
   // leaving the replay. The run/rail come from report data, so they're available even
@@ -389,11 +381,6 @@ export const FightReplay: React.FC = () => {
   // in the store adds pressure (a likely contributor to mobile tab reloads); the marginal speed-up
   // isn't worth it there.
   const isMobileReplay = useIsMobileReplay();
-  useReplayPrefetch(
-    trialChapters.nextBoss,
-    trialChapters.prevBoss,
-    !isMobileReplay && Boolean(lookup) && !isActorPositionsLoading,
-  );
 
   // Switching fights in-place leaves the actor-position result slot holding the previous
   // fight's positions (it isn't cleared until the next compute resolves). Reset it on a
@@ -430,6 +417,10 @@ export const FightReplay: React.FC = () => {
       // New fight's positions are ready.
       loadingSeenRef.current = false;
       setIsSwitchingFight(false);
+    } else if (actorPositionsError) {
+      // The pipeline failed outright — surface the error panel instead of spinning forever.
+      loadingSeenRef.current = false;
+      setIsSwitchingFight(false);
     } else if (isActorPositionsLoading) {
       // Pipeline has engaged for the new fight.
       loadingSeenRef.current = true;
@@ -438,7 +429,21 @@ export const FightReplay: React.FC = () => {
       loadingSeenRef.current = false;
       setIsSwitchingFight(false);
     }
-  }, [isSwitchingFight, lookup, isActorPositionsLoading]);
+  }, [isSwitchingFight, lookup, isActorPositionsLoading, actorPositionsError]);
+
+  // Bounded fallback: if the compute pipeline never engages (deduped dispatch, hung events),
+  // none of the branches above fire and the flag would latch forever behind a permanent
+  // transition overlay (which also suppresses the real error panel). 15s is far beyond any
+  // legitimate switch.
+  useEffect(() => {
+    if (!isSwitchingFight) return;
+    const timer = setTimeout(() => setIsSwitchingFight(false), 15000);
+    return () => clearTimeout(timer);
+  }, [isSwitchingFight, fightId]);
+
+  // Route-leave teardown. Lives in a hook so the "must not fire on a mid-session breakpoint
+  // flip" invariant is unit-testable — see useReplayTeardown.
+  useReplayTeardown(dispatch, isMobileReplay);
 
   // Keyboard skip to the previous / next boss ( [ and ] ). Distinct from FightReplay3D's
   // in-fight transport keys, so the two handlers never collide. Guards mirror the
@@ -502,6 +507,31 @@ export const FightReplay: React.FC = () => {
     [trialChapters.segments, includeTrash],
   );
 
+  // Warm the adjacent segments' events once the current fight is interactive, so the next skip
+  // starts without waiting on the network (positions still compute on arrival, but a
+  // previously-viewed fight returns instantly from the worker's LRU result cache). Neighbours
+  // come from the FILTERED timeline (trash-aware): with includeTrash on, the next segment is
+  // often trash, not the next boss — boss-only prefetch would leave it cold. Falls back to
+  // bosses when there is no multi-entry timeline. Disabled on mobile (memory pressure).
+  const prefetchReady = !isMobileReplay && Boolean(lookup) && !isActorPositionsLoading;
+  const prefetchNext = useMemo(() => {
+    if (!prefetchReady || !fightId) return null;
+    if (trialTimeline.entries.length > 1) {
+      const idx = trialTimeline.entries.findIndex((e) => e.chapter.fightId === fightId);
+      if (idx >= 0) return trialTimeline.entries[idx + 1]?.chapter ?? null;
+    }
+    return trialChapters.nextBoss;
+  }, [prefetchReady, fightId, trialTimeline, trialChapters.nextBoss]);
+  const prefetchPrev = useMemo(() => {
+    if (!prefetchReady || !fightId) return null;
+    if (trialTimeline.entries.length > 1) {
+      const idx = trialTimeline.entries.findIndex((e) => e.chapter.fightId === fightId);
+      if (idx >= 0) return trialTimeline.entries[idx - 1]?.chapter ?? null;
+    }
+    return trialChapters.prevBoss;
+  }, [prefetchReady, fightId, trialTimeline, trialChapters.prevBoss]);
+  useReplayPrefetch(prefetchNext, prefetchPrev, prefetchReady);
+
   // Keep FightReplay3D mounted once the arena has rendered, so fullscreen and the continuous
   // transition overlay survive fight switches (it shows its own loading state in place).
   const hasRenderedArenaRef = useRef(false);
@@ -518,12 +548,11 @@ export const FightReplay: React.FC = () => {
   }, [friendlyBuffEvents, hostileBuffEvents]);
 
   // Only show loading if we don't have the necessary data yet
-  // Don't show loading if we're just updating markers
-  const isInitialLoading =
-    (isActorPositionsLoading && !lookup) ||
-    (isFriendlyBuffEventsLoading && friendlyBuffEvents.length === 0) ||
-    (isHostileBuffEventsLoading && hostileBuffEvents.length === 0) ||
-    (isFightLoading && !fight);
+  // Don't show loading if we're just updating markers.
+  // NOTE: buff streams are deliberately NOT part of this gate. The arena only needs positions;
+  // the phase map tolerates absent buffs (usePhaseBasedMap falls back to explicit transitions).
+  // Gating first paint on buffs held the loader forever whenever the buff stream was slow.
+  const isInitialLoading = (isActorPositionsLoading && !lookup) || (isFightLoading && !fight);
 
   // Shared back action for the state screens (only navigable when we have the ids).
   const stateBackAction =
@@ -537,9 +566,13 @@ export const FightReplay: React.FC = () => {
   // run, so a single isolated fight behaves exactly as before. The label shown while entering a
   // fight is the segment/fight name (the new fight resolves from report data before its
   // positions), trash-disambiguated so "Entering Trash · X" can't read as a boss pull.
+  // Off-timeline fallback: a fight with no difficulty that isn't a known segment is time-span
+  // trash — prefix it so it can't read as a boss pull either.
   const enteringLabel = trialChapters.currentSegment
     ? chapterDisplayName(trialChapters.currentSegment)
-    : (fight?.name ?? null);
+    : fight?.difficulty == null && fight?.name
+      ? `Trash · ${fight.name}`
+      : (fight?.name ?? null);
   const killedBosses = trialChapters.bossChapters.filter((b) => b.isKill).length;
   // Gate on the UNFILTERED run size, not the filtered timeline: with the trash filter on, a
   // 1-boss-plus-trash run collapses to a single timeline entry, and gating on that unmounted
@@ -564,7 +597,7 @@ export const FightReplay: React.FC = () => {
             runCount: trialChapters.runCount,
             bossSummary:
               trialChapters.bossChapters.length > 0
-                ? `${killedBosses} / ${trialChapters.bossChapters.length} bosses`
+                ? `${killedBosses} / ${trialChapters.bossChapters.length} pulls`
                 : null,
             prevBoss: trialChapters.prevBoss,
             nextBoss: trialChapters.nextBoss,
@@ -717,7 +750,7 @@ export const FightReplay: React.FC = () => {
                 </Typography>
               )}
               <Chip
-                label={formatDuration(fight.endTime - fight.startTime)}
+                label={formatDurationMs(fight.endTime - fight.startTime)}
                 size="small"
                 variant="outlined"
                 icon={<AccessTimeIcon />}
@@ -732,10 +765,11 @@ export const FightReplay: React.FC = () => {
       </Box>
 
       {/* Trial chapter rail — skip between bosses (and trash) without leaving the replay.
-          Stays mounted across fight switches so navigation feels continuous. Its title is
-          suppressed when the page header already states the same trial name. The map-markers
-          tools live in their own quiet toolbar below, so the rail stays focused on navigation. */}
-      {trialChapters.currentRun && (
+          Stays mounted across fight switches so navigation feels continuous. Gated on a
+          MULTI-SEGMENT run like trialNav (not mere run existence) so a single isolated fight
+          doesn't render a one-stop rail. Its title is suppressed when the page header already
+          states the same trial name. */}
+      {trialChapters.currentRun && trialChapters.segments.length > 1 && (
         <ChapterRail
           segments={trialChapters.segments}
           bossChapters={trialChapters.bossChapters}

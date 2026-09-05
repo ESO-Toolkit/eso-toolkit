@@ -71,3 +71,10 @@ export interface MapMarkersState {
   /** Esotk-native drawn shapes (lines/zones/circles/rects/rulers). Optional for back-compat. */
   shapes?: ReplayShape[];
 }
+
+/** Canonical import/persistence caps enforced by decoders, converters and the manager. */
+export const MAX_IMPORT_MARKERS = 500;
+export const MAX_IMPORT_SHAPES = 100;
+export const MAX_IMPORT_VERTICES = 500;
+export const MAX_IMPORT_BYTES = 262144;
+export const MAX_MARKER_LABEL_LENGTH = 120;

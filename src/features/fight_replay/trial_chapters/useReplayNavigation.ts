@@ -16,7 +16,10 @@ import { useNavigate } from 'react-router-dom';
 import { useReportFightParams } from '../../../hooks/useReportFightParams';
 
 export interface ReplayNavigationOptions {
-  /** Start time (ms into the fight) to seed; omitted/0 starts the new fight from the beginning. */
+  /**
+   * Start time (ms into the fight) to seed. Omitted/null/negative starts the new fight from the
+   * beginning; an explicit 0 is canonicalized the same way (arrival defaults to 0 anyway).
+   */
   time?: number;
   /** Replace the history entry instead of pushing (default: push, so Back returns to the prior fight). */
   replace?: boolean;
@@ -44,7 +47,9 @@ export function useReplayNavigation(): UseReplayNavigationResult {
       if (!reportId) return;
 
       const params = new URLSearchParams();
-      if (options?.time != null && options.time > 0) {
+      // Finite, non-negative only: NaN/Infinity/negatives would seed garbage or be mistaken for
+      // "no param" downstream (arrival treats missing and 0 identically — fight start).
+      if (options?.time != null && Number.isFinite(options.time) && options.time >= 0) {
         params.set('time', String(Math.round(options.time)));
       }
       const query = params.toString();
