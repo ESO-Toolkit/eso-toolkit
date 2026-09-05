@@ -1,5 +1,13 @@
 import { useFrame, type ThreeEvent } from '@react-three/fiber';
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import {
+  Suspense,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
@@ -1656,16 +1664,25 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
         />
       ))}
       {showNames && (
-        <BatchedActorNames3D
-          lookup={lookup}
-          timeRef={timeRef}
-          scale={scale}
-          actorIds={actorIds}
-          playerVisibility={playerVisibility}
-          selectedActorRef={selectedActorRef}
-          nameTagBudget={nameTagBudget}
-          capGateRef={capGateRef}
-        />
+        // Own Suspense boundary, deliberately NOT shared with the rest of the arena.
+        // BatchedActorNames3D renders drei's <Text>, which suspends while troika loads/measures
+        // its font. The only other boundary is Arena3D's <Suspense fallback={null}> around the
+        // WHOLE scene, so a name-tag load that never settles (e.g. troika's worker module failing
+        // to rehydrate under a minified vendor chunk) unmounts the ENTIRE arena — floor, actors,
+        // lighting — leaving a bare cleared canvas with no error and no loading state. Scoping the
+        // boundary here degrades exactly one feature: names disappear, the fight still renders.
+        <Suspense fallback={null}>
+          <BatchedActorNames3D
+            lookup={lookup}
+            timeRef={timeRef}
+            scale={scale}
+            actorIds={actorIds}
+            playerVisibility={playerVisibility}
+            selectedActorRef={selectedActorRef}
+            nameTagBudget={nameTagBudget}
+            capGateRef={capGateRef}
+          />
+        </Suspense>
       )}
     </>
   );
