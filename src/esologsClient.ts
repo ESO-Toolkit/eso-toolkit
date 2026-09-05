@@ -12,7 +12,6 @@ import {
   Observable,
   from,
 } from '@apollo/client';
-import { CombinedGraphQLErrors } from '@apollo/client/errors';
 import { setContext } from '@apollo/client/link/context';
 import { onError, ErrorLink } from '@apollo/client/link/error';
 import { RetryLink } from '@apollo/client/link/retry';
@@ -20,11 +19,12 @@ import { getOperationAST } from 'graphql';
 
 import { clearStoredTokens, refreshAccessToken } from './features/auth/auth';
 import { Logger, LogLevel } from './utils/logger';
-
-type ErrorWithGraphQLErrors = {
-  graphQLErrors?: Array<{ message?: string }>;
-  message?: string;
-};
+import {
+  classifyRequestFailure,
+  getRetryDelayMs,
+  shouldRetryRequest,
+  toRequestFailure,
+} from './utils/requestFailure';
 
 // Create a logger instance for GraphQL client
 const logger = new Logger({
@@ -97,51 +97,29 @@ export class EsoLogsClient {
   private createApolloClient(accessToken: string): ApolloClient {
     // Retry link: automatically retries requests that fail with HTTP 429 (rate limit)
     // or transient network errors (status 0 / no statusCode — CORS block, DNS failure,
-    // dropped connection, etc.). Uses exponential backoff with jitter to avoid
-    // thundering-herd retries.
+    // dropped connection, etc.). Delays are deterministic, bounded, and honour
+    // the server's Retry-After header where present.
     const retryLink = new RetryLink({
-      delay: {
-        initial: 1000, // wait 1 s before the first retry
-        max: 15000, // cap at 15 s
-        jitter: true, // randomise to spread concurrent retries
-      },
-      attempts: {
-        max: 3,
-        retryIf: (error: unknown) => {
-          const statusCode = (error as { statusCode?: number })?.statusCode;
-          if (statusCode === 429) {
-            logger.warn('API rate limit hit (429) — retrying with backoff', {
-              operation: 'pending',
-            });
-            return true;
-          }
-          // Also retry on network-level errors (no statusCode means the request
-          // never reached the server — transient connectivity failure).
-          if (error != null && statusCode === undefined) {
-            logger.warn('Network error — retrying with backoff');
-            return true;
-          }
-          return false;
-        },
+      delay: (retryCount, _operation, error) => getRetryDelayMs(error, retryCount),
+      attempts: (retryCount, operation, error) => {
+        const failure = classifyRequestFailure(error);
+        const retry = shouldRetryRequest(error, retryCount);
+        if (retry) {
+          logger.warn(`Request failed (${failure.kind}) - retrying with backoff`, {
+            operation: operation.operationName,
+            retryCount,
+            retryAfterMs: failure.retryAfterMs,
+          });
+        }
+        return retry;
       },
     });
 
     // Error handling link for 401 responses
     const errorLink: ErrorLink = onError(({ error, operation, forward }) => {
-      // Check if this is a GraphQL error with authentication issues
-      let hasAuthError = false;
+      const failure = classifyRequestFailure(error);
 
-      if (CombinedGraphQLErrors.is(error)) {
-        hasAuthError = error.errors.some(
-          (err) =>
-            err.message?.includes('Unauthenticated') ||
-            err.message?.includes('Unauthorized') ||
-            err.extensions?.code === 'UNAUTHENTICATED' ||
-            err.extensions?.code === 'UNAUTHORIZED',
-        );
-      }
-
-      if (hasAuthError) {
+      if (failure.kind === 'authentication') {
         // Loop guard is PER-OPERATION, not client-wide: if THIS op was already
         // retried with a freshly refreshed token and still fails auth, the
         // refresh genuinely didn't help — clear tokens and stop. Concurrent ops
@@ -210,10 +188,10 @@ export class EsoLogsClient {
       // Log the error for debugging — skip noisy 429 logs since RetryLink already
       // warned on each attempt and the query() catch block will surface a
       // human-readable message to the UI.
-      const networkStatusCode = (error as { statusCode?: number })?.statusCode;
-      if (networkStatusCode === 429) {
+      if (failure.kind === 'rate-limited') {
         logger.warn('API rate limit (429) — all retries exhausted', {
           operation: operation.operationName,
+          retryAfterMs: failure.retryAfterMs,
         });
         return;
       }
@@ -300,31 +278,7 @@ export class EsoLogsClient {
     try {
       result = await this.client.query(options);
     } catch (networkError) {
-      // Convert well-known network failures to human-readable messages so that UI
-      // components can surface actionable feedback instead of an opaque stack trace.
-      //
-      // When ApolloClient.query() throws, it always wraps low-level errors inside
-      // an ApolloError.  The HTTP status code therefore lives at:
-      //   error.networkError.statusCode  (ApolloError → ServerError)
-      // NOT at the top-level error.statusCode (which is always undefined).
-      // We check both locations for robustness.
-      const innerNetworkError = (networkError as { networkError?: { statusCode?: number } })
-        ?.networkError;
-      const statusCode =
-        innerNetworkError?.statusCode ?? (networkError as { statusCode?: number })?.statusCode;
-      if (statusCode === 429) {
-        throw new Error(
-          'API rate limit exceeded. Too many requests were sent in a short period — please wait a moment and try again.',
-        );
-      }
-      // statusCode === undefined (or 0) means the request never got a response —
-      // this is the NetworkError case captured in sentry as ESO-LOGS-8J / ESO-589.
-      if (statusCode === undefined || statusCode === 0) {
-        throw new Error(
-          'Network error: Could not connect to the ESO Logs API. Please check your internet connection and try again.',
-        );
-      }
-      throw networkError;
+      throw toRequestFailure(networkError);
     }
 
     // Check for GraphQL errors and reject if they exist
@@ -335,20 +289,12 @@ export class EsoLogsClient {
       const errorPolicy = options.errorPolicy ?? 'none';
 
       if (errorPolicy === 'all' && hasData) {
-        const graphErrors = (result.error as ErrorWithGraphQLErrors | undefined)?.graphQLErrors;
-        const errorMessages =
-          Array.isArray(graphErrors) && graphErrors.length > 0
-            ? graphErrors.map((graphError) => graphError?.message ?? 'Unknown GraphQL error')
-            : [result.error.message ?? 'Unknown GraphQL error'];
-        logger.warn('GraphQL query completed with errors', {
-          query: operationName,
-          messages: errorMessages,
-        });
+        throw toRequestFailure(result.error, { partial: true });
       } else {
         logger.error('GraphQL query error', result.error, {
           query: operationName,
         });
-        throw new Error(`GraphQL error: ${result.error.message}`);
+        throw toRequestFailure(result.error);
       }
     }
 

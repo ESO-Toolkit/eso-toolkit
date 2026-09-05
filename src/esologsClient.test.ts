@@ -1,7 +1,8 @@
 import { ApolloClient } from '@apollo/client';
-import { DocumentNode } from 'graphql';
+import { DocumentNode, parse } from 'graphql';
 
 import { EsoLogsClient, createEsoLogsClient } from './esologsClient';
+import { RequestFailure } from './utils/requestFailure';
 
 describe('EsoLogsClient', () => {
   const mockAccessToken = 'mock-access-token';
@@ -289,9 +290,11 @@ describe('EsoLogsClient', () => {
       );
       apolloClient.query = jest.fn().mockRejectedValue(apolloError);
 
-      await expect(client.query({ query: {} as DocumentNode })).rejects.toThrow(
-        'API rate limit exceeded',
-      );
+      await expect(client.query({ query: {} as DocumentNode })).rejects.toMatchObject({
+        kind: 'rate-limited',
+        retryable: true,
+        statusCode: 429,
+      });
     });
 
     it('should surface a user-friendly message when a 429 rate-limit error occurs (direct statusCode)', async () => {
@@ -301,21 +304,60 @@ describe('EsoLogsClient', () => {
       const rateLimitError = Object.assign(new Error('Too Many Requests'), { statusCode: 429 });
       apolloClient.query = jest.fn().mockRejectedValue(rateLimitError);
 
-      await expect(client.query({ query: {} as DocumentNode })).rejects.toThrow(
-        'API rate limit exceeded',
-      );
+      await expect(client.query({ query: {} as DocumentNode })).rejects.toMatchObject({
+        kind: 'rate-limited',
+        retryable: true,
+        statusCode: 429,
+      });
     });
 
-    it('should rethrow other errors unchanged', async () => {
+    it('classifies transient server failures instead of exposing transport details', async () => {
       const client = new EsoLogsClient(mockAccessToken, mockProxyUrl);
       const apolloClient = client.getClient();
 
       const serverError = Object.assign(new Error('Internal Server Error'), { statusCode: 500 });
       apolloClient.query = jest.fn().mockRejectedValue(serverError);
 
-      await expect(client.query({ query: {} as DocumentNode })).rejects.toThrow(
-        'Internal Server Error',
-      );
+      await expect(client.query({ query: {} as DocumentNode })).rejects.toMatchObject({
+        kind: 'transient',
+        retryable: true,
+        statusCode: 500,
+      });
+    });
+
+    it.each([
+      [Object.assign(new Error('Unauthorized'), { statusCode: 401 }), 'authentication'],
+      [Object.assign(new Error('Forbidden'), { statusCode: 403 }), 'forbidden'],
+      [
+        {
+          errors: [{ message: 'Token expired', extensions: { code: 'UNAUTHENTICATED' } }],
+        },
+        'authentication',
+      ],
+    ] as const)('rejects %s as a typed %s failure', async (error, kind) => {
+      const client = new EsoLogsClient(mockAccessToken, mockProxyUrl);
+      const apolloClient = client.getClient();
+      apolloClient.query = jest.fn().mockRejectedValue(error);
+
+      const request = client.query({ query: {} as DocumentNode });
+      await expect(request).rejects.toBeInstanceOf(RequestFailure);
+      await expect(request).rejects.toMatchObject({ kind });
+    });
+
+    it('rejects partial GraphQL data so consumers cannot render it as complete', async () => {
+      const client = new EsoLogsClient(mockAccessToken, mockProxyUrl);
+      const apolloClient = client.getClient();
+      apolloClient.query = jest.fn().mockResolvedValue({
+        data: { report: { code: 'partial' } },
+        error: { errors: [{ message: 'Event stream timed out' }] },
+      });
+
+      await expect(
+        client.query({
+          query: parse('query Report { report { code } }'),
+          errorPolicy: 'all',
+        }),
+      ).rejects.toMatchObject({ kind: 'partial', retryable: true });
     });
   });
 });
