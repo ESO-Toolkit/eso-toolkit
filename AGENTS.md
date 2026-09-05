@@ -129,8 +129,9 @@ Self-contained feature areas with their own components, hooks, store slices, and
 **Full details**: [AGENTS_TECH_STACK.md](AGENTS_TECH_STACK.md)
 
 For reconstructed fight-replay NPC model work, read
+[the pipeline runbook](documentation/architecture/fight-replay-npc-pipeline-runbook.md) first, then
 [the asset manifest](documentation/architecture/fight-replay-npc-asset-manifest.md) and
-[the GPU queue log](documentation/architecture/fight-replay-npc-gpu-queue-log.md) first. GPU
+[the GPU queue log](documentation/architecture/fight-replay-npc-gpu-queue-log.md). GPU
 generation is serialized through one operator at a time, and there is no standalone Blender on the
 workstation — run `tools/fight-replay-models/*.py` through the Hunyuan venv interpreter.
 
