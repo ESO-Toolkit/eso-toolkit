@@ -39,21 +39,28 @@ not a claim that Elder Scrolls Online intellectual property is freely licensed.
   per island, down from v1's 491), island borders dilated so mipmapping cannot bleed background into
   the silhouette.
 - Prepared asset: `yandir-the-butcher-overview-v2.glb`; one mesh, one material, one draw call,
-  45,000 triangles, 28,854 vertices, 1024x1024 JPEG q92 base-color texture, 1,715,468 bytes, SHA-256
-  `7BD34A2DAF442874B24FC993E9958911D6E9BCDA650D8CA1AF25BF7F5B74AE72`. Stored as JPEG because the
-  same texture as PNG is 2,710,356 bytes, over the 2.5 MB runtime gate.
+  45,000 triangles, 28,854 vertices, 1024x1024 JPEG q92 base-color texture (no chroma subsampling),
+  1,981,816 bytes. Stored as JPEG because the same texture as PNG is 2,710,356 bytes, over the
+  2.5 MB runtime gate.
 - Prepared bounds: 0.9414 x 1.9927 x 0.3990 model units (X x Y x Z), minimum Y exactly 0.0, centered
   on X and Z. Vertex attributes are POSITION, NORMAL, and TEXCOORD_0 only: no skin, animation, morph
   target, or glTF extension, so the browser runtime needs no DRACOLoader or meshopt decoder.
-- Source ceiling: ~200k opaque source pixels across both plates against 1,048,576 texels in a 1024px
-  atlas — roughly 5x oversampled. 1024 is still worthwhile (chart gutters, no resampling loss) but
-  no projection method can contain more real detail than the plates carry.
+- Source ceiling: ~186k native subject pixels across both plates against 563,769 _covered_ texels
+  (46% of the atlas is chart padding) — roughly **3x** oversampled, and near 1:1 in the torso where
+  the registered closeups land. An earlier note said 5x; that compared against the full atlas
+  including padding. No projection method can contain more real detail than the plates carry, but
+  there is more headroom here than the 5x figure implied.
 - Known limitation: the left and right profiles streak horizontally. About 34% of texels face neither
   reference camera squarely and receive silhouette-edge pixels stretched sideways. This is
   irreducible with two genuine views; only a real profile capture would fix it, and fabricating one
   was judged worse than an honest limitation. The profiles are still substantially better than v1's.
 - Intended presentation: 32-64 px-tall replay actor; broad color/silhouette identity LOD rather than
   a close-up replica.
+- Encoding correction (2026-09-05): the first build was written at JPEG **q75**, not the q92 its
+  notes claimed (PIL default quantization table; 31.60 dB against the lossless atlas). Re-encoded
+  from the lossless PNG master at true q92 with chroma subsampling disabled, giving **38.34 dB**.
+  Geometry and UVs are bit-identical; only the image bytes changed. Reproduce with
+  `tools/fight-replay-models/reencode-glb-texture.py`.
 - Prepared: 2026-09-05 (v2 texture rebuild; v1 was 2026-09-03)
 
 The Elder Scrolls Online name, character design, and related rights remain with their respective

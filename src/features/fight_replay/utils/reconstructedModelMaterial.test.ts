@@ -19,9 +19,9 @@ describe('prepareReconstructedModelMaterial', () => {
     expect(material.side).toBe(THREE.DoubleSide);
     expect(material.emissive.getHex()).toBe(0xffffff);
     expect(material.emissiveMap).toBe(map);
-    expect(material.emissiveIntensity).toBe(0.2);
+    expect(material.emissiveIntensity).toBe(0.08);
     expect(map.colorSpace).toBe(THREE.SRGBColorSpace);
-    expect(map.anisotropy).toBe(8);
+    expect(map.anisotropy).toBe(16);
   });
 
   it('also makes non-PBR reconstruction materials two-sided', () => {

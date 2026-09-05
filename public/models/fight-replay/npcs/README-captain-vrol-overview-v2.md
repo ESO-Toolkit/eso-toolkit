@@ -45,7 +45,7 @@ not a claim that Elder Scrolls Online intellectual property is freely licensed.
   material to `CaptainVrolBakedVertexColor`. The binary chunk was copied byte-for-byte, so no
   geometry, UV, or texture data was re-encoded by that rename.
 - Prepared asset: `captain-vrol-overview-v2.glb`; one mesh, one material, one draw call, 44,999
-  triangles, 28,732 vertices, 1024x1024 JPEG q92 base-color texture, 1,746,004 bytes. Stored as JPEG
+  triangles, 28,732 vertices, 1024x1024 JPEG q92 base-color texture (no chroma subsampling), 2,033,380 bytes. Stored as JPEG
   because the same texture as PNG is 2,764,516 bytes, over the 2.5 MB runtime gate; a 512px PNG
   would fit but would discard the closeup detail this pass gained, for the same byte cost.
 - Prepared bounds: 0.8591 x 1.9938 x 0.4039 model units (X x Y x Z), minimum Y exactly 0.0, centered
@@ -56,9 +56,10 @@ not a claim that Elder Scrolls Online intellectual property is freely licensed.
   ratio is 0.203 against the reference's 0.202. The thin profile is faithful to the source A-pose
   rather than an artifact of the missing side plates.
 - Source ceiling: in the native 1366x768 plates the character is 717 px tall by 289 px wide, about
-  100k opaque pixels per view and ~200k across both. A 1024px atlas is 1,048,576 texels, so it is
-  roughly 5x oversampled relative to the information actually available. 1024 is still worthwhile
-  (chart gutters, no resampling loss) but it cannot contain more real detail than the plates carry.
+  100k opaque pixels per view and ~186k native pixels across both. Against 563,769 _covered_ texels
+  (46% of the atlas is chart padding) that is roughly **3x** oversampled, and near 1:1 in the torso
+  where the registered closeups land. An earlier note said 5x; that compared against the full atlas
+  including padding. It still cannot contain more real detail than the plates carry.
 - Known limitation: the left and right profiles show horizontal streaking. About 34% of texels face
   neither reference camera squarely and receive silhouette-edge pixels stretched sideways. A
   confidence-thresholded 3D inpaint was tried and rejected — it made the atlas blotchier without
@@ -69,6 +70,13 @@ not a claim that Elder Scrolls Online intellectual property is freely licensed.
 - Intended presentation: 32-64 px-tall replay actor; broad color/silhouette identity LOD rather than
   a close-up replica. The horned helm, pale ice hair, dark red-brown leather, blue-grey scaled
   plates, and fur-trimmed boots all remain legible at that size.
+- Encoding correction (2026-09-05): the first build of this asset was written at JPEG **q75**, not
+  the q92 its notes claimed — the luminance quantization table was PIL's q75 default and PSNR against
+  the lossless atlas was 30.84 dB. It was re-encoded from the lossless PNG master at true q92 with
+  chroma subsampling disabled, giving **37.83 dB**. Geometry and UVs are bit-identical; only the
+  image bytes changed. Chroma subsampling is disabled deliberately: this atlas carries identity as
+  flat colour blocks, which 4:2:0 smears. Reproduce with
+  `tools/fight-replay-models/reencode-glb-texture.py`.
 - Prepared: 2026-09-05 (v2 texture rebuild; v1 was 2026-09-04)
 
 The Elder Scrolls Online name, character design, and related rights remain with their respective

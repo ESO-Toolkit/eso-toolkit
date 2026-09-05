@@ -22,8 +22,8 @@ Do not reuse any reconstructed asset outside this project without a separate rig
 | Asset                                | Actor              | Renderer                  |   Tris |  Verts | Materials | Texture     | GLB bytes | Reference                                                                   |
 | ------------------------------------ | ------------------ | ------------------------- | -----: | -----: | --------: | ----------- | --------: | --------------------------------------------------------------------------- |
 | `coolstickman-walk.glb`              | all players        | `instanced-pose-flipbook` |      — |      — |         1 | —           |         — | CC0, Polygonal Mind                                                         |
-| `yandir-the-butcher-overview-v2.glb` | Yandir the Butcher | `static-boss`             | 45,000 | 28,854 |         1 | 1024px JPEG | 1,715,468 | [post 82](https://esomodelviewer.com/characters/post/82-yandir-the-butcher) |
-| `captain-vrol-overview-v2.glb`       | Captain Vrol       | `static-boss`             | 44,999 | 28,732 |         1 | 1024px JPEG | 1,746,004 | [post 83](https://esomodelviewer.com/characters/post/83-captain-vrol)       |
+| `yandir-the-butcher-overview-v2.glb` | Yandir the Butcher | `static-boss`             | 45,000 | 28,854 |         1 | 1024px JPEG | 1,981,816 | [post 82](https://esomodelviewer.com/characters/post/82-yandir-the-butcher) |
+| `captain-vrol-overview-v2.glb`       | Captain Vrol       | `static-boss`             | 44,999 | 28,732 |         1 | 1024px JPEG | 2,033,380 | [post 83](https://esomodelviewer.com/characters/post/83-captain-vrol)       |
 
 ### Runtime budgets
 
@@ -33,8 +33,11 @@ Do not reuse any reconstructed asset outside this project without a separate rig
 - One mesh, one material, one draw call per asset. No skins, animations, or morph targets.
 - Texture 512px by default; 1024px where the reference plates support it (a boss with registered
   closeup captures). Store as JPEG when the equivalent PNG would exceed the size gate — a 1024px
-  JPEG carries more real detail than a 512px PNG at comparable bytes. No Draco or meshopt — the
-  browser runtime registers no `DRACOLoader`.
+  JPEG carries more real detail than a 512px PNG at comparable bytes. Encode at q92 with chroma
+  subsampling **disabled** — these atlases carry identity as flat colour blocks and 4:2:0 smears
+  exactly those boundaries. Verify the written quality by reading the JPEG quantization table back
+  out of the GLB; an export asking for a quality does not guarantee it honoured one. No Draco or
+  meshopt — the browser runtime registers no `DRACOLoader`.
 - Colour must be projected into the UV atlas at texel resolution. Baking from vertex colours caps
   detail at the vertex count and produces a visibly smeared surface.
 - glTF `+Y` up, facing `+Z`. The renderer re-grounds from the mesh bounding box every frame, so a
