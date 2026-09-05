@@ -22,8 +22,8 @@ Do not reuse any reconstructed asset outside this project without a separate rig
 | Asset                                | Actor              | Renderer                  |   Tris |  Verts | Materials | Texture     | GLB bytes | Reference                                                                   |
 | ------------------------------------ | ------------------ | ------------------------- | -----: | -----: | --------: | ----------- | --------: | --------------------------------------------------------------------------- |
 | `coolstickman-walk.glb`              | all players        | `instanced-pose-flipbook` |      — |      — |         1 | —           |         — | CC0, Polygonal Mind                                                         |
-| `yandir-the-butcher-overview-v2.glb` | Yandir the Butcher | `static-boss`             | 45,000 | 28,854 |         1 | 1024px JPEG | 1,652,260 | [post 82](https://esomodelviewer.com/characters/post/82-yandir-the-butcher) |
-| `captain-vrol-overview-v2.glb`       | Captain Vrol       | `static-boss`             | 44,999 | 28,732 |         1 | 1024px JPEG | 1,699,852 | [post 83](https://esomodelviewer.com/characters/post/83-captain-vrol)       |
+| `yandir-the-butcher-overview-v2.glb` | Yandir the Butcher | `static-boss`             | 45,000 | 28,854 |         1 | 1024px JPEG | 1,654,632 | [post 82](https://esomodelviewer.com/characters/post/82-yandir-the-butcher) |
+| `captain-vrol-overview-v2.glb`       | Captain Vrol       | `static-boss`             | 44,999 | 28,732 |         1 | 1024px JPEG | 1,691,788 | [post 83](https://esomodelviewer.com/characters/post/83-captain-vrol)       |
 
 ### Runtime budgets
 
@@ -40,6 +40,16 @@ Do not reuse any reconstructed asset outside this project without a separate rig
   meshopt — the browser runtime registers no `DRACOLoader`.
 - Colour must be projected into the UV atlas at texel resolution. Baking from vertex colours caps
   detail at the vertex count and produces a visibly smeared surface.
+- Weight UV allocation towards the face. A default unwrap spends texels in proportion to 3D surface
+  area, which gave the face only ~103x103 texels (about 1% of the atlas) — the single biggest cause
+  of a "pixelated, blurry" face, and unfixable by any amount of sharpening or higher JPEG quality.
+  Unwrap from a density-warped copy of the mesh (head enlarged) and apply the resulting UVs to the
+  untouched original, so geometry is unchanged. Scale about the vertical axis, not the model centre,
+  or the neck ramp turns into slivers. Make any tone statistic **area-weighted**, otherwise
+  re-allocating UV space silently shifts the exposure correction.
+- Asset URLs must be joined to the app base (`resolveReplayModelUrl`). A bare catalog path resolves
+  against the current route, and the replay is always nested, so it 404s and falls back to the
+  capsule — a silent failure that looks exactly like "this boss has no model".
 - Register closeup reference plates and project them onto the region they cover. The head especially:
   in a full-body plate the head is only ~60 px, so without a helm closeup the face reads as a smear,
   and the face is the identity anchor. Match closeups on the **region band** (head rows only for a

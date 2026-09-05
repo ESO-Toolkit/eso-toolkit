@@ -8,6 +8,7 @@ import { prepareReconstructedModelMaterial } from '../features/fight_replay/util
 import {
   STATIC_REPLAY_ACTOR_MODEL_ASSETS,
   type StaticReplayActorModelAsset,
+  resolveReplayModelUrl,
 } from '../features/fight_replay/utils/replayActorModelRegistry';
 
 import {
@@ -53,7 +54,7 @@ function ModelScene({
     setModel(null);
     const loader = new GLTFLoader();
     loader.load(
-      `${import.meta.env.BASE_URL ?? '/'}${asset.path}`.replace(/([^:]\/)\/+/g, '$1'),
+      resolveReplayModelUrl(asset.path, import.meta.env.BASE_URL),
       (gltf) => {
         let found: THREE.Mesh | null = null;
         gltf.scene.updateMatrixWorld(true);

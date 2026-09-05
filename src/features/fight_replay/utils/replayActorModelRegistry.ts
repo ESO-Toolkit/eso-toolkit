@@ -103,6 +103,22 @@ export const STATIC_REPLAY_ACTOR_MODEL_ASSETS: readonly StaticReplayActorModelAs
   },
 ];
 
+/**
+ * Resolve an asset's catalog path to a URL the loader can fetch.
+ *
+ * Catalog paths are stored relative to the deployment root (`models/...`). They MUST be joined to
+ * the app's base URL rather than handed to a loader as-is: a bare relative path resolves against the
+ * *current route*, and the replay always lives on a nested one (`/report/<code>/fight/<n>/replay`),
+ * so the request lands on a path that does not exist. The failure is quiet — the loader errors and
+ * the capsule fallback takes over — so a broken URL looks exactly like "this boss has no model".
+ *
+ * Kept free of `import.meta` so it stays unit-testable; callers pass `import.meta.env.BASE_URL`.
+ */
+export function resolveReplayModelUrl(path: string, baseUrl: string | undefined): string {
+  const base = baseUrl && baseUrl.length > 0 ? baseUrl : '/';
+  return `${base.endsWith('/') ? base : `${base}/`}${path.replace(/^\/+/, '')}`;
+}
+
 export function parseNpcModelPreviewMode(value: string | null): NpcModelPreviewMode {
   return value === 'prototype' ? 'prototype' : 'off';
 }

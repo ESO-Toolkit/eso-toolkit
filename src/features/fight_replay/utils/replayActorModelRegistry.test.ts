@@ -2,6 +2,7 @@ import type { ActorPosition } from '../../../workers/calculations/CalculateActor
 
 import {
   COOL_STICKMAN_ASSET,
+  resolveReplayModelUrl,
   STATIC_REPLAY_ACTOR_MODEL_ASSETS,
   findStaticActorModel,
   normalizeActorName,
@@ -148,5 +149,41 @@ describe('registry catalog integrity', () => {
   it('uses unique asset ids', () => {
     const ids = STATIC_REPLAY_ACTOR_MODEL_ASSETS.map((asset) => asset.id);
     expect(new Set(ids).size).toBe(ids.length);
+  });
+});
+
+describe('resolveReplayModelUrl', () => {
+  // Regression: the replay always renders on a nested route, so a bare catalog path resolved
+  // against the current URL and 404'd. The loader then errored and the capsule fallback took
+  // over, which looks identical to "this boss has no model" — a silent failure.
+  it('joins catalog paths to a sub-path deployment base, not the current route', () => {
+    expect(
+      resolveReplayModelUrl('models/fight-replay/npcs/boss.glb', '/dev-previews/pr-1516/'),
+    ).toBe('/dev-previews/pr-1516/models/fight-replay/npcs/boss.glb');
+  });
+
+  it('handles a root deployment', () => {
+    expect(resolveReplayModelUrl('models/a.glb', '/')).toBe('/models/a.glb');
+  });
+
+  it('adds a missing trailing slash on the base', () => {
+    expect(resolveReplayModelUrl('models/a.glb', '/base')).toBe('/base/models/a.glb');
+  });
+
+  it('falls back to root when the base is empty or undefined', () => {
+    expect(resolveReplayModelUrl('models/a.glb', undefined)).toBe('/models/a.glb');
+    expect(resolveReplayModelUrl('models/a.glb', '')).toBe('/models/a.glb');
+  });
+
+  it('never doubles the separator when the path is already root-relative', () => {
+    expect(resolveReplayModelUrl('/models/a.glb', '/base/')).toBe('/base/models/a.glb');
+  });
+
+  it('produces a usable url for every shipped asset', () => {
+    for (const asset of STATIC_REPLAY_ACTOR_MODEL_ASSETS) {
+      const url = resolveReplayModelUrl(asset.path, '/dev-previews/pr-1/');
+      expect(url.startsWith('/dev-previews/pr-1/models/')).toBe(true);
+      expect(url).not.toContain('//models');
+    }
   });
 });

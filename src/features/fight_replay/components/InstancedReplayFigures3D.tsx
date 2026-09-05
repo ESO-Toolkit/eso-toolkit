@@ -23,11 +23,13 @@ import {
 import { enablePerInstanceOpacity } from '../utils/instanceOpacity';
 import { prepareReconstructedModelMaterial } from '../utils/reconstructedModelMaterial';
 import {
+  COOL_STICKMAN_ASSET,
   NPC_MODEL_PREVIEW_PARAM,
   type NpcModelPreviewMode,
   type StaticReplayActorModelAsset,
   parseNpcModelPreviewMode,
   resolveReplayActorModel,
+  resolveReplayModelUrl,
 } from '../utils/replayActorModelRegistry';
 
 import { BatchedActorNames3D } from './BatchedActorNames3D';
@@ -152,7 +154,10 @@ const PLAYER_SCALE = 0.82;
 // pose layer matching its current walk-cycle phase (derived from accumulated travel distance) and
 // hidden (y=-10000) in the other four. Non-players keep the capsule body. Draw-call cost is +4
 // layers (O(1), NOT per-actor) over a single-pose humanoid; instancing is preserved.
-const HUMANOID_WALK_MODEL_URL = `${import.meta.env.BASE_URL}models/coolstickman-walk.glb`;
+const HUMANOID_WALK_MODEL_URL = resolveReplayModelUrl(
+  COOL_STICKMAN_ASSET.path,
+  import.meta.env.BASE_URL,
+);
 // Pose layer order. Index 0 is the idle stand; 1..4 are the walk cycle in phase order. The GLB
 // stores them as named meshes; we load them into this fixed order so the renderer indexes poses by
 // walk-cycle phase. WALK_POSE_COUNT (4) is the cyclic stride length used for phase math.
@@ -553,7 +558,12 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
     () => (detailedFigures ? getBossModelInLookup(lookup, actorIds, npcModelPreviewMode) : null),
     [lookup, actorIds, detailedFigures, npcModelPreviewMode],
   );
-  const bossModelUrl = bossModelAsset?.path ?? null;
+  // Join to the app base URL. A bare catalog path would resolve against the current route, and the
+  // replay is always nested (/report/<code>/fight/<n>/replay), so the fetch would 404 and silently
+  // fall back to the capsule — indistinguishable from "this boss has no model".
+  const bossModelUrl = bossModelAsset
+    ? resolveReplayModelUrl(bossModelAsset.path, import.meta.env.BASE_URL)
+    : null;
   const bossTransform = bossModelAsset?.transform ?? DEFAULT_BOSS_TRANSFORM;
 
   // Stable index → glyph-group membership. An actor's symbol is fixed (role/type don't change
