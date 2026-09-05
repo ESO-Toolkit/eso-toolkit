@@ -31,6 +31,16 @@ interface ShareButtonProps {
   selectedActorIdRef?: React.RefObject<number | null>;
   /** Optional ref to current time for more accurate sharing (the authoritative source). */
   timeRef?: React.RefObject<number> | { current: number };
+  /**
+   * Render as a bare ghost icon at every breakpoint — no label, border or fill.
+   *
+   * The desktop transport's options cluster is otherwise entirely ghost icon buttons, and a
+   * cyan-filled, cyan-bordered pill reading "Share" made the row's least-used control its loudest
+   * one. This is the same treatment the button already applied at `xs` (where the label is hidden
+   * and a bordered icon-pill read as a stray box); this prop just makes it available on purpose
+   * rather than only as a side effect of viewport width.
+   */
+  iconOnly?: boolean;
 }
 
 /**
@@ -50,6 +60,7 @@ export const ShareButton: React.FC<ShareButtonProps> = ({
   currentTime = 0,
   selectedActorIdRef,
   timeRef,
+  iconOnly = false,
 }) => {
   const [shareSnackbar, setShareSnackbar] = useState<{
     severity: 'success' | 'error' | 'info';
@@ -171,19 +182,25 @@ export const ShareButton: React.FC<ShareButtonProps> = ({
             fontSize: '13px',
             fontWeight: 600,
             textTransform: 'none',
-            color: 'primary.main',
             borderColor: `${theme.palette.primary.main}47`, // ~0.28 alpha (only visible at sm+)
-            minWidth: { xs: 0, sm: 64 },
-            px: { xs: '8px', sm: '13px' },
-            border: { xs: 'none', sm: '1px solid' },
-            backgroundColor: { xs: 'transparent', sm: `${theme.palette.primary.main}0f` }, // ~0.06 alpha
-            transition: `background-color ${TRANSPORT_MOTION.tap} ${TRANSPORT_MOTION.ease}, border-color ${TRANSPORT_MOTION.tap} ${TRANSPORT_MOTION.ease}`,
-            '&:hover': {
-              backgroundColor: { xs: 'action.hover', sm: `${theme.palette.primary.main}1f` },
-              borderColor: `${theme.palette.primary.main}80`,
-            },
-            '& .MuiButton-startIcon': { mr: { xs: 0, sm: 0.75 } },
-            '& .share-label': { display: { xs: 'none', sm: 'inline' } },
+            // `iconOnly` collapses to the bare-icon treatment at every width; otherwise it still
+            // kicks in below `sm`, where there is no room for the label.
+            minWidth: iconOnly ? 0 : { xs: 0, sm: 64 },
+            px: iconOnly ? '8px' : { xs: '8px', sm: '13px' },
+            border: iconOnly ? 'none' : { xs: 'none', sm: '1px solid' },
+            color: iconOnly ? 'text.secondary' : 'primary.main',
+            backgroundColor: iconOnly
+              ? 'transparent'
+              : { xs: 'transparent', sm: `${theme.palette.primary.main}0f` }, // ~0.06 alpha
+            transition: `background-color ${TRANSPORT_MOTION.tap} ${TRANSPORT_MOTION.ease}, border-color ${TRANSPORT_MOTION.tap} ${TRANSPORT_MOTION.ease}, color ${TRANSPORT_MOTION.tap} ${TRANSPORT_MOTION.ease}`,
+            '&:hover': iconOnly
+              ? { backgroundColor: 'action.hover', color: 'text.primary' }
+              : {
+                  backgroundColor: { xs: 'action.hover', sm: `${theme.palette.primary.main}1f` },
+                  borderColor: `${theme.palette.primary.main}80`,
+                },
+            '& .MuiButton-startIcon': { mr: iconOnly ? 0 : { xs: 0, sm: 0.75 }, ml: 0 },
+            '& .share-label': { display: iconOnly ? 'none' : { xs: 'none', sm: 'inline' } },
           })}
         >
           <span className="share-label">Share</span>
