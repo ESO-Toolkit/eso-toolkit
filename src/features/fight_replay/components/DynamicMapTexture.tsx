@@ -1,5 +1,5 @@
 import { useFrame, useThree } from '@react-three/fiber';
-import { useRef, useMemo, useEffect } from 'react';
+import { useRef, useMemo, useEffect, useCallback } from 'react';
 import * as THREE from 'three';
 
 import { useLogger } from '@/contexts/LoggerContext';
@@ -33,22 +33,87 @@ interface DynamicMapTextureProps {
   enhanced?: boolean;
 }
 
-// Map texture cache to avoid reloading the same textures. Bounded (LRU, 8 entries): a trial
-// run touches a handful of distinct maps, so 8 covers revisits while preventing unbounded GPU
-// growth across long chapter-hopping sessions. Eviction disposes the texture — a still-mounted
-// floor bound to it re-fetches on its next phase change (rare; distinct-map count is tiny).
+// Map texture cache to avoid reloading the same textures. Bounded (true LRU, 8 entries): a
+// trial run touches a handful of distinct maps, so 8 covers revisits while preventing
+// unbounded GPU growth across long chapter-hopping sessions. Recency is refreshed on BOTH a
+// cache-hit read (`getCachedMapTexture`) and a write (`cacheMapTexture`) by deleting and
+// re-inserting the key — a `Map` only reorders on delete+set, not on a plain `set` of an
+// existing key — so the least-recently-*used* entry is always the eviction candidate, not
+// merely the least-recently-*inserted* one.
 const MAX_CACHED_MAP_TEXTURES = 8;
 const textureCache = new Map<string, THREE.Texture>();
 
-function cacheMapTexture(mapFile: string, texture: THREE.Texture): void {
+// Live-reference counts, keyed by mapFile. A texture is "live" while at least one mounted
+// DynamicMapTexture instance currently has it bound to its floor material (see
+// retainMapTexture/releaseMapTexture, called from the bind/rebind/unmount sites below).
+// Eviction consults this so it never disposes a texture out from under a live GPU binding.
+const textureRefCounts = new Map<string, number>();
+
+// Textures evicted from the cache while still live (refcount > 0). Eviction drops the cache's
+// only handle to them, so releaseMapTexture becomes the sole remaining hook that can dispose
+// them — without this registry the "don't dispose a live texture" fix would simply trade an
+// early-dispose bug for a permanent leak.
+const evictedLiveTextures = new Map<string, THREE.Texture>();
+
+// Exported for DynamicMapTexture.test.ts, which exercises the cache/eviction/refcount
+// machinery directly (no live R3F canvas available under jsdom). Not intended for use
+// outside the component and its test.
+export function retainMapTexture(mapFile: string): void {
+  textureRefCounts.set(mapFile, (textureRefCounts.get(mapFile) ?? 0) + 1);
+}
+
+export function releaseMapTexture(mapFile: string): void {
+  const count = textureRefCounts.get(mapFile);
+  if (count === undefined) return;
+  if (count <= 1) {
+    textureRefCounts.delete(mapFile);
+    // Last holder let go. If this key was evicted from the cache WHILE live, the cache can no
+    // longer dispose it — this is the only remaining hook, so it is disposed here.
+    const orphan = evictedLiveTextures.get(mapFile);
+    if (orphan) {
+      evictedLiveTextures.delete(mapFile);
+      orphan.dispose();
+    }
+  } else {
+    textureRefCounts.set(mapFile, count - 1);
+  }
+}
+
+// Cache-hit read. Reinserts the key so it becomes most-recently-used — without this a
+// frequently-revisited map (the common case: phase transitions bounce between a small set of
+// arenas) would still be evicted in pure insertion order, i.e. FIFO wearing an LRU comment.
+export function getCachedMapTexture(mapFile: string): THREE.Texture | undefined {
+  const cached = textureCache.get(mapFile);
+  if (cached === undefined) return undefined;
+  textureCache.delete(mapFile);
+  textureCache.set(mapFile, cached);
+  return cached;
+}
+
+export function cacheMapTexture(mapFile: string, texture: THREE.Texture): void {
+  // A write counts as a use too: drop any existing entry first so re-caching the same
+  // mapFile (e.g. the tier-refresh path in loadTexture) also moves it to most-recently-used
+  // instead of leaving it pinned at its original insertion position.
+  textureCache.delete(mapFile);
   textureCache.set(mapFile, texture);
   while (textureCache.size > MAX_CACHED_MAP_TEXTURES) {
     const oldest = textureCache.keys().next();
     if (oldest.done) break;
-    const evicted = textureCache.get(oldest.value);
-    textureCache.delete(oldest.value);
-    // Don't dispose a texture that is still the live floor map elsewhere — tenants re-fetch on
-    // next rebind. In practice the evicted entry is a fight left several hops ago.
+    const evictedKey = oldest.value;
+    const evicted = textureCache.get(evictedKey);
+    textureCache.delete(evictedKey);
+    if ((textureRefCounts.get(evictedKey) ?? 0) > 0) {
+      // Still bound to a mounted floor's material.map: disposing here would free the GPU
+      // texture out from under a live binding, and three.js would silently re-upload it on
+      // its next initTexture pass — a wasted re-upload plus an orphaned GPU texture the
+      // cache can no longer track. Drop the cache's ownership but hand the texture to
+      // evictedLiveTextures so the final releaseMapTexture still disposes it — dropping it on
+      // the floor here would leak the GPU texture for the page's lifetime.
+      if (evicted) {
+        evictedLiveTextures.set(evictedKey, evicted);
+      }
+      continue;
+    }
     evicted?.dispose();
   }
 }
@@ -58,10 +123,15 @@ function cacheMapTexture(mapFile: string, texture: THREE.Texture): void {
 // fires its own CDN fetch + GPU upload, and the loser applies a superseded texture.
 const inflightLoads = new Map<string, Promise<THREE.Texture>>();
 
-// Cleanup function for texture cache
+// Cleanup function for texture cache. Intended for explicit full teardown (app shutdown / test
+// isolation) when nothing should still be mounted — so, unlike eviction, this unconditionally
+// disposes everything and resets the refcounts too rather than trying to preserve live bindings.
 export const clearMapTextureCache = (): void => {
   textureCache.forEach((texture) => texture.dispose());
   textureCache.clear();
+  evictedLiveTextures.forEach((texture) => texture.dispose());
+  evictedLiveTextures.clear();
+  textureRefCounts.clear();
   inflightLoads.clear();
 };
 
@@ -207,6 +277,43 @@ export const DynamicMapTexture: React.FC<DynamicMapTextureProps> = ({
   const meshRef = useRef<THREE.Mesh>(null);
   const materialRef = useRef<THREE.MeshPhongMaterial | THREE.MeshBasicMaterial>(null);
   const currentMapFileRef = useRef<string | null>(null);
+  // Tracks which cached mapFile (if any) THIS instance currently holds a live reference to —
+  // i.e. what retainMapTexture/releaseMapTexture was last called with. Distinct from
+  // currentMapFileRef (which mapFile the floor WANTS to show, updated the instant a phase
+  // change is observed): this one only moves once a load actually resolves and binds,
+  // because retain/release must bracket the texture's real GPU lifetime, not the intent.
+  const boundMapFileRef = useRef<string | null>(null);
+
+  // Retain `mapFile`'s cache entry before binding it to the floor material, releasing whatever
+  // this instance held previously. Keeps textureRefCounts accurate so cacheMapTexture's eviction
+  // never disposes a texture this component still has bound.
+  const bindCachedTexture = useCallback(
+    (mapFile: string, texture: THREE.Texture): void => {
+      if (boundMapFileRef.current !== mapFile) {
+        if (boundMapFileRef.current) {
+          releaseMapTexture(boundMapFileRef.current);
+        }
+        retainMapTexture(mapFile);
+        boundMapFileRef.current = mapFile;
+      }
+      applyFloorTexture(materialRef.current, texture, onTextureChange);
+    },
+    [onTextureChange],
+  );
+
+  // Bind a non-cached texture (procedural grid / slate — never stored in textureCache) and
+  // release any cached entry this instance was previously holding, since the floor no longer
+  // displays it.
+  const bindUncachedTexture = useCallback(
+    (texture: THREE.Texture): void => {
+      if (boundMapFileRef.current) {
+        releaseMapTexture(boundMapFileRef.current);
+        boundMapFileRef.current = null;
+      }
+      applyFloorTexture(materialRef.current, texture, onTextureChange);
+    },
+    [onTextureChange],
+  );
 
   // Material identity flips with `enhanced` (Phong <-> Basic below). Reset the
   // map cache so the useFrame rebinds the current map texture to the NEW
@@ -310,9 +417,11 @@ export const DynamicMapTexture: React.FC<DynamicMapTextureProps> = ({
       });
 
     return (mapFile: string): Promise<THREE.Texture> => {
-      // Check cache first. A tier change rebuilds this memo (maxAnisotropy dep), so refresh the
-      // cached texture's sampling instead of serving a stale tier's anisotropy forever.
-      const cached = textureCache.get(mapFile);
+      // Check cache first — getCachedMapTexture also refreshes recency (moves the entry to
+      // most-recently-used) so a hot, repeatedly-revisited map survives eviction. A tier change
+      // rebuilds this memo (maxAnisotropy dep), so refresh the cached texture's sampling instead
+      // of serving a stale tier's anisotropy forever.
+      const cached = getCachedMapTexture(mapFile);
       if (cached) {
         if (cached.anisotropy !== maxAnisotropy) {
           cached.anisotropy = maxAnisotropy;
@@ -384,26 +493,27 @@ export const DynamicMapTexture: React.FC<DynamicMapTextureProps> = ({
     const timestamp = fightTimeToTimestamp(currentTime, fight);
     const currentMapEntry = getMapAtTimestamp(mapTimeline, timestamp);
 
-    if (!currentMapEntry?.mapFile) {
+    const nextMapFile = currentMapEntry?.mapFile;
+    if (!nextMapFile) {
       return;
     }
 
     // Only update if map has actually changed
-    if (currentMapFileRef.current !== currentMapEntry.mapFile) {
-      currentMapFileRef.current = currentMapEntry.mapFile;
+    if (currentMapFileRef.current !== nextMapFile) {
+      currentMapFileRef.current = nextMapFile;
 
       // Load new texture asynchronously. Guard on the map file still being current (the
       // user may have scrubbed to a different phase before the fetch resolved).
-      loadTexture(currentMapEntry.mapFile)
+      loadTexture(nextMapFile)
         .then((texture) => {
-          if (currentMapFileRef.current === currentMapEntry.mapFile) {
-            applyFloorTexture(materialRef.current, texture, onTextureChange);
+          if (currentMapFileRef.current === nextMapFile) {
+            bindCachedTexture(nextMapFile, texture);
           }
         })
         .catch(() => {
           // CDN load failed — show the procedural grid floor instead of a blank plane.
-          if (currentMapFileRef.current === currentMapEntry.mapFile) {
-            applyFloorTexture(materialRef.current, fallbackTexture, onTextureChange);
+          if (currentMapFileRef.current === nextMapFile) {
+            bindUncachedTexture(fallbackTexture);
           }
         });
     }
@@ -423,17 +533,24 @@ export const DynamicMapTexture: React.FC<DynamicMapTextureProps> = ({
             if (materialRef.current) {
               currentMapFileRef.current = firstMapFile;
             }
-            applyFloorTexture(materialRef.current, texture, onTextureChange);
+            bindCachedTexture(firstMapFile, texture);
           }
         })
         .catch((_error) => {
           // Initial CDN load failed — show the procedural grid floor instead of a blank
           // plane. Reset the file ref so a later successful load can still replace it.
-          applyFloorTexture(materialRef.current, fallbackTexture, onTextureChange);
+          bindUncachedTexture(fallbackTexture);
           currentMapFileRef.current = null;
         });
     }
-  }, [mapTimeline, loadTexture, fallbackTexture, onTextureChange]);
+  }, [
+    mapTimeline,
+    loadTexture,
+    fallbackTexture,
+    onTextureChange,
+    bindCachedTexture,
+    bindUncachedTexture,
+  ]);
 
   // Mapless fight (empty timeline): bind the deliberate slate floor instead of leaving a bare dark
   // plane. Runs in an effect (NOT useFrame — the useFrame map updater early-returns on an empty
@@ -445,11 +562,24 @@ export const DynamicMapTexture: React.FC<DynamicMapTextureProps> = ({
   useEffect(() => {
     if (mapTimeline.entries.length === 0) {
       currentMapFileRef.current = null;
-      applyFloorTexture(materialRef.current, maplessTexture, onTextureChange);
+      bindUncachedTexture(maplessTexture);
     }
     // `enhanced` is a dep because the material IDENTITY flips with it — the
     // slate must rebind to the freshly-mounted material.
-  }, [mapTimeline, maplessTexture, onTextureChange, enhanced]);
+  }, [mapTimeline, maplessTexture, onTextureChange, enhanced, bindUncachedTexture]);
+
+  // Release this instance's live reference on unmount so cacheMapTexture's eviction is free to
+  // dispose the entry once nothing else holds it. Mount-once (no deps): must run exactly once
+  // per real unmount, not on every mapFile change (rebinds already release the PREVIOUS mapFile
+  // via bindCachedTexture/bindUncachedTexture as they happen).
+  useEffect(() => {
+    return () => {
+      if (boundMapFileRef.current) {
+        releaseMapTexture(boundMapFileRef.current);
+        boundMapFileRef.current = null;
+      }
+    };
+  }, []);
 
   // Cleanup on unmount: dispose only the per-instance resources this component created.
   // Do NOT clear the module-global textureCache here — it is shared across all live
