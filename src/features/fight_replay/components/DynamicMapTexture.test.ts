@@ -189,10 +189,14 @@ describe('cacheMapTexture / getCachedMapTexture (LRU + live-reference eviction)'
   // eviction on its own — the next `cacheMapTexture` call is what pushes it over and forces
   // exactly one eviction, which is what each test below inspects.
   const CAPACITY = 8;
-  function fillCache(): { keys: string[]; textures: THREE.Texture[]; disposeSpies: jest.Mock[] } {
+  function fillCache(): {
+    keys: string[];
+    textures: THREE.Texture[];
+    disposeSpies: jest.SpyInstance[];
+  } {
     const keys: string[] = [];
     const textures: THREE.Texture[] = [];
-    const disposeSpies: jest.Mock[] = [];
+    const disposeSpies: jest.SpyInstance[] = [];
     for (let i = 0; i < CAPACITY; i++) {
       const key = `map-${i}`;
       const texture = new THREE.Texture();
