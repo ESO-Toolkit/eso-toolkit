@@ -21,6 +21,7 @@ import {
   getReplayActorShellColor,
 } from '../utils/actorVisualState';
 import { enablePerInstanceOpacity } from '../utils/instanceOpacity';
+import { resolveStaticBossReplayModel } from '../utils/replayBossModelRegistry';
 
 import { BatchedActorNames3D } from './BatchedActorNames3D';
 
@@ -210,38 +211,31 @@ const GAIT_WALK_ENTER_SPEED = 0.18; // units/SECOND to start walking from idle
 const GAIT_WALK_EXIT_SPEED = 0.1; // units/SECOND to drop back to idle (must be < enter)
 
 // ---- Optional boss model (single non-instanced GLB) ----
-// No game-derived model is bundled. Bosses use the existing project-owned capsule renderer below
-// until a separately licensed model is available; keeping this nullable gate preserves the same
-// renderer path and avoids shipping extracted game geometry in a public build.
-const BOSS_MODEL_URL: string | null = null;
-// The hook is intentionally empty until a separately licensed model is supplied.
-const BOSS_MODEL_NAME_KEYS: readonly string[] = [];
-const ORIENT_EULER: [number, number, number] = [-Math.PI / 2, 0, 0]; // rotateX(-90°) to stand it up
-// World-unit scale. The oriented model is ≈2.84u tall (raw), so BOSS_SCALE≈0.9 makes it ≈2.5u —
-// clearly bigger than the ≈0.95u players without dwarfing the arena (the viewer's 3/maxDim≈0.87 is a
-// comparable reference). Reads as a boss. Tune live.
-const BOSS_SCALE = 0.9;
+// Project-authorized reconstructed models enter through the registry. Unknown bosses and failed
+// loads retain the capsule fallback; detailedFigures=false avoids fetching this asset entirely.
+const ORIENT_EULER: [number, number, number] = [0, 0, 0]; // shipped GLBs use glTF's Y-up convention
+// Yandir is approximately 1.99 model units tall, so this reads as a 2.5u boss beside 0.95u players.
+const BOSS_SCALE = 1.25;
 const BOSS_Y_OFFSET = 0; // extra lift above the grounded feet (feet land at y=0 from the bbox offset)
 const BOSS_YAW_OFFSET = 0; // radians added to actor.rotation; the model's facing axis is unknown — tune
-// Dead-boss look (Taleria dies at fight end; observable). A non-instanced materialled mesh can't be
+// Dead-boss look. A non-instanced materialled mesh can't be
 // setColorAt'd like the capsule, so death is conveyed by lowering material opacity, optionally
 // darkening the material color, and squashing Y (feet stay grounded since the offset puts min.y at 0).
 // `transparent` is set ONCE at load (flipping it per frame recompiles the material); only opacity +
 // color are animated, and only on the dead-flag transition. THESE ARE THE USER'S LOOK CALL — lowered
-// opacity on a 19.8k-tri swirling mesh can show depth-sort artifacts; if it looks bad, the fallback is
+// opacity on a detailed mesh can show depth-sort artifacts; if it looks bad, the fallback is
 // darken-only (set DEAD_OPACITY back to 1 and lean on DEAD_DARKEN + DEAD_SQUASH_Y).
 const DEAD_OPACITY = 0.45;
 const DEAD_DARKEN = 0.45; // multiply material color toward black (1 = unchanged, 0 = black)
 const DEAD_SQUASH_Y = 0.55; // Y scale factor when dead (compresses toward the grounded feet)
 
 function getBossModelUrlForActor(actor: ActorPosition): string | null {
-  if (actor.type !== 'boss') return null;
-  const name = actor.name?.toLowerCase() ?? '';
-  return BOSS_MODEL_NAME_KEYS.some((key) => name.includes(key)) ? BOSS_MODEL_URL : null;
+  const asset = resolveStaticBossReplayModel(actor);
+  return asset ? `${import.meta.env.BASE_URL}${asset.path}` : null;
 }
 
 // Scan the lookup for the first boss actor that maps to a model, returning its URL (or null). Used to
-// gate the GLB load: non-Taleria fights never fetch/parse the 560 KB model.
+// gate the GLB load: fights without a registered boss never fetch or parse a boss model.
 //
 // Correctness vs cost: a fixed timestamp cap is UNSOUND — a boss with no recorded death (a wipe) is
 // gated by recent-event visibility in CalculateActorPositions, so it can be absent from the earliest
@@ -1208,11 +1202,11 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
       // floats as a halo above the (taller) figure's head; for the boss model it floats above the
       // (much taller) model; for the capsule it rides just above the cap as before. The boss glyph
       // height tracks BOSS_SCALE so it follows the model up/down when the scale is tuned live (the
-      // oriented model is ≈2.84u tall before scale).
+      // current model is approximately 1.99u tall before scale).
       const glyphYWorld = useHumanoid
         ? y + GROUND_LEVEL + HUMANOID_TARGET_HEIGHT * groupScale + 0.12 * groupScale
         : useBossModel
-          ? y + GROUND_LEVEL + BOSS_Y_OFFSET + 2.84 * BOSS_SCALE + 0.25
+          ? y + GROUND_LEVEL + BOSS_Y_OFFSET + 1.99 * BOSS_SCALE + 0.25
           : y + GROUND_LEVEL + glyphY * groupScale;
       // Boss glyph rides a touch larger so it reads above the bigger model; others use group scale.
       const glyphScale = useBossModel ? groupScale * 1.6 : groupScale;
