@@ -235,6 +235,25 @@ export const STATIC_REPLAY_ACTOR_MODEL_ASSETS: readonly StaticReplayActorModelAs
       attributionFile: 'public/models/fight-replay/npcs/README-shade-of-relequen-overview-v1.md',
     },
   },
+  {
+    id: 'the-serpent-overview-v1',
+    path: 'models/fight-replay/npcs/the-serpent-overview-v1.glb',
+    renderer: 'static-boss',
+    actorTypes: HOSTILE_ACTOR_TYPES,
+    aliases: ['the serpent'],
+    transform: {
+      orientEuler: [0, 0, 0],
+      scale: 1.25,
+      yOffset: 0,
+      yawOffset: 0,
+      modelHeight: 1.9938,
+    },
+    provenance: {
+      designation: 'project-authorized-fan-prototype',
+      sourceUrl: 'https://esomodelviewer.com/characters/post/169-the-serpent',
+      attributionFile: 'public/models/fight-replay/npcs/README-the-serpent-overview-v1.md',
+    },
+  },
 ];
 
 /**

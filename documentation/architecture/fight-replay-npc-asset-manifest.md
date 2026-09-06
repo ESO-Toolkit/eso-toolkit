@@ -31,6 +31,7 @@ Do not reuse any reconstructed asset outside this project without a separate rig
 | `shade-of-galenwe-overview-v1.glb`   | Shade of Galenwe        | `static-boss`             | 44,998 | 29,810 |         1 | 1024px JPEG | 1,743,648 | [post 233](https://esomodelviewer.com/characters/post/233-shade-of-galenwe)         |
 | `shade-of-siroria-overview-v1.glb`   | Shade of Siroria        | `static-boss`             | 45,000 | 30,932 |         1 | 1024px JPEG | 1,739,784 | [post 234](https://esomodelviewer.com/characters/post/234-shade-of-siroria)         |
 | `shade-of-relequen-overview-v1.glb`  | Shade of Relequen       | `static-boss`             | 45,000 | 32,337 |         1 | 1024px JPEG | 1,741,760 | [post 235](https://esomodelviewer.com/characters/post/235-shade-of-relequen)        |
+| `the-serpent-overview-v1.glb`        | The Serpent             | `static-boss`             | 45,000 | 28,458 |         1 | 1024px JPEG | 1,687,556 | [post 169](https://esomodelviewer.com/characters/post/169-the-serpent)              |
 
 ### Runtime budgets
 
@@ -175,22 +176,29 @@ Two further notes if it is picked up:
 
 Evidence: `B:/CodexScratch/eso-fight-replay-3d/build/saint-olms/crop-truncation.png`.
 
-### The Celestial Serpent — held
+### The Celestial Serpent — resolved
 
-Built and passing every gate, but not shipped: its gold skull mask does not appear in the texture.
+Shipped. Its gold skull mask initially did not appear, and was first recorded as a failed
+reconstruction — **wrongly**. A clay render showed the mask fully modelled at both octree levels.
 
-The cause was initially reported as a failed reconstruction and a GPU retry at higher octree
-resolution was spent on that basis. **That diagnosis was wrong.** A clay render shows the mask fully
-modelled at both octree levels — brow, eye sockets, nose, moustache, chin. The failure is in the
-mesh-to-plate horizontal mapping: at head height the silhouette is dominated by wide gold horn plates
-that the reconstruction placed differently from the plate, so equal silhouette-normalized `u` stops
-meaning the same feature and face texels land on hood. Occlusion was ruled out — 97.2% of front-facing
-head vertices pass the depth test, better than the body's 83.3%.
+The real cause generalises and is worth knowing before the next ornamented head: the plate row at
+mask height contains **disconnected opaque runs** (horn, gap, mask, gap, horn) while the mesh row at
+the same normalized height is a **single run**, because the reconstruction placed the horns closer in
+so they merge with the hood. Per-slice normalization maps both to [0,1], so the mesh's centre lands
+in the plate's _gap_ and nearest-opaque snapping resolves it to hood. Occlusion was ruled out (97.2%
+of front-facing head vertices pass the depth test, against the body's 83.3%).
 
-The fix under trial is a hand-registered head closeup, which places the mask directly instead of
-inferring it from silhouette correspondence. If that does not verify on the overlay, the Serpent will
-ship faceless with this limitation recorded: at 32-64 px it reads correctly as a hooded figure with
-gold horns and a filigree robe, and only fails close up.
+Fixed by hand-registering the helm plate **on the mask rather than the silhouette**, judged on
+eye-socket doubling rather than any width metric — 0.134-0.138 single-images the sockets, third eye
+and jaw; outside that they double. `width_error` is recorded as `null` for that plate, since no
+meaningful silhouette error exists for the fit.
+
+**Proposed detector, not yet implemented.** Count opaque _runs_ per slice in the plate row and in the
+mesh's rasterized front-coverage row across the head band, and flag a slice when the run counts differ
+or matched run centres diverge by more than a few percent of span. O(rows), needs no new rendering
+since the front depth buffer already exists, fires precisely on wide-ornament heads and stays silent
+on ordinary silhouettes. It would have flagged this automatically and could gate a "this head needs a
+hand-registered plate" warning in the build report.
 
 ## Unknown actors
 
