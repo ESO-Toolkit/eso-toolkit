@@ -31,7 +31,24 @@ allocation, and one URL bug. Budget accordingly:
 - The GPU is a single-worker resource. One job at a time; record it in the queue log first, confirm
   the process exited and VRAM was released before starting another.
 
-## The pipeline
+## Building one — the short version
+
+```bash
+B:/CodexScratch/eso-fight-replay-3d/.venv/Scripts/python.exe   tools/fight-replay-models/build-npc-asset.py tools/fight-replay-models/npcs/<slug>.json
+```
+
+Adding an NPC is: drop the reference plates somewhere, run `register-npc-plates.py` to fit the
+closeups and print the config block, **look at the overlays it saves**, paste the block into
+`npcs/<slug>.json`, then run the orchestrator. It emits the GLB plus a JSON build report carrying
+every number a reviewer needs, and exits non-zero if any acceptance check fails.
+
+Registration acceptance is deliberately human — four automatic gates were tried and all of them
+accepted a known-bad plate or rejected a known-good one. Someone must look at the overlay.
+
+`uv_density.head_scale` is hand-tuned per NPC (Vrol 5.5, Yandir 8.0) because head-to-body ratio
+varies; expect 2-3 trial runs. `leg_scale` is a trap — leave it at 1.0.
+
+## The stages
 
 1. **Source reference plates.** Prefer `esomodelviewer.com`. A usable set is a clean full-body
    **front** and **back** on a plain backdrop. Closeups (torso, helm, legs) are a large bonus — they

@@ -1,0 +1,152 @@
+{
+  "slug": "yandir-the-butcher",
+  "display_name": "Yandir the Butcher",
+  "aliases": ["Yandir the Butcher"],
+  "encounter": {
+    "trial": "Kyne's Aegis",
+    "boss_order": 1,
+    "notes": "Hooded/helmed humanoid: scaled helm cap with spike, tusked cheek guards, red-orange braided beard, teal cloth, pale fur trim, brown leather."
+  },
+  "work_dir": "build/yandir-the-butcher",
+  "reference": {
+    "page_url": "https://esomodelviewer.com/characters/post/82-yandir-the-butcher",
+    "directory": "yandir-references",
+    "plates": {
+      "front": { "file": "view-02.jpg", "role": "full-body-front" },
+      "back": { "file": "view-03.jpg", "role": "full-body-back" }
+    },
+    "side_plates": {
+      "available": false,
+      "note": "generated-left-profile-v1.png exists in the reference folder from the original run but is an AI-fabricated image and is deliberately NOT used."
+    },
+    "closeups": [
+      {
+        "file": "view-07.jpg",
+        "role": "torso",
+        "view": "front",
+        "accepted": true,
+        "registration": {
+          "scale": 0.38,
+          "row": 117.0,
+          "col": 96.1,
+          "width_error": 0.0514,
+          "method": "silhouette-profile",
+          "verified_by": "overlay reviewed 2026-09-05"
+        }
+      },
+      {
+        "file": "view-08.jpg",
+        "role": "torso",
+        "view": "back",
+        "accepted": true,
+        "registration": {
+          "scale": 0.41,
+          "row": 100.0,
+          "col": 69.7,
+          "width_error": 0.0466,
+          "method": "silhouette-profile",
+          "verified_by": "overlay reviewed 2026-09-05"
+        }
+      },
+      {
+        "file": "view-04.jpg",
+        "role": "helm",
+        "view": "front",
+        "region": "head",
+        "accepted": true,
+        "registration": {
+          "scale": 0.208,
+          "row": 15.7,
+          "col": 214.9,
+          "width_error": 0.0353,
+          "method": "head-region-silhouette",
+          "verified_by": "overlay reviewed 2026-09-05",
+          "note": "This plate scored a LOWER width error against the back plate (2.58%) than the front (3.53%). It is a face, so it can only go on the front - content overrides the metric."
+        }
+      },
+      {
+        "file": "view-06.jpg",
+        "role": "helm",
+        "view": "back",
+        "region": "head",
+        "accepted": true,
+        "registration": {
+          "scale": 0.246,
+          "row": 17.8,
+          "col": 201.4,
+          "width_error": 0.0516,
+          "v_min": 0.8547,
+          "method": "head-region-silhouette",
+          "verified_by": "overlay reviewed 2026-09-05"
+        }
+      },
+      {
+        "file": "view-05.jpg",
+        "role": "helm",
+        "view": "front",
+        "accepted": false,
+        "rejected_reason": "redundant with view-04 and a worse fit (6.60%); adds no information"
+      },
+      {
+        "file": "view-09.jpg",
+        "role": "legs",
+        "view": "front",
+        "accepted": false,
+        "rejected_reason": "registration could not be verified; overlay inconclusive"
+      },
+      {
+        "file": "view-10.jpg",
+        "role": "legs",
+        "view": "back",
+        "accepted": false,
+        "rejected_reason": "registration could not be verified; overlay inconclusive"
+      }
+    ]
+  },
+  "geometry": {
+    "source": "yandir-rebuild/yandir-decimated-45k.glb",
+    "decimate": false,
+    "target_triangles": 45000,
+    "max_triangles": 50000,
+    "provenance": "Blender-collapse decimation of the reviewed 90,891-triangle mesh yandir-overview-polish-v17-body-only.glb (itself Hunyuan3D-2mv from the front/back plates). Accepted geometry - do NOT regenerate.",
+    "regenerate_note": "For a NEW npc, point source at the Hunyuan draft and set decimate=true."
+  },
+  "atlas": {
+    "size": 1024,
+    "jpeg_quality": 92,
+    "roughness": 0.78,
+    "material_name": "yandir-the-butcher-atlas"
+  },
+  "regions": {
+    "head_v_min": 0.8563,
+    "head_feather": 0.12,
+    "note": "Front shoulder line is v=0.8563, back is v=0.8547; the back helm plate carries its own v_min override."
+  },
+  "uv_density": {
+    "head_scale": 8.0,
+    "head_v": 0.82,
+    "leg_scale": 1.0,
+    "leg_v": 0.45,
+    "ramp": 0.08,
+    "note": "Yandir's head is a smaller share of the model than Vrol's (4,087 vs 5,239 faces), so it needs a larger boost to reach comparable face texels."
+  },
+  "projection": {
+    "supersample": 2,
+    "depth_size": 2048,
+    "pack_resolution": 2048,
+    "pack_padding": 4,
+    "blend_power": 3.0,
+    "silhouette_inset": 0.02,
+    "grazing_threshold": 0.35,
+    "dilate": 24,
+    "closeup_feather": 60
+  },
+  "tone": { "contrast": 1.08, "saturation": 1.1 },
+  "unsharp": { "sigma": 0.7, "amount": 0.45, "threshold": 0.01569 },
+  "output": {
+    "directory": "build/yandir-the-butcher/out",
+    "suffix": "-overview-v8",
+    "max_bytes": 2500000
+  },
+  "rights": "The Elder Scrolls Online name, character design and related rights remain with ZeniMax Media/Bethesda Softworks. Reconstructed from published screenshots for an authorized fan prototype; not a claim that the IP is freely licensed."
+}

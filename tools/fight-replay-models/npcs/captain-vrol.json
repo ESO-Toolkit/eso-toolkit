@@ -1,0 +1,143 @@
+{
+  "slug": "captain-vrol",
+  "display_name": "Captain Vrol",
+  "aliases": ["Captain Vrol"],
+  "encounter": {
+    "trial": "Kyne's Aegis",
+    "boss_order": 2,
+    "notes": "Sea Giant humanoid: horned helm with ice-crystal crown, dark eye slit, gold nose-guard, pale-blue ice beard, blue-grey scaled armour, fur-trimmed boots."
+  },
+  "work_dir": "build/captain-vrol",
+  "reference": {
+    "page_url": "https://esomodelviewer.com/characters/post/83-captain-vrol",
+    "directory": "vrol-references",
+    "source_dimensions_m": { "x": 1.03, "y": 2.42, "z": 0.49 },
+    "plates": {
+      "front": { "file": "view-02.jpg", "role": "full-body-front" },
+      "back": { "file": "view-03.jpg", "role": "full-body-back" }
+    },
+    "side_plates": {
+      "available": false,
+      "note": "The page publishes no true left/right profile. A synthesized profile was deliberately NOT used: fabricated detail is not permitted. Consequence: surfaces facing neither camera are filled by the grazing pass rather than observed, so the profile views are soft."
+    },
+    "closeups": [
+      {
+        "file": "view-07.jpg",
+        "role": "torso",
+        "view": "front",
+        "accepted": true,
+        "registration": {
+          "scale": 0.35,
+          "row": 169.0,
+          "col": 153.8,
+          "width_error": 0.0579,
+          "method": "silhouette-profile",
+          "verified_by": "overlay reviewed 2026-09-04"
+        }
+      },
+      {
+        "file": "view-08.jpg",
+        "role": "torso",
+        "view": "back",
+        "accepted": true,
+        "registration": {
+          "scale": 0.4,
+          "row": 143.0,
+          "col": 122.6,
+          "width_error": 0.0447,
+          "method": "silhouette-profile",
+          "verified_by": "overlay reviewed 2026-09-04"
+        }
+      },
+      {
+        "file": "view-04.jpg",
+        "role": "helm",
+        "view": "front",
+        "region": "head",
+        "accepted": true,
+        "registration": {
+          "scale": 0.21,
+          "row": 63.0,
+          "col": 256.8,
+          "width_error": 0.0286,
+          "method": "head-region-silhouette",
+          "verified_by": "overlay reviewed 2026-09-05"
+        }
+      },
+      {
+        "file": "view-05.jpg",
+        "role": "helm",
+        "view": "front",
+        "accepted": false,
+        "rejected_reason": "head-region width error 50.25%; overlay shows horns grossly oversized and offset"
+      },
+      {
+        "file": "view-06.jpg",
+        "role": "helm",
+        "view": "front",
+        "accepted": false,
+        "rejected_reason": "head-region width error 72.86%; angled three-quarter capture, not a front plate"
+      },
+      {
+        "file": "view-09.jpg",
+        "role": "legs",
+        "view": "front",
+        "accepted": false,
+        "rejected_reason": "registration could not be verified; no reliable automatic gate and the overlay was inconclusive"
+      },
+      {
+        "file": "view-10.jpg",
+        "role": "legs",
+        "view": "back",
+        "accepted": false,
+        "rejected_reason": "registration could not be verified; overlay inconclusive"
+      }
+    ]
+  },
+  "geometry": {
+    "source": "vrol-hunyuan/vrol-decimated-45k.glb",
+    "decimate": false,
+    "target_triangles": 45000,
+    "max_triangles": 50000,
+    "provenance": "Tencent Hunyuan3D-2mv (hunyuan3d-dit-v2-mv, fp16, 50 steps, octree 380, seed 12345) from the front/back plates only, then Blender-collapse decimated. Accepted geometry - do NOT regenerate.",
+    "regenerate_note": "For a NEW npc, point source at the Hunyuan draft and set decimate=true."
+  },
+  "atlas": {
+    "size": 1024,
+    "jpeg_quality": 92,
+    "roughness": 0.78,
+    "material_name": "captain-vrol-atlas"
+  },
+  "regions": {
+    "head_v_min": 0.8121,
+    "head_feather": 0.12,
+    "note": "head_v_min is the shoulder line as a fraction of model height, taken from the front plate. head_feather blends the helm closeup out below it; 0.05 left a visible horizontal seam across the beard, 0.12 does not."
+  },
+  "uv_density": {
+    "head_scale": 5.5,
+    "head_v": 0.8,
+    "leg_scale": 1.0,
+    "leg_v": 0.45,
+    "ramp": 0.08,
+    "note": "Head is unwrapped from an enlarged copy so xatlas spends texels on it. leg_scale stays 1.0: shrinking the legs to buy head area destroyed the fur-trimmed boots for a 2% gain."
+  },
+  "projection": {
+    "supersample": 2,
+    "depth_size": 2048,
+    "pack_resolution": 2048,
+    "pack_padding": 4,
+    "blend_power": 3.0,
+    "silhouette_inset": 0.02,
+    "grazing_threshold": 0.35,
+    "dilate": 24,
+    "closeup_feather": 60
+  },
+  "tone": { "contrast": 1.08, "saturation": 1.1 },
+  "unsharp": { "sigma": 0.7, "amount": 0.45, "threshold": 0.01569 },
+  "output": {
+    "directory": "build/captain-vrol/out",
+    "suffix": "-overview-v8",
+    "max_bytes": 2500000
+  },
+  "rights": "The Elder Scrolls Online name, character design and related rights remain with ZeniMax Media/Bethesda Softworks. Reconstructed from published screenshots for an authorized fan prototype; not a claim that the IP is freely licensed."
+}

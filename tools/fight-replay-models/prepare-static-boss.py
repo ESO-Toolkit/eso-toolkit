@@ -1,8 +1,17 @@
-"""Prepare an image-to-3D boss reconstruction for the fight replay.
+"""Prepare a reconstructed boss mesh for the fight replay.
 
-Run with Blender, for example:
+    python tools/fight-replay-models/prepare-static-boss.py in.glb out.glb \
+        --max-triangles 50000 --texture-size 1024 --name captain-vrol
 
-    blender --background --python prepare-static-boss.py -- input.glb output.glb
+Run with the project's Python interpreter (which provides ``bpy``). There is no
+standalone Blender install, so ``blender --background --python`` will not work.
+A leading ``--`` separator is still tolerated for backwards compatibility.
+
+This is the deterministic runtime gate: it joins mesh objects, applies
+transforms, centres the model horizontally, grounds its feet at y=0, enforces
+the triangle budget, downsizes embedded textures, removes unused data and
+exports a plain GLB. Do not enable Draco without adding ``DRACOLoader`` to the
+browser runtime.
 """
 
 from __future__ import annotations
@@ -16,13 +25,17 @@ from mathutils import Vector
 
 
 def parse_args() -> argparse.Namespace:
-    arguments = sys.argv[sys.argv.index("--") + 1 :] if "--" in sys.argv else []
-    parser = argparse.ArgumentParser()
+    argv = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else sys.argv[1:]
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
     parser.add_argument("source", type=Path)
     parser.add_argument("destination", type=Path)
     parser.add_argument("--max-triangles", type=int, default=16_000)
     parser.add_argument("--texture-size", type=int, default=1024)
-    return parser.parse_args(arguments)
+    parser.add_argument("--name", default=None,
+                        help="object/mesh name written into the GLB; defaults to the output stem")
+    return parser.parse_args(argv)
 
 
 def world_bounds(objects: list[bpy.types.Object]) -> tuple[Vector, Vector]:
@@ -53,7 +66,8 @@ def main() -> None:
     if len(meshes) > 1:
         bpy.ops.object.join()
     boss = bpy.context.view_layer.objects.active
-    boss.name = "yandir-the-butcher-static-v1"
+    boss.name = args.name or destination.stem
+    boss.data.name = boss.name
 
     triangle_count = sum(len(polygon.vertices) - 2 for polygon in boss.data.polygons)
     if triangle_count > args.max_triangles:
@@ -69,18 +83,20 @@ def main() -> None:
     # Blender is Z-up. glTF export maps this to +Y-up. Center X/Y, put feet on Z=0,
     # and bake the translation so the runtime can rotate about a stable ground pivot.
     minimum, maximum = world_bounds([boss])
-    boss.location += Vector(
-        (
-            -((minimum.x + maximum.x) / 2),
-            -((minimum.y + maximum.y) / 2),
-            -minimum.z,
-        )
-    )
+    boss.location += Vector((
+        -((minimum.x + maximum.x) / 2),
+        -((minimum.y + maximum.y) / 2),
+        -minimum.z,
+    ))
     bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
 
     for image in bpy.data.images:
         if image.type == "IMAGE" and max(image.size) > args.texture_size:
             image.scale(args.texture_size, args.texture_size)
+
+    for material in boss.data.materials:
+        if material is not None:
+            material.name = f"{boss.name}-material"
 
     # Remove imported cameras/lights/empties and unused datablocks before deterministic export.
     for obj in list(bpy.context.scene.objects):
@@ -102,7 +118,7 @@ def main() -> None:
         export_materials="EXPORT",
         export_normals=True,
         # Three.js derives tangents when a material actually needs them. Omitting the
-        # de-indexed tangent stream saves roughly 1.4 MB on the Yandir prototype.
+        # de-indexed tangent stream saves roughly 1.4 MB on a boss-sized asset.
         export_tangents=False,
         export_animations=False,
         export_morph=False,
