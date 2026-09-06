@@ -26,6 +26,11 @@ Do not reuse any reconstructed asset outside this project without a separate rig
 | `captain-vrol-overview-v2.glb`       | Captain Vrol            | `static-boss`             | 44,999 | 28,796 |         1 | 1024px JPEG | 1,679,644 | [post 83](https://esomodelviewer.com/characters/post/83-captain-vrol)               |
 | `saint-llothis-overview-v1.glb`      | Saint Llothis the Pious | `static-boss`             | 44,999 | 31,803 |         1 | 1024px JPEG | 1,774,760 | [creature 89](https://esomodelviewer.com/creatures/post/89-saint-llothis-the-pious) |
 | `saint-felms-overview-v1.glb`        | Saint Felms the Bold    | `static-boss`             | 45,000 | 30,921 |         1 | 1024px JPEG | 1,704,864 | [creature 88](https://esomodelviewer.com/creatures/post/88-saint-felms-the-bold)    |
+| `the-warrior-overview-v1.glb`        | The Warrior             | `static-boss`             | 44,999 | 28,943 |         1 | 1024px JPEG | 1,672,496 | [post 172](https://esomodelviewer.com/characters/post/172-the-warrior)              |
+| `the-mage-overview-v1.glb`           | The Mage                | `static-boss`             | 45,000 | 29,007 |         1 | 1024px JPEG | 1,722,144 | [post 173](https://esomodelviewer.com/characters/post/173-the-mage)                 |
+| `shade-of-galenwe-overview-v1.glb`   | Shade of Galenwe        | `static-boss`             | 44,998 | 29,810 |         1 | 1024px JPEG | 1,743,648 | [post 233](https://esomodelviewer.com/characters/post/233-shade-of-galenwe)         |
+| `shade-of-siroria-overview-v1.glb`   | Shade of Siroria        | `static-boss`             | 45,000 | 30,932 |         1 | 1024px JPEG | 1,739,784 | [post 234](https://esomodelviewer.com/characters/post/234-shade-of-siroria)         |
+| `shade-of-relequen-overview-v1.glb`  | Shade of Relequen       | `static-boss`             | 45,000 | 32,337 |         1 | 1024px JPEG | 1,741,760 | [post 235](https://esomodelviewer.com/characters/post/235-shade-of-relequen)        |
 
 ### Runtime budgets
 

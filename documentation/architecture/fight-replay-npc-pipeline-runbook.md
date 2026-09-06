@@ -140,6 +140,48 @@ needed 6.0). Ruled out by measurement, do not re-test: grazing/no-good-source-vi
 edge being smeared, and the region gate (which is saturated at 1.0 on both sides of the band — which
 is why widening the feather did nothing).
 
+### The shoulder detector breaks on two common shapes
+
+`regions.head_v_min` comes from a detector keyed to the widest upper-body row. Across nine models it
+was correct on five and wrong on four, in three distinct modes:
+
+- **Head ornaments that rise above the crown.** All three Cloudrest Shades have feathered
+  shoulder pieces taller than the head, so the threshold is crossed at the crown and the detector
+  fires far too high (0.96-0.99).
+- **Robe cones.** The Mage's widest upper row is the flared robe, so 62% of it is not reached until
+  the chest and the detector fires too low (0.647).
+- **Wingspans.** Saint Olms returns a 16-28 px head band because the widest row is the wings. For
+  that shape the concept fails outright — see the manifest.
+
+A neck-minimum detector was tried as a general replacement and was **worse** (erratic on back plates:
+Warrior 0.669, Galenwe 0.624). Until something better exists, **verify the detected row by drawing it
+on the plate** and hand-set `head_v_min` when it is wrong. Record which value was hand-set and why in
+the config; both shipped batches do.
+
+### Width error is not a reliability signal — the overlay is
+
+Four independent confirmations now, and the strongest is worth stating: **Shade of Siroria's head
+plate scored 0.75% width error — the lowest measured anywhere in this project — and its overlay was
+grossly oversized.** In the same batch a head plate at 6.80% was rejected and a torso plate at 10.61%
+was accepted, purely on the overlays.
+
+An earlier attempt to gate this on profile variance was **disproved against the plates that actually
+failed**: the rear-leg plate that doubled the greaves on two models had the _highest_ variation of any
+plate (0.401 against 0.17-0.39) while scoring the lowest error. `profile_variation` is therefore
+reported as information only. The caveat is attached by role instead — leg, tail and wing plates carry
+a standing warning.
+
+Leg plates have now misregistered on **6 of 6** models where they were attempted, with the same
+signature: the overlay's boots overshoot below the base plate's feet.
+
+### Concave recessed features may not reconstruct
+
+Two-view marching-cubes reconstruction produces convex hulls where a reference has a recess. The
+Celestial Serpent's gold mask, set back inside a hood opening, came out as a smooth convex hood cone
+from every angle — the projection then correctly painted the hood's engraving onto that cone. This is
+a **geometry** failure and cannot be fixed in the texture stage. Raising octree resolution, adding a
+third view that sees into the cavity, or more inference steps are the levers.
+
 ### Encode deliberately, then verify
 
 q92, chroma subsampling **disabled** (these atlases carry identity as flat colour blocks, which 4:2:0

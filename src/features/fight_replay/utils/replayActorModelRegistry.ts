@@ -139,6 +139,102 @@ export const STATIC_REPLAY_ACTOR_MODEL_ASSETS: readonly StaticReplayActorModelAs
       attributionFile: 'public/models/fight-replay/npcs/README-saint-felms-overview-v1.md',
     },
   },
+
+  {
+    id: 'the-warrior-overview-v1',
+    path: 'models/fight-replay/npcs/the-warrior-overview-v1.glb',
+    renderer: 'static-boss',
+    actorTypes: HOSTILE_ACTOR_TYPES,
+    aliases: ['the warrior'],
+    transform: {
+      orientEuler: [0, 0, 0],
+      scale: 1.25,
+      yOffset: 0,
+      yawOffset: 0,
+      modelHeight: 1.9938,
+    },
+    provenance: {
+      designation: 'project-authorized-fan-prototype',
+      sourceUrl: 'https://esomodelviewer.com/characters/post/172-the-warrior',
+      attributionFile: 'public/models/fight-replay/npcs/README-the-warrior-overview-v1.md',
+    },
+  },
+  {
+    id: 'the-mage-overview-v1',
+    path: 'models/fight-replay/npcs/the-mage-overview-v1.glb',
+    renderer: 'static-boss',
+    actorTypes: HOSTILE_ACTOR_TYPES,
+    aliases: ['the mage'],
+    transform: {
+      orientEuler: [0, 0, 0],
+      scale: 1.25,
+      yOffset: 0,
+      yawOffset: 0,
+      modelHeight: 1.9928,
+    },
+    provenance: {
+      designation: 'project-authorized-fan-prototype',
+      sourceUrl: 'https://esomodelviewer.com/characters/post/173-the-mage',
+      attributionFile: 'public/models/fight-replay/npcs/README-the-mage-overview-v1.md',
+    },
+  },
+  {
+    id: 'shade-of-galenwe-overview-v1',
+    path: 'models/fight-replay/npcs/shade-of-galenwe-overview-v1.glb',
+    renderer: 'static-boss',
+    actorTypes: HOSTILE_ACTOR_TYPES,
+    aliases: ['shade of galenwe'],
+    transform: {
+      orientEuler: [0, 0, 0],
+      scale: 1.25,
+      yOffset: 0,
+      yawOffset: 0,
+      modelHeight: 1.9939,
+    },
+    provenance: {
+      designation: 'project-authorized-fan-prototype',
+      sourceUrl: 'https://esomodelviewer.com/characters/post/233-shade-of-galenwe',
+      attributionFile: 'public/models/fight-replay/npcs/README-shade-of-galenwe-overview-v1.md',
+    },
+  },
+  {
+    id: 'shade-of-siroria-overview-v1',
+    path: 'models/fight-replay/npcs/shade-of-siroria-overview-v1.glb',
+    renderer: 'static-boss',
+    actorTypes: HOSTILE_ACTOR_TYPES,
+    aliases: ['shade of siroria'],
+    transform: {
+      orientEuler: [0, 0, 0],
+      scale: 1.25,
+      yOffset: 0,
+      yawOffset: 0,
+      modelHeight: 1.9939,
+    },
+    provenance: {
+      designation: 'project-authorized-fan-prototype',
+      sourceUrl: 'https://esomodelviewer.com/characters/post/234-shade-of-siroria',
+      attributionFile: 'public/models/fight-replay/npcs/README-shade-of-siroria-overview-v1.md',
+    },
+  },
+  {
+    id: 'shade-of-relequen-overview-v1',
+    path: 'models/fight-replay/npcs/shade-of-relequen-overview-v1.glb',
+    renderer: 'static-boss',
+    actorTypes: HOSTILE_ACTOR_TYPES,
+    aliases: ['shade of relequen'],
+    transform: {
+      orientEuler: [0, 0, 0],
+      scale: 1.25,
+      yOffset: 0,
+      yawOffset: 0,
+      modelHeight: 1.9935,
+    },
+    provenance: {
+      designation: 'project-authorized-fan-prototype',
+      sourceUrl: 'https://esomodelviewer.com/characters/post/235-shade-of-relequen',
+      attributionFile: 'public/models/fight-replay/npcs/README-shade-of-relequen-overview-v1.md',
+    },
+  },
 ];
 
 /**
