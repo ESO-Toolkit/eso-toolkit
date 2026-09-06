@@ -60,7 +60,7 @@ def _fill_empty_slices(minimums: np.ndarray, maximums: np.ndarray) -> None:
         maximums[index] = maximums[nearest]
 
 
-def projected_u(points, slice_indices, screen_right, slice_count):
+def projected_u(points, slice_indices, screen_right, slice_count, envelope_sigma=0.0):
     """Horizontal coordinate of each point within its own height slice.
 
     This is what registers the mesh against the plate: both are normalised by
@@ -73,6 +73,9 @@ def projected_u(points, slice_indices, screen_right, slice_count):
     np.minimum.at(minimums, slice_indices, projected)
     np.maximum.at(maximums, slice_indices, projected)
     _fill_empty_slices(minimums, maximums)
+    if envelope_sigma > 0:
+        minimums = ndimage.gaussian_filter1d(minimums, envelope_sigma, mode="nearest")
+        maximums = ndimage.gaussian_filter1d(maximums, envelope_sigma, mode="nearest")
     span = np.maximum(maximums[slice_indices] - minimums[slice_indices], 1e-6)
     return np.clip((projected - minimums[slice_indices]) / span, 0.0, 1.0)
 
@@ -88,7 +91,7 @@ class Plate:
     sharpness but mipped to mush.
     """
 
-    def __init__(self, path: Path, feather: int = 0):
+    def __init__(self, path: Path, feather: int = 0, envelope_sigma: float = 0.0):
         rgba = np.asarray(Image.open(path).convert("RGBA"), dtype=np.float32) / 255.0
         self.path = Path(path)
         self.rgb = rgba[:, :, :3]
@@ -109,6 +112,10 @@ class Plate:
         for y in np.flatnonzero(~np.isfinite(left)):
             n = known[np.argmin(np.abs(known - y))]
             left[y], right[y] = left[n], right[n]
+        if envelope_sigma > 0:
+            sigma_rows = envelope_sigma * (self.bottom - self.top) / 255.0
+            left = ndimage.gaussian_filter1d(left, sigma_rows, mode="nearest")
+            right = ndimage.gaussian_filter1d(right, sigma_rows, mode="nearest")
         self.row_left, self.row_right = left, right
 
         # Used only when all four bilinear taps land in background.
@@ -362,6 +369,15 @@ class ProjectionSettings:
     blend_power: float = 3.0
     silhouette_inset: float = 0.02
     grazing_threshold: float = 0.35
+    # Gaussian smoothing (in height slices) applied to the mesh AND plate silhouette envelopes
+    # before they normalise the horizontal coordinate. Non-zero by default: at 0 the envelopes step
+    # abruptly where the shoulders meet the neck, and because the mesh and plate step at slightly
+    # different heights the two normalisations stop cancelling — which threw the sampled plate
+    # coordinate 40-70px sideways in a single texel row and drew a hard bar across the chin and
+    # pauldrons. The normalisation is a deformation field correcting mesh-vs-plate silhouette error,
+    # so it should be band-limited; a step in it corrects nothing and amplifies a 2-3 slice
+    # registration error into a ~20% horizontal error. Raise it if a seam persists.
+    envelope_sigma: float = 3.0
     contrast: float = 1.08
     saturation: float = 1.10
     unsharp_sigma: float = 0.7
@@ -470,7 +486,7 @@ def project_atlas(mesh_path, base_plates, closeups, settings: ProjectionSettings
     slice_idx = np.clip((v * 255).astype(np.int32), 0, 255)
     rights = np.array([[1.0, 0, 0], [-1.0, 0, 0]])
     dirs = np.array([[0, 0, 1.0], [0, 0, -1.0]])
-    us = [projected_u(pts, slice_idx, r, 256) for r in rights]
+    us = [projected_u(pts, slice_idx, r, 256, settings.envelope_sigma) for r in rights]
 
     sampled = np.zeros((len(pts), 2, 3), np.float32)
     for k, view in enumerate(("front", "back")):

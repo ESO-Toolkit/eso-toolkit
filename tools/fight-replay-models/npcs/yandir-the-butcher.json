@@ -1,7 +1,9 @@
 {
   "slug": "yandir-the-butcher",
   "display_name": "Yandir the Butcher",
-  "aliases": ["Yandir the Butcher"],
+  "aliases": [
+    "Yandir the Butcher"
+  ],
   "encounter": {
     "trial": "Kyne's Aegis",
     "boss_order": 1,
@@ -12,8 +14,14 @@
     "page_url": "https://esomodelviewer.com/characters/post/82-yandir-the-butcher",
     "directory": "yandir-references",
     "plates": {
-      "front": { "file": "view-02.jpg", "role": "full-body-front" },
-      "back": { "file": "view-03.jpg", "role": "full-body-back" }
+      "front": {
+        "file": "view-02.jpg",
+        "role": "full-body-front"
+      },
+      "back": {
+        "file": "view-03.jpg",
+        "role": "full-body-back"
+      }
     },
     "side_plates": {
       "available": false,
@@ -139,10 +147,18 @@
     "silhouette_inset": 0.02,
     "grazing_threshold": 0.35,
     "dilate": 24,
-    "closeup_feather": 60
+    "closeup_feather": 60,
+    "envelope_sigma": 3.0
   },
-  "tone": { "contrast": 1.08, "saturation": 1.1 },
-  "unsharp": { "sigma": 0.7, "amount": 0.45, "threshold": 0.01569 },
+  "tone": {
+    "contrast": 1.08,
+    "saturation": 1.1
+  },
+  "unsharp": {
+    "sigma": 0.7,
+    "amount": 0.45,
+    "threshold": 0.01569
+  },
   "output": {
     "directory": "build/yandir-the-butcher/out",
     "suffix": "-overview-v8",

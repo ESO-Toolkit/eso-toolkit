@@ -1,7 +1,9 @@
 {
   "slug": "captain-vrol",
   "display_name": "Captain Vrol",
-  "aliases": ["Captain Vrol"],
+  "aliases": [
+    "Captain Vrol"
+  ],
   "encounter": {
     "trial": "Kyne's Aegis",
     "boss_order": 2,
@@ -11,10 +13,20 @@
   "reference": {
     "page_url": "https://esomodelviewer.com/characters/post/83-captain-vrol",
     "directory": "vrol-references",
-    "source_dimensions_m": { "x": 1.03, "y": 2.42, "z": 0.49 },
+    "source_dimensions_m": {
+      "x": 1.03,
+      "y": 2.42,
+      "z": 0.49
+    },
     "plates": {
-      "front": { "file": "view-02.jpg", "role": "full-body-front" },
-      "back": { "file": "view-03.jpg", "role": "full-body-back" }
+      "front": {
+        "file": "view-02.jpg",
+        "role": "full-body-front"
+      },
+      "back": {
+        "file": "view-03.jpg",
+        "role": "full-body-back"
+      }
     },
     "side_plates": {
       "available": false,
@@ -130,10 +142,18 @@
     "silhouette_inset": 0.02,
     "grazing_threshold": 0.35,
     "dilate": 24,
-    "closeup_feather": 60
+    "closeup_feather": 60,
+    "envelope_sigma": 6.0
   },
-  "tone": { "contrast": 1.08, "saturation": 1.1 },
-  "unsharp": { "sigma": 0.7, "amount": 0.45, "threshold": 0.01569 },
+  "tone": {
+    "contrast": 1.08,
+    "saturation": 1.1
+  },
+  "unsharp": {
+    "sigma": 0.7,
+    "amount": 0.45,
+    "threshold": 0.01569
+  },
   "output": {
     "directory": "build/captain-vrol/out",
     "suffix": "-overview-v8",

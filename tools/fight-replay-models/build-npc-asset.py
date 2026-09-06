@@ -157,6 +157,7 @@ def main():
         blend_power=proj.get("blend_power", 3.0),
         silhouette_inset=proj.get("silhouette_inset", 0.02),
         grazing_threshold=proj.get("grazing_threshold", 0.35),
+        envelope_sigma=proj.get("envelope_sigma", 3.0),
         contrast=cfg.get("tone", {}).get("contrast", 1.08),
         saturation=cfg.get("tone", {}).get("saturation", 1.10),
         unsharp_sigma=cfg.get("unsharp", {}).get("sigma", 0.7),
@@ -174,7 +175,10 @@ def main():
         head_v_min_measure=regions.get("head_v_min", 0.80),
     )
 
-    base_plates = {n: engine.Plate(plates_dir / f"{n}-native.png") for n in ("front", "back")}
+    base_plates = {
+        n: engine.Plate(plates_dir / f"{n}-native.png", envelope_sigma=settings.envelope_sigma)
+        for n in ("front", "back")
+    }
     closeups: dict[str, list[engine.CloseupRef]] = {"front": [], "back": []}
     accepted_records = []
     for entry in reference.get("closeups", []):
@@ -184,7 +188,8 @@ def main():
         is_head = entry.get("region") == "head"
         closeups[entry["view"]].append(engine.CloseupRef(
             plate=engine.Plate(plates_dir / f"closeup-{Path(entry['file']).stem}.png",
-                               feather=settings.closeup_feather),
+                               feather=settings.closeup_feather,
+                               envelope_sigma=settings.envelope_sigma),
             scale=reg["scale"], row=reg["row"], col=reg["col"],
             source=entry["file"],
             v_min=(reg.get("v_min", regions.get("head_v_min")) if is_head else None),

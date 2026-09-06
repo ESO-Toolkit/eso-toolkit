@@ -113,6 +113,33 @@ chart so colour cannot cross a boundary), ramp the blend by `(threshold − obse
 skip islands with too few well-observed texels. Filled regions read smooth — that is honest, since no
 plate observed them.
 
+### Band-limit the silhouette envelopes (`projection.envelope_sigma`)
+
+Both bosses shipped with a hard horizontal bar across the chin/beard and the tops of the pauldrons.
+It was assumed for a while to be an irreducible two-view artefact. **It was a bug.**
+
+The horizontal coordinate is silhouette-normalised: a point's x is divided by the _mesh_ silhouette
+span in its height slice, then re-expanded by the _plate_ silhouette span at the same v. Both spans
+collapse abruptly where the shoulders meet the neck — but at slightly different heights (2-3 slices
+apart) and with different shapes, so in that window the two normalisations stop cancelling. Measured
+on Yandir, one slice had a mesh/plate span ratio of **2.51**, and a fixed world-space column jumped
+**0.23 in u within a single slice** — throwing the sampled plate coordinate **40-70 px sideways in
+one texel row**. Vrol had the identical defect at v 0.79-0.82.
+
+The giveaway: the affected band covers the chin _and_ the pauldron tops — disjoint surfaces that
+share only a world height. Only a v-driven cause can do that.
+
+Fix: Gaussian-smooth all four envelopes (mesh min/max, plate left/right) along v with one shared
+sigma. The normalisation is a deformation field correcting mesh-vs-plate silhouette error, so it
+should be band-limited; a step in it corrects nothing and amplifies a small registration error into a
+~20% horizontal error. Smoothing both sides identically is self-consistent, so the head still samples
+the head. Max per-slice jump drops from ~60 px to ~4 px at sigma 3 (2.3 px is the floor).
+
+Default is **3.0** so a new NPC cannot silently inherit the bug. Raise it if a seam persists (Vrol
+needed 6.0). Ruled out by measurement, do not re-test: grazing/no-good-source-view, a source-plate
+edge being smeared, and the region gate (which is saturated at 1.0 on both sides of the band — which
+is why widening the feather did nothing).
+
 ### Encode deliberately, then verify
 
 q92, chroma subsampling **disabled** (these atlases carry identity as flat colour blocks, which 4:2:0
@@ -140,7 +167,8 @@ Before accepting any asset:
 
 ## Known limits — do not spend effort here
 
-- **Side profiles are irreducibly soft** with two views. ~34% of texels are unobserved; the fill makes
+- **Side profiles are irreducibly soft** with two views (this is real; the chin/pauldron _seam_ was
+  not — see `envelope_sigma` above). ~34% of texels are unobserved; the fill makes
   them smooth, not detailed. Only a genuine profile plate adds real information, and fabricating one
   was judged worse than the limitation.
 - **Source resolution is the ceiling.** The character occupies ~700 x 300 px in a full-body plate. The
