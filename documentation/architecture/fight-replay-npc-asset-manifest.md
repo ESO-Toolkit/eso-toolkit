@@ -145,23 +145,36 @@ the same for any same-species pair.
 Olms was attempted and **stopped before the GPU job**, because the build would have produced a
 clipped model. Three measured blockers, none of which a parameter override fixes:
 
-1. **The plate crop truncates the wings.** `prepare_base_plates` sizes its square as
-   `min(max(h*1.06, w*1.30), source_height)`. Olms's subject is 1805x738 front / 1859x757 back and
-   needs a ~1913-1970 px square, but the source is 1080 tall so it clamps — cutting **44-45% of the
-   wingspan**. The cutout alpha touches columns 0 and 1079 on both plates. Fix: size the square from
-   `max(width, height)` and letterbox with padding rather than clamping to source height. Contained,
-   and it benefits any wide creature.
+1. ~~**The plate crop truncates the wings.**~~ **FIXED.** `prepare_base_plates` clamped its square to
+   the source height, cutting **44-45% of the wingspan**. It now sizes purely from the subject and
+   **letterboxes** with transparent padding when the square exceeds the source (`_framing_centre`
+   only clamps the centre when the crop actually fits, so every narrow subject is byte-identical).
+   Re-cut on the Olms plates: square **2415 px**, front subject spans columns 307–2107 (**1801 of
+   1805 px**), back 280–2135 (**1856 of 1859 px**), and neither edge column is opaque on either
+   plate. The 3–4 px shortfall is the alpha threshold (96 for the crop vs 16 for the bounding box),
+   not truncation.
 2. **The shoulder detector misfires badly.** It keys off the widest upper-body row, which here is the
-   (already truncated) wingspan, so it fires at the wing tops and returns head bands of 28 px (3.8%)
-   front and 16 px (2.1%) back.
-3. **The head-band concept does not apply at all.** For Olms the top of the silhouette is _wing_, not
-   head — the skull sits mid-height, below the wing shoulders. `uv_density_warp`,
-   `regions.head_v_min` and `measure_uv_allocation` all key off normalized height `v`, and **no
-   scalar threshold selects a skull that is not at the top.** The fix is to replace the `head_v_min`
-   scalar with an optional normalized axis-aligned **3D box** plus smooth falloff, used by both the
-   density warp and the measurement. The reported metric then becomes "region texels" rather than
-   "face texels". For Olms that means one box at the skull and probably a second at the wing
-   membranes, since that is where the identity lives.
+   wingspan, so it fires at the wing tops and returns head bands of 28 px (3.8%) front and 16 px
+   (2.1%) back. Still true; hand-set the region instead (see 3).
+3. ~~**The head-band concept does not apply at all.**~~ **ADDRESSED.** For Olms the top of the
+   silhouette is _wing_, not head — the skull sits mid-height — and **no scalar threshold selects a
+   skull that is not at the top.** `regions.boxes` is now an optional list of normalized
+   axis-aligned 3D boxes, `[x0,y0,z0,x1,y1,z1]` in model space with smooth Euclidean falloff, used by
+   **both** the density warp (`region_box_warp`, scaling about each box's own centre) and
+   `measure_uv_allocation`. Several boxes are supported and are applied in order, so Olms can take
+   one at the skull and one at the wing membranes. When boxes are present the reported metric is
+   **region texels** and `atlas.uv_allocation.region.kind` reads `boxes`; the `head`/`face` keys are
+   retained so existing readers keep working.
+
+   Backwards compatibility is proven, not assumed: rebuilding Saint Llothis unchanged gives face
+   **67,590** texels, head **25.0%** of atlas, **776** charts, **66.53%** coverage, 44,999 tris /
+   31,803 verts — identical to the shipped report. (Byte count moves by ~150 and the grazing fill by
+   ~20 texels between _any_ two runs of the same code, because `raster_attributes` is
+   `numba parallel=True` and races on shared texels; two consecutive runs of the new code differ by
+   the same amount.) Expressing that same band as a box instead gives 307,951 region texels / 29.4%,
+   higher than the scalar's 262,301 / 25.0% because the box warp scales on all three axes about the
+   box centre rather than x/z about the vertical axis — so a box is not a drop-in numeric equivalent
+   and `uv_scale` needs its own tuning pass.
 
 Two further notes if it is picked up:
 
@@ -193,12 +206,35 @@ eye-socket doubling rather than any width metric — 0.134-0.138 single-images t
 and jaw; outside that they double. `width_error` is recorded as `null` for that plate, since no
 meaningful silhouette error exists for the fit.
 
-**Proposed detector, not yet implemented.** Count opaque _runs_ per slice in the plate row and in the
-mesh's rasterized front-coverage row across the head band, and flag a slice when the run counts differ
-or matched run centres diverge by more than a few percent of span. O(rows), needs no new rendering
-since the front depth buffer already exists, fires precisely on wide-ornament heads and stays silent
-on ordinary silhouettes. It would have flagged this automatically and could gate a "this head needs a
-hand-registered plate" warning in the build report.
+**Detector implemented — and it does NOT catch this case.** The run-count detector proposed here now
+ships (`detect_run_count_mismatch`): it compares opaque runs per slice between the plate row and the
+mesh's rasterized front-coverage row across the head band, O(rows), reusing the existing front depth
+buffer. Its warning appears in the build report at `atlas.head_run_mismatch` and `warnings`.
+
+The premise above was measured and is **wrong**. It compares _silhouettes_, and the Serpent's mask is
+not a silhouette feature. At mask height (v 0.865–0.895) the plate alpha reads horn / gap / **hood** /
+gap / horn, and the bright bone occupies at most **42 px inside the ~175 px hood run** — it is never a
+separate opaque run, so no alpha-run comparison can see it. The Serpent's horns _do_ appear on both
+sides, offset by ~4 slices, but that is a much weaker signal. Measured flagged fraction across all ten
+shipped models, front plate, each model's own `head_v_min`:
+
+| siroria | felms | relequen | galenwe | llothis | warrior | vrol | yandir | **serpent** | mage |
+| ------: | ----: | -------: | ------: | ------: | ------: | ---: | -----: | ----------: | ---: |
+|    0.53 |  0.45 |     0.45 |    0.33 |    0.28 |    0.28 | 0.27 |   0.11 |    **0.09** | 0.05 |
+
+The Serpent ranks **9th of 10**. The detector is therefore useful as a "this head's silhouette does not
+correspond, look at the overlay" prompt (it fires on the seven ornamented heads and stays quiet on
+Yandir, the Serpent and the Mage) but it is **not** the gate for the Serpent's class of defect. Catching
+a recessed interior feature needs a luminance/interior-structure comparison, not a silhouette one.
+
+Two scoring alternatives were tried and disproved, do not re-test:
+
+- **Cumulative-coverage mass transport** (`C_plate⁻¹(C_mesh(u))`). Discontinuous at every gap: two
+  near-identical rows whose left runs differ by two cells report a huge error because the mesh's right
+  run starts at a mass fraction the plate has not reached. On Vrol at v=0.945 it returned **0.603 for
+  rows differing by three pixels**. It did rank the Serpent above Llothis — purely by that artefact.
+- **Raw count of mismatched slices**, at every noise threshold from `min_run_frac` 0.03 to 0.12. The
+  Serpent stays 7th–9th in all of them.
 
 ## Unknown actors
 

@@ -276,6 +276,98 @@ def smoothstep(a, b, t):
     return x * x * (3 - 2 * x)
 
 
+def normalise_region_boxes(boxes, default_feather=0.06, default_scale=None):
+    """Validate and normalise region-box config into a plain list of dicts.
+
+    A box is ``[x0, y0, z0, x1, y1, z1]`` in NORMALISED model space - each
+    coordinate 0-1 across the mesh's own bounding box on that axis - plus an
+    optional ``feather`` (falloff width, same units) and ``uv_scale``.
+
+    This exists because ``regions.head_v_min`` is a scalar on normalised HEIGHT,
+    and no scalar threshold can select identity that is not at the top of the
+    silhouette. Saint Olms's top is wing and his skull sits mid-height; head
+    ornaments rising above the crown (all three Cloudrest Shades) and robe cones
+    (The Mage) break it from the other direction. A neck-minimum detector was
+    tried as a replacement and was WORSE - erratic on back plates - so do not
+    re-attempt that; a box states the answer instead of inferring it.
+    """
+    out = []
+    for index, entry in enumerate(boxes or []):
+        raw = entry["box"] if isinstance(entry, dict) else entry
+        values = [float(v) for v in raw]
+        if len(values) != 6:
+            raise ValueError(f"region box {index} needs 6 values [x0,y0,z0,x1,y1,z1], got {len(values)}")
+        low = np.minimum(values[:3], values[3:])
+        high = np.maximum(values[:3], values[3:])
+        if np.any(high - low <= 0):
+            raise ValueError(f"region box {index} is degenerate: {values}")
+        meta = entry if isinstance(entry, dict) else {}
+        out.append({
+            "name": meta.get("name", f"box{index}"),
+            "low": low.astype(np.float64),
+            "high": high.astype(np.float64),
+            "feather": float(meta.get("feather", default_feather)),
+            "uv_scale": float(meta.get("uv_scale", default_scale if default_scale else 1.0)),
+            "note": meta.get("note"),
+        })
+    return out
+
+
+def region_box_weight(vertices, box, lo=None, hi=None):
+    """Smooth 0-1 membership of each vertex in a normalised axis-aligned box.
+
+    Falloff is on the Euclidean distance OUTSIDE the box in normalised units, so
+    a corner ramps as smoothly as a face. A hard box would put a step in the
+    density field, and a step in a deformation field is exactly the defect that
+    ``envelope_sigma`` exists to remove elsewhere in this pipeline.
+    """
+    lo = vertices.min(axis=0) if lo is None else lo
+    hi = vertices.max(axis=0) if hi is None else hi
+    span = np.maximum(hi - lo, 1e-9)
+    normalised = (vertices - lo) / span
+    outside = np.maximum(box["low"] - normalised, normalised - box["high"])
+    distance = np.linalg.norm(np.maximum(outside, 0.0), axis=1)
+    feather = max(box["feather"], 1e-6)
+    return 1.0 - smoothstep(0.0, feather, distance)
+
+
+def region_boxes_weight(vertices, boxes, lo=None, hi=None):
+    """Combined membership across several boxes (max, so boxes never stack)."""
+    if not boxes:
+        return np.zeros(len(vertices))
+    lo = vertices.min(axis=0) if lo is None else lo
+    hi = vertices.max(axis=0) if hi is None else hi
+    weights = [region_box_weight(vertices, box, lo, hi) for box in boxes]
+    return np.maximum.reduce(weights)
+
+
+def region_box_warp(vertices, boxes):
+    """Inflate each region box's contents so xatlas spends texels there.
+
+    Same principle as :func:`uv_density_warp` - the warp is applied to a
+    THROWAWAY copy that is only unwrapped; the shipped geometry never changes -
+    but scaled about each box's own centre with a smooth falloff, so it works
+    wherever the region sits rather than only at the top of the model. Boxes are
+    applied in order; overlapping boxes compound, which is why they should be
+    written disjoint.
+    """
+    if not boxes:
+        return vertices, None
+    lo, hi = vertices.min(axis=0), vertices.max(axis=0)
+    span = np.maximum(hi - lo, 1e-9)
+    warped = np.array(vertices, dtype=np.float64, copy=True)
+    applied = np.zeros(len(vertices))
+    for box in boxes:
+        if box["uv_scale"] == 1.0:
+            continue
+        weight = region_box_weight(warped, box, lo, hi)
+        centre = lo + (box["low"] + box["high"]) / 2.0 * span
+        scale = 1.0 + (box["uv_scale"] - 1.0) * weight[:, None]
+        warped = centre + (warped - centre) * scale
+        applied = np.maximum(applied, weight)
+    return warped, applied
+
+
 def uv_density_warp(vertices, head_scale, head_v, leg_scale, leg_v, ramp):
     """Return a copy of the mesh warped so xatlas spends texels where we want.
 
@@ -314,14 +406,271 @@ def uv_density_warp(vertices, head_scale, head_v, leg_scale, leg_v, ramp):
 
 
 # --------------------------------------------------------------------------
+# head-band run-structure detector
+# --------------------------------------------------------------------------
+# The horizontal coordinate is normalised by the SILHOUETTE SPAN in each height
+# slice, which silently assumes the mesh row and the plate row describe the same
+# arrangement of features. On an ornamented head they need not: the plate row can
+# be several disconnected opaque runs (horn, gap, horn) while the mesh row at the
+# same normalised height is a single run, because the reconstruction merged the
+# ornaments into the body. Per-slice normalisation maps both to [0, 1], so equal
+# u stops meaning the same feature.
+#
+# This detector counts opaque runs per slice on both sides and compares their
+# normalised centres. It is O(rows) and reuses the front depth buffer the
+# projection already rasterises; nothing extra is rendered.
+#
+# WHAT IT CANNOT SEE - measured, do not re-litigate. It compares SILHOUETTES, so
+# it only sees features that break the outline. The Celestial Serpent's gold
+# mask is not one: at mask height (v 0.865-0.895) the plate alpha is
+# horn/gap/hood/gap/horn and the bright bone occupies at most 42 px INSIDE the
+# ~175 px hood run. The manifest's premise that the row reads "horn, gap, mask,
+# gap, horn" in alpha does not hold against the actual plate. The Serpent's
+# horns do appear on both sides, offset by ~4 slices, which is a real finding but
+# a much weaker signal than its mask defect. Consequently this detector scores
+# The Serpent LOW (9%, 9th of the 10 shipped models) and does not identify it.
+# Catching a recessed interior feature needs a luminance/interior-structure
+# comparison, not a silhouette one.
+def _row_cells(row, bins=128):
+    """Resample a boolean row to ``bins`` majority-vote cells across its span.
+
+    Without this the two sides of the comparison are measured at wildly
+    different resolutions - a 2048-wide depth buffer gives the mesh row roughly
+    1,000 px at head height while the native plate row is ~200 px - so any
+    pixel-denominated noise floor is ~5x stricter on the plate. Measured that
+    way the detector inverts: it reports filigree antialiasing as structure and
+    scores an ornamented head BELOW an ordinary one.
+    """
+    mask = np.asarray(row, dtype=bool)
+    xs = np.flatnonzero(mask)
+    if not len(xs):
+        return None, 0.0
+    span_px = float(xs[-1] - xs[0] + 1)
+    inside = mask[xs[0]:xs[-1] + 1].astype(np.float32)
+    edges = np.floor(np.linspace(0, len(inside), int(bins) + 1)).astype(int)
+    sums = np.add.reduceat(inside, edges[:-1])
+    cells = (sums / np.maximum(np.diff(edges), 1)) >= 0.5
+    if not cells.any():
+        cells[:] = True
+    return cells, span_px
+
+
+def opaque_runs(row, min_run_frac=0.03, merge_gap_frac=0.03, bins=128):
+    """Opaque runs of a boolean row, as centres normalised across the row span.
+
+    Returns ``(centres, widths, span_px)``, both lists in [0, 1] of the row's own
+    silhouette span. Runs separated by a gap narrower than ``merge_gap_frac`` are
+    merged and runs shorter than ``min_run_frac`` are dropped, so antialiasing
+    specks and one-pixel rasterisation cracks cannot manufacture a run.
+    """
+    cells, span_px = _row_cells(row, bins)
+    if cells is None:
+        return [], [], 0.0
+    ys = np.flatnonzero(cells)
+    breaks = np.flatnonzero(np.diff(ys) > 1)
+    starts = np.concatenate([[ys[0]], ys[breaks + 1]])
+    ends = np.concatenate([ys[breaks], [ys[-1]]])
+
+    merged: list[list[int]] = []
+    for start, end in zip(starts, ends):
+        if merged and (start - merged[-1][1] - 1) <= merge_gap_frac * bins:
+            merged[-1][1] = int(end)
+        else:
+            merged.append([int(start), int(end)])
+    kept = [r for r in merged if (r[1] - r[0] + 1) >= min_run_frac * bins]
+    if not kept:
+        kept = [[int(ys[0]), int(ys[-1])]]
+
+    centres = [((start + end + 1) / 2.0) / bins for start, end in kept]
+    widths = [(end - start + 1) / bins for start, end in kept]
+    return centres, widths, span_px
+
+
+def correspondence_displacement(mesh_runs, plate_runs):
+    """Worst feature displacement silhouette-normalised ``u`` imposes on a slice.
+
+    ``mesh_runs`` and ``plate_runs`` are ``(centres, widths)`` from
+    :func:`opaque_runs`, both in units of their own row's span. The projection
+    maps a mesh point at normalised ``u`` onto the plate at the SAME ``u``, so
+    the error is what happens to each run: runs are paired by interval overlap,
+    a pair contributes the distance between its centres, and a run with no
+    partner contributes its own width, because the whole of it is projected onto
+    something else.
+
+    One alternative was tried and is recorded so it is not repeated.
+    **Cumulative-coverage mass transport** (``C_plate^-1(C_mesh(u))``) is
+    discontinuous at every gap: two visually near-identical rows whose left runs
+    differ by two cells report a huge error, because the mesh's right run begins
+    at a mass fraction the plate has not reached yet. Measured on Captain Vrol at
+    v=0.945 it returned 0.603 for rows differing by three pixels. It did rank
+    The Serpent above Saint Llothis, but only by that artefact.
+    """
+    mesh_centres, mesh_widths = mesh_runs
+    plate_centres, plate_widths = plate_runs
+    if not mesh_centres or not plate_centres:
+        return 0.0
+
+    def intervals(centres, widths):
+        return [(c - w / 2.0, c + w / 2.0, w) for c, w in zip(centres, widths)]
+
+    mesh = intervals(mesh_centres, mesh_widths)
+    plate = intervals(plate_centres, plate_widths)
+
+    error = 0.0
+    for source, other, source_centres, other_centres in (
+        (mesh, plate, mesh_centres, plate_centres),
+        (plate, mesh, plate_centres, mesh_centres),
+    ):
+        for index, (lo, hi, width) in enumerate(source):
+            best, best_overlap = None, 0.0
+            for j, (olo, ohi, _) in enumerate(other):
+                overlap = max(0.0, min(hi, ohi) - max(lo, olo))
+                if overlap > best_overlap:
+                    best, best_overlap = j, overlap
+            if best is None or best_overlap < 0.5 * width:
+                # Nothing on the far side covers this run: all of it lands on
+                # the wrong feature.
+                error = max(error, width)
+            else:
+                error = max(error, abs(source_centres[index] - other_centres[best]))
+    return float(error)
+
+
+def detect_run_count_mismatch(mesh_coverage, plate, v_min, v_max=1.0, slices=64,
+                              tolerance=0.15, min_run_frac=0.03,
+                              merge_gap_frac=0.03, bins=128):
+    """Compare per-slice opaque-run structure between the mesh and a plate.
+
+    ``mesh_coverage`` is a boolean image whose row index runs bottom-to-top over
+    the model's normalised height - the front depth buffer's coverage, which the
+    projection already rasterises, so nothing extra is rendered. ``plate`` is a
+    :class:`Plate`. For every slice in the band both rows are reduced to opaque
+    runs with normalised centres, and to a correspondence displacement.
+
+    A slice is flagged when its displacement exceeds ``tolerance``. Run-count
+    differences are recorded per slice and summarised, but are NOT the flag on
+    their own - see :func:`correspondence_displacement`.
+    """
+    mesh_coverage = np.asarray(mesh_coverage, dtype=bool)
+    rows = mesh_coverage.shape[0]
+    plate_band = max(plate.bottom - plate.top, 1)
+
+    checked = 0
+    flagged = []
+    count_mismatch = 0
+    displacements = []
+    for v in np.linspace(float(v_min), float(v_max), int(slices), endpoint=False):
+        mesh_row = mesh_coverage[min(int(round(v * (rows - 1))), rows - 1)]
+        plate_y = min(max(int(round(plate.bottom - v * plate_band)), 0), plate.h - 1)
+        plate_row = plate.alpha[plate_y]
+        mesh_centres, mesh_widths, mesh_span = opaque_runs(
+            mesh_row, min_run_frac, merge_gap_frac, bins)
+        plate_centres, plate_widths, plate_span = opaque_runs(
+            plate_row, min_run_frac, merge_gap_frac, bins)
+        if not mesh_centres or not plate_centres:
+            continue
+        checked += 1
+
+        differing = len(mesh_centres) != len(plate_centres)
+        count_mismatch += int(differing)
+        displacement = correspondence_displacement(
+            (mesh_centres, mesh_widths), (plate_centres, plate_widths))
+        displacements.append(displacement)
+        if displacement > tolerance:
+            flagged.append({
+                "v": round(float(v), 4),
+                "displacement": round(displacement, 4),
+                "run_counts_differ": differing,
+                "mesh_runs": len(mesh_centres),
+                "plate_runs": len(plate_centres),
+                "mesh_centres": [round(c, 4) for c in mesh_centres],
+                "plate_centres": [round(c, 4) for c in plate_centres],
+                "mesh_span_px": round(mesh_span, 1),
+                "plate_span_px": round(plate_span, 1),
+            })
+
+    values = np.asarray(displacements) if displacements else np.zeros(1)
+    return {
+        "v_min": round(float(v_min), 4),
+        "v_max": round(float(v_max), 4),
+        "slices_checked": checked,
+        "slices_flagged": len(flagged),
+        "run_count_mismatches": count_mismatch,
+        "flagged_fraction": round(len(flagged) / max(checked, 1), 4),
+        "displacement_mean": round(float(values.mean()), 4),
+        "displacement_p90": round(float(np.percentile(values, 90)), 4),
+        "displacement_max": round(float(values.max()), 4),
+        "tolerance": tolerance,
+        "slices": flagged[:16],
+    }
+
+
+def run_mismatch_warning(result, threshold=0.20):
+    """Build-report warning text, or None when the band is structurally sound.
+
+    Threshold read off all ten shipped models rather than guessed. Measured
+    flagged fractions at the defaults, front plate, each model's own
+    ``head_v_min``::
+
+        siroria .53  felms .45  relequen .45  galenwe .33  llothis .28
+        warrior .28  vrol .27   yandir .11    serpent .09  mage .05
+
+    At 0.20 it fires on the seven heads whose plate and reconstruction resolve
+    the silhouette differently and stays silent on the three that agree. It is a
+    prompt to look at the head overlay, NOT an accept/reject gate - four
+    automatic registration gates have already been tried and abandoned here.
+
+    It does not identify The Serpent; see the note above :func:`_row_cells` for
+    the measurement that explains why a silhouette detector cannot.
+    """
+    if not result or result["slices_checked"] == 0:
+        return None
+    if result["flagged_fraction"] < threshold:
+        return None
+    return (
+        f"head band shows run-structure mismatch on {result['slices_flagged']} of "
+        f"{result['slices_checked']} slices "
+        f"({result['flagged_fraction'] * 100:.0f}%; "
+        f"{result['run_count_mismatches']} differ in opaque-run count, worst feature "
+        f"displacement {result['displacement_max'] * 100:.0f}% of span, p90 "
+        f"{result['displacement_p90'] * 100:.0f}%) - this head likely needs a "
+        "hand-registered plate. Silhouette-normalised u only corresponds when the mesh row "
+        "and the plate row resolve the same features; where they do not, register the "
+        "closeup on the feature itself and judge it on doubling, not on a width metric."
+    )
+
+
+# --------------------------------------------------------------------------
 # measurement
 # --------------------------------------------------------------------------
-def measure_uv_allocation(vertices, faces, uvs, head_v_min, atlas_size, front_dot=0.5):
-    """Head / front-facing-face share of the atlas, in texels."""
+def measure_uv_allocation(vertices, faces, uvs, head_v_min, atlas_size, front_dot=0.5,
+                          region_boxes=None):
+    """Region / front-facing-region share of the atlas, in texels.
+
+    Without ``region_boxes`` the region is the head band ``vn > head_v_min``,
+    byte-identical to the original behaviour. With them the region is the union
+    of the boxes and the reported metric is REGION texels rather than face
+    texels - the keys stay ``head``/``face`` so every existing report, config
+    and reader keeps working, and ``region`` records which definition was used.
+    """
     lo, hi = vertices.min(axis=0), vertices.max(axis=0)
     span = np.maximum(hi - lo, 1e-9)
-    vn = (vertices[:, 1] - lo[1]) / span[1]
-    head = (vn[faces] > head_v_min).all(axis=1)
+
+    if region_boxes:
+        weight = region_boxes_weight(vertices, region_boxes, lo, hi)
+        region = (weight[faces] >= 0.5).all(axis=1)
+        definition = {
+            "kind": "boxes",
+            "boxes": [
+                {"name": b["name"], "box": [round(float(v), 4) for v in (*b["low"], *b["high"])],
+                 "feather": b["feather"], "uv_scale": b["uv_scale"], "note": b["note"]}
+                for b in region_boxes
+            ],
+        }
+    else:
+        vn = (vertices[:, 1] - lo[1]) / span[1]
+        region = (vn[faces] > head_v_min).all(axis=1)
+        definition = {"kind": "head_v_min", "head_v_min": float(head_v_min)}
 
     a, b, c = uvs[faces[:, 0]], uvs[faces[:, 1]], uvs[faces[:, 2]]
     uv_area = 0.5 * np.abs(np.cross(b - a, c - a))
@@ -330,10 +679,10 @@ def measure_uv_allocation(vertices, faces, uvs, head_v_min, atlas_size, front_do
     p0, p1, p2 = vertices[faces[:, 0]], vertices[faces[:, 1]], vertices[faces[:, 2]]
     n = np.cross(p1 - p0, p2 - p0)
     n /= np.maximum(np.linalg.norm(n, axis=1, keepdims=True), 1e-12)
-    face_mask = head & (n[:, 2] > front_dot)
+    face_mask = region & (n[:, 2] > front_dot)
 
-    result = {}
-    for name, mask in (("head", head), ("face", face_mask)):
+    result = {"region": definition}
+    for name, mask in (("head", region), ("face", face_mask)):
         texels = float(uv_area[mask].sum()) * atlas_size * atlas_size
         result[name] = {
             "faces": int(mask.sum()),
@@ -395,6 +744,16 @@ class ProjectionSettings:
     chart_normal_deviation_weight: float = 0.5
     material_name: str = "ProjectedAtlas"
     head_v_min_measure: float = 0.80
+    # Region boxes ([x0,y0,z0,x1,y1,z1] in normalised model space, plus optional
+    # per-box uv_scale/feather) replace the head_v_min scalar when supplied. A
+    # scalar on normalised height cannot select identity that is not at the top
+    # of the silhouette (Saint Olms's skull sits below the wings) and misfires on
+    # crests that rise above the crown.
+    region_boxes: list = field(default_factory=list)
+    # Head-band run-structure detector.
+    run_mismatch_slices: int = 64
+    run_mismatch_tolerance: float = 0.15
+    run_mismatch_threshold: float = 0.20
     log: object = print
     stats: dict = field(default_factory=dict)
 
@@ -412,13 +771,26 @@ def project_atlas(mesh_path, base_plates, closeups, settings: ProjectionSettings
     N = np.asarray(mesh.vertex_normals, np.float64)
     say(f"geometry: faces={len(F):,} verts={len(V):,}")
 
-    V_unwrap, _ = uv_density_warp(
-        V, settings.head_uv_scale, settings.head_uv_v,
-        settings.leg_uv_scale, settings.leg_uv_v, settings.uv_ramp,
+    region_boxes = normalise_region_boxes(
+        settings.region_boxes, default_scale=settings.head_uv_scale
     )
-    if V_unwrap is not V:
-        say(f"uv density: head x{settings.head_uv_scale} above v={settings.head_uv_v}, "
-            f"legs x{settings.leg_uv_scale} below v={settings.leg_uv_v}, ramp={settings.uv_ramp}")
+    if region_boxes:
+        # Boxes replace the height band entirely: mixing a vertical field with a
+        # box would double-scale wherever they overlap.
+        V_unwrap, _ = region_box_warp(V, region_boxes)
+        for box in region_boxes:
+            say(f"uv density: region '{box['name']}' x{box['uv_scale']} "
+                f"box={[round(float(v), 3) for v in (*box['low'], *box['high'])]} "
+                f"feather={box['feather']}")
+    else:
+        V_unwrap, _ = uv_density_warp(
+            V, settings.head_uv_scale, settings.head_uv_v,
+            settings.leg_uv_scale, settings.leg_uv_v, settings.uv_ramp,
+        )
+        if V_unwrap is not V:
+            say(f"uv density: head x{settings.head_uv_scale} above v={settings.head_uv_v}, "
+                f"legs x{settings.leg_uv_scale} below v={settings.leg_uv_v}, "
+                f"ramp={settings.uv_ramp}")
 
     chart = xatlas.ChartOptions()
     chart.max_cost = settings.chart_max_cost
@@ -469,6 +841,26 @@ def project_atlas(mesh_path, base_plates, closeups, settings: ProjectionSettings
     dsz = V[:, 2].astype(np.float32)
     depth_front = raster_depth(dsx, dsy, dsz, F, ds, True)
     depth_back = raster_depth(dsx, dsy, dsz, F, ds, False)
+
+    # Structural check on the head band, free: the front depth buffer already
+    # carries the mesh's front coverage, so comparing its opaque runs against the
+    # plate's costs one pass over ~64 rows. Fires on ornamented heads (horns,
+    # halos, crests) where equal normalised u stops meaning the same feature.
+    mismatch = detect_run_count_mismatch(
+        depth_front > -1e8, base_plates["front"],
+        v_min=settings.head_v_min_measure,
+        slices=settings.run_mismatch_slices,
+        tolerance=settings.run_mismatch_tolerance,
+    )
+    stats["head_run_mismatch"] = mismatch
+    warning = run_mismatch_warning(mismatch, settings.run_mismatch_threshold)
+    stats["warnings"] = ([warning] if warning else []) + list(stats.get("warnings", []))
+    say(f"head band runs: {mismatch['slices_flagged']}/{mismatch['slices_checked']} slices "
+        f"mismatched, {mismatch['run_count_mismatches']} with differing run counts "
+        f"(feature displacement mean {mismatch['displacement_mean'] * 100:.1f}%, "
+        f"p90 {mismatch['displacement_p90'] * 100:.1f}% of span)")
+    if warning:
+        say(f"WARNING: {warning}")
 
     pts = pos[covb].astype(np.float64)
     nn = nrm[covb].astype(np.float64)
@@ -639,11 +1031,12 @@ def project_atlas(mesh_path, base_plates, closeups, settings: ProjectionSettings
     out.export(glb_path, file_type="glb")
 
     stats["uv_allocation"] = measure_uv_allocation(
-        aV, afaces, uvs, settings.head_v_min_measure, size
+        aV, afaces, uvs, settings.head_v_min_measure, size, region_boxes=region_boxes
     )
-    say(f"uv allocation: head {stats['uv_allocation']['head']['texels']:,} texels "
+    label = "region" if region_boxes else "head"
+    say(f"uv allocation: {label} {stats['uv_allocation']['head']['texels']:,} texels "
         f"({stats['uv_allocation']['head']['percent_of_atlas']:.1f}% of atlas), "
-        f"face {stats['uv_allocation']['face']['texels']:,} texels "
+        f"{label} front-facing {stats['uv_allocation']['face']['texels']:,} texels "
         f"(~{stats['uv_allocation']['face']['equivalent_square']:.0f}^2)")
     return stats
 

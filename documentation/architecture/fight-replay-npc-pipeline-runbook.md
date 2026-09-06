@@ -158,6 +158,25 @@ Warrior 0.669, Galenwe 0.624). Until something better exists, **verify the detec
 on the plate** and hand-set `head_v_min` when it is wrong. Record which value was hand-set and why in
 the config; both shipped batches do.
 
+For a shape where no scalar works at all — a skull below a wingspan, identity in the wing membranes —
+use `regions.boxes` instead: a list of normalized axis-aligned 3D boxes `[x0,y0,z0,x1,y1,z1]` with an
+optional `feather` and `uv_scale`. Boxes drive both the density warp and the measurement, several are
+allowed, and the reported metric becomes **region texels**. Omit them and nothing changes; every
+shipped config still uses `head_v_min` and rebuilds identically.
+
+### The head-band run detector reports, it does not gate
+
+`detect_run_count_mismatch` compares opaque runs per slice between the plate row and the mesh's
+front-coverage row (free — the front depth buffer already exists) and writes
+`atlas.head_run_mismatch` plus a `warnings` entry into the build report. Read it as "this head's
+silhouette does not correspond, go look at the overlay", nothing stronger.
+
+Know its blind spot before trusting it: it compares **silhouettes only**. The Celestial Serpent's gold
+mask never breaks the outline — at mask height the plate alpha is horn/gap/hood/gap/horn and the
+bright bone is at most 42 px _inside_ the ~175 px hood run — so the detector scores the Serpent 9th of
+the 10 shipped models and would not have caught it. See the manifest for the full table and for the
+two scoring alternatives (mass transport, raw slice counts) that were measured and rejected.
+
 ### Width error is not a reliability signal — the overlay is
 
 Four independent confirmations now, and the strongest is worth stating: **Shade of Siroria's head

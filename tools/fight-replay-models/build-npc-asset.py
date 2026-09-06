@@ -161,10 +161,26 @@ def main():
         target = plates_dir / f"{view}-geometry.png"
         if args.refresh_plates or not target.exists():
             box = meta["plates"][view]["crop_box"]
-            Image.open(ref_dir / spec["file"]).convert("RGB").crop(box).save(target)
+            source = Image.open(ref_dir / spec["file"]).convert("RGB")
+            if box[0] >= 0 and box[1] >= 0 and box[2] <= source.width and box[3] <= source.height:
+                source.crop(box).save(target)
+            else:
+                # A wide subject letterboxes past the source edges. Pad with the
+                # source's own corner colour rather than black, so the background
+                # removal Hunyuan runs still sees one uniform backdrop.
+                backdrop = source.getpixel((0, 0))
+                canvas = Image.new("RGB", (box[2] - box[0], box[3] - box[1]), backdrop)
+                canvas.paste(source, (-box[0], -box[1]))
+                canvas.save(target)
     print(f"  native square={meta['native_side']}px; "
-          f"subject {meta['plates']['front']['subject_height_px']}px tall in source; "
+          f"subject {meta['plates']['front']['subject_height_px']}px tall x "
+          f"{meta['plates']['front']['subject_width_px']}px wide in source; "
           f"geometry crops ready ({plates_dir.name}/<view>-geometry.png)")
+    if meta.get("letterboxed"):
+        pad = meta["plates"]["front"]["pad_px"]
+        print(f"  subject is wider than the source: letterboxed with "
+              f"{pad['left']}/{pad['right']}px side and {pad['top']}/{pad['bottom']}px "
+              "vertical padding rather than clamped (clamping truncates a wingspan)")
 
     if args.plates_only:
         print("\n[plates-only] stopping before geometry. Register closeups with:\n"
@@ -218,6 +234,14 @@ def main():
         uv_ramp=cfg.get("uv_density", {}).get("ramp", 0.08),
         material_name=cfg["atlas"].get("material_name", f"{slug}-atlas"),
         head_v_min_measure=regions.get("head_v_min", 0.80),
+        # Optional normalised 3D boxes. When present they REPLACE head_v_min for
+        # both the density warp and the measurement, and the reported metric
+        # becomes region texels. Absent (every config shipped so far) nothing
+        # changes.
+        region_boxes=regions.get("boxes", []),
+        run_mismatch_slices=proj.get("run_mismatch_slices", 64),
+        run_mismatch_tolerance=proj.get("run_mismatch_tolerance", 0.15),
+        run_mismatch_threshold=proj.get("run_mismatch_threshold", 0.20),
     )
 
     base_plates = {
@@ -303,6 +327,7 @@ def main():
             "tone": {"contrast": settings.contrast, "saturation": settings.saturation},
         },
         "atlas": stats,
+        "warnings": list(stats.get("warnings", [])),
         "asset": engine.inspect_glb(final, atlas_png),
         "artifacts": {
             "glb": str(final),
@@ -335,9 +360,11 @@ def main():
 
     face = stats["uv_allocation"]["face"]
     head = stats["uv_allocation"]["head"]
+    label = "region" if stats["uv_allocation"]["region"]["kind"] == "boxes" else "face"
     print(f"\n== {slug} ==")
-    print(f"  face {face['texels']:,} texels (~{face['equivalent_square']:.0f}^2), "
-          f"head {head['percent_of_atlas']:.1f}% of atlas, charts {stats['chart_count']}, "
+    print(f"  {label} {face['texels']:,} texels (~{face['equivalent_square']:.0f}^2), "
+          f"{'region' if label == 'region' else 'head'} "
+          f"{head['percent_of_atlas']:.1f}% of atlas, charts {stats['chart_count']}, "
           f"coverage {stats['coverage_percent']:.1f}%")
     print(f"  {report['asset']['triangles']:,} tris / {report['asset']['vertices']:,} verts / "
           f"{report['asset']['bytes']:,} bytes")
@@ -345,6 +372,8 @@ def main():
         t = report["asset"]["texture"]
         print(f"  texture {t['size'][0]}x{t['size'][1]} {t['mime']} q-table {t['luma_quant_table']} "
               f"PSNR {t.get('psnr_db')} dB")
+    for message in report["warnings"]:
+        print(f"  WARNING: {message}")
     failed = [k for k, v in checks.items() if not v]
     print(f"  checks: {'ALL PASSED' if not failed else 'FAILED -> ' + ', '.join(failed)}")
     print(f"  report: {report_path}")

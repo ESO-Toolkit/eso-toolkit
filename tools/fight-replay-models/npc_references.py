@@ -230,9 +230,31 @@ def overlay(base_rgba, close_rgba, fit, out_path: Path, label="", crop_head=Fals
     return out_path
 
 
+def _framing_centre(centre, side, extent):
+    """Keep the crop inside the source when it fits; letterbox when it does not.
+
+    A square wider than the source cannot be slid into range, so clamping the
+    centre is meaningless there and the old code instead SHRANK the square to the
+    source height. For a wide subject that silently truncates: Saint Olms needs a
+    ~1913-1970 px square from a 1080-tall source, so 44-45% of the wingspan was
+    cut off and the cutout alpha ran into both edge columns. Padding costs
+    nothing (the crop falls outside the image, which reads as transparent) and
+    keeps the subject whole and centred.
+    """
+    if extent < side:
+        return centre
+    return min(max(centre, side / 2), extent - side / 2)
+
+
 def prepare_base_plates(front_src: Path, back_src: Path, out_dir: Path,
                         margin=1.06, min_width_ratio=1.30, remover=None):
-    """Crop front/back to one shared NATIVE square. No resizing is applied."""
+    """Crop front/back to one shared NATIVE square. No resizing is applied.
+
+    The square is sized from the subject, never clamped to the source: a subject
+    wider than the source is LETTERBOXED with transparent padding instead of
+    being cut. Narrow subjects (every humanoid shipped so far) are unaffected -
+    their square already fits, so both the size and the centring are identical.
+    """
     remover = remover or background_remover()
     out_dir.mkdir(parents=True, exist_ok=True)
     sources, cutouts, boxes = {}, {}, {}
@@ -248,13 +270,14 @@ def prepare_base_plates(front_src: Path, back_src: Path, out_dir: Path,
     bottom = max(b[3] for b in boxes.values())
     width = max(b[2] - b[0] for b in boxes.values())
     height = sources["front"].height
-    side = int(min(max((bottom - top) * margin, width * min_width_ratio), height))
-    cy = min(max((top + bottom) / 2.0, side / 2), height - side / 2)
+    side = int(max((bottom - top) * margin, width * min_width_ratio))
+    cy = _framing_centre((top + bottom) / 2.0, side, height)
 
-    meta = {"native_side": side, "plates": {}}
+    meta = {"native_side": side, "letterboxed": side > height, "plates": {}}
     for name in ("front", "back"):
         x0, y0, x1, y1 = boxes[name]
-        cx = min(max((x0 + x1) / 2.0, side / 2), sources[name].width - side / 2)
+        source_width = sources[name].width
+        cx = _framing_centre((x0 + x1) / 2.0, side, source_width)
         box = (int(round(cx - side / 2)), int(round(cy - side / 2)),
                int(round(cx + side / 2)), int(round(cy + side / 2)))
         arr = np.asarray(cutouts[name].crop(box)).copy()
@@ -266,6 +289,12 @@ def prepare_base_plates(front_src: Path, back_src: Path, out_dir: Path,
             "size": side,
             "subject_height_px": int(y1 - y0 + 1),
             "subject_width_px": int(x1 - x0 + 1),
+            "pad_px": {
+                "left": max(0, -box[0]), "top": max(0, -box[1]),
+                "right": max(0, box[2] - source_width),
+                "bottom": max(0, box[3] - sources[name].height),
+            },
+            "subject_touches_edge": bool(x0 <= 0 or x1 >= source_width - 1),
         }
     (out_dir / "plates.json").write_text(json.dumps(meta, indent=2))
     return meta
