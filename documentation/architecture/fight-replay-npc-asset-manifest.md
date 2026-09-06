@@ -124,20 +124,51 @@ its tint is currently unverified and must not be guessed.
 
 ## Coverage status — Asylum Sanctorium
 
-| Encounter | Name                    | Status                                                                                                 |
-| --------- | ----------------------- | ------------------------------------------------------------------------------------------------------ |
-| `boss_1`  | Saint Llothis the Pious | **Shipped**                                                                                            |
-| `boss_2`  | Saint Felms the Bold    | **Shipped**                                                                                            |
-| `boss_3`  | Saint Olms the Just     | Buildable — [creature 90](https://esomodelviewer.com/creatures/post/90-saint-olms-the-just), 13 plates |
+| Encounter | Name                    | Status                                                        |
+| --------- | ----------------------- | ------------------------------------------------------------- |
+| `boss_1`  | Saint Llothis the Pious | **Shipped**                                                   |
+| `boss_2`  | Saint Felms the Bold    | **Shipped**                                                   |
+| `boss_3`  | Saint Olms the Just     | **Blocked on the engine** — needs a non-humanoid path (below) |
 
 Llothis and Felms share a base mesh (differing helm crest and tint), and that transferred: Felms hit
 its face-texel target on the **first** build reusing Llothis's tuned values, with no re-tuning. Expect
 the same for any same-species pair.
 
-Saint Olms is **not humanoid** — a winged draconic construct whose body core is only ~700 px because
-the wingspan fills the frame. Both the head-weighted UV warp and the shoulder detector assume a
-humanoid, and the detector keys off the widest upper-body row, which for Olms will be the wingspan.
-Expect `regions.head_v_min` to need a manual override there.
+### Saint Olms — what a non-humanoid target needs
+
+Olms was attempted and **stopped before the GPU job**, because the build would have produced a
+clipped model. Three measured blockers, none of which a parameter override fixes:
+
+1. **The plate crop truncates the wings.** `prepare_base_plates` sizes its square as
+   `min(max(h*1.06, w*1.30), source_height)`. Olms's subject is 1805x738 front / 1859x757 back and
+   needs a ~1913-1970 px square, but the source is 1080 tall so it clamps — cutting **44-45% of the
+   wingspan**. The cutout alpha touches columns 0 and 1079 on both plates. Fix: size the square from
+   `max(width, height)` and letterbox with padding rather than clamping to source height. Contained,
+   and it benefits any wide creature.
+2. **The shoulder detector misfires badly.** It keys off the widest upper-body row, which here is the
+   (already truncated) wingspan, so it fires at the wing tops and returns head bands of 28 px (3.8%)
+   front and 16 px (2.1%) back.
+3. **The head-band concept does not apply at all.** For Olms the top of the silhouette is _wing_, not
+   head — the skull sits mid-height, below the wing shoulders. `uv_density_warp`,
+   `regions.head_v_min` and `measure_uv_allocation` all key off normalized height `v`, and **no
+   scalar threshold selects a skull that is not at the top.** The fix is to replace the `head_v_min`
+   scalar with an optional normalized axis-aligned **3D box** plus smooth falloff, used by both the
+   density warp and the measurement. The reported metric then becomes "region texels" rather than
+   "face texels". For Olms that means one box at the skull and probably a second at the wing
+   membranes, since that is where the identity lives.
+
+Two further notes if it is picked up:
+
+- **The two plates are not the same pose.** The front shows the tail short and tucked between the
+  legs; the back shows it long and swept down-left with a bladed tip, and the wings sit at a
+  different sweep. Two-view reconstruction and the per-slice silhouette registration both assume one
+  pose, so even with the above fixed, expect a smeared tail and wrong wing angles unless a
+  matched-pose back plate is sourced.
+- **Triangle budget:** ask for the hero-boss exception at ~70-80k rather than 45k. Two 1.8 m
+  membranes plus a long tail leaves very few triangles per unit area at 45k, and thin sheets are
+  already the weakest case for marching-cubes reconstruction.
+
+Evidence: `B:/CodexScratch/eso-fight-replay-3d/build/saint-olms/crop-truncation.png`.
 
 ## Unknown actors
 
