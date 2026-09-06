@@ -40,8 +40,8 @@ not a claim that Elder Scrolls Online intellectual property is freely licensed.
   per island, down from v1's 491), island borders dilated so mipmapping cannot bleed background into
   the silhouette.
 - Prepared asset: `yandir-the-butcher-overview-v2.glb`; one mesh, one material, one draw call,
-  45,000 triangles, 28,854 vertices, 1024x1024 JPEG q92 base-color texture (4:4:4, no chroma
-  subsampling), 1,652,260 bytes. Stored as JPEG because the same texture as PNG is 2,710,356 bytes, over the
+  45,000 triangles, 29,609 vertices, 1024x1024 JPEG q92 base-color texture (4:4:4, no chroma
+  subsampling), 1,644,896 bytes. Stored as JPEG because the same texture as PNG is 2,710,356 bytes, over the
   2.5 MB runtime gate.
 - Prepared bounds: 0.9414 x 1.9927 x 0.3990 model units (X x Y x Z), minimum Y exactly 0.0, centered
   on X and Z. Vertex attributes are POSITION, NORMAL, and TEXCOORD_0 only: no skin, animation, morph
@@ -103,6 +103,10 @@ not a claim that Elder Scrolls Online intellectual property is freely licensed.
   from the lossless PNG master at true q92 with chroma subsampling disabled, giving **38.34 dB**.
   Geometry and UVs are bit-identical; only the image bytes changed. Reproduce with
   `tools/fight-replay-models/reencode-glb-texture.py`.
+- Seam fix (2026-09-06): rebuilt with `projection.envelope_sigma` band-limiting the mesh and
+  plate silhouette envelopes. This removed the hard horizontal bar across the chin/beard and
+  the ghosting on the pauldron trim — a projection bug, not the two-view limitation it was
+  previously documented as. Geometry, UVs and all other settings unchanged.
 - Prepared: 2026-09-05 (v2 texture rebuild; v1 was 2026-09-03)
 
 The Elder Scrolls Online name, character design, and related rights remain with their respective

@@ -46,7 +46,7 @@ not a claim that Elder Scrolls Online intellectual property is freely licensed.
   material to `CaptainVrolBakedVertexColor`. The binary chunk was copied byte-for-byte, so no
   geometry, UV, or texture data was re-encoded by that rename.
 - Prepared asset: `captain-vrol-overview-v2.glb`; one mesh, one material, one draw call, 44,999
-  triangles, 28,732 vertices, 1024x1024 JPEG q92 base-color texture (4:4:4, no chroma subsampling), 1,699,852 bytes. Stored as JPEG
+  triangles, 28,796 vertices, 1024x1024 JPEG q92 base-color texture (4:4:4, no chroma subsampling), 1,679,644 bytes. Stored as JPEG
   because the same texture as PNG is 2,764,516 bytes, over the 2.5 MB runtime gate; a 512px PNG
   would fit but would discard the closeup detail this pass gained, for the same byte cost.
 - Prepared bounds: 0.8591 x 1.9938 x 0.4039 model units (X x Y x Z), minimum Y exactly 0.0, centered
@@ -120,6 +120,10 @@ not a claim that Elder Scrolls Online intellectual property is freely licensed.
   image bytes changed. Chroma subsampling is disabled deliberately: this atlas carries identity as
   flat colour blocks, which 4:2:0 smears. Reproduce with
   `tools/fight-replay-models/reencode-glb-texture.py`.
+- Seam fix (2026-09-06): rebuilt with `projection.envelope_sigma` band-limiting the mesh and
+  plate silhouette envelopes. This removed the hard horizontal bar across the chin/beard and
+  the ghosting on the pauldron trim — a projection bug, not the two-view limitation it was
+  previously documented as. Geometry, UVs and all other settings unchanged.
 - Prepared: 2026-09-05 (v2 texture rebuild; v1 was 2026-09-04)
 
 The Elder Scrolls Online name, character design, and related rights remain with their respective
