@@ -1,0 +1,163 @@
+{
+  "slug": "varlariel",
+  "display_name": "Varlariel",
+  "aliases": [
+    "Varlariel",
+    "Wispmother"
+  ],
+  "encounter": {
+    "trial": "Aetherian Archive",
+    "encounter": "Varlariel",
+    "role": "boss",
+    "notes": "Wispmother. Soft cloth hood, hair inside the head width, robe cone below the belt with no leg geometry."
+  },
+  "work_dir": "build/varlariel",
+  "reference": {
+    "page_url": "https://esomodelviewer.com/creatures/post/74-wispmother-light",
+    "directory": "wispmother-light-references",
+    "plates": {
+      "front": {
+        "file": "view-01.jpg",
+        "role": "full-body-front"
+      },
+      "back": {
+        "file": "view-03.jpg",
+        "role": "full-body-back"
+      }
+    },
+    "closeups": [
+      {
+        "file": "view-09.jpg",
+        "role": "skirt",
+        "view": "front",
+        "accepted": true,
+        "registration": {
+          "scale": 0.64,
+          "row": 364.0,
+          "col": -58.2,
+          "width_error": 0.0129,
+          "method": "silhouette-profile",
+          "verified_by": "overlay reviewed 2026-09-06; hem tatters, robe folds and belt all single-imaged",
+          "note": "A leg-class plate, which carries the standing caveat. Inspected at full size and it passes - the caveat means inspect, not reject."
+        }
+      },
+      {
+        "file": "view-04.jpg",
+        "role": "head",
+        "view": "front",
+        "region": "head",
+        "accepted": true,
+        "registration": {
+          "scale": 0.265,
+          "row": 22.1,
+          "col": 292.6,
+          "width_error": 0.0191,
+          "method": "head-region-silhouette",
+          "verified_by": "overlay reviewed 2026-09-06; mouth, hair and hood aligned with no doubling",
+          "note": "FIRST automatic head registration accepted in this project. The seed-window fix was decisive: the closeup crops the shoulders so the seeded window was [1.197, 2.670] and would have reported 55.71%; the wide sweep found the true scale 0.265 at 1.91%."
+        }
+      },
+      {
+        "file": "view-08.jpg",
+        "role": "torso",
+        "view": "back",
+        "accepted": true,
+        "registration": {
+          "scale": 0.35,
+          "row": 102.5,
+          "col": 214.0,
+          "width_error": 0.0674,
+          "method": "silhouette-profile",
+          "verified_by": "overlay reviewed 2026-09-06"
+        }
+      },
+      {
+        "file": "view-07.jpg",
+        "role": "torso",
+        "view": "front",
+        "accepted": false,
+        "rejected_reason": "17.65% and the overlay confirms it: the chest and arms are doubled, overlay shifted up-left"
+      },
+      {
+        "file": "view-10.jpg",
+        "role": "skirt",
+        "view": "back",
+        "accepted": false,
+        "rejected_reason": "8.07%; clear white hem ghosting, doubled patches bottom-left and bottom-right"
+      },
+      {
+        "file": "view-06.jpg",
+        "role": "head",
+        "view": "back",
+        "accepted": false,
+        "rejected_reason": "head-region 10.44%; overlay grossly oversized and offset, whole body doubled"
+      },
+      {
+        "file": "view-02.jpg",
+        "role": "three-quarter",
+        "view": "front",
+        "accepted": false,
+        "rejected_reason": "3/4 action pose; explicitly not usable as a base plate"
+      },
+      {
+        "file": "view-05.jpg",
+        "role": "head",
+        "view": "front",
+        "accepted": false,
+        "rejected_reason": "head+shoulders 3/4 capture, wrong axis"
+      }
+    ]
+  },
+  "geometry": {
+    "source": "build/varlariel/varlariel-draft.glb",
+    "decimate": true,
+    "target_triangles": 45000,
+    "max_triangles": 50000,
+    "provenance": "Tencent Hunyuan3D-2mv (fp16, 50 steps, octree 380, seed 12345) from view-01/view-03. Draft: 460,728 faces, 68.4s on an RTX 4070 Ti Super."
+  },
+  "atlas": {
+    "size": 1024,
+    "jpeg_quality": 92,
+    "roughness": 0.78,
+    "material_name": "varlariel-atlas"
+  },
+  "regions": {
+    "head_v_min": 0.8004,
+    "head_feather": 0.12,
+    "note": "Shoulder detector 0.8004 front (verified visually at the chin/shoulder) and 0.8431 back. Front value used. NOTE the plates are an ACTION pose, not the relaxed A-pose expected: arms outstretched horizontally and mouth open, which makes the silhouette very wide at arm height."
+  },
+  "uv_density": {
+    "head_scale": 5.0,
+    "head_v": 0.8004,
+    "leg_scale": 1.0,
+    "leg_v": 0.45,
+    "ramp": 0.08
+  },
+  "projection": {
+    "supersample": 2,
+    "depth_size": 2048,
+    "pack_resolution": 2048,
+    "pack_padding": 4,
+    "blend_power": 3.0,
+    "silhouette_inset": 0.02,
+    "grazing_threshold": 0.35,
+    "dilate": 24,
+    "closeup_feather": 60,
+    "envelope_sigma": 3.0
+  },
+  "tone": {
+    "contrast": 1.08,
+    "saturation": 1.1
+  },
+  "unsharp": {
+    "sigma": 0.7,
+    "amount": 0.45,
+    "threshold": 0.01569
+  },
+  "output": {
+    "directory": "build/varlariel/out",
+    "suffix": "-overview-v1",
+    "max_bytes": 2500000
+  },
+  "rights": "The Elder Scrolls Online name, character design and related rights remain with ZeniMax Media/Bethesda Softworks. Reconstructed from published screenshots for an authorized fan prototype; not a claim that the IP is freely licensed."
+}

@@ -32,6 +32,7 @@ Do not reuse any reconstructed asset outside this project without a separate rig
 | `shade-of-siroria-overview-v1.glb`   | Shade of Siroria        | `static-boss`             | 45,000 | 30,932 |         1 | 1024px JPEG | 1,739,784 | [post 234](https://esomodelviewer.com/characters/post/234-shade-of-siroria)         |
 | `shade-of-relequen-overview-v1.glb`  | Shade of Relequen       | `static-boss`             | 45,000 | 32,337 |         1 | 1024px JPEG | 1,741,760 | [post 235](https://esomodelviewer.com/characters/post/235-shade-of-relequen)        |
 | `the-serpent-overview-v1.glb`        | The Serpent             | `static-boss`             | 45,000 | 28,458 |         1 | 1024px JPEG | 1,687,556 | [post 169](https://esomodelviewer.com/characters/post/169-the-serpent)              |
+| `varlariel-overview-v1.glb`          | Varlariel               | `static-boss`             | 45,000 | 30,450 |         1 | 1024px JPEG | 1,702,168 | [creature 74](https://esomodelviewer.com/creatures/post/74-wispmother-light)        |
 
 ### Runtime budgets
 
@@ -235,6 +236,44 @@ Two scoring alternatives were tried and disproved, do not re-test:
   rows differing by three pixels**. It did rank the Serpent above Llothis — purely by that artefact.
 - **Raw count of mismatched slices**, at every noise threshold from `min_run_frac` 0.03 to 0.12. The
   Serpent stays 7th–9th in all of them.
+
+### Extracted game meshes — tested, and the limit is the texture not the geometry
+
+The unmerged branch `feat/trial-boss-models` holds real extracted ESO meshes under
+`public/models/bosses/*.glb` — genuine game geometry with **no materials and no textures**. That is
+exactly the gap the projection stage fills, so the Dwarven Colossus was built end-to-end from
+`DwarvenColossus_Body_A_Basic.glb` (24,534 tris) as a test.
+
+**The geometry half works perfectly and costs no GPU at all.** Orientation needed no correction — the
+mesh was already +Y up, +Z front, feet at y=0 — and only a scale normalisation (x0.12651, 15.730 game
+units to 1.99). Its game `TEXCOORD_0` was discarded in favour of our own unwrap, since we have no
+matching game texture.
+
+**The texture half failed on this subject, and the atlas is confetti.** Two structural causes:
+
+|                  |             Dwarven Colossus | Varlariel (contrast) |
+| ---------------- | ---------------------------: | -------------------: |
+| source shells    | **234** (806 boundary edges) |       3 (0 boundary) |
+| charts           | **1,406** (17.4 faces/chart) |                  804 |
+| "neither camera" |                    **62.0%** |                 ~15% |
+| grazing fill     |                    **51.2%** |                34.8% |
+
+Extracted meshes are assembled from many separate armour pieces, so xatlas _must_ emit hundreds of
+charts; and a bulky, deep mech has most of its surface facing sideways, so only 21.3% front plus
+18.8% back is ever observed. Front and back renders read acceptably — chest face disc, Dwemer key
+patterning, correct bronze and verdigris — but three-quarter and side views are badly smeared. **Not
+shipped.**
+
+So the verdict on the ~25 extracted GLBs is a qualified yes: **humanoid extracted meshes should work
+and would beat reconstructions**, because the geometry is exact rather than inferred. Bulky or deep
+non-humanoids will not, with two views.
+
+**The unlock is 4-view projection**, which the engine does not support (front and back only). The
+argument is specific and worth acting on: with an _exact_ mesh, side plates would register reliably,
+because the silhouette correspondence that broke on the Serpent's reconstruction is precisely what an
+extracted mesh guarantees. The modelviewer sets already include side and 3/4 views. For
+reconstructions extra views risk misregistration; for extracted meshes they would be safe. Welding
+coincident vertices across shells before unwrapping is also worth a probe, to cut the chart count.
 
 ## Unknown actors
 

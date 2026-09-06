@@ -254,6 +254,26 @@ export const STATIC_REPLAY_ACTOR_MODEL_ASSETS: readonly StaticReplayActorModelAs
       attributionFile: 'public/models/fight-replay/npcs/README-the-serpent-overview-v1.md',
     },
   },
+
+  {
+    id: 'varlariel-overview-v1',
+    path: 'models/fight-replay/npcs/varlariel-overview-v1.glb',
+    renderer: 'static-boss',
+    actorTypes: HOSTILE_ACTOR_TYPES,
+    aliases: ['varlariel'],
+    transform: {
+      orientEuler: [0, 0, 0],
+      scale: 1.25,
+      yOffset: 0,
+      yawOffset: 0,
+      modelHeight: 1.9815,
+    },
+    provenance: {
+      designation: 'project-authorized-fan-prototype',
+      sourceUrl: 'https://esomodelviewer.com/creatures/post/74-wispmother-light',
+      attributionFile: 'public/models/fight-replay/npcs/README-varlariel-overview-v1.md',
+    },
+  },
 ];
 
 /**
