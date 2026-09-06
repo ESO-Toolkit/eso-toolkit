@@ -996,16 +996,20 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
     });
 
     // Reconstructed-model layers. Sized to the asset's SLOT count (not instanceCount) — the plan
-    // packs only the actors that resolve to it — and wired at the capsule body's render order, since
-    // the model stands exactly where that capsule would have. Per-instance opacity is patched onto
-    // every material of the mesh; the attribute lives on the shared geometry, so the helper hands
-    // back the same array each time.
+    // packs only the actors that resolve to it. Per-instance opacity is patched onto every material
+    // of the mesh; the attribute lives on the shared geometry, so the helper hands back the same
+    // array each time.
+    //
+    // renderOrder stays 0, which is what the previous single <mesh> used. It is deliberately NOT the
+    // capsule body's 12: the ground layers (blob 9, anchor ring 10, wedge 11) are all depthWrite
+    // false, so paint order alone decides whether they read on top of the model's feet, and 12 would
+    // silently flip that relationship from what shipped.
     o.model.clear();
     staticModelLayers.forEach(({ asset, model, slots }) => {
       const mesh = staticModelMeshes.current.get(asset.id);
       if (!mesh) return;
       mesh.frustumCulled = false;
-      mesh.renderOrder = 12;
+      mesh.renderOrder = 0;
       mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
       let array: Float32Array | undefined;
       model.materials.forEach((material) => {
