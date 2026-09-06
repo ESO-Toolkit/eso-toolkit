@@ -1,0 +1,142 @@
+{
+  "slug": "shade-of-galenwe",
+  "display_name": "Shade of Galenwe",
+  "aliases": [
+    "Shade of Galenwe"
+  ],
+  "encounter": {
+    "trial": "Cloudrest",
+    "role": "boss",
+    "notes": "Male base body, heavy gold plate, articulated skirt."
+  },
+  "work_dir": "build/shade-of-galenwe",
+  "reference": {
+    "page_url": "https://esomodelviewer.com/characters/post/233-shade-of-galenwe",
+    "directory": "shade-of-galenwe-references",
+    "plates": {
+      "front": {
+        "file": "view-01.jpg",
+        "role": "full-body-front"
+      },
+      "back": {
+        "file": "view-03.jpg",
+        "role": "full-body-back"
+      }
+    },
+    "side_plates": {
+      "available": false,
+      "note": "No true left/right profile is published. No profile was synthesized; fabricated detail is not permitted."
+    },
+    "closeups": [
+      {
+        "file": "view-07.jpg",
+        "role": "torso",
+        "view": "front",
+        "accepted": true,
+        "registration": {
+          "scale": 0.42,
+          "row": 183.0,
+          "col": 132.91,
+          "width_error": 0.0428,
+          "method": "silhouette-profile",
+          "verified_by": "overlay reviewed 2026-09-06"
+        }
+      },
+      {
+        "file": "view-08.jpg",
+        "role": "torso",
+        "view": "back",
+        "accepted": true,
+        "registration": {
+          "scale": 0.36,
+          "row": 272.0,
+          "col": 157.65,
+          "width_error": 0.04238,
+          "method": "silhouette-profile",
+          "verified_by": "overlay reviewed 2026-09-06"
+        }
+      },
+      {
+        "file": "view-04.jpg",
+        "role": "helm",
+        "view": "front",
+        "accepted": false,
+        "rejected_reason": "no viable head-region fit"
+      },
+      {
+        "file": "view-09.jpg",
+        "role": "legs",
+        "view": "front",
+        "accepted": false,
+        "rejected_reason": "overlay boots overshoot below the base feet (4.17%)"
+      },
+      {
+        "file": "view-10.jpg",
+        "role": "legs",
+        "view": "front",
+        "accepted": false,
+        "rejected_reason": "same overshoot signature (3.69%)"
+      },
+      {
+        "file": "view-06.jpg",
+        "role": "helm",
+        "view": "front",
+        "accepted": false,
+        "rejected_reason": "shot against black feathers, very low contrast"
+      }
+    ]
+  },
+  "geometry": {
+    "source": "build/shade-of-galenwe/shade-of-galenwe-draft.glb",
+    "decimate": true,
+    "target_triangles": 45000,
+    "max_triangles": 50000,
+    "provenance": "TBD"
+  },
+  "atlas": {
+    "size": 1024,
+    "jpeg_quality": 92,
+    "roughness": 0.78,
+    "material_name": "shade-of-galenwe-atlas"
+  },
+  "regions": {
+    "head_v_min": 0.79,
+    "head_feather": 0.12,
+    "note": "detector MISFIRED to 0.9600 (feathered shoulder ornaments rise above the head, so the threshold is crossed at the crown). Hand-set to match Relequen's near-identical silhouette and verified visually."
+  },
+  "uv_density": {
+    "head_scale": 3.6,
+    "head_v": 0.79,
+    "leg_scale": 1.0,
+    "leg_v": 0.45,
+    "ramp": 0.08,
+    "note": "Tuned for this silhouette: the crested helm plus halo ring is a far larger share of the body than a normal head, so it needs much LESS boost than Vrol (5.5) or Yandir (8.0). head_scale 5.5 overshot to 321^2 with the head taking 38.5% of the atlas; 2.0 lands ~258^2 at ~25%."
+  },
+  "projection": {
+    "supersample": 2,
+    "depth_size": 2048,
+    "pack_resolution": 2048,
+    "pack_padding": 4,
+    "blend_power": 3.0,
+    "silhouette_inset": 0.02,
+    "grazing_threshold": 0.35,
+    "dilate": 24,
+    "closeup_feather": 60,
+    "envelope_sigma": 3.0
+  },
+  "tone": {
+    "contrast": 1.08,
+    "saturation": 1.1
+  },
+  "unsharp": {
+    "sigma": 0.7,
+    "amount": 0.45,
+    "threshold": 0.01569
+  },
+  "output": {
+    "directory": "build/shade-of-galenwe/out",
+    "suffix": "-overview-v1",
+    "max_bytes": 2500000
+  },
+  "rights": "The Elder Scrolls Online name, character design and related rights remain with ZeniMax Media/Bethesda Softworks. Reconstructed from published screenshots for an authorized fan prototype; not a claim that the IP is freely licensed."
+}

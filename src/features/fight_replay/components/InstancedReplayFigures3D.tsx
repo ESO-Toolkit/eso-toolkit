@@ -29,6 +29,16 @@ import {
   getReplayActorShellColor,
 } from '../utils/actorVisualState';
 import { enablePerInstanceOpacity } from '../utils/instanceOpacity';
+import { prepareReconstructedModelMaterial } from '../utils/reconstructedModelMaterial';
+import {
+  COOL_STICKMAN_ASSET,
+  NPC_MODEL_PREVIEW_PARAM,
+  type NpcModelPreviewMode,
+  type StaticReplayActorModelAsset,
+  parseNpcModelPreviewMode,
+  resolveReplayActorModel,
+  resolveReplayModelUrl,
+} from '../utils/replayActorModelRegistry';
 
 import { BatchedActorNames3D } from './BatchedActorNames3D';
 
@@ -152,7 +162,10 @@ const PLAYER_SCALE = 0.82;
 // pose layer matching its current walk-cycle phase (derived from accumulated travel distance) and
 // hidden (y=-10000) in the other four. Non-players keep the capsule body. Draw-call cost is +4
 // layers (O(1), NOT per-actor) over a single-pose humanoid; instancing is preserved.
-const HUMANOID_WALK_MODEL_URL = `${import.meta.env.BASE_URL}models/coolstickman-walk.glb`;
+const HUMANOID_WALK_MODEL_URL = resolveReplayModelUrl(
+  COOL_STICKMAN_ASSET.path,
+  import.meta.env.BASE_URL,
+);
 // Pose layer order. Index 0 is the idle stand; 1..4 are the walk cycle in phase order. The GLB
 // stores them as named meshes; we load them into this fixed order so the renderer indexes poses by
 // walk-cycle phase. WALK_POSE_COUNT (4) is the cyclic stride length used for phase math.
@@ -225,19 +238,21 @@ const GAIT_WALK_ENTER_SPEED = 0.18; // units/SECOND to start walking from idle
 const GAIT_WALK_EXIT_SPEED = 0.1; // units/SECOND to drop back to idle (must be < enter)
 
 // ---- Optional boss model (single non-instanced GLB) ----
-// No game-derived model is bundled. Bosses use the existing project-owned capsule renderer below
-// until a separately licensed model is available; keeping this nullable gate preserves the same
-// renderer path and avoids shipping extracted game geometry in a public build.
-const BOSS_MODEL_URL: string | null = null;
-// The hook is intentionally empty until a separately licensed model is supplied.
-const BOSS_MODEL_NAME_KEYS: readonly string[] = [];
-const ORIENT_EULER: [number, number, number] = [-Math.PI / 2, 0, 0]; // rotateX(-90°) to stand it up
-// World-unit scale. The oriented model is ≈2.84u tall (raw), so BOSS_SCALE≈0.9 makes it ≈2.5u —
-// clearly bigger than the ≈0.95u players without dwarfing the arena (the viewer's 3/maxDim≈0.87 is a
-// comparable reference). Reads as a boss. Tune live.
-const BOSS_SCALE = 0.9;
-const BOSS_Y_OFFSET = 0; // extra lift above the grounded feet (feet land at y=0 from the bbox offset)
-const BOSS_YAW_OFFSET = 0; // radians added to actor.rotation; the model's facing axis is unknown — tune
+// No game-derived geometry is bundled. Reconstructed art enters exclusively through
+// `replayActorModelRegistry`, which records each asset's provenance and keeps it behind the
+// `?npcModels=prototype` opt-in. Anything the registry does not recognise — including every boss
+// with no shipped model — keeps the project-owned capsule renderer below, so an unknown, missing,
+// or failed asset can never make a combatant disappear.
+//
+// Per-asset orientation/scale/offsets live on the registry entry's `transform` rather than as
+// module constants, because each reconstruction is exported at its own scale and facing.
+const DEFAULT_BOSS_TRANSFORM: StaticReplayActorModelAsset['transform'] = {
+  orientEuler: [0, 0, 0],
+  scale: 1,
+  yOffset: 0,
+  yawOffset: 0,
+  modelHeight: 2,
+};
 // Dead-boss look (Taleria dies at fight end; observable). A non-instanced materialled mesh can't be
 // setColorAt'd like the capsule, so death is conveyed by lowering material opacity, optionally
 // darkening the material color, and squashing Y (feet stay grounded since the offset puts min.y at 0).
@@ -249,10 +264,26 @@ const DEAD_OPACITY = 0.45;
 const DEAD_DARKEN = 0.45; // multiply material color toward black (1 = unchanged, 0 = black)
 const DEAD_SQUASH_Y = 0.55; // Y scale factor when dead (compresses toward the grounded feet)
 
-function getBossModelUrlForActor(actor: ActorPosition): string | null {
-  if (actor.type !== 'boss') return null;
-  const name = actor.name?.toLowerCase() ?? '';
-  return BOSS_MODEL_NAME_KEYS.some((key) => name.includes(key)) ? BOSS_MODEL_URL : null;
+/**
+ * Read the reconstructed-model opt-in straight from the URL.
+ *
+ * This is deliberately not a prop or a router hook: the figures render inside the
+ * `@react-three/fiber` canvas, which reconciles in its own root, so router context is not reliably
+ * available here. The flag only changes on navigation, which remounts the replay anyway.
+ */
+function readNpcModelPreviewMode(): NpcModelPreviewMode {
+  if (typeof window === 'undefined') return 'off';
+  return parseNpcModelPreviewMode(
+    new URLSearchParams(window.location.search).get(NPC_MODEL_PREVIEW_PARAM),
+  );
+}
+
+function getBossModelForActor(
+  actor: ActorPosition,
+  npcPreviewMode: NpcModelPreviewMode,
+): StaticReplayActorModelAsset | null {
+  const asset = resolveReplayActorModel(actor, npcPreviewMode);
+  return asset?.renderer === 'static-boss' ? asset : null;
 }
 
 // Scan the lookup for the first boss actor that maps to a model, returning its URL (or null). Used to
@@ -267,10 +298,11 @@ function getBossModelUrlForActor(actor: ActorPosition): string | null {
 // id in `actorIds` has been seen. Every actor appears within a bounded number of buckets (players from
 // start, a boss within its first event window), so this terminates early for matching AND non-matching
 // fights, yet still checks every actor — so it can't miss a late-spawning boss.
-function getBossModelUrlInLookup(
+function getBossModelInLookup(
   lookup: TimestampPositionLookup | null,
   actorIds: readonly number[],
-): string | null {
+  npcPreviewMode: NpcModelPreviewMode,
+): StaticReplayActorModelAsset | null {
   const positions = lookup?.positionsByTimestamp;
   if (!positions || actorIds.length === 0) return null;
   const seen = new Set<number>();
@@ -280,8 +312,8 @@ function getBossModelUrlInLookup(
       const actorId = Number(id);
       if (seen.has(actorId)) continue;
       seen.add(actorId);
-      const url = getBossModelUrlForActor(atTs[actorId]);
-      if (url) return url;
+      const asset = getBossModelForActor(atTs[actorId], npcPreviewMode);
+      if (asset) return asset;
     }
     if (seen.size >= actorIds.length) break; // every distinct actor sampled → no boss matched
   }
@@ -452,18 +484,21 @@ function isThreatActor(actor: ActorPosition): boolean {
 // performanceMode toggle) forces one recompose. Keep every value the per-frame boss compose reads,
 // plus the barebones flags — a preset flip while paused must recompose once too.
 function bossTuneSignature(
+  transform: StaticReplayActorModelAsset['transform'],
+  assetId: string,
   performanceMode: boolean,
   detailedFigures: boolean,
   richMaterials: boolean,
   figureAccents: boolean,
 ): string {
   return [
-    BOSS_SCALE,
-    BOSS_Y_OFFSET,
-    BOSS_YAW_OFFSET,
-    ORIENT_EULER[0],
-    ORIENT_EULER[1],
-    ORIENT_EULER[2],
+    assetId,
+    transform.scale,
+    transform.yOffset,
+    transform.yawOffset,
+    transform.orientEuler[0],
+    transform.orientEuler[1],
+    transform.orientEuler[2],
     DEAD_OPACITY,
     DEAD_DARKEN,
     DEAD_SQUASH_Y,
@@ -520,13 +555,24 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
   const actorIds = useMemo(() => getActorIdsFromLookup(lookup), [lookup]);
   const instanceCount = actorIds.length;
 
-  // URL of the boss model this fight needs, or null if no actor maps to one. Gates the GLB load so
-  // non-Taleria fights never fetch/parse the 560 KB model. Barebones (detailedFigures=false) keeps
-  // every boss on the capsule and never fetches.
-  const bossModelUrl = useMemo(
-    () => (detailedFigures ? getBossModelUrlInLookup(lookup, actorIds) : null),
-    [lookup, actorIds, detailedFigures],
+  // The reconstructed-art opt-in. Read once per mount: changing it requires a navigation, which
+  // remounts the replay.
+  const npcModelPreviewMode = useMemo(readNpcModelPreviewMode, []);
+
+  // The registry entry this fight needs, or null if no actor maps to one. Gates the GLB load so a
+  // fight with no modelled boss never fetches/parses the asset. Barebones (detailedFigures=false)
+  // keeps every boss on the capsule and never fetches.
+  const bossModelAsset = useMemo(
+    () => (detailedFigures ? getBossModelInLookup(lookup, actorIds, npcModelPreviewMode) : null),
+    [lookup, actorIds, detailedFigures, npcModelPreviewMode],
   );
+  // Join to the app base URL. A bare catalog path would resolve against the current route, and the
+  // replay is always nested (/report/<code>/fight/<n>/replay), so the fetch would 404 and silently
+  // fall back to the capsule — indistinguishable from "this boss has no model".
+  const bossModelUrl = bossModelAsset
+    ? resolveReplayModelUrl(bossModelAsset.path, import.meta.env.BASE_URL)
+    : null;
+  const bossTransform = bossModelAsset?.transform ?? DEFAULT_BOSS_TRANSFORM;
 
   // Stable index → glyph-group membership. An actor's symbol is fixed (role/type don't change
   // mid-fight), so we can assign each actor to one glyph group once and only toggle visibility.
@@ -624,6 +670,12 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
         );
         materials.forEach((m) => {
           m.transparent = true; // set ONCE; only opacity/color animate (per-frame flip would recompile)
+          // Image-to-3D exports routinely omit metallicFactor, which glTF defines as 1 — that makes a
+          // baked photographic albedo read as polished metal and go nearly black under the replay's
+          // overhead lighting. Normalise to cloth/leather defaults while keeping the authored atlas.
+          // Front-side: both shipped reconstructions are closed meshes, so back faces are pure
+          // overdraw. Two-sided remains the helper's default for assets with thin armor shells.
+          prepareReconstructedModelMaterial(m, { doubleSided: false });
         });
         const rawBox = new THREE.Box3().setFromBufferAttribute(
           geometry.getAttribute('position') as THREE.BufferAttribute,
@@ -996,8 +1048,16 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
   // produces a new signature and forces one recompose. The barebones flags are
   // deps too — a preset flip while paused must recompose once.
   const bossSignature = useMemo(
-    () => bossTuneSignature(performanceMode, detailedFigures, richMaterials, figureAccents),
-    [performanceMode, detailedFigures, richMaterials, figureAccents],
+    () =>
+      bossTuneSignature(
+        bossTransform,
+        bossModelAsset?.id ?? 'none',
+        performanceMode,
+        detailedFigures,
+        richMaterials,
+        figureAccents,
+      ),
+    [bossTransform, bossModelAsset, performanceMode, detailedFigures, richMaterials, figureAccents],
   );
 
   useFrame((_state, rafDelta) => {
@@ -1105,7 +1165,9 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
       // <primitive>, driven after this loop from the recorded boss actor. Only the FIRST matching
       // boss drives the one primitive.
       const useBossModel =
-        bossModel !== null && bossActor === null && getBossModelUrlForActor(actor) !== null;
+        bossModel !== null &&
+        bossActor === null &&
+        getBossModelForActor(actor, npcModelPreviewMode) !== null;
       if (useBossModel) {
         bossActor = actor;
         bossActorId = actorId;
@@ -1233,12 +1295,16 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
       // Glyph plane lies flat above the head, faces up (rotation -PI/2 X). For the humanoid it
       // floats as a halo above the (taller) figure's head; for the boss model it floats above the
       // (much taller) model; for the capsule it rides just above the cap as before. The boss glyph
-      // height tracks BOSS_SCALE so it follows the model up/down when the scale is tuned live (the
-      // oriented model is ≈2.84u tall before scale).
+      // height tracks the registry entry's own height and scale, so it follows each asset up/down
+      // instead of assuming one shared model size.
       const glyphYWorld = useHumanoid
         ? y + GROUND_LEVEL + HUMANOID_TARGET_HEIGHT * groupScale + 0.12 * groupScale
         : useBossModel
-          ? y + GROUND_LEVEL + BOSS_Y_OFFSET + 2.84 * BOSS_SCALE + 0.25
+          ? y +
+            GROUND_LEVEL +
+            bossTransform.yOffset +
+            bossTransform.modelHeight * bossTransform.scale +
+            0.25
           : y + GROUND_LEVEL + glyphY * groupScale;
       // Boss glyph rides a touch larger so it reads above the bigger model; others use group scale.
       const glyphScale = useBossModel ? groupScale * 1.6 : groupScale;
@@ -1399,17 +1465,16 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
         // Compose M = T_world · R_yaw · S · T_offset · R_orient (applied right-to-left). T_offset is
         // BEFORE scale so feet (oriented min.y → 0) stay grounded under scale and yaw spins about the
         // model center; the dead Y-squash then compresses toward the grounded feet.
-        t.orient.makeRotationFromEuler(
-          t.euler.set(ORIENT_EULER[0], ORIENT_EULER[1], ORIENT_EULER[2]),
-        );
+        const { orientEuler, scale: bossScale, yOffset, yawOffset } = bossTransform;
+        t.orient.makeRotationFromEuler(t.euler.set(orientEuler[0], orientEuler[1], orientEuler[2]));
         // Oriented bbox: re-AABB the raw box under ORIENT (8-corner transform — free for one actor).
         t.box.copy(bossModel.rawBox).applyMatrix4(t.orient);
         t.box.getCenter(t.center);
         t.offset.makeTranslation(-t.center.x, -t.box.min.y, -t.center.z);
         const squashY = bossDead ? DEAD_SQUASH_Y : 1;
-        t.scale.makeScale(BOSS_SCALE, BOSS_SCALE * squashY, BOSS_SCALE);
-        t.yaw.makeRotationY(bossActor.rotation + BOSS_YAW_OFFSET);
-        t.world.makeTranslation(bx, by + GROUND_LEVEL + BOSS_Y_OFFSET, bz);
+        t.scale.makeScale(bossScale, bossScale * squashY, bossScale);
+        t.yaw.makeRotationY(bossActor.rotation + yawOffset);
+        t.world.makeTranslation(bx, by + GROUND_LEVEL + yOffset, bz);
         // world = T_world · R_yaw · S · T_offset · R_orient
         t.world.multiply(t.yaw).multiply(t.scale).multiply(t.offset).multiply(t.orient);
         bossMesh.matrix.copy(t.world);
