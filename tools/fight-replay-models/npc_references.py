@@ -92,6 +92,40 @@ def _fit(rows, close_w, close_c, full_w, full_c, scales, row_lo, row_hi, min_ove
     return best
 
 
+def profile_variation(widths, rows):
+    """Coefficient of variation of a silhouette width profile.
+
+    Reported for information only. It is NOT a reliability gate: measured on the
+    plates that actually misregistered (Llothis and Felms ``view-11``, rear
+    legs) the variation was 0.40, the HIGHEST of any plate on those models,
+    while the errors were the lowest. A low-variance theory was tried and
+    disproved against that data.
+    """
+    values = np.asarray(widths)[rows]
+    values = values[values > 0]
+    if len(values) < 8:
+        return 0.0
+    return float(values.std() / max(values.mean(), 1e-6))
+
+
+# Plate roles whose reported width error has demonstrably misled. Rear-leg
+# plates registered with the lowest error of any plate on two separate models
+# and were doubled by ~25px both times. No cheap statistic separated them from
+# good fits, so the caveat is attached by role and the overlay stays the gate.
+UNRELIABLE_ROLES = {"legs", "leg", "tail", "wing"}
+
+
+def registration_caveat(role):
+    """Standing warning for plate roles whose width error has misled before."""
+    if role and role.lower() in UNRELIABLE_ROLES:
+        return (
+            f"width error is NOT sufficient evidence for a '{role}' plate: rear-leg plates "
+            "registered with the lowest error of any plate on two models and were still "
+            "doubled by ~25px. Inspect the overlay and accept only on that."
+        )
+    return None
+
+
 def register_whole_body(base_rgba, close_rgba, scales=np.arange(0.15, 0.95, 0.01)):
     """Match a torso/body closeup against the full plate over all silhouette rows."""
     _, fw, fc = silhouette_profile(base_rgba)
@@ -99,7 +133,11 @@ def register_whole_body(base_rgba, close_rgba, scales=np.arange(0.15, 0.95, 0.01
     rows = np.flatnonzero(cw > 0)
     if not len(rows):
         return None
-    return _fit(rows, cw, cc, fw, fc, scales, 0.0, float(len(fw) - 1))
+    best = _fit(rows, cw, cc, fw, fc, scales, 0.0, float(len(fw) - 1))
+    if best is not None:
+        best["method"] = "silhouette-profile"
+        best["profile_variation"] = round(profile_variation(cw, rows), 4)
+    return best
 
 
 def register_head_region(base_rgba, close_rgba):
@@ -122,22 +160,45 @@ def register_head_region(base_rgba, close_rgba):
     c_sh = shoulder_row(cw, c_top, c_bottom)
 
     seed = (b_sh - b_top) / max(c_sh - c_top, 1)
-    scales = np.arange(max(0.05, seed * 0.65), seed * 1.45, 0.005)
     rows = np.arange(c_top, c_sh + 1)
     head_height = max(b_sh - b_top, 1)
-    best = _fit(
-        rows, cw, cc, bw, bc, scales,
-        b_top - 0.25 * head_height, b_top + 0.35 * head_height,
-    )
-    if best is not None:
-        best.update({
-            "method": "head-region-silhouette",
-            "plate_head_top": b_top,
-            "plate_shoulder": int(b_sh),
-            "plate_rows": [b_top, b_bottom],
-            "closeup_shoulder": int(c_sh),
-            "seed_scale": round(float(seed), 4),
-        })
+    row_lo, row_hi = b_top - 0.25 * head_height, b_top + 0.35 * head_height
+
+    # A helm closeup usually crops the shoulders out of frame, so the CLOSEUP's
+    # own shoulder detection falls back and the seeded window can exclude the
+    # true scale entirely. That silently cost four helm plates: every one pinned
+    # to the window's lower bound. Search a wide absolute range instead and let
+    # the row window - anchored to the base plate's reliable head band - do the
+    # constraining. The old window is still reported so the miss is visible.
+    seed_lo, seed_hi = max(0.05, seed * 0.65), seed * 1.45
+    scales = np.arange(0.08, 1.30, 0.005)
+    best = _fit(rows, cw, cc, bw, bc, scales, row_lo, row_hi)
+    if best is None:
+        return None
+
+    seeded = _fit(rows, cw, cc, bw, bc,
+                  np.arange(seed_lo, max(seed_hi, seed_lo + 0.01), 0.005), row_lo, row_hi)
+    cv = profile_variation(cw, rows)
+    best.update({
+        "method": "head-region-silhouette",
+        "plate_head_top": b_top,
+        "plate_shoulder": int(b_sh),
+        "plate_rows": [b_top, b_bottom],
+        "closeup_shoulder": int(c_sh),
+        "seed_scale": round(float(seed), 4),
+        "seed_window": [round(seed_lo, 4), round(seed_hi, 4)],
+        "profile_variation": round(cv, 4),
+    })
+    if not (seed_lo <= best["scale"] <= seed_hi):
+        best["seed_window_excluded_best"] = True
+        best["seeded_width_error"] = round(seeded["width_error"], 5) if seeded else None
+        best["note"] = (
+            f"best scale {best['scale']:.3f} lies OUTSIDE the seeded window "
+            f"[{seed_lo:.3f}, {seed_hi:.3f}] - the closeup's own shoulder detection is "
+            "unreliable (shoulders likely out of frame). The wide sweep found "
+            f"{best['width_error']*100:.2f}% where the seeded window would have reported "
+            f"{(seeded['width_error']*100 if seeded else float('nan')):.2f}%."
+        )
     return best
 
 

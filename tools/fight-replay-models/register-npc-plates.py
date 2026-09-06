@@ -98,6 +98,7 @@ def main():
                 "col": round(fit["col"], 2),
                 "width_error": round(fit["width_error"], 5),
                 "method": fit.get("method", "silhouette-profile"),
+                "profile_variation": fit.get("profile_variation"),
                 "verified_by": "TODO: overlay reviewed by <name>",
             },
         }
@@ -110,6 +111,14 @@ def main():
         print(f"{spec['file']} -> {spec['view']}"
               f"{' (head region)' if head else ''}: err={fit['width_error']*100:.2f}% "
               f"scale={fit['scale']:.3f} row={fit['row']:.1f} col={fit['col']:.1f}")
+        caveat = refs.registration_caveat(spec["role"])
+        if caveat:
+            print(f"    !! {caveat}")
+            entry["registration"]["error_meaningful"] = False
+            entry["registration"]["caveat"] = caveat
+        if fit.get("seed_window_excluded_best"):
+            print(f"    !! {fit['note']}")
+            entry["registration"]["seed_window_excluded_best"] = True
         if head:
             print(f"    suggested regions.head_v_min = "
                   f"{entry['registration']['suggested_head_v_min']}")

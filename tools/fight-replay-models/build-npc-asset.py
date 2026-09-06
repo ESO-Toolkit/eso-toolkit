@@ -36,6 +36,8 @@ import sys
 from datetime import date
 from pathlib import Path
 
+from PIL import Image
+
 import npc_pipeline as engine
 import npc_references as refs
 
@@ -79,6 +81,12 @@ def parse_args():
                    help="directory to write the GLB and build report into")
     p.add_argument("--refresh-plates", action="store_true",
                    help="re-cut the reference plates even if the cache exists")
+    p.add_argument("--plates-only", action="store_true",
+                   help="cut the plates and geometry crops, then stop. Use this before "
+                        "register-npc-plates.py: registration needs plates/, which used to "
+                        "exist only after a full build, which needed the registration.")
+    p.add_argument("--refresh-geometry", action="store_true",
+                   help="re-run decimation even if the cached decimated mesh exists")
     p.add_argument("--skip-encode", action="store_true",
                    help="leave the prepared PNG-textured GLB; do not re-encode to JPEG")
     return p.parse_args()
@@ -105,27 +113,64 @@ def main():
     plates_cfg = reference["plates"]
 
     # ---- 1. plates -------------------------------------------------------
+    # The base crops and the per-closeup cutouts are cached independently. They
+    # used to share one branch, so the natural register -> build order (which
+    # leaves plates.json already present) never cut the closeups and the build
+    # died on a missing closeup-*.png.
+    remover = None
+
+    def get_remover():
+        nonlocal remover
+        if remover is None:
+            remover = refs.background_remover()
+        return remover
+
     if args.refresh_plates or not (plates_dir / "plates.json").exists():
         print("[plates] cutting native front/back crops")
-        remover = refs.background_remover()
         meta = refs.prepare_base_plates(
             ref_dir / plates_cfg["front"]["file"],
             ref_dir / plates_cfg["back"]["file"],
             plates_dir,
-            remover=remover,
+            remover=get_remover(),
         )
-        for entry in reference.get("closeups", []):
-            if entry.get("accepted"):
-                refs.prepare_closeup(
-                    ref_dir / entry["file"],
-                    plates_dir / f"closeup-{Path(entry['file']).stem}.png",
-                    remover=remover,
-                )
     else:
         meta = json.loads((plates_dir / "plates.json").read_text())
         print(f"[plates] reusing cache ({plates_dir})")
+
+    missing = [
+        entry for entry in reference.get("closeups", [])
+        if entry.get("accepted")
+        and not (plates_dir / f"closeup-{Path(entry['file']).stem}.png").exists()
+    ]
+    if args.refresh_plates:
+        missing = [e for e in reference.get("closeups", []) if e.get("accepted")]
+    for entry in missing:
+        refs.prepare_closeup(
+            ref_dir / entry["file"],
+            plates_dir / f"closeup-{Path(entry['file']).stem}.png",
+            remover=get_remover(),
+        )
+    if missing:
+        print(f"  cut {len(missing)} closeup cutout(s): "
+              f"{', '.join(e['file'] for e in missing)}")
+
+    # Hunyuan runs its own background removal, so geometry generation needs the
+    # ORIGINAL backdrop rather than an alpha cutout. Emit those crops here so
+    # nobody has to re-derive them from plates.json by hand.
+    for view, spec in plates_cfg.items():
+        target = plates_dir / f"{view}-geometry.png"
+        if args.refresh_plates or not target.exists():
+            box = meta["plates"][view]["crop_box"]
+            Image.open(ref_dir / spec["file"]).convert("RGB").crop(box).save(target)
     print(f"  native square={meta['native_side']}px; "
-          f"subject {meta['plates']['front']['subject_height_px']}px tall in source")
+          f"subject {meta['plates']['front']['subject_height_px']}px tall in source; "
+          f"geometry crops ready ({plates_dir.name}/<view>-geometry.png)")
+
+    if args.plates_only:
+        print("\n[plates-only] stopping before geometry. Register closeups with:\n"
+              f"  register-npc-plates.py --references {ref_dir} --plates {plates_dir} "
+              "--closeup <file> --role <role> --view <front|back> [--region head]")
+        return
 
     # ---- 2. geometry -----------------------------------------------------
     geom = cfg["geometry"]
@@ -135,7 +180,7 @@ def main():
     mesh_for_projection = source_mesh
     if geom.get("decimate", True):
         decimated = work / f"{slug}-decimated.glb"
-        if args.refresh_plates or not decimated.exists():
+        if args.refresh_geometry or not decimated.exists():
             print("[geometry] Blender-collapse decimation")
             run("decimate-mesh.py", source_mesh, decimated,
                 "--target-triangles", geom["target_triangles"])
