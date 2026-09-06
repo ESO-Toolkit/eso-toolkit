@@ -10,6 +10,42 @@ was encountered (all 26 listing fetches + 41 post fetches returned HTTP 200).
 
 ---
 
+## Correction — the "shared mesh family" shortcuts do not exist
+
+An early pass assumed the three Cloudrest Shades were one build plus two retextures, and implied the
+same of the three Celestials. **Both were wrong.** Verified by downloading and viewing every plate:
+
+**The three Shades share a prop and shader family, not a mesh.** Identical black feather
+wing-shoulders, bow and quiver, purple glowing eyes and ashen skin — but Galenwe is a male in heavy
+gold plate with an articulated skirt, Siroria is a **female base body** in a crimson bodysuit with a
+gold corset, and Relequen wears a **floor-length robe with no visible leg geometry**. A retexture
+cannot turn a plate-skirted male into a female bodysuit or into a robe cone.
+
+**The three Celestials share only an art theme.** The Warrior is broad bone/stone plate with a horned
+skull helm; the Serpent is slimmer red-brown armour with a hooded gold mask; the Mage is essentially a
+cone with sleeves — a floor-length black robe under an enormous gold sunburst halo.
+
+So that is **six GPU jobs, not two**. The genuine same-mesh saving found so far is Saint Llothis and
+Saint Felms, which did transfer: Felms hit its face-texel target on the first build reusing Llothis's
+tuned values. The Kyne's Aegis knights (all UESP species _Bloodknight_) remain a real one-mesh family
+on paper, still unverified against plates.
+
+**Lesson: verify mesh-sharing by looking at the plates before planning around it.** A shared species
+name, shared props or a shared art theme are not evidence of a shared mesh.
+
+### Verified plate quality for those six
+
+All six are buildable and all plates are 1920x1080. Subject heights are **973-1005 px** — above the
+~989 px that gave Saint Llothis an excellent head with no helm closeup, and far above the ~717 px that
+left Captain Vrol's face needing one. `view-01` is the clean full-body front and `view-03` the back in
+every one of the six posts.
+
+Caveats: all three Shades carry a back-slung bow and quiver that crosses the upper back on `view-03`
+(worst on Siroria, mildest on Relequen), so the `view-08` torso-back closeup will be needed to fill
+what it hides; the fronts are clean. Shade `view-06` is shot against black feathers and is the weakest
+plate in each set. The Celestials carry **no weapons in any plate** and are the cleanest sets in the
+batch. Warrior and Serpent additionally have an unhelmed bare-face plate at `view-05`.
+
 ## 1. Summary
 
 | Metric                                                                              | Count                                |
@@ -117,9 +153,9 @@ from the Yandir + Vrol pipeline).
 | 1   | Saint Olms the Just       | AS    | `/creatures/post/90-saint-olms-the-just`        | **13** | 1920        | Highest plate count of any exact match. Giant factotum = broadly humanoid, rigid armour panels, no fur/cloth. Ideal for the texel-projection atlas method. |
 | 2   | Saint Llothis the Pious   | AS    | `/creatures/post/89-saint-llothis-the-pious`    | 11     | 1920        | Humanoid, robed, exact match. Same trial as #1 and #3 — one trial fully covered in three builds.                                                           |
 | 3   | Saint Felms the Bold      | AS    | `/creatures/post/88-saint-felms-the-bold`       | 11     | 1920        | Humanoid axe-wielder, exact match. Completes Asylum Sanctorium 3/3.                                                                                        |
-| 4   | Shade of Galenwe          | CR    | `/characters/post/233-shade-of-galenwe`         | 10     | 1920        | Humanoid Welkynar in armour — closest analogue to the already-solved Captain Vrol.                                                                         |
-| 5   | Shade of Siroria          | CR    | `/characters/post/234-shade-of-siroria`         | 10     | 1920        | Same body/armour family as #4; expect heavy asset reuse, mostly a retexture.                                                                               |
-| 6   | Shade of Relequen         | CR    | `/characters/post/235-shade-of-relequen`        | 10     | 1920        | Same family again. #4–#6 are effectively one build plus two retextures.                                                                                    |
+| 4   | Shade of Galenwe          | CR    | `/characters/post/233-shade-of-galenwe`         | 10     | 1920        | Male, heavy gold plate, articulated plate skirt. Separate build.                                                                                           |
+| 5   | Shade of Siroria          | CR    | `/characters/post/234-shade-of-siroria`         | 10     | 1920        | **NOT a retexture of #4** — verified from the plates. Female base body, crimson bodysuit with gold corset, tall greaves. Separate build.                   |
+| 6   | Shade of Relequen         | CR    | `/characters/post/235-shade-of-relequen`        | 10     | 1920        | **NOT a retexture either** — floor-length robe with no visible leg geometry. #4-#6 are THREE separate builds; see the correction below.                    |
 | 7   | The Warrior               | HRC   | `/characters/post/172-the-warrior`              | **11** | 2048 (`_k`) | Celestial Warrior — humanoid, exact match, highest-resolution plates on the whole site.                                                                    |
 | 8   | The Serpent               | SO    | `/characters/post/169-the-serpent`              | **11** | 1600–2048   | Celestial, exact match, good coverage.                                                                                                                     |
 | 9   | The Mage                  | AA    | `/characters/post/173-the-mage`                 | 10     | 1600–2048   | Celestial, exact match. #7–#9 are the three Celestials — same visual language, likely shared shader work.                                                  |
