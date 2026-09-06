@@ -181,13 +181,21 @@ Before accepting any asset:
 - Some NPCs have no face to resolve. Vrol's helm is an eye slit, nose-guard, fangs and an ice beard;
   making those individually legible is the correct outcome and no texture work yields a "face".
 
-## Scaling beyond one boss at a time
+## Packs and recolour variants
 
-The current runtime renders exactly **one** non-instanced `<primitive>` per fight and takes only the
-first matching actor. That is correct for a single boss but wrong for trash, which spawns in packs —
-one knight would get a mesh and its identical siblings would stay capsules.
+The runtime renders **one `InstancedMesh` per registry asset id**, sized to the number of actors in
+the fight that resolve to it. `buildStaticModelInstancingPlan`
+(`src/features/fight_replay/utils/staticModelInstancing.ts`) scans the lookup once, samples each
+distinct actor exactly once, and assigns every match a slot. So a pack costs one draw call and no
+sibling is left on a capsule, and a fight containing a boss plus a trash type simply gets two meshes.
 
-Before shipping any lesser enemy, extend the static-model path to render N actors from one shared
-geometry: an `InstancedMesh` keyed by asset id, with a per-instance tint so one reconstruction can
-serve recolour variants (the three Kyne's Aegis knights are all UESP species _Bloodknight_ — one mesh,
-three tints).
+An asset may carry an optional `tint` (asset-wide) and `aliasTints` (per normalized alias). The tint
+is a linear RGB multiplier folded into `instanceColor`, so **one reconstruction can serve recolour
+variants** — register Blood Knight, Crimson Knight and Bitter Knight as three aliases of the single
+UESP species _Bloodknight_ and give two of them an `aliasTints` entry. Omit both fields and the
+albedo renders exactly as authored; every currently shipped asset does.
+
+Death is per instance too: the Y-squash rides the instance matrix, the darken multiplies into
+`instanceColor`, and the fade uses the shared `instanceOpacity` attribute. Nothing mutates the
+material after load — flipping material state per frame recompiles the shader, and that is only more
+true once N actors share one material.

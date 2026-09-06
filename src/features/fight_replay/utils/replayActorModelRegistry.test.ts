@@ -2,6 +2,9 @@ import type { ActorPosition } from '../../../workers/calculations/CalculateActor
 
 import {
   COOL_STICKMAN_ASSET,
+  NEUTRAL_MODEL_TINT,
+  type StaticReplayActorModelAsset,
+  resolveStaticModelTint,
   resolveReplayModelUrl,
   STATIC_REPLAY_ACTOR_MODEL_ASSETS,
   findStaticActorModel,
@@ -185,5 +188,60 @@ describe('resolveReplayModelUrl', () => {
       expect(url.startsWith('/dev-previews/pr-1/models/')).toBe(true);
       expect(url).not.toContain('//models');
     }
+  });
+});
+
+describe('resolveStaticModelTint', () => {
+  const base: StaticReplayActorModelAsset = {
+    id: 'tint-fixture',
+    path: 'models/fight-replay/npcs/tint-fixture.glb',
+    renderer: 'static-boss',
+    actorTypes: ['boss', 'enemy'],
+    aliases: ['blood knight', 'crimson knight'],
+    transform: {
+      orientEuler: [0, 0, 0],
+      scale: 1,
+      yOffset: 0,
+      yawOffset: 0,
+      modelHeight: 2,
+    },
+    provenance: {
+      designation: 'project-authorized-fan-prototype',
+      sourceUrl: 'https://example.invalid/fixture',
+      attributionFile: 'public/models/fight-replay/npcs/README-fixture.md',
+    },
+  };
+
+  it('is neutral when the asset declares no tint at all', () => {
+    expect(resolveStaticModelTint(base, 'Blood Knight')).toBe(NEUTRAL_MODEL_TINT);
+  });
+
+  it('every shipped catalog entry stays untinted, so this change cannot alter one', () => {
+    STATIC_REPLAY_ACTOR_MODEL_ASSETS.forEach((asset) => {
+      asset.aliases.forEach((alias) => {
+        expect(resolveStaticModelTint(asset, alias)).toBe(NEUTRAL_MODEL_TINT);
+      });
+    });
+  });
+
+  it('falls back to the asset-wide tint for an alias with no override', () => {
+    const asset = { ...base, tint: [0.9, 0.9, 1] as const };
+    expect(resolveStaticModelTint(asset, 'Blood Knight')).toEqual([0.9, 0.9, 1]);
+  });
+
+  it('prefers a per-alias tint over the asset-wide one', () => {
+    const asset = {
+      ...base,
+      tint: [0.9, 0.9, 1] as const,
+      aliasTints: { 'crimson knight': [1.2, 0.55, 0.55] as const },
+    };
+    expect(resolveStaticModelTint(asset, 'Crimson Knight')).toEqual([1.2, 0.55, 0.55]);
+    expect(resolveStaticModelTint(asset, 'Blood Knight')).toEqual([0.9, 0.9, 1]);
+  });
+
+  it('normalizes the actor name before matching an alias tint', () => {
+    const asset = { ...base, aliasTints: { 'crimson knight': [1.2, 0.55, 0.55] as const } };
+    expect(resolveStaticModelTint(asset, '  CRIMSON   Knight #3 ')).toEqual([1.2, 0.55, 0.55]);
+    expect(resolveStaticModelTint(asset, undefined)).toBe(NEUTRAL_MODEL_TINT);
   });
 });

@@ -16,6 +16,19 @@ interface LicensedReplayActorModelAsset {
   };
 }
 
+/**
+ * Linear RGB multiplier applied on top of an asset's baked albedo, per rendered instance.
+ *
+ * ESO reuses one body across recolour variants — Blood Knight, Crimson Knight and Bitter Knight are
+ * all UESP species "Bloodknight" — so one reconstruction can serve all three if the renderer can
+ * shift its colour per instance. `[1, 1, 1]` is the identity and is what every entry that omits a
+ * tint gets, so adding this field cannot change how an existing asset looks.
+ */
+export type StaticReplayActorModelTint = readonly [number, number, number];
+
+/** Identity tint. Multiplying by this leaves the baked albedo exactly as authored. */
+export const NEUTRAL_MODEL_TINT: StaticReplayActorModelTint = [1, 1, 1];
+
 export interface StaticReplayActorModelAsset {
   id: string;
   path: string;
@@ -26,6 +39,14 @@ export interface StaticReplayActorModelAsset {
   /** Fully normalized names (see `normalizeActorName`). Matching is EXACT against this list —
    *  never a substring test, so "Vampire Infuser Acolyte" can never borrow the Infuser's mesh. */
   aliases: readonly string[];
+  /** Optional tint applied to every actor that resolves to this asset. Omit for "as authored". */
+  tint?: StaticReplayActorModelTint;
+  /**
+   * Optional per-alias tint overrides, keyed by the same NORMALIZED alias strings as `aliases`.
+   * This is what lets one mesh serve recolour variants: register every variant name as an alias,
+   * then give each its own tint here. An alias with no entry falls back to `tint`, then to neutral.
+   */
+  aliasTints?: Readonly<Record<string, StaticReplayActorModelTint>>;
   transform: {
     orientEuler: readonly [number, number, number];
     scale: number;
@@ -117,6 +138,20 @@ export const STATIC_REPLAY_ACTOR_MODEL_ASSETS: readonly StaticReplayActorModelAs
 export function resolveReplayModelUrl(path: string, baseUrl: string | undefined): string {
   const base = baseUrl && baseUrl.length > 0 ? baseUrl : '/';
   return `${base.endsWith('/') ? base : `${base}/`}${path.replace(/^\/+/, '')}`;
+}
+
+/**
+ * The tint an actor should render this asset with.
+ *
+ * Alias tint wins over the asset-wide tint, which wins over neutral. Resolution is by normalized
+ * name so the ` #2` instance suffix and apostrophe variants behave exactly as they do for lookup.
+ */
+export function resolveStaticModelTint(
+  asset: StaticReplayActorModelAsset,
+  actorName: string | undefined,
+): StaticReplayActorModelTint {
+  const normalizedName = normalizeActorName(actorName);
+  return asset.aliasTints?.[normalizedName] ?? asset.tint ?? NEUTRAL_MODEL_TINT;
 }
 
 export function parseNpcModelPreviewMode(value: string | null): NpcModelPreviewMode {
