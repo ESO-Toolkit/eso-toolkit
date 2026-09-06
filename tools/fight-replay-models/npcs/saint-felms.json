@@ -1,0 +1,172 @@
+{
+  "slug": "saint-felms",
+  "display_name": "Saint Felms the Bold",
+  "aliases": [
+    "Saint Felms the Bold",
+    "Saint Felms"
+  ],
+  "encounter": {
+    "trial": "Asylum Sanctorium",
+    "role": "boss",
+    "notes": "Ornate bone/ivory Dwemer-style construct sharing Saint Llothis's base mesh and pose; paler near-white tint and a flatter fan-shaped helm crest instead of Llothis's tall point."
+  },
+  "work_dir": "build/saint-felms",
+  "reference": {
+    "page_url": "https://esomodelviewer.com/creatures/post/saint-felms-the-bold",
+    "directory": "saint-felms-references",
+    "plates": {
+      "front": {
+        "file": "view-01.jpg",
+        "role": "full-body-front"
+      },
+      "back": {
+        "file": "view-03.jpg",
+        "role": "full-body-back"
+      }
+    },
+    "side_plates": {
+      "available": false,
+      "note": "No true left/right profile is published. No profile was synthesized; fabricated detail is not permitted."
+    },
+    "closeups": [
+      {
+        "file": "view-10.jpg",
+        "role": "legs",
+        "view": "front",
+        "accepted": true,
+        "registration": {
+          "scale": 0.63,
+          "row": 381.0,
+          "col": -73.7,
+          "width_error": 0.04907,
+          "method": "silhouette-profile",
+          "verified_by": "overlay reviewed 2026-09-06",
+          "note": "Listed before the torso plate so the torso wins in the overlap; the engine has no region gate for non-head closeups."
+        }
+      },
+      {
+        "file": "view-08.jpg",
+        "role": "torso",
+        "view": "front",
+        "accepted": true,
+        "registration": {
+          "scale": 0.39,
+          "row": 206.0,
+          "col": 155.0,
+          "width_error": 0.05161,
+          "method": "silhouette-profile",
+          "verified_by": "overlay reviewed 2026-09-06"
+        }
+      },
+      {
+        "file": "view-09.jpg",
+        "role": "torso",
+        "view": "back",
+        "accepted": true,
+        "registration": {
+          "scale": 0.39,
+          "row": 205.5,
+          "col": 139.8,
+          "width_error": 0.01637,
+          "method": "silhouette-profile",
+          "verified_by": "overlay reviewed 2026-09-06"
+        }
+      },
+      {
+        "file": "view-11.jpg",
+        "role": "legs",
+        "view": "back",
+        "accepted": false,
+        "rejected_reason": "MISREGISTERED despite a 2.82% width error - greaves and boots doubled in the overlay. Same failure as Llothis view-11; the rear-leg silhouette is near translation-invariant down its length so the row offset is under-determined."
+      },
+      {
+        "file": "view-04.jpg",
+        "role": "helm",
+        "view": "front",
+        "accepted": false,
+        "rejected_reason": "head-region fit 11.16% at scale 0.533 - pinned to the search lower bound by the seed-scale bug (closeup has no shoulders in frame). Overlay shows the helm oversized and offset, rings doubled."
+      },
+      {
+        "file": "view-06.jpg",
+        "role": "helm",
+        "view": "back",
+        "accepted": false,
+        "rejected_reason": "head-region width error 90.78%; grossly misfit"
+      },
+      {
+        "file": "view-05.jpg",
+        "role": "helm",
+        "view": "front",
+        "accepted": false,
+        "rejected_reason": "three-quarter capture, wrong axis"
+      },
+      {
+        "file": "view-07.jpg",
+        "role": "helm",
+        "view": "back",
+        "accepted": false,
+        "rejected_reason": "rear helm plate; view-06 equivalent already failed, not verifiable"
+      },
+      {
+        "file": "view-02.jpg",
+        "role": "three-quarter",
+        "view": "front",
+        "accepted": false,
+        "rejected_reason": "redundant given view-01/view-03"
+      }
+    ]
+  },
+  "geometry": {
+    "source": "build/saint-felms/saint-felms-draft.glb",
+    "decimate": true,
+    "target_triangles": 45000,
+    "max_triangles": 50000,
+    "provenance": "Tencent Hunyuan3D-2mv (hunyuan3d-dit-v2-mv, fp16, 50 steps, octree 380, seed 12345) from view-01/view-03 only. Draft: 397,374 faces, 59.6s on an RTX 4070 Ti Super."
+  },
+  "atlas": {
+    "size": 1024,
+    "jpeg_quality": 92,
+    "roughness": 0.78,
+    "material_name": "saint-felms-atlas"
+  },
+  "regions": {
+    "head_v_min": 0.78,
+    "head_feather": 0.12,
+    "note": "Shoulder detector returned 0.7843 (front) / 0.8064 (back), verified visually: the line sits at the pauldron top with the helm and halo inside the head band. 0.78 used for both."
+  },
+  "uv_density": {
+    "head_scale": 2.0,
+    "head_v": 0.78,
+    "leg_scale": 1.0,
+    "leg_v": 0.45,
+    "ramp": 0.08,
+    "note": "Tuned for this silhouette: the crested helm plus halo ring is a far larger share of the body than a normal head, so it needs much LESS boost than Vrol (5.5) or Yandir (8.0). head_scale 5.5 overshot to 321^2 with the head taking 38.5% of the atlas; 2.0 lands ~258^2 at ~25%."
+  },
+  "projection": {
+    "supersample": 2,
+    "depth_size": 2048,
+    "pack_resolution": 2048,
+    "pack_padding": 4,
+    "blend_power": 3.0,
+    "silhouette_inset": 0.02,
+    "grazing_threshold": 0.35,
+    "dilate": 24,
+    "closeup_feather": 60,
+    "envelope_sigma": 3.0
+  },
+  "tone": {
+    "contrast": 1.08,
+    "saturation": 1.1
+  },
+  "unsharp": {
+    "sigma": 0.7,
+    "amount": 0.45,
+    "threshold": 0.01569
+  },
+  "output": {
+    "directory": "build/saint-felms/out",
+    "suffix": "-overview-v1",
+    "max_bytes": 2500000
+  },
+  "rights": "The Elder Scrolls Online name, character design and related rights remain with ZeniMax Media/Bethesda Softworks. Reconstructed from published screenshots for an authorized fan prototype; not a claim that the IP is freely licensed."
+}

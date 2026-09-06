@@ -19,11 +19,13 @@ Do not reuse any reconstructed asset outside this project without a separate rig
 
 ## Shipped assets
 
-| Asset                                | Actor              | Renderer                  |   Tris |  Verts | Materials | Texture     | GLB bytes | Reference                                                                   |
-| ------------------------------------ | ------------------ | ------------------------- | -----: | -----: | --------: | ----------- | --------: | --------------------------------------------------------------------------- |
-| `coolstickman-walk.glb`              | all players        | `instanced-pose-flipbook` |      — |      — |         1 | —           |         — | CC0, Polygonal Mind                                                         |
-| `yandir-the-butcher-overview-v2.glb` | Yandir the Butcher | `static-boss`             | 45,000 | 29,609 |         1 | 1024px JPEG | 1,644,896 | [post 82](https://esomodelviewer.com/characters/post/82-yandir-the-butcher) |
-| `captain-vrol-overview-v2.glb`       | Captain Vrol       | `static-boss`             | 44,999 | 28,796 |         1 | 1024px JPEG | 1,679,644 | [post 83](https://esomodelviewer.com/characters/post/83-captain-vrol)       |
+| Asset                                | Actor                   | Renderer                  |   Tris |  Verts | Materials | Texture     | GLB bytes | Reference                                                                           |
+| ------------------------------------ | ----------------------- | ------------------------- | -----: | -----: | --------: | ----------- | --------: | ----------------------------------------------------------------------------------- |
+| `coolstickman-walk.glb`              | all players             | `instanced-pose-flipbook` |      — |      — |         1 | —           |         — | CC0, Polygonal Mind                                                                 |
+| `yandir-the-butcher-overview-v2.glb` | Yandir the Butcher      | `static-boss`             | 45,000 | 29,609 |         1 | 1024px JPEG | 1,644,896 | [post 82](https://esomodelviewer.com/characters/post/82-yandir-the-butcher)         |
+| `captain-vrol-overview-v2.glb`       | Captain Vrol            | `static-boss`             | 44,999 | 28,796 |         1 | 1024px JPEG | 1,679,644 | [post 83](https://esomodelviewer.com/characters/post/83-captain-vrol)               |
+| `saint-llothis-overview-v1.glb`      | Saint Llothis the Pious | `static-boss`             | 44,999 | 31,803 |         1 | 1024px JPEG | 1,774,760 | [creature 89](https://esomodelviewer.com/creatures/post/89-saint-llothis-the-pious) |
+| `saint-felms-overview-v1.glb`        | Saint Felms the Bold    | `static-boss`             | 45,000 | 30,921 |         1 | 1024px JPEG | 1,704,864 | [creature 88](https://esomodelviewer.com/creatures/post/88-saint-felms-the-bold)    |
 
 ### Runtime budgets
 
@@ -119,6 +121,23 @@ shared geometry — an `InstancedMesh` keyed by asset id, with a per-instance ti
 base can serve Blood, Crimson, and Bitter variants from one draw call. Only then is generating the
 asset worthwhile. Bitter Knight additionally needs a colour reference: UESP has no image for it, so
 its tint is currently unverified and must not be guessed.
+
+## Coverage status — Asylum Sanctorium
+
+| Encounter | Name                    | Status                                                                                                 |
+| --------- | ----------------------- | ------------------------------------------------------------------------------------------------------ |
+| `boss_1`  | Saint Llothis the Pious | **Shipped**                                                                                            |
+| `boss_2`  | Saint Felms the Bold    | **Shipped**                                                                                            |
+| `boss_3`  | Saint Olms the Just     | Buildable — [creature 90](https://esomodelviewer.com/creatures/post/90-saint-olms-the-just), 13 plates |
+
+Llothis and Felms share a base mesh (differing helm crest and tint), and that transferred: Felms hit
+its face-texel target on the **first** build reusing Llothis's tuned values, with no re-tuning. Expect
+the same for any same-species pair.
+
+Saint Olms is **not humanoid** — a winged draconic construct whose body core is only ~700 px because
+the wingspan fills the frame. Both the head-weighted UV warp and the shoulder detector assume a
+humanoid, and the detector keys off the widest upper-body row, which for Olms will be the wingspan.
+Expect `regions.head_v_min` to need a manual override there.
 
 ## Unknown actors
 

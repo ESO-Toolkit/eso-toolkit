@@ -101,6 +101,44 @@ export const STATIC_REPLAY_ACTOR_MODEL_ASSETS: readonly StaticReplayActorModelAs
       attributionFile: 'public/models/fight-replay/npcs/README-captain-vrol-overview-v2.md',
     },
   },
+  {
+    id: 'saint-llothis-overview-v1',
+    path: 'models/fight-replay/npcs/saint-llothis-overview-v1.glb',
+    renderer: 'static-boss',
+    actorTypes: HOSTILE_ACTOR_TYPES,
+    aliases: ['saint llothis the pious'],
+    transform: {
+      orientEuler: [0, 0, 0],
+      scale: 1.25,
+      yOffset: 0,
+      yawOffset: 0,
+      modelHeight: 1.9943,
+    },
+    provenance: {
+      designation: 'project-authorized-fan-prototype',
+      sourceUrl: 'https://esomodelviewer.com/creatures/post/89-saint-llothis-the-pious',
+      attributionFile: 'public/models/fight-replay/npcs/README-saint-llothis-overview-v1.md',
+    },
+  },
+  {
+    id: 'saint-felms-overview-v1',
+    path: 'models/fight-replay/npcs/saint-felms-overview-v1.glb',
+    renderer: 'static-boss',
+    actorTypes: HOSTILE_ACTOR_TYPES,
+    aliases: ['saint felms the bold'],
+    transform: {
+      orientEuler: [0, 0, 0],
+      scale: 1.25,
+      yOffset: 0,
+      yawOffset: 0,
+      modelHeight: 1.9951,
+    },
+    provenance: {
+      designation: 'project-authorized-fan-prototype',
+      sourceUrl: 'https://esomodelviewer.com/creatures/post/88-saint-felms-the-bold',
+      attributionFile: 'public/models/fight-replay/npcs/README-saint-felms-overview-v1.md',
+    },
+  },
 ];
 
 /**
