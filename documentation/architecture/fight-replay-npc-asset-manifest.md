@@ -108,17 +108,15 @@ Sea Giant / **Nord** and the Vampire Infuser as **Nord**; in-game screenshots sh
 figures on the standard character rig (Bulwark: mace and round shield; Raider: spiked helm and
 greatsword; Infuser: a robed caster). They do not warrant bespoke reconstructions.
 
-**The blocker is the renderer, not the references.** `InstancedReplayFigures3D` drives exactly one
-non-instanced `<primitive>` per fight (`bossMeshRef`), and the resolver deliberately takes only the
-**first** matching actor. That is correct for a single boss, but Kyne's Aegis trash spawns in packs —
-two Half-Giant Raiders, multiple knights. Shipping a Bloodknight asset today would give a mesh to one
-knight and leave its identical siblings as capsules, which reads as a bug rather than a feature.
+**The renderer blocker is cleared.** `InstancedReplayFigures3D` used to drive exactly one
+non-instanced `<primitive>` per fight, with the resolver taking only the **first** matching actor —
+so a Bloodknight asset would have given a mesh to one knight and left its identical siblings as
+capsules. It now renders one `InstancedMesh` per registry asset id, sized to every actor that
+resolves to it, with an optional per-instance tint (`tint` / `aliasTints` on the registry entry). One
+Bloodknight build can therefore serve Blood, Crimson, and Bitter from one draw call.
 
-**Single next action for lesser enemies:** extend the static-model path to render N actors from one
-shared geometry — an `InstancedMesh` keyed by asset id, with a per-instance tint so the Bloodknight
-base can serve Blood, Crimson, and Bitter variants from one draw call. Only then is generating the
-asset worthwhile. Bitter Knight additionally needs a colour reference: UESP has no image for it, so
-its tint is currently unverified and must not be guessed.
+**Single remaining blocker for the knights:** Bitter Knight has no colour reference — UESP has no
+image for it, so its tint is unverified and must not be guessed.
 
 ## Unknown actors
 
