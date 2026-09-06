@@ -174,13 +174,33 @@ a standing warning.
 Leg plates have now misregistered on **6 of 6** models where they were attempted, with the same
 signature: the overlay's boots overshoot below the base plate's feet.
 
-### Concave recessed features may not reconstruct
+### Render clay before blaming geometry
 
-Two-view marching-cubes reconstruction produces convex hulls where a reference has a recess. The
-Celestial Serpent's gold mask, set back inside a hood opening, came out as a smooth convex hood cone
-from every angle — the projection then correctly painted the hood's engraving onto that cone. This is
-a **geometry** failure and cannot be fixed in the texture stage. Raising octree resolution, adding a
-third view that sees into the cavity, or more inference steps are the levers.
+When a feature is missing from a finished model, **render it untextured (clay) before diagnosing.**
+The Celestial Serpent's mask was reported as a failed reconstruction — a "smooth convex hood cone" —
+and a GPU retry at higher octree resolution was authorized on that basis. The clay render then showed
+the mask fully modelled at _both_ resolutions: brow, eye sockets, nose, moustache and chin, all with
+real relief. Geometry was never the problem, the retry changed nothing, and the diagnosis had been
+made from textured renders alone.
+
+### Silhouette-normalized `u` breaks under wide head ornaments
+
+This is what actually hid the Serpent's mask, and it is a general property of the projection rather
+than one model's quirk.
+
+The horizontal coordinate is normalized by the silhouette span in each height slice. At head height
+the Serpent's silhouette is dominated by wide gold horn plates, and the reconstruction placed those
+horns differently from the plate. Equal normalized `u` therefore stops meaning the same feature: face
+texels map into roughly the right plate columns (442-619 against the mask/horn bright span of
+437-620) but return muddy warm brown instead of bright bone, because those columns contain hood.
+
+Measurements that narrow it to correspondence rather than anything else: the mask is prominent in the
+plate; occlusion is _not_ rejecting it (97.2% of front-facing head vertices pass the depth test,
+better than the body's 83.3%); and the geometry is correct. It is the mesh-to-plate mapping alone.
+
+**Expect this on any NPC with wide head ornaments — horns, halos, feathered crests.** The fix is a
+verified head closeup, which places the feature directly instead of inferring it from silhouette
+correspondence.
 
 ### Encode deliberately, then verify
 

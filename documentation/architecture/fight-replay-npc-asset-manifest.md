@@ -175,6 +175,23 @@ Two further notes if it is picked up:
 
 Evidence: `B:/CodexScratch/eso-fight-replay-3d/build/saint-olms/crop-truncation.png`.
 
+### The Celestial Serpent — held
+
+Built and passing every gate, but not shipped: its gold skull mask does not appear in the texture.
+
+The cause was initially reported as a failed reconstruction and a GPU retry at higher octree
+resolution was spent on that basis. **That diagnosis was wrong.** A clay render shows the mask fully
+modelled at both octree levels — brow, eye sockets, nose, moustache, chin. The failure is in the
+mesh-to-plate horizontal mapping: at head height the silhouette is dominated by wide gold horn plates
+that the reconstruction placed differently from the plate, so equal silhouette-normalized `u` stops
+meaning the same feature and face texels land on hood. Occlusion was ruled out — 97.2% of front-facing
+head vertices pass the depth test, better than the body's 83.3%.
+
+The fix under trial is a hand-registered head closeup, which places the mask directly instead of
+inferring it from silhouette correspondence. If that does not verify on the overlay, the Serpent will
+ship faceless with this limitation recorded: at 32-64 px it reads correctly as a hooded figure with
+gold horns and a filigree robe, and only fails close up.
+
 ## Unknown actors
 
 Any actor the registry does not recognise by exact normalized name keeps the capsule marker. That
