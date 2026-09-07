@@ -354,6 +354,30 @@ export const STATIC_REPLAY_ACTOR_MODEL_ASSETS: readonly StaticReplayActorModelAs
     },
   },
 
+  {
+    id: 'orphic-shattered-shard-overview-v1',
+    path: 'models/fight-replay/npcs/orphic-shattered-shard-overview-v1.glb',
+    renderer: 'static-boss',
+    actorTypes: HOSTILE_ACTOR_TYPES,
+    // Only the exact encounter name. The reference page is titled for the SPECIES
+    // ("Shattered Shard"), but aliasing that bare name would let any other shard-kin actor
+    // borrow this body, which is precisely what the registry refuses to do.
+    aliases: ['orphic shattered shard'],
+    transform: {
+      orientEuler: [0, 0, 0],
+      scale: 1.25,
+      yOffset: 0,
+      yawOffset: 0,
+      modelHeight: 1.982,
+    },
+    provenance: {
+      designation: 'project-authorized-fan-prototype',
+      sourceUrl: 'https://esomodelviewer.com/characters/post/180-shattered-shard',
+      attributionFile:
+        'public/models/fight-replay/npcs/README-orphic-shattered-shard-overview-v1.md',
+    },
+  },
+
   // --- Extracted game assets, NOT reconstructions -------------------------------------------
   // Everything above is modelled from published screenshots. The four below are ESO's own mesh
   // and ESO's own hand-authored diffuse atlas, lifted verbatim out of the client (see each

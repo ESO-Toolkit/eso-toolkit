@@ -35,22 +35,23 @@ separate rights review.
 
 ## Shipped assets
 
-| Asset                                | Actor                   | Renderer                  |   Tris |  Verts | Materials | Texture     | GLB bytes | Reference                                                                           |
-| ------------------------------------ | ----------------------- | ------------------------- | -----: | -----: | --------: | ----------- | --------: | ----------------------------------------------------------------------------------- |
-| `coolstickman-walk.glb`              | all players             | `instanced-pose-flipbook` |      — |      — |         1 | —           |         — | CC0, Polygonal Mind                                                                 |
-| `yandir-the-butcher-overview-v2.glb` | Yandir the Butcher      | `static-boss`             | 45,000 | 29,609 |         1 | 1024px JPEG | 1,644,896 | [post 82](https://esomodelviewer.com/characters/post/82-yandir-the-butcher)         |
-| `captain-vrol-overview-v2.glb`       | Captain Vrol            | `static-boss`             | 44,999 | 28,796 |         1 | 1024px JPEG | 1,679,644 | [post 83](https://esomodelviewer.com/characters/post/83-captain-vrol)               |
-| `saint-llothis-overview-v1.glb`      | Saint Llothis the Pious | `static-boss`             | 44,999 | 31,803 |         1 | 1024px JPEG | 1,774,760 | [creature 89](https://esomodelviewer.com/creatures/post/89-saint-llothis-the-pious) |
-| `saint-felms-overview-v1.glb`        | Saint Felms the Bold    | `static-boss`             | 45,000 | 30,921 |         1 | 1024px JPEG | 1,704,864 | [creature 88](https://esomodelviewer.com/creatures/post/88-saint-felms-the-bold)    |
-| `the-warrior-overview-v1.glb`        | The Warrior             | `static-boss`             | 44,999 | 28,943 |         1 | 1024px JPEG | 1,672,496 | [post 172](https://esomodelviewer.com/characters/post/172-the-warrior)              |
-| `the-mage-overview-v1.glb`           | The Mage                | `static-boss`             | 45,000 | 29,007 |         1 | 1024px JPEG | 1,722,144 | [post 173](https://esomodelviewer.com/characters/post/173-the-mage)                 |
-| `shade-of-galenwe-overview-v1.glb`   | Shade of Galenwe        | `static-boss`             | 44,998 | 29,810 |         1 | 1024px JPEG | 1,743,648 | [post 233](https://esomodelviewer.com/characters/post/233-shade-of-galenwe)         |
-| `shade-of-siroria-overview-v1.glb`   | Shade of Siroria        | `static-boss`             | 45,000 | 30,932 |         1 | 1024px JPEG | 1,739,784 | [post 234](https://esomodelviewer.com/characters/post/234-shade-of-siroria)         |
-| `shade-of-relequen-overview-v1.glb`  | Shade of Relequen       | `static-boss`             | 45,000 | 32,337 |         1 | 1024px JPEG | 1,741,760 | [post 235](https://esomodelviewer.com/characters/post/235-shade-of-relequen)        |
-| `the-serpent-overview-v1.glb`        | The Serpent             | `static-boss`             | 45,000 | 28,458 |         1 | 1024px JPEG | 1,687,556 | [post 169](https://esomodelviewer.com/characters/post/169-the-serpent)              |
-| `varlariel-overview-v1.glb`          | Varlariel               | `static-boss`             | 45,000 | 30,450 |         1 | 1024px JPEG | 1,702,168 | [creature 74](https://esomodelviewer.com/creatures/post/74-wispmother-light)        |
-| `saint-olms-overview-v1.glb`         | Saint Olms the Just     | `static-boss`             | 70,000 | 44,924 |         1 | 1024px JPEG | 2,277,308 | [creature 90](https://esomodelviewer.com/creatures/post/90-saint-olms-the-just)     |
-| `lord-falgravn-overview-v1.glb`      | Lord Falgravn           | `static-boss`             | 70,000 | 44,724 |         1 | 1024px JPEG | 2,259,112 | [creature 32](https://esomodelviewer.com/creatures/post/32-vampire-lord)            |
+| Asset                                    | Actor                   | Renderer                  |   Tris |  Verts | Materials | Texture     | GLB bytes | Reference                                                                           |
+| ---------------------------------------- | ----------------------- | ------------------------- | -----: | -----: | --------: | ----------- | --------: | ----------------------------------------------------------------------------------- |
+| `coolstickman-walk.glb`                  | all players             | `instanced-pose-flipbook` |      — |      — |         1 | —           |         — | CC0, Polygonal Mind                                                                 |
+| `yandir-the-butcher-overview-v2.glb`     | Yandir the Butcher      | `static-boss`             | 45,000 | 29,609 |         1 | 1024px JPEG | 1,644,896 | [post 82](https://esomodelviewer.com/characters/post/82-yandir-the-butcher)         |
+| `captain-vrol-overview-v2.glb`           | Captain Vrol            | `static-boss`             | 44,999 | 28,796 |         1 | 1024px JPEG | 1,679,644 | [post 83](https://esomodelviewer.com/characters/post/83-captain-vrol)               |
+| `saint-llothis-overview-v1.glb`          | Saint Llothis the Pious | `static-boss`             | 44,999 | 31,803 |         1 | 1024px JPEG | 1,774,760 | [creature 89](https://esomodelviewer.com/creatures/post/89-saint-llothis-the-pious) |
+| `saint-felms-overview-v1.glb`            | Saint Felms the Bold    | `static-boss`             | 45,000 | 30,921 |         1 | 1024px JPEG | 1,704,864 | [creature 88](https://esomodelviewer.com/creatures/post/88-saint-felms-the-bold)    |
+| `the-warrior-overview-v1.glb`            | The Warrior             | `static-boss`             | 44,999 | 28,943 |         1 | 1024px JPEG | 1,672,496 | [post 172](https://esomodelviewer.com/characters/post/172-the-warrior)              |
+| `the-mage-overview-v1.glb`               | The Mage                | `static-boss`             | 45,000 | 29,007 |         1 | 1024px JPEG | 1,722,144 | [post 173](https://esomodelviewer.com/characters/post/173-the-mage)                 |
+| `shade-of-galenwe-overview-v1.glb`       | Shade of Galenwe        | `static-boss`             | 44,998 | 29,810 |         1 | 1024px JPEG | 1,743,648 | [post 233](https://esomodelviewer.com/characters/post/233-shade-of-galenwe)         |
+| `shade-of-siroria-overview-v1.glb`       | Shade of Siroria        | `static-boss`             | 45,000 | 30,932 |         1 | 1024px JPEG | 1,739,784 | [post 234](https://esomodelviewer.com/characters/post/234-shade-of-siroria)         |
+| `shade-of-relequen-overview-v1.glb`      | Shade of Relequen       | `static-boss`             | 45,000 | 32,337 |         1 | 1024px JPEG | 1,741,760 | [post 235](https://esomodelviewer.com/characters/post/235-shade-of-relequen)        |
+| `the-serpent-overview-v1.glb`            | The Serpent             | `static-boss`             | 45,000 | 28,458 |         1 | 1024px JPEG | 1,687,556 | [post 169](https://esomodelviewer.com/characters/post/169-the-serpent)              |
+| `varlariel-overview-v1.glb`              | Varlariel               | `static-boss`             | 45,000 | 30,450 |         1 | 1024px JPEG | 1,702,168 | [creature 74](https://esomodelviewer.com/creatures/post/74-wispmother-light)        |
+| `saint-olms-overview-v1.glb`             | Saint Olms the Just     | `static-boss`             | 70,000 | 44,924 |         1 | 1024px JPEG | 2,277,308 | [creature 90](https://esomodelviewer.com/creatures/post/90-saint-olms-the-just)     |
+| `orphic-shattered-shard-overview-v1.glb` | Orphic Shattered Shard  | `static-boss`             | 44,999 | 32,092 |         1 | 1024px JPEG | 2,025,356 | [post 180](https://esomodelviewer.com/characters/post/180-shattered-shard)          |
+| `lord-falgravn-overview-v1.glb`          | Lord Falgravn           | `static-boss`             | 70,000 | 44,724 |         1 | 1024px JPEG | 2,259,112 | [creature 32](https://esomodelviewer.com/creatures/post/32-vampire-lord)            |
 
 Extracted client assets (see the licensing posture above — **not reconstructions**):
 
@@ -468,7 +469,7 @@ are worth carrying forward:
    has nothing to feed the side cameras here.
 2. **This subject is not camera-limited, it is interior-limited.** Tested against **64 orthographic
    directions** spread over the whole sphere (`build/dwarven-colossus-4view/diagnose2.py`): only
-   **71.8%** of its atlas texels are reachable from *any* direction. **28.2% is interior surface** —
+   **71.8%** of its atlas texels are reachable from _any_ direction. **28.2% is interior surface** —
    overlapping armour shells that no photograph of any kind can ever see. 68.9% of the
    right-facing surface is occluded from the right camera, against 60.5% of the front-facing surface
    from the front, so the side cameras land in the same self-occlusion the front pair does. A further
@@ -509,7 +510,7 @@ What changed, in one line each:
   printed to the log.
 
 **Registration matches HEIGHT and nothing else, deliberately.** A profile silhouette's width is the
-subject's *depth*, which has no counterpart in the front plate's width, so there is nothing
+subject's _depth_, which has no counterpart in the front plate's width, so there is nothing
 horizontal to match and none is attempted. The side capture is cropped to its own square, sized so
 the subject fills the same fraction of it as on the base plates — a uniform scale expressed as a
 crop, so nothing is resampled and the "plates are never upsampled" rule still holds. The assumption
@@ -526,17 +527,17 @@ applied to more cameras, not a new one; `projection.blend_power` is the knob if 
 Saint Llothis rebuilt unchanged, and the noise band measured first by running the **pre-change** code
 twice, exactly as this document requires:
 
-| | A (old) | B (old) | C (new) |
-| --- | ---: | ---: | ---: |
-| charts / utilization | 776 / 0.7538 | 776 / 0.7538 | 776 / 0.7538 |
+|                           |          A (old) |          B (old) |          C (new) |
+| ------------------------- | ---------------: | ---------------: | ---------------: |
+| charts / utilization      |     776 / 0.7538 |     776 / 0.7538 |     776 / 0.7538 |
 | coverage / covered texels | 66.53% / 697,661 | 66.53% / 697,661 | 66.53% / 697,661 |
-| grazing fill texels | 292,061 | 292,067 | **292,046** |
-| face texels / head share | 67,590 / 25.01% | 67,590 / 25.01% | 67,590 / 25.01% |
-| tris / verts | 44,999 / 31,803 | 44,999 / 31,803 | 44,999 / 31,803 |
-| bytes | 1,774,604 | 1,774,564 | **1,774,548** |
-| PSNR | 38.26 dB | 38.26 dB | 38.26 dB |
+| grazing fill texels       |          292,061 |          292,067 |      **292,046** |
+| face texels / head share  |  67,590 / 25.01% |  67,590 / 25.01% |  67,590 / 25.01% |
+| tris / verts              |  44,999 / 31,803 |  44,999 / 31,803 |  44,999 / 31,803 |
+| bytes                     |        1,774,604 |        1,774,564 |    **1,774,548** |
+| PSNR                      |         38.26 dB |         38.26 dB |         38.26 dB |
 
-Two runs of the *old* code already differ by 6 grazing texels and 40 bytes. The new code sits 15-21
+Two runs of the _old_ code already differ by 6 grazing texels and 40 bytes. The new code sits 15-21
 texels and 16-56 bytes from them — inside that band — and every other number is identical, including
 the tone means and all checks. The visibility line still reads `front=37.4% back=35.9% neither=28.9%`.
 Test suite: **51 pass**, up from 28, with the new cases covering camera order, the exact reproduction
@@ -550,23 +551,23 @@ so this cost minutes rather than builds. It reproduces the Colossus's condemning
 (1,406 charts at 17.4 faces, 62.0% neither, 51.2% grazing fill), which is what makes the rest
 trustworthy. Grazing fill, two cameras -> four:
 
-| Mesh | charts | neither | grazing fill | gain |
-| --- | ---: | ---: | ---: | ---: |
-| Mantikora (Possessed Mantikora) | 368 | 31.2 -> 8.4 | 55.5 -> 25.1 | **30.4** |
-| Sload (Z'Maja) | 415 | 13.6 -> 4.2 | 45.3 -> 19.2 | 26.1 |
-| ArgonianBehemoth (Oaxiltso) | 264 | 14.9 -> 4.4 | 42.2 -> 19.3 | 22.8 |
-| Harvester (Xalvakka) | 406 | 20.7 -> 11.8 | 43.1 -> 20.6 | 22.5 |
-| VampireLord (Falgravn) | 1,185 | 24.0 -> 13.9 | 43.6 -> 27.4 | 16.2 |
-| Lamia (Ozara) | 141 | 6.3 -> 3.3 | 24.6 -> 9.1 | 15.5 |
-| StoneAtronach (Foundation Stone) | 232 | 35.8 -> 22.8 | 50.1 -> 34.8 | 15.4 |
-| Chimera | 5,134 | 36.8 -> 21.0 | 32.0 -> 18.3 | 13.8 |
-| ShatteredShard (Orphic Shard) | 877 | 15.7 -> 8.8 | 35.5 -> 22.8 | 12.7 |
-| ClockWorkTitan | 2,680 | 19.6 -> 8.1 | 38.4 -> 27.1 | 11.3 |
-| GrievousTwilight (Rakkhat) | 587 | 12.2 -> 5.4 | 27.0 -> 16.9 | 10.2 |
-| WispMother (Varlariel) | 1,220 | 10.4 -> 5.8 | 49.9 -> 38.5 | 11.4 |
-| Giant | 494 | 27.4 -> 20.4 | 50.8 -> 43.5 | 7.3 |
-| Troll (Stonebreaker) | 2,227 | 48.7 -> 37.0 | 33.6 -> 31.4 | 2.2 |
-| **DwarvenColossus** | 1,406 | **62.0 -> 53.4** | **51.2 -> 49.2** | **2.0** |
+| Mesh                             | charts |          neither |     grazing fill |     gain |
+| -------------------------------- | -----: | ---------------: | ---------------: | -------: |
+| Mantikora (Possessed Mantikora)  |    368 |      31.2 -> 8.4 |     55.5 -> 25.1 | **30.4** |
+| Sload (Z'Maja)                   |    415 |      13.6 -> 4.2 |     45.3 -> 19.2 |     26.1 |
+| ArgonianBehemoth (Oaxiltso)      |    264 |      14.9 -> 4.4 |     42.2 -> 19.3 |     22.8 |
+| Harvester (Xalvakka)             |    406 |     20.7 -> 11.8 |     43.1 -> 20.6 |     22.5 |
+| VampireLord (Falgravn)           |  1,185 |     24.0 -> 13.9 |     43.6 -> 27.4 |     16.2 |
+| Lamia (Ozara)                    |    141 |       6.3 -> 3.3 |      24.6 -> 9.1 |     15.5 |
+| StoneAtronach (Foundation Stone) |    232 |     35.8 -> 22.8 |     50.1 -> 34.8 |     15.4 |
+| Chimera                          |  5,134 |     36.8 -> 21.0 |     32.0 -> 18.3 |     13.8 |
+| ShatteredShard (Orphic Shard)    |    877 |      15.7 -> 8.8 |     35.5 -> 22.8 |     12.7 |
+| ClockWorkTitan                   |  2,680 |      19.6 -> 8.1 |     38.4 -> 27.1 |     11.3 |
+| GrievousTwilight (Rakkhat)       |    587 |      12.2 -> 5.4 |     27.0 -> 16.9 |     10.2 |
+| WispMother (Varlariel)           |  1,220 |      10.4 -> 5.8 |     49.9 -> 38.5 |     11.4 |
+| Giant                            |    494 |     27.4 -> 20.4 |     50.8 -> 43.5 |      7.3 |
+| Troll (Stonebreaker)             |  2,227 |     48.7 -> 37.0 |     33.6 -> 31.4 |      2.2 |
+| **DwarvenColossus**              |  1,406 | **62.0 -> 53.4** | **51.2 -> 49.2** |  **2.0** |
 
 Read that as a **sourcing priority**, not a promise: it is what the cameras could reach, and every one
 of those gains still needs a real profile plate to exist. The deep quadrupeds and serpentine subjects
@@ -594,7 +595,7 @@ Analysis only, no rebuild (`build/lord-falgravn/wing-analysis.py`).
   front/back. Raw blend weight 0.083 versus 0.522. The wings are membranes whose normals already
   point at the cameras we have; the defect is in the `u` parameterisation, not in coverage.
 - **A top camera does not help either**, which was worth checking and is not what I expected. Slicing
-  on depth instead of height makes the envelope *more* volatile on this subject, 1.71% mean against
+  on depth instead of height makes the envelope _more_ volatile on this subject, 1.71% mean against
   0.67%, because the wing is thin in z. So the conclusion in the Falgravn section stands unchanged: a
   **registered wing closeup** is the fix, and nothing about camera count changes that.
 

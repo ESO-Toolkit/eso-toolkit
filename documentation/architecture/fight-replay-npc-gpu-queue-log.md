@@ -322,3 +322,54 @@ whether the dark band on the wing leading edges is the v-driven envelope defect.
 moved 39.87 -> 39.97 dB and the band was essentially unchanged, so the default was kept. The variant
 lives at `build/falgravn-sigma8/` as evidence. Do not re-run it; the real fix is a registered wing
 closeup.
+
+---
+
+## Job — Orphic Shattered Shard (2026-09-07)
+
+First coverage of **Lucent Citadel**, a trial that previously had nothing.
+
+- **Input:** config `tools/fight-replay-models/npcs/orphic-shattered-shard.json`; plates from
+  `orphic-shattered-shard-references/` (1920x1080, subject 1005 x 1029 px — the best plate supply
+  of any asset built so far), letterboxed to a 1336 px square.
+- **Output:** 44,999 tris / 32,092 verts / 2,025,356 bytes (474 KB under the gate), 855 charts,
+  73.4% coverage, PSNR 35.26 dB. All checks passed; one warning, recorded below.
+- **Accepted**, with the caveats below stated rather than smoothed over.
+
+**Three numbers are worse than the shipped set, and each has a cause worth keeping:**
+
+1. **PSNR 35.26 dB** against Falgravn's 39.87 and Olms' 39.0. This is not a projection failure —
+   the atlas is a high-frequency crystal mosaic, which is the content JPEG handles worst. The flat
+   colour blocks that let the humanoid assets reach 39 dB simply are not present here.
+2. **18.1% "neither camera"** against Olms' 6.9% and Falgravn's 5.6%. The subject is hunched, so
+   the backs of its thighs face *downward* and no front or back camera sees them. This is the grey
+   banding visible on the legs in the back and side renders, and it is inherent to two views on
+   this pose rather than a bug.
+3. **855 charts at 52.6 faces each**, between Olms (744 at 94) and the rejected Dwarven Colossus
+   (1,406 at 17). Several hundred crystal spikes, each becoming its own chart.
+
+**The head mask does not resolve.** The build's own detector flagged a head-band run mismatch on
+**44 of 64 slices (69%)** — the Celestial Serpent failure mode, where a wide spiked crest breaks
+silhouette-normalised `u`. Two head closeups were tried and both rejected: `view-04` because its
+best scale fell outside the seeded window and the shoulder detection was flagged unreliable, and
+`view-08` **despite it having the lowest width error measured on this subject (4.57%)** — the
+Siroria lesson, that a good width metric is not evidence of correct registration. Mitigating: this
+head has no face to lose, and at replay distance all five angles read correctly. A straight-on
+orthographic head plate is the single highest-value follow-up for this asset.
+
+**The box check earned its keep for the second consecutive build.** The first placement
+(`y0=0.885`) claimed the crown and crest and left the entire face outside the box — invisible to
+every downstream metric. Caught on the membership render before any projection time was spent.
+
+**Triangle budget was deliberately left at 45k rather than taken as a hero exception.** The Hunyuan
+draft was **873,740 faces**, 2.7x the previous project high, because marching cubes resolves every
+crystal spike. Decimating 19.4x visibly rounds the smaller spikes, and there are 474 KB of byte
+headroom, so a higher-triangle variant is affordable — but it would push chart count toward the
+Colossus failure mode. Worth revisiting deliberately rather than by default.
+
+**Operational finding: the GPU was never the bottleneck here — system RAM was.** The first
+plate-cut died with an onnxruntime out-of-memory because another agent was concurrently running
+`build-npc-asset.py` for the Saint Llothis regression check (8.9 GB working set, 1.3 GB free of
+31.7 GB). `onnxruntime` in this environment is **CPU-only**, so rembg is a 6-9 GB *system RAM*
+consumer, not a GPU one. **The single-worker rule covers the GPU but not the CPU stages, and the
+CPU stages are the memory-hungry ones.** Extend the rule accordingly.
