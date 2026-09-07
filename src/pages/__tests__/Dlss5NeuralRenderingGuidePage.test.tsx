@@ -127,15 +127,21 @@ describe('Dlss5NeuralRenderingGuidePage', () => {
     expect(text).toMatch(/Get\s+the\s+order\s+wrong\s+and\s+nothing\s+errors/i);
   });
 
-  it('covers the overlay and the Neural Rendering add-on panel', () => {
+  it('documents a tuning panel for each path', () => {
     renderPage();
 
     expect(screen.getByRole('heading', { name: /Using the ReShade overlay/i })).toBeInTheDocument();
+    // Two add-ons, two panels. The direct one is in the main flow; the feeder's
+    // stays with the fallback so a reader is never handed the wrong controls.
+    expect(screen.getByRole('heading', { name: /Tuning the neural pass/i })).toBeInTheDocument();
     expect(
-      screen.getByRole('heading', { name: /The Neural Rendering add-on panel/i }),
+      screen.getByRole('heading', { name: /Fallback: the feeder add-on panel/i }),
     ).toBeInTheDocument();
+    // Both panels expose it and the direct path calls it out in prose, so this
+    // counts rather than asserting a single match. It is the control the guide
+    // points at first on either path.
+    expect(screen.getAllByText('Skin Structure Strength').length).toBeGreaterThanOrEqual(2);
     expect(screen.getByText('Enable DLSS Neural Rendering')).toBeInTheDocument();
-    expect(screen.getByText('Skin Structure Strength')).toBeInTheDocument();
     expect(screen.getByText('Reset NR feature and clear failure latch')).toBeInTheDocument();
   });
 

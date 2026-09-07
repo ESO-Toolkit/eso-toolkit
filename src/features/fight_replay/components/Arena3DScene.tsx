@@ -452,7 +452,17 @@ const RenderLoop: React.FC<RenderLoopProps> = ({
       lastFollowIdRef.current = null;
       renderBudgetRef.current = RENDER_TAIL_FRAMES;
     }
-    lastCamPosRef.current = [camPos.x, camPos.y, camPos.z];
+    // Reuse the existing tuple in place after the first frame instead of allocating a fresh
+    // array every frame (useFrame runs up to 120/s). The comparison above already read and
+    // consumed the previous frame's values before we overwrite them here, so mutating in place
+    // is safe; `null` still means "no previous frame yet" and is only ever set once.
+    if (lastCamPos === null) {
+      lastCamPosRef.current = [camPos.x, camPos.y, camPos.z];
+    } else {
+      lastCamPos[0] = camPos.x;
+      lastCamPos[1] = camPos.y;
+      lastCamPos[2] = camPos.z;
+    }
 
     // Frame cap: a capped-out frame defers the paint WITHOUT consuming budget or
     // clearing shadowDirtyRef — both are only mutated inside the paint branch

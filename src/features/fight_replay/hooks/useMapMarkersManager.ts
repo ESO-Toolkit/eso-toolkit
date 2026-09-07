@@ -515,15 +515,26 @@ export const useMapMarkersManager = ({
 
     const saved = readStored()[String(zoneId)];
     if (saved) {
-      const restored: MapMarkersState = {
+      const restoredRaw: MapMarkersState = {
         format: saved.format,
         zoneId: saved.zoneId,
         markers: saved.markers,
         shapes: saved.shapes ?? [],
       };
+      // Route through the same canonical caps every other mutation path uses: a legacy blob
+      // saved before the cap existed (or hand-edited) must not restore over budget. If capping
+      // did anything, also write the capped set back so the oversized blob doesn't silently
+      // re-trim (and re-fire this notice) on every future restore.
+      const { state: restored, truncated } = enforceCanonicalCaps(restoredRaw);
+      if (truncated) {
+        onErrorRef.current?.(
+          `Restored markers trimmed to ${MAX_CANONICAL_MARKERS} markers / ${MAX_CANONICAL_SHAPES} shapes — the saved set exceeded the limit.`,
+        );
+        persistZone(zoneId, restored, onErrorRef.current ?? undefined);
+      }
       stateRef.current = restored;
       setMarkersState(restored);
-      setRestoredCount(saved.markers.length + (saved.shapes?.length ?? 0));
+      setRestoredCount((restored?.markers.length ?? 0) + (restored?.shapes?.length ?? 0));
     } else {
       stateRef.current = null;
       setMarkersState(null);

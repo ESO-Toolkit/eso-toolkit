@@ -1,13 +1,19 @@
 /**
  * ReplayDisplaySettingsMenu
  *
- * The desktop transport's "display settings" control: one gear button in the control row that
- * opens a popover grouping name tags, the locked-player stats toggle, and the replay-quality
- * preset — the same grouping the mobile Settings sheet already uses (see
- * `mobile/MobileReplayDock.tsx`'s "Display" section). Before this, those three lived as separate
- * always-visible floating circles stacked down the right edge of the 3D canvas (Arena3D), each
- * hardcoding its own `bottom` offset — this ports the mobile grouping to desktop instead of
- * inventing a new one, and collapses three magic-numbered buttons into one.
+ * The desktop transport's settings control: one gear button in the control row that opens a
+ * popover grouping the replay's modes and preferences — Autoplay, name tags, the locked-player
+ * stats toggle, the replay-quality preset, and the keyboard-shortcuts panel. The Display grouping
+ * mirrors the mobile Settings sheet (see `mobile/MobileReplayDock.tsx`'s "Display" section).
+ * Before this, those lived as separate always-visible floating circles stacked down the right edge
+ * of the 3D canvas (Arena3D), each hardcoding its own `bottom` offset — this ports the mobile
+ * grouping to desktop instead of inventing a new one, and collapses three magic-numbered buttons
+ * into one.
+ *
+ * Autoplay and the keyboard-help trigger moved in here afterwards, from the transport row itself:
+ * Autoplay was a labelled `Switch` (the only one in a row of icon buttons, and wide enough to
+ * crowd the cluster) and help was a permanently-parked `?` circle. Both are set-once preferences
+ * rather than per-moment playback actions, which is exactly what a settings menu is for.
  *
  * Follows the same popover skeleton as {@link ChaptersPopoverButton}: a menu-labelled trigger,
  * body mounted only while open (off the per-frame playback path), and an optional portal target
@@ -23,10 +29,20 @@
  */
 
 import Insights from '@mui/icons-material/Insights';
+import KeyboardOutlined from '@mui/icons-material/KeyboardOutlined';
 import Label from '@mui/icons-material/Label';
 import LabelOff from '@mui/icons-material/LabelOff';
 import TuneRoundedIcon from '@mui/icons-material/TuneRounded';
-import { Box, Divider, IconButton, Popover, Tooltip, Typography } from '@mui/material';
+import {
+  Box,
+  Button,
+  Divider,
+  IconButton,
+  Popover,
+  Switch,
+  Tooltip,
+  Typography,
+} from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import React from 'react';
 
@@ -36,6 +52,18 @@ import { QUALITY_PRESET_OPTIONS } from '../constants/qualityPresets';
 interface ReplayDisplaySettingsMenuProps {
   namesEnabled: boolean;
   onToggleNames: () => void;
+  /**
+   * Autoplay ("continue into the next fight when this one ends") — multi-fight trial runs only.
+   * Omit both to hide the Playback section entirely, as an isolated fight has nothing to advance to.
+   */
+  autoplayEnabled?: boolean;
+  onToggleAutoplay?: () => void;
+  /**
+   * Opens the keyboard-shortcuts panel. Omitted on touch (no keyboard). The row hides while the
+   * panel is already open, matching the old inline `?` button's visibility rule.
+   */
+  onToggleKeyboardHelp?: () => void;
+  showKeyboardHelp?: boolean;
   qualityPreset: ReplayQualityPreset;
   onQualityPresetChange: (preset: ReplayQualityPreset) => void;
   /** Only rendered while following someone — mirrors the old floating button's visibility rule. */
@@ -98,9 +126,63 @@ const ToggleRow: React.FC<{
   </Box>
 );
 
+/**
+ * A mode row: label on the left, a native `Switch` on the right. Used for Autoplay — a persistent
+ * on/off mode, so it keeps `Switch`'s `aria-checked` semantics rather than borrowing
+ * {@link ToggleRow}'s `aria-pressed` icon button (which exists to preserve the accessible names
+ * the old floating canvas buttons had).
+ */
+const SwitchRow: React.FC<{
+  label: string;
+  description: string;
+  checked: boolean;
+  ariaLabel: string;
+  onToggle: () => void;
+}> = ({ label, description, checked, ariaLabel, onToggle }) => (
+  <Box
+    sx={{
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: 1.5,
+      px: 1.5,
+      py: 0.5,
+    }}
+  >
+    <Box sx={{ minWidth: 0 }}>
+      <Typography variant="body2" sx={{ color: 'text.primary', fontWeight: 500 }}>
+        {label}
+      </Typography>
+      <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+        {description}
+      </Typography>
+    </Box>
+    <Switch
+      size="small"
+      checked={checked}
+      onChange={onToggle}
+      slotProps={{ input: { 'aria-label': ariaLabel } }}
+    />
+  </Box>
+);
+
+/** The popover's section heading — one style, so the groupings read as a single system. */
+const SectionLabel: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <Typography
+    variant="overline"
+    sx={{ px: 1.5, color: 'text.secondary', fontWeight: 700, letterSpacing: '0.06em' }}
+  >
+    {children}
+  </Typography>
+);
+
 const ReplayDisplaySettingsMenuComponent: React.FC<ReplayDisplaySettingsMenuProps> = ({
   namesEnabled,
   onToggleNames,
+  autoplayEnabled,
+  onToggleAutoplay,
+  onToggleKeyboardHelp,
+  showKeyboardHelp = false,
   qualityPreset,
   onQualityPresetChange,
   showStatsRow,
@@ -113,9 +195,9 @@ const ReplayDisplaySettingsMenuComponent: React.FC<ReplayDisplaySettingsMenuProp
 
   return (
     <>
-      <Tooltip title="Display settings">
+      <Tooltip title="Settings">
         <IconButton
-          aria-label="Display settings"
+          aria-label="Settings"
           aria-haspopup="menu"
           aria-expanded={open}
           size="small"
@@ -141,12 +223,22 @@ const ReplayDisplaySettingsMenuComponent: React.FC<ReplayDisplaySettingsMenuProp
         {/* Mount the body only while open — keeps this off the per-frame playback path. */}
         {open && (
           <>
-            <Typography
-              variant="overline"
-              sx={{ px: 1.5, color: 'text.secondary', fontWeight: 700, letterSpacing: '0.06em' }}
-            >
-              Display
-            </Typography>
+            {/* Playback — trial runs only (an isolated fight has no next fight to advance to). */}
+            {autoplayEnabled != null && onToggleAutoplay && (
+              <>
+                <SectionLabel>Playback</SectionLabel>
+                <SwitchRow
+                  label="Autoplay"
+                  description="Continue into the next fight"
+                  checked={autoplayEnabled}
+                  ariaLabel="Autoplay the whole trial"
+                  onToggle={onToggleAutoplay}
+                />
+                <Divider sx={{ my: 1 }} />
+              </>
+            )}
+
+            <SectionLabel>Display</SectionLabel>
 
             <ToggleRow
               label="Name tags"
@@ -174,12 +266,7 @@ const ReplayDisplaySettingsMenuComponent: React.FC<ReplayDisplaySettingsMenuProp
 
             <Divider sx={{ my: 1 }} />
 
-            <Typography
-              variant="overline"
-              sx={{ px: 1.5, color: 'text.secondary', fontWeight: 700, letterSpacing: '0.06em' }}
-            >
-              Replay quality
-            </Typography>
+            <SectionLabel>Replay quality</SectionLabel>
             {/* Same 4-way pill grid as the mobile Settings sheet (QUALITY_PRESET_OPTIONS) — one
                 grammar for the same choice on both form factors. */}
             <Box
@@ -227,6 +314,26 @@ const ReplayDisplaySettingsMenuComponent: React.FC<ReplayDisplaySettingsMenuProp
                 );
               })}
             </Box>
+
+            {/* Keyboard shortcuts — an action, not a setting, so it sits last behind a rule.
+                Hidden while the panel is already open (the panel's own close control takes over),
+                mirroring the inline `?` button this replaced. */}
+            {onToggleKeyboardHelp && !showKeyboardHelp && (
+              <>
+                <Divider sx={{ mt: 1.5, mb: 0.5 }} />
+                <Button
+                  fullWidth
+                  size="small"
+                  color="inherit"
+                  startIcon={<KeyboardOutlined fontSize="small" />}
+                  onClick={onToggleKeyboardHelp}
+                  aria-label="Show keyboard controls"
+                  sx={{ justifyContent: 'flex-start', px: 1.5, color: 'text.secondary' }}
+                >
+                  Keyboard shortcuts
+                </Button>
+              </>
+            )}
           </>
         )}
       </Popover>

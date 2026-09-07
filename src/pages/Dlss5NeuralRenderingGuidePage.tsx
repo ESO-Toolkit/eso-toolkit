@@ -216,12 +216,13 @@ const SECTIONS = [
   { id: 'setup', title: 'Setup' },
   { id: 'verify', title: "Verify it's working" },
   { id: 'log-noise', title: 'Warnings you can ignore' },
+  { id: 'nr-panel', title: 'Tuning the neural pass' },
   { id: 'troubleshooting', title: 'Troubleshooting: fixes by log line' },
   { id: 'performance', title: 'What it costs' },
   { id: 'frame-generation', title: 'Getting the performance back' },
   { id: 'feeder-setup', title: 'Fallback: the two-add-on feeder path' },
   { id: 'overlay', title: 'Using the ReShade overlay' },
-  { id: 'nr-panel', title: 'The Neural Rendering add-on panel' },
+  { id: 'feeder-panel', title: 'Fallback: the feeder add-on panel' },
   { id: 'depth-buffer', title: 'Checking the depth buffer' },
   { id: 'config', title: 'Config file reference' },
   { id: 'credits', title: 'Credits and downloads' },
@@ -545,6 +546,53 @@ const LOG_NOISE_ROWS: ReadonlyArray<RowSpec> = [
       'cannot preserve unsupported D3D11 motion format 34; native DLSS output remains authoritative',
     value:
       'Fires once, usually beside "D3D11 proxy evaluation failed". This is the D3D11 proxy path declining; Neural Rendering then initialises on the D3D12 backend and runs normally. It is not the cause of a non-working setup.',
+  },
+];
+
+/**
+ * The direct add-on's controls. Names follow its ReShade.ini keys, which is
+ * what a reader will see if they open the file: [RENODX-DLSS] holds the global
+ * ones and [RENODX-DLSS-presetN] the per-preset tuning.
+ */
+const DIRECT_NR_SETTINGS: ReadonlyArray<RowSpec> = [
+  {
+    label: 'Preset #1 / #2 / #3',
+    value:
+      'Three independent slots. Each keeps its own copy of every setting below, written to its own [RENODX-DLSS-presetN] section, so you can flip between looks without retyping anything.',
+  },
+  {
+    label: 'Intensity',
+    value:
+      'How strongly the neural result is blended over the original frame. Lower it first if the output looks overcooked.',
+  },
+  {
+    label: 'Style',
+    value:
+      'Overall character of the neural pass. The setting most worth experimenting with if the look is not to your taste.',
+  },
+  {
+    label: 'Skin Structure Strength',
+    value:
+      'Detail reconstruction on skin. The most visible control by a wide margin, which makes it the best one to toggle when you want to confirm the pass is running.',
+  },
+  {
+    label: 'Local Structure Strength',
+    value:
+      'Fine detail reconstruction across the frame generally, rather than on skin specifically.',
+  },
+  {
+    label: 'Local Tone Strength / Global Tone Strength',
+    value:
+      'Local and frame-wide tone shaping. Leave both alone unless the image is coming out too flat or too contrasty.',
+  },
+  {
+    label: 'Auto Mask',
+    value: 'On by default. Leave it on; it decides where the neural pass should not apply.',
+  },
+  {
+    label: 'Pass Count',
+    value:
+      'How many neural passes run per frame. Costs performance directly, so raise it last and only if you can spare the frames.',
   },
 ];
 
@@ -1165,8 +1213,40 @@ DLSS-NR direct: EvaluateFeature succeeded: evaluation=4754`}
         </Stack>
       </Section>
 
+      {/* ── Tuning the neural pass ───────────────────────────────────
+          Applies to the direct path. Keys and values transcribed from the
+          add-on's own ReShade.ini sections on a working install. */}
+      <Section id="nr-panel" index={6} title="Tuning the neural pass">
+        <Stack spacing={2}>
+          <Typography variant="body2" sx={proseSx}>
+            Open the ReShade overlay with <strong>Home</strong> and find{' '}
+            <strong>RenoDX DLSS</strong> under <strong>Add-ons</strong>. Everything below is
+            optional; the defaults work. Settings are saved per preset, so you can keep three
+            different looks and switch between them.
+          </Typography>
+
+          <Box sx={cardSx}>
+            <Typography
+              component="h3"
+              sx={{ fontWeight: W.heading, fontSize: '1.125rem', lineHeight: 1.4, mb: 1.5 }}
+            >
+              The controls worth touching
+            </Typography>
+            <SettingsTable rows={DIRECT_NR_SETTINGS} labelWidth={230} />
+          </Box>
+
+          <Callout tone="info" label="Where to start">
+            <Typography variant="body2">
+              Turn <strong>Skin Structure Strength</strong> up and down while looking closely at a
+              character&apos;s face. It is the control whose effect is easiest to actually see, so
+              it is the quickest way to confirm the neural pass is doing something at all.
+            </Typography>
+          </Callout>
+        </Stack>
+      </Section>
+
       {/* ── Troubleshooting ──────────────────────────────────────────── */}
-      <Section id="troubleshooting" index={6} title="Troubleshooting: fixes by log line">
+      <Section id="troubleshooting" index={7} title="Troubleshooting: fixes by log line">
         <Typography variant="body2" sx={{ ...proseSx, mb: 2 }}>
           Work top to bottom. Each failure masks the ones after it.
         </Typography>
@@ -1214,7 +1294,7 @@ DLSS-NR direct: EvaluateFeature succeeded: evaluation=4754`}
       </Section>
 
       {/* ── Performance ──────────────────────────────────────────────── */}
-      <Section id="performance" index={7} title="What it costs">
+      <Section id="performance" index={8} title="What it costs">
         <Box sx={cardSx}>
           <Typography variant="body2" sx={{ ...proseSx, mb: 2 }}>
             Neural Rendering is not free. Measured at 1440p on an RTX 4070 Ti Super, from the
@@ -1242,7 +1322,7 @@ after NR:   feed CPU 11.82 ms/frame |  63.9 fps | feed is 75% of the frame`}
       </Section>
 
       {/* ── Frame generation ───────────────────────────────────────── */}
-      <Section id="frame-generation" index={8} title="Getting the performance back">
+      <Section id="frame-generation" index={9} title="Getting the performance back">
         <Stack spacing={2}>
           <Typography variant="body2" sx={proseSx}>
             Neural Rendering costs roughly half the framerate, and frame generation is the answer.
@@ -1304,7 +1384,7 @@ after NR:   feed CPU 11.82 ms/frame |  63.9 fps | feed is 75% of the frame`}
       </Section>
 
       {/* ── Steps ────────────────────────────────────────────────────── */}
-      <Section id="feeder-setup" index={9} title="Fallback: the two-add-on feeder path">
+      <Section id="feeder-setup" index={10} title="Fallback: the two-add-on feeder path">
         <Box sx={{ ...cardSx, p: { xs: 2.5, md: 3.5 } }}>
           <Stack component="ol" role="list" sx={{ listStyle: 'none', p: 0, m: 0 }}>
             <StepRow n={1} last={false} title="Find your ESO client folder">
@@ -1514,7 +1594,7 @@ after NR:   feed CPU 11.82 ms/frame |  63.9 fps | feed is 75% of the frame`}
       </Section>
 
       {/* ── Overlay walkthrough ──────────────────────────────────────── */}
-      <Section id="overlay" index={10} title="Using the ReShade overlay">
+      <Section id="overlay" index={11} title="Using the ReShade overlay">
         <Stack spacing={2}>
           <Callout tone="caution" label="This is the fallback path" sx={{ mb: 2 }}>
             <Typography variant="body2">
@@ -1653,7 +1733,7 @@ after NR:   feed CPU 11.82 ms/frame |  63.9 fps | feed is 75% of the frame`}
       </Section>
 
       {/* ── NR add-on panel ──────────────────────────────────────────── */}
-      <Section id="nr-panel" index={11} title="The Neural Rendering add-on panel">
+      <Section id="feeder-panel" index={12} title="Fallback: the feeder add-on panel">
         <Stack spacing={2}>
           <Callout tone="caution" label="This is the fallback path" sx={{ mb: 2 }}>
             <Typography variant="body2">
@@ -1749,7 +1829,7 @@ after NR:   feed CPU 11.82 ms/frame |  63.9 fps | feed is 75% of the frame`}
       </Section>
 
       {/* ── Depth buffer ─────────────────────────────────────────────── */}
-      <Section id="depth-buffer" index={12} title="Checking the depth buffer">
+      <Section id="depth-buffer" index={13} title="Checking the depth buffer">
         <Box sx={cardSx}>
           <Typography variant="body2" sx={{ ...proseSx, mb: 2 }}>
             The feeder needs <strong>scene depth</strong>. ESO presents several depth buffers and
@@ -1807,7 +1887,7 @@ after NR:   feed CPU 11.82 ms/frame |  63.9 fps | feed is 75% of the frame`}
       </Section>
 
       {/* ── Config reference ─────────────────────────────────────────── */}
-      <Section id="config" index={13} title="Config file reference">
+      <Section id="config" index={14} title="Config file reference">
         <Box sx={cardSx}>
           <Callout tone="caution" label="This is the fallback path" sx={{ mb: 2 }}>
             <Typography variant="body2">
@@ -1875,7 +1955,7 @@ flags=-1           ; -1 = auto`}
       {/* ── Credits ──────────────────────────────────────────────────
           None of this stack is ours. Naming the authors is basic courtesy and
           also gives readers a legitimate trail without us mirroring binaries. */}
-      <Section id="credits" index={14} title="Credits and downloads">
+      <Section id="credits" index={15} title="Credits and downloads">
         <Box sx={cardSx}>
           <Typography variant="body2" sx={{ ...proseSx, mb: 2 }}>
             This guide documents other people&apos;s work. Everything below is theirs, not ours.
