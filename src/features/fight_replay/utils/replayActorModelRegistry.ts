@@ -382,6 +382,159 @@ export const STATIC_REPLAY_ACTOR_MODEL_ASSETS: readonly StaticReplayActorModelAs
     },
   },
 
+  // --- Lesser enemies (trash and mini bosses) -------------------------------------------------
+  // Built to a much smaller budget than the bosses above: ~5,000 triangles, a 512px atlas and
+  // ~300-340 KB each, against the boss profile's 45,000-70,000 triangles, 1024px and ~1.7-2.3 MB.
+  // The reason is arithmetic rather than taste — a boss appears once, trash appears dozens of times
+  // at once, so the boss budget would put well over a million triangles a frame on screen.
+  //
+  // Scales here are anchored on the player figure (HUMANOID_TARGET_HEIGHT, 0.95 world units) rather
+  // than on the boss convention of ~2.49, so rank-and-file enemies do not render at boss size. None
+  // of the reference pages publish real-world dimensions, so every scale below is a judgment call
+  // and is flagged as such in the asset's README.
+  {
+    id: 'bloodknight-overview-v1',
+    path: 'models/fight-replay/npcs/bloodknight-overview-v1.glb',
+    renderer: 'static-boss',
+    actorTypes: HOSTILE_ACTOR_TYPES,
+    // One build, three encounters. The reference post states outright that this model serves
+    // generic Bloodknights, Gray Host Bloodknights, Bitter Knights and Crimson Knights.
+    aliases: ['blood knight', 'crimson knight', 'bitter knight'],
+    // Tint MULTIPLIES, so it can darken a channel but never raise one. That is workable here only
+    // because the base plate measures #696264, a near-neutral steel, which can reach both a warm and
+    // a cold sibling. A strongly-hued base could not, which is why the Frost/Crystal atronach pair
+    // ships as two atlases instead of one tinted mesh.
+    //
+    // Keys must be the same PRE-NORMALIZED lowercase strings as `aliases`: resolveStaticModelTint
+    // normalizes the incoming actor name but NOT these keys, so 'Crimson Knight' would silently
+    // never match and produce no type error.
+    aliasTints: {
+      'blood knight': [1, 1, 1],
+      // Estimates, not measurements: no reference plate exists for either sibling, so these are
+      // derived from the names and must be eyeballed in game.
+      'crimson knight': [1.0, 0.55, 0.55],
+      'bitter knight': [0.72, 0.84, 1.0],
+    },
+    transform: {
+      orientEuler: [0, 0, 0],
+      scale: 0.55,
+      yOffset: 0,
+      yawOffset: 0,
+      modelHeight: 1.9974,
+    },
+    provenance: {
+      designation: 'project-authorized-fan-prototype',
+      sourceUrl: 'https://esomodelviewer.com/creatures/post/33-bloodknight',
+      attributionFile: 'public/models/fight-replay/npcs/README-bloodknight-overview-v1.md',
+    },
+  },
+  {
+    // Same mesh as the Frost Atronach below, generated once and reused. They are two assets rather
+    // than one tinted asset because they differ in HUE (iridescent glass against uniform ice), and
+    // a multiply tint cannot raise a channel.
+    id: 'crystal-atronach-overview-v1',
+    path: 'models/fight-replay/npcs/crystal-atronach-overview-v1.glb',
+    renderer: 'static-boss',
+    actorTypes: HOSTILE_ACTOR_TYPES,
+    aliases: ['crystal atronach'],
+    transform: {
+      orientEuler: [0, 0, 0],
+      scale: 0.95,
+      yOffset: 0,
+      yawOffset: 0,
+      modelHeight: 2.0,
+    },
+    provenance: {
+      designation: 'project-authorized-fan-prototype',
+      sourceUrl: 'https://esomodelviewer.com/creatures/post/179-crystal-atronach',
+      attributionFile: 'public/models/fight-replay/npcs/README-crystal-atronach-overview-v1.md',
+    },
+  },
+  {
+    id: 'frost-atronach-overview-v1',
+    path: 'models/fight-replay/npcs/frost-atronach-overview-v1.glb',
+    renderer: 'static-boss',
+    actorTypes: HOSTILE_ACTOR_TYPES,
+    aliases: ['frost atronach'],
+    transform: {
+      orientEuler: [0, 0, 0],
+      scale: 0.95,
+      yOffset: 0,
+      yawOffset: 0,
+      modelHeight: 2.0,
+    },
+    provenance: {
+      designation: 'project-authorized-fan-prototype',
+      sourceUrl: 'https://esomodelviewer.com/creatures/post/153-frost-atronach',
+      attributionFile: 'public/models/fight-replay/npcs/README-frost-atronach-overview-v1.md',
+    },
+  },
+  {
+    // Appears in four Cloudrest encounter slots — the highest count of any single lesser-enemy name.
+    // Also the weakest build of its batch: 32.6% of texels face neither camera, because six legs
+    // splayed from a deep body is near worst-case for two views. See its README.
+    id: 'yaghra-monstrosity-overview-v1',
+    path: 'models/fight-replay/npcs/yaghra-monstrosity-overview-v1.glb',
+    renderer: 'static-boss',
+    actorTypes: HOSTILE_ACTOR_TYPES,
+    aliases: ['yaghra monstrosity'],
+    transform: {
+      orientEuler: [0, 0, 0],
+      scale: 0.9,
+      yOffset: 0,
+      yawOffset: 0,
+      modelHeight: 1.468,
+    },
+    provenance: {
+      designation: 'project-authorized-fan-prototype',
+      sourceUrl: 'https://esomodelviewer.com/creatures/post/120-yaghra-monstrosity',
+      attributionFile: 'public/models/fight-replay/npcs/README-yaghra-monstrosity-overview-v1.md',
+    },
+  },
+  {
+    // Wider than it is tall, so the prepare step normalized its WINGSPAN and it exports only 0.7279
+    // units high. The scale below restores a ~1.13 world height rather than leaving it flattened —
+    // the same case as Saint Olms and Lord Falgravn.
+    id: 'ash-titan-overview-v1',
+    path: 'models/fight-replay/npcs/ash-titan-overview-v1.glb',
+    renderer: 'static-boss',
+    actorTypes: HOSTILE_ACTOR_TYPES,
+    aliases: ['ash titan'],
+    transform: {
+      orientEuler: [0, 0, 0],
+      scale: 1.55,
+      yOffset: 0,
+      yawOffset: 0,
+      modelHeight: 0.7279,
+    },
+    provenance: {
+      designation: 'project-authorized-fan-prototype',
+      sourceUrl: 'https://esomodelviewer.com/creatures/post/112-ash-titan',
+      attributionFile: 'public/models/fight-replay/npcs/README-ash-titan-overview-v1.md',
+    },
+  },
+  {
+    // The cleanest build in the catalog by blind area: 4.5% of texels face neither camera, and only
+    // 74 charts.
+    id: 'fire-behemoth-overview-v1',
+    path: 'models/fight-replay/npcs/fire-behemoth-overview-v1.glb',
+    renderer: 'static-boss',
+    actorTypes: HOSTILE_ACTOR_TYPES,
+    aliases: ['fire behemoth'],
+    transform: {
+      orientEuler: [0, 0, 0],
+      scale: 1.0,
+      yOffset: 0,
+      yawOffset: 0,
+      modelHeight: 1.9947,
+    },
+    provenance: {
+      designation: 'project-authorized-fan-prototype',
+      sourceUrl: 'https://esomodelviewer.com/creatures/post/65-fire-behemoth',
+      attributionFile: 'public/models/fight-replay/npcs/README-fire-behemoth-overview-v1.md',
+    },
+  },
+
   // --- Extracted game assets, NOT reconstructions -------------------------------------------
   // Everything above is modelled from published screenshots. The four below are ESO's own mesh
   // and ESO's own hand-authored diffuse atlas, lifted verbatim out of the client (see each

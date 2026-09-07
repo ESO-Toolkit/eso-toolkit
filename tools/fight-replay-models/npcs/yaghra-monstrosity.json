@@ -1,0 +1,79 @@
+{
+  "slug": "yaghra-monstrosity",
+  "display_name": "Yaghra Monstrosity",
+  "aliases": [
+    "Yaghra Monstrosity"
+  ],
+  "encounter": {
+    "trial": "Cloudrest",
+    "encounter": "Yaghra Monstrosity",
+    "role": "trash",
+    "notes": "Six-legged crab/arachnid. A dark spined SHELL sits high and to the rear; the pale fleshy body and the fanged mouth hang UNDERNEATH and FORWARD of it at mid height, with two yellow eye nodules on the shell. Not a biped: no height threshold selects the head, because the top of the silhouette is shell. Highest encounter-slot count of any single trash name (4x in Cloudrest)."
+  },
+  "work_dir": "build/yaghra-monstrosity",
+  "reference": {
+    "page_url": "https://esomodelviewer.com/creatures/post/120-yaghra-monstrosity",
+    "directory": "yaghra-monstrosity-references",
+    "plates": {
+      "front": {
+        "file": "view-02.jpg",
+        "role": "full-body-front"
+      },
+      "back": {
+        "file": "view-03.jpg",
+        "role": "full-body-back"
+      }
+    },
+    "closeups": [],
+    "closeup_policy": "Deliberately none - 512px trash profile; the base plates carry a 980/986px subject and already oversample the atlas ~2x.",
+    "orientation_verified": "2026-09-07, and this set does NOT follow the gallery convention. view-01 is a 3/4 front, rotated maybe 20 degrees off-axis (mouth off-centre, near-side legs foreshortened). view-02 is the true head-on orthographic front: legs symmetric left and right, mouth centred, shell centred behind. view-03 is the matching orthographic back. The survey's manifest measured view-01 as the front (1156x985); the pair actually used here is view-02 (1221x980) / view-03 (1251x986). Checked side by side in _advice-crops/y-set.jpg. This is exactly the failure the 'verify by eye' rule exists for - every metric would have looked fine on the 3/4 plate."
+  },
+  "geometry": {
+    "source": "build/yaghra-monstrosity/yaghra-monstrosity-draft.glb",
+    "decimate": true,
+    "target_triangles": 5000,
+    "max_triangles": 6000,
+    "provenance": "Tencent Hunyuan3D-2mv (fp16, 50 steps, octree 380, seed 12345) from build/yaghra-monstrosity/plates/{front,back}-geometry.png (1628x1628, letterboxed because the leg span is wider than the subject is tall). Draft: 719,108 faces in 68.7s on an RTX 4070 Ti Super. TRASH budget 5,000 target / 6,000 max."
+  },
+  "atlas": {
+    "size": 512,
+    "jpeg_quality": 92,
+    "roughness": 0.75,
+    "material_name": "yaghra-monstrosity-atlas"
+  },
+  "uv_density": {
+    "head_scale": 1.0,
+    "head_v": 0.8,
+    "leg_scale": 1.0,
+    "leg_v": 0.45,
+    "ramp": 0.08,
+    "note": "UNIFORM unwrap, no density warp and no region boxes, deliberately. The scalar head_v_min band is meaningless here - the top of this silhouette is shell, and the fanged face hangs below and forward of it, so no height threshold selects it. A region box could select it, but the standing rule is that a box must be verified on a membership render first, and on this subject the payoff does not justify it: the face is a single large pale mass covering roughly a quarter of the frontal area, so a uniform unwrap already gives it a large share of a 512 atlas. Revisit with a verified box only if this is ever promoted to the 1024 boss profile."
+  },
+  "projection": {
+    "supersample": 2,
+    "depth_size": 2048,
+    "pack_resolution": 2048,
+    "pack_padding": 4,
+    "blend_power": 3.0,
+    "silhouette_inset": 0.02,
+    "grazing_threshold": 0.35,
+    "dilate": 12,
+    "closeup_feather": 60,
+    "envelope_sigma": 3.0
+  },
+  "tone": {
+    "contrast": 1.08,
+    "saturation": 1.1
+  },
+  "unsharp": {
+    "sigma": 0.7,
+    "amount": 0.45,
+    "threshold": 0.01569
+  },
+  "output": {
+    "directory": "build/yaghra-monstrosity/out",
+    "suffix": "-overview-v1",
+    "max_bytes": 400000
+  },
+  "rights": "The Elder Scrolls Online name, character design and related rights remain with ZeniMax Media/Bethesda Softworks. Reconstructed from published screenshots for an authorized fan prototype; not a claim that the IP is freely licensed."
+}

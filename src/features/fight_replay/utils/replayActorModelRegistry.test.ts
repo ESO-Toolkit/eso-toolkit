@@ -311,12 +311,44 @@ describe('resolveStaticModelTint', () => {
     expect(resolveStaticModelTint(base, 'Blood Knight')).toBe(NEUTRAL_MODEL_TINT);
   });
 
-  it('every shipped catalog entry stays untinted, so this change cannot alter one', () => {
-    STATIC_REPLAY_ACTOR_MODEL_ASSETS.forEach((asset) => {
-      asset.aliases.forEach((alias) => {
-        expect(resolveStaticModelTint(asset, alias)).toBe(NEUTRAL_MODEL_TINT);
-      });
-    });
+  it('tints only the one asset that deliberately declares them', () => {
+    // This guard used to assert that NO catalog entry was tinted, which was the right check while
+    // the feature shipped inert. The Bloodknight now uses it on purpose, so the guard is narrowed
+    // rather than dropped: everything else must still resolve to neutral, so an accidental or
+    // stray tint is still caught.
+    const tinted = STATIC_REPLAY_ACTOR_MODEL_ASSETS.filter(
+      (asset) => asset.tint !== undefined || asset.aliasTints !== undefined,
+    ).map((asset) => asset.id);
+    expect(tinted).toEqual(['bloodknight-overview-v1']);
+
+    STATIC_REPLAY_ACTOR_MODEL_ASSETS.filter((asset) => !tinted.includes(asset.id)).forEach(
+      (asset) => {
+        asset.aliases.forEach((alias) => {
+          expect(resolveStaticModelTint(asset, alias)).toBe(NEUTRAL_MODEL_TINT);
+        });
+      },
+    );
+  });
+
+  it('resolves each Bloodknight sibling to its own tint through the real catalog entry', () => {
+    // The keys of `aliasTints` are NOT normalized on lookup — only the incoming actor name is — so
+    // a key written in title case would silently never match and produce no type error. These
+    // assertions exist to catch exactly that.
+    const knight = STATIC_REPLAY_ACTOR_MODEL_ASSETS.find(
+      (asset) => asset.id === 'bloodknight-overview-v1',
+    );
+    expect(knight).toBeDefined();
+    if (!knight) return;
+    // Blood Knight is the colour the atlas was actually built at, so it must stay neutral.
+    expect(resolveStaticModelTint(knight, 'Blood Knight')).toEqual([1, 1, 1]);
+    // The two siblings are name-derived estimates, but they must at least resolve to something
+    // other than neutral, which is what proves the keys match.
+    expect(resolveStaticModelTint(knight, 'Crimson Knight')).not.toEqual([1, 1, 1]);
+    expect(resolveStaticModelTint(knight, 'Bitter Knight')).not.toEqual([1, 1, 1]);
+    // An instance suffix must still resolve — ESO Logs appends ` #2` for duplicate spawns.
+    expect(resolveStaticModelTint(knight, 'Crimson Knight #2')).toEqual(
+      resolveStaticModelTint(knight, 'Crimson Knight'),
+    );
   });
 
   it('falls back to the asset-wide tint for an alias with no override', () => {

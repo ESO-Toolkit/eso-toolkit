@@ -1,0 +1,83 @@
+{
+  "slug": "crystal-atronach",
+  "display_name": "Crystal Atronach",
+  "aliases": [
+    "Crystal Atronach"
+  ],
+  "encounter": {
+    "trial": "Lucent Citadel",
+    "encounter": "Crystal Atronach",
+    "role": "trash",
+    "notes": "Humanoid crystal-glass golem. Tall crest spike above a faceted face-mask, huge outward shoulder spikes, blade-shaped forearms, flared skirt-like feet. SAME MESH as the Aetherian Archive Frost Atronach - confirmed by the post text and by all 12 plates in both sets measuring identical framing to within 3px. Geometry is built ONCE here and the Frost variant reuses this draft with its own plates and its own atlas; a multiply tint cannot get from this iridescent purple/green/blue to Frost's uniform ice blue."
+  },
+  "work_dir": "build/crystal-atronach",
+  "reference": {
+    "page_url": "https://esomodelviewer.com/creatures/post/179-crystal-atronach",
+    "directory": "crystal-atronach-references",
+    "plates": {
+      "front": {
+        "file": "view-01.jpg",
+        "role": "full-body-front"
+      },
+      "back": {
+        "file": "view-03.jpg",
+        "role": "full-body-back"
+      }
+    },
+    "closeups": [],
+    "closeup_policy": "Deliberately none - 512px trash profile, base plates carry a 992/997px subject and already oversample the atlas ~2x.",
+    "orientation_verified": "2026-09-07, head crops side by side (_advice-crops/ca-heads.jpg): view-01 shows the symmetrical faceted FACE MASK with brow and eye plates below the crest; view-03 shows a smooth crystalline rear crest with no face. Gallery order matches the front/back convention."
+  },
+  "geometry": {
+    "source": "build/crystal-atronach/crystal-atronach-draft.glb",
+    "decimate": true,
+    "target_triangles": 5000,
+    "max_triangles": 6000,
+    "provenance": "Tencent Hunyuan3D-2mv (fp16, 50 steps, octree 380, seed 12345) from build/crystal-atronach/plates/{front,back}-geometry.png (1055x1055). Draft: 511,260 faces in 69.4s on an RTX 4070 Ti Super. TRASH budget 5,000 target / 6,000 max."
+  },
+  "atlas": {
+    "size": 512,
+    "jpeg_quality": 92,
+    "roughness": 0.62,
+    "material_name": "crystal-atronach-atlas"
+  },
+  "regions": {
+    "head_v_min": 0.7,
+    "head_feather": 0.12,
+    "note": "NOT the shoulder-detector value. The detector reports 0.8202 front / 0.8139 back, but on this subject the band above that line is the bare CREST SPIKE - the faceted face mask sits BELOW the shoulders, at v~0.73 (measured on _advice-crops/crystal-atronach-plates.jpg). A 0.82 band would have spent the boost on a featureless spike. 0.70 puts the face mask, the crest and the upper chest inside the band; the boost is kept modest (x2.5, not the humanoid x5) because the band is large and the subject is a uniform crystal shell with no high-frequency facial detail to resolve."
+  },
+  "uv_density": {
+    "head_scale": 2.5,
+    "head_v": 0.7,
+    "leg_scale": 1.0,
+    "leg_v": 0.45,
+    "ramp": 0.08
+  },
+  "projection": {
+    "supersample": 2,
+    "depth_size": 2048,
+    "pack_resolution": 2048,
+    "pack_padding": 4,
+    "blend_power": 3.0,
+    "silhouette_inset": 0.02,
+    "grazing_threshold": 0.35,
+    "dilate": 12,
+    "closeup_feather": 60,
+    "envelope_sigma": 3.0
+  },
+  "tone": {
+    "contrast": 1.08,
+    "saturation": 1.1
+  },
+  "unsharp": {
+    "sigma": 0.7,
+    "amount": 0.45,
+    "threshold": 0.01569
+  },
+  "output": {
+    "directory": "build/crystal-atronach/out",
+    "suffix": "-overview-v1",
+    "max_bytes": 400000
+  },
+  "rights": "The Elder Scrolls Online name, character design and related rights remain with ZeniMax Media/Bethesda Softworks. Reconstructed from published screenshots for an authorized fan prototype; not a claim that the IP is freely licensed."
+}

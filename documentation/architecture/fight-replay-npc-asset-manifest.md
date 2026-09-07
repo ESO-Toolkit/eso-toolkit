@@ -35,23 +35,29 @@ separate rights review.
 
 ## Shipped assets
 
-| Asset                                    | Actor                   | Renderer                  |   Tris |  Verts | Materials | Texture     | GLB bytes | Reference                                                                           |
-| ---------------------------------------- | ----------------------- | ------------------------- | -----: | -----: | --------: | ----------- | --------: | ----------------------------------------------------------------------------------- |
-| `coolstickman-walk.glb`                  | all players             | `instanced-pose-flipbook` |      — |      — |         1 | —           |         — | CC0, Polygonal Mind                                                                 |
-| `yandir-the-butcher-overview-v2.glb`     | Yandir the Butcher      | `static-boss`             | 45,000 | 29,609 |         1 | 1024px JPEG | 1,644,896 | [post 82](https://esomodelviewer.com/characters/post/82-yandir-the-butcher)         |
-| `captain-vrol-overview-v2.glb`           | Captain Vrol            | `static-boss`             | 44,999 | 28,796 |         1 | 1024px JPEG | 1,679,644 | [post 83](https://esomodelviewer.com/characters/post/83-captain-vrol)               |
-| `saint-llothis-overview-v1.glb`          | Saint Llothis the Pious | `static-boss`             | 44,999 | 31,803 |         1 | 1024px JPEG | 1,774,760 | [creature 89](https://esomodelviewer.com/creatures/post/89-saint-llothis-the-pious) |
-| `saint-felms-overview-v1.glb`            | Saint Felms the Bold    | `static-boss`             | 45,000 | 30,921 |         1 | 1024px JPEG | 1,704,864 | [creature 88](https://esomodelviewer.com/creatures/post/88-saint-felms-the-bold)    |
-| `the-warrior-overview-v1.glb`            | The Warrior             | `static-boss`             | 44,999 | 28,943 |         1 | 1024px JPEG | 1,672,496 | [post 172](https://esomodelviewer.com/characters/post/172-the-warrior)              |
-| `the-mage-overview-v1.glb`               | The Mage                | `static-boss`             | 45,000 | 29,007 |         1 | 1024px JPEG | 1,722,144 | [post 173](https://esomodelviewer.com/characters/post/173-the-mage)                 |
-| `shade-of-galenwe-overview-v1.glb`       | Shade of Galenwe        | `static-boss`             | 44,998 | 29,810 |         1 | 1024px JPEG | 1,743,648 | [post 233](https://esomodelviewer.com/characters/post/233-shade-of-galenwe)         |
-| `shade-of-siroria-overview-v1.glb`       | Shade of Siroria        | `static-boss`             | 45,000 | 30,932 |         1 | 1024px JPEG | 1,739,784 | [post 234](https://esomodelviewer.com/characters/post/234-shade-of-siroria)         |
-| `shade-of-relequen-overview-v1.glb`      | Shade of Relequen       | `static-boss`             | 45,000 | 32,337 |         1 | 1024px JPEG | 1,741,760 | [post 235](https://esomodelviewer.com/characters/post/235-shade-of-relequen)        |
-| `the-serpent-overview-v1.glb`            | The Serpent             | `static-boss`             | 45,000 | 28,458 |         1 | 1024px JPEG | 1,687,556 | [post 169](https://esomodelviewer.com/characters/post/169-the-serpent)              |
-| `varlariel-overview-v1.glb`              | Varlariel               | `static-boss`             | 45,000 | 30,450 |         1 | 1024px JPEG | 1,702,168 | [creature 74](https://esomodelviewer.com/creatures/post/74-wispmother-light)        |
-| `saint-olms-overview-v1.glb`             | Saint Olms the Just     | `static-boss`             | 70,000 | 44,924 |         1 | 1024px JPEG | 2,277,308 | [creature 90](https://esomodelviewer.com/creatures/post/90-saint-olms-the-just)     |
-| `orphic-shattered-shard-overview-v1.glb` | Orphic Shattered Shard  | `static-boss`             | 44,999 | 32,092 |         1 | 1024px JPEG | 2,025,356 | [post 180](https://esomodelviewer.com/characters/post/180-shattered-shard)          |
-| `lord-falgravn-overview-v1.glb`          | Lord Falgravn           | `static-boss`             | 70,000 | 44,724 |         1 | 1024px JPEG | 2,259,112 | [creature 32](https://esomodelviewer.com/creatures/post/32-vampire-lord)            |
+| Asset                                    | Actor                           | Renderer                  |   Tris |  Verts | Materials | Texture     | GLB bytes | Reference                                                                           |
+| ---------------------------------------- | ------------------------------- | ------------------------- | -----: | -----: | --------: | ----------- | --------: | ----------------------------------------------------------------------------------- |
+| `coolstickman-walk.glb`                  | all players                     | `instanced-pose-flipbook` |      — |      — |         1 | —           |         — | CC0, Polygonal Mind                                                                 |
+| `yandir-the-butcher-overview-v2.glb`     | Yandir the Butcher              | `static-boss`             | 45,000 | 29,609 |         1 | 1024px JPEG | 1,644,896 | [post 82](https://esomodelviewer.com/characters/post/82-yandir-the-butcher)         |
+| `captain-vrol-overview-v2.glb`           | Captain Vrol                    | `static-boss`             | 44,999 | 28,796 |         1 | 1024px JPEG | 1,679,644 | [post 83](https://esomodelviewer.com/characters/post/83-captain-vrol)               |
+| `saint-llothis-overview-v1.glb`          | Saint Llothis the Pious         | `static-boss`             | 44,999 | 31,803 |         1 | 1024px JPEG | 1,774,760 | [creature 89](https://esomodelviewer.com/creatures/post/89-saint-llothis-the-pious) |
+| `saint-felms-overview-v1.glb`            | Saint Felms the Bold            | `static-boss`             | 45,000 | 30,921 |         1 | 1024px JPEG | 1,704,864 | [creature 88](https://esomodelviewer.com/creatures/post/88-saint-felms-the-bold)    |
+| `the-warrior-overview-v1.glb`            | The Warrior                     | `static-boss`             | 44,999 | 28,943 |         1 | 1024px JPEG | 1,672,496 | [post 172](https://esomodelviewer.com/characters/post/172-the-warrior)              |
+| `the-mage-overview-v1.glb`               | The Mage                        | `static-boss`             | 45,000 | 29,007 |         1 | 1024px JPEG | 1,722,144 | [post 173](https://esomodelviewer.com/characters/post/173-the-mage)                 |
+| `shade-of-galenwe-overview-v1.glb`       | Shade of Galenwe                | `static-boss`             | 44,998 | 29,810 |         1 | 1024px JPEG | 1,743,648 | [post 233](https://esomodelviewer.com/characters/post/233-shade-of-galenwe)         |
+| `shade-of-siroria-overview-v1.glb`       | Shade of Siroria                | `static-boss`             | 45,000 | 30,932 |         1 | 1024px JPEG | 1,739,784 | [post 234](https://esomodelviewer.com/characters/post/234-shade-of-siroria)         |
+| `shade-of-relequen-overview-v1.glb`      | Shade of Relequen               | `static-boss`             | 45,000 | 32,337 |         1 | 1024px JPEG | 1,741,760 | [post 235](https://esomodelviewer.com/characters/post/235-shade-of-relequen)        |
+| `the-serpent-overview-v1.glb`            | The Serpent                     | `static-boss`             | 45,000 | 28,458 |         1 | 1024px JPEG | 1,687,556 | [post 169](https://esomodelviewer.com/characters/post/169-the-serpent)              |
+| `varlariel-overview-v1.glb`              | Varlariel                       | `static-boss`             | 45,000 | 30,450 |         1 | 1024px JPEG | 1,702,168 | [creature 74](https://esomodelviewer.com/creatures/post/74-wispmother-light)        |
+| `saint-olms-overview-v1.glb`             | Saint Olms the Just             | `static-boss`             | 70,000 | 44,924 |         1 | 1024px JPEG | 2,277,308 | [creature 90](https://esomodelviewer.com/creatures/post/90-saint-olms-the-just)     |
+| `orphic-shattered-shard-overview-v1.glb` | Orphic Shattered Shard          | `static-boss`             | 44,999 | 32,092 |         1 | 1024px JPEG | 2,025,356 | [post 180](https://esomodelviewer.com/characters/post/180-shattered-shard)          |
+| `bloodknight-overview-v1.glb`            | Blood / Crimson / Bitter Knight | `static-boss`             |  5,000 |      — |         1 | 512px JPEG  |   304,148 | [creature 33](https://esomodelviewer.com/creatures/post/33-bloodknight)             |
+| `crystal-atronach-overview-v1.glb`       | Crystal Atronach                | `static-boss`             |  4,996 |      — |         1 | 512px JPEG  |   341,612 | [creature 179](https://esomodelviewer.com/creatures/post/179-crystal-atronach)      |
+| `frost-atronach-overview-v1.glb`         | Frost Atronach                  | `static-boss`             |  4,996 |      — |         1 | 512px JPEG  |   320,576 | [creature 153](https://esomodelviewer.com/creatures/post/153-frost-atronach)        |
+| `yaghra-monstrosity-overview-v1.glb`     | Yaghra Monstrosity              | `static-boss`             |  4,976 |      — |         1 | 512px JPEG  |   327,324 | [creature 120](https://esomodelviewer.com/creatures/post/120-yaghra-monstrosity)    |
+| `ash-titan-overview-v1.glb`              | Ash Titan                       | `static-boss`             |  5,000 |      — |         1 | 512px JPEG  |   330,820 | [creature 112](https://esomodelviewer.com/creatures/post/112-ash-titan)             |
+| `fire-behemoth-overview-v1.glb`          | Fire Behemoth                   | `static-boss`             |  5,000 |      — |         1 | 512px JPEG  |   324,864 | [creature 65](https://esomodelviewer.com/creatures/post/65-fire-behemoth)           |
+| `lord-falgravn-overview-v1.glb`          | Lord Falgravn                   | `static-boss`             | 70,000 | 44,724 |         1 | 1024px JPEG | 2,259,112 | [creature 32](https://esomodelviewer.com/creatures/post/32-vampire-lord)            |
 
 Extracted client assets (see the licensing posture above — **not reconstructions**):
 
@@ -79,6 +85,30 @@ is the only way to render a lesser enemy at a size that differs from the boss wh
 `resolveReplayModelUrl`, the catalog-integrity tests, and the instancing plan all handle shared
 paths; the tests additionally assert every catalog `path` exists on disk, so an entry can never be
 added ahead of the GLB it names.
+
+### Lesser-enemy budget
+
+The six assets above are **trash and mini bosses, built to a different budget from every boss in
+this catalog**: ~5,000 triangles, a 512px atlas and ~300-340 KB each, against the boss profile's
+45,000-70,000 triangles, 1024px and ~1.7-2.3 MB. The reason is arithmetic — a boss appears once, but
+trash appears dozens at a time, so the boss budget would put well over a million triangles a frame
+on screen. Their registry scales are anchored on the player figure (0.95 world units) rather than
+the boss convention of ~2.49, so rank-and-file enemies do not render at boss size.
+
+**One build covers three encounters** for the Bloodknights, via per-instance `aliasTints`. That
+works only because the base plate measures a near-neutral `#696264`: tint multiplies, so it can
+darken a channel but never raise one, and only a neutral base can reach both a warm and a cold
+sibling. Only Blood Knight's colour is measured — Crimson and Bitter are name-derived estimates with
+no reference plate, and are recorded as such.
+
+**Frost and Crystal Atronach share one geometry generation but ship as two GLBs**, because they
+differ in hue rather than value and no multiply tint can turn ice into iridescent glass.
+
+Two further mini bosses, **Haj Mota and Bow Breaker, were not built** and the reason is an input
+defect worth recording: their galleries are **mirror arcs of only ~90 degrees**, proven by a
+silhouette mirror test (IoU 0.859 between one set's back plate and the other's mirrored). Neither
+set contains a 180-degree-opposed pair, so both reconstruction and two-camera projection would paint
+head colour onto the tail.
 
 ### Runtime budgets
 

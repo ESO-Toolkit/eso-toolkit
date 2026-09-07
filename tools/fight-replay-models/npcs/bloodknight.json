@@ -1,0 +1,42 @@
+{
+  "slug": "bloodknight",
+  "display_name": "Blood Knight",
+  "aliases": ["Blood Knight", "Crimson Knight", "Bitter Knight", "Bloodknight", "Gray Host Bloodknight"],
+  "encounter": {
+    "trial": "Kyne's Aegis",
+    "encounter": "Blood Knight / Crimson Knight / Bitter Knight",
+    "role": "trash",
+    "notes": "Humanoid vampiric knight. A-pose, pale sinewy flesh, grey plate pauldrons/helm/greaves, deep red tabard front and back, clawed hands and digitigrade clawed feet. ONE build serves three encounter names through per-instance tint; base plate median is #696264 (near-neutral steel), so build neutral and let instanceColor multiply toward warm red (Crimson) and cold steel-blue (Bitter)."
+  },
+  "work_dir": "build/bloodknight",
+  "reference": {
+    "page_url": "https://esomodelviewer.com/creatures/post/33-bloodknight",
+    "directory": "bloodknight-references-v2",
+    "plates": {
+      "front": { "file": "view-01.jpg", "role": "full-body-front" },
+      "back":  { "file": "view-03.jpg", "role": "full-body-back" }
+    },
+    "closeups": [],
+    "closeup_policy": "Deliberately none. This is the 512px trash profile, not the 1024px boss profile. The base plates carry a 676/674px subject, so they already oversample a 512 atlas by ~1.3x; a registered closeup can only add detail the atlas cannot hold. The set does publish usable closeups (view-04/05 helm front, view-06 helm back, view-07 torso front, view-09/10 legs) and they should be revisited only if this asset is ever promoted to the boss profile.",
+    "orientation_verified": "2026-09-07, by eye on a side-by-side crop (_advice-crops/bk-pair.jpg): view-01 shows the face inside the helm opening, the front chest plate and forward-pointing foot claws; view-03 shows the helm's rear vent, the back plate and the heels. Gallery display order matches the front/back convention for this set."
+  },
+  "geometry": {
+    "source": "build/bloodknight/bloodknight-draft.glb",
+    "decimate": true,
+    "target_triangles": 5000,
+    "max_triangles": 6000,
+    "provenance": "Tencent Hunyuan3D-2mv (fp16, 50 steps, octree 380, seed 12345) from build/bloodknight/plates/{front,back}-geometry.png (720x720). Draft: 422,292 faces in 69.1s on an RTX 4070 Ti Super. TRASH triangle budget 5,000 target / 6,000 max, not the 45-70k boss budget: trash can put dozens of these on screen at once."
+  },
+  "atlas": { "size": 512, "jpeg_quality": 92, "roughness": 0.78, "material_name": "bloodknight-atlas" },
+  "regions": { "head_v_min": 0.8447, "head_feather": 0.12, "note": "Shoulder detector: 0.8447 front, 0.8423 back; front used. Verified by eye on _advice-crops/bloodknight-plates.jpg - the line lands on the top of the pauldrons, so the band above it is helm only." },
+  "uv_density": { "head_scale": 5.0, "head_v": 0.8447, "leg_scale": 1.0, "leg_v": 0.45, "ramp": 0.08 },
+  "projection": {
+    "supersample": 2, "depth_size": 2048, "pack_resolution": 2048, "pack_padding": 4,
+    "blend_power": 3.0, "silhouette_inset": 0.02, "grazing_threshold": 0.35,
+    "dilate": 12, "closeup_feather": 60, "envelope_sigma": 3.0
+  },
+  "tone": { "contrast": 1.08, "saturation": 1.1 },
+  "unsharp": { "sigma": 0.7, "amount": 0.45, "threshold": 0.01569 },
+  "output": { "directory": "build/bloodknight/out", "suffix": "-overview-v1", "max_bytes": 400000 },
+  "rights": "The Elder Scrolls Online name, character design and related rights remain with ZeniMax Media/Bethesda Softworks. Reconstructed from published screenshots for an authorized fan prototype; not a claim that the IP is freely licensed."
+}
