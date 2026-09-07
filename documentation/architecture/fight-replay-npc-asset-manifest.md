@@ -34,6 +34,7 @@ Do not reuse any reconstructed asset outside this project without a separate rig
 | `the-serpent-overview-v1.glb`        | The Serpent             | `static-boss`             | 45,000 | 28,458 |         1 | 1024px JPEG | 1,687,556 | [post 169](https://esomodelviewer.com/characters/post/169-the-serpent)              |
 | `varlariel-overview-v1.glb`          | Varlariel               | `static-boss`             | 45,000 | 30,450 |         1 | 1024px JPEG | 1,702,168 | [creature 74](https://esomodelviewer.com/creatures/post/74-wispmother-light)        |
 | `saint-olms-overview-v1.glb`         | Saint Olms the Just     | `static-boss`             | 70,000 | 44,924 |         1 | 1024px JPEG | 2,277,308 | [creature 90](https://esomodelviewer.com/creatures/post/90-saint-olms-the-just)     |
+| `lord-falgravn-overview-v1.glb`      | Lord Falgravn           | `static-boss`             | 70,000 | 44,724 |         1 | 1024px JPEG | 2,259,112 | [creature 32](https://esomodelviewer.com/creatures/post/32-vampire-lord)            |
 
 ### Runtime budgets
 
@@ -77,7 +78,7 @@ Names below are verified against `src/types/trial-encounters.ts` (the curated en
 | -------------------------- | ------------------ | -------------------------------------------------------------- |
 | `boss_1`                   | Yandir the Butcher | **Shipped**                                                    |
 | `boss_2`                   | Captain Vrol       | **Shipped**                                                    |
-| `boss_3`                   | Lord Falgravn      | **Blocked** — no adequate reference imagery exists (see below) |
+| `boss_3`                   | Lord Falgravn      | **Shipped** — the trial is complete (below)                    |
 | `trash_half_giant_bulwark` | Half-Giant Bulwark | Deferred — ordinary humanoid, no bespoke model needed          |
 | `trash_half_giant_raider`  | Half-Giant Raider  | Deferred — ordinary humanoid, no bespoke model needed          |
 | `trash_vampire_infuser`    | Vampire Infuser    | Deferred — ordinary humanoid, no bespoke model needed          |
@@ -85,18 +86,66 @@ Names below are verified against `src/types/trial-encounters.ts` (the curated en
 | `trash_bitter_knight`      | Bitter Knight      | Blocked on renderer + unverified tint                          |
 | `trash_blood_knight`       | Blood Knight       | Blocked on renderer — references secured                       |
 
-### Lord Falgravn blocker
+### Lord Falgravn — shipped, and the blocker was a search bug
 
-esomodelviewer.com has no Falgravn page; he is only named in prose on the Vrol page. The only
-located imagery is a single 809x809 in-game action screenshot
-(`https://images.uesp.net/a/a5/ON-npc-Lord_Falgravn.jpg`) — one angle, non-studio lighting, no back
-or side. That is not adequate input for multiview reconstruction, and generating a model from it
-would produce exactly the fragmented, single-angle-flattering result the acceptance gate rejects.
+**Shipped 2026-09-06.** 70,000 tris / 44,724 verts / 2,259,112 bytes, 693 charts at 101 faces each,
+70.5% coverage, 24.5% grazing fill, PSNR 39.87 dB, all checks passed with **no warnings**.
+Visibility: front 45.5%, back 53.3%, **neither camera only 5.6%** — the best of any subject so far,
+narrowly beating Olms' 6.9% for the same reason (broad flat wings face the reference cameras almost
+squarely). **Kyne's Aegis is now complete for bosses.**
 
-**Single next action:** the repository owner captures front / back / side studio-style screenshots
-of Lord Falgravn in-game, or requests that esomodelviewer add him. `creatures/post/32-vampire-lord`
-(`VampireLord_C_Basic`) is a possible proxy for his vampire-lord phase silhouette only, and would
-need its own provenance note.
+This encounter was recorded here as *blocked — no adequate reference imagery exists* for several
+rounds. **That was wrong, and the reason is worth keeping.** esomodelviewer does have him: the page
+is titled **"Vampire Lord"** (`creatures/post/32-vampire-lord`), and a title-only sweep never matched
+it. The page's *body text* states the mesh serves generic Gray Host Vampire Lords **and Lord
+Falgravn**, which was cross-checked against the UESP in-game shot — horned head plate, swept membrane
+wings, spiked pauldrons, red sigil loincloth, knee guards and clawed feet all match. The earlier
+entry even names this exact page as a "possible proxy for his vampire-lord phase silhouette only". It
+was not a proxy; it was him.
+
+**Lesson: search reference-site body text, not just titles.** The block cost more time than the build
+did — the whole asset took one 65.8 s GPU job plus CPU work, against several rounds spent concluding
+no reference existed.
+
+#### How it actually went
+
+- **Boxes again, and again re-measured rather than copied.** Olms' box numbers do not transfer:
+  Falgravn is an upright biped whose wings separate from the body in *both* x and z (at head height
+  wings sit at z 0.01-0.22, head at z 0.35-0.79), where Olms is a low wide construct. A scalar
+  `head_v_min` is still impossible — the wing claws reach normalized y = 1.0 while the horn tips stop
+  at 0.902.
+- **The membership render caught a real error, on its first outing as a standing rule.** The first
+  placement (`skull y0 = 0.805`) claimed the horns and cranium and **left the entire face outside the
+  box**. Every downstream metric would have looked healthy — region texels, coverage, PSNR, all of
+  them — and the asset would have shipped with its identity region pointed at the top of the skull.
+  Re-measuring the neck pinch (the front-half column narrows to x 0.463-0.537 at y 0.77) put the
+  floor at 0.775. **Keep doing this.**
+- **The Olms "equal texel squares" target does not generalise; the underlying reasoning does.** Olms
+  split the atlas evenly because his skull was ~2% of the surface against ~45% membranes. Falgravn's
+  membranes are only ~20% and he has an actual face, so the correct bias is toward the head. Swept
+  4.0/2.0 -> 246² skull, 5.0/2.0 -> 265², 5.0/1.5 -> 287², 6.0/1.6 -> 300², with the wings falling
+  159²/150²/125²/114² respectively. Shipped 5.0/2.0, which clears the *humanoid* `face >= 256²` bar
+  at 265² for a 6% linear cost per membrane. The rule to carry forward is "decide the bias from the
+  region's share of surface area and whether the subject has a face", not a number.
+- **The sweep does not need the projection.** Region texels depend only on the density warp and the
+  xatlas pack, so a sweep can run unwrap-and-measure only. Four operating points cost a couple of
+  minutes instead of four full builds.
+- **A defect the pipeline cannot currently fix: near-horizontal limbs.** The wing leading edges carry
+  a dark grey band that spreads inboard from the (correctly black) elbow claws for ~40% of the arm,
+  with horizontal streaking, where the plates show pale bone. This is silhouette-normalized `u`
+  failing on a limb that is nearly *horizontal*: one height slice spans the entire wing, so a small
+  vertical registration error smears the claw's plate columns along the arm. It is the documented
+  "wide head ornaments" failure rotated 90°. **`envelope_sigma` is not the fix** — raising it 3.0 ->
+  8.0 moved PSNR 39.87 -> 39.97 dB and left the band essentially unchanged, so the shipped asset keeps
+  the default. A registered wing closeup is the real answer. Recorded so the next operator does not
+  re-run that experiment.
+- **Two things were easier than Olms and both held:** the plates are the *same pose* (no smear to
+  reason about), and the wingspan-to-height ratio is only ~1.34x against Olms' ~2.7x, so the runtime
+  scale correction is a mild 1.6744 rather than 3.372.
+- **An extracted mesh was available and deliberately not used.** `VampireLord_Lurker` (88 shells,
+  28.1% unobserved) is genuinely this character, but 88 shells is the profile that got the Dwarven
+  Colossus rejected, and reconstruction is now 13-for-13. Noted only as a fallback that was not
+  needed.
 
 ### Lesser enemies — findings and the blocker
 

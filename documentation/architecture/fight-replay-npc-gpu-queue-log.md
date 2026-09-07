@@ -287,3 +287,38 @@ re-dropped with front and back swapped). The process was **killed by the host, n
 just after the Hunyuan model finished loading — `build/lord-falgravn/logs/gpu-geometry.log` ends
 there and `build/lord-falgravn/out/` is empty. GPU returned to idle (~2.4 GB, no compute process),
 so no cleanup was required and the job is safe to restart from the existing config.
+
+## Job — Lord Falgravn (2026-09-06) — completed
+
+Single operator, no concurrent GPU work. GPU confirmed idle before starting (2.8 GB, all
+compositing, no compute process).
+
+**Correction to the interrupted-attempt entry above.** It records the kill as landing "just after the
+Hunyuan model finished loading". Re-reading `build/lord-falgravn/logs/gpu-geometry.log` in full, its
+final line is `Saved build\lord-falgravn\lord-falgravn-draft.glb with 240,420 faces in 65.8s` — the
+**GPU stage had already completed** and the draft mesh was on disk. Only `out/` was empty. So this
+session ran **no GPU reconstruction at all**; the remaining work was CPU-side (decimate, unwrap,
+projection, prepare, encode) plus EEVEE review renders.
+
+- **Input:** config `tools/fight-replay-models/npcs/lord-falgravn.json`; plates
+  `lord-falgravn-references/view-01.jpg` (front) and `view-03.jpg` (back), letterboxed to a shared
+  1311 px square. Orientation re-verified by eye on `plates/front-native.png` and
+  `plates/back-native.png` before any projection.
+- **Command:** `tools/fight-replay-models/build-npc-asset.py` driven by that config.
+- **Reconstruction:** Hunyuan3D-2mv, 240,420 faces, **65.8 s** — carried over from the interrupted
+  session, not re-run.
+- **Output:** `build/lord-falgravn/out/lord-falgravn-overview-v1.glb` — 70,000 tris, 44,724 verts,
+  2,259,112 bytes (240,888 under the 2.5 MB gate), 693 charts, 70.5% coverage, PSNR 39.87 dB,
+  visibility neither-camera 5.6%. All checks passed, no warnings.
+- **Accepted.** Shipped as `public/models/fight-replay/npcs/lord-falgravn-overview-v1.glb`. Kyne's
+  Aegis bosses are now complete.
+
+Box placement was verified on a membership render before the projection, per the standing rule from
+Olms, and it immediately paid: the first skull box claimed the horns and cranium but **left the face
+outside it**, which no metric in the build report would have revealed.
+
+One extra CPU build was run and rejected: `envelope_sigma` 8.0 against the default 3.0, testing
+whether the dark band on the wing leading edges is the v-driven envelope defect. It is not — PSNR
+moved 39.87 -> 39.97 dB and the band was essentially unchanged, so the default was kept. The variant
+lives at `build/falgravn-sigma8/` as evidence. Do not re-run it; the real fix is a registered wing
+closeup.

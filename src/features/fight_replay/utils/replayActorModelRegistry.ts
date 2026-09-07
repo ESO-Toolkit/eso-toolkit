@@ -301,6 +301,31 @@ export const STATIC_REPLAY_ACTOR_MODEL_ASSETS: readonly StaticReplayActorModelAs
       attributionFile: 'public/models/fight-replay/npcs/README-saint-olms-overview-v1.md',
     },
   },
+
+  {
+    id: 'lord-falgravn-overview-v1',
+    path: 'models/fight-replay/npcs/lord-falgravn-overview-v1.glb',
+    renderer: 'static-boss',
+    actorTypes: HOSTILE_ACTOR_TYPES,
+    aliases: ['lord falgravn', 'falgravn'],
+    transform: {
+      orientEuler: [0, 0, 0],
+      // Second subject wider than tall (1.9933 wingspan against 1.4885 height), so the prepare
+      // step normalized his WINGSPAN to ~2 rather than his height, and the family's usual 1.25
+      // would stand him only 1.86 units tall. This restores the family's ~2.49 world height and
+      // puts his wingspan at ~3.34 units. Far less extreme than Olms' 3.372 because Falgravn is
+      // an upright biped whose wings are roughly as wide as he is tall, not a low wide construct.
+      scale: 1.6744,
+      yOffset: 0,
+      yawOffset: 0,
+      modelHeight: 1.4885,
+    },
+    provenance: {
+      designation: 'project-authorized-fan-prototype',
+      sourceUrl: 'https://esomodelviewer.com/creatures/post/32-vampire-lord',
+      attributionFile: 'public/models/fight-replay/npcs/README-lord-falgravn-overview-v1.md',
+    },
+  },
 ];
 
 /**

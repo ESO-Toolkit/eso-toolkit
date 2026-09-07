@@ -1,0 +1,126 @@
+{
+  "slug": "lord-falgravn",
+  "display_name": "Lord Falgravn",
+  "aliases": [
+    "Lord Falgravn",
+    "Falgravn"
+  ],
+  "encounter": {
+    "trial": "Kyne's Aegis",
+    "encounter": "Lord Falgravn",
+    "role": "boss",
+    "notes": "Winged vampire lord. Upright biped, NOT a low wide construct: the wings spread wide and rise ABOVE the horned head, so the top of the silhouette is wing, not head, and no scalar head_v_min can select the face. Pale flesh, horned skull, spiked pauldrons, red sigil loincloth, knee guards, clawed hands and feet."
+  },
+  "work_dir": "build/lord-falgravn",
+  "reference": {
+    "page_url": "https://esomodelviewer.com/creatures/post/32-vampire-lord",
+    "directory": "lord-falgravn-references",
+    "identity_note": "The page is titled 'Vampire Lord' and was missed by an earlier title-only sweep; its BODY text states the model serves generic Gray Host Vampire Lords AND Lord Falgravn. Cross-checked against a UESP in-game shot: head plate, wings, pauldrons, sigil loincloth, knee guards and clawed feet all match.",
+    "orientation_check": "VERIFIED BY EYE before projecting, because this set was re-dropped once with front/back swapped. view-01 shows the face, chest sigil, forward-hanging loincloth and toes; view-03 shows no face, the spine and shoulder blades, the wing roots and the heels. Convention holds. Same pose in both plates - no pose mismatch. Re-checked by eye this session on plates/front-native.png and plates/back-native.png: front shows the face, chest sigil, forward loincloth and toes; back shows the spine, wing roots, rear tassets and heels.",
+    "plates": {
+      "front": {
+        "file": "view-01.jpg",
+        "role": "full-body-front"
+      },
+      "back": {
+        "file": "view-03.jpg",
+        "role": "full-body-back"
+      }
+    },
+    "closeups": []
+  },
+  "geometry": {
+    "source": "build/lord-falgravn/lord-falgravn-draft.glb",
+    "decimate": true,
+    "target_triangles": 70000,
+    "max_triangles": 72000,
+    "provenance": "Tencent Hunyuan3D-2mv (fp16, 50 steps, seed 12345) from the letterboxed view-01/view-03 plates (1311px square, full 884/1010px wingspan retained). Draft: 240,420 faces, 65.8s. HERO TRIANGLE BUDGET 70,000 (approved exception above the 20-50k standard): two thin wing membranes are the weakest case for marching-cubes reconstruction and leave few triangles per unit area at 45k.",
+    "budget_note": "70,000 chosen inside the approved 70-80k hero band, and NOT pushed higher: Olms showed 75,000 lands within 52KB of the 2.5MB gate for no measurable gain. Byte headroom beats triangles."
+  },
+  "atlas": {
+    "size": 1024,
+    "jpeg_quality": 92,
+    "roughness": 0.78,
+    "material_name": "lord-falgravn-atlas"
+  },
+  "uv_density": {
+    "head_scale": 1.0,
+    "head_v": 0.8,
+    "leg_scale": 1.0,
+    "leg_v": 0.45,
+    "ramp": 0.08,
+    "note": "Legacy scalar warp disabled; regions.boxes drives the density warp instead."
+  },
+  "projection": {
+    "supersample": 2,
+    "depth_size": 2048,
+    "pack_resolution": 2048,
+    "pack_padding": 4,
+    "blend_power": 3.0,
+    "silhouette_inset": 0.02,
+    "grazing_threshold": 0.35,
+    "dilate": 24,
+    "closeup_feather": 60,
+    "envelope_sigma": 3.0
+  },
+  "tone": {
+    "contrast": 1.08,
+    "saturation": 1.1
+  },
+  "unsharp": {
+    "sigma": 0.7,
+    "amount": 0.45,
+    "threshold": 0.01569
+  },
+  "output": {
+    "directory": "build/lord-falgravn/out",
+    "suffix": "-overview-v1",
+    "max_bytes": 2500000
+  },
+  "rights": "The Elder Scrolls Online name, character design and related rights remain with ZeniMax Media/Bethesda Softworks. Reconstructed from published screenshots for an authorized fan prototype; not a claim that the IP is freely licensed.",
+  "regions": {
+    "boxes": [
+      {
+        "name": "skull",
+        "box": [
+          0.43,
+          0.775,
+          0.28,
+          0.57,
+          1.0,
+          1.0
+        ],
+        "feather": 0.04,
+        "uv_scale": 5.0
+      },
+      {
+        "name": "wing-left",
+        "box": [
+          0.0,
+          0.7,
+          0.0,
+          0.365,
+          1.0,
+          0.3
+        ],
+        "feather": 0.04,
+        "uv_scale": 2.0
+      },
+      {
+        "name": "wing-right",
+        "box": [
+          0.635,
+          0.7,
+          0.0,
+          1.0,
+          1.0,
+          0.3
+        ],
+        "feather": 0.04,
+        "uv_scale": 2.0
+      }
+    ],
+    "note": "No scalar head_v_min: the wing claws reach normalized y=1.0 while the horn tips stop at y=0.902, so the top of this silhouette is wing and a height threshold selects the wrong surface. Boxes measured on this mesh, NOT copied from Saint Olms - Falgravn is an upright biped whose wings separate from the body in BOTH x and z (at head height the wings sit at z 0.01-0.22 while the head sits at z 0.35-0.79), where Olms is a low wide construct. Verified visually on a membership render (build/lord-falgravn/box-check/sheet.png) BEFORE spending projection time: red claims the horns, cranium, face and neck; blue/green claim only the two membranes and their wing arms; torso, arms, loincloth and legs unclaimed. A first placement with y0=0.805 was rejected on that render - it took the horns and cranium but left the FACE grey, which no downstream metric would have reported. The pauldron spike tips take a weak partial weight; they are 96 vertices and adjacent to the head in the atlas anyway.",
+    "targeting_rationale": "Measured, not assumed - the boxes compete for one atlas. Sweep on the decimated mesh (unwrap + measure only, no projection): skull 4.0/wing 2.0 gave skull 246^2 front-facing and wings 159^2/159^2; 5.0/2.0 gave 265^2 and 150^2/151^2; 5.0/1.5 gave 287^2 and 125^2/126^2; 6.0/1.6 gave 300^2 and 114^2/116^2. Shipped 5.0/2.0/2.0. Olms deliberately targeted EQUAL texel squares (~200^2 each) because his skull was small and his membranes were 45% of the surface; Falgravn is an upright biped with a real FACE - eyes, brow, fangs - and his membranes are only ~20% of the mesh, so the correct bias here is toward the head. 5.0/2.0 clears the humanoid face>=256^2 bar at 265^2 for a 6% linear cost on each membrane, which carries only low-frequency veined skin. Do not read these as Olms numbers transferred; they were re-measured on this mesh."
+  }
+}

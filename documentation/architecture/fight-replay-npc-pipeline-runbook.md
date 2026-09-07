@@ -221,6 +221,14 @@ better than the body's 83.3%); and the geometry is correct. It is the mesh-to-pl
 verified head closeup, which places the feature directly instead of inferring it from silhouette
 correspondence.
 
+**The same defect appears rotated 90° on near-horizontal limbs.** Lord Falgravn's outstretched wings
+put one height slice across an entire wing, so a small vertical registration error smears plate
+columns *along* the limb: the black elbow claws bleed inboard over roughly 40% of the pale wing arm,
+with the horizontal streaking that is this defect's signature. **`envelope_sigma` is not the fix** —
+3.0 → 8.0 moved PSNR by 0.10 dB and left the band unchanged (measured, do not re-test). A registered
+closeup on the limb is the only real answer. Expect this on any wing, tail or arm held out
+horizontally.
+
 ### Encode deliberately, then verify
 
 q92, chroma subsampling **disabled** (these atlases carry identity as flat colour blocks, which 4:2:0
