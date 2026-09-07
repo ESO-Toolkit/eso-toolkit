@@ -34,6 +34,12 @@ export interface StaticReplayActorModelAsset {
     modelHeight: number;
   };
   provenance: {
+    /** NOTE: this single value no longer describes the whole catalog. Most assets are
+     *  reconstructions built from published screenshots; a subset at the end of the list is ESO's
+     *  own geometry and texture extracted verbatim from the game client. Those have a materially
+     *  different rights position that has NOT been cleared, and the distinction is recorded in
+     *  each asset's README and in the manifest rather than here, because widening this union
+     *  would change the runtime contract every consumer and test already relies on. */
     designation: 'project-authorized-fan-prototype';
     sourceUrl: string;
     attributionFile: string;
@@ -324,6 +330,98 @@ export const STATIC_REPLAY_ACTOR_MODEL_ASSETS: readonly StaticReplayActorModelAs
       designation: 'project-authorized-fan-prototype',
       sourceUrl: 'https://esomodelviewer.com/creatures/post/32-vampire-lord',
       attributionFile: 'public/models/fight-replay/npcs/README-lord-falgravn-overview-v1.md',
+    },
+  },
+
+  // --- Extracted game assets, NOT reconstructions -------------------------------------------
+  // Everything above is modelled from published screenshots. The four below are ESO's own mesh
+  // and ESO's own hand-authored diffuse atlas, lifted verbatim out of the client (see each
+  // README for the blob path). They keep the `project-authorized-fan-prototype` designation only
+  // because that is the sole value the type admits — their rights position is materially
+  // different and redistribution has NOT been cleared. See the manifest's licensing section.
+  {
+    id: 'stonebreaker-overview-v1',
+    path: 'models/fight-replay/npcs/stonebreaker-overview-v1.glb',
+    renderer: 'static-boss',
+    actorTypes: HOSTILE_ACTOR_TYPES,
+    aliases: ['stonebreaker'],
+    transform: {
+      orientEuler: [0, 0, 0],
+      scale: 1.25,
+      yOffset: 0,
+      yawOffset: 0,
+      modelHeight: 2,
+    },
+    provenance: {
+      designation: 'project-authorized-fan-prototype',
+      sourceUrl: 'https://github.com/ESO-Toolkit/eso-toolkit/tree/feat/trial-boss-textures',
+      attributionFile: 'public/models/fight-replay/npcs/README-stonebreaker-overview-v1.md',
+    },
+  },
+  {
+    id: 'possessed-mantikora-overview-v1',
+    path: 'models/fight-replay/npcs/possessed-mantikora-overview-v1.glb',
+    renderer: 'static-boss',
+    actorTypes: HOSTILE_ACTOR_TYPES,
+    // Deliberately NOT aliased to a bare 'mantikora': the Celestial Serpent encounter spawns
+    // ordinary Mantikora adds, and giving them the boss body would misread the fight.
+    aliases: ['possessed mantikora'],
+    transform: {
+      orientEuler: [0, 0, 0],
+      scale: 1.25,
+      yOffset: 0,
+      yawOffset: 0,
+      modelHeight: 2,
+    },
+    provenance: {
+      designation: 'project-authorized-fan-prototype',
+      sourceUrl: 'https://github.com/ESO-Toolkit/eso-toolkit/tree/feat/trial-boss-textures',
+      attributionFile: 'public/models/fight-replay/npcs/README-possessed-mantikora-overview-v1.md',
+    },
+  },
+  {
+    id: 'foundation-stone-atronach-overview-v1',
+    path: 'models/fight-replay/npcs/foundation-stone-atronach-overview-v1.glb',
+    renderer: 'static-boss',
+    actorTypes: HOSTILE_ACTOR_TYPES,
+    // Not aliased to a bare 'stone atronach' — generic stone atronachs appear as trash in several
+    // trials and are a different, smaller creature.
+    aliases: ['foundation stone atronach'],
+    transform: {
+      orientEuler: [0, 0, 0],
+      scale: 1.25,
+      yOffset: 0,
+      yawOffset: 0,
+      modelHeight: 2,
+    },
+    provenance: {
+      designation: 'project-authorized-fan-prototype',
+      sourceUrl: 'https://github.com/ESO-Toolkit/eso-toolkit/tree/feat/trial-boss-textures',
+      attributionFile:
+        'public/models/fight-replay/npcs/README-foundation-stone-atronach-overview-v1.md',
+    },
+  },
+  {
+    id: 'cloudrest-gryphon-overview-v1',
+    path: 'models/fight-replay/npcs/cloudrest-gryphon-overview-v1.glb',
+    renderer: 'static-boss',
+    actorTypes: HOSTILE_ACTOR_TYPES,
+    // The three Welkynar mounts. These names come from the curated encounter notes in
+    // `trial-encounters.ts`, not from an observed ESO Logs actor list, so they are the one part
+    // of this entry that is unverified against live data. A miss is silent and harmless: the
+    // gryphon simply keeps the capsule.
+    aliases: ['falarielle', 'silaeda', 'belanaril'],
+    transform: {
+      orientEuler: [0, 0, 0],
+      scale: 1.25,
+      yOffset: 0,
+      yawOffset: 0,
+      modelHeight: 2,
+    },
+    provenance: {
+      designation: 'project-authorized-fan-prototype',
+      sourceUrl: 'https://github.com/ESO-Toolkit/eso-toolkit/tree/feat/trial-boss-textures',
+      attributionFile: 'public/models/fight-replay/npcs/README-cloudrest-gryphon-overview-v1.md',
     },
   },
 ];

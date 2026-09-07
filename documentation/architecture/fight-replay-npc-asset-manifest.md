@@ -9,13 +9,29 @@ Read alongside the [actor model pipeline](./fight-replay-actor-model-pipeline.md
 
 ## Licensing posture
 
-Every asset below is a **project-authorized fan reconstruction built from published reference
-screenshots**, not geometry extracted from the ESO client. The Elder Scrolls Online name, character
-designs, and related rights remain with ZeniMax Media / Bethesda Softworks. These assets are not
-CC0 and are not officially licensed; they ship behind the `?npcModels=prototype` opt-in while a
-rights review is pending. The one exception is the player figure, which is genuinely CC0.
+There are now **three** distinct rights positions in this catalog. Read this before reusing
+anything.
 
-Do not reuse any reconstructed asset outside this project without a separate rights review.
+1. **CC0** — the player figure (`coolstickman-walk.glb`) only. Genuinely open.
+2. **Project-authorized fan reconstruction** — every asset built by the screenshot pipeline. Modelled
+   from published reference screenshots, not extracted. Not CC0, not officially licensed; ships
+   behind the `?npcModels=prototype` opt-in while a rights review is pending.
+3. **Extracted ESO client assets — NEW, and materially different.** `stonebreaker`,
+   `possessed-mantikora`, `foundation-stone-atronach` and `cloudrest-gryphon` are **ESO's own mesh
+   and ESO's own hand-authored diffuse atlas, shipped verbatim**. Nothing about them was modelled or
+   painted here; the only changes are a uniform scale, a recentre and a container re-export, and the
+   JPEG bytes are passed through untouched. **Redistribution of these has not been cleared and the
+   repository owner needs to make an explicit call on it.**
+
+Category 3 is filed in the registry under `designation: 'project-authorized-fan-prototype'` **only
+because that is the sole value the `StaticReplayActorModelAsset` type admits**. Widening that union
+would change a runtime contract that every consumer and the catalog-integrity test rely on, so the
+distinction lives here and in each asset's README instead. Do not read the designation field as a
+rights determination for those four.
+
+The Elder Scrolls Online name, character designs, and related rights remain with ZeniMax Media /
+Bethesda Softworks. Do not reuse any asset in category 2 or 3 outside this project without a
+separate rights review.
 
 ## Shipped assets
 
@@ -35,6 +51,15 @@ Do not reuse any reconstructed asset outside this project without a separate rig
 | `varlariel-overview-v1.glb`          | Varlariel               | `static-boss`             | 45,000 | 30,450 |         1 | 1024px JPEG | 1,702,168 | [creature 74](https://esomodelviewer.com/creatures/post/74-wispmother-light)        |
 | `saint-olms-overview-v1.glb`         | Saint Olms the Just     | `static-boss`             | 70,000 | 44,924 |         1 | 1024px JPEG | 2,277,308 | [creature 90](https://esomodelviewer.com/creatures/post/90-saint-olms-the-just)     |
 | `lord-falgravn-overview-v1.glb`      | Lord Falgravn           | `static-boss`             | 70,000 | 44,724 |         1 | 1024px JPEG | 2,259,112 | [creature 32](https://esomodelviewer.com/creatures/post/32-vampire-lord)            |
+
+Extracted client assets (see the licensing posture above — **not reconstructions**):
+
+| Asset                                       | Actor                            | Renderer      |   Tris |  Verts | Materials | Texture     | GLB bytes | Source blob on `feat/trial-boss-textures`       |
+| ------------------------------------------- | -------------------------------- | ------------- | -----: | -----: | --------: | ----------- | --------: | ----------------------------------------------- |
+| `stonebreaker-overview-v1.glb`              | Stonebreaker                     | `static-boss` | 13,474 | 11,620 |         1 | 1024px JPEG |   768,420 | `public/models/bosses/Troll_Craglorn_Boss.glb`  |
+| `possessed-mantikora-overview-v1.glb`       | Possessed Mantikora              | `static-boss` |  9,072 |  6,031 |         1 | 1024px JPEG |   545,372 | `public/models/bosses/Mantikora_B_Boss.glb`     |
+| `foundation-stone-atronach-overview-v1.glb` | Foundation Stone Atronach        | `static-boss` |  6,884 |  3,906 |         1 | 1024px JPEG |   519,364 | `public/models/bosses/StoneAtronach_B_Boss.glb` |
+| `cloudrest-gryphon-overview-v1.glb`         | Falarielle / Silaeda / Belanaril | `static-boss` | 37,104 | 27,650 |         1 | 1024px JPEG | 1,578,084 | `public/models/bosses/Gryphon_A_Boss.glb`       |
 
 ### Runtime budgets
 
@@ -74,17 +99,17 @@ Do not reuse any reconstructed asset outside this project without a separate rig
 
 Names below are verified against `src/types/trial-encounters.ts` (the curated encounter table).
 
-| Encounter                  | Name               | Status                                                         |
-| -------------------------- | ------------------ | -------------------------------------------------------------- |
-| `boss_1`                   | Yandir the Butcher | **Shipped**                                                    |
-| `boss_2`                   | Captain Vrol       | **Shipped**                                                    |
-| `boss_3`                   | Lord Falgravn      | **Shipped** — the trial is complete (below)                    |
-| `trash_half_giant_bulwark` | Half-Giant Bulwark | Deferred — ordinary humanoid, no bespoke model needed          |
-| `trash_half_giant_raider`  | Half-Giant Raider  | Deferred — ordinary humanoid, no bespoke model needed          |
-| `trash_vampire_infuser`    | Vampire Infuser    | Deferred — ordinary humanoid, no bespoke model needed          |
-| `trash_crimson_knight`     | Crimson Knight     | Blocked on renderer — Bloodknight family recolor               |
-| `trash_bitter_knight`      | Bitter Knight      | Blocked on renderer + unverified tint                          |
-| `trash_blood_knight`       | Blood Knight       | Blocked on renderer — references secured                       |
+| Encounter                  | Name               | Status                                                |
+| -------------------------- | ------------------ | ----------------------------------------------------- |
+| `boss_1`                   | Yandir the Butcher | **Shipped**                                           |
+| `boss_2`                   | Captain Vrol       | **Shipped**                                           |
+| `boss_3`                   | Lord Falgravn      | **Shipped** — the trial is complete (below)           |
+| `trash_half_giant_bulwark` | Half-Giant Bulwark | Deferred — ordinary humanoid, no bespoke model needed |
+| `trash_half_giant_raider`  | Half-Giant Raider  | Deferred — ordinary humanoid, no bespoke model needed |
+| `trash_vampire_infuser`    | Vampire Infuser    | Deferred — ordinary humanoid, no bespoke model needed |
+| `trash_crimson_knight`     | Crimson Knight     | Blocked on renderer — Bloodknight family recolor      |
+| `trash_bitter_knight`      | Bitter Knight      | Blocked on renderer + unverified tint                 |
+| `trash_blood_knight`       | Blood Knight       | Blocked on renderer — references secured              |
 
 ### Lord Falgravn — shipped, and the blocker was a search bug
 
@@ -94,10 +119,10 @@ Visibility: front 45.5%, back 53.3%, **neither camera only 5.6%** — the best o
 narrowly beating Olms' 6.9% for the same reason (broad flat wings face the reference cameras almost
 squarely). **Kyne's Aegis is now complete for bosses.**
 
-This encounter was recorded here as *blocked — no adequate reference imagery exists* for several
+This encounter was recorded here as _blocked — no adequate reference imagery exists_ for several
 rounds. **That was wrong, and the reason is worth keeping.** esomodelviewer does have him: the page
 is titled **"Vampire Lord"** (`creatures/post/32-vampire-lord`), and a title-only sweep never matched
-it. The page's *body text* states the mesh serves generic Gray Host Vampire Lords **and Lord
+it. The page's _body text_ states the mesh serves generic Gray Host Vampire Lords **and Lord
 Falgravn**, which was cross-checked against the UESP in-game shot — horned head plate, swept membrane
 wings, spiked pauldrons, red sigil loincloth, knee guards and clawed feet all match. The earlier
 entry even names this exact page as a "possible proxy for his vampire-lord phase silhouette only". It
@@ -110,7 +135,7 @@ no reference existed.
 #### How it actually went
 
 - **Boxes again, and again re-measured rather than copied.** Olms' box numbers do not transfer:
-  Falgravn is an upright biped whose wings separate from the body in *both* x and z (at head height
+  Falgravn is an upright biped whose wings separate from the body in _both_ x and z (at head height
   wings sit at z 0.01-0.22, head at z 0.35-0.79), where Olms is a low wide construct. A scalar
   `head_v_min` is still impossible — the wing claws reach normalized y = 1.0 while the horn tips stop
   at 0.902.
@@ -124,7 +149,7 @@ no reference existed.
   split the atlas evenly because his skull was ~2% of the surface against ~45% membranes. Falgravn's
   membranes are only ~20% and he has an actual face, so the correct bias is toward the head. Swept
   4.0/2.0 -> 246² skull, 5.0/2.0 -> 265², 5.0/1.5 -> 287², 6.0/1.6 -> 300², with the wings falling
-  159²/150²/125²/114² respectively. Shipped 5.0/2.0, which clears the *humanoid* `face >= 256²` bar
+  159²/150²/125²/114² respectively. Shipped 5.0/2.0, which clears the _humanoid_ `face >= 256²` bar
   at 265² for a 6% linear cost per membrane. The rule to carry forward is "decide the bias from the
   region's share of surface area and whether the subject has a face", not a number.
 - **The sweep does not need the projection.** Region texels depend only on the density warp and the
@@ -133,13 +158,13 @@ no reference existed.
 - **A defect the pipeline cannot currently fix: near-horizontal limbs.** The wing leading edges carry
   a dark grey band that spreads inboard from the (correctly black) elbow claws for ~40% of the arm,
   with horizontal streaking, where the plates show pale bone. This is silhouette-normalized `u`
-  failing on a limb that is nearly *horizontal*: one height slice spans the entire wing, so a small
+  failing on a limb that is nearly _horizontal_: one height slice spans the entire wing, so a small
   vertical registration error smears the claw's plate columns along the arm. It is the documented
   "wide head ornaments" failure rotated 90°. **`envelope_sigma` is not the fix** — raising it 3.0 ->
   8.0 moved PSNR 39.87 -> 39.97 dB and left the band essentially unchanged, so the shipped asset keeps
   the default. A registered wing closeup is the real answer. Recorded so the next operator does not
   re-run that experiment.
-- **Two things were easier than Olms and both held:** the plates are the *same pose* (no smear to
+- **Two things were easier than Olms and both held:** the plates are the _same pose_ (no smear to
   reason about), and the wingspan-to-height ratio is only ~1.34x against Olms' ~2.7x, so the runtime
   scale correction is a mild 1.6744 rather than 3.372.
 - **An extracted mesh was available and deliberately not used.** `VampireLord_Lurker` (88 shells,
@@ -181,11 +206,11 @@ its tint is currently unverified and must not be guessed.
 
 ## Coverage status — Asylum Sanctorium
 
-| Encounter | Name                    | Status                                                        |
-| --------- | ----------------------- | ------------------------------------------------------------- |
-| `boss_1`  | Saint Llothis the Pious | **Shipped**                                                   |
-| `boss_2`  | Saint Felms the Bold    | **Shipped**                                                   |
-| `boss_3`  | Saint Olms the Just     | **Shipped** — the non-humanoid path landed (below)            |
+| Encounter | Name                    | Status                                             |
+| --------- | ----------------------- | -------------------------------------------------- |
+| `boss_1`  | Saint Llothis the Pious | **Shipped**                                        |
+| `boss_2`  | Saint Felms the Bold    | **Shipped**                                        |
+| `boss_3`  | Saint Olms the Just     | **Shipped** — the non-humanoid path landed (below) |
 
 Llothis and Felms share a base mesh (differing helm crest and tint), and that transferred: Felms hit
 its face-texel target on the **first** build reusing Llothis's tuned values, with no re-tuning. Expect
@@ -256,7 +281,7 @@ Evidence: `B:/CodexScratch/eso-fight-replay-3d/build/saint-olms/crop-truncation.
   tail" overstated it.
 - **Boxes had to be verified visually, not numerically.** Placement came from measurement (the
   central column narrows above y~0.70; x-slabs separate membrane from body by Z-thickness), but it
-  was confirmed by rendering the mesh coloured by box membership *before* spending GPU time
+  was confirmed by rendering the mesh coloured by box membership _before_ spending GPU time
   (`build/saint-olms/box-check/sheet.png`): red claims only the skull, blue/green only the
   membranes, body and tail unclaimed. **Do this on every future box-driven build** — no scalar
   metric can tell you a box is in the right place.
@@ -267,7 +292,7 @@ Evidence: `B:/CodexScratch/eso-fight-replay-3d/build/saint-olms/crop-truncation.
   that anchors closeups and large membranes that dominate the silhouette at replay distance, and
   **equal texel squares are the right target**.
 - **Prefer byte headroom over triangles.** A 75,000-tri build came to 2,447,876 bytes — 52 KB under
-  the 2.5 MB gate. 70,000 gives 223 KB of headroom at *identical* region balance, so the extra
+  the 2.5 MB gate. 70,000 gives 223 KB of headroom at _identical_ region balance, so the extra
   triangles bought nothing.
 - **Runtime scale needed a departure.** Olms is the first subject wider than tall, so the prepare
   step normalized his wingspan rather than his height, leaving him 0.7384 units tall. The usual
@@ -357,6 +382,80 @@ shipped.**
 So the verdict on the ~25 extracted GLBs is a qualified yes: **humanoid extracted meshes should work
 and would beat reconstructions**, because the geometry is exact rather than inferred. Bulky or deep
 non-humanoids will not, with two views.
+
+#### Update 2026-09-07 — for a subset, the texture half is already solved and needs no pipeline
+
+The paragraph above assumes we have to _make_ the texture. For four of these meshes we do not. The
+sibling branch **`feat/trial-boss-textures`** is a superset of `feat/trial-boss-models` in which
+**10 GLBs carry a material and 7 carry a real embedded image** on the game's own `TEXCOORD_0`. Four
+of those images were opened and confirmed to be genuine hand-authored ESO character atlases, and
+all four have now shipped: **Stonebreaker, Possessed Mantikora, Foundation Stone Atronach** and the
+**Cloudrest gryphon**. No plates, no xatlas, no projection, no GPU — extract the blob, normalise the
+height, run `prepare-static-boss.py`, wire the registry. Total cost for all four: minutes of CPU.
+
+Because nothing is projected, the two numbers that gate the projection route are **irrelevant** for
+these. Stonebreaker has 359 source shells and ~50% "neither camera" coverage — worse than the
+rejected Dwarven Colossus on both — and looks perfect, because it is wearing its own skin.
+
+Consequences worth carrying forward:
+
+- **Shell count and camera coverage only predict failure for the projection route.** Do not screen
+  extracted meshes on them when a matching game diffuse exists.
+- **Metadata is not proof — open the atlas.** The audit tagged Falgravn's `VampireLord_Lurker` mesh
+  as carrying a committed diffuse. It does, and it is a 512x512 tiling moss/bark detail map with no
+  charts at all. Wiring it up would have shipped a mossy Falgravn. Every atlas in this batch was
+  opened and looked at before shipping.
+- **The highest-leverage follow-up is locating the remaining game DDS diffuses.** The extractor's
+  `trial_boss_complete.json` records diffuse `file_index` values for 22 of 30 creature models, and
+  Tier 2 of the extracted-mesh inventory (`ShatteredShard` at 1 shell, `GrievousTwilight` at 34 and
+  covering _two_ encounters, `VaerminaGloamKnight`, `Voriplasm`) is the best geometry in the whole
+  supply with no plates to project. A located diffuse turns each of those into a minutes-long CPU
+  job.
+- **`prepare-static-boss.py` gained `--normalize-height`** for this batch. Reconstructions arrive
+  from Hunyuan already ~2 units tall; extracted meshes arrive in game units (3-16) and need it.
+- **The rights position changed and it is not a detail.** See the licensing posture at the top.
+
+## Coverage status — Sanctum Ophidia
+
+| Encounter | Name                | Status                                                                |
+| --------- | ------------------- | --------------------------------------------------------------------- |
+| `boss_1`  | Possessed Mantikora | **Shipped 2026-09-07** — extracted client asset, not a reconstruction |
+| `boss_2`  | Stonebreaker        | **Shipped 2026-09-07** — extracted client asset, not a reconstruction |
+| `boss_3`  | Ozara               | Blocked — greyscale mask only, plates uncertain (see below)           |
+| `boss_4`  | The Serpent         | **Shipped** (reconstruction, hand-registered mask)                    |
+
+**Stonebreaker had no reference plates anywhere, on any site.** The screenshot pipeline could never
+have built him at any quality. The extracted mesh was the only route to this encounter that will
+ever exist, and it cost no GPU time at all.
+
+Ozara's `Lamia_A_Boss` mesh carries a greyscale mask only (ESO tints it at runtime) and its plates
+are tagged "uncertain". Its 2 shells and 7.6% unobserved area look like the easiest projection win
+in the supply, but its bbox is 1.14 x 4.08 x **0.46** — a near-planar vertical spike with no visible
+torso or arms. Verify the mesh is not a partial extraction before spending anything on it.
+
+## Coverage status — Aetherian Archive
+
+| Encounter | Name                      | Status                                                                            |
+| --------- | ------------------------- | --------------------------------------------------------------------------------- |
+| `boss_1`  | Lightning Storm Atronach  | Blocked — greyscale mask only, and 96 shells makes it a poor projection candidate |
+| `boss_2`  | Foundation Stone Atronach | **Shipped 2026-09-07** — extracted client asset, not a reconstruction             |
+| `boss_3`  | Varlariel                 | **Shipped** (reconstruction)                                                      |
+| `boss_4`  | The Mage                  | **Shipped** (reconstruction)                                                      |
+
+## Coverage status — Cloudrest
+
+| Encounter | Name              | Status                                                            |
+| --------- | ----------------- | ----------------------------------------------------------------- |
+| `boss_1`  | Shade of Galenwe  | **Shipped** (reconstruction). Mount **Falarielle** now has a body |
+| `boss_2`  | Shade of Siroria  | **Shipped** (reconstruction). Mount **Silaeda** now has a body    |
+| `boss_3`  | Shade of Relequen | **Shipped** (reconstruction). Mount **Belanaril** now has a body  |
+
+The three Welkynar gryphons share one extracted asset, `cloudrest-gryphon-overview-v1.glb`. They are
+not their own boss rows — ESO Logs tracks each Welkynar-plus-gryphon pair as a single boss — so they
+do not change the boss count. **Their aliases are the one unverified part of this batch:** the names
+come from the curated notes in `trial-encounters.ts`, not from an observed ESO Logs actor list. A
+mismatch is silent and harmless (the gryphon keeps the capsule), but it should be confirmed against
+a real Cloudrest report before Cloudrest is called covered.
 
 **The unlock is 4-view projection**, which the engine does not support (front and back only). The
 argument is specific and worth acting on: with an _exact_ mesh, side plates would register reliably,

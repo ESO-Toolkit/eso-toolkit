@@ -35,6 +35,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--texture-size", type=int, default=1024)
     parser.add_argument("--name", default=None,
                         help="object/mesh name written into the GLB; defaults to the output stem")
+    parser.add_argument("--normalize-height", type=float, default=None,
+                        help="uniformly scale the joined mesh so its glTF +Y extent equals this "
+                             "many units. Reconstructions arrive from Hunyuan already ~2 units "
+                             "tall, so this is off by default; meshes extracted from the game "
+                             "client arrive in game units (3-16) and need it.")
     return parser.parse_args(argv)
 
 
@@ -68,6 +73,15 @@ def main() -> None:
     boss = bpy.context.view_layer.objects.active
     boss.name = args.name or destination.stem
     boss.data.name = boss.name
+
+    # Blender is Z-up while glTF is Y-up, so the exported model's HEIGHT is Blender's Z extent.
+    if args.normalize_height is not None:
+        minimum, maximum = world_bounds([boss])
+        height = maximum.z - minimum.z
+        if height <= 0:
+            raise RuntimeError(f"{source} has no vertical extent to normalize")
+        boss.scale *= args.normalize_height / height
+        bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
 
     triangle_count = sum(len(polygon.vertices) - 2 for polygon in boss.data.polygons)
     if triangle_count > args.max_triangles:

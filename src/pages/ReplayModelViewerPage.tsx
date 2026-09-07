@@ -163,8 +163,11 @@ export function ReplayModelViewerPage(): React.ReactElement {
     <main style={{ padding: 24, maxWidth: 1100, margin: '0 auto' }}>
       <h1 style={{ marginBottom: 4 }}>Replay NPC model viewer</h1>
       <p style={{ opacity: 0.75, marginTop: 0 }}>
-        Review-only. These are project-authorized fan reconstructions built from published reference
-        screenshots, rendered through the same material setup the fight replay uses.
+        Review-only, rendered through the same material setup the fight replay uses. Most of these
+        are project-authorized fan reconstructions built from published reference screenshots; the
+        last four (Stonebreaker, Possessed Mantikora, Foundation Stone Atronach and the Cloudrest
+        gryphon) are ESO client assets shipped verbatim, whose redistribution has not been cleared.
+        See each asset&rsquo;s README and the NPC asset manifest.
       </p>
 
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', margin: '16px 0' }}>

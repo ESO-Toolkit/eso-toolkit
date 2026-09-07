@@ -104,6 +104,22 @@ describe('resolveReplayActorModel', () => {
     );
   });
 
+  it('resolves the extracted-mesh bosses, and never lends them to their own adds', () => {
+    expect(resolveReplayActorModel(actor('boss', 'Stonebreaker'), 'prototype')?.id).toBe(
+      'stonebreaker-overview-v1',
+    );
+    expect(resolveReplayActorModel(actor('boss', 'Possessed Mantikora'), 'prototype')?.id).toBe(
+      'possessed-mantikora-overview-v1',
+    );
+    expect(
+      resolveReplayActorModel(actor('boss', 'Foundation Stone Atronach'), 'prototype')?.id,
+    ).toBe('foundation-stone-atronach-overview-v1');
+    // The Serpent encounter spawns plain Mantikora adds and several trials spawn plain stone
+    // atronachs. Neither may borrow the boss body - that would misread the fight.
+    expect(resolveReplayActorModel(actor('enemy', 'Mantikora'), 'prototype')).toBeNull();
+    expect(resolveReplayActorModel(actor('enemy', 'Stone Atronach'), 'prototype')).toBeNull();
+  });
+
   it('falls back to the capsule for unrecognized hostiles instead of substituting another model', () => {
     expect(resolveReplayActorModel(actor('enemy', 'Unmodelled Trash Mob'), 'prototype')).toBeNull();
     // Kazpian has no reference imagery anywhere, so he is the durable stand-in for an unmodelled
