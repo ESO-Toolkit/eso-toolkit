@@ -33,6 +33,7 @@ Do not reuse any reconstructed asset outside this project without a separate rig
 | `shade-of-relequen-overview-v1.glb`  | Shade of Relequen       | `static-boss`             | 45,000 | 32,337 |         1 | 1024px JPEG | 1,741,760 | [post 235](https://esomodelviewer.com/characters/post/235-shade-of-relequen)        |
 | `the-serpent-overview-v1.glb`        | The Serpent             | `static-boss`             | 45,000 | 28,458 |         1 | 1024px JPEG | 1,687,556 | [post 169](https://esomodelviewer.com/characters/post/169-the-serpent)              |
 | `varlariel-overview-v1.glb`          | Varlariel               | `static-boss`             | 45,000 | 30,450 |         1 | 1024px JPEG | 1,702,168 | [creature 74](https://esomodelviewer.com/creatures/post/74-wispmother-light)        |
+| `saint-olms-overview-v1.glb`         | Saint Olms the Just     | `static-boss`             | 70,000 | 44,924 |         1 | 1024px JPEG | 2,277,308 | [creature 90](https://esomodelviewer.com/creatures/post/90-saint-olms-the-just)     |
 
 ### Runtime budgets
 
@@ -135,16 +136,24 @@ its tint is currently unverified and must not be guessed.
 | --------- | ----------------------- | ------------------------------------------------------------- |
 | `boss_1`  | Saint Llothis the Pious | **Shipped**                                                   |
 | `boss_2`  | Saint Felms the Bold    | **Shipped**                                                   |
-| `boss_3`  | Saint Olms the Just     | **Blocked on the engine** — needs a non-humanoid path (below) |
+| `boss_3`  | Saint Olms the Just     | **Shipped** — the non-humanoid path landed (below)            |
 
 Llothis and Felms share a base mesh (differing helm crest and tint), and that transferred: Felms hit
 its face-texel target on the **first** build reusing Llothis's tuned values, with no re-tuning. Expect
 the same for any same-species pair.
 
-### Saint Olms — what a non-humanoid target needs
+### Saint Olms — the non-humanoid path, now shipped
 
-Olms was attempted and **stopped before the GPU job**, because the build would have produced a
-clipped model. Three measured blockers, none of which a parameter override fixes:
+**Shipped 2026-09-06.** 70,000 tris / 44,924 verts / 2,277,308 bytes, 744 charts at 94 faces each,
+72.1% coverage, 23.6% grazing fill, PSNR 39.0 dB, all checks passed with no warnings. Visibility:
+front 51.2%, back 48.1%, **neither camera only 6.9%** — flat wings face the reference cameras
+almost perfectly. The contrast with the rejected Dwarven Colossus (62% neither, 1,406 charts at 17
+faces from 234 shells) is the clearest evidence yet that chart explosion, not subject exoticism, is
+what actually kills a build.
+
+Olms was originally attempted and **stopped before the GPU job**, because the build would have
+produced a clipped model. All three blockers below were fixed, and the record is kept because each
+fix is now general machinery:
 
 1. ~~**The plate crop truncates the wings.**~~ **FIXED.** `prepare_base_plates` clamped its square to
    the source height, cutting **44-45% of the wingspan**. It now sizes purely from the subject and
@@ -189,6 +198,38 @@ Two further notes if it is picked up:
   already the weakest case for marching-cubes reconstruction.
 
 Evidence: `B:/CodexScratch/eso-fight-replay-3d/build/saint-olms/crop-truncation.png`.
+
+#### How it actually went
+
+- **The pose mismatch did less damage than feared.** The reconstruction settled on a single tail
+  pose (long, swept) rather than averaging the two, so the tail is coherent rather than smeared. It
+  is still a genuine defect in the inputs and is recorded as unresolved — but "expect a smeared
+  tail" overstated it.
+- **Boxes had to be verified visually, not numerically.** Placement came from measurement (the
+  central column narrows above y~0.70; x-slabs separate membrane from body by Z-thickness), but it
+  was confirmed by rendering the mesh coloured by box membership *before* spending GPU time
+  (`build/saint-olms/box-check/sheet.png`): red claims only the skull, blue/green only the
+  membranes, body and tail unclaimed. **Do this on every future box-driven build** — no scalar
+  metric can tell you a box is in the right place.
+- **The boxes compete, and the trade must be measured.** Skull 3.0 / wing 2.0 collapsed the skull to
+  148²; skull 4.5 / wing 2.0 dropped the wings to 183². The shipped 4.0 / 2.0 / 2.0 lands skull
+  202², wings 200² and 211². Pushing either region to 256² starves the other, so the humanoid rule
+  of "face >= 256²" does not transfer: identity on a winged subject is split between a small skull
+  that anchors closeups and large membranes that dominate the silhouette at replay distance, and
+  **equal texel squares are the right target**.
+- **Prefer byte headroom over triangles.** A 75,000-tri build came to 2,447,876 bytes — 52 KB under
+  the 2.5 MB gate. 70,000 gives 223 KB of headroom at *identical* region balance, so the extra
+  triangles bought nothing.
+- **Runtime scale needed a departure.** Olms is the first subject wider than tall, so the prepare
+  step normalized his wingspan rather than his height, leaving him 0.7384 units tall. The usual
+  `scale: 1.25` would stand him 0.92 units tall. The registry uses **`scale: 3.372`** to restore the
+  family's ~2.49 world height (wingspan ~6.7 units). This is a judgment call, not a measurement —
+  the reference page publishes no real-world dimensions — and is worth confirming by eye against
+  another Asylum Sanctorium boss.
+- **Head-correspondence detector:** 4 of 64 slices flagged (6.25%), 5 run-count mismatches, no
+  warnings. The flagged slices sit at v 0.966-0.972 where the mesh spans ~780 px but the plate only
+  ~29 px — the reconstruction's wings reach higher than the plate's. Above the skull box, so the
+  identity region is unaffected, but a real correspondence gap that the detector caught correctly.
 
 ### The Celestial Serpent — resolved
 

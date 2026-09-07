@@ -253,3 +253,37 @@ Reviewed the flat atlas, all five angles, and a v1-vs-v2 A/B. The improvement is
 v1 is a smooth blob with no readable feature; v2 resolves the rivetted chest plate, scalloped fur
 trim, quilted sleeves, chainmail bracers, belt buckle, fur tassels and pouches — same identity
 throughout (teal cloth, pale fur, brown leather, red beard). Accepted.
+
+---
+
+## Job — Saint Olms the Just (2026-09-06)
+
+Single GPU job, one operator, no concurrent GPU work.
+
+- **Input:** config `tools/fight-replay-models/npcs/saint-olms.json`; plates
+  `saint-olms-references/view-01.jpg` (front) and `view-03.jpg` (back), letterboxed to a shared
+  2415 px square.
+- **Command:** `tools/fight-replay-models/build-npc-asset.py` driven by that config.
+- **Reconstruction:** Hunyuan3D-2mv, 194,988 faces, **91.3 s**, exit 0, VRAM released and confirmed
+  idle before any further work.
+- **Output:** `build/saint-olms/out/saint-olms-overview-v1.glb` — 70,000 tris, 44,924 verts,
+  2,277,308 bytes, 744 charts, 72.1% coverage, PSNR 39.0 dB. All checks passed, no warnings.
+- **Accepted.** Shipped as `public/models/fight-replay/npcs/saint-olms-overview-v1.glb`.
+
+Two engine features had their first real use here and both held up: **letterboxed framing** (the
+first subject wider than tall — 1805 px of wingspan against 738 px of height) and **`regions.boxes`**
+(the first subject whose head is not at the top of the silhouette, so no scalar `head_v_min` could
+select it). Box placement was verified with a membership render *before* the GPU job rather than
+inferred from metrics afterwards; that check is now the standing rule for box-driven builds.
+
+A 75,000-triangle variant was built first and rejected — 2,447,876 bytes, only 52 KB under the
+2.5 MB gate, at identical region balance. Byte headroom beat triangle count.
+
+## Job — Lord Falgravn (2026-09-06) — INTERRUPTED, no output
+
+Started immediately after Olms. Plates were prepared and orientation verified by eye
+(`build/lord-falgravn/lord-falgravn.json` records the evidence, because this plate set had once been
+re-dropped with front and back swapped). The process was **killed by the host, not by a failure**,
+just after the Hunyuan model finished loading — `build/lord-falgravn/logs/gpu-geometry.log` ends
+there and `build/lord-falgravn/out/` is empty. GPU returned to idle (~2.4 GB, no compute process),
+so no cleanup was required and the job is safe to restart from the existing config.

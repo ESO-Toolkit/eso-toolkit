@@ -1,0 +1,125 @@
+{
+  "slug": "saint-olms",
+  "display_name": "Saint Olms the Just",
+  "aliases": [
+    "Saint Olms the Just",
+    "Saint Olms"
+  ],
+  "encounter": {
+    "trial": "Asylum Sanctorium",
+    "encounter": "Saint Olms the Just",
+    "role": "boss",
+    "notes": "Large winged draconic construct. NOT humanoid: wingspan fills the frame, body core is narrow, skull sits mid-height below the wing shoulders, long tail."
+  },
+  "work_dir": "build/saint-olms",
+  "reference": {
+    "page_url": "https://esomodelviewer.com/creatures/post/90-saint-olms-the-just",
+    "directory": "saint-olms-references",
+    "plates": {
+      "front": {
+        "file": "view-01.jpg",
+        "role": "full-body-front"
+      },
+      "back": {
+        "file": "view-03.jpg",
+        "role": "full-body-back"
+      }
+    },
+    "closeups": [],
+    "pose_mismatch": "UNRESOLVED and known. The front plate shows the tail short and tucked between the legs; the back shows it long and swept down-left, and the wing sweep differs too. Two-view reconstruction and the per-slice silhouette registration both assume a single pose. Consequence: expect a smeared tail and wing-sweep error. Built anyway with the defect documented rather than fabricating a matched plate."
+  },
+  "geometry": {
+    "source": "build/saint-olms/saint-olms-draft.glb",
+    "decimate": true,
+    "target_triangles": 70000,
+    "max_triangles": 72000,
+    "provenance": "Tencent Hunyuan3D-2mv (fp16, 50 steps, octree 380, seed 12345) from letterboxed view-01/view-03 (2415px square, full 1801/1856px wingspan retained). Draft: 194,988 faces, single watertight shell, 91.3s. HERO TRIANGLE BUDGET 70,000 (approved exception above the 20-50k standard): two ~1.8 unit membranes plus a long tail leave very few triangles per unit area at 45k, and thin sheets are the weakest case for marching-cubes reconstruction.",
+    "budget_note": "70,000 chosen inside the approved 70-80k hero band. 75,000 built to 2,447,876 bytes, only 52KB under the 2.5MB gate; 70,000 leaves usable headroom at no visible cost."
+  },
+  "atlas": {
+    "size": 1024,
+    "jpeg_quality": 92,
+    "roughness": 0.78,
+    "material_name": "saint-olms-atlas"
+  },
+  "uv_density": {
+    "head_scale": 1.0,
+    "head_v": 0.8,
+    "leg_scale": 1.0,
+    "leg_v": 0.45,
+    "ramp": 0.08,
+    "note": "Legacy scalar warp disabled; regions.boxes drives the density warp instead."
+  },
+  "projection": {
+    "supersample": 2,
+    "depth_size": 2048,
+    "pack_resolution": 2048,
+    "pack_padding": 4,
+    "blend_power": 3.0,
+    "silhouette_inset": 0.02,
+    "grazing_threshold": 0.35,
+    "dilate": 24,
+    "closeup_feather": 60,
+    "envelope_sigma": 3.0
+  },
+  "tone": {
+    "contrast": 1.08,
+    "saturation": 1.1
+  },
+  "unsharp": {
+    "sigma": 0.7,
+    "amount": 0.45,
+    "threshold": 0.01569
+  },
+  "output": {
+    "directory": "build/saint-olms/out",
+    "suffix": "-overview-v1",
+    "max_bytes": 2500000
+  },
+  "rights": "The Elder Scrolls Online name, character design and related rights remain with ZeniMax Media/Bethesda Softworks. Reconstructed from published screenshots for an authorized fan prototype; not a claim that the IP is freely licensed.",
+  "regions": {
+    "boxes": [
+      {
+        "name": "skull",
+        "box": [
+          0.43,
+          0.68,
+          0.68,
+          0.58,
+          0.92,
+          1.0
+        ],
+        "feather": 0.05,
+        "uv_scale": 4.0
+      },
+      {
+        "name": "wing-left",
+        "box": [
+          0.0,
+          0.24,
+          0.0,
+          0.33,
+          0.96,
+          1.0
+        ],
+        "feather": 0.05,
+        "uv_scale": 2.0
+      },
+      {
+        "name": "wing-right",
+        "box": [
+          0.68,
+          0.24,
+          0.0,
+          1.0,
+          0.96,
+          1.0
+        ],
+        "feather": 0.05,
+        "uv_scale": 2.0
+      }
+    ],
+    "note": "No scalar head_v_min: this NPC's skull sits MID-HEIGHT below the wing shoulders, so the top of the silhouette is wing, not head, and no height threshold can select it. Boxes verified visually on a membership render (build/saint-olms/box-check/sheet.png): red claims only the horned skull, blue/green only the two membrane wings, body/legs/tail unclaimed.",
+    "targeting_rationale": "Both the skull and the wing membranes are boosted, and tuned to land at roughly 200^2 front-facing EACH (skull 202^2, wings 203^2/213^2) rather than chasing the humanoid 'face >=256^2'. There is no single face region on a winged construct: identity is split between a small skull that anchors it at closeup and two large membranes that dominate the silhouette at replay distance. Equal texel squares give the skull far higher density per unit area (~2% of surface vs the wings' ~45%), which is the correct bias. Boxes compete directly - measured: skull 3.0/wing 2.0 gave skull 148^2, skull 4.5/wing 2.0 gave wings 183^2 - so pushing either to 256^2 starves the other."
+  }
+}

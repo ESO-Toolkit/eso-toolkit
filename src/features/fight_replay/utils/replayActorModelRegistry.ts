@@ -274,6 +274,33 @@ export const STATIC_REPLAY_ACTOR_MODEL_ASSETS: readonly StaticReplayActorModelAs
       attributionFile: 'public/models/fight-replay/npcs/README-varlariel-overview-v1.md',
     },
   },
+
+  {
+    id: 'saint-olms-overview-v1',
+    path: 'models/fight-replay/npcs/saint-olms-overview-v1.glb',
+    renderer: 'static-boss',
+    actorTypes: HOSTILE_ACTOR_TYPES,
+    aliases: ['saint olms the just', 'saint olms'],
+    transform: {
+      orientEuler: [0, 0, 0],
+      // Every other asset in this catalog is normalized so its HEIGHT is ~1.99 and then scaled
+      // by 1.25, giving ~2.49 world units tall. Olms is the first subject wider than it is tall
+      // (1.9934 wingspan against 0.7384 height), so the prepare step normalized his WINGSPAN to
+      // ~2 instead. Scaling him by 1.25 would therefore stand him only 0.92 units tall — a
+      // flattened bat on the floor. The scale below restores the family's ~2.49 world height,
+      // which puts his wingspan at ~6.7 units. He is genuinely enormous in game, so a footprint
+      // several times a humanoid boss' is expected rather than a bug.
+      scale: 3.372,
+      yOffset: 0,
+      yawOffset: 0,
+      modelHeight: 0.7384,
+    },
+    provenance: {
+      designation: 'project-authorized-fan-prototype',
+      sourceUrl: 'https://esomodelviewer.com/creatures/post/90-saint-olms-the-just',
+      attributionFile: 'public/models/fight-replay/npcs/README-saint-olms-overview-v1.md',
+    },
+  },
 ];
 
 /**
