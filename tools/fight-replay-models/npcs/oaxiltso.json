@@ -1,0 +1,126 @@
+{
+  "slug": "oaxiltso",
+  "display_name": "Oaxiltso",
+  "aliases": [
+    "Oaxiltso",
+    "Argonian Behemoth"
+  ],
+  "encounter": {
+    "trial": "Rockgrove",
+    "encounter": "Oaxiltso",
+    "role": "boss",
+    "notes": "ROUTE B: geometry is the EXTRACTED game mesh ArgonianBehemoth_A_Red_Basic, not a reconstruction. Bulky tailed saurian; bbox depth exceeds height because of the tail."
+  },
+  "work_dir": "build/oaxiltso",
+  "reference": {
+    "page_url": "https://esomodelviewer.com/creatures/post/83-oaxiltso",
+    "directory": "oaxiltso-references",
+    "plates": {
+      "front": {
+        "file": "view-01.jpg",
+        "role": "full-body-front"
+      },
+      "back": {
+        "file": "view-03.jpg",
+        "role": "full-body-back"
+      }
+    },
+    "side_plates": {
+      "available": false,
+      "why": "The gallery publishes no full-body left or right profile. view-02 and view-10 are three-quarter rears and view-05 is a HEAD-only profile crop, none of which is a profile of the whole subject. measure-view-coverage says a real pair would take grazing fill 42.6% -> 19.3%, so the loss is real and is accepted rather than synthesised."
+    },
+    "closeups": [
+      {
+        "file": "view-04.jpg",
+        "role": "head",
+        "view": "front",
+        "region": "head",
+        "accepted": false,
+        "rejected_reason": "head-region width error 4.96% at scale 0.500 looked healthy, but the 50% overlay shows THREE eyes, a doubled crown-spike row and a doubled jaw - the closeup is offset about a third of a head width horizontally. Judged by feature doubling, not by the metric."
+      },
+      {
+        "file": "view-07.jpg",
+        "role": "torso",
+        "view": "front",
+        "accepted": false,
+        "rejected_reason": "16.72% at scale 0.770; the overlay doubles both arms and the whole torso, shifted up-left."
+      },
+      {
+        "file": "view-06.jpg",
+        "role": "back-ridge",
+        "view": "back",
+        "accepted": false,
+        "rejected_reason": "16.02% at scale 0.580; the overlay ghosts the far arm and the back ridge into empty space to the left."
+      }
+    ],
+    "closeup_note": "All three candidates rejected. The gallery's closeups are perspective crops of a DIFFERENT camera position from the base plates (the base plates are wide action shots, the closeups are pushed in with a different lens), so the single scale+translate the registrar fits cannot align them. Oaxiltso is built from the two base plates alone."
+  },
+  "geometry": {
+    "source": "build/oaxiltso/oaxiltso-source.glb",
+    "decimate": false,
+    "target_triangles": 8130,
+    "max_triangles": 50000,
+    "provenance": "EXTRACTED game mesh ArgonianBehemoth_A_Red_Basic.glb (feat/trial-boss-models), 8,130 tris, 22 welded shells. Already +Y up / +Z front / feet at y=0; passed through prepare-static-boss.py --normalize-height 2.0 (uniform x0.5013) before projection. No Hunyuan step and no GPU: the geometry is correct by construction, so nothing is reconstructed."
+  },
+  "atlas": {
+    "size": 1024,
+    "jpeg_quality": 92,
+    "roughness": 0.78,
+    "material_name": "oaxiltso-atlas"
+  },
+  "regions": {
+    "head_v_min": 0.68,
+    "head_feather": 0.1,
+    "boxes": [
+      {
+        "name": "head",
+        "box": [
+          0.3,
+          0.72,
+          0.82,
+          0.7,
+          1.0,
+          1.0
+        ],
+        "feather": 0.04,
+        "uv_scale": 3.5
+      }
+    ],
+    "note": "Single head box, VERIFIED on a membership render (_advice-crops/oaxiltso-boxcheck.jpg): red claims the skull, snout, jaw and crown spikes and stops at the neck; shoulders, back ridge, arms, legs and tail unclaimed. The first attempt ([0.24,0.66,0.68]-[0.76,1,1]) also swallowed the whole shoulder yoke and upper back - invisible in any metric, caught only by the render. No scalar head_v_min warp; head_v_min 0.68 is retained only as the default v-gate for head-region closeups."
+  },
+  "uv_density": {
+    "head_scale": 1.0,
+    "head_v": 0.8,
+    "leg_scale": 1.0,
+    "leg_v": 0.45,
+    "ramp": 0.08,
+    "note": "Legacy scalar warp disabled; regions.boxes drives the density warp."
+  },
+  "projection": {
+    "supersample": 2,
+    "depth_size": 2048,
+    "pack_resolution": 2048,
+    "pack_padding": 4,
+    "blend_power": 3.0,
+    "silhouette_inset": 0.02,
+    "grazing_threshold": 0.35,
+    "dilate": 24,
+    "closeup_feather": 60,
+    "envelope_sigma": 3.0
+  },
+  "tone": {
+    "contrast": 1.08,
+    "saturation": 1.1
+  },
+  "unsharp": {
+    "sigma": 0.7,
+    "amount": 0.45,
+    "threshold": 0.01569
+  },
+  "output": {
+    "directory": "build/oaxiltso/out",
+    "suffix": "-overview-v1",
+    "max_bytes": 2500000
+  },
+  "rights": "The Elder Scrolls Online name, character design and related rights remain with ZeniMax Media/Bethesda Softworks. Reconstructed from published screenshots for an authorized fan prototype; not a claim that the IP is freely licensed."
+}

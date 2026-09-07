@@ -535,6 +535,56 @@ export const STATIC_REPLAY_ACTOR_MODEL_ASSETS: readonly StaticReplayActorModelAs
     },
   },
 
+  // --- Route B: extracted ESO geometry, colour projected from reference plates -----------------
+  // Unlike every reconstruction above, the MESH here is ESO's own, lifted from the client; only the
+  // colour comes from screenshots. Both of these were previously filed unbuildable because two-view
+  // reconstruction could not infer their geometry — exact geometry makes that objection moot. No GPU
+  // is involved at all, since the reconstruction stage is skipped.
+  //
+  // The trade is in the texture: roughly half of each atlas is chart-local neighbour fill rather
+  // than observed colour, because neither gallery publishes a profile view. Honest at replay
+  // distance, not at close-up. See each README.
+  {
+    id: 'oaxiltso-overview-v1',
+    path: 'models/fight-replay/npcs/oaxiltso-overview-v1.glb',
+    renderer: 'static-boss',
+    actorTypes: HOSTILE_ACTOR_TYPES,
+    aliases: ['oaxiltso'],
+    transform: {
+      orientEuler: [0, 0, 0],
+      scale: 1.25,
+      yOffset: 0,
+      yawOffset: 0,
+      modelHeight: 2,
+    },
+    provenance: {
+      designation: 'project-authorized-fan-prototype',
+      sourceUrl: 'https://esomodelviewer.com/creatures/post/83-oaxiltso',
+      attributionFile: 'public/models/fight-replay/npcs/README-oaxiltso-overview-v1.md',
+    },
+  },
+  {
+    // Scaled on WIDTH, not height: normalised she is 3.86 x 3.17 x 2.0, so the family default of
+    // 1.25 would put her 4.83 units across — about five player-widths. 1.0 keeps her 2.0 tall.
+    id: 'tideborn-taleria-overview-v1',
+    path: 'models/fight-replay/npcs/tideborn-taleria-overview-v1.glb',
+    renderer: 'static-boss',
+    actorTypes: HOSTILE_ACTOR_TYPES,
+    aliases: ['tideborn taleria'],
+    transform: {
+      orientEuler: [0, 0, 0],
+      scale: 1.0,
+      yOffset: 0,
+      yawOffset: 0,
+      modelHeight: 2,
+    },
+    provenance: {
+      designation: 'project-authorized-fan-prototype',
+      sourceUrl: 'https://esomodelviewer.com/creatures/post/119-tideborn-taleria',
+      attributionFile: 'public/models/fight-replay/npcs/README-tideborn-taleria-overview-v1.md',
+    },
+  },
+
   // --- Extracted game assets, NOT reconstructions -------------------------------------------
   // Everything above is modelled from published screenshots. The four below are ESO's own mesh
   // and ESO's own hand-authored diffuse atlas, lifted verbatim out of the client (see each
