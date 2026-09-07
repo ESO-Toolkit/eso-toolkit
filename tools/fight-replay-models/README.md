@@ -40,6 +40,40 @@ Only `generate-hunyuan-multiview.py` needs the GPU. Everything else is CPU.
 4. **Write `npcs/<slug>.json`** (copy an existing one) and run
    `build-npc-asset.py`. You get the GLB plus `<slug>-build-report.json`.
 
+### Side plates
+
+If the reference page publishes a true left and/or right profile, declare it and
+the projection gains that camera:
+
+```json
+"side_plates": {
+  "available": true,
+  "left": { "file": "view-14.jpg", "role": "full-body-left" }
+}
+```
+
+Absent (every config shipped so far records `"available": false` and why), the
+projection runs on two cameras and is numerically unchanged. A config that lists
+a file while declaring `available: false` is rejected rather than guessed at.
+
+**Only HEIGHT is registered.** A profile silhouette's width is the subject's
+*depth*, which has no counterpart in the front plate's width, so there is nothing
+horizontal to match and none is attempted: the side capture is cropped to its own
+square sized so the subject fills the same fraction of it as on the base plates
+(a uniform scale expressed as a crop, so nothing is resampled). That assumes the
+capture shows the same subject, same pose, at full height. A vertically cropped
+profile breaks the assumption and is reported as a build warning rather than
+silently absorbed.
+
+Before sourcing profile plates, measure whether they would pay:
+
+```
+python measure-view-coverage.py <mesh>.glb
+```
+
+It reports "neither camera" and grazing fill for two versus four cameras on the
+real charts, with no plates and no GPU.
+
 ### Registration is deliberately not automatic
 
 Four automatic accept/reject gates were tried and all failed on known cases:
@@ -55,9 +89,13 @@ and the measured error so acceptance is data, not a lost conversation.
 
 Reference plates are projected **directly into the UV atlas at texel
 resolution**. For each texel: unproject to a surface point and normal, test
-visibility against per-camera orthographic depth buffers, project into the front
-and back plate, sample bilinearly, and blend by how squarely each camera sees
+visibility against per-camera orthographic depth buffers, project into every
+supplied plate, sample bilinearly, and blend by how squarely each camera sees
 that surface.
+
+There are **up to four cameras**: front and back always, plus left and right
+when - and only when - the config supplies real profile plates. See "Side
+plates" below.
 
 Load-bearing details, each of which was a bug once:
 
@@ -99,6 +137,7 @@ Feet at y=0, horizontally centred, under 2.5 MB.
 | `npc_pipeline.py` | engine: projection, UV density, tone, unsharp, measurement |
 | `npc_references.py` | plate cutting and registration |
 | `register-npc-plates.py` | fit closeups, emit overlays and config snippets |
+| `measure-view-coverage.py` | how much a second camera pair would buy, before sourcing plates |
 | `render-npc-views.py` | five review views, head crops, clay, replay-distance strip |
 | `measure-npc-asset.py` | audit an existing GLB without rebuilding it |
 | `decimate-mesh.py` | Blender-collapse decimation to a triangle budget |
@@ -124,10 +163,22 @@ retains it if it is ever needed.
 
 ## Known limitations
 
-- **Two-view projection cannot describe the sides.** Roughly a third of texels
-  face neither camera. The grazing fill keeps them plausible; it does not invent
-  detail, and profile views stay soft. Synthesising a side plate is not
-  permitted.
+- **Without side plates the sides are still undescribed.** Roughly a third of
+  texels face neither camera on a two-view build. The grazing fill keeps them
+  plausible; it does not invent detail, and profile views stay soft. Most
+  reference pages publish no profile, and **synthesising one is not permitted** -
+  the answer is fewer cameras, not a generated view.
+- **A side camera is not free.** The blend weight is `exp(blend_power * (cos-1))`
+  for every camera, so at the default `blend_power` 3.0 a camera 90 degrees away
+  still carries `e^-3` = 4.5% raw weight. A four-camera build therefore takes ~9%
+  of a perfectly front-facing texel from the two side plates, against ~0.25% from
+  the back plate on a two-camera build. Raising `projection.blend_power` is the
+  knob for that.
+- **More cameras do not fix a near-horizontal limb.** That defect is
+  silhouette-normalised `u` breaking where one height slice spans a whole wing,
+  and it happens on surfaces the front camera already sees square-on. Measured on
+  Falgravn: the side cameras see the wing at |cos| 0.135, so they could never
+  carry it. A registered closeup on the limb is the fix.
 - **A horizontal discontinuity across the jaw/upper chest remains.** Widening
   the head gate feather (`regions.head_feather`) reduces it. It is *not* the
   closeup frame feather and *not* the grazing fill - both were ruled out by

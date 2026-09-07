@@ -7,13 +7,14 @@ standalone and exits non-zero on failure.
 
 These cover the pure-geometry logic that has repeatedly gone wrong: the shoulder
 detector, the head scale search window, how registration reliability is
-reported, the head-band run-structure detector, wide-subject plate framing, and
-normalised 3D region boxes.
+reported, the head-band run-structure detector, wide-subject plate framing,
+normalised 3D region boxes, and the optional left/right reference cameras.
 """
 
 from __future__ import annotations
 
 import sys
+import tempfile
 from pathlib import Path
 
 import numpy as np
@@ -392,6 +393,290 @@ def test_measure_uv_allocation_with_boxes_reports_region_texels():
     assert result["head"]["faces"] == 1
     assert engine.measure_uv_allocation(
         vertices, faces, uvs, 0.5, 1024)["head"]["faces"] == 1
+
+
+# --------------------------------------------------------------------------
+# reference cameras (front/back always, left/right only when supplied)
+# --------------------------------------------------------------------------
+def test_two_views_are_the_canonical_default():
+    """No side plate must mean exactly the pair the engine always had."""
+    assert engine.ordered_views({"front": None, "back": None}) == ["front", "back"]
+
+
+def test_view_order_puts_front_and_back_first():
+    """Index order is load-bearing: a two-view build must index arrays as before."""
+    views = engine.ordered_views({"left": None, "back": None, "right": None, "front": None})
+    assert views == ["front", "back", "right", "left"]
+
+
+def test_missing_base_view_is_rejected():
+    for plates in ({"front": None}, {"back": None, "left": None}):
+        try:
+            engine.ordered_views(plates)
+        except ValueError:
+            continue
+        raise AssertionError(f"{plates} must not be accepted")
+
+
+def test_unknown_view_is_rejected():
+    """A typo must not silently drop a plate out of the projection."""
+    try:
+        engine.ordered_views({"front": None, "back": None, "side": None})
+    except ValueError as exc:
+        assert "side" in str(exc)
+    else:
+        raise AssertionError("an unknown view name must be rejected")
+
+
+def test_screen_right_reproduces_the_original_front_back_pair():
+    """The old code hard-coded [[1,0,0], [-1,0,0]]; up x direction must match it."""
+    assert np.array_equal(engine.view_screen_right("front"), np.array([1.0, 0.0, 0.0]))
+    assert np.array_equal(engine.view_screen_right("back"), np.array([-1.0, 0.0, 0.0]))
+
+
+def test_screen_right_of_a_side_camera_runs_along_depth():
+    # a camera at +X sees the model's -Z as its screen right, and vice versa
+    assert np.array_equal(engine.view_screen_right("right"), np.array([0.0, 0.0, -1.0]))
+    assert np.array_equal(engine.view_screen_right("left"), np.array([0.0, 0.0, 1.0]))
+
+
+def test_view_depth_axis_picks_the_axis_and_the_near_side():
+    assert engine.view_depth_axis("front") == (2, True)
+    assert engine.view_depth_axis("back") == (2, False)
+    assert engine.view_depth_axis("right") == (0, True)
+    assert engine.view_depth_axis("left") == (0, False)
+
+
+def unit_box():
+    """A closed axis-aligned box, so near/far depths are known exactly."""
+    corners = np.array([[x, y, z] for x in (0.0, 1.0) for y in (0.0, 2.0) for z in (0.0, 3.0)])
+    faces = np.array([
+        [0, 1, 3], [0, 3, 2], [4, 7, 5], [4, 6, 7],
+        [0, 4, 5], [0, 5, 1], [2, 3, 7], [2, 7, 6],
+        [0, 2, 6], [0, 6, 4], [1, 5, 7], [1, 7, 3],
+    ])
+    return corners, faces
+
+
+def test_axis_depth_buffers_bracket_the_model_on_both_axes():
+    vertices, faces = unit_box()
+    lo, hi = vertices.min(axis=0), vertices.max(axis=0)
+    span = np.maximum(hi - lo, 1e-9)
+    for axis, extent in ((2, 3.0), (0, 1.0)):
+        near, far = engine.axis_depth_buffers(vertices, faces, lo, span, 64, axis)
+        covered = near > -1e8
+        assert covered.any(), f"nothing rasterised on axis {axis}"
+        assert abs(near[covered].max() - extent) < 1e-3
+        assert abs(far[covered].min() - 0.0) < 1e-3
+
+
+def test_a_vertical_camera_pair_is_refused():
+    """Every camera here is horizontal; a top/bottom pair needs its own mapping."""
+    vertices, faces = unit_box()
+    lo = vertices.min(axis=0)
+    span = np.maximum(vertices.max(axis=0) - lo, 1e-9)
+    try:
+        engine.axis_depth_buffers(vertices, faces, lo, span, 32, 1)
+    except ValueError:
+        return
+    raise AssertionError("axis 1 must be rejected, not silently mis-mapped")
+
+
+# --------------------------------------------------------------------------
+# N-view blending
+# --------------------------------------------------------------------------
+FRONT, BACK, RIGHT, LEFT = (np.array(c, dtype=np.float32) for c in
+                            ([1, 0, 0], [0, 1, 0], [0, 0, 1], [1, 1, 0]))
+
+
+def blend(normal, views, samples, visible=None):
+    """Blend one texel with the given normal across ``views``."""
+    dirs = np.array([engine.VIEW_DIRECTIONS[v] for v in views])
+    align = (np.asarray([normal], dtype=np.float64) @ dirs.T)
+    seen = np.ones((1, len(views)), dtype=bool) if visible is None else np.asarray([visible])
+    colours, weights = engine.blend_views(
+        np.asarray([samples], dtype=np.float32), align, seen, 3.0)
+    return colours[0], weights[0]
+
+
+def test_a_front_facing_texel_takes_the_front_plate():
+    colour, weights = blend([0, 0, 1], ["front", "back"], [FRONT, BACK])
+    assert weights[0] > 0.99
+    assert np.allclose(colour, FRONT, atol=0.02)
+
+
+def test_a_front_facing_texel_still_belongs_to_the_front_plate_with_four_cameras():
+    """Measured, not assumed: a tangential camera is attenuated but not silenced.
+
+    ``exp(3 * (cos - 1))`` gives a camera at 90 degrees ``e^-3`` = 0.0498 raw
+    weight, so with four cameras a perfectly front-facing texel takes ~4.5% from
+    EACH side plate (9% together) where the two-view build took ~0.25% from the
+    back. That is the existing rule applied to more cameras, not a new one, and
+    it is the reason ``blend_power`` is worth raising on a four-view build. The
+    front must still dominate by a wide margin.
+    """
+    _, two = blend([0, 0, 1], ["front", "back"], [FRONT, BACK])
+    colour, four = blend([0, 0, 1], ["front", "back", "right", "left"],
+                         [FRONT, BACK, RIGHT, LEFT])
+    assert two[0] > 0.99
+    assert four[0] > 0.90
+    assert 0.03 < four[2] < 0.06 and abs(four[2] - four[3]) < 1e-9
+    assert np.argmax(colour) == 0, "the front plate must still win the texel"
+
+
+def test_a_sideways_texel_is_a_mush_of_front_and_back_with_two_cameras():
+    """This is the Dwarven Colossus failure in one texel: 62% of them look like this."""
+    colour, weights = blend([1, 0, 0], ["front", "back"], [FRONT, BACK])
+    assert abs(weights[0] - weights[1]) < 1e-6, "no camera sees it better than the other"
+    assert np.abs(colour - (FRONT + BACK) / 2).max() < 1e-6
+
+
+def test_a_sideways_texel_takes_the_side_plate_with_four_cameras():
+    """The same texel, once a real profile exists: 91% of it comes from that plate."""
+    colour, weights = blend([1, 0, 0], ["front", "back", "right", "left"],
+                            [FRONT, BACK, RIGHT, LEFT])
+    assert weights[2] > 0.90, weights
+    assert weights[2] > 10 * max(weights[0], weights[1], weights[3])
+    assert np.allclose(colour, RIGHT, atol=0.10)
+
+
+def test_occlusion_still_rejects_a_camera_the_texel_is_hidden_from():
+    """The 1e-4 attenuation is kept, not replaced, when the view count grows."""
+    colour, weights = blend([1, 0, 0], ["front", "back", "right", "left"],
+                            [FRONT, BACK, RIGHT, LEFT],
+                            visible=[True, True, False, True])
+    assert weights[2] < 1e-3, "an occluded camera must not win the texel"
+    assert np.abs(colour - RIGHT).max() > 0.1
+
+
+def test_a_texel_no_camera_sees_still_resolves():
+    """Grazing fill deals with these afterwards; the blend must not divide by zero."""
+    colour, weights = blend([0, 1, 0], ["front", "back"], [FRONT, BACK],
+                            visible=[False, False])
+    assert np.isfinite(colour).all()
+    assert abs(weights.sum() - 1.0) < 1e-6
+
+
+def test_blend_is_unchanged_for_two_views():
+    """The refactor to N cameras must reproduce the original arithmetic exactly."""
+    rng = np.random.default_rng(7)
+    normals = rng.normal(size=(64, 3))
+    normals /= np.linalg.norm(normals, axis=1, keepdims=True)
+    samples = rng.random((64, 2, 3)).astype(np.float32)
+    visible = rng.random((64, 2)) > 0.3
+    dirs = np.array([[0, 0, 1.0], [0, 0, -1.0]])
+    align = normals @ dirs.T
+
+    legacy = np.exp(3.0 * (align - 1.0))
+    legacy = np.where(~visible, legacy * 1e-4, legacy)
+    legacy /= np.maximum(legacy.sum(axis=1, keepdims=True), 1e-12)
+    expected = np.sum(samples * legacy[:, :, None], axis=1)
+
+    colours, weights = engine.blend_views(samples, align, visible, 3.0)
+    assert np.array_equal(colours, expected)
+    assert np.array_equal(weights, legacy)
+
+
+# --------------------------------------------------------------------------
+# side-plate registration
+# --------------------------------------------------------------------------
+def test_side_plates_are_off_unless_the_config_supplies_them():
+    """Every config shipped so far records side_plates.available = false."""
+    assert refs.side_plate_specs({}) == {}
+    assert refs.side_plate_specs({"side_plates": {"available": False, "note": "none published"}}) == {}
+
+
+def test_side_plate_specs_reads_the_files():
+    specs = refs.side_plate_specs({"side_plates": {
+        "available": True,
+        "left": {"file": "view-14.jpg", "role": "full-body-left"},
+    }})
+    assert list(specs) == ["left"]
+    assert specs["left"]["file"] == "view-14.jpg"
+
+
+def test_a_config_that_contradicts_itself_is_rejected():
+    """available=false plus a file means one of the two is wrong; never guess."""
+    try:
+        refs.side_plate_specs({"side_plates": {"available": False,
+                                               "right": {"file": "view-15.jpg"}}})
+    except ValueError as exc:
+        assert "available=false" in str(exc)
+    else:
+        raise AssertionError("a contradictory side_plates block must be rejected")
+
+
+def scratch():
+    """A throwaway directory; these helpers write real PNGs."""
+    return Path(tempfile.mkdtemp(prefix="npc-side-"))
+
+
+def fake_remover(image):
+    """Stand in for rembg: everything non-black is subject."""
+    arr = np.asarray(image.convert("RGB"))
+    alpha = (arr.max(axis=2) > 8).astype(np.uint8) * 255
+    return Image.fromarray(np.dstack([arr, alpha]), "RGBA")
+
+
+def profile_capture(width, height, subject, top):
+    """A capture with a solid subject band of ``subject`` rows starting at ``top``."""
+    arr = np.zeros((height, width, 3), dtype=np.uint8)
+    arr[top:top + subject, width // 2 - 30:width // 2 + 30] = 200
+    return Image.fromarray(arr, "RGB")
+
+
+def base_meta(fill=0.5, side=1000):
+    return {"native_side": side, "subject_height_px": int(side * fill),
+            "subject_fill": fill,
+            "plates": {"front": {"subject_height_px": int(side * fill), "size": side},
+                       "back": {"subject_height_px": int(side * fill), "size": side}}}
+
+
+def test_side_plate_is_framed_to_the_base_subject_fill():
+    """Height is the only axis that can be matched, so it is the one that is."""
+    tmp = scratch()
+    source = tmp / "profile.png"
+    profile_capture(800, 900, subject=200, top=300).save(source)
+    meta = refs.prepare_side_plates({"left": source}, tmp, base_meta(fill=0.5),
+                                    remover=fake_remover)
+    entry = meta["plates"]["left"]
+    assert entry["subject_height_px"] == 200
+    # subject fills half the base square, so the side square must be twice its subject
+    assert abs(entry["size"] - 400) <= 1
+    assert (tmp / "left-native.png").exists()
+    assert entry["registration"]["method"] == "height-matched-square"
+    assert abs(entry["registration"]["scale_to_base"] - 2.5) < 0.01
+    assert "warning" not in entry["registration"]
+    assert refs.side_plate_warnings(meta) == []
+
+
+def test_a_vertically_cropped_side_plate_is_reported_not_absorbed():
+    """A cropped profile makes the height match meaningless; say so."""
+    tmp = scratch()
+    source = tmp / "profile.png"
+    profile_capture(800, 400, subject=400, top=0).save(source)
+    meta = refs.prepare_side_plates({"right": source}, tmp, base_meta(fill=0.5),
+                                    remover=fake_remover)
+    warnings = refs.side_plate_warnings(meta)
+    assert len(warnings) == 1
+    assert "top or bottom edge" in warnings[0]
+
+
+def test_side_plate_registration_survives_a_plates_cache_without_the_new_keys():
+    """plates.json files cut before side plates existed must still register."""
+    legacy = {"native_side": 1000, "plates": {"front": {"subject_height_px": 500, "size": 1000}}}
+    assert abs(refs.base_subject_fill(legacy) - 0.5) < 1e-9
+
+
+def test_only_left_and_right_are_accepted_as_side_views():
+    tmp = scratch()
+    source = tmp / "profile.png"
+    profile_capture(400, 400, subject=100, top=100).save(source)
+    try:
+        refs.prepare_side_plates({"top": source}, tmp, base_meta(), remover=fake_remover)
+    except ValueError:
+        return
+    raise AssertionError("only left/right are cameras this engine has")
 
 
 # --------------------------------------------------------------------------

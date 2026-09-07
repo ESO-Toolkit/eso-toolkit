@@ -695,6 +695,83 @@ def measure_uv_allocation(vertices, faces, uvs, head_v_min, atlas_size, front_do
 
 
 # --------------------------------------------------------------------------
+# reference cameras
+# --------------------------------------------------------------------------
+# Front and back are mandatory. Left and right are OPTIONAL and exist only when
+# a config supplies a REAL side plate: most reference pages publish no true
+# profile, and a profile is never synthesised - an early Yandir build carried a
+# generated left view and it was removed as invented detail. With no side plate
+# the answer is fewer cameras, not a fabricated one.
+#
+# Each camera is orthographic along a model axis. ``direction`` points from the
+# subject TOWARDS the camera, so the facing term stays ``normal . direction``.
+# Screen-right is ``up x direction``, which reproduces the original [+X, -X]
+# pair for front/back exactly - the cross products are integral, so a two-view
+# build is numerically unchanged.
+UP = np.array([0.0, 1.0, 0.0])
+VIEW_DIRECTIONS = {
+    "front": np.array([0.0, 0.0, 1.0]),
+    "back": np.array([0.0, 0.0, -1.0]),
+    "right": np.array([1.0, 0.0, 0.0]),
+    "left": np.array([-1.0, 0.0, 0.0]),
+}
+# Fixed order with front/back first, so a two-view build indexes every array
+# (sampled colours, visibility columns, blend weights) exactly as it did before
+# side plates existed.
+VIEW_ORDER = ("front", "back", "right", "left")
+SIDE_VIEWS = ("right", "left")
+
+
+def ordered_views(plates):
+    """The supplied views in canonical order. Front and back are required."""
+    missing = [v for v in ("front", "back") if v not in plates]
+    if missing:
+        raise ValueError(f"base plates are missing required view(s): {missing}")
+    unknown = sorted(v for v in plates if v not in VIEW_ORDER)
+    if unknown:
+        raise ValueError(f"unknown reference view(s): {unknown}; expected {list(VIEW_ORDER)}")
+    return [v for v in VIEW_ORDER if v in plates]
+
+
+def view_screen_right(view):
+    """Screen-right vector of a camera: ``up x direction``."""
+    return np.cross(UP, VIEW_DIRECTIONS[view])
+
+
+def view_depth_axis(view):
+    """``(axis, keep_max)`` for a camera's occlusion test.
+
+    ``axis`` is the model axis the camera looks along; ``keep_max`` is True when
+    the camera sits at +axis, so the surface nearest it is the one with the
+    LARGEST coordinate on that axis.
+    """
+    direction = VIEW_DIRECTIONS[view]
+    axis = int(np.argmax(np.abs(direction)))
+    return axis, bool(direction[axis] > 0)
+
+
+def axis_depth_buffers(vertices, faces, lo, span, size, axis):
+    """Near and far depth along ``axis``, rasterised in the other two axes.
+
+    Axis 2 is the front/back camera pair (screen x comes from X); axis 0 is the
+    right/left pair (screen x comes from Z). Height is the screen y for both
+    pairs, which is what lets one shared row index query either - and is also why
+    only the two HORIZONTAL axes are supported. A top/bottom pair would have to
+    rasterise (x, z) and would need its own row index; every camera this engine
+    has is horizontal, so that case is rejected rather than silently mis-mapped.
+    """
+    if axis not in (0, 2):
+        raise ValueError(f"depth axis {axis} is not horizontal; cameras are on x and z only")
+    screen_axis = 0 if axis == 2 else 2
+    sx = ((vertices[:, screen_axis] - lo[screen_axis]) / span[screen_axis]
+          * (size - 1)).astype(np.float32)
+    sy = ((vertices[:, 1] - lo[1]) / span[1] * (size - 1)).astype(np.float32)
+    sz = vertices[:, axis].astype(np.float32)
+    return raster_depth(sx, sy, sz, faces, size, True), raster_depth(
+        sx, sy, sz, faces, size, False)
+
+
+# --------------------------------------------------------------------------
 # main projection
 # --------------------------------------------------------------------------
 @dataclass
@@ -758,11 +835,71 @@ class ProjectionSettings:
     stats: dict = field(default_factory=dict)
 
 
+def blend_views(sampled, align, visible, blend_power):
+    """Mix the per-camera samples by how squarely each camera sees the texel.
+
+    Generalised from two cameras to N WITHOUT changing the rule: the weight is
+    still ``exp(power * (cos - 1))`` on the angle between the surface normal and
+    the camera, a camera the texel is occluded from is still attenuated by 1e-4
+    rather than removed (so a texel no camera can see still resolves to its best
+    guess instead of dividing by zero), and the weights are still normalised.
+
+    Returns ``(colours, weights)``; the weights are also what the per-view
+    coverage report is measured from.
+    """
+    weights = np.exp(blend_power * (align - 1.0))
+    weights = np.where(~visible, weights * 1e-4, weights)
+    weights /= np.maximum(weights.sum(axis=1, keepdims=True), 1e-12)
+    return np.sum(sampled * weights[:, :, None], axis=1), weights
+
+
+def unwrap_atlas(vertices, faces, settings: "ProjectionSettings"):
+    """xatlas unwrap of ``vertices`` (already density-warped, if at all).
+
+    Split out of :func:`project_atlas` unchanged so that a coverage measurement
+    can be taken on the SAME charts the projection would use, without needing
+    plates. Returns ``(mapping, faces, uvs, utilization)``; the UVs are applied
+    to the original geometry by the caller, which is why the warp is a throwaway.
+    """
+    chart = xatlas.ChartOptions()
+    chart.max_cost = settings.chart_max_cost
+    chart.normal_deviation_weight = settings.chart_normal_deviation_weight
+    chart.roundness_weight = 0.01
+    chart.straightness_weight = 3.0
+    chart.normal_seam_weight = 1.0
+    chart.texture_seam_weight = 0.25
+    chart.max_iterations = 8
+    pack = xatlas.PackOptions()
+    # xatlas clamps a chart to the packer resolution. UVs are normalised and
+    # rasterised into our own texture, so a larger packer resolution is free and
+    # keeps that clamp away from the enlarged head charts.
+    pack.resolution = settings.pack_resolution
+    pack.padding = settings.pack_padding
+    pack.bruteForce = True
+    pack.rotate_charts = True
+    pack.blockAlign = True
+
+    atlas = xatlas.Atlas()
+    atlas.add_mesh(np.asarray(vertices).astype(np.float32), np.asarray(faces).astype(np.uint32))
+    atlas.generate(chart_options=chart, pack_options=pack)
+    mapping, afaces, uvs = atlas[0]
+    return mapping, np.asarray(afaces, np.int64), np.asarray(uvs, np.float64), float(
+        atlas.utilization)
+
+
 def project_atlas(mesh_path, base_plates, closeups, settings: ProjectionSettings,
                   atlas_path: Path, glb_path: Path):
-    """Project plates into a UV atlas and write the textured GLB + lossless PNG."""
+    """Project plates into a UV atlas and write the textured GLB + lossless PNG.
+
+    ``base_plates`` maps view name -> :class:`Plate`. ``front`` and ``back`` are
+    required; ``right`` and ``left`` are used when supplied and otherwise simply
+    do not exist, which is the two-camera behaviour this engine shipped with.
+    """
     say = settings.log
     stats = settings.stats
+    views = ordered_views(base_plates)
+    if len(views) > 2:
+        say(f"cameras: {len(views)} ({', '.join(views)})")
 
     mesh = trimesh.load(mesh_path, force="scene").to_geometry()
     mesh.merge_vertices()
@@ -792,36 +929,13 @@ def project_atlas(mesh_path, base_plates, closeups, settings: ProjectionSettings
                 f"legs x{settings.leg_uv_scale} below v={settings.leg_uv_v}, "
                 f"ramp={settings.uv_ramp}")
 
-    chart = xatlas.ChartOptions()
-    chart.max_cost = settings.chart_max_cost
-    chart.normal_deviation_weight = settings.chart_normal_deviation_weight
-    chart.roundness_weight = 0.01
-    chart.straightness_weight = 3.0
-    chart.normal_seam_weight = 1.0
-    chart.texture_seam_weight = 0.25
-    chart.max_iterations = 8
-    pack = xatlas.PackOptions()
-    # xatlas clamps a chart to the packer resolution. UVs are normalised and
-    # rasterised into our own texture, so a larger packer resolution is free and
-    # keeps that clamp away from the enlarged head charts.
-    pack.resolution = settings.pack_resolution
-    pack.padding = settings.pack_padding
-    pack.bruteForce = True
-    pack.rotate_charts = True
-    pack.blockAlign = True
-
-    atlas = xatlas.Atlas()
-    atlas.add_mesh(V_unwrap.astype(np.float32), F.astype(np.uint32))
-    atlas.generate(chart_options=chart, pack_options=pack)
-    mapping, afaces, uvs = atlas[0]
-    afaces = np.asarray(afaces, np.int64)
-    uvs = np.asarray(uvs, np.float64)
+    mapping, afaces, uvs, utilization = unwrap_atlas(V_unwrap, F, settings)
     aV, aN = V[mapping], N[mapping]
     nisl, face_isl = island_ids(afaces, len(aV))
     say(f"unwrap: charts={nisl} ({len(afaces)/nisl:.1f} faces/chart) "
-        f"utilization={atlas.utilization:.3f}")
+        f"utilization={utilization:.3f}")
     stats["chart_count"] = int(nisl)
-    stats["xatlas_utilization"] = round(float(atlas.utilization), 4)
+    stats["xatlas_utilization"] = round(float(utilization), 4)
 
     size = settings.atlas_size
     S = size * settings.supersample
@@ -836,11 +950,13 @@ def project_atlas(mesh_path, base_plates, closeups, settings: ProjectionSettings
     lo, hi = V.min(axis=0), V.max(axis=0)
     span = np.maximum(hi - lo, 1e-9)
     ds = settings.depth_size
-    dsx = ((V[:, 0] - lo[0]) / span[0] * (ds - 1)).astype(np.float32)
-    dsy = ((V[:, 1] - lo[1]) / span[1] * (ds - 1)).astype(np.float32)
-    dsz = V[:, 2].astype(np.float32)
-    depth_front = raster_depth(dsx, dsy, dsz, F, ds, True)
-    depth_back = raster_depth(dsx, dsy, dsz, F, ds, False)
+    # One near/far pair per camera AXIS: front/back share the z pair, left/right
+    # the x pair. The x pair is rasterised only when a side plate was supplied,
+    # so a two-view build does exactly the work it always did.
+    depth = {2: axis_depth_buffers(V, F, lo, span, ds, 2)}
+    depth_front, depth_back = depth[2]
+    if any(view in views for view in SIDE_VIEWS):
+        depth[0] = axis_depth_buffers(V, F, lo, span, ds, 0)
 
     # Structural check on the head band, free: the front depth buffer already
     # carries the mesh's front coverage, so comparing its opaque runs against the
@@ -867,21 +983,30 @@ def project_atlas(mesh_path, base_plates, closeups, settings: ProjectionSettings
     nn /= np.maximum(np.linalg.norm(nn, axis=1, keepdims=True), 1e-9)
     qx = np.clip(((pts[:, 0] - lo[0]) / span[0] * (ds - 1)).astype(np.int32), 0, ds - 1)
     qy = np.clip(((pts[:, 1] - lo[1]) / span[1] * (ds - 1)).astype(np.int32), 0, ds - 1)
-    bias = 0.01 * span[2]
-    visible = np.stack(
-        [pts[:, 2] >= depth_front[qy, qx] - bias, pts[:, 2] <= depth_back[qy, qx] + bias], axis=1
-    )
-    say(f"visibility: front={visible[:,0].mean()*100:.1f}% back={visible[:,1].mean()*100:.1f}% "
-        f"neither={(~visible.any(axis=1)).mean()*100:.1f}%")
+    qz = np.clip(((pts[:, 2] - lo[2]) / span[2] * (ds - 1)).astype(np.int32), 0, ds - 1)
+    screen_x = {2: qx, 0: qz}
+    columns = []
+    for view in views:
+        axis, keep_max = view_depth_axis(view)
+        near, far = depth[axis]
+        column = screen_x[axis]
+        bias = 0.01 * span[axis]
+        columns.append(pts[:, axis] >= near[qy, column] - bias if keep_max
+                       else pts[:, axis] <= far[qy, column] + bias)
+    visible = np.stack(columns, axis=1)
+    neither = float((~visible.any(axis=1)).mean() * 100)
+    say("visibility: "
+        + " ".join(f"{view}={visible[:, k].mean() * 100:.1f}%" for k, view in enumerate(views))
+        + f" neither={neither:.1f}%")
 
     v = np.clip((pts[:, 1] - lo[1]) / span[1], 0, 1)
     slice_idx = np.clip((v * 255).astype(np.int32), 0, 255)
-    rights = np.array([[1.0, 0, 0], [-1.0, 0, 0]])
-    dirs = np.array([[0, 0, 1.0], [0, 0, -1.0]])
+    dirs = np.array([VIEW_DIRECTIONS[view] for view in views])
+    rights = np.array([view_screen_right(view) for view in views])
     us = [projected_u(pts, slice_idx, r, 256, settings.envelope_sigma) for r in rights]
 
-    sampled = np.zeros((len(pts), 2, 3), np.float32)
-    for k, view in enumerate(("front", "back")):
+    sampled = np.zeros((len(pts), len(views), 3), np.float32)
+    for k, view in enumerate(views):
         plate = base_plates[view]
         x, y = plate.target_coords(us[k], v, settings.silhouette_inset)
         rgb, _ = plate.sample(x, y)
@@ -901,11 +1026,26 @@ def project_atlas(mesh_path, base_plates, closeups, settings: ProjectionSettings
         sampled[:, k] = rgb
 
     align = nn @ dirs.T
-    weights = np.exp(settings.blend_power * (align - 1.0))
-    weights = np.where(~visible, weights * 1e-4, weights)
-    weights /= np.maximum(weights.sum(axis=1, keepdims=True), 1e-12)
-    colors = np.sum(sampled * weights[:, :, None], axis=1)
+    colors, weights = blend_views(sampled, align, visible, settings.blend_power)
     observed = np.where(visible, align, -1.0).max(axis=1)
+
+    # Per-view coverage, so adding a camera is measurable rather than asserted.
+    # "visible" is the occlusion test alone; "primary" is the share of texels for
+    # which that camera carries the most blend weight, i.e. where the colour
+    # actually comes from. The two differ widely on a deep subject, where a texel
+    # can be visible from a camera it is nearly edge-on to.
+    primary = weights.argmax(axis=1)
+    stats["visibility"] = {
+        "views": list(views),
+        "neither_percent": round(neither, 2),
+        "per_view": {
+            view: {
+                "visible_percent": round(float(visible[:, k].mean() * 100), 2),
+                "primary_percent": round(float((primary == k).mean() * 100), 2),
+            }
+            for k, view in enumerate(views)
+        },
+    }
 
     f = settings.supersample
     full_c = np.zeros((S, S, 3), np.float32)

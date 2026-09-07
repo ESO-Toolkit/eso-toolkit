@@ -111,6 +111,7 @@ def main():
     reference = cfg["reference"]
     ref_dir = resolve(base, reference["directory"])
     plates_cfg = reference["plates"]
+    side_specs = refs.side_plate_specs(reference)
 
     # ---- 1. plates -------------------------------------------------------
     # The base crops and the per-closeup cutouts are cached independently. They
@@ -136,6 +137,30 @@ def main():
     else:
         meta = json.loads((plates_dir / "plates.json").read_text())
         print(f"[plates] reusing cache ({plates_dir})")
+
+    # Side plates are cut AFTER the base square exists, because their framing is
+    # derived from it: they are registered by height onto the base subject's
+    # share of the square (see refs.prepare_side_plates). They are cached on the
+    # cutout file plus the recorded registration, so a plates cache cut before
+    # side plates existed still picks them up.
+    if side_specs and (args.refresh_plates
+                       or any(view not in meta.get("plates", {})
+                              or not (plates_dir / f"{view}-native.png").exists()
+                              for view in side_specs)):
+        print("[plates] registering side plate(s): "
+              + ", ".join(f"{view}={spec['file']}" for view, spec in side_specs.items()))
+        meta = refs.prepare_side_plates(
+            {view: ref_dir / spec["file"] for view, spec in side_specs.items()},
+            plates_dir, meta, remover=get_remover(),
+        )
+    for view in side_specs:
+        entry = meta["plates"][view]
+        registration = entry["registration"]
+        print(f"  {view}: {entry['source']} square={entry['size']}px "
+              f"subject {entry['subject_height_px']}px tall "
+              f"(x{registration['scale_to_base']:.4f} onto the base framing)")
+        if registration.get("warning"):
+            print(f"  WARNING: {registration['warning']}")
 
     missing = [
         entry for entry in reference.get("closeups", [])
@@ -244,11 +269,14 @@ def main():
         run_mismatch_threshold=proj.get("run_mismatch_threshold", 0.20),
     )
 
+    # Front and back always; left/right only when the config supplied a real
+    # profile. There is no fallback that invents one - fewer cameras is the
+    # correct answer, and the engine degrades to exactly its two-view behaviour.
     base_plates = {
         n: engine.Plate(plates_dir / f"{n}-native.png", envelope_sigma=settings.envelope_sigma)
-        for n in ("front", "back")
+        for n in ("front", "back", *side_specs)
     }
-    closeups: dict[str, list[engine.CloseupRef]] = {"front": [], "back": []}
+    closeups: dict[str, list[engine.CloseupRef]] = {n: [] for n in base_plates}
     accepted_records = []
     for entry in reference.get("closeups", []):
         if not entry.get("accepted"):
@@ -310,6 +338,10 @@ def main():
             "subject_height_px": meta["plates"]["front"]["subject_height_px"],
             "subject_width_px": meta["plates"]["front"]["subject_width_px"],
             "base_plates": {k: v["file"] for k, v in plates_cfg.items()},
+            "side_plates": ({view: {"file": spec["file"], "role": spec.get("role"),
+                                    "registration": meta["plates"][view]["registration"]}
+                             for view, spec in side_specs.items()}
+                            if side_specs else reference.get("side_plates")),
             "closeups_accepted": accepted_records,
             "closeups_rejected": [
                 {"file": e["file"], "reason": e.get("rejected_reason")}
@@ -327,7 +359,7 @@ def main():
             "tone": {"contrast": settings.contrast, "saturation": settings.saturation},
         },
         "atlas": stats,
-        "warnings": list(stats.get("warnings", [])),
+        "warnings": list(stats.get("warnings", [])) + refs.side_plate_warnings(meta),
         "asset": engine.inspect_glb(final, atlas_png),
         "artifacts": {
             "glb": str(final),

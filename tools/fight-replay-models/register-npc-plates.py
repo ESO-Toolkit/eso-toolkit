@@ -52,10 +52,13 @@ def parse_args():
     p.add_argument("--references", required=True, type=Path,
                    help="directory holding the raw reference images")
     p.add_argument("--plates", required=True, type=Path,
-                   help="prepared plates directory (contains front-native.png / back-native.png)")
+                   help="prepared plates directory (front-native.png / back-native.png, plus "
+                        "left/right-native.png when the config supplies profiles)")
     p.add_argument("--closeup", action=_Collect, help="reference file name; repeatable")
     p.add_argument("--role", action=_Attr, help="torso | helm | legs | ... (labels the config)")
-    p.add_argument("--view", action=_Attr, choices=["front", "back"])
+    p.add_argument("--view", action=_Attr, choices=["front", "back", "left", "right"],
+                   help="which base plate to register against; left/right exist only when "
+                        "the config supplied a real profile")
     p.add_argument("--region", action=_Attr, choices=["whole", "head"])
     p.set_defaults(specs=[])
     args = p.parse_args()
@@ -66,8 +69,17 @@ def parse_args():
 
 def main():
     args = parse_args()
+    # Side plates are optional, so only load the ones that were actually cut.
     bases = {v: Image.open(args.plates / f"{v}-native.png").convert("RGBA")
-             for v in ("front", "back")}
+             for v in ("front", "back", "left", "right")
+             if (args.plates / f"{v}-native.png").exists()}
+    wanted = {spec["view"] for spec in args.specs}
+    if not wanted <= set(bases):
+        raise SystemExit(
+            f"no base plate for view(s) {sorted(wanted - set(bases))} in {args.plates}. "
+            "Side plates are cut by build-npc-asset.py --plates-only once the config "
+            "declares reference.side_plates; they are never synthesised."
+        )
     overlay_dir = args.plates / "registration"
     remover = refs.background_remover()
 

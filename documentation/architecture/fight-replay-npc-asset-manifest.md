@@ -457,12 +457,148 @@ come from the curated notes in `trial-encounters.ts`, not from an observed ESO L
 mismatch is silent and harmless (the gryphon keeps the capsule), but it should be confirmed against
 a real Cloudrest report before Cloudrest is called covered.
 
-**The unlock is 4-view projection**, which the engine does not support (front and back only). The
-argument is specific and worth acting on: with an _exact_ mesh, side plates would register reliably,
-because the silhouette correspondence that broke on the Serpent's reconstruction is precisely what an
-extracted mesh guarantees. The modelviewer sets already include side and 3/4 views. For
-reconstructions extra views risk misregistration; for extracted meshes they would be safe. Welding
-coincident vertices across shells before unwrapping is also worth a probe, to cut the chart count.
+**4-view projection was proposed as the unlock. It shipped, and it does not rescue this subject.**
+See the next section. On this exact mesh, adding left and right cameras moves "neither camera"
+**62.0% -> 53.4%** and grazing fill **51.2% -> 49.2%** — 2.0 points, the worst return of any mesh
+measured. The confetti atlas is unchanged. **The premise above was wrong on two counts**, and both
+are worth carrying forward:
+
+1. **The reference set has no profile.** All 13 published plates on
+   `/creatures/post/96-dwarven-colossus` are front, rear, three-quarter or closeup; the nearest to a
+   side is `view-02` at roughly 45 degrees. "The modelviewer sets already include side views" does
+   not hold for this page, and a profile is never synthesised. So even a working four-camera engine
+   has nothing to feed the side cameras here.
+2. **This subject is not camera-limited, it is interior-limited.** Tested against **64 orthographic
+   directions** spread over the whole sphere (`build/dwarven-colossus-4view/diagnose2.py`): only
+   **71.8%** of its atlas texels are reachable from *any* direction. **28.2% is interior surface** —
+   overlapping armour shells that no photograph of any kind can ever see. 68.9% of the
+   right-facing surface is occluded from the right camera, against 60.5% of the front-facing surface
+   from the front, so the side cameras land in the same self-occlusion the front pair does. A further
+   36.4% of what the four cameras miss faces up or down, where no horizontal camera helps at all.
+
+**So the next thing to build for this tier is geometry cleanup, not cameras**: weld coincident
+vertices across shells and drop interior faces before unwrapping. That attacks the chart count
+(1,406 charts at 17.4 faces), the interior 28.2%, and the atlas budget at once.
+
+### Four reference cameras — shipped 2026-09-07
+
+The projection takes **up to four orthographic cameras**: front, back, right, left. Front and back
+are mandatory. The side pair exists only when a config supplies real profile plates:
+
+```json
+"side_plates": { "available": true, "left": { "file": "view-14.jpg", "role": "full-body-left" } }
+```
+
+Absent — which is every config shipped so far, each recording `"available": false` and why — the
+engine runs the two cameras it always had. A config that lists a profile file while declaring
+`available: false` is rejected rather than guessed at. **A side view is never synthesised**; an early
+Yandir build carried a generated left profile and it was removed as invented detail. Fewer cameras is
+the correct answer.
+
+What changed, in one line each:
+
+- `VIEW_DIRECTIONS` / `ordered_views` / `view_screen_right` / `view_depth_axis` replace the hard-coded
+  `[[1,0,0], [-1,0,0]]` screen-right pair. Screen-right is `up x direction`, which reproduces the old
+  pair exactly (the cross products are integral).
+- `axis_depth_buffers` rasterises a near/far pair per camera **axis** — front/back share the z pair,
+  left/right the x pair — and the x pair is only rasterised when a side plate exists. Vertical
+  cameras are rejected: a top/bottom pair would need its own screen mapping.
+- `blend_views` is the existing rule, unchanged, generalised to N columns:
+  `exp(blend_power * (cos - 1))`, occluded cameras attenuated by `1e-4`, then normalised.
+- `refs.prepare_side_plates` registers a profile onto the base framing.
+- The build report gains `atlas.visibility` with per-view `visible_percent` and `primary_percent`
+  (the share of texels a camera actually carries), plus the `neither` figure that was previously only
+  printed to the log.
+
+**Registration matches HEIGHT and nothing else, deliberately.** A profile silhouette's width is the
+subject's *depth*, which has no counterpart in the front plate's width, so there is nothing
+horizontal to match and none is attempted. The side capture is cropped to its own square, sized so
+the subject fills the same fraction of it as on the base plates — a uniform scale expressed as a
+crop, so nothing is resampled and the "plates are never upsampled" rule still holds. The assumption
+that buys is stated in the code and recorded in `plates.json`: same subject, same pose, full height.
+A vertically cropped profile invalidates it and is raised as a build warning rather than absorbed.
+
+**A side camera is not free.** At the default `blend_power` 3.0 a camera 90 degrees off still carries
+`e^-3` = 4.5% raw weight, so a four-camera build takes ~9% of a perfectly front-facing texel from the
+two side plates, against ~0.25% from the back plate on a two-camera build. That is the existing rule
+applied to more cameras, not a new one; `projection.blend_power` is the knob if it shows.
+
+#### Regression proof
+
+Saint Llothis rebuilt unchanged, and the noise band measured first by running the **pre-change** code
+twice, exactly as this document requires:
+
+| | A (old) | B (old) | C (new) |
+| --- | ---: | ---: | ---: |
+| charts / utilization | 776 / 0.7538 | 776 / 0.7538 | 776 / 0.7538 |
+| coverage / covered texels | 66.53% / 697,661 | 66.53% / 697,661 | 66.53% / 697,661 |
+| grazing fill texels | 292,061 | 292,067 | **292,046** |
+| face texels / head share | 67,590 / 25.01% | 67,590 / 25.01% | 67,590 / 25.01% |
+| tris / verts | 44,999 / 31,803 | 44,999 / 31,803 | 44,999 / 31,803 |
+| bytes | 1,774,604 | 1,774,564 | **1,774,548** |
+| PSNR | 38.26 dB | 38.26 dB | 38.26 dB |
+
+Two runs of the *old* code already differ by 6 grazing texels and 40 bytes. The new code sits 15-21
+texels and 16-56 bytes from them — inside that band — and every other number is identical, including
+the tone means and all checks. The visibility line still reads `front=37.4% back=35.9% neither=28.9%`.
+Test suite: **51 pass**, up from 28, with the new cases covering camera order, the exact reproduction
+of the old screen-right pair, the two-view blend arithmetic, occlusion under N cameras, side-plate
+framing, a vertically cropped profile, and a config that contradicts itself.
+
+#### What four cameras actually buy, across the extracted-mesh supply
+
+`measure-view-coverage.py` runs the real unwrap, raster and occlusion test with no plates and no GPU,
+so this cost minutes rather than builds. It reproduces the Colossus's condemning numbers exactly
+(1,406 charts at 17.4 faces, 62.0% neither, 51.2% grazing fill), which is what makes the rest
+trustworthy. Grazing fill, two cameras -> four:
+
+| Mesh | charts | neither | grazing fill | gain |
+| --- | ---: | ---: | ---: | ---: |
+| Mantikora (Possessed Mantikora) | 368 | 31.2 -> 8.4 | 55.5 -> 25.1 | **30.4** |
+| Sload (Z'Maja) | 415 | 13.6 -> 4.2 | 45.3 -> 19.2 | 26.1 |
+| ArgonianBehemoth (Oaxiltso) | 264 | 14.9 -> 4.4 | 42.2 -> 19.3 | 22.8 |
+| Harvester (Xalvakka) | 406 | 20.7 -> 11.8 | 43.1 -> 20.6 | 22.5 |
+| VampireLord (Falgravn) | 1,185 | 24.0 -> 13.9 | 43.6 -> 27.4 | 16.2 |
+| Lamia (Ozara) | 141 | 6.3 -> 3.3 | 24.6 -> 9.1 | 15.5 |
+| StoneAtronach (Foundation Stone) | 232 | 35.8 -> 22.8 | 50.1 -> 34.8 | 15.4 |
+| Chimera | 5,134 | 36.8 -> 21.0 | 32.0 -> 18.3 | 13.8 |
+| ShatteredShard (Orphic Shard) | 877 | 15.7 -> 8.8 | 35.5 -> 22.8 | 12.7 |
+| ClockWorkTitan | 2,680 | 19.6 -> 8.1 | 38.4 -> 27.1 | 11.3 |
+| GrievousTwilight (Rakkhat) | 587 | 12.2 -> 5.4 | 27.0 -> 16.9 | 10.2 |
+| WispMother (Varlariel) | 1,220 | 10.4 -> 5.8 | 49.9 -> 38.5 | 11.4 |
+| Giant | 494 | 27.4 -> 20.4 | 50.8 -> 43.5 | 7.3 |
+| Troll (Stonebreaker) | 2,227 | 48.7 -> 37.0 | 33.6 -> 31.4 | 2.2 |
+| **DwarvenColossus** | 1,406 | **62.0 -> 53.4** | **51.2 -> 49.2** | **2.0** |
+
+Read that as a **sourcing priority**, not a promise: it is what the cameras could reach, and every one
+of those gains still needs a real profile plate to exist. The deep quadrupeds and serpentine subjects
+are where profiles pay for themselves; the Colossus and the Troll are where they do not, and both are
+interior-heavy assemblies.
+
+**The four-camera path was also exercised end to end**, on the Colossus with `view-02` supplied as a
+left plate purely as a plumbing run (`build/dwarven-colossus-4view/`, suffix `-4view-plumbing`, **not
+an asset** — `view-02` is a ~45 degree three-quarter and the colour it lays down is yaw-skewed). It
+completed with `cameras: 3 (front, back, left)`, `visibility: front=21.3% back=18.7% left=16.4%
+neither=57.6%`, all checks passed. The atlas is **still confetti and visually indistinguishable from
+the two-camera one** — the flat atlas, not a render, being the thing to judge.
+
+#### Falgravn's wing band: four cameras cannot fix it either
+
+Analysis only, no rebuild (`build/lord-falgravn/wing-analysis.py`).
+
+- **The mechanism, quantified.** The per-slice horizontal silhouette envelope moves
+  **0.14%** of model width per height slice through the legs, **0.27%** through the torso and
+  **0.64% mean / 1.29% p90 / 6.62% max** through the wing band. So a one-slice registration error
+  costs up to ~6.6% of the model's width horizontally on the wing — 2.4x the torso and 4.6x the legs.
+  That is exactly the recorded "one height slice spans the entire wing" failure, now with a number.
+- **A side camera could never carry that surface.** The wing texels face the side cameras at |cos|
+  **0.135** — only 2.4-2.8% of them clear the 0.35 grazing threshold — against |cos| 0.683 for
+  front/back. Raw blend weight 0.083 versus 0.522. The wings are membranes whose normals already
+  point at the cameras we have; the defect is in the `u` parameterisation, not in coverage.
+- **A top camera does not help either**, which was worth checking and is not what I expected. Slicing
+  on depth instead of height makes the envelope *more* volatile on this subject, 1.71% mean against
+  0.67%, because the wing is thin in z. So the conclusion in the Falgravn section stands unchanged: a
+  **registered wing closeup** is the fix, and nothing about camera count changes that.
 
 ## Unknown actors
 

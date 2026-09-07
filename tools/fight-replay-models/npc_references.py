@@ -273,7 +273,15 @@ def prepare_base_plates(front_src: Path, back_src: Path, out_dir: Path,
     side = int(max((bottom - top) * margin, width * min_width_ratio))
     cy = _framing_centre((top + bottom) / 2.0, side, height)
 
-    meta = {"native_side": side, "letterboxed": side > height, "plates": {}}
+    meta = {
+        "native_side": side,
+        "letterboxed": side > height,
+        # The subject's share of the square's height. A side plate is framed to
+        # reproduce this fraction, which is the whole of its registration.
+        "subject_height_px": int(bottom - top + 1),
+        "subject_fill": round(float((bottom - top + 1) / side), 6),
+        "plates": {},
+    }
     for name in ("front", "back"):
         x0, y0, x1, y1 = boxes[name]
         source_width = sources[name].width
@@ -298,6 +306,135 @@ def prepare_base_plates(front_src: Path, back_src: Path, out_dir: Path,
         }
     (out_dir / "plates.json").write_text(json.dumps(meta, indent=2))
     return meta
+
+
+def base_subject_fill(meta):
+    """Subject height as a fraction of the shared square, from a plates.json.
+
+    Recomputed from the front plate when the key is absent, so a plates cache cut
+    before side plates existed still registers correctly instead of raising.
+    """
+    if meta.get("subject_fill"):
+        return float(meta["subject_fill"])
+    front = meta["plates"]["front"]
+    return float(front["subject_height_px"]) / float(front.get("size", meta["native_side"]))
+
+
+def side_plate_specs(reference):
+    """The left/right plates a config supplies, or nothing at all.
+
+    Most reference pages publish no true profile. That is the normal case and not
+    an error: the projection runs with two cameras exactly as it did before side
+    plates existed. What IS an error is a config that lists profile files while
+    declaring ``available: false``, because one of the two statements is wrong
+    and guessing which would silently change the build.
+    """
+    block = reference.get("side_plates") or {}
+    specs = {view: block[view] for view in ("left", "right")
+             if isinstance(block.get(view), dict) and block[view].get("file")}
+    if specs and block.get("available") is False:
+        raise ValueError(
+            f"reference.side_plates lists {', '.join(sorted(specs))} but is marked "
+            "available=false. Remove the files or set available=true; a side view is never "
+            "synthesised, so the two must agree."
+        )
+    return specs
+
+
+def prepare_side_plates(sources, out_dir: Path, meta, remover=None):
+    """Cut left/right profile plates onto the base plates' subject framing.
+
+    WHAT IS AND IS NOT MATCHED. A profile silhouette is a DIFFERENT silhouette
+    from the front: its width is the subject's DEPTH, which has no counterpart in
+    the front plate's width, so there is nothing horizontal to match and none is
+    attempted. HEIGHT is the one axis both captures share, so each side plate is
+    cropped to its own square sized such that the subject fills the same fraction
+    of it as the subject fills the base square. That is a uniform scale expressed
+    as a crop, so nothing is resampled - the module's rule that plates are never
+    upsampled still holds.
+
+    THE ASSUMPTION, stated plainly: the side capture shows the SAME subject at
+    the SAME pose, uncropped, standing on the same ground line. If it is cropped
+    vertically the height match is meaningless, so that is detected and reported
+    rather than silently absorbed. The projection normalises v over each plate's
+    own silhouette top-to-bottom anyway, which means a vertically cropped side
+    plate does not merely register badly, it stretches the wrong band of the
+    model across the whole plate.
+
+    Returns ``meta`` with the side plates added under ``plates`` and a
+    ``side_plates`` record carrying the registration and any warnings.
+    """
+    remover = remover or background_remover()
+    out_dir.mkdir(parents=True, exist_ok=True)
+    fill = base_subject_fill(meta)
+    base_height = int(meta.get("subject_height_px")
+                      or meta["plates"]["front"]["subject_height_px"])
+    record = meta.setdefault("side_plates", {})
+
+    for name, path in sources.items():
+        if name not in ("left", "right"):
+            raise ValueError(f"side plate view must be 'left' or 'right', got {name!r}")
+        rgb = Image.open(path).convert("RGB")
+        cut = remover(rgb).convert("RGBA")
+        alpha = np.asarray(cut)[:, :, 3] > 16
+        ys, xs = np.nonzero(alpha)
+        if not len(ys):
+            raise RuntimeError(f"side plate has no subject after cutout: {path}")
+        x0, y0, x1, y1 = int(xs.min()), int(ys.min()), int(xs.max()), int(ys.max())
+        subject_height = y1 - y0 + 1
+
+        side = max(int(round(subject_height / max(fill, 1e-6))), subject_height)
+        cx = _framing_centre((x0 + x1) / 2.0, side, rgb.width)
+        cy = _framing_centre((y0 + y1) / 2.0, side, rgb.height)
+        box = (int(round(cx - side / 2)), int(round(cy - side / 2)),
+               int(round(cx + side / 2)), int(round(cy + side / 2)))
+        arr = np.asarray(cut.crop(box)).copy()
+        arr[:, :, 3] = np.where(arr[:, :, 3] > 96, 255, 0).astype(np.uint8)
+        Image.fromarray(arr, "RGBA").save(out_dir / f"{name}-native.png")
+
+        cropped = bool(y0 <= 0 or y1 >= rgb.height - 1)
+        entry = {
+            "source": str(Path(path).name),
+            "crop_box": box,
+            "size": side,
+            "subject_height_px": subject_height,
+            "subject_width_px": int(x1 - x0 + 1),
+            "pad_px": {
+                "left": max(0, -box[0]), "top": max(0, -box[1]),
+                "right": max(0, box[2] - rgb.width),
+                "bottom": max(0, box[3] - rgb.height),
+            },
+            "subject_touches_edge": bool(x0 <= 0 or x1 >= rgb.width - 1 or cropped),
+            "registration": {
+                "method": "height-matched-square",
+                "base_subject_height_px": base_height,
+                "base_subject_fill": round(fill, 6),
+                "scale_to_base": round(float(base_height) / max(subject_height, 1), 4),
+                "assumption": (
+                    "the side capture shows the same subject, same pose, full height. Only "
+                    "height is matched: a profile's width is DEPTH and has no counterpart in "
+                    "the front plate's width."
+                ),
+            },
+        }
+        if cropped:
+            entry["registration"]["warning"] = (
+                f"the {name} plate's subject touches the top or bottom edge, so its height is "
+                "a crop rather than the subject's height. Height is the only axis this "
+                "registration has; source an uncropped profile instead of accepting this one."
+            )
+        meta["plates"][name] = entry
+        record[name] = entry["registration"]
+
+    (out_dir / "plates.json").write_text(json.dumps(meta, indent=2))
+    return meta
+
+
+def side_plate_warnings(meta):
+    """Build-report warnings for any registered side plate that cannot be trusted."""
+    return [entry["registration"]["warning"]
+            for name, entry in (meta.get("plates") or {}).items()
+            if name in ("left", "right") and entry.get("registration", {}).get("warning")]
 
 
 def prepare_closeup(source: Path, out_path: Path, remover=None):
