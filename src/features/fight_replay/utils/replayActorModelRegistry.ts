@@ -129,40 +129,6 @@ export const STATIC_REPLAY_ACTOR_MODEL_ASSETS: readonly StaticReplayActorModelAs
     },
   },
   {
-    // STAND-IN, NOT A LIKENESS — and the weakest reuse in this catalog. Read before extending it.
-    //
-    // Captain Vrol's reference post puts the Half-Giants in his force ("the Sea Giant and
-    // Half-Giant force that invaded Kyne's Aegis"), which is why his body is the closest thing
-    // shipped. But that same sentence distinguishes them from Sea Giants, and the UESP research
-    // already recorded in the asset manifest lists the Half-Giants as **Nord**, on the standard
-    // character rig. So this is a large humanoid in Sea Giant armour standing in for a big Nord,
-    // not a same-species match: better than an abstract capsule at replay camera distance,
-    // materially worse than a build, and it should be replaced if either name is ever modelled.
-    //
-    // It is a SECOND asset over the same GLB rather than two more aliases on Vrol's entry because
-    // `transform` is per-asset, and rendering rank-and-file trash at the exact size of the
-    // encounter's named boss is its own misreading. Vrol's post measures him at 2.42 m; 0.85 of
-    // that is ~2.06 m, which is about where a very large Nord lands — so the scale below is
-    // Vrol's 1.25 x 0.85, chosen off that number rather than picked to look right.
-    id: 'half-giant-standin-overview-v1',
-    path: 'models/fight-replay/npcs/captain-vrol-overview-v2.glb',
-    renderer: 'static-boss',
-    actorTypes: HOSTILE_ACTOR_TYPES,
-    aliases: ['half-giant bulwark', 'half-giant raider'],
-    transform: {
-      orientEuler: [0, 0, 0],
-      scale: 1.0625,
-      yOffset: 0,
-      yawOffset: 0,
-      modelHeight: 1.9938,
-    },
-    provenance: {
-      designation: 'project-authorized-fan-prototype',
-      sourceUrl: 'https://esomodelviewer.com/characters/post/83-captain-vrol',
-      attributionFile: 'public/models/fight-replay/npcs/README-captain-vrol-overview-v2.md',
-    },
-  },
-  {
     id: 'saint-llothis-overview-v1',
     path: 'models/fight-replay/npcs/saint-llothis-overview-v1.glb',
     renderer: 'static-boss',

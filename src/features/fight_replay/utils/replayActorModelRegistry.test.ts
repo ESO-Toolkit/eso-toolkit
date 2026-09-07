@@ -153,19 +153,13 @@ describe('resolveReplayActorModel', () => {
     );
   });
 
-  it("gives both Half-Giants the giant stand-in, sized apart from Captain Vrol's own entry", () => {
-    const bulwark = resolveReplayActorModel(actor('enemy', 'Half-Giant Bulwark'), 'prototype');
-    const raider = resolveReplayActorModel(actor('enemy', 'Half-Giant Raider'), 'prototype');
-    expect(bulwark?.id).toBe('half-giant-standin-overview-v1');
-    expect(raider?.id).toBe('half-giant-standin-overview-v1');
-    const vrol = resolveReplayActorModel(actor('boss', 'Captain Vrol'), 'prototype');
-    // Same GLB, deliberately NOT the same catalog entry: the trash renders smaller than the boss.
-    expect((bulwark as StaticReplayActorModelAsset).path).toBe(
-      (vrol as StaticReplayActorModelAsset).path,
-    );
-    expect((bulwark as StaticReplayActorModelAsset).transform.scale).toBeLessThan(
-      (vrol as StaticReplayActorModelAsset).transform.scale,
-    );
+  it('keeps both Half-Giants on the capsule rather than lending them a Sea Giant body', () => {
+    // Captain Vrol's post puts the Half-Giants in his force but distinguishes them FROM Sea
+    // Giants, and the UESP research in the asset manifest lists them as Nords on the standard
+    // character rig. Vrol's body is therefore a lookalike, not a match, and the catalog's rule
+    // is that a wrong body misleads more than an abstract marker does.
+    expect(resolveReplayActorModel(actor('enemy', 'Half-Giant Bulwark'), 'prototype')).toBeNull();
+    expect(resolveReplayActorModel(actor('enemy', 'Half-Giant Raider'), 'prototype')).toBeNull();
   });
 
   it('gives both Sanctum Ophidia trolls the Craglorn troll body, smaller than Stonebreaker', () => {

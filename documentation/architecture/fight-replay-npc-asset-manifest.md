@@ -67,11 +67,10 @@ Extracted client assets (see the licensing posture above — **not reconstructio
 Two kinds of reuse exist, and they are not the same thing. Neither adds a row above, because neither
 adds a GLB.
 
-| Registry entry                     | GLB it reuses                  | Serves                                | Kind                                    |
-| ---------------------------------- | ------------------------------ | ------------------------------------- | --------------------------------------- |
-| `the-serpent-overview-v1` (alias)  | `the-serpent-overview-v1.glb`  | The Serpent's Image                   | **Faithful** — same creature, same size |
-| `craglorn-troll-trash-overview-v1` | `stonebreaker-overview-v1.glb` | Rockheaver Troll, Berserker Troll     | **Species match, wrong tier** — 0.85x   |
-| `half-giant-standin-overview-v1`   | `captain-vrol-overview-v2.glb` | Half-Giant Bulwark, Half-Giant Raider | **Stand-in** — approximate, see below   |
+| Registry entry                     | GLB it reuses                  | Serves                            | Kind                                    |
+| ---------------------------------- | ------------------------------ | --------------------------------- | --------------------------------------- |
+| `the-serpent-overview-v1` (alias)  | `the-serpent-overview-v1.glb`  | The Serpent's Image               | **Faithful** — same creature, same size |
+| `craglorn-troll-trash-overview-v1` | `stonebreaker-overview-v1.glb` | Rockheaver Troll, Berserker Troll | **Species match, wrong tier** — 0.85x   |
 
 A pure alias (row 1) is added to an existing entry's `aliases`. A reuse that needs its own scale
 (rows 2-3) must be a **separate catalog entry pointing at the same `path`**, because `transform` is
@@ -119,17 +118,17 @@ added ahead of the GLB it names.
 
 Names below are verified against `src/types/trial-encounters.ts` (the curated encounter table).
 
-| Encounter                  | Name               | Status                                                       |
-| -------------------------- | ------------------ | ------------------------------------------------------------ |
-| `boss_1`                   | Yandir the Butcher | **Shipped**                                                  |
-| `boss_2`                   | Captain Vrol       | **Shipped**                                                  |
-| `boss_3`                   | Lord Falgravn      | **Shipped** — the trial is complete (below)                  |
-| `trash_half_giant_bulwark` | Half-Giant Bulwark | **Stand-in 2026-09-07** — reuses Vrol's GLB at 0.85x (below) |
-| `trash_half_giant_raider`  | Half-Giant Raider  | **Stand-in 2026-09-07** — reuses Vrol's GLB at 0.85x (below) |
-| `trash_vampire_infuser`    | Vampire Infuser    | Deferred — ordinary humanoid, no bespoke model needed        |
-| `trash_crimson_knight`     | Crimson Knight     | Blocked on renderer — Bloodknight family recolor             |
-| `trash_bitter_knight`      | Bitter Knight      | Blocked on renderer + unverified tint                        |
-| `trash_blood_knight`       | Blood Knight       | Blocked on renderer — references secured                     |
+| Encounter                  | Name               | Status                                                         |
+| -------------------------- | ------------------ | -------------------------------------------------------------- |
+| `boss_1`                   | Yandir the Butcher | **Shipped**                                                    |
+| `boss_2`                   | Captain Vrol       | **Shipped**                                                    |
+| `boss_3`                   | Lord Falgravn      | **Shipped** — the trial is complete (below)                    |
+| `trash_half_giant_bulwark` | Half-Giant Bulwark | Capsule — ordinary Nord humanoid, deliberately not substituted |
+| `trash_half_giant_raider`  | Half-Giant Raider  | Capsule — ordinary Nord humanoid, deliberately not substituted |
+| `trash_vampire_infuser`    | Vampire Infuser    | Deferred — ordinary humanoid, no bespoke model needed          |
+| `trash_crimson_knight`     | Crimson Knight     | Blocked on renderer — Bloodknight family recolor               |
+| `trash_bitter_knight`      | Bitter Knight      | Blocked on renderer + unverified tint                          |
+| `trash_blood_knight`       | Blood Knight       | Blocked on renderer — references secured                       |
 
 ### Lord Falgravn — shipped, and the blocker was a search bug
 
@@ -212,16 +211,23 @@ Sea Giant / **Nord** and the Vampire Infuser as **Nord**; in-game screenshots sh
 figures on the standard character rig (Bulwark: mace and round shield; Raider: spiked helm and
 greatsword; Infuser: a robed caster). They do not warrant bespoke reconstructions.
 
-**The Half-Giants now render as a stand-in on Captain Vrol's GLB (2026-09-07), and the honest
-reading is that this is approximate.** Vrol's reference post names "the Sea Giant and Half-Giant
-force that invaded Kyne's Aegis", which is what makes his body the nearest thing shipped — but the
-same sentence distinguishes Half-Giants from Sea Giants, and the UESP finding above says they are
-Nords on the standard rig. So `half-giant-standin-overview-v1` is a large armoured humanoid
-standing in for a big Nord, **not** a likeness of either the creature or of Captain Vrol. It is a
-separate catalog entry over the same GLB so it can carry its own scale: Vrol's post measures him at
-2.42 m, and 0.85x of that (`scale: 1.0625`) lands near 2.06 m, roughly a very large Nord. Replace
-it the moment either name is actually modelled. The Vampire Infuser is deliberately **not**
-included — a robed caster on a Sea Giant body would be a worse depiction than the capsule.
+**A Half-Giant stand-in on Captain Vrol's GLB was built on 2026-09-07 and then withdrawn the same
+day.** It is recorded here because the reasoning is the rule, not the exception. Vrol's reference
+post names "the Sea Giant and Half-Giant force that invaded Kyne's Aegis", which made his the
+nearest body shipped — but that same sentence _distinguishes_ Half-Giants from Sea Giants, and the
+UESP finding above puts them on the standard Nord rig. So the substitution would have put a Sea
+Giant in horned armour on a big Nord: a lookalike, not a match.
+
+That is precisely what the "Unknown actors" rule below forbids — **a wrong body misleads more than
+an abstract one**. The stand-in was well documented and honestly labelled, and it was still the
+wrong call, because a reader of the replay does not see the documentation. Both names keep the
+capsule. The Vampire Infuser was never included for the same reason: a robed caster on a Sea Giant
+body is a worse depiction than the marker.
+
+The reuses that _did_ ship in that pass are the ones where the body is genuinely right: The
+Serpent's Image is the Celestial Serpent's own duplicate, and the Rockheaver and Berserker Trolls
+share ESO's own `Troll_Craglorn_Boss` mesh with Stonebreaker, rendered at 0.85x because that asset
+is the boss-tier variant.
 
 **The renderer blocker is cleared.** `InstancedReplayFigures3D` used to drive exactly one
 non-instanced `<primitive>` per fight, with the resolver taking only the **first** matching actor —
