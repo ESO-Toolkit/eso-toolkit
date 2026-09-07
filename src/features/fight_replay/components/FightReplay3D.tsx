@@ -13,6 +13,7 @@ import { useScrubbingMode } from '@/hooks/useScrubbingMode';
 import { FightFragment } from '../../../graphql/gql/graphql';
 import { usePerfTier } from '../../../hooks/usePerfTier';
 import { usePhaseBasedMap } from '../../../hooks/usePhaseBasedMap';
+import { useReportData } from '../../../hooks/useReportData';
 import { useReplayPrefs, type ReplayQualityPreset } from '../../../hooks/useReplayPrefs';
 import { useTimelineMarkers } from '../../../hooks/useTimelineMarkers';
 import { BuffEvent } from '../../../types/combatlogEvents';
@@ -358,10 +359,14 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
     };
   }, [selectedFight.name, selectedFight.difficulty, selectedFight.kill]);
 
-  // Map timeline for debug information and phase-aware map changes
+  // Map timeline for debug information and phase-aware map changes. The report's other fights are
+  // supplied so a trash pull — which ESO Logs ships with no `maps` at all — can inherit the floor
+  // map from a boss fight in the same zone instead of rendering a blank plane.
+  const { reportData } = useReportData();
   const { mapTimeline } = usePhaseBasedMap({
     fight: selectedFight || null,
     buffEvents: allBuffEvents.length > 0 ? allBuffEvents : null,
+    reportFights: reportData?.fights ?? null,
   });
 
   // Parse URL parameters for timestamp initialization

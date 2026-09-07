@@ -187,16 +187,19 @@ export function generateFallbackTexture(): THREE.CanvasTexture {
 }
 
 /**
- * Deliberate floor texture for a fight that ESO Logs ships NO map for — every trash pull
- * (`encounterID === 0`: dungeon/trial trash, Cyrodiil/PvP) has an empty `fight.maps`, so the floor
- * would otherwise be a bare dark plane that reads as broken ("the map is gone, just a grid"). This is
- * NOT the load-error grid (that's `generateFallbackTexture`, a harsh white-on-grey grid for the rarer
- * "a map exists but failed to fetch" case). Here there is no geography to depict, so we render an
- * intentional, calm tactical surface: a soft slate radial vignette in the scene's grid palette
- * (cell #3f4654 / section #566173), letting the arena `<Grid>` overlay read as the spatial reference
- * on top. Crucially it makes NO geographic claim, so actors sit at correct relative positions with
- * zero misregistration risk — the honest choice over deriving a zone map (which could land actors on
- * the wrong spot, and on a huge zone like Cyrodiil would shrink the fight to an unreadable speck).
+ * Deliberate floor texture for a fight with no map to show — a bare dark plane reads as broken
+ * ("the map is gone, just a grid"). This is NOT the load-error grid (that's
+ * `generateFallbackTexture`, a harsh white-on-grey grid for the rarer "a map exists but failed to
+ * fetch" case). Here there is no geography to depict, so we render an intentional, calm tactical
+ * surface: a soft slate radial vignette in the scene's grid palette (cell #3f4654 / section
+ * #566173), letting the arena `<Grid>` overlay read as the spatial reference on top. It makes NO
+ * geographic claim, so actors sit at correct relative positions with zero misregistration risk.
+ *
+ * Scope: ESO Logs ships no `maps` for any trash pull (`encounterID === 0`), but inside a dungeon or
+ * trial those pulls now BORROW the map from a boss fight in the same zone
+ * (`resolveInheritedFightMaps`), which is coordinate-safe because actor positions never derive from
+ * the map. What is left for this texture is a report where nothing has a map at all — Cyrodiil/PvP
+ * and overland — where a zone map would shrink the fight to an unreadable speck anyway.
  *
  * Same jsdom guard as `generateFallbackTexture`: returns a valid CanvasTexture even with no 2D context.
  */
