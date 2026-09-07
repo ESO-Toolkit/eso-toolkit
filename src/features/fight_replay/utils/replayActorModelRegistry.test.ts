@@ -99,14 +99,21 @@ describe('resolveReplayActorModel', () => {
     expect(resolveReplayActorModel(actor('enemy', 'captain vrol #3'), 'prototype')?.id).toBe(
       'captain-vrol-overview-v2',
     );
+    expect(resolveReplayActorModel(actor('boss', 'Lord Falgravn'), 'prototype')?.id).toBe(
+      'lord-falgravn-overview-v1',
+    );
   });
 
   it('falls back to the capsule for unrecognized hostiles instead of substituting another model', () => {
     expect(resolveReplayActorModel(actor('enemy', 'Unmodelled Trash Mob'), 'prototype')).toBeNull();
-    // Falgravn has no shipped asset yet: he must stay on the capsule, never borrow Vrol's body.
-    expect(resolveReplayActorModel(actor('boss', 'Lord Falgravn'), 'prototype')).toBeNull();
+    // Kazpian has no reference imagery anywhere, so he is the durable stand-in for an unmodelled
+    // boss. This slot previously held Falgravn, who now ships - if Kazpian is ever built, move
+    // this to another unmodelled boss rather than deleting the assertion.
+    expect(resolveReplayActorModel(actor('boss', 'Overfiend Kazpian'), 'prototype')).toBeNull();
     expect(resolveReplayActorModel(actor('enemy', 'Half-Giant Raider'), 'prototype')).toBeNull();
+    // A partial name must never borrow the full-name asset's body.
     expect(resolveReplayActorModel(actor('boss', 'Vrol'), 'prototype')).toBeNull();
+    expect(resolveReplayActorModel(actor('boss', 'Falgravn the Lesser'), 'prototype')).toBeNull();
   });
 
   it('keeps friendly npcs and pets on the capsule', () => {
