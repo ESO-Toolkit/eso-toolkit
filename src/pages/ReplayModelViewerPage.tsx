@@ -165,9 +165,11 @@ export function ReplayModelViewerPage(): React.ReactElement {
       <p style={{ opacity: 0.75, marginTop: 0 }}>
         Review-only, rendered through the same material setup the fight replay uses. Most of these
         are project-authorized fan reconstructions built from published reference screenshots; the
-        last four (Stonebreaker, Possessed Mantikora, Foundation Stone Atronach and the Cloudrest
-        gryphon) are ESO client assets shipped verbatim, whose redistribution has not been cleared.
-        See each asset&rsquo;s README and the NPC asset manifest.
+        last five (Stonebreaker, the Craglorn trolls, Possessed Mantikora, Foundation Stone Atronach
+        and the Cloudrest gryphon) are ESO client assets shipped verbatim, whose redistribution has
+        not been cleared. Two entries render a GLB that another entry also uses, at their own scale
+        &mdash; the Craglorn trolls reuse Stonebreaker&rsquo;s body, and the Half-Giant stand-in
+        reuses Captain Vrol&rsquo;s. See each asset&rsquo;s README and the NPC asset manifest.
       </p>
 
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', margin: '16px 0' }}>

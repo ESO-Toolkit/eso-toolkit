@@ -1,3 +1,6 @@
+import { existsSync } from 'fs';
+import { join } from 'path';
+
 import type { ActorPosition } from '../../../workers/calculations/CalculateActorPositions';
 
 import {
@@ -129,10 +132,74 @@ describe('resolveReplayActorModel', () => {
     // boss. This slot previously held Falgravn, who now ships - if Kazpian is ever built, move
     // this to another unmodelled boss rather than deleting the assertion.
     expect(resolveReplayActorModel(actor('boss', 'Overfiend Kazpian'), 'prototype')).toBeNull();
-    expect(resolveReplayActorModel(actor('enemy', 'Half-Giant Raider'), 'prototype')).toBeNull();
     // A partial name must never borrow the full-name asset's body.
     expect(resolveReplayActorModel(actor('boss', 'Vrol'), 'prototype')).toBeNull();
     expect(resolveReplayActorModel(actor('boss', 'Falgravn the Lesser'), 'prototype')).toBeNull();
+  });
+
+  // Lesser enemies that reuse an already-shipped GLB. Names below are copied verbatim from
+  // `src/types/trial-encounters.ts`; matching is exact, so a typo fails silently to a capsule.
+  it("gives The Serpent's Image the Celestial Serpent's own asset", () => {
+    // Not a lookalike — the Image IS the Serpent's duplicate, so this is a faithful reuse.
+    expect(resolveReplayActorModel(actor('enemy', "The Serpent's Image"), 'prototype')?.id).toBe(
+      'the-serpent-overview-v1',
+    );
+    // Typographic apostrophe and the ESO Logs instance suffix both fold into the same alias.
+    expect(resolveReplayActorModel(actor('boss', 'The Serpent’s Image #2'), 'prototype')?.id).toBe(
+      'the-serpent-overview-v1',
+    );
+    expect(resolveReplayActorModel(actor('boss', 'The Serpent'), 'prototype')?.id).toBe(
+      'the-serpent-overview-v1',
+    );
+  });
+
+  it("gives both Half-Giants the giant stand-in, sized apart from Captain Vrol's own entry", () => {
+    const bulwark = resolveReplayActorModel(actor('enemy', 'Half-Giant Bulwark'), 'prototype');
+    const raider = resolveReplayActorModel(actor('enemy', 'Half-Giant Raider'), 'prototype');
+    expect(bulwark?.id).toBe('half-giant-standin-overview-v1');
+    expect(raider?.id).toBe('half-giant-standin-overview-v1');
+    const vrol = resolveReplayActorModel(actor('boss', 'Captain Vrol'), 'prototype');
+    // Same GLB, deliberately NOT the same catalog entry: the trash renders smaller than the boss.
+    expect((bulwark as StaticReplayActorModelAsset).path).toBe(
+      (vrol as StaticReplayActorModelAsset).path,
+    );
+    expect((bulwark as StaticReplayActorModelAsset).transform.scale).toBeLessThan(
+      (vrol as StaticReplayActorModelAsset).transform.scale,
+    );
+  });
+
+  it('gives both Sanctum Ophidia trolls the Craglorn troll body, smaller than Stonebreaker', () => {
+    const rockheaver = resolveReplayActorModel(actor('enemy', 'Rockheaver Troll'), 'prototype');
+    const berserker = resolveReplayActorModel(actor('enemy', 'Berserker Troll'), 'prototype');
+    expect(rockheaver?.id).toBe('craglorn-troll-trash-overview-v1');
+    expect(berserker?.id).toBe('craglorn-troll-trash-overview-v1');
+    const stonebreaker = resolveReplayActorModel(actor('boss', 'Stonebreaker'), 'prototype');
+    expect((rockheaver as StaticReplayActorModelAsset).path).toBe(
+      (stonebreaker as StaticReplayActorModelAsset).path,
+    );
+    expect((rockheaver as StaticReplayActorModelAsset).transform.scale).toBeLessThan(
+      (stonebreaker as StaticReplayActorModelAsset).transform.scale,
+    );
+  });
+
+  it('never lets a near-miss name borrow one of the reused bodies', () => {
+    // The whole point of the registry is that it does not partial-match or substitute a lookalike.
+    // Every name below is a plausible neighbour of a name that DOES resolve above.
+    [
+      'Serpent',
+      "The Serpent's Shadow",
+      'Image of the Serpent',
+      'Half-Giant',
+      'Half-Giant Raider Captain',
+      'Giant',
+      'Troll',
+      'Rockheaver',
+      'Frost Troll',
+      'Berserker',
+      'Berserker Trolls',
+    ].forEach((name) => {
+      expect(resolveReplayActorModel(actor('enemy', name), 'prototype')).toBeNull();
+    });
   });
 
   it('keeps friendly npcs and pets on the capsule', () => {
@@ -169,6 +236,17 @@ describe('registry catalog integrity', () => {
         expect(seen.has(alias)).toBe(false);
         seen.add(alias);
       }
+    }
+  });
+
+  // Two entries MAY share one GLB — that is how a lesser enemy reuses a shipped body while
+  // keeping its own transform — but the shared path still has to exist. A registry entry pointing
+  // at a file that was never built fails silently: the loader errors and the actor keeps the
+  // capsule, which is indistinguishable from "this NPC has no model".
+  it('points every entry at a GLB that is actually on disk', () => {
+    for (const asset of STATIC_REPLAY_ACTOR_MODEL_ASSETS) {
+      expect(existsSync(join(process.cwd(), 'public', asset.path))).toBe(true);
+      expect(existsSync(join(process.cwd(), asset.provenance.attributionFile))).toBe(true);
     }
   });
 

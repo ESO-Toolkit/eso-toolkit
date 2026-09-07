@@ -62,6 +62,25 @@ Extracted client assets (see the licensing posture above — **not reconstructio
 | `foundation-stone-atronach-overview-v1.glb` | Foundation Stone Atronach        | `static-boss` |  6,884 |  3,906 |         1 | 1024px JPEG |   519,364 | `public/models/bosses/StoneAtronach_B_Boss.glb` |
 | `cloudrest-gryphon-overview-v1.glb`         | Falarielle / Silaeda / Belanaril | `static-boss` | 37,104 | 27,650 |         1 | 1024px JPEG | 1,578,084 | `public/models/bosses/Gryphon_A_Boss.glb`       |
 
+### Registry entries that ship no new bytes
+
+Two kinds of reuse exist, and they are not the same thing. Neither adds a row above, because neither
+adds a GLB.
+
+| Registry entry                     | GLB it reuses                  | Serves                                | Kind                                    |
+| ---------------------------------- | ------------------------------ | ------------------------------------- | --------------------------------------- |
+| `the-serpent-overview-v1` (alias)  | `the-serpent-overview-v1.glb`  | The Serpent's Image                   | **Faithful** — same creature, same size |
+| `craglorn-troll-trash-overview-v1` | `stonebreaker-overview-v1.glb` | Rockheaver Troll, Berserker Troll     | **Species match, wrong tier** — 0.85x   |
+| `half-giant-standin-overview-v1`   | `captain-vrol-overview-v2.glb` | Half-Giant Bulwark, Half-Giant Raider | **Stand-in** — approximate, see below   |
+
+A pure alias (row 1) is added to an existing entry's `aliases`. A reuse that needs its own scale
+(rows 2-3) must be a **separate catalog entry pointing at the same `path`**, because `transform` is
+per-asset. That costs one extra fetch of an already-cached URL and one extra `InstancedMesh`, and it
+is the only way to render a lesser enemy at a size that differs from the boss whose body it borrows.
+`resolveReplayModelUrl`, the catalog-integrity tests, and the instancing plan all handle shared
+paths; the tests additionally assert every catalog `path` exists on disk, so an entry can never be
+added ahead of the GLB it names.
+
 ### Runtime budgets
 
 - Lesser enemies: 5,000–12,000 triangles.
@@ -100,17 +119,17 @@ Extracted client assets (see the licensing posture above — **not reconstructio
 
 Names below are verified against `src/types/trial-encounters.ts` (the curated encounter table).
 
-| Encounter                  | Name               | Status                                                |
-| -------------------------- | ------------------ | ----------------------------------------------------- |
-| `boss_1`                   | Yandir the Butcher | **Shipped**                                           |
-| `boss_2`                   | Captain Vrol       | **Shipped**                                           |
-| `boss_3`                   | Lord Falgravn      | **Shipped** — the trial is complete (below)           |
-| `trash_half_giant_bulwark` | Half-Giant Bulwark | Deferred — ordinary humanoid, no bespoke model needed |
-| `trash_half_giant_raider`  | Half-Giant Raider  | Deferred — ordinary humanoid, no bespoke model needed |
-| `trash_vampire_infuser`    | Vampire Infuser    | Deferred — ordinary humanoid, no bespoke model needed |
-| `trash_crimson_knight`     | Crimson Knight     | Blocked on renderer — Bloodknight family recolor      |
-| `trash_bitter_knight`      | Bitter Knight      | Blocked on renderer + unverified tint                 |
-| `trash_blood_knight`       | Blood Knight       | Blocked on renderer — references secured              |
+| Encounter                  | Name               | Status                                                       |
+| -------------------------- | ------------------ | ------------------------------------------------------------ |
+| `boss_1`                   | Yandir the Butcher | **Shipped**                                                  |
+| `boss_2`                   | Captain Vrol       | **Shipped**                                                  |
+| `boss_3`                   | Lord Falgravn      | **Shipped** — the trial is complete (below)                  |
+| `trash_half_giant_bulwark` | Half-Giant Bulwark | **Stand-in 2026-09-07** — reuses Vrol's GLB at 0.85x (below) |
+| `trash_half_giant_raider`  | Half-Giant Raider  | **Stand-in 2026-09-07** — reuses Vrol's GLB at 0.85x (below) |
+| `trash_vampire_infuser`    | Vampire Infuser    | Deferred — ordinary humanoid, no bespoke model needed        |
+| `trash_crimson_knight`     | Crimson Knight     | Blocked on renderer — Bloodknight family recolor             |
+| `trash_bitter_knight`      | Bitter Knight      | Blocked on renderer + unverified tint                        |
+| `trash_blood_knight`       | Blood Knight       | Blocked on renderer — references secured                     |
 
 ### Lord Falgravn — shipped, and the blocker was a search bug
 
@@ -192,6 +211,17 @@ shared reconstruction plus per-variant recolors, not three separate models.
 Sea Giant / **Nord** and the Vampire Infuser as **Nord**; in-game screenshots show human-sized
 figures on the standard character rig (Bulwark: mace and round shield; Raider: spiked helm and
 greatsword; Infuser: a robed caster). They do not warrant bespoke reconstructions.
+
+**The Half-Giants now render as a stand-in on Captain Vrol's GLB (2026-09-07), and the honest
+reading is that this is approximate.** Vrol's reference post names "the Sea Giant and Half-Giant
+force that invaded Kyne's Aegis", which is what makes his body the nearest thing shipped — but the
+same sentence distinguishes Half-Giants from Sea Giants, and the UESP finding above says they are
+Nords on the standard rig. So `half-giant-standin-overview-v1` is a large armoured humanoid
+standing in for a big Nord, **not** a likeness of either the creature or of Captain Vrol. It is a
+separate catalog entry over the same GLB so it can carry its own scale: Vrol's post measures him at
+2.42 m, and 0.85x of that (`scale: 1.0625`) lands near 2.06 m, roughly a very large Nord. Replace
+it the moment either name is actually modelled. The Vampire Infuser is deliberately **not**
+included — a robed caster on a Sea Giant body would be a worse depiction than the capsule.
 
 **The renderer blocker is cleared.** `InstancedReplayFigures3D` used to drive exactly one
 non-instanced `<primitive>` per fight, with the resolver taking only the **first** matching actor —
@@ -422,6 +452,29 @@ Consequences worth carrying forward:
 | `boss_2`  | Stonebreaker        | **Shipped 2026-09-07** — extracted client asset, not a reconstruction |
 | `boss_3`  | Ozara               | Blocked — greyscale mask only, plates uncertain (see below)           |
 | `boss_4`  | The Serpent         | **Shipped** (reconstruction, hand-registered mask)                    |
+
+| Lesser enemy             | Name                | Status                                                                 |
+| ------------------------ | ------------------- | ---------------------------------------------------------------------- |
+| `mini_1`                 | The Serpent's Image | **Shipped 2026-09-07** — alias onto `the-serpent-overview-v1`          |
+| `trash_rockheaver_troll` | Rockheaver Troll    | **Shipped 2026-09-07** — Craglorn troll body at 0.85x (below); 3 slots |
+| `trash_berserker_troll`  | Berserker Troll     | **Shipped 2026-09-07** — Craglorn troll body at 0.85x (below)          |
+
+### Zero-art reuse — Sanctum Ophidia lesser enemies
+
+Three names, no new GLB, no pipeline run. Since PR #1519 the renderer loads **every** distinct
+registry asset a fight needs and draws one `InstancedMesh` per asset, so a lesser enemy can claim a
+body without stealing the boss' slot — which is exactly what would have happened before it.
+
+- **`The Serpent's Image` is a faithful reuse, not a stand-in.** The mini boss is the Celestial
+  Serpent's own duplicate, so it is a plain alias on `the-serpent-overview-v1` at the Serpent's own
+  scale — same creature, same size, one array entry.
+- **`Rockheaver Troll` / `Berserker Troll` are a species match at the wrong tier.**
+  `stonebreaker-overview-v1.glb` is ESO's `Troll_Craglorn_Boss` mesh with the game's own atlas, and
+  both trash names are Craglorn trolls, so the body is right. Stonebreaker is the **boss-tier**
+  variant, though, so a second catalog entry (`craglorn-troll-trash-overview-v1`) points at the same
+  GLB with `scale: 1.0625` (0.85x the boss) — otherwise the fight reads as three Stonebreakers.
+  No plate exists for either variant, so **no `aliasTints` is set**: the colour difference between
+  them is unmeasured and a guess would be less honest than shipping both as authored.
 
 **Stonebreaker had no reference plates anywhere, on any site.** The screenshot pipeline could never
 have built him at any quality. The extracted mesh was the only route to this encounter that will
