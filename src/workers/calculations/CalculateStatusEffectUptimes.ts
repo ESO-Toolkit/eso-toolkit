@@ -1,6 +1,6 @@
 import { KnownAbilities } from '../../types/abilities';
-import { BuffLookupData } from '../../utils/BuffLookupUtils';
-import { OnProgressCallback } from '../Utils';
+import type { BuffLookupData, BuffTimeInterval } from '../../utils/BuffLookupUtils';
+import type { OnProgressCallback } from '../Utils';
 
 import { getStatusEffectIcon, getStatusEffectName } from './statusEffectMetadata';
 
@@ -79,25 +79,79 @@ export interface StatusEffectUptimesByTarget {
   };
 }
 
+export type StatusEffectUptimesNoDataReason =
+  | 'missing-fight-start'
+  | 'missing-fight-end'
+  | 'non-finite-fight-start'
+  | 'non-finite-fight-end'
+  | 'invalid-fight-window';
+
+export interface StatusEffectUptimesSuccessResult {
+  status: 'ok';
+  data: StatusEffectUptimesByTarget[];
+}
+
+export interface StatusEffectUptimesNoDataResult {
+  status: 'no-data';
+  reason: StatusEffectUptimesNoDataReason;
+  data: [];
+}
+
+export type StatusEffectUptimesResult =
+  StatusEffectUptimesSuccessResult | StatusEffectUptimesNoDataResult;
+
+interface UptimeMetrics {
+  totalDuration: number;
+  uptime: number;
+  uptimePercentage: number;
+  applications: number;
+}
+
+type UptimeByTarget = Record<number, UptimeMetrics>;
+type UptimeByPlayer = Record<number, Record<number, UptimeMetrics>>;
+
+interface UptimeGroupKeys {
+  allPlayersTargetId: number;
+  playerId: number;
+  byPlayerTargetId: number;
+}
+
 /**
  * Calculate status effect uptimes segmented by target with averaging capability
  */
 export function calculateStatusEffectUptimes(
   data: StatusEffectUptimesCalculationTask,
   onProgress?: OnProgressCallback,
-): StatusEffectUptimesByTarget[] {
+): StatusEffectUptimesResult {
   const { debuffsLookup, hostileBuffsLookup, fightStartTime, fightEndTime, friendlyPlayerIds } =
     data;
 
-  if (!fightStartTime || !fightEndTime) {
-    return [];
+  if (typeof fightStartTime !== 'number') {
+    return { status: 'no-data', reason: 'missing-fight-start', data: [] };
   }
+  if (typeof fightEndTime !== 'number') {
+    return { status: 'no-data', reason: 'missing-fight-end', data: [] };
+  }
+  if (!Number.isFinite(fightStartTime)) {
+    return { status: 'no-data', reason: 'non-finite-fight-start', data: [] };
+  }
+  if (!Number.isFinite(fightEndTime)) {
+    return { status: 'no-data', reason: 'non-finite-fight-end', data: [] };
+  }
+  const fightDuration = fightEndTime - fightStartTime;
+  if (fightEndTime <= fightStartTime || !Number.isFinite(fightDuration) || fightDuration <= 0) {
+    return { status: 'no-data', reason: 'invalid-fight-window', data: [] };
+  }
+
+  const normalizedFightStartTime = normalizeZero(fightStartTime);
+  const normalizedFightEndTime = normalizeZero(fightEndTime);
 
   // Create a Set for O(1) friendly player lookups
   // This filters hostile buff intervals to only include players in the current fight
-  const friendlyPlayerSet = friendlyPlayerIds ? new Set(friendlyPlayerIds) : null;
+  const friendlyPlayerSet = friendlyPlayerIds
+    ? new Set(friendlyPlayerIds.filter(Number.isFinite))
+    : null;
 
-  const fightDuration = fightEndTime - fightStartTime;
   const results = new Map<string, StatusEffectUptimesByTarget>();
 
   // Report progress for debuff calculations
@@ -109,81 +163,17 @@ export function calculateStatusEffectUptimes(
     if (intervals && intervals.length > 0) {
       const abilityKey = abilityId.toString();
 
-      // Build both allPlayers (aggregated) and byPlayer (per-player) structures
-      const allPlayers: {
-        [targetId: number]: {
-          totalDuration: number;
-          uptime: number;
-          uptimePercentage: number;
-          applications: number;
-        };
-      } = {};
-
-      const byPlayer: {
-        [playerId: number]: {
-          [targetId: number]: {
-            totalDuration: number;
-            uptime: number;
-            uptimePercentage: number;
-            applications: number;
-          };
-        };
-      } = {};
-
-      for (const interval of intervals) {
-        // Clip interval to fight bounds
-        const clippedStart = Math.max(interval.start, fightStartTime);
-        const clippedEnd = Math.min(interval.end, fightEndTime);
-
-        if (clippedEnd > clippedStart) {
-          const duration = clippedEnd - clippedStart;
-          const playerId = interval.sourceID;
-          const targetId = interval.targetID;
-
-          // Update allPlayers (aggregated across all players)
-          if (!allPlayers[targetId]) {
-            allPlayers[targetId] = {
-              totalDuration: 0,
-              uptime: 0,
-              uptimePercentage: 0,
-              applications: 0,
-            };
-          }
-          allPlayers[targetId].totalDuration += duration;
-          allPlayers[targetId].uptime += duration / 1000;
-          allPlayers[targetId].applications += 1;
-
-          // Update byPlayer (per-player breakdown)
-          if (!byPlayer[playerId]) {
-            byPlayer[playerId] = {};
-          }
-          if (!byPlayer[playerId][targetId]) {
-            byPlayer[playerId][targetId] = {
-              totalDuration: 0,
-              uptime: 0,
-              uptimePercentage: 0,
-              applications: 0,
-            };
-          }
-          byPlayer[playerId][targetId].totalDuration += duration;
-          byPlayer[playerId][targetId].uptime += duration / 1000;
-          byPlayer[playerId][targetId].applications += 1;
-        }
-      }
-
-      // Calculate uptime percentages for allPlayers
-      for (const targetId in allPlayers) {
-        allPlayers[Number(targetId)].uptimePercentage =
-          (allPlayers[Number(targetId)].totalDuration / fightDuration) * 100;
-      }
-
-      // Calculate uptime percentages for each player's data
-      for (const playerId in byPlayer) {
-        for (const targetId in byPlayer[playerId]) {
-          byPlayer[playerId][Number(targetId)].uptimePercentage =
-            (byPlayer[playerId][Number(targetId)].totalDuration / fightDuration) * 100;
-        }
-      }
+      const { allPlayers, byPlayer } = calculateSegmentedUptimes(
+        intervals,
+        normalizedFightStartTime,
+        normalizedFightEndTime,
+        fightDuration,
+        (interval) => ({
+          allPlayersTargetId: interval.targetID,
+          playerId: interval.sourceID,
+          byPlayerTargetId: interval.targetID,
+        }),
+      );
 
       // Only create entry if we have data for at least one target
       if (Object.keys(allPlayers).length > 0) {
@@ -220,89 +210,20 @@ export function calculateStatusEffectUptimes(
     if (intervals && intervals.length > 0) {
       const abilityKey = abilityId.toString();
 
-      // Build both allPlayers (aggregated) and byPlayer (per-player) structures
-      const allPlayers: {
-        [targetId: number]: {
-          totalDuration: number;
-          uptime: number;
-          uptimePercentage: number;
-          applications: number;
-        };
-      } = {};
-
-      const byPlayer: {
-        [playerId: number]: {
-          [targetId: number]: {
-            totalDuration: number;
-            uptime: number;
-            uptimePercentage: number;
-            applications: number;
-          };
-        };
-      } = {};
-
-      for (const interval of intervals) {
-        // Clip interval to fight bounds
-        const clippedStart = Math.max(interval.start, fightStartTime);
-        const clippedEnd = Math.min(interval.end, fightEndTime);
-
-        if (clippedEnd > clippedStart) {
-          const duration = clippedEnd - clippedStart;
-          // For hostile buffs in tests, targetID represents the player receiving the buff
-          // and sourceID represents the enemy applying it (default to 1 in tests)
-          const playerId = interval.targetID;
-          const enemySourceId = interval.sourceID;
-
-          // Filter to only include players in the current fight
-          if (friendlyPlayerSet && !friendlyPlayerSet.has(playerId)) {
-            continue;
-          }
-
-          // Update allPlayers (aggregated across all players)
-          if (!allPlayers[playerId]) {
-            allPlayers[playerId] = {
-              totalDuration: 0,
-              uptime: 0,
-              uptimePercentage: 0,
-              applications: 0,
-            };
-          }
-          allPlayers[playerId].totalDuration += duration;
-          allPlayers[playerId].uptime += duration / 1000;
-          allPlayers[playerId].applications += 1;
-
-          // Update byPlayer (per-player breakdown, indexed by enemy source)
-          // This allows filtering by BOTH player AND enemy/boss
-          if (!byPlayer[playerId]) {
-            byPlayer[playerId] = {};
-          }
-          if (!byPlayer[playerId][enemySourceId]) {
-            byPlayer[playerId][enemySourceId] = {
-              totalDuration: 0,
-              uptime: 0,
-              uptimePercentage: 0,
-              applications: 0,
-            };
-          }
-          byPlayer[playerId][enemySourceId].totalDuration += duration;
-          byPlayer[playerId][enemySourceId].uptime += duration / 1000;
-          byPlayer[playerId][enemySourceId].applications += 1;
-        }
-      }
-
-      // Calculate uptime percentages for allPlayers
-      for (const targetId in allPlayers) {
-        allPlayers[Number(targetId)].uptimePercentage =
-          (allPlayers[Number(targetId)].totalDuration / fightDuration) * 100;
-      }
-
-      // Calculate uptime percentages for each player's data
-      for (const playerId in byPlayer) {
-        for (const targetId in byPlayer[playerId]) {
-          byPlayer[playerId][Number(targetId)].uptimePercentage =
-            (byPlayer[playerId][Number(targetId)].totalDuration / fightDuration) * 100;
-        }
-      }
+      const { allPlayers, byPlayer } = calculateSegmentedUptimes(
+        intervals,
+        normalizedFightStartTime,
+        normalizedFightEndTime,
+        fightDuration,
+        (interval) => ({
+          // For hostile buffs, targetID is the player receiving the effect and
+          // sourceID is the enemy applying it.
+          allPlayersTargetId: interval.targetID,
+          playerId: interval.targetID,
+          byPlayerTargetId: interval.sourceID,
+        }),
+        (interval) => !friendlyPlayerSet || friendlyPlayerSet.has(interval.targetID),
+      );
 
       // Only create entry if we have data for at least one target
       if (Object.keys(allPlayers).length > 0) {
@@ -331,5 +252,125 @@ export function calculateStatusEffectUptimes(
 
   onProgress?.(1);
 
-  return resultArray;
+  return { status: 'ok', data: resultArray };
+}
+
+function normalizeZero(value: number): number {
+  return Object.is(value, -0) ? 0 : value;
+}
+
+function calculateSegmentedUptimes(
+  intervals: readonly BuffTimeInterval[],
+  fightStartTime: number,
+  fightEndTime: number,
+  fightDuration: number,
+  getKeys: (interval: BuffTimeInterval) => UptimeGroupKeys,
+  includeInterval: (interval: BuffTimeInterval) => boolean = () => true,
+): { allPlayers: UptimeByTarget; byPlayer: UptimeByPlayer } {
+  const allPlayers: UptimeByTarget = {};
+  const byPlayer: UptimeByPlayer = {};
+  const allPlayerIntervals: Record<number, Array<{ start: number; end: number }>> = {};
+  const byPlayerIntervals: Record<
+    number,
+    Record<number, Array<{ start: number; end: number }>>
+  > = {};
+
+  for (const interval of intervals) {
+    if (
+      !includeInterval(interval) ||
+      !Number.isFinite(interval.start) ||
+      !Number.isFinite(interval.end)
+    ) {
+      continue;
+    }
+
+    const keys = getKeys(interval);
+    if (
+      !Number.isFinite(keys.allPlayersTargetId) ||
+      !Number.isFinite(keys.playerId) ||
+      !Number.isFinite(keys.byPlayerTargetId)
+    ) {
+      continue;
+    }
+
+    const start = Math.max(interval.start, fightStartTime);
+    const end = Math.min(interval.end, fightEndTime);
+    if (end <= start) {
+      continue;
+    }
+
+    const normalized = { start, end };
+    const allPlayersTarget = ensureMetrics(allPlayers, keys.allPlayersTargetId);
+    allPlayersTarget.applications += 1;
+    (allPlayerIntervals[keys.allPlayersTargetId] ??= []).push(normalized);
+
+    const byPlayerTargets = (byPlayer[keys.playerId] ??= {});
+    const byPlayerTarget = ensureMetrics(byPlayerTargets, keys.byPlayerTargetId);
+    byPlayerTarget.applications += 1;
+    ((byPlayerIntervals[keys.playerId] ??= {})[keys.byPlayerTargetId] ??= []).push(normalized);
+  }
+
+  for (const targetId of Object.keys(allPlayers)) {
+    setUnionedDuration(
+      allPlayers[Number(targetId)],
+      allPlayerIntervals[Number(targetId)],
+      fightDuration,
+    );
+  }
+  for (const playerId of Object.keys(byPlayer)) {
+    for (const targetId of Object.keys(byPlayer[Number(playerId)])) {
+      setUnionedDuration(
+        byPlayer[Number(playerId)][Number(targetId)],
+        byPlayerIntervals[Number(playerId)][Number(targetId)],
+        fightDuration,
+      );
+    }
+  }
+
+  return { allPlayers, byPlayer };
+}
+
+function ensureMetrics(metricsByTarget: UptimeByTarget, targetId: number): UptimeMetrics {
+  return (metricsByTarget[targetId] ??= {
+    totalDuration: 0,
+    uptime: 0,
+    uptimePercentage: 0,
+    applications: 0,
+  });
+}
+
+function setUnionedDuration(
+  metrics: UptimeMetrics,
+  intervals: Array<{ start: number; end: number }>,
+  fightDuration: number,
+): void {
+  const totalDuration = unionDuration(intervals);
+  metrics.totalDuration = totalDuration;
+  metrics.uptime = totalDuration / 1000;
+  metrics.uptimePercentage = (totalDuration / fightDuration) * 100;
+}
+
+function unionDuration(intervals: Array<{ start: number; end: number }>): number {
+  if (intervals.length === 0) {
+    return 0;
+  }
+
+  const sorted = [...intervals].sort((a, b) => a.start - b.start || a.end - b.end);
+  let totalDuration = 0;
+  let start = sorted[0].start;
+  let end = sorted[0].end;
+
+  for (let index = 1; index < sorted.length; index += 1) {
+    const interval = sorted[index];
+    if (interval.start <= end) {
+      end = Math.max(end, interval.end);
+      continue;
+    }
+
+    totalDuration += end - start;
+    start = interval.start;
+    end = interval.end;
+  }
+
+  return totalDuration + (end - start);
 }

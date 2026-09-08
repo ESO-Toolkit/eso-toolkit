@@ -13,6 +13,21 @@ export interface BuffLookupData {
   buffIntervals: { [key: string]: BuffTimeInterval[] };
 }
 
+interface LifecycleEvent {
+  abilityGameID: number;
+  sourceID: number;
+  targetID: number;
+  timestamp: number;
+  type: string;
+}
+
+interface ActiveEffect {
+  abilityGameID: number;
+  sourceID: number;
+  targetID: number;
+  startTime: number;
+}
+
 /**
  * Creates an efficient buff lookup data structure from a list of buff events.
  * Uses a Map with sorted time intervals for O(log n) lookup time per buff.
@@ -28,84 +43,12 @@ export interface BuffLookupData {
  * @returns BuffLookupData object containing the processed buff intervals
  */
 export function createBuffLookup(buffEvents: BuffEvent[], fightEndTime?: number): BuffLookupData {
-  // Map from abilityGameID to sorted array of active time intervals with target info
-  const buffIntervals = new Map<number, BuffTimeInterval[]>();
-
-  // Track active buffs and their start times per target
-  const activeBuffs = new Map<string, { startTime: number; sourceID: number }>(); // key: `${abilityGameID}_${targetID}`, value: {startTime, sourceID}
-
-  // Process events in chronological order
-  const sortedEvents = [...buffEvents].sort((a, b) => a.timestamp - b.timestamp);
-
-  for (const event of sortedEvents) {
-    const buffKey = `${event.abilityGameID}_${event.targetID}`;
-
-    if (event.type === 'applybuff' || event.type === 'applybuffstack') {
-      // Start tracking this buff instance if not already active
-      if (!activeBuffs.has(buffKey)) {
-        activeBuffs.set(buffKey, { startTime: event.timestamp, sourceID: event.sourceID });
-      }
-    } else if (event.type === 'removebuff') {
-      // End tracking this buff instance (removebuffstack does NOT end the buff)
-      const buffInfo = activeBuffs.get(buffKey);
-      if (buffInfo !== undefined) {
-        activeBuffs.delete(buffKey);
-
-        // Add completed interval to the map
-        if (!buffIntervals.has(event.abilityGameID)) {
-          buffIntervals.set(event.abilityGameID, []);
-        }
-
-        const intervals = buffIntervals.get(event.abilityGameID);
-        if (intervals) {
-          intervals.push({
-            start: buffInfo.startTime,
-            end: event.timestamp,
-            targetID: event.targetID,
-            sourceID: buffInfo.sourceID,
-          });
-        }
-      }
-    }
-    // Note: removebuffstack events are ignored - they don't end the buff
-  }
-
-  // Handle any remaining active buffs (they last until end of fight or indefinitely)
-  const endTime = fightEndTime ?? Number.MAX_SAFE_INTEGER; // Use max number if no end time
-  for (const [buffKey, buffInfo] of activeBuffs) {
-    const [abilityGameIDStr, targetIDStr] = buffKey.split('_');
-    const abilityGameID = parseInt(abilityGameIDStr, 10);
-    const targetID = parseInt(targetIDStr, 10);
-
-    if (!buffIntervals.has(abilityGameID)) {
-      buffIntervals.set(abilityGameID, []);
-    }
-
-    const intervals = buffIntervals.get(abilityGameID);
-    if (intervals) {
-      intervals.push({
-        start: buffInfo.startTime,
-        end: endTime,
-        targetID: targetID,
-        sourceID: buffInfo.sourceID,
-      });
-    }
-  }
-
-  // Sort intervals for each buff by start time for efficient binary search
-  for (const intervals of buffIntervals.values()) {
-    intervals.sort((a, b) => a.start - b.start);
-  }
-
-  // Convert Map to POJO for serialization
-  const buffIntervalsObj: { [key: string]: BuffTimeInterval[] } = {};
-  for (const [abilityGameID, intervals] of buffIntervals.entries()) {
-    buffIntervalsObj[abilityGameID.toString()] = intervals;
-  }
-
-  return {
-    buffIntervals: buffIntervalsObj,
-  };
+  return createLookupFromLifecycleEvents(
+    buffEvents,
+    fightEndTime,
+    ['applybuff', 'applybuffstack'],
+    'removebuff',
+  );
 }
 
 /**
@@ -133,7 +76,7 @@ export function isBuffActive(
 
   // Check if any interval contains the timestamp (regardless of target)
   return intervals.some(
-    (interval: BuffTimeInterval) => timestamp >= interval.start && timestamp <= interval.end,
+    (interval: BuffTimeInterval) => timestamp >= interval.start && timestamp < interval.end,
   );
 }
 
@@ -174,7 +117,7 @@ export function isBuffActiveOnTarget(
   // If no target specified, check if buff is active on any target at the timestamp
   if (targetID === undefined) {
     return intervals.some(
-      (interval: BuffTimeInterval) => timestamp >= interval.start && timestamp <= interval.end,
+      (interval: BuffTimeInterval) => timestamp >= interval.start && timestamp < interval.end,
     );
   }
 
@@ -186,7 +129,7 @@ export function isBuffActiveOnTarget(
   // over this ability id's intervals); behavior is identical.
   return intervals.some(
     (interval: BuffTimeInterval) =>
-      interval.targetID === targetID && timestamp >= interval.start && timestamp <= interval.end,
+      interval.targetID === targetID && timestamp >= interval.start && timestamp < interval.end,
   );
 }
 
@@ -211,82 +154,108 @@ export function createDebuffLookup(
   debuffEvents: DebuffEvent[],
   fightEndTime?: number,
 ): BuffLookupData {
-  // Map from abilityGameID to sorted array of active time intervals with target info
-  const debuffIntervals = new Map<number, BuffTimeInterval[]>();
+  return createLookupFromLifecycleEvents(
+    debuffEvents,
+    fightEndTime,
+    ['applydebuff', 'applydebuffstack'],
+    'removedebuff',
+  );
+}
 
-  // Track active debuffs and their start times per target
-  const activeDebuffs = new Map<string, { startTime: number; sourceID: number }>(); // key: `${abilityGameID}_${targetID}`, value: {startTime, sourceID}
-
-  // Process events in chronological order
-  const sortedEvents = [...debuffEvents].sort((a, b) => a.timestamp - b.timestamp);
+function createLookupFromLifecycleEvents(
+  events: readonly LifecycleEvent[],
+  fightEndTime: number | undefined,
+  applyTypes: readonly string[],
+  removeType: string,
+): BuffLookupData {
+  const intervalsByAbility = new Map<number, BuffTimeInterval[]>();
+  const activeEffects = new Map<string, ActiveEffect>();
+  const endTime =
+    typeof fightEndTime === 'number' && Number.isFinite(fightEndTime)
+      ? normalizeZero(fightEndTime)
+      : Number.MAX_SAFE_INTEGER;
+  const sortedEvents = events
+    .filter(isFiniteLifecycleEvent)
+    .map(normalizeLifecycleEvent)
+    .sort((first, second) => first.timestamp - second.timestamp);
 
   for (const event of sortedEvents) {
-    const debuffKey = `${event.abilityGameID}_${event.targetID}`;
+    const effectKey = `${event.abilityGameID}_${event.targetID}`;
 
-    if (event.type === 'applydebuff' || event.type === 'applydebuffstack') {
-      // Start tracking this debuff instance if not already active
-      if (!activeDebuffs.has(debuffKey)) {
-        activeDebuffs.set(debuffKey, { startTime: event.timestamp, sourceID: event.sourceID });
+    if (applyTypes.includes(event.type)) {
+      if (!activeEffects.has(effectKey)) {
+        activeEffects.set(effectKey, {
+          abilityGameID: event.abilityGameID,
+          sourceID: event.sourceID,
+          targetID: event.targetID,
+          startTime: event.timestamp,
+        });
       }
-    } else if (event.type === 'removedebuff') {
-      // End tracking this debuff instance (removedebuffstack does NOT end the debuff)
-      const debuffInfo = activeDebuffs.get(debuffKey);
-      if (debuffInfo !== undefined) {
-        activeDebuffs.delete(debuffKey);
-
-        // Add completed interval to the map
-        if (!debuffIntervals.has(event.abilityGameID)) {
-          debuffIntervals.set(event.abilityGameID, []);
-        }
-
-        const intervals = debuffIntervals.get(event.abilityGameID);
-        if (intervals) {
-          intervals.push({
-            start: debuffInfo.startTime,
-            end: event.timestamp,
-            targetID: event.targetID,
-            sourceID: debuffInfo.sourceID,
-          });
-        }
-      }
-    }
-    // Note: removedebuffstack events are ignored - they don't end the debuff
-  }
-
-  // Handle any remaining active debuffs (they last until end of fight or indefinitely)
-  const endTime = fightEndTime ?? Number.MAX_SAFE_INTEGER; // Use max number if no end time
-  for (const [debuffKey, debuffInfo] of activeDebuffs) {
-    const [abilityGameIDStr, targetIDStr] = debuffKey.split('_');
-    const abilityGameID = parseInt(abilityGameIDStr, 10);
-    const targetID = parseInt(targetIDStr, 10);
-
-    if (!debuffIntervals.has(abilityGameID)) {
-      debuffIntervals.set(abilityGameID, []);
+      continue;
     }
 
-    const intervals = debuffIntervals.get(abilityGameID);
-    if (intervals) {
-      intervals.push({
-        start: debuffInfo.startTime,
-        end: endTime,
-        targetID: targetID,
-        sourceID: debuffInfo.sourceID,
-      });
+    if (event.type !== removeType) {
+      continue;
+    }
+
+    const activeEffect = activeEffects.get(effectKey);
+    if (activeEffect) {
+      activeEffects.delete(effectKey);
+      addInterval(intervalsByAbility, activeEffect, event.timestamp);
     }
   }
 
-  // Sort intervals for each debuff by start time for efficient binary search
-  for (const intervals of debuffIntervals.values()) {
-    intervals.sort((a, b) => a.start - b.start);
+  for (const activeEffect of activeEffects.values()) {
+    addInterval(intervalsByAbility, activeEffect, endTime);
   }
 
-  // Convert Map to POJO for serialization
-  const buffIntervalsObj: { [key: string]: BuffTimeInterval[] } = {};
-  for (const [abilityGameID, intervals] of debuffIntervals.entries()) {
-    buffIntervalsObj[abilityGameID.toString()] = intervals;
+  const buffIntervals: BuffLookupData['buffIntervals'] = {};
+  for (const [abilityGameID, intervals] of intervalsByAbility) {
+    intervals.sort((first, second) => first.start - second.start);
+    buffIntervals[abilityGameID.toString()] = intervals;
   }
 
+  return { buffIntervals };
+}
+
+function isFiniteLifecycleEvent(event: LifecycleEvent): boolean {
+  return (
+    Number.isFinite(event.abilityGameID) &&
+    Number.isFinite(event.sourceID) &&
+    Number.isFinite(event.targetID) &&
+    Number.isFinite(event.timestamp)
+  );
+}
+
+function normalizeLifecycleEvent(event: LifecycleEvent): LifecycleEvent {
   return {
-    buffIntervals: buffIntervalsObj, // Reusing the same interface for consistency
+    ...event,
+    abilityGameID: normalizeZero(event.abilityGameID),
+    sourceID: normalizeZero(event.sourceID),
+    targetID: normalizeZero(event.targetID),
+    timestamp: normalizeZero(event.timestamp),
   };
+}
+
+function normalizeZero(value: number): number {
+  return Object.is(value, -0) ? 0 : value;
+}
+
+function addInterval(
+  intervalsByAbility: Map<number, BuffTimeInterval[]>,
+  activeEffect: ActiveEffect,
+  endTime: number,
+): void {
+  if (!Number.isFinite(endTime) || endTime <= activeEffect.startTime) {
+    return;
+  }
+
+  const intervals = intervalsByAbility.get(activeEffect.abilityGameID) ?? [];
+  intervals.push({
+    start: activeEffect.startTime,
+    end: endTime,
+    targetID: activeEffect.targetID,
+    sourceID: activeEffect.sourceID,
+  });
+  intervalsByAbility.set(activeEffect.abilityGameID, intervals);
 }

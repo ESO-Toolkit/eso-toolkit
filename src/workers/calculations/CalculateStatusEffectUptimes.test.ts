@@ -1,6 +1,9 @@
 import { KnownAbilities } from '../../types/abilities';
 
-import { calculateStatusEffectUptimes } from './CalculateStatusEffectUptimes';
+import {
+  calculateStatusEffectUptimes,
+  type StatusEffectUptimesCalculationTask,
+} from './CalculateStatusEffectUptimes';
 
 describe('CalculateStatusEffectUptimes', () => {
   const FIGHT_START = 10000;
@@ -8,6 +11,16 @@ describe('CalculateStatusEffectUptimes', () => {
   const FIGHT_DURATION = FIGHT_END - FIGHT_START; // 20 seconds
   const TARGET_ID_1 = 200;
   const TARGET_ID_2 = 201;
+
+  const calculateOk = (
+    data: StatusEffectUptimesCalculationTask,
+    onProgress?: (progress: number) => void,
+  ) => {
+    const result = calculateStatusEffectUptimes(data, onProgress);
+    expect(result.status).toBe('ok');
+    if (result.status !== 'ok') throw new Error(`Expected ok result, received ${result.reason}`);
+    return result.data;
+  };
 
   const createMockBuffLookupData = (
     intervals: Record<
@@ -28,7 +41,7 @@ describe('CalculateStatusEffectUptimes', () => {
 
   describe('calculateStatusEffectUptimes', () => {
     it('should return empty results when no status effects are present', () => {
-      const result = calculateStatusEffectUptimes({
+      const result = calculateOk({
         debuffsLookup: createMockBuffLookupData({}),
         hostileBuffsLookup: createMockBuffLookupData({}),
         fightStartTime: FIGHT_START,
@@ -48,7 +61,7 @@ describe('CalculateStatusEffectUptimes', () => {
         hostileBuffsLookup: createMockBuffLookupData({}),
       });
 
-      expect(result).toEqual([]);
+      expect(result).toEqual({ status: 'no-data', reason: 'missing-fight-start', data: [] });
     });
 
     describe('Target Segmentation', () => {
@@ -59,7 +72,7 @@ describe('CalculateStatusEffectUptimes', () => {
           ],
         });
 
-        const result = calculateStatusEffectUptimes({
+        const result = calculateOk({
           debuffsLookup,
           hostileBuffsLookup: createMockBuffLookupData({}),
           fightStartTime: FIGHT_START,
@@ -99,7 +112,7 @@ describe('CalculateStatusEffectUptimes', () => {
           ],
         });
 
-        const result = calculateStatusEffectUptimes({
+        const result = calculateOk({
           debuffsLookup,
           hostileBuffsLookup: createMockBuffLookupData({}),
           fightStartTime: FIGHT_START,
@@ -138,7 +151,7 @@ describe('CalculateStatusEffectUptimes', () => {
           ],
         });
 
-        const result = calculateStatusEffectUptimes({
+        const result = calculateOk({
           debuffsLookup,
           hostileBuffsLookup: createMockBuffLookupData({}),
           fightStartTime: FIGHT_START,
@@ -166,7 +179,7 @@ describe('CalculateStatusEffectUptimes', () => {
           ],
         });
 
-        const result = calculateStatusEffectUptimes({
+        const result = calculateOk({
           debuffsLookup: createMockBuffLookupData({}),
           hostileBuffsLookup,
           fightStartTime: FIGHT_START,
@@ -215,7 +228,7 @@ describe('CalculateStatusEffectUptimes', () => {
           ],
         });
 
-        const result = calculateStatusEffectUptimes({
+        const result = calculateOk({
           debuffsLookup,
           hostileBuffsLookup,
           fightStartTime: FIGHT_START,
@@ -252,6 +265,72 @@ describe('CalculateStatusEffectUptimes', () => {
     });
 
     describe('Edge Cases', () => {
+      it('accepts timestamp zero and unions overlapping intervals before calculating uptime', () => {
+        const result = calculateOk({
+          debuffsLookup: createMockBuffLookupData({
+            [KnownAbilities.BURNING.toString()]: [
+              { start: -1000, end: 4000, targetID: TARGET_ID_1 },
+              { start: 2000, end: 8000, targetID: TARGET_ID_1 },
+              { start: 8000, end: 12000, targetID: TARGET_ID_1 },
+            ],
+          }),
+          hostileBuffsLookup: createMockBuffLookupData({}),
+          fightStartTime: 0,
+          fightEndTime: 10000,
+        });
+
+        const targetData = result[0].targetData![TARGET_ID_1];
+        expect(targetData.totalDuration).toBe(10000);
+        expect(targetData.uptimePercentage).toBe(100);
+        expect(targetData.applications).toBe(3);
+      });
+
+      it('rejects invalid fight windows and malformed intervals', () => {
+        const lookup = createMockBuffLookupData({
+          [KnownAbilities.BURNING.toString()]: [
+            { start: 0, end: 1000, targetID: TARGET_ID_1 },
+            { start: Number.NaN, end: 1000, targetID: TARGET_ID_1 },
+            { start: 0, end: Number.POSITIVE_INFINITY, targetID: TARGET_ID_1 },
+          ],
+        });
+
+        expect(
+          calculateStatusEffectUptimes({
+            debuffsLookup: lookup,
+            hostileBuffsLookup: createMockBuffLookupData({}),
+            fightStartTime: 1000,
+            fightEndTime: 0,
+          }),
+        ).toEqual({ status: 'no-data', reason: 'invalid-fight-window', data: [] });
+        expect(
+          calculateStatusEffectUptimes({
+            debuffsLookup: lookup,
+            hostileBuffsLookup: createMockBuffLookupData({}),
+            fightStartTime: Number.NEGATIVE_INFINITY,
+            fightEndTime: 1000,
+          }),
+        ).toEqual({ status: 'no-data', reason: 'non-finite-fight-start', data: [] });
+
+        const result = calculateOk({
+          debuffsLookup: lookup,
+          hostileBuffsLookup: createMockBuffLookupData({}),
+          fightStartTime: 0,
+          fightEndTime: 2000,
+        });
+        expect(result[0].targetData![TARGET_ID_1].totalDuration).toBe(1000);
+      });
+
+      it('returns typed no-data when finite endpoints overflow the derived fight duration', () => {
+        const result = calculateStatusEffectUptimes({
+          debuffsLookup: createMockBuffLookupData({}),
+          hostileBuffsLookup: createMockBuffLookupData({}),
+          fightStartTime: -1e308,
+          fightEndTime: 1e308,
+        });
+
+        expect(result).toEqual({ status: 'no-data', reason: 'invalid-fight-window', data: [] });
+      });
+
       it('should handle intervals extending beyond fight bounds', () => {
         const debuffsLookup = createMockBuffLookupData({
           [KnownAbilities.BURNING.toString()]: [
@@ -266,7 +345,7 @@ describe('CalculateStatusEffectUptimes', () => {
           ],
         });
 
-        const result = calculateStatusEffectUptimes({
+        const result = calculateOk({
           debuffsLookup,
           hostileBuffsLookup: createMockBuffLookupData({}),
           fightStartTime: FIGHT_START,
@@ -314,7 +393,7 @@ describe('CalculateStatusEffectUptimes', () => {
           ],
         });
 
-        const result = calculateStatusEffectUptimes({
+        const result = calculateOk({
           debuffsLookup,
           hostileBuffsLookup,
           fightStartTime: FIGHT_START,
@@ -335,7 +414,7 @@ describe('CalculateStatusEffectUptimes', () => {
           [KnownAbilities.BURNING.toString()]: [], // Empty intervals array
         });
 
-        const result = calculateStatusEffectUptimes({
+        const result = calculateOk({
           debuffsLookup,
           hostileBuffsLookup: createMockBuffLookupData({}),
           fightStartTime: FIGHT_START,
@@ -353,7 +432,7 @@ describe('CalculateStatusEffectUptimes', () => {
           ],
         });
 
-        const result = calculateStatusEffectUptimes({
+        const result = calculateOk({
           debuffsLookup,
           hostileBuffsLookup: createMockBuffLookupData({}),
           fightStartTime: FIGHT_START,
@@ -389,7 +468,7 @@ describe('CalculateStatusEffectUptimes', () => {
           ],
         });
 
-        const result = calculateStatusEffectUptimes({
+        const result = calculateOk({
           debuffsLookup,
           hostileBuffsLookup: createMockBuffLookupData({}),
           fightStartTime: FIGHT_START,
@@ -422,7 +501,7 @@ describe('CalculateStatusEffectUptimes', () => {
           ],
         });
 
-        const result = calculateStatusEffectUptimes({
+        const result = calculateOk({
           debuffsLookup,
           hostileBuffsLookup,
           fightStartTime: FIGHT_START,

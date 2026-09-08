@@ -1,9 +1,7 @@
 import { createMockDamageEvent } from '../../test/utils/combatLogMockFactories';
 
-import {
-  calculateDamageOverTimeData,
-  DamageOverTimeCalculationTask,
-} from './CalculateDamageOverTime';
+import { calculateDamageOverTimeData } from './CalculateDamageOverTime';
+import type { DamageOverTimeCalculationTask } from './CalculateDamageOverTime';
 
 describe('CalculateDamageOverTime', () => {
   const FIGHT_START = 1000000;
@@ -73,6 +71,7 @@ describe('CalculateDamageOverTime', () => {
 
     // Verify basic structure
     expect(result).toBeDefined();
+    expect(result.status).toBe('ok');
     expect(result.fightStartTime).toBe(FIGHT_START);
     expect(result.fightEndTime).toBe(FIGHT_END);
     expect(result.fightDuration).toBe(30000); // 30 seconds
@@ -123,6 +122,7 @@ describe('CalculateDamageOverTime', () => {
     const result = calculateDamageOverTimeData(task);
 
     expect(result).toBeDefined();
+    expect(result.status).toBe('ok');
     expect(Object.keys(result.byTarget)).toHaveLength(0);
     expect(Object.keys(result.allTargets)).toHaveLength(0);
   });
@@ -178,7 +178,7 @@ describe('CalculateDamageOverTime', () => {
         sourceIsFriendly: true,
         targetIsFriendly: false,
       }),
-      // Before the fight window -> excluded from buckets (matched no bucket)
+      // Before the fight window -> excluded from buckets, groups, and event counts
       createMockDamageEvent({
         timestamp: FIGHT_START - 5,
         sourceID: PLAYER_ID_1,
@@ -187,11 +187,11 @@ describe('CalculateDamageOverTime', () => {
         sourceIsFriendly: true,
         targetIsFriendly: false,
       }),
-      // Exactly at fight end -> excluded (last bucket end is exclusive)
+      // Exactly at fight end -> excluded (last bucket end is exclusive), including its target group
       createMockDamageEvent({
         timestamp: FIGHT_END,
         sourceID: PLAYER_ID_1,
-        targetID: TARGET_ID_1,
+        targetID: TARGET_ID_2,
         amount: 777,
         sourceIsFriendly: true,
         targetIsFriendly: false,
@@ -210,14 +210,120 @@ describe('CalculateDamageOverTime', () => {
     expect(p1t1.dataPoints[10].damage).toBe(500);
     expect(p1t1.dataPoints[10].eventCount).toBe(1);
     expect(p1t1.totalDamage).toBe(500);
-    // totalEvents counts all of the player's events (matches prior behavior).
-    expect(p1t1.totalEvents).toBe(3);
+    expect(p1t1.totalEvents).toBe(1);
+    expect(result.byTarget[TARGET_ID_2]).toBeUndefined();
+    expect(result.allTargets[PLAYER_ID_1].totalEvents).toBe(1);
 
     // Player 2 has no events but is in the players record -> all-zero buckets.
     const p2t1 = result.byTarget[TARGET_ID_1][PLAYER_ID_2];
     expect(p2t1.totalDamage).toBe(0);
     expect(p2t1.dataPoints).toHaveLength(30);
     expect(p2t1.dataPoints.every((d) => d.damage === 0 && d.eventCount === 0)).toBe(true);
+  });
+
+  it('accepts timestamp zero and treats the fight end as exclusive', () => {
+    const result = calculateDamageOverTimeData({
+      fight: { startTime: 0, endTime: 2000 },
+      players: mockPlayers,
+      damageEvents: [
+        createMockDamageEvent({
+          timestamp: 0,
+          sourceID: PLAYER_ID_1,
+          targetID: TARGET_ID_1,
+          amount: 100,
+          sourceIsFriendly: true,
+          targetIsFriendly: false,
+        }),
+        createMockDamageEvent({
+          timestamp: 2000,
+          sourceID: PLAYER_ID_1,
+          targetID: TARGET_ID_1,
+          amount: 999,
+          sourceIsFriendly: true,
+          targetIsFriendly: false,
+        }),
+      ],
+      bucketSizeMs: 1000,
+    });
+
+    expect(result.byTarget[TARGET_ID_1][PLAYER_ID_1].dataPoints).toEqual([
+      expect.objectContaining({ timestamp: 0, damage: 100, eventCount: 1 }),
+      expect.objectContaining({ timestamp: 1000, damage: 0, eventCount: 0 }),
+    ]);
+    expect(result.allTargets[PLAYER_ID_1].totalDamage).toBe(100);
+  });
+
+  it.each([
+    ['start', { startTime: -0, endTime: 1000 }],
+    ['end', { startTime: -1000, endTime: -0 }],
+  ])('normalizes a valid negative-zero fight %s endpoint', (_endpoint, fight) => {
+    const result = calculateDamageOverTimeData({
+      fight,
+      players: mockPlayers,
+      damageEvents: [],
+      bucketSizeMs: 1000,
+    });
+
+    expect(result.status).toBe('ok');
+    expect(Object.is(result.fightStartTime, -0)).toBe(false);
+    expect(Object.is(result.fightEndTime, -0)).toBe(false);
+    expect(result.fightDuration).toBe(1000);
+  });
+
+  it.each([
+    ['zero duration', { startTime: 0, endTime: 0 }, 1000, 'invalid-fight-window'],
+    ['negative-zero metadata', { startTime: -0, endTime: -0 }, 1000, 'invalid-fight-window'],
+    ['negative duration', { startTime: 1000, endTime: 0 }, 1000, 'invalid-fight-window'],
+    ['non-finite start', { startTime: Number.NaN, endTime: 1000 }, 1000, 'non-finite-fight-start'],
+    [
+      'non-finite end',
+      { startTime: 0, endTime: Number.POSITIVE_INFINITY },
+      1000,
+      'non-finite-fight-end',
+    ],
+    [
+      'huge bucket count',
+      { startTime: 0, endTime: Number.MAX_SAFE_INTEGER },
+      1,
+      'bucket-count-exceeded',
+    ],
+    ['zero bucket size', mockFight, 0, 'invalid-bucket-size'],
+    ['negative-zero bucket size', mockFight, -0, 'invalid-bucket-size'],
+    ['negative bucket size', mockFight, -1, 'invalid-bucket-size'],
+    ['sub-millisecond bucket size', mockFight, Number.MIN_VALUE, 'invalid-bucket-size'],
+    [
+      'sub-millisecond fight duration',
+      { startTime: 0, endTime: Number.MIN_VALUE },
+      1,
+      'invalid-fight-window',
+    ],
+    ['non-finite bucket size', mockFight, Number.NaN, 'non-finite-bucket-size'],
+  ])('returns explicit no-data for %s', (_description, fight, bucketSizeMs, reason) => {
+    const onProgress = jest.fn();
+    const result = calculateDamageOverTimeData(
+      {
+        fight,
+        players: mockPlayers,
+        damageEvents: [],
+        bucketSizeMs,
+      },
+      onProgress,
+    );
+
+    expect(result.status).toBe('no-data');
+    if (result.status !== 'no-data') throw new Error('Expected no-data result');
+    expect(result.reason).toBe(reason);
+    expect(result.byTarget).toEqual({});
+    expect(result.allTargets).toEqual({});
+    expect(result.fightDuration).toBe(0);
+    expect(Number.isFinite(result.fightStartTime)).toBe(true);
+    expect(Number.isFinite(result.fightEndTime)).toBe(true);
+    expect(Number.isFinite(result.bucketSizeMs)).toBe(true);
+    expect(Object.is(result.fightStartTime, -0)).toBe(false);
+    expect(Object.is(result.fightEndTime, -0)).toBe(false);
+    expect(Object.is(result.bucketSizeMs, -0)).toBe(false);
+    expect(onProgress).toHaveBeenNthCalledWith(1, 0);
+    expect(onProgress).toHaveBeenNthCalledWith(2, 1);
   });
 
   it('should calculate correct DPS values', () => {
@@ -249,5 +355,35 @@ describe('CalculateDamageOverTime', () => {
 
     // Max DPS should be 2000 (2000 damage in a 1-second bucket)
     expect(playerData.maxDps).toBe(2000);
+  });
+
+  it('returns typed no-data instead of non-finite damage totals after numeric overflow', () => {
+    const result = calculateDamageOverTimeData({
+      fight: { startTime: 0, endTime: 2000 },
+      players: mockPlayers,
+      damageEvents: [
+        createMockDamageEvent({
+          timestamp: 0,
+          sourceID: PLAYER_ID_1,
+          targetID: TARGET_ID_1,
+          amount: Number.MAX_VALUE,
+          sourceIsFriendly: true,
+          targetIsFriendly: false,
+        }),
+        createMockDamageEvent({
+          timestamp: 1000,
+          sourceID: PLAYER_ID_1,
+          targetID: TARGET_ID_1,
+          amount: Number.MAX_VALUE,
+          sourceIsFriendly: true,
+          targetIsFriendly: false,
+        }),
+      ],
+      bucketSizeMs: 1000,
+    });
+
+    expect(result).toMatchObject({ status: 'no-data', reason: 'non-finite-damage-output' });
+    expect(result.byTarget).toEqual({});
+    expect(result.allTargets).toEqual({});
   });
 });
