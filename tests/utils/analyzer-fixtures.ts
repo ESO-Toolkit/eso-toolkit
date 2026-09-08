@@ -217,11 +217,11 @@ export const analyzerTest = base.extend<AnalyzerFixtures, AnalyzerWorkerFixtures
     },
     { scope: 'worker', auto: true },
   ],
-  analyzerPage: async ({ page, analyzerWorkerPreloaded }, use) => {
+  analyzerPage: async ({ page, analyzerWorkerPreloaded }, providePage) => {
     void analyzerWorkerPreloaded;
     const tracker = await installAnalyzerGraphQLFixture(page);
     await installAnalyzerAuthentication(page);
     await preloadAnalyzerSummary(page, tracker);
-    await use(page);
+    await providePage(page);
   },
 });
