@@ -194,15 +194,19 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
   // isDarkMode, so it is computed inside the component rather than at module scope).
   const navIconButtonSx = useMemo(
     () => ({
-      width: { xs: 32, md: 36 },
-      height: { xs: 32, md: 36 },
-      minWidth: { xs: '32px !important', md: 36 },
-      minHeight: { xs: '32px !important', md: 36 },
+      width: 44,
+      height: 44,
+      minWidth: '44px !important',
+      minHeight: '44px !important',
       borderRadius: { xs: '8px', md: '10px' },
       backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.05)',
       color: isDarkMode ? 'rgba(255, 255, 255, 0.85)' : 'rgba(0, 0, 0, 0.7)',
       padding: { xs: '4px', md: '5px' },
       transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+      '&:focus-visible': {
+        outline: `3px solid ${theme.palette.primary.main}`,
+        outlineOffset: 2,
+      },
       '& .MuiSvgIcon-root': { fontSize: { xs: '1.15rem', md: '1.5rem' } },
       '&:hover': {
         backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.1)',
@@ -213,8 +217,12 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
         opacity: 0.25,
         backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.02)' : 'rgba(0, 0, 0, 0.02)',
       },
+      '@media (prefers-reduced-motion: reduce)': {
+        transition: 'none',
+        '&:hover': { transform: 'none' },
+      },
     }),
-    [isDarkMode],
+    [isDarkMode, theme.palette.primary.main],
   );
 
   // Generate player list for the buff source selector
@@ -285,6 +293,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
             onChange={handleNavigationModeChange}
             exclusive
             size="small"
+            aria-label="Fight navigation mode"
             sx={{
               backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.04)',
               borderRadius: '8px',
@@ -310,14 +319,18 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
                 fontWeight: 600,
                 textTransform: 'none',
                 minWidth: 'auto',
-                minHeight: 'unset',
-                height: { xs: 32, md: 28 },
+                minHeight: 44,
+                height: 44,
                 border: 'none',
                 borderRadius: '6px',
                 color: isDarkMode ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)',
                 fontFamily: '"Inter Variable", -apple-system, BlinkMacSystemFont, sans-serif',
                 letterSpacing: '0.025em',
                 transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                '&:focus-visible': {
+                  outline: `3px solid ${theme.palette.primary.main}`,
+                  outlineOffset: -2,
+                },
                 '&:hover': {
                   backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.04)',
                   color: isDarkMode ? 'rgba(255, 255, 255, 0.8)' : 'rgba(0, 0, 0, 0.8)',
@@ -331,6 +344,10 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
                     color: 'white',
                     transform: 'scale(1.02)',
                   },
+                },
+                '@media (prefers-reduced-motion: reduce)': {
+                  transition: 'none',
+                  '&:hover': { transform: 'none' },
                 },
               },
             }}
@@ -352,6 +369,9 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
               justifyContent: 'center',
               height: { xs: 32, md: 'auto' },
             }}
+            role="status"
+            aria-live="polite"
+            aria-label={`Fight ${navigationData.currentIndex >= 0 && navigationData.totalCount > 0 ? `${navigationData.currentIndex + 1} of ${navigationData.totalCount}` : navigationData.totalCount > 0 ? `unknown of ${navigationData.totalCount}` : '0 of 0'}`}
           >
             <Typography
               variant="body2"
@@ -399,6 +419,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
       >
         <Tabs
           value={validSelectedTabId}
+          aria-label="Fight detail sections"
           onChange={(_: React.SyntheticEvent, v: unknown) => {
             onTabChange(v as TabId);
           }}
@@ -428,8 +449,8 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
               scrollbarWidth: 'none',
             },
             '& .MuiTabs-scrollButtons': {
-              width: 32,
-              minWidth: 32,
+              width: 44,
+              minWidth: 44,
               padding: 0,
               margin: 0,
               flexShrink: 0,
@@ -445,6 +466,15 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
               opacity: 1,
               borderRadius: 100,
               flexShrink: 0,
+              '&:focus-visible': {
+                outline: `3px solid ${theme.palette.primary.main}`,
+                outlineOffset: -2,
+              },
+            },
+            '@media (prefers-reduced-motion: reduce)': {
+              '& .MuiTabs-indicator, & .MuiTab-root, & .MuiTabs-scrollButtons': {
+                transition: 'none',
+              },
             },
           }}
           variant="scrollable"
@@ -706,7 +736,18 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
            getTabsMeta doesn't trigger a full-page layout recalc.
            (paint omitted — it would clip disablePortal overlays in child panels) */}
       <Box
-        sx={{ mt: { xs: 1, md: 2 }, contain: 'layout style' }}
+        role="tabpanel"
+        aria-label={`${validSelectedTabId} content`}
+        tabIndex={0}
+        sx={{
+          mt: { xs: 1, md: 2 },
+          contain: 'layout style',
+          outline: 'none',
+          '&:focus-visible': {
+            outline: `3px solid ${theme.palette.primary.main}`,
+            outlineOffset: 2,
+          },
+        }}
         data-testid="fight-tab-content-container"
       >
         <AnimatedTabContent tabKey={deferredTabId} data-testid={`tab-content-${deferredTabId}`}>

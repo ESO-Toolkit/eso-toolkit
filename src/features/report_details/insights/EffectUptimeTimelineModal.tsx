@@ -5,7 +5,6 @@ import {
   Chip,
   Dialog,
   DialogContent,
-  DialogTitle,
   IconButton,
   Stack,
   Tooltip,
@@ -86,7 +85,13 @@ export const EffectUptimeTimelineModal: React.FC<EffectUptimeTimelineModalProps>
   }, [prefetchedSeries, uptimes, lookup, fightStartTime, fightEndTime, targetFilter]);
 
   const fightDurationMs = React.useMemo(() => {
-    if (!fightStartTime || !fightEndTime || fightEndTime <= fightStartTime) {
+    if (
+      fightStartTime == null ||
+      fightEndTime == null ||
+      !Number.isFinite(fightStartTime) ||
+      !Number.isFinite(fightEndTime) ||
+      fightEndTime <= fightStartTime
+    ) {
       return 0;
     }
 
@@ -208,17 +213,38 @@ export const EffectUptimeTimelineModal: React.FC<EffectUptimeTimelineModalProps>
   }, [category]);
 
   const hasData = series.length > 0;
+  const titleId = 'effect-uptime-timeline-title';
+  const subtitleId = subtitle ? 'effect-uptime-timeline-description' : undefined;
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="lg">
-      <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      fullWidth
+      maxWidth="lg"
+      aria-labelledby={titleId}
+      aria-describedby={subtitleId}
+    >
+      <Box
+        component="header"
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 1,
+          px: 3,
+          py: 2,
+        }}
+      >
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
           <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
             <TimelineIcon sx={{ color: theme.palette.mode === 'dark' ? '#38bdf8' : '#0f172a' }} />
-            <Typography variant="h6">{title}</Typography>
+            <Typography id={titleId} component="h2" variant="h6">
+              {title}
+            </Typography>
             <Chip label={categoryBadge.label} color={categoryBadge.color} size="small" />
           </Stack>
           {subtitle && (
-            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+            <Typography id={subtitleId} variant="body2" sx={{ color: 'text.secondary' }}>
               {subtitle}
             </Typography>
           )}
@@ -227,20 +253,40 @@ export const EffectUptimeTimelineModal: React.FC<EffectUptimeTimelineModalProps>
           <IconButton
             onClick={onClose}
             size="small"
-            aria-label="Close"
+            aria-label="Close timeline"
             sx={{
               color: 'text.secondary',
+              width: 44,
+              height: 44,
+              '&:focus-visible': {
+                outline: `3px solid ${theme.palette.primary.main}`,
+                outlineOffset: 2,
+              },
               '&:hover': { color: '#ef4444', backgroundColor: 'rgba(239,68,68,0.10)' },
+              '@media (prefers-reduced-motion: reduce)': {
+                transition: 'none',
+                '&:hover': { transform: 'none' },
+              },
             }}
           >
             <CloseIcon />
           </IconButton>
         </Tooltip>
-      </DialogTitle>
-      <DialogContent sx={{ minHeight: 420 }}>
+      </Box>
+      <DialogContent
+        sx={{
+          minHeight: { xs: 280, sm: 360, md: 420 },
+          minWidth: 0,
+          overflowX: 'hidden',
+          '@media (prefers-reduced-motion: reduce)': {
+            '& *': { animation: 'none !important', transition: 'none !important' },
+          },
+        }}
+      >
         {hasData ? (
           <>
             <Box
+              role="list"
               sx={{
                 display: 'flex',
                 flexWrap: 'wrap',
@@ -264,6 +310,8 @@ export const EffectUptimeTimelineModal: React.FC<EffectUptimeTimelineModalProps>
                 return (
                   <Box
                     key={s.id}
+                    role="listitem"
+                    aria-label={s.label}
                     sx={{
                       height: 24,
                       borderRadius: '12px',
@@ -296,13 +344,17 @@ export const EffectUptimeTimelineModal: React.FC<EffectUptimeTimelineModalProps>
               })}
             </Box>
             <Box role="img" aria-label="Effect uptime timeline chart">
-              <EChart option={chartOption} height={380} group="fightReport" />
+              <Box sx={{ width: '100%', minWidth: 0, minHeight: { xs: 240, sm: 300, md: 380 } }}>
+                <EChart option={chartOption} height={380} group="fightReport" />
+              </Box>
             </Box>
           </>
         ) : (
           <Box
             sx={{
-              height: 320,
+              minHeight: { xs: 240, sm: 280, md: 320 },
+              height: { xs: 240, sm: 280, md: 320 },
+              px: { xs: 1, sm: 2 },
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
