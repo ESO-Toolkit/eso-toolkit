@@ -18,8 +18,8 @@ import {
 import React from 'react';
 import { useSelector } from 'react-redux';
 
-import type { ReportActorFragment } from '../../../graphql/gql/graphql';
 import { useReportMasterData } from '../../../hooks';
+import { resolveTargetScopes } from '../../../hooks/targetScopes';
 import { useSelectedFight } from '../../../hooks/useSelectedFight';
 import { ALL_TARGETS_SENTINEL, ALL_ENEMIES_SENTINEL } from '../../../hooks/useSelectedTargetIds';
 import {
@@ -75,32 +75,19 @@ const CombinedFilterDropdownComponent: React.FC<CombinedFilterDropdownProps> = (
   const selectedTargetIds = React.useMemo(() => rawSelectedTargetIds || [], [rawSelectedTargetIds]);
 
   const targetsList = React.useMemo(() => {
-    if (!fight?.enemyNPCs || !reportMasterData?.actorsById) return [];
-    const actorsById = reportMasterData.actorsById;
-    const validEnemies = fight.enemyNPCs
-      .filter((npc): npc is { id: number } => npc?.id != null)
-      .map((npc) => ({ id: npc.id, actor: actorsById[npc.id] }))
-      .filter((enemy) => enemy.actor && enemy.actor.name);
+    const namedEnemies = resolveTargetScopes(
+      fight?.enemyNPCs,
+      reportMasterData?.actorsById,
+    ).namedEnemies;
+    const nameCounts = new Map<string, number>();
+    for (const enemy of namedEnemies) {
+      nameCounts.set(enemy.name, (nameCounts.get(enemy.name) ?? 0) + 1);
+    }
 
-    const enemyGroups = validEnemies.reduce(
-      (acc, enemy) => {
-        const name = enemy.actor.name;
-        if (name && !acc[name]) acc[name] = [];
-        if (name) acc[name].push(enemy);
-        return acc;
-      },
-      {} as Record<string, Array<{ id: number; actor: ReportActorFragment }>>,
-    );
-
-    return validEnemies
-      .filter((enemy) => {
-        const name = enemy.actor.name;
-        if (!name) return false;
-        const sameNameEnemies = enemyGroups[name];
-        if (sameNameEnemies && sameNameEnemies.length === 1) return true;
-        return enemy.actor.subType === 'Boss';
-      })
-      .map((enemy) => ({ id: enemy.id, name: enemy.actor.name }));
+    return namedEnemies.map((enemy) => ({
+      id: enemy.id,
+      name: nameCounts.get(enemy.name) === 1 ? enemy.name : `${enemy.name} (#${enemy.id})`,
+    }));
   }, [reportMasterData?.actorsById, fight?.enemyNPCs]);
 
   const isAllBosses = React.useMemo(
@@ -327,6 +314,12 @@ const CombinedFilterDropdownComponent: React.FC<CombinedFilterDropdownProps> = (
         open={open}
         anchorEl={anchorEl}
         onClose={() => setAnchorEl(null)}
+        slotProps={{
+          paper: {
+            'aria-label': 'Analyzer filters',
+            role: 'dialog',
+          },
+        }}
         {...dropdownMenuOrigins(menuUp)}
         sx={popoverSx}
       >
